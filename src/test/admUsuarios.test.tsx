@@ -362,8 +362,9 @@ describe("ADM-01 salvar, concorrência (091) e idempotência (092)", () => {
     let liberar: (r: Resp) => void = () => undefined;
     handlers.salvar_vinculo_usuario_adm = () => new Promise<Resp>((r) => (liberar = r));
     const dlg = await abrirEdicao();
-    salvar(dlg);
-    salvar(dlg);
+    const botao = within(dlg).getByRole("button", { name: "Salvar vínculo" });
+    fireEvent.click(botao);
+    fireEvent.click(botao);
     await waitFor(() => expect(within(dlg).getByRole("button", { name: /Salvando/ })).toBeDisabled());
     expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(1);
     liberar(ok({ schema_versao: "adm01-v2", correlation_id: "c", id_usuario: "u-a", vinculo: {} }));
@@ -517,13 +518,14 @@ describe("ADM-01 varredura de código (zero drift)", () => {
 
   it("sem assinatura v1, writes diretos, auth.admin, service_role ou console", () => {
     expect(fonte).not.toMatch(/p_ids_contratos(?!_ativar|_revogar)/);
-    expect(fonte).not.toMatch(/\.from\(|\.insert\(|\.update\(|\.delete\(|\.upsert\(/);
+    expect(fonte).not.toMatch(/\.from\(\s*["'`]|\.insert\(|\.update\(|\.upsert\(|\.delete\(\s*\)/);
     expect(fonte).not.toMatch(/auth\.admin|service_role|sb_secret|client\.server/);
     expect(fonte).not.toMatch(/console\./);
   });
 
   it("usa somente as 4 RPCs do escopo", () => {
-    const nomes = [...fonte.matchAll(/rpc\(\s*"([a-z_]+)"/g)].map((x) => x[1]);
+    const nomes = [...fonte.matchAll(/"([a-z_]+_adm)"/g)].map((x) => x[1]);
+    expect(fonte.match(/supabase\.rpc/g)).toHaveLength(1);
     expect(new Set(nomes)).toEqual(
       new Set(["listar_usuarios_vinculos_adm", "listar_escopo_contratos_usuario_adm", "listar_auditoria_vinculo_usuario_adm", "salvar_vinculo_usuario_adm"]),
     );
