@@ -102,8 +102,8 @@ describe("V1-06 rota", () => {
     const o = (Route as unknown as { options: { ssr: boolean; head: () => { meta: Array<Record<string, string>> } } }).options;
     expect(o.ssr).toBe(false);
     const meta = o.head().meta;
-    expect(meta.find((x) => x.title)?.title).toBe("Contrato — ContaOS");
-    expect(meta.some((x) => x.name === "robots" && x.content === "noindex")).toBe(true);
+    expect(meta.find((x) => x["title"])?.["title"]).toBe("Contrato — ContaOS");
+    expect(meta.some((x) => x["name"] === "robots" && x["content"] === "noindex")).toBe(true);
   });
 });
 
@@ -113,7 +113,7 @@ describe("V1-06 dados", () => {
     montar();
     expect(await screen.findByRole("heading", { level: 1, name: "Contrato CT-001" })).toBeTruthy();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    const c = sel()[0];
+    const c = sel()[0]!;
     expect(c.ops.find((o) => o[0] === "select")![1][0]).toBe(COLUNAS_DETALHE);
     expect(COLUNAS_DETALHE).toContain("contratante:contratantes!contratos_contratante_org_fk(razao_social,nome_fantasia,documento)");
     expect(COLUNAS_DETALHE).not.toContain("!inner");
@@ -262,7 +262,7 @@ describe("V1-06 navegação e scan", () => {
   it("navegação futura indisponível, sem links nem carga extra; voltar seguro", async () => {
     m.resposta = () => ok(contrato(K1));
     montar();
-    await screen.findByRole("heading", { level: 1 });
+    await screen.findByText("Prefeitura X");
     const nav = screen.getByRole("navigation", { name: "Seções do contrato" });
     expect(nav.querySelectorAll("a")).toHaveLength(0);
     for (const t of ["Base normativa", "Orçamento", "Regras", "Documentos", "Competências"]) {
