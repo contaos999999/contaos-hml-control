@@ -52,7 +52,7 @@ vi.mock("@tanstack/react-router", () => ({
 import { BaseNormativaContrato, MENSAGENS_V107 } from "@/components/contratos/BaseNormativaContrato";
 import { COLUNAS_FONTE, COLUNAS_VERSAO, COLUNAS_APLICABILIDADE, LIMITE_TEXTO, rotuloAplicabilidade } from "@/lib/contratos/baseNormativaDados";
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
-import { Route } from "@/routes/contratos_.$id.base-normativa";
+import { Route } from "@/routes/contratos_.$id_.base-normativa";
 
 const U = "user-1";
 const A = "org-A";
@@ -423,7 +423,7 @@ describe("V1-07 mutações por RPC V107", () => {
 
 describe("V1-07 scan", () => {
   it("sem DML direto, secrets, casts proibidos; RPCs só V107 + nenhum outro", () => {
-    const fs = ["src/components/contratos/BaseNormativaContrato.tsx", "src/lib/contratos/baseNormativaDados.ts", "src/routes/contratos_.$id.base-normativa.tsx"].map((p) => readFileSync(p, "utf8")).join("\n");
+    const fs = ["src/components/contratos/BaseNormativaContrato.tsx", "src/lib/contratos/baseNormativaDados.ts", "src/routes/contratos_.$id_.base-normativa.tsx"].map((p) => readFileSync(p, "utf8")).join("\n");
     for (const t of [".insert(", ".update(", ".delete(", ".upsert(", "service_role", "sb_secret", "as any", "as never", "placeholderData", "keepPreviousData", "!inner", "aprovado_por:", "p_hash:"]) expect(fs).not.toContain(t);
     const nomes = [...fs.matchAll(/"([a-z_]+_v107)"/g)].map((x) => x[1]);
     expect(new Set(nomes)).toEqual(new Set(["salvar_fonte_normativa_v107", "registrar_versao_fonte_v107", "aprovar_versao_fonte_v107", "definir_aplicabilidade_fonte_v107"]));

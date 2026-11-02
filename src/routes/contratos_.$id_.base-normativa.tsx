@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { BaseNormativaContrato } from "@/components/contratos/BaseNormativaContrato";
 
-export const Route = createFileRoute("/contratos_/$id/base-normativa")({
+export const Route = createFileRoute("/contratos_/$id_/base-normativa")({
   ssr: false,
   head: () => ({
     meta: [
