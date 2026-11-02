@@ -1,6 +1,6 @@
 /**
  * "Vincular usuário existente": somente vincula uma conta ContaOS já existente pelo e-mail.
- * Não envia convite, não cria conta e não usa auth.admin.
+ * Não envia convite e não cria conta; apenas a RPC oficial de vínculo é usada.
  */
 export function InviteLinkUserForm(props: { email: string; onChange: (v: string) => void; disabled?: boolean }) {
   return (

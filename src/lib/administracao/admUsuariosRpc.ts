@@ -103,7 +103,7 @@ const VERSOES: Record<string, string[]> = {
 type Rpc = (nome: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown; status: number }>;
 // Cast pontual: os tipos gerados declaram `p_id_usuario`/`p_email`/`p_versao_esperada` como não-nulos,
 // mas o contrato adm01-v2 aceita null nesses parâmetros.
-const rpc = supabase.rpc.bind(supabase) as unknown as Rpc;
+const rpc: Rpc = (nome, args) => (supabase.rpc as unknown as Rpc).call(supabase, nome, args);
 
 async function chamar<T>(nome: string, args: Record<string, unknown>, op: Operacao, grupo: keyof typeof VERSOES): Promise<T> {
   const { data, error, status } = await rpc(nome, args);
