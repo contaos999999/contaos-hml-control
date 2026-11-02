@@ -226,8 +226,9 @@ export function NovoContratante() {
     const inval = validarFormulario(form);
     setInvalidos(inval);
     setErroEnvio(null);
-    if (inval.length) {
-      document.getElementById(IDS[inval[0]])?.focus();
+    const primeiro = inval[0];
+    if (primeiro) {
+      document.getElementById(IDS[primeiro])?.focus();
       return;
     }
     enviandoRef.current = true;

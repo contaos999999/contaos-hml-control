@@ -74,7 +74,7 @@ function montar() {
 const inserts = () => m.chamadas.filter((c) => c.tabela === "contratantes");
 const op = (c: Chamada, nome: string) => c.ops.filter((o) => o[0] === nome).map((o) => o[1]);
 
-async function preencher(over: Partial<Record<string, string>> = {}) {
+async function preencher(over: { razao?: string; tipo?: string; documento?: string; fantasia?: string; email?: string; telefone?: string } = {}) {
   await screen.findByLabelText(/Razão social/);
   const v = { razao: "ACME LTDA", tipo: "juridica", ...over };
   fireEvent.change(screen.getByLabelText(/Razão social/), { target: { value: v.razao } });
