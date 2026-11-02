@@ -11,8 +11,8 @@ const ler = (p: string) => readFileSync(resolve(raiz, p), "utf8");
 
 // SHA-256 do MANIFEST_SHA256_v4_1_BRAND_v1_0.json oficial.
 const ASSETS_OFICIAIS: Record<string, string> = {
-  "public/brand/ContaOS_Logo_Horizontal_Fundo_Escuro.svg":
-    "2d3c6c1a088a6f631acf2055a06a9e4b7bd81519cd83b2c9fed4fcf367815187",
+  "public/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg":
+    "099518bc6ff6b83d4380071b99410dbbbdb43805790c7ad6b0437ba16ae14c36",
   "public/brand/ContaOS_Simbolo_Branco.svg":
     "7de27bd24a220d9d8e6b7bb2352e9ba895109e3f648401f5cc454fff1873e3fc",
   "public/favicon.svg": "b659af3ca70eaa47cfa67c0115a394c23448f091ba9ded7cb3a15b5702c1c907",
@@ -42,7 +42,7 @@ describe("BRAND-01 — componente de marca", () => {
   it("usa o logo horizontal oficial para fundo escuro com alt ContaOS", () => {
     const { container } = render(<ContaOSMarca />);
     const logo = container.querySelector(
-      'img[src="/brand/ContaOS_Logo_Horizontal_Fundo_Escuro.svg"]',
+      'img[src="/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg"]',
     );
     expect(logo).not.toBeNull();
     expect(logo?.getAttribute("alt")).toBe("ContaOS");
