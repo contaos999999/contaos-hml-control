@@ -19,8 +19,8 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   return (
-    <div lang="pt-BR" className="flex min-h-screen flex-col bg-background md:flex-row">
-      <aside className="flex flex-col justify-between gap-6 bg-primary px-6 py-6 text-primary-foreground md:py-8 lg:w-[44%] lg:px-12 lg:py-12 md:w-auto">
+    <div lang="pt-BR" className="flex min-h-screen flex-col bg-background lg:flex-row">
+      <aside className="flex flex-col justify-between gap-6 bg-primary px-6 py-6 text-primary-foreground md:px-10 lg:w-[44%] lg:px-12 lg:py-12">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-6 w-6" aria-hidden />
           <span className="text-lg font-semibold tracking-tight">ContaOS</span>
