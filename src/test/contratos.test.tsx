@@ -27,7 +27,7 @@ vi.mock("@/integrations/supabase/client", () => {
         return b;
       };
     }
-    b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => {
+    b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => {
       try {
         return Promise.resolve(m.respostas[tabela as "organizacoes" | "contratos"]?.(c)).then(res, rej);
       } catch (e) {
@@ -93,7 +93,7 @@ describe("V1-04 dados", () => {
     m.respostas.contratos = () => lista(A, 25, 30);
     const s = new AbortController().signal;
     const r = await listarContratos({ idOrganizacao: A, pagina: 1 }, s);
-    const ops = consultasContratos()[0].ops;
+    const ops = consultasContratos()[0]!.ops;
     expect(ops).toContainEqual(["select", [COLUNAS_CONTRATO, { count: "exact" }]]);
     expect(COLUNAS_CONTRATO).toBe("id,id_organizacao,numero,objeto,situacao,criticidade,inicio,fim,valor_global");
     expect(ops).toContainEqual(["eq", ["id_organizacao", A]]);
@@ -102,7 +102,7 @@ describe("V1-04 dados", () => {
     expect(ops).toContainEqual(["abortSignal", [s]]);
     expect(r.totalPaginas).toBe(2);
     await listarContratos({ idOrganizacao: A, pagina: 2 });
-    expect(consultasContratos()[1].ops).toContainEqual(["range", [25, 49]]);
+    expect(consultasContratos()[1]!.ops).toContainEqual(["range", [25, 49]]);
   });
 
   it("classifica 403/42501/PGRST301 como negado e 500 como erro", async () => {
