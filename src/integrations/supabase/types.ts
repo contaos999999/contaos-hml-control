@@ -2332,60 +2332,75 @@ export type Database = {
           atualizado_em: string
           configuracao_diligencia: Json
           configuracao_financeira: Json
+          conta_bancaria_vinculada: string | null
           criado_em: string
           criticidade: string
+          dia_limite_apresentacao: number | null
           fim: string | null
+          fonte_recurso: string | null
           id: string
           id_contratante: string
           id_organizacao: string
-          inicio: string | null
+          inicio: string
           numero: string
           objeto: string
-          periodicidade: string | null
+          periodicidade: string
           prazo_prestacao_dias: number | null
           situacao: string
           tipo_contrato: string | null
+          unidade_vinculada: string | null
           valor_global: number | null
+          valor_mensal_referencia: number | null
           versao_registro: number
         }
         Insert: {
           atualizado_em?: string
           configuracao_diligencia?: Json
           configuracao_financeira?: Json
+          conta_bancaria_vinculada?: string | null
           criado_em?: string
           criticidade?: string
+          dia_limite_apresentacao?: number | null
           fim?: string | null
+          fonte_recurso?: string | null
           id?: string
           id_contratante: string
           id_organizacao: string
-          inicio?: string | null
+          inicio: string
           numero: string
           objeto: string
-          periodicidade?: string | null
+          periodicidade?: string
           prazo_prestacao_dias?: number | null
           situacao?: string
           tipo_contrato?: string | null
+          unidade_vinculada?: string | null
           valor_global?: number | null
+          valor_mensal_referencia?: number | null
           versao_registro?: number
         }
         Update: {
           atualizado_em?: string
           configuracao_diligencia?: Json
           configuracao_financeira?: Json
+          conta_bancaria_vinculada?: string | null
           criado_em?: string
           criticidade?: string
+          dia_limite_apresentacao?: number | null
           fim?: string | null
+          fonte_recurso?: string | null
           id?: string
           id_contratante?: string
           id_organizacao?: string
-          inicio?: string | null
+          inicio?: string
           numero?: string
           objeto?: string
-          periodicidade?: string | null
+          periodicidade?: string
           prazo_prestacao_dias?: number | null
           situacao?: string
           tipo_contrato?: string | null
+          unidade_vinculada?: string | null
           valor_global?: number | null
+          valor_mensal_referencia?: number | null
           versao_registro?: number
         }
         Relationships: [
@@ -8883,6 +8898,17 @@ export type Database = {
           p_tamanho_pagina?: number
         }
         Returns: Json
+      }
+      listar_organizacoes_disponiveis: {
+        Args: never
+        Returns: {
+          cnpj: string
+          id: string
+          nome_fantasia: string
+          perfil: string
+          razao_social: string
+          situacao: string
+        }[]
       }
       listar_usuarios_vinculos_adm: {
         Args: {

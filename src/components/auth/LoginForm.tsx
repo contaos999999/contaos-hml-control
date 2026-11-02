@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
+  ErroOrganizacoes,
+  listarOrganizacoesDisponiveis,
   resolverDestinoPosLogin,
-  type VinculoUsuario,
+  type OrganizacaoDisponivel,
 } from "@/lib/auth/resolverDestinoPosLogin";
 
 type Fase =
@@ -18,6 +20,7 @@ type Fase =
   | "carregando-vinculos"
   | "sem-acesso"
   | "erro-vinculos"
+  | "negado"
   | "redirecionando";
 
 type ErroGeral = "credencial" | "rede" | null;
@@ -30,6 +33,7 @@ export const MENSAGENS = {
   semAcesso:
     "Seu usuário não possui acesso ativo a nenhuma organização. Procure o administrador.",
   erroVinculos: "Não foi possível carregar seus acessos. Tente novamente.",
+  negado: "Você não tem permissão para acessar as organizações. Procure o administrador.",
   emailInvalido: "Informe um e-mail válido.",
   senhaVazia: "Informe sua senha.",
 } as const;
@@ -66,18 +70,15 @@ export function LoginForm({ onNavegar = navegarPadrao }: Props) {
       setFase("inicial");
       return;
     }
-    // RLS é a autoridade. O filtro por id_usuario apenas seleciona os vínculos
-    // do próprio usuário (perfis administrativos enxergam vínculos de terceiros).
-    const { data, error } = await supabase
-      .from("vinculos_usuarios")
-      .select("id, id_organizacao, perfil")
-      .eq("id_usuario", userData.user.id)
-      .eq("ativo", true);
-    if (error) {
-      setFase("erro-vinculos");
+    // RLS é a autoridade; a RPC certificada inclui o Administrador Master.
+    let data: OrganizacaoDisponivel[];
+    try {
+      data = await listarOrganizacoesDisponiveis();
+    } catch (e) {
+      setFase(e instanceof ErroOrganizacoes && e.tipo === "negado" ? "negado" : "erro-vinculos");
       return;
     }
-    const destino = resolverDestinoPosLogin((data ?? []) as VinculoUsuario[]);
+    const destino = resolverDestinoPosLogin(data);
     if (destino.tipo === "sem-acesso") {
       setFase("sem-acesso");
       return;
@@ -136,14 +137,14 @@ export function LoginForm({ onNavegar = navegarPadrao }: Props) {
   const enviando = fase === "enviando";
   const ocupado = enviando || fase === "carregando-vinculos" || fase === "redirecionando";
 
-  if (fase === "sem-acesso" || fase === "erro-vinculos") {
-    const semAcesso = fase === "sem-acesso";
+  if (fase === "sem-acesso" || fase === "erro-vinculos" || fase === "negado") {
+    const semAcesso = fase !== "erro-vinculos";
     return (
       <div className="space-y-4">
         <Alert variant={semAcesso ? "default" : "destructive"} role="alert">
           {semAcesso ? <ShieldAlert className="h-4 w-4" aria-hidden /> : <AlertCircle className="h-4 w-4" aria-hidden />}
           <AlertTitle>{semAcesso ? "Acesso não disponível" : "Erro ao carregar acessos"}</AlertTitle>
-          <AlertDescription>{semAcesso ? MENSAGENS.semAcesso : MENSAGENS.erroVinculos}</AlertDescription>
+          <AlertDescription>{fase === "negado" ? MENSAGENS.negado : semAcesso ? MENSAGENS.semAcesso : MENSAGENS.erroVinculos}</AlertDescription>
         </Alert>
         <div className="flex flex-col gap-2 sm:flex-row">
           {!semAcesso && (
