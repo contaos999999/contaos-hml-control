@@ -768,7 +768,7 @@ describe("ADM-01 retorno de foco ao gatilho (acessibilidade)", () => {
     const b = await screen.findByRole("button", { name: "Editar vínculo de Ana Souza" });
     acionar(b);
     const dlg = await screen.findByRole("dialog");
-    await within(dlg).findByText("CT-c1");
+    await within(dlg).findByLabelText("Contrato CT-c1 — Objeto c1");
     const antes = chamadas("listar_usuarios_vinculos_adm").length;
     salvar(dlg);
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
