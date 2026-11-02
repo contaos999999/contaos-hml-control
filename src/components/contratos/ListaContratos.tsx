@@ -52,7 +52,7 @@ const Selo = ({ texto }: { texto: string }) => (
 
 function Tabela({ itens }: { itens: Contrato[] }) {
   return (
-    <div className="hidden md:block">
+    <div className="hidden lg:block">
       <table className="w-full table-fixed border-collapse text-sm">
         <caption className="sr-only">Contratos autorizados da organização selecionada</caption>
         <thead>
@@ -88,7 +88,7 @@ function Tabela({ itens }: { itens: Contrato[] }) {
 
 function Cards({ itens }: { itens: Contrato[] }) {
   return (
-    <ul aria-label="Contratos (lista compacta)" className="space-y-3 md:hidden">
+    <ul aria-label="Contratos (lista compacta)" className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:hidden">
       {itens.map((c) => (
         <li key={c.id} className="rounded-lg border border-border bg-background p-4">
           <p className="break-words font-medium tabular-nums">{c.numero}</p>
