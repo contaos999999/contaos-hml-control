@@ -12,7 +12,7 @@ Fonte: pacote `ContaOS_4_1_BRAND_FINAL.zip` (PROMPT_000, ANEXO_BRAND_01, ANEXO_Z
 ## Assets oficiais (byte a byte, SHA-256 do MANIFEST_SHA256_v4_1_BRAND_v1_0.json)
 | Arquivo | SHA-256 |
 |---|---|
-| public/brand/ContaOS_Logo_Horizontal_Fundo_Escuro.svg | 2d3c6c1a088a6f631acf2055a06a9e4b7bd81519cd83b2c9fed4fcf367815187 |
+| public/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg | 099518bc6ff6b83d4380071b99410dbbbdb43805790c7ad6b0437ba16ae14c36 |
 | public/brand/ContaOS_Simbolo_Branco.svg | 7de27bd24a220d9d8e6b7bb2352e9ba895109e3f648401f5cc454fff1873e3fc |
 | public/favicon.svg | b659af3ca70eaa47cfa67c0115a394c23448f091ba9ded7cb3a15b5702c1c907 |
 | public/favicon.ico | 9d1705a8e8a446b33e3f907adf9b4d5f8d137af3ead8f81d217f6eaa99c3121f |
@@ -22,3 +22,6 @@ Fonte: pacote `ContaOS_4_1_BRAND_FINAL.zip` (PROMPT_000, ANEXO_BRAND_01, ANEXO_Z
 
 ## Testes
 `src/test/brand.test.tsx` (RED: módulo ausente; GREEN após build). Validação browser 1440/1280/768/390.
+
+## Decisão de troca (aprovada pelo usuário em 02/11/2026)
+O asset oficial `ContaOS_Logo_Horizontal_Fundo_Escuro.svg` tinha parte do símbolo em navy (#0F172A), invisível sobre o fundo navy. Por aprovação explícita, ele foi substituído pelo asset oficial `ContaOS_Logo_Horizontal_Mono_Branco.svg` (copiado byte a byte, SHA-256 conferido contra o manifesto). Nenhum asset foi redesenhado.

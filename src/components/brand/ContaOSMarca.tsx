@@ -5,7 +5,7 @@ export function ContaOSMarca() {
   return (
     <>
       <img
-        src="/brand/ContaOS_Logo_Horizontal_Fundo_Escuro.svg"
+        src="/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg"
         alt="ContaOS"
         width={131}
         height={32}
