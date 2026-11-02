@@ -53,6 +53,10 @@ export function ContractScopeDialog(props: {
   // Identidade já obtida pela Edge para o e-mail corrente: retry do vínculo não repete o convite.
   const identidade = useRef<{ email: string; id: string; codigo: string } | null>(null);
   const salvandoRef = useRef(false);
+  // Fechamento controlado: o pai só desmonta após o Radix concluir o fechamento (onCloseAutoFocus),
+  // evitando corrida com a restauração de foco.
+  const [aberto, setAberto] = useState(true);
+  const fechadoRef = useRef(false);
 
   const [email, setEmail] = useState("");
   const [nomeNovo, setNomeNovo] = useState("");
@@ -92,6 +96,13 @@ export function ContractScopeDialog(props: {
   function fechar() {
     intencao.current.encerrar();
     intencaoConvite.current.encerrar();
+    setAberto(false);
+  }
+
+  function concluirFechamento(ev: Event) {
+    ev.preventDefault();
+    if (fechadoRef.current) return;
+    fechadoRef.current = true;
     props.onFechar();
   }
 
@@ -179,6 +190,7 @@ export function ContractScopeDialog(props: {
           ? MENSAGENS_ADM01.usuarioConvidado
           : MENSAGENS_ADM01.usuarioExistente;
       props.onSalvo(r.correlation_id, aviso);
+      fechar();
     } catch (e) {
       setErro(e instanceof ErroAdm ? e.tipo : "erro");
     } finally {
@@ -191,8 +203,8 @@ export function ContractScopeDialog(props: {
   const nome = u ? u.nome || u.email || "usuário" : null;
 
   return (
-    <Dialog open onOpenChange={(o) => !o && fechar()}>
-      <DialogContent className="max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-3xl overflow-y-auto">
+    <Dialog open={aberto} onOpenChange={(o) => !o && fechar()}>
+      <DialogContent className="max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-3xl overflow-y-auto" onCloseAutoFocus={concluirFechamento}>
         <DialogHeader>
           <DialogTitle>{u ? `Editar vínculo de ${nome}` : "Convidar ou vincular usuário"}</DialogTitle>
           <DialogDescription>

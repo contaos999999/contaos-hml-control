@@ -299,8 +299,6 @@ export function AdminUsuarios() {
           perfis={perfis}
           onFechar={() => (setEditando(null), restaurarFoco())}
           onSalvo={(c, extra) => {
-            setEditando(null);
-            restaurarFoco();
             setAviso(`${extra ?? MENSAGENS_ADM01.salvo} Referência: ${c}`);
             consulta.refetch();
           }}
