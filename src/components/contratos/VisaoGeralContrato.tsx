@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
-import { ErroDetalhe, formatarBrl, formatarDataBr, obterContrato, texto, type ContratoDetalhe } from "@/lib/contratos/contratoDetalheDados";
+import { ErroDetalhe, uuidCanonico, formatarBrl, formatarDataBr, obterContrato, texto, type ContratoDetalhe } from "@/lib/contratos/contratoDetalheDados";
 
 export const MENSAGENS_V106 = {
   verificando: "Verificando sessão…",
@@ -85,7 +85,7 @@ export function VisaoGeralContrato({ id }: { id: string }) {
           </>
         ) : (
           // key por usuário+organização+id: troca descarta estado e respostas tardias anteriores.
-          <Conteudo key={`${ctx.idUsuario}:${ctx.idOrganizacao}:${id}`} id={id} idUsuario={ctx.idUsuario} idOrganizacao={ctx.idOrganizacao} />
+          <Conteudo key={`${ctx.idUsuario}:${ctx.idOrganizacao}:${uuidCanonico(id)}`} id={uuidCanonico(id)} idUsuario={ctx.idUsuario} idOrganizacao={ctx.idOrganizacao} />
         )}
       </main>
     </div>
@@ -124,7 +124,7 @@ function Conteudo({ id, idUsuario, idOrganizacao }: { id: string; idUsuario: str
     );
   }
   const c = consulta.data;
-  if (!c || c.id !== id) {
+  if (!c || uuidCanonico(c.id) !== id) {
     return (
       <>
         <Titulo />
