@@ -151,7 +151,7 @@ describe("V1-03 leitura", () => {
   it("GET exato com org+id+versão e pré-preenchimento", async () => {
     montar();
     await screen.findByLabelText(/Razão social/);
-    const g = gets()[0];
+    const g = gets()[0]!;
     expect(op(g, "select")).toEqual([[COLS]]);
     expect(op(g, "eq")).toEqual([
       ["id_organizacao", ORG],
