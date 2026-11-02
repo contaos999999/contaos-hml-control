@@ -401,13 +401,16 @@ describe("V1-06 revisão: abort do classificador", () => {
 });
 
 describe("V1-06 navegação e scan", () => {
-  it("navegação futura indisponível, sem links nem carga extra; voltar seguro", async () => {
+  it("navegação: só Base normativa é link; demais futuras indisponíveis; voltar seguro", async () => {
     m.resposta = () => ok(contrato(K1));
     montar();
     await screen.findByText("Prefeitura X");
     const nav = screen.getByRole("navigation", { name: "Seções do contrato" });
-    expect(nav.querySelectorAll("a")).toHaveLength(0);
-    for (const t of ["Base normativa", "Orçamento", "Regras", "Documentos", "Competências"]) {
+    const links = nav.querySelectorAll("a");
+    expect(links).toHaveLength(1);
+    expect(links[0]!.textContent).toBe("Base normativa");
+    expect(links[0]!.getAttribute("href")).toBe("/contratos/$id/base-normativa");
+    for (const t of ["Orçamento", "Regras", "Documentos", "Competências"]) {
       const el = screen.getByText(t).closest("[aria-disabled]");
       expect(el?.getAttribute("aria-disabled")).toBe("true");
     }
