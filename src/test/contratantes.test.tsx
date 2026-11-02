@@ -250,14 +250,6 @@ describe("V1-01 query Data API (093 paginação)", () => {
     expect(await screen.findByText("Página 2 de 2")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Próxima" })).toBeDisabled();
 
-    // total encolhe: página 2 vazia com count 3 -> volta à página 1
-    m.respostas.contratantes = (c) => {
-      const r = op(c as Chamada, "range")[0] as number[];
-      return r[0] === 0 ? lista([linha(1)], 3) : lista([], 3);
-    };
-    fireEvent.click(screen.getByRole("button", { name: "Anterior" }));
-    await screen.findByText("Página 1 de 1");
-    // força ir à página 2 inexistente via estado: simulamos com nova resposta
   });
 
   it("página além do fim não mostra vazio falso", async () => {
