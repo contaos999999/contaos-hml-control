@@ -204,20 +204,28 @@ describe("V1-04 multi-organização", () => {
     r1.unmount();
     qc.clear();
     definirPreferenciaOrganizacao(U, B);
-    montar(qc);
+    const r2 = montar(qc);
     expect(screen.queryByText(/org-A-/)).toBeNull();
     expect(screen.getByRole("status")).toBeInTheDocument();
     await screen.findByText("org-B-N000", { selector: "td" });
     expect(screen.queryByText(/org-A-/)).toBeNull();
     expect(screen.getByText("Página 1 de 3")).toBeInTheDocument();
-    const ultima = consultasContratos().at(-1)!;
+    let ultima = consultasContratos().at(-1)!;
     expect(ultima.ops).toContainEqual(["eq", ["id_organizacao", B]]);
     expect(ultima.ops).toContainEqual(["range", [0, 24]]);
-    // B -> A
+    // B -> A (mesmo fluxo SYS-04)
+    r2.unmount();
     qc.clear();
     definirPreferenciaOrganizacao(U, A);
-    const atual = screen.getByText("org-B-N000", { selector: "td" });
-    expect(atual).toBeInTheDocument();
+    montar(qc);
+    expect(screen.queryByText(/org-B-/)).toBeNull();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    await screen.findByText("org-A-N000", { selector: "td" });
+    expect(screen.queryByText(/org-B-/)).toBeNull();
+    expect(screen.getByText("Página 1 de 3")).toBeInTheDocument();
+    ultima = consultasContratos().at(-1)!;
+    expect(ultima.ops).toContainEqual(["eq", ["id_organizacao", A]]);
+    expect(ultima.ops).toContainEqual(["range", [0, 24]]);
   });
 
   it("resposta tardia de A não sobrescreve B", async () => {
