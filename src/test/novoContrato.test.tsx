@@ -70,7 +70,7 @@ const doTipo = (t: string) => m.chamadas.filter((c) => c.tabela === t);
 const inserts = () => doTipo("contratos").filter((c) => op(c, "insert").length > 0);
 const buscas = () => doTipo("contratantes");
 
-async function escolherContratante(nome = "Contratante 1") {
+async function escolherContratante(nome = "^Contratante 1$") {
   const cb = await screen.findByRole("combobox", { name: /Contratante/ });
   fireEvent.focus(cb);
   fireEvent.click(await screen.findByRole("option", { name: new RegExp(nome) }));
@@ -89,7 +89,7 @@ const salvar = () => fireEvent.click(screen.getByRole("button", { name: "Salvar"
 beforeEach(() => {
   vi.clearAllMocks();
   m.chamadas.length = 0;
-  localStorage.clear();
+  sessionStorage.clear();
   m.getUser.mockResolvedValue({ data: { user: { id: U } }, error: null });
   definirPreferenciaOrganizacao(U, ORG);
   m.rpc.mockResolvedValue({ data: [org("administrador")], error: null });
@@ -144,7 +144,7 @@ describe("V1-05 gate (Master por herança, sem vínculo físico)", () => {
     const r = montar();
     await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/login", replace: true }));
     r.unmount();
-    localStorage.clear();
+    sessionStorage.clear();
     montar();
     await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }));
   });
@@ -265,7 +265,7 @@ describe("V1-05 source scan", () => {
   it("sem operações/segredos proibidos", () => {
     for (const f of ["src/lib/contratos/novoContratoDados.ts", "src/components/contratos/NovoContrato.tsx", "src/routes/contratos_.novo.tsx"]) {
       const s = readFileSync(f, "utf8");
-      for (const t of [".update(", ".delete(", ".upsert(", ".rpc(", "functions.invoke", "service_role", "sb_secret", "vinculos_usuarios", "localStorage", ".select().", "situacao: \"rascunho\"", "versao_registro"]) {
+      for (const t of [".update(", ".delete(", ".upsert(", ".rpc(", "functions.invoke", "service_role", "sb_secret", "vinculos_usuarios", ".select().", "sessionStorage", "situacao: \"rascunho\"", "versao_registro"]) {
         expect(s.includes(t), `${f} contém ${t}`).toBe(false);
       }
     }
