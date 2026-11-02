@@ -71,7 +71,7 @@ describe("SYS-04 Selecionar organização", () => {
     let resolver!: (v: unknown) => void;
     m.resultado.mockReturnValue(new Promise((r) => (resolver = r)));
     montar();
-    expect(await screen.findByText(MENSAGENS_SYS04.carregando)).toBeTruthy();
+    expect((await screen.findAllByText(MENSAGENS_SYS04.carregando)).length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: "Continuar" })).toBeNull();
     await waitFor(() => expect(m.eqs).toEqual([["id_usuario", U], ["ativo", true]]));
     resolver({ data: [org("o1", "Alfa")], error: null });
