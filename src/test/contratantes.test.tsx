@@ -243,7 +243,8 @@ describe("V1-01 query Data API (093 paginação)", () => {
     expect(screen.getByText("Página 1 de 2")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Situação"), { target: { value: "ativo" } });
     await waitFor(() => expect(op(ultima(), "eq")).toContainEqual(["situacao", "ativo"]));
-    fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
+    // filtro novo não reaproveita dados (sem placeholder entre filtros): aguarda o resultado
+    fireEvent.click(await screen.findByRole("button", { name: "Próxima" }));
     await waitFor(() => expect(op(ultima(), "range")).toEqual([[25, 49]]));
     expect(op(ultima(), "eq")).toContainEqual(["situacao", "ativo"]);
     expect(await screen.findByText("Página 2 de 2")).toBeInTheDocument();
