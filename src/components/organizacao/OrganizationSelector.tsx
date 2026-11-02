@@ -19,6 +19,11 @@ import {
   definirPreferenciaOrganizacao,
   obterPreferenciaOrganizacao,
 } from "@/lib/organizacao/preferenciaOrganizacao";
+import {
+  ErroOrganizacoes as ErroConsulta,
+  listarOrganizacoesDisponiveis,
+  rotuloPerfil,
+} from "@/lib/auth/resolverDestinoPosLogin";
 
 export const MENSAGENS_SYS04 = {
   carregando: "Carregando organizações…",
@@ -37,40 +42,21 @@ type Organizacao = {
 };
 type Vinculo = { id: string; perfil: string; organizacao: Organizacao | null };
 
-class ErroConsulta extends Error {
-  constructor(public tipo: "negado" | "erro") {
-    super(tipo);
-  }
-}
-
-function classificar(error: { code?: string; status?: number } | null): "negado" | "erro" {
-  if (!error) return "erro";
-  if (
-    error.code === "42501" ||
-    error.code === "PGRST301" ||
-    error.status === 401 ||
-    error.status === 403
-  )
-    return "negado";
-  return "erro";
-}
-
 export function formatarCnpj(c: string | null): string {
   const d = (c ?? "").replace(/\D/g, "");
   if (d.length !== 14) return c ?? "—";
   return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 }
 
-async function buscarVinculos(idUsuario: string): Promise<Vinculo[]> {
-  const { data, error } = await supabase
-    .from("vinculos_usuarios")
-    .select(
-      "id, perfil, organizacao:organizacoes!vinculos_usuarios_id_organizacao_fkey(id, razao_social, nome_fantasia, cnpj, situacao)",
-    )
-    .eq("id_usuario", idUsuario)
-    .eq("ativo", true);
-  if (error) throw new ErroConsulta(classificar(error as { code?: string; status?: number }));
-  return (data ?? []) as unknown as Vinculo[];
+async function buscarVinculos(): Promise<Vinculo[]> {
+  const linhas = await listarOrganizacoesDisponiveis();
+  return linhas.map((l, i) => ({
+    id: l.id ?? `indisponivel-${i}`,
+    perfil: l.perfil,
+    organizacao: l.id
+      ? { id: l.id, razao_social: l.razao_social, nome_fantasia: l.nome_fantasia, cnpj: l.cnpj, situacao: l.situacao }
+      : null,
+  }));
 }
 
 export function OrganizationCard(props: {
@@ -132,7 +118,7 @@ export function OrganizationCard(props: {
           </div>
           <div className="flex items-center gap-1">
             <dt>Perfil:</dt>
-            <dd className="text-foreground">{props.vinculo.perfil}</dd>
+            <dd className="text-foreground">{rotuloPerfil(props.vinculo.perfil)}</dd>
           </div>
           <div className="flex gap-1">
             <dt>Situação:</dt>
@@ -282,8 +268,8 @@ export function OrganizationSelector() {
   }, [navigate, tentativaSessao]);
 
   const consulta = useQuery({
-    queryKey: ["sys04", "vinculos", idUsuario],
-    queryFn: () => buscarVinculos(idUsuario!),
+    queryKey: ["sys04", "organizacoes-disponiveis", idUsuario],
+    queryFn: () => buscarVinculos(),
     enabled: !!idUsuario,
     retry: false,
   });
