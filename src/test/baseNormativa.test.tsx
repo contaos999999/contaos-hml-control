@@ -171,7 +171,7 @@ describe("V1-07 lista de fontes", () => {
     expect(op(c, "or")[0]).toEqual([`id_contrato.eq.${K1},id_contrato.is.null`]);
     expect(op(c, "order")).toEqual([["titulo", { ascending: true }], ["id", { ascending: true }]]);
     expect(op(c, "range")[0]).toEqual([0, 24]);
-    const lista = screen.getByRole("list");
+    const lista = screen.getByText("Lei do contrato").closest("ul")!;
     expect(within(lista).getByText("Do contrato")).toBeTruthy();
     expect(within(lista).getByText("Global da organização")).toBeTruthy();
     expect(de("versoes_fontes_normativas")).toHaveLength(0);
