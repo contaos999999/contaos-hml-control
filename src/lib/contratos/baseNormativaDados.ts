@@ -157,7 +157,14 @@ async function invocar(nome: "storage-sign-upload" | "storage-sign-download", bo
   return d;
 }
 async function sha256Hex(arquivo: File): Promise<string> {
-  const bytes = await arquivo.arrayBuffer();
+  const bytes = typeof arquivo.arrayBuffer === "function"
+    ? await arquivo.arrayBuffer()
+    : await new Promise<ArrayBuffer>((ok, falha) => {
+        const leitor = new FileReader();
+        leitor.onload = () => ok(leitor.result as ArrayBuffer);
+        leitor.onerror = () => falha(leitor.error);
+        leitor.readAsArrayBuffer(arquivo);
+      });
   const h = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
   return Array.from(h, (b) => b.toString(16).padStart(2, "0")).join("");
 }
@@ -175,7 +182,12 @@ export async function enviarArquivo(org: string, contrato: string | null, arquiv
     throw new ErroBn("erro");
   }
   if (up.error) throw new ErroBn("erro");
-  const sha = await sha256Hex(arquivo);
+  let sha: string;
+  try {
+    sha = await sha256Hex(arquivo);
+  } catch {
+    throw new ErroBn("erro");
+  }
   let r: { data: unknown; error: unknown };
   try {
     r = await rpcV107("confirmar_upload_arquivo", { p_id_organizacao: org, p_id_contrato: contrato, p_path: path, p_nome_original: arquivo.name, p_mime: mime, p_tamanho: arquivo.size, p_sha256: sha, p_origem: "upload_usuario" });
