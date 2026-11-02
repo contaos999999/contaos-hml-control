@@ -171,8 +171,9 @@ describe("V1-07 lista de fontes", () => {
     expect(op(c, "or")[0]).toEqual([`id_contrato.eq.${K1},id_contrato.is.null`]);
     expect(op(c, "order")).toEqual([["titulo", { ascending: true }], ["id", { ascending: true }]]);
     expect(op(c, "range")[0]).toEqual([0, 24]);
-    expect(screen.getByText("Do contrato")).toBeTruthy();
-    expect(screen.getByText("Global da organização")).toBeTruthy();
+    const lista = screen.getByRole("list");
+    expect(within(lista).getByText("Do contrato")).toBeTruthy();
+    expect(within(lista).getByText("Global da organização")).toBeTruthy();
     expect(de("versoes_fontes_normativas")).toHaveLength(0);
     expect(de("aplicabilidades_fonte")).toHaveLength(0);
     expect(de("arquivos")).toHaveLength(0);
@@ -244,7 +245,7 @@ describe("V1-07 detalhe sob demanda", () => {
     await within(dlg).findByText("Versão 2");
     expect(within(dlg).getByText("Sem aprovação registrada")).toBeTruthy();
     expect(within(dlg).getByText(/Aprovada em 10\/03\/2026 12:30/)).toBeTruthy();
-    expect(within(dlg).getByText(/01\/01\/2026/)).toBeTruthy();
+    expect(within(dlg).getAllByText(/01\/01\/2026/).length).toBe(2);
     fireEvent.click(within(dlg).getAllByRole("button", { name: /Ver texto registrado/ })[0]!);
     await within(dlg).findByText(/não constitui aprovação normativa/);
     expect(within(dlg).getByText(/Exibição limitada/)).toBeTruthy();

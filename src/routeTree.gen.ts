@@ -21,6 +21,7 @@ import { Route as ContratantesNovoRouteImport } from './routes/contratantes_.nov
 import { Route as ContratosIdRouteImport } from './routes/contratos_.$id'
 import { Route as ContratosNovoRouteImport } from './routes/contratos_.novo'
 import { Route as ContratantesIdEditarRouteImport } from './routes/contratantes_.$id.editar'
+import { Route as ContratosIdBaseNormativaRouteImport } from './routes/contratos_.$id.base-normativa'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -82,6 +83,12 @@ const ContratantesIdEditarRoute = ContratantesIdEditarRouteImport.update({
   path: '/contratantes/$id/editar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContratosIdBaseNormativaRoute =
+  ContratosIdBaseNormativaRouteImport.update({
+    id: '/base-normativa',
+    path: '/base-normativa',
+    getParentRoute: () => ContratosIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -93,9 +100,10 @@ export interface FileRoutesByFullPath {
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/contratantes/novo': typeof ContratantesNovoRoute
-  '/contratos/$id': typeof ContratosIdRoute
+  '/contratos/$id': typeof ContratosIdRouteWithChildren
   '/contratos/novo': typeof ContratosNovoRoute
   '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
+  '/contratos/$id/base-normativa': typeof ContratosIdBaseNormativaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,9 +115,10 @@ export interface FileRoutesByTo {
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/contratantes/novo': typeof ContratantesNovoRoute
-  '/contratos/$id': typeof ContratosIdRoute
+  '/contratos/$id': typeof ContratosIdRouteWithChildren
   '/contratos/novo': typeof ContratosNovoRoute
   '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
+  '/contratos/$id/base-normativa': typeof ContratosIdBaseNormativaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,9 +131,10 @@ export interface FileRoutesById {
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/contratantes_/novo': typeof ContratantesNovoRoute
-  '/contratos_/$id': typeof ContratosIdRoute
+  '/contratos_/$id': typeof ContratosIdRouteWithChildren
   '/contratos_/novo': typeof ContratosNovoRoute
   '/contratantes_/$id/editar': typeof ContratantesIdEditarRoute
+  '/contratos_/$id/base-normativa': typeof ContratosIdBaseNormativaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/contratos/$id'
     | '/contratos/novo'
     | '/contratantes/$id/editar'
+    | '/contratos/$id/base-normativa'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/contratos/$id'
     | '/contratos/novo'
     | '/contratantes/$id/editar'
+    | '/contratos/$id/base-normativa'
   id:
     | '__root__'
     | '/'
@@ -169,6 +181,7 @@ export interface FileRouteTypes {
     | '/contratos_/$id'
     | '/contratos_/novo'
     | '/contratantes_/$id/editar'
+    | '/contratos_/$id/base-normativa'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -181,7 +194,7 @@ export interface RootRouteChildren {
   SelecionarOrganizacaoRoute: typeof SelecionarOrganizacaoRoute
   AdministracaoUsuariosRoute: typeof AdministracaoUsuariosRoute
   ContratantesNovoRoute: typeof ContratantesNovoRoute
-  ContratosIdRoute: typeof ContratosIdRoute
+  ContratosIdRoute: typeof ContratosIdRouteWithChildren
   ContratosNovoRoute: typeof ContratosNovoRoute
   ContratantesIdEditarRoute: typeof ContratantesIdEditarRoute
 }
@@ -272,8 +285,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContratantesIdEditarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contratos_/$id/base-normativa': {
+      id: '/contratos_/$id/base-normativa'
+      path: '/base-normativa'
+      fullPath: '/contratos/$id/base-normativa'
+      preLoaderRoute: typeof ContratosIdBaseNormativaRouteImport
+      parentRoute: typeof ContratosIdRoute
+    }
   }
 }
+
+interface ContratosIdRouteChildren {
+  ContratosIdBaseNormativaRoute: typeof ContratosIdBaseNormativaRoute
+}
+
+const ContratosIdRouteChildren: ContratosIdRouteChildren = {
+  ContratosIdBaseNormativaRoute: ContratosIdBaseNormativaRoute,
+}
+
+const ContratosIdRouteWithChildren = ContratosIdRoute._addFileChildren(
+  ContratosIdRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -285,7 +317,7 @@ const rootRouteChildren: RootRouteChildren = {
   SelecionarOrganizacaoRoute: SelecionarOrganizacaoRoute,
   AdministracaoUsuariosRoute: AdministracaoUsuariosRoute,
   ContratantesNovoRoute: ContratantesNovoRoute,
-  ContratosIdRoute: ContratosIdRoute,
+  ContratosIdRoute: ContratosIdRouteWithChildren,
   ContratosNovoRoute: ContratosNovoRoute,
   ContratantesIdEditarRoute: ContratantesIdEditarRoute,
 }
