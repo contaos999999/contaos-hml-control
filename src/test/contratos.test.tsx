@@ -204,20 +204,28 @@ describe("V1-04 multi-organização", () => {
     r1.unmount();
     qc.clear();
     definirPreferenciaOrganizacao(U, B);
-    montar(qc);
+    const r2 = montar(qc);
     expect(screen.queryByText(/org-A-/)).toBeNull();
     expect(screen.getByRole("status")).toBeInTheDocument();
     await screen.findByText("org-B-N000", { selector: "td" });
     expect(screen.queryByText(/org-A-/)).toBeNull();
     expect(screen.getByText("Página 1 de 3")).toBeInTheDocument();
-    const ultima = consultasContratos().at(-1)!;
+    let ultima = consultasContratos().at(-1)!;
     expect(ultima.ops).toContainEqual(["eq", ["id_organizacao", B]]);
     expect(ultima.ops).toContainEqual(["range", [0, 24]]);
-    // B -> A
+    // B -> A (mesmo fluxo SYS-04)
+    r2.unmount();
     qc.clear();
     definirPreferenciaOrganizacao(U, A);
-    const atual = screen.getByText("org-B-N000", { selector: "td" });
-    expect(atual).toBeInTheDocument();
+    montar(qc);
+    expect(screen.queryByText(/org-B-/)).toBeNull();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    await screen.findByText("org-A-N000", { selector: "td" });
+    expect(screen.queryByText(/org-B-/)).toBeNull();
+    expect(screen.getByText("Página 1 de 3")).toBeInTheDocument();
+    ultima = consultasContratos().at(-1)!;
+    expect(ultima.ops).toContainEqual(["eq", ["id_organizacao", A]]);
+    expect(ultima.ops).toContainEqual(["range", [0, 24]]);
   });
 
   it("resposta tardia de A não sobrescreve B", async () => {
@@ -261,5 +269,73 @@ describe("V1-04 Zero-Drift", () => {
     expect(meta).toContainEqual({ title: "Contratos — ContaOS" });
     expect(meta).toContainEqual({ name: "robots", content: "noindex" });
     expect(o.ssr).toBe(false);
+  });
+});
+
+describe("V1-04 complementos Q1/Q2/scan", () => {
+  it("Q1 exato: select id + eq id + maybeSingle; Q2 só após Q1 positivo", async () => {
+    m.respostas.organizacoes = orgOk;
+    m.respostas.contratos = () => lista(A, 1);
+    montar();
+    await screen.findByText("org-A-N000", { selector: "td" });
+    const q1 = m.chamadas.find((c) => c.tabela === "organizacoes")!;
+    expect(q1.ops).toEqual([["select", ["id"]], ["eq", ["id", A]], ["maybeSingle", []]]);
+    expect(m.chamadas.findIndex((c) => c.tabela === "organizacoes")).toBeLessThan(m.chamadas.findIndex((c) => c.tabela === "contratos"));
+  });
+
+  const negadosQ1 = [
+    { status: 401, error: {} },
+    { status: 403, error: {} },
+    { status: 400, error: { code: "42501" } },
+    { status: 401, error: { code: "PGRST301" } },
+  ];
+  for (const r of negadosQ1) {
+    it(`Q1 ${r.status}/${(r.error as { code?: string }).code ?? "-"} => negado e zero Q2`, async () => {
+      m.respostas.organizacoes = () => ({ data: null, ...r });
+      montar();
+      expect(await screen.findByText(MENSAGENS_V104.negado)).toBeInTheDocument();
+      expect(consultasContratos()).toHaveLength(0);
+    });
+  }
+
+  it("Q1 500 => erro e zero Q2", async () => {
+    m.respostas.organizacoes = () => ({ data: null, error: { code: "XX000" }, status: 500 });
+    montar();
+    expect(await screen.findByText(MENSAGENS_V104.erro)).toBeInTheDocument();
+    expect(consultasContratos()).toHaveLength(0);
+  });
+
+  it("Q1 falha de rede => erro e zero Q2", async () => {
+    m.respostas.organizacoes = () => {
+      throw new TypeError("Failed to fetch");
+    };
+    montar();
+    expect(await screen.findByText(MENSAGENS_V104.erro)).toBeInTheDocument();
+    expect(consultasContratos()).toHaveLength(0);
+  });
+
+  it("Q2 falha de rede => erro", async () => {
+    m.respostas.organizacoes = orgOk;
+    m.respostas.contratos = () => {
+      throw new TypeError("Failed to fetch");
+    };
+    montar();
+    expect(await screen.findByText(MENSAGENS_V104.erro)).toBeInTheDocument();
+    expect(screen.queryByText(MENSAGENS_V104.vazio)).toBeNull();
+  });
+
+  it("Q2 [] com count 0 => vazio legítimo", async () => {
+    m.respostas.organizacoes = orgOk;
+    m.respostas.contratos = () => ({ data: [], error: null, status: 200, count: 0 });
+    montar();
+    expect(await screen.findByText(MENSAGENS_V104.vazio)).toBeInTheDocument();
+    expect(screen.queryByText(MENSAGENS_V104.negado)).toBeNull();
+  });
+
+  it("scan: sem sb_secret e sem localStorage no domínio novo", () => {
+    for (const f of ["src/lib/contratos/contratosDados.ts", "src/components/contratos/ListaContratos.tsx", "src/routes/contratos.tsx"]) {
+      const s = readFileSync(f, "utf8");
+      expect(s).not.toMatch(/sb_secret|localStorage/);
+    }
   });
 });
