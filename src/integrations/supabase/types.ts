@@ -8735,6 +8735,10 @@ export type Database = {
         Args: { p_id_ciclo: string }
         Returns: Json
       }
+      classificar_acesso_contrato_v106: {
+        Args: { p_id_contrato: string }
+        Returns: string
+      }
       concluir_plano_remediacao: {
         Args: { p_evidencias: Json; p_id_plano: string }
         Returns: undefined
