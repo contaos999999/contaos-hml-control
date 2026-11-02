@@ -1,143 +1,161 @@
 # PROMPT 22 / V1-01 — Contratantes (somente leitura)
 
-## Auditoria do código atual
-- Não existe rota `/contratantes`, componente, camada de acesso nem teste sobre contratantes. Também não existem `/contratantes/novo` ou `/contratantes/:id/editar` (nada a reportar sobre rotas futuras).
-- `src/integrations/supabase/types.ts` já tipa `contratantes` com as 11 colunas auditadas. Não precisa mudar.
-- Padrões a reutilizar:
-  - **Sessão:** `Dashboard.tsx` faz `supabase.auth.getUser()`. Usuário null sem erro vai para `/login`; erro técnico mostra erro com "Tentar novamente".
-  - **Organização:** `obterPreferenciaOrganizacao(user.id)`; sem preferência vai para `/selecionar-organizacao`.
-  - **Acesso negado:** a classificação usa `status` 401/403 do nível superior da resposta e `code` 42501/PGRST301 (correção do FAIL do SYS-05).
-  - **Dados:** React Query (`useQuery`) com chave que inclui a organização; rota com `ssr:false` e `head()` PT-BR com `noindex`, como em `administracao.usuarios.tsx`.
-- Conflitos: nenhum. Observação: não há menu global com link para Contratantes. Não vou criar esse link (layout global fora de escopo); a rota fica acessível pela URL.
-- Backend: sem LACUNA, conforme a auditoria HML informada.
+## 1. Auditoria do código atual
+- **O que ainda não existe:**
+  - Rota `/contratantes`, componente, camada de acesso e teste de contratantes.
+  - As rotas `/contratantes/novo` e `/contratantes/$id/editar` não estão na árvore de rotas. Por isso, **nenhum botão Novo ou Editar** será criado: um link sem rota seria enganoso e não compila na árvore tipada. Os botões ficam para V1-02/V1-03.
+- **O que já existe e será reaproveitado:**
+  - `src/integrations/supabase/types.ts` já tipa `contratantes` e `organizacoes`. Não muda.
+  - O padrão SYS-05 (`Dashboard.tsx`): `supabase.auth.getUser()`.
+    - Usuário null sem erro vai para `/login`.
+    - Erro técnico mostra erro com "Tentar novamente", sem deslogar.
+  - Sem preferência de organização (`obterPreferenciaOrganizacao(user.id)`), vai para `/selecionar-organizacao`.
+  - A classificação de acesso negado usa `status` 401/403 do topo da resposta e `code` 42501/PGRST301, com React Query (`useQuery`).
+  - O padrão ADM-01 (`administracao.usuarios.tsx`): `ssr:false`, `head()` PT-BR com `noindex`, workspace denso, retorno de foco e alvos de 44 px.
+- **Backend HML (leitura de `pg_policies`):**
+  - `contratantes_select` usa `privado.usuario_tem_acesso_organizacao(id_organizacao)`.
+  - `organizacoes_select` usa a mesma função, `privado.usuario_tem_acesso_organizacao(id)`.
+  - A função exige sessão ativa e vínculo ativo e vigente.
+- **Conflito ou lacuna:** nenhuma LACUNA DE BACKEND (ver item 4).
+- **Fora de escopo, só registro:** o `<html lang>` global está "en", definido no root. Não será alterado neste prompt.
 
-## A) Arquivos (somente estes)
-- Criar `src/routes/contratantes.tsx` (rota, `ssr:false`, `head` único PT-BR).
-- Criar `src/components/contratantes/ListaContratantes.tsx` (tela).
-- Criar `src/lib/contratantes/contratantesDados.ts` (acesso à Data API + tipos + rótulos/formatação pura).
-- Criar `src/test/contratantes.test.tsx` (TDD).
-- `src/routeTree.gen.ts`: só a regeneração automática.
-- Nenhum outro arquivo.
+## 2. Arquivos
+**Criar:**
+- `src/routes/contratantes.tsx`: rota com `ssr:false` e `head` único PT-BR (title, description, og:*, twitter:card, noindex).
+- `src/components/contratantes/ListaContratantes.tsx`: tela.
+- `src/lib/contratantes/contratantesDados.ts`: acesso à Data API, tipos, sanitização da busca e formatação pura.
+- `src/test/contratantes.test.tsx`: TDD.
 
-## B) Camada de acesso — contrato
+**Modificar:** só `src/routeTree.gen.ts`, por regeneração automática.
+
+**Não tocar:**
+- `__root.tsx`, `router.tsx`, `start.ts` e o layout global.
+- Os arquivos de `src/integrations/supabase/*`.
+- SYS-01–05 (login, esqueci, redefinir, selecionar organização, dashboard) e ADM-01 (`administracao/*`).
+- `src/components/ui/*`, `package.json`, `supabase/*` e migrations.
+
+## 3. Queries da Data API (exatas)
+**Q1 — verificação de acesso** (mesmo predicado RLS da tabela):
 ```text
-type TipoPessoa = "juridica" | "fisica" | "orgao_publico" | "outro"
-type Situacao = "ativo" | "inativo"
-type Contratante = { id; razao_social; nome_fantasia: string|null; documento: string|null;
-                     tipo_pessoa: string; situacao: string; versao_registro: number }
-type FiltroSituacao = "todos" | "ativo" | "inativo"
-type ParametrosLista = { idOrganizacao: string; pagina: number (>=1); busca: string; situacao: FiltroSituacao }
-type PaginaContratantes = { itens: Contratante[]; total: number; pagina: number; totalPaginas: number }
-class ErroContratantes { tipo: "negado" | "erro" }
-TAMANHO_PAGINA = 25
-listarContratantes(p): Promise<PaginaContratantes>
-escaparPadraoIlike(texto): string        // escapa \ % _
-rotuloTipoPessoa(t), rotuloSituacao(s), formatarDocumento(d)
+supabase.from("organizacoes").select("id").eq("id", idOrganizacao).maybeSingle()
 ```
-- Valores desconhecidos de tipo ou situação são exibidos com o texto literal do backend, sem inventar significado.
-- `versao_registro` fica só no tipo, sem uso (NFR-007).
 
-## C) Query exata
+**Q2 — listagem**, executada só se Q1 retornar a linha:
 ```text
-from = (pagina-1)*25 ; to = from+24
+TAMANHO_PAGINA = 25 ; from=(pagina-1)*25 ; to=from+24
 supabase.from("contratantes")
-  .select("id,razao_social,nome_fantasia,documento,tipo_pessoa,situacao,versao_registro", { count: "exact" })
+  .select("id,razao_social,nome_fantasia,documento,tipo_pessoa,situacao,atualizado_em", { count: "exact" })
   .eq("id_organizacao", idOrganizacao)
-  [.eq("situacao", situacao)               se situacao != "todos"]
-  [.ilike("razao_social", `%${escaparPadraoIlike(busca.trim())}%`)  se busca.trim() != ""]
+  [.eq("situacao", "ativo"|"inativo")           se filtro != todos]
+  [.or(`razao_social.ilike.${p},nome_fantasia.ilike.${p},documento.ilike.${p}`)   se busca]
   .order("razao_social", { ascending: true })
   .order("id", { ascending: true })
   .range(from, to)
 ```
-- Sem `select('*')`, `.or()`, RPC, Edge ou escrita.
-- Resposta: `{ data, error, status, count }`.
-  - **Negado:** `error` com `status` 401/403 ou `code` 42501/PGRST301 lança `ErroContratantes("negado")`.
-  - **Erro:** qualquer outro `error`, `data` que não seja array ou `count` nulo lança `ErroContratantes("erro")`.
-  - `totalPaginas = max(1, ceil(count/25))`.
-  - **Página além do fim** (`count>0` e itens vazios após o total encolher): a tela volta para a última página válida e refaz a consulta. Nunca mostra empty falso.
-  - **Erro de faixa inválida (PGRST103 / 416):** tratado igual ao caso acima, voltando à última página.
-- Array vazio com `count=0` é empty legítimo, nunca negado.
-- **Busca:** debounce de 300 ms e trim. Busca e filtro reiniciam na página 1.
-- **Chave React Query:** `["contratantes", idOrganizacao, pagina, busca, situacao]`; `placeholderData` mantém a página anterior durante a navegação.
+- Sem `select('*')`, sem `contato` (dado pessoal não necessário) e sem `versao_registro` (uso só em V1-03).
+- **Busca segura no `.or()`:** o valor passa por `montarPadraoBusca(texto)`.
+  1. Faz trim e limita a 100 caracteres.
+  2. Escapa `\`, `%` e `_` (curingas do LIKE).
+  3. Monta `*texto*` (curinga do PostgREST).
+  4. Envolve em aspas duplas, escapando `"` e `\`.
+  - Assim, vírgula, parênteses e pontos do usuário não quebram nem injetam filtros na sintaxe do `or`.
+  - Testes explícitos para `a,b`, `x)`, `razao_social.eq.1`, `%_`, `"`.
+- **Documento:** a busca usa o texto como foi digitado. Não há normalização local de CNPJ/CPF além de ser texto.
 
-## D) Componentes e estados
-- **Cabeçalho:** h1 "Contratantes" e descrição "Consulte os contratantes cadastrados na organização selecionada." Link "Painel" e botão "Sair", como no Dashboard. Nenhum botão de criar ou editar.
-- **Filtros:** região com h2 "Filtros".
-  - Campo "Buscar por razão social" (com label).
-  - Select "Situação" com Todos, Ativos e Inativos.
-- **Resultado:** h2 "Contratantes cadastrados" e o texto "N contratante(s)".
+## 4. Como separar acesso negado de vazio (backend existente)
+Q1 consulta `organizacoes`, cuja policy SELECT usa **a mesma função** `usuario_tem_acesso_organizacao` que a de `contratantes`.
+- **Q1 com 1 linha:** o usuário tem acesso. Se Q2 vier com `count=0`, é **vazio legítimo**.
+- **Q1 com 0 linhas sem erro:** **acesso negado**. Q2 nem é executada.
+- **Q1 ou Q2 com erro:** `status` 401/403 ou `code` 42501/PGRST301 é **acesso negado**; qualquer outro erro, falha de rede, `data` inválido ou `count` nulo é **erro técnico**.
+- O backend decide; a tela só lê o resultado. Sem RPC nova, Edge, `auth.users` ou cálculo local de permissão.
+- Sem RPC de autorização também. `validar_administrador_organizacao` é de admin e não serve para leitores.
+
+## 5. Paginação e query keys
+- Página fixa de 25 (≤100), paginação real com `.range` e `count:"exact"`. Botões "Anterior" e "Próxima", texto "Página X de Y" e total de registros. Sem rolagem infinita.
+- Busca (debounce de 300 ms) e filtro voltam à página 1; trocar de página mantém busca e filtro.
+- Página além do fim (o total encolheu): volta para a última página válida e refaz a consulta, nunca mostra vazio falso.
+- **Chaves:**
+  - Acesso: `["contratantes","acesso", userId, orgId]`.
+  - Lista: `["contratantes","lista", userId, orgId, situacao, busca, pagina]`.
+  - Com usuário e organização na chave, a troca de organização não reaproveita dados da anterior.
+  - `placeholderData` só mantém a página anterior **da mesma organização e filtros**.
+- "Sair" usa o fluxo existente: `queryClient.clear()`, `signOut` e `/login` com `replace`.
+
+## 6. Componentes, estados, responsividade e acessibilidade
+- **Cabeçalho:** h1 "Contratantes", descrição curta e o nome da organização (do Q1? não: só `id` é lido; o nome não é exibido para não ampliar a consulta). Links "Painel" e "Selecionar organização", e botão "Sair".
+- **Filtros:** seção com h2 "Filtros".
+  - Campo "Buscar por razão social, nome fantasia ou documento".
+  - Select nativo "Situação" com Todos, Ativos e Inativos.
+  - Botão "Limpar filtros".
+- **Lista:** seção com h2 "Contratantes cadastrados", com "N contratante(s)" numa região `aria-live="polite"`.
 - **Estados:**
-  - **verificando sessão:** "Verificando sessão…"
-  - **loading:** skeleton com `role=status` e "Carregando contratantes…"
-  - **empty sem filtro:** "Nenhum contratante cadastrado nesta organização."
-  - **empty com filtro:** "Nenhum contratante encontrado para os filtros aplicados." e botão "Limpar filtros"
-  - **denied:** "Você não tem acesso aos contratantes desta organização." com link "Selecionar outra organização". Sem botão "Tentar novamente".
-  - **error:** "Não foi possível carregar os contratantes agora. Tente novamente em instantes." com botão "Tentar novamente".
-  - **success:** tabela ou cards e a paginação.
-- **Situação:** badge com texto "Ativo"/"Inativo" e ícone, nunca só cor.
-- **Tipo:** Pessoa jurídica, Pessoa física, Órgão público, Outro.
-- **Documento:**
-  - 14 dígitos: máscara CNPJ, só exibição.
-  - 11 dígitos: máscara CPF.
-  - Outros formatos: texto original.
-  - Sem documento: "Não informado".
-  - Nenhuma validação jurídica.
-- **Paginação:** `nav aria-label="Paginação"`, botões "Anterior"/"Próxima" desabilitados nos limites e "Página X de Y".
-- **Tooltip:** só um, acessível, em "Situação", explicando que reflete o cadastro no sistema (hover, foco e toque, como em `Dica`).
-- Mensagens técnicas nunca aparecem.
 
-## E) Responsividade
-- **1440/1280:** largura máxima de container e tabela com 5 colunas.
-- **768:** tabela; Nome fantasia quebra linha; filtros em 2 colunas.
-- **390:** lista de cards (`md:hidden` / `hidden md:table`).
-  - Cada card tem Razão social (título), Documento, Situação, Tipo e Nome fantasia.
-  - Filtros empilhados; paginação com botões de 44 px.
-  - `break-words`, sem overflow horizontal.
+| Estado | O que aparece |
+|---|---|
+| Verificando sessão | `role=status` "Verificando sessão…" |
+| Carregando | skeleton e `role=status` "Carregando contratantes…" |
+| Vazio sem filtro | "Nenhum contratante cadastrado nesta organização." |
+| Vazio com filtro | "Nenhum contratante encontrado para os filtros aplicados." e "Limpar filtros" |
+| Acesso negado | `role=alert` "Você não tem acesso aos contratantes desta organização." e link "Selecionar outra organização" |
+| Erro | `role=alert` "Não foi possível carregar os contratantes agora. Tente novamente em instantes." e "Tentar novamente" |
+| Sucesso | tabela ou cards e paginação |
 
-## F) Acessibilidade
-- Um h1 e hierarquia de h2.
-- Labels associados.
-- Tabela com `<caption class="sr-only">` e `scope="col"`.
-- Cards em `<ul>/<li>` com `<dl>`.
-- Região `aria-live="polite"` anunciando o total e a página.
-- Foco visível, alvos ≥44 px e ordem de Tab lógica.
-- Paginação operável por Enter e Espaço.
-- Denied e error com `role="alert"`.
+- **Campos exibidos:**
+  - **Razão social**.
+  - **Nome fantasia:** "—" se vazio.
+  - **Documento:**
+    - 14 dígitos: máscara CNPJ, só exibição.
+    - 11 dígitos: máscara CPF.
+    - Outros formatos: texto original.
+    - Vazio: "Não informado".
+  - **Tipo:** Pessoa jurídica, Pessoa física, Órgão público, Outro. Valor desconhecido aparece literal.
+  - **Situação:** badge com texto e ícone, Ativo/Inativo. Valor desconhecido aparece literal.
+  - **Atualizado em:** `DD/MM/AAAA HH:mm`, America/Sao_Paulo.
+- **Tooltip:** só em "Situação", explicando que reflete o cadastro oficial (hover, foco e toque).
+- **Responsividade:**
+  - 1440/1280: tabela com 6 colunas.
+  - 768: tabela; Nome fantasia e Atualizado em quebram linha.
+  - 390: lista de cards (`<ul>` com `<dl>`) com razão social, documento, situação e tipo. Filtros empilhados, paginação com 44 px.
+  - `break-words` e nenhuma rolagem horizontal.
+- **Acessibilidade:**
+  - Um h1 e h2 por seção, labels reais.
+  - Tabela com `<caption class="sr-only">` e `scope="col"`.
+  - Foco visível, ordem de Tab lógica, Enter e Espaço nos botões, alvos ≥44 px.
+  - Paginação em `<nav aria-label="Paginação">`.
 
-## G) TDD — testes RED antes da produção (`src/test/contratantes.test.tsx`)
-1. Sem sessão (user null, sem erro) vai para `/login`; erro de `getUser` mostra erro e retry, sem redirecionar.
-2. Sem preferência vai para `/selecionar-organizacao`.
-3. Query exata:
-   - `from("contratantes")` e o `select` com as colunas listadas e `count:"exact"`;
-   - `eq id_organizacao`;
-   - `order razao_social` e depois `order id`;
-   - `range(0,24)`.
-4. "Próxima" chama `range(25,49)`; "Página 2 de 3" aparece; "Anterior" desabilitado na página 1 e "Próxima" na última.
-5. Filtro Ativos chama `eq("situacao","ativo")` e reinicia em `range(0,24)`; "Todos" não envia `eq` de situação.
-6. Busca: `ilike` com o padrão `%texto%`, trim e volta à página 1.
-   - `100%_a\b` é escapado como `100\%\_a\\b`.
-   - Nunca chama `.or`.
-7. Empty legítimo (`[]`, count 0) mostra a mensagem de empty; empty com filtro mostra "Limpar filtros".
-8. Denied: status 403 sem code, 401, code 42501 e PGRST301 mostram denied, nunca empty.
-9. Erro genérico (500, falha de rede, `data` inválido, `count` nulo) mostra a mensagem amigável, sem SQLSTATE; "Tentar novamente" refaz a consulta.
-10. Página além do fim volta à última página válida.
-11. Render: rótulos de tipo e situação em PT-BR, máscara CNPJ/CPF, "Não informado".
-12. Mobile: com `matchMedia`/classes, os cards contêm Razão social, Documento e Situação.
-13. Ausência de DML: o cliente mock não recebe `insert`/`update`/`delete`/`upsert`/`rpc`/`functions.invoke`. Nenhum link para `/contratantes/novo` ou `/editar` e nenhum botão de criar ou editar.
-14. A rota `head` tem um título único.
+## 7. TDD (RED antes da produção, depois GREEN mínimo)
+Testes em `src/test/contratantes.test.tsx`, com mock do cliente que registra chamadas:
+1. A rota renderiza o h1, e o `head` tem título único.
+2. `getUser` null leva a `/login`; erro técnico do `getUser` mostra retry sem redirecionar.
+3. Sem preferência leva a `/selecionar-organizacao`.
+4. Q1 retorna a linha e Q2 vem `[]` com count 0: aparece vazio legítimo.
+5. Acesso negado, nunca vazio: Q1 retorna null sem erro, e Q2 **não** é chamada. O mesmo para Q1 ou Q2 com 403 sem code, 401, 42501 e PGRST301.
+6. Q2 exata: tabela, colunas do `select`, `count:"exact"`, `eq id_organizacao`, duas `order` e `range(0,24)`.
+7. Busca e filtro mandam `.or` com o padrão sanitizado ou `eq situacao` e voltam a `range(0,24)`. Entradas maliciosas (`a,b`, `x)`, `razao_social.eq.1`, `%_`, `"`) geram um único valor entre aspas, escapado.
+8. "Próxima" pede `range(25,49)` e mantém busca e filtro; "Anterior" desabilitado na página 1; página além do fim volta à última válida.
+9. Rótulos PT-BR; máscara CNPJ/CPF sem alterar o valor enviado ou recebido; "Não informado"; data em America/Sao_Paulo.
+10. Erro 500, rede, `data` inválido e `count` nulo mostram a mensagem genérica, sem código técnico; "Tentar novamente" refaz a consulta.
+11. O mock não recebe `insert`/`update`/`delete`/`upsert`/`rpc`/`functions.invoke`; nenhum link para `/contratantes/novo` ou editar; varredura do código-fonte sem service_role, sb_secret, auth.admin e auth.users.
+12. Trocar a preferência de organização gera nova chave e não mostra linhas da organização anterior.
+13. Em 390, os cards mostram razão social, documento e situação.
 
-Rodar e registrar o RED (falha por módulo ou comportamento ausente); depois GREEN mínimo.
+Comandos:
+- RED: `bunx vitest run src/test/contratantes.test.tsx` (falha esperada por módulo ou comportamento ausente; registrar).
+- GREEN: o mesmo arquivo, depois `bunx vitest run` (suíte completa) e `tsgo --noEmit`, e o log de build automático.
 
-## H) Regressão e segurança
-- Teste focado, suíte completa, typecheck (`tsgo`) e log de build automático.
-- Varredura do frontend de produção por service_role, sb_secret, auth.admin, auth.users, `.insert(`/`.update(`/`.delete(`/`.upsert(`, `select("*")` e `.or(` no novo módulo.
-- Git diff limitado aos arquivos da seção A.
-- Teste C (browser em 4 larguras, console, Security Scan) só no turno oficial posterior.
+## 8. Validação posterior (Teste Oficial C, outro turno)
+- Navegador em 1440/1280/768/390 com sessão controlada e interceptação para a tela.
+- Isolamento RLS só por evidência HML real.
+- Teclado, foco, console e network sem escrita.
+- Regressão SYS-01..05, ADM-01, suíte, typecheck, build e Security Scan.
 
-## I) Confirmações
-- Backend, Supabase, RLS, Auth, Edge e PROD intocados.
-- Nenhuma RPC/Edge nova ou existente usada.
-- Nenhum CRUD de escrita.
-- Nenhum link ou botão para criar ou editar (V1-02/V1-03 nos prompts 23 e 24).
-- Layout global, cliente Supabase, SYS-01–05 e ADM-01 não alterados.
-- Rastreabilidade: 093 aplicado; 085, 091 e 094 respeitados por não implementação; 001–084, 086–090, 092 e 095–096 não aplicáveis.
+## 9. Confirmações
+- Backend, schema, RLS, Auth, Edge, Storage e PROD intocados.
+- Nenhuma RPC/Edge nova e nenhuma RPC usada.
+- Zero escrita (INSERT/UPDATE/DELETE/UPSERT).
+- Zero secret, service_role, auth.admin e auth.users.
+- Nenhum botão ou link para rotas inexistentes de criar ou editar.
+- Rastreabilidade:
+  - **Aplicados:** 093 (paginação) e 094 (sem detalhe técnico).
+  - **Respeitados:** 085 (sem estado crítico local); 091/092 sem mecanismo novo por ser leitura.
+  - **Não aplicáveis:** demais atômicos.
