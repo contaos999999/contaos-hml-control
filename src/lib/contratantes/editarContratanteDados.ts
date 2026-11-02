@@ -98,18 +98,10 @@ export function montarArgsAtualizacao(idOrganizacao: string, id: string, versaoL
   };
 }
 
-/**
- * LACUNA DE TIPOS: `types.ts` (gerado, não editável por este fluxo) ainda não contém a RPC certificada.
- * Adaptador estreito com a assinatura exata do contrato HML; remover quando os tipos forem regenerados.
- */
-type ClienteRpcV103 = {
-  rpc(fn: "atualizar_contratante", args: ArgsAtualizacao): PromiseLike<{ data: unknown; error: unknown; status?: number }>;
-};
-
 export async function atualizarContratante(args: ArgsAtualizacao): Promise<ContratanteEdicao> {
   let r: { data: unknown; error: unknown; status?: number };
   try {
-    r = await (supabase as unknown as ClienteRpcV103).rpc("atualizar_contratante", args);
+    r = await supabase.rpc("atualizar_contratante", args);
   } catch {
     throw new ErroV103("erro");
   }
