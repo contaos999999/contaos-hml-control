@@ -121,6 +121,7 @@ describe("V1-05 gate (Master por herança, sem vínculo físico)", () => {
     expect(m.rpc).toHaveBeenCalledWith("listar_organizacoes_disponiveis");
     expect(doTipo("vinculos_usuarios")).toHaveLength(0);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: /Sobre Contratante/ })).toBeNull();
   });
   it("gestor_contrato libera", async () => {
     m.rpc.mockResolvedValue({ data: [org("gestor_contrato")], error: null });
@@ -151,15 +152,14 @@ describe("V1-05 gate (Master por herança, sem vínculo físico)", () => {
 });
 
 describe("V1-05 ContratanteCombobox paginado", () => {
-  it("consulta por org, ativos, range 0..19 e Carregar mais pede 20..39", async () => {
+  it("consulta por org SEM filtro situacao, range 0..19 e Carregar mais pede 20..39", async () => {
     montar();
     const cb = await screen.findByRole("combobox", { name: /Contratante/ });
     fireEvent.focus(cb);
     await screen.findByRole("option", { name: /Contratante 1$/ });
     const c0 = buscas()[0]!;
-    expect(op(c0, "select")[0]![0]).toBe("id,razao_social,nome_fantasia,documento");
-    expect(op(c0, "eq")).toContainEqual(["id_organizacao", ORG]);
-    expect(op(c0, "eq")).toContainEqual(["situacao", "ativo"]);
+    expect(op(c0, "select")[0]![0]).toBe("id,razao_social,nome_fantasia,documento,situacao");
+    expect(op(c0, "eq")).toEqual([["id_organizacao", ORG]]);
     expect(op(c0, "range")).toEqual([[0, TAMANHO_PAGINA_OPCOES - 1]]);
     expect(op(c0, "abortSignal")).toHaveLength(1);
     expect(screen.getAllByRole("option")).toHaveLength(20);
@@ -202,8 +202,14 @@ describe("V1-05 validação e payload", () => {
     expect(await screen.findByText("A data de término não pode ser anterior à data de início.")).toBeTruthy();
     expect(inserts()).toHaveLength(0);
   });
-  it("contratante obrigatório (somente da lista)", () => {
-    expect(validarFormularioContrato({ numero: "1", objeto: "x", idContratante: "", inicio: "2026-01-01", fim: "", valorGlobal: "", valorMensal: "", tipoContrato: "", unidadeVinculada: "", fonteRecurso: "" })).toContain("contratante");
+  it("numero, contratante e inicio obrigatórios; valor negativo inválido", () => {
+    const inv = validarFormularioContrato({ numero: " ", objeto: "x", idContratante: "", inicio: "", fim: "", valorGlobal: "-1", valorMensal: "", tipoContrato: "", unidadeVinculada: "", fonteRecurso: "" });
+    expect(inv).toEqual(expect.arrayContaining(["numero", "contratante", "inicio", "valorGlobal"]));
+  });
+  it("payload nunca contém defaults server-side nem campos de sistema", () => {
+    const p = montarPayloadContrato(ORG, { numero: "1", objeto: "x", idContratante: "ct-1", inicio: "2026-01-01", fim: "2026-02-01", valorGlobal: "1,00", valorMensal: "2,00", tipoContrato: "T", unidadeVinculada: "U", fonteRecurso: "F" });
+    for (const k of ["periodicidade", "situacao", "criticidade", "versao_registro", "configuracao_diligencia", "configuracao_financeira", "id", "criado_em", "atualizado_em"]) expect(p).not.toHaveProperty(k);
+    expect(Object.keys(p).sort()).toEqual(["fim", "fonte_recurso", "id_contratante", "id_organizacao", "inicio", "numero", "objeto", "tipo_contrato", "unidade_vinculada", "valor_global", "valor_mensal_referencia"]);
   });
   it("moeda BR", () => {
     expect(converterMoedaBR("1.234,56")).toBe(1234.56);
@@ -266,7 +272,7 @@ describe("V1-05 source scan", () => {
   it("sem operações/segredos proibidos", () => {
     for (const f of ["src/lib/contratos/novoContratoDados.ts", "src/components/contratos/NovoContrato.tsx", "src/routes/contratos_.novo.tsx"]) {
       const s = readFileSync(f, "utf8");
-      for (const t of [".update(", ".delete(", ".upsert(", ".rpc(", "functions.invoke", "service_role", "sb_secret", "vinculos_usuarios", ".select().", "sessionStorage", "situacao: \"rascunho\"", "versao_registro"]) {
+      for (const t of ["periodicidade", ".update(", ".delete(", ".upsert(", ".rpc(", "functions.invoke", "service_role", "sb_secret", "vinculos_usuarios", ".select().", "sessionStorage", "situacao: \"rascunho\"", "versao_registro"]) {
         expect(s.includes(t), `${f} contém ${t}`).toBe(false);
       }
     }

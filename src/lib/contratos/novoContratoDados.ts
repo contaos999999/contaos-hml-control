@@ -14,7 +14,7 @@ export function organizacaoPermiteCadastro(orgs: OrganizacaoDisponivel[], idOrga
 }
 
 export const TAMANHO_PAGINA_OPCOES = 20;
-export type OpcaoContratante = { id: string; razao_social: string; nome_fantasia: string | null; documento: string | null };
+export type OpcaoContratante = { id: string; razao_social: string; nome_fantasia: string | null; documento: string | null; situacao: string };
 export type PaginaOpcoes = { itens: OpcaoContratante[]; total: number; proximaPagina: number | null };
 
 export class ErroV105 extends Error {
@@ -42,9 +42,8 @@ export async function buscarOpcoesContratantes(
   const to = from + TAMANHO_PAGINA_OPCOES - 1;
   let q = supabase
     .from("contratantes")
-    .select("id,razao_social,nome_fantasia,documento", { count: "exact" })
-    .eq("id_organizacao", p.idOrganizacao)
-    .eq("situacao", "ativo");
+    .select("id,razao_social,nome_fantasia,documento,situacao", { count: "exact" })
+    .eq("id_organizacao", p.idOrganizacao);
   const padrao = montarPadraoBusca(p.busca);
   if (padrao) q = q.or(`razao_social.ilike.${padrao},nome_fantasia.ilike.${padrao},documento.ilike.${padrao}`);
   let q2 = q.order("razao_social", { ascending: true }).order("id", { ascending: true }).range(from, to);
