@@ -8700,16 +8700,6 @@ export type Database = {
         Args: { p_id_regra_preventiva: string; p_parecer?: string }
         Returns: string
       }
-      aprovar_versao_fonte_v107: {
-        Args: {
-          p_chave_idempotencia: string
-          p_fundamento: string
-          p_hash_esperado: string
-          p_id_organizacao: string
-          p_id_versao: string
-        }
-        Returns: Json
-      }
       atribuir_alerta_preventivo: {
         Args: { p_id_alerta: string; p_prazo?: string; p_responsavel: string }
         Returns: string
@@ -8848,18 +8838,6 @@ export type Database = {
           p_id_usuario: string
         }
         Returns: undefined
-      }
-      definir_aplicabilidade_fonte_v107: {
-        Args: {
-          p_aplicavel: boolean
-          p_atualizado_em_esperado: string
-          p_chave_idempotencia: string
-          p_fundamento: string
-          p_id_contrato: string
-          p_id_organizacao: string
-          p_id_versao: string
-        }
-        Returns: Json
       }
       definir_vinculo_usuario: {
         Args: {
@@ -9082,19 +9060,6 @@ export type Database = {
         }
         Returns: string
       }
-      registrar_versao_fonte_v107: {
-        Args: {
-          p_chave_idempotencia: string
-          p_conteudo_texto: string
-          p_fim_vigencia: string
-          p_id_arquivo: string
-          p_id_fonte: string
-          p_id_organizacao: string
-          p_inicio_vigencia: string
-          p_metadados: Json
-        }
-        Returns: Json
-      }
       revisar_solucao_tarefa_diligencia: {
         Args: { p_aprovar: boolean; p_fundamento: string; p_id_tarefa: string }
         Returns: Json
@@ -9115,21 +9080,6 @@ export type Database = {
       }
       rotacionar_cliente_api: { Args: { p_id_cliente: string }; Returns: Json }
       rotacionar_webhook: { Args: { p_id_webhook: string }; Returns: Json }
-      salvar_fonte_normativa_v107: {
-        Args: {
-          p_chave_idempotencia: string
-          p_descricao: string
-          p_id_contrato: string
-          p_id_fonte: string
-          p_id_organizacao: string
-          p_referencia: string
-          p_situacao: string
-          p_tipo: string
-          p_titulo: string
-          p_versao_esperada: number
-        }
-        Returns: Json
-      }
       salvar_vinculo_usuario_adm: {
         Args: {
           p_ativo: boolean
