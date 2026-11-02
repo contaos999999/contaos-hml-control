@@ -28,6 +28,7 @@ Ambiente: HML. Supabase oficial conectado: `gklhhhyosgasnyoxlrui`.
 11. IA não cria obrigação sem fonte, escopo e aprovação humana.
 12. Uma tarefa não pode alterar área fora do escopo.
 13. Se precisar de algo não autorizado, PARE e explique.
+14. Entre alternativas igualmente conformes ao pacote 4.1, usar sempre a que consome menos créditos do Lovable.
 
 ## Premissas adicionais permanentes
 
@@ -40,3 +41,5 @@ Ambiente: HML. Supabase oficial conectado: `gklhhhyosgasnyoxlrui`.
 - Tudo deve ser documentado, registrado e versionado no GitHub.
 - Design System oficial: Executive Command Center + Audit Workspace.
 - Playwright, acessibilidade, responsividade 1440/1280/768/390 e Zero-Drift fazem parte do critério de pronto.
+- **Economia de créditos Lovable é regra canônica de execução:** inspecionar e planejar fora do Lovable quando ferramentas diretas do GitHub/Supabase forem suficientes; agrupar instruções compatíveis em um único turno; evitar mensagens, retries, planos, scans ou builds duplicados; não reenviar turno ainda em processamento; preferir GitHub para documentação/diff/rastreabilidade e Supabase direto para inspeção/provas de backend; reservar Lovable para alterações e validações que realmente dependam do editor/runtime/frontend Lovable.
+- Economia nunca pode reduzir fidelidade ao PRD, segurança, TDD, Teste C, Zero-Drift, rastreabilidade, cobertura, acessibilidade, responsividade ou critérios de aceite. Se a opção mais barata for tecnicamente inferior ou incompleta, ela é proibida.
