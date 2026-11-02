@@ -13,7 +13,7 @@ const m = vi.hoisted(() => ({
   rpc: vi.fn(),
   invoke: vi.fn(),
   chamadas: [] as Array<{ tabela: string; ops: Array<[string, unknown[]]> }>,
-  respostas: {} as Record<string, (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown>,
+  respostas: {} as { vinculos_usuarios?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown; contratantes?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown },
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -29,7 +29,7 @@ vi.mock("@/integrations/supabase/client", () => {
     }
     b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => {
       try {
-        return Promise.resolve(m.respostas[tabela]?.(c)).then(res, rej);
+        return Promise.resolve(m.respostas[tabela as "contratantes"]?.(c)).then(res, rej);
       } catch (e) {
         return Promise.reject(e).then(res, rej);
       }
@@ -303,7 +303,7 @@ describe("V1-03 conflito PT409", () => {
     salvar();
     await screen.findByText(MENSAGENS_V103.sucesso);
     expect(m.rpc).toHaveBeenCalledTimes(2);
-    expect(m.rpc.mock.calls[1][1]).toMatchObject({ p_versao_esperada: 9, p_razao_social: "REMOTO" });
+    expect(m.rpc.mock.calls[1]?.[1]).toMatchObject({ p_versao_esperada: 9, p_razao_social: "REMOTO" });
   });
   it.each([
     [() => ({ data: null, error: null, status: 200 }), "reloadNaoEncontrado"],
