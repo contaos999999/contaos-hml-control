@@ -260,6 +260,12 @@ describe("V1-07 detalhe sob demanda", () => {
     expect(rotuloAplicabilidade({ aplicavel: true, aprovado_em: "2026-01-01T00:00:00Z" }, true)).toBe("Aplicável");
     expect(rotuloAplicabilidade({ aplicavel: false, aprovado_em: "2026-01-01T00:00:00Z" }, false)).toBe("Não aplicável");
   });
+  it("Esc fecha o detalhe e devolve o foco ao gatilho", async () => {
+    const dlg = await abrir({ versoes: [] });
+    fireEvent.keyDown(dlg, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(document.activeElement?.getAttribute("aria-label")).toBe("Detalhes de Lei do contrato"));
+  });
   it("versões vazias distintas", async () => {
     const dlg = await abrir({ versoes: [] });
     expect(await within(dlg).findByText(MENSAGENS_V107.semVersoes)).toBeTruthy();
