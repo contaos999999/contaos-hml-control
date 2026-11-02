@@ -8689,6 +8689,20 @@ export type Database = {
         Args: { p_id_alerta: string; p_prazo?: string; p_responsavel: string }
         Returns: string
       }
+      atualizar_contratante: {
+        Args: {
+          p_contato: Json
+          p_documento: string
+          p_id_contratante: string
+          p_id_organizacao: string
+          p_nome_fantasia: string
+          p_razao_social: string
+          p_situacao: string
+          p_tipo_pessoa: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
       atualizar_tarefa_diligencia: {
         Args: {
           p_descricao?: string
