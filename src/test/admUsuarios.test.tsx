@@ -26,7 +26,12 @@ import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrga
 const U = "admin-1";
 const ORG = "org-1";
 type Resp = { data: unknown; error: unknown; status: number };
-type Args = Record<string, unknown>;
+type Chave =
+  | "p_id_organizacao" | "p_id_usuario" | "p_email" | "p_perfil" | "p_escopo_todos_contratos" | "p_ativo"
+  | "p_ids_contratos_ativar" | "p_ids_contratos_revogar" | "p_versao_esperada" | "p_chave_idempotencia"
+  | "p_pagina" | "p_tamanho_pagina" | "p_busca";
+type Args = Partial<Record<Chave, unknown>>;
+type RpcNome = "listar_usuarios_vinculos_adm" | "listar_escopo_contratos_usuario_adm" | "listar_auditoria_vinculo_usuario_adm" | "salvar_vinculo_usuario_adm";
 const ok = (data: unknown): Resp => ({ data, error: null, status: 200 });
 const falha = (code: string, status: number): Resp => ({ data: null, error: { code, message: "detalhe técnico interno" }, status });
 
@@ -106,8 +111,8 @@ function auditoria(pagina = 1) {
   };
 }
 
-let handlers: Record<string, (a: Args) => Resp | Promise<Resp>>;
-const chamadas = (nome: string) => m.rpc.mock.calls.filter((c) => c[0] === nome).map((c) => c[1] as Args);
+let handlers: Record<RpcNome, (a: Args) => Resp | Promise<Resp>>;
+const chamadas = (nome: RpcNome) => m.rpc.mock.calls.filter((c) => c[0] === nome).map((c) => c[1] as Args);
 
 function montar() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -130,7 +135,7 @@ beforeEach(() => {
     listar_auditoria_vinculo_usuario_adm: (a) => ok(auditoria(Number(a.p_pagina))),
     salvar_vinculo_usuario_adm: () => ok({ schema_versao: "adm01-v2", correlation_id: "corr-ok-1", id_usuario: "u-a", vinculo: {} }),
   };
-  m.rpc.mockImplementation(async (nome: string, a: Args) => handlers[nome]!(a));
+  m.rpc.mockImplementation(async (nome: RpcNome, a: Args) => handlers[nome](a));
 });
 afterEach(() => vi.restoreAllMocks());
 
