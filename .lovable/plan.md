@@ -1,83 +1,94 @@
-# PROMPT 17 — SYS-02 Esqueci a senha (PLAN)
+# PROMPT 18 — SYS-03 Redefinir senha (PLAN)
 
-Ambiente: HML `gklhhhyosgasnyoxlrui`. Nenhuma alteração de backend, Auth config, RLS, schema, Edge Function, Storage ou package.json.
+Ambiente: HML `gklhhhyosgasnyoxlrui`. Nenhuma alteração de backend, Auth config, RLS, schema, Edge Function, Storage, cliente Supabase ou package.json.
 
-## 1. Backend/Auth encontrado
+## 1. Backend/Auth usado (nenhuma tabela, RPC ou Edge Function)
 
-- Cliente existente: `src/integrations/supabase/client.ts` (chave publicável apenas). Não será alterado.
-- Operação única: `supabase.auth.resetPasswordForEmail(email: string, options?: { redirectTo?: string; captchaToken?: string })` → `Promise<{ data: {} | null; error: AuthError | null }>` (auth-js instalado).
-- Nenhuma tabela, RPC ou endpoint próprio é usado. Nenhum dado é lido do banco.
-- `supabase/config.toml` contém só `project_id`; não há seção `[auth]` local. A configuração de Auth HML (Site URL, Redirect URLs, rate limit de e-mail, SMTP) fica no painel Supabase e **não é legível pelo sandbox**.
+- Cliente existente `src/integrations/supabase/client.ts` (supabase-js/auth-js 2.118.0, chave publicável). Sem `flowType` explícito → fluxo implícito; `detectSessionInUrl` padrão = true.
+- Chegada pelo link do e-mail (SYS-02 envia `redirectTo = origin/redefinir-senha`): o SDK lê o fragmento `#access_token…&type=recovery` (ou `#error=…&error_code=otp_expired`) e emite `onAuthStateChange("PASSWORD_RECOVERY")`.
+- Operações: `supabase.auth.onAuthStateChange`, `supabase.auth.getSession` (só para saber se há sessão de recuperação), `supabase.auth.updateUser({ password })`, `supabase.auth.signOut()` após sucesso.
+- Se o link vier com `?code=` (PKCE), o SDK também troca automaticamente; não haverá chamada manual a `exchangeCodeForSession`.
+- Política de senha (tamanho mínimo, caracteres, senha vazada) é do Auth HML; a UI faz só checagem local mínima de UX (não vazia, mínimo 8, confirmação igual) e exibe o erro do backend `weak_password` de forma traduzida. A autoridade é o backend.
+- Sem LACUNA DE BACKEND: `updateUser` existe. Pendência já registrada: allowlist de `/redefinir-senha` em Redirect URLs (não verificável pelo sandbox).
 
-## 2. redirectTo e allowlist
-
-- Valor planejado: `redirectTo: \`${window.location.origin}/redefinir-senha\``.
-- Comportamento do Supabase: se a URL não estiver na allowlist (Redirect URLs), a chamada **não falha** — o link do e-mail cai na Site URL. Portanto a UI não consegue detectar a lacuna; só a abertura real do e-mail confirma.
-- **LACUNA DE AUTH/REDIRECT (pendente de verificação, não bloqueia o SYS-02):** confirmar no painel HML (Authentication → URL Configuration) se constam a origem do preview e `/redefinir-senha`. Não alterarei a configuração. Se ausente, registro a lacuna em docs e o SYS-02 segue (o pedido de envio funciona); o destino correto depende da allowlist + SYS-03.
-- `/redefinir-senha` (SYS-03) não será criada; é DEPENDÊNCIA DE FRONTEND.
-
-## 3. Arquivos exatos
+## 2. Arquivos exatos
 
 Novos:
-- `src/routes/esqueci-senha.tsx` — rota pública com head() próprio (título/descrição/og PT-BR). Reproduz a linguagem visual aprovada do SYS-01 (painel institucional escuro em desktop, faixa compacta em 768/390, cartão à direita) com markup próprio e mínimo, usando apenas tokens existentes. Nada é importado nem movido de `login.tsx`.
-- `src/components/auth/ForgotPasswordForm.tsx` — formulário e estados.
-- `src/test/forgotPassword.test.tsx` — testes unitários SYS-02.
+- `src/routes/redefinir-senha.tsx` — rota pública, head() próprio PT-BR, mesmo layout visual do SYS-02 (painel escuro desktop, faixa compacta 768/390, cartão à direita), markup próprio, só tokens existentes.
+- `src/components/auth/ResetPasswordForm.tsx` — detecção do link, formulário e estados.
+- `src/test/resetPassword.test.tsx` — testes unitários.
 
-Alterado (mínimo):
-- `src/components/auth/LoginForm.tsx` — apenas um `<Link to="/esqueci-senha">Esqueci minha senha</Link>` junto ao campo Senha. Nenhuma outra linha alterada.
-- `src/routeTree.gen.ts` — regenerado automaticamente.
+Gerado automaticamente: `src/routeTree.gen.ts`.
 
-Não serão tocados: `src/routes/login.tsx`, AGENTS.md, `__root.tsx`, `index.tsx`, `start.ts`, `src/integrations/**`, `styles.css`, package.json, supabase/**, docs/**. Evidências e PASS/FAIL serão entregues no chat para versionamento no GitHub canônico pelo orquestrador; nenhuma documentação canônica será criada no sandbox.
+Não tocados: `login.tsx`, `LoginForm.tsx`, `esqueci-senha.tsx`, `ForgotPasswordForm.tsx`, `__root.tsx`, `index.tsx`, `start.ts`, `src/integrations/**`, `styles.css`, package.json, supabase/**, AGENTS.md.
+
+## 3. Componentes
+
+- `ResetPasswordForm`: campos "Nova senha" e "Confirmar nova senha" (`ui/input`, `ui/label`), botão mostrar/ocultar com `aria-label`/`aria-pressed` + tooltip (`ui/tooltip`, hover/foco; toque abre de forma idempotente como no SYS-02), `ui/button`, `ui/alert`.
+- Tooltip informativo junto a "Nova senha": "A senha deve seguir a política de segurança do ContaOS. O sistema valida no envio." Complementa a ajuda visível, não a substitui.
+- Links "Voltar ao login" (`/login`) e "Solicitar novo link" (`/esqueci-senha`).
 
 ## 4. Estados e copy (PT-BR)
 
 | Estado | Comportamento | Copy |
 |---|---|---|
-| inicial | campo E-mail com label visível, botão "Enviar link" | Título único h1 "Recuperar acesso"; apoio: "Informe o e-mail da sua conta. Enviaremos um link para redefinir a senha." |
-| e-mail inválido | validação local, Supabase não é chamado, `aria-invalid` + erro ligado por `aria-describedby`, foco volta ao campo | "Informe um e-mail válido." |
-| enviando | botão desabilitado + spinner, `aria-busy`, aria-live | "Enviando…" |
-| sucesso (resposta aceita) | formulário substituído por painel neutro com ícone + texto (não só cor); campo não reexibe e-mail completo | "Se existir uma conta vinculada a este e-mail, você receberá as instruções para redefinir sua senha." + "Verifique também a caixa de spam." |
-| rate limit (`AuthError.status === 429` ou `code === "over_email_send_rate_limit"`) | sem cooldown fixo e sem contagem regressiva: o SDK `resetPasswordForEmail` não expõe headers nem prazo confiável. Exibe a copy segura; o botão fica disponível para nova tentativa manual. Nunca há reenvio automático | "Muitas solicitações em pouco tempo. Aguarde alguns instantes e tente novamente." |
-| erro de rede/serviço/configuração/captcha/inesperado | mensagem genérica, sem detalhe técnico e sem indicar existência de conta; reenvio só por clique | "Não foi possível enviar a solicitação agora. Tente novamente em instantes." |
+| verificando (loading) | aguarda evento/sessão até ~3 s; spinner + aria-live | "Validando link de redefinição…" |
+| link inválido/expirado/ausente (denied) | sem formulário; link para solicitar novo | "Este link de redefinição é inválido ou expirou. Solicite um novo link." |
+| formulário | h1 "Definir nova senha" | "Crie uma nova senha para sua conta." |
+| validação local | sem chamada; `aria-invalid` + `aria-describedby`; foco no 1º campo inválido | "Informe a nova senha." / "A senha deve ter pelo menos 8 caracteres." / "As senhas não conferem." |
+| processing | botão desabilitado + spinner, `aria-busy`, bloqueio de duplo envio | "Salvando…" |
+| sucesso | `signOut` local, painel com ícone + texto, botão "Ir para o login" | "Senha redefinida com sucesso. Entre novamente com a nova senha." |
+| senha fraca (`weak_password`) | mantém formulário | "A senha não atende à política de segurança. Escolha outra senha." |
+| mesma senha (`same_password`) | mantém formulário | "A nova senha deve ser diferente da anterior." |
+| sessão expirada (401/`session_not_found`) | vai para estado denied | copy do link inválido |
+| rate limit 429 | sem retry automático | "Muitas tentativas. Aguarde alguns instantes e tente novamente." |
+| erro rede/inesperado | genérico, sem detalhe técnico | "Não foi possível redefinir a senha agora. Tente novamente em instantes." |
 
-- Ação "Voltar ao login" (Link para `/login`) visível em todos os estados.
-- Tooltip (componente `ui/tooltip` já usado no SYS-01), por hover e foco; no toque abre por clique: ícone de informação ao lado do título do painel de sucesso explicando "Por segurança, não informamos se o e-mail possui cadastro." Complementa, não substitui o texto.
-- Após sucesso, botão "Enviar novamente" volta ao formulário (mesmo controle de rate limit).
+"Empty" não se aplica (não há listagem). Nenhum status crítico calculado localmente.
 
-## 5. Segurança e anti-enumeração
+## 5. Segurança
 
-- Resposta aceita pelo Supabase (sem `error`) → mesma tela de sucesso neutra, para conta existente ou inexistente.
-- Somente se o SDK retornar um erro que revele materialmente existência/inexistência de conta (ex.: `code === "user_not_found"`), esse caso específico é normalizado para a mesma copy neutra de sucesso.
-- Demais erros (técnicos, configuração, captcha, serviço, inesperados) → mensagem genérica de falha, sem detalhe técnico e sem revelar conta.
-- Nada salvo em localStorage/sessionStorage; e-mail mantido só em estado React; sem console.log de e-mail/resposta.
-- Nenhum token de recuperação manipulado nesta tela.
-- Somente chave publicável na request.
+- Tokens nunca lidos, exibidos, logados ou copiados pelo código; o SDK consome o fragmento e o limpa da URL.
+- Sem console.log, sem storage próprio; senha só em estado React, limpa após sucesso/erro.
+- Após sucesso, `signOut` para não deixar sessão de recuperação ativa; sem redirecionar ao dashboard.
+- Somente chave publicável.
 
-## 6. Testes
+## 6. Responsividade
+
+- 1440/1280: painel institucional à esquerda (48%), cartão à direita.
+- 768/390: faixa compacta superior com marca + badge, cartão em largura total (max-w-md), sem rolagem horizontal, alvos de toque ≥ 44 px.
+
+## 7. Acessibilidade
+
+- h1 único; labels visíveis associadas; ordem de Tab: nova senha → mostrar → confirmar → mostrar → salvar → links.
+- Foco visível; erros com `role="alert"`; região aria-live para verificando/salvando/sucesso; status nunca só por cor (ícone + texto); `lang="pt-BR"`.
+
+## 8. Testes
 
 Unitários (vitest, Supabase mockado):
-1. e-mail inválido não chama `resetPasswordForEmail`;
-2. duplo clique durante envio gera 1 chamada;
-3. sucesso mostra copy neutra exata e passa `redirectTo` terminando em `/redefinir-senha`;
-4. erro que revela conta (`user_not_found`) mostra a mesma copy de sucesso; erro inesperado (ex.: `captcha_failed`, 500) mostra a mensagem genérica de falha;
-5. 429 mostra copy segura, sem contagem regressiva, e permite nova tentativa manual; erro de rede mostra mensagem genérica; nenhuma nova chamada automática.
+1. sem evento de recuperação/sessão → estado link inválido, sem formulário;
+2. hash com `error_code=otp_expired` → estado link inválido;
+3. evento `PASSWORD_RECOVERY` → formulário;
+4. validações locais não chamam `updateUser`;
+5. duplo clique → 1 chamada;
+6. sucesso → `updateUser({password})`, `signOut` chamado, copy de sucesso;
+7. `weak_password`, `same_password`, 429, 401, erro de rede → copy correta, sem retry automático;
+8. tooltip abre por foco e por toque (idempotente).
+9. Regressão: vitest SYS-01/SYS-02 continua PASS.
 
 Playwright/HML:
-6. `/esqueci-senha` abre (200), h1 único;
-7. Login → "Esqueci minha senha" → "Voltar ao login";
-8. pedido real para `edivanpablo99@gmail.com` e para e-mail válido inexistente (Gmail aleatório): texto visível idêntico; respeitar limite (no máx. 2 pedidos; se 429, registrar como comportamento esperado);
-9. network: só `/auth/v1/recover` com chave publicável, sem secret/service_role;
-10. 1440/1280/768/390 sem rolagem horizontal, campo/botão/voltar visíveis;
-11. teclado (Tab: e-mail → enviar → voltar), labels, tooltip por foco/hover;
-12. console sem erro de aplicação; security scan sem novo Critical; typecheck e vitest SYS-01 continuam PASS.
+10. `/redefinir-senha` abre 200 sem token → estado link inválido; link "Solicitar novo link" leva a `/esqueci-senha`;
+11. `/redefinir-senha#error=access_denied&error_code=otp_expired` → link inválido;
+12. fluxo real fim a fim (BLOQUEADO até haver link real): pedir recuperação para `edivanpablo99@gmail.com`, abrir o link do e-mail (depende do usuário colar o link ou da allowlist), definir nova senha gravada em `/tmp` (perm 600, nunca impressa), confirmar login com a nova senha;
+13. network: só `/auth/v1/user` (PUT) e `/auth/v1/logout`, chave publicável;
+14. 1440/1280/768/390 sem rolagem horizontal; teclado/foco/tooltip; console limpo; typecheck; security scan sem novo Critical.
 
-## 7. Lacunas
+## 9. Lacunas / dependências
 
-- LACUNA DE AUTH/REDIRECT: allowlist de `/redefinir-senha` não verificável pelo sandbox — requer conferência no painel HML pelo responsável.
-- Rate limit de e-mail e SMTP do HML (padrão Supabase é baixo) podem limitar o teste 8; não serão alterados.
-- DEPENDÊNCIA DE FRONTEND: SYS-03 `/redefinir-senha`.
-- Risco registrado: o visual do SYS-02 replica o SYS-01 por markup próprio; ajustes futuros de marca precisarão ser feitos nas duas telas (sem drift funcional).
+- Allowlist de Redirect URLs do HML não verificável pelo sandbox (já registrada no SYS-02).
+- Teste 12 depende de acesso ao e-mail real; sem ele fica BLOQUEADO, não PASS por inferência.
+- Política de senha do HML não legível pelo sandbox; a UI confia na resposta do backend.
 
-## 8. Confirmação
+## 10. Confirmação
 
-Nenhuma migration, tabela, RLS, RPC, Edge Function, Storage, endpoint próprio, secret ou alteração de Auth config será criada ou alterada neste prompt.
+Nenhuma migration, tabela, RLS, RPC, Edge Function, Storage, endpoint próprio, secret ou alteração de Auth/cliente Supabase será criada ou alterada.
