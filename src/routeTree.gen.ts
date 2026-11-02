@@ -17,6 +17,7 @@ import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as SelecionarOrganizacaoRouteImport } from './routes/selecionar-organizacao'
 import { Route as AdministracaoUsuariosRouteImport } from './routes/administracao.usuarios'
 import { Route as ContratantesNovoRouteImport } from './routes/contratantes_.novo'
+import { Route as ContratantesIdEditarRouteImport } from './routes/contratantes_.$id.editar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,6 +59,11 @@ const ContratantesNovoRoute = ContratantesNovoRouteImport.update({
   path: '/contratantes/novo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContratantesIdEditarRoute = ContratantesIdEditarRouteImport.update({
+  id: '/contratantes_/$id/editar',
+  path: '/contratantes/$id/editar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/contratantes/novo': typeof ContratantesNovoRoute
+  '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/contratantes/novo': typeof ContratantesNovoRoute
+  '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/contratantes_/novo': typeof ContratantesNovoRoute
+  '/contratantes_/$id/editar': typeof ContratantesIdEditarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/selecionar-organizacao'
     | '/administracao/usuarios'
     | '/contratantes/novo'
+    | '/contratantes/$id/editar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/selecionar-organizacao'
     | '/administracao/usuarios'
     | '/contratantes/novo'
+    | '/contratantes/$id/editar'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/selecionar-organizacao'
     | '/administracao/usuarios'
     | '/contratantes_/novo'
+    | '/contratantes_/$id/editar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   SelecionarOrganizacaoRoute: typeof SelecionarOrganizacaoRoute
   AdministracaoUsuariosRoute: typeof AdministracaoUsuariosRoute
   ContratantesNovoRoute: typeof ContratantesNovoRoute
+  ContratantesIdEditarRoute: typeof ContratantesIdEditarRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContratantesNovoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contratantes_/$id/editar': {
+      id: '/contratantes_/$id/editar'
+      path: '/contratantes/$id/editar'
+      fullPath: '/contratantes/$id/editar'
+      preLoaderRoute: typeof ContratantesIdEditarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +224,7 @@ const rootRouteChildren: RootRouteChildren = {
   SelecionarOrganizacaoRoute: SelecionarOrganizacaoRoute,
   AdministracaoUsuariosRoute: AdministracaoUsuariosRoute,
   ContratantesNovoRoute: ContratantesNovoRoute,
+  ContratantesIdEditarRoute: ContratantesIdEditarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
