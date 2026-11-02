@@ -48,11 +48,11 @@ export function AuditDrawer(props: { org: string; usuario: UsuarioVinculo; onFec
                 </Button>
               ) : null}
             </div>
-          ) : q.data.itens.length === 0 ? (
+          ) : (q.data?.itens ?? []).length === 0 ? (
             <p className="text-sm text-muted-foreground">{MENSAGENS_ADM01.auditoriaVazia}</p>
           ) : (
             <ol className="divide-y divide-border">
-              {q.data.itens.map((e) => (
+              {(q.data?.itens ?? []).map((e) => (
                 <li key={e.id} className="space-y-1 py-3 text-sm">
                   <p className="font-medium text-foreground">{e.evento}</p>
                   <p className="text-muted-foreground">

@@ -226,7 +226,7 @@ describe("ADM-01 paginação real (093)", () => {
   });
 
   it("paginação da lista chama a RPC (sem slice local)", async () => {
-    handlers.listar_usuarios_vinculos_adm = (a) => ok(lista([usuario({}, { nome: `Pessoa ${a.p_pagina}` } as never)], Number(a.p_pagina), 60));
+    handlers.listar_usuarios_vinculos_adm = (a) => ok(lista([usuario(7, { nome: `Pessoa ${a.p_pagina}` } as never)], Number(a.p_pagina), 60));
     montar();
     await screen.findByText("Pessoa 1");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página" }));

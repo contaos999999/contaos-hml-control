@@ -210,11 +210,11 @@ export function ContractScopeDialog(props: {
                   </Button>
                 ) : null}
               </div>
-            ) : escopo.data.itens.length === 0 ? (
+            ) : (escopo.data?.itens ?? []).length === 0 ? (
               <p className="text-sm text-muted-foreground">{MENSAGENS_ADM01.escopoVazio}</p>
             ) : (
               <ul className="divide-y divide-border rounded-md border border-border">
-                {escopo.data.itens.map((c) => (
+                {(escopo.data?.itens ?? []).map((c) => (
                   <li key={c.id} className="flex flex-col gap-1 p-3 sm:flex-row sm:items-center sm:justify-between">
                     <label className="flex min-h-11 items-center gap-3 text-sm text-foreground">
                       <input
