@@ -220,8 +220,9 @@ describe("V1-05 criar contrato", () => {
   it("INSERT único sem .select(), sucesso navega para /contratos", async () => {
     montar();
     await preencher({ valorGlobal: "10.000,00", fim: "2026-12-31" });
-    salvar();
-    salvar();
+    const b = screen.getByRole("button", { name: "Salvar" });
+    fireEvent.click(b);
+    fireEvent.click(b);
     expect(await screen.findByText(MENSAGENS_V105.sucesso)).toBeTruthy();
     expect(inserts()).toHaveLength(1);
     const c = inserts()[0]!;
