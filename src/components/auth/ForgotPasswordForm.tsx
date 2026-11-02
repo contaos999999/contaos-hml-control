@@ -38,6 +38,7 @@ export function classificarRespostaReset(
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
+  const [dicaAberta, setDicaAberta] = useState(false);
   const [fase, setFase] = useState<Fase>("inicial");
   const [erro, setErro] = useState<Erro>(null);
   const [erroEmail, setErroEmail] = useState<string | null>(null);
@@ -91,11 +92,12 @@ export function ForgotPasswordForm() {
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-semibold text-foreground">Solicitação recebida</p>
                 <TooltipProvider delayDuration={200}>
-                  <Tooltip>
+                  <Tooltip open={dicaAberta} onOpenChange={setDicaAberta}>
                     <TooltipTrigger asChild>
                       <button
                         type="button"
                         aria-label="Por que não confirmamos o cadastro"
+                        onClick={() => setDicaAberta((v) => !v)}
                         className="rounded text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <Info className="h-4 w-4" aria-hidden />
