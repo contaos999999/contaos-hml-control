@@ -153,6 +153,7 @@ describe("SYS-05 Dashboard", () => {
       montar();
       expect(await screen.findByText(MENSAGENS_SYS05.negado)).toBeTruthy();
       expect(screen.queryByText(MENSAGENS_SYS05.vazio)).toBeNull();
+      expect(screen.queryByText(MENSAGENS_SYS05.erro)).toBeNull();
       expect(screen.queryByText(/resumo desta organização|forbidden/)).toBeNull();
       expect(screen.getByRole("link", { name: "Selecionar outra organização" }).getAttribute("href")).toBe("/selecionar-organizacao");
       expect(screen.getByRole("button", { name: "Sair da conta" })).toBeTruthy();
