@@ -1,12 +1,11 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, ArrowLeft, CheckCircle2, Info, Loader2, LogOut, RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, LogOut, RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { listarOrganizacoesDisponiveis } from "@/lib/auth/resolverDestinoPosLogin";
 import { buscaContemAsterisco } from "@/lib/contratantes/contratantesDados";
@@ -76,30 +75,6 @@ const VAZIO: FormularioContrato = {
   unidadeVinculada: "",
   fonteRecurso: "",
 };
-
-function Dica({ rotulo, texto }: { rotulo: string; texto: string }) {
-  const [aberta, setAberta] = useState(false);
-  return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip open={aberta} onOpenChange={setAberta}>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            aria-label={rotulo}
-            onClick={(e) => {
-              e.preventDefault();
-              setAberta(true);
-            }}
-            className={`-my-3 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-muted-foreground ${foco}`}
-          >
-            <Info className="h-3.5 w-3.5" aria-hidden />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs">{texto}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 function Aviso(props: { icone: "negado" | "erro"; texto: string; children?: React.ReactNode }) {
   const Icone = props.icone === "negado" ? ShieldAlert : AlertCircle;
@@ -184,7 +159,7 @@ function ContratanteCombobox(props: {
         aria-controls={listaId}
         aria-required="true"
         aria-invalid={props.invalido || asterisco || undefined}
-        aria-describedby={props.invalido ? `${IDS.contratante}-erro` : asterisco ? `${IDS.contratante}-busca` : undefined}
+        aria-describedby={[`${IDS.contratante}-ajuda`, props.invalido && `${IDS.contratante}-erro`, asterisco && `${IDS.contratante}-busca`].filter(Boolean).join(" ")}
         aria-activedescendant={aberto && ativo >= 0 ? `${listaId}-${ativo}` : undefined}
         autoComplete="off"
         maxLength={100}
@@ -237,7 +212,9 @@ function ContratanteCombobox(props: {
                 className={`flex min-h-11 cursor-pointer flex-col justify-center rounded px-3 py-2 text-sm ${i === ativo ? "bg-accent text-accent-foreground" : "hover:bg-accent/60"}`}
               >
                 <span className="break-words">{rotuloOpcao(o)}</span>
-                {o.documento && <span className="text-xs text-muted-foreground">{o.documento}</span>}
+                <span className="text-xs text-muted-foreground">
+                  {[o.documento, o.situacao === "inativo" ? "Inativo" : o.situacao === "ativo" ? "Ativo" : o.situacao].filter(Boolean).join(" · ")}
+                </span>
               </li>
             ))}
           </ul>
@@ -464,12 +441,10 @@ export function NovoContrato() {
             <Erro c="numero" />
           </div>
           <div className="min-w-0 space-y-1.5">
-            <div className="flex items-center gap-1">
-              <label htmlFor={IDS.contratante} className={label}>
-                Contratante <span aria-hidden>*</span>
-              </label>
-              <Dica rotulo="Sobre Contratante" texto="Somente contratantes ativos desta organização. Digite para buscar; a lista é carregada aos poucos." />
-            </div>
+            <label htmlFor={IDS.contratante} className={label}>
+              Contratante <span aria-hidden>*</span>
+            </label>
+            <p id={`${IDS.contratante}-ajuda`} className="text-xs text-muted-foreground">Digite para buscar contratantes desta organização.</p>
             {idUsuario && idOrganizacao && (
               <ContratanteCombobox
                 idUsuario={idUsuario}
