@@ -57,16 +57,16 @@ function Tabela({ itens }: { itens: Contrato[] }) {
         <caption className="sr-only">Contratos autorizados da organização selecionada</caption>
         <thead>
           <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-            <th scope="col" className="w-[13%] py-2 pr-3 font-medium">Número</th>
-            <th scope="col" className="w-[29%] py-2 pr-3 font-medium">Objeto</th>
+            <th scope="col" className="w-[12%] py-2 pr-3 font-medium">Número</th>
+            <th scope="col" className="w-[22%] py-2 pr-3 font-medium">Objeto</th>
             <th scope="col" className="w-[11%] py-2 pr-3 font-medium">Situação</th>
-            <th scope="col" className="w-[13%] py-2 pr-3 font-medium">
+            <th scope="col" className="w-[18%] py-2 pr-3 font-medium">
               <span className="inline-flex items-center gap-1">
                 Criticidade <DicaCriticidade />
               </span>
             </th>
             <th scope="col" className="w-[19%] py-2 pr-3 font-medium">Vigência</th>
-            <th scope="col" className="w-[15%] py-2 text-right font-medium">Valor global</th>
+            <th scope="col" className="w-[17%] py-2 text-right font-medium">Valor global</th>
           </tr>
         </thead>
         <tbody>
@@ -77,7 +77,7 @@ function Tabela({ itens }: { itens: Contrato[] }) {
               <td className="py-3 pr-3"><Selo texto={c.situacao} /></td>
               <td className="py-3 pr-3"><Selo texto={c.criticidade} /></td>
               <td className="break-words py-3 pr-3 tabular-nums">{formatarVigencia(c.inicio, c.fim)}</td>
-              <td className="break-words py-3 text-right tabular-nums">{formatarMoeda(c.valor_global)}</td>
+              <td className="whitespace-nowrap py-3 text-right tabular-nums">{formatarMoeda(c.valor_global)}</td>
             </tr>
           ))}
         </tbody>
