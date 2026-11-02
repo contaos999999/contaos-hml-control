@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AlertCircle, Eye, EyeOff, Loader2, LogOut, ShieldAlert } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -195,7 +196,12 @@ export function LoginForm({ onNavegar = navegarPadrao }: Props) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="login-senha">Senha</Label>
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="login-senha">Senha</Label>
+          <Link to="/esqueci-senha" className="text-sm font-medium text-primary underline-offset-4 hover:underline focus-visible:underline">
+            Esqueci minha senha
+          </Link>
+        </div>
         <div className="relative">
           <Input
             id="login-senha"
