@@ -217,19 +217,81 @@ describe("V1-01 query Data API (093 paginação)", () => {
     await waitFor(() => expect(op(ultima(), "range")).toEqual([[25, 49]]));
     fireEvent.change(screen.getByLabelText("Buscar por razão social, nome fantasia ou documento"), { target: { value: "  alfa  " } });
     await waitFor(() => expect(op(ultima(), "or")).toHaveLength(1), { timeout: 2000 });
-    const p = '"*alfa*"';
+    const p = '"%alfa%"';
     expect(op(ultima(), "or")[0]).toEqual([`razao_social.ilike.${p},nome_fantasia.ilike.${p},documento.ilike.${p}`]);
     expect(op(ultima(), "range")).toEqual([[0, 24]]);
   });
 
-  it("entradas maliciosas viram um único valor entre aspas escapado", () => {
-    expect(montarPadraoBusca("a,b")).toBe('"*a,b*"');
-    expect(montarPadraoBusca("x)")).toBe('"*x)*"');
-    expect(montarPadraoBusca("razao_social.eq.1")).toBe('"*razao\\\\_social.eq.1*"');
-    expect(montarPadraoBusca("%_")).toBe('"*\\\\%\\\\_*"');
-    expect(montarPadraoBusca('a"b')).toBe('"*a\\"b*"');
+  // Valor esperado = um único valor PostgREST entre aspas; dentro dele:
+  // LIKE escapa \ % _ ; `*` do usuário vira `_` (não pode virar curinga múltiplo do PostgREST);
+  // depois aspas/barra são escapadas para o delimitador do PostgREST.
+  const CASOS: Array<[string, string]> = [
+    ["razao_social.eq.1", String.raw`"%razao\\_social.eq.1%"`],
+    ["a,b", String.raw`"%a,b%"`],
+    ["x)", String.raw`"%x)%"`],
+    ["a(b", String.raw`"%a(b%"`],
+    ["a.b", String.raw`"%a.b%"`],
+    ["x:y", String.raw`"%x:y%"`],
+    ["*", String.raw`"%_%"`],
+    ["%_", String.raw`"%\\%\\_%"`],
+    ['"', String.raw`"%\"%"`],
+    ["\\", String.raw`"%\\\\%"`],
+    ["a,b.eq.1),id.neq.(x", String.raw`"%a,b.eq.1),id.neq.(x%"`],
+  ];
+
+  it("entradas maliciosas: valor efetivamente passado ao .or() é único e escapado", async () => {
+    montar();
+    await screen.findAllByText("Contratante 1 LTDA");
+    const campo = screen.getByLabelText("Buscar por razão social, nome fantasia ou documento");
+    for (const [entrada, p] of CASOS) {
+      fireEvent.change(campo, { target: { value: entrada } });
+      const esperado = `razao_social.ilike.${p},nome_fantasia.ilike.${p},documento.ilike.${p}`;
+      await waitFor(() => expect(op(ultima(), "or")).toEqual([[esperado]]), { timeout: 2000 });
+      expect(montarPadraoBusca(entrada)).toBe(p);
+      expect(op(ultima(), "range")).toEqual([[0, 24]]);
+    }
+  });
+
+  it("busca: trim, vazio não filtra e limite de 100 caracteres após trim", () => {
     expect(montarPadraoBusca("   ")).toBeNull();
-    expect(montarPadraoBusca("x".repeat(300))!.length).toBe(100 + 4);
+    expect(montarPadraoBusca("  ab  ")).toBe('"%ab%"');
+    expect(montarPadraoBusca("  " + "x".repeat(300))).toBe(`"%${"x".repeat(100)}%"`);
+  });
+
+  it("troca de página mostra loading explícito, nunca dados da página anterior", async () => {
+    let liberar: (v: Resp) => void = () => undefined;
+    m.respostas.contratantes = (c) => {
+      const r = op(c as Chamada, "range")[0] as number[];
+      if (r[0] === 0) return lista([linha(1)], 30);
+      return new Promise<Resp>((res) => (liberar = res));
+    };
+    montar();
+    await screen.findAllByText("Contratante 1 LTDA");
+    fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
+    expect(await screen.findByText(MENSAGENS_V101.carregando)).toBeInTheDocument();
+    expect(screen.queryByText("Contratante 1 LTDA")).toBeNull();
+    await act(async () => liberar(lista([linha(26)], 30)));
+    expect((await screen.findAllByText("Contratante 26 LTDA")).length).toBeGreaterThan(0);
+  });
+
+  it("troca de filtro mostra loading explícito, nunca dados do filtro anterior", async () => {
+    let liberar: (v: Resp) => void = () => undefined;
+    m.respostas.contratantes = (c) => {
+      if (op(c as Chamada, "eq").length === 1) return lista([linha(1)], 1);
+      return new Promise<Resp>((res) => (liberar = res));
+    };
+    montar();
+    await screen.findAllByText("Contratante 1 LTDA");
+    fireEvent.change(screen.getByLabelText("Situação"), { target: { value: "inativo" } });
+    expect(await screen.findByText(MENSAGENS_V101.carregando)).toBeInTheDocument();
+    expect(screen.queryByText("Contratante 1 LTDA")).toBeNull();
+    await act(async () => liberar(lista([linha(9, { situacao: "inativo" })], 1)));
+    expect((await screen.findAllByText("Contratante 9 LTDA")).length).toBeGreaterThan(0);
+  });
+
+  it("código sem placeholderData/keepPreviousData nem storage direto da lista", () => {
+    const src = ["src/components/contratantes/ListaContratantes.tsx", "src/lib/contratantes/contratantesDados.ts"].map((f) => readFileSync(f, "utf8")).join("\n");
+    for (const p of [/placeholderData/, /keepPreviousData/, /localStorage/, /sessionStorage/]) expect(src).not.toMatch(p);
   });
 
   it("paginação mantém filtros, limites desabilitados e página além do fim volta à última", async () => {
