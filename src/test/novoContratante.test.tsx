@@ -195,7 +195,7 @@ describe("V1-02 payload e validação", () => {
     await preencher({ documento: "  ", fantasia: "  " });
     salvar();
     await screen.findByText(MENSAGENS_V102.sucesso);
-    const c = inserts()[0];
+    const c = inserts()[0]!;
     const [payload] = op(c, "insert")[0] as [Record<string, unknown>];
     expect(Object.keys(payload).sort()).toEqual(
       ["contato", "documento", "id_organizacao", "nome_fantasia", "razao_social", "situacao", "tipo_pessoa"].sort(),
