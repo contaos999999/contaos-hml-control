@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Building2, ShieldCheck } from "lucide-react";
+import { Building2 } from "lucide-react";
 
 import { OrganizationSelector } from "@/components/organizacao/OrganizationSelector";
+import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 export const Route = createFileRoute("/selecionar-organizacao")({
   ssr: false,
@@ -21,11 +22,8 @@ export const Route = createFileRoute("/selecionar-organizacao")({
 function Marca() {
   return (
     <div className="flex items-center gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary-foreground/20 bg-primary-foreground/10">
-        <ShieldCheck className="h-5 w-5" aria-hidden />
-      </span>
+      <ContaOSMarca />
       <div className="leading-tight">
-        <p className="text-lg font-semibold tracking-tight">ContaOS</p>
         <p className="hidden text-[0.65rem] font-medium uppercase tracking-[0.2em] opacity-70 sm:block">
           Controle • Auditoria • Conformidade
         </p>

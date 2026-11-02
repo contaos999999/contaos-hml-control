@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Building2, ChevronLeft, ChevronRight, Info, Loader2, RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
+import { AlertCircle, Building2, ChevronLeft, ChevronRight, Info, Loader2, RefreshCw, ShieldAlert } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { verificarAcessoOrganizacao } from "@/lib/contratantes/contratantesDados";
 import { ErroContratos, formatarMoeda, formatarVigencia, listarContratos, type Contrato } from "@/lib/contratos/contratosDados";
+import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 export const MENSAGENS_V104 = {
   verificando: "Verificando sessão…",
@@ -139,10 +140,7 @@ export function ListaContratos() {
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary-foreground/20 bg-primary-foreground/10">
-              <ShieldCheck className="h-5 w-5" aria-hidden />
-            </span>
-            <p className="text-lg font-semibold tracking-tight">ContaOS</p>
+            <ContaOSMarca />
           </div>
           <nav aria-label="Navegação" className="flex flex-wrap gap-2">
             <Button asChild variant="secondary" className="h-11"><Link to="/">Painel</Link></Button>
