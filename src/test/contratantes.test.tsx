@@ -51,7 +51,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 import { ListaContratantes, MENSAGENS_V101 } from "@/components/contratantes/ListaContratantes";
-import { montarPadraoBusca, formatarDocumento } from "@/lib/contratantes/contratantesDados";
+import { montarPadraoBusca, formatarDocumento, ErroBuscaInvalida } from "@/lib/contratantes/contratantesDados";
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { Route } from "@/routes/contratantes";
 
@@ -232,7 +232,6 @@ describe("V1-01 query Data API (093 paginação)", () => {
     ["a(b", String.raw`"%a(b%"`],
     ["a.b", String.raw`"%a.b%"`],
     ["x:y", String.raw`"%x:y%"`],
-    ["*", String.raw`"%_%"`],
     ["%_", String.raw`"%\\%\\_%"`],
     ['"', String.raw`"%\"%"`],
     ["\\", String.raw`"%\\\\%"`],
@@ -250,6 +249,40 @@ describe("V1-01 query Data API (093 paginação)", () => {
       expect(montarPadraoBusca(entrada)).toBe(p);
       expect(op(ultima(), "range")).toEqual([[0, 24]]);
     }
+  });
+
+  it("asterisco é recusado por montarPadraoBusca, nunca vira _ ou %", () => {
+    for (const e of ["*", "abc*def", "  *  "]) {
+      expect(() => montarPadraoBusca(e)).toThrow(ErroBuscaInvalida);
+    }
+  });
+
+  it("busca com * mostra validação, não consulta e não mantém linhas antigas; corrigir volta a consultar", async () => {
+    montar();
+    await screen.findAllByText("Contratante 1 LTDA");
+    const antes = listas().length;
+    const campo = screen.getByLabelText("Buscar por razão social, nome fantasia ou documento");
+    fireEvent.change(campo, { target: { value: "abc*def" } });
+    const alerta = await screen.findByRole("alert");
+    expect(alerta).toHaveTextContent("O caractere * não é permitido na busca.");
+    expect(campo).toHaveAttribute("aria-invalid", "true");
+    expect(campo.getAttribute("aria-describedby")).toBe(alerta.id);
+    await new Promise((r) => setTimeout(r, 500));
+    expect(listas().length).toBe(antes);
+    expect(listas().some((c) => op(c, "or").length > 0)).toBe(false);
+    expect(screen.queryByText("Contratante 1 LTDA")).toBeNull();
+    fireEvent.change(campo, { target: { value: "abcdef" } });
+    await waitFor(() => expect(op(ultima(), "or")).toHaveLength(1), { timeout: 2000 });
+    expect(screen.queryByText("O caractere * não é permitido na busca.")).toBeNull();
+    expect(campo).not.toHaveAttribute("aria-invalid", "true");
+    expect((await screen.findAllByText("Contratante 1 LTDA")).length).toBeGreaterThan(0);
+  });
+
+  it("botão Sobre Situação tem alvo de toque >= 44 px (h-11 w-11)", async () => {
+    montar();
+    const b = await screen.findByRole("button", { name: "Sobre Situação" });
+    expect(b.className).toMatch(/\bh-11\b/);
+    expect(b.className).toMatch(/\bw-11\b/);
   });
 
   it("busca: trim, vazio não filtra e limite de 100 caracteres após trim", () => {
