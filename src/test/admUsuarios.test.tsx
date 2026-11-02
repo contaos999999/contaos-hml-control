@@ -5,10 +5,10 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import type { ReactNode } from "react";
 
-const m = vi.hoisted(() => ({ getUser: vi.fn(), signOut: vi.fn(), rpc: vi.fn(), nav: vi.fn() }));
+const m = vi.hoisted(() => ({ getUser: vi.fn(), signOut: vi.fn(), rpc: vi.fn(), nav: vi.fn(), invoke: vi.fn() }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth: { getUser: m.getUser, signOut: m.signOut }, rpc: m.rpc, from: vi.fn() },
+  supabase: { auth: { getUser: m.getUser, signOut: m.signOut }, rpc: m.rpc, from: vi.fn(), functions: { invoke: m.invoke } },
 }));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.nav,
@@ -31,7 +31,7 @@ type Chave =
   | "p_ids_contratos_ativar" | "p_ids_contratos_revogar" | "p_versao_esperada" | "p_chave_idempotencia"
   | "p_pagina" | "p_tamanho_pagina" | "p_busca";
 type Args = Partial<Record<Chave, unknown>>;
-type RpcNome = "listar_usuarios_vinculos_adm" | "listar_escopo_contratos_usuario_adm" | "listar_auditoria_vinculo_usuario_adm" | "salvar_vinculo_usuario_adm";
+type RpcNome = "validar_administrador_organizacao" | "listar_usuarios_vinculos_adm" | "listar_escopo_contratos_usuario_adm" | "listar_auditoria_vinculo_usuario_adm" | "salvar_vinculo_usuario_adm";
 const ok = (data: unknown): Resp => ({ data, error: null, status: 200 });
 const falha = (code: string, status: number): Resp => ({ data: null, error: { code, message: "detalhe técnico interno" }, status });
 
@@ -130,12 +130,18 @@ beforeEach(() => {
   m.getUser.mockResolvedValue({ data: { user: { id: U } }, error: null });
   m.signOut.mockResolvedValue({ error: null });
   handlers = {
+    validar_administrador_organizacao: () => ok(true),
     listar_usuarios_vinculos_adm: () => ok(lista([usuario()])),
     listar_escopo_contratos_usuario_adm: (a) => ok(escopoPagina(Number(a.p_pagina))),
     listar_auditoria_vinculo_usuario_adm: (a) => ok(auditoria(Number(a.p_pagina))),
     salvar_vinculo_usuario_adm: () => ok({ schema_versao: "adm01-v2", correlation_id: "corr-ok-1", id_usuario: "u-a", vinculo: {} }),
   };
   m.rpc.mockImplementation(async (nome: RpcNome, a: Args) => handlers[nome](a));
+  m.invoke.mockResolvedValue({ data: { codigo: "USUARIO_EXISTENTE", id_usuario: "u-novo", correlation_id: "corr-edge-1" }, error: null });
+});
+const edgeFalha = (status: number, codigo: string) => ({
+  data: null,
+  error: { name: "FunctionsHttpError", message: "Edge Function returned a non-2xx status code", context: { status, json: async () => ({ codigo, mensagem: "detalhe técnico interno" }) } },
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -171,6 +177,39 @@ describe("ADM-01 sessão e estados", () => {
     window.sessionStorage.clear();
     montar();
     await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }));
+  });
+
+  it("valida administrador no backend uma vez antes de listar", async () => {
+    montar();
+    expect(await screen.findByText("Ana Souza")).toBeInTheDocument();
+    expect(chamadas("validar_administrador_organizacao")).toEqual([{ p_id_organizacao: ORG }]);
+    expect(m.rpc.mock.calls[0]![0]).toBe("validar_administrador_organizacao");
+  });
+
+  it("validar=false mostra 403 dedicado e não chama a lista", async () => {
+    handlers.validar_administrador_organizacao = () => ok(false);
+    montar();
+    expect(await screen.findByText(MENSAGENS_ADM01.negado)).toBeInTheDocument();
+    expect(chamadas("listar_usuarios_vinculos_adm")).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Convidar ou vincular usuário" })).not.toBeInTheDocument();
+  });
+
+  it("validar 42501 mostra 403; validar 500 mostra erro genérico", async () => {
+    handlers.validar_administrador_organizacao = () => falha("42501", 403);
+    const r = montar();
+    expect(await screen.findByText(MENSAGENS_ADM01.negado)).toBeInTheDocument();
+    r.unmount();
+    handlers.validar_administrador_organizacao = () => falha("XX000", 500);
+    montar();
+    expect(await screen.findByText(MENSAGENS_ADM01.erro)).toBeInTheDocument();
+    expect(chamadas("listar_usuarios_vinculos_adm")).toHaveLength(0);
+  });
+
+  it("schema_versao adm01-v1 na lista é incompatibilidade (erro genérico)", async () => {
+    handlers.listar_usuarios_vinculos_adm = () => ok({ ...lista([usuario()]), schema_versao: "adm01-v1" });
+    montar();
+    expect(await screen.findByText(MENSAGENS_ADM01.erro)).toBeInTheDocument();
+    expect(screen.queryByText("Ana Souza")).not.toBeInTheDocument();
   });
 
   it("lista chama RPC 1 com org, página 1 e tamanho 25 e mostra valores literais", async () => {
@@ -446,30 +485,131 @@ describe("ADM-01 salvar, concorrência (091) e idempotência (092)", () => {
 describe("ADM-01 vínculo novo e PT404 contextual", () => {
   async function abrirNovo() {
     montar();
-    fireEvent.click(await screen.findByRole("button", { name: "Vincular usuário existente" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Convidar ou vincular usuário" }));
     const dlg = await screen.findByRole("dialog");
     await within(dlg).findByLabelText("Contrato CT-c1 — Objeto c1");
     return dlg;
   }
 
-  it("lista escopo com p_id_usuario=null e salva com versão null e e-mail", async () => {
+  const preencher = (dlg: HTMLElement, email = " nova@exemplo.com ") => {
+    fireEvent.change(within(dlg).getByLabelText("E-mail"), { target: { value: email } });
+    fireEvent.change(within(dlg).getByLabelText("Perfil de acesso"), { target: { value: "analista" } });
+  };
+
+  it("convite: Edge com body exato e depois RPC salvar com id retornado e 10 argumentos", async () => {
     const dlg = await abrirNovo();
     expect(chamadas("listar_escopo_contratos_usuario_adm")[0]).toMatchObject({ p_id_usuario: null, p_pagina: 1, p_tamanho_pagina: 25 });
-    fireEvent.change(within(dlg).getByLabelText("E-mail da conta ContaOS"), { target: { value: " nova@exemplo.com " } });
-    fireEvent.change(within(dlg).getByLabelText("Perfil de acesso"), { target: { value: "analista" } });
+    preencher(dlg);
+    fireEvent.change(within(dlg).getByLabelText("Nome (opcional)"), { target: { value: " Nova Pessoa " } });
     salvar(dlg);
     await waitFor(() => expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(1));
-    expect(ultimoSalvar()).toMatchObject({ p_id_usuario: null, p_email: "nova@exemplo.com", p_versao_esperada: null, p_perfil: "analista" });
+    expect(m.invoke).toHaveBeenCalledTimes(1);
+    const [nome, opts] = m.invoke.mock.calls[0]!;
+    expect(nome).toBe("admin-invite-user");
+    expect(Object.keys(opts.body).sort()).toEqual(["chave_idempotencia", "email", "id_organizacao", "nome"]);
+    expect(opts.body).toMatchObject({ id_organizacao: ORG, email: "nova@exemplo.com", nome: "Nova Pessoa" });
+    const s = ultimoSalvar();
+    expect(Object.keys(s)).toHaveLength(10);
+    expect(s).toMatchObject({ p_id_usuario: "u-novo", p_email: "nova@exemplo.com", p_versao_esperada: null, p_perfil: "analista" });
+    expect(s.p_chave_idempotencia).not.toBe(opts.body.chave_idempotencia);
   });
 
-  it("PT404 ao salvar vínculo novo = conta inexistente, sem falar em convite", async () => {
-    handlers.salvar_vinculo_usuario_adm = () => falha("PT404", 404);
+  it("nome vazio não é enviado à Edge", async () => {
     const dlg = await abrirNovo();
-    fireEvent.change(within(dlg).getByLabelText("E-mail da conta ContaOS"), { target: { value: "x@exemplo.com" } });
-    fireEvent.change(within(dlg).getByLabelText("Perfil de acesso"), { target: { value: "analista" } });
+    preencher(dlg);
     salvar(dlg);
-    expect(await within(dlg).findByText(MENSAGENS_ADM01.contaInexistente)).toBeInTheDocument();
-    expect(screen.queryByText(/convite/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(m.invoke).toHaveBeenCalledTimes(1));
+    expect(m.invoke.mock.calls[0]![1].body).not.toHaveProperty("nome");
+  });
+
+  it("USUARIO_EXISTENTE salva vínculo e mostra aviso", async () => {
+    const dlg = await abrirNovo();
+    preencher(dlg);
+    salvar(dlg);
+    expect(await screen.findByText(new RegExp(MENSAGENS_ADM01.usuarioExistente))).toBeInTheDocument();
+    expect(dlg).not.toBeInTheDocument();
+  });
+
+  it("USUARIO_CONVIDADO mostra aviso de convite", async () => {
+    m.invoke.mockResolvedValue({ data: { codigo: "USUARIO_CONVIDADO", id_usuario: "u-novo" }, error: null });
+    const dlg = await abrirNovo();
+    preencher(dlg);
+    salvar(dlg);
+    expect(await screen.findByText(new RegExp(MENSAGENS_ADM01.usuarioConvidado))).toBeInTheDocument();
+  });
+
+  it("falha no vínculo após convite: retry não repete a Edge e reutiliza a chave do vínculo", async () => {
+    let n = 0;
+    handlers.salvar_vinculo_usuario_adm = () =>
+      ++n === 1 ? falha("500", 500) : ok({ schema_versao: "adm01-v2", correlation_id: "corr-ok-2", id_usuario: "u-novo", vinculo: {} });
+    const dlg = await abrirNovo();
+    preencher(dlg);
+    salvar(dlg);
+    expect(await within(dlg).findByText(MENSAGENS_ADM01.erroSalvar)).toBeInTheDocument();
+    salvar(dlg);
+    await waitFor(() => expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(2));
+    expect(m.invoke).toHaveBeenCalledTimes(1);
+    const [s1, s2] = chamadas("salvar_vinculo_usuario_adm");
+    expect(s2!.p_chave_idempotencia).toBe(s1!.p_chave_idempotencia);
+  });
+
+  it("Edge 409 CONFLITO_IDEMPOTENCIA: mensagem e nova chave na próxima tentativa", async () => {
+    m.invoke.mockResolvedValueOnce(edgeFalha(409, "CONFLITO_IDEMPOTENCIA"));
+    const dlg = await abrirNovo();
+    preencher(dlg);
+    salvar(dlg);
+    expect(await within(dlg).findByText(MENSAGENS_ADM01.conflitoIdempotencia)).toBeInTheDocument();
+    salvar(dlg);
+    await waitFor(() => expect(m.invoke).toHaveBeenCalledTimes(2));
+    expect(m.invoke.mock.calls[1]![1].body.chave_idempotencia).not.toBe(m.invoke.mock.calls[0]![1].body.chave_idempotencia);
+    expect(screen.queryByText(/detalhe técnico/)).not.toBeInTheDocument();
+  });
+
+  it("Edge 409 OPERACAO_EM_PROCESSAMENTO: neutro, sem reenvio automático; Consultar novamente reusa a chave", async () => {
+    m.invoke.mockResolvedValueOnce(edgeFalha(409, "OPERACAO_EM_PROCESSAMENTO"));
+    const dlg = await abrirNovo();
+    preencher(dlg);
+    salvar(dlg);
+    expect(await within(dlg).findByText(MENSAGENS_ADM01.emProcessamento)).toBeInTheDocument();
+    expect(within(dlg).getByRole("button", { name: "Salvar vínculo" })).toBeDisabled();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(m.invoke).toHaveBeenCalledTimes(1);
+    fireEvent.click(within(dlg).getByRole("button", { name: "Consultar novamente" }));
+    await waitFor(() => expect(m.invoke).toHaveBeenCalledTimes(2));
+    expect(m.invoke.mock.calls[1]![1].body.chave_idempotencia).toBe(m.invoke.mock.calls[0]![1].body.chave_idempotencia);
+  });
+
+  it.each([
+    [422, "DADOS_INVALIDOS", "validacao"],
+    [422, "CONVITE_NAO_ENVIADO", "conviteNaoEnviado"],
+    [413, "REQUISICAO_MUITO_GRANDE", "muitoGrande"],
+    [403, "AUTH_ACESSO_NEGADO", "negado"],
+    [401, "AUTH_SESSAO_INVALIDA", "sessaoInvalida"],
+    [500, "ERRO_INTERNO", "erroSalvar"],
+  ] as const)("Edge %i %s mostra mensagem própria, sem texto técnico e sem salvar", async (st, cod, chave) => {
+    m.invoke.mockResolvedValueOnce(edgeFalha(st, cod));
+    const dlg = await abrirNovo();
+    preencher(dlg);
+    salvar(dlg);
+    expect(await within(dlg).findByText(MENSAGENS_ADM01[chave])).toBeInTheDocument();
+    expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(0);
+    expect(screen.queryByText(/detalhe técnico|non-2xx/)).not.toBeInTheDocument();
+  });
+
+  it("falha de rede na Edge = erro genérico", async () => {
+    m.invoke.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    const dlg = await abrirNovo();
+    preencher(dlg);
+    salvar(dlg);
+    expect(await within(dlg).findByText(MENSAGENS_ADM01.erroSalvar)).toBeInTheDocument();
+  });
+
+  it("e-mail vazio não chama a Edge", async () => {
+    const dlg = await abrirNovo();
+    preencher(dlg, "  ");
+    salvar(dlg);
+    expect(await within(dlg).findByText(MENSAGENS_ADM01.validacao)).toBeInTheDocument();
+    expect(m.invoke).not.toHaveBeenCalled();
   });
 
   it("PT404 no escopo durante edição = vínculo desatualizado + Recarregar lista", async () => {
@@ -528,11 +668,14 @@ describe("ADM-01 varredura de código (zero drift)", () => {
     expect(fonte).not.toMatch(/console\./);
   });
 
-  it("usa somente as 4 RPCs do escopo", () => {
-    const nomes = [...fonte.matchAll(/"([a-z_]+_adm)"/g)].map((x) => x[1]);
+  it("usa somente as 5 RPCs oficiais e a Edge admin-invite-user", () => {
+    const nomes = [...fonte.matchAll(/"([a-z_]+_(?:adm|organizacao))"/g)].map((x) => x[1]);
     expect(fonte.match(/supabase\.rpc/g)).toHaveLength(1);
+    expect(fonte.match(/functions\.invoke\(/g)).toHaveLength(1);
+    expect([...fonte.matchAll(/invoke\(\s*"([^"]+)"/g)].map((x) => x[1])).toEqual(["admin-invite-user"]);
+    expect(fonte).not.toMatch(/adm01-v1|auth\.users/);
     expect(new Set(nomes)).toEqual(
-      new Set(["listar_usuarios_vinculos_adm", "listar_escopo_contratos_usuario_adm", "listar_auditoria_vinculo_usuario_adm", "salvar_vinculo_usuario_adm"]),
+      new Set(["validar_administrador_organizacao", "listar_usuarios_vinculos_adm", "listar_escopo_contratos_usuario_adm", "listar_auditoria_vinculo_usuario_adm", "salvar_vinculo_usuario_adm"]),
     );
   });
 });

@@ -90,3 +90,19 @@ describe("ADM-01 classificação de erro contextual", () => {
     expect(classificarErroAdm("listar", e("500"), 500)).toBe("erro");
   });
 });
+
+describe("ADM-01 classificação da Edge admin-invite-user", () => {
+  it("mapeia status/código oficiais", async () => {
+    const { classificarErroConvite } = await import("@/lib/administracao/admUsuariosRpc");
+    expect(classificarErroConvite(401, "AUTH_NAO_AUTENTICADO")).toBe("sessaoInvalida");
+    expect(classificarErroConvite(401, "AUTH_SESSAO_INVALIDA")).toBe("sessaoInvalida");
+    expect(classificarErroConvite(403, "AUTH_ACESSO_NEGADO")).toBe("negado");
+    expect(classificarErroConvite(409, "CONFLITO_IDEMPOTENCIA")).toBe("conflitoIdempotencia");
+    expect(classificarErroConvite(409, "OPERACAO_EM_PROCESSAMENTO")).toBe("emProcessamento");
+    expect(classificarErroConvite(422, "DADOS_INVALIDOS")).toBe("validacao");
+    expect(classificarErroConvite(422, "CONVITE_NAO_ENVIADO")).toBe("conviteNaoEnviado");
+    expect(classificarErroConvite(413, "REQUISICAO_MUITO_GRANDE")).toBe("muitoGrande");
+    expect(classificarErroConvite(500, "X")).toBe("erro");
+    expect(classificarErroConvite(409, "OUTRO")).toBe("erro");
+  });
+});
