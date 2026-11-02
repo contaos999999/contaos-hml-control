@@ -5,7 +5,7 @@ import { Loader2, LogOut, ShieldAlert, ShieldCheck, UserPlus } from "lucide-reac
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ErroAdm, MENSAGENS_ADM01, listarUsuarios, type UsuarioVinculo } from "@/lib/administracao/admUsuariosRpc";
+import { ErroAdm, MENSAGENS_ADM01, listarUsuarios, validarAdministrador, type UsuarioVinculo } from "@/lib/administracao/admUsuariosRpc";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { AuditDrawer } from "./AuditDrawer";
 import { ContractScopeDialog, type ModoVinculo } from "./ContractScopeDialog";
@@ -80,11 +80,19 @@ export function AdminUsuarios() {
     return () => clearTimeout(t);
   }, [buscaTexto]);
 
+  const acesso = useQuery({
+    queryKey: ["adm01", "validar", idUsuario, org],
+    queryFn: () => validarAdministrador(org!),
+    enabled: !!idUsuario && !!org,
+    retry: false,
+  });
+  const admin = acesso.data === true;
+
   const p_ativo = situacao === "todos" ? null : situacao === "ativos";
   const consulta = useQuery({
     queryKey: ["adm01", "usuarios", idUsuario, org, pagina, busca, p_ativo],
     queryFn: () => listarUsuarios(org!, { pagina, busca, ativo: p_ativo }),
-    enabled: !!idUsuario && !!org,
+    enabled: !!idUsuario && !!org && admin,
     retry: false,
   });
 
@@ -152,7 +160,7 @@ export function AdminUsuarios() {
           </div>
           {fase === "sucesso" && (
             <Button type="button" className="h-11" onClick={() => (setAviso(null), setEditando({ tipo: "novo" }))}>
-              <UserPlus className="mr-2 h-4 w-4" aria-hidden /> Vincular usuário existente
+              <UserPlus className="mr-2 h-4 w-4" aria-hidden /> Convidar ou vincular usuário
             </Button>
           )}
         </div>
@@ -161,7 +169,7 @@ export function AdminUsuarios() {
           {aviso ?? (fase === "verificando" ? MENSAGENS_ADM01.verificando : fase === "carregando" ? MENSAGENS_ADM01.carregando : "")}
         </div>
 
-        {pronto && !erroSessao && fase !== "negado" && (
+        {pronto && admin && !erroSessao && fase !== "negado" && (
           <section aria-labelledby="adm01-filtros" className="grid gap-3 sm:grid-cols-[1fr_220px]">
             <h2 id="adm01-filtros" className="sr-only">
               Filtros
@@ -220,7 +228,7 @@ export function AdminUsuarios() {
             <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-foreground">
               {MENSAGENS_ADM01.erro}
             </div>
-            <Button type="button" className="h-11" onClick={() => (erroSessao ? setTentativa((n) => n + 1) : consulta.refetch())}>
+            <Button type="button" className="h-11" onClick={() => (erroSessao ? setTentativa((n) => n + 1) : acesso.error ? acesso.refetch() : consulta.refetch())}>
               Tentar novamente
             </Button>
           </div>
@@ -269,9 +277,9 @@ export function AdminUsuarios() {
           modo={editando}
           perfis={perfis}
           onFechar={() => setEditando(null)}
-          onSalvo={(c) => {
+          onSalvo={(c, extra) => {
             setEditando(null);
-            setAviso(`${MENSAGENS_ADM01.salvo} Referência: ${c}`);
+            setAviso(`${extra ?? MENSAGENS_ADM01.salvo} Referência: ${c}`);
             consulta.refetch();
           }}
           obterUsuarioAtual={obterUsuarioAtual}
