@@ -42,7 +42,7 @@ type Props = {
 // não implementadas; navegação por URL evita criar rotas fora do escopo.
 const navegarPadrao = (rota: string) => window.location.assign(rota);
 
-function ehErroDeCredencial(err: { status?: number; code?: string; message?: string }) {
+function ehErroDeCredencial(err: { status?: number | undefined; code?: string | undefined }) {
   if (err.status === 400 || err.status === 401 || err.status === 422) return true;
   return err.code === "invalid_credentials";
 }

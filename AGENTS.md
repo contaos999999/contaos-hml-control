@@ -40,3 +40,7 @@ Ambiente: HML. Supabase oficial conectado: `gklhhhyosgasnyoxlrui`.
 - Tudo deve ser documentado, registrado e versionado no GitHub.
 - Design System oficial: Executive Command Center + Audit Workspace.
 - Playwright, acessibilidade, responsividade 1440/1280/768/390 e Zero-Drift fazem parte do critério de pronto.
+
+## Decisões de frontend
+
+- Pós-login é resolvido por função pura em `src/lib/auth/` que só conta os vínculos devolvidos pela RLS; destinos oficiais `/selecionar-organizacao` e `/` — mantém autorização no backend e regra testável.

@@ -12,9 +12,9 @@ const m = vi.hoisted(() => {
   };
   const state: { r: { data: unknown; error: unknown } } = { r: { data: [], error: null } };
   const query: Record<string, unknown> = {};
-  query.select = () => query;
-  query.eq = () => query;
-  query.then = (res: (v: unknown) => void) => res(state.r);
+  query["select"] = () => query;
+  query["eq"] = () => query;
+  query["then"] = (res: (v: unknown) => void) => res(state.r);
   return { auth, state, query };
 });
 const auth = m.auth;
