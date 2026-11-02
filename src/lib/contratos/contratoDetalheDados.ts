@@ -39,19 +39,31 @@ export class ErroDetalhe extends Error {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const uuidValido = (v: string) => UUID.test(v);
+/** Forma canônica (PostgreSQL devolve uuid em minúsculas). */
+export const uuidCanonico = (v: string) => v.toLowerCase();
+
+function abortado(signal?: AbortSignal): never {
+  throw signal?.reason ?? new DOMException("Aborted", "AbortError");
+}
 
 function erroNegado(error: unknown, status?: number) {
   const code = (error as { code?: string } | null)?.code;
   return code === "42501" || code === "PGRST301" || status === 401 || status === 403;
 }
 
-async function classificar(id: string): Promise<never> {
+async function classificar(id: string, signal?: AbortSignal): Promise<never> {
+  if (signal?.aborted) abortado(signal);
+  let q = supabase.rpc("classificar_acesso_contrato_v106", { p_id_contrato: id });
+  if (signal) q = q.abortSignal(signal);
   let r: { data: unknown; error: unknown };
   try {
-    r = await supabase.rpc("classificar_acesso_contrato_v106", { p_id_contrato: id });
+    r = await q;
   } catch {
+    if (signal?.aborted) abortado(signal);
     throw new ErroDetalhe("erro");
   }
+  // Aborto não é dado nem 404: propaga cancelamento.
+  if (signal?.aborted) abortado(signal);
   if (r.error) throw new ErroDetalhe("erro");
   if (r.data === "negado") throw new ErroDetalhe("negado");
   if (r.data === "nao_encontrado") throw new ErroDetalhe("nao_encontrado");
@@ -59,8 +71,9 @@ async function classificar(id: string): Promise<never> {
   throw new ErroDetalhe("erro");
 }
 
-export async function obterContrato(id: string, signal?: AbortSignal): Promise<ContratoDetalhe> {
-  if (!uuidValido(id)) throw new ErroDetalhe("nao_encontrado");
+export async function obterContrato(idBruto: string, signal?: AbortSignal): Promise<ContratoDetalhe> {
+  if (!uuidValido(idBruto)) throw new ErroDetalhe("nao_encontrado");
+  const id = uuidCanonico(idBruto);
   let q = supabase.from("contratos").select(COLUNAS_DETALHE).eq("id", id);
   if (signal) q = q.abortSignal(signal);
   let r: { data: unknown; error: unknown; status?: number };
@@ -70,7 +83,7 @@ export async function obterContrato(id: string, signal?: AbortSignal): Promise<C
     throw new ErroDetalhe("erro");
   }
   if (r.error) throw new ErroDetalhe(erroNegado(r.error, r.status) ? "negado" : "erro");
-  if (!r.data) return classificar(id);
+  if (!r.data) return classificar(id, signal);
   return r.data as ContratoDetalhe;
 }
 
