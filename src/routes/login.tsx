@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Eye, FileSearch, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import { FileSearch, Lock, ShieldCheck, Sparkles } from "lucide-react";
 
 import { LoginForm } from "@/components/auth/LoginForm";
 
@@ -134,7 +134,7 @@ function LoginPage() {
             aria-labelledby="acesso-protegido-titulo"
             className="flex gap-3 rounded-xl border border-border bg-muted/50 p-4"
           >
-            <Eye className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
             <div>
               <h2 id="acesso-protegido-titulo" className="text-sm font-semibold text-foreground">
                 Acesso protegido
