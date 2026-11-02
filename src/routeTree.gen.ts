@@ -18,6 +18,7 @@ import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as SelecionarOrganizacaoRouteImport } from './routes/selecionar-organizacao'
 import { Route as AdministracaoUsuariosRouteImport } from './routes/administracao.usuarios'
 import { Route as ContratantesNovoRouteImport } from './routes/contratantes_.novo'
+import { Route as ContratosIdRouteImport } from './routes/contratos_.$id'
 import { Route as ContratosNovoRouteImport } from './routes/contratos_.novo'
 import { Route as ContratantesIdEditarRouteImport } from './routes/contratantes_.$id.editar'
 
@@ -66,6 +67,11 @@ const ContratantesNovoRoute = ContratantesNovoRouteImport.update({
   path: '/contratantes/novo',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContratosIdRoute = ContratosIdRouteImport.update({
+  id: '/contratos_/$id',
+  path: '/contratos/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContratosNovoRoute = ContratosNovoRouteImport.update({
   id: '/contratos_/novo',
   path: '/contratos/novo',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/contratantes/novo': typeof ContratantesNovoRoute
+  '/contratos/$id': typeof ContratosIdRoute
   '/contratos/novo': typeof ContratosNovoRoute
   '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
 }
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/contratantes/novo': typeof ContratantesNovoRoute
+  '/contratos/$id': typeof ContratosIdRoute
   '/contratos/novo': typeof ContratosNovoRoute
   '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/contratantes_/novo': typeof ContratantesNovoRoute
+  '/contratos_/$id': typeof ContratosIdRoute
   '/contratos_/novo': typeof ContratosNovoRoute
   '/contratantes_/$id/editar': typeof ContratantesIdEditarRoute
 }
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/selecionar-organizacao'
     | '/administracao/usuarios'
     | '/contratantes/novo'
+    | '/contratos/$id'
     | '/contratos/novo'
     | '/contratantes/$id/editar'
   fileRoutesByTo: FileRoutesByTo
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/selecionar-organizacao'
     | '/administracao/usuarios'
     | '/contratantes/novo'
+    | '/contratos/$id'
     | '/contratos/novo'
     | '/contratantes/$id/editar'
   id:
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/selecionar-organizacao'
     | '/administracao/usuarios'
     | '/contratantes_/novo'
+    | '/contratos_/$id'
     | '/contratos_/novo'
     | '/contratantes_/$id/editar'
   fileRoutesById: FileRoutesById
@@ -169,6 +181,7 @@ export interface RootRouteChildren {
   SelecionarOrganizacaoRoute: typeof SelecionarOrganizacaoRoute
   AdministracaoUsuariosRoute: typeof AdministracaoUsuariosRoute
   ContratantesNovoRoute: typeof ContratantesNovoRoute
+  ContratosIdRoute: typeof ContratosIdRoute
   ContratosNovoRoute: typeof ContratosNovoRoute
   ContratantesIdEditarRoute: typeof ContratantesIdEditarRoute
 }
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContratantesNovoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contratos_/$id': {
+      id: '/contratos_/$id'
+      path: '/contratos/$id'
+      fullPath: '/contratos/$id'
+      preLoaderRoute: typeof ContratosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contratos_/novo': {
       id: '/contratos_/novo'
       path: '/contratos/novo'
@@ -265,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   SelecionarOrganizacaoRoute: SelecionarOrganizacaoRoute,
   AdministracaoUsuariosRoute: AdministracaoUsuariosRoute,
   ContratantesNovoRoute: ContratantesNovoRoute,
+  ContratosIdRoute: ContratosIdRoute,
   ContratosNovoRoute: ContratosNovoRoute,
   ContratantesIdEditarRoute: ContratantesIdEditarRoute,
 }
