@@ -62,15 +62,18 @@ describe("SYS-02 Esqueci a senha", () => {
     expect(await screen.findByText(MENSAGENS_SYS02.falha)).toBeTruthy();
   });
 
-  it("429 mostra rate limit, sem nova chamada automática, permite tentativa manual", async () => {
-    m.reset.mockResolvedValue({ data: null, error: { status: 429, code: "over_email_send_rate_limit" } });
-    render(<ForgotPasswordForm />);
-    enviar("a@b.com");
-    expect(await screen.findByText(MENSAGENS_SYS02.rateLimit)).toBeTruthy();
-    await new Promise((r) => setTimeout(r, 50));
-    expect(m.reset).toHaveBeenCalledTimes(1);
-    expect((screen.getByRole("button", { name: "Enviar link" }) as HTMLButtonElement).disabled).toBe(false);
-  });
+  it.each(["over_email_send_rate_limit", "over_request_rate_limit"])(
+    "429 (%s) mostra exatamente a copy neutra de sucesso, sem nova chamada automática",
+    async (code) => {
+      m.reset.mockResolvedValue({ data: null, error: { status: 429, code } });
+      render(<ForgotPasswordForm />);
+      enviar("a@b.com");
+      expect(await screen.findByText(MENSAGENS_SYS02.sucesso)).toBeTruthy();
+      expect(screen.queryByText(/Muitas solicitações/)).toBeNull();
+      await new Promise((r) => setTimeout(r, 50));
+      expect(m.reset).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it("erro de rede mostra falha genérica", async () => {
     m.reset.mockRejectedValue(new TypeError("Failed to fetch"));
