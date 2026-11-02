@@ -15,24 +15,25 @@ export const MENSAGENS_SYS02 = {
   emailInvalido: "Informe um e-mail válido.",
   sucesso:
     "Se existir uma conta vinculada a este e-mail, você receberá as instruções para redefinir sua senha.",
-  rateLimit: "Muitas solicitações em pouco tempo. Aguarde alguns instantes e tente novamente.",
   falha: "Não foi possível enviar a solicitação agora. Tente novamente em instantes.",
   tooltipNeutro: "Por segurança, não informamos se o e-mail possui cadastro.",
 } as const;
 
 type Fase = "inicial" | "enviando" | "sucesso";
-type Erro = "rateLimit" | "falha" | null;
+type Erro = "falha" | null;
 
 // Erros cujo único efeito seria revelar existência/inexistência de conta.
 const CODIGOS_ENUMERACAO = new Set(["user_not_found", "email_not_found"]);
 
 export function classificarRespostaReset(
   error: { status?: number | undefined; code?: string | undefined } | null,
-): "sucesso" | "rateLimit" | "falha" {
+): "sucesso" | "falha" {
   if (!error) return "sucesso";
   if (error.code && CODIGOS_ENUMERACAO.has(error.code)) return "sucesso";
+  // Anti-enumeração: o limite por e-mail do Auth só atinge contas existentes,
+  // então 429 recebe a mesma resposta neutra do sucesso.
   if (error.status === 429 || error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit")
-    return "rateLimit";
+    return "sucesso";
   return "falha";
 }
 
