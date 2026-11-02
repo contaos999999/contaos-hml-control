@@ -153,7 +153,7 @@ async function invocar(nome: "storage-sign-upload" | "storage-sign-download", bo
     throw new ErroBn(st === 401 || st === 403 ? "negado" : "erro");
   }
   const d = r.data as Record<string, unknown> | null;
-  if (!d || d.ok !== true) throw new ErroBn("erro");
+  if (!d || d["ok"] !== true) throw new ErroBn("erro");
   return d;
 }
 async function sha256Hex(arquivo: File): Promise<string> {
@@ -172,7 +172,7 @@ async function sha256Hex(arquivo: File): Promise<string> {
 export async function enviarArquivo(org: string, contrato: string | null, arquivo: File): Promise<string> {
   const mime = arquivo.type.toLowerCase();
   const d = await invocar("storage-sign-upload", { id_organizacao: org, id_contrato: contrato, nome_arquivo: arquivo.name, mime, tamanho: arquivo.size });
-  if (d.usar_upload_resumivel === true) throw new ErroBn("resumivel");
+  if (d["usar_upload_resumivel"] === true) throw new ErroBn("resumivel");
   const { bucket, path, token } = d;
   if (typeof bucket !== "string" || typeof path !== "string" || typeof token !== "string") throw new ErroBn("erro");
   let up: { error: unknown };
@@ -201,7 +201,7 @@ export async function enviarArquivo(org: string, contrato: string | null, arquiv
 /** Download somente por ação explícita; abre apenas a signed_url https retornada. */
 export async function baixarArquivo(idArquivo: string): Promise<void> {
   const d = await invocar("storage-sign-download", { id_arquivo: idArquivo });
-  const u = d.signed_url;
+  const u = d["signed_url"];
   let ok = false;
   try { ok = typeof u === "string" && new URL(u).protocol === "https:"; } catch { ok = false; }
   if (!ok) throw new ErroBn("erro");
