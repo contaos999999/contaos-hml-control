@@ -8860,6 +8860,10 @@ export type Database = {
         Returns: Json
       }
       obter_mensagem_sistema: { Args: { p_codigo: string }; Returns: Json }
+      obter_resumo_dashboard: {
+        Args: { p_id_organizacao: string }
+        Returns: Json
+      }
       obter_saude_operacional: {
         Args: { p_id_organizacao: string }
         Returns: Json
