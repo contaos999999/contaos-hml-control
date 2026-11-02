@@ -141,13 +141,19 @@ describe("SYS-05 Dashboard", () => {
     expect(screen.queryByText(MENSAGENS_SYS05.negado)).toBeNull();
   });
 
-  it.each([[{ code: "42501", message: "Acesso negado ao resumo desta organização." }], [{ status: 403, message: "forbidden" }]])(
+  it.each([
+    [{ data: null, error: { code: "42501", message: "Acesso negado ao resumo desta organização." }, status: 403, statusText: "Forbidden" }],
+    // Shape real do supabase-js para HTTP 403: status no nível da resposta, sem `error.status` e sem code 42501.
+    [{ data: null, error: { code: "PGRST000", message: "forbidden", details: null, hint: null }, status: 403, statusText: "Forbidden" }],
+    [{ data: null, error: { code: "", message: "forbidden", details: null, hint: null }, status: 401, statusText: "Unauthorized" }],
+  ])(
     "denied %o: acesso negado com ações, nunca empty",
-    async (error) => {
-      m.rpc.mockResolvedValue({ data: null, error });
+    async (resposta) => {
+      m.rpc.mockResolvedValue(resposta);
       montar();
       expect(await screen.findByText(MENSAGENS_SYS05.negado)).toBeTruthy();
       expect(screen.queryByText(MENSAGENS_SYS05.vazio)).toBeNull();
+      expect(screen.queryByText(MENSAGENS_SYS05.erro)).toBeNull();
       expect(screen.queryByText(/resumo desta organização|forbidden/)).toBeNull();
       expect(screen.getByRole("link", { name: "Selecionar outra organização" }).getAttribute("href")).toBe("/selecionar-organizacao");
       expect(screen.getByRole("button", { name: "Sair da conta" })).toBeTruthy();

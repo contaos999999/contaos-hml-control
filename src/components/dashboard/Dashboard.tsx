@@ -67,10 +67,10 @@ class ErroResumo extends Error {
 }
 
 async function buscarResumo(idOrganizacao: string): Promise<ResumoDashboard> {
-  const { data, error } = await supabase.rpc("obter_resumo_dashboard", { p_id_organizacao: idOrganizacao });
+  const { data, error, status } = await supabase.rpc("obter_resumo_dashboard", { p_id_organizacao: idOrganizacao });
   if (error) {
-    const e = error as { code?: string; status?: number };
-    const negado = e.code === "42501" || e.code === "PGRST301" || e.status === 401 || e.status === 403;
+    const code = (error as { code?: string }).code;
+    const negado = code === "42501" || code === "PGRST301" || status === 401 || status === 403;
     throw new ErroResumo(negado ? "negado" : "erro");
   }
   const r = data as unknown as ResumoDashboard | null;
