@@ -80,7 +80,7 @@ export function ForgotPasswordForm() {
   return (
     <div className="space-y-5">
       <div aria-live="polite" className="sr-only">
-        {enviando ? "Enviando solicitação." : fase === "sucesso" ? MENSAGENS_SYS02.sucesso : ""}
+        {enviando ? "Enviando solicitação." : fase === "sucesso" ? "Solicitação recebida." : ""}
       </div>
 
       {fase === "sucesso" ? (
