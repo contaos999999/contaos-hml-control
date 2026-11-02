@@ -46,15 +46,8 @@ export function classificarErroOrganizacoes(
   return "erro";
 }
 
-// LACUNA DE TIPOS: a RPC certificada ainda não consta em types.ts (arquivo
-// gerado). Cast restrito à assinatura desta RPC; remover após regeneração.
-type RpcSemArgs = (
-  fn: "listar_organizacoes_disponiveis",
-) => PromiseLike<{ data: OrganizacaoDisponivel[] | null; error: { code?: string; status?: number } | null }>;
-
 export async function listarOrganizacoesDisponiveis(): Promise<OrganizacaoDisponivel[]> {
-  const rpc = (supabase.rpc as unknown as RpcSemArgs).bind(supabase);
-  const { data, error } = await rpc("listar_organizacoes_disponiveis");
+  const { data, error } = await supabase.rpc("listar_organizacoes_disponiveis");
   if (error) throw new ErroOrganizacoes(classificarErroOrganizacoes(error));
   return data ?? [];
 }
