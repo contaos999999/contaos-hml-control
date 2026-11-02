@@ -12,7 +12,13 @@ export function ContaOSMarca() {
         className="hidden h-8 w-auto shrink-0 sm:block"
       />
       <span className="flex shrink-0 items-center gap-2 sm:hidden">
-        <img src="/brand/ContaOS_Simbolo_Branco.svg" alt="" width={32} height={32} className="size-8 shrink-0" />
+        <img
+          src="/brand/ContaOS_Simbolo_Branco.svg"
+          alt=""
+          width={32}
+          height={32}
+          className="size-8 shrink-0"
+        />
         <span className="text-lg font-semibold tracking-tight">ContaOS</span>
       </span>
     </>
