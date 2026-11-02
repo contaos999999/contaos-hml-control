@@ -11,6 +11,8 @@ const m = vi.hoisted(() => ({
   nav: vi.fn(),
   rpc: vi.fn(),
   invoke: vi.fn(),
+  upload: vi.fn(),
+  bucket: [] as string[],
   rpcChamadas: [] as Array<{ nome: string; args: Record<string, unknown> }>,
   chamadas: [] as Chamada[],
   resposta: null as null | ((c: Chamada) => unknown),
@@ -37,7 +39,8 @@ vi.mock("@/integrations/supabase/client", () => {
     b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => Promise.resolve(m.rpc(nome, args)).then(res, rej);
     return b;
   };
-  return { supabase: { auth: { getUser: m.getUser }, from, rpc, functions: { invoke: m.invoke } } };
+  const storage = { from: (b: string) => { m.bucket.push(b); return { uploadToSignedUrl: (...a: unknown[]) => m.upload(...a) }; } };
+  return { supabase: { auth: { getUser: m.getUser }, from, rpc, functions: { invoke: m.invoke }, storage } };
 });
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.nav,
@@ -100,6 +103,8 @@ beforeEach(() => {
   m.nav.mockReset();
   m.rpc.mockReset();
   m.invoke.mockReset();
+  m.upload.mockReset();
+  m.bucket.length = 0;
   m.getUser.mockReset().mockResolvedValue({ data: { user: { id: U } }, error: null });
   window.sessionStorage.clear();
   definirPreferenciaOrganizacao(U, A);
@@ -424,6 +429,70 @@ describe("V1-07 mutações por RPC V107", () => {
     await waitFor(() => expect(m.rpcChamadas).toHaveLength(1));
     expect(m.rpcChamadas[0]!.nome).toBe("definir_aplicabilidade_fonte_v107");
     expect(m.rpcChamadas[0]!.args).toMatchObject({ p_id_organizacao: A, p_id_contrato: K1, p_id_versao: V1, p_aplicavel: true, p_fundamento: "Contrato prevê", p_atualizado_em_esperado: "2026-01-05T10:00:00Z" });
+  });
+});
+
+describe("V1-07 arquivos (Edges reais)", () => {
+  async function abrirVersaoArquivo() {
+    cenario({ fontes: [fonte(F1, "Lei do contrato", K1)], versoes: [] });
+    montar();
+    fireEvent.click(await screen.findByRole("button", { name: "Detalhes de Lei do contrato" }));
+    const det = await screen.findByRole("dialog");
+    fireEvent.click(await within(det).findByRole("button", { name: "Nova versão" }));
+    const dlg = await screen.findByRole("dialog", { name: "Nova versão" });
+    fireEvent.click(within(dlg).getByLabelText("Arquivo já aprovado"));
+    const arq = new File(["abc"], "Edital.PDF", { type: "APPLICATION/PDF" });
+    fireEvent.change(within(dlg).getByLabelText("Enviar novo arquivo"), { target: { files: [arq] } });
+    return { dlg, arq };
+  }
+  it("upload: sign-upload → uploadToSignedUrl(path, token) → confirmar_upload_arquivo com sha256; pendente; sem path/token na UI", async () => {
+    m.invoke.mockResolvedValue({ data: { ok: true, bucket: "contaos-documentos", path: "org-A/segredo/x.pdf", token: "tok-secreto", signed_url: "https://x", usar_upload_resumivel: false, limiar_upload_resumivel_bytes: 1 }, error: null });
+    m.upload.mockResolvedValue({ data: {}, error: null });
+    m.rpc.mockResolvedValue({ data: "arq-novo", error: null });
+    const { dlg, arq } = await abrirVersaoArquivo();
+    fireEvent.click(within(dlg).getByRole("button", { name: "Enviar arquivo" }));
+    await within(dlg).findByText(/Arquivo enviado e em análise de segurança/);
+    expect(m.invoke).toHaveBeenCalledWith("storage-sign-upload", { body: { id_organizacao: A, id_contrato: K1, nome_arquivo: "Edital.PDF", mime: "application/pdf", tamanho: 3 } });
+    expect(m.bucket).toEqual(["contaos-documentos"]);
+    expect(m.upload.mock.calls[0]!.slice(0, 3)).toEqual(["org-A/segredo/x.pdf", "tok-secreto", arq]);
+    const c = m.rpcChamadas.find((r) => r.nome === "confirmar_upload_arquivo")!;
+    expect(c.args).toEqual({ p_id_organizacao: A, p_id_contrato: K1, p_path: "org-A/segredo/x.pdf", p_nome_original: "Edital.PDF", p_mime: "application/pdf", p_tamanho: 3, p_sha256: "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", p_origem: "upload_usuario" });
+    expect(document.body.textContent).not.toMatch(/segredo|tok-secreto/);
+    expect(m.rpcChamadas.some((r) => r.nome === "registrar_versao_fonte_v107")).toBe(false);
+  });
+  it("usar_upload_resumivel=true interrompe sem upload nem confirmação", async () => {
+    m.invoke.mockResolvedValue({ data: { ok: true, bucket: "b", path: "p", token: "t", usar_upload_resumivel: true }, error: null });
+    const { dlg } = await abrirVersaoArquivo();
+    fireEvent.click(within(dlg).getByRole("button", { name: "Enviar arquivo" }));
+    await within(dlg).findByText("Upload retomável não está disponível nesta tela.");
+    expect(m.upload).not.toHaveBeenCalled();
+    expect(m.rpcChamadas).toHaveLength(0);
+  });
+  it("erro do Edge é sanitizado", async () => {
+    m.invoke.mockResolvedValue({ data: null, error: { message: "bucket contaos-documentos path x", context: { status: 500 } } });
+    const { dlg } = await abrirVersaoArquivo();
+    fireEvent.click(within(dlg).getByRole("button", { name: "Enviar arquivo" }));
+    await within(dlg).findByText(MENSAGENS_V107.erroEnvio);
+    expect(document.body.textContent).not.toMatch(/contaos-documentos|path x/);
+  });
+  it("download só por clique, por id_arquivo, abre apenas signed_url https retornada", async () => {
+    const abrir = vi.spyOn(window, "open").mockReturnValue(null);
+    cenario({ fontes: [fonte(F1, "Lei do contrato", K1)], versoes: [versao(V1, { id_arquivo: "arq-1" })] });
+    m.invoke.mockResolvedValue({ data: { ok: true, signed_url: "https://assinado/x", nome_arquivo: "a.pdf", valido_ate: "2026-01-01T00:00:00Z", timezone: "America/Sao_Paulo" }, error: null });
+    montar();
+    fireEvent.click(await screen.findByRole("button", { name: "Detalhes de Lei do contrato" }));
+    const det = await screen.findByRole("dialog");
+    await within(det).findByText("Versão 2", { exact: true });
+    expect(m.invoke).not.toHaveBeenCalled();
+    fireEvent.click(within(det).getByRole("button", { name: "Baixar arquivo da versão 2" }));
+    await waitFor(() => expect(abrir).toHaveBeenCalledWith("https://assinado/x", "_blank", "noopener,noreferrer"));
+    expect(m.invoke).toHaveBeenCalledWith("storage-sign-download", { body: { id_arquivo: "arq-1" } });
+    m.invoke.mockResolvedValue({ data: { ok: true, signed_url: "javascript:alert(1)" }, error: null });
+    abrir.mockClear();
+    fireEvent.click(within(det).getByRole("button", { name: "Baixar arquivo da versão 2" }));
+    await within(det).findByText(MENSAGENS_V107.erroDownload);
+    expect(abrir).not.toHaveBeenCalled();
+    abrir.mockRestore();
   });
 });
 

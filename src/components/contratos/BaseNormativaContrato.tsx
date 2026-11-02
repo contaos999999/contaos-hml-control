@@ -11,7 +11,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { ErroDetalhe, formatarDataBr, obterContrato, texto, uuidCanonico, uuidValido, type ContratoDetalhe } from "@/lib/contratos/contratoDetalheDados";
 import {
-  ErroBn, PAGINA_BN, LIMITE_TEXTO, SITUACOES_FONTE, chamarV107, formatarDataHoraBr, listarAplicabilidades, listarArquivos, listarFontes, listarVersoes,
+  ErroBn, PAGINA_BN, LIMITE_TEXTO, SITUACOES_FONTE, baixarArquivo, chamarV107, enviarArquivo, formatarDataHoraBr, listarAplicabilidades, listarArquivos, listarFontes, listarVersoes,
   obterTextoVersao, rotuloAplicabilidade, type Aplicabilidade, type Escopo, type Fonte, type TipoErroBn, type Versao,
 } from "@/lib/contratos/baseNormativaDados";
 
@@ -33,11 +33,15 @@ export const MENSAGENS_V107 = {
   obsoleto: "Este registro não está mais disponível. Recarregue a página.",
   semPermissao: "Você não tem permissão para esta ação.",
   erroAcao: "Não foi possível concluir a ação agora. Tente novamente em instantes.",
+  erroEnvio: "Não foi possível enviar o arquivo agora. Tente novamente em instantes.",
+  resumivel: "Upload retomável não está disponível nesta tela.",
+  enviado: "Arquivo enviado e em análise de segurança. Ele só poderá ser anexado após aprovação; use “Atualizar status”.",
+  erroDownload: "Não foi possível baixar o arquivo agora. Tente novamente em instantes.",
 } as const;
 
 const SECOES_FUTURAS = ["Orçamento", "Regras", "Documentos", "Competências"] as const;
 const MSG_ERRO_ACAO: Record<TipoErroBn, string> = {
-  conflito: MENSAGENS_V107.conflito, validacao: MENSAGENS_V107.validacao, obsoleto: MENSAGENS_V107.obsoleto, negado: MENSAGENS_V107.semPermissao, erro: MENSAGENS_V107.erroAcao,
+  conflito: MENSAGENS_V107.conflito, validacao: MENSAGENS_V107.validacao, obsoleto: MENSAGENS_V107.obsoleto, negado: MENSAGENS_V107.semPermissao, erro: MENSAGENS_V107.erroAcao, resumivel: MENSAGENS_V107.resumivel,
 };
 const tipoErro = (e: unknown): TipoErroBn => (e instanceof ErroBn ? e.tipo : "erro");
 const novaChave = () => crypto.randomUUID();
@@ -357,6 +361,7 @@ function DetalheFonte({ retorno, fonte, c, ctx, onFechar, onConcluir }: { retorn
                       <Button type="button" variant="outline" className="h-11" aria-expanded={expandida === v.id} onClick={() => setExpandida((x) => (x === v.id ? null : v.id))}>
                         {expandida === v.id ? "Ocultar texto" : `Ver texto registrado (versão ${v.versao})`}
                       </Button>
+                      {v.id_arquivo ? <BotaoDownload idArquivo={v.id_arquivo} versao={v.versao} /> : null}
                       <Button type="button" variant="outline" className="h-11" onClick={(e) => abrir(e, { tipo: "aprovar", v })}>Aprovar versão {v.versao}</Button>
                       <Button type="button" variant="outline" className="h-11" onClick={(e) => abrir(e, { tipo: "aplic", v, a })}>Definir aplicabilidade da versão {v.versao}</Button>
                     </div>
@@ -549,7 +554,7 @@ function DialogoVersao({ retorno, fonte, org, ctx, onFechar, onConcluir, onRecar
               <p className="text-xs text-muted-foreground">Arquivos em análise de segurança não podem ser anexados até serem aprovados.</p>
             </fieldset>
           )}
-          <p className="text-xs text-muted-foreground">O envio de novos arquivos ainda não está disponível nesta tela.</p>
+          {origem === "arquivo" ? <EnvioArquivo org={org} contrato={fonte.id_contrato} onEnviado={() => void arquivos.refetch()} /> : null}
           {falta ? <p role="alert" className="text-sm text-destructive">{falta}</p> : null}
           <RodapeErro erro={mut.error} onRecarregar={onRecarregar} />
         </div>
@@ -642,5 +647,54 @@ function Alerta({ mensagem, onRetry }: { mensagem: string; onRetry: () => void }
       <p className="flex items-start gap-2 text-sm"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />{mensagem}</p>
       <Button type="button" variant="outline" className="h-11" onClick={onRetry}><RefreshCw className="mr-2 h-4 w-4" aria-hidden /> Tentar novamente</Button>
     </div>
+  );
+}
+
+function EnvioArquivo({ org, contrato, onEnviado }: { org: string; contrato: string | null; onEnviado: () => void }) {
+  const [sel, setSel] = useState<File | null>(null);
+  const [estado, setEstado] = useState<"ocioso" | "enviando" | "enviado" | "erro" | "resumivel">("ocioso");
+  const enviar = async () => {
+    if (!sel || estado === "enviando") return;
+    setEstado("enviando");
+    try {
+      await enviarArquivo(org, contrato, sel);
+      setEstado("enviado");
+      onEnviado();
+    } catch (e) {
+      setEstado(e instanceof ErroBn && e.tipo === "resumivel" ? "resumivel" : "erro");
+    }
+  };
+  return (
+    <div className="space-y-2 rounded-lg border border-border p-3">
+      <label className="block text-sm">Enviar novo arquivo<input type="file" className="mt-1 block w-full text-sm" onChange={(e) => { setSel(e.target.files?.[0] ?? null); setEstado("ocioso"); }} /></label>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" className="h-11" disabled={!sel || estado === "enviando"} onClick={() => void enviar()}>{estado === "enviando" ? "Enviando…" : "Enviar arquivo"}</Button>
+        {estado === "enviado" ? <Button type="button" variant="outline" className="h-11" onClick={onEnviado}>Atualizar status</Button> : null}
+      </div>
+      <div aria-live="polite" className="text-sm">
+        {estado === "enviado" ? <p>{MENSAGENS_V107.enviado}</p> : null}
+        {estado === "erro" ? <p role="alert" className="text-destructive">{MENSAGENS_V107.erroEnvio}</p> : null}
+        {estado === "resumivel" ? <p role="alert" className="text-destructive">{MENSAGENS_V107.resumivel}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+function BotaoDownload({ idArquivo, versao }: { idArquivo: string; versao: number }) {
+  const [estado, setEstado] = useState<"ocioso" | "baixando" | "erro">("ocioso");
+  const baixar = async () => {
+    setEstado("baixando");
+    try {
+      await baixarArquivo(idArquivo);
+      setEstado("ocioso");
+    } catch {
+      setEstado("erro");
+    }
+  };
+  return (
+    <>
+      <Button type="button" variant="outline" className="h-11" disabled={estado === "baixando"} onClick={() => void baixar()}>{`Baixar arquivo da versão ${versao}`}</Button>
+      {estado === "erro" ? <p role="alert" className="w-full text-sm text-destructive">{MENSAGENS_V107.erroDownload}</p> : null}
+    </>
   );
 }
