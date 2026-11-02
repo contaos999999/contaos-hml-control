@@ -672,6 +672,62 @@ describe("ADM-01 auditoria", () => {
     expect(await within(dlg).findByText(/corr-aud-2/)).toBeInTheDocument();
     expect(chamadas("listar_auditoria_vinculo_usuario_adm").at(-1)!.p_pagina).toBe(2);
   });
+
+  const abrir = async () => {
+    montar();
+    fireEvent.click(await screen.findByRole("button", { name: "Ver auditoria de Ana Souza" }));
+    return screen.findByRole("dialog");
+  };
+
+  it("A/B: antes, depois e metadados aparecem integralmente, com ator, data e correlation_id", async () => {
+    handlers.listar_auditoria_vinculo_usuario_adm = () => {
+      const a = auditoria(1);
+      a.itens[0] = {
+        ...a.itens[0],
+        antes: { vinculo: { perfil: "analista", ativo: true, escopo_todos_contratos: false, inicio_em: "campo-antes-extra" } },
+        depois: { vinculo: { perfil: "administrador", ativo: false, escopo_todos_contratos: false }, contratos_ativados: ["ct-depois-extra"] },
+        metadados: { origem: "metadado-redigido-backend", ids_ocultos: 2 },
+      } as (typeof a.itens)[0];
+      return ok(a);
+    };
+    const dlg = await abrir();
+    expect(await within(dlg).findByText(/campo-antes-extra/)).toBeInTheDocument();
+    expect(within(dlg).getByText(/ct-depois-extra/)).toBeInTheDocument();
+    expect(within(dlg).getByText(/metadado-redigido-backend/)).toBeInTheDocument();
+    expect(within(dlg).getByText(/ids_ocultos/)).toBeInTheDocument();
+    expect(within(dlg).getByText(/corr-aud-1/)).toBeInTheDocument();
+    expect(within(dlg).getByText(/Admin Teste/)).toBeInTheDocument();
+    expect(within(dlg).getByText("02/11/2026 10:05")).toBeInTheDocument();
+  });
+
+  it("C: mostra carregando enquanto a RPC está pendente", async () => {
+    handlers.listar_auditoria_vinculo_usuario_adm = () => new Promise(() => undefined);
+    const dlg = await abrir();
+    expect(within(dlg).getByRole("status")).toHaveTextContent("Carregando auditoria…");
+  });
+
+  it("D: resposta vazia mostra estado vazio", async () => {
+    handlers.listar_auditoria_vinculo_usuario_adm = () => ok({ ...auditoria(1), total: 0, total_paginas: 0, itens: [] });
+    const dlg = await abrir();
+    expect(await within(dlg).findByText(MENSAGENS_ADM01.auditoriaVazia)).toBeInTheDocument();
+  });
+
+  it("E: erro mostra mensagem PT-BR sem detalhe técnico", async () => {
+    handlers.listar_auditoria_vinculo_usuario_adm = () => falha("XX000", 500);
+    const dlg = await abrir();
+    expect(await within(dlg).findByRole("alert")).toHaveTextContent(MENSAGENS_ADM01.erro);
+    expect(dlg).not.toHaveTextContent(/detalhe técnico|XX000/);
+    expect(within(dlg).getByRole("button", { name: "Tentar novamente" })).toBeInTheDocument();
+  });
+
+  it("F: paginação pede só a página solicitada à RPC", async () => {
+    const dlg = await abrir();
+    await within(dlg).findByText(/corr-aud-1/);
+    expect(chamadas("listar_auditoria_vinculo_usuario_adm")).toHaveLength(1);
+    fireEvent.click(within(dlg).getByRole("button", { name: "Próxima página da auditoria" }));
+    await within(dlg).findByText(/corr-aud-2/);
+    expect(chamadas("listar_auditoria_vinculo_usuario_adm").map((c) => [c.p_pagina, c.p_tamanho_pagina])).toEqual([[1, 20], [2, 20]]);
+  });
 });
 
 describe("ADM-01 varredura de código (zero drift)", () => {

@@ -97,10 +97,13 @@ export type EventoAuditoria = {
   correlation_id: string | null;
   evento: string;
   entidade: string;
+  id_entidade: string | null;
+  id_usuario_ator: string | null;
   ator_nome: string | null;
   ator_email: string | null;
-  antes: Record<string, unknown> | null;
-  depois: Record<string, unknown> | null;
+  antes: unknown;
+  depois: unknown;
+  metadados: unknown;
   criado_em: string;
 };
 export type ListaAuditoria = Pagina<EventoAuditoria>;
