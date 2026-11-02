@@ -26,7 +26,7 @@ export type ArquivoResumo = Pick<ArquivoRow, "id" | "nome_original" | "mime" | "
 export type Escopo = "ambos" | "contrato" | "global";
 export const SITUACOES_FONTE = ["rascunho", "ativa", "inativa", "revogada"] as const;
 
-export type TipoErroBn = "negado" | "erro" | "conflito" | "validacao" | "obsoleto";
+export type TipoErroBn = "negado" | "erro" | "conflito" | "validacao" | "obsoleto" | "resumivel";
 export class ErroBn extends Error {
   constructor(public tipo: TipoErroBn) {
     super(tipo);
@@ -119,6 +119,8 @@ type ArgsV107 = {
   salvar_fonte_normativa_v107: { p_id_organizacao: string; p_id_contrato: string | null; p_id_fonte: string | null; p_tipo: string; p_titulo: string; p_referencia: string | null; p_descricao: string | null; p_situacao: string; p_versao_esperada: number | null; p_chave_idempotencia: string };
   registrar_versao_fonte_v107: { p_id_organizacao: string; p_id_fonte: string; p_inicio_vigencia: string; p_fim_vigencia: string | null; p_id_arquivo: string | null; p_conteudo_texto: string | null; p_metadados: Record<string, never>; p_chave_idempotencia: string };
   aprovar_versao_fonte_v107: { p_id_organizacao: string; p_id_versao: string; p_hash_esperado: string; p_fundamento: string; p_chave_idempotencia: string };
+  // types.ts declara p_id_contrato como string; o HML aceita null (fonte global).
+  confirmar_upload_arquivo: { p_id_organizacao: string; p_id_contrato: string | null; p_path: string; p_nome_original: string; p_mime: string; p_tamanho: number; p_sha256: string; p_origem: "upload_usuario" };
   definir_aplicabilidade_fonte_v107: { p_id_organizacao: string; p_id_contrato: string; p_id_versao: string; p_aplicavel: boolean; p_fundamento: string; p_atualizado_em_esperado: string | null; p_chave_idempotencia: string };
 };
 export type NomeV107 = keyof ArgsV107;
@@ -134,7 +136,67 @@ export function classificarErroRpc(error: unknown): TipoErroBn {
   return "erro";
 }
 
-export async function chamarV107<N extends NomeV107>(nome: N, args: ArgsV107[N]): Promise<{ correlationId: string | null }> {
+// ---------- Arquivos (Edges existentes storage-sign-upload / storage-sign-download) ----------
+function statusEdge(error: unknown): number | undefined {
+  const c = (error as { context?: { status?: unknown } } | null)?.context;
+  return typeof c?.status === "number" ? c.status : undefined;
+}
+async function invocar(nome: "storage-sign-upload" | "storage-sign-download", body: Record<string, unknown>): Promise<Record<string, unknown>> {
+  let r: { data: unknown; error: unknown };
+  try {
+    r = await supabase.functions.invoke(nome, { body });
+  } catch {
+    throw new ErroBn("erro");
+  }
+  if (r.error) {
+    const st = statusEdge(r.error);
+    throw new ErroBn(st === 401 || st === 403 ? "negado" : "erro");
+  }
+  const d = r.data as Record<string, unknown> | null;
+  if (!d || d.ok !== true) throw new ErroBn("erro");
+  return d;
+}
+async function sha256Hex(arquivo: File): Promise<string> {
+  const bytes = await arquivo.arrayBuffer();
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return Array.from(h, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+/** Upload simples: retorna o id do arquivo (status inicial pendente). Nunca expõe path/token. */
+export async function enviarArquivo(org: string, contrato: string | null, arquivo: File): Promise<string> {
+  const mime = arquivo.type.toLowerCase();
+  const d = await invocar("storage-sign-upload", { id_organizacao: org, id_contrato: contrato, nome_arquivo: arquivo.name, mime, tamanho: arquivo.size });
+  if (d.usar_upload_resumivel === true) throw new ErroBn("resumivel");
+  const { bucket, path, token } = d;
+  if (typeof bucket !== "string" || typeof path !== "string" || typeof token !== "string") throw new ErroBn("erro");
+  let up: { error: unknown };
+  try {
+    up = await supabase.storage.from(bucket).uploadToSignedUrl(path, token, arquivo);
+  } catch {
+    throw new ErroBn("erro");
+  }
+  if (up.error) throw new ErroBn("erro");
+  const sha = await sha256Hex(arquivo);
+  let r: { data: unknown; error: unknown };
+  try {
+    r = await rpcV107("confirmar_upload_arquivo", { p_id_organizacao: org, p_id_contrato: contrato, p_path: path, p_nome_original: arquivo.name, p_mime: mime, p_tamanho: arquivo.size, p_sha256: sha, p_origem: "upload_usuario" });
+  } catch {
+    throw new ErroBn("erro");
+  }
+  if (r.error) throw new ErroBn(classificarErroRpc(r.error));
+  if (typeof r.data !== "string") throw new ErroBn("erro");
+  return r.data;
+}
+/** Download somente por ação explícita; abre apenas a signed_url https retornada. */
+export async function baixarArquivo(idArquivo: string): Promise<void> {
+  const d = await invocar("storage-sign-download", { id_arquivo: idArquivo });
+  const u = d.signed_url;
+  let ok = false;
+  try { ok = typeof u === "string" && new URL(u).protocol === "https:"; } catch { ok = false; }
+  if (!ok) throw new ErroBn("erro");
+  window.open(u as string, "_blank", "noopener,noreferrer");
+}
+
+export async function chamarV107<N extends Exclude<NomeV107, "confirmar_upload_arquivo">>(nome: N, args: ArgsV107[N]): Promise<{ correlationId: string | null }> {
   let r: { data: unknown; error: unknown };
   try {
     r = await rpcV107(nome, args);
