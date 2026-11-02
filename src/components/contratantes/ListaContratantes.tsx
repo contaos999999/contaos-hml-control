@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import {
   ErroContratantes,
+  buscaContemAsterisco,
   formatarDataHora,
   formatarDocumento,
   listarContratantes,
@@ -28,6 +29,8 @@ export const MENSAGENS_V101 = {
   negado: "Você não tem acesso aos contratantes desta organização.",
   erro: "Não foi possível carregar os contratantes agora. Tente novamente em instantes.",
   erroSessao: "Não foi possível verificar sua sessão agora. Tente novamente em instantes.",
+  buscaAsterisco: "O caractere * não é permitido na busca.",
+  buscaInvalidaLista: "Corrija a busca para ver os contratantes.",
 } as const;
 
 const foco = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
@@ -45,7 +48,7 @@ function DicaSituacao() {
               e.preventDefault();
               setAberta(true);
             }}
-            className={`inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted-foreground ${foco}`}
+            className={`-my-3 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-muted-foreground ${foco}`}
           >
             <Info className="h-3.5 w-3.5" aria-hidden />
           </button>
@@ -233,6 +236,7 @@ export function ListaContratantes() {
 
   // Debounce da busca: só a busca aplicada vai ao backend; sempre volta à página 1.
   useEffect(() => {
+    if (buscaContemAsterisco(buscaDigitada)) return;
     const t = setTimeout(() => {
       const v = buscaDigitada.trim();
       setBusca((atual) => {
@@ -244,6 +248,7 @@ export function ListaContratantes() {
   }, [buscaDigitada]);
 
   const pronto = !!idUsuario && !!idOrganizacao;
+  const buscaInvalida = buscaContemAsterisco(buscaDigitada);
 
   const acesso = useQuery({
     queryKey: ["contratantes", "acesso", idUsuario, idOrganizacao],
@@ -256,7 +261,7 @@ export function ListaContratantes() {
   const consulta = useQuery({
     queryKey: ["contratantes", "lista", idUsuario, idOrganizacao, situacao, busca, pagina],
     queryFn: () => listarContratantes({ idOrganizacao: idOrganizacao!, pagina, busca, situacao }),
-    enabled: pronto && acesso.isSuccess,
+    enabled: pronto && acesso.isSuccess && !buscaInvalida,
     retry: false,
   });
 
@@ -288,7 +293,7 @@ export function ListaContratantes() {
   const tipoErro = (e: unknown) => (e instanceof ErroContratantes ? e.tipo : "erro");
   const ajustandoPagina = !!dados && dados.itens.length === 0 && dados.total > 0 && dados.pagina > 1;
 
-  type Fase = "verificando" | "erroSessao" | "carregando" | "negado" | "erro" | "vazio" | "vazioFiltro" | "sucesso";
+  type Fase = "verificando" | "erroSessao" | "carregando" | "negado" | "erro" | "buscaInvalida" | "vazio" | "vazioFiltro" | "sucesso";
   const fase: Fase = erroSessao
     ? "erroSessao"
     : verificando || !pronto
@@ -299,7 +304,9 @@ export function ListaContratantes() {
           : "erro"
         : !acesso.isSuccess
           ? "carregando"
-          : consulta.isError && !erroFaixa
+          : buscaInvalida
+            ? "buscaInvalida"
+            : consulta.isError && !erroFaixa
             ? tipoErro(consulta.error) === "negado"
               ? "negado"
               : "erro"
@@ -347,9 +354,16 @@ export function ListaContratantes() {
                   type="search"
                   maxLength={100}
                   value={buscaDigitada}
+                  aria-invalid={buscaInvalida || undefined}
+                  aria-describedby={buscaInvalida ? "v101-busca-erro" : undefined}
                   onChange={(e) => setBuscaDigitada(e.target.value)}
                   className={`h-11 w-full rounded-md border border-input bg-background px-3 text-sm ${foco}`}
                 />
+                {buscaInvalida && (
+                  <p id="v101-busca-erro" role="alert" className="text-sm text-destructive">
+                    {MENSAGENS_V101.buscaAsterisco}
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="v101-situacao" className="text-sm font-medium">
@@ -425,6 +439,7 @@ export function ListaContratantes() {
               </Button>
             </div>
           )}
+          {fase === "buscaInvalida" && <p className="text-sm text-muted-foreground">{MENSAGENS_V101.buscaInvalidaLista}</p>}
           {fase === "vazio" && <p role="status" className="text-sm text-muted-foreground">{MENSAGENS_V101.vazio}</p>}
           {fase === "vazioFiltro" && (
             <div role="status" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
