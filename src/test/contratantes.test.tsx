@@ -313,7 +313,7 @@ describe("V1-01 apresentação", () => {
     await screen.findByText(MENSAGENS_V101.vazio);
     fireEvent.change(screen.getByLabelText("Situação"), { target: { value: "inativo" } });
     expect(await screen.findByText(MENSAGENS_V101.vazioFiltro)).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: "Limpar filtros" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Limpar filtros" })[0]!);
     expect(await screen.findByText(MENSAGENS_V101.vazio)).toBeInTheDocument();
   });
 });
