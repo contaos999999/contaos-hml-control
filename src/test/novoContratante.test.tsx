@@ -13,7 +13,7 @@ const m = vi.hoisted(() => ({
   rpc: vi.fn(),
   invoke: vi.fn(),
   chamadas: [] as Array<{ tabela: string; ops: Array<[string, unknown[]]> }>,
-  respostas: {} as Record<string, (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown>,
+  respostas: {} as { vinculos_usuarios?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown; contratantes?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown },
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -29,7 +29,7 @@ vi.mock("@/integrations/supabase/client", () => {
     }
     b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => {
       try {
-        return Promise.resolve(m.respostas[tabela]?.(c)).then(res, rej);
+        return Promise.resolve(m.respostas[tabela as "contratantes"]?.(c)).then(res, rej);
       } catch (e) {
         return Promise.reject(e).then(res, rej);
       }
@@ -99,7 +99,7 @@ beforeEach(() => {
 
 describe("V1-02 rota", () => {
   it("1 head PT-BR com noindex", () => {
-    const head = (Route as unknown as { options: { head: () => { meta: Array<Record<string, string>> } } }).options.head();
+    const head = (Route as unknown as { options: { head: () => { meta: Array<{ title?: string; name?: string; content?: string }> } } }).options.head();
     expect(head.meta).toContainEqual({ title: "Novo contratante — ContaOS" });
     expect(head.meta).toContainEqual({ name: "robots", content: "noindex" });
     expect(head.meta.find((x) => x.name === "description")?.content).toMatch(/contratante/);
