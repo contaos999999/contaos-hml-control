@@ -137,7 +137,18 @@ beforeEach(() => {
     salvar_vinculo_usuario_adm: () => ok({ schema_versao: "adm01-v2", correlation_id: "corr-ok-1", id_usuario: "u-a", vinculo: {} }),
   };
   m.rpc.mockImplementation(async (nome: RpcNome, a: Args) => handlers[nome](a));
-  m.invoke.mockResolvedValue({ data: { codigo: "USUARIO_EXISTENTE", id_usuario: "u-novo", correlation_id: "corr-edge-1" }, error: null });
+  m.invoke.mockResolvedValue({
+    data: {
+      ok: true,
+      codigo: "USUARIO_EXISTENTE",
+      titulo: "Usuário existente",
+      mensagem: "Conta existente localizada.",
+      usuario: { id_usuario: "u-novo", email: "nova@exemplo.com", nome: "Nova Pessoa" },
+      convite_enviado: false,
+      proxima_acao: "salvar_vinculo_usuario_adm",
+    },
+    error: null,
+  });
 });
 const edgeFalha = (status: number, codigo: string) => ({
   data: null,
@@ -496,7 +507,7 @@ describe("ADM-01 vínculo novo e PT404 contextual", () => {
     fireEvent.change(within(dlg).getByLabelText("Perfil de acesso"), { target: { value: "analista" } });
   };
 
-  it("convite: Edge com body exato e depois RPC salvar com id retornado e 10 argumentos", async () => {
+  it("resposta oficial da Edge: usuario.id_usuario u-novo segue para RPC salvar com 10 argumentos", async () => {
     const dlg = await abrirNovo();
     expect(chamadas("listar_escopo_contratos_usuario_adm")[0]).toMatchObject({ p_id_usuario: null, p_pagina: 1, p_tamanho_pagina: 25 });
     preencher(dlg);
@@ -531,7 +542,18 @@ describe("ADM-01 vínculo novo e PT404 contextual", () => {
   });
 
   it("USUARIO_CONVIDADO mostra aviso de convite", async () => {
-    m.invoke.mockResolvedValue({ data: { codigo: "USUARIO_CONVIDADO", id_usuario: "u-novo" }, error: null });
+    m.invoke.mockResolvedValue({
+      data: {
+        ok: true,
+        codigo: "USUARIO_CONVIDADO",
+        titulo: "Usuário convidado",
+        mensagem: "Convite enviado.",
+        usuario: { id_usuario: "u-novo", email: "nova@exemplo.com", nome: null },
+        convite_enviado: true,
+        proxima_acao: "salvar_vinculo_usuario_adm",
+      },
+      error: null,
+    });
     const dlg = await abrirNovo();
     preencher(dlg);
     salvar(dlg);
