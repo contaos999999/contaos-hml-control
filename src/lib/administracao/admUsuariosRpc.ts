@@ -175,7 +175,7 @@ export function salvarVinculo(payload: PayloadSalvar, chave: string, op: "salvar
 
 // ---- Edge Function oficial admin-invite-user (verify_jwt=true; JWT anexado pelo cliente existente) ----
 export type CorpoConvite = { id_organizacao: string; email: string; nome?: string; chave_idempotencia: string };
-export type RespostaConvite = { codigo: "USUARIO_EXISTENTE" | "USUARIO_CONVIDADO"; id_usuario: string; correlation_id: string | null };
+export type RespostaConvite = { codigo: "USUARIO_EXISTENTE" | "USUARIO_CONVIDADO"; id_usuario: string };
 
 export function classificarErroConvite(status: number, codigo: string | null): TipoErro {
   if (status === 401) return "sessaoInvalida";
@@ -189,8 +189,8 @@ export function classificarErroConvite(status: number, codigo: string | null): T
 }
 
 function lerCodigo(b: unknown): string | null {
-  const o = b as { codigo?: unknown; code?: unknown; resultado?: unknown } | null;
-  const c = o?.codigo ?? o?.code ?? o?.resultado;
+  const o = b as { codigo?: unknown } | null;
+  const c = o?.codigo;
   return typeof c === "string" ? c : null;
 }
 
@@ -207,11 +207,11 @@ export async function convidarUsuario(corpo: CorpoConvite): Promise<RespostaConv
     const corpoErro = ctx?.json ? await ctx.json().catch(() => null) : null;
     throw new ErroAdm(classificarErroConvite(status, lerCodigo(corpoErro)));
   }
-  const d = resp.data as { id_usuario?: unknown; usuario?: { id?: unknown }; correlation_id?: unknown } | null;
-  const codigo = lerCodigo(d);
-  const id = typeof d?.id_usuario === "string" ? d.id_usuario : typeof d?.usuario?.id === "string" ? d.usuario.id : null;
+  const d = resp.data as { codigo?: unknown; usuario?: { id_usuario?: unknown } } | null;
+  const codigo = d?.codigo;
+  const id = typeof d?.usuario?.id_usuario === "string" ? d.usuario.id_usuario : null;
   if ((codigo !== "USUARIO_EXISTENTE" && codigo !== "USUARIO_CONVIDADO") || !id) throw new ErroAdm("erro");
-  return { codigo, id_usuario: id, correlation_id: typeof d?.correlation_id === "string" ? d.correlation_id : null };
+  return { codigo, id_usuario: id };
 }
 
 export function textoErro(e: unknown): string {
