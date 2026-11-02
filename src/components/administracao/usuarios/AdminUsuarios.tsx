@@ -112,15 +112,21 @@ export function AdminUsuarios() {
   const pronto = !!idUsuario && !!org;
   const fase = erroSessao
     ? "erro"
-    : verificando || !pronto
+    : verificando || !pronto || acesso.isPending
       ? "verificando"
-      : consulta.isPending
-        ? "carregando"
-        : consulta.error
-          ? consulta.error instanceof ErroAdm && consulta.error.tipo === "negado"
-            ? "negado"
-            : "erro"
-          : "sucesso";
+      : acesso.error
+        ? acesso.error instanceof ErroAdm && acesso.error.tipo === "negado"
+          ? "negado"
+          : "erro"
+        : !admin
+          ? "negado"
+          : consulta.isPending
+            ? "carregando"
+            : consulta.error
+              ? consulta.error instanceof ErroAdm && consulta.error.tipo === "negado"
+                ? "negado"
+                : "erro"
+              : "sucesso";
   const d = fase === "sucesso" ? consulta.data : undefined;
   const perfis = d?.perfis_disponiveis ?? [];
 
