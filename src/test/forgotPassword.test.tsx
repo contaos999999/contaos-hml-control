@@ -45,7 +45,7 @@ describe("SYS-02 Esqueci a senha", () => {
     render(<ForgotPasswordForm />);
     enviar("a@b.com");
     expect(await screen.findByText(MENSAGENS_SYS02.sucesso)).toBeTruthy();
-    expect(m.reset.mock.calls[0][1].redirectTo).toMatch(/\/redefinir-senha$/);
+    expect(m.reset.mock.calls[0]?.[1]?.redirectTo).toMatch(/\/redefinir-senha$/);
   });
 
   it("erro que revela conta vira a mesma copy neutra", async () => {
