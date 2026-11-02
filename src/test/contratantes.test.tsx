@@ -14,14 +14,14 @@ const m = vi.hoisted(() => ({
   rpc: vi.fn(),
   invoke: vi.fn(),
   chamadas: [] as Array<{ tabela: string; ops: Array<[string, unknown[]]> }>,
-  respostas: {} as Record<string, (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown>,
+  respostas: {} as { organizacoes?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown; contratantes?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown },
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
   const from = (tabela: string) => {
     const c = { tabela, ops: [] as Array<[string, unknown[]]> };
     m.chamadas.push(c);
-    const b: Record<string, unknown> = {};
+    const b: { [k: string]: unknown; then?: unknown } = {};
     for (const op of ["select", "eq", "or", "order", "range", "maybeSingle", "ilike", "insert", "update", "delete", "upsert"]) {
       b[op] = (...args: unknown[]) => {
         c.ops.push([op, args]);
@@ -30,7 +30,7 @@ vi.mock("@/integrations/supabase/client", () => {
     }
     b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => {
       try {
-        const r = m.respostas[tabela]?.(c);
+        const r = m.respostas[tabela as "organizacoes" | "contratantes"]?.(c);
         return Promise.resolve(r).then(res, rej);
       } catch (e) {
         return Promise.reject(e).then(res, rej);
@@ -102,7 +102,7 @@ beforeEach(() => {
 describe("V1-01 rota e sessão", () => {
   it("head com título único e componente renderiza h1", async () => {
     const head = (Route as unknown as { options: { head: () => { meta: Array<Record<string, string>> } } }).options.head();
-    expect(head.meta.find((x) => x.title)?.title).toBe("Contratantes — ContaOS");
+    expect(head.meta.find((x) => x["title"])?.["title"]).toBe("Contratantes — ContaOS");
     montar();
     expect(await screen.findByRole("heading", { level: 1, name: "Contratantes" })).toBeInTheDocument();
   });
