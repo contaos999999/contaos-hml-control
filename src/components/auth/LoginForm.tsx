@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   resolverDestinoPosLogin,
   type VinculoUsuario,
@@ -208,16 +209,23 @@ export function LoginForm({ onNavegar = navegarPadrao }: Props) {
             aria-describedby={erroSenha ? "login-senha-erro" : undefined}
             className="h-11 pr-12"
           />
-          <button
-            type="button"
-            onClick={() => setMostrarSenha((v) => !v)}
-            aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
-            aria-pressed={mostrarSenha}
-            aria-controls="login-senha"
-            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            {mostrarSenha ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
-          </button>
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => setMostrarSenha((v) => !v)}
+                aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                aria-pressed={mostrarSenha}
+                aria-controls="login-senha"
+                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {mostrarSenha ? <EyeOff className="h-4 w-4" aria-hidden /> : <Eye className="h-4 w-4" aria-hidden />}
+              </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">{mostrarSenha ? "Ocultar senha" : "Mostrar senha"}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         {erroSenha && (
           <p id="login-senha-erro" role="alert" className="flex items-center gap-1 text-sm text-destructive">
