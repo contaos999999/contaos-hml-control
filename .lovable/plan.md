@@ -19,18 +19,15 @@ Ambiente: HML `gklhhhyosgasnyoxlrui`. Nenhuma alteração de backend, Auth confi
 ## 3. Arquivos exatos
 
 Novos:
-- `src/routes/esqueci-senha.tsx` — rota pública com head() próprio (título/descrição/og PT-BR).
+- `src/routes/esqueci-senha.tsx` — rota pública com head() próprio (título/descrição/og PT-BR). Reproduz a linguagem visual aprovada do SYS-01 (painel institucional escuro em desktop, faixa compacta em 768/390, cartão à direita) com markup próprio e mínimo, usando apenas tokens existentes. Nada é importado nem movido de `login.tsx`.
 - `src/components/auth/ForgotPasswordForm.tsx` — formulário e estados.
-- `src/components/auth/AuthShell.tsx` — **decisão para aprovação:** mover `Marca`, `BadgeAmbiente`, `PainelInstitucional` e `PILARES` de `login.tsx` para cá, **sem mudar nenhuma linha visual**, para reaproveitar o Auth Shell. Alternativa, se preferir zero toque em login.tsx além do link: duplicar o painel em `esqueci-senha.tsx` (gera drift visual futuro; não recomendado).
 - `src/test/forgotPassword.test.tsx` — testes unitários SYS-02.
-- `docs/frontend/lovable/SYS-02-esqueci-senha.md` — plano, evidências, PASS/FAIL, lacunas.
 
-Alterados (mínimo):
-- `src/components/auth/LoginForm.tsx` — apenas um `<Link to="/esqueci-senha">Esqueci minha senha</Link>` junto ao rótulo/campo Senha.
-- `src/routes/login.tsx` — somente se a extração do AuthShell for aprovada (troca do bloco local por import).
+Alterado (mínimo):
+- `src/components/auth/LoginForm.tsx` — apenas um `<Link to="/esqueci-senha">Esqueci minha senha</Link>` junto ao campo Senha. Nenhuma outra linha alterada.
 - `src/routeTree.gen.ts` — regenerado automaticamente.
 
-Não serão tocados: AGENTS.md, `__root.tsx`, `index.tsx`, `start.ts`, `src/integrations/**`, `styles.css`, package.json, supabase/**.
+Não serão tocados: `src/routes/login.tsx`, AGENTS.md, `__root.tsx`, `index.tsx`, `start.ts`, `src/integrations/**`, `styles.css`, package.json, supabase/**, docs/**. Evidências e PASS/FAIL serão entregues no chat para versionamento no GitHub canônico pelo orquestrador; nenhuma documentação canônica será criada no sandbox.
 
 ## 4. Estados e copy (PT-BR)
 
@@ -40,7 +37,7 @@ Não serão tocados: AGENTS.md, `__root.tsx`, `index.tsx`, `start.ts`, `src/inte
 | e-mail inválido | validação local, Supabase não é chamado, `aria-invalid` + erro ligado por `aria-describedby`, foco volta ao campo | "Informe um e-mail válido." |
 | enviando | botão desabilitado + spinner, `aria-busy`, aria-live | "Enviando…" |
 | sucesso (resposta aceita) | formulário substituído por painel neutro com ícone + texto (não só cor); campo não reexibe e-mail completo | "Se existir uma conta vinculada a este e-mail, você receberá as instruções para redefinir sua senha." + "Verifique também a caixa de spam." |
-| rate limit (HTTP 429 / `over_email_send_rate_limit`) | botão bloqueado por 60 s com contagem visível; sem reenvio automático | "Muitas solicitações em pouco tempo. Aguarde alguns instantes e tente novamente." |
+| rate limit (HTTP 429 / `over_email_send_rate_limit`) | sem cooldown fixo no código. Se a resposta trouxer prazo (header `Retry-After` ou tempo informado no erro do Auth), exibe esse tempo e mantém o botão desabilitado até ele; se não trouxer, exibe só a copy segura e o botão fica disponível para nova tentativa manual. Nunca há reenvio automático | "Muitas solicitações em pouco tempo. Aguarde alguns instantes e tente novamente." (+ "Tente novamente em N s." apenas quando o backend informar) |
 | erro de rede/serviço | mensagem genérica, sem detalhe técnico; reenvio só por clique | "Não foi possível enviar a solicitação agora. Verifique sua conexão e tente novamente." |
 
 - Ação "Voltar ao login" (Link para `/login`) visível em todos os estados.
@@ -61,7 +58,7 @@ Unitários (vitest, Supabase mockado):
 2. duplo clique durante envio gera 1 chamada;
 3. sucesso mostra copy neutra exata e passa `redirectTo` terminando em `/redefinir-senha`;
 4. erro de "usuário inexistente" mostra a mesma copy de sucesso;
-5. 429 mostra mensagem de rate limit e bloqueia botão; erro de rede mostra mensagem genérica; sem nova chamada automática.
+5. 429 sem prazo mostra copy segura e permite nova tentativa manual; 429 com prazo informado bloqueia até o prazo; erro de rede mostra mensagem genérica; sem nova chamada automática.
 
 Playwright/HML:
 6. `/esqueci-senha` abre (200), h1 único;
@@ -77,7 +74,7 @@ Playwright/HML:
 - LACUNA DE AUTH/REDIRECT: allowlist de `/redefinir-senha` não verificável pelo sandbox — requer conferência no painel HML pelo responsável.
 - Rate limit de e-mail e SMTP do HML (padrão Supabase é baixo) podem limitar o teste 8; não serão alterados.
 - DEPENDÊNCIA DE FRONTEND: SYS-03 `/redefinir-senha`.
-- Decisão pendente: extrair AuthShell (recomendado) vs duplicar painel.
+- Risco registrado: o visual do SYS-02 replica o SYS-01 por markup próprio; ajustes futuros de marca precisarão ser feitos nas duas telas (sem drift funcional).
 
 ## 8. Confirmação
 
