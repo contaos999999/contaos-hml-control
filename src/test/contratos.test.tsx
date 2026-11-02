@@ -13,7 +13,7 @@ const m = vi.hoisted(() => ({
   rpc: vi.fn(),
   invoke: vi.fn(),
   chamadas: [] as Array<{ tabela: string; ops: Array<[string, unknown[]]> }>,
-  respostas: {} as Record<string, (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown>,
+  respostas: {} as { organizacoes?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown; contratos?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown },
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
@@ -29,7 +29,7 @@ vi.mock("@/integrations/supabase/client", () => {
     }
     b.then = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => {
       try {
-        return Promise.resolve(m.respostas[tabela]?.(c)).then(res, rej);
+        return Promise.resolve(m.respostas[tabela as "organizacoes" | "contratos"]?.(c)).then(res, rej);
       } catch (e) {
         return Promise.reject(e).then(res, rej);
       }
