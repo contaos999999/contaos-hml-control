@@ -462,6 +462,8 @@ describe("ADM-01 salvar, concorrência (091) e idempotência (092)", () => {
     await within(dlg).findByText(MENSAGENS_ADM01.erroSalvar);
     fireEvent.click(within(dlg).getByRole("button", { name: "Cancelar" }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    // O fechamento conclui após onCloseAutoFocus do Radix (assíncrono); aguarda o ciclo terminar.
+    await new Promise((r) => setTimeout(r, 20));
     fireEvent.click(screen.getByRole("button", { name: "Editar vínculo de Ana Souza" }));
     dlg = await screen.findByRole("dialog");
     await within(dlg).findByLabelText("Contrato CT-c1 — Objeto c1");
