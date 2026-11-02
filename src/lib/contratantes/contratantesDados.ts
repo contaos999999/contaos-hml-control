@@ -57,15 +57,18 @@ export async function verificarAcessoOrganizacao(idOrganizacao: string): Promise
 }
 
 /**
- * Valor seguro para `.or()`: escapa curingas LIKE (`\ % _`), adiciona `*` do
- * PostgREST e envolve em aspas duplas (escapando `"` e `\`), de modo que
- * vírgulas, parênteses e pontos não alterem a sintaxe do filtro.
+ * Valor seguro para `.or()` (sintaxe PostgREST crua):
+ * 1) trim + limite de 100 caracteres;
+ * 2) LIKE: escapa `\\`, `%` e `_`; `*` do usuário vira `_` (o PostgREST trataria `*` como curinga múltiplo);
+ * 3) curingas próprios `%...%`;
+ * 4) delimita como UM valor entre aspas duplas, escapando `"` e `\\` — vírgula, ponto,
+ *    dois-pontos e parênteses ficam literais e não podem formar operador/condição.
  */
 export function montarPadraoBusca(texto: string): string | null {
   const t = texto.trim().slice(0, 100);
   if (!t) return null;
-  const like = t.replace(/[\\%_]/g, (c) => `\\${c}`);
-  const valor = `*${like}*`.replace(/["\\]/g, (c) => `\\${c}`);
+  const like = t.replace(/[\\%_*]/g, (c) => (c === "*" ? "_" : `\\${c}`));
+  const valor = `%${like}%`.replace(/["\\]/g, (c) => `\\${c}`);
   return `"${valor}"`;
 }
 

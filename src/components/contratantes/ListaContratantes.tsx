@@ -252,28 +252,21 @@ export function ListaContratantes() {
     retry: false,
   });
 
-  const chaveFiltros = [idUsuario, idOrganizacao, situacao, busca] as const;
+  // Sem placeholder: qualquer troca de chave mostra loading explícito (nunca dados de outra chave).
   const consulta = useQuery({
-    queryKey: ["contratantes", "lista", ...chaveFiltros, pagina],
+    queryKey: ["contratantes", "lista", idUsuario, idOrganizacao, situacao, busca, pagina],
     queryFn: () => listarContratantes({ idOrganizacao: idOrganizacao!, pagina, busca, situacao }),
     enabled: pronto && acesso.isSuccess,
     retry: false,
-    placeholderData: (anterior, consultaAnterior) => {
-      const k = consultaAnterior?.queryKey as readonly unknown[] | undefined;
-      if (!k) return undefined;
-      const mesmos = chaveFiltros.every((v, i) => k[2 + i] === v);
-      return mesmos ? anterior : undefined;
-    },
   });
 
   // Página além do fim (total encolheu ou faixa inválida): volta à última página válida.
   const dados = consulta.data;
   const erroFaixa = consulta.error instanceof ErroContratantes && consulta.error.tipo === "faixa";
   useEffect(() => {
-    if (consulta.isPlaceholderData) return;
     if (dados && dados.itens.length === 0 && dados.total > 0 && dados.pagina > 1) setPagina(dados.totalPaginas);
     else if (erroFaixa && pagina > 1) setPagina(1);
-  }, [dados, erroFaixa, pagina, consulta.isPlaceholderData]);
+  }, [dados, erroFaixa, pagina]);
 
   async function sair() {
     if (saindoRef.current) return;
@@ -293,7 +286,7 @@ export function ListaContratantes() {
   }
 
   const tipoErro = (e: unknown) => (e instanceof ErroContratantes ? e.tipo : "erro");
-  const ajustandoPagina = !!dados && !consulta.isPlaceholderData && dados.itens.length === 0 && dados.total > 0 && dados.pagina > 1;
+  const ajustandoPagina = !!dados && dados.itens.length === 0 && dados.total > 0 && dados.pagina > 1;
 
   type Fase = "verificando" | "erroSessao" | "carregando" | "negado" | "erro" | "vazio" | "vazioFiltro" | "sucesso";
   const fase: Fase = erroSessao
