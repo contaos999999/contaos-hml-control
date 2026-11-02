@@ -179,6 +179,7 @@ export function OrganizationList(props: {
     e.preventDefault();
     const i = (validos.indexOf(id) + delta + validos.length) % validos.length;
     const prox = validos[i];
+    if (!prox) return;
     props.onSelecionar(prox);
     refs.current[prox]?.focus();
   }
@@ -246,7 +247,9 @@ export function OrganizationSelector() {
         if (!data.user) navigate({ to: "/login", replace: true });
         else setIdUsuario(data.user.id);
       })
-      .catch(() => ativo && navigate({ to: "/login", replace: true }))
+      .catch(() => {
+        if (ativo) navigate({ to: "/login", replace: true });
+      })
       .finally(() => ativo && setVerificandoSessao(false));
     return () => {
       ativo = false;
@@ -268,7 +271,7 @@ export function OrganizationSelector() {
     const ok = consulta.data.filter((v) => v.organizacao).map((v) => v.organizacao!.id);
     const pref = obterPreferenciaOrganizacao(idUsuario);
     if (pref && ok.includes(pref)) setSelecionada(pref);
-    else if (ok.length === 1) setSelecionada(ok[0]);
+    else if (ok.length === 1 && ok[0]) setSelecionada(ok[0]);
   }, [consulta.data, idUsuario, selecionada]);
 
   function continuar() {
