@@ -11,8 +11,10 @@ const ler = (p: string) => readFileSync(resolve(raiz, p), "utf8");
 
 // SHA-256 do MANIFEST_SHA256_v4_1_BRAND_v1_0.json oficial.
 const ASSETS_OFICIAIS: Record<string, string> = {
-  "public/brand/ContaOS_Logo_Horizontal_Fundo_Escuro.svg": "2d3c6c1a088a6f631acf2055a06a9e4b7bd81519cd83b2c9fed4fcf367815187",
-  "public/brand/ContaOS_Simbolo_Branco.svg": "7de27bd24a220d9d8e6b7bb2352e9ba895109e3f648401f5cc454fff1873e3fc",
+  "public/brand/ContaOS_Logo_Horizontal_Fundo_Escuro.svg":
+    "2d3c6c1a088a6f631acf2055a06a9e4b7bd81519cd83b2c9fed4fcf367815187",
+  "public/brand/ContaOS_Simbolo_Branco.svg":
+    "7de27bd24a220d9d8e6b7bb2352e9ba895109e3f648401f5cc454fff1873e3fc",
   "public/favicon.svg": "b659af3ca70eaa47cfa67c0115a394c23448f091ba9ded7cb3a15b5702c1c907",
   "public/favicon.ico": "9d1705a8e8a446b33e3f907adf9b4d5f8d137af3ead8f81d217f6eaa99c3121f",
   "public/favicon-16x16.png": "700d6d663f22e5cee0d0566f41aac972dc96504da81035ca53a1c5a9724ddf3d",
@@ -39,7 +41,9 @@ const ARQUIVOS_MARCA = [
 describe("BRAND-01 — componente de marca", () => {
   it("usa o logo horizontal oficial para fundo escuro com alt ContaOS", () => {
     const { container } = render(<ContaOSMarca />);
-    const logo = container.querySelector('img[src="/brand/ContaOS_Logo_Horizontal_Fundo_Escuro.svg"]');
+    const logo = container.querySelector(
+      'img[src="/brand/ContaOS_Logo_Horizontal_Fundo_Escuro.svg"]',
+    );
     expect(logo).not.toBeNull();
     expect(logo?.getAttribute("alt")).toBe("ContaOS");
   });
@@ -71,7 +75,9 @@ describe("BRAND-01 — head e assets", () => {
   });
 
   it.each(Object.entries(ASSETS_OFICIAIS))("%s é byte a byte o asset oficial", (arquivo, sha) => {
-    const hash = createHash("sha256").update(readFileSync(resolve(raiz, arquivo))).digest("hex");
+    const hash = createHash("sha256")
+      .update(readFileSync(resolve(raiz, arquivo)))
+      .digest("hex");
     expect(hash).toBe(sha);
   });
 });
