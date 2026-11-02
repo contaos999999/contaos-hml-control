@@ -29,7 +29,7 @@ export const MENSAGENS_V105 = {
   negadoInsert: "Você não tem permissão para cadastrar contratos nesta organização.",
   erroGate: "Não foi possível validar sua permissão agora. Tente novamente em instantes.",
   validacao: "Revise os campos destacados antes de salvar.",
-  invalido: "Revise os dados informados. O cadastro oficial recusou alguns valores.",
+  invalido: "Revise os dados informados.",
   duplicado: "Já existe um contrato com este número nesta organização.",
   erroEnvio: "Não foi possível cadastrar o contrato agora. Tente novamente em instantes.",
   sucesso: "Contrato cadastrado com sucesso.",
