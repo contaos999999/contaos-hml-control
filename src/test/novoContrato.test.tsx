@@ -268,6 +268,16 @@ describe("V1-05 criar contrato", () => {
   });
 });
 
+describe("V1-05 mensagem vazia neutra", () => {
+  it("lista vazia não sugere filtro por ativo", async () => {
+    m.respostas["contratantes"] = () => ({ data: [], error: null, count: 0, status: 200 });
+    montar();
+    fireEvent.focus(await screen.findByRole("combobox", { name: /Contratante/ }));
+    expect(await screen.findByText("Nenhum contratante encontrado nesta organização.")).toBeTruthy();
+    expect(MENSAGENS_V105.semOpcoes).not.toMatch(/ativo/i);
+  });
+});
+
 describe("V1-05 source scan", () => {
   it("sem operações/segredos proibidos", () => {
     for (const f of ["src/lib/contratos/novoContratoDados.ts", "src/components/contratos/NovoContrato.tsx", "src/routes/contratos_.novo.tsx"]) {
