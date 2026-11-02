@@ -118,9 +118,9 @@ describe("SYS-05 Dashboard", () => {
     m.rpc.mockResolvedValue({ data: resumo(), error: null });
     montar();
     const itens = await screen.findAllByTestId("prazo-item");
-    expect(itens[0].textContent).toContain("Segundo pelo backend");
-    expect(itens[1].textContent).toContain("Primeiro? não");
-    expect(itens[0].textContent).toContain("05/11/2026");
+    expect(itens[0]?.textContent).toContain("Segundo pelo backend");
+    expect(itens[1]?.textContent).toContain("Primeiro? não");
+    expect(itens[0]?.textContent).toContain("05/11/2026");
     expect(screen.getByTestId("atencao-item").textContent).toContain("02/11/2026 10:45");
   });
 
