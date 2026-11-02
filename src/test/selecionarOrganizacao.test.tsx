@@ -175,6 +175,50 @@ describe("SYS-04 Selecionar organização", () => {
     await waitFor(() => expect(m.nav).toHaveBeenCalled());
     expect(m.nav).toHaveBeenCalledTimes(1);
   });
+
+  it.each([
+    ["erro do Auth", () => m.getUser.mockResolvedValueOnce({ data: { user: null }, error: { status: 500, message: "auth boom" } })],
+    ["promise rejeitada", () => m.getUser.mockRejectedValueOnce(new TypeError("Failed to fetch"))],
+  ])("getUser com %s mostra erro genérico, não navega para login, e retry segue", async (_n, prep) => {
+    prep();
+    m.resultado.mockReturnValue({ data: [org("o1", "Alfa")], error: null });
+    montar();
+    expect(await screen.findByText(MENSAGENS_SYS04.erro)).toBeTruthy();
+    expect(screen.queryByText(/boom|Failed to fetch/)).toBeNull();
+    expect(m.nav).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    expect(await screen.findByRole("radio", { name: /Alfa/ })).toBeTruthy();
+    expect(m.getUser).toHaveBeenCalledTimes(2);
+    expect(m.nav).not.toHaveBeenCalled();
+  });
+
+  it("radiogroup contém só opções válidas; indisponível fica visível fora dele", async () => {
+    m.resultado.mockReturnValue({
+      data: [org("o1", "Alfa"), { id: "v-x", perfil: "admin", organizacao: null }],
+      error: null,
+    });
+    montar();
+    const grupo = await screen.findByRole("radiogroup");
+    const filhos = Array.from(grupo.querySelectorAll("[role]")).map((e) => e.getAttribute("role"));
+    expect(filhos).toEqual(["radio"]);
+    const ind = screen.getByText(MENSAGENS_SYS04.indisponivel);
+    expect(grupo.contains(ind)).toBe(false);
+    expect(screen.queryByRole("button", { name: "Sobre o perfil" })).toBeNull();
+  });
+
+  it("teclado: ArrowDown seleciona/foca a segunda, ArrowUp volta à primeira", async () => {
+    m.resultado.mockReturnValue({ data: [org("o1", "Alfa"), org("o2", "Beta")], error: null });
+    montar();
+    const a = await screen.findByRole("radio", { name: /Alfa/ });
+    const b = screen.getByRole("radio", { name: /Beta/ });
+    a.focus();
+    fireEvent.keyDown(a, { key: "ArrowDown" });
+    await waitFor(() => expect(b.getAttribute("aria-checked")).toBe("true"));
+    expect(document.activeElement).toBe(b);
+    fireEvent.keyDown(b, { key: "ArrowUp" });
+    await waitFor(() => expect(a.getAttribute("aria-checked")).toBe("true"));
+    expect(document.activeElement).toBe(a);
+  });
 });
 
 describe("preferência local por usuário (não autoritativa)", () => {
