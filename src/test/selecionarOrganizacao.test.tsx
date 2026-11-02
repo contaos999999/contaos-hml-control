@@ -7,24 +7,20 @@ const m = vi.hoisted(() => ({
   getUser: vi.fn(),
   signOut: vi.fn(),
   resultado: vi.fn(),
-  eqs: [] as Array<[string, unknown]>,
+  rpcs: [] as unknown[][],
+  from: vi.fn(),
   nav: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/client", () => {
-  const builder = {
-    select: () => builder,
-    eq: (c: string, v: unknown) => {
-      m.eqs.push([c, v]);
-      return builder;
-    },
-    then: (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
-      Promise.resolve().then(() => m.resultado()).then(res, rej),
-  };
   return {
     supabase: {
       auth: { getUser: m.getUser, signOut: m.signOut },
-      from: () => builder,
+      from: m.from,
+      rpc: (...a: unknown[]) => {
+        m.rpcs.push(a);
+        return Promise.resolve().then(() => m.resultado());
+      },
     },
   };
 });
@@ -39,10 +35,8 @@ import {
 } from "@/lib/organizacao/preferenciaOrganizacao";
 
 const U = "user-1";
-const org = (id: string, nome: string) => ({
-  id: `v-${id}`,
-  perfil: "admin",
-  organizacao: { id, razao_social: `${nome} LTDA`, nome_fantasia: nome, cnpj: "12345678000190", situacao: "ativa" },
+const org = (id: string, nome: string, perfil = "admin") => ({
+  id, razao_social: `${nome} LTDA`, nome_fantasia: nome, cnpj: "12345678000190", situacao: "ativa", perfil,
 });
 
 let qc: QueryClient;
@@ -54,7 +48,7 @@ function montar() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  m.eqs.length = 0;
+  m.rpcs.length = 0;
   sessionStorage.clear();
   m.getUser.mockResolvedValue({ data: { user: { id: U } }, error: null });
   m.signOut.mockResolvedValue({ error: null });
@@ -74,13 +68,14 @@ describe("SYS-04 Selecionar organização", () => {
     expect(screen.queryByText(MENSAGENS_SYS04.erro)).toBeNull();
   });
 
-  it("loading bloqueia a ação e a consulta filtra id_usuario e ativo", async () => {
+  it("loading bloqueia a ação e usa somente a RPC sem argumentos", async () => {
     let resolver!: (v: unknown) => void;
     m.resultado.mockReturnValue(new Promise((r) => (resolver = r)));
     montar();
     expect((await screen.findAllByText(MENSAGENS_SYS04.carregando)).length).toBeGreaterThan(0);
     expect(screen.queryByRole("button", { name: "Continuar" })).toBeNull();
-    await waitFor(() => expect(m.eqs).toEqual([["id_usuario", U], ["ativo", true]]));
+    await waitFor(() => expect(m.rpcs).toEqual([["listar_organizacoes_disponiveis"]]));
+    expect(m.from).not.toHaveBeenCalled();
     resolver({ data: [org("o1", "Alfa")], error: null });
     expect(await screen.findByRole("radio", { name: /Alfa/ })).toBeTruthy();
   });
@@ -115,8 +110,8 @@ describe("SYS-04 Selecionar organização", () => {
     expect(await screen.findByRole("radio", { name: /Alfa/ })).toBeTruthy();
   });
 
-  it("organização aninhada null aparece indisponível e não selecionável", async () => {
-    m.resultado.mockReturnValue({ data: [{ id: "v-x", perfil: "admin", organizacao: null }], error: null });
+  it("linha sem id aparece indisponível e não selecionável", async () => {
+    m.resultado.mockReturnValue({ data: [{ id: null, razao_social: "X", nome_fantasia: null, cnpj: null, situacao: "ativa", perfil: "admin" }], error: null });
     montar();
     expect(await screen.findByText(MENSAGENS_SYS04.indisponivel)).toBeTruthy();
     expect(screen.queryByText(MENSAGENS_SYS04.vazio)).toBeNull();
@@ -201,7 +196,7 @@ describe("SYS-04 Selecionar organização", () => {
 
   it("radiogroup contém só opções válidas; indisponível fica visível fora dele", async () => {
     m.resultado.mockReturnValue({
-      data: [org("o1", "Alfa"), { id: "v-x", perfil: "admin", organizacao: null }],
+      data: [org("o1", "Alfa"), { id: null, razao_social: "X", nome_fantasia: null, cnpj: null, situacao: "ativa", perfil: "admin" }],
       error: null,
     });
     montar();
@@ -225,6 +220,29 @@ describe("SYS-04 Selecionar organização", () => {
     fireEvent.keyDown(b, { key: "ArrowUp" });
     await waitFor(() => expect(a.getAttribute("aria-checked")).toBe("true"));
     expect(document.activeElement).toBe(a);
+  });
+});
+
+describe("Administrador Master (SYS-04)", () => {
+  it("Master vê A e B com rótulo Administrador Master e escolhe B", async () => {
+    m.resultado.mockReturnValue({ data: [org("o1", "Alfa", "administrador_master"), org("o2", "Beta", "administrador_master")], error: null });
+    montar();
+    expect(await screen.findByRole("radio", { name: /Alfa/ })).toBeTruthy();
+    expect(screen.getByRole("radio", { name: /Beta/ })).toBeTruthy();
+    expect(screen.getAllByText("Administrador Master")).toHaveLength(2);
+    expect(screen.queryByText("administrador_master")).toBeNull();
+    fireEvent.click(screen.getByRole("radio", { name: /Beta/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/" }));
+    expect(obterPreferenciaOrganizacao(U)).toBe("o2");
+  });
+  it("usuário comum recebe apenas A com perfil real", async () => {
+    m.resultado.mockReturnValue({ data: [org("o1", "Alfa", "analista")], error: null });
+    montar();
+    expect(await screen.findByRole("radio", { name: /Alfa/ })).toBeTruthy();
+    expect(screen.queryAllByRole("radio")).toHaveLength(1);
+    expect(screen.getByText("analista")).toBeTruthy();
+    expect(screen.queryByText("Administrador Master")).toBeNull();
   });
 });
 
