@@ -730,6 +730,53 @@ describe("ADM-01 auditoria", () => {
   });
 });
 
+describe("ADM-01 retorno de foco ao gatilho (acessibilidade)", () => {
+  const acionar = (b: HTMLElement) => (b.focus(), fireEvent.click(b));
+
+  it("A: fechar a edição devolve o foco ao botão Editar", async () => {
+    montar();
+    const b = await screen.findByRole("button", { name: "Editar vínculo de Ana Souza" });
+    acionar(b);
+    const dlg = await screen.findByRole("dialog");
+    fireEvent.click(within(dlg).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(document.activeElement).toBe(b));
+  });
+
+  it("B: fechar a auditoria (Esc) devolve o foco ao botão Ver auditoria", async () => {
+    montar();
+    const b = await screen.findByRole("button", { name: "Ver auditoria de Ana Souza" });
+    acionar(b);
+    const dlg = await screen.findByRole("dialog");
+    fireEvent.keyDown(dlg, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(document.activeElement).toBe(b));
+  });
+
+  it("C: fechar o novo vínculo devolve o foco ao botão Convidar", async () => {
+    montar();
+    const b = await screen.findByRole("button", { name: "Convidar ou vincular usuário" });
+    acionar(b);
+    const dlg = await screen.findByRole("dialog");
+    fireEvent.click(within(dlg).getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(document.activeElement).toBe(b));
+  });
+
+  it("D: após salvar, foco volta ao botão Editar e a lista é recarregada", async () => {
+    montar();
+    const b = await screen.findByRole("button", { name: "Editar vínculo de Ana Souza" });
+    acionar(b);
+    const dlg = await screen.findByRole("dialog");
+    await within(dlg).findByLabelText("Contrato CT-c1 — Objeto c1");
+    const antes = chamadas("listar_usuarios_vinculos_adm").length;
+    salvar(dlg);
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() => expect(chamadas("listar_usuarios_vinculos_adm").length).toBeGreaterThan(antes));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Editar vínculo de Ana Souza" })));
+  });
+});
+
 describe("ADM-01 varredura de código (zero drift)", () => {
   const raiz = path.resolve(__dirname, "..");
   const arquivos = [
