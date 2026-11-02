@@ -34,7 +34,7 @@ export const MENSAGENS_V105 = {
   erroEnvio: "Não foi possível cadastrar o contrato agora. Tente novamente em instantes.",
   sucesso: "Contrato cadastrado com sucesso.",
   carregandoOpcoes: "Carregando contratantes…",
-  semOpcoes: "Nenhum contratante ativo encontrado.",
+  semOpcoes: "Nenhum contratante encontrado nesta organização.",
   erroOpcoes: "Não foi possível carregar os contratantes.",
   buscaAsterisco: "O caractere * não é permitido na busca.",
 } as const;
