@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, ArrowLeft, Building2, Loader2, RefreshCw, SearchX, ShieldAlert, ShieldCheck } from "lucide-react";
@@ -41,6 +41,12 @@ const MSG_ERRO_ACAO: Record<TipoErroBn, string> = {
 };
 const tipoErro = (e: unknown): TipoErroBn => (e instanceof ErroBn ? e.tipo : "erro");
 const novaChave = () => crypto.randomUUID();
+type Retorno = RefObject<HTMLElement | null>;
+/** Devolve o foco ao gatilho (diálogos abertos por estado, não por Trigger). */
+const devolverFoco = (ref: Retorno) => (e: Event) => {
+  e.preventDefault();
+  ref.current?.focus();
+};
 const campo = "mt-1 block min-h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 type Ctx = { idUsuario: string; idOrganizacao: string };
@@ -186,6 +192,7 @@ function Pagina({ c, ctx }: { c: ContratoDetalhe; ctx: Ctx }) {
   const [detalhe, setDetalhe] = useState<Fonte | null>(null);
   const [dialogo, setDialogo] = useState<Dialogo>(null);
   const [sucesso, setSucesso] = useState("");
+  const gatilho = useRef<HTMLElement | null>(null);
   const qc = useQueryClient();
 
   const lista = useQuery({
@@ -213,7 +220,7 @@ function Pagina({ c, ctx }: { c: ContratoDetalhe; ctx: Ctx }) {
             <h2 id="bn-fontes" className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">Fontes normativas</h2>
             <p className="mt-1 text-xs text-muted-foreground">Fontes do contrato e globais da organização. Fonte global só se aplica a este contrato com aplicabilidade aprovada.</p>
           </div>
-          <Button type="button" className="h-11" onClick={() => setDialogo({ tipo: "fonte", fonte: null })}>Nova fonte</Button>
+          <Button type="button" className="h-11" onClick={(e) => { gatilho.current = e.currentTarget; setDialogo({ tipo: "fonte", fonte: null }); }}>Nova fonte</Button>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:max-w-xl">
           <label className="text-sm">Escopo
@@ -249,8 +256,8 @@ function Pagina({ c, ctx }: { c: ContratoDetalhe; ctx: Ctx }) {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" variant="outline" className="h-11" aria-label={`Detalhes de ${f.titulo}`} onClick={() => setDetalhe(f)}>Detalhes</Button>
-                  <Button type="button" variant="outline" className="h-11" aria-label={`Editar ${f.titulo}`} onClick={() => setDialogo({ tipo: "fonte", fonte: f })}>Editar</Button>
+                  <Button type="button" variant="outline" className="h-11" aria-label={`Detalhes de ${f.titulo}`} onClick={(e) => { gatilho.current = e.currentTarget; setDetalhe(f); }}>Detalhes</Button>
+                  <Button type="button" variant="outline" className="h-11" aria-label={`Editar ${f.titulo}`} onClick={(e) => { gatilho.current = e.currentTarget; setDialogo({ tipo: "fonte", fonte: f }); }}>Editar</Button>
                 </div>
               </li>
             ))}
@@ -269,9 +276,9 @@ function Pagina({ c, ctx }: { c: ContratoDetalhe; ctx: Ctx }) {
       <p className="text-xs text-muted-foreground">
         Cadastro e edição de fontes e versões: administrador, gestor de contrato ou jurídico/conformidade. Aprovação de versão e aplicabilidade: administrador ou direção aprovadora. Mudança de situação: administrador. A permissão final é sempre verificada pelo servidor.
       </p>
-      {detalhe ? <DetalheFonte fonte={detalhe} c={c} ctx={ctx} onFechar={() => setDetalhe(null)} onConcluir={concluir} /> : null}
+      {detalhe ? <DetalheFonte retorno={gatilho} fonte={detalhe} c={c} ctx={ctx} onFechar={() => setDetalhe(null)} onConcluir={concluir} /> : null}
       {dialogo?.tipo === "fonte" ? (
-        <DialogoFonte fonte={dialogo.fonte} org={org} contrato={c.id} onFechar={() => setDialogo(null)} onConcluir={(cid) => { setDialogo(null); concluir(cid); }}
+        <DialogoFonte retorno={gatilho} fonte={dialogo.fonte} org={org} contrato={c.id} onFechar={() => setDialogo(null)} onConcluir={(cid) => { setDialogo(null); concluir(cid); }}
           onRecarregar={() => { setDialogo(null); void qc.invalidateQueries({ queryKey: ["bn-fontes"] }); }} />
       ) : null}
     </>
@@ -284,11 +291,13 @@ function Selo({ children }: { children: ReactNode }) {
 
 type DialogoV = { tipo: "versao" } | { tipo: "aprovar"; v: Versao } | { tipo: "aplic"; v: Versao; a: Aplicabilidade | undefined } | null;
 
-function DetalheFonte({ fonte, c, ctx, onFechar, onConcluir }: { fonte: Fonte; c: ContratoDetalhe; ctx: Ctx; onFechar: () => void; onConcluir: (cid: string | null) => void }) {
+function DetalheFonte({ retorno, fonte, c, ctx, onFechar, onConcluir }: { retorno: Retorno; fonte: Fonte; c: ContratoDetalhe; ctx: Ctx; onFechar: () => void; onConcluir: (cid: string | null) => void }) {
   const org = c.id_organizacao;
   const [pagina, setPagina] = useState(0);
   const [expandida, setExpandida] = useState<string | null>(null);
   const [dlg, setDlg] = useState<DialogoV>(null);
+  const gatilhoV = useRef<HTMLElement | null>(null);
+  const abrir = (e: { currentTarget: HTMLElement }, d: DialogoV) => { gatilhoV.current = e.currentTarget; setDlg(d); };
   const qc = useQueryClient();
   const global = fonte.id_contrato === null;
   const versoes = useQuery({
@@ -309,7 +318,7 @@ function DetalheFonte({ fonte, c, ctx, onFechar, onConcluir }: { fonte: Fonte; c
 
   return (
     <Sheet open onOpenChange={(o) => { if (!o) onFechar(); }}>
-      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-2xl">
+      <SheetContent onCloseAutoFocus={devolverFoco(retorno)} side="right" className="w-full overflow-y-auto sm:max-w-2xl">
         <SheetHeader>
           <SheetTitle className="break-words">{fonte.titulo}</SheetTitle>
           <SheetDescription>{global ? "Global da organização" : "Do contrato"} · Situação: {fonte.situacao}</SheetDescription>
@@ -322,7 +331,7 @@ function DetalheFonte({ fonte, c, ctx, onFechar, onConcluir }: { fonte: Fonte; c
           </dl>
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold">Versões</h3>
-            <Button type="button" className="h-11" onClick={() => setDlg({ tipo: "versao" })}>Nova versão</Button>
+            <Button type="button" className="h-11" onClick={(e) => abrir(e, { tipo: "versao" })}>Nova versão</Button>
           </div>
           {versoes.isError ? (
             <Alerta mensagem={MENSAGENS_V107.erroLista} onRetry={() => void versoes.refetch()} />
@@ -348,8 +357,8 @@ function DetalheFonte({ fonte, c, ctx, onFechar, onConcluir }: { fonte: Fonte; c
                       <Button type="button" variant="outline" className="h-11" aria-expanded={expandida === v.id} onClick={() => setExpandida((x) => (x === v.id ? null : v.id))}>
                         {expandida === v.id ? "Ocultar texto" : `Ver texto registrado (versão ${v.versao})`}
                       </Button>
-                      <Button type="button" variant="outline" className="h-11" onClick={() => setDlg({ tipo: "aprovar", v })}>Aprovar versão {v.versao}</Button>
-                      <Button type="button" variant="outline" className="h-11" onClick={() => setDlg({ tipo: "aplic", v, a })}>Definir aplicabilidade da versão {v.versao}</Button>
+                      <Button type="button" variant="outline" className="h-11" onClick={(e) => abrir(e, { tipo: "aprovar", v })}>Aprovar versão {v.versao}</Button>
+                      <Button type="button" variant="outline" className="h-11" onClick={(e) => abrir(e, { tipo: "aplic", v, a })}>Definir aplicabilidade da versão {v.versao}</Button>
                     </div>
                     {expandida === v.id ? <TextoVersaoBloco idVersao={v.id} ctx={ctx} org={org} /> : null}
                   </li>
@@ -364,9 +373,9 @@ function DetalheFonte({ fonte, c, ctx, onFechar, onConcluir }: { fonte: Fonte; c
             </div>
           ) : null}
         </div>
-        {dlg?.tipo === "versao" ? <DialogoVersao fonte={fonte} org={org} ctx={ctx} onFechar={() => setDlg(null)} onConcluir={fechar} onRecarregar={recarregar} /> : null}
-        {dlg?.tipo === "aprovar" ? <DialogoAprovar v={dlg.v} org={org} onFechar={() => setDlg(null)} onConcluir={fechar} onRecarregar={recarregar} /> : null}
-        {dlg?.tipo === "aplic" ? <DialogoAplic v={dlg.v} a={dlg.a} org={org} contrato={c.id} onFechar={() => setDlg(null)} onConcluir={fechar} onRecarregar={recarregar} /> : null}
+        {dlg?.tipo === "versao" ? <DialogoVersao retorno={gatilhoV} fonte={fonte} org={org} ctx={ctx} onFechar={() => setDlg(null)} onConcluir={fechar} onRecarregar={recarregar} /> : null}
+        {dlg?.tipo === "aprovar" ? <DialogoAprovar retorno={gatilhoV} v={dlg.v} org={org} onFechar={() => setDlg(null)} onConcluir={fechar} onRecarregar={recarregar} /> : null}
+        {dlg?.tipo === "aplic" ? <DialogoAplic retorno={gatilhoV} v={dlg.v} a={dlg.a} org={org} contrato={c.id} onFechar={() => setDlg(null)} onConcluir={fechar} onRecarregar={recarregar} /> : null}
       </SheetContent>
     </Sheet>
   );
@@ -409,9 +418,9 @@ function RodapeErro({ erro, onRecarregar }: { erro: unknown; onRecarregar: () =>
   );
 }
 
-type PropsDlg = { onFechar: () => void; onConcluir: (cid: string | null) => void; onRecarregar: () => void };
+type PropsDlg = { retorno: Retorno; onFechar: () => void; onConcluir: (cid: string | null) => void; onRecarregar: () => void };
 
-function DialogoFonte({ fonte, org, contrato, onFechar, onConcluir, onRecarregar }: PropsDlg & { fonte: Fonte | null; org: string; contrato: string }) {
+function DialogoFonte({ retorno, fonte, org, contrato, onFechar, onConcluir, onRecarregar }: PropsDlg & { fonte: Fonte | null; org: string; contrato: string }) {
   const [f, setF] = useState({ escopo: "contrato", tipo: fonte?.tipo ?? "", titulo: fonte?.titulo ?? "", referencia: fonte?.referencia ?? "", descricao: fonte?.descricao ?? "", situacao: fonte?.situacao ?? "rascunho" });
   const [faltando, setFaltando] = useState(false);
   const { mut, renovar } = useAcao(onConcluir);
@@ -432,7 +441,7 @@ function DialogoFonte({ fonte, org, contrato, onFechar, onConcluir, onRecarregar
   };
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onFechar(); }}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent onCloseAutoFocus={devolverFoco(retorno)} className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{fonte ? "Editar fonte" : "Nova fonte"}</DialogTitle>
           <DialogDescription>{fonte ? "Alterações usam a versão do registro lida para evitar sobrescrita." : "Toda fonte nova é criada como rascunho."}</DialogDescription>
@@ -473,7 +482,7 @@ function DialogoFonte({ fonte, org, contrato, onFechar, onConcluir, onRecarregar
 
 const STATUS_ARQUIVO: Record<string, string> = { aprovado: "Aprovado", pendente: "Em análise de segurança", processando: "Em análise de segurança", rejeitado: "Rejeitado" };
 
-function DialogoVersao({ fonte, org, ctx, onFechar, onConcluir, onRecarregar }: PropsDlg & { fonte: Fonte; org: string; ctx: Ctx }) {
+function DialogoVersao({ retorno, fonte, org, ctx, onFechar, onConcluir, onRecarregar }: PropsDlg & { fonte: Fonte; org: string; ctx: Ctx }) {
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
   const [origem, setOrigem] = useState<"texto" | "arquivo">("texto");
@@ -501,7 +510,7 @@ function DialogoVersao({ fonte, org, ctx, onFechar, onConcluir, onRecarregar }: 
   };
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onFechar(); }}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent onCloseAutoFocus={devolverFoco(retorno)} className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nova versão</DialogTitle>
           <DialogDescription>Versões não são sobrescritas: cada registro cria uma nova versão, numerada e com hash calculado pelo servidor.</DialogDescription>
@@ -553,14 +562,14 @@ function DialogoVersao({ fonte, org, ctx, onFechar, onConcluir, onRecarregar }: 
   );
 }
 
-function DialogoAprovar({ v, org, onFechar, onConcluir, onRecarregar }: PropsDlg & { v: Versao; org: string }) {
+function DialogoAprovar({ retorno, v, org, onFechar, onConcluir, onRecarregar }: PropsDlg & { v: Versao; org: string }) {
   const [fundamento, setFundamento] = useState("");
   const [confirmo, setConfirmo] = useState(false);
   const { mut, renovar } = useAcao(onConcluir);
   const pronto = fundamento.trim().length > 0 && confirmo;
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onFechar(); }}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent onCloseAutoFocus={devolverFoco(retorno)} className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Aprovar versão {v.versao}</DialogTitle>
           <DialogDescription>Revise hash, origem e vigência. Ator, data e auditoria são registrados pelo servidor.</DialogDescription>
@@ -585,14 +594,14 @@ function DialogoAprovar({ v, org, onFechar, onConcluir, onRecarregar }: PropsDlg
   );
 }
 
-function DialogoAplic({ v, a, org, contrato, onFechar, onConcluir, onRecarregar }: PropsDlg & { v: Versao; a: Aplicabilidade | undefined; org: string; contrato: string }) {
+function DialogoAplic({ retorno, v, a, org, contrato, onFechar, onConcluir, onRecarregar }: PropsDlg & { v: Versao; a: Aplicabilidade | undefined; org: string; contrato: string }) {
   const [aplicavel, setAplicavel] = useState<boolean | null>(a ? a.aplicavel : null);
   const [fundamento, setFundamento] = useState("");
   const { mut, renovar } = useAcao(onConcluir);
   const pronto = aplicavel !== null && fundamento.trim().length > 0;
   return (
     <Dialog open onOpenChange={(o) => { if (!o) onFechar(); }}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent onCloseAutoFocus={devolverFoco(retorno)} className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Aplicabilidade da versão {v.versao}</DialogTitle>
           <DialogDescription>Somente versões aprovadas podem ter aplicabilidade definida. A decisão é registrada pelo servidor.</DialogDescription>
