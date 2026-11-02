@@ -264,11 +264,43 @@ describe("V1-06 sessão/contexto", () => {
     await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }));
     expect(sel()).toHaveLength(0);
   });
-  it("leitor e Master leem sem gate de perfil (nenhuma consulta a vínculos)", async () => {
-    m.resposta = () => ok(contrato(K1));
+  it.each([
+    ["leitor com escopo", "org-A"],
+    ["Administrador Master sem vínculo físico", "org-M"],
+  ])("%s lê o resumo; autoridade é do backend, sem consulta de perfil/vínculo local", async (_p, org) => {
+    window.sessionStorage.clear();
+    definirPreferenciaOrganizacao(U, org);
+    m.resposta = () => ok({ ...contrato(K1), id_organizacao: org });
     montar();
-    await screen.findByRole("heading", { level: 1 });
-    expect(m.chamadas.some((c) => c.tabela === "vinculos_usuarios")).toBe(false);
+    expect(await screen.findByRole("heading", { level: 1, name: "Contrato CT-001" })).toBeTruthy();
+    expect(screen.getByText("Prefeitura X")).toBeTruthy();
+    expect(m.chamadas.map((c) => c.tabela)).toEqual(["contratos"]);
+    expect(m.rpcChamadas).toHaveLength(0);
+  });
+  it("org A→B→A via unmount/qc.clear/preferência/remount; resposta tardia não invade contexto novo", async () => {
+    const B = "org-B";
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    let soltarA: (v: unknown) => void = () => {};
+    m.resposta = () => new Promise((r) => (soltarA = r));
+    const r1 = montar(K1, qc);
+    await waitFor(() => expect(sel()).toHaveLength(1));
+    r1.unmount();
+    qc.clear();
+    definirPreferenciaOrganizacao(U, B);
+    m.resposta = () => ok({ ...contrato(K1, "CT-B"), id_organizacao: B });
+    const r2 = montar(K1, qc);
+    expect(await screen.findByRole("heading", { level: 1, name: "Contrato CT-B" })).toBeTruthy();
+    soltarA(ok(contrato(K1, "CT-A-TARDIO")));
+    await new Promise((x) => setTimeout(x, 20));
+    expect(screen.queryByText("Contrato CT-A-TARDIO")).toBeNull();
+    r2.unmount();
+    qc.clear();
+    definirPreferenciaOrganizacao(U, A);
+    m.resposta = () => ok(contrato(K1, "CT-A"));
+    montar(K1, qc);
+    expect(screen.queryByText("Contrato CT-B")).toBeNull();
+    expect(await screen.findByRole("heading", { level: 1, name: "Contrato CT-A" })).toBeTruthy();
+    expect(sel()).toHaveLength(3);
   });
   it("troca de id A→B sem remount: resposta tardia de A não aparece", async () => {
     let soltarA: (v: unknown) => void = () => {};
@@ -382,6 +414,18 @@ describe("V1-06 navegação e scan", () => {
     expect(screen.getByText("Visão geral").closest("[aria-current]")?.getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("link", { name: /Voltar para contratos/ }).getAttribute("href")).toBe("/contratos");
     expect(sel()).toHaveLength(1);
+  });
+  it("contratante null mantém resumo; status desconhecido literal sem inferência; zero cargas pesadas", async () => {
+    m.resposta = () => ok({ ...contrato(K1), contratante: null, situacao: "xpto_novo", criticidade: "zz_desconhecida" });
+    montar();
+    expect(await screen.findByRole("heading", { level: 1, name: "Contrato CT-001" })).toBeTruthy();
+    expect(screen.getByText("Serviços de limpeza")).toBeTruthy();
+    expect(screen.getByText("xpto_novo")).toBeTruthy();
+    expect(screen.getByText("zz_desconhecida")).toBeTruthy();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(m.chamadas.map((c) => c.tabela)).toEqual(["contratos"]);
+    expect(m.rpcChamadas).toHaveLength(0);
+    expect(m.invoke).not.toHaveBeenCalled();
   });
   it("arquivos novos sem mutações, secrets, casts proibidos; único rpc é o classificador", () => {
     const fs = ["src/components/contratos/VisaoGeralContrato.tsx", "src/lib/contratos/contratoDetalheDados.ts", "src/routes/contratos_.$id.tsx"].map((p) => readFileSync(p, "utf8")).join("\n");
