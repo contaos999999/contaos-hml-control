@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Building2, Check, Info, Loader2, LogOut, RefreshCw, ShieldAlert } from "lucide-react";
+import {
+  AlertCircle,
+  Building2,
+  Check,
+  Loader2,
+  LogOut,
+  RefreshCw,
+  ShieldAlert,
+} from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   definirPreferenciaOrganizacao,
@@ -19,7 +26,6 @@ export const MENSAGENS_SYS04 = {
   negado: "Acesso negado. Você não tem permissão para consultar organizações.",
   erro: "Não foi possível carregar as organizações agora. Tente novamente em instantes.",
   indisponivel: "Acesso indisponível",
-  tooltipPerfil: "Perfil do seu vínculo nesta organização. As permissões são aplicadas pelo sistema.",
 } as const;
 
 type Organizacao = {
@@ -39,7 +45,13 @@ class ErroConsulta extends Error {
 
 function classificar(error: { code?: string; status?: number } | null): "negado" | "erro" {
   if (!error) return "erro";
-  if (error.code === "42501" || error.code === "PGRST301" || error.status === 401 || error.status === 403) return "negado";
+  if (
+    error.code === "42501" ||
+    error.code === "PGRST301" ||
+    error.status === 401 ||
+    error.status === 403
+  )
+    return "negado";
   return "erro";
 }
 
@@ -61,32 +73,6 @@ async function buscarVinculos(idUsuario: string): Promise<Vinculo[]> {
   return (data ?? []) as unknown as Vinculo[];
 }
 
-function DicaPerfil() {
-  const [aberta, setAberta] = useState(false);
-  return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip open={aberta} onOpenChange={setAberta}>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            aria-label="Sobre o perfil"
-            tabIndex={-1}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setAberta(true);
-            }}
-            className="inline-flex h-6 w-6 items-center justify-center rounded text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Info className="h-3.5 w-3.5" aria-hidden />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-xs">{MENSAGENS_SYS04.tooltipPerfil}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
 export function OrganizationCard(props: {
   vinculo: Vinculo;
   selecionado: boolean;
@@ -98,10 +84,7 @@ export function OrganizationCard(props: {
   const o = props.vinculo.organizacao;
   if (!o) {
     return (
-      <div
-        role="listitem"
-        className="flex items-start gap-3 rounded-lg border border-dashed border-border bg-muted/40 p-4 text-muted-foreground"
-      >
+      <div className="flex items-start gap-3 rounded-lg border border-dashed border-border bg-muted/40 p-4 text-muted-foreground">
         <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
         <div className="min-w-0">
           <p className="text-sm font-medium">{MENSAGENS_SYS04.indisponivel}</p>
@@ -121,14 +104,18 @@ export function OrganizationCard(props: {
       onKeyDown={props.onTecla}
       className={cn(
         "flex min-h-[44px] cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        props.selecionado ? "border-primary bg-primary/5" : "border-border bg-card hover:bg-muted/50",
+        props.selecionado
+          ? "border-primary bg-primary/5"
+          : "border-border bg-card hover:bg-muted/50",
       )}
     >
       <span
         aria-hidden
         className={cn(
           "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
-          props.selecionado ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40",
+          props.selecionado
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-muted-foreground/40",
         )}
       >
         {props.selecionado && <Check className="h-3 w-3" />}
@@ -146,7 +133,6 @@ export function OrganizationCard(props: {
           <div className="flex items-center gap-1">
             <dt>Perfil:</dt>
             <dd className="text-foreground">{props.vinculo.perfil}</dd>
-            <DicaPerfil />
           </div>
           <div className="flex gap-1">
             <dt>Situação:</dt>
@@ -166,7 +152,8 @@ export function OrganizationList(props: {
 }) {
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
   const validos = props.vinculos.filter((v) => v.organizacao).map((v) => v.organizacao!.id);
-  const focavel = props.selecionada && validos.includes(props.selecionada) ? props.selecionada : validos[0];
+  const focavel =
+    props.selecionada && validos.includes(props.selecionada) ? props.selecionada : validos[0];
 
   function tecla(id: string, e: KeyboardEvent<HTMLDivElement>) {
     if (e.key === " " || e.key === "Enter") {
@@ -174,7 +161,12 @@ export function OrganizationList(props: {
       props.onSelecionar(id);
       return;
     }
-    const delta = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 0;
+    const delta =
+      e.key === "ArrowDown" || e.key === "ArrowRight"
+        ? 1
+        : e.key === "ArrowUp" || e.key === "ArrowLeft"
+          ? -1
+          : 0;
     if (!delta || validos.length === 0) return;
     e.preventDefault();
     const i = (validos.indexOf(id) + delta + validos.length) % validos.length;
@@ -185,31 +177,53 @@ export function OrganizationList(props: {
   }
 
   return (
-    <div role="radiogroup" aria-labelledby="sys04-titulo-lista" className="space-y-3">
+    <div className="space-y-3">
       <p id="sys04-titulo-lista" className="text-sm font-medium text-foreground">
         Organizações disponíveis
       </p>
-      {props.vinculos.map((v) => {
-        const id = v.organizacao?.id;
-        return (
+      {validos.length > 0 && (
+        <div role="radiogroup" aria-labelledby="sys04-titulo-lista" className="space-y-3">
+          {props.vinculos
+            .filter((v) => v.organizacao)
+            .map((v) => {
+              const id = v.organizacao?.id;
+              return (
+                <OrganizationCard
+                  key={v.id}
+                  vinculo={v}
+                  selecionado={!!id && id === props.selecionada}
+                  focavel={!!id && id === focavel}
+                  onSelecionar={() => id && props.onSelecionar(id)}
+                  onTecla={(e) => id && tecla(id, e)}
+                  refEl={(el) => {
+                    if (id) refs.current[id] = el;
+                  }}
+                />
+              );
+            })}
+        </div>
+      )}
+      {props.vinculos
+        .filter((v) => !v.organizacao)
+        .map((v) => (
           <OrganizationCard
             key={v.id}
             vinculo={v}
-            selecionado={!!id && id === props.selecionada}
-            focavel={!!id && id === focavel}
-            onSelecionar={() => id && props.onSelecionar(id)}
-            onTecla={(e) => id && tecla(id, e)}
-            refEl={(el) => {
-              if (id) refs.current[id] = el;
-            }}
+            selecionado={false}
+            focavel={false}
+            onSelecionar={() => undefined}
+            onTecla={() => undefined}
           />
-        );
-      })}
+        ))}
     </div>
   );
 }
 
-export function ContinueButton(props: { desabilitado: boolean; processando: boolean; onClick: () => void }) {
+export function ContinueButton(props: {
+  desabilitado: boolean;
+  processando: boolean;
+  onClick: () => void;
+}) {
   return (
     <Button
       type="button"
@@ -234,27 +248,34 @@ export function OrganizationSelector() {
   const queryClient = useQueryClient();
   const [idUsuario, setIdUsuario] = useState<string | null>(null);
   const [verificandoSessao, setVerificandoSessao] = useState(true);
+  const [erroSessao, setErroSessao] = useState(false);
+  const [tentativaSessao, setTentativaSessao] = useState(0);
   const [selecionada, setSelecionada] = useState<string | null>(null);
   const [processando, setProcessando] = useState(false);
   const emAndamento = useRef(false);
 
   useEffect(() => {
     let ativo = true;
+    setVerificandoSessao(true);
+    setErroSessao(false);
     supabase.auth
       .getUser()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
         if (!ativo) return;
-        if (!data.user) navigate({ to: "/login", replace: true });
+        if (error) setErroSessao(true);
+        else if (!data.user) navigate({ to: "/login", replace: true });
         else setIdUsuario(data.user.id);
       })
       .catch(() => {
-        if (ativo) navigate({ to: "/login", replace: true });
+        if (ativo) setErroSessao(true);
       })
-      .finally(() => ativo && setVerificandoSessao(false));
+      .finally(() => {
+        if (ativo) setVerificandoSessao(false);
+      });
     return () => {
       ativo = false;
     };
-  }, [navigate]);
+  }, [navigate, tentativaSessao]);
 
   const consulta = useQuery({
     queryKey: ["sys04", "vinculos", idUsuario],
@@ -290,9 +311,21 @@ export function OrganizationSelector() {
     navigate({ to: "/login", replace: true });
   }
 
-  const carregando = verificandoSessao || !idUsuario || consulta.isPending;
-  const erroTipo = consulta.error instanceof ErroConsulta ? consulta.error.tipo : consulta.error ? "erro" : null;
-  const anuncio = carregando ? MENSAGENS_SYS04.carregando : processando ? "Abrindo organização selecionada." : "";
+  const carregando = !erroSessao && (verificandoSessao || !idUsuario || consulta.isPending);
+  const erroTipo = erroSessao
+    ? "erro"
+    : consulta.error instanceof ErroConsulta
+      ? consulta.error.tipo
+      : consulta.error
+        ? "erro"
+        : null;
+  const tentarNovamente = () =>
+    erroSessao ? setTentativaSessao((n) => n + 1) : consulta.refetch();
+  const anuncio = carregando
+    ? MENSAGENS_SYS04.carregando
+    : processando
+      ? "Abrindo organização selecionada."
+      : "";
 
   return (
     <div className="space-y-5">
@@ -311,7 +344,10 @@ export function OrganizationSelector() {
       )}
 
       {!carregando && erroTipo === "negado" && (
-        <div role="alert" className="flex gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4">
+        <div
+          role="alert"
+          className="flex gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4"
+        >
           <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden />
           <p className="text-sm text-foreground">{MENSAGENS_SYS04.negado}</p>
         </div>
@@ -319,11 +355,14 @@ export function OrganizationSelector() {
 
       {!carregando && erroTipo === "erro" && (
         <div className="space-y-3">
-          <div role="alert" className="flex gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4">
+          <div
+            role="alert"
+            className="flex gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4"
+          >
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden />
             <p className="text-sm text-foreground">{MENSAGENS_SYS04.erro}</p>
           </div>
-          <Button type="button" variant="outline" className="h-11 w-full" onClick={() => consulta.refetch()}>
+          <Button type="button" variant="outline" className="h-11 w-full" onClick={tentarNovamente}>
             <RefreshCw className="mr-2 h-4 w-4" aria-hidden /> Tentar novamente
           </Button>
         </div>
@@ -338,9 +377,17 @@ export function OrganizationSelector() {
 
       {!carregando && !erroTipo && vinculos.length > 0 && (
         <>
-          <OrganizationList vinculos={vinculos} selecionada={selecionada} onSelecionar={setSelecionada} />
+          <OrganizationList
+            vinculos={vinculos}
+            selecionada={selecionada}
+            onSelecionar={setSelecionada}
+          />
           {validos.length > 0 && (
-            <ContinueButton desabilitado={!selecionada} processando={processando} onClick={continuar} />
+            <ContinueButton
+              desabilitado={!selecionada}
+              processando={processando}
+              onClick={continuar}
+            />
           )}
         </>
       )}
