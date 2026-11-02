@@ -253,7 +253,8 @@ describe("V1-02 payload e validação", () => {
     const b = screen.getByRole("button", { name: "Salvar" });
     fireEvent.click(b);
     fireEvent.click(b);
-    expect(inserts()).toHaveLength(1);
+    await waitFor(() => expect(inserts()).toHaveLength(1));
+    fireEvent.click(b);
     await waitFor(() => expect(screen.getByRole("button", { name: /Salvando/ }).hasAttribute("disabled")).toBe(true));
     resolver(okInsert());
     await screen.findByText(MENSAGENS_V102.sucesso);
@@ -275,7 +276,7 @@ describe("V1-02 erros do INSERT", () => {
     expect(await screen.findByText(MENSAGENS_V102[chave])).toBeTruthy();
     expect(screen.getByLabelText(/Razão social/)).toBeTruthy();
     expect(document.body.textContent).not.toMatch(/23505|23502|23514|XX000|constraint|stack|detalhe/);
-    if (chave === "duplicado") expect(document.activeElement).toBe(screen.getByLabelText(/^Documento/));
+    if (chave === "duplicado") await waitFor(() => expect(document.activeElement).toBe(screen.getByLabelText(/^Documento/)));
   });
   it("10 rede → erro genérico", async () => {
     m.respostas.contratantes = () => {
