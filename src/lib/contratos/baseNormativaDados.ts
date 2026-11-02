@@ -113,7 +113,8 @@ export function rotuloAplicabilidade(a: Pick<Aplicabilidade, "aplicavel" | "apro
 }
 
 // ---------- RPCs V107 ----------
-// LACUNA DE TIPOS: os 4 RPCs V107 ainda não constam em types.ts (arquivo gerado, não editável).
+// LACUNA DE TIPOS: types.ts (gerado, não editável) declara como obrigatórios args que o HML aceita null
+// (p_id_contrato, p_id_fonte, p_fim_vigencia, p_id_arquivo, p_conteudo_texto etc.).
 // Fronteira única e estritamente tipada (assinaturas lidas do HML), no padrão ADM01.
 type ArgsV107 = {
   salvar_fonte_normativa_v107: { p_id_organizacao: string; p_id_contrato: string | null; p_id_fonte: string | null; p_tipo: string; p_titulo: string; p_referencia: string | null; p_descricao: string | null; p_situacao: string; p_versao_esperada: number | null; p_chave_idempotencia: string };
