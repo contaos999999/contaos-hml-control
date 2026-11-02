@@ -7,11 +7,10 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { formatarDataHoraBr } from "@/components/dashboard/dashboardFormatacao";
 import { ErroAdm, MENSAGENS_ADM01, listarAuditoria, textoErro, type UsuarioVinculo } from "@/lib/administracao/admUsuariosRpc";
 
-function resumoVinculo(v: unknown): string {
-  const x = (v as { vinculo?: { perfil?: unknown; ativo?: unknown; escopo_todos_contratos?: unknown } } | null)?.vinculo;
-  if (!x) return "—";
-  const sn = (b: unknown) => (b === true ? "sim" : b === false ? "não" : "—");
-  return `Perfil: ${String(x.perfil ?? "—")} • Ativo: ${sn(x.ativo)} • Todos os contratos: ${sn(x.escopo_todos_contratos)}`;
+// Apresenta o JSON já redigido pelo backend sem filtrar, resumir ou alterar campos.
+function jsonLiteral(v: unknown): string {
+  if (v === null || v === undefined) return "—";
+  return JSON.stringify(v, null, 2);
 }
 
 export function AuditDrawer(props: { org: string; usuario: UsuarioVinculo; onFechar: () => void; onRecarregarLista: () => void }) {
