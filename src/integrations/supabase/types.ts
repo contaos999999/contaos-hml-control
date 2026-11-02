@@ -8851,6 +8851,35 @@ export type Database = {
         Args: { p_fundamento?: string; p_id_ciclo: string }
         Returns: Json
       }
+      listar_auditoria_vinculo_usuario_adm: {
+        Args: {
+          p_id_organizacao: string
+          p_id_usuario: string
+          p_pagina?: number
+          p_tamanho_pagina?: number
+        }
+        Returns: Json
+      }
+      listar_escopo_contratos_usuario_adm: {
+        Args: {
+          p_busca?: string
+          p_id_organizacao: string
+          p_id_usuario: string
+          p_pagina?: number
+          p_tamanho_pagina?: number
+        }
+        Returns: Json
+      }
+      listar_usuarios_vinculos_adm: {
+        Args: {
+          p_ativo?: boolean
+          p_busca?: string
+          p_id_organizacao: string
+          p_pagina?: number
+          p_tamanho_pagina?: number
+        }
+        Returns: Json
+      }
       normalizar_erro_backend: {
         Args: { p_codigo_sql: string; p_mensagem_tecnica?: string }
         Returns: Json
@@ -9007,6 +9036,21 @@ export type Database = {
       }
       rotacionar_cliente_api: { Args: { p_id_cliente: string }; Returns: Json }
       rotacionar_webhook: { Args: { p_id_webhook: string }; Returns: Json }
+      salvar_vinculo_usuario_adm: {
+        Args: {
+          p_ativo: boolean
+          p_chave_idempotencia: string
+          p_email: string
+          p_escopo_todos_contratos: boolean
+          p_id_organizacao: string
+          p_id_usuario: string
+          p_ids_contratos_ativar: string[]
+          p_ids_contratos_revogar: string[]
+          p_perfil: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
       solicitar_analise_competencia: {
         Args: { p_id_competencia: string; p_tipo?: string }
         Returns: string
@@ -9052,6 +9096,10 @@ export type Database = {
           p_user_agent_hash?: string
         }
         Returns: Json
+      }
+      validar_administrador_organizacao: {
+        Args: { p_id_organizacao: string }
+        Returns: boolean
       }
       validar_remediacao: {
         Args: { p_aprovar: boolean; p_fundamento: string; p_id_plano: string }
