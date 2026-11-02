@@ -37,8 +37,8 @@ Não serão tocados: `src/routes/login.tsx`, AGENTS.md, `__root.tsx`, `index.tsx
 | e-mail inválido | validação local, Supabase não é chamado, `aria-invalid` + erro ligado por `aria-describedby`, foco volta ao campo | "Informe um e-mail válido." |
 | enviando | botão desabilitado + spinner, `aria-busy`, aria-live | "Enviando…" |
 | sucesso (resposta aceita) | formulário substituído por painel neutro com ícone + texto (não só cor); campo não reexibe e-mail completo | "Se existir uma conta vinculada a este e-mail, você receberá as instruções para redefinir sua senha." + "Verifique também a caixa de spam." |
-| rate limit (HTTP 429 / `over_email_send_rate_limit`) | sem cooldown fixo no código. Se a resposta trouxer prazo (header `Retry-After` ou tempo informado no erro do Auth), exibe esse tempo e mantém o botão desabilitado até ele; se não trouxer, exibe só a copy segura e o botão fica disponível para nova tentativa manual. Nunca há reenvio automático | "Muitas solicitações em pouco tempo. Aguarde alguns instantes e tente novamente." (+ "Tente novamente em N s." apenas quando o backend informar) |
-| erro de rede/serviço | mensagem genérica, sem detalhe técnico; reenvio só por clique | "Não foi possível enviar a solicitação agora. Verifique sua conexão e tente novamente." |
+| rate limit (`AuthError.status === 429` ou `code === "over_email_send_rate_limit"`) | sem cooldown fixo e sem contagem regressiva: o SDK `resetPasswordForEmail` não expõe headers nem prazo confiável. Exibe a copy segura; o botão fica disponível para nova tentativa manual. Nunca há reenvio automático | "Muitas solicitações em pouco tempo. Aguarde alguns instantes e tente novamente." |
+| erro de rede/serviço/configuração/captcha/inesperado | mensagem genérica, sem detalhe técnico e sem indicar existência de conta; reenvio só por clique | "Não foi possível enviar a solicitação agora. Tente novamente em instantes." |
 
 - Ação "Voltar ao login" (Link para `/login`) visível em todos os estados.
 - Tooltip (componente `ui/tooltip` já usado no SYS-01), por hover e foco; no toque abre por clique: ícone de informação ao lado do título do painel de sucesso explicando "Por segurança, não informamos se o e-mail possui cadastro." Complementa, não substitui o texto.
@@ -46,7 +46,9 @@ Não serão tocados: `src/routes/login.tsx`, AGENTS.md, `__root.tsx`, `index.tsx
 
 ## 5. Segurança e anti-enumeração
 
-- Qualquer resposta sem erro → mesma tela de sucesso; erros que não sejam 429/rede (ex.: usuário inexistente, se houver) também são tratados como sucesso neutro, para não revelar conta.
+- Resposta aceita pelo Supabase (sem `error`) → mesma tela de sucesso neutra, para conta existente ou inexistente.
+- Somente se o SDK retornar um erro que revele materialmente existência/inexistência de conta (ex.: `code === "user_not_found"`), esse caso específico é normalizado para a mesma copy neutra de sucesso.
+- Demais erros (técnicos, configuração, captcha, serviço, inesperados) → mensagem genérica de falha, sem detalhe técnico e sem revelar conta.
 - Nada salvo em localStorage/sessionStorage; e-mail mantido só em estado React; sem console.log de e-mail/resposta.
 - Nenhum token de recuperação manipulado nesta tela.
 - Somente chave publicável na request.
@@ -57,8 +59,8 @@ Unitários (vitest, Supabase mockado):
 1. e-mail inválido não chama `resetPasswordForEmail`;
 2. duplo clique durante envio gera 1 chamada;
 3. sucesso mostra copy neutra exata e passa `redirectTo` terminando em `/redefinir-senha`;
-4. erro de "usuário inexistente" mostra a mesma copy de sucesso;
-5. 429 sem prazo mostra copy segura e permite nova tentativa manual; 429 com prazo informado bloqueia até o prazo; erro de rede mostra mensagem genérica; sem nova chamada automática.
+4. erro que revela conta (`user_not_found`) mostra a mesma copy de sucesso; erro inesperado (ex.: `captcha_failed`, 500) mostra a mensagem genérica de falha;
+5. 429 mostra copy segura, sem contagem regressiva, e permite nova tentativa manual; erro de rede mostra mensagem genérica; nenhuma nova chamada automática.
 
 Playwright/HML:
 6. `/esqueci-senha` abre (200), h1 único;
