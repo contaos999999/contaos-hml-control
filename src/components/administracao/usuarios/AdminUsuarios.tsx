@@ -30,6 +30,21 @@ export function AdminUsuarios() {
   const [editando, setEditando] = useState<ModoVinculo | null>(null);
   const [auditando, setAuditando] = useState<UsuarioVinculo | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  // Acessibilidade: gatilho que abriu o diálogo/gaveta, para devolver o foco após o fechamento.
+  const gatilhoRef = useRef<HTMLElement | null>(null);
+
+  function lembrarGatilho(el?: HTMLElement | null) {
+    const a = el ?? document.activeElement;
+    gatilhoRef.current = a instanceof HTMLElement && a !== document.body ? a : null;
+  }
+  function restaurarFoco() {
+    const g = gatilhoRef.current;
+    gatilhoRef.current = null;
+    if (!g) return;
+    requestAnimationFrame(() => {
+      if (g.isConnected) g.focus();
+    });
+  }
 
   useEffect(() => {
     let ativo = true;
@@ -165,7 +180,7 @@ export function AdminUsuarios() {
             <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Usuários e vínculos</h1>
           </div>
           {fase === "sucesso" && (
-            <Button type="button" className="h-11" onClick={() => (setAviso(null), setEditando({ tipo: "novo" }))}>
+            <Button type="button" className="h-11" onClick={(e) => (lembrarGatilho(e.currentTarget), setAviso(null), setEditando({ tipo: "novo" }))}>
               <UserPlus className="mr-2 h-4 w-4" aria-hidden /> Convidar ou vincular usuário
             </Button>
           )}
@@ -251,8 +266,8 @@ export function AdminUsuarios() {
               <UserMembershipTable
                 itens={d.itens}
                 perfis={perfis}
-                onEditar={(u) => (setAviso(null), setEditando({ tipo: "editar", usuario: u }))}
-                onAuditoria={setAuditando}
+                onEditar={(u) => (lembrarGatilho(), setAviso(null), setEditando({ tipo: "editar", usuario: u }))}
+                onAuditoria={(u) => (lembrarGatilho(), setAuditando(u))}
               />
             )}
             {d.total_paginas > 1 && (
@@ -282,9 +297,10 @@ export function AdminUsuarios() {
           org={org}
           modo={editando}
           perfis={perfis}
-          onFechar={() => setEditando(null)}
+          onFechar={() => (setEditando(null), restaurarFoco())}
           onSalvo={(c, extra) => {
             setEditando(null);
+            restaurarFoco();
             setAviso(`${extra ?? MENSAGENS_ADM01.salvo} Referência: ${c}`);
             consulta.refetch();
           }}
@@ -293,7 +309,7 @@ export function AdminUsuarios() {
         />
       )}
       {auditando && org && (
-        <AuditDrawer org={org} usuario={auditando} onFechar={() => setAuditando(null)} onRecarregarLista={() => consulta.refetch()} />
+        <AuditDrawer org={org} usuario={auditando} onFechar={() => (setAuditando(null), restaurarFoco())} onRecarregarLista={() => consulta.refetch()} />
       )}
     </div>
   );
