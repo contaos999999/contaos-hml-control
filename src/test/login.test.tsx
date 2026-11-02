@@ -3,17 +3,23 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 
-const auth = {
-  getSession: vi.fn(),
-  getUser: vi.fn(),
-  signInWithPassword: vi.fn(),
-  signOut: vi.fn(),
-};
-let vinculosResult: { data: unknown; error: unknown } = { data: [], error: null };
-const query = { select: () => query, eq: () => query, then: (r: (v: unknown) => void) => r(vinculosResult) };
-
+const m = vi.hoisted(() => {
+  const auth = {
+    getSession: vi.fn(),
+    getUser: vi.fn(),
+    signInWithPassword: vi.fn(),
+    signOut: vi.fn(),
+  };
+  const state: { r: { data: unknown; error: unknown } } = { r: { data: [], error: null } };
+  const query: Record<string, unknown> = {};
+  query.select = () => query;
+  query.eq = () => query;
+  query.then = (res: (v: unknown) => void) => res(state.r);
+  return { auth, state, query };
+});
+const auth = m.auth;
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth, from: () => query },
+  supabase: { auth: m.auth, from: () => m.query },
 }));
 
 import { LoginForm, MENSAGENS } from "@/components/auth/LoginForm";
@@ -29,7 +35,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   auth.getSession.mockResolvedValue({ data: { session: null } });
   auth.getUser.mockResolvedValue({ data: { user: { id: "u1" } }, error: null });
-  vinculosResult = { data: [], error: null };
+  m.state.r = { data: [], error: null };
 });
 
 describe("SYS-01 Login", () => {
@@ -82,7 +88,7 @@ describe("SYS-01 Login", () => {
 
   it("vários vínculos navega para /selecionar-organizacao", async () => {
     auth.signInWithPassword.mockResolvedValue({ error: null });
-    vinculosResult = { data: [{ id: "1" }, { id: "2" }], error: null };
+    m.state.r = { data: [{ id: "1" }, { id: "2" }], error: null };
     const nav = vi.fn();
     render(<LoginForm onNavegar={nav} />);
     preencher("a@b.com", "x");
