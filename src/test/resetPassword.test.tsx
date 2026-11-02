@@ -69,15 +69,43 @@ describe("SYS-03 Redefinir senha", () => {
     expect(await abrirComRecuperacao()).toBeTruthy();
   });
 
-  it("validações locais não chamam updateUser", async () => {
+  it("SIGNED_IN com sessão comum NÃO libera o formulário", async () => {
+    vi.useFakeTimers();
+    render(<ResetPasswordForm />);
+    act(() => m.cb?.("SIGNED_IN", { user: {} }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3100);
+    });
+    expect(screen.queryByLabelText("Nova senha")).toBeNull();
+    expect(screen.getByText(MENSAGENS_SYS03.linkInvalido)).toBeTruthy();
+  });
+
+  it("getSession com sessão comum NÃO libera o formulário", async () => {
+    vi.useFakeTimers();
+    m.getSession.mockResolvedValue({ data: { session: { user: {} } } });
+    render(<ResetPasswordForm />);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3100);
+    });
+    expect(screen.queryByLabelText("Nova senha")).toBeNull();
+    expect(screen.getByText(MENSAGENS_SYS03.linkInvalido)).toBeTruthy();
+  });
+
+  it("validação local: vazia e não conferem não chamam updateUser", async () => {
     await abrirComRecuperacao();
     preencher("", "");
     expect(await screen.findByText(MENSAGENS_SYS03.senhaVazia)).toBeTruthy();
-    preencher("curta", "curta");
-    expect(await screen.findByText(MENSAGENS_SYS03.senhaCurta)).toBeTruthy();
     preencher("SenhaLonga123", "Outra123456");
     expect(await screen.findByText(MENSAGENS_SYS03.naoConferem)).toBeTruthy();
     expect(m.update).not.toHaveBeenCalled();
+  });
+
+  it("senha curta não é bloqueada localmente; weak_password do backend mostra fraca", async () => {
+    m.update.mockResolvedValue({ data: null, error: { status: 422, code: "weak_password" } });
+    await abrirComRecuperacao();
+    preencher("curta", "curta");
+    expect(await screen.findByText(MENSAGENS_SYS03.fraca)).toBeTruthy();
+    expect(m.update).toHaveBeenCalledWith({ password: "curta" });
   });
 
   it("duplo envio gera uma única chamada; sucesso chama signOut", async () => {

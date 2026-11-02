@@ -13,7 +13,6 @@ export const MENSAGENS_SYS03 = {
   verificando: "Validando link de redefinição…",
   linkInvalido: "Este link de redefinição é inválido ou expirou. Solicite um novo link.",
   senhaVazia: "Informe a nova senha.",
-  senhaCurta: "A senha deve ter pelo menos 8 caracteres.",
   naoConferem: "As senhas não conferem.",
   sucesso: "Senha redefinida com sucesso. Entre novamente com a nova senha.",
   fraca: "A senha não atende à política de segurança. Escolha outra senha.",
@@ -124,15 +123,9 @@ export function ResetPasswordForm() {
     }
     let ativo = true;
     const liberar = () => ativo && setFase((f) => (f === "verificando" ? "formulario" : f));
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || (session && event !== "SIGNED_OUT")) liberar();
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") liberar();
     });
-    supabase.auth
-      .getSession()
-      .then(({ data: d }) => {
-        if (d.session) liberar();
-      })
-      .catch(() => undefined);
     const t = setTimeout(() => {
       if (ativo) setFase((f) => (f === "verificando" ? "invalido" : f));
     }, TEMPO_VERIFICACAO_MS);
@@ -150,7 +143,6 @@ export function ResetPasswordForm() {
     let es: string | null = null;
     let ec: string | null = null;
     if (!senha) es = MENSAGENS_SYS03.senhaVazia;
-    else if (senha.length < 8) es = MENSAGENS_SYS03.senhaCurta;
     if (!es && confirmacao !== senha) ec = MENSAGENS_SYS03.naoConferem;
     setErroSenha(es);
     setErroConf(ec);
@@ -265,7 +257,6 @@ export function ResetPasswordForm() {
               </TooltipProvider>
             }
           />
-          <p className="-mt-3 text-xs text-muted-foreground">Mínimo de 8 caracteres.</p>
           <CampoSenha
             id="confirmar-senha"
             label="Confirmar nova senha"
