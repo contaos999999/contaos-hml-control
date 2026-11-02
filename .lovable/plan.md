@@ -1,78 +1,94 @@
-# PROMPT 28 / V1-07 — Contrato — Base normativa (PLANO para auditoria externa)
+# PROMPT 28 / FE V1-07 — Contrato — Base normativa (plano canônico V107)
 
-Rastreabilidade: GitHub issue #24. Base frontend 9c26e97e. HML gklhhhyosgasnyoxlrui. PROD intocado. Sem build neste turno.
+Substitui integralmente o plano readonly anterior. Base funcional: 9c26e97e. Backend: migration `20261102215515_v107_base_normativa_autorizada.sql` (main 06d65093). Issues: frontend #24, backend #25. HML gklhhhyosgasnyoxlrui; PROD intocado. **BUILD só após confirmação externa de restore verde.**
 
-## 1. Referências
-- Regular: PROMPT 28 / FE V1-07 `/contratos/:id/base-normativa`.
-- Atômicos (parciais, nunca PASS integral por existir tela):
-  - 001 / V1-CON-001 cadastro de documentos-base: **leitura** coberta aqui; cadastro = LACUNA (ver §8).
-  - 002 / V1-CON-002 vigência temporal: exibição de inicio/fim_vigencia por versão, coberta aqui; manutenção = LACUNA.
-  - 004 / V1-CON-004 extração assistida: fora desta tela (depende V1-08/09/10 e de fluxo certificado); registrado N/A-dependente.
-  - 005 / V1-CON-005 documento/página/trecho: exibe somente id_arquivo/metadados oficiais quando existirem; ausência declarada "Não informado pelo backend". Sem inventar página/trecho.
-- NFR-005 (PT-BR/formatos) e NFR-009 (paginação) aplicáveis; NFR-007/008 N/A porque não há mutação neste recorte.
+## 1. Rastreabilidade (sem cobertura fictícia)
+| Ref | Parcela nesta tela | Fora desta tela |
+|---|---|---|
+| PROMPT 28 / FE V1-07 | rota, leitura, gestão por RPC | — |
+| V1-CON-001 (001) documentos-base | cadastrar/editar fonte, registrar versão por texto/arquivo aprovado | cadastro de documentos de competência |
+| V1-CON-002 (002) vigência | inicio/fim por versão, exibição e registro | regra temporal aplicada a competências (V1-08+) |
+| V1-CON-004 (004) extração assistida | nenhuma | depende V1-08/09/10; sem OCR/IA/filas |
+| V1-CON-005 (005) documento/página/trecho | exibir `id_arquivo`/metadados oficiais quando presentes; ausência declarada | página/trecho estruturado não existe no contrato desta tela |
+| NFR-005 | PT-BR, DD/MM/AAAA, America/Sao_Paulo, status literal | — |
+| NFR-007 / NFR-008 | conflito 409 (CAS), idempotência, auditoria/correlation_id do backend | — |
+| NFR-009 | paginação server-side 25 | — |
 
-## 2. Escopo funcional (somente leitura, sem certificar feature integral)
-- Lista paginada (25, server-side) de fontes normativas visíveis via RLS para o contrato: específicas do contrato (`id_contrato = :id`) e globais da organização do contrato (`id_contrato is null`), em seções/filtro distintos ("Do contrato" / "Globais da organização").
-- Filtros: escopo (contrato/global), situação (literais oficiais rascunho/ativa/inativa/revogada; desconhecido exibido literal). Ordem determinística: `titulo asc, id asc`.
-- Detalhe sob demanda (drawer acessível, Esc/retorno de foco) de uma fonte: versões paginadas (25, `versao desc, id asc`), com vigência, hash, id_arquivo (apenas "Arquivo vinculado" sem download), aprovado_por/aprovado_em ("Aprovada em DD/MM/AAAA HH:mm" somente se aprovado_em não nulo; caso contrário "Sem aprovação registrada"). Vigência nunca implica aprovação.
-- Aplicabilidade por versão ao contrato: lida de `aplicabilidades_fonte` (id_contrato=:id, id_fonte_versao in versões da página atual — uma única query por página, sem N+1). Rótulos: "Aplicável"/"Não aplicável" apenas de `aplicavel` com aprovado_em; registro sem aprovação = "Aplicabilidade sem aprovação registrada"; ausência = "Sem registro de aplicabilidade". Fonte global sem registro nunca é exibida como aplicável.
-- `conteudo_texto`/`metadados`: só ao expandir uma versão, query separada `select conteudo_texto, metadados` por id, exibição limitada a 5.000 caracteres com aviso de truncamento; rotulado "Texto registrado (não constitui aprovação normativa)".
+## 2. Gate e autorização
+Sessão `getUser` (ausente → /login; erro → retry sem signOut) → preferência de organização (ausente → /selecionar-organizacao) → `uuidValido`/`uuidCanonico` (inválido não consulta) → `obterContrato(id, signal)` reutilizado sem alteração (classificador `classificar_acesso_contrato_v106` só após zero linhas; nunca em erro) → 403/404/consistência/erro. Só então carga normativa, usando `contrato.id_organizacao` do backend. Sem gate de perfil local; RLS/RPC são autoridade.
 
-## 3. Gate e autorização (reutilização, sem alterar helpers certificados)
-- Sessão `getUser` (ausente → /login; erro → retry sem signOut); preferência de organização ausente → /selecionar-organizacao (padrão V1-06).
-- UUID validado com `uuidValido`, canonizado com `uuidCanonico`; inválido não chama API.
-- Contrato autorizado via `obterContrato(id, signal)` (inclui classificador `classificar_acesso_contrato_v106` só após zero linhas) → 403/404/consistência/erro com mensagens existentes. Somente após sucesso executam-se as queries normativas, usando `contrato.id_organizacao` (do backend) para o filtro global.
-- Sem gate por perfil: leitor e Master leem conforme RLS.
-
-## 4. Queries exatas (Data API, somente SELECT)
+## 3. Leituras (Data API, SELECT)
 ```text
-Q-F: from('fontes_normativas')
-  .select('id,id_organizacao,id_contrato,tipo,titulo,referencia,descricao,situacao,versao_registro,criado_em,atualizado_em', {count:'exact'})
-  .eq('id_organizacao', org).[escopo: .eq('id_contrato', id) | .is('id_contrato', null) | .or(`id_contrato.eq.${id},id_contrato.is.null`)]
-  .[situacao: .eq('situacao', s)]
-  .order('titulo').order('id').range(p*25, p*25+24).abortSignal(signal)
-Q-V: from('versoes_fontes_normativas')
-  .select('id,id_fonte,versao,inicio_vigencia,fim_vigencia,id_arquivo,hash,aprovado_por,aprovado_em,criado_em', {count:'exact'})
-  .eq('id_fonte', idFonte).order('versao',{ascending:false}).order('id').range(...).abortSignal(signal)
-Q-A: from('aplicabilidades_fonte')
-  .select('id,id_fonte_versao,aplicavel,fundamento,aprovado_por,aprovado_em,atualizado_em')
-  .eq('id_contrato', id).in('id_fonte_versao', idsVersoesDaPagina).abortSignal(signal)
-Q-T: from('versoes_fontes_normativas').select('conteudo_texto,metadados').eq('id', idVersao).maybeSingle()
+Q-F fontes_normativas
+  select id,id_organizacao,id_contrato,tipo,titulo,referencia,descricao,situacao,versao_registro,criado_em,atualizado_em  {count:'exact'}
+  .eq(id_organizacao, org)
+  escopo: contrato → .eq(id_contrato,id) | global → .is(id_contrato,null) | ambos → .or(`id_contrato.eq.${id},id_contrato.is.null`) (id UUID canônico validado)
+  situacao opcional .eq(situacao, s)
+  .order(titulo).order(id).range(p*25, p*25+24).abortSignal
+Q-V versoes_fontes_normativas (só ao abrir fonte)
+  select id,id_fonte,versao,inicio_vigencia,fim_vigencia,id_arquivo,hash,aprovado_por,aprovado_em,criado_em {count:'exact'}
+  .eq(id_fonte, f).order(versao,desc).order(id).range(25)
+Q-A aplicabilidades_fonte (1 por página de versões; sem N+1)
+  select id,id_fonte_versao,aplicavel,fundamento,aprovado_por,aprovado_em,atualizado_em
+  .eq(id_contrato,id).in(id_fonte_versao, idsDaPagina)
+Q-T versoes_fontes_normativas select conteudo_texto,metadados .eq(id, v).maybeSingle()   (só ao expandir UMA versão; exibição limitada a 5.000 caracteres com aviso)
+Q-Arq arquivos select id,nome_original,mime,tamanho,status_seguranca,criado_em
+  .eq(id_organizacao,org).eq(id_contrato,id).order(criado_em,desc).order(id).range(25)  (só no diálogo de versão por arquivo; sem path na UI)
+  ou .eq(id, idArquivo).maybeSingle() para acompanhar status
 ```
-Sem `!inner`, sem RPC além do classificador V1-06, sem Storage, sem INSERT/UPDATE.
-Query keys: `['base-normativa', uid, org, idContrato, escopo, situacao, pagina]`, `['bn-versoes', uid, org, idContrato, idFonte, pagina]`, `['bn-aplic', uid, org, idContrato, idsVersoes]`, `['bn-texto', uid, org, idVersao]`; sem placeholderData; remount por key (anti-stale A→B).
-Erros: 401/403/42501/PGRST301 → "Acesso negado"; demais/rede → erro técnico sanitizado + retry; sem expor code/hint/stack.
+Sem `!inner`, sem prefetch, sem filtro local como autorização. Query keys: `['bn-fontes',uid,org,contrato,escopo,situacao,pagina]`, `['bn-versoes',uid,org,contrato,fonte,pagina]`, `['bn-aplic',uid,org,contrato,ids]`, `['bn-texto',uid,org,versao]`, `['bn-arquivos',uid,org,contrato,pagina]`; sem placeholderData; remount por key e AbortSignal (anti-stale A→B).
 
-## 5. Tipagem
-Tipos derivados de `Database['public']['Tables'][...]['Row']` existentes (Pick). Sem casts, sem editar types.ts.
+Rótulos oficiais: "Aprovada em …" só com `aprovado_em`; vigência nunca implica aprovação; aplicabilidade "Aplicável/Não aplicável" só com registro aprovado; global sem registro aprovado = "Sem aplicabilidade aprovada para este contrato". Texto: "Texto registrado (não constitui aprovação normativa)". Escopo visível: badge "Do contrato" / "Global da organização".
 
-## 6. Estados e UI
-Loading, empty distinto ("Nenhuma fonte normativa registrada para este contrato/organização"), 403, 404, erro + retry, empty de versões e de aplicabilidade. H1 único "Base normativa"; datas DD/MM/AAAA e horas America/Sao_Paulo (date-only sem deslocamento); alvos ≥44px; status com texto, não só cor; tooltips só em "Escopo global" e "Hash" (ganho real), hover+foco, toque via popover existente. Larguras 1440/1280/768/390 sem overflow. Design existente, sem layout global.
+## 4. Mutações (somente RPCs V107; nenhum DML direto)
+| Ação | RPC | Campos enviados | Nunca enviar |
+|---|---|---|---|
+| Nova fonte | `salvar_fonte_normativa_v107` | org, contrato (ou null p/ global), fonte=null, tipo, titulo, referencia, descricao, situacao='rascunho', versao_esperada=null, chave | aprovado_*, hash |
+| Editar metadados | idem | fonte, campos, versao_esperada=versao_registro lida, chave | — |
+| Alterar situação | idem | situacao nova + versao_esperada; aviso "ativação exige versão aprovada; requer administrador" | — |
+| Nova versão | `registrar_versao_fonte_v107` | org, fonte, inicio, fim?, id_arquivo? (só status `aprovado`), conteudo_texto?, metadados `{}`, chave | versao, hash |
+| Aprovar versão | `aprovar_versao_fonte_v107` | org, versao, hash_esperado (o exibido), fundamento obrigatório, chave | ator/data |
+| Aplicabilidade | `definir_aplicabilidade_fonte_v107` | org, contrato, versao, aplicavel, fundamento, atualizado_em_esperado (lido ou null), chave | aprovado_* |
 
-## 7. Navegação
-- V1-06: "Base normativa" passa a link para `/contratos/$id/base-normativa` (única alteração em VisaoGeralContrato.tsx + teste associado); demais seções seguem "Em breve".
-- V1-07: link "Visão geral" → `/contratos/$id`; "Base normativa" aria-current; demais "Em breve"; voltar a /contratos.
+- Aprovação: diálogo de revisão mostra hash, origem (texto/arquivo), vigência e exige fundamento + confirmação explícita.
+- Idempotência: `crypto.randomUUID()` por intenção ao abrir diálogo; estável em retry; renovada após sucesso, cancelamento ou alteração material de campo.
+- Respostas: sucesso → toast/aria-live com `correlation_id`, invalidação das keys afetadas, foco devolvido ao gatilho. PT409 → "Registro alterado por outra pessoa" + botão Recarregar e revisar (sem reenvio automático). PT400 → validação sanitizada. PT404 → registro obsoleto, recarregar. 42501/403 → "Você não tem permissão para esta ação". Rede/outros → erro técnico + retry com mesma chave. Nunca code/hint/stack.
+- Perfis explicados em texto de ajuda (fonte/versão: administrador, gestor_contrato, juridico_conformidade; aprovação/aplicabilidade: administrador, direcao_aprovador; situação: administrador; Master reconhecido no backend). Botões ficam disponíveis a todos os leitores; o backend nega. Nenhum gate local.
 
-## 8. LACUNAS DE BACKEND (caminhos parados, sem contorno)
-- Cadastro/edição de fonte (001): grants INSERT/UPDATE existem, mas UPDATE tem duplo incremento de `versao_registro` (controlar_versao_registro + tocar_atualizado_em) sem contrato otimista provado → LACUNA; INSERT isolado sem fluxo de versão/aprovação certificado definido pelo pacote para esta tela → não implementado nesta etapa.
-- Nova versão/vigência (002): INSERT em versões possível, mas exige id_arquivo/upload sem fluxo Storage certificado para esta tela e hash sem origem definida → LACUNA.
-- Aprovação de fonte/versão: sem RPC pública; escrita de aprovado_por/em via Data API proibida → LACUNA.
-- Aplicabilidade: sem INSERT/UPDATE nem RPC → LACUNA.
-- Publicação/ativação (situacao): sem RPC de transição crítica → LACUNA.
-- Download de arquivo/página/trecho (005): sem fluxo Storage certificado → LACUNA; exibe só indicação de vínculo.
-- Extração assistida (004): depende de V1-08/09/10 → N/A nesta tela.
-Consequência: V1-07 é certificável apenas como **recorte de leitura**, não como feature integral.
+## 5. Arquivo (reuso Edge existente)
+- Upload: `storage-sign-upload` → `supabase.storage.uploadToSignedUrl` → `confirmar_upload_arquivo(p_id_organizacao,p_id_contrato,p_nome_original,p_mime,p_tamanho,p_sha256 (SubtleCrypto),p_path retornado pelo Edge,p_origem)`. Arquivo resultante exibido "Em análise de segurança"; não selecionável até `status_seguranca='aprovado'`; rejeitado exibido literal. Botão "Atualizar status" (Q-Arq por id), sem polling contínuo.
+- Download: somente clique explícito → `storage-sign-download({id_arquivo})` → abre URL assinada retornada; nunca URL arbitrária.
+- **Limitação parada:** upload grande retomável (TUS) não existe certificado no cliente → subcaminho não implementado; upload simples respeita limite de `configuracao_upload`/Edge.
+- **Risco:** `confirmar_upload_arquivo` exige `p_id_contrato`; versão por arquivo de fonte **global** pode ser recusada por escopo → nesse caso a UI oferece só versão por texto e exibe a mensagem do backend; registrado como risco, sem contorno.
+- Contrato exato de request/response dos Edges será lido do backend/documentação na abertura do BUILD (sem alterar); se divergir do exposto, parar esse subcaminho.
+
+## 6. Tipagem
+Tabelas via `Database['public']['Tables'][T]['Row']` (Pick). As 4 RPCs V107 **não estão** em `types.ts` (verificado) e o arquivo gerado não será editado: adaptador único em `baseNormativaDados.ts` com tipos explícitos de Args/Returns dos 4 nomes, uma única fronteira de chamada tipada (precedente ADM01), sem `any`/`never` nem casts fora dela; marcado `LACUNA DE TIPOS` até regeneração.
+
+## 7. Componentes e estados (dentro de BaseNormativaContrato.tsx)
+Cabeçalho leve do contrato + navegação canônica; filtros; lista paginada; drawer de detalhe (versões, aplicabilidade, expandir texto); diálogos: Fonte (criar/editar/situação), Nova versão (texto | arquivo aprovado | upload), Aprovar versão, Aplicabilidade. Estados: verificando sessão, carregando contrato, 403, 404, inconsistência, erro+retry, lista vazia, versões vazias, upload pendente/processando/rejeitado/aprovado, salvando, 409, 400, permissão, sucesso. H1 único "Base normativa"; Esc fecha e devolve foco; aria-live; alvos ≥44px; status com texto; larguras 1440/1280/768/390.
+
+## 8. Navegação
+V1-06: "Base normativa" vira `<Link to="/contratos/$id/base-normativa">` (única mudança + teste). V1-07: "Visão geral" link, "Base normativa" `aria-current`, demais "Em breve".
 
 ## 9. Arquivos exatos
 - novo `src/routes/contratos_.$id.base-normativa.tsx` (ssr:false, title "Base normativa — ContaOS", robots noindex)
-- novo `src/components/contratos/BaseNormativaContrato.tsx` (inclui drawer local; nenhum componente auxiliar extra)
+- novo `src/components/contratos/BaseNormativaContrato.tsx`
 - novo `src/lib/contratos/baseNormativaDados.ts`
 - novo `src/test/baseNormativa.test.tsx`
-- alterar `src/components/contratos/VisaoGeralContrato.tsx` (somente link) e `src/test/contratoDetalhe.test.tsx` (somente teste do link)
-- `src/routeTree.gen.ts` regenerado; `.lovable/plan.md`.
+- alterar `src/components/contratos/VisaoGeralContrato.tsx` (só link) e `src/test/contratoDetalhe.test.tsx` (só teste do link)
+- `src/routeTree.gen.ts` (gerado), `.lovable/plan.md`
+Nenhum auxiliar extra previsto; se o componente exceder legibilidade, proposta prévia: `src/components/contratos/BaseNormativaDialogos.tsx` (apenas após autorização).
 
 ## 10. TDD
-RED (módulo ausente + comportamento link V1-06) → GREEN mínimo. Casos: gate sessão/org/UUID; autorizado/403/404/erro/rede via obterContrato; Q-F colunas/filtros/ordem/range/página 2; escopo contrato vs global vs ambos; situação desconhecida literal; empty vs erro; versões paginadas; aplicabilidade sem aprovação/sem registro/global não aplicável; vigência ≠ aprovação; texto só sob demanda e truncado; uma Q-A por página (sem N+1); stale A→B e abort; scan sem insert/update/upsert/delete/storage/service_role. Suíte completa, tsgo, build, browser 4 larguras.
+RED (módulo ausente + link V1-06) → GREEN mínimo. Casos: gate sessão/org/UUID; obterContrato 403/404/classificador só zero linhas; Q-F colunas/filtros/ordem/range/página 2/global×contrato; lazy Q-V/Q-A única/Q-T sob demanda e truncada; abort/stale A→B; cada RPC com payload exato, sem aprovado_*/hash local; chave estável em retry e renovada; 400/403/404/409 sanitizados e reload; aprovação com hash_esperado e fundamento obrigatório; CAS aplicabilidade; global não aplicável sem registro; arquivo pendente não anexável; download só por id; correlation_id; navegação; a11y foco/Esc; scan sem `.insert/.update/.upsert/.delete` em tabelas normativas, sem service_role. Depois focused, suíte, `tsgo --noEmit`, build, browser 4 larguras.
 
-## 11. Teste C (18 gates, turno separado)
-1 HEAD/status; 2 Zero-Drift diff; 3 tipos sem cast; 4 rota/head; 5 sessão/org; 6 UUID; 7 autorização obterContrato/classificador; 8 Q-F/paginação/filtros; 9 escopo contrato×global; 10 versões/vigência/aprovação literal; 11 aplicabilidade; 12 texto sob demanda/limite; 13 estados/erros sanitizados; 14 stale/abort; 15 navegação V1-06↔V1-07; 16 a11y/drawer/foco/44px; 17 responsividade 4 larguras; 18 testes/typecheck/build + Security Scan separado + HEAD final. Qualquer FAIL para sem auto-fix.
+## 11. Teste C (separado, read-only, 18 gates)
+1 HEAD/status; 2 Zero-Drift; 3 tipagem/adaptador; 4 rota/head; 5 sessão/org/UUID; 6 obterContrato/classificador; 7 Q-F paginação/filtros/escopo; 8 versões/vigência/aprovação literal; 9 aplicabilidade/global; 10 lazy sem N+1/texto limitado; 11 RPC fonte criar/editar/situação; 12 RPC versão/arquivo pendente/aprovado; 13 aprovação hash/fundamento; 14 aplicabilidade CAS; 15 idempotência/409/400/403/404 sanitizados; 16 stale/abort/navegação; 17 a11y + 4 larguras; 18 testes/typecheck/build + HEAD final. Security Scan separado (0 Critical novo). Qualquer FAIL para sem auto-fix.
+
+## 12. Riscos reais restantes
+- RPCs ausentes em types.ts (adaptador temporário).
+- Escopo de arquivo para fonte global (confirmar_upload exige contrato).
+- Upload retomável não suportado.
+- Sem endpoint de capacidade: ações aparecem a todos e o backend nega.
+- Browser com mocks não prova RLS/RPC real; prova real vem da regressão SQL backend 18/18.
