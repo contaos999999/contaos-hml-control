@@ -33,7 +33,7 @@ Q-A aplicabilidades_fonte (1 por página de versões; sem N+1)
   .eq(id_contrato,id).in(id_fonte_versao, idsDaPagina)
 Q-T versoes_fontes_normativas select conteudo_texto,metadados .eq(id, v).maybeSingle()   (só ao expandir UMA versão; exibição limitada a 5.000 caracteres com aviso)
 Q-Arq arquivos select id,nome_original,mime,tamanho,status_seguranca,criado_em
-  .eq(id_organizacao,org).eq(id_contrato,id).order(criado_em,desc).order(id).range(25)  (só no diálogo de versão por arquivo; sem path na UI)
+  .eq(id_organizacao,org) + (fonte do contrato: .eq(id_contrato,id) | fonte global: .is(id_contrato,null)).order(criado_em,desc).order(id).range(25)  (só no diálogo de versão por arquivo; sem path na UI)
   ou .eq(id, idArquivo).maybeSingle() para acompanhar status
 ```
 Sem `!inner`, sem prefetch, sem filtro local como autorização. Query keys: `['bn-fontes',uid,org,contrato,escopo,situacao,pagina]`, `['bn-versoes',uid,org,contrato,fonte,pagina]`, `['bn-aplic',uid,org,contrato,ids]`, `['bn-texto',uid,org,versao]`, `['bn-arquivos',uid,org,contrato,pagina]`; sem placeholderData; remount por key e AbortSignal (anti-stale A→B).
@@ -56,10 +56,9 @@ Rótulos oficiais: "Aprovada em …" só com `aprovado_em`; vigência nunca impl
 - Perfis explicados em texto de ajuda (fonte/versão: administrador, gestor_contrato, juridico_conformidade; aprovação/aplicabilidade: administrador, direcao_aprovador; situação: administrador; Master reconhecido no backend). Botões ficam disponíveis a todos os leitores; o backend nega. Nenhum gate local.
 
 ## 5. Arquivo (reuso Edge existente)
-- Upload: `storage-sign-upload` → `supabase.storage.uploadToSignedUrl` → `confirmar_upload_arquivo(p_id_organizacao,p_id_contrato,p_nome_original,p_mime,p_tamanho,p_sha256 (SubtleCrypto),p_path retornado pelo Edge,p_origem)`. Arquivo resultante exibido "Em análise de segurança"; não selecionável até `status_seguranca='aprovado'`; rejeitado exibido literal. Botão "Atualizar status" (Q-Arq por id), sem polling contínuo.
+- Upload: `storage-sign-upload` → se a resposta trouxer `usar_upload_resumivel=true`, PARAR e exibir "Upload retomável não está disponível nesta tela." (nunca tentar upload simples acima do limiar). Caso contrário `supabase.storage.uploadToSignedUrl(path, token, arquivo)` com path/token retornados pelo Edge → `confirmar_upload_arquivo(p_id_organizacao, p_id_contrato, p_path, p_nome_original, p_mime, p_tamanho, p_sha256 (SubtleCrypto), p_origem='upload_usuario')` → uuid. `p_id_contrato` = id do contrato para fonte do contrato e `null` para fonte global (nullable; path por organização). Path nunca exibido na UI. Arquivo exibido "Em análise de segurança"; não selecionável até `status_seguranca='aprovado'`; rejeitado exibido literal. Botão "Atualizar status" (Q-Arq por id), sem polling contínuo. Mesmo escopo arquivo×fonte permanece validado por `registrar_versao_fonte_v107`.
 - Download: somente clique explícito → `storage-sign-download({id_arquivo})` → abre URL assinada retornada; nunca URL arbitrária.
-- **Limitação parada:** upload grande retomável (TUS) não existe certificado no cliente → subcaminho não implementado; upload simples respeita limite de `configuracao_upload`/Edge.
-- **Risco:** `confirmar_upload_arquivo` exige `p_id_contrato`; versão por arquivo de fonte **global** pode ser recusada por escopo → nesse caso a UI oferece só versão por texto e exibe a mensagem do backend; registrado como risco, sem contorno.
+- **Limitação parada:** upload retomável não implementado nesta tela (interrompido por `usar_upload_resumivel=true`).
 - Contrato exato de request/response dos Edges será lido do backend/documentação na abertura do BUILD (sem alterar); se divergir do exposto, parar esse subcaminho.
 
 ## 6. Tipagem
@@ -81,14 +80,12 @@ V1-06: "Base normativa" vira `<Link to="/contratos/$id/base-normativa">` (única
 Nenhum auxiliar extra previsto; se o componente exceder legibilidade, proposta prévia: `src/components/contratos/BaseNormativaDialogos.tsx` (apenas após autorização).
 
 ## 10. TDD
-RED (módulo ausente + link V1-06) → GREEN mínimo. Casos: gate sessão/org/UUID; obterContrato 403/404/classificador só zero linhas; Q-F colunas/filtros/ordem/range/página 2/global×contrato; lazy Q-V/Q-A única/Q-T sob demanda e truncada; abort/stale A→B; cada RPC com payload exato, sem aprovado_*/hash local; chave estável em retry e renovada; 400/403/404/409 sanitizados e reload; aprovação com hash_esperado e fundamento obrigatório; CAS aplicabilidade; global não aplicável sem registro; arquivo pendente não anexável; download só por id; correlation_id; navegação; a11y foco/Esc; scan sem `.insert/.update/.upsert/.delete` em tabelas normativas, sem service_role. Depois focused, suíte, `tsgo --noEmit`, build, browser 4 larguras.
+RED (módulo ausente + link V1-06) → GREEN mínimo. Casos: gate sessão/org/UUID; obterContrato 403/404/classificador só zero linhas; Q-F colunas/filtros/ordem/range/página 2/global×contrato; lazy Q-V/Q-A única/Q-T sob demanda e truncada; abort/stale A→B; cada RPC com payload exato, sem aprovado_*/hash local; chave estável em retry e renovada; 400/403/404/409 sanitizados e reload; aprovação com hash_esperado e fundamento obrigatório; CAS aplicabilidade; global não aplicável sem registro; arquivo pendente não anexável; download só por id; correlation_id; navegação; a11y foco/Esc; scan sem `.insert/.update/.upsert/.delete` em tabelas normativas, sem service_role; `usar_upload_resumivel=true` interrompe sem upload; ordem exata de args de `confirmar_upload_arquivo` e `p_id_contrato=null` para fonte global. Depois focused, suíte, `npx tsc --noEmit` (exit real), build, browser 4 larguras.
 
 ## 11. Teste C (separado, read-only, 18 gates)
 1 HEAD/status; 2 Zero-Drift; 3 tipagem/adaptador; 4 rota/head; 5 sessão/org/UUID; 6 obterContrato/classificador; 7 Q-F paginação/filtros/escopo; 8 versões/vigência/aprovação literal; 9 aplicabilidade/global; 10 lazy sem N+1/texto limitado; 11 RPC fonte criar/editar/situação; 12 RPC versão/arquivo pendente/aprovado; 13 aprovação hash/fundamento; 14 aplicabilidade CAS; 15 idempotência/409/400/403/404 sanitizados; 16 stale/abort/navegação; 17 a11y + 4 larguras; 18 testes/typecheck/build + HEAD final. Security Scan separado (0 Critical novo). Qualquer FAIL para sem auto-fix.
 
 ## 12. Riscos reais restantes
-- RPCs ausentes em types.ts (adaptador temporário).
-- Escopo de arquivo para fonte global (confirmar_upload exige contrato).
-- Upload retomável não suportado.
+- RPCs V107 ausentes em types.ts (adaptador temporário tipado).
+- Upload retomável parado (`usar_upload_resumivel=true` interrompe com mensagem).
 - Sem endpoint de capacidade: ações aparecem a todos e o backend nega.
-- Browser com mocks não prova RLS/RPC real; prova real vem da regressão SQL backend 18/18.
