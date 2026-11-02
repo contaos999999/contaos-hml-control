@@ -19,7 +19,7 @@ export const MENSAGENS_V106 = {
   erroSessao: "Não foi possível verificar sua sessão agora. Tente novamente em instantes.",
 } as const;
 
-const SECOES_FUTURAS = ["Base normativa", "Orçamento", "Regras", "Documentos", "Competências"] as const;
+const SECOES_FUTURAS = ["Orçamento", "Regras", "Documentos", "Competências"] as const;
 
 export function VisaoGeralContrato({ id }: { id: string }) {
   const navigate = useNavigate();
@@ -179,6 +179,9 @@ function Resumo({ c }: { c: ContratoDetalhe }) {
         <ul className="flex flex-wrap gap-2">
           <li>
             <span aria-current="page" className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">Visão geral</span>
+          </li>
+          <li>
+            <Link to="/contratos/$id/base-normativa" params={{ id: c.id }} className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Base normativa</Link>
           </li>
           {SECOES_FUTURAS.map((s) => (
             <li key={s}>
