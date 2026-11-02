@@ -58,15 +58,22 @@ export function AuditDrawer(props: { org: string; usuario: UsuarioVinculo; onFec
                     <span>{formatarDataHoraBr(e.criado_em)}</span>
                   </p>
                   <p className="break-words text-muted-foreground">{`Por: ${e.ator_nome ?? "—"}${e.ator_email ? ` (${e.ator_email})` : ""}`}</p>
-                  <dl className="space-y-0.5 text-xs">
-                    <div className="flex flex-wrap gap-1">
-                      <dt className="text-muted-foreground">Antes:</dt>
-                      <dd className="break-words">{resumoVinculo(e.antes)}</dd>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      <dt className="text-muted-foreground">Depois:</dt>
-                      <dd className="break-words">{resumoVinculo(e.depois)}</dd>
-                    </div>
+                  <p className="break-words text-xs text-muted-foreground">{`Entidade: ${e.entidade}`}</p>
+                  <dl className="space-y-2 text-xs">
+                    {(
+                      [
+                        ["Antes", e.antes],
+                        ["Depois", e.depois],
+                        ["Metadados", e.metadados],
+                      ] as const
+                    ).map(([rotulo, valor]) => (
+                      <div key={rotulo} className="space-y-0.5">
+                        <dt className="text-muted-foreground">{`${rotulo}:`}</dt>
+                        <dd>
+                          <pre className="max-w-full whitespace-pre-wrap break-all rounded-md bg-muted p-2 font-mono text-xs text-foreground">{jsonLiteral(valor)}</pre>
+                        </dd>
+                      </div>
+                    ))}
                   </dl>
                   {e.correlation_id && <p className="break-all text-xs text-muted-foreground">{`Referência: ${e.correlation_id}`}</p>}
                 </li>
