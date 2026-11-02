@@ -1,5 +1,5 @@
 /**
- * ADM-01 — Acesso às 4 RPCs oficiais (backend HML certificado). Nenhuma outra operação.
+ * ADM-01 — Acesso às 5 RPCs oficiais e à Edge `admin-invite-user` (backend HML certificado).
  * A autoridade é o backend/RLS; aqui só há transporte, validação de versão do contrato e
  * classificação contextual de erro para mensagens PT-BR seguras.
  */
@@ -19,10 +19,28 @@ export const MENSAGENS_ADM01 = {
   salvo: "Vínculo salvo.",
   escopoVazio: "Nenhum contrato encontrado.",
   auditoriaVazia: "Nenhum evento registrado para este vínculo.",
+  usuarioExistente: "Conta existente localizada e vinculada.",
+  usuarioConvidado: "Convite enviado e vínculo salvo.",
+  conflitoIdempotencia: "Esta solicitação conflita com outra já registrada. Revise os dados e envie novamente.",
+  emProcessamento: "Esta solicitação ainda está em processamento. Aguarde e consulte novamente.",
+  conviteNaoEnviado: "Não foi possível enviar o convite para este e-mail. Revise o endereço e tente novamente.",
+  muitoGrande: "Os dados enviados excedem o tamanho permitido. Reduza as informações e tente novamente.",
+  sessaoInvalida: "Sua sessão expirou ou é inválida. Entre novamente para continuar.",
 } as const;
 
 export type Operacao = "listar" | "escopo" | "escopoNovo" | "auditoria" | "salvarNovo" | "salvarEdicao";
-export type TipoErro = "negado" | "conflito" | "contaInexistente" | "vinculoDesatualizado" | "validacao" | "erro";
+export type TipoErro =
+  | "negado"
+  | "conflito"
+  | "contaInexistente"
+  | "vinculoDesatualizado"
+  | "validacao"
+  | "conflitoIdempotencia"
+  | "emProcessamento"
+  | "conviteNaoEnviado"
+  | "muitoGrande"
+  | "sessaoInvalida"
+  | "erro";
 
 export class ErroAdm extends Error {
   constructor(public tipo: TipoErro) {
@@ -92,32 +110,33 @@ export const TAMANHO_LISTA = 25;
 export const TAMANHO_ESCOPO = 25;
 export const TAMANHO_AUDITORIA = 20;
 
-// O backend HML retorna "adm01-v2" em todas as RPCs; lista/auditoria aceitam também "adm01-v1".
-const VERSOES: Record<string, string[]> = {
-  listar: ["adm01-v1", "adm01-v2"],
-  auditoria: ["adm01-v1", "adm01-v2"],
-  escopo: ["adm01-v2"],
-  salvar: ["adm01-v2"],
-};
+// Contrato canônico: somente "adm01-v2". Outro valor = incompatibilidade técnica, sem fallback.
+const VERSAO = "adm01-v2";
 
 type Rpc = (nome: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown; status: number }>;
 // Cast pontual: os tipos gerados declaram `p_id_usuario`/`p_email`/`p_versao_esperada` como não-nulos,
 // mas o contrato adm01-v2 aceita null nesses parâmetros.
 const rpc: Rpc = (nome, args) => (supabase.rpc as unknown as Rpc).call(supabase, nome, args);
 
-async function chamar<T>(nome: string, args: Record<string, unknown>, op: Operacao, grupo: keyof typeof VERSOES): Promise<T> {
+async function chamar<T>(nome: string, args: Record<string, unknown>, op: Operacao): Promise<T> {
   const { data, error, status } = await rpc(nome, args);
   if (error) throw new ErroAdm(classificarErroAdm(op, error, status));
-  const v = (data as { schema_versao?: string } | null)?.schema_versao;
-  if (!v || !VERSOES[grupo]!.includes(v)) throw new ErroAdm("erro");
+  if ((data as { schema_versao?: string } | null)?.schema_versao !== VERSAO) throw new ErroAdm("erro");
   return data as T;
+}
+
+/** Autorização administrativa decidida no backend. `false` = negado. */
+export async function validarAdministrador(org: string): Promise<boolean> {
+  const { data, error, status } = await rpc("validar_administrador_organizacao", { p_id_organizacao: org });
+  if (error) throw new ErroAdm(classificarErroAdm("listar", error, status));
+  if (typeof data !== "boolean") throw new ErroAdm("erro");
+  return data;
 }
 
 export function listarUsuarios(org: string, p: { pagina: number; busca: string | null; ativo: boolean | null }) {
   return chamar<ListaUsuarios>(
     "listar_usuarios_vinculos_adm",
     { p_id_organizacao: org, p_pagina: p.pagina, p_tamanho_pagina: TAMANHO_LISTA, p_busca: p.busca, p_ativo: p.ativo },
-    "listar",
     "listar",
   );
 }
@@ -127,7 +146,6 @@ export function listarEscopo(org: string, idUsuario: string | null, pagina: numb
     "listar_escopo_contratos_usuario_adm",
     { p_id_organizacao: org, p_id_usuario: idUsuario, p_pagina: pagina, p_tamanho_pagina: TAMANHO_ESCOPO, p_busca: busca },
     idUsuario ? "escopo" : "escopoNovo",
-    "escopo",
   );
 }
 
@@ -135,7 +153,6 @@ export function listarAuditoria(org: string, idUsuario: string, pagina: number) 
   return chamar<ListaAuditoria>(
     "listar_auditoria_vinculo_usuario_adm",
     { p_id_organizacao: org, p_id_usuario: idUsuario, p_pagina: pagina, p_tamanho_pagina: TAMANHO_AUDITORIA },
-    "auditoria",
     "auditoria",
   );
 }
@@ -152,13 +169,49 @@ export type PayloadSalvar = {
   p_versao_esperada: number | null;
 };
 
-export function salvarVinculo(payload: PayloadSalvar, chave: string) {
-  return chamar<RespostaSalvar>(
-    "salvar_vinculo_usuario_adm",
-    { ...payload, p_chave_idempotencia: chave },
-    payload.p_id_usuario ? "salvarEdicao" : "salvarNovo",
-    "salvar",
-  );
+export function salvarVinculo(payload: PayloadSalvar, chave: string, op: "salvarNovo" | "salvarEdicao") {
+  return chamar<RespostaSalvar>("salvar_vinculo_usuario_adm", { ...payload, p_chave_idempotencia: chave }, op);
+}
+
+// ---- Edge Function oficial admin-invite-user (verify_jwt=true; JWT anexado pelo cliente existente) ----
+export type CorpoConvite = { id_organizacao: string; email: string; nome?: string; chave_idempotencia: string };
+export type RespostaConvite = { codigo: "USUARIO_EXISTENTE" | "USUARIO_CONVIDADO"; id_usuario: string; correlation_id: string | null };
+
+export function classificarErroConvite(status: number, codigo: string | null): TipoErro {
+  if (status === 401) return "sessaoInvalida";
+  if (status === 403) return "negado";
+  if (status === 409 && codigo === "CONFLITO_IDEMPOTENCIA") return "conflitoIdempotencia";
+  if (status === 409 && codigo === "OPERACAO_EM_PROCESSAMENTO") return "emProcessamento";
+  if (status === 422 && codigo === "CONVITE_NAO_ENVIADO") return "conviteNaoEnviado";
+  if (status === 422) return "validacao";
+  if (status === 413) return "muitoGrande";
+  return "erro";
+}
+
+function lerCodigo(b: unknown): string | null {
+  const o = b as { codigo?: unknown; code?: unknown; resultado?: unknown } | null;
+  const c = o?.codigo ?? o?.code ?? o?.resultado;
+  return typeof c === "string" ? c : null;
+}
+
+export async function convidarUsuario(corpo: CorpoConvite): Promise<RespostaConvite> {
+  let resp: { data: unknown; error: unknown };
+  try {
+    resp = await supabase.functions.invoke("admin-invite-user", { body: corpo });
+  } catch {
+    throw new ErroAdm("erro");
+  }
+  if (resp.error) {
+    const ctx = (resp.error as { context?: { status?: number; json?: () => Promise<unknown> } }).context;
+    const status = typeof ctx?.status === "number" ? ctx.status : 0;
+    const corpoErro = ctx?.json ? await ctx.json().catch(() => null) : null;
+    throw new ErroAdm(classificarErroConvite(status, lerCodigo(corpoErro)));
+  }
+  const d = resp.data as { id_usuario?: unknown; usuario?: { id?: unknown }; correlation_id?: unknown } | null;
+  const codigo = lerCodigo(d);
+  const id = typeof d?.id_usuario === "string" ? d.id_usuario : typeof d?.usuario?.id === "string" ? d.usuario.id : null;
+  if ((codigo !== "USUARIO_EXISTENTE" && codigo !== "USUARIO_CONVIDADO") || !id) throw new ErroAdm("erro");
+  return { codigo, id_usuario: id, correlation_id: typeof d?.correlation_id === "string" ? d.correlation_id : null };
 }
 
 export function textoErro(e: unknown): string {
