@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Building2, Info, Loader2, LogOut, RefreshCw, ShieldAlert, ShieldCheck } from "lucide-react";
+import { AlertCircle, Building2, Info, Loader2, LogOut, RefreshCw, ShieldAlert } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { formatarDataBr, formatarDataHoraBr, formatarNumero, rotuloTipo } from "./dashboardFormatacao";
+import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 export const MENSAGENS_SYS05 = {
   verificando: "Verificando sessão…",
@@ -243,11 +244,8 @@ function Cabecalho(props: {
     <header className="border-b border-border bg-primary text-primary-foreground">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary-foreground/20 bg-primary-foreground/10">
-            <ShieldCheck className="h-5 w-5" aria-hidden />
-          </span>
+          <ContaOSMarca />
           <div className="min-w-0 leading-tight">
-            <p className="text-lg font-semibold tracking-tight">ContaOS</p>
             {o && (
               <p className="break-words text-sm opacity-80">
                 {o.nome_fantasia || o.razao_social} <span className="opacity-70">• Situação: {o.situacao}</span>

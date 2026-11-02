@@ -1,13 +1,14 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, ArrowLeft, Building2, Loader2, RefreshCw, SearchX, ShieldAlert, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowLeft, Building2, Loader2, RefreshCw, SearchX, ShieldAlert } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { ErroDetalhe, uuidCanonico, formatarBrl, formatarDataBr, obterContrato, texto, type ContratoDetalhe } from "@/lib/contratos/contratoDetalheDados";
+import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 export const MENSAGENS_V106 = {
   verificando: "Verificando sessão…",
@@ -55,10 +56,7 @@ export function VisaoGeralContrato({ id }: { id: string }) {
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary-foreground/20 bg-primary-foreground/10">
-              <ShieldCheck className="h-5 w-5" aria-hidden />
-            </span>
-            <p className="text-lg font-semibold tracking-tight">ContaOS</p>
+            <ContaOSMarca />
           </div>
           <nav aria-label="Navegação" className="flex flex-wrap gap-2">
             <Button asChild variant="secondary" className="h-11">

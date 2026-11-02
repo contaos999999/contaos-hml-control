@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Loader2, LogOut, ShieldAlert, ShieldCheck, UserPlus } from "lucide-react";
+import { Loader2, LogOut, ShieldAlert, UserPlus } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrgani
 import { AuditDrawer } from "./AuditDrawer";
 import { ContractScopeDialog, type ModoVinculo } from "./ContractScopeDialog";
 import { UserMembershipTable } from "./UserMembershipTable";
+import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 type Situacao = "todos" | "ativos" | "inativos";
 
@@ -150,10 +151,7 @@ export function AdminUsuarios() {
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-primary-foreground/20 bg-primary-foreground/10">
-              <ShieldCheck className="h-5 w-5" aria-hidden />
-            </span>
-            <p className="text-lg font-semibold tracking-tight">ContaOS</p>
+            <ContaOSMarca />
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="secondary" className="h-11">
