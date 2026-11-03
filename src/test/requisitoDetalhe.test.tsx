@@ -591,4 +591,15 @@ describe("V1-17 troca A/B e acessibilidade", () => {
     fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
     await waitFor(() => expect(document.activeElement).toBe(b));
   });
+  it("X nativo do Sheet oculto por display:none (classe) e ação Fechar PT-BR única", async () => {
+    abrir();
+    await pronto();
+    const dlg = screen.getByRole("dialog", { name: /Detalhe do requisito/ });
+    // Prova estática: a classe é aplicada ao conteúdo do Sheet (CSS real verificado no browser).
+    expect(dlg.className).toContain("[&>button:first-child]:hidden");
+    const primeiro = dlg.firstElementChild as HTMLElement;
+    expect(primeiro.tagName).toBe("BUTTON");
+    expect(primeiro.textContent).toBe("Close");
+    expect(within(dlg).getAllByRole("button", { name: /^Fechar$/ })).toHaveLength(1);
+  });
 });

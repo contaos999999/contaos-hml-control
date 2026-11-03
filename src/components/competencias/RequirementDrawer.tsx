@@ -101,7 +101,7 @@ export function RequirementDrawer({
     <Sheet open={aberto} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-2xl"
+        className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-2xl [&>button:first-child]:hidden"
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           titulo.current?.focus();
