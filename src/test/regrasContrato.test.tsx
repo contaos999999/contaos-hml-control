@@ -189,8 +189,7 @@ function cenario(d: Dados = {}) {
       return ok(d.conformidade ?? [], d.totalConformidade ?? (d.conformidade ?? []).length);
     if (c.tabela === "regras_preventivas")
       return ok(d.preventivas ?? [], (d.preventivas ?? []).length);
-    if (c.tabela === "versoes_fontes_normativas")
-      return ok([{ id: VF1, id_fonte: F1, versao: 3 }]);
+    if (c.tabela === "versoes_fontes_normativas") return ok([{ id: VF1, id_fonte: F1, versao: 3 }]);
     if (c.tabela === "fontes_normativas") return ok([{ id: F1, titulo: "CCT 2026" }]);
     if (c.tabela === "fontes_formais_regras_preventivas")
       return ok([
@@ -350,7 +349,9 @@ describe("V1-09 consultas", () => {
     montar();
     await screen.findByText("Checklist mensal");
     expect(de("versoes_lista")).toHaveLength(0);
-    fireEvent.click(screen.getByRole("button", { name: "Ver versões e itens de Checklist mensal" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver versões e itens de Checklist mensal" }),
+    );
     await screen.findByText("IT-01");
     const v = de("versoes_lista")[0]!;
     expect(op(v, "select")[0]).toEqual([COLUNAS_VERSAO_LISTA, { count: "exact" }]);
@@ -382,7 +383,9 @@ describe("V1-09 renderização V1-CHK-001..004", () => {
     });
     montar();
     await screen.findByText("Checklist mensal");
-    fireEvent.click(screen.getByRole("button", { name: "Ver versões e itens de Checklist mensal" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ver versões e itens de Checklist mensal" }),
+    );
     await screen.findByText("IT-01");
     // item: Sim/Não textual e regra legível (chave/valor, sem JSON cru)
     const linhaItem = screen.getByText("IT-01").closest("tr")!;
@@ -402,7 +405,9 @@ describe("V1-09 renderização V1-CHK-001..004", () => {
     const p2 = screen.getByText("RP-02").closest("tr")!;
     expect(within(p1).getByText("Candidata")).toBeTruthy();
     expect(within(p2).getByText("Ativa")).toBeTruthy();
-    expect(within(p1).getByText("Candidata").closest("[data-situacao]")?.getAttribute("data-situacao")).toBe("candidata");
+    expect(
+      within(p1).getByText("Candidata").closest("[data-situacao]")?.getAttribute("data-situacao"),
+    ).toBe("candidata");
     expect(within(p1).getByText("01/01/2026 a 31/12/2026")).toBeTruthy();
     expect(within(p1).getByText("Contrato")).toBeTruthy();
     expect(within(p1).getByText("v1")).toBeTruthy();

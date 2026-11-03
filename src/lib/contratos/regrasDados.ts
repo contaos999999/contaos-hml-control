@@ -272,7 +272,10 @@ export async function obterRotulosFontes(
     if (signal) qf = qf.abortSignal(signal);
     const rf = await executar(qf, signal);
     titulos = Object.fromEntries(
-      ((rf.data as Array<{ id: string; titulo: string }> | null) ?? []).map((f) => [f.id, f.titulo]),
+      ((rf.data as Array<{ id: string; titulo: string }> | null) ?? []).map((f) => [
+        f.id,
+        f.titulo,
+      ]),
     );
   }
   return Object.fromEntries(
@@ -289,7 +292,9 @@ export function paresLegiveis(v: Json, prefixo = ""): Array<[string, string]> {
     return v.flatMap((x, i) => paresLegiveis(x, `${prefixo || "item"} ${i + 1}`));
   }
   if (typeof v === "object")
-    return Object.entries(v).flatMap(([k, x]) => paresLegiveis(x, prefixo ? `${prefixo} › ${k}` : k));
+    return Object.entries(v).flatMap(([k, x]) =>
+      paresLegiveis(x, prefixo ? `${prefixo} › ${k}` : k),
+    );
   return prefixo ? [[prefixo, valorLegivel(v)]] : [["valor", valorLegivel(v)]];
 }
 function valorLegivel(x: Json): string {

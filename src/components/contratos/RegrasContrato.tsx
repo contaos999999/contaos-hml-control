@@ -102,7 +102,8 @@ const MSG_APROVACAO: Record<TipoErroAprovacao, string> = {
 type Ctx = { idUsuario: string; idOrganizacao: string };
 const LINK_NAV =
   "inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-const TH = "px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+const TH =
+  "px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 const TD = "px-3 py-2 align-top";
 const vigencia = (i: string | null, f: string | null) =>
   `${formatarDataBr(i)} a ${f ? formatarDataBr(f) : "Sem término"}`;
@@ -181,7 +182,9 @@ export function RegrasContrato({ id }: { id: string }) {
             <>
               <Titulo />
               <Aviso
-                icone={<SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}
+                icone={
+                  <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                }
                 mensagem={MENSAGENS_V109.naoEncontrado}
               />
             </>
@@ -297,7 +300,11 @@ function Portao({ v }: { v: boolean }) {
   return (
     <span className="inline-flex items-center gap-1">
       <Selo>
-        {v ? <ShieldAlert className="h-3.5 w-3.5" aria-hidden /> : <MinusCircle className="h-3.5 w-3.5" aria-hidden />}
+        {v ? (
+          <ShieldAlert className="h-3.5 w-3.5" aria-hidden />
+        ) : (
+          <MinusCircle className="h-3.5 w-3.5" aria-hidden />
+        )}
         <span>{`Afeta portão: ${v ? "Sim" : "Não"}`}</span>
       </Selo>
       <Dica rotulo="Sobre o efeito no portão">{MENSAGENS_V109.portao}</Dica>
@@ -313,9 +320,18 @@ const ESTILO_SITUACAO: Record<string, { icone: ReactNode; borda: string }> = {
     icone: <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />,
     borda: "border-2 border-primary bg-primary/10",
   },
-  inativa: { icone: <MinusCircle className="h-3.5 w-3.5" aria-hidden />, borda: "border border-border bg-muted" },
-  rejeitada: { icone: <XCircle className="h-3.5 w-3.5" aria-hidden />, borda: "border border-destructive/60 bg-destructive/5" },
-  substituida: { icone: <History className="h-3.5 w-3.5" aria-hidden />, borda: "border border-dotted border-border bg-muted" },
+  inativa: {
+    icone: <MinusCircle className="h-3.5 w-3.5" aria-hidden />,
+    borda: "border border-border bg-muted",
+  },
+  rejeitada: {
+    icone: <XCircle className="h-3.5 w-3.5" aria-hidden />,
+    borda: "border border-destructive/60 bg-destructive/5",
+  },
+  substituida: {
+    icone: <History className="h-3.5 w-3.5" aria-hidden />,
+    borda: "border border-dotted border-border bg-muted",
+  },
 };
 function SeloSituacao({ situacao }: { situacao: string }) {
   const e = ESTILO_SITUACAO[situacao] ?? { icone: null, borda: "border border-border bg-muted" };
@@ -356,11 +372,23 @@ function Paginador({
   const ultima = Math.max(0, Math.ceil(total / PAGINA_REGRAS) - 1);
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      <Button type="button" variant="outline" className="h-11" disabled={pagina === 0} onClick={() => onMudar(pagina - 1)}>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-11"
+        disabled={pagina === 0}
+        onClick={() => onMudar(pagina - 1)}
+      >
         Página anterior
       </Button>
       <span aria-live="polite">{`Página ${pagina + 1} de ${ultima + 1} · ${total} registros`}</span>
-      <Button type="button" variant="outline" className="h-11" disabled={pagina >= ultima} onClick={() => onMudar(pagina + 1)}>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-11"
+        disabled={pagina >= ultima}
+        onClick={() => onMudar(pagina + 1)}
+      >
         Próxima página
       </Button>
     </div>
@@ -378,7 +406,11 @@ function EstadoConsulta({
   if (erro)
     return (
       <Alerta
-        mensagem={erro instanceof ErroBn && erro.tipo === "negado" ? MENSAGENS_V109.negadoSecao : MENSAGENS_V109.erroSecao}
+        mensagem={
+          erro instanceof ErroBn && erro.tipo === "negado"
+            ? MENSAGENS_V109.negadoSecao
+            : MENSAGENS_V109.erroSecao
+        }
         onRetry={onRetry}
       />
     );
@@ -441,7 +473,9 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
           />
         ) : tipo === "nao_encontrado" ? (
           <Aviso
-            icone={<SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}
+            icone={
+              <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            }
             mensagem={MENSAGENS_V109.naoEncontrado}
           />
         ) : (
@@ -541,7 +575,9 @@ function SecaoListas({ contrato, chave }: { contrato: string; chave: unknown[] }
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <p className="break-words font-medium">{l.nome}</p>
-                  {l.descricao && <p className="break-words text-sm text-muted-foreground">{l.descricao}</p>}
+                  {l.descricao && (
+                    <p className="break-words text-sm text-muted-foreground">{l.descricao}</p>
+                  )}
                   <p className="mt-1 flex flex-wrap gap-2 text-xs">
                     <Selo>{rotulo(ROTULO_SITUACAO_LISTA, l.situacao)}</Selo>
                     <Selo>{`Versão atual: ${l.versao_atual}`}</Selo>
@@ -593,7 +629,10 @@ function PainelLista({ lista, chave }: { lista: Lista; chave: unknown[] }) {
     retry: false,
   });
   const itens = qi.data?.itens ?? [];
-  const fontes = useRotulosFontes(chave, itens.map((i) => i.id_fonte_versao ?? ""));
+  const fontes = useRotulosFontes(
+    chave,
+    itens.map((i) => i.id_fonte_versao ?? ""),
+  );
   return (
     <div className="space-y-3">
       <EstadoConsulta erro={qv.error} carregando={qv.isPending} onRetry={() => void qv.refetch()} />
@@ -624,27 +663,54 @@ function PainelLista({ lista, chave }: { lista: Lista; chave: unknown[] }) {
           </ul>
           <Paginador pagina={paginaV} total={qv.data?.total ?? 0} onMudar={setPaginaV} />
           <h3 className="text-sm font-semibold">Itens da versão</h3>
-          <EstadoConsulta erro={qi.error} carregando={qi.isPending && !!idVersao} onRetry={() => void qi.refetch()} />
+          <EstadoConsulta
+            erro={qi.error}
+            carregando={qi.isPending && !!idVersao}
+            onRetry={() => void qi.refetch()}
+          />
           {qi.isSuccess && itens.length === 0 && (
             <p className="text-sm text-muted-foreground">{MENSAGENS_V109.vazioItens}</p>
           )}
           {itens.length > 0 && (
             <Tabela
-              cabecalhos={["Código", "Descrição", "Obrigatório", "Aplicável", "Impeditivo", "Criticidade", "Fonte/versão", "Regra de validação"]}
+              cabecalhos={[
+                "Código",
+                "Descrição",
+                "Obrigatório",
+                "Aplicável",
+                "Impeditivo",
+                "Criticidade",
+                "Fonte/versão",
+                "Regra de validação",
+              ]}
             >
               {itens.map((i) => (
                 <tr key={i.id}>
                   <td className={`${TD} font-mono text-xs`}>{i.codigo}</td>
                   <td className={TD}>
                     <span className="break-words">{i.descricao}</span>
-                    {i.categoria && <span className="block text-xs text-muted-foreground">{i.categoria}</span>}
+                    {i.categoria && (
+                      <span className="block text-xs text-muted-foreground">{i.categoria}</span>
+                    )}
                   </td>
-                  <td className={TD}><SimNao v={i.obrigatorio} /></td>
-                  <td className={TD}><SimNao v={i.aplicavel} /></td>
-                  <td className={TD}><SimNao v={i.impeditivo} /></td>
-                  <td className={TD}><Selo>{rotulo(ROTULO_CRITICIDADE, i.criticidade)}</Selo></td>
-                  <td className={TD}>{i.id_fonte_versao ? (fontes.data?.[i.id_fonte_versao] ?? "—") : "—"}</td>
-                  <td className={TD}><ParesChaveValor v={i.regra_validacao} /></td>
+                  <td className={TD}>
+                    <SimNao v={i.obrigatorio} />
+                  </td>
+                  <td className={TD}>
+                    <SimNao v={i.aplicavel} />
+                  </td>
+                  <td className={TD}>
+                    <SimNao v={i.impeditivo} />
+                  </td>
+                  <td className={TD}>
+                    <Selo>{rotulo(ROTULO_CRITICIDADE, i.criticidade)}</Selo>
+                  </td>
+                  <td className={TD}>
+                    {i.id_fonte_versao ? (fontes.data?.[i.id_fonte_versao] ?? "—") : "—"}
+                  </td>
+                  <td className={TD}>
+                    <ParesChaveValor v={i.regra_validacao} />
+                  </td>
                 </tr>
               ))}
             </Tabela>
@@ -665,24 +731,46 @@ function SecaoConformidade({ contrato, chave }: { contrato: string; chave: unkno
     retry: false,
   });
   const itens = q.data?.itens ?? [];
-  const fontes = useRotulosFontes(chave, itens.map((r) => r.id_fonte_versao ?? ""));
+  const fontes = useRotulosFontes(
+    chave,
+    itens.map((r) => r.id_fonte_versao ?? ""),
+  );
   return (
-    <section aria-label="Regras de conformidade" className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <section
+      aria-label="Regras de conformidade"
+      className="space-y-3 rounded-xl border border-border bg-card p-4"
+    >
       <h2 className="text-lg font-semibold">Regras de conformidade</h2>
       <EstadoConsulta erro={q.error} carregando={q.isPending} onRetry={() => void q.refetch()} />
       {q.isSuccess && itens.length === 0 && (
         <p className="text-sm text-muted-foreground">{MENSAGENS_V109.vazioConformidade}</p>
       )}
       {itens.length > 0 && (
-        <Tabela cabecalhos={["Código", "Descrição", "Tipo", "Efeito no portão", "Fonte/versão", "Situação", "Atualizada em"]}>
+        <Tabela
+          cabecalhos={[
+            "Código",
+            "Descrição",
+            "Tipo",
+            "Efeito no portão",
+            "Fonte/versão",
+            "Situação",
+            "Atualizada em",
+          ]}
+        >
           {itens.map((r) => (
             <tr key={r.id}>
               <td className={`${TD} font-mono text-xs`}>{r.codigo}</td>
               <td className={`${TD} break-words`}>{r.descricao}</td>
               <td className={TD}>{r.tipo}</td>
-              <td className={TD}><Portao v={r.efeito_portao} /></td>
-              <td className={TD}>{r.id_fonte_versao ? (fontes.data?.[r.id_fonte_versao] ?? "—") : "—"}</td>
-              <td className={TD}><Selo>{rotulo(ROTULO_SITUACAO_LISTA, r.situacao)}</Selo></td>
+              <td className={TD}>
+                <Portao v={r.efeito_portao} />
+              </td>
+              <td className={TD}>
+                {r.id_fonte_versao ? (fontes.data?.[r.id_fonte_versao] ?? "—") : "—"}
+              </td>
+              <td className={TD}>
+                <Selo>{rotulo(ROTULO_SITUACAO_LISTA, r.situacao)}</Selo>
+              </td>
               <td className={TD}>{formatarDataHoraBr(r.atualizado_em)}</td>
             </tr>
           ))}
@@ -710,7 +798,10 @@ function SecaoPreventivas({ contrato, chave }: { contrato: string; chave: unknow
     retry: false,
   });
   const itens = q.data?.itens ?? [];
-  const fontes = useRotulosFontes(chave, itens.map((r) => r.id_fonte_formal_versao ?? ""));
+  const fontes = useRotulosFontes(
+    chave,
+    itens.map((r) => r.id_fonte_formal_versao ?? ""),
+  );
   const recarregar = () => void qc.invalidateQueries({ queryKey: ["regras", "preventivas"] });
   const abrir = (tipo: "detalhe" | "aprovar", regra: RegraPreventiva, el: HTMLButtonElement) => {
     gatilho.current = el;
@@ -718,7 +809,10 @@ function SecaoPreventivas({ contrato, chave }: { contrato: string; chave: unknow
     setDialogo({ tipo, regra, sessao: sessao.current });
   };
   return (
-    <section aria-label="Regras preventivas" className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <section
+      aria-label="Regras preventivas"
+      className="space-y-3 rounded-xl border border-border bg-card p-4"
+    >
       <h2 className="text-lg font-semibold">Regras preventivas</h2>
       <div className="flex flex-wrap items-end gap-3">
         <label className="text-sm font-medium" htmlFor="v109-filtro-situacao">
@@ -742,7 +836,10 @@ function SecaoPreventivas({ contrato, chave }: { contrato: string; chave: unknow
         </label>
       </div>
       {sucesso && (
-        <p role="status" className="flex items-start gap-2 rounded-md border border-border bg-muted p-3 text-sm">
+        <p
+          role="status"
+          className="flex items-start gap-2 rounded-md border border-border bg-muted p-3 text-sm"
+        >
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           {`Regra aprovada. Protocolo da revisão: ${sucesso}`}
         </p>
@@ -752,18 +849,37 @@ function SecaoPreventivas({ contrato, chave }: { contrato: string; chave: unknow
         <p className="text-sm text-muted-foreground">{MENSAGENS_V109.vazioPreventivas}</p>
       )}
       {itens.length > 0 && (
-        <Tabela cabecalhos={["Código", "Descrição", "Situação", "Criticidade", "Efeito", "Escopo", "Vigência", "Versão", "Fonte/versão", "Ações"]}>
+        <Tabela
+          cabecalhos={[
+            "Código",
+            "Descrição",
+            "Situação",
+            "Criticidade",
+            "Efeito",
+            "Escopo",
+            "Vigência",
+            "Versão",
+            "Fonte/versão",
+            "Ações",
+          ]}
+        >
           {itens.map((r) => (
             <tr key={r.id}>
               <td className={`${TD} font-mono text-xs`}>{r.codigo_regra}</td>
               <td className={`${TD} break-words`}>{r.descricao}</td>
-              <td className={TD}><SeloSituacao situacao={r.situacao} /></td>
-              <td className={TD}><Selo>{rotulo(ROTULO_CRITICIDADE, r.criticidade)}</Selo></td>
+              <td className={TD}>
+                <SeloSituacao situacao={r.situacao} />
+              </td>
+              <td className={TD}>
+                <Selo>{rotulo(ROTULO_CRITICIDADE, r.criticidade)}</Selo>
+              </td>
               <td className={TD}>{r.efeito}</td>
               <td className={TD}>{rotulo(ROTULO_ESCOPO, r.escopo_aplicacao)}</td>
               <td className={TD}>{vigencia(r.vigencia_inicio, r.vigencia_fim)}</td>
               <td className={TD}>{`v${r.numero_versao}`}</td>
-              <td className={TD}>{r.id_fonte_formal_versao ? (fontes.data?.[r.id_fonte_formal_versao] ?? "—") : "—"}</td>
+              <td className={TD}>
+                {r.id_fonte_formal_versao ? (fontes.data?.[r.id_fonte_formal_versao] ?? "—") : "—"}
+              </td>
               <td className={TD}>
                 <div className="flex flex-wrap gap-2">
                   <Button
@@ -849,7 +965,10 @@ function DetalheRegra({
     retry: false,
   });
   const formais = q.data ?? [];
-  const rotulos = useRotulosFontes(chave, formais.map((f) => f.id_versao_fonte_normativa));
+  const rotulos = useRotulosFontes(
+    chave,
+    formais.map((f) => f.id_versao_fonte_normativa),
+  );
   return (
     <>
       <DialogHeader>
@@ -857,17 +976,23 @@ function DetalheRegra({
         <DialogDescription>{regra.descricao}</DialogDescription>
       </DialogHeader>
       <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Campo rotulo="Situação"><SeloSituacao situacao={regra.situacao} /></Campo>
+        <Campo rotulo="Situação">
+          <SeloSituacao situacao={regra.situacao} />
+        </Campo>
         <Campo rotulo="Criticidade">{rotulo(ROTULO_CRITICIDADE, regra.criticidade)}</Campo>
         <Campo rotulo="Efeito">{regra.efeito}</Campo>
         <Campo rotulo="Escopo">{rotulo(ROTULO_ESCOPO, regra.escopo_aplicacao)}</Campo>
         <Campo rotulo="Vigência">{vigencia(regra.vigencia_inicio, regra.vigencia_fim)}</Campo>
         <Campo rotulo="Versão">{`v${regra.numero_versao}`}</Campo>
         <Campo rotulo="Fonte formal">
-          {regra.id_fonte_formal_versao ? (rotuloFonte?.[regra.id_fonte_formal_versao] ?? "—") : "—"}
+          {regra.id_fonte_formal_versao
+            ? (rotuloFonte?.[regra.id_fonte_formal_versao] ?? "—")
+            : "—"}
         </Campo>
         <Campo rotulo="Aprovada em">{formatarDataHoraBr(regra.aprovada_em)}</Campo>
-        <Campo rotulo="Origem"><ParesChaveValor v={regra.fonte} /></Campo>
+        <Campo rotulo="Origem">
+          <ParesChaveValor v={regra.fonte} />
+        </Campo>
       </dl>
       <h3 className="text-sm font-semibold">Fontes formais vinculadas</h3>
       <EstadoConsulta erro={q.error} carregando={q.isPending} onRetry={() => void q.refetch()} />
@@ -940,7 +1065,11 @@ function FormAprovacao({
       </div>
       {erro && (
         <p role="alert" className="flex items-start gap-2 text-sm text-destructive">
-          {bloqueado ? <Ban className="mt-0.5 h-4 w-4 shrink-0" aria-hidden /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />}
+          {bloqueado ? (
+            <Ban className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          ) : (
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          )}
           {MSG_APROVACAO[erro]}
         </p>
       )}
@@ -950,7 +1079,12 @@ function FormAprovacao({
             <RefreshCw className="mr-2 h-4 w-4" aria-hidden /> Recarregar
           </Button>
         )}
-        <Button type="submit" className="h-11" disabled={enviando || bloqueado} aria-label="Confirmar aprovação">
+        <Button
+          type="submit"
+          className="h-11"
+          disabled={enviando || bloqueado}
+          aria-label="Confirmar aprovação"
+        >
           {enviando ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> Aprovando…
