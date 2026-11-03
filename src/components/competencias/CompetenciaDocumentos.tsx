@@ -21,6 +21,13 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";
@@ -841,16 +848,23 @@ function DocumentTable({
         </div>
       )}
       <Paginador rotulo="documentos" off={off} total={l.documentos_total} setOff={setOff} />
-      {versaoDe && l.capacidades.pode_nova_versao ? (
-        <NovaVersao
-          key={versaoDe.id}
-          l={l}
-          d={versaoDe}
-          config={config}
-          onFechar={() => setVersaoDe(null)}
-          onConcluido={onConcluido}
-        />
-      ) : null}
+      <Dialog
+        open={!!versaoDe && l.capacidades.pode_nova_versao}
+        onOpenChange={(aberto) => {
+          if (!aberto) setVersaoDe(null);
+        }}
+      >
+        {versaoDe && l.capacidades.pode_nova_versao ? (
+          <NovaVersao
+            key={versaoDe.id}
+            l={l}
+            d={versaoDe}
+            config={config}
+            onFechar={() => setVersaoDe(null)}
+            onConcluido={onConcluido}
+          />
+        ) : null}
+      </Dialog>
     </section>
   );
 }
@@ -890,14 +904,13 @@ function NovaVersao({
     if (ok) onConcluido();
   };
   return (
-    <section
-      aria-label={`Nova versão de ${d.titulo}`}
-      className="space-y-3 rounded-md border border-border p-4"
-    >
-      <h3 className="text-sm font-semibold">Nova versão — {d.titulo}</h3>
-      <p className="text-xs text-muted-foreground">
-        As versões anteriores são preservadas no histórico; nada é sobrescrito.
-      </p>
+    <DialogContent className="max-h-[90dvh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Nova versão — {d.titulo}</DialogTitle>
+        <DialogDescription>
+          As versões anteriores são preservadas no histórico; nada é sobrescrito.
+        </DialogDescription>
+      </DialogHeader>
       <div>
         <label htmlFor="v115-nv-arquivo" className="text-sm font-medium">
           Arquivo da nova versão
@@ -954,6 +967,6 @@ function NovaVersao({
         </Button>
       </div>
       <MensagemEnvio fase={env.fase} msg={env.msg} pct={env.pct} />
-    </section>
+    </DialogContent>
   );
 }

@@ -341,6 +341,32 @@ describe("V1-15 rota e gate", () => {
     expect(parseLeituraV115(leitura())).not.toBeNull();
   });
 
+  it.each([
+    ["ausente", undefined],
+    ["null", null],
+    ["string", "nota_fiscal"],
+    ["objeto", {}],
+    ["número", 1],
+    ["item null", ["nota_fiscal", null]],
+    ["item número", ["nota_fiscal", 1]],
+    ["item booleano", [false]],
+    ["item objeto", [{}]],
+    ["item undefined", [undefined]],
+  ])("tipos_esperados fail-closed: %s rejeitado", (_nome, tipos) => {
+    const requisito: Record<string, unknown> = { ...req(), tipos_esperados: tipos };
+    if (tipos === undefined) delete requisito["tipos_esperados"];
+    expect(parseLeituraV115(leitura({ reqs: [requisito] }))).toBeNull();
+  });
+
+  it.each([[], ["nota_fiscal", "tipo_sem_rotulo"]])(
+    "tipos_esperados válido preservado sem filter: %j",
+    (...tipos) => {
+      expect(
+        parseLeituraV115(leitura({ reqs: [req(tipos)] }))?.requisitos[0]?.tipos_esperados,
+      ).toEqual(tipos);
+    },
+  );
+
   const camposResumo = [
     "documentos_total",
     "requisitos_documentais_total",
@@ -644,6 +670,29 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
 });
 
 describe("V1-15 nova versão, abrir e polling", () => {
+  it("Nova versão abre dialog nomeado e Cancelar fecha", async () => {
+    montar();
+    await pronto();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Nova versão/ }));
+    const dialog = await screen.findByRole("dialog", { name: /Nova versão/ });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByLabelText("Arquivo da nova versão")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(m.invoke).not.toHaveBeenCalled();
+  });
+
+  it("Nova versão: Escape fecha pelo comportamento nativo do dialog", async () => {
+    montar();
+    await pronto();
+    fireEvent.click(screen.getByRole("button", { name: /Nova versão/ }));
+    await screen.findByRole("dialog", { name: /Nova versão/ });
+    fireEvent.keyDown(document, { key: "Escape", code: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(m.invoke).not.toHaveBeenCalled();
+  });
+
   it("motivo exigido só quando a capacidade manda; chave estável", async () => {
     leituraAtual = leitura({ motivo: true });
     montar();
