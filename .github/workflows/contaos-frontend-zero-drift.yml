@@ -29,13 +29,20 @@ jobs:
         env:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: node scripts/frontend-scope-gate.mjs
+      - name: Autotestes do snapshot canônico e matriz de telas
+        run: node --test scripts/context-freshness-gate.test.mjs scripts/testc/visual-audit.test.mjs
+      - name: Verificar HEAD vivo do repositório normativo antes de BUILD
+        env:
+          FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CONTAOS_CANONICAL_READ_TOKEN: ${{ secrets.CONTAOS_CANONICAL_READ_TOKEN }}
+        run: node scripts/context-freshness-gate.mjs
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
       - name: Lint e formatacao do saneamento transversal
         run: |
-          bunx eslint src/routes/__root.tsx src/components/brand/ContaOSMarca.tsx src/test/rootLocale.test.tsx src/test/brand.test.tsx scripts/frontend-zero-drift.mjs scripts/frontend-scope-gate.mjs
+          bunx eslint src/routes/__root.tsx src/components/brand/ContaOSMarca.tsx src/test/rootLocale.test.tsx src/test/brand.test.tsx scripts/frontend-zero-drift.mjs scripts/frontend-scope-gate.mjs scripts/context-freshness-gate.mjs scripts/context-freshness-gate.test.mjs scripts/testc/visual-audit.mjs scripts/testc/visual-audit.test.mjs
           bunx prettier --check scripts/frontend-zero-drift.mjs src/test/brand.test.tsx src/test/rootLocale.test.tsx
       - name: Full regression serial
         run: bunx vitest run --maxWorkers=1
@@ -45,3 +52,10 @@ jobs:
         run: bunx vite build
       - name: Brand-01, PT-BR, secrets and types integrity
         run: node scripts/frontend-zero-drift.mjs
+
+  teste-c:
+    name: Auditoria de navegador independente (somente leitura)
+    needs: frontend-quality
+    uses: ./.github/workflows/contaos-teste-c-independente.yml
+    permissions:
+      contents: read

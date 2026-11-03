@@ -1,0 +1,98 @@
+name: ContaOS Teste C Independente
+on:
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visual:
+    name: ContaOS Teste C Independente
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout SHA imutavel, apenas leitura
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detectar escopo de auditoria visual
+        id: scope
+        shell: bash
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -n "$DIFF_BASE" && ! "$DIFF_BASE" =~ ^0+$ ]]; then
+            base="$DIFF_BASE"
+          else
+            base="$(git rev-parse HEAD^)"
+          fi
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            base="$(git merge-base "$base" HEAD)"
+          fi
+          git diff --name-only "$base" HEAD > "$RUNNER_TEMP/changed-testc.txt"
+          if grep -Eq '^(src/|public/|package\.json$|bun\.lock$|vite\.config\.ts$|scripts/testc/|\.github/workflows/contaos-teste-c-independente\.yml$)' "$RUNNER_TEMP/changed-testc.txt"; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "required=false" >> "$GITHUB_OUTPUT"
+            echo "Teste C N/A: alterações somente documentais ou CI administrativo."
+          fi
+      - name: Setup Bun
+        if: steps.scope.outputs.required == 'true'
+        uses: oven-sh/setup-bun@v2
+      - name: Instalar dependencias congeladas
+        if: steps.scope.outputs.required == 'true'
+        run: bun install --frozen-lockfile
+      - name: Instalar Playwright isolado, sem atualizar package/lock
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/contaos-testc"
+          npm install --prefix "$RUNNER_TEMP/contaos-testc" --no-save --no-package-lock --ignore-scripts playwright@1.64.1
+          "$RUNNER_TEMP/contaos-testc/node_modules/.bin/playwright" install --with-deps chromium
+          echo "CONTAOS_PLAYWRIGHT_MODULE=$RUNNER_TEMP/contaos-testc/node_modules/playwright/index.mjs" >> "$GITHUB_ENV"
+      - name: Executar servidor de desenvolvimento isolado do mesmo SHA
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bunx vite dev --host 127.0.0.1 --port 4173 --strictPort > "$RUNNER_TEMP/testc-vite.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/testc-vite.pid"
+          for i in $(seq 1 75); do
+            if curl --silent --fail http://127.0.0.1:4173/login > /dev/null; then
+              echo "Servidor Teste C pronto."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Servidor Teste C indisponível."
+          tail -n 60 "$RUNNER_TEMP/testc-vite.log"
+          exit 1
+      - name: Teste C Playwright — 23 telas, 4 larguras, 2 temas
+        if: steps.scope.outputs.required == 'true'
+        shell: bash
+        env:
+          CONTAOS_TESTC_BASE_URL: http://127.0.0.1:4173
+          CONTAOS_TESTC_HEAD_SHA: ${{ github.sha }}
+          CONTAOS_TESTC_OUTPUT: artifacts/testc-visual
+        run: node scripts/testc/visual-audit.mjs
+      - name: Evidencia permanente de screenshots e SHA256SUMS
+        if: always() && steps.scope.outputs.required == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: contaos-teste-c-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/testc-visual/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Confirmar que nenhuma fonte versionada foi editada
+        if: always() && steps.scope.outputs.required == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code --
+          test -z "$(git status --porcelain --untracked-files=no)"
+          echo "Teste C somente leitura: PASS."
