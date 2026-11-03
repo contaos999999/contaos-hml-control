@@ -533,6 +533,7 @@ describe("V1-15 nova versão, abrir e polling", () => {
     expect(leituras()).toHaveLength(1);
     leituraAtual = leitura({ estado: "complete" });
     await act(async () => void vi.advanceTimersByTime(1500));
+    console.log("DBG", leituras().length, m.rpc.mock.calls.map(c=>c[0]));
     await waitFor(() => expect(leituras()).toHaveLength(2));
     await act(async () => void vi.advanceTimersByTime(120000));
     expect(leituras()).toHaveLength(2);
