@@ -2788,11 +2788,14 @@ export type Database = {
           id: string
           id_contrato: string
           id_organizacao: string
+          observacoes: string | null
           situacao: string
           tipo: string
           titulo: string
           versao_atual: number
           versao_registro: number
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
         }
         Insert: {
           atualizado_em?: string
@@ -2801,11 +2804,14 @@ export type Database = {
           id?: string
           id_contrato: string
           id_organizacao: string
+          observacoes?: string | null
           situacao?: string
           tipo: string
           titulo: string
           versao_atual?: number
           versao_registro?: number
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Update: {
           atualizado_em?: string
@@ -2814,11 +2820,14 @@ export type Database = {
           id?: string
           id_contrato?: string
           id_organizacao?: string
+          observacoes?: string | null
           situacao?: string
           tipo?: string
           titulo?: string
           versao_atual?: number
           versao_registro?: number
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Relationships: [
           {
@@ -6452,6 +6461,8 @@ export type Database = {
           situacao: string
           tipo: string
           versao_registro: number
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
         }
         Insert: {
           atualizado_em?: string
@@ -6467,6 +6478,8 @@ export type Database = {
           situacao?: string
           tipo?: string
           versao_registro?: number
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Update: {
           atualizado_em?: string
@@ -6482,6 +6495,8 @@ export type Database = {
           situacao?: string
           tipo?: string
           versao_registro?: number
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Relationships: [
           {
@@ -7452,6 +7467,8 @@ export type Database = {
           status: string
           tipo: string
           trecho_fonte: string | null
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
         }
         Insert: {
           categoria_sugerida?: string | null
@@ -7470,6 +7487,8 @@ export type Database = {
           status?: string
           tipo: string
           trecho_fonte?: string | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Update: {
           categoria_sugerida?: string | null
@@ -7488,6 +7507,8 @@ export type Database = {
           status?: string
           tipo?: string
           trecho_fonte?: string | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Relationships: [
           {
@@ -8683,6 +8704,15 @@ export type Database = {
         Args: { p_id_arquivo: string; p_id_documento: string; p_motivo: string }
         Returns: string
       }
+      adicionar_versao_documento_contrato: {
+        Args: {
+          p_chave_idempotencia: string
+          p_id_arquivo: string
+          p_id_documento: string
+          p_motivo: string
+        }
+        Returns: Json
+      }
       agora_brasilia: { Args: never; Returns: string }
       api_autenticar_cliente: {
         Args: { p_escopo: string; p_identificador: string; p_secret: string }
@@ -8838,6 +8868,31 @@ export type Database = {
         }
         Returns: string
       }
+      criar_documento_contrato: {
+        Args: {
+          p_categoria: string
+          p_chave_idempotencia: string
+          p_id_arquivo: string
+          p_id_contrato: string
+          p_tipo: string
+          p_titulo: string
+        }
+        Returns: Json
+      }
+      criar_documento_contrato_completo: {
+        Args: {
+          p_categoria: string
+          p_chave_idempotencia: string
+          p_id_arquivo: string
+          p_id_contrato: string
+          p_observacoes: string
+          p_tipo: string
+          p_titulo: string
+          p_vigencia_fim: string
+          p_vigencia_inicio: string
+        }
+        Returns: Json
+      }
       criar_organizacao: {
         Args: {
           p_cnpj?: string
@@ -8883,6 +8938,14 @@ export type Database = {
           p_id_contrato: string
           p_id_organizacao: string
           p_id_versao: string
+        }
+        Returns: Json
+      }
+      definir_vigencia_sugestao_extracao: {
+        Args: {
+          p_id_sugestao: string
+          p_vigencia_fim: string
+          p_vigencia_inicio: string
         }
         Returns: Json
       }
