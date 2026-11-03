@@ -116,7 +116,11 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
 
   // Gate de sessão/organização (uma vez por tentativa).
   useEffect(() => {
-    if (!idOk) return;
+    if (!idOk) {
+      setAutorizado(false);
+      setEstado({ tipo: "nao_encontrada" });
+      return;
+    }
     let vivo = true;
     setAutorizado(false);
     setEstado({ tipo: "carregando" });
@@ -145,7 +149,7 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
 
   // Leitura autoritativa paginada.
   useEffect(() => {
-    if (!autorizado) return;
+    if (!idOk || !autorizado) return;
     const ctrl = new AbortController();
     const signal = ctrl.signal;
     (async () => {
@@ -172,7 +176,7 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
       }
     })();
     return () => ctrl.abort();
-  }, [autorizado, idC, offDocs, offReqs, recarga]);
+  }, [idOk, autorizado, idC, offDocs, offReqs, recarga]);
 
   // Polling somente quando o backend indica processamento.
   const processando = estado.tipo === "ok" && estado.l.estado_documental === "processing";
