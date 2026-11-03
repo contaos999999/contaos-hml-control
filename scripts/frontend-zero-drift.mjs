@@ -50,8 +50,29 @@ for (const path of COMPONENTS) {
 const expectedAssets=[
 "public/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg",
 "public/brand/ContaOS_Simbolo_Branco.svg",
+"public/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg",
+"public/brand/ContaOS_Simbolo_Navy.svg",
 "public/favicon.svg"
 ];
+// Os dois SVGs de fundo claro são oficiais do pacote BRAND v1.0: nunca gerar/recolorir.
+// SHA-256 garante cópia literal dos arquivos originais.
+const navySha = {
+  "public/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg": "bd924993afbb620647d1053614688efea1f157523cbf41b3c36a368b0d0c976c",
+  "public/brand/ContaOS_Simbolo_Navy.svg": "5773eb79ade28369b1efd457bf3b69b70f79a9ede87a05aa5e622f44d56e3252",
+};
+const brandComponent=source("src/components/brand/ContaOSMarca.tsx");
+for(const required of ["/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg","/brand/ContaOS_Simbolo_Navy.svg"]) {
+  if(!brandComponent.includes(required)) problems.push("Componente de marca não seleciona variante oficial para fundo claro: "+required);
+}
+if (!brandComponent.includes("dark:")) problems.push("Seleção responsiva da marca não acompanha explicitamente tema escuro.");
+
+const { createHash } = await import("node:crypto");
+for(const [asset,sha] of Object.entries(navySha)) {
+  if(existsSync(asset)){
+    const hex=createHash("sha256").update(readFileSync(asset)).digest("hex");
+    if(hex!==sha) problems.push("Asset BRAND-01 de fundo claro não coincide com o SHA original: "+asset);
+  }
+}
 for(const p of expectedAssets) if(!existsSync(p)) problems.push("Asset oficial não encontrado: "+p);
 
 let actualBlob = "";
