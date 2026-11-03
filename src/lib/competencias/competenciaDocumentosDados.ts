@@ -168,19 +168,26 @@ function parseDoc(d: unknown): DocV115 | null {
   };
 }
 function parseReq(r: unknown): ReqV115 | null {
-  if (!obj(r) || typeof r["id"] !== "string") return null;
+  if (
+    !obj(r) ||
+    typeof r["id"] !== "string" ||
+    typeof r["obrigatorio"] !== "boolean" ||
+    typeof r["aplicavel"] !== "boolean" ||
+    typeof r["impeditivo"] !== "boolean" ||
+    typeof r["atendido"] !== "boolean"
+  ) return null;
   const t = r["tipos_esperados"];
   return {
     id: r["id"],
     codigo: str(r["codigo"]),
     descricao: str(r["descricao"]),
     categoria: str(r["categoria"]),
-    obrigatorio: r["obrigatorio"] === true,
-    aplicavel: r["aplicavel"] === true,
-    impeditivo: r["impeditivo"] === true,
+    obrigatorio: r["obrigatorio"],
+    aplicavel: r["aplicavel"],
+    impeditivo: r["impeditivo"],
     criticidade: str(r["criticidade"]),
     tipos_esperados: Array.isArray(t) ? t.filter((x): x is string => typeof x === "string") : [],
-    atendido: r["atendido"] === true,
+    atendido: r["atendido"],
   };
 }
 
@@ -199,6 +206,9 @@ export function parseLeituraV115(data: unknown): LeituraV115 | null {
     typeof c["id_organizacao"] !== "string" ||
     !obj(res) ||
     !obj(cap) ||
+    typeof cap["pode_enviar"] !== "boolean" ||
+    typeof cap["pode_nova_versao"] !== "boolean" ||
+    typeof cap["motivo_nova_versao_obrigatorio"] !== "boolean" ||
     !obj(pd) ||
     !obj(pr) ||
     !ESTADOS.includes(e as EstadoDocumental) ||
@@ -212,6 +222,14 @@ export function parseLeituraV115(data: unknown): LeituraV115 | null {
   const dt = num(pd["total"]);
   const rt = num(pr["total"]);
   if (dt === null || rt === null) return null;
+  const documentosTotal = num(res["documentos_total"]);
+  const requisitosTotal = num(res["requisitos_documentais_total"]);
+  const requisitosAplicaveis = num(res["requisitos_documentais_aplicaveis"]);
+  const requisitosPendentes = num(res["requisitos_documentais_pendentes"]);
+  if (
+    documentosTotal === null || requisitosTotal === null ||
+    requisitosAplicaveis === null || requisitosPendentes === null
+  ) return null;
   return {
     competencia: {
       id: c["id"],
@@ -221,19 +239,19 @@ export function parseLeituraV115(data: unknown): LeituraV115 | null {
     },
     estado_documental: e as EstadoDocumental,
     resumo: {
-      documentos_total: num(res["documentos_total"]) ?? 0,
-      requisitos_documentais_total: num(res["requisitos_documentais_total"]) ?? 0,
-      requisitos_documentais_aplicaveis: num(res["requisitos_documentais_aplicaveis"]) ?? 0,
-      requisitos_documentais_pendentes: num(res["requisitos_documentais_pendentes"]) ?? 0,
+      documentos_total: documentosTotal,
+      requisitos_documentais_total: requisitosTotal,
+      requisitos_documentais_aplicaveis: requisitosAplicaveis,
+      requisitos_documentais_pendentes: requisitosPendentes,
     },
     documentos: docs as DocV115[],
     documentos_total: dt,
     requisitos: reqs as ReqV115[],
     requisitos_total: rt,
     capacidades: {
-      pode_enviar: cap["pode_enviar"] === true,
-      pode_nova_versao: cap["pode_nova_versao"] === true,
-      motivo_nova_versao_obrigatorio: cap["motivo_nova_versao_obrigatorio"] === true,
+      pode_enviar: cap["pode_enviar"],
+      pode_nova_versao: cap["pode_nova_versao"],
+      motivo_nova_versao_obrigatorio: cap["motivo_nova_versao_obrigatorio"],
     },
   };
 }

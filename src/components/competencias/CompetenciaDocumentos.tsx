@@ -4,7 +4,7 @@
  * Estado documental, paginação e capacidades são autoridade do backend.
  * Upload/download: pipeline certificado V1-10 (`enviarArquivoCertificado`, `baixarDocumento`).
  */
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   AlertCircle,
@@ -423,11 +423,11 @@ function useEnvio() {
   const [pct, setPct] = useState(0);
   const tent = useRef<(EstadoEnvio & { chave: string }) | null>(null);
   const trava = useRef(false);
-  const reiniciar = () => {
+  const reiniciar = useCallback(() => {
     tent.current = null;
     setFase("idle");
     setMsg("");
-  };
+  }, []);
   const executar = async (
     org: string,
     contrato: string,
@@ -493,6 +493,14 @@ function UploadDropzone({
   const env = useEnvio();
   const req = l.requisitos.find((r) => r.id === idReq) ?? null;
   const tipos = tiposParaRequisito(req);
+
+  useEffect(() => {
+    if (idReq && !l.requisitos.some((r) => r.id === idReq)) {
+      setIdReq("");
+      setTipo("");
+      env.reiniciar();
+    }
+  }, [l.requisitos, idReq, env.reiniciar]);
 
   const mudou = () => env.reiniciar();
   const escolher = (f: File | null) => {
