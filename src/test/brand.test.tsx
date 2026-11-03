@@ -97,7 +97,8 @@ describe("BRAND-01 — head e assets", () => {
 
 // Hex só é cor quando aparece em className, style ou valor arbitrário Tailwind;
 // hashes/SHA em texto ou comentários não são capturados.
-const HEX_COR = /(className=["'{`][^"'`}]*#[0-9a-fA-F]{3,8}\b|style=\{\{[^}]*#[0-9a-fA-F]{3,8}\b|\[#[0-9a-fA-F]{3,8}\])/;
+const HEX_COR =
+  /(className=["'{`][^"'`}]*#[0-9a-fA-F]{3,8}\b|style=\{\{[^}]*#[0-9a-fA-F]{3,8}\b|\[#[0-9a-fA-F]{3,8}\])/;
 const IMG_NAO_OFICIAL = /<img[^>]*src=["'{`](?!\/brand\/)/;
 const DS_PARALELO = /(import\s+["'][^"']+\.css["']|fonts\.googleapis|createTheme|tailwind\.config)/;
 
