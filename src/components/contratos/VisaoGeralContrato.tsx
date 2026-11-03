@@ -182,7 +182,13 @@ function Resumo({ c }: { c: ContratoDetalhe }) {
             <Link to="/contratos/$id/base-normativa" params={{ id: c.id }} className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Base normativa</Link>
           </li>
           <li>
-            <Link to="/contratos/$id/orcamento" params={{ id: c.id }} className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Orçamento</Link>
+            <Link
+              to="/contratos/$id/orcamento"
+              params={{ id: c.id }}
+              className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Orçamento
+            </Link>
           </li>
           {SECOES_FUTURAS.map((s) => (
             <li key={s}>
