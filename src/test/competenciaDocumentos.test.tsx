@@ -361,7 +361,9 @@ describe("V1-15 rota e gate", () => {
   it.each([[], ["nota_fiscal", "tipo_sem_rotulo"]])(
     "tipos_esperados válido preservado sem filter: %j",
     (...tipos) => {
-      expect(parseLeituraV115(leitura({ reqs: [req(tipos)] }))?.requisitos[0]?.tipos_esperados).toEqual(tipos);
+      expect(
+        parseLeituraV115(leitura({ reqs: [req(tipos)] }))?.requisitos[0]?.tipos_esperados,
+      ).toEqual(tipos);
     },
   );
 
