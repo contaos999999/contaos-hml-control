@@ -29,6 +29,7 @@ export const COLUNAS_SUGESTAO_RESUMO =
   "id,id_versao_documento,tipo,status,vigencia_inicio,categoria_sugerida,id_requisito_sugerido,confianca";
 export const COLUNAS_REQUISITO = "id,codigo,descricao,categoria,origem_tipo,origem_id";
 export const LOTE_SUGESTOES = 1000;
+export const LOTE_PROCESSAMENTOS = 1000;
 
 export const COLUNAS_DOCUMENTO =
   "id,id_contrato,tipo,titulo,categoria,situacao,versao_atual,versao_registro,vigencia_inicio,vigencia_fim,observacoes,criado_em,atualizado_em";
@@ -254,18 +255,18 @@ export async function obterResumos(
   /** Processamentos das versões da página em lotes (mais recente primeiro, sem truncamento). */
   const lerProcessamentos = async (): Promise<Processamento[]> => {
     const todos: Processamento[] = [];
-    for (let de = 0; ; de += LOTE_SUGESTOES) {
+    for (let de = 0; ; de += LOTE_PROCESSAMENTOS) {
       let q = supabase
         .from("processamentos_documento")
         .select(COLUNAS_PROCESSAMENTO)
         .in("id_versao_documento", vids)
         .order("criado_em", { ascending: false })
         .order("id", { ascending: false })
-        .range(de, de + LOTE_SUGESTOES - 1);
+        .range(de, de + LOTE_PROCESSAMENTOS - 1);
       if (signal) q = q.abortSignal(signal);
       const lote = ((await executar(q, signal)).data as Processamento[] | null) ?? [];
       todos.push(...lote);
-      if (lote.length < LOTE_SUGESTOES) return todos;
+      if (lote.length < LOTE_PROCESSAMENTOS) return todos;
     }
   };
   /** Sugestões das versões da página em lotes (sem N+1, sem truncamento). */
