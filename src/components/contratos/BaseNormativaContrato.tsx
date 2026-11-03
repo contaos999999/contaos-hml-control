@@ -190,7 +190,11 @@ function NavSecoes({ id }: { id: string }) {
           </Link>
         </li>
         <li>
-          <Link to="/contratos/$id/documentos" params={{ id: id }} className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <Link
+            to="/contratos/$id/documentos"
+            params={{ id: id }}
+            className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             Documentos
           </Link>
         </li>
