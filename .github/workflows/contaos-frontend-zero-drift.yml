@@ -23,7 +23,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Autoteste do guard (casos permitidos e proibidos)\n        run: node --test scripts/frontend-scope-gate.test.mjs\n      - name: Verificar fronteira frontend/backend e PLAN validado prévio
+      - name: Autoteste do guard (casos permitidos e proibidos)
+        run: node --test scripts/frontend-scope-gate.test.mjs
+      - name: Verificar fronteira frontend/backend e PLAN validado prévio
         env:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: node scripts/frontend-scope-gate.mjs
