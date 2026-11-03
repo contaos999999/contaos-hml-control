@@ -300,7 +300,7 @@ describe("V1-15 rota e gate", () => {
     let chamadasA = 0;
     m.rpc.mockImplementation((nome: string, args: Record<string, unknown>) => {
       if (nome !== "obter_documentos_competencia_v115") return rpcPadrao(nome);
-      if (args.p_id_competencia === ID) {
+      if (args["p_id_competencia"] === ID) {
         chamadasA += 1;
         return chamadasA === 1 ? ok(leitura({ docsTotal: 30 })) : tardiaA;
       }
