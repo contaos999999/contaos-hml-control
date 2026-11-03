@@ -64,7 +64,9 @@ export function formatarPercentual(v: number | null | undefined): string {
 
 export function classificarErroCompetencia(error: unknown, status?: number): TipoErroCompetencia {
   const code = (error as { code?: string } | null)?.code;
-  return code === "42501" || code === "PGRST301" || status === 401 || status === 403 ? "negado" : "erro";
+  return code === "42501" || code === "PGRST301" || status === 401 || status === 403
+    ? "negado"
+    : "erro";
 }
 
 export async function listarCompetencias(

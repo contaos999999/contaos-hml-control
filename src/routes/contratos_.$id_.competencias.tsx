@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { CompetenciasContrato } from "@/components/contratos/CompetenciasContrato";
 
-const DESC = "Competências mensais de um contrato no ContaOS, com situação e percentual de conformidade.";
+const DESC =
+  "Competências mensais de um contrato no ContaOS, com situação e percentual de conformidade.";
 
 export const Route = createFileRoute("/contratos_/$id_/competencias")({
   ssr: false,

@@ -7,13 +7,28 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, ArrowLeft, Building2, CircleDot, Loader2, RefreshCw, SearchX, ShieldAlert } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Building2,
+  CircleDot,
+  Loader2,
+  RefreshCw,
+  SearchX,
+  ShieldAlert,
+} from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
-import { ErroDetalhe, formatarDataBr, obterContrato, uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";
+import {
+  ErroDetalhe,
+  formatarDataBr,
+  obterContrato,
+  uuidCanonico,
+  uuidValido,
+} from "@/lib/contratos/contratoDetalheDados";
 import {
   ErroCompetencia,
   FILTROS_COMPETENCIA_VAZIOS,
@@ -32,7 +47,8 @@ export const MENSAGENS_V112 = {
   carregandoLista: "Carregando competências…",
   negado: "Você não tem acesso a este contrato.",
   naoEncontrado: "Contrato não encontrado.",
-  consistencia: "Não foi possível exibir este contrato por uma inconsistência de acesso. Tente novamente mais tarde.",
+  consistencia:
+    "Não foi possível exibir este contrato por uma inconsistência de acesso. Tente novamente mais tarde.",
   erro: "Não foi possível carregar o contrato agora. Tente novamente em instantes.",
   erroSessao: "Não foi possível verificar sua sessão agora. Tente novamente em instantes.",
   erroLista: "Não foi possível carregar as competências agora. Tente novamente em instantes.",
@@ -43,10 +59,13 @@ export const MENSAGENS_V112 = {
 type Ctx = { idUsuario: string; idOrganizacao: string };
 const LINK_NAV =
   "inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-const TH = "px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+const TH =
+  "px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 const TD = "px-3 py-2 align-top";
 const EM_BREVE = (
-  <span className="rounded border border-border px-1.5 text-[0.65rem] uppercase tracking-wide">Em breve</span>
+  <span className="rounded border border-border px-1.5 text-[0.65rem] uppercase tracking-wide">
+    Em breve
+  </span>
 );
 
 export function CompetenciasContrato({ id }: { id: string }) {
@@ -66,7 +85,8 @@ export function CompetenciasContrato({ id }: { id: string }) {
           !!error &&
           ((error as { name?: string }).name === "AuthSessionMissingError" ||
             (error as { code?: string }).code === "session_not_found");
-        if (semSessao || (!error && !data.user)) return void navigate({ to: "/login", replace: true });
+        if (semSessao || (!error && !data.user))
+          return void navigate({ to: "/login", replace: true });
         if (error || !data.user) return void setErroSessao(true);
         const pref = obterPreferenciaOrganizacao(data.user.id);
         if (!pref) return void navigate({ to: "/selecionar-organizacao", replace: true });
@@ -107,7 +127,10 @@ export function CompetenciasContrato({ id }: { id: string }) {
         {erroSessao ? (
           <>
             <Titulo />
-            <Alerta mensagem={MENSAGENS_V112.erroSessao} onRetry={() => setTentativa((n) => n + 1)} />
+            <Alerta
+              mensagem={MENSAGENS_V112.erroSessao}
+              onRetry={() => setTentativa((n) => n + 1)}
+            />
           </>
         ) : !ctx ? (
           <>
@@ -118,7 +141,9 @@ export function CompetenciasContrato({ id }: { id: string }) {
           <>
             <Titulo />
             <Aviso
-              icone={<SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}
+              icone={
+                <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              }
               mensagem={MENSAGENS_V112.naoEncontrado}
             />
           </>
@@ -136,7 +161,9 @@ function Titulo({ numero }: { numero?: string }) {
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
         {numero ? `Contrato ${numero}` : "Gestão contratual"}
       </p>
-      <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">Competências</h1>
+      <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">
+        Competências
+      </h1>
     </div>
   );
 }
@@ -149,7 +176,10 @@ function Carregando({ texto }: { texto: string }) {
 }
 function Aviso({ icone, mensagem }: { icone: ReactNode; mensagem: string }) {
   return (
-    <div role="alert" className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      role="alert"
+      className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
+    >
       <p className="flex items-start gap-2 text-sm">
         {icone}
         {mensagem}
@@ -162,7 +192,10 @@ function Aviso({ icone, mensagem }: { icone: ReactNode; mensagem: string }) {
 }
 function Alerta({ mensagem, onRetry }: { mensagem: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      role="alert"
+      className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+    >
       <p className="flex items-start gap-2 text-sm">
         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
         {mensagem}
@@ -186,9 +219,17 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
       <>
         <Titulo />
         {tipo === "negado" ? (
-          <Aviso icone={<ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />} mensagem={MENSAGENS_V112.negado} />
+          <Aviso
+            icone={<ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />}
+            mensagem={MENSAGENS_V112.negado}
+          />
         ) : tipo === "nao_encontrado" ? (
-          <Aviso icone={<SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />} mensagem={MENSAGENS_V112.naoEncontrado} />
+          <Aviso
+            icone={
+              <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            }
+            mensagem={MENSAGENS_V112.naoEncontrado}
+          />
         ) : (
           <Alerta
             mensagem={tipo === "consistencia" ? MENSAGENS_V112.consistencia : MENSAGENS_V112.erro}
@@ -216,7 +257,18 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
 }
 
 function NavSecoes({ id }: { id: string }) {
-  const links: Array<[string, "/contratos/$id" | "/contratos/$id/base-normativa" | "/contratos/$id/orcamento" | "/contratos/$id/regras" | "/contratos/$id/documentos"]> = [
+  const links: Array<
+    [
+      string,
+      (
+        | "/contratos/$id"
+        | "/contratos/$id/base-normativa"
+        | "/contratos/$id/orcamento"
+        | "/contratos/$id/regras"
+        | "/contratos/$id/documentos"
+      ),
+    ]
+  > = [
     ["Visão geral", "/contratos/$id"],
     ["Base normativa", "/contratos/$id/base-normativa"],
     ["Orçamento", "/contratos/$id/orcamento"],
@@ -234,7 +286,10 @@ function NavSecoes({ id }: { id: string }) {
           </li>
         ))}
         <li>
-          <span aria-current="page" className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">
+          <span
+            aria-current="page"
+            className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+          >
             Competências
           </span>
         </li>
@@ -258,47 +313,105 @@ function PercentGauge({ valor }: { valor: number | null }) {
   const largura = Math.min(100, Math.max(0, Number(valor)));
   return (
     <div className="flex min-w-32 items-center gap-2">
-      <div role="meter" aria-label="Percentual de conformidade informado pelo backend" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Number(valor)} aria-valuetext={texto} className="h-2 w-20 overflow-hidden rounded bg-muted">
+      <div
+        role="meter"
+        aria-label="Percentual de conformidade informado pelo backend"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Number(valor)}
+        aria-valuetext={texto}
+        className="h-2 w-20 overflow-hidden rounded bg-muted"
+      >
         <div className="h-full bg-primary" style={{ width: `${largura}%` }} />
       </div>
-      <span data-percentual className="tabular-nums text-sm">{texto}</span>
+      <span data-percentual className="tabular-nums text-sm">
+        {texto}
+      </span>
     </div>
   );
 }
 
-function FilterBar({ filtros, onMudar }: { filtros: FiltrosCompetencia; onMudar: (f: FiltrosCompetencia) => void }) {
+function FilterBar({
+  filtros,
+  onMudar,
+}: {
+  filtros: FiltrosCompetencia;
+  onMudar: (f: FiltrosCompetencia) => void;
+}) {
   return (
     <div className="flex flex-wrap items-end gap-3">
       <div className="flex flex-col gap-1">
-        <label htmlFor="v112-mes" className="text-sm font-medium">Competência</label>
-        <input id="v112-mes" type="month" value={filtros.mes} onChange={(e) => onMudar({ ...filtros, mes: e.target.value })} className="h-11 rounded-md border border-input bg-background px-3 text-sm" />
+        <label htmlFor="v112-mes" className="text-sm font-medium">
+          Competência
+        </label>
+        <input
+          id="v112-mes"
+          type="month"
+          value={filtros.mes}
+          onChange={(e) => onMudar({ ...filtros, mes: e.target.value })}
+          className="h-11 rounded-md border border-input bg-background px-3 text-sm"
+        />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="v112-situacao" className="text-sm font-medium">Situação</label>
-        <select id="v112-situacao" value={filtros.situacao} onChange={(e) => onMudar({ ...filtros, situacao: e.target.value })} className="h-11 rounded-md border border-input bg-background px-3 font-mono text-sm">
+        <label htmlFor="v112-situacao" className="text-sm font-medium">
+          Situação
+        </label>
+        <select
+          id="v112-situacao"
+          value={filtros.situacao}
+          onChange={(e) => onMudar({ ...filtros, situacao: e.target.value })}
+          className="h-11 rounded-md border border-input bg-background px-3 font-mono text-sm"
+        >
           <option value="">Todas</option>
           {SITUACOES_COMPETENCIA.map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>
+              {s}
+            </option>
           ))}
         </select>
       </div>
-      <Button type="button" variant="outline" className="h-11" onClick={() => onMudar(FILTROS_COMPETENCIA_VAZIOS)}>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-11"
+        onClick={() => onMudar(FILTROS_COMPETENCIA_VAZIOS)}
+      >
         Limpar filtros
       </Button>
     </div>
   );
 }
 
-function Pagination({ pagina, total, onMudar }: { pagina: number; total: number; onMudar: (p: number) => void }) {
+function Pagination({
+  pagina,
+  total,
+  onMudar,
+}: {
+  pagina: number;
+  total: number;
+  onMudar: (p: number) => void;
+}) {
   if (total <= PAGINA_COMPETENCIAS) return null;
   const ultima = Math.max(0, Math.ceil(total / PAGINA_COMPETENCIAS) - 1);
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      <Button type="button" variant="outline" className="h-11" disabled={pagina === 0} onClick={() => onMudar(pagina - 1)}>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-11"
+        disabled={pagina === 0}
+        onClick={() => onMudar(pagina - 1)}
+      >
         Página anterior
       </Button>
       <span aria-live="polite">{`Página ${pagina + 1} de ${ultima + 1} · ${total} registros`}</span>
-      <Button type="button" variant="outline" className="h-11" disabled={pagina >= ultima} onClick={() => onMudar(pagina + 1)}>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-11"
+        disabled={pagina >= ultima}
+        onClick={() => onMudar(pagina + 1)}
+      >
         Próxima página
       </Button>
     </div>
@@ -312,8 +425,18 @@ function CompetenceTable({ itens }: { itens: Competencia[] }) {
         <caption className="sr-only">Competências do contrato</caption>
         <thead className="bg-muted/50">
           <tr>
-            {["Competência", "Período", "Data limite", "Situação", "Conformidade", "Versão do pacote", "Ações"].map((h) => (
-              <th key={h} scope="col" className={TH}>{h}</th>
+            {[
+              "Competência",
+              "Período",
+              "Data limite",
+              "Situação",
+              "Conformidade",
+              "Versão do pacote",
+              "Ações",
+            ].map((h) => (
+              <th key={h} scope="col" className={TH}>
+                {h}
+              </th>
             ))}
           </tr>
         </thead>
@@ -322,14 +445,26 @@ function CompetenceTable({ itens }: { itens: Competencia[] }) {
             const ref = formatarCompetencia(c.competencia_referencia);
             return (
               <tr key={c.id} className="border-t border-border">
-                <th scope="row" className={`${TD} text-left font-medium`}>{ref}</th>
-                <td className={TD}>{`${formatarDataBr(c.periodo_inicio)} a ${formatarDataBr(c.periodo_fim)}`}</td>
+                <th scope="row" className={`${TD} text-left font-medium`}>
+                  {ref}
+                </th>
+                <td
+                  className={TD}
+                >{`${formatarDataBr(c.periodo_inicio)} a ${formatarDataBr(c.periodo_fim)}`}</td>
                 <td className={TD}>{formatarDataBr(c.data_limite)}</td>
-                <td className={TD}><StatusBadge situacao={c.situacao} /></td>
-                <td className={TD}><PercentGauge valor={c.percentual_conformidade} /></td>
+                <td className={TD}>
+                  <StatusBadge situacao={c.situacao} />
+                </td>
+                <td className={TD}>
+                  <PercentGauge valor={c.percentual_conformidade} />
+                </td>
                 <td className={TD}>{c.versao_pacote_atual ?? "—"}</td>
                 <td className={TD}>
-                  <span aria-disabled="true" aria-label={`Abrir competência ${ref} — em breve`} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-3 text-muted-foreground">
+                  <span
+                    aria-disabled="true"
+                    aria-label={`Abrir competência ${ref} — em breve`}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-3 text-muted-foreground"
+                  >
                     <span>Abrir competência</span>
                     {EM_BREVE}
                   </span>
@@ -353,10 +488,19 @@ function ListaCompetencias({ contrato, chave }: { contrato: string; chave: strin
     placeholderData: keepPreviousData,
   });
   return (
-    <section aria-labelledby="v112-lista" className="space-y-4 rounded-xl border border-border bg-card p-4">
+    <section
+      aria-labelledby="v112-lista"
+      className="space-y-4 rounded-xl border border-border bg-card p-4"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="v112-lista" className="text-lg font-semibold">Lista de competências</h2>
-        <span aria-disabled="true" aria-label="Nova competência — em breve" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm text-muted-foreground">
+        <h2 id="v112-lista" className="text-lg font-semibold">
+          Lista de competências
+        </h2>
+        <span
+          aria-disabled="true"
+          aria-label="Nova competência — em breve"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm text-muted-foreground"
+        >
           <span>Nova competência</span>
           {EM_BREVE}
         </span>
@@ -370,13 +514,19 @@ function ListaCompetencias({ contrato, chave }: { contrato: string; chave: strin
       />
       {q.isError ? (
         <Alerta
-          mensagem={q.error instanceof ErroCompetencia && q.error.tipo === "negado" ? MENSAGENS_V112.negadoLista : MENSAGENS_V112.erroLista}
+          mensagem={
+            q.error instanceof ErroCompetencia && q.error.tipo === "negado"
+              ? MENSAGENS_V112.negadoLista
+              : MENSAGENS_V112.erroLista
+          }
           onRetry={() => void q.refetch()}
         />
       ) : !q.data ? (
         <Carregando texto={MENSAGENS_V112.carregandoLista} />
       ) : q.data.itens.length === 0 ? (
-        <p role="status" className="text-sm text-muted-foreground">{MENSAGENS_V112.vazio}</p>
+        <p role="status" className="text-sm text-muted-foreground">
+          {MENSAGENS_V112.vazio}
+        </p>
       ) : (
         <>
           <CompetenceTable itens={q.data.itens} />

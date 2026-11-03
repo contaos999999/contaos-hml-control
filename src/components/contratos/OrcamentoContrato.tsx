@@ -97,7 +97,6 @@ export const MENSAGENS_V108 = {
   erroDownload: "Não foi possível baixar o arquivo agora. Tente novamente em instantes.",
 } as const;
 
-const SECOES_FUTURAS = ["Competências"] as const;
 const MSG_ERRO_ACAO: Record<TipoErroBn, string> = {
   conflito: MENSAGENS_V108.conflito,
   validacao: MENSAGENS_V108.validacao,
@@ -384,19 +383,11 @@ function NavSecoes({ id }: { id: string }) {
             Documentos
           </Link>
         </li>
-        {SECOES_FUTURAS.map((s) => (
-          <li key={s}>
-            <span
-              aria-disabled="true"
-              className="inline-flex min-h-11 items-center gap-2 rounded-md px-4 text-sm text-muted-foreground"
-            >
-              <span>{s}</span>
-              <span className="rounded border border-border px-1.5 text-[0.65rem] uppercase tracking-wide">
-                Em breve
-              </span>
-            </span>
-          </li>
-        ))}
+        <li>
+          <Link to="/contratos/$id/competencias" params={{ id: id }} className={link}>
+            Competências
+          </Link>
+        </li>
       </ul>
     </nav>
   );

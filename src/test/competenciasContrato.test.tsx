@@ -41,7 +41,16 @@ vi.mock("@/integrations/supabase/client", () => {
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.nav,
   createFileRoute: () => (o: unknown) => ({ options: o, useParams: () => ({ id: "x" }) }),
-  Link: ({ children, to, params, ...p }: { children: ReactNode; to: string; params?: { id?: string } }) => (
+  Link: ({
+    children,
+    to,
+    params,
+    ...p
+  }: {
+    children: ReactNode;
+    to: string;
+    params?: { id?: string };
+  }) => (
     <a href={params?.id ? to.replace("$id", params.id) : to} {...p}>
       {children}
     </a>
@@ -65,7 +74,15 @@ const A = "org-A";
 const K1 = "11111111-1111-4111-8111-111111111111";
 const C1 = "22222222-2222-4222-8222-222222222222";
 
-const contrato = () => ({ id: K1, id_organizacao: A, numero: "CT-001", objeto: "x", situacao: "ativo", criticidade: "alta", contratante: null });
+const contrato = () => ({
+  id: K1,
+  id_organizacao: A,
+  numero: "CT-001",
+  objeto: "x",
+  situacao: "ativo",
+  criticidade: "alta",
+  contratante: null,
+});
 const comp = (extra: Record<string, unknown> = {}) => ({
   id: C1,
   competencia_referencia: "2026-03-01",
@@ -111,7 +128,11 @@ beforeEach(() => {
 
 describe("V1-12 rota e gates", () => {
   it("rota com ssr:false e head próprio", () => {
-    const o = (Route as unknown as { options: { ssr: boolean; head: () => { meta: Array<Record<string, string>> } } }).options;
+    const o = (
+      Route as unknown as {
+        options: { ssr: boolean; head: () => { meta: Array<Record<string, string>> } };
+      }
+    ).options;
     expect(o.ssr).toBe(false);
     expect(o.head().meta.some((x) => x.title === "Competências — ContaOS")).toBe(true);
   });
@@ -131,7 +152,9 @@ describe("V1-12 rota e gates", () => {
     window.localStorage.clear();
     window.sessionStorage.clear();
     montar();
-    await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }));
+    await waitFor(() =>
+      expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }),
+    );
     expect(de("competencias")).toHaveLength(0);
   });
   it("contrato negado: mensagem sanitizada e zero competências", async () => {
@@ -180,7 +203,10 @@ describe("V1-12 consulta server-side", () => {
     fireEvent.change(screen.getByLabelText("Competência"), { target: { value: "2026-02" } });
     await waitFor(() => {
       const u = de("competencias").at(-1)!;
-      expect(op(u, "eq")).toEqual([["id_contrato", K1], ["competencia_referencia", "2026-02-01"]]);
+      expect(op(u, "eq")).toEqual([
+        ["id_contrato", K1],
+        ["competencia_referencia", "2026-02-01"],
+      ]);
       expect(op(u, "range")).toEqual([[0, 24]]);
     });
   });
@@ -188,11 +214,20 @@ describe("V1-12 consulta server-side", () => {
     cenario();
     montar();
     await screen.findByText("03/2026");
-    fireEvent.change(screen.getByLabelText("Situação"), { target: { value: "pode_apresentar_contratante" } });
+    fireEvent.change(screen.getByLabelText("Situação"), {
+      target: { value: "pode_apresentar_contratante" },
+    });
     await waitFor(() =>
-      expect(op(de("competencias").at(-1)!, "eq")).toEqual([["id_contrato", K1], ["situacao", "pode_apresentar_contratante"]]),
+      expect(op(de("competencias").at(-1)!, "eq")).toEqual([
+        ["id_contrato", K1],
+        ["situacao", "pode_apresentar_contratante"],
+      ]),
     );
-    expect(within(screen.getByLabelText("Situação")).getByRole("option", { name: "pode_apresentar_contratante" })).toBeInTheDocument();
+    expect(
+      within(screen.getByLabelText("Situação")).getByRole("option", {
+        name: "pode_apresentar_contratante",
+      }),
+    ).toBeInTheDocument();
   });
   it("helpers de formato", () => {
     expect(mesParaReferencia("2026-02")).toBe("2026-02-01");
@@ -206,27 +241,55 @@ describe("V1-12 consulta server-side", () => {
 describe("V1-12 status e percentual", () => {
   it("14 tokens oficiais exatos", () => {
     expect([...SITUACOES_COMPETENCIA]).toEqual([
-      "rascunho", "preparando", "em_analise", "pendente_correcao", "em_reanalise",
-      "pode_apresentar_contratante", "apresentado", "aguardando_contratante", "com_apontamentos",
-      "pode_reapresentar_contratante", "reapresentado", "validada", "encerrada", "cancelada",
+      "rascunho",
+      "preparando",
+      "em_analise",
+      "pendente_correcao",
+      "em_reanalise",
+      "pode_apresentar_contratante",
+      "apresentado",
+      "aguardando_contratante",
+      "com_apontamentos",
+      "pode_reapresentar_contratante",
+      "reapresentado",
+      "validada",
+      "encerrada",
+      "cancelada",
     ]);
   });
   it("cada token renderizado literalmente, inclusive desconhecido", async () => {
     const tokens = [...SITUACOES_COMPETENCIA, "xpto_novo"];
-    cenario(tokens.map((s, i) => comp({ id: `${i}`.padStart(8, "0") + C1.slice(8), situacao: s, competencia_referencia: `20${10 + i}-01-01` })));
+    cenario(
+      tokens.map((s, i) =>
+        comp({
+          id: `${i}`.padStart(8, "0") + C1.slice(8),
+          situacao: s,
+          competencia_referencia: `20${10 + i}-01-01`,
+        }),
+      ),
+    );
     montar();
     await screen.findByText("01/2010");
     const tabela = screen.getByRole("table");
-    for (const t of tokens) expect(within(tabela).getAllByText(t, { selector: "[data-status]" }).length).toBe(1);
+    for (const t of tokens)
+      expect(within(tabela).getAllByText(t, { selector: "[data-status]" }).length).toBe(1);
   });
   it("percentual do backend exibido sem cálculo e sem habilitar ação", async () => {
-    cenario([comp({ percentual_conformidade: 100 }), comp({ id: "33333333-3333-4333-8333-333333333333", percentual_conformidade: null, competencia_referencia: "2026-02-01" })]);
+    cenario([
+      comp({ percentual_conformidade: 100 }),
+      comp({
+        id: "33333333-3333-4333-8333-333333333333",
+        percentual_conformidade: null,
+        competencia_referencia: "2026-02-01",
+      }),
+    ]);
     montar();
     await screen.findByText("100,00%");
     expect(screen.getByText("—", { selector: "[data-percentual]" })).toBeInTheDocument();
     const meter = screen.getAllByRole("meter")[0]!;
     expect(meter.getAttribute("aria-valuenow")).toBe("100");
-    for (const b of screen.getAllByText(/Abrir competência/)) expect(b.closest("[aria-disabled]")?.getAttribute("aria-disabled")).toBe("true");
+    for (const b of screen.getAllByText(/Abrir competência/))
+      expect(b.closest("[aria-disabled]")?.getAttribute("aria-disabled")).toBe("true");
   });
 });
 
@@ -237,7 +300,10 @@ describe("V1-12 estados, ações e a11y", () => {
     await screen.findByText(/Nenhuma competência encontrada/);
   });
   it("erro com retry", async () => {
-    m.resposta = (c) => (c.tabela === "contratos" ? ok(contrato()) : { data: null, error: { code: "XX000" }, status: 500 });
+    m.resposta = (c) =>
+      c.tabela === "contratos"
+        ? ok(contrato())
+        : { data: null, error: { code: "XX000" }, status: 500 };
     montar();
     await screen.findByText(/Não foi possível carregar as competências/);
     expect(screen.getByRole("button", { name: /Tentar novamente/ })).toBeInTheDocument();
@@ -249,7 +315,15 @@ describe("V1-12 estados, ações e a11y", () => {
     const nova = screen.getByText("Nova competência").closest("[aria-disabled]");
     expect(nova?.getAttribute("aria-disabled")).toBe("true");
     expect(nova?.textContent).toMatch(/Em breve/);
-    expect(screen.queryAllByRole("link").some((a) => /competencias\//.test(a.getAttribute("href") ?? "") || /^\/competencias/.test(a.getAttribute("href") ?? ""))).toBe(false);
+    expect(
+      screen
+        .queryAllByRole("link")
+        .some(
+          (a) =>
+            /competencias\//.test(a.getAttribute("href") ?? "") ||
+            /^\/competencias/.test(a.getAttribute("href") ?? ""),
+        ),
+    ).toBe(false);
     expect(m.rpc).not.toHaveBeenCalledWith("criar_competencia", expect.anything());
   });
   it("H1 único, nav com Competências ativo e irmãs como link", async () => {
@@ -258,13 +332,22 @@ describe("V1-12 estados, ações e a11y", () => {
     await screen.findByText("03/2026");
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     const nav = screen.getByRole("navigation", { name: "Seções do contrato" });
-    expect(within(nav).getByText("Competências").closest("[aria-current]")?.getAttribute("aria-current")).toBe("page");
-    expect(within(nav).getByRole("link", { name: "Documentos" }).getAttribute("href")).toBe(`/contratos/${K1}/documentos`);
+    expect(
+      within(nav).getByText("Competências").closest("[aria-current]")?.getAttribute("aria-current"),
+    ).toBe("page");
+    expect(within(nav).getByRole("link", { name: "Documentos" }).getAttribute("href")).toBe(
+      `/contratos/${K1}/documentos`,
+    );
   });
   it("fonte sem escrita, sem rpc, sem any", () => {
-    for (const f of ["src/components/contratos/CompetenciasContrato.tsx", "src/lib/contratos/competenciasDados.ts"]) {
+    for (const f of [
+      "src/components/contratos/CompetenciasContrato.tsx",
+      "src/lib/contratos/competenciasDados.ts",
+    ]) {
       const s = readFileSync(f, "utf8");
-      expect(s).not.toMatch(/\.(insert|update|delete|upsert)\(|\.rpc\(|criar_competencia|service_role|as any/);
+      expect(s).not.toMatch(
+        /\.(insert|update|delete|upsert)\(|\.rpc\(|criar_competencia|service_role|as any/,
+      );
     }
   });
 });
