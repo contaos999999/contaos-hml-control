@@ -866,12 +866,14 @@ describe("V1-10 escopo e Zero-Drift", () => {
     expect(fonte).not.toMatch(/\.(insert|update|delete|upsert)\(/);
     expect(fonte).not.toMatch(/service_role|as any/);
   });
-  it("Competências continua Em breve e Documentos é a seção atual", async () => {
+  it("Competências é link e Documentos é a seção atual", async () => {
     cenario();
     montar();
     await screen.findByText("Contrato principal");
     const nav = screen.getByRole("navigation", { name: "Seções do contrato" });
     expect(within(nav).getByText("Documentos")).toHaveAttribute("aria-current", "page");
-    expect(within(nav).getByText("Competências")).toBeInTheDocument();
+    expect(within(nav).getByRole("link", { name: "Competências" }).getAttribute("href")).toBe(
+      `/contratos/${K1}/competencias`,
+    );
   });
 });

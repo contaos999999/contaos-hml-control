@@ -416,10 +416,8 @@ describe("V1-06 navegação e scan", () => {
     expect(links[2]!.getAttribute("href")).toBe("/contratos/$id/regras");
     expect(links[3]!.textContent).toBe("Documentos");
     expect(links[3]!.getAttribute("href")).toBe("/contratos/$id/documentos");
-    for (const t of ["Competências"]) {
-      const el = screen.getByText(t).closest("[aria-disabled]");
-      expect(el?.getAttribute("aria-disabled")).toBe("true");
-    }
+    expect(links[4]!.textContent).toBe("Competências");
+    expect(links[4]!.getAttribute("href")).toBe("/contratos/$id/competencias");
     expect(screen.getByText("Visão geral").closest("[aria-current]")?.getAttribute("aria-current")).toBe("page");
     expect(screen.getByRole("link", { name: /Voltar para contratos/ }).getAttribute("href")).toBe("/contratos");
     expect(sel()).toHaveLength(1);
