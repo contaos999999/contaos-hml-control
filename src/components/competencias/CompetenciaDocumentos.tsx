@@ -101,11 +101,19 @@ function mensagemFalha(e: unknown): string {
   }[t];
 }
 
+const NAO_ENCONTRADA: Estado = { tipo: "nao_encontrada" };
+const CARREGANDO: Estado = { tipo: "carregando" };
+
 export function CompetenciaDocumentos({ id }: { id: string }) {
   const navigate = useNavigate();
   const idOk = uuidValido(id);
   const idC = idOk ? uuidCanonico(id) : id;
-  const [estado, setEstado] = useState<Estado>({ tipo: "carregando" });
+  // Estado vinculado ao recurso: só renderiza o que pertence ao idC atual.
+  const [registro, setRegistro] = useState<{ id: string; e: Estado }>({
+    id: idC,
+    e: { tipo: "carregando" },
+  });
+  const estado: Estado = !idOk ? NAO_ENCONTRADA : registro.id === idC ? registro.e : CARREGANDO;
   const [idAutorizado, setIdAutorizado] = useState<string | null>(null);
   const [tentativa, setTentativa] = useState(0);
   const [offDocs, setOffDocs] = useState(0);
@@ -116,6 +124,7 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
 
   // Gate de sessão/organização (uma vez por tentativa).
   useEffect(() => {
+    const setEstado = (e: Estado) => setRegistro({ id: idC, e });
     if (!idOk) {
       setIdAutorizado(null);
       setEstado({ tipo: "nao_encontrada" });
@@ -150,6 +159,7 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
   // Leitura autoritativa paginada.
   useEffect(() => {
     if (!idOk || idAutorizado !== idC) return;
+    const setEstado = (e: Estado) => setRegistro({ id: idC, e });
     const ctrl = new AbortController();
     const signal = ctrl.signal;
     (async () => {
