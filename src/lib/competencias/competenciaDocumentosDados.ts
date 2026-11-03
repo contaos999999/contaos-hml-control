@@ -178,6 +178,7 @@ function parseReq(r: unknown): ReqV115 | null {
   )
     return null;
   const t = r["tipos_esperados"];
+  if (!Array.isArray(t) || !t.every((x): x is string => typeof x === "string")) return null;
   return {
     id: r["id"],
     codigo: str(r["codigo"]),
@@ -187,7 +188,7 @@ function parseReq(r: unknown): ReqV115 | null {
     aplicavel: r["aplicavel"],
     impeditivo: r["impeditivo"],
     criticidade: str(r["criticidade"]),
-    tipos_esperados: Array.isArray(t) ? t.filter((x): x is string => typeof x === "string") : [],
+    tipos_esperados: t,
     atendido: r["atendido"],
   };
 }
