@@ -195,9 +195,7 @@ if (sourcePaths.length) {
       errors.push("CONTEXT GATE: documento do PLAN ausente no commit anterior.");
     }
     if (
-      !promptContent.includes(
-        "ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)",
-      )
+      !promptContent.includes("ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)")
     ) {
       errors.push("PLAN sem cláusula ZERO-DRIFT literal exigida pelo pacote 4.1.");
     }
@@ -220,12 +218,8 @@ if (sourcePaths.length) {
         errors.push("Context Gate exige os mesmos 25 documentos e blobs canônicos.");
       }
       const catalog = context.prompt_catalog || {};
-      const regular = Array.from({ length: 100 }, (_, i) =>
-        String(i).padStart(2, "0"),
-      );
-      const atomic = Array.from({ length: 97 }, (_, i) =>
-        String(i).padStart(3, "0"),
-      );
+      const regular = Array.from({ length: 100 }, (_, i) => String(i).padStart(2, "0"));
+      const atomic = Array.from({ length: 97 }, (_, i) => String(i).padStart(3, "0"));
       if (
         JSON.stringify(catalog.regular_ids) !== JSON.stringify(regular) ||
         JSON.stringify(catalog.atomic_ids) !== JSON.stringify(atomic) ||
@@ -244,16 +238,12 @@ if (sourcePaths.length) {
         plan.context_source_commit !== context.source_commit ||
         plan.context_catalog_blob !== catalog.source_blob_sha ||
         !Array.isArray(plan.context_documents_read) ||
-        REQUIRED_CONTEXT_FILES.some(
-          (name) => !plan.context_documents_read.includes(name),
-        )
+        REQUIRED_CONTEXT_FILES.some((name) => !plan.context_documents_read.includes(name))
       ) {
         errors.push("Context Gate: leitura integral 4.1/fingerprint não declarados no PLAN.");
       }
       const crosswalk = plan.prompt_crosswalk || {};
-      const sourceRow = catalog.crosswalk?.find(
-        (row) => row.regular_id === plan.prompt_id,
-      );
+      const sourceRow = catalog.crosswalk?.find((row) => row.regular_id === plan.prompt_id);
       const direct = crosswalk.direct_atomic_ids || [];
       const extra = crosswalk.additional_transversal_atomic_ids || [];
       const used = [...direct, ...extra];
@@ -288,9 +278,7 @@ if (sourcePaths.length) {
       !plan.validacao?.ci_plano_url?.startsWith(
         "https://github.com/contaos9999/contaos-hml-control/actions/runs/",
       ) ||
-      REQUIRED_PLAN_GATES.some(
-        (key) => plan.validacao?.gates?.[key] !== "PASS",
-      )
+      REQUIRED_PLAN_GATES.some((key) => plan.validacao?.gates?.[key] !== "PASS")
     ) {
       errors.push("Validação formal incompleta: CI do PLAN/gates obrigatórios ausentes.");
     }
@@ -311,16 +299,10 @@ if (sourcePaths.length) {
     ) {
       errors.push("Aprovação humana sem evidência rastreável no PLAN.");
     }
-    if (
-      plan.impacto_visual !== "SIM" &&
-      plan.impacto_visual !== "N/A"
-    ) {
+    if (plan.impacto_visual !== "SIM" && plan.impacto_visual !== "N/A") {
       errors.push("Impacto visual não classificado no PLAN.");
     }
-    if (
-      plan.impacto_visual === "N/A" &&
-      !plan.impacto_visual_justificativa
-    ) {
+    if (plan.impacto_visual === "N/A" && !plan.impacto_visual_justificativa) {
       errors.push("Impacto visual N/A exige justificativa específica.");
     }
     for (const path of sourcePaths) {
