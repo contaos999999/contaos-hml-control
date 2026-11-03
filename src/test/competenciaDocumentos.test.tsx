@@ -385,12 +385,25 @@ describe("V1-15 rota e gate", () => {
   });
 
   it("zeros e flags false válidos são preservados sem recálculo", () => {
-    const data = leitura({ docsTotal: 0, reqsTotal: 0, pendentes: 0, enviar: false, versao: false });
-    data.requisitos_documentais = [{ ...req(), obrigatorio: false, aplicavel: false, impeditivo: false }];
+    const data = leitura({
+      docsTotal: 0,
+      reqsTotal: 0,
+      pendentes: 0,
+      enviar: false,
+      versao: false,
+    });
+    data.requisitos_documentais = [
+      { ...req(), obrigatorio: false, aplicavel: false, impeditivo: false },
+    ];
     const parsed = parseLeituraV115(data);
     expect(parsed?.resumo).toEqual(data.resumo);
     expect(parsed?.capacidades).toEqual(data.capacidades);
-    expect(parsed?.requisitos[0]).toMatchObject({ obrigatorio: false, aplicavel: false, impeditivo: false, atendido: false });
+    expect(parsed?.requisitos[0]).toMatchObject({
+      obrigatorio: false,
+      aplicavel: false,
+      impeditivo: false,
+      atendido: false,
+    });
   });
 });
 
@@ -485,8 +498,12 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
         : rpcPadrao(nome),
     );
     await selecionar();
-    fireEvent.change(screen.getByLabelText("Requisito documental (opcional)"), { target: { value: REQ } });
-    fireEvent.change(screen.getByLabelText("Tipo do documento"), { target: { value: "nota_fiscal" } });
+    fireEvent.change(screen.getByLabelText("Requisito documental (opcional)"), {
+      target: { value: REQ },
+    });
+    fireEvent.change(screen.getByLabelText("Tipo do documento"), {
+      target: { value: "nota_fiscal" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
     await screen.findByText(/Não foi possível concluir o envio/);
     const primeira = m.rpc.mock.calls.find((c) => c[0] === "criar_documento_competencia_v115")?.[1];
@@ -501,12 +518,18 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
     expect(screen.queryByText(/Não foi possível concluir o envio/)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
     await screen.findByText("Selecione o tipo do documento.");
-    expect(m.rpc.mock.calls.filter((c) => c[0] === "criar_documento_competencia_v115")).toHaveLength(1);
+    expect(
+      m.rpc.mock.calls.filter((c) => c[0] === "criar_documento_competencia_v115"),
+    ).toHaveLength(1);
     expect(m.upload).toHaveBeenCalledTimes(1);
 
     falhar = false;
-    fireEvent.change(screen.getByLabelText("Requisito documental (opcional)"), { target: { value: outroReq } });
-    fireEvent.change(screen.getByLabelText("Tipo do documento"), { target: { value: "nota_fiscal" } });
+    fireEvent.change(screen.getByLabelText("Requisito documental (opcional)"), {
+      target: { value: outroReq },
+    });
+    fireEvent.change(screen.getByLabelText("Tipo do documento"), {
+      target: { value: "nota_fiscal" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
     await screen.findByText(/Envio concluído/);
     const chamadas = m.rpc.mock.calls.filter((c) => c[0] === "criar_documento_competencia_v115");
@@ -523,9 +546,18 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
     await screen.findByText(/Envio concluído/);
     expect(spy).toHaveBeenCalledTimes(1);
-    expect(spy).toHaveBeenCalledWith(ORG, K, expect.any(File), expect.any(Object), expect.objectContaining({ onProgresso: expect.any(Function) }));
+    expect(spy).toHaveBeenCalledWith(
+      ORG,
+      K,
+      expect.any(File),
+      expect.any(Object),
+      expect.objectContaining({ onProgresso: expect.any(Function) }),
+    );
     expect(m.upload).toHaveBeenCalledTimes(1);
-    expect(m.rpc).toHaveBeenCalledWith("confirmar_upload_arquivo", expect.objectContaining({ p_id_organizacao: ORG }));
+    expect(m.rpc).toHaveBeenCalledWith(
+      "confirmar_upload_arquivo",
+      expect.objectContaining({ p_id_organizacao: ORG }),
+    );
   });
 
   it("upload → confirmar (org/contrato da competência) → criar V1-15 idempotente; duplo clique = 1", async () => {
