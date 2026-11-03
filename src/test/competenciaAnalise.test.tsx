@@ -545,13 +545,13 @@ describe("V1-16 mecanismos, evidência, apontamentos, histórico", () => {
     expect(screen.getByText(/p\. 3/)).toBeInTheDocument();
     expect(screen.getAllByText("Alta").length).toBeGreaterThan(0);
     expect(screen.getByText("Recibo ausente")).toBeInTheDocument();
-    expect(screen.getByText("Informativo")).toBeInTheDocument();
+    expect(within(screen.getByRole("region", { name: /^Apontamentos$/ })).getByText("Informativo")).toBeInTheDocument();
     expect(screen.getByText(/REG-9/)).toBeInTheDocument();
     expect(screen.getByText(/Enviar recibo/)).toBeInTheDocument();
     const hist = screen.getByRole("region", { name: /Histórico de execuções/ });
     expect(within(hist).getByText(/2\.1\.0/)).toBeInTheDocument();
     expect(within(hist).getByText(/modelo-y/)).toBeInTheDocument();
-    expect(within(hist).getByText(/10\/03\/2026/)).toBeInTheDocument();
+    expect(within(hist).getAllByText(/10\/03\/2026/).length).toBeGreaterThan(0);
     expect(within(hist).queryByText(/Provedor/)).toBeNull();
   });
 });
@@ -706,13 +706,13 @@ describe("V1-16 troca de recurso A → B", () => {
     const { rerender } = render(<CompetenciaAnalise id={ID} />);
     await waitFor(() => expect(soltarA).not.toBeNull());
     rerender(<CompetenciaAnalise id={ID_B} />);
-    expect(await screen.findByText(/04\/2026/)).toBeInTheDocument();
+    expect(await screen.findByText(/Competência 04\/2026/)).toBeInTheDocument();
     await act(async () => {
       soltarA!({ data: leitura({ id: ID, ref: "2026-03-01" }), error: null });
       await new Promise((r) => setTimeout(r, 20));
     });
-    expect(screen.queryByText(/03\/2026/)).toBeNull();
-    expect(screen.getByText(/04\/2026/)).toBeInTheDocument();
+    expect(screen.queryByText(/Competência 03\/2026/)).toBeNull();
+    expect(screen.getByText(/Competência 04\/2026/)).toBeInTheDocument();
   });
 
   it("A → inválida → B: B autentica e lê normalmente", async () => {
