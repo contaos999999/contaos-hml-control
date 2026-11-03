@@ -83,6 +83,7 @@ import {
 } from "@/lib/competencias/competenciaDocumentosDados";
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { Route } from "@/routes/competencias_.$id_.documentos";
+import * as documentosDados from "@/lib/contratos/documentosDados";
 
 const U = "user-1";
 const ID = "44444444-4444-4444-8444-444444444444";
@@ -229,6 +230,7 @@ beforeEach(() => {
   vi.stubGlobal("open", m.open);
 });
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -338,6 +340,58 @@ describe("V1-15 rota e gate", () => {
     expect(parseLeituraV115({ ...leitura(), schema_versao: "outro" })).toBeNull();
     expect(parseLeituraV115(leitura())).not.toBeNull();
   });
+
+  const camposResumo = [
+    "documentos_total",
+    "requisitos_documentais_total",
+    "requisitos_documentais_aplicaveis",
+    "requisitos_documentais_pendentes",
+  ] as const;
+  it.each(camposResumo)("fail-closed: resumo.%s ausente/inválido é rejeitado", (campo) => {
+    for (const valor of [undefined, null, "0", false, NaN, Infinity]) {
+      const data = leitura();
+      expect(parseLeituraV115({ ...data, resumo: { ...data.resumo, [campo]: valor } })).toBeNull();
+    }
+  });
+
+  it.each(["pode_enviar", "pode_nova_versao", "motivo_nova_versao_obrigatorio"] as const)(
+    "fail-closed: capacidades.%s ausente/não booleano é rejeitado",
+    (campo) => {
+      for (const valor of [undefined, null, "false", 0, 1]) {
+        const data = leitura();
+        expect(
+          parseLeituraV115({ ...data, capacidades: { ...data.capacidades, [campo]: valor } }),
+        ).toBeNull();
+      }
+    },
+  );
+
+  it.each(["obrigatorio", "aplicavel", "impeditivo", "atendido"] as const)(
+    "fail-closed: requisito.%s ausente/não booleano é rejeitado",
+    (campo) => {
+      for (const valor of [undefined, null, "false", 0, 1]) {
+        expect(parseLeituraV115(leitura({ reqs: [{ ...req(), [campo]: valor }] }))).toBeNull();
+      }
+    },
+  );
+
+  it("shape autoritativo inválido resulta em erro na tela, não resumo inventado", async () => {
+    const data = leitura();
+    leituraAtual = { ...data, capacidades: { ...data.capacidades, pode_enviar: "true" } };
+    montar();
+    expect((await screen.findByRole("alert")).textContent).toMatch(/Não foi possível carregar/);
+    expect(screen.queryByTestId("resumo-documental")).toBeNull();
+    expect(m.invoke).not.toHaveBeenCalled();
+  });
+
+  it("zeros e flags false válidos são preservados sem recálculo", () => {
+    const data = leitura({ docsTotal: 0, reqsTotal: 0, pendentes: 0, enviar: false, versao: false });
+    data.requisitos_documentais = [{ ...req(), obrigatorio: false, aplicavel: false, impeditivo: false }];
+    const parsed = parseLeituraV115(data);
+    expect(parsed?.resumo).toEqual(data.resumo);
+    expect(parsed?.capacidades).toEqual(data.capacidades);
+    expect(parsed?.requisitos[0]).toMatchObject({ obrigatorio: false, aplicavel: false, impeditivo: false, atendido: false });
+  });
 });
 
 describe("V1-15 resumo e tabela (backend é autoridade)", () => {
@@ -420,6 +474,58 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
     expect(tiposParaRequisito(req([])).map((t) => t[0])).toContain("outro");
     expect(tiposParaRequisito(null).map((t) => t[0])).toContain("contrato");
     expect(tiposParaRequisito(req(["x"]))).toEqual([["x", "x"]]);
+  });
+
+  it("paginação remove requisito selecionado: reseta vínculo, tipo e tentativa antes de enviar", async () => {
+    leituraAtual = leitura({ reqsTotal: 40 });
+    let falhar = true;
+    m.rpc.mockImplementation((nome: string) =>
+      nome === "criar_documento_competencia_v115" && falhar
+        ? { data: null, error: { code: "XX000" } }
+        : rpcPadrao(nome),
+    );
+    await selecionar();
+    fireEvent.change(screen.getByLabelText("Requisito documental (opcional)"), { target: { value: REQ } });
+    fireEvent.change(screen.getByLabelText("Tipo do documento"), { target: { value: "nota_fiscal" } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+    await screen.findByText(/Não foi possível concluir o envio/);
+    const primeira = m.rpc.mock.calls.find((c) => c[0] === "criar_documento_competencia_v115")?.[1];
+    expect(primeira).toMatchObject({ p_id_requisito: REQ });
+
+    const outroReq = "99999999-9999-4999-8999-999999999999";
+    leituraAtual = leitura({ reqsTotal: 40, reqs: [req([], false, outroReq)] });
+    fireEvent.click(screen.getByRole("button", { name: "Próxima página de requisitos" }));
+    await waitFor(() => expect(leituras()).toHaveLength(2));
+    await waitFor(() => expect(screen.getByLabelText("Tipo do documento")).toHaveValue(""));
+    expect(screen.getByLabelText("Requisito documental (opcional)")).toHaveValue("");
+    expect(screen.queryByText(/Não foi possível concluir o envio/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+    await screen.findByText("Selecione o tipo do documento.");
+    expect(m.rpc.mock.calls.filter((c) => c[0] === "criar_documento_competencia_v115")).toHaveLength(1);
+    expect(m.upload).toHaveBeenCalledTimes(1);
+
+    falhar = false;
+    fireEvent.change(screen.getByLabelText("Requisito documental (opcional)"), { target: { value: outroReq } });
+    fireEvent.change(screen.getByLabelText("Tipo do documento"), { target: { value: "nota_fiscal" } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+    await screen.findByText(/Envio concluído/);
+    const chamadas = m.rpc.mock.calls.filter((c) => c[0] === "criar_documento_competencia_v115");
+    expect(chamadas).toHaveLength(2);
+    expect(chamadas[1]?.[1]).toMatchObject({ p_id_requisito: outroReq });
+    expect(chamadas[1]?.[1].p_chave_idempotencia).not.toBe(primeira?.p_chave_idempotencia);
+    expect(m.upload).toHaveBeenCalledTimes(2);
+  });
+
+  it("spy direto: envio V1-15 chama enviarArquivoCertificado real do V1-10", async () => {
+    const spy = vi.spyOn(documentosDados, "enviarArquivoCertificado");
+    await selecionar();
+    fireEvent.change(screen.getByLabelText("Tipo do documento"), { target: { value: "contrato" } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
+    await screen.findByText(/Envio concluído/);
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalledWith(ORG, K, expect.any(File), expect.any(Object), expect.objectContaining({ onProgresso: expect.any(Function) }));
+    expect(m.upload).toHaveBeenCalledTimes(1);
+    expect(m.rpc).toHaveBeenCalledWith("confirmar_upload_arquivo", expect.objectContaining({ p_id_organizacao: ORG }));
   });
 
   it("upload → confirmar (org/contrato da competência) → criar V1-15 idempotente; duplo clique = 1", async () => {
@@ -541,6 +647,7 @@ describe("V1-15 nova versão, abrir e polling", () => {
   });
 
   it("Abrir usa download assinado V1-10", async () => {
+    const spy = vi.spyOn(documentosDados, "baixarDocumento");
     montar();
     await pronto();
     fireEvent.click(screen.getByRole("button", { name: /Abrir/ }));
@@ -548,6 +655,7 @@ describe("V1-15 nova versão, abrir e polling", () => {
       expect(m.invoke).toHaveBeenCalledWith("storage-sign-download", { body: { id_arquivo: ARQ } }),
     );
     expect(m.open).toHaveBeenCalledWith("https://exemplo.test/s", "_blank", "noopener,noreferrer");
+    expect(spy).toHaveBeenCalledExactlyOnceWith(ARQ);
   });
 
   it.each(["quarentena", "bloqueado"])("%s → Abrir desabilitado", async (seg) => {
