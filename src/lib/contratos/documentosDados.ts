@@ -667,3 +667,59 @@ export const temMetadados = (v: unknown) =>
   v !== undefined &&
   !(typeof v === "object" && !Array.isArray(v) && Object.keys(v as object).length === 0) &&
   !(Array.isArray(v) && v.length === 0);
+
+export const MENSAGENS_V110 = {
+  verificando: "Verificando sessão…",
+  carregando: "Carregando contrato…",
+  carregandoSecao: "Carregando documentos…",
+  negado: "Você não tem acesso a este contrato.",
+  naoEncontrado: "Contrato não encontrado.",
+  consistencia:
+    "Não foi possível exibir este contrato por uma inconsistência de acesso. Tente novamente mais tarde.",
+  erro: "Não foi possível carregar o contrato agora. Tente novamente em instantes.",
+  erroSessao: "Não foi possível verificar sua sessão agora. Tente novamente em instantes.",
+  erroSecao: "Não foi possível carregar os documentos agora. Tente novamente em instantes.",
+  negadoSecao: "Você não tem acesso a estes documentos.",
+  vazio: "Nenhum documento encontrado para este contrato.",
+  bloqueadoSeguranca:
+    "Bloqueado pela verificação de segurança — download e análise indisponíveis.",
+  verificacaoPendente: "Download disponível após a verificação de segurança.",
+  downloadNegado: "Você não tem permissão para baixar este arquivo.",
+  downloadErro: "Não foi possível gerar o link temporário de download. Tente novamente.",
+  formatoInvalido: "Este formato de arquivo não é aceito pelo ContaOS.",
+  mimeIncompativel: "A extensão e o tipo do arquivo não são compatíveis.",
+  tamanhoExcedido: "O arquivo ultrapassa o limite de 500 MB deste ambiente.",
+  arquivoVazio: "O arquivo está vazio.",
+  semArquivos: "Selecione ao menos um arquivo válido.",
+  semTitulo: "Informe o título de todos os documentos.",
+  vigenciaFimSemInicio: "Informe o início da vigência quando houver fim de vigência.",
+  vigenciaFimAntes: "O fim da vigência não pode ser anterior ao início.",
+  motivoObrigatorio: "Informe o motivo da nova versão para preservar a rastreabilidade documental.",
+  semPermissao: "Seu perfil atual não permite incluir documentos neste contrato.",
+  validacaoBackend: "O ContaOS recusou os dados informados. Revise os campos e tente novamente.",
+  conflito: "Os dados mudaram desde a abertura. Atualize a lista antes de tentar novamente.",
+  naoEncontradoEnvio: "O contrato ou documento não foi encontrado.",
+  recusadoSeguranca: "O arquivo foi recusado pela validação de segurança do envio.",
+  erroEnvio: "Não foi possível concluir o envio agora. Tente novamente.",
+  sucesso: "Envio concluído. O processamento segue em segundo plano.",
+  detalheEmBreve: "O detalhe com histórico de versões e revisão de IA chega na próxima etapa.",
+} as const;
+
+export function validarArquivo(f: File): string | null {
+  const m = motivoInvalido(f);
+  if (m === "formato") return MENSAGENS_V110.formatoInvalido;
+  if (m === "mime") return MENSAGENS_V110.mimeIncompativel;
+  if (m === "vazio") return MENSAGENS_V110.arquivoVazio;
+  if (m === "tamanho") return MENSAGENS_V110.tamanhoExcedido;
+  return null;
+}
+export function mensagemErroEnvio(t: TipoErroDoc): string {
+  return {
+    negado: MENSAGENS_V110.semPermissao,
+    validacao: MENSAGENS_V110.validacaoBackend,
+    conflito: MENSAGENS_V110.conflito,
+    nao_encontrado: MENSAGENS_V110.naoEncontradoEnvio,
+    edge_recusa: MENSAGENS_V110.recusadoSeguranca,
+    erro: MENSAGENS_V110.erroEnvio,
+  }[t];
+}
