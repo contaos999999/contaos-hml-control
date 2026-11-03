@@ -152,7 +152,7 @@ export function RegrasContrato({ id }: { id: string }) {
             </div>
             <nav aria-label="Navegação" className="flex flex-wrap gap-2">
               <Button asChild variant="secondary" className="h-11">
-                <Link to="/contratos">
+                <Link to="/contratos" activeOptions={{ exact: true }}>
                   <ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Voltar para contratos
                 </Link>
               </Button>
@@ -512,7 +512,12 @@ function NavSecoes({ id }: { id: string }) {
     <nav aria-label="Seções do contrato" className="rounded-xl border border-border bg-card p-2">
       <ul className="flex flex-wrap gap-2">
         <li>
-          <Link to="/contratos/$id" params={{ id }} className={LINK_NAV}>
+          <Link
+            to="/contratos/$id"
+            params={{ id }}
+            activeOptions={{ exact: true }}
+            className={LINK_NAV}
+          >
             Visão geral
           </Link>
         </li>
