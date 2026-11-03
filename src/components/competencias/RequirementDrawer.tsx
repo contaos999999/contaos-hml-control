@@ -23,7 +23,13 @@ import {
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";
@@ -79,7 +85,13 @@ type Props = {
   onReanalisado: () => void;
 };
 
-export function RequirementDrawer({ idCompetencia, idRequisito, aberto, onOpenChange, onReanalisado }: Props) {
+export function RequirementDrawer({
+  idCompetencia,
+  idRequisito,
+  aberto,
+  onOpenChange,
+  onReanalisado,
+}: Props) {
   const titulo = useRef<HTMLHeadingElement>(null);
   return (
     <Sheet open={aberto} onOpenChange={onOpenChange}>
@@ -92,10 +104,16 @@ export function RequirementDrawer({ idCompetencia, idRequisito, aberto, onOpenCh
         }}
       >
         <SheetHeader className="border-b border-border p-4 pr-12 text-left">
-          <SheetTitle ref={titulo} tabIndex={-1} className="outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <SheetTitle
+            ref={titulo}
+            tabIndex={-1}
+            className="outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
             Detalhe do requisito
           </SheetTitle>
-          <SheetDescription>Fonte, resultado, evidências, apontamentos e histórico conforme o sistema.</SheetDescription>
+          <SheetDescription>
+            Fonte, resultado, evidências, apontamentos e histórico conforme o sistema.
+          </SheetDescription>
         </SheetHeader>
         {aberto && idRequisito ? (
           <Conteudo
@@ -136,7 +154,10 @@ function Conteudo({
       ? reg.e
       : { tipo: "carregando" };
   const [autorizado, setAutorizado] = useState<string | null>(null);
-  const [off, setOff] = useState<{ k: string; o: OffsetsDetalhe }>({ k: chave, o: OFFSETS_DETALHE_ZERO });
+  const [off, setOff] = useState<{ k: string; o: OffsetsDetalhe }>({
+    k: chave,
+    o: OFFSETS_DETALHE_ZERO,
+  });
   const o = off.k === chave ? off.o : OFFSETS_DETALHE_ZERO;
   const [recarga, setRecarga] = useState(0);
   const [tentativa, setTentativa] = useState(0);
@@ -161,7 +182,8 @@ function Conteudo({
           !!error &&
           ((error as { name?: string }).name === "AuthSessionMissingError" ||
             (error as { code?: string }).code === "session_not_found");
-        if (semSessao || (!error && !data.user)) return void navigate({ to: "/login", replace: true });
+        if (semSessao || (!error && !data.user))
+          return void navigate({ to: "/login", replace: true });
         if (error || !data.user) return void setReg({ k: chave, e: { tipo: "erro_sessao" } });
         if (!obterPreferenciaOrganizacao(data.user.id))
           return void navigate({ to: "/selecionar-organizacao", replace: true });
@@ -198,7 +220,8 @@ function Conteudo({
     return () => ctrl.abort();
   }, [idsOk, autorizado, chave, c, r, ev, hist, ap, recarga]);
 
-  const mudarOffset = (k: keyof OffsetsDetalhe, v: number) => setOff({ k: chave, o: { ...o, [k]: v } });
+  const mudarOffset = (k: keyof OffsetsDetalhe, v: number) =>
+    setOff({ k: chave, o: { ...o, [k]: v } });
 
   const reanalisar = async () => {
     if (trava.current) return;
@@ -246,7 +269,8 @@ function Conteudo({
       </p>
     );
   if (estado.tipo !== "ok") {
-    const msg = estado.tipo === "erro_sessao" ? MENSAGENS_V117.erroSessao : MENSAGENS_V117[estado.tipo];
+    const msg =
+      estado.tipo === "erro_sessao" ? MENSAGENS_V117.erroSessao : MENSAGENS_V117[estado.tipo];
     const retry = estado.tipo === "erro" || estado.tipo === "erro_sessao";
     return (
       <div role="alert" className="space-y-3 p-4 text-sm">
@@ -378,7 +402,11 @@ function Conteudo({
               ))}
             </ul>
           )}
-          <Paginador rotulo="apontamentos" p={d.apontamentos_paginacao} onPagina={(v) => mudarOffset("ap", v)} />
+          <Paginador
+            rotulo="apontamentos"
+            p={d.apontamentos_paginacao}
+            onPagina={(v) => mudarOffset("ap", v)}
+          />
         </Bloco>
 
         <AuditTimeline d={d} onPagina={(v) => mudarOffset("hist", v)} />
@@ -409,7 +437,10 @@ function Termo({ t, dica }: { t: string; dica: string }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button type="button" className="inline-flex items-center gap-1 underline decoration-dotted underline-offset-2">
+        <button
+          type="button"
+          className="inline-flex items-center gap-1 underline decoration-dotted underline-offset-2"
+        >
           {t}
           <HelpCircle className="h-3 w-3" aria-hidden="true" />
           <span className="sr-only">: {dica}</span>
@@ -423,7 +454,13 @@ const DICA_HASH = "Impressão digital do conteúdo; muda se o conteúdo mudar.";
 
 function ResultBadge({ v }: { v: string }) {
   const Icone =
-    v === "conforme" ? CheckCircle2 : v === "nao_conforme" ? XCircle : v === "nao_aplicavel" ? MinusCircle : CircleHelp;
+    v === "conforme"
+      ? CheckCircle2
+      : v === "nao_conforme"
+        ? XCircle
+        : v === "nao_aplicavel"
+          ? MinusCircle
+          : CircleHelp;
   return (
     <span className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 font-medium">
       <Icone className="h-4 w-4" aria-hidden="true" />
@@ -438,11 +475,21 @@ function ResultadoCard({ r }: { r: ResultadoV117 }) {
       <ResultBadge v={r.resultado} />
       <dl className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
         <Par
-          t={<Termo t="Mecanismo" dica="Como o resultado foi produzido: regra objetiva, IA ou revisor humano." />}
+          t={
+            <Termo
+              t="Mecanismo"
+              dica="Como o resultado foi produzido: regra objetiva, IA ou revisor humano."
+            />
+          }
           v={r.mecanismo ? (ROT_MEC[r.mecanismo] ?? r.mecanismo) : null}
         />
         <Par
-          t={<Termo t="Confiança" dica="Grau de confiança informado pelo sistema para este resultado." />}
+          t={
+            <Termo
+              t="Confiança"
+              dica="Grau de confiança informado pelo sistema para este resultado."
+            />
+          }
           v={r.confianca === null ? null : fmtConf.format(r.confianca)}
         />
         <Par t="Registrado em" v={formatarDataHoraBr(r.criado_em)} />
@@ -539,7 +586,12 @@ function EvidenciaItem({ e }: { e: EvidenciaV117 }) {
       ) : null}
       <div className="flex flex-wrap gap-2">
         {e.trecho ? (
-          <Button variant="outline" className="min-h-11" aria-expanded={ver} onClick={() => setVer((v) => !v)}>
+          <Button
+            variant="outline"
+            className="min-h-11"
+            aria-expanded={ver}
+            onClick={() => setVer((v) => !v)}
+          >
             {ver ? "Ocultar trecho" : "Ver trecho"}
           </Button>
         ) : null}
@@ -556,7 +608,9 @@ function EvidenciaItem({ e }: { e: EvidenciaV117 }) {
           </Button>
         ) : null}
       </div>
-      {ver && e.trecho ? <blockquote className="border-l-2 border-border pl-3">“{e.trecho}”</blockquote> : null}
+      {ver && e.trecho ? (
+        <blockquote className="border-l-2 border-border pl-3">“{e.trecho}”</blockquote>
+      ) : null}
       {erro ? (
         <p role="alert" className="text-destructive">
           {MENSAGENS_V117.downloadFalha}
@@ -577,10 +631,16 @@ function AuditTimeline({ d, onPagina }: { d: DetalheV117; onPagina: (n: number) 
             <li key={h.id_resultado} className="space-y-1 rounded-md border border-border p-3">
               <ResultBadge v={h.resultado} />
               <dl className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
-                <Par t="Execução" v={[h.tipo_execucao, h.status_execucao].filter(Boolean).join(" · ") || null} />
+                <Par
+                  t="Execução"
+                  v={[h.tipo_execucao, h.status_execucao].filter(Boolean).join(" · ") || null}
+                />
                 <Par t="Mecanismo" v={h.mecanismo ? (ROT_MEC[h.mecanismo] ?? h.mecanismo) : null} />
                 <Par t="Motor" v={[h.motor, h.versao_motor].filter(Boolean).join(" ") || null} />
-                <Par t="Provedor/modelo" v={[h.provedor, h.modelo].filter(Boolean).join(" / ") || null} />
+                <Par
+                  t="Provedor/modelo"
+                  v={[h.provedor, h.modelo].filter(Boolean).join(" / ") || null}
+                />
                 <Par t="Versão do prompt" v={h.prompt_versao} />
                 <Par t="Hash de entrada" v={h.hash_entrada} />
                 <Par t="Confiança" v={h.confianca === null ? null : fmtConf.format(h.confianca)} />
@@ -596,7 +656,15 @@ function AuditTimeline({ d, onPagina }: { d: DetalheV117; onPagina: (n: number) 
   );
 }
 
-function Paginador({ rotulo, p, onPagina }: { rotulo: string; p: PaginacaoV117; onPagina: (n: number) => void }) {
+function Paginador({
+  rotulo,
+  p,
+  onPagina,
+}: {
+  rotulo: string;
+  p: PaginacaoV117;
+  onPagina: (n: number) => void;
+}) {
   if (p.total <= p.limite) return null;
   const pagina = Math.floor(p.offset / p.limite) + 1;
   const paginas = Math.max(1, Math.ceil(p.total / p.limite));

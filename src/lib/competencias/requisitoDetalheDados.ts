@@ -73,7 +73,8 @@ export const MENSAGENS_V117 = {
   sem_permissao: "Você não tem acesso a este requisito.",
   nao_encontrado: "Requisito não encontrado ou indisponível.",
   invalida: "Solicitação inválida para este requisito.",
-  conflito: "Já existe uma análise ativa com escopo diferente. Aguarde a conclusão e tente novamente.",
+  conflito:
+    "Já existe uma análise ativa com escopo diferente. Aguarde a conclusão e tente novamente.",
   erro: "Não foi possível carregar o detalhe agora. Tente novamente em instantes.",
   erroSessao: "Não foi possível verificar sua sessão agora. Tente novamente em instantes.",
   reanaliseOk: "Reanálise deste requisito solicitada. Acompanhe o andamento na análise.",
@@ -259,7 +260,11 @@ const inteiro = (v: unknown): number =>
 
 function pag(v: unknown, offsetEsperado: number): PaginacaoV117 {
   const p = o(v);
-  const r = { offset: inteiro(p["offset"]), limite: inteiro(p["limite"]), total: inteiro(p["total"]) };
+  const r = {
+    offset: inteiro(p["offset"]),
+    limite: inteiro(p["limite"]),
+    total: inteiro(p["total"]),
+  };
   if (r.limite !== PAGINA_DETALHE || r.offset !== offsetEsperado) falha();
   return r;
 }
@@ -413,7 +418,10 @@ export function parseDetalheV117(
       situacao: s(c["situacao"]),
     };
     const requisito = req(d["requisito"]);
-    if (competencia.id !== uuidCanonico(idCompetencia) || requisito.id !== uuidCanonico(idRequisito))
+    if (
+      competencia.id !== uuidCanonico(idCompetencia) ||
+      requisito.id !== uuidCanonico(idRequisito)
+    )
       falha();
     for (const k of ["execucao_atual", "resultado_atual", "resultado_referencia", "na_validade"])
       if (!(k in d)) falha();

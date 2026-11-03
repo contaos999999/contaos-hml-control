@@ -3,7 +3,7 @@
  * Gate: UUID → getUser → preferência de organização (contexto) → `obter_analise_competencia_v116`.
  * Estado, stale, percentual, blocking_summary, allowed_actions e mecanismos são autoridade do
  * backend; a tela não calcula portão, regra nem desatualização.
- * Ações: `solicitar_analise_competencia` ('completa' | 'reanálise'). Abrir requisito = V1-17 (staged).
+ * Ações: `solicitar_analise_competencia` ('completa' | 'reanálise'). Abrir requisito = drawer V1-17.
  */
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
+import { RequirementDrawer } from "@/components/competencias/RequirementDrawer";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";
 import { formatarCompetencia } from "@/lib/contratos/competenciasDados";
@@ -116,6 +117,8 @@ export function CompetenciaAnalise({ id }: { id: string }) {
   idAtual.current = idC;
   const [recarga, setRecarga] = useState(0);
   const polls = useRef(0);
+  const [drawer, setDrawer] = useState<{ id: string; req: string } | null>(null);
+  const drawerAtual = drawer && drawer.id === idC ? drawer.req : null;
 
   // Gate de sessão/organização.
   useEffect(() => {
@@ -365,7 +368,20 @@ export function CompetenciaAnalise({ id }: { id: string }) {
                   />
                 </div>
               </section>
-              <RequirementTable l={estado.l} onPagina={(v) => mudarOffset("res", v)} />
+              <RequirementTable
+                l={estado.l}
+                onPagina={(v) => mudarOffset("res", v)}
+                onAbrir={(req) => setDrawer({ id: idC, req })}
+              />
+              <RequirementDrawer
+                idCompetencia={idC}
+                idRequisito={drawerAtual}
+                aberto={drawerAtual !== null}
+                onOpenChange={(v) => {
+                  if (!v) setDrawer(null);
+                }}
+                onReanalisado={() => setRecarga((n) => n + 1)}
+              />
               <ApontamentosBloco l={estado.l} onPagina={(v) => mudarOffset("ap", v)} />
               <HistoricoExecucoes l={estado.l} onPagina={(v) => mudarOffset("exec", v)} />
             </>
@@ -745,7 +761,15 @@ function Paginador({
 
 const fmtConf = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 
-function RequirementTable({ l, onPagina }: { l: LeituraV116; onPagina: (n: number) => void }) {
+function RequirementTable({
+  l,
+  onPagina,
+  onAbrir,
+}: {
+  l: LeituraV116;
+  onPagina: (n: number) => void;
+  onAbrir: (idRequisito: string) => void;
+}) {
   return (
     <section aria-labelledby="v116-req" className="space-y-3">
       <h2 id="v116-req" className="text-lg font-semibold">
@@ -814,15 +838,14 @@ function RequirementTable({ l, onPagina }: { l: LeituraV116; onPagina: (n: numbe
                   </td>
                   <td className="p-3">
                     {l.allowed_actions.abrir_requisito ? (
-                      <span
-                        aria-disabled="true"
-                        className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-muted-foreground"
+                      <Button
+                        variant="outline"
+                        className="min-h-11"
+                        aria-label={`Abrir requisito ${r.codigo ?? ""}`.trim()}
+                        onClick={() => onAbrir(r.id_requisito)}
                       >
                         Abrir requisito
-                        <span className="rounded bg-muted px-1.5 text-[10px] uppercase">
-                          Em breve
-                        </span>
-                      </span>
+                      </Button>
                     ) : (
                       <span className="text-muted-foreground">Abrir requisito: Indisponível</span>
                     )}

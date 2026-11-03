@@ -131,9 +131,18 @@ function detalhe(o: Op = {}) {
       o.na !== undefined
         ? o.na
         : ref === "nao_aplicavel"
-          ? { valido: true, id_resultado_referencia: RES1, possui_fundamento: true, possui_evidencia: true }
+          ? {
+              valido: true,
+              id_resultado_referencia: RES1,
+              possui_fundamento: true,
+              possui_evidencia: true,
+            }
           : null,
-    allowed_actions: { executar_analise: false, reanalisar: o.reanalisar ?? false, abrir_requisito: true },
+    allowed_actions: {
+      executar_analise: false,
+      reanalisar: o.reanalisar ?? false,
+      abrir_requisito: true,
+    },
     evidencias: [
       {
         id: EV,
@@ -150,8 +159,34 @@ function detalhe(o: Op = {}) {
     ],
     evidencias_paginacao: { offset: 0, limite: 25, total: 30 },
     historico: [
-      { ...resultado(RES2, EX2, "conforme"), id_resultado: RES2, tipo_execucao: "parcial", status_execucao: "concluida", motor: "m", versao_motor: "1", provedor: null, modelo: null, prompt_versao: null, hash_entrada: "h2", iniciada_em: null, concluida_em: null },
-      { ...resultado(RES1, EX1, "nao_conforme"), id_resultado: RES1, tipo_execucao: "completa", status_execucao: "concluida", motor: "m", versao_motor: "1", provedor: null, modelo: null, prompt_versao: null, hash_entrada: "h1", iniciada_em: null, concluida_em: null },
+      {
+        ...resultado(RES2, EX2, "conforme"),
+        id_resultado: RES2,
+        tipo_execucao: "parcial",
+        status_execucao: "concluida",
+        motor: "m",
+        versao_motor: "1",
+        provedor: null,
+        modelo: null,
+        prompt_versao: null,
+        hash_entrada: "h2",
+        iniciada_em: null,
+        concluida_em: null,
+      },
+      {
+        ...resultado(RES1, EX1, "nao_conforme"),
+        id_resultado: RES1,
+        tipo_execucao: "completa",
+        status_execucao: "concluida",
+        motor: "m",
+        versao_motor: "1",
+        provedor: null,
+        modelo: null,
+        prompt_versao: null,
+        hash_entrada: "h1",
+        iniciada_em: null,
+        concluida_em: null,
+      },
     ],
     historico_paginacao: { offset: 0, limite: 25, total: 30 },
     apontamentos: [
@@ -179,7 +214,14 @@ function rpcLeitura(f: (a: Record<string, unknown>) => unknown) {
   );
 }
 const pronto = () => screen.findByText("REQ-7");
-function abrir(p: Partial<{ c: string; r: string; onReanalisado: () => void; onOpenChange: (v: boolean) => void }> = {}) {
+function abrir(
+  p: Partial<{
+    c: string;
+    r: string;
+    onReanalisado: () => void;
+    onOpenChange: (v: boolean) => void;
+  }> = {},
+) {
   return render(
     <RequirementDrawer
       idCompetencia={p.c ?? C}
@@ -202,7 +244,8 @@ beforeEach(() => {
 describe("V1-17 parser fail-closed", () => {
   const p = (d: unknown) => parseDetalheV117(d, C, R, OFFSETS_DETALHE_ZERO);
   it("aceita contrato v117-v1", () => expect(p(detalhe())).not.toBeNull());
-  it("rejeita schema diferente", () => expect(p({ ...detalhe(), schema_versao: "v116-v1" })).toBeNull());
+  it("rejeita schema diferente", () =>
+    expect(p({ ...detalhe(), schema_versao: "v116-v1" })).toBeNull());
   it("rejeita competência/requisito diferentes do solicitado", () => {
     expect(p(detalhe({ c: C_B }))).toBeNull();
     expect(p(detalhe({ r: R_B }))).toBeNull();
@@ -214,12 +257,18 @@ describe("V1-17 parser fail-closed", () => {
     expect(p(d)).toBeNull();
   });
   it("rejeita paginação inválida ou limite diferente de 25", () => {
-    expect(p({ ...detalhe(), historico_paginacao: { offset: 0, limite: 10, total: 1 } })).toBeNull();
-    expect(p({ ...detalhe(), evidencias_paginacao: { offset: -1, limite: 25, total: 1 } })).toBeNull();
+    expect(
+      p({ ...detalhe(), historico_paginacao: { offset: 0, limite: 10, total: 1 } }),
+    ).toBeNull();
+    expect(
+      p({ ...detalhe(), evidencias_paginacao: { offset: -1, limite: 25, total: 1 } }),
+    ).toBeNull();
     expect(p({ ...detalhe(), apontamentos_paginacao: { offset: 0, limite: 25 } })).toBeNull();
   });
   it("rejeita allowed_actions sem os três booleanos", () => {
-    expect(p({ ...detalhe(), allowed_actions: { reanalisar: true, executar_analise: false } })).toBeNull();
+    expect(
+      p({ ...detalhe(), allowed_actions: { reanalisar: true, executar_analise: false } }),
+    ).toBeNull();
     expect(p({ ...detalhe(), allowed_actions: {} })).toBeNull();
   });
   it("rejeita na_validade fora de N/A e N/A sem valido boolean", () => {
@@ -228,7 +277,12 @@ describe("V1-17 parser fail-closed", () => {
     expect(p(detalhe({ ref: "nao_aplicavel", na: { valido: "sim" } }))).toBeNull();
   });
   it("na_validade.valido=false é legítimo", () => {
-    const d = p(detalhe({ ref: "nao_aplicavel", na: { valido: false, possui_fundamento: false, possui_evidencia: true } }));
+    const d = p(
+      detalhe({
+        ref: "nao_aplicavel",
+        na: { valido: false, possui_fundamento: false, possui_evidencia: true },
+      }),
+    );
     expect(d?.na_validade?.valido).toBe(false);
   });
   it("resultado_atual nulo com referência presente é válido", () => {
@@ -272,7 +326,9 @@ describe("V1-17 gate", () => {
     rpcLeitura(() => ({ data: null, error: err }));
     abrir();
     expect(await screen.findByText(re)).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/permission denied|relation secret|Paginação inválida/);
+    expect(document.body.textContent).not.toMatch(
+      /permission denied|relation secret|Paginação inválida/,
+    );
   });
   it("contrato inválido → erro, sem dados parciais", async () => {
     rpcLeitura(() => ({ data: { ...detalhe(), schema_versao: "v0" }, error: null }));
@@ -308,7 +364,10 @@ describe("V1-17 conteúdo e estados", () => {
     expect(screen.getByText(/Não aplicável válido/)).toBeInTheDocument();
     v.unmount();
     rpcLeitura(() => ({
-      data: detalhe({ ref: "nao_aplicavel", na: { valido: false, possui_fundamento: false, possui_evidencia: true } }),
+      data: detalhe({
+        ref: "nao_aplicavel",
+        na: { valido: false, possui_fundamento: false, possui_evidencia: true },
+      }),
       error: null,
     }));
     abrir();
@@ -437,7 +496,9 @@ describe("V1-17 reanálise", () => {
     abrir();
     await pronto();
     fireEvent.click(screen.getByRole("button", { name: /Reanalisar este requisito/ }));
-    expect(await screen.findByText(/Já existe uma análise ativa com escopo diferente/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Já existe uma análise ativa com escopo diferente/),
+    ).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/conflict scope raw/);
     expect(escritas()).toHaveLength(1);
   });
@@ -468,7 +529,13 @@ describe("V1-17 troca A/B e acessibilidade", () => {
     const v = abrir();
     await waitFor(() => expect(lidas()).toHaveLength(1));
     v.rerender(
-      <RequirementDrawer idCompetencia={C} idRequisito={R_B} aberto onOpenChange={() => {}} onReanalisado={() => {}} />,
+      <RequirementDrawer
+        idCompetencia={C}
+        idRequisito={R_B}
+        aberto
+        onOpenChange={() => {}}
+        onReanalisado={() => {}}
+      />,
     );
     expect(await screen.findByText("Requisito B")).toBeInTheDocument();
     soltarA({ data: detalhe({ descricao: "Requisito A tardio" }), error: null });
@@ -480,7 +547,9 @@ describe("V1-17 troca A/B e acessibilidade", () => {
     abrir({ onOpenChange: onOpen });
     await pronto();
     const dlg = screen.getByRole("dialog", { name: /Detalhe do requisito/ });
-    expect(within(dlg).getByRole("heading", { level: 2, name: /Detalhe do requisito/ })).toBeInTheDocument();
+    expect(
+      within(dlg).getByRole("heading", { level: 2, name: /Detalhe do requisito/ }),
+    ).toBeInTheDocument();
     expect(within(dlg).queryByRole("heading", { level: 1 })).toBeNull();
     fireEvent.keyDown(dlg, { key: "Escape" });
     expect(onOpen).toHaveBeenCalledWith(false);
@@ -489,6 +558,8 @@ describe("V1-17 troca A/B e acessibilidade", () => {
     const src =
       readFileSync("src/components/competencias/RequirementDrawer.tsx", "utf8") +
       readFileSync("src/lib/competencias/requisitoDetalheDados.ts", "utf8");
-    expect(src).not.toMatch(/getPublicUrl|createSignedUrl|service_role|solicitar_analise_competencia\b|percentual|stale/);
+    expect(src).not.toMatch(
+      /getPublicUrl|createSignedUrl|service_role|solicitar_analise_competencia\b|percentual|stale/,
+    );
   });
 });
