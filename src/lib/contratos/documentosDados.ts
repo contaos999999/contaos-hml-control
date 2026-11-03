@@ -228,8 +228,10 @@ export async function obterResumos(
   let qv = supabase.from("versoes_documento").select(COLUNAS_VERSAO_DOC).or(filtro);
   if (signal) qv = qv.abortSignal(signal);
   const versoes = ((await executar(qv, signal)).data as VersaoDoc[] | null) ?? [];
-  for (const v of versoes)
-    if (base[v.id_documento_contrato]) base[v.id_documento_contrato].versao = v;
+  for (const v of versoes) {
+    const alvoV = base[v.id_documento_contrato];
+    if (alvoV) alvoV.versao = v;
+  }
   const vids = versoes.map((v) => v.id).sort();
   const aids = [...new Set(versoes.map((v) => v.id_arquivo))].sort();
   if (vids.length === 0) return base;
@@ -278,19 +280,29 @@ export async function obterResumos(
   const arquivos = Object.fromEntries(
     ((ra.data as ArquivoDoc[] | null) ?? []).map((a) => [a.id, a]),
   );
-  for (const v of versoes) base[v.id_documento_contrato].arquivo = arquivos[v.id_arquivo];
+  const de = (vid: string): Resumo | undefined => {
+    const d = porVersao[vid];
+    return d ? base[d] : undefined;
+  };
+  for (const v of versoes) {
+    const r = base[v.id_documento_contrato];
+    const a = arquivos[v.id_arquivo];
+    if (r && a) r.arquivo = a;
+  }
   for (const p of (rp.data as Processamento[] | null) ?? []) {
-    const d = porVersao[p.id_versao_documento];
-    if (d && !base[d].processamento) base[d].processamento = p;
+    const r = de(p.id_versao_documento);
+    if (r && !r.processamento) r.processamento = p;
   }
   for (const c of (rc.data as Classificacao[] | null) ?? []) {
-    const d = porVersao[c.id_versao_documento];
-    if (d && !base[d].classificacao) base[d].classificacao = c;
+    const r = de(c.id_versao_documento);
+    if (r && !r.classificacao) r.classificacao = c;
   }
   for (const [vid, pend, sem] of contagens) {
-    const d = porVersao[vid];
-    base[d].iaPendentes = pend;
-    base[d].semVigencia = sem;
+    const r = de(vid);
+    if (r) {
+      r.iaPendentes = pend;
+      r.semVigencia = sem;
+    }
   }
   return base;
 }
@@ -380,7 +392,7 @@ export async function enviarSimples(a: Autorizacao, f: File): Promise<void> {
 
 /** Endpoint TUS oficial do Storage do projeto conectado (direto navegador↔Storage). */
 export function endpointTus(): string {
-  const base = String(import.meta.env.VITE_SUPABASE_URL ?? "");
+  const base = String(import.meta.env["VITE_SUPABASE_URL"] ?? "");
   try {
     const u = new URL(base);
     u.hostname = u.hostname.replace(/\.supabase\.co$/, ".storage.supabase.co");
@@ -393,7 +405,7 @@ const b64 = (s: string) => btoa(unescape(encodeURIComponent(s)));
 const dormir = (ms: number) => new Promise<void>((ok) => setTimeout(ok, ms));
 
 export type OpcoesTus = {
-  location?: string;
+  location?: string | undefined;
   onProgresso?: (pct: number) => void;
   onLocation?: (l: string) => void;
   signal?: AbortSignal;
@@ -408,7 +420,7 @@ export async function enviarTus(
 ): Promise<{ location: string }> {
   const espera = o.atraso ?? dormir;
   const max = o.tentativas ?? 3;
-  const apikey = String(import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "");
+  const apikey = String(import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] ?? "");
   const comuns = { "Tus-Resumable": "1.0.0", "x-signature": a.token, apikey };
   let location = o.location;
   let offset = 0;
@@ -417,7 +429,7 @@ export async function enviarTus(
     try {
       r = await fetch(endpointTus(), {
         method: "POST",
-        signal: o.signal,
+        signal: o.signal ?? null,
         headers: {
           ...comuns,
           "Upload-Length": String(f.size),
@@ -447,7 +459,7 @@ export async function enviarTus(
     try {
       r = await fetch(location, {
         method: "PATCH",
-        signal: o.signal,
+        signal: o.signal ?? null,
         headers: {
           ...comuns,
           "Upload-Offset": String(offset),
@@ -482,7 +494,7 @@ async function consultarOffset(
 ): Promise<number> {
   let r: Response;
   try {
-    r = await fetch(location, { method: "HEAD", signal, headers: comuns });
+    r = await fetch(location, { method: "HEAD", signal: signal ?? null, headers: comuns });
   } catch {
     throw new ErroDoc("erro");
   }

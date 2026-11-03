@@ -211,7 +211,7 @@ function Aviso({ icone, mensagem }: { icone: ReactNode; mensagem: string }) {
     </div>
   );
 }
-function Alerta({ mensagem, onRetry }: { mensagem: string; onRetry?: () => void }) {
+function Alerta({ mensagem, onRetry }: { mensagem: string; onRetry?: (() => void) | undefined }) {
   return (
     <div
       role="alert"
@@ -938,7 +938,9 @@ function DialogoEnvio({
           if (p.resumivel) {
             await enviarTus({ bucket: p.bucket!, path: p.path!, token: p.token! }, it.arquivo, {
               location: p.location,
-              onLocation: (l) => (p.location = l),
+              onLocation: (l) => {
+                p.location = l;
+              },
               onProgresso: (pct) => atualizarItem(it.id, { progresso: pct }),
             });
           } else {

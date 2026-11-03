@@ -308,7 +308,7 @@ describe("V1-10 lista, filtros e paginação server-side", () => {
     cenario();
     montar();
     expect(await screen.findByText("Contrato principal")).toBeInTheDocument();
-    const c = de("documentos_contrato")[0];
+    const c = de("documentos_contrato")[0]!;
     expect(op(c, "select")[0]).toEqual([COLUNAS_DOCUMENTO, { count: "exact" }]);
     expect(op(c, "eq")).toContainEqual(["id_contrato", K1]);
     expect(op(c, "range")[0]).toEqual([0, PAGINA_DOCS - 1]);
@@ -496,7 +496,7 @@ describe("V1-10 envio múltiplo e documento-base completo", () => {
       p_origem: "upload_usuario",
     });
     const criacoes = m.rpcChamadas.filter((r) => r.nome === "criar_documento_contrato_completo");
-    expect(criacoes[0].args).toEqual({
+    expect(criacoes[0]!.args).toEqual({
       p_id_contrato: K1,
       p_tipo: "aditivo",
       p_titulo: "a",
@@ -507,7 +507,9 @@ describe("V1-10 envio múltiplo e documento-base completo", () => {
       p_id_arquivo: AR2,
       p_chave_idempotencia: expect.any(String),
     });
-    expect(criacoes[0].args.p_chave_idempotencia).not.toBe(criacoes[1].args.p_chave_idempotencia);
+    expect(criacoes[0]!.args["p_chave_idempotencia"]).not.toBe(
+      criacoes[1]!.args["p_chave_idempotencia"],
+    );
     expect(m.rpcChamadas.some((r) => r.nome === "criar_documento_contrato")).toBe(false);
   });
   it("retry após upload confirmado reutiliza id_arquivo e a mesma chave, sem reenviar bytes", async () => {
@@ -534,8 +536,8 @@ describe("V1-10 envio múltiplo e documento-base completo", () => {
       ).toHaveLength(2),
     );
     const c = m.rpcChamadas.filter((r) => r.nome === "criar_documento_contrato_completo");
-    expect(c[0].args.p_chave_idempotencia).toBe(c[1].args.p_chave_idempotencia);
-    expect(c[1].args.p_id_arquivo).toBe(AR2);
+    expect(c[0]!.args["p_chave_idempotencia"]).toBe(c[1]!.args["p_chave_idempotencia"]);
+    expect(c[1]!.args["p_id_arquivo"]).toBe(AR2);
     expect(m.upload).toHaveBeenCalledTimes(1);
     expect(m.rpcChamadas.filter((r) => r.nome === "confirmar_upload_arquivo")).toHaveLength(1);
   });
@@ -623,9 +625,9 @@ describe("V1-10 TUS resumível e polling", () => {
       atraso: async () => {},
     });
     expect(r.location).toBe("https://s/up/1");
-    expect(chamadas[0].metodo).toBe("POST");
-    expect(chamadas[0].headers["x-signature"]).toBe("tok");
-    expect(chamadas[0].headers["Tus-Resumable"]).toBe("1.0.0");
+    expect(chamadas[0]!.metodo).toBe("POST");
+    expect(chamadas[0]!.headers["x-signature"]).toBe("tok");
+    expect(chamadas[0]!.headers["Tus-Resumable"]).toBe("1.0.0");
     expect(chamadas.filter((c) => c.metodo === "HEAD")).toHaveLength(1);
     expect(CHUNK_TUS).toBe(6 * 1024 * 1024);
     expect(progresso.at(-1)).toBe(100);
