@@ -131,7 +131,7 @@ describe("V1-13 rota e gates", () => {
     };
     expect(r.path).toBe("/contratos_/$id_/competencias_/nova");
     expect(r.options.ssr).toBe(false);
-    expect(r.options.head().meta[0]!.title).toMatch(/Nova competência/);
+    expect(r.options.head().meta[0]!["title"]).toMatch(/Nova competência/);
   });
   it("UUID inválido: zero Auth, Data API e RPC", async () => {
     montar("abc");
