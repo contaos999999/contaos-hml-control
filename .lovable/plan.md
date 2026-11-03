@@ -20,13 +20,23 @@ Base: `8b62e506a8351fba9819afb1b4508be449be7228` (HEAD local confirmado). `types
 ## 4. Adapter local (sem `any`, sem REST, sem tocar types/client)
 Em `src/lib/competencias/competenciaVisaoGeralDados.ts`:
 ```ts
+type RespostaRpc = { data: unknown; error: unknown; status?: number };
 type RpcVisaoGeral = {
   rpc(fn: "obter_visao_geral_competencia", args: { p_id_competencia: string }):
-    PromiseLike<{ data: unknown; error: unknown; status?: number }>;
+    { abortSignal(signal: AbortSignal): PromiseLike<RespostaRpc> };
 };
 const cliente = supabase as unknown as RpcVisaoGeral;
+export function obterVisaoGeral(id: string, signal: AbortSignal): PromiseLike<RespostaRpc> {
+  return cliente.rpc("obter_visao_geral_competencia", { p_id_competencia: id }).abortSignal(signal);
+}
 ```
-- `obterVisaoGeral(id)` chama uma vez com somente `p_id_competencia`.
+- `abortSignal()` é método nativo do builder do supabase-js (já usado em V1-06+); o tipo é declarado só no adapter, sem regenerar `types.ts` nem tocar `client.ts`.
+- Cancelamento sem efeito tardio, no componente:
+  - cada execução do efeito cria um `AbortController`; o cleanup (desmontagem ou troca de `id`) chama `abort()`;
+  - após cada `await` (getUser, preferência, RPC) há guarda `if (signal.aborted) return;` antes de qualquer `setState`/`navigate`;
+  - retry manual: aborta o controller anterior, cria novo e incrementa `tentativa`; botão "Tentar novamente" fica desabilitado enquanto `carregando`, impedindo chamada duplicada;
+  - `AbortError` é ignorado (não vira estado de erro).
+- StrictMode: o primeiro ciclo é abortado antes de resolver; só o resultado do controller vigente é aplicado.
 - `parseVisaoGeral(data: unknown): VisaoGeral | null` — validação estrutural (objeto, strings, numbers|null, booleans estritos). Falha de shape → `erro` genérico.
 - Tipos locais `CompetenciaVG`, `PortaoVG`, `BlockingSummaryVG`, `AllowedActionsVG` espelhando os campos listados no prompt.
 - `classificarErroVisaoGeral(error, status)`: 401/403/42501 → `sem_permissao`; P0001/sem dados → `nao_encontrada` ("Competência não encontrada ou indisponível."); resto → `erro` genérico com retry manual. Nunca texto bruto.
@@ -47,7 +57,20 @@ Padrão do gate idêntico à V1-12/V1-13 (useEffect + AbortSignal, UUID canoniza
 - `StatusBadge`: texto + ícone (não só cor), tokens existentes.
 - `PercentGauge`: `role="meter"` com `percentual_conformidade` do backend; "—" se null. Mostra também `portao.percentual`/contagens como dado informativo.
 - `BlockingSummary`: lista exatamente os 8 campos backend (sem soma/recalculo); `portao.liberado` exibido como "Liberado pelo backend"/"Não liberado pelo backend".
-- `AllowedActions`: 4 itens (Abrir documentos, Analisar, Abrir parecer, Apresentar) com "Permitida pelo backend"/"Bloqueada pelo backend"; todos staged `aria-disabled="true"` + "Em breve" (telas destino inexistentes); nenhum navega/executa.
+- `AllowedActions` — fonte exclusiva: `allowed_actions` do backend. Mapa local fixo de destinos `DESTINOS_IMPLEMENTADOS = {}` (vazio: V1-15/16/18/19 inexistentes).
+  - booleano `false`: renderiza só texto informativo "Bloqueada pelo backend" (ícone + texto); **nenhum** `button`/`a`/elemento com role de ação para aquela ação.
+  - booleano `true` e destino não implementado (todos hoje): elemento staged `<span aria-disabled="true">` "Em breve" + "Permitida pelo backend"; sem `href`, sem `onClick`, sem execução.
+  - booleano `true` e destino implementado (futuro, fora deste prompt): só então Link real.
+  - Proibido derivar de percentual, situação ou estado visual.
+
+### Estado visual canônico (apresentação; nunca governa ações)
+`derivarEstadoVisual(vg)` puro, usando apenas dados do backend, em ordem determinística:
+1. `presented`: situação ∈ {apresentado, aguardando_contratante, com_apontamentos, reapresentado, validada, encerrada}.
+2. `ready`: situação ∈ {pode_apresentar_contratante, pode_reapresentar_contratante}.
+3. `blocked`: `portao.liberado === false` e (`blocking_summary.nao_conformidades_bloqueantes > 0` ou `blocking_summary.nao_conformes > 0`).
+4. `analysis`: situação ∈ {em_analise, em_reanalise}.
+5. `preparation`: demais (rascunho, preparando, pendente_correcao, cancelada ou desconhecida).
+Renderização: painel `EstadoCompetencia` com rótulo PT-BR ("Em preparação", "Em análise", "Com bloqueios", "Pronta conforme backend", "Apresentada") + ícone + descrição; `StatusBadge` continua mostrando o status oficial exato. A função não é importada por `AllowedActions` (verificado por teste).
 - `Tabs`: `role="tablist"`; "Visão geral" `aria-selected=true`; Documentos/Análise/Parecer/Apresentação staged aria-disabled "Em breve"; nenhuma rota futura criada.
 - Tooltips acessíveis existentes em termos técnicos (portão, inconclusivos) se já há componente; sem shared UI novo.
 
@@ -70,6 +93,11 @@ Padrão do gate idêntico à V1-12/V1-13 (useEffect + AbortSignal, UUID canoniza
 12. Voltar usa `id_contrato` do backend.
 13. V1-12: Abrir = link `/competencias/<id>`; Nova competência intacta.
 14. Teste estático: o arquivo de produção não contém `=== 100` nem `avaliar_portao_conformidade`, nem `any`.
+15. Estados visuais (um teste cada, RED antes da produção): `preparation` (preparando), `analysis` (em_analise), `blocked` (liberado=false + bloqueantes>0), `ready` (pode_apresentar_contratante), `presented` (apresentado) — cada um exibe seu rótulo/ícone; e, em cada estado, as ações refletem só os booleanos do fixture (ex.: `ready` com `apresentar=false` → Apresentar bloqueada; `blocked` com `analisar=true` → Analisar permitida/staged).
+16. Ação `false` → `queryAllByRole("button"|"link", {name:/Apresentar|Analisar|Abrir documentos|Abrir parecer/})` vazio para aquela ação; só texto "Bloqueada pelo backend".
+17. Ação `true` com rota futura inexistente → staged aria-disabled "Em breve", sem `href`, clique não chama `navigate` nem rpc.
+18. Cancelamento: desmontar com RPC pendente e resolvê-la depois → nenhum `setState`/aviso React, nenhum `navigate`; `abortSignal` recebeu signal abortado. Troca de `id` aborta a anterior e só a nova é exibida. Retry manual durante carregamento não dispara segunda RPC; após erro, dispara exatamente 1.
+19. Regressão obrigatória mantida (item 8): percentual=100 + `apresentar=false` nunca libera; percentual baixo + `apresentar=true` mostra "Permitida pelo backend".
 
 ## 9. Verificação
 Focado V1-14 + regressão V1-13/V1-12/V1-11/V1-10; suíte serial `--maxWorkers=1`; lint arquivos alterados; build automático; static scan; Security Scan; browser 1440/1280/768/390 claro/escuro via fixture mock (sem overflow; UUID inválido = zero requisições). `tsc`/build manual: gate externo se ambiente não permitir. Teste C separado read-only.
