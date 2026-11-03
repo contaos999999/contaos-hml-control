@@ -134,7 +134,7 @@ describe("V1-12 rota e gates", () => {
       }
     ).options;
     expect(o.ssr).toBe(false);
-    expect(o.head().meta.some((x) => x.title === "Competências — ContaOS")).toBe(true);
+    expect(o.head().meta.some((x) => x["title"] === "Competências — ContaOS")).toBe(true);
   });
   it("UUID inválido: nenhuma consulta", async () => {
     cenario();
