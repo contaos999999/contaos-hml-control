@@ -1,29 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  AlertCircle,
-  ArrowLeft,
-  Building2,
-  Loader2,
-  RefreshCw,
-  SearchX,
-  ShieldAlert,
-} from "lucide-react";
+import { AlertCircle, ArrowLeft, Building2, Loader2, RefreshCw, SearchX, ShieldAlert } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
-import {
-  ErroDetalhe,
-  uuidCanonico,
-  formatarBrl,
-  formatarDataBr,
-  obterContrato,
-  texto,
-  type ContratoDetalhe,
-} from "@/lib/contratos/contratoDetalheDados";
+import { ErroDetalhe, uuidCanonico, formatarBrl, formatarDataBr, obterContrato, texto, type ContratoDetalhe } from "@/lib/contratos/contratoDetalheDados";
 import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 export const MENSAGENS_V106 = {
@@ -31,8 +15,7 @@ export const MENSAGENS_V106 = {
   carregando: "Carregando contrato…",
   negado: "Você não tem acesso a este contrato.",
   naoEncontrado: "Contrato não encontrado.",
-  consistencia:
-    "Não foi possível exibir este contrato por uma inconsistência de acesso. Tente novamente mais tarde.",
+  consistencia: "Não foi possível exibir este contrato por uma inconsistência de acesso. Tente novamente mais tarde.",
   erro: "Não foi possível carregar o contrato agora. Tente novamente em instantes.",
   erroSessao: "Não foi possível verificar sua sessão agora. Tente novamente em instantes.",
 } as const;
@@ -53,11 +36,8 @@ export function VisaoGeralContrato({ id }: { id: string }) {
       .then(({ data, error }) => {
         if (!ativo) return;
         const semSessao =
-          !!error &&
-          ((error as { name?: string }).name === "AuthSessionMissingError" ||
-            (error as { code?: string }).code === "session_not_found");
-        if (semSessao || (!error && !data.user))
-          return void navigate({ to: "/login", replace: true });
+          !!error && ((error as { name?: string }).name === "AuthSessionMissingError" || (error as { code?: string }).code === "session_not_found");
+        if (semSessao || (!error && !data.user)) return void navigate({ to: "/login", replace: true });
         if (error || !data.user) return void setErroSessao(true);
         const pref = obterPreferenciaOrganizacao(data.user.id);
         if (!pref) return void navigate({ to: "/selecionar-organizacao", replace: true });
@@ -80,14 +60,10 @@ export function VisaoGeralContrato({ id }: { id: string }) {
           </div>
           <nav aria-label="Navegação" className="flex flex-wrap gap-2">
             <Button asChild variant="secondary" className="h-11">
-              <Link to="/contratos">
-                <ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Voltar para contratos
-              </Link>
+              <Link to="/contratos"><ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Voltar para contratos</Link>
             </Button>
             <Button asChild variant="secondary" className="h-11">
-              <Link to="/selecionar-organizacao">
-                <Building2 className="mr-2 h-4 w-4" aria-hidden /> Selecionar organização
-              </Link>
+              <Link to="/selecionar-organizacao"><Building2 className="mr-2 h-4 w-4" aria-hidden /> Selecionar organização</Link>
             </Button>
           </nav>
         </div>
@@ -96,10 +72,7 @@ export function VisaoGeralContrato({ id }: { id: string }) {
         {erroSessao ? (
           <>
             <Titulo />
-            <Alerta
-              mensagem={MENSAGENS_V106.erroSessao}
-              onRetry={() => setTentativa((n) => n + 1)}
-            />
+            <Alerta mensagem={MENSAGENS_V106.erroSessao} onRetry={() => setTentativa((n) => n + 1)} />
           </>
         ) : !ctx ? (
           <>
@@ -110,12 +83,7 @@ export function VisaoGeralContrato({ id }: { id: string }) {
           </>
         ) : (
           // key por usuário+organização+id: troca descarta estado e respostas tardias anteriores.
-          <Conteudo
-            key={`${ctx.idUsuario}:${ctx.idOrganizacao}:${uuidCanonico(id)}`}
-            id={uuidCanonico(id)}
-            idUsuario={ctx.idUsuario}
-            idOrganizacao={ctx.idOrganizacao}
-          />
+          <Conteudo key={`${ctx.idUsuario}:${ctx.idOrganizacao}:${uuidCanonico(id)}`} id={uuidCanonico(id)} idUsuario={ctx.idUsuario} idOrganizacao={ctx.idOrganizacao} />
         )}
       </main>
     </div>
@@ -125,25 +93,13 @@ export function VisaoGeralContrato({ id }: { id: string }) {
 function Titulo({ numero }: { numero?: string }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        Gestão contratual
-      </p>
-      <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">
-        {numero ? `Contrato ${numero}` : "Contrato"}
-      </h1>
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Gestão contratual</p>
+      <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl">{numero ? `Contrato ${numero}` : "Contrato"}</h1>
     </div>
   );
 }
 
-function Conteudo({
-  id,
-  idUsuario,
-  idOrganizacao,
-}: {
-  id: string;
-  idUsuario: string;
-  idOrganizacao: string;
-}) {
+function Conteudo({ id, idUsuario, idOrganizacao }: { id: string; idUsuario: string; idOrganizacao: string }) {
   const consulta = useQuery({
     queryKey: ["contratos", "detalhe", idUsuario, idOrganizacao, id],
     queryFn: ({ signal }) => obterContrato(id, signal),
@@ -156,22 +112,11 @@ function Conteudo({
       <>
         <Titulo />
         {tipo === "negado" ? (
-          <Aviso
-            icone={<ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />}
-            mensagem={MENSAGENS_V106.negado}
-          />
+          <Aviso icone={<ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />} mensagem={MENSAGENS_V106.negado} />
         ) : tipo === "nao_encontrado" ? (
-          <Aviso
-            icone={
-              <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-            }
-            mensagem={MENSAGENS_V106.naoEncontrado}
-          />
+          <Aviso icone={<SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />} mensagem={MENSAGENS_V106.naoEncontrado} />
         ) : (
-          <Alerta
-            mensagem={tipo === "consistencia" ? MENSAGENS_V106.consistencia : MENSAGENS_V106.erro}
-            onRetry={() => void consulta.refetch()}
-          />
+          <Alerta mensagem={tipo === "consistencia" ? MENSAGENS_V106.consistencia : MENSAGENS_V106.erro} onRetry={() => void consulta.refetch()} />
         )}
       </>
     );
@@ -184,11 +129,7 @@ function Conteudo({
         <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> {MENSAGENS_V106.carregando}
         </p>
-        <div className="space-y-2" aria-hidden>
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-16 w-full" />
-          ))}
-        </div>
+        <div className="space-y-2" aria-hidden>{[0, 1, 2].map((i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
       </>
     );
   }
@@ -215,20 +156,14 @@ function Campo({ rotulo, valor }: { rotulo: string; valor: string }) {
 function Secao({ id, titulo, children }: { id: string; titulo: string; children: ReactNode }) {
   return (
     <section aria-labelledby={id} className="rounded-xl border border-border bg-card p-4 sm:p-5">
-      <h2
-        id={id}
-        className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground"
-      >
-        {titulo}
-      </h2>
+      <h2 id={id} className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">{titulo}</h2>
       <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</dl>
     </section>
   );
 }
 
 function Resumo({ c }: { c: ContratoDetalhe }) {
-  const vigencia =
-    !c.inicio && !c.fim ? "—" : `${formatarDataBr(c.inicio)} – ${formatarDataBr(c.fim)}`;
+  const vigencia = !c.inicio && !c.fim ? "—" : `${formatarDataBr(c.inicio)} – ${formatarDataBr(c.fim)}`;
   return (
     <>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -241,21 +176,10 @@ function Resumo({ c }: { c: ContratoDetalhe }) {
       <nav aria-label="Seções do contrato" className="rounded-xl border border-border bg-card p-2">
         <ul className="flex flex-wrap gap-2">
           <li>
-            <span
-              aria-current="page"
-              className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
-            >
-              Visão geral
-            </span>
+            <span aria-current="page" className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">Visão geral</span>
           </li>
           <li>
-            <Link
-              to="/contratos/$id/base-normativa"
-              params={{ id: c.id }}
-              className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Base normativa
-            </Link>
+            <Link to="/contratos/$id/base-normativa" params={{ id: c.id }} className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Base normativa</Link>
           </li>
           <li>
             <Link
@@ -276,29 +200,15 @@ function Resumo({ c }: { c: ContratoDetalhe }) {
             </Link>
           </li>
           <li>
-            <Link
-              to="/contratos/$id/documentos"
-              params={{ id: c.id }}
-              className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Documentos
-            </Link>
-          </li>
-          <li>
             <Link to="/contratos/$id/documentos" params={{ id: c.id }} className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               Documentos
             </Link>
           </li>
           {SECOES_FUTURAS.map((s) => (
             <li key={s}>
-              <span
-                aria-disabled="true"
-                className="inline-flex min-h-11 items-center gap-2 rounded-md px-4 text-sm text-muted-foreground"
-              >
+              <span aria-disabled="true" className="inline-flex min-h-11 items-center gap-2 rounded-md px-4 text-sm text-muted-foreground">
                 <span>{s}</span>
-                <span className="rounded border border-border px-1.5 text-[0.65rem] uppercase tracking-wide">
-                  Em breve
-                </span>
+                <span className="rounded border border-border px-1.5 text-[0.65rem] uppercase tracking-wide">Em breve</span>
               </span>
             </li>
           ))}
@@ -324,10 +234,7 @@ function Resumo({ c }: { c: ContratoDetalhe }) {
         </Secao>
         <Secao id="v106-valores" titulo="Valores">
           <Campo rotulo="Valor global" valor={formatarBrl(c.valor_global)} />
-          <Campo
-            rotulo="Valor mensal de referência"
-            valor={formatarBrl(c.valor_mensal_referencia)}
-          />
+          <Campo rotulo="Valor mensal de referência" valor={formatarBrl(c.valor_mensal_referencia)} />
         </Secao>
       </div>
     </>
@@ -336,34 +243,18 @@ function Resumo({ c }: { c: ContratoDetalhe }) {
 
 function Aviso({ icone, mensagem }: { icone: ReactNode; mensagem: string }) {
   return (
-    <div
-      role="alert"
-      className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <p className="flex items-start gap-2 text-sm">
-        {icone}
-        {mensagem}
-      </p>
-      <Button asChild variant="outline" className="h-11">
-        <Link to="/contratos">Voltar para contratos</Link>
-      </Button>
+    <div role="alert" className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="flex items-start gap-2 text-sm">{icone}{mensagem}</p>
+      <Button asChild variant="outline" className="h-11"><Link to="/contratos">Voltar para contratos</Link></Button>
     </div>
   );
 }
 
 function Alerta({ mensagem, onRetry }: { mensagem: string; onRetry: () => void }) {
   return (
-    <div
-      role="alert"
-      className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <p className="flex items-start gap-2 text-sm">
-        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
-        {mensagem}
-      </p>
-      <Button type="button" variant="outline" className="h-11" onClick={onRetry}>
-        <RefreshCw className="mr-2 h-4 w-4" aria-hidden /> Tentar novamente
-      </Button>
+    <div role="alert" className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="flex items-start gap-2 text-sm"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />{mensagem}</p>
+      <Button type="button" variant="outline" className="h-11" onClick={onRetry}><RefreshCw className="mr-2 h-4 w-4" aria-hidden /> Tentar novamente</Button>
     </div>
   );
 }
