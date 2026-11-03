@@ -83,3 +83,23 @@ Regras obrigatórias para BRAND-01:
 - Não forçar push nem reescrever histórico sincronizado com Lovable. Proteger escopo e a marca BRAND-01. Só pedir intervenção por impedimento externo ou risco que exija autorização distinta.
 - **Continuidade entre chats:** o registro mestre de retomada é `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md`. No início de novo chat, **ler os HEADs atuais nos dois repositórios antes de agir**; depois ler o registro e as matrizes de evidência. Não confiar apenas na memória do chat.
 - Detalhamento: `docs/frontend/ADR-DEV-001-GITHUB-DIRETO.md`.
+
+
+## ADR-DEV-002 — Rito formal obrigatório para TODA correção frontend
+
+1. **PROMPT**: identificar critério original/atômicos e FAIL real; registrar baseline e fontes.
+2. **PLAN**: redigir plano por prompt com lista fechada de arquivos, dados, UI, testes, rollback; backend/RLS/RPC/Auth/Storage/schema, PROD e `types.ts` expressamente PROIBIDOS.
+3. **VALIDAÇÃO DO PLAN ANTES DO BUILD**: conferir PRD 4.1, arquitetura, NFRs 000–096, BRAND-01, segurança, Zero-Drift, TDD, impacto mínimo, CI e Teste C. **QUALQUER gate FAIL/NÃO VERIFICADO aplicável = NÃO IMPLEMENTAR.** Em caso nominal e sem aprovação humana específica, aprovar tecnicamente e registrar no GitHub; para BRAND-01 e outras aprovações obrigatórias, solicitar aceite explícito.
+4. **COMMIT DOCUMENTAL PRÉVIO**: criar `docs/frontend/planos/PROMPT_...md` e marcar `docs/frontend/planos/PLANO_ATIVO.json` `VALIDADO` antes do BUILD; esperar CI verde do plano. A CI reprova fonte de app sem plano validado **no commit de base**.
+5. **BUILD**: alterar somente caminhos allowlisted, via GitHub direto, TDD RED/GREEN. Se precisar mudar escopo ou backend, **PARAR** e revalidar o plano, sem executar mudança proibida.
+6. **TESTES E TESTE C**: CI, lint, tipos, build, regressão, segurança, hash tipos certificado, 4 larguras × 2 temas, acessibilidade, estados, Teste C independente e imutável. Evidência MOCK ≠ E2E real.
+7. **REGISTRO E RETOMADA**: commit/testes/evidências por prompt e `ESTADO_E_RETOMADA_CONTAOS_4_1.md` atualizado.
+
+Norma detalhada: `docs/frontend/ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md`. O backend `contaos9999/develop` **não deve ser alterado por tarefas exclusivamente frontend**.
+
+
+### ESCALONAMENTO DE LACUNA REAL DE BACKEND (APROVAÇÃO HUMANA)
+
+- Durante o frontend, se surgir **possível** problema de backend, DOCUMENTAR evidência obtida no frontend e **PARAR**. Antes de migrar o foco para `contaos9999/develop` e investigar Supabase HML, **pedir e receber autorização explícita do usuário**; sem ela, somente frontend, nenhuma inspeção técnica de schema/RPC/RLS nem modificação backend.
+- Autorizado, investigar backend **somente leitura** e confirmar a lacuna REAL. Se falso alarme, registrar e retomar frontend. Se real, abrir PROMPT + PLAN backend, validar contra PRD 4.1, premissas, PROMPTs 00–99, atômicos 000–096, BRAND-01/NFRs/Zero-Drift/auditoria/fontes. Só após gate PASS (e autorização adicional quando requerida), BUILD limitado no Supabase HML com testes, CI e certificação individual. Registrar GitHub e retornar frontend.
+- Backend tem autoridade absoluta sobre regras de acesso, cálculos e dados, sem fallback frontend. PROD e alteração de `types.ts` continuam proibidos. Ver `docs/frontend/ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md`.

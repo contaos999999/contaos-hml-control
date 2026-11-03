@@ -1,0 +1,16 @@
+{
+  "schema": "contaos.frontend.plan.v1",
+  "prompt_id": null,
+  "status": "SEM_PLANO_ATIVO",
+  "plano_documento": null,
+  "validacao": {
+    "resultado": "PENDENTE",
+    "validado_por": null,
+    "validado_em": null,
+    "modo_aprovacao": null,
+    "aprovacao_humana": null,
+    "ci_plano_url": null
+  },
+  "arquivos_permitidos": [],
+  "observacao": "Antes de qualquer BUILD do frontend, publicar um PLAN validado em commit documental separado e atualizar este arquivo em estado VALIDADO. Nenhuma alteração em src, public, dependências ou configuração de app é permitida enquanto o status for SEM_PLANO_ATIVO. Nunca incluir backend nem types.ts na allowlist."
+}

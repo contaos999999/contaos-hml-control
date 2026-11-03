@@ -21,13 +21,19 @@ jobs:
     steps:
       - name: Checkout immutable commit
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Autoteste do guard (casos permitidos e proibidos)\n        run: node --test scripts/frontend-scope-gate.test.mjs\n      - name: Verificar fronteira frontend/backend e PLAN validado prévio
+        env:
+          FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/frontend-scope-gate.mjs
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
       - name: Lint e formatacao do saneamento transversal
         run: |
-          bunx eslint src/routes/__root.tsx src/components/brand/ContaOSMarca.tsx src/test/rootLocale.test.tsx src/test/brand.test.tsx scripts/frontend-zero-drift.mjs
+          bunx eslint src/routes/__root.tsx src/components/brand/ContaOSMarca.tsx src/test/rootLocale.test.tsx src/test/brand.test.tsx scripts/frontend-zero-drift.mjs scripts/frontend-scope-gate.mjs
           bunx prettier --check scripts/frontend-zero-drift.mjs src/test/brand.test.tsx src/test/rootLocale.test.tsx
       - name: Full regression serial
         run: bunx vitest run --maxWorkers=1

@@ -10,6 +10,10 @@ O desenvolvimento e as correções do frontend serão realizados **diretamente n
 
 O **Lovable permanece conectado como ambiente de sincronização, pré-visualização e consulta visual**, não como editor canônico ou fonte de verdade do frontend. Não usar o agente Lovable para implementar features ou correções regulares. A integração ainda pode regenerar `src/integrations/supabase/types.ts` por conta própria, razão pela qual o processo exige Zero-Drift e Auto-Lock.
 
+## Processo de aprovação formal (ADR-DEV-002)
+
+A execução direta por GitHub **não autoriza pular a etapa de validação do PLAN**. Antes de qualquer BUILD, seguir integralmente o rito [ADR-DEV-002](ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md): PROMPT → PLAN → VALIDAÇÃO FORMAL → commit documental + CI verde → BUILD frontend → CI → Teste C separado → dossiê e retomada. O backend permanece fora do escopo; mudança de `src/`, `public/` ou configuração do app somente com `PLANO_ATIVO.json` VALIDADO em commit anterior.
+
 ## Fluxo de trabalho obrigatório
 
 1. Ler o estado mais recente de ambos os repositórios, o PRD 4.1, critérios do PROMPT 00–99 e atômicos 000–096 aplicáveis, decisões de produto, BRAND-01 e o tracker das 39 etapas.
@@ -28,3 +32,8 @@ O GitHub do frontend permanece conectado ao Lovable. Evitar `force push`, `rebas
 O arquivo protegido `types.ts` foi realmente regenerado pelo Lovable e depois **reparado em push automático pelo Auto-Lock**: https://github.com/contaos9999/contaos-hml-control/actions/runs/41725182728 e commit https://github.com/contaos9999/contaos-hml-control/commit/174512a2d2cc978f9c04da54bd8096ad2e47408d. Isso prova a recuperação, não a desativação do gerador interno.
 
 **Protocolo permanente de continuidade de conversas:** [ESTADO_E_RETOMADA_CONTAOS_4_1.md](ESTADO_E_RETOMADA_CONTAOS_4_1.md). A cada sessão, primeiro confirmar os HEADs atuais, workflows e issues, nunca presumir que o snapshot anterior continua vigente.
+
+
+## Exceção controlada para lacuna comprovada de backend
+
+A autorização geral para desenvolver o frontend **NÃO autoriza migrar ao backend**. Se a implementação evidenciar uma possível lacuna no Supabase, documentar e **solicitar autorização humana para mudar o foco ao fluxo `contaos9999/develop` e investigar HML**. Após a autorização, investigação read-only, constatação objetiva, PROMPT/PLAN/validação separados, BUILD backend limitado somente se gate PASS, certificação, GitHub e retorno imediato ao frontend. O procedimento detalhado, inclusive aprovações adicionais obrigatórias, está na [ADR-DEV-002](ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md). Todas as demais tarefas permanecem somente frontend.
