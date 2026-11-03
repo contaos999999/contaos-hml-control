@@ -53,10 +53,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 import { CompetenciaAnalise } from "@/components/competencias/CompetenciaAnalise";
-import {
-  classificarErroV116,
-  parseAnaliseV116,
-} from "@/lib/competencias/competenciaAnaliseDados";
+import { classificarErroV116, parseAnaliseV116 } from "@/lib/competencias/competenciaAnaliseDados";
 import * as preferenciaDados from "@/lib/organizacao/preferenciaOrganizacao";
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { Route } from "@/routes/competencias_.$id_.analise";
@@ -330,7 +327,11 @@ describe("V1-16 gate", () => {
     [{ code: "PGRST301", message: "jwt" }, 401, /não tem acesso/],
     [{ code: "x", message: "forbidden raw" }, 403, /não tem acesso/],
     [{ code: "PT404", message: "Não encontramos a competência informada." }, 404, /não encontrada/],
-    [{ code: "PT400", message: "O filtro de mecanismo não é válido." }, 400, /Não foi possível carregar/],
+    [
+      { code: "PT400", message: "O filtro de mecanismo não é válido." },
+      400,
+      /Não foi possível carregar/,
+    ],
     [{ code: "XX000", message: "ERROR: relation secret" }, 500, /Não foi possível carregar/],
   ])("erro %o → mensagem sanitizada", async (error, status, re) => {
     rpcLeitura(() => ({ data: null, error, status }));
@@ -415,10 +416,12 @@ describe("V1-16 parser fail-closed", () => {
     [
       "criticidade inválida",
       (l) =>
-        (((l["resultados"] as Array<Record<string, unknown>>)[0]!["requisito"] as Record<
-          string,
-          unknown
-        >)["criticidade"] = "urgente"),
+        ((
+          (l["resultados"] as Array<Record<string, unknown>>)[0]!["requisito"] as Record<
+            string,
+            unknown
+          >
+        )["criticidade"] = "urgente"),
     ],
     [
       "severidade apontamento inválida",
@@ -451,7 +454,12 @@ describe("V1-16 parser fail-closed", () => {
       reanalisar: false,
       abrir_requisito: false,
     });
-    expect(l.mecanismos).toEqual({ deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 });
+    expect(l.mecanismos).toEqual({
+      deterministico: 0,
+      semantico: 0,
+      humano: 0,
+      nao_identificado: 0,
+    });
     expect(l.resultados_paginacao.total).toBe(0);
   });
   it("not_analyzed sem execução: mecanismos {} vira ausência (null), sem inventar zeros", () => {
@@ -472,7 +480,11 @@ describe("V1-16 estados backend", () => {
     ["stale", /Desatualizada/],
   ])("%s → texto do estado", async (estado, re) => {
     rpcLeitura(() => ({
-      data: leitura({ estado, stale: estado === "stale", exec: estado === "not_analyzed" ? null : EXEC }),
+      data: leitura({
+        estado,
+        stale: estado === "stale",
+        exec: estado === "not_analyzed" ? null : EXEC,
+      }),
       error: null,
     }));
     render(<CompetenciaAnalise id={ID} />);
@@ -520,8 +532,7 @@ describe("V1-16 mecanismos, evidência, apontamentos, histórico", () => {
     await pronto();
     const tabela = screen.getByRole("table", { name: /Requisitos analisados/ });
     expect(within(tabela).getByText(rot)).toBeInTheDocument();
-    if (mec === "nao_identificado")
-      expect(within(tabela).queryByText("Determinístico")).toBeNull();
+    if (mec === "nao_identificado") expect(within(tabela).queryByText("Determinístico")).toBeNull();
   });
 
   it("resumo de mecanismos com contagens do backend, incluindo zero", async () => {
@@ -545,7 +556,9 @@ describe("V1-16 mecanismos, evidência, apontamentos, histórico", () => {
     expect(screen.getByText(/p\. 3/)).toBeInTheDocument();
     expect(screen.getAllByText("Alta").length).toBeGreaterThan(0);
     expect(screen.getByText("Recibo ausente")).toBeInTheDocument();
-    expect(within(screen.getByRole("region", { name: /^Apontamentos$/ })).getByText("Informativo")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("region", { name: /^Apontamentos$/ })).getByText("Informativo"),
+    ).toBeInTheDocument();
     expect(screen.getByText(/REG-9/)).toBeInTheDocument();
     expect(screen.getByText(/Enviar recibo/)).toBeInTheDocument();
     const hist = screen.getByRole("region", { name: /Histórico de execuções/ });
@@ -569,7 +582,11 @@ describe("V1-16 filtros e paginação server-side", () => {
     }));
     render(<CompetenciaAnalise id={ID} />);
     await pronto();
-    for (const n of [/Próxima página de resultados/, /Próxima página de execuções/, /Próxima página de apontamentos/]) {
+    for (const n of [
+      /Próxima página de resultados/,
+      /Próxima página de execuções/,
+      /Próxima página de apontamentos/,
+    ]) {
       fireEvent.click(screen.getByRole("button", { name: n }));
       await waitFor(() => expect(screen.getByRole("button", { name: n })).not.toBeDisabled());
     }
@@ -689,9 +706,13 @@ describe("V1-16 troca de recurso A → B", () => {
     rerender(<CompetenciaAnalise id={ID} />);
     rerender(<CompetenciaAnalise id={ID_B} />);
     await waitFor(() =>
-      expect(lidas().some((c) => (c[1] as Record<string, unknown>)["p_id_competencia"] === ID_B)).toBe(true),
+      expect(
+        lidas().some((c) => (c[1] as Record<string, unknown>)["p_id_competencia"] === ID_B),
+      ).toBe(true),
     );
-    const b = lidas().filter((c) => (c[1] as Record<string, unknown>)["p_id_competencia"] === ID_B)[0]![1];
+    const b = lidas().filter(
+      (c) => (c[1] as Record<string, unknown>)["p_id_competencia"] === ID_B,
+    )[0]![1];
     expect(b).toMatchObject({ p_resultados_offset: 0, p_filtro_criticidade: null });
     expect((screen.getByLabelText(/^Criticidade$/) as HTMLSelectElement).value).toBe("");
   });
@@ -827,7 +848,9 @@ describe("V1-16 ações", () => {
     render(<CompetenciaAnalise id={ID} />);
     await pronto();
     const tabela = screen.getByRole("table", { name: /Requisitos analisados/ });
-    const c = within(tabela).getByText(/Abrir requisito/).closest("[aria-disabled]")!;
+    const c = within(tabela)
+      .getByText(/Abrir requisito/)
+      .closest("[aria-disabled]")!;
     expect(c.getAttribute("aria-disabled")).toBe("true");
     expect(c.getAttribute("href")).toBeNull();
     expect(c.textContent).toMatch(/Em breve/);
@@ -882,7 +905,10 @@ describe("V1-16 polling", () => {
 
   it.each(["failed", "complete", "stale", "not_analyzed"])("%s: sem polling", async (estado) => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    rpcLeitura(() => ({ data: leitura({ estado, exec: estado === "not_analyzed" ? null : EXEC }), error: null }));
+    rpcLeitura(() => ({
+      data: leitura({ estado, exec: estado === "not_analyzed" ? null : EXEC }),
+      error: null,
+    }));
     render(<CompetenciaAnalise id={ID} />);
     await pronto();
     await act(async () => {
@@ -919,7 +945,9 @@ describe("V1-16 polling", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(120000);
     });
-    expect(lidas().filter((c) => (c[1] as Record<string, unknown>)["p_id_competencia"] === ID)).toHaveLength(1);
+    expect(
+      lidas().filter((c) => (c[1] as Record<string, unknown>)["p_id_competencia"] === ID),
+    ).toHaveLength(1);
   });
 });
 
@@ -928,7 +956,13 @@ describe("V1-16 acessibilidade", () => {
     render(<CompetenciaAnalise id={ID} />);
     await pronto();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    for (const l of [/^Resultado$/, /^Criticidade$/, /^Mecanismo$/, /^Status do apontamento$/, /^Buscar requisito$/])
+    for (const l of [
+      /^Resultado$/,
+      /^Criticidade$/,
+      /^Mecanismo$/,
+      /^Status do apontamento$/,
+      /^Buscar requisito$/,
+    ])
       expect(screen.getByLabelText(l)).toBeInTheDocument();
   });
 });
@@ -940,7 +974,10 @@ describe("V1-16 scan estático", () => {
     "src/routes/competencias_.$id_.analise.tsx",
   ].map((f) => readFileSync(f, "utf8"));
   it.each([
-    ["comparação de hash/stale local", /hash_entrada\s*[!=]==?|hash_contexto_atual\s*[!=]==?|contexto_atual\s*\?/],
+    [
+      "comparação de hash/stale local",
+      /hash_entrada\s*[!=]==?|hash_contexto_atual\s*[!=]==?|contexto_atual\s*\?/,
+    ],
     ["fórmula de percentual", /conformes_ou_na_validos\s*\/|\/\s*total|\*\s*100/],
     ["liberação local", /percentual\s*(>=|===?|>)\s*100/],
     ["REST/fetch manual", /\bfetch\(|\/rest\/v1/],

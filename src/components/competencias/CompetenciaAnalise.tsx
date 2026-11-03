@@ -220,8 +220,7 @@ export function CompetenciaAnalise({ id }: { id: string }) {
     } else if (k === "apStatus") no.ap = 0;
     setCtx({ id: idC, f: nf, o: no });
   };
-  const mudarOffset = (k: keyof Offsets, v: number) =>
-    setCtx({ id: idC, f, o: { ...o, [k]: v } });
+  const mudarOffset = (k: keyof Offsets, v: number) => setCtx({ id: idC, f, o: { ...o, [k]: v } });
   const aplicarBusca = (v: string) => mudarFiltro("busca", v.trim());
 
   const solicitar = async (tipo: TipoSolicitacao, anterior: string | null) => {
@@ -290,15 +289,24 @@ export function CompetenciaAnalise({ id }: { id: string }) {
             ) : null}
           </div>
           {estado.tipo === "nao_encontrada" ? (
-            <Aviso icone={<SearchX className="h-4 w-4" aria-hidden />} mensagem={MENSAGENS_V116.naoEncontrada} />
+            <Aviso
+              icone={<SearchX className="h-4 w-4" aria-hidden />}
+              mensagem={MENSAGENS_V116.naoEncontrada}
+            />
           ) : estado.tipo === "carregando" ? (
             <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> {MENSAGENS_V116.carregando}
             </p>
           ) : estado.tipo === "sem_permissao" ? (
-            <Aviso icone={<ShieldAlert className="h-4 w-4" aria-hidden />} mensagem={MENSAGENS_V116.negado} />
+            <Aviso
+              icone={<ShieldAlert className="h-4 w-4" aria-hidden />}
+              mensagem={MENSAGENS_V116.negado}
+            />
           ) : estado.tipo === "erro" || estado.tipo === "erro_sessao" ? (
-            <div role="alert" className="space-y-3 rounded-lg border border-destructive/40 bg-card p-4">
+            <div
+              role="alert"
+              className="space-y-3 rounded-lg border border-destructive/40 bg-card p-4"
+            >
               <p className="flex items-center gap-2 text-sm">
                 <AlertCircle className="h-4 w-4 text-destructive" aria-hidden />
                 {estado.tipo === "erro" ? MENSAGENS_V116.erro : MENSAGENS_V116.erroSessao}
@@ -357,10 +365,7 @@ export function CompetenciaAnalise({ id }: { id: string }) {
                   />
                 </div>
               </section>
-              <RequirementTable
-                l={estado.l}
-                onPagina={(v) => mudarOffset("res", v)}
-              />
+              <RequirementTable l={estado.l} onPagina={(v) => mudarOffset("res", v)} />
               <ApontamentosBloco l={estado.l} onPagina={(v) => mudarOffset("ap", v)} />
               <HistoricoExecucoes l={estado.l} onPagina={(v) => mudarOffset("exec", v)} />
             </>
@@ -373,7 +378,10 @@ export function CompetenciaAnalise({ id }: { id: string }) {
 
 function Aviso({ icone, mensagem }: { icone: ReactNode; mensagem: string }) {
   return (
-    <p role="status" className="flex items-center gap-2 rounded-lg border border-border bg-card p-4 text-sm">
+    <p
+      role="status"
+      className="flex items-center gap-2 rounded-lg border border-border bg-card p-4 text-sm"
+    >
       {icone} {mensagem}
     </p>
   );
@@ -440,7 +448,10 @@ function AnalysisHeader({
 }) {
   const x = l.execucao_atual;
   return (
-    <section aria-labelledby="v116-cab" className="space-y-3 rounded-lg border border-border bg-card p-4">
+    <section
+      aria-labelledby="v116-cab"
+      className="space-y-3 rounded-lg border border-border bg-card p-4"
+    >
       <h2 id="v116-cab" className="text-lg font-semibold">
         Situação da análise
       </h2>
@@ -465,7 +476,11 @@ function AnalysisHeader({
       <div className="flex flex-wrap gap-3">
         {l.allowed_actions.executar_analise ? (
           <Button className="h-11" disabled={enviando} onClick={() => onSolicitar("completa")}>
-            {enviando ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : <Play className="mr-2 h-4 w-4" aria-hidden />}
+            {enviando ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+            ) : (
+              <Play className="mr-2 h-4 w-4" aria-hidden />
+            )}
             Executar análise
           </Button>
         ) : (
@@ -474,7 +489,12 @@ function AnalysisHeader({
           </p>
         )}
         {l.allowed_actions.reanalisar ? (
-          <Button variant="outline" className="h-11" disabled={enviando} onClick={() => onSolicitar("reanálise")}>
+          <Button
+            variant="outline"
+            className="h-11"
+            disabled={enviando}
+            onClick={() => onSolicitar("reanálise")}
+          >
             <RotateCcw className="mr-2 h-4 w-4" aria-hidden />
             Reanalisar
           </Button>
@@ -486,11 +506,13 @@ function AnalysisHeader({
       </div>
       {aviso === "reconciliada" ? (
         <p role="status" className="flex items-center gap-2 text-sm">
-          <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden /> {MENSAGENS_V116.reconciliada}
+          <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />{" "}
+          {MENSAGENS_V116.reconciliada}
         </p>
       ) : aviso === "falha" ? (
         <p role="alert" className="flex items-center gap-2 text-sm">
-          <AlertCircle className="h-4 w-4 text-destructive" aria-hidden /> {MENSAGENS_V116.falhaSolicitacao}
+          <AlertCircle className="h-4 w-4 text-destructive" aria-hidden />{" "}
+          {MENSAGENS_V116.falhaSolicitacao}
         </p>
       ) : null}
     </section>
@@ -502,7 +524,10 @@ const fmtPct = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 function PercentGauge({ percentual }: { percentual: number }) {
   const largura = Math.min(Math.max(percentual, 0), 100);
   return (
-    <section aria-labelledby="v116-pct" className="space-y-2 rounded-lg border border-border bg-card p-4">
+    <section
+      aria-labelledby="v116-pct"
+      className="space-y-2 rounded-lg border border-border bg-card p-4"
+    >
       <h2 id="v116-pct" className="text-sm font-medium text-muted-foreground">
         Percentual de conformidade (backend)
       </h2>
@@ -526,13 +551,20 @@ function PercentGauge({ percentual }: { percentual: number }) {
 function BlockingSummary({ bs }: { bs: Record<string, unknown> }) {
   const lib = bs["liberado"];
   return (
-    <section aria-labelledby="v116-bloq" className="space-y-2 rounded-lg border border-border bg-card p-4">
+    <section
+      aria-labelledby="v116-bloq"
+      className="space-y-2 rounded-lg border border-border bg-card p-4"
+    >
       <h2 id="v116-bloq" className="text-sm font-medium text-muted-foreground">
         Resumo do portão (backend)
       </h2>
       {typeof lib === "boolean" ? (
         <p className="flex items-center gap-2 text-sm font-medium">
-          {lib ? <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden /> : <Lock className="h-4 w-4" aria-hidden />}
+          {lib ? (
+            <CheckCircle2 className="h-4 w-4 text-primary" aria-hidden />
+          ) : (
+            <Lock className="h-4 w-4" aria-hidden />
+          )}
           Liberado pelo portão: {lib ? "Sim" : "Não"}
         </p>
       ) : null}
@@ -550,7 +582,10 @@ function BlockingSummary({ bs }: { bs: Record<string, unknown> }) {
 
 function MecanismosResumo({ m }: { m: LeituraV116["mecanismos"] }) {
   return (
-    <section aria-labelledby="v116-mec" className="space-y-2 rounded-lg border border-border bg-card p-4">
+    <section
+      aria-labelledby="v116-mec"
+      className="space-y-2 rounded-lg border border-border bg-card p-4"
+    >
       <div className="flex items-center gap-1">
         <h2 id="v116-mec" className="text-sm font-medium text-muted-foreground">
           Mecanismos
@@ -594,7 +629,12 @@ function FilterBar({
   onBusca: (v: string) => void;
   prefixo: string;
 }) {
-  const sel = (k: keyof Filtros, rotulo: string, opcoes: readonly string[], rot: (v: string) => string) => (
+  const sel = (
+    k: keyof Filtros,
+    rotulo: string,
+    opcoes: readonly string[],
+    rot: (v: string) => string,
+  ) => (
     <div className="space-y-1">
       <label htmlFor={`${prefixo}-${k}`} className="text-sm font-medium">
         {rotulo}
@@ -618,7 +658,12 @@ function FilterBar({
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
       {sel("resultado", "Resultado", RESULTADOS, rotuloResultado)}
       {sel("criticidade", "Criticidade", CRITICIDADES, rotuloCriticidade)}
-      {sel("mecanismo", "Mecanismo", MECANISMOS, (v) => ROTULO_MECANISMO[v as keyof typeof ROTULO_MECANISMO] ?? v)}
+      {sel(
+        "mecanismo",
+        "Mecanismo",
+        MECANISMOS,
+        (v) => ROTULO_MECANISMO[v as keyof typeof ROTULO_MECANISMO] ?? v,
+      )}
       {sel("apStatus", "Status do apontamento", STATUS_APONTAMENTO, rotuloStatusApontamento)}
       <form
         className="space-y-1"
@@ -659,7 +704,15 @@ function FilterBar({
   );
 }
 
-function Paginador({ rotulo, p, onPagina }: { rotulo: string; p: Paginacao; onPagina: (n: number) => void }) {
+function Paginador({
+  rotulo,
+  p,
+  onPagina,
+}: {
+  rotulo: string;
+  p: Paginacao;
+  onPagina: (n: number) => void;
+}) {
   if (p.total <= p.limite) return null;
   const pag = Math.floor(p.offset / p.limite) + 1;
   const pags = Math.max(1, Math.ceil(p.total / p.limite));
@@ -706,13 +759,27 @@ function RequirementTable({ l, onPagina }: { l: LeituraV116; onPagina: (n: numbe
             <caption className="sr-only">Requisitos analisados</caption>
             <thead className="bg-muted">
               <tr>
-                <th scope="col" className="p-3">Requisito</th>
-                <th scope="col" className="p-3">Resultado</th>
-                <th scope="col" className="p-3">Criticidade</th>
-                <th scope="col" className="p-3">Mecanismo</th>
-                <th scope="col" className="p-3">Confiança</th>
-                <th scope="col" className="p-3">Justificativa e evidência</th>
-                <th scope="col" className="p-3">Ação</th>
+                <th scope="col" className="p-3">
+                  Requisito
+                </th>
+                <th scope="col" className="p-3">
+                  Resultado
+                </th>
+                <th scope="col" className="p-3">
+                  Criticidade
+                </th>
+                <th scope="col" className="p-3">
+                  Mecanismo
+                </th>
+                <th scope="col" className="p-3">
+                  Confiança
+                </th>
+                <th scope="col" className="p-3">
+                  Justificativa e evidência
+                </th>
+                <th scope="col" className="p-3">
+                  Ação
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -728,7 +795,9 @@ function RequirementTable({ l, onPagina }: { l: LeituraV116; onPagina: (n: numbe
                   <td className="p-3">{rotuloResultado(r.resultado)}</td>
                   <td className="p-3">{r.criticidade ? rotuloCriticidade(r.criticidade) : "—"}</td>
                   <td className="p-3">{ROTULO_MECANISMO[r.mecanismo]}</td>
-                  <td className="p-3">{r.confianca === null ? "—" : fmtConf.format(r.confianca)}</td>
+                  <td className="p-3">
+                    {r.confianca === null ? "—" : fmtConf.format(r.confianca)}
+                  </td>
                   <td className="space-y-1 p-3">
                     {r.justificativa ? <p>{r.justificativa}</p> : null}
                     {r.fundamento ? (
@@ -750,7 +819,9 @@ function RequirementTable({ l, onPagina }: { l: LeituraV116; onPagina: (n: numbe
                         className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 text-muted-foreground"
                       >
                         Abrir requisito
-                        <span className="rounded bg-muted px-1.5 text-[10px] uppercase">Em breve</span>
+                        <span className="rounded bg-muted px-1.5 text-[10px] uppercase">
+                          Em breve
+                        </span>
                       </span>
                     ) : (
                       <span className="text-muted-foreground">Abrir requisito: Indisponível</span>
@@ -778,15 +849,22 @@ function ApontamentosBloco({ l, onPagina }: { l: LeituraV116; onPagina: (n: numb
       ) : (
         <ul className="space-y-2">
           {l.apontamentos.map((a) => (
-            <li key={a.id} className="space-y-1 rounded-lg border border-border bg-card p-3 text-sm">
+            <li
+              key={a.id}
+              className="space-y-1 rounded-lg border border-border bg-card p-3 text-sm"
+            >
               <div className="flex flex-wrap items-center gap-2">
                 {a.severidade ? (
                   <span className="rounded bg-muted px-2 py-0.5 text-xs font-medium">
                     {rotuloCriticidade(a.severidade)}
                   </span>
                 ) : null}
-                {a.status ? <span className="text-xs">{rotuloStatusApontamento(a.status)}</span> : null}
-                {a.codigo ? <span className="text-xs text-muted-foreground">{a.codigo}</span> : null}
+                {a.status ? (
+                  <span className="text-xs">{rotuloStatusApontamento(a.status)}</span>
+                ) : null}
+                {a.codigo ? (
+                  <span className="text-xs text-muted-foreground">{a.codigo}</span>
+                ) : null}
               </div>
               {a.descricao ? <p>{a.descricao}</p> : null}
               {a.regra_violada ? (
