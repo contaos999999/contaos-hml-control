@@ -192,6 +192,7 @@ describe("V1-13 perfil (UX, backend é autoridade)", () => {
     expect(op(v, "eq")).toEqual([
       ["id_usuario", U],
       ["id_organizacao", A],
+      ["ativo", true],
     ]);
   });
   it.each(["administrador", "gestor_contrato", "prestacao_contas"])(
