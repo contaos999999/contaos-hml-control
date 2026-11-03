@@ -412,7 +412,7 @@ function AllowedActions({ acoes }: { acoes: AllowedActionsVG }) {
   );
 }
 
-const ABAS_FUTURAS = ["Análise", "Parecer", "Apresentação"];
+const ABAS_FUTURAS = ["Parecer", "Apresentação"];
 
 function Tabs({ id }: { id: string }) {
   return (
@@ -436,6 +436,15 @@ function Tabs({ id }: { id: string }) {
         className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         Documentos
+      </Link>
+      <Link
+        to="/competencias/$id/analise"
+        params={{ id }}
+        role="tab"
+        aria-selected="false"
+        className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        Análise
       </Link>
       {ABAS_FUTURAS.map((t) => (
         <span
