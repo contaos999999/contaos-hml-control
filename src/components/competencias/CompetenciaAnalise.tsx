@@ -873,6 +873,14 @@ function ApontamentosBloco({ l, onPagina }: { l: LeituraV116; onPagina: (n: numb
               {a.acao_sugerida ? (
                 <p className="text-xs text-muted-foreground">Ação sugerida: {a.acao_sugerida}</p>
               ) : null}
+              {a.origem ? (
+                <p className="text-xs text-muted-foreground">Origem: {a.origem}</p>
+              ) : null}
+              {a.fonte.length > 0 ? (
+                <p className="break-all text-xs text-muted-foreground">
+                  Fonte: {a.fonte.map(([k, v]) => `${k}: ${v}`).join(" · ")}
+                </p>
+              ) : null}
             </li>
           ))}
         </ul>

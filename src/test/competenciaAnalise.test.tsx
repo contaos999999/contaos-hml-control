@@ -427,6 +427,10 @@ describe("V1-16 parser fail-closed", () => {
       "severidade apontamento inválida",
       (l) => ((l["apontamentos"] as Array<Record<string, unknown>>)[0]!["severidade"] = "x"),
     ],
+    [
+      "fonte apontamento não objeto",
+      (l) => ((l["apontamentos"] as Array<Record<string, unknown>>)[0]!["fonte"] = "x"),
+    ],
   ])("%s → null", (_n, f) => {
     expect(parseAnaliseV116(com(f))).toBeNull();
   });
@@ -549,6 +553,23 @@ describe("V1-16 mecanismos, evidência, apontamentos, histórico", () => {
     expect(within(r).getByText("Semântico").parentElement!.textContent).toMatch(/0/);
   });
 
+  it("apontamento exibe a fonte retornada pelo backend sem inventar campos", async () => {
+    rpcLeitura(() => {
+      const d = leitura();
+      (d.apontamentos as Array<Record<string, unknown>>)[0]!["fonte"] = {
+        documento: "Recibo 03",
+        pagina: 4,
+      };
+      return { data: d, error: null };
+    });
+    render(<CompetenciaAnalise id={ID} />);
+    await pronto();
+    const apReg = screen.getByRole("region", { name: /^Apontamentos$/ });
+    const fonte = within(apReg).getByText(/Fonte:/);
+    expect(fonte.textContent).toMatch(/documento: Recibo 03/);
+    expect(fonte.textContent).toMatch(/pagina: 4/);
+  });
+
   it("evidência, criticidade, apontamento e histórico renderizados; ausentes omitidos", async () => {
     render(<CompetenciaAnalise id={ID} />);
     await pronto();
@@ -561,6 +582,9 @@ describe("V1-16 mecanismos, evidência, apontamentos, histórico", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/REG-9/)).toBeInTheDocument();
     expect(screen.getByText(/Enviar recibo/)).toBeInTheDocument();
+    const apReg = screen.getByRole("region", { name: /^Apontamentos$/ });
+    expect(within(apReg).getByText(/Origem: motor/)).toBeInTheDocument();
+    expect(within(apReg).queryByText(/Fonte:/)).toBeNull();
     const hist = screen.getByRole("region", { name: /Histórico de execuções/ });
     expect(within(hist).getByText(/2\.1\.0/)).toBeInTheDocument();
     expect(within(hist).getByText(/modelo-y/)).toBeInTheDocument();

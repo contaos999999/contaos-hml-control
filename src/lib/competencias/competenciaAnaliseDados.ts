@@ -124,6 +124,8 @@ export type ApontamentoV116 = {
   origem: string | null;
   regra_violada: string | null;
   acao_sugerida: string | null;
+  /** Pares exatamente como o backend devolveu em `fonte` (objeto; `{}` = sem fonte). */
+  fonte: Array<[string, string]>;
   criado_em: string | null;
 };
 export type Paginacao = { offset: number; limite: number; total: number };
@@ -269,6 +271,14 @@ function parseRes(r: unknown): ResultadoV116 | null {
 function parseAp(a: unknown): ApontamentoV116 | null {
   if (!obj(a) || typeof a["id"] !== "string") return null;
   if (!critOk(a["severidade"], CRITICIDADES)) return null;
+  const fo = a["fonte"];
+  if (fo !== undefined && fo !== null && !obj(fo)) return null;
+  const fonte: Array<[string, string]> = [];
+  if (obj(fo))
+    for (const [k, v] of Object.entries(fo)) {
+      const t = textoOuNumero(v) ?? (typeof v === "boolean" ? String(v) : null);
+      if (t !== null && t !== "") fonte.push([k, t]);
+    }
   const q = obj(a["requisito"]) ? a["requisito"] : null;
   return {
     id: a["id"],
@@ -279,6 +289,7 @@ function parseAp(a: unknown): ApontamentoV116 | null {
     origem: str(a["origem"]),
     regra_violada: str(a["regra_violada"]),
     acao_sugerida: str(a["acao_sugerida"]),
+    fonte,
     criado_em: str(a["criado_em"]),
   };
 }
