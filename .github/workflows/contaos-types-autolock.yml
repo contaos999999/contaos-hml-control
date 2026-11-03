@@ -1,0 +1,107 @@
+name: ContaOS Types Auto-Lock
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/integrations/supabase/types.ts'
+      - '.github/workflows/contaos-types-autolock.yml'
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: contaos-types-autolock-main
+  cancel-in-progress: false
+jobs:
+  protect-types:
+    name: Restaurar types.ts certificado quando houver drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      LOCKED_PATH: src/integrations/supabase/types.ts
+      CERTIFIED_SOURCE_COMMIT: ad0b933943d4b69f7a9f23f203e4cff1211b4902
+      CERTIFIED_TYPES_BLOB: 8ea7750b75fd9d76b29c36ce7613392e3ab65e19
+    steps:
+      - name: Checkout completo da branch homologacao
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Teste isolado da trava e fonte certificada
+        shell: bash
+        run: |
+          set -euo pipefail
+          golden="$(mktemp)"
+          fixture="$(mktemp)"
+          trap 'rm -f "$golden" "$fixture"' EXIT
+          git show "${CERTIFIED_SOURCE_COMMIT}:${LOCKED_PATH}" > "$golden"
+          [[ "$(git hash-object "$golden")" == "$CERTIFIED_TYPES_BLOB" ]]
+          cp "$golden" "$fixture"
+          printf '%s' '// DRIFT_CONTROLADO_APENAS_EM_TMP' >> "$fixture"
+          [[ "$(git hash-object "$fixture")" != "$CERTIFIED_TYPES_BLOB" ]]
+          cp "$golden" "$fixture"
+          [[ "$(git hash-object "$fixture")" == "$CERTIFIED_TYPES_BLOB" ]]
+          echo 'LOCK-TYPES-01: fixture de deteccao e restauro PASS, branch intacta.'
+      - name: Detectar drift em main
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git switch -C types-autolock origin/main
+          actual="$(git hash-object "$LOCKED_PATH")"
+          echo "current_blob=$actual" >> "$GITHUB_OUTPUT"
+          if [[ "$actual" != "$CERTIFIED_TYPES_BLOB" ]]; then
+            echo 'drift=true' >> "$GITHUB_OUTPUT"
+            echo "DRIFT DETECTADO: $actual; iniciando recuperacao auditada."
+          else
+            echo 'drift=false' >> "$GITHUB_OUTPUT"
+            echo 'LOCK-TYPES-01: arquivo ja integro no main.'
+          fi
+      - name: Setup Bun apenas quando houver drift
+        if: steps.detect.outputs.drift == 'true'
+        uses: oven-sh/setup-bun@v2
+      - name: Restauracao controlada com suite antes do push
+        if: steps.detect.outputs.drift == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          golden="$(mktemp)"
+          trap 'rm -f "$golden"' EXIT
+          git show "${CERTIFIED_SOURCE_COMMIT}:${LOCKED_PATH}" > "$golden"
+          [[ "$(git hash-object "$golden")" == "$CERTIFIED_TYPES_BLOB" ]]
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git switch -C types-autolock origin/main
+            current="$(git hash-object "$LOCKED_PATH")"
+            if [[ "$current" == "$CERTIFIED_TYPES_BLOB" ]]; then
+              echo 'Arquivo reparado por outra execucao, nenhuma escrita.'
+              exit 0
+            fi
+            repair_count="$(git log --since='60 minutes ago' --format='%s' | grep -c '^fix(types-autolock): restaurar blob imutavel$' || true)"
+            if (( repair_count >= 3 )); then
+              echo 'CIRCUIT BREAKER: tres restauros na ultima hora; possivel loop de plataforma.' >&2
+              exit 1
+            fi
+            cp "$golden" "$LOCKED_PATH"
+            [[ "$(git hash-object "$LOCKED_PATH")" == "$CERTIFIED_TYPES_BLOB" ]]
+            node scripts/frontend-zero-drift.mjs
+            bun install --frozen-lockfile
+            bunx vitest run --maxWorkers=1
+            bunx tsc --noEmit -p .
+            bunx vite build
+            node scripts/frontend-zero-drift.mjs
+            git add -- "$LOCKED_PATH"
+            git commit -m 'fix(types-autolock): restaurar blob imutavel'
+            if git push origin HEAD:main; then
+              echo 'LOCK-TYPES-01: restauro publicado apos testes completos PASS.'
+              exit 0
+            fi
+            echo "Concorrencia no push da tentativa $attempt; retomando origin/main." >&2
+          done
+          echo 'Falha apos tres tentativas; proibido push forcado.' >&2
+          exit 1
