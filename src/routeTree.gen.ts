@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as SelecionarOrganizacaoRouteImport } from './routes/selecionar-organizacao'
 import { Route as AdministracaoUsuariosRouteImport } from './routes/administracao.usuarios'
+import { Route as CompetenciasIdRouteImport } from './routes/competencias_.$id'
 import { Route as ContratantesNovoRouteImport } from './routes/contratantes_.novo'
 import { Route as ContratosIdRouteImport } from './routes/contratos_.$id'
 import { Route as ContratosNovoRouteImport } from './routes/contratos_.novo'
@@ -67,6 +68,11 @@ const SelecionarOrganizacaoRoute = SelecionarOrganizacaoRouteImport.update({
 const AdministracaoUsuariosRoute = AdministracaoUsuariosRouteImport.update({
   id: '/administracao/usuarios',
   path: '/administracao/usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompetenciasIdRoute = CompetenciasIdRouteImport.update({
+  id: '/competencias_/$id',
+  path: '/competencias/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContratantesNovoRoute = ContratantesNovoRouteImport.update({
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
+  '/competencias/$id': typeof CompetenciasIdRoute
   '/contratantes/novo': typeof ContratantesNovoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/contratos/novo': typeof ContratosNovoRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
+  '/competencias/$id': typeof CompetenciasIdRoute
   '/contratantes/novo': typeof ContratantesNovoRoute
   '/contratos/$id': typeof ContratosIdRoute
   '/contratos/novo': typeof ContratosNovoRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
+  '/competencias_/$id': typeof CompetenciasIdRoute
   '/contratantes_/novo': typeof ContratantesNovoRoute
   '/contratos_/$id': typeof ContratosIdRoute
   '/contratos_/novo': typeof ContratosNovoRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/selecionar-organizacao'
     | '/administracao/usuarios'
+    | '/competencias/$id'
     | '/contratantes/novo'
     | '/contratos/$id'
     | '/contratos/novo'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/selecionar-organizacao'
     | '/administracao/usuarios'
+    | '/competencias/$id'
     | '/contratantes/novo'
     | '/contratos/$id'
     | '/contratos/novo'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/redefinir-senha'
     | '/selecionar-organizacao'
     | '/administracao/usuarios'
+    | '/competencias_/$id'
     | '/contratantes_/novo'
     | '/contratos_/$id'
     | '/contratos_/novo'
@@ -267,6 +279,7 @@ export interface RootRouteChildren {
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   SelecionarOrganizacaoRoute: typeof SelecionarOrganizacaoRoute
   AdministracaoUsuariosRoute: typeof AdministracaoUsuariosRoute
+  CompetenciasIdRoute: typeof CompetenciasIdRoute
   ContratantesNovoRoute: typeof ContratantesNovoRoute
   ContratosIdRoute: typeof ContratosIdRoute
   ContratosNovoRoute: typeof ContratosNovoRoute
@@ -336,6 +349,13 @@ declare module '@tanstack/react-router' {
       path: '/administracao/usuarios'
       fullPath: '/administracao/usuarios'
       preLoaderRoute: typeof AdministracaoUsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/competencias_/$id': {
+      id: '/competencias_/$id'
+      path: '/competencias/$id'
+      fullPath: '/competencias/$id'
+      preLoaderRoute: typeof CompetenciasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contratantes_/novo': {
@@ -427,6 +447,7 @@ const rootRouteChildren: RootRouteChildren = {
   RedefinirSenhaRoute: RedefinirSenhaRoute,
   SelecionarOrganizacaoRoute: SelecionarOrganizacaoRoute,
   AdministracaoUsuariosRoute: AdministracaoUsuariosRoute,
+  CompetenciasIdRoute: CompetenciasIdRoute,
   ContratantesNovoRoute: ContratantesNovoRoute,
   ContratosIdRoute: ContratosIdRoute,
   ContratosNovoRoute: ContratosNovoRoute,
