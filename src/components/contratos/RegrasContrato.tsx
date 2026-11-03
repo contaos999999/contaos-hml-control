@@ -539,7 +539,12 @@ function NavSecoes({ id }: { id: string }) {
             Regras
           </span>
         </li>
-        {(["Documentos", "Competências"] as const).map((s) => (
+        <li>
+          <Link to="/contratos/$id/documentos" params={{ id: id }} className={LINK_NAV}>
+            Documentos
+          </Link>
+        </li>
+        {(["Competências"] as const).map((s) => (
           <li key={s}>
             <span
               aria-disabled="true"

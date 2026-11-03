@@ -22,6 +22,7 @@ import { Route as ContratosIdRouteImport } from './routes/contratos_.$id'
 import { Route as ContratosNovoRouteImport } from './routes/contratos_.novo'
 import { Route as ContratantesIdEditarRouteImport } from './routes/contratantes_.$id.editar'
 import { Route as ContratosIdBaseNormativaRouteImport } from './routes/contratos_.$id_.base-normativa'
+import { Route as ContratosIdDocumentosRouteImport } from './routes/contratos_.$id_.documentos'
 import { Route as ContratosIdOrcamentoRouteImport } from './routes/contratos_.$id_.orcamento'
 import { Route as ContratosIdRegrasRouteImport } from './routes/contratos_.$id_.regras'
 
@@ -91,6 +92,11 @@ const ContratosIdBaseNormativaRoute =
     path: '/contratos/$id/base-normativa',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ContratosIdDocumentosRoute = ContratosIdDocumentosRouteImport.update({
+  id: '/contratos_/$id_/documentos',
+  path: '/contratos/$id/documentos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContratosIdOrcamentoRoute = ContratosIdOrcamentoRouteImport.update({
   id: '/contratos_/$id_/orcamento',
   path: '/contratos/$id/orcamento',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/contratos/novo': typeof ContratosNovoRoute
   '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
   '/contratos/$id/base-normativa': typeof ContratosIdBaseNormativaRoute
+  '/contratos/$id/documentos': typeof ContratosIdDocumentosRoute
   '/contratos/$id/orcamento': typeof ContratosIdOrcamentoRoute
   '/contratos/$id/regras': typeof ContratosIdRegrasRoute
 }
@@ -133,6 +140,7 @@ export interface FileRoutesByTo {
   '/contratos/novo': typeof ContratosNovoRoute
   '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
   '/contratos/$id/base-normativa': typeof ContratosIdBaseNormativaRoute
+  '/contratos/$id/documentos': typeof ContratosIdDocumentosRoute
   '/contratos/$id/orcamento': typeof ContratosIdOrcamentoRoute
   '/contratos/$id/regras': typeof ContratosIdRegrasRoute
 }
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/contratos_/novo': typeof ContratosNovoRoute
   '/contratantes_/$id/editar': typeof ContratantesIdEditarRoute
   '/contratos_/$id_/base-normativa': typeof ContratosIdBaseNormativaRoute
+  '/contratos_/$id_/documentos': typeof ContratosIdDocumentosRoute
   '/contratos_/$id_/orcamento': typeof ContratosIdOrcamentoRoute
   '/contratos_/$id_/regras': typeof ContratosIdRegrasRoute
 }
@@ -170,6 +179,7 @@ export interface FileRouteTypes {
     | '/contratos/novo'
     | '/contratantes/$id/editar'
     | '/contratos/$id/base-normativa'
+    | '/contratos/$id/documentos'
     | '/contratos/$id/orcamento'
     | '/contratos/$id/regras'
   fileRoutesByTo: FileRoutesByTo
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/contratos/novo'
     | '/contratantes/$id/editar'
     | '/contratos/$id/base-normativa'
+    | '/contratos/$id/documentos'
     | '/contratos/$id/orcamento'
     | '/contratos/$id/regras'
   id:
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/contratos_/novo'
     | '/contratantes_/$id/editar'
     | '/contratos_/$id_/base-normativa'
+    | '/contratos_/$id_/documentos'
     | '/contratos_/$id_/orcamento'
     | '/contratos_/$id_/regras'
   fileRoutesById: FileRoutesById
@@ -222,6 +234,7 @@ export interface RootRouteChildren {
   ContratosNovoRoute: typeof ContratosNovoRoute
   ContratantesIdEditarRoute: typeof ContratantesIdEditarRoute
   ContratosIdBaseNormativaRoute: typeof ContratosIdBaseNormativaRoute
+  ContratosIdDocumentosRoute: typeof ContratosIdDocumentosRoute
   ContratosIdOrcamentoRoute: typeof ContratosIdOrcamentoRoute
   ContratosIdRegrasRoute: typeof ContratosIdRegrasRoute
 }
@@ -319,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContratosIdBaseNormativaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contratos_/$id_/documentos': {
+      id: '/contratos_/$id_/documentos'
+      path: '/contratos/$id/documentos'
+      fullPath: '/contratos/$id/documentos'
+      preLoaderRoute: typeof ContratosIdDocumentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contratos_/$id_/orcamento': {
       id: '/contratos_/$id_/orcamento'
       path: '/contratos/$id/orcamento'
@@ -350,6 +370,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContratosNovoRoute: ContratosNovoRoute,
   ContratantesIdEditarRoute: ContratantesIdEditarRoute,
   ContratosIdBaseNormativaRoute: ContratosIdBaseNormativaRoute,
+  ContratosIdDocumentosRoute: ContratosIdDocumentosRoute,
   ContratosIdOrcamentoRoute: ContratosIdOrcamentoRoute,
   ContratosIdRegrasRoute: ContratosIdRegrasRoute,
 }
