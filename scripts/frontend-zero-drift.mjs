@@ -24,67 +24,104 @@ const COMPONENTS = [
   "src/components/contratos/NovaCompetencia.tsx",
   "src/components/competencias/CompetenciaVisaoGeral.tsx",
   "src/components/competencias/CompetenciaDocumentos.tsx",
-  "src/components/competencias/CompetenciaAnalise.tsx"
+  "src/components/competencias/CompetenciaAnalise.tsx",
 ];
 
 const problems = [];
 function source(path) {
-  if (!existsSync(path)) { problems.push("Arquivo obrigatório ausente: "+path); return ""; }
+  if (!existsSync(path)) {
+    problems.push("Arquivo obrigatório ausente: " + path);
+    return "";
+  }
   return readFileSync(path, "utf8");
 }
 const root = source("src/routes/__root.tsx");
-if (!root.includes('<html lang="pt-BR">')) problems.push("Documento HTML deve declarar lang=pt-BR.");
-for (const english of ["Page not found","Go home","This page didn't load","Something went wrong on our end","Try again"]) {
-  if (root.includes(english)) problems.push("Texto global em inglês no root: "+english);
+if (!root.includes('<html lang="pt-BR">'))
+  problems.push("Documento HTML deve declarar lang=pt-BR.");
+for (const english of [
+  "Page not found",
+  "Go home",
+  "This page didn't load",
+  "Something went wrong on our end",
+  "Try again",
+]) {
+  if (root.includes(english)) problems.push("Texto global em inglês no root: " + english);
 }
 
 const brandTest = source("src/test/brand.test.tsx");
 for (const path of COMPONENTS) {
   const code = source(path);
-  if (!code.includes("<ContaOSMarca")) problems.push("Tela sem componente ContaOSMarca oficial: "+path);
-  if (!brandTest.includes(path)) problems.push("Tela ausente da proteção do teste BRAND-01: "+path);
-  if (/#[0-9a-fA-F]{6}\b/.test(code)) problems.push("Cor hexadecimal fixa encontrada em tela, auditar token: "+path);
-  if (code.includes("sb_secret_")||code.includes("service_role")) problems.push("Possível secret literal em tela: "+path);
+  if (!code.includes("<ContaOSMarca"))
+    problems.push("Tela sem componente ContaOSMarca oficial: " + path);
+  if (!brandTest.includes(path))
+    problems.push("Tela ausente da proteção do teste BRAND-01: " + path);
+  if (/#[0-9a-fA-F]{6}\b/.test(code))
+    problems.push("Cor hexadecimal fixa encontrada em tela, auditar token: " + path);
+  if (code.includes("sb_secret_") || code.includes("service_role"))
+    problems.push("Possível secret literal em tela: " + path);
 }
 
-const expectedAssets=[
-"public/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg",
-"public/brand/ContaOS_Simbolo_Branco.svg",
-"public/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg",
-"public/brand/ContaOS_Simbolo_Navy.svg",
-"public/favicon.svg"
+const expectedAssets = [
+  "public/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg",
+  "public/brand/ContaOS_Simbolo_Branco.svg",
+  "public/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg",
+  "public/brand/ContaOS_Simbolo_Navy.svg",
+  "public/favicon.svg",
 ];
 // Os dois SVGs de fundo claro são oficiais do pacote BRAND v1.0: nunca gerar/recolorir.
 // SHA-256 garante cópia literal dos arquivos originais.
 const navySha = {
-  "public/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg": "bd924993afbb620647d1053614688efea1f157523cbf41b3c36a368b0d0c976c",
-  "public/brand/ContaOS_Simbolo_Navy.svg": "5773eb79ade28369b1efd457bf3b69b70f79a9ede87a05aa5e622f44d56e3252",
+  "public/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg":
+    "bd924993afbb620647d1053614688efea1f157523cbf41b3c36a368b0d0c976c",
+  "public/brand/ContaOS_Simbolo_Navy.svg":
+    "5773eb79ade28369b1efd457bf3b69b70f79a9ede87a05aa5e622f44d56e3252",
 };
-const brandComponent=source("src/components/brand/ContaOSMarca.tsx");
-for(const required of ["/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg","/brand/ContaOS_Simbolo_Navy.svg"]) {
-  if(!brandComponent.includes(required)) problems.push("Componente de marca não seleciona variante oficial para fundo claro: "+required);
+const brandComponent = source("src/components/brand/ContaOSMarca.tsx");
+for (const required of [
+  "/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg",
+  "/brand/ContaOS_Simbolo_Navy.svg",
+]) {
+  if (!brandComponent.includes(required))
+    problems.push(
+      "Componente de marca não seleciona variante oficial para fundo claro: " + required,
+    );
 }
-if (!brandComponent.includes("dark:")) problems.push("Seleção responsiva da marca não acompanha explicitamente tema escuro.");
+if (!brandComponent.includes("dark:"))
+  problems.push("Seleção responsiva da marca não acompanha explicitamente tema escuro.");
 
 const { createHash } = await import("node:crypto");
-for(const [asset,sha] of Object.entries(navySha)) {
-  if(existsSync(asset)){
-    const hex=createHash("sha256").update(readFileSync(asset)).digest("hex");
-    if(hex!==sha) problems.push("Asset BRAND-01 de fundo claro não coincide com o SHA original: "+asset);
+for (const [asset, sha] of Object.entries(navySha)) {
+  if (existsSync(asset)) {
+    const hex = createHash("sha256").update(readFileSync(asset)).digest("hex");
+    if (hex !== sha)
+      problems.push("Asset BRAND-01 de fundo claro não coincide com o SHA original: " + asset);
   }
 }
-for(const p of expectedAssets) if(!existsSync(p)) problems.push("Asset oficial não encontrado: "+p);
+for (const p of expectedAssets)
+  if (!existsSync(p)) problems.push("Asset oficial não encontrado: " + p);
 
 let actualBlob = "";
-try { actualBlob = execFileSync("git", ["hash-object","src/integrations/supabase/types.ts"], {encoding:"utf8"}).trim(); }
-catch { problems.push("Não foi possível verificar o blob do types.ts."); }
-if(actualBlob!==CERTIFIED_TYPES_BLOB) problems.push("DRIFT CRÍTICO: types.ts não coincide com o blob certificado. Atual="+actualBlob);
+try {
+  actualBlob = execFileSync("git", ["hash-object", "src/integrations/supabase/types.ts"], {
+    encoding: "utf8",
+  }).trim();
+} catch {
+  problems.push("Não foi possível verificar o blob do types.ts.");
+}
+if (actualBlob !== CERTIFIED_TYPES_BLOB)
+  problems.push("DRIFT CRÍTICO: types.ts não coincide com o blob certificado. Atual=" + actualBlob);
 
 // Regras de economia: nenhum teste precisa acessar Supabase, alterar arquivos ou usar créditos Lovable.
 // Este gate não certifica screenshots reais, RLS de sessão nem auditoria semântica de 197 prompts.
-if(problems.length) {
-  for(const item of problems) console.error("ZERO-DRIFT FAIL: "+item);
+if (problems.length) {
+  for (const item of problems) console.error("ZERO-DRIFT FAIL: " + item);
   process.exit(1);
 }
-console.log("ZERO-DRIFT PASS: "+COMPONENTS.length+" telas com ContaOSMarca e teste BRAND-01, pt-BR global, blobs/ativos oficiais e types.ts imutável.");
-console.log("LIMITAÇÃO: captura visual dinâmica e estados autenticados são verificados em Teste C independente.");
+console.log(
+  "ZERO-DRIFT PASS: " +
+    COMPONENTS.length +
+    " telas com ContaOSMarca e teste BRAND-01, pt-BR global, blobs/ativos oficiais e types.ts imutável.",
+);
+console.log(
+  "LIMITAÇÃO: captura visual dinâmica e estados autenticados são verificados em Teste C independente.",
+);
