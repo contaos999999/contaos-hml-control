@@ -72,3 +72,14 @@ Regras obrigatórias para BRAND-01:
 - O workflow `.github/workflows/contaos-types-autolock.yml` detecta e **tenta** autorrestaurar drift na branch main, após suíte e Zero-Drift verdes, com controle de concorrência e limite para impedir ciclos. O teste isolado do workflow não equivale à comprovação do push de recuperação. Falhas precisam ser tratadas, nunca silenciadas.
 - O frontend consome apenas o Supabase HML oficial; não criar backend paralelo, não desconectar integração, não tocar PROD e não usar geração de tipos como justificativa para migration sem autorização.
 - Mudança legítima de tipos só mediante mudança formal de contrato/schema, atualização rastreável do blob certificado, validação de todos os usos, CI e Teste C independente. Ver `docs/frontend/LOCK-TYPES-01.md`.
+
+
+## ADR-DEV-001 — GitHub como editor canônico do frontend (APROVADA EM 03/11/2026)
+
+- **Decisão expressa do responsável:** programar, corrigir e testar o frontend React/TypeScript **diretamente no GitHub** `contaos9999/contaos-hml-control`, com branch/PR quando viável, commits rastreáveis e CI. O agente de desenvolvimento do Lovable deixa de ser necessário para BUILD.
+- **Supabase HML** `gklhhhyosgasnyoxlrui` continua backend exclusivo; migrations/RLS/RPC/Storage/Edge são governados por `contaos9999/develop` com testes. **PROD proibido** nesta etapa.
+- **Lovable permanece conectado exclusivamente para sincronizar e visualizar** o projeto (e inspecionar quando realmente necessário). Não solicitar IMPLEMENTAÇÃO/BUILD ao agente Lovable nas próximas correções. Mudança espontânea de plataforma não é autorização, tratar como drift.
+- Fluxo: identificar prompt/atômicos → PLAN → código GitHub → TDD RED/GREEN → lint/typecheck/testes/build/segurança → Zero-Drift e hash bloqueado do `types.ts` → Teste C independente, visual 1440/1280/768/390 claro/escuro → registrar evidências/commit por prompt. CI e MOCK não substituem E2E autenticado.
+- Não forçar push nem reescrever histórico sincronizado com Lovable. Proteger escopo e a marca BRAND-01. Só pedir intervenção por impedimento externo ou risco que exija autorização distinta.
+- **Continuidade entre chats:** o registro mestre de retomada é `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md`. No início de novo chat, **ler os HEADs atuais nos dois repositórios antes de agir**; depois ler o registro e as matrizes de evidência. Não confiar apenas na memória do chat.
+- Detalhamento: `docs/frontend/ADR-DEV-001-GITHUB-DIRETO.md`.
