@@ -245,9 +245,9 @@ describe("V1-16 rota", () => {
     expect(r.path).toBe("/competencias_/$id_/analise");
     expect(r.options.ssr).toBe(false);
     const meta = r.options.head().meta;
-    expect(meta.find((x) => x.title)?.title).toMatch(/Análise/);
-    expect(meta.some((x) => x.property === "og:title")).toBe(true);
-    expect(meta.some((x) => x.name === "twitter:card")).toBe(true);
+    expect(meta.find((x) => x["title"])?.["title"]).toMatch(/Análise/);
+    expect(meta.some((x) => x["property"] === "og:title")).toBe(true);
+    expect(meta.some((x) => x["name"] === "twitter:card")).toBe(true);
   });
 });
 
