@@ -28,7 +28,7 @@ jobs:
       - name: Full regression serial
         run: bunx vitest run --maxWorkers=1
       - name: TypeScript typecheck
-        run: bunx tsgo --noEmit -p .
+        run: bunx tsc --noEmit -p .
       - name: Production build
         run: bunx vite build
       - name: Brand-01, PT-BR, secrets and types integrity
