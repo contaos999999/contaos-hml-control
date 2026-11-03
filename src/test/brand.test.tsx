@@ -22,6 +22,18 @@ const ASSETS_OFICIAIS: Record<string, string> = {
   "public/favicon-48x48.png": "3a2e17b6535c59feafdb0196b026d1481a36c181fc0ad0f4548dbd4ccb655cbc",
 };
 
+const ARQUIVOS_V108_V116 = [
+  "src/components/contratos/OrcamentoContrato.tsx",
+  "src/components/contratos/RegrasContrato.tsx",
+  "src/components/contratos/DocumentosContrato.tsx",
+  "src/components/contratos/DocumentoDetalhe.tsx",
+  "src/components/contratos/CompetenciasContrato.tsx",
+  "src/components/contratos/NovaCompetencia.tsx",
+  "src/components/competencias/CompetenciaVisaoGeral.tsx",
+  "src/components/competencias/CompetenciaDocumentos.tsx",
+  "src/components/competencias/CompetenciaAnalise.tsx",
+];
+
 const ARQUIVOS_MARCA = [
   "src/routes/login.tsx",
   "src/routes/esqueci-senha.tsx",
@@ -79,5 +91,30 @@ describe("BRAND-01 — head e assets", () => {
       .update(readFileSync(resolve(raiz, arquivo)))
       .digest("hex");
     expect(hash).toBe(sha);
+  });
+});
+
+// Hex só é cor quando aparece em className, style ou valor arbitrário Tailwind;
+// hashes/SHA em texto ou comentários não são capturados.
+const HEX_COR =
+  /(className=["'{`][^"'`}]*#[0-9a-fA-F]{3,8}\b|style=\{\{[^}]*#[0-9a-fA-F]{3,8}\b|\[#[0-9a-fA-F]{3,8}\])/;
+const IMG_NAO_OFICIAL = /<img[^>]*src=["'{`](?!\/brand\/)/;
+const DS_PARALELO = /(import\s+["'][^"']+\.css["']|fonts\.googleapis|createTheme|tailwind\.config)/;
+
+describe("BRAND-01 — telas V1-08 a V1-16 sem hardcode nem sistema paralelo", () => {
+  it("os detectores pegam violações sintéticas e ignoram hashes", () => {
+    expect(HEX_COR.test('<div className="bg-[#123456]" />')).toBe(true);
+    expect(HEX_COR.test("<div style={{ color: '#fff' }} />")).toBe(true);
+    expect(HEX_COR.test('const sha = "#8ea7750b"; // commit #abc123')).toBe(false);
+    expect(IMG_NAO_OFICIAL.test('<img src="/logo.png" />')).toBe(true);
+    expect(IMG_NAO_OFICIAL.test('<img src="/brand/x.svg" />')).toBe(false);
+    expect(DS_PARALELO.test('import "./tela.css";')).toBe(true);
+  });
+  it.each(ARQUIVOS_V108_V116)("%s cumpre BRAND-01", (arquivo) => {
+    const src = ler(arquivo);
+    expect(src).toContain("<ContaOSMarca");
+    expect(src).not.toMatch(HEX_COR);
+    expect(src).not.toMatch(IMG_NAO_OFICIAL);
+    expect(src).not.toMatch(DS_PARALELO);
   });
 });
