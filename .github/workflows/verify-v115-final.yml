@@ -1,0 +1,19 @@
+name: Verify V1-15 Final
+
+on:
+  push:
+    branches:
+      - verify/v115-1e09de92
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: TypeScript
+        run: bunx tsc --noEmit
+      - name: Build
+        run: bun run build
