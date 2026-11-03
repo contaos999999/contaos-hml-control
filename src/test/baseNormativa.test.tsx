@@ -222,7 +222,9 @@ describe("V1-07 lista de fontes", () => {
     expect(within(nav).getByRole("link", { name: "Orçamento" }).getAttribute("href")).toBe(
       `/contratos/${K1}/orcamento`,
     );
-    expect(within(nav).getByRole("link", { name: "Regras" }).getAttribute("href")).toBe(`/contratos/${K1}/regras`);
+    expect(within(nav).getByRole("link", { name: "Regras" }).getAttribute("href")).toBe(
+      `/contratos/${K1}/regras`,
+    );
     for (const t of ["Documentos", "Competências"]) expect(within(nav).getByText(t).closest("[aria-disabled]")?.getAttribute("aria-disabled")).toBe("true");
   });
 });
