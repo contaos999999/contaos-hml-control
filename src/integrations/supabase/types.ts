@@ -4513,11 +4513,16 @@ export type Database = {
           id_versao_proposta: string
           limite_remanejamento_percentual: number | null
           metadados: Json
+          observacoes: string | null
+          permite_remanejamento: boolean
           quantidade: number
           rubrica: string | null
           subrubrica: string | null
+          valor_anual_previsto: number | null
+          valor_mensal_previsto: number | null
           valor_total: number
           valor_unitario: number
+          versao_registro: number
         }
         Insert: {
           codigo: string
@@ -4530,11 +4535,16 @@ export type Database = {
           id_versao_proposta: string
           limite_remanejamento_percentual?: number | null
           metadados?: Json
+          observacoes?: string | null
+          permite_remanejamento?: boolean
           quantidade?: number
           rubrica?: string | null
           subrubrica?: string | null
+          valor_anual_previsto?: number | null
+          valor_mensal_previsto?: number | null
           valor_total?: number
           valor_unitario?: number
+          versao_registro?: number
         }
         Update: {
           codigo?: string
@@ -4547,11 +4557,16 @@ export type Database = {
           id_versao_proposta?: string
           limite_remanejamento_percentual?: number | null
           metadados?: Json
+          observacoes?: string | null
+          permite_remanejamento?: boolean
           quantidade?: number
           rubrica?: string | null
           subrubrica?: string | null
+          valor_anual_previsto?: number | null
+          valor_mensal_previsto?: number | null
           valor_total?: number
           valor_unitario?: number
+          versao_registro?: number
         }
         Relationships: [
           {
@@ -8344,6 +8359,7 @@ export type Database = {
           criado_em: string
           hash: string
           id: string
+          id_arquivo_origem: string | null
           id_contrato: string
           id_organizacao: string
           id_proposta: string
@@ -8359,6 +8375,7 @@ export type Database = {
           criado_em?: string
           hash: string
           id?: string
+          id_arquivo_origem?: string | null
           id_contrato: string
           id_organizacao: string
           id_proposta: string
@@ -8374,6 +8391,7 @@ export type Database = {
           criado_em?: string
           hash?: string
           id?: string
+          id_arquivo_origem?: string | null
           id_contrato?: string
           id_organizacao?: string
           id_proposta?: string
@@ -8390,6 +8408,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contratos"
             referencedColumns: ["id", "id_organizacao"]
+          },
+          {
+            foreignKeyName: "versoes_proposta_id_arquivo_origem_fkey"
+            columns: ["id_arquivo_origem"]
+            isOneToOne: false
+            referencedRelation: "arquivos"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "versoes_proposta_id_contrato_fkey"
@@ -8700,6 +8725,16 @@ export type Database = {
         Args: { p_id_regra_preventiva: string; p_parecer?: string }
         Returns: string
       }
+      aprovar_versao_fonte_v107: {
+        Args: {
+          p_chave_idempotencia: string
+          p_fundamento: string
+          p_hash_esperado: string
+          p_id_organizacao: string
+          p_id_versao: string
+        }
+        Returns: Json
+      }
       atribuir_alerta_preventivo: {
         Args: { p_id_alerta: string; p_prazo?: string; p_responsavel: string }
         Returns: string
@@ -8838,6 +8873,18 @@ export type Database = {
           p_id_usuario: string
         }
         Returns: undefined
+      }
+      definir_aplicabilidade_fonte_v107: {
+        Args: {
+          p_aplicavel: boolean
+          p_atualizado_em_esperado: string
+          p_chave_idempotencia: string
+          p_fundamento: string
+          p_id_contrato: string
+          p_id_organizacao: string
+          p_id_versao: string
+        }
+        Returns: Json
       }
       definir_vinculo_usuario: {
         Args: {
@@ -8992,6 +9039,16 @@ export type Database = {
         }
         Returns: string
       }
+      publicar_versao_proposta_v108: {
+        Args: {
+          p_chave_idempotencia: string
+          p_fundamento: string
+          p_hash_esperado: string
+          p_id_organizacao: string
+          p_id_versao: string
+        }
+        Returns: Json
+      }
       recalcular_inteligencia_historica: {
         Args: { p_id_contratante: string }
         Returns: Json
@@ -9060,6 +9117,40 @@ export type Database = {
         }
         Returns: string
       }
+      registrar_versao_fonte_v107: {
+        Args: {
+          p_chave_idempotencia: string
+          p_conteudo_texto: string
+          p_fim_vigencia: string
+          p_id_arquivo: string
+          p_id_fonte: string
+          p_id_organizacao: string
+          p_inicio_vigencia: string
+          p_metadados: Json
+        }
+        Returns: Json
+      }
+      registrar_versao_proposta_v108: {
+        Args: {
+          p_chave_idempotencia: string
+          p_id_arquivo_origem: string
+          p_id_organizacao: string
+          p_id_proposta: string
+          p_vigencia_fim: string
+          p_vigencia_inicio: string
+        }
+        Returns: Json
+      }
+      remover_linha_orcamentaria_v108: {
+        Args: {
+          p_chave_idempotencia: string
+          p_id_linha: string
+          p_id_organizacao: string
+          p_id_versao_proposta: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
       revisar_solucao_tarefa_diligencia: {
         Args: { p_aprovar: boolean; p_fundamento: string; p_id_tarefa: string }
         Returns: Json
@@ -9080,6 +9171,52 @@ export type Database = {
       }
       rotacionar_cliente_api: { Args: { p_id_cliente: string }; Returns: Json }
       rotacionar_webhook: { Args: { p_id_webhook: string }; Returns: Json }
+      salvar_fonte_normativa_v107: {
+        Args: {
+          p_chave_idempotencia: string
+          p_descricao: string
+          p_id_contrato: string
+          p_id_fonte: string
+          p_id_organizacao: string
+          p_referencia: string
+          p_situacao: string
+          p_tipo: string
+          p_titulo: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
+      salvar_linha_orcamentaria_v108: {
+        Args: {
+          p_chave_idempotencia: string
+          p_codigo: string
+          p_descricao: string
+          p_grupo: string
+          p_id_linha: string
+          p_id_organizacao: string
+          p_id_versao_proposta: string
+          p_limite_remanejamento_percentual: number
+          p_observacoes: string
+          p_permite_remanejamento: boolean
+          p_rubrica: string
+          p_subrubrica: string
+          p_valor_anual: number
+          p_valor_mensal: number
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
+      salvar_proposta_orcamentaria_v108: {
+        Args: {
+          p_chave_idempotencia: string
+          p_id_contrato: string
+          p_id_organizacao: string
+          p_id_proposta: string
+          p_titulo: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
       salvar_vinculo_usuario_adm: {
         Args: {
           p_ativo: boolean
