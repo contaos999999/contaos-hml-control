@@ -748,6 +748,19 @@ describe("V1-11 perfil para revisão humana (UX; backend é a autoridade)", () =
     expect(eqDe(v[0]!, "id_organizacao")).toBe(A);
     expect(op(v[0]!, "maybeSingle")).toHaveLength(1);
   });
+  it("revisão bem-sucedida refaz sugestões sem reler vinculos_usuarios", async () => {
+    cenario({ perfil: "gestor_contrato" });
+    m.rpc.mockResolvedValue({ data: { status: "rejeitada" }, error: null });
+    montar();
+    fireEvent.click(within(await cartao("s-obr")).getByRole("button", { name: /Rejeitar/ }));
+    const dlg = await screen.findByRole("dialog");
+    const antes = de("sugestoes_extracao_documento").length;
+    fireEvent.click(within(dlg).getByRole("button", { name: "Confirmar rejeição" }));
+    expect(await screen.findByText(MENSAGENS_V111.rejeitada)).toBeInTheDocument();
+    await waitFor(() => expect(de("sugestoes_extracao_documento").length).toBeGreaterThan(antes));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(de("vinculos_usuarios")).toHaveLength(1);
+  });
   it("leitor vê sugestão, fonte e status, mas nenhuma ação humana nem RPC", async () => {
     cenario({ perfil: "leitor" });
     montar();
