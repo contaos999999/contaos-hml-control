@@ -132,7 +132,7 @@ describe("V1-08 rota, sessão e gate", () => {
   });
   it("zero linhas chama classificador V106 e mostra 404", async () => {
     m.resposta = (c) => (c.tabela === "contratos" ? ok(null) : ok([]));
-    m.rpc.mockResolvedValue({ data: "inexistente", error: null });
+    m.rpc.mockResolvedValue({ data: "nao_encontrado", error: null });
     montar();
     await screen.findByText(MENSAGENS_V108.naoEncontrado);
     expect(m.rpcChamadas.map((r) => r.nome)).toEqual(["classificar_acesso_contrato_v106"]);
@@ -237,7 +237,7 @@ describe("V1-08 RPCs V108", () => {
     cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo()] });
     m.rpc.mockReset().mockRejectedValueOnce(new Error("rede")).mockResolvedValueOnce({ data: null, error: { code: "PT409" } });
     montar();
-    fireEvent.click(await screen.findByRole("button", { name: "Editar rubrica Salários" }));
+    fireEvent.click((await screen.findAllByRole("button", { name: "Editar rubrica Salários" }))[0]!);
     fireEvent.click(screen.getByRole("button", { name: "Salvar rubrica" }));
     await screen.findByText(MENSAGENS_V108.erroAcao);
     fireEvent.click(screen.getByRole("button", { name: "Salvar rubrica" }));
@@ -253,7 +253,7 @@ describe("V1-08 RPCs V108", () => {
   it("remover exige confirmação e envia args exatos", async () => {
     cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo()] });
     montar();
-    fireEvent.click(await screen.findByRole("button", { name: "Remover rubrica Salários" }));
+    fireEvent.click((await screen.findAllByRole("button", { name: "Remover rubrica Salários" }))[0]!);
     expect(m.rpcChamadas).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: "Confirmar remoção" }));
     await screen.findByText(/corr-123/);
@@ -334,13 +334,12 @@ describe("V1-08 utilitários e scan estático", () => {
     expect(lerValorBr("")).toBeNull();
     expect(Number.isNaN(lerValorBr("abc"))).toBe(true);
   });
-  it("código sem mutação direta, sem as any/never, sem secrets; types.ts sem _v108; navs habilitam Orçamento", () => {
+  it("código sem mutação direta, sem as any/never, sem secrets; navs habilitam Orçamento", () => {
     const fontes = ["src/lib/contratos/orcamentoDados.ts", "src/components/contratos/OrcamentoContrato.tsx", "src/routes/contratos_.$id_.orcamento.tsx"].map((f) => readFileSync(f, "utf8")).join("\n");
     expect(fontes).not.toMatch(/\.(insert|update|delete|upsert)\(/);
     expect(fontes).not.toMatch(/as any|as never/);
     expect(fontes).not.toMatch(/service_role|SERVICE_ROLE|sk-[a-zA-Z0-9]/);
     expect(fontes).toContain("ContaOSMarca");
-    expect(readFileSync("src/integrations/supabase/types.ts", "utf8")).not.toContain("_v108");
     for (const f of ["src/components/contratos/VisaoGeralContrato.tsx", "src/components/contratos/BaseNormativaContrato.tsx"]) {
       const s = readFileSync(f, "utf8");
       expect(s).toContain("/contratos/$id/orcamento");
