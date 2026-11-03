@@ -416,7 +416,10 @@ function Central({ contrato, ctx }: { contrato: string; ctx: Ctx }) {
   const negado = lista.error instanceof ErroDoc && lista.error.tipo === "negado";
 
   return (
-    <section aria-labelledby="v110-docs" className="space-y-4 rounded-xl border border-border bg-card p-4 sm:p-6">
+    <section
+      aria-labelledby="v110-docs"
+      className="space-y-4 rounded-xl border border-border bg-card p-4 sm:p-6"
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 id="v110-docs" className="text-lg font-semibold">
           Documentos do contrato
@@ -434,7 +437,11 @@ function Central({ contrato, ctx }: { contrato: string; ctx: Ctx }) {
         {aviso}
       </p>
 
-      <form onSubmit={aplicar} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" aria-label="Filtros">
+      <form
+        onSubmit={aplicar}
+        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5"
+        aria-label="Filtros"
+      >
         <label className="grid gap-1 lg:col-span-2">
           <span className={ROTULO}>Buscar por título</span>
           <input
@@ -513,7 +520,9 @@ function Central({ contrato, ctx }: { contrato: string; ctx: Ctx }) {
         </div>
       ) : (
         <>
-          {resumos.isError && <Alerta mensagem={MENSAGENS_V110.erroSecao} onRetry={() => void resumos.refetch()} />}
+          {resumos.isError && (
+            <Alerta mensagem={MENSAGENS_V110.erroSecao} onRetry={() => void resumos.refetch()} />
+          )}
           <ul className="space-y-3" aria-label="Documentos">
             {docs.map((d) => (
               <LinhaDocumento
@@ -779,8 +788,8 @@ function LinhaDocumento({
         <p className="mb-2 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           <Bot className="h-3.5 w-3.5" aria-hidden /> Sugestões de IA — somente leitura
           <Dica rotulo="Sobre as sugestões de IA">
-            Sugestões da IA não criam obrigações. A revisão humana, com fonte, página e trecho,
-            será feita no detalhe do documento.
+            Sugestões da IA não criam obrigações. A revisão humana, com fonte, página e trecho, será
+            feita no detalhe do documento.
           </Dica>
         </p>
         {carregandoResumo && !r ? (
@@ -797,7 +806,9 @@ function LinhaDocumento({
               </Selo>
             </li>
             <li>
-              <Selo>{plural(r?.semVigencia ?? 0, "sugestão sem vigência", "sugestões sem vigência")}</Selo>
+              <Selo>
+                {plural(r?.semVigencia ?? 0, "sugestão sem vigência", "sugestões sem vigência")}
+              </Selo>
             </li>
             <li>
               <Selo>
@@ -821,7 +832,8 @@ function LinhaDocumento({
 }
 
 // ---------- UploadDropzone + UploadProgress + MetadataForm ----------
-type Etapa = "fila" | "invalido" | "enviando" | "confirmando" | "registrando" | "concluido" | "erro";
+type Etapa =
+  "fila" | "invalido" | "enviando" | "confirmando" | "registrando" | "concluido" | "erro";
 type Item = {
   id: string;
   arquivo: File;
@@ -915,7 +927,13 @@ function DialogoEnvio({
           atualizarItem(it.id, { etapa: "enviando", mensagem: "" });
           if (!(p.resumivel && p.location && p.token && p.path && p.bucket)) {
             const a = await autorizarUpload(ctx.idOrganizacao, contrato, it.arquivo);
-            Object.assign(p, { path: a.path, token: a.token, bucket: a.bucket, resumivel: a.resumivel, location: undefined });
+            Object.assign(p, {
+              path: a.path,
+              token: a.token,
+              bucket: a.bucket,
+              resumivel: a.resumivel,
+              location: undefined,
+            });
           }
           if (p.resumivel) {
             await enviarTus({ bucket: p.bucket!, path: p.path!, token: p.token! }, it.arquivo, {
@@ -938,7 +956,13 @@ function DialogoEnvio({
       }
       atualizarItem(it.id, { etapa: "registrando" });
       if (modo.tipo === "versao") await adicionarVersao(modo.doc.id, p.idArquivo, motivo, p.chave);
-      else await criarDocumentoCompleto(contrato, { ...meta, titulo: it.titulo }, p.idArquivo, p.chave);
+      else
+        await criarDocumentoCompleto(
+          contrato,
+          { ...meta, titulo: it.titulo },
+          p.idArquivo,
+          p.chave,
+        );
       atualizarItem(it.id, { etapa: "concluido", mensagem: "" });
       return true;
     } catch (e) {
@@ -991,7 +1015,9 @@ function DialogoEnvio({
     >
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{versao ? `Nova versão — ${modo.doc.titulo}` : "Enviar documentos"}</DialogTitle>
+          <DialogTitle>
+            {versao ? `Nova versão — ${modo.doc.titulo}` : "Enviar documentos"}
+          </DialogTitle>
           <DialogDescription>
             {versao
               ? "A versão anterior é preservada. O arquivo vai direto para o armazenamento privado com autorização temporária."
@@ -1008,7 +1034,10 @@ function DialogoEnvio({
             }}
           >
             <FileUp className="mx-auto mb-2 h-6 w-6 text-muted-foreground" aria-hidden />
-            <label htmlFor={`${idBase}-arquivos`} className="cursor-pointer text-sm font-medium underline">
+            <label
+              htmlFor={`${idBase}-arquivos`}
+              className="cursor-pointer text-sm font-medium underline"
+            >
               {versao ? "Escolher arquivo" : "Escolher arquivos"}
             </label>
             <p className="text-xs text-muted-foreground">
@@ -1035,7 +1064,13 @@ function DialogoEnvio({
                 <li key={i.id} className="rounded-md border border-border p-3">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <span className="break-all text-sm font-medium">{i.arquivo.name}</span>
-                    <Selo classe={i.etapa === "erro" || i.etapa === "invalido" ? "border-destructive/60 bg-destructive/5" : ""}>
+                    <Selo
+                      classe={
+                        i.etapa === "erro" || i.etapa === "invalido"
+                          ? "border-destructive/60 bg-destructive/5"
+                          : ""
+                      }
+                    >
                       {i.etapa === "concluido" ? (
                         <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
                       ) : i.etapa === "erro" || i.etapa === "invalido" ? (

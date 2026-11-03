@@ -329,7 +329,9 @@ describe("V1-10 lista, filtros e paginação server-side", () => {
     montar();
     const linha = await screen.findByTestId(`documento-${D1}`);
     await waitFor(() =>
-      expect(within(linha).getByText("3 sugestões de IA pendentes de revisão humana")).toBeInTheDocument(),
+      expect(
+        within(linha).getByText("3 sugestões de IA pendentes de revisão humana"),
+      ).toBeInTheDocument(),
     );
     expect(within(linha).getByText("1 sugestão sem vigência")).toBeInTheDocument();
     expect(within(linha).getByText(/Trabalhista — 87%/)).toBeInTheDocument();
@@ -387,7 +389,11 @@ describe("V1-10 segurança de arquivo e download", () => {
         body: { id_arquivo: AR1 },
       }),
     );
-    expect(abrir).toHaveBeenCalledWith("https://x.supabase.co/assinada", "_blank", "noopener,noreferrer");
+    expect(abrir).toHaveBeenCalledWith(
+      "https://x.supabase.co/assinada",
+      "_blank",
+      "noopener,noreferrer",
+    );
   });
   it("download negado pelo Edge mostra mensagem PT-BR", async () => {
     cenario();
@@ -425,7 +431,9 @@ describe("V1-10 envio múltiplo e documento-base completo", () => {
   it("fim de vigência sem início bloqueia antes de qualquer chamada", async () => {
     const d = await abrirEnvio();
     fireEvent.change(within(d).getByLabelText("Arquivos"), { target: { files: [pdf()] } });
-    fireEvent.change(within(d).getByLabelText("Fim da vigência"), { target: { value: "2026-12-31" } });
+    fireEvent.change(within(d).getByLabelText("Fim da vigência"), {
+      target: { value: "2026-12-31" },
+    });
     fireEvent.click(within(d).getByRole("button", { name: "Enviar e registrar" }));
     expect(await within(d).findByText(MENSAGENS_V110.vigenciaFimSemInicio)).toBeInTheDocument();
     expect(m.invoke).not.toHaveBeenCalled();
@@ -433,8 +441,12 @@ describe("V1-10 envio múltiplo e documento-base completo", () => {
   it("fim antes do início bloqueia", async () => {
     const d = await abrirEnvio();
     fireEvent.change(within(d).getByLabelText("Arquivos"), { target: { files: [pdf()] } });
-    fireEvent.change(within(d).getByLabelText("Início da vigência"), { target: { value: "2026-12-31" } });
-    fireEvent.change(within(d).getByLabelText("Fim da vigência"), { target: { value: "2026-01-01" } });
+    fireEvent.change(within(d).getByLabelText("Início da vigência"), {
+      target: { value: "2026-12-31" },
+    });
+    fireEvent.change(within(d).getByLabelText("Fim da vigência"), {
+      target: { value: "2026-01-01" },
+    });
     fireEvent.click(within(d).getByRole("button", { name: "Enviar e registrar" }));
     expect(await within(d).findByText(MENSAGENS_V110.vigenciaFimAntes)).toBeInTheDocument();
     expect(m.invoke).not.toHaveBeenCalled();
@@ -454,15 +466,21 @@ describe("V1-10 envio múltiplo e documento-base completo", () => {
     fireEvent.change(within(d).getByLabelText("Arquivos"), {
       target: { files: [pdf("a.pdf"), pdf("b.pdf")] },
     });
-    fireEvent.change(within(d).getByLabelText("Tipo do documento"), { target: { value: "aditivo" } });
+    fireEvent.change(within(d).getByLabelText("Tipo do documento"), {
+      target: { value: "aditivo" },
+    });
     fireEvent.change(within(d).getByLabelText("Categoria"), { target: { value: "Jurídico" } });
-    fireEvent.change(within(d).getByLabelText("Início da vigência"), { target: { value: "2026-01-01" } });
+    fireEvent.change(within(d).getByLabelText("Início da vigência"), {
+      target: { value: "2026-01-01" },
+    });
     fireEvent.change(within(d).getByLabelText("Observações"), { target: { value: "Obs" } });
     const botao = within(d).getByRole("button", { name: "Enviar e registrar" });
     fireEvent.click(botao);
     fireEvent.click(botao);
     await waitFor(() =>
-      expect(m.rpcChamadas.filter((r) => r.nome === "criar_documento_contrato_completo")).toHaveLength(2),
+      expect(
+        m.rpcChamadas.filter((r) => r.nome === "criar_documento_contrato_completo"),
+      ).toHaveLength(2),
     );
     expect(m.invoke.mock.calls.filter(([n]) => n === "storage-sign-upload")).toHaveLength(2);
     expect(m.upload).toHaveBeenCalledWith(PATH, "tok", expect.any(File));
@@ -511,7 +529,9 @@ describe("V1-10 envio múltiplo e documento-base completo", () => {
     fireEvent.click(within(d).getByRole("button", { name: "Enviar e registrar" }));
     fireEvent.click(await within(d).findByRole("button", { name: "Tentar novamente nota.pdf" }));
     await waitFor(() =>
-      expect(m.rpcChamadas.filter((r) => r.nome === "criar_documento_contrato_completo")).toHaveLength(2),
+      expect(
+        m.rpcChamadas.filter((r) => r.nome === "criar_documento_contrato_completo"),
+      ).toHaveLength(2),
     );
     const c = m.rpcChamadas.filter((r) => r.nome === "criar_documento_contrato_completo");
     expect(c[0].args.p_chave_idempotencia).toBe(c[1].args.p_chave_idempotencia);
@@ -552,16 +572,22 @@ describe("V1-10 nova versão", () => {
     rpcOk();
     montar();
     const linha = await screen.findByTestId(`documento-${D1}`);
-    fireEvent.click(within(linha).getByRole("button", { name: "Nova versão de Contrato principal" }));
+    fireEvent.click(
+      within(linha).getByRole("button", { name: "Nova versão de Contrato principal" }),
+    );
     const d = await screen.findByRole("dialog");
     fireEvent.change(within(d).getByLabelText("Arquivo"), { target: { files: [pdf()] } });
     fireEvent.click(within(d).getByRole("button", { name: "Enviar nova versão" }));
     expect(await within(d).findByText(MENSAGENS_V110.motivoObrigatorio)).toBeInTheDocument();
     expect(m.invoke).not.toHaveBeenCalled();
-    fireEvent.change(within(d).getByLabelText("Motivo da nova versão"), { target: { value: "Correção" } });
+    fireEvent.change(within(d).getByLabelText("Motivo da nova versão"), {
+      target: { value: "Correção" },
+    });
     fireEvent.click(within(d).getByRole("button", { name: "Enviar nova versão" }));
     await waitFor(() =>
-      expect(m.rpcChamadas.find((r) => r.nome === "adicionar_versao_documento_contrato")?.args).toEqual({
+      expect(
+        m.rpcChamadas.find((r) => r.nome === "adicionar_versao_documento_contrato")?.args,
+      ).toEqual({
         p_id_documento: D1,
         p_id_arquivo: AR2,
         p_motivo: "Correção",
@@ -592,11 +618,10 @@ describe("V1-10 TUS resumível e polling", () => {
     vi.stubGlobal("fetch", f);
     const arq = new File([new Uint8Array(CHUNK_TUS + 10)], "g.pdf", { type: "application/pdf" });
     const progresso: number[] = [];
-    const r = await enviarTus(
-      { bucket: "contaos-documentos", path: PATH, token: "tok" },
-      arq,
-      { onProgresso: (p) => progresso.push(p), atraso: async () => {} },
-    );
+    const r = await enviarTus({ bucket: "contaos-documentos", path: PATH, token: "tok" }, arq, {
+      onProgresso: (p) => progresso.push(p),
+      atraso: async () => {},
+    });
     expect(r.location).toBe("https://s/up/1");
     expect(chamadas[0].metodo).toBe("POST");
     expect(chamadas[0].headers["x-signature"]).toBe("tok");
@@ -606,7 +631,9 @@ describe("V1-10 TUS resumível e polling", () => {
     expect(progresso.at(-1)).toBe(100);
   });
   it("backoff 5/10/20/40/60 s", () => {
-    expect([0, 1, 2, 3, 4, 9].map(atrasoPolling)).toEqual([5000, 10000, 20000, 40000, 60000, 60000]);
+    expect([0, 1, 2, 3, 4, 9].map(atrasoPolling)).toEqual([
+      5000, 10000, 20000, 40000, 60000, 60000,
+    ]);
   });
   it("processando mostra status textual e permite atualização manual", async () => {
     cenario({ proc: "processando" });
@@ -626,7 +653,8 @@ describe("V1-10 escopo e Zero-Drift", () => {
     const linha = await screen.findByTestId(`documento-${D1}`);
     const det = within(linha).getByRole("button", { name: /Abrir detalhe — Em breve/ });
     expect(det).toBeDisabled();
-    const fonte = readFileSync("src/components/contratos/DocumentosContrato.tsx", "utf8") +
+    const fonte =
+      readFileSync("src/components/contratos/DocumentosContrato.tsx", "utf8") +
       readFileSync("src/lib/contratos/documentosDados.ts", "utf8");
     expect(fonte).not.toMatch(/revisar_sugestao_extracao|definir_vigencia_sugestao_extracao/);
     expect(fonte).not.toMatch(/\.(insert|update|delete|upsert)\(/);

@@ -147,12 +147,7 @@ export const ROTULO_PROCESSAMENTO: Record<string, string> = {
 };
 
 export type TipoErroDoc =
-  | "negado"
-  | "nao_encontrado"
-  | "conflito"
-  | "validacao"
-  | "edge_recusa"
-  | "erro";
+  "negado" | "nao_encontrado" | "conflito" | "validacao" | "edge_recusa" | "erro";
 export class ErroDoc extends Error {
   constructor(public tipo: TipoErroDoc) {
     super(tipo);
@@ -233,7 +228,8 @@ export async function obterResumos(
   let qv = supabase.from("versoes_documento").select(COLUNAS_VERSAO_DOC).or(filtro);
   if (signal) qv = qv.abortSignal(signal);
   const versoes = ((await executar(qv, signal)).data as VersaoDoc[] | null) ?? [];
-  for (const v of versoes) if (base[v.id_documento_contrato]) base[v.id_documento_contrato].versao = v;
+  for (const v of versoes)
+    if (base[v.id_documento_contrato]) base[v.id_documento_contrato].versao = v;
   const vids = versoes.map((v) => v.id).sort();
   const aids = [...new Set(versoes.map((v) => v.id_arquivo))].sort();
   if (vids.length === 0) return base;
@@ -275,7 +271,9 @@ export async function obterResumos(
     executar(qa, signal),
     executar(qp, signal),
     executar(qc, signal),
-    Promise.all(vids.map(async (vid) => [vid, await contar(vid, false), await contar(vid, true)] as const)),
+    Promise.all(
+      vids.map(async (vid) => [vid, await contar(vid, false), await contar(vid, true)] as const),
+    ),
   ]);
   const arquivos = Object.fromEntries(
     ((ra.data as ArquivoDoc[] | null) ?? []).map((a) => [a.id, a]),
@@ -339,7 +337,11 @@ async function invocar(
   if (r.error) {
     const st = statusEdge(r.error);
     throw new ErroDoc(
-      st === 401 || st === 403 ? "negado" : st === 400 || st === 413 || st === 415 ? "edge_recusa" : "erro",
+      st === 401 || st === 403
+        ? "negado"
+        : st === 400 || st === 413 || st === 415
+          ? "edge_recusa"
+          : "erro",
     );
   }
   const d = r.data as Record<string, unknown> | null;
@@ -348,7 +350,11 @@ async function invocar(
 }
 
 export type Autorizacao = { bucket: string; path: string; token: string; resumivel: boolean };
-export async function autorizarUpload(org: string, contrato: string, f: File): Promise<Autorizacao> {
+export async function autorizarUpload(
+  org: string,
+  contrato: string,
+  f: File,
+): Promise<Autorizacao> {
   const d = await invocar("storage-sign-upload", {
     id_organizacao: org,
     id_contrato: contrato,
@@ -681,8 +687,7 @@ export const MENSAGENS_V110 = {
   erroSecao: "Não foi possível carregar os documentos agora. Tente novamente em instantes.",
   negadoSecao: "Você não tem acesso a estes documentos.",
   vazio: "Nenhum documento encontrado para este contrato.",
-  bloqueadoSeguranca:
-    "Bloqueado pela verificação de segurança — download e análise indisponíveis.",
+  bloqueadoSeguranca: "Bloqueado pela verificação de segurança — download e análise indisponíveis.",
   verificacaoPendente: "Download disponível após a verificação de segurança.",
   downloadNegado: "Você não tem permissão para baixar este arquivo.",
   downloadErro: "Não foi possível gerar o link temporário de download. Tente novamente.",
