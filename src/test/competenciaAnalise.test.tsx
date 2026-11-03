@@ -231,7 +231,7 @@ function rpcLeitura(f: (args: Record<string, unknown>) => unknown) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  localStorage.clear();
+  sessionStorage.clear();
   sessao();
   rpcLeitura(() => ({ data: leitura(), error: null }));
 });
@@ -318,7 +318,7 @@ describe("V1-16 gate", () => {
   });
 
   it("sem preferência: vai para seleção de organização, sem RPC", async () => {
-    localStorage.clear();
+    sessionStorage.clear();
     render(<CompetenciaAnalise id={ID} />);
     await waitFor(() => expect(m.nav).toHaveBeenCalled());
     expect(m.nav.mock.calls[0]![0]).toMatchObject({ to: "/selecionar-organizacao" });
