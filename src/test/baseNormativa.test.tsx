@@ -219,7 +219,9 @@ describe("V1-07 lista de fontes", () => {
     const nav = screen.getByRole("navigation", { name: "Seções do contrato" });
     expect(within(nav).getByRole("link", { name: "Visão geral" }).getAttribute("href")).toBe(`/contratos/${K1}`);
     expect(within(nav).getByText("Base normativa").closest("[aria-current]")?.getAttribute("aria-current")).toBe("page");
-    expect(within(nav).getByRole("link", { name: "Orçamento" }).getAttribute("href")).toBe(`/contratos/${K1}/orcamento`);
+    expect(within(nav).getByRole("link", { name: "Orçamento" }).getAttribute("href")).toBe(
+      `/contratos/${K1}/orcamento`,
+    );
     for (const t of ["Regras", "Documentos", "Competências"]) expect(within(nav).getByText(t).closest("[aria-disabled]")?.getAttribute("aria-disabled")).toBe("true");
   });
 });

@@ -172,7 +172,13 @@ function NavSecoes({ id }: { id: string }) {
           <span aria-current="page" className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">Base normativa</span>
         </li>
         <li>
-          <Link to="/contratos/$id/orcamento" params={{ id: id }} className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Orçamento</Link>
+          <Link
+            to="/contratos/$id/orcamento"
+            params={{ id: id }}
+            className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Orçamento
+          </Link>
         </li>
         {SECOES_FUTURAS.map((s) => (
           <li key={s}>
