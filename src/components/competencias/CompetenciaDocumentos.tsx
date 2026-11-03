@@ -116,8 +116,16 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
   const estado: Estado = !idOk ? NAO_ENCONTRADA : registro.id === idC ? registro.e : CARREGANDO;
   const [idAutorizado, setIdAutorizado] = useState<string | null>(null);
   const [tentativa, setTentativa] = useState(0);
-  const [offDocs, setOffDocs] = useState(0);
-  const [offReqs, setOffReqs] = useState(0);
+  // Paginação vinculada ao recurso: offsets efetivos são 0 para outro idC.
+  const [pag, setPag] = useState<{ id: string; docs: number; reqs: number }>({
+    id: idC,
+    docs: 0,
+    reqs: 0,
+  });
+  const offDocs = pag.id === idC ? pag.docs : 0;
+  const offReqs = pag.id === idC ? pag.reqs : 0;
+  const setOffDocs = (docs: number) => setPag({ id: idC, docs, reqs: offReqs });
+  const setOffReqs = (reqs: number) => setPag({ id: idC, docs: offDocs, reqs });
   const [recarga, setRecarga] = useState(0);
   const polls = useRef(0);
   const [config, setConfig] = useState<ConfigUpload | null | "erro">(null);
