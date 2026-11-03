@@ -131,7 +131,7 @@ describe("V1-13 rota e gates", () => {
     };
     expect(r.path).toBe("/contratos_/$id_/competencias_/nova");
     expect(r.options.ssr).toBe(false);
-    expect(r.options.head().meta[0].title).toMatch(/Nova competência/);
+    expect(r.options.head().meta[0]!.title).toMatch(/Nova competência/);
   });
   it("UUID inválido: zero Auth, Data API e RPC", async () => {
     montar("abc");
@@ -187,7 +187,7 @@ describe("V1-13 perfil (UX, backend é autoridade)", () => {
     montar();
     await preencher();
     expect(m.chamadas.map((c) => c.tabela)).toEqual(["contratos", "vinculos_usuarios"]);
-    const v = de("vinculos_usuarios")[0];
+    const v = de("vinculos_usuarios")[0]!;
     expect(op(v, "select")[0][0]).toBe("perfil");
     expect(op(v, "eq")).toEqual([
       ["id_usuario", U],
@@ -313,12 +313,12 @@ describe("V1-13 comando criar_competencia", () => {
     expect(m.rpc).toHaveBeenCalledTimes(1);
     const c = de("competencias");
     expect(c).toHaveLength(1);
-    expect(op(c[0], "select")[0][0]).toBe("id");
-    expect(op(c[0], "eq")).toEqual([
+    expect(op(c[0]!, "select")[0][0]).toBe("id");
+    expect(op(c[0]!, "eq")).toEqual([
       ["id_contrato", K1],
       ["competencia_referencia", "2026-11-01"],
     ]);
-    expect(op(c[0], "maybeSingle")).toHaveLength(1);
+    expect(op(c[0]!, "maybeSingle")).toHaveLength(1);
   });
   it("ambíguo + inexistente → erro com retry manual, sem retry automático", async () => {
     m.rpc.mockRejectedValueOnce(new TypeError("Failed to fetch"));
