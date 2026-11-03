@@ -44,7 +44,10 @@ import {
 } from "@/lib/contratos/contratoDetalheDados";
 import { formatarDataHoraBr } from "@/lib/contratos/baseNormativaDados";
 import {
-  ACEITE,
+  aceiteDe,
+  formatarBytes,
+  obterConfiguracaoUpload,
+  type ConfigUpload,
   ErroDoc,
   FILTROS_VAZIOS,
   MENSAGENS_V110,
@@ -402,6 +405,13 @@ function Central({ contrato, ctx }: { contrato: string; ctx: Ctx }) {
       return atrasoPolling(ciclos.current++);
     },
   });
+  const cfg = useQuery({
+    queryKey: ["documentos", "config-upload", ...chave],
+    queryFn: ({ signal }) => obterConfiguracaoUpload(signal),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  const config = cfg.data;
   const total = lista.data?.total ?? 0;
   const paginas = Math.max(1, Math.ceil(total / PAGINA_DOCS));
   const atualizar = () => {
@@ -428,11 +438,19 @@ function Central({ contrato, ctx }: { contrato: string; ctx: Ctx }) {
           <Button type="button" variant="outline" className="h-11" onClick={atualizar}>
             <RefreshCw className="mr-2 h-4 w-4" aria-hidden /> Atualizar lista
           </Button>
-          <Button type="button" className="h-11" onClick={() => setEnvioAberto(true)}>
+          <Button
+            type="button"
+            className="h-11"
+            disabled={!config}
+            onClick={() => setEnvioAberto(true)}
+          >
             <FileUp className="mr-2 h-4 w-4" aria-hidden /> Enviar documentos
           </Button>
         </div>
       </div>
+      {cfg.isError && (
+        <Alerta mensagem={MENSAGENS_V110.configIndisponivel} onRetry={() => void cfg.refetch()} />
+      )}
       <p aria-live="polite" className="text-sm">
         {aviso}
       </p>
@@ -530,6 +548,7 @@ function Central({ contrato, ctx }: { contrato: string; ctx: Ctx }) {
                 d={d}
                 r={resumos.data?.[d.id]}
                 carregandoResumo={resumos.isPending}
+                envioDisponivel={!!config}
                 onNovaVersao={() => setVersaoDe(d)}
               />
             ))}
@@ -562,19 +581,23 @@ function Central({ contrato, ctx }: { contrato: string; ctx: Ctx }) {
         </>
       )}
 
-      <DialogoEnvio
-        aberto={envioAberto}
-        modo={{ tipo: "novo" }}
-        ctx={ctx}
-        contrato={contrato}
-        onFechar={() => setEnvioAberto(false)}
-        onConcluido={() => {
-          setAviso(MENSAGENS_V110.sucesso);
-          atualizar();
-        }}
-      />
-      {versaoDe && (
+      {config && (
         <DialogoEnvio
+          cfg={config}
+          aberto={envioAberto}
+          modo={{ tipo: "novo" }}
+          ctx={ctx}
+          contrato={contrato}
+          onFechar={() => setEnvioAberto(false)}
+          onConcluido={() => {
+            setAviso(MENSAGENS_V110.sucesso);
+            atualizar();
+          }}
+        />
+      )}
+      {versaoDe && config && (
+        <DialogoEnvio
+          cfg={config}
           aberto
           modo={{ tipo: "versao", doc: versaoDe }}
           ctx={ctx}
@@ -646,11 +669,13 @@ function LinhaDocumento({
   d,
   r,
   carregandoResumo,
+  envioDisponivel,
   onNovaVersao,
 }: {
   d: Documento;
   r: Resumo | undefined;
   carregandoResumo: boolean;
+  envioDisponivel: boolean;
   onNovaVersao: () => void;
 }) {
   const [baixando, setBaixando] = useState(false);
@@ -708,6 +733,7 @@ function LinhaDocumento({
             variant="outline"
             className="h-11"
             aria-label={`Nova versão de ${d.titulo}`}
+            disabled={!envioDisponivel}
             onClick={onNovaVersao}
           >
             <FileUp className="mr-2 h-4 w-4" aria-hidden /> Nova versão
@@ -815,10 +841,19 @@ function LinhaDocumento({
                 {r?.classificacao?.categoria_sugerida
                   ? `Classificação (IA): ${r.classificacao.categoria_sugerida} — ${Math.round(
                       Number(r.classificacao.confianca ?? 0) * 100,
-                    )}% de confiança${r.classificacao.id_requisito_sugerido ? " · item sugerido" : ""}`
+                    )}% de confiança`
                   : "Classificação (IA) pendente"}
               </Selo>
             </li>
+            {r?.classificacao?.id_requisito_sugerido && (
+              <li>
+                <Selo>
+                  {r.requisito
+                    ? `Item sugerido: ${r.requisito.codigo ? `${r.requisito.codigo} — ` : ""}${r.requisito.descricao}`
+                    : "Item sugerido indisponível"}
+                </Selo>
+              </li>
+            )}
             <li>
               <Selo>
                 {`Metadados extraídos: ${temMetadados(r?.versao?.metadados_extraidos) ? "disponíveis" : "pendentes"}`}
@@ -864,6 +899,7 @@ const ROTULO_ETAPA: Record<Etapa, string> = {
 };
 
 function DialogoEnvio({
+  cfg,
   aberto,
   modo,
   ctx,
@@ -877,6 +913,7 @@ function DialogoEnvio({
   contrato: string;
   onFechar: () => void;
   onConcluido: () => void;
+  cfg: ConfigUpload;
 }) {
   const versao = modo.tipo === "versao";
   const [itens, setItens] = useState<Item[]>([]);
@@ -906,7 +943,7 @@ function DialogoEnvio({
   const adicionar = (lista: FileList | File[] | null) => {
     if (!lista) return;
     const novos = Array.from(lista).map((f): Item => {
-      const inv = validarArquivo(f);
+      const inv = validarArquivo(f, cfg);
       return {
         id: `i${++seq.current}`,
         arquivo: f,
@@ -1043,14 +1080,18 @@ function DialogoEnvio({
               {versao ? "Escolher arquivo" : "Escolher arquivos"}
             </label>
             <p className="text-xs text-muted-foreground">
-              ou arraste aqui. PDF, XLSX, CSV, DOCX, imagens, TXT, JSON e XML — até 500 MB.
+              {`ou arraste aqui. Formatos aceitos: ${cfg.extensoes.map((e) => e.toUpperCase()).join(", ")}${
+                cfg.maximo !== null ? ` — até ${formatarBytes(cfg.maximo)}` : ""
+              }.`}
+              {cfg.limiarResumivel !== null &&
+                ` Arquivos acima de ${formatarBytes(cfg.limiarResumivel)} usam envio resumível, com retomada automática.`}
             </p>
             <input
               id={`${idBase}-arquivos`}
               type="file"
               aria-label={versao ? "Arquivo" : "Arquivos"}
               multiple={!versao}
-              accept={ACEITE}
+              accept={aceiteDe(cfg)}
               disabled={ocupado}
               className="sr-only"
               onChange={(e) => {
