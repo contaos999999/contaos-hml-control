@@ -76,9 +76,7 @@ describe("BRAND-01 — contraste no tema escuro", () => {
     const logoNavy = container.querySelector(
       'img[src="/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg"]',
     );
-    const simboloNavy = container.querySelector(
-      'img[src="/brand/ContaOS_Simbolo_Navy.svg"]',
-    );
+    const simboloNavy = container.querySelector('img[src="/brand/ContaOS_Simbolo_Navy.svg"]');
     expect(logoNavy).not.toBeNull();
     expect(logoNavy?.getAttribute("alt")).toBe("ContaOS");
     expect(logoNavy?.getAttribute("class")).toContain("dark:block");
@@ -113,7 +111,7 @@ describe("BRAND-01 — sem visual paralelo nas telas recentes", () => {
     expect(violaCorDireta('className="bg-primary text-primary-foreground"')).toBe(false);
   });
 
-  it.each(recentes)("%s preserva a identidade visual existente sem paleta paralela", arquivo => {
+  it.each(recentes)("%s preserva a identidade visual existente sem paleta paralela", (arquivo) => {
     const src = ler(arquivo);
     expect(src).toContain("<ContaOSMarca");
     expect(violaCorDireta(src)).toBe(false);

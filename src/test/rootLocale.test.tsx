@@ -19,7 +19,9 @@ describe("root — idioma e mensagens PT-BR", () => {
   });
   it("apresenta erro global, orientação e ações em português", () => {
     expect(root).toContain("Não foi possível carregar esta página");
-    expect(root).toContain("Ocorreu um problema ao carregar a página. Tente novamente ou volte ao início.");
+    expect(root).toContain(
+      "Ocorreu um problema ao carregar a página. Tente novamente ou volte ao início.",
+    );
     expect(root).toContain("Tentar novamente");
     expect(root).not.toContain("This page didn't load");
     expect(root).not.toContain("Something went wrong on our end");
