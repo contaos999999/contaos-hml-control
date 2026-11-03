@@ -97,7 +97,7 @@ export const MENSAGENS_V108 = {
   erroDownload: "Não foi possível baixar o arquivo agora. Tente novamente em instantes.",
 } as const;
 
-const SECOES_FUTURAS = ["Regras", "Documentos", "Competências"] as const;
+const SECOES_FUTURAS = ["Documentos", "Competências"] as const;
 const MSG_ERRO_ACAO: Record<TipoErroBn, string> = {
   conflito: MENSAGENS_V108.conflito,
   validacao: MENSAGENS_V108.validacao,
@@ -373,6 +373,11 @@ function NavSecoes({ id }: { id: string }) {
           >
             Orçamento
           </span>
+        </li>
+        <li>
+          <Link to="/contratos/$id/regras" params={{ id }} className={link}>
+            Regras
+          </Link>
         </li>
         {SECOES_FUTURAS.map((s) => (
           <li key={s}>
