@@ -116,6 +116,7 @@ function montar(id = K1) {
 }
 
 beforeEach(() => {
+  vi.restoreAllMocks();
   m.chamadas.length = 0;
   m.resposta = null;
   m.nav.mockReset();
