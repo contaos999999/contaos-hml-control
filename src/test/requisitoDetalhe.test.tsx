@@ -306,7 +306,7 @@ describe("V1-17 gate", () => {
     abrir();
     await pronto();
     expect(m.getUser).toHaveBeenCalledTimes(1);
-    expect(lidas()[0][1]).toEqual({
+    expect(lidas()[0]![1]).toEqual({
       p_id_competencia: C,
       p_id_requisito: R,
       p_evidencias_offset: 0,
@@ -452,7 +452,10 @@ describe("V1-17 paginação independente", () => {
           ...d,
           evidencias_paginacao: { ...d.evidencias_paginacao, offset: a["p_evidencias_offset"] },
           historico_paginacao: { ...d.historico_paginacao, offset: a["p_historico_offset"] },
-          apontamentos_paginacao: { ...d.apontamentos_paginacao, offset: a["p_apontamentos_offset"] },
+          apontamentos_paginacao: {
+            ...d.apontamentos_paginacao,
+            offset: a["p_apontamentos_offset"],
+          },
         },
         error: null,
       };
@@ -461,7 +464,7 @@ describe("V1-17 paginação independente", () => {
     await pronto();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(`Próxima página de ${rot}`) }));
     await waitFor(() => expect(lidas()).toHaveLength(2));
-    const a = lidas()[1][1] as Record<string, number>;
+    const a = lidas()[1]![1] as Record<string, number>;
     for (const k of ["p_evidencias_offset", "p_historico_offset", "p_apontamentos_offset"])
       expect(a[k]).toBe(k === campo ? 25 : 0);
   });
@@ -483,7 +486,7 @@ describe("V1-17 reanálise", () => {
     fireEvent.click(b);
     await waitFor(() => expect(onR).toHaveBeenCalledTimes(1));
     expect(escritas()).toHaveLength(1);
-    expect(escritas()[0][1]).toEqual({ p_id_competencia: C, p_requisitos: [R] });
+    expect(escritas()[0]![1]).toEqual({ p_id_competencia: C, p_requisitos: [R] });
     await waitFor(() => expect(lidas()).toHaveLength(2));
     expect(await screen.findByText(/Reanálise deste requisito solicitada/)).toBeInTheDocument();
   });
