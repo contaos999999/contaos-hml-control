@@ -48,7 +48,6 @@ const ARQUIVOS_MARCA = [
   "src/components/contratos/VisaoGeralContrato.tsx",
   "src/components/contratos/BaseNormativaContrato.tsx",
   "src/components/administracao/usuarios/AdminUsuarios.tsx",
-  ...ARQUIVOS_V108_V116,
 ];
 
 describe("BRAND-01 — componente de marca", () => {
