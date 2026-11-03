@@ -115,16 +115,16 @@ Zero toque em: supabase/**, client.ts, types.ts (salvo restauração ao blob), u
 - Casos, com mocks de `supabase.auth`, `rpc` e preferência:
   1. UUID inválido: zero getUser, preferência e RPC. Também válido → `abc`.
   2. Ordem do gate; 42501/401/403, PT404, PT400 e transporte sanitizados; o texto bruto do banco não aparece.
-  3. Parser fail-closed campo a campo; fixtures com 0/false válidos são preservadas.
+  3. Parser fail-closed campo a campo, incluindo `percentual` ausente/null/não numérico; fixtures com 0/false válidos são preservadas.
   4. Os 6 estados, incluindo fixture incoerente (ex.: `complete` com percentual 0 e bloqueios) renderizada literalmente.
   5. `stale` só do backend; teste com hashes divergentes e `stale=false` mostra o estado do backend.
   6. Percentual e bloqueio só do backend.
-  7. Os 3 offsets são independentes; filtro reseta só o offset afetado; parâmetros enviados à RPC conferidos.
+  7. Os 3 offsets são independentes; parâmetros enviados à RPC conferidos. Resultado e mecanismo zeram só resultados; criticidade e busca zeram resultados e apontamentos; status de apontamento zera só apontamentos; execuções nunca são zeradas por filtro.
   8. A→B: offsets 0, filtros limpos, nenhum DOM de A, A tardia descartada; também A→inválido→B.
   9. Os 4 mecanismos; `nao_identificado` nunca vira determinístico.
   10. Evidência, criticidade, apontamentos e histórico, com campos ausentes omitidos.
   11. `allowed_actions` false → sem botão; true → botão.
-  12. `completa` / `reanálise`; duplo clique = 1 chamada; retorno de execução existente reconciliado; a RPC incremental nunca é chamada.
+  12. `completa` / `reanálise`; duplo clique = 1 chamada; retorno de execução existente reconciliado; a RPC incremental nunca é chamada. Erro/timeout ambíguo: uma leitura de reconciliação. Leitura com queued/processing ou nova execução = reconciliada, sem erro. Leitura sem nova execução, ou com falha = mensagem sanitizada. Nenhuma segunda chamada de escrita.
   13. Polling: backoff 5s→60s com fake timers; para no estado terminal, no unmount e na troca de id.
   14. Abrir requisito em breve: sem href e sem handler; false → bloqueado.
   15. V1-14: Análise vira link; Parecer e Apresentação continuam staged.
