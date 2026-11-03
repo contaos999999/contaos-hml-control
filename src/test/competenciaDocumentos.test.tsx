@@ -529,13 +529,12 @@ describe("V1-15 nova versão, abrir e polling", () => {
     const r = montar();
     await pronto();
     expect(leituras()).toHaveLength(1);
-    await act(async () => void vi.advanceTimersByTime(4000));
+    await act(() => vi.advanceTimersByTimeAsync(4000));
     expect(leituras()).toHaveLength(1);
     leituraAtual = leitura({ estado: "complete" });
-    await act(async () => void vi.advanceTimersByTime(1500));
-    console.log("DBG", leituras().length, m.rpc.mock.calls.map(c=>c[0]));
+    await act(() => vi.advanceTimersByTimeAsync(1500));
     await waitFor(() => expect(leituras()).toHaveLength(2));
-    await act(async () => void vi.advanceTimersByTime(120000));
+    await act(() => vi.advanceTimersByTimeAsync(120000));
     expect(leituras()).toHaveLength(2);
     r.unmount();
   });
@@ -544,7 +543,7 @@ describe("V1-15 nova versão, abrir e polling", () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     montar();
     await pronto();
-    await act(async () => void vi.advanceTimersByTime(120000));
+    await act(() => vi.advanceTimersByTimeAsync(120000));
     expect(leituras()).toHaveLength(1);
   });
 });
