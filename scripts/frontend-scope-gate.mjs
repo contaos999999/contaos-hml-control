@@ -93,13 +93,25 @@ if (sourcePaths.length) {
     errors.push("BUILD SEM PLAN ANTERIOR: falta " + PLAN + " no commit de base.");
   }
   if (plan) {
-    if (plan.schema !== "contaos.frontend.plan.v1" || plan.status !== "VALIDADO" || plan.validacao?.resultado !== "PASS") {
+    if (
+      plan.schema !== "contaos.frontend.plan.v1" ||
+      plan.status !== "VALIDADO" ||
+      plan.validacao?.resultado !== "PASS"
+    ) {
       errors.push("BUILD BLOQUEADO: PLAN anterior não foi VALIDADO com todos os gates PASS.");
     }
-    if (!plan.prompt_id || !plan.plano_documento || !Array.isArray(plan.arquivos_permitidos) || !plan.arquivos_permitidos.length) {
+    if (
+      !plan.prompt_id ||
+      !plan.plano_documento ||
+      !Array.isArray(plan.arquivos_permitidos) ||
+      !plan.arquivos_permitidos.length
+    ) {
       errors.push("PLAN anterior sem prompt, documento de evidência ou allowlist fechada.");
     }
-    if (plan.validacao?.aprovacao_humana_exigida === true && plan.validacao?.aprovacao_humana !== "CONCEDIDA") {
+    if (
+      plan.validacao?.aprovacao_humana_exigida === true &&
+      plan.validacao?.aprovacao_humana !== "CONCEDIDA"
+    ) {
       errors.push("PLAN depende de aprovação humana explícita, ainda não concedida.");
     }
     for (const path of sourcePaths) {
@@ -124,4 +136,6 @@ console.log(
     " do aplicativo sob PLAN prevalidado; " +
     (restoredTypes ? "recuperação do blob types.ts certificado" : "nenhuma mudança backend"),
 );
-console.log("LIMITAÇÃO: escopo é verificado no CI pós-push; gates semânticos exigem evidência e Teste C.");
+console.log(
+  "LIMITAÇÃO: escopo é verificado no CI pós-push; gates semânticos exigem evidência e Teste C.",
+);
