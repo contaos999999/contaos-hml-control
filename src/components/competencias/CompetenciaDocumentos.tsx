@@ -848,9 +848,12 @@ function DocumentTable({
         </div>
       )}
       <Paginador rotulo="documentos" off={off} total={l.documentos_total} setOff={setOff} />
-      <Dialog open={!!versaoDe && l.capacidades.pode_nova_versao} onOpenChange={(aberto) => {
-        if (!aberto) setVersaoDe(null);
-      }}>
+      <Dialog
+        open={!!versaoDe && l.capacidades.pode_nova_versao}
+        onOpenChange={(aberto) => {
+          if (!aberto) setVersaoDe(null);
+        }}
+      >
         {versaoDe && l.capacidades.pode_nova_versao ? (
           <NovaVersao
             key={versaoDe.id}
