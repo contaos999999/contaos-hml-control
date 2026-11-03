@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { readFileSync } from "node:fs";
-import type { ReactNode } from "react";
+import { useLayoutEffect, type ReactNode } from "react";
 
 const m = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -353,6 +353,71 @@ describe("V1-15 rota e gate", () => {
     expect(pref).toHaveBeenCalledExactlyOnceWith(U);
     expect(leituras()).toHaveLength(1);
     expect(leituras()[0]?.[1].p_id_competencia).toBe(B);
+  });
+
+  it("A → B: primeiro commit de B não exibe nenhum dado de A e B só lê após Auth/preferência", async () => {
+    const B = "55555555-5555-4555-8555-555555555555";
+    const sessao = { data: { user: { id: U } }, error: null };
+    let resolverB: ((valor: typeof sessao) => void) | undefined;
+    const authB = new Promise<typeof sessao>((resolve) => {
+      resolverB = resolve;
+    });
+    m.rpc.mockImplementation((nome: string, args: Record<string, unknown>) => {
+      if (nome !== "obter_documentos_competencia_v115") return rpcPadrao(nome);
+      if (args["p_id_competencia"] === ID) return ok(leitura());
+      const b = leitura({ estado: "complete", docs: [{ ...doc(), titulo: "Documento B" }] });
+      return ok({
+        ...b,
+        competencia: { ...b.competencia, id: B, competencia_referencia: "2026-04-01" },
+      });
+    });
+    type Foto = { id: string; docA: boolean; resumo: boolean; compA: boolean };
+    const commits: Foto[] = [];
+    function Sonda({ id }: { id: string }) {
+      useLayoutEffect(() => {
+        const texto = document.body.textContent ?? "";
+        commits.push({
+          id,
+          docA: texto.includes("Nota de março"),
+          resumo: !!document.querySelector('[data-testid="resumo-documental"]'),
+          compA: texto.includes("03/2026"),
+        });
+      });
+      return null;
+    }
+    const comSonda = (id: string) => (
+      <>
+        <CompetenciaDocumentos id={id} />
+        <Sonda id={id} />
+      </>
+    );
+    const pref = vi.spyOn(preferenciaDados, "obterPreferenciaOrganizacao");
+    const tela = render(comSonda(ID));
+    await pronto();
+    expect(screen.getByText("Nota de março")).toBeInTheDocument();
+    const prefAntes = pref.mock.calls.length;
+    m.getUser.mockReturnValueOnce(authB);
+    tela.rerender(comSonda(B));
+    const primeiroB = commits.find((c) => c.id === B);
+    expect(primeiroB).toEqual({ id: B, docA: false, resumo: false, compA: false });
+    await waitFor(() => expect(m.getUser).toHaveBeenCalledTimes(2));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(commits.filter((c) => c.id === B).every((c) => !c.docA && !c.resumo && !c.compA)).toBe(
+      true,
+    );
+    expect(pref).toHaveBeenCalledTimes(prefAntes);
+    expect(leituras().filter((c) => c[1].p_id_competencia === B)).toHaveLength(0);
+    expect(screen.getByRole("status")).toHaveTextContent(/carregando/i);
+    await act(async () => {
+      resolverB?.(sessao);
+    });
+    await screen.findByText("Documento B");
+    expect(screen.queryByText("Nota de março")).toBeNull();
+    expect(screen.getByText("Competência 04/2026")).toBeInTheDocument();
+    expect(screen.getByTestId("resumo-documental")).toHaveAttribute("data-estado", "complete");
+    expect(leituras().filter((c) => c[1].p_id_competencia === B)).toHaveLength(1);
   });
 
   it("A → inválida → B: autentica B novamente e ignora resposta tardia de A", async () => {
