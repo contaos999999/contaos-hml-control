@@ -1,128 +1,115 @@
-# PROMPT 31 / V1-10 — Central de Documentos do Contrato — PLAN canônico
+# PROMPT 32 / V1-11 — Detalhe e versões de documento — PLAN
 
-Base funcional: `e10f7973260df0c455bb66baa091e5c9b3124efe` (V1-09 certificado). Drift conhecido no main: só `.lovable/plan.md` e `types.ts` (+137, plataforma). HML somente; PROD intocado; nenhum backend alterado.
+Baseline funcional: `e2551e5` (V1-10 certificado). `types.ts` deve ficar byte a byte igual a `e10f797`. HML `gklhhhyosgasnyoxlrui`, só consumo. PROD intocado. V1-12 fora do escopo.
 
-## 1. Inventário backend HML (lido neste turno)
+## 1. Fatos do backend confirmados agora (somente leitura)
 
-Tabelas (RLS SELECT authenticated; nenhuma escrita direta):
-- `documentos_contrato`: id, id_organizacao, id_contrato, tipo, titulo, categoria, situacao (`ativo|inativo|substituido`), versao_atual, versao_registro, vigencia_inicio, vigencia_fim, observacoes, criado_em, atualizado_em. CHECK: fim exige início e fim ≥ início.
-- `versoes_documento`: id, id_documento_contrato, numero_versao, id_arquivo, hash, motivo_substituicao, metadados_extraidos, enviado_por, criado_em.
-- `arquivos`: id, nome_original, mime, tamanho, sha256, status_seguranca (`pendente|aprovado|quarentena|bloqueado`), origem, criado_por, criado_em (bucket/path nunca exibidos).
-- `processamentos_documento`: id_versao_documento, etapa, status (`pendente|processando|concluido|falhou|cancelado`), tentativas, erro_codigo, iniciado_em, concluido_em.
-- `sugestoes_extracao_documento`: id_versao_documento, tipo (`classificacao|clausula|obrigacao|prazo|documento_exigido|restricao|metadado|regra_candidata`), categoria_sugerida, id_requisito_sugerido, conteudo, pagina, trecho_fonte, confianca (0–1), status (`pendente|aprovada|rejeitada|substituida`), vigencia_inicio, vigencia_fim, revisado_por, revisado_em, metadados.
-- `paginas_documento`: id_versao_documento, numero_pagina, texto_extraido, hash_texto.
-- `itens_lista` (somente para resolver nome do item sugerido em V1-DOC-002, leitura por id).
-- `configuracao_upload`: limiar resumível 100 MB, máximo 500 MB, MIMEs/extensões permitidos (pré-validação UX; Edge é autoridade).
+- RLS SELECT `privado.usuario_tem_acesso_contrato(id_contrato)` em `versoes_documento`, `processamentos_documento`, `paginas_documento`, `fragmentos_documento` e `sugestoes_extracao_documento`. O papel `authenticated` tem SELECT nessas tabelas e também em `arquivos` e `requisitos_competencia`.
+- `definir_vigencia_sugestao_extracao(p_id_sugestao uuid, p_vigencia_inicio date, p_vigencia_fim date) → jsonb`. Wrapper SQL invoker → `privado..._v111` SECURITY DEFINER com `FOR UPDATE`.
+  - Códigos: PT404 (não encontrada), 42501 (sem acesso ou perfil), PT409 (já revisada), PT400 (início ausente, ou fim antes do início).
+  - Retorno: `{status: 'atualizada'|'sem_alteracao', vigencia_inicio, vigencia_fim}`.
+  - EXECUTE: authenticated sim, anon não.
+- `revisar_sugestao_extracao(p_id_sugestao uuid, p_aprovar boolean, p_conteudo_revisado text, p_categoria_revisada text, p_id_requisito_revisado uuid) → jsonb`. Wrapper → `privado.revisar_sugestao_extracao` com `FOR UPDATE`.
+  - Retorno: `{status: 'rejeitada'|'aprovada', id_regra_rascunho?, mensagem}`.
+  - Material: insere em `regras_conformidade` com `situacao='rascunho'` e `efeito_portao=false`. Metadado: mescla `metadados->'campos'` na versão. Classificação: grava a categoria no documento.
+  - EXECUTE: authenticated sim, anon não.
+- **Divergência registrada (não é lacuna):** as exceções de `revisar_sugestao_extracao` não definem `errcode` (vêm como P0001), apesar de o enunciado citar PT404/42501/PT409. Mitigação na interface:
+  - qualquer erro de revisão faz refetch da sugestão antes de liberar uma nova tentativa;
+  - a mensagem exibida sai de uma lista fixa em PT-BR, comparando o texto do backend com as quatro frases conhecidas e caindo numa mensagem genérica;
+  - texto bruto nunca é exibido.
+- `fragmentos_documento.embedding` é legível, mas nunca será selecionado: colunas sempre explícitas.
 
-RPCs (todas SECURITY INVOKER, execute só authenticated — verificado):
-- `confirmar_upload_arquivo(p_id_organizacao,p_id_contrato,p_path,p_nome_original,p_mime,p_tamanho,p_sha256,p_origem) -> uuid`
-- `criar_documento_contrato_completo(p_id_contrato,p_tipo,p_titulo,p_categoria,p_vigencia_inicio,p_vigencia_fim,p_observacoes,p_id_arquivo,p_chave_idempotencia) -> jsonb` — caminho usado para criar documento-base (substitui o uso de `criar_documento_contrato`, que não recebe vigência/observações e NÃO será chamado).
-- `adicionar_versao_documento_contrato(p_id_documento,p_id_arquivo,p_motivo,p_chave_idempotencia) -> jsonb`
-- `definir_vigencia_sugestao_extracao(p_id_sugestao,p_vigencia_inicio,p_vigencia_fim) -> jsonb`
-- `revisar_sugestao_extracao(p_id_sugestao,p_aprovar,p_conteudo_revisado?,p_categoria_revisada?,p_id_requisito_revisado?) -> jsonb`
+## 2. Matriz requisito → dado/RPC → componente → teste
 
-Edges: `storage-sign-upload` (JWT; devolve bucket/path/token/signed_url/usar_upload_resumivel) e `storage-sign-download` (JWT; signed_url temporária; Storage nega quarentena/bloqueado). `storage.objects` só tem policy SELECT; não há INSERT para authenticated (upload só por token assinado).
-
-Formato do jsonb de retorno das RPCs: wrappers delegam a funções privadas; as chaves serão lidas no BUILD por inspeção read-only (`pg_get_functiondef` das privadas) antes do código, e o adaptador exige-as estritamente (formato diferente = erro, sem palpite).
-
-## 2. Matriz requisito → UI → backend → teste
-
-| Requisito | Comportamento UI | Backend real | Teste |
+| Requisito | Dado / RPC | Componente | Teste (`documentoDetalhe.test.tsx`) |
 |---|---|---|---|
-| V1-CON-001 documentos-base com categoria, vigência, versão, observações | MetadataForm: tipo (contrato, proposta, aditivo, legislação, portaria, decreto, resolução, manual, lista de verificação, instrução, outro), título, categoria, vigência início/fim (DD/MM/AAAA), observações; lista mostra versão atual, vigência e observações | `criar_documento_contrato_completo`; leitura `documentos_contrato` | T-criar-completo (args exatos), T-vigencia-fim-sem-inicio (UX bloqueia + PT400 backend exibido), T-fim-antes-inicio, T-lista-colunas |
-| V1-CON-002 regra extraída com início e fim de vigência | V1-10: indicador por documento "N sugestões sem vigência" (contagem server-side `head:true`), somente leitura. Definir vigência e revisar ficam em V1-11 | colunas vigencia_* de `sugestoes_extracao_documento` | T-indicador-sem-vigencia; edição testada em V1-11 |
-| V1-CON-004 IA sugere cláusulas, obrigações, prazos, documentos exigidos, restrições | V1-10: indicador "N sugestões de IA pendentes de revisão humana" (contagem server-side por documento, rótulo IA); sem lista nem decisão. Painel completo e revisão em V1-11 | `sugestoes_extracao_documento` (status=pendente) | T-indicador-ia-pendente, T-ia-sem-acao-na-central |
-| V1-CON-005 vínculo documento/página/trecho | V1-10 não cria nem aprova regra; nenhuma ação de regra nesta tela. Exibição de página/trecho e bloqueio sem fonte ficam em V1-11; garantia material no backend (trigger em `regras_conformidade`) | colunas pagina/trecho_fonte; trigger | T-sem-acao-de-regra (nenhuma chamada a `revisar_sugestao_extracao`/`definir_vigencia_sugestao_extracao`) |
-| V1-DOC-001 anexação múltipla, formatos, limites, segurança | Dropzone `multiple`; fila com progresso por arquivo; rejeição PT-BR por MIME/extensão/tamanho; Storage privado por signed upload; status de segurança visível | Edge upload + `confirmar_upload_arquivo`; `configuracao_upload` | T-multiplo, T-mime, T-extensao, T-tamanho, T-edge-recusa |
-| V1-DOC-002 classificação automática (categoria e item) | V1-10: coluna "Classificação (IA)" com a categoria sugerida de maior confiança e % (rótulo IA, separada da categoria informada), ou "Classificação pendente"; aceitar/ajustar fica em V1-11 | `sugestoes_extracao_documento` tipo=classificacao | T-classificacao-coluna, T-classificacao-pendente, T-separacao-humano-ia |
-| V1-DOC-003 versionamento sem apagar anterior; motivo quando exigido | V1-10: ação "Nova versão" por linha (upload + motivo) → RPC; recusa do backend por motivo exibida em PT-BR; coluna versão atual. Histórico completo das versões fica em V1-11 | `adicionar_versao_documento_contrato` | T-versao, T-motivo-recusado, T-replay-versao |
-| V1-DOC-004 metadados extraídos por tipo | V1-10: indicador "Metadados extraídos: disponíveis / pendentes" da versão atual; exibição completa formatada em V1-11 | `versoes_documento.metadados_extraidos` (só presença) | T-indicador-metadados |
-| V1-DOC-005 hash, data, usuário, origem, versão | V1-10: SHA-256 calculado no navegador e enviado na confirmação; linha mostra hash abreviado (tooltip completo), data/hora BR e nº da versão atual. Cadeia completa por versão em V1-11 | `confirmar_upload_arquivo`; `arquivos`/`versoes_documento` | T-hash-enviado, T-hash-linha |
-| NFR-003 transferência direta | Bytes direto navegador→Storage; download por signed_url sob clique | Edges | T-sem-proxy, T-download-edge |
-| NFR-004 multipart/retry/retomada | TUS oficial em blocos de 6 MB quando `usar_upload_resumivel=true` | Storage TUS + token Edge | T-resumivel-6mb, T-retomada-offset, T-retry |
-| NFR-005 assincronicidade | Tela só cria job via RPC e acompanha status com backoff | `processamentos_documento` | T-proc-estados, T-backoff |
-| NFR-007 concorrência | PT409/stale → bloqueia, "Recarregar" invalida intenção (padrão V1-08) | locks nas RPCs | T-conflito-409 |
-| NFR-008 idempotência | Chave por intenção; retry técnico mesma chave; nova após sucesso; retry reusa id_arquivo | p_chave_idempotencia | T-replay-criacao, T-retry-upload, T-double-click |
-| NFR-009 paginação | 25 por página em documentos, versões, sugestões; `range`+`count exact`; filtros no servidor | PostgREST | T-range(0,24), T-pagina-2, T-filtro-servidor |
-| NFR-010 observabilidade | Erros classificados (código, etapa, chave) em "Detalhes técnicos", sem path/token/URL; métricas de produção são da plataforma (PROD fora da fase) | auditoria nas RPCs | T-erro-sem-segredo |
-| BRAND-01 | `ContaOSMarca`, tokens existentes, dark mode herdado | — | T-marca; Playwright claro/escuro |
-| Zero-Drift | diff restrito; `types.ts` = e10f797 | — | gate diff |
+| Gate V1-11 | UUIDs → `getUser` → preferência → `obterContrato` → `documentos_contrato` `.eq(id).eq(id_contrato)` | Rota + `DocumentoDetalhe` | sem sessão, sem organização, UUID inválido, 403 contrato, documento de outro contrato = 404 sem consultas de detalhe |
+| V1-DOC-001 / NFR-003 | `arquivos.status_seguranca` + Edge `storage-sign-download({id_arquivo})` | Painel Versão → Baixar | aprovado abre URL https; pendente, quarentena e bloqueado desabilitam com texto; nada de bucket/path no DOM |
+| V1-DOC-002 | sugestões `tipo='classificacao'` + `requisitos_competencia` `.in('id')` | Sugestões | categoria + "Item sugerido: código — descrição" + confiança em %; não resolvido = "indisponível" |
+| V1-DOC-003 | `versoes_documento` paginado, `numero_versao DESC, id DESC`, `motivo_substituicao` | Histórico de versões | página 20, atual marcada "Versão atual", motivo visível, selecionar não chama RPC |
+| V1-DOC-004 | `versoes_documento.metadados_extraidos` | Metadados | renderização chave/valor como texto, rótulos PT-BR para chaves conhecidas, objetos aninhados recursivos, ausente = "Sem metadados extraídos" |
+| V1-DOC-005 | `hash`, `criado_em`, `enviado_por`, `arquivos.{sha256,origem,nome,mime,tamanho,criado_por}` | Cadeia de evidência | "Você" quando igual a `auth.uid()`, caso contrário UUID abreviado + tooltip; `hash≠sha256` → alerta "Inconsistência entre hash da versão e do arquivo", sem afirmar causa |
+| V1-CON-002 | `vigencia_inicio/fim` + `definir_vigencia_sugestao_extracao` | Diálogo Definir vigência | PT400 início/fim, PT409 → refetch, `sem_alteracao`, `atualizada` |
+| V1-CON-004 | sugestões de todos os tipos | Sugestões (selo "Sugestão de IA" separado de "Decisão humana: aprovada/rejeitada por … em …") | lista os tipos clausula, obrigacao, prazo, documento_exigido, restricao, regra_candidata, metadado e classificacao |
+| V1-CON-005 | `pagina`, `trecho_fonte` | Bloco "Fonte" somente leitura | material sem página ou trecho: aprovar bloqueado com motivo; sem vigência: aprovar bloqueado + "Definir vigência" |
+| NFR-005 | `processamentos_documento` da versão selecionada, `criado_em DESC, id DESC`, página 10 | Processamento | status texto + ícone; polling só pendente/processando, backoff 5/10/20/40/60 s, pausa com a aba oculta, botão Atualizar |
+| NFR-007 / NFR-008 | duas RPCs | Diálogos | duplo clique = 1 chamada; erro ou PT409 → refetch antes de reabilitar; segunda revisão após `status≠pendente` não é oferecida |
+| NFR-009 | todas as listas com `.range` + `count:'exact'` | todas | versões 20, processamentos 10, páginas 10, fragmentos 20, sugestões 20; arquivos e requisitos com um `.in()` por página; nenhuma consulta por item |
+| NFR-010 | mapa de erros | todas | erros PT-BR, sem token/path/stack; texto extraído renderizado como texto puro |
+| BRAND-01 | `ContaOSMarca`, tokens, shadcn | todas | 1440/1280/768/390, claro e escuro |
 
-## 3. Fluxo V1-10
+## 3. Consultas, RPCs e Edge (colunas explícitas)
 
-```text
-gate: getUser -> /login | org -> /selecionar-organizacao | obterContrato+classificador -> 403/404 sem outra consulta
-lista: documentos_contrato .eq(id_contrato) [ilike titulo][eq tipo][eq categoria][eq situacao]
-       order atualizado_em desc, id desc; range 25; count exact
-       + versão atual / arquivo / processamento via .in() (1 query cada)
-upload (por arquivo da fila):
-  validar UX -> storage-sign-upload
-    false: storage.from(bucket).uploadToSignedUrl(path, token, file)
-    true : TUS 1.0 via fetch (sem pacote novo) em
-           https://gklhhhyosgasnyoxlrui.storage.supabase.co/storage/v1/upload/resumable
-           headers: Tus-Resumable, Upload-Length, Upload-Metadata(bucketName, objectName=path, contentType),
-                    x-signature=<token do Edge>, apikey publishable; PATCH 6 MB; HEAD retoma
-  -> sha256 -> confirmar_upload_arquivo -> id_arquivo
-  -> novo: criar_documento_contrato_completo | nova versão: adicionar_versao_documento_contrato
-processamento: refetch só com pendente/processando; backoff 5,10,20,40,60 s; pausa com aba oculta
-indicadores por linha (contagens server-side, head:true, só ids da página): sugestões IA pendentes,
-  sugestões sem vigência, classificação de maior confiança, presença de metadados
-detalhe: "Abrir detalhe" = item V1-11 marcado "Em breve" (sem rota nova, sem drawer)
-download: botão só se status_seguranca=aprovado -> storage-sign-download -> abre https signed_url
-```
+- `documentos_contrato`: `id,id_contrato,tipo,titulo,categoria,situacao,versao_atual,versao_registro,vigencia_inicio,vigencia_fim,observacoes,criado_em,atualizado_em` `.eq('id',idDoc).eq('id_contrato',id).maybeSingle()`.
+- `versoes_documento`: `id,id_documento_contrato,numero_versao,id_arquivo,hash,motivo_substituicao,metadados_extraidos,enviado_por,criado_em` `.eq('id_documento_contrato',idDoc)`, ordenada, `.range` 20, count exact.
+- `arquivos`: `id,nome_original,mime,tamanho,sha256,status_seguranca,origem,criado_por,criado_em` `.in('id', ids da página)`.
+- `processamentos_documento`: `id,id_versao_documento,etapa,status,tentativas,erro_codigo,iniciado_em,concluido_em,criado_em,atualizado_em` `.eq('id_versao_documento',v)`, `.range` 10. `erro_detalhe` e `resultado` não entram na interface; só o `erro_codigo` mapeado para PT-BR (NFR-010).
+- `paginas_documento`: `id,id_versao_documento,numero_pagina,texto_extraido,hash_texto,criado_em` `.eq(v)`, `numero_pagina ASC`, `.range` 10.
+- `fragmentos_documento`: `id,id_versao_documento,pagina_inicio,pagina_fim,indice_fragmento,texto,criado_em` `.eq(v)`, filtro opcional `.lte('pagina_inicio',p).gte('pagina_fim',p)`, `indice_fragmento ASC`, `.range` 20.
+- `sugestoes_extracao_documento`: `id,id_versao_documento,tipo,categoria_sugerida,id_requisito_sugerido,conteudo,pagina,trecho_fonte,confianca,status,revisado_por,revisado_em,metadados,criado_em,vigencia_inicio,vigencia_fim` `.eq(v)`, filtros `.eq('status')` e `.eq('tipo')` no servidor, `criado_em DESC, id DESC`, `.range` 20.
+- `requisitos_competencia`: `id,codigo,descricao,categoria,origem_tipo,origem_id` `.in('id', ids da página)`.
+- RPCs `definir_vigencia_sugestao_extracao` e `revisar_sugestao_extracao`, tipadas localmente com o mesmo padrão de fronteira já documentado em V1-10, porque não constam em `types.ts`.
+- Edge `storage-sign-download` reutilizada de `documentosDados.ts` (sem duplicar).
 
-Se o Storage HML recusar `x-signature` no TUS, declaro LACUNA, paro só esse caminho e mantenho bloqueio PT-BR — sem proxy, sem policy nova.
+## 4. Fluxos
 
-## 4. Estados UI
+- **Gate:** parâmetros inválidos → não encontrado, sem consultas. Sem sessão → `/login`. Sem organização → `/selecionar-organizacao`. Contrato 403/404 → mensagem sanitizada. Documento não encontrado no contrato → "Documento não encontrado ou sem acesso" (mesma mensagem para inexistente e outro tenant).
+- **Seleção de versão:** padrão = versão atual (maior `numero_versao`); search param `versao` opcional. Trocar a versão só muda as consultas por versão.
+- **Download:** habilitado só com `status_seguranca='aprovado'`. Chama a Edge e abre apenas URL https; erro em PT-BR.
+- **Definir vigência:** diálogo Radix com início obrigatório e fim opcional, validação local de UX; chamada única com botão bloqueado. `atualizada` ou `sem_alteracao` → aviso em `aria-live` + refetch. PT409 → refetch + "já revisada".
+- **Aprovar/rejeitar:** só para `status='pendente'`.
+  - Classificação: campo opcional de categoria revisada e conteúdo revisado (parâmetros reais). Requisito preservado (`p_id_requisito_revisado=null`); troca de requisito fica fora, por não haver busca server-side delimitada.
+  - Metadado: mostra `metadados.campos` somente leitura; sem editor granular.
+  - Material: exige página, trecho e vigência. O sucesso mostra a `mensagem` do backend ("…gerou uma regra em rascunho para revisão material"), nunca "ativada".
+  - Rejeição mostra a mensagem do backend da lista fixa.
+  - Qualquer erro → refetch da sugestão antes de reabilitar.
+- **Confiança:** só a porcentagem, sem rótulo baixo/alto (não há threshold oficial).
+- **Central V1-10:** o botão desabilitado vira `Link` para a rota de detalhe, levando a busca, os filtros e a página atuais em search params; o detalhe volta com os mesmos parâmetros.
 
-loading (skeleton), empty (com ação enviar), error + retry, denied/403, not found/404, uploading (progressbar com `aria-valuenow`), processing, quarantine/blocked ("Bloqueado pela verificação de segurança — download e análise indisponíveis"; metadados visíveis), success (toast + `aria-live`), conflict/stale (PT409, recarga segura), validação PT-BR. Status por texto+ícone+borda; tooltips em segurança, processamento, confiança, hash, vigência (hover+foco; toque no mobile).
-
-## 5. V1-10 × V1-11 × V1-12
-
-- V1-10 Central de documentos: lista/filtros/paginação, upload múltiplo, criação de documento-base completo, nova versão, status de segurança e processamento, indicadores somente leitura de IA/vigência/classificação/metadados, download.
-- V1-11 Detalhe/versões de documento (NÃO implementado aqui): histórico de versões, cadeia de evidência completa, metadados formatados, painel de extração com página/trecho, definir vigência, revisão humana. Na V1-10 aparece só "Abrir detalhe — Em breve" desabilitado com tooltip; quando V1-11 existir, vira link.
-- V1-12 Competências: segue "Em breve" no nav, intocado.
-- V1-10 não chama `definir_vigencia_sugestao_extracao` nem `revisar_sugestao_extracao`; ficam inventariadas para V1-11.
-
-## 6. Arquivos
+## 5. Arquivos
 
 Criar:
-- `src/routes/contratos_.$id_.documentos.tsx` — rota `ssr:false`, head PT-BR, UUID.
-- `src/components/contratos/DocumentosContrato.tsx` — gate, layout, DocumentTable (com indicadores), FilterBar, Pagination, UploadDropzone/UploadProgress, ProcessingStatus, DownloadAction, MetadataForm (novo documento / nova versão). Sem VersionDrawer nem painel de extração (V1-11).
-- `src/lib/contratos/documentosDados.ts` — consultas, adaptadores, upload/TUS, RPCs tipadas localmente, erros, backoff.
-- `src/test/documentosContrato.test.tsx`.
-- `docs/frontend/lovable/PROMPT-31-V1-10-documentos.md`.
+- `src/routes/contratos_.$id_.documentos_.$idDocumento.tsx` (padrão un-nested já usado: `contratos_.$id_.*`)
+- `src/components/contratos/DocumentoDetalhe.tsx`
+- `src/lib/contratos/documentoDetalheDados.ts`
+- `src/test/documentoDetalhe.test.tsx`
+- `docs/frontend/lovable/PROMPT-32-V1-11-detalhe-documento.md`
 
-Alterar (só o link "Documentos", retirando o "Em breve" correspondente): `VisaoGeralContrato.tsx`, `BaseNormativaContrato.tsx`, `OrcamentoContrato.tsx`, `RegrasContrato.tsx`. Testes antigos apenas se assertarem "Documentos — Em breve", alteração restrita à asserção e justificada no doc.
+Modificar:
+- `src/components/contratos/DocumentosContrato.tsx`: só o link de detalhe e a leitura e escrita dos search params da Central.
+- `src/routes/contratos_.$id_.documentos.tsx`: só `validateSearch` opcional, se necessário para o retorno.
+- `src/test/documentosContrato.test.tsx`: só a asserção "Abrir detalhe — Em breve".
+- `src/routeTree.gen.ts`: automático.
 
-## 7. Proibidos
+Proibidos: `supabase/**`, package/lock, `src/integrations/supabase/types.ts` (restaurar de `e10f797` se regenerado), `client.ts`, `src/styles.css`, `src/components/ui/**`, `public/brand/**`, `ContaOSMarca.tsx`, `AGENTS.md`, outras telas, roadmap.
 
-`src/integrations/supabase/types.ts` (resultado final = e10f797), `client.ts`, `supabase/**`, migrations, RLS, grants, Auth, Edges, secrets, `package.json`/lock, `src/styles.css`, `src/components/ui/**`, `public/brand/**`, `ContaOSMarca.tsx`, `AGENTS.md`, `routeTree.gen.ts` (auto), qualquer outra rota/tela, `criar_documento_contrato` (substituída pela completa), escrita direta em tabelas, cálculo de portão no React.
+## 6. TDD e verificação no BUILD
 
-## 8. Tipos sem tocar `types.ts`
+1. Restaurar `types.ts` de `e10f797`.
+2. Criar o teste primeiro, rodar e registrar o RED (módulos ausentes).
+3. GREEN mínimo.
+4. Casos de teste:
+   - gate e cross-tenant;
+   - paginação e ausência de N+1, contando as consultas;
+   - hash divergente;
+   - download aprovado, quarentena e bloqueado;
+   - metadados e texto puro;
+   - classificação + item;
+   - material bloqueado por fonte e vigência;
+   - vigência PT400, PT409, `sem_alteracao` e `atualizada`;
+   - aprovar e rejeitar, duplo clique e refetch após erro P0001;
+   - mensagem de rascunho;
+   - ausência total de `.insert/.update/.delete/.upsert`.
+5. Teste focado, suíte, `npx tsc --noEmit`, build, lint (novos com 0 erros; global ≤ 8.962/9), scan estático, Security Scan, navegador em 4 larguras claro e escuro, diff restrito e `types.ts` com diff zero. Teste C em turno separado.
 
-`documentosDados.ts` declara interfaces locais de argumentos/retorno das RPCs novas e um único helper `rpcDocumentos(nome, args)` com cast mínimo `as unknown as` concentrado em um ponto (padrão já usado em V1-09), documentado; leituras usam `.select` com colunas explícitas e adaptadores que validam campos (sem `as any`).
+## 7. Riscos e mitigação
 
-## 9. Drift
+- Erros de `revisar_sugestao_extracao` sem SQLSTATE: refetch obrigatório + mensagens de lista fixa (seção 1).
+- `types.ts` regenerado pela plataforma: restaurar e provar diff zero antes de encerrar.
+- Texto extraído grande: paginação de 10 páginas e corte visual com "Mostrar mais" local; texto sempre como texto puro.
+- Nomes de terceiros indisponíveis (RLS self-only em `usuarios`): usar UUID técnico, sem inventar nome.
+- Sessão real indisponível no sandbox: browser com fixture interceptada; RLS real registrada como limitação.
 
-BUILD passo 0: `git show e10f797:src/integrations/supabase/types.ts > src/integrations/supabase/types.ts`. Final: `git diff e10f797 -- src/integrations/supabase/types.ts` = 0 bytes (repetido antes de reportar SHA).
+## PLAN: APROVÁVEL — V1-11 100% COBERTO
 
-## 10. TDD e verificação
-
-1. RED: teste novo importando módulos inexistentes → falha registrada.
-2. GREEN mínimo: dados → componente → rota → navs.
-3. Negativos obrigatórios: sem sessão, sem organização, 403, 404, tenant (lista só com `id_contrato` do gate; nenhuma consulta sem ele), MIME/tamanho inseguro, quarentena/bloqueado, download negado pelo Edge, RPC inválida (PT400/42501), idempotência/double click, vigência do documento ausente/inválida (fim sem início, fim < início), conflito/stale, e garantia de que a Central não oferece ação sobre sugestão sem página/trecho ou sem vigência (nenhuma ação de regra na V1-10; validação de fonte/vigência das sugestões testada em V1-11).
-4. Comandos: `bunx vitest run src/test/documentosContrato.test.tsx`; `bunx vitest run`; `npx tsc --noEmit`; build em cópia temporária; eslint global (baseline 8.962, 0 novos) e 0 por arquivo novo; scan rg (service_role, secret, `as any`, `.insert/.update/.delete/.upsert(`, Edges não oficiais, bucket público); Security Scan; Playwright 1440/1280/768/390 claro e escuro com fixture; `git diff --stat e10f797` restrito à lista.
-5. Teste C em turno separado, read-only, árvore imutável.
-
-## 11. Riscos
-
-- R1 TUS assinado depende de `x-signature` aceito pelo Storage HML; sem sessão real a prova fica LIMITADA.
-- R2 Sem sessão real (`external_unmanaged`): RLS/RPC reais só por fixture; registrado.
-- R3 SHA-256 de até 500 MB em memória no navegador; dentro do limite configurado.
-- R4 Chaves do jsonb das RPCs confirmadas por leitura no BUILD.
-- R5 Filtro por status de segurança só se join `!inner` funcionar; senão omitido e registrado (nunca no cliente).
-
-Todos os requisitos têm contrato backend existente e verificado.
-
-PLAN: APROVÁVEL
+Não há lacuna de backend: todas as leituras e as duas RPCs existem com RLS, grants e locks. A única divergência (exceções sem SQLSTATE em `revisar_sugestao_extracao`) é tratada só na interface, sem afetar segurança ou idempotência, já que o backend bloqueia `status≠pendente` com `FOR UPDATE`.
