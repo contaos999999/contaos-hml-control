@@ -188,7 +188,7 @@ describe("V1-13 perfil (UX, backend é autoridade)", () => {
     await preencher();
     expect(m.chamadas.map((c) => c.tabela)).toEqual(["contratos", "vinculos_usuarios"]);
     const v = de("vinculos_usuarios")[0]!;
-    expect(op(v, "select")[0][0]).toBe("perfil");
+    expect(op(v, "select")[0]![0]).toBe("perfil");
     expect(op(v, "eq")).toEqual([
       ["id_usuario", U],
       ["id_organizacao", A],
@@ -313,7 +313,7 @@ describe("V1-13 comando criar_competencia", () => {
     expect(m.rpc).toHaveBeenCalledTimes(1);
     const c = de("competencias");
     expect(c).toHaveLength(1);
-    expect(op(c[0]!, "select")[0][0]).toBe("id");
+    expect(op(c[0]!, "select")[0]![0]).toBe("id");
     expect(op(c[0]!, "eq")).toEqual([
       ["id_contrato", K1],
       ["competencia_referencia", "2026-11-01"],
