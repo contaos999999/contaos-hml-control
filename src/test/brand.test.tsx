@@ -11,6 +11,10 @@ const ler = (p: string) => readFileSync(resolve(raiz, p), "utf8");
 
 // SHA-256 do MANIFEST_SHA256_v4_1_BRAND_v1_0.json oficial.
 const ASSETS_OFICIAIS: Record<string, string> = {
+  "public/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg":
+    "bd924993afbb620647d1053614688efea1f157523cbf41b3c36a368b0d0c976c",
+  "public/brand/ContaOS_Simbolo_Navy.svg":
+    "5773eb79ade28369b1efd457bf3b69b70f79a9ede87a05aa5e622f44d56e3252",
   "public/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg":
     "099518bc6ff6b83d4380071b99410dbbbdb43805790c7ad6b0437ba16ae14c36",
   "public/brand/ContaOS_Simbolo_Branco.svg":
@@ -63,6 +67,28 @@ describe("BRAND-01 — componente de marca", () => {
     expect(simbolo).not.toBeNull();
     expect(simbolo?.getAttribute("alt")).toBe("");
     expect(container.textContent).toContain("ContaOS");
+  });
+});
+
+describe("BRAND-01 — contraste no tema escuro", () => {
+  it("usa as variantes navy oficiais para superfícies claras e classe dark", () => {
+    const { container } = render(<ContaOSMarca />);
+    const logoNavy = container.querySelector(
+      'img[src="/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg"]',
+    );
+    const simboloNavy = container.querySelector(
+      'img[src="/brand/ContaOS_Simbolo_Navy.svg"]',
+    );
+    expect(logoNavy).not.toBeNull();
+    expect(logoNavy?.getAttribute("alt")).toBe("ContaOS");
+    expect(logoNavy?.getAttribute("class")).toContain("dark:block");
+    expect(simboloNavy).not.toBeNull();
+    expect(simboloNavy?.getAttribute("alt")).toBe("");
+    expect(simboloNavy?.getAttribute("class")).toContain("dark:block");
+    const logoBranco = container.querySelector(
+      'img[src="/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg"]',
+    );
+    expect(logoBranco?.getAttribute("class")).toContain("dark:hidden");
   });
 });
 
