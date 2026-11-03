@@ -302,7 +302,7 @@ function Pagina({ c, ctx }: { c: ContratoDetalhe; ctx: Ctx }) {
   const editavel = versao?.situacao === "rascunho";
   const arqVersao = arqDe(versao);
   const docAprovado = arqVersao?.status_seguranca === "aprovado";
-  const qtdRubricas = rubricas.data?.total ?? 0;
+  const qtdRubricas = Math.max(rubricas.data?.total ?? 0, rubricas.data?.itens.length ?? 0);
 
   return (
     <>
