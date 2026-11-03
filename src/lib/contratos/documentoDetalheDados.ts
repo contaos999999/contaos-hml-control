@@ -142,10 +142,9 @@ export async function obterDocumento(
     .from("documentos_contrato")
     .select(COLUNAS_DOCUMENTO)
     .eq("id", idDocumento)
-    .eq("id_contrato", contrato)
-    .maybeSingle();
+    .eq("id_contrato", contrato);
   if (signal) q = q.abortSignal(signal);
-  const r = await executar(q, signal);
+  const r = await executar(q.maybeSingle(), signal);
   const d = r.data as Documento | null;
   if (!d || d.id.toLowerCase() !== idDocumento || d.id_contrato.toLowerCase() !== contrato)
     throw new ErroDoc("nao_encontrado");
