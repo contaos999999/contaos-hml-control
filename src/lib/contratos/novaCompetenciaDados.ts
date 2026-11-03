@@ -15,7 +15,8 @@ export const PERFIS_CRIAR_COMPETENCIA = [
 export const perfilPodeCriar = (p: string | null) =>
   !!p && (PERFIS_CRIAR_COMPETENCIA as readonly string[]).includes(p);
 
-export type TipoErroNovaCompetencia = "duplicada" | "sem_permissao" | "ambiguo" | "erro" | "validacao";
+export type TipoErroNovaCompetencia =
+  "duplicada" | "sem_permissao" | "ambiguo" | "erro" | "validacao";
 export class ErroNovaCompetencia extends Error {
   constructor(public tipo: TipoErroNovaCompetencia) {
     super(tipo);
@@ -34,7 +35,10 @@ export function classificarErroNovaCompetencia(
   return "erro";
 }
 
-export async function lerPerfilAtivo(idUsuario: string, idOrganizacao: string): Promise<string | null> {
+export async function lerPerfilAtivo(
+  idUsuario: string,
+  idOrganizacao: string,
+): Promise<string | null> {
   const { data, error } = await supabase
     .from("vinculos_usuarios")
     .select("perfil")

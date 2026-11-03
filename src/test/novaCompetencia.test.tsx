@@ -194,12 +194,15 @@ describe("V1-13 perfil (UX, backend é autoridade)", () => {
       ["id_organizacao", A],
     ]);
   });
-  it.each(["administrador", "gestor_contrato", "prestacao_contas"])("%s vê formulário", async (p) => {
-    cenario(p);
-    montar();
-    await preencher();
-    expect(criar()).toBeEnabled();
-  });
+  it.each(["administrador", "gestor_contrato", "prestacao_contas"])(
+    "%s vê formulário",
+    async (p) => {
+      cenario(p);
+      montar();
+      await preencher();
+      expect(criar()).toBeEnabled();
+    },
+  );
   it.each(["auditor", "leitor", null])("%s recebe sem permissão, sem form", async (p) => {
     cenario(p as string | null);
     montar();
@@ -236,7 +239,9 @@ describe("V1-13 comando criar_competencia", () => {
     montar();
     await preencher("");
     fireEvent.click(criar());
-    expect(await screen.findByText("Informe a competência no formato MM/AAAA.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Informe a competência no formato MM/AAAA."),
+    ).toBeInTheDocument();
     expect(m.rpc).not.toHaveBeenCalled();
   });
   it("duplo clique = uma RPC", async () => {

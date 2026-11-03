@@ -117,14 +117,19 @@ export function NovaCompetencia({ id }: { id: string }) {
           <>
             <Titulo />
             <Aviso
-              icone={<SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}
+              icone={
+                <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              }
               mensagem={MENSAGENS_V113.naoEncontrado}
             />
           </>
         ) : erroSessao ? (
           <>
             <Titulo />
-            <Alerta mensagem={MENSAGENS_V113.erroSessao} onRetry={() => setTentativa((n) => n + 1)} />
+            <Alerta
+              mensagem={MENSAGENS_V113.erroSessao}
+              onRetry={() => setTentativa((n) => n + 1)}
+            />
           </>
         ) : !ctx ? (
           <>
@@ -218,7 +223,9 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
           />
         ) : tipo === "nao_encontrado" ? (
           <Aviso
-            icone={<SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}
+            icone={
+              <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            }
             mensagem={MENSAGENS_V113.naoEncontrado}
           />
         ) : (
@@ -338,7 +345,12 @@ function CompetenceForm({ idContrato }: { idContrato: string }) {
       <h2 id="v113-form" className="text-lg font-semibold">
         Dados da competência
       </h2>
-      <MonthPicker valor={mes} onMudar={setMes} desabilitado={enviando} invalido={estado.k === "validacao"} />
+      <MonthPicker
+        valor={mes}
+        onMudar={setMes}
+        desabilitado={enviando}
+        invalido={estado.k === "validacao"}
+      />
       {msg && (
         <p role="alert" className="flex items-start gap-2 text-sm">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
