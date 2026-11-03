@@ -291,6 +291,70 @@ describe("V1-15 rota e gate", () => {
     expect(screen.queryByText("Nota de março")).toBeNull();
   });
 
+  it("A → B: aguarda Auth e preferência de B antes de exatamente uma leitura B", async () => {
+    const B = "55555555-5555-4555-8555-555555555555";
+    const sessao = { data: { user: { id: U } }, error: null };
+    let resolverB: ((valor: typeof sessao) => void) | undefined;
+    const authB = new Promise<typeof sessao>((resolve) => {
+      resolverB = resolve;
+    });
+    const pref = vi.spyOn(preferenciaDados, "obterPreferenciaOrganizacao");
+    const tela = montar();
+    await pronto();
+    const prefAntes = pref.mock.calls.length;
+    const rpcAntes = m.rpc.mock.calls.length;
+    m.getUser.mockReturnValueOnce(authB);
+    tela.rerender(<CompetenciaDocumentos id={B} />);
+    await waitFor(() => expect(m.getUser).toHaveBeenCalledTimes(2));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(pref).toHaveBeenCalledTimes(prefAntes);
+    expect(m.rpc).toHaveBeenCalledTimes(rpcAntes);
+    expect(leituras().filter((c) => c[1].p_id_competencia === B)).toHaveLength(0);
+    await act(async () => {
+      resolverB?.(sessao);
+    });
+    await pronto();
+    expect(pref).toHaveBeenCalledTimes(prefAntes + 1);
+    expect(pref).toHaveBeenLastCalledWith(U);
+    expect(leituras().filter((c) => c[1].p_id_competencia === B)).toHaveLength(1);
+    expect(pref.mock.invocationCallOrder[prefAntes]).toBeLessThan(
+      m.rpc.mock.invocationCallOrder[rpcAntes] ?? 0,
+    );
+  });
+
+  it("Auth tardia de A não autoriza B enquanto Auth de B permanece pendente", async () => {
+    const B = "55555555-5555-4555-8555-555555555555";
+    const sessao = { data: { user: { id: U } }, error: null };
+    let resolverA: ((valor: typeof sessao) => void) | undefined;
+    let resolverB: ((valor: typeof sessao) => void) | undefined;
+    const authA = new Promise<typeof sessao>((resolve) => {
+      resolverA = resolve;
+    });
+    const authB = new Promise<typeof sessao>((resolve) => {
+      resolverB = resolve;
+    });
+    const pref = vi.spyOn(preferenciaDados, "obterPreferenciaOrganizacao");
+    m.getUser.mockReturnValueOnce(authA).mockReturnValueOnce(authB);
+    const tela = montar();
+    await waitFor(() => expect(m.getUser).toHaveBeenCalledTimes(1));
+    tela.rerender(<CompetenciaDocumentos id={B} />);
+    await waitFor(() => expect(m.getUser).toHaveBeenCalledTimes(2));
+    await act(async () => {
+      resolverA?.(sessao);
+    });
+    expect(pref).not.toHaveBeenCalled();
+    expect(m.rpc).not.toHaveBeenCalled();
+    await act(async () => {
+      resolverB?.(sessao);
+    });
+    await pronto();
+    expect(pref).toHaveBeenCalledExactlyOnceWith(U);
+    expect(leituras()).toHaveLength(1);
+    expect(leituras()[0]?.[1].p_id_competencia).toBe(B);
+  });
+
   it("A → inválida → B: autentica B novamente e ignora resposta tardia de A", async () => {
     const B = "55555555-5555-4555-8555-555555555555";
     let resolverA: ((valor: ReturnType<typeof ok>) => void) | undefined;
