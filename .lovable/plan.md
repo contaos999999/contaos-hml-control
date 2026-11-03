@@ -57,7 +57,20 @@ Padrão do gate idêntico à V1-12/V1-13 (useEffect + AbortSignal, UUID canoniza
 - `StatusBadge`: texto + ícone (não só cor), tokens existentes.
 - `PercentGauge`: `role="meter"` com `percentual_conformidade` do backend; "—" se null. Mostra também `portao.percentual`/contagens como dado informativo.
 - `BlockingSummary`: lista exatamente os 8 campos backend (sem soma/recalculo); `portao.liberado` exibido como "Liberado pelo backend"/"Não liberado pelo backend".
-- `AllowedActions`: 4 itens (Abrir documentos, Analisar, Abrir parecer, Apresentar) com "Permitida pelo backend"/"Bloqueada pelo backend"; todos staged `aria-disabled="true"` + "Em breve" (telas destino inexistentes); nenhum navega/executa.
+- `AllowedActions` — fonte exclusiva: `allowed_actions` do backend. Mapa local fixo de destinos `DESTINOS_IMPLEMENTADOS = {}` (vazio: V1-15/16/18/19 inexistentes).
+  - booleano `false`: renderiza só texto informativo "Bloqueada pelo backend" (ícone + texto); **nenhum** `button`/`a`/elemento com role de ação para aquela ação.
+  - booleano `true` e destino não implementado (todos hoje): elemento staged `<span aria-disabled="true">` "Em breve" + "Permitida pelo backend"; sem `href`, sem `onClick`, sem execução.
+  - booleano `true` e destino implementado (futuro, fora deste prompt): só então Link real.
+  - Proibido derivar de percentual, situação ou estado visual.
+
+### Estado visual canônico (apresentação; nunca governa ações)
+`derivarEstadoVisual(vg)` puro, usando apenas dados do backend, em ordem determinística:
+1. `presented`: situação ∈ {apresentado, aguardando_contratante, com_apontamentos, reapresentado, validada, encerrada}.
+2. `ready`: situação ∈ {pode_apresentar_contratante, pode_reapresentar_contratante}.
+3. `blocked`: `portao.liberado === false` e (`blocking_summary.nao_conformidades_bloqueantes > 0` ou `blocking_summary.nao_conformes > 0`).
+4. `analysis`: situação ∈ {em_analise, em_reanalise}.
+5. `preparation`: demais (rascunho, preparando, pendente_correcao, cancelada ou desconhecida).
+Renderização: painel `EstadoCompetencia` com rótulo PT-BR ("Em preparação", "Em análise", "Com bloqueios", "Pronta conforme backend", "Apresentada") + ícone + descrição; `StatusBadge` continua mostrando o status oficial exato. A função não é importada por `AllowedActions` (verificado por teste).
 - `Tabs`: `role="tablist"`; "Visão geral" `aria-selected=true`; Documentos/Análise/Parecer/Apresentação staged aria-disabled "Em breve"; nenhuma rota futura criada.
 - Tooltips acessíveis existentes em termos técnicos (portão, inconclusivos) se já há componente; sem shared UI novo.
 
