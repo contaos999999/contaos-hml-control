@@ -116,6 +116,7 @@ function montar(id = K1) {
 }
 
 beforeEach(() => {
+  vi.restoreAllMocks();
   m.chamadas.length = 0;
   m.resposta = null;
   m.nav.mockReset();
@@ -138,9 +139,37 @@ describe("V1-12 rota e gates", () => {
   });
   it("UUID inválido: nenhuma consulta", async () => {
     cenario();
+    const preferencia = vi.spyOn(Storage.prototype, "getItem");
     montar("nao-uuid");
     await screen.findByText(/Contrato não encontrado/);
+    expect(m.getUser).not.toHaveBeenCalled();
+    expect(preferencia).not.toHaveBeenCalled();
     expect(m.chamadas).toHaveLength(0);
+    expect(m.rpc).not.toHaveBeenCalled();
+    preferencia.mockRestore();
+  });
+  it("UUID válido mantém sessão → organização → contrato → competências", async () => {
+    const fluxo: string[] = [];
+    const preferencia = vi.spyOn(Storage.prototype, "getItem");
+    preferencia.mockImplementation(function (this: Storage, chave: string) {
+      fluxo.push("organizacao");
+      return chave === "contaos.preferenciaOrganizacao"
+        ? JSON.stringify({ idUsuario: U, idOrganizacao: A })
+        : null;
+    });
+    m.getUser.mockImplementation(async () => {
+      fluxo.push("sessao");
+      return { data: { user: { id: U } }, error: null };
+    });
+    m.resposta = (c) => {
+      fluxo.push(c.tabela);
+      return c.tabela === "contratos" ? ok(contrato()) : ok([comp()], 1);
+    };
+    montar();
+    await screen.findByText("03/2026");
+    expect(fluxo).toEqual(["sessao", "organizacao", "contratos", "competencias"]);
+    expect(m.getUser).toHaveBeenCalledTimes(1);
+    preferencia.mockRestore();
   });
   it("sem sessão → /login", async () => {
     m.getUser.mockResolvedValue({ data: { user: null }, error: null });

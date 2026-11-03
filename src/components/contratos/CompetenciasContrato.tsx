@@ -73,8 +73,10 @@ export function CompetenciasContrato({ id }: { id: string }) {
   const [ctx, setCtx] = useState<Ctx | null>(null);
   const [erroSessao, setErroSessao] = useState(false);
   const [tentativa, setTentativa] = useState(0);
+  const idOk = uuidValido(id);
 
   useEffect(() => {
+    if (!idOk) return;
     let ativo = true;
     setErroSessao(false);
     supabase.auth
@@ -98,9 +100,8 @@ export function CompetenciasContrato({ id }: { id: string }) {
     return () => {
       ativo = false;
     };
-  }, [navigate, tentativa]);
+  }, [idOk, navigate, tentativa]);
 
-  const idOk = uuidValido(id);
   const idC = idOk ? uuidCanonico(id) : id;
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -124,7 +125,17 @@ export function CompetenciasContrato({ id }: { id: string }) {
         </div>
       </header>
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        {erroSessao ? (
+        {!idOk ? (
+          <>
+            <Titulo />
+            <Aviso
+              icone={
+                <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              }
+              mensagem={MENSAGENS_V112.naoEncontrado}
+            />
+          </>
+        ) : erroSessao ? (
           <>
             <Titulo />
             <Alerta
@@ -136,16 +147,6 @@ export function CompetenciasContrato({ id }: { id: string }) {
           <>
             <Titulo />
             <Carregando texto={MENSAGENS_V112.verificando} />
-          </>
-        ) : !idOk ? (
-          <>
-            <Titulo />
-            <Aviso
-              icone={
-                <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-              }
-              mensagem={MENSAGENS_V112.naoEncontrado}
-            />
           </>
         ) : (
           <GateContrato key={`${ctx.idUsuario}:${ctx.idOrganizacao}:${idC}`} id={idC} ctx={ctx} />
