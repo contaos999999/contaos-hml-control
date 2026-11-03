@@ -33,7 +33,7 @@ Zero toque em: supabase/**, client.ts, types.ts (salvo restauração ao blob), u
   - `schema_versao === "v116-v1"`.
   - `estado` ∈ {not_analyzed, queued, processing, failed, complete, stale}.
   - `stale` booleano.
-  - `percentual` numérico finito ou `null`, apenas se o contrato permitir `null` em not_analyzed. Será confirmado lendo a função antes do RED; nunca vira 0.
+  - `percentual` sempre numérico finito (0 é válido). Se vier ausente, `null` ou não numérico, o parser falha.
   - `allowed_actions` com 3 booleans.
   - Paginações (total/offset/limite numéricos) dos três conjuntos.
   - Arrays em resultados, execuções e apontamentos.
@@ -60,8 +60,10 @@ Zero toque em: supabase/**, client.ts, types.ts (salvo restauração ao blob), u
 
 ## Filtros e paginação
 - `FilterBar`: resultado, criticidade, mecanismo, status do apontamento e busca. Todos são parâmetros da RPC; não há filtro local.
-  - Mudar um filtro de resultados, criticidade, mecanismo ou busca zera `p_resultados_offset`.
-  - Mudar o status de apontamento zera `p_apontamentos_offset`.
+  - `p_filtro_resultado` e `p_filtro_mecanismo`: zeram somente `p_resultados_offset`.
+  - `p_filtro_criticidade`: zera `p_resultados_offset` e `p_apontamentos_offset`.
+  - `p_busca` (aplicar ou limpar): zera `p_resultados_offset` e `p_apontamentos_offset`.
+  - `p_filtro_apontamento_status`: zera somente `p_apontamentos_offset`.
   - O offset de execuções é independente.
 - Busca aplicada por botão ou Enter, para evitar uma RPC por tecla.
 - Os controles Anterior e Próxima usam total, offset e limite do backend.
@@ -94,6 +96,10 @@ Zero toque em: supabase/**, client.ts, types.ts (salvo restauração ao blob), u
   - Uma trava local (ref) garante 1 chamada em duplo clique.
   - Ao receber o uuid, faz refetch e entra no polling se o estado for queued ou processing.
   - Se o backend devolver uma execução existente, a tela apenas reconcilia pelo refetch.
+  - Erro ou timeout ambíguo na solicitação: antes de mostrar falha, faz uma leitura V1-16 de reconciliação.
+    - Se a leitura mostrar queued/processing ou uma `execucao_atual` diferente da anterior, a solicitação conta como reconciliada (aviso informativo e polling).
+    - Só quando a leitura confirma que não há nova execução, ou também falha, aparece a mensagem sanitizada.
+    - Não há retry automático da RPC de escrita nem regra paralela de concorrência.
 - `solicitar_reanalise_requisitos`: NÃO é chamado neste prompt.
 - `abrir_requisito`:
   - true: controle "Abrir requisito · Em breve" com `aria-disabled`, sem href, onClick ou RPC, porque V1-17 está fora do escopo.
