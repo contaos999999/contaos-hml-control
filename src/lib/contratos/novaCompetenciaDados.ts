@@ -44,6 +44,7 @@ export async function lerPerfilAtivo(
     .select("perfil")
     .eq("id_usuario", idUsuario)
     .eq("id_organizacao", idOrganizacao)
+    .eq("ativo", true)
     .maybeSingle();
   if (error) throw new ErroNovaCompetencia("erro");
   const p = (data as { perfil?: unknown } | null)?.perfil;
