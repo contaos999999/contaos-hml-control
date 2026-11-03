@@ -175,7 +175,8 @@ function parseReq(r: unknown): ReqV115 | null {
     typeof r["aplicavel"] !== "boolean" ||
     typeof r["impeditivo"] !== "boolean" ||
     typeof r["atendido"] !== "boolean"
-  ) return null;
+  )
+    return null;
   const t = r["tipos_esperados"];
   return {
     id: r["id"],
@@ -227,9 +228,12 @@ export function parseLeituraV115(data: unknown): LeituraV115 | null {
   const requisitosAplicaveis = num(res["requisitos_documentais_aplicaveis"]);
   const requisitosPendentes = num(res["requisitos_documentais_pendentes"]);
   if (
-    documentosTotal === null || requisitosTotal === null ||
-    requisitosAplicaveis === null || requisitosPendentes === null
-  ) return null;
+    documentosTotal === null ||
+    requisitosTotal === null ||
+    requisitosAplicaveis === null ||
+    requisitosPendentes === null
+  )
+    return null;
   return {
     competencia: {
       id: c["id"],
