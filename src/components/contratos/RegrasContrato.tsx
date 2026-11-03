@@ -957,7 +957,7 @@ function DetalheRegra({
 }: {
   regra: RegraPreventiva;
   chave: unknown[];
-  rotuloFonte?: Record<string, string>;
+  rotuloFonte?: Record<string, string> | undefined;
 }) {
   const q = useQuery({
     queryKey: ["regras", "fontes-formais", ...chave, regra.id],
