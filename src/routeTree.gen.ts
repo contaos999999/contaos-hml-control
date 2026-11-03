@@ -22,6 +22,7 @@ import { Route as ContratosIdRouteImport } from './routes/contratos_.$id'
 import { Route as ContratosNovoRouteImport } from './routes/contratos_.novo'
 import { Route as ContratantesIdEditarRouteImport } from './routes/contratantes_.$id.editar'
 import { Route as ContratosIdBaseNormativaRouteImport } from './routes/contratos_.$id_.base-normativa'
+import { Route as ContratosIdOrcamentoRouteImport } from './routes/contratos_.$id_.orcamento'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -89,6 +90,11 @@ const ContratosIdBaseNormativaRoute =
     path: '/contratos/$id/base-normativa',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ContratosIdOrcamentoRoute = ContratosIdOrcamentoRouteImport.update({
+  id: '/contratos_/$id_/orcamento',
+  path: '/contratos/$id/orcamento',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/contratos/novo': typeof ContratosNovoRoute
   '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
   '/contratos/$id/base-normativa': typeof ContratosIdBaseNormativaRoute
+  '/contratos/$id/orcamento': typeof ContratosIdOrcamentoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/contratos/novo': typeof ContratosNovoRoute
   '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
   '/contratos/$id/base-normativa': typeof ContratosIdBaseNormativaRoute
+  '/contratos/$id/orcamento': typeof ContratosIdOrcamentoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/contratos_/novo': typeof ContratosNovoRoute
   '/contratantes_/$id/editar': typeof ContratantesIdEditarRoute
   '/contratos_/$id_/base-normativa': typeof ContratosIdBaseNormativaRoute
+  '/contratos_/$id_/orcamento': typeof ContratosIdOrcamentoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/contratos/novo'
     | '/contratantes/$id/editar'
     | '/contratos/$id/base-normativa'
+    | '/contratos/$id/orcamento'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -167,6 +177,7 @@ export interface FileRouteTypes {
     | '/contratos/novo'
     | '/contratantes/$id/editar'
     | '/contratos/$id/base-normativa'
+    | '/contratos/$id/orcamento'
   id:
     | '__root__'
     | '/'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/contratos_/novo'
     | '/contratantes_/$id/editar'
     | '/contratos_/$id_/base-normativa'
+    | '/contratos_/$id_/orcamento'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -198,6 +210,7 @@ export interface RootRouteChildren {
   ContratosNovoRoute: typeof ContratosNovoRoute
   ContratantesIdEditarRoute: typeof ContratantesIdEditarRoute
   ContratosIdBaseNormativaRoute: typeof ContratosIdBaseNormativaRoute
+  ContratosIdOrcamentoRoute: typeof ContratosIdOrcamentoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -293,6 +306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContratosIdBaseNormativaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contratos_/$id_/orcamento': {
+      id: '/contratos_/$id_/orcamento'
+      path: '/contratos/$id/orcamento'
+      fullPath: '/contratos/$id/orcamento'
+      preLoaderRoute: typeof ContratosIdOrcamentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -310,6 +330,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContratosNovoRoute: ContratosNovoRoute,
   ContratantesIdEditarRoute: ContratantesIdEditarRoute,
   ContratosIdBaseNormativaRoute: ContratosIdBaseNormativaRoute,
+  ContratosIdOrcamentoRoute: ContratosIdOrcamentoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
