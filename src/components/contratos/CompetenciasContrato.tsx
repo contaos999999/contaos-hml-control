@@ -62,11 +62,6 @@ const LINK_NAV =
 const TH =
   "px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 const TD = "px-3 py-2 align-top";
-const EM_BREVE = (
-  <span className="rounded border border-border px-1.5 text-[0.65rem] uppercase tracking-wide">
-    Em breve
-  </span>
-);
 
 export function CompetenciasContrato({ id }: { id: string }) {
   const navigate = useNavigate();
