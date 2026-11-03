@@ -226,7 +226,11 @@ function cenario(d: Dados = {}) {
         }),
         s("s2", "obrigacao"),
         s("s3", "clausula", { vigencia_inicio: "2026-01-01" }),
-        s("s4", "classificacao", { categoria_sugerida: "Fiscal", confianca: 0.2 }),
+        s("s4", "classificacao", {
+          categoria_sugerida: "Fiscal",
+          confianca: 0.2,
+          status: "rejeitada",
+        }),
         s("s5", "prazo", { status: "aprovada", vigencia_inicio: "2026-01-01" }),
       ]);
     }
