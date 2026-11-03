@@ -158,14 +158,14 @@ describe("V1-12 rota e gates", () => {
     expect(de("competencias")).toHaveLength(0);
   });
   it("contrato negado: mensagem sanitizada e zero competências", async () => {
-    m.resposta = (c) => (c.tabela === "contratos" ? ok([]) : ok([]));
+    m.resposta = (c) => (c.tabela === "contratos" ? ok(null) : ok([]));
     m.rpc.mockResolvedValue({ data: "negado", error: null });
     montar();
     await screen.findByText(/não tem acesso/i);
     expect(de("competencias")).toHaveLength(0);
   });
   it("contrato inexistente: não encontrado e zero competências", async () => {
-    m.resposta = () => ok([]);
+    m.resposta = () => ok(null);
     m.rpc.mockResolvedValue({ data: "nao_encontrado", error: null });
     montar();
     await screen.findByText(/Contrato não encontrado/);

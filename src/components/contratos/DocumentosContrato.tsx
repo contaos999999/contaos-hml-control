@@ -380,15 +380,9 @@ function NavSecoes({ id }: { id: string }) {
           </span>
         </li>
         <li>
-          <span
-            aria-disabled="true"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md px-4 text-sm text-muted-foreground"
-          >
-            <span>Competências</span>
-            <span className="rounded border border-border px-1.5 text-[0.65rem] uppercase tracking-wide">
-              Em breve
-            </span>
-          </span>
+          <Link to="/contratos/$id/competencias" params={{ id }} className={LINK_NAV}>
+            Competências
+          </Link>
         </li>
       </ul>
     </nav>
