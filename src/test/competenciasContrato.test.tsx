@@ -344,6 +344,9 @@ describe("V1-12 estados, ações e a11y", () => {
     expect(screen.getByRole("link", { name: "Nova competência" }).getAttribute("href")).toBe(
       `/contratos/${K1}/competencias/nova`,
     );
+    const abrir = screen.getByText("Abrir competência").closest("[aria-disabled]");
+    expect(abrir?.getAttribute("aria-disabled")).toBe("true");
+    expect(abrir?.textContent).toMatch(/Em breve/);
     expect(
       screen
         .queryAllByRole("link")

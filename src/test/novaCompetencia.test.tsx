@@ -168,6 +168,7 @@ describe("V1-13 rota e gates", () => {
   });
   it("contrato inexistente sanitizado", async () => {
     m.resposta = () => ok(null);
+    m.rpc.mockResolvedValue({ data: "nao_encontrado", error: null });
     montar();
     expect(await screen.findByText("Contrato não encontrado.")).toBeInTheDocument();
   });
@@ -247,7 +248,7 @@ describe("V1-13 comando criar_competencia", () => {
     fireEvent.click(criar());
     fireEvent.click(criar());
     fireEvent.click(criar());
-    expect(m.rpc).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(m.rpc).toHaveBeenCalledTimes(1));
     expect(criar()).toBeDisabled();
     solta({ data: NOVA, error: null, status: 200 });
     await screen.findByText(/criada/);
