@@ -266,9 +266,9 @@ describe("V1-08 RPCs V108", () => {
     montar();
     fireEvent.click(await screen.findByRole("button", { name: "Nova versão" }));
     fireEvent.change(screen.getByLabelText("Início da vigência"), { target: { value: "2027-01-01" } });
+    await screen.findByRole("option", { name: "base.pdf — Aprovado" });
     fireEvent.change(screen.getByLabelText("Documento-base"), { target: { value: ARQ } });
     fireEvent.click(screen.getByRole("button", { name: "Registrar versão" }));
-    await new Promise((r) => setTimeout(r, 50)); console.log("DBG", JSON.stringify(m.rpcChamadas), screen.queryAllByRole("alert").map((x) => x.textContent));
     await screen.findByText(/corr-123/);
     const c = m.rpcChamadas.find((r) => r.nome === "registrar_versao_proposta_v108")!;
     expect(c.args).toMatchObject({ p_id_organizacao: A, p_id_proposta: P1, p_vigencia_inicio: "2027-01-01", p_vigencia_fim: null, p_id_arquivo_origem: ARQ });
@@ -287,7 +287,9 @@ describe("V1-08 publicação e imutabilidade", () => {
   it("publicar exige fundamento + confirmação e envia hash do servidor", async () => {
     cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo()] });
     montar();
-    const pb = await screen.findByRole("button", { name: "Publicar versão" }); await new Promise((r) => setTimeout(r, 50)); console.log("DBG2", (pb as HTMLButtonElement).disabled, document.body.textContent?.slice(0, 1500)); fireEvent.click(pb);
+    const pb = await screen.findByRole("button", { name: "Publicar versão" });
+    await waitFor(() => expect((pb as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(pb);
     const dlg = screen.getByRole("dialog");
     expect(within(dlg).getByText("hash-servidor-xyz")).toBeTruthy();
     const conf = within(dlg).getByRole("button", { name: "Confirmar publicação" }) as HTMLButtonElement;
