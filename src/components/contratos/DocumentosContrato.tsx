@@ -988,38 +988,11 @@ function DialogoEnvio({
     const p = (prog.current[it.id] ??= { chave: crypto.randomUUID() });
     try {
       if (!p.idArquivo) {
-        if (!p.enviado) {
-          atualizarItem(it.id, { etapa: "enviando", mensagem: "" });
-          if (!(p.resumivel && p.location && p.token && p.path && p.bucket)) {
-            const a = await autorizarUpload(ctx.idOrganizacao, contrato, it.arquivo);
-            Object.assign(p, {
-              path: a.path,
-              token: a.token,
-              bucket: a.bucket,
-              resumivel: a.resumivel,
-              location: undefined,
-            });
-          }
-          if (p.resumivel) {
-            await enviarTus({ bucket: p.bucket!, path: p.path!, token: p.token! }, it.arquivo, {
-              location: p.location,
-              onLocation: (l) => {
-                p.location = l;
-              },
-              onProgresso: (pct) => atualizarItem(it.id, { progresso: pct }),
-            });
-          } else {
-            await enviarSimples(
-              { bucket: p.bucket!, path: p.path!, token: p.token!, resumivel: false },
-              it.arquivo,
-            );
-          }
-          p.enviado = true;
-          atualizarItem(it.id, { progresso: 100 });
-        }
-        atualizarItem(it.id, { etapa: "confirmando" });
-        const sha = await sha256Hex(it.arquivo);
-        p.idArquivo = await confirmarUpload(ctx.idOrganizacao, contrato, p.path!, it.arquivo, sha);
+        await enviarArquivoCertificado(ctx.idOrganizacao, contrato, it.arquivo, p, {
+          onEtapa: (e) =>
+            atualizarItem(it.id, e === "enviando" ? { etapa: e, mensagem: "" } : { etapa: e }),
+          onProgresso: (pct) => atualizarItem(it.id, { progresso: pct }),
+        });
       }
       atualizarItem(it.id, { etapa: "registrando" });
       if (modo.tipo === "versao") await adicionarVersao(modo.doc.id, p.idArquivo, motivo, p.chave);
