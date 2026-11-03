@@ -493,14 +493,15 @@ function UploadDropzone({
   const env = useEnvio();
   const req = l.requisitos.find((r) => r.id === idReq) ?? null;
   const tipos = tiposParaRequisito(req);
+  const reiniciarEnvio = env.reiniciar;
 
   useEffect(() => {
     if (idReq && !l.requisitos.some((r) => r.id === idReq)) {
       setIdReq("");
       setTipo("");
-      env.reiniciar();
+      reiniciarEnvio();
     }
-  }, [l.requisitos, idReq, env.reiniciar]);
+  }, [l.requisitos, idReq, reiniciarEnvio]);
 
   const mudou = () => env.reiniciar();
   const escolher = (f: File | null) => {
