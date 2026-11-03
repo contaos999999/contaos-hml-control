@@ -41,7 +41,7 @@ const faixa = (p: number) => [p * PAGINA_ORC, p * PAGINA_ORC + PAGINA_ORC - 1] a
 export async function listarPropostas(contrato: string, pagina: number, signal?: AbortSignal): Promise<Pagina<Proposta>> {
   const [a, b] = faixa(pagina);
   let q = supabase.from("propostas_orcamentarias").select(COLUNAS_PROPOSTA, { count: "exact" }).eq("id_contrato", contrato)
-    .order("criado_em", { ascending: false }).order("id", { ascending: true }).range(a, b);
+    .order("criado_em", { ascending: false }).order("id", { ascending: false }).range(a, b);
   if (signal) q = q.abortSignal(signal);
   const r = await executar(q, signal);
   return { itens: (r.data as Proposta[] | null) ?? [], total: r.count ?? 0 };
@@ -50,7 +50,7 @@ export async function listarPropostas(contrato: string, pagina: number, signal?:
 export async function listarVersoesProposta(idProposta: string, pagina: number, signal?: AbortSignal): Promise<Pagina<VersaoProposta>> {
   const [a, b] = faixa(pagina);
   let q = supabase.from("versoes_proposta").select(COLUNAS_VERSAO_PROPOSTA, { count: "exact" }).eq("id_proposta", idProposta)
-    .order("numero_versao", { ascending: false }).order("id", { ascending: true }).range(a, b);
+    .order("numero_versao", { ascending: false }).order("id", { ascending: false }).range(a, b);
   if (signal) q = q.abortSignal(signal);
   const r = await executar(q, signal);
   return { itens: (r.data as VersaoProposta[] | null) ?? [], total: r.count ?? 0 };
@@ -104,11 +104,11 @@ export async function chamarV108<N extends NomeV108>(nome: N, args: ArgsV108[N])
   return { correlationId: typeof c === "string" ? c : null };
 }
 
-/** Mesma intenção (payload igual) preserva a chave; alteração material renova. */
+/** Uma intenção pendente preserva a chave nos retries; conclusão encerra seu ciclo. */
 export function criarGerenciadorChave() {
   let ultimo: string | null = null;
   let chave = "";
-  return (payload: unknown): string => {
+  const obter = (payload: unknown): string => {
     const s = JSON.stringify(payload);
     if (s !== ultimo) {
       ultimo = s;
@@ -116,6 +116,12 @@ export function criarGerenciadorChave() {
     }
     return chave;
   };
+  return Object.assign(obter, {
+    concluir: () => {
+      ultimo = null;
+      chave = "";
+    },
+  });
 }
 
 /** "1.234,56" → 1234.56; vazio → null; inválido → NaN. */
