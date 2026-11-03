@@ -84,6 +84,7 @@ import {
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { Route } from "@/routes/competencias_.$id_.documentos";
 import * as documentosDados from "@/lib/contratos/documentosDados";
+import * as preferenciaDados from "@/lib/organizacao/preferenciaOrganizacao";
 
 const U = "user-1";
 const ID = "44444444-4444-4444-8444-444444444444";
@@ -263,6 +264,55 @@ describe("V1-15 rota e gate", () => {
     expect(m.getUser).not.toHaveBeenCalled();
     expect(m.rpc).not.toHaveBeenCalled();
     expect(m.invoke).not.toHaveBeenCalled();
+  });
+
+  it("válida → abc: zero novas Auth/preferência/RPC/function e nenhum dado antigo", async () => {
+    const pref = vi.spyOn(preferenciaDados, "obterPreferenciaOrganizacao");
+    const tela = montar();
+    await pronto();
+    const antes = { auth: m.getUser.mock.calls.length, pref: pref.mock.calls.length, rpc: m.rpc.mock.calls.length, edge: m.invoke.mock.calls.length, leituras: leituras().length };
+    tela.rerender(<CompetenciaDocumentos id="abc" />);
+    await screen.findByText("Competência não encontrada ou indisponível.");
+    await act(async () => { await Promise.resolve(); });
+    expect(m.getUser).toHaveBeenCalledTimes(antes.auth);
+    expect(pref).toHaveBeenCalledTimes(antes.pref);
+    expect(m.rpc).toHaveBeenCalledTimes(antes.rpc);
+    expect(m.invoke).toHaveBeenCalledTimes(antes.edge);
+    expect(leituras()).toHaveLength(antes.leituras);
+    expect(screen.queryByTestId("resumo-documental")).toBeNull();
+    expect(screen.queryByText("Nota de março")).toBeNull();
+  });
+
+  it("A → inválida → B: autentica B novamente e ignora resposta tardia de A", async () => {
+    const B = "55555555-5555-4555-8555-555555555555";
+    let resolverA: ((valor: ReturnType<typeof ok>) => void) | undefined;
+    const tardiaA = new Promise<ReturnType<typeof ok>>((resolve) => { resolverA = resolve; });
+    let chamadasA = 0;
+    m.rpc.mockImplementation((nome: string, args: Record<string, unknown>) => {
+      if (nome !== "obter_documentos_competencia_v115") return rpcPadrao(nome);
+      if (args.p_id_competencia === ID) {
+        chamadasA += 1;
+        return chamadasA === 1 ? ok(leitura({ docsTotal: 30 })) : tardiaA;
+      }
+      const b = leitura({ estado: "complete", docs: [{ ...doc(), titulo: "Documento B" }] });
+      return ok({ ...b, competencia: { ...b.competencia, id: B } });
+    });
+    const tela = montar();
+    await pronto();
+    fireEvent.click(screen.getByRole("button", { name: "Próxima página de documentos" }));
+    await waitFor(() => expect(chamadasA).toBe(2));
+    tela.rerender(<CompetenciaDocumentos id="abc" />);
+    await screen.findByText("Competência não encontrada ou indisponível.");
+    await act(async () => { await Promise.resolve(); });
+    expect(leituras().some((c) => c[1].p_id_competencia === "abc")).toBe(false);
+    tela.rerender(<CompetenciaDocumentos id={B} />);
+    await screen.findByText("Documento B");
+    expect(m.getUser).toHaveBeenCalledTimes(2);
+    expect(leituras().filter((c) => c[1].p_id_competencia === B)).toHaveLength(1);
+    await act(async () => { resolverA?.(ok(leitura({ docs: [{ ...doc(), titulo: "Resposta tardia A" }] }))); });
+    expect(screen.getByText("Documento B")).toBeInTheDocument();
+    expect(screen.queryByText("Resposta tardia A")).toBeNull();
+    expect(screen.getByTestId("resumo-documental")).toHaveAttribute("data-estado", "complete");
   });
 
   it("sem sessão → /login sem RPC", async () => {
