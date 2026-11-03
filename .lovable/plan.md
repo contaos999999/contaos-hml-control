@@ -130,6 +130,15 @@ validarArquivoLocal -> storage-sign-upload {id_organizacao,id_contrato,nome_arqu
 - R3 — SHA-256 de até 500 MB carrega o arquivo em memória no navegador; dentro do limite configurado, documentado.
 - R4 — Formato do jsonb das RPCs confirmado por leitura no BUILD; formato inesperado = erro.
 - R5 — Filtro por status de segurança depende de join embutido; se não suportado, omitido e registrado.
-- R6 — Classificação automática depende do worker preencher `resultado`/`metadados_extraidos`; a tela só exibe.
+- R6 — Classificação automática e metadados dependem do worker preencher `sugestoes_extracao_documento`/`metadados_extraidos`; a tela só exibe.
 
-PLAN: APROVÁVEL — V1-10 100% COBERTO
+## 9. Lacunas de backend que impedem 100%
+
+- L1 — V1-CON-001: faltam vigência (início/fim) e observações do documento-base em `documentos_contrato` e nos parâmetros de `criar_documento_contrato` / `adicionar_versao_documento_contrato`.
+- L2 — V1-CON-002: faltam início/fim de vigência por regra extraída em `sugestoes_extracao_documento` (e no retorno/ajuste de `revisar_sugestao_extracao`).
+
+Sem essas colunas/parâmetros, a tela teria de inventar campos ou gravar fora do contrato do backend — proibido. Caminho para destravar (fora deste PLAN, exige autorização específica de backend): migration HML acrescentando os campos + parâmetros opcionais nas RPCs, com teste transacional; depois disso este PLAN fica completo sem outra mudança de frontend além de exibir/enviar esses campos (já previstos no MetadataForm e no painel de extração).
+
+Todo o restante (V1-CON-004/005, V1-DOC-001..005, NFR-003/004/005/007/008/009/010, BRAND-01, TDD, Teste C, Zero-Drift) está coberto pelo backend atual.
+
+PLAN: NÃO APROVÁVEL — LACUNAS DE BACKEND L1 (V1-CON-001 vigência/observações) e L2 (V1-CON-002 vigência das regras extraídas)
