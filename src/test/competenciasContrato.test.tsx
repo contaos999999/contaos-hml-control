@@ -317,8 +317,13 @@ describe("V1-12 status e percentual", () => {
     expect(screen.getByText("—", { selector: "[data-percentual]" })).toBeInTheDocument();
     const meter = screen.getAllByRole("meter")[0]!;
     expect(meter.getAttribute("aria-valuenow")).toBe("100");
-    for (const b of screen.getAllByText(/Abrir competência/))
-      expect(b.closest("[aria-disabled]")?.getAttribute("aria-disabled")).toBe("true");
+    const hrefs = screen
+      .getAllByRole("link", { name: /Abrir competência/ })
+      .map((a) => a.getAttribute("href"));
+    expect(hrefs).toEqual([
+      `/competencias/${C1}`,
+      "/competencias/33333333-3333-4333-8333-333333333333",
+    ]);
   });
 });
 
@@ -337,26 +342,16 @@ describe("V1-12 estados, ações e a11y", () => {
     await screen.findByText(/Não foi possível carregar as competências/);
     expect(screen.getByRole("button", { name: /Tentar novamente/ })).toBeInTheDocument();
   });
-  it("Nova competência é link V1-13; Abrir segue staged, sem link V1-14 e sem RPC", async () => {
+  it("Nova competência é link V1-13; Abrir é link V1-14 e sem RPC", async () => {
     cenario();
     montar();
     await screen.findByText("03/2026");
     expect(screen.getByRole("link", { name: "Nova competência" }).getAttribute("href")).toBe(
       `/contratos/${K1}/competencias/nova`,
     );
-    const abrir = screen.getByText("Abrir competência").closest("[aria-disabled]");
-    expect(abrir?.getAttribute("aria-disabled")).toBe("true");
-    expect(abrir?.textContent).toMatch(/Em breve/);
-    expect(
-      screen
-        .queryAllByRole("link")
-        .some(
-          (a) =>
-            (/competencias\//.test(a.getAttribute("href") ?? "") &&
-              !(a.getAttribute("href") ?? "").endsWith("/competencias/nova")) ||
-            /^\/competencias/.test(a.getAttribute("href") ?? ""),
-        ),
-    ).toBe(false);
+    const abrir = screen.getByRole("link", { name: "Abrir competência 03/2026" });
+    expect(abrir.getAttribute("href")).toBe(`/competencias/${C1}`);
+    expect(abrir.getAttribute("aria-disabled")).toBeNull();
     expect(m.rpc).not.toHaveBeenCalledWith("criar_competencia", expect.anything());
   });
   it("H1 único, nav com Competências ativo e irmãs como link", async () => {
