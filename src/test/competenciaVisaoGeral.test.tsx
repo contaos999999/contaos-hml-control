@@ -120,6 +120,7 @@ beforeEach(() => {
   m.from.mockReset();
   m.sinais.length = 0;
   window.localStorage.clear();
+  window.sessionStorage.clear();
   definirPreferenciaOrganizacao(U, "org-A");
 });
 
@@ -158,7 +159,7 @@ describe("V1-14 rota e gate", () => {
   });
 
   it("sem organização → /selecionar-organizacao, sem RPC", async () => {
-    window.localStorage.clear();
+    window.sessionStorage.clear();
     montar();
     await waitFor(() =>
       expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }),
