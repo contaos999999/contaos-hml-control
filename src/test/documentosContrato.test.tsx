@@ -574,9 +574,9 @@ describe("V1-10 nova versão", () => {
     rpcOk();
     montar();
     const linha = await screen.findByTestId(`documento-${D1}`);
-    fireEvent.click(
-      within(linha).getByRole("button", { name: "Nova versão de Contrato principal" }),
-    );
+    const nv = within(linha).getByRole("button", { name: "Nova versão de Contrato principal" });
+    await waitFor(() => expect(nv).toBeEnabled());
+    fireEvent.click(nv);
     const d = await screen.findByRole("dialog");
     fireEvent.change(within(d).getByLabelText("Arquivo"), { target: { files: [pdf()] } });
     fireEvent.click(within(d).getByRole("button", { name: "Enviar nova versão" }));
