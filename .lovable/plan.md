@@ -29,7 +29,7 @@ Modificar (hunk mínimo):
 - `PERFIS_CRIAR_COMPETENCIA = ["administrador","gestor_contrato","prestacao_contas"]` — comentado como UX, não autoritativo.
 - `lerPerfilAtivo(idUsuario, idOrg)`: um SELECT explícito em `vinculos_usuarios` (colunas nomeadas, filtro usuário+organização+ativo, `maybeSingle`), uma vez por tela (mesmo padrão V1-11).
 - `criarCompetencia(idContrato, mes)`: `mesParaReferencia(mes)`; se null → erro de validação, sem RPC; `supabase.rpc("criar_competencia", { p_id_contrato, p_competencia_referencia })` — opcionais omitidos (backend aplica defaults). Zero insert/update direto.
-- `classificarErroNovaCompetencia(error)` → `duplicada` (23505), `sem_permissao` (42501/403/P0001 de perfil por código), `ambiguo` (erro de transporte/sem código/fetch falho), `erro`. Nunca expõe texto bruto.
+- `classificarErroNovaCompetencia(error, status)` → `duplicada` (23505); `sem_permissao` (401/403/42501); `erro` sanitizado genérico PT-BR para P0001 (o backend usa P0001 também para contrato inexistente e competência inválida) e demais códigos; `ambiguo` (erro de transporte/sem código/fetch falho). Nunca expõe texto bruto. Teste dedicado: P0001 → `erro`, nunca `sem_permissao`.
 - `verificarCompetenciaExistente(idContrato, ref)`: `select("id").eq("id_contrato").eq("competencia_referencia").maybeSingle()` — leitura exata, sem dataset.
 
 ## Fluxo e estados
@@ -49,7 +49,7 @@ Validação: focado V1-13 + regressão V1-12/V1-11/V1-10, suíte completa serial
 Intocados: `supabase/**`, `types.ts` (restaurar ao blob `8ea7750b…` se regenerado), `client.ts`, package/lock, `components/ui/**`, `styles.css`, `public/brand/**`, AGENTS. Tokens/BRAND-01 existentes; sem paleta nova. V1-14 ausente.
 
 ## Riscos
-- Código exato do erro de perfil vindo da RPC (pode ser P0001): mapeado por código, sem texto bruto; perfil já bloqueado na UX.
+- Se a RPC recusar perfil via P0001, a tela mostra erro genérico sanitizado (não "sem permissão"); o perfil já é bloqueado antes na UX.
 - Regeneração de `types.ts` pela plataforma: restauração autorizada ao baseline.
 - `tsc` manual pode ser restrito pelo ambiente; usar build automático e reportar limitação.
 
