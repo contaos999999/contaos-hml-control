@@ -71,3 +71,25 @@ Alterados:
 - `tsc --noEmit` e build manual: gate externo pendente. Vale a verificação automática do build.
 - Caminhos protegidos (supabase, integrations, ui, styles, brand, package/lock, AGENTS, arquivos V1-15): zero diff contra `cdfbc59b`.
 - Teste C: não executado; fica para um turno separado.
+
+## Correção pós-Teste C (FAIL no item 11, SHA `12df4b4e`)
+- Desvio: o backend devolve `origem` e `fonte` (jsonb, `{}` quando ausente) em cada apontamento. A tela não mostrava nenhum dos dois, e o parser descartava `fonte`.
+- RED: `bunx vitest run src/test/competenciaAnalise.test.tsx` → exit 1, 3 falhas (parser com `fonte` não objeto, exibição de `fonte` e exibição de `origem`). Nenhum código de produção foi alterado antes desse RED.
+- GREEN mínimo:
+  - `parseAp` exige `fonte` objeto, ou ausente/null; qualquer outro tipo → null (fail-closed).
+  - Os pares chave/valor primitivos são mantidos exatamente como o backend enviou.
+  - A tela mostra "Origem: …" e "Fonte: chave: valor · …" só quando vierem preenchidos. `{}` não exibe nada.
+- O `.lovable/plan.md` foi restaurado para o plano aprovado, que está arquivado. Um rascunho de delta, nunca aprovado, tinha sobrescrito o arquivo.
+- Verificação:
+  - V1-16 + V1-14: 126/126.
+  - Suíte serial: 26 arquivos, 739/739, exit 0.
+  - eslint: exit 0.
+  - Static scan: nenhuma ocorrência.
+  - Security Scan: só o Info preexistente.
+  - Navegador nas 8 combinações: PASS, com 0 requisições ao Supabase.
+  - Build automático OK.
+- `types.ts`: a plataforma o regenerou de novo e ele foi restaurado ao blob `8ea7750b`.
+- Limitações:
+  - Estados autenticados cobertos só com mocks.
+  - `tsc` e build manual continuam como gate externo pendente.
+  - Teste C não executado.
