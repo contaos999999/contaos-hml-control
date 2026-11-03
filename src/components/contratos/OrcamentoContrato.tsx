@@ -282,6 +282,9 @@ function Pagina({ c, ctx }: { c: ContratoDetalhe; ctx: Ctx }) {
     setDialogo(d);
   };
   const recarregar = () => void qc.invalidateQueries({ queryKey: base });
+  const recarregarIntencao = () => {
+    void qc.resetQueries({ queryKey: base }).then(() => setDialogo(null));
+  };
   const concluido = (msg: string, protocolo: string | null) => {
     setDialogo(null);
     setSucesso(protocolo ? `${msg} Protocolo: ${protocolo}` : msg);
@@ -410,15 +413,15 @@ function Pagina({ c, ctx }: { c: ContratoDetalhe; ctx: Ctx }) {
       <Dialog open={dialogo !== null} onOpenChange={(o) => { if (!o) setDialogo(null); }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg" onCloseAutoFocus={devolverFoco(gatilho)}>
           {dialogo?.tipo === "proposta" ? (
-            <FormProposta org={org} contrato={c.id} proposta={dialogo.proposta} onOk={(p) => concluido("Proposta salva.", p)} onRecarregar={recarregar} />
+            <FormProposta org={org} contrato={c.id} proposta={dialogo.proposta} onOk={(p) => concluido("Proposta salva.", p)} onRecarregar={recarregarIntencao} />
           ) : dialogo?.tipo === "versao" && proposta ? (
-            <FormVersao org={org} contrato={c.id} proposta={proposta} onOk={(p) => concluido("Versão registrada em rascunho.", p)} onRecarregar={recarregar} />
+            <FormVersao org={org} contrato={c.id} proposta={proposta} onOk={(p) => concluido("Versão registrada em rascunho.", p)} onRecarregar={recarregarIntencao} />
           ) : dialogo?.tipo === "rubrica" && versao ? (
-            <FormRubrica org={org} versao={versao} rubrica={dialogo.rubrica} onOk={(p) => concluido("Rubrica salva.", p)} onRecarregar={recarregar} />
+            <FormRubrica org={org} versao={versao} rubrica={dialogo.rubrica} onOk={(p) => concluido("Rubrica salva.", p)} onRecarregar={recarregarIntencao} />
           ) : dialogo?.tipo === "remover" && versao ? (
-            <ConfirmarRemocao org={org} versao={versao} rubrica={dialogo.rubrica} onCancelar={() => setDialogo(null)} onOk={(p) => concluido("Rubrica removida.", p)} onRecarregar={recarregar} />
+            <ConfirmarRemocao org={org} versao={versao} rubrica={dialogo.rubrica} onCancelar={() => setDialogo(null)} onOk={(p) => concluido("Rubrica removida.", p)} onRecarregar={recarregarIntencao} />
           ) : dialogo?.tipo === "publicar" && versao ? (
-            <FormPublicar org={org} versao={versao} arquivo={arqVersao} qtdRubricas={qtdRubricas} somaPagina={(rubricas.data?.itens ?? []).reduce((s, r) => s + (r.valor_anual_previsto ?? 0), 0)} onOk={(p) => concluido("Versão publicada.", p)} onRecarregar={recarregar} />
+            <FormPublicar org={org} versao={versao} arquivo={arqVersao} qtdRubricas={qtdRubricas} somaPagina={(rubricas.data?.itens ?? []).reduce((s, r) => s + (r.valor_anual_previsto ?? 0), 0)} onOk={(p) => concluido("Versão publicada.", p)} onRecarregar={recarregarIntencao} />
           ) : null}
         </DialogContent>
       </Dialog>
@@ -483,20 +486,34 @@ function TabelaRubricas({ itens, editavel, onEditar, onRemover }: { itens: Rubri
 /** Envio com chave idempotente: retry de transporte preserva; PT409 nunca reenvia sozinho. */
 function useEnvio<N extends NomeV108>(nome: N) {
   const chave = useRef(criarGerenciadorChave());
+  const pendente = useRef(false);
+  const bloqueada = useRef(false);
   const [estado, setEstado] = useState<{ salvando: boolean; erro: TipoErroBn | null }>({ salvando: false, erro: null });
   const enviar = async (args: Omit<ArgsRpcV108<N>, "p_chave_idempotencia">, onOk: (p: string | null) => void) => {
-    if (estado.salvando) return;
+    if (pendente.current || bloqueada.current) return;
+    pendente.current = true;
     setEstado({ salvando: true, erro: null });
     try {
       const r = await chamarV108(nome, { ...args, p_chave_idempotencia: chave.current(args) } as ArgsRpcV108<N>);
+      chave.current.concluir();
       onOk(r.correlationId);
     } catch (e) {
-      setEstado({ salvando: false, erro: tipoErro(e) });
+      const erro = tipoErro(e);
+      bloqueada.current = erro === "conflito" || erro === "obsoleto";
+      if (erro !== "erro") chave.current.concluir();
+      setEstado({ salvando: false, erro });
       return;
+    } finally {
+      pendente.current = false;
     }
     setEstado({ salvando: false, erro: null });
   };
-  return { ...estado, enviar };
+  const recarregar = (onRecarregar: () => void) => {
+    bloqueada.current = true;
+    chave.current.concluir();
+    onRecarregar();
+  };
+  return { ...estado, bloqueada: bloqueada.current, enviar, recarregar };
 }
 function ErroAcao({ erro, onRecarregar }: { erro: TipoErroBn | null; onRecarregar: () => void }) {
   if (!erro) return null;
@@ -528,9 +545,9 @@ function FormProposta({ org, contrato, proposta, onOk, onRecarregar }: { org: st
           <input className={campo} value={titulo} maxLength={300} aria-invalid={erroCampo} aria-describedby={erroCampo ? "erro-titulo" : undefined} onChange={(x) => setTitulo(x.target.value)} />
         </label>
         {erroCampo ? <p id="erro-titulo" className="text-sm text-destructive">Informe o título.</p> : null}
-        <ErroAcao erro={e.erro} onRecarregar={onRecarregar} />
+        <ErroAcao erro={e.erro} onRecarregar={() => e.recarregar(onRecarregar)} />
       </div>
-      <DialogFooter><Button type="submit" className="h-11" disabled={e.salvando} aria-busy={e.salvando}>{e.salvando ? "Salvando…" : "Salvar proposta"}</Button></DialogFooter>
+      <DialogFooter><Button type="submit" className="h-11" disabled={e.salvando || e.bloqueada} aria-busy={e.salvando}>{e.salvando ? "Salvando…" : "Salvar proposta"}</Button></DialogFooter>
     </form>
   );
 }
@@ -569,9 +586,9 @@ function FormVersao({ org, contrato, proposta, onOk, onRecarregar }: { org: stri
         {docs.isError ? <p role="alert" className="text-sm text-destructive">{MENSAGENS_V108.erroLista}</p> : null}
         <EnvioArquivo org={org} contrato={contrato} onEnviado={() => void qc.invalidateQueries({ queryKey: ["orcamento", "docs", org, contrato] })} />
         {erroCampo ? <p role="alert" className="text-sm text-destructive">{erroCampo}</p> : null}
-        <ErroAcao erro={e.erro} onRecarregar={onRecarregar} />
+        <ErroAcao erro={e.erro} onRecarregar={() => e.recarregar(onRecarregar)} />
       </div>
-      <DialogFooter><Button type="submit" className="h-11" disabled={e.salvando} aria-busy={e.salvando}>{e.salvando ? "Registrando…" : "Registrar versão"}</Button></DialogFooter>
+      <DialogFooter><Button type="submit" className="h-11" disabled={e.salvando || e.bloqueada} aria-busy={e.salvando}>{e.salvando ? "Registrando…" : "Registrar versão"}</Button></DialogFooter>
     </form>
   );
 }
@@ -623,9 +640,9 @@ function FormRubrica({ org, versao, rubrica, onOk, onRecarregar }: { org: string
         <label className="block text-sm font-medium sm:col-span-2">Descrição (opcional)<textarea className={`${campo} py-2`} rows={2} value={f.descricao} onChange={set("descricao")} /></label>
         <label className="block text-sm font-medium sm:col-span-2">Observações (opcional)<textarea className={`${campo} py-2`} rows={2} value={f.observacoes} onChange={set("observacoes")} /></label>
         {erroCampo ? <p role="alert" className="text-sm text-destructive sm:col-span-2">{erroCampo}</p> : null}
-        <div className="sm:col-span-2"><ErroAcao erro={e.erro} onRecarregar={onRecarregar} /></div>
+        <div className="sm:col-span-2"><ErroAcao erro={e.erro} onRecarregar={() => e.recarregar(onRecarregar)} /></div>
       </div>
-      <DialogFooter><Button type="submit" className="h-11" disabled={e.salvando} aria-busy={e.salvando}>{e.salvando ? "Salvando…" : "Salvar rubrica"}</Button></DialogFooter>
+      <DialogFooter><Button type="submit" className="h-11" disabled={e.salvando || e.bloqueada} aria-busy={e.salvando}>{e.salvando ? "Salvando…" : "Salvar rubrica"}</Button></DialogFooter>
     </form>
   );
 }
@@ -638,10 +655,10 @@ function ConfirmarRemocao({ org, versao, rubrica, onCancelar, onOk, onRecarregar
         <DialogTitle>Remover rubrica</DialogTitle>
         <DialogDescription>{`Remover “${rubrica.rubrica ?? ""}” da versão ${versao.numero_versao} em rascunho?`}</DialogDescription>
       </DialogHeader>
-      <ErroAcao erro={e.erro} onRecarregar={onRecarregar} />
+      <ErroAcao erro={e.erro} onRecarregar={() => e.recarregar(onRecarregar)} />
       <DialogFooter className="gap-2">
         <Button type="button" variant="outline" className="h-11" onClick={onCancelar}>Cancelar</Button>
-        <Button type="button" variant="destructive" className="h-11" disabled={e.salvando} aria-busy={e.salvando} onClick={() => void e.enviar({ p_id_organizacao: org, p_id_versao_proposta: versao.id, p_id_linha: rubrica.id, p_versao_esperada: rubrica.versao_registro }, onOk)}>Confirmar remoção</Button>
+        <Button type="button" variant="destructive" className="h-11" disabled={e.salvando || e.bloqueada} aria-busy={e.salvando} onClick={() => void e.enviar({ p_id_organizacao: org, p_id_versao_proposta: versao.id, p_id_linha: rubrica.id, p_versao_esperada: rubrica.versao_registro }, onOk)}>Confirmar remoção</Button>
       </DialogFooter>
     </>
   );
@@ -673,8 +690,8 @@ function FormPublicar({ org, versao, arquivo, qtdRubricas, somaPagina, onOk, onR
         <textarea className={`${campo} py-2`} rows={3} value={fundamento} onChange={(x) => setFundamento(x.target.value)} />
       </label>
       <label className="mt-3 flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" className="h-5 w-5" checked={confirmo} onChange={(x) => setConfirmo(x.target.checked)} /> Confirmo que revisei a versão e desejo publicá-la.</label>
-      <div className="mt-3"><ErroAcao erro={e.erro} onRecarregar={onRecarregar} /></div>
-      <DialogFooter className="mt-4"><Button type="submit" className="h-11" disabled={!fundamento.trim() || !confirmo || !hash || e.salvando} aria-busy={e.salvando}>{e.salvando ? "Publicando…" : "Confirmar publicação"}</Button></DialogFooter>
+      <div className="mt-3"><ErroAcao erro={e.erro} onRecarregar={() => e.recarregar(onRecarregar)} /></div>
+      <DialogFooter className="mt-4"><Button type="submit" className="h-11" disabled={!fundamento.trim() || !confirmo || !hash || e.salvando || e.bloqueada} aria-busy={e.salvando}>{e.salvando ? "Publicando…" : "Confirmar publicação"}</Button></DialogFooter>
     </form>
   );
 }

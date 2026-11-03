@@ -22,29 +22,56 @@ vi.mock("@/integrations/supabase/client", () => {
     const c: Chamada = { tabela, ops: [] };
     m.chamadas.push(c);
     const b: { [k: string]: unknown } = {};
-    for (const op of ["select", "eq", "is", "or", "in", "order", "range", "maybeSingle", "abortSignal", "insert", "update", "delete", "upsert"]) {
+    for (const op of [
+      "select",
+      "eq",
+      "is",
+      "or",
+      "in",
+      "order",
+      "range",
+      "maybeSingle",
+      "abortSignal",
+      "insert",
+      "update",
+      "delete",
+      "upsert",
+    ]) {
       b[op] = (...args: unknown[]) => {
         c.ops.push([op, args]);
         return b;
       };
     }
-    b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => Promise.resolve(m.resposta?.(c)).then(res, rej);
+    b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
+      Promise.resolve(m.resposta?.(c)).then(res, rej);
     return b;
   };
   const rpc = (nome: string, args: Record<string, unknown>) => {
     m.rpcChamadas.push({ nome, args });
     const b: { [k: string]: unknown } = {};
     b["abortSignal"] = () => b;
-    b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) => Promise.resolve(m.rpc(nome, args)).then(res, rej);
+    b["then"] = (res: (v: unknown) => unknown, rej: (e: unknown) => unknown) =>
+      Promise.resolve(m.rpc(nome, args)).then(res, rej);
     return b;
   };
   const storage = { from: () => ({ uploadToSignedUrl: (...a: unknown[]) => m.upload(...a) }) };
-  return { supabase: { auth: { getUser: m.getUser }, from, rpc, functions: { invoke: m.invoke }, storage } };
+  return {
+    supabase: { auth: { getUser: m.getUser }, from, rpc, functions: { invoke: m.invoke }, storage },
+  };
 });
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.nav,
   createFileRoute: () => (o: unknown) => ({ options: o, useParams: () => ({ id: "x" }) }),
-  Link: ({ children, to, params, ...p }: { children: ReactNode; to: string; params?: { id?: string } }) => (
+  Link: ({
+    children,
+    to,
+    params,
+    ...p
+  }: {
+    children: ReactNode;
+    to: string;
+    params?: { id?: string };
+  }) => (
     <a href={params?.id ? to.replace("$id", params.id) : to} {...p}>
       {children}
     </a>
@@ -52,7 +79,13 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 import { OrcamentoContrato, MENSAGENS_V108 } from "@/components/contratos/OrcamentoContrato";
-import { COLUNAS_PROPOSTA, COLUNAS_VERSAO_PROPOSTA, COLUNAS_RUBRICA, criarGerenciadorChave, lerValorBr } from "@/lib/contratos/orcamentoDados";
+import {
+  COLUNAS_PROPOSTA,
+  COLUNAS_VERSAO_PROPOSTA,
+  COLUNAS_RUBRICA,
+  criarGerenciadorChave,
+  lerValorBr,
+} from "@/lib/contratos/orcamentoDados";
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { Route } from "@/routes/contratos_.$id_.orcamento";
 
@@ -65,30 +98,99 @@ const V0 = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
 const L1 = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 const ARQ = "ffffffff-ffff-4fff-8fff-ffffffffffff";
 
-const contrato = () => ({ id: K1, id_organizacao: A, numero: "CT-001", objeto: "x", situacao: "ativo", criticidade: "alta", contratante: null });
-const proposta = (extra: Record<string, unknown> = {}) => ({ id: P1, id_organizacao: A, id_contrato: K1, titulo: "Proposta 2026", situacao: "rascunho", versao_atual: null, versao_registro: 2, criado_em: "2026-01-02T12:00:00Z", atualizado_em: "2026-01-02T12:00:00Z", ...extra });
-const versao = (extra: Record<string, unknown> = {}) => ({ id: V1, id_proposta: P1, numero_versao: 1, vigencia_inicio: "2026-01-01", vigencia_fim: "2026-12-31", valor_total: 1200, hash: "hash-servidor-xyz", situacao: "rascunho", aprovado_por: null, aprovado_em: null, criado_em: "2026-01-02T12:00:00Z", id_arquivo_origem: ARQ, ...extra });
-const rubrica = (extra: Record<string, unknown> = {}) => ({ id: L1, id_versao_proposta: V1, codigo: "RUB-0001", grupo: "Pessoal", rubrica: "Salários", subrubrica: "Base", descricao: null, valor_mensal_previsto: 100, valor_anual_previsto: 1200, permite_remanejamento: true, limite_remanejamento_percentual: 25, observacoes: "Obs A", versao_registro: 4, criado_em: "2026-01-02T12:00:00Z", ...extra });
-const arquivo = (status = "aprovado") => ({ id: ARQ, nome_original: "base.pdf", mime: "application/pdf", tamanho: 10, status_seguranca: status, criado_em: "2026-01-02T12:00:00Z" });
+const contrato = () => ({
+  id: K1,
+  id_organizacao: A,
+  numero: "CT-001",
+  objeto: "x",
+  situacao: "ativo",
+  criticidade: "alta",
+  contratante: null,
+});
+const proposta = (extra: Record<string, unknown> = {}) => ({
+  id: P1,
+  id_organizacao: A,
+  id_contrato: K1,
+  titulo: "Proposta 2026",
+  situacao: "rascunho",
+  versao_atual: null,
+  versao_registro: 2,
+  criado_em: "2026-01-02T12:00:00Z",
+  atualizado_em: "2026-01-02T12:00:00Z",
+  ...extra,
+});
+const versao = (extra: Record<string, unknown> = {}) => ({
+  id: V1,
+  id_proposta: P1,
+  numero_versao: 1,
+  vigencia_inicio: "2026-01-01",
+  vigencia_fim: "2026-12-31",
+  valor_total: 1200,
+  hash: "hash-servidor-xyz",
+  situacao: "rascunho",
+  aprovado_por: null,
+  aprovado_em: null,
+  criado_em: "2026-01-02T12:00:00Z",
+  id_arquivo_origem: ARQ,
+  ...extra,
+});
+const rubrica = (extra: Record<string, unknown> = {}) => ({
+  id: L1,
+  id_versao_proposta: V1,
+  codigo: "RUB-0001",
+  grupo: "Pessoal",
+  rubrica: "Salários",
+  subrubrica: "Base",
+  descricao: null,
+  valor_mensal_previsto: 100,
+  valor_anual_previsto: 1200,
+  permite_remanejamento: true,
+  limite_remanejamento_percentual: 25,
+  observacoes: "Obs A",
+  versao_registro: 4,
+  criado_em: "2026-01-02T12:00:00Z",
+  ...extra,
+});
+const arquivo = (status = "aprovado") => ({
+  id: ARQ,
+  nome_original: "base.pdf",
+  mime: "application/pdf",
+  tamanho: 10,
+  status_seguranca: status,
+  criado_em: "2026-01-02T12:00:00Z",
+});
 
 const ok = (d: unknown, count?: number) => ({ data: d, error: null, status: 200, count });
 const de = (t: string) => m.chamadas.filter((c) => c.tabela === t);
 const op = (c: Chamada, nome: string) => c.ops.filter(([o]) => o === nome).map(([, a]) => a);
 
-type Dados = { propostas?: unknown[]; versoes?: unknown[]; rubricas?: unknown[]; arquivos?: unknown[]; erroPropostas?: unknown; totalRubricas?: number };
+type Dados = {
+  propostas?: unknown[];
+  versoes?: unknown[];
+  rubricas?: unknown[];
+  arquivos?: unknown[];
+  erroPropostas?: unknown;
+  totalRubricas?: number;
+};
 function cenario(d: Dados = {}) {
   m.resposta = (c) => {
     if (c.tabela === "contratos") return ok(contrato());
-    if (c.tabela === "propostas_orcamentarias") return d.erroPropostas ?? ok(d.propostas ?? [], (d.propostas ?? []).length);
+    if (c.tabela === "propostas_orcamentarias")
+      return d.erroPropostas ?? ok(d.propostas ?? [], (d.propostas ?? []).length);
     if (c.tabela === "versoes_proposta") return ok(d.versoes ?? [], (d.versoes ?? []).length);
-    if (c.tabela === "linhas_orcamentarias") return ok(d.rubricas ?? [], d.totalRubricas ?? (d.rubricas ?? []).length);
+    if (c.tabela === "linhas_orcamentarias")
+      return ok(d.rubricas ?? [], d.totalRubricas ?? (d.rubricas ?? []).length);
     if (c.tabela === "arquivos") return ok(d.arquivos ?? [], (d.arquivos ?? []).length);
     return ok(null);
   };
 }
 function montar(id = K1) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}><OrcamentoContrato id={id} /></QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={qc}>
+      <OrcamentoContrato id={id} />
+    </QueryClientProvider>,
+  );
 }
 
 beforeEach(() => {
@@ -96,7 +198,9 @@ beforeEach(() => {
   m.rpcChamadas.length = 0;
   m.resposta = null;
   m.nav.mockReset();
-  m.rpc.mockReset().mockResolvedValue({ data: { ok: true, correlation_id: "corr-123" }, error: null });
+  m.rpc
+    .mockReset()
+    .mockResolvedValue({ data: { ok: true, correlation_id: "corr-123" }, error: null });
   m.invoke.mockReset();
   m.upload.mockReset();
   m.getUser.mockReset().mockResolvedValue({ data: { user: { id: U } }, error: null });
@@ -106,7 +210,11 @@ beforeEach(() => {
 
 describe("V1-08 rota, sessão e gate", () => {
   it("rota ssr:false, título e noindex", () => {
-    const o = (Route as unknown as { options: { ssr: boolean; head: () => { meta: Array<Record<string, string>> } } }).options;
+    const o = (
+      Route as unknown as {
+        options: { ssr: boolean; head: () => { meta: Array<Record<string, string>> } };
+      }
+    ).options;
     expect(o.ssr).toBe(false);
     expect(o.head().meta).toContainEqual({ title: "Orçamento — ContaOS" });
     expect(o.head().meta).toContainEqual({ name: "robots", content: "noindex" });
@@ -121,7 +229,9 @@ describe("V1-08 rota, sessão e gate", () => {
     window.sessionStorage.clear();
     window.localStorage.clear();
     montar();
-    await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }));
+    await waitFor(() =>
+      expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }),
+    );
   });
   it("403 do contrato não carrega orçamento nem classificador", async () => {
     m.resposta = () => ({ data: null, error: { code: "42501" }, status: 403 });
@@ -141,6 +251,30 @@ describe("V1-08 rota, sessão e gate", () => {
 });
 
 describe("V1-08 leituras", () => {
+  it("propostas desempata por id DESC após criado_em DESC", async () => {
+    cenario({ propostas: [proposta()] });
+    montar();
+    await screen.findByRole("button", { name: "Editar título" });
+    const consulta = de("propostas_orcamentarias")[0];
+    expect(consulta).toBeDefined();
+    if (!consulta) throw new Error("Consulta de propostas ausente");
+    expect(op(consulta, "order")).toEqual([
+      ["criado_em", { ascending: false }],
+      ["id", { ascending: false }],
+    ]);
+  });
+  it("versões desempata por id DESC após numero_versao DESC", async () => {
+    cenario({ propostas: [proposta()], versoes: [versao()] });
+    montar();
+    await screen.findByRole("button", { name: "Nova rubrica" });
+    const consulta = de("versoes_proposta")[0];
+    expect(consulta).toBeDefined();
+    if (!consulta) throw new Error("Consulta de versões ausente");
+    expect(op(consulta, "order")).toEqual([
+      ["numero_versao", { ascending: false }],
+      ["id", { ascending: false }],
+    ]);
+  });
   it("empty real com H1 único, nav e Criar proposta", async () => {
     cenario();
     montar();
@@ -167,7 +301,12 @@ describe("V1-08 leituras", () => {
     expect(screen.queryByText(MENSAGENS_V108.vazio)).toBeNull();
   });
   it("colunas explícitas, range 0–24 e ordem estável; arquivos em uma consulta sem path", async () => {
-    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo("pendente")] });
+    cenario({
+      propostas: [proposta()],
+      versoes: [versao()],
+      rubricas: [rubrica()],
+      arquivos: [arquivo("pendente")],
+    });
     montar();
     await screen.findByText("Salários");
     const p = de("propostas_orcamentarias")[0]!;
@@ -176,7 +315,10 @@ describe("V1-08 leituras", () => {
     expect(op(p, "range")[0]).toEqual([0, 24]);
     const v = de("versoes_proposta")[0]!;
     expect(op(v, "select")[0]).toEqual([COLUNAS_VERSAO_PROPOSTA, { count: "exact" }]);
-    expect(op(v, "order")).toEqual([["numero_versao", { ascending: false }], ["id", { ascending: true }]]);
+    expect(op(v, "order")).toEqual([
+      ["numero_versao", { ascending: false }],
+      ["id", { ascending: false }],
+    ]);
     expect(op(v, "range")[0]).toEqual([0, 24]);
     const l = de("linhas_orcamentarias")[0]!;
     expect(op(l, "select")[0]).toEqual([COLUNAS_RUBRICA, { count: "exact" }]);
@@ -186,28 +328,99 @@ describe("V1-08 leituras", () => {
     expect(de("arquivos")).toHaveLength(1);
     expect(op(de("arquivos")[0]!, "in")[0]).toEqual(["id", [ARQ]]);
     expect(String(op(de("arquivos")[0]!, "select")[0]?.[0])).not.toContain("path");
-    for (const c of m.chamadas) for (const o of ["insert", "update", "delete", "upsert"]) expect(op(c, o)).toHaveLength(0);
+    for (const c of m.chamadas)
+      for (const o of ["insert", "update", "delete", "upsert"]) expect(op(c, o)).toHaveLength(0);
   });
   it("exibe campos V1-CON-003 em BRL e datas BR", async () => {
-    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo()] });
+    cenario({
+      propostas: [proposta()],
+      versoes: [versao()],
+      rubricas: [rubrica()],
+      arquivos: [arquivo()],
+    });
     montar();
     await screen.findByText("Salários");
-    for (const t of ["Pessoal", "Base", "RUB-0001", "Obs A", "25%"]) expect(screen.getAllByText(t).length).toBeGreaterThan(0);
+    for (const t of ["Pessoal", "Base", "RUB-0001", "Obs A", "25%"])
+      expect(screen.getAllByText(t).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/R\$\s?100,00/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/R\$\s?1\.200,00/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/01\/01\/2026/).length).toBeGreaterThan(0);
     expect(screen.getAllByText("Sim").length).toBeGreaterThan(0);
   });
   it("paginação de rubricas solicita 25–49", async () => {
-    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], totalRubricas: 30, arquivos: [arquivo()] });
+    cenario({
+      propostas: [proposta()],
+      versoes: [versao()],
+      rubricas: [rubrica()],
+      totalRubricas: 30,
+      arquivos: [arquivo()],
+    });
     montar();
     await screen.findByText("Salários");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de rubricas" }));
-    await waitFor(() => expect(de("linhas_orcamentarias").some((c) => JSON.stringify(op(c, "range")[0]) === "[25,49]")).toBe(true));
+    await waitFor(() =>
+      expect(
+        de("linhas_orcamentarias").some((c) => JSON.stringify(op(c, "range")[0]) === "[25,49]"),
+      ).toBe(true),
+    );
   });
 });
 
 describe("V1-08 RPCs V108", () => {
+  it.each([
+    ["PT409", MENSAGENS_V108.conflito],
+    ["PT404", MENSAGENS_V108.obsoleto],
+  ])(
+    "%s bloqueia a intenção até recarregar e reabrir com revisão atualizada",
+    async (code, mensagem) => {
+      cenario({
+        propostas: [proposta()],
+        versoes: [versao()],
+        rubricas: [rubrica()],
+        arquivos: [arquivo()],
+      });
+      m.rpc.mockResolvedValueOnce({ data: null, error: { code } });
+      montar();
+      const abrir = (await screen.findAllByRole("button", { name: "Editar rubrica Salários" }))[0];
+      if (!abrir) throw new Error("Ação de edição ausente");
+      fireEvent.click(abrir);
+      fireEvent.click(screen.getByRole("button", { name: "Salvar rubrica" }));
+      await screen.findByText(mensagem);
+      const salvar = screen.getByRole("button", { name: "Salvar rubrica" });
+      expect(salvar).toBeDisabled();
+      fireEvent.change(screen.getByLabelText("Observações (opcional)"), {
+        target: { value: "Carga revisada" },
+      });
+      fireEvent.click(salvar);
+      const form = salvar.closest("form");
+      if (!form) throw new Error("Formulário ausente");
+      fireEvent.submit(form);
+      expect(m.rpcChamadas).toHaveLength(1);
+      const primeira = m.rpcChamadas[0];
+      if (!primeira) throw new Error("RPC ausente");
+      cenario({
+        propostas: [proposta()],
+        versoes: [versao()],
+        rubricas: [rubrica({ versao_registro: 5 })],
+        arquivos: [arquivo()],
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Recarregar" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+      expect(m.rpcChamadas).toHaveLength(1);
+      const reabrir = (
+        await screen.findAllByRole("button", { name: "Editar rubrica Salários" })
+      )[0];
+      if (!reabrir) throw new Error("Ação atualizada ausente");
+      fireEvent.click(reabrir);
+      fireEvent.click(screen.getByRole("button", { name: "Salvar rubrica" }));
+      await screen.findByText(/corr-123/);
+      expect(m.rpcChamadas).toHaveLength(2);
+      const segunda = m.rpcChamadas[1];
+      if (!segunda) throw new Error("Segunda RPC ausente");
+      expect(segunda.args["p_versao_esperada"]).toBe(5);
+      expect(segunda.args["p_chave_idempotencia"]).not.toBe(primeira.args["p_chave_idempotencia"]);
+    },
+  );
   it("criar proposta: args exatos e protocolo", async () => {
     cenario();
     montar();
@@ -216,28 +429,70 @@ describe("V1-08 RPCs V108", () => {
     fireEvent.click(screen.getByRole("button", { name: "Salvar proposta" }));
     await screen.findByText(/corr-123/);
     const c = m.rpcChamadas.find((r) => r.nome === "salvar_proposta_orcamentaria_v108")!;
-    expect(Object.keys(c.args).sort()).toEqual(["p_chave_idempotencia", "p_id_contrato", "p_id_organizacao", "p_id_proposta", "p_titulo", "p_versao_esperada"]);
-    expect(c.args).toMatchObject({ p_id_organizacao: A, p_id_contrato: K1, p_id_proposta: null, p_titulo: "Nova", p_versao_esperada: null });
+    expect(Object.keys(c.args).sort()).toEqual([
+      "p_chave_idempotencia",
+      "p_id_contrato",
+      "p_id_organizacao",
+      "p_id_proposta",
+      "p_titulo",
+      "p_versao_esperada",
+    ]);
+    expect(c.args).toMatchObject({
+      p_id_organizacao: A,
+      p_id_contrato: K1,
+      p_id_proposta: null,
+      p_titulo: "Nova",
+      p_versao_esperada: null,
+    });
     expect(typeof c.args["p_chave_idempotencia"]).toBe("string");
   });
   it("salvar rubrica com código opcional nulo e valores pt-BR", async () => {
-    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [], arquivos: [arquivo("pendente")] });
+    cenario({
+      propostas: [proposta()],
+      versoes: [versao()],
+      rubricas: [],
+      arquivos: [arquivo("pendente")],
+    });
     montar();
     fireEvent.click(await screen.findByRole("button", { name: "Nova rubrica" }));
     fireEvent.change(screen.getByLabelText("Grupo"), { target: { value: "Pessoal" } });
     fireEvent.change(screen.getByLabelText("Rubrica"), { target: { value: "Salários" } });
-    fireEvent.change(screen.getByLabelText("Valor mensal previsto (R$)"), { target: { value: "1.234,56" } });
+    fireEvent.change(screen.getByLabelText("Valor mensal previsto (R$)"), {
+      target: { value: "1.234,56" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Salvar rubrica" }));
     await screen.findByText(/corr-123/);
     const c = m.rpcChamadas.find((r) => r.nome === "salvar_linha_orcamentaria_v108")!;
     expect(Object.keys(c.args)).toHaveLength(15);
-    expect(c.args).toMatchObject({ p_id_organizacao: A, p_id_versao_proposta: V1, p_id_linha: null, p_codigo: null, p_grupo: "Pessoal", p_rubrica: "Salários", p_valor_mensal: 1234.56, p_valor_anual: null, p_permite_remanejamento: false, p_limite_remanejamento_percentual: null, p_versao_esperada: null });
+    expect(c.args).toMatchObject({
+      p_id_organizacao: A,
+      p_id_versao_proposta: V1,
+      p_id_linha: null,
+      p_codigo: null,
+      p_grupo: "Pessoal",
+      p_rubrica: "Salários",
+      p_valor_mensal: 1234.56,
+      p_valor_anual: null,
+      p_permite_remanejamento: false,
+      p_limite_remanejamento_percentual: null,
+      p_versao_esperada: null,
+    });
   });
   it("PT409 mostra conflito, não reenvia e retry de transporte preserva chave", async () => {
-    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo()] });
-    m.rpc.mockReset().mockRejectedValueOnce(new Error("rede")).mockResolvedValueOnce({ data: null, error: { code: "PT409" } });
+    cenario({
+      propostas: [proposta()],
+      versoes: [versao()],
+      rubricas: [rubrica()],
+      arquivos: [arquivo()],
+    });
+    m.rpc
+      .mockReset()
+      .mockRejectedValueOnce(new Error("rede"))
+      .mockResolvedValueOnce({ data: null, error: { code: "PT409" } });
     montar();
-    fireEvent.click((await screen.findAllByRole("button", { name: "Editar rubrica Salários" }))[0]!);
+    fireEvent.click(
+      (await screen.findAllByRole("button", { name: "Editar rubrica Salários" }))[0]!,
+    );
     fireEvent.click(screen.getByRole("button", { name: "Salvar rubrica" }));
     await screen.findByText(MENSAGENS_V108.erroAcao);
     fireEvent.click(screen.getByRole("button", { name: "Salvar rubrica" }));
@@ -248,64 +503,117 @@ describe("V1-08 RPCs V108", () => {
     expect(cs[0]!.args["p_versao_esperada"]).toBe(4);
     expect(screen.getByRole("button", { name: "Recarregar" })).toBeTruthy();
     await new Promise((r) => setTimeout(r, 30));
-    expect(m.rpcChamadas.filter((r) => r.nome === "salvar_linha_orcamentaria_v108")).toHaveLength(2);
+    expect(m.rpcChamadas.filter((r) => r.nome === "salvar_linha_orcamentaria_v108")).toHaveLength(
+      2,
+    );
   });
   it("remover exige confirmação e envia args exatos", async () => {
-    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo()] });
+    cenario({
+      propostas: [proposta()],
+      versoes: [versao()],
+      rubricas: [rubrica()],
+      arquivos: [arquivo()],
+    });
     montar();
-    fireEvent.click((await screen.findAllByRole("button", { name: "Remover rubrica Salários" }))[0]!);
+    fireEvent.click(
+      (await screen.findAllByRole("button", { name: "Remover rubrica Salários" }))[0]!,
+    );
     expect(m.rpcChamadas).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: "Confirmar remoção" }));
     await screen.findByText(/corr-123/);
     const c = m.rpcChamadas.find((r) => r.nome === "remover_linha_orcamentaria_v108")!;
-    expect(c.args).toMatchObject({ p_id_organizacao: A, p_id_versao_proposta: V1, p_id_linha: L1, p_versao_esperada: 4 });
+    expect(c.args).toMatchObject({
+      p_id_organizacao: A,
+      p_id_versao_proposta: V1,
+      p_id_linha: L1,
+      p_versao_esperada: 4,
+    });
     expect(Object.keys(c.args)).toHaveLength(5);
   });
   it("nova versão: oculta com rascunho existente; envia vigência e documento", async () => {
-    cenario({ propostas: [proposta({ situacao: "ativa", versao_atual: 1 })], versoes: [versao({ situacao: "publicada" })], rubricas: [rubrica()], arquivos: [arquivo()] });
+    cenario({
+      propostas: [proposta({ situacao: "ativa", versao_atual: 1 })],
+      versoes: [versao({ situacao: "publicada" })],
+      rubricas: [rubrica()],
+      arquivos: [arquivo()],
+    });
     montar();
     fireEvent.click(await screen.findByRole("button", { name: "Nova versão" }));
-    fireEvent.change(screen.getByLabelText("Início da vigência"), { target: { value: "2027-01-01" } });
+    fireEvent.change(screen.getByLabelText("Início da vigência"), {
+      target: { value: "2027-01-01" },
+    });
     await screen.findByRole("option", { name: "base.pdf — Aprovado" });
     fireEvent.change(screen.getByLabelText("Documento-base"), { target: { value: ARQ } });
     fireEvent.click(screen.getByRole("button", { name: "Registrar versão" }));
     await screen.findByText(/corr-123/);
     const c = m.rpcChamadas.find((r) => r.nome === "registrar_versao_proposta_v108")!;
-    expect(c.args).toMatchObject({ p_id_organizacao: A, p_id_proposta: P1, p_vigencia_inicio: "2027-01-01", p_vigencia_fim: null, p_id_arquivo_origem: ARQ });
+    expect(c.args).toMatchObject({
+      p_id_organizacao: A,
+      p_id_proposta: P1,
+      p_vigencia_inicio: "2027-01-01",
+      p_vigencia_fim: null,
+      p_id_arquivo_origem: ARQ,
+    });
     expect(Object.keys(c.args)).toHaveLength(6);
   });
 });
 
 describe("V1-08 publicação e imutabilidade", () => {
   it("documento pendente bloqueia publicar", async () => {
-    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo("pendente")] });
+    cenario({
+      propostas: [proposta()],
+      versoes: [versao()],
+      rubricas: [rubrica()],
+      arquivos: [arquivo("pendente")],
+    });
     montar();
     await screen.findByText("Salários");
-    expect((screen.getByRole("button", { name: "Publicar versão" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Publicar versão" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
     expect(screen.getByText(MENSAGENS_V108.docNaoAprovado)).toBeTruthy();
   });
   it("publicar exige fundamento + confirmação e envia hash do servidor", async () => {
-    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo()] });
+    cenario({
+      propostas: [proposta()],
+      versoes: [versao()],
+      rubricas: [rubrica()],
+      arquivos: [arquivo()],
+    });
     montar();
     const pb = await screen.findByRole("button", { name: "Publicar versão" });
     await waitFor(() => expect((pb as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(pb);
     const dlg = screen.getByRole("dialog");
     expect(within(dlg).getByText("hash-servidor-xyz")).toBeTruthy();
-    const conf = within(dlg).getByRole("button", { name: "Confirmar publicação" }) as HTMLButtonElement;
+    const conf = within(dlg).getByRole("button", {
+      name: "Confirmar publicação",
+    }) as HTMLButtonElement;
     expect(conf.disabled).toBe(true);
-    fireEvent.change(within(dlg).getByLabelText("Fundamento da publicação"), { target: { value: "Aprovado pela diretoria" } });
+    fireEvent.change(within(dlg).getByLabelText("Fundamento da publicação"), {
+      target: { value: "Aprovado pela diretoria" },
+    });
     expect(conf.disabled).toBe(true);
     fireEvent.click(within(dlg).getByLabelText(/Confirmo/));
     expect(conf.disabled).toBe(false);
     fireEvent.click(conf);
     await screen.findByText(/corr-123/);
     const c = m.rpcChamadas.find((r) => r.nome === "publicar_versao_proposta_v108")!;
-    expect(c.args).toMatchObject({ p_id_organizacao: A, p_id_versao: V1, p_hash_esperado: "hash-servidor-xyz", p_fundamento: "Aprovado pela diretoria" });
+    expect(c.args).toMatchObject({
+      p_id_organizacao: A,
+      p_id_versao: V1,
+      p_hash_esperado: "hash-servidor-xyz",
+      p_fundamento: "Aprovado pela diretoria",
+    });
     expect(Object.keys(c.args)).toHaveLength(5);
   });
   it("versão publicada não oferece mutação de rubricas", async () => {
-    cenario({ propostas: [proposta({ situacao: "ativa", versao_atual: 1 })], versoes: [versao({ situacao: "publicada" })], rubricas: [rubrica()], arquivos: [arquivo()] });
+    cenario({
+      propostas: [proposta({ situacao: "ativa", versao_atual: 1 })],
+      versoes: [versao({ situacao: "publicada" })],
+      rubricas: [rubrica()],
+      arquivos: [arquivo()],
+    });
     montar();
     await screen.findByText("Salários");
     expect(screen.queryByRole("button", { name: "Nova rubrica" })).toBeNull();
@@ -314,7 +622,12 @@ describe("V1-08 publicação e imutabilidade", () => {
     expect(screen.queryByRole("button", { name: "Publicar versão" })).toBeNull();
   });
   it("Esc fecha diálogo e devolve foco ao gatilho", async () => {
-    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo()] });
+    cenario({
+      propostas: [proposta()],
+      versoes: [versao()],
+      rubricas: [rubrica()],
+      arquivos: [arquivo()],
+    });
     montar();
     const b = await screen.findByRole("button", { name: "Nova rubrica" });
     b.focus();
@@ -326,6 +639,15 @@ describe("V1-08 publicação e imutabilidade", () => {
 });
 
 describe("V1-08 utilitários e scan estático", () => {
+  it("conclusão de sucesso renova a chave para nova intenção com carga idêntica", () => {
+    const g = criarGerenciadorChave();
+    const primeira = g({ titulo: "Mesma carga" });
+    expect(g({ titulo: "Mesma carga" })).toBe(primeira);
+    g.concluir();
+    const segunda = g({ titulo: "Mesma carga" });
+    expect(segunda).not.toBe(primeira);
+    expect(g({ titulo: "Mesma carga" })).toBe(segunda);
+  });
   it("chave idempotente: mesma intenção preserva, payload novo renova", () => {
     const g = criarGerenciadorChave();
     const a = g({ x: 1 });
@@ -338,12 +660,21 @@ describe("V1-08 utilitários e scan estático", () => {
     expect(Number.isNaN(lerValorBr("abc"))).toBe(true);
   });
   it("código sem mutação direta, sem as any/never, sem secrets; navs habilitam Orçamento", () => {
-    const fontes = ["src/lib/contratos/orcamentoDados.ts", "src/components/contratos/OrcamentoContrato.tsx", "src/routes/contratos_.$id_.orcamento.tsx"].map((f) => readFileSync(f, "utf8")).join("\n");
+    const fontes = [
+      "src/lib/contratos/orcamentoDados.ts",
+      "src/components/contratos/OrcamentoContrato.tsx",
+      "src/routes/contratos_.$id_.orcamento.tsx",
+    ]
+      .map((f) => readFileSync(f, "utf8"))
+      .join("\n");
     expect(fontes).not.toMatch(/\.(insert|update|delete|upsert)\(/);
     expect(fontes).not.toMatch(/as any|as never/);
     expect(fontes).not.toMatch(/service_role|SERVICE_ROLE|sk-[a-zA-Z0-9]/);
     expect(fontes).toContain("ContaOSMarca");
-    for (const f of ["src/components/contratos/VisaoGeralContrato.tsx", "src/components/contratos/BaseNormativaContrato.tsx"]) {
+    for (const f of [
+      "src/components/contratos/VisaoGeralContrato.tsx",
+      "src/components/contratos/BaseNormativaContrato.tsx",
+    ]) {
       const s = readFileSync(f, "utf8");
       expect(s).toContain("/contratos/$id/orcamento");
       expect(s).not.toMatch(/SECOES_FUTURAS = \["Orçamento"/);
