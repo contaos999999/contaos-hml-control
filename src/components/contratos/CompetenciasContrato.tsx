@@ -497,14 +497,11 @@ function ListaCompetencias({ contrato, chave }: { contrato: string; chave: strin
         <h2 id="v112-lista" className="text-lg font-semibold">
           Lista de competências
         </h2>
-        <span
-          aria-disabled="true"
-          aria-label="Nova competência — em breve"
-          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-4 text-sm text-muted-foreground"
-        >
-          <span>Nova competência</span>
-          {EM_BREVE}
-        </span>
+        <Button asChild className="h-11">
+          <Link to="/contratos/$id/competencias/nova" params={{ id: contrato }}>
+            Nova competência
+          </Link>
+        </Button>
       </div>
       <FilterBar
         filtros={filtros}
