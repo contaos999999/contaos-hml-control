@@ -85,6 +85,7 @@ import { DocumentosContrato, MENSAGENS_V110 } from "@/components/contratos/Docum
 import {
   CHUNK_TUS,
   COLUNAS_DOCUMENTO,
+  LOTE_PROCESSAMENTOS,
   PAGINA_DOCS,
   atrasoPolling,
   enviarTus,
@@ -420,6 +421,52 @@ describe("V1-10 lista, filtros e paginação server-side", () => {
     montar();
     const linha = await screen.findByTestId(`documento-${D1}`);
     expect(await within(linha).findByText("Item sugerido indisponível")).toBeInTheDocument();
+  });
+  it("NFR-009: >100 processamentos entre versões; o de V2 só no 2º lote é resolvido sem consulta por versão", async () => {
+    cenario();
+    const base = m.resposta;
+    const D2 = "d2222222-2222-4222-8222-222222222222";
+    const V2 = "e2222222-2222-4222-8222-222222222222";
+    const p = (id: string, vid: string, status: string) => ({
+      id,
+      id_versao_documento: vid,
+      etapa: "documents",
+      status,
+      tentativas: 1,
+      erro_codigo: null,
+      iniciado_em: null,
+      concluido_em: null,
+      criado_em: "2026-02-01T12:00:00Z",
+    });
+    m.resposta = (c) => {
+      if (c.tabela === "documentos_contrato")
+        return ok([doc(), doc({ id: D2, titulo: "Aditivo" })], 2);
+      if (c.tabela === "versoes_documento")
+        return ok([versao(), { ...versao(), id: V2, id_documento_contrato: D2 }]);
+      if (c.tabela !== "processamentos_documento") return base!(c);
+      const [de0] = (c.ops.find(([o]) => o === "range")?.[1] ?? [0]) as number[];
+      if (de0 === 0)
+        return ok(
+          Array.from({ length: LOTE_PROCESSAMENTOS }, (_, i) => p(`a${i}`, V1, "concluido")),
+        );
+      return ok([p("b-novo", V2, "processando"), p("b-velho", V2, "concluido")]);
+    };
+    montar();
+    const l2 = await screen.findByTestId(`documento-${D2}`);
+    expect(await within(l2).findByText("Processando")).toBeInTheDocument();
+    expect(
+      within(screen.getByTestId(`documento-${D1}`)).getByText("Concluído"),
+    ).toBeInTheDocument();
+    const pr = de("processamentos_documento");
+    expect(pr).toHaveLength(2);
+    expect(pr.map((c) => op(c, "range")[0])).toEqual([
+      [0, LOTE_PROCESSAMENTOS - 1],
+      [LOTE_PROCESSAMENTOS, 2 * LOTE_PROCESSAMENTOS - 1],
+    ]);
+    for (const c of pr) {
+      expect(op(c, "in")[0]).toEqual(["id_versao_documento", [V1, V2].sort()]);
+      expect(op(c, "eq")).toHaveLength(0);
+    }
   });
   it("NFR-009: processamentos paginados em lotes de 1000 até esgotar, mais recente por versão", async () => {
     cenario();
