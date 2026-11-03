@@ -88,6 +88,7 @@ import {
   PAGINA_DOCS,
   atrasoPolling,
   enviarTus,
+  lerConfiguracaoUpload,
   validarArquivo,
 } from "@/lib/contratos/documentosDados";
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
@@ -153,7 +154,35 @@ const ok = (d: unknown, count?: number) => ({ data: d, error: null, status: 200,
 const de = (t: string) => m.chamadas.filter((c) => c.tabela === t);
 const op = (c: Chamada, nome: string) => c.ops.filter(([o]) => o === nome).map(([, a]) => a);
 
-type Dados = { docs?: unknown[]; total?: number; status?: string; proc?: string };
+type Dados = {
+  docs?: unknown[];
+  total?: number;
+  status?: string;
+  proc?: string;
+  requisito?: string | null;
+  cfg?: unknown;
+  cfgErro?: boolean;
+};
+const RQ1 = "66666666-6666-4666-8666-666666666666";
+const RQ_FANTASMA = "77777777-7777-4777-8777-777777777777";
+const CFG = {
+  extensoes_permitidas: [
+    "pdf",
+    "xlsx",
+    "csv",
+    "docx",
+    "png",
+    "jpg",
+    "jpeg",
+    "webp",
+    "txt",
+    "json",
+    "xml",
+  ],
+  mimes_permitidos: ["application/pdf", "text/csv", "image/png"],
+  tamanho_maximo_bytes: 524288000,
+  limiar_upload_resumivel_bytes: 104857600,
+};
 function cenario(d: Dados = {}) {
   m.resposta = (c) => {
     if (c.tabela === "contratos") return ok(contrato());
@@ -178,18 +207,42 @@ function cenario(d: Dados = {}) {
         },
       ]);
     if (c.tabela === "sugestoes_extracao_documento") {
-      if (op(c, "select")[0]?.[1]) return ok(null, op(c, "is").length ? 1 : 3);
+      const s = (id: string, tipo: string, extra: Record<string, unknown> = {}) => ({
+        id,
+        id_versao_documento: V1,
+        tipo,
+        status: "pendente",
+        vigencia_inicio: null,
+        categoria_sugerida: null,
+        id_requisito_sugerido: null,
+        confianca: 0.5,
+        ...extra,
+      });
       return ok([
-        {
-          id: "s1",
-          id_versao_documento: V1,
+        s("s1", "classificacao", {
           categoria_sugerida: "Trabalhista",
-          id_requisito_sugerido: null,
+          id_requisito_sugerido: d.requisito === undefined ? RQ1 : d.requisito,
           confianca: 0.87,
-          status: "pendente",
-        },
+        }),
+        s("s2", "obrigacao"),
+        s("s3", "clausula", { vigencia_inicio: "2026-01-01" }),
+        s("s4", "classificacao", { categoria_sugerida: "Fiscal", confianca: 0.2 }),
+        s("s5", "prazo", { status: "aprovada", vigencia_inicio: "2026-01-01" }),
       ]);
     }
+    if (c.tabela === "requisitos_competencia")
+      return ok([
+        {
+          id: RQ1,
+          codigo: "RQ-7",
+          descricao: "Folha de pagamento",
+          categoria: "Pessoal",
+          origem_tipo: "lista",
+          origem_id: null,
+        },
+      ]);
+    if (c.tabela === "configuracao_upload")
+      return d.cfgErro ? { data: null, error: { code: "XX000" }, status: 500 } : ok(d.cfg ?? CFG);
     return ok(null);
   };
 }
@@ -334,13 +387,35 @@ describe("V1-10 lista, filtros e paginação server-side", () => {
       ).toBeInTheDocument(),
     );
     expect(within(linha).getByText("1 sugestão sem vigência")).toBeInTheDocument();
-    expect(within(linha).getByText(/Trabalhista — 87%/)).toBeInTheDocument();
+    expect(within(linha).getByText(/Classificação \(IA\): Trabalhista — 87%/)).toBeInTheDocument();
     expect(within(linha).getByText("Metadados extraídos: disponíveis")).toBeInTheDocument();
-    const contagens = de("sugestoes_extracao_documento").filter((c) => op(c, "select")[0]?.[1]);
-    expect(contagens.length).toBeGreaterThan(0);
-    contagens.forEach((c) =>
-      expect(op(c, "select")[0]?.[1]).toEqual({ count: "exact", head: true }),
-    );
+    // sem N+1: uma única consulta de sugestões filtrada pelas versões da página, sem head/count
+    const sug = de("sugestoes_extracao_documento");
+    expect(sug).toHaveLength(1);
+    expect(op(sug[0]!, "in")).toContainEqual(["id_versao_documento", [V1]]);
+    expect(op(sug[0]!, "select")[0]?.[1]).toBeUndefined();
+    expect(op(sug[0]!, "eq")).toHaveLength(0);
+  });
+  it("V1-DOC-002: item sugerido real via uma consulta .in() em requisitos_competencia", async () => {
+    cenario();
+    montar();
+    const linha = await screen.findByTestId(`documento-${D1}`);
+    expect(
+      await within(linha).findByText("Item sugerido: RQ-7 — Folha de pagamento"),
+    ).toBeInTheDocument();
+    const rq = de("requisitos_competencia");
+    expect(rq).toHaveLength(1);
+    expect(op(rq[0]!, "select")[0]).toEqual([
+      "id,codigo,descricao,categoria,origem_tipo,origem_id",
+    ]);
+    expect(op(rq[0]!, "in")[0]).toEqual(["id", [RQ1]]);
+    expect(de("itens_lista")).toHaveLength(0);
+  });
+  it("V1-DOC-002: item não resolvido por RLS mostra indisponível", async () => {
+    cenario({ requisito: RQ_FANTASMA });
+    montar();
+    const linha = await screen.findByTestId(`documento-${D1}`);
+    expect(await within(linha).findByText("Item sugerido indisponível")).toBeInTheDocument();
   });
   it("filtros vão ao servidor (ilike título, eq tipo) e voltam à página 1", async () => {
     cenario({ total: 60 });
@@ -403,20 +478,56 @@ describe("V1-10 segurança de arquivo e download", () => {
     fireEvent.click(await within(linha).findByRole("button", { name: /Baixar/ }));
     expect(await screen.findByText(MENSAGENS_V110.downloadNegado)).toBeInTheDocument();
   });
-  it("validação UX de MIME, extensão, tamanho e compatibilidade", () => {
-    expect(validarArquivo(pdf())).toBeNull();
-    expect(validarArquivo(new File(["x"], "a.exe", { type: "application/x-msdownload" }))).toBe(
-      MENSAGENS_V110.formatoInvalido,
-    );
-    expect(validarArquivo(new File(["x"], "a.pdf", { type: "image/png" }))).toBe(
+  it("validação UX usa a configuração carregada (formato, MIME, tamanho, vazio)", () => {
+    const cfg = lerConfiguracaoUpload(CFG);
+    expect(validarArquivo(pdf(), cfg)).toBeNull();
+    expect(
+      validarArquivo(new File(["x"], "a.exe", { type: "application/x-msdownload" }), cfg),
+    ).toBe(MENSAGENS_V110.formatoInvalido);
+    expect(validarArquivo(new File(["x"], "a.pdf", { type: "image/png" }), cfg)).toBe(
       MENSAGENS_V110.mimeIncompativel,
     );
     const grande = pdf();
     Object.defineProperty(grande, "size", { value: 600 * 1024 * 1024 });
-    expect(validarArquivo(grande)).toBe(MENSAGENS_V110.tamanhoExcedido);
-    expect(validarArquivo(new File([], "v.pdf", { type: "application/pdf" }))).toBe(
+    expect(validarArquivo(grande, cfg)).toMatch(/500 MB/);
+    expect(validarArquivo(new File([], "v.pdf", { type: "application/pdf" }), cfg)).toBe(
       MENSAGENS_V110.arquivoVazio,
     );
+    const menor = lerConfiguracaoUpload({
+      ...CFG,
+      extensoes_permitidas: ["csv"],
+      tamanho_maximo_bytes: 5,
+    });
+    expect(validarArquivo(pdf(), menor)).toBe(MENSAGENS_V110.formatoInvalido);
+    expect(validarArquivo(new File(["123456"], "a.csv", { type: "text/csv" }), menor)).toMatch(
+      /limite/,
+    );
+  });
+  it("configuração alterada no backend muda a validação do diálogo", async () => {
+    cenario({ cfg: { ...CFG, extensoes_permitidas: ["csv"] } });
+    montar();
+    await screen.findByText("Contrato principal");
+    const b = screen.getByRole("button", { name: "Enviar documentos" });
+    await waitFor(() => expect(b).toBeEnabled());
+    fireEvent.click(b);
+    const d = await screen.findByRole("dialog");
+    fireEvent.change(within(d).getByLabelText("Arquivos"), { target: { files: [pdf()] } });
+    expect(await within(d).findByText(MENSAGENS_V110.formatoInvalido)).toBeInTheDocument();
+    expect(within(d).getByLabelText("Arquivos")).toHaveAttribute("accept", ".csv");
+    const cfgCall = de("configuracao_upload")[0]!;
+    expect(op(cfgCall, "select")[0]).toEqual([
+      "extensoes_permitidas,mimes_permitidos,tamanho_maximo_bytes,limiar_upload_resumivel_bytes",
+    ]);
+    expect(op(cfgCall, "eq")).toContainEqual(["id", true]);
+  });
+  it("falha da configuração bloqueia só o envio; lista e download seguem", async () => {
+    cenario({ cfgErro: true });
+    montar();
+    const linha = await screen.findByTestId(`documento-${D1}`);
+    expect(await screen.findByText(MENSAGENS_V110.configIndisponivel)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Enviar documentos" })).toBeDisabled();
+    expect(within(linha).getByRole("button", { name: /Nova versão/ })).toBeDisabled();
+    expect(await within(linha).findByRole("button", { name: /Baixar/ })).toBeEnabled();
   });
 });
 
@@ -425,7 +536,9 @@ describe("V1-10 envio múltiplo e documento-base completo", () => {
     cenario();
     montar();
     await screen.findByText("Contrato principal");
-    fireEvent.click(screen.getByRole("button", { name: "Enviar documentos" }));
+    const b = screen.getByRole("button", { name: "Enviar documentos" });
+    await waitFor(() => expect(b).toBeEnabled());
+    fireEvent.click(b);
     return screen.findByRole("dialog");
   }
   it("fim de vigência sem início bloqueia antes de qualquer chamada", async () => {
