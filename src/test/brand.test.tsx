@@ -36,6 +36,15 @@ const ARQUIVOS_MARCA = [
   "src/components/contratos/VisaoGeralContrato.tsx",
   "src/components/contratos/BaseNormativaContrato.tsx",
   "src/components/administracao/usuarios/AdminUsuarios.tsx",
+  "src/components/contratos/OrcamentoContrato.tsx",
+  "src/components/contratos/RegrasContrato.tsx",
+  "src/components/contratos/DocumentosContrato.tsx",
+  "src/components/contratos/DocumentoDetalhe.tsx",
+  "src/components/contratos/CompetenciasContrato.tsx",
+  "src/components/contratos/NovaCompetencia.tsx",
+  "src/components/competencias/CompetenciaVisaoGeral.tsx",
+  "src/components/competencias/CompetenciaDocumentos.tsx",
+  "src/components/competencias/CompetenciaAnalise.tsx",
 ];
 
 describe("BRAND-01 — componente de marca", () => {
@@ -62,6 +71,28 @@ describe("BRAND-01 — aplicação nas telas", () => {
     const src = ler(arquivo);
     expect(src).toContain("<ContaOSMarca");
     expect(src).not.toMatch(/<ShieldCheck className="h-5 w-5" aria-hidden \/>/);
+  });
+});
+
+describe("BRAND-01 — sem visual paralelo nas telas recentes", () => {
+  const recentes = ARQUIVOS_MARCA.slice(-9);
+  const violaCorDireta = (css: string) =>
+    /(?:className|style)\s*=\s*["'`][^"'`]*#[0-9a-fA-F]{3,8}\b/.test(css) ||
+    /\[(?:#)[0-9a-fA-F]{3,8}\]/.test(css);
+
+  it("o detector de cores literais rejeita um exemplo sintético", () => {
+    expect(violaCorDireta('className="bg-[#123456]"')).toBe(true);
+    expect(violaCorDireta('className="bg-primary text-primary-foreground"')).toBe(false);
+  });
+
+  it.each(recentes)("%s preserva a identidade visual existente sem paleta paralela", arquivo => {
+    const src = ler(arquivo);
+    expect(src).toContain("<ContaOSMarca");
+    expect(violaCorDireta(src)).toBe(false);
+    expect(src).not.toMatch(/<img\s[^>]*src=["'](?!\/brand\/)/);
+    expect(src).not.toMatch(/from\s+["'][^"']+\.css["']/);
+    expect(src).not.toContain("fonts.googleapis");
+    expect(src).not.toContain("createTheme(");
   });
 });
 
