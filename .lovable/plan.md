@@ -93,6 +93,11 @@ Renderização: painel `EstadoCompetencia` com rótulo PT-BR ("Em preparação",
 12. Voltar usa `id_contrato` do backend.
 13. V1-12: Abrir = link `/competencias/<id>`; Nova competência intacta.
 14. Teste estático: o arquivo de produção não contém `=== 100` nem `avaliar_portao_conformidade`, nem `any`.
+15. Estados visuais (um teste cada, RED antes da produção): `preparation` (preparando), `analysis` (em_analise), `blocked` (liberado=false + bloqueantes>0), `ready` (pode_apresentar_contratante), `presented` (apresentado) — cada um exibe seu rótulo/ícone; e, em cada estado, as ações refletem só os booleanos do fixture (ex.: `ready` com `apresentar=false` → Apresentar bloqueada; `blocked` com `analisar=true` → Analisar permitida/staged).
+16. Ação `false` → `queryAllByRole("button"|"link", {name:/Apresentar|Analisar|Abrir documentos|Abrir parecer/})` vazio para aquela ação; só texto "Bloqueada pelo backend".
+17. Ação `true` com rota futura inexistente → staged aria-disabled "Em breve", sem `href`, clique não chama `navigate` nem rpc.
+18. Cancelamento: desmontar com RPC pendente e resolvê-la depois → nenhum `setState`/aviso React, nenhum `navigate`; `abortSignal` recebeu signal abortado. Troca de `id` aborta a anterior e só a nova é exibida. Retry manual durante carregamento não dispara segunda RPC; após erro, dispara exatamente 1.
+19. Regressão obrigatória mantida (item 8): percentual=100 + `apresentar=false` nunca libera; percentual baixo + `apresentar=true` mostra "Permitida pelo backend".
 
 ## 9. Verificação
 Focado V1-14 + regressão V1-13/V1-12/V1-11/V1-10; suíte serial `--maxWorkers=1`; lint arquivos alterados; build automático; static scan; Security Scan; browser 1440/1280/768/390 claro/escuro via fixture mock (sem overflow; UUID inválido = zero requisições). `tsc`/build manual: gate externo se ambiente não permitir. Teste C separado read-only.
