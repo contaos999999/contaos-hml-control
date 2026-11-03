@@ -467,3 +467,24 @@ export function mensagemErroRevisao(t: TipoErroRevisao, vigencia = false): strin
   if (t === "validacao" && vigencia) return MENSAGENS_V111.vigenciaInvalida;
   return MENSAGENS_V111.erroRevisao;
 }
+
+// ---------- Retorno à Central (busca/filtros/página preservados) ----------
+export type BuscaCentral = {
+  busca?: string;
+  tipo?: string;
+  categoria?: string;
+  situacao?: string;
+  pagina?: number;
+};
+const textoBusca = (v: unknown) =>
+  typeof v === "string" && v.trim() ? v.trim().slice(0, 200) : undefined;
+export function lerBuscaCentral(s: Record<string, unknown>): BuscaCentral {
+  const r: BuscaCentral = {};
+  for (const k of ["busca", "tipo", "categoria", "situacao"] as const) {
+    const t = textoBusca(s[k]);
+    if (t) r[k] = t;
+  }
+  const p = Number(s["pagina"]);
+  if (Number.isInteger(p) && p > 0 && p < 100000) r.pagina = p;
+  return r;
+}
