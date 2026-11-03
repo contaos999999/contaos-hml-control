@@ -183,7 +183,9 @@ export function DocumentoDetalhe({
             <>
               <Titulo />
               <Aviso
-                icone={<SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}
+                icone={
+                  <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                }
                 mensagem={MENSAGENS_V111.docNaoEncontrado}
               />
             </>
@@ -309,7 +311,10 @@ function Paginacao({
   const paginas = Math.max(1, Math.ceil(total / tamanho));
   if (paginas <= 1) return null;
   return (
-    <nav aria-label={`Paginação de ${rotulo}`} className="flex flex-wrap items-center justify-between gap-2">
+    <nav
+      aria-label={`Paginação de ${rotulo}`}
+      className="flex flex-wrap items-center justify-between gap-2"
+    >
       <p className="text-sm text-muted-foreground">{`Página ${pagina + 1} de ${paginas}`}</p>
       <div className="flex gap-2">
         <Button
@@ -378,7 +383,9 @@ function GateContrato({
           />
         ) : tipo === "nao_encontrado" ? (
           <Aviso
-            icone={<SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />}
+            icone={
+              <SearchX className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+            }
             mensagem={MENSAGENS_V111.naoEncontrado}
           />
         ) : (
@@ -440,7 +447,11 @@ function GateContrato({
             <span aria-hidden> / </span>
           </li>
           <li>
-            <Link to="/contratos/$id" params={{ id: c.id }} className="underline-offset-4 hover:underline">
+            <Link
+              to="/contratos/$id"
+              params={{ id: c.id }}
+              className="underline-offset-4 hover:underline"
+            >
               {`Contrato ${c.numero ?? ""}`.trim()}
             </Link>
             <span aria-hidden> / </span>
@@ -702,7 +713,10 @@ function Cadeia({ sel, ctx }: { sel: Selecao; ctx: Ctx }) {
         )}
       </div>
       {hashDiverge(v.hash, a?.sha256) && (
-        <p role="alert" className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+        <p
+          role="alert"
+          className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm"
+        >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
           {MENSAGENS_V111.hashDivergente}
         </p>
@@ -983,7 +997,11 @@ function Fragmentos({ idVersao, ctx }: { idVersao: string; ctx: Ctx }) {
   return (
     <section aria-label="Fragmentos" className={SECAO}>
       <h2 className="text-lg font-semibold">Fragmentos</h2>
-      <form onSubmit={aplicar} className="flex flex-wrap items-end gap-2" aria-label="Filtro de fragmentos">
+      <form
+        onSubmit={aplicar}
+        className="flex flex-wrap items-end gap-2"
+        aria-label="Filtro de fragmentos"
+      >
         <label className="grid gap-1">
           <span className={ROTULO}>Filtrar por página</span>
           <input
@@ -1258,11 +1276,21 @@ function CartaoSugestao({
             >
               <Check className="mr-2 h-4 w-4" aria-hidden /> Aprovar
             </Button>
-            <Button type="button" variant="outline" className="h-11" onClick={() => onAcao("rejeitar")}>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11"
+              onClick={() => onAcao("rejeitar")}
+            >
               <X className="mr-2 h-4 w-4" aria-hidden /> Rejeitar
             </Button>
             {material && (
-              <Button type="button" variant="outline" className="h-11" onClick={() => onAcao("vigencia")}>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11"
+                onClick={() => onAcao("vigencia")}
+              >
                 <CalendarClock className="mr-2 h-4 w-4" aria-hidden /> Definir vigência
               </Button>
             )}
@@ -1340,17 +1368,33 @@ function DialogoVigencia({
         <form onSubmit={salvar} className="space-y-3">
           <label className="grid gap-1">
             <span className={ROTULO}>Início da vigência</span>
-            <input type="date" className={CAMPO} value={inicio} onChange={(e) => setInicio(e.target.value)} />
+            <input
+              type="date"
+              className={CAMPO}
+              value={inicio}
+              onChange={(e) => setInicio(e.target.value)}
+            />
           </label>
           <label className="grid gap-1">
             <span className={ROTULO}>Fim da vigência (opcional)</span>
-            <input type="date" className={CAMPO} value={fim} onChange={(e) => setFim(e.target.value)} />
+            <input
+              type="date"
+              className={CAMPO}
+              value={fim}
+              onChange={(e) => setFim(e.target.value)}
+            />
           </label>
           <p aria-live="assertive" className="text-sm text-destructive">
             {erro}
           </p>
           <div className="flex flex-wrap justify-end gap-2">
-            <Button type="button" variant="ghost" className="h-11" disabled={enviando} onClick={onFechar}>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-11"
+              disabled={enviando}
+              onClick={onFechar}
+            >
               Cancelar
             </Button>
             <Button type="submit" className="h-11" disabled={enviando}>
@@ -1415,7 +1459,9 @@ function DialogoRevisao({
     <Dialog open onOpenChange={(o) => !o && !enviando && onFechar()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{aprovar ? "Aprovar sugestão de IA" : "Rejeitar sugestão de IA"}</DialogTitle>
+          <DialogTitle>
+            {aprovar ? "Aprovar sugestão de IA" : "Rejeitar sugestão de IA"}
+          </DialogTitle>
           <DialogDescription>
             {aprovar
               ? ehMaterial(s.tipo)
@@ -1430,7 +1476,11 @@ function DialogoRevisao({
           <div className="space-y-3">
             <label className="grid gap-1">
               <span className={ROTULO}>Categoria revisada (opcional)</span>
-              <input className={CAMPO} value={categoria} onChange={(e) => setCategoria(e.target.value)} />
+              <input
+                className={CAMPO}
+                value={categoria}
+                onChange={(e) => setCategoria(e.target.value)}
+              />
             </label>
             <label className="grid gap-1">
               <span className={ROTULO}>Conteúdo revisado (opcional)</span>
@@ -1446,7 +1496,13 @@ function DialogoRevisao({
           {erro}
         </p>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="ghost" className="h-11" disabled={enviando} onClick={onFechar}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-11"
+            disabled={enviando}
+            onClick={onFechar}
+          >
             Cancelar
           </Button>
           <Button

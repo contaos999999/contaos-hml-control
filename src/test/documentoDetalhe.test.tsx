@@ -202,7 +202,11 @@ function cenario(o: Cen = {}) {
     sug("s-obr", "obrigacao"),
     sug("s-sem-fonte", "prazo", { pagina: null }),
     sug("s-sem-vig", "restricao", { vigencia_inicio: null }),
-    sug("s-aprov", "clausula", { status: "aprovada", revisado_por: U, revisado_em: "2026-02-02T12:00:00Z" }),
+    sug("s-aprov", "clausula", {
+      status: "aprovada",
+      revisado_por: U,
+      revisado_em: "2026-02-02T12:00:00Z",
+    }),
   ];
   m.resposta = (c) => {
     if (c.tabela === "contratos")
@@ -359,7 +363,9 @@ describe("V1-11 versões e cadeia de evidência", () => {
   it("versões paginadas server-side, colunas explícitas, atual marcada, motivo visível, arquivos em um .in()", async () => {
     cenario();
     montar();
-    expect(await screen.findByRole("heading", { level: 1, name: "Contrato principal" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Contrato principal" }),
+    ).toBeInTheDocument();
     const hist = await screen.findByRole("region", { name: "Histórico de versões" });
     expect(await within(hist).findByText("Versão atual")).toBeInTheDocument();
     expect(within(hist).getByText(/Aditivo assinado/)).toBeInTheDocument();
@@ -427,17 +433,24 @@ describe("V1-11 arquivo e download", () => {
         body: { id_arquivo: AR2 },
       }),
     );
-    expect(abrir).toHaveBeenCalledWith("https://x.supabase.co/assinada", "_blank", "noopener,noreferrer");
+    expect(abrir).toHaveBeenCalledWith(
+      "https://x.supabase.co/assinada",
+      "_blank",
+      "noopener,noreferrer",
+    );
     abrir.mockRestore();
   });
-  it.each(["quarentena", "bloqueado", "pendente"])("%s: sem download, metadados visíveis", async (s) => {
-    cenario({ status: s });
-    montar();
-    const cad = await screen.findByRole("region", { name: "Cadeia de evidência" });
-    expect(await within(cad).findByText("contrato-v2.pdf")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Baixar/ })).not.toBeInTheDocument();
-    expect(m.invoke).not.toHaveBeenCalled();
-  });
+  it.each(["quarentena", "bloqueado", "pendente"])(
+    "%s: sem download, metadados visíveis",
+    async (s) => {
+      cenario({ status: s });
+      montar();
+      const cad = await screen.findByRole("region", { name: "Cadeia de evidência" });
+      expect(await within(cad).findByText("contrato-v2.pdf")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Baixar/ })).not.toBeInTheDocument();
+      expect(m.invoke).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe("V1-11 metadados, páginas, fragmentos e processamento", () => {
@@ -460,7 +473,9 @@ describe("V1-11 metadados, páginas, fragmentos e processamento", () => {
     cenario();
     montar();
     const r = await screen.findByRole("region", { name: "Páginas extraídas" });
-    expect(await within(r).findByText(/<script>alert\(1\)<\/script> Texto da página/)).toBeInTheDocument();
+    expect(
+      await within(r).findByText(/<script>alert\(1\)<\/script> Texto da página/),
+    ).toBeInTheDocument();
     expect(document.querySelector("main script")).toBeNull();
     const p = de("paginas_documento")[0]!;
     expect(op(p, "select")[0]![0]).toBe(
@@ -510,7 +525,9 @@ describe("V1-11 sugestões de IA e revisão humana", () => {
     montar();
     const c = await cartao("s-class");
     expect(within(c).getByText(/Trabalhista/)).toBeInTheDocument();
-    expect(await within(c).findByText("Item sugerido: RQ-7 — Folha de pagamento")).toBeInTheDocument();
+    expect(
+      await within(c).findByText("Item sugerido: RQ-7 — Folha de pagamento"),
+    ).toBeInTheDocument();
     expect(within(c).getByText("Confiança: 87%")).toBeInTheDocument();
     const s = de("sugestoes_extracao_documento")[0]!;
     expect(eqDe(s, "id_versao_documento")).toBe(V2);
@@ -524,7 +541,9 @@ describe("V1-11 sugestões de IA e revisão humana", () => {
     expect(op(rq[0]!, "in")[0]).toEqual(["id", [RQ]]);
     const r = screen.getByRole("region", { name: "Sugestões de IA" });
     fireEvent.change(within(r).getByLabelText("Status"), { target: { value: "pendente" } });
-    fireEvent.change(within(r).getByLabelText("Tipo de sugestão"), { target: { value: "obrigacao" } });
+    fireEvent.change(within(r).getByLabelText("Tipo de sugestão"), {
+      target: { value: "obrigacao" },
+    });
     await waitFor(() => {
       const u = de("sugestoes_extracao_documento").at(-1)!;
       expect(eqDe(u, "status")).toBe("pendente");
@@ -552,8 +571,22 @@ describe("V1-11 sugestões de IA e revisão humana", () => {
     expect(within(sv).getByRole("button", { name: /Aprovar/ })).toBeDisabled();
     expect(within(sv).getByText(MENSAGENS_V111.semVigencia)).toBeInTheDocument();
     expect(within(sv).getByRole("button", { name: /Definir vigência/ })).toBeEnabled();
-    expect(bloqueioAprovacao({ tipo: "obrigacao", pagina: 1, trecho_fonte: "  ", vigencia_inicio: "2026-01-01" })).toBe("sem_fonte");
-    expect(bloqueioAprovacao({ tipo: "classificacao", pagina: null, trecho_fonte: null, vigencia_inicio: null })).toBeNull();
+    expect(
+      bloqueioAprovacao({
+        tipo: "obrigacao",
+        pagina: 1,
+        trecho_fonte: "  ",
+        vigencia_inicio: "2026-01-01",
+      }),
+    ).toBe("sem_fonte");
+    expect(
+      bloqueioAprovacao({
+        tipo: "classificacao",
+        pagina: null,
+        trecho_fonte: null,
+        vigencia_inicio: null,
+      }),
+    ).toBeNull();
   });
   it("definir vigência: PT400 mostra erro; atualizada envia args e refaz leitura", async () => {
     cenario();
@@ -561,9 +594,13 @@ describe("V1-11 sugestões de IA e revisão humana", () => {
       .mockResolvedValueOnce({ data: null, error: { code: "PT400", message: "x" } })
       .mockResolvedValueOnce({ data: { status: "atualizada" }, error: null });
     montar();
-    fireEvent.click(within(await cartao("s-sem-vig")).getByRole("button", { name: /Definir vigência/ }));
+    fireEvent.click(
+      within(await cartao("s-sem-vig")).getByRole("button", { name: /Definir vigência/ }),
+    );
     const dlg = await screen.findByRole("dialog");
-    fireEvent.change(within(dlg).getByLabelText("Início da vigência"), { target: { value: "2026-03-01" } });
+    fireEvent.change(within(dlg).getByLabelText("Início da vigência"), {
+      target: { value: "2026-03-01" },
+    });
     fireEvent.click(within(dlg).getByRole("button", { name: "Salvar vigência" }));
     expect(await within(dlg).findByText(MENSAGENS_V111.vigenciaInvalida)).toBeInTheDocument();
     const antes = de("sugestoes_extracao_documento").length;
@@ -579,14 +616,22 @@ describe("V1-11 sugestões de IA e revisão humana", () => {
     cenario();
     m.rpc.mockResolvedValue({ data: { status: "sem_alteracao" }, error: null });
     montar();
-    fireEvent.click(within(await cartao("s-sem-vig")).getByRole("button", { name: /Definir vigência/ }));
+    fireEvent.click(
+      within(await cartao("s-sem-vig")).getByRole("button", { name: /Definir vigência/ }),
+    );
     const dlg = await screen.findByRole("dialog");
-    fireEvent.change(within(dlg).getByLabelText("Início da vigência"), { target: { value: "2026-03-01" } });
-    fireEvent.change(within(dlg).getByLabelText("Fim da vigência (opcional)"), { target: { value: "2026-02-01" } });
+    fireEvent.change(within(dlg).getByLabelText("Início da vigência"), {
+      target: { value: "2026-03-01" },
+    });
+    fireEvent.change(within(dlg).getByLabelText("Fim da vigência (opcional)"), {
+      target: { value: "2026-02-01" },
+    });
     fireEvent.click(within(dlg).getByRole("button", { name: "Salvar vigência" }));
     expect(await within(dlg).findByText(MENSAGENS_V111.fimAntes)).toBeInTheDocument();
     expect(m.rpcChamadas).toHaveLength(0);
-    fireEvent.change(within(dlg).getByLabelText("Fim da vigência (opcional)"), { target: { value: "" } });
+    fireEvent.change(within(dlg).getByLabelText("Fim da vigência (opcional)"), {
+      target: { value: "" },
+    });
     fireEvent.click(within(dlg).getByRole("button", { name: "Salvar vigência" }));
     expect(await screen.findByText(MENSAGENS_V111.vigenciaSemAlteracao)).toBeInTheDocument();
   });
@@ -594,9 +639,13 @@ describe("V1-11 sugestões de IA e revisão humana", () => {
     cenario();
     m.rpc.mockResolvedValue({ data: null, error: { code: "PT409", message: "x" } });
     montar();
-    fireEvent.click(within(await cartao("s-sem-vig")).getByRole("button", { name: /Definir vigência/ }));
+    fireEvent.click(
+      within(await cartao("s-sem-vig")).getByRole("button", { name: /Definir vigência/ }),
+    );
     const dlg = await screen.findByRole("dialog");
-    fireEvent.change(within(dlg).getByLabelText("Início da vigência"), { target: { value: "2026-03-01" } });
+    fireEvent.change(within(dlg).getByLabelText("Início da vigência"), {
+      target: { value: "2026-03-01" },
+    });
     const antes = de("sugestoes_extracao_documento").length;
     fireEvent.click(within(dlg).getByRole("button", { name: "Salvar vigência" }));
     expect(await screen.findByText(MENSAGENS_V111.jaRevisada)).toBeInTheDocument();
@@ -638,7 +687,10 @@ describe("V1-11 sugestões de IA e revisão humana", () => {
     });
     fireEvent.click(within(dlg).getByRole("button", { name: "Confirmar aprovação" }));
     expect(await screen.findByText(MENSAGENS_V111.aprovadaAplicada)).toBeInTheDocument();
-    expect(m.rpcChamadas[0]!.args).toMatchObject({ p_aprovar: true, p_categoria_revisada: "Fiscal" });
+    expect(m.rpcChamadas[0]!.args).toMatchObject({
+      p_aprovar: true,
+      p_categoria_revisada: "Fiscal",
+    });
     m.rpc.mockResolvedValue({ data: { status: "rejeitada" }, error: null });
     fireEvent.click(within(await cartao("s-obr")).getByRole("button", { name: /Rejeitar/ }));
     dlg = await screen.findByRole("dialog");
@@ -662,7 +714,10 @@ describe("V1-11 sugestões de IA e revisão humana", () => {
   });
   it("erro desconhecido da revisão não exibe texto bruto do backend", async () => {
     cenario();
-    m.rpc.mockResolvedValue({ data: null, error: { code: "P0001", message: "stack secreto /bucket/x" } });
+    m.rpc.mockResolvedValue({
+      data: null,
+      error: { code: "P0001", message: "stack secreto /bucket/x" },
+    });
     montar();
     fireEvent.click(within(await cartao("s-obr")).getByRole("button", { name: /Rejeitar/ }));
     const dlg = await screen.findByRole("dialog");
@@ -678,7 +733,9 @@ describe("V1-11 escopo e Zero-Drift", () => {
       readFileSync("src/components/contratos/DocumentoDetalhe.tsx", "utf8") +
       readFileSync("src/lib/contratos/documentoDetalheDados.ts", "utf8");
     expect(fonte).not.toMatch(/\.(insert|update|delete|upsert)\(/);
-    expect(fonte).not.toMatch(/service_role|as any|itens_lista|getPublicUrl|dangerouslySetInnerHTML/);
+    expect(fonte).not.toMatch(
+      /service_role|as any|itens_lista|getPublicUrl|dangerouslySetInnerHTML/,
+    );
     expect(fonte).not.toMatch(/"[^"]*embedding[^"]*"/);
   });
 });

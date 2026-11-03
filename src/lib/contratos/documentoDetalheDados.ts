@@ -263,9 +263,7 @@ export async function listarSugestoes(
     let qr = supabase.from("requisitos_competencia").select(COLUNAS_REQUISITO).in("id", rids);
     if (signal) qr = qr.abortSignal(signal);
     const rr = await executar(qr, signal);
-    requisitos = Object.fromEntries(
-      ((rr.data as Requisito[] | null) ?? []).map((x) => [x.id, x]),
-    );
+    requisitos = Object.fromEntries(((rr.data as Requisito[] | null) ?? []).map((x) => [x.id, x]));
   }
   return { itens, total: r.count ?? itens.length, requisitos };
 }
@@ -418,8 +416,7 @@ const ROTULOS_METADADO: Record<string, string> = {
   revisado_em: "Revisado em",
 };
 export const rotuloMetadado = (k: string) =>
-  ROTULOS_METADADO[k] ??
-  (k.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()) || k);
+  ROTULOS_METADADO[k] ?? (k.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()) || k);
 
 export const MENSAGENS_V111 = {
   verificando: "Verificando sessão…",
@@ -454,9 +451,9 @@ export const MENSAGENS_V111 = {
   jaRevisada: "Esta sugestão já foi revisada. Os dados foram atualizados.",
   semPermissao: "Seu perfil não permite esta ação.",
   sugestaoNaoEncontrada: "Sugestão não encontrada. Os dados foram atualizados.",
-  erroRevisao: "Não foi possível concluir a ação agora. Os dados foram atualizados; tente novamente.",
-  aprovadaRascunho:
-    "A sugestão foi aprovada e gerou uma regra em rascunho para revisão material.",
+  erroRevisao:
+    "Não foi possível concluir a ação agora. Os dados foram atualizados; tente novamente.",
+  aprovadaRascunho: "A sugestão foi aprovada e gerou uma regra em rascunho para revisão material.",
   aprovadaAplicada: "A sugestão foi aprovada e aplicada ao documento.",
   rejeitada: "A sugestão foi rejeitada e nenhuma regra ou metadado foi alterado.",
 };
