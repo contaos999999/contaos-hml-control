@@ -63,3 +63,12 @@ Regras obrigatórias para BRAND-01:
 - executar a fase TESTE sem alterar código;
 - se qualquer necessidade ultrapassar o escopo visual, PARE e reporte LACUNA ou CONFLITO;
 - em conflito estético com arquitetura, comportamento ou Design System, o pacote 4.1 prevalece.
+
+
+## LOCK-TYPES-01 — tipos Supabase congelados, proteção obrigatória
+
+- O código `src/integrations/supabase/types.ts` é **imutável** no blob Git `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`, certificado no commit `ad0b933943d4b69f7a9f23f203e4cff1211b4902`. Não editar, regenerar, substituir, formatar ou reescrever esse caminho em nenhum PLAN, BUILD, TESTE ou auditoria.
+- A ferramenta Lovable pode regenerar tipos por mecanismos internos; isso **não equivale a autorização**. Antes de declarar qualquer gate PASS, conferir `git hash-object src/integrations/supabase/types.ts`. Havendo drift, restaurar o blob imutável e comprovar novo SHA e CI. Nunca mudar a constante do verificador para esconder drift.
+- O workflow `.github/workflows/contaos-types-autolock.yml` detecta e **tenta** autorrestaurar drift na branch main, após suíte e Zero-Drift verdes, com controle de concorrência e limite para impedir ciclos. O teste isolado do workflow não equivale à comprovação do push de recuperação. Falhas precisam ser tratadas, nunca silenciadas.
+- O frontend consome apenas o Supabase HML oficial; não criar backend paralelo, não desconectar integração, não tocar PROD e não usar geração de tipos como justificativa para migration sem autorização.
+- Mudança legítima de tipos só mediante mudança formal de contrato/schema, atualização rastreável do blob certificado, validação de todos os usos, CI e Teste C independente. Ver `docs/frontend/LOCK-TYPES-01.md`.
