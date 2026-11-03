@@ -147,7 +147,11 @@ function parseDoc(d: unknown): DocV115 | null {
         ? { id: r["id"], codigo: str(r["codigo"]), descricao: str(r["descricao"]) }
         : null,
     versao: obj(v)
-      ? { numero_versao: num(v["numero_versao"]), hash: str(v["hash"]), id_arquivo: str(v["id_arquivo"]) }
+      ? {
+          numero_versao: num(v["numero_versao"]),
+          hash: str(v["hash"]),
+          id_arquivo: str(v["id_arquivo"]),
+        }
       : null,
     arquivo:
       obj(a) && typeof a["id"] === "string"

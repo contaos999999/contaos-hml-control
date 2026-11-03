@@ -196,7 +196,8 @@ function rpcPadrao(nome: string) {
   if (nome === "obter_documentos_competencia_v115") return ok(leituraAtual);
   if (nome === "confirmar_upload_arquivo") return ok(ARQ);
   if (nome === "criar_documento_competencia_v115") return ok(RET);
-  if (nome === "adicionar_versao_documento_competencia_v115") return ok({ ...RET, numero_versao: 2 });
+  if (nome === "adicionar_versao_documento_competencia_v115")
+    return ok({ ...RET, numero_versao: 2 });
   return { data: null, error: { code: "XX" } };
 }
 
@@ -212,7 +213,13 @@ beforeEach(() => {
     Promise.resolve(
       nome === "storage-sign-upload"
         ? {
-            data: { ok: true, bucket: "documentos", path: "o/c/x.pdf", token: "t", usar_upload_resumivel: false },
+            data: {
+              ok: true,
+              bucket: "documentos",
+              path: "o/c/x.pdf",
+              token: "t",
+              usar_upload_resumivel: false,
+            },
             error: null,
           }
         : { data: { ok: true, signed_url: "https://exemplo.test/s" }, error: null },
@@ -233,7 +240,10 @@ const pdf = (n = "nota.pdf") => new File(["%PDF-1"], n, { type: "application/pdf
 
 describe("V1-15 rota e gate", () => {
   it("rota /competencias_/$id_/documentos, ssr:false e head PT-BR", () => {
-    const r = Route as unknown as { path: string; options: { ssr: boolean; head: () => { meta: Record<string, string>[] } } };
+    const r = Route as unknown as {
+      path: string;
+      options: { ssr: boolean; head: () => { meta: Record<string, string>[] } };
+    };
     expect(r.path).toBe("/competencias_/$id_/documentos");
     expect(r.options.ssr).toBe(false);
     const meta = r.options.head().meta;
@@ -245,7 +255,9 @@ describe("V1-15 rota e gate", () => {
 
   it("UUID inválido: zero Auth, zero RPC, zero Edge", async () => {
     montar("abc");
-    expect(await screen.findByText("Competência não encontrada ou indisponível.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Competência não encontrada ou indisponível."),
+    ).toBeInTheDocument();
     expect(m.getUser).not.toHaveBeenCalled();
     expect(m.rpc).not.toHaveBeenCalled();
     expect(m.invoke).not.toHaveBeenCalled();
@@ -296,7 +308,9 @@ describe("V1-15 rota e gate", () => {
   it("PT404 → não encontrada", async () => {
     m.rpc.mockResolvedValue({ data: null, error: { code: "PT404", message: "RAW" }, status: 404 });
     montar();
-    expect(await screen.findByText("Competência não encontrada ou indisponível.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Competência não encontrada ou indisponível."),
+    ).toBeInTheDocument();
   });
 
   it("transporte → erro sanitizado e retry manual", async () => {
@@ -391,9 +405,13 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
 
   it("tipos_esperados do backend são exatamente as opções; valor sem rótulo usa o próprio valor", async () => {
     await selecionar();
-    fireEvent.change(screen.getByLabelText("Requisito documental (opcional)"), { target: { value: REQ } });
+    fireEvent.change(screen.getByLabelText("Requisito documental (opcional)"), {
+      target: { value: REQ },
+    });
     const tipo = screen.getByLabelText("Tipo do documento") as HTMLSelectElement;
-    const vals = Array.from(tipo.options).map((o) => o.value).filter(Boolean);
+    const vals = Array.from(tipo.options)
+      .map((o) => o.value)
+      .filter(Boolean);
     expect(vals).toEqual(["nota_fiscal", "tipo_sem_rotulo"]);
     expect(Array.from(tipo.options).some((o) => o.textContent === "tipo_sem_rotulo")).toBe(true);
   });
@@ -406,13 +424,22 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
 
   it("upload → confirmar (org/contrato da competência) → criar V1-15 idempotente; duplo clique = 1", async () => {
     await selecionar();
-    fireEvent.change(screen.getByLabelText("Requisito documental (opcional)"), { target: { value: REQ } });
-    fireEvent.change(screen.getByLabelText("Tipo do documento"), { target: { value: "nota_fiscal" } });
+    fireEvent.change(screen.getByLabelText("Requisito documental (opcional)"), {
+      target: { value: REQ },
+    });
+    fireEvent.change(screen.getByLabelText("Tipo do documento"), {
+      target: { value: "nota_fiscal" },
+    });
     const b = screen.getByRole("button", { name: "Enviar" });
     fireEvent.click(b);
     fireEvent.click(b);
     expect(await screen.findByText(/Envio concluído/)).toBeInTheDocument();
-    expect(m.invoke).toHaveBeenCalledWith("storage-sign-upload", expect.objectContaining({ body: expect.objectContaining({ id_organizacao: ORG, id_contrato: K }) }));
+    expect(m.invoke).toHaveBeenCalledWith(
+      "storage-sign-upload",
+      expect.objectContaining({
+        body: expect.objectContaining({ id_organizacao: ORG, id_contrato: K }),
+      }),
+    );
     expect(m.upload).toHaveBeenCalledTimes(1);
     const conf = m.rpc.mock.calls.find((c) => c[0] === "confirmar_upload_arquivo")!;
     expect(conf[1]).toMatchObject({ p_id_organizacao: ORG, p_id_contrato: K, p_path: "o/c/x.pdf" });
@@ -430,10 +457,10 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
 
   it("erro na criação: retry manual reutiliza a mesma chave e não reenvia bytes", async () => {
     let n = 0;
-    m.rpc.mockImplementation((nome: string, a: unknown) =>
+    m.rpc.mockImplementation((nome: string) =>
       nome === "criar_documento_competencia_v115" && n++ === 0
         ? { data: null, error: { code: "XX000", message: "RAW" } }
-        : rpcPadrao(nome, a),
+        : rpcPadrao(nome),
     );
     await selecionar();
     fireEvent.change(screen.getByLabelText("Tipo do documento"), { target: { value: "contrato" } });
@@ -450,7 +477,9 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
 
   it("arquivo inválido usa validação V1-10 e não chama Edge", async () => {
     await selecionar(new File(["x"], "a.exe", { type: "application/x-msdownload" }));
-    expect(await screen.findByText("Este formato de arquivo não é aceito pelo ContaOS.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Este formato de arquivo não é aceito pelo ContaOS."),
+    ).toBeInTheDocument();
     expect(m.invoke).not.toHaveBeenCalled();
   });
 
@@ -482,11 +511,15 @@ describe("V1-15 nova versão, abrir e polling", () => {
     montar();
     await pronto();
     fireEvent.click(screen.getByRole("button", { name: /Nova versão/ }));
-    fireEvent.change(await screen.findByLabelText("Arquivo da nova versão"), { target: { files: [pdf()] } });
+    fireEvent.change(await screen.findByLabelText("Arquivo da nova versão"), {
+      target: { files: [pdf()] },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Enviar nova versão" }));
     expect(await screen.findByText(/Informe o motivo da nova versão/)).toBeInTheDocument();
     expect(m.invoke).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByLabelText(/Motivo da nova versão/), { target: { value: "Correção" } });
+    fireEvent.change(screen.getByLabelText(/Motivo da nova versão/), {
+      target: { value: "Correção" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Enviar nova versão" }));
     expect(await screen.findByText(/Envio concluído/)).toBeInTheDocument();
     const v = m.rpc.mock.calls.find((c) => c[0] === "adicionar_versao_documento_competencia_v115")!;
@@ -498,7 +531,9 @@ describe("V1-15 nova versão, abrir e polling", () => {
     montar();
     await pronto();
     fireEvent.click(screen.getByRole("button", { name: /Nova versão/ }));
-    fireEvent.change(await screen.findByLabelText("Arquivo da nova versão"), { target: { files: [pdf()] } });
+    fireEvent.change(await screen.findByLabelText("Arquivo da nova versão"), {
+      target: { files: [pdf()] },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Enviar nova versão" }));
     expect(await screen.findByText(/Envio concluído/)).toBeInTheDocument();
     const v = m.rpc.mock.calls.find((c) => c[0] === "adicionar_versao_documento_competencia_v115")!;

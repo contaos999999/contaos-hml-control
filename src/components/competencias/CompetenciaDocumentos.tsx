@@ -182,7 +182,8 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
   }, [processando, estado]);
 
   const podeEscrever =
-    estado.tipo === "ok" && (estado.l.capacidades.pode_enviar || estado.l.capacidades.pode_nova_versao);
+    estado.tipo === "ok" &&
+    (estado.l.capacidades.pode_enviar || estado.l.capacidades.pode_nova_versao);
   useEffect(() => {
     if (!podeEscrever || config !== null) return;
     const ctrl = new AbortController();
@@ -220,15 +221,24 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <Titulo l={estado.tipo === "ok" ? estado.l : null} />
         {!idOk || estado.tipo === "nao_encontrada" ? (
-          <Aviso icone={<SearchX className="h-4 w-4" aria-hidden />} mensagem={MENSAGENS_V115.naoEncontrada} />
+          <Aviso
+            icone={<SearchX className="h-4 w-4" aria-hidden />}
+            mensagem={MENSAGENS_V115.naoEncontrada}
+          />
         ) : estado.tipo === "carregando" ? (
           <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> {MENSAGENS_V115.carregando}
           </p>
         ) : estado.tipo === "sem_permissao" ? (
-          <Aviso icone={<ShieldAlert className="h-4 w-4" aria-hidden />} mensagem={MENSAGENS_V115.negado} />
+          <Aviso
+            icone={<ShieldAlert className="h-4 w-4" aria-hidden />}
+            mensagem={MENSAGENS_V115.negado}
+          />
         ) : estado.tipo === "erro" || estado.tipo === "erro_sessao" ? (
-          <div role="alert" className="space-y-3 rounded-lg border border-destructive/40 bg-card p-4">
+          <div
+            role="alert"
+            className="space-y-3 rounded-lg border border-destructive/40 bg-card p-4"
+          >
             <p className="flex items-center gap-2 text-sm">
               <AlertCircle className="h-4 w-4 text-destructive" aria-hidden />
               {estado.tipo === "erro" ? MENSAGENS_V115.erro : MENSAGENS_V115.erroSessao}
@@ -276,7 +286,10 @@ function Titulo({ l }: { l: LeituraV115 | null }) {
 
 function Aviso({ icone, mensagem }: { icone: ReactNode; mensagem: string }) {
   return (
-    <p role="status" className="flex items-center gap-2 rounded-lg border border-border bg-card p-4 text-sm">
+    <p
+      role="status"
+      className="flex items-center gap-2 rounded-lg border border-border bg-card p-4 text-sm"
+    >
       {icone} {mensagem}
     </p>
   );
@@ -370,7 +383,9 @@ function RequiredDocumentsSummary({
             <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
               <span>
                 <span className="font-medium">{r.codigo ?? "—"}</span> {r.descricao ?? ""}
-                {!r.aplicavel ? <span className="text-muted-foreground"> (não aplicável)</span> : null}
+                {!r.aplicavel ? (
+                  <span className="text-muted-foreground"> (não aplicável)</span>
+                ) : null}
               </span>
               <span className="flex items-center gap-1 text-xs">
                 {r.atendido ? (
@@ -518,12 +533,17 @@ function UploadDropzone({
   };
 
   return (
-    <section aria-labelledby="v115-envio" className="space-y-3 rounded-lg border border-border bg-card p-4">
+    <section
+      aria-labelledby="v115-envio"
+      className="space-y-3 rounded-lg border border-border bg-card p-4"
+    >
       <h2 id="v115-envio" className="text-sm font-medium text-muted-foreground">
         Enviar documento
       </h2>
       {config === "erro" ? (
-        <p role="alert" className="text-sm">{MENSAGENS_V110.configIndisponivel}</p>
+        <p role="alert" className="text-sm">
+          {MENSAGENS_V110.configIndisponivel}
+        </p>
       ) : null}
       <div
         onDragOver={(e) => {
@@ -550,9 +570,15 @@ function UploadDropzone({
           onChange={(e) => escolher(e.target.files?.[0] ?? null)}
         />
         {config && config !== "erro" && config.maximo !== null ? (
-          <p className="mt-1 text-xs text-muted-foreground">Limite: {formatarBytes(config.maximo)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Limite: {formatarBytes(config.maximo)}
+          </p>
         ) : null}
-        {invalido ? <p role="alert" className="mt-2 text-sm text-destructive">{invalido}</p> : null}
+        {invalido ? (
+          <p role="alert" className="mt-2 text-sm text-destructive">
+            {invalido}
+          </p>
+        ) : null}
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         <div>
@@ -680,11 +706,18 @@ function DocumentTable({
     }
   };
   return (
-    <section aria-labelledby="v115-docs" className="space-y-3 rounded-lg border border-border bg-card p-4">
+    <section
+      aria-labelledby="v115-docs"
+      className="space-y-3 rounded-lg border border-border bg-card p-4"
+    >
       <h2 id="v115-docs" className="text-sm font-medium text-muted-foreground">
         Documentos vinculados
       </h2>
-      {erroDl ? <p role="alert" className="text-sm">{erroDl}</p> : null}
+      {erroDl ? (
+        <p role="alert" className="text-sm">
+          {erroDl}
+        </p>
+      ) : null}
       {l.documentos.length === 0 ? (
         <p className="text-sm text-muted-foreground">{MENSAGENS_V115.vazio}</p>
       ) : (
@@ -692,15 +725,33 @@ function DocumentTable({
           <table className="w-full min-w-[960px] text-left text-sm">
             <thead className="text-xs text-muted-foreground">
               <tr>
-                <th scope="col" className="p-2">Tipo</th>
-                <th scope="col" className="p-2">Título</th>
-                <th scope="col" className="p-2">Requisito</th>
-                <th scope="col" className="p-2">Versão</th>
-                <th scope="col" className="p-2">Arquivo</th>
-                <th scope="col" className="p-2">Status</th>
-                <th scope="col" className="p-2">Hash</th>
-                <th scope="col" className="p-2">Atualizado</th>
-                <th scope="col" className="p-2">Ações</th>
+                <th scope="col" className="p-2">
+                  Tipo
+                </th>
+                <th scope="col" className="p-2">
+                  Título
+                </th>
+                <th scope="col" className="p-2">
+                  Requisito
+                </th>
+                <th scope="col" className="p-2">
+                  Versão
+                </th>
+                <th scope="col" className="p-2">
+                  Arquivo
+                </th>
+                <th scope="col" className="p-2">
+                  Status
+                </th>
+                <th scope="col" className="p-2">
+                  Hash
+                </th>
+                <th scope="col" className="p-2">
+                  Atualizado
+                </th>
+                <th scope="col" className="p-2">
+                  Ações
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -726,9 +777,13 @@ function DocumentTable({
                       <ProcessingStatus d={d} />
                     </td>
                     <td className="p-2 font-mono text-xs">
-                      {d.versao?.hash ?? d.arquivo?.sha256 ? hashCurto(d.versao?.hash ?? d.arquivo?.sha256) : "—"}
+                      {(d.versao?.hash ?? d.arquivo?.sha256)
+                        ? hashCurto(d.versao?.hash ?? d.arquivo?.sha256)
+                        : "—"}
                     </td>
-                    <td className="p-2">{d.atualizado_em ? formatarDataHoraBr(d.atualizado_em) : "—"}</td>
+                    <td className="p-2">
+                      {d.atualizado_em ? formatarDataHoraBr(d.atualizado_em) : "—"}
+                    </td>
                     <td className="p-2">
                       <div className="flex flex-wrap gap-2">
                         <Button
@@ -764,7 +819,9 @@ function DocumentTable({
                         )}
                       </div>
                       {travado ? (
-                        <p className="mt-1 text-xs text-muted-foreground">{MENSAGENS_V110.bloqueadoSeguranca}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {MENSAGENS_V110.bloqueadoSeguranca}
+                        </p>
                       ) : null}
                     </td>
                   </tr>
@@ -849,7 +906,11 @@ function NovaVersao({
             setInvalido(f && config && config !== "erro" ? validarArquivo(f, config) : null);
           }}
         />
-        {invalido ? <p role="alert" className="mt-1 text-sm text-destructive">{invalido}</p> : null}
+        {invalido ? (
+          <p role="alert" className="mt-1 text-sm text-destructive">
+            {invalido}
+          </p>
+        ) : null}
       </div>
       <div>
         <label htmlFor="v115-nv-motivo" className="text-sm font-medium">
@@ -874,7 +935,12 @@ function NovaVersao({
         >
           Enviar nova versão
         </Button>
-        <Button variant="outline" className="h-11" onClick={onFechar} disabled={env.fase === "enviando"}>
+        <Button
+          variant="outline"
+          className="h-11"
+          onClick={onFechar}
+          disabled={env.fase === "enviando"}
+        >
           Cancelar
         </Button>
       </div>
