@@ -141,6 +141,24 @@ describe("V1-08 rota, sessão e gate", () => {
 });
 
 describe("V1-08 leituras", () => {
+  it("propostas desempata por id DESC após criado_em DESC", async () => {
+    cenario({ propostas: [proposta()] });
+    montar();
+    await screen.findByRole("button", { name: "Editar título" });
+    const consulta = de("propostas_orcamentarias")[0];
+    expect(consulta).toBeDefined();
+    if (!consulta) throw new Error("Consulta de propostas ausente");
+    expect(op(consulta, "order")).toEqual([["criado_em", { ascending: false }], ["id", { ascending: false }]]);
+  });
+  it("versões desempata por id DESC após numero_versao DESC", async () => {
+    cenario({ propostas: [proposta()], versoes: [versao()] });
+    montar();
+    await screen.findByRole("button", { name: "Nova rubrica" });
+    const consulta = de("versoes_proposta")[0];
+    expect(consulta).toBeDefined();
+    if (!consulta) throw new Error("Consulta de versões ausente");
+    expect(op(consulta, "order")).toEqual([["numero_versao", { ascending: false }], ["id", { ascending: false }]]);
+  });
   it("empty real com H1 único, nav e Criar proposta", async () => {
     cenario();
     montar();
@@ -176,7 +194,7 @@ describe("V1-08 leituras", () => {
     expect(op(p, "range")[0]).toEqual([0, 24]);
     const v = de("versoes_proposta")[0]!;
     expect(op(v, "select")[0]).toEqual([COLUNAS_VERSAO_PROPOSTA, { count: "exact" }]);
-    expect(op(v, "order")).toEqual([["numero_versao", { ascending: false }], ["id", { ascending: true }]]);
+    expect(op(v, "order")).toEqual([["numero_versao", { ascending: false }], ["id", { ascending: false }]]);
     expect(op(v, "range")[0]).toEqual([0, 24]);
     const l = de("linhas_orcamentarias")[0]!;
     expect(op(l, "select")[0]).toEqual([COLUNAS_RUBRICA, { count: "exact" }]);
@@ -208,6 +226,43 @@ describe("V1-08 leituras", () => {
 });
 
 describe("V1-08 RPCs V108", () => {
+  it.each([
+    ["PT409", MENSAGENS_V108.conflito],
+    ["PT404", MENSAGENS_V108.obsoleto],
+  ])("%s bloqueia a intenção até recarregar e reabrir com revisão atualizada", async (code, mensagem) => {
+    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica()], arquivos: [arquivo()] });
+    m.rpc.mockResolvedValueOnce({ data: null, error: { code } });
+    montar();
+    const abrir = (await screen.findAllByRole("button", { name: "Editar rubrica Salários" }))[0];
+    if (!abrir) throw new Error("Ação de edição ausente");
+    fireEvent.click(abrir);
+    fireEvent.click(screen.getByRole("button", { name: "Salvar rubrica" }));
+    await screen.findByText(mensagem);
+    const salvar = screen.getByRole("button", { name: "Salvar rubrica" });
+    expect(salvar).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Observações (opcional)"), { target: { value: "Carga revisada" } });
+    fireEvent.click(salvar);
+    const form = salvar.closest("form");
+    if (!form) throw new Error("Formulário ausente");
+    fireEvent.submit(form);
+    expect(m.rpcChamadas).toHaveLength(1);
+    const primeira = m.rpcChamadas[0];
+    if (!primeira) throw new Error("RPC ausente");
+    cenario({ propostas: [proposta()], versoes: [versao()], rubricas: [rubrica({ versao_registro: 5 })], arquivos: [arquivo()] });
+    fireEvent.click(screen.getByRole("button", { name: "Recarregar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(m.rpcChamadas).toHaveLength(1);
+    const reabrir = (await screen.findAllByRole("button", { name: "Editar rubrica Salários" }))[0];
+    if (!reabrir) throw new Error("Ação atualizada ausente");
+    fireEvent.click(reabrir);
+    fireEvent.click(screen.getByRole("button", { name: "Salvar rubrica" }));
+    await screen.findByText(/corr-123/);
+    expect(m.rpcChamadas).toHaveLength(2);
+    const segunda = m.rpcChamadas[1];
+    if (!segunda) throw new Error("Segunda RPC ausente");
+    expect(segunda.args["p_versao_esperada"]).toBe(5);
+    expect(segunda.args["p_chave_idempotencia"]).not.toBe(primeira.args["p_chave_idempotencia"]);
+  });
   it("criar proposta: args exatos e protocolo", async () => {
     cenario();
     montar();
@@ -326,6 +381,15 @@ describe("V1-08 publicação e imutabilidade", () => {
 });
 
 describe("V1-08 utilitários e scan estático", () => {
+  it("conclusão de sucesso renova a chave para nova intenção com carga idêntica", () => {
+    const g = criarGerenciadorChave();
+    const primeira = g({ titulo: "Mesma carga" });
+    expect(g({ titulo: "Mesma carga" })).toBe(primeira);
+    g.concluir();
+    const segunda = g({ titulo: "Mesma carga" });
+    expect(segunda).not.toBe(primeira);
+    expect(g({ titulo: "Mesma carga" })).toBe(segunda);
+  });
   it("chave idempotente: mesma intenção preserva, payload novo renova", () => {
     const g = criarGerenciadorChave();
     const a = g({ x: 1 });
