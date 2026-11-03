@@ -247,7 +247,7 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
               <RefreshCw className="mr-2 h-4 w-4" aria-hidden /> Tentar novamente
             </Button>
           </div>
-        ) : (
+        ) : estado.tipo !== "ok" ? null : (
           <>
             <RequiredDocumentsSummary l={estado.l} off={offReqs} setOff={setOffReqs} />
             {estado.l.capacidades.pode_enviar ? (
