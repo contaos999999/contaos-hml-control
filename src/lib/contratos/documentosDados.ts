@@ -9,8 +9,7 @@ import type { Pagina } from "@/lib/contratos/baseNormativaDados";
 
 export const PAGINA_DOCS = 25;
 export const CHUNK_TUS = 6 * 1024 * 1024;
-/** Pré-validação UX espelhando `configuracao_upload` (HML); o Edge/RPC é a autoridade. */
-export const TAMANHO_MAXIMO = 500 * 1024 * 1024;
+/** Compatibilidade extensão↔MIME (espelho de privado.mime_compativel_extensao); listas e limites vêm de `configuracao_upload`. */
 export const MIMES_POR_EXTENSAO: Record<string, string[]> = {
   pdf: ["application/pdf"],
   xlsx: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
@@ -24,9 +23,12 @@ export const MIMES_POR_EXTENSAO: Record<string, string[]> = {
   json: ["application/json"],
   xml: ["application/xml", "text/xml"],
 };
-export const ACEITE = Object.keys(MIMES_POR_EXTENSAO)
-  .map((e) => `.${e}`)
-  .join(",");
+export const COLUNAS_CONFIG_UPLOAD =
+  "extensoes_permitidas,mimes_permitidos,tamanho_maximo_bytes,limiar_upload_resumivel_bytes";
+export const COLUNAS_SUGESTAO_RESUMO =
+  "id,id_versao_documento,tipo,status,vigencia_inicio,categoria_sugerida,id_requisito_sugerido,confianca";
+export const COLUNAS_REQUISITO = "id,codigo,descricao,categoria,origem_tipo,origem_id";
+export const LOTE_SUGESTOES = 1000;
 
 export const COLUNAS_DOCUMENTO =
   "id,id_contrato,tipo,titulo,categoria,situacao,versao_atual,versao_registro,vigencia_inicio,vigencia_fim,observacoes,criado_em,atualizado_em";
@@ -36,8 +38,6 @@ export const COLUNAS_ARQUIVO_DOC =
   "id,nome_original,mime,tamanho,sha256,status_seguranca,origem,criado_em";
 export const COLUNAS_PROCESSAMENTO =
   "id,id_versao_documento,etapa,status,tentativas,erro_codigo,iniciado_em,concluido_em,criado_em";
-export const COLUNAS_CLASSIFICACAO =
-  "id,id_versao_documento,categoria_sugerida,id_requisito_sugerido,confianca,status";
 /** Tipos de sugestão que originam regra e, portanto, exigem vigência (V1-CON-002). */
 export const TIPOS_SUGESTAO_REGRA = [
   "clausula",
@@ -97,16 +97,28 @@ export type Processamento = {
 export type Classificacao = {
   id: string;
   id_versao_documento: string;
+  tipo: string;
+  status: string;
+  vigencia_inicio: string | null;
   categoria_sugerida: string | null;
   id_requisito_sugerido: string | null;
   confianca: number | null;
-  status: string;
+};
+export type Requisito = {
+  id: string;
+  codigo: string | null;
+  descricao: string;
+  categoria: string | null;
+  origem_tipo: string | null;
+  origem_id: string | null;
 };
 export type Resumo = {
   versao?: VersaoDoc;
   arquivo?: ArquivoDoc;
   processamento?: Processamento;
   classificacao?: Classificacao;
+  /** Item sugerido resolvido por RLS; null = id presente mas não resolvido. */
+  requisito?: Requisito | null;
   iaPendentes: number;
   semVigencia: number;
 };
@@ -245,37 +257,30 @@ export async function obterResumos(
     .order("criado_em", { ascending: false })
     .order("id", { ascending: false })
     .range(0, 99);
-  let qc = supabase
-    .from("sugestoes_extracao_documento")
-    .select(COLUNAS_CLASSIFICACAO)
-    .in("id_versao_documento", vids)
-    .eq("tipo", "classificacao")
-    .order("confianca", { ascending: false })
-    .order("id", { ascending: true })
-    .range(0, 99);
   if (signal) {
     qa = qa.abortSignal(signal);
     qp = qp.abortSignal(signal);
-    qc = qc.abortSignal(signal);
   }
-  const contar = (vid: string, semVig: boolean) => {
-    let q = supabase
-      .from("sugestoes_extracao_documento")
-      .select("id", { count: "exact", head: true })
-      .eq("id_versao_documento", vid);
-    q = semVig
-      ? q.in("tipo", [...TIPOS_SUGESTAO_REGRA]).is("vigencia_inicio", null)
-      : q.eq("status", "pendente");
-    if (signal) q = q.abortSignal(signal);
-    return executar(q, signal).then((r) => r.count ?? 0);
+  /** Sugestões das versões da página em lotes (sem N+1, sem truncamento). */
+  const lerSugestoes = async (): Promise<Classificacao[]> => {
+    const todas: Classificacao[] = [];
+    for (let de = 0; ; de += LOTE_SUGESTOES) {
+      let q = supabase
+        .from("sugestoes_extracao_documento")
+        .select(COLUNAS_SUGESTAO_RESUMO)
+        .in("id_versao_documento", vids)
+        .order("id", { ascending: true })
+        .range(de, de + LOTE_SUGESTOES - 1);
+      if (signal) q = q.abortSignal(signal);
+      const lote = ((await executar(q, signal)).data as Classificacao[] | null) ?? [];
+      todas.push(...lote);
+      if (lote.length < LOTE_SUGESTOES) return todas;
+    }
   };
-  const [ra, rp, rc, contagens] = await Promise.all([
+  const [ra, rp, sugestoes] = await Promise.all([
     executar(qa, signal),
     executar(qp, signal),
-    executar(qc, signal),
-    Promise.all(
-      vids.map(async (vid) => [vid, await contar(vid, false), await contar(vid, true)] as const),
-    ),
+    lerSugestoes(),
   ]);
   const arquivos = Object.fromEntries(
     ((ra.data as ArquivoDoc[] | null) ?? []).map((a) => [a.id, a]),
@@ -293,15 +298,34 @@ export async function obterResumos(
     const r = de(p.id_versao_documento);
     if (r && !r.processamento) r.processamento = p;
   }
-  for (const c of (rc.data as Classificacao[] | null) ?? []) {
-    const r = de(c.id_versao_documento);
-    if (r && !r.classificacao) r.classificacao = c;
+  const regra = new Set<string>(TIPOS_SUGESTAO_REGRA);
+  for (const sg of sugestoes) {
+    const r = de(sg.id_versao_documento);
+    if (!r) continue;
+    if (sg.status === "pendente") r.iaPendentes += 1;
+    if (regra.has(sg.tipo) && !sg.vigencia_inicio) r.semVigencia += 1;
+    if (
+      sg.tipo === "classificacao" &&
+      (!r.classificacao || Number(sg.confianca ?? 0) > Number(r.classificacao.confianca ?? 0))
+    )
+      r.classificacao = sg;
   }
-  for (const [vid, pend, sem] of contagens) {
-    const r = de(vid);
-    if (r) {
-      r.iaPendentes = pend;
-      r.semVigencia = sem;
+  const rids = [
+    ...new Set(
+      Object.values(base)
+        .map((r) => r.classificacao?.id_requisito_sugerido)
+        .filter((x): x is string => !!x),
+    ),
+  ].sort();
+  if (rids.length) {
+    let qr = supabase.from("requisitos_competencia").select(COLUNAS_REQUISITO).in("id", rids);
+    if (signal) qr = qr.abortSignal(signal);
+    const reqs = Object.fromEntries(
+      (((await executar(qr, signal)).data as Requisito[] | null) ?? []).map((q) => [q.id, q]),
+    );
+    for (const r of Object.values(base)) {
+      const rid = r.classificacao?.id_requisito_sugerido;
+      if (rid) r.requisito = reqs[rid] ?? null;
     }
   }
   return base;
@@ -319,15 +343,54 @@ export const emAndamento = (r: Record<string, Resumo> | undefined) =>
 const BACKOFF = [5000, 10000, 20000, 40000, 60000];
 export const atrasoPolling = (n: number) => BACKOFF[Math.min(Math.max(n, 0), BACKOFF.length - 1)];
 
-// ---------- Validação UX de arquivo (autoridade: Edge/RPC) ----------
+// ---------- Configuração de upload (HML `configuracao_upload`; Edge/RPC são a autoridade) ----------
+export type ConfigUpload = {
+  extensoes: string[];
+  mimes: string[];
+  maximo: number | null;
+  limiarResumivel: number | null;
+};
+const numOuNulo = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+export function lerConfiguracaoUpload(d: unknown): ConfigUpload {
+  const o = d as Record<string, unknown> | null;
+  const lista = (v: unknown) =>
+    Array.isArray(v) && v.every((x) => typeof x === "string")
+      ? (v as string[]).map((x) => x.toLowerCase())
+      : null;
+  const extensoes = lista(o?.["extensoes_permitidas"]);
+  const mimes = lista(o?.["mimes_permitidos"]);
+  if (!o || !extensoes || !mimes) throw new ErroDoc("erro");
+  return {
+    extensoes,
+    mimes,
+    maximo: numOuNulo(o["tamanho_maximo_bytes"]),
+    limiarResumivel: numOuNulo(o["limiar_upload_resumivel_bytes"]),
+  };
+}
+export async function obterConfiguracaoUpload(signal?: AbortSignal): Promise<ConfigUpload> {
+  let q = supabase.from("configuracao_upload").select(COLUNAS_CONFIG_UPLOAD).eq("id", true);
+  if (signal) q = q.abortSignal(signal);
+  const r = await executar(q.maybeSingle(), signal);
+  if (!r.data) throw new ErroDoc("erro");
+  return lerConfiguracaoUpload(r.data);
+}
+export const aceiteDe = (c: ConfigUpload) => c.extensoes.map((e) => `.${e}`).join(",");
+export function formatarBytes(n: number): string {
+  const mb = 1024 * 1024;
+  if (n >= mb) return `${Math.round((n / mb) * 10) / 10} MB`.replace(".", ",");
+  return `${n} bytes`;
+}
+
+// ---------- Validação UX de arquivo ----------
 export type MotivoInvalido = "formato" | "mime" | "tamanho" | "vazio";
-export function motivoInvalido(f: File): MotivoInvalido | null {
+export function motivoInvalido(f: File, c: ConfigUpload): MotivoInvalido | null {
   const ext = f.name.includes(".") ? f.name.split(".").pop()!.toLowerCase() : "";
-  const mimes = MIMES_POR_EXTENSAO[ext];
-  if (!mimes) return "formato";
-  if (!mimes.includes(f.type.toLowerCase())) return "mime";
+  if (!c.extensoes.includes(ext)) return "formato";
+  const mime = f.type.toLowerCase();
+  const compat = MIMES_POR_EXTENSAO[ext];
+  if (!c.mimes.includes(mime) || (compat && !compat.includes(mime))) return "mime";
   if (f.size === 0) return "vazio";
-  if (f.size > TAMANHO_MAXIMO) return "tamanho";
+  if (c.maximo !== null && f.size > c.maximo) return "tamanho";
   return null;
 }
 
@@ -705,7 +768,8 @@ export const MENSAGENS_V110 = {
   downloadErro: "Não foi possível gerar o link temporário de download. Tente novamente.",
   formatoInvalido: "Este formato de arquivo não é aceito pelo ContaOS.",
   mimeIncompativel: "A extensão e o tipo do arquivo não são compatíveis.",
-  tamanhoExcedido: "O arquivo ultrapassa o limite de 500 MB deste ambiente.",
+  configIndisponivel:
+    "Não foi possível carregar as regras de envio de arquivos. O envio fica indisponível até atualizar; a lista e os downloads continuam disponíveis.",
   arquivoVazio: "O arquivo está vazio.",
   semArquivos: "Selecione ao menos um arquivo válido.",
   semTitulo: "Informe o título de todos os documentos.",
@@ -722,12 +786,14 @@ export const MENSAGENS_V110 = {
   detalheEmBreve: "O detalhe com histórico de versões e revisão de IA chega na próxima etapa.",
 } as const;
 
-export function validarArquivo(f: File): string | null {
-  const m = motivoInvalido(f);
+export const mensagemLimite = (maximo: number) =>
+  `O arquivo ultrapassa o limite de ${formatarBytes(maximo)} deste ambiente.`;
+export function validarArquivo(f: File, c: ConfigUpload): string | null {
+  const m = motivoInvalido(f, c);
   if (m === "formato") return MENSAGENS_V110.formatoInvalido;
   if (m === "mime") return MENSAGENS_V110.mimeIncompativel;
   if (m === "vazio") return MENSAGENS_V110.arquivoVazio;
-  if (m === "tamanho") return MENSAGENS_V110.tamanhoExcedido;
+  if (m === "tamanho" && c.maximo !== null) return mensagemLimite(c.maximo);
   return null;
 }
 export function mensagemErroEnvio(t: TipoErroDoc): string {
