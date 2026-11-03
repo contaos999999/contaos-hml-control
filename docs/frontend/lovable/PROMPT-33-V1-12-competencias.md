@@ -13,7 +13,7 @@ Base: `d490ebe9f90d53b7d1f5e3f26d8ef31c7b22844e`. HML. Somente leitura.
 
 ## TDD
 - RED: `competenciasContrato.test.tsx` falhou por módulo inexistente; 3 asserções irmãs autorizadas (baseNormativa, contratoDetalhe, documentosContrato) falharam por Competências ainda desabilitado.
-- GREEN: 22 testes V1-12; suíte 519/519 (22 arquivos).
+- GREEN: 18 testes V1-12; suíte 519/519 (22 arquivos).
 
 ## Validação
 - `npx tsc --noEmit` OK; `vite build` OK.
