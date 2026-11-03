@@ -664,6 +664,34 @@ describe("V1-15 resumo e tabela (backend é autoridade)", () => {
     expect(leituras()[1]![1]).toMatchObject({ p_documentos_offset: 0, p_requisitos_offset: 25 });
   });
 
+  it.each([
+    ["documentos", { docsTotal: 30 }],
+    ["requisitos", { reqsTotal: 40 }],
+  ] as const)(
+    "A página 2 de %s → B: primeira leitura B usa offsets 0 sem clique manual",
+    async (rotulo, op) => {
+      const B = "55555555-5555-4555-8555-555555555555";
+      leituraAtual = leitura(op);
+      const tela = montar();
+      await pronto();
+      fireEvent.click(screen.getByRole("button", { name: `Próxima página de ${rotulo}` }));
+      await waitFor(() => expect(leituras()).toHaveLength(2));
+      expect(screen.getByRole("button", { name: `Página anterior de ${rotulo}` })).toBeEnabled();
+      tela.rerender(<CompetenciaDocumentos id={B} />);
+      await waitFor(() => expect(leituras().some((c) => c[1].p_id_competencia === B)).toBe(true));
+      await pronto();
+      const lidasB = leituras().filter((c) => c[1].p_id_competencia === B);
+      expect(lidasB).toHaveLength(1);
+      expect(lidasB[0]![1]).toMatchObject({
+        p_documentos_offset: 0,
+        p_documentos_limite: 25,
+        p_requisitos_offset: 0,
+        p_requisitos_limite: 25,
+      });
+      expect(screen.getByRole("button", { name: `Página anterior de ${rotulo}` })).toBeDisabled();
+    },
+  );
+
   it("vazio ≠ sem permissão", async () => {
     leituraAtual = leitura({ docs: [] });
     montar();

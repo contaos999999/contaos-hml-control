@@ -101,3 +101,15 @@ Base auditada: `b69d590b9e69a7de44d6dcff63d317322b4e60e2`. Escopo exclusivo: imp
 - Security Scan 12:36:42 UTC: um **Info preexistente** (senhas vazadas, Auth congelado). `wiz` não configurado.
 - Diff de código contra SHA auditado: componente **+11/-1**, teste **+66/-1**; documentação recebe somente esta seção. Zero diff em supabase/**, package/lock, src/integrations/**, shared UI, styles, public/brand, AGENTS.
 - Evidências com mocks/React Testing Library, sem sessão real HML. Build/typecheck manuais não executados (restrição do ambiente). **Teste C não executado neste turno.**
+
+## Correção Teste C #4 — paginação vinculada ao recurso — 03/11/2026
+
+Base auditada: `1e09de9226026d9bb545703ecf69ca0cedc02bda`. Escopo exclusivo: offsets de documentos/requisitos de A não podem ser usados na leitura de B.
+
+- `types.ts` regenerado na entrada restaurado antes de produção ao blob **`8ea7750b75fd9d76b29c36ce7613392e3ab65e19`**.
+- **RED real antes de produção:** `bunx vitest run src/test/competenciaDocumentos.test.tsx -t "primeira leitura B usa offsets 0"`, exit 1, **2 FAIL**: primeira leitura B recebeu `p_documentos_offset: 25` (cenário documentos) e `p_requisitos_offset: 25` (cenário requisitos).
+- **GREEN mínimo:** paginação guardada como `{ id, docs, reqs }`; offsets efetivos derivados no render são 0 quando `pag.id !== idC`; paginar grava `{ id: idC, ... }`. Sem effect de reset; limite 25 e offsets independentes preservados; gate UUID/Auth/preferência/RPC e estado vinculado ao recurso intactos.
+- Testes permanentes (`it.each` documentos/requisitos): A página 2 → B; exatamente uma leitura B com ambos offsets 0 e limites 25, sem clique manual; botão "Página anterior" de B desabilitado (paginação visual reiniciada). Testes das correções #1/#2/#3 mantidos.
+- **GREEN V1-15 69/69**; regressão V1-14..V1-10 (6 arquivos) **165/165**; suíte completa serial **645/645**, 25 arquivos, exit 0. Lint dos dois arquivos alterados exit 0; static scan sem ocorrências.
+- Security Scan final: um **Info preexistente** (senhas vazadas, Auth congelado); `wiz` não configurado.
+- Evidências com mocks/React Testing Library, sem sessão real HML. Build/typecheck manuais não executados (restrição do ambiente). **Teste C não executado neste turno.**
