@@ -33,9 +33,7 @@ export const ROUTES = [
 ];
 export function cases() {
   return ROUTES.flatMap((route) =>
-    WIDTHS.flatMap((width) =>
-      THEMES.map((theme) => ({ ...route, width, theme })),
-    ),
+    WIDTHS.flatMap((width) => THEMES.map((theme) => ({ ...route, width, theme }))),
   );
 }
 export function publicGate({ http, lang, h1, overflow, pageErrors }) {
@@ -83,18 +81,21 @@ async function run() {
         reducedMotion: "reduce",
         permissions: [],
       });
-      await context.addInitScript(({ theme }) => {
-        try {
-          localStorage.setItem("theme", theme);
-        } catch {
-          // Navegador isolado; não injeta autenticação.
-        }
-        const apply = () => {
-          document.documentElement.classList.toggle("dark", theme === "dark");
-        };
-        if (document.documentElement) apply();
-        else document.addEventListener("DOMContentLoaded", apply, { once: true });
-      }, { theme: item.theme });
+      await context.addInitScript(
+        ({ theme }) => {
+          try {
+            localStorage.setItem("theme", theme);
+          } catch {
+            // Navegador isolado; não injeta autenticação.
+          }
+          const apply = () => {
+            document.documentElement.classList.toggle("dark", theme === "dark");
+          };
+          if (document.documentElement) apply();
+          else document.addEventListener("DOMContentLoaded", apply, { once: true });
+        },
+        { theme: item.theme },
+      );
       // O Teste C nunca deve enviar mutações ao Supabase.
       await context.route("https://gklhhhyosgasnyoxlrui.supabase.co/**", (route) => {
         if (!["GET", "HEAD", "OPTIONS"].includes(route.request().method())) {
@@ -137,8 +138,11 @@ async function run() {
         const code = response?.status() || 0;
         if (item.public) {
           record.publicAssertions = publicGate({
-            http: code, lang: state.lang, h1: state.h1,
-            overflow: state.overflow, pageErrors: errors,
+            http: code,
+            lang: state.lang,
+            h1: state.h1,
+            overflow: state.overflow,
+            pageErrors: errors,
           });
           record.outcome = record.publicAssertions.length ? "FAIL_PUBLICO" : "PASS_PUBLICO";
           record.brandAssetPresent = state.brand;
@@ -184,7 +188,9 @@ async function run() {
     screenshots: images.length,
     public_pass: logs.filter((x) => x.outcome === "PASS_PUBLICO").length,
     public_fail: logs.filter((x) => x.outcome === "FAIL_PUBLICO").length,
-    protected_no_session: logs.filter((x) => !x.publicAssertions.length && !ROUTES.find((r) => r.id === x.id)?.public).length,
+    protected_no_session: logs.filter(
+      (x) => !x.publicAssertions.length && !ROUTES.find((r) => r.id === x.id)?.public,
+    ).length,
     authenticated_e2e: "NAO_VERIFICADO",
     rls_ab_real: "NAO_VERIFICADO",
     upload_real: "NAO_VERIFICADO",
@@ -203,8 +209,13 @@ async function run() {
     images.map((x) => x.sha256 + "  " + x.filename).join("\n") + "\n",
   );
   console.log(
-    "Teste C: " + result.verdict + ", " + result.combinations +
-    " combinações, " + result.screenshots + " capturas; HML real NÃO VERIFICADO.",
+    "Teste C: " +
+      result.verdict +
+      ", " +
+      result.combinations +
+      " combinações, " +
+      result.screenshots +
+      " capturas; HML real NÃO VERIFICADO.",
   );
   if (result.verdict === "FAIL") process.exitCode = 1;
 }

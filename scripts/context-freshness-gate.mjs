@@ -15,7 +15,9 @@ export function mustCheck(paths, plan) {
     paths.some(
       (p) =>
         (/^(src|public)\//.test(p) && p !== "src/integrations/supabase/types.ts") ||
-        ["package.json", "bun.lock", "index.html", "vite.config.ts", "tailwind.config.ts"].includes(p),
+        ["package.json", "bun.lock", "index.html", "vite.config.ts", "tailwind.config.ts"].includes(
+          p,
+        ),
     )
   );
 }

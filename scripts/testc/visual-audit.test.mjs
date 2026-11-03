@@ -16,8 +16,14 @@ test("public gate FAIL em idioma, H1, overflow, JS ou HTTP", () => {
   assert.equal(publicGate({ http: 503, lang: "en", h1: 0, overflow: 16, pageErrors: 1 }).length, 5);
 });
 test("rotas privadas não recebem PASS sem sessão autenticada real", () => {
-  assert.equal(classifyProtected({ pathname: "/contratos", text: "Contratos" }), "NAO_VERIFICADO_SESSAO_REAL");
-  assert.equal(classifyProtected({ pathname: "/login", text: "Entrar" }), "ACESSO_NEGADO_REDIRECIONADO");
+  assert.equal(
+    classifyProtected({ pathname: "/contratos", text: "Contratos" }),
+    "NAO_VERIFICADO_SESSAO_REAL",
+  );
+  assert.equal(
+    classifyProtected({ pathname: "/login", text: "Entrar" }),
+    "ACESSO_NEGADO_REDIRECIONADO",
+  );
 });
 test("drawer V1-17 permanece inacessível sem sessão/competência real", () => {
   assert.equal(ROUTES.find((r) => r.id === "V117").requiresDrawer, true);
