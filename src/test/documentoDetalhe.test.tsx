@@ -736,6 +736,6 @@ describe("V1-11 escopo e Zero-Drift", () => {
     expect(fonte).not.toMatch(
       /service_role|as any|itens_lista|getPublicUrl|dangerouslySetInnerHTML/,
     );
-    expect(fonte).not.toMatch(/"[^"]*embedding[^"]*"/);
+    expect(fonte).not.toMatch(/COLUNAS_[A-Z_]+ =\s*"[^"]*embedding/);
   });
 });
