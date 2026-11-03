@@ -544,19 +544,11 @@ function NavSecoes({ id }: { id: string }) {
             Documentos
           </Link>
         </li>
-        {(["Competências"] as const).map((s) => (
-          <li key={s}>
-            <span
-              aria-disabled="true"
-              className="inline-flex min-h-11 items-center gap-2 rounded-md px-4 text-sm text-muted-foreground"
-            >
-              <span>{s}</span>
-              <span className="rounded border border-border px-1.5 text-[0.65rem] uppercase tracking-wide">
-                Em breve
-              </span>
-            </span>
-          </li>
-        ))}
+        <li>
+          <Link to="/contratos/$id/competencias" params={{ id: id }} className={LINK_NAV}>
+            Competências
+          </Link>
+        </li>
       </ul>
     </nav>
   );

@@ -20,8 +20,6 @@ export const MENSAGENS_V106 = {
   erroSessao: "Não foi possível verificar sua sessão agora. Tente novamente em instantes.",
 } as const;
 
-const SECOES_FUTURAS = ["Competências"] as const;
-
 export function VisaoGeralContrato({ id }: { id: string }) {
   const navigate = useNavigate();
   const [ctx, setCtx] = useState<{ idUsuario: string; idOrganizacao: string } | null>(null);
@@ -208,14 +206,15 @@ function Resumo({ c }: { c: ContratoDetalhe }) {
               Documentos
             </Link>
           </li>
-          {SECOES_FUTURAS.map((s) => (
-            <li key={s}>
-              <span aria-disabled="true" className="inline-flex min-h-11 items-center gap-2 rounded-md px-4 text-sm text-muted-foreground">
-                <span>{s}</span>
-                <span className="rounded border border-border px-1.5 text-[0.65rem] uppercase tracking-wide">Em breve</span>
-              </span>
-            </li>
-          ))}
+          <li>
+            <Link
+              to="/contratos/$id/competencias"
+              params={{ id: c.id }}
+              className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Competências
+            </Link>
+          </li>
         </ul>
       </nav>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
