@@ -450,9 +450,9 @@ describe("V1-17 paginação independente", () => {
       return {
         data: {
           ...d,
-          evidencias_paginacao: { ...d.evidencias_paginacao, offset: a.p_evidencias_offset },
-          historico_paginacao: { ...d.historico_paginacao, offset: a.p_historico_offset },
-          apontamentos_paginacao: { ...d.apontamentos_paginacao, offset: a.p_apontamentos_offset },
+          evidencias_paginacao: { ...d.evidencias_paginacao, offset: a["p_evidencias_offset"] },
+          historico_paginacao: { ...d.historico_paginacao, offset: a["p_historico_offset"] },
+          apontamentos_paginacao: { ...d.apontamentos_paginacao, offset: a["p_apontamentos_offset"] },
         },
         error: null,
       };
@@ -522,7 +522,7 @@ describe("V1-17 troca A/B e acessibilidade", () => {
   it("troca de requisito descarta resposta tardia de A", async () => {
     let soltarA: (v: unknown) => void = () => {};
     m.rpc.mockImplementation((_n: string, a: Record<string, unknown>) =>
-      a.p_id_requisito === R
+      a["p_id_requisito"] === R
         ? new Promise((res) => (soltarA = res))
         : { data: detalhe({ r: R_B, descricao: "Requisito B" }), error: null },
     );
