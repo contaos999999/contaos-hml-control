@@ -337,19 +337,23 @@ describe("V1-12 estados, ações e a11y", () => {
     await screen.findByText(/Não foi possível carregar as competências/);
     expect(screen.getByRole("button", { name: /Tentar novamente/ })).toBeInTheDocument();
   });
-  it("ações staged Em breve, sem link para V1-13/V1-14 e sem RPC", async () => {
+  it("Nova competência é link V1-13; Abrir segue staged, sem link V1-14 e sem RPC", async () => {
     cenario();
     montar();
     await screen.findByText("03/2026");
-    const nova = screen.getByText("Nova competência").closest("[aria-disabled]");
-    expect(nova?.getAttribute("aria-disabled")).toBe("true");
-    expect(nova?.textContent).toMatch(/Em breve/);
+    expect(screen.getByRole("link", { name: "Nova competência" }).getAttribute("href")).toBe(
+      `/contratos/${K1}/competencias/nova`,
+    );
+    const abrir = screen.getByText("Abrir competência").closest("[aria-disabled]");
+    expect(abrir?.getAttribute("aria-disabled")).toBe("true");
+    expect(abrir?.textContent).toMatch(/Em breve/);
     expect(
       screen
         .queryAllByRole("link")
         .some(
           (a) =>
-            /competencias\//.test(a.getAttribute("href") ?? "") ||
+            (/competencias\//.test(a.getAttribute("href") ?? "") &&
+              !(a.getAttribute("href") ?? "").endsWith("/competencias/nova")) ||
             /^\/competencias/.test(a.getAttribute("href") ?? ""),
         ),
     ).toBe(false);
