@@ -545,11 +545,7 @@ function NavSecoes({ id }: { id: string }) {
           </Link>
         </li>
         <li>
-          <Link
-            to="/contratos/$id/competencias"
-            params={{ id: id }}
-            className={LINK_NAV}
-          >
+          <Link to="/contratos/$id/competencias" params={{ id: id }} className={LINK_NAV}>
             Competências
           </Link>
         </li>
