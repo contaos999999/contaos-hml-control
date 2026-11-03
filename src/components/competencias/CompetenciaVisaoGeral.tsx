@@ -165,9 +165,9 @@ export function CompetenciaVisaoGeral({ id }: { id: string }) {
               </Button>
             </div>
           </>
-        ) : (
+        ) : estado.tipo === "ok" ? (
           <Conteudo vg={estado.vg} />
-        )}
+        ) : null}
       </main>
     </div>
   );
