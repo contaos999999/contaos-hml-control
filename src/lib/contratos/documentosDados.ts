@@ -657,6 +657,67 @@ export async function confirmarUpload(
   return d;
 }
 
+/** Estado retomável de um envio (mantido pelo chamador entre tentativas manuais). */
+export type EstadoEnvio = {
+  path?: string;
+  token?: string;
+  bucket?: string;
+  resumivel?: boolean;
+  location?: string | undefined;
+  enviado?: boolean;
+  idArquivo?: string;
+};
+/**
+ * Pipeline certificado único (V1-10, reutilizado por V1-15):
+ * storage-sign-upload → simples/TUS → SHA-256 → confirmar_upload_arquivo.
+ * Retomável: etapas já concluídas em `p` não são repetidas.
+ */
+export async function enviarArquivoCertificado(
+  org: string,
+  contrato: string,
+  f: File,
+  p: EstadoEnvio,
+  cb: {
+    onEtapa?: (e: "enviando" | "confirmando") => void;
+    onProgresso?: (pct: number) => void;
+  } = {},
+): Promise<string> {
+  if (p.idArquivo) return p.idArquivo;
+  if (!p.enviado) {
+    cb.onEtapa?.("enviando");
+    if (!(p.resumivel && p.location && p.token && p.path && p.bucket)) {
+      const a = await autorizarUpload(org, contrato, f);
+      Object.assign(p, {
+        path: a.path,
+        token: a.token,
+        bucket: a.bucket,
+        resumivel: a.resumivel,
+        location: undefined,
+      });
+    }
+    if (p.resumivel) {
+      await enviarTus({ bucket: p.bucket!, path: p.path!, token: p.token! }, f, {
+        location: p.location,
+        onLocation: (l) => {
+          p.location = l;
+        },
+        ...(cb.onProgresso ? { onProgresso: cb.onProgresso } : {}),
+      });
+    } else {
+      await enviarSimples(
+        { bucket: p.bucket!, path: p.path!, token: p.token!, resumivel: false },
+        f,
+      );
+    }
+    p.enviado = true;
+    cb.onProgresso?.(100);
+  }
+  cb.onEtapa?.("confirmando");
+  const sha = await sha256Hex(f);
+  p.idArquivo = await confirmarUpload(org, contrato, p.path!, f, sha);
+  return p.idArquivo;
+}
+
 /** Contrato real (privado.*_v110/_v111): id_documento, id_versao, numero_versao, id_arquivo, id_job. */
 export type RetornoDocumento = {
   id_documento: string;

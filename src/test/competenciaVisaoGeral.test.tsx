@@ -344,7 +344,10 @@ describe("V1-14 renderização do backend", () => {
       "Apresentação",
     ]);
     expect(tabs[0]!.getAttribute("aria-selected")).toBe("true");
-    for (const t of tabs.slice(1)) {
+    expect(tabs[1]!.getAttribute("href")).toBe(`/competencias/${ID}/documentos`);
+    expect(tabs[1]!.getAttribute("aria-disabled")).toBeNull();
+    expect(tabs[1]!.textContent).not.toMatch(/Em breve/);
+    for (const t of tabs.slice(2)) {
       expect(t.getAttribute("aria-disabled")).toBe("true");
       expect(t.getAttribute("href")).toBeNull();
     }

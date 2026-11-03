@@ -198,7 +198,7 @@ function Conteudo({ vg }: { vg: VisaoGeral }) {
         idContrato={c.id_contrato}
         situacao={c.situacao}
       />
-      <Tabs />
+      <Tabs id={c.id} />
       <div className="grid gap-4 lg:grid-cols-3">
         <EstadoCompetencia estado={derivarEstadoVisual(vg)} />
         <PercentGauge valor={c.percentual_conformidade} portao={vg.portao} />
@@ -412,9 +412,9 @@ function AllowedActions({ acoes }: { acoes: AllowedActionsVG }) {
   );
 }
 
-const ABAS_FUTURAS = ["Documentos", "Análise", "Parecer", "Apresentação"];
+const ABAS_FUTURAS = ["Análise", "Parecer", "Apresentação"];
 
-function Tabs() {
+function Tabs({ id }: { id: string }) {
   return (
     <div
       role="tablist"
@@ -428,6 +428,15 @@ function Tabs() {
       >
         Visão geral
       </span>
+      <Link
+        to="/competencias/$id/documentos"
+        params={{ id }}
+        role="tab"
+        aria-selected="false"
+        className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        Documentos
+      </Link>
       {ABAS_FUTURAS.map((t) => (
         <span
           key={t}
