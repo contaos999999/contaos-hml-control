@@ -1106,7 +1106,11 @@ function Sugestoes({
   const concluir = async (m: string) => {
     setAcao(null);
     onAviso(m);
-    await qc.invalidateQueries({ queryKey: ["v111"] });
+    // Perfil (vinculos_usuarios) é lido uma única vez por tela: nunca invalidar.
+    await qc.invalidateQueries({
+      queryKey: ["v111"],
+      predicate: (query) => query.queryKey[1] !== "perfil",
+    });
   };
   const itens = q.data?.itens ?? [];
   const mudar = (f: FiltrosSugestao) => {
