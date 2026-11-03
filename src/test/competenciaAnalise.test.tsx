@@ -221,7 +221,7 @@ const pronto = () => screen.findByRole("heading", { level: 2, name: /Requisitos 
 
 function sessao() {
   m.getUser.mockResolvedValue({ data: { user: { id: U } }, error: null });
-  definirPreferenciaOrganizacao(U, { id_organizacao: ORG, nome: "Org" } as never);
+  definirPreferenciaOrganizacao(U, ORG);
 }
 function rpcLeitura(f: (args: Record<string, unknown>) => unknown) {
   m.rpc.mockImplementation((nome: string, args: Record<string, unknown>) =>
@@ -291,7 +291,7 @@ describe("V1-16 gate", () => {
     const pref = vi.spyOn(preferenciaDados, "obterPreferenciaOrganizacao");
     pref.mockImplementation(() => {
       ordem.push("pref");
-      return { id_organizacao: ORG, nome: "Org" } as never;
+      return ORG;
     });
     rpcLeitura(() => {
       ordem.push("rpc");
