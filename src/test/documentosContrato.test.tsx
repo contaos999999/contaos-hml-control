@@ -421,6 +421,46 @@ describe("V1-10 lista, filtros e paginação server-side", () => {
     const linha = await screen.findByTestId(`documento-${D1}`);
     expect(await within(linha).findByText("Item sugerido indisponível")).toBeInTheDocument();
   });
+  it("NFR-009: processamentos paginados em lotes de 1000 até esgotar, mais recente por versão", async () => {
+    cenario();
+    const base = m.resposta;
+    const p = (id: string, status: string) => ({
+      id,
+      id_versao_documento: V1,
+      etapa: "documents",
+      status,
+      tentativas: 1,
+      erro_codigo: null,
+      iniciado_em: null,
+      concluido_em: null,
+      criado_em: "2026-02-01T12:00:00Z",
+    });
+    m.resposta = (c) => {
+      if (c.tabela !== "processamentos_documento") return base!(c);
+      const [de0] = (c.ops.find(([o]) => o === "range")?.[1] ?? [0]) as number[];
+      if (de0 === 0)
+        return ok([
+          p("p-novo", "processando"),
+          ...Array.from({ length: 999 }, (_, i) => p(`p${i}`, "concluido")),
+        ]);
+      return ok([p("p-velho", "falhou")]);
+    };
+    montar();
+    const linha = await screen.findByTestId(`documento-${D1}`);
+    expect(await within(linha).findByText("Processando")).toBeInTheDocument();
+    const pr = de("processamentos_documento");
+    expect(pr.map((c) => op(c, "range")[0])).toEqual([
+      [0, 999],
+      [1000, 1999],
+    ]);
+    for (const c of pr) {
+      expect(op(c, "in")[0]).toEqual(["id_versao_documento", [V1]]);
+      expect(op(c, "order")).toEqual([
+        ["criado_em", { ascending: false }],
+        ["id", { ascending: false }],
+      ]);
+    }
+  });
   it("filtros vão ao servidor (ilike título, eq tipo) e voltam à página 1", async () => {
     cenario({ total: 60 });
     montar();

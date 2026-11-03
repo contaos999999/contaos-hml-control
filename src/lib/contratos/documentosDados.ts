@@ -250,17 +250,24 @@ export async function obterResumos(
   const porVersao = Object.fromEntries(versoes.map((v) => [v.id, v.id_documento_contrato]));
 
   let qa = supabase.from("arquivos").select(COLUNAS_ARQUIVO_DOC).in("id", aids);
-  let qp = supabase
-    .from("processamentos_documento")
-    .select(COLUNAS_PROCESSAMENTO)
-    .in("id_versao_documento", vids)
-    .order("criado_em", { ascending: false })
-    .order("id", { ascending: false })
-    .range(0, 99);
-  if (signal) {
-    qa = qa.abortSignal(signal);
-    qp = qp.abortSignal(signal);
-  }
+  if (signal) qa = qa.abortSignal(signal);
+  /** Processamentos das versões da página em lotes (mais recente primeiro, sem truncamento). */
+  const lerProcessamentos = async (): Promise<Processamento[]> => {
+    const todos: Processamento[] = [];
+    for (let de = 0; ; de += LOTE_SUGESTOES) {
+      let q = supabase
+        .from("processamentos_documento")
+        .select(COLUNAS_PROCESSAMENTO)
+        .in("id_versao_documento", vids)
+        .order("criado_em", { ascending: false })
+        .order("id", { ascending: false })
+        .range(de, de + LOTE_SUGESTOES - 1);
+      if (signal) q = q.abortSignal(signal);
+      const lote = ((await executar(q, signal)).data as Processamento[] | null) ?? [];
+      todos.push(...lote);
+      if (lote.length < LOTE_SUGESTOES) return todos;
+    }
+  };
   /** Sugestões das versões da página em lotes (sem N+1, sem truncamento). */
   const lerSugestoes = async (): Promise<Classificacao[]> => {
     const todas: Classificacao[] = [];
@@ -277,9 +284,9 @@ export async function obterResumos(
       if (lote.length < LOTE_SUGESTOES) return todas;
     }
   };
-  const [ra, rp, sugestoes] = await Promise.all([
+  const [ra, processamentos, sugestoes] = await Promise.all([
     executar(qa, signal),
-    executar(qp, signal),
+    lerProcessamentos(),
     lerSugestoes(),
   ]);
   const arquivos = Object.fromEntries(
@@ -294,7 +301,7 @@ export async function obterResumos(
     const a = arquivos[v.id_arquivo];
     if (r && a) r.arquivo = a;
   }
-  for (const p of (rp.data as Processamento[] | null) ?? []) {
+  for (const p of processamentos) {
     const r = de(p.id_versao_documento);
     if (r && !r.processamento) r.processamento = p;
   }

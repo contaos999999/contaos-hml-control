@@ -39,7 +39,7 @@ Testes antigos alterados só na asserção "Documentos — Em breve" → link: `
 | Idempotência | chave por item; mesma chave no retry; após upload confirmado reutiliza `id_arquivo` sem reenviar bytes; trava contra duplo clique | DocumentosContrato | "dois arquivos…" (duplo clique), "retry após upload confirmado…" |
 | Erros RPC | 42501, PT400, PT404, PT409 e jsonb inválido em PT-BR | documentosDados | "PT400… 42501…", "retorno jsonb fora do contrato…" |
 | NFR-005 polling | só com pendente/processando; 5/10/20/40/60 s; pausa com aba oculta; atualização manual | ambos | "backoff…", "processando…" |
-| NFR-009 paginação | 25 por página, `range` + `count exact`, filtros no servidor (ilike escapado, eq) | documentosDados | "consulta colunas explícitas…", "filtros vão ao servidor…" |
+| NFR-009 paginação | 25 por página, `range` + `count exact`, filtros no servidor (ilike escapado, eq); sugestões e processamentos das versões da página lidos por `.in(id_versao_documento)` em lotes de 1000 até esgotar (processamentos ordenados `criado_em DESC, id DESC`, mais recente por versão), sem N+1 e sem corte fixo | documentosDados | "consulta colunas explícitas…", "filtros vão ao servidor…", "NFR-009: processamentos paginados em lotes…" |
 | Desempenho (sem N+1) | uma consulta de sugestões por `.in(id_versao_documento)` em lotes de 1000 até esgotar; agregação local; uma `.in()` de requisitos | documentosDados | "indicadores…" (1 consulta, sem head/count) |
 | Escopo | "Abrir detalhe — Em breve" desabilitado; Competências Em breve; sem `revisar_sugestao_extracao`/`definir_vigencia_sugestao_extracao` | DocumentosContrato | "não oferece…", "Competências continua…" |
 
@@ -49,10 +49,12 @@ Testes antigos alterados só na asserção "Documentos — Em breve" → link: `
 - GREEN inicial: 27/27 (após o próprio teste novo aguardar indicadores assíncronos).
 - RED do delta: 6 falhas / 25 aprovados (indicadores sem N+1, item sugerido real, item indisponível, validação por configuração, configuração alterada, falha de configuração).
 - GREEN do delta: 31/31.
+- RED do delta final (Teste C apontou `range(0, 99)` fixo em `processamentos_documento`): 1 falha / 31 aprovados (`[[0,99]]` recebido vs `[[0,999],[1000,1999]]`).
+- GREEN do delta final: 32/32.
 
 ## Resultados finais (reais)
 
-- Focado: 31/31. Suíte: 464/464 (20 arquivos).
+- Focado: 32/32. Suíte: 465/465 (20 arquivos). `tsc --noEmit` e build exit 0; ESLint dos arquivos tocados 0.
 - `npx tsc --noEmit`: exit 0. `npm run build`: exit 0.
 - ESLint arquivos novos: 0. Global: 8.962 erros / 9 avisos (= baseline); arquivos antigos alterados com a mesma contagem da base.
 - Scan estático nos arquivos novos: sem `service_role`, secrets, `as any`, `.insert/.update/.delete/.upsert(`, `getPublicUrl`, bucket público, RPCs de sugestão. Um único `as unknown as` (fronteira tipada das RPCs ausentes do `types.ts` certificado).
