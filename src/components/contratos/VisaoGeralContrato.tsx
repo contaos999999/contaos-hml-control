@@ -20,7 +20,6 @@ export const MENSAGENS_V106 = {
   erroSessao: "Não foi possível verificar sua sessão agora. Tente novamente em instantes.",
 } as const;
 
-
 export function VisaoGeralContrato({ id }: { id: string }) {
   const navigate = useNavigate();
   const [ctx, setCtx] = useState<{ idUsuario: string; idOrganizacao: string } | null>(null);
@@ -208,13 +207,13 @@ function Resumo({ c }: { c: ContratoDetalhe }) {
             </Link>
           </li>
           <li>
-          <Link to="/contratos/$id/competencias"
+            <Link
               params={{ id: c.id }}
               className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-            Competências
-          </Link>
-        </li>
+              Competências
+            </Link>
+          </li>
         </ul>
       </nav>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
