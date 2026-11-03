@@ -868,19 +868,25 @@ describe("V1-16 ações", () => {
     expect(solicitacoes()).toHaveLength(1);
   });
 
-  it("Abrir requisito allowed=true → Em breve aria-disabled sem href/RPC", async () => {
+  it("Abrir requisito allowed=true → botão abre drawer V1-17 com o id do requisito", async () => {
+    const REQ = "66666666-6666-4666-8666-666666666666";
+    rpcLeitura(() => ({
+      data: leitura({ resultados: [{ ...resultado(), id_requisito: REQ }] }),
+      error: null,
+    }));
     render(<CompetenciaAnalise id={ID} />);
     await pronto();
     const tabela = screen.getByRole("table", { name: /Requisitos analisados/ });
-    const c = within(tabela)
-      .getByText(/Abrir requisito/)
-      .closest("[aria-disabled]")!;
-    expect(c.getAttribute("aria-disabled")).toBe("true");
-    expect(c.getAttribute("href")).toBeNull();
-    expect(c.textContent).toMatch(/Em breve/);
-    const n = m.rpc.mock.calls.length;
-    fireEvent.click(c);
-    expect(m.rpc.mock.calls.length).toBe(n);
+    expect(within(tabela).queryByText(/Em breve/)).toBeNull();
+    const b = within(tabela).getByRole("button", { name: /Abrir requisito/ });
+    expect(b.getAttribute("href")).toBeNull();
+    fireEvent.click(b);
+    expect(await screen.findByRole("dialog", { name: /Detalhe do requisito/ })).toBeInTheDocument();
+    await waitFor(() =>
+      expect(m.rpc.mock.calls.some((c) => c[0] === "obter_detalhe_requisito_v117")).toBe(true),
+    );
+    const det = m.rpc.mock.calls.find((c) => c[0] === "obter_detalhe_requisito_v117")!;
+    expect(det[1]).toMatchObject({ p_id_competencia: ID, p_id_requisito: REQ });
     expect(m.nav).not.toHaveBeenCalled();
   });
 
