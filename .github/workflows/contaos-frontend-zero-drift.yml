@@ -25,6 +25,10 @@ jobs:
         uses: oven-sh/setup-bun@v2
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
+      - name: Lint e formatacao do saneamento transversal
+        run: |
+          bunx eslint src/routes/__root.tsx src/components/brand/ContaOSMarca.tsx src/test/rootLocale.test.tsx src/test/brand.test.tsx scripts/frontend-zero-drift.mjs
+          bunx prettier --check scripts/frontend-zero-drift.mjs src/test/brand.test.tsx src/test/rootLocale.test.tsx
       - name: Full regression serial
         run: bunx vitest run --maxWorkers=1
       - name: TypeScript typecheck
