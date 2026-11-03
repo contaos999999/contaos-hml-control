@@ -436,10 +436,13 @@ describe("V1-10 lista, filtros e paginação server-side", () => {
       criado_em: "2026-02-01T12:00:00Z",
     });
     m.resposta = (c) => {
-      if (c.tabela !== "processamentos_documento") return base(c);
+      if (c.tabela !== "processamentos_documento") return base!(c);
       const [de0] = (c.ops.find(([o]) => o === "range")?.[1] ?? [0]) as number[];
       if (de0 === 0)
-        return ok([p("p-novo", "processando"), ...Array.from({ length: 999 }, (_, i) => p(`p${i}`, "concluido"))]);
+        return ok([
+          p("p-novo", "processando"),
+          ...Array.from({ length: 999 }, (_, i) => p(`p${i}`, "concluido")),
+        ]);
       return ok([p("p-velho", "falhou")]);
     };
     montar();
