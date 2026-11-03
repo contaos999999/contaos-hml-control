@@ -55,6 +55,7 @@ Gate: UUID inválido → "Competência não encontrada", **zero** `getUser`/pref
 `capacidades.pode_enviar=false` → Dropzone desabilitado com motivo "Bloqueado pelo backend".
 Fluxo: `obterConfiguracaoUpload` → `motivoInvalido` → `sha256Hex` → `storage-sign-upload` → simples ou TUS (se `resumivel`) → `confirmar_upload_arquivo(competencia.id_organizacao, competencia.id_contrato, ...)` → `criar_documento_competencia_v115`.
 - Requisito: select só com itens de `requisitos_documentais` retornados (opcional); backend revalida.
+- Tipo: se o requisito selecionado tiver `tipos_esperados` não vazio, o seletor de tipo oferece **exatamente** esses valores do backend (fonte autoritativa), com rótulo amigável via `ROTULO_TIPO` quando existir e fallback para o próprio valor retornado — sem catálogo local inventado. Se `tipos_esperados` vier vazio (ou sem requisito), reutiliza `TIPOS_DOCUMENTO` do V1-10. Trocar o requisito reinicia o tipo. Teste dedicado: tipos do backend exibidos literalmente (incluindo valor sem rótulo conhecido) e fallback ao catálogo genérico quando vazio.
 - Chave idempotente `crypto.randomUUID()` gerada ao iniciar a tentativa lógica e mantida em ref até sucesso ou troca de arquivo/metadados; retry manual reutiliza a mesma chave; botão bloqueado enquanto pendente; sem retry automático.
 - Nenhum byte por RPC; bucket privado; nunca `getPublicUrl`.
 
