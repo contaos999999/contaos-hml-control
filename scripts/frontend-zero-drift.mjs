@@ -1,0 +1,69 @@
+import { readFileSync, existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+
+const CERTIFIED_TYPES_BLOB = "8ea7750b75fd9d76b29c36ce7613392e3ab65e19";
+const COMPONENTS = [
+  "src/routes/login.tsx",
+  "src/routes/esqueci-senha.tsx",
+  "src/routes/redefinir-senha.tsx",
+  "src/routes/selecionar-organizacao.tsx",
+  "src/components/dashboard/Dashboard.tsx",
+  "src/components/contratantes/ListaContratantes.tsx",
+  "src/components/contratantes/NovoContratante.tsx",
+  "src/components/contratantes/EditarContratante.tsx",
+  "src/components/contratos/ListaContratos.tsx",
+  "src/components/contratos/NovoContrato.tsx",
+  "src/components/contratos/VisaoGeralContrato.tsx",
+  "src/components/contratos/BaseNormativaContrato.tsx",
+  "src/components/administracao/usuarios/AdminUsuarios.tsx",
+  "src/components/contratos/OrcamentoContrato.tsx",
+  "src/components/contratos/RegrasContrato.tsx",
+  "src/components/contratos/DocumentosContrato.tsx",
+  "src/components/contratos/DocumentoDetalhe.tsx",
+  "src/components/contratos/CompetenciasContrato.tsx",
+  "src/components/contratos/NovaCompetencia.tsx",
+  "src/components/competencias/CompetenciaVisaoGeral.tsx",
+  "src/components/competencias/CompetenciaDocumentos.tsx",
+  "src/components/competencias/CompetenciaAnalise.tsx"
+];
+
+const problems = [];
+function source(path) {
+  if (!existsSync(path)) { problems.push("Arquivo obrigatório ausente: "+path); return ""; }
+  return readFileSync(path, "utf8");
+}
+const root = source("src/routes/__root.tsx");
+if (!root.includes('<html lang="pt-BR">')) problems.push("Documento HTML deve declarar lang=pt-BR.");
+for (const english of ["Page not found","Go home","This page didn't load","Something went wrong on our end","Try again"]) {
+  if (root.includes(english)) problems.push("Texto global em inglês no root: "+english);
+}
+
+const brandTest = source("src/test/brand.test.tsx");
+for (const path of COMPONENTS) {
+  const code = source(path);
+  if (!code.includes("<ContaOSMarca")) problems.push("Tela sem componente ContaOSMarca oficial: "+path);
+  if (!brandTest.includes(path)) problems.push("Tela ausente da proteção do teste BRAND-01: "+path);
+  if (/#[0-9a-fA-F]{6}\b/.test(code)) problems.push("Cor hexadecimal fixa encontrada em tela, auditar token: "+path);
+  if (code.includes("sb_secret_")||code.includes("service_role")) problems.push("Possível secret literal em tela: "+path);
+}
+
+const expectedAssets=[
+"public/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg",
+"public/brand/ContaOS_Simbolo_Branco.svg",
+"public/favicon.svg"
+];
+for(const p of expectedAssets) if(!existsSync(p)) problems.push("Asset oficial não encontrado: "+p);
+
+let actualBlob = "";
+try { actualBlob = execFileSync("git", ["hash-object","src/integrations/supabase/types.ts"], {encoding:"utf8"}).trim(); }
+catch { problems.push("Não foi possível verificar o blob do types.ts."); }
+if(actualBlob!==CERTIFIED_TYPES_BLOB) problems.push("DRIFT CRÍTICO: types.ts não coincide com o blob certificado. Atual="+actualBlob);
+
+// Regras de economia: nenhum teste precisa acessar Supabase, alterar arquivos ou usar créditos Lovable.
+// Este gate não certifica screenshots reais, RLS de sessão nem auditoria semântica de 197 prompts.
+if(problems.length) {
+  for(const item of problems) console.error("ZERO-DRIFT FAIL: "+item);
+  process.exit(1);
+}
+console.log("ZERO-DRIFT PASS: "+COMPONENTS.length+" telas com ContaOSMarca e teste BRAND-01, pt-BR global, blobs/ativos oficiais e types.ts imutável.");
+console.log("LIMITAÇÃO: captura visual dinâmica e estados autenticados são verificados em Teste C independente.");
