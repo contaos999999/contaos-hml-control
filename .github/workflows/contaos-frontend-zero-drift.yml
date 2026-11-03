@@ -1,0 +1,35 @@
+name: ContaOS Frontend Zero-Drift
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-zero-drift-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-quality:
+    name: ContaOS Frontend Zero-Drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout immutable commit
+        uses: actions/checkout@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Brand-01, PT-BR, secrets and types integrity
+        run: node scripts/frontend-zero-drift.mjs
+      - name: Full regression serial
+        run: bunx vitest run --maxWorkers=1
+      - name: TypeScript typecheck
+        run: bunx tsgo --noEmit -p .
+      - name: Production build
+        run: bunx vite build
