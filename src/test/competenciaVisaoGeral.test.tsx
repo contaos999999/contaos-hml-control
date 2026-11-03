@@ -59,8 +59,18 @@ const ID = "44444444-4444-4444-8444-444444444444";
 const ID2 = "55555555-5555-4555-8555-555555555555";
 const K = "11111111-1111-4111-8111-111111111111";
 
-type Acoes = { abrir_documentos: boolean; analisar: boolean; abrir_parecer: boolean; apresentar: boolean };
-const NENHUMA: Acoes = { abrir_documentos: false, analisar: false, abrir_parecer: false, apresentar: false };
+type Acoes = {
+  abrir_documentos: boolean;
+  analisar: boolean;
+  abrir_parecer: boolean;
+  apresentar: boolean;
+};
+const NENHUMA: Acoes = {
+  abrir_documentos: false,
+  analisar: false,
+  abrir_parecer: false,
+  apresentar: false,
+};
 
 function vg(
   o: {
@@ -137,15 +147,17 @@ describe("V1-14 rota e gate", () => {
     expect(r.path).toBe("/competencias_/$id");
     expect(r.options.ssr).toBe(false);
     const meta = r.options.head().meta;
-    expect(meta.find((x) => x.title)?.title).toMatch(/Competência/);
+    expect(meta.find((x) => x["title"])?.["title"]).toMatch(/Competência/);
     for (const k of ["og:title", "og:description", "og:type"])
-      expect(meta.some((x) => x.property === k)).toBe(true);
-    expect(meta.some((x) => x.name === "twitter:card")).toBe(true);
+      expect(meta.some((x) => x["property"] === k)).toBe(true);
+    expect(meta.some((x) => x["name"] === "twitter:card")).toBe(true);
   });
 
   it("UUID inválido: zero Auth/RPC e mensagem sanitizada", async () => {
     montar("abc");
-    expect(await screen.findByText("Competência não encontrada ou indisponível.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Competência não encontrada ou indisponível."),
+    ).toBeInTheDocument();
     expect(m.getUser).not.toHaveBeenCalled();
     expect(m.rpc).not.toHaveBeenCalled();
     expect(m.from).not.toHaveBeenCalled();
@@ -191,9 +203,15 @@ describe("V1-14 erros sanitizados", () => {
   });
 
   it("P0001 → não encontrada/indisponível, sem texto bruto", async () => {
-    m.rpc.mockResolvedValue({ data: null, error: { code: "P0001", message: "RAW x" }, status: 400 });
+    m.rpc.mockResolvedValue({
+      data: null,
+      error: { code: "P0001", message: "RAW x" },
+      status: 400,
+    });
     montar();
-    expect(await screen.findByText("Competência não encontrada ou indisponível.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Competência não encontrada ou indisponível."),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/RAW/)).toBeNull();
   });
 
@@ -302,7 +320,9 @@ describe("V1-14 renderização do backend", () => {
 
   it("copy oficial dos status críticos; nunca 'Apta'", async () => {
     expect(rotuloSituacao("pode_apresentar_contratante")).toBe("PODE APRESENTAR AO CONTRATANTE");
-    expect(rotuloSituacao("pode_reapresentar_contratante")).toBe("PODE REAPRESENTAR AO CONTRATANTE");
+    expect(rotuloSituacao("pode_reapresentar_contratante")).toBe(
+      "PODE REAPRESENTAR AO CONTRATANTE",
+    );
     expect(rotuloSituacao("em_analise")).toBe("em_analise");
     m.rpc.mockResolvedValue(ok(vg({ situacao: "pode_reapresentar_contratante" })));
     montar();
@@ -337,7 +357,11 @@ describe("V1-14 estados visuais (apresentação apenas)", () => {
     ["preparation", { situacao: "preparando" }, "Em preparação"],
     ["analysis", { situacao: "em_analise" }, "Em análise"],
     ["blocked", { situacao: "em_analise", liberado: false, bloqueantes: 2 }, "Com bloqueios"],
-    ["ready", { situacao: "pode_apresentar_contratante", liberado: true }, "Pronta conforme backend"],
+    [
+      "ready",
+      { situacao: "pode_apresentar_contratante", liberado: true },
+      "Pronta conforme backend",
+    ],
     ["presented", { situacao: "apresentado" }, "Apresentada"],
   ];
   it.each(casos)("%s", async (estado, o, rotulo) => {
@@ -409,6 +433,8 @@ describe("V1-14 estático", () => {
     expect(fontes).not.toMatch(/\.(insert|update|upsert|delete)\(/);
     const comp = readFileSync("src/components/competencias/CompetenciaVisaoGeral.tsx", "utf8");
     const bloco = comp.slice(comp.indexOf("function AllowedActions"));
-    expect(bloco.slice(0, bloco.indexOf("\n}\n"))).not.toMatch(/derivarEstadoVisual|situacao|percentual/);
+    expect(bloco.slice(0, bloco.indexOf("\n}\n"))).not.toMatch(
+      /derivarEstadoVisual|situacao|percentual/,
+    );
   });
 });

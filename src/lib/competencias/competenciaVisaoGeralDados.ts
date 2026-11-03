@@ -87,12 +87,34 @@ export function parseVisaoGeral(data: unknown): VisaoGeral | null {
     bool(p["liberado"]) &&
     todos(
       p,
-      ["total", "avaliados", "pendentes", "nao_conformes", "inconclusivos", "em_analise", "nao_conformidades_bloqueantes"],
+      [
+        "total",
+        "avaliados",
+        "pendentes",
+        "nao_conformes",
+        "inconclusivos",
+        "em_analise",
+        "nao_conformidades_bloqueantes",
+      ],
       num,
     ) &&
     numN(p["percentual"]) &&
-    todos(b, ["pendentes", "nao_conformes", "inconclusivos", "em_analise", "nao_conformidades_bloqueantes"], num) &&
-    todos(b, ["parecer_aprovado", "analise_concluida_atual", "aprovacao_apresentacao_atual"], bool) &&
+    todos(
+      b,
+      [
+        "pendentes",
+        "nao_conformes",
+        "inconclusivos",
+        "em_analise",
+        "nao_conformidades_bloqueantes",
+      ],
+      num,
+    ) &&
+    todos(
+      b,
+      ["parecer_aprovado", "analise_concluida_atual", "aprovacao_apresentacao_atual"],
+      bool,
+    ) &&
     todos(a, ["abrir_documentos", "analisar", "abrir_parecer", "apresentar"], bool);
   return ok ? (data as unknown as VisaoGeral) : null;
 }

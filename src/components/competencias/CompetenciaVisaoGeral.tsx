@@ -129,7 +129,10 @@ export function CompetenciaVisaoGeral({ id }: { id: string }) {
         {!idOk || estado.tipo === "nao_encontrada" ? (
           <>
             <Titulo />
-            <Aviso icone={<SearchX className="h-4 w-4" aria-hidden />} mensagem={MENSAGENS_V114.naoEncontrada} />
+            <Aviso
+              icone={<SearchX className="h-4 w-4" aria-hidden />}
+              mensagem={MENSAGENS_V114.naoEncontrada}
+            />
           </>
         ) : estado.tipo === "carregando" ? (
           <>
@@ -141,7 +144,10 @@ export function CompetenciaVisaoGeral({ id }: { id: string }) {
         ) : estado.tipo === "sem_permissao" ? (
           <>
             <Titulo />
-            <Aviso icone={<ShieldAlert className="h-4 w-4" aria-hidden />} mensagem={MENSAGENS_V114.negado} />
+            <Aviso
+              icone={<ShieldAlert className="h-4 w-4" aria-hidden />}
+              mensagem={MENSAGENS_V114.negado}
+            />
           </>
         ) : estado.tipo === "erro" || estado.tipo === "erro_sessao" ? (
           <>
@@ -173,7 +179,10 @@ function Titulo() {
 
 function Aviso({ icone, mensagem }: { icone: ReactNode; mensagem: string }) {
   return (
-    <div role="status" className="flex items-start gap-2 rounded-md border border-border bg-card p-4 text-sm">
+    <div
+      role="status"
+      className="flex items-start gap-2 rounded-md border border-border bg-card p-4 text-sm"
+    >
       <span className="mt-0.5 text-muted-foreground">{icone}</span>
       <p>{mensagem}</p>
     </div>
@@ -184,7 +193,11 @@ function Conteudo({ vg }: { vg: VisaoGeral }) {
   const c = vg.competencia;
   return (
     <>
-      <PageHeader referencia={c.competencia_referencia} idContrato={c.id_contrato} situacao={c.situacao} />
+      <PageHeader
+        referencia={c.competencia_referencia}
+        idContrato={c.id_contrato}
+        situacao={c.situacao}
+      />
       <Tabs />
       <div className="grid gap-4 lg:grid-cols-3">
         <EstadoCompetencia estado={derivarEstadoVisual(vg)} />
@@ -303,7 +316,8 @@ function PercentGauge({ valor, portao }: { valor: number | null; portao: PortaoV
         <div className="h-full bg-primary" style={{ width: `${largura}%` }} />
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Portão: {portao.avaliados} de {portao.total} avaliados · {formatarPercentual(portao.percentual)}
+        Portão: {portao.avaliados} de {portao.total} avaliados ·{" "}
+        {formatarPercentual(portao.percentual)}
       </p>
     </section>
   );
@@ -402,8 +416,16 @@ const ABAS_FUTURAS = ["Documentos", "Análise", "Parecer", "Apresentação"];
 
 function Tabs() {
   return (
-    <div role="tablist" aria-label="Áreas da competência" className="flex flex-wrap gap-2 border-b border-border pb-2">
-      <span role="tab" aria-selected="true" className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
+    <div
+      role="tablist"
+      aria-label="Áreas da competência"
+      className="flex flex-wrap gap-2 border-b border-border pb-2"
+    >
+      <span
+        role="tab"
+        aria-selected="true"
+        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
+      >
         Visão geral
       </span>
       {ABAS_FUTURAS.map((t) => (
