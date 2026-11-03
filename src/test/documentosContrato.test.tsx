@@ -853,12 +853,12 @@ describe("V1-10 TUS resumível e polling", () => {
 });
 
 describe("V1-10 escopo e Zero-Drift", () => {
-  it("não oferece revisão/vigência de sugestão e marca detalhe como Em breve", async () => {
+  it("não oferece revisão/vigência de sugestão e liga o detalhe V1-11", async () => {
     cenario();
     montar();
     const linha = await screen.findByTestId(`documento-${D1}`);
-    const det = within(linha).getByRole("button", { name: /Abrir detalhe — Em breve/ });
-    expect(det).toBeDisabled();
+    const det = within(linha).getByRole("link", { name: /Abrir detalhe de/ });
+    expect(det.getAttribute("href")).toContain(`/contratos/${K1}/documentos/`);
     const fonte =
       readFileSync("src/components/contratos/DocumentosContrato.tsx", "utf8") +
       readFileSync("src/lib/contratos/documentosDados.ts", "utf8");

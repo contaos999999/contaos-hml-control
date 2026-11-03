@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { DocumentosContrato } from "@/components/contratos/DocumentosContrato";
+import { lerBuscaCentral } from "@/lib/contratos/documentoDetalheDados";
 
 export const Route = createFileRoute("/contratos_/$id_/documentos")({
   ssr: false,
+  validateSearch: lerBuscaCentral,
   head: () => ({
     meta: [
       { title: "Documentos do contrato — ContaOS" },
@@ -28,5 +30,6 @@ export const Route = createFileRoute("/contratos_/$id_/documentos")({
 
 function PaginaDocumentos() {
   const { id } = Route.useParams();
-  return <DocumentosContrato id={id} />;
+  const inicial = Route.useSearch();
+  return <DocumentosContrato id={id} inicial={inicial} />;
 }

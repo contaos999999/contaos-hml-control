@@ -12,9 +12,9 @@ import {
   Clock,
   Download,
   FileUp,
+  FileSearch,
   Info,
   Loader2,
-  Lock,
   RefreshCw,
   SearchX,
   ShieldAlert,
@@ -80,8 +80,25 @@ import {
   type Filtros,
   type Resumo,
 } from "@/lib/contratos/documentosDados";
+import type { BuscaCentral } from "@/lib/contratos/documentoDetalheDados";
 
 export { MENSAGENS_V110 };
+
+const filtrosDe = (b: BuscaCentral): Filtros => ({
+  busca: b.busca ?? "",
+  tipo: b.tipo ?? "",
+  categoria: b.categoria ?? "",
+  situacao: b.situacao ?? "",
+});
+function buscaDe(f: Filtros, pagina: number): BuscaCentral {
+  const r: BuscaCentral = {};
+  if (f.busca.trim()) r.busca = f.busca.trim();
+  if (f.tipo) r.tipo = f.tipo;
+  if (f.categoria.trim()) r.categoria = f.categoria.trim();
+  if (f.situacao) r.situacao = f.situacao;
+  if (pagina > 0) r.pagina = pagina;
+  return r;
+}
 
 type Ctx = { idUsuario: string; idOrganizacao: string };
 const LINK_NAV =
@@ -90,7 +107,7 @@ const CAMPO =
   "h-11 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const ROTULO = "text-sm font-medium";
 
-export function DocumentosContrato({ id }: { id: string }) {
+export function DocumentosContrato({ id, inicial = {} }: { id: string; inicial?: BuscaCentral }) {
   const navigate = useNavigate();
   const [ctx, setCtx] = useState<Ctx | null>(null);
   const [erroSessao, setErroSessao] = useState(false);
@@ -171,7 +188,12 @@ export function DocumentosContrato({ id }: { id: string }) {
               />
             </>
           ) : (
-            <GateContrato key={`${ctx.idUsuario}:${ctx.idOrganizacao}:${idC}`} id={idC} ctx={ctx} />
+            <GateContrato
+              key={`${ctx.idUsuario}:${ctx.idOrganizacao}:${idC}`}
+              id={idC}
+              ctx={ctx}
+              inicial={inicial}
+            />
           )}
         </main>
       </div>
@@ -271,7 +293,7 @@ function Selo({ children, classe = "" }: { children: ReactNode; classe?: string 
   );
 }
 
-function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
+function GateContrato({ id, ctx, inicial }: { id: string; ctx: Ctx; inicial: BuscaCentral }) {
   const consulta = useQuery({
     queryKey: ["contratos", "detalhe", ctx.idUsuario, ctx.idOrganizacao, id],
     queryFn: ({ signal }) => obterContrato(id, signal),
@@ -315,7 +337,7 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
     <>
       <Titulo numero={c.numero ?? undefined} />
       <NavSecoes id={c.id} />
-      <Central contrato={c.id} ctx={ctx} />
+      <Central contrato={c.id} ctx={ctx} inicial={inicial} />
     </>
   );
 }
@@ -374,11 +396,19 @@ function NavSecoes({ id }: { id: string }) {
 }
 
 // ---------- Central: FilterBar + DocumentTable + Pagination ----------
-function Central({ contrato, ctx }: { contrato: string; ctx: Ctx }) {
+function Central({
+  contrato,
+  ctx,
+  inicial,
+}: {
+  contrato: string;
+  ctx: Ctx;
+  inicial: BuscaCentral;
+}) {
   const qc = useQueryClient();
-  const [rascunho, setRascunho] = useState<Filtros>(FILTROS_VAZIOS);
-  const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS);
-  const [pagina, setPagina] = useState(0);
+  const [rascunho, setRascunho] = useState<Filtros>(() => filtrosDe(inicial));
+  const [filtros, setFiltros] = useState<Filtros>(() => filtrosDe(inicial));
+  const [pagina, setPagina] = useState(inicial.pagina ?? 0);
   const [envioAberto, setEnvioAberto] = useState(false);
   const [versaoDe, setVersaoDe] = useState<Documento | null>(null);
   const [aviso, setAviso] = useState("");
@@ -424,6 +454,7 @@ function Central({ contrato, ctx }: { contrato: string; ctx: Ctx }) {
     setPagina(0);
   };
   const negado = lista.error instanceof ErroDoc && lista.error.tipo === "negado";
+  const retorno = buscaDe(filtros, pagina);
 
   return (
     <section
@@ -550,6 +581,7 @@ function Central({ contrato, ctx }: { contrato: string; ctx: Ctx }) {
                 carregandoResumo={resumos.isPending}
                 envioDisponivel={!!config}
                 onNovaVersao={() => setVersaoDe(d)}
+                retorno={retorno}
               />
             ))}
           </ul>
@@ -671,12 +703,14 @@ function LinhaDocumento({
   carregandoResumo,
   envioDisponivel,
   onNovaVersao,
+  retorno,
 }: {
   d: Documento;
   r: Resumo | undefined;
   carregandoResumo: boolean;
   envioDisponivel: boolean;
   onNovaVersao: () => void;
+  retorno: BuscaCentral;
 }) {
   const [baixando, setBaixando] = useState(false);
   const [erroDl, setErroDl] = useState("");
@@ -738,15 +772,15 @@ function LinhaDocumento({
           >
             <FileUp className="mr-2 h-4 w-4" aria-hidden /> Nova versão
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-11"
-            disabled
-            aria-label="Abrir detalhe — Em breve"
-            title={MENSAGENS_V110.detalheEmBreve}
-          >
-            <Lock className="mr-2 h-4 w-4" aria-hidden /> Abrir detalhe — Em breve
+          <Button asChild variant="ghost" className="h-11">
+            <Link
+              to="/contratos/$id/documentos/$idDocumento"
+              params={{ id: d.id_contrato, idDocumento: d.id }}
+              search={retorno}
+              aria-label={`Abrir detalhe de ${d.titulo}`}
+            >
+              <FileSearch className="mr-2 h-4 w-4" aria-hidden /> Abrir detalhe
+            </Link>
           </Button>
         </div>
       </div>
