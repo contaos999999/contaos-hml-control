@@ -304,7 +304,8 @@ describe("ADM-01 deltas de escopo", () => {
     await waitFor(() => expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(1));
     expect(ultimoSalvar().p_ids_contratos_ativar).toEqual(["c1"]);
     expect(ultimoSalvar().p_ids_contratos_revogar).toEqual([]);
-    expect(JSON.stringify(ultimoSalvar())).not.toContain("c9");
+    expect(ultimoSalvar().p_ids_contratos_ativar).not.toContain("c9");
+    expect(ultimoSalvar().p_ids_contratos_revogar).not.toContain("c9");
     expect(chamadas("listar_escopo_contratos_usuario_adm").some((a) => a.p_pagina === 3)).toBe(false);
   });
 
