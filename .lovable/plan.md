@@ -20,13 +20,23 @@ Base: `8b62e506a8351fba9819afb1b4508be449be7228` (HEAD local confirmado). `types
 ## 4. Adapter local (sem `any`, sem REST, sem tocar types/client)
 Em `src/lib/competencias/competenciaVisaoGeralDados.ts`:
 ```ts
+type RespostaRpc = { data: unknown; error: unknown; status?: number };
 type RpcVisaoGeral = {
   rpc(fn: "obter_visao_geral_competencia", args: { p_id_competencia: string }):
-    PromiseLike<{ data: unknown; error: unknown; status?: number }>;
+    { abortSignal(signal: AbortSignal): PromiseLike<RespostaRpc> };
 };
 const cliente = supabase as unknown as RpcVisaoGeral;
+export function obterVisaoGeral(id: string, signal: AbortSignal): PromiseLike<RespostaRpc> {
+  return cliente.rpc("obter_visao_geral_competencia", { p_id_competencia: id }).abortSignal(signal);
+}
 ```
-- `obterVisaoGeral(id)` chama uma vez com somente `p_id_competencia`.
+- `abortSignal()` é método nativo do builder do supabase-js (já usado em V1-06+); o tipo é declarado só no adapter, sem regenerar `types.ts` nem tocar `client.ts`.
+- Cancelamento sem efeito tardio, no componente:
+  - cada execução do efeito cria um `AbortController`; o cleanup (desmontagem ou troca de `id`) chama `abort()`;
+  - após cada `await` (getUser, preferência, RPC) há guarda `if (signal.aborted) return;` antes de qualquer `setState`/`navigate`;
+  - retry manual: aborta o controller anterior, cria novo e incrementa `tentativa`; botão "Tentar novamente" fica desabilitado enquanto `carregando`, impedindo chamada duplicada;
+  - `AbortError` é ignorado (não vira estado de erro).
+- StrictMode: o primeiro ciclo é abortado antes de resolver; só o resultado do controller vigente é aplicado.
 - `parseVisaoGeral(data: unknown): VisaoGeral | null` — validação estrutural (objeto, strings, numbers|null, booleans estritos). Falha de shape → `erro` genérico.
 - Tipos locais `CompetenciaVG`, `PortaoVG`, `BlockingSummaryVG`, `AllowedActionsVG` espelhando os campos listados no prompt.
 - `classificarErroVisaoGeral(error, status)`: 401/403/42501 → `sem_permissao`; P0001/sem dados → `nao_encontrada` ("Competência não encontrada ou indisponível."); resto → `erro` genérico com retry manual. Nunca texto bruto.
