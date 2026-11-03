@@ -26,4 +26,4 @@ Alterados: `src/lib/contratos/documentosDados.ts` (extração de `enviarArquivoC
 - Reuso comprovado: teste estático garante que os arquivos V1-15 importam `documentosDados` e não contêm `storage-sign-*`, TUS, `uploadToSignedUrl`, `MIMES_POR_EXTENSAO`, `CHUNK_TUS`, `crypto.subtle`.
 - Browser: `/competencias/abc/documentos` em 1440/1280/768/390 claro/escuro: mensagem sanitizada, sem overflow, zero requisições ao Supabase. Estados autenticados verificados apenas por testes com fixture (sem sessão HML real).
 - `types.ts` restaurado ao blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`. Zero diff em `supabase/**`, package/lock, client, `components/ui`, `styles.css`, `public/brand`, AGENTS.
-- Pendentes: `tsc --noEmit`/build manual (restrição do ambiente; build automático do preview), Security Scan, Teste C read-only.
+- Reverificação 03/11/2026 11:36 UTC: suíte serial 609/609; V1-15 33/33; lint 0; scan 0 ocorrências; build automático OK; Security Scan: 1 aviso informativo de Auth (senha vazada), fora do escopo. `tsc --noEmit` manual não executado (gate externo). Teste C pendente (turno read-only).
