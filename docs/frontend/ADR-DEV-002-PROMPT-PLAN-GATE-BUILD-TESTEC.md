@@ -71,6 +71,21 @@ O trabalho normal e ativo é **EXCLUSIVAMENTE FRONTEND**. Supabase HML é a **ú
 
 Em nenhuma hipótese esse protocolo modifica ou relativiza **PRD 4.1, Premissas, arquitetura, PROMPTs regulares 00–99, atômicos 000–096, identidade visual BRAND-01, requisitos não funcionais, Zero-Drift, auditoria, fontes/rastreabilidade e Supabase como fonte única do backend**. Não misturar commits de backend com o frontend, não tocar PROD ou gerar `types.ts` por conveniência. A autorização para investigar não implica automaticamente aprovação de um plano que exija consentimento adicional.
 
+
+## Paridade documentada com Context Gate e Prompt Crosswalk canônicos
+
+O frontend no GitHub usa como referência **imutável por commit** `docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json`, que registra os **25 documentos** `00–20`, `08A–08D` e os blobs Git do repositório normativo `contaos9999/develop`. O mesmo registro referencia o índice original dos **100 prompts 00–99 e 97 atômicos 000–096**, preservando SHA-256 das fontes. Não renumera, omite, amplia nem reinterpreta requisitos.
+
+**Antes do PLAN:** ler integralmente as fontes canônicas aplicáveis e consultar a versão HEAD de `contaos9999/develop`. Se o HEAD da fonte difere do snapshot, **não aprovar** um novo PLAN; atualizar o snapshot documental com procedência e validar de novo. O CI do frontend não consegue consultar automaticamente a branch privada de outro repositório sem credencial entre repositórios; por isso exige registro do commit SHA e dos 25 blobs, e a conferência do HEAD ao início de cada tarefa permanece obrigação humana/agent. Registrar declaração de leitura, autor, data, documentos, SHA fonte e prova da correlação regular/atômico, incluindo todos os transversais relevantes ou justificativa de exclusão.
+
+**No PLAN:** usar o bloco literal `ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)` do §11.3 em texto completo, não apenas menção ou link. Declarar a estratégia de economia (sem utilização de BUILD Lovable), a matriz BRAND-01, 4 resoluções × 2 temas, TDD e teste C separado. O manifesto `PLANO_ATIVO.json` exige todos os gates `PASS` e evidência verificável do CI do commit de PLAN, anterior ao BUILD. Um mero preenchimento de `PASS` não comprova execução, portanto a validação técnica precisa conferir a fonte, o resultado e a autoria antes de autorizar. A aprovação humana exigida por mudanças BRAND-01/escopo restrito nunca é suprida por aprovação técnica automática.
+
+**Branch/PR:** o gate agora localiza o commit documental anterior ao **primeiro BUILD na branch**, evitando falsa recusa de um PLAN válido em PR sem aceitar commits com PLAN e BUILD juntos. O CI continua posterior ao push, pois não há branch protection exigida na conta: é uma mitigação, não autorização para publicar alterações sem revisão.
+
+**Teste C:** a auditoria visual read-only em navegador, screenshots e hashes arquivados duravelmente, teste com sessão real quando exigido e segurança RLS A/B continuam obrigatórios **fora do CI unitário**. Se ferramenta independente estiver indisponível, classificar `NÃO VERIFICADO`, jamais homologado 100%. O Lovable pode ser visualizador passivo, mas não autor de código.
+
+**Limitações de prova:** este gate documental não demonstra, por software, que o autor leu semanticamente cada documento, não mede sozinho contraste nem certifica o backend. A fonte e o PRD são sempre superiores ao manifesto.
+
 ## 6. FECHAMENTO E PASSAGEM DE CHAT
 
 - Registrar evidência por PROMPT regular e atômico, base/HEAD, diff, PLAN validado, CI, Teste C, SHA, gate Zero-Drift, arquivos inalterados e impedimentos em `contaos9999/develop` apenas quando uma tarefa documental separada autorizar atualização do tracker; **não fazer mudanças de backend por esse registro**.

@@ -9,8 +9,47 @@
     "validado_em": null,
     "modo_aprovacao": null,
     "aprovacao_humana": null,
-    "ci_plano_url": null
+    "ci_plano_url": null,
+    "gates": {
+      "prd": "PENDENTE",
+      "premissas": "PENDENTE",
+      "arquitetura": "PENDENTE",
+      "atomicos": "PENDENTE",
+      "brand": "PENDENTE",
+      "seguranca": "PENDENTE",
+      "nfr": "PENDENTE",
+      "zero_drift": "PENDENTE",
+      "tdd": "PENDENTE",
+      "ci": "PENDENTE",
+      "teste_c_planejado": "PENDENTE",
+      "rollback": "PENDENTE"
+    },
+    "aprovacao_humana_exigida": null,
+    "aprovacao_humana_evidencia": null
   },
   "arquivos_permitidos": [],
-  "observacao": "Antes de qualquer BUILD do frontend, publicar um PLAN validado em commit documental separado e atualizar este arquivo em estado VALIDADO. Nenhuma alteração em src, public, dependências ou configuração de app é permitida enquanto o status for SEM_PLANO_ATIVO. Nunca incluir backend nem types.ts na allowlist."
+  "observacao": "Antes de qualquer BUILD do frontend, publicar um PLAN validado em commit documental separado e atualizar este arquivo em estado VALIDADO. Nenhuma alteração em src, public, dependências ou configuração de app é permitida enquanto o status for SEM_PLANO_ATIVO. Nunca incluir backend nem types.ts na allowlist. Gate 4.1 exige 25 documentos, fontes 100/97 e bloco literal Zero-Drift antes de qualquer BUILD.",
+  "context_pack_version": "4.1",
+  "context_read_acknowledged": false,
+  "context_read_by": null,
+  "context_read_acknowledged_at": null,
+  "context_source_commit": null,
+  "context_catalog_blob": null,
+  "context_documents_read": [],
+  "prompt_crosswalk": {
+    "regular_prompt_id": null,
+    "direct_atomic_ids": [],
+    "additional_transversal_atomic_ids": [],
+    "exclusoes_justificadas": {},
+    "source_evidence_missing": true,
+    "regular_original_sha256": null,
+    "atomic_original_sha256": null
+  },
+  "brand_context": "ContaOS Brand v1.0",
+  "prompt_000_brand_01_read": false,
+  "prompt_policy": {
+    "required_section": "ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE"
+  },
+  "impacto_visual": null,
+  "impacto_visual_justificativa": null
 }
