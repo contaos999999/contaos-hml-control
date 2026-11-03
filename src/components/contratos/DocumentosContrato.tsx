@@ -991,12 +991,7 @@ function DialogoEnvio({
       atualizarItem(it.id, { etapa: "registrando" });
       if (modo.tipo === "versao") await adicionarVersao(modo.doc.id, idArquivo, motivo, p.chave);
       else
-        await criarDocumentoCompleto(
-          contrato,
-          { ...meta, titulo: it.titulo },
-          idArquivo,
-          p.chave,
-        );
+        await criarDocumentoCompleto(contrato, { ...meta, titulo: it.titulo }, idArquivo, p.chave);
       atualizarItem(it.id, { etapa: "concluido", mensagem: "" });
       return true;
     } catch (e) {
