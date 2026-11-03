@@ -187,6 +187,8 @@ type Cen = {
   meta?: unknown;
   proc?: string;
   sugs?: unknown[];
+  perfil?: string | null;
+  perfilErro?: boolean;
 };
 let sugAtuais: unknown[] = [];
 function cenario(o: Cen = {}) {
@@ -262,6 +264,10 @@ function cenario(o: Cen = {}) {
         1,
       );
     if (c.tabela === "sugestoes_extracao_documento") return ok(sugAtuais, sugAtuais.length);
+    if (c.tabela === "vinculos_usuarios") {
+      if (o.perfilErro) return { data: null, error: { code: "XX000" }, status: 500 };
+      return ok(o.perfil === null ? null : { perfil: o.perfil ?? "gestor_contrato" });
+    }
     if (c.tabela === "requisitos_competencia")
       return ok([
         {
@@ -724,6 +730,50 @@ describe("V1-11 sugestões de IA e revisão humana", () => {
     fireEvent.click(within(dlg).getByRole("button", { name: "Confirmar rejeição" }));
     expect(await screen.findByText(MENSAGENS_V111.erroRevisao)).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/stack secreto|\/bucket/);
+  });
+});
+
+describe("V1-11 perfil para revisão humana (UX; backend é a autoridade)", () => {
+  it("gestor_contrato vê Aprovar/Rejeitar e Definir vigência em material; vínculo lido uma vez", async () => {
+    cenario({ perfil: "gestor_contrato" });
+    montar();
+    const c = await cartao("s-obr");
+    expect(await within(c).findByRole("button", { name: /Aprovar/ })).toBeInTheDocument();
+    expect(within(c).getByRole("button", { name: /Rejeitar/ })).toBeInTheDocument();
+    expect(within(c).getByRole("button", { name: /Definir vigência/ })).toBeInTheDocument();
+    const v = de("vinculos_usuarios");
+    expect(v).toHaveLength(1);
+    expect(op(v[0]!, "select")[0]).toEqual(["perfil"]);
+    expect(eqDe(v[0]!, "id_usuario")).toBe(U);
+    expect(eqDe(v[0]!, "id_organizacao")).toBe(A);
+    expect(op(v[0]!, "maybeSingle")).toHaveLength(1);
+  });
+  it("leitor vê sugestão, fonte e status, mas nenhuma ação humana nem RPC", async () => {
+    cenario({ perfil: "leitor" });
+    montar();
+    const c = await cartao("s-obr");
+    await waitFor(() => expect(de("vinculos_usuarios")).toHaveLength(1));
+    expect(within(c).getByText("Página 3")).toBeInTheDocument();
+    expect(within(c).getByText(/Cláusula 5.1 — pagamento mensal/)).toBeInTheDocument();
+    expect(within(c).getByText("Pendente de revisão")).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
+    for (const n of [/Aprovar/, /Rejeitar/, /Definir vigência/])
+      expect(screen.queryByRole("button", { name: n })).not.toBeInTheDocument();
+    expect(m.rpcChamadas).toHaveLength(0);
+  });
+  it.each([
+    ["sem vínculo", { perfil: null }],
+    ["erro de leitura", { perfilErro: true }],
+  ] as const)("%s: falha fechada, conteúdo em leitura e sem ações", async (_n, o) => {
+    cenario(o);
+    montar();
+    const c = await cartao("s-sem-vig");
+    await waitFor(() => expect(de("vinculos_usuarios")).toHaveLength(1));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(within(c).getByText(/Conteúdo restricao/)).toBeInTheDocument();
+    for (const n of [/Aprovar/, /Rejeitar/, /Definir vigência/])
+      expect(screen.queryByRole("button", { name: n })).not.toBeInTheDocument();
+    expect(screen.queryByText(MENSAGENS_V111.erro)).not.toBeInTheDocument();
   });
 });
 

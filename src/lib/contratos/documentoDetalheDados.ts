@@ -267,6 +267,35 @@ export async function listarSugestoes(
   return { itens, total: r.count ?? itens.length, requisitos };
 }
 
+// ---------- Perfil para revisão humana (UX; o backend é a autoridade) ----------
+/** Mesmo conjunto usado por `definir_vigencia_sugestao_extracao` e `revisar_sugestao_extracao`. */
+export const PERFIS_REVISAO = [
+  "administrador",
+  "direcao_aprovador",
+  "gestor_contrato",
+  "prestacao_contas",
+  "juridico_conformidade",
+  "auditor",
+] as const;
+const REVISORES = new Set<string>(PERFIS_REVISAO);
+export const podeRevisar = (perfil: string | null | undefined) => !!perfil && REVISORES.has(perfil);
+/** Perfil do vínculo do usuário na organização ativa (RLS self-only). Ausente ⇒ null. */
+export async function obterPerfilVinculo(
+  idUsuario: string,
+  idOrganizacao: string,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  let q = supabase
+    .from("vinculos_usuarios")
+    .select("perfil")
+    .eq("id_usuario", idUsuario)
+    .eq("id_organizacao", idOrganizacao);
+  if (signal) q = q.abortSignal(signal);
+  const r = await executar(q.maybeSingle(), signal);
+  const p = (r.data as { perfil?: unknown } | null)?.perfil;
+  return typeof p === "string" ? p : null;
+}
+
 // ---------- Regras de UX (o backend é a autoridade) ----------
 const MATERIAIS = new Set<string>(TIPOS_SUGESTAO_REGRA);
 export const ehMaterial = (tipo: string) => MATERIAIS.has(tipo);

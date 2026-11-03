@@ -24,7 +24,8 @@ Baseline funcional: `e2551e5` (V1-10 certificado). HML `gklhhhyosgasnyoxlrui`, s
 | V1-CON-002 | diálogo "Definir vigência" (início obrigatório, fim opcional) | PT400; fim antes; sem_alteracao; PT409 |
 | V1-CON-004 | todos os tipos; selo "Sugestão de IA" separado de "Decisão humana" | material mostra fonte… |
 | V1-CON-005 | página/trecho somente leitura; aprovação material bloqueada sem fonte ou vigência | material sem fonte/vigência |
-| Revisão | aprovar/rejeitar só `pendente`; material → "regra em rascunho para revisão material" | aprovar material; classificação/rejeição; P0001; erro desconhecido |
+| Perfil (UX) | `vinculos_usuarios` lido uma vez (`select perfil`, `id_usuario`=auth.uid(), `id_organizacao` ativa, `maybeSingle`); ações só para `administrador`, `direcao_aprovador`, `gestor_contrato`, `prestacao_contas`, `juridico_conformidade`, `auditor` (mesmo conjunto das duas RPCs); carregando/erro/sem vínculo = somente leitura | perfil para revisão humana (4 testes) |
+| Revisão | aprovar/rejeitar só `pendente` e perfil permitido; material → "regra em rascunho para revisão material" | aprovar material; classificação/rejeição; P0001; erro desconhecido |
 | NFR-005 | processamento da versão, polling 5/10/20/40/60 s só pendente/processando, pausa em aba oculta, "Atualizar processamento" | processamento |
 | NFR-007/008 | trava contra duplo clique; refetch após qualquer erro antes de reabilitar | duplo clique = 1 chamada; PT409/P0001 refetch |
 | NFR-009 | versões 20, processamentos 10, páginas 10, fragmentos 20 (filtro de página no servidor), sugestões 20 (status/tipo no servidor); arquivos e requisitos com um `.in()` | ranges, orders e `.in()` verificados |
@@ -34,6 +35,13 @@ Baseline funcional: `e2551e5` (V1-10 certificado). HML `gklhhhyosgasnyoxlrui`, s
 ## TDD
 - RED: `bunx vitest run src/test/documentoDetalhe.test.tsx` → falha de importação (módulo `documentoDetalheDados` inexistente), 0 testes.
 - GREEN: 30/30 no focado. Durante o GREEN, a asserção de `embedding` foi ajustada para olhar só as constantes de colunas, porque o regex inicial pegava o comentário do arquivo.
+
+## Correção de perfil (pós-auditoria)
+- Causa: as ações de revisão apareciam para qualquer sugestão pendente, sem considerar o perfil.
+- RED: 4 falhas / 30 aprovados (`vinculos_usuarios` não era consultado; leitor via as ações).
+- GREEN: 34/34. V1-10 33/33. Suíte 500/500 (21 arquivos). tsc e build exit 0; ESLint dos alterados 0; global 8.962/9.
+- Navegador 1440 e 390: `gestor_contrato` vê 3 Aprovar, 3 Rejeitar, 2 Definir vigência; `leitor` vê 0 de cada, com o mesmo conteúdo e fonte.
+- O backend continua a autoridade final; o tratamento de 42501/P0001/PT409 foi mantido.
 
 ## Resultados reais
 - Focado V1-11: 30/30. V1-10: 33/33. Suíte: 496/496 (21 arquivos).

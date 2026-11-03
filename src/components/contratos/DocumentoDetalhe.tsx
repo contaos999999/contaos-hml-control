@@ -81,6 +81,8 @@ import {
   listarVersoes,
   mensagemErroRevisao,
   obterDocumento,
+  obterPerfilVinculo,
+  podeRevisar,
   revisarSugestao,
   rotuloMetadado,
   rotuloUsuario,
@@ -537,6 +539,14 @@ function Detalhe({ doc, ctx }: { doc: Documento; ctx: Ctx }) {
   const [sel, setSel] = useState<Selecao | null>(null);
   const [aviso, setAviso] = useState("");
   const chave = [ctx.idUsuario, ctx.idOrganizacao, doc.id];
+  const perfil = useQuery({
+    queryKey: ["v111", "perfil", ctx.idUsuario, ctx.idOrganizacao],
+    queryFn: ({ signal }) => obterPerfilVinculo(ctx.idUsuario, ctx.idOrganizacao, signal),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  // Falha fechada: carregando, erro ou sem vínculo ⇒ somente leitura.
+  const revisor = perfil.isSuccess && podeRevisar(perfil.data);
   const versoes = useQuery({
     queryKey: ["v111", "versoes", ...chave, pagina],
     queryFn: ({ signal }) => listarVersoes(doc.id, pagina, signal),
@@ -646,7 +656,13 @@ function Detalhe({ doc, ctx }: { doc: Documento; ctx: Ctx }) {
         <>
           <Paginas key={`pg-${atual.v.id}`} idVersao={atual.v.id} ctx={ctx} />
           <Fragmentos key={`f-${atual.v.id}`} idVersao={atual.v.id} ctx={ctx} />
-          <Sugestoes key={`s-${atual.v.id}`} idVersao={atual.v.id} ctx={ctx} onAviso={setAviso} />
+          <Sugestoes
+            key={`s-${atual.v.id}`}
+            idVersao={atual.v.id}
+            ctx={ctx}
+            revisor={revisor}
+            onAviso={setAviso}
+          />
         </>
       )}
     </>
@@ -1068,10 +1084,12 @@ type Acao = { tipo: "aprovar" | "rejeitar" | "vigencia"; s: Sugestao };
 function Sugestoes({
   idVersao,
   ctx,
+  revisor,
   onAviso,
 }: {
   idVersao: string;
   ctx: Ctx;
+  revisor: boolean;
   onAviso: (m: string) => void;
 }) {
   const qc = useQueryClient();
@@ -1150,6 +1168,7 @@ function Sugestoes({
                 key={s.id}
                 s={s}
                 ctx={ctx}
+                revisor={revisor}
                 requisito={
                   s.id_requisito_sugerido ? q.data?.requisitos[s.id_requisito_sugerido] : undefined
                 }
@@ -1166,7 +1185,7 @@ function Sugestoes({
           />
         </>
       )}
-      {acao?.tipo === "vigencia" && (
+      {revisor && acao?.tipo === "vigencia" && (
         <DialogoVigencia
           s={acao.s}
           onFechar={() => setAcao(null)}
@@ -1174,7 +1193,7 @@ function Sugestoes({
           onRecarregar={recarregar}
         />
       )}
-      {(acao?.tipo === "aprovar" || acao?.tipo === "rejeitar") && (
+      {revisor && (acao?.tipo === "aprovar" || acao?.tipo === "rejeitar") && (
         <DialogoRevisao
           s={acao.s}
           aprovar={acao.tipo === "aprovar"}
@@ -1190,11 +1209,13 @@ function Sugestoes({
 function CartaoSugestao({
   s,
   ctx,
+  revisor,
   requisito,
   onAcao,
 }: {
   s: Sugestao;
   ctx: Ctx;
+  revisor: boolean;
   requisito: { codigo: string | null; descricao: string } | undefined;
   onAcao: (t: Acao["tipo"]) => void;
 }) {
@@ -1259,7 +1280,7 @@ function CartaoSugestao({
           {`Decisão humana: ${(ROTULO_STATUS_SUGESTAO[s.status] ?? s.status).toLowerCase()} por ${rotuloUsuario(s.revisado_por, ctx.idUsuario)}${s.revisado_em ? ` em ${formatarDataHoraBr(s.revisado_em)}` : ""}`}
         </p>
       )}
-      {pendente && (
+      {pendente && revisor && (
         <>
           {bloqueio && (
             <p role="note" className="flex items-start gap-2 text-sm">
