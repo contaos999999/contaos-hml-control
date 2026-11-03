@@ -704,7 +704,10 @@ export async function enviarArquivoCertificado(
         ...(cb.onProgresso ? { onProgresso: cb.onProgresso } : {}),
       });
     } else {
-      await enviarSimples({ bucket: p.bucket!, path: p.path!, token: p.token!, resumivel: false }, f);
+      await enviarSimples(
+        { bucket: p.bucket!, path: p.path!, token: p.token!, resumivel: false },
+        f,
+      );
     }
     p.enviado = true;
     cb.onProgresso?.(100);

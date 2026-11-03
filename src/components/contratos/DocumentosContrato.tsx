@@ -983,20 +983,18 @@ function DialogoEnvio({
   const processar = async (it: Item) => {
     const p = (prog.current[it.id] ??= { chave: crypto.randomUUID() });
     try {
-      if (!p.idArquivo) {
-        await enviarArquivoCertificado(ctx.idOrganizacao, contrato, it.arquivo, p, {
-          onEtapa: (e) =>
-            atualizarItem(it.id, e === "enviando" ? { etapa: e, mensagem: "" } : { etapa: e }),
-          onProgresso: (pct) => atualizarItem(it.id, { progresso: pct }),
-        });
-      }
+      const idArquivo = await enviarArquivoCertificado(ctx.idOrganizacao, contrato, it.arquivo, p, {
+        onEtapa: (e) =>
+          atualizarItem(it.id, e === "enviando" ? { etapa: e, mensagem: "" } : { etapa: e }),
+        onProgresso: (pct) => atualizarItem(it.id, { progresso: pct }),
+      });
       atualizarItem(it.id, { etapa: "registrando" });
-      if (modo.tipo === "versao") await adicionarVersao(modo.doc.id, p.idArquivo, motivo, p.chave);
+      if (modo.tipo === "versao") await adicionarVersao(modo.doc.id, idArquivo, motivo, p.chave);
       else
         await criarDocumentoCompleto(
           contrato,
           { ...meta, titulo: it.titulo },
-          p.idArquivo,
+          idArquivo,
           p.chave,
         );
       atualizarItem(it.id, { etapa: "concluido", mensagem: "" });
