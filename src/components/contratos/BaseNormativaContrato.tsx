@@ -40,7 +40,7 @@ export const MENSAGENS_V107 = {
   erroDownload: "Não foi possível baixar o arquivo agora. Tente novamente em instantes.",
 } as const;
 
-const SECOES_FUTURAS = ["Orçamento", "Regras", "Documentos", "Competências"] as const;
+const SECOES_FUTURAS = ["Regras", "Documentos", "Competências"] as const;
 const MSG_ERRO_ACAO: Record<TipoErroBn, string> = {
   conflito: MENSAGENS_V107.conflito, validacao: MENSAGENS_V107.validacao, obsoleto: MENSAGENS_V107.obsoleto, negado: MENSAGENS_V107.semPermissao, erro: MENSAGENS_V107.erroAcao, resumivel: MENSAGENS_V107.resumivel,
 };
@@ -170,6 +170,9 @@ function NavSecoes({ id }: { id: string }) {
         </li>
         <li>
           <span aria-current="page" className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground">Base normativa</span>
+        </li>
+        <li>
+          <Link to="/contratos/$id/orcamento" params={{ id: id }} className="inline-flex min-h-11 items-center rounded-md px-4 text-sm font-medium hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Orçamento</Link>
         </li>
         {SECOES_FUTURAS.map((s) => (
           <li key={s}>

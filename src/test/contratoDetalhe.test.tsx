@@ -407,10 +407,12 @@ describe("V1-06 navegação e scan", () => {
     await screen.findByText("Prefeitura X");
     const nav = screen.getByRole("navigation", { name: "Seções do contrato" });
     const links = nav.querySelectorAll("a");
-    expect(links).toHaveLength(1);
+    expect(links).toHaveLength(2);
     expect(links[0]!.textContent).toBe("Base normativa");
     expect(links[0]!.getAttribute("href")).toBe("/contratos/$id/base-normativa");
-    for (const t of ["Orçamento", "Regras", "Documentos", "Competências"]) {
+    expect(links[1]!.textContent).toBe("Orçamento");
+    expect(links[1]!.getAttribute("href")).toBe("/contratos/$id/orcamento");
+    for (const t of ["Regras", "Documentos", "Competências"]) {
       const el = screen.getByText(t).closest("[aria-disabled]");
       expect(el?.getAttribute("aria-disabled")).toBe("true");
     }
