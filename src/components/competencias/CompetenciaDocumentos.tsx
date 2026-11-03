@@ -106,7 +106,7 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
   const idOk = uuidValido(id);
   const idC = idOk ? uuidCanonico(id) : id;
   const [estado, setEstado] = useState<Estado>({ tipo: "carregando" });
-  const [autorizado, setAutorizado] = useState(false);
+  const [idAutorizado, setIdAutorizado] = useState<string | null>(null);
   const [tentativa, setTentativa] = useState(0);
   const [offDocs, setOffDocs] = useState(0);
   const [offReqs, setOffReqs] = useState(0);
@@ -117,12 +117,12 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
   // Gate de sessão/organização (uma vez por tentativa).
   useEffect(() => {
     if (!idOk) {
-      setAutorizado(false);
+      setIdAutorizado(null);
       setEstado({ tipo: "nao_encontrada" });
       return;
     }
     let vivo = true;
-    setAutorizado(false);
+    setIdAutorizado(null);
     setEstado({ tipo: "carregando" });
     (async () => {
       try {
@@ -137,7 +137,7 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
         if (error || !data.user) return void setEstado({ tipo: "erro_sessao" });
         if (!obterPreferenciaOrganizacao(data.user.id))
           return void navigate({ to: "/selecionar-organizacao", replace: true });
-        setAutorizado(true);
+        setIdAutorizado(idC);
       } catch {
         if (vivo) setEstado({ tipo: "erro_sessao" });
       }
@@ -149,7 +149,7 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
 
   // Leitura autoritativa paginada.
   useEffect(() => {
-    if (!idOk || !autorizado) return;
+    if (!idOk || idAutorizado !== idC) return;
     const ctrl = new AbortController();
     const signal = ctrl.signal;
     (async () => {
@@ -176,7 +176,7 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
       }
     })();
     return () => ctrl.abort();
-  }, [idOk, autorizado, idC, offDocs, offReqs, recarga]);
+  }, [idOk, idAutorizado, idC, offDocs, offReqs, recarga]);
 
   // Polling somente quando o backend indica processamento.
   const processando = estado.tipo === "ok" && estado.l.estado_documental === "processing";
