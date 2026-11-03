@@ -25,11 +25,11 @@ jobs:
         uses: oven-sh/setup-bun@v2
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
-      - name: Brand-01, PT-BR, secrets and types integrity
-        run: node scripts/frontend-zero-drift.mjs
       - name: Full regression serial
         run: bunx vitest run --maxWorkers=1
       - name: TypeScript typecheck
         run: bunx tsgo --noEmit -p .
       - name: Production build
         run: bunx vite build
+      - name: Brand-01, PT-BR, secrets and types integrity
+        run: node scripts/frontend-zero-drift.mjs
