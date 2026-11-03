@@ -321,7 +321,7 @@ describe("V1-10 lista, filtros e paginação server-side", () => {
     expect(within(linha).getByText("01/01/2026 a 31/12/2026")).toBeInTheDocument();
     expect(within(linha).getByText("Versão 2")).toBeInTheDocument();
     expect(within(linha).getByText("Assinado")).toBeInTheDocument();
-    expect(within(linha).getByText(/aaaaaaaa…aaaaaaaa/)).toBeInTheDocument();
+    expect(await within(linha).findByText(/aaaaaaaa…aaaaaaaa/)).toBeInTheDocument();
     expect(within(linha).getByText("Aprovado")).toBeInTheDocument();
   });
   it("indicadores somente leitura: IA, vigência, classificação e metadados", async () => {
@@ -370,7 +370,7 @@ describe("V1-10 segurança de arquivo e download", () => {
     cenario({ status: "quarentena" });
     montar();
     const linha = await screen.findByTestId(`documento-${D1}`);
-    expect(within(linha).getByText("Em quarentena")).toBeInTheDocument();
+    expect(await within(linha).findByText("Em quarentena")).toBeInTheDocument();
     expect(within(linha).getByText(MENSAGENS_V110.bloqueadoSeguranca)).toBeInTheDocument();
     expect(within(linha).queryByRole("button", { name: /Baixar/ })).toBeNull();
     expect(within(linha).getByText("Contrato principal")).toBeInTheDocument();
@@ -381,7 +381,7 @@ describe("V1-10 segurança de arquivo e download", () => {
     const abrir = vi.spyOn(window, "open").mockReturnValue(null);
     montar();
     const linha = await screen.findByTestId(`documento-${D1}`);
-    fireEvent.click(within(linha).getByRole("button", { name: /Baixar/ }));
+    fireEvent.click(await within(linha).findByRole("button", { name: /Baixar/ }));
     await waitFor(() =>
       expect(m.invoke).toHaveBeenCalledWith("storage-sign-download", {
         body: { id_arquivo: AR1 },
@@ -394,7 +394,7 @@ describe("V1-10 segurança de arquivo e download", () => {
     m.invoke.mockResolvedValue({ data: null, error: { context: { status: 403 } } });
     montar();
     const linha = await screen.findByTestId(`documento-${D1}`);
-    fireEvent.click(within(linha).getByRole("button", { name: /Baixar/ }));
+    fireEvent.click(await within(linha).findByRole("button", { name: /Baixar/ }));
     expect(await screen.findByText(MENSAGENS_V110.downloadNegado)).toBeInTheDocument();
   });
   it("validação UX de MIME, extensão, tamanho e compatibilidade", () => {
@@ -612,7 +612,7 @@ describe("V1-10 TUS resumível e polling", () => {
     cenario({ proc: "processando" });
     montar();
     const linha = await screen.findByTestId(`documento-${D1}`);
-    expect(within(linha).getByText("Processando")).toBeInTheDocument();
+    expect(await within(linha).findByText("Processando")).toBeInTheDocument();
     const antes = de("documentos_contrato").length;
     fireEvent.click(screen.getByRole("button", { name: "Atualizar lista" }));
     await waitFor(() => expect(de("documentos_contrato").length).toBeGreaterThan(antes));
