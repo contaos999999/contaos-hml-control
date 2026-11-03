@@ -678,9 +678,7 @@ describe("V1-15 resumo e tabela (backend é autoridade)", () => {
       await waitFor(() => expect(leituras()).toHaveLength(2));
       expect(screen.getByRole("button", { name: `Página anterior de ${rotulo}` })).toBeEnabled();
       tela.rerender(<CompetenciaDocumentos id={B} />);
-      await waitFor(() =>
-        expect(leituras().some((c) => c[1].p_id_competencia === B)).toBe(true),
-      );
+      await waitFor(() => expect(leituras().some((c) => c[1].p_id_competencia === B)).toBe(true));
       await pronto();
       const lidasB = leituras().filter((c) => c[1].p_id_competencia === B);
       expect(lidasB).toHaveLength(1);
