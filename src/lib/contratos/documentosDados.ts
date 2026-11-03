@@ -284,9 +284,9 @@ export async function obterResumos(
       if (lote.length < LOTE_SUGESTOES) return todas;
     }
   };
-  const [ra, rp, sugestoes] = await Promise.all([
+  const [ra, processamentos, sugestoes] = await Promise.all([
     executar(qa, signal),
-    executar(qp, signal),
+    lerProcessamentos(),
     lerSugestoes(),
   ]);
   const arquivos = Object.fromEntries(
@@ -301,7 +301,7 @@ export async function obterResumos(
     const a = arquivos[v.id_arquivo];
     if (r && a) r.arquivo = a;
   }
-  for (const p of (rp.data as Processamento[] | null) ?? []) {
+  for (const p of processamentos) {
     const r = de(p.id_versao_documento);
     if (r && !r.processamento) r.processamento = p;
   }
