@@ -528,7 +528,7 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
       target: { value: outroReq },
     });
     fireEvent.change(screen.getByLabelText("Tipo do documento"), {
-      target: { value: "nota_fiscal" },
+      target: { value: "contrato" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Enviar" }));
     await screen.findByText(/Envio concluído/);
