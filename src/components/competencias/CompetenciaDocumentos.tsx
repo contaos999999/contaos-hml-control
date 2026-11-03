@@ -174,7 +174,9 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
       polls.current = 0;
       return;
     }
+    console.log("DBGT", atrasoPolling(polls.current));
     const t = setTimeout(() => {
+      console.log("DBGFIRE");
       polls.current += 1;
       setRecarga((n) => n + 1);
     }, atrasoPolling(polls.current));
