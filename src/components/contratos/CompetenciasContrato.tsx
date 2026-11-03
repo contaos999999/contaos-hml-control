@@ -461,14 +461,14 @@ function CompetenceTable({ itens }: { itens: Competencia[] }) {
                 </td>
                 <td className={TD}>{c.versao_pacote_atual ?? "—"}</td>
                 <td className={TD}>
-                  <span
-                    aria-disabled="true"
-                    aria-label={`Abrir competência ${ref} — em breve`}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-3 text-muted-foreground"
+                  <Link
+                    to="/competencias/$id"
+                    params={{ id: c.id }}
+                    aria-label={`Abrir competência ${ref}`}
+                    className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-3 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <span>Abrir competência</span>
-                    {EM_BREVE}
-                  </span>
+                  </Link>
                 </td>
               </tr>
             );
