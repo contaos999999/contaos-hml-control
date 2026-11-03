@@ -96,7 +96,9 @@ describe("BRAND-01 — aplicação nas telas", () => {
   it.each(ARQUIVOS_MARCA)("%s usa ContaOSMarca e não usa a marca provisória", (arquivo) => {
     const src = ler(arquivo);
     expect(src).toContain("<ContaOSMarca");
-    expect(src).not.toMatch(/<ShieldCheck className="h-5 w-5" aria-hidden \/>/);
+    // Ícones de status ShieldCheck são permitidos. Proibir apenas marca provisória
+    // no lugar de ContaOSMarca, sem gerar falsos positivos em fluxos de segurança.
+    expect(src).not.toMatch(/<ShieldCheck[^>]*\/>\s*<span[^>]*>ContaOS<\/span>/);
   });
 });
 
