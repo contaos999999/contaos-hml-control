@@ -1,0 +1,19 @@
+name: Verify V1-14 Temp
+
+on:
+  push:
+    branches:
+      - verify-v114-b5fe91f3
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: TypeScript
+        run: bunx tsc --noEmit
+      - name: Build
+        run: bun run build
