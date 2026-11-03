@@ -93,6 +93,10 @@ export function RequirementDrawer({
   onReanalisado,
 }: Props) {
   const titulo = useRef<HTMLHeadingElement>(null);
+  // Elemento de origem (botão "Abrir requisito") para devolver o foco ao fechar.
+  const origem = useRef<HTMLElement | null>(null);
+  if (aberto && !origem.current && typeof document !== "undefined")
+    origem.current = document.activeElement as HTMLElement | null;
   return (
     <Sheet open={aberto} onOpenChange={onOpenChange}>
       <SheetContent
@@ -101,6 +105,14 @@ export function RequirementDrawer({
         onOpenAutoFocus={(e) => {
           e.preventDefault();
           titulo.current?.focus();
+        }}
+        onCloseAutoFocus={(e) => {
+          const el = origem.current;
+          origem.current = null;
+          if (el && el.isConnected) {
+            e.preventDefault();
+            el.focus();
+          }
         }}
       >
         <SheetHeader className="border-b border-border p-4 pr-12 text-left">

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
+import { useState } from "react";
 
 const m = vi.hoisted(() => ({
   getUser: vi.fn(),
@@ -564,5 +565,30 @@ describe("V1-17 troca A/B e acessibilidade", () => {
     expect(src).not.toMatch(
       /getPublicUrl|createSignedUrl|service_role|solicitar_analise_competencia\b|percentual|stale/,
     );
+  });
+  it("foco devolvido ao botão de origem ao fechar", async () => {
+    function Host() {
+      const [a, setA] = useState(false);
+      return (
+        <>
+          <button onClick={() => setA(true)}>Abrir origem</button>
+          <RequirementDrawer
+            idCompetencia={C}
+            idRequisito={R}
+            aberto={a}
+            onOpenChange={setA}
+            onReanalisado={() => {}}
+          />
+        </>
+      );
+    }
+    render(<Host />);
+    const b = screen.getByRole("button", { name: "Abrir origem" });
+    b.focus();
+    fireEvent.click(b);
+    await pronto();
+    expect(document.activeElement?.textContent).toMatch(/Detalhe do requisito/);
+    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+    await waitFor(() => expect(document.activeElement).toBe(b));
   });
 });
