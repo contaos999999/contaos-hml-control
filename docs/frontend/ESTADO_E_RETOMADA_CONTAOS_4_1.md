@@ -3,6 +3,19 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — BUILD PROMPT 42 / V1-21 CI VERDE, MERGE A CONFIRMAR (04/11/2026)
+
+- **Fonte:** frontend main de partida `a971ec2ba8736977b54e8c71786da4ad8f79c9c0`; backend normativo `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Reconsultar HEADs na próxima retomada. Última etapa funcional integrada comprovada **41/V1-20 PR #52**; **42/V1-21 implementado, somente em PR #62 até confirmação explícita de merge**.
+- PLAN 42 PR #57 integrado; GATE #58 integrado. O primeiro BUILD #59 falhou legitimamente `FRONTEND SCOPE FAIL` por ausência da cláusula literal `ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)`. Correção de PLAN PR #60 integrada, CI #41916280531 2 SUCCESS; GATE revalidado PR #61 integrado em `a971ec2ba8736977b54e8c71786da4ad8f79c9c0` CI #41916776592 2 SUCCESS. Não mesclar PR #59, não reescrever histórico.
+- BUILD definitivo [PR #62](https://github.com/contaos999999/contaos-hml-control/pull/62), branch `build/prompt-42-v121-historico-validated-20261104`. TDD RED real commit `d5f65e958bdd4d9614c5d991a7c558bb760ded7e`, [run #41917210513](https://github.com/contaos999999/contaos-hml-control/actions/runs/41917210513), Vitest FAIL pela ausência do adaptador, 848 testes anteriores PASS. BUILD `8625730a054fa130440ae2c9a3a8b2acba4f2b16` acrescentou tela/rota/queries/testes sob allowlist. `src/routeTree.gen.ts` **blob igual ao gerador oficial** `9ec02101dcdc238bdcc98ddc70cd2c32805e8257`; sem edição manual.
+- GREEN validado no commit `eb7769879e9520e6f48d3b1bca41eec4ec9090ca`: [CI #41918054745](https://github.com/contaos999999/contaos-hml-control/actions/runs/41918054745) **dois jobs SUCCESS no mesmo SHA**. Vitest **32 arquivos/856 testes PASS**; TypeScript/build/GOV-020/BRAND-01/tipos oficiais 25/25 fontes e 100/97 PASS. Teste C independente **216 combinações e 178 capturas**, `PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA`, integridade somente leitura PASS.
+- **Artefato evidência Teste C:** `contaos-teste-c-41918054745-1`, ID `13365099685`, SHA-256 `1047d08a6f554b1a6972dcc63452057c265a89df520d06996cc2e5228253f7c7`; retenção GitHub Actions limitada, arquivamento externo permanente não comprovado. Dossiê `docs/frontend/auditorias/PROMPT_42_V121_TESTES_2026-11-04.md` na mesma branch.
+- **Escopo V1-21:** `/contratos/:id/historico`, leitura de relatórios, apontamentos, respostas/desfechos, precedentes e regras apenas do contrato/organização corrente, paginação de 25 e estados PT-BR. Sem backend, RLS, PROD, `types.ts`, assets BRAND, CSS global ou dependências novas.
+- **RLS HML A/B:** NÃO VERIFICADO, FACULTATIVO APÓS PROMPT REGULAR 99, NÃO BLOQUEANTE ISOLADAMENTE por decisão do titular PR #49. Não declarar acesso autenticado HML, WCAG integral ou prova de isolação RLS efetiva.
+- **Próxima ação exata:** exigir dois jobs SUCCESS no HEAD final incluindo o dossiê e checkpoint, então integrar PR #62 via ruleset e verificar merge SHA/main. Se integrado, última etapa funcional passa a **PROMPT 42/V1-21**; próximo PLAN **43/V1-22 Ingestão de histórico**, usando texto original autenticado e matriz de 97 atômicos. Não antecipar BUILD 43 sem PLAN/GATE, nem repetir 42.
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — REVALIDAÇÃO DO GATE 42 APÓS CORREÇÃO DOCUMENTAL (04/11/2026)
 
 - CI do primeiro BUILD #59 encontrou `FRONTEND SCOPE FAIL: PLAN sem cláusula ZERO-DRIFT literal`, sem chegar a regressão; Teste C detectou corretamente routeTree não gerado. Não alterar nem flexibilizar guard.
