@@ -65,6 +65,12 @@ test("verde: repositório privado da organização é a fonte fixa", () => {
 });
 
 test("GOV-003: verificação forçada exige fonte viva mesmo em alteração documental", () => {
-  assert.equal(shouldCheckSource(["docs/frontend/nota.md"], { status: "SEM_PLANO_ATIVO" }, true), true);
-  assert.equal(shouldCheckSource(["docs/frontend/nota.md"], { status: "SEM_PLANO_ATIVO" }, false), false);
+  assert.equal(
+    shouldCheckSource(["docs/frontend/nota.md"], { status: "SEM_PLANO_ATIVO" }, true),
+    true,
+  );
+  assert.equal(
+    shouldCheckSource(["docs/frontend/nota.md"], { status: "SEM_PLANO_ATIVO" }, false),
+    false,
+  );
 });
