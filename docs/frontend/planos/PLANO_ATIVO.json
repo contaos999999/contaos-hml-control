@@ -1,17 +1,17 @@
 {
   "schema": "contaos.frontend.plan.v1",
-  "prompt_id": "40",
+  "prompt_id": "41",
   "status": "VALIDADO",
-  "plano_documento": "docs/frontend/planos/PROMPT_40_V1_19_WIZARD_APRESENTACAO_2026-11-04.md",
+  "plano_documento": "docs/frontend/planos/PROMPT_41_V1_20_APRESENTACAO_PROTOCOLO_2026-11-04.md",
   "validacao": {
     "resultado": "PASS",
-    "validado_por": "GPT-6, revisão técnica PLAN V1-19 e CI do PR #42",
+    "validado_por": "GPT-6 — revisão técnica PR #50 e comprovantes normativos PROMPT 41",
     "validado_em": "2026-11-04",
-    "modo_aprovacao": "aprovacao_tecnica_automatica_por_escopo_frontend_sem_alterar_brand",
-    "aprovacao_humana": "NAO_EXIGIDA_SEM_ALTERACAO_DIRETA_BRAND",
+    "modo_aprovacao": "aprovacao_tecnica_automatica_de_plan_frontend_sem_alteracao_da_brand",
+    "aprovacao_humana": "NAO_EXIGIDA_SEM_MUDANCA_DIRETA_DA_MARCA",
     "aprovacao_humana_exigida": false,
     "aprovacao_humana_evidencia": null,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41880258322",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41901870132",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -28,21 +28,21 @@
     }
   },
   "arquivos_permitidos": [
-    "src/lib/competencias/apresentacaoDados.ts",
-    "src/components/competencias/CompetenciaApresentar.tsx",
-    "src/routes/competencias_.$id_.apresentar.tsx",
-    "src/test/competenciaApresentar.test.tsx",
-    "src/components/competencias/CompetenciaVisaoGeral.tsx",
-    "src/test/competenciaVisaoGeral.test.tsx",
+    "src/lib/competencias/protocoloDados.ts",
+    "src/components/competencias/CompetenciaProtocolo.tsx",
+    "src/routes/competencias_.$id_.apresentacoes_.$apresentacaoId.tsx",
+    "src/test/competenciaProtocolo.test.tsx",
     "src/routeTree.gen.ts",
-    "src/test/brand.test.tsx",
     "scripts/testc/visual-audit.mjs",
-    "scripts/testc/visual-audit.test.mjs"
+    "scripts/testc/visual-audit.test.mjs",
+    "src/test/brand.test.tsx",
+    "docs/frontend/auditorias/PROMPT_41_V120_TESTES_2026-11-04.md",
+    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
   ],
-  "observacao": "Gate V1-19 e somente frontend. Backend Supabase congelado; RPCs aprovar_apresentacao e registrar_apresentacao; allowed_actions.apresentar da visão geral é fonte de autoridade, nenhuma aprovação/porta/estado local. Idempotência por intenção, sem retransmissão silenciosa. Inclui Teste C 200 cenários e crivo BRAND-01, mas HML autenticado NÃO VERIFICADO até prova real. Após gate integrado criar branch BUILD separado.",
+  "observacao": "PROMPT 41/V1-20: consulta somente leitura de apresentação e pacote congelado, sem escrita/retrocalculo de portão ou reconstrução de documentos. RLS HML A/B operacional FACULTATIVO APÓS PROMPT 99 por decisão do titular, NÃO VERIFICADO, não bloqueante isoladamente; demais segurança obrigatória. PR #50 PLAN, CI 41901870132; GATE próprio anterior ao BUILD.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
-  "context_read_by": "GPT-6 — leitura do PLAN 40, PRD, fontes 25/25 e crosswalk 100/97; backend RPC e frontend schema consultados",
+  "context_read_by": "GPT-6 — revalidação PRD 4.1, fonte original SHA-256, PRs 47-50, 25/25 fontes canônicas, matriz de atômicos 97/97, tipos frontend certificados",
   "context_read_acknowledged_at": "2026-11-04",
   "context_source_commit": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
@@ -74,13 +74,19 @@
     "20_PROMPT_000_BRAND_01.md"
   ],
   "prompt_crosswalk": {
-    "regular_prompt_id": "40",
+    "regular_prompt_id": "41",
     "direct_atomic_ids": [
-      "000",
+      "000"
+    ],
+    "additional_transversal_atomic_ids": [
+      "019",
+      "020",
       "067"
     ],
-    "additional_transversal_atomic_ids": [],
-    "exclusoes_justificadas": {},
+    "exclusoes_justificadas": {
+      "087": "Condicional a download Storage não autorizado no escopo V1-20",
+      "093": "Condicional a coleção extensa de eventos; V1-20 exibe apenas itens do pacote limitados"
+    },
     "source_evidence_missing": false,
     "regular_original_sha256": "8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e",
     "atomic_original_sha256": "d9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8"
@@ -91,24 +97,28 @@
     "required_section": "ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE"
   },
   "impacto_visual": "SIM",
-  "impacto_visual_justificativa": "Nova tela Wizard V1-19 usando ContaOSMarca transparente, tokens existentes e responsividade; crivo visual 200 casos",
+  "impacto_visual_justificativa": "Nova rota V1-20 reutiliza Design System e marca sem modificar BRAND; Teste C 208 cenários 26 telas × 4 larguras × 2 temas.",
   "backend_changes_allowed": false,
   "prod_changes_allowed": false,
   "source_proof": {
-    "frontend_baseline": "7aa9324ad1a9f505a1c2d9490608dd539c2c684e",
+    "frontend_baseline": "69182d1317cac3fa6a6fb88cd8423f834d89ce96",
     "normative_head": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
-    "crosswalk_regular40": [
+    "crosswalk_regular41": [
       "000",
+      "019",
+      "020",
       "067"
     ],
-    "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19"
+    "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+    "plan_pr": 50,
+    "plan_ci_run": 41901870132
   },
   "unverified_operational": [
-    "E2E HML com aprovador e usuário de prestação de contas",
-    "Autorização RLS real multi-organização",
-    "Contraste WCAG renderizado na rota autenticada",
-    "Congelamento real e idempotência sob concorrência do Supabase HML"
+    "RLS real Supabase HML A/B — facultativo após PROMPT 99 e não bloqueante para frontend 41–99",
+    "E2E HML com autenticação real e fixtures — NÃO VERIFICADO",
+    "WCAG integral das telas privadas HML — NÃO VERIFICADO",
+    "Congelamento e SELECT efetivo do pacote em HML — NÃO VERIFICADO; contrato tipado comprovado"
   ]
 }
