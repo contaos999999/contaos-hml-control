@@ -114,7 +114,6 @@ test("GOV-012: limites de diagnosticos e regras desconhecidas", () => {
   assert.deepEqual(data[0].reasonCodes, ["bgGradient", "fgAlpha"]);
 });
 
-
 test("GOV-014: contraste WCAG sRGB de cores conhecidas", () => {
   assert.equal(wcagContrastRatio([255, 255, 255], [0, 0, 0]), 21);
   assert.ok(wcagContrastRatio([119, 119, 119], [255, 255, 255]) < 4.5);
@@ -166,7 +165,10 @@ test("GOV-014: nenhuma diferenca ou PNG incompatível nunca gera PASS", () => {
     fontSizePx: 16,
     fontWeight: 400,
   };
-  assert.equal(measureRenderedTextContrast(p, p, [node], { minPixels: 1 })[0].status, "NAO_VERIFICADO");
+  assert.equal(
+    measureRenderedTextContrast(p, p, [node], { minPixels: 1 })[0].status,
+    "NAO_VERIFICADO",
+  );
   assert.equal(
     measureRenderedTextContrast(p, { ...p, width: 2 }, [node], { minPixels: 1 })[0].status,
     "NAO_VERIFICADO",
