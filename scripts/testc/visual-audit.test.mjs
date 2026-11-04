@@ -15,12 +15,12 @@ import {
   pixelContrastDecision,
 } from "./visual-audit.mjs";
 
-test("matriz oficial: 25 telas × 4 larguras × 2 temas", () => {
-  assert.equal(ROUTES.length, 25);
+test("matriz oficial: 26 telas × 4 larguras × 2 temas", () => {
+  assert.equal(ROUTES.length, 26);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
-  assert.equal(cases().length, 200);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 200);
+  assert.equal(cases().length, 208);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 208);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");
@@ -42,6 +42,15 @@ test("PROMPT 40: V119 privada integra 200 casos sem certificar sessão real", ()
     "NAO_VERIFICADO_SESSAO_REAL",
   );
   assert.equal(cases().filter((c) => c.id === "V119").length, 8);
+});
+
+test("PROMPT 41: V120 privada possui 8 combinações sem alegar sessão real", () => {
+  const rota = ROUTES.find((r) => r.id === "V120");
+  assert.ok(rota);
+  assert.equal(rota.path, "/competencias/00000000-0000-4000-8000-000000000001/apresentacoes/00000000-0000-4000-8000-000000000001");
+  assert.notEqual(rota.public, true);
+  assert.equal(cases().filter(c => c.id === "V120").length, 8);
+  assert.equal(classifyProtected({ pathname: rota.path, text: "Apresentação e protocolo" }), "NAO_VERIFICADO_SESSAO_REAL");
 });
 
 test("public gate PASS somente para métricas comprovadas", () => {
