@@ -110,6 +110,8 @@ export function CompetenciaApresentar({ id }: { id: string }) {
               : tipo === "nao_encontrada" ? "nao_encontrado" : "erro" },
           });
         }
+        if (r.data === null || r.data === undefined)
+          return void setRegistro({ id: idC, estado: { tipo: "nao_encontrado" } });
         const visao = parseVisaoGeral(r.data);
         if (!visao || uuidCanonico(visao.competencia.id) !== idC ||
           visao.competencia.id_organizacao !== org ||
