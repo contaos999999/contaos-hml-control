@@ -2,8 +2,8 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "cb65f4980f4eeca6ccd33caf6198a801b7e60328",
-  "source_date": "03/11/2026",
+  "source_commit": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
+  "source_date": "2026-11-04",
   "context_documents": [
     {
       "path": "00_AI_LEIA_ANTES_DE_ALTERAR.md",
