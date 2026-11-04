@@ -202,7 +202,7 @@ if (sourcePaths.length) {
     if (context) {
       if (
         context.schema !== "contaos.frontend.canonical-source-snapshot.v1" ||
-        context.source_repo !== "contaos9999/develop" ||
+        context.source_repo !== "contaos999999/develop" ||
         !/^[a-f0-9]{40}$/.test(context.source_commit || "")
       ) {
         errors.push("Contexto canônico não tem origem/commit verificável.");
@@ -276,7 +276,7 @@ if (sourcePaths.length) {
     }
     if (
       !plan.validacao?.ci_plano_url?.startsWith(
-        "https://github.com/contaos9999/contaos-hml-control/actions/runs/",
+        "https://github.com/contaos999999/contaos-hml-control/actions/runs/",
       ) ||
       REQUIRED_PLAN_GATES.some((key) => plan.validacao?.gates?.[key] !== "PASS")
     ) {
