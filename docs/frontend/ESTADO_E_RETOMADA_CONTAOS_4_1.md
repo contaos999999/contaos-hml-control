@@ -3,13 +3,13 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
-## 0. ESTADO VIVO — atualizado em 04/11/2026 após GOV-003 a GOV-007
+## 0. ESTADO VIVO — atualizado em 04/11/2026 após GOV-014
 
 **Estas informações prevalecem sobre snapshots históricos mais abaixo; conferir HEADs e checks a cada novo chat.**
 
 | Item | Última confirmação no GitHub |
 | --- | --- |
-| Frontend canônico | `contaos999999/contaos-hml-control`, `main` no commit `1d4d3488b801e5a8c30875b8588e7cc80063558a` (baseline anterior ao PR #20; verificar HEAD ao retomar) |
+| Frontend canônico | `contaos999999/contaos-hml-control`, `main` no commit `a31b852a99a753b0ea442e7d08e0d3b4e323eb6d` antes do GOV-015; **sempre conferir HEAD antes de trabalhar** |
 | Backend normativo | `contaos999999/develop`, branch `main`, `cb65f4980f4eeca6ccd33caf6198a801b7e60328` (somente leitura para frontend) |
 | PLAN funcional | `docs/frontend/planos/PLANO_ATIVO.json` = `SEM_PLANO_ATIVO`; não editar src/public/config sem PLAN validado e CI anterior |
 | Fonte canônica | `FONTE CANÔNICA PASS`, 25 documentos e catálogo 100/97 no run do PR #14; revalidar a cada BUILD |
@@ -18,7 +18,7 @@
 | GOV-004 | PR #15 mesclado em `f9b46b9e07823bb291a1c5efe2a67dfd23e36727`, evidências em issue #16 e `docs/frontend/auditorias/GOV_004_CERTIFICACAO_BRANCH_2026-11-03.md` |
 | Ruleset | `ContaOS-Zero-Drift-main` ID `26495643` ACTIVE, alvo `main`, 2 required checks, PR obrigatório, 0 revisões, sem bypass, sem exclusão/force push |
 | Provas positivas/negativas | T02 escrita direta bloqueada HTTP 409; T03 merge com CI FAIL bloqueado HTTP 405; T04 merge PR #15 com CI verde e 0 reviews |
-| Auto-Lock | Execução sem drift `41762615464` SUCCESS; **criação de PR por drift real NÃO TESTADA** |
+| Auto-Lock | GOV-011 run `41805167363` tentativa 2, `GITHUB_TOKEN` abriu PR #26 real em **branches descartáveis**, validou diff e `main`, fechou PR e limpou refs. **Drift em main não foi induzido** |
 | Proteção force push/deletion | Regras ACTIVE verificadas por API, sem tentativa destrutiva real em `main` |
 | HML E2E autenticado | Ainda NÃO VERIFICADO nesta linha de trabalho; evitar tocar Supabase sem autorização específica |
 
@@ -56,6 +56,21 @@
 **Decisão de qualidade:** não declarar equivalência operacional integral nem 100% do PRD 4.1 enquanto faltarem as provas acima. Não alterar o frontend visual para fazer o teste passar sem PLAN específico de BRAND-01. Não interpretar CI administrativo com `Teste C N/A` como prova de navegação. Nenhum teste HML ou PROD foi executado no GOV-006/007/008.
 
 **Próximos saneamentos prioritários:** medir e revisar manualmente os elementos `color-contrast` inconclusivos (sem suprimir falhas); homologar telas autenticadas e fluxos A/B apenas com credenciais autorizadas; arquivar evidências institucionalmente antes de `02/02/2027`; comprovar caminho real do Auto-Lock em ambiente isolado; validar atualização dos metadados do Lovable sem usar sua IA para BUILD. Antes de qualquer BUILD, reler `PLANO_ATIVO.json`, documentos normativos, ISSUE, HEADs e gates do CI.
+
+## GOV-015 — Provas encerradas de Auto-Lock, Lovable e contraste público
+
+**Registro verificado em 04/11/2026.** Este bloco prevalece sobre pendências antigas do GOV-006/GOV-008 que descreviam o bot como incapaz de abrir PR, a sincronização Lovable como quebrada, ou os 120 contrastes públicos como ainda não mensurados. Essas referências anteriores permanecem como histórico de fatos na época. Nenhum desses resultados homologa o backend HML ou a WCAG integral.
+
+| Ponto | Prova concreta | Situação e limite |
+| --- | --- | --- |
+| **GOV-011 Auto-Lock** | GitHub Actions `41805167363` tentativa 2, job `126606923195` **SUCCESS**. O bot criou `autolock/probe-drift-41805167363-2` e `autolock/probe-repair-41805167363-2`, abriu o **PR #26** com `github-actions[bot]`, verificou diff apenas de `types.ts` e o SHA da `main`, fechou o PR sem merge e removeu as duas branches | **PASS de abertura automática de PR de recuperação em cenário isolado**. Não houve corrupção real da `main`; não confundir com prova de incidência real |
+| **Sincronização GitHub → Lovable** | Após o GOV-014, GitHub `main` e Lovable projeto `b113dd59-6caf-4c92-8302-457a037a0c6f` retornaram o mesmo SHA `a31b852a99a753b0ea442e7d08e0d3b4e323eb6d`. Conteúdos de `docs/frontend/auditorias/GOV_014_MEDICAO_CONTRASTE_2026-11-04.md`, `scripts/testc/visual-audit.mjs` e `src/routes/login.tsx` foram comparados: idênticos após remover somente o newline final omitido pela API Lovable | **PASS de sincronização no SHA verificado**. Repetir conferência de SHA e conteúdo após novos merges; Lovable é só visualizador, sem IA BUILD |
+| **GOV-014 WCAG AA, contraste público** | PR #25 mesclado SHA `a31b852a99a753b0ea442e7d08e0d3b4e323eb6d`; CI `41840128303` **SUCCESS nos dois jobs**. 120/120 elementos públicos anteriormente `INCOMPLETE` obtiveram **PASS_AA_PIXEL**, zero FAIL, zero sem amostra, razão mínima **4,7465:1** diante do mínimo 4,5:1 para texto normal; 24/24 cenários públicos PASS, 184 combinações totais | **PASS do contraste nesses elementos, quatro larguras e dois temas**. `axe-core` ainda marca detecção automática `INCOMPLETE`; prova suplementar foi por pixels do fundo renderizado. **160 combinações protegidas seguem NÃO VERIFICADAS** |
+| **Evidência GOV-014** | Run `41840128303`, artifact `13328683000` (retido até 02/02/2027); ZIP `ContaOS_GOV014_Pixel_41840128303.zip`, SHA256 `5d452e5c1ba515384c352ccbbd133cda5824a8b3e88b56383f4fcc167d7fba37`, CRC PASS e **25/25 hashes internos válidos** | **Integridade verificada**; retenção Actions de 90 dias não equivale a armazenamento institucional imutável |
+
+**Próxima frente que permanece pendente:** homologação autenticada HML A/B, upload, reset de senha e demais verificações de 160 cenários protegidos; fluxos de teclado/foco/leitor de tela e estados dinâmicos para WCAG total. Não usar os 120/120 elementos públicos para declarar 100% de todos os 416 critérios do PRD 4.1.
+
+**Governança:** `main` protegida pelo ruleset `26495643`, PR com dois checks e zero revisões obrigatórias; `types.ts` blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` preservado. Nenhuma alteração de backend, PROD, estilos, UI, marca BRAND-01, assets ou código funcional neste checkpoint. Para continuar, ler este documento, `AGENTS.md` e PLAN ativo, consultar HEADs e CI correntes, e jamais presumir que o SHA histórico continua atual.
 
 ## ADR-DEV-002 — validação obrigatória antes de qualquer BUILD
 
