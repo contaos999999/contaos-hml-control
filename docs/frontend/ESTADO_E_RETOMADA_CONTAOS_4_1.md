@@ -3,6 +3,22 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — PROMPT 41 FONTE ORIGINAL AUTENTICADA, 04/11/2026
+
+**Frontend antes desta auditoria:** `contaos999999/contaos-hml-control/main@c8c599dede97d68b22af86b7909567ed8d5179a4` (PR #47 integrado). **Repositório normativo:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`; fonte canônica permanece preservada. Conferir HEAD novo a cada retomada.
+
+- **Fonte literal encontrada:** ZIP original do titular `ContaOS_Pacote_Mestre_Arquitetura_4_1_100_PRD_Lovable_Supabase_BRAND_v1_0_FINAL.zip`; SHA-256 ZIP `5ee115d12e263d98068288b6bb722f5f303f2d19e1e4c0b5e930e69da03621da`. Manual interno `Manual_Mestre_Prompts_4_1_100_PRD.docx`, SHA-256 `8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e`, **idêntico ao SHA original no catálogo**; o regular 41 ocupa os parágrafos 2303–2362. Caderno 97 original SHA-256 `d9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8`, também idêntico à fonte normativa, ids 000/019/020/067/087/093 conferidos.
+- **Espelho permanente do prompt literal:** `docs/frontend/fontes/PROMPT_41_V120_TEXTO_ORIGINAL_VERIFICADO_2026-11-04.md`, reproduzido com rastreabilidade; dossiê `docs/frontend/auditorias/PROMPT_41_V120_FONTE_LITERAL_E_CONTRATO_PACOTE_2026-11-04.md`. A falta anterior do texto literal **RESOLVIDA**; nenhuma renumeração dos 100 regulares/97 atômicos.
+- **Contrato frontend de consulta:** `src/integrations/supabase/types.ts` blob imutável `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` confirma `apresentacoes_contratante`, `pacotes_competencia` e **`itens_pacote_competencia`**. Itens contêm `id_pacote`, `entidade_id/tipo`, `versao_id`, `hash`, `metadados` e tenant. Dados para o detalhe existem **estruturalmente**, mas permissões RLS e SELECT real HML A/B permanecem NÃO VERIFICADOS. Não reconstruir pacote usando documentos atuais.
+- **Registro UUID:** `registrar_apresentacao` na V1-19 retorna UUID, que é o identificador de apresentação para a rota `/competencias/:id/apresentacoes/:apresentacaoId`. Não confundir com texto do protocolo externo.
+- **Auditoria 97/97:** PR #47 integrado `c8c599dede97d68b22af86b7909567ed8d5179a4`, matriz `docs/frontend/auditorias/PROMPT_41_V120_CROSSWALK_97_ATOMICOS_2026-11-04.md` com 000 aplicável, 019/020/067 dependências, 087/093 condicionais e 91 sem implementação nova. Não confundir com certificação integral do PRD.
+- **Último BUILD funcional:** V1-19, PR #44 concluído, CI dois checks SUCCESS, 841 testes, 200 combinações, HML real NÃO VERIFICADO.
+- **GATE atual:** o PLAN 41 agora possui fonte literal e contrato tipado, porém **NÃO VALIDADO para BUILD** por ausência de evidência operacional de acesso RLS HML e snapshot efetivamente legível. `PLANO_ATIVO.json` ainda aponta para 40 VALIDADO, não alterar até gate próprio. Ações HML/backend exigem autorização humana específica prevista na ADR-DEV-002. Não alegar E2E.
+- **Ramo deste checkpoint:** `audit/prompt-41-original-literal-frozen-package-20261104`, documental; exige PR e dois checks SUCCESS no HEAD final. Nenhuma modificação no Supabase/PROD, `types.ts`, frontend funcional, design visual ou Lovable BUILD.
+- **Próxima tarefa:** concluir PR documental e CI, confirmar HEAD da main; quando houver autorização apropriada, executar inspeção somente leitura do contrato de SELECT e, após provas, criar GATE do PLAN 41 em PR separado. Não iniciar BUILD indevidamente.
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — V1-20 TRIAGEM DOS 97 ATÔMICOS, 04/11/2026
 
 **HEAD frontend de origem da auditoria:** `contaos999999/contaos-hml-control/main@94bbceafa45af291c73558ea7d5aca4c132f5ae5` (PR #46 integrado; PLAN registrado, NÃO VALIDADO para BUILD). **HEAD normativo:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` (sem mudanças). Não presumir que esses HEADs continuem atuais.
