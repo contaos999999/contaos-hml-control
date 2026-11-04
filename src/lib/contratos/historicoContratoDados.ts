@@ -113,7 +113,7 @@ function parseApo(v: Linha, c: string, o: string, idRelatorio: string): Apontame
   escopo(v, c, o);
   if (v.id_relatorio !== idRelatorio || !texto(v.problema) || !textoOuNulo(v.item) ||
       !textoOuNulo(v.severidade) ||
-      !(v.fonte_pagina === null || (Number.isInteger(v.fonte_pagina) && Number(v.fonte_pagina) > 0)) ||
+      !(v.fonte_pagina === null || (typeof v.fonte_pagina === "number" && Number.isInteger(v.fonte_pagina) && v.fonte_pagina > 0)) ||
       !textoOuNulo(v.fundamento) || !texto(v.criado_em)) throw new ErroHistorico("inconsistente");
   return v as ApontamentoHistorico;
 }
