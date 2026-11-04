@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
+  "source_commit": "c2bf86d011da6bfd3abaa70de38e7a722ae629de",
   "source_date": "2026-11-04",
   "context_documents": [
     {
@@ -1262,5 +1262,6 @@
     "O check formal exige declaração de leitura e SHAs, mas não prova que o autor leu semanticamente os documentos.",
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
-  "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização."
+  "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
+  "p0_reanchor_note": "PR normativo #38 merge c2bf86d011da6bfd3abaa70de38e7a722ae629de; 25/25 blobs canônicos e catálogo original sem mudanças; ajuste somente do HEAD de origem, nenhuma reescrita de fonte ou hash."
 }

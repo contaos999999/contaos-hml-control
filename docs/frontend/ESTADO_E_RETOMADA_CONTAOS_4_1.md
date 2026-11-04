@@ -3,6 +3,24 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT P0 — NOVA REGRA CANÔNICA DE PRIORIDADE ZERO POR VERSÃO (04/11/2026)
+
+**Decisão expressa do titular:** desenvolver **por VERSÃO, e não pela ordem dos números dos prompts**, mantendo obrigatórios **100/100 regulares 00–99** e **97/97 atômicos 000–096**, com certificação a cada etapa V1→V2→V3→V4→V5 e certificação GLOBAL/GO-NO-GO só ao final. P0 não autoriza redução de RLS, BRAND, segurança, TypeScript, GOV-020, 25 fontes, Zero-Drift, CI, Teste C, RNF nem aprovação humana exigida.
+
+**Norma obrigatória frontend:** `docs/frontend/governanca/P0_PRIORIDADE_ZERO_ORDEM_POR_VERSAO_4_1.md` e matriz `docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json`, citadas em `AGENTS.md` e `TEMPLATE_PROMPT_PLAN_GATE.md`. **Guard CI:** `scripts/p0-version-order-gate.mjs` com 14 testes positivos/negativos, incluído no workflow. Integrado no [PR #64](https://github.com/contaos999999/contaos-hml-control/pull/64), merge `8683873c99c974d67ec49c91e3cbee7dfd392f4e`, run [#41924923763](https://github.com/contaos999999/contaos-hml-control/actions/runs/41924923763), **dois jobs SUCCESS**.
+
+**Norma obrigatória backend/repositório de origem:** `contaos999999/develop/docs/prompts/P0_PRIORIDADE_ZERO_ORDEM_POR_VERSAO_4_1.md`; `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `LOVABLE.md`, `.github/copilot-instructions.md` exigem leitura. `scripts/ai-context-gate.mjs` bloqueia omissão/desaparecimento da regra. [PR normativo #38](https://github.com/contaos999999/develop/pull/38) **MERGED**, `develop/main@c2bf86d011da6bfd3abaa70de38e7a722ae629de`, CI #41925882263 guard SUCCESS.
+
+**Sincronização canônica:** snapshot `docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json` e `PLANO_ATIVO.json` apontam para o novo HEAD normativo `c2bf86d011da6bfd3abaa70de38e7a722ae629de`. Foi comprovado **25/25 blobs canônicos idênticos e catálogo `PROMPT_TRACKS_4_1.json` no mesmo blob original**. Nesta branch de checkpoint/reancoragem `governance/p0-sync-normative-head-20261104`, integração/CI **ainda precisam ser confirmados**, não antecipar conclusão.
+
+**Estado funcional do frontend:** último BUILD integrado PROMPT **42/V1-21**, PR #62 MERGED `479f3be73d8caa0bd3651045ffb26f06f2b230e9`, checkpoint PR #63 `bd3b0631837f404e569d94b4a80deeba306877a9`. **V1 NÃO CERTIFICADA**. Próximos regulares obrigatórios **43/V1-22**, depois **75/V1-23**, com auditoria retrospectiva individual 00–42 e CERTIFICAÇÃO V1 com evidência. **É PROIBIDO iniciar regular 44/V2-01 enquanto certificado V1 não estiver integrado ao GitHub.** Depois V2: 44–49/76–77; V3: 50–55/78–79; V4: 56–59/80–83; V5: 60–66/84–89; TRANSVERSAIS: 67–74 e 90–99, com 100/97 rastreáveis.
+
+**RLS HML A/B operacional:** continua NÃO VERIFICADO, FACULTATIVO APÓS regular 99 e NÃO BLOQUEANTE ISOLADAMENTE para desenvolvimento por decisão expressa anterior; não confundir com prova de segurança PROD. **PROD proibido sem processo próprio, GO final e autorização expressa.**
+
+**Próxima ação exata:** confirmar CI e merge da reancoragem P0, conferir HEADs novamente, seguir PLAN/GATE de **43/V1-22** e depois **75/V1-23**, sem iniciar qualquer V2 antes de certificar V1. Ler sempre os documentos P0 e checkpoint antes de agir.
+
+---
+
 ## CHECKPOINT OFICIAL — PROMPT REGULAR 42 / V1-21 INTEGRADO E VALIDADO (04/11/2026)
 
 **HEAD principal verificado:** `contaos999999/contaos-hml-control/main@479f3be73d8caa0bd3651045ffb26f06f2b230e9`, integração [PR #62](https://github.com/contaos999999/contaos-hml-control/pull/62). **Fonte normativa:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`, confirmar HEAD vivo em cada retomada.

@@ -44,7 +44,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — fonte original do regular 42, 25/25 documentos e 100/97 do catálogo, crosswalk semântico 97/97, tipos certificados, PR #57 com CI aprovado",
   "context_read_acknowledged_at": "2026-11-04",
-  "context_source_commit": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
+  "context_source_commit": "c2bf86d011da6bfd3abaa70de38e7a722ae629de",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -109,7 +109,7 @@
   "prod_changes_allowed": false,
   "source_proof": {
     "frontend_baseline": "7721577cf4c43fe94f8f923e085a08c016fa746e",
-    "normative_head": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
+    "normative_head": "c2bf86d011da6bfd3abaa70de38e7a722ae629de",
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
     "crosswalk_regular42": [
@@ -133,5 +133,6 @@
     "RLS operacional HML com usuários A/B de organizações distintas — NÃO VERIFICADO e FACULTATIVO após prompt regular 99, não bloqueante isoladamente",
     "E2E autenticado HML privado — NÃO VERIFICADO",
     "WCAG integral privado — NÃO VERIFICADO"
-  ]
+  ],
+  "p0_note": "P0 por versão integrado no frontend PR #64 e backend normativo PR #38. Este PLAN 42 pertence ao histórico e permanece VALIDADO; próximo novo PLAN permitido regular 43/V1-22 e depois 75/V1-23; não iniciar V2 até V1 certificada. HEAD normativo reancorado sem mudança de 25 blobs ou catálogo."
 }
