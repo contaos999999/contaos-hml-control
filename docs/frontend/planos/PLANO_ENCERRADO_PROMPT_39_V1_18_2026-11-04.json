@@ -1,0 +1,127 @@
+{
+  "schema": "contaos.frontend.plan.v1",
+  "prompt_id": "39",
+  "status": "CONCLUIDO_COM_RESSALVAS_EXTRINSECAS",
+  "plano_documento": "docs/frontend/planos/PROMPT_39_V1_18_PARECER_INTERNO_2026-11-04.md",
+  "validacao": {
+    "resultado": "PASS",
+    "validado_por": "ChatGPT GPT-6 — validação técnica documental com CI do PLAN",
+    "validado_em": "2026-11-04",
+    "modo_aprovacao": "aprovacao_tecnica_automatica_por_escopo_frontend",
+    "aprovacao_humana": "NAO_EXIGIDA_SEM_ALTERACAO_DIRETA_BRAND",
+    "aprovacao_humana_exigida": false,
+    "aprovacao_humana_evidencia": null,
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41851784279",
+    "gates": {
+      "prd": "PASS",
+      "premissas": "PASS",
+      "arquitetura": "PASS",
+      "atomicos": "PASS",
+      "brand": "PASS",
+      "seguranca": "PASS",
+      "nfr": "PASS",
+      "zero_drift": "PASS",
+      "tdd": "PASS",
+      "ci": "PASS",
+      "teste_c_planejado": "PASS",
+      "rollback": "PASS"
+    }
+  },
+  "arquivos_permitidos": [
+    "src/lib/competencias/parecerInternoDados.ts",
+    "src/components/competencias/CompetenciaParecer.tsx",
+    "src/routes/competencias_.$id_.parecer.tsx",
+    "src/test/competenciaParecer.test.tsx",
+    "src/components/competencias/CompetenciaVisaoGeral.tsx",
+    "src/test/competenciaVisaoGeral.test.tsx",
+    "src/routeTree.gen.ts"
+  ],
+  "observacao": "VALIDAÇÃO DO PLAN (não de funcionalidade). Somente após esta revisão documental integrada na main e CI próprio verde é permitido iniciar BUILD em novo branch/PR, com TDD, diff limitado à allowlist e Teste C separado. E2E HML A/B é NÃO VERIFICADO. Edição manual de texto de parecer fora de escopo sem contrato RPC autorizado.",
+  "context_pack_version": "4.1",
+  "context_read_acknowledged": true,
+  "context_read_by": "GPT-6 — conferência da matriz PRD, fontes canônicas e prompt original 39, zero-drift e RNF",
+  "context_read_acknowledged_at": "2026-11-04",
+  "context_source_commit": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
+  "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
+  "context_documents_read": [
+    "00_AI_LEIA_ANTES_DE_ALTERAR.md",
+    "01_PRD_MESTRE_4_1.md",
+    "02_PREMISSAS_FUNCIONAIS_TECNICAS_4_1.md",
+    "03_ARQUITETURA_OFICIAL_4_1.md",
+    "04_MANUAL_AMBIENTE_E_PROMOCAO_4_1.md",
+    "05_BACKEND_SUPABASE_CERTIFICADO_4_1.md",
+    "06_FRONTEND_LOVABLE_ESPECIFICACAO_4_1.md",
+    "07_ZERO_DRIFT_GOVERNANCA_4_1.md",
+    "08_REQUISITOS_96_E_CRITERIOS_ACEITE_4_1.md",
+    "08A_REQUISITOS_001_024_4_1.md",
+    "08B_REQUISITOS_025_048_4_1.md",
+    "08C_REQUISITOS_049_072_4_1.md",
+    "08D_REQUISITOS_073_096_4_1.md",
+    "09_RASTREABILIDADE_FONTES_AUDITORIA_4_1.md",
+    "10_IA_OCR_RAG_E_PRECEDENTES_4_1.md",
+    "11_RNF_PERFORMANCE_CONCORRENCIA_RESILIENCIA_4_1.md",
+    "12_PROMPTS_PROTOCOLO_IMPLEMENTACAO_4_1.md",
+    "13_MAPA_DOCUMENTOS_PACOTE_4_1.md",
+    "14_CHECKLIST_PRE_ALTERACAO.md",
+    "15_ESTADO_CERTIFICADO_HML_4_1.md",
+    "16_CUSTOS_E_PLANOS_REFERENCIA_4_1.md",
+    "17_FONTES_TECNICAS_E_QA_4_1.md",
+    "18_SCHEMA_RLS_EDGE_QUEUES_CRON_4_1.md",
+    "19_IDENTIDADE_VISUAL_OFICIAL_BRAND_1_0.md",
+    "20_PROMPT_000_BRAND_01.md"
+  ],
+  "prompt_crosswalk": {
+    "regular_prompt_id": "39",
+    "direct_atomic_ids": [
+      "000",
+      "021",
+      "022",
+      "023"
+    ],
+    "additional_transversal_atomic_ids": [],
+    "exclusoes_justificadas": {},
+    "source_evidence_missing": false,
+    "regular_original_sha256": "8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e",
+    "atomic_original_sha256": "d9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8"
+  },
+  "brand_context": "ContaOS Brand v1.0",
+  "prompt_000_brand_01_read": true,
+  "prompt_policy": {
+    "required_section": "ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE"
+  },
+  "impacto_visual": "SIM",
+  "impacto_visual_justificativa": "Nova tela V1-18 apenas com componentes e tokens existentes, sem alterar identidade da marca.",
+  "backend_changes_allowed": false,
+  "prod_changes_allowed": false,
+  "source_proof": {
+    "frontend_baseline": "15bf2aa6fab6b4c9e262a7d74b6a2ea422419e1f",
+    "normative_head": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
+    "source_blobs_verified": 25,
+    "source_blob_differences": 0,
+    "crosswalk_regular39": [
+      "000",
+      "021",
+      "022",
+      "023"
+    ],
+    "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19"
+  },
+  "unverified_operational": [
+    "Auth/RLS real HML A/B",
+    "RPCs solicitar/aprovar com usuários sintéticos autorizados",
+    "UI autenticada V118: contraste, foco, responsividade, leitor de tela",
+    "Revisão humana das regras de segregação de funções"
+  ],
+  "encerramento": {
+    "data": "2026-11-04",
+    "origem_main": "f58265fd595eae5ba5bae8406dc75b2c95afc2b0",
+    "pr_build": "https://github.com/contaos999999/contaos-hml-control/pull/30",
+    "merge_build_sha": "53d4bf5464739e66fcad0af4bb5f8e7f323bef1c",
+    "ci_build_pr": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41857581129",
+    "ci_scope": "824/824 testes unitários, TS/build/Zero-Drift PASS, Teste C 23 superfícies sem provas autenticadas",
+    "pr_teste_c": "https://github.com/contaos999999/contaos-hml-control/pull/32",
+    "merge_testec_sha": "f58265fd595eae5ba5bae8406dc75b2c95afc2b0",
+    "ci_teste_c_pr": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41859649176/attempts/2",
+    "observacao": "Aprovação interna de PLAN e testes de código não provam Auth/RLS A/B, fluxo mutativo real nem WCAG de telas protegidas; sem redacao manual de parecer."
+  }
+}
