@@ -97,7 +97,7 @@ function scenario({
         },
         validacao: {
           resultado: status === "VALIDADO" ? "PASS" : "PENDENTE",
-          ci_plano_url: "https://github.com/contaos9999/contaos-hml-control/actions/runs/41732038105",
+          ci_plano_url: "https://github.com/contaos999999/contaos-hml-control/actions/runs/41732038105",
           gates,
           aprovacao_humana_exigida: false,
         },
@@ -202,7 +202,7 @@ scenario({
   mutation: ({ plan }) => {
     plan.validacao.aprovacao_humana_exigida = true;
     plan.validacao.aprovacao_humana = "CONCEDIDA";
-    plan.validacao.aprovacao_humana_evidencia = "https://github.com/contaos9999/contaos-hml-control/issues/1";
+    plan.validacao.aprovacao_humana_evidencia = "https://github.com/contaos999999/contaos-hml-control/issues/1";
   },
 });
 scenario({
@@ -215,4 +215,19 @@ scenario({
   status: "SEM_PLANO_ATIVO",
   expected: 1,
   description: "FAIL PR com BUILD na branch sem PLAN validado",
+});
+
+scenario({
+  expected: 1,
+  description: "FAIL para snapshot com owner antigo apos migracao",
+  mutation: ({ receipt }) => {
+    receipt.source_repo = "contaos9999/develop";
+  },
+});
+scenario({
+  expected: 1,
+  description: "FAIL para URL antiga de CI do PLAN",
+  mutation: ({ plan }) => {
+    plan.validacao.ci_plano_url = "https://github.com/contaos9999/contaos-hml-control/actions/runs/41732038105";
+  },
 });
