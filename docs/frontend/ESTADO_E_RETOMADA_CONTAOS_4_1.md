@@ -4,15 +4,15 @@
 
 ## ADR-DEV-002 — validação obrigatória antes de qualquer BUILD
 
-**GATE BLOQUEANTE:** usar [ADR-DEV-002](ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md). Em cada prompt: **PROMPT → PLAN → VALIDAÇÃO → commit isolado do PLAN e CI aprovado → BUILD somente frontend via GitHub → CI/Zero-Drift → Teste C independente somente leitura → dossiê → novo checkpoint**. Sem `docs/frontend/planos/PLANO_ATIVO.json` previamente VALIDADO, proibido editar `src/`, `public/` ou configuração do app. Backend `contaos9999/develop` e Supabase não entram em uma tarefa frontend. Aprovação humana específica permanece obrigatória quando o pacote exigir.
+**GATE BLOQUEANTE:** usar [ADR-DEV-002](ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md). Em cada prompt: **PROMPT → PLAN → VALIDAÇÃO → commit isolado do PLAN e CI aprovado → BUILD somente frontend via GitHub → CI/Zero-Drift → Teste C independente somente leitura → dossiê → novo checkpoint**. Sem `docs/frontend/planos/PLANO_ATIVO.json` previamente VALIDADO, proibido editar `src/`, `public/` ou configuração do app. Backend `contaos999999/develop` e Supabase não entram em uma tarefa frontend. Aprovação humana específica permanece obrigatória quando o pacote exigir.
 
 ## Quando houver suspeita de lacuna no backend
 
-O desenvolvimento permanece **somente frontend**. Documentar o sintoma com provas do frontend e **pedir autorização ao responsável ANTES de passar ao fluxo do repositório `contaos9999/develop` para analisar Supabase HML**. Autorizada a investigação, checar backend read-only; se confirmada lacuna real, PROMPT backend → PLAN → gate validado → BUILD limitado HML → testes e certificação → GitHub → **retorno ao frontend**. Sem aprovação explícita, não investigar nem modificar backend. PRD, Premissas, prompts 00–99 e 000–096, NFRs, BRAND-01, auditoria/fontes e Zero-Drift continuam absolutos.
+O desenvolvimento permanece **somente frontend**. Documentar o sintoma com provas do frontend e **pedir autorização ao responsável ANTES de passar ao fluxo do repositório `contaos999999/develop` para analisar Supabase HML**. Autorizada a investigação, checar backend read-only; se confirmada lacuna real, PROMPT backend → PLAN → gate validado → BUILD limitado HML → testes e certificação → GitHub → **retorno ao frontend**. Sem aprovação explícita, não investigar nem modificar backend. PRD, Premissas, prompts 00–99 e 000–096, NFRs, BRAND-01, auditoria/fontes e Zero-Drift continuam absolutos.
 
 ## Verificação canônica de paridade antes de abrir novo PROMPT
 
-- Verificar SHA HEAD atual do repositório normativo `contaos9999/develop`; confrontar `docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json` (25 documentos) e `docs/prompts/PROMPT_TRACKS_4_1.json` (100 regulares / 97 atômicos). Divergência de fonte = PLAN BLOQUEADO até atualização controlada do snapshot.
+- Verificar SHA HEAD atual do repositório normativo `contaos999999/develop`; confrontar `docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json` (25 documentos) e `docs/prompts/PROMPT_TRACKS_4_1.json` (100 regulares / 97 atômicos). Divergência de fonte = PLAN BLOQUEADO até atualização controlada do snapshot.
 - Exigir manifesto `PLANO_ATIVO.json` VALIDADO, leitura declarada das fontes, origem SHA e cláusula literal Zero-Drift §11.3 no PLAN. Não basta CI verde de código.
 - CI verifica aprovação prévia e allowlist, inclusive branch PR. **Teste C real/screenshot/contraste, autorização HML A/B e branch protection não são substituídos por esse gate de texto**.
 - Fonte do saneamento documental: `docs/frontend/planos/GOV_001_PARIDADE_LOVABLE_GITHUB_2026-11-03.md`.
@@ -20,13 +20,13 @@ O desenvolvimento permanece **somente frontend**. Documentar o sintoma com prova
 ## 1. Regra de retomada: nunca recomeçar nem adivinhar
 
 No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
-- Frontend (código canônico): https://github.com/contaos9999/contaos-hml-control
-- Backend, governança e dossiês: https://github.com/contaos9999/develop
-- Este arquivo: https://github.com/contaos9999/contaos-hml-control/blob/main/docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md
-- Fonte oficial dos 416 critérios: https://github.com/contaos9999/develop/blob/main/docs/prompts/CRITERIOS_ORIGINAIS_39_PROMPTS_2026-11-03.json
-- Matriz de prova (39 × 416): https://github.com/contaos9999/develop/blob/main/docs/prompts/MATRIZ_416_CRITERIOS_STATUS_E_PROVAS_2026-11-03.json
-- Tracker: https://github.com/contaos9999/develop/blob/main/docs/prompts/PLANO_SANEAMENTO_39_PROMPTS_2026-11-03.json
-- Dossiês dos PROMPTs 00–38: https://github.com/contaos9999/develop/tree/main/docs/prompts/evidencias_individuais
+- Frontend (código canônico): https://github.com/contaos999999/contaos-hml-control
+- Backend, governança e dossiês: https://github.com/contaos999999/develop
+- Este arquivo: https://github.com/contaos999999/contaos-hml-control/blob/main/docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md
+- Fonte oficial dos 416 critérios: https://github.com/contaos999999/develop/blob/main/docs/prompts/CRITERIOS_ORIGINAIS_39_PROMPTS_2026-11-03.json
+- Matriz de prova (39 × 416): https://github.com/contaos999999/develop/blob/main/docs/prompts/MATRIZ_416_CRITERIOS_STATUS_E_PROVAS_2026-11-03.json
+- Tracker: https://github.com/contaos999999/develop/blob/main/docs/prompts/PLANO_SANEAMENTO_39_PROMPTS_2026-11-03.json
+- Dossiês dos PROMPTs 00–38: https://github.com/contaos999999/develop/tree/main/docs/prompts/evidencias_individuais
 - ADR oficial: `docs/frontend/ADR-DEV-001-GITHUB-DIRETO.md` e `AGENTS.md`.
 
 **Obrigatório:** verificar HEAD da branch `main` de ambos os repositórios, commits recentes, diff desde último checkpoint, CI do SHA atual, issues abertas e hash do `types.ts`. **O estado real dos repositórios tem precedência sobre o snapshot desta página e sobre a memória do chat.** Não atualizar o backend pela IA Lovable.
@@ -35,14 +35,14 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 
 | Área | Identificação e estado |
 | --- | --- |
-| Frontend | `contaos9999/contaos-hml-control`, branch `main`; HEAD verificado antes da ADR: `174512a2d2cc978f9c04da54bd8096ad2e47408d` (o SHA **muda** com este documento) |
-| Backend/documentação | `contaos9999/develop`, branch `main`; último HEAD observado: `75a62cce775989017c7723b9206b3358161b40a3` |
+| Frontend | `contaos999999/contaos-hml-control`, branch `main`; HEAD verificado antes da ADR: `174512a2d2cc978f9c04da54bd8096ad2e47408d` (o SHA **muda** com este documento) |
+| Backend/documentação | `contaos999999/develop`, branch `main`; último HEAD observado: `75a62cce775989017c7723b9206b3358161b40a3` |
 | Supabase HML | Projeto `gklhhhyosgasnyoxlrui`; PROD proibido |
 | Lovable, somente visualização/sincronização | Projeto `b113dd59-6caf-4c92-8302-457a037a0c6f`; https://lovable.dev/projects/b113dd59-6caf-4c92-8302-457a037a0c6f |
 | Tipos Supabase | `src/integrations/supabase/types.ts` bloqueado no blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` |
-| Auto-Lock | Regeneração indevida do Lovable foi **reparada automaticamente**, workflow https://github.com/contaos9999/contaos-hml-control/actions/runs/41725182728 |
-| CI frontend | Último SHA imutável auditado sem alteração funcional `c36c9c817ec97948885acbf8330181d6a7e325e9`, CI SUCCESS https://github.com/contaos9999/contaos-hml-control/actions/runs/41720206213. Push do Lovable com types divergente `4f8326...` teve CI FAIL https://github.com/contaos9999/contaos-hml-control/actions/runs/41725182737 **antes do Auto-Lock**; o commit do bot restaurou o arquivo, mas deve ser verificado novo CI conforme a regra. |
-| CI backend | `75a62cce775989017c7723b9206b3358161b40a3` SUCCESS https://github.com/contaos9999/develop/actions/runs/41726627573 |
+| Auto-Lock | Regeneração indevida do Lovable foi **reparada automaticamente**, workflow https://github.com/contaos999999/contaos-hml-control/actions/runs/41725182728 |
+| CI frontend | Último SHA imutável auditado sem alteração funcional `c36c9c817ec97948885acbf8330181d6a7e325e9`, CI SUCCESS https://github.com/contaos999999/contaos-hml-control/actions/runs/41720206213. Push do Lovable com types divergente `4f8326...` teve CI FAIL https://github.com/contaos999999/contaos-hml-control/actions/runs/41725182737 **antes do Auto-Lock**; o commit do bot restaurou o arquivo, mas deve ser verificado novo CI conforme a regra. |
+| CI backend | `75a62cce775989017c7723b9206b3358161b40a3` SUCCESS https://github.com/contaos999999/develop/actions/runs/41726627573 |
 | Inventário | **39 prompts** `00–38` e **416 critérios** originais; **não há documentação de 49 itens**. Não inventar dez pendências. |
 | Provas parciais | 15 prompts de backend têm migrations aplicadas e RLS presente; HML: 117/117 tabelas públicas RLS, 183 policies. Matriz registra **36 gates com PASS delimitado** e **69 gates de responsividade com evidência visual MOCK**; nenhuma certificação integral universal. |
 | Frontend | 23 telas SYS01–ADM01 e V1-01–V1-17 implementadas; 812 testes em 28 arquivos no CI aprovado do SHA `ad0b933...`. Teste C visual reportou **23/23 sem falha**, 184 capturas base + 70 extras (**254**), todas originais efêmeras em `/tmp`, sem pacote de imagens durável. |
@@ -51,8 +51,8 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 
 ## 3. Pendências documentadas, sem fingir encerramento
 
-- Frontend: https://github.com/contaos9999/contaos-hml-control/issues/6 — teste flutuante ADM-01; https://github.com/contaos9999/contaos-hml-control/issues/2 — E2E ADM-01; https://github.com/contaos9999/contaos-hml-control/issues/5 — E2E cadastro contratante.
-- Backend/governança: https://github.com/contaos9999/develop/issues/33 — SYS03 e-mail real; https://github.com/contaos9999/develop/issues/34 — arquivar 254 capturas e contraste WCAG; https://github.com/contaos9999/develop/issues/35 — duas identidades HML e contratos de teste para RLS A/B.
+- Frontend: https://github.com/contaos999999/contaos-hml-control/issues/6 — teste flutuante ADM-01; https://github.com/contaos999999/contaos-hml-control/issues/2 — E2E ADM-01; https://github.com/contaos999999/contaos-hml-control/issues/5 — E2E cadastro contratante.
+- Backend/governança: https://github.com/contaos999999/develop/issues/33 — SYS03 e-mail real; https://github.com/contaos999999/develop/issues/34 — arquivar 254 capturas e contraste WCAG; https://github.com/contaos999999/develop/issues/35 — duas identidades HML e contratos de teste para RLS A/B.
 - Seis WARN de SECURITY DEFINER requerem verificação contextual de acesso, não revogação automática. Proteção contra senha vazada desabilitada no Auth requer painel administrativo/credenciais.
 - Teste C com dados MOCK **não** homologa controles de acesso reais nem leitura/escrita efetiva. Qualquer evidência externa que não estiver acessível deve ser rotulada NÃO VERIFICADA.
 - Toda correção frontend deve ser feita **no GitHub, sem BUILD do Lovable**. O Lovable pode continuar regenerando `types.ts` internamente; conferir sempre o blob e o Auto-Lock.
@@ -66,7 +66,7 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 
 ## 5. Texto pronto para colar no novo chat
 
-> Continue o projeto ContaOS 4.1 **de onde parou**, sem reiniciar nem presumir o contexto antigo. A decisão oficial **ADR-DEV-001** estabelece frontend corrigido/programado **diretamente no GitHub** `contaos9999/contaos-hml-control`, backend **somente Supabase HML** `gklhhhyosgasnyoxlrui` e Lovable **somente sincronização/visualização**. Primeiro leia `AGENTS.md`, `docs/frontend/ADR-DEV-001-GITHUB-DIRETO.md` e `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md` no GitHub frontend, depois o tracker das 39 etapas, os 39 dossiês, a matriz dos 416 critérios e as issues abertas no `contaos9999/develop`. Confira os HEADs e CI atuais antes de qualquer mudança. Nunca altere PROD, não regenere `types.ts` (blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`), respeite o PRD 4.1, BRAND-01, Zero-Drift, TDD, Teste C e rastreabilidade. Resolva autonomamente a próxima pendência concreta, com correção, testes, commit e evidências por prompt, e atualize o checkpoint. Só me consulte se houver bloqueio real não solucionável.
+> Continue o projeto ContaOS 4.1 **de onde parou**, sem reiniciar nem presumir o contexto antigo. A decisão oficial **ADR-DEV-001** estabelece frontend corrigido/programado **diretamente no GitHub** `contaos999999/contaos-hml-control`, backend **somente Supabase HML** `gklhhhyosgasnyoxlrui` e Lovable **somente sincronização/visualização**. Primeiro leia `AGENTS.md`, `docs/frontend/ADR-DEV-001-GITHUB-DIRETO.md` e `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md` no GitHub frontend, depois o tracker das 39 etapas, os 39 dossiês, a matriz dos 416 critérios e as issues abertas no `contaos999999/develop`. Confira os HEADs e CI atuais antes de qualquer mudança. Nunca altere PROD, não regenere `types.ts` (blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`), respeite o PRD 4.1, BRAND-01, Zero-Drift, TDD, Teste C e rastreabilidade. Resolva autonomamente a próxima pendência concreta, com correção, testes, commit e evidências por prompt, e atualize o checkpoint. Só me consulte se houver bloqueio real não solucionável.
 
 ## 6. Segurança da passagem entre chats
 
@@ -78,24 +78,35 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 
 > **REGRA DE RETOMADA ADR-DEV-002**: antes de corrigir qualquer frontend, ler `docs/frontend/ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md` e `docs/frontend/planos/PLANO_ATIVO.json`; realizar PROMPT → PLAN → validação (com gate registrado em commit + CI) → BUILD apenas frontend → CI → Teste C independente. Nenhuma alteração de backend, Supabase, migrations, RLS, RPC, Storage, Auth, Edge ou PROD. Caso fora de escopo, parar e comunicar.
 
-> **OBSERVAÇÃO DE AUTORIZAÇÃO BACKEND:** se identificar possível lacuna backend, no novo chat solicitar permissão específica antes de acessar o fluxo `contaos9999/develop` para confirmar. Nunca interpretar instruções gerais de continuidade como essa permissão.
+> **OBSERVAÇÃO DE AUTORIZAÇÃO BACKEND:** se identificar possível lacuna backend, no novo chat solicitar permissão específica antes de acessar o fluxo `contaos999999/develop` para confirmar. Nunca interpretar instruções gerais de continuidade como essa permissão.
 
 
 ## 03/11/2026 — Auditoria de paridade Lovable × GitHub e reforço do gate
 - Parecer: `docs/frontend/AUDITORIA_PARIDADE_LOVABLE_GITHUB_2026-11-03.md`.
-- PLAN documentado: `docs/frontend/planos/GOV_001_PARIDADE_LOVABLE_GITHUB_2026-11-03.md`, CI https://github.com/contaos9999/contaos-hml-control/actions/runs/41732038105 **SUCCESS**.
-- BUILD exclusivo de governança frontend: commit `21416e1685f00344cd7e8e790a507fbfed3a53cc`, 13/13 testes do guard, 812/812 Vitest, lint/TS/build/Zero-Drift CI https://github.com/contaos9999/contaos-hml-control/actions/runs/41733336741 **SUCCESS**.
+- PLAN documentado: `docs/frontend/planos/GOV_001_PARIDADE_LOVABLE_GITHUB_2026-11-03.md`, CI https://github.com/contaos999999/contaos-hml-control/actions/runs/41732038105 **SUCCESS**.
+- BUILD exclusivo de governança frontend: commit `21416e1685f00344cd7e8e790a507fbfed3a53cc`, 13/13 testes do guard, 812/812 Vitest, lint/TS/build/Zero-Drift CI https://github.com/contaos999999/contaos-hml-control/actions/runs/41733336741 **SUCCESS**.
 - Fontes canônicas `00–20 + 08A–08D`: snapshot `docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json`; crosswalk 100 regulares, 97 atômicos, mas não 100% execução.
 - Lovable sincronizado ao mesmo SHA `21416e1685f00344cd7e8e790a507fbfed3a53cc` em consulta realizada após o CI; autor de frontend = GitHub, Lovable não usado em BUILD.
-- Backend `contaos9999/develop` não alterado, HEAD `cb65f4980f4eeca6ccd33caf6198a801b7e60328`; types blob certificado. `PLANO_ATIVO.json` ainda `SEM_PLANO_ATIVO`.
+- Backend `contaos999999/develop` não alterado, HEAD `cb65f4980f4eeca6ccd33caf6198a801b7e60328`; types blob certificado. `PLANO_ATIVO.json` ainda `SEM_PLANO_ATIVO`.
 - PENDENTE para equivalência operacional plena: Teste C independente durável sem IA Lovable, sessões HML reais A/B, branch protection, conferência humana/HEAD upstream a cada plano.
 - Próxima tarefa funcional frontend exige novo PLAN validado, CI prévio e allowlist; **não modificar Supabase sem autorização humana específica**.
 
 ## GOV-002 — Quatro controles de equivalência Lovable → GitHub
 
-- **Branch exclusiva de governança:** `governance/quatro-gates-20261103`, PR #11 https://github.com/contaos9999/contaos-hml-control/pull/11. PLAN `docs/frontend/planos/GOV_002_QUATRO_GATES_2026-11-03.md`, commit somente documental `fa872871eb25472a55366bcc20d4752fb172497a`, CI do PLAN https://github.com/contaos9999/contaos-hml-control/actions/runs/41735578730 SUCCESS.
+- **Branch exclusiva de governança:** `governance/quatro-gates-20261103`, PR #11 https://github.com/contaos999999/contaos-hml-control/pull/11. PLAN `docs/frontend/planos/GOV_002_QUATRO_GATES_2026-11-03.md`, commit somente documental `fa872871eb25472a55366bcc20d4752fb172497a`, CI do PLAN https://github.com/contaos999999/contaos-hml-control/actions/runs/41735578730 SUCCESS.
 - **Teste C:** `.github/workflows/contaos-teste-c-independente.yml`, runner `scripts/testc/visual-audit.mjs` e teste unitário. 23 telas × 4 larguras × 2 temas; acesso sem credenciais; PNG somente públicos e estados de negação, hashes e relatórios em artifact por 30 dias. Sem sessão real, drawer e autorização A/B continuam NÃO VERIFICADOS. Como executar: `docs/frontend/GUIA_TESTEC_E_FONTES_2026-11-03.md`.
 - **Fonte viva:** `scripts/context-freshness-gate.mjs`, verificação de HEAD/25 documentos/catálogo 100/97. O titular precisa configurar Secret `CONTAOS_CANONICAL_READ_TOKEN` read-only, restrito ao repositório normativo `develop`. Sem isso, BUILD funcional deve FAIL fechado. **A fonte normativa não foi alterada**.
 - **Proteção de branch:** `docs/frontend/GUIA_PROTECAO_GITHUB_2026-11-03.md`, depende de admin/plano compatível e ajuste prévio do Auto-Lock para não bloquear a recuperação do `types.ts`. Não declarar ativada antes da prova real.
 - **HML real:** `docs/frontend/HML_E2E_PRECONDICOES_2026-11-03.md`; nenhuma conta/contrato/arquivo criado, autorização específica pendente antes de qualquer teste de escrita, inspeção do backend ou acesso a dados.
-- **Intocáveis:** `src/**`, `public/**`, `package.json`, `bun.lock`, `types.ts` certificado, todos os objetos Supabase HML, repositório `contaos9999/develop` e PROD. Retomar frontend funcional somente com PLAN por prompt 00–99 + atômicos 000–096 e CI/BRAND-01/Zero-Drift.
+- **Intocáveis:** `src/**`, `public/**`, `package.json`, `bun.lock`, `types.ts` certificado, todos os objetos Supabase HML, repositório `contaos999999/develop` e PROD. Retomar frontend funcional somente com PLAN por prompt 00–99 + atômicos 000–096 e CI/BRAND-01/Zero-Drift.
+
+## Atualização GOV-003 — 03/11/2026
+- Organização GitHub conectada: `contaos999999`. Frontend `contaos999999/contaos-hml-control`; repositório normativo `contaos999999/develop` (somente leitura).
+- PLAN GOV-003: `docs/frontend/planos/GOV_003_RULESET_AUTOLOCK_CANONICO_2026-11-03.md`; PR de governança rascunho #14, sem merge e sem modificação de backend/PROD.
+- Auto-Lock planejado por branch+PR com CI obrigatório e **0 revisões humanas obrigatórias** por decisão do titular; não fazer bypass da proteção da main. Verificar permissões Actions e checks reais de CI após BUILD.
+- O secret `CONTAOS_CANONICAL_READ_TOKEN`, enforcement do ruleset, regras de branch sem revisão humana obrigatória e E2E autenticado A/B são **NÃO VERIFICADOS** enquanto não houver evidência direta. O backend e os dados HML permanecem intocados.
+
+### Decisão de governança do titular — 03/11/2026
+- O titular optou por operar a organização com um único colaborador e **Required approvals = 0** no ruleset. Exigir PR, checks verdes, bloquear exclusão/force push, nenhuma exceção ampla de bypass. Não inventar evidência de aprovação humana. Aprovações excepcionais previstas para modificações sensíveis BRAND-01/escopo específico permanecem gates distintos.
+- A restauração de types.ts não poderá fazer push direto na main; o bot abre PR, solicita CI e não executa merge automaticamente. O merge pelo titular não requer segundo revisor, mas só é permitido com CI e regras efetivas.
+- HML A/B fora do escopo desta tarefa a pedido do titular; não executar testes do Supabase.

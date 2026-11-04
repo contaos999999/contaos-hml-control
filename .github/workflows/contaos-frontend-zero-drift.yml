@@ -25,6 +25,8 @@ jobs:
           fetch-depth: 0
       - name: Autoteste do guard (casos permitidos e proibidos)
         run: node --test scripts/frontend-scope-gate.test.mjs
+      - name: Verificar contrato de seguranca do Auto-Lock por PR
+        run: node --test scripts/types-autolock-workflow.test.mjs
       - name: Verificar fronteira frontend/backend e PLAN validado prévio
         env:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -36,6 +38,13 @@ jobs:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           CONTAOS_CANONICAL_READ_TOKEN: ${{ secrets.CONTAOS_CANONICAL_READ_TOKEN }}
         run: node scripts/context-freshness-gate.mjs
+      - name: GOV-003 — exigir token valido e fonte viva antes do merge
+        if: ${{ github.event_name == 'pull_request' && startsWith(github.head_ref, 'governance/gov-003-') }}
+        env:
+          CONTAOS_FORCE_CANONICAL_CHECK: "1"
+          CONTAOS_CANONICAL_READ_TOKEN: ${{ secrets.CONTAOS_CANONICAL_READ_TOKEN }}
+        run: |
+          node scripts/context-freshness-gate.mjs
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
       - name: Install frozen dependencies

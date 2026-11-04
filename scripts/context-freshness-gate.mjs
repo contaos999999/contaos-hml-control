@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const SOURCE = "contaos9999/develop";
+const SOURCE = "contaos999999/develop";
 const SNAPSHOT = "docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json";
 const PLAN = "docs/frontend/planos/PLANO_ATIVO.json";
 const sha40 = (v) => /^[a-f0-9]{40}$/.test(v || "");
@@ -87,17 +87,22 @@ async function github(path, token) {
   return await response.json();
 }
 
+export function shouldCheckSource(paths, plan, force = false) {
+  return force || mustCheck(paths, plan);
+}
+
 export async function main() {
   const snapshot = JSON.parse(readFileSync(SNAPSHOT, "utf8"));
   const plan = JSON.parse(readFileSync(PLAN, "utf8"));
-  if (!mustCheck(changedPaths(), plan)) {
+  const force = process.env.CONTAOS_FORCE_CANONICAL_CHECK === "1";
+  if (!shouldCheckSource(force ? [] : changedPaths(), plan, force)) {
     console.log("FONTE CANÔNICA: N/A (governança documental sem PLAN validado nem BUILD).");
     return;
   }
   const token = process.env.CONTAOS_CANONICAL_READ_TOKEN?.trim();
   if (!token) {
     throw new Error(
-      "FONTE CANÔNICA BLOQUEADA: configure Secret CONTAOS_CANONICAL_READ_TOKEN, Contents:read somente contaos9999/develop. Não envie o token ao chat.",
+      "FONTE CANÔNICA BLOQUEADA: configure Secret CONTAOS_CANONICAL_READ_TOKEN, Contents:read somente contaos999999/develop. Não envie o token ao chat.",
     );
   }
   const branch = await github("/branches/main", token);

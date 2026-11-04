@@ -8,14 +8,20 @@ on:
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch: {}
+
+# O bot não altera main diretamente e nunca faz aprovação ou merge automático.
+# 'actions: write' é necessário apenas para disparar CI na branch do PR;
+# PRs criados por GITHUB_TOKEN não disparam workflows pull_request automaticamente.
 permissions:
   contents: write
+  pull-requests: write
+  actions: write
 concurrency:
   group: contaos-types-autolock-main
   cancel-in-progress: false
 jobs:
   protect-types:
-    name: Restaurar types.ts certificado quando houver drift
+    name: Abrir PR para restaurar types.ts certificado quando houver drift
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -36,7 +42,7 @@ jobs:
           golden="$(mktemp)"
           fixture="$(mktemp)"
           trap 'rm -f "$golden" "$fixture"' EXIT
-          git show "${CERTIFIED_SOURCE_COMMIT}:${LOCKED_PATH}" > "$golden"
+          git show "$CERTIFIED_SOURCE_COMMIT:$LOCKED_PATH" > "$golden"
           [[ "$(git hash-object "$golden")" == "$CERTIFIED_TYPES_BLOB" ]]
           cp "$golden" "$fixture"
           printf '%s' '// DRIFT_CONTROLADO_APENAS_EM_TMP' >> "$fixture"
@@ -55,53 +61,74 @@ jobs:
           echo "current_blob=$actual" >> "$GITHUB_OUTPUT"
           if [[ "$actual" != "$CERTIFIED_TYPES_BLOB" ]]; then
             echo 'drift=true' >> "$GITHUB_OUTPUT"
-            echo "DRIFT DETECTADO: $actual; iniciando recuperacao auditada."
+            echo "DRIFT DETECTADO: $actual; criar proposta de reparo via PR."
           else
             echo 'drift=false' >> "$GITHUB_OUTPUT"
-            echo 'LOCK-TYPES-01: arquivo ja integro no main.'
+            echo 'LOCK-TYPES-01: arquivo ja integro na main.'
           fi
       - name: Setup Bun apenas quando houver drift
         if: steps.detect.outputs.drift == 'true'
         uses: oven-sh/setup-bun@v2
-      - name: Restauracao controlada com suite antes do push
+      - name: Preparar reparo certificado e abrir PR sem merge automatico
         if: steps.detect.outputs.drift == 'true'
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           golden="$(mktemp)"
           trap 'rm -f "$golden"' EXIT
-          git show "${CERTIFIED_SOURCE_COMMIT}:${LOCKED_PATH}" > "$golden"
+          git show "$CERTIFIED_SOURCE_COMMIT:$LOCKED_PATH" > "$golden"
           [[ "$(git hash-object "$golden")" == "$CERTIFIED_TYPES_BLOB" ]]
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          for attempt in 1 2 3; do
-            git fetch origin main
-            git switch -C types-autolock origin/main
-            current="$(git hash-object "$LOCKED_PATH")"
-            if [[ "$current" == "$CERTIFIED_TYPES_BLOB" ]]; then
-              echo 'Arquivo reparado por outra execucao, nenhuma escrita.'
-              exit 0
-            fi
-            repair_count="$(git log --since='60 minutes ago' --format='%s' | grep -c '^fix(types-autolock): restaurar blob imutavel$' || true)"
-            if (( repair_count >= 3 )); then
-              echo 'CIRCUIT BREAKER: tres restauros na ultima hora; possivel loop de plataforma.' >&2
-              exit 1
-            fi
-            cp "$golden" "$LOCKED_PATH"
-            [[ "$(git hash-object "$LOCKED_PATH")" == "$CERTIFIED_TYPES_BLOB" ]]
-            node scripts/frontend-zero-drift.mjs
-            bun install --frozen-lockfile
-            bunx vitest run --maxWorkers=1
-            bunx tsc --noEmit -p .
-            bunx vite build
-            node scripts/frontend-zero-drift.mjs
-            git add -- "$LOCKED_PATH"
-            git commit -m 'fix(types-autolock): restaurar blob imutavel'
-            if git push origin HEAD:main; then
-              echo 'LOCK-TYPES-01: restauro publicado apos testes completos PASS.'
-              exit 0
-            fi
-            echo "Concorrencia no push da tentativa $attempt; retomando origin/main." >&2
-          done
-          echo 'Falha apos tres tentativas; proibido push forcado.' >&2
-          exit 1
+
+          # Um PR de reparo aberto deve passar pelo CI; nao duplicar nem mesclar automaticamente.
+          existing="$(gh pr list --state open --base main --json headRefName,number --jq '[.[] | select(.headRefName | startswith("autolock/types-certified-"))] | length')"
+          if (( existing > 0 )); then
+            echo "JA EXISTE PR de restauro pendente ($existing). Conferir CI; nenhuma escrita."
+            exit 0
+          fi
+
+          git fetch origin main
+          git switch -C types-autolock origin/main
+          if [[ "$(git hash-object "$LOCKED_PATH")" == "$CERTIFIED_TYPES_BLOB" ]]; then
+            echo 'Outro processo restaurou o arquivo; nenhuma escrita.'
+            exit 0
+          fi
+          repair_count="$(git log --since='60 minutes ago' --format='%s' | grep -c '^fix(types-autolock): restaurar blob imutavel$' || true)"
+          if (( repair_count >= 3 )); then
+            echo 'CIRCUIT BREAKER: tres restauracoes na ultima hora; requer revisao humana.' >&2
+            exit 1
+          fi
+
+          main_before="$(git rev-parse origin/main)"
+          cp "$golden" "$LOCKED_PATH"
+          [[ "$(git hash-object "$LOCKED_PATH")" == "$CERTIFIED_TYPES_BLOB" ]]
+          node scripts/frontend-zero-drift.mjs
+          bun install --frozen-lockfile
+          bunx vitest run --maxWorkers=1
+          bunx tsc --noEmit -p .
+          bunx vite build
+          node scripts/frontend-zero-drift.mjs
+          git add -- "$LOCKED_PATH"
+          git commit -m 'fix(types-autolock): restaurar blob imutavel'
+
+          # Se a base mudou durante os testes, falhar fechado em vez de PR obsoleto.
+          git fetch origin main
+          if [[ "$(git rev-parse origin/main)" != "$main_before" ]]; then
+            echo 'MAIN ALTERADA durante a suite. Nenhuma escrita; reexecutar o Auto-Lock.' >&2
+            exit 1
+          fi
+
+          repair_branch="autolock/types-certified-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          git push origin "HEAD:refs/heads/$repair_branch"
+          gh pr create --base main --head "$repair_branch" \
+            --title 'fix(types-autolock): propor restauro do blob certificado' \
+            --body "Reparo restrito a src/integrations/supabase/types.ts, restaurado ao blob certificado \`$CERTIFIED_TYPES_BLOB\`. Testes executados antes da publicação. Sem aprovação humana obrigatória (0 revisões); exigir CI verde e ruleset, sem bypass e sem merge automático pelo bot. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          echo 'PR de reparo aberto, sem merge nem bypass da main.'
+
+          # GITHUB_TOKEN não dispara CI pull_request para PR que ele próprio cria.
+          # Disparar workflow_dispatch somente na branch do reparo.
+          gh workflow run contaos-frontend-zero-drift.yml --ref "$repair_branch"
+          echo 'CI Zero-Drift solicitado na mesma branch; conferir os checks no PR.'

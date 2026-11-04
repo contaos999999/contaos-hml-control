@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { checkSnapshot, mustCheck } from "./context-freshness-gate.mjs";
+import { checkSnapshot, mustCheck, shouldCheckSource } from "./context-freshness-gate.mjs";
 
 const source = JSON.parse(readFileSync("docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json", "utf8"));
 const items = [
@@ -49,6 +49,28 @@ test("PLAN validado exige confirmação mesmo sem alteração em src", () => {
 test("autorrestauração types.ts não investiga backend", () => {
   assert.equal(
     mustCheck(["src/integrations/supabase/types.ts"], { status: "SEM_PLANO_ATIVO" }),
+    false,
+  );
+});
+
+test("vermelho: fonte antiga contaos9999/develop não é canônica", () => {
+  const snapshot = clone();
+  snapshot.source_repo = "contaos9999/develop";
+  assert.match(checkSnapshot(snapshot, source.source_commit, items).join(" "), /origem/);
+});
+test("verde: repositório privado da organização é a fonte fixa", () => {
+  assert.equal(source.source_repo, "contaos999999/develop");
+  assert.equal(source.source_branch, "main");
+  assert.deepEqual(checkSnapshot(clone(), source.source_commit, items), []);
+});
+
+test("GOV-003: verificação forçada exige fonte viva mesmo em alteração documental", () => {
+  assert.equal(
+    shouldCheckSource(["docs/frontend/nota.md"], { status: "SEM_PLANO_ATIVO" }, true),
+    true,
+  );
+  assert.equal(
+    shouldCheckSource(["docs/frontend/nota.md"], { status: "SEM_PLANO_ATIVO" }, false),
     false,
   );
 });
