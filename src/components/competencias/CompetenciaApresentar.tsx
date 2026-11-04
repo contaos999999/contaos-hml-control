@@ -218,7 +218,7 @@ export function CompetenciaApresentar({ id }: { id: string }) {
             </p>
           </section>
         )}
-        {!valido || estado.tipo === "nao_encontrado" ? (
+        {concluido ? null : (!valido || estado.tipo === "nao_encontrado") ? (
           <Mensagem>Competência não encontrada ou indisponível.</Mensagem>
         ) : estado.tipo === "carregando" ? (
           <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
