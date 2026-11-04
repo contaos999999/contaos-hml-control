@@ -46,6 +46,12 @@ jobs:
       - name: Instalar dependencias congeladas
         if: steps.scope.outputs.required == 'true'
         run: bun install --frozen-lockfile
+      - name: Cache do Chromium Playwright 1.64.1
+        if: steps.scope.outputs.required == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-contaos-playwright-chromium-1.64.1
       - name: Instalar Playwright isolado, sem atualizar package/lock
         if: steps.scope.outputs.required == 'true'
         shell: bash
