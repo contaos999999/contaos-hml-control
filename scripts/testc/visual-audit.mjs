@@ -31,6 +31,7 @@ export const ROUTES = [
   { id: "V115", path: "/competencias/" + UUID + "/documentos" },
   { id: "V116", path: "/competencias/" + UUID + "/analise" },
   { id: "V117", path: "/competencias/" + UUID + "/analise", requiresDrawer: true },
+  { id: "V118", path: "/competencias/" + UUID + "/parecer" },
 ];
 export function cases() {
   return ROUTES.flatMap((route) =>

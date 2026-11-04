@@ -15,12 +15,22 @@ import {
   pixelContrastDecision,
 } from "./visual-audit.mjs";
 
-test("matriz oficial: 23 telas × 4 larguras × 2 temas", () => {
-  assert.equal(ROUTES.length, 23);
+test("matriz oficial: 24 telas × 4 larguras × 2 temas", () => {
+  assert.equal(ROUTES.length, 24);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
-  assert.equal(cases().length, 184);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 184);
+  assert.equal(cases().length, 192);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 192);
+});
+test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
+  const rota = ROUTES.find((r) => r.id === "V118");
+  assert.ok(rota, "A superfície V118 deve existir no Teste C");
+  assert.equal(rota.path, "/competencias/00000000-0000-4000-8000-000000000001/parecer");
+  assert.notEqual(rota.public, true);
+  assert.equal(
+    classifyProtected({ pathname: rota.path, text: "Parecer interno" }),
+    "NAO_VERIFICADO_SESSAO_REAL",
+  );
 });
 test("public gate PASS somente para métricas comprovadas", () => {
   assert.deepEqual(publicGate({ http: 200, lang: "pt-BR", h1: 1, overflow: 0, pageErrors: 0 }), []);

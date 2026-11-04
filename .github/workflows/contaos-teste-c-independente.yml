@@ -76,7 +76,7 @@ jobs:
           echo "Servidor Teste C indisponível."
           tail -n 60 "$RUNNER_TEMP/testc-vite.log"
           exit 1
-      - name: Teste C Playwright — 23 telas, 4 larguras, 2 temas
+      - name: Teste C Playwright — 24 telas, 4 larguras, 2 temas
         if: steps.scope.outputs.required == 'true'
         shell: bash
         env:
