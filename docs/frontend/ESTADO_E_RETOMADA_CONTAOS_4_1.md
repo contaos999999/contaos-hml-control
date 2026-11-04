@@ -3,6 +3,19 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT DE CONTINUIDADE — GOV-017 FINAL E GOV-019 VITEST, 04/11/2026
+
+**Última main confirmada antes deste experimento:** `contaos999999/contaos-hml-control/main@953ee28c95230d75a128ffed852d30060a7533a2`. Fonte canônica: `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` (25/25, 100/97), `types.ts` certificado Git blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`.
+
+- **GOV-017:** PLAN PR #34; gate PR #38; BUILD PR #39 (head validado `2babc39ebb82089ddb7a1dfb17ae450d82c46521`; dois checks SUCCESS, CI run `41874233461`), merge `ab2a10dffa590416dc1bdbc0e57c7405db7d9708`. SVG branco transparente aplicado a `ContaOSMarca` com original preservado; BRAND V1-18 PASS estático, HML autenticado **NÃO VERIFICADO**. Teste C 192 combinações, 24 capturas, artefato `contaos-teste-c-41874233461-1` ID `13345847149`.
+- **GOV-019 PLAN:** PR #40 com dois checks SUCCESS e merge `953ee28c95230d75a128ffed852d30060a7533a2`; documento `docs/frontend/planos/GOV_019_VITEST_2_WORKERS_2026-11-04.md`.
+- **GOV-019 ensaio:** PR #41 run `41875827954`, três execuções independentes de `bunx vitest run --maxWorkers=2`: 828/828 testes em 29 arquivos por execução, 65s, 65s e 63s instrumentados, 3/3 PASS; CI completo SUCCESS, dois checks SUCCESS. Adoção em commit posterior `50c488e4e0c6f90d806353993dd3b15941d9ef59` volta a UMA suite com 2 workers; **exigir novo CI dos commits finais** antes de merge, não declarar permanente até HEAD confirmado.
+- **Próxima tarefa após CI final + merge do GOV-019:** PROMPT regular **40** / tela **V1-19 Wizard de apresentação** `/competencias/:id/apresentar`, atômicos **000 e 067**, fonte original `Manual_Mestre_Prompts_4_1_100_PRD_original.docx` lida; RPCs tipadas `aprovar_apresentacao` e `registrar_apresentacao`, idempotência, `allowed_actions.apresentar` por `obter_visao_geral_competencia`. Criar PLAN, gate, BUILD e Teste C; crivo BRAND pós-módulo; não alterar backend/PROD/constantes certificadas.
+- **Proteções:** ruleset `ContaOS-Zero-Drift-main` dois checks, PRs separados; backend Supabase único e fonte de autorização; não afirmar HML E2E real sem credenciais e provas; nenhuma refatoração de infraestrutura fora dos planos.
+- **Checkpoint de rollback:** usar PR para restaurar `--maxWorkers=1` se detectar flakiness/perda de cobertura no futuro.
+
+---
+
 ## CHECKPOINT ATUAL — GOV-017 BRAND TRANSPARENTE E AUDITORIA V1-18, 04/11/2026
 
 **Antes do BUILD:** `contaos999999/contaos-hml-control/main@ca74b9555a46f0de8f01020b8cb779f412fcee40`; fonte normativa `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` (25/25, prompts 100/97); `types.ts` bloqueado em `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`.
