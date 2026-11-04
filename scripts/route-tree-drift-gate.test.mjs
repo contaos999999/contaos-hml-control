@@ -18,7 +18,17 @@ function ambiente() {
   git(cwd, "init", "--quiet");
   writeFileSync(arquivo, "// generated: canonical\n");
   git(cwd, "add", ".");
-  git(cwd, "-c", "user.name=ContaOS Teste", "-c", "user.email=teste@example.invalid", "commit", "--quiet", "-m", "fixture");
+  git(
+    cwd,
+    "-c",
+    "user.name=ContaOS Teste",
+    "-c",
+    "user.email=teste@example.invalid",
+    "commit",
+    "--quiet",
+    "-m",
+    "fixture",
+  );
   return { cwd, arquivo, close: () => rmSync(cwd, { recursive: true, force: true }) };
 }
 function executar(cwd) {
@@ -30,7 +40,9 @@ test("GOV-020 PASS: árvore versionada e reproduzível sem alteração", () => {
     const r = executar(env.cwd);
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout, /GOV-020 PASS/);
-  } finally { env.close(); }
+  } finally {
+    env.close();
+  }
 });
 test("GOV-020 FAIL: alteração do nome ou ordem da rota gerada", () => {
   const env = ambiente();
@@ -41,7 +53,9 @@ test("GOV-020 FAIL: alteração do nome ou ordem da rota gerada", () => {
     assert.match(r.stderr, /GOV-020 FAIL/);
     assert.match(r.stderr, /generated: reordered/);
     assert.match(r.stderr, /antes do PR/i);
-  } finally { env.close(); }
+  } finally {
+    env.close();
+  }
 });
 test("GOV-020 FAIL: arquivo gerado removido", () => {
   const env = ambiente();
@@ -50,17 +64,31 @@ test("GOV-020 FAIL: arquivo gerado removido", () => {
     const r = executar(env.cwd);
     assert.equal(r.status, 1);
     assert.match(r.stderr, /GOV-020 FAIL/);
-  } finally { env.close(); }
+  } finally {
+    env.close();
+  }
 });
 test("GOV-020 FAIL: arquivo gerado novo ainda não versionado", () => {
   const env = ambiente();
   try {
     git(env.cwd, "rm", "-q", "src/routeTree.gen.ts");
-    git(env.cwd, "-c", "user.name=ContaOS Teste", "-c", "user.email=teste@example.invalid", "commit", "--quiet", "-m", "remove fixture");
+    git(
+      env.cwd,
+      "-c",
+      "user.name=ContaOS Teste",
+      "-c",
+      "user.email=teste@example.invalid",
+      "commit",
+      "--quiet",
+      "-m",
+      "remove fixture",
+    );
     mkdirSync(join(env.cwd, "src"), { recursive: true });
     writeFileSync(env.arquivo, "// generated: untracked\n");
     const r = executar(env.cwd);
     assert.equal(r.status, 1);
     assert.match(r.stderr, /não está versionado/);
-  } finally { env.close(); }
+  } finally {
+    env.close();
+  }
 });
