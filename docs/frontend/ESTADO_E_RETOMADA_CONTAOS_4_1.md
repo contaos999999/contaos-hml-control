@@ -3,6 +3,17 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — DECISÃO TITULAR: HML A/B PÓS-PROMPT 99, FACULTATIVO (04/11/2026)
+
+**Baseline confirmado antes deste registro:** frontend `contaos999999/contaos-hml-control/main@a70591bf89189bdf87c474061e2b91717533adab` (PR #48 integrado), normativo `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`; verificar HEADs novamente em cada retomada. Último módulo funcional integrado: **PROMPT 40/V1-19**; próxima atividade: **PROMPT 41/V1-20**.
+
+- **DECISÃO EXPRESSA:** o teste operacional de RLS real no Supabase HML com usuários de organizações A/B, comprovando impedimento de acesso cruzado, fica **FACULTATIVO, NÃO BLOQUEANTE, PARA DEPOIS DA EXECUÇÃO DO PROMPT REGULAR 99**. Não será pré-condição de GATE/BUILD/frontend entre prompts 41–99. Regra registrada em `docs/frontend/governanca/DECISAO_RLS_HML_AB_POS_PROMPT_99_2026-11-04.md` e suplemento ADR-DEV-002.
+- **Não confundir prova com dispensa de segurança:** isolamento de tenant, autoridade de RLS, contratos tipados certificados, auth, validação por frontend, nenhum secret, proibição de IDOR e fallback de privilégios, TDD, CI, Teste C, 97 atômicos e BRAND-01 **continuam gates obrigatórios**. Teste operacional HML A/B permanece **NÃO VERIFICADO**; um FAIL real de segurança impede merge. Não afirmar HML/PROD certificado. Nenhuma intervenção no Supabase está autorizada por esta decisão.
+- **PROMPT 41:** PLAN e fontes originais integrados PRs #46–#48; fonte original literal certificada; matriz de triagem 97 IDs; tipos `apresentacoes_contratante`, `pacotes_competencia`, `itens_pacote_competencia` confirmados no `types.ts` blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`. O teste externo A/B **não bloqueia mais** o PLAN, mas validação técnica remanescente, GATE independente de `PLANO_ATIVO.json` e CI ainda são necessários; o manifesto continua PROMPT 40 até atualização específica.
+- **Próxima tarefa:** integrar este registro documental por PR e dois checks verdes; avaliar gates remanescentes do PLAN 41 e, se PASS, abrir GATE separado. Sem alteração de backend, produção, Lovable BUILD nem código de aplicação nesta decisão.
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — PROMPT 41 FONTE ORIGINAL AUTENTICADA, 04/11/2026
 
 **Frontend antes desta auditoria:** `contaos999999/contaos-hml-control/main@c8c599dede97d68b22af86b7909567ed8d5179a4` (PR #47 integrado). **Repositório normativo:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`; fonte canônica permanece preservada. Conferir HEAD novo a cada retomada.

@@ -111,3 +111,10 @@ Fonte original SHA-256 regular 41 `8a15d96568d021ac86fdd45e79038e2cb969d69c12b2e
 ### Espelho da fonte para próximas conversas
 
 Arquivo GitHub: `docs/frontend/fontes/PROMPT_41_V120_TEXTO_ORIGINAL_VERIFICADO_2026-11-04.md`. Fonte regular 41 autenticada por SHA-256; a exigência de texto original do prompt está resolvida, preservando os gates de contrato RLS e segurança ainda NÃO VERIFICADOS.
+
+
+## L. Decisão do titular: ensaio operacional RLS HML A/B diferido e não bloqueante
+
+**Decisão posterior de 04/11/2026, prevalece somente quanto à obrigatoriedade temporal do ensaio A/B:** o titular dispensou a execução antecipada da prova RLS multi-organização no Supabase HML e determinou sua análise **facultativa depois do PROMPT regular 99**, sem bloquear a continuidade de PLAN/GATE/BUILD dos prompts 41–99. Fonte GitHub: `docs/frontend/governanca/DECISAO_RLS_HML_AB_POS_PROMPT_99_2026-11-04.md`. O histórico anterior deste documento registrava a ausência da prova RLS como bloqueio; **essa condição isolada deixa de ser bloqueio sob a decisão expressa**, sem que se converta a evidência em PASS.
+
+Para V1-20: a verificação tipada de `apresentacoes_contratante`, `pacotes_competencia` e `itens_pacote_competencia`, a fonte literal regular 41, a triagem dos 97 atômicos, a allowlist, BRAND-01, TDD, validação de tratamento 401/403/404, proteção de dados, consulta somente leitura, Teste C e CI **continuam obrigatórios**. Nenhum acesso ou isolamento operacional HML A/B será alegado como validado. **PLAN não fica automaticamente VALIDADO**: falta consolidar uma avaliação técnica final de todos os controles restantes e, se PASS, emitir GATE documental separado antes do BUILD.
