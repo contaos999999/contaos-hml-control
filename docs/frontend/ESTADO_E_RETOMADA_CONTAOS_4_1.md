@@ -3,6 +3,16 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — REVALIDAÇÃO DO GATE 42 APÓS CORREÇÃO DOCUMENTAL (04/11/2026)
+
+- CI do primeiro BUILD #59 encontrou `FRONTEND SCOPE FAIL: PLAN sem cláusula ZERO-DRIFT literal`, sem chegar a regressão; Teste C detectou corretamente routeTree não gerado. Não alterar nem flexibilizar guard.
+- PLAN original #57 integrado, GATE original #58 integrado. Correção literal de PLAN #60 **integrada** na `main@7721577cf4c43fe94f8f923e085a08c016fa746e`, run [41916280531](https://github.com/contaos999999/contaos-hml-control/actions/runs/41916280531) **dois checks SUCCESS**. Frase canônica agora inclui `(OBRIGATÓRIO)`.
+- GATE revalidado na branch `gate/revalidate-prompt42-plan-literal-20261104`, `PLANO_ATIVO.json` continua 42/VALIDADO e aponta para CI corrigido #41916280531; **BUILD antigo #59 não é apto**, pois o primeiro commit de `src/**` antecede esse PLAN. Não usar rebase/force push e não integrar #59.
+- Próxima ação: CI e merge deste GATE corrigido; criar branch de BUILD **nova** a partir do merge do GATE; portar pelo GitHub somente os arquivos de aplicativo permitidos do #59 e a saída **exata** do gerador TanStack, comprovada no job Teste C da execução antiga (#41916018778, esperado blob `9ec0210`). Executar qualidade, TDD, Teste C 216 casos com dois SUCCESS no SHA final. Não repetir PROMPT 41.
+- RLS HML A/B operacional: **NÃO VERIFICADO, FACULTATIVO DEPOIS DO REGULAR 99, NÃO BLOQUEANTE ISOLADAMENTE**; todo o resto continua obrigatório.
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — PROMPT 42/V1-21 GATE EM PR (04/11/2026)
 
 - PLAN PROMPT 42 / V1-21 histórico do contrato **integrado** pelo [PR #57](https://github.com/contaos999999/contaos-hml-control/pull/57), merge `8f0a4ebba23f0a1047d831559633c54b9439e6de`; CI documental [#41913182521](https://github.com/contaos999999/contaos-hml-control/actions/runs/41913182521), dois checks SUCCESS. Frontend main basal `8f0a4ebba23f0a1047d831559633c54b9439e6de`; fonte normativa `develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`.
