@@ -3,6 +3,12 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — PROMPT 41 GATE ATIVADO EM PR, 04/11/2026
+
+O PR #50 PLAN V1-20 teve HEAD `5bc4162b88b60a970a7138c60783f7719718a363`, dois checks SUCCESS no run 41901870132 e merge na main `69182d1317cac3fa6a6fb88cd8423f834d89ce96`. A validação técnica e allowlist de 10 caminhos constam em `docs/frontend/planos/PROMPT_41_V1_20_VALIDACAO_TECNICA_2026-11-04.md`. O ramo `gate/prompt-41-v120-validado-20261104` atualizou `PLANO_ATIVO.json` para PROMPT 41, com gates planejados PASS, fontes originais e crosswalk comprovados, **condicionado a CI do PR de GATE e integração normal à main**. Não editar `src/**` antes desse merge. A prova real RLS HML A/B permanece NÃO VERIFICADA e facultativa após regular 99, sem ser impedimento isolado de BUILD; demais segurança e Teste C continuam obrigatórios. Backend, PROD, types.ts e BRAND não foram alterados. Último BUILD funcional integrado continua V1-19 PR #44. Próxima tarefa: CI e merge do GATE, branch BUILD 41, TDD/regressão/Teste C independente, evidências e novo checkpoint com HEAD real.
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — DECISÃO TITULAR: HML A/B PÓS-PROMPT 99, FACULTATIVO (04/11/2026)
 
 **Baseline confirmado antes deste registro:** frontend `contaos999999/contaos-hml-control/main@a70591bf89189bdf87c474061e2b91717533adab` (PR #48 integrado), normativo `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`; verificar HEADs novamente em cada retomada. Último módulo funcional integrado: **PROMPT 40/V1-19**; próxima atividade: **PROMPT 41/V1-20**.

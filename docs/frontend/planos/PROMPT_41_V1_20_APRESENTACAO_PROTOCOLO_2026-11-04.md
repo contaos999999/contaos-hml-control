@@ -122,3 +122,11 @@ Para V1-20: a verificação tipada de `apresentacoes_contratante`, `pacotes_comp
 ## M. Consolidação de validação e allowlist
 
 O parecer de validação técnica e a lista fechada de arquivos do BUILD V1-20 estão no arquivo `docs/frontend/planos/PROMPT_41_V1_20_VALIDACAO_TECNICA_2026-11-04.md`. O ensaio HML A/B é facultativo pós-PROMPT 99, permanece NÃO VERIFICADO e não condiciona os demais gates. O PLAN ainda depende do CI deste PR e do GATE separado de `PLANO_ATIVO.json` para liberar edição funcional.
+
+## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+
+Aplicar exclusivamente ContaOS Brand v1.0, tokens e componentes aprovados, incluindo logomarca oficial transparente e contexto BRAND-01. Não criar cores, tipografia, logos, páginas globais ou UI paralelas. Reutilizar, estender somente se necessário, criar apenas o mínimo autorizado na allowlist. Desenvolver por GitHub direto; Lovable exclusivamente sincronização e conferência, não executar IA de BUILD. Exigir TDD, Zero-Drift, segurança, quatro larguras (1440/1280/768/390), dois temas, acessibilidade, textos PT-BR, formato de Brasília, Teste C independente somente leitura com SHA e evidências. Se houver desvio de marca, necessidade de backend ou alteração de escopo, reprovar/replanejar antes de editar. A prova RLS real HML A/B segue NÃO VERIFICADA, facultativa pós-PROMPT 99 e não bloqueante apenas para essa prova operacional, conforme decisão do titular.
+
+## N. PARECER FINAL DO PLAN — liberado somente após CI e GATE separadamente
+
+A revisão técnica encerrada no PR #50 concluiu documentação e allowlist fechada no arquivo `docs/frontend/planos/PROMPT_41_V1_20_VALIDACAO_TECNICA_2026-11-04.md`; o próprio PR #50 recebeu ambos checks SUCCESS no HEAD `5bc4162b88b60a970a7138c60783f7719718a363`, merge `69182d1317cac3fa6a6fb88cd8423f834d89ce96`. A fonte original e o contrato tipado estão demonstrados, os 97 atômicos passaram por triagem de aplicabilidade e o ensaio A/B foi diferido. **Para efeito de PLAN pré-BUILD**, gates de PRD/arquitetura/brand/segurança de desenho/RNF/TDD/teste planejado/rollback são PASS, com RLS real A/B explicitamente NÃO VERIFICADO e não exigível nesta fase. O BUILD somente será autorizado após merge/CI do PR de GATE que registra `PLANO_ATIVO.json` 41 VALIDADO. Não confundir essa aprovação do plano com aprovação da implementação.
