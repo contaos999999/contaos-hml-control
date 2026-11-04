@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   AlertCircle, ArrowLeft, CheckCircle2, ClipboardCheck, Clock3,
-  FileText, Loader2, Lock, RefreshCw, SearchX, ShieldAlert,
+  FileText, Loader2, Lock, RefreshCw, ShieldAlert,
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
