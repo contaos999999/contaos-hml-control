@@ -64,6 +64,48 @@ export function contrastAssessment(scan) {
   if ((scan.passes || []).some((v) => v.id === "color-contrast")) return "PASS_AUTOMATIZADO";
   return "NAO_APLICAVEL_SEM_TEXTO";
 }
+
+export function sanitizeContrastDiagnostics(items) {
+  if (!Array.isArray(items)) return [];
+  const allowedReasons = new Set([
+    "bgGradient", "bgImage", "bgOverlap", "fgAlpha",
+    "elmPartiallyObscured", "elmPartiallyObscuring",
+    "outsideViewport", "pseudoContent", "colorParse",
+    "shortTextContent", "equalRatio", "undetermined",
+  ]);
+  const safeTag = (x) =>
+    /^[a-z][a-z0-9-]{0,22}$/i.test(String(x || ""))
+      ? String(x).toLowerCase()
+      : "desconhecido";
+  const safeColor = (x) => {
+    const value = String(x || "").trim();
+    if (/^(transparent|#[a-f0-9]{3,8})$/i.test(value)) return value;
+    if (/^(rgb|rgba|oklch|oklab|color)\([0-9.a-z\s,%/+-]{1,90}\)$/i.test(value)) return value;
+    return "NAO_INFORMADO";
+  };
+  const safeNumber = (x) => {
+    const v = Number.parseFloat(String(x));
+    return Number.isFinite(v) && v >= 0 && v <= 1000 ? v : null;
+  };
+  return items.slice(0, 24).map((item) => ({
+    tag: safeTag(item?.tag),
+    color: safeColor(item?.color),
+    fontSizePx: safeNumber(item?.fontSize),
+    fontWeight: safeNumber(item?.fontWeight),
+    opacity: safeNumber(item?.opacity),
+    reasonCodes: (Array.isArray(item?.reasonCodes) ? item.reasonCodes : [])
+      .filter((x) => allowedReasons.has(x))
+      .slice(0, 8),
+    layers: (Array.isArray(item?.layers) ? item.layers : []).slice(0, 7).map((layer) => ({
+      tag: safeTag(layer?.tag),
+      backgroundColor: safeColor(layer?.backgroundColor),
+      hasBackgroundImage: layer?.hasBackgroundImage === true,
+      hasBackdropFilter: layer?.hasBackdropFilter === true,
+      opacity: safeNumber(layer?.opacity),
+    })),
+  }));
+}
+
 export function classifyProtected({ pathname, text }) {
   if (pathname === "/login") return "ACESSO_NEGADO_REDIRECIONADO";
   if (/acesso negado|sem permissão|não tem acesso|faça login|sessão expirada/i.test(text)) {
@@ -185,11 +227,62 @@ async function run() {
                 impact: v.impact || "unknown",
                 nodes: v.nodes.length,
               });
+              const contrastNodes = result.incomplete
+                .filter((rule) => rule.id === "color-contrast")
+                .flatMap((rule) => rule.nodes)
+                .map((node) => {
+                  const checks = [...(node.any || []), ...(node.all || []), ...(node.none || [])];
+                  const reasons = checks.map((check) => {
+                    const message = String(check.message || "");
+                    if (/gradient/i.test(message)) return "bgGradient";
+                    if (/background image|image node/i.test(message)) return "bgImage";
+                    if (/overlap/i.test(message)) return "bgOverlap";
+                    if (/partially obscured/i.test(message)) return "elmPartiallyObscured";
+                    if (/partially obscuring/i.test(message)) return "elmPartiallyObscuring";
+                    if (/alpha|transparen/i.test(message)) return "fgAlpha";
+                    if (/viewport/i.test(message)) return "outsideViewport";
+                    if (/pseudo/i.test(message)) return "pseudoContent";
+                    if (/short text/i.test(message)) return "shortTextContent";
+                    if (/1:1 contrast/i.test(message)) return "equalRatio";
+                    return "undetermined";
+                  });
+                  let el = null;
+                  try {
+                    const target = node.target?.[0];
+                    if (typeof target === "string") el = document.querySelector(target);
+                  } catch {
+                    // Selectors de shadow root não são gravados nem expostos.
+                  }
+                  const style = el ? getComputedStyle(el) : null;
+                  const layers = [];
+                  let ancestor = el;
+                  while (ancestor && layers.length < 7) {
+                    const computed = getComputedStyle(ancestor);
+                    layers.push({
+                      tag: ancestor.tagName.toLowerCase(),
+                      backgroundColor: computed.backgroundColor,
+                      hasBackgroundImage: computed.backgroundImage !== "none",
+                      hasBackdropFilter: computed.backdropFilter !== "none",
+                      opacity: computed.opacity,
+                    });
+                    ancestor = ancestor.parentElement;
+                  }
+                  return {
+                    tag: el?.tagName.toLowerCase() || "desconhecido",
+                    color: style?.color,
+                    fontSize: style?.fontSize,
+                    fontWeight: style?.fontWeight,
+                    opacity: style?.opacity,
+                    reasonCodes: reasons,
+                    layers,
+                  };
+                });
               return {
                 axeVersion: result.testEngine.version,
                 violations: result.violations.map(summary),
                 incomplete: result.incomplete.map(summary),
                 passes: result.passes.map(summary),
+                contrastNodes,
               };
             });
           } catch {
@@ -202,6 +295,7 @@ async function run() {
             contrast: contrastAssessment(axeScan),
             violations: axeScan?.violations || [],
             incomplete: axeScan?.incomplete || [],
+            contrastDiagnostics: sanitizeContrastDiagnostics(axeScan?.contrastNodes),
             scanCompleted: Boolean(axeScan),
           };
           record.outcome = record.publicAssertions.length ? "FAIL_PUBLICO" : "PASS_PUBLICO";
@@ -262,6 +356,10 @@ async function run() {
     public_a11y_scanned: logs.filter((x) => x.a11y?.scanCompleted).length,
     public_wcag_violation_rules: logs.reduce((n, x) => n + (x.a11y?.violations?.length || 0), 0),
     public_wcag_incomplete_rules: logs.reduce((n, x) => n + (x.a11y?.incomplete?.length || 0), 0),
+    public_contrast_unresolved_nodes: logs.reduce(
+      (n, x) => n + (x.a11y?.contrastDiagnostics?.length || 0),
+      0,
+    ),
     wcag_full_certification: "NAO_VERIFICADO_EXIGE_SESSAO_REAL_E_REVISAO_MANUAL",
     verdict: logs.some((x) => x.outcome === "FAIL_PUBLICO")
       ? "FAIL"
