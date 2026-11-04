@@ -3,6 +3,23 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — PROMPT 40 / V1-19 INTEGRADO, 04/11/2026
+
+**Estado oficial verificado no GitHub:** `contaos999999/contaos-hml-control/main@2bc2696b1272cce74f6aaaae4dd608751b469f5b` (PR #44 integrado); backend normativo `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`, snapshot 25/25, 100 prompts regulares e 97 atômicos, `src/integrations/supabase/types.ts` blob imutável `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`.
+
+- **GOV-017** logomarca transparente concluída, PR #39 merge `ab2a10dffa590416dc1bdbc0e57c7405db7d9708`. V1-18 usou marca oficial e tokens do Design System em revisão estática; visual HML autenticado NÃO VERIFICADO.
+- **GOV-018** CI em paralelo e cache Chromium concluído, PRs #35–37, sem repetir.
+- **GOV-019** Vitest 2 workers concluído, PR #41 merge `ca5bc8db579a6788ad2b6778c2b7b83f23b223cb`, 3 ensaios de 29 arquivos/828 testes PASS, configuração permanente `--maxWorkers=2`.
+- **PROMPT 40/V1-19 PLAN** PR #42 integrado no merge `7aa9324ad1a9f505a1c2d9490608dd539c2c684e`; **GATE** PR #43 integrado no merge `222ca3128732e504737c7e0db7221be094b4b327` com PLANO_ATIVO 40/atômicos 000 e 067; ambos dois checks verdes.
+- **PROMPT 40/V1-19 BUILD** PR [#44](https://github.com/contaos999999/contaos-hml-control/pull/44) integrado na main `2bc2696b1272cce74f6aaaae4dd608751b469f5b`, head testado `ef128b9825da14af5e82eb51b09d8d65ce6ddc51`, CI [run #41885026808](https://github.com/contaos999999/contaos-hml-control/actions/runs/41885026808), **dois check-runs SUCCESS no mesmo SHA**. Vitest 30 arquivos/841 testes PASS, TypeScript PASS, produção build PASS, Zero-Drift/Brand PASS, scope gate 12 files e nenhum backend modificado. Teste C **200 combinações e 24 capturas**, classificação `PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA`, artefato `contaos-teste-c-41885026808-1`, ID `13351920495`, hash e somente leitura PASS.
+- **Correções efetuadas no BUILD:** lint Prettier, TypeScript params opcionais RPC, meta index signature, e sincronização exata de `src/routeTree.gen.ts` com TanStack Router; commit final do reparo `ef128b9825da14af5e82eb51b09d8d65ce6ddc51`. Não repetir nem inventar backends.
+- **Segurança operacional:** E2E HML com sessão real de aprovador, organização cruzada/RLS e confirmação real de criação de pacote no backend **NÃO VERIFICADOS**. CI/estáticos/mocks não equivalem a produção aprovada.
+- **CI push pós-merge:** run `41885691797` disparado no SHA `2bc2696b1272cce74f6aaaae4dd608751b469f5b`. No registro inicial do checkpoint status final pendente; confirmar antes de considerar a integração operacional completamente auditada.
+- **Próxima tarefa comprovada:** identificar no manual original o PROMPT regular **41/V1-20** (Apresentação/protocolo) e criar PLAN PR separado, respeitando 000/BRAND-01, fonte canônica e pré-gate; não implementar sem contrato normativo. Atualizar este checkpoint e os HEADs antes de eventual nova conversa.
+- **Dossiê oficial:** `docs/frontend/auditorias/PROMPT_40_V119_IDENTIDADE_E_TESTES_2026-11-04.md`. **Rollback:** PR específico e testes de regressão, sem apagar aprovações, pacotes ou apresentações no Supabase.
+
+---
+
 ## CHECKPOINT ATUAL — PROMPT 40 / V1-19, 04/11/2026
 
 **Última HEAD comprovada antes do BUILD:** `contaos999999/contaos-hml-control/main@222ca3128732e504737c7e0db7221be094b4b327`; backend/fonte canônica `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Fonte 25/25 e catálogo 100/97 sem deriva, `types.ts` Git blob certificado `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`, não alterar.

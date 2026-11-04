@@ -33,4 +33,14 @@
 4. Após CI e merge, atualizar checkpoint `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md` com SHA real, run, evidências e próxima tarefa.
 5. Rollback apenas por PR para desfazer navegação e rota e regressão, sem tocar no Supabase ou nos registros de apresentação já confirmados.
 
-**Resultado final do BUILD:** PENDENTE até CI e Teste C do PR e validação de HEAD.
+## RESULTADO INTEGRADO — VERIFICAÇÃO FINAL EM 04/11/2026
+
+**PROMPT 40 / V1-19 integrado e comprovado no GitHub.** PR [#44](https://github.com/contaos999999/contaos-hml-control/pull/44), head final de BUILD `ef128b9825da14af5e82eb51b09d8d65ce6ddc51`, dois check-runs obrigatórios `completed/success` no próprio SHA; merge `2bc2696b1272cce74f6aaaae4dd608751b469f5b`, confirmado como `main HEAD` pela API de branches. CI do PR: [run #41885026808](https://github.com/contaos999999/contaos-hml-control/actions/runs/41885026808).
+
+- **Qualidade:** job `126767069446` SUCCESS, 18:13:44Z–18:14:56Z, Vitest **30 arquivos/841 testes PASS** (duração reportada 42,78s), TypeScript typecheck PASS, build PASS, ZERO-DRIFT PASS, BRAND-01 PASS e `FRONTEND SCOPE PASS: 12 arquivos modificados; 8 do aplicativo sob PLAN prevalidado; nenhuma mudança backend`. `src/integrations/supabase/types.ts` e assets oficiais preservados.
+- **Teste C independente:** job `126767070050` SUCCESS, 18:13:44Z–18:16:59Z. Log: `PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA, 200 combinações, 24 capturas; HML real NÃO VERIFICADO`. `git diff --exit-code` e check “Teste C somente leitura: PASS”; cache Chromium HIT. Evidência arquivada `contaos-teste-c-41885026808-1`, artifact ID **13351920495**, tamanho **2.165.803 bytes**, não expirado no momento da verificação. A etapa ainda possui nome legado “24 telas” no workflow; **a cobertura real executada são 25 rotas × 4 larguras × 2 temas = 200 casos, comprovada pelo log**.
+- **Desvios resolvidos, sem bypass:** lint Prettier no teste da matriz (commit `83b7a373436ba3bbca75ab53130e0651134ffb47`); TypeScript `exactOptionalPropertyTypes` nos args das RPCs e index signature dos metadados (commits `82d117814681327ff93e75595e0d72df5950d732`, `1e4585f5fdf530cba93016e37c0ce4bc74e04ef0`); gerador TanStack Router alterava `src/routeTree.gen.ts` durante Teste C, reparado em commit `ef128b9825da14af5e82eb51b09d8d65ce6ddc51` com hash Git idêntico à saída gerada. Todo CI repetido e aprovado no SHA final.
+- **Pós-merge:** run `41885691797` no SHA main `2bc2696b1272cce74f6aaaae4dd608751b469f5b` iniciado. Seu desfecho **não estava confirmado na redação inicial deste relatório**; não presumir verde sem verificar o run.
+- **Limites:** testes autenticados HML multi-usuário/RLS e avaliação visual privada com sessões reais permanecem **NÃO VERIFICADOS**. Testes de mocks e redirecionamentos de rotas privadas não substituem prova real de autorização de aprovação e congelamento do pacote.
+- **Próxima tarefa funcional:** ler fonte original do PROMPT 41/V1-20 e iniciar PLAN separado; não repetir PROMPT 40, backend ou GOV-019. Sem autodeclarar prontidão para produção.
+
