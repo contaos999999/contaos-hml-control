@@ -165,7 +165,7 @@ describe("PROMPT 39 — contrato e fail closed", () => {
     const r = Route as unknown as { path: string; options: { ssr: boolean; head: () => { meta: Array<Record<string, string>> } } };
     expect(r.path).toBe("/competencias_/$id_/parecer");
     expect(r.options.ssr).toBe(false);
-    expect(r.options.head().meta.some((x) => x.name === "robots" && x.content === "noindex")).toBe(true);
+    expect(r.options.head().meta.some((x) => x["name"] === "robots" && x["content"] === "noindex")).toBe(true);
   });
   it("renderiza parecer e histórico RLS sem liberar portão local", async () => {
     render(<CompetenciaParecer id={ID} />);
