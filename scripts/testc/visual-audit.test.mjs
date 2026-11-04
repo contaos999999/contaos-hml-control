@@ -37,9 +37,11 @@ test("PROMPT 40: V119 privada integra 200 casos sem certificar sessão real", ()
   assert.ok(rota);
   assert.equal(rota.path, "/competencias/00000000-0000-4000-8000-000000000001/apresentar");
   assert.notEqual(rota.public, true);
-  assert.equal(classifyProtected({ pathname: rota.path, text: "Wizard de apresentação" }),
-    "NAO_VERIFICADO_SESSAO_REAL");
-  assert.equal(cases().filter(c => c.id === "V119").length, 8);
+  assert.equal(
+    classifyProtected({ pathname: rota.path, text: "Wizard de apresentação" }),
+    "NAO_VERIFICADO_SESSAO_REAL",
+  );
+  assert.equal(cases().filter((c) => c.id === "V119").length, 8);
 });
 
 test("public gate PASS somente para métricas comprovadas", () => {
