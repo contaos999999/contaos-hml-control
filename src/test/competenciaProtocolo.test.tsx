@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const m = vi.hoisted(() => ({
   requests: [] as Array<{ table: string; method: string; key?: string; value?: unknown }>,
-  replies: {} as Record<string, { data: unknown; error: unknown; status: number; count?: number }>,
+  replies: {} as Record<string, { data: unknown; error: unknown; status: number; count?: number | undefined }>,
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
