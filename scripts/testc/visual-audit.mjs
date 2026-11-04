@@ -82,9 +82,7 @@ export function sanitizeContrastDiagnostics(items) {
     "undetermined",
   ]);
   const safeTag = (x) =>
-    /^[a-z][a-z0-9-]{0,22}$/i.test(String(x || ""))
-      ? String(x).toLowerCase()
-      : "desconhecido";
+    /^[a-z][a-z0-9-]{0,22}$/i.test(String(x || "")) ? String(x).toLowerCase() : "desconhecido";
   const safeColor = (x) => {
     const value = String(x || "").trim();
     if (/^(transparent|#[a-f0-9]{3,8})$/i.test(value)) return value;
@@ -104,15 +102,13 @@ export function sanitizeContrastDiagnostics(items) {
     reasonCodes: (Array.isArray(item?.reasonCodes) ? item.reasonCodes : [])
       .filter((x) => allowedReasons.has(x))
       .slice(0, 8),
-    layers: (Array.isArray(item?.layers) ? item.layers : [])
-      .slice(0, 7)
-      .map((layer) => ({
-        tag: safeTag(layer?.tag),
-        backgroundColor: safeColor(layer?.backgroundColor),
-        hasBackgroundImage: layer?.hasBackgroundImage === true,
-        hasBackdropFilter: layer?.hasBackdropFilter === true,
-        opacity: safeNumber(layer?.opacity),
-      })),
+    layers: (Array.isArray(item?.layers) ? item.layers : []).slice(0, 7).map((layer) => ({
+      tag: safeTag(layer?.tag),
+      backgroundColor: safeColor(layer?.backgroundColor),
+      hasBackgroundImage: layer?.hasBackgroundImage === true,
+      hasBackdropFilter: layer?.hasBackdropFilter === true,
+      opacity: safeNumber(layer?.opacity),
+    })),
   }));
 }
 
