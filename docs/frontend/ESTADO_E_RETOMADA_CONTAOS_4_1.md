@@ -3,13 +3,13 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
-## 0. ESTADO VIVO — atualizado em 04/11/2026 após GOV-004 e revisão GOV-006
+## 0. ESTADO VIVO — atualizado em 04/11/2026 após GOV-003 a GOV-007
 
 **Estas informações prevalecem sobre snapshots históricos mais abaixo; conferir HEADs e checks a cada novo chat.**
 
 | Item | Última confirmação no GitHub |
 | --- | --- |
-| Frontend canônico | `contaos999999/contaos-hml-control`, `main` no commit `f9b46b9e07823bb291a1c5efe2a67dfd23e36727` (baseline deste GOV-005) |
+| Frontend canônico | `contaos999999/contaos-hml-control`, `main` no commit `1d4d3488b801e5a8c30875b8588e7cc80063558a` (baseline anterior ao PR #20; verificar HEAD ao retomar) |
 | Backend normativo | `contaos999999/develop`, branch `main`, `cb65f4980f4eeca6ccd33caf6198a801b7e60328` (somente leitura para frontend) |
 | PLAN funcional | `docs/frontend/planos/PLANO_ATIVO.json` = `SEM_PLANO_ATIVO`; não editar src/public/config sem PLAN validado e CI anterior |
 | Fonte canônica | `FONTE CANÔNICA PASS`, 25 documentos e catálogo 100/97 no run do PR #14; revalidar a cada BUILD |
@@ -34,6 +34,28 @@
 - Lovable projeto `b113dd59-6caf-4c92-8302-457a037a0c6f` informa latest commit `b8ca8b99...`, GitHub estava em `79eec9b8...` antes do GOV-006. Compare confirmou **37 commits sem diff funcional em src/public**; não declarar sync atualizado no Lovable até nova verificação explícita.
 - Ações futuras: mensuração de contraste WCAG e estados públicos, preservação de evidências além de 30 dias, sincronização/metadados Lovable, teste de criação PR Auto-Lock em ambiente isolado e (em projeto separado autorizado) autenticação HML A/B. Não confundir equivalência normativa com homologação 100% dos requisitos.
 - GOV-006 é **somente documental**: PLAN registrado e CI validado; nenhuma mudança em frontend funcional, Supabase ou PROD.
+
+## GOV-008 — Estado de paridade GitHub × Lovable, com provas e limites
+
+**Referência temporal:** 04/11/2026. **Este bloco complementa a seção 0; os commits nele são baselines históricos, não instruções para ignorar o HEAD futuro.**
+
+| Eixo | Evidência confirmada | Estado |
+| --- | --- | --- |
+| GOV-006 | PR #18 mesclado, SHA `bd832cda02cb2c2d1a7041020909724ae70d62f5`; parecer comparativo atualizado na seção 7 de `AUDITORIA_PARIDADE_LOVABLE_GITHUB_2026-11-03.md` | PASS documental |
+| GOV-007 | PR #19 mesclado, SHA `1d4d3488b801e5a8c30875b8588e7cc80063558a`; auditoria WCAG instrumentada `axe-core@4.14.0` no Teste C Playwright | PASS de implantação |
+| TDD e CI GOV-007 | TDD RED `41767892283`; CI com navegação real `41768441317`; CI do SHA final `41769282629` com ambos os jobs SUCCESS | PASS no escopo testado |
+| Teste C público WCAG | 184 combinações; 24 testes públicos com 0 regras de violação automática confirmadas, mas `color-contrast` **INCOMPLETE em 24/24** (12 nós por combinação); 160 casos protegidos sem sessão | PASS somente no escopo público com contraste NÃO VERIFICADO e HML NÃO VERIFICADO |
+| Artefato novo | Actions `13294825132` (`41769282629`), prazo confirmado até `02/02/2027`; evidências sob hash `SHA256SUMS` | Retenção de 90 dias, **não arquivo permanente** |
+| Hash de código funcional | SHA Git `src`: `34f9be40ac4167867b0b89362b00e02557eaa95a`; `public`: `7f72da43b4a4fbd669ca1e900a773bc18f89845b`; package `6dbe973df8f2fb6c45ef4cf544c99fbbb5141713`; lock `17b4d9861dba2e5edef0bb0933d3ab2d8daffea0`. Iguais entre commit informado pelo Lovable `b8ca8b99...` e GitHub antes do GOV-007 | Equivalência **bit a bit destes artefatos** comprovada |
+| Lovable | Knowledge do projeto `b113dd59-6caf-4c92-8302-457a037a0c6f` atualizado somente nos caminhos de `contaos999999`, sem BUILD. API Lovable continua informando `latest_commit_sha=b8ca8b99...` | Metadados de sync NÃO VERIFICADOS no SHA GitHub atual |
+| Auto-Lock | Executado sem drift (`41762615464`), restauração por fixture validada | Abertura **real** de PR por drift NÃO TESTADA |
+| Ruleset | `26495643` ACTIVE, PR obrigatório, checks obrigatórios, 0 revisões, sem bypass; rejeição real de push direto/merge com CI negativo | PASS principais; força/exclusão confirmadas por configuração, não ensaio destrutivo |
+| Backend real | Supabase HML A/B, Auth, recuperação de senha, gravação/upload sem homologação nesta trilha | NÃO VERIFICADO |
+| WCAG manual | Revisão de contraste inconclusivo, foco/teclado/leitor de tela e telas protegidas | NÃO VERIFICADO |
+
+**Decisão de qualidade:** não declarar equivalência operacional integral nem 100% do PRD 4.1 enquanto faltarem as provas acima. Não alterar o frontend visual para fazer o teste passar sem PLAN específico de BRAND-01. Não interpretar CI administrativo com `Teste C N/A` como prova de navegação. Nenhum teste HML ou PROD foi executado no GOV-006/007/008.
+
+**Próximos saneamentos prioritários:** medir e revisar manualmente os elementos `color-contrast` inconclusivos (sem suprimir falhas); homologar telas autenticadas e fluxos A/B apenas com credenciais autorizadas; arquivar evidências institucionalmente antes de `02/02/2027`; comprovar caminho real do Auto-Lock em ambiente isolado; validar atualização dos metadados do Lovable sem usar sua IA para BUILD. Antes de qualquer BUILD, reler `PLANO_ATIVO.json`, documentos normativos, ISSUE, HEADs e gates do CI.
 
 ## ADR-DEV-002 — validação obrigatória antes de qualquer BUILD
 
