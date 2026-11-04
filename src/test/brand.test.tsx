@@ -50,6 +50,7 @@ const ARQUIVOS_MARCA = [
   "src/components/competencias/CompetenciaDocumentos.tsx",
   "src/components/competencias/CompetenciaAnalise.tsx",
   "src/components/competencias/CompetenciaParecer.tsx",
+  "src/components/competencias/CompetenciaApresentar.tsx",
 ];
 
 describe("BRAND-01 — componente de marca", () => {
