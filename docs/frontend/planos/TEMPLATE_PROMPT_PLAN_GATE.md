@@ -78,3 +78,12 @@ Entregar evidências e classificar: IDENTIDADE VISUAL PASS/FAIL/NÃO VERIFICADO/
 
 
 > Nota de migração 04/11/2026: os nomes canônicos agora pertencem à organização `contaos999999`. O ruleset da main exige PR e dois status checks, com `required_approving_review_count=0`, mas aprovações de PLAN explicitamente obrigatórias (por exemplo, BRAND-01) permanecem exigíveis. Consultar `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md` antes de preencher.
+
+
+## GOV-020 — geração TanStack para prompts com rotas (OBRIGATÓRIO QUANDO APLICÁVEL)
+
+- Criará, alterará nome ou removerá arquivos de `src/routes/`? **SIM / NÃO**. Se SIM, `src/routeTree.gen.ts` deve constar na allowlist e ser gerado por `bunx vite build`, nunca editado manualmente.
+- Para BUILD de rotas, confirmar resultado real de `node scripts/route-tree-drift-gate.mjs` após o commit da árvore gerada; registrar SHA da branch e teste negativo com drift que retorne FAIL. Não criar gate PASS por evidência fictícia.
+- CI deve executar build/gerador antes dos testes longos, em seguida comparar a árvore com o Git. Teste C repete a verificação após Vite dev e preserva conferência final de integridade.
+- Se GOV-020 FAIL, PLAN/BUILD **não está pronto para integração**, mesmo com Vitest, TypeScript, browser ou build PASS. Não desabilitar o gate nem editar `routeTree.gen.ts` manualmente. Não usar `git add`/commit automáticos no CI.
+- Referência: `docs/frontend/governanca/GOV_020_GERACAO_DETERMINISTICA_ROTAS_2026-11-04.md`.
