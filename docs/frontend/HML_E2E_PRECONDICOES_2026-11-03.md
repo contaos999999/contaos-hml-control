@@ -2,7 +2,7 @@
 **Status:** PLANEJADO, NÃO EXECUTADO. Esta documentação não autoriza investigar ou alterar o Supabase.
 
 ## Antes do teste
-O responsável determinou: se surgir possível lacuna backend durante o frontend, **PARAR e pedir autorização expressa antes de acessar `contaos9999/develop` ou Supabase para investigar**. Para ensaios reais com dados de teste, pedir **autorização específica** para autenticar/criar fixtures no HML e posterior limpeza. Isso não autoriza mudar código, RLS, migrations, RPCs, Auth config, Edge ou PROD.
+O responsável determinou: se surgir possível lacuna backend durante o frontend, **PARAR e pedir autorização expressa antes de acessar `contaos999999/develop` ou Supabase para investigar**. Para ensaios reais com dados de teste, pedir **autorização específica** para autenticar/criar fixtures no HML e posterior limpeza. Isso não autoriza mudar código, RLS, migrations, RPCs, Auth config, Edge ou PROD.
 
 Condições necessárias: dois usuários de teste independentes com e-mails sob controle do titular e senhas distintas; duas organizações A e B com vínculo ativo isolado por identidade, perfis comuns sem privilégio Master; um contrato fictício de cada organização; anexos não pessoais no Storage privado existente; caixa postal de teste para redefinição. No último diagnóstico registrado havia 4 organizações, **0 contratos** e **1 vínculo ativo**. Não reconsultei o backend agora, portanto não suponho que já existem os fixtures necessários.
 
