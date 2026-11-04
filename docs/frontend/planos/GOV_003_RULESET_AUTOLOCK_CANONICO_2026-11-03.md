@@ -15,8 +15,8 @@ Após migração dos repositórios da conta pessoal `contaos9999` para a organiz
 
 ## 2. PLAN e estratégia
 - **GOV-003-P1 | Canônico:** alterar exclusivamente o nome do owner para `contaos999999` no comparador HTTP do GitHub, nos testes e no snapshot; manter commit e 25 blob SHAs inalterados, assim como catálogo 100 regulares / 97 atômicos. Ajustar o gate de escopo para aceitar apenas a nova origem e URLs de CI do novo repositório, com testes negativos para as origens antigas. Não mascarar ausência de token, divergência de HEAD nem 403.
-- **GOV-003-P2 | Auto-Lock:** retirar completamente o push direto à `main`. Preservar detecção por evento/schedule, comprovante do blob e testes de regressão; caso haja drift, criar uma branch `autolock/types-certified-<run>-<attempt>` com o arquivo **exatamente igual ao blob certificado**, publicar somente nessa branch e abrir PR normal para revisão humana, SEM merge automático, bypass amplo ou force push. Se a criação de PR por Actions estiver desabilitada, falhar com instrução administrativa. Não editar `types.ts` em `main` neste BUILD.
-- **GOV-003-P3 | Regras:** guia atualizado exigindo ruleset ativo e verificável na `main`, PR, checks efetivos do PR, impedir delete/force push, 1 revisão independente **quando houver pessoa autorizada**. Não ativar nem alegar revisão obrigatória sem revisor distinto do autor. Verificação real/alteração do ruleset requer administração pelo titular, não há ação disponível no conector.
+- **GOV-003-P2 | Auto-Lock:** retirar completamente o push direto à `main`. Preservar detecção por evento/schedule, comprovante do blob e testes de regressão; caso haja drift, criar uma branch `autolock/types-certified-<run>-<attempt>` com o arquivo **exatamente igual ao blob certificado**, publicar somente nessa branch e abrir PR normal com **0 revisões obrigatórias**, SEM merge automático, bypass amplo ou force push. Se a criação de PR por Actions estiver desabilitada, falhar com instrução administrativa. Não editar `types.ts` em `main` neste BUILD.
+- **GOV-003-P3 | Regras:** guia atualizado exigindo ruleset ativo e verificável na `main`, PR, checks efetivos do PR, impedir delete/force push e configurar **0 aprovações obrigatórias**, decisão expressa do titular que não convidará colaborador. Nunca simular revisão humana. Verificação real/alteração do ruleset requer administração pelo titular, não há ação disponível no conector.
 - **GOV-003-P4 | Segredos:** orientar token fine-grained no owner `contaos999999`, exclusivamente repo `develop`, `Contents: Read-only`; registrar em Actions no frontend com o nome exato `CONTAOS_CANONICAL_READ_TOKEN`, sem expor valor. Só declarar PASS após check real de BUILD/PLAN validado emitir `FONTE CANÔNICA PASS`, não N/A.
 - **GOV-003-P5 | Continuidade:** atualizar guias e checkpoint exclusivamente para esse escopo. URLs históricas de evidência são referências, não certificações novas.
 
@@ -34,14 +34,14 @@ Após migração dos repositórios da conta pessoal `contaos9999` para a organiz
 11. `docs/frontend/GUIA_PROTECAO_GITHUB_2026-11-03.md`.
 12. `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md`.
 
-**Proibidos:** `src/**`, `public/**`, `supabase/**`, `backend/**`, `migrations/**`, `package.json`, `bun.lock`, segredos, demais arquivos do projeto; qualquer escrita no repositório `contaos999999/develop`, Supabase HML e PROD. O Auto-Lock somente restaura o blob certificado por PR de reparo futuro e revisão humana.
+**Proibidos:** `src/**`, `public/**`, `supabase/**`, `backend/**`, `migrations/**`, `package.json`, `bun.lock`, segredos, demais arquivos do projeto; qualquer escrita no repositório `contaos999999/develop`, Supabase HML e PROD. O Auto-Lock somente propõe restaurar o blob certificado por PR de reparo futuro, com CI obrigatório e sem aprovação humana obrigatória.
 
 ## 4. TDD, critérios de aceite e rollback
 - **RED:** testes estáticos e unitários devem detectar: URL de origem antiga; URL de CI PLAN antiga; instrução de `git push origin HEAD:main`; mutação não autorizada do arquivo bloqueado; snapshots com origem incorreta. 
 - **GREEN:** validar funções do snapshot com 25 documentos preservados, 100/97 prompts, HEAD/blobs iguais; rejeitar owner antigo; nenhum push ou merge direto na `main`; abertura de PR sem bypass; CI local do guard e do workflow Auto-Lock.
 - **CI obrigatório:** GitHub Action `ContaOS Frontend Zero-Drift` (autotestes dos gates, Vitest, TypeScript, build, Zero-Drift) e `ContaOS Teste C Independente` quando acionável, com artefato do SHA. Não aceitar "teste pendente" como PASS de end-to-end.
 - **Teste prático Auto-Lock:** em cenário isolado e reversível, simular drift **apenas em fixture/branch temporária**, validar a criação do PR e que nenhum push à main foi efetuado. PR real de restauração só ocorrerá se drift real existir. Caso a política de Actions para criação de PR esteja desabilitada, reportar bloqueio e não criar bypass.
-- **Ruleset:** validar no site GitHub que PR sem revisão/checks tem merge recusado, que revisão por outro usuário autorizado desbloqueia após CI verde, e que a rotina Auto-Lock cria PR em vez de push. A ativação é **manual e posterior** à aprovação dos testes do Auto-Lock.
+- **Ruleset:** validar no site GitHub que PR com checks FAIL é bloqueado, que PR com checks SUCCESS é mesclável com zero revisões, e que a rotina Auto-Lock cria PR em vez de push direto. A ativação é **manual e posterior** à aprovação dos testes do Auto-Lock.
 - **Token vivo:** usar check em SHA de BUILD/PLAN real com `FONTE CANÔNICA PASS`; secret ausente/inválido deve bloquear. Seu conteúdo nunca aparecerá em logs/chat.
 - **Rollback:** reverter unicamente commits de GOV-003 via PR; nenhuma reversão de backend necessária.
 - **Impacto visual:** N/A; marca, tokens, rotas e UX intocados.
@@ -55,7 +55,7 @@ Após migração dos repositórios da conta pessoal `contaos9999` para a organiz
 | Origem canônica / revisão do backend | PASS documental | HEAD `cb65f498...`, catálogo blob `e54e49e626e65a9c94c81709180fd192a1f0c079` |
 | PLAN antes de BUILD | PENDENTE CI do PLAN | commit documental isolado obrigatório |
 | Testes Auto-Lock com PR real | NÃO VERIFICADO | validar em ambiente seguro |
-| Ruleset e aprovação humana | NÃO VERIFICADO | depende de administração + revisor |
+| Ruleset com 0 revisões | NÃO VERIFICADO | depende de administração; dispensa de revisor decidida pelo titular |
 | Token Actions e prova de leitura | NÃO VERIFICADO | precisa do titular, sem valor exposto |
 | E2E Supabase A/B | BLOQUEADO | falta autorização específica; fora do escopo |
 
