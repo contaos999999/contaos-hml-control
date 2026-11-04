@@ -53,8 +53,8 @@ jobs:
         run: |
           bunx eslint src/routes/__root.tsx src/components/brand/ContaOSMarca.tsx src/test/rootLocale.test.tsx src/test/brand.test.tsx scripts/frontend-zero-drift.mjs scripts/frontend-scope-gate.mjs scripts/context-freshness-gate.mjs scripts/context-freshness-gate.test.mjs scripts/testc/visual-audit.mjs scripts/testc/visual-audit.test.mjs
           bunx prettier --check scripts/frontend-zero-drift.mjs src/test/brand.test.tsx src/test/rootLocale.test.tsx
-      - name: Full regression serial
-        run: bunx vitest run --maxWorkers=1
+      - name: Full regression — Vitest 2 workers
+        run: bunx vitest run --maxWorkers=2
       - name: TypeScript typecheck
         run: bunx tsc --noEmit -p .
       - name: Production build
