@@ -138,7 +138,7 @@ describe("V1-19 — wizard de apresentação", () => {
     };
     expect(route.path).toBe("/competencias_/$id_/apresentar");
     expect(route.options.ssr).toBe(false);
-    expect(route.options.head().meta.some(x => x.title?.includes("Apresentação"))).toBe(true);
+    expect(route.options.head().meta.some(x => x["title"]?.includes("Apresentação"))).toBe(true);
   });
   it("UUID inválido não dispara Auth nem RPC", async () => {
     render(<CompetenciaApresentar id="inválido" />);
