@@ -161,8 +161,8 @@ export function CompetenciaParecer({ id }: { id: string }) {
       if (chave.current === idAntes) setAviso({ erro: true, mensagem: explicarErro(e) });
     } finally {
       ocupadoRef.current = false;
+      setOcupado(false);
       if (chave.current === idAntes) {
-        setOcupado(false);
         setDecisao(null);
         setFundamento("");
         // Reconciliar por uma leitura, inclusive após resultado ambíguo.
