@@ -23,7 +23,14 @@ vi.mock("@/integrations/supabase/client", () => ({
     },
     from: (name: string) => {
       m.from(name);
-      const query = {
+      type Query = {
+        select: () => Query;
+        eq: () => Query;
+        order: () => Query;
+        range: () => Query;
+        abortSignal: () => Promise<unknown>;
+      };
+      const query: Query = {
         select: () => query,
         eq: () => query,
         order: () => query,
