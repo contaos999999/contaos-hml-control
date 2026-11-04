@@ -21,3 +21,11 @@ A verificação automática `scripts/context-freshness-gate.mjs` usa a API GitHu
 O token é de leitura documental do GitHub: não autoriza consultas SQL, RPC/RLS, Auth, Storage nem qualquer alteração no Supabase. `src/integrations/supabase/types.ts` continua congelado.
 
 **Status GOV-003:** após a migração do owner, a correspondência SHA/25 blobs continua exigida; a configuração real e leitura do secret não podem ser inferidas de testes com resultado `N/A`. A conferência de leitura ao vivo permanece NÃO VERIFICADA até um run autorizado registrar `FONTE CANÔNICA PASS`.
+
+## GOV-007 — auditoria WCAG instrumental no Teste C independente (04/11/2026)
+
+O Teste C passou a injetar **axe-core@4.14.0** somente no navegador isolado para páginas públicas, executando verificações automáticas de WCAG A/AA por breakpoint e tema. O relatório registra regras com `violations` (FAIL público) e `incomplete` (NÃO VERIFICADO, revisão manual necessária); inclui `color-contrast` e resultados por cenário, sem armazenar conteúdo de campos ou dados de usuário. Falha de execução do axe também será FAIL, nunca aprovação presumida. Telas privadas permanecem **NÃO VERIFICADAS** sem HML autenticado; nenhuma credencial é injetada.
+
+O artefato de screenshots e `SHA256SUMS` passa a ser solicitado com retenção de **90 dias**, limitada pela política efetiva da organização. Isto **não é arquivo permanente** e não substitui migração autorizada a repositório de evidências/armazenamento restrito. Não alterar o backend ou o Lovable para contornar a ausência de sessão. A medição axe também não substitui auditoria manual de foco, ordem de teclado, percepções de contraste em imagens/gradientes, leitor de tela e estados autenticados.
+
+**Evidência anterior preservada:** run `41737621829`, artefato `13280975443`, expiração 03/12/2026, ZIP SHA256 `06dd5aaa044053ae88dc60f9e84289b6b84089d6c080140e20a051c6d47b52ec`; 25/25 SHA256SUMS internos conferidos e 24 imagens públicas. A auditoria GOV-007 não altera o histórico desse run; nova execução deverá produzir artefato separado e relatórios no SHA atual.
