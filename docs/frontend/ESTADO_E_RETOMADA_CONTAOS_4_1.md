@@ -3,6 +3,20 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT ATUAL — GOV-017 BRAND TRANSPARENTE E AUDITORIA V1-18, 04/11/2026
+
+**Antes do BUILD:** `contaos999999/contaos-hml-control/main@ca74b9555a46f0de8f01020b8cb779f412fcee40`; fonte normativa `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` (25/25, prompts 100/97); `types.ts` bloqueado em `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`.
+
+- **GOV-017 PLAN:** PR #34, 2 checks SUCCESS, merge `33f167c6b745261c5a21d7bc63aedad4ffd36fd5`.
+- **GOV-017 GATE:** PR #38, 2 checks SUCCESS, merge `ca74b9555a46f0de8f01020b8cb779f412fcee40`, PLANO_ATIVO prompt 16 / atomic 000, autorização expressa para variante SVG alpha preservando original.
+- **BUILD em andamento:** branch `build/gov-017-logo-transparente-20261104`, commits TDD test `fd15204c4c1ae3ad7a1a442de7bc4fb7dc441fb9` (RED previsto não executado isoladamente), SVG derivado `922b41b82d12bd524a25aeaf5c5890ff3778d046`, componente compartilhado `b405bb544930a38a8637129bcd21fbede342a55c`, ajuste teste `9104e190f04ead9836fbd16f41405c6fa51dcd38`, auditoria `docs/frontend/auditorias/GOV_017_BRAND_SEM_FUNDO_2026-11-04.md`. Ainda NÃO declarar GREEN antes de PR CI e Teste C.
+- **Fonte imutável do logo:** SVG branco oficial SHA-256 `099518bc6ff6b83d4380071b99410dbbbdb43805790c7ad6b0437ba16ae14c36`; derivado sem único retângulo de fundo SHA-256 `d9fa1c6f1dee18ea74f3dfe8b8ea6b8edb5100b7e863a51cf21597924030b438`; nenhuma alteração de logos certificados.
+- **Crivo V1-18:** código usa `ContaOSMarca`, tokens e componentes existentes, navegação responsiva e estados de UI; nenhum hexadecimal próprio ou fonte paralela. PASS **estático**. V1-18 autenticada HML em 1440/1280/768/390 e WCAG completo **NÃO VERIFICADO**; rotas privadas Teste C sem credenciais não representam execução autenticada.
+- **Próxima ação:** finalizar BUILD PR GOV-017 com dois checks SUCCESS e 192 cenários; arquivar evidências e integrar; só então abrir PLAN do ensaio Vitest com 2 workers (3 repetições) e, após prova, PROMPT 40/V1-19 com crosswalk 000/067, gate e BUILD, sem backend/PROD. A infraestrutura CI GOV-018 já está integrada, não repetir PR #35–37.
+- **Risco e rollback:** Se falhar, reverter exclusivamente os arquivos de escopo da correção visual em PR; registrar SHA/CI, sem bypass ou force push.
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — GOV-018 OTIMIZAÇÃO CI CONCLUÍDA, 04/11/2026
 
 **Estado comprovado:** frontend `contaos999999/contaos-hml-control/main@070022bb72c86c221f0f02898b7b9c3e3db67b9c`; backend/norma `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`; 25 fontes e catálogo 100/97, `types.ts` blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`, sem mudanças.
