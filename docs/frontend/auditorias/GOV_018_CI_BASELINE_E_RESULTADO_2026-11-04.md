@@ -25,5 +25,20 @@ PLAN: `docs/frontend/planos/GOV_018_OTIMIZAR_CI_2026-11-04.md`, PR #35, checks `
 - Se jobs não forem disponibilizados simultaneamente, classificação do ganho = NÃO VERIFICADO por limitação operacional do runner. Se os mesmos cenários tiverem falha/cobertura incompleta, não mesclar.
 - Reversão segura: PR restaurando os dois YAMLs, com duas verificações obrigatórias.
 - Fase 2 (Vitest 2 workers e Teste C 2×96 shards): não incluída; novo PLAN e testes de repetibilidade antes de alterar.
-## STATUS DE RESULTADO
-**PENDENTE de execução do PR de BUILD.** Não inventar valores futuros.
+## STATUS DE RESULTADO — EXECUÇÃO COMPROVADA E MERGE
+
+**BUILD implementado e integrado:** PR [#36](https://github.com/contaos999999/contaos-hml-control/pull/36), commit de validação `d478b5829064f53563b9136cd4cc0f0ccc436faa`; 2 check-runs do mesmo SHA **SUCCESS**; commit de merge na `main` `070022bb72c86c221f0f02898b7b9c3e3db67b9c` (confirmado via GET /branches/main).
+
+### Run A/B de PR após a alteração
+- [Run #41869470067](https://github.com/contaos999999/contaos-hml-control/actions/runs/41869470067): **SUCCESS**, finalizado às 16:42:17Z.
+- **Qualidade:** 16:39:15Z → 16:40:59Z = **104 s**, incluindo regressão Vitest **71 s**, TypeScript, build, zero-drift e verificações; check `ContaOS Frontend Zero-Drift` SUCCESS.
+- **Teste C:** 16:39:06Z → 16:42:17Z = **191 s**, incluindo Playwright 16:39:44Z → 16:42:06Z = **142 s**, instalação isolada **23 s**; check `Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente` SUCCESS.
+- **Início simultâneo comprovado:** Teste C começou 16:39:06Z e qualidade começou 16:39:15Z, diferença de apenas 9 segundos. O navegador não precisou esperar 104 s de regressão.
+- **Duração processada total:** 16:39:06Z → 16:42:17Z = **191 s (3m11s)**, contra baseline de código na main #41861082671 **321 s (5m21s)**, redução **130 s (≈40,5%)**. A diferença de hardware/disponibilidade e execução variável exige replicação, mas paralelização dos jobs foi comprovada.
+- **Integridade da auditoria:** log de Teste C `PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA, 192 combinações, 25 capturas; HML real NÃO VERIFICADO`. Artefato `contaos-teste-c-41869470067-1`, ID `13344291691`, tamanho informado **2.182.609 bytes**, não expirado no momento da conferência; upload e hash SHA256SUMS em log. `git diff --exit-code` de somente leitura PASS.
+- **Cache:** primeiro acesso declarou `Cache not found for input keys: Linux-contaos-playwright-chromium-1.64.1`; post-job declarou `Cache saved with key: Linux-contaos-playwright-chromium-1.64.1`. O ganho de 130 s **não pode ser atribuído ao cache**; medir HIT em corrida subsequente, observando que caches de branches PR e main podem ter escopos diferentes.
+- **Pós-merge:** run na `main` #41870259996 foi iniciado; na atualização deste relatório seu desfecho e cache HIT permanecem NÃO VERIFICADOS. Registrar separadamente quando houver resultados.
+
+**Cobertura e segurança preservadas:** sem alterações src/public/backend/PROD/types.ts, não houve mudança de regras, mesmo Teste C 24×4×2; status checks e ruleset inalterados; testes autenticados HML continuam não verificados.
+
+**Fase seguinte:** avaliar hit de cache no post-merge; Vitest 2 workers e split 2×96 exigem PLAN separado, provas de estabilidade e auditoria de agregação antes de entrar na main.
