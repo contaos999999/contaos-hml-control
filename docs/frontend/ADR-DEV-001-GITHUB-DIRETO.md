@@ -4,9 +4,9 @@
 
 ## Decisão oficial
 
-O desenvolvimento e as correções do frontend serão realizados **diretamente no repositório GitHub** `contaos9999/contaos-hml-control` (React + TypeScript), sem depender da IA de BUILD do Lovable. A preferência é trabalhar em branch de mudança, com PR e revisão quando tecnicamente disponível; o repositório deve sempre ser mantido em estado funcional e auditável.
+O desenvolvimento e as correções do frontend serão realizados **diretamente no repositório GitHub** `contaos999999/contaos-hml-control` (React + TypeScript), sem depender da IA de BUILD do Lovable. É obrigatório trabalhar em branch e PR para a `main`, com checks do ruleset; o repositório deve sempre ser mantido em estado funcional e auditável. A política atual exige **zero revisões de PR**, por decisão do titular, sem bypass dos checks.
 
-**Supabase HML** `gklhhhyosgasnyoxlrui` segue como **única autoridade de dados e backend**. Código de migrations, RPC, RLS, grants, funções, Storage e Edge é governado em `contaos9999/develop`; não instalar backend paralelo nem alterar schema por conveniência. **PROD não deve ser alterada**.
+**Supabase HML** `gklhhhyosgasnyoxlrui` segue como **única autoridade de dados e backend**. Código de migrations, RPC, RLS, grants, funções, Storage e Edge é governado em `contaos999999/develop`; não instalar backend paralelo nem alterar schema por conveniência. **PROD não deve ser alterada**.
 
 O **Lovable permanece conectado como ambiente de sincronização, pré-visualização e consulta visual**, não como editor canônico ou fonte de verdade do frontend. Não usar o agente Lovable para implementar features ou correções regulares. A integração ainda pode regenerar `src/integrations/supabase/types.ts` por conta própria, razão pela qual o processo exige Zero-Drift e Auto-Lock.
 
@@ -27,13 +27,18 @@ A execução direta por GitHub **não autoriza pular a etapa de validação do P
 
 Esta decisão **substitui apenas** orientações operacionais antigas que exigiam Lovable como ferramenta de edição do frontend. O pacote PRD 4.1, arquitetura, Premissas, Zero-Drift, regras de aprovação e BRAND-01 permanecem vigentes.
 
-O GitHub do frontend permanece conectado ao Lovable. Evitar `force push`, `rebase` de histórico publicado e mutações não controladas. A proteção obrigatória de branch não estava disponível no plano GitHub privado no último diagnóstico; o CI e o Auto-Lock são mitigações, não proteção de escrita pré-merge.
+O GitHub do frontend permanece conectado ao Lovable. Evitar `force push`, `rebase` de histórico publicado e mutações não controladas. A proteção da `main` **está atualmente ACTIVE** pelo ruleset `ContaOS-Zero-Drift-main` (ID `26495643`), confirmado na GOV-004. Exige PR, dois checks, zero revisões, proíbe exclusão e non-fast-forward, sem bypass. HTTP 409 comprovou bloqueio de escrita direta; HTTP 405 bloqueou merge com CI reprovado; PR #15 com CI verde foi mesclado com zero revisões. A proteção deve ser conferida novamente no início de tarefas futuras.
 
-O arquivo protegido `types.ts` foi realmente regenerado pelo Lovable e depois **reparado em push automático pelo Auto-Lock**: https://github.com/contaos9999/contaos-hml-control/actions/runs/41725182728 e commit https://github.com/contaos9999/contaos-hml-control/commit/174512a2d2cc978f9c04da54bd8096ad2e47408d. Isso prova a recuperação, não a desativação do gerador interno.
+O histórico anterior comprova que o arquivo protegido `types.ts` foi regenerado pelo Lovable e **reparado pelo Auto-Lock antigo, que ainda usava push direto**: https://github.com/contaos999999/contaos-hml-control/actions/runs/41725182728 e commit https://github.com/contaos999999/contaos-hml-control/commit/174512a2d2cc978f9c04da54bd8096ad2e47408d. Isso prova a recuperação, não a desativação do gerador interno.
 
 **Protocolo permanente de continuidade de conversas:** [ESTADO_E_RETOMADA_CONTAOS_4_1.md](ESTADO_E_RETOMADA_CONTAOS_4_1.md). A cada sessão, primeiro confirmar os HEADs atuais, workflows e issues, nunca presumir que o snapshot anterior continua vigente.
 
 
 ## Exceção controlada para lacuna comprovada de backend
 
-A autorização geral para desenvolver o frontend **NÃO autoriza migrar ao backend**. Se a implementação evidenciar uma possível lacuna no Supabase, documentar e **solicitar autorização humana para mudar o foco ao fluxo `contaos9999/develop` e investigar HML**. Após a autorização, investigação read-only, constatação objetiva, PROMPT/PLAN/validação separados, BUILD backend limitado somente se gate PASS, certificação, GitHub e retorno imediato ao frontend. O procedimento detalhado, inclusive aprovações adicionais obrigatórias, está na [ADR-DEV-002](ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md). Todas as demais tarefas permanecem somente frontend.
+A autorização geral para desenvolver o frontend **NÃO autoriza migrar ao backend**. Se a implementação evidenciar uma possível lacuna no Supabase, documentar e **solicitar autorização humana para mudar o foco ao fluxo `contaos999999/develop` e investigar HML**. Após a autorização, investigação read-only, constatação objetiva, PROMPT/PLAN/validação separados, BUILD backend limitado somente se gate PASS, certificação, GitHub e retorno imediato ao frontend. O procedimento detalhado, inclusive aprovações adicionais obrigatórias, está na [ADR-DEV-002](ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md). Todas as demais tarefas permanecem somente frontend.
+
+
+## GOV-003/GOV-004 — Situação atual após migração da organização
+
+A implementação anterior de Auto-Lock por push direto foi substituída no PR #14, merge `31eb0a3e7f0dca0f70420eeeab2ded1b69fcab2d`, por **branch + PR de reparo e execução CI**, sem auto-merge. A configuração foi testada estaticamente e o fluxo sem drift rodou com sucesso (run 41762615464). A emissão de PR real pelo bot após drift ainda NÃO VERIFICADA. A auditoria GOV-004 foi registrada no PR #15, merge `f9b46b9e07823bb291a1c5efe2a67dfd23e36727`. O conteúdo normativo e os critérios do PRD não foram modificados; o repositório normativo permanece `contaos999999/develop`, branch `main`.
