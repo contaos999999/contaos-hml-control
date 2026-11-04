@@ -3,7 +3,7 @@
 **Data:** 04/11/2026, horário de Brasília. **MODO PLAN: nenhum BUILD neste PR.** Planejamento originado do `Manual_Mestre_Prompts_4_1_100_PRD_original.docx`, parágrafos 2243–2302: rota `/competencias/:id/apresentar`, acesso aprovador, RPCs oficiais `aprovar_apresentacao` e `registrar_apresentacao`; sem criar backend. PRD e matrizes 4.1, BRAND-01, fonte normativa, Zero-Drift, NFR, segurança e política de custos Lovable prevalecem.
 
 ## A. Fonte canônica e checkpoint de entrada
-- Frontend BASE DE PREPARAÇÃO `contaos999999/contaos-hml-control/main@953ee28c95230d75a128ffed852d30060a7533a2` (GOV-017 PR #39 concluído e GOV-019 PLAN #40 integrado). **Não integrar este PLAN em main até o PR #41 GOV-019 Vitest 2 workers estar concluído, integrado e HEAD revalidado.**
+- Frontend BASE REVALIDADA `contaos999999/contaos-hml-control/main@ca5bc8db579a6788ad2b6778c2b7b83f23b223cb` (GOV-017 PR #39 concluído; GOV-019 PLAN PR #40 e BUILD PR #41 integrados). PR #41 teve dois checks SUCCESS no SHA `633bb1d83a58a628ee3d1e7a4bcd49d182676327`, merge confirmado `ca5bc8db579a6788ad2b6778c2b7b83f23b223cb`. Novo PLAN deve passar CI próprio no SHA final antes de integração.
 - Fonte normativa/backend `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`; frontend snapshot `docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json`: 25 arquivos 00–20/08A–08D, regular 00–99 (100 originais), atômicos 000–096 (97), crosswalk regular **40** → **000 (BRAND-01), 067**. `types.ts` hash git blob certificado `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`, imutável.
 - Última funcionalidade V1-18: PR #30, marca reparada via GOV-017 PR #39, crivo estático PASS, visual privado HML NÃO VERIFICADO. Não refazer PROMPT 39.
 - Revalidar na hora do GATE: HEAD normativo vivo igual ao snapshot; CI PLAN 2 checks SUCCESS; conferir evolução real do frontend após PR #41 e ajustar baseline por novo PR/commit, sem copiar SHA desatualizado.
@@ -55,7 +55,7 @@ Arquivos alteráveis:
 ## F. Gates e triagem de backend
 - **Lacuna de contrato de backend?** Nenhuma demonstrada: RPCs `aprovar_apresentacao` e `registrar_apresentacao` existem no client congelado e na fonte normativa; `allowed_actions.apresentar` existe no overview. **Nenhuma investigação/mudança operacional de HML autorizada por este PLAN.**
 - **Limitação de prévia imutável:** não há RPC certificada de snapshot dry-run no contrato frontend; UX mostrará resumo não imutável e declarará congelamento apenas após `registrar_apresentacao`. Se exigência nova de prévia byte a byte surgir, classificar LACUNA e pedir aprovação antes de backend.
-- Gate 1: PR deste PLAN somente docs, 2 checks SUCCESS, integrar após GOV-019 PR #41 verde e integrados.
+- Gate 1: PR deste PLAN somente docs, 2 checks SUCCESS no SHA final, integrar após GOV-019 PR #41 verde e integrado (GOV-019 confirmado) e revalidar HEAD canônico.
 - Gate 2: `PLANO_ATIVO.json` regular 40/atômicos 000/067, 25 documentos, fonte normativa viva, allowlist exata e CI do PLAN, `VALIDADO`, em commit PR separado e 2 checks SUCCESS.
 - Gate 3: BUILD TDD primeiro e Teste C independente, 200 combinações, 2 checks SUCCESS, crivo visual com sessão real classificada honestamente. Integração sem bypass e checkpoint.
 - **Aprovação humana BRAND:** não exigida para simples reuso do símbolo oficial, sem alteração direta da marca; a aprovação de GOV-017 é específica à variante SVG e já foi concluída.
