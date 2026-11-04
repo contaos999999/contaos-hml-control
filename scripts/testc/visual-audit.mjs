@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -224,6 +225,11 @@ async function run() {
     throw new Error("axe-core pinado não encontrado no executor independente.");
   }
   const { chromium } = await import(pathToFileURL(resolve(modulePath)).href);
+  const pngModule = process.env.CONTAOS_PNG_MODULE;
+  if (!pngModule || !existsSync(pngModule)) {
+    throw new Error("pngjs pinado não encontrado para medição conservadora de pixels.");
+  }
+  const { PNG } = createRequire(import.meta.url)(resolve(pngModule));
   const output = resolve(process.env.CONTAOS_TESTC_OUTPUT || "artifacts/testc-visual");
   const base = process.env.CONTAOS_TESTC_BASE_URL || "http://127.0.0.1:4173";
   const sha = process.env.CONTAOS_TESTC_HEAD_SHA || "NAO_INFORMADO";
@@ -327,7 +333,7 @@ async function run() {
               const contrastNodes = result.incomplete
                 .filter((rule) => rule.id === "color-contrast")
                 .flatMap((rule) => rule.nodes)
-                .map((node) => {
+                .map((node, index) => {
                   const checks = [...(node.any || []), ...(node.all || []), ...(node.none || [])];
                   const reasons = checks.map((check) => {
                     const message = String(check.message || "");
@@ -351,6 +357,33 @@ async function run() {
                     // Selectors de shadow root não são gravados nem expostos.
                   }
                   const style = el ? getComputedStyle(el) : null;
+                  if (el) el.setAttribute("data-contaos-pixel-probe", String(index));
+                  const rect = el?.getBoundingClientRect();
+                  let effectiveOpacity = 1;
+                  let opacityEl = el;
+                  while (opacityEl) {
+                    const value = Number.parseFloat(getComputedStyle(opacityEl).opacity);
+                    if (!Number.isFinite(value)) {
+                      effectiveOpacity = 0;
+                      break;
+                    }
+                    effectiveOpacity *= value;
+                    opacityEl = opacityEl.parentElement;
+                  }
+                  const foregroundColor = (() => {
+                    if (!style?.color || !CSS.supports("color", style.color)) return null;
+                    const canvas = document.createElement("canvas");
+                    canvas.width = 1;
+                    canvas.height = 1;
+                    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+                    if (!ctx) return null;
+                    ctx.clearRect(0, 0, 1, 1);
+                    ctx.fillStyle = style.color;
+                    ctx.fillRect(0, 0, 1, 1);
+                    const px = [...ctx.getImageData(0, 0, 1, 1).data];
+                    effectiveOpacity *= px[3] / 255;
+                    return px.slice(0, 3);
+                  })();
                   const layers = [];
                   let ancestor = el;
                   while (ancestor && layers.length < 7) {
@@ -371,6 +404,19 @@ async function run() {
                     fontWeight: style?.fontWeight,
                     opacity: style?.opacity,
                     reasonCodes: reasons,
+                    probeId: el ? String(index) : null,
+                    rect: rect
+                      ? {
+                          x: rect.left,
+                          y: rect.top,
+                          width: rect.width,
+                          height: rect.height,
+                        }
+                      : null,
+                    foregroundRgb: foregroundColor,
+                    effectiveOpacity,
+                    fontSizePx: Number.parseFloat(style?.fontSize || ""),
+                    fontWeight: Number.parseFloat(style?.fontWeight || ""),
                     layers,
                   };
                 });
@@ -387,12 +433,60 @@ async function run() {
             axeScan = null;
           }
           record.publicAssertions.push(...publicA11yGate(axeScan));
+          let pixelContrast = {
+            status: "NAO_VERIFICADO",
+            nodes: 0,
+            pass: 0,
+            fail: 0,
+            inconclusive: 0,
+            measurements: [],
+          };
+          if (axeScan?.contrastNodes?.length) {
+            try {
+              const originalPng = PNG.sync.read(
+                await page.screenshot({ fullPage: false, animations: "disabled" }),
+              );
+              const overlay = await page.addStyleTag({
+                content:
+                  '[data-contaos-pixel-probe], [data-contaos-pixel-probe] * { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; }',
+              });
+              let backgroundPng;
+              try {
+                backgroundPng = PNG.sync.read(
+                  await page.screenshot({ fullPage: false, animations: "disabled" }),
+                );
+              } finally {
+                await overlay.evaluate((node) => node.remove());
+              }
+              const measured = measureRenderedTextContrast(
+                originalPng,
+                backgroundPng,
+                axeScan.contrastNodes,
+              );
+              const status = pixelContrastDecision(measured, axeScan.contrastNodes.length);
+              pixelContrast = {
+                status,
+                nodes: measured.length,
+                pass: measured.filter((x) => x.status === "PASS_AA_PIXEL").length,
+                fail: measured.filter((x) => x.status === "FAIL_AA_PIXEL").length,
+                inconclusive: measured.filter((x) => x.status === "NAO_VERIFICADO").length,
+                measurements: measured,
+              };
+              if (status === "FAIL_AA_PIXEL_PUBLICO") {
+                record.publicAssertions.push("WCAG 1.4.3: contraste por pixel abaixo do mínimo AA");
+              }
+            } catch {
+              // Sem par de PNGs válido, não fabricar aprovação por amostragem.
+              pixelContrast.status = "NAO_VERIFICADO";
+            }
+          }
           record.a11y = {
             engine: axeScan?.axeVersion || "NAO_EXECUTADO",
             contrast: contrastAssessment(axeScan),
             violations: axeScan?.violations || [],
             incomplete: axeScan?.incomplete || [],
             contrastDiagnostics: sanitizeContrastDiagnostics(axeScan?.contrastNodes),
+            pixelContrast,
             scanCompleted: Boolean(axeScan),
           };
           record.outcome = record.publicAssertions.length ? "FAIL_PUBLICO" : "PASS_PUBLICO";
@@ -455,6 +549,12 @@ async function run() {
     public_wcag_incomplete_rules: logs.reduce((n, x) => n + (x.a11y?.incomplete?.length || 0), 0),
     public_contrast_unresolved_nodes: logs.reduce(
       (n, x) => n + (x.a11y?.contrastDiagnostics?.length || 0),
+      0,
+    ),
+    public_pixel_contrast_pass: logs.reduce((n, x) => n + (x.a11y?.pixelContrast?.pass || 0), 0),
+    public_pixel_contrast_fail: logs.reduce((n, x) => n + (x.a11y?.pixelContrast?.fail || 0), 0),
+    public_pixel_contrast_inconclusive: logs.reduce(
+      (n, x) => n + (x.a11y?.pixelContrast?.inconclusive || 0),
       0,
     ),
     wcag_full_certification: "NAO_VERIFICADO_EXIGE_SESSAO_REAL_E_REVISAO_MANUAL",
