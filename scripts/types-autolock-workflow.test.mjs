@@ -35,3 +35,15 @@ test("Auto-Lock testa em fixture e falha fechado se a base mudar", () => {
   assert.match(workflow, /bunx tsc --noEmit -p \./);
   assert.match(workflow, /bunx vite build/);
 });
+
+
+test("GOV-011: Auto-Lock exercita PR real de recuperação somente em branches descartáveis", () => {
+  assert.match(workflow, /name: Ensaio isolado de PR de recuperacao/);
+  assert.match(workflow, /autolock\/probe-drift-/);
+  assert.match(workflow, /autolock\/probe-repair-/);
+  assert.match(workflow, /gh pr create --base "\$drift_branch" --head "\$repair_branch"/);
+  assert.match(workflow, /gh pr close "\$pr_number"/);
+  assert.match(workflow, /git push origin --delete/);
+  assert.match(workflow, /main_before/);
+  assert.doesNotMatch(workflow, /git push origin HEAD:main/);
+});

@@ -132,3 +132,73 @@ jobs:
           # Disparar workflow_dispatch somente na branch do reparo.
           gh workflow run contaos-frontend-zero-drift.yml --ref "$repair_branch"
           echo 'CI Zero-Drift solicitado na mesma branch; conferir os checks no PR.'
+
+  probe-recovery:
+    name: Ensaio isolado de PR de recuperacao
+    # O teste é executado uma vez após o merge GOV-011, sem drift em main.
+    if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, 'GOV-011') }}
+    needs: protect-types
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      LOCKED_PATH: src/integrations/supabase/types.ts
+      CERTIFIED_SOURCE_COMMIT: ad0b933943d4b69f7a9f23f203e4cff1211b4902
+      CERTIFIED_TYPES_BLOB: 8ea7750b75fd9d76b29c36ce7613392e3ab65e19
+    steps:
+      - name: Checkout main somente como origem dos testes
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Criar PR real por GITHUB_TOKEN em duas branches descartaveis
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          main_before="$(git ls-remote origin refs/heads/main | cut -f1)"
+          [[ "$(git hash-object "$LOCKED_PATH")" == "$CERTIFIED_TYPES_BLOB" ]]
+          drift_branch="autolock/probe-drift-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          repair_branch="autolock/probe-repair-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          pr_number=""
+          cleanup() {
+            set +e
+            if [[ -n "$pr_number" ]]; then
+              gh pr close "$pr_number" --comment 'GOV-011: fim de ensaio isolado; sem merge.' || true
+            fi
+            git push origin --delete "$repair_branch" || true
+            git push origin --delete "$drift_branch" || true
+            echo 'GOV-011: limpeza das branches descartaveis solicitada.'
+          }
+          trap cleanup EXIT
+
+          git fetch origin main
+          git switch -c "$drift_branch" origin/main
+          printf '\n// GOV011_DRIFT_SIMULADO_SOMENTE_BRANCH_DESCARTAVEL\n' >> "$LOCKED_PATH"
+          [[ "$(git hash-object "$LOCKED_PATH")" != "$CERTIFIED_TYPES_BLOB" ]]
+          git add -- "$LOCKED_PATH"
+          git commit -m 'test(gov-011): drift somente na branch isolada'
+          git push origin "HEAD:refs/heads/$drift_branch"
+
+          git switch -c "$repair_branch" "$drift_branch"
+          git show "$CERTIFIED_SOURCE_COMMIT:$LOCKED_PATH" > "$LOCKED_PATH"
+          [[ "$(git hash-object "$LOCKED_PATH")" == "$CERTIFIED_TYPES_BLOB" ]]
+          git add -- "$LOCKED_PATH"
+          git commit -m 'fix(types-autolock): restaurar blob imutavel na prova isolada'
+          git push origin "HEAD:refs/heads/$repair_branch"
+
+          gh pr create --base "$drift_branch" --head "$repair_branch" \
+            --title 'GOV-011: PR real temporario de reparo Auto-Lock' \
+            --body 'Ensaio do GITHUB_TOKEN. Base e head sao branches descartaveis. Nao mesclar. O bot fecha este PR e limpa as branches.'
+          pr_number="$(gh pr view "$repair_branch" --json number --jq '.number')"
+          [[ "$pr_number" =~ ^[0-9]+$ ]]
+          [[ "$(gh pr view "$pr_number" --json baseRefName --jq '.baseRefName')" == "$drift_branch" ]]
+          [[ "$(gh pr view "$pr_number" --json headRefName --jq '.headRefName')" == "$repair_branch" ]]
+          gh pr view "$pr_number" --json author --jq '.author.login' | grep -F 'github-actions'
+          [[ "$(gh pr diff "$pr_number" --name-only)" == "$LOCKED_PATH" ]]
+          [[ "$(git ls-remote origin refs/heads/main | cut -f1)" == "$main_before" ]]
+          echo "GOV-011 AUTOLOCK_PROBE_PASS: PR #$pr_number aberto pelo bot e somente $LOCKED_PATH restaurado."
+          echo 'GOV-011: PR nao mesclado; main permaneceu inalterada.'
