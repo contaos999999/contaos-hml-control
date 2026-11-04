@@ -63,8 +63,9 @@ jobs:
         run: node scripts/frontend-zero-drift.mjs
 
   teste-c:
+    # GOV-018: runner isolado, mesmo commit; CI de qualidade e Teste C em paralelo.
+    # Ambos continuam checks obrigatorios no ruleset da main.
     name: Auditoria de navegador independente (somente leitura)
-    needs: frontend-quality
     uses: ./.github/workflows/contaos-teste-c-independente.yml
     permissions:
       contents: read
