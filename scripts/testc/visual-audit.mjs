@@ -122,10 +122,11 @@ const luminance = (rgb) =>
   0.2126 * toLinear(rgb[0]) + 0.7152 * toLinear(rgb[1]) + 0.0722 * toLinear(rgb[2]);
 
 export function wcagContrastRatio(foregroundRgb, backgroundRgb) {
-  if (![foregroundRgb, backgroundRgb].every((c) =>
-    Array.isArray(c) && c.length === 3 &&
-    c.every((v) => Number.isFinite(v) && v >= 0 && v <= 255)
-  )) return null;
+  const validColor = (rgb) =>
+    Array.isArray(rgb) &&
+    rgb.length === 3 &&
+    rgb.every((v) => Number.isFinite(v) && v >= 0 && v <= 255);
+  if (!validColor(foregroundRgb) || !validColor(backgroundRgb)) return null;
   const a = luminance(foregroundRgb);
   const b = luminance(backgroundRgb);
   return Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 10000) / 10000;
@@ -138,26 +139,35 @@ export function measureRenderedTextContrast(before, after, nodes, { minPixels = 
     img.width > 0 &&
     img.height > 0 &&
     img.data?.length === img.width * img.height * 4;
-  const pairValid = validImage(before) && validImage(after) &&
-    before.width === after.width && before.height === after.height;
+  const pairValid = [validImage(before), validImage(after),
+    before?.width === after?.width, before?.height === after?.height].every(Boolean);
   return (Array.isArray(nodes) ? nodes : []).map((node) => {
-    const unresolved = (reason) => ({ status: "NAO_VERIFICADO", reason, minimumRatio: null, sampleCount: 0 });
+    const unresolved = (reason) => ({
+      status: "NAO_VERIFICADO",
+      reason,
+      minimumRatio: null,
+      sampleCount: 0,
+    });
     const rect = node?.rect;
     const opacity = Number(node?.effectiveOpacity);
     const fg = node?.foregroundRgb;
     if (!pairValid) return unresolved("DIFERENCA_DE_DIMENSOES_PNG");
-    if (!rect || ![rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) ||
-        rect.width <= 0 || rect.height <= 0) return unresolved("RETANGULO_INVALIDO");
-    if (!Array.isArray(fg) || fg.length !== 3 ||
-        fg.some((v) => !Number.isFinite(v) || v < 0 || v > 255) ||
-        !Number.isFinite(opacity) || opacity <= 0 || opacity > 1)
+    if (!rect) return unresolved("RETANGULO_INVALIDO");
+    const coords = [rect.x, rect.y, rect.width, rect.height];
+    if (!coords.every(Number.isFinite)) return unresolved("RETANGULO_INVALIDO");
+    if (rect.width <= 0 || rect.height <= 0) return unresolved("RETANGULO_INVALIDO");
+    if (!Array.isArray(fg) || fg.length !== 3) return unresolved("COR_OU_OPACIDADE_INVALIDA");
+    if (fg.some((v) => !Number.isFinite(v) || v < 0 || v > 255))
+      return unresolved("COR_OU_OPACIDADE_INVALIDA");
+    if (!Number.isFinite(opacity) || opacity <= 0 || opacity > 1)
       return unresolved("COR_OU_OPACIDADE_INVALIDA");
     const x0 = Math.max(0, Math.floor(rect.x));
     const x1 = Math.min(before.width, Math.ceil(rect.x + rect.width));
     const y0 = Math.max(0, Math.floor(rect.y));
     const y1 = Math.min(before.height, Math.ceil(rect.y + rect.height));
-    if (x0 >= x1 || y0 >= y1 || rect.x < 0 || rect.y < 0 ||
-        rect.x + rect.width > before.width || rect.y + rect.height > before.height)
+    if (x0 >= x1 || y0 >= y1 || rect.x < 0 || rect.y < 0)
+      return unresolved("FORA_DO_VIEWPORT");
+    if (rect.x + rect.width > before.width || rect.y + rect.height > before.height)
       return unresolved("FORA_DO_VIEWPORT");
     let sampleCount = 0;
     let changedPixels = 0;
@@ -183,9 +193,9 @@ export function measureRenderedTextContrast(before, after, nodes, { minPixels = 
     }
     if (sampleCount < minPixels || sampleCount < Math.ceil(changedPixels * 0.08))
       return { ...unresolved("GLIFOS_SEM_AMOSTRAGEM_CONFIAVEL"), changedPixels, sampleCount };
-    const large = Number(node.fontSizePx) >= 24 ||
-      (Number(node.fontSizePx) >= 18.66 && Number(node.fontWeight) >= 700);
-    const requiredRatio = large ? 3 : 4.5;
+    const largeBySize = Number(node.fontSizePx) >= 24;
+    const largeBold = Number(node.fontSizePx) >= 18.66 && Number(node.fontWeight) >= 700;
+    const requiredRatio = largeBySize || largeBold ? 3 : 4.5;
     return {
       status: minimumRatio >= requiredRatio ? "PASS_AA_PIXEL" : "FAIL_AA_PIXEL",
       minimumRatio: Math.round(minimumRatio * 10000) / 10000,
@@ -197,8 +207,9 @@ export function measureRenderedTextContrast(before, after, nodes, { minPixels = 
 }
 
 export function pixelContrastDecision(measured, expectedCount) {
-  if (!Array.isArray(measured) || measured.length !== expectedCount ||
-      !Number.isInteger(expectedCount) || expectedCount < 1) return "NAO_VERIFICADO";
+  if (!Array.isArray(measured) || measured.length !== expectedCount)
+    return "NAO_VERIFICADO";
+  if (!Number.isInteger(expectedCount) || expectedCount < 1) return "NAO_VERIFICADO";
   if (measured.some((x) => x.status === "FAIL_AA_PIXEL")) return "FAIL_AA_PIXEL_PUBLICO";
   if (measured.some((x) => x.status !== "PASS_AA_PIXEL")) return "NAO_VERIFICADO";
   return "PASS_AA_PIXEL_PUBLICO";
@@ -448,7 +459,7 @@ async function run() {
               );
               const overlay = await page.addStyleTag({
                 content:
-                  '[data-contaos-pixel-probe], [data-contaos-pixel-probe] * { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; }',
+                  "[data-contaos-pixel-probe], [data-contaos-pixel-probe] * { color: transparent !important; -webkit-text-fill-color: transparent !important; text-shadow: none !important; }",
               });
               let backgroundPng;
               try {
