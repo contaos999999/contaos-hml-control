@@ -25,6 +25,8 @@ jobs:
           fetch-depth: 0
       - name: Autoteste do guard (casos permitidos e proibidos)
         run: node --test scripts/frontend-scope-gate.test.mjs
+      - name: Verificar contrato de seguranca do Auto-Lock por PR
+        run: node --test scripts/types-autolock-workflow.test.mjs
       - name: Verificar fronteira frontend/backend e PLAN validado prévio
         env:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
