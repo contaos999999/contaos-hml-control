@@ -1,4 +1,6 @@
 # ContaOS 4.1 — Auditoria independente de equivalência de processo: Lovable × GitHub
+> **ATUALIZAÇÃO GOV-006 (04/11/2026):** o texto de 03/11 abaixo é histórico. A constatação de `main` desprotegida e ausência de executor Playwright foi **superada** pelos GOV-003/GOV-004 e GOV-002. O parecer atualizado e suas ressalvas estão na seção 7; não reutilizar os status antigos como situação atual.
+
 **Data:** 03/11/2026 · **Natureza:** comparação normativa e de controles concretos, não certificação funcional integral · **Escopo de alteração:** repositório frontend exclusivamente.
 
 ## 1. Resposta à decisão do responsável
@@ -64,3 +66,40 @@ Se qualquer requisito exigir mudança em Supabase: **PARAR e solicitar autoriza�
 - O procedimento GitHub ficou **pelo menos tão explícito e controlado documentalmente** quanto a fase anterior, e possui guardas automáticos novos. A exigência de qualidade e do PRD é idêntica, mas a ferramenta de execução do Teste C e o enforcement pré-merge ainda precisam de solução própria.
 
 **Alterações nesta auditoria:** somente arquivos de governança/CI no repo frontend; código funcional `src/**`, design `public/**`, backend Supabase HML e PROD preservados. Não confundir análise documental do repositório canônico com investigação técnica do backend HML.
+
+
+## 7. Reavaliação oficial GOV-006 em 04/11/2026 (prevalece sobre conclusões anteriores)
+
+**Baseline verificado:** frontend `contaos999999/contaos-hml-control` main `79eec9b810b722cb2626f03039cac30b68a1dfce`; backend normativo, somente leitura, `contaos999999/develop` main `cb65f4980f4eeca6ccd33caf6198a801b7e60328`. O blob `types.ts` é `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`. A aplicação React/TypeScript, `src/**` e `public/**`, permanece funcionalmente sem modificações nos 37 commits de governança posteriores ao SHA `b8ca8b99b31c65ceccfe6091b5e7bcaad1cf80f0`.
+
+### 7.1. Matriz retificada das lacunas
+
+| Lacuna registrada em 03/11 | Comprovação atual | Classificação 04/11 |
+| --- | --- | --- |
+| Proteção de branch inexistente | Ruleset `ContaOS-Zero-Drift-main` ID `26495643` **ACTIVE**, alvo `main`, PR, 2 required checks, 0 reviews, nenhum bypass, deletion/non-fast-forward proibidos. GOV-004: push direto 409; merge CI negativo 405; merge CI verde e 0 reviews no PR #15 | **RESOLVIDA e comprovada para regras principais**; testes destrutivos de force-push e delete não foram executados na main |
+| Teste C inexistente no GitHub | Implementado no GOV-002, workflow `contaos-teste-c-independente.yml` e `scripts/testc/visual-audit.mjs`. Run `41737621829` PASS, 184 combinações, 24 capturas, 24 PASS público, 0 FAIL público. Artefato ID `13280975443` confirmado, expira em **03/12/2026** | **EXECUTOR RESOLVIDO, certificação limitada**: 152 protegidas sem sessão, 8 drawer sem sessão, contraste WCAG especializado NÃO VERIFICADO; prova expira em 30 dias |
+| Fonte privada não conferida automaticamente | Context gate/100 regulares e 97 atômicos; token GitHub com leitura do repo `contaos999999/develop`; teste vivo `FONTE CANÔNICA PASS` no CI GOV-003 | **RESOLVIDA para comparação técnica de HEAD/blobs**; leitura semântica individual ainda é gate obrigatório por tarefa |
+| Revisão humana no PR obrigatória | Regras da branch exigem **zero** revisões (decisão do titular); PLAN com aprovação explícita quando exigida por BRAND-01/PRD permanece | **ALINHADO**; zero reviews de PR não substituem eventual aprovação específica de produto |
+| E2E real HML A/B, recuperação de senha, CRUD/upload | Não executado nesta auditoria, sem dois usuários e contratos controlados | **NÃO VERIFICADO** (também não comprovado no processo anterior; não atribuir diferença ao editor) |
+| Prova contínua da sincronização Lovable | Projeto Lovable `b113dd59-6caf-4c92-8302-457a037a0c6f` informa `latest_commit_sha=b8ca8b99...`; GitHub 37 commits de governança à frente, nenhum `src/**` ou `public/**` alterado | **NÃO VERIFICADO nos metadados**, sem prova de divergência funcional nem sincronização no SHA atual |
+| Auto-Lock recovery | Workflow atual na `main` abre PR de reparo, sem push direto. Run limpo `41762615464` SUCCESS | **PASS caminho sem drift; NÃO VERIFICADO criação real de PR após drift** |
+| Matriz de requisitos 39/416 e 100/97 | Catálogos e matrizes permanecem, com pendências e resultados por critério | **Rastreabilidade preservada; 100% de critérios materialmente comprovados não certificado** |
+
+### 7.2. Limites da expressão 100% equivalente
+
+- Mesmo SHA e mesma árvore funcional de aplicação produzem o mesmo comportamento esperado independentemente da ferramenta autora, mas **não** demonstram por si só equivalência de workflow e evidência.
+- O CI `SUCCESS` do Teste C em commit **somente documental** pode registrar `N/A`, logo não equivale a uma execução visual nesse commit. A execução real documentada é `41737621829`, e sua cobertura é explicitamente escopada a páginas públicas ou bloqueios sem sessão.
+- O artefato existente tem retenção de 30 dias e expira em 03/12/2026. Para preservar evidência por período superior é necessário configurar arquivo durável independente, sob controle de acesso, sem dados pessoais ou tokens. Não afirmar \"permanente\" enquanto depender apenas do Actions.
+- Ferramentas automáticas de acessibilidade capturam parte das violações, mas não substituem testes de contraste/instrumentação e cenários de teclado/manual aplicáveis. É obrigatório medir e registrar o escopo efetivamente analisado.
+- O projeto do Lovable retorna SHA anterior; `git compare` verificou apenas alterações administrativas, então o risco é de **metadados/sincronização sem prova atual**, não de diferença demonstrada no frontend funcional.
+- A validação semântica de 25 fontes, provas de aprovação humana específica e E2E com sessão real exigem procedimentos próprios. O PRD continua superior a um green CI.
+
+### 7.3. Prioridade para alcançar equivalência operacional auditável
+
+1. Incrementar Teste C com prova de contraste WCAG e teclado/labels para telas efetivamente renderizadas, reportando falhas em vez de inventar PASS.
+2. Preservar capturas e `SHA256SUMS` em repositório/arquivo durável autorizado, ou ajustar retenção e plano de exportação, mantendo artefato original preservado até migração.
+3. Comparar estado de sincronização Lovable após commits novos, sem usar a IA do Lovable para BUILD, e separar diferença de SHA administrativa de divergência funcional de UI.
+4. Ampliar HML apenas com identidades autorizadas, organizações/contratos fictícios, canal de e-mail controlado e evidências reais, mediante escopo separado. Sem isso, `NÃO VERIFICADO`.
+5. Ensaiar Auto-Lock completo em **ambiente isolado** que permita criar PR sem modificar `main`, nunca corromper o arquivo protegido real para simular incidente.
+
+**Conclusão atualizada:** a troca de Lovable IA por desenvolvimento GitHub preservou código, PRD e arquitetura. Os controles de branch e executor Teste C já existem e foram exercitados; entretanto, evidência visual interna/autenticada, mensuração WCAG, retenção durável, sincronização de metadados e recuperação real do Auto-Lock ainda exigem provas. **A equivalência operacional integral NÃO está certificada.**
