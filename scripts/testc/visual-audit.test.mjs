@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ROUTES, WIDTHS, THEMES, cases, publicGate, classifyProtected } from "./visual-audit.mjs";
+import { ROUTES, WIDTHS, THEMES, cases, publicGate, classifyProtected, publicA11yGate, contrastAssessment } from "./visual-audit.mjs";
 
 test("matriz oficial: 23 telas × 4 larguras × 2 temas", () => {
   assert.equal(ROUTES.length, 23);
@@ -27,4 +27,20 @@ test("rotas privadas não recebem PASS sem sessão autenticada real", () => {
 });
 test("drawer V1-17 permanece inacessível sem sessão/competência real", () => {
   assert.equal(ROUTES.find((r) => r.id === "V117").requiresDrawer, true);
+});
+
+test("GOV-007: axe ausente deve falhar fechado", () => {
+  assert.deepEqual(publicA11yGate(null), ["auditoria axe-core pública não executada"]);
+  assert.equal(contrastAssessment(null), "NAO_VERIFICADO");
+});
+test("GOV-007: violações reais são FAIL, sem supressão", () => {
+  const s = { axeVersion: "4.14.0", violations: [{ id: "color-contrast", nodes: 2 }], incomplete: [], passes: [] };
+  assert.equal(publicA11yGate(s).length, 1);
+  assert.equal(contrastAssessment(s), "FAIL_AUTOMATIZADO");
+});
+test("GOV-007: evidência parcial não vira certificado WCAG integral", () => {
+  const s = { axeVersion: "4.14.0", violations: [], incomplete: [{ id: "color-contrast", nodes: 1 }], passes: [] };
+  assert.deepEqual(publicA11yGate(s), []);
+  assert.equal(contrastAssessment(s), "NAO_VERIFICADO_REVISAO_MANUAL");
+  assert.equal(contrastAssessment({ ...s, incomplete: [], passes: [{ id: "color-contrast", nodes: 4 }] }), "PASS_AUTOMATIZADO");
 });
