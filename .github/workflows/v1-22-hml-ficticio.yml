@@ -22,20 +22,57 @@ jobs:
       - name: Validar configuracao do ambiente
         env:
           DATABASE_URL: ${{ secrets.CONTAOS_HML_DATABASE_URL }}
+          EXPECTED_PROJECT_REF: gklhhhyosgasnyoxlrui
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "${DATABASE_URL}" ]]; then
-            echo "::error::Configure CONTAOS_HML_DATABASE_URL no ambiente hml."
-            exit 1
-          fi
-          if [[ "${DATABASE_URL}" != postgres* ]]; then
-            echo "::error::A URL do banco HML nao tem formato PostgreSQL."
-            exit 1
-          fi
-          echo "Configuracao presente. Nenhum segredo foi exibido."
+          python3 - <<'PY'
+          import os
+          import sys
+          from urllib.parse import urlsplit
+
+          def fail(message):
+              print(f"::error::{message}")
+              sys.exit(1)
+
+          raw = os.environ.get("DATABASE_URL", "")
+          ref = os.environ["EXPECTED_PROJECT_REF"]
+          if not raw:
+              fail("Configure CONTAOS_HML_DATABASE_URL no environment hml.")
+          try:
+              url = urlsplit(raw)
+              host = url.hostname or ""
+              port = url.port
+              username = url.username
+          except ValueError:
+              fail("URL HML malformada. Copie a Session pooler connection string do Supabase.")
+          if url.scheme not in ("postgres", "postgresql"):
+              fail("O esquema deve ser postgres:// ou postgresql://.")
+          if username != f"postgres.{ref}":
+              fail("Usuario incorreto: o Shared Session Pooler exige postgres.<PROJECT_REF>.")
+          if not host.endswith(".pooler.supabase.com"):
+              fail("Host incorreto: use o host exato fornecido em Supabase > Connect > Session pooler.")
+          if port != 5432:
+              fail("Porta incorreta: Session pooler utiliza 5432.")
+          if url.path != "/postgres":
+              fail("Banco incorreto: use /postgres.")
+          if not url.password:
+              fail("Senha do banco ausente na URL HML.")
+          print("Formato HML validado. Nenhuma credencial foi exibida.")
+          PY
       - name: Instalar cliente PostgreSQL
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Verificar conectividade e autenticacao HML
+        env:
+          DATABASE_URL: ${{ secrets.CONTAOS_HML_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'SELECT 1' > /dev/null; then
+            echo "::error::A conexao HML foi recusada. Confira usuario postgres.<PROJECT_REF>, senha do banco e Session pooler no secret do environment hml."
+            exit 1
+          fi
+          echo "Conexao HML autenticada."
       - name: Executar testes transacionais sem persistencia
         env:
           DATABASE_URL: ${{ secrets.CONTAOS_HML_DATABASE_URL }}
