@@ -57,6 +57,7 @@ test("GOV-020 FAIL: arquivo gerado novo ainda não versionado", () => {
   try {
     git(env.cwd, "rm", "-q", "src/routeTree.gen.ts");
     git(env.cwd, "-c", "user.name=ContaOS Teste", "-c", "user.email=teste@example.invalid", "commit", "--quiet", "-m", "remove fixture");
+    mkdirSync(join(env.cwd, "src"), { recursive: true });
     writeFileSync(env.arquivo, "// generated: untracked\n");
     const r = executar(env.cwd);
     assert.equal(r.status, 1);
