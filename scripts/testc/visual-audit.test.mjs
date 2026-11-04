@@ -47,10 +47,16 @@ test("PROMPT 40: V119 privada integra 200 casos sem certificar sessão real", ()
 test("PROMPT 41: V120 privada possui 8 combinações sem alegar sessão real", () => {
   const rota = ROUTES.find((r) => r.id === "V120");
   assert.ok(rota);
-  assert.equal(rota.path, "/competencias/00000000-0000-4000-8000-000000000001/apresentacoes/00000000-0000-4000-8000-000000000001");
+  assert.equal(
+    rota.path,
+    "/competencias/00000000-0000-4000-8000-000000000001/apresentacoes/00000000-0000-4000-8000-000000000001",
+  );
   assert.notEqual(rota.public, true);
-  assert.equal(cases().filter(c => c.id === "V120").length, 8);
-  assert.equal(classifyProtected({ pathname: rota.path, text: "Apresentação e protocolo" }), "NAO_VERIFICADO_SESSAO_REAL");
+  assert.equal(cases().filter((c) => c.id === "V120").length, 8);
+  assert.equal(
+    classifyProtected({ pathname: rota.path, text: "Apresentação e protocolo" }),
+    "NAO_VERIFICADO_SESSAO_REAL",
+  );
 });
 
 test("public gate PASS somente para métricas comprovadas", () => {
