@@ -3,6 +3,33 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT OFICIAL MAIS RECENTE — V1-18 CONCLUÍDA + GOV-016, 04/11/2026
+
+**Esta seção prevalece sobre snapshots históricos abaixo.** Não adivinhar HEADs futuros; sempre verificar commits e checks reais.
+
+| Elemento | Situação verificada em 04/11/2026 |
+|---|---|
+| Repositório frontend | `contaos999999/contaos-hml-control`, branch `main` HEAD `f58265fd595eae5ba5bae8406dc75b2c95afc2b0` **antes** deste checkpoint documental |
+| Fonte normativa backend/doc | `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` (somente leitura neste trabalho) |
+| Fonte/catálogo | 25/25 documentos canônicos e catálogo 100 regulares/97 atômicos preservados; snapshot reancorado pelo PR #28 |
+| Última função implementada | PROMPT **39** / **V1-18 Parecer interno**, rota `/competencias/:id/parecer`, PR [#30](https://github.com/contaos999999/contaos-hml-control/pull/30), merge `53d4bf5464739e66fcad0af4bb5f8e7f323bef1c` |
+| Prova do BUILD | TDD RED real no commit `3108e27238257b654283801228a61b8b71d06e39`, GREEN no run `41857581129`: **824/824** testes, TS/build, marca, Zero-Drift e 2 checks SUCCESS |
+| GOV-016 cobertura Teste C | PLAN PR [#31](https://github.com/contaos999999/contaos-hml-control/pull/31), merge `64087f832bbe74e3a51551fb38bffe3b9728eb24`; BUILD PR [#32](https://github.com/contaos999999/contaos-hml-control/pull/32), merge `f58265fd595eae5ba5bae8406dc75b2c95afc2b0` |
+| Teste C atualizado | **24 superfícies × 4 larguras × 2 temas = 192 casos**; V1-18 inventariada e protegida; run [`41859649176` tentativa 2](https://github.com/contaos999999/contaos-hml-control/actions/runs/41859649176), 2 checks PR SUCCESS |
+| Evidência de Teste C | artifact `13339612595`, nome `contaos-teste-c-41859649176-2`, expiração `02/02/2027` (temporário, sem arquivo permanente) |
+| Erro ADM-01 | Timeout de teste legado 5 s na tentativa 1 de `41859649176`, retry tentativa 2 com **824/824 PASS**; issue [#6](https://github.com/contaos999999/contaos-hml-control/issues/6) atualizada; **causa não provada**, nenhum código ADM alterado |
+| Manifesto PLAN | V1-18 arquivado em `docs/frontend/planos/PLANO_ENCERRADO_PROMPT_39_V1_18_2026-11-04.json`; `PLANO_ATIVO.json` devolvido a `SEM_PLANO_ATIVO` neste checkpoint documental |
+| Types Supabase bloqueados | Blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` preservado no frontend |
+| HML real | **NÃO VERIFICADO**: A/B, perfis, auth, tela Parecer autenticada, solicitação/aprovação efetiva, contraste/teclado/leitor de tela em tela protegida |
+| Produção e backend | **ZERO alterações** em PROD, migrations, RLS, grants, RPC, Auth, Edge, Storage ou frontend fora do PLAN |
+| Próxima tarefa | **PROMPT regular 40 / V1-19 — Wizard de apresentação**, atômicos diretos `000` e `067`; iniciar com novo PROMPT e PLAN validado; sem autorização por plano antigo |
+
+**Registro detalhado:** `docs/frontend/auditorias/GOV_016_TESTEC_V118_2026-11-04.md`, histórico do PLAN 39 e PRs #28 a #32. **A última etapa comprovadamente concluída é V1-18 no escopo de código e testes, mais GOV-016 na cobertura Teste C sem sessão.** O E2E real continua pendente e não pode ser promovido a PASS por mocks.
+
+**Prompt de continuidade para uma próxima conversa, se necessário:** “Retome ContaOS 4.1 com frontend canônico `contaos999999/contaos-hml-control` e fonte normativa `contaos999999/develop`. Primeiro verifique HEADs/CI, leia `AGENTS.md`, `ADR-DEV-001`, `ADR-DEV-002`, `ESTADO_E_RETOMADA_CONTAOS_4_1.md` e `GOV_016_TESTEC_V118_2026-11-04.md`, confirme `PLANO_ATIVO=SEM_PLANO_ATIVO`, snapshot 25/25 e crosswalk 100/97, tipos bloqueados. Não repita V1-18 ou GOV-016. O próximo PROMPT é 40/V1-19 e exige PLAN validado, PR com checks verdes, TDD e Teste C. Não toque backend/PROD. HML A/B e WCAG protegida permanecem NÃO VERIFICADOS.”
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — PROMPT 39 / V1-18, 04/11/2026
 
 **Este checkpoint tem precedência sobre indicações históricas de “próxima tarefa” nas seções abaixo; sempre conferir HEAD e CI correntes.**
