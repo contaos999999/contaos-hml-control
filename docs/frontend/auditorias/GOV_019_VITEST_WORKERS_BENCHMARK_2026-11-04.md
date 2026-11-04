@@ -22,3 +22,19 @@ Aprovar a adoção somente depois de: 3/3 suites PASS sem flakiness; contagem de
 
 ## Riscos e rollback
 A concorrência pode provocar race, OOM, conflito de estado global ou flakiness nos testes. Se ocorrer, não aprovar adoção; restaurar `--maxWorkers=1` por PR e registrar FAIL, sem alterar software/DB/Auth. Nenhum impacto sobre identidade visual, tipos, segredos, backend, ambiente PROD ou cobertura Teste C.
+
+## Resultado do ensaio 3×2 workers — verificado no GitHub
+
+Run PR #41: [#41875827954](https://github.com/contaos999999/contaos-hml-control/actions/runs/41875827954), job `126734821357`, dois checks SUCCESS, incluindo quality, TypeScript e build, sem alterar backend.
+| Repetição | Test files PASS | Testes PASS | Vitest reportou | Wall time instrumentado | Resultado |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 1 | 29 | 828 | 64,12 s | 65 s | PASS |
+| 2 | 29 | 828 | 64,69 s | 65 s | PASS |
+| 3 | 29 | 828 | 62,69 s | 63 s | PASS |
+
+**Mediana instrumentada: 65s**, contra baseline do run 41874233461 **~79s**, redução observada **14s (~17,7%)**. O teste de estresse foi de três repetições completas, sem falhas, contagens iguais, sem desligar suite ou mover código. Não há garantias absolutas de estabilidade futura; monitorar após merge.
+
+**Configuração permanente proposta:** passo único `bunx vitest run --maxWorkers=2` no mesmo PR #41 após a repetição 3/3. Novo commit `50c488e4e0c6f90d806353993dd3b15941d9ef59` implementa esse delta. Exigir novamente ambos os checks SUCCESS no commit **final** antes do merge. A auditoria de navegador do PR pode ser escopo N/A por ser exclusivamente CI, sem alterar os 192 cenários anteriores. Sem Teste C completo autenticado HML.
+
+**Pós-merge:** registrar SHA real e CI depois da integração; até lá NÃO declarar configuração permanente em main.
+
