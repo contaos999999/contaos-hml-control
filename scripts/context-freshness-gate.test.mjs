@@ -74,3 +74,7 @@ test("GOV-003: verificação forçada exige fonte viva mesmo em alteração docu
     false,
   );
 });
+
+test("GOV-004 T03: falha negativa transitória de CI (NÃO MESCLAR)", () => {
+  assert.fail("GOV-004_NEGATIVE_EXPECTED");
+});
