@@ -20,12 +20,12 @@
 |---|---|---|---|
 | T01 | Regras ativas e alvo `main` | PASS — consulta direta | ruleset 26495643 |
 | T02 | Tentativa de escrita direta `main` com arquivo documental inofensivo | PASS — 409, rejeitado | `Repository rule violations found; Changes must be made through a pull request; 2 of 2 required status checks are expected` |
-| T03 | PR com falha controlada de teste node:test, merge deveria falhar | PENDENTE | executar teste transitório apenas na branch |
-| T04 | PR com CI verde e 0 reviews, merge permitido | PENDENTE | realizar apenas após remoção do teste propositalmente falho |
+| T03 | PR com falha controlada de teste node:test, merge deveria falhar | **PASS — recusado (HTTP 405)** | PR #15, CI negativo run 41763485347; mensagem: 2 required checks not succeeded (1 expected, 1 failing) |
+| T04 | PR com CI verde e 0 reviews, merge permitido | **PASS histórico — PR #14**; revalidação no PR #15 após CI | PR #14 merge SHA 31eb0a3e7f0dca0f70420eeeab2ded1b69fcab2d, 0 reviews, CI run 41762284750 SUCCESS |
 | T05 | Force push bloqueado | CONFIGURADO — regra `non_fast_forward`; não executar rewind destrutivo de `main` | ruleset ativo |
 | T06 | Exclusão de `main` bloqueada | CONFIGURADO — regra `deletion`; não tentar apagar `main` | ruleset ativo |
 | T07 | Sem bypass de admin/bot | PASS config `bypass_actors=[]` + `current_user_can_bypass=never` | ruleset ativo |
-| T08 | Auto-Lock normal com `types.ts` íntegro | PENDENTE evidência de run | trabalho em `main`, nenhum drift induzido |
+| T08 | Auto-Lock normal com `types.ts` íntegro | **PASS — execução real sem drift** | run 41762615464 job 126353560829; fixture de detecção/restauro PASS, `types.ts` integro na main; nenhum PR criado |
 
 ## Protocolo de segurança
 1. Não disparar força/exclusão/rewind na `main` em momento algum.
@@ -37,4 +37,8 @@
 7. HML real excluído por determinação do titular.
 
 ## Estado da certificação
-**EM EXECUÇÃO**. Concluir os dados de T03/T04/T08 antes de encerrar a auditoria. Ruleset e fonte podem mudar; os resultados aplicam-se ao SHA, run e momento documentados.
+**TESTES T01/T02/T03/T04/T07/T08 COMPROVADOS** conforme links e logs. T05/T06 verificações declarativas do ruleset ACTIVE: os controles existem, mas não houve tentativa real de destruição ou reescrita da `main`. A etapa positiva do PR #15 será registrada no seu histórico após CI e merge. Este documento é a evidência inicial; a ata final pode ser complementada em comentário GitHub sem novo commit na main. Ruleset e fonte podem mudar, portanto resultados aplicam-se ao SHA e momento indicados.
+
+## T03 — Evidência adicional de reprovação real
+
+A falha transitória `GOV-004_NEGATIVE_EXPECTED` foi introduzida em `scripts/context-freshness-gate.test.mjs` apenas na branch `governance/gov-004-branch-protection-audit`, commit `e293bd87f272876b9bf6473debe539453e6b7519`. O CI do PR #15 concluiu `failure` (run `41763485347`), e a tentativa de merge recebeu HTTP 405 com `Repository rule violations found\n2 of 2 required status checks have not succeeded: 1 expected and 1 failing`. Nenhum merge ocorreu. Em commit `f7a44f80b537136c64a1bd1de445c7085d18c311`, o teste negativo foi retirado integralmente; o blob retornou ao SHA original `0fc7cf7a28653f620705b55406152b16da57d43a`.
