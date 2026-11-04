@@ -86,3 +86,16 @@ Seguir ContaOS Brand v1.0 e 000/BRAND-01, sem paleta paralela, preservar logo tr
 - **Limite normativo explícito:** a `provenance.source_note` do catálogo do backend reconhece que os DOCX originais não estão materializados individualmente como blobs Git. Assim, 25/25 de documentos **não é** prova de leitura literal do Prompt 41 do DOCX; este gate continua NÃO VERIFICADO. Sem validação do contrato autorizado de snapshot detalhado, não abrir GATE/BUILD.
 - A especificação FE v4 em biblioteca, páginas 20 e 65, registra rota `/competencias/:id/apresentacoes/:apresentacaoId` e SELECT Data API sob RLS. Consulta estrutural ao `types.ts` do frontend não é verificação HML com sessão autenticada.
 - Nenhuma mudança funcional, backend, HML, Lovable BUILD ou PROD efetuada neste PLAN. **Status do planejamento: NÃO VALIDADO**. A integração de documentação não altera essa classificação.
+
+## I. GATE TRANSVERSAL — 97 ATÔMICOS, ALÉM DO BRAND-01
+
+**Verificação independente do visual:** O prompt 000/BRAND-01 é obrigatório, mas NÃO esgota as obrigações. O catálogo `docs/prompts/PROMPT_TRACKS_4_1.json`, blob `e54e49e626e65a9c94c81709180fd192a1f0c079`, declara `certification.full_crosswalk_verified=false`, `count_regular_verified=0` e status `FONTES_VERIFICADAS_MATRIZ_ESTRUTURAL_POR_TELA_PARCIAL`. Para o regular 41, há somente vínculo estrutural direto a 000; `not_relevant_atomic_ids=[]` NÃO prova que 001–096 foram analisados ou excluídos.
+
+**ANTES de classificar PLAN 41 como VALIDADO:**
+1. Conferir requisito original do prompt regular 41; separar dos inventários 39 etapas/416 critérios.
+2. Percorrer **todos os 97 IDs 000–096**, confrontando texto canônico 08A–08D e 20_PROMPT_000_BRAND_01 com a finalidade V1-20; classificar cada um como **APLICÁVEL**, **TRANSVERSAL APLICÁVEL** ou **NÃO APLICÁVEL**, justificando e citando fonte por ID. Os conjuntos precisam ser disjuntos e totalizar 97/97.
+3. Registrar matriz de aplicabilidade na documentação do PLAN e mapear cada critério aplicável para arquivo, teste e evidência; contemplar segurança, RLS/autorização, isolamento por organização, integridade e imutabilidade do pacote, rastreabilidade, RNFs, PT-BR, acessibilidade, custo e Teste C, além da marca.
+4. Confirmar se requisitos requerem verificação HML real ou autorização especial e manter `NÃO VERIFICADO` quando faltarem evidências; jamais reclassificar mock como E2E.
+5. Não editar o catálogo normativo para forçar PASS ou alterar numeradores; se surgir divergência, abrir análise própria e bloquear o GATE até reconciliação legítima.
+
+**Resultado atual:** somente inventário e crosswalk estrutural conhecido; auditoria semântica 97/97 para PROMPT 41 **NÃO VERIFICADA**. BRAND-01 isoladamente não libera BUILD. A presente seção corrige explicitamente a interpretação de que o vínculo direto 41→000 bastaria.
