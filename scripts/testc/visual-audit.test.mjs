@@ -68,15 +68,29 @@ test("GOV-007: evidência parcial não vira certificado WCAG integral", () => {
   );
 });
 
-
 test("GOV-012: diagnostico de contraste preserva causa sem expor dados privados", () => {
-  const input = [{
-    tag: "P", color: "oklch(0.984 0.003 247.858)", fontSize: "16px",
-    fontWeight: "400", opacity: "0.8", reasonCodes: ["bgOverlap"],
-    layers: [{ tag: "ASIDE", backgroundColor: "oklch(0.208 0.042 265.755)",
-      hasBackgroundImage: true, opacity: "1", userToken: "SEGREDO" }],
-    outerHTML: "<p>SEGREDO</p>", textContent: "SEGREDO", value: "SEGREDO"
-  }];
+  const input = [
+    {
+      tag: "P",
+      color: "oklch(0.984 0.003 247.858)",
+      fontSize: "16px",
+      fontWeight: "400",
+      opacity: "0.8",
+      reasonCodes: ["bgOverlap"],
+      layers: [
+        {
+          tag: "ASIDE",
+          backgroundColor: "oklch(0.208 0.042 265.755)",
+          hasBackgroundImage: true,
+          opacity: "1",
+          userToken: "SEGREDO",
+        },
+      ],
+      outerHTML: "<p>SEGREDO</p>",
+      textContent: "SEGREDO",
+      value: "SEGREDO",
+    },
+  ];
   const data = sanitizeContrastDiagnostics(input);
   assert.equal(data.length, 1);
   assert.equal(data[0].tag, "p");
@@ -86,8 +100,10 @@ test("GOV-012: diagnostico de contraste preserva causa sem expor dados privados"
 });
 test("GOV-012: limites de diagnosticos e regras desconhecidas", () => {
   const input = Array.from({ length: 500 }, () => ({
-    tag: "SPAN", reasonCodes: ["bgGradient", "BAD_CODE_9999", "fgAlpha"],
-    color: "red; https://malicioso.exemplo/segredo", layers: []
+    tag: "SPAN",
+    reasonCodes: ["bgGradient", "BAD_CODE_9999", "fgAlpha"],
+    color: "red; https://malicioso.exemplo/segredo",
+    layers: [],
   }));
   const data = sanitizeContrastDiagnostics(input);
   assert.ok(data.length <= 24);
