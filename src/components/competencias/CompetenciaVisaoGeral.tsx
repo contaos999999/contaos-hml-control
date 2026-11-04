@@ -198,7 +198,7 @@ function Conteudo({ vg }: { vg: VisaoGeral }) {
         idContrato={c.id_contrato}
         situacao={c.situacao}
       />
-      <Tabs id={c.id} />
+      <Tabs id={c.id} permitirParecer={vg.allowed_actions.abrir_parecer} />
       <div className="grid gap-4 lg:grid-cols-3">
         <EstadoCompetencia estado={derivarEstadoVisual(vg)} />
         <PercentGauge valor={c.percentual_conformidade} portao={vg.portao} />
@@ -422,7 +422,7 @@ function AllowedActions({ acoes, vgId }: { acoes: AllowedActionsVG; vgId: string
 
 const ABAS_FUTURAS = ["Apresentação"];
 
-function Tabs({ id }: { id: string }) {
+function Tabs({ id, permitirParecer }: { id: string; permitirParecer: boolean }) {
   return (
     <div
       role="tablist"
@@ -454,15 +454,22 @@ function Tabs({ id }: { id: string }) {
       >
         Análise
       </Link>
-      <Link
-        to="/competencias/$id/parecer"
-        params={{ id }}
-        role="tab"
-        aria-selected="false"
-        className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        Parecer
-      </Link>
+      {permitirParecer ? (
+        <Link
+          to="/competencias/$id/parecer"
+          params={{ id }}
+          role="tab"
+          aria-selected="false"
+          className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Parecer
+        </Link>
+      ) : (
+        <span role="tab" aria-selected="false" aria-disabled="true"
+          className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-muted-foreground">
+          Parecer <Lock className="ml-2 h-4 w-4" aria-hidden />
+        </span>
+      )}
       {ABAS_FUTURAS.map((t) => (
         <span
           key={t}
