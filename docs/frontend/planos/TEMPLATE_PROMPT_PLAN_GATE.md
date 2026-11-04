@@ -28,12 +28,12 @@
 
 - Há possível lacuna em schema, RPC, RLS, Auth, Storage, Edge ou regra de negócio que depende do Supabase? **SIM/NÃO**.
 - Se SIM, evidência limitada ao frontend e referências do PRD:
-- **Gate obrigatório:** autorização humana pedida para migrar ao fluxo `contaos9999/develop` e investigar HML? **PENDENTE / CONCEDIDA**.
+- **Gate obrigatório:** autorização humana pedida para migrar ao fluxo `contaos999999/develop` e investigar HML? **PENDENTE / CONCEDIDA**.
 - Enquanto pendente, **BLOQUEAR o trabalho dependente**; não investigar backend nem corrigir por desvio no frontend. Seguir a ADR-DEV-002.
 
 ## B.2. CONTEXTO CANÔNICO 4.1 E PROVA 100/97
 
-- Consultar fonte `contaos9999/develop`, registrar **SHA HEAD atual** e confirmar que coincide com `docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json`. Divergente = PLAN BLOQUEADO até atualizar fonte.
+- Consultar fonte `contaos999999/develop`, registrar **SHA HEAD atual** e confirmar que coincide com `docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json`. Divergente = PLAN BLOQUEADO até atualizar fonte.
 - Declarar `context_pack_version: "4.1"`; `context_read_acknowledged: true`; `context_read_by` e `context_read_acknowledged_at`; `context_source_commit`; `context_catalog_blob` e `context_documents_read` contendo integralmente os 25 arquivos `00–20` e `08A–08D` com fontes e SHAs versionados. Declaração falsa é motivo de reprovação.
 - Registrar `prompt_crosswalk.regular_prompt_id` 00–99, `direct_atomic_ids` (incluir 000/BRAND-01 em cada frontend), `additional_transversal_atomic_ids`, `exclusoes_justificadas` quando necessário, `source_evidence_missing: false`, `regular_original_sha256`, `atomic_original_sha256`. **Confirmação numérica NÃO substitui conferência semântica do PRD e da matriz 08A–08D.**
 - Registrar `brand_context: "ContaOS Brand v1.0"`, `prompt_000_brand_01_read: true`, `prompt_policy.required_section: "ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE"`.
@@ -75,3 +75,6 @@ Entregar evidências e classificar: IDENTIDADE VISUAL PASS/FAIL/NÃO VERIFICADO/
 - Resultado por critério: PASS/FAIL/NÃO VERIFICADO:
 - Divergência descoberta e novo PLAN, se houver:
 - Registro no dossiê e checkpoint para novo chat:
+
+
+> Nota de migração 04/11/2026: os nomes canônicos agora pertencem à organização `contaos999999`. O ruleset da main exige PR e dois status checks, com `required_approving_review_count=0`, mas aprovações de PLAN explicitamente obrigatórias (por exemplo, BRAND-01) permanecem exigíveis. Consultar `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md` antes de preencher.
