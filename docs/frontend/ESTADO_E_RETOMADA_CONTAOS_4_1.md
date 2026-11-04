@@ -3,6 +3,16 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — PROMPT 42/V1-21 GATE EM PR (04/11/2026)
+
+- PLAN PROMPT 42 / V1-21 histórico do contrato **integrado** pelo [PR #57](https://github.com/contaos999999/contaos-hml-control/pull/57), merge `8f0a4ebba23f0a1047d831559633c54b9439e6de`; CI documental [#41913182521](https://github.com/contaos999999/contaos-hml-control/actions/runs/41913182521), dois checks SUCCESS. Frontend main basal `8f0a4ebba23f0a1047d831559633c54b9439e6de`; fonte normativa `develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`.
+- PR de GATE em preparação na branch `gate/prompt-42-v121-historico-20261104`: `docs/frontend/planos/PLANO_ATIVO.json` atualizado para prompt 42 VALIDADO, com allowlist de dez caminhos de BUILD e classificação individual dos 97 atômicos, documentação `docs/frontend/planos/PROMPT_42_V1_21_HISTORICO_CONTRATO_2026-11-04.md`, fonte literal original autenticada por hash. **Não iniciar src/** até CI e merge deste GATE.
+- Último BUILD funcional integrado: PROMPT 41/V1-20 PR #52, merge `a114e2c9d47cb359a79bda05f5ee95699e4ecd37`, 848 testes PASS e Teste C 208 combinações/24 capturas. Não repetir.
+- Próximo BUILD após GATE: V1-21 `/contratos/:id/historico`, somente leitura de relatórios históricos, apontamentos, respostas, desfechos, precedentes e regras do contrato atual, com paginação e isolamento lógico; ingestão V1-22/PROMPT 43 fora do escopo. A saída `src/routeTree.gen.ts` deve ser gerada pelo TanStack, não editada manualmente (GOV-020).
+- Ensaio RLS HML A/B **NÃO VERIFICADO, FACULTATIVO DEPOIS DO REGULAR 99, NÃO BLOQUEANTE ISOLADAMENTE**, sem dispensar autenticação, escopo, logs, TDD, CI/BRAND-01 e Teste C independente. Backend, PROD e `types.ts` certificados não podem ser alterados.
+
+---
+
 ## CHECKPOINT — PROMPT 42 / V1-21 PLAN EM VALIDAÇÃO (04/11/2026)
 
 - **Frontend de origem:** `contaos999999/contaos-hml-control/main@e12bf962d83b347f1c168c3e7541172d9ae35df4`. **Fonte normativa:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Verificar HEADs em nova sessão. CI pós-merge do regular 41, run [41911981719](https://github.com/contaos999999/contaos-hml-control/actions/runs/41911981719), ambos os jobs SUCCESS.
