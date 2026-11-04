@@ -284,14 +284,31 @@ describe("V1-14 renderização do backend", () => {
     expect(acao("apresentar").querySelector("a,button,[aria-disabled]")).toBeNull();
   });
 
+  it("REGRESSÃO: percentual 100 com backend apresentar=false continua sem link", async () => {
+    m.rpc.mockResolvedValue(ok(vg({
+      percentual: 100, situacao: "pode_apresentar_contratante", acoes: { apresentar: false },
+    })));
+    montar();
+    await pronto();
+    expect(acao("apresentar").querySelector("a")).toBeNull();
+    const aba = screen.getAllByRole("tab").find(t => t.textContent?.includes("Apresentação"));
+    expect(aba?.getAttribute("aria-disabled")).toBe("true");
+    expect(aba?.getAttribute("href")).toBeNull();
+  });
+
   it("REGRESSÃO: percentual 0 + apresentar=true → Permitida pelo backend (staged)", async () => {
     m.rpc.mockResolvedValue(ok(vg({ percentual: 0, acoes: { apresentar: true } })));
     montar();
     await pronto();
     expect(acao("apresentar").textContent).toMatch(/Permitida pelo backend/);
+    expect(acao("apresentar").querySelector("a")?.getAttribute("href"))
+      .toBe(`/competencias/${ID}/apresentar`);
+    const aba = screen.getAllByRole("tab").find(t => t.textContent?.includes("Apresentação"));
+    expect(aba?.getAttribute("href")).toBe(`/competencias/${ID}/apresentar`);
+    expect(aba?.getAttribute("aria-disabled")).toBeNull();
   });
 
-  it.each(["abrir_documentos", "analisar", "apresentar"])(
+  it.each(["abrir_documentos", "analisar"])(
     "%s=true: staged aria-disabled Em breve, sem href, clique não navega nem chama RPC",
     async (n) => {
       m.rpc.mockResolvedValue(ok(vg({ acoes: { [n]: true } })));
@@ -344,7 +361,7 @@ describe("V1-14 renderização do backend", () => {
     expect(document.body.textContent).not.toMatch(/Apta/i);
   });
 
-  it("a11y: H1 único, tablist com Visão geral selecionada e futuras staged", async () => {
+  it("a11y: H1 único, tablist com Visão geral selecionada e apresentação bloqueada pelo backend", async () => {
     montar();
     await pronto();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
