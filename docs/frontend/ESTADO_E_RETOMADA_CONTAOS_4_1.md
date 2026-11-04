@@ -3,6 +3,21 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT OFICIAL — GOV-020 PREVENÇÃO DE DRIFT DE ROTAS INTEGRADA (04/11/2026)
+
+**HEAD comprovado da main após integração:** `contaos999999/contaos-hml-control/main@7149420e980fc87c4fc4477044fb9699e4e23a43` (PR #54 MERGED). Fonte normativa `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` verificada no CI. **Conferir HEADs atuais novamente antes de retomar.**
+
+- **GOV-020 IMPLEMENTADO E INTEGRADO** via [PR #54](https://github.com/contaos999999/contaos-hml-control/pull/54), head `de5e69cfe1b669ed8ceb957ae920925d2a63f88f`, merge `7149420e980fc87c4fc4477044fb9699e4e23a43`; [CI run #41908955342](https://github.com/contaos999999/contaos-hml-control/actions/runs/41908955342): **ContaOS Frontend Zero-Drift SUCCESS e Teste C Independente SUCCESS no mesmo SHA**. Vitest **841 PASS, 30 arquivos**, 4 autotestes GOV-020 PASS; fonte canônica 25/25, TypeScript, Vite build, BRAND-01, blob `types.ts` e checks existentes preservados. Teste C artefato `contaos-teste-c-41908955342-1` ID `13361398084`, SHA256 `90483de5fd1c5589d670d38a14a22774b72a2e0796107b40fe4a9889e56ef95f`.
+- **Controle 1, preventivo:** `scripts/route-tree-drift-gate.mjs` compara `src/routeTree.gen.ts` ao Git após geração `bunx vite build` no workflow quality, **antes** dos testes longos. FAIL com diff se nome/ordem divergir, arquivo ausente ou não versionado. Nunca altera, restaura ou comita arquivos no CI.
+- **Controle 2, independente:** workflow Teste C executa mesmo guard após Vite dev inicializado e antes do Playwright; preserva sem alterações `git diff --exit-code --` e `git status --porcelain --untracked-files=no` ao final. Dois checks obrigatórios permanecem, sem bypass.
+- **Autotestes negativos:** 4 casos PASS, incluindo ambiente limpo (PASS esperado), arquivo divergente (FAIL esperado), arquivo removido (FAIL esperado) e arquivo não versionado (FAIL esperado). Execução no CI real com snapshots TanStack reproduzíveis, sem novas dependências.
+- **Regra permanente:** `AGENTS.md`, `docs/frontend/planos/TEMPLATE_PROMPT_PLAN_GATE.md`, `docs/frontend/governanca/GOV_020_GERACAO_DETERMINISTICA_ROTAS_2026-11-04.md`. Quando um prompt 42–99 adicionar/renomear/excluir rota, criar em `src/routes/`, gerar oficialmente e versionar `src/routeTree.gen.ts` na allowlist do PLAN aprovado, antes do PR; nunca editar à mão. Não foi alterado `package.json` ou `bun.lock`, nem backend/PROD/brand/RLS/types.
+- **PR #52 BUILD 41/V1-20:** permanece **ABERTO e NÃO INTEGRADO**; sua árvore TanStack, anterior a GOV-020, ainda diverge da gerada. O CI da etapa [#41904426343](https://github.com/contaos999999/contaos-hml-control/actions/runs/41904426343) comprovou 848 Vitest PASS, TypeScript e build PASS, Teste C navegador 208 combinações/24 capturas, mas job final **FAIL** por diferença `src/routeTree.gen.ts`. GOV-020 detectará drift antecipadamente em novos runs, mas **não corrige esse arquivo automaticamente**. A correção por conector GitHub foi bloqueada anteriormente; NÃO DECLARAR CORRIGIDO ou fazer merge com checks vermelhos.
+- **Última etapa funcional concluída:** PROMPT 40/V1-19 PR #44. PLAN/GATE 41 integrados #50/#51; BUILD #52 pendente de sincronização legítima do gerador e dois checks SUCCESS. Próxima tarefa exata: aplicar saída oficial TanStack em `src/routeTree.gen.ts` na branch #52 usando ambiente com permissão de escrita, repetir CI e Teste C no HEAD final, integrar sem bypass e prosseguir regular 42.
+- **RLS HML A/B real:** NÃO VERIFICADO, facultativo após PROMPT regular 99, não bloqueante isoladamente conforme decisão no PR #49; outros gates de segurança intactos.
+
+---
+
 ## CHECKPOINT — GOV-020 GERAÇÃO DETERMINÍSTICA ROUTETREE / CI PREVENTIVO (04/11/2026)
 
 **Origem deste workstream:** frontend `main@cffbf0532a7fe76f384130ae56df080a7a8a14ed`; normativo `develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Confirmar HEAD vivo antes de retomar. **Último BUILD funcional integrado:** regular 40/V1-19, PR #44. PLAN/GATE 41 integrados PRs #50/#51; BUILD V1-20 PR #52 **ABERTO**, não repetir e não declarar concluído antes de 2 checks SUCCESS.
