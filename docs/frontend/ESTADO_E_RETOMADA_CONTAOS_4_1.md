@@ -3,6 +3,23 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — PROMPT 39 / V1-18, 04/11/2026
+
+**Este checkpoint tem precedência sobre indicações históricas de “próxima tarefa” nas seções abaixo; sempre conferir HEAD e CI correntes.**
+
+- **Última implementação funcional identificada:** PROMPT 38 / V1-17, drawer de detalhe do requisito, implementada no frontend. Não repetir.
+- **Frontend baseline confirmado:** `contaos999999/contaos-hml-control/main@15bf2aa6fab6b4c9e262a7d74b6a2ea422419e1f`; CI pré-PLAN `41842635961` SUCCESS.
+- **Fonte normativa:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Os 25 blobs canônicos e o catálogo 100/97 estão iguais ao snapshot anterior; o `source_commit` foi atualizado via PR #28.
+- **PLAN da próxima etapa:** `docs/frontend/planos/PROMPT_39_V1_18_PARECER_INTERNO_2026-11-04.md`, PR #28 MERGED em `d49f40f29e96f4630b282823d606acdd072c921b`; CI do PR `41851784279` com **2 checks SUCCESS**.
+- **Nova tarefa selecionada:** PROMPT regular **39**, tela **V1-18 Parecer interno**, rota `/competencias/:id/parecer`. Atômicos diretos `000` BRAND-01, `021` V1-AUD-002, `022` V1-AUD-003 e `023` V1-AUD-004.
+- **Contratos lidos do frontend congelado:** `pareceres_internos` via RLS, `solicitar_parecer_interno(p_id_competencia)`, `aprovar_parecer_interno(p_id_parecer,p_aprovar,p_fundamento?)`; visão geral `obter_visao_geral_competencia` com `allowed_actions.abrir_parecer`. **Nenhum backend analisado, desenvolvido ou alterado nesta retomada.**
+- **Gate de PLAN:** `docs/frontend/planos/PLANO_ATIVO.json` agora descreve exclusivamente V1-18 e declara 25 fontes, 100/97, RNFs, Zero-Drift, allowlist de 7 arquivos e referência ao CI documental anterior. Estado `VALIDADO` **sujeito à aprovação do CI do PR que incorpora este checkpoint e o manifesto**. Não iniciar BUILD na branch do PLAN.
+- **Próxima ação exata:** após o merge do PR de validação e CI no HEAD final, iniciar em **nova branch** o BUILD do PROMPT 39, começando por TDD RED; executar apenas allowlist, regressão, CI e Teste C independente. **NÃO** iniciar PROMPT 40/V1-19 até fechar V1-18.
+- **Proibições permanentes:** `src/integrations/supabase/types.ts` blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` imutável; `supabase/**`, backend, PROD, Auth, Storage, migrations, cores/brand/Design System intocados.
+- **Pendências reais não falsamente aprovadas:** HML Auth/RLS A/B e fluxos mutativos com contas autorizadas; telas privadas no navegador/contraste; redação/edição manual de parecer sem RPC tipada deve ser **BLOQUEADA** até autorização de investigação backend. MOCK e CI documental não comprovam tais itens.
+
+---
+
 ## 0. ESTADO VIVO — atualizado em 04/11/2026 após GOV-014
 
 **Estas informações prevalecem sobre snapshots históricos mais abaixo; conferir HEADs e checks a cada novo chat.**
