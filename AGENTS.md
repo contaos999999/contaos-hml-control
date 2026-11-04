@@ -112,3 +112,12 @@ Norma detalhada: `docs/frontend/ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md`. O
 - Proibir exclusão, force push (non-fast-forward) e bypass amplo (`bypass_actors=[]`, `current_user_can_bypass=never`).
 - GOV-004: T02 escrita direta bloqueada HTTP 409; T03 merge de CI FAIL bloqueado HTTP 405; T04 PR #15 com CI verde e zero revisões mesclado. Force push/exclusão comprovados por configuração ACTIVE, **não por ensaio destrutivo na main**.
 - Rastreabilidade: `docs/frontend/auditorias/GOV_004_CERTIFICACAO_BRANCH_2026-11-03.md`, PR #15 e issue #16. Autenticado HML A/B não integra essa auditoria.
+
+
+## GOV-020 — geração determinística das rotas TanStack (obrigatório)
+
+- O arquivo `src/routeTree.gen.ts` é gerado automaticamente pelo TanStack Router, **nunca deve ser editado manualmente** nem removido do versionamento para contornar drift.
+- Em qualquer PLAN que inclua criar, remover ou renomear `src/routes/**`, incluir explicitamente na allowlist a saída `src/routeTree.gen.ts` e a prova GOV-020; registrar por PR o arquivo da árvore gerada pelo `bunx vite build`, no mesmo commit/BUILD autorizado.
+- O CI executa `node --test scripts/route-tree-drift-gate.test.mjs` e `node scripts/route-tree-drift-gate.mjs` **depois da geração e antes da regressão longa**. Divergência do gerador significa FAIL; o CI não corrige, não comita e não faz push.
+- O Teste C independente repete a verificação após iniciar Vite dev e mantém o gate final de árvore de trabalho inteiramente limpa; não substituir nenhum dos dois checks ou flexibilizar o Zero-Drift.
+- Casos negativos obrigatórios: nome/ordem alterado, árvore excluída e arquivo não versionado devem retornar FAIL. Todos os demais gates de PLAN, escopo, fonte canônica, Brand v1.0, `types.ts`, segurança e CI permanecem ativos. Ver `docs/frontend/governanca/GOV_020_GERACAO_DETERMINISTICA_ROTAS_2026-11-04.md`.
