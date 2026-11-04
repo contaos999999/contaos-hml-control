@@ -49,13 +49,14 @@ const ARQUIVOS_MARCA = [
   "src/components/competencias/CompetenciaVisaoGeral.tsx",
   "src/components/competencias/CompetenciaDocumentos.tsx",
   "src/components/competencias/CompetenciaAnalise.tsx",
+  "src/components/competencias/CompetenciaParecer.tsx",
 ];
 
 describe("BRAND-01 — componente de marca", () => {
   it("usa o logo horizontal oficial para fundo escuro com alt ContaOS", () => {
     const { container } = render(<ContaOSMarca />);
     const logo = container.querySelector(
-      'img[src="/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg"]',
+      'img[src="/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"]',
     );
     expect(logo).not.toBeNull();
     expect(logo?.getAttribute("alt")).toBe("ContaOS");
@@ -84,7 +85,7 @@ describe("BRAND-01 — contraste no tema escuro", () => {
     expect(simboloNavy?.getAttribute("alt")).toBe("");
     expect(simboloNavy?.getAttribute("class")).toContain("dark:block");
     const logoBranco = container.querySelector(
-      'img[src="/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg"]',
+      'img[src="/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"]',
     );
     expect(logoBranco?.getAttribute("class")).toContain("dark:hidden");
   });
@@ -119,6 +120,42 @@ describe("BRAND-01 — sem visual paralelo nas telas recentes", () => {
     expect(src).not.toMatch(/from\s+["'][^"']+\.css["']/);
     expect(src).not.toContain("fonts.googleapis");
     expect(src).not.toContain("createTheme(");
+  });
+});
+
+describe("GOV-017 — SVG branco sem fundo para superficies compostas", () => {
+  const original = "public/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg";
+  const transparente = "public/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg";
+  const fundo = '<rect width="100%" height="100%" fill="#0F172A"/>';
+
+  it("derivado preserva cada forma oficial e remove somente o fundo total", () => {
+    const assetOriginal = ler(original);
+    const assetTransparente = ler(transparente);
+    expect(assetOriginal.split(fundo)).toHaveLength(2);
+    expect(assetTransparente).toBe(assetOriginal.replace(fundo, ""));
+    expect(assetTransparente).not.toContain(fundo);
+    expect(assetTransparente).toContain('aria-label="ContaOS"');
+  });
+
+  it("a marca compartilhada usa somente a variante sem fundo", () => {
+    const componente = ler("src/components/brand/ContaOSMarca.tsx");
+    const { container } = render(<ContaOSMarca />);
+    const logo = container.querySelector(
+      'img[src="/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"]',
+    );
+    expect(logo).not.toBeNull();
+    expect(logo?.getAttribute("alt")).toBe("ContaOS");
+    expect(componente).not.toContain('src="/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg"');
+  });
+
+  it("V1-18 mantém a marca compartilhada e tokens sem paleta paralela", () => {
+    const tela = ler("src/components/competencias/CompetenciaParecer.tsx");
+    expect(tela).toContain("<ContaOSMarca");
+    expect(tela).toContain("bg-primary text-primary-foreground");
+    expect(tela).toContain("bg-background text-foreground");
+    expect(tela).not.toMatch(/#[0-9a-fA-F]{3,8}\\b/);
+    expect(tela).not.toContain("fonts.googleapis");
+    expect(tela).not.toContain("createTheme(");
   });
 });
 
