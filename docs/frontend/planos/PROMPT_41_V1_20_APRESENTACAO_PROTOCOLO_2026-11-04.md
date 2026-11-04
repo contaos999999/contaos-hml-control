@@ -99,3 +99,7 @@ Seguir ContaOS Brand v1.0 e 000/BRAND-01, sem paleta paralela, preservar logo tr
 5. Não editar o catálogo normativo para forçar PASS ou alterar numeradores; se surgir divergência, abrir análise própria e bloquear o GATE até reconciliação legítima.
 
 **Resultado atual:** somente inventário e crosswalk estrutural conhecido; auditoria semântica 97/97 para PROMPT 41 **NÃO VERIFICADA**. BRAND-01 isoladamente não libera BUILD. A presente seção corrige explicitamente a interpretação de que o vínculo direto 41→000 bastaria.
+
+## J. Matriz 97/97 de aplicabilidade adicionada após PR #46
+
+A auditoria individual está registrada em `docs/frontend/auditorias/PROMPT_41_V120_CROSSWALK_97_ATOMICOS_2026-11-04.md`: 000 diretamente aplicável; 019/020/067 como dependências transversais pré-existentes; 087/093 condicionais sem autorização de nova funcionalidade; 91 IDs sem implementação nova na V1-20. **97/97 classificados, sem correspondências numéricas arbitrárias**, mas a triagem não substitui certificação integral de requisitos, autenticação real nem literal do DOCX PROMPT 41. O campo oficial `full_crosswalk_verified` do catálogo normativo permanece false. Ainda NÃO VALIDADO para BUILD; `PLANO_ATIVO.json` fica intacto (PROMPT 40). O ramo de auditoria só altera documentação e depende de dois checks verdes próprios antes de qualquer merge.
