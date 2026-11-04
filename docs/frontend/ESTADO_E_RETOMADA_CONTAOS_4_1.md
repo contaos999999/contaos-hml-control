@@ -3,6 +3,20 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — PROMPT REGULAR 41 / V1-20 BUILD INTEGRADO (04/11/2026)
+
+**HEAD comprovado da `main` após o BUILD:** `contaos999999/contaos-hml-control/main@a114e2c9d47cb359a79bda05f5ee95699e4ecd37`. **Normativo:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Estes HEADs são fotografias de evidência: **verificar HEAD vivo na próxima execução**. O checkpoint desta seção está na branch `docs/checkpoint-prompt41-v120-integrado-20261104` aguardando seu próprio PR/CI até integração comprovada.
+
+- **ÚLTIMA ETAPA FUNCIONAL COMPROVADAMENTE CONCLUÍDA:** **PROMPT regular 41 / V1-20 — Apresentação e protocolo**, rota `/competencias/:id/apresentacoes/:apresentacaoId`. PLAN PR #50, GATE PR #51, BUILD [PR #52](https://github.com/contaos999999/contaos-hml-control/pull/52) **MERGED** na main@ `a114e2c9d47cb359a79bda05f5ee95699e4ecd37`. Não repetir PROMPT 40/V1-19 nem PROMPT 41/V1-20.
+- **Desvio routeTree solucionado:** blob TanStack real `src/routeTree.gen.ts@0dcfb92ffddaf9c1f7dd441ef0b45ac9113ff3f7`, commit `8c409693b8dd129c954746c79a6a19719eccc1cb`. Branch reconciliada com main e GOV-020 por merge de dois pais `9efd645d4dc2867484a4e4963d8a107cef7f1b7b`, sem rebase/force push; preservado checkpoint vigente na main.
+- **CI BUILD FINAL** [run #41910821199](https://github.com/contaos999999/contaos-hml-control/actions/runs/41910821199) no SHA `9efd645d4dc2867484a4e4963d8a107cef7f1b7b`: dois checks exigidos **SUCCESS**. Job Zero-Drift ID `126857585652`: fonte 25/25 e 100/97 PASS, GOV-020 PASS, **Vitest 31 arquivos / 848 testes PASS**, TypeScript PASS, build PASS, BRAND-01 e blob types.ts PASS. Job Teste C independente ID `126857585844`: GOV-020 PASS, Playwright **208 combinações / 24 capturas**, resultado `PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA`, integridade final **PASS**.
+- **Artefato Teste C** `contaos-teste-c-41910821199-1`, ID `13362587330`, SHA-256 `947a79f926c28f3e805ead20a9ac4bd1af0d70a4458807ce1e5708ea0cb9a6de`. Retenção limitada GitHub Actions; arquivamento externo institucional permanente não demonstrado.
+- **Segurança e escopo:** somente frontend aprovado, pacote de apresentação congelado e SELECT de dados oficiais; backend, types.ts certificado, RLS, PROD e marca não modificados. O ensaio RLS real entre organizações em HML segue **NÃO VERIFICADO, FACULTATIVO APÓS REGULAR 99, NÃO BLOQUEANTE** por decisão expressa PR #49. Não afirmar E2E autenticado ou conformidade WCAG integral.
+- **Proteção futura:** GOV-020 PR #54 integrado e verificado; o build não aceita diferença de routeTree gerado, e Teste C repete o gate sem bypass. Manter os dois checks.
+- **PRÓXIMA TAREFA:** regular **42 / V1-21**, iniciar pelo texto original autenticado e triagem dos 97 atômicos, elaborar PLAN, validação técnica e GATE em PRs separados, executar TDD RED/GREEN, CI/Teste C e evidências. **Não iniciar BUILD 42 sem GATE PASS**. O `PLANO_ATIVO.json` ainda está 41 VALIDADO até avanço formal; não promover automaticamente. Atualizar este checkpoint e registrar resultado de integração após cada módulo.
+
+---
+
 ## CHECKPOINT OFICIAL — GOV-020 PREVENÇÃO DE DRIFT DE ROTAS INTEGRADA (04/11/2026)
 
 **HEAD comprovado da main após integração:** `contaos999999/contaos-hml-control/main@7149420e980fc87c4fc4477044fb9699e4e23a43` (PR #54 MERGED). Fonte normativa `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` verificada no CI. **Conferir HEADs atuais novamente antes de retomar.**
