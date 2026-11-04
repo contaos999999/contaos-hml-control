@@ -65,7 +65,7 @@ export async function aprovarApresentacao(
   try {
     resposta = await supabase.rpc("aprovar_apresentacao", {
       p_id_competencia: uuidCanonico(competencia),
-      p_fundamento: fundamento.trim() || undefined,
+      ...(fundamento.trim() ? { p_fundamento: fundamento.trim() } : {}),
     });
   } catch {
     throw new ErroApresentacao("erro");
@@ -99,8 +99,8 @@ export async function registrarApresentacao(
     resposta = await supabase.rpc("registrar_apresentacao", {
       p_id_competencia: uuidCanonico(competencia),
       p_idempotency_key: chave,
-      p_protocolo: protocolo.trim() || undefined,
-      p_forma_apresentacao: forma.trim() || undefined,
+      ...(protocolo.trim() ? { p_protocolo: protocolo.trim() } : {}),
+      ...(forma.trim() ? { p_forma_apresentacao: forma.trim() } : {}),
     });
   } catch {
     throw new ErroApresentacao("erro");
