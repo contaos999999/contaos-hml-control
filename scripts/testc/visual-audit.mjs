@@ -68,10 +68,18 @@ export function contrastAssessment(scan) {
 export function sanitizeContrastDiagnostics(items) {
   if (!Array.isArray(items)) return [];
   const allowedReasons = new Set([
-    "bgGradient", "bgImage", "bgOverlap", "fgAlpha",
-    "elmPartiallyObscured", "elmPartiallyObscuring",
-    "outsideViewport", "pseudoContent", "colorParse",
-    "shortTextContent", "equalRatio", "undetermined",
+    "bgGradient",
+    "bgImage",
+    "bgOverlap",
+    "fgAlpha",
+    "elmPartiallyObscured",
+    "elmPartiallyObscuring",
+    "outsideViewport",
+    "pseudoContent",
+    "colorParse",
+    "shortTextContent",
+    "equalRatio",
+    "undetermined",
   ]);
   const safeTag = (x) =>
     /^[a-z][a-z0-9-]{0,22}$/i.test(String(x || ""))
@@ -80,7 +88,7 @@ export function sanitizeContrastDiagnostics(items) {
   const safeColor = (x) => {
     const value = String(x || "").trim();
     if (/^(transparent|#[a-f0-9]{3,8})$/i.test(value)) return value;
-    if (/^(rgb|rgba|oklch|oklab|color)\([0-9.a-z\s,%/+-]{1,90}\)$/i.test(value)) return value;
+    if (/^(rgb|rgba|oklch|oklab|color)\([0-9.a-z\s,%+\x2f-]{1,90}\)$/i.test(value)) return value;
     return "NAO_INFORMADO";
   };
   const safeNumber = (x) => {
@@ -96,13 +104,15 @@ export function sanitizeContrastDiagnostics(items) {
     reasonCodes: (Array.isArray(item?.reasonCodes) ? item.reasonCodes : [])
       .filter((x) => allowedReasons.has(x))
       .slice(0, 8),
-    layers: (Array.isArray(item?.layers) ? item.layers : []).slice(0, 7).map((layer) => ({
-      tag: safeTag(layer?.tag),
-      backgroundColor: safeColor(layer?.backgroundColor),
-      hasBackgroundImage: layer?.hasBackgroundImage === true,
-      hasBackdropFilter: layer?.hasBackdropFilter === true,
-      opacity: safeNumber(layer?.opacity),
-    })),
+    layers: (Array.isArray(item?.layers) ? item.layers : [])
+      .slice(0, 7)
+      .map((layer) => ({
+        tag: safeTag(layer?.tag),
+        backgroundColor: safeColor(layer?.backgroundColor),
+        hasBackgroundImage: layer?.hasBackgroundImage === true,
+        hasBackdropFilter: layer?.hasBackdropFilter === true,
+        opacity: safeNumber(layer?.opacity),
+      })),
   }));
 }
 
