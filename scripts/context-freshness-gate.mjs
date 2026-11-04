@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
-const SOURCE = "contaos9999/develop";
+const SOURCE = "contaos999999/develop";
 const SNAPSHOT = "docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json";
 const PLAN = "docs/frontend/planos/PLANO_ATIVO.json";
 const sha40 = (v) => /^[a-f0-9]{40}$/.test(v || "");
@@ -97,7 +97,7 @@ export async function main() {
   const token = process.env.CONTAOS_CANONICAL_READ_TOKEN?.trim();
   if (!token) {
     throw new Error(
-      "FONTE CANÔNICA BLOQUEADA: configure Secret CONTAOS_CANONICAL_READ_TOKEN, Contents:read somente contaos9999/develop. Não envie o token ao chat.",
+      "FONTE CANÔNICA BLOQUEADA: configure Secret CONTAOS_CANONICAL_READ_TOKEN, Contents:read somente contaos999999/develop. Não envie o token ao chat.",
     );
   }
   const branch = await github("/branches/main", token);
