@@ -9,7 +9,7 @@ on:
     - cron: '17 * * * *'
   workflow_dispatch: {}
 
-# O bot não pode alterar main diretamente nem aprovar ou fazer merge.
+# O bot não altera main diretamente e nunca faz aprovação ou merge automático.
 # 'actions: write' é necessário apenas para disparar CI na branch do PR;
 # PRs criados por GITHUB_TOKEN não disparam workflows pull_request automaticamente.
 permissions:
@@ -83,10 +83,10 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
-          # Uma reparacao em aberto deve receber revisao; nunca duplicar ou mesclar.
+          # Um PR de reparo aberto deve passar pelo CI; nao duplicar nem mesclar automaticamente.
           existing="$(gh pr list --state open --base main --json headRefName,number --jq '[.[] | select(.headRefName | startswith("autolock/types-certified-"))] | length')"
           if (( existing > 0 )); then
-            echo "JA EXISTE PR de restauro pendente ($existing). Revisar; nenhuma escrita."
+            echo "JA EXISTE PR de restauro pendente ($existing). Conferir CI; nenhuma escrita."
             exit 0
           fi
 
@@ -125,7 +125,7 @@ jobs:
           git push origin "HEAD:refs/heads/$repair_branch"
           gh pr create --base main --head "$repair_branch" \
             --title 'fix(types-autolock): propor restauro do blob certificado' \
-            --body "Reparo restrito a src/integrations/supabase/types.ts, restaurado ao blob certificado \`$CERTIFIED_TYPES_BLOB\`. Testes executados antes da publicação. Não aprovar nem mesclar automaticamente. Exigir CI, ruleset e revisão humana independente. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            --body "Reparo restrito a src/integrations/supabase/types.ts, restaurado ao blob certificado \`$CERTIFIED_TYPES_BLOB\`. Testes executados antes da publicação. Sem aprovação humana obrigatória (0 revisões); exigir CI verde e ruleset, sem bypass e sem merge automático pelo bot. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           echo 'PR de reparo aberto, sem merge nem bypass da main.'
 
           # GITHUB_TOKEN não dispara CI pull_request para PR que ele próprio cria.
