@@ -3,17 +3,18 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
-## CHECKPOINT PRIORITÁRIO — GOV-018 OTIMIZAÇÃO CI, 04/11/2026
+## CHECKPOINT PRIORITÁRIO — GOV-018 OTIMIZAÇÃO CI CONCLUÍDA, 04/11/2026
 
-**Estado verificado:** `contaos999999/contaos-hml-control/main@b34e53561587d46cbf600ff3b70e35ccbdf4b8ad` antes do BUILD GOV-018; fonte normativa/backend `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` inalterada. Contexto 25/25 e catálogo 100/97 preservados; `types.ts` certificado `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`.
+**Estado comprovado:** frontend `contaos999999/contaos-hml-control/main@070022bb72c86c221f0f02898b7b9c3e3db67b9c`; backend/norma `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`; 25 fontes e catálogo 100/97, `types.ts` blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`, sem mudanças.
 
-- **Última etapa funcional integrada:** PROMPT 39 / V1-18 Parecer interno, PR #30 e GOV-016 Teste C 24×4×2 PR #32, não repetir.
-- **GOV-017:** PLAN correção transparente da logomarca PR #34, 2 checks SUCCESS e merge em `33f167c6b745261c5a21d7bc63aedad4ffd36fd5`. **Não declarar aplicação do SVG concluída**: ainda exigem gate `PLANO_ATIVO`, BUILD e Teste C; próxima tarefa do fluxo visual pendente.
-- **GOV-018:** PLAN otimização CI `docs/frontend/planos/GOV_018_OTIMIZAR_CI_2026-11-04.md`, PR #35 com dois checks SUCCESS, merge em `b34e53561587d46cbf600ff3b70e35ccbdf4b8ad`. Executar o BUILD **somente** pela branch `build/gov-018-ci-paralelo-cache-20261104`, com `.github/workflows/contaos-frontend-zero-drift.yml` e `contaos-teste-c-independente.yml` (paralelismo + cache travado Chromium), auditoria `docs/frontend/auditorias/GOV_018_CI_BASELINE_E_RESULTADO_2026-11-04.md`.
-- **Baseline:** #41859649176 processamento 316 s (qualidade 118s + Teste C 195s), #41861082671 processamento 321s (121+196s) e atraso extra de atualização do status GitHub. Teste C 192 cenários. **Resultado do BUILD GOV-018 ainda não verificado**.
-- **Próxima ação exata:** abrir PR da branch BUILD GOV-018, provar 2 checks SUCCESS e a execução real de Teste C com 192 cenários, medir runtimes e cache, integrar sem bypass. Depois retomar GOV-017 gate e correção visual, seguido do PROMPT 40 V1-19. Não alterar backend, Auth, RLS, RPC, `types.ts` nem produção.
-- **Ressalva de testes HML autenticados:** não comprovados; auditoria pública e rotas privadas redirecionadas não substituem E2E real.
-- **Rollback:** novo PR restaurando os dois YAMLs, checks obrigatórios inalterados.
+- **GOV-018 PLAN integrado:** PR #35, documento `docs/frontend/planos/GOV_018_OTIMIZAR_CI_2026-11-04.md`, 2 checks SUCCESS; merge `b34e53561587d46cbf600ff3b70e35ccbdf4b8ad`.
+- **GOV-018 BUILD integrado:** PR #36, commit testado `d478b5829064f53563b9136cd4cc0f0ccc436faa`; run [#41869470067](https://github.com/contaos999999/contaos-hml-control/actions/runs/41869470067), dois checks SUCCESS e merge em `070022bb72c86c221f0f02898b7b9c3e3db67b9c`. Alterações SOMENTE nos dois workflows CI, baseline e checkpoint.
+- **Medição A/B:** qualidade 104s, Teste C 191s, início em paralelo dentro de 9s; tempo total 191s versus 321s baseline, redução observada 130s (~40,5%). Teste C `192 combinações`, `25 capturas`, artefato `contaos-teste-c-41869470067-1` ID `13344291691`, teste read-only e checks de brand/zero-drift PASS. Cache Chromium 1.64.1 MISS inicial seguido de SAVE, benefício do HIT futuro não comprovado. Dossiê `docs/frontend/auditorias/GOV_018_CI_BASELINE_E_RESULTADO_2026-11-04.md`.
+- **CI push pós-merge:** run `41870259996` iniciou na `main`, estado final ainda não apurado neste checkpoint. Não confundir job concluído e eventual atraso da API na finalização do workflow. HML autenticado NÃO VERIFICADO, sem afirmação de E2E privado.
+- **GOV-017:** PR #34 PLAN da logomarca transparente foi integrado em `33f167c6b745261c5a21d7bc63aedad4ffd36fd5`, mas **a correção do SVG não foi integrada**. Próxima tarefa funcional: novo PR exclusivo gate `PLANO_ATIVO` GOV-017, CI verde, depois BUILD e Teste C da variante transparente; preservar asset oficial original.
+- **Depois do GOV-017:** PROMPT 40 / V1-19 Wizard de apresentação, PLAN→GATE→BUILD→Teste C, crosswalk 000/067, RPCs oficiais `aprovar_apresentacao` e `registrar_apresentacao`, sem modificar backend sem autorização.
+- **Fase 2 CI:** somente se justificável após medir HIT/cache e repetir baseline, planejar em PR separado Vitest 2 workers e particionamento Teste C 2×96, preservando agregação e 192/192.
+- **Rollback:** PR restaurando versões anteriores dos dois workflows sem desabilitar check, sem force push, sem bypass. Todos os resultados devem ser comprovados por SHA/run antes de serem declarados concluídos.
 
 ---
 
