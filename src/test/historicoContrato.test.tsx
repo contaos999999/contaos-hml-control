@@ -88,7 +88,7 @@ const sig = () => new AbortController().signal;
 describe("PROMPT 42 / V1-21: histórico somente leitura, escopado e paginado", () => {
   it("classifica 403 como permissão negada, nunca como vazio", async () => {
     expect(classificarErroHistorico({ code: "42501" }, 403)).toBe("negado");
-    mock.response.relatorios_historicos_contratante = {
+    mock.response["relatorios_historicos_contratante"] = {
       data: null, count: null, error: { code: "42501" }, status: 403,
     };
     await expect(listarRelatoriosHistoricos(CONTRATO, ORG, 0, sig()))
@@ -113,7 +113,7 @@ describe("PROMPT 42 / V1-21: histórico somente leitura, escopado e paginado", (
     expect(mock.calls.every(x => ["select", "eq", "range"].includes(x.op))).toBe(true);
   });
   it("falha fechado se backend devolver registro de outra organização", async () => {
-    mock.response.relatorios_historicos_contratante = ok([{ ...rel, id_organizacao: "outra" }]);
+    mock.response["relatorios_historicos_contratante"] = ok([{ ...rel, id_organizacao: "outra" }]);
     await expect(listarRelatoriosHistoricos(CONTRATO, ORG, 0, sig()))
       .rejects.toMatchObject({ tipo: "inconsistente" });
   });
@@ -129,7 +129,7 @@ describe("PROMPT 42 / V1-21: histórico somente leitura, escopado e paginado", (
     expect(filtros[1]?.value).toEqual([APONTAMENTO]);
   });
   it("não exibe resposta de apontamento de outro contrato", async () => {
-    mock.response.respostas_historicas = ok([{
+    mock.response["respostas_historicas"] = ok([{
       id: "88888888-8888-4888-8888-888888888888",
       id_apontamento: APONTAMENTO, id_contrato: "outro", id_organizacao: ORG,
       texto: "Não pode vazar", criado_em: DATA,
@@ -147,7 +147,7 @@ describe("PROMPT 42 / V1-21: histórico somente leitura, escopado e paginado", (
     expect(mock.calls.some(x => !["select", "eq", "range"].includes(x.op))).toBe(false);
   });
   it("vazio real é sucesso sem resultados, não permissão negada", async () => {
-    mock.response.relatorios_historicos_contratante = ok([], 0);
+    mock.response["relatorios_historicos_contratante"] = ok([], 0);
     await expect(listarRelatoriosHistoricos(CONTRATO, ORG, 0, sig()))
       .resolves.toEqual({ itens: [], total: 0, offset: 0 });
   });
