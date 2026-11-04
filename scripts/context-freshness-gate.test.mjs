@@ -52,3 +52,14 @@ test("autorrestauração types.ts não investiga backend", () => {
     false,
   );
 });
+
+test("vermelho: fonte antiga contaos9999/develop não é canônica", () => {
+  const snapshot = clone();
+  snapshot.source_repo = "contaos9999/develop";
+  assert.match(checkSnapshot(snapshot, source.source_commit, items).join(" "), /origem/);
+});
+test("verde: repositório privado da organização é a fonte fixa", () => {
+  assert.equal(source.source_repo, "contaos999999/develop");
+  assert.equal(source.source_branch, "main");
+  assert.deepEqual(checkSnapshot(clone(), source.source_commit, items), []);
+});
