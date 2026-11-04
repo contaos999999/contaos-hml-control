@@ -3,6 +3,17 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT — PROMPT 42 / V1-21 PLAN EM VALIDAÇÃO (04/11/2026)
+
+- **Frontend de origem:** `contaos999999/contaos-hml-control/main@e12bf962d83b347f1c168c3e7541172d9ae35df4`. **Fonte normativa:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Verificar HEADs em nova sessão. CI pós-merge do regular 41, run [41911981719](https://github.com/contaos999999/contaos-hml-control/actions/runs/41911981719), ambos os jobs SUCCESS.
+- **Último BUILD funcional concluído:** PROMPT regular 41/V1-20, PR #52 merge `a114e2c9d47cb359a79bda05f5ee95699e4ecd37`, dossiê e checkpoint integrados PR #56 merge `e12bf962d83b347f1c168c3e7541172d9ae35df4`. **Não repetir**.
+- **Próximo regular 42/V1-21:** histórico do contrato na rota canônica `/contratos/:id/historico`. Fonte literal original inspecionada nos parágrafos 2363–2422 do Manual Mestre 100 prompts, SHA-256 `8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e`. Matriz 97/97 de aplicabilidade `docs/frontend/auditorias/PROMPT_42_V121_CROSSWALK_97_ATOMICOS_2026-11-04.md`; PLAN `docs/frontend/planos/PROMPT_42_V1_21_HISTORICO_CONTRATO_2026-11-04.md`.
+- **Escopo previsto:** consulta somente leitura aos relatórios anteriores, apontamentos, respostas/desfechos, precedentes e regras preventivas associados ao **contrato e organização corrente**, com paginação e estados de processamento oficiais. Ingestão/IA/OCR V1-22 fica para PROMPT 43, sem backend novo. Tipos Supabase `src/integrations/supabase/types.ts` blob certificado `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`, nenhuma alteração permitida.
+- **Princípios obrigatórios:** BRAND-01, RNFs, escopo e contrato, prevenção IDOR no frontend, TanStack `routeTree.gen.ts` gerado automaticamente/GOV-020, TDD RED/GREEN e Teste C previsto 27×4×2 = 216 (sem alegar E2E privado). Nenhuma alteração em backend ou PROD. RLS HML A/B real permanece **NÃO VERIFICADO, FACULTATIVO APÓS PROMPT 99 e NÃO BLOQUEANTE ISOLADAMENTE**.
+- **Estado:** apenas PLAN e matriz documental na branch `plan/prompt-42-v121-historico-contrato-20261104`; **NÃO CONSIDERAR BUILD 42 AUTORIZADO** até CI do PLAN, parecer de validação e GATE `PLANO_ATIVO.json` em PR próprio. Próxima ação: concluir PR documental do PLAN, dois checks verdes, revisão técnica e PR de GATE; após integração do GATE, TDD/BUILD V1-21.
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — PROMPT REGULAR 41 / V1-20 BUILD INTEGRADO (04/11/2026)
 
 **HEAD comprovado da `main` após o BUILD:** `contaos999999/contaos-hml-control/main@a114e2c9d47cb359a79bda05f5ee95699e4ecd37`. **Normativo:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Estes HEADs são fotografias de evidência: **verificar HEAD vivo na próxima execução**. O checkpoint desta seção está na branch `docs/checkpoint-prompt41-v120-integrado-20261104` aguardando seu próprio PR/CI até integração comprovada.
