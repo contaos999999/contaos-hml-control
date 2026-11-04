@@ -3,6 +3,20 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT OFICIAL — PROMPT REGULAR 42 / V1-21 INTEGRADO E VALIDADO (04/11/2026)
+
+**HEAD principal verificado:** `contaos999999/contaos-hml-control/main@479f3be73d8caa0bd3651045ffb26f06f2b230e9`, integração [PR #62](https://github.com/contaos999999/contaos-hml-control/pull/62). **Fonte normativa:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`, confirmar HEAD vivo em cada retomada.
+
+- **ÚLTIMA ETAPA FUNCIONAL COMPROVADAMENTE CONCLUÍDA:** PROMPT **42/V1-21 — Histórico do contrato**, rota `/contratos/:id/historico`, PR #62 **MERGED**, merge SHA `479f3be73d8caa0bd3651045ffb26f06f2b230e9`. PLAN original PR #57, GATE inicial #58; correção de cláusula Zero-Drift PR #60 e GATE revalidado PR #61, ambos integrados e com dois checks SUCCESS. BUILD anterior PR #59 **CLOSED SEM MERGE**; não repetir suas etapas nem mesclá-lo.
+- **GOV-020 intacto:** árvore oficial `src/routeTree.gen.ts` blob `9ec02101dcdc238bdcc98ddc70cd2c32805e8257`, idêntica à saída do TanStack do run anterior, validada no CI. Não editar manualmente.
+- **TDD:** RED real no commit `d5f65e958bdd4d9614c5d991a7c558bb760ded7e`, run [#41917210513](https://github.com/contaos999999/contaos-hml-control/actions/runs/41917210513), Vitest FAIL por adapter ausente; 848 testes legados PASS. GREEN no commit `eb7769879e9520e6f48d3b1bca41eec4ec9090ca`; ajustes TS4111 sem relaxar TypeScript.
+- **CI DEFINITIVO ANTES DO MERGE:** [run #41919008227](https://github.com/contaos999999/contaos-hml-control/actions/runs/41919008227) no HEAD final `6885269c90bbdd4bc31e7bbdb7457b6ee16d1b24`: **dois jobs obrigatórios SUCCESS**, regressão **856 testes Vitest / 32 arquivos PASS**, TypeScript PASS, build PASS, BRAND-01, 25/25 fontes, 100/97 catálogo, `types.ts` imutável e GOV-020 PASS. **Teste C independente:** 216 combinações em 27 superfícies × 4 resoluções × 2 temas, 178 capturas, classificação `PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA` e integridade final PASS.
+- **Artefato Teste C final:** `contaos-teste-c-41919008227-1`, ID `13366721494`, digest SHA-256 `00317962ffa567c868ea4905f200239b2b8d1117826cf1105b80176c13ca8e32`. Evidência Actions sujeita à retenção, arquivamento institucional externo adicional NÃO COMPROVADO. Dossiê `docs/frontend/auditorias/PROMPT_42_V121_TESTES_2026-11-04.md`.
+- **Segurança e âmbito:** somente frontend HML, consultas read-only do histórico do contrato corrente, dados existentes sob RLS; nenhum backend/RLS/PROD, migrations, `types.ts`, assets BRAND, CSS global ou pacote alterado. Teste operacional de isolamento RLS HML A/B **NÃO VERIFICADO, FACULTATIVO DEPOIS DO REGULAR 99, NÃO BLOQUEANTE ISOLADAMENTE**, conforme decisão do titular no PR #49. Não declarar E2E HML autenticado nem WCAG privado integral.
+- **Próxima tarefa exata:** regular **43/V1-22 — Ingestão de histórico**. Recuperar texto original do PROMPT 43 da fonte autenticada SHA-256 `8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e`, mapear 97 atômicos, conferir backend/Storage/RPC efetivamente existentes antes de habilitar escrita, fazer PLAN com allowlist/CI, GATE em PR próprio e só então TDD/BUILD/Teste C. `PLANO_ATIVO.json` segue PROMPT 42 VALIDADO até GATE 43. **Não repetir PROMPT 41 nem 42**.
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — BUILD PROMPT 42 / V1-21 CI VERDE, MERGE A CONFIRMAR (04/11/2026)
 
 - **Fonte:** frontend main de partida `a971ec2ba8736977b54e8c71786da4ad8f79c9c0`; backend normativo `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Reconsultar HEADs na próxima retomada. Última etapa funcional integrada comprovada **41/V1-20 PR #52**; **42/V1-21 implementado, somente em PR #62 até confirmação explícita de merge**.
