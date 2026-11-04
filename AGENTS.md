@@ -46,7 +46,7 @@ Ambiente: HML. Supabase oficial conectado: `gklhhhyosgasnyoxlrui`.
 
 ## Complemento canônico — ContaOS Brand v1.0 / PROMPT 000
 
-Antes de qualquer alteração de identidade visual, logo, símbolo, cores, tipografia, favicon, PWA, sidebar, login, header, tokens, manifest, metadata ou aplicação de marca, o agente deve ler integralmente no repositório `contaos9999/develop`:
+Antes de qualquer alteração de identidade visual, logo, símbolo, cores, tipografia, favicon, PWA, sidebar, login, header, tokens, manifest, metadata ou aplicação de marca, o agente deve ler integralmente no repositório `contaos999999/develop`:
 
 - `19_IDENTIDADE_VISUAL_OFICIAL_BRAND_1_0.md`;
 - `20_PROMPT_000_BRAND_01.md`.
@@ -69,15 +69,15 @@ Regras obrigatórias para BRAND-01:
 
 - O código `src/integrations/supabase/types.ts` é **imutável** no blob Git `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`, certificado no commit `ad0b933943d4b69f7a9f23f203e4cff1211b4902`. Não editar, regenerar, substituir, formatar ou reescrever esse caminho em nenhum PLAN, BUILD, TESTE ou auditoria.
 - A ferramenta Lovable pode regenerar tipos por mecanismos internos; isso **não equivale a autorização**. Antes de declarar qualquer gate PASS, conferir `git hash-object src/integrations/supabase/types.ts`. Havendo drift, restaurar o blob imutável e comprovar novo SHA e CI. Nunca mudar a constante do verificador para esconder drift.
-- O workflow `.github/workflows/contaos-types-autolock.yml` detecta e **tenta** autorrestaurar drift na branch main, após suíte e Zero-Drift verdes, com controle de concorrência e limite para impedir ciclos. O teste isolado do workflow não equivale à comprovação do push de recuperação. Falhas precisam ser tratadas, nunca silenciadas.
+- O workflow `.github/workflows/contaos-types-autolock.yml` detecta drift e, quando necessário, **propõe reparo exclusivamente por branch e PR com CI**, sem push direto, sem bypass e sem merge automático na `main`. A execução limpa do workflow (run 41762615464) e o fixture de restauro foram aprovados; a criação efetiva de PR pelo bot após drift real **não foi testada**. Falhas exigem tratamento, nunca silêncio.
 - O frontend consome apenas o Supabase HML oficial; não criar backend paralelo, não desconectar integração, não tocar PROD e não usar geração de tipos como justificativa para migration sem autorização.
 - Mudança legítima de tipos só mediante mudança formal de contrato/schema, atualização rastreável do blob certificado, validação de todos os usos, CI e Teste C independente. Ver `docs/frontend/LOCK-TYPES-01.md`.
 
 
 ## ADR-DEV-001 — GitHub como editor canônico do frontend (APROVADA EM 03/11/2026)
 
-- **Decisão expressa do responsável:** programar, corrigir e testar o frontend React/TypeScript **diretamente no GitHub** `contaos9999/contaos-hml-control`, com branch/PR quando viável, commits rastreáveis e CI. O agente de desenvolvimento do Lovable deixa de ser necessário para BUILD.
-- **Supabase HML** `gklhhhyosgasnyoxlrui` continua backend exclusivo; migrations/RLS/RPC/Storage/Edge são governados por `contaos9999/develop` com testes. **PROD proibido** nesta etapa.
+- **Decisão expressa do responsável:** programar, corrigir e testar o frontend React/TypeScript **diretamente no GitHub** `contaos999999/contaos-hml-control`, com branch/PR quando viável, commits rastreáveis e CI. O agente de desenvolvimento do Lovable deixa de ser necessário para BUILD.
+- **Supabase HML** `gklhhhyosgasnyoxlrui` continua backend exclusivo; migrations/RLS/RPC/Storage/Edge são governados por `contaos999999/develop` com testes. **PROD proibido** nesta etapa.
 - **Lovable permanece conectado exclusivamente para sincronizar e visualizar** o projeto (e inspecionar quando realmente necessário). Não solicitar IMPLEMENTAÇÃO/BUILD ao agente Lovable nas próximas correções. Mudança espontânea de plataforma não é autorização, tratar como drift.
 - Fluxo: identificar prompt/atômicos → PLAN → código GitHub → TDD RED/GREEN → lint/typecheck/testes/build/segurança → Zero-Drift e hash bloqueado do `types.ts` → Teste C independente, visual 1440/1280/768/390 claro/escuro → registrar evidências/commit por prompt. CI e MOCK não substituem E2E autenticado.
 - Não forçar push nem reescrever histórico sincronizado com Lovable. Proteger escopo e a marca BRAND-01. Só pedir intervenção por impedimento externo ou risco que exija autorização distinta.
@@ -95,11 +95,20 @@ Regras obrigatórias para BRAND-01:
 6. **TESTES E TESTE C**: CI, lint, tipos, build, regressão, segurança, hash tipos certificado, 4 larguras × 2 temas, acessibilidade, estados, Teste C independente e imutável. Evidência MOCK ≠ E2E real.
 7. **REGISTRO E RETOMADA**: commit/testes/evidências por prompt e `ESTADO_E_RETOMADA_CONTAOS_4_1.md` atualizado.
 
-Norma detalhada: `docs/frontend/ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md`. O backend `contaos9999/develop` **não deve ser alterado por tarefas exclusivamente frontend**.
+Norma detalhada: `docs/frontend/ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md`. O backend `contaos999999/develop` **não deve ser alterado por tarefas exclusivamente frontend**.
 
 
 ### ESCALONAMENTO DE LACUNA REAL DE BACKEND (APROVAÇÃO HUMANA)
 
-- Durante o frontend, se surgir **possível** problema de backend, DOCUMENTAR evidência obtida no frontend e **PARAR**. Antes de migrar o foco para `contaos9999/develop` e investigar Supabase HML, **pedir e receber autorização explícita do usuário**; sem ela, somente frontend, nenhuma inspeção técnica de schema/RPC/RLS nem modificação backend.
+- Durante o frontend, se surgir **possível** problema de backend, DOCUMENTAR evidência obtida no frontend e **PARAR**. Antes de migrar o foco para `contaos999999/develop` e investigar Supabase HML, **pedir e receber autorização explícita do usuário**; sem ela, somente frontend, nenhuma inspeção técnica de schema/RPC/RLS nem modificação backend.
 - Autorizado, investigar backend **somente leitura** e confirmar a lacuna REAL. Se falso alarme, registrar e retomar frontend. Se real, abrir PROMPT + PLAN backend, validar contra PRD 4.1, premissas, PROMPTs 00–99, atômicos 000–096, BRAND-01/NFRs/Zero-Drift/auditoria/fontes. Só após gate PASS (e autorização adicional quando requerida), BUILD limitado no Supabase HML com testes, CI e certificação individual. Registrar GitHub e retornar frontend.
 - Backend tem autoridade absoluta sobre regras de acesso, cálculos e dados, sem fallback frontend. PROD e alteração de `types.ts` continuam proibidos. Ver `docs/frontend/ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md`.
+
+
+## GOV-004 — Proteção atual da main (evidência oficial)
+
+- Fonte: `https://github.com/contaos999999/contaos-hml-control/rules/26495643`; ruleset `ContaOS-Zero-Drift-main` **ACTIVE** na branch padrão, conforme auditoria GOV-004 em 04/11/2026.
+- Exigir PR e dois checks: `ContaOS Frontend Zero-Drift` e `Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente`; **0 aprovações de PR** por decisão do responsável, sem revisor convidado. Não confundir essa regra de branch com aprovações humanas específicas exigidas por outros gates do PRD/BRAND-01.
+- Proibir exclusão, force push (non-fast-forward) e bypass amplo (`bypass_actors=[]`, `current_user_can_bypass=never`).
+- GOV-004: T02 escrita direta bloqueada HTTP 409; T03 merge de CI FAIL bloqueado HTTP 405; T04 PR #15 com CI verde e zero revisões mesclado. Force push/exclusão comprovados por configuração ACTIVE, **não por ensaio destrutivo na main**.
+- Rastreabilidade: `docs/frontend/auditorias/GOV_004_CERTIFICACAO_BRANCH_2026-11-03.md`, PR #15 e issue #16. Autenticado HML A/B não integra essa auditoria.
