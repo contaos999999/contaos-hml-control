@@ -10,6 +10,9 @@ import {
   publicA11yGate,
   contrastAssessment,
   sanitizeContrastDiagnostics,
+  wcagContrastRatio,
+  measureRenderedTextContrast,
+  pixelContrastDecision,
 } from "./visual-audit.mjs";
 
 test("matriz oficial: 23 telas × 4 larguras × 2 temas", () => {
@@ -109,4 +112,64 @@ test("GOV-012: limites de diagnosticos e regras desconhecidas", () => {
   assert.ok(data.length <= 24);
   assert.equal(data[0].color, "NAO_INFORMADO");
   assert.deepEqual(data[0].reasonCodes, ["bgGradient", "fgAlpha"]);
+});
+
+
+test("GOV-014: contraste WCAG sRGB de cores conhecidas", () => {
+  assert.equal(wcagContrastRatio([255, 255, 255], [0, 0, 0]), 21);
+  assert.ok(wcagContrastRatio([119, 119, 119], [255, 255, 255]) < 4.5);
+});
+test("GOV-014: glifo branco sobre preto mede 21:1 e aprova AA", () => {
+  const before = { width: 1, height: 1, data: Uint8Array.from([255, 255, 255, 255]) };
+  const after = { width: 1, height: 1, data: Uint8Array.from([0, 0, 0, 255]) };
+  const nodes = [
+    {
+      tag: "p",
+      rect: { x: 0, y: 0, width: 1, height: 1 },
+      foregroundRgb: [255, 255, 255],
+      effectiveOpacity: 1,
+      fontSizePx: 16,
+      fontWeight: 400,
+    },
+  ];
+  const measured = measureRenderedTextContrast(before, after, nodes, { minPixels: 1 });
+  assert.equal(measured[0].status, "PASS_AA_PIXEL");
+  assert.equal(measured[0].minimumRatio, 21);
+  assert.equal(pixelContrastDecision(measured, 1), "PASS_AA_PIXEL_PUBLICO");
+});
+test("GOV-014: AA falha em texto #777 sobre branco", () => {
+  const before = { width: 1, height: 1, data: Uint8Array.from([119, 119, 119, 255]) };
+  const after = { width: 1, height: 1, data: Uint8Array.from([255, 255, 255, 255]) };
+  const measured = measureRenderedTextContrast(
+    before,
+    after,
+    [
+      {
+        rect: { x: 0, y: 0, width: 1, height: 1 },
+        foregroundRgb: [119, 119, 119],
+        effectiveOpacity: 1,
+        fontSizePx: 16,
+        fontWeight: 400,
+      },
+    ],
+    { minPixels: 1 },
+  );
+  assert.equal(measured[0].status, "FAIL_AA_PIXEL");
+  assert.equal(pixelContrastDecision(measured, 1), "FAIL_AA_PIXEL_PUBLICO");
+});
+test("GOV-014: nenhuma diferenca ou PNG incompatível nunca gera PASS", () => {
+  const p = { width: 1, height: 1, data: Uint8Array.from([0, 0, 0, 255]) };
+  const node = {
+    rect: { x: 0, y: 0, width: 1, height: 1 },
+    foregroundRgb: [255, 255, 255],
+    effectiveOpacity: 1,
+    fontSizePx: 16,
+    fontWeight: 400,
+  };
+  assert.equal(measureRenderedTextContrast(p, p, [node], { minPixels: 1 })[0].status, "NAO_VERIFICADO");
+  assert.equal(
+    measureRenderedTextContrast(p, { ...p, width: 2 }, [node], { minPixels: 1 })[0].status,
+    "NAO_VERIFICADO",
+  );
+  assert.equal(pixelContrastDecision([], 1), "NAO_VERIFICADO");
 });
