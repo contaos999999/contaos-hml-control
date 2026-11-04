@@ -186,13 +186,15 @@ test("GOV-014: minúscula coincidência de cores em área ampla não recebe PASS
   const result = measureRenderedTextContrast(
     { width: 10, height: 10, data: a },
     { width: 10, height: 10, data: b },
-    [{
-      rect: { x: 0, y: 0, width: 10, height: 10 },
-      foregroundRgb: [255, 255, 255],
-      effectiveOpacity: 1,
-      fontSizePx: 16,
-      fontWeight: 400,
-    }],
+    [
+      {
+        rect: { x: 0, y: 0, width: 10, height: 10 },
+        foregroundRgb: [255, 255, 255],
+        effectiveOpacity: 1,
+        fontSizePx: 16,
+        fontWeight: 400,
+      },
+    ],
     { minPixels: 1 },
   );
   assert.equal(result[0].status, "NAO_VERIFICADO");
