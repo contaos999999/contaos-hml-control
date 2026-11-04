@@ -2,6 +2,30 @@
 
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
+
+## 0. ESTADO VIVO — atualizado em 04/11/2026 após GOV-004
+
+**Estas informações prevalecem sobre snapshots históricos mais abaixo; conferir HEADs e checks a cada novo chat.**
+
+| Item | Última confirmação no GitHub |
+| --- | --- |
+| Frontend canônico | `contaos999999/contaos-hml-control`, `main` no commit `f9b46b9e07823bb291a1c5efe2a67dfd23e36727` (baseline deste GOV-005) |
+| Backend normativo | `contaos999999/develop`, branch `main`, `cb65f4980f4eeca6ccd33caf6198a801b7e60328` (somente leitura para frontend) |
+| PLAN funcional | `docs/frontend/planos/PLANO_ATIVO.json` = `SEM_PLANO_ATIVO`; não editar src/public/config sem PLAN validado e CI anterior |
+| Fonte canônica | `FONTE CANÔNICA PASS`, 25 documentos e catálogo 100/97 no run do PR #14; revalidar a cada BUILD |
+| LOCK-TYPES-01 | `types.ts` blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`, intacto |
+| GOV-003 | PR #14 mesclado em `31eb0a3e7f0dca0f70420eeeab2ded1b69fcab2d`, Auto-Lock agora abre PR de reparo; não faz push direto nem merge automático |
+| GOV-004 | PR #15 mesclado em `f9b46b9e07823bb291a1c5efe2a67dfd23e36727`, evidências em issue #16 e `docs/frontend/auditorias/GOV_004_CERTIFICACAO_BRANCH_2026-11-03.md` |
+| Ruleset | `ContaOS-Zero-Drift-main` ID `26495643` ACTIVE, alvo `main`, 2 required checks, PR obrigatório, 0 revisões, sem bypass, sem exclusão/force push |
+| Provas positivas/negativas | T02 escrita direta bloqueada HTTP 409; T03 merge com CI FAIL bloqueado HTTP 405; T04 merge PR #15 com CI verde e 0 reviews |
+| Auto-Lock | Execução sem drift `41762615464` SUCCESS; **criação de PR por drift real NÃO TESTADA** |
+| Proteção force push/deletion | Regras ACTIVE verificadas por API, sem tentativa destrutiva real em `main` |
+| HML E2E autenticado | Ainda NÃO VERIFICADO nesta linha de trabalho; evitar tocar Supabase sem autorização específica |
+
+**Próxima tarefa funcional:** issue #6 (teste ADM-01 possivelmente flutuante) somente **se a falha for reproduzida**. A hipótese de colisão de substring `c9` com UUID não foi demonstrada: o teste atual já verifica por igualdade arrays de `p_ids_contratos_ativar/revogar`. Sem FAIL reproduzível, não alterar código funcional nem mascarar o teste; registrar evidência e investigar outras pendências de frontend. Issues #2/#5 e backend #33–#35 requerem E2E externo, não converter MOCK em PASS.
+
+**Política permanente:** frontend GitHub, Lovable só sincronização/visualização; zero aprovações de revisão obrigatórias para PR, mas gates específicos BRAND-01 continuam. PRD 4.1, 39 etapas, 416 critérios, 100 prompts, 97 atômicos, proteção `types.ts` e ZERO-DRIFT inalterados. Sem BUILD ou inspeção de Supabase/backend/PROD neste GOV-005.
+
 ## ADR-DEV-002 — validação obrigatória antes de qualquer BUILD
 
 **GATE BLOQUEANTE:** usar [ADR-DEV-002](ADR-DEV-002-PROMPT-PLAN-GATE-BUILD-TESTEC.md). Em cada prompt: **PROMPT → PLAN → VALIDAÇÃO → commit isolado do PLAN e CI aprovado → BUILD somente frontend via GitHub → CI/Zero-Drift → Teste C independente somente leitura → dossiê → novo checkpoint**. Sem `docs/frontend/planos/PLANO_ATIVO.json` previamente VALIDADO, proibido editar `src/`, `public/` ou configuração do app. Backend `contaos999999/develop` e Supabase não entram em uma tarefa frontend. Aprovação humana específica permanece obrigatória quando o pacote exigir.
@@ -57,7 +81,7 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 - Teste C com dados MOCK **não** homologa controles de acesso reais nem leitura/escrita efetiva. Qualquer evidência externa que não estiver acessível deve ser rotulada NÃO VERIFICADA.
 - Toda correção frontend deve ser feita **no GitHub, sem BUILD do Lovable**. O Lovable pode continuar regenerando `types.ts` internamente; conferir sempre o blob e o Auto-Lock.
 
-## 4. Próxima ação padrão para continuar automaticamente
+## 4. Próxima ação padrão para continuar automaticamente (avaliar após estado vivo do item 0)
 
 1. Conferir HEADs, diffs, CI, issues e dossiês. Não repetir implementações já presentes.
 2. Escolher a pendência **comprovada e solucionável diretamente**, por exemplo estabilizar o teste ADM-01 da issue #6 após reproduzir sua falha; sem inventar defeito. Fazer correção mínima por GitHub, TDD e CI, atualizar dossiê e issue.
@@ -88,7 +112,7 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 - Fontes canônicas `00–20 + 08A–08D`: snapshot `docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json`; crosswalk 100 regulares, 97 atômicos, mas não 100% execução.
 - Lovable sincronizado ao mesmo SHA `21416e1685f00344cd7e8e790a507fbfed3a53cc` em consulta realizada após o CI; autor de frontend = GitHub, Lovable não usado em BUILD.
 - Backend `contaos999999/develop` não alterado, HEAD `cb65f4980f4eeca6ccd33caf6198a801b7e60328`; types blob certificado. `PLANO_ATIVO.json` ainda `SEM_PLANO_ATIVO`.
-- PENDENTE para equivalência operacional plena: Teste C independente durável sem IA Lovable, sessões HML reais A/B, branch protection, conferência humana/HEAD upstream a cada plano.
+- PENDENTE no snapshot de 03/11: Teste C independente durável, HML A/B e branch protection. **Atualização posterior GOV-004 no item 0: proteção da main já comprovada, e Teste C independente existe, mas os estados autenticados E2E permanecem não verificados.**
 - Próxima tarefa funcional frontend exige novo PLAN validado, CI prévio e allowlist; **não modificar Supabase sem autorização humana específica**.
 
 ## GOV-002 — Quatro controles de equivalência Lovable → GitHub
@@ -96,11 +120,11 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 - **Branch exclusiva de governança:** `governance/quatro-gates-20261103`, PR #11 https://github.com/contaos999999/contaos-hml-control/pull/11. PLAN `docs/frontend/planos/GOV_002_QUATRO_GATES_2026-11-03.md`, commit somente documental `fa872871eb25472a55366bcc20d4752fb172497a`, CI do PLAN https://github.com/contaos999999/contaos-hml-control/actions/runs/41735578730 SUCCESS.
 - **Teste C:** `.github/workflows/contaos-teste-c-independente.yml`, runner `scripts/testc/visual-audit.mjs` e teste unitário. 23 telas × 4 larguras × 2 temas; acesso sem credenciais; PNG somente públicos e estados de negação, hashes e relatórios em artifact por 30 dias. Sem sessão real, drawer e autorização A/B continuam NÃO VERIFICADOS. Como executar: `docs/frontend/GUIA_TESTEC_E_FONTES_2026-11-03.md`.
 - **Fonte viva:** `scripts/context-freshness-gate.mjs`, verificação de HEAD/25 documentos/catálogo 100/97. O titular precisa configurar Secret `CONTAOS_CANONICAL_READ_TOKEN` read-only, restrito ao repositório normativo `develop`. Sem isso, BUILD funcional deve FAIL fechado. **A fonte normativa não foi alterada**.
-- **Proteção de branch:** `docs/frontend/GUIA_PROTECAO_GITHUB_2026-11-03.md`, depende de admin/plano compatível e ajuste prévio do Auto-Lock para não bloquear a recuperação do `types.ts`. Não declarar ativada antes da prova real.
+- **Proteção de branch no histórico GOV-002:** precisava de admin e Auto-Lock compatível. **Situação atual: ruleset ACTIVE, sem bypass e checks obrigatórios (GOV-004, item 0).**
 - **HML real:** `docs/frontend/HML_E2E_PRECONDICOES_2026-11-03.md`; nenhuma conta/contrato/arquivo criado, autorização específica pendente antes de qualquer teste de escrita, inspeção do backend ou acesso a dados.
 - **Intocáveis:** `src/**`, `public/**`, `package.json`, `bun.lock`, `types.ts` certificado, todos os objetos Supabase HML, repositório `contaos999999/develop` e PROD. Retomar frontend funcional somente com PLAN por prompt 00–99 + atômicos 000–096 e CI/BRAND-01/Zero-Drift.
 
-## Atualização GOV-003 — 03/11/2026
+## Atualização GOV-003 — 03/11/2026 (registro histórico anterior ao merge do PR #14)
 - Organização GitHub conectada: `contaos999999`. Frontend `contaos999999/contaos-hml-control`; repositório normativo `contaos999999/develop` (somente leitura).
 - PLAN GOV-003: `docs/frontend/planos/GOV_003_RULESET_AUTOLOCK_CANONICO_2026-11-03.md`; PR de governança rascunho #14, sem merge e sem modificação de backend/PROD.
 - Auto-Lock planejado por branch+PR com CI obrigatório e **0 revisões humanas obrigatórias** por decisão do titular; não fazer bypass da proteção da main. Verificar permissões Actions e checks reais de CI após BUILD.
