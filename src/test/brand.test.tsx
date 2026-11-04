@@ -153,7 +153,7 @@ describe("GOV-017 — SVG branco sem fundo para superficies compostas", () => {
     expect(tela).toContain("<ContaOSMarca");
     expect(tela).toContain("bg-primary text-primary-foreground");
     expect(tela).toContain("bg-background text-foreground");
-    expect(tela).not.toMatch(/#[0-9a-fA-F]{3,8}\\b/);
+    expect(tela).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(tela).not.toContain("fonts.googleapis");
     expect(tela).not.toContain("createTheme(");
   });
