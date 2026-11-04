@@ -38,9 +38,8 @@ jobs:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           CONTAOS_CANONICAL_READ_TOKEN: ${{ secrets.CONTAOS_CANONICAL_READ_TOKEN }}
         run: node scripts/context-freshness-gate.mjs
-      - name: GOV-003 — testar secret canônico na fonte viva (auditoria não bloqueante)
+      - name: GOV-003 — exigir token valido e fonte viva antes do merge
         if: ${{ github.event_name == 'pull_request' && startsWith(github.head_ref, 'governance/gov-003-') }}
-        continue-on-error: true
         env:
           CONTAOS_FORCE_CANONICAL_CHECK: "1"
           CONTAOS_CANONICAL_READ_TOKEN: ${{ secrets.CONTAOS_CANONICAL_READ_TOKEN }}
