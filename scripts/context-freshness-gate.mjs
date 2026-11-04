@@ -87,10 +87,15 @@ async function github(path, token) {
   return await response.json();
 }
 
+export function shouldCheckSource(paths, plan, force = false) {
+  return force || mustCheck(paths, plan);
+}
+
 export async function main() {
   const snapshot = JSON.parse(readFileSync(SNAPSHOT, "utf8"));
   const plan = JSON.parse(readFileSync(PLAN, "utf8"));
-  if (!mustCheck(changedPaths(), plan)) {
+  const force = process.env.CONTAOS_FORCE_CANONICAL_CHECK === "1";
+  if (!shouldCheckSource(force ? [] : changedPaths(), plan, force)) {
     console.log("FONTE CANÔNICA: N/A (governança documental sem PLAN validado nem BUILD).");
     return;
   }
