@@ -30,7 +30,7 @@ O backend permanece fonte única do status e da autorização; **RLS, Auth, RPC,
 ## D. Proposta de BUILD (não autorizada até novo GATE)
 
 **Candidatos, sujeitos à conferência de caminhos e contratos**:
-- `src/routes/competencias_.$id_.protocolo.tsx` (rota autenticada de consulta, nome sujeito ao texto original);
+- `src/routes/competencias_.$id_.apresentacoes_.$apresentacaoId.tsx` (rota TanStack proposta para a rota canônica `/competencias/:id/apresentacoes/:apresentacaoId`; confirmar convenção no router antes do BUILD);
 - `src/components/competencias/CompetenciaProtocolo.tsx` (visualização institucional);
 - `src/lib/competencias/protocoloDados.ts` (adaptador tipado somente leitura);
 - `src/test/competenciaProtocolo.test.tsx` (TDD RED/GREEN e cenários de autorização);
@@ -67,3 +67,11 @@ O backend permanece fonte única do status e da autorização; **RLS, Auth, RPC,
 Seguir ContaOS Brand v1.0 e 000/BRAND-01, sem paleta paralela, preservar logo transparente e tokens; **REUTILIZAR > ESTENDER > CRIAR**. Desenvolvimento GitHub direto, nenhuma chamada Lovable duplicada, sem alteração backend e sem elevar mock a E2E. Toda mudança visual requer crivo 4×2 e Teste C independente em SHA imutável.
 
 **Status final deste PLAN:** **NÃO VALIDADO**. Próxima ação: obter o literal do Prompt 41 e comprovar contrato de leitura; então validar GATE e executar BUILD em PRs separados. Não declarar a tela concluída, nem permitir promoção a PROD.
+
+## G. Verificação complementar do PLAN — 04/11/2026
+
+- **CI do primeiro commit do PLAN**: [run #41887241676](https://github.com/contaos999999/contaos-hml-control/actions/runs/41887241676), HEAD `ffe0c081603e3bbeff9052d808bdb6f415612dcb`, dois jobs SUCCESS. O job do Teste C foi **SKIPPED internamente pelo filtro documental**; o passo Playwright não executou. Um novo commit exige novo CI no SHA atualizado.
+- **Especificação frontend 4.0/4.1 recuperada da biblioteca**, `FE_v4_Manual_Integral_Lovable_Supabase.docx`, páginas 20 e 65: rota exata `/competencias/:id/apresentacoes/:apresentacaoId`, acesso `acesso`, SELECT Data API com RLS, estados `loading`, `empty`, `success`, `denied`, `error`, acessibilidade, 4 larguras e backend autoritativo. O texto genérico de CRUD não autoriza escrever pacote ou protocolo; a V1-20 será **exclusivamente leitura**.
+- **Contrato tipado existente sem edição**, `src/integrations/supabase/types.ts` no commit base: `apresentacoes_contratante.Row` tem `id`, `id_competencia`, `id_contrato`, `id_organizacao`, `id_pacote`, `protocolo`, `forma_apresentacao`, `apresentado_em`, `apresentado_por`, `numero_rodada`, `tipo` e `id_comprovante_arquivo`; relação `id_pacote` → `pacotes_competencia.id`. `pacotes_competencia.Row` tem `id`, `id_competencia`, `id_contrato`, `id_organizacao`, `hash_pacote`, `numero`, `status`, `tipo`, `congelado_em`. Estes tipos **não demonstram, sozinhos, que cada SELECT e cada snapshot detalhado esteja acessível sob RLS em HML autenticado**. Não montar pacote a partir de documentos atuais nem tratar `hash_pacote` como conteúdo do snapshot.
+- **Fonte original ainda pendente:** Manual Mestre de Prompts 4.1 não recuperado integralmente nesta inspeção. O manual FE v4 confirma a rota e a finalidade, mas não substitui o texto literal do PROMPT 41 nem o hash do original. Manter `NÃO VALIDADO` e não emitir GATE de BUILD por aproximação.
+- **Verificações para aprovação:** demonstrar acesso somente leitura e detalhe de snapshot congelado com RLS, fonte literal do PROMPT 41 e crosswalk completo 25/25, além de CI verde no HEAD final. Quando não demonstrado, bloquear dependência sem inventar RPC/endpoint, sem mudar backend e sem promover a produção.
