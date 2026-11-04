@@ -59,7 +59,8 @@ export function publicA11yGate(scan) {
 export function contrastAssessment(scan) {
   if (!scan?.axeVersion) return "NAO_VERIFICADO";
   if ((scan.violations || []).some((v) => v.id === "color-contrast")) return "FAIL_AUTOMATIZADO";
-  if ((scan.incomplete || []).some((v) => v.id === "color-contrast")) return "NAO_VERIFICADO_REVISAO_MANUAL";
+  if ((scan.incomplete || []).some((v) => v.id === "color-contrast"))
+    return "NAO_VERIFICADO_REVISAO_MANUAL";
   if ((scan.passes || []).some((v) => v.id === "color-contrast")) return "PASS_AUTOMATIZADO";
   return "NAO_APLICAVEL_SEM_TEXTO";
 }
@@ -173,7 +174,10 @@ async function run() {
             axeScan = await page.evaluate(async () => {
               if (!window.axe) throw new Error("axe-core não injetado");
               const result = await window.axe.run(document, {
-                runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"] },
+                runOnly: {
+                  type: "tag",
+                  values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"],
+                },
               });
               // Relatar apenas IDs, impactos e contagens, nunca HTML, texto de campos ou tokens.
               const summary = (v) => ({
