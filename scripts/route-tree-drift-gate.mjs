@@ -56,11 +56,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   } else {
     console.error("GOV-020 FAIL: " + result.motivo);
     if (result.diff) console.error(result.diff);
-    console.error(
-      "CORREÇÃO: em sua branch de BUILD, execute 'bun run build', confira o diff " +
-      "e versione a saída determinística de src/routeTree.gen.ts ANTES do PR. " +
-      "O CI é somente leitura: não corrige nem cria commits.",
-    );
+    console.error("CORREÇÃO: execute 'bun run build' na sua branch de BUILD.");
+    console.error("Versione o routeTree.gen.ts oficial antes do PR.");
+    console.error("O CI é somente leitura: não corrige nem cria commits.");
     process.exitCode = 1;
   }
 }
