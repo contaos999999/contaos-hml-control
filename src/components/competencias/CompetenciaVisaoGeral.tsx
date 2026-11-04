@@ -198,7 +198,8 @@ function Conteudo({ vg }: { vg: VisaoGeral }) {
         idContrato={c.id_contrato}
         situacao={c.situacao}
       />
-      <Tabs id={c.id} permitirParecer={vg.allowed_actions.abrir_parecer} />
+      <Tabs id={c.id} permitirParecer={vg.allowed_actions.abrir_parecer}
+        permitirApresentar={vg.allowed_actions.apresentar} />
       <div className="grid gap-4 lg:grid-cols-3">
         <EstadoCompetencia estado={derivarEstadoVisual(vg)} />
         <PercentGauge valor={c.percentual_conformidade} portao={vg.portao} />
@@ -399,6 +400,12 @@ function AllowedActions({ acoes, vgId }: { acoes: AllowedActionsVG; vgId: string
                       Abrir parecer
                     </Link>
                   </Button>
+                ) : k === "apresentar" ? (
+                  <Button asChild variant="outline" className="min-h-11">
+                    <Link to="/competencias/$id/apresentar" params={{ id: vgId }}>
+                      Abrir apresentação
+                    </Link>
+                  </Button>
                 ) : (
                   <span
                     aria-disabled="true"
@@ -420,9 +427,9 @@ function AllowedActions({ acoes, vgId }: { acoes: AllowedActionsVG; vgId: string
   );
 }
 
-const ABAS_FUTURAS = ["Apresentação"];
-
-function Tabs({ id, permitirParecer }: { id: string; permitirParecer: boolean }) {
+function Tabs({
+  id, permitirParecer, permitirApresentar,
+}: { id: string; permitirParecer: boolean; permitirApresentar: boolean }) {
   return (
     <div
       role="tablist"
@@ -470,18 +477,22 @@ function Tabs({ id, permitirParecer }: { id: string; permitirParecer: boolean })
           Parecer <Lock className="ml-2 h-4 w-4" aria-hidden />
         </span>
       )}
-      {ABAS_FUTURAS.map((t) => (
-        <span
-          key={t}
+      {permitirApresentar ? (
+        <Link
+          to="/competencias/$id/apresentar"
+          params={{ id }}
           role="tab"
           aria-selected="false"
-          aria-disabled="true"
-          className="inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm text-muted-foreground"
+          className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {t}
-          <span className="rounded bg-muted px-1.5 text-[10px] uppercase">Em breve</span>
+          Apresentação
+        </Link>
+      ) : (
+        <span role="tab" aria-selected="false" aria-disabled="true"
+          className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-muted-foreground">
+          Apresentação <Lock className="ml-2 h-4 w-4" aria-hidden />
         </span>
-      ))}
+      )}
     </div>
   );
 }
