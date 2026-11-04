@@ -27,8 +27,10 @@ test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS a
   assert.ok(rota, "A superfície V118 deve existir no Teste C");
   assert.equal(rota.path, "/competencias/00000000-0000-4000-8000-000000000001/parecer");
   assert.notEqual(rota.public, true);
-  assert.equal(classifyProtected({ pathname: rota.path, text: "Parecer interno" }),
-    "NAO_VERIFICADO_SESSAO_REAL");
+  assert.equal(
+    classifyProtected({ pathname: rota.path, text: "Parecer interno" }),
+    "NAO_VERIFICADO_SESSAO_REAL",
+  );
 });
 test("public gate PASS somente para métricas comprovadas", () => {
   assert.deepEqual(publicGate({ http: 200, lang: "pt-BR", h1: 1, overflow: 0, pageErrors: 0 }), []);
