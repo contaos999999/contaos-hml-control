@@ -112,6 +112,97 @@ export function sanitizeContrastDiagnostics(items) {
   }));
 }
 
+
+const toLinear = (channel) => {
+  const x = channel / 255;
+  return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+};
+const luminance = (rgb) =>
+  0.2126 * toLinear(rgb[0]) + 0.7152 * toLinear(rgb[1]) + 0.0722 * toLinear(rgb[2]);
+
+export function wcagContrastRatio(foregroundRgb, backgroundRgb) {
+  if (![foregroundRgb, backgroundRgb].every((c) =>
+    Array.isArray(c) && c.length === 3 &&
+    c.every((v) => Number.isFinite(v) && v >= 0 && v <= 255)
+  )) return null;
+  const a = luminance(foregroundRgb);
+  const b = luminance(backgroundRgb);
+  return Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 10000) / 10000;
+}
+
+export function measureRenderedTextContrast(before, after, nodes, { minPixels = 5 } = {}) {
+  const validImage = (img) =>
+    Number.isInteger(img?.width) &&
+    Number.isInteger(img?.height) &&
+    img.width > 0 &&
+    img.height > 0 &&
+    img.data?.length === img.width * img.height * 4;
+  const pairValid = validImage(before) && validImage(after) &&
+    before.width === after.width && before.height === after.height;
+  return (Array.isArray(nodes) ? nodes : []).map((node) => {
+    const unresolved = (reason) => ({ status: "NAO_VERIFICADO", reason, minimumRatio: null, sampleCount: 0 });
+    const rect = node?.rect;
+    const opacity = Number(node?.effectiveOpacity);
+    const fg = node?.foregroundRgb;
+    if (!pairValid) return unresolved("DIFERENCA_DE_DIMENSOES_PNG");
+    if (!rect || ![rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) ||
+        rect.width <= 0 || rect.height <= 0) return unresolved("RETANGULO_INVALIDO");
+    if (!Array.isArray(fg) || fg.length !== 3 ||
+        fg.some((v) => !Number.isFinite(v) || v < 0 || v > 255) ||
+        !Number.isFinite(opacity) || opacity <= 0 || opacity > 1)
+      return unresolved("COR_OU_OPACIDADE_INVALIDA");
+    const x0 = Math.max(0, Math.floor(rect.x));
+    const x1 = Math.min(before.width, Math.ceil(rect.x + rect.width));
+    const y0 = Math.max(0, Math.floor(rect.y));
+    const y1 = Math.min(before.height, Math.ceil(rect.y + rect.height));
+    if (x0 >= x1 || y0 >= y1 || rect.x < 0 || rect.y < 0 ||
+        rect.x + rect.width > before.width || rect.y + rect.height > before.height)
+      return unresolved("FORA_DO_VIEWPORT");
+    let sampleCount = 0;
+    let changedPixels = 0;
+    let minimumRatio = Infinity;
+    // Somente pixels centrais de glifo condizentes com cor+opacidade declarada.
+    // Bordas antialiasadas e sobreposições não são aprovadas por aproximação.
+    for (let y = y0; y < y1; y++) {
+      for (let x = x0; x < x1; x++) {
+        const i = (y * before.width + x) * 4;
+        if (before.data[i + 3] !== 255 || after.data[i + 3] !== 255) continue;
+        const background = [after.data[i], after.data[i + 1], after.data[i + 2]];
+        const actual = [before.data[i], before.data[i + 1], before.data[i + 2]];
+        const predicted = fg.map((v, c) => Math.round(v * opacity + background[c] * (1 - opacity)));
+        const delta = Math.max(...actual.map((v, c) => Math.abs(v - background[c])));
+        if (delta < 12) continue;
+        changedPixels++;
+        if (Math.max(...actual.map((v, c) => Math.abs(v - predicted[c]))) > 12) continue;
+        const ratio = wcagContrastRatio(predicted, background);
+        if (ratio === null) return unresolved("COR_INVALIDA");
+        sampleCount++;
+        minimumRatio = Math.min(minimumRatio, ratio);
+      }
+    }
+    if (sampleCount < minPixels || sampleCount < Math.ceil(changedPixels * 0.08))
+      return { ...unresolved("GLIFOS_SEM_AMOSTRAGEM_CONFIAVEL"), changedPixels, sampleCount };
+    const large = Number(node.fontSizePx) >= 24 ||
+      (Number(node.fontSizePx) >= 18.66 && Number(node.fontWeight) >= 700);
+    const requiredRatio = large ? 3 : 4.5;
+    return {
+      status: minimumRatio >= requiredRatio ? "PASS_AA_PIXEL" : "FAIL_AA_PIXEL",
+      minimumRatio: Math.round(minimumRatio * 10000) / 10000,
+      requiredRatio,
+      sampleCount,
+      changedPixels,
+    };
+  });
+}
+
+export function pixelContrastDecision(measured, expectedCount) {
+  if (!Array.isArray(measured) || measured.length !== expectedCount ||
+      !Number.isInteger(expectedCount) || expectedCount < 1) return "NAO_VERIFICADO";
+  if (measured.some((x) => x.status === "FAIL_AA_PIXEL")) return "FAIL_AA_PIXEL_PUBLICO";
+  if (measured.some((x) => x.status !== "PASS_AA_PIXEL")) return "NAO_VERIFICADO";
+  return "PASS_AA_PIXEL_PUBLICO";
+}
+
 export function classifyProtected({ pathname, text }) {
   if (pathname === "/login") return "ACESSO_NEGADO_REDIRECIONADO";
   if (/acesso negado|sem permissão|não tem acesso|faça login|sessão expirada/i.test(text)) {
