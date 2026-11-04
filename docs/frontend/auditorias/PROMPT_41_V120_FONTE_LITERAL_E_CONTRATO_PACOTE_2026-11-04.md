@@ -40,3 +40,6 @@
 | PLAN→GATE de BUILD | NÃO VALIDADO | Necessário autorizar oficialmente o escopo e cumprir critérios de segurança |
 
 **Conclusão:** pendência literal do PROMPT 41 RESOLVIDA, e lacuna estrutural de itens do pacote ESCLARECIDA no frontend. A validação de acesso por RLS HML e a recuperação de dados reais da apresentação permanecem **NÃO VERIFICADAS**, exigindo consentimento humano específico antes de investigar Supabase. Este documento não libera BUILD, migrations, mudanças de types, download, PROD, novos endpoints, ou ação do Lovable.
+### Espelho literal permanente no GitHub
+
+O conteúdo integral dos parágrafos 2303–2362 foi preservado em `docs/frontend/fontes/PROMPT_41_V120_TEXTO_ORIGINAL_VERIFICADO_2026-11-04.md`, com identificação exata do ZIP do titular e SHA-256 do DOCX de origem. Esta transcrição documenta o requisito, mas não suplanta a fonte principal nem autoriza um BUILD sem GATE.
