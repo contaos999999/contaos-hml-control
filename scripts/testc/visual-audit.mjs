@@ -113,7 +113,6 @@ export function sanitizeContrastDiagnostics(items) {
   }));
 }
 
-
 const toLinear = (channel) => {
   const x = channel / 255;
   return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
@@ -139,8 +138,12 @@ export function measureRenderedTextContrast(before, after, nodes, { minPixels = 
     img.width > 0 &&
     img.height > 0 &&
     img.data?.length === img.width * img.height * 4;
-  const pairValid = [validImage(before), validImage(after),
-    before?.width === after?.width, before?.height === after?.height].every(Boolean);
+  const pairValid = [
+    validImage(before),
+    validImage(after),
+    before?.width === after?.width,
+    before?.height === after?.height,
+  ].every(Boolean);
   return (Array.isArray(nodes) ? nodes : []).map((node) => {
     const unresolved = (reason) => ({
       status: "NAO_VERIFICADO",
@@ -165,8 +168,7 @@ export function measureRenderedTextContrast(before, after, nodes, { minPixels = 
     const x1 = Math.min(before.width, Math.ceil(rect.x + rect.width));
     const y0 = Math.max(0, Math.floor(rect.y));
     const y1 = Math.min(before.height, Math.ceil(rect.y + rect.height));
-    if (x0 >= x1 || y0 >= y1 || rect.x < 0 || rect.y < 0)
-      return unresolved("FORA_DO_VIEWPORT");
+    if (x0 >= x1 || y0 >= y1 || rect.x < 0 || rect.y < 0) return unresolved("FORA_DO_VIEWPORT");
     if (rect.x + rect.width > before.width || rect.y + rect.height > before.height)
       return unresolved("FORA_DO_VIEWPORT");
     let sampleCount = 0;
@@ -207,8 +209,7 @@ export function measureRenderedTextContrast(before, after, nodes, { minPixels = 
 }
 
 export function pixelContrastDecision(measured, expectedCount) {
-  if (!Array.isArray(measured) || measured.length !== expectedCount)
-    return "NAO_VERIFICADO";
+  if (!Array.isArray(measured) || measured.length !== expectedCount) return "NAO_VERIFICADO";
   if (!Number.isInteger(expectedCount) || expectedCount < 1) return "NAO_VERIFICADO";
   if (measured.some((x) => x.status === "FAIL_AA_PIXEL")) return "FAIL_AA_PIXEL_PUBLICO";
   if (measured.some((x) => x.status !== "PASS_AA_PIXEL")) return "NAO_VERIFICADO";
