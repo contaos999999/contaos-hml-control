@@ -1,0 +1,51 @@
+name: ContaOS V1-22 - homologacao ficticia HML
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_hml:
+        description: "Digite HML para confirmar ambiente de homologacao"
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: contaos-v1-22-hml
+  cancel-in-progress: false
+jobs:
+  homologacao:
+    if: ${{ inputs.confirm_hml == 'HML' }}
+    runs-on: ubuntu-latest
+    environment: hml
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar configuracao do ambiente
+        env:
+          DATABASE_URL: ${{ secrets.CONTAOS_HML_DATABASE_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${DATABASE_URL}" ]]; then
+            echo "::error::Configure CONTAOS_HML_DATABASE_URL no ambiente hml."
+            exit 1
+          fi
+          if [[ "${DATABASE_URL}" != postgres* ]]; then
+            echo "::error::A URL do banco HML nao tem formato PostgreSQL."
+            exit 1
+          fi
+          echo "Configuracao presente. Nenhum segredo foi exibido."
+      - name: Instalar cliente PostgreSQL
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Executar testes transacionais sem persistencia
+        env:
+          DATABASE_URL: ${{ secrets.CONTAOS_HML_DATABASE_URL }}
+          EXPECTED_PROJECT_REF: gklhhhyosgasnyoxlrui
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/hml/v1-22-historico-smoke.sql | tee "$RUNNER_TEMP/v1-22-smoke.log"
+      - name: Resumo da homologacao
+        if: always()
+        run: |
+          echo "### V1-22 HML - smoke test" >> "$GITHUB_STEP_SUMMARY"
+          echo "Testes SQL transacionais. Nao substituem o teste autenticado de upload, worker e isolamento multiusuario." >> "$GITHUB_STEP_SUMMARY"
