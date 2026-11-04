@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -45,6 +45,25 @@ export function publicGate({ http, lang, h1, overflow, pageErrors }) {
   if (pageErrors > 0) errors.push("erro JavaScript não tratado");
   return errors;
 }
+export function publicA11yGate(scan) {
+  if (
+    !scan?.axeVersion ||
+    !Array.isArray(scan.violations) ||
+    !Array.isArray(scan.incomplete) ||
+    !Array.isArray(scan.passes)
+  ) {
+    return ["auditoria axe-core pública não executada"];
+  }
+  return scan.violations.map((v) => `WCAG ${v.id}: ${v.nodes} ocorrências automáticas`);
+}
+export function contrastAssessment(scan) {
+  if (!scan?.axeVersion) return "NAO_VERIFICADO";
+  if ((scan.violations || []).some((v) => v.id === "color-contrast")) return "FAIL_AUTOMATIZADO";
+  if ((scan.incomplete || []).some((v) => v.id === "color-contrast"))
+    return "NAO_VERIFICADO_REVISAO_MANUAL";
+  if ((scan.passes || []).some((v) => v.id === "color-contrast")) return "PASS_AUTOMATIZADO";
+  return "NAO_APLICAVEL_SEM_TEXTO";
+}
 export function classifyProtected({ pathname, text }) {
   if (pathname === "/login") return "ACESSO_NEGADO_REDIRECIONADO";
   if (/acesso negado|sem permissão|não tem acesso|faça login|sessão expirada/i.test(text)) {
@@ -61,6 +80,10 @@ function safeName(item) {
 async function run() {
   const modulePath = process.env.CONTAOS_PLAYWRIGHT_MODULE;
   if (!modulePath) throw new Error("Playwright não instalado no executor independente.");
+  const axeSource = process.env.CONTAOS_AXE_SOURCE_PATH;
+  if (!axeSource || !existsSync(axeSource)) {
+    throw new Error("axe-core pinado não encontrado no executor independente.");
+  }
   const { chromium } = await import(pathToFileURL(resolve(modulePath)).href);
   const output = resolve(process.env.CONTAOS_TESTC_OUTPUT || "artifacts/testc-visual");
   const base = process.env.CONTAOS_TESTC_BASE_URL || "http://127.0.0.1:4173";
@@ -116,6 +139,7 @@ async function run() {
         profile: "NAVEGADOR_SEM_SESSAO_HML",
         outcome: "NAO_VERIFICADO_SESSAO_REAL",
         publicAssertions: [],
+        a11y: null,
         screenshot: null,
         screenshotSha256: null,
       };
@@ -144,6 +168,42 @@ async function run() {
             overflow: state.overflow,
             pageErrors: errors,
           });
+          let axeScan = null;
+          try {
+            await page.addScriptTag({ path: axeSource });
+            axeScan = await page.evaluate(async () => {
+              if (!window.axe) throw new Error("axe-core não injetado");
+              const result = await window.axe.run(document, {
+                runOnly: {
+                  type: "tag",
+                  values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"],
+                },
+              });
+              // Relatar apenas IDs, impactos e contagens, nunca HTML, texto de campos ou tokens.
+              const summary = (v) => ({
+                id: v.id,
+                impact: v.impact || "unknown",
+                nodes: v.nodes.length,
+              });
+              return {
+                axeVersion: result.testEngine.version,
+                violations: result.violations.map(summary),
+                incomplete: result.incomplete.map(summary),
+                passes: result.passes.map(summary),
+              };
+            });
+          } catch {
+            // FAIL fechado; não esconder indisponibilidade da auditoria.
+            axeScan = null;
+          }
+          record.publicAssertions.push(...publicA11yGate(axeScan));
+          record.a11y = {
+            engine: axeScan?.axeVersion || "NAO_EXECUTADO",
+            contrast: contrastAssessment(axeScan),
+            violations: axeScan?.violations || [],
+            incomplete: axeScan?.incomplete || [],
+            scanCompleted: Boolean(axeScan),
+          };
           record.outcome = record.publicAssertions.length ? "FAIL_PUBLICO" : "PASS_PUBLICO";
           record.brandAssetPresent = state.brand;
         } else {
@@ -195,7 +255,14 @@ async function run() {
     rls_ab_real: "NAO_VERIFICADO",
     upload_real: "NAO_VERIFICADO",
     reset_email_real: "NAO_VERIFICADO",
-    contrast_measured: "NAO_VERIFICADO_EXIGE_AUDITORIA_ESPECIALIZADA",
+    contrast_measured: logs.some((x) => x.a11y?.scanCompleted)
+      ? "AXE_AUTOMATIZADO_SOMENTE_PAGINAS_PUBLICAS"
+      : "NAO_VERIFICADO",
+    accessibility_engine: "axe-core@4.14.0",
+    public_a11y_scanned: logs.filter((x) => x.a11y?.scanCompleted).length,
+    public_wcag_violation_rules: logs.reduce((n, x) => n + (x.a11y?.violations?.length || 0), 0),
+    public_wcag_incomplete_rules: logs.reduce((n, x) => n + (x.a11y?.incomplete?.length || 0), 0),
+    wcag_full_certification: "NAO_VERIFICADO_EXIGE_SESSAO_REAL_E_REVISAO_MANUAL",
     verdict: logs.some((x) => x.outcome === "FAIL_PUBLICO")
       ? "FAIL"
       : "PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA",
