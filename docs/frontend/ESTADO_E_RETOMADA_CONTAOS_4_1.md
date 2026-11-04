@@ -3,6 +3,21 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT ATUAL — PROMPT 40 / V1-19, 04/11/2026
+
+**Última HEAD comprovada antes do BUILD:** `contaos999999/contaos-hml-control/main@222ca3128732e504737c7e0db7221be094b4b327`; backend/fonte canônica `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Fonte 25/25 e catálogo 100/97 sem deriva, `types.ts` Git blob certificado `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`, não alterar.
+
+- **GOV-017 logomarca transparente:** PR #39 integrado em `ab2a10dffa590416dc1bdbc0e57c7405db7d9708`, Teste C 192/192 e crivo V1-18 estático PASS. HML privado NÃO VERIFICADO. Não repetir.
+- **GOV-019 Vitest dois workers:** PLAN PR #40, BUILD PR #41 integrado em `ca5bc8db579a6788ad2b6778c2b7b83f23b223cb` com dois checks SUCCESS. Três ensaios 29 arquivos/828 testes PASS, tempos 65/65/63s; CI permanente `vitest run --maxWorkers=2`. Não repetir.
+- **PROMPT 40 PLAN:** PR #42, dois checks SUCCESS, run `41880258322`, SHA validado `8e6fde7caf5ebecc5527dbec8be4fb6fa75da48d`, merge `7aa9324ad1a9f505a1c2d9490608dd539c2c684e`, especificação `docs/frontend/planos/PROMPT_40_V1_19_WIZARD_APRESENTACAO_2026-11-04.md`.
+- **PROMPT 40 GATE:** PR #43, dois checks SUCCESS run `41881374268`, merge `222ca3128732e504737c7e0db7221be094b4b327`. `PLANO_ATIVO.json` com prompt 40, atômicos 000/067, 25 fontes, allowlist fechada.
+- **V1-19 BUILD em execução, NÃO INTEGRADO:** branch `build/prompt-40-v119-wizard-20261104`; rota `/competencias/:id/apresentar`, RPCs certificadas `aprovar_apresentacao` e `registrar_apresentacao`, `allowed_actions.apresentar` do backend, idempotência criptográfica por intenção, sem UPDATE direto; BRAND-01 oficial, `src/routeTree.gen.ts`, testes `src/test/competenciaApresentar.test.tsx`, matrizes Teste C 25×4×2=200, dossiê `docs/frontend/auditorias/PROMPT_40_V119_IDENTIDADE_E_TESTES_2026-11-04.md`.
+- **TESTES/CI/PR:** resultado ainda PENDENTE. TDD RED commit inicial existe, mas execução real RED não foi efetuada isoladamente; verificar GREEN por CI. Validar 2 checks SUCCESS no mesmo SHA da branch e logs de 200 casos Teste C, salvar ID de artefato; **nunca declarar HML RLS real autenticado com base em mock**.
+- **Próxima ação exata:** abrir BUILD PR, corrigir qualquer falha demonstrada até dois checks SUCCESS, integrar somente sem bypass, confirmar HEAD da main e CI push; atualizar este checkpoint com run, commit de merge e próxima tarefa PROMPT 41 / V1-20 conforme fonte original.
+- **Rollback:** PR para retirada da rota V1-19 e navegação, jamais apagar registros reais do Supabase ou mexer em source types certificado.
+
+---
+
 ## CHECKPOINT DE CONTINUIDADE — GOV-017 FINAL E GOV-019 VITEST, 04/11/2026
 
 **Última main confirmada antes deste experimento:** `contaos999999/contaos-hml-control/main@953ee28c95230d75a128ffed852d30060a7533a2`. Fonte canônica: `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` (25/25, 100/97), `types.ts` certificado Git blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`.
