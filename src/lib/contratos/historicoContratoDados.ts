@@ -74,8 +74,8 @@ function validarId(id: string) {
   return uuidCanonico(id);
 }
 function escopo(row: Linha, c: string, o: string) {
-  if (row.id_contrato !== c || row.id_organizacao !== o || !texto(row.id) ||
-      !uuidValido(row.id)) throw new ErroHistorico("inconsistente");
+  if (row["id_contrato"] !== c || row["id_organizacao"] !== o || !texto(row["id"]) ||
+      !uuidValido(row["id"])) throw new ErroHistorico("inconsistente");
 }
 function garantirResposta(
   r: { data: unknown; count?: number | null; error: unknown; status: number },
@@ -102,46 +102,46 @@ const COL_PRE =
 const COL_REG = "id,id_organizacao,id_contrato,codigo_regra,descricao,efeito,situacao,criado_em";
 function parseRel(v: Linha, c: string, o: string): RelatorioHistorico {
   escopo(v, c, o);
-  if (!texto(v.id_arquivo) || !uuidValido(v.id_arquivo) ||
-      !textoOuNulo(v.numero_documento) || !texto(v.tipo) ||
-      !textoOuNulo(v.competencia_referencia) || !textoOuNulo(v.data_documento) ||
-      !texto(v.status_processamento) || !textoOuNulo(v.resultado_geral) ||
-      !texto(v.origem_temporal) || !texto(v.criado_em)) throw new ErroHistorico("inconsistente");
+  if (!texto(v["id_arquivo"]) || !uuidValido(v["id_arquivo"]) ||
+      !textoOuNulo(v["numero_documento"]) || !texto(v["tipo"]) ||
+      !textoOuNulo(v["competencia_referencia"]) || !textoOuNulo(v["data_documento"]) ||
+      !texto(v["status_processamento"]) || !textoOuNulo(v["resultado_geral"]) ||
+      !texto(v["origem_temporal"]) || !texto(v["criado_em"])) throw new ErroHistorico("inconsistente");
   return v as RelatorioHistorico;
 }
 function parseApo(v: Linha, c: string, o: string, idRelatorio: string): ApontamentoHistorico {
   escopo(v, c, o);
-  if (v.id_relatorio !== idRelatorio || !texto(v.problema) || !textoOuNulo(v.item) ||
-      !textoOuNulo(v.severidade) ||
-      !(v.fonte_pagina === null || (typeof v.fonte_pagina === "number" && Number.isInteger(v.fonte_pagina) && v.fonte_pagina > 0)) ||
-      !textoOuNulo(v.fundamento) || !texto(v.criado_em)) throw new ErroHistorico("inconsistente");
+  if (v["id_relatorio"] !== idRelatorio || !texto(v["problema"]) || !textoOuNulo(v["item"]) ||
+      !textoOuNulo(v["severidade"]) ||
+      !(v["fonte_pagina"] === null || (typeof v["fonte_pagina"] === "number" && Number.isInteger(v["fonte_pagina"]) && v["fonte_pagina"] > 0)) ||
+      !textoOuNulo(v["fundamento"]) || !texto(v["criado_em"])) throw new ErroHistorico("inconsistente");
   return v as ApontamentoHistorico;
 }
 function parseResposta(v: Linha, c: string, o: string, ids: Set<string>): RespostaHistorica {
   escopo(v, c, o);
-  if (!texto(v.id_apontamento) || !ids.has(v.id_apontamento) ||
-      !texto(v.texto) || !texto(v.criado_em)) throw new ErroHistorico("inconsistente");
+  if (!texto(v["id_apontamento"]) || !ids.has(v["id_apontamento"]) ||
+      !texto(v["texto"]) || !texto(v["criado_em"])) throw new ErroHistorico("inconsistente");
   return v as RespostaHistorica;
 }
 function parseDesfecho(v: Linha, c: string, o: string, ids: Set<string>): DesfechoHistorico {
   escopo(v, c, o);
-  if (!texto(v.id_apontamento) || !ids.has(v.id_apontamento) ||
-      !texto(v.resultado) || !textoOuNulo(v.data) ||
-      !texto(v.criado_em)) throw new ErroHistorico("inconsistente");
+  if (!texto(v["id_apontamento"]) || !ids.has(v["id_apontamento"]) ||
+      !texto(v["resultado"]) || !textoOuNulo(v["data"]) ||
+      !texto(v["criado_em"])) throw new ErroHistorico("inconsistente");
   return v as DesfechoHistorico;
 }
 function parsePre(v: Linha, c: string, o: string): PrecedenteHistorico {
-  if (v.id_contrato_origem !== c || v.id_organizacao !== o ||
-      !texto(v.id) || !uuidValido(v.id) || !texto(v.fonte_tipo) ||
-      !textoOuNulo(v.titulo) || !texto(v.problema) ||
-      !textoOuNulo(v.solucao) || !textoOuNulo(v.desfecho) ||
-      !texto(v.status) || !texto(v.criado_em)) throw new ErroHistorico("inconsistente");
+  if (v["id_contrato_origem"] !== c || v["id_organizacao"] !== o ||
+      !texto(v["id"]) || !uuidValido(v["id"]) || !texto(v["fonte_tipo"]) ||
+      !textoOuNulo(v["titulo"]) || !texto(v["problema"]) ||
+      !textoOuNulo(v["solucao"]) || !textoOuNulo(v["desfecho"]) ||
+      !texto(v["status"]) || !texto(v["criado_em"])) throw new ErroHistorico("inconsistente");
   return v as PrecedenteHistorico;
 }
 function parseReg(v: Linha, c: string, o: string): RegraHistorica {
   escopo(v, c, o);
-  if (!texto(v.codigo_regra) || !texto(v.descricao) || !texto(v.efeito) ||
-      !texto(v.situacao) || !texto(v.criado_em)) throw new ErroHistorico("inconsistente");
+  if (!texto(v["codigo_regra"]) || !texto(v["descricao"]) || !texto(v["efeito"]) ||
+      !texto(v["situacao"]) || !texto(v["criado_em"])) throw new ErroHistorico("inconsistente");
   return v as RegraHistorica;
 }
 function validarArray(r: { data: unknown; error: unknown; status: number }, c: string,
