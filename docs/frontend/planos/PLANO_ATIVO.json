@@ -1,17 +1,17 @@
 {
   "schema": "contaos.frontend.plan.v1",
-  "prompt_id": "39",
+  "prompt_id": "16",
   "status": "VALIDADO",
-  "plano_documento": "docs/frontend/planos/PROMPT_39_V1_18_PARECER_INTERNO_2026-11-04.md",
+  "plano_documento": "docs/frontend/planos/GOV_017_BRAND_TRANSPARENCIA_2026-11-04.md",
   "validacao": {
     "resultado": "PASS",
-    "validado_por": "ChatGPT GPT-6 — validação técnica documental com CI do PLAN",
+    "validado_por": "GPT-6 — conferência GOV-017 do diagnóstico SVG, normas BRAND-01, fonte 25/25, CI original PR #34",
     "validado_em": "2026-11-04",
-    "modo_aprovacao": "aprovacao_tecnica_automatica_por_escopo_frontend",
-    "aprovacao_humana": "NAO_EXIGIDA_SEM_ALTERACAO_DIRETA_BRAND",
-    "aprovacao_humana_exigida": false,
-    "aprovacao_humana_evidencia": null,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41851784279",
+    "modo_aprovacao": "aprovacao_humana_expressa_mensagens_usuario_2026_11_04",
+    "aprovacao_humana": "CONCEDIDA",
+    "aprovacao_humana_exigida": true,
+    "aprovacao_humana_evidencia": "Solicitações expressas do usuário nesta conversa: após conclusão de módulo executar crivo da identidade visual e corrigir logo branco com fundo sobre gradiente, usar fundo transparente; em seguida 'faça tudo', 'continue' e 'faça a correção da logomarca transparente'. PLAN GOV-017 PR #34 (https://github.com/contaos999999/contaos-hml-control/pull/34) registra o aceite e foi integrado com 2 checks SUCCESS. Não autoriza mudanças além da variante branca transparente.",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41862342763",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -28,18 +28,14 @@
     }
   },
   "arquivos_permitidos": [
-    "src/lib/competencias/parecerInternoDados.ts",
-    "src/components/competencias/CompetenciaParecer.tsx",
-    "src/routes/competencias_.$id_.parecer.tsx",
-    "src/test/competenciaParecer.test.tsx",
-    "src/components/competencias/CompetenciaVisaoGeral.tsx",
-    "src/test/competenciaVisaoGeral.test.tsx",
-    "src/routeTree.gen.ts"
+    "public/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+    "src/components/brand/ContaOSMarca.tsx",
+    "src/test/brand.test.tsx"
   ],
-  "observacao": "VALIDAÇÃO DO PLAN (não de funcionalidade). Somente após esta revisão documental integrada na main e CI próprio verde é permitido iniciar BUILD em novo branch/PR, com TDD, diff limitado à allowlist e Teste C separado. E2E HML A/B é NÃO VERIFICADO. Edição manual de texto de parecer fora de escopo sem contrato RPC autorizado.",
+  "observacao": "GOV-017: somente variante derivada do SVG oficial removendo o retângulo externo navy; componente compartilhado, testes TDD. Não substituir os SVGs oficiais certificados. Registro documental da auditoria de V1-18, mantendo HML autenticado NÃO VERIFICADO. PLAN PR #34/CI 41862342763, gate próprio anterior ao BUILD. Outros arquivos documentais fora do scope gate de app apenas dossiê e checkpoint especificados no PLAN.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
-  "context_read_by": "GPT-6 — conferência da matriz PRD, fontes canônicas e prompt original 39, zero-drift e RNF",
+  "context_read_by": "GPT-6 — normas 19/20, arquivo 00, BRAND-01 e contexto canônico 25/25 conferidos; alterações visuais limitadas GOV-017",
   "context_read_acknowledged_at": "2026-11-04",
   "context_source_commit": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
@@ -71,12 +67,9 @@
     "20_PROMPT_000_BRAND_01.md"
   ],
   "prompt_crosswalk": {
-    "regular_prompt_id": "39",
+    "regular_prompt_id": "16",
     "direct_atomic_ids": [
-      "000",
-      "021",
-      "022",
-      "023"
+      "000"
     ],
     "additional_transversal_atomic_ids": [],
     "exclusoes_justificadas": {},
@@ -90,11 +83,11 @@
     "required_section": "ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE"
   },
   "impacto_visual": "SIM",
-  "impacto_visual_justificativa": "Nova tela V1-18 apenas com componentes e tokens existentes, sem alterar identidade da marca.",
+  "impacto_visual_justificativa": "Remove fundo navy de SVG derivado sobre texturas e gradientes, sem alterar desenho, dimensões, tema ou composição; crivo V1-18 e 24 superfícies × 4 × 2.",
   "backend_changes_allowed": false,
   "prod_changes_allowed": false,
   "source_proof": {
-    "frontend_baseline": "15bf2aa6fab6b4c9e262a7d74b6a2ea422419e1f",
+    "frontend_baseline": "f167d7d364b52ef3fe2c768e28a11dc2577cad4e",
     "normative_head": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
@@ -104,12 +97,14 @@
       "022",
       "023"
     ],
-    "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19"
+    "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+    "crosswalk_regular16": [
+      "000"
+    ]
   },
   "unverified_operational": [
-    "Auth/RLS real HML A/B",
-    "Fluxo RPC solicitar/aprovar com duas identidades",
-    "Versões e histórico em ambiente com fixtures",
-    "Visual autenticado 4 resoluções x 2 temas"
+    "Login HML real e rotas privadas com sessão real",
+    "Contraste renderizado com composição complexa fora dos nós auditados",
+    "Audit V1-18 autenticado em múltiplas resoluções (não observado diretamente)"
   ]
 }
