@@ -42,7 +42,7 @@ Não alterar Auth, RLS, backend, tipos Supabase, PROD, package/lockfile, assets,
 
 TDD RED antes do adaptador; GREEN para formato UUID, auth, 403/404/vazio distintos, id_organizacao/id_contrato, relatório e seus apontamentos associados, respostas/desfechos em lote, ausência de N+1, limite de 25, paginação e abort, flags de processamento oficiais, não autorização cruzada via mocks sem alegar teste operacional HML, sem mutações, sem dados fabricados e sem segredo. Regressão completa Vitest, TypeScript, eslint/Prettier, build, BRAND-01, GOV-020 e fontes 25/25. Ao adicionar V1-21, Teste C deve cobrir 27 telas × 4 larguras × 2 temas = **216 combinações**; tela privada sem sessão real permanece NÃO VERIFICADA, não é E2E HML. Dois checks obrigatórios SUCCESS no mesmo SHA antes de merge. Rollback por PR, sem alterar dados.
 
-## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
+## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 
 REUTILIZAR > ESTENDER > CRIAR. Usar os mesmos componentes/cores/tokens oficiais, sem redesenhar marca ou promover lógica backend para browser. GitHub direto para BUILD, Lovable apenas para sincronizar/revisar. `routeTree.gen.ts` nunca pode ser editado manualmente: gerar via Vite, versionar output na allowlist e exigir GOV-020 PASS antes de testes longos e no Teste C. Não reduzir segurança, RNFs ou cobertura para economizar créditos.
 
