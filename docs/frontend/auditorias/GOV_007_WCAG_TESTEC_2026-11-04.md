@@ -16,7 +16,7 @@
 
 ## 3. TDD e critérios
 - **RED comprovado:** commit `e0fad9a3d25bd291f1208f91f2010a41e60debba`, run `41767892283`, falha intencional no teste da API `publicA11yGate` antes da implementação, sem alterações da aplicação.
-- **GREEN:** aguardando conclusão do CI do HEAD final do PR #19; **não declarar PASS antes do run/artefato real**.
+- **GREEN instrumental confirmado:** CI run `41768441317` com job principal e Playwright `SUCCESS`, no SHA de checkout `b1dbe5557d4ed5dbfd5965eb9bce94c91c3d1556`. 24 scans axe-core em páginas públicas, 0 regras com violação confirmada, **24 verificações de contraste incompletas** (`color-contrast`, 12 nós por combinação). O resultado é `NAO_VERIFICADO_REVISAO_MANUAL`, **não** WCAG PASS. 152 protegidas + 8 drawers sem sessão mantidas NÃO VERIFICADO. Artefato original da medição ID `13294226796`, nome `contaos-teste-c-41768441317-1`, expira em 02/02/2027, ZIP SHA256 `10d550b963a71adf08caed2bb5161dbde13a91c2f6d1d3ddf44559277570f89c`, 25/25 hashes internos validados.
 - Sem mudança de `src/**`, `public/**`, `src/integrations/supabase/types.ts`, `supabase/**`, PROD ou backend.
 - Zero supressões arbitrárias de regra de acessibilidade; caso algum contraste público falhe, registrar e abrir PLAN específico de correção visual/BRAND-01 sem mexer na UI dentro do GOV-007.
 
@@ -26,7 +26,7 @@
 - A preservação de screenshots por prazo indeterminado exige armazenamento próprio, não há permissão para alterar policies de GitHub ou Supabase neste escopo.
 - O build Lovable, identidade visual, PRD 4.1 e contratos RPC não foram alterados.
 
-**Estado:** BUILD de governança submetido; aguardar CI verde e prova do Teste C com Axe em execução real. Não afirmar equivalência operacional 100% com HML e revisão manual pendentes.
+**Estado:** BUILD GOV-007 realizado e comprovado no CI anterior. O novo teste ampliou a cobertura de acessibilidade pública, mas contraste permaneceu inconclusivo nos 24 cenários; abrir análise independente especializada se a meta for certificação WCAG. Não afirmar equivalência operacional 100% com HML e revisão manual pendentes.
 
 ## 5. Prova criptográfica independente da equivalência de código Lovable × GitHub
 
