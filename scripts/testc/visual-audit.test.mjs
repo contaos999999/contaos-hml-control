@@ -15,12 +15,12 @@ import {
   pixelContrastDecision,
 } from "./visual-audit.mjs";
 
-test("matriz oficial: 24 telas × 4 larguras × 2 temas", () => {
-  assert.equal(ROUTES.length, 24);
+test("matriz oficial: 25 telas × 4 larguras × 2 temas", () => {
+  assert.equal(ROUTES.length, 25);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
-  assert.equal(cases().length, 192);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 192);
+  assert.equal(cases().length, 200);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 200);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");
@@ -32,6 +32,16 @@ test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS a
     "NAO_VERIFICADO_SESSAO_REAL",
   );
 });
+test("PROMPT 40: V119 privada integra 200 casos sem certificar sessão real", () => {
+  const rota = ROUTES.find((r) => r.id === "V119");
+  assert.ok(rota);
+  assert.equal(rota.path, "/competencias/00000000-0000-4000-8000-000000000001/apresentar");
+  assert.notEqual(rota.public, true);
+  assert.equal(classifyProtected({ pathname: rota.path, text: "Wizard de apresentação" }),
+    "NAO_VERIFICADO_SESSAO_REAL");
+  assert.equal(cases().filter(c => c.id === "V119").length, 8);
+});
+
 test("public gate PASS somente para métricas comprovadas", () => {
   assert.deepEqual(publicGate({ http: 200, lang: "pt-BR", h1: 1, overflow: 0, pageErrors: 0 }), []);
 });
