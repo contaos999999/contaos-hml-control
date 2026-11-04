@@ -23,6 +23,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão
+        run: node --test scripts/p0-version-order-gate.test.mjs
+      - name: P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1
+        env:
+          FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/p0-version-order-gate.mjs
       - name: Autoteste do guard (casos permitidos e proibidos)
         run: node --test scripts/frontend-scope-gate.test.mjs
       - name: Verificar contrato de seguranca do Auto-Lock por PR

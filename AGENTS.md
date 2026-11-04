@@ -11,6 +11,18 @@
 
 # ContaOS 4.1 — Regras Constitucionais e Premissas Permanentes
 
+## P0 — PRIORIDADE ZERO: ORDEM DE DESENVOLVIMENTO POR VERSÃO (NOVO, VINCULANTE)
+
+**ANTES de qualquer leitura de prompt, PLAN, GATE, BUILD, revisão, GitHub, Lovable, CI, Supabase ou certificação**, LEIA INTEGRALMENTE: `docs/frontend/governanca/P0_PRIORIDADE_ZERO_ORDEM_POR_VERSAO_4_1.md` e `docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json`; confirme o checkpoint GitHub e o status de certificação da versão corrente. Esta decisão expressa de 04/11/2026 é **regra constitucional aditiva de PRIORIDADE ZERO** para **sequenciamento e certificação**, sem revogar as demais restrições técnicas, segurança ou aprovações.
+
+**NUNCA mais seguir 00→99 como ordem automática de execução do frontend.** Exigir conclusão integral e certificação da versão anterior antes de mudar de versão: **V1 (43/V1-22, 75/V1-23 + auditoria 00–42) → CERTIFICAR V1 → V2 (44–49,76–77) → CERTIFICAR V2 → V3 (50–55,78–79) → CERTIFICAR V3 → V4 (56–59,80–83) → CERTIFICAR V4 → V5 (60–66,84–89) → CERTIFICAR V5 → TRANSVERSAIS E CERTIFICAÇÃO GLOBAL (67–74 e 90–99) → GO/NO-GO; **PROD só com autorização expressa**.
+
+**Todos os 100 regulares 00–99 e 97 atômicos 000–096 continuam obrigatórios integralmente**, com rastreabilidade e evidência. 000 = BRAND-01; 001–084 = 84 RF distribuídos por versões; 085–096 = 12 NFR transversais. Não marcar um prompt como executado ou certificado somente por aparecer no catálogo, por tela existente ou por mock. O **próximo regular autorizado é 43/V1-22**, depois 75/V1-23; **V1 AINDA NÃO CERTIFICADA**. Não iniciar V2 antes do certificado de V1 com CI e PR efetivamente integrados.
+
+**Controle técnico:** `scripts/p0-version-order-gate.mjs`, autotestes e workflow Zero-Drift. Divergência ou salto de versão = **FAIL/NO-GO sem bypass**. Atualizar a matriz de execução e o checkpoint somente com evidências verificadas. A comprovação operacional RLS HML A/B continua facultativa pós-99 e não bloqueante isolada ao desenvolvimento, conforme decisão anterior; todos os demais controles permanecem.
+
+
+
 Ambiente: HML. Supabase oficial conectado: `gklhhhyosgasnyoxlrui`.
 
 ## Regras constitucionais

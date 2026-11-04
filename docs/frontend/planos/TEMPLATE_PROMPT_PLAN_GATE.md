@@ -1,5 +1,18 @@
 # TEMPLATE — PROMPT / PLAN / GATE / BUILD / TESTE C (frontend)
 
+## PRIORIDADE ZERO — GATE DE VERSÃO ANTES DE ESCOLHER O PROMPT (P0 OBRIGATÓRIO)
+
+**Ler primeiro** `docs/frontend/governanca/P0_PRIORIDADE_ZERO_ORDEM_POR_VERSAO_4_1.md` e `docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json`. A ordem de desenvolvimento é V1 → certificado V1 → V2 → certificado V2 → V3 → certificado V3 → V4 → certificado V4 → V5 → certificado V5 → regulares transversais e certificação global. **NÃO** seguir numeração 00–99 como sequência automática. Todos os 100 regulares e 97 atômicos continuam obrigatórios e auditáveis.
+
+**Antes de iniciar qualquer PLAN/GATE/BUILD**, declarar:
+- Versão atualmente autorizada: **V1 / V2 / V3 / V4 / V5 / GLOBAL**; HEAD e SHA de evidência do último certificado aprovado:
+- Próximo prompt regular autorizado conforme o manifesto P0:
+- Recibos integrados dos regulares anteriores, atômicos próprios, BRAND-01, 12 NFR transversais e pendências:
+- Quando versão anterior não tem certificado PASS e PR integrado: **NO-GO, não prosseguir**, mesmo que próximo número do manual seja de outra versão.
+- Neste marco: V1 ainda não certificada; regular 43/V1-22 antes do regular 75/V1-23, depois certificação V1. Só então V2 (44–49,76–77).
+- Exigir `node --test scripts/p0-version-order-gate.test.mjs` e `node scripts/p0-version-order-gate.mjs` no CI sem bypass. Os demais gates do template permanecem.
+
+
 > Copie para `docs/frontend/planos/PROMPT_XX_<data>_<assunto>.md`. **Não modificar código antes do PLAN validado e publicado em commit próprio.**
 
 ## A. PROMPT E REFERÊNCIAS

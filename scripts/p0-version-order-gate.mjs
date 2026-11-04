@@ -1,0 +1,167 @@
+import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+export const P0 = "docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json";
+const PLAN = "docs/frontend/planos/PLANO_ATIVO.json";
+const seq = (a, b, digits) =>
+  Array.from({ length: b - a + 1 }, (_, i) => String(a + i).padStart(digits, "0"));
+const same = (a, b) =>
+  Array.isArray(a) && a.length === b.length && a.every((x, i) => x === b[i]);
+const sha40 = (s) => typeof s === "string" && /^[a-f0-9]{40}$/.test(s);
+const expectCerts = ["V1", "V2", "V3", "V4", "V5", "GLOBAL"];
+const safePrefix = (seen, expected) =>
+  Array.isArray(seen) &&
+  new Set(seen).size === seen.length &&
+  seen.every((id, i) => id === expected[i]);
+
+/** Valida conteúdo, ordem e prova declarada, sem inventar evidência operacional. */
+export function validateP0(m, plan, changed = [], fileExists = existsSync) {
+  const errors = [];
+  const err = (s) => errors.push(s);
+  if (m?.schema !== "contaos.p0.version-first.v1" ||
+      m.prioridade !== "P0_IMUTAVEL_SEM_DECISAO_EXPRESSA")
+    err("Manifesto P0 ausente ou inválido.");
+  if (!same(m?.inventario?.regular_00_99, seq(0, 99, 2)) ||
+      !same(m?.inventario?.atomic_000_096, seq(0, 96, 3)) ||
+      m?.inventario?.regular_total !== 100 ||
+      m?.inventario?.atomic_total !== 97)
+    err("Inventário original 100 regulares / 97 atômicos foi alterado.");
+  if (!same(m?.ordem_versoes, expectCerts) ||
+      !Array.isArray(m?.blocos) || m.blocos.length !== 6)
+    err("Ordem canônica V1 → V2 → V3 → V4 → V5 → GLOBAL alterada.");
+  const expectedRegular = [
+    ["43", "75"],
+    [...seq(44, 49, 2), "76", "77"],
+    [...seq(50, 55, 2), "78", "79"],
+    [...seq(56, 59, 2), ...seq(80, 83, 2)],
+    [...seq(60, 66, 2), ...seq(84, 89, 2)],
+    [...seq(67, 74, 2), ...seq(90, 99, 2)],
+  ];
+  const expectedAtomic = [
+    seq(1, 24, 3), seq(25, 43, 3), seq(44, 54, 3),
+    seq(55, 74, 3), seq(75, 84, 3), seq(85, 96, 3),
+  ];
+  for (const [i, name] of expectCerts.entries()) {
+    const b = m?.blocos?.[i];
+    if (b?.versao !== name ||
+        !same(b?.regular_ids, expectedRegular[i]) ||
+        !same(b?.atomic_ids, expectedAtomic[i]))
+      err("Sequência regular/atômica divergente no bloco " + name);
+  }
+  if (!same(m?.baseline?.regular_ids_historicos_00_42, seq(0, 42, 2)) ||
+      m?.baseline?.ultimo_regular_integrado !== "42" ||
+      m?.baseline?.nao_marcar_100_por_pressuposicao !== true)
+    err("O histórico 00–42 não pode ser presumido certificado.");
+  const order = expectedRegular.flat();
+  if (order.length !== 57 || new Set([...seq(0, 42, 2), ...order]).size !== 100)
+    err("P0 deixou um dos 100 prompts regulares de fora ou duplicado.");
+  if (new Set(["000", ...expectedAtomic.flat()]).size !== 97 ||
+      !same(m?.controle?.nfr_transversais, seq(85, 96, 3)) ||
+      m?.controle?.brand_transversal !== "000")
+    err("P0 perdeu BRAND-01, requisito atômico ou NFR transversal.");
+
+  const seen = m?.controle?.regulares_pendentes_concluidos_com_evidencia;
+  if (!safePrefix(seen, order)) err("Execução futura fora da ordem por versão ou sem recibos sequenciais.");
+  const pendingIndex = Array.isArray(seen) ? seen.length : 0;
+  const next = order[pendingIndex] || null;
+  const pendingVersion = expectedRegular.findIndex((ids, i) =>
+    ids.some((x) => order.indexOf(x) >= pendingIndex));
+  const statuses = m?.controle?.certificados_por_versao || {};
+  for (const [i, name] of expectCerts.entries()) {
+    const cert = statuses[name];
+    if (!cert || !["PENDENTE", "NO_GO", "PASS"].includes(cert.status)) {
+      err("Certificado de versão ausente/inválido: " + name);
+      continue;
+    }
+    if (cert.status !== "PASS") continue;
+    if (i > 0 && statuses[expectCerts[i - 1]]?.status !== "PASS")
+      err("Certificação " + name + " foi antecipada sem certificado anterior.");
+    const expectedIds = i === 0
+      ? [...seq(0, 42, 2), ...expectedRegular[0]]
+      : expectedRegular[i];
+    if (!Array.isArray(cert.regulares_comprovados) ||
+        expectedIds.some((id) => !cert.regulares_comprovados.includes(id)))
+      err("Certificado " + name + " não comprova todos os regulares exigidos.");
+    const atomic = i === 5 ? seq(0, 96, 3) : ["000", ...expectedAtomic[i]];
+    if (!Array.isArray(cert.atomic_ids_comprovados) ||
+        atomic.some((id) => !cert.atomic_ids_comprovados.includes(id)))
+      err("Certificado " + name + " não comprova todos os atômicos exigidos.");
+    if (!sha40(cert.pr_merge_sha) || !cert.arquivo_evidencia ||
+        !fileExists(cert.arquivo_evidencia) ||
+        !/^https:\/\/github\.com\/contaos999999\//.test(cert.ci_url || ""))
+      err("Certificado " + name + " não tem documento, commit de merge e CI verificáveis.");
+    if (i < 5 && expectedRegular[i].some((id) => !seen?.includes(id)))
+      err("Certificado " + name + " emitido antes de concluir seus prompts.");
+    if (i === 5 && pendingIndex !== 57)
+      err("Certificado GLOBAL antes de executar os 57 regulares restantes.");
+  }
+  const planId = String(plan?.prompt_id || "").padStart(2, "0");
+  if (!/^\d{2}$/.test(planId) || Number(planId) > 99) {
+    err("PLANO_ATIVO sem regular válido 00–99.");
+  } else if (Number(planId) >= 43) {
+    // Após integrar um BUILD, o manifesto do PLAN antigo pode continuar ativo
+    // durante o registro documental do recibo. Nunca permite saltar o próximo.
+    const oldReceipt = seen?.includes(planId);
+    if (planId !== next && !oldReceipt)
+      err("P0 PROÍBE SALTO: PLAN " + planId + ", próximo regular permitido " + (next || "NENHUM") + ".");
+    const versionIndex = expectedRegular.findIndex((ids) => ids.includes(planId));
+    if (versionIndex > 0 && statuses[expectCerts[versionIndex - 1]]?.status !== "PASS")
+      err("P0 BLOQUEIA versão " + expectCerts[versionIndex] +
+        ": falta certificado da " + expectCerts[versionIndex - 1] + ".");
+  }
+  // Bloqueia PLAN de versão futura mesmo antes de editar PLANO_ATIVO.
+  for (const path of changed) {
+    const match = /(?:^|\/)PROMPT[_-]?(\d{1,2})(?:[_-]|\.)/i.exec(path);
+    if (!match || !/(?:^|\/)(?:docs\/frontend\/planos|src|scripts\/testc)\//.test(path))
+      continue;
+    const id = String(Number(match[1])).padStart(2, "0");
+    if (!order.includes(id)) continue;
+    const idx = expectedRegular.findIndex((ids) => ids.includes(id));
+    if (idx > 0 && statuses[expectCerts[idx - 1]]?.status !== "PASS")
+      err("P0 BLOQUEIA PLAN/BUILD " + id + ": versão " + expectCerts[idx] +
+        " depende de " + expectCerts[idx - 1] + " certificada.");
+  }
+  if (m?.restricoes?.nenhum_salto_de_versao !== true ||
+      m?.restricoes?.todos_100_regulares !== true ||
+      m?.restricoes?.todos_97_atomicos !== true ||
+      m?.restricoes?.produçao_somente_com_aprovacao_expressa !== true)
+    err("Restrições constitucionais P0 foram removidas ou relaxadas.");
+  if (!fileExists("docs/frontend/governanca/P0_PRIORIDADE_ZERO_ORDEM_POR_VERSAO_4_1.md"))
+    err("Documento normativo P0 ausente.");
+  return { errors, next, pendingVersion: expectCerts[pendingVersion] || "ENCERRADO" };
+}
+
+function changedFiles() {
+  const baseEnv = (process.env.FRONTEND_DIFF_BASE || "").trim();
+  const event = process.env.GITHUB_EVENT_NAME || "";
+  try {
+    const git = (...args) => execFileSync("git", args, { encoding: "utf8" }).trim();
+    let base = baseEnv && !/^0+$/.test(baseEnv) ? baseEnv : git("rev-parse", "HEAD^");
+    let head = "HEAD";
+    if (event === "pull_request") {
+      try { head = git("rev-parse", "HEAD^2"); } catch { head = "HEAD"; }
+      base = git("merge-base", base, head);
+    }
+    return git("diff", "--name-only", base, head).split("\n").filter(Boolean);
+  } catch {
+    // Executar o teste de catálogo mesmo em teste unitário ou repositório sem pai.
+    return [];
+  }
+}
+function main() {
+  const manifest = JSON.parse(readFileSync(P0, "utf8"));
+  const plan = JSON.parse(readFileSync(PLAN, "utf8"));
+  const result = validateP0(manifest, plan, changedFiles());
+  if (result.errors.length) {
+    for (const e of result.errors) console.error("PRIORIDADE ZERO FAIL: " + e);
+    process.exitCode = 1;
+    return;
+  }
+  console.log("PRIORIDADE ZERO PASS — ordem por versão intacta, 100 regulares/97 atômicos preservados.");
+  console.log("Versão pendente: " + result.pendingVersion +
+    "; próximo regular elegível: " + result.next +
+    "; PLAN atualmente registrado: " + plan.prompt_id + ".");
+}
+if (process.argv[1] && fileURLToPath(import.meta.url) ===
+    fileURLToPath(new URL("file://" + process.argv[1]))) main();
