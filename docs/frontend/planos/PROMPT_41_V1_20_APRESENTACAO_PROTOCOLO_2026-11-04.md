@@ -107,3 +107,7 @@ A auditoria individual está registrada em `docs/frontend/auditorias/PROMPT_41_V
 ## K. Prova da fonte e contrato real de itens — atualização documental
 
 Fonte original SHA-256 regular 41 `8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e`, caderno atômico SHA-256 `d9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8`. Ambos encontrados no ZIP original, confrontados com o catálogo. O Tipo oficial `itens_pacote_competencia.Row` inclui `id_pacote`, `entidade_tipo/id`, `versao_id`, `hash`, `metadados`, `ordem` e IDs de tenant/contrato/competência, resolvendo a dúvida de **forma estrutural** sobre itens congelados. O vínculo do UUID retornado por `registrar_apresentacao` ao parâmetro `:apresentacaoId` também foi conferido no frontend. **Ainda NÃO existe evidência nesta auditoria de SELECT autorizado via HML real por perfis/tenants nem de leitura efetiva do pacote**; não transformar prova tipada em homologação. Nenhuma alteração backend ou de código. Ver dossiê `docs/frontend/auditorias/PROMPT_41_V120_FONTE_LITERAL_E_CONTRATO_PACOTE_2026-11-04.md`.
+
+### Espelho da fonte para próximas conversas
+
+Arquivo GitHub: `docs/frontend/fontes/PROMPT_41_V120_TEXTO_ORIGINAL_VERIFICADO_2026-11-04.md`. Fonte regular 41 autenticada por SHA-256; a exigência de texto original do prompt está resolvida, preservando os gates de contrato RLS e segurança ainda NÃO VERIFICADOS.
