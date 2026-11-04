@@ -1,4 +1,4 @@
-// BRAND-01 — Marca oficial ContaOS v1.0 (SVGs originais, sem recolorir).
+// BRAND-01 / GOV-017 — Marca oficial preservada; derivado branco transparente sem fundo.
 // Os cabeçalhos usam bg-primary: navy no tema claro e fundo claro em .dark.
 // Seleção CSS por tema sem estado JS, conservando largura e acessibilidade.
 export function ContaOSMarca() {
@@ -6,7 +6,7 @@ export function ContaOSMarca() {
     <>
       <span className="hidden shrink-0 sm:block">
         <img
-          src="/brand/ContaOS_Logo_Horizontal_Mono_Branco.svg"
+          src="/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"
           alt="ContaOS"
           width={131}
           height={32}
