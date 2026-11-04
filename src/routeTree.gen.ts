@@ -31,6 +31,7 @@ import { Route as ContratosIdCompetenciasRouteImport } from './routes/contratos_
 import { Route as ContratosIdDocumentosRouteImport } from './routes/contratos_.$id_.documentos'
 import { Route as ContratosIdOrcamentoRouteImport } from './routes/contratos_.$id_.orcamento'
 import { Route as ContratosIdRegrasRouteImport } from './routes/contratos_.$id_.regras'
+import { Route as CompetenciasIdApresentacoesApresentacaoIdRouteImport } from './routes/competencias_.$id_.apresentacoes_.$apresentacaoId'
 import { Route as ContratosIdCompetenciasNovaRouteImport } from './routes/contratos_.$id_.competencias_.nova'
 import { Route as ContratosIdDocumentosIdDocumentoRouteImport } from './routes/contratos_.$id_.documentos_.$idDocumento'
 
@@ -147,6 +148,12 @@ const ContratosIdRegrasRoute = ContratosIdRegrasRouteImport.update({
   path: '/contratos/$id/regras',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompetenciasIdApresentacoesApresentacaoIdRoute =
+  CompetenciasIdApresentacoesApresentacaoIdRouteImport.update({
+    id: '/competencias_/$id_/apresentacoes_/$apresentacaoId',
+    path: '/competencias/$id/apresentacoes/$apresentacaoId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ContratosIdCompetenciasNovaRoute =
   ContratosIdCompetenciasNovaRouteImport.update({
     id: '/contratos_/$id_/competencias_/nova',
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/contratos/$id/documentos': typeof ContratosIdDocumentosRoute
   '/contratos/$id/orcamento': typeof ContratosIdOrcamentoRoute
   '/contratos/$id/regras': typeof ContratosIdRegrasRoute
+  '/competencias/$id/apresentacoes/$apresentacaoId': typeof CompetenciasIdApresentacoesApresentacaoIdRoute
   '/contratos/$id/competencias/nova': typeof ContratosIdCompetenciasNovaRoute
   '/contratos/$id/documentos/$idDocumento': typeof ContratosIdDocumentosIdDocumentoRoute
 }
@@ -209,6 +217,7 @@ export interface FileRoutesByTo {
   '/contratos/$id/documentos': typeof ContratosIdDocumentosRoute
   '/contratos/$id/orcamento': typeof ContratosIdOrcamentoRoute
   '/contratos/$id/regras': typeof ContratosIdRegrasRoute
+  '/competencias/$id/apresentacoes/$apresentacaoId': typeof CompetenciasIdApresentacoesApresentacaoIdRoute
   '/contratos/$id/competencias/nova': typeof ContratosIdCompetenciasNovaRoute
   '/contratos/$id/documentos/$idDocumento': typeof ContratosIdDocumentosIdDocumentoRoute
 }
@@ -236,6 +245,7 @@ export interface FileRoutesById {
   '/contratos_/$id_/documentos': typeof ContratosIdDocumentosRoute
   '/contratos_/$id_/orcamento': typeof ContratosIdOrcamentoRoute
   '/contratos_/$id_/regras': typeof ContratosIdRegrasRoute
+  '/competencias_/$id_/apresentacoes_/$apresentacaoId': typeof CompetenciasIdApresentacoesApresentacaoIdRoute
   '/contratos_/$id_/competencias_/nova': typeof ContratosIdCompetenciasNovaRoute
   '/contratos_/$id_/documentos_/$idDocumento': typeof ContratosIdDocumentosIdDocumentoRoute
 }
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/contratos/$id/documentos'
     | '/contratos/$id/orcamento'
     | '/contratos/$id/regras'
+    | '/competencias/$id/apresentacoes/$apresentacaoId'
     | '/contratos/$id/competencias/nova'
     | '/contratos/$id/documentos/$idDocumento'
   fileRoutesByTo: FileRoutesByTo
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/contratos/$id/documentos'
     | '/contratos/$id/orcamento'
     | '/contratos/$id/regras'
+    | '/competencias/$id/apresentacoes/$apresentacaoId'
     | '/contratos/$id/competencias/nova'
     | '/contratos/$id/documentos/$idDocumento'
   id:
@@ -316,6 +328,7 @@ export interface FileRouteTypes {
     | '/contratos_/$id_/documentos'
     | '/contratos_/$id_/orcamento'
     | '/contratos_/$id_/regras'
+    | '/competencias_/$id_/apresentacoes_/$apresentacaoId'
     | '/contratos_/$id_/competencias_/nova'
     | '/contratos_/$id_/documentos_/$idDocumento'
   fileRoutesById: FileRoutesById
@@ -343,6 +356,7 @@ export interface RootRouteChildren {
   ContratosIdDocumentosRoute: typeof ContratosIdDocumentosRoute
   ContratosIdOrcamentoRoute: typeof ContratosIdOrcamentoRoute
   ContratosIdRegrasRoute: typeof ContratosIdRegrasRoute
+  CompetenciasIdApresentacoesApresentacaoIdRoute: typeof CompetenciasIdApresentacoesApresentacaoIdRoute
   ContratosIdCompetenciasNovaRoute: typeof ContratosIdCompetenciasNovaRoute
   ContratosIdDocumentosIdDocumentoRoute: typeof ContratosIdDocumentosIdDocumentoRoute
 }
@@ -503,6 +517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContratosIdRegrasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/competencias_/$id_/apresentacoes_/$apresentacaoId': {
+      id: '/competencias_/$id_/apresentacoes_/$apresentacaoId'
+      path: '/competencias/$id/apresentacoes/$apresentacaoId'
+      fullPath: '/competencias/$id/apresentacoes/$apresentacaoId'
+      preLoaderRoute: typeof CompetenciasIdApresentacoesApresentacaoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contratos_/$id_/competencias_/nova': {
       id: '/contratos_/$id_/competencias_/nova'
       path: '/contratos/$id/competencias/nova'
@@ -543,6 +564,8 @@ const rootRouteChildren: RootRouteChildren = {
   ContratosIdDocumentosRoute: ContratosIdDocumentosRoute,
   ContratosIdOrcamentoRoute: ContratosIdOrcamentoRoute,
   ContratosIdRegrasRoute: ContratosIdRegrasRoute,
+  CompetenciasIdApresentacoesApresentacaoIdRoute:
+    CompetenciasIdApresentacoesApresentacaoIdRoute,
   ContratosIdCompetenciasNovaRoute: ContratosIdCompetenciasNovaRoute,
   ContratosIdDocumentosIdDocumentoRoute: ContratosIdDocumentosIdDocumentoRoute,
 }
