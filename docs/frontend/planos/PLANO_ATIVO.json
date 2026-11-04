@@ -1,17 +1,17 @@
 {
   "schema": "contaos.frontend.plan.v1",
-  "prompt_id": "41",
+  "prompt_id": "42",
   "status": "VALIDADO",
-  "plano_documento": "docs/frontend/planos/PROMPT_41_V1_20_APRESENTACAO_PROTOCOLO_2026-11-04.md",
+  "plano_documento": "docs/frontend/planos/PROMPT_42_V1_21_HISTORICO_CONTRATO_2026-11-04.md",
   "validacao": {
     "resultado": "PASS",
-    "validado_por": "GPT-6 — revisão técnica PR #50 e comprovantes normativos PROMPT 41",
+    "validado_por": "GPT-6 — revisão técnica documental PR #57 e CI #41913182521",
     "validado_em": "2026-11-04",
     "modo_aprovacao": "aprovacao_tecnica_automatica_de_plan_frontend_sem_alteracao_da_brand",
     "aprovacao_humana": "NAO_EXIGIDA_SEM_MUDANCA_DIRETA_DA_MARCA",
     "aprovacao_humana_exigida": false,
     "aprovacao_humana_evidencia": null,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41901870132",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41913182521",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -28,21 +28,21 @@
     }
   },
   "arquivos_permitidos": [
-    "src/lib/competencias/protocoloDados.ts",
-    "src/components/competencias/CompetenciaProtocolo.tsx",
-    "src/routes/competencias_.$id_.apresentacoes_.$apresentacaoId.tsx",
-    "src/test/competenciaProtocolo.test.tsx",
+    "src/lib/contratos/historicoContratoDados.ts",
+    "src/components/contratos/HistoricoContrato.tsx",
+    "src/routes/contratos_.$id_.historico.tsx",
+    "src/test/historicoContrato.test.tsx",
     "src/routeTree.gen.ts",
     "scripts/testc/visual-audit.mjs",
     "scripts/testc/visual-audit.test.mjs",
     "src/test/brand.test.tsx",
-    "docs/frontend/auditorias/PROMPT_41_V120_TESTES_2026-11-04.md",
+    "docs/frontend/auditorias/PROMPT_42_V121_TESTES_2026-11-04.md",
     "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
   ],
-  "observacao": "PROMPT 41/V1-20: consulta somente leitura de apresentação e pacote congelado, sem escrita/retrocalculo de portão ou reconstrução de documentos. RLS HML A/B operacional FACULTATIVO APÓS PROMPT 99 por decisão do titular, NÃO VERIFICADO, não bloqueante isoladamente; demais segurança obrigatória. PR #50 PLAN, CI 41901870132; GATE próprio anterior ao BUILD.",
+  "observacao": "PROMPT 42/V1-21: somente leitura do histórico do contrato corrente, seis tabelas existentes, paginação server-side; importação e IA pertencem a V1-22/PROMPT 43. CI PLAN PR #57 dois checks SUCCESS. GOV-020 exige saída TanStack gerada, nunca manual. HML RLS A/B facultativo após PROMPT 99, NÃO VERIFICADO e não bloqueante isolado; todos demais gates exigidos.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
-  "context_read_by": "GPT-6 — revalidação PRD 4.1, fonte original SHA-256, PRs 47-50, 25/25 fontes canônicas, matriz de atômicos 97/97, tipos frontend certificados",
+  "context_read_by": "GPT-6 — fonte original do regular 42, 25/25 documentos e 100/97 do catálogo, crosswalk semântico 97/97, tipos certificados, PR #57 com CI aprovado",
   "context_read_acknowledged_at": "2026-11-04",
   "context_source_commit": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
@@ -74,18 +74,25 @@
     "20_PROMPT_000_BRAND_01.md"
   ],
   "prompt_crosswalk": {
-    "regular_prompt_id": "41",
+    "regular_prompt_id": "42",
     "direct_atomic_ids": [
-      "000"
+      "000",
+      "006",
+      "007",
+      "008",
+      "009",
+      "010"
     ],
     "additional_transversal_atomic_ids": [
       "019",
-      "020",
-      "067"
+      "070",
+      "089",
+      "093",
+      "095"
     ],
     "exclusoes_justificadas": {
-      "087": "Condicional a download Storage não autorizado no escopo V1-20",
-      "093": "Condicional a coleção extensa de eventos; V1-20 exibe apenas itens do pacote limitados"
+      "087": "Download condicionado a Storage autorizado; não previsto neste BUILD.",
+      "094": "Observabilidade de infraestrutura é transversal, sem instrumentação de backend alterável nesta tela."
     },
     "source_evidence_missing": false,
     "regular_original_sha256": "8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e",
@@ -97,28 +104,34 @@
     "required_section": "ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE"
   },
   "impacto_visual": "SIM",
-  "impacto_visual_justificativa": "Nova rota V1-20 reutiliza Design System e marca sem modificar BRAND; Teste C 208 cenários 26 telas × 4 larguras × 2 temas.",
+  "impacto_visual_justificativa": "Nova V1-21 no Design System vigente sem mudar BRAND; matriz Teste C 27 rotas×4 larguras×2 temas=216, superfícies privadas sem E2E real seguem não verificadas.",
   "backend_changes_allowed": false,
   "prod_changes_allowed": false,
   "source_proof": {
-    "frontend_baseline": "69182d1317cac3fa6a6fb88cd8423f834d89ce96",
+    "frontend_baseline": "8f0a4ebba23f0a1047d831559633c54b9439e6de",
     "normative_head": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
-    "crosswalk_regular41": [
+    "crosswalk_regular42": [
       "000",
+      "006",
+      "007",
+      "008",
+      "009",
+      "010",
       "019",
-      "020",
-      "067"
+      "070",
+      "089",
+      "093",
+      "095"
     ],
     "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
-    "plan_pr": 50,
-    "plan_ci_run": 41901870132
+    "plan_pr": 57,
+    "plan_ci_run": 41913182521
   },
   "unverified_operational": [
-    "RLS real Supabase HML A/B — facultativo após PROMPT 99 e não bloqueante para frontend 41–99",
-    "E2E HML com autenticação real e fixtures — NÃO VERIFICADO",
-    "WCAG integral das telas privadas HML — NÃO VERIFICADO",
-    "Congelamento e SELECT efetivo do pacote em HML — NÃO VERIFICADO; contrato tipado comprovado"
+    "RLS operacional HML com usuários A/B de organizações distintas — NÃO VERIFICADO e FACULTATIVO após prompt regular 99, não bloqueante isoladamente",
+    "E2E autenticado HML privado — NÃO VERIFICADO",
+    "WCAG integral privado — NÃO VERIFICADO"
   ]
 }
