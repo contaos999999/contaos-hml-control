@@ -25,3 +25,10 @@ Fonte: pacote `ContaOS_4_1_BRAND_FINAL.zip` (PROMPT_000, ANEXO_BRAND_01, ANEXO_Z
 
 ## Decisão de troca (aprovada pelo usuário em 02/11/2026)
 O asset oficial `ContaOS_Logo_Horizontal_Fundo_Escuro.svg` tinha parte do símbolo em navy (#0F172A), invisível sobre o fundo navy. Por aprovação explícita, ele foi substituído pelo asset oficial `ContaOS_Logo_Horizontal_Mono_Branco.svg` (copiado byte a byte, SHA-256 conferido contra o manifesto). Nenhum asset foi redesenhado.
+
+
+## GOV-017 — aplicação transparente da marca, 04/11/2026
+
+Aprovada expressamente pelo usuário a remoção do fundo navy sobreposto aos glows/gradientes da aplicação, sem mudança do símbolo ou wordmark. **Não substituir o arquivo oficial de hash imutável.** Para uso do logo horizontal branco nos cabeçalhos, referenciar `/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg`, cópia fiel do oficial com remoção exclusiva do retângulo integral de fundo. A seleção por tema e os símbolos mobile permanecem inalterados. Toda tela recém-entregue deve passar por crivo BRAND-01, cores sem hardcode, viewport 1440/1280/768/390 × temas e auditoria de evidência. As telas privadas exigem sessão real autorizada; sem ela, marcar NÃO VERIFICADO, jamais PASS integral.
+
+Plano PR #34, gate PR #38; ver `docs/frontend/auditorias/GOV_017_BRAND_SEM_FUNDO_2026-11-04.md` para hash e crivo V1-18.
