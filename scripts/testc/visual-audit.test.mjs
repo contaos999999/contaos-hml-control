@@ -175,3 +175,27 @@ test("GOV-014: nenhuma diferenca ou PNG incompatível nunca gera PASS", () => {
   );
   assert.equal(pixelContrastDecision([], 1), "NAO_VERIFICADO");
 });
+
+test("GOV-014: minúscula coincidência de cores em área ampla não recebe PASS", () => {
+  const a = new Uint8Array(100 * 4);
+  const b = new Uint8Array(100 * 4);
+  for (let i = 0; i < 100; i++) {
+    a.set(i === 0 ? [255, 255, 255, 255] : [255, 0, 0, 255], i * 4);
+    b.set([0, 0, 0, 255], i * 4);
+  }
+  const result = measureRenderedTextContrast(
+    { width: 10, height: 10, data: a },
+    { width: 10, height: 10, data: b },
+    [{
+      rect: { x: 0, y: 0, width: 10, height: 10 },
+      foregroundRgb: [255, 255, 255],
+      effectiveOpacity: 1,
+      fontSizePx: 16,
+      fontWeight: 400,
+    }],
+    { minPixels: 1 },
+  );
+  assert.equal(result[0].status, "NAO_VERIFICADO");
+  assert.equal(result[0].sampleCount, 1);
+  assert.equal(pixelContrastDecision(result, 1), "NAO_VERIFICADO");
+});
