@@ -3,6 +3,20 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — GOV-018 OTIMIZAÇÃO CI, 04/11/2026
+
+**Estado verificado:** `contaos999999/contaos-hml-control/main@b34e53561587d46cbf600ff3b70e35ccbdf4b8ad` antes do BUILD GOV-018; fonte normativa/backend `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` inalterada. Contexto 25/25 e catálogo 100/97 preservados; `types.ts` certificado `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`.
+
+- **Última etapa funcional integrada:** PROMPT 39 / V1-18 Parecer interno, PR #30 e GOV-016 Teste C 24×4×2 PR #32, não repetir.
+- **GOV-017:** PLAN correção transparente da logomarca PR #34, 2 checks SUCCESS e merge em `33f167c6b745261c5a21d7bc63aedad4ffd36fd5`. **Não declarar aplicação do SVG concluída**: ainda exigem gate `PLANO_ATIVO`, BUILD e Teste C; próxima tarefa do fluxo visual pendente.
+- **GOV-018:** PLAN otimização CI `docs/frontend/planos/GOV_018_OTIMIZAR_CI_2026-11-04.md`, PR #35 com dois checks SUCCESS, merge em `b34e53561587d46cbf600ff3b70e35ccbdf4b8ad`. Executar o BUILD **somente** pela branch `build/gov-018-ci-paralelo-cache-20261104`, com `.github/workflows/contaos-frontend-zero-drift.yml` e `contaos-teste-c-independente.yml` (paralelismo + cache travado Chromium), auditoria `docs/frontend/auditorias/GOV_018_CI_BASELINE_E_RESULTADO_2026-11-04.md`.
+- **Baseline:** #41859649176 processamento 316 s (qualidade 118s + Teste C 195s), #41861082671 processamento 321s (121+196s) e atraso extra de atualização do status GitHub. Teste C 192 cenários. **Resultado do BUILD GOV-018 ainda não verificado**.
+- **Próxima ação exata:** abrir PR da branch BUILD GOV-018, provar 2 checks SUCCESS e a execução real de Teste C com 192 cenários, medir runtimes e cache, integrar sem bypass. Depois retomar GOV-017 gate e correção visual, seguido do PROMPT 40 V1-19. Não alterar backend, Auth, RLS, RPC, `types.ts` nem produção.
+- **Ressalva de testes HML autenticados:** não comprovados; auditoria pública e rotas privadas redirecionadas não substituem E2E real.
+- **Rollback:** novo PR restaurando os dois YAMLs, checks obrigatórios inalterados.
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — PROMPT 39 / V1-18, 04/11/2026
 
 **Este checkpoint tem precedência sobre indicações históricas de “próxima tarefa” nas seções abaixo; sempre conferir HEAD e CI correntes.**
