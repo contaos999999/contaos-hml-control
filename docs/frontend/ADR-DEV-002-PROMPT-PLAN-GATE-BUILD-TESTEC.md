@@ -102,3 +102,10 @@ A leitura desta ADR é **obrigatória a cada retomada**. Prevalecem os critério
 ## Atualização de contexto — GOV-005, 04/11/2026
 
 As referências canônicas de repositório após a transferência são `contaos999999/contaos-hml-control` (frontend) e `contaos999999/develop` (backend normativo, SOMENTE LEITURA em tarefas de frontend). A política GitHub é PR obrigatório, 2 required checks e 0 reviews; não dispensa aprovação humana explicitamente exigida pelo PLAN para alteração BRAND-01. A GOV-004 comprovou bloqueio de escrita direta e CI negativo, e merge com zero reviews. Nenhuma alteração no rito de PLAN anterior ao BUILD ou na autoridade do Supabase HML.
+
+
+## Decisão suplementar do titular — 04/11/2026: escopo temporal da prova RLS HML A/B
+
+O titular determinou que a **comprovação operacional HML com usuários A/B para provar impedimento de acesso entre organizações** será considerada **facultativa e pós-PROMPT regular 99**, sem efeito impeditivo sobre a sequência de PLAN/GATE/BUILD dos prompts 41–99. A decisão expressa e os limites constam em `docs/frontend/governanca/DECISAO_RLS_HML_AB_POS_PROMPT_99_2026-11-04.md`.
+
+Para interpretar a validação formal da seção 3: **o ensaio externo autenticado A/B postergado não é um gate aplicável aos BUILDs frontend antes do PROMPT 99**. A **segurança da implementação** (contrato existente, autoridade RLS, isolamento lógico, chamadas autenticadas, testes sem vazamento, IDOR, tratamento 401/403/404, backend como fonte de verdade, zero segredos) **continua gate obrigatório PASS**. Testes unitários com mocks não comprovam RLS efetiva e devem ser rotulados MOCK; a prova operacional segue **NÃO VERIFICADA, DIFERIDA, NÃO OBRIGATÓRIA**. Se for identificado FAIL real de segurança, não fazer BUILD/merge. Não presumir que a decisão autorize operações de Supabase, PROD ou reescrita de requisitos PRD/BRAND. Qualquer implantação em produção exige avaliação independente, sem equiparar dispensa do ensaio de HML a certificação de acesso.
