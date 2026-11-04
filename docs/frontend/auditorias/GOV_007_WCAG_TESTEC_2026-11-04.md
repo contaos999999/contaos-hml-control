@@ -27,3 +27,17 @@
 - O build Lovable, identidade visual, PRD 4.1 e contratos RPC não foram alterados.
 
 **Estado:** BUILD de governança submetido; aguardar CI verde e prova do Teste C com Axe em execução real. Não afirmar equivalência operacional 100% com HML e revisão manual pendentes.
+
+## 5. Prova criptográfica independente da equivalência de código Lovable × GitHub
+
+Consulta direta à API Git do GitHub aos objetos de árvore dos commits `b8ca8b99b31c65ceccfe6091b5e7bcaad1cf80f0` (SHA informado como último pelo Lovable) e `bd832cda02cb2c2d1a7041020909724ae70d62f5` (main GitHub após GOV-006):
+
+| Objeto | SHA Git em ambos |
+| --- | --- |
+| `src/` | `34f9be40ac4167867b0b89362b00e02557eaa95a` |
+| `public/` | `7f72da43b4a4fbd669ca1e900a773bc18f89845b` |
+| `package.json` | `6dbe973df8f2fb6c45ef4cf544c99fbbb5141713` |
+| `bun.lock` | `17b4d9861dba2e5edef0bb0933d3ab2d8daffea0` |
+| `vite.config.ts` | `174e074ca30e73877870b02eb162b0c28848051e` |
+
+**Conclusão delimitada:** árvore funcional, assets e dependências são **bit a bit idênticos** entre os dois commits. Logo, os 37 commits administrativos posteriores ao SHA conhecido do Lovable **não introduziram divergência no código ou dependências citados**. Isso não prova que o Lovable atualizou metadados ou que a execução autenticada HML é equivalente; o estado do editor deve ser verificado separadamente, sem usar IA do Lovable para BUILD.
