@@ -82,6 +82,9 @@ jobs:
           echo "Servidor Teste C indisponível."
           tail -n 60 "$RUNNER_TEMP/testc-vite.log"
           exit 1
+      - name: GOV-020 — verificar routeTree após Vite dev e antes do Playwright
+        if: steps.scope.outputs.required == 'true'
+        run: node scripts/route-tree-drift-gate.mjs
       - name: Teste C Playwright — 24 telas, 4 larguras, 2 temas
         if: steps.scope.outputs.required == 'true'
         shell: bash
