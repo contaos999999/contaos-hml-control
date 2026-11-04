@@ -24,6 +24,7 @@ import { Route as ContratosNovoRouteImport } from './routes/contratos_.novo'
 import { Route as CompetenciasIdAnaliseRouteImport } from './routes/competencias_.$id_.analise'
 import { Route as CompetenciasIdDocumentosRouteImport } from './routes/competencias_.$id_.documentos'
 import { Route as CompetenciasIdParecerRouteImport } from './routes/competencias_.$id_.parecer'
+import { Route as CompetenciasIdApresentarRouteImport } from './routes/competencias_.$id_.apresentar'
 import { Route as ContratantesIdEditarRouteImport } from './routes/contratantes_.$id.editar'
 import { Route as ContratosIdBaseNormativaRouteImport } from './routes/contratos_.$id_.base-normativa'
 import { Route as ContratosIdCompetenciasRouteImport } from './routes/contratos_.$id_.competencias'
@@ -109,6 +110,11 @@ const CompetenciasIdParecerRoute = CompetenciasIdParecerRouteImport.update({
   path: '/competencias/$id/parecer',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompetenciasIdApresentarRoute = CompetenciasIdApresentarRouteImport.update({
+  id: '/competencias_/$id_/apresentar',
+  path: '/competencias/$id/apresentar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContratantesIdEditarRoute = ContratantesIdEditarRouteImport.update({
   id: '/contratantes_/$id/editar',
   path: '/contratantes/$id/editar',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/competencias/$id/analise': typeof CompetenciasIdAnaliseRoute
   '/competencias/$id/documentos': typeof CompetenciasIdDocumentosRoute
   '/competencias/$id/parecer': typeof CompetenciasIdParecerRoute
+  '/competencias/$id/apresentar': typeof CompetenciasIdApresentarRoute
   '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
   '/contratos/$id/base-normativa': typeof ContratosIdBaseNormativaRoute
   '/contratos/$id/competencias': typeof ContratosIdCompetenciasRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/competencias/$id/analise': typeof CompetenciasIdAnaliseRoute
   '/competencias/$id/documentos': typeof CompetenciasIdDocumentosRoute
   '/competencias/$id/parecer': typeof CompetenciasIdParecerRoute
+  '/competencias/$id/apresentar': typeof CompetenciasIdApresentarRoute
   '/contratantes/$id/editar': typeof ContratantesIdEditarRoute
   '/contratos/$id/base-normativa': typeof ContratosIdBaseNormativaRoute
   '/contratos/$id/competencias': typeof ContratosIdCompetenciasRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/competencias_/$id_/analise': typeof CompetenciasIdAnaliseRoute
   '/competencias_/$id_/documentos': typeof CompetenciasIdDocumentosRoute
   '/competencias_/$id_/parecer': typeof CompetenciasIdParecerRoute
+  '/competencias_/$id_/apresentar': typeof CompetenciasIdApresentarRoute
   '/contratantes_/$id/editar': typeof ContratantesIdEditarRoute
   '/contratos_/$id_/base-normativa': typeof ContratosIdBaseNormativaRoute
   '/contratos_/$id_/competencias': typeof ContratosIdCompetenciasRoute
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/competencias/$id/analise'
     | '/competencias/$id/documentos'
     | '/competencias/$id/parecer'
+    | '/competencias/$id/apresentar'
     | '/contratantes/$id/editar'
     | '/contratos/$id/base-normativa'
     | '/contratos/$id/competencias'
@@ -272,6 +282,7 @@ export interface FileRouteTypes {
     | '/competencias/$id/analise'
     | '/competencias/$id/documentos'
     | '/competencias/$id/parecer'
+    | '/competencias/$id/apresentar'
     | '/contratantes/$id/editar'
     | '/contratos/$id/base-normativa'
     | '/contratos/$id/competencias'
@@ -297,6 +308,7 @@ export interface FileRouteTypes {
     | '/competencias_/$id_/analise'
     | '/competencias_/$id_/documentos'
     | '/competencias_/$id_/parecer'
+    | '/competencias_/$id_/apresentar'
     | '/contratantes_/$id/editar'
     | '/contratos_/$id_/base-normativa'
     | '/contratos_/$id_/competencias'
@@ -323,6 +335,7 @@ export interface RootRouteChildren {
   CompetenciasIdAnaliseRoute: typeof CompetenciasIdAnaliseRoute
   CompetenciasIdDocumentosRoute: typeof CompetenciasIdDocumentosRoute
   CompetenciasIdParecerRoute: typeof CompetenciasIdParecerRoute
+  CompetenciasIdApresentarRoute: typeof CompetenciasIdApresentarRoute
   ContratantesIdEditarRoute: typeof ContratantesIdEditarRoute
   ContratosIdBaseNormativaRoute: typeof ContratosIdBaseNormativaRoute
   ContratosIdCompetenciasRoute: typeof ContratosIdCompetenciasRoute
@@ -440,6 +453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompetenciasIdParecerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/competencias_/$id_/apresentar': {
+      id: '/competencias_/$id_/apresentar'
+      path: '/competencias/$id/apresentar'
+      fullPath: '/competencias/$id/apresentar'
+      preLoaderRoute: typeof CompetenciasIdApresentarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contratantes_/$id/editar': {
       id: '/contratantes_/$id/editar'
       path: '/contratantes/$id/editar'
@@ -515,6 +535,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompetenciasIdAnaliseRoute: CompetenciasIdAnaliseRoute,
   CompetenciasIdDocumentosRoute: CompetenciasIdDocumentosRoute,
   CompetenciasIdParecerRoute: CompetenciasIdParecerRoute,
+  CompetenciasIdApresentarRoute: CompetenciasIdApresentarRoute,
   ContratantesIdEditarRoute: ContratantesIdEditarRoute,
   ContratosIdBaseNormativaRoute: ContratosIdBaseNormativaRoute,
   ContratosIdCompetenciasRoute: ContratosIdCompetenciasRoute,
