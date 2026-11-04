@@ -58,25 +58,25 @@ export function parseParecerInterno(
 ): ParecerInterno | null {
   if (!obj(v) || !uuidValido(idCompetencia) || !uuidValido(idContrato)) return null;
   if (
-    !texto(v.id) || !uuidValido(v.id) ||
-    v.id_competencia !== idCompetencia ||
-    v.id_organizacao !== idOrganizacao ||
-    v.id_contrato !== idContrato ||
-    !textoNulo(v.autor) ||
-    !texto(v.texto) ||
-    !texto(v.status) || !v.status.trim() ||
-    !Number.isSafeInteger(v.versao) || (v.versao as number) < 1 ||
-    !hashValido(v.hash) ||
-    !dataIso(v.criado_em) ||
-    !textoNulo(v.aprovado_por) ||
-    !textoNulo(v.aprovado_em) ||
-    (v.aprovado_em !== null && !dataIso(v.aprovado_em))
+    !texto(v["id"]) || !uuidValido(v["id"]) ||
+    v["id_competencia"] !== idCompetencia ||
+    v["id_organizacao"] !== idOrganizacao ||
+    v["id_contrato"] !== idContrato ||
+    !textoNulo(v["autor"]) ||
+    !texto(v["texto"]) ||
+    !texto(v["status"]) || !v["status"].trim() ||
+    !Number.isSafeInteger(v["versao"]) || (v["versao"] as number) < 1 ||
+    !hashValido(v["hash"]) ||
+    !dataIso(v["criado_em"]) ||
+    !textoNulo(v["aprovado_por"]) ||
+    !textoNulo(v["aprovado_em"]) ||
+    (v["aprovado_em"] !== null && !dataIso(v["aprovado_em"]))
   ) return null;
   return v as ParecerInterno;
 }
 
 export function classificarErroParecer(error: unknown, status?: number): TipoErroParecer {
-  const code = obj(error) && texto(error.code) ? error.code : "";
+  const code = obj(error) && texto(error["code"]) ? error["code"] : "";
   if (status === 401 || status === 403 || code === "42501" || code === "PGRST301")
     return "sem_permissao";
   if (code === "PT409" || status === 409) return "conflito";
