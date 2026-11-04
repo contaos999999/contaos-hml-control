@@ -4,6 +4,8 @@
  * Invocar APÓS a geração real (vite build ou vite dev), jamais antes.
  */
 import { execFileSync } from "node:child_process";
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 export const ROUTE_TREE = "src/routeTree.gen.ts";
 
@@ -47,7 +49,7 @@ export function verificarArvore() {
   };
 }
 
-if (process.argv[1] && import.meta.url === new URL("file://" + process.argv[1]).href) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   const result = verificarArvore();
   if (result.ok) {
     console.log("GOV-020 PASS: routeTree.gen.ts coincide com a geração oficial.");
