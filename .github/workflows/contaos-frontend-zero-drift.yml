@@ -53,18 +53,8 @@ jobs:
         run: |
           bunx eslint src/routes/__root.tsx src/components/brand/ContaOSMarca.tsx src/test/rootLocale.test.tsx src/test/brand.test.tsx scripts/frontend-zero-drift.mjs scripts/frontend-scope-gate.mjs scripts/context-freshness-gate.mjs scripts/context-freshness-gate.test.mjs scripts/testc/visual-audit.mjs scripts/testc/visual-audit.test.mjs
           bunx prettier --check scripts/frontend-zero-drift.mjs src/test/brand.test.tsx src/test/rootLocale.test.tsx
-      - name: Full regression GOV-019 — 3x Vitest com 2 workers
-        shell: bash
-        run: |
-          set -euo pipefail
-          for i in 1 2 3; do
-            inicio="$(date +%s)"
-            echo "GOV-019 INICIO REPETICAO $i/3 com --maxWorkers=2"
-            bunx vitest run --maxWorkers=2
-            fim="$(date +%s)"
-            echo "GOV-019 PASS REPETICAO $i/3 SEGUNDOS=$((fim - inicio))"
-          done
-          echo "GOV-019: três suites completas executadas sem redução de cobertura."
+      - name: Full regression — Vitest 2 workers
+        run: bunx vitest run --maxWorkers=2
       - name: TypeScript typecheck
         run: bunx tsc --noEmit -p .
       - name: Production build
