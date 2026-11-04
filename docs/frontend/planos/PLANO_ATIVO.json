@@ -1,17 +1,17 @@
 {
   "schema": "contaos.frontend.plan.v1",
-  "prompt_id": "16",
+  "prompt_id": "40",
   "status": "VALIDADO",
-  "plano_documento": "docs/frontend/planos/GOV_017_BRAND_TRANSPARENCIA_2026-11-04.md",
+  "plano_documento": "docs/frontend/planos/PROMPT_40_V1_19_WIZARD_APRESENTACAO_2026-11-04.md",
   "validacao": {
     "resultado": "PASS",
-    "validado_por": "GPT-6 — conferência GOV-017 do diagnóstico SVG, normas BRAND-01, fonte 25/25, CI original PR #34",
+    "validado_por": "GPT-6, revisão técnica PLAN V1-19 e CI do PR #42",
     "validado_em": "2026-11-04",
-    "modo_aprovacao": "aprovacao_humana_expressa_mensagens_usuario_2026_11_04",
-    "aprovacao_humana": "CONCEDIDA",
-    "aprovacao_humana_exigida": true,
-    "aprovacao_humana_evidencia": "Solicitações expressas do usuário nesta conversa: após conclusão de módulo executar crivo da identidade visual e corrigir logo branco com fundo sobre gradiente, usar fundo transparente; em seguida 'faça tudo', 'continue' e 'faça a correção da logomarca transparente'. PLAN GOV-017 PR #34 (https://github.com/contaos999999/contaos-hml-control/pull/34) registra o aceite e foi integrado com 2 checks SUCCESS. Não autoriza mudanças além da variante branca transparente.",
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41862342763",
+    "modo_aprovacao": "aprovacao_tecnica_automatica_por_escopo_frontend_sem_alterar_brand",
+    "aprovacao_humana": "NAO_EXIGIDA_SEM_ALTERACAO_DIRETA_BRAND",
+    "aprovacao_humana_exigida": false,
+    "aprovacao_humana_evidencia": null,
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41880258322",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -28,14 +28,21 @@
     }
   },
   "arquivos_permitidos": [
-    "public/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
-    "src/components/brand/ContaOSMarca.tsx",
-    "src/test/brand.test.tsx"
+    "src/lib/competencias/apresentacaoDados.ts",
+    "src/components/competencias/CompetenciaApresentar.tsx",
+    "src/routes/competencias_.$id_.apresentar.tsx",
+    "src/test/competenciaApresentar.test.tsx",
+    "src/components/competencias/CompetenciaVisaoGeral.tsx",
+    "src/test/competenciaVisaoGeral.test.tsx",
+    "src/routeTree.gen.ts",
+    "src/test/brand.test.tsx",
+    "scripts/testc/visual-audit.mjs",
+    "scripts/testc/visual-audit.test.mjs"
   ],
-  "observacao": "GOV-017: somente variante derivada do SVG oficial removendo o retângulo externo navy; componente compartilhado, testes TDD. Não substituir os SVGs oficiais certificados. Registro documental da auditoria de V1-18, mantendo HML autenticado NÃO VERIFICADO. PLAN PR #34/CI 41862342763, gate próprio anterior ao BUILD. Outros arquivos documentais fora do scope gate de app apenas dossiê e checkpoint especificados no PLAN.",
+  "observacao": "Gate V1-19 e somente frontend. Backend Supabase congelado; RPCs aprovar_apresentacao e registrar_apresentacao; allowed_actions.apresentar da visão geral é fonte de autoridade, nenhuma aprovação/porta/estado local. Idempotência por intenção, sem retransmissão silenciosa. Inclui Teste C 200 cenários e crivo BRAND-01, mas HML autenticado NÃO VERIFICADO até prova real. Após gate integrado criar branch BUILD separado.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
-  "context_read_by": "GPT-6 — normas 19/20, arquivo 00, BRAND-01 e contexto canônico 25/25 conferidos; alterações visuais limitadas GOV-017",
+  "context_read_by": "GPT-6 — leitura do PLAN 40, PRD, fontes 25/25 e crosswalk 100/97; backend RPC e frontend schema consultados",
   "context_read_acknowledged_at": "2026-11-04",
   "context_source_commit": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
@@ -67,9 +74,10 @@
     "20_PROMPT_000_BRAND_01.md"
   ],
   "prompt_crosswalk": {
-    "regular_prompt_id": "16",
+    "regular_prompt_id": "40",
     "direct_atomic_ids": [
-      "000"
+      "000",
+      "067"
     ],
     "additional_transversal_atomic_ids": [],
     "exclusoes_justificadas": {},
@@ -83,28 +91,24 @@
     "required_section": "ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE"
   },
   "impacto_visual": "SIM",
-  "impacto_visual_justificativa": "Remove fundo navy de SVG derivado sobre texturas e gradientes, sem alterar desenho, dimensões, tema ou composição; crivo V1-18 e 24 superfícies × 4 × 2.",
+  "impacto_visual_justificativa": "Nova tela Wizard V1-19 usando ContaOSMarca transparente, tokens existentes e responsividade; crivo visual 200 casos",
   "backend_changes_allowed": false,
   "prod_changes_allowed": false,
   "source_proof": {
-    "frontend_baseline": "f167d7d364b52ef3fe2c768e28a11dc2577cad4e",
+    "frontend_baseline": "7aa9324ad1a9f505a1c2d9490608dd539c2c684e",
     "normative_head": "a10d3b1a1a14276c017027f93ec2a7aace4d6cb6",
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
-    "crosswalk_regular39": [
+    "crosswalk_regular40": [
       "000",
-      "021",
-      "022",
-      "023"
+      "067"
     ],
-    "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
-    "crosswalk_regular16": [
-      "000"
-    ]
+    "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19"
   },
   "unverified_operational": [
-    "Login HML real e rotas privadas com sessão real",
-    "Contraste renderizado com composição complexa fora dos nós auditados",
-    "Audit V1-18 autenticado em múltiplas resoluções (não observado diretamente)"
+    "E2E HML com aprovador e usuário de prestação de contas",
+    "Autorização RLS real multi-organização",
+    "Contraste WCAG renderizado na rota autenticada",
+    "Congelamento real e idempotência sob concorrência do Supabase HML"
   ]
 }
