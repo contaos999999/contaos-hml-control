@@ -3,6 +3,18 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT PRIORITÁRIO — V1-20 TRIAGEM DOS 97 ATÔMICOS, 04/11/2026
+
+**HEAD frontend de origem da auditoria:** `contaos999999/contaos-hml-control/main@94bbceafa45af291c73558ea7d5aca4c132f5ae5` (PR #46 integrado; PLAN registrado, NÃO VALIDADO para BUILD). **HEAD normativo:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6` (sem mudanças). Não presumir que esses HEADs continuem atuais.
+
+- **Nova auditoria documental:** `docs/frontend/auditorias/PROMPT_41_V120_CROSSWALK_97_ATOMICOS_2026-11-04.md`; 97 IDs classificados individualmente: 000 diretamente aplicável, 019/020/067 dependências transversais herdadas, 087/093 condicionais sem funcionalidade liberada, 91 sem implementação nova na tela. A triagem não afirma que 97 requisitos estejam executados/homologados. Catálogo normativo não alterado e `full_crosswalk_verified=false` permanece.
+- **Regra além do BRAND-01:** exigir direitos de consulta reais, isolamento multi-organização/RLS, pacote imutável e hash oficial, rastreabilidade, auditabilidade, NFRs, PT-BR, acessibilidade e Teste C. Não implementar nenhum requisito adicional em V1-20 por associação numérica.
+- **GATE atual:** PR #46 foi integrado documentalmente em `94bbceafa45af291c73558ea7d5aca4c132f5ae5`, mas `PLANO_ATIVO.json` continua regular 40 VALIDADO; V1-20 segue **NÃO VALIDADO/BLOQUEADO para BUILD**. Faltam texto literal original do PROMPT 41 e contrato de leitura detalhada do pacote (RLS real/ACL, snapshot congelado). Testes A/B HML, E2E privado e WCAG abrangente continuam NÃO VERIFICADOS. Não usar mock como prova.
+- **Último BUILD funcional concluído:** PR #44 V1-19, commit de merge `2bc2696b1272cce74f6aaaae4dd608751b469f5b`, 841 testes, Teste C escopado 200 cenários; não repetir.
+- **Branch de auditoria atual:** `audit/prompt-41-v120-atomic-crosswalk-20261104`. A integração depende de PR independente com dois checks verdes no HEAD final e sem bypass. Nenhuma alteração de backend HML/PROD, `types.ts`, BRAND, Lovable BUILD ou código funcional nesta etapa.
+- **Próxima ação após merge documental:** recuperar fonte literal do regular PROMPT 41 e dados oficiais de leitura autorizada; preparar GATE do PLANO_ATIVO 41 somente quando cada gate aplicável estiver PASS. Investigação específica Supabase/backend requer consentimento humano adicional conforme ADR-DEV-002. Não afirmar BUILD liberado nesta auditoria.
+
+---
 ## CHECKPOINT PRIORITÁRIO — RETOMADA PROMPT 41 / V1-20, 04/11/2026
 
 **Última main frontend confirmada antes deste PLAN:** `contaos999999/contaos-hml-control/main@657b350fa43c30177df399667fbc885aa1a2599a` (PR #45 integrado). **Fonte normativa:** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`, branch padrão `main`. A verificação foi realizada diretamente no GitHub; nunca presumir que esses SHAs permanecem HEAD após novos merges.
