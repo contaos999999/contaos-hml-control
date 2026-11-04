@@ -3,6 +3,24 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT — GOV-020 GERAÇÃO DETERMINÍSTICA ROUTETREE / CI PREVENTIVO (04/11/2026)
+
+**Origem deste workstream:** frontend `main@cffbf0532a7fe76f384130ae56df080a7a8a14ed`; normativo `develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Confirmar HEAD vivo antes de retomar. **Último BUILD funcional integrado:** regular 40/V1-19, PR #44. PLAN/GATE 41 integrados PRs #50/#51; BUILD V1-20 PR #52 **ABERTO**, não repetir e não declarar concluído antes de 2 checks SUCCESS.
+
+**Motivo GOV-020:** PR #52 teve 848 testes PASS, TypeScript/build PASS e Teste C 208 combinações/24 capturas, porém check obrigatório Teste C FAIL no passo final porque o TanStack reescreveu `src/routeTree.gen.ts` (nome interno/ordem diferentes). Run [41904426343](https://github.com/contaos999999/contaos-hml-control/actions/runs/41904426343), artefato Teste C ID `13358194058`, SHA-256 `6d218dd9e482871d2d26c9427a8e51483bb38dbcf93a9b2b248df69fd4183279`. Correção imediata de `routeTree.gen.ts` no PR #52 ainda NÃO COMPROVADA; não fazer bypass nem merge.
+
+**Proteção preventiva em branch** `governance/gov-020-route-tree-drift-prevention-20261104`:
+- `scripts/route-tree-drift-gate.mjs` compara arquivo gerado/versionado em Git, somente leitura, FAIL em diferenças com diff.
+- `scripts/route-tree-drift-gate.test.mjs`: cenários PASS limpo, FAIL alterado, FAIL removido, FAIL não versionado, com diretórios temporários.
+- `.github/workflows/contaos-frontend-zero-drift.yml`: executa testes GOV-020, move `vite build` (gerador já existente) para antes da regressão longa e verifica drift sem alterar fontes; mantém Vitest/TS/brand e dois checks.
+- `.github/workflows/contaos-teste-c-independente.yml`: verifica árvore após Vite dev, antes de Playwright; preserva check final de integridade.
+- `AGENTS.md` e `docs/frontend/planos/TEMPLATE_PROMPT_PLAN_GATE.md` tornam a regra permanente para prompts futuros de rota.
+- Documento normativo frontend `docs/frontend/governanca/GOV_020_GERACAO_DETERMINISTICA_ROTAS_2026-11-04.md`. Sem mudanças no backend, `types.ts`, pacote/lock, BRAND ou PROD.
+
+**Estado desta branch:** implementação submetida a CI próprio, não declarar PASS nem merge antes dos dois checks no HEAD definitivo. **Próxima ação:** abrir PR GOV-020, corrigir erros reais de CI sem enfraquecer gates, integrar via ruleset; depois retomar PR #52 e sincronizar árvore por gerador em ambiente com escrita legítima, exigindo dois checks SUCCESS antes de avançar ao prompt 42. Prova RLS A/B HML continua não verificada, facultativa pós-prompt 99 conforme PR #49, sem influência sobre GOV-020.
+
+---
+
 ## CHECKPOINT PRIORITÁRIO — BUILD PROMPT 41/V1-20 EM PR #52, SEM MERGE (04/11/2026)
 
 **HEAD principal auditado:** `contaos999999/contaos-hml-control/main@f8adb8af51fe49a9bd03ce4fa92238f8f19e6a33`, GATE PR #51 validado e integrado; **fonte normativa** `contaos999999/develop/main@a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`. Reconsultar HEADs, branches e checks antes de agir. **Último módulo funcional comprovadamente integrado é PROMPT 40 / V1-19**. Não avançar para regular 42 antes de integrar BUILD 41.

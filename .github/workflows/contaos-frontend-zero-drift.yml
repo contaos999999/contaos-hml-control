@@ -49,16 +49,20 @@ jobs:
         uses: oven-sh/setup-bun@v2
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
+      - name: GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada
+        run: node --test scripts/route-tree-drift-gate.test.mjs
       - name: Lint e formatacao do saneamento transversal
         run: |
-          bunx eslint src/routes/__root.tsx src/components/brand/ContaOSMarca.tsx src/test/rootLocale.test.tsx src/test/brand.test.tsx scripts/frontend-zero-drift.mjs scripts/frontend-scope-gate.mjs scripts/context-freshness-gate.mjs scripts/context-freshness-gate.test.mjs scripts/testc/visual-audit.mjs scripts/testc/visual-audit.test.mjs
-          bunx prettier --check scripts/frontend-zero-drift.mjs src/test/brand.test.tsx src/test/rootLocale.test.tsx
+          bunx eslint src/routes/__root.tsx src/components/brand/ContaOSMarca.tsx src/test/rootLocale.test.tsx src/test/brand.test.tsx scripts/frontend-zero-drift.mjs scripts/frontend-scope-gate.mjs scripts/context-freshness-gate.mjs scripts/context-freshness-gate.test.mjs scripts/testc/visual-audit.mjs scripts/testc/visual-audit.test.mjs scripts/route-tree-drift-gate.mjs scripts/route-tree-drift-gate.test.mjs
+          bunx prettier --check scripts/frontend-zero-drift.mjs src/test/brand.test.tsx src/test/rootLocale.test.tsx scripts/route-tree-drift-gate.mjs scripts/route-tree-drift-gate.test.mjs
+      - name: Production build — geração canônica TanStack antes dos testes longos
+        run: bunx vite build
+      - name: GOV-020 — bloquear divergência entre routeTree gerado e commit
+        run: node scripts/route-tree-drift-gate.mjs
       - name: Full regression — Vitest 2 workers
         run: bunx vitest run --maxWorkers=2
       - name: TypeScript typecheck
         run: bunx tsc --noEmit -p .
-      - name: Production build
-        run: bunx vite build
       - name: Brand-01, PT-BR, secrets and types integrity
         run: node scripts/frontend-zero-drift.mjs
 
