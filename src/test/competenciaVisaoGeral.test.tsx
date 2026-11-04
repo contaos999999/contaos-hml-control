@@ -291,7 +291,7 @@ describe("V1-14 renderização do backend", () => {
     expect(acao("apresentar").textContent).toMatch(/Permitida pelo backend/);
   });
 
-  it.each(["abrir_documentos", "analisar", "abrir_parecer", "apresentar"])(
+  it.each(["abrir_documentos", "analisar", "apresentar"])(
     "%s=true: staged aria-disabled Em breve, sem href, clique não navega nem chama RPC",
     async (n) => {
       m.rpc.mockResolvedValue(ok(vg({ acoes: { [n]: true } })));
@@ -307,6 +307,19 @@ describe("V1-14 renderização do backend", () => {
       expect(m.rpc).toHaveBeenCalledTimes(1);
     },
   );
+
+  it("abrir_parecer=true habilita somente a aba/ação correspondente", async () => {
+    m.rpc.mockResolvedValue(ok(vg({ acoes: { abrir_parecer: true } })));
+    montar();
+    await pronto();
+    const link = acao("abrir_parecer").querySelector("a");
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute("href")).toBe(`/competencias/${ID}/parecer`);
+    const aba = screen.getAllByRole("tab").find((v) => v.textContent?.includes("Parecer"));
+    expect(aba?.getAttribute("href")).toBe(`/competencias/${ID}/parecer`);
+    expect(aba?.getAttribute("aria-disabled")).toBeNull();
+    expect(m.rpc).toHaveBeenCalledTimes(1);
+  });
 
   it("ação false: nenhum botão/link com nome da ação", async () => {
     montar();
@@ -350,10 +363,11 @@ describe("V1-14 renderização do backend", () => {
     expect(tabs[2]!.getAttribute("href")).toBe(`/competencias/${ID}/analise`);
     expect(tabs[2]!.getAttribute("aria-disabled")).toBeNull();
     expect(tabs[2]!.textContent).not.toMatch(/Em breve/);
-    for (const t of tabs.slice(3)) {
-      expect(t.getAttribute("aria-disabled")).toBe("true");
-      expect(t.getAttribute("href")).toBeNull();
-    }
+    expect(tabs[3]!.getAttribute("aria-disabled")).toBe("true");
+    expect(tabs[3]!.getAttribute("href")).toBeNull();
+    expect(tabs[3]!.textContent).toMatch(/Parecer/);
+    expect(tabs[4]!.getAttribute("aria-disabled")).toBe("true");
+    expect(tabs[4]!.getAttribute("href")).toBeNull();
     expect(screen.getByRole("status", { name: /Situação/ })).toBeInTheDocument();
   });
 });

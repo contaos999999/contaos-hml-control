@@ -198,13 +198,13 @@ function Conteudo({ vg }: { vg: VisaoGeral }) {
         idContrato={c.id_contrato}
         situacao={c.situacao}
       />
-      <Tabs id={c.id} />
+      <Tabs id={c.id} permitirParecer={vg.allowed_actions.abrir_parecer} />
       <div className="grid gap-4 lg:grid-cols-3">
         <EstadoCompetencia estado={derivarEstadoVisual(vg)} />
         <PercentGauge valor={c.percentual_conformidade} portao={vg.portao} />
         <BlockingSummary b={vg.blocking_summary} liberado={vg.portao.liberado} />
       </div>
-      <AllowedActions acoes={vg.allowed_actions} />
+      <AllowedActions acoes={vg.allowed_actions} vgId={c.id} />
     </>
   );
 }
@@ -374,7 +374,7 @@ const ACOES: Array<[keyof AllowedActionsVG, string]> = [
   ["apresentar", "Apresentar"],
 ];
 
-function AllowedActions({ acoes }: { acoes: AllowedActionsVG }) {
+function AllowedActions({ acoes, vgId }: { acoes: AllowedActionsVG; vgId: string }) {
   return (
     <section aria-labelledby="v114-acoes" className="rounded-lg border border-border bg-card p-4">
       <h2 id="v114-acoes" className="text-sm font-medium text-muted-foreground">
@@ -393,12 +393,20 @@ function AllowedActions({ acoes }: { acoes: AllowedActionsVG }) {
                 <span className="flex items-center gap-1.5 text-xs">
                   <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Permitida pelo backend
                 </span>
-                <span
-                  aria-disabled="true"
-                  className="inline-flex w-fit items-center rounded-md border border-dashed border-border px-2 py-1 text-xs text-muted-foreground"
-                >
-                  Em breve
-                </span>
+                {k === "abrir_parecer" ? (
+                  <Button asChild variant="outline" className="min-h-11">
+                    <Link to="/competencias/$id/parecer" params={{ id: vgId }}>
+                      Abrir parecer
+                    </Link>
+                  </Button>
+                ) : (
+                  <span
+                    aria-disabled="true"
+                    className="inline-flex w-fit items-center rounded-md border border-dashed border-border px-2 py-1 text-xs text-muted-foreground"
+                  >
+                    Em breve
+                  </span>
+                )}
               </>
             ) : (
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -412,9 +420,9 @@ function AllowedActions({ acoes }: { acoes: AllowedActionsVG }) {
   );
 }
 
-const ABAS_FUTURAS = ["Parecer", "Apresentação"];
+const ABAS_FUTURAS = ["Apresentação"];
 
-function Tabs({ id }: { id: string }) {
+function Tabs({ id, permitirParecer }: { id: string; permitirParecer: boolean }) {
   return (
     <div
       role="tablist"
@@ -446,6 +454,22 @@ function Tabs({ id }: { id: string }) {
       >
         Análise
       </Link>
+      {permitirParecer ? (
+        <Link
+          to="/competencias/$id/parecer"
+          params={{ id }}
+          role="tab"
+          aria-selected="false"
+          className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Parecer
+        </Link>
+      ) : (
+        <span role="tab" aria-selected="false" aria-disabled="true"
+          className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-muted-foreground">
+          Parecer <Lock className="ml-2 h-4 w-4" aria-hidden />
+        </span>
+      )}
       {ABAS_FUTURAS.map((t) => (
         <span
           key={t}
