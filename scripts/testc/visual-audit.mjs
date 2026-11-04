@@ -128,7 +128,7 @@ export function wcagContrastRatio(foregroundRgb, backgroundRgb) {
   if (!validColor(foregroundRgb) || !validColor(backgroundRgb)) return null;
   const a = luminance(foregroundRgb);
   const b = luminance(backgroundRgb);
-  return Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 10000) / 10000;
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 }
 
 export function measureRenderedTextContrast(before, after, nodes, { minPixels = 5 } = {}) {
@@ -193,8 +193,17 @@ export function measureRenderedTextContrast(before, after, nodes, { minPixels = 
         minimumRatio = Math.min(minimumRatio, ratio);
       }
     }
-    if (sampleCount < minPixels || sampleCount < Math.ceil(changedPixels * 0.08))
-      return { ...unresolved("GLIFOS_SEM_AMOSTRAGEM_CONFIAVEL"), changedPixels, sampleCount };
+    // Fonte pequena antialiasada pode ter poucos núcleos opacos (<8%).
+    // Exigir quantidade absoluta e até 2% de correspondência, limitado a 30 pixels.
+    // Assim 1-2 pixels isolados em área grande não fabricam aprovação.
+    const minimumCorePixels = Math.max(minPixels, Math.min(30, Math.ceil(changedPixels * 0.02)));
+    if (sampleCount < minimumCorePixels)
+      return {
+        ...unresolved("GLIFOS_SEM_AMOSTRAGEM_CONFIAVEL"),
+        changedPixels,
+        sampleCount,
+        minimumCorePixels,
+      };
     const largeBySize = Number(node.fontSizePx) >= 24;
     const largeBold = Number(node.fontSizePx) >= 18.66 && Number(node.fontWeight) >= 700;
     const requiredRatio = largeBySize || largeBold ? 3 : 4.5;
@@ -204,6 +213,7 @@ export function measureRenderedTextContrast(before, after, nodes, { minPixels = 
       requiredRatio,
       sampleCount,
       changedPixels,
+      minimumCorePixels,
     };
   });
 }
