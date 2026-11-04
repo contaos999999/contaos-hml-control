@@ -3,7 +3,7 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
-## 0. ESTADO VIVO — atualizado em 04/11/2026 após GOV-004
+## 0. ESTADO VIVO — atualizado em 04/11/2026 após GOV-004 e revisão GOV-006
 
 **Estas informações prevalecem sobre snapshots históricos mais abaixo; conferir HEADs e checks a cada novo chat.**
 
@@ -25,6 +25,15 @@
 **Próxima tarefa funcional:** issue #6 (teste ADM-01 possivelmente flutuante) somente **se a falha for reproduzida**. A hipótese de colisão de substring `c9` com UUID não foi demonstrada: o teste atual já verifica por igualdade arrays de `p_ids_contratos_ativar/revogar`. Sem FAIL reproduzível, não alterar código funcional nem mascarar o teste; registrar evidência e investigar outras pendências de frontend. Issues #2/#5 e backend #33–#35 requerem E2E externo, não converter MOCK em PASS.
 
 **Política permanente:** frontend GitHub, Lovable só sincronização/visualização; zero aprovações de revisão obrigatórias para PR, mas gates específicos BRAND-01 continuam. PRD 4.1, 39 etapas, 416 critérios, 100 prompts, 97 atômicos, proteção `types.ts` e ZERO-DRIFT inalterados. Sem BUILD ou inspeção de Supabase/backend/PROD neste GOV-005.
+
+
+### Reavaliação GOV-006 — Lovable × GitHub (04/11/2026)
+
+- Parecer oficial: `docs/frontend/AUDITORIA_PARIDADE_LOVABLE_GITHUB_2026-11-03.md`, seção 7, com auditoria atualizada e preservação do histórico. Branch protection **RESOLVIDA**; Teste C Playwright **IMPLEMENTADO** no GOV-002.
+- Run com navegador real `41737621829`: 184 combinações, 24 capturas, 24 PASS públicos, 152 não verificados sem sessão + 8 drawer sem sessão; contraste WCAG não medido. Artefato `13280975443` expira em **03/12/2026**. Artefatos de runs documentais marcados `Teste C N/A` não comprovam nova visualização.
+- Lovable projeto `b113dd59-6caf-4c92-8302-457a037a0c6f` informa latest commit `b8ca8b99...`, GitHub estava em `79eec9b8...` antes do GOV-006. Compare confirmou **37 commits sem diff funcional em src/public**; não declarar sync atualizado no Lovable até nova verificação explícita.
+- Ações futuras: mensuração de contraste WCAG e estados públicos, preservação de evidências além de 30 dias, sincronização/metadados Lovable, teste de criação PR Auto-Lock em ambiente isolado e (em projeto separado autorizado) autenticação HML A/B. Não confundir equivalência normativa com homologação 100% dos requisitos.
+- GOV-006 é **somente documental**: PLAN registrado e CI validado; nenhuma mudança em frontend funcional, Supabase ou PROD.
 
 ## ADR-DEV-002 — validação obrigatória antes de qualquer BUILD
 
