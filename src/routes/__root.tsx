@@ -132,7 +132,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <ContaOSAppShell><Outlet /></ContaOSAppShell>
+      <ContaOSAppShell>
+        <Outlet />
+      </ContaOSAppShell>
     </QueryClientProvider>
   );
 }
