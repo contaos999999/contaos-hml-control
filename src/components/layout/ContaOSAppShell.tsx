@@ -12,14 +12,17 @@ import { MENU_ADMIN_V1 } from "@/lib/navegacao/menuV1";
 export function ContaOSAppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [liberado, setLiberado] = useState(false);
+  const [revisaoSessao, setRevisaoSessao] = useState(0);
   const [administrador, setAdministrador] = useState(false);
   const [recolhida, setRecolhida] = useState(false);
   const [movelAberto, setMovelAberto] = useState(false);
   useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((evento) => {
+      if (evento !== "SIGNED_IN" && evento !== "SIGNED_OUT" && evento !== "USER_UPDATED") return;
       setLiberado(false);
       setAdministrador(false);
       setMovelAberto(false);
+      setRevisaoSessao((atual) => atual + 1);
     });
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -40,7 +43,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       }
     })().catch(() => { if (ativo) setLiberado(false); });
     return () => { ativo = false; };
-  }, [pathname]);
+  }, [pathname, revisaoSessao]);
   if (rotaSemSidebar(pathname)) return <>{children}</>;
   return (
     <div className="min-h-screen bg-background text-foreground">
