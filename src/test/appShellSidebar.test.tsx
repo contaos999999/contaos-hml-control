@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ReactNode } from "react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { MENU_V1, MENU_ADMIN_V1, rotaSemSidebar } from "@/lib/navegacao/menuV1";
@@ -57,5 +58,68 @@ describe("P0 sidebar — regressões consolidadas do diálogo móvel", () => {
     expect(codigo).toContain('document.body.style.overflow = overflowAnterior');
     expect(codigo).toContain('fechamentoPorNavegacao.current');
     expect(codigo).toContain('document.removeEventListener("keydown", controlarTeclado)');
+  });
+});
+
+import { afterEach, beforeEach, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { ContaOSAppShell } from "@/components/layout/ContaOSAppShell";
+
+const mocks = vi.hoisted(() => ({
+  pathname: "/",
+  getUser: vi.fn(),
+  validarAdministrador: vi.fn(),
+  obterPreferencia: vi.fn(),
+  onAuthStateChange: vi.fn(),
+}));
+
+vi.mock("@tanstack/react-router", () => ({
+  useRouterState: ({ select }: { select: (s: { location: { pathname: string } }) => unknown }) =>
+    select({ location: { pathname: mocks.pathname } }),
+  Link: ({ children, to, onClick, ...props }: {
+    children: React.ReactNode; to: string; onClick?: () => void; [key: string]: unknown;
+  }) => <a href={to} onClick={onClick} {...props}>{children}</a>,
+}));
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: { auth: { getUser: mocks.getUser, onAuthStateChange: mocks.onAuthStateChange } },
+}));
+vi.mock("@/lib/organizacao/preferenciaOrganizacao", () => ({
+  obterPreferenciaOrganizacao: mocks.obterPreferencia,
+}));
+vi.mock("@/lib/administracao/admUsuariosRpc", () => ({
+  validarAdministrador: mocks.validarAdministrador,
+}));
+
+describe("P0 sidebar — testes DOM reais do modal", () => {
+  beforeEach(() => {
+    mocks.pathname = "/";
+    mocks.getUser.mockReset().mockResolvedValue({ data: { user: { id: "usuario-teste" } }, error: null });
+    mocks.obterPreferencia.mockReset().mockReturnValue("org-teste");
+    mocks.validarAdministrador.mockReset().mockResolvedValue(false);
+    mocks.onAuthStateChange.mockReset().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } });
+    document.body.style.overflow = "";
+  });
+  afterEach(() => { cleanup(); document.body.style.overflow = ""; });
+
+  it("abre o diálogo, torna o fundo inerte e restaura rolagem após Escape", async () => {
+    render(<ContaOSAppShell><button type="button">Conteúdo privado</button></ContaOSAppShell>);
+    const abrir = await screen.findByRole("button", { name: "Abrir menu" });
+    fireEvent.click(abrir);
+    const dialogo = screen.getByRole("dialog", { name: "Menu de navegação" });
+    expect(dialogo).toHaveAttribute("aria-modal", "true");
+    expect(abrir).toHaveAttribute("inert");
+    expect(screen.getByRole("button", { name: "Conteúdo privado" }).parentElement).toHaveAttribute("inert");
+    expect(document.body.style.overflow).toBe("hidden");
+    fireEvent.keyDown(document, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(abrir).not.toHaveAttribute("inert");
+    expect(document.body.style.overflow).toBe("");
+  });
+
+  it("nega links administrativos quando a RPC retorna falso", async () => {
+    render(<ContaOSAppShell><div>Conteúdo</div></ContaOSAppShell>);
+    await screen.findByRole("button", { name: "Abrir menu" });
+    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Auditoria" })).not.toBeInTheDocument();
   });
 });
