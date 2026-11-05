@@ -1,3 +1,4 @@
+import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -10,7 +11,6 @@ import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrgani
 import { AuditDrawer } from "./AuditDrawer";
 import { ContractScopeDialog, type ModoVinculo } from "./ContractScopeDialog";
 import { UserMembershipTable } from "./UserMembershipTable";
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 type Situacao = "todos" | "ativos" | "inativos";
 
@@ -151,7 +151,8 @@ export function AdminUsuarios() {
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <ContaOSMarca />
+            <span className="md:hidden"><ContaOSMarca /></span>
+            
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="secondary" className="h-11">

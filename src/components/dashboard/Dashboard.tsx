@@ -1,3 +1,4 @@
+import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -9,7 +10,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { formatarDataBr, formatarDataHoraBr, formatarNumero, rotuloTipo } from "./dashboardFormatacao";
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 export const MENSAGENS_SYS05 = {
   verificando: "Verificando sessão…",
@@ -244,7 +244,8 @@ function Cabecalho(props: {
     <header className="border-b border-border bg-primary text-primary-foreground">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
-          <ContaOSMarca />
+            <span className="md:hidden"><ContaOSMarca /></span>
+          
           <div className="min-w-0 leading-tight">
             {o && (
               <p className="break-words text-sm opacity-80">
