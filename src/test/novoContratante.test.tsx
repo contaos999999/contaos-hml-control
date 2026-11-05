@@ -49,7 +49,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 import { NovoContratante, MENSAGENS_V102 } from "@/components/contratantes/NovoContratante";
-import { montarPayload, vinculoPermiteCadastro } from "@/lib/contratantes/novoContratanteDados";
+import { montarPayload, capacidadePermiteCadastro } from "@/lib/contratantes/novoContratanteDados";
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { Route } from "@/routes/contratantes_.novo";
 
@@ -148,10 +148,10 @@ describe("V1-02 gate UX via RPC autenticada", () => {
     expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
     expect(screen.queryByLabelText(/Razão social/)).toBeNull();
   });
-  it("vinculoPermiteCadastro exige perfil autorizado", () => {
-    expect(vinculoPermiteCadastro(org("administrador_master"))).toBe(true);
-    expect(vinculoPermiteCadastro(org("leitor"))).toBe(false);
-    expect(vinculoPermiteCadastro(null)).toBe(false);
+  it("capacidadePermiteCadastro exige perfil autorizado", () => {
+    expect(capacidadePermiteCadastro(org("administrador_master"))).toBe(true);
+    expect(capacidadePermiteCadastro(org("leitor"))).toBe(false);
+    expect(capacidadePermiteCadastro(null)).toBe(false);
   });
 });
 
