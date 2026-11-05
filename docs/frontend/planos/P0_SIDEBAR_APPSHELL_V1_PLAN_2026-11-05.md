@@ -112,3 +112,7 @@ A política real de `public.eventos_auditoria` em HML permite `administrador`, `
 
 **Gates:** PLAN em `EM_VALIDACAO`; confirmar fonte canônica, aderência 100/97, rollback da migration, CI Zero-Drift/Teste C e HML autenticado. BUILD proibido até `PLANO_ATIVO.json` VALIDADO em `main` por PR anterior. A mudança `backend_changes_allowed=true` aplica-se somente à migration nomeada na allowlist, nunca a alterações genéricas de backend.
 **Rollback:** reversão da migration por nova migration versionada e rollback do frontend por PR; não executar SQL ad hoc. **Não há certificação V1.**
+
+## Retificação de governança — ADR-DEV-002 (05/11/2026)
+A inspeção do gate executável `scripts/frontend-scope-gate.mjs` e do template canônico `TEMPLATE_PROMPT_PLAN_GATE.md` confirmou que **toda alteração em `supabase/**` é proibida neste repositório frontend**, independentemente de allowlist ou `backend_changes_allowed`. A ampliação anterior do PR #126 não concedeu autorização válida para migration.
+**Decisão:** restaurar `backend_changes_allowed=false`, remover migration da allowlist, manter `PLANO_ATIVO.json` em `EM_VALIDACAO` e gates PENDENTE. O backend precisa de PLAN e migration versionada no repositório canônico `contaos999999/develop`, observando autorização humana prevista no item B.1 do template. Depois de implantação HML e contrato verificado, frontend pode implementar o consumo no escopo autorizado e certificar mediante testes. Nenhuma migration SQL executada por este fluxo.
