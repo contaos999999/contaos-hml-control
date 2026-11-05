@@ -16,9 +16,18 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   const [recolhida, setRecolhida] = useState(false);
   const [movelAberto, setMovelAberto] = useState(false);
   useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      setLiberado(false);
+      setAdministrador(false);
+      setMovelAberto(false);
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
+  useEffect(() => {
     let ativo = true;
     setLiberado(false);
     setAdministrador(false);
+    setMovelAberto(false);
     if (rotaSemSidebar(pathname)) return;
     void (async () => {
       const { data, error } = await supabase.auth.getUser();
