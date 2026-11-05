@@ -16,6 +16,7 @@ import { Route as EsqueciSenhaRouteImport } from './routes/esqueci-senha'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as SelecionarOrganizacaoRouteImport } from './routes/selecionar-organizacao'
+import { Route as AdministracaoAuditoriaRouteImport } from './routes/administracao.auditoria'
 import { Route as AdministracaoUsuariosRouteImport } from './routes/administracao.usuarios'
 import { Route as CompetenciasIdRouteImport } from './routes/competencias_.$id'
 import { Route as ContratantesNovoRouteImport } from './routes/contratantes_.novo'
@@ -70,6 +71,11 @@ const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
 const SelecionarOrganizacaoRoute = SelecionarOrganizacaoRouteImport.update({
   id: '/selecionar-organizacao',
   path: '/selecionar-organizacao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdministracaoAuditoriaRoute = AdministracaoAuditoriaRouteImport.update({
+  id: '/administracao/auditoria',
+  path: '/administracao/auditoria',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdministracaoUsuariosRoute = AdministracaoUsuariosRouteImport.update({
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
+  '/administracao/auditoria': typeof AdministracaoAuditoriaRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/competencias/$id': typeof CompetenciasIdRoute
   '/contratantes/novo': typeof ContratantesNovoRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
+  '/administracao/auditoria': typeof AdministracaoAuditoriaRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/competencias/$id': typeof CompetenciasIdRoute
   '/contratantes/novo': typeof ContratantesNovoRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
   '/selecionar-organizacao': typeof SelecionarOrganizacaoRoute
+  '/administracao/auditoria': typeof AdministracaoAuditoriaRoute
   '/administracao/usuarios': typeof AdministracaoUsuariosRoute
   '/competencias_/$id': typeof CompetenciasIdRoute
   '/contratantes_/novo': typeof ContratantesNovoRoute
@@ -278,6 +287,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/redefinir-senha'
     | '/selecionar-organizacao'
+    | '/administracao/auditoria'
     | '/administracao/usuarios'
     | '/competencias/$id'
     | '/contratantes/novo'
@@ -307,6 +317,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/redefinir-senha'
     | '/selecionar-organizacao'
+    | '/administracao/auditoria'
     | '/administracao/usuarios'
     | '/competencias/$id'
     | '/contratantes/novo'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/redefinir-senha'
     | '/selecionar-organizacao'
+    | '/administracao/auditoria'
     | '/administracao/usuarios'
     | '/competencias_/$id'
     | '/contratantes_/novo'
@@ -366,6 +378,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   SelecionarOrganizacaoRoute: typeof SelecionarOrganizacaoRoute
+  AdministracaoAuditoriaRoute: typeof AdministracaoAuditoriaRoute
   AdministracaoUsuariosRoute: typeof AdministracaoUsuariosRoute
   CompetenciasIdRoute: typeof CompetenciasIdRoute
   ContratantesNovoRoute: typeof ContratantesNovoRoute
@@ -437,6 +450,13 @@ declare module '@tanstack/react-router' {
       path: '/selecionar-organizacao'
       fullPath: '/selecionar-organizacao'
       preLoaderRoute: typeof SelecionarOrganizacaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/administracao/auditoria': {
+      id: '/administracao/auditoria'
+      path: '/administracao/auditoria'
+      fullPath: '/administracao/auditoria'
+      preLoaderRoute: typeof AdministracaoAuditoriaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/administracao/usuarios': {
@@ -590,6 +610,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
   SelecionarOrganizacaoRoute: SelecionarOrganizacaoRoute,
+  AdministracaoAuditoriaRoute: AdministracaoAuditoriaRoute,
   AdministracaoUsuariosRoute: AdministracaoUsuariosRoute,
   CompetenciasIdRoute: CompetenciasIdRoute,
   ContratantesNovoRoute: ContratantesNovoRoute,

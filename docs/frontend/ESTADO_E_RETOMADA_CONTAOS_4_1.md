@@ -502,3 +502,17 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 - O titular optou por operar a organização com um único colaborador e **Required approvals = 0** no ruleset. Exigir PR, checks verdes, bloquear exclusão/force push, nenhuma exceção ampla de bypass. Não inventar evidência de aprovação humana. Aprovações excepcionais previstas para modificações sensíveis BRAND-01/escopo específico permanecem gates distintos.
 - A restauração de types.ts não poderá fazer push direto na main; o bot abre PR, solicita CI e não executa merge automaticamente. O merge pelo titular não requer segundo revisor, mas só é permitido com CI e regras efetivas.
 - HML A/B fora do escopo desta tarefa a pedido do titular; não executar testes do Supabase.
+
+
+## Retomada V1-23 / GOV-020 — 05/11/2026
+- PR #84 integrado na main: gerador TanStack produziu e versionou `src/routeTree.gen.ts` no BUILD #83 (HEAD `1891e330bbd114a9edb54721df434f4efabaddfb`).
+- CI do BUILD #83, execução `41952164027`: Teste C PASS; Zero-Drift FAIL exclusivamente no gate de escopo porque `src/routeTree.gen.ts` não constava na allowlist do PLAN.
+- PR #85 GOV-020, execução `41954661365`: Zero-Drift PASS e Teste C PASS; integrado à main no commit `74189592db7a9bd945ce8c6311d482bde701be26`.
+- GOV-020 autoriza exclusivamente a árvore gerada quando existe rota `src/routes/*.tsx` já autorizada pelo PLAN. Não libera backend nem arquivos arbitrários.
+- **Pendente:** nova validação do PR #83 sobre a main atual; inspecionar Zero-Drift e Teste C no novo HEAD antes de merge. HML real, RLS, isolamento entre usuários, requisito transversal da sidebar/BRAND-01 e certificação V1 continuam não comprovados.
+- **Próxima ação:** reexecutar checks do BUILD #83, resolver eventuais falhas e atualizar este checkpoint com evidências verificadas. Não antecipar certificação.
+
+### GOV-021 — evidências verificadas 05/11/2026
+- PLAN PR #88: CI `41957610750` Zero-Drift PASS, Teste C PASS; merge `6607b06573652edd0cba99de3fdf56e97793dc6b`.
+- BUILD PR #89: CI `41958140715` Zero-Drift PASS, Teste C PASS; merge `a3ad4c5dc0b38720cb740db838e010ca3636ec05`.
+- A varredura ADM-01 foi limitada ao módulo correto, preservando as restrições originais. PR #83 requer novo CI após a integração; não presumir verde nem certificação V1.
