@@ -37,3 +37,14 @@ Não alterar marca, tokens, layout de telas existentes ou comportamento de negó
 
 ## Próximo passo
 Conferir inventário completo das rotas e arquivos de navegação, fontes normativas e matriz de acesso. Completar PLAN ativo, obter gates de planejamento e só então criar branch de BUILD. **Nenhum teste ou homologação é considerado executado por este documento.**
+
+## Inventário de rotas encontrado no repositório (pesquisa por createFileRoute)
+**Públicas, sem sidebar:** `/login`, `/esqueci-senha`, `/redefinir-senha`; `/selecionar-organizacao` é etapa de autenticação/contexto e não deve exigir organização já selecionada.
+
+**Navegação principal V1:** `/` (dashboard), `/contratantes`, `/contratos`, `/administracao/usuarios` e `/administracao/auditoria` (esta última confirmada no BUILD #83). Não apresentar links de páginas V2–V5 como ativas.
+
+**Rotas contextuais, não itens de menu global:** novo/editar contratante; novo/detalhe de contrato; regras, orçamento, histórico, importação histórica, documentos e detalhe, competências e criação, base normativa; detalhe de competência, documentos, análise, parecer, apresentação e detalhe de apresentação. A navegação entre essas páginas permanece contextual ao contrato/competência.
+
+**Risco identificado:** `__root.tsx` não possui autenticação global, portanto o AppShell não pode presumir que toda rota diferente das quatro públicas está autorizada. Deve preservar verificações de sessão, organização e permissões existentes sem criar flash de conteúdo privado. Auditoria e administração devem ter autorização específica e não apenas ocultação de links.
+
+**Próxima checagem antes de VALIDADO:** conferir `routeTree.gen.ts` para a lista exata e os nomes das rotas dinâmicas, inspecionar proteção das rotas ADM, autorização por organização e componentes atuais de cabeçalho. Em seguida congelar allowlist do PLAN ativo e executar os gates de planejamento. Nenhuma implementação está autorizada por este inventário.
