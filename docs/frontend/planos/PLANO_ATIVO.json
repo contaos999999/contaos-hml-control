@@ -37,10 +37,9 @@
     "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
     "docs/frontend/auditorias/P0_SIDEBAR_APPSHELL_V1_TESTES_2026-11-05.md",
     "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md",
-    "src/lib/administracao/admUsuariosRpc.ts",
-    "supabase/migrations/20261105095500_auditoria_capacidade_v1.sql"
+    "src/lib/administracao/admUsuariosRpc.ts"
   ],
-  "observacao": "Ampliação de escopo proposta para autorização de auditoria V1: RPC pública read-only, frontend de capacidades e testes. NÃO autoriza DDL direto em HML ou PROD. BUILD somente após PLAN validado, CI verde e migração versionada. V1 ainda não certificada.",
+  "observacao": "Correção da fronteira ADR-DEV-002: frontend não autoriza migrations/RPC SQL, mesmo com allowlist. Plano EM_VALIDACAO e gates pendentes. Nova RPC deve ser planejada/versionada no repositório backend canônico contaos999999/develop, com autorização humana quando exigida. Frontend pode consumir contrato apenas após implantação comprovada no HML. PROD proibido.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
@@ -109,7 +108,7 @@
   },
   "impacto_visual": "SIM",
   "impacto_visual_justificativa": "Nova tela de auditoria V1-23; Teste C, WCAG e visual de BUILD exigidos em quatro larguras e dois temas; sem aprovação operacional antecipada.",
-  "backend_changes_allowed": true,
+  "backend_changes_allowed": false,
   "prod_changes_allowed": false,
   "source_proof": {
     "frontend_baseline": "48ff81d804247bfa48be93afcfcaa947c48ecd0d",
