@@ -311,7 +311,7 @@ if (sourcePaths.length) {
       const arvoreGeradaAutorizada =
         path === "src/routeTree.gen.ts" &&
         sourcePaths.some((arquivo) =>
-          /^src\\/routes\\/.+\\.tsx$/.test(arquivo) &&
+          arquivo.startsWith("src/routes/") && arquivo.endsWith(".tsx") &&
           plan.arquivos_permitidos?.includes(arquivo),
         );
       if (!plan.arquivos_permitidos?.includes(path) && !arvoreGeradaAutorizada)
