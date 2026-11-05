@@ -49,19 +49,13 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 import { NovoContratante, MENSAGENS_V102 } from "@/components/contratantes/NovoContratante";
-import { montarPayload, vinculoPermiteCadastro } from "@/lib/contratantes/novoContratanteDados";
+import { montarPayload, capacidadePermiteCadastro } from "@/lib/contratantes/novoContratanteDados";
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { Route } from "@/routes/contratantes_.novo";
 
 const U = "user-1";
 const ORG = "org-1";
-const passado = "2020-01-01T00:00:00Z";
-const futuro = "2099-01-01T00:00:00Z";
-const vinc = (over: Record<string, unknown> = {}) => ({
-  data: { perfil: "administrador", ativo: true, inicio_em: passado, fim_em: null, ...over },
-  error: null,
-  status: 200,
-});
+const org = (perfil: string, id = ORG) => ({ id, razao_social: "Org", nome_fantasia: null, cnpj: null, situacao: "ativa", perfil });
 
 function montar() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -93,7 +87,8 @@ beforeEach(() => {
   sessionStorage.clear();
   m.getUser.mockResolvedValue({ data: { user: { id: U } }, error: null });
   m.signOut.mockResolvedValue({ error: null });
-  m.respostas = { vinculos_usuarios: () => vinc(), contratantes: okInsert };
+  m.respostas = { contratantes: okInsert };
+  m.rpc.mockResolvedValue({ data: [org("administrador")], error: null });
   definirPreferenciaOrganizacao(U, ORG);
 });
 
@@ -128,64 +123,35 @@ describe("V1-02 sessão e organização", () => {
   });
 });
 
-describe("V1-02 gate UX do próprio vínculo", () => {
-  it.each(["administrador", "gestor_contrato"])("4 %s ativo e vigente vê formulário; consulta exata", async (perfil) => {
-    m.respostas.vinculos_usuarios = () => vinc({ perfil, fim_em: futuro });
+describe("V1-02 gate UX via RPC autenticada", () => {
+  it.each(["administrador_master", "administrador", "gestor_contrato"])("%s vê formulário sem vínculo físico", async (perfil) => {
+    m.rpc.mockResolvedValue({ data: [org(perfil)], error: null });
     montar();
-    await screen.findByLabelText(/Razão social/);
-    const g = m.chamadas.find((c) => c.tabela === "vinculos_usuarios")!;
-    expect(op(g, "select")).toEqual([["perfil,ativo,inicio_em,fim_em"]]);
-    expect(op(g, "eq")).toEqual([
-      ["id_organizacao", ORG],
-      ["id_usuario", U],
-    ]);
-    expect(op(g, "maybeSingle")).toHaveLength(1);
+    expect(await screen.findByLabelText(/Razão social/)).toBeTruthy();
+    expect(m.rpc).toHaveBeenCalledWith("listar_organizacoes_disponiveis");
+    expect(m.chamadas.some((c) => c.tabela === "vinculos_usuarios")).toBe(false);
   });
-  it.each([
-    ["leitor", { perfil: "leitor" }],
-    ["inativo", { ativo: false }],
-    ["expirado", { fim_em: passado }],
-    ["futuro", { inicio_em: futuro }],
-  ])("5 %s → negado sem formulário", async (_n, over) => {
-    m.respostas.vinculos_usuarios = () => vinc(over);
+  it.each(["leitor", "auditor", "juridico"])("%s é negado", async (perfil) => {
+    m.rpc.mockResolvedValue({ data: [org(perfil)], error: null });
+    montar();
+    expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
+    expect(inserts()).toHaveLength(0);
+  });
+  it("organização divergente e lista vazia negam", async () => {
+    m.rpc.mockResolvedValue({ data: [org("administrador_master", "outra")], error: null });
+    montar();
+    expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
+  });
+  it("RPC 42501 nega sem expor formulário", async () => {
+    m.rpc.mockResolvedValue({ data: null, error: { code: "42501" } });
     montar();
     expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
     expect(screen.queryByLabelText(/Razão social/)).toBeNull();
-    expect(inserts()).toHaveLength(0);
   });
-  it("5 vínculo nulo → negado", async () => {
-    m.respostas.vinculos_usuarios = () => ({ data: null, error: null, status: 200 });
-    montar();
-    expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
-  });
-  it("vinculoPermiteCadastro respeita fronteiras de vigência", () => {
-    const agora = new Date("2026-11-02T12:00:00Z");
-    expect(vinculoPermiteCadastro({ perfil: "gestor_contrato", ativo: true, inicio_em: "2026-11-02T12:00:00Z", fim_em: null }, agora)).toBe(true);
-    expect(vinculoPermiteCadastro({ perfil: "gestor_contrato", ativo: true, inicio_em: passado, fim_em: "2026-11-02T12:00:00Z" }, agora)).toBe(false);
-  });
-  it.each([
-    ["401", { data: null, error: { message: "x" }, status: 401 }],
-    ["403", { data: null, error: { message: "x" }, status: 403 }],
-    ["42501", { data: null, error: { code: "42501" }, status: 400 }],
-    ["PGRST301", { data: null, error: { code: "PGRST301" }, status: 400 }],
-  ])("6 gate %s → negado", async (_n, r) => {
-    m.respostas.vinculos_usuarios = () => r;
-    montar();
-    expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
-  });
-  it("6 gate 500 e rede → erro genérico com retry", async () => {
-    m.respostas.vinculos_usuarios = () => ({ data: null, error: { code: "XX000", message: "stack secreto" }, status: 500 });
-    montar();
-    expect(await screen.findByText(MENSAGENS_V102.erroGate)).toBeTruthy();
-    expect(document.body.textContent).not.toMatch(/XX000|stack/);
-    m.respostas.vinculos_usuarios = () => {
-      throw new TypeError("Failed to fetch");
-    };
-    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
-    expect(await screen.findByText(MENSAGENS_V102.erroGate)).toBeTruthy();
-    m.respostas.vinculos_usuarios = () => vinc();
-    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
-    expect(await screen.findByLabelText(/Razão social/)).toBeTruthy();
+  it("capacidadePermiteCadastro exige perfil autorizado", () => {
+    expect(capacidadePermiteCadastro(org("administrador_master"))).toBe(true);
+    expect(capacidadePermiteCadastro(org("leitor"))).toBe(false);
+    expect(capacidadePermiteCadastro(null)).toBe(false);
   });
 });
 
@@ -359,7 +325,7 @@ describe("V1-02 sucesso, navegação e apresentação", () => {
 });
 
 describe("V1-02 segurança de código", () => {
-  it("15 sem RPC/Edge/DML extra/segredos/storage nos arquivos novos", () => {
+  it("15 RPC autenticada permitida, sem Edge/DML extra/segredos/storage nos arquivos novos", () => {
     const arquivos = [
       "src/components/contratantes/NovoContratante.tsx",
       "src/lib/contratantes/novoContratanteDados.ts",
@@ -374,7 +340,22 @@ describe("V1-02 segurança de código", () => {
       if (a !== "src/lib/contratantes/novoContratanteDados.ts") expect(s).not.toMatch(/\.insert\(/);
     }
     expect(inserts).toBe(1);
-    expect(m.rpc).not.toHaveBeenCalled();
     expect(m.invoke).not.toHaveBeenCalled();
+  });
+});
+
+describe("P0 V1 MASTER — regressão RED convertida em GREEN", () => {
+  it("MASTER sem vínculo físico acessa cadastro via RPC", async () => {
+    m.rpc.mockResolvedValue({ data: [org("administrador_master")], error: null });
+    montar();
+    expect(await screen.findByLabelText(/Razão social/)).toBeTruthy();
+    expect(m.rpc).toHaveBeenCalledWith("listar_organizacoes_disponiveis");
+  });
+  it("RPC negada impede formulário mesmo se houver vínculo físico legado", async () => {
+    m.respostas.vinculos_usuarios = () => ({ data: { perfil: "administrador", ativo: true }, error: null });
+    m.rpc.mockResolvedValue({ data: null, error: { code: "42501" } });
+    montar();
+    expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
+    expect(screen.queryByLabelText(/Razão social/)).toBeNull();
   });
 });

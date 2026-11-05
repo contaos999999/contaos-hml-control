@@ -10,11 +10,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import {
   ErroV102,
-  consultarVinculoProprio,
+  consultarCapacidadeCadastro,
   inserirContratante,
   montarPayload,
   validarFormulario,
-  vinculoPermiteCadastro,
+  capacidadePermiteCadastro,
   type CampoFormulario,
   type ContratanteCriado,
   type FormularioContratante,
@@ -190,7 +190,7 @@ export function NovoContratante() {
   const pronto = !!idUsuario && !!idOrganizacao;
   const gate = useQuery({
     queryKey: ["v102", "vinculo", idUsuario, idOrganizacao],
-    queryFn: () => consultarVinculoProprio(idOrganizacao!, idUsuario!),
+    queryFn: () => consultarCapacidadeCadastro(idOrganizacao!, idUsuario!),
     enabled: pronto,
     retry: false,
   });
@@ -252,7 +252,7 @@ export function NovoContratante() {
   const salvando = mutacao.isPending;
 
   const gateErro = gate.error instanceof ErroV102 ? gate.error.tipo : gate.error ? "erro" : null;
-  const autorizado = gate.isSuccess && vinculoPermiteCadastro(gate.data ?? null);
+  const autorizado = gate.isSuccess && capacidadePermiteCadastro(gate.data ?? null);
   const negadoGate = gateErro === "negado" || (gate.isSuccess && !autorizado);
 
   let corpo: React.ReactNode;

@@ -3,6 +3,7 @@
  * O gate de vínculo é apenas UX; a autoridade é a RLS do INSERT em `contratantes`.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { listarOrganizacoesDisponiveis, type OrganizacaoDisponivel } from "@/lib/auth/resolverDestinoPosLogin";
 
 export const PERFIS_CADASTRO = ["administrador", "gestor_contrato"] as const;
 
@@ -81,6 +82,25 @@ export function vinculoPermiteCadastro(v: VinculoProprio | null, agora: Date = n
   }
   return true;
 }
+
+export type CapacidadeCadastro = OrganizacaoDisponivel;
+/** Gate UX exclusivamente pela RPC autenticada; o INSERT continua sob RLS. */
+export async function consultarCapacidadeCadastro(idOrganizacao: string, _idUsuario: string): Promise<CapacidadeCadastro | null> {
+  try {
+    const organizacoes = await listarOrganizacoesDisponiveis();
+    if (!Array.isArray(organizacoes)) throw new ErroV102("erro");
+    return organizacoes.find((o) => o.id === idOrganizacao) ?? null;
+  } catch (erro) {
+    if (erro instanceof ErroV102) throw erro;
+    const e = erro as { tipo?: string };
+    throw new ErroV102(e?.tipo === "negado" ? "negado" : "erro");
+  }
+}
+
+export function capacidadePermiteCadastro(v: CapacidadeCadastro | null): boolean {
+  return !!v && typeof v.id === "string" && v.situacao === "ativa" && (["administrador_master", ...PERFIS_CADASTRO] as readonly string[]).includes(v.perfil);
+}
+
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const TIPOS_PESSOA = ["juridica", "fisica", "orgao_publico", "outro"] as const;
