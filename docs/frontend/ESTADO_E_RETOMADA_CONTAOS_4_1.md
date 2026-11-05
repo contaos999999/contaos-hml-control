@@ -1,5 +1,8 @@
 ## CHECKPOINT P0 — 05/11/2026: rastreabilidade V1, seguranca e Auto-Lock (BUILD)
 
+- **Custódia Teste C atualizada** (05/11/2026): PLAN #151, BUILD #152, workflow 42049252141 SUCCESS. Release privada tag `contaos-v1-testc-evidence-20261105`, 3 assets, SHA256SUMS e restauração byte a byte PASS; manifesto no `docs/frontend/auditorias/P0_V1_AUTOLOCK_RECUPERACAO_CUSTODIA_2026-11-05.md`. Não é WORM, não é homologação HML autenticada, V1 ainda NO-GO.
+
+
 - PLAN exclusivo **#149**, main-base `3b64605185a1cc13cf98edc242d615150d46cd0b`, CI PLAN `42046272466` SUCCESS e merge confirmado. BUILD documental na branch `build/p0-v1-ledger-security-autolock-20261105`; **não elevar para merge/certificado sem dois checks verdes no SHA final**.
 - Matriz `docs/frontend/auditorias/P0_V1_RASTREABILIDADE_COMPLETA_2026-11-05.json`: inventário de **45 regulares 00–43 + 75**, **416 critérios originais 00–38**, **25 atômicos BRAND-01/001–024** e **12 NFR 085–096** com status e fontes. Isso fecha indexação mas não transforma as 134 provas ausentes nem 250 parciais em testes realizados. Seis prompts finais ainda exigem prova literal critério a critério.
 - Segurança Supabase HML: `docs/frontend/auditorias/P0_V1_SEGURANCA_RPC_HML_2026-11-05.md`; 9/9 ACL bloqueiam anon, 8/9 negativas SQL diretas retornaram 42501, uma tentativa bloqueada pela ferramenta; quatro helpers privados não executáveis por authenticated. Sem DDL; nove avisos Security Definer monitorados, não falsamente “corrigidos”; aviso leaked-password **fora do escopo** no plano Free.
