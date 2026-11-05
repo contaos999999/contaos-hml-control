@@ -5,10 +5,13 @@ import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { obterEventosAuditoria } from "@/lib/administracao/auditoriaDados";
+import { podeConsultarAuditoria } from "@/lib/administracao/admUsuariosRpc";
 
 export function TrilhaAuditoria() {
   const navigate = useNavigate();
   const [org, setOrg] = useState<string | null>(null);
+  const [autorizada, setAutorizada] = useState(false);
+  const [acessoNegado, setAcessoNegado] = useState(false);
   const [verificando, setVerificando] = useState(true);
   const [erroSessao, setErroSessao] = useState(false);
   const [pagina, setPagina] = useState(0);
@@ -20,12 +23,19 @@ export function TrilhaAuditoria() {
   const [fim, setFim] = useState("");
   useEffect(() => {
     let ativo = true;
-    supabase.auth.getUser().then(({ data, error }) => {
+    setOrg(null);
+    setAutorizada(false);
+    setAcessoNegado(false);
+    supabase.auth.getUser().then(async ({ data, error }) => {
       if (!ativo) return;
       if (error || !data.user) { navigate({ to: "/login", replace: true }); return; }
       const selecionada = obterPreferenciaOrganizacao(data.user.id);
       if (!selecionada) { navigate({ to: "/selecionar-organizacao", replace: true }); return; }
+      const permitido = await podeConsultarAuditoria(selecionada).catch(() => false);
+      if (!ativo) return;
+      if (!permitido) { setAcessoNegado(true); return; }
       setOrg(selecionada);
+      setAutorizada(true);
     }).catch(() => { if (ativo) setErroSessao(true); }).finally(() => { if (ativo) setVerificando(false); });
     return () => { ativo = false; };
   }, [navigate]);
@@ -36,7 +46,7 @@ export function TrilhaAuditoria() {
       ...(inicio ? { dataInicial: new Date(inicio + "T00:00:00-03:00").toISOString() } : {}),
       ...(fim ? { dataFinal: new Date(fim + "T23:59:59-03:00").toISOString() } : {}),
     }),
-    enabled: !!org, retry: false,
+    enabled: !!org && autorizada, retry: false,
   });
   const campos = [
     { nome: "Evento", valor: evento, mudar: setEvento },
@@ -45,6 +55,8 @@ export function TrilhaAuditoria() {
     { nome: "Correlation ID", valor: correlationId, mudar: setCorrelationId },
   ];
   const dataBr = (v: string) => new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "medium" }).format(new Date(v));
+  if (acessoNegado) return <main className="p-6"><p role="alert">Você não tem permissão para consultar a auditoria desta organização.</p></main>;
+  if (verificando || !autorizada) return <main className="p-6"><p role="status">Verificando acesso à auditoria…</p>{erroSessao && <p role="alert">Não foi possível verificar sua sessão.</p>}</main>;
   return <main className="mx-auto max-w-7xl space-y-6 p-4 md:p-8">
     <header className="space-y-2"><span className="md:hidden"><ContaOSMarca /></span><h1 className="text-2xl font-bold">Trilha de auditoria</h1>
       <p className="text-sm text-muted-foreground">Histórico de eventos da organização. Informações sensíveis não são exibidas.</p></header>
