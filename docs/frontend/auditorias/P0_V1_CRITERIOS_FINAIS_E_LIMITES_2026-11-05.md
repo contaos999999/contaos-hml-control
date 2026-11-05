@@ -36,3 +36,12 @@ No workflow `contaos-v1-evidence-release.yml`, a checagem mensal somente leitura
 
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 Sem impacto visual, nenhuma modificação da marca BRAND-01, nenhuma mudança em Lovable, Supabase, Auth, PROD ou types congelado. Reversível por PR.
+
+## Evidência de integração efetiva do BUILD
+
+- PLAN [#157](https://github.com/contaos999999/contaos-hml-control/pull/157), CI [42054005968](https://github.com/contaos999999/contaos-hml-control/actions/runs/42054005968) com os dois jobs `SUCCESS`, merge `1bd1314ef8287e0117f1fc5f93d3e6d00b93d61b`.
+- BUILD [#158](https://github.com/contaos999999/contaos-hml-control/pull/158), HEAD `69b482748ca0e2f87bc4c47e8893d87171ab5b31`, CI [42055040063](https://github.com/contaos999999/contaos-hml-control/actions/runs/42055040063) com os dois jobs `SUCCESS`, merge `c5893df43d8038ed91a113410e26097507ab1594`.
+- Pós-merge na main: [42055439865](https://github.com/contaos999999/contaos-hml-control/actions/runs/42055439865) dois jobs `SUCCESS`; Release workflow [42055439763](https://github.com/contaos999999/contaos-hml-control/actions/runs/42055439763) job arquivamento `SUCCESS`, o job mensal `SKIPPED` por não ser evento de agenda. Não declarar que o SHA fixo foi testado via evento mensal.
+- Frontend integrado sem alteração funcional: `c5893df43d8038ed91a113410e26097507ab1594`; backend normativo fonte `3aa4af7a292b80243045e0a426ee6399ba948ff2`.
+- Situação: integridade da rastreabilidade verificada por CI e testes de negativos; **não** equivale a aceitação individual do comportamento de 488 itens, teste HML privado ou certificação V1.
+
