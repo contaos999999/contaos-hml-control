@@ -1,0 +1,89 @@
+name: ContaOS V1 Evidence Release
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/contaos-v1-evidence-release.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contaos-v1-evidence-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'contaos999999/contaos-hml-control' && github.ref == 'refs/heads/main'
+    name: Arquivar Teste C em Release privada e testar recuperacao
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: contaos-v1-testc-evidence-20261105
+    steps:
+      - name: Baixar artefatos oficiais, conferir SHA256 interno e criar pacotes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/out" "$RUNNER_TEMP/restore"
+          while read -r run sha; do
+            [[ -n "$run" ]] || continue
+            mkdir -p "$RUNNER_TEMP/src-$run"
+            gh run download "$run" --name "contaos-teste-c-$run-1" --dir "$RUNNER_TEMP/src-$run"
+            (
+              cd "$RUNNER_TEMP/src-$run"
+              test -s SHA256SUMS
+              test -s relatorio.json
+              sha256sum --check SHA256SUMS > "$RUNNER_TEMP/check-$run.log"
+              jq -e --arg expected "$sha" '
+                .tested_sha == $expected
+                and .public_fail == 0
+                and .authenticated_e2e == "NAO_VERIFICADO"
+                and .no_backend_mutations == true
+              ' relatorio.json > /dev/null
+            )
+            (cd "$RUNNER_TEMP" && zip -qr "out/ContaOS_TestC_$run.zip" "src-$run")
+          done <<'RUNS'
+          42024620823 3949d90c090267b18c39af37a13936598f3cedde
+          42026795811 8b7bcd76d36d1373f8bbc353879cf5666c87a72e
+          RUNS
+          test "$(find "$RUNNER_TEMP/out" -maxdepth 1 -name 'ContaOS_TestC_*.zip' | wc -l)" -eq 2
+          (cd "$RUNNER_TEMP/out" && sha256sum ContaOS_TestC_*.zip > SHA256SUMS)
+      - name: Criar ou verificar release sem sobrescrever ativos existentes
+        shell: bash
+        run: |
+          set -euo pipefail
+          created=false
+          if gh release view "$TAG" --json tagName > /dev/null 2>&1; then
+            echo "Release preexistente: verificar sem sobrescrever."
+          else
+            gh release create "$TAG" "$RUNNER_TEMP/out/ContaOS_TestC_42024620823.zip" "$RUNNER_TEMP/out/ContaOS_TestC_42026795811.zip" "$RUNNER_TEMP/out/SHA256SUMS"               --target "$GITHUB_SHA"               --title "ContaOS V1 - Evidencias independentes do Teste C"               --notes "Evidencias publicas sem sessao. Runs 42024620823 e 42026795811; autenticacao, upload, worker e isolamento multiusuario nao testados. Nao equivale a certificado PROD."               --latest=false
+            created=true
+          fi
+          gh release download "$TAG" --dir "$RUNNER_TEMP/restore"
+          (
+            cd "$RUNNER_TEMP/restore"
+            test -s SHA256SUMS
+            sha256sum --check SHA256SUMS
+          )
+          if [[ "$created" == true ]]; then
+            cmp "$RUNNER_TEMP/out/SHA256SUMS" "$RUNNER_TEMP/restore/SHA256SUMS"
+            for name in ContaOS_TestC_42024620823.zip ContaOS_TestC_42026795811.zip; do
+              cmp "$RUNNER_TEMP/out/$name" "$RUNNER_TEMP/restore/$name"
+            done
+          fi
+          {
+            echo "### P0 V1: custodia Teste C em release privada"
+            echo "Release: $TAG"
+            echo "Provas fonte: 42024620823 e 42026795811, hashes internos verificados."
+            echo "Recuperacao da release e SHA256 de todos os assets: PASS"
+            echo "Somente telas publicas; homologacao autenticada nao executada."
+            echo ""
+            cat "$RUNNER_TEMP/restore/SHA256SUMS"
+          } >> "$GITHUB_STEP_SUMMARY"
