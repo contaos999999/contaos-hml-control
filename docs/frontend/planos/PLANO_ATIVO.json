@@ -5,11 +5,11 @@
   "plano_documento": "docs/frontend/planos/P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md",
   "validacao": {
     "resultado": "PENDENTE",
-    "validado_por": "",
+    "validado_por": "Gate parcial: CI documental comprovado; demais gates pendentes",
     "validado_em": "2026-11-05",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": false,
-    "ci_plano_url": "",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42015852575",
     "gates": {
       "prd": "PENDENTE",
       "premissas": "PENDENTE",
@@ -20,7 +20,7 @@
       "nfr": "PENDENTE",
       "zero_drift": "PENDENTE",
       "tdd": "PENDENTE",
-      "ci": "PENDENTE",
+      "ci": "PASS",
       "teste_c_planejado": "PENDENTE",
       "rollback": "PENDENTE"
     }
@@ -41,7 +41,7 @@
     "docs/frontend/planos/PLANO_ATIVO.json",
     "docs/frontend/planos/P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md"
   ],
-  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios.",
+  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Evidência de CI documental PASS isoladamente; validação do plano permanece PENDENTE. Proibido BUILD até revisão dos demais gates e prova atual de contexto.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
@@ -125,7 +125,11 @@
     "unified_plan_pr": 130,
     "unified_plan_ci": 42013946647,
     "fe_be_audit_pr": 131,
-    "fe_be_audit_ci": 42014564846
+    "fe_be_audit_ci": 42014564846,
+    "acceptance_plan_pr": 134,
+    "acceptance_plan_ci": 42015852575,
+    "hml_rpc_contract_pr": 133,
+    "hml_rpc_contract_ci": 42015435635
   },
   "unverified_operational": [
     "V1-23: teste real de autorização/isolamento HML — NÃO VERIFICADO",
