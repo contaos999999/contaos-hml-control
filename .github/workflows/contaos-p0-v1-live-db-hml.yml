@@ -1,0 +1,90 @@
+name: ContaOS P0 V1 - provas SQL reais HML
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/hml/p0-v1-live-db-guards-readonly.sql'
+      - '.github/workflows/contaos-p0-v1-live-db-hml.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+concurrency:
+  group: contaos-p0-v1-live-db-hml
+  cancel-in-progress: false
+
+jobs:
+  pg-real-readonly:
+    if: github.repository == 'contaos999999/contaos-hml-control' && github.ref == 'refs/heads/main'
+    name: PostgreSQL HML real - ACL de nove RPCs, RLS e rollback
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: hml
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: ${{ secrets.CONTAOS_HML_DATABASE_URL }}
+      EXPECTED_PROJECT_REF: gklhhhyosgasnyoxlrui
+      PGSSLMODE: require
+      PGCONNECT_TIMEOUT: '10'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar destino da URL do environment hml sem exibir credencial
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, sys
+          from urllib.parse import urlsplit
+          raw=os.environ.get('DATABASE_URL','')
+          ref=os.environ['EXPECTED_PROJECT_REF']
+          def fail(reason):
+              print(f'::error::CONTAOS_HML_DATABASE_URL: {reason}')
+              sys.exit(1)
+          if not raw: fail('secret nao configurada no environment hml')
+          try:
+              u=urlsplit(raw)
+              host=u.hostname or ''
+              port=u.port
+              username=u.username or ''
+          except ValueError:
+              fail('URL invalida: codifique caracteres especiais de senha (ex: # como %23)')
+          if u.scheme not in ('postgres','postgresql'): fail('esquema nao permitido')
+          if username!=f'postgres.{ref}': fail('usuario nao confere com project ref HML')
+          if not host.endswith('.pooler.supabase.com'): fail('pooler Supabase nao reconhecido')
+          if port!=5432 or u.path!='/postgres': fail('Session pooler deve usar porta 5432 e /postgres')
+          if not u.password: fail('senha ausente')
+          if u.fragment: fail('fragmento na URL: codifique # na senha como %23')
+          print('PASS: URL corresponde ao Session pooler Supabase HML; nenhum segredo exibido')
+          PY
+      - name: Instalar cliente PostgreSQL
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Provar conectividade com a HML (SELECT 1)
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -qAt -v ON_ERROR_STOP=1 -c 'SELECT 1' > /dev/null
+          echo 'PASS: conexao PostgreSQL real autenticada no projeto HML'
+      - name: Executar transacoes read-only com rollback e 9 negativas SQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/hml/p0-v1-live-db-guards-readonly.sql 2>&1 | tee "$RUNNER_TEMP/p0-v1-live-db-hml.log"
+          grep -q 'P0_V1_DB_HML_REAL_READONLY_PASS' "$RUNNER_TEMP/p0-v1-live-db-hml.log"
+      - name: Arquivar log expurgado de credenciais
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contaos-p0-v1-live-db-hml-${{ github.run_id }}
+          path: ${{ runner.temp }}/p0-v1-live-db-hml.log
+          if-no-files-found: ignore
+          retention-days: 90
+      - name: Resumo de escopo
+        if: always()
+        run: |
+          {
+            echo '### ContaOS P0 V1 - evidencia SQL real HML'
+            echo 'Escopo: PostgreSQL HML, transacoes READ ONLY, rollback, 9 RPCs anon, RLS e view.'
+            echo 'Conexao via CONTAOS_HML_DATABASE_URL existente no environment hml.'
+            echo 'Nao e login JWT emitido pelo Supabase Auth, nem isolamento real R03.'
+          } >> "$GITHUB_STEP_SUMMARY"
