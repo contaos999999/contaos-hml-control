@@ -98,7 +98,7 @@ export async function consultarCapacidadeCadastro(idOrganizacao: string, _idUsua
 }
 
 export function capacidadePermiteCadastro(v: CapacidadeCadastro | null): boolean {
-  return !!v && typeof v.id === "string" && (PERFIS_CADASTRO as readonly string[]).includes(v.perfil);
+  return !!v && typeof v.id === "string" && v.situacao === "ativa" && (["administrador_master", ...PERFIS_CADASTRO] as readonly string[]).includes(v.perfil);
 }
 
 
