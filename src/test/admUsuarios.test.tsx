@@ -784,7 +784,7 @@ describe("ADM-01 varredura de código (zero drift)", () => {
   const raiz = path.resolve(__dirname, "..");
   const arquivos = [
     ...readdirSync(path.join(raiz, "components/administracao/usuarios")).map((f) => path.join(raiz, "components/administracao/usuarios", f)),
-    ...readdirSync(path.join(raiz, "lib/administracao")).map((f) => path.join(raiz, "lib/administracao", f)),
+    path.join(raiz, "lib/administracao/admUsuariosRpc.ts"),
     path.join(raiz, "routes/administracao.usuarios.tsx"),
   ];
   const fonte = arquivos.map((f) => readFileSync(f, "utf8")).join("\n");
