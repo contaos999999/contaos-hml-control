@@ -60,3 +60,13 @@ Data: 05/11/2026. Autorização expressa do titular: executar em **uma rodada co
 - Para TDD, primeiro testes RED de CAP-01..05, depois implementação GREEN. Reexecutar `node --test scripts/p0-version-order-gate.test.mjs`, gate de ordem por versão, Zero-Drift, lint, typecheck, build, Vitest e Teste C.
 - Se `PLANO_ATIVO` permanecer EM_VALIDACAO/PENDENTE, **NO-GO para editar código**. Promover o manifesto somente com comprovação, em commit anterior ao BUILD.
 - Não confundir este aceite funcional com certificação integral da V1; upload/worker, WCAG real, JWT A/B, restore e outras lacunas permanecem separadas no mesmo plano mestre.
+
+## Gate consolidado para BUILD agrupado, 05/11/2026
+- Fonte canônica: 25 documentos da revisão c2bf86d011da6bfd3abaa70de38e7a722ae629de consultados; conferir HEAD antes de promover o gate.
+- Escopo: V1-23 Prompt 75, sem alterações em backend, migrations, marca ou PROD.
+- Contrato HML: validar_administrador_organizacao e pode_consultar_auditoria_organizacao presentes, SECURITY INVOKER, EXECUTE authenticated, não anon. JWT A/B real não testado.
+- Correção conjunta: wrapper booleano fail-closed da RPC Auditoria; separar autorização do menu Usuários e Auditoria no AppShell; proteger rota direta TrilhaAuditoria; testar logout, troca A/B, resposta obsoleta, desktop e móvel.
+- TDD: testes RED para matriz de perfis e erros, depois GREEN; lint, typecheck, build, Vitest, Zero-Drift e ordem P0; Teste C independente após BUILD.
+- Visual: preservar BRAND-01, verificar 1440/1280/768/390 em claro e escuro, foco, teclado, contraste e drawer. Sem evidência visual, não certificar.
+- Rollback: reverter exclusivamente o commit/PR frontend da correção; nenhuma reversão de banco.
+- Decisão: não confundir planejamento aprovado com testes executados. Gates sem prova permanecem PENDENTE; BUILD somente após PLANO_ATIVO VALIDADO em commit anterior e CI verde.
