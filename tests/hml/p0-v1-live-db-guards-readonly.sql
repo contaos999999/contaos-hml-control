@@ -28,7 +28,11 @@ BEGIN
     FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
    WHERE n.nspname='public' AND p.prosecdef
      AND has_function_privilege('authenticated',p.oid,'EXECUTE')
-     AND NOT ('search_path=' = ANY(coalesce(p.proconfig,ARRAY[]::text[])));
+     AND NOT EXISTS (
+       SELECT 1
+         FROM unnest(coalesce(p.proconfig,ARRAY[]::text[])) AS cfg(setting)
+        WHERE cfg.setting IN ('search_path=', 'search_path=""')
+     );
   IF wrong_search_path > 0 THEN
     RAISE EXCEPTION 'HML_RPC_SEARCH_PATH_NOT_PINNED count=%',wrong_search_path;
   END IF;
