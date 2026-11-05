@@ -7,6 +7,7 @@ Status: PLANO / NÃO IMPLEMENTADO. Data: 2026-11-05. Escopo: exclusivamente V1, 
 - HML gklhhhyosgasnyoxlrui: public.perfis_usuarios(id,codigo,nome,descricao,criado_em), public.vinculos_usuarios(id,id_organizacao,id_usuario,perfil,escopo_todos_contratos,ativo,inicio_em,fim_em,...), public.organizacoes(id,razao_social,nome_fantasia,cnpj,timezone,moeda,idioma,situacao,...).
 - Consulta information_schema: não há tabela de permissões por recurso/ação no schema public.
 - RPCs existentes: criar_organizacao, listar_organizacoes_disponiveis, validar_administrador_organizacao, pode_consultar_auditoria_organizacao.
+- HML possui exatamente 1 registro MASTER ativo no instante da consulta (contagem agregada, sem expor identificadores). Não comprova que a sessão do usuário relatante corresponde a esse registro.
 - Investigação adicional: MASTER global JÁ EXISTE no backend em privado.administradores_master, verificado pela função privado.usuario_e_administrador_master(), com sessão ativa, vínculo ativo e janela temporal. privado.usuario_possui_perfil inclui MASTER quando a operação exige administrador. A listagem de organizações já inclui MASTER. O bloqueio relatado exige teste de sessão e UI, não recriação de autoridade MASTER.
 - Frontend: /selecionar-organizacao, /administracao/usuarios, /administracao/auditoria, /contratantes e /contratos; não existe rota CRUD /administracao/organizacoes no routeTree.gen.ts.
 
