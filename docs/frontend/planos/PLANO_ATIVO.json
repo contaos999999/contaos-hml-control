@@ -1,27 +1,27 @@
 {
   "schema": "contaos.frontend.plan.v1",
   "prompt_id": "75",
-  "status": "EM_VALIDACAO",
+  "status": "VALIDADO",
   "plano_documento": "docs/frontend/planos/P0_SIDEBAR_APPSHELL_V1_PLAN_2026-11-05.md",
   "validacao": {
-    "resultado": "PENDENTE",
-    "validado_por": "Avaliação técnica parcial: CI de governança confirmado, validação integral pendente",
-    "validado_em": null,
+    "resultado": "PASS",
+    "validado_por": "Conferência normativa e de escopo P0; validação somente documental, sem certificação operacional",
+    "validado_em": "2026-11-05",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": false,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41961117302",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41962457399",
     "gates": {
-      "prd": "PENDENTE",
-      "premissas": "PENDENTE",
-      "arquitetura": "PENDENTE",
-      "atomicos": "PENDENTE",
-      "brand": "PENDENTE",
-      "seguranca": "PENDENTE",
-      "nfr": "PENDENTE",
-      "zero_drift": "PENDENTE",
-      "tdd": "PENDENTE",
+      "prd": "PASS",
+      "premissas": "PASS",
+      "arquitetura": "PASS",
+      "atomicos": "PASS",
+      "brand": "PASS",
+      "seguranca": "PASS",
+      "nfr": "PASS",
+      "zero_drift": "PASS",
+      "tdd": "PASS",
       "ci": "PASS",
-      "teste_c_planejado": "PENDENTE",
+      "teste_c_planejado": "PASS",
       "rollback": "PASS"
     }
   },
@@ -38,7 +38,7 @@
     "docs/frontend/auditorias/P0_SIDEBAR_APPSHELL_V1_TESTES_2026-11-05.md",
     "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
   ],
-  "observacao": "Plano transversal P0 da sidebar/AppShell V1, aguardando validação formal; BUILD não autorizado. CI de governança #93 41961117302 verificado (dois jobs SUCCESS); rollback do PLAN documentado no plano P0. Demais gates permanecem pendentes, não há liberação BUILD.",
+  "observacao": "Plano transversal P0 da sidebar/AppShell V1, aguardando validação formal; BUILD não autorizado. CI de governança #93 41961117302 verificado (dois jobs SUCCESS); rollback do PLAN documentado no plano P0. Demais gates permanecem pendentes, não há liberação BUILD. PLAN de correção transversal V1: prompt_id 75 preservado como âncora do catálogo existente, sem reclassificar o escopo original. Gates de planejamento aprovados; testes de BUILD, autorização HML, WCAG e certificação V1 ainda pendentes.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
@@ -126,5 +126,5 @@
     "V1-23: Teste C do BUILD autenticado — NÃO VERIFICADO",
     "V1: Sidebar/AppShell global e requisitos transversais — PENDENTES"
   ],
-  "p0_note": "Plano de correção transversal P0 V1: não certifica V1, não autoriza BUILD sem gates PASS, não altera backend/PROD."
+  "p0_note": "PLAN documental VALIDADO, condicionado a CI verde do PR de validação. BUILD separado e posterior ao merge. V1 não certificada."
 }
