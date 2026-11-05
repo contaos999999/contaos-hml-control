@@ -91,7 +91,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   verify-monthly:
-    if: github.event_name == 'schedule' && github.repository == 'contaos999999/contaos-hml-control' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'schedule' || github.event_name == 'push') && github.repository == 'contaos999999/contaos-hml-control' && github.ref == 'refs/heads/main'
     name: Conferir integridade mensal de Release privada (somente leitura)
     runs-on: ubuntu-latest
     timeout-minutes: 10
