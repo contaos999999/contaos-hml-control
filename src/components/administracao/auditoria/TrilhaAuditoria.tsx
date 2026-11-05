@@ -10,6 +10,7 @@ export function TrilhaAuditoria() {
   const navigate = useNavigate();
   const [org, setOrg] = useState<string | null>(null);
   const [verificando, setVerificando] = useState(true);
+  const [erroSessao, setErroSessao] = useState(false);
   const [pagina, setPagina] = useState(0);
   const [evento, setEvento] = useState("");
   const [entidade, setEntidade] = useState("");
@@ -25,7 +26,7 @@ export function TrilhaAuditoria() {
       const selecionada = obterPreferenciaOrganizacao(data.user.id);
       if (!selecionada) { navigate({ to: "/selecionar-organizacao", replace: true }); return; }
       setOrg(selecionada);
-    }).catch(() => { if (ativo) setOrg(null); }).finally(() => { if (ativo) setVerificando(false); });
+    }).catch(() => { if (ativo) setErroSessao(true); }).finally(() => { if (ativo) setVerificando(false); });
     return () => { ativo = false; };
   }, [navigate]);
   const consulta = useQuery({
@@ -53,7 +54,8 @@ export function TrilhaAuditoria() {
       <label className="flex flex-col gap-1 text-sm">Data inicial<input type="date" className="rounded border bg-background p-2" value={inicio} onChange={e => { setInicio(e.target.value); setPagina(0); }} /></label>
       <label className="flex flex-col gap-1 text-sm">Data final<input type="date" className="rounded border bg-background p-2" value={fim} onChange={e => { setFim(e.target.value); setPagina(0); }} /></label>
     </section>
-    {verificando || consulta.isPending ? <p role="status">Carregando trilha de auditoria…</p>
+    {erroSessao ? <p role="alert">Não foi possível verificar sua sessão. Atualize a página ou entre novamente.</p>
+      : verificando || consulta.isPending ? <p role="status">Carregando trilha de auditoria…</p>
       : consulta.isError ? <div role="alert" className="space-y-2"><p>{consulta.error instanceof Error ? consulta.error.message : "Falha ao consultar eventos."}</p><button className="rounded border p-2" onClick={() => consulta.refetch()}>Tentar novamente</button></div>
       : !consulta.data?.eventos.length ? <p role="status">Nenhum evento encontrado para os filtros selecionados.</p>
       : <div className="overflow-x-auto"><table className="w-full border-collapse text-left text-sm">
