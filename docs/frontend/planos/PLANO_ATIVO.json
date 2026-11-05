@@ -32,9 +32,10 @@
     "src/test/trilhaAuditoria.test.tsx",
     "docs/frontend/auditorias/PROMPT_75_V123_TESTES_2026-11-04.md",
     "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md",
+    "src/test/admUsuarios.test.tsx",
     "src/test/admUsuarios.test.tsx"
   ],
-  "observacao": "V1-23: PLAN #75 integrado e CI dois jobs SUCCESS no HEAD 19d14e0; consulta somente leitura eventos_auditoria; RLS e teste operacional HML ainda pendentes; sidebar/AppShell BRAND-01 e WCAG P0 bloqueiam certificação V1; BUILD só após GATE integrado. Não certificar V1 nem avançar V2. Emenda de escopo GOV-021: teste ADM-01 exclusivamente para eliminar falso positivo causado por auditoriaDados.ts; nenhuma alteração em lógica do backend ou relaxamento de proibições ADM-01. Emenda exige validação CI e merge separado antes de BUILD.",
+  "observacao": "V1-23: PLAN #75 integrado e CI dois jobs SUCCESS no HEAD 19d14e0; consulta somente leitura eventos_auditoria; RLS e teste operacional HML ainda pendentes; sidebar/AppShell BRAND-01 e WCAG P0 bloqueiam certificação V1; BUILD só após GATE integrado. Não certificar V1 nem avançar V2. Emenda de escopo GOV-021: teste ADM-01 exclusivamente para eliminar falso positivo causado por auditoriaDados.ts; nenhuma alteração em lógica do backend ou relaxamento de proibições ADM-01. Emenda exige validação CI e merge separado antes de BUILD. GOV-021: ajuste de teste ADM-01 para isolar varredura do modulo V1-23; PLAN antecede BUILD e exige CI verde.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
