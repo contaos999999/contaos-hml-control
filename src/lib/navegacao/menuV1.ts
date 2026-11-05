@@ -3,7 +3,9 @@ export const ROTAS_PUBLICAS = ["/login", "/esqueci-senha", "/redefinir-senha", "
 export const MENU_V1 = [
   { titulo: "Painel", destino: "/" },
   { titulo: "Contratantes", destino: "/contratantes" },
+  { titulo: "Novo contratante", destino: "/contratantes/novo" },
   { titulo: "Contratos", destino: "/contratos" },
+  { titulo: "Novo contrato", destino: "/contratos/novo" },
 ] as const;
 export const MENU_ADMIN_V1 = [
   { titulo: "Usuários", destino: "/administracao/usuarios" },
