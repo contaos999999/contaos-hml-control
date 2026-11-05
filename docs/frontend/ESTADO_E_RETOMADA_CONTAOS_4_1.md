@@ -3,6 +3,14 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## DECISÃO CONDICIONAL DO TITULAR — NÃO CERTIFICAR V1-22 ENQUANTO HOUVER OUTRAS LACUNAS (04/11/2026)
+
+O titular autorizou certificação com ressalvas **somente se** as únicas pendências fossem fluxo real de upload, processamento por worker e isolamento entre usuários. Auditoria ao `main@070ed2dccf7cd6410f70f500d7bde9464bf5fb77` constatou **outras pendências relevantes**: rota `/contratos/:id/historico/importar` ausente em `src/routes` e `routeTree.gen.ts`; `PLANO_ATIVO.json` ainda no PROMPT 42; PLAN/GATE/BUILD do 43 não integrados; extração do worker limitada a marcadores sem prova de formatos representativos. Registro formal em `docs/frontend/auditorias/V1_22_HML_SMOKE_2026-11-04.md`.
+
+**Decisão factual:** teste SQL HML `41939010108` = **PASS limitado**; PROMPT 43/V1-22 = **PENDENTE / NÃO CERTIFICADO**, V1 = **NÃO CERTIFICADA**. Não liberar V2. Próxima ação: PLAN/GATE/BUILD 43 com prova real; depois 75/V1-23 e certificação V1. RLS HML A/B facultativo após regular 99, não bloqueante isoladamente. PROD intocada.
+
+---
+
 ## CHECKPOINT HML — V1-22: CONEXÃO CORRIGIDA, SMOKE SQL PASS; CERTIFICAÇÃO FUNCIONAL PENDENTE (04/11/2026, 21h08 Brasília)
 
 - **Resultado comprovado:** [workflow V1-22 HML #9, run 41939010108](https://github.com/contaos999999/contaos-hml-control/actions/runs/41939010108), job `homologacao` ID `126954685454`, `completed/success` no SHA `f7213bcec06deb0392ee9a4f56408b79d28c0326`. Preflight de URI PASS; conexão e autenticação Supabase HML por `SELECT 1` PASS; script SQL `tests/hml/v1-22-historico-smoke.sql` PASS: três funções existentes, cron `contaos-worker-historico-v1-22` ativo, `BEGIN`/`ROLLBACK`. Nenhum dado de teste persistido pelo script.
