@@ -1,3 +1,17 @@
+## CHECKPOINT P0 — 05/11/2026, CI e sidebar
+
+- PR #99 sidebar/AppShell: MERGED, HEAD `fc303514aca465af18a638c830de34201dc57882`, workflow `41964388882` SUCCESS; não equivale a certificação funcional HML.
+- PR #100 reconciliação: MERGED, HEAD `4fe3970afc2ef3b8ca53507040ab036d90de2ee7`.
+- PR #101 cabeçalhos: OPEN na última consulta, HEAD `9e3b7a51edcffd6801d63d6936602b818f285351`; workflow `41968405315` PENDING. O workflow anterior `41966737195` falhou em testes BRAND-01 que exigem `ContaOSMarca` nas telas. O novo HEAD restaurou a presença do componente nas quatro telas, mas os novos checks ainda não foram concluídos. Não mesclar sem dois jobs SUCCESS no mesmo HEAD.
+- PR #77 RED: OPEN, HEAD `50ed95552094fe53e2c45fd1535ad16eb9dd79d9`, CI `41949536167` FAILURE (Zero-Drift FAIL, Teste C SUCCESS).
+- PR #78 BUILD: OPEN, HEAD `f44a33165e71a0ef35a2ce9ae8fa094bc5cfc261`, CI `41949684490` FAILURE nos dois jobs.
+- PR #86 ADM-01: OPEN, HEAD `1b488b20f4f2ec54e8b66800c68c7ac47e2572e5`, CI `41956036853` FAILURE (Zero-Drift FAIL, Teste C SUCCESS).
+- PR #80 GATE, #83 V1-23 BUILD, #87 emenda e #98 PLAN sidebar: MERGED, conforme histórico; sem autorizar merge de branches legadas falhas.
+- Fonte literal: índice do ZIP canônico consultado; ZIP não reaberto nesta execução, portanto sem nova validação literal de seu conteúdo.
+- Próximos passos: conferir CI do PR #101 e, se ambos SUCCESS, revisar diff e integrar conforme proteções; resolver compatibilidade entre BRAND-01 e eliminação de duplicidade visual sem suprimir teste; testar sessão real, permissões, isolamento, upload/worker, teclado/foco, quatro larguras, dois temas e contraste WCAG; atualizar retrospectiva. V1 NÃO CERTIFICADA, V2 BLOQUEADA, PROD INALTERADA.
+
+---
+
 ## ATUALIZAÇÃO DE RETOMADA — V1-23 E SIDEBAR (05/11/2026)
 
 Consulta GitHub desta execução, sem presumir sucesso operacional:
