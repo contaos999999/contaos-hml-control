@@ -37,9 +37,9 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       const primeiro = focaveis[0];
       const ultimo = focaveis[focaveis.length - 1];
       if (evento.shiftKey && (document.activeElement === primeiro || !dialogo?.contains(document.activeElement))) {
-        evento.preventDefault(); ultimo.focus();
+        evento.preventDefault(); ultimo?.focus();
       } else if (!evento.shiftKey && (document.activeElement === ultimo || !dialogo?.contains(document.activeElement))) {
-        evento.preventDefault(); primeiro.focus();
+        evento.preventDefault(); primeiro?.focus();
       }
     };
     document.addEventListener("keydown", controlarTeclado);
