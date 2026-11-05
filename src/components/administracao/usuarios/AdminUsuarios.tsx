@@ -1,3 +1,4 @@
+import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -150,6 +151,7 @@ export function AdminUsuarios() {
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
+            <span className="md:hidden"><ContaOSMarca /></span>
             
           </div>
           <div className="flex flex-wrap gap-2">
