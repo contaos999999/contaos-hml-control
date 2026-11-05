@@ -1,0 +1,55 @@
+name: ContaOS P0 - Monitor de conclusao CI
+on:
+  workflow_run:
+    workflows: ["ContaOS Frontend Zero-Drift"]
+    types: [completed]
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: contaos-p0-ci-monitor
+  cancel-in-progress: false
+
+jobs:
+  verificar-fila:
+    name: P0 - Verificar CI e fila de PRs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Avaliar checks dos PRs abertos sem executar codigo de PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "## ContaOS P0 — fila de CI" >> "$GITHUB_STEP_SUMMARY"
+          echo "Acionamento: $EVENT_NAME. Workflow de origem: ${EVENT_WORKFLOW_CONCLUSION:-n/a}." >> "$GITHUB_STEP_SUMMARY"
+          prs="$(gh api --paginate "repos/$GH_REPO/pulls?state=open&per_page=100" --jq '.[] | select(.base.ref == "main") | [.number, .head.sha, .draft] | @tsv')"
+          if [[ -z "$prs" ]]; then
+            echo "Nenhum PR aberto contra main." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          while IFS=$'\t' read -r number sha draft; do
+            [[ -n "$number" ]] || continue
+            # A API de check-runs é consultada somente para o SHA imutável do PR.
+            checks="$(gh api "repos/$GH_REPO/commits/$sha/check-runs?per_page=100" --jq '[.check_runs[] | {name, status, conclusion}]')"
+            zero="$(jq -r '[.[] | select(.name == "ContaOS Frontend Zero-Drift")] | last | if . == null then "missing" else (.conclusion // .status) end' <<< "$checks")"
+            testc="$(jq -r '[.[] | select(.name | contains("ContaOS Teste C Independente"))] | last | if . == null then "missing" else (.conclusion // .status) end' <<< "$checks")"
+            state="AGUARDANDO"
+            if [[ "$zero" == "success" && "$testc" == "success" ]]; then state="CI_VERDE_REVISAR_GATES"; fi
+            if [[ "$zero" == "failure" || "$testc" == "failure" ]]; then state="FALHA_CORRIGIR"; fi
+            printf -- '- PR #%s (draft=%s), HEAD `%s`: Zero-Drift=%s, Teste C=%s, fila=%s\n' "$number" "$draft" "$sha" "$zero" "$testc" "$state" >> "$GITHUB_STEP_SUMMARY"
+            echo "PR=$number SHA=$sha ZERO=$zero TESTC=$testc STATE=$state"
+          done <<< "$prs"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "CI_VERDE_REVISAR_GATES não autoriza merge: validar PLAN/GATE, ordem por versão, proteção de branch, evidências HML e Teste C aplicável. Este monitor é somente leitura." >> "$GITHUB_STEP_SUMMARY"
