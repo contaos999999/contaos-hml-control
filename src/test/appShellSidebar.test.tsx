@@ -9,6 +9,6 @@ describe("P0 sidebar V1", () => {
   it("somente oferece destinos principais existentes e sem links administrativos por padrão", () => {
     expect(MENU_V1.map((x) => x.destino)).toEqual(["/", "/contratantes", "/contratos"]);
     expect(MENU_V1.every((x) => !x.destino.includes("$"))).toBe(true);
-    expect(MENU_V1.every((x) => !MENU_ADMIN_V1.some((a) => a.destino === x.destino))).toBe(true);
+    expect(MENU_V1.every((x) => !MENU_ADMIN_V1.map((a) => String(a.destino)).includes(String(x.destino)))).toBe(true);
   });
 });
