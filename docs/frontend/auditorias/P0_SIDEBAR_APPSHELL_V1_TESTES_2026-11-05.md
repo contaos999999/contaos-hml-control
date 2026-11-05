@@ -53,3 +53,10 @@ Inspeção SQL read-only de `pg_proc` e `has_function_privilege` no projeto HML:
 5. **Governança:** backend SQL/migrations, `src/lib/administracao/admUsuariosRpc.ts` e testes de integração fora da allowlist do PLAN ativo. Exige PLAN de escopo expandido, gates Zero-Drift e BUILD separado antes de editar esses arquivos. Não aplicar DDL diretamente no HML sem migração versionada e CI. Não modificar a política `eventos_select`.
 6. **Critérios de aceite:** perfil administrador vê Usuários e Auditoria; auditor/jurídico vê apenas Auditoria; perfil não autorizado não vê nenhum; RPC falha fechada; testes A/B autenticados no HML com dados e vínculos de teste, incluindo leitura cruzada negada; evidência de build, testes, migração, CI, checkpoint.
 **Estado:** plano proposto, não implementado nem certificado. Evidências de metadata SQL não substituem testes autenticados.
+
+## Bloqueio confirmado na fonte canônica backend (05/11/2026)
+Inspeção de `contaos999999/develop` em `main`, sem mutações:
+- `00_AI_LEIA_ANTES_DE_ALTERAR.md`: exige leitura integral das 25 fontes, manifesto específico, prova da lacuna, migration nova, testes A/B, rollback e autorização explícita para modificar backend certificado.
+- `docs/tasks/active-task.json`: tarefa `RNF-AUD-001-STATIC-20261104` em fase `build_estatico_sem_servicos`, `database_changes_allowed=false`, `rls_changes_allowed=false`, `auth_changes_allowed=false`; `supabase/**` está em `forbidden_paths`. A autorização histórica para funções V1-17 é específica e **não** abrange uma nova RPC de auditoria.
+- `05_BACKEND_SUPABASE_CERTIFICADO_4_1.md` e `docs/CERTIFICACAO_BACKEND_HML_4_1.md` registram certificação anterior e exigem mudanças incrementais e testes de restore. Esses registros históricos não comprovam a nova capacidade.
+**Decisão NO-GO:** não criar migration nem executar DDL usando a tarefa RNF atual. Abrir PLAN backend dedicado, após conferência de 25 documentos e validação do gate/autorização humana específica quando exigida; preservar a tarefa RNF em andamento sem sobrescrever seu manifesto. Não alterar frontend até contrato HML novo estar certificado. **A V1 segue não certificada.**
