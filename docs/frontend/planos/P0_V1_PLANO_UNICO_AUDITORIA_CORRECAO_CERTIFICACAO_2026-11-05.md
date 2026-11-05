@@ -87,3 +87,18 @@ Data: 05/11/2026. Autorização expressa do titular: executar em **uma rodada co
 
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 A emenda mantém todos os controles e a identidade visual canônica, sem custo de novo Lovable, sem interfaces ou componentes extras. Somente inclui teste existente na allowlist depois de evidência de falha real e necessidade de regressão.
+
+## Emenda P0 — revalidação imediata de organização no AppShell (05/11/2026)
+
+**Constatação reproduzível por inspeção:** `src/lib/organizacao/preferenciaOrganizacao.ts` grava no sessionStorage sem notificação local. `OrganizationSelector.tsx` já limpa React Query ao mudar A→B, mas `ContaOSAppShell.tsx` revalida apenas por pathname, auth e visibility; troca A→B que mantém a mesma rota pode apresentar menu da organização anterior até outro evento. Não usar preferência local como autorização.
+
+**Correção mínima e fechada:** `src/lib/organizacao/preferenciaOrganizacao.ts` emite evento local sem dados pessoais **apenas quando a preferência muda**; `ContaOSAppShell.tsx` escuta este evento, invalida geração de auth/autorizações em voo, fecha o menu, nega links administrativos imediatamente e refaz verificação pelo backend. Os arquivos `src/components/layout/ContaOSAppShell.tsx` e `src/test/appShellSidebar.test.tsx` já constam da allowlist. Inclusão somente de `src/lib/organizacao/preferenciaOrganizacao.ts` e `src/test/selecionarOrganizacao.test.tsx` na allowlist existente. O seletor de organização e o backend não serão modificados.
+
+**Testes RED→GREEN:** preferência por usuário, nenhum evento se mesma organização, evento na troca, listener de AppShell e limpeza, resposta autorizadora antiga descartada após troca, resposta nova só após RPC, timeout/erro de autorização continua fail-closed, logout, UI existente; rodar 100% Vitest (2 workers), typecheck, lint, build, scope gate, Zero-Drift, P0 por versão e Teste C independente.
+
+**Limites de certificação:** esta correção não prova RLS nem isolamento real entre usuários (ressalva expressa), não substitui a verificação de recuperação de senha, contraste WCAG em telas privadas, segurança dos SECURITY DEFINER, restore/Auto-Lock ou retroauditoria V1. Todos os itens precisam de prova ou decisão formal específica. Sem promoção de PROD.
+
+**Sequência:** merge deste PLAN somente com dois checks CI verdes; iniciar BUILD em nova branch baseada no HEAD integrado. Nenhum código antes do PLAN. Após BUILD e Teste C, registrar relatório atualizado de pendências e decisão GO/NO-GO para certificação com exatamente três ressalvas.
+
+## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+Preservar 100% da ContaOS Brand v1.0 e assets. Sem alterações visuais ou backend. Reutilizar autenticação e testes existentes, edição direta GitHub, minimizando retrabalho e chamadas Lovable sem diminuir controles.
