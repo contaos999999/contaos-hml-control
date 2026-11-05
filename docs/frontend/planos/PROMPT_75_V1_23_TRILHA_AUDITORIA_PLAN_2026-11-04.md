@@ -17,3 +17,15 @@ Sequência: PLAN documental em PR separado; dois checks no mesmo HEAD e merge; G
 Testes planejados: autorização e negação, isolamento por contrato, datas PT-BR, estados vazios/erros, ordenação estável, texto não interpretado como HTML, ausência de segredos, teclado e contraste em 4 larguras e 2 temas.
 
 Pendências bloqueantes do GATE: texto literal do regular 75, inventário técnico HML e allowlist exata. V1 ainda não certificada. Não alterar PROD.
+
+
+## Requisito transversal obrigatório: navegação global e acessibilidade (P0)
+Antes de certificar V1, comprovar a sidebar/menu global e AppShell centralizado, BRAND-01 com logomarca oficial transparente nos estados expandido/recolhido, ativação progressiva dos módulos, rotas e navegação coerente. A trilha de auditoria deve participar desse mesmo padrão, sem criar navegação paralela.
+
+Acessibilidade verificável: navegação integral por teclado (Tab, Shift+Tab, Enter, Escape quando aplicável), ordem de foco lógica, foco visível inclusive em modal, menus e filtros, retorno de foco após fechar diálogos, sem armadilhas; nomes acessíveis, rótulos, semântica, estados e mensagens para tecnologia assistiva; contraste de texto e componentes em temas claro e escuro. Avaliar WCAG 2.2 nível AA nos critérios aplicáveis, com medição documentada (texto comum >=4,5:1, texto grande >=3:1 e contraste não textual >=3:1 onde exigido), registrando exceções justificadas e correções. Não declarar conformidade por inspeção superficial.
+
+Testes obrigatórios: testes automatizados unitários/de integração e regressão, testes de acessibilidade automatizados mais verificação manual por teclado, auditoria visual das telas e Teste C independente em quatro larguras e dois temas. Evidenciar resultados, falhas, correções, capturas e limitações de sessão autenticada. Evidência de mock não substitui teste real.
+
+Rastreabilidade obrigatória no GitHub: para cada requisito, registrar matriz requisito -> implementação -> teste -> evidência -> commit -> PR -> run CI -> artefato, com dois checks obrigatórios SUCCESS no mesmo HEAD, Teste C independente e confirmação de merge. Não usar status PASS sem evidência verificável. Preservar os artefatos e indicar claramente qualquer limitação de retenção.
+
+**BLOQUEIO P0 DE CERTIFICAÇÃO:** V1 não pode ser certificada, homologada ou liberar V2 sem aprovação comprovada desse requisito transversal de menu/sidebar e acessibilidade, além de todos os demais critérios V1, auditoria retrospectiva e PRs integrados. O bloqueio persiste mesmo se PROMPT 75 passar isoladamente. Produção depende de autorização expressa posterior.
