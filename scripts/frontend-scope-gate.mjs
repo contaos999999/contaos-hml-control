@@ -310,9 +310,11 @@ if (sourcePaths.length) {
       // A excecao e restrita ao artefato gerado, nunca a arquivos de codigo livres.
       const arvoreGeradaAutorizada =
         path === "src/routeTree.gen.ts" &&
-        sourcePaths.some((arquivo) =>
-          arquivo.startsWith("src/routes/") && arquivo.endsWith(".tsx") &&
-          plan.arquivos_permitidos?.includes(arquivo),
+        sourcePaths.some(
+          (arquivo) =>
+            arquivo.startsWith("src/routes/") &&
+            arquivo.endsWith(".tsx") &&
+            plan.arquivos_permitidos?.includes(arquivo),
         );
       if (!plan.arquivos_permitidos?.includes(path) && !arvoreGeradaAutorizada)
         errors.push("ARQUIVO FORA DO PLAN VALIDADO: " + path);
