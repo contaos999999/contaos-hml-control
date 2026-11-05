@@ -103,7 +103,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background text-foreground">
       {liberado && (
         <>
-          <button ref={botaoMovelRef} type="button" aria-label="Abrir menu" aria-expanded={movelAberto} aria-controls="contaos-menu-movel"
+          <button ref={botaoMovelRef} type="button" inert={movelAberto} aria-label="Abrir menu" aria-expanded={movelAberto} aria-controls="contaos-menu-movel"
             onClick={() => setMovelAberto((v) => !v)} className={`fixed bottom-4 right-4 rounded-lg border bg-background p-3 shadow-lg focus-visible:ring-2 focus-visible:ring-ring md:hidden ${movelAberto ? "z-30" : "z-50"}`}>Menu</button>
           {movelAberto && <div ref={dialogoMovelRef} tabIndex={-1} id="contaos-menu-movel" role="dialog" aria-modal="true" aria-label="Menu de navegação" className="fixed inset-0 z-40 overflow-y-auto bg-background/95 pt-12 md:hidden"><button type="button" className="m-3 rounded border px-3 py-2" onClick={() => setMovelAberto(false)}>Fechar menu</button><ContaOSSidebar aoNavegar={() => setMovelAberto(false)} />{administrador && <nav aria-label="Administração" className="flex flex-col gap-1 p-3">{MENU_ADMIN_V1.map((item) => <Link key={item.destino} to={item.destino} onClick={() => setMovelAberto(false)} aria-current={rotaAdministrativaAtiva(item.destino) ? "page" : undefined} className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-accent text-accent-foreground" : "hover:bg-accent"}`}>{item.titulo}</Link>)}</nav>}</div>}
           <aside className={`fixed inset-y-0 left-0 hidden border-r bg-background md:block ${recolhida ? "w-20" : "w-56"}`}>
@@ -112,7 +112,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
           </aside>
         </>
       )}
-      <div className={liberado ? (recolhida ? "md:pl-20" : "md:pl-56") : ""}>{children}</div>
+      <div inert={movelAberto} className={liberado ? (recolhida ? "md:pl-20" : "md:pl-56") : ""}>{children}</div>
     </div>
   );
 }
