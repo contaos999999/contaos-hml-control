@@ -112,6 +112,8 @@ function Conteudo({ctx}:{ctx:Ctx}){
   const refs=useRef(new Map<string,Trabalho>());
   const trava=useRef(new Set<string>());
   const [lendo,setLendo]=useState(false);
+  const [enviandoLote,setEnviandoLote]=useState(false);
+  const bloqueioLote=useRef(false);
   useEffect(()=>{
     const ctrl=new AbortController();
     obterConfiguracaoUpload(ctrl.signal).then(setConfig).catch(()=>{if(!ctrl.signal.aborted)setConfig("erro");});
@@ -188,6 +190,18 @@ function Conteudo({ctx}:{ctx:Ctx}){
     }catch(e){alterar(i.chave,{etapa:"erro",aviso:mensagemErroIngestao(e)});}
     finally{ctrl.abort();trava.current.delete(i.chave);}
   };
+  const enviarLote=async()=>{
+    if(bloqueioLote.current)return;
+    bloqueioLote.current=true;setEnviandoLote(true);
+    try{
+      // Execução sequencial preserva progressos independentes e permite falha parcial.
+      for(const item of itens){
+        if(!refs.current.get(item.chave)?.documento && item.etapa!=="enfileirado"){
+          await enviar(item);
+        }
+      }
+    }finally{bloqueioLote.current=false;setEnviandoLote(false);}
+  };
   const total=itens.length;
   const permitidos=config!==null&&config!=="erro";
   return <div className="space-y-6">
@@ -202,14 +216,23 @@ function Conteudo({ctx}:{ctx:Ctx}){
         config==="erro"?<p role="alert" className="text-sm text-destructive">Não foi possível obter os formatos permitidos. Atualize a página antes de enviar.</p>:
         <p className="text-sm text-muted-foreground">Formatos aceitos: {config.extensoes.join(", ").toUpperCase()}. O limite de tamanho e o tipo real são conferidos pelo backend.</p>}
       <label htmlFor="historico-arquivos" className="block text-sm font-medium">Arquivos históricos (seleção múltipla)</label>
-      <input id="historico-arquivos" type="file" multiple className={CAMPO} disabled={!permitidos}
+      <input id="historico-arquivos" type="file" multiple className={CAMPO} disabled={!permitidos||enviandoLote}
         accept={config && config!=="erro" ? aceiteDe(config) : undefined} onChange={adicionar}/>
       <p role="status" className="text-sm text-muted-foreground">{total===0?"Nenhum arquivo selecionado.":`${total} arquivo(s) selecionado(s).`}</p>
+      {total>1&&<div className="space-y-1">
+        <Button type="button" className="min-h-11" disabled={!permitidos||enviandoLote}
+          onClick={()=>void enviarLote()}>
+          <FileUp className="mr-2 h-4 w-4" aria-hidden/> Enviar arquivos pendentes em sequência
+        </Button>
+        <p role="status" className="text-xs text-muted-foreground">
+          {enviandoLote?"Enviando o lote. Cada arquivo conserva seu estado e pode exigir correção individual.":"Defina a competência e o tipo de cada arquivo antes de enviar. Falhas em um documento não impedem os demais."}
+        </p>
+      </div>}
     </section>
     {itens.length>0&&<section className="space-y-3" aria-label="Arquivos selecionados">
       <h2 className="text-lg font-semibold">2. Competência e processamento por arquivo</h2>
       {itens.map((i,indice)=>{
-        const enviando=trava.current.has(i.chave);
+        const enviando=trava.current.has(i.chave)||enviandoLote;
         const persistido=refs.current.get(i.chave);
         const iniciado=!!persistido?.documento;
         return <article key={i.chave} className="space-y-3 rounded-lg border border-border bg-card p-4">
@@ -260,6 +283,9 @@ function Conteudo({ctx}:{ctx:Ctx}){
 }
 function RevisaoHistorico({org,contrato}:{org:string;contrato:string}){
   const [offset,setOffset]=useState(0),[versao,setVersao]=useState(0);
+  const [paginaAp,setPaginaAp]=useState(0);
+  const [totalAp,setTotalAp]=useState(0);
+  const [lendoAp,setLendoAp]=useState(false);
   const [relatorios,setRelatorios]=useState<{itens:RelatorioHistorico[];total:number}|null>(null);
   const [relatorio,setRelatorio]=useState<string|null>(null);
   const [apontamentos,setApontamentos]=useState<ApontamentoVinculado[]>([]);
@@ -267,6 +293,13 @@ function RevisaoHistorico({org,contrato}:{org:string;contrato:string}){
   const [carregando,setCarregando]=useState(false);
   const [resposta,setResposta]=useState(""),[desfecho,setDesfecho]=useState(""),[fundamento,setFundamento]=useState("");
   const [emEdicao,setEmEdicao]=useState<string|null>(null);
+  const [salvando,setSalvando]=useState(false);
+  const travaTratamento=useRef(false);
+  const limparTratamento=()=>{setEmEdicao(null);setResposta("");setDesfecho("");setFundamento("");};
+  const selecionar=(id:string)=>{
+    setRelatorio(atual=>atual===id?null:id);
+    setApontamentos([]);setTotalAp(0);setPaginaAp(0);limparTratamento();setErro("");
+  };
   useEffect(()=>{
     const ctrl=new AbortController();
     setCarregando(true);setErro("");
@@ -277,19 +310,24 @@ function RevisaoHistorico({org,contrato}:{org:string;contrato:string}){
     return ()=>ctrl.abort();
   },[org,contrato,offset,versao]);
   useEffect(()=>{
-    if(!relatorio){setApontamentos([]);return;}
+    if(!relatorio){setApontamentos([]);setTotalAp(0);return;}
     const ctrl=new AbortController();
-    listarApontamentosVinculados(contrato,org,relatorio,0,ctrl.signal)
-      .then(r=>{if(!ctrl.signal.aborted)setApontamentos(r.itens);})
-      .catch(e=>{if(!ctrl.signal.aborted)setErro(mensagemErroIngestao(e));});
+    setLendoAp(true);setApontamentos([]);setTotalAp(0);setErro("");
+    listarApontamentosVinculados(contrato,org,relatorio,paginaAp,ctrl.signal)
+      .then(r=>{if(!ctrl.signal.aborted){setApontamentos(r.itens);setTotalAp(r.total);}})
+      .catch(e=>{if(!ctrl.signal.aborted)setErro(mensagemErroIngestao(e));})
+      .finally(()=>{if(!ctrl.signal.aborted)setLendoAp(false);});
     return ()=>ctrl.abort();
-  },[org,contrato,relatorio,versao]);
+  },[org,contrato,relatorio,paginaAp,versao]);
   const guardar=async(id:string)=>{
-    setErro("");
+    if(travaTratamento.current)return;
+    travaTratamento.current=true;setSalvando(true);setErro("");
     try{
       await vincularTratamentoHistorico(id,resposta,desfecho,fundamento);
-      setResposta("");setDesfecho("");setFundamento("");setEmEdicao(null);setVersao(n=>n+1);
-    }catch(e){setErro(mensagemErroIngestao(e));}
+      limparTratamento();setVersao(n=>n+1);
+    }catch{
+      setErro("Não foi possível confirmar a gravação. Atualize o histórico antes de tentar novamente para evitar duplicidade.");
+    }finally{travaTratamento.current=false;setSalvando(false);}
   };
   return <div className="space-y-3">
     <Button variant="outline" className="min-h-11" onClick={()=>setVersao(v=>v+1)} disabled={carregando}><RefreshCw className="mr-2 h-4 w-4" aria-hidden/> Atualizar histórico</Button>
@@ -300,30 +338,41 @@ function RevisaoHistorico({org,contrato}:{org:string;contrato:string}){
       {relatorios?.itens.map(r=><li key={r.id} className="rounded-md border border-border p-3 text-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span>{r.tipo} · Competência {r.competencia_referencia? r.competencia_referencia.slice(0,7).split("-").reverse().join("/"): "não informada"} · {r.status_processamento}</span>
-          <Button variant="outline" className="min-h-11" onClick={()=>setRelatorio(r.id===relatorio?null:r.id)}> {r.id===relatorio?"Ocultar":"Ver apontamentos"}</Button>
+          <Button variant="outline" className="min-h-11" onClick={()=>selecionar(r.id)}> {r.id===relatorio?"Ocultar":"Ver apontamentos"}</Button>
         </div>
       </li>)}
     </ul>
     {relatorios&&relatorios.total>PAGINA_HISTORICO&&<div className="flex gap-2">
-      <Button variant="outline" disabled={offset===0} onClick={()=>{setOffset(o=>Math.max(0,o-PAGINA_HISTORICO));setRelatorio(null);}}>Anterior</Button>
+      <Button variant="outline" disabled={offset===0} onClick={()=>{setOffset(o=>Math.max(0,o-PAGINA_HISTORICO));setRelatorio(null);setApontamentos([]);limparTratamento();}}>Anterior</Button>
       <span className="text-sm">Página {Math.floor(offset/PAGINA_HISTORICO)+1}</span>
-      <Button variant="outline" disabled={offset+PAGINA_HISTORICO>=relatorios.total} onClick={()=>{setOffset(o=>o+PAGINA_HISTORICO);setRelatorio(null);}}>Próxima</Button>
+      <Button variant="outline" disabled={offset+PAGINA_HISTORICO>=relatorios.total} onClick={()=>{setOffset(o=>o+PAGINA_HISTORICO);setRelatorio(null);setApontamentos([]);limparTratamento();}}>Próxima</Button>
     </div>}
     {relatorio&&<div className="space-y-2" aria-label="Apontamentos do relatório">
       <h3 className="font-medium">Apontamentos registrados</h3>
-      {apontamentos.length===0&&<p className="text-sm text-muted-foreground">Nenhum apontamento localizado. Revise o conteúdo original, inclusive itens sem marcadores.</p>}
+      {lendoAp?<p role="status" className="text-sm">Carregando apontamentos da página…</p>:
+        apontamentos.length===0&&!erro&&<p className="text-sm text-muted-foreground">Nenhum apontamento localizado. Revise o conteúdo original, inclusive itens sem marcadores.</p>}
       {apontamentos.map(a=><div key={a.id} className="space-y-2 rounded-lg border border-border p-3">
         <p className="text-sm font-medium">{a.item??"Item sem número"}: {a.problema}</p>
         <p className="text-xs text-muted-foreground">Página {a.fonte_pagina??"não informada"} · {a.fundamento??"Fundamento não informado"}</p>
         <p className="text-xs">Respostas: {a.respostas.length} · Desfechos: {a.desfechos.length}</p>
-        <Button className="min-h-11" variant="outline" onClick={()=>setEmEdicao(emEdicao===a.id?null:a.id)}>Registrar tratamento</Button>
+        <Button className="min-h-11" variant="outline" disabled={salvando} onClick={()=>{limparTratamento();setEmEdicao(emEdicao===a.id?null:a.id);}}>Registrar tratamento</Button>
         {emEdicao===a.id&&<div className="space-y-2">
           <label className="block text-sm">Resposta<textarea className={CAMPO} rows={3} value={resposta} onChange={e=>setResposta(e.target.value)}/></label>
           <label className="block text-sm">Desfecho<textarea className={CAMPO} rows={3} value={desfecho} onChange={e=>setDesfecho(e.target.value)}/></label>
           <label className="block text-sm">Fundamentação<textarea className={CAMPO} rows={2} value={fundamento} onChange={e=>setFundamento(e.target.value)}/></label>
-          <Button className="min-h-11" disabled={!resposta.trim()&&!desfecho.trim()} onClick={()=>void guardar(a.id)}>Salvar resposta/desfecho</Button>
+          <Button className="min-h-11" disabled={salvando||(!resposta.trim()&&!desfecho.trim())} onClick={()=>void guardar(a.id)}>{salvando?"Salvando…":"Salvar resposta/desfecho"}</Button>
         </div>}
       </div>)}
+      {totalAp>PAGINA_HISTORICO&&<nav aria-label="Páginas de apontamentos" className="flex flex-wrap items-center gap-3">
+        <Button type="button" variant="outline" className="min-h-11"
+          disabled={lendoAp||paginaAp===0} onClick={()=>{setPaginaAp(p=>Math.max(0,p-PAGINA_HISTORICO));limparTratamento();}}>Anterior</Button>
+        <span role="status" className="text-sm text-muted-foreground">
+          Apontamentos {Math.min(paginaAp+1,totalAp)}–{Math.min(paginaAp+PAGINA_HISTORICO,totalAp)} de {totalAp}
+        </span>
+        <Button type="button" variant="outline" className="min-h-11"
+          disabled={lendoAp||paginaAp+PAGINA_HISTORICO>=totalAp}
+          onClick={()=>{setPaginaAp(p=>p+PAGINA_HISTORICO);limparTratamento();}}>Próxima</Button>
+      </nav>}
     </div>}
   </div>;
 }
