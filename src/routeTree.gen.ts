@@ -35,6 +35,7 @@ import { Route as ContratosIdRegrasRouteImport } from './routes/contratos_.$id_.
 import { Route as CompetenciasIdApresentacoesApresentacaoIdRouteImport } from './routes/competencias_.$id_.apresentacoes_.$apresentacaoId'
 import { Route as ContratosIdCompetenciasNovaRouteImport } from './routes/contratos_.$id_.competencias_.nova'
 import { Route as ContratosIdDocumentosIdDocumentoRouteImport } from './routes/contratos_.$id_.documentos_.$idDocumento'
+import { Route as ContratosIdHistoricoImportarRouteImport } from './routes/contratos_.$id_.historico_.importar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -172,6 +173,12 @@ const ContratosIdDocumentosIdDocumentoRoute =
     path: '/contratos/$id/documentos/$idDocumento',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ContratosIdHistoricoImportarRoute =
+  ContratosIdHistoricoImportarRouteImport.update({
+    id: '/contratos_/$id_/historico_/importar',
+    path: '/contratos/$id/historico/importar',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/competencias/$id/apresentacoes/$apresentacaoId': typeof CompetenciasIdApresentacoesApresentacaoIdRoute
   '/contratos/$id/competencias/nova': typeof ContratosIdCompetenciasNovaRoute
   '/contratos/$id/documentos/$idDocumento': typeof ContratosIdDocumentosIdDocumentoRoute
+  '/contratos/$id/historico/importar': typeof ContratosIdHistoricoImportarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -228,6 +236,7 @@ export interface FileRoutesByTo {
   '/competencias/$id/apresentacoes/$apresentacaoId': typeof CompetenciasIdApresentacoesApresentacaoIdRoute
   '/contratos/$id/competencias/nova': typeof ContratosIdCompetenciasNovaRoute
   '/contratos/$id/documentos/$idDocumento': typeof ContratosIdDocumentosIdDocumentoRoute
+  '/contratos/$id/historico/importar': typeof ContratosIdHistoricoImportarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -257,6 +266,7 @@ export interface FileRoutesById {
   '/competencias_/$id_/apresentacoes_/$apresentacaoId': typeof CompetenciasIdApresentacoesApresentacaoIdRoute
   '/contratos_/$id_/competencias_/nova': typeof ContratosIdCompetenciasNovaRoute
   '/contratos_/$id_/documentos_/$idDocumento': typeof ContratosIdDocumentosIdDocumentoRoute
+  '/contratos_/$id_/historico_/importar': typeof ContratosIdHistoricoImportarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/competencias/$id/apresentacoes/$apresentacaoId'
     | '/contratos/$id/competencias/nova'
     | '/contratos/$id/documentos/$idDocumento'
+    | '/contratos/$id/historico/importar'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/competencias/$id/apresentacoes/$apresentacaoId'
     | '/contratos/$id/competencias/nova'
     | '/contratos/$id/documentos/$idDocumento'
+    | '/contratos/$id/historico/importar'
   id:
     | '__root__'
     | '/'
@@ -343,6 +355,7 @@ export interface FileRouteTypes {
     | '/competencias_/$id_/apresentacoes_/$apresentacaoId'
     | '/contratos_/$id_/competencias_/nova'
     | '/contratos_/$id_/documentos_/$idDocumento'
+    | '/contratos_/$id_/historico_/importar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -372,6 +385,7 @@ export interface RootRouteChildren {
   CompetenciasIdApresentacoesApresentacaoIdRoute: typeof CompetenciasIdApresentacoesApresentacaoIdRoute
   ContratosIdCompetenciasNovaRoute: typeof ContratosIdCompetenciasNovaRoute
   ContratosIdDocumentosIdDocumentoRoute: typeof ContratosIdDocumentosIdDocumentoRoute
+  ContratosIdHistoricoImportarRoute: typeof ContratosIdHistoricoImportarRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -558,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContratosIdDocumentosIdDocumentoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contratos_/$id_/historico_/importar': {
+      id: '/contratos_/$id_/historico_/importar'
+      path: '/contratos/$id/historico/importar'
+      fullPath: '/contratos/$id/historico/importar'
+      preLoaderRoute: typeof ContratosIdHistoricoImportarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -589,6 +610,7 @@ const rootRouteChildren: RootRouteChildren = {
     CompetenciasIdApresentacoesApresentacaoIdRoute,
   ContratosIdCompetenciasNovaRoute: ContratosIdCompetenciasNovaRoute,
   ContratosIdDocumentosIdDocumentoRoute: ContratosIdDocumentosIdDocumentoRoute,
+  ContratosIdHistoricoImportarRoute: ContratosIdHistoricoImportarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
