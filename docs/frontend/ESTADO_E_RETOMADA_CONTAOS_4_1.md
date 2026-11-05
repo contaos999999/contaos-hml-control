@@ -3,6 +3,15 @@
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
 
 
+## CHECKPOINT HML — V1-22: CONEXÃO CORRIGIDA, SMOKE SQL PASS; CERTIFICAÇÃO FUNCIONAL PENDENTE (04/11/2026, 21h08 Brasília)
+
+- **Resultado comprovado:** [workflow V1-22 HML #9, run 41939010108](https://github.com/contaos999999/contaos-hml-control/actions/runs/41939010108), job `homologacao` ID `126954685454`, `completed/success` no SHA `f7213bcec06deb0392ee9a4f56408b79d28c0326`. Preflight de URI PASS; conexão e autenticação Supabase HML por `SELECT 1` PASS; script SQL `tests/hml/v1-22-historico-smoke.sql` PASS: três funções existentes, cron `contaos-worker-historico-v1-22` ativo, `BEGIN`/`ROLLBACK`. Nenhum dado de teste persistido pelo script.
+- **Evidência institucional em GitHub:** `docs/frontend/auditorias/V1_22_HML_SMOKE_2026-11-04.md`. O run NÃO publicou artifact; logs permanecem vinculados ao Actions e sujeitos a retenção.
+- **Limite técnico:** smoke de presença de RPCs e cron **NÃO é execução real de upload, fila, worker, OCR/IA, segurança multiusuário ou E2E autenticado**. **V1-22 NÃO CERTIFICADO; V1 NÃO CERTIFICADA.** Ensaio RLS HML A/B segue facultativo após prompt 99 e não bloqueante isoladamente, conforme P0, sem dispensar os demais requisitos.
+- **Última etapa funcional comprovadamente integrada:** 42/V1-21, PR #62; PR #68 apenas corrigiu a validação de conexão do workflow. **Próxima tarefa:** continuar o PLAN/GATE do regular **43/V1-22** antes de BUILD frontend; depois regular **75/V1-23** e certificação V1 com provas retrospectivas 00–42. **Proibido iniciar V2 ou alterar PROD** sem a certificação/aprovação exigida.
+
+---
+
 ## CHECKPOINT P0 — NOVA REGRA CANÔNICA DE PRIORIDADE ZERO POR VERSÃO (04/11/2026)
 
 **Decisão expressa do titular:** desenvolver **por VERSÃO, e não pela ordem dos números dos prompts**, mantendo obrigatórios **100/100 regulares 00–99** e **97/97 atômicos 000–096**, com certificação a cada etapa V1→V2→V3→V4→V5 e certificação GLOBAL/GO-NO-GO só ao final. P0 não autoriza redução de RLS, BRAND, segurança, TypeScript, GOV-020, 25 fontes, Zero-Drift, CI, Teste C, RNF nem aprovação humana exigida.
