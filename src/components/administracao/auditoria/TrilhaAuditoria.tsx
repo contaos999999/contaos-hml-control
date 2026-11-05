@@ -66,7 +66,7 @@ export function TrilhaAuditoria() {
     <nav aria-label="Paginação da auditoria" className="flex items-center gap-4">
       <button className="rounded border px-3 py-2 disabled:opacity-50" disabled={pagina === 0 || consulta.isFetching} onClick={() => setPagina(p => Math.max(0, p - 1))}>Anterior</button>
       <span aria-live="polite">Página {pagina + 1}</span>
-      <button className="rounded border px-3 py-2 disabled={consulta.isFetching || !consulta.data || (pagina + 1) * 25 >= consulta.data.total} onClick={() => setPagina(p => p + 1)}>Próxima</button>
+      <button className="rounded border px-3 py-2" disabled={consulta.isFetching || !consulta.data || (pagina + 1) * 25 >= consulta.data.total} onClick={() => setPagina(p => p + 1)}>Próxima</button>
     </nav>
   </main>;
 }
