@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.plan.v1",
   "prompt_id": "75",
   "status": "EM_VALIDACAO",
-  "plano_documento": "docs/frontend/planos/P0_SIDEBAR_APPSHELL_V1_PLAN_2026-11-05.md",
+  "plano_documento": "docs/frontend/planos/P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md",
   "validacao": {
     "resultado": "PENDENTE",
     "validado_por": "",
@@ -37,9 +37,11 @@
     "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
     "docs/frontend/auditorias/P0_SIDEBAR_APPSHELL_V1_TESTES_2026-11-05.md",
     "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md",
-    "src/lib/administracao/admUsuariosRpc.ts"
+    "src/lib/administracao/admUsuariosRpc.ts",
+    "docs/frontend/planos/PLANO_ATIVO.json",
+    "docs/frontend/planos/P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md"
   ],
-  "observacao": "Correção da fronteira ADR-DEV-002: frontend não autoriza migrations/RPC SQL, mesmo com allowlist. Plano EM_VALIDACAO e gates pendentes. Nova RPC deve ser planejada/versionada no repositório backend canônico contaos999999/develop, com autorização humana quando exigida. Frontend pode consumir contrato apenas após implantação comprovada no HML. PROD proibido.",
+  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
@@ -119,14 +121,21 @@
     "plan_pr": 75,
     "plan_ci_run": 41948962744,
     "prompt_original_hash_verified": true,
-    "backend_hml_test_run": 41939010108
+    "backend_hml_test_run": 41939010108,
+    "unified_plan_pr": 130,
+    "unified_plan_ci": 42013946647,
+    "fe_be_audit_pr": 131,
+    "fe_be_audit_ci": 42014564846
   },
   "unverified_operational": [
     "V1-23: teste real de autorização/isolamento HML — NÃO VERIFICADO",
     "V1-23: auditoria visual e teclado WCAG — NÃO VERIFICADO",
     "V1-23: Teste C do BUILD autenticado — NÃO VERIFICADO",
     "V1: Sidebar/AppShell global e requisitos transversais — PENDENTES",
-    "V1-23: RPC de capacidade de auditoria e testes A/B autenticados — NÃO EXECUTADOS"
+    "V1-23: RPC de capacidade de auditoria e testes A/B autenticados — NÃO EXECUTADOS",
+    "V1-23 RPC backend certificada condicionalmente por simulação, PR #49; não equivale a JWT/RLS autenticada",
+    "V1-23 FE: novo wrapper RPC e capacidades separadas ainda aguardam BUILD",
+    "V1 inteira: certificação não concedida"
   ],
   "p0_note": "PLAN documental VALIDADO, condicionado a CI verde do PR de validação. BUILD separado e posterior ao merge. V1 não certificada."
 }
