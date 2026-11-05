@@ -33,8 +33,8 @@ export function TrilhaAuditoria() {
     queryKey: ["v1-23", org, pagina, evento, entidade, idUsuario, correlationId, inicio, fim],
     queryFn: () => obterEventosAuditoria({
       idOrganizacao: org!, pagina, evento, entidade, idUsuario, correlationId,
-      dataInicial: inicio ? new Date(inicio + "T00:00:00-03:00").toISOString() : undefined,
-      dataFinal: fim ? new Date(fim + "T23:59:59-03:00").toISOString() : undefined,
+      ...(inicio ? { dataInicial: new Date(inicio + "T00:00:00-03:00").toISOString() } : {}),
+      ...(fim ? { dataFinal: new Date(fim + "T23:59:59-03:00").toISOString() } : {}),
     }),
     enabled: !!org, retry: false,
   });
