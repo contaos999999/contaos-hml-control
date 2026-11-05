@@ -5,6 +5,8 @@ on:
     paths:
       - '.github/workflows/contaos-v1-evidence-release.yml'
   workflow_dispatch: {}
+  schedule:
+    - cron: '17 11 1 * *'
 
 permissions:
   contents: read
@@ -15,7 +17,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.repository == 'contaos999999/contaos-hml-control' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'schedule' && github.repository == 'contaos999999/contaos-hml-control' && github.ref == 'refs/heads/main'
     name: Arquivar Teste C em Release privada e testar recuperacao
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -86,4 +88,34 @@ jobs:
             echo "Somente telas publicas; homologacao autenticada nao executada."
             echo ""
             cat "$RUNNER_TEMP/restore/SHA256SUMS"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  verify-monthly:
+    if: github.event_name == 'schedule' && github.repository == 'contaos999999/contaos-hml-control' && github.ref == 'refs/heads/main'
+    name: Conferir integridade mensal de Release privada (somente leitura)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: contaos-v1-testc-evidence-20261105
+    steps:
+      - name: Baixar todos os assets e validar SHA256SUMS sem escrita
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/restore"
+          gh release download "$TAG" --dir "$RUNNER_TEMP/restore"
+          test "$(find "$RUNNER_TEMP/restore" -maxdepth 1 -name 'ContaOS_TestC_*.zip' | wc -l)" -eq 2
+          (
+            cd "$RUNNER_TEMP/restore"
+            test -s SHA256SUMS
+            sha256sum --check SHA256SUMS
+          )
+          {
+            echo "### Integridade mensal P0 V1: PASS"
+            echo "Release privada verificada em $(date -u '+%Y-%m-%dT%H:%M:%SZ')."
+            echo "Dois ZIPs de Teste C + manifesto, sem escrita e sem dados reais."
           } >> "$GITHUB_STEP_SUMMARY"
