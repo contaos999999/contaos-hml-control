@@ -1,28 +1,28 @@
 {
   "schema": "contaos.frontend.plan.v1",
   "prompt_id": "75",
-  "status": "VALIDADO",
+  "status": "EM_VALIDACAO",
   "plano_documento": "docs/frontend/planos/P0_SIDEBAR_APPSHELL_V1_PLAN_2026-11-05.md",
   "validacao": {
-    "resultado": "PASS",
-    "validado_por": "Conferência normativa e de escopo P0; validação somente documental, sem certificação operacional",
+    "resultado": "PENDENTE",
+    "validado_por": "",
     "validado_em": "2026-11-05",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": false,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41962457399",
+    "ci_plano_url": "",
     "gates": {
-      "prd": "PASS",
-      "premissas": "PASS",
-      "arquitetura": "PASS",
-      "atomicos": "PASS",
-      "brand": "PASS",
-      "seguranca": "PASS",
-      "nfr": "PASS",
-      "zero_drift": "PASS",
-      "tdd": "PASS",
-      "ci": "PASS",
-      "teste_c_planejado": "PASS",
-      "rollback": "PASS"
+      "prd": "PENDENTE",
+      "premissas": "PENDENTE",
+      "arquitetura": "PENDENTE",
+      "atomicos": "PENDENTE",
+      "brand": "PENDENTE",
+      "seguranca": "PENDENTE",
+      "nfr": "PENDENTE",
+      "zero_drift": "PENDENTE",
+      "tdd": "PENDENTE",
+      "ci": "PENDENTE",
+      "teste_c_planejado": "PENDENTE",
+      "rollback": "PENDENTE"
     }
   },
   "arquivos_permitidos": [
@@ -36,9 +36,11 @@
     "src/components/administracao/usuarios/AdminUsuarios.tsx",
     "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
     "docs/frontend/auditorias/P0_SIDEBAR_APPSHELL_V1_TESTES_2026-11-05.md",
-    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
+    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md",
+    "src/lib/administracao/admUsuariosRpc.ts",
+    "supabase/migrations/20261105095500_auditoria_capacidade_v1.sql"
   ],
-  "observacao": "Plano transversal P0 da sidebar/AppShell V1, aguardando validação formal; BUILD não autorizado. CI de governança #93 41961117302 verificado (dois jobs SUCCESS); rollback do PLAN documentado no plano P0. Demais gates permanecem pendentes, não há liberação BUILD. PLAN de correção transversal V1: prompt_id 75 preservado como âncora do catálogo existente, sem reclassificar o escopo original. Gates de planejamento aprovados; testes de BUILD, autorização HML, WCAG e certificação V1 ainda pendentes.",
+  "observacao": "Ampliação de escopo proposta para autorização de auditoria V1: RPC pública read-only, frontend de capacidades e testes. NÃO autoriza DDL direto em HML ou PROD. BUILD somente após PLAN validado, CI verde e migração versionada. V1 ainda não certificada.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
@@ -107,7 +109,7 @@
   },
   "impacto_visual": "SIM",
   "impacto_visual_justificativa": "Nova tela de auditoria V1-23; Teste C, WCAG e visual de BUILD exigidos em quatro larguras e dois temas; sem aprovação operacional antecipada.",
-  "backend_changes_allowed": false,
+  "backend_changes_allowed": true,
   "prod_changes_allowed": false,
   "source_proof": {
     "frontend_baseline": "48ff81d804247bfa48be93afcfcaa947c48ecd0d",
@@ -124,7 +126,8 @@
     "V1-23: teste real de autorização/isolamento HML — NÃO VERIFICADO",
     "V1-23: auditoria visual e teclado WCAG — NÃO VERIFICADO",
     "V1-23: Teste C do BUILD autenticado — NÃO VERIFICADO",
-    "V1: Sidebar/AppShell global e requisitos transversais — PENDENTES"
+    "V1: Sidebar/AppShell global e requisitos transversais — PENDENTES",
+    "V1-23: RPC de capacidade de auditoria e testes A/B autenticados — NÃO EXECUTADOS"
   ],
   "p0_note": "PLAN documental VALIDADO, condicionado a CI verde do PR de validação. BUILD separado e posterior ao merge. V1 não certificada."
 }
