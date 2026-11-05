@@ -1,3 +1,21 @@
+## CHECKPOINT P0 — 05/11/2026: 488 itens, evidência íntegra e segurança estrutural HML
+
+**Baselines provados:** frontend main antes deste PR `c5893df43d8038ed91a113410e26097507ab1594` (BUILD #158); backend fonte `contaos999999/develop@3aa4af7a292b80243045e0a426ee6399ba948ff2`; HML `gklhhhyosgasnyoxlrui`. PROD intocada.
+
+**PLAN/BUILD/CI:**
+- PLAN #157, merge `1bd1314`, CI 42054005968 2 checks SUCCESS. BUILD #158, merge `c5893df`, CI 42055040063 2 checks SUCCESS; CI posmerge main 42055439865 2 checks SUCCESS.
+- Matriz `docs/frontend/auditorias/P0_V1_RASTREABILIDADE_COMPLETA_2026-11-05.json`: 45 regulares V1 (00–43 e 75); 416 critérios originais legados (00–38); mais 72 critérios **normalizados** (12 para cada um dos seis prompts finais), total 488. 25 requisitos BRAND/atômicos V1, mais 12 NFR transversais. **Critérios finais normalizados não equivalem à transcrição literal dos outros cinco prompts.** Nenhum item indevidamente certificado. Gate `scripts/p0-v1-traceability-gate.mjs` integrado com 15 autotestes, incluindo negativas de duplicidade, falta de fonte, certificação artificial e perda de itens.
+- Release privada `contaos-v1-testc-evidence-20261105`, 3 ativos, restaurados por SHA-256. Job 42049252141 SUCCESS (gravação/recuperação), job pós-merge 42055439763 SUCCESS; verificações de integridade mensal adicionais com três SHA fixos agora versionadas, mas **execução mensal ainda não comprovada**. Biblioteca `/ContaOS/Evidencias/Teste-C/` possui originais de dois ZIPs recuperados e conferidos.
+- Auto-Lock GOV-011: ensaio real em branches descartáveis, tentativa 3 de run 41805167363, jobs SUCCESS; PR temporário #148 fechado sem merge, branches limpas; não foi provocado drift na main.
+- Segurança HML: 32 funções públicas SECURITY DEFINER, 0 executáveis por `anon`, 9 executáveis por `authenticated`; 8 negativas diretas SQL 42501 e ACL negada para a nona (ferramenta bloqueou tentativa). Bucket `contaos-documentos` privado; zero tabelas sem RLS em `public`/`storage`; policy Storage SELECT restringe authenticated, arquivo fora de quarentena e escopo; view `v_central_excecoes_financeiras` com `security_invoker=true`. Advisor: 9 WARN das RPCs privilegiadas intencionais; um WARN de senhas vazadas no plano Free, **excetuado apenas esse recurso, não tratado como corrigido**.
+- Documento detalhado: `docs/frontend/auditorias/P0_V1_SEGURANCA_RPC_HML_2026-11-05.md`; matriz finais `docs/frontend/auditorias/P0_V1_CRITERIOS_FINAIS_E_LIMITES_2026-11-05.md`; custódia `docs/frontend/auditorias/P0_V1_AUTOLOCK_RECUPERACAO_CUSTODIA_2026-11-05.md`.
+
+**Última etapa comprovadamente concluída:** indexação V1 45/488/37, CI/documentação e controle de custódia, validação estrutural de ACL/RLS/Storage, Auto-Lock isolado. **Não concluída:** certificação funcional irrestrita da V1, autorização por sessões reais de perfis, WCAG/telas privadas, recuperação de senha SYS-03 e NFRs práticos. Não dispensar esses critérios sem aprovação expressa específica. Três únicas ressalvas autorizadas R-01 upload E2E real; R-02 processamento worker real; R-03 isolamento real entre usuários.
+
+**Próxima tarefa:** concluir **provas operacionais fora das três ressalvas** por identidades sintéticas autenticadas HML e evidências de CI/Teste C, fechar as provas específicas dos 488 itens conforme aplicabilidade; executar testes NFR não dependentes de R01/R02/R03, recuperar SYS-03, WCAG privado e critérios de segurança perfil/JWT. Só então emitir `CERTIFICADA_V1_COM_3_RESSALVAS` mediante PR/CI/merge verificado. V2 e PROD continuam bloqueados pelo gate P0. Não repetir os BUILDs já integrados.
+
+---
+
 ## CHECKPOINT P0 — 05/11/2026: matriz, segurança, Auto-Lock e custódia automática
 
 **HEAD comprovado antes deste checkpoint:** frontend main `5ac459af0aef68e1a82ab36cc656726d1f15f836`; backend develop main `3aa4af7a292b80243045e0a426ee6399ba948ff2`; Supabase HML `gklhhhyosgasnyoxlrui`, PROD intocada.

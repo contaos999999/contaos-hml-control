@@ -55,3 +55,22 @@ Os resultados não equivalem a E2E JWT e nem a prova de bloqueio de todos os per
 
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 Auditoria somente leitura, sem impacto em BRAND-01, sem build Lovable, sem toques em HML/PROD, types imutável. Evidência por função acima é reprodutível com `pg_proc`, `has_function_privilege` e consultas controladas; nenhum token/senha armazenado.
+
+## Extensão da inspeção HML — storage, views e funções (05/11/2026)
+
+Consulta read-only efetuada no Supabase HML `gklhhhyosgasnyoxlrui`. Nenhuma migration, operação de escrita, alteração de configuração ou exposição de segredo.
+
+| Controle observado | Resultado verificado | Limitação |
+| --- | --- | --- |
+| Funções SECURITY DEFINER no schema public | 32 funções; 0 executáveis por `anon`; 9 executáveis por `authenticated` | Nem todas executadas com JWT real; 9 avisos do Advisor permanecem por desenho |
+| Storage documental | Único bucket `contaos-documentos`, `public=false` | Bucket privado não prova, sozinho, autorização de download |
+| Storage.objects | RLS ativo; policy `contaos_storage_select` somente para `authenticated`, vinculando bucket e tabela de arquivos, bloqueando `quarentena`/`bloqueado` e verificando escopo por helper privado | Revisão de expressão `qual` foi parcial; teste real de arquivo e autorização continua pendente |
+| Tabelas `public` + `storage` | Zero tabelas sem RLS na consulta | Não substitui ensaio por perfil/tenant |
+| Views `public` | `v_central_excecoes_financeiras` com `security_invoker=true` | Sem autorização real testada |
+| Supabase Security Advisor | 9 WARN `authenticated_security_definer_function_executable` e 1 WARN `auth_leaked_password_protection`; sem Critical reportado | A presença de WARN intencionais não significa ausência de outros riscos |
+| Senha vazada | Recurso nativo desativado no plano Free; **exceção expressa do titular** | NÃO marcar corrigido; requer plano Pro ou equivalente disponível |
+
+A negativa `anon` das nove RPCs foi comprovada por ACL, oito também por chamada SQL `42501`; o nono teste dinâmico foi bloqueado pela ferramenta. Leitura estática de guards e negativas `authenticated` sem JWT constam das seções anteriores. Nenhuma destas verificações autoriza declarar teste multiusuário R-03, token real ou revogação efetiva de sessão.
+
+**Fechamento estrutural de segurança:** `CONFORMIDADE_OBSERVADA_NAS_CONFIGURACOES_VERIFICADAS`. **Fechamento funcional de segurança:** `PENDENTE_JWT_HML_REAL_E_CENARIOS_NEGATIVOS_POR_PERFIL`. Preservar prioridade P0 e não certificar V1 integralmente com base apenas neste dossiê.
+
