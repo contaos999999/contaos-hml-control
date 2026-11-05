@@ -601,3 +601,15 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 - PR #114 integrado, CI 41998471755 SUCCESS; revalidação de sessão e permissões ao voltar à aba visível.
 - **Evidência limitada:** CI verde e testes estáticos não comprovam WCAG em navegador, HML autenticado, revogação imediata de acesso, isolamento multi-tenant, upload/worker reais ou homologação.
 - **Última etapa comprovada:** PR #114 integrado à main com CI verde. **Próxima tarefa:** testes comportamentais de sidebar, revisão visual responsiva/BRAND-01, HML autenticado e isolamento entre organizações; registrar evidências reais antes de certificar V1. Nenhuma certificação ou avanço V2 autorizado.
+
+## Regra canônica P0 — compatibilidade frontend/backend antes de PLAN (05/11/2026)
+Decisão expressa do titular: todo prompt/requisito frontend V1–V5 deve ser confrontado com implementação real do backend Supabase HML **antes de aprovação do PLAN ou BUILD**. Matriz por requisito, contrato e evidência verificável. Se faltar backend, **NO-GO**, informar alternativas ao titular: ampliar backend sob autorização específica ou adequar frontend ao backend **sem violar PRD**. Somente o titular decide. Revalidar em mudanças de contrato; não presumir que CI frontend certifica backend. Regra incluída no template de PLAN do frontend.
+### Evidências recentes
+- PR #123, HEAD `9b21c38d`, CI `42004648753` SUCCESS, merged.
+- PR #124, HEAD `9286dffb`, CI `42005441734` SUCCESS, merged.
+- PR #125, HEAD `19e1667e`, CI `42005966081` SUCCESS, merged.
+- PR #126, HEAD `c80a7147`, CI `42006482450` SUCCESS, merged; tentativa de expandir allowlist backend no frontend **não autorizou SQL**.
+- PR #127, HEAD `901e47ea`, CI `42006913109` SUCCESS, merged; restabeleceu fronteira ADR-DEV-002.
+- PR #128, HEAD `120b5e8f`, CI `42007393616` SUCCESS, merged; documentou NO-GO de RPC de auditoria.
+### Última etapa comprovada e próxima
+Última etapa: documentação da divergência entre RLS de `eventos_auditoria` (admin/auditor/jurídico) e navegação (admin), mais bloqueio de backend no manifesto ativo, comprovados. **Próxima:** aprovar e integrar regra P0 do gate FE↔BE; depois, obter decisão expressa do titular sobre a lacuna de autorização da Auditoria antes de PLAN/BUILD correspondente. Nenhuma migration de auditoria foi executada neste fluxo. V1 não certificada; testes autenticados A/B e evidências operacionais ainda pendentes.
