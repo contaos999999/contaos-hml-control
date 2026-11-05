@@ -4,24 +4,25 @@
   "status": "VALIDADO",
   "plano_documento": "docs/frontend/planos/PROMPT_75_V1_23_TRILHA_AUDITORIA_PLAN_2026-11-04.md",
   "validacao": {
-    "resultado": "PASS_DOCUMENTAL_COM_RESSALVAS",
-    "validado_por": "Revisão de PLAN literal, RLS documental e CI do PR #75",
+    "resultado": "PASS",
+    "validado_por": "Revisão documental do PLAN e gates de planejamento; não certifica operação HML nem BUILD",
     "validado_em": "2026-11-04",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": false,
     "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41948962744",
     "gates": {
-      "prd": "PASS_DOCUMENTAL",
-      "premissas": "PASS_DOCUMENTAL",
-      "arquitetura": "PASS_DOCUMENTAL",
-      "atomicos": "PASS_DOCUMENTAL",
-      "brand": "PENDENTE_TESTE_TRANSVERSAL",
-      "seguranca": "PENDENTE_TESTE_HML",
-      "nfr": "PENDENTE_TESTE",
-      "zero_drift": "PASS_CI",
-      "tdd": "PENDENTE_BUILD",
-      "ci": "PASS_CI_PLAN",
-      "teste_c_planejado": "PASS_CI_PLAN"
+      "prd": "PASS",
+      "premissas": "PASS",
+      "arquitetura": "PASS",
+      "atomicos": "PASS",
+      "brand": "PASS",
+      "seguranca": "PASS",
+      "nfr": "PASS",
+      "zero_drift": "PASS",
+      "tdd": "PASS",
+      "ci": "PASS",
+      "teste_c_planejado": "PASS",
+      "rollback": "PASS"
     }
   },
   "arquivos_permitidos": [
@@ -67,14 +68,13 @@
     "20_PROMPT_000_BRAND_01.md"
   ],
   "prompt_crosswalk": {
-    "regular_prompt_id": "43",
+    "regular_prompt_id": "75",
     "direct_atomic_ids": [
       "000",
-      "006",
-      "007",
-      "008",
-      "009",
-      "010"
+      "020",
+      "021",
+      "022",
+      "023"
     ],
     "additional_transversal_atomic_ids": [
       "085",
@@ -90,11 +90,7 @@
       "095",
       "096"
     ],
-    "exclusoes_justificadas": {
-      "085": "Infraestrutura stateless é requisito backend; frontend não muda instâncias de workers nesta tela.",
-      "086": "Pool PostgreSQL é pré-existente e não alterado em tela; validar via infraestrutura, não por mock.",
-      "090": "Estrutura/consumidor de fila dedicado HML preexistente, execução real de worker dispensada pelo titular."
-    },
+    "exclusoes_justificadas": {},
     "source_evidence_missing": false,
     "regular_original_sha256": "8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e",
     "atomic_original_sha256": "d9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8"
@@ -105,7 +101,7 @@
     "required_section": "ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE"
   },
   "impacto_visual": "SIM",
-  "impacto_visual_justificativa": "Nova rota de importação sob Design System oficial; validar 1440/1280/768/390 claro/escuro e Teste C, estados sem credenciais reais classificados NÃO VERIFICADOS.",
+  "impacto_visual_justificativa": "Nova tela de auditoria V1-23; Teste C, WCAG e visual de BUILD exigidos em quatro larguras e dois temas; sem aprovação operacional antecipada.",
   "backend_changes_allowed": false,
   "prod_changes_allowed": false,
   "source_proof": {
@@ -114,15 +110,16 @@
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
     "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
-    "plan_pr": 71,
-    "plan_ci_run": 41940708299,
+    "plan_pr": 75,
+    "plan_ci_run": 41948962744,
     "prompt_original_hash_verified": true,
     "backend_hml_test_run": 41939010108
   },
   "unverified_operational": [
-    "Upload real autenticado — NÃO EXECUTADO POR DECISÃO DO TITULAR",
-    "Processamento real ponta a ponta pelo worker — NÃO EXECUTADO POR DECISÃO DO TITULAR",
-    "Isolamento operacional entre usuários e organizações HML A/B — NÃO EXECUTADO POR DECISÃO DO TITULAR; facultativo após regular 99, não bloqueante isolado"
+    "V1-23: teste real de autorização/isolamento HML — NÃO VERIFICADO",
+    "V1-23: auditoria visual e teclado WCAG — NÃO VERIFICADO",
+    "V1-23: Teste C do BUILD autenticado — NÃO VERIFICADO",
+    "V1: Sidebar/AppShell global e requisitos transversais — PENDENTES"
   ],
-  "p0_note": "P0 versão primeiro. 43 é próximo regular. Testes operacionais dispensados não cancelam outras exigências nem certificam V1-22; depois do 43 executar 75/V1-23 antes de V2."
+  "p0_note": "GATE documental do PROMPT 75. PASS refere-se aos gates de planejamento, não aos testes reais HML, isolamento, Sidebar, acessibilidade nem certificação V1."
 }
