@@ -1,0 +1,5 @@
+# PLAN P0 V1 — segunda copia de evidencias
+05/11/2026. Emenda ao PLAN #149. Autorizar somente um workflow novo em `.github/workflows/contaos-v1-evidence-release.yml` para copiar os Testes C ja gerados nas runs 42024620823 e 42026795811 para uma Release privada do proprio repositorio, verificar SHA256SUMS, baixar novamente e comparar SHA. O workflow deve executar apenas em main por mudanca no seu proprio arquivo ou manualmente, exigir `contents:write` em job isolado, nao expor segredos, nao sobrescrever arquivos de release existentes e nao alterar src, Supabase, Auth ou PROD. Registrar a evidencia no doc de custodia via outro PR apos executar; se as permissoes impedirem, documentar o bloqueio. Nao confundir copia com homologacao de telas privadas, WORM ou independencia completa do provedor.
+Rollback por PR. BRAND-01 mantida. Teste C usual e Zero-Drift inalterados.
+## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+Sem impacto UI, sem recursos Lovable.
