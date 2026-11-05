@@ -81,3 +81,22 @@ Conferir inventário completo das rotas e arquivos de navegação, fontes normat
 | Fonte canônica | Snapshot `CONTEXT_CANONICO_4_1_SNAPSHOT.json`, commit normativo `c2bf86d011da6bfd3abaa70de38e7a722ae629de`; Prompt 75 mapeado a 000/020/021/022/023 | Não alterar catálogo, não alegar que sidebar é escopo original do 75; requisito transversal P0 | Conferência estrutural, leitura normativa individual pendente |
 
 **Limite de evidência:** inspeção estática e CI do PLAN não comprovam autorização real em HML, isolamento entre usuários, WCAG, nem cobertura dos 25 documentos canônicos. Manter gates pendentes até comprovação específica. A exigência de PLAN VALIDADO em commit anterior ao BUILD permanece integral.
+
+## Conferência de acesso às 25 fontes canônicas (05/11/2026)
+Foram recuperados via GitHub, na revisão normativa fixa `c2bf86d011da6bfd3abaa70de38e7a722ae629de`, os 25 documentos listados em `PLANO_ATIVO.json.context_documents_read`: 00, 01, 02, 03, 04, 05, 06, 07, 08, 08A, 08B, 08C, 08D, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 e 20. Não houve erro de recuperação nesta rodada.
+
+**Evidências normativas pertinentes, conferidas no texto recuperado:**
+- `00_AI_LEIA_ANTES_DE_ALTERAR.md`: bloqueia alterações antes da leitura integral do pacote canônico.
+- `01_PRD_MESTRE_4_1.md`: autorização no backend, nunca somente na interface.
+- `03_ARQUITETURA_OFICIAL_4_1.md`: não contornar autorização; preservar fronteiras arquiteturais.
+- `05_BACKEND_SUPABASE_CERTIFICADO_4_1.md`: backend certificado não deve ser recriado ou simplificado sem requisito e autorização.
+- `06_FRONTEND_LOVABLE_ESPECIFICACAO_4_1.md`: navegação por teclado, autorização e BRAND-01 transversal estritamente visual.
+- `07_ZERO_DRIFT_GOVERNANCA_4_1.md`: Plan Mode antes do Build, escopo fechado e frontend não é autoridade de segurança.
+- `08D_REQUISITOS_073_096_4_1.md` e `11_RNF_PERFORMANCE_CONCORRENCIA_RESILIENCIA_4_1.md`: transferência autorizada e isolamento do Storage, sem alterações neste PLAN.
+- `12_PROMPTS_PROTOCOLO_IMPLEMENTACAO_4_1.md`: prompts não autorizam reinterpretar PRD; BRAND-01 não altera rotas, regras ou autenticação.
+- `14_CHECKLIST_PRE_ALTERACAO.md`: autorização backend efetiva e alterações de RLS/DDL/Auth dependem de autorização específica.
+- `18_SCHEMA_RLS_EDGE_QUEUES_CRON_4_1.md`: leitura não implica autorização para aprovação.
+- `19_IDENTIDADE_VISUAL_OFICIAL_BRAND_1_0.md`: marca complementa o pacote 4.1, sem prevalecer sobre arquitetura, navegação ou acessibilidade.
+- `20_PROMPT_000_BRAND_01.md`: marca exclusivamente visual, proibição de mudanças funcionais no escopo BRAND-01.
+
+**Distinção de evidências:** a recuperação das 25 fontes e a identificação de trechos relevantes não substituem auditoria semântica integral item a item, nem comprovam testes autenticados de RLS ou autorização. O plano transversal de navegação não deve ser rotulado como BUILD do BRAND-01 isolado; precisa de autorização funcional de navegação específica. O `prompt_id=75` é âncora técnica herdada, não prova de correspondência funcional da sidebar. Até resolução dessa lacuna de rastreabilidade, manter `PLANO_ATIVO.json` como `EM_VALIDACAO` e gates pendentes. Não iniciar BUILD.
