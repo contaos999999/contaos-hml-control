@@ -10,7 +10,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { verificarAcessoOrganizacao } from "@/lib/contratantes/contratantesDados";
 import { ErroContratos, formatarMoeda, formatarVigencia, listarContratos, type Contrato } from "@/lib/contratos/contratosDados";
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 export const MENSAGENS_V104 = {
   verificando: "Verificando sessão…",
@@ -140,7 +139,7 @@ export function ListaContratos() {
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <ContaOSMarca />
+            
           </div>
           <nav aria-label="Navegação" className="flex flex-wrap gap-2">
             <Button asChild variant="secondary" className="h-11"><Link to="/">Painel</Link></Button>
