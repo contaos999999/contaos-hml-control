@@ -4,12 +4,12 @@
   "status": "VALIDADO",
   "plano_documento": "docs/frontend/planos/P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md",
   "validacao": {
-    "resultado": "VALIDADO",
-    "validado_por": "Auditoria documental de PLAN, gates de planejamento, não certificação de BUILD",
+    "resultado": "PASS",
+    "validado_por": "PLAN validado por gates canônicos, evidência CI PR #138 42019842121; não certifica BUILD",
     "validado_em": "2026-11-05",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": false,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42019273683",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42019842121",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
