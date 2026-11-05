@@ -1,3 +1,15 @@
+## CHECKPOINT P0 — 05/11/2026: rastreabilidade V1, seguranca e Auto-Lock (BUILD)
+
+- PLAN exclusivo **#149**, main-base `3b64605185a1cc13cf98edc242d615150d46cd0b`, CI PLAN `42046272466` SUCCESS e merge confirmado. BUILD documental na branch `build/p0-v1-ledger-security-autolock-20261105`; **não elevar para merge/certificado sem dois checks verdes no SHA final**.
+- Matriz `docs/frontend/auditorias/P0_V1_RASTREABILIDADE_COMPLETA_2026-11-05.json`: inventário de **45 regulares 00–43 + 75**, **416 critérios originais 00–38**, **25 atômicos BRAND-01/001–024** e **12 NFR 085–096** com status e fontes. Isso fecha indexação mas não transforma as 134 provas ausentes nem 250 parciais em testes realizados. Seis prompts finais ainda exigem prova literal critério a critério.
+- Segurança Supabase HML: `docs/frontend/auditorias/P0_V1_SEGURANCA_RPC_HML_2026-11-05.md`; 9/9 ACL bloqueiam anon, 8/9 negativas SQL diretas retornaram 42501, uma tentativa bloqueada pela ferramenta; quatro helpers privados não executáveis por authenticated. Sem DDL; nove avisos Security Definer monitorados, não falsamente “corrigidos”; aviso leaked-password **fora do escopo** no plano Free.
+- Auto-Lock GOV-011 rerun 41805167363 attempt 3 SUCCESS, bot PR temporário #148 fechado sem merge; tipos em main não alterados. Docs: `docs/frontend/auditorias/P0_V1_AUTOLOCK_RECUPERACAO_CUSTODIA_2026-11-05.md`.
+- Dois ZIP Teste C arquivados em `/ContaOS/Evidencias/Teste-C/` e restaurados com hashes externos/internos idênticos; backup institucional independente (Release privada) ainda a comprovar, não imputar WORM.
+- **V1 status ainda NO-GO para certificado integral ou “somente R01–R03”**: seguem SYS-03 email, WCAG privado, testes operacionais/seguranca autenticada, NFR, demais provas individuais. **V2 BLOQUEADA**, PROD inalterada. Apenas R-01 upload E2E, R-02 worker E2E, R-03 isolamento entre usuários têm ressalva aceita; nenhuma exceção nova.
+- Próxima tarefa: confirmar CI/merge deste BUILD, arquivar release privada sob emenda PLAN específica e retomar B-01/B-02/B-04/B-07; não repetir auditorias já evidenciadas.
+
+---
+
 ## CHECKPOINT P0 — 05/11/2026 03:56 America/Bahia — PR #108, foco móvel
 
 - PR #108 `build/p0-sidebar-mobile-focus-v1`: HEAD anterior `4936223b5295e48748d98d1236177fe9564c1b71`, run `41980265900`: Zero-Drift FAILURE (TypeScript TS18048 em `ContaOSAppShell.tsx`, variáveis `primeiro` e `ultimo` possivelmente indefinidas); Teste C SUCCESS. **Não houve merge desse HEAD falho.**
