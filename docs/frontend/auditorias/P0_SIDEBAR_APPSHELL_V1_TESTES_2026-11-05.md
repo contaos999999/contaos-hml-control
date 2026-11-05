@@ -60,3 +60,22 @@ Inspeção de `contaos999999/develop` em `main`, sem mutações:
 - `docs/tasks/active-task.json`: tarefa `RNF-AUD-001-STATIC-20261104` em fase `build_estatico_sem_servicos`, `database_changes_allowed=false`, `rls_changes_allowed=false`, `auth_changes_allowed=false`; `supabase/**` está em `forbidden_paths`. A autorização histórica para funções V1-17 é específica e **não** abrange uma nova RPC de auditoria.
 - `05_BACKEND_SUPABASE_CERTIFICADO_4_1.md` e `docs/CERTIFICACAO_BACKEND_HML_4_1.md` registram certificação anterior e exigem mudanças incrementais e testes de restore. Esses registros históricos não comprovam a nova capacidade.
 **Decisão NO-GO:** não criar migration nem executar DDL usando a tarefa RNF atual. Abrir PLAN backend dedicado, após conferência de 25 documentos e validação do gate/autorização humana específica quando exigida; preservar a tarefa RNF em andamento sem sobrescrever seu manifesto. Não alterar frontend até contrato HML novo estar certificado. **A V1 segue não certificada.**
+
+## Auditoria consolidada V1 — rodada do plano mestre PR #130 (05/11/2026)
+**Baseline verificado:** PR #130 merged, CI 42013946647 SUCCESS. `PLANO_ATIVO.json` ainda aponta prompt 75, status `EM_VALIDACAO`; **não** promover a BUILD sem gate de escopo e matriz canônica concluída.
+
+### Matriz FE ↔ BE — lacuna objetiva V1-23
+| Requisito | FE main inspecionado | Backend HML comprovado | Veredito |
+|---|---|---|---|
+| Menu Usuários admin-only | `ContaOSAppShell.tsx` usa `validarAdministrador` e `MENU_ADMIN_V1` | `validar_administrador_organizacao` | PASS de contrato; E2E não verificado |
+| Menu Auditoria admin/auditor/jurídico | Mesmo boolean `administrador` controla os dois links no desktop e móvel | `pode_consultar_auditoria_organizacao(uuid)` implantada HML, PR backend #49 certificação condicionada | **FAIL funcional FE**: auditor e jurídico sem link |
+| Transporte de capacidade Auditoria | `admUsuariosRpc.ts` só contém `validarAdministrador`; não possui wrapper para nova RPC | RPC `authenticated`, retorna boolean e falha fechada | **FAIL funcional FE** |
+| Sessão/org invalidation | AppShell incrementa geração no SIGNED_IN/OUT, USER_UPDATED, visibilidade, pathname; revalida admin | Sessão ativa e vínculos são exigidos pelo backend | PASS estático; comportamento concorrente E2E não verificado |
+| RLS de eventos de Auditoria | Trilha consulta dados, não deve inferir autorização pelo menu | `eventos_select` por admin/auditor/jurídico e sessão ativa | PASS estrutural backend; RLS autenticada A/B não executada |
+
+### Correção agrupada sob plano mestre, sem BUILD prematuro
+1. Separar capacidades `podeGerenciarUsuarios` e `podeConsultarAuditoria`, adicionando wrapper RPC boolean estrito, erro = false, sem tocar backend.
+2. Desktop e móvel: menu Usuários somente admin, Auditoria admin/auditor/jurídico; invalidar ambos em sessão, organização e respostas obsoletas.
+3. Criar testes comportamentais de permissões, A/B, foco/teclado, rota direta, race e falha RPC; preservar marca BRAND-01.
+4. Primeiro atualizar/validar `PLANO_ATIVO.json` e allowlist, confirmar catálogo 100/97 e HEAD canônico, aprovar PLAN pelo CI; depois BUILD agrupado. Sem prova de backend para outra função, NO-GO e consulta ao titular.
+5. Persistem como NÃO VERIFICADO: WCAG em navegador, upload/worker real, HML JWT A/B, restore, recuperação Auto-Lock e sincronização Lovable. A dispensa expressa anterior cobre **somente** certificação condicionada V1-23 backend, não esses itens automaticamente.
