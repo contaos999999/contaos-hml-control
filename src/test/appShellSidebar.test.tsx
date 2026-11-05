@@ -25,11 +25,14 @@ describe("P0 sidebar — invariantes de sessao e acessibilidade", () => {
     expect(codigo).toContain("setRevisaoSessao((atual) => atual + 1)");
     expect(codigo).toContain("[pathname, revisaoSessao]");
     expect(codigo).toContain("setAdministrador(false)");
+    expect(codigo).toContain("setAuditoriaPermitida(false)");
   });
   it("mantem administracao condicionada ao retorno da verificacao", () => {
     const codigo = lerShell();
     expect(codigo).toContain("validarAdministrador(organizacao).catch(() => false)");
     expect(codigo).toContain("setAdministrador(autorizado === true)");
+    expect(codigo).toContain("podeConsultarAuditoria(organizacao).catch(() => false)");
+    expect(codigo).toContain("setAuditoriaPermitida(auditoriaAutorizada === true)");
     expect(codigo).toContain("aria-expanded={movelAberto}");
     expect(codigo).toContain("aria-controls=\"contaos-menu-movel\"");
   });
@@ -42,6 +45,7 @@ describe("P0 sidebar — protecao contra respostas de autenticacao antigas", () 
     expect(codigo).toContain("geracao === geracaoAutenticacao.current");
     expect(codigo).toContain("if (!sessaoAtual() || error || !data.user) return");
     expect(codigo).toContain("if (sessaoAtual()) setAdministrador(autorizado === true)");
+    expect(codigo).toContain("if (sessaoAtual()) setAuditoriaPermitida(auditoriaAutorizada === true)");
   });
 });
 
@@ -69,6 +73,7 @@ const mocks = vi.hoisted(() => ({
   pathname: "/",
   getUser: vi.fn(),
   validarAdministrador: vi.fn(),
+  podeConsultarAuditoria: vi.fn(),
   obterPreferencia: vi.fn(),
   onAuthStateChange: vi.fn(),
 }));
@@ -88,6 +93,7 @@ vi.mock("@/lib/organizacao/preferenciaOrganizacao", () => ({
 }));
 vi.mock("@/lib/administracao/admUsuariosRpc", () => ({
   validarAdministrador: mocks.validarAdministrador,
+  podeConsultarAuditoria: mocks.podeConsultarAuditoria,
 }));
 
 describe("P0 sidebar — testes DOM reais do modal", () => {
@@ -96,6 +102,7 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
     mocks.getUser.mockReset().mockResolvedValue({ data: { user: { id: "usuario-teste" } }, error: null });
     mocks.obterPreferencia.mockReset().mockReturnValue("org-teste");
     mocks.validarAdministrador.mockReset().mockResolvedValue(false);
+    mocks.podeConsultarAuditoria.mockReset().mockResolvedValue(false);
     mocks.onAuthStateChange.mockReset().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } });
     document.body.style.overflow = "";
   });
@@ -165,5 +172,22 @@ describe("P0 sidebar — concorrência de autorização e responsividade", () =>
       cleanup();
       Object.defineProperty(window, "matchMedia", { configurable: true, value: original });
     }
+  });
+});
+
+
+describe("P0 V1-23 — capacidades independentes", () => {
+  it("exibe Auditoria para auditor sem liberar Usuários", async () => {
+    mocks.validarAdministrador.mockResolvedValue(false);
+    mocks.podeConsultarAuditoria.mockResolvedValue(true);
+    render(<ContaOSAppShell><div>Área de trabalho</div></ContaOSAppShell>);
+    await waitFor(() => expect(screen.getAllByRole("link", { name: "Auditoria" }).length).toBeGreaterThan(0));
+    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+  });
+  it("não exibe Auditoria quando RPC de capacidade falha", async () => {
+    mocks.podeConsultarAuditoria.mockRejectedValue(new Error("falha"));
+    render(<ContaOSAppShell><div>Área de trabalho</div></ContaOSAppShell>);
+    await waitFor(() => expect(mocks.podeConsultarAuditoria).toHaveBeenCalled());
+    expect(screen.queryByRole("link", { name: "Auditoria" })).not.toBeInTheDocument();
   });
 });

@@ -796,14 +796,14 @@ describe("ADM-01 varredura de código (zero drift)", () => {
     expect(fonte).not.toMatch(/console\./);
   });
 
-  it("usa somente as 5 RPCs oficiais e a Edge admin-invite-user", () => {
+  it("usa somente as 6 RPCs oficiais, incluindo capacidade read-only de Auditoria, e a Edge admin-invite-user", () => {
     const nomes = [...fonte.matchAll(/"([a-z_]+_(?:adm|organizacao))"/g)].map((x) => x[1]);
     expect(fonte.match(/supabase\.rpc/g)).toHaveLength(1);
     expect(fonte.match(/functions\.invoke\(/g)).toHaveLength(1);
     expect([...fonte.matchAll(/invoke\(\s*"([^"]+)"/g)].map((x) => x[1])).toEqual(["admin-invite-user"]);
     expect(fonte).not.toMatch(/adm01-v1|auth\.users/);
     expect(new Set(nomes)).toEqual(
-      new Set(["validar_administrador_organizacao", "listar_usuarios_vinculos_adm", "listar_escopo_contratos_usuario_adm", "listar_auditoria_vinculo_usuario_adm", "salvar_vinculo_usuario_adm"]),
+      new Set(["validar_administrador_organizacao", "listar_usuarios_vinculos_adm", "listar_escopo_contratos_usuario_adm", "listar_auditoria_vinculo_usuario_adm", "salvar_vinculo_usuario_adm", "pode_consultar_auditoria_organizacao"]),
     );
   });
 });
