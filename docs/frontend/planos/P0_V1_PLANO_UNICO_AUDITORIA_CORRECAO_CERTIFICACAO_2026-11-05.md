@@ -70,3 +70,9 @@ Data: 05/11/2026. Autorização expressa do titular: executar em **uma rodada co
 - Visual: preservar BRAND-01, verificar 1440/1280/768/390 em claro e escuro, foco, teclado, contraste e drawer. Sem evidência visual, não certificar.
 - Rollback: reverter exclusivamente o commit/PR frontend da correção; nenhuma reversão de banco.
 - Decisão: não confundir planejamento aprovado com testes executados. Gates sem prova permanecem PENDENTE; BUILD somente após PLANO_ATIVO VALIDADO em commit anterior e CI verde.
+
+## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+- Reutilizar ContaOS Brand v1.0 e componentes existentes. Não modificar assets, paleta, logos, estilos globais nem criar segunda identidade.
+- Escopo mínimo: corrigir autorização de menu e rota V1-23 usando RPC HML existente; nenhum backend, migration, RLS, segredo, tipo certificado ou PROD.
+- Economizar chamadas Lovable por implementação agrupada, preservando Design System, responsividade e acessibilidade. Nenhum atalho reduz gates, testes ou rastreabilidade.
+- Evidências: PR #138, CI 42019842121, backend HEAD 3aa4af7a292b80243045e0a426ee6399ba948ff2; testes reais de BUILD ainda não executados.
