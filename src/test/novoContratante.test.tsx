@@ -55,8 +55,6 @@ import { Route } from "@/routes/contratantes_.novo";
 
 const U = "user-1";
 const ORG = "org-1";
-const passado = "2020-01-01T00:00:00Z";
-const futuro = "2099-01-01T00:00:00Z";
 const org = (perfil: string, id = ORG) => ({ id, razao_social: "Org", nome_fantasia: null, cnpj: null, situacao: "ativa", perfil });
 
 function montar() {
@@ -144,11 +142,11 @@ describe("V1-02 gate UX via RPC autenticada", () => {
     montar();
     expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
   });
-  it("RPC 42501 nega e 500 falha fechada com retry", async () => {
+  it("RPC 42501 nega sem expor formulário", async () => {
     m.rpc.mockResolvedValue({ data: null, error: { code: "42501" } });
     montar();
     expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
-
+    expect(screen.queryByLabelText(/Razão social/)).toBeNull();
   });
   it("vinculoPermiteCadastro exige perfil autorizado", () => {
     expect(vinculoPermiteCadastro(org("administrador_master"))).toBe(true);
