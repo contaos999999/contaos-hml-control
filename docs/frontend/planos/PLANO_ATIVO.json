@@ -39,9 +39,10 @@
     "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md",
     "src/lib/administracao/admUsuariosRpc.ts",
     "docs/frontend/planos/PLANO_ATIVO.json",
-    "docs/frontend/planos/P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md"
+    "docs/frontend/planos/P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md",
+    "src/test/admUsuarios.test.tsx"
   ],
-  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Gate CI do plano mestre e matriz de aceite comprovado; demais gates permanecem PENDENTE e BUILD bloqueado. Escopo agrupado documentado, gate ainda condicionado à conferência canônica e CI; não alterar código sem validação. Snapshot reancorado no HEAD backend pós-RPC sem alteração dos 25 blobs normativos. Demais gates ainda exigem evidência. Gates PASS significam somente validação do planejamento do Prompt 75, com TDD e Teste C planejados, não executados; BUILD requer CI verde deste PR antes de iniciar.",
+  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Gate CI do plano mestre e matriz de aceite comprovado; demais gates permanecem PENDENTE e BUILD bloqueado. Escopo agrupado documentado, gate ainda condicionado à conferência canônica e CI; não alterar código sem validação. Snapshot reancorado no HEAD backend pós-RPC sem alteração dos 25 blobs normativos. Demais gates ainda exigem evidência. Gates PASS significam somente validação do planejamento do Prompt 75, com TDD e Teste C planejados, não executados; BUILD requer CI verde deste PR antes de iniciar. Emenda documental P0 (05/11/2026): teste de regressão preexistente ADM-01 precisa refletir a sexta RPC pública somente-leitura para capacidade da Auditoria. Caminho adicionado à allowlist para BUILD posterior a esta emenda validada por CI; não altera permissões, RLS, backend, identidade visual ou PROD. Testes e bloqueios negativos permanecem exigidos.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
@@ -136,7 +137,10 @@
     "backend_changed_files": 5,
     "normative_changed_files": 0,
     "backend_reanchor_pr": 137,
-    "backend_reanchor_ci": 42019273683
+    "backend_reanchor_ci": 42019273683,
+    "amendment_reason": "Vitest 3/883: dois asserts com nome legado e varredura ADM-01 com 5 RPCs; autorizar teste ADM-01 no PLAN antes de reaplicar BUILD",
+    "amendment_prior_failed_run": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42023225551",
+    "amendment_status": "PENDENTE_CI"
   },
   "unverified_operational": [
     "V1-23: teste real de autorização/isolamento HML — NÃO VERIFICADO",
