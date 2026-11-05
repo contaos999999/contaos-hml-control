@@ -123,3 +123,47 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
     expect(screen.queryByRole("link", { name: "Auditoria" })).not.toBeInTheDocument();
   });
 });
+
+describe("P0 sidebar — concorrência de autorização e responsividade", () => {
+  it("não exibe administração enquanto RPC está pendente e libera somente após autorização", async () => {
+    let resolver!: (valor: boolean) => void;
+    mocks.validarAdministrador.mockImplementation(() => new Promise<boolean>((resolve) => { resolver = resolve; }));
+    render(<ContaOSAppShell><div>Área de trabalho</div></ContaOSAppShell>);
+    await screen.findByRole("button", { name: "Abrir menu" });
+    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+    resolver(true);
+    await waitFor(() => expect(screen.getAllByRole("link", { name: "Usuários" }).length).toBeGreaterThan(0));
+  });
+
+  it("mantém menu administrativo oculto quando a RPC falha", async () => {
+    mocks.validarAdministrador.mockRejectedValue(new Error("indisponível"));
+    render(<ContaOSAppShell><div>Área de trabalho</div></ContaOSAppShell>);
+    await screen.findByRole("button", { name: "Abrir menu" });
+    await waitFor(() => expect(mocks.validarAdministrador).toHaveBeenCalled());
+    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+  });
+
+  it("fecha o diálogo ao mudar para viewport desktop e libera o conteúdo", async () => {
+    const original = window.matchMedia;
+    let aoMudar: ((evento: { matches: boolean }) => void) | undefined;
+    Object.defineProperty(window, "matchMedia", { configurable: true, value: vi.fn(() => ({
+      matches: false,
+      addEventListener: (_nome: string, cb: (evento: { matches: boolean }) => void) => { aoMudar = cb; },
+      removeEventListener: vi.fn(),
+    })) });
+    try {
+      render(<ContaOSAppShell><button type="button">Conteúdo</button></ContaOSAppShell>);
+      const abrir = await screen.findByRole("button", { name: "Abrir menu" });
+      fireEvent.click(abrir);
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
+      const { act } = await import("@testing-library/react");
+      await act(async () => { aoMudar?.({ matches: true }); });
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(abrir).not.toHaveAttribute("inert");
+      expect(document.body.style.overflow).toBe("");
+    } finally {
+      cleanup();
+      Object.defineProperty(window, "matchMedia", { configurable: true, value: original });
+    }
+  });
+});
