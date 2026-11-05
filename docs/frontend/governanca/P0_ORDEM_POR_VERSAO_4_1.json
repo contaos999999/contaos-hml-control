@@ -490,9 +490,11 @@
       "096"
     ],
     "proxima_versao_permitida": "V1",
-    "proximo_regular_a_planejar": "43",
-    "regulares_restantes_total": 57,
-    "regulares_pendentes_concluidos_com_evidencia": [],
+    "proximo_regular_a_planejar": "75",
+    "regulares_restantes_total": 56,
+    "regulares_pendentes_concluidos_com_evidencia": [
+      "43"
+    ],
     "certificados_por_versao": {
       "V1": {
         "status": "PENDENTE",
@@ -542,6 +544,26 @@
         "atomic_ids_comprovados": [],
         "regulares_comprovados": []
       }
+    },
+    "registro_43": {
+      "status": "BUILD_FRONTEND_INTEGRADO_COM_RESSALVAS",
+      "pr_build": 73,
+      "sha_build": "405266439d01d271dfaecaf4886e3859c41feb2f",
+      "sha_merge": "99e6fe9cb1b80cdd841665f781d48a0b3406233a",
+      "ci_build_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41943470748",
+      "vitest_pass": 865,
+      "test_c_combinacoes": 224,
+      "test_c_capturas": 24,
+      "teste_c_status": "PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA",
+      "tres_ensaios_nao_executados_por_decisao_do_titular": [
+        "upload autenticado real",
+        "worker histórico ponta a ponta real",
+        "isolamento real entre usuários e organizações"
+      ],
+      "desvio_worker_conhecido": "Extração conservadora baseada em marcadores textuais; cobertura integral de formatos e casos sem marcadores não demonstrada, requer revisão humana; não afirmar extração universal.",
+      "certificacao_v1": "PENDENTE",
+      "proximo": "75/V1-23 e revisão do legado 00-42; V2 bloqueada",
+      "producao": "PROIBIDA"
     }
   },
   "restricoes": {
