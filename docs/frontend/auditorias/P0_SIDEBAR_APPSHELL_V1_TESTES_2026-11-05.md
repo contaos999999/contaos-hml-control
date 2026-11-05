@@ -79,3 +79,10 @@ Inspeção de `contaos999999/develop` em `main`, sem mutações:
 3. Criar testes comportamentais de permissões, A/B, foco/teclado, rota direta, race e falha RPC; preservar marca BRAND-01.
 4. Primeiro atualizar/validar `PLANO_ATIVO.json` e allowlist, confirmar catálogo 100/97 e HEAD canônico, aprovar PLAN pelo CI; depois BUILD agrupado. Sem prova de backend para outra função, NO-GO e consulta ao titular.
 5. Persistem como NÃO VERIFICADO: WCAG em navegador, upload/worker real, HML JWT A/B, restore, recuperação Auto-Lock e sincronização Lovable. A dispensa expressa anterior cobre **somente** certificação condicionada V1-23 backend, não esses itens automaticamente.
+
+### Verificação HML direta após merge PR #132 — 05/11/2026
+Consulta somente leitura a `pg_proc` e `has_function_privilege` no projeto HML `gklhhhyosgasnyoxlrui` confirmou:
+- `public.pode_consultar_auditoria_organizacao`: existe, SECURITY INVOKER (`prosecdef=false`), STABLE (`provolatile=s`), EXECUTE authenticated=true, anon=false.
+- `public.validar_administrador_organizacao`: existe, SECURITY INVOKER, STABLE, EXECUTE authenticated=true, anon=false.
+- Ambas as capacidades possuem contrato backend existente; nenhum DDL foi executado. A autorização efetiva por JWT e o isolamento A/B **não foram comprovados** por essa consulta.
+- Gate de BUILD frontend permanece `EM_VALIDACAO` em `PLANO_ATIVO.json`; não alterar código antes de fechar as verificações canônicas, testes planejados e CI do PLAN. A correção deve reutilizar a RPC implantada, nunca ampliar privilégios.
