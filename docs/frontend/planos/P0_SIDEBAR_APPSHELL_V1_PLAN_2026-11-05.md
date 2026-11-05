@@ -70,3 +70,14 @@ Conferir inventário completo das rotas e arquivos de navegação, fontes normat
 - `PLANO_ATIVO.json` na main: `status=EM_VALIDACAO`, `validacao.resultado=PENDENTE`, doze gates `PENDENTE`; allowlist P0 fechada. **Os jobs acima validam o commit de governança, não o BUILD da sidebar.**
 - **Pendências antes de marcar VALIDADO:** (1) confrontar cada requisito e cada permissão com as 25 fontes canônicas e crosswalk 100/97, (2) revisar o vínculo do plano transversal com `prompt_id=75` sem falsear escopo original, (3) demonstrar gates de planejamento individuais, (4) registrar URL de CI do PLAN e aprovação conforme política, (5) fechar estratégia de autorização e de cabeçalhos. Nenhum gate individual é considerado PASS por inferência do CI.
 - **Rollback do PLAN:** reverter o commit de atualização do `PLANO_ATIVO.json` mediante PR e CI, restaurando o PLAN anterior se necessário. BUILD ainda proibido.
+
+## Matriz de rastreabilidade e autorização: inspeção de código (05/11/2026)
+| Item | Evidência no repositório | Regra para BUILD | Estado |
+|---|---|---|---|
+| BRAND-01 | `src/components/brand/ContaOSMarca.tsx`: horizontal branco transparente/navy por tema; símbolo branco/navy no mobile | Reutilizar arquivos oficiais; não modificar assets sem aprovação; conferir legibilidade na sidebar recolhida | Código inspecionado, visual pendente |
+| ADM-01 | `src/lib/administracao/admUsuariosRpc.ts`: classificação 401/403, 42501 e PGRST301 como acesso negado; backend/RLS autoridade | Exibir link administrativo somente após `validarAdministrador` ou política canônica equivalente; não inferir permissão da rota | Código inspecionado, HML pendente |
+| V1-23 | `src/lib/administracao/auditoriaDados.ts`: consulta `eventos_auditoria` filtrada por `id_organizacao`, erros 42501/PGRST301 tratados | Não mostrar link auditoria indiscriminadamente; confirmar matriz de papéis e RLS com teste autenticado entre organizações | Código inspecionado, matriz/HML pendentes |
+| Navegação | `src/routeTree.gen.ts`: 29 rotas; `__root.tsx` sem AppShell | Preservar rotas públicas, contexto de organização e 29 rotas existentes | Inventário concluído |
+| Fonte canônica | Snapshot `CONTEXT_CANONICO_4_1_SNAPSHOT.json`, commit normativo `c2bf86d011da6bfd3abaa70de38e7a722ae629de`; Prompt 75 mapeado a 000/020/021/022/023 | Não alterar catálogo, não alegar que sidebar é escopo original do 75; requisito transversal P0 | Conferência estrutural, leitura normativa individual pendente |
+
+**Limite de evidência:** inspeção estática e CI do PLAN não comprovam autorização real em HML, isolamento entre usuários, WCAG, nem cobertura dos 25 documentos canônicos. Manter gates pendentes até comprovação específica. A exigência de PLAN VALIDADO em commit anterior ao BUILD permanece integral.
