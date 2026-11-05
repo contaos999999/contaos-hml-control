@@ -29,3 +29,11 @@ Testes obrigatórios: testes automatizados unitários/de integração e regress�
 Rastreabilidade obrigatória no GitHub: para cada requisito, registrar matriz requisito -> implementação -> teste -> evidência -> commit -> PR -> run CI -> artefato, com dois checks obrigatórios SUCCESS no mesmo HEAD, Teste C independente e confirmação de merge. Não usar status PASS sem evidência verificável. Preservar os artefatos e indicar claramente qualquer limitação de retenção.
 
 **BLOQUEIO P0 DE CERTIFICAÇÃO:** V1 não pode ser certificada, homologada ou liberar V2 sem aprovação comprovada desse requisito transversal de menu/sidebar e acessibilidade, além de todos os demais critérios V1, auditoria retrospectiva e PRs integrados. O bloqueio persiste mesmo se PROMPT 75 passar isoladamente. Produção depende de autorização expressa posterior.
+
+
+## Verificação documental complementar (04/11/2026)
+- Catálogo normativo `docs/prompts/PROMPT_TRACKS_4_1.json`: mapeamento do regular 75 para V1-23 confirmado; o próprio catálogo declara `original_manual_docx_embedded_as_git_blob=false`. Portanto, **texto literal do regular original ainda NÃO COTEJADO** e GATE permanece bloqueado.
+- Migration `20261101205936_0002_identidade_organizacoes.sql`: `public.eventos_auditoria` possui `id`, `id_organizacao`, `id_usuario`, `origem`, `evento`, `entidade`, `id_entidade`, `antes`, `depois`, `metadados`, `correlation_id`, `criado_em`; índices por organização/data, entidade e correlação.
+- RLS documental: política `eventos_select` limita SELECT a perfis `administrador`, `auditor`, `juridico_conformidade` vinculados à organização. Migration `20261101211500_0015_hardening_seguranca_integridade.sql` cria trigger de imutabilidade em UPDATE/DELETE. **Não equivale a ensaio operacional de isolamento HML**.
+- Atenção ao escopo: tabela auditável é por organização; **não presumir filtro por contrato direto**, pois `id_contrato` não integra o esquema dessa tabela. Vínculo por entidade/metadados só após comprovar consulta segura e escopo sem vazamento. Os campos JSON `antes`, `depois`, `metadados` não devem ser expostos integralmente na UI sem política formal de redação.
+- CI do HEAD `cee73b75e532661844f021bfee7f5efa190e46e0`: run `41948048364` localizado em andamento durante a consulta. **Não declarar SUCCESS antes de conclusão e dois checks no mesmo HEAD**.
