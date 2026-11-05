@@ -9,19 +9,24 @@ const plan = (id) => ({ prompt_id: id, status: "VALIDADO" });
 const check = (m = clone(), p = plan("42"), paths = []) =>
   validateP0(m, p, paths);
 
-test("P0 — catálogo de 100 regulares e 97 atômicos, V1 ativa e 43 próximo", () => {
+test("P0 — catálogo 100/97, recibo integrado 43 e próximo 75/V1", () => {
   const result = check();
   assert.deepEqual(result.errors, []);
-  assert.equal(result.next, "43");
+  assert.equal(result.next, "75");
+  assert.deepEqual(original.controle.regulares_pendentes_concluidos_com_evidencia, ["43"]);
   assert.equal(result.pendingVersion, "V1");
 });
 
-test("P0 — permite PLAN 43/V1-22 antes da certificação V1", () => {
-  assert.deepEqual(check(clone(), plan("43")).errors, []);
+test("P0 — permite PLAN 43/V1-22 antes da certificação V1 e antes do próprio recibo", () => {
+  const m = clone();
+  m.controle.regulares_pendentes_concluidos_com_evidencia = [];
+  assert.deepEqual(check(m, plan("43")).errors, []);
 });
 
-test("P0 — bloqueia PLAN 75/V1-23 antes de concluir o 43", () => {
-  assert.match(check(clone(), plan("75")).errors.join(" "), /SALTO/);
+test("P0 — bloqueia PLAN 75/V1-23 sem recibo do 43", () => {
+  const m = clone();
+  m.controle.regulares_pendentes_concluidos_com_evidencia = [];
+  assert.match(check(m, plan("75")).errors.join(" "), /SALTO/);
 });
 
 test("P0 — permite PLAN 75 depois de recibo do regular 43", () => {
