@@ -3,11 +3,11 @@
  * O gate de vínculo é apenas UX; a autoridade é a RLS do INSERT em `contratantes`.
  */
 import { supabase } from "@/integrations/supabase/client";
-
 import { listarOrganizacoesDisponiveis, type OrganizacaoDisponivel } from "@/lib/auth/resolverDestinoPosLogin";
 
-export const PERFIS_CADASTRO = ["administrador_master", "administrador", "gestor_contrato"] as const;
-export type VinculoProprio = OrganizacaoDisponivel;
+export const PERFIS_CADASTRO = ["administrador", "gestor_contrato"] as const;
+
+export type VinculoProprio = { perfil: string; ativo: boolean; inicio_em: string; fim_em: string | null };
 
 export type FormularioContratante = {
   razaoSocial: string;
@@ -51,8 +51,41 @@ export function classificarErro(r: RespostaPg): ErroV102 {
   return new ErroV102("erro");
 }
 
+/** Gate UX: somente o próprio vínculo do usuário na organização preferida. */
+export async function consultarVinculoProprio(idOrganizacao: string, idUsuario: string): Promise<VinculoProprio | null> {
+  let r: { data: unknown; error: unknown; status?: number };
+  try {
+    r = await supabase
+      .from("vinculos_usuarios")
+      .select("perfil,ativo,inicio_em,fim_em")
+      .eq("id_organizacao", idOrganizacao)
+      .eq("id_usuario", idUsuario)
+      .maybeSingle();
+  } catch {
+    throw new ErroV102("erro");
+  }
+  if (r.error) {
+    const e = classificarErro(r);
+    throw e.tipo === "negado" ? e : new ErroV102("erro");
+  }
+  return (r.data as VinculoProprio | null) ?? null;
+}
+
+export function vinculoPermiteCadastro(v: VinculoProprio | null, agora: Date = new Date()): boolean {
+  if (!v || v.ativo !== true) return false;
+  if (!(PERFIS_CADASTRO as readonly string[]).includes(v.perfil)) return false;
+  const inicio = Date.parse(v.inicio_em);
+  if (Number.isNaN(inicio) || inicio > agora.getTime()) return false;
+  if (v.fim_em !== null) {
+    const fim = Date.parse(v.fim_em);
+    if (Number.isNaN(fim) || fim <= agora.getTime()) return false;
+  }
+  return true;
+}
+
+export type CapacidadeCadastro = OrganizacaoDisponivel;
 /** Gate UX exclusivamente pela RPC autenticada; o INSERT continua sob RLS. */
-export async function consultarVinculoProprio(idOrganizacao: string, _idUsuario: string): Promise<VinculoProprio | null> {
+export async function consultarCapacidadeCadastro(idOrganizacao: string, _idUsuario: string): Promise<CapacidadeCadastro | null> {
   try {
     const organizacoes = await listarOrganizacoesDisponiveis();
     if (!Array.isArray(organizacoes)) throw new ErroV102("erro");
@@ -64,9 +97,10 @@ export async function consultarVinculoProprio(idOrganizacao: string, _idUsuario:
   }
 }
 
-export function vinculoPermiteCadastro(v: VinculoProprio | null): boolean {
+export function capacidadePermiteCadastro(v: CapacidadeCadastro | null): boolean {
   return !!v && typeof v.id === "string" && (PERFIS_CADASTRO as readonly string[]).includes(v.perfil);
 }
+
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const TIPOS_PESSOA = ["juridica", "fisica", "orgao_publico", "outro"] as const;
