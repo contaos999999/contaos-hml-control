@@ -306,7 +306,15 @@ if (sourcePaths.length) {
       errors.push("Impacto visual N/A exige justificativa específica.");
     }
     for (const path of sourcePaths) {
-      if (!plan.arquivos_permitidos?.includes(path))
+      // GOV-020: a arvore e derivada exclusivamente das rotas aprovadas.
+      // A excecao e restrita ao artefato gerado, nunca a arquivos de codigo livres.
+      const arvoreGeradaAutorizada =
+        path === "src/routeTree.gen.ts" &&
+        sourcePaths.some((arquivo) =>
+          /^src\\/routes\\/.+\\.tsx$/.test(arquivo) &&
+          plan.arquivos_permitidos?.includes(arquivo),
+        );
+      if (!plan.arquivos_permitidos?.includes(path) && !arvoreGeradaAutorizada)
         errors.push("ARQUIVO FORA DO PLAN VALIDADO: " + path);
     }
     for (const path of plan.arquivos_permitidos || []) {
