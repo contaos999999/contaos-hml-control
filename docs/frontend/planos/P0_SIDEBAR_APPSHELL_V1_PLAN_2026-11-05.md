@@ -48,3 +48,10 @@ Conferir inventário completo das rotas e arquivos de navegação, fontes normat
 **Risco identificado:** `__root.tsx` não possui autenticação global, portanto o AppShell não pode presumir que toda rota diferente das quatro públicas está autorizada. Deve preservar verificações de sessão, organização e permissões existentes sem criar flash de conteúdo privado. Auditoria e administração devem ter autorização específica e não apenas ocultação de links.
 
 **Próxima checagem antes de VALIDADO:** conferir `routeTree.gen.ts` para a lista exata e os nomes das rotas dinâmicas, inspecionar proteção das rotas ADM, autorização por organização e componentes atuais de cabeçalho. Em seguida congelar allowlist do PLAN ativo e executar os gates de planejamento. Nenhuma implementação está autorizada por este inventário.
+
+## Conferência técnica da árvore gerada e das rotas ADM (05/11/2026)
+- `src/routeTree.gen.ts` contém **29 rotas** (incluindo raiz, rotas públicas e contextuais) e confirma os caminhos literais `/administracao/usuarios` e `/administracao/auditoria`.
+- As duas rotas administrativas usam `component: AdminUsuarios` e `component: TrilhaAuditoria` e `ssr: false`. A proteção não é declarada em `beforeLoad` nessas rotas; a autorização é delegada aos componentes e ao backend. O AppShell não deve assumir autorização administrativa com base apenas na URL.
+- `Dashboard.tsx` já contém cabeçalho próprio, marca, seleção de organização e ação de sair; migrar essas funções ao shell exige revisão de regressão e prevenção de cabeçalhos duplicados. Não remover proteções de sessão existentes sem cobertura equivalente.
+- O catálogo do menu deve usar **somente** as rotas estáticas existentes e evitar itens dinâmicos `/$id` sem contexto. Menu de Administração condicionado a permissões efetivamente verificadas; ocultação visual não concede nem revoga autorização.
+- **Pendente de comprovação:** inspeção completa das verificações de permissão dos componentes ADM, dos cabeçalhos das demais telas e matriz canônica de papéis. Não registrar PLAN VALIDADO nem iniciar BUILD antes disso.
