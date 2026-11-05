@@ -203,7 +203,7 @@ function Conteudo({ctx}:{ctx:Ctx}){
         <p className="text-sm text-muted-foreground">Formatos aceitos: {config.extensoes.join(", ").toUpperCase()}. O limite de tamanho e o tipo real são conferidos pelo backend.</p>}
       <label htmlFor="historico-arquivos" className="block text-sm font-medium">Arquivos históricos (seleção múltipla)</label>
       <input id="historico-arquivos" type="file" multiple className={CAMPO} disabled={!permitidos}
-        accept={permitidos?aceiteDe(config):undefined} onChange={adicionar}/>
+        accept={config && config!=="erro" ? aceiteDe(config) : undefined} onChange={adicionar}/>
       <p role="status" className="text-sm text-muted-foreground">{total===0?"Nenhum arquivo selecionado.":`${total} arquivo(s) selecionado(s).`}</p>
     </section>
     {itens.length>0&&<section className="space-y-3" aria-label="Arquivos selecionados">
