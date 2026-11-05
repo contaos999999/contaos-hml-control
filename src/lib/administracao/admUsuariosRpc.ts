@@ -136,6 +136,14 @@ export async function validarAdministrador(org: string): Promise<boolean> {
   return data;
 }
 
+/** Capacidade de consulta da auditoria, decidida exclusivamente no backend HML. */
+export async function podeConsultarAuditoria(org: string): Promise<boolean> {
+  const { data, error, status } = await rpc("pode_consultar_auditoria_organizacao", { p_id_organizacao: org });
+  if (error) throw new ErroAdm(classificarErroAdm("auditoria", error, status));
+  if (typeof data !== "boolean") throw new ErroAdm("erro");
+  return data;
+}
+
 export function listarUsuarios(org: string, p: { pagina: number; busca: string | null; ativo: boolean | null }) {
   return chamar<ListaUsuarios>(
     "listar_usuarios_vinculos_adm",
