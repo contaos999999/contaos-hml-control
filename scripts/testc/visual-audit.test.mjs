@@ -15,12 +15,12 @@ import {
   pixelContrastDecision,
 } from "./visual-audit.mjs";
 
-test("matriz oficial: 27 telas × 4 larguras × 2 temas", () => {
-  assert.equal(ROUTES.length, 27);
+test("matriz oficial: 28 telas × 4 larguras × 2 temas", () => {
+  assert.equal(ROUTES.length, 28);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
-  assert.equal(cases().length, 216);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 216);
+  assert.equal(cases().length, 224);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 224);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");
@@ -67,6 +67,18 @@ test("PROMPT 42: V121 privada integra matriz 216 sem inventar sessão HML", () =
   assert.equal(cases().filter((c) => c.id === "V121").length, 8);
   assert.equal(
     classifyProtected({ pathname: rota.path, text: "Histórico do contrato" }),
+    "NAO_VERIFICADO_SESSAO_REAL",
+  );
+});
+
+test("PROMPT 43: V122 integra Teste C privado 224 casos (sem upload/worker/isolamento real)", () => {
+  const rota = ROUTES.find((r) => r.id === "V122");
+  assert.ok(rota);
+  assert.equal(rota.path, "/contratos/00000000-0000-4000-8000-000000000001/historico/importar");
+  assert.notEqual(rota.public, true);
+  assert.equal(cases().filter((c) => c.id === "V122").length, 8);
+  assert.equal(
+    classifyProtected({ pathname: rota.path, text: "Importação de histórico" }),
     "NAO_VERIFICADO_SESSAO_REAL",
   );
 });

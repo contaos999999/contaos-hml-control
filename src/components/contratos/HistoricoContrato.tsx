@@ -214,6 +214,14 @@ function HistoricoConteudo({ contrato, ctx }: { contrato: ContratoDetalhe; ctx: 
         </Link>
       </Button>
     </div>
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-3">
+      <p className="flex-1 text-sm text-muted-foreground">Importar relatórios anteriores requer perfil de gestão e autorização do backend.</p>
+      <Button asChild variant="outline" className="min-h-11">
+        <Link to="/contratos/$id/historico/importar" params={{id:contrato.id}}>
+          Importar relatórios (gestão)
+        </Link>
+      </Button>
+    </div>
     <nav aria-label="Áreas do histórico" className="flex flex-wrap gap-2">
       {MENU.map(x => <Button key={x.aba} type="button" className="min-h-11"
         aria-pressed={aba === x.aba} variant={aba === x.aba ? "default" : "outline"}
