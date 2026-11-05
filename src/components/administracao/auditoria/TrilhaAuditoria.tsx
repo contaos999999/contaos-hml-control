@@ -4,7 +4,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { obterEventosAuditoria } from "@/lib/administracao/auditoriaDados";
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 export function TrilhaAuditoria() {
   const navigate = useNavigate();
@@ -46,7 +45,7 @@ export function TrilhaAuditoria() {
   ];
   const dataBr = (v: string) => new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "medium" }).format(new Date(v));
   return <main className="mx-auto max-w-7xl space-y-6 p-4 md:p-8">
-    <header className="space-y-2"><ContaOSMarca /><h1 className="text-2xl font-bold">Trilha de auditoria</h1>
+    <header className="space-y-2"><h1 className="text-2xl font-bold">Trilha de auditoria</h1>
       <p className="text-sm text-muted-foreground">Histórico de eventos da organização. Informações sensíveis não são exibidas.</p></header>
     <section aria-label="Filtros de auditoria" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {campos.map(c => <label key={c.nome} className="flex flex-col gap-1 text-sm">{c.nome}
