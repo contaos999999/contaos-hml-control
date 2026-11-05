@@ -26,3 +26,11 @@ Análise de código de `ContaOSAppShell.tsx`, `ContaOSSidebar.tsx`, `menuV1.ts`,
 
 ## Decisão de governança
 Regra de execução: **auditar integralmente → planejar integralmente → implementar em conjunto → testar integralmente → certificar com evidências**. Não fragmentar em PRs de ajustes isolados quando um conjunto compatível já puder ser previsto. Preservar PLAN/BUILD, gates Zero-Drift e sequência por V1, V2, V3, V4 e V5.
+
+## Inspeção complementar pós-PR #120 (05/11/2026)
+- PR #120 HEAD `406a2045631ab3ae283070be4334b7a33a3c71dd`, workflow `42002691495` SUCCESS, integrado à `main`. Isto comprova CI, **não** teste HML autenticado.
+- `OrganizationSelector.tsx` já valida a organização selecionada contra os vínculos retornados por `listarOrganizacoesDisponiveis()`, compara preferência anterior e executa `queryClient.clear()` ao trocar A→B. **Não implementar novamente esta limpeza**. Há, porém, lacuna de prova para navegação com requisições em voo, revalidação imediata do shell na mesma rota e isolamento real no backend.
+- `preferenciaOrganizacao.ts` mantém preferência de sessão vinculada ao ID de usuário e declara expressamente que não é fonte de autorização. Alteração desse arquivo não consta da allowlist P0 atual; requer PLAN atualizado e validado se necessária.
+- `TrilhaAuditoria.tsx` consulta `obterEventosAuditoria` com `idOrganizacao` e tratamento de erro, mas não invoca `validarAdministrador` explicitamente antes da consulta. A exibição do link no AppShell é condicionada ao RPC admin; a proteção efetiva da rota direta precisa de matriz canônica e RLS autenticado. Não inferir vulnerabilidade comprovada nem permissão por simples presença da URL.
+- A maior lacuna de qualidade dos testes permanece: `appShellSidebar.test.tsx` usa verificações estáticas de strings; não comprova foco real, autenticação concorrente, acessibilidade WCAG nem troca A/B. O próximo pacote deve priorizar testes comportamentais e autorização, **não** novos ajustes estéticos.
+- Decisão: **não** certificar V1 e **não** afirmar isolamento multi-tenant comprovado; agrupar eventual ampliação de allowlist em PLAN próprio antes do BUILD.
