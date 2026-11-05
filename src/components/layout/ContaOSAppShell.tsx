@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
+import { EVENTO_ORGANIZACAO_ALTERADA, obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { rotaSemSidebar } from "@/lib/navegacao/menuV1";
 import { ContaOSSidebar } from "./ContaOSSidebar";
 import { validarAdministrador, podeConsultarAuditoria } from "@/lib/administracao/admUsuariosRpc";
@@ -80,6 +80,19 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     };
     document.addEventListener("visibilitychange", revalidarAoRetomar);
     return () => document.removeEventListener("visibilitychange", revalidarAoRetomar);
+  }, []);
+  useEffect(() => {
+    const revalidarAoAlterarOrganizacao = () => {
+      // Invalida RPCs pendentes antes de iniciar qualquer consulta da nova organização.
+      geracaoAutenticacao.current += 1;
+      setLiberado(false);
+      setAdministrador(false);
+      setAuditoriaPermitida(false);
+      setMovelAberto(false);
+      setRevisaoSessao((atual) => atual + 1);
+    };
+    window.addEventListener(EVENTO_ORGANIZACAO_ALTERADA, revalidarAoAlterarOrganizacao);
+    return () => window.removeEventListener(EVENTO_ORGANIZACAO_ALTERADA, revalidarAoAlterarOrganizacao);
   }, []);
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((evento) => {

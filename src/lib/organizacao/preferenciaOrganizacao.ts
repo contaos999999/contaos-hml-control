@@ -6,6 +6,8 @@
  * deve revalidar o acesso pelo backend/RLS; este valor nunca concede acesso.
  */
 const CHAVE = "contaos.preferenciaOrganizacao";
+/** Apenas notificação local: jamais constitui autorização para ler dados. */
+export const EVENTO_ORGANIZACAO_ALTERADA = "contaos:organizacao-alterada" as const;
 
 type Preferencia = { idUsuario: string; idOrganizacao: string };
 
@@ -32,6 +34,10 @@ export function obterPreferenciaOrganizacao(idUsuario: string): string | null {
 export function definirPreferenciaOrganizacao(idUsuario: string, idOrganizacao: string): void {
   const s = storage();
   if (!s) return;
+  const anterior = obterPreferenciaOrganizacao(idUsuario);
   const v: Preferencia = { idUsuario, idOrganizacao };
   s.setItem(CHAVE, JSON.stringify(v));
+  if (anterior !== idOrganizacao) {
+    window.dispatchEvent(new Event(EVENTO_ORGANIZACAO_ALTERADA));
+  }
 }

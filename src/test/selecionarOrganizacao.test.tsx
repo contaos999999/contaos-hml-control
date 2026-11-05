@@ -32,6 +32,7 @@ import { OrganizationSelector, MENSAGENS_SYS04 } from "@/components/organizacao/
 import {
   definirPreferenciaOrganizacao,
   obterPreferenciaOrganizacao,
+  EVENTO_ORGANIZACAO_ALTERADA,
 } from "@/lib/organizacao/preferenciaOrganizacao";
 
 const U = "user-1";
@@ -256,5 +257,25 @@ describe("preferência local por usuário (não autoritativa)", () => {
   it("valor corrompido é ignorado", () => {
     sessionStorage.setItem("contaos.preferenciaOrganizacao", "{lixo");
     expect(obterPreferenciaOrganizacao("user-A")).toBeNull();
+  });
+});
+
+
+describe("P0 V1 — evento local de organização (sem conceder acesso)", () => {
+  it("notifica somente a mudança efetiva da preferência, nunca leitura ou repetição", () => {
+    const ouvir = vi.fn();
+    window.addEventListener(EVENTO_ORGANIZACAO_ALTERADA, ouvir);
+    try {
+      definirPreferenciaOrganizacao(U, "o1");
+      expect(ouvir).toHaveBeenCalledTimes(1);
+      expect(obterPreferenciaOrganizacao(U)).toBe("o1");
+      definirPreferenciaOrganizacao(U, "o1");
+      expect(ouvir).toHaveBeenCalledTimes(1);
+      definirPreferenciaOrganizacao(U, "o2");
+      expect(ouvir).toHaveBeenCalledTimes(2);
+      expect(obterPreferenciaOrganizacao(U)).toBe("o2");
+    } finally {
+      window.removeEventListener(EVENTO_ORGANIZACAO_ALTERADA, ouvir);
+    }
   });
 });

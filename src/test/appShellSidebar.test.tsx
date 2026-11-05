@@ -90,6 +90,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("@/lib/organizacao/preferenciaOrganizacao", () => ({
   obterPreferenciaOrganizacao: mocks.obterPreferencia,
+  EVENTO_ORGANIZACAO_ALTERADA: "contaos:organizacao-alterada",
 }));
 vi.mock("@/lib/administracao/admUsuariosRpc", () => ({
   validarAdministrador: mocks.validarAdministrador,
@@ -189,5 +190,42 @@ describe("P0 V1-23 — capacidades independentes", () => {
     render(<ContaOSAppShell><div>Área de trabalho</div></ContaOSAppShell>);
     await waitFor(() => expect(mocks.podeConsultarAuditoria).toHaveBeenCalled());
     expect(screen.queryByRole("link", { name: "Auditoria" })).not.toBeInTheDocument();
+  });
+});
+
+
+describe("P0 V1 — invalidação local imediata na troca de organização", () => {
+  beforeEach(() => {
+    mocks.pathname = "/";
+    mocks.getUser.mockReset().mockResolvedValue({ data: { user: { id: "usuario-teste" } }, error: null });
+    mocks.obterPreferencia.mockReset().mockReturnValue("org-teste");
+    mocks.validarAdministrador.mockReset().mockResolvedValue(false);
+    mocks.podeConsultarAuditoria.mockReset().mockResolvedValue(false);
+    mocks.onAuthStateChange.mockReset().mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } });
+  });
+  afterEach(() => cleanup());
+
+  it("derruba link de Usuários imediatamente e revalida permissões sem mudar pathname", async () => {
+    mocks.validarAdministrador.mockResolvedValueOnce(true).mockResolvedValue(false);
+    render(<ContaOSAppShell><div>Área de trabalho</div></ContaOSAppShell>);
+    await waitFor(() => expect(screen.getAllByRole("link", { name: "Usuários" }).length).toBeGreaterThan(0));
+    fireEvent(window, new Event("contaos:organizacao-alterada"));
+    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+    await waitFor(() => expect(mocks.validarAdministrador).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+  });
+
+  it("ignora autorização antiga concluída após a troca de organização", async () => {
+    let resolverPrimeira!: (valor: boolean) => void;
+    mocks.validarAdministrador
+      .mockImplementationOnce(() => new Promise<boolean>((resolve) => { resolverPrimeira = resolve; }))
+      .mockResolvedValue(false);
+    render(<ContaOSAppShell><div>Área de trabalho</div></ContaOSAppShell>);
+    await waitFor(() => expect(mocks.validarAdministrador).toHaveBeenCalledTimes(1));
+    fireEvent(window, new Event("contaos:organizacao-alterada"));
+    await waitFor(() => expect(mocks.validarAdministrador).toHaveBeenCalledTimes(2));
+    resolverPrimeira(true);
+    await waitFor(() => expect(mocks.getUser).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
   });
 });
