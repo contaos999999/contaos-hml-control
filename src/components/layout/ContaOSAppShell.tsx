@@ -53,6 +53,18 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     };
   }, [movelAberto]);
   useEffect(() => {
+    const revalidarAoRetomar = () => {
+      if (document.visibilityState !== "visible") return;
+      geracaoAutenticacao.current += 1;
+      setAdministrador(false);
+      setLiberado(false);
+      setMovelAberto(false);
+      setRevisaoSessao((atual) => atual + 1);
+    };
+    document.addEventListener("visibilitychange", revalidarAoRetomar);
+    return () => document.removeEventListener("visibilitychange", revalidarAoRetomar);
+  }, []);
+  useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((evento) => {
       if (evento !== "SIGNED_IN" && evento !== "SIGNED_OUT" && evento !== "USER_UPDATED") return;
       geracaoAutenticacao.current += 1;
