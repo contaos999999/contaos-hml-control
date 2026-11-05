@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 export const ledgerFile = "docs/frontend/auditorias/P0_V1_RASTREABILIDADE_COMPLETA_2026-11-05.json";
@@ -9,6 +9,28 @@ export const regularIds = [
 export const atomicIds = [
   ...Array.from({ length: 25 }, (_, index) => String(index).padStart(3, "0")),
   ...Array.from({ length: 12 }, (_, index) => String(index + 85).padStart(3, "0")),
+];
+const finalPromptTests = {
+  "39": "src/test/competenciaParecer.test.tsx",
+  "40": "src/test/competenciaApresentar.test.tsx",
+  "41": "src/test/competenciaProtocolo.test.tsx",
+  "42": "src/test/historicoContrato.test.tsx",
+  "43": "src/test/ingestaoHistorico.test.tsx",
+  "75": "src/test/trilhaAuditoria.test.tsx",
+};
+const canonicalFinalCriteria = [
+  "Rota abre corretamente",
+  "Perfil autorizado consegue utilizar a funcionalidade",
+  "Perfil não autorizado é bloqueado pelo backend/RLS",
+  "Estados loading, empty e error são adequados",
+  "Nenhuma requisição usa chave secreta",
+  "Ações críticas não executam UPDATE direto",
+  "Desktop 1440 e 1280 px preserva conteúdo",
+  "Tablet 768 px preserva conteúdo",
+  "Mobile 390 px preserva dados críticos",
+  "Teclado, foco e labels acessíveis",
+  "Console sem erros ou logs sensíveis",
+  "Security scan sem novo Critical",
 ];
 const recognizedGrades = new Set([
   "HISTORICA_ESCOPADA",
@@ -46,9 +68,51 @@ export function validateLedger(data) {
     fail(!Array.isArray(r.latest_evidence_docs) || r.latest_evidence_docs.length < 1,
       "Sem fonte/dossiê indicado: " + r.id);
     if (Number(r.id) <= 38) original.push(...(r.criteria || []).map((c) => ({...c, prompt:r.id})));
-    else fail(r.criteria_count !== 0 && !r.criteria?.length, "Critérios finais sem itens estruturados: " + r.id);
+    else {
+      fail(r.criteria_count !== 12 || r.criteria?.length !== 12,
+        "Prompts finais exigem 12 critérios cada: " + r.id);
+      fail(r.criterion_indexing_status !== "DOZE_CRITERIOS_NORMALIZADOS_NAO_TRANSCRICAO_LITERAL_INTEGRAL",
+        "Origem normalizada não foi declarada: " + r.id);
+      const expectedTestFile = finalPromptTests[r.id];
+      fail(!expectedTestFile, "Prompt final não consta da allowlist: " + r.id);
+      let sourceTest = "";
+      if (expectedTestFile && existsSync(expectedTestFile)) {
+        sourceTest = readFileSync(expectedTestFile, "utf8");
+      } else {
+        fail(true, "Arquivo de teste final ausente: " + r.id);
+      }
+      const seenFinalIds = new Set();
+      for (const criterion of r.criteria || []) {
+        const key = r.id + ":" + criterion.index;
+        fail(seenFinalIds.has(criterion.index), "Critério final duplicado: " + key);
+        seenFinalIds.add(criterion.index);
+        fail(criterion.index < 1 || criterion.index > 12 ||
+          criterion.text !== canonicalFinalCriteria[criterion.index - 1],
+          "Critério final ausente ou alterado: " + key);
+        fail(criterion.criterion_origin !==
+          "PROTOCOLO_12_ITENS_VERIFICADO_NO_PROMPT_41_COM_CROSSWALK_NORMALIZADO" ||
+          criterion.source_protocol !==
+          "docs/frontend/fontes/PROMPT_41_V120_TEXTO_ORIGINAL_VERIFICADO_2026-11-04.md" ||
+          !criterion.prompt_specific_source || !criterion.implementation_route,
+          "Critério final sem fonte/escopo: " + key);
+        fail(criterion.test_file !== expectedTestFile ||
+          !/^[0-9a-f]{40}$/.test(criterion.test_file_blob_sha || ""),
+          "Teste final sem vínculo verificável: " + key);
+        fail(!Array.isArray(criterion.indicative_test_titles) ||
+          (criterion.indicative_test_titles || []).some((title) => !sourceTest.includes(title)),
+          "Título de teste indicativo sem correspondência no código: " + key);
+        fail(criterion.certified !== false || !criterion.proof_grade ||
+          !criterion.evidence_scope,
+          "Critério final promovido ou sem limites de prova: " + key);
+      }
+    }
   }
   fail(original.length !== 416, "Esperados 416 critérios originais 00–38.");
+  fail(data?.count_final_normalized_criteria !== 72 ||
+    data?.coverage?.final_normalized_criteria_indexed !== 72 ||
+    data?.coverage?.criteria_total_indexed !== 488,
+    "Cobertura dos 72 critérios finais ou total 488 divergente.");
+
   const distinct = new Set();
   const grades = {};
   for (const criterion of original) {
@@ -99,6 +163,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     for (const issue of issues) console.error("P0 V1 TRACEABILITY FAIL: " + issue);
     process.exit(1);
   }
-  console.log("P0 V1 TRACEABILITY PASS: 45 regulares, 416 critérios legados, 25 atômicos V1/BRAND, 12 NFR; sem PASS fabricado.");
-  console.log("LIMITAÇÃO: integridade documental não substitui homologação funcional real nem prova de 39–43/75 por critério.");
+  console.log("P0 V1 TRACEABILITY PASS: 45 regulares, 416 critérios legados + 72 finais normalizados, 25 atômicos V1/BRAND, 12 NFR; sem PASS fabricado.");
+  console.log("LIMITAÇÃO: 72 itens são critérios normalizados, não transcrição literal integral nem prova HML autenticada.");
 }
