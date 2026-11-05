@@ -268,7 +268,7 @@ function Conteudo({ctx}:{ctx:Ctx}){
               <Button className="min-h-11" disabled={enviando} onClick={()=>void finalizar(i)}>
                 <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden/> Enfileirar ingestão
               </Button>}
-            {!iniciado&&!enviando&&<Button variant="ghost" className="min-h-11"
+            {!iniciado&&!persistido&&!enviando&&<Button variant="ghost" className="min-h-11"
               onClick={()=>setItens(anteriores=>anteriores.filter(x=>x.chave!==i.chave))}>Remover</Button>}
           </div>
         </article>;
