@@ -4,9 +4,10 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 
-export const PERFIS_CADASTRO = ["administrador", "gestor_contrato"] as const;
+import { listarOrganizacoesDisponiveis, type OrganizacaoDisponivel } from "@/lib/auth/resolverDestinoPosLogin";
 
-export type VinculoProprio = { perfil: string; ativo: boolean; inicio_em: string; fim_em: string | null };
+export const PERFIS_CADASTRO = ["administrador_master", "administrador", "gestor_contrato"] as const;
+export type VinculoProprio = OrganizacaoDisponivel;
 
 export type FormularioContratante = {
   razaoSocial: string;
@@ -50,36 +51,21 @@ export function classificarErro(r: RespostaPg): ErroV102 {
   return new ErroV102("erro");
 }
 
-/** Gate UX: somente o próprio vínculo do usuário na organização preferida. */
-export async function consultarVinculoProprio(idOrganizacao: string, idUsuario: string): Promise<VinculoProprio | null> {
-  let r: { data: unknown; error: unknown; status?: number };
+/** Gate UX exclusivamente pela RPC autenticada; o INSERT continua sob RLS. */
+export async function consultarVinculoProprio(idOrganizacao: string, _idUsuario: string): Promise<VinculoProprio | null> {
   try {
-    r = await supabase
-      .from("vinculos_usuarios")
-      .select("perfil,ativo,inicio_em,fim_em")
-      .eq("id_organizacao", idOrganizacao)
-      .eq("id_usuario", idUsuario)
-      .maybeSingle();
-  } catch {
-    throw new ErroV102("erro");
+    const organizacoes = await listarOrganizacoesDisponiveis();
+    if (!Array.isArray(organizacoes)) throw new ErroV102("erro");
+    return organizacoes.find((o) => o.id === idOrganizacao) ?? null;
+  } catch (erro) {
+    if (erro instanceof ErroV102) throw erro;
+    const e = erro as { tipo?: string };
+    throw new ErroV102(e?.tipo === "negado" ? "negado" : "erro");
   }
-  if (r.error) {
-    const e = classificarErro(r);
-    throw e.tipo === "negado" ? e : new ErroV102("erro");
-  }
-  return (r.data as VinculoProprio | null) ?? null;
 }
 
-export function vinculoPermiteCadastro(v: VinculoProprio | null, agora: Date = new Date()): boolean {
-  if (!v || v.ativo !== true) return false;
-  if (!(PERFIS_CADASTRO as readonly string[]).includes(v.perfil)) return false;
-  const inicio = Date.parse(v.inicio_em);
-  if (Number.isNaN(inicio) || inicio > agora.getTime()) return false;
-  if (v.fim_em !== null) {
-    const fim = Date.parse(v.fim_em);
-    if (Number.isNaN(fim) || fim <= agora.getTime()) return false;
-  }
-  return true;
+export function vinculoPermiteCadastro(v: VinculoProprio | null): boolean {
+  return !!v && typeof v.id === "string" && (PERFIS_CADASTRO as readonly string[]).includes(v.perfil);
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
