@@ -70,3 +70,9 @@ Na `main` frontend existe `src/routes/administracao.usuarios.tsx` com TanStack R
 
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 Requisito literal do gate canônico: não gerar backend paralelo, não editar Supabase/types, não modificar BRAND-01, não ampliar escopo de arquivos sem novo PLAN. Usar Design System, AppShell/sidebar oficial e componentes existentes; evitar duplicação de código e chamadas Lovable desnecessárias. Os testes reais HML, WCAG e Teste C de BUILD continuam pendentes e NÃO são declarados PASS por esta cláusula. Fonte: manual mestre 100 prompts, pacote oficial BRAND v1.0 e documentação normativa versionada.
+
+
+## Emenda de escopo GOV-021 — 05/11/2026
+A auditoria V1-23 introduziu `src/lib/administracao/auditoriaDados.ts` fora do módulo ADM-01. A varredura legada em `src/test/admUsuarios.test.tsx` inspecionava indiscriminadamente `src/lib/administracao/*`, gerando dois falsos positivos no BUILD #83 (run 41954980718, 867/869 testes PASS). A emenda autoriza exclusivamente a edição de `src/test/admUsuarios.test.tsx` para limitar a varredura de RPCs ADM-01 ao módulo `admUsuariosRpc.ts`, preservando a varredura integral dos componentes de usuários, rota de usuários, regras de proibição de escrita direta e cinco RPCs permitidas.
+
+**ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)**: a emenda não modifica marca, estilos, rotas, Supabase, dependências nem código funcional. Impacto visual N/A para a emenda. A inclusão da allowlist não autoriza mudanças adicionais ao teste nem altera o escopo funcional do Prompt 75. PLAN deve ser integrado separadamente antes de qualquer novo BUILD, com ambos os checks do mesmo SHA aprovados. Evidência operacional HML continua não verificada.
