@@ -511,3 +511,8 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 - GOV-020 autoriza exclusivamente a árvore gerada quando existe rota `src/routes/*.tsx` já autorizada pelo PLAN. Não libera backend nem arquivos arbitrários.
 - **Pendente:** nova validação do PR #83 sobre a main atual; inspecionar Zero-Drift e Teste C no novo HEAD antes de merge. HML real, RLS, isolamento entre usuários, requisito transversal da sidebar/BRAND-01 e certificação V1 continuam não comprovados.
 - **Próxima ação:** reexecutar checks do BUILD #83, resolver eventuais falhas e atualizar este checkpoint com evidências verificadas. Não antecipar certificação.
+
+### GOV-021 — evidências verificadas 05/11/2026
+- PLAN PR #88: CI `41957610750` Zero-Drift PASS, Teste C PASS; merge `6607b06573652edd0cba99de3fdf56e97793dc6b`.
+- BUILD PR #89: CI `41958140715` Zero-Drift PASS, Teste C PASS; merge `a3ad4c5dc0b38720cb740db838e010ca3636ec05`.
+- A varredura ADM-01 foi limitada ao módulo correto, preservando as restrições originais. PR #83 requer novo CI após a integração; não presumir verde nem certificação V1.
