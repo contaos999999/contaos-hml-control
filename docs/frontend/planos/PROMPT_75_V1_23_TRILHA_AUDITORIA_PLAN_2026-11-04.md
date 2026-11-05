@@ -37,3 +37,16 @@ Rastreabilidade obrigatória no GitHub: para cada requisito, registrar matriz re
 - RLS documental: política `eventos_select` limita SELECT a perfis `administrador`, `auditor`, `juridico_conformidade` vinculados à organização. Migration `20261101211500_0015_hardening_seguranca_integridade.sql` cria trigger de imutabilidade em UPDATE/DELETE. **Não equivale a ensaio operacional de isolamento HML**.
 - Atenção ao escopo: tabela auditável é por organização; **não presumir filtro por contrato direto**, pois `id_contrato` não integra o esquema dessa tabela. Vínculo por entidade/metadados só após comprovar consulta segura e escopo sem vazamento. Os campos JSON `antes`, `depois`, `metadados` não devem ser expostos integralmente na UI sem política formal de redação.
 - CI do HEAD `cee73b75e532661844f021bfee7f5efa190e46e0`: run `41948048364` localizado em andamento durante a consulta. **Não declarar SUCCESS antes de conclusão e dois checks no mesmo HEAD**.
+
+
+## Confronto com manual de telas recuperado da biblioteca
+Foi recuperada a especificação `FE_v4_Manual_Integral_Lovable_Supabase.docx` para **V1-23**. Ela define expressamente:
+- **Rota `/administracao/auditoria`** (não uma rota por contrato).
+- **Finalidade:** histórico filtrável de ações, entidade, usuário, `correlation_id` e representação reduzida de antes/depois.
+- **Acesso:** auditor/administrador; backend `eventos_auditoria` com RLS.
+- **Estados:** carregando, vazio, sucesso, erro, 403 e conflito/expirado quando aplicável.
+- **Critérios:** bloqueio backend de perfil sem acesso, ausência de regra crítica calculada apenas em React, evidência/fonte acessível quando exigida, ausência de segredos em rede/bundle/console/localStorage, responsividade e teclado.
+
+**Correção do escopo proposto:** a interface V1-23 é de administração e deve filtrar eventos por organização autorizada, não inventar uma rota por contrato. Eventual filtro por contrato é opcional somente se fonte original e API segura comprovarem seu vínculo. O documento recuperado **remete explicitamente ao PROMPT 75 do Manual Mestre**, cujo texto literal ainda não foi localizado: não substituir uma fonte pela outra. A definição de acesso `auditor/administrador` deve ser cotejada com a política backend que também permite `juridico_conformidade`; não alterar RLS sem autorização, nem conceder acesso UI adicional por inferência.
+
+Status: **fonte de tela recuperada, texto literal do PROMPT 75 pendente, GATE ainda BLOQUEADO**.
