@@ -1,0 +1,42 @@
+name: ContaOS V1-23 - Gerar routeTree oficial
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/v1-23-route-tree-generator.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout branch BUILD fixa
+        uses: actions/checkout@v4
+        with:
+          ref: build/v1-23-auditoria-rebase-p0
+          persist-credentials: true
+      - name: Confirmar HEAD autorizado
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "f4d6ec425a633a0f4321c50156e7f24eb6a3d944"
+      - uses: oven-sh/setup-bun@v2
+      - name: Instalar dependencias
+        run: bun install --frozen-lockfile
+      - name: Gerar arvore oficial TanStack pelo build
+        run: bun run build
+      - name: Versionar somente routeTree gerado
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- src/routeTree.gen.ts
+          git diff --cached --quiet && exit 0
+          test "$(git diff --cached --name-only)" = "src/routeTree.gen.ts"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(v1-23): versionar routeTree gerado pelo TanStack"
+          git push origin HEAD:build/v1-23-auditoria-rebase-p0
