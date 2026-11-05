@@ -1,3 +1,15 @@
+## CHECKPOINT P0 — 05/11/2026: conexão real PostgreSQL HML com secret existente
+
+- O titular confirmou e autorizou usar `CONTAOS_HML_DATABASE_URL` do GitHub Actions Environment `hml`; nenhuma chave foi solicitada ou exposta.
+- PLAN mestre #160 integrado; BUILD [#164](https://github.com/contaos999999/contaos-hml-control/pull/164) integrado na main `6281e05f9bcc9462625d92666917d0371e9d707a` com 2 required checks SUCCESS; backend de referência `3aa4af7a292b80243045e0a426ee6399ba948ff2`.
+- Teste **REAL** via `psql`, run [42064796959](https://github.com/contaos999999/contaos-hml-control/actions/runs/42064796959) job 127375836160 `SUCCESS`: conexão direta PostgreSQL HML, 32 funções SECURITY DEFINER, 9 authenticated/0 anon, nove chamadas RPC efetivamente negadas para `anon` com `42501`, search_path, RLS `public/storage`, bucket privado e view invoker; três transações read-only e rollback. Log e escopo em `docs/frontend/auditorias/P0_V1_PROVA_REAL_HML_POSTGRES_2026-11-05.md`.
+- O teste SQL real **não** é JWT real. Runner HTTP Auth #163 executou 9 negativas sem token, mas run 42063335906 ficou FAIL fechado por ausência de `CONTAOS_HML_TEST_EMAIL`/`CONTAOS_HML_TEST_PASSWORD` ou `CONTAOS_HML_SERVICE_ROLE_KEY` no environment HML. O secret de banco não supre isso. Não marcar B02 como aprovado.
+- A main também recebeu PR de restauração GOV-016 em `21d4f3561e4e3a77bc64349f753a91f79ea6e4ec`; este checkpoint é documental e respeita todos os HEADs posteriores.
+- **Etapa comprovadamente concluída**: `B01_HML_PGSQL_REAL`, sem repetir teste. **Próxima tarefa**: conseguir identidade **sintética** HML pela API oficial de Auth/segredo protegido do environment, executar 9 RPCs com JWT e perfis, fechar provas restantes dos 488 critérios, SYS-03, WCAG e NFRs. **V1 não certificada; V2 bloqueada; PROD intocada.**
+- Ressalvas R01 upload E2E, R02 worker E2E, R03 isolamento multiusuário mantidas, sem PASS; exceção HIBP Pro continua não corrigida.
+
+---
+
 ## CHECKPOINT P0 — 05/11/2026: 488 itens, evidência íntegra e segurança estrutural HML
 
 **Baselines provados:** frontend main antes deste PR `c5893df43d8038ed91a113410e26097507ab1594` (BUILD #158); backend fonte `contaos999999/develop@3aa4af7a292b80243045e0a426ee6399ba948ff2`; HML `gklhhhyosgasnyoxlrui`. PROD intocada.
