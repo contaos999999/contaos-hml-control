@@ -5,11 +5,11 @@
   "plano_documento": "docs/frontend/planos/P0_SIDEBAR_APPSHELL_V1_PLAN_2026-11-05.md",
   "validacao": {
     "resultado": "PENDENTE",
-    "validado_por": "Aguardando revisão documental e CI do plano P0",
+    "validado_por": "Avaliação técnica parcial: CI de governança confirmado, validação integral pendente",
     "validado_em": null,
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": false,
-    "ci_plano_url": "",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41961117302",
     "gates": {
       "prd": "PENDENTE",
       "premissas": "PENDENTE",
@@ -20,9 +20,9 @@
       "nfr": "PENDENTE",
       "zero_drift": "PENDENTE",
       "tdd": "PENDENTE",
-      "ci": "PENDENTE",
+      "ci": "PASS",
       "teste_c_planejado": "PENDENTE",
-      "rollback": "PENDENTE"
+      "rollback": "PASS"
     }
   },
   "arquivos_permitidos": [
@@ -38,7 +38,7 @@
     "docs/frontend/auditorias/P0_SIDEBAR_APPSHELL_V1_TESTES_2026-11-05.md",
     "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
   ],
-  "observacao": "Plano transversal P0 da sidebar/AppShell V1, aguardando validação formal; BUILD não autorizado.",
+  "observacao": "Plano transversal P0 da sidebar/AppShell V1, aguardando validação formal; BUILD não autorizado. CI de governança #93 41961117302 verificado (dois jobs SUCCESS); rollback do PLAN documentado no plano P0. Demais gates permanecem pendentes, não há liberação BUILD.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
