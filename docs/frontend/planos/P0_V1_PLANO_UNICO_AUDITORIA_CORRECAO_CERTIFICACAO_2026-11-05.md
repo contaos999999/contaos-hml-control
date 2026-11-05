@@ -42,3 +42,21 @@ Data: 05/11/2026. Autorização expressa do titular: executar em **uma rodada co
 - Evidência anterior válida deve ser reutilizada. Status NÃO VERIFICADO não vira PASS por presunção.
 - O plano não modifica `PLANO_ATIVO.json` automaticamente: primeiro validar CI e conformidade do plano, depois promover a tarefa ativa por gate próprio.
 - Ao finalizar cada fase atualizar checkpoint de continuidade, com última etapa comprovada e próxima tarefa, sem perder rastreabilidade.
+
+## Anexo executável de aceite — BUILD agrupado da Auditoria (05/11/2026)
+**Evidências integradas:** plano mestre PR #130 CI 42013946647; auditoria PR #131 CI 42014564846; plano ativo PR #132 CI 42014956515; inspeção HML PR #133 CI 42015435635. O HML confirmou as duas RPCs existentes, SECURITY INVOKER STABLE, EXECUTE somente authenticated. **Isso não comprova JWT/RLS E2E.**
+
+### Contrato fechado do BUILD (sem novas migrations)
+| Item | Alteração frontend | Aceite automatizado |
+|---|---|---|
+| CAP-01 | `admUsuariosRpc.ts`: `podeConsultarAuditoria(org)` invoca `pode_consultar_auditoria_organizacao` com `p_id_organizacao` e aceita exclusivamente boolean true | true permite, false/erro/retorno malformado nega; sem fallback admin |
+| CAP-02 | `ContaOSAppShell.tsx`: estado `administrador` continua exclusivo para Usuários; novo estado `auditoriaPermitida` somente para Auditoria | admin: ambos; auditor/jurídico: somente Auditoria; comum: nenhum |
+| CAP-03 | Desktop e menu móvel filtram `MENU_ADMIN_V1` por capacidade por item, inclusive recolhido | links sem duplicação, `aria-current`, foco, rótulos e ícones preservados |
+| CAP-04 | Toda mudança de sessão, visibilidade, rota e organização invalida as duas capacidades e bloqueia resultados antigos | testes concorrência, logout, mudança A/B, erro de RPC, fail-closed |
+| CAP-05 | BRAND-01 e demais módulos permanecem intactos | regressão visual 4 larguras × 2 temas, testes existentes e Teste C independente |
+
+### Gate antes de BUILD
+- Não declarar `PLANO_ATIVO.validacao.gates.*=PASS` em lote: cada gate requer evidência da fonte canônica atual, CI do PLAN e Teste C planejado.
+- Para TDD, primeiro testes RED de CAP-01..05, depois implementação GREEN. Reexecutar `node --test scripts/p0-version-order-gate.test.mjs`, gate de ordem por versão, Zero-Drift, lint, typecheck, build, Vitest e Teste C.
+- Se `PLANO_ATIVO` permanecer EM_VALIDACAO/PENDENTE, **NO-GO para editar código**. Promover o manifesto somente com comprovação, em commit anterior ao BUILD.
+- Não confundir este aceite funcional com certificação integral da V1; upload/worker, WCAG real, JWT A/B, restore e outras lacunas permanecem separadas no mesmo plano mestre.
