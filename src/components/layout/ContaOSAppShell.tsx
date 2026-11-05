@@ -21,6 +21,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   const dialogoMovelRef = useRef<HTMLDivElement>(null);
   const botaoMovelRef = useRef<HTMLButtonElement>(null);
   const geracaoAutenticacao = useRef(0);
+  const fechamentoPorNavegacao = useRef(false);
   useEffect(() => {
     if (!movelAberto) return;
     const overflowAnterior = document.body.style.overflow;
@@ -51,10 +52,20 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     return () => {
       document.removeEventListener("keydown", controlarTeclado);
       document.body.style.overflow = overflowAnterior;
-      if (focoAnterior?.isConnected) focoAnterior.focus();
-      else botaoMovelRef.current?.focus();
+      if (!fechamentoPorNavegacao.current && focoAnterior?.isConnected) focoAnterior.focus();
+      else if (!fechamentoPorNavegacao.current) botaoMovelRef.current?.focus();
+      fechamentoPorNavegacao.current = false;
     };
   }, [movelAberto]);
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const fecharAoExpandir = (evento: MediaQueryListEvent) => {
+      if (evento.matches) setMovelAberto(false);
+    };
+    if (media.matches) setMovelAberto(false);
+    media.addEventListener("change", fecharAoExpandir);
+    return () => media.removeEventListener("change", fecharAoExpandir);
+  }, []);
   useEffect(() => {
     const revalidarAoRetomar = () => {
       if (document.visibilityState !== "visible") return;
@@ -84,6 +95,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     const sessaoAtual = () => ativo && geracao === geracaoAutenticacao.current;
     setLiberado(false);
     setAdministrador(false);
+    fechamentoPorNavegacao.current = true;
     setMovelAberto(false);
     if (rotaSemSidebar(pathname)) return;
     void (async () => {
