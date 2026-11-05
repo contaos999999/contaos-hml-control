@@ -1,0 +1,44 @@
+name: ContaOS P0 V1 - JWT real HML
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/hml/p0-v1-real-jwt-probe.mjs'
+      - '.github/workflows/contaos-p0-v1-jwt-real-hml.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: contaos-v1-hml-jwt-synthetic
+  cancel-in-progress: false
+
+jobs:
+  jwt-real-hml:
+    if: github.repository == 'contaos999999/contaos-hml-control' && github.ref == 'refs/heads/main'
+    name: Nove RPCs HTTP reais com JWT de Auth HML
+    runs-on: ubuntu-latest
+    environment: hml
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      CONTAOS_HML_SERVICE_ROLE_KEY: ${{ secrets.CONTAOS_HML_SERVICE_ROLE_KEY }}
+      CONTAOS_HML_TEST_EMAIL: ${{ secrets.CONTAOS_HML_TEST_EMAIL }}
+      CONTAOS_HML_TEST_PASSWORD: ${{ secrets.CONTAOS_HML_TEST_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Instalar dependencias congeladas
+        run: bun install --frozen-lockfile
+      - name: Exercitar nove RPCs em HTTP com anon e JWT real, sem dados reais
+        run: node scripts/hml/p0-v1-real-jwt-probe.mjs
+      - name: Preservar relatorio sem tokens nem credenciais
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contaos-v1-hml-jwt-real-${{ github.run_id }}
+          path: ${{ runner.temp }}/p0-v1-jwt-hml.json
+          if-no-files-found: warn
+          retention-days: 90
