@@ -100,3 +100,15 @@ Foram recuperados via GitHub, na revisão normativa fixa `c2bf86d011da6bfd3abaa7
 - `20_PROMPT_000_BRAND_01.md`: marca exclusivamente visual, proibição de mudanças funcionais no escopo BRAND-01.
 
 **Distinção de evidências:** a recuperação das 25 fontes e a identificação de trechos relevantes não substituem auditoria semântica integral item a item, nem comprovam testes autenticados de RLS ou autorização. O plano transversal de navegação não deve ser rotulado como BUILD do BRAND-01 isolado; precisa de autorização funcional de navegação específica. O `prompt_id=75` é âncora técnica herdada, não prova de correspondência funcional da sidebar. Até resolução dessa lacuna de rastreabilidade, manter `PLANO_ATIVO.json` como `EM_VALIDACAO` e gates pendentes. Não iniciar BUILD.
+
+## Emenda de PLAN em validação — capacidade de Auditoria V1 (05/11/2026)
+A política real de `public.eventos_auditoria` em HML permite `administrador`, `auditor` e `juridico_conformidade` com sessão e vínculo vigentes; o AppShell mostra Auditoria apenas ao administrador. A RPC pública existente `validar_administrador_organizacao` não cobre os dois perfis adicionais.
+
+**Escopo adicional fechado (proposto, não validado):**
+- `src/lib/administracao/admUsuariosRpc.ts`: função tipada para RPC de capacidade de auditoria com falha fechada, separada de `validarAdministrador`.
+- `supabase/migrations/20261105095500_auditoria_capacidade_v1.sql`: migration versionada da função pública read-only `pode_consultar_auditoria_organizacao(uuid)`, delegando à `privado.usuario_possui_perfil`, `search_path` seguro e concessão `authenticated`. Revogar `PUBLIC`/anon explicitamente.
+- `src/components/layout/ContaOSAppShell.tsx` e `src/test/appShellSidebar.test.tsx` já permitidos: capacidades separadas, testes admin/auditor/jurídico/negado/erro e mudanças de sessão.
+- Documentos de auditoria/checkpoint já permitidos. Não alterar RLS `eventos_select`, arquivos da marca, tokens visuais ou PROD.
+
+**Gates:** PLAN em `EM_VALIDACAO`; confirmar fonte canônica, aderência 100/97, rollback da migration, CI Zero-Drift/Teste C e HML autenticado. BUILD proibido até `PLANO_ATIVO.json` VALIDADO em `main` por PR anterior. A mudança `backend_changes_allowed=true` aplica-se somente à migration nomeada na allowlist, nunca a alterações genéricas de backend.
+**Rollback:** reversão da migration por nova migration versionada e rollback do frontend por PR; não executar SQL ad hoc. **Não há certificação V1.**
