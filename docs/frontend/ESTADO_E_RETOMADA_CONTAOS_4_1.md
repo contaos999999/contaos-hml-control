@@ -1,3 +1,14 @@
+## CHECKPOINT P0 — 05/11/2026 03:56 America/Bahia — PR #108, foco móvel
+
+- PR #108 `build/p0-sidebar-mobile-focus-v1`: HEAD anterior `4936223b5295e48748d98d1236177fe9564c1b71`, run `41980265900`: Zero-Drift FAILURE (TypeScript TS18048 em `ContaOSAppShell.tsx`, variáveis `primeiro` e `ultimo` possivelmente indefinidas); Teste C SUCCESS. **Não houve merge desse HEAD falho.**
+- Correção aplicada na mesma branch, commit `0f1068736c7d94759c5fe8d6d462d5206f23fc4c`: chamadas de foco com optional chaining, preservando a navegação Tab/Shift+Tab e o fechamento por Esc. Novo run `41983831986` IN_PROGRESS na última consulta; requer ambos os jobs SUCCESS no mesmo HEAD antes de merge.
+- PR #80 GATE: MERGED, run `41950160697` SUCCESS. PR #77 RED OPEN, run `41949536167` FAILURE (gate de fronteira/PLAN); #78 BUILD OPEN, run `41949684490` FAILURE (gate e Teste C); #86 ADM-01 OPEN, run `41956036853` FAILURE (gate). Nenhum dos três está liberado para merge.
+- Normas P0 de ambos repositórios consultadas; sequência V1 certificada antes de V2, 100 regulares e 97 atômicos mantida. Índice ZIP canônico consultado, ZIP literal ainda não recuperado nesta execução.
+- **Pendências de certificação:** autenticação e isolamento reais em HML, upload/worker, auditoria visual em quatro larguras e dois temas, contraste WCAG 2.2 AA, teclado/leitor de tela, evidências arquivadas e retrospectiva. V1 NÃO CERTIFICADA; V2 BLOQUEADA; PROD INALTERADA.
+- Próxima ação: reconsultar run `41983831986`; se dois jobs SUCCESS no HEAD corrigido, revisar/merge protegido do PR #108; caso contrário ler logs e corrigir. Depois avançar testes HML e evidências.
+
+---
+
 ## CHECKPOINT P0 — 05/11/2026 02:13 (America/Bahia): SIDEBAR E SESSÃO
 
 Consulta viva dos PRs e jobs no mesmo HEAD, sem inferir homologação operacional:
