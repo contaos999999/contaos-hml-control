@@ -516,3 +516,9 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 - PLAN PR #88: CI `41957610750` Zero-Drift PASS, Teste C PASS; merge `6607b06573652edd0cba99de3fdf56e97793dc6b`.
 - BUILD PR #89: CI `41958140715` Zero-Drift PASS, Teste C PASS; merge `a3ad4c5dc0b38720cb740db838e010ca3636ec05`.
 - A varredura ADM-01 foi limitada ao módulo correto, preservando as restrições originais. PR #83 requer novo CI após a integração; não presumir verde nem certificação V1.
+
+### V1-23 — BUILD integrado, evidência de CI (05/11/2026)
+- PR #83, HEAD `e4df6316b244a143c9b9dbf1de682104fecd26c1`, execução `41959012094`: **Zero-Drift SUCCESS** e **Teste C Independente SUCCESS**.
+- PR #83 integrado à main por merge `66f3a33f15445035aced2b19b7bd354fbc2fb929`. Corrigidos erros de tipagem TypeScript e varredura ADM-01 sem alterar backend.
+- **Última etapa comprovada:** BUILD de código V1-23 integrado com dois checks CI verdes; isto não equivale à homologação operacional nem à certificação da V1.
+- **Próxima tarefa:** concluir e comprovar requisito transversal P0 da sidebar/AppShell e BRAND-01 (expandida/recolhida, transparência, navegação centralizada, rotas e ativação progressiva), revisão WCAG/identidade visual, e verificar HML real/isolamento, upload e worker conforme pendências formalizadas. Não avançar à V2 sem gate V1.
