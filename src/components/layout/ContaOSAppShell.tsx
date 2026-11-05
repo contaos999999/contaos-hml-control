@@ -23,6 +23,8 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   const geracaoAutenticacao = useRef(0);
   useEffect(() => {
     if (!movelAberto) return;
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const dialogo = dialogoMovelRef.current;
     const focoAnterior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const selecionarFocaveis = () => Array.from(
@@ -48,6 +50,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     document.addEventListener("keydown", controlarTeclado);
     return () => {
       document.removeEventListener("keydown", controlarTeclado);
+      document.body.style.overflow = overflowAnterior;
       if (focoAnterior?.isConnected) focoAnterior.focus();
       else botaoMovelRef.current?.focus();
     };
