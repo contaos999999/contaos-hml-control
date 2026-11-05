@@ -1,3 +1,23 @@
+## ATUALIZAÇÃO DE RETOMADA — V1-23 E SIDEBAR (05/11/2026)
+
+Consulta GitHub desta execução, sem presumir sucesso operacional:
+
+- **PR #75 PLAN V1-23:** merged; HEAD `19d14e0d649889f839bea18b71e952e68b3f5ffc`; workflow 41948962744 SUCCESS.
+- **PR #80 GATE corrigido:** merged; HEAD `aa3868c34d3fa2ba9f1b382380da51766c4542e5`; workflow 41950160697 SUCCESS.
+- **PR #87 emenda ADM-01:** merged; HEAD `61a8523fa3c5dcf35749a10a569b8a2c226ee049`; workflow 41956515190 SUCCESS.
+- **PR #83 BUILD V1-23:** merged; HEAD `e4df6316b244a143c9b9dbf1de682104fecd26c1`; workflow 41959012094 SUCCESS. A integração não certifica automaticamente HML/autorização.
+- **PRs legados #77 RED e #78 BUILD:** permanecem OPEN, workflows 41949536167 e 41949684490 FAILURE. Não mesclar sem novo HEAD e dois jobs SUCCESS; verificar obsolescência e fechar com justificativa, se comprovada, em vez de contornar gates.
+- **PR #86 correção ADM-01:** OPEN, HEAD `1b488b20f4f2ec54e8b66800c68c7ac47e2572e5`, workflow 41956036853 FAILURE: Zero-Drift FAILURE, Teste C SUCCESS. Não mesclar sem correção e novos checks.
+- **PR #96 conferência normativa:** merged, HEAD `e56376a719f717380b2411719075a8dcad64fa41`, workflow 41962351779 SUCCESS.
+- **PR #97 gates documentais:** merged, HEAD `dcc0328ad180d0b13428fbd880182a92667919ef`, workflow 41962457399 SUCCESS.
+- **PR #98 PLAN sidebar:** merged, HEAD `7942833316620b1b1334a1ccd6793fd87bd5574d`, workflow 41962851627 SUCCESS, com **ambos os jobs** Zero-Drift e Teste C SUCCESS. `PLANO_ATIVO.json` está VALIDADO exclusivamente para planejamento; não é evidência de BUILD.
+- **Sidebar/AppShell:** `src/routes/__root.tsx` ainda renderiza `<Outlet />` diretamente; `src/components/layout/ContaOSAppShell.tsx` e `ContaOSSidebar.tsx` não existem em `main` na consulta. Portanto **não implementada**. PLAN aprovado não equivale a código funcional.
+- **Rastreabilidade:** regular 75 corresponde literalmente à Trilha de Auditoria V1-23; o PLAN da sidebar usa o mesmo ID como âncora estrutural transversal, sem autorização para reinterpretar a funcionalidade original. Manter trilha separada de correção transversal e não contar a sidebar como novo prompt regular.
+- **Fonte ZIP:** índice `docs/frontend/governanca/INDICE_LOCALIZACAO_PACOTE_MESTRE_4_1.md` fornece nome, SHA-256 e caminhos internos, mas o arquivo ZIP original não foi reaberto nesta execução; não afirmar conferência literal nova.
+- **Próxima tarefa:** implementar sidebar/AppShell em branch BUILD própria, com testes RED anteriores, respeitando allowlist do PLAN e autorização real por sessão/organização/ADM; verificar quatro larguras, dois temas, WCAG, marca transparente, Teste C e CI no mesmo HEAD. Reconciliar PRs legados, testar HML real e atualizar certificado V1. **V1 NÃO CERTIFICADA, V2 BLOQUEADA, PROD INALTERADA.**
+
+---
+
 # ContaOS 4.1 — Estado vivo e protocolo de retomada entre chats
 
 **Canal oficial de continuidade.** Documento de referência para quando uma conversa acabar, precisar trocar de chat, houver perda parcial do histórico ou outra pessoa/instância assumir o trabalho. **Atualizar o checkpoint ao terminar qualquer bloco de correções.**
