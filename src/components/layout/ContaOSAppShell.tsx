@@ -18,6 +18,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   const [movelAberto, setMovelAberto] = useState(false);
   const dialogoMovelRef = useRef<HTMLDivElement>(null);
   const botaoMovelRef = useRef<HTMLButtonElement>(null);
+  const geracaoAutenticacao = useRef(0);
   useEffect(() => {
     if (!movelAberto) return;
     const dialogo = dialogoMovelRef.current;
@@ -52,6 +53,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((evento) => {
       if (evento !== "SIGNED_IN" && evento !== "SIGNED_OUT" && evento !== "USER_UPDATED") return;
+      geracaoAutenticacao.current += 1;
       setLiberado(false);
       setAdministrador(false);
       setMovelAberto(false);
@@ -61,20 +63,22 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     let ativo = true;
+    const geracao = geracaoAutenticacao.current;
+    const sessaoAtual = () => ativo && geracao === geracaoAutenticacao.current;
     setLiberado(false);
     setAdministrador(false);
     setMovelAberto(false);
     if (rotaSemSidebar(pathname)) return;
     void (async () => {
       const { data, error } = await supabase.auth.getUser();
-      if (error || !data.user) return;
+      if (!sessaoAtual() || error || !data.user) return;
       const organizacao = await obterPreferenciaOrganizacao(data.user.id);
-      if (ativo && organizacao) {
+      if (sessaoAtual() && organizacao) {
         setLiberado(true);
         const autorizado = await validarAdministrador(organizacao).catch(() => false);
-        if (ativo) setAdministrador(autorizado === true);
+        if (sessaoAtual()) setAdministrador(autorizado === true);
       }
-    })().catch(() => { if (ativo) setLiberado(false); });
+    })().catch(() => { if (sessaoAtual()) setLiberado(false); });
     return () => { ativo = false; };
   }, [pathname, revisaoSessao]);
   if (rotaSemSidebar(pathname)) return <>{children}</>;

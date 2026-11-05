@@ -33,3 +33,13 @@ describe("P0 sidebar — invariantes de sessao e acessibilidade", () => {
     expect(codigo).toContain("aria-controls=\"contaos-menu-movel\"");
   });
 });
+
+describe("P0 sidebar — protecao contra respostas de autenticacao antigas", () => {
+  it("invalida consultas em voo quando a sessao muda", () => {
+    const codigo = lerShell();
+    expect(codigo).toContain("geracaoAutenticacao.current += 1");
+    expect(codigo).toContain("geracao === geracaoAutenticacao.current");
+    expect(codigo).toContain("if (!sessaoAtual() || error || !data.user) return");
+    expect(codigo).toContain("if (sessaoAtual()) setAdministrador(autorizado === true)");
+  });
+});
