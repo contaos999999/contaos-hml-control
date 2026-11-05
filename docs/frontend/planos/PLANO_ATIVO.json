@@ -1,17 +1,17 @@
 {
   "schema": "contaos.frontend.plan.v1",
-  "prompt_id": "42",
+  "prompt_id": "43",
   "status": "VALIDADO",
-  "plano_documento": "docs/frontend/planos/PROMPT_42_V1_21_HISTORICO_CONTRATO_2026-11-04.md",
+  "plano_documento": "docs/frontend/planos/PROMPT_43_V1_22_INGESTAO_HISTORICO_PLAN_2026-11-04.md",
   "validacao": {
     "resultado": "PASS",
-    "validado_por": "GPT-6 — revalidação após corrigir cláusula literal do PLAN no PR #60",
+    "validado_por": "GPT-6 — revisão de contratos HML somente leitura e cotejo de 25 fontes canônicas; não certifica fluxo operacional",
     "validado_em": "2026-11-04",
-    "modo_aprovacao": "aprovacao_tecnica_automatica_de_plan_frontend_sem_alteracao_da_brand",
+    "modo_aprovacao": "aprovacao_tecnica_automatica_de_plan_sem_alteracao_da_brand",
     "aprovacao_humana": "NAO_EXIGIDA_SEM_MUDANCA_DIRETA_DA_MARCA",
     "aprovacao_humana_exigida": false,
     "aprovacao_humana_evidencia": null,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41916280531",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41940708299",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -28,21 +28,22 @@
     }
   },
   "arquivos_permitidos": [
-    "src/lib/contratos/historicoContratoDados.ts",
+    "src/lib/contratos/ingestaoHistoricoDados.ts",
+    "src/components/contratos/ImportarHistorico.tsx",
+    "src/routes/contratos_.$id_.historico_.importar.tsx",
     "src/components/contratos/HistoricoContrato.tsx",
-    "src/routes/contratos_.$id_.historico.tsx",
-    "src/test/historicoContrato.test.tsx",
     "src/routeTree.gen.ts",
+    "src/test/ingestaoHistorico.test.tsx",
     "scripts/testc/visual-audit.mjs",
     "scripts/testc/visual-audit.test.mjs",
     "src/test/brand.test.tsx",
-    "docs/frontend/auditorias/PROMPT_42_V121_TESTES_2026-11-04.md",
+    "docs/frontend/auditorias/PROMPT_43_V122_TESTES_2026-11-04.md",
     "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
   ],
-  "observacao": "PROMPT 42/V1-21: somente leitura do histórico do contrato corrente, seis tabelas existentes, paginação server-side; importação e IA pertencem a V1-22/PROMPT 43. CI PLAN PR #57 dois checks SUCCESS. GOV-020 exige saída TanStack gerada, nunca manual. HML RLS A/B facultativo após PROMPT 99, NÃO VERIFICADO e não bloqueante isolado; todos demais gates exigidos. O CI do primeiro BUILD PR #59 bloqueou corretamente cláusula literal do plano; corrigido em PR #60, CI 41916280531 dois checks SUCCESS. Este GATE revalida a anterioridade antes de nova branch BUILD. Não reutilizar branch antiga para contornar scope gate.",
+  "observacao": "PROMPT 43 / V1-22: lote de relatórios com competência; reuso exclusivo de Storage, confirmar_upload_arquivo, criar_documento_contrato_completo, RPCs históricas e filas HML existentes. Nenhum fluxo real de upload, processamento real por worker ou isolamento entre usuários será testado nesta etapa por decisão expressa do titular; manter NÃO VERIFICADO, não equivale a certificação operacional. PR PLAN #71, CI 41940708299 dois SUCCESS, merge a3d1f65e2af235166d5d0d68ffe227a5877959e8. Após gate, TDD/BUILD, Teste C e verificação da rota TanStack. V1 não certificada, V2 bloqueada.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
-  "context_read_by": "GPT-6 — fonte original do regular 42, 25/25 documentos e 100/97 do catálogo, crosswalk semântico 97/97, tipos certificados, PR #57 com CI aprovado",
+  "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
   "context_read_acknowledged_at": "2026-11-04",
   "context_source_commit": "c2bf86d011da6bfd3abaa70de38e7a722ae629de",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
@@ -74,7 +75,7 @@
     "20_PROMPT_000_BRAND_01.md"
   ],
   "prompt_crosswalk": {
-    "regular_prompt_id": "42",
+    "regular_prompt_id": "43",
     "direct_atomic_ids": [
       "000",
       "006",
@@ -84,15 +85,23 @@
       "010"
     ],
     "additional_transversal_atomic_ids": [
-      "019",
-      "070",
+      "085",
+      "086",
+      "087",
+      "088",
       "089",
+      "090",
+      "091",
+      "092",
       "093",
-      "095"
+      "094",
+      "095",
+      "096"
     ],
     "exclusoes_justificadas": {
-      "087": "Download condicionado a Storage autorizado; não previsto neste BUILD.",
-      "094": "Observabilidade de infraestrutura é transversal, sem instrumentação de backend alterável nesta tela."
+      "085": "Infraestrutura stateless é requisito backend; frontend não muda instâncias de workers nesta tela.",
+      "086": "Pool PostgreSQL é pré-existente e não alterado em tela; validar via infraestrutura, não por mock.",
+      "090": "Estrutura/consumidor de fila dedicado HML preexistente, execução real de worker dispensada pelo titular."
     },
     "source_evidence_missing": false,
     "regular_original_sha256": "8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e",
@@ -104,35 +113,24 @@
     "required_section": "ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE"
   },
   "impacto_visual": "SIM",
-  "impacto_visual_justificativa": "Nova V1-21 no Design System vigente sem mudar BRAND; matriz Teste C 27 rotas×4 larguras×2 temas=216, superfícies privadas sem E2E real seguem não verificadas.",
+  "impacto_visual_justificativa": "Nova rota de importação sob Design System oficial; validar 1440/1280/768/390 claro/escuro e Teste C, estados sem credenciais reais classificados NÃO VERIFICADOS.",
   "backend_changes_allowed": false,
   "prod_changes_allowed": false,
   "source_proof": {
-    "frontend_baseline": "7721577cf4c43fe94f8f923e085a08c016fa746e",
+    "frontend_baseline": "48ff81d804247bfa48be93afcfcaa947c48ecd0d",
     "normative_head": "c2bf86d011da6bfd3abaa70de38e7a722ae629de",
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
-    "crosswalk_regular42": [
-      "000",
-      "006",
-      "007",
-      "008",
-      "009",
-      "010",
-      "019",
-      "070",
-      "089",
-      "093",
-      "095"
-    ],
     "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
-    "plan_pr": 60,
-    "plan_ci_run": 41916280531
+    "plan_pr": 71,
+    "plan_ci_run": 41940708299,
+    "prompt_original_hash_verified": true,
+    "backend_hml_test_run": 41939010108
   },
   "unverified_operational": [
-    "RLS operacional HML com usuários A/B de organizações distintas — NÃO VERIFICADO e FACULTATIVO após prompt regular 99, não bloqueante isoladamente",
-    "E2E autenticado HML privado — NÃO VERIFICADO",
-    "WCAG integral privado — NÃO VERIFICADO"
+    "Upload real autenticado — NÃO EXECUTADO POR DECISÃO DO TITULAR",
+    "Processamento real ponta a ponta pelo worker — NÃO EXECUTADO POR DECISÃO DO TITULAR",
+    "Isolamento operacional entre usuários e organizações HML A/B — NÃO EXECUTADO POR DECISÃO DO TITULAR; facultativo após regular 99, não bloqueante isolado"
   ],
-  "p0_note": "P0 por versão integrado no frontend PR #64 e backend normativo PR #38. Este PLAN 42 pertence ao histórico e permanece VALIDADO; próximo novo PLAN permitido regular 43/V1-22 e depois 75/V1-23; não iniciar V2 até V1 certificada. HEAD normativo reancorado sem mudança de 25 blobs ou catálogo."
+  "p0_note": "P0 versão primeiro. 43 é próximo regular. Testes operacionais dispensados não cancelam outras exigências nem certificam V1-22; depois do 43 executar 75/V1-23 antes de V2."
 }
