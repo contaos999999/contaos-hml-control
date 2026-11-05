@@ -1,41 +1,44 @@
 {
   "schema": "contaos.frontend.plan.v1",
   "prompt_id": "75",
-  "status": "VALIDADO",
-  "plano_documento": "docs/frontend/planos/PROMPT_75_V1_23_TRILHA_AUDITORIA_PLAN_2026-11-04.md",
+  "status": "EM_VALIDACAO",
+  "plano_documento": "docs/frontend/planos/P0_SIDEBAR_APPSHELL_V1_PLAN_2026-11-05.md",
   "validacao": {
-    "resultado": "PASS",
-    "validado_por": "Revisão documental do PLAN e gates de planejamento; não certifica operação HML nem BUILD",
-    "validado_em": "2026-11-04",
+    "resultado": "PENDENTE",
+    "validado_por": "Aguardando revisão documental e CI do plano P0",
+    "validado_em": null,
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": false,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/41948962744",
+    "ci_plano_url": "",
     "gates": {
-      "prd": "PASS",
-      "premissas": "PASS",
-      "arquitetura": "PASS",
-      "atomicos": "PASS",
-      "brand": "PASS",
-      "seguranca": "PASS",
-      "nfr": "PASS",
-      "zero_drift": "PASS",
-      "tdd": "PASS",
-      "ci": "PASS",
-      "teste_c_planejado": "PASS",
-      "rollback": "PASS"
+      "prd": "PENDENTE",
+      "premissas": "PENDENTE",
+      "arquitetura": "PENDENTE",
+      "atomicos": "PENDENTE",
+      "brand": "PENDENTE",
+      "seguranca": "PENDENTE",
+      "nfr": "PENDENTE",
+      "zero_drift": "PENDENTE",
+      "tdd": "PENDENTE",
+      "ci": "PENDENTE",
+      "teste_c_planejado": "PENDENTE",
+      "rollback": "PENDENTE"
     }
   },
   "arquivos_permitidos": [
-    "src/routes/administracao.auditoria.tsx",
+    "src/routes/__root.tsx",
+    "src/components/layout/ContaOSAppShell.tsx",
+    "src/components/layout/ContaOSSidebar.tsx",
+    "src/lib/navegacao/menuV1.ts",
+    "src/test/appShellSidebar.test.tsx",
+    "src/components/dashboard/Dashboard.tsx",
+    "src/components/contratos/ListaContratos.tsx",
+    "src/components/administracao/usuarios/AdminUsuarios.tsx",
     "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
-    "src/lib/administracao/auditoriaDados.ts",
-    "src/test/trilhaAuditoria.test.tsx",
-    "docs/frontend/auditorias/PROMPT_75_V123_TESTES_2026-11-04.md",
-    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md",
-    "src/test/admUsuarios.test.tsx",
-    "src/test/admUsuarios.test.tsx"
+    "docs/frontend/auditorias/P0_SIDEBAR_APPSHELL_V1_TESTES_2026-11-05.md",
+    "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
   ],
-  "observacao": "V1-23: PLAN #75 integrado e CI dois jobs SUCCESS no HEAD 19d14e0; consulta somente leitura eventos_auditoria; RLS e teste operacional HML ainda pendentes; sidebar/AppShell BRAND-01 e WCAG P0 bloqueiam certificação V1; BUILD só após GATE integrado. Não certificar V1 nem avançar V2. Emenda de escopo GOV-021: teste ADM-01 exclusivamente para eliminar falso positivo causado por auditoriaDados.ts; nenhuma alteração em lógica do backend ou relaxamento de proibições ADM-01. Emenda exige validação CI e merge separado antes de BUILD. GOV-021: ajuste de teste ADM-01 para isolar varredura do modulo V1-23; PLAN antecede BUILD e exige CI verde.",
+  "observacao": "Plano transversal P0 da sidebar/AppShell V1, aguardando validação formal; BUILD não autorizado.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
@@ -123,5 +126,5 @@
     "V1-23: Teste C do BUILD autenticado — NÃO VERIFICADO",
     "V1: Sidebar/AppShell global e requisitos transversais — PENDENTES"
   ],
-  "p0_note": "GATE documental do PROMPT 75. PASS refere-se aos gates de planejamento, não aos testes reais HML, isolamento, Sidebar, acessibilidade nem certificação V1."
+  "p0_note": "Plano de correção transversal P0 V1: não certifica V1, não autoriza BUILD sem gates PASS, não altera backend/PROD."
 }
