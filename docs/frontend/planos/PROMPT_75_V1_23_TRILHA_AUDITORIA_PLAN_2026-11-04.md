@@ -66,3 +66,7 @@ Na `main` frontend existe `src/routes/administracao.usuarios.tsx` com TanStack R
 **Plano de acesso mínimo:** consulta paginada e filtrada no Supabase com `id_organizacao` autorizado; proibir seleção genérica de `antes/depois/metadados`; apresentar apenas campos não sensíveis aprovados; bloquear UI de perfis não autorizados sem tratar bloqueio visual como substituto da RLS. Revalidar política `eventos_select` que inclui `juridico_conformidade` contra especificação da tela que cita apenas auditor/administrador. **Não alterar grants/RLS neste BUILD frontend.**
 
 **Correção do estado do PLAN:** trechos anteriores que tratavam texto original como pendente foram superados pela recuperação literal documentada na seção anterior. Permanecem pendentes confirmação operacional HML, definição final da consulta e aprovação do PLAN pelos checks. O próximo GATE depende dessas provas, não de autorização verbal genérica.
+
+
+## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+Requisito literal do gate canônico: não gerar backend paralelo, não editar Supabase/types, não modificar BRAND-01, não ampliar escopo de arquivos sem novo PLAN. Usar Design System, AppShell/sidebar oficial e componentes existentes; evitar duplicação de código e chamadas Lovable desnecessárias. Os testes reais HML, WCAG e Teste C de BUILD continuam pendentes e NÃO são declarados PASS por esta cláusula. Fonte: manual mestre 100 prompts, pacote oficial BRAND v1.0 e documentação normativa versionada.
