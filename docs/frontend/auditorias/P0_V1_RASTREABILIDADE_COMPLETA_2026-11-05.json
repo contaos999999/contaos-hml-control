@@ -29,7 +29,8 @@
       "HISTORICA_ESCOPADA": 32,
       "PARCIAL_OU_NAO_VERIFICADA": 250,
       "SEM_PROVA_INDIVIDUAL": 134
-    }
+    },
+    "nfr_transversal_explicitly_applicable": 12
   },
   "attestation": {
     "structural_traceability": "COMPLETE_FOR_ENUMERATION",
@@ -6275,7 +6276,10 @@
       "required_test": "teste de escala/concorrência",
       "regular_ids": [],
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "086",
@@ -6288,7 +6292,10 @@
       "required_test": "carga de conexões",
       "regular_ids": [],
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "087",
@@ -6304,7 +6311,10 @@
         "32"
       ],
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "088",
@@ -6319,7 +6329,10 @@
         "31"
       ],
       "test_status": "RESSALVA_R01_R02_SOMENTE_FLUXO_REAL",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "089",
@@ -6334,7 +6347,10 @@
         "38"
       ],
       "test_status": "RESSALVA_R01_R02_SOMENTE_FLUXO_REAL",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "090",
@@ -6347,7 +6363,10 @@
       "required_test": "backlog/falha isolada",
       "regular_ids": [],
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "091",
@@ -6362,7 +6381,10 @@
         "38"
       ],
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "092",
@@ -6377,7 +6399,10 @@
         "38"
       ],
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "093",
@@ -6392,7 +6417,10 @@
         "38"
       ],
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "094",
@@ -6407,7 +6435,10 @@
         "38"
       ],
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "095",
@@ -6420,7 +6451,10 @@
       "required_test": "falha externa",
       "regular_ids": [],
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     },
     {
       "atomic_id": "096",
@@ -6433,7 +6467,10 @@
       "required_test": "carga e thresholds",
       "regular_ids": [],
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "certified": false
+      "certified": false,
+      "applies_to_v1": true,
+      "applicability_status": "TRANSVERSAL_V1_PENDENTE_PROVA_REAL",
+      "applicability_basis": "NFR transversal 085–096 aplicável às versões, sem inferir homologação por tela"
     }
   ]
 }
