@@ -31,7 +31,8 @@ describe("P0 sidebar — invariantes de sessao e acessibilidade", () => {
     const codigo = lerShell();
     expect(codigo).toContain("validarAdministrador(organizacao).catch(() => false)");
     expect(codigo).toContain("setAdministrador(autorizado === true)");
-    expect(codigo).toContain("setAuditoriaPermitida(autorizado === true)");
+    expect(codigo).toContain("podeConsultarAuditoria(organizacao).catch(() => false)");
+    expect(codigo).toContain("setAuditoriaPermitida(auditoriaAutorizada === true)");
     expect(codigo).toContain("aria-expanded={movelAberto}");
     expect(codigo).toContain("aria-controls=\"contaos-menu-movel\"");
   });
@@ -44,7 +45,7 @@ describe("P0 sidebar — protecao contra respostas de autenticacao antigas", () 
     expect(codigo).toContain("geracao === geracaoAutenticacao.current");
     expect(codigo).toContain("if (!sessaoAtual() || error || !data.user) return");
     expect(codigo).toContain("if (sessaoAtual()) setAdministrador(autorizado === true)");
-    expect(codigo).toContain("if (sessaoAtual()) setAuditoriaPermitida(autorizado === true)");
+    expect(codigo).toContain("if (sessaoAtual()) setAuditoriaPermitida(auditoriaAutorizada === true)");
   });
 });
 
