@@ -37,3 +37,28 @@ Não alterar marca, tokens, layout de telas existentes ou comportamento de negó
 
 ## Próximo passo
 Conferir inventário completo das rotas e arquivos de navegação, fontes normativas e matriz de acesso. Completar PLAN ativo, obter gates de planejamento e só então criar branch de BUILD. **Nenhum teste ou homologação é considerado executado por este documento.**
+
+## Inventário de rotas encontrado no repositório (pesquisa por createFileRoute)
+**Públicas, sem sidebar:** `/login`, `/esqueci-senha`, `/redefinir-senha`; `/selecionar-organizacao` é etapa de autenticação/contexto e não deve exigir organização já selecionada.
+
+**Navegação principal V1:** `/` (dashboard), `/contratantes`, `/contratos`, `/administracao/usuarios` e `/administracao/auditoria` (esta última confirmada no BUILD #83). Não apresentar links de páginas V2–V5 como ativas.
+
+**Rotas contextuais, não itens de menu global:** novo/editar contratante; novo/detalhe de contrato; regras, orçamento, histórico, importação histórica, documentos e detalhe, competências e criação, base normativa; detalhe de competência, documentos, análise, parecer, apresentação e detalhe de apresentação. A navegação entre essas páginas permanece contextual ao contrato/competência.
+
+**Risco identificado:** `__root.tsx` não possui autenticação global, portanto o AppShell não pode presumir que toda rota diferente das quatro públicas está autorizada. Deve preservar verificações de sessão, organização e permissões existentes sem criar flash de conteúdo privado. Auditoria e administração devem ter autorização específica e não apenas ocultação de links.
+
+**Próxima checagem antes de VALIDADO:** conferir `routeTree.gen.ts` para a lista exata e os nomes das rotas dinâmicas, inspecionar proteção das rotas ADM, autorização por organização e componentes atuais de cabeçalho. Em seguida congelar allowlist do PLAN ativo e executar os gates de planejamento. Nenhuma implementação está autorizada por este inventário.
+
+## Conferência técnica da árvore gerada e das rotas ADM (05/11/2026)
+- `src/routeTree.gen.ts` contém **29 rotas** (incluindo raiz, rotas públicas e contextuais) e confirma os caminhos literais `/administracao/usuarios` e `/administracao/auditoria`.
+- As duas rotas administrativas usam `component: AdminUsuarios` e `component: TrilhaAuditoria` e `ssr: false`. A proteção não é declarada em `beforeLoad` nessas rotas; a autorização é delegada aos componentes e ao backend. O AppShell não deve assumir autorização administrativa com base apenas na URL.
+- `Dashboard.tsx` já contém cabeçalho próprio, marca, seleção de organização e ação de sair; migrar essas funções ao shell exige revisão de regressão e prevenção de cabeçalhos duplicados. Não remover proteções de sessão existentes sem cobertura equivalente.
+- O catálogo do menu deve usar **somente** as rotas estáticas existentes e evitar itens dinâmicos `/$id` sem contexto. Menu de Administração condicionado a permissões efetivamente verificadas; ocultação visual não concede nem revoga autorização.
+- **Pendente de comprovação:** inspeção completa das verificações de permissão dos componentes ADM, dos cabeçalhos das demais telas e matriz canônica de papéis. Não registrar PLAN VALIDADO nem iniciar BUILD antes disso.
+
+## Correções obrigatórias identificadas na inspeção dos componentes
+1. **ADM-01:** `AdminUsuarios.tsx` valida sessão e organização, depois usa `validarAdministrador(org)` e só habilita a consulta de usuários quando `admin === true`. O menu Administração/Usuários só deve aparecer após verificação equivalente, nunca por presunção de perfil; manter RPC e estados de acesso negado.
+2. **V1-23 Auditoria:** `TrilhaAuditoria.tsx` verifica sessão/organização e consulta `obterEventosAuditoria`; não contém a mesma verificação explícita `validarAdministrador` do ADM-01. **Não inferir que auditoria é acessível a todo usuário**: antes de exibir link, definir a política de acesso a partir da matriz canônica e da autorização real da consulta, com tratamento de 401/403 e RLS. A ausência de guard frontend não prova falha do backend.
+3. **Cabeçalhos duplicados:** `Dashboard.tsx`, `ListaContratos.tsx` e `AdminUsuarios.tsx` já renderizam `<header>` com `ContaOSMarca` e ações. `TrilhaAuditoria.tsx` também exibe `ContaOSMarca` no cabeçalho interno. BUILD deve migrar de forma controlada ações globais para AppShell e deixar títulos locais, sem duplicação de marca/ações.
+4. **Logout/contexto:** `Dashboard.tsx` e `AdminUsuarios.tsx` chamam `supabase.auth.signOut()`; preservar comportamento e não limpar dados de outra organização apenas visualmente. Garantir limpeza/invalidação de cache após troca de organização ou saída, com testes.
+5. **Sequência de implementação segura:** (a) catálogo de rotas e teste de rotas públicas, (b) shell condicionado à sessão/contexto, (c) marca responsiva, (d) migração dos cabeçalhos por tela, (e) permissão ADM, (f) teste visual/teclado, (g) regressão/CI. Não marcar VALIDADO até o cruzamento normativo e PLAN ativo.
