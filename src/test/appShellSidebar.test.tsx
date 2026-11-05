@@ -229,3 +229,14 @@ describe("P0 V1 — invalidação local imediata na troca de organização", () 
     expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
   });
 });
+
+
+describe("BRAND-01 P0 — contraste dos logos oficiais na sidebar", () => {
+  it("seleciona logo navy em tema claro e branca em tema escuro", () => {
+    const codigo = lerShell();
+    expect(codigo).toMatch(/ContaOS_Logo_Horizontal_Mono_Navy\.svg[^\n]*dark:hidden/);
+    expect(codigo).toMatch(/ContaOS_Logo_Horizontal_Mono_Branco_Transparente\.svg[^\n]*dark:block/);
+    expect(codigo).toMatch(/ContaOS_Simbolo_Navy\.svg[^\n]*dark:hidden/);
+    expect(codigo).toMatch(/ContaOS_Simbolo_Branco\.svg[^\n]*dark:block/);
+  });
+});
