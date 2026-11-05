@@ -1,3 +1,19 @@
+## CHECKPOINT P0 — 05/11/2026 02:13 (America/Bahia): SIDEBAR E SESSÃO
+
+Consulta viva dos PRs e jobs no mesmo HEAD, sem inferir homologação operacional:
+
+- PR #99 (sidebar/AppShell) MERGED, HEAD `fc303514aca465af18a638c830de34201dc57882`, CI 41964388882 SUCCESS.
+- PR #101 (BRAND-01, deduplicação responsiva) MERGED, HEAD `9e3b7a51edcffd6801d63d6936602b818f285351`, CI 41968405315 SUCCESS, merge `9fb223a1d6b20f39345e249bfbbac5adbf63138e`.
+- PR #102 (checkpoint) MERGED, HEAD `32f6f567fc55deacd09522b6edeaf14a9345f12a`, CI 41968464688, **Zero-Drift SUCCESS e Teste C SUCCESS**, merge `6c66bd6f676cb66e77d9b958cc3027ddc5b37fe7`.
+- PR #103 (invalidação visual de sidebar em mudança de sessão) MERGED, HEAD `35ffe59d5e90d5da9a9922530f95ff24f97578f0`, CI 41969133467, **Zero-Drift SUCCESS e Teste C SUCCESS**, merge `c5845a871c6a90854bfcfec50b0692912e351450`.
+- PRs #77 (RED, HEAD `50ed95552094fe53e2c45fd1535ad16eb9dd79d9`, run 41949536167 FAILURE), #78 (BUILD, HEAD `f44a33165e71a0ef35a2ce9ae8fa094bc5cfc261`, run 41949684490 FAILURE) e #86 (ADM-01, HEAD `1b488b20f4f2ec54e8b66800c68c7ac47e2572e5`, run 41956036853 FAILURE) continuam OPEN. **Não mesclar** sem reconciliação normativa, novo HEAD e dois checks SUCCESS. #80 GATE, #83 BUILD e #87 emenda já integrados.
+- O checkpoint anterior dizia que sidebar/AppShell não existiam na main. Essa afirmação está **superada** pelos merges #99/#101/#103; componentes existem, mas operação autenticada HML e acessibilidade integral não foram certificadas.
+- Fonte canônica: índice do ZIP consultado; arquivo ZIP literal não reaberto nesta execução. Nenhuma mudança em PROD.
+
+**Próximo passo P0:** verificar teste real HML com sessão, autorização administrativa, isolamento entre organizações/usuários, upload e worker ponta a ponta; auditar WCAG 2.2 AA, quatro larguras e dois temas com evidência visual, arquivar artefatos permanentes, reconciliar PRs legados e executar retrospectiva. Não certificar V1 nem avançar V2 sem evidência.
+
+---
+
 ## CHECKPOINT P0 — 05/11/2026, CI e sidebar
 
 - PR #99 sidebar/AppShell: MERGED, HEAD `fc303514aca465af18a638c830de34201dc57882`, workflow `41964388882` SUCCESS; não equivale a certificação funcional HML.
