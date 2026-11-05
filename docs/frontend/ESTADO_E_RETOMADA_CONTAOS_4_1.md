@@ -583,3 +583,21 @@ No **primeiro turno de todo novo chat**, acessar pelo conector GitHub:
 - PR #83 integrado à main por merge `66f3a33f15445035aced2b19b7bd354fbc2fb929`. Corrigidos erros de tipagem TypeScript e varredura ADM-01 sem alterar backend.
 - **Última etapa comprovada:** BUILD de código V1-23 integrado com dois checks CI verdes; isto não equivale à homologação operacional nem à certificação da V1.
 - **Próxima tarefa:** concluir e comprovar requisito transversal P0 da sidebar/AppShell e BRAND-01 (expandida/recolhida, transparência, navegação centralizada, rotas e ativação progressiva), revisão WCAG/identidade visual, e verificar HML real/isolamento, upload e worker conforme pendências formalizadas. Não avançar à V2 sem gate V1.
+
+
+### P0 transversal sidebar/AppShell — atualização verificada em 05/11/2026
+- PLAN P0: PR #98 integrado, execução CI 41962851627 SUCCESS; escopo Zero-Drift validado para o BUILD.
+- BUILD inicial: PR #99 integrado, CI 41964388882 SUCCESS; AppShell, sidebar e rotas principais/admin com validação RPC fail-closed.
+- PR #101 integrado, CI 41968405315 SUCCESS; preservação das marcas exigidas por brand.test.tsx.
+- PR #103 integrado, CI 41969133467 SUCCESS; invalidação do menu ao alterar autenticação.
+- PR #105 integrado, CI 41978453275 SUCCESS; revalidação após SIGNED_IN/SIGNED_OUT/USER_UPDATED.
+- PR #106 integrado, CI 41978982701 SUCCESS; testes estáticos de invariantes de sessão e navegação.
+- PR #107 integrado, CI 41979537498 SUCCESS; diálogo móvel e Escape.
+- PR #108 integrado, CI 41983831986 SUCCESS; foco inicial, Tab/Shift+Tab e restauração de foco no menu móvel.
+- PR #110 integrado, CI 41989617157 SUCCESS; bloqueio de respostas assíncronas de autenticação obsoletas.
+- PR #111 integrado, CI 41990206952 SUCCESS; aria-current e foco visível nas rotas administrativas.
+- PR #112 integrado, CI 41997059478 SUCCESS; ícones distintos para módulos comuns recolhidos.
+- PR #113 integrado, CI 41997871841 SUCCESS; ícones distintos para módulos administrativos recolhidos.
+- PR #114 integrado, CI 41998471755 SUCCESS; revalidação de sessão e permissões ao voltar à aba visível.
+- **Evidência limitada:** CI verde e testes estáticos não comprovam WCAG em navegador, HML autenticado, revogação imediata de acesso, isolamento multi-tenant, upload/worker reais ou homologação.
+- **Última etapa comprovada:** PR #114 integrado à main com CI verde. **Próxima tarefa:** testes comportamentais de sidebar, revisão visual responsiva/BRAND-01, HML autenticado e isolamento entre organizações; registrar evidências reais antes de certificar V1. Nenhuma certificação ou avanço V2 autorizado.
