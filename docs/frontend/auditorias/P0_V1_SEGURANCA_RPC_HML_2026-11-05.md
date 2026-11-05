@@ -36,5 +36,22 @@ O Security Advisor reportou nove avisos `authenticated_security_definer_function
 - Não transpor o status estrutural para `SEGURANCA_100_PASS`: a certificação integral depende dos ensaios operacionais não abrangidos pelas ressalvas.
 - Referências Supabase: https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable e https://supabase.com/docs/guides/auth/password-security.
 
+
+## Ensaio adicional read-only: papel authenticated sem JWT
+
+No Supabase HML foram executadas consultas SQL em transação `READ ONLY`, com `SET LOCAL ROLE authenticated`, **sem qualquer JWT** e usando UUID inexistente e fixo. Resultado:
+
+| RPC | Resposta | Interpretação restrita |
+| --- | --- | --- |
+| `obter_detalhe_requisito_v117` | 42501 acesso negado | PASS de negativa sem sessão |
+| `enfileirar_ingestao_historica_hml` | P0001 Sessão necessária | PASS de negativa sem sessão |
+| `obter_analise_competencia_v116` | PT404 competência não encontrada | Consulta retorna inexistência antes da guarda; não demonstra autorização de identidade real |
+| `obter_documentos_competencia_v115` | PT404 competência não encontrada | Mesma limitação |
+| `obter_visao_geral_competencia` | P0001 competência não encontrada | Mesma limitação |
+
+Os resultados não equivalem a E2E JWT e nem a prova de bloqueio de todos os perfis. A verificação de ausência de dados por UUID inexistente é limitada e não constitui teste de uma linha existente. Nenhuma gravação executada.
+
+**Fechamento da frente segurança:** `PASS_CONFIG_ACL_E_NEGATIVAS_DISPONIVEIS; PENDENTE_AUTORIZACAO_AUTENTICADA`. O alerta de senhas vazadas permanece excepcionalmente fora do escopo por decisão do titular, sem marcar remediado.
+
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 Auditoria somente leitura, sem impacto em BRAND-01, sem build Lovable, sem toques em HML/PROD, types imutável. Evidência por função acima é reprodutível com `pg_proc`, `has_function_privilege` e consultas controladas; nenhum token/senha armazenado.
