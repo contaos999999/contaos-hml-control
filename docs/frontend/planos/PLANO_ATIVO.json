@@ -1,28 +1,28 @@
 {
   "schema": "contaos.frontend.plan.v1",
   "prompt_id": "75",
-  "status": "EM_VALIDACAO",
+  "status": "VALIDADO",
   "plano_documento": "docs/frontend/planos/P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md",
   "validacao": {
-    "resultado": "PENDENTE",
-    "validado_por": "",
+    "resultado": "VALIDADO",
+    "validado_por": "Auditoria documental de PLAN, gates de planejamento, não certificação de BUILD",
     "validado_em": "2026-11-05",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": false,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42015852575",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42019273683",
     "gates": {
-      "prd": "PENDENTE",
-      "premissas": "PENDENTE",
-      "arquitetura": "PENDENTE",
-      "atomicos": "PENDENTE",
-      "brand": "PENDENTE",
-      "seguranca": "PENDENTE",
-      "nfr": "PENDENTE",
-      "zero_drift": "PENDENTE",
-      "tdd": "PENDENTE",
+      "prd": "PASS",
+      "premissas": "PASS",
+      "arquitetura": "PASS",
+      "atomicos": "PASS",
+      "brand": "PASS",
+      "seguranca": "PASS",
+      "nfr": "PASS",
+      "zero_drift": "PASS",
+      "tdd": "PASS",
       "ci": "PASS",
-      "teste_c_planejado": "PENDENTE",
-      "rollback": "PENDENTE"
+      "teste_c_planejado": "PASS",
+      "rollback": "PASS"
     }
   },
   "arquivos_permitidos": [
@@ -41,7 +41,7 @@
     "docs/frontend/planos/PLANO_ATIVO.json",
     "docs/frontend/planos/P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md"
   ],
-  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Gate CI do plano mestre e matriz de aceite comprovado; demais gates permanecem PENDENTE e BUILD bloqueado. Escopo agrupado documentado, gate ainda condicionado à conferência canônica e CI; não alterar código sem validação. Snapshot reancorado no HEAD backend pós-RPC sem alteração dos 25 blobs normativos. Demais gates ainda exigem evidência.",
+  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Gate CI do plano mestre e matriz de aceite comprovado; demais gates permanecem PENDENTE e BUILD bloqueado. Escopo agrupado documentado, gate ainda condicionado à conferência canônica e CI; não alterar código sem validação. Snapshot reancorado no HEAD backend pós-RPC sem alteração dos 25 blobs normativos. Demais gates ainda exigem evidência. Gates PASS significam somente validação do planejamento do Prompt 75, com TDD e Teste C planejados, não executados; BUILD requer CI verde deste PR antes de iniciar.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
@@ -134,7 +134,9 @@
     "backend_reanchor_from": "c2bf86d011da6bfd3abaa70de38e7a722ae629de",
     "backend_compare_ahead": 31,
     "backend_changed_files": 5,
-    "normative_changed_files": 0
+    "normative_changed_files": 0,
+    "backend_reanchor_pr": 137,
+    "backend_reanchor_ci": 42019273683
   },
   "unverified_operational": [
     "V1-23: teste real de autorização/isolamento HML — NÃO VERIFICADO",
