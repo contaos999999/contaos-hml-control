@@ -378,3 +378,26 @@ describe("V1-02 segurança de código", () => {
     expect(m.invoke).not.toHaveBeenCalled();
   });
 });
+
+
+describe("P0 V1 MASTER — regressão RED antes do BUILD", () => {
+  it("MASTER global sem vínculo físico recebe autorização via RPC e acessa formulário", async () => {
+    m.respostas.vinculos_usuarios = () => ({ data: null, error: null, status: 200 });
+    m.rpc.mockResolvedValue({
+      data: [{ id: ORG, razao_social: "Organização", nome_fantasia: null, cnpj: null, situacao: "ativa", perfil: "administrador_master" }],
+      error: null,
+    });
+    montar();
+    expect(await screen.findByLabelText(/Razão social/)).toBeTruthy();
+    expect(m.rpc).toHaveBeenCalledWith("listar_organizacoes_disponiveis");
+    expect(m.chamadas.some((c) => c.tabela === "vinculos_usuarios")).toBe(false);
+  });
+
+  it("RPC negada não concede acesso mesmo quando vínculo físico antigo diz administrador", async () => {
+    m.rpc.mockResolvedValue({ data: null, error: { code: "42501", message: "negado" } });
+    montar();
+    expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
+    expect(screen.queryByLabelText(/Razão social/)).toBeNull();
+    expect(inserts()).toHaveLength(0);
+  });
+});
