@@ -77,7 +77,10 @@ test("PROMPT 43: V122 integra Teste C privado 224 casos (sem upload/worker/isola
   assert.equal(rota.path, "/contratos/00000000-0000-4000-8000-000000000001/historico/importar");
   assert.notEqual(rota.public, true);
   assert.equal(cases().filter((c) => c.id === "V122").length, 8);
-  assert.equal(classifyProtected({ pathname: rota.path, text: "Importação de histórico" }), "NAO_VERIFICADO_SESSAO_REAL");
+  assert.equal(
+    classifyProtected({ pathname: rota.path, text: "Importação de histórico" }),
+    "NAO_VERIFICADO_SESSAO_REAL",
+  );
 });
 
 test("public gate PASS somente para métricas comprovadas", () => {
