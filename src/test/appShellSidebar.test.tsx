@@ -19,6 +19,11 @@ describe("P0 sidebar V1", () => {
 const lerShell = () => readFileSync(resolve(__dirname, "../components/layout/ContaOSAppShell.tsx"), "utf8");
 
 describe("P0 sidebar — invariantes de sessao e acessibilidade", () => {
+  it("distingue rota de cadastro da listagem e mantém ícone de contratantes", () => {
+    const codigo = readFileSync(resolve(__dirname, "../components/layout/ContaOSSidebar.tsx"), "utf8");
+    expect(codigo).toContain('destino !== "/contratantes" && destino !== "/contratos"');
+    expect(codigo).toContain('destino.startsWith("/contratantes")');
+  });
   it("revalida o menu quando a autenticacao muda", () => {
     const codigo = lerShell();
     expect(codigo).toContain("onAuthStateChange");
