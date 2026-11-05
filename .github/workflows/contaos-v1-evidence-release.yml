@@ -113,6 +113,11 @@ jobs:
             cd "$RUNNER_TEMP/restore"
             test -s SHA256SUMS
             sha256sum --check SHA256SUMS
+            cat <<'EXPECTED_SHA256' | sha256sum --check
+          c59d9826b06b7be8023db5bff4e3b48a7f572263f66fb3d2ad993517af48d10b  ContaOS_TestC_42024620823.zip
+          b6d9f38d7017b70f860d76a6677452c6065f73aa38229136cc5ab14a7e29e095  ContaOS_TestC_42026795811.zip
+          67f67926b471b3b5cf912987f3c856546b165ceedf0a0a910176e8baf41d901c  SHA256SUMS
+          EXPECTED_SHA256
           )
           {
             echo "### Integridade mensal P0 V1: PASS"
