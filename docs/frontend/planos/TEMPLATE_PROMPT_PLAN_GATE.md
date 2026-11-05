@@ -15,6 +15,16 @@
 
 > Copie para `docs/frontend/planos/PROMPT_XX_<data>_<assunto>.md`. **Não modificar código antes do PLAN validado e publicado em commit próprio.**
 
+## PRIORIDADE ZERO — GATE DE COMPATIBILIDADE FRONTEND ↔ BACKEND (DECISÃO DO TITULAR)
+
+**Regra expressa do titular (05/11/2026):** ANTES de desenvolver frontend ou aprovar qualquer PLAN, confrontar cada prompt regular, atômico e requisito transversal com o backend **efetivamente implementado e comprovado** no Supabase HML e com migrations/RPC/RLS/Auth/Storage/Edge/filas, tipos e testes versionados. Documentação aspiracional ou certificação histórica genérica não comprova um contrato específico.
+
+Para cada operação, tela, permissão e fluxo, preencher matriz **requisito → contrato backend existente → evidência concreta (arquivo/migration/RPC/RLS/teste/CI/ambiente) → compatibilidade PASS/FAIL/NÃO VERIFICADO**. Distinguir contrato existente de implementação real e registrar divergências de perfis, organização, estados, tipos, parâmetros, erros, idempotência e processamento assíncrono. Sem prova = NÃO VERIFICADO e não PASS.
+
+**Se houver lacuna ou incompatibilidade, bloquear a aprovação do PLAN e o BUILD dependente, comunicar ao titular com impacto e duas opções:** (A) ampliar backend mediante autorização específica, PLAN/migration/testes/certificação no repositório canônico; (B) reduzir/adequar frontend ao backend existente **somente quando preservar integralmente PRD, requisitos e critérios de aceite**. O titular decide expressamente A ou B; o agente não escolhe silenciosamente, não inventa endpoint, não simula backend como solução definitiva e não enfraquece RLS. Se B violar requisito obrigatório, declarar opção B tecnicamente inviável e pedir decisão sobre escopo/produto.
+
+Registrar decisão, SHA do backend, ambiente HML, evidências e matriz no PLAN antes de marcar VALIDADO. Reexecutar o gate se o contrato backend mudar entre PLAN e BUILD. Não modificar backend no repositório frontend. Este gate vale para V1–V5, 100 prompts regulares, 97 atômicos e todos os transversais, sem renumerar ou flexibilizar a ordem de certificação por versão.
+
 ## A. PROMPT E REFERÊNCIAS
 - ID do prompt regular e atômicos vinculados:
 - Descrição literal do requisito/FAIL reproduzível:
