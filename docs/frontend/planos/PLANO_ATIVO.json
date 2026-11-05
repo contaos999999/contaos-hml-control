@@ -41,12 +41,12 @@
     "docs/frontend/planos/PLANO_ATIVO.json",
     "docs/frontend/planos/P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md"
   ],
-  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Gate CI do plano mestre e matriz de aceite comprovado; demais gates permanecem PENDENTE e BUILD bloqueado. Escopo agrupado documentado, gate ainda condicionado à conferência canônica e CI; não alterar código sem validação.",
+  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Gate CI do plano mestre e matriz de aceite comprovado; demais gates permanecem PENDENTE e BUILD bloqueado. Escopo agrupado documentado, gate ainda condicionado à conferência canônica e CI; não alterar código sem validação. Snapshot reancorado no HEAD backend pós-RPC sem alteração dos 25 blobs normativos. Demais gates ainda exigem evidência.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
   "context_read_acknowledged_at": "2026-11-04",
-  "context_source_commit": "c2bf86d011da6bfd3abaa70de38e7a722ae629de",
+  "context_source_commit": "3aa4af7a292b80243045e0a426ee6399ba948ff2",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -114,7 +114,7 @@
   "prod_changes_allowed": false,
   "source_proof": {
     "frontend_baseline": "48ff81d804247bfa48be93afcfcaa947c48ecd0d",
-    "normative_head": "c2bf86d011da6bfd3abaa70de38e7a722ae629de",
+    "normative_head": "3aa4af7a292b80243045e0a426ee6399ba948ff2",
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
     "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
@@ -130,7 +130,11 @@
     "acceptance_plan_ci": 42015852575,
     "hml_rpc_contract_pr": 133,
     "hml_rpc_contract_ci": 42015435635,
-    "grouped_build_plan_commit": "c0fda7f89b055c7767e81a9a1f87a885f841e5ca"
+    "grouped_build_plan_commit": "c0fda7f89b055c7767e81a9a1f87a885f841e5ca",
+    "backend_reanchor_from": "c2bf86d011da6bfd3abaa70de38e7a722ae629de",
+    "backend_compare_ahead": 31,
+    "backend_changed_files": 5,
+    "normative_changed_files": 0
   },
   "unverified_operational": [
     "V1-23: teste real de autorização/isolamento HML — NÃO VERIFICADO",
