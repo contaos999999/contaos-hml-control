@@ -62,3 +62,11 @@ Conferir inventário completo das rotas e arquivos de navegação, fontes normat
 3. **Cabeçalhos duplicados:** `Dashboard.tsx`, `ListaContratos.tsx` e `AdminUsuarios.tsx` já renderizam `<header>` com `ContaOSMarca` e ações. `TrilhaAuditoria.tsx` também exibe `ContaOSMarca` no cabeçalho interno. BUILD deve migrar de forma controlada ações globais para AppShell e deixar títulos locais, sem duplicação de marca/ações.
 4. **Logout/contexto:** `Dashboard.tsx` e `AdminUsuarios.tsx` chamam `supabase.auth.signOut()`; preservar comportamento e não limpar dados de outra organização apenas visualmente. Garantir limpeza/invalidação de cache após troca de organização ou saída, com testes.
 5. **Sequência de implementação segura:** (a) catálogo de rotas e teste de rotas públicas, (b) shell condicionado à sessão/contexto, (c) marca responsiva, (d) migração dos cabeçalhos por tela, (e) permissão ADM, (f) teste visual/teclado, (g) regressão/CI. Não marcar VALIDADO até o cruzamento normativo e PLAN ativo.
+
+## Evidência de integração do PLAN ativo (05/11/2026)
+- PR #93 integrado na `main`, merge `949403669ca87d1040149ef5d99d38e17b2ce2b2`.
+- CI no HEAD `1e3632e053987a67d808e20f2c5fe6ba5e8b7f77`: execução `41961117302`, conclusão **SUCCESS**.
+- Jobs: `ContaOS Frontend Zero-Drift` **SUCCESS** e `Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente` **SUCCESS**.
+- `PLANO_ATIVO.json` na main: `status=EM_VALIDACAO`, `validacao.resultado=PENDENTE`, doze gates `PENDENTE`; allowlist P0 fechada. **Os jobs acima validam o commit de governança, não o BUILD da sidebar.**
+- **Pendências antes de marcar VALIDADO:** (1) confrontar cada requisito e cada permissão com as 25 fontes canônicas e crosswalk 100/97, (2) revisar o vínculo do plano transversal com `prompt_id=75` sem falsear escopo original, (3) demonstrar gates de planejamento individuais, (4) registrar URL de CI do PLAN e aprovação conforme política, (5) fechar estratégia de autorização e de cabeçalhos. Nenhum gate individual é considerado PASS por inferência do CI.
+- **Rollback do PLAN:** reverter o commit de atualização do `PLANO_ATIVO.json` mediante PR e CI, restaurando o PLAN anterior se necessário. BUILD ainda proibido.
