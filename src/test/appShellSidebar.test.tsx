@@ -43,3 +43,19 @@ describe("P0 sidebar — protecao contra respostas de autenticacao antigas", () 
     expect(codigo).toContain("if (sessaoAtual()) setAdministrador(autorizado === true)");
   });
 });
+
+describe("P0 sidebar — regressões consolidadas do diálogo móvel", () => {
+  it("fecha ao atingir o breakpoint desktop e libera o conteúdo", () => {
+    const codigo = lerShell();
+    expect(codigo).toContain('window.matchMedia("(min-width: 768px)")');
+    expect(codigo).toContain('media.addEventListener("change", fecharAoExpandir)');
+    expect(codigo).toContain('media.removeEventListener("change", fecharAoExpandir)');
+    expect(codigo).toContain('inert={movelAberto}');
+  });
+  it("restaura rolagem e protege foco durante mudança de rota", () => {
+    const codigo = lerShell();
+    expect(codigo).toContain('document.body.style.overflow = overflowAnterior');
+    expect(codigo).toContain('fechamentoPorNavegacao.current');
+    expect(codigo).toContain('document.removeEventListener("keydown", controlarTeclado)');
+  });
+});

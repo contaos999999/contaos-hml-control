@@ -21,8 +21,10 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   const dialogoMovelRef = useRef<HTMLDivElement>(null);
   const botaoMovelRef = useRef<HTMLButtonElement>(null);
   const geracaoAutenticacao = useRef(0);
+  const fechamentoPorNavegacao = useRef(false);
   useEffect(() => {
     if (!movelAberto) return;
+    fechamentoPorNavegacao.current = false;
     const overflowAnterior = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const dialogo = dialogoMovelRef.current;
@@ -51,10 +53,20 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     return () => {
       document.removeEventListener("keydown", controlarTeclado);
       document.body.style.overflow = overflowAnterior;
-      if (focoAnterior?.isConnected) focoAnterior.focus();
-      else botaoMovelRef.current?.focus();
+      if (!fechamentoPorNavegacao.current && focoAnterior?.isConnected) focoAnterior.focus();
+      else if (!fechamentoPorNavegacao.current) botaoMovelRef.current?.focus();
+      fechamentoPorNavegacao.current = false;
     };
   }, [movelAberto]);
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const fecharAoExpandir = (evento: MediaQueryListEvent) => {
+      if (evento.matches) setMovelAberto(false);
+    };
+    if (media.matches) setMovelAberto(false);
+    media.addEventListener("change", fecharAoExpandir);
+    return () => media.removeEventListener("change", fecharAoExpandir);
+  }, []);
   useEffect(() => {
     const revalidarAoRetomar = () => {
       if (document.visibilityState !== "visible") return;
@@ -84,6 +96,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     const sessaoAtual = () => ativo && geracao === geracaoAutenticacao.current;
     setLiberado(false);
     setAdministrador(false);
+    fechamentoPorNavegacao.current = true;
     setMovelAberto(false);
     if (rotaSemSidebar(pathname)) return;
     void (async () => {
@@ -104,7 +117,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       {liberado && (
         <>
           <button ref={botaoMovelRef} type="button" inert={movelAberto} aria-label="Abrir menu" aria-expanded={movelAberto} aria-controls="contaos-menu-movel"
-            onClick={() => setMovelAberto((v) => !v)} className={`fixed bottom-4 right-4 rounded-lg border bg-background p-3 shadow-lg focus-visible:ring-2 focus-visible:ring-ring md:hidden ${movelAberto ? "z-30" : "z-50"}`}>Menu</button>
+            onClick={() => { fechamentoPorNavegacao.current = false; setMovelAberto((v) => !v); }} className={`fixed bottom-4 right-4 rounded-lg border bg-background p-3 shadow-lg focus-visible:ring-2 focus-visible:ring-ring md:hidden ${movelAberto ? "z-30" : "z-50"}`}>Menu</button>
           {movelAberto && <div ref={dialogoMovelRef} tabIndex={-1} id="contaos-menu-movel" role="dialog" aria-modal="true" aria-label="Menu de navegação" className="fixed inset-0 z-40 overflow-y-auto bg-background/95 pt-12 md:hidden"><button type="button" className="m-3 rounded border px-3 py-2" onClick={() => setMovelAberto(false)}>Fechar menu</button><ContaOSSidebar aoNavegar={() => setMovelAberto(false)} />{administrador && <nav aria-label="Administração" className="flex flex-col gap-1 p-3">{MENU_ADMIN_V1.map((item) => <Link key={item.destino} to={item.destino} onClick={() => setMovelAberto(false)} aria-current={rotaAdministrativaAtiva(item.destino) ? "page" : undefined} className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-accent text-accent-foreground" : "hover:bg-accent"}`}>{item.titulo}</Link>)}</nav>}</div>}
           <aside className={`fixed inset-y-0 left-0 hidden border-r bg-background md:block ${recolhida ? "w-20" : "w-56"}`}>
             <div className="flex items-center justify-between gap-2 border-b p-3"><img src="/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg" alt="ContaOS" width={131} height={32} className={recolhida ? "hidden" : "h-8 w-auto dark:hidden"} /><img src="/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg" alt="ContaOS" width={131} height={32} className={recolhida ? "hidden" : "hidden h-8 w-auto dark:block"} /><img src="/brand/ContaOS_Simbolo_Branco.svg" alt="ContaOS" width={32} height={32} className={recolhida ? "block size-8 dark:hidden" : "hidden"} /><img src="/brand/ContaOS_Simbolo_Navy.svg" alt="ContaOS" width={32} height={32} className={recolhida ? "hidden size-8 dark:block" : "hidden"} /><button type="button" aria-label={recolhida ? "Expandir menu" : "Recolher menu"} aria-expanded={!recolhida} onClick={() => setRecolhida((v) => !v)} className="rounded border px-2 py-1 focus-visible:ring-2 focus-visible:ring-ring">{recolhida ? "»" : "«"}</button></div>
