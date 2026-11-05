@@ -25,6 +25,10 @@ jobs:
           fetch-depth: 0
       - name: P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão
         run: node --test scripts/p0-version-order-gate.test.mjs
+      - name: P0 V1 — autotestes do inventario e dispensas
+        run: node --test scripts/p0-v1-traceability-gate.test.mjs
+      - name: P0 V1 — integridade dos 416 critérios, 45 prompts e 37 atomicos
+        run: node scripts/p0-v1-traceability-gate.mjs
       - name: P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1
         env:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
