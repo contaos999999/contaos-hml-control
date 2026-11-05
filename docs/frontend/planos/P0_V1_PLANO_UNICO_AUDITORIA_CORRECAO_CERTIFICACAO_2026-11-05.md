@@ -76,3 +76,14 @@ Data: 05/11/2026. Autorização expressa do titular: executar em **uma rodada co
 - Escopo mínimo: corrigir autorização de menu e rota V1-23 usando RPC HML existente; nenhum backend, migration, RLS, segredo, tipo certificado ou PROD.
 - Economizar chamadas Lovable por implementação agrupada, preservando Design System, responsividade e acessibilidade. Nenhum atalho reduz gates, testes ou rastreabilidade.
 - Evidências: PR #138, CI 42019842121, backend HEAD 3aa4af7a292b80243045e0a426ee6399ba948ff2; testes reais de BUILD ainda não executados.
+
+## Emenda P0 V1-23 — cobertura de regressão ADM-01 (05/11/2026)
+- **Motivação comprovada:** BUILD PR #141, CI 42022477957, Vitest 880 PASS/3 FAIL, causado por asserções legadas ao introduzir a RPC de capacidade read-only. Após atualização estritamente de testes, CI 42023225551 bloqueou `src/test/admUsuarios.test.tsx` por ausência da allowlist, funcionando corretamente.
+- **Novo arquivo expressamente permitido:** `src/test/admUsuarios.test.tsx`. A mudança é exclusivamente nos testes estáticos de varredura: preserva a lista explícita e fechada de RPCs oficiais, incluindo `pode_consultar_auditoria_organizacao`, sem permitir outras chamadas.
+- **Arquivo já permitido:** `src/test/appShellSidebar.test.tsx`: atualizar asserções para a variável `auditoriaAutorizada` que recebe `podeConsultarAuditoria(organizacao)`, mantendo invalidação de sessão, falha fechada e regressões DOM.
+- **Autoridade:** backend `contaos999999/develop` contém migration `20261105102019_v123_auditoria_capacidade.sql`; frontend não cria RPC nem altera schema/RLS. Isolamento autenticado real continua pendente.
+- **Execução obrigatória:** validar o PLAN em PR separado e CI verde; **somente após merge e novo HEAD main** criar BUILD novo a partir desse HEAD (não reaproveitar commits de código anteriores ao PLAN). Reexecutar Zero-Drift, Vitest, typecheck, lint, build e Teste C. Sem certificar V1 pela mera passagem dos testes.
+- **Rollback:** reverter o PR de BUILD; não abrir permissões nem relaxar o guard de escopo. Nenhuma alteração de assets BRAND-01 ou PROD.
+
+## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+A emenda mantém todos os controles e a identidade visual canônica, sem custo de novo Lovable, sem interfaces ou componentes extras. Somente inclui teste existente na allowlist depois de evidência de falha real e necessidade de regressão.
