@@ -1,3 +1,16 @@
+## CHECKPOINT COMPLEMENTAR P0 — 06/11/2026: auditoria HML e PRs reconciliados
+
+**V1 NÃO CERTIFICADA; V2 E PROD BLOQUEADOS.** Referências na abertura deste trabalho: frontend main `df6ea5ef3403b7612afa257f105d9d65a7f8c1ce` e backend main `67668c61054405368d5c7895f5087ccfa9eb9dfc`; fonte canônica 25/25 e snapshot íntegros. Ver prova nova `docs/frontend/auditorias/P0_V1_BASELINE_HML_OBSERVABILIDADE_2026-11-06.md` (somente leitura, não certificadora).
+
+- PRs frontend #182 e #176 **encerrados sem merge**, branches preservadas. Implementações/testes correspondentes já entraram por #183 e #177, sem substituição nem retorno a código antigo.
+- Revalidação independente HML: 56 contas de teste P0 bloqueadas, zero contas não bloqueadas, sessões, vínculos e MASTER ativos nessas contas; matriz 480 permissões, 10 perfis, 48 ações, versão 5, 52 policies públicas com RBAC. Nove RPCs EXECUTE por authenticated e nenhuma por anon; provas JWT 377/377 preservadas.
+- Logs do gateway em janela padrão 24h: RPC REST 1.057 requisições, 0 HTTP 5xx, P95 upstream 272,5ms; Auth token 70 req, P95 upstream 1.675,8ms. **Não** chamar isso de teste de carga ou latência navegador, nem certificar RNF. Nenhum fluxo /recover foi comprovado.
+- Advisor ainda alerta nove RPCs SECURITY DEFINER e proteção contra senha vazada; não são considerados corrigidos por remoção de aviso. Provas reais de autorização já arquivadas permanecem válidas.
+- **Rastreabilidade 486 × 488:** cruzamento documental adicional em `docs/frontend/auditorias/P0_V1_DIFERENCIAL_486_488_CRITERIOS_2026-11-06.md`. A diferença numérica vem das 12 categorias normalizadas do regular 75 frente às 10 verificações resumidas do manual; **não é equivalência semântica automática**, nem autoriza remover os 2 registros, omitir schema/isolamento A/B ou atestar PASS.
+- **Última etapa comprovada:** investigação independente, reconciliação de PRs obsoletos e crosswalk de proveniência, sem mudar HML. **Próxima:** SYS-03 com alias sintético controlado, Teste C privado com sessão válida, backup/restauração isolados de dados sintéticos e 486/488 critérios com evidência individual. Ressalvas R01/R02/R03 restritas; nenhuma PROD.
+
+---
+
 ## CHECKPOINT OFICIAL — 06/11/2026: RBAC e provas JWT integrados; execução interrompida pelo ambiente
 
 **V1 NÃO CERTIFICADA. V2 e PROD continuam bloqueados.** Este registro preserva a última etapa comprovadamente concluída e distingue as provas restantes da preparação local não executada.
