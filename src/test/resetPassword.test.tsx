@@ -137,6 +137,19 @@ describe("SYS-03 Redefinir senha", () => {
     expect(m.signOut).not.toHaveBeenCalled();
   });
 
+  it.each(["otp_expired", "otp_disabled", "invalid_grant"])(
+    "token de recuperação inválido %s não permite repetir alteração de senha",
+    async (code) => {
+      m.update.mockResolvedValue({ data: null, error: { status: 422, code } });
+      await abrirComRecuperacao();
+      preencher("SenhaLonga123", "SenhaLonga123");
+      expect(await screen.findByText(MENSAGENS_SYS03.linkInvalido)).toBeTruthy();
+      expect(screen.queryByLabelText("Nova senha")).toBeNull();
+      expect(m.signOut).not.toHaveBeenCalled();
+      expect(m.update).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it("erro de rede mostra falha genérica", async () => {
     m.update.mockRejectedValue(new TypeError("Failed to fetch"));
     await abrirComRecuperacao();
