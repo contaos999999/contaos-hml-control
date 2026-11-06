@@ -13,7 +13,8 @@ Edição/desativação/exclusão de organizações permanecem fora deste delta, 
 - src/components/organizacao/CriarOrganizacaoForm.tsx (novo)
 - src/lib/organizacao/criarOrganizacaoDados.ts (novo)
 - src/test/criarOrganizacao.test.tsx (novo)
-- src/test/organizationSelector.test.tsx (somente se a regressão existente exigir ajuste real; confirmar existência antes de editar)
+- src/components/auth/LoginForm.tsx (somente botão de navegação no estado sem-acesso; nenhuma mudança Auth/login)
+- src/test/login.test.tsx
 Documentação: docs/frontend/auditorias/P0_CRUD_ORGANIZACAO_RESULTADO_2026-11-06.md.
 Sem rota nova ou árvore gerada, tipos congelados, assets/tema/global shell, Auth, Supabase client, APIs novas, migrations, RLS, Storage ou PROD.
 
@@ -35,3 +36,6 @@ Falha de rede/retorno inválido: resultado incerto; sem retry automático. Orien
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
 Reusar Button, Input/labels e tokens existentes; sem redesenho ou assets novos. Marca e tipografia oficiais preservadas; formulário integrado ao seletor. Matriz visual4larguras×2temas, loading/erro/vazio/sucesso, foco e teclado; não declarar PASS sem prova.
 GitHub direto para BUILD; RPC Supabase existente; zero BUILD do agente Lovable; consolidar tarefas sem reduzir TDD/CI/Teste C/segurança. V1 não certificada, V2 e PROD bloqueados.
+
+## Emenda de integração confirmada antes do BUILD
+LoginForm.tsx mantém usuário autenticado sem organizações no estado sem-acesso. Adicionar nesse estado somente botão que chama onNavegar('/selecionar-organizacao'); não exibir no estado negado nem alterar login, sessão, credenciais ou resolução automática. Testes de login comprovam caminho e negativa. Seletor vazio terá orientação compatível com criação. Nenhuma regra Auth/RBAC alterada.
