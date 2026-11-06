@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CriarOrganizacaoForm } from "@/components/organizacao/CriarOrganizacaoForm";
 import { cn } from "@/lib/utils";
 import {
   definirPreferenciaOrganizacao,
@@ -27,7 +28,7 @@ import {
 
 export const MENSAGENS_SYS04 = {
   carregando: "Carregando organizações…",
-  vazio: "Não há organização disponível para o seu usuário. Procure o administrador do ContaOS.",
+  vazio: "Não há organização disponível. Você pode criar uma organização ou solicitar acesso ao administrador.",
   negado: "Acesso negado. Você não tem permissão para consultar organizações.",
   erro: "Não foi possível carregar as organizações agora. Tente novamente em instantes.",
   indisponivel: "Acesso indisponível",
@@ -238,6 +239,8 @@ export function OrganizationSelector() {
   const [tentativaSessao, setTentativaSessao] = useState(0);
   const [selecionada, setSelecionada] = useState<string | null>(null);
   const [processando, setProcessando] = useState(false);
+  const [criando, setCriando] = useState(false);
+  const [criada, setCriada] = useState(false);
   const emAndamento = useRef(false);
 
   useEffect(() => {
@@ -322,6 +325,7 @@ export function OrganizationSelector() {
       <div aria-live="polite" className="sr-only">
         {anuncio}
       </div>
+      {criada && <p role="status" className="text-sm text-foreground">Organização criada com sucesso. Selecione-a para continuar.</p>}
 
       {carregando && (
         <div className="space-y-3" aria-hidden>
@@ -374,12 +378,20 @@ export function OrganizationSelector() {
           />
           {validos.length > 0 && (
             <ContinueButton
-              desabilitado={!selecionada}
+              desabilitado={!validos.some((v) => v.organizacao?.id === selecionada)}
               processando={processando}
               onClick={continuar}
             />
           )}
         </>
+      )}
+
+      {!carregando && !erroTipo && idUsuario && !processando && (
+        criando ? <CriarOrganizacaoForm key={idUsuario} onCriada={(id) => {
+          setCriando(false); setCriada(true); setSelecionada(id);
+          void consulta.refetch();
+        }} onCancelar={() => { setCriando(false); void consulta.refetch(); }} /> :
+          <Button type="button" variant="outline" className="h-11 w-full" onClick={() => { setCriada(false); setCriando(true); }}>Nova organização</Button>
       )}
 
       {!carregando && (erroTipo === "negado" || vinculos.length === 0 || validos.length === 0) && (
