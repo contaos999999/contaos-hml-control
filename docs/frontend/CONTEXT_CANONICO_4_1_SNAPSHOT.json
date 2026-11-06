@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "1edb2c40595e01f7e1e8c5f80160b7b3a4113c12",
+  "source_commit": "67668c61054405368d5c7895f5087ccfa9eb9dfc",
   "source_date": "2026-11-06",
   "context_documents": [
     {
@@ -1258,10 +1258,10 @@
     ]
   },
   "limitations": [
-    "Fingerprint de Git blobs é fixado ao commit fonte; o CI do frontend não possui direito de leitura automática no repo privado de backend e portanto não confirma HEAD remoto em tempo real.",
+    "O gate de fonte viva verifica HEAD, os 25 blobs normativos e o catálogo com token protegido de leitura; falha fechada em divergência ou indisponibilidade. Essa conferência não certifica comportamento funcional nem contratos de banco.",
     "O check formal exige declaração de leitura e SHAs, mas não prova que o autor leu semanticamente os documentos.",
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "25/25 blobs e catálogo conferidos idênticos no HEAD backend 1edb2c40595e01f7e1e8c5f80160b7b3a4113c12. PR83 conclui rodada matriz/Edge com quarentena; PR84 prepara regressão noveRPCs. Backend deve permanecer neste HEAD durante CI/BUILD frontend ou o guard exigirá nova conferência."
+  "p0_reanchor_note": "Reancoragem após PR backend85, merge67668c61054405368d5c7895f5087ccfa9eb9dfc. Conferência GitHub de25/25blobs e catálogo e54e49e626e65a9c94c81709180fd192a1f0c079 semdiferença. Código frontendPR183 aprovado nos dois checks antes da mudança documental backend; esta atualização recompõe o gate de fonte viva."
 }

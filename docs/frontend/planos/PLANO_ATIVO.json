@@ -50,12 +50,12 @@
     "src/components/administracao/usuarios/MatrizPermissoes.tsx",
     "src/test/rbacMatriz.test.tsx"
   ],
-  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Gate CI do plano mestre e matriz de aceite comprovado; demais gates permanecem PENDENTE e BUILD bloqueado. Escopo agrupado documentado, gate ainda condicionado à conferência canônica e CI; não alterar código sem validação. Snapshot reancorado no HEAD backend pós-RPC sem alteração dos 25 blobs normativos. Demais gates ainda exigem evidência. Gates PASS significam somente validação do planejamento do Prompt 75, com TDD e Teste C planejados, não executados; BUILD requer CI verde deste PR antes de iniciar. Emenda documental P0 (05/11/2026): teste de regressão preexistente ADM-01 precisa refletir a sexta RPC pública somente-leitura para capacidade da Auditoria. Caminho adicionado à allowlist para BUILD posterior a esta emenda validada por CI; não altera permissões, RLS, backend, identidade visual ou PROD. Testes e bloqueios negativos permanecem exigidos. EMENDA P0 V1 (05/11): corrigir falta de sinalização síncrona de mudança da organização preferida entre SYS-04 e AppShell na mesma rota, evitando exibição obsoleta de permissões. Acrescentados somente preferência organizacional e seu teste de regressão à allowlist, mantendo lógica do backend RLS como autoridade. Cobertura de logout, corrida assíncrona, idempotência, menu e CI. Corrigir antes da certificação. O aceite condicional das três ressalvas não dispensa outros requisitos ainda NÃO VERIFICADOS. EMENDA P0 V1 #166: escopo autorizado para correção de gate MASTER em Novo Contratante, após PLAN #173 e GATE #174 integrados; inclusão exclusiva dos dois arquivos de implementação e teste V1-02. Sem autorizar backend/PROD, sem dispensar TDD RED, CI e Teste C. Gate RPC/RLS como autoridade. EMENDA RBAC V1 aprovada: PR frontend #178 integrado em 6cd922a0738549d421b57a704ec17e6c6ac541cd, dois checks SUCCESS run 42154230082. Escopo src/lib/administracao/rbacRpc.ts, src/components/administracao/usuarios/MatrizPermissoes.tsx, src/test/rbacMatriz.test.tsx; AdminUsuarios.tsx preexistente. Sem rotas novas, backend, PROD, Brand, tipos, SQL. BUILD em PR distinto após CI do presente gate. EMENDA06/11: matriz MASTER e navegação contextual já implementada V1, sob RPC rbac-v1 e dados RLS, contratos descritos no aditivo da emenda. Sem tocar PR176, tipos, rotas geradas, Brand, backend ou PROD. CI deste commit anterior ao BUILD obrigatório.",
+  "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Gate CI do plano mestre e matriz de aceite comprovado; demais gates permanecem PENDENTE e BUILD bloqueado. Escopo agrupado documentado, gate ainda condicionado à conferência canônica e CI; não alterar código sem validação. Snapshot reancorado no HEAD backend pós-RPC sem alteração dos 25 blobs normativos. Demais gates ainda exigem evidência. Gates PASS significam somente validação do planejamento do Prompt 75, com TDD e Teste C planejados, não executados; BUILD requer CI verde deste PR antes de iniciar. Emenda documental P0 (05/11/2026): teste de regressão preexistente ADM-01 precisa refletir a sexta RPC pública somente-leitura para capacidade da Auditoria. Caminho adicionado à allowlist para BUILD posterior a esta emenda validada por CI; não altera permissões, RLS, backend, identidade visual ou PROD. Testes e bloqueios negativos permanecem exigidos. EMENDA P0 V1 (05/11): corrigir falta de sinalização síncrona de mudança da organização preferida entre SYS-04 e AppShell na mesma rota, evitando exibição obsoleta de permissões. Acrescentados somente preferência organizacional e seu teste de regressão à allowlist, mantendo lógica do backend RLS como autoridade. Cobertura de logout, corrida assíncrona, idempotência, menu e CI. Corrigir antes da certificação. O aceite condicional das três ressalvas não dispensa outros requisitos ainda NÃO VERIFICADOS. EMENDA P0 V1 #166: escopo autorizado para correção de gate MASTER em Novo Contratante, após PLAN #173 e GATE #174 integrados; inclusão exclusiva dos dois arquivos de implementação e teste V1-02. Sem autorizar backend/PROD, sem dispensar TDD RED, CI e Teste C. Gate RPC/RLS como autoridade. EMENDA RBAC V1 aprovada: PR frontend #178 integrado em 6cd922a0738549d421b57a704ec17e6c6ac541cd, dois checks SUCCESS run 42154230082. Escopo src/lib/administracao/rbacRpc.ts, src/components/administracao/usuarios/MatrizPermissoes.tsx, src/test/rbacMatriz.test.tsx; AdminUsuarios.tsx preexistente. Sem rotas novas, backend, PROD, Brand, tipos, SQL. BUILD em PR distinto após CI do presente gate. EMENDA06/11: matriz MASTER e navegação contextual já implementada V1, sob RPC rbac-v1 e dados RLS, contratos descritos no aditivo da emenda. Sem tocar PR176, tipos, rotas geradas, Brand, backend ou PROD. CI deste commit anterior ao BUILD obrigatório. CHECKPOINT06/11: BUILD183 integrado após dois checks SUCCESS; testes locais36suítes/921PASS. Reancoragem documental no backend67668c6 com25/25fontes e catálogo iguais. Executor ficou indisponível depois da conclusão das rodadasJWT e da quarentena; retomar itens pendentes sem repetir casos válidos.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
   "context_read_acknowledged_at": "2026-11-06",
-  "context_source_commit": "1edb2c40595e01f7e1e8c5f80160b7b3a4113c12",
+  "context_source_commit": "67668c61054405368d5c7895f5087ccfa9eb9dfc",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -123,7 +123,7 @@
   "prod_changes_allowed": false,
   "source_proof": {
     "frontend_baseline": "48ff81d804247bfa48be93afcfcaa947c48ecd0d",
-    "normative_head": "1edb2c40595e01f7e1e8c5f80160b7b3a4113c12",
+    "normative_head": "67668c61054405368d5c7895f5087ccfa9eb9dfc",
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
     "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
@@ -151,11 +151,20 @@
     "amendment_status": "PENDENTE_CI",
     "v1_scope_amendment_issue": "Mudança de organização não emite evento para AppShell no mesmo pathname; conferido em fontes de código no HEAD 3949d90c",
     "v1_scope_amendment_ci": "PENDENTE_NOVO_PR",
-    "v1_certification_status": "AUDITORIA_EM_ANDAMENTO_SEM_CERTIFICADO"
+    "v1_certification_status": "AUDITORIA_EM_ANDAMENTO_SEM_CERTIFICADO",
+    "rbac_build_pr": 183,
+    "rbac_build_merge": "ead42939425b9369ca5f23f361f749894b6bc635",
+    "rbac_build_ci": 42157723794,
+    "backend_nine_jwt_merge": "67668c61054405368d5c7895f5087ccfa9eb9dfc",
+    "backend_nine_jwt_ci": 42157462457
   },
   "unverified_operational": [
-    "Matriz frontend e navegação: BUILD/TDD/CI/Teste C pendentes; provas backend PR83 não são teste da interface.",
-    "SYS03, WCAG privado, RNFs e critérios literais486 (histórico488) pendentes; V1 não certificada."
+    "Teste C privado/autenticado e WCAG privado: NÃO EXECUTADOS; Teste C existente passou no run42157723794, sem ampliar prova pública para privada.",
+    "SYS-03 real: entrega de e-mail, link válido/expirado/reutilizado e login após redefinição ainda NÃO EXECUTADOS. Conta real conectada preservada.",
+    "RNFs práticos: desempenho por rota500/800ms, observabilidade e restauração de dados sintéticos ainda PENDENTES. Restore por migrations não é backup de dados.",
+    "486critérios literais V1: candidato documental identificado; integrar diferencial dos488históricos e reconciliar evidência individual antes de certificação.",
+    "Executor indisponível durante preparação da próxima etapa. Nenhuma nova fixture SYS03 foi criada e nenhuma credencial precisa ser enviada pelo chat.",
+    "V1 não certificada; V2 e PROD bloqueados."
   ],
   "p0_note": "PLAN documental VALIDADO, condicionado a CI verde do PR de validação. BUILD separado e posterior ao merge. V1 não certificada.",
   "rbac_emenda_p0": {

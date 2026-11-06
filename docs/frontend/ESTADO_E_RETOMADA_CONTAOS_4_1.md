@@ -1,3 +1,45 @@
+## CHECKPOINT OFICIAL — 06/11/2026: RBAC e provas JWT integrados; execução interrompida pelo ambiente
+
+**V1 NÃO CERTIFICADA. V2 e PROD continuam bloqueados.** Este registro preserva a última etapa comprovadamente concluída e distingue as provas restantes da preparação local não executada.
+
+### HEADs e código integrado
+
+- Frontend: ead42939425b9369ca5f23f361f749894b6bc635, merge do [PR #183](https://github.com/contaos999999/contaos-hml-control/pull/183). HEAD aprovado do BUILD:3917e54eec28019924e1914e2e65054091a0cec8. Os dois checks obrigatórios passaram no [run42157723794](https://github.com/contaos999999/contaos-hml-control/actions/runs/42157723794).
+- Backend: 67668c61054405368d5c7895f5087ccfa9eb9dfc, merge do [PR #85](https://github.com/contaos999999/develop/pull/85). HEAD aprovado:87dcdc306b6b7db41b457adee495a5be58968558; [CI42157462457](https://github.com/contaos999999/develop/actions/runs/42157462457) SUCCESS.
+- Conferência posterior pelo GitHub: ambos os HEADs confirmados; fonte integrada de MatrizPermissoes idêntica ao BUILD testado; relatório377/377 presente no backend integrado.
+- Snapshot reancorado neste checkpoint: 25/25 blobs normativos e catálogo100/97 conferidos sem diferença no backend atual. Não alterar fontes para contornar o gate.
+- Tipos congelados preservados:8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Nenhuma mudança de rota gerada, Brand ou PROD.
+
+### Etapas concluídas com prova
+
+1. Matriz persistente: migração20261106014102 implantada pelo fluxo CLI canônico,126/126 versões em paridade,48ações/480combinações,71políticas adicionais,43funções protegidas. PRs77–79 e deploy42149828772. Não repetir reparo de histórico nem reescrever migration aplicada.
+2. Matriz, organizações e assinador por JWT real:147cenários distintos finais aprovados. Preservadas152tentativas,149PASS e três500históricos corrigidos no PR82; não apagar as falhas anteriores. Concorrência, replay, payload divergente, revogação, interrupção pós-commit e restauração confirmada. Edge storage-sign-upload versão6, verify_jwt=true, fonte aprovada conferida. PR83 e relatório P0_V1_RBAC_JWT_EDGE_RESULTADO_2026-11-06.md.
+3. Nove APIs privilegiadas após RBAC:377/377PASS,94ALLOW,212DENY e71verificações Auth/organizações/RLS/logout. MASTER,dezperfis,semvínculo,gestorA1restrito e leitorB; negações com mesmoJWT após revogar vínculo e sessão. Dados persistidos conferidos:seisrespostas/seisdesfechos autorizados,trêsexecuções históricas e3/3payloads exatos. Mensagens próprias arquivadas3/pendentes0; execuções canceladas3. PR84código e PR85resultado.
+4. Frontend integrado: painel MASTER com consulta/edição real das RPCs existentes, revisão explícita, versão otimista, retry com mesmoUUID, PT409 e invalidação de contexto. Menu comum e contextual por permissões, seletor de organizações existente. Revisão independente corrigiu perda de edição/UUID ao filtrar usuários; dois testes reproduziram RED antigo e passaram com a correção.
+5. Validação frontend:36suítes/921testes locaisPASS; TypeScript/buildPASS; lint sem erros,doisavisos de referências em cleanup. Os dois checks remotos do BUILD passaram. Teste C público/sem credenciais não é certificação visual privada.
+6. Quarentena revalidada por SQL independente após os merges:28contas sintéticas das duasrodadas bloqueadas;0sessões,0MASTER e0vínculos sintéticos ativos;4organizações inativas. Matriz permanece com480entradas e leitor/contratos/consultar=true, valor original. Não reativar nem reutilizar essas contas.
+7. Originais DOCX recuperados e SHA conferido: Manual8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e; atômicosd9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8. O universo literal V1 é486:416anteriores +60dos39–43 +10do75. Histórico488preservado; diferença não dispensa obrigações de outras fontes. Candidato literal ainda não integrado.
+
+### Limites e pendências reais
+
+- Escritas documentais positivas usaram replay semeado, não primeira criação física. Registro de relatório retornou fixture própria existente. Não certificar upload físico nem worker. Permanecem as ressalvas específicas autorizadas, sem ampliá-las para outros requisitos.
+- SYS-03: nenhuma prova real de entrega, link válido/expirado/reutilizado e login com nova senha foi executada nesta etapa. A caixa conectada está disponível, mas seu endereço já pertence a uma conta real Auth: **não redefinir essa conta**. Usar aliases sintéticos novos sob gate. Restrição SMTP é hipótese documental; nenhum bloqueio de envio foi demonstrado porque recover não foi chamado.
+- Teste C privado e WCAG: ainda executar com identidades sintéticas novas e fonte exata, quatro larguras1440/1280/768/390, claro/escuro, teclado, foco, contraste e estados. Não transferir PASS de mocks ou rotas negadas para telas autenticadas.
+- RNFs: completar latência por rota500/800ms, observabilidade prática e recuperação de backup contendo dados sintéticos. Snapshot12conexões/60,sem espera e sem deadlock não é teste de carga ou disponibilidade.
+- Backup isolado: instrumento local em preparação, NÃO executado. Antes de integrar, corrigir cleanup: manter diretório temporário até supabase stop terminar; remover somente recursos próprios e não declarar PASS se stop falhar. Exigir origem/destino vazios e verificar tabelas/IDs/hashes/versões/RLS. Duas instâncias efêmeras sequenciais evitam conflito de pg_cron. CLI2.122.0/Postgres17 no workflow atual. Não exportar HML real, inventar RPO/RTO ou supor necessidade de contratação.
+- Rastreabilidade: integrar os486literais, conservar488históricos e reconciliar cada critério com prova específica. Refinamento local dos70finais identificou31candidatos unitários/estáticos e8comJWT parcial,sem evidência visual. Candidato não é certificação.
+- PR182 contém implementação concorrente nos mesmos arquivos: preservar sua branch e reconciliar antes de eventual merge; não substituir o BUILD183 validado nem apagar testes para resolver conflito. PR176 também permanece fora deste escopo.
+
+### Interrupção e próxima tarefa
+
+O executor tornou-se indisponível e os comandos de preparação retornaram erro de transporte. Não houve nova DDL, fixture SYS03, envio de recuperação ou teste de backup após a interrupção. Não há necessidade de senha,JWT ou service_role pelo chat.
+
+**Última etapa comprovada:** matriz/frontend integrados,377provas das noveAPIs e quarentena independente concluídos. **Próxima tarefa:** restabelecer um executor; ler HEADs atuais e este checkpoint; preservar provas válidas; preparar gate fechado para contas sintéticas SYS03/TesteC privado e ensaio RNF isolado; executar e registrar resultados reais; só depois reconciliar certificação V1. Não iniciar V2.
+
+Artefatos de preparação estavam no workspace transitório, cuja disponibilidade não foi confirmada depois da interrupção. Não depender deles sem conferir integridade. Código entregue e relatórios conclusivos estão nos repositórios; originais normativos continuam identificados por seus hashes.
+
+---
+
 ## CHECKPOINT P0 — 06/11/2026: BUILD local da matriz e navegação V1
 
 PLAN #180 integrado em 50709cd796d876149c8f011607fc24369ab5d28a, com os dois checks obrigatórios aprovados no run 42155058599. Preservados PLANS #178/#179, PR #176 e fontes normativas. Backend atual: 1edb2c40595e01f7e1e8c5f80160b7b3a4113c12, com 25/25 blobs e catálogo 100/97 iguais. Relatório JWT das nove funções no PR backend #85, ainda não integrado durante este BUILD para preservar o gate de fonte viva.
