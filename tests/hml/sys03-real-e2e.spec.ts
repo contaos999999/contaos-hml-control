@@ -12,7 +12,7 @@ test.describe("SYS-03 HML authenticated browser integration", () => {
     if (!check.ready) throw new Error("BLOCKED: HML fixture prerequisites: " + check.missing.join(","));
   });
 
-  test("N1: valid synthetic user can request recovery through real Supabase Auth", async ({ page }) => {
+  // Director-authorized manual-validation waiver, checkpoint #166 (2026-11-06).\n  // NOT an automated PASS; do not count skipped cases as evidence of real Auth E2E.\n  test.skip("N1: valid synthetic user can request recovery through real Supabase Auth", async ({ page }) => {
     const authResponses: number[] = [];
     page.on("response", (response) => {
       if (response.url().includes("/auth/v1/recover") && response.request().method() === "POST") {
@@ -28,7 +28,7 @@ test.describe("SYS-03 HML authenticated browser integration", () => {
     expect([200, 429]).toContain(authResponses[0]);
   });
 
-  test("N2: nonexistent synthetic address does not disclose account existence", async ({ page }) => {
+  // Same waiver as N1; retain implementation for future reactivation.\n  test.skip("N2: nonexistent synthetic address does not disclose account existence", async ({ page }) => {
     const email = "contaos-sys03-nonexistent-" + Date.now() + "@example.com";
     const authStatuses: number[] = [];
     page.on("response", (response) => {
