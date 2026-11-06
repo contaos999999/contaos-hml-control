@@ -1,0 +1,47 @@
+name: SYS-03 Bun Playwright dependency PR
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-dependency-pr:
+    name: Generate Playwright dependency PR with Bun
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install current frozen dependencies
+        run: bun install --frozen-lockfile
+      - name: Generate pinned Playwright dependency and Bun lockfile
+        run: |
+          set -euo pipefail
+          bun add --dev --exact @playwright/test@1.58.2
+          bun install --frozen-lockfile
+          git diff --check
+          git diff --exit-code -- playwright.config.ts tests/hml/ || true
+          git status --short
+          test -n "$(git diff -- package.json bun.lock)"
+          test -z "$(git diff --name-only | grep -vE '^(package.json|bun.lock)$' || true)"
+      - name: Open isolated dependency PR (never push main)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          BRANCH="p0/sys03-bun-lock-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json bun.lock
+          git commit -m "build(sys03): pin Playwright and regenerate Bun lockfile"
+          git -c http.extraheader="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)" push origin "HEAD:refs/heads/$BRANCH"
+          gh pr create --base main --head "$BRANCH" --title "P0 SYS-03: instalar Playwright com bun.lock gerado" --body "Gerado automaticamente por Bun, somente package.json e bun.lock. Não inclui execução E2E nem credenciais. Exige Zero-Drift e Teste C verdes antes de merge."
