@@ -5,10 +5,10 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import type { ReactNode } from "react";
 
-const m = vi.hoisted(() => ({ getUser: vi.fn(), signOut: vi.fn(), rpc: vi.fn(), nav: vi.fn(), invoke: vi.fn() }));
+const m = vi.hoisted(() => ({ getUser: vi.fn(), signOut: vi.fn(), onAuthStateChange: vi.fn(), rpc: vi.fn(), nav: vi.fn(), invoke: vi.fn() }));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth: { getUser: m.getUser, signOut: m.signOut }, rpc: m.rpc, from: vi.fn(), functions: { invoke: m.invoke } },
+  supabase: { auth: { getUser: m.getUser, signOut: m.signOut, onAuthStateChange: m.onAuthStateChange }, rpc: m.rpc, from: vi.fn(), functions: { invoke: m.invoke } },
 }));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.nav,
@@ -31,7 +31,7 @@ type Chave =
   | "p_ids_contratos_ativar" | "p_ids_contratos_revogar" | "p_versao_esperada" | "p_chave_idempotencia"
   | "p_pagina" | "p_tamanho_pagina" | "p_busca";
 type Args = Partial<Record<Chave, unknown>>;
-type RpcNome = "validar_administrador_organizacao" | "listar_usuarios_vinculos_adm" | "listar_escopo_contratos_usuario_adm" | "listar_auditoria_vinculo_usuario_adm" | "salvar_vinculo_usuario_adm";
+type RpcNome = "validar_administrador_organizacao" | "listar_usuarios_vinculos_adm" | "listar_escopo_contratos_usuario_adm" | "listar_auditoria_vinculo_usuario_adm" | "salvar_vinculo_usuario_adm" | "obter_matriz_rbac_master";
 const ok = (data: unknown): Resp => ({ data, error: null, status: 200 });
 const falha = (code: string, status: number): Resp => ({ data: null, error: { code, message: "detalhe técnico interno" }, status });
 
@@ -127,6 +127,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   window.sessionStorage.clear();
   definirPreferenciaOrganizacao(U, ORG);
+  m.onAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } });
   m.getUser.mockResolvedValue({ data: { user: { id: U } }, error: null });
   m.signOut.mockResolvedValue({ error: null });
   handlers = {
@@ -135,6 +136,7 @@ beforeEach(() => {
     listar_escopo_contratos_usuario_adm: (a) => ok(escopoPagina(Number(a.p_pagina))),
     listar_auditoria_vinculo_usuario_adm: (a) => ok(auditoria(Number(a.p_pagina))),
     salvar_vinculo_usuario_adm: () => ok({ schema_versao: "adm01-v2", correlation_id: "corr-ok-1", id_usuario: "u-a", vinculo: {} }),
+    obter_matriz_rbac_master: () => falha("42501", 403),
   };
   m.rpc.mockImplementation(async (nome: RpcNome, a: Args) => handlers[nome](a));
   m.invoke.mockResolvedValue({
