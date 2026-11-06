@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { listarOrganizacoesDisponiveis } from "@/lib/auth/resolverDestinoPosLogin";
+import { consultarPermissoesEfetivas, temPermissao } from "@/lib/administracao/rbacRpc";
 import { obterContrato, uuidCanonico, uuidValido, type ContratoDetalhe } from "@/lib/contratos/contratoDetalheDados";
 import {
   aceiteDe, criarDocumentoCompleto, enviarArquivoCertificado,
@@ -57,15 +58,16 @@ export function ImportarHistorico({ id }: { id: string }) {
         if(error||!data.user){setGate({fase:"erro"});return;}
         const org=obterPreferenciaOrganizacao(data.user.id);
         if(!org){void navigate({to:"/selecionar-organizacao",replace:true});return;}
-        const [contrato,orgs]=await Promise.all([
+        const [contrato,orgs,efetivas]=await Promise.all([
           obterContrato(id,abort.signal),listarOrganizacoesDisponiveis(),
+          consultarPermissoesEfetivas(org,uuidCanonico(id)),
         ]);
         if(abort.signal.aborted)return;
         if(uuidCanonico(contrato.id)!==uuidCanonico(id) ||
            uuidCanonico(contrato.id_organizacao)!==uuidCanonico(org)){setGate({fase:"sem_permissao"});return;}
-        const perfil=orgs.find(x=>x.id && uuidValido(x.id) &&
-          uuidCanonico(x.id)===uuidCanonico(org) && x.situacao==="ativa")?.perfil;
-        if(!perfil||!["administrador","gestor_contrato","administrador_master"].includes(perfil)){
+        const ativa=orgs.some(x=>x.id && uuidValido(x.id) &&
+          uuidCanonico(x.id)===uuidCanonico(org) && x.situacao==="ativa");
+        if(!ativa||!temPermissao(efetivas.permissoes,"historico","criar")){
           setGate({fase:"sem_permissao"});return;
         }
         setGate({fase:"ok",ctx:{org,contrato,usuario:data.user.id}});

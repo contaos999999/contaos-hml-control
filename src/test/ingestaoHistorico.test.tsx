@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 const mock = vi.hoisted(() => ({
   rpc: vi.fn(),
+  efetivas: vi.fn(),
   getUser: vi.fn(),
   navigate: vi.fn(),
   org: vi.fn(),
@@ -14,6 +15,7 @@ const mock = vi.hoisted(() => ({
   criarDoc: vi.fn(),
   relatorios: vi.fn(),
 }));
+vi.mock("@/lib/administracao/rbacRpc", async (original) => ({ ...(await original<typeof import("@/lib/administracao/rbacRpc")>()), consultarPermissoesEfetivas: mock.efetivas }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { rpc: mock.rpc, auth: { getUser: mock.getUser } },
 }));
@@ -114,6 +116,7 @@ describe("PROMPT 43 / V1-22 — ingestão histórica com backend autoritativo", 
 describe("PROMPT 43 / V1-22 — interface de lote, só com mocks, sem fluxo HML real", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mock.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: false, permissoes: [{ recurso: "historico", acao: "criar" }] });
     mock.getUser.mockResolvedValue({ data: { user: { id: ORG } }, error: null });
     mock.org.mockReturnValue(ORG);
     mock.orgs.mockResolvedValue([{
@@ -149,10 +152,32 @@ describe("PROMPT 43 / V1-22 — interface de lote, só com mocks, sem fluxo HML 
     expect(container.textContent).toContain("Aguardando segurança e leitura documental");
   });
   it("perfil de leitura não recebe formulário de importação, sem simular isolamento real", async () => {
+    mock.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: false, permissoes: [] });
     mock.orgs.mockResolvedValue([{ id: ORG, perfil: "auditor", situacao: "ativa" }]);
     render(<ImportarHistorico id={CONTRATO} />);
     expect(await screen.findByText(/Seu perfil não possui permissão para importar histórico/)).toBeTruthy();
     expect(screen.queryByLabelText(/Arquivos históricos/i)).toBeNull();
     expect(mock.enviar).not.toHaveBeenCalled();
+  });
+  it("MASTER sem perfil local usa capacidade histórica no contrato exato", async () => {
+    mock.orgs.mockResolvedValue([{ id: ORG, perfil: "", situacao: "ativa" }]);
+    mock.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: true, permissoes: [{ recurso: "historico", acao: "criar" }] });
+    render(<ImportarHistorico id={CONTRATO} />); await screen.findByLabelText(/Arquivos históricos/i);
+    expect(mock.efetivas).toHaveBeenCalledWith(ORG, CONTRATO);
+  });
+  it("gestor não contorna capacidade histórica negada", async () => {
+    mock.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: true, permissoes: [] });
+    render(<ImportarHistorico id={CONTRATO} />); await screen.findByText(/Seu perfil não possui permissão/);
+    expect(mock.config).not.toHaveBeenCalled();
+  });
+  it("falha de capacidade impede upload", async () => {
+    mock.efetivas.mockRejectedValue(new Error("indisponível"));
+    render(<ImportarHistorico id={CONTRATO} />); await screen.findByText(/Não foi possível confirmar o acesso/);
+    expect(mock.enviar).not.toHaveBeenCalled();
+  });
+  it("capacidade não contorna contrato de outra organização", async () => {
+    mock.contrato.mockResolvedValue({ id: CONTRATO, id_organizacao: ARQUIVO });
+    render(<ImportarHistorico id={CONTRATO} />); await screen.findByText(/Seu perfil não possui permissão/);
+    expect(mock.config).not.toHaveBeenCalled();
   });
 });
