@@ -33,6 +33,7 @@ export function classificarErroUpdate(
   if (!error) return "sucesso";
   if (error.code === "weak_password") return "fraca";
   if (error.code === "same_password") return "mesma";
+  if (error.code === "otp_expired" || error.code === "otp_disabled" || error.code === "invalid_grant") return "invalido";
   if (error.status === 429 || error.code?.startsWith("over_")) return "rateLimit";
   if (error.status === 401 || error.status === 403 || error.code === "session_not_found" || error.code === "session_expired")
     return "invalido";
