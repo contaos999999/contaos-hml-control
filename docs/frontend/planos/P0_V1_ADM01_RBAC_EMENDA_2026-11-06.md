@@ -65,3 +65,11 @@ Backend `main@6fe3764b6b9c5c6989e8aa138a0fa7b1461b00c7`; frontend baseline `main
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
 
 Sem alterações de marca, tipos congelados, estilos globais, assets ou infraestrutura. GitHub diretamente; Lovable somente sincronização. A emenda não gera créditos de BUILD e não elimina TDD, segurança, teste real, Teste C ou CI.
+
+
+## Gate de fonte viva, 06/11/2026, atualização rastreada
+
+- CI inicial do PLAN, run 42153716551: Teste C independente SUCCESS e Frontend Zero-Drift FAIL apenas no guard `context-freshness-gate.mjs`, pois `CONTEXT_CANONICO_4_1_SNAPSHOT.json` continha HEAD antigo `3aa4af7...` (não dispensado).
+- Rechecagem direta no backend `contaos999999/develop@4c21fe2961f54218891e1f1edf25ef5e21137106`: **25 de 25 documentos normativos com blobs SHA idênticos** ao snapshot, catálogo `docs/prompts/PROMPT_TRACKS_4_1.json` com blob original `e54e49e626e65a9c94c81709180fd192a1f0c079`, 100 regulares, 97 atômicos, 100 crosswalk; nenhuma fonte modificada.
+- Snapshot reancorado em commit documental desta mesma branch e aguardando novamente **ambos os required checks**; o frontend não foi alterado, `src/integrations/supabase/types.ts` não foi tocado. Em caso de novo HEAD remoto antes do CI, falhar fechado e conferir mudança em vez de pular verificação.
+- O BUILD ainda exige emenda de allowlist em `PLANO_ATIVO.json` com CI próprio **antes de alterar src/**, além da condição de não conflitar com PR #176. V1 permanece NÃO CERTIFICADA.
