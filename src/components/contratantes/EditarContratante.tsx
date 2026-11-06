@@ -9,16 +9,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import {
-  consultarVinculoProprio,
-  ErroV102,
   validarFormulario,
-  vinculoPermiteCadastro,
   type CampoFormulario,
   type FormularioContratante,
 } from "@/lib/contratantes/novoContratanteDados";
 import {
   atualizarContratante,
   buscarContratante,
+  consultarCapacidadeEdicaoContratante,
   ErroV103,
   formularioDe,
   montarArgsAtualizacao,
@@ -172,13 +170,13 @@ export function EditarContratante({ id }: { id: string }) {
 
   const pronto = !!idUsuario && !!idOrganizacao;
   const gate = useQuery({
-    queryKey: ["v103", "vinculo", idUsuario, idOrganizacao],
-    queryFn: () => consultarVinculoProprio(idOrganizacao!, idUsuario!),
+    queryKey: ["v103", "capacidade-editar", idUsuario, idOrganizacao],
+    queryFn: () => consultarCapacidadeEdicaoContratante(idOrganizacao!),
     enabled: pronto,
     retry: false,
   });
-  const gateErro = gate.error instanceof ErroV102 ? gate.error.tipo : gate.error ? "erro" : null;
-  const autorizado = gate.isSuccess && vinculoPermiteCadastro(gate.data ?? null);
+  const gateErro = gate.error instanceof ErroV103 ? gate.error.tipo : gate.error ? "erro" : null;
+  const autorizado = gate.isSuccess && gate.data === true;
   const negadoGate = gateErro === "negado" || (gate.isSuccess && !autorizado);
 
   const registro = useQuery({
@@ -222,7 +220,11 @@ export function EditarContratante({ id }: { id: string }) {
     try {
       const r = await atualizarContratante(montarArgsAtualizacao(idOrganizacao, id, versaoLida, form));
       setAtualizado(r);
-      queryClient.removeQueries({ queryKey: ["v103", "contratante"] });
+      queryClient.removeQueries({ queryKey: ["v103", "contratante", idUsuario, idOrganizacao, id] });
+      void queryClient.invalidateQueries({
+        queryKey: ["contratantes"],
+        predicate: (consulta) => consulta.queryKey[2] === idUsuario && consulta.queryKey[3] === idOrganizacao,
+      });
     } catch (err) {
       const tipo = err instanceof ErroV103 ? err.tipo : "erro";
       if (tipo === "negado") setNegadoSave(true);

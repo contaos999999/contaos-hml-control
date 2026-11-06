@@ -4,6 +4,7 @@
  * com concorrência otimista; a versão é incrementada no backend.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { consultarPermissoesEfetivas, ErroRbac, temPermissao } from "@/lib/administracao/rbacRpc";
 import type { FormularioContratante } from "@/lib/contratantes/novoContratanteDados";
 
 export const COLUNAS_V103 =
@@ -39,6 +40,16 @@ export type TipoErroV103 = "negado" | "nao_encontrado" | "conflito" | "duplicado
 export class ErroV103 extends Error {
   constructor(public tipo: TipoErroV103) {
     super(tipo);
+  }
+}
+
+/** Capacidade de UX retornada pelo backend; a RPC de escrita revalida a autorização. */
+export async function consultarCapacidadeEdicaoContratante(idOrganizacao: string): Promise<boolean> {
+  try {
+    const resultado = await consultarPermissoesEfetivas(idOrganizacao, null);
+    return temPermissao(resultado.permissoes, "contratantes", "editar");
+  } catch (erro) {
+    throw new ErroV103(erro instanceof ErroRbac && erro.tipo === "negado" ? "negado" : "erro");
   }
 }
 
