@@ -1,6 +1,6 @@
 /**
  * V1-13 — Nova competência.
- * Gate: UUID → getUser → preferência de organização (contexto) → obterContrato (RLS) → perfil (UX).
+ * Gate: UUID → getUser → preferência de organização → contrato RLS/contexto → capacidade efetiva.
  * Comando: RPC `criar_competencia` com contrato + `YYYY-MM-01`; snapshot é do backend.
  * Sem retry automático; resultado ambíguo é reconciliado por leitura exata.
  */
@@ -31,8 +31,7 @@ import { formatarCompetencia, mesParaReferencia } from "@/lib/contratos/competen
 import {
   ErroNovaCompetencia,
   criarCompetencia,
-  lerPerfilAtivo,
-  perfilPodeCriar,
+  consultarCapacidadeCriarCompetencia,
   verificarCompetenciaExistente,
 } from "@/lib/contratos/novaCompetenciaDados";
 
@@ -196,13 +195,13 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
     retry: false,
   });
   const c = contrato.data;
-  const contratoOk = !!c && uuidCanonico(c.id) === id;
+  const contextoDivergente = !!c && (uuidCanonico(c.id) !== id || uuidCanonico(c.id_organizacao) !== uuidCanonico(ctx.idOrganizacao));
+  const contratoOk = !!c && !contextoDivergente;
   const perfil = useQuery({
-    queryKey: ["v113", "perfil", ctx.idUsuario, ctx.idOrganizacao],
-    queryFn: () => lerPerfilAtivo(ctx.idUsuario, ctx.idOrganizacao),
+    queryKey: ["v113", "capacidade-criar", ctx.idUsuario, ctx.idOrganizacao, id],
+    queryFn: () => consultarCapacidadeCriarCompetencia(ctx.idOrganizacao, id),
     enabled: contratoOk,
     retry: false,
-    staleTime: Infinity,
   });
   if (contrato.isError) {
     const tipo = contrato.error instanceof ErroDetalhe ? contrato.error.tipo : "erro";
@@ -230,6 +229,7 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
       </>
     );
   }
+  if (contextoDivergente) return <><Titulo /><Aviso icone={<ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />} mensagem={MENSAGENS_V113.negado} /></>;
   if (!contratoOk || !c)
     return (
       <>
@@ -244,7 +244,7 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
         <Alerta mensagem={MENSAGENS_V113.erro} onRetry={() => void perfil.refetch()} />
       ) : perfil.isPending ? (
         <Carregando texto={MENSAGENS_V113.carregando} />
-      ) : !perfilPodeCriar(perfil.data ?? null) ? (
+      ) : perfil.data !== true ? (
         <div role="alert" className="space-y-3 rounded-lg border border-border bg-card p-4">
           <p className="flex items-start gap-2 text-sm">
             <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
