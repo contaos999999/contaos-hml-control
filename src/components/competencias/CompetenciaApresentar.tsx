@@ -215,8 +215,16 @@ export function CompetenciaApresentar({ id }: { id: string }) {
             <p className="mt-2 text-sm">Identificador oficial do registro:</p>
             <p className="mt-1 break-all font-mono text-sm">{registroFinal.protocolo}</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              O registro e o pacote são mantidos pelo Supabase. Consulte a competência para acompanhar a situação.
+              O registro e o pacote são mantidos pelo Supabase. Consulte o registro oficial para acompanhar o protocolo.
             </p>
+            <Button asChild variant="outline" className="mt-4 min-h-11">
+              <Link
+                to="/competencias/$id/apresentacoes/$apresentacaoId"
+                params={{ id: idC, apresentacaoId: registroFinal.protocolo }}
+              >
+                Abrir registro da apresentação
+              </Link>
+            </Button>
           </section>
         )}
         {concluido ? null : (!valido || estado.tipo === "nao_encontrado") ? (
