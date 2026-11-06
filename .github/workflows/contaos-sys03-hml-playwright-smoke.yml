@@ -8,7 +8,7 @@ permissions:
 jobs:
   public-browser-smoke:
     name: SYS-03 HML public browser smoke (no credentials)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       CI: "true"
