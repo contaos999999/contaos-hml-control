@@ -12,9 +12,15 @@ const m = vi.hoisted(() => ({
   nav: vi.fn(),
   rpc: vi.fn(),
   invoke: vi.fn(),
+  efetivas: vi.fn(),
   chamadas: [] as Array<{ tabela: string; ops: Array<[string, unknown[]]> }>,
   respostas: {} as { vinculos_usuarios?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown; contratantes?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown },
 }));
+
+vi.mock("@/lib/administracao/rbacRpc", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/administracao/rbacRpc")>();
+  return { ...real, consultarPermissoesEfetivas: m.efetivas };
+});
 
 vi.mock("@/integrations/supabase/client", () => {
   const from = (tabela: string) => {
@@ -83,8 +89,7 @@ const okRpc = (over: Record<string, unknown> = {}) => ({
   status: 200,
 });
 
-function montar() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+function montar(qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })) {
   return render(
     <QueryClientProvider client={qc}>
       <EditarContratante id={ID} />
@@ -103,6 +108,7 @@ beforeEach(() => {
   m.getUser.mockResolvedValue({ data: { user: { id: U } }, error: null });
   m.signOut.mockResolvedValue({ error: null });
   m.rpc.mockResolvedValue(okRpc());
+  m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: false, permissoes: [{ recurso: "contratantes", acao: "editar" }] });
   m.respostas = { vinculos_usuarios: () => vinc(), contratantes: okGet() };
   definirPreferenciaOrganizacao(U, ORG);
 });
@@ -133,8 +139,8 @@ describe("V1-03 sessão/org/gate", () => {
     montar();
     await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }));
   });
-  it.each([{ perfil: "leitor" }, { ativo: false }])("gate negativo %o → negado, zero GET/RPC", async (over) => {
-    m.respostas.vinculos_usuarios = () => vinc(over);
+  it.each([false, true])("sem edição efetiva, master=%s → negado, zero GET/escrita", async (master) => {
+    m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master, permissoes: [{ recurso: "contratantes", acao: "criar" }] });
     montar();
     expect(await screen.findByText(MENSAGENS_V103.negado)).toBeTruthy();
     expect(gets()).toHaveLength(0);
@@ -143,6 +149,29 @@ describe("V1-03 sessão/org/gate", () => {
   it("gestor_contrato liberado", async () => {
     m.respostas.vinculos_usuarios = () => vinc({ perfil: "gestor_contrato" });
     montar();
+    expect(await screen.findByLabelText(/Razão social/)).toBeTruthy();
+  });
+  it("MASTER com edição efetiva não depende de vínculo local", async () => {
+    m.respostas.vinculos_usuarios = () => ({ data: null, error: null, status: 200 });
+    m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: true, permissoes: [{ recurso: "contratantes", acao: "editar" }] });
+    montar();
+    expect(await screen.findByLabelText(/Razão social/)).toBeTruthy();
+    expect(m.efetivas).toHaveBeenCalledWith(ORG, null);
+    expect(m.chamadas.some((c) => c.tabela === "vinculos_usuarios")).toBe(false);
+  });
+  it("edição efetiva liberada mesmo sem permissão de criar", async () => {
+    m.respostas.vinculos_usuarios = () => vinc({ perfil: "leitor" });
+    montar();
+    expect(await screen.findByLabelText(/Razão social/)).toBeTruthy();
+    expect(m.efetivas).toHaveBeenCalledWith(ORG, null);
+  });
+  it("erro de capacidade bloqueia leitura e permite tentar novamente", async () => {
+    m.efetivas.mockRejectedValueOnce(new Error("falha privada"));
+    montar();
+    expect(await screen.findByText(MENSAGENS_V103.erroGate)).toBeTruthy();
+    expect(gets()).toHaveLength(0);
+    expect(screen.queryByText(/falha privada/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
     expect(await screen.findByLabelText(/Razão social/)).toBeTruthy();
   });
 });
@@ -187,6 +216,22 @@ describe("V1-03 leitura", () => {
 });
 
 describe("V1-03 salvamento", () => {
+  it("salvar situação invalida somente listas da organização e usuário atuais", async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const atual = ["contratantes", "lista", U, ORG, "todos", "", 1];
+    const outraOrg = ["contratantes", "lista", U, "outra-org", "todos", "", 1];
+    const outroUsuario = ["contratantes", "lista", "outro-usuario", ORG, "todos", "", 1];
+    for (const key of [atual, outraOrg, outroUsuario]) qc.setQueryData(key, { itens: [] });
+    montar(qc);
+    await screen.findByLabelText(/Razão social/);
+    fireEvent.change(screen.getByLabelText(/^Situação/), { target: { value: "inativo" } });
+    salvar();
+    await screen.findByText(MENSAGENS_V103.sucesso);
+    expect(m.rpc).toHaveBeenCalledWith("atualizar_contratante", expect.objectContaining({ p_situacao: "inativo", p_versao_esperada: 7 }));
+    expect(qc.getQueryState(atual)?.isInvalidated).toBe(true);
+    expect(qc.getQueryState(outraOrg)?.isInvalidated).toBe(false);
+    expect(qc.getQueryState(outroUsuario)?.isInvalidated).toBe(false);
+  });
   it("validação local bloqueia RPC", async () => {
     montar();
     await screen.findByLabelText(/Razão social/);
