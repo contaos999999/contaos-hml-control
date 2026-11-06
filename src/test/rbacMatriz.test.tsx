@@ -84,10 +84,10 @@ describe("P0 V1 matriz RBAC — interface MASTER", () => {
     mocks.rpc.mockImplementation(async (name: string, args: Record<string, unknown>) => {
       if (name === "obter_matriz_rbac_master") return ok({ ...matrix, versao });
       if (name === "atualizar_matriz_rbac_master") {
-        expect(args.p_versao_esperada).toBe(5);
-        expect(args.p_alteracoes).toEqual([linha("administrador", "arquivos", "criar", true)]);
+        expect(args['p_versao_esperada']).toBe(5);
+        expect(args['p_alteracoes']).toEqual([linha("administrador", "arquivos", "criar", true)]);
         versao++;
-        return ok({ schema_versao: "rbac-v1", versao, request_id: args.p_request_id, evento_id: "00000000-0000-4000-8000-000000000002" });
+        return ok({ schema_versao: "rbac-v1", versao, request_id: args['p_request_id'], evento_id: "00000000-0000-4000-8000-000000000002" });
       }
       return denied();
     });
