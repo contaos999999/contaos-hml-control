@@ -20,3 +20,17 @@ O check intitulado “Teste C Independente” que passou no PR #200 **não equiv
 5. Executar N9 por executor independente, registrar run/HEAD/hash; fechar SYS-03 apenas após critérios reais aprovados.
 
 **Estado:** lacuna de infraestrutura E2E identificada, sem certificação SYS-03/V1. Nenhuma mudança de Auth, banco, PROD ou contas de usuários nesta auditoria.
+
+## Atualização comprovada: Playwright público HML, 06/11/2026
+
+- Run canônico: https://github.com/contaos999999/contaos-hml-control/actions/runs/42199114065
+- Commit main testado: `fdceac92b177771f9f3ef44d9f4b59e174f706cf`.
+- Runner Ubuntu 24.04; `bun install --frozen-lockfile` SUCCESS; Chromium Playwright 1.58.2 instalado SUCCESS.
+- Job `127829716039`, resultado SUCCESS: **3/3 testes Playwright aprovados (10,4 s)**.
+- N4: acesso direto a `/redefinir-senha` sem token não exibe formulário de nova senha: PASS.
+- N4: hash `error_code=otp_expired` não exibe formulário: PASS.
+- Página pública `/esqueci-senha` acessível e botão visível: PASS.
+- A bateria não realiza solicitação de e-mail, login, atualização de senha, teste de sessão nem alteração de dados.
+- **N1, N2, N3, N5, N6, N7, N8 e N9 seguem sem prova real E2E. N4 parcial, sem prova de token malformado contra o serviço.**
+- Para completar testes autenticados, preparar conta sintética e mailbox sob controle HML, secrets efêmeros protegidos, cleanup e teste C independente. Nunca utilizar conta pessoal ou dados reais. N7 exige limite seguro de requisições.
+- Não declarar SYS-03 ou V1 certificados com base em 3 testes públicos.
