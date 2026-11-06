@@ -12,6 +12,7 @@ export function syntheticFixturePreflight(env: Record<string, string | undefined
     } catch { missing.push("INVALID_HML_PROJECT"); }
   }
   const email = env.CONTAOS_HML_SYNTHETIC_EMAIL;
+  // Fixture must be isolated from personal and production identities.
   if (email && !email.toLowerCase().startsWith("contaos-sys03-")) missing.push("INVALID_SYNTHETIC_EMAIL_PREFIX");
   return { ready: missing.length === 0, missing };
 }
