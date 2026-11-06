@@ -308,19 +308,18 @@ describe("V1-02 sucesso, navegação e apresentação", () => {
     await preencher();
     const cancelar = screen.getByRole("link", { name: "Cancelar" });
     expect(cancelar.getAttribute("href")).toBe("/contratantes");
-    for (const el of [cancelar, screen.getByRole("button", { name: "Salvar" }), screen.getByLabelText(/Razão social/), screen.getByRole("button", { name: "Sair" })]) {
+    for (const el of [cancelar, screen.getByRole("button", { name: "Salvar" }), screen.getByLabelText(/Razão social/)]) {
       expect(el.className).toMatch(/\bh-11\b|\bmin-h-11\b/);
     }
     fireEvent.submit(screen.getByLabelText(/Razão social/).closest("form")!);
     await screen.findByText(MENSAGENS_V102.sucesso);
     expect(inserts()).toHaveLength(1);
   });
-  it("16 Sair limpa sessão e vai a /login", async () => {
+  it("16 não duplica saída da sessão na página de cadastro", async () => {
     montar();
     await screen.findByLabelText(/Razão social/);
-    fireEvent.click(screen.getByRole("button", { name: "Sair" }));
-    await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/login", replace: true }));
-    expect(m.signOut).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Sair" })).toBeNull();
+    expect(m.signOut).not.toHaveBeenCalled();
   });
 });
 

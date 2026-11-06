@@ -14,6 +14,7 @@ import {
 } from "@/lib/organizacao/preferenciaOrganizacao";
 import { rotaSemSidebar } from "@/lib/navegacao/menuV1";
 import { ContaOSSidebar } from "./ContaOSSidebar";
+import { ContaOSOrganizationHeader } from "./ContaOSOrganizationHeader";
 import { validarAdministrador, podeConsultarAuditoria } from "@/lib/administracao/admUsuariosRpc";
 import { Link } from "@tanstack/react-router";
 import { MENU_ADMIN_V1 } from "@/lib/navegacao/menuV1";
@@ -26,6 +27,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     pathname === destino || pathname.startsWith(`${destino}/`);
   const [liberado, setLiberado] = useState(false);
   const [revisaoSessao, setRevisaoSessao] = useState(0);
+  const [chaveConteudo, setChaveConteudo] = useState(0);
   const [administrador, setAdministrador] = useState(false);
   const [auditoriaPermitida, setAuditoriaPermitida] = useState(false);
   const [permissoes, setPermissoes] = useState<AcaoRbac[]>([]);
@@ -118,6 +120,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     const revalidarAoAlterarOrganizacao = () => {
+      setChaveConteudo((chave) => chave + 1);
       // Invalida RPCs pendentes antes de iniciar qualquer consulta da nova organização.
       geracaoAutenticacao.current += 1;
       setLiberado(false);
@@ -216,15 +219,24 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
               role="dialog"
               aria-modal="true"
               aria-label="Menu de navegação"
-              className="fixed inset-0 z-40 overflow-y-auto bg-background/95 pt-12 md:hidden"
+              className="fixed inset-0 z-40 overflow-y-auto bg-sidebar text-sidebar-foreground pt-12 md:hidden"
             >
               <button
                 type="button"
-                className="m-3 rounded border px-3 py-2"
+                className="m-3 min-h-11 rounded border border-sidebar-border px-3 py-2 focus-visible:ring-2 focus-visible:ring-sidebar-ring"
                 onClick={() => setMovelAberto(false)}
               >
                 Fechar menu
               </button>
+              <div className="border-b border-sidebar-border p-4">
+                <img
+                  src="/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"
+                  alt="ContaOS"
+                  width={131}
+                  height={32}
+                  className="h-8 w-auto"
+                />
+              </div>
               <ContaOSSidebar
                 permissoes={permissoes}
                 contexto={contexto}
@@ -240,7 +252,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
                       to={item.destino}
                       onClick={() => setMovelAberto(false)}
                       aria-current={rotaAdministrativaAtiva(item.destino) ? "page" : undefined}
-                      className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-accent text-accent-foreground" : "hover:bg-accent"}`}
+                      className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-sidebar-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                     >
                       {item.titulo}
                     </Link>
@@ -250,43 +262,26 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
             </div>
           )}
           <aside
-            className={`fixed inset-y-0 left-0 hidden overflow-y-auto border-r bg-background md:block ${recolhida ? "w-20" : "w-56"}`}
+            className={`fixed inset-y-0 left-0 z-30 hidden overflow-y-auto border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:block ${recolhida ? "w-20" : "w-56"}`}
           >
-            <div className="flex items-center justify-between gap-2 border-b p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-sidebar-border p-3">
               <img
-                src="/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg"
+                src={
+                  recolhida
+                    ? "/brand/ContaOS_Simbolo_Branco.svg"
+                    : "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"
+                }
                 alt="ContaOS"
-                width={131}
+                width={recolhida ? 32 : 131}
                 height={32}
-                className={recolhida ? "hidden" : "h-8 w-auto dark:hidden"}
-              />
-              <img
-                src="/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"
-                alt="ContaOS"
-                width={131}
-                height={32}
-                className={recolhida ? "hidden" : "hidden h-8 w-auto dark:block"}
-              />
-              <img
-                src="/brand/ContaOS_Simbolo_Navy.svg"
-                alt="ContaOS"
-                width={32}
-                height={32}
-                className={recolhida ? "block size-8 dark:hidden" : "hidden"}
-              />
-              <img
-                src="/brand/ContaOS_Simbolo_Branco.svg"
-                alt="ContaOS"
-                width={32}
-                height={32}
-                className={recolhida ? "hidden size-8 dark:block" : "hidden"}
+                className={recolhida ? "size-8 shrink-0" : "h-8 w-auto min-w-0"}
               />
               <button
                 type="button"
                 aria-label={recolhida ? "Expandir menu" : "Recolher menu"}
                 aria-expanded={!recolhida}
                 onClick={() => setRecolhida((v) => !v)}
-                className="rounded border px-2 py-1 focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-11 rounded border border-sidebar-border px-2 py-1 focus-visible:ring-2 focus-visible:ring-sidebar-ring"
               >
                 {recolhida ? "»" : "«"}
               </button>
@@ -303,7 +298,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
                     aria-label={item.titulo}
                     title={recolhida ? item.titulo : undefined}
                     aria-current={rotaAdministrativaAtiva(item.destino) ? "page" : undefined}
-                    className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-accent text-accent-foreground" : "hover:bg-accent"}`}
+                    className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-sidebar-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                   >
                     <span className="flex items-center gap-2">
                       {item.destino === "/administracao/usuarios" ? (
@@ -320,8 +315,12 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
           </aside>
         </>
       )}
-      <div inert={movelAberto} className={liberado ? (recolhida ? "md:pl-20" : "md:pl-56") : ""}>
-        {children}
+      <div
+        inert={movelAberto}
+        className={`min-w-0 ${liberado ? (recolhida ? "md:pl-20" : "md:pl-56") : ""}`}
+      >
+        <ContaOSOrganizationHeader />
+        <div key={chaveConteudo}>{children}</div>
       </div>
     </div>
   );

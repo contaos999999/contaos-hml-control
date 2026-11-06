@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
@@ -188,9 +187,9 @@ export function CompetenciaParecer({ id }: { id: string }) {
   const podeDecidir = ultima && !ultima.aprovado_em && !["aprovado", "reprovado"].includes(ultima.status);
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-primary text-primary-foreground">
+      <nav aria-label="Navegação da página" className="border-b border-border bg-card text-card-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-          <ContaOSMarca />
+          
           <nav aria-label="Navegação" className="flex flex-wrap gap-2">
             <Button variant="secondary" asChild className="min-h-11">
               <Link to="/competencias/$id" params={{ id: idC }}>
@@ -199,7 +198,7 @@ export function CompetenciaParecer({ id }: { id: string }) {
             </Button>
           </nav>
         </div>
-      </header>
+      </nav>
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>

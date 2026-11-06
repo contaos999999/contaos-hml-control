@@ -670,7 +670,8 @@ describe("V1-08 utilitários e scan estático", () => {
     expect(fontes).not.toMatch(/\.(insert|update|delete|upsert)\(/);
     expect(fontes).not.toMatch(/as any|as never/);
     expect(fontes).not.toMatch(/service_role|SERVICE_ROLE|sk-[a-zA-Z0-9]/);
-    expect(fontes).toContain("ContaOSMarca");
+    expect(fontes).not.toContain("<ContaOSMarca");
+    expect(readFileSync("src/components/layout/ContaOSAppShell.tsx", "utf8")).toContain("<ContaOSOrganizationHeader");
     for (const f of [
       "src/components/contratos/VisaoGeralContrato.tsx",
       "src/components/contratos/BaseNormativaContrato.tsx",

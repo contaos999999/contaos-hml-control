@@ -181,7 +181,7 @@ describe("V1-04 estados", () => {
     expect(within(tabela).getAllByText("alta").length).toBeGreaterThan(0);
     expect(within(tabela).getAllByText("01/01/2026 – 31/12/2026").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: /Selecionar organização/ })).toHaveAttribute("href", "/selecionar-organizacao");
+    expect(screen.queryByRole("link", { name: /Selecionar organização/ })).toBeNull();
     const prox = screen.getByRole("button", { name: /Próxima/ });
     expect(prox.className).toContain("h-11");
     expect(screen.getByRole("button", { name: /Anterior/ })).toBeDisabled();

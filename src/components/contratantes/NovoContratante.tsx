@@ -19,7 +19,6 @@ import {
   type ContratanteCriado,
   type FormularioContratante,
 } from "@/lib/contratantes/novoContratanteDados";
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 export const MENSAGENS_V102 = {
   verificando: "Verificando sessão…",
@@ -85,38 +84,6 @@ function Dica({ rotulo, texto }: { rotulo: string; texto: string }) {
   );
 }
 
-function Cabecalho(props: { onSair: () => void; saindo: boolean }) {
-  return (
-    <header className="border-b border-border bg-primary text-primary-foreground">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-3">
-          <ContaOSMarca />
-        </div>
-        <nav aria-label="Navegação" className="flex flex-wrap gap-2">
-          <Button asChild variant="secondary" className="h-11">
-            <Link to="/">Painel</Link>
-          </Button>
-          <Button asChild variant="secondary" className="h-11">
-            <Link to="/contratantes">
-              <ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Contratantes
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-            disabled={props.saindo}
-            onClick={props.onSair}
-          >
-            {props.saindo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : <LogOut className="mr-2 h-4 w-4" aria-hidden />}
-            Sair
-          </Button>
-        </nav>
-      </div>
-    </header>
-  );
-}
-
 function Aviso(props: { icone: "negado" | "erro"; texto: string; children?: React.ReactNode }) {
   const Icone = props.icone === "negado" ? ShieldAlert : AlertCircle;
   return (
@@ -138,8 +105,6 @@ export function NovoContratante() {
   const [verificando, setVerificando] = useState(true);
   const [erroSessao, setErroSessao] = useState(false);
   const [tentativa, setTentativa] = useState(0);
-  const [saindo, setSaindo] = useState(false);
-  const saindoRef = useRef(false);
 
   const [form, setForm] = useState<FormularioContratante>(VAZIO);
   const [invalidos, setInvalidos] = useState<CampoFormulario[]>([]);
@@ -203,16 +168,6 @@ export function NovoContratante() {
   useEffect(() => {
     if (criado) tituloSucessoRef.current?.focus();
   }, [criado]);
-
-  async function sair() {
-    if (saindoRef.current) return;
-    saindoRef.current = true;
-    setSaindo(true);
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut().catch(() => undefined);
-    navigate({ to: "/login", replace: true });
-  }
 
   function focar(id: string) {
     requestAnimationFrame(() => document.getElementById(id)?.focus());
@@ -412,7 +367,7 @@ export function NovoContratante() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Cabecalho onSair={sair} saindo={saindo} />
+      
       <main className="mx-auto max-w-3xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Cadastros</p>

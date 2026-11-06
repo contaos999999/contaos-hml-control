@@ -30,7 +30,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { RequirementDrawer } from "@/components/competencias/RequirementDrawer";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";
@@ -264,9 +263,9 @@ export function CompetenciaAnalise({ id }: { id: string }) {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground">
-        <header className="border-b border-border bg-primary text-primary-foreground">
+        <nav aria-label="Navegação da página" className="border-b border-border bg-card text-card-foreground">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-            <ContaOSMarca />
+            
             <nav aria-label="Navegação" className="flex flex-wrap gap-2">
               <Button asChild variant="secondary" className="h-11">
                 {idOk ? (
@@ -281,7 +280,7 @@ export function CompetenciaAnalise({ id }: { id: string }) {
               </Button>
             </nav>
           </div>
-        </header>
+        </nav>
         <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
           <div>
             <h1 className="text-2xl font-semibold">Análise da competência</h1>
