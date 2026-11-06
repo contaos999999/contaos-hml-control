@@ -308,22 +308,20 @@ describe("V1-14 renderização do backend", () => {
     expect(aba?.getAttribute("aria-disabled")).toBeNull();
   });
 
-  it.each(["abrir_documentos", "analisar"])(
-    "%s=true: staged aria-disabled Em breve, sem href, clique não navega nem chama RPC",
-    async (n) => {
-      m.rpc.mockResolvedValue(ok(vg({ acoes: { [n]: true } })));
-      montar();
-      await pronto();
-      const el = acao(n);
-      expect(el.textContent).toMatch(/Permitida pelo backend/);
-      const staged = el.querySelector('[aria-disabled="true"]') as HTMLElement;
-      expect(staged.textContent).toMatch(/Em breve/);
-      expect(el.querySelector("a,button,[href]")).toBeNull();
-      fireEvent.click(staged);
-      expect(m.nav).not.toHaveBeenCalled();
-      expect(m.rpc).toHaveBeenCalledTimes(1);
-    },
-  );
+  it.each([
+    ["abrir_documentos", "Abrir documentos", `/competencias/${ID}/documentos`],
+    ["analisar", "Analisar", `/competencias/${ID}/analise`],
+  ])("%s=true: ação permitida navega para a tela já existente", async (n, nome, href) => {
+    m.rpc.mockResolvedValue(ok(vg({ acoes: { [n]: true } })));
+    montar();
+    await pronto();
+    const el = acao(n);
+    expect(el.textContent).toMatch(/Permitida pelo backend/);
+    expect(el.textContent).not.toMatch(/Em breve/);
+    const link = screen.getByRole("link", { name: nome });
+    expect(link).toHaveAttribute("href", href);
+    expect(m.rpc).toHaveBeenCalledTimes(1);
+  });
 
   it("abrir_parecer=true habilita somente a aba/ação correspondente", async () => {
     m.rpc.mockResolvedValue(ok(vg({ acoes: { abrir_parecer: true } })));

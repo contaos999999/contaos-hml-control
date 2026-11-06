@@ -393,25 +393,30 @@ function AllowedActions({ acoes, vgId }: { acoes: AllowedActionsVG; vgId: string
                 <span className="flex items-center gap-1.5 text-xs">
                   <CheckCircle2 className="h-3.5 w-3.5" aria-hidden /> Permitida pelo backend
                 </span>
-                {k === "abrir_parecer" ? (
+                {k === "abrir_documentos" ? (
+                  <Button asChild variant="outline" className="min-h-11">
+                    <Link to="/competencias/$id/documentos" params={{ id: vgId }}>
+                      Abrir documentos
+                    </Link>
+                  </Button>
+                ) : k === "analisar" ? (
+                  <Button asChild variant="outline" className="min-h-11">
+                    <Link to="/competencias/$id/analise" params={{ id: vgId }}>
+                      Analisar
+                    </Link>
+                  </Button>
+                ) : k === "abrir_parecer" ? (
                   <Button asChild variant="outline" className="min-h-11">
                     <Link to="/competencias/$id/parecer" params={{ id: vgId }}>
                       Abrir parecer
                     </Link>
                   </Button>
-                ) : k === "apresentar" ? (
+                ) : (
                   <Button asChild variant="outline" className="min-h-11">
                     <Link to="/competencias/$id/apresentar" params={{ id: vgId }}>
                       Abrir apresentação
                     </Link>
                   </Button>
-                ) : (
-                  <span
-                    aria-disabled="true"
-                    className="inline-flex w-fit items-center rounded-md border border-dashed border-border px-2 py-1 text-xs text-muted-foreground"
-                  >
-                    Em breve
-                  </span>
                 )}
               </>
             ) : (
