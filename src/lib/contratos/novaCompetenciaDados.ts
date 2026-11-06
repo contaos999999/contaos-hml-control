@@ -5,6 +5,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { mesParaReferencia } from "@/lib/contratos/competenciasDados";
+import { consultarPermissoesEfetivas, ErroRbac, temPermissao } from "@/lib/administracao/rbacRpc";
 
 /** Somente UX: o backend é a autoridade final sobre quem pode criar. */
 export const PERFIS_CRIAR_COMPETENCIA = [
@@ -20,6 +21,17 @@ export type TipoErroNovaCompetencia =
 export class ErroNovaCompetencia extends Error {
   constructor(public tipo: TipoErroNovaCompetencia) {
     super(tipo);
+  }
+}
+
+/** Capacidade de UX por contrato. A RPC de criação revalida sessão e autorização. */
+export async function consultarCapacidadeCriarCompetencia(idOrganizacao: string, idContrato: string): Promise<boolean> {
+  try {
+    const permissoes = await consultarPermissoesEfetivas(idOrganizacao, idContrato);
+    return temPermissao(permissoes.permissoes, "competencias", "criar");
+  } catch (erro) {
+    if (erro instanceof ErroRbac && erro.tipo === "negado") return false;
+    throw new ErroNovaCompetencia("erro");
   }
 }
 

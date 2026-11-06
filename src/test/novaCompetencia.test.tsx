@@ -9,9 +9,15 @@ const m = vi.hoisted(() => ({
   getUser: vi.fn(),
   nav: vi.fn(),
   rpc: vi.fn(),
+  efetivas: vi.fn(),
   chamadas: [] as Chamada[],
   resposta: null as null | ((c: Chamada) => unknown),
 }));
+
+vi.mock("@/lib/administracao/rbacRpc", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/lib/administracao/rbacRpc")>();
+  return { ...real, consultarPermissoesEfetivas: m.efetivas };
+});
 
 vi.mock("@/integrations/supabase/client", () => {
   const from = (tabela: string) => {
@@ -89,6 +95,8 @@ const de = (t: string) => m.chamadas.filter((c) => c.tabela === t);
 const op = (c: Chamada, nome: string) => c.ops.filter(([o]) => o === nome).map(([, a]) => a);
 
 function cenario(perfil: string | null = "gestor_contrato", existente: unknown = null) {
+  m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: false,
+    permissoes: ["administrador", "gestor_contrato", "prestacao_contas"].includes(perfil ?? "") ? [{ recurso: "competencias", acao: "criar" }] : [] });
   m.resposta = (c) => {
     if (c.tabela === "contratos")
       return ok({ id: K1, id_organizacao: A, numero: "CT-001", objeto: "x", situacao: "ativo" });
@@ -117,6 +125,7 @@ beforeEach(() => {
   m.resposta = null;
   m.nav.mockReset();
   m.rpc.mockReset().mockResolvedValue({ data: NOVA, error: null, status: 200 });
+  m.efetivas.mockReset();
   m.getUser.mockReset().mockResolvedValue({ data: { user: { id: U } }, error: null });
   window.sessionStorage.clear();
   window.localStorage.clear();
@@ -182,18 +191,12 @@ describe("V1-13 perfil (UX, backend é autoridade)", () => {
       "prestacao_contas",
     ]);
   });
-  it("ordem do gate e SELECT explícito único de perfil", async () => {
+  it("capacidade efetiva por organização e contrato, sem leitura de vínculos", async () => {
     cenario();
     montar();
     await preencher();
-    expect(m.chamadas.map((c) => c.tabela)).toEqual(["contratos", "vinculos_usuarios"]);
-    const v = de("vinculos_usuarios")[0]!;
-    expect(op(v, "select")[0]![0]).toBe("perfil");
-    expect(op(v, "eq")).toEqual([
-      ["id_usuario", U],
-      ["id_organizacao", A],
-      ["ativo", true],
-    ]);
+    expect(m.chamadas.map((c) => c.tabela)).toEqual(["contratos"]);
+    expect(m.efetivas).toHaveBeenCalledWith(A, K1);
   });
   it.each(["administrador", "gestor_contrato", "prestacao_contas"])(
     "%s vê formulário",
@@ -212,6 +215,44 @@ describe("V1-13 perfil (UX, backend é autoridade)", () => {
     ).toBeInTheDocument();
     expect(screen.queryByLabelText(/Competência \(mês\/ano\)/)).toBeNull();
     expect(m.rpc).not.toHaveBeenCalled();
+  });
+  it("MASTER com capacidade efetiva cria sem vínculo local", async () => {
+    cenario(null);
+    m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: true, permissoes: [{ recurso: "competencias", acao: "criar" }] });
+    montar(); await preencher();
+    expect(criar()).toBeEnabled();
+    expect(de("vinculos_usuarios")).toHaveLength(0);
+    expect(m.efetivas).toHaveBeenCalledWith(A, K1);
+  });
+  it("papel nominal não concede criação quando permissão efetiva foi revogada", async () => {
+    cenario("administrador");
+    m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: true, permissoes: [] });
+    montar();
+    expect(await screen.findByText("Seu perfil não permite criar competências neste contrato.")).toBeTruthy();
+    expect(screen.queryByLabelText(/Competência \(mês\/ano\)/)).toBeNull();
+    expect(m.rpc).not.toHaveBeenCalled();
+  });
+  it("capacidade concedida pelo backend prevalece sobre perfil nominal de leitura", async () => {
+    cenario("leitor");
+    m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: false, permissoes: [{ recurso: "competencias", acao: "criar" }] });
+    montar(); await preencher(); expect(criar()).toBeEnabled();
+  });
+  it("contrato de outra organização bloqueia antes de consultar capacidade ou gravar", async () => {
+    cenario();
+    m.resposta = () => ok({ id: K1, id_organizacao: "org-B", numero: "CT-B", objeto: "x", situacao: "ativo" });
+    montar();
+    expect(await screen.findByText("Você não tem acesso a este contrato.")).toBeTruthy();
+    expect(m.efetivas).not.toHaveBeenCalled(); expect(m.rpc).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText(/Competência \(mês\/ano\)/)).toBeNull();
+  });
+  it("erro da capacidade não libera formulário e permite tentar novamente", async () => {
+    cenario(); m.efetivas.mockRejectedValueOnce(new Error("falha privada"));
+    montar();
+    expect(await screen.findByRole("button", { name: "Tentar novamente" })).toBeTruthy();
+    expect(screen.queryByLabelText(/Competência \(mês\/ano\)/)).toBeNull();
+    expect(screen.queryByText(/falha privada/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    await preencher(); expect(criar()).toBeEnabled();
   });
 });
 
