@@ -45,3 +45,28 @@ O check intitulado “Teste C Independente” que passou no PR #200 **não equiv
 - N4 permanece **parcial**; N1–N3 e N5–N9 seguem pendentes de evidência E2E autenticada e independente.
 - Próxima etapa: fixtures sintéticas HML, mailbox controlada, secrets protegidos, limpeza e execução N1–N9 com orçamento seguro para N7.
 - **Não certificar SYS-03/V1** com base nesta bateria.
+
+
+## Gate de prontidão para provas autenticadas HML (P0, sem execução de Auth)
+
+**Escopo deste gate:** documentação e especificação verificável. Não autoriza provisionamento de usuário, envio de e-mail, uso de service_role, alteração de senha, SQL ou chamadas de autenticação.
+
+**Pré-condições bloqueantes:**
+1. Conta sintética exclusiva da homologação, identificada por prefixo controlado, sem e-mail pessoal ou dados de terceiros; mailbox de teste sob controle do projeto, com captura do link de recuperação e expurgo automático.
+2. Segredos restritos ao environment `hml` do GitHub Actions, mascarados, sem exposição em artefatos/logs/PRs. URL e chaves devem apontar inequivocamente ao projeto Supabase HML esperado `gklhhhyosgasnyoxlrui`. Não usar PROD.
+3. Fixture idempotente, organização de teste isolada, criação e cleanup garantidos mesmo em falhas; identificar IDs somente em artefatos sanitizados. Proibir exclusão de usuários preexistentes.
+4. Runner independente com timeout por teste, limites de repetição, logs sanitizados, hashes de evidência e registro do SHA exato de frontend/backend.
+5. Autorizar em emenda de `PLANO_ATIVO.json` os arquivos de implementação e workflow antes do BUILD. Aplicar PLAN -> gate CI -> RED -> BUILD -> GREEN -> Teste C independente -> merge.
+
+**Matriz de aceite ainda pendente:**
+- N1: solicitar e-mail sintético, consumir link uma vez, alterar senha e autenticar com a nova credencial.
+- N2: reutilização do mesmo link rejeitada pelo serviço.
+- N3: expiração real conforme TTL controlado e observado, sem simular relógio para afirmar comportamento do serviço.
+- N4: token inválido/malformado validado também no serviço; sete casos públicos de URL já aprovados, mas não substituem esta prova.
+- N5: senha fraca rejeitada pelo servidor, sem confiar apenas em validação da interface.
+- N6: e-mail inexistente recebe mensagem neutra sem revelar existência da conta; nenhuma credencial real.
+- N7: limitação de taxa apenas com orçamento explícito e baixo número de tentativas, respeitando políticas do provedor.
+- N8: política de invalidação das sessões antigas comprovada com sessões sintéticas independentes.
+- N9: Teste C autenticado executado por workflow independente e vinculado ao mesmo SHA, sem reutilizar somente o check de PR.
+
+**Critério de interrupção:** falta de mailbox, credenciais HML, ambiente protegido, autorização de arquivos ou cleanup implica BLOCKED, nunca PASS. **SYS-03 e V1 permanecem não certificados.**
