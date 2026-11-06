@@ -7,7 +7,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./tests/hml",
-  testMatch: /sys03-harness-readiness\.spec\.ts/,
+  testMatch: /sys03-(harness-readiness|negative)\.spec\.ts/,
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
