@@ -136,3 +136,110 @@ Preservar 100% da ContaOS Brand v1.0 e assets. Sem alterações visuais ou backe
 - **Gate 4 (GREEN/AUDIT):** CI, testes funcionais, 27 telas × 8 variantes, 72 BRAND, Zero-Drift, Teste C, evidências e hashes, aprovação no HEAD, merge e checkpoint. Apenas depois reportar percentual real 27/27.
 
 **Regra de integridade:** esta emenda é autorização de planejamento, NÃO certificação visual nem autorização para modificar arquivos fora da allowlist ativa. O trabalho só está concluído quando houver prova real em todas as 27 telas. V1 permanece NO-GO.
+
+
+## Emenda executável de escopo visual — 06/11/2026, continuação do PR #223
+Baseline frontend `e2172c70f38addb1785f798c6cc6fadd0e032e48`; backend `01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea`. PR #223 integrado, ambos checks SUCCESS no commit `29d9a67d7b9b01e674532f30e6c820662e810683`, run 42228480428. Conferência dos 25 blobs atuais com snapshot: 25 iguais. Isso reutiliza integridade das fontes; não constitui nova certificação dos 100/97 prompts.
+### Correção do inventário
+Inspeção de todas as entradas `createFileRoute`: **28 rotas de página**, excluindo __root; 24 organizacionais e 4 públicas/seletor. A expressão histórica “27 telas” não corresponde ao inventário atual. Nenhuma rota será criada, removida ou renumerada. Perfil efetivo é determinado pelos gates RBAC/RLS já implementados em cada componente; não presumir admin para todas as rotas nem liberar por preferência local.
+| Nº | Rota real | Componente | Acesso preservado | Evidência visual |
+|---|---|---|---|---|
+| 1 | `/administracao/auditoria` | `administracao/auditoria/TrilhaAuditoria` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 2 | `/administracao/usuarios` | `administracao/usuarios/AdminUsuarios` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 3 | `/competencias/$id` | `competencias/CompetenciaVisaoGeral` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 4 | `/competencias/$id/analise` | `competencias/CompetenciaAnalise` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 5 | `/competencias/$id/apresentacoes/$apresentacaoId` | `competencias/CompetenciaProtocolo` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 6 | `/competencias/$id/apresentar` | `competencias/CompetenciaApresentar` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 7 | `/competencias/$id/documentos` | `competencias/CompetenciaDocumentos` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 8 | `/competencias/$id/parecer` | `competencias/CompetenciaParecer` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 9 | `/contratantes` | `contratantes/ListaContratantes` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 10 | `/contratantes/$id/editar` | `contratantes/EditarContratante` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 11 | `/contratantes/novo` | `contratantes/NovoContratante` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 12 | `/contratos` | `contratos/ListaContratos` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 13 | `/contratos/$id` | `contratos/VisaoGeralContrato` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 14 | `/contratos/$id/base-normativa` | `contratos/BaseNormativaContrato` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 15 | `/contratos/$id/competencias` | `contratos/CompetenciasContrato` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 16 | `/contratos/$id/competencias/nova` | `contratos/NovaCompetencia` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 17 | `/contratos/$id/documentos` | `contratos/DocumentosContrato` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 18 | `/contratos/$id/documentos/$idDocumento` | `contratos/DocumentoDetalhe` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 19 | `/contratos/$id/historico` | `contratos/HistoricoContrato` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 20 | `/contratos/$id/historico/importar` | `contratos/ImportarHistorico` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 21 | `/contratos/$id/orcamento` | `contratos/OrcamentoContrato` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 22 | `/contratos/$id/regras` | `contratos/RegrasContrato` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 23 | `/contratos/novo` | `contratos/NovoContrato` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 24 | `/esqueci-senha` | `auth/ForgotPasswordForm` | publico | NÃO VERIFICADO |
+| 25 | `/` | `dashboard/Dashboard` | RBAC/RLS existente do componente, sem ampliação | NÃO VERIFICADO |
+| 26 | `/login` | `auth/LoginForm` | publico | NÃO VERIFICADO |
+| 27 | `/redefinir-senha` | `auth/ResetPasswordForm` | publico | NÃO VERIFICADO |
+| 28 | `/selecionar-organizacao` | `organizacao/OrganizationSelector` | sessao_sem_org | NÃO VERIFICADO |
+### Arquivos de apresentação expressamente abrangidos
+- `src/components/administracao/auditoria/TrilhaAuditoria.tsx`
+- `src/components/administracao/usuarios/AdminUsuarios.tsx`
+- `src/components/competencias/CompetenciaAnalise.tsx`
+- `src/components/competencias/CompetenciaApresentar.tsx`
+- `src/components/competencias/CompetenciaDocumentos.tsx`
+- `src/components/competencias/CompetenciaParecer.tsx`
+- `src/components/competencias/CompetenciaProtocolo.tsx`
+- `src/components/competencias/CompetenciaVisaoGeral.tsx`
+- `src/components/contratantes/EditarContratante.tsx`
+- `src/components/contratantes/ListaContratantes.tsx`
+- `src/components/contratantes/NovoContratante.tsx`
+- `src/components/contratos/BaseNormativaContrato.tsx`
+- `src/components/contratos/CompetenciasContrato.tsx`
+- `src/components/contratos/DocumentoDetalhe.tsx`
+- `src/components/contratos/DocumentosContrato.tsx`
+- `src/components/contratos/HistoricoContrato.tsx`
+- `src/components/contratos/ImportarHistorico.tsx`
+- `src/components/contratos/ListaContratos.tsx`
+- `src/components/contratos/NovaCompetencia.tsx`
+- `src/components/contratos/NovoContrato.tsx`
+- `src/components/contratos/OrcamentoContrato.tsx`
+- `src/components/contratos/RegrasContrato.tsx`
+- `src/components/contratos/VisaoGeralContrato.tsx`
+- `src/components/dashboard/Dashboard.tsx`
+- `src/styles.css`
+- `src/components/layout/ContaOSOrganizationHeader.tsx`
+- `src/test/visualShell.test.tsx`
+- `src/test/trilhaAuditoria.test.tsx`
+- `src/test/admUsuarios.test.tsx`
+- `src/test/appShellSidebar.test.tsx`
+- `src/test/baseNormativa.test.tsx`
+- `src/test/brand.test.tsx`
+- `src/test/competenciaAnalise.test.tsx`
+- `src/test/competenciaApresentar.test.tsx`
+- `src/test/competenciaDocumentos.test.tsx`
+- `src/test/competenciaParecer.test.tsx`
+- `src/test/competenciaProtocolo.test.tsx`
+- `src/test/competenciaVisaoGeral.test.tsx`
+- `src/test/competenciasContrato.test.tsx`
+- `src/test/contratantes.test.tsx`
+- `src/test/contratoDetalhe.test.tsx`
+- `src/test/contratos.test.tsx`
+- `src/test/dashboard.test.tsx`
+- `src/test/documentoDetalhe.test.tsx`
+- `src/test/documentosContrato.test.tsx`
+- `src/test/editarContratante.test.tsx`
+- `src/test/historicoContrato.test.tsx`
+- `src/test/ingestaoHistorico.test.tsx`
+- `src/test/novaCompetencia.test.tsx`
+- `src/test/novoContratante.test.tsx`
+- `src/test/novoContrato.test.tsx`
+- `src/test/orcamento.test.tsx`
+- `src/test/rbacMatriz.test.tsx`
+- `src/test/regrasContrato.test.tsx`
+- `src/test/requisitoDetalhe.test.tsx`
+O escopo inclui ainda AppShell/Sidebar e testes preexistentes da allowlist. Testes legados só podem mudar asserções de apresentação afetadas pelo header global, nunca remover provas de autorização, dados ou regras. Arquivos de rotas, árvore gerada, tipos e integração Supabase continuam proibidos nesta emenda; assets públicos oficiais ficam intactos.
+### Contrato de apresentação do cabeçalho
+Reutilizar exclusivamente `obter_resumo_dashboard(p_id_organizacao)`, schema `sys05-v1`, organização `id/razao_social/nome_fantasia/situacao`, já consumido pelo Dashboard. Não deduzir nome/status de sessionStorage; a preferência só escolhe o ID a verificar. Validar que ID retornado é o solicitado, strings válidas e esquema correto. Falha/negação não usa dados anteriores nem concede permissões. Consulta isolada por usuário/organização; limpar imediatamente em logout/troca, descartar respostas antigas e não derrubar RBAC/menu por indisponibilidade do resumo. Não alterar contrato de RPC nem tipos certificados. Reutilizar cache do Dashboard quando seguro, sem ler estado de usuário anterior.
+Centralizar apenas apresentação das ações existentes de trocar organização e sair. Logout usa fluxo Supabase já existente, limpa contexto, trata falha sem afirmar sucesso e redireciona somente após sucesso. Preservar avisos de alterações não salvas e ações específicas da página.
+### Tokens e marca
+Tokens atuais confirmados em `src/styles.css`; reutilizar namespace sidebar existente, centralizando somente navy/azul/teal/superfície oficiais em oklch. Contraste WCAG com estados visíveis, sem cores hardcoded espalhadas. Inter somente se disponível, nenhuma nova dependência/fontes de rede. Logo branca oficial no menu navy, símbolo branco recolhido, drawer móvel com logo; nenhum redesenho ou edição de SVG/favicon/PWA. Fora do shell, as quatro rotas de acesso/seletor preservam sua marca atual.
+### Execução e evidências
+1. Integrar este gate documental somente após Zero-Drift e Teste C SUCCESS no mesmo HEAD; nenhum BUILD antes.
+2. Nova branch a partir do merge. RED com header persistente entre rotas, ID incompatível, erro/negação, logout, troca A/B e resposta obsoleta; logo somente menu; filtros/tabela/paginação da Auditoria responsivos.
+3. Implementar somente apresentação e testes fechados; lint/typecheck/build/regressão, types blob imutável e gates.
+4. Teste C read-only, 28 rotas × 8 variantes (224 combinações), 72 BRAND individuais. Rota privada inacessível = BLOCKED, nunca PASS; captura de login não prova tela privada. Não executar Auth/fixtures/banco com esta emenda.
+5. CI e Teste C precisam aprovar o HEAD exato antes de merge. Registrar evidências, limitações e próximo passo na issue #166. Rollback: reverter exclusivamente PR frontend visual, sem banco.
+**Limite operacional:** Git CLI neste executor não autenticado; cópia de fontes obtida por conector GitHub. Instalação local ainda não comprovada. Nenhum teste local/RED/BUILD/captura executado por esta emenda; utilizar CI canônico sem modificar workflows para contornar limitação.
+### ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+Continuação do plano único já autorizado pelo titular, sem outro plano fragmentado. Edição GitHub direta, zero chamadas de BUILD Lovable, sem biblioteca nova, sem backend/PROD, sem alteração de rotas ou tipos. Gate valida escopo e requisitos de execução, não marca testes não realizados como PASS. V1 permanece NO-GO.
