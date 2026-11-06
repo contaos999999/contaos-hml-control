@@ -714,6 +714,7 @@ describe("V1-15 envio reutiliza uploader V1-10", () => {
     montar();
     await pronto();
     const input = await screen.findByLabelText("Arquivo");
+    await waitFor(() => expect(input).toBeEnabled());
     fireEvent.change(input, { target: { files: [f] } });
   }
 
