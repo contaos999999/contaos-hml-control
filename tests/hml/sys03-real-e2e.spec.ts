@@ -22,7 +22,7 @@ test.describe("SYS-03 HML authenticated browser integration", () => {
     await page.goto("/esqueci-senha");
     await page.getByLabel("E-mail").fill(process.env.CONTAOS_HML_SYNTHETIC_EMAIL!);
     await page.getByRole("button", { name: /enviar link|solicitar/i }).click();
-    await expect(page.getByText("Solicitação recebida", { exact: true })).toBeVisible();
+    await expect(page.getByText("Solicitação recebida", { exact: true }), "N1: Auth HTTP statuses (no tokens): " + authResponses.join(",")).toBeVisible();
     expect(authResponses.length).toBe(1);
     // A 429 can be an expected rate-limit response; the UI intentionally stays neutral.
     expect([200, 429]).toContain(authResponses[0]);
@@ -30,10 +30,14 @@ test.describe("SYS-03 HML authenticated browser integration", () => {
 
   test("N2: nonexistent synthetic address does not disclose account existence", async ({ page }) => {
     const email = "contaos-sys03-nonexistent-" + Date.now() + "@example.com";
+    const authStatuses: number[] = [];
+    page.on("response", (response) => {
+      if (response.url().includes("/auth/v1/recover") && response.request().method() === "POST") authStatuses.push(response.status());
+    });
     await page.goto("/esqueci-senha");
     await page.getByLabel("E-mail").fill(email);
     await page.getByRole("button", { name: /enviar link|solicitar/i }).click();
-    await expect(page.getByText("Se existir uma conta vinculada a este e-mail, você receberá as instruções para redefinir sua senha.")).toBeVisible();
+    await expect(page.getByText("Se existir uma conta vinculada a este e-mail, você receberá as instruções para redefinir sua senha."), "N2: Auth HTTP statuses (no tokens): " + authStatuses.join(",")).toBeVisible();
     await expect(page.getByText(/usuário não encontrado|user not found|não cadastrado/i)).toHaveCount(0);
   });
 
