@@ -867,7 +867,7 @@
       ],
       "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
       "acoes_a_reconciliar": {
-        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "criar": "GATE_FRONTEND_CORRIGIDO_SEM_PROVA_JWT_PR240",
         "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
         "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
         "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
@@ -1259,13 +1259,13 @@
       ],
       "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
       "acoes_a_reconciliar": {
-        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "criar": "EVENTOS_GERADOS_PELO_BACKEND_NAO_CADASTRO_MANUAL",
         "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
-        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
-        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
-        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
-        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
-        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+        "editar": "PROIBIDO_OU_NAO_APLICAVEL_EVENTO_IMUTAVEL_PRD01",
+        "ativar": "PROIBIDO_OU_NAO_APLICAVEL_EVENTO_IMUTAVEL_PRD01",
+        "desativar": "PROIBIDO_OU_NAO_APLICAVEL_EVENTO_IMUTAVEL_PRD01",
+        "excluir": "PROIBIDO_OU_NAO_APLICAVEL_EVENTO_IMUTAVEL_PRD01",
+        "transicoes_especificas": "PROIBIDO_OU_NAO_APLICAVEL_EVENTO_IMUTAVEL_PRD01"
       }
     },
     {
@@ -1718,7 +1718,7 @@
       ],
       "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
       "acoes_a_reconciliar": {
-        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "criar": "IMPLEMENTADO_FRONTEND_RPC_EXISTENTE_SEM_PROVA_JWT_PR238",
         "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
         "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
         "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
@@ -3116,6 +3116,34 @@
         "src/lib/contratos/ingestaoHistoricoDados.ts"
       ],
       "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    }
+  ],
+  "prioridade": "CRUD_GLOBAL",
+  "atualizacoes_incrementais": [
+    {
+      "entidade": "organizacoes",
+      "acao": "criar",
+      "pr": 238,
+      "head": "65161aee63b455f41aa2b6f22cf828235628425c",
+      "merge": "af23f3afa87e6331573f4870e22a58bcddfe8b1f",
+      "status": "IMPLEMENTADO_FRONTEND_RPC_EXISTENTE_SEM_PROVA_JWT",
+      "arquivos": [
+        "src/lib/organizacao/criarOrganizacaoDados.ts",
+        "src/components/organizacao/CriarOrganizacaoForm.tsx",
+        "src/components/organizacao/OrganizationSelector.tsx"
+      ]
+    },
+    {
+      "entidade": "competencias",
+      "acao": "criar",
+      "pr": 240,
+      "head": "1fa74eebab15b185918fdcbd16287559a4dadcaf",
+      "merge": "cd13443bc26ba48482f35c709cef5fb3ee313963",
+      "status": "GATE_FRONTEND_CORRIGIDO_RPC_EXISTENTE_SEM_PROVA_JWT",
+      "arquivos": [
+        "src/lib/contratos/novaCompetenciaDados.ts",
+        "src/components/contratos/NovaCompetencia.tsx"
+      ]
     }
   ]
 }
