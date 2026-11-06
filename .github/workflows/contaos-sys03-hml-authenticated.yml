@@ -11,7 +11,7 @@ jobs:
     environment: hml
     timeout-minutes: 10
     env:
-      CONTAOS_HML_SUPABASE_URL: ${{ vars.CONTAOS_HML_SUPABASE_URL }}
+      CONTAOS_HML_SUPABASE_URL: https://gklhhhyosgasnyoxlrui.supabase.co
       CONTAOS_HML_SYNTHETIC_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_EMAIL }}
       CONTAOS_HML_SYNTHETIC_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_PASSWORD }}
       CONTAOS_HML_MAILBOX_TOKEN: ${{ secrets.CONTAOS_HML_MAILBOX_TOKEN }}
