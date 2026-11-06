@@ -1,3 +1,29 @@
+## CHECKPOINT P0 — 06/11/2026: prova real de restore sintético integrada e reancoragem canônica
+
+**V1 NÃO CERTIFICADA. V2 e PROD continuam BLOQUEADAS.** HEAD backend de referência `contaos999999/develop@01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea`; frontend main anterior ao presente PR `320b3ab72aacaecc9381cbc41cefc14caa39bbd0`. Fonte 25/25 blobs e catálogo 100 regulares/97 atômicos conferidos **idênticos** no HEAD backend, snapshot e PLANO_ATIVO reancorados sem modificar fontes, BRAND-01 ou types congelados.
+
+### Provas novas desta rodada
+
+- PLAN [backend #86](https://github.com/contaos999999/develop/pull/86) integrado `e7cfb5e7f953a11a8024ab6075fc0661b8277bfa`; BUILD [backend #87](https://github.com/contaos999999/develop/pull/87) integrado `0b790304ae3fd7d8e44dd6cfca1ca6e0a9a64a7f`; evidência [backend #88](https://github.com/contaos999999/develop/pull/88) integrada `01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea`.
+- Zero-Drift do BUILD [run 42168969380](https://github.com/contaos999999/develop/actions/runs/42168969380): SUCCESS.
+- Workflow [run 42168969390](https://github.com/contaos999999/develop/actions/runs/42168969390): **dois jobs SUCCESS**. Job original reconstrói schema; novo job fez backup real de uma organização fictícia com `pg_dump`, destruiu instância local A, recriou instância B e restaurou conteúdo por `pg_restore`. O artifact [13480626051](https://github.com/contaos999999/develop/actions/runs/42168969390/artifacts/13480626051) foi conferido: 1 linha→1 linha, hash SHA-256 idêntico, 126/126 versões de migrations idênticas, RLS `true:false` inalterado, cleanup comprovado, 38 segundos medidos após parada de A. **Não é ensaio RPO/RTO, PITR ou backup integral**, nem testa PROD/Storage ou os três fluxos ressalvados.
+- FAIL histórico [run 42168549551](https://github.com/contaos999999/develop/actions/runs/42168549551) preservado: ID de container obsoleto após `db reset`; fix mínimo `5cffdd1028b72c58397d76b9f8507cfb81074cb0` e reteste PASS. Não falsificar resultado anterior.
+- Snapshot SQL HML somente leitura 06/11/2026 05:29 UTC: sete conexões/60, zero sessões esperando lock, zero deadlocks acumulados; nove filas pgmq sem mensagens pendentes, seis mensagens de histórico arquivadas, seis jobs Cron ativos. **Não é** carga de pico, disponibilidade 99,9% ou prova de todas as metas 500/800ms.
+
+### Última etapa e próximas obrigações
+
+**Última etapa comprovadamente concluída:** provas estruturais/funcionais já integradas do RBAC e nove JWT (377/377), BUILD frontend #183 com 36 suítes/921 testes locais e dois CI aprovados, e agora backup/restore de **uma tabela sintética local**, integrado no backend com dois jobs verdes. Quarentena anterior de 56 contas P0 sintéticas bloqueadas com zero sessões/vínculos/MASTER ativos permanece documentada; esta rodada **não** reutilizou contas.
+
+**Próxima tarefa obrigatória:** SYS-03 recuperação de senha end-to-end com email alias sintético controlado e verificação real de link válido/expirado/reutilizado + novo login; Teste C autenticado de telas privadas/WCAG 1440/1280/768/390 claro/escuro; RNFs latência por rota/carga, backup integral/PITR/RPO/RTO e monitoramento temporal; critérios V1 individualizados (486 literais e 488 históricos) sem falso PASS. Ressalvas R01 upload físico, R02 worker, R03 isolamento A/B real permanecem estritamente limitadas.
+
+Não modificar, promover nem certificar V2/PROD; não declarar certificação V1 pela aprovação do restore local.
+
+### ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
+
+Documentação e snapshot de fontes: **impacto visual N/A**, zero mudanças em frontend executável, Brand-01, tipos congelados, banco remoto, Auth, RLS, Storage ou PROD. Sem usar créditos Lovable; usar provas e implementações já homologadas.
+
+---
+
 ## CHECKPOINT COMPLEMENTAR P0 — 06/11/2026: auditoria HML e PRs reconciliados
 
 **V1 NÃO CERTIFICADA; V2 E PROD BLOQUEADOS.** Referências na abertura deste trabalho: frontend main `df6ea5ef3403b7612afa257f105d9d65a7f8c1ce` e backend main `67668c61054405368d5c7895f5087ccfa9eb9dfc`; fonte canônica 25/25 e snapshot íntegros. Ver prova nova `docs/frontend/auditorias/P0_V1_BASELINE_HML_OBSERVABILIDADE_2026-11-06.md` (somente leitura, não certificadora).
