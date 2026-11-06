@@ -129,7 +129,7 @@ function Tabela({ itens }: { itens: Contratante[] }) {
         <tbody>
           {itens.map((c) => (
             <tr key={c.id} className="border-b border-border/60 align-top">
-              <td className="break-words py-3 pr-3 font-medium text-foreground">{c.razao_social}</td>
+              <td className="break-words py-3 pr-3 font-medium text-foreground"><Link to="/contratantes/$id/editar" params={{ id: c.id }} aria-label={`Abrir cadastro de ${c.razao_social}`} className={`inline-flex min-h-11 max-w-full items-center rounded underline underline-offset-4 hover:text-primary ${foco}`}>{c.razao_social}</Link></td>
               <td className="break-words py-3 pr-3 text-muted-foreground">{c.nome_fantasia || "—"}</td>
               <td className="break-words py-3 pr-3 tabular-nums">{formatarDocumento(c.documento)}</td>
               <td className="break-words py-3 pr-3">{rotuloTipoPessoa(c.tipo_pessoa)}</td>
@@ -150,7 +150,7 @@ function Cards({ itens }: { itens: Contratante[] }) {
     <ul aria-label="Contratantes (lista compacta)" className="space-y-3 md:hidden">
       {itens.map((c) => (
         <li key={c.id} className="rounded-lg border border-border bg-background p-4">
-          <p className="break-words font-medium text-foreground">{c.razao_social}</p>
+          <p className="break-words font-medium text-foreground"><Link to="/contratantes/$id/editar" params={{ id: c.id }} aria-label={`Abrir cadastro de ${c.razao_social}`} className={`inline-flex min-h-11 max-w-full items-center rounded underline underline-offset-4 hover:text-primary ${foco}`}>{c.razao_social}</Link></p>
           {c.nome_fantasia && <p className="break-words text-sm text-muted-foreground">{c.nome_fantasia}</p>}
           <dl className="mt-3 grid grid-cols-1 gap-2 text-sm min-[360px]:grid-cols-2">
             <div className="min-w-0">

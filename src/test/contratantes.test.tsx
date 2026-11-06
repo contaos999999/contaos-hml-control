@@ -43,8 +43,8 @@ vi.mock("@/integrations/supabase/client", () => {
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.nav,
   createFileRoute: () => (o: unknown) => ({ options: o }),
-  Link: ({ children, to, ...p }: { children: ReactNode; to: string }) => (
-    <a href={to} {...p}>
+  Link: ({ children, to, params, ...p }: { children: ReactNode; to: string; params?: Record<string, string> }) => (
+    <a href={to.replace(/\$([A-Za-z]+)/g, (_, key: string) => params?.[key] ?? `${key}`)} {...p}>
       {children}
     </a>
   ),
@@ -414,14 +414,14 @@ describe("V1-01 apresentação", () => {
 });
 
 describe("V1-01 segurança e isolamento", () => {
-  it("zero DML/RPC/Edge e nenhum link de criar/editar", async () => {
+  it("zero DML/RPC/Edge; navegação não executa gravações", async () => {
     montar();
     await screen.findAllByText("Contratante 1 LTDA");
     for (const c of m.chamadas) for (const [o] of c.ops) expect(["insert", "update", "delete", "upsert"]).not.toContain(o);
     expect(m.rpc).not.toHaveBeenCalled();
     expect(m.invoke).not.toHaveBeenCalled();
     const hrefs = screen.getAllByRole("link").map((a) => a.getAttribute("href"));
-    expect(hrefs.some((h) => h?.startsWith("/contratantes/"))).toBe(false);
+    expect(hrefs.filter((h) => h?.startsWith("/contratantes/"))).toEqual(["/contratantes/c1/editar", "/contratantes/c2/editar", "/contratantes/c1/editar", "/contratantes/c2/editar"]);
     expect(screen.queryByRole("button", { name: /novo|editar/i })).toBeNull();
   });
 
@@ -447,5 +447,26 @@ describe("V1-01 segurança e isolamento", () => {
     await screen.findAllByText("Da Org Dois");
     expect(screen.queryByText("Da Org Um")).toBeNull();
     await act(async () => undefined);
+  });
+});
+
+describe("P0 integração lista para cadastro", () => {
+  it("tabela e card navegam ao cadastro do ID exato sem executar mutações", async () => {
+    montar();
+    const tabela = await screen.findByRole("table");
+    const cards = screen.getByRole("list", { name: "Contratantes (lista compacta)" });
+    for (const regiao of [tabela, cards]) {
+      expect(within(regiao).getByRole("link", { name: "Abrir cadastro de Contratante 1 LTDA" })).toHaveAttribute("href", "/contratantes/c1/editar");
+      expect(within(regiao).getByRole("link", { name: "Abrir cadastro de Contratante 2 LTDA" })).toHaveAttribute("href", "/contratantes/c2/editar");
+    }
+    expect(m.rpc).not.toHaveBeenCalled();
+    expect(m.invoke).not.toHaveBeenCalled();
+    for (const c of m.chamadas) for (const [o] of c.ops) expect(["insert", "update", "delete", "upsert"]).not.toContain(o);
+  });
+  it("estado vazio não produz link para cadastro inexistente", async () => {
+    m.respostas.contratantes = () => lista([], 0);
+    montar();
+    await screen.findByText(MENSAGENS_V101.vazio);
+    expect(screen.queryByRole("link", { name: /Abrir cadastro de/ })).toBeNull();
   });
 });

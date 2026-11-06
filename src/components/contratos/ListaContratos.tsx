@@ -73,7 +73,7 @@ function Tabela({ itens }: { itens: Contrato[] }) {
         <tbody>
           {itens.map((c) => (
             <tr key={c.id} className="border-b border-border/60 align-top">
-              <td className="break-words py-3 pr-3 font-medium tabular-nums">{c.numero}</td>
+              <td className="break-words py-3 pr-3 font-medium tabular-nums"><Link to="/contratos/$id" params={{ id: c.id }} aria-label={`Abrir contrato ${c.numero}`} className={`inline-flex min-h-11 max-w-full items-center rounded underline underline-offset-4 hover:text-primary ${foco}`}>{c.numero}</Link></td>
               <td className="break-words py-3 pr-3">{c.objeto}</td>
               <td className="py-3 pr-3"><Selo texto={c.situacao} /></td>
               <td className="py-3 pr-3"><Selo texto={c.criticidade} /></td>
@@ -92,7 +92,7 @@ function Cards({ itens }: { itens: Contrato[] }) {
     <ul aria-label="Contratos (lista compacta)" className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:hidden">
       {itens.map((c) => (
         <li key={c.id} className="rounded-lg border border-border bg-background p-4">
-          <p className="break-words font-medium tabular-nums">{c.numero}</p>
+          <p className="break-words font-medium tabular-nums"><Link to="/contratos/$id" params={{ id: c.id }} aria-label={`Abrir contrato ${c.numero}`} className={`inline-flex min-h-11 max-w-full items-center rounded underline underline-offset-4 hover:text-primary ${foco}`}>{c.numero}</Link></p>
           <p className="break-words text-sm text-muted-foreground">{c.objeto}</p>
           <dl className="mt-3 grid grid-cols-1 gap-2 text-sm min-[360px]:grid-cols-2">
             <div className="min-w-0"><dt className="text-xs text-muted-foreground">Situação</dt><dd><Selo texto={c.situacao} /></dd></div>

@@ -41,8 +41,8 @@ vi.mock("@/integrations/supabase/client", () => {
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.nav,
   createFileRoute: () => (o: unknown) => ({ options: o }),
-  Link: ({ children, to, ...p }: { children: ReactNode; to: string }) => (
-    <a href={to} {...p}>
+  Link: ({ children, to, params, ...p }: { children: ReactNode; to: string; params?: Record<string, string> }) => (
+    <a href={to.replace(/\$([A-Za-z]+)/g, (_, key: string) => params?.[key] ?? `${key}`)} {...p}>
       {children}
     </a>
   ),
@@ -135,7 +135,7 @@ describe("V1-04 sessão e contexto", () => {
     m.respostas.organizacoes = orgOk;
     m.respostas.contratos = () => lista(A, 1);
     fireEvent.click(screen.getByRole("button", { name: /Tentar novamente/ }));
-    expect(await screen.findByText("org-A-N000", { selector: "td" })).toBeInTheDocument();
+    expect(await screen.findByText("org-A-N000", { selector: "td a" })).toBeInTheDocument();
   });
   it("sem preferência vai para /selecionar-organizacao", async () => {
     window.sessionStorage.clear();
@@ -186,7 +186,7 @@ describe("V1-04 estados", () => {
     expect(prox.className).toContain("h-11");
     expect(screen.getByRole("button", { name: /Anterior/ })).toBeDisabled();
     fireEvent.click(prox);
-    expect(await screen.findByText("org-A-N099", { selector: "td" })).toBeInTheDocument();
+    expect(await screen.findByText("org-A-N099", { selector: "td a" })).toBeInTheDocument();
     expect(screen.getByText("Página 2 de 2")).toBeInTheDocument();
   });
 });
@@ -197,7 +197,7 @@ describe("V1-04 multi-organização", () => {
     m.respostas.contratos = (c) => lista(orgDe(c), 25, 60);
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const r1 = montar(qc);
-    await screen.findByText("org-A-N000", { selector: "td" });
+    await screen.findByText("org-A-N000", { selector: "td a" });
     fireEvent.click(screen.getByRole("button", { name: /Próxima/ }));
     await screen.findByText("Página 2 de 3");
     // troca SYS-04: limpa cache, grava B, remonta
@@ -207,7 +207,7 @@ describe("V1-04 multi-organização", () => {
     const r2 = montar(qc);
     expect(screen.queryByText(/org-A-/)).toBeNull();
     expect(screen.getByRole("status")).toBeInTheDocument();
-    await screen.findByText("org-B-N000", { selector: "td" });
+    await screen.findByText("org-B-N000", { selector: "td a" });
     expect(screen.queryByText(/org-A-/)).toBeNull();
     expect(screen.getByText("Página 1 de 3")).toBeInTheDocument();
     let ultima = consultasContratos().at(-1)!;
@@ -220,7 +220,7 @@ describe("V1-04 multi-organização", () => {
     montar(qc);
     expect(screen.queryByText(/org-B-/)).toBeNull();
     expect(screen.getByRole("status")).toBeInTheDocument();
-    await screen.findByText("org-A-N000", { selector: "td" });
+    await screen.findByText("org-A-N000", { selector: "td a" });
     expect(screen.queryByText(/org-B-/)).toBeNull();
     expect(screen.getByText("Página 1 de 3")).toBeInTheDocument();
     ultima = consultasContratos().at(-1)!;
@@ -240,13 +240,13 @@ describe("V1-04 multi-organização", () => {
     qc.clear();
     definirPreferenciaOrganizacao(U, B);
     montar(qc);
-    await screen.findByText("org-B-N000", { selector: "td" });
+    await screen.findByText("org-B-N000", { selector: "td a" });
     await act(async () => {
       liberarA();
       await pendenteA;
     });
     expect(screen.queryByText(/org-A-/)).toBeNull();
-    expect(screen.getByText("org-B-N000", { selector: "td" })).toBeInTheDocument();
+    expect(screen.getByText("org-B-N000", { selector: "td a" })).toBeInTheDocument();
   });
 
   it("query key inclui usuário, organização e página; sem placeholderData", () => {
@@ -277,7 +277,7 @@ describe("V1-04 complementos Q1/Q2/scan", () => {
     m.respostas.organizacoes = orgOk;
     m.respostas.contratos = () => lista(A, 1);
     montar();
-    await screen.findByText("org-A-N000", { selector: "td" });
+    await screen.findByText("org-A-N000", { selector: "td a" });
     const q1 = m.chamadas.find((c) => c.tabela === "organizacoes")!;
     expect(q1.ops).toEqual([["select", ["id"]], ["eq", ["id", A]], ["maybeSingle", []]]);
     expect(m.chamadas.findIndex((c) => c.tabela === "organizacoes")).toBeLessThan(m.chamadas.findIndex((c) => c.tabela === "contratos"));
@@ -337,5 +337,29 @@ describe("V1-04 complementos Q1/Q2/scan", () => {
       const s = readFileSync(f, "utf8");
       expect(s).not.toMatch(/sb_secret|localStorage/);
     }
+  });
+});
+
+describe("P0 integração lista para contrato", () => {
+  it("tabela e card abrem o contrato correspondente sem executar mutações", async () => {
+    m.respostas.organizacoes = orgOk;
+    m.respostas.contratos = () => lista(A, 2);
+    montar();
+    const tabela = await screen.findByRole("table");
+    const cards = screen.getByRole("list", { name: "Contratos (lista compacta)" });
+    for (const regiao of [tabela, cards]) {
+      expect(within(regiao).getByRole("link", { name: "Abrir contrato org-A-N000" })).toHaveAttribute("href", "/contratos/org-A-k0");
+      expect(within(regiao).getByRole("link", { name: "Abrir contrato org-A-N001" })).toHaveAttribute("href", "/contratos/org-A-k1");
+    }
+    expect(m.rpc).not.toHaveBeenCalled();
+    expect(m.invoke).not.toHaveBeenCalled();
+    for (const c of m.chamadas) for (const [o] of c.ops) expect(["insert", "update", "delete", "upsert"]).not.toContain(o);
+  });
+  it("estado vazio não produz link para contrato inexistente", async () => {
+    m.respostas.organizacoes = orgOk;
+    m.respostas.contratos = () => lista(A, 0);
+    montar();
+    await screen.findByText(MENSAGENS_V104.vazio);
+    expect(screen.queryByRole("link", { name: /Abrir contrato/ })).toBeNull();
   });
 });
