@@ -1,0 +1,3121 @@
+{
+  "schema": "contaos.inventario-operacoes.v1",
+  "data": "2026-11-06",
+  "frontend_build_ref": "098d1e67bfc3aba7c0ecd2f605b328edf7f34083",
+  "backend_ref_na_consulta": "01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea",
+  "projeto_hml": "gklhhhyosgasnyoxlrui",
+  "escopo": "Inventário observacional; não inicia PLAN/BUILD de V2-V5 nem concede permissão.",
+  "limitacoes": [
+    "Policies por comando não comprovam acesso efetivo de usuário nem autorização de exclusão.",
+    "Presença textual não comprova caminho acionável, resposta ou gravação.",
+    "Funções filtradas por prefixos: não é inventário completo de todas as funções PostgreSQL.",
+    "Ausência nominal não prova ausência de capacidade equivalente.",
+    "Nenhuma classificação PENDENTE pode ser convertida automaticamente em botão ou grant."
+  ],
+  "resumo": {
+    "rotas": 28,
+    "tabelas_public_com_rls": 117,
+    "tabelas_public": 117,
+    "funcoes_public_filtradas": 72
+  },
+  "rotas": [
+    {
+      "arquivo_rota": "src/routes/contratos_.$id_.regras.tsx",
+      "identificador_tanstack": "/contratos_/$id_/regras",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/RegrasContrato.tsx",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/lib/contratos/regrasDados.ts",
+        "src/routes/contratos_.$id_.regras.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "aprovar_regra_preventiva"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/competencias_.$id_.apresentar.tsx",
+      "identificador_tanstack": "/competencias_/$id_/apresentar",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/competencias/CompetenciaApresentar.tsx",
+        "src/lib/competencias/apresentacaoDados.ts",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts",
+        "src/lib/contratos/competenciasDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/routes/competencias_.$id_.apresentar.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "aprovar_apresentacao",
+        "obter_visao_geral_competencia",
+        "registrar_apresentacao"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos_.$id_.documentos_.$idDocumento.tsx",
+      "identificador_tanstack": "/contratos_/$id_/documentos_/$idDocumento",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/DocumentoDetalhe.tsx",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/lib/contratos/documentoDetalheDados.ts",
+        "src/lib/contratos/documentosDados.ts",
+        "src/routes/contratos_.$id_.documentos_.$idDocumento.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "adicionar_versao_documento_contrato",
+        "criar_documento_contrato_completo",
+        "definir_vigencia_sugestao_extracao"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos.tsx",
+      "identificador_tanstack": "/contratos",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/ListaContratos.tsx",
+        "src/lib/contratantes/contratantesDados.ts",
+        "src/lib/contratos/contratosDados.ts",
+        "src/routes/contratos.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/login.tsx",
+      "identificador_tanstack": "/login",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/auth/LoginForm.tsx",
+        "src/components/brand/ContaOSMarca.tsx",
+        "src/routes/login.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos_.$id_.historico_.importar.tsx",
+      "identificador_tanstack": "/contratos_/$id_/historico_/importar",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/ImportarHistorico.tsx",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/lib/contratos/documentosDados.ts",
+        "src/lib/contratos/historicoContratoDados.ts",
+        "src/lib/contratos/ingestaoHistoricoDados.ts",
+        "src/routes/contratos_.$id_.historico_.importar.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "adicionar_versao_documento_contrato",
+        "criar_documento_contrato_completo",
+        "enfileirar_ingestao_historica_hml",
+        "registrar_relatorio_historico_hml",
+        "vincular_tratamento_historico_hml"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/administracao.usuarios.tsx",
+      "identificador_tanstack": "/administracao/usuarios",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/administracao/usuarios/AdminUsuarios.tsx",
+        "src/lib/administracao/admUsuariosRpc.ts",
+        "src/routes/administracao.usuarios.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "listar_auditoria_vinculo_usuario_adm",
+        "listar_escopo_contratos_usuario_adm",
+        "listar_usuarios_vinculos_adm",
+        "salvar_vinculo_usuario_adm"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos_.$id_.base-normativa.tsx",
+      "identificador_tanstack": "/contratos_/$id_/base-normativa",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/BaseNormativaContrato.tsx",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/routes/contratos_.$id_.base-normativa.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "aprovar_versao_fonte_v107",
+        "definir_aplicabilidade_fonte_v107",
+        "registrar_versao_fonte_v107",
+        "salvar_fonte_normativa_v107"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos_.$id_.competencias.tsx",
+      "identificador_tanstack": "/contratos_/$id_/competencias",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/CompetenciasContrato.tsx",
+        "src/lib/contratos/competenciasDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/routes/contratos_.$id_.competencias.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/administracao.auditoria.tsx",
+      "identificador_tanstack": "/administracao/auditoria",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
+        "src/lib/administracao/admUsuariosRpc.ts",
+        "src/lib/administracao/auditoriaDados.ts",
+        "src/routes/administracao.auditoria.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "listar_auditoria_vinculo_usuario_adm",
+        "listar_escopo_contratos_usuario_adm",
+        "listar_usuarios_vinculos_adm",
+        "salvar_vinculo_usuario_adm"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratantes.tsx",
+      "identificador_tanstack": "/contratantes",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratantes/ListaContratantes.tsx",
+        "src/lib/contratantes/contratantesDados.ts",
+        "src/routes/contratantes.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos_.$id.tsx",
+      "identificador_tanstack": "/contratos_/$id",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/VisaoGeralContrato.tsx",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/routes/contratos_.$id.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/esqueci-senha.tsx",
+      "identificador_tanstack": "/esqueci-senha",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/auth/ForgotPasswordForm.tsx",
+        "src/components/brand/ContaOSMarca.tsx",
+        "src/routes/esqueci-senha.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/competencias_.$id.tsx",
+      "identificador_tanstack": "/competencias_/$id",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/competencias/CompetenciaVisaoGeral.tsx",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts",
+        "src/lib/contratos/competenciasDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/routes/competencias_.$id.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "obter_visao_geral_competencia"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratantes_.$id.editar.tsx",
+      "identificador_tanstack": "/contratantes_/$id/editar",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratantes/EditarContratante.tsx",
+        "src/lib/administracao/rbacRpc.ts",
+        "src/lib/contratantes/editarContratanteDados.ts",
+        "src/lib/contratantes/novoContratanteDados.ts",
+        "src/routes/contratantes_.$id.editar.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "atualizar_contratante",
+        "atualizar_matriz_rbac_master",
+        "consultar_permissoes_efetivas",
+        "obter_matriz_rbac_master"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos_.$id_.documentos.tsx",
+      "identificador_tanstack": "/contratos_/$id_/documentos",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/DocumentosContrato.tsx",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/lib/contratos/documentoDetalheDados.ts",
+        "src/lib/contratos/documentosDados.ts",
+        "src/routes/contratos_.$id_.documentos.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "adicionar_versao_documento_contrato",
+        "criar_documento_contrato_completo",
+        "definir_vigencia_sugestao_extracao"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/selecionar-organizacao.tsx",
+      "identificador_tanstack": "/selecionar-organizacao",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/brand/ContaOSMarca.tsx",
+        "src/components/organizacao/OrganizationSelector.tsx",
+        "src/lib/utils.ts",
+        "src/routes/selecionar-organizacao.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos_.novo.tsx",
+      "identificador_tanstack": "/contratos_/novo",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/NovoContrato.tsx",
+        "src/lib/contratantes/contratantesDados.ts",
+        "src/lib/contratos/novoContratoDados.ts",
+        "src/routes/contratos_.novo.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos_.$id_.competencias_.nova.tsx",
+      "identificador_tanstack": "/contratos_/$id_/competencias_/nova",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/NovaCompetencia.tsx",
+        "src/lib/contratos/competenciasDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/lib/contratos/novaCompetenciaDados.ts",
+        "src/routes/contratos_.$id_.competencias_.nova.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "criar_competencia"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/competencias_.$id_.analise.tsx",
+      "identificador_tanstack": "/competencias_/$id_/analise",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/competencias/CompetenciaAnalise.tsx",
+        "src/components/competencias/RequirementDrawer.tsx",
+        "src/lib/competencias/competenciaAnaliseDados.ts",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts",
+        "src/lib/competencias/requisitoDetalheDados.ts",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/competenciasDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/lib/contratos/documentosDados.ts",
+        "src/routes/competencias_.$id_.analise.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "adicionar_versao_documento_contrato",
+        "criar_documento_contrato_completo",
+        "obter_analise_competencia_v116",
+        "obter_detalhe_requisito_v117",
+        "obter_visao_geral_competencia",
+        "solicitar_analise_competencia",
+        "solicitar_reanalise_requisitos"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/competencias_.$id_.documentos.tsx",
+      "identificador_tanstack": "/competencias_/$id_/documentos",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/competencias/CompetenciaDocumentos.tsx",
+        "src/lib/competencias/competenciaDocumentosDados.ts",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/competenciasDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/lib/contratos/documentosDados.ts",
+        "src/routes/competencias_.$id_.documentos.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "adicionar_versao_documento_competencia_v115",
+        "adicionar_versao_documento_contrato",
+        "criar_documento_competencia_v115",
+        "criar_documento_contrato_completo",
+        "obter_documentos_competencia_v115"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/competencias_.$id_.apresentacoes_.$apresentacaoId.tsx",
+      "identificador_tanstack": "/competencias_/$id_/apresentacoes_/$apresentacaoId",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/competencias/CompetenciaProtocolo.tsx",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts",
+        "src/lib/competencias/protocoloDados.ts",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/routes/competencias_.$id_.apresentacoes_.$apresentacaoId.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "obter_visao_geral_competencia"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratantes_.novo.tsx",
+      "identificador_tanstack": "/contratantes_/novo",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratantes/NovoContratante.tsx",
+        "src/lib/contratantes/novoContratanteDados.ts",
+        "src/routes/contratantes_.novo.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/competencias_.$id_.parecer.tsx",
+      "identificador_tanstack": "/competencias_/$id_/parecer",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/competencias/CompetenciaParecer.tsx",
+        "src/lib/competencias/competenciaVisaoGeralDados.ts",
+        "src/lib/competencias/parecerInternoDados.ts",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/competenciasDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/routes/competencias_.$id_.parecer.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "aprovar_parecer_interno",
+        "obter_visao_geral_competencia",
+        "solicitar_parecer_interno"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos_.$id_.historico.tsx",
+      "identificador_tanstack": "/contratos_/$id_/historico",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/HistoricoContrato.tsx",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/lib/contratos/historicoContratoDados.ts",
+        "src/routes/contratos_.$id_.historico.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/index.tsx",
+      "identificador_tanstack": "/",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/dashboard/Dashboard.tsx",
+        "src/routes/index.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "obter_resumo_dashboard"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/redefinir-senha.tsx",
+      "identificador_tanstack": "/redefinir-senha",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/auth/ResetPasswordForm.tsx",
+        "src/components/brand/ContaOSMarca.tsx",
+        "src/routes/redefinir-senha.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    },
+    {
+      "arquivo_rota": "src/routes/contratos_.$id_.orcamento.tsx",
+      "identificador_tanstack": "/contratos_/$id_/orcamento",
+      "arquivos_alcancaveis_inspecionados": [
+        "src/components/contratos/OrcamentoContrato.tsx",
+        "src/lib/contratos/baseNormativaDados.ts",
+        "src/lib/contratos/contratoDetalheDados.ts",
+        "src/lib/contratos/orcamentoDados.ts",
+        "src/routes/contratos_.$id_.orcamento.tsx"
+      ],
+      "contratos_backend_referenciados_em_codigo": [
+        "publicar_versao_proposta_v108",
+        "registrar_versao_proposta_v108",
+        "remover_linha_orcamentaria_v108",
+        "salvar_linha_orcamentaria_v108",
+        "salvar_proposta_orcamentaria_v108"
+      ],
+      "teste_autenticado": "NAO_VERIFICADO",
+      "observacao": "Referência textual não comprova execução, permissão ou cobertura de CRUD."
+    }
+  ],
+  "entidades": [
+    {
+      "entidade": "acessos_pacote_evidencias",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "acoes_corretivas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "alertas_historicos_transversais",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "alertas_operacionais",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "alertas_preventivos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "alteracoes_normativas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "analises_apontamentos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "aplicabilidades_controle",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "aplicabilidades_fonte",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "apontamentos_contratante",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "apontamentos_historicos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "apontamentos_internos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "apresentacoes_contratante",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "aprovacoes",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "arquivos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "assinaturas_eventos_integracao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "avaliacoes_impacto",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "catalogo_mensagens_sistema",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "catalogo_status_ui",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "ciclos_diligencia",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "clientes_api",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "comandos_idempotentes",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "competencias",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "conciliacoes",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "configuracao_api",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "configuracao_localizacao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "configuracao_upload",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "configuracoes_automacao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "configuracoes_prevencao_financeira",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "consultas_semanticas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "consumo_orcamentario",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "contestacoes",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "contratantes",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "contratos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "contratos_fornecedores",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "controles_conformidade",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "desfechos_apontamentos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "desfechos_historicos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "documentos_competencia",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "documentos_contrato",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "documentos_transacao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "entidades_organizacionais",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "escopos_clientes_api",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "eventos_acesso_pacote_evidencias",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "eventos_auditoria",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "eventos_webhook",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "evidencias_resultado",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "excecoes_controle",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "execucoes_analise",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "execucoes_assincronas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "execucoes_controle",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "exportacoes_evidencias",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "fontes_financeiras",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "fontes_formais_regras_preventivas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "fontes_normativas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "fontes_resposta_copiloto",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "fornecedores",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "fragmentos_documento",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "importacoes_financeiras",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "itens_lista",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "itens_pacote_competencia",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "itens_pacote_evidencias",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "jobs_dlq",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "linhas_orcamentarias",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "listas_verificacao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "mapas_evidencias_contestacao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "mensagens_copiloto",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "metricas_historicas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "nao_conformidades",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "notificacoes",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "organizacoes",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "pacotes_competencia",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "pacotes_evidencias",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "pacotes_reapresentacao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "padroes_historicos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "paginas_documento",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "pareceres_contratante",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "pareceres_internos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "perfis_contratante",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "perfis_usuarios",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "planos_acao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "planos_remediacao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "pontuacoes_risco",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "precedentes",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "preferencias_notificacao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "processamentos_documento",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "propostas_orcamentarias",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "publicacoes_regras",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "recursos_organizacao",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "regras_candidatas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "regras_conformidade",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "regras_preventivas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "relacionamentos_conhecimento",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "relatorios_historicos_contratante",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "requisitos_competencia",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "respostas_historicas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "resultados_requisitos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "retornos_modelo",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "revisoes_regras_preventivas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "riscos_corporativos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "sessoes_copiloto",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "similaridades_precedentes",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "sugestoes_extracao_documento",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "tarefas_alerta",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "tarefas_diligencia",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "transacoes_financeiras",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "tratamentos_alertas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "usuarios",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT",
+        "UPDATE"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "versoes_contrato",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "versoes_controle",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "versoes_documento",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "versoes_fontes_normativas",
+      "rls": true,
+      "operacoes_com_policy": [
+        "INSERT",
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "versoes_lista",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "versoes_proposta",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "vinculos_usuario_contratos",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "vinculos_usuarios",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    },
+    {
+      "entidade": "webhooks",
+      "rls": true,
+      "operacoes_com_policy": [
+        "SELECT"
+      ],
+      "status": "RLS_CATALOGO_CONFIRMADO; OPERACOES_DE_NEGOCIO_PENDENTES_DE_RECONCILIACAO",
+      "acoes_a_reconciliar": {
+        "criar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "consultar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "editar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "ativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "desativar": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "excluir": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE",
+        "transicoes_especificas": "PENDENTE_REGRA_PERMISSAO_UI_E_TESTE"
+      }
+    }
+  ],
+  "funcoes": [
+    {
+      "nome": "adicionar_versao_documento_competencia",
+      "argumentos": "p_id_documento uuid, p_id_arquivo uuid, p_motivo text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "adicionar_versao_documento_competencia_v115",
+      "argumentos": "p_id_documento uuid, p_id_arquivo uuid, p_motivo text, p_chave_idempotencia text",
+      "security_definer": true,
+      "referencias_frontend": [
+        "src/lib/competencias/competenciaDocumentosDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "adicionar_versao_documento_contrato",
+      "argumentos": "p_id_documento uuid, p_id_arquivo uuid, p_motivo text, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/contratos/documentosDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "aprovar_apresentacao",
+      "argumentos": "p_id_competencia uuid, p_fundamento text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/competencias/apresentacaoDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "aprovar_avaliacao_impacto",
+      "argumentos": "p_id_avaliacao uuid, p_aprovar boolean, p_decisao text, p_fundamento text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "aprovar_contestacao",
+      "argumentos": "p_id_contestacao uuid, p_aprovar boolean, p_fundamento text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "aprovar_excecao_controle",
+      "argumentos": "p_id_excecao uuid, p_aprovar boolean",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "aprovar_parecer_interno",
+      "argumentos": "p_id_parecer uuid, p_aprovar boolean, p_fundamento text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/competencias/parecerInternoDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "aprovar_regra_preventiva",
+      "argumentos": "p_id_regra_preventiva uuid, p_parecer text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/contratos/regrasDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "aprovar_versao_fonte_v107",
+      "argumentos": "p_id_organizacao uuid, p_id_versao uuid, p_hash_esperado text, p_fundamento text, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/components/contratos/BaseNormativaContrato.tsx"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "atualizar_contratante",
+      "argumentos": "p_id_organizacao uuid, p_id_contratante uuid, p_versao_esperada bigint, p_tipo_pessoa text, p_documento text, p_razao_social text, p_nome_fantasia text, p_contato jsonb, p_situacao text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/contratantes/editarContratanteDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "atualizar_matriz_rbac_master",
+      "argumentos": "p_versao_esperada bigint, p_request_id uuid, p_alteracoes jsonb",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/administracao/rbacRpc.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "atualizar_tarefa_diligencia",
+      "argumentos": "p_id_tarefa uuid, p_descricao text, p_responsavel uuid, p_prazo date",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "consultar_permissoes_efetivas",
+      "argumentos": "p_id_organizacao uuid, p_id_contrato uuid",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/administracao/rbacRpc.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_acesso_temporario_pacote",
+      "argumentos": "p_id_pacote uuid, p_expira_em timestamp with time zone, p_descricao_destinatario text, p_max_acessos integer",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_cliente_api",
+      "argumentos": "p_id_organizacao uuid, p_nome text, p_escopos text[]",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_competencia",
+      "argumentos": "p_id_contrato uuid, p_competencia_referencia date, p_periodo_inicio date, p_periodo_fim date, p_data_limite date",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/contratos/novaCompetenciaDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_contestacao",
+      "argumentos": "p_id_apontamento uuid, p_texto text, p_fundamento text, p_evidencias jsonb",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_documento_competencia",
+      "argumentos": "p_id_competencia uuid, p_tipo text, p_titulo text, p_categoria text, p_id_requisito uuid, p_id_arquivo uuid",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_documento_competencia_v115",
+      "argumentos": "p_id_competencia uuid, p_tipo text, p_titulo text, p_categoria text, p_id_requisito uuid, p_id_arquivo uuid, p_chave_idempotencia text",
+      "security_definer": true,
+      "referencias_frontend": [
+        "src/lib/competencias/competenciaDocumentosDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_documento_contrato",
+      "argumentos": "p_id_contrato uuid, p_tipo text, p_titulo text, p_categoria text, p_id_arquivo uuid, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_documento_contrato_completo",
+      "argumentos": "p_id_contrato uuid, p_tipo text, p_titulo text, p_categoria text, p_vigencia_inicio date, p_vigencia_fim date, p_observacoes text, p_id_arquivo uuid, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/contratos/documentosDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_organizacao",
+      "argumentos": "p_razao_social text, p_nome_fantasia text, p_cnpj character varying, p_timezone text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_pacote_evidencias",
+      "argumentos": "p_id_organizacao uuid, p_id_contrato uuid, p_escopo jsonb, p_expira_em timestamp with time zone",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "criar_webhook",
+      "argumentos": "p_id_organizacao uuid, p_nome text, p_url text, p_eventos text[]",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "definir_acesso_contrato_usuario",
+      "argumentos": "p_id_organizacao uuid, p_id_usuario uuid, p_id_contrato uuid, p_conceder boolean",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "definir_aplicabilidade_fonte_v107",
+      "argumentos": "p_id_organizacao uuid, p_id_contrato uuid, p_id_versao uuid, p_aplicavel boolean, p_fundamento text, p_atualizado_em_esperado timestamp with time zone, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/components/contratos/BaseNormativaContrato.tsx"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "definir_vigencia_sugestao_extracao",
+      "argumentos": "p_id_sugestao uuid, p_vigencia_inicio date, p_vigencia_fim date",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/contratos/documentoDetalheDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "definir_vinculo_usuario",
+      "argumentos": "p_id_organizacao uuid, p_id_usuario uuid, p_perfil text, p_escopo_todos_contratos boolean, p_ativo boolean",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "encerrar_nao_conformidade",
+      "argumentos": "p_id_nao_conformidade uuid, p_fundamento text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "enfileirar_evento_webhook",
+      "argumentos": "p_id_webhook uuid, p_evento text, p_entidade_tipo text, p_entidade_id uuid, p_payload_ref jsonb",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "enfileirar_ingestao_historica_hml",
+      "argumentos": "p_id_relatorio uuid, p_id_versao_documento uuid",
+      "security_definer": true,
+      "referencias_frontend": [
+        "src/lib/contratos/ingestaoHistoricoDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "enfileirar_processamento_documento",
+      "argumentos": "p_id_versao_documento uuid, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "listar_auditoria_vinculo_usuario_adm",
+      "argumentos": "p_id_organizacao uuid, p_id_usuario uuid, p_pagina integer, p_tamanho_pagina integer",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/administracao/admUsuariosRpc.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "listar_escopo_contratos_usuario_adm",
+      "argumentos": "p_id_organizacao uuid, p_id_usuario uuid, p_pagina integer, p_tamanho_pagina integer, p_busca text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/administracao/admUsuariosRpc.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "listar_organizacoes_disponiveis",
+      "argumentos": "",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/auth/resolverDestinoPosLogin.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "listar_usuarios_vinculos_adm",
+      "argumentos": "p_id_organizacao uuid, p_pagina integer, p_tamanho_pagina integer, p_busca text, p_ativo boolean",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/administracao/admUsuariosRpc.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "obter_analise_competencia_v116",
+      "argumentos": "p_id_competencia uuid, p_resultados_offset integer, p_resultados_limite integer, p_execucoes_offset integer, p_execucoes_limite integer, p_apontamentos_offset integer, p_apontamentos_limite integer, p_filtro_resultado text, p_filtro_criticidade text, p_filtro_mecanismo text, p_filtro_apontamento_status text, p_busca text",
+      "security_definer": true,
+      "referencias_frontend": [
+        "src/lib/competencias/competenciaAnaliseDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "obter_detalhe_requisito_v117",
+      "argumentos": "p_id_competencia uuid, p_id_requisito uuid, p_evidencias_offset integer, p_evidencias_limite integer, p_historico_offset integer, p_historico_limite integer, p_apontamentos_offset integer, p_apontamentos_limite integer",
+      "security_definer": true,
+      "referencias_frontend": [
+        "src/lib/competencias/requisitoDetalheDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "obter_documentos_competencia_v115",
+      "argumentos": "p_id_competencia uuid, p_documentos_offset integer, p_documentos_limite integer, p_requisitos_offset integer, p_requisitos_limite integer",
+      "security_definer": true,
+      "referencias_frontend": [
+        "src/lib/competencias/competenciaDocumentosDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "obter_matriz_rbac_master",
+      "argumentos": "",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/administracao/rbacRpc.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "obter_mensagem_sistema",
+      "argumentos": "p_codigo text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "obter_resumo_dashboard",
+      "argumentos": "p_id_organizacao uuid",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/components/layout/ContaOSOrganizationHeader.tsx",
+        "src/components/dashboard/Dashboard.tsx"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "obter_saude_operacional",
+      "argumentos": "p_id_organizacao uuid",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "obter_visao_geral_competencia",
+      "argumentos": "p_id_competencia uuid",
+      "security_definer": true,
+      "referencias_frontend": [
+        "src/lib/competencias/competenciaVisaoGeralDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "publicar_controle",
+      "argumentos": "p_id_controle uuid, p_texto text, p_evidencia_requerida jsonb, p_vigencia_inicio date, p_vigencia_fim date",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "publicar_controle_conformidade",
+      "argumentos": "p_id_controle uuid, p_texto text, p_evidencia_requerida jsonb, p_vigencia_inicio date, p_vigencia_fim date",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "publicar_regra_candidata",
+      "argumentos": "p_id_regra_candidata uuid, p_id_avaliacao_impacto uuid, p_vigencia_inicio date, p_vigencia_fim date",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "publicar_versao_proposta_v108",
+      "argumentos": "p_id_organizacao uuid, p_id_versao uuid, p_hash_esperado text, p_fundamento text, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/components/contratos/OrcamentoContrato.tsx"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "registrar_apontamento_contratante",
+      "argumentos": "p_id_ciclo uuid, p_descricao text, p_fundamento text, p_codigo text, p_severidade text, p_fonte_pagina integer, p_fonte_trecho text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "registrar_apresentacao",
+      "argumentos": "p_id_competencia uuid, p_idempotency_key text, p_protocolo text, p_forma_apresentacao text, p_id_comprovante_arquivo uuid",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/competencias/apresentacaoDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "registrar_desfecho_contestacao",
+      "argumentos": "p_id_contestacao uuid, p_resultado text, p_texto text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "registrar_parecer_contratante",
+      "argumentos": "p_id_competencia uuid, p_id_apresentacao uuid, p_id_arquivo uuid, p_resultado_geral text, p_parecer_final_favoravel boolean, p_numero_documento text, p_data_emissao date, p_prazo_resposta date",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "registrar_reapresentacao",
+      "argumentos": "p_id_ciclo uuid, p_idempotency_key text, p_protocolo text, p_forma_apresentacao text, p_id_comprovante_arquivo uuid",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "registrar_relatorio_historico_hml",
+      "argumentos": "p_id_arquivo uuid, p_competencia date, p_tipo text",
+      "security_definer": true,
+      "referencias_frontend": [
+        "src/lib/contratos/ingestaoHistoricoDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "registrar_resultado_requisito",
+      "argumentos": "p_id_execucao uuid, p_id_requisito uuid, p_resultado text, p_justificativa text, p_fundamento text, p_evidencias jsonb",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "registrar_versao_fonte_v107",
+      "argumentos": "p_id_organizacao uuid, p_id_fonte uuid, p_inicio_vigencia date, p_fim_vigencia date, p_id_arquivo uuid, p_conteudo_texto text, p_metadados jsonb, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/components/contratos/BaseNormativaContrato.tsx"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "registrar_versao_proposta_v108",
+      "argumentos": "p_id_organizacao uuid, p_id_proposta uuid, p_vigencia_inicio date, p_vigencia_fim date, p_id_arquivo_origem uuid, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/components/contratos/OrcamentoContrato.tsx"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "remover_linha_orcamentaria_v108",
+      "argumentos": "p_id_organizacao uuid, p_id_versao_proposta uuid, p_id_linha uuid, p_versao_esperada bigint, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/components/contratos/OrcamentoContrato.tsx"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "revogar_acesso_temporario_pacote",
+      "argumentos": "p_id_acesso uuid, p_fundamento text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "salvar_fonte_normativa_v107",
+      "argumentos": "p_id_organizacao uuid, p_id_contrato uuid, p_id_fonte uuid, p_tipo text, p_titulo text, p_referencia text, p_descricao text, p_situacao text, p_versao_esperada bigint, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/components/contratos/BaseNormativaContrato.tsx"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "salvar_linha_orcamentaria_v108",
+      "argumentos": "p_id_organizacao uuid, p_id_versao_proposta uuid, p_id_linha uuid, p_codigo text, p_grupo text, p_rubrica text, p_subrubrica text, p_descricao text, p_valor_mensal numeric, p_valor_anual numeric, p_permite_remanejamento boolean, p_limite_remanejamento_percentual numeric, p_observacoes text, p_versao_esperada bigint, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/components/contratos/OrcamentoContrato.tsx"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "salvar_proposta_orcamentaria_v108",
+      "argumentos": "p_id_organizacao uuid, p_id_contrato uuid, p_id_proposta uuid, p_titulo text, p_versao_esperada bigint, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/components/contratos/OrcamentoContrato.tsx"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "salvar_vinculo_usuario_adm",
+      "argumentos": "p_id_organizacao uuid, p_id_usuario uuid, p_email text, p_perfil text, p_escopo_todos_contratos boolean, p_ativo boolean, p_ids_contratos_ativar uuid[], p_ids_contratos_revogar uuid[], p_versao_esperada bigint, p_chave_idempotencia text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/administracao/admUsuariosRpc.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "solicitar_analise_competencia",
+      "argumentos": "p_id_competencia uuid, p_tipo text",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/competencias/competenciaAnaliseDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "solicitar_avaliacao_impacto_normativo",
+      "argumentos": "p_id_alteracao uuid",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "solicitar_importacao_financeira",
+      "argumentos": "p_id_fonte uuid, p_id_arquivo uuid, p_hash text, p_chave_deduplicacao text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "solicitar_minuta_contestacao",
+      "argumentos": "p_id_apontamento uuid",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "solicitar_parecer_interno",
+      "argumentos": "p_id_competencia uuid",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/competencias/parecerInternoDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "solicitar_reanalise_requisitos",
+      "argumentos": "p_id_competencia uuid, p_requisitos uuid[]",
+      "security_definer": false,
+      "referencias_frontend": [
+        "src/lib/competencias/requisitoDetalheDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "vincular_fonte_formal_regra",
+      "argumentos": "p_id_regra uuid, p_id_versao_fonte uuid, p_id_contrato uuid, p_fundamento text",
+      "security_definer": false,
+      "referencias_frontend": [],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    },
+    {
+      "nome": "vincular_tratamento_historico_hml",
+      "argumentos": "p_id_apontamento uuid, p_resposta text, p_desfecho text, p_fundamento text",
+      "security_definer": true,
+      "referencias_frontend": [
+        "src/lib/contratos/ingestaoHistoricoDados.ts"
+      ],
+      "status_prova": "ASSINATURA_CATALOGO_HML; EXECUCAO_NAO_VERIFICADA"
+    }
+  ]
+}
