@@ -1,3 +1,4 @@
+/** P0 V1 RED: esta suite deve falhar antes da implementacao, nunca ser interpretada como CI verde. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
