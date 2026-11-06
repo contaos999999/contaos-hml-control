@@ -26,4 +26,4 @@ jobs:
       - name: Install Chromium browser
         run: bunx playwright install --with-deps chromium
       - name: Execute public SYS-03 smoke
-        run: bunx playwright test tests/hml/sys03-harness-readiness.spec.ts --config=playwright.config.ts
+        run: bunx playwright test --config=playwright.config.ts
