@@ -102,3 +102,37 @@ A emenda mantém todos os controles e a identidade visual canônica, sem custo d
 
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 Preservar 100% da ContaOS Brand v1.0 e assets. Sem alterações visuais ou backend. Reutilizar autenticação e testes existentes, edição direta GitHub, minimizando retrabalho e chamadas Lovable sem diminuir controles.
+
+
+---
+
+## Emenda transversal prioritária — 27 telas, evidência visual 06/11/2026
+
+**Fonte:** quatro capturas reais do diretor (Painel, Contratantes, Contratos e Trilha de Auditoria), checkpoint #166, comentários 6684615020 e 6684808574. **Prioridade P0 sobre correções secundárias da V1.** Integra esta emenda ao plano único, sem novos planos fragmentados.
+
+### Falhas de arquitetura visual comprovadas por código
+
+- `ContaOSAppShell.tsx`: sidebar global presente, porém falta header/contexto organizacional persistente; a troca de rota revalida RBAC, mas não preserva apresentação do nome/status. NÃO deduzir autorização da preferência local.
+- `Dashboard.tsx`: obtém `organizacao.razao_social`, `nome_fantasia`, `situacao` por `obter_resumo_dashboard`; informação atualmente local ao Painel.
+- `ListaContratantes.tsx`: `Cabecalho` local com `ContaOSMarca`, botões Painel/Selecionar organização/Sair; gera segunda logomarca e barra incompatível com o painel.
+- `TrilhaAuditoria.tsx`: header local, logo condicional mobile, filtros sem container/card, tabela e paginação sem design system uniforme; falta header global.
+- `ContaOSSidebar.tsx`: navegação com superfícies genéricas, sem diferenciação visual adequada ao BRAND-01.
+- `ListaContratos.tsx` e demais componentes: inventariar todos os headers/brands locais e impedir duplicidade; NÃO presumir correção sem inspeção.
+
+### Regras de aceite por componente e em TODAS as 27 telas reais
+
+1. **AppShell único:** header global com nome e situação da organização ativa da sessão, trocar organização e sair, título/breadcrumb coerentes; todas as páginas autenticadas recebem o mesmo header, inclusive Auditoria. Fallback seguro quando organização ainda não verificada. Não exibir contexto obsoleto ao trocar organização ou usuário.
+2. **Logomarca única:** somente na sidebar do ambiente autenticado (expandida, recolhida, drawer mobile). Remover marca dos headers e helpers locais; telas públicas login/recuperação ficam sujeitas ao BRAND-01 específico. Usar SVGs oficiais transparentes, contraste correto light/dark e área de proteção.
+3. **Menu BRAND-01:** navy #0F172A, azul #0EA5E9, teal #14B8A6, superfície #F1F5F9 conforme tokens existentes; tipografia Inter se já disponível. Hierarquia de grupos, estado ativo, hover, foco, modo recolhido e mobile, sem recriar paleta ou usar efeito que comprometa WCAG. O pedido de aparência cinematográfica não autoriza animações pesadas ou alteração de lógica.
+4. **Design system transversal:** cards, tabelas, filtros, paginação, formulários, botões, títulos, espaços, mensagens vazias/erro/carregamento, responsividade e navegação por teclado.
+5. **Trilha Auditoria:** filtros em card com grid responsivo, tabela em container com rolagem horizontal acessível e colunas de IDs tratadas para não romper largura; cabeçalho e paginação alinhados ao restante.
+6. **Provas individuais:** inventário exato das 27 telas (rota, componente, papel exigido), captura em 1440/1280/768/390 × light/dark, estados de acesso e dados, testes de transição Painel→Contratantes→Novo Contrato→Contratos→Auditoria, sessão/org e duplicidade de logos; 72 checks BRAND-01 individuais. Status PASS somente por evidência; tela inacessível = BLOCKED, não PASS.
+
+### Plano de BUILD agrupado, sob gates existentes
+
+- **Gate 1 (PLAN):** conferir 25 fontes canônicas, 72 itens BRAND, inventário 27 rotas, HEAD frontend/backend, contratos RPC para obter nome/status com RLS, allowlist e teste C planejado; aprovar escopo dos componentes reais em PR documental com CI Zero-Drift/Teste C SUCCESS.
+- **Gate 2 (RED):** adicionar testes que falhem para header persistente, marca exclusiva do menu, alternância de org, logout e auditoria responsiva; registrar execução RED antes do BUILD.
+- **Gate 3 (BUILD):** implementar AppShell + header + sidebar + remover headers locais + componentes de UI em PR(s) técnicos agrupados, mantendo rotas, permissões, Auth, RPCs, tipos e backend intactos; conflito de contrato backend é NO-GO isolado, não pretexto para inventar dados.
+- **Gate 4 (GREEN/AUDIT):** CI, testes funcionais, 27 telas × 8 variantes, 72 BRAND, Zero-Drift, Teste C, evidências e hashes, aprovação no HEAD, merge e checkpoint. Apenas depois reportar percentual real 27/27.
+
+**Regra de integridade:** esta emenda é autorização de planejamento, NÃO certificação visual nem autorização para modificar arquivos fora da allowlist ativa. O trabalho só está concluído quando houver prova real em todas as 27 telas. V1 permanece NO-GO.
