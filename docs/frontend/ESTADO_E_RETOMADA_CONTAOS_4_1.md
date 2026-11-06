@@ -1,3 +1,33 @@
+## CHECKPOINT P0 — 06/11/2026: navegação funcional + padrão visual integrados; V1 ainda não certificada
+
+**HEAD frontend integrado:** `4fc0b9f0e5a1ac0a0519194f0fe939dbb347c767`. **Backend/normativo de referência conferido nesta frente:** `contaos999999/develop@01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea`. Fonte P0 por versão, AGENTS, ADR-DEV-002, índice do pacote e PLANO_ATIVO 75 lidos/conferidos. **V1 NÃO CERTIFICADA; V2 e PROD permanecem bloqueados.**
+
+### Integrações concluídas nesta rodada
+
+- **PR #228 — listas → registros existentes:** BUILD head `7faa007f13c971bd0c6f0467219ec0837a520234`, CI `42273689419` com **Zero-Drift SUCCESS + Teste C SUCCESS no mesmo SHA**, merge `7e300a2e430bf2f2e99c202638bdfb2aab9844a5`. Contrato agora abre `/contratos/$id`; contratante abre `/contratantes/$id/editar`; tabela e cards móveis; zero DML/RPC/Edge acrescentado. RED anterior preservado; run cancelado `42264068037` não é prova positiva.
+- **PR #229 — reconciliação visual + navegação:** substituiu o antigo PR #226, que foi fechado **sem merge** após conflito com #228. Head `af22827319404f109b77d78ee62c01ada47de992`, run `42280224929` com **dois jobs SUCCESS**, merge `c8797e50efeb2ff92809f6cf3f7a43181374eee9`. AppShell/sidebar/cabeçalho organizacional e padronização das 24 páginas organizacionais foram reconciliados sobre a main atual sem force-push e preservando os links funcionais.
+- **PR #230 — apresentação → protocolo:** RED head `9e548cada3241278191cb36421ae33882a576b14`, run `42281145067`, regressão **944 PASS / 1 FAIL esperado** por ausência do link “Abrir registro da apresentação”. GREEN head `b4ba90274b0cd7e6ec31127aafe1c553b46c244f`, run `42281441878` com **dois jobs SUCCESS**, merge `23a5abe5b6bbc85eddb720d2f6a1401f5be671a7`. O UUID retornado por `registrar_apresentacao` agora leva à rota existente `/competencias/$id/apresentacoes/$apresentacaoId`; nenhuma RPC/rota nova.
+- **PR #231 — ações permitidas da competência:** RED head `7799f2bce1f9e39164dadaafe82de54b77ca688a`, run `42282110824`, regressão **942 PASS / 2 FAIL esperados** porque Documentos e Análise ainda exibiam “Em breve”. GREEN head `cd7b03cc30b58baa53b0c4fe44d287779c57a86d`, run `42282432096` com **dois jobs SUCCESS**, merge `4fc0b9f0e5a1ac0a0519194f0fe939dbb347c767`. Quando `allowed_actions` autoriza, os cartões agora navegam para `/competencias/$id/documentos` e `/competencias/$id/analise`, sem ampliar permissão backend.
+
+### Cadeia de navegação já confirmada por código/testes
+
+Lista de contratos → visão geral; lista de contratantes → edição/inativação; contrato → base normativa/orçamento/regras/documentos/competências e menu contextual de histórico; histórico → importar histórico; competências do contrato → nova competência e abrir competência; documentos do contrato → detalhe; competência → documentos/análise/parecer/apresentação; apresentação registrada → protocolo oficial. **Tela existente deixou de ser tratada como suficiente sem um caminho normal de acesso.**
+
+### Lacuna real ainda aberta — edição/desativação de contrato
+
+Criada issue backend **contaos999999/develop#89 — “P0 V1 — contrato: edição/desativação sem operação backend canônica”**. O backend versionado possui policy `contratos_update` para os perfis autorizados e a tabela possui estados `rascunho|ativo|suspenso|encerrado|cancelado`, porém não foi localizada RPC canônica `atualizar_contrato`/`desativar_contrato`. A norma `00_AI_LEIA_ANTES_DE_ALTERAR.md` proíbe update genérico de status crítico pelo React. **Não implementar botão inseguro.** Antes de BUILD backend, aplicar o protocolo específico ADR-DEV-002 para lacuna backend, com PLAN próprio, concorrência/auditoria/testes e PROD intocada.
+
+### Provas ainda NÃO verificadas
+
+- Browser autenticado MASTER pós-correções: **NÃO VERIFICADO nesta retomada**, porque o conector de navegador disponível retornou “Browser access requires the originating browser context”. Não converter Teste C público/read-only em prova autenticada.
+- Teste visual privado/WCAG de todas as telas e estados autenticados: ainda pendente conforme matriz P0.
+- SYS-03 real, RNFs operacionais e demais critérios V1 pendentes permanecem conforme o checkpoint anterior.
+- A existência das rotas e CI verde não equivale, isoladamente, à certificação V1.
+
+**Próxima tarefa:** retomar a auditoria integral das ligações restantes e prova autenticada assim que o navegador/ambiente de sessão estiver disponível; em paralelo, resolver somente lacunas frontend sem backend novo. Para edição/desativação de contrato, aguardar/obter a autorização humana específica exigida pelo protocolo de exceção backend antes da investigação/BUILD no `develop`. Depois fechar os critérios V1 restantes e somente então emitir certificado V1.
+
+---
+
 # P0 V1 — integração funcional das listas, 06/11/2026
 
 **V1 NÃO CERTIFICADA; V2/PROD BLOQUEADOS.** Plano #227 integrado em `52875d47695d559013c43fc73533c4ddfaddff6a`, após dois checks SUCCESS no run42263199286, HEAD11ce366165a8bf5b02308889835e3ccc9e825c29. Fonte backend HEAD conferido01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea inalterado.
