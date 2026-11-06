@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "4c21fe2961f54218891e1f1edf25ef5e21137106",
+  "source_commit": "72f229e0ec229fd2123457d2f87e285aca8cfad7",
   "source_date": "2026-11-06",
   "context_documents": [
     {
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "Reancoragem P0 V1 em 4c21fe2961f54218891e1f1edf25ef5e21137106: validada diretamente arvore GitHub; 25/25 blobs canonicos identicos e catalogo 100/97 com blob identico; historico de testes e conteudos preservados; nenhuma DDL, RLS, Auth, Storage ou PROD. Novo PLAN e CI exigidos."
+  "p0_reanchor_note": "P0 V1 gate de fonte viva 72f229e0ec229fd2123457d2f87e285aca8cfad7; HEAD apos PR backend 83 contendo apenas registro e checkpoint RBAC; 25/25 blobs canonicos identicos; catalogo 100/97 hash identico; sem modificar fontes, contratos ou tipos. CI de PLAN continua obrigatorio."
 }
