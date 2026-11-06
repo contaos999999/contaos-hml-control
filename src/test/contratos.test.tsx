@@ -135,7 +135,7 @@ describe("V1-04 sessão e contexto", () => {
     m.respostas.organizacoes = orgOk;
     m.respostas.contratos = () => lista(A, 1);
     fireEvent.click(screen.getByRole("button", { name: /Tentar novamente/ }));
-    expect(await screen.findByText("org-A-N000", { selector: "td" })).toBeInTheDocument();
+    expect(await screen.findByText("org-A-N000", { selector: "a" })).toBeInTheDocument();
   });
   it("sem preferência vai para /selecionar-organizacao", async () => {
     window.sessionStorage.clear();
@@ -186,7 +186,7 @@ describe("V1-04 estados", () => {
     expect(prox.className).toContain("h-11");
     expect(screen.getByRole("button", { name: /Anterior/ })).toBeDisabled();
     fireEvent.click(prox);
-    expect(await screen.findByText("org-A-N099", { selector: "td" })).toBeInTheDocument();
+    expect(await screen.findByText("org-A-N099", { selector: "a" })).toBeInTheDocument();
     expect(screen.getByText("Página 2 de 2")).toBeInTheDocument();
   });
 });
@@ -197,7 +197,7 @@ describe("V1-04 multi-organização", () => {
     m.respostas.contratos = (c) => lista(orgDe(c), 25, 60);
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const r1 = montar(qc);
-    await screen.findByText("org-A-N000", { selector: "td" });
+    await screen.findByText("org-A-N000", { selector: "a" });
     fireEvent.click(screen.getByRole("button", { name: /Próxima/ }));
     await screen.findByText("Página 2 de 3");
     // troca SYS-04: limpa cache, grava B, remonta
@@ -207,7 +207,7 @@ describe("V1-04 multi-organização", () => {
     const r2 = montar(qc);
     expect(screen.queryByText(/org-A-/)).toBeNull();
     expect(screen.getByRole("status")).toBeInTheDocument();
-    await screen.findByText("org-B-N000", { selector: "td" });
+    await screen.findByText("org-B-N000", { selector: "a" });
     expect(screen.queryByText(/org-A-/)).toBeNull();
     expect(screen.getByText("Página 1 de 3")).toBeInTheDocument();
     let ultima = consultasContratos().at(-1)!;
@@ -220,7 +220,7 @@ describe("V1-04 multi-organização", () => {
     montar(qc);
     expect(screen.queryByText(/org-B-/)).toBeNull();
     expect(screen.getByRole("status")).toBeInTheDocument();
-    await screen.findByText("org-A-N000", { selector: "td" });
+    await screen.findByText("org-A-N000", { selector: "a" });
     expect(screen.queryByText(/org-B-/)).toBeNull();
     expect(screen.getByText("Página 1 de 3")).toBeInTheDocument();
     ultima = consultasContratos().at(-1)!;
@@ -240,13 +240,13 @@ describe("V1-04 multi-organização", () => {
     qc.clear();
     definirPreferenciaOrganizacao(U, B);
     montar(qc);
-    await screen.findByText("org-B-N000", { selector: "td" });
+    await screen.findByText("org-B-N000", { selector: "a" });
     await act(async () => {
       liberarA();
       await pendenteA;
     });
     expect(screen.queryByText(/org-A-/)).toBeNull();
-    expect(screen.getByText("org-B-N000", { selector: "td" })).toBeInTheDocument();
+    expect(screen.getByText("org-B-N000", { selector: "a" })).toBeInTheDocument();
   });
 
   it("query key inclui usuário, organização e página; sem placeholderData", () => {
@@ -277,7 +277,7 @@ describe("V1-04 complementos Q1/Q2/scan", () => {
     m.respostas.organizacoes = orgOk;
     m.respostas.contratos = () => lista(A, 1);
     montar();
-    await screen.findByText("org-A-N000", { selector: "td" });
+    await screen.findByText("org-A-N000", { selector: "a" });
     const q1 = m.chamadas.find((c) => c.tabela === "organizacoes")!;
     expect(q1.ops).toEqual([["select", ["id"]], ["eq", ["id", A]], ["maybeSingle", []]]);
     expect(m.chamadas.findIndex((c) => c.tabela === "organizacoes")).toBeLessThan(m.chamadas.findIndex((c) => c.tabela === "contratos"));
