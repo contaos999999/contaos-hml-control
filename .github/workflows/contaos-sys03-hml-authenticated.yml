@@ -1,0 +1,26 @@
+name: SYS-03 HML authenticated prerequisites
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-preflight:
+    runs-on: ubuntu-24.04
+    environment: hml
+    timeout-minutes: 10
+    env:
+      CONTAOS_HML_SUPABASE_URL: ${{ vars.CONTAOS_HML_SUPABASE_URL }}
+      CONTAOS_HML_SYNTHETIC_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_EMAIL }}
+      CONTAOS_HML_SYNTHETIC_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_PASSWORD }}
+      CONTAOS_HML_MAILBOX_TOKEN: ${{ secrets.CONTAOS_HML_MAILBOX_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - name: Verify synthetic HML prerequisites without exposing secrets
+        run: |
+          bun -e 'import { syntheticFixturePreflight } from "./tests/hml/sys03-fixture.ts"; const p = syntheticFixturePreflight(process.env); if (!p.ready) { console.error("BLOCKED: missing or invalid HML fixture prerequisites: " + p.missing.join(",")); process.exit(1); } console.log("PASS: HML fixture prerequisites configured; no Auth E2E performed");'
