@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { listarOrganizacoesDisponiveis } from "@/lib/auth/resolverDestinoPosLogin";
+import { consultarPermissoesEfetivas, temPermissao } from "@/lib/administracao/rbacRpc";
 import { buscaContemAsterisco } from "@/lib/contratantes/contratantesDados";
 import {
   ErroV105,
   buscarOpcoesContratantes,
   inserirContrato,
   montarPayloadContrato,
-  organizacaoPermiteCadastro,
   validarFormularioContrato,
   type CampoContrato,
   type FormularioContrato,
@@ -286,8 +286,14 @@ export function NovoContrato() {
 
   const pronto = !!idUsuario && !!idOrganizacao;
   const gate = useQuery({
-    queryKey: ["v105", "organizacoes", idUsuario],
-    queryFn: listarOrganizacoesDisponiveis,
+    queryKey: ["v105", "organizacoes", idUsuario, idOrganizacao],
+    queryFn: async () => {
+      if (!idOrganizacao) throw new Error("Contexto organizacional ausente");
+      const [organizacoes, efetivas] = await Promise.all([
+        listarOrganizacoesDisponiveis(), consultarPermissoesEfetivas(idOrganizacao, null),
+      ]);
+      return { organizacoes, permitido: temPermissao(efetivas.permissoes, "contratos", "criar") };
+    },
     enabled: pronto,
     retry: false,
   });
@@ -341,7 +347,8 @@ export function NovoContrato() {
   const salvando = mutacao.isPending;
 
   const tipoGateErro = gate.error ? ((gate.error as { tipo?: string }).tipo === "negado" ? "negado" : "erro") : null;
-  const autorizado = gate.isSuccess && !!idOrganizacao && organizacaoPermiteCadastro(gate.data ?? [], idOrganizacao);
+  const autorizado = gate.isSuccess && gate.data.permitido && !!idOrganizacao &&
+    gate.data.organizacoes.some((o) => o.id === idOrganizacao && o.situacao === "ativa");
   const negadoGate = tipoGateErro === "negado" || (gate.isSuccess && !autorizado);
 
   let corpo: React.ReactNode;
