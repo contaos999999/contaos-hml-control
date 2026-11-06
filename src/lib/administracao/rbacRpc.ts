@@ -78,7 +78,7 @@ function validarMatriz(raw: unknown): MatrizRbac {
   }
   if (porPerfil.size !== 10 || [...porPerfil.values()].some((a) => a.size !== 48)) throw new ErroRbac("contrato");
   const conjunto = [...porPerfil.values()][0];
-  if ([...porPerfil.values()].some((a) => [...a].some((x) => !conjunto.has(x)))) throw new ErroRbac("contrato");
+  if ([...porPerfil.values()].some((a) => [...a].some((x) => !conjunto!.has(x)))) throw new ErroRbac("contrato");
   return data as MatrizRbac;
 }
 
