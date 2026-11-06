@@ -1,13 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import {
-  mkdtempSync,
-  cpSync,
-  readFileSync,
-  writeFileSync,
-  mkdirSync,
-  rmSync,
-} from "node:fs";
+import { mkdtempSync, cpSync, readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve, dirname } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -21,11 +14,10 @@ function executar(mutar = () => {}) {
       cpSync(resolve(path), resolve(temp, path), { recursive: true });
     }
     mutar(temp);
-    return spawnSync(
-      process.execPath,
-      [resolve(temp, "scripts/frontend-zero-drift.mjs")],
-      { cwd: temp, encoding: "utf8" },
-    );
+    return spawnSync(process.execPath, [resolve(temp, "scripts/frontend-zero-drift.mjs")], {
+      cwd: temp,
+      encoding: "utf8",
+    });
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
@@ -41,12 +33,7 @@ test("aceita marca centralizada com header, sidebar, tipos e assets oficiais", (
   assert.equal(result.status, 0, result.stderr);
 });
 for (const [nome, path, anterior, proximo] of [
-  [
-    "ausência de AppShell no root",
-    "src/routes/__root.tsx",
-    "<ContaOSAppShell>",
-    "<div>",
-  ],
+  ["ausência de AppShell no root", "src/routes/__root.tsx", "<ContaOSAppShell>", "<div>"],
   [
     "marca duplicada na página organizacional",
     "src/components/contratos/NovoContrato.tsx",
@@ -65,12 +52,7 @@ for (const [nome, path, anterior, proximo] of [
     "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
     "/logo-nao-oficial.svg",
   ],
-  [
-    "ausência de marca na tela pública",
-    "src/routes/login.tsx",
-    "<ContaOSMarca",
-    "<MarcaAusente",
-  ],
+  ["ausência de marca na tela pública", "src/routes/login.tsx", "<ContaOSMarca", "<MarcaAusente"],
 ])
   test(`rejeita ${nome}`, () => {
     const result = executar((temp) => trocar(temp, path, anterior, proximo));

@@ -1,12 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  act,
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { useState, type ReactNode } from "react";
@@ -149,10 +142,7 @@ describe("P0 apresentação organizacional global", () => {
   });
   it.each([
     ["ID incompatível", resumo("org-b")],
-    [
-      "schema inválido",
-      { data: { ...resumo().data, schema_versao: "invalido" }, error: null },
-    ],
+    ["schema inválido", { data: { ...resumo().data, schema_versao: "invalido" }, error: null }],
     ["negação", { data: null, error: { code: "42501" } }],
   ])("não exibe organização quando backend retorna %s", async (_, response) => {
     m.rpc.mockResolvedValue(response);
@@ -165,16 +155,15 @@ describe("P0 apresentação organizacional global", () => {
     await screen.findByText("Organização Alfa");
     fireEvent.click(screen.getByRole("button", { name: "Sair" }));
     fireEvent.click(screen.getByRole("button", { name: "Sair" }));
-    await waitFor(() =>
-      expect(m.navigate).toHaveBeenCalledWith({ to: "/login", replace: true }),
-    );
+    await waitFor(() => expect(m.navigate).toHaveBeenCalledWith({ to: "/login", replace: true }));
     expect(screen.queryByText("Organização Alfa")).not.toBeInTheDocument();
     expect(m.signOut).toHaveBeenCalledTimes(1);
     expect(m.cancelQueries).toHaveBeenCalledTimes(1);
     expect(m.clear).toHaveBeenCalledTimes(1);
-    expect(
-      screen.getByRole("link", { name: "Trocar organização" }),
-    ).toHaveAttribute("href", "/selecionar-organizacao");
+    expect(screen.getByRole("link", { name: "Trocar organização" })).toHaveAttribute(
+      "href",
+      "/selecionar-organizacao",
+    );
   });
   it("apresenta falha de logout sem anunciar sucesso nem navegar", async () => {
     m.signOut.mockResolvedValue({ error: new Error("indisponivel") });
@@ -199,17 +188,11 @@ describe("P0 apresentação organizacional global", () => {
     );
     expect(files.length).toBeGreaterThan(20);
     for (const file of files)
-      expect(
-        readFileSync(resolve(__dirname, file), "utf8"),
-        file,
-      ).not.toContain("<ContaOSMarca");
+      expect(readFileSync(resolve(__dirname, file), "utf8"), file).not.toContain("<ContaOSMarca");
   });
   it("Auditoria oferece filtros em card e tabela como região rolável acessível", () => {
     const file = readFileSync(
-      resolve(
-        __dirname,
-        "../components/administracao/auditoria/TrilhaAuditoria.tsx",
-      ),
+      resolve(__dirname, "../components/administracao/auditoria/TrilhaAuditoria.tsx"),
       "utf8",
     );
     expect(file).toContain("bg-card");
@@ -243,10 +226,7 @@ describe("P0 contexto compartilhado e ações únicas", () => {
       "contratos/NovoContrato.tsx",
       "administracao/usuarios/AdminUsuarios.tsx",
     ]) {
-      const src = readFileSync(
-        resolve(__dirname, "../components/", file),
-        "utf8",
-      );
+      const src = readFileSync(resolve(__dirname, "../components/", file), "utf8");
       expect(src, file).not.toMatch(/onClick=\{(?:props\.onSair|sair)\}/);
     }
   });

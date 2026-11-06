@@ -38,10 +38,7 @@ export function ContaOSSidebar({
           >
             <span className="flex items-center gap-2">
               {destino === "/" ? (
-                <LayoutDashboard
-                  aria-hidden="true"
-                  className="size-4 shrink-0"
-                />
+                <LayoutDashboard aria-hidden="true" className="size-4 shrink-0" />
               ) : destino.startsWith("/contratantes") ? (
                 <Building2 aria-hidden="true" className="size-4 shrink-0" />
               ) : (
@@ -69,9 +66,7 @@ export function ContaOSSidebar({
           aria-label="Contexto atual"
         >
           {!recolhida && (
-            <p className="px-3 text-xs font-semibold text-sidebar-foreground/80">
-              Contexto atual
-            </p>
+            <p className="px-3 text-xs font-semibold text-sidebar-foreground/80">Contexto atual</p>
           )}
           {menuContextualV1(contexto, permissoes).map((item) => (
             <a

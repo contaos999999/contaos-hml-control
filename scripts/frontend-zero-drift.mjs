@@ -51,8 +51,7 @@ for (const english of [
   "Something went wrong on our end",
   "Try again",
 ]) {
-  if (root.includes(english))
-    problems.push("Texto global em inglês no root: " + english);
+  if (root.includes(english)) problems.push("Texto global em inglês no root: " + english);
 }
 
 const brandTest = source("src/test/brand.test.tsx");
@@ -66,8 +65,7 @@ for (const required of [
   "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
   "/brand/ContaOS_Simbolo_Branco.svg",
 ])
-  if (!shell.includes(required))
-    problems.push("Shell sem apresentação/marca oficial: " + required);
+  if (!shell.includes(required)) problems.push("Shell sem apresentação/marca oficial: " + required);
 
 for (const path of COMPONENTS) {
   const code = source(path);
@@ -80,9 +78,7 @@ for (const path of COMPONENTS) {
   if (!brandTest.includes(path))
     problems.push("Tela ausente da proteção do teste BRAND-01: " + path);
   if (/#[0-9a-fA-F]{6}\b/.test(code))
-    problems.push(
-      "Cor hexadecimal fixa encontrada em tela, auditar token: " + path,
-    );
+    problems.push("Cor hexadecimal fixa encontrada em tela, auditar token: " + path);
   if (code.includes("sb_secret_") || code.includes("service_role"))
     problems.push("Possível secret literal em tela: " + path);
 }
@@ -109,24 +105,18 @@ for (const required of [
 ]) {
   if (!brandComponent.includes(required))
     problems.push(
-      "Componente de marca não seleciona variante oficial para fundo claro: " +
-        required,
+      "Componente de marca não seleciona variante oficial para fundo claro: " + required,
     );
 }
 if (!brandComponent.includes("dark:"))
-  problems.push(
-    "Seleção responsiva da marca não acompanha explicitamente tema escuro.",
-  );
+  problems.push("Seleção responsiva da marca não acompanha explicitamente tema escuro.");
 
 const { createHash } = await import("node:crypto");
 for (const [asset, sha] of Object.entries(navySha)) {
   if (existsSync(asset)) {
     const hex = createHash("sha256").update(readFileSync(asset)).digest("hex");
     if (hex !== sha)
-      problems.push(
-        "Asset BRAND-01 de fundo claro não coincide com o SHA original: " +
-          asset,
-      );
+      problems.push("Asset BRAND-01 de fundo claro não coincide com o SHA original: " + asset);
   }
 }
 for (const p of expectedAssets)
@@ -134,21 +124,14 @@ for (const p of expectedAssets)
 
 let actualBlob = "";
 try {
-  actualBlob = execFileSync(
-    "git",
-    ["hash-object", "src/integrations/supabase/types.ts"],
-    {
-      encoding: "utf8",
-    },
-  ).trim();
+  actualBlob = execFileSync("git", ["hash-object", "src/integrations/supabase/types.ts"], {
+    encoding: "utf8",
+  }).trim();
 } catch {
   problems.push("Não foi possível verificar o blob do types.ts.");
 }
 if (actualBlob !== CERTIFIED_TYPES_BLOB)
-  problems.push(
-    "DRIFT CRÍTICO: types.ts não coincide com o blob certificado. Atual=" +
-      actualBlob,
-  );
+  problems.push("DRIFT CRÍTICO: types.ts não coincide com o blob certificado. Atual=" + actualBlob);
 
 // Regras de economia: nenhum teste precisa acessar Supabase, alterar arquivos ou usar créditos Lovable.
 // Este gate não certifica screenshots reais, RLS de sessão nem auditoria semântica de 197 prompts.

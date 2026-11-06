@@ -38,9 +38,7 @@ export function TrilhaAuditoria() {
           navigate({ to: "/selecionar-organizacao", replace: true });
           return;
         }
-        const permitido = await podeConsultarAuditoria(selecionada).catch(
-          () => false,
-        );
+        const permitido = await podeConsultarAuditoria(selecionada).catch(() => false);
         if (!ativo) return;
         if (!permitido) {
           setAcessoNegado(true);
@@ -60,17 +58,7 @@ export function TrilhaAuditoria() {
     };
   }, [navigate]);
   const consulta = useQuery({
-    queryKey: [
-      "v1-23",
-      org,
-      pagina,
-      evento,
-      entidade,
-      idUsuario,
-      correlationId,
-      inicio,
-      fim,
-    ],
+    queryKey: ["v1-23", org, pagina, evento, entidade, idUsuario, correlationId, inicio, fim],
     queryFn: () =>
       obterEventosAuditoria({
         idOrganizacao: org!,
@@ -79,12 +67,8 @@ export function TrilhaAuditoria() {
         entidade,
         idUsuario,
         correlationId,
-        ...(inicio
-          ? { dataInicial: new Date(inicio + "T00:00:00-03:00").toISOString() }
-          : {}),
-        ...(fim
-          ? { dataFinal: new Date(fim + "T23:59:59-03:00").toISOString() }
-          : {}),
+        ...(inicio ? { dataInicial: new Date(inicio + "T00:00:00-03:00").toISOString() } : {}),
+        ...(fim ? { dataFinal: new Date(fim + "T23:59:59-03:00").toISOString() } : {}),
       }),
     enabled: !!org && autorizada,
     retry: false,
@@ -104,18 +88,14 @@ export function TrilhaAuditoria() {
   if (acessoNegado)
     return (
       <main className="p-6">
-        <p role="alert">
-          Você não tem permissão para consultar a auditoria desta organização.
-        </p>
+        <p role="alert">Você não tem permissão para consultar a auditoria desta organização.</p>
       </main>
     );
   if (verificando || !autorizada)
     return (
       <main className="p-6">
         <p role="status">Verificando acesso à auditoria…</p>
-        {erroSessao && (
-          <p role="alert">Não foi possível verificar sua sessão.</p>
-        )}
+        {erroSessao && <p role="alert">Não foi possível verificar sua sessão.</p>}
       </main>
     );
   return (
@@ -123,8 +103,7 @@ export function TrilhaAuditoria() {
       <header className="space-y-2">
         <h1 className="text-2xl font-bold">Trilha de auditoria</h1>
         <p className="text-sm text-muted-foreground">
-          Histórico de eventos da organização. Informações sensíveis não são
-          exibidas.
+          Histórico de eventos da organização. Informações sensíveis não são exibidas.
         </p>
       </header>
       <section
@@ -171,8 +150,7 @@ export function TrilhaAuditoria() {
       </section>
       {erroSessao ? (
         <p role="alert">
-          Não foi possível verificar sua sessão. Atualize a página ou entre
-          novamente.
+          Não foi possível verificar sua sessão. Atualize a página ou entre novamente.
         </p>
       ) : verificando || consulta.isPending ? (
         <p role="status">Carregando trilha de auditoria…</p>
@@ -183,17 +161,12 @@ export function TrilhaAuditoria() {
               ? consulta.error.message
               : "Falha ao consultar eventos."}
           </p>
-          <button
-            className="rounded border p-2"
-            onClick={() => consulta.refetch()}
-          >
+          <button className="rounded border p-2" onClick={() => consulta.refetch()}>
             Tentar novamente
           </button>
         </div>
       ) : !consulta.data?.eventos.length ? (
-        <p role="status">
-          Nenhum evento encontrado para os filtros selecionados.
-        </p>
+        <p role="status">Nenhum evento encontrado para os filtros selecionados.</p>
       ) : (
         <div
           role="region"
@@ -202,18 +175,10 @@ export function TrilhaAuditoria() {
           className="overflow-x-auto rounded-xl border border-border bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <table className="w-full min-w-[48rem] table-fixed border-collapse text-left text-sm">
-            <caption className="sr-only">
-              Eventos de auditoria da organização
-            </caption>
+            <caption className="sr-only">Eventos de auditoria da organização</caption>
             <thead>
               <tr>
-                {[
-                  "Data e hora",
-                  "Evento",
-                  "Entidade",
-                  "Usuário",
-                  "Correlação",
-                ].map((h) => (
+                {["Data e hora", "Evento", "Entidade", "Usuário", "Correlação"].map((h) => (
                   <th
                     scope="col"
                     className="break-words border-b border-border p-3 align-top"
@@ -230,12 +195,8 @@ export function TrilhaAuditoria() {
                   <td className="break-words border-b border-border p-3 align-top">
                     {dataBr(e.criado_em)}
                   </td>
-                  <td className="break-words border-b border-border p-3 align-top">
-                    {e.evento}
-                  </td>
-                  <td className="break-words border-b border-border p-3 align-top">
-                    {e.entidade}
-                  </td>
+                  <td className="break-words border-b border-border p-3 align-top">{e.evento}</td>
+                  <td className="break-words border-b border-border p-3 align-top">{e.entidade}</td>
                   <td className="break-words border-b border-border p-3 align-top">
                     {e.id_usuario ?? "Sistema"}
                   </td>
@@ -263,9 +224,7 @@ export function TrilhaAuditoria() {
         <button
           className="rounded border px-3 py-2"
           disabled={
-            consulta.isFetching ||
-            !consulta.data ||
-            (pagina + 1) * 25 >= consulta.data.total
+            consulta.isFetching || !consulta.data || (pagina + 1) * 25 >= consulta.data.total
           }
           onClick={() => setPagina((p) => p + 1)}
         >

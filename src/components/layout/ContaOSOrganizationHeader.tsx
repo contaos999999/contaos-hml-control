@@ -21,9 +21,7 @@ export function ContaOSOrganizationHeader() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [organizacao, setOrganizacao] = useState<Organizacao | null>(null);
-  const [fase, setFase] = useState<"carregando" | "pronto" | "erro">(
-    "carregando",
-  );
+  const [fase, setFase] = useState<"carregando" | "pronto" | "erro">("carregando");
   const [revisao, setRevisao] = useState(0);
   const [saindo, setSaindo] = useState(false);
   const [erroSaida, setErroSaida] = useState(false);
@@ -43,11 +41,7 @@ export function ContaOSOrganizationHeader() {
     window.addEventListener(EVENTO_ORGANIZACAO_ALTERADA, invalidar);
     document.addEventListener("visibilitychange", aoRetomar);
     const { data } = supabase.auth.onAuthStateChange((evento) => {
-      if (
-        ["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED", "TOKEN_REFRESHED"].includes(
-          evento,
-        )
-      )
+      if (["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED", "TOKEN_REFRESHED"].includes(evento))
         invalidar();
     });
     return () => {
@@ -61,8 +55,7 @@ export function ContaOSOrganizationHeader() {
   useEffect(() => {
     let ativo = true;
     const versao = geracao.current;
-    const atual = () =>
-      ativo && versao === geracao.current && !saidaEmCurso.current;
+    const atual = () => ativo && versao === geracao.current && !saidaEmCurso.current;
     void (async () => {
       try {
         const { data, error } = await supabase.auth.getUser();
@@ -141,9 +134,7 @@ export function ContaOSOrganizationHeader() {
               <p className="break-words font-semibold">
                 {organizacao.nome_fantasia?.trim() || organizacao.razao_social}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Situação: {organizacao.situacao}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">Situação: {organizacao.situacao}</p>
             </>
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -168,10 +159,7 @@ export function ContaOSOrganizationHeader() {
             disabled={saindo}
           >
             {saindo ? (
-              <Loader2
-                className="mr-2 size-4 animate-spin"
-                aria-hidden="true"
-              />
+              <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
             ) : (
               <LogOut className="mr-2 size-4" aria-hidden="true" />
             )}
