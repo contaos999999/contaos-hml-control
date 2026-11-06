@@ -34,3 +34,14 @@ O check intitulado “Teste C Independente” que passou no PR #200 **não equiv
 - **N1, N2, N3, N5, N6, N7, N8 e N9 seguem sem prova real E2E. N4 parcial, sem prova de token malformado contra o serviço.**
 - Para completar testes autenticados, preparar conta sintética e mailbox sob controle HML, secrets efêmeros protegidos, cleanup e teste C independente. Nunca utilizar conta pessoal ou dados reais. N7 exige limite seguro de requisições.
 - Não declarar SYS-03 ou V1 certificados com base em 3 testes públicos.
+
+## Atualização da bateria pública ampliada — 06/11/2026
+
+- Run: https://github.com/contaos999999/contaos-hml-control/actions/runs/42200526972
+- HEAD testado: `fbdbf40f919ca43edca8c89ea48dc19a89154a29`.
+- Resultado reportado nos registros da execução: **7/7 testes Playwright aprovados, 12,1 s**.
+- Cenários: acesso sem token; token expirado no hash; página pública de recuperação; erro `otp_disabled`; erro `invalid_grant`; token expirado na query; erro genérico na query.
+- Escopo: smoke público e testes negativos de URL. Não comprovam fluxo autenticado, entrega de e-mail, consumo real de token, sessão, rate limiting ou alteração de senha.
+- N4 permanece **parcial**; N1–N3 e N5–N9 seguem pendentes de evidência E2E autenticada e independente.
+- Próxima etapa: fixtures sintéticas HML, mailbox controlada, secrets protegidos, limpeza e execução N1–N9 com orçamento seguro para N7.
+- **Não certificar SYS-03/V1** com base nesta bateria.
