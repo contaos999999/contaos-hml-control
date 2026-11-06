@@ -4,7 +4,6 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { AlertCircle, ArrowLeft, Loader2, RefreshCw, ShieldAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { supabase } from "@/integrations/supabase/client";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import {
@@ -118,14 +117,14 @@ export function HistoricoContrato({ id }: { id: string }) {
   const valido = uuidValido(id);
   const canon = valido ? uuidCanonico(id) : id;
   return <div className="min-h-screen bg-background text-foreground">
-    <header className="border-b border-border bg-primary text-primary-foreground">
+    <nav aria-label="Navegação da página" className="border-b border-border bg-card text-card-foreground">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-        <ContaOSMarca />
+        
         <Button asChild variant="secondary" className="min-h-11">
           <Link to="/contratos"><ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Contratos</Link>
         </Button>
       </div>
-    </header>
+    </nav>
     <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

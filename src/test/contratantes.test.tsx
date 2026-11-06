@@ -420,7 +420,7 @@ describe("V1-01 segurança e isolamento", () => {
     for (const c of m.chamadas) for (const [o] of c.ops) expect(["insert", "update", "delete", "upsert"]).not.toContain(o);
     expect(m.rpc).not.toHaveBeenCalled();
     expect(m.invoke).not.toHaveBeenCalled();
-    const hrefs = screen.getAllByRole("link").map((a) => a.getAttribute("href"));
+    const hrefs = screen.queryAllByRole("link").map((a) => a.getAttribute("href"));
     expect(hrefs.some((h) => h?.startsWith("/contratantes/"))).toBe(false);
     expect(screen.queryByRole("button", { name: /novo|editar/i })).toBeNull();
   });

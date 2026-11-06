@@ -1,4 +1,3 @@
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -137,20 +136,15 @@ export function ListaContratos() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-primary text-primary-foreground">
+      <nav aria-label="Navegação da página" className="border-b border-border bg-card text-card-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="md:hidden"><ContaOSMarca /></span>
-            
-          </div>
+          
           <nav aria-label="Navegação" className="flex flex-wrap gap-2">
-            <Button asChild variant="secondary" className="h-11"><Link to="/">Painel</Link></Button>
-            <Button asChild variant="secondary" className="h-11">
-              <Link to="/selecionar-organizacao"><Building2 className="mr-2 h-4 w-4" aria-hidden /> Selecionar organização</Link>
-            </Button>
+            
+            
           </nav>
         </div>
-      </header>
+      </nav>
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Gestão contratual</p>

@@ -6,7 +6,12 @@ import { MENU_V1, MENU_ADMIN_V1, rotaSemSidebar } from "@/lib/navegacao/menuV1";
 
 describe("P0 sidebar V1", () => {
   it("não mostra menu nas rotas públicas e seleção de organização", () => {
-    for (const rota of ["/login", "/esqueci-senha", "/redefinir-senha", "/selecionar-organizacao"])
+    for (const rota of [
+      "/login",
+      "/esqueci-senha",
+      "/redefinir-senha",
+      "/selecionar-organizacao",
+    ])
       expect(rotaSemSidebar(rota)).toBe(true);
     expect(rotaSemSidebar("/")).toBe(false);
   });
@@ -21,15 +26,22 @@ describe("P0 sidebar V1", () => {
     expect(MENU_V1.every((x) => !x.destino.includes("$"))).toBe(true);
     expect(
       MENU_V1.every(
-        (x) => !MENU_ADMIN_V1.map((a) => String(a.destino)).includes(String(x.destino)),
+        (x) =>
+          !MENU_ADMIN_V1.map((a) => String(a.destino)).includes(
+            String(x.destino),
+          ),
       ),
     ).toBe(true);
   });
 });
 
-const semEspaco = (valor: string) => valor.replace(/\s+/g, "").replace(/,\)/g, ")");
+const semEspaco = (valor: string) =>
+  valor.replace(/\s+/g, "").replace(/,\)/g, ")");
 const lerShell = () =>
-  readFileSync(resolve(__dirname, "../components/layout/ContaOSAppShell.tsx"), "utf8");
+  readFileSync(
+    resolve(__dirname, "../components/layout/ContaOSAppShell.tsx"),
+    "utf8",
+  );
 
 describe("P0 sidebar — invariantes de sessao e acessibilidade", () => {
   it("distingue rota de cadastro da listagem e mantém ícone de contratantes", () => {
@@ -40,15 +52,21 @@ describe("P0 sidebar — invariantes de sessao e acessibilidade", () => {
     expect(semEspaco(codigo)).toContain(
       semEspaco('destino !== "/contratantes" && destino !== "/contratos"'),
     );
-    expect(semEspaco(codigo)).toContain(semEspaco('destino.startsWith("/contratantes")'));
+    expect(semEspaco(codigo)).toContain(
+      semEspaco('destino.startsWith("/contratantes")'),
+    );
   });
   it("revalida o menu quando a autenticacao muda", () => {
     const codigo = lerShell();
     expect(semEspaco(codigo)).toContain(semEspaco("onAuthStateChange"));
-    expect(semEspaco(codigo)).toContain(semEspaco("setRevisaoSessao((atual) => atual + 1)"));
+    expect(semEspaco(codigo)).toContain(
+      semEspaco("setRevisaoSessao((atual) => atual + 1)"),
+    );
     expect(semEspaco(codigo)).toContain(semEspaco("[pathname, revisaoSessao]"));
     expect(semEspaco(codigo)).toContain(semEspaco("setAdministrador(false)"));
-    expect(semEspaco(codigo)).toContain(semEspaco("setAuditoriaPermitida(false)"));
+    expect(semEspaco(codigo)).toContain(
+      semEspaco("setAuditoriaPermitida(false)"),
+    );
   });
   it("mantem administracao condicionada ao retorno da verificacao", () => {
     const codigo = lerShell();
@@ -68,16 +86,24 @@ describe("P0 sidebar — invariantes de sessao e acessibilidade", () => {
         'setAuditoriaPermitida(auditoriaAutorizada === true && temPermissao(efetivas.permissoes, "auditoria", "consultar"))',
       ),
     );
-    expect(semEspaco(codigo)).toContain(semEspaco("aria-expanded={movelAberto}"));
-    expect(semEspaco(codigo)).toContain(semEspaco('aria-controls="contaos-menu-movel"'));
+    expect(semEspaco(codigo)).toContain(
+      semEspaco("aria-expanded={movelAberto}"),
+    );
+    expect(semEspaco(codigo)).toContain(
+      semEspaco('aria-controls="contaos-menu-movel"'),
+    );
   });
 });
 
 describe("P0 sidebar — protecao contra respostas de autenticacao antigas", () => {
   it("invalida consultas em voo quando a sessao muda", () => {
     const codigo = lerShell();
-    expect(semEspaco(codigo)).toContain(semEspaco("geracaoAutenticacao.current += 1"));
-    expect(semEspaco(codigo)).toContain(semEspaco("geracao === geracaoAutenticacao.current"));
+    expect(semEspaco(codigo)).toContain(
+      semEspaco("geracaoAutenticacao.current += 1"),
+    );
+    expect(semEspaco(codigo)).toContain(
+      semEspaco("geracao === geracaoAutenticacao.current"),
+    );
     expect(semEspaco(codigo)).toContain(
       semEspaco("if (!sessaoAtual() || error || !data.user) return"),
     );
@@ -97,7 +123,9 @@ describe("P0 sidebar — protecao contra respostas de autenticacao antigas", () 
 describe("P0 sidebar — regressões consolidadas do diálogo móvel", () => {
   it("fecha ao atingir o breakpoint desktop e libera o conteúdo", () => {
     const codigo = lerShell();
-    expect(semEspaco(codigo)).toContain(semEspaco('window.matchMedia("(min-width: 768px)")'));
+    expect(semEspaco(codigo)).toContain(
+      semEspaco('window.matchMedia("(min-width: 768px)")'),
+    );
     expect(semEspaco(codigo)).toContain(
       semEspaco('media.addEventListener("change", fecharAoExpandir)'),
     );
@@ -111,7 +139,9 @@ describe("P0 sidebar — regressões consolidadas do diálogo móvel", () => {
     expect(semEspaco(codigo)).toContain(
       semEspaco("document.body.style.overflow = overflowAnterior"),
     );
-    expect(semEspaco(codigo)).toContain(semEspaco("fechamentoPorNavegacao.current"));
+    expect(semEspaco(codigo)).toContain(
+      semEspaco("fechamentoPorNavegacao.current"),
+    );
     expect(semEspaco(codigo)).toContain(
       semEspaco('document.removeEventListener("keydown", controlarTeclado)'),
     );
@@ -119,7 +149,13 @@ describe("P0 sidebar — regressões consolidadas do diálogo móvel", () => {
 });
 
 import { afterEach, beforeEach, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { ContaOSAppShell } from "@/components/layout/ContaOSAppShell";
 
 const mocks = vi.hoisted(() => ({
@@ -134,8 +170,12 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
-  useRouterState: ({ select }: { select: (s: { location: { pathname: string } }) => unknown }) =>
-    select({ location: { pathname: mocks.pathname } }),
+  useNavigate: () => vi.fn(),
+  useRouterState: ({
+    select,
+  }: {
+    select: (s: { location: { pathname: string } }) => unknown;
+  }) => select({ location: { pathname: mocks.pathname } }),
   Link: ({
     children,
     to,
@@ -153,7 +193,12 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth: { getUser: mocks.getUser, onAuthStateChange: mocks.onAuthStateChange } },
+  supabase: {
+    auth: {
+      getUser: mocks.getUser,
+      onAuthStateChange: mocks.onAuthStateChange,
+    },
+  },
 }));
 vi.mock("@/lib/organizacao/preferenciaOrganizacao", () => ({
   obterPreferenciaOrganizacao: mocks.obterPreferencia,
@@ -187,13 +232,16 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
         { recurso: "contratantes", acao: "criar" },
       ],
     });
-    mocks.contexto
-      .mockReset()
-      .mockResolvedValue({ contrato: null, competencia: null, contratante: null });
+    mocks.contexto.mockReset().mockResolvedValue({
+      contrato: null,
+      competencia: null,
+      contratante: null,
+    });
     mocks.pathname = "/";
-    mocks.getUser
-      .mockReset()
-      .mockResolvedValue({ data: { user: { id: "usuario-teste" } }, error: null });
+    mocks.getUser.mockReset().mockResolvedValue({
+      data: { user: { id: "usuario-teste" } },
+      error: null,
+    });
     mocks.obterPreferencia.mockReset().mockReturnValue("org-teste");
     mocks.validarAdministrador.mockReset().mockResolvedValue(false);
     mocks.podeConsultarAuditoria.mockReset().mockResolvedValue(false);
@@ -218,12 +266,16 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
     const dialogo = screen.getByRole("dialog", { name: "Menu de navegação" });
     expect(dialogo).toHaveAttribute("aria-modal", "true");
     expect(abrir).toHaveAttribute("inert");
-    expect(screen.getByRole("button", { name: "Conteúdo privado" }).parentElement).toHaveAttribute(
-      "inert",
-    );
+    expect(
+      screen
+        .getByRole("button", { name: "Conteúdo privado" })
+        .closest("[inert]"),
+    ).toHaveAttribute("inert");
     expect(document.body.style.overflow).toBe("hidden");
     fireEvent.keyDown(document, { key: "Escape" });
-    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
     expect(abrir).not.toHaveAttribute("inert");
     expect(document.body.style.overflow).toBe("");
   });
@@ -235,8 +287,12 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
       </ContaOSAppShell>,
     );
     await screen.findByRole("button", { name: "Abrir menu" });
-    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Auditoria" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Usuários" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Auditoria" }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -255,10 +311,14 @@ describe("P0 sidebar — concorrência de autorização e responsividade", () =>
       </ContaOSAppShell>,
     );
     await screen.findByRole("button", { name: "Abrir menu" });
-    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Usuários" }),
+    ).not.toBeInTheDocument();
     resolver(true);
     await waitFor(() =>
-      expect(screen.getAllByRole("link", { name: "Usuários" }).length).toBeGreaterThan(0),
+      expect(
+        screen.getAllByRole("link", { name: "Usuários" }).length,
+      ).toBeGreaterThan(0),
     );
   });
 
@@ -271,7 +331,9 @@ describe("P0 sidebar — concorrência de autorização e responsividade", () =>
     );
     await screen.findByRole("button", { name: "Abrir menu" });
     await waitFor(() => expect(mocks.validarAdministrador).toHaveBeenCalled());
-    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Usuários" }),
+    ).not.toBeInTheDocument();
   });
 
   it("fecha o diálogo ao mudar para viewport desktop e libera o conteúdo", async () => {
@@ -281,7 +343,10 @@ describe("P0 sidebar — concorrência de autorização e responsividade", () =>
       configurable: true,
       value: vi.fn(() => ({
         matches: false,
-        addEventListener: (_nome: string, cb: (evento: { matches: boolean }) => void) => {
+        addEventListener: (
+          _nome: string,
+          cb: (evento: { matches: boolean }) => void,
+        ) => {
           aoMudar = cb;
         },
         removeEventListener: vi.fn(),
@@ -300,12 +365,17 @@ describe("P0 sidebar — concorrência de autorização e responsividade", () =>
       await act(async () => {
         aoMudar?.({ matches: true });
       });
-      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+      );
       expect(abrir).not.toHaveAttribute("inert");
       expect(document.body.style.overflow).toBe("");
     } finally {
       cleanup();
-      Object.defineProperty(window, "matchMedia", { configurable: true, value: original });
+      Object.defineProperty(window, "matchMedia", {
+        configurable: true,
+        value: original,
+      });
     }
   });
 });
@@ -320,9 +390,13 @@ describe("P0 V1-23 — capacidades independentes", () => {
       </ContaOSAppShell>,
     );
     await waitFor(() =>
-      expect(screen.getAllByRole("link", { name: "Auditoria" }).length).toBeGreaterThan(0),
+      expect(
+        screen.getAllByRole("link", { name: "Auditoria" }).length,
+      ).toBeGreaterThan(0),
     );
-    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Usuários" }),
+    ).not.toBeInTheDocument();
   });
   it("não exibe Auditoria quando RPC de capacidade falha", async () => {
     mocks.podeConsultarAuditoria.mockRejectedValue(new Error("falha"));
@@ -331,8 +405,12 @@ describe("P0 V1-23 — capacidades independentes", () => {
         <div>Área de trabalho</div>
       </ContaOSAppShell>,
     );
-    await waitFor(() => expect(mocks.podeConsultarAuditoria).toHaveBeenCalled());
-    expect(screen.queryByRole("link", { name: "Auditoria" })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(mocks.podeConsultarAuditoria).toHaveBeenCalled(),
+    );
+    expect(
+      screen.queryByRole("link", { name: "Auditoria" }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -352,13 +430,16 @@ describe("P0 V1 — invalidação local imediata na troca de organização", () 
         { recurso: "contratantes", acao: "criar" },
       ],
     });
-    mocks.contexto
-      .mockReset()
-      .mockResolvedValue({ contrato: null, competencia: null, contratante: null });
+    mocks.contexto.mockReset().mockResolvedValue({
+      contrato: null,
+      competencia: null,
+      contratante: null,
+    });
     mocks.pathname = "/";
-    mocks.getUser
-      .mockReset()
-      .mockResolvedValue({ data: { user: { id: "usuario-teste" } }, error: null });
+    mocks.getUser.mockReset().mockResolvedValue({
+      data: { user: { id: "usuario-teste" } },
+      error: null,
+    });
     mocks.obterPreferencia.mockReset().mockReturnValue("org-teste");
     mocks.validarAdministrador.mockReset().mockResolvedValue(false);
     mocks.podeConsultarAuditoria.mockReset().mockResolvedValue(false);
@@ -369,19 +450,29 @@ describe("P0 V1 — invalidação local imediata na troca de organização", () 
   afterEach(() => cleanup());
 
   it("derruba link de Usuários imediatamente e revalida permissões sem mudar pathname", async () => {
-    mocks.validarAdministrador.mockResolvedValueOnce(true).mockResolvedValue(false);
+    mocks.validarAdministrador
+      .mockResolvedValueOnce(true)
+      .mockResolvedValue(false);
     render(
       <ContaOSAppShell>
         <div>Área de trabalho</div>
       </ContaOSAppShell>,
     );
     await waitFor(() =>
-      expect(screen.getAllByRole("link", { name: "Usuários" }).length).toBeGreaterThan(0),
+      expect(
+        screen.getAllByRole("link", { name: "Usuários" }).length,
+      ).toBeGreaterThan(0),
     );
     fireEvent(window, new Event("contaos:organizacao-alterada"));
-    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
-    await waitFor(() => expect(mocks.validarAdministrador).toHaveBeenCalledTimes(2));
-    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Usuários" }),
+    ).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(mocks.validarAdministrador).toHaveBeenCalledTimes(2),
+    );
+    expect(
+      screen.queryByRole("link", { name: "Usuários" }),
+    ).not.toBeInTheDocument();
   });
 
   it("ignora autorização antiga concluída após a troca de organização", async () => {
@@ -399,22 +490,35 @@ describe("P0 V1 — invalidação local imediata na troca de organização", () 
         <div>Área de trabalho</div>
       </ContaOSAppShell>,
     );
-    await waitFor(() => expect(mocks.validarAdministrador).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(mocks.validarAdministrador).toHaveBeenCalledTimes(1),
+    );
     fireEvent(window, new Event("contaos:organizacao-alterada"));
-    await waitFor(() => expect(mocks.validarAdministrador).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(mocks.validarAdministrador).toHaveBeenCalledTimes(2),
+    );
     resolverPrimeira(true);
-    await waitFor(() => expect(mocks.getUser).toHaveBeenCalledTimes(2));
-    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
+    await waitFor(() => expect(mocks.getUser).toHaveBeenCalledTimes(4));
+    expect(
+      screen.queryByRole("link", { name: "Usuários" }),
+    ).not.toBeInTheDocument();
   });
 });
 
 describe("BRAND-01 P0 — contraste dos logos oficiais na sidebar", () => {
-  it("seleciona logo navy em tema claro e branca em tema escuro", () => {
+  it("usa logo e símbolo brancos oficiais na superfície navy em ambos os temas", () => {
     const codigo = lerShell();
-    expect(codigo).toMatch(/ContaOS_Logo_Horizontal_Mono_Navy\.svg[^>]*dark:hidden/);
-    expect(codigo).toMatch(/ContaOS_Logo_Horizontal_Mono_Branco_Transparente\.svg[^>]*dark:block/);
-    expect(codigo).toMatch(/ContaOS_Simbolo_Navy\.svg[^>]*dark:hidden/);
-    expect(codigo).toMatch(/ContaOS_Simbolo_Branco\.svg[^>]*dark:block/);
+    expect(codigo).toContain("bg-sidebar text-sidebar-foreground");
+    expect(codigo).toContain(
+      "ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+    );
+    expect(codigo).toContain("ContaOS_Simbolo_Branco.svg");
+    expect(codigo).not.toContain("ContaOS_Logo_Horizontal_Mono_Navy.svg");
+    expect(codigo).not.toContain("ContaOS_Simbolo_Navy.svg");
+    const tokens = readFileSync(resolve(__dirname, "../styles.css"), "utf8");
+    expect(
+      tokens.match(/--sidebar: oklch\(0.208 0.042 265.755\)/g),
+    ).toHaveLength(2);
   });
 });
 
@@ -425,10 +529,14 @@ describe("navegação V1 por permissões e contexto", () => {
   });
   it("separa consultar e criar sem herança por nome de perfil", () => {
     expect(
-      menuComumPermitido([{ recurso: "contratos", acao: "consultar" }]).map((x) => x.destino),
+      menuComumPermitido([{ recurso: "contratos", acao: "consultar" }]).map(
+        (x) => x.destino,
+      ),
     ).toEqual(["/contratos"]);
     expect(
-      menuComumPermitido([{ recurso: "contratantes", acao: "criar" }]).map((x) => x.destino),
+      menuComumPermitido([{ recurso: "contratantes", acao: "criar" }]).map(
+        (x) => x.destino,
+      ),
     ).toEqual(["/contratantes/novo"]);
   });
   it("constrói apenas rotas existentes do contrato corrente", () => {
@@ -450,7 +558,11 @@ describe("navegação V1 por permissões e contexto", () => {
     expect(links.some((x) => x.destino.endsWith("/importar"))).toBe(false);
   });
   it("mantém a competência exata nos links e exige permissão por ação", () => {
-    const c = { contrato: "contrato-A", competencia: "competencia-A", contratante: null };
+    const c = {
+      contrato: "contrato-A",
+      competencia: "competencia-A",
+      contratante: null,
+    };
     const links = menuContextualV1(c, [
       { recurso: "documentos_competencia", acao: "consultar" },
       { recurso: "analises", acao: "consultar" },
@@ -466,21 +578,27 @@ describe("navegação V1 por permissões e contexto", () => {
 describe("menu contextual autenticado", () => {
   beforeEach(() => {
     mocks.pathname = "/";
-    mocks.getUser
-      .mockReset()
-      .mockResolvedValue({ data: { user: { id: "usuario-teste" } }, error: null });
+    mocks.getUser.mockReset().mockResolvedValue({
+      data: { user: { id: "usuario-teste" } },
+      error: null,
+    });
     mocks.obterPreferencia.mockReset().mockReturnValue("org-A");
     mocks.validarAdministrador.mockReset().mockResolvedValue(false);
     mocks.podeConsultarAuditoria.mockReset().mockResolvedValue(false);
     mocks.onAuthStateChange
       .mockReset()
       .mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } });
-    mocks.contexto
-      .mockReset()
-      .mockResolvedValue({ contrato: null, competencia: null, contratante: null });
-    mocks.efetivas
-      .mockReset()
-      .mockResolvedValue({ schema_versao: "rbac-v1", versao: 5, master: false, permissoes: [] });
+    mocks.contexto.mockReset().mockResolvedValue({
+      contrato: null,
+      competencia: null,
+      contratante: null,
+    });
+    mocks.efetivas.mockReset().mockResolvedValue({
+      schema_versao: "rbac-v1",
+      versao: 5,
+      master: false,
+      permissoes: [],
+    });
   });
   afterEach(cleanup);
   it("não exibe links comuns enquanto permissões estão pendentes", async () => {
@@ -497,7 +615,9 @@ describe("menu contextual autenticado", () => {
       </ContaOSAppShell>,
     );
     await waitFor(() => expect(mocks.efetivas).toHaveBeenCalled());
-    expect(screen.queryByRole("link", { name: "Contratos" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Contratos" }),
+    ).not.toBeInTheDocument();
     resolver({
       schema_versao: "rbac-v1",
       versao: 5,
@@ -505,7 +625,9 @@ describe("menu contextual autenticado", () => {
       permissoes: [{ recurso: "contratos", acao: "consultar" }],
     });
     await screen.findByRole("link", { name: "Contratos" });
-    expect(screen.queryByRole("link", { name: "Novo contrato" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Novo contrato" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Organizações" })).toHaveAttribute(
       "href",
       "/selecionar-organizacao",
@@ -520,7 +642,12 @@ describe("menu contextual autenticado", () => {
             resolver = r;
           }),
       )
-      .mockResolvedValue({ schema_versao: "rbac-v1", versao: 5, master: false, permissoes: [] });
+      .mockResolvedValue({
+        schema_versao: "rbac-v1",
+        versao: 5,
+        master: false,
+        permissoes: [],
+      });
     render(
       <ContaOSAppShell>
         <div>Conteúdo</div>
@@ -529,7 +656,9 @@ describe("menu contextual autenticado", () => {
     await waitFor(() => expect(mocks.efetivas).toHaveBeenCalledTimes(1));
     mocks.obterPreferencia.mockReturnValue("org-B");
     fireEvent(window, new Event("contaos:organizacao-alterada"));
-    await waitFor(() => expect(mocks.efetivas).toHaveBeenLastCalledWith("org-B", null));
+    await waitFor(() =>
+      expect(mocks.efetivas).toHaveBeenLastCalledWith("org-B", null),
+    );
     resolver({
       schema_versao: "rbac-v1",
       versao: 5,
@@ -537,7 +666,9 @@ describe("menu contextual autenticado", () => {
       permissoes: [{ recurso: "contratos", acao: "criar" }],
     });
     await waitFor(() =>
-      expect(screen.queryByRole("link", { name: "Novo contrato" })).not.toBeInTheDocument(),
+      expect(
+        screen.queryByRole("link", { name: "Novo contrato" }),
+      ).not.toBeInTheDocument(),
     );
   });
   it("negativa efetiva bloqueia links mesmo com capacidade administrativa true", async () => {
@@ -548,8 +679,21 @@ describe("menu contextual autenticado", () => {
         <div>Conteúdo</div>
       </ContaOSAppShell>,
     );
-    await waitFor(() => expect(mocks.podeConsultarAuditoria).toHaveBeenCalled());
-    expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Auditoria" })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(mocks.podeConsultarAuditoria).toHaveBeenCalled(),
+    );
+    expect(
+      screen.queryByRole("link", { name: "Usuários" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Auditoria" }),
+    ).not.toBeInTheDocument();
   });
 });
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({
+    cancelQueries: vi.fn(async () => undefined),
+    clear: vi.fn(),
+  }),
+}));

@@ -137,7 +137,7 @@ describe("SYS-05 Dashboard", () => {
     });
     montar();
     expect(await screen.findByText(MENSAGENS_SYS05.vazio)).toBeTruthy();
-    expect(screen.getByText(/Alfa Contábil/)).toBeTruthy();
+    expect(screen.queryByText(/Alfa Contábil/)).toBeNull();
     expect(screen.queryByText(MENSAGENS_SYS05.negado)).toBeNull();
   });
 
@@ -156,7 +156,7 @@ describe("SYS-05 Dashboard", () => {
       expect(screen.queryByText(MENSAGENS_SYS05.erro)).toBeNull();
       expect(screen.queryByText(/resumo desta organização|forbidden/)).toBeNull();
       expect(screen.getByRole("link", { name: "Selecionar outra organização" }).getAttribute("href")).toBe("/selecionar-organizacao");
-      expect(screen.getByRole("button", { name: "Sair da conta" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Sair da conta" })).toBeNull();
     },
   );
 
@@ -183,15 +183,11 @@ describe("SYS-05 Dashboard", () => {
     expect(await screen.findByText(MENSAGENS_SYS05.erro)).toBeTruthy();
   });
 
-  it("Trocar organização aponta para /selecionar-organizacao; Sair chama signOut uma vez", async () => {
+  it("ações da sessão pertencem ao cabeçalho global sem duplicação no Painel", async () => {
     m.rpc.mockResolvedValue({ data: resumo(), error: null });
     montar();
     await screen.findByText("Atenção A");
-    expect(screen.getByRole("link", { name: /Trocar organização/ }).getAttribute("href")).toBe("/selecionar-organizacao");
-    const sair = screen.getByRole("button", { name: "Sair" });
-    fireEvent.click(sair);
-    fireEvent.click(sair);
-    await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/login", replace: true }));
-    expect(m.signOut).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("link", { name: /Trocar organização/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Sair" })).toBeNull();
   });
 });

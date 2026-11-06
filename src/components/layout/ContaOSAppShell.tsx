@@ -14,7 +14,11 @@ import {
 } from "@/lib/organizacao/preferenciaOrganizacao";
 import { rotaSemSidebar } from "@/lib/navegacao/menuV1";
 import { ContaOSSidebar } from "./ContaOSSidebar";
-import { validarAdministrador, podeConsultarAuditoria } from "@/lib/administracao/admUsuariosRpc";
+import { ContaOSOrganizationHeader } from "./ContaOSOrganizationHeader";
+import {
+  validarAdministrador,
+  podeConsultarAuditoria,
+} from "@/lib/administracao/admUsuariosRpc";
 import { Link } from "@tanstack/react-router";
 import { MENU_ADMIN_V1 } from "@/lib/navegacao/menuV1";
 import { Users, ScrollText } from "lucide-react";
@@ -26,6 +30,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     pathname === destino || pathname.startsWith(`${destino}/`);
   const [liberado, setLiberado] = useState(false);
   const [revisaoSessao, setRevisaoSessao] = useState(0);
+  const [chaveConteudo, setChaveConteudo] = useState(0);
   const [administrador, setAdministrador] = useState(false);
   const [auditoriaPermitida, setAuditoriaPermitida] = useState(false);
   const [permissoes, setPermissoes] = useState<AcaoRbac[]>([]);
@@ -47,7 +52,9 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     document.body.style.overflow = "hidden";
     const dialogo = dialogoMovelRef.current;
     const focoAnterior =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     const selecionarFocaveis = () =>
       Array.from(
         dialogo?.querySelectorAll<HTMLElement>(
@@ -71,13 +78,15 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       const ultimo = focaveis[focaveis.length - 1];
       if (
         evento.shiftKey &&
-        (document.activeElement === primeiro || !dialogo?.contains(document.activeElement))
+        (document.activeElement === primeiro ||
+          !dialogo?.contains(document.activeElement))
       ) {
         evento.preventDefault();
         ultimo?.focus();
       } else if (
         !evento.shiftKey &&
-        (document.activeElement === ultimo || !dialogo?.contains(document.activeElement))
+        (document.activeElement === ultimo ||
+          !dialogo?.contains(document.activeElement))
       ) {
         evento.preventDefault();
         primeiro?.focus();
@@ -87,7 +96,8 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     return () => {
       document.removeEventListener("keydown", controlarTeclado);
       document.body.style.overflow = overflowAnterior;
-      if (!fechamentoPorNavegacao.current && focoAnterior?.isConnected) focoAnterior.focus();
+      if (!fechamentoPorNavegacao.current && focoAnterior?.isConnected)
+        focoAnterior.focus();
       else if (!fechamentoPorNavegacao.current) botaoMovelRef.current?.focus();
       fechamentoPorNavegacao.current = false;
     };
@@ -114,10 +124,12 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       setRevisaoSessao((atual) => atual + 1);
     };
     document.addEventListener("visibilitychange", revalidarAoRetomar);
-    return () => document.removeEventListener("visibilitychange", revalidarAoRetomar);
+    return () =>
+      document.removeEventListener("visibilitychange", revalidarAoRetomar);
   }, []);
   useEffect(() => {
     const revalidarAoAlterarOrganizacao = () => {
+      setChaveConteudo((chave) => chave + 1);
       // Invalida RPCs pendentes antes de iniciar qualquer consulta da nova organização.
       geracaoAutenticacao.current += 1;
       setLiberado(false);
@@ -128,13 +140,24 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       setMovelAberto(false);
       setRevisaoSessao((atual) => atual + 1);
     };
-    window.addEventListener(EVENTO_ORGANIZACAO_ALTERADA, revalidarAoAlterarOrganizacao);
+    window.addEventListener(
+      EVENTO_ORGANIZACAO_ALTERADA,
+      revalidarAoAlterarOrganizacao,
+    );
     return () =>
-      window.removeEventListener(EVENTO_ORGANIZACAO_ALTERADA, revalidarAoAlterarOrganizacao);
+      window.removeEventListener(
+        EVENTO_ORGANIZACAO_ALTERADA,
+        revalidarAoAlterarOrganizacao,
+      );
   }, []);
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((evento) => {
-      if (evento !== "SIGNED_IN" && evento !== "SIGNED_OUT" && evento !== "USER_UPDATED") return;
+      if (
+        evento !== "SIGNED_IN" &&
+        evento !== "SIGNED_OUT" &&
+        evento !== "USER_UPDATED"
+      )
+        return;
       geracaoAutenticacao.current += 1;
       setLiberado(false);
       setAdministrador(false);
@@ -165,16 +188,24 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       if (sessaoAtual() && organizacao) {
         setLiberado(true);
         const contextoAtual = await resolverContextoRbac(pathname, organizacao);
-        const efetivas = await consultarPermissoesEfetivas(organizacao, contextoAtual.contrato);
+        const efetivas = await consultarPermissoesEfetivas(
+          organizacao,
+          contextoAtual.contrato,
+        );
         if (!sessaoAtual()) return;
         setPermissoes(efetivas.permissoes);
         setContexto(contextoAtual);
-        const autorizado = await validarAdministrador(organizacao).catch(() => false);
+        const autorizado = await validarAdministrador(organizacao).catch(
+          () => false,
+        );
         if (sessaoAtual())
           setAdministrador(
-            autorizado === true && temPermissao(efetivas.permissoes, "usuarios", "administrar"),
+            autorizado === true &&
+              temPermissao(efetivas.permissoes, "usuarios", "administrar"),
           );
-        const auditoriaAutorizada = await podeConsultarAuditoria(organizacao).catch(() => false);
+        const auditoriaAutorizada = await podeConsultarAuditoria(
+          organizacao,
+        ).catch(() => false);
         if (sessaoAtual())
           setAuditoriaPermitida(
             auditoriaAutorizada === true &&
@@ -216,31 +247,49 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
               role="dialog"
               aria-modal="true"
               aria-label="Menu de navegação"
-              className="fixed inset-0 z-40 overflow-y-auto bg-background/95 pt-12 md:hidden"
+              className="fixed inset-0 z-40 overflow-y-auto bg-sidebar text-sidebar-foreground pt-12 md:hidden"
             >
               <button
                 type="button"
-                className="m-3 rounded border px-3 py-2"
+                className="m-3 min-h-11 rounded border border-sidebar-border px-3 py-2 focus-visible:ring-2 focus-visible:ring-sidebar-ring"
                 onClick={() => setMovelAberto(false)}
               >
                 Fechar menu
               </button>
+              <div className="border-b border-sidebar-border p-4">
+                <img
+                  src="/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"
+                  alt="ContaOS"
+                  width={131}
+                  height={32}
+                  className="h-8 w-auto"
+                />
+              </div>
               <ContaOSSidebar
                 permissoes={permissoes}
                 contexto={contexto}
                 aoNavegar={() => setMovelAberto(false)}
               />
               {(administrador || auditoriaPermitida) && (
-                <nav aria-label="Administração" className="flex flex-col gap-1 p-3">
+                <nav
+                  aria-label="Administração"
+                  className="flex flex-col gap-1 p-3"
+                >
                   {MENU_ADMIN_V1.filter((item) =>
-                    item.destino === "/administracao/usuarios" ? administrador : auditoriaPermitida,
+                    item.destino === "/administracao/usuarios"
+                      ? administrador
+                      : auditoriaPermitida,
                   ).map((item) => (
                     <Link
                       key={item.destino}
                       to={item.destino}
                       onClick={() => setMovelAberto(false)}
-                      aria-current={rotaAdministrativaAtiva(item.destino) ? "page" : undefined}
-                      className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-accent text-accent-foreground" : "hover:bg-accent"}`}
+                      aria-current={
+                        rotaAdministrativaAtiva(item.destino)
+                          ? "page"
+                          : undefined
+                      }
+                      className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-sidebar-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                     >
                       {item.titulo}
                     </Link>
@@ -250,66 +299,63 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
             </div>
           )}
           <aside
-            className={`fixed inset-y-0 left-0 hidden overflow-y-auto border-r bg-background md:block ${recolhida ? "w-20" : "w-56"}`}
+            className={`fixed inset-y-0 left-0 z-30 hidden overflow-y-auto border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:block ${recolhida ? "w-20" : "w-56"}`}
           >
-            <div className="flex items-center justify-between gap-2 border-b p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-sidebar-border p-3">
               <img
-                src="/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg"
+                src={
+                  recolhida
+                    ? "/brand/ContaOS_Simbolo_Branco.svg"
+                    : "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"
+                }
                 alt="ContaOS"
-                width={131}
+                width={recolhida ? 32 : 131}
                 height={32}
-                className={recolhida ? "hidden" : "h-8 w-auto dark:hidden"}
-              />
-              <img
-                src="/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"
-                alt="ContaOS"
-                width={131}
-                height={32}
-                className={recolhida ? "hidden" : "hidden h-8 w-auto dark:block"}
-              />
-              <img
-                src="/brand/ContaOS_Simbolo_Navy.svg"
-                alt="ContaOS"
-                width={32}
-                height={32}
-                className={recolhida ? "block size-8 dark:hidden" : "hidden"}
-              />
-              <img
-                src="/brand/ContaOS_Simbolo_Branco.svg"
-                alt="ContaOS"
-                width={32}
-                height={32}
-                className={recolhida ? "hidden size-8 dark:block" : "hidden"}
+                className={recolhida ? "size-8 shrink-0" : "h-8 w-auto min-w-0"}
               />
               <button
                 type="button"
                 aria-label={recolhida ? "Expandir menu" : "Recolher menu"}
                 aria-expanded={!recolhida}
                 onClick={() => setRecolhida((v) => !v)}
-                className="rounded border px-2 py-1 focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-h-11 rounded border border-sidebar-border px-2 py-1 focus-visible:ring-2 focus-visible:ring-sidebar-ring"
               >
                 {recolhida ? "»" : "«"}
               </button>
             </div>
-            <ContaOSSidebar permissoes={permissoes} contexto={contexto} recolhida={recolhida} />
+            <ContaOSSidebar
+              permissoes={permissoes}
+              contexto={contexto}
+              recolhida={recolhida}
+            />
             {(administrador || auditoriaPermitida) && (
-              <nav aria-label="Administração" className="flex flex-col gap-1 p-3">
+              <nav
+                aria-label="Administração"
+                className="flex flex-col gap-1 p-3"
+              >
                 {MENU_ADMIN_V1.filter((item) =>
-                  item.destino === "/administracao/usuarios" ? administrador : auditoriaPermitida,
+                  item.destino === "/administracao/usuarios"
+                    ? administrador
+                    : auditoriaPermitida,
                 ).map((item) => (
                   <Link
                     key={item.destino}
                     to={item.destino}
                     aria-label={item.titulo}
                     title={recolhida ? item.titulo : undefined}
-                    aria-current={rotaAdministrativaAtiva(item.destino) ? "page" : undefined}
-                    className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-accent text-accent-foreground" : "hover:bg-accent"}`}
+                    aria-current={
+                      rotaAdministrativaAtiva(item.destino) ? "page" : undefined
+                    }
+                    className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-sidebar-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                   >
                     <span className="flex items-center gap-2">
                       {item.destino === "/administracao/usuarios" ? (
                         <Users aria-hidden="true" className="size-4 shrink-0" />
                       ) : (
-                        <ScrollText aria-hidden="true" className="size-4 shrink-0" />
+                        <ScrollText
+                          aria-hidden="true"
+                          className="size-4 shrink-0"
+                        />
                       )}
                       {!recolhida && <span>{item.titulo}</span>}
                     </span>
@@ -320,8 +366,12 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
           </aside>
         </>
       )}
-      <div inert={movelAberto} className={liberado ? (recolhida ? "md:pl-20" : "md:pl-56") : ""}>
-        {children}
+      <div
+        inert={movelAberto}
+        className={`min-w-0 ${liberado ? (recolhida ? "md:pl-20" : "md:pl-56") : ""}`}
+      >
+        <ContaOSOrganizationHeader />
+        <div key={chaveConteudo}>{children}</div>
       </div>
     </div>
   );
