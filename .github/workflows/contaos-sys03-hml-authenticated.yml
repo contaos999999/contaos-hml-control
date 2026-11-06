@@ -9,12 +9,15 @@ jobs:
   synthetic-preflight:
     runs-on: ubuntu-24.04
     environment: hml
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
+      CI: "true"
       CONTAOS_HML_SUPABASE_URL: https://gklhhhyosgasnyoxlrui.supabase.co
+      CONTAOS_HML_FRONTEND_URL: https://scope-and-approval-keeper.lovable.app
       CONTAOS_HML_SYNTHETIC_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_EMAIL }}
       CONTAOS_HML_SYNTHETIC_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_PASSWORD }}
       CONTAOS_HML_MAILBOX_TOKEN: ${{ secrets.CONTAOS_HML_MAILBOX_TOKEN }}
+      CONTAOS_SYS03_AUTH_E2E: "true"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,4 +26,18 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - name: Verify synthetic HML prerequisites without exposing secrets
         run: |
-          bun -e 'import { syntheticFixturePreflight } from "./tests/hml/sys03-fixture.ts"; const p = syntheticFixturePreflight(process.env); if (!p.ready) { console.error("BLOCKED: missing or invalid HML fixture prerequisites: " + p.missing.join(",")); process.exit(1); } console.log("PASS: HML fixture prerequisites configured; no Auth E2E performed");'
+          bun -e 'import { syntheticFixturePreflight } from "./tests/hml/sys03-fixture.ts"; const p = syntheticFixturePreflight(process.env); if (!p.ready) { console.error("BLOCKED: missing or invalid HML fixture prerequisites: " + p.missing.join(",")); process.exit(1); } console.log("PASS: HML fixture prerequisites configured");'
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Install Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Run real SYS-03 HML browser integration
+        run: bunx playwright test --config=playwright.config.ts
+      - name: Upload redacted test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sys03-hml-authenticated-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
