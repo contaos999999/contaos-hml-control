@@ -6,8 +6,15 @@ import { Loader2, LogOut, ShieldAlert, UserPlus } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { ErroAdm, MENSAGENS_ADM01, listarUsuarios, validarAdministrador, type UsuarioVinculo } from "@/lib/administracao/admUsuariosRpc";
+import {
+  ErroAdm,
+  MENSAGENS_ADM01,
+  listarUsuarios,
+  validarAdministrador,
+  type UsuarioVinculo,
+} from "@/lib/administracao/admUsuariosRpc";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
+import { MatrizPermissoes } from "./MatrizPermissoes";
 import { AuditDrawer } from "./AuditDrawer";
 import { ContractScopeDialog, type ModoVinculo } from "./ContractScopeDialog";
 import { UserMembershipTable } from "./UserMembershipTable";
@@ -57,7 +64,8 @@ export function AdminUsuarios() {
         if (!ativo) return;
         const semSessao =
           !!error &&
-          ((error as { name?: string }).name === "AuthSessionMissingError" || (error as { code?: string }).code === "session_not_found");
+          ((error as { name?: string }).name === "AuthSessionMissingError" ||
+            (error as { code?: string }).code === "session_not_found");
         if (semSessao || (!error && !data.user)) {
           navigate({ to: "/login", replace: true });
           return;
@@ -151,8 +159,9 @@ export function AdminUsuarios() {
       <header className="border-b border-border bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <span className="md:hidden"><ContaOSMarca /></span>
-            
+            <span className="md:hidden">
+              <ContaOSMarca />
+            </span>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="secondary" className="h-11">
@@ -165,7 +174,11 @@ export function AdminUsuarios() {
               disabled={saindo}
               onClick={sair}
             >
-              {saindo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : <LogOut className="mr-2 h-4 w-4" aria-hidden />}
+              {saindo ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <LogOut className="mr-2 h-4 w-4" aria-hidden />
+              )}
               Sair
             </Button>
           </div>
@@ -175,18 +188,39 @@ export function AdminUsuarios() {
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Administração</p>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Usuários e vínculos</h1>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Administração
+            </p>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Usuários e vínculos
+            </h1>
           </div>
           {fase === "sucesso" && (
-            <Button type="button" className="h-11" onClick={(e) => (lembrarGatilho(e.currentTarget), setAviso(null), setEditando({ tipo: "novo" }))}>
+            <Button
+              type="button"
+              className="h-11"
+              onClick={(e) => (
+                lembrarGatilho(e.currentTarget),
+                setAviso(null),
+                setEditando({ tipo: "novo" })
+              )}
+            >
               <UserPlus className="mr-2 h-4 w-4" aria-hidden /> Convidar ou vincular usuário
             </Button>
           )}
         </div>
 
-        <div role="status" aria-live="polite" className={aviso ? "rounded-md border border-border bg-card p-3 text-sm" : "sr-only"}>
-          {aviso ?? (fase === "verificando" ? MENSAGENS_ADM01.verificando : fase === "carregando" ? MENSAGENS_ADM01.carregando : "")}
+        <div
+          role="status"
+          aria-live="polite"
+          className={aviso ? "rounded-md border border-border bg-card p-3 text-sm" : "sr-only"}
+        >
+          {aviso ??
+            (fase === "verificando"
+              ? MENSAGENS_ADM01.verificando
+              : fase === "carregando"
+                ? MENSAGENS_ADM01.carregando
+                : "")}
         </div>
 
         {pronto && admin && !erroSessao && fase !== "negado" && (
@@ -233,7 +267,10 @@ export function AdminUsuarios() {
 
         {fase === "negado" && (
           <div className="max-w-xl space-y-3">
-            <div role="alert" className="flex gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4">
+            <div
+              role="alert"
+              className="flex gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4"
+            >
               <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden />
               <p className="text-sm text-foreground">{MENSAGENS_ADM01.negado}</p>
             </div>
@@ -245,18 +282,37 @@ export function AdminUsuarios() {
 
         {fase === "erro" && (
           <div className="max-w-xl space-y-3">
-            <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-foreground">
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-foreground"
+            >
               {MENSAGENS_ADM01.erro}
             </div>
-            <Button type="button" className="h-11" onClick={() => (erroSessao ? setTentativa((n) => n + 1) : acesso.error ? acesso.refetch() : consulta.refetch())}>
+            <Button
+              type="button"
+              className="h-11"
+              onClick={() =>
+                erroSessao
+                  ? setTentativa((n) => n + 1)
+                  : acesso.error
+                    ? acesso.refetch()
+                    : consulta.refetch()
+              }
+            >
               Tentar novamente
             </Button>
           </div>
         )}
 
         {d && (
-          <section aria-labelledby="adm01-lista" className="rounded-xl border border-border bg-card p-3 sm:p-5">
-            <h2 id="adm01-lista" className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <section
+            aria-labelledby="adm01-lista"
+            className="rounded-xl border border-border bg-card p-3 sm:p-5"
+          >
+            <h2
+              id="adm01-lista"
+              className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+            >
               Usuários vinculados
             </h2>
             {d.itens.length === 0 ? (
@@ -265,13 +321,27 @@ export function AdminUsuarios() {
               <UserMembershipTable
                 itens={d.itens}
                 perfis={perfis}
-                onEditar={(u) => (lembrarGatilho(), setAviso(null), setEditando({ tipo: "editar", usuario: u }))}
+                onEditar={(u) => (
+                  lembrarGatilho(),
+                  setAviso(null),
+                  setEditando({ tipo: "editar", usuario: u })
+                )}
                 onAuditoria={(u) => (lembrarGatilho(), setAuditando(u))}
               />
             )}
             {d.total_paginas > 1 && (
-              <nav aria-label="Paginação de usuários" className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
-                <Button type="button" variant="outline" className="h-11" aria-label="Página anterior" disabled={pagina <= 1} onClick={() => setPagina((p) => p - 1)}>
+              <nav
+                aria-label="Paginação de usuários"
+                className="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm"
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11"
+                  aria-label="Página anterior"
+                  disabled={pagina <= 1}
+                  onClick={() => setPagina((p) => p - 1)}
+                >
                   Anterior
                 </Button>
                 <span>{`Página ${d.pagina} de ${d.total_paginas}`}</span>
@@ -288,6 +358,9 @@ export function AdminUsuarios() {
               </nav>
             )}
           </section>
+        )}
+        {idUsuario && org && admin && !erroSessao && fase !== "negado" && (
+          <MatrizPermissoes key={`${idUsuario}:${org}`} idUsuario={idUsuario} org={org} />
         )}
       </main>
 
@@ -306,7 +379,12 @@ export function AdminUsuarios() {
         />
       )}
       {auditando && org && (
-        <AuditDrawer org={org} usuario={auditando} onFechar={() => (setAuditando(null), restaurarFoco())} onRecarregarLista={() => consulta.refetch()} />
+        <AuditDrawer
+          org={org}
+          usuario={auditando}
+          onFechar={() => (setAuditando(null), restaurarFoco())}
+          onRecarregarLista={() => consulta.refetch()}
+        />
       )}
     </div>
   );

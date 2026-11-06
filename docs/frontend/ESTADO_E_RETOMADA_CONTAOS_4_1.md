@@ -1,3 +1,19 @@
+## CHECKPOINT P0 — 06/11/2026: BUILD local da matriz e navegação V1
+
+PLAN #180 integrado em 50709cd796d876149c8f011607fc24369ab5d28a, com os dois checks obrigatórios aprovados no run 42155058599. Preservados PLANS #178/#179, PR #176 e fontes normativas. Backend atual: 1edb2c40595e01f7e1e8c5f80160b7b3a4113c12, com 25/25 blobs e catálogo 100/97 iguais. Relatório JWT das nove funções no PR backend #85, ainda não integrado durante este BUILD para preservar o gate de fonte viva.
+
+Implementação: painel MASTER persistente na rota administrativa existente; 480 combinações validadas, revisão antes de salvar, versão otimista, retry com mesmo UUID, recarga após PT409, descarte de respostas antigas e bloqueio síncrono após troca de sessão. Menu comum e contextual das rotas V1 existentes filtrado por permissões efetivas. Seletor de organizações reutilizado. Sem alteração de tipos, Brand, rotas geradas, backend ou PROD.
+
+A revisão independente encontrou perda de edição e UUID ao filtrar a lista de usuários. Corrigido: o painel permanece montado enquanto identidade, organização e acesso forem válidos. Dois testes falharam com a condição antiga e passaram com a correção. Acrescentada conferência do transporte de contexto de competência sob organização exata, ausência e erro.
+
+Validação local concluída: **36 suítes / 921 testes PASS**, TypeScript PASS, lint dos nove arquivos sem erros e com dois avisos de hooks, build PASS, árvore de rotas sem mudança e tipos no blob 8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Mock não equivale a JWT ou visual real. CI remoto e Teste C deste BUILD ainda pendentes.
+
+Backend: rodada matriz/Edge PR #83, com 147 cenários distintos finais aprovados e quarentena de 14 contas sem sessões. Nova rodada das nove APIs: 377/377 PASS, 94 ALLOW e 212 DENY; persistência de seis respostas e seis desfechos, três mensagens próprias arquivadas, 14 contas bloqueadas e zero sessões, no PR #85. Upload físico e worker continuam sem certificação.
+
+Última etapa comprovada: BUILD e regressão local após as correções da revisão. Próxima tarefa: dois checks remotos no SHA exato, Teste C autenticado e visual, SYS-03, RNFs práticos e critérios. A reconciliação original confirmou 486 critérios literais V1; os 488 históricos foram preservados para análise do diferencial. **V1 NÃO CERTIFICADA; V2 bloqueada; PROD intacta.**
+
+---
+
 ## CHECKPOINT P0 — 05/11/2026: conexão real PostgreSQL HML com secret existente
 
 - O titular confirmou e autorizou usar `CONTAOS_HML_DATABASE_URL` do GitHub Actions Environment `hml`; nenhuma chave foi solicitada ou exposta.

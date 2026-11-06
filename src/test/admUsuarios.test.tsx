@@ -5,10 +5,26 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import type { ReactNode } from "react";
 
-const m = vi.hoisted(() => ({ getUser: vi.fn(), signOut: vi.fn(), rpc: vi.fn(), nav: vi.fn(), invoke: vi.fn() }));
+const m = vi.hoisted(() => ({
+  getUser: vi.fn(),
+  signOut: vi.fn(),
+  rpc: vi.fn(),
+  nav: vi.fn(),
+  invoke: vi.fn(),
+  rbac: vi.fn(),
+}));
 
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth: { getUser: m.getUser, signOut: m.signOut }, rpc: m.rpc, from: vi.fn(), functions: { invoke: m.invoke } },
+  supabase: {
+    auth: {
+      getUser: m.getUser,
+      signOut: m.signOut,
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
+    },
+    rpc: m.rpc,
+    from: vi.fn(),
+    functions: { invoke: m.invoke },
+  },
 }));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.nav,
@@ -27,13 +43,32 @@ const U = "admin-1";
 const ORG = "org-1";
 type Resp = { data: unknown; error: unknown; status: number };
 type Chave =
-  | "p_id_organizacao" | "p_id_usuario" | "p_email" | "p_perfil" | "p_escopo_todos_contratos" | "p_ativo"
-  | "p_ids_contratos_ativar" | "p_ids_contratos_revogar" | "p_versao_esperada" | "p_chave_idempotencia"
-  | "p_pagina" | "p_tamanho_pagina" | "p_busca";
+  | "p_id_organizacao"
+  | "p_id_usuario"
+  | "p_email"
+  | "p_perfil"
+  | "p_escopo_todos_contratos"
+  | "p_ativo"
+  | "p_ids_contratos_ativar"
+  | "p_ids_contratos_revogar"
+  | "p_versao_esperada"
+  | "p_chave_idempotencia"
+  | "p_pagina"
+  | "p_tamanho_pagina"
+  | "p_busca";
 type Args = Partial<Record<Chave, unknown>>;
-type RpcNome = "validar_administrador_organizacao" | "listar_usuarios_vinculos_adm" | "listar_escopo_contratos_usuario_adm" | "listar_auditoria_vinculo_usuario_adm" | "salvar_vinculo_usuario_adm";
+type RpcNome =
+  | "validar_administrador_organizacao"
+  | "listar_usuarios_vinculos_adm"
+  | "listar_escopo_contratos_usuario_adm"
+  | "listar_auditoria_vinculo_usuario_adm"
+  | "salvar_vinculo_usuario_adm";
 const ok = (data: unknown): Resp => ({ data, error: null, status: 200 });
-const falha = (code: string, status: number): Resp => ({ data: null, error: { code, message: "detalhe técnico interno" }, status });
+const falha = (code: string, status: number): Resp => ({
+  data: null,
+  error: { code, message: "detalhe técnico interno" },
+  status,
+});
 
 const PERFIS = [
   { codigo: "administrador", nome: "Administrador", descricao: null },
@@ -81,8 +116,22 @@ const contrato = (id: string, selecionado: boolean, acesso = selecionado) => ({
 });
 // 3 páginas de escopo: p1 c1(false) c2(true); p2 c3(false); p3 c9(true) — nunca visitada nos testes.
 function escopoPagina(pagina: number, todos = false) {
-  const itens = pagina === 1 ? [contrato("c1", false), contrato("c2", true)] : pagina === 2 ? [contrato("c3", false)] : [contrato("c9", true)];
-  return { schema_versao: "adm01-v2", id_usuario: "u-a", escopo_todos_contratos: todos, pagina, tamanho_pagina: 25, total: 75, total_paginas: 3, itens };
+  const itens =
+    pagina === 1
+      ? [contrato("c1", false), contrato("c2", true)]
+      : pagina === 2
+        ? [contrato("c3", false)]
+        : [contrato("c9", true)];
+  return {
+    schema_versao: "adm01-v2",
+    id_usuario: "u-a",
+    escopo_todos_contratos: todos,
+    pagina,
+    tamanho_pagina: 25,
+    total: 75,
+    total_paginas: 3,
+    itens,
+  };
 }
 function auditoria(pagina = 1) {
   return {
@@ -103,7 +152,9 @@ function auditoria(pagina = 1) {
         ator_nome: "Admin Teste",
         ator_email: "admin@exemplo.com",
         antes: { vinculo: { perfil: "analista", ativo: true, escopo_todos_contratos: false } },
-        depois: { vinculo: { perfil: "administrador", ativo: true, escopo_todos_contratos: false } },
+        depois: {
+          vinculo: { perfil: "administrador", ativo: true, escopo_todos_contratos: false },
+        },
         metadados: {},
         criado_em: "2026-11-02T13:05:00Z",
       },
@@ -112,7 +163,8 @@ function auditoria(pagina = 1) {
 }
 
 let handlers: Record<RpcNome, (a: Args) => Resp | Promise<Resp>>;
-const chamadas = (nome: RpcNome) => m.rpc.mock.calls.filter((c) => c[0] === nome).map((c) => c[1] as Args);
+const chamadas = (nome: RpcNome) =>
+  m.rpc.mock.calls.filter((c) => c[0] === nome).map((c) => c[1] as Args);
 
 function montar() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -129,14 +181,26 @@ beforeEach(() => {
   definirPreferenciaOrganizacao(U, ORG);
   m.getUser.mockResolvedValue({ data: { user: { id: U } }, error: null });
   m.signOut.mockResolvedValue({ error: null });
+  m.rbac.mockReset().mockResolvedValue(falha("42501", 403));
   handlers = {
     validar_administrador_organizacao: () => ok(true),
     listar_usuarios_vinculos_adm: () => ok(lista([usuario()])),
     listar_escopo_contratos_usuario_adm: (a) => ok(escopoPagina(Number(a.p_pagina))),
     listar_auditoria_vinculo_usuario_adm: (a) => ok(auditoria(Number(a.p_pagina))),
-    salvar_vinculo_usuario_adm: () => ok({ schema_versao: "adm01-v2", correlation_id: "corr-ok-1", id_usuario: "u-a", vinculo: {} }),
+    salvar_vinculo_usuario_adm: () =>
+      ok({
+        schema_versao: "adm01-v2",
+        correlation_id: "corr-ok-1",
+        id_usuario: "u-a",
+        vinculo: {},
+      }),
   };
-  m.rpc.mockImplementation(async (nome: RpcNome, a: Args) => handlers[nome](a));
+  m.rpc.mockImplementation(
+    async (nome: RpcNome | "obter_matriz_rbac_master" | "atualizar_matriz_rbac_master", a: Args) =>
+      nome === "obter_matriz_rbac_master" || nome === "atualizar_matriz_rbac_master"
+        ? m.rbac(nome, a)
+        : handlers[nome](a),
+  );
   m.invoke.mockResolvedValue({
     data: {
       ok: true,
@@ -152,7 +216,11 @@ beforeEach(() => {
 });
 const edgeFalha = (status: number, codigo: string) => ({
   data: null,
-  error: { name: "FunctionsHttpError", message: "Edge Function returned a non-2xx status code", context: { status, json: async () => ({ codigo, mensagem: "detalhe técnico interno" }) } },
+  error: {
+    name: "FunctionsHttpError",
+    message: "Edge Function returned a non-2xx status code",
+    context: { status, json: async () => ({ codigo, mensagem: "detalhe técnico interno" }) },
+  },
 });
 afterEach(() => vi.restoreAllMocks());
 
@@ -163,19 +231,26 @@ async function abrirEdicao() {
   await within(dlg).findByLabelText("Contrato CT-c1 — Objeto c1");
   return dlg;
 }
-const salvar = (dlg: HTMLElement) => fireEvent.click(within(dlg).getByRole("button", { name: "Salvar vínculo" }));
+const salvar = (dlg: HTMLElement) =>
+  fireEvent.click(within(dlg).getByRole("button", { name: "Salvar vínculo" }));
 const ultimoSalvar = () => chamadas("salvar_vinculo_usuario_adm").at(-1)!;
 
 describe("ADM-01 sessão e estados", () => {
   it("sem sessão (AuthSessionMissingError) vai para /login", async () => {
-    m.getUser.mockResolvedValue({ data: { user: null }, error: { name: "AuthSessionMissingError", status: 400 } });
+    m.getUser.mockResolvedValue({
+      data: { user: null },
+      error: { name: "AuthSessionMissingError", status: 400 },
+    });
     montar();
     await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/login", replace: true }));
     expect(m.rpc).not.toHaveBeenCalled();
   });
 
   it("erro técnico do getUser não desloga e oferece retry", async () => {
-    m.getUser.mockResolvedValue({ data: { user: null }, error: { name: "AuthRetryableFetchError", status: 500 } });
+    m.getUser.mockResolvedValue({
+      data: { user: null },
+      error: { name: "AuthRetryableFetchError", status: 500 },
+    });
     montar();
     expect(await screen.findByText(MENSAGENS_ADM01.erro)).toBeInTheDocument();
     expect(m.nav).not.toHaveBeenCalled();
@@ -187,7 +262,9 @@ describe("ADM-01 sessão e estados", () => {
   it("sem preferência de organização vai para /selecionar-organizacao", async () => {
     window.sessionStorage.clear();
     montar();
-    await waitFor(() => expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }));
+    await waitFor(() =>
+      expect(m.nav).toHaveBeenCalledWith({ to: "/selecionar-organizacao", replace: true }),
+    );
   });
 
   it("valida administrador no backend uma vez antes de listar", async () => {
@@ -202,7 +279,9 @@ describe("ADM-01 sessão e estados", () => {
     montar();
     expect(await screen.findByText(MENSAGENS_ADM01.negado)).toBeInTheDocument();
     expect(chamadas("listar_usuarios_vinculos_adm")).toHaveLength(0);
-    expect(screen.queryByRole("button", { name: "Convidar ou vincular usuário" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Convidar ou vincular usuário" }),
+    ).not.toBeInTheDocument();
   });
 
   it("validar 42501 mostra 403; validar 500 mostra erro genérico", async () => {
@@ -217,7 +296,8 @@ describe("ADM-01 sessão e estados", () => {
   });
 
   it("schema_versao adm01-v1 na lista é incompatibilidade (erro genérico)", async () => {
-    handlers.listar_usuarios_vinculos_adm = () => ok({ ...lista([usuario()]), schema_versao: "adm01-v1" });
+    handlers.listar_usuarios_vinculos_adm = () =>
+      ok({ ...lista([usuario()]), schema_versao: "adm01-v1" });
     montar();
     expect(await screen.findByText(MENSAGENS_ADM01.erro)).toBeInTheDocument();
     expect(screen.queryByText("Ana Souza")).not.toBeInTheDocument();
@@ -270,13 +350,26 @@ describe("ADM-01 paginação real (093)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Próxima página" }));
     await waitFor(() => expect(chamadas("listar_usuarios_vinculos_adm").at(-1)!.p_pagina).toBe(2));
     fireEvent.change(screen.getByLabelText("Buscar usuários"), { target: { value: "  ana  " } });
-    await waitFor(() => expect(chamadas("listar_usuarios_vinculos_adm").at(-1)).toMatchObject({ p_busca: "ana", p_pagina: 1 }));
-    fireEvent.change(screen.getByLabelText("Situação do vínculo"), { target: { value: "inativos" } });
-    await waitFor(() => expect(chamadas("listar_usuarios_vinculos_adm").at(-1)).toMatchObject({ p_ativo: false, p_pagina: 1 }));
+    await waitFor(() =>
+      expect(chamadas("listar_usuarios_vinculos_adm").at(-1)).toMatchObject({
+        p_busca: "ana",
+        p_pagina: 1,
+      }),
+    );
+    fireEvent.change(screen.getByLabelText("Situação do vínculo"), {
+      target: { value: "inativos" },
+    });
+    await waitFor(() =>
+      expect(chamadas("listar_usuarios_vinculos_adm").at(-1)).toMatchObject({
+        p_ativo: false,
+        p_pagina: 1,
+      }),
+    );
   });
 
   it("paginação da lista chama a RPC (sem slice local)", async () => {
-    handlers.listar_usuarios_vinculos_adm = (a) => ok(lista([usuario(7, { nome: `Pessoa ${a.p_pagina}` } as never)], Number(a.p_pagina), 60));
+    handlers.listar_usuarios_vinculos_adm = (a) =>
+      ok(lista([usuario(7, { nome: `Pessoa ${a.p_pagina}` } as never)], Number(a.p_pagina), 60));
     montar();
     await screen.findByText("Pessoa 1");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página" }));
@@ -306,7 +399,9 @@ describe("ADM-01 deltas de escopo", () => {
     expect(ultimoSalvar().p_ids_contratos_revogar).toEqual([]);
     expect(ultimoSalvar().p_ids_contratos_ativar).not.toContain("c9");
     expect(ultimoSalvar().p_ids_contratos_revogar).not.toContain("c9");
-    expect(chamadas("listar_escopo_contratos_usuario_adm").some((a) => a.p_pagina === 3)).toBe(false);
+    expect(chamadas("listar_escopo_contratos_usuario_adm").some((a) => a.p_pagina === 3)).toBe(
+      false,
+    );
   });
 
   it("paginação e busca no escopo não limpam deltas", async () => {
@@ -315,7 +410,12 @@ describe("ADM-01 deltas de escopo", () => {
     fireEvent.click(within(dlg).getByRole("button", { name: "Próxima página de contratos" }));
     fireEvent.click(await within(dlg).findByLabelText("Contrato CT-c3 — Objeto c3"));
     fireEvent.change(within(dlg).getByLabelText("Buscar contratos"), { target: { value: "c" } });
-    await waitFor(() => expect(chamadas("listar_escopo_contratos_usuario_adm").at(-1)).toMatchObject({ p_busca: "c", p_pagina: 1 }));
+    await waitFor(() =>
+      expect(chamadas("listar_escopo_contratos_usuario_adm").at(-1)).toMatchObject({
+        p_busca: "c",
+        p_pagina: 1,
+      }),
+    );
     fireEvent.click(await within(dlg).findByLabelText("Contrato CT-c2 — Objeto c2"));
     expect(within(dlg).getByLabelText("Contrato CT-c1 — Objeto c1")).toBeChecked();
     salvar(dlg);
@@ -353,7 +453,11 @@ describe("ADM-01 deltas de escopo", () => {
     expect(within(dlg).getByLabelText("Contrato CT-c1 — Objeto c1")).toBeDisabled();
     salvar(dlg);
     await waitFor(() => expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(1));
-    expect(ultimoSalvar()).toMatchObject({ p_escopo_todos_contratos: true, p_ids_contratos_ativar: [], p_ids_contratos_revogar: [] });
+    expect(ultimoSalvar()).toMatchObject({
+      p_escopo_todos_contratos: true,
+      p_ids_contratos_ativar: [],
+      p_ids_contratos_revogar: [],
+    });
   });
 
   it("todos→específico recarrega RPC 3, refaz baseline, limpa deltas e invalida a chave", async () => {
@@ -367,10 +471,17 @@ describe("ADM-01 deltas de escopo", () => {
     fireEvent.click(within(dlg).getByLabelText("Acesso a todos os contratos"));
     // backend agora reporta c1 como explícito
     handlers.listar_escopo_contratos_usuario_adm = (a) =>
-      ok({ ...escopoPagina(Number(a.p_pagina)), itens: [contrato("c1", true), contrato("c2", true)] });
+      ok({
+        ...escopoPagina(Number(a.p_pagina)),
+        itens: [contrato("c1", true), contrato("c2", true)],
+      });
     fireEvent.click(within(dlg).getByLabelText("Acesso a todos os contratos"));
-    await waitFor(() => expect(chamadas("listar_escopo_contratos_usuario_adm").length).toBeGreaterThan(antes));
-    await waitFor(() => expect(within(dlg).getByLabelText("Contrato CT-c1 — Objeto c1")).toBeChecked());
+    await waitFor(() =>
+      expect(chamadas("listar_escopo_contratos_usuario_adm").length).toBeGreaterThan(antes),
+    );
+    await waitFor(() =>
+      expect(within(dlg).getByLabelText("Contrato CT-c1 — Objeto c1")).toBeChecked(),
+    );
     fireEvent.click(within(dlg).getByLabelText("Contrato CT-c2 — Objeto c2"));
     salvar(dlg);
     await waitFor(() => expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(2));
@@ -383,7 +494,9 @@ describe("ADM-01 deltas de escopo", () => {
 describe("ADM-01 salvar, concorrência (091) e idempotência (092)", () => {
   it("edição envia p_versao_esperada literal, p_email null e assinatura v2", async () => {
     const dlg = await abrirEdicao();
-    fireEvent.change(within(dlg).getByLabelText("Perfil de acesso"), { target: { value: "administrador" } });
+    fireEvent.change(within(dlg).getByLabelText("Perfil de acesso"), {
+      target: { value: "administrador" },
+    });
     salvar(dlg);
     await waitFor(() => expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(1));
     const a = ultimoSalvar();
@@ -401,7 +514,14 @@ describe("ADM-01 salvar, concorrência (091) e idempotência (092)", () => {
         "p_versao_esperada",
       ].sort(),
     );
-    expect(a).toMatchObject({ p_id_organizacao: ORG, p_id_usuario: "u-a", p_email: null, p_perfil: "administrador", p_versao_esperada: 7, p_ativo: true });
+    expect(a).toMatchObject({
+      p_id_organizacao: ORG,
+      p_id_usuario: "u-a",
+      p_email: null,
+      p_perfil: "administrador",
+      p_versao_esperada: 7,
+      p_ativo: true,
+    });
     expect(typeof a.p_chave_idempotencia).toBe("string");
   });
 
@@ -421,7 +541,9 @@ describe("ADM-01 salvar, concorrência (091) e idempotência (092)", () => {
     const botao = within(dlg).getByRole("button", { name: "Salvar vínculo" });
     fireEvent.click(botao);
     fireEvent.click(botao);
-    await waitFor(() => expect(within(dlg).getByRole("button", { name: /Salvando/ })).toBeDisabled());
+    await waitFor(() =>
+      expect(within(dlg).getByRole("button", { name: /Salvando/ })).toBeDisabled(),
+    );
     expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(1);
     liberar(ok({ schema_versao: "adm01-v2", correlation_id: "c", id_usuario: "u-a", vinculo: {} }));
   });
@@ -485,13 +607,22 @@ describe("ADM-01 salvar, concorrência (091) e idempotência (092)", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     const k1 = ultimoSalvar().p_chave_idempotencia;
     versao = 8;
-    handlers.salvar_vinculo_usuario_adm = () => ok({ schema_versao: "adm01-v2", correlation_id: "c2", id_usuario: "u-a", vinculo: {} });
+    handlers.salvar_vinculo_usuario_adm = () =>
+      ok({ schema_versao: "adm01-v2", correlation_id: "c2", id_usuario: "u-a", vinculo: {} });
     fireEvent.click(within(dlg).getByRole("button", { name: "Recarregar e revisar" }));
-    await waitFor(() => expect(within(dlg).queryByText(MENSAGENS_ADM01.conflito)).not.toBeInTheDocument());
-    await waitFor(() => expect(within(dlg).getByLabelText("Contrato CT-c1 — Objeto c1")).not.toBeChecked());
+    await waitFor(() =>
+      expect(within(dlg).queryByText(MENSAGENS_ADM01.conflito)).not.toBeInTheDocument(),
+    );
+    await waitFor(() =>
+      expect(within(dlg).getByLabelText("Contrato CT-c1 — Objeto c1")).not.toBeChecked(),
+    );
     salvar(dlg);
     await waitFor(() => expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(2));
-    expect(ultimoSalvar()).toMatchObject({ p_versao_esperada: 8, p_ids_contratos_ativar: [], p_ids_contratos_revogar: [] });
+    expect(ultimoSalvar()).toMatchObject({
+      p_versao_esperada: 8,
+      p_ids_contratos_ativar: [],
+      p_ids_contratos_revogar: [],
+    });
     expect(ultimoSalvar().p_chave_idempotencia).not.toBe(k1);
   });
 });
@@ -507,24 +638,46 @@ describe("ADM-01 vínculo novo e PT404 contextual", () => {
 
   const preencher = (dlg: HTMLElement, email = " nova@exemplo.com ") => {
     fireEvent.change(within(dlg).getByLabelText("E-mail"), { target: { value: email } });
-    fireEvent.change(within(dlg).getByLabelText("Perfil de acesso"), { target: { value: "analista" } });
+    fireEvent.change(within(dlg).getByLabelText("Perfil de acesso"), {
+      target: { value: "analista" },
+    });
   };
 
   it("resposta oficial da Edge: usuario.id_usuario u-novo segue para RPC salvar com 10 argumentos", async () => {
     const dlg = await abrirNovo();
-    expect(chamadas("listar_escopo_contratos_usuario_adm")[0]).toMatchObject({ p_id_usuario: null, p_pagina: 1, p_tamanho_pagina: 25 });
+    expect(chamadas("listar_escopo_contratos_usuario_adm")[0]).toMatchObject({
+      p_id_usuario: null,
+      p_pagina: 1,
+      p_tamanho_pagina: 25,
+    });
     preencher(dlg);
-    fireEvent.change(within(dlg).getByLabelText("Nome (opcional)"), { target: { value: " Nova Pessoa " } });
+    fireEvent.change(within(dlg).getByLabelText("Nome (opcional)"), {
+      target: { value: " Nova Pessoa " },
+    });
     salvar(dlg);
     await waitFor(() => expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(1));
     expect(m.invoke).toHaveBeenCalledTimes(1);
     const [nome, opts] = m.invoke.mock.calls[0]!;
     expect(nome).toBe("admin-invite-user");
-    expect(Object.keys(opts.body).sort()).toEqual(["chave_idempotencia", "email", "id_organizacao", "nome"]);
-    expect(opts.body).toMatchObject({ id_organizacao: ORG, email: "nova@exemplo.com", nome: "Nova Pessoa" });
+    expect(Object.keys(opts.body).sort()).toEqual([
+      "chave_idempotencia",
+      "email",
+      "id_organizacao",
+      "nome",
+    ]);
+    expect(opts.body).toMatchObject({
+      id_organizacao: ORG,
+      email: "nova@exemplo.com",
+      nome: "Nova Pessoa",
+    });
     const s = ultimoSalvar();
     expect(Object.keys(s)).toHaveLength(10);
-    expect(s).toMatchObject({ p_id_usuario: "u-novo", p_email: "nova@exemplo.com", p_versao_esperada: null, p_perfil: "analista" });
+    expect(s).toMatchObject({
+      p_id_usuario: "u-novo",
+      p_email: "nova@exemplo.com",
+      p_versao_esperada: null,
+      p_perfil: "analista",
+    });
     expect(s.p_chave_idempotencia).not.toBe(opts.body.chave_idempotencia);
   });
 
@@ -540,7 +693,9 @@ describe("ADM-01 vínculo novo e PT404 contextual", () => {
     const dlg = await abrirNovo();
     preencher(dlg);
     salvar(dlg);
-    expect(await screen.findByText(new RegExp(MENSAGENS_ADM01.usuarioExistente))).toBeInTheDocument();
+    expect(
+      await screen.findByText(new RegExp(MENSAGENS_ADM01.usuarioExistente)),
+    ).toBeInTheDocument();
     expect(dlg).not.toBeInTheDocument();
   });
 
@@ -560,13 +715,22 @@ describe("ADM-01 vínculo novo e PT404 contextual", () => {
     const dlg = await abrirNovo();
     preencher(dlg);
     salvar(dlg);
-    expect(await screen.findByText(new RegExp(MENSAGENS_ADM01.usuarioConvidado))).toBeInTheDocument();
+    expect(
+      await screen.findByText(new RegExp(MENSAGENS_ADM01.usuarioConvidado)),
+    ).toBeInTheDocument();
   });
 
   it("falha no vínculo após convite: retry não repete a Edge e reutiliza a chave do vínculo", async () => {
     let n = 0;
     handlers.salvar_vinculo_usuario_adm = () =>
-      ++n === 1 ? falha("500", 500) : ok({ schema_versao: "adm01-v2", correlation_id: "corr-ok-2", id_usuario: "u-novo", vinculo: {} });
+      ++n === 1
+        ? falha("500", 500)
+        : ok({
+            schema_versao: "adm01-v2",
+            correlation_id: "corr-ok-2",
+            id_usuario: "u-novo",
+            vinculo: {},
+          });
     const dlg = await abrirNovo();
     preencher(dlg);
     salvar(dlg);
@@ -586,7 +750,9 @@ describe("ADM-01 vínculo novo e PT404 contextual", () => {
     expect(await within(dlg).findByText(MENSAGENS_ADM01.conflitoIdempotencia)).toBeInTheDocument();
     salvar(dlg);
     await waitFor(() => expect(m.invoke).toHaveBeenCalledTimes(2));
-    expect(m.invoke.mock.calls[1]![1].body.chave_idempotencia).not.toBe(m.invoke.mock.calls[0]![1].body.chave_idempotencia);
+    expect(m.invoke.mock.calls[1]![1].body.chave_idempotencia).not.toBe(
+      m.invoke.mock.calls[0]![1].body.chave_idempotencia,
+    );
     expect(screen.queryByText(/detalhe técnico/)).not.toBeInTheDocument();
   });
 
@@ -601,7 +767,9 @@ describe("ADM-01 vínculo novo e PT404 contextual", () => {
     expect(m.invoke).toHaveBeenCalledTimes(1);
     fireEvent.click(within(dlg).getByRole("button", { name: "Consultar novamente" }));
     await waitFor(() => expect(m.invoke).toHaveBeenCalledTimes(2));
-    expect(m.invoke.mock.calls[1]![1].body.chave_idempotencia).toBe(m.invoke.mock.calls[0]![1].body.chave_idempotencia);
+    expect(m.invoke.mock.calls[1]![1].body.chave_idempotencia).toBe(
+      m.invoke.mock.calls[0]![1].body.chave_idempotencia,
+    );
   });
 
   it.each([
@@ -611,15 +779,18 @@ describe("ADM-01 vínculo novo e PT404 contextual", () => {
     [403, "AUTH_ACESSO_NEGADO", "negado"],
     [401, "AUTH_SESSAO_INVALIDA", "sessaoInvalida"],
     [500, "ERRO_INTERNO", "erroSalvar"],
-  ] as const)("Edge %i %s mostra mensagem própria, sem texto técnico e sem salvar", async (st, cod, chave) => {
-    m.invoke.mockResolvedValueOnce(edgeFalha(st, cod));
-    const dlg = await abrirNovo();
-    preencher(dlg);
-    salvar(dlg);
-    expect(await within(dlg).findByText(MENSAGENS_ADM01[chave])).toBeInTheDocument();
-    expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(0);
-    expect(screen.queryByText(/detalhe técnico|non-2xx/)).not.toBeInTheDocument();
-  });
+  ] as const)(
+    "Edge %i %s mostra mensagem própria, sem texto técnico e sem salvar",
+    async (st, cod, chave) => {
+      m.invoke.mockResolvedValueOnce(edgeFalha(st, cod));
+      const dlg = await abrirNovo();
+      preencher(dlg);
+      salvar(dlg);
+      expect(await within(dlg).findByText(MENSAGENS_ADM01[chave])).toBeInTheDocument();
+      expect(chamadas("salvar_vinculo_usuario_adm")).toHaveLength(0);
+      expect(screen.queryByText(/detalhe técnico|non-2xx/)).not.toBeInTheDocument();
+    },
+  );
 
   it("falha de rede na Edge = erro genérico", async () => {
     m.invoke.mockRejectedValueOnce(new TypeError("Failed to fetch"));
@@ -669,7 +840,12 @@ describe("ADM-01 auditoria", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Ver auditoria de Ana Souza" }));
     const dlg = await screen.findByRole("dialog");
     expect(await within(dlg).findByText("02/11/2026 10:05")).toBeInTheDocument();
-    expect(chamadas("listar_auditoria_vinculo_usuario_adm")[0]).toEqual({ p_id_organizacao: ORG, p_id_usuario: "u-a", p_pagina: 1, p_tamanho_pagina: 20 });
+    expect(chamadas("listar_auditoria_vinculo_usuario_adm")[0]).toEqual({
+      p_id_organizacao: ORG,
+      p_id_usuario: "u-a",
+      p_pagina: 1,
+      p_tamanho_pagina: 20,
+    });
     expect(within(dlg).getByText(/corr-aud-1/)).toBeInTheDocument();
     fireEvent.click(within(dlg).getByRole("button", { name: "Próxima página da auditoria" }));
     expect(await within(dlg).findByText(/corr-aud-2/)).toBeInTheDocument();
@@ -687,8 +863,18 @@ describe("ADM-01 auditoria", () => {
       const a = auditoria(1);
       a.itens[0] = {
         ...a.itens[0],
-        antes: { vinculo: { perfil: "analista", ativo: true, escopo_todos_contratos: false, inicio_em: "campo-antes-extra" } },
-        depois: { vinculo: { perfil: "administrador", ativo: false, escopo_todos_contratos: false }, contratos_ativados: ["ct-depois-extra"] },
+        antes: {
+          vinculo: {
+            perfil: "analista",
+            ativo: true,
+            escopo_todos_contratos: false,
+            inicio_em: "campo-antes-extra",
+          },
+        },
+        depois: {
+          vinculo: { perfil: "administrador", ativo: false, escopo_todos_contratos: false },
+          contratos_ativados: ["ct-depois-extra"],
+        },
         metadados: { origem: "metadado-redigido-backend", ids_ocultos: 2 },
       } as (typeof a.itens)[0];
       return ok(a);
@@ -710,7 +896,8 @@ describe("ADM-01 auditoria", () => {
   });
 
   it("D: resposta vazia mostra estado vazio", async () => {
-    handlers.listar_auditoria_vinculo_usuario_adm = () => ok({ ...auditoria(1), total: 0, total_paginas: 0, itens: [] });
+    handlers.listar_auditoria_vinculo_usuario_adm = () =>
+      ok({ ...auditoria(1), total: 0, total_paginas: 0, itens: [] });
     const dlg = await abrir();
     expect(await within(dlg).findByText(MENSAGENS_ADM01.auditoriaVazia)).toBeInTheDocument();
   });
@@ -729,7 +916,12 @@ describe("ADM-01 auditoria", () => {
     expect(chamadas("listar_auditoria_vinculo_usuario_adm")).toHaveLength(1);
     fireEvent.click(within(dlg).getByRole("button", { name: "Próxima página da auditoria" }));
     await within(dlg).findByText(/corr-aud-2/);
-    expect(chamadas("listar_auditoria_vinculo_usuario_adm").map((c) => [c.p_pagina, c.p_tamanho_pagina])).toEqual([[1, 20], [2, 20]]);
+    expect(
+      chamadas("listar_auditoria_vinculo_usuario_adm").map((c) => [c.p_pagina, c.p_tamanho_pagina]),
+    ).toEqual([
+      [1, 20],
+      [2, 20],
+    ]);
   });
 });
 
@@ -775,15 +967,23 @@ describe("ADM-01 retorno de foco ao gatilho (acessibilidade)", () => {
     const antes = chamadas("listar_usuarios_vinculos_adm").length;
     salvar(dlg);
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
-    await waitFor(() => expect(chamadas("listar_usuarios_vinculos_adm").length).toBeGreaterThan(antes));
-    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("button", { name: "Editar vínculo de Ana Souza" })));
+    await waitFor(() =>
+      expect(chamadas("listar_usuarios_vinculos_adm").length).toBeGreaterThan(antes),
+    );
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Editar vínculo de Ana Souza" }),
+      ),
+    );
   });
 });
 
 describe("ADM-01 varredura de código (zero drift)", () => {
   const raiz = path.resolve(__dirname, "..");
   const arquivos = [
-    ...readdirSync(path.join(raiz, "components/administracao/usuarios")).map((f) => path.join(raiz, "components/administracao/usuarios", f)),
+    ...readdirSync(path.join(raiz, "components/administracao/usuarios")).map((f) =>
+      path.join(raiz, "components/administracao/usuarios", f),
+    ),
     path.join(raiz, "lib/administracao/admUsuariosRpc.ts"),
     path.join(raiz, "routes/administracao.usuarios.tsx"),
   ];
@@ -800,10 +1000,125 @@ describe("ADM-01 varredura de código (zero drift)", () => {
     const nomes = [...fonte.matchAll(/"([a-z_]+_(?:adm|organizacao))"/g)].map((x) => x[1]);
     expect(fonte.match(/supabase\.rpc/g)).toHaveLength(1);
     expect(fonte.match(/functions\.invoke\(/g)).toHaveLength(1);
-    expect([...fonte.matchAll(/invoke\(\s*"([^"]+)"/g)].map((x) => x[1])).toEqual(["admin-invite-user"]);
+    expect([...fonte.matchAll(/invoke\(\s*"([^"]+)"/g)].map((x) => x[1])).toEqual([
+      "admin-invite-user",
+    ]);
     expect(fonte).not.toMatch(/adm01-v1|auth\.users/);
     expect(new Set(nomes)).toEqual(
-      new Set(["validar_administrador_organizacao", "listar_usuarios_vinculos_adm", "listar_escopo_contratos_usuario_adm", "listar_auditoria_vinculo_usuario_adm", "salvar_vinculo_usuario_adm", "pode_consultar_auditoria_organizacao"]),
+      new Set([
+        "validar_administrador_organizacao",
+        "listar_usuarios_vinculos_adm",
+        "listar_escopo_contratos_usuario_adm",
+        "listar_auditoria_vinculo_usuario_adm",
+        "salvar_vinculo_usuario_adm",
+        "pode_consultar_auditoria_organizacao",
+      ]),
     );
+  });
+});
+
+const catalogoRbacTeste = {
+  organizacoes: ["consultar", "administrar"],
+  usuarios: ["consultar", "administrar"],
+  auditoria: ["consultar"],
+  contratantes: ["consultar", "criar", "editar"],
+  contratos: ["consultar", "criar", "editar"],
+  orcamentos: ["consultar", "criar", "editar", "aprovar"],
+  normativos: ["consultar", "criar", "editar", "aprovar"],
+  listas: ["consultar", "criar", "editar"],
+  documentos_contrato: ["consultar", "criar", "editar"],
+  documentos_competencia: ["consultar", "criar", "editar"],
+  competencias: ["consultar", "criar"],
+  analises: ["consultar", "criar", "processar", "editar"],
+  pareceres: ["consultar", "criar", "aprovar"],
+  apresentacoes: ["consultar", "aprovar", "apresentar"],
+  historico: ["consultar", "criar", "editar", "processar"],
+  arquivos: ["consultar", "criar", "editar"],
+  dashboard: ["consultar"],
+};
+function matrizAdmFixture() {
+  return {
+    schema_versao: "rbac-v1",
+    versao: 5,
+    permissoes: [
+      "administrador",
+      "auditor",
+      "contabilidade",
+      "direcao_aprovador",
+      "financeiro",
+      "gestor_contrato",
+      "juridico_conformidade",
+      "leitor",
+      "prestacao_contas",
+      "rh_dp",
+    ].flatMap((perfil) =>
+      Object.entries(catalogoRbacTeste).flatMap(([recurso, acoes]) =>
+        acoes.map((acao) => ({ perfil, recurso, acao, permitido: true })),
+      ),
+    ),
+  };
+}
+describe("ADM01 preserva matriz durante filtros da lista", () => {
+  it("filtro de usuários não perde edição da matriz", async () => {
+    m.rbac.mockResolvedValue(ok(matrizAdmFixture()));
+    let resolver!: (r: Resp) => void;
+    montar();
+    const checkbox = (await screen.findAllByRole("checkbox"))[0]!;
+    fireEvent.click(checkbox);
+    handlers.listar_usuarios_vinculos_adm = () =>
+      new Promise<Resp>((r) => {
+        resolver = r;
+      });
+    fireEvent.change(screen.getByLabelText("Situação do vínculo"), {
+      target: { value: "inativos" },
+    });
+    await waitFor(() => expect(resolver).toBeDefined());
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).not.toBeChecked();
+    expect(screen.getByRole("button", { name: "Revisar alterações" })).toBeEnabled();
+    expect(m.rbac).toHaveBeenCalledTimes(1);
+    resolver(ok(lista([])));
+  });
+  it("filtro não descarta UUID de resultado incerto", async () => {
+    m.rbac.mockImplementation((nome) =>
+      nome === "obter_matriz_rbac_master"
+        ? Promise.resolve(ok(matrizAdmFixture()))
+        : Promise.reject(new Error("network")),
+    );
+    montar();
+    fireEvent.click((await screen.findAllByRole("checkbox"))[0]!);
+    fireEvent.click(screen.getByRole("button", { name: "Revisar alterações" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar alterações" }));
+    await screen.findByRole("button", { name: "Tentar novamente" });
+    let resolver!: (r: Resp) => void;
+    handlers.listar_usuarios_vinculos_adm = () =>
+      new Promise<Resp>((r) => {
+        resolver = r;
+      });
+    fireEvent.change(screen.getByLabelText("Situação do vínculo"), {
+      target: { value: "inativos" },
+    });
+    await waitFor(() => expect(resolver).toBeDefined());
+    expect(screen.getByRole("button", { name: "Tentar novamente" })).toBeInTheDocument();
+    m.rbac.mockImplementation((nome, a) =>
+      Promise.resolve(
+        ok(
+          nome === "obter_matriz_rbac_master"
+            ? matrizAdmFixture()
+            : {
+                schema_versao: "rbac-v1",
+                versao: 6,
+                request_id: a.p_request_id,
+                evento_id: "00000000-0000-4000-8000-000000000001",
+              },
+        ),
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    await screen.findByText("Permissões salvas.");
+    const w = m.rbac.mock.calls.filter((c) => c[0] === "atualizar_matriz_rbac_master");
+    expect(w).toHaveLength(2);
+    expect(w[0]![1]).toEqual(w[1]![1]);
+    resolver(ok(lista([])));
   });
 });
