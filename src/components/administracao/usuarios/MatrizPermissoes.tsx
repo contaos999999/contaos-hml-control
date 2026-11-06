@@ -16,8 +16,8 @@ const chave = (x: Pick<PermissaoPerfil, "perfil" | "recurso" | "acao">) => JSON.
 function novoUuid(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
-  bytes[6] = (bytes[6] & 15) | 64;
-  bytes[8] = (bytes[8] & 63) | 128;
+  bytes[6] = (bytes[6]! & 15) | 64;
+  bytes[8] = (bytes[8]! & 63) | 128;
   const h = [...bytes].map((n) => n.toString(16).padStart(2, "0")).join("");
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
@@ -71,7 +71,7 @@ export function MatrizPermissoes({ idUsuario, org }: Props) {
   const linhas = matriz?.permissoes.filter((l) => l.perfil === perfilAtual && (!recurso || l.recurso === recurso)) ?? [];
   const delta = matriz?.permissoes
     .filter((l) => Object.prototype.hasOwnProperty.call(alterados, chave(l)) && alterados[chave(l)] !== l.permitido)
-    .map((l) => ({ perfil: l.perfil, recurso: l.recurso, acao: l.acao, permitido: alterados[chave(l)] })) ?? [];
+    .map((l) => ({ perfil: l.perfil, recurso: l.recurso, acao: l.acao, permitido: alterados[chave(l)]! })) ?? [];
 
   if (consulta.isPending) return null;
   if (consulta.error instanceof ErroRbac && consulta.error.tipo === "negado") return null;
@@ -152,7 +152,7 @@ export function MatrizPermissoes({ idUsuario, org }: Props) {
           const valor = Object.prototype.hasOwnProperty.call(alterados, id) ? alterados[id] : l.permitido;
           return (
             <label key={id} className="flex min-h-11 items-center gap-3 border-b border-border px-3 py-2 text-sm last:border-0 hover:bg-muted/40">
-              <input type="checkbox" checked={valor} aria-label={`${l.perfil} ${l.recurso} ${l.acao}`}
+              <input type="checkbox" checked={valor ?? l.permitido} aria-label={`${l.perfil} ${l.recurso} ${l.acao}`}
                 onChange={(event) => {
                   setAlterados((prev) => {
                     const next = { ...prev };
