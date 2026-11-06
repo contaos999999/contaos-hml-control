@@ -1,3 +1,22 @@
+# P0 V1 — integração funcional das listas, 06/11/2026
+
+**V1 NÃO CERTIFICADA; V2/PROD BLOQUEADOS.** Plano #227 integrado em `52875d47695d559013c43fc73533c4ddfaddff6a`, após dois checks SUCCESS no run42263199286, HEAD11ce366165a8bf5b02308889835e3ccc9e825c29. Fonte backend HEAD conferido01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea inalterado.
+
+## Falha real e dados preservados
+MASTER criou pelo navegador, na organização V107 concorrência, o contratante **TESTE VISUAL P0 06112026 - SEM VALIDADE**, fantasia TESTE VISUAL P0, tipo Outro, e contrato **TESTE-VISUAL-P0-06112026**, objeto sintético, R$1000, rascunho, início efetivo30/10/2026 e término ausente. Não duplicar. Nenhuma permissão/convite foi alterado. Prova: PR226 comentário6689741619. As listas mostram os registros, porém não permitiam abrir contrato nem editar contratante.
+
+## Execução atual
+PR228 `p0/v1-list-navigation-build-20261106`: RED b2e0c88f2704d0f87a801d639f0d50b93665037d, run42263605285/job128049635432 FAIL esperado com ausência dos links acessíveis de contrato/cadastro. Nenhuma implementação antes desse RED publicado. Testes legados proibiam links de edição, agora navegação esperada com zero DML/RPC/Edge preservado. Correções8fe1ca7e788ef6471be4d3bd718c4fcbd8e77f9b e8090c59a8c212a6e4b82d92b4fa17ff253b981c3 adicionam somente links tabela/card para rotas existentes com o ID retornado pelo backend. Não confundir link com concessão de edição.
+
+**CI GREEN e revisão autenticada desta correção AINDA PENDENTES neste registro.** PR226 visual permanece draft no6b0343b2be5009a13f54a99e897ab27e410c9853, sem merge nem publicação. Preview Lovable permanece branch visual para revisão; versões da main ainda têm visual anterior. Não integrar draft visual sem seus gates.
+
+**Próxima tarefa:** conferir CI final do228, corrigir qualquer falha real, revisar diff e testar links no preview com os registros existentes; então completar todas as telas internas por criações autorizadas no navegador. Depois integrar somente o que tiver gates completos. EditarContratante contém situação ativo/inativo; VisaoGeralContrato não oferece edição/desativação, lacuna a confrontar com requisito/contrato antes de implementar. Sem inventar rota ou endpoint.
+
+## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
+Links usam componentes e tokens existentes, sem mudança de marca, CSS compartilhado, rotas, tipos congelados, API, RBAC, backend ou PROD. Nenhum BUILD do agente Lovable. TDD/CI não equivalem a prova visual4x2 ou certificação das28 rotas.
+
+---
+
 ## CHECKPOINT P0 — 06/11/2026: prova real de restore sintético integrada e reancoragem canônica
 
 **V1 NÃO CERTIFICADA. V2 e PROD continuam BLOQUEADAS.** HEAD backend de referência `contaos999999/develop@01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea`; frontend main anterior ao presente PR `320b3ab72aacaecc9381cbc41cefc14caa39bbd0`. Fonte 25/25 blobs e catálogo 100 regulares/97 atômicos conferidos **idênticos** no HEAD backend, snapshot e PLANO_ATIVO reancorados sem modificar fontes, BRAND-01 ou types congelados.
