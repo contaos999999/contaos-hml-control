@@ -1,0 +1,29 @@
+name: SYS-03 HML Playwright public smoke
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-browser-smoke:
+    name: SYS-03 HML public browser smoke (no credentials)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CI: "true"
+      CONTAOS_HML_FRONTEND_URL: https://scope-and-approval-keeper.lovable.app
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+      - name: Install Chromium browser
+        run: bunx playwright install --with-deps chromium
+      - name: Execute public SYS-03 smoke
+        run: bunx playwright test tests/hml/sys03-harness-readiness.spec.ts --config=playwright.config.ts
