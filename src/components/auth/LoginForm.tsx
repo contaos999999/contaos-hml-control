@@ -147,6 +147,11 @@ export function LoginForm({ onNavegar = navegarPadrao }: Props) {
           <AlertDescription>{fase === "negado" ? MENSAGENS.negado : semAcesso ? MENSAGENS.semAcesso : MENSAGENS.erroVinculos}</AlertDescription>
         </Alert>
         <div className="flex flex-col gap-2 sm:flex-row">
+          {fase === "sem-acesso" && (
+            <Button className="min-h-11 flex-1" onClick={() => onNavegar("/selecionar-organizacao")}>
+              Criar organização
+            </Button>
+          )}
           {!semAcesso && (
             <Button className="min-h-11 flex-1" onClick={() => void carregarVinculos()}>
               Tentar novamente

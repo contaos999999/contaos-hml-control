@@ -86,6 +86,17 @@ describe("SYS-01 Login", () => {
     expect(await screen.findByText(MENSAGENS.semAcesso)).toBeInTheDocument();
   });
 
+  it("autenticado sem organização acessa o cadastro pelo seletor", async () => {
+    auth.signInWithPassword.mockResolvedValue({ error: null });
+    const nav = vi.fn();
+    render(<LoginForm onNavegar={nav} />);
+    preencher("a@b.com", "x");
+    fireEvent.click(await screen.findByRole("button", { name: "Criar organização" }));
+    expect(nav).toHaveBeenCalledWith("/selecionar-organizacao");
+    expect(m.rpc).toHaveBeenCalledWith("listar_organizacoes_disponiveis");
+    expect(m.from).not.toHaveBeenCalled();
+  });
+
   it("vários vínculos navega para /selecionar-organizacao", async () => {
     auth.signInWithPassword.mockResolvedValue({ error: null });
     m.state.r = { data: [org("1"), org("2")], error: null };
@@ -123,6 +134,7 @@ describe("SYS-01 Login", () => {
     render(<LoginForm onNavegar={vi.fn()} />);
     preencher("a@b.com", "x");
     expect(await screen.findByText(MENSAGENS.negado)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Criar organização" })).toBeNull();
     expect(screen.queryByText(MENSAGENS.semAcesso)).toBeNull();
   });
 
