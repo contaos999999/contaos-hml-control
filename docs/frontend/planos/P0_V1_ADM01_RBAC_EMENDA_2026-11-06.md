@@ -73,3 +73,36 @@ Sem alterações de marca, tipos congelados, estilos globais, assets ou infraest
 - Rechecagem direta no backend `contaos999999/develop@4c21fe2961f54218891e1f1edf25ef5e21137106`: **25 de 25 documentos normativos com blobs SHA idênticos** ao snapshot, catálogo `docs/prompts/PROMPT_TRACKS_4_1.json` com blob original `e54e49e626e65a9c94c81709180fd192a1f0c079`, 100 regulares, 97 atômicos, 100 crosswalk; nenhuma fonte modificada.
 - Snapshot reancorado em commit documental desta mesma branch e aguardando novamente **ambos os required checks**; o frontend não foi alterado, `src/integrations/supabase/types.ts` não foi tocado. Em caso de novo HEAD remoto antes do CI, falhar fechado e conferir mudança em vez de pular verificação.
 - O BUILD ainda exige emenda de allowlist em `PLANO_ATIVO.json` com CI próprio **antes de alterar src/**, além da condição de não conflitar com PR #176. V1 permanece NÃO CERTIFICADA.
+
+## Aditivo executivo ao plano único: matriz e navegação V1
+
+Autorização vigente: “Execute integralmente”. A emenda PR178 já está integrada; este commit promove a allowlist anterior ao BUILD. Evidências mais recentes substituem pendências históricas acima: backend PR82 corrigiu thenable, Edgev6; PR83 registrou147cenários distintos aprovados e quarentena14contas/0sessões; PR84 prepara regressão das nove funções, em execução. Fonte backend atual 1edb2c40595e01f7e1e8c5f80160b7b3a4113c12; 25/25 blobs e catálogo intactos. Frontend baseline 6cd922a0738549d421b57a704ec17e6c6ac541cd; as alterações posteriores a be842a3 são documentais. Não tocar PR176.
+
+### Arquitetura e decisões de implementação
+
+Reutilizar a rota /administracao/usuarios, componentes e tokens existentes, sem nova rota ou dependência. Alternativa de nova página/árvore adicionaria governança sem benefício; tela local sem persistência não atende ADM01. Escolha técnica dentro do plano autorizado: painel MatrizPermissoes na administração e navegação contextual no shell existente.
+
+Arquivos exatos: rbacRpc.ts, MatrizPermissoes.tsx, rbacMatriz.test.tsx (novos); AdminUsuarios.tsx, ContaOSAppShell.tsx, ContaOSSidebar.tsx, menuV1.ts, appShellSidebar.test.tsx e admUsuarios.test.tsx (existentes). Checkpoint documental autorizado. O aditivo autoriza expressamente evolução do menu, antes preservado pela proposta inicial, somente para rotas V1 existentes e sob permissões backend. Não modificar NovoContratante, seus testes/planos, backend, Auth/Storage, types.ts, assets, estilos globais, src/routes ou routeTree.gen.ts.
+
+rbacRpc expõe obterMatrizRbac():Promise<MatrizRbac>, atualizarMatrizRbac(versao:number,requestId:string,alteracoes:PermissaoPerfil[]):Promise<ResultadoRbac>, consultarPermissoesEfetivas(org:string,contrato:string|null):Promise<PermissoesEfetivas> e resolverContextoRbac(pathname:string,org:string):Promise<ContextoRbac>. Cast restrito só para três nomes RPC existentes. Matriz exige schema rbac-v1, versão inteira positiva,480 combinações únicas dos10perfis/48ações,booleanos reais; nenhuma concessão inferida. Resposta efetiva exige schema,versão,master booleano e combinações conhecidas sem duplicação. Falha/malformado nega. Nenhum tipo gerado alterado.
+
+Painel: obter_matriz_rbac_master decide visibilidade, não perfil local. Seleção de perfil/recurso, checkbox com rótulo completo, revisão explícita das mudanças antes de salvar, cancelamento local, indicação de impacto global. UUID lógico estável em tentativa/retry, bloqueio de edição enquanto resultado incerto; PT409 exige recarregar/revisar, sem sobrescrever. Após sucesso confirmar por nova consulta. Sessão, organização, retorno à página e resposta tardia invalidam estado e edição; geração descarta promessas antigas.
+
+Menu: links comuns filtrados por consultar_permissoes_efetivas. Administração continua exigindo suas RPCs específicas, além da permissão correspondente. Acesso a selecionar-organizacao reaproveita seletor existente. Submenu contextual de contrato: resumo,base normativa,orçamento,regras,documentos,competências,nova competência,histórico/importação. Submenu de competência: resumo,documentos,análise,parecer,apresentação; detalhe/apresentações individuais continuam acessíveis pela lista respectiva. Contexto de competência resolve id_contrato por SELECT sob RLS e organização exata. Nunca inventar UUID, organização ou permissão. Todas as rotas existentes permanecem protegidas pelo backend; menu não concede acesso. Navegação nativa em links contextuais concretos é aceitável se preservar acesso/foco e testes, sem cast amplo de rotas. Desktop/móvel/recolhido usam o mesmo conjunto filtrado.
+
+### Tarefas verificáveis
+
+- [ ] RED: rbacMatriz.test.tsx falha antes da implementação em contratos inválidos/403, MASTER positivo, administrador negado, não salvar em erro, revisão/cancelamento, PT409, retry com mesmoUUID/payload, troca de sessão/org e resposta obsoleta. Teste de teclado/rótulos.
+- [ ] GREEN: implementar transporte e painel mínimo, integrar AdminUsuarios sem remover administração existente. Rodar teste focado até PASS; preservar a negativa para nãoMASTER.
+- [ ] RED/GREEN navegação: negar por padrão, filtrar cinco links comuns e links contextuais por ação, A/B/competência exata via RLS, não usar resultado antigo após auth/org/visibilidade. Atualizar mocks com permissões explícitas, sem liberar por fallback. Validar teclado/drawer existente.
+- [ ] Regressão: baseline anterior35suites/886PASS local; rodar Vitest completo, typecheck,lint,build; hash types.ts igual8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Sem editar gates para acomodar falhas.
+- [ ] Dois required checks no mesmo SHA e Teste C4larguras×2temas. Evidência pública não certifica tela privada; ensaio autenticado próprio e revisão independente permanecem necessários.
+- [ ] Registrar HEADs, resultados, limitações e próxima tarefa no checkpoint; merge apenas CIverde. Rollback exclusivo do PRfrontend.
+
+### Foco da revisão
+
+Sessão trocada no meio do save; resposta atrasada de outro contexto; resposta de matriz com entradas faltantes/duplicadas; timeout depois de commit sem criar segundoUUID; filtros ocultando alterações ainda pendentes. Cada situação tem teste no arquivo proprietário acima. Nenhuma certificação por contagem, mock ou texto de gate.
+
+### ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+
+Preservar Brand1.0, logos, cores e tokens; usar componentes existentes. Edição direta GitHub, sem BUILD Lovable. Aprovação vigente cobre implementação funcional do plano; não há mudança da identidade. CI da emenda precisa passar antes de qualquer src novo. V1 não certificada; V2 e PROD bloqueados.

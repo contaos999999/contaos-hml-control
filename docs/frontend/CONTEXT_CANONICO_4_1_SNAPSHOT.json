@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "P0 V1 RBAC gate de allowlist: HEAD canonico 1edb2c40595e01f7e1e8c5f80160b7b3a4113c12; verificados 25 documentos canônicos e catalogo 100/97 via hashes GitHub. Reancoragem documental sem mudanca de fontes/Brand/tipos. PR #178 e CI confirmados; BUILD nao iniciado."
+  "p0_reanchor_note": "25/25 blobs e catálogo conferidos idênticos no HEAD backend 1edb2c40595e01f7e1e8c5f80160b7b3a4113c12. PR83 conclui rodada matriz/Edge com quarentena; PR84 prepara regressão noveRPCs. Backend deve permanecer neste HEAD durante CI/BUILD frontend ou o guard exigirá nova conferência."
 }
