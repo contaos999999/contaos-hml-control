@@ -11,6 +11,7 @@ import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrgani
 import { AuditDrawer } from "./AuditDrawer";
 import { ContractScopeDialog, type ModoVinculo } from "./ContractScopeDialog";
 import { UserMembershipTable } from "./UserMembershipTable";
+import { MatrizPermissoes } from "./MatrizPermissoes";
 
 type Situacao = "todos" | "ativos" | "inativos";
 
@@ -288,6 +289,9 @@ export function AdminUsuarios() {
               </nav>
             )}
           </section>
+        )}
+        {fase === "sucesso" && idUsuario && org && (
+          <MatrizPermissoes key={`${idUsuario}:${org}`} idUsuario={idUsuario} org={org} />
         )}
       </main>
 
