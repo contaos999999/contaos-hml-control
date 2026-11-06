@@ -29,8 +29,15 @@ vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, to, params, ...rest }: {
     children: ReactNode;
     to: string;
-    params?: { id?: string };
-  }) => <a href={params?.id ? to.replace("$id", params.id) : to} {...rest}>{children}</a>,
+    params?: Record<string, string>;
+  }) => (
+    <a
+      href={to.replace(/\$([A-Za-z]+)/g, (_, key: string) => params?.[key] ?? `${key}`)}
+      {...rest}
+    >
+      {children}
+    </a>
+  ),
 }));
 
 import { CompetenciaApresentar } from "@/components/competencias/CompetenciaApresentar";
@@ -167,6 +174,20 @@ describe("V1-19 — wizard de apresentação", () => {
     expect(await screen.findByText(/Confirmar envio ao contratante/)).toBeInTheDocument();
     expect(m.chamadas.map(x => x.nome)).toEqual(["obter_visao_geral_competencia"]);
   });
+  it("após registrar, oferece navegação para o protocolo oficial pelo UUID retornado", async () => {
+    m.rpc.mockImplementation((nome: string) => {
+      if (nome === "obter_visao_geral_competencia")
+        return Promise.resolve(ok(visao("pode_apresentar_contratante", true)));
+      if (nome === "registrar_apresentacao") return Promise.resolve(ok(REG));
+      return Promise.resolve(ok(null));
+    });
+    render(<CompetenciaApresentar id={ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Registrar apresentação" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirmar registro" }));
+    const link = await screen.findByRole("link", { name: "Abrir registro da apresentação" });
+    expect(link).toHaveAttribute("href", `/competencias/${ID}/apresentacoes/${REG}`);
+  });
+
   it("nenhum UPDATE direto, status fictício ou credencial no frontend", () => {
     const src = [
       readFileSync("src/lib/competencias/apresentacaoDados.ts", "utf8"),
