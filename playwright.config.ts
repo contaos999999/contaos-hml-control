@@ -7,7 +7,9 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./tests/hml",
-  testMatch: /sys03-(harness-readiness|negative)\.spec\.ts/,
+  testMatch: process.env.CONTAOS_SYS03_AUTH_E2E === "true"
+    ? /sys03-real-e2e\.spec\.ts/
+    : /sys03-(harness-readiness|negative)\.spec\.ts/,
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
