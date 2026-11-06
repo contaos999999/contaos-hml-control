@@ -1,4 +1,3 @@
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -28,8 +27,6 @@ export function AdminUsuarios() {
   const [verificando, setVerificando] = useState(true);
   const [erroSessao, setErroSessao] = useState(false);
   const [tentativa, setTentativa] = useState(0);
-  const [saindo, setSaindo] = useState(false);
-  const saindoRef = useRef(false);
 
   const [pagina, setPagina] = useState(1);
   const [buscaTexto, setBuscaTexto] = useState("");
@@ -120,14 +117,6 @@ export function AdminUsuarios() {
     retry: false,
   });
 
-  async function sair() {
-    if (saindoRef.current) return;
-    saindoRef.current = true;
-    setSaindo(true);
-    await supabase.auth.signOut().catch(() => undefined);
-    navigate({ to: "/login", replace: true });
-  }
-
   async function obterUsuarioAtual(id: string) {
     const r = await consulta.refetch();
     return r.data?.itens.find((x) => x.id_usuario === id) ?? null;
@@ -156,34 +145,19 @@ export function AdminUsuarios() {
 
   return (
     <div lang="pt-BR" className="min-h-screen bg-background">
-      <header className="border-b border-border bg-primary text-primary-foreground">
+      <nav aria-label="Navegação da página" className="border-b border-border bg-card text-card-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <span className="md:hidden">
-              <ContaOSMarca />
+              
             </span>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="secondary" className="h-11">
-              <Link to="/">Painel</Link>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-              disabled={saindo}
-              onClick={sair}
-            >
-              {saindo ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
-              ) : (
-                <LogOut className="mr-2 h-4 w-4" aria-hidden />
-              )}
-              Sair
-            </Button>
+            
+            
           </div>
         </div>
-      </header>
+      </nav>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-3">

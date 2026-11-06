@@ -28,7 +28,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";
 import { formatarCompetencia } from "@/lib/contratos/competenciasDados";
@@ -229,9 +228,9 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-primary text-primary-foreground">
+      <nav aria-label="Navegação da página" className="border-b border-border bg-card text-card-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-          <ContaOSMarca />
+          
           <nav aria-label="Navegação" className="flex flex-wrap gap-2">
             <Button asChild variant="secondary" className="h-11">
               {idOk ? (
@@ -246,7 +245,7 @@ export function CompetenciaDocumentos({ id }: { id: string }) {
             </Button>
           </nav>
         </div>
-      </header>
+      </nav>
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <Titulo l={estado.tipo === "ok" ? estado.l : null} />
         {!idOk || estado.tipo === "nao_encontrada" ? (

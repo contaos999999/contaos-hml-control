@@ -1,3 +1,40 @@
+
+# P0 V1 — BUILD visual compartilhado proposto em 06/11/2026
+**V1 NÃO CERTIFICADA. Código em branch técnica, sem merge ou publicação por este registro.**
+Base obrigatória frontend `8c3c1987b50f4f4d235b7430ac3ab4ac2aac0dbb`; backend `01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea`. Plano único #223; escopo #224 integrado após dois checks SUCCESS run42237578958; compatibilidade do guard #225 integrada após dois checks SUCCESS run42238859753. RED em `829d7141549103da6b16befac012f3ce9ef3397c`; BUILD posterior no mesmo branch `p0/v1-shared-visual-build-20261106`.
+
+## Mudanças
+- Header organizacional global usa RPC SYS-05 existente, valida schema/id/strings, limpa dados em mudança de sessão/organização e descarta respostas antigas. Permissões/RLS não vêm desse resumo. Persiste entre rotas; não há fallback com nome/status do storage.
+- Ações globais Trocar organização e Sair concentradas no shell; logout impede duplo clique, cancela/limpa cache e só navega após sucesso. Navegação específica de cada página preservada.
+- Remontagem do conteúdo no evento de troca de org/sessão, para impedir que um header B acompanhe conteúdo A. Chave separada da revisão de visibilidade, sem apagar formulário ao apenas retornar à aba.
+- Marca removida das 24 páginas organizacionais; logo/símbolo oficiais exclusivamente sidebar/drawer. Quatro páginas de acesso/seletor mantêm marca. Sidebar usa tokens centralizados navy/azul/teal, branco oficial em ambos os temas.
+- Auditoria com card de filtros, região de tabela focável/rolável, colunas de largura controlada e paginação consistente.
+- Guard preserva proteção de marca pelo shell e proíbe duplicação; inventário real 28 rotas (24 organizacionais + quatro acesso/seletor).
+
+## Provas executadas e limitações
+| Prova | Resultado observado |
+|---|---|
+| Reprodução inicial visual | 10/10 testes FAIL esperados antes da implementação; mesmos 10/10 PASS depois |
+| Revisão independente | Dois achados Important: conteúdo A/header B; controles/contexto duplicados |
+| Reprodução dos achados | Dois novos testes FAIL; corrigidos no AppShell e nas páginas, total 12 testes novos |
+| Regressão dirigida inicial | 66/66 PASS antes da correção final dos achados |
+| Guard real em fixtures isoladas | 6/6 PASS; positivo centralizado e cinco negativos, com RED observado antes do fix |
+| Última regressão local integral | 37 suítes; 936 PASS e 4 FAIL exclusivamente favicons binários ausentes da cópia local |
+| TypeScript | PASS, exit 0 |
+| Build Vite | PASS, exit 0 |
+| Lint dos componentes/gates/testes centrais | 0 erros; um aviso preexistente de ref no cleanup de foco do AppShell |
+| Types congelados | `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` preservado |
+| Árvore de rotas gerada | `d6a2305730865d696348dad5a6a5706d9793f5af` preservado |
+| HML autenticado, 224 variantes visuais, 72 BRAND individuais | NÃO EXECUTADOS nesta rodada; dependem de sessão/dados válidos e evidência real |
+
+**Não esconder falhas locais:** `public/favicon.ico`, `public/favicon-16x16.png`, `public/favicon-32x32.png` e `public/favicon-48x48.png` não foram fornecidos como binário pelas ferramentas (rejeição UTF-8); não foram recriados ou modificados. O BUILD não altera qualquer arquivo `public/`. Os 936 testes PASS não são declaração de suíte integral verde; a regressão canônica completa deve ser comprovada pelo CI no HEAD do PR com assets originais. Não há bypass nem alteração de teste de hash desses assets.
+**Revisão final:** findings Important reproduzidos e corrigidos com testes antes da proposta de integração. Aviso preexistente de ref é mantido, sem refatoração fora do escopo. Evidência de CI ainda pendente no momento deste commit. Teste C público, ainda que aprovado, não prova páginas privadas.
+**Próxima tarefa:** conferir CI e Teste C no HEAD exato do PR; corrigir qualquer falha real de escopo; executar/registrar auditoria visual privada nas quatro resoluções e dois temas antes de integração/certificação visual. Sem certificar V1, liberar V2 ou tocar PROD.
+
+## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+Assets, tipos, rotas, backend, RLS, Auth e APIs preservados. GitHub direto, nenhuma chamada BUILD Lovable e nenhuma dependência nova. Mudança de apresentação não altera regras/cálculos/perfis/status. Fonte25/25 blobs conferida idêntica ao snapshot; não atribuir execução nova aos 100 regulares e 97 atômicos pelo inventário.
+---
+
 # Auditoria consolidada P0 — sidebar/AppShell V1 — 05/11/2026
 
 ## Método e limites

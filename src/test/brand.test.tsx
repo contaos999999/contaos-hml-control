@@ -51,6 +51,10 @@ const ARQUIVOS_MARCA = [
   "src/components/competencias/CompetenciaAnalise.tsx",
   "src/components/competencias/CompetenciaParecer.tsx",
   "src/components/competencias/CompetenciaApresentar.tsx",
+  "src/components/competencias/CompetenciaProtocolo.tsx",
+  "src/components/contratos/HistoricoContrato.tsx",
+  "src/components/contratos/ImportarHistorico.tsx",
+  "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
 ];
 
 describe("BRAND-01 — componente de marca", () => {
@@ -95,7 +99,16 @@ describe("BRAND-01 — contraste no tema escuro", () => {
 describe("BRAND-01 — aplicação nas telas", () => {
   it.each(ARQUIVOS_MARCA)("%s usa ContaOSMarca e não usa a marca provisória", (arquivo) => {
     const src = ler(arquivo);
-    expect(src).toContain("<ContaOSMarca");
+    if (arquivo.startsWith("src/routes/")) expect(src).toContain("<ContaOSMarca");
+    else {
+      expect(src).not.toContain("<ContaOSMarca");
+      expect(ler("src/components/layout/ContaOSAppShell.tsx")).toContain(
+        "<ContaOSOrganizationHeader",
+      );
+      expect(ler("src/components/layout/ContaOSAppShell.tsx")).toContain(
+        "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+      );
+    }
     // Ícones de status ShieldCheck são permitidos. Proibir apenas marca provisória
     // no lugar de ContaOSMarca, sem gerar falsos positivos em fluxos de segurança.
     expect(src).not.toMatch(/<ShieldCheck[^>]*\/>\s*<span[^>]*>ContaOS<\/span>/);
@@ -115,7 +128,16 @@ describe("BRAND-01 — sem visual paralelo nas telas recentes", () => {
 
   it.each(recentes)("%s preserva a identidade visual existente sem paleta paralela", (arquivo) => {
     const src = ler(arquivo);
-    expect(src).toContain("<ContaOSMarca");
+    if (arquivo.startsWith("src/routes/")) expect(src).toContain("<ContaOSMarca");
+    else {
+      expect(src).not.toContain("<ContaOSMarca");
+      expect(ler("src/components/layout/ContaOSAppShell.tsx")).toContain(
+        "<ContaOSOrganizationHeader",
+      );
+      expect(ler("src/components/layout/ContaOSAppShell.tsx")).toContain(
+        "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+      );
+    }
     expect(violaCorDireta(src)).toBe(false);
     expect(src).not.toMatch(/<img\s[^>]*src=["'](?!\/brand\/)/);
     expect(src).not.toMatch(/from\s+["'][^"']+\.css["']/);
@@ -151,8 +173,11 @@ describe("GOV-017 — SVG branco sem fundo para superficies compostas", () => {
 
   it("V1-18 mantém a marca compartilhada e tokens sem paleta paralela", () => {
     const tela = ler("src/components/competencias/CompetenciaParecer.tsx");
-    expect(tela).toContain("<ContaOSMarca");
-    expect(tela).toContain("bg-primary text-primary-foreground");
+    expect(tela).not.toContain("<ContaOSMarca");
+    expect(ler("src/components/layout/ContaOSAppShell.tsx")).toContain(
+      "<ContaOSOrganizationHeader",
+    );
+    expect(tela).toContain("bg-card text-card-foreground");
     expect(tela).toContain("bg-background text-foreground");
     expect(tela).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
     expect(tela).not.toContain("fonts.googleapis");

@@ -1,4 +1,3 @@
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -234,48 +233,6 @@ function AtencoesPrioritarias({ itens }: { itens: Atencao[] }) {
   );
 }
 
-function Cabecalho(props: {
-  resumo: ResumoDashboard | null;
-  saindo: boolean;
-  onSair: () => void;
-}) {
-  const o = props.resumo?.organizacao;
-  return (
-    <header className="border-b border-border bg-primary text-primary-foreground">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-3">
-            <span className="md:hidden"><ContaOSMarca /></span>
-          
-          <div className="min-w-0 leading-tight">
-            {o && (
-              <p className="break-words text-sm opacity-80">
-                {o.nome_fantasia || o.razao_social} <span className="opacity-70">• Situação: {o.situacao}</span>
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="secondary" className="h-11">
-            <Link to="/selecionar-organizacao">
-              <Building2 className="mr-2 h-4 w-4" aria-hidden /> Trocar organização
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-            disabled={props.saindo}
-            onClick={props.onSair}
-          >
-            {props.saindo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : <LogOut className="mr-2 h-4 w-4" aria-hidden />}
-            Sair
-          </Button>
-        </div>
-      </div>
-    </header>
-  );
-}
-
 export function Dashboard() {
   const navigate = useNavigate();
   const [idUsuario, setIdUsuario] = useState<string | null>(null);
@@ -283,8 +240,6 @@ export function Dashboard() {
   const [verificando, setVerificando] = useState(true);
   const [erroSessao, setErroSessao] = useState(false);
   const [tentativa, setTentativa] = useState(0);
-  const [saindo, setSaindo] = useState(false);
-  const saindoRef = useRef(false);
 
   useEffect(() => {
     let ativo = true;
@@ -332,14 +287,6 @@ export function Dashboard() {
     retry: false,
   });
 
-  async function sair() {
-    if (saindoRef.current) return;
-    saindoRef.current = true;
-    setSaindo(true);
-    await supabase.auth.signOut().catch(() => undefined);
-    navigate({ to: "/login", replace: true });
-  }
-
   const pronto = !!idUsuario && !!idOrganizacao;
   const fase: "verificando" | "carregando" | "negado" | "erro" | "sucesso" = erroSessao
     ? "erro"
@@ -358,7 +305,7 @@ export function Dashboard() {
 
   return (
     <div lang="pt-BR" className="min-h-screen bg-background">
-      <Cabecalho resumo={r} saindo={saindo} onSair={sair} />
+      
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 md:py-8 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
@@ -398,9 +345,7 @@ export function Dashboard() {
               <Button asChild className="h-11">
                 <Link to="/selecionar-organizacao">Selecionar outra organização</Link>
               </Button>
-              <Button type="button" variant="outline" className="h-11" onClick={sair} disabled={saindo}>
-                Sair da conta
-              </Button>
+              
             </div>
           </div>
         )}

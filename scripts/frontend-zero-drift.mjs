@@ -25,6 +25,12 @@ const COMPONENTS = [
   "src/components/competencias/CompetenciaVisaoGeral.tsx",
   "src/components/competencias/CompetenciaDocumentos.tsx",
   "src/components/competencias/CompetenciaAnalise.tsx",
+  "src/components/competencias/CompetenciaParecer.tsx",
+  "src/components/competencias/CompetenciaApresentar.tsx",
+  "src/components/competencias/CompetenciaProtocolo.tsx",
+  "src/components/contratos/HistoricoContrato.tsx",
+  "src/components/contratos/ImportarHistorico.tsx",
+  "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
 ];
 
 const problems = [];
@@ -49,10 +55,26 @@ for (const english of [
 }
 
 const brandTest = source("src/test/brand.test.tsx");
+// A marca das páginas organizacionais vem do shell, não de cabeçalhos duplicados.
+const shell = source("src/components/layout/ContaOSAppShell.tsx");
+if (!root.includes("<ContaOSAppShell>") || !root.includes("<Outlet />"))
+  problems.push("Root sem AppShell compartilhado e Outlet.");
+for (const required of [
+  "<ContaOSOrganizationHeader",
+  "<ContaOSSidebar",
+  "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+  "/brand/ContaOS_Simbolo_Branco.svg",
+])
+  if (!shell.includes(required)) problems.push("Shell sem apresentação/marca oficial: " + required);
+
 for (const path of COMPONENTS) {
   const code = source(path);
-  if (!code.includes("<ContaOSMarca"))
-    problems.push("Tela sem componente ContaOSMarca oficial: " + path);
+  if (path.startsWith("src/routes/")) {
+    if (!code.includes("<ContaOSMarca"))
+      problems.push("Tela de acesso/seletor sem marca oficial: " + path);
+  } else if (code.includes("<ContaOSMarca")) {
+    problems.push("Marca duplicada fora da sidebar organizacional: " + path);
+  }
   if (!brandTest.includes(path))
     problems.push("Tela ausente da proteção do teste BRAND-01: " + path);
   if (/#[0-9a-fA-F]{6}\b/.test(code))
@@ -120,7 +142,7 @@ if (problems.length) {
 console.log(
   "ZERO-DRIFT PASS: " +
     COMPONENTS.length +
-    " telas com ContaOSMarca e teste BRAND-01, pt-BR global, blobs/ativos oficiais e types.ts imutável.",
+    " telas com marca pública ou compartilhada no menu, teste BRAND-01, pt-BR global, blobs/ativos oficiais e types.ts imutável.",
 );
 console.log(
   "LIMITAÇÃO: captura visual dinâmica e estados autenticados são verificados em Teste C independente.",

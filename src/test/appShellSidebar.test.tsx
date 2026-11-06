@@ -134,6 +134,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => vi.fn(),
   useRouterState: ({ select }: { select: (s: { location: { pathname: string } }) => unknown }) =>
     select({ location: { pathname: mocks.pathname } }),
   Link: ({
@@ -153,7 +154,12 @@ vi.mock("@tanstack/react-router", () => ({
   ),
 }));
 vi.mock("@/integrations/supabase/client", () => ({
-  supabase: { auth: { getUser: mocks.getUser, onAuthStateChange: mocks.onAuthStateChange } },
+  supabase: {
+    auth: {
+      getUser: mocks.getUser,
+      onAuthStateChange: mocks.onAuthStateChange,
+    },
+  },
 }));
 vi.mock("@/lib/organizacao/preferenciaOrganizacao", () => ({
   obterPreferenciaOrganizacao: mocks.obterPreferencia,
@@ -187,13 +193,16 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
         { recurso: "contratantes", acao: "criar" },
       ],
     });
-    mocks.contexto
-      .mockReset()
-      .mockResolvedValue({ contrato: null, competencia: null, contratante: null });
+    mocks.contexto.mockReset().mockResolvedValue({
+      contrato: null,
+      competencia: null,
+      contratante: null,
+    });
     mocks.pathname = "/";
-    mocks.getUser
-      .mockReset()
-      .mockResolvedValue({ data: { user: { id: "usuario-teste" } }, error: null });
+    mocks.getUser.mockReset().mockResolvedValue({
+      data: { user: { id: "usuario-teste" } },
+      error: null,
+    });
     mocks.obterPreferencia.mockReset().mockReturnValue("org-teste");
     mocks.validarAdministrador.mockReset().mockResolvedValue(false);
     mocks.podeConsultarAuditoria.mockReset().mockResolvedValue(false);
@@ -218,9 +227,9 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
     const dialogo = screen.getByRole("dialog", { name: "Menu de navegação" });
     expect(dialogo).toHaveAttribute("aria-modal", "true");
     expect(abrir).toHaveAttribute("inert");
-    expect(screen.getByRole("button", { name: "Conteúdo privado" }).parentElement).toHaveAttribute(
-      "inert",
-    );
+    expect(
+      screen.getByRole("button", { name: "Conteúdo privado" }).closest("[inert]"),
+    ).toHaveAttribute("inert");
     expect(document.body.style.overflow).toBe("hidden");
     fireEvent.keyDown(document, { key: "Escape" });
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
@@ -305,7 +314,10 @@ describe("P0 sidebar — concorrência de autorização e responsividade", () =>
       expect(document.body.style.overflow).toBe("");
     } finally {
       cleanup();
-      Object.defineProperty(window, "matchMedia", { configurable: true, value: original });
+      Object.defineProperty(window, "matchMedia", {
+        configurable: true,
+        value: original,
+      });
     }
   });
 });
@@ -352,13 +364,16 @@ describe("P0 V1 — invalidação local imediata na troca de organização", () 
         { recurso: "contratantes", acao: "criar" },
       ],
     });
-    mocks.contexto
-      .mockReset()
-      .mockResolvedValue({ contrato: null, competencia: null, contratante: null });
+    mocks.contexto.mockReset().mockResolvedValue({
+      contrato: null,
+      competencia: null,
+      contratante: null,
+    });
     mocks.pathname = "/";
-    mocks.getUser
-      .mockReset()
-      .mockResolvedValue({ data: { user: { id: "usuario-teste" } }, error: null });
+    mocks.getUser.mockReset().mockResolvedValue({
+      data: { user: { id: "usuario-teste" } },
+      error: null,
+    });
     mocks.obterPreferencia.mockReset().mockReturnValue("org-teste");
     mocks.validarAdministrador.mockReset().mockResolvedValue(false);
     mocks.podeConsultarAuditoria.mockReset().mockResolvedValue(false);
@@ -403,18 +418,21 @@ describe("P0 V1 — invalidação local imediata na troca de organização", () 
     fireEvent(window, new Event("contaos:organizacao-alterada"));
     await waitFor(() => expect(mocks.validarAdministrador).toHaveBeenCalledTimes(2));
     resolverPrimeira(true);
-    await waitFor(() => expect(mocks.getUser).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(mocks.getUser).toHaveBeenCalledTimes(4));
     expect(screen.queryByRole("link", { name: "Usuários" })).not.toBeInTheDocument();
   });
 });
 
 describe("BRAND-01 P0 — contraste dos logos oficiais na sidebar", () => {
-  it("seleciona logo navy em tema claro e branca em tema escuro", () => {
+  it("usa logo e símbolo brancos oficiais na superfície navy em ambos os temas", () => {
     const codigo = lerShell();
-    expect(codigo).toMatch(/ContaOS_Logo_Horizontal_Mono_Navy\.svg[^>]*dark:hidden/);
-    expect(codigo).toMatch(/ContaOS_Logo_Horizontal_Mono_Branco_Transparente\.svg[^>]*dark:block/);
-    expect(codigo).toMatch(/ContaOS_Simbolo_Navy\.svg[^>]*dark:hidden/);
-    expect(codigo).toMatch(/ContaOS_Simbolo_Branco\.svg[^>]*dark:block/);
+    expect(codigo).toContain("bg-sidebar text-sidebar-foreground");
+    expect(codigo).toContain("ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg");
+    expect(codigo).toContain("ContaOS_Simbolo_Branco.svg");
+    expect(codigo).not.toContain("ContaOS_Logo_Horizontal_Mono_Navy.svg");
+    expect(codigo).not.toContain("ContaOS_Simbolo_Navy.svg");
+    const tokens = readFileSync(resolve(__dirname, "../styles.css"), "utf8");
+    expect(tokens.match(/--sidebar: oklch\(0.208 0.042 265.755\)/g)).toHaveLength(2);
   });
 });
 
@@ -450,7 +468,11 @@ describe("navegação V1 por permissões e contexto", () => {
     expect(links.some((x) => x.destino.endsWith("/importar"))).toBe(false);
   });
   it("mantém a competência exata nos links e exige permissão por ação", () => {
-    const c = { contrato: "contrato-A", competencia: "competencia-A", contratante: null };
+    const c = {
+      contrato: "contrato-A",
+      competencia: "competencia-A",
+      contratante: null,
+    };
     const links = menuContextualV1(c, [
       { recurso: "documentos_competencia", acao: "consultar" },
       { recurso: "analises", acao: "consultar" },
@@ -466,21 +488,27 @@ describe("navegação V1 por permissões e contexto", () => {
 describe("menu contextual autenticado", () => {
   beforeEach(() => {
     mocks.pathname = "/";
-    mocks.getUser
-      .mockReset()
-      .mockResolvedValue({ data: { user: { id: "usuario-teste" } }, error: null });
+    mocks.getUser.mockReset().mockResolvedValue({
+      data: { user: { id: "usuario-teste" } },
+      error: null,
+    });
     mocks.obterPreferencia.mockReset().mockReturnValue("org-A");
     mocks.validarAdministrador.mockReset().mockResolvedValue(false);
     mocks.podeConsultarAuditoria.mockReset().mockResolvedValue(false);
     mocks.onAuthStateChange
       .mockReset()
       .mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } });
-    mocks.contexto
-      .mockReset()
-      .mockResolvedValue({ contrato: null, competencia: null, contratante: null });
-    mocks.efetivas
-      .mockReset()
-      .mockResolvedValue({ schema_versao: "rbac-v1", versao: 5, master: false, permissoes: [] });
+    mocks.contexto.mockReset().mockResolvedValue({
+      contrato: null,
+      competencia: null,
+      contratante: null,
+    });
+    mocks.efetivas.mockReset().mockResolvedValue({
+      schema_versao: "rbac-v1",
+      versao: 5,
+      master: false,
+      permissoes: [],
+    });
   });
   afterEach(cleanup);
   it("não exibe links comuns enquanto permissões estão pendentes", async () => {
@@ -520,7 +548,12 @@ describe("menu contextual autenticado", () => {
             resolver = r;
           }),
       )
-      .mockResolvedValue({ schema_versao: "rbac-v1", versao: 5, master: false, permissoes: [] });
+      .mockResolvedValue({
+        schema_versao: "rbac-v1",
+        versao: 5,
+        master: false,
+        permissoes: [],
+      });
     render(
       <ContaOSAppShell>
         <div>Conteúdo</div>
@@ -553,3 +586,10 @@ describe("menu contextual autenticado", () => {
     expect(screen.queryByRole("link", { name: "Auditoria" })).not.toBeInTheDocument();
   });
 });
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({
+    cancelQueries: vi.fn(async () => undefined),
+    clear: vi.fn(),
+  }),
+}));

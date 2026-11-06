@@ -20,7 +20,6 @@ import {
   type FormularioContrato,
   type OpcaoContratante,
 } from "@/lib/contratos/novoContratoDados";
-import { ContaOSMarca } from "@/components/brand/ContaOSMarca";
 
 export const MENSAGENS_V105 = {
   verificando: "Verificando sessão…",
@@ -239,8 +238,6 @@ export function NovoContrato() {
   const [verificando, setVerificando] = useState(true);
   const [erroSessao, setErroSessao] = useState(false);
   const [tentativa, setTentativa] = useState(0);
-  const [saindo, setSaindo] = useState(false);
-  const saindoRef = useRef(false);
 
   const [form, setForm] = useState<FormularioContrato>(VAZIO);
   const [invalidos, setInvalidos] = useState<CampoContrato[]>([]);
@@ -303,16 +300,6 @@ export function NovoContrato() {
     const t = setTimeout(() => navigate({ to: "/contratos" }), 1200);
     return () => clearTimeout(t);
   }, [criado, navigate]);
-
-  async function sair() {
-    if (saindoRef.current) return;
-    saindoRef.current = true;
-    setSaindo(true);
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut().catch(() => undefined);
-    navigate({ to: "/login", replace: true });
-  }
 
   async function enviar(e: FormEvent) {
     e.preventDefault();
@@ -537,33 +524,20 @@ export function NovoContrato() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-primary text-primary-foreground">
+      <nav aria-label="Navegação da página" className="border-b border-border bg-card text-card-foreground">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex min-w-0 items-center gap-3">
-            <ContaOSMarca />
-          </div>
+          
           <nav aria-label="Navegação" className="flex flex-wrap gap-2">
-            <Button asChild variant="secondary" className="h-11">
-              <Link to="/">Painel</Link>
-            </Button>
+            
             <Button asChild variant="secondary" className="h-11">
               <Link to="/contratos">
                 <ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Contratos
               </Link>
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="h-11 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-              disabled={saindo}
-              onClick={sair}
-            >
-              {saindo ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden /> : <LogOut className="mr-2 h-4 w-4" aria-hidden />}
-              Sair
-            </Button>
+            
           </nav>
         </div>
-      </header>
+      </nav>
       <main className="mx-auto max-w-3xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Contratos</p>
