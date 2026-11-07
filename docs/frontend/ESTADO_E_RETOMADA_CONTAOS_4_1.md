@@ -1,3 +1,46 @@
+## Checkpoint verificado: revisão humana V1-17 implantada no HML, prova JWT bloqueada
+
+**Data: 07/11/2026. CRUD global NÃO CONCLUÍDO. V1 NÃO CERTIFICADA.** V2–V5 e PROD permanecem bloqueados. Este bloco prevalece sobre os registros históricos abaixo.
+
+### Autorização e última etapa comprovada
+
+O titular respondeu **Autorizado** à investigação somente em leitura de `registrar_resultado_requisito` e depois determinou **Execute** para a correção canônica, integração e testes reais. O gate específico de autorização foi cumprido. Não solicitar novamente essa autorização nem confundir o impedimento atual de configuração com falta de consentimento.
+
+Backend `contaos999999/develop`, main `744dee8636c164415774e413e76883e08dffbc09`. PLAN [#98](https://github.com/contaos999999/develop/pull/98), merge `c1e138d7a60641e1059079e83649bc3bb7f31599`, guard `42361197685` SUCCESS antes do BUILD. BUILD [#99](https://github.com/contaos999999/develop/pull/99), HEAD testado `e63894d48b832239ed5bb3637765041be8a49942`, integrado no HEAD main acima. Guard `42362238678`, histórico `42362238683` e restore `42362238665` SUCCESS; reconstrução integral e backup sintético em duas instâncias aprovados no mesmo SHA. Restore da main `42362448129` também passou nos dois jobs; guard main `42362448058` SUCCESS.
+
+### Implementação e limites da prova
+
+- Novas RPCs: `obter_contexto_revisao_v117(uuid,uuid)` e `registrar_revisao_requisito_v117(uuid,uuid,uuid,uuid,text,text,text,text,jsonb,uuid)`. Consulta retorna capacidade efetiva e CAS de execução, resultado e hash. Escrita transacional preserva o UNIQUE existente e gera nova execução incremental humana, resultado e evidências, sem sobrescrever o resultado anterior.
+- Exige hash da execução-base igual ao contexto atual calculado no servidor e ao hash esperado. Duas revisões com a mesma base não podem sobrescrever uma à outra. Mesma chave/ator/payload retorna o mesmo recibo; payload ou ator diferente é negado. Replay autorizado é verificado antes do CAS, e autorização é revalidada após espera.
+- Evidência deve pertencer ao mesmo tenant, contrato e competência, com arquivo aprovado; hash é copiado no servidor. Não aplicável exige fundamento e evidência. Parecer anterior é substituído sem apagar conteúdo. Percentual e portões continuam no backend, com parecer/contexto atuais obrigatórios.
+- Função legada conserva assinatura, mas recusa o fluxo sem CAS/idempotência. DML direto e anon permanecem negados. Direção conserva a autorização de escrita legada; MASTER usa a autoridade canônica, sem herança especializada nova. Sem alteração de RLS, Edge, configuração Auth, tipos, rotas ou PROD.
+- RED `375c908d`, run `42361330041`: nova RPC inexistente. Testes finais isolados e concorrentes passaram, incluindo histórico, recibo único, CAS, evidência válida, evidência existente de outro tenant negada, substituição de parecer, hash obsoleto com dois requisitos, revogação durante espera e reanálise concorrente.
+- Revisão independente corrigiu ambiguidade de hash-base, acesso de direção e recuperação de fixtures Auth. Intenção de criação é persistida antes da API; resposta perdida é recuperada pelo próprio e-mail e nonce; organização é desativada pelo UUID mesmo após interrupção. Self-test sem rede passou localmente, na revisão e no restore. Isso não equivale a JWT real.
+
+### Deploy HML comprovado
+
+Workflow [Revisão V117](https://github.com/contaos999999/develop/actions/runs/42362609674), job canonical-deploy SUCCESS. Deploy CLI [42362617182](https://github.com/contaos999999/develop/actions/runs/42362617182) SUCCESS, fonte main exata e hash conferidos. Migration `20261107094443_p0_v117_revisao_humana.sql`, SHA-256 `a90ace330c27314915dbdb547bfe4bad4f49c763a8373f1540d83d4a8eddcabb`.
+
+Leitura posterior do Supabase: **129 migrations**, nova versão aplicada **uma única vez**; paridade global GitHub/HML PASS. Os seis corpos de função definidos pela migration foram conferidos por MD5 com o SQL versionado, e ACLs confirmadas: anon sem execução, wrappers públicos invoker, implementações privadas com autorização. Advisor mantém categorias INFO/WARN conhecidas; funções privadas definer autorizadas continuam sujeitas à revisão RBAC/sessão/tenant, sem presumir que o aviso genérico é prova de vulnerabilidade ou de segurança integral.
+
+### Impedimento atual e ação necessária
+
+O job real-jwt `128374040482` do run `42362609674` falhou no **preflight**, com `Auth Admin API credential unavailable; no identities or business fixtures created`. Estado do relatório: `CONFIG_BLOCKED_AUTH_ADMIN_KEY_MISSING`. **Nenhuma identidade ou fixture de negócio foi criada nessa tentativa.** Não houve provisionamento por SQL em auth.users no HML.
+
+1. Configurar no GitHub Secrets do backend HML o Secret **CONTAOS_HML_AUTH_ADMIN_KEY**, com credencial administrativa Auth do projeto HML. Os aliases já previstos são CONTAOS_HML_SERVICE_ROLE_KEY ou SUPABASE_SERVICE_ROLE_KEY. Valor somente no gerenciador de Secrets, nunca em chat, código, arquivo ou log. Chave pública/anon não substitui credencial administrativa.
+2. Após configuração, reexecutar **somente os jobs falhos do run 42362609674**. O deploy já passou: **não reaplicar a migration nem repetir o job canônico**. Preservar backend main `744dee8` até essa prova, pois o job exige o HEAD vivo exato. Não fazer commit documental no backend antes desse rerun; usar este checkpoint e o comentário do PR99 para continuidade.
+3. Provar criação via Auth Admin API, login GoTrue, chamadas HTTP e concorrência, perfis administrador/MASTER/auditor/direção, negativas leitor/sem vínculo/outro tenant/contrato restrito e quarentena. Conferir recibos, relatório sanitizado, contas banidas, vínculos/MASTER desativados, sessões revogadas e organizações sintéticas inativas. Falha não vira PASS.
+4. Só após JWT real aprovado: atualizar resultado backend e abrir PLAN frontend para integrar revisão no drawer V117. Reancorar novamente se o HEAD backend mudar; manter os 25 blobs e catálogo conferidos e tipos congelados. A UI deve mostrar confirmação, conflito e resultado incerto; repetir somente a intenção original explicitamente, com a mesma chave.
+5. Prova privada e WCAG autenticado continuam NÃO VERIFICADOS. Não repetir pedido de autenticação cancelado sem iniciativa do titular. Preservar SYS03 N1/N2 e ressalvas R01/R02/R03. Reconciliar matriz V1/RNF antes de certificar; nenhuma dispensa nova.
+
+### Estado frontend e prompt de retomada
+
+Último BUILD frontend comprovado: PR265, merge `ec7659708b2e6563274915803c59f8ef22c5aeef`, HEAD `78523eea0a850420682356f202a8892aa2fa3fa3`, CI `42357723313` com dois checks SUCCESS, 1.084 testes e Teste C público. Checkpoint anterior PR266 merge `d8849c28877d97e5503f33c0fc9329b642ae9157`. **Nenhuma UI nova de revisão humana foi implementada nesta rodada.** Snapshot deste checkpoint reancora em backend `744dee8`, com 25/25 blobs canônicos e catálogo invariáveis conferidos.
+
+Continue o ContaOS 4.1 pelo checkpoint mais recente em `contaos999999/contaos-hml-control`. Reconsulte main, AGENTS, ADR-DEV-002, ordem por versão, PLANO_ATIVO e fontes. Não repetir frontend255/257/259/262/264/265/266 nem backend98/99. A autorização específica já foi recebida. Backend da revisão está integrado e implantado em main744dee8636c164415774e413e76883e08dffbc09, CLI42362617182 PASS e129migrations paritárias. Próximo impedimento é credencial Auth Admin ausente no job real-jwt do run42362609674. Após o titular configurar o Secret, reexecutar somente jobs falhos desse mesmo run, mantendo main744dee8 até a prova; não repetir deploy. Nunca criar usuários HML com INSERT auth.users. Somente depois do JWT real PASS, planejar e integrar frontend, com types8ea7750b75fd9d76b29c36ce7613392e3ab65e19 preservados e novo gate de fontes. CRUD global não concluído, V1 não certificada, privado não verificado; sem V2–V5/PROD e sem repetir autenticação cancelada por iniciativa própria.
+
+---
+
 ## Checkpoint verificado em 07/11/2026: PR #265 integrado
 
 Última etapa comprovada: aviso de falha da conferência explícita da reanálise. PR #265 integrado no merge `ec7659708b2e6563274915803c59f8ef22c5aeef`, HEAD testado `78523eea0a850420682356f202a8892aa2fa3fa3`. PLAN #264 foi integrado antes do BUILD: merge `97eaaa7b4685970add307222834b486bbdbdddc8`, CI `42357346038`, ambos checks SUCCESS.
