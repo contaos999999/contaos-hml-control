@@ -43,6 +43,23 @@ export function cases() {
     WIDTHS.flatMap((width) => THEMES.map((theme) => ({ ...route, width, theme }))),
   );
 }
+export function brandTypographyGate(fontFamily) {
+  const stack =
+    typeof fontFamily === "string"
+      ? fontFamily.split(",").map((font) =>
+          font
+            .trim()
+            .replace(/^["']|["']$/g, "")
+            .toLowerCase(),
+        )
+      : [];
+  return stack.length === 3 &&
+    stack[0] === "inter" &&
+    stack[1] === "arial" &&
+    stack[2] === "sans-serif"
+    ? []
+    : ["Pilha tipográfica institucional requer Inter, Arial, sans-serif nessa ordem"];
+}
 export function publicGate({ http, lang, h1, overflow, pageErrors }) {
   const errors = [];
   if (http >= 400) errors.push("rota pública HTTP " + http);
@@ -324,6 +341,7 @@ async function run() {
         await page.waitForTimeout(550);
         const state = await page.evaluate(() => ({
           pathname: window.location.pathname,
+          fontFamily: getComputedStyle(document.body).fontFamily,
           lang: document.documentElement.lang,
           h1: document.querySelectorAll("h1").length,
           overflow: Math.max(0, document.documentElement.scrollWidth - window.innerWidth),
@@ -341,6 +359,8 @@ async function run() {
             overflow: state.overflow,
             pageErrors: errors,
           });
+          record.typography = { fontFamily: state.fontFamily };
+          record.publicAssertions.push(...brandTypographyGate(state.fontFamily));
           let axeScan = null;
           try {
             await page.addScriptTag({ path: axeSource });
