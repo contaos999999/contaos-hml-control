@@ -427,9 +427,10 @@
     "SYS03 decisoes manuais anteriores preservadas sem repetirporpadrao",
     "Editor manual de parecer/exportacao auditoria/reprocessamento documental manual nao sao permissoesCRUD novas semfonte/contrato; nao inventarAPI",
     "Runs privados 42398052328/42398802825 falharam por validação/preenchimento do teste. Correções 123/124 integradas; nenhuma aprovação de domínio por execução parcial.",
-    "PASS_BATCH 42402246765 cobre quatro domínios; upload físico/worker e demais domínios não comprovados por este lote. Auditoria visual limitada à gestão de listas."
+    "PASS_BATCH 42402246765 cobre quatro domínios; upload físico/worker e demais domínios não comprovados por este lote. Auditoria visual limitada à gestão de listas.",
+    "PASS funcional do lote não aprova as capturas: revisão independente rejeitou4/8; quatro aceitas somente para o painel. PR130 exige nova prova visual estável, foco/teclado/axe sem certificar WCAG manual."
   ],
-  "latest_backend_head": "a0337932872402b12a5378040f18feb2161bc723",
+  "latest_backend_head": "aa5f83ede6ea74d377c92dde0fdd830288450e29",
   "private_runs": [
     {
       "run": 42398052328,
@@ -465,5 +466,19 @@
       "global_complete": false,
       "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
     }
-  ]
+  ],
+  "visual_gate": {
+    "state": "NOT_APPROVED",
+    "run": 42402246765,
+    "inspected": 8,
+    "rejected": 4,
+    "accepted_panel_only": 4,
+    "reason": "Busy initial captures and clipped panel; mobile header not captured",
+    "fix_pr": 130,
+    "fix_head": "5dccafcc916d1c420fdeb350b0b091cb0af2126c",
+    "new_images_required": 16,
+    "manual_wcag": "PENDENTE",
+    "historical_transient_v117_contrast": "OPEN",
+    "fix_merge": "aa5f83ede6ea74d377c92dde0fdd830288450e29"
+  }
 }
