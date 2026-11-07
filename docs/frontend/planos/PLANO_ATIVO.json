@@ -977,7 +977,7 @@
       "reset_red": "d079839ef17d10cdcfd8232bb030363450c50097",
       "local_protocol": 29,
       "local_directed_tests": 56,
-      "independent_review": "Importantresetresolvido; semCritical/Important pendente; capturas e runtime ainda pendentes",
+      "independent_review": "Código final semCritical/Important; runtime16casos/112steps e revisão visual concluídos sembloqueantes noescopo público. ContrasteAA/WCAGintegral/privadas permanecem pendentes.",
       "build_pr": 314,
       "build_head": "a9c1c1cb13b4c2a70189509ad1bd4af5f2cfcbae",
       "build_merge": "add9b06ae162f9f9fe994b31cb7a0bd2adccbda2",
