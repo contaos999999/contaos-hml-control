@@ -1,3 +1,20 @@
+## Checkpoint P0 — 07/11/2026 — lote CADASTROS_LISTAS aprovado no HML
+
+Este bloco prevalece sobre o histórico. **CRUD global e V1 continuam pendentes de certificação.** Não repetir os PLAN120/GATE121 nem o lote CADASTROS_LISTAS aprovado.
+
+- Prova real [42402246765](https://github.com/contaos999999/develop/actions/runs/42402246765), job128492370077: PASS_BATCH. Backend `a0337932872402b12a5378040f18feb2161bc723`; frontend funcional fixado `74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8`. São 37 verificações Auth/SQL/auditoria e 76 de navegador, zero falhas e zero erros de runtime. Domínios comprovados neste lote: organizações, contratantes, contratos e listas.
+- CAS409 real entre duas abas, rascunho preservado durante falha real de transporte de leitura, nenhuma escrita durante a falha e recuperação posterior aprovados. Leitor sem botões de mutação e outro tenant negado. Persistência, situações, versões/itens e recibos/auditoria conferidos. Quarentena de quatro contas e três organizações próprias VERIFICADA, inclusive limpeza independente.
+- Artefato13584889991 baixado e SHA-256 conferido: `00fddbbdf18d76f4bc55c4e5fea8712973b92fa1fd375e151b9c6c19e1095110`. Oito PNGs da gestão de listas inspecionados: 1440/1280/768/390, claro/escuro, sem corte horizontal da página. Limite: não demonstram todas as rotas, teclado ou contraste integral; não certificam WCAG.
+- FIX127, HEAD8533f2acae1320f24f0753f60795b07f700ae4b5, mergeb66f4af1e555d14c03a28c08e7369616bf4820e9: seleção de situação pelo formulário específico e preflight Chromium real. FIX129, HEADc102cfab42e0ecec021c3442e740260b619b653e, mergea033793: segunda aba escolhe organização pela UI real, preservando isolamento de sessionStorage. Diagnósticos sanitizados mantidos. Suíte43/43 e protocolo13/13; revisão independente sem Critical/Important. CI129 guard42401839024, restore/backup42401839082 e probe42401839045 SUCCESS no mesmo HEAD. Main guard42402066651 e restore/backup42402066548 SUCCESS.
+- Falhas históricas permanecem FAIL: 42400417695 na seleção exata de Situação e 42401271563 na segunda aba sem organização. Quarentenas verificadas em ambas. Não são falhas de produto corrigidas por ampliação de permissão. PRs duplicados126/128 fechados sem merge, incorporando a solução canônica127/129. Nenhum bypass de HEAD ou CI.
+- Última etapa comprovada: lote privado CADASTROS_LISTAS. Próxima tarefa: prova somente-leitura de Auditoria e demais jornadas pendentes na matriz, sob PLAN120/GATE121 e allowlist vigente; upload físico/worker real antes de fluxos dependentes. V117 anterior permanece aprovado somente em seu escopo. Não certificar 18 domínios por este lote.
+- Snapshot/ack reancorados juntos no backend a033793; 25 blobs normativos iguais. ZIP original e hashes dos manuais100/97 preservados. Matriz atualizada sem apagar histórico. V2–V5/PROD bloqueados; critérios V1, auditoria manual e retrospectiva pendentes.
+- PRs backend75/77/78/80 já integrados; nenhum PR aberto nos dois repositórios na consulta anterior a este checkpoint. Reconsultar HEADs/CI antes da próxima alteração. Automação horária não implica vigilância contínua entre execuções.
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: somente documentação e evidências; sem produto, tipos, marca, DDL/RLS/Edge/Authconfig ou PROD.
+
+---
+
 ## Checkpoint P0 — 07/11/2026 — prova CRUD privada e diagnóstico pós-descarte
 
 Este bloco prevalece sobre o histórico. CRUDglobal/V1 NÃO CONCLUÍDOS ou CERTIFICADOS. V2–V5 e PROD bloqueados. Não repetir PLAN120/GATE121, BUILD122, FIX123/124 ou diagnóstico125 integrados.

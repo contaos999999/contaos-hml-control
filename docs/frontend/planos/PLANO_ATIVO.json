@@ -149,7 +149,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "Codex: leitura contexto25/P0/manifesto/checkpoint; ZIPoriginal e doisDOCX recuperados e hashes conferidos;25blobs/catalogo invariáveis no backend01cde2e; diagnóstico125 integrado, provaCRUD privada pendente.",
   "context_read_acknowledged_at": "2026-11-07",
-  "context_source_commit": "01cde2e96e2fc98d601f9c9dfc865f05af4629b8",
+  "context_source_commit": "a0337932872402b12a5378040f18feb2161bc723",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -630,7 +630,7 @@
   "crud_global_fechamento": {
     "plan": "docs/frontend/planos/P0_CRUD_GLOBAL_FECHAMENTO_2026-11-07.md",
     "matrix": "docs/frontend/auditorias/P0_CRUD_GLOBAL_MATRIZ_2026-11-07.json",
-    "state": "PROVA_PRIVADA_FALHOU_DIAGNOSTICO_INTEGRADO_SEM_CAUSA_PRESUMIDA",
+    "state": "PASS_BATCH_CADASTROS_LISTAS_GLOBAL_PENDENTE",
     "source_head": "a6399adc39e984293c14d7adcf106b00ab76ce50",
     "routes": 28,
     "domains": 18,
@@ -674,16 +674,18 @@
     "backend_proof_plan": 120,
     "backend_proof_gate": 121,
     "backend_proof_gate_merge": "34d88b8a77cd3ae2abfca72ee78d441c426e767b",
-    "backend_current_head": "01cde2e96e2fc98d601f9c9dfc865f05af4629b8",
+    "backend_current_head": "a0337932872402b12a5378040f18feb2161bc723",
     "backend_build_pr": 122,
     "backend_build_merge": "c5b0a31793ead6bace7a28246bcb848c26b0d107",
     "backend_fix_prs": [
       123,
-      124
+      124,
+      127,
+      129
     ],
-    "backend_latest_fix_merge": "b30d69575609ae7aaf2fc15a8e0a85c8d0ef4322",
-    "backend_protocol_tests": 12,
-    "backend_regression": 42,
+    "backend_latest_fix_merge": "a0337932872402b12a5378040f18feb2161bc723",
+    "backend_protocol_tests": 13,
+    "backend_regression": 43,
     "global_complete": false,
     "private_runs": [
       {
@@ -699,10 +701,50 @@
         "artifact": 13584985531,
         "sha256": "7c715843f300a1fe0cd5a13b6ca8eac577baf5d3549f7579a88ed6244a46e0a5",
         "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS"
+      },
+      {
+        "run": 42402246765,
+        "state": "PASS_BATCH",
+        "backend_head": "a0337932872402b12a5378040f18feb2161bc723",
+        "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8",
+        "artifact": 13584889991,
+        "sha256": "00fddbbdf18d76f4bc55c4e5fea8712973b92fa1fd375e151b9c6c19e1095110",
+        "http_sql_assertions": 37,
+        "browser_assertions": 76,
+        "failures": 0,
+        "completed_domains": [
+          "organizacoes",
+          "contratantes",
+          "contratos",
+          "listas"
+        ],
+        "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
+        "global_complete": false,
+        "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
       }
     ],
-    "next_action": "Consultar prova HML pósdiagnóstico125 em01cde2e, identificar fase/flags sem presumircausa e corrigir porrito vigente.",
+    "next_action": "Provar auditoria somente-leitura e demais jornadas pendentes pelo PLAN120/GATE121; upload físico e worker reais antes de publicação dependente. Não repetir o lote CADASTROS_LISTAS aprovado.",
     "backend_diagnostic_pr": 125,
-    "backend_diagnostic_merge": "01cde2e96e2fc98d601f9c9dfc865f05af4629b8"
+    "backend_diagnostic_merge": "01cde2e96e2fc98d601f9c9dfc865f05af4629b8",
+    "latest_pass_batch": {
+      "run": 42402246765,
+      "state": "PASS_BATCH",
+      "backend_head": "a0337932872402b12a5378040f18feb2161bc723",
+      "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8",
+      "artifact": 13584889991,
+      "sha256": "00fddbbdf18d76f4bc55c4e5fea8712973b92fa1fd375e151b9c6c19e1095110",
+      "http_sql_assertions": 37,
+      "browser_assertions": 76,
+      "failures": 0,
+      "completed_domains": [
+        "organizacoes",
+        "contratantes",
+        "contratos",
+        "listas"
+      ],
+      "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
+      "global_complete": false,
+      "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
+    }
   }
 }
