@@ -127,7 +127,7 @@ export type RequisitoV117 = {
   fonte_tipo: string | null;
   fonte_referencia: string | null;
   fonte_detalhe: string | null;
-  efeito_portao: string | null;
+  efeito_portao: boolean | null;
   hash_snapshot: string | null;
   regra_validacao: string | null;
   condicao_aplicabilidade: string | null;
@@ -271,6 +271,37 @@ function pag(v: unknown, offsetEsperado: number): PaginacaoV117 {
   if (r.limite !== PAGINA_DETALHE || r.offset !== offsetEsperado) falha();
   return r;
 }
+/** JSONB é dado de fonte, nunca uma regra executável no cliente. */
+function textoJson(v: unknown): string | null {
+  if (v === null || v === undefined) return null;
+  const caminho = new Set<object>();
+  const valido = (x: unknown): boolean => {
+    if (x === null || typeof x === "string" || typeof x === "boolean") return true;
+    if (typeof x === "number") return Number.isFinite(x);
+    if (!obj(x) && !Array.isArray(x)) return false;
+    if (caminho.has(x)) return false;
+    const proto = Object.getPrototypeOf(x);
+    if (Array.isArray(x) ? proto !== Array.prototype : proto !== Object.prototype && proto !== null)
+      return false;
+    const descritores = Object.getOwnPropertyDescriptors(x);
+    if (
+      Array.isArray(x) &&
+      Array.from({ length: x.length }, (_, i) => i).some((i) => !Object.hasOwn(descritores, i))
+    )
+      return false;
+    caminho.add(x);
+    const ok = Reflect.ownKeys(x).every((k) => {
+      if (typeof k !== "string") return false;
+      const d = descritores[k];
+      return !!d && "value" in d && valido(d.value);
+    });
+    caminho.delete(x);
+    return ok;
+  };
+  if (!valido(v)) falha();
+  return typeof v === "string" ? v : JSON.stringify(v);
+}
+
 function req(v: unknown): RequisitoV117 {
   const q = o(v);
   return {
@@ -287,11 +318,11 @@ function req(v: unknown): RequisitoV117 {
     criticidade: s(q["criticidade"]),
     fonte_tipo: s(q["fonte_tipo"]),
     fonte_referencia: s(q["fonte_referencia"]),
-    fonte_detalhe: s(q["fonte_detalhe"]),
-    efeito_portao: s(q["efeito_portao"]),
+    fonte_detalhe: textoJson(q["fonte_detalhe"]),
+    efeito_portao: b(q["efeito_portao"]),
     hash_snapshot: s(q["hash_snapshot"]),
-    regra_validacao: s(q["regra_validacao"]),
-    condicao_aplicabilidade: s(q["condicao_aplicabilidade"]),
+    regra_validacao: textoJson(q["regra_validacao"]),
+    condicao_aplicabilidade: textoJson(q["condicao_aplicabilidade"]),
   };
 }
 function exec(v: unknown): ExecucaoV117 | null {

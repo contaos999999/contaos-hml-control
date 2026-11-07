@@ -567,7 +567,7 @@
     "scope_changed": false
   },
   "v117_json_contract_fix": {
-    "phase": "GATE_CORRIGIDO_AGUARDANDO_CI",
+    "phase": "BUILD_SUBSTITUTO_EM_VALIDACAO",
     "source_head": "b619056aef9c00ca7818cfbe61d65c69e7f9060d",
     "files": [
       "src/lib/competencias/requisitoDetalheDados.ts",
@@ -588,6 +588,29 @@
     "previous_build_pr": 277,
     "previous_build_head": "427236661d29d5b610645777b1eefe78a8c33a8b",
     "failure": "Context Gate: context_source_commit antigo744 apesar do snapshotb619; sem alteração de blobs normativos",
-    "replacement_build_required": true
+    "replacement_build_required": false,
+    "gate_pr": 276,
+    "gate_head": "7276e8d975f038021e613e31572cb146d3614230",
+    "gate_merge": "57f1c09bce208910549de52a68dde99c81f018cc",
+    "red": "resposta canônica rejeitada:1FAIL/58SKIP; array com toJSON herdado:1FAIL/74SKIP",
+    "local_focused": 118,
+    "local_regression": 1146,
+    "local_suites": 41,
+    "checks_local": [
+      "TypeScript",
+      "Vite build",
+      "ESLint focal",
+      "Zero-Drift",
+      "GOV-020",
+      "diff-check"
+    ],
+    "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+    "independent_review": "achado array com protótipo customizado corrigido com RED/GREEN, sem executar getter herdado",
+    "private_acceptance": "PENDENTE",
+    "corrected_gate_pr": 278,
+    "corrected_gate_head": "cb06f95d4dd6bca1e3a2c3b11411b03d37d1cccc",
+    "corrected_gate_merge": "6ce44b0a06c3c9359d92217231dfccd695feec36",
+    "previous_build_state": "CLOSED_WITHOUT_MERGE",
+    "source_blobs_identical_to_local_tested_commit": "c1f5446"
   }
 }
