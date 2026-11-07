@@ -947,7 +947,7 @@
       }
     },
     "public_keyboard_proof": {
-      "phase": "PLAN",
+      "phase": "GATE_SEPARADO",
       "state": "PENDENTE_SEM_EXECUCAO_REAL",
       "routes": [
         "/login",
@@ -961,7 +961,12 @@
       "no_product_changes": true,
       "no_mutations": true,
       "full_wcag": false,
-      "sequence": "PLAN checks merge -> GATE separado checks merge -> RED BUILD GREEN -> TesteC CI -> revisão visual -> checkpoint"
+      "sequence": "PLAN checks merge -> GATE separado checks merge -> RED BUILD GREEN -> TesteC CI -> revisão visual -> checkpoint",
+      "plan_pr": 311,
+      "plan_head": "3c853428aba98c1b2343008c544a08de063f6ceb",
+      "plan_merge": "dfc6bc5042cd51d4d57055d6077811200aae6ce9",
+      "plan_ci": 42423318998,
+      "gate_review": "Escopo fechado2scripts;16casos públicos vazios;failclosed;semAuth/submit;revisão independente de capturas exigida"
     }
   }
 }

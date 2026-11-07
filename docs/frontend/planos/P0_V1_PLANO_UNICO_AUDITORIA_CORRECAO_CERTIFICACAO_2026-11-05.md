@@ -360,3 +360,23 @@ A falta de teclado público é lacuna de evidência, não defeito de produto dem
 Riscos: foco pode rolar o viewport, tooltip pode aparecer ao receber foco e a ordem inclui linkEsqueci antes da senha pela ordemDOM. Usar ordem real observada, sem preferência inventada; preservar foco, tooltips e rolagem naturais. Comparar capturas gerais antes/depois e manter limitações de campos vazios, semenvio, semleitor de tela e semprivadas. Rollback restrito ao requisito adicional de prova no harness, preservando relatórioFAIL histórico, sem modificar produto.
 
 ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: prova de apresentação/acessibilidade no executor existente, sem biblioteca/turnoLovable, produto ou backend. V1 e as trêsfrentes continuam pendentes. PLAN tecnicamente APROVÁVEL para rito separado, nenhum BUILD antecipado.
+
+## GATE separado: prova pública de teclado, PLAN311 (07/11/2026)
+
+PLAN311 integrado emdfc6bc5042cd51d4d57055d6077811200aae6ce9, HEAD3c853428 comZero-Drift/TesteC42423318998 eLOCK42423319021 SUCCESS. Este GATE não implementa código. BUILD dos dois scriptsTesteC somente após os trêschecksSUCCESS no HEAD final deste GATE e merge protegido.
+
+Allowlist de implementação: scripts/testc/visual-audit.mjs e scripts/testc/visual-audit.test.mjs. Documentos de evidência jápermitidos; todo src/public/workflow/backend/tipo permanece fora do delta. Executar somente16casos públicos vazios. Sessões, privadas, submit/clique/recuperação real e WCAG integral permanecem nãoverificados.
+
+Ordem DOM conferida: /login E-mail → Esqueci minha senha → Senha → Mostrar senha → Entrar; /esqueci-senha E-mail → Enviar link → Voltar ao login. Seletores semânticos estáveis dos controles existentes: IDs login-email,login-senha,esqueci-email; links de href exato; botãoaria-controls login-senha; botão submit no formulário. Nome acessível esperado deve ser conferido em memória, sem exportar textoDOM/valores. Não deduzir acesso a partir de classe ou seletor presente.
+
+Tab real avança desde página nova sem focus() ou alteração de tabindex; Shift+Tab retorna do último ao primeiro controle. Coleção incompleta, ordem divergente, alvo diferente de activeElement, falta de nome, foco fora da viewport ou indicador não demonstrado resultamFAIL. Indicador compara estilos visuais pertinentes antes/depois (outline/box-shadow/borda/sublinhado), além de :focus-visible e captura individual com hash. FlagsCSS não certificam área/contrasteWCAG; revisão visual independente continuaexigida. Esperar estabilização finita de apresentação, sem timeout expandido para esconder falha.
+
+Relatório estritamente fechado: rota/ID de controle conhecidos, direções forward/reverse, booleans/contagens, filename sintético fixo/hash; nenhum nome real, valor de campo, DOM/HTML, token, URL assinada ou erro bruto. Sanitizador descarta campos extras/canário e marca desconhecido como inválido. Não tratar dado ausente/inconclusivo comoPASS. Rotas fora destas duas não recebem selo de teclado por esta prova.
+
+Captura geral deve preservar comparabilidade: após concluir a prova, recarregar por GET a MESMA URL pública, aguardar o mesmo estado inicial vazio e restabelecer a rolagem inicial para a captura geral. Não acionar link ou formulário; bloqueio de mutações Supabase continua intacto e qualquer tentativa observada deve falhar a prova. As imagens de foco são publicadas como evidência adicional e não substituem a captura geral.
+
+TDD RED dos helpers antes da implementação; GREEN,24testespreexistentes preservados, testes negativos de forma/ordem/saneamento, sintaxe/Prettier/escopo/P0/types e CIexistente. Browser falho ou coleta de captura ausente produzFAIL/NÃOEXECUTADO, nunca substituição por mock. TesteC posterior não altera produto. Falha real de interface exige deltaPLAN/GATE de produto próprio antes de correção. Rollback somente do incremento do harness, preservando evidência histórica.
+
+GATE tecnicamenteAPROVÁVEL dentro do PLAN311. NenhumBUILD antecipado, frontendlogin/autenticação/permissões ebackend/PROD intactos. V1 permanece semcertificação.
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: prova no executor existente, sembiblioteca, LovableBUILD ou alteraçãofuncional. Mantém critérios de tipografia, contraste, axe e classificação privada, sem dispensa de evidência.
