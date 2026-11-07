@@ -273,3 +273,12 @@ RED de navegador preservado no HEAD 24466e1a5abd64dcace2d973c45b5161173e2aaf: ru
 Correção local 76ebe71: duas linhas de CSS definem --font-sans como Inter, Arial, sans-serif e aplicam a variável no body. Não baixa fontes nem altera SVG, wordmark ou regra monoespaçada explícita. O CSS compilado passou a declarar essa pilha. Detector/helper Node 24/24, BRAND Vitest 54/54, tsc/build/Prettier/Zero-Drift/diff PASS. Types permanece 8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Revisões independentes dos scripts e do CSS sem achados.
 
 GREEN de navegador, capturas finais e CI ainda PENDENTES neste registro. Pilha declarada não comprova Inter instalada, todos os estados privados, zoom ou WCAG integral. Identidade visual continua NÃO CERTIFICADA.
+
+
+## Prova pública de teclado314 integrada, sem certificadoWCAGglobal
+
+PLAN311/GATE313/BUILD314 integrados; recibos no checkpoint oficial. HEADa9c1c1c comZero-Drift/TesteC42424327491 eLOCK42424327335 SUCCESS, mergeadd9b06. Artefato13594363182 SHAc42a1b02bfcb7e5f8cdff00b663caaaef13c33a1120da0873ecb78a67a33a5da baixado e337hashes conferidos.16casos login/recuperação vazios,112etapas de avanço/retorno,0mutações,16resets200/mesmaURL/vazios/controles/scroll0.24públicosPASS/0FAIL e208protegidos semsessão.
+
+Revisão independente inspecionou64conteúdos únicos das112capturas de foco,48retornos byteidênticos;24gerais comparadas comGREEN309 semregressão de layout/focoresidual. TooltipMostrarSenha sobrepõe texto vizinho preservando o alvo. Código recebeu fix doImportantreset (RED28/1→GREEN29/29) e revisãofinalfavorável. ContrasteAA/área/leitorTela/zoom/estado preenchido/submetido/privadas permanecemNÃO CERTIFICADOS. Anelisoladoclaro2.63014:1 nãoéPASS3:1; avaliarindicadorcompleto comcaret/tooltip conformeW3C, seminferirAAglobal.
+
+O GREEN tipográfico309 anteriormente pendente neste relatório foi integrado emb0e22f5, trêschecks noHEAD164b10b; artefato13593374754 SHA44889c1d42c940cd0e394c7f4851f42e7c9d969412497efc3fd1fb2f22f4b9df conferido e48PNG RED/GREEN revisados. Pilha declarada não prova Inter instalada. Identidadevisual/V1 continuam semcertificação integral.
