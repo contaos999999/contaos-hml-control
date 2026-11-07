@@ -63,7 +63,7 @@ type Estado =
   | { tipo: "erro_sessao" }
   | { tipo: TipoErroV117 }
   | { tipo: "ok"; d: DetalheV117 };
-type Aviso = "ok" | "reconciliada" | "falha" | "conflito" | "sem_permissao" | "invalida";
+type Aviso = "ok" | "incerta" | "falha" | "conflito" | "sem_permissao" | "invalida";
 
 const ROT_MEC: Record<string, string> = {
   deterministico: "Determinístico (regra objetiva)",
@@ -129,6 +129,7 @@ export function RequirementDrawer({
         </SheetHeader>
         {aberto && idRequisito ? (
           <Conteudo
+            key={`${idCompetencia}:${idRequisito}`}
             idCompetencia={idCompetencia}
             idRequisito={idRequisito}
             onReanalisado={onReanalisado}
@@ -171,14 +172,24 @@ function Conteudo({
     o: OFFSETS_DETALHE_ZERO,
   });
   const o = off.k === chave ? off.o : OFFSETS_DETALHE_ZERO;
+  const offsetsAtuais = useRef(o);
+  offsetsAtuais.current = o;
   const [recarga, setRecarga] = useState(0);
   const [tentativa, setTentativa] = useState(0);
   const [aviso, setAviso] = useState<{ k: string; a: Aviso } | null>(null);
   const avisoAtual = aviso && aviso.k === chave ? aviso.a : null;
   const [enviando, setEnviando] = useState<string | null>(null);
+  const [incerta, setIncerta] = useState(false);
+  const [conferindo, setConferindo] = useState(false);
   const trava = useRef(false);
   const chaveAtual = useRef(chave);
   chaveAtual.current = chave;
+  useEffect(() => {
+    chaveAtual.current = chave;
+    return () => {
+      chaveAtual.current = "";
+    };
+  }, [chave]);
 
   useEffect(() => {
     trava.current = false;
@@ -236,7 +247,7 @@ function Conteudo({
     setOff({ k: chave, o: { ...o, [k]: v } });
 
   const reanalisar = async () => {
-    if (trava.current) return;
+    if (trava.current || incerta) return;
     trava.current = true;
     const alvo = chave;
     setEnviando(alvo);
@@ -253,7 +264,8 @@ function Conteudo({
       if (t === "conflito" || t === "sem_permissao" || t === "invalida") {
         if (chaveAtual.current === alvo) setAviso({ k: alvo, a: t });
       } else {
-        // Erro/timeout ambíguo: nenhuma segunda escrita; uma única leitura de reconciliação.
+        // Sem recibo, uma leitura não comprova a autoria/aceitação deste comando.
+        if (chaveAtual.current === alvo) setIncerta(true);
         let d: DetalheV117 | null = null;
         try {
           const x = await obterDetalheRequisito(c, r, o, new AbortController().signal);
@@ -262,14 +274,35 @@ function Conteudo({
           d = null;
         }
         if (chaveAtual.current === alvo) {
-          if (d) setReg({ k: alvo, e: { tipo: "ok", d } });
-          setAviso({ k: alvo, a: d ? "reconciliada" : "falha" });
-          if (d) onReanalisado();
+          if (d && offsetsAtuais.current === o) setReg({ k: alvo, e: { tipo: "ok", d } });
+          setAviso({ k: alvo, a: "incerta" });
         }
       }
     } finally {
-      if (chaveAtual.current === alvo) trava.current = false;
-      setEnviando(null);
+      if (chaveAtual.current === alvo) {
+        trava.current = false;
+        setEnviando(null);
+      }
+    }
+  };
+
+  const conferir = async () => {
+    if (trava.current || !incerta) return;
+    trava.current = true;
+    const alvo = chave;
+    setConferindo(true);
+    try {
+      const x = await obterDetalheRequisito(c, r, o, new AbortController().signal);
+      const d = x.error ? null : parseDetalheV117(x.data, c, r, o);
+      if (chaveAtual.current === alvo && offsetsAtuais.current === o && d)
+        setReg({ k: alvo, e: { tipo: "ok", d } });
+    } catch {
+      // Preserva o estado incerto. Conferir nunca reenvia o comando.
+    } finally {
+      if (chaveAtual.current === alvo) {
+        trava.current = false;
+        setConferindo(false);
+      }
     }
   };
 
@@ -361,7 +394,7 @@ function Conteudo({
 
         {d.allowed_actions.reanalisar ? (
           <div className="space-y-2">
-            <Button className="min-h-11" disabled={enviandoAqui} onClick={reanalisar}>
+            <Button className="min-h-11" disabled={enviandoAqui || incerta} onClick={reanalisar}>
               {enviandoAqui ? (
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
@@ -371,11 +404,24 @@ function Conteudo({
             </Button>
           </div>
         ) : null}
+        {incerta ? (
+          <Button
+            variant="outline"
+            className="min-h-11"
+            disabled={enviandoAqui || conferindo}
+            onClick={conferir}
+          >
+            {conferindo ? (
+              <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : null}
+            Conferir andamento
+          </Button>
+        ) : null}
         <p role="status" aria-live="polite" className="text-sm">
           {avisoAtual === "ok"
             ? MENSAGENS_V117.reanaliseOk
-            : avisoAtual === "reconciliada"
-              ? MENSAGENS_V117.reanaliseReconciliada
+            : avisoAtual === "incerta"
+              ? MENSAGENS_V117.reanaliseIncerta
               : avisoAtual === "falha"
                 ? MENSAGENS_V117.reanaliseFalha
                 : avisoAtual === "conflito"
