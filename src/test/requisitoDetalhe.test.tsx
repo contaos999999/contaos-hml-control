@@ -973,3 +973,17 @@ describe("V1-17 troca A/B e acessibilidade", () => {
     expect(within(dlg).getAllByRole("button", { name: /^Fechar$/ })).toHaveLength(1);
   });
 });
+
+it("preserva movimento do drawer sem interpolar cores durante troca de tema", async () => {
+  abrir();
+  await pronto();
+  const drawer = screen.getByRole("dialog");
+  const { compile } = await import("tailwindcss");
+  const css = (await compile("@tailwind utilities;")).build([...drawer.classList]);
+  const properties = [...css.matchAll(/transition-property:\s*([^;]+);/g)].map((x) => x[1]);
+  expect(properties).toHaveLength(1);
+  expect(properties[0]).toContain("transform");
+  expect(properties[0]).not.toMatch(/color|background|\ball\b/);
+  expect(drawer).toHaveClass("data-[state=open]:animate-in");
+  expect(drawer).toHaveClass("data-[state=closed]:animate-out");
+});
