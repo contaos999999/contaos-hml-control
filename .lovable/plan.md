@@ -1,59 +1,40 @@
-# Saneamento retrospectivo transversal (Prompts 00–38) — PLAN
+# P0-A — Retomada com Lovable como editor do frontend (PLAN, sem BUILD)
 
-PROMPT 38 / V1-17 continua separado, aprovado e pendente. Este plano não o antecipa.
+## 0. Confronto real (lido neste turno)
+- Branch Lovable: `edit/edt-40293a40-...`; HEAD local `6b0343b` (= metadata Lovable anterior informada).
+- Baseline frontend `71362700c83adf438170c2fe9ed35f79601472e7`: **ausente no repositório local** (git cat-file falha). PRs 228–249 não estão nesta árvore. Qualquer BUILD agora sobre `6b0343b` seria rollback — **proibido**.
+- `types.ts`: blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` (PASS).
+- `PLANO_ATIVO.json`: prompt 75, VALIDADO, allowlist AppShell/Sidebar (antiga, não cobre P0-A).
+- Fontes **não acessíveis** (API GitHub 404, repositório privado): issue #250 (seções 12/13), PR #251, `develop` issue #97, backend main `4fec09bf…`, PR96, migration `20261107001620`. Nenhuma leitura desses itens é afirmada neste plano.
 
-## Baseline verificado
-- HEAD `bc120e3b6cdb2069ce225d52d23d6eec2d3fa6e5`, árvore `a3adc4b60fa9bf59644e9eb6e6799b7fce764c8e`.
-- `types.ts` está no blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`.
-- `src/routes/__root.tsx` tem `<html lang="en">` (linha 116). O 404 e o erro global estão em inglês: "Page not found", "Go home", "Something went wrong…", "Try again", além do título e do texto do erro.
-- `src/test/brand.test.tsx` cobre 14 arquivos em `ARQUIVOS_MARCA`, mas nenhuma tela de V1-08 a V1-16.
-- As 9 telas-alvo já usam `<ContaOSMarca` (2 ocorrências cada) e não têm hex. A previsão é zero alteração nos componentes.
+## 1. Emenda mínima de governança (proposta, aplicar só em P0-B)
+Texto aditivo ao Knowledge e a `ADR-DEV-001`: "Por decisão expressa do titular em 07/11/2026, o Lovable volta a ser editor do frontend; GitHub permanece versionamento canônico com PR + checks `ContaOS Frontend Zero-Drift` e `Teste C Independente` obrigatórios; Supabase HML `gklhhhyosgasnyoxlrui` permanece backend exclusivo; Lovable Cloud, remix, novo projeto e PROD proibidos; `types.ts` congelado; Teste C separado e read-only." Nenhum outro controle revogado.
 
-## Correção A — idioma do root
-- Arquivo de produção: somente `src/routes/__root.tsx`.
-- Mudar `lang="en"` para `lang="pt-BR"`.
-- 404: título "Página não encontrada", texto curto em PT-BR e botão "Ir para o início".
-- Erro global: título "Algo deu errado", texto "Ocorreu um erro inesperado. Tente novamente ou volte ao início." e botões "Tentar novamente" e "Ir para o início".
-- Ficam preservados: `console.error`, `reportLovableError`, `reset`, links, classes e tokens, head e favicons. Nenhum header ou marca novo, conforme a decisão oficial.
-- Teste novo `src/test/rootLocale.test.tsx`, escrito primeiro (RED):
-  - lê o código-fonte e exige `lang="pt-BR"`, sem `lang="en"`;
-  - exige as frases PT-BR acima;
-  - proíbe "Page not found", "Go home", "Something went wrong" e "Try again".
-- A leitura do fonte é proposital, para não alterar o fluxo do roteador.
+## 2. Capacidade real de gates sem GitHub Actions
+| Gate | No sandbox Lovable | Observação |
+|---|---|---|
+| Vitest, ESLint, Prettier, tsgo, vite build | SIM | executável localmente |
+| zero-drift, route-tree-drift, p0-version-order-gate (scripts) | SIM | node local |
+| Hash `types.ts` | SIM | `git hash-object` |
+| Playwright 4 larguras × 2 temas | SIM, MOCK | sem sessão HML real |
+| Checks obrigatórios do ruleset / merge PR | NÃO | só GitHub Actions |
+| PostgreSQL/restore, pgTAP, JWT HML, secrets | NÃO | não presumir; backend externo |
+| E2E autenticado HML A/B | NÃO | sem credenciais |
+Gates locais nunca substituem os checks remotos: ficam "local PASS / remoto NÃO VERIFICADO".
 
-## Correção B — cobertura BRAND-01
-- Arquivo: somente `src/test/brand.test.tsx`.
-- Acrescentar a `ARQUIVOS_MARCA` os 9 caminhos:
-  - `contratos/` OrcamentoContrato, RegrasContrato, DocumentosContrato, DocumentoDetalhe, CompetenciasContrato e NovaCompetencia;
-  - `competencias/` CompetenciaVisaoGeral, CompetenciaDocumentos e CompetenciaAnalise.
-- Novo `it.each` só para os 9 arquivos:
-  - **Sem hex de cor:** proibir `#[0-9a-fA-F]{3,8}` somente dentro de `className`, de `style` ou de literais de cor com prefixo `[`. Isso evita falso positivo com SHA, hashes e exemplos.
-  - **Sem logo provisório:** proibir `<img` com `src` diferente de `/brand/`.
-  - **Sem sistema visual paralelo:** proibir import de `*.css` e de fontes externas (`fonts.googleapis`), além de `createTheme` e `tailwind.config`.
-- Testes de componente, de assets SHA-256 e de head: intocados.
-- RED esperado: nenhum, porque as telas já estão conformes. A prova de que o teste funciona é um RED controlado em memória: o mesmo matcher aplicado a uma string sintética com `className="bg-[#123456]"` tem que falhar. Isso fica registrado como asserção no próprio teste e nenhum componente é alterado.
+## 3. Fases
+- **P0-A (este)**: confronto + plano. Saída: plano aprovado.
+- **P0-B Sincronização**: obter `71362700` na branch Lovable (sync GitHub→Lovable pelo titular). Allowlist: nenhuma. Saída: HEAD contém `71362700`, PRs 228–249 presentes, types blob ok. **Impedimento atual: depende do titular.**
+- **P0-C Governança**: aplicar emenda §1. Allowlist: `docs/frontend/ADR-DEV-001-GITHUB-DIRETO.md`, `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md`, `docs/frontend/planos/PLANO_ATIVO.json`, novo `docs/frontend/planos/P0_A_RETORNO_LOVABLE_EDITOR_2026-11-07.md`. Saída: CI remoto verde do PR documental.
+- **P0-D Leitura das fontes privadas**: titular cola seções 12/13 da #250, #251, #97 (ou concede acesso). Saída: próximo prompt V1 confirmado (esperado 43/V1-22 → 75/V1-23 conforme P0, a confirmar).
+- **P0-E BUILD V1 / CRUD global**: só sobre a allowlist do prompt V1 vigente. Listas de PR96 **bloqueadas** até migration `20261107001620` e JWT comprovados em HML; sem UI fictícia. Primeira ação RED: teste do prompt V1 vigente (definido após P0-D) falhando no HEAD sincronizado.
+- **P0-F Teste C** separado, read-only, SHA imutável, 1440/1280/768/390 × claro/escuro, BRAND-01.
+- **P0-G Certificação V1 + GO/NO-GO**; V2–V5 só depois.
 
-## Arquivos permitidos (diff esperado)
-- `src/routes/__root.tsx` (troca de strings e de lang, cerca de 8 linhas)
-- `src/test/rootLocale.test.tsx` (novo)
-- `src/test/brand.test.tsx` (cerca de 30 linhas)
-- `docs/frontend/lovable/SANEAMENTO-RETROSPECTIVO-00-38.md` (novo, com as evidências)
-- `.lovable/plan.md` e o arquivo arquivado
+## 4. Impedimentos
+1. Baseline `71362700` ausente localmente (bloqueia todo BUILD).
+2. Fontes privadas ilegíveis (#250, #251, #97).
+3. Checks remotos, HML JWT, migration e restore não executáveis aqui.
 
-## Intocáveis
-`supabase/**`, `types.ts` (restaurar byte a byte se a plataforma regenerar), `client.ts`, `src/styles.css`, `public/brand/**` e favicons, `src/components/ui/**`, `ContaOSMarca`, package/lock, AGENTS, os 9 componentes, V1-17 e PROD.
-
-## Critérios de aceite e verificação (nada é PASS antes de rodar)
-1. `rootLocale.test.tsx`: RED antes da edição do root, depois GREEN.
-2. `brand.test.tsx` GREEN, com 14 + 9 telas.
-3. Regressão: `app-routing.test.tsx` e full serial `bunx vitest run --maxWorkers=1`, com 739 testes ou mais.
-4. eslint nos arquivos alterados, `tsgo`, build automático OK e scan de secrets/static.
-5. Browser `/rota-inexistente` (404) em 1440/1280/768/390, claro e escuro: texto PT-BR, foco visível nos botões e contraste. Também `lang` lido do DOM. Erro global apenas por teste (NÃO VERIFICADO no browser se não puder ser induzido). Os fluxos existentes ficam como smoke de login/dashboard, sem sessão real, marcados como limitação.
-6. Diff final restrito à lista permitida e blob de `types.ts` conferido.
-7. Teste C read-only em turno separado sobre o SHA imutável.
-
-## Ressalvas
-- O SHA candidato só existe depois do commit da plataforma; ele será lido no git e informado.
-- `tsc` e build manual podem estar bloqueados. Nesse caso ficam como gate externo pendente.
-
-ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: reutilizar a marca e os tokens existentes, sem hardcodes nem UI nova. Saídas: IDENTIDADE VISUAL a verificar no Teste C. ECONOMIA LOVABLE CONFORME: um BUILD único para A e B, que são independentes. ZERO-DRIFT a verificar.
+## Zero-Drift
+IDENTIDADE VISUAL N/A (sem mudança visual); ECONOMIA LOVABLE CONFORME; ZERO-DRIFT PASS (nada editado; types blob certificado).
