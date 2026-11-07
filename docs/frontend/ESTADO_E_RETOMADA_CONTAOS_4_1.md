@@ -1,3 +1,17 @@
+# Checkpoint P0: prova privada atual falha em contraste escuro
+
+07/11/2026. Este bloco prevalece sobre o histórico. **V1 não certificada, CRUD global incompleto, V2–V5 e PROD bloqueados.**
+
+A execução privada atual é [42374576017](https://github.com/contaos999999/develop/actions/runs/42374576017), backend `6c0f7a0f186ea2a49a5fb9f9fc1a7570e86151b0` e frontend corrigido `f537dadf9fefca79eb800de10a3b68d4e3fe3a3c`. Portanto, o registro anterior de que não havia tentativa posterior ao run42372068640 foi superado. O relatório atual comprova 38 assertions HTTP, login UI200, detalhe200, abertura do drawer/editor e consulta RLS de evidências. A falha ocorre em VISUAL_AUDIT: axe4.14 reporta color-contrast serious em12nodes na combinação1440dark.1440light não tem violations, mas há incomplete de contraste e aria-hidden-focus. Não equivale a WCAG aprovado nem persistência privada completa.
+
+Artifact13575210914, ZIP SHA256 `e76139eee41525775fc5b23c811d5261e7c62588d2f536203352eeab69b5f5d3`, baixado e hash conferido; relatórios lidos e capturas1440light/dark inspecionadas. Quarentena8 verificada no relatório; jobs de cleanup SUCCESS. A contagem não identifica quais elementos falharam: não atribuir causa ao CSS ou ao fundo do diálogo sem diagnóstico por elemento. Não silenciar regras nem reduzir escopo do axe.
+
+Rerun exclusivo do job128409434978 foi aceito, novo job128444921048. Consultar resultado antes de qualquer transição; este commit documental não certifica o rerun. Próximo passo se reproduzir: PLAN/GATE de diagnóstico sanitizado por elemento, sem conteúdo/HTML/valores/credenciais, localizar contraste e corrigir por TDD/CI no escopo aprovado, então repetir prova e inspeção nas quatro larguras/dois temas.
+
+PR backend103 aberto, HEAD `bc59caa4aea9b18556a844cf7b1fe121ca04995c`, guard SUCCESS e mergeable_state dirty. Não integrar branch antiga sobre o manifesto vigente. Após prova privada/quarentena, reancorar PLAN preservando pinf537dadf e histórico; novo CI, GATE separado, RED/BUILD/GREEN/TesteC. Comentários: backend103#6708996228 e frontend166#6709007515. Nenhuma alteração de código, deploy, schema, Authconfig, tipos ou PROD nesta rodada.
+
+---
+
 # Checkpoint P0: contrato V117 corrigido e reteste privado em fila
 
 Data: 07/11/2026 UTC. **CRUD global em execução. V1 não certificada. V2–V5 e PROD bloqueados.** Este bloco prevalece sobre o histórico.
