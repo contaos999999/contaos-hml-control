@@ -1,3 +1,20 @@
+## Emenda P0 — PASS funcional preservado; gate visual não aprovado
+
+O checkpoint anterior registra corretamente o PASS funcional do lote CADASTROS_LISTAS, mas a revisão visual identificou limites que precisam permanecer explícitos. **O lote não aprova o gate visual, WCAG integral, CRUD global ou V1.**
+
+- Run `42402246765`, job `128492370077`, backend `a0337932872402b12a5378040f18feb2161bc723`, frontend `74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8`: 76/76 verificações de navegador e 37/37 no validador HML, zero falhas/runtime, persistência/auditoria, CAS409, rascunho, isolamento e quarentena4/3 comprovados. Artefato `13584889991`, SHA-256 `00fddbbdf18d76f4bc55c4e5fea8712973b92fa1fd375e151b9c6c19e1095110`. Preservar essa evidência; não refazer o produto ou os PLAN120/GATE121.
+- Revisão independente abriu as oito imagens. Rejeitadas: 1440 claro/escuro e1280 claro, por envio ainda ativo;1280 escuro, pelo início do painel cortado. Aceitas apenas para o painel:768 e390, ambos os temas. O cabeçalho e a marca mobile não foram provados por essas imagens. Important do harness: captura antes da estabilização e rolagem sem enquadramento. Minor: Menu flutuante sobrepõe texto do cartão inferior mobile; token sintético longo quebra de forma pouco elegante em768. Nenhum Critical.
+- Correção do harness no PR backend #130, HEAD `5dccafcc916d1c420fdeb350b0b091cb0af2126c`: espera nome atualizado, edição habilitada e ausência de envio; aguarda transições finitas reais; captura topo da página e painel separadamente (16 imagens), verifica foco/Tab e axe4.14 com saída sem DOM/HTML/seletores/valores privados. Incompletos do axe permanecem registrados. RED13PASS/2FAIL, GREEN15/15protocolo e45/45suíte, revisão independente sem Critical/Important no código. Integrado em `aa5f83ede6ea74d377c92dde0fdd830288450e29` após guard128495580643, restore128495580237, backup128495580373 e probe128495580850 SUCCESS no mesmo HEAD. Nova HML ainda necessária antes de aceitar as imagens.
+- A reexecução do workflow é justificada pela nova correção do gate visual. Não apaga o PASS funcional anterior nem constitui nova implementação de cadastros/listas. Contraste em estado estável não fecha a falha transitória V117 histórica; auditoria manual permanece pendente.
+
+**Próxima ação:** acompanhar restore/HML do backend `aa5f83ede6ea74d377c92dde0fdd830288450e29` (PR #130 integrado com quatro checks SUCCESS). Inspecionar as16capturas novas antes de aprovar o escopo visual. Os14domínios restantes podem ser preparados em paralelo, mas não alterar o HEAD do backend durante o gate da HML atual. Upload físico e worker real são dependências dos fluxos documentais/orçamentários; não forçar status de arquivo ou execução. V2–V5 e PROD continuam bloqueados.
+
+Verificação independente somente leitura no HML, antes da sexta rodada:20usuários próprios/20bloqueados/0sessões,15organizações próprias/15inativas. Cron de workers rápidos/pesados ativo; nenhuma configuração foi alterada. O próximo lote está preparado localmente em `/tmp/contaos-crud-documents`, somente plano ainda não publicado; não confundir preparação com prova.
+
+Snapshot e reconhecimento da fonte reancorados juntos em `aa5f83ede6ea74d377c92dde0fdd830288450e29`; 25 documentos e catálogo conferidos sem mudança de blob.
+
+---
+
 ## Checkpoint P0 — 07/11/2026 — lote CADASTROS_LISTAS aprovado no HML
 
 Este bloco prevalece sobre o histórico. **CRUD global e V1 continuam pendentes de certificação.** Não repetir os PLAN120/GATE121 nem o lote CADASTROS_LISTAS aprovado.
