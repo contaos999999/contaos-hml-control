@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "01cde2e96e2fc98d601f9c9dfc865f05af4629b8",
+  "source_commit": "a0337932872402b12a5378040f18feb2161bc723",
   "source_date": "2026-11-07",
   "context_documents": [
     {
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "Reancoragem após PR backend85, merge67668c61054405368d5c7895f5087ccfa9eb9dfc. Conferência GitHub de25/25blobs e catálogo e54e49e626e65a9c94c81709180fd192a1f0c079 semdiferença. Código frontendPR183 aprovado nos dois checks antes da mudança documental backend; esta atualização recompõe o gate de fonte viva. | Reancoragem 06/11 pós-PRs backend #86 PLAN, #87 BUILD restore local, #88 resultado integrado: 25/25 blobs e catálogo 100/97 invariáveis; snapshot sem certificação V1, sem mudanças PROD/HML remoto. | Reancoragem após PR57 documental, merge c530fca558e4ce3e3c2cce4cabb660b1ccc05f97. Comparação 25/25 blobs e catálogo sem diferenças; sem mudança de schema ou permissões. | CRUD cadastros PLAN:25/25blobs e catálogo invariáveis em5ef5646. BUILD backend/JWT pendentes, sem certificação. | Capacidades BUILD245: backendbfd741d,25/25blobs e catálogo conferidos sem diferenças. Sem certificação. | Reancoragem PR253: 25/25 blobs e catálogo idênticos após backend PLAN95/BUILD96; deploy protegido em execução42321885307; não certifica UI/JWT."
+  "p0_reanchor_note": "Reancoragem documental após FIX129 e PASS_BATCH HML42402246765; 25 blobs normativos preservados. Não certifica CRUD global ou V1."
 }

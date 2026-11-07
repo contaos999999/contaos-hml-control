@@ -60,8 +60,28 @@
       "ui": "src/components/organizacao/OrganizationSelector.tsx",
       "test": "src/test/cadastroOperacional.test.tsx",
       "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
-      "private_status": "NAO_VERIFICADO",
-      "retention_rule": "PROIBIDO_DELETE_RETENCAO"
+      "private_status": "PASS_ESCOPO_CADASTROS_LISTAS_RUN42402246765",
+      "retention_rule": "PROIBIDO_DELETE_RETENCAO",
+      "private_evidence": {
+        "run": 42402246765,
+        "state": "PASS_BATCH",
+        "backend_head": "a0337932872402b12a5378040f18feb2161bc723",
+        "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8",
+        "artifact": 13584889991,
+        "sha256": "00fddbbdf18d76f4bc55c4e5fea8712973b92fa1fd375e151b9c6c19e1095110",
+        "http_sql_assertions": 37,
+        "browser_assertions": 76,
+        "failures": 0,
+        "completed_domains": [
+          "organizacoes",
+          "contratantes",
+          "contratos",
+          "listas"
+        ],
+        "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
+        "global_complete": false,
+        "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
+      }
     },
     {
       "id": "contratantes",
@@ -74,8 +94,28 @@
       "ui": "src/components/contratantes/EditarContratante.tsx",
       "test": "src/test/editarContratante.test.tsx",
       "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
-      "private_status": "NAO_VERIFICADO",
-      "retention_rule": "SEM_DELETE_CANONICO"
+      "private_status": "PASS_ESCOPO_CADASTROS_LISTAS_RUN42402246765",
+      "retention_rule": "SEM_DELETE_CANONICO",
+      "private_evidence": {
+        "run": 42402246765,
+        "state": "PASS_BATCH",
+        "backend_head": "a0337932872402b12a5378040f18feb2161bc723",
+        "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8",
+        "artifact": 13584889991,
+        "sha256": "00fddbbdf18d76f4bc55c4e5fea8712973b92fa1fd375e151b9c6c19e1095110",
+        "http_sql_assertions": 37,
+        "browser_assertions": 76,
+        "failures": 0,
+        "completed_domains": [
+          "organizacoes",
+          "contratantes",
+          "contratos",
+          "listas"
+        ],
+        "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
+        "global_complete": false,
+        "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
+      }
     },
     {
       "id": "contratos",
@@ -91,8 +131,28 @@
       "ui": "src/components/contratos/VisaoGeralContrato.tsx",
       "test": "src/test/cadastroOperacional.test.tsx",
       "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
-      "private_status": "NAO_VERIFICADO",
-      "retention_rule": "ENCERRAMENTO_CANCELAMENTO_SEM_APAGAR_HISTORICO"
+      "private_status": "PASS_ESCOPO_CADASTROS_LISTAS_RUN42402246765",
+      "retention_rule": "ENCERRAMENTO_CANCELAMENTO_SEM_APAGAR_HISTORICO",
+      "private_evidence": {
+        "run": 42402246765,
+        "state": "PASS_BATCH",
+        "backend_head": "a0337932872402b12a5378040f18feb2161bc723",
+        "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8",
+        "artifact": 13584889991,
+        "sha256": "00fddbbdf18d76f4bc55c4e5fea8712973b92fa1fd375e151b9c6c19e1095110",
+        "http_sql_assertions": 37,
+        "browser_assertions": 76,
+        "failures": 0,
+        "completed_domains": [
+          "organizacoes",
+          "contratantes",
+          "contratos",
+          "listas"
+        ],
+        "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
+        "global_complete": false,
+        "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
+      }
     },
     {
       "id": "base_normativa",
@@ -143,8 +203,28 @@
       "ui": "src/components/contratos/GerenciarListas.tsx",
       "test": "src/test/listaOperacional.test.tsx",
       "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
-      "private_status": "NAO_VERIFICADO",
-      "retention_rule": "REMOVER_ITEM_SOMENTE_RASCUNHO_PUBLICADAS_IMUTAVEIS"
+      "private_status": "PASS_ESCOPO_CADASTROS_LISTAS_RUN42402246765",
+      "retention_rule": "REMOVER_ITEM_SOMENTE_RASCUNHO_PUBLICADAS_IMUTAVEIS",
+      "private_evidence": {
+        "run": 42402246765,
+        "state": "PASS_BATCH",
+        "backend_head": "a0337932872402b12a5378040f18feb2161bc723",
+        "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8",
+        "artifact": 13584889991,
+        "sha256": "00fddbbdf18d76f4bc55c4e5fea8712973b92fa1fd375e151b9c6c19e1095110",
+        "http_sql_assertions": 37,
+        "browser_assertions": 76,
+        "failures": 0,
+        "completed_domains": [
+          "organizacoes",
+          "contratantes",
+          "contratos",
+          "listas"
+        ],
+        "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
+        "global_complete": false,
+        "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
+      }
     },
     {
       "id": "regras_preventivas",
@@ -320,7 +400,7 @@
       "severity": "IMPORTANT",
       "file": "src/components/contratos/GerenciarListas.tsx",
       "finding": "q.isError desmonta Formulario e perde rascunho após409/refetchtransitório",
-      "state": "FIX_291_INTEGRADO_CI_SUCCESS_PROVA_PRIVADA_PENDENTE",
+      "state": "FIX_291_PROVA_PRIVADA_PASS_RUN42402246765",
       "test_required": "409 -> refetch falha500 -> bloquearmutação/preservardraft -> retryPASS sem perderdados;403continua failclosed",
       "verification": {
         "focused": 42,
@@ -335,7 +415,7 @@
             "failed": 1
           }
         ],
-        "private": "PENDENTE",
+        "private": "PASS_CAS409_LEITURA_TRANSITORIA_RASCUNHO_RECUPERACAO",
         "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8"
       }
     }
@@ -346,9 +426,10 @@
     "V1 nao certificada; V2/PROD bloqueados",
     "SYS03 decisoes manuais anteriores preservadas sem repetirporpadrao",
     "Editor manual de parecer/exportacao auditoria/reprocessamento documental manual nao sao permissoesCRUD novas semfonte/contrato; nao inventarAPI",
-    "Runs privados 42398052328/42398802825 falharam por validação/preenchimento do teste. Correções 123/124 integradas; nenhuma aprovação de domínio por execução parcial."
+    "Runs privados 42398052328/42398802825 falharam por validação/preenchimento do teste. Correções 123/124 integradas; nenhuma aprovação de domínio por execução parcial.",
+    "PASS_BATCH 42402246765 cobre quatro domínios; upload físico/worker e demais domínios não comprovados por este lote. Auditoria visual limitada à gestão de listas."
   ],
-  "latest_backend_head": "b30d69575609ae7aaf2fc15a8e0a85c8d0ef4322",
+  "latest_backend_head": "a0337932872402b12a5378040f18feb2161bc723",
   "private_runs": [
     {
       "run": 42398052328,
@@ -363,6 +444,26 @@
       "artifact": 13584985531,
       "sha256": "7c715843f300a1fe0cd5a13b6ca8eac577baf5d3549f7579a88ed6244a46e0a5",
       "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS"
+    },
+    {
+      "run": 42402246765,
+      "state": "PASS_BATCH",
+      "backend_head": "a0337932872402b12a5378040f18feb2161bc723",
+      "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8",
+      "artifact": 13584889991,
+      "sha256": "00fddbbdf18d76f4bc55c4e5fea8712973b92fa1fd375e151b9c6c19e1095110",
+      "http_sql_assertions": 37,
+      "browser_assertions": 76,
+      "failures": 0,
+      "completed_domains": [
+        "organizacoes",
+        "contratantes",
+        "contratos",
+        "listas"
+      ],
+      "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
+      "global_complete": false,
+      "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
     }
   ]
 }
