@@ -887,13 +887,29 @@
       "CRUD_GLOBAL_V1",
       "INTEGRACAO_RASTREABILIDADE_AUDITORIA_V1"
     ],
-    "fase": "GATE_INVENTARIO_TESTEC",
+    "fase": "IDENTIDADE_VISUAL_PROVA_AUTENTICADA_PENDENTE",
     "status": "PENDENTE",
     "certificacao_global_v1_v5": "BLOQUEADA_PELA_ORDEM_POR_VERSAO",
     "gate_escopo": [
       "scripts/testc/visual-audit.mjs",
       "scripts/testc/visual-audit.test.mjs"
     ],
-    "criterio": "28 rotas unicas + drawer V117 = 29 superficies / 232 casos; nenhuma homologacao privada sem sessao."
+    "criterio": "28 rotas unicas + drawer V117 = 29 superficies / 232 casos; nenhuma homologacao privada sem sessao.",
+    "gate_pr": 300,
+    "gate_merge": "5f3b2bf80d003241b02e55d4a81917b76ea33154",
+    "inventario_build_pr": 301,
+    "inventario_build_head": "acee00c875ad65abb7434e2316c9b80c740bc5be",
+    "inventario_build_merge": "3f168d7a503258cd9014b93cbf3239abd1fb2642",
+    "ci": 42417377261,
+    "artifact": 13592241053,
+    "artifact_sha256": "6690036fd3ed32bdab20c8022dc2ea4bc2ab45a5b050bba31d2e5a6b057ba39e",
+    "rotas": 28,
+    "superficies": 29,
+    "casos": 232,
+    "publico_pass": 24,
+    "protegidos_sem_sessao": 208,
+    "certificado_visual": "PENDENTE",
+    "certificado_crud": "PENDENTE",
+    "certificado_rastreabilidade": "PENDENTE"
   }
 }
