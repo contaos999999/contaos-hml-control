@@ -1,3 +1,15 @@
+## Atualização P0 — quarentena SQL aprovada; uploads HML ainda desabilitados
+
+Este bloco prevalece sobre a preparação abaixo. BUILD parcial #134 integrado em `c993e38c1f9b9f6a6d45a754945b5b0542fb3ccc`, HEAD testado `12bfb1c259e7087f5ff739e4bab0e88545bef16d`. Guard, restore, backup e prova pública SUCCESS no mesmo HEAD. Restore run42407629689/job128508656001, log lido: `DOCUMENT_QUARANTINE_LOCAL_SQL_PASS`.
+
+O SQL real no banco descartável comprovou cancelamento próprio, preservação de terceiro e concluído, recusa de worker ativo e de mensagem órfã, além da corrida entre duas conexões com bloqueio mensurável e preservação de processando. Protocolo20/20, suíte50/50 locais e revisão independente final sem Critical/Important. O FAIL anterior42407348738 por tipo json/jsonb permanece no histórico.
+
+Isso aprova somente a infraestrutura de teste. **Nenhum upload ou worker HML foi executado neste incremento.** A fase continua GATE_PROVA_PRIVADA_DOCUMENTOS; a rotina ainda não está ligada ao fluxo HML e DOCUMENTOS permanece bloqueado no inicializador material. Próxima tarefa: consultar mainrestore/backup e skips do mergec993; depois implementar essa integração e o lote de upload físico pelo PLAN132/GATE133, com RED/GREEN, revisão, novo CI e HML. Não certificar V1, CRUD global, formatos ou requisitos sem a prova correspondente.
+
+Snapshot e reconhecimento reancorados juntos emc993e38;25blobs normativos/catálogo invariáveis. O estado SQL PENDENTE abaixo descreve a preparação anterior e foi superado pela evidência acima.
+
+---
+
 ## Checkpoint P0 — 07/11/2026 — PLAN/GATE documental integrado; cleanup em validação
 
 Este bloco prevalece sobre o histórico. **V1 e CRUD global continuam sem certificação.** Os resultados funcionais anteriores de CADASTROS_LISTAS e Auditoria permanecem válidos somente nos respectivos escopos. V2–V5 e PROD bloqueados.
