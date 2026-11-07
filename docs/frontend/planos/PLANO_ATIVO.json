@@ -483,5 +483,24 @@
     "red_run": 42336809205,
     "red": "4 falhas específicas/1067 PASS",
     "review": "Sem achados críticos/importantes; execução validada no GitHub Actions"
+  },
+  "crud_reanalise_confirmacao_gate": {
+    "plan": "docs/frontend/planos/P0_CRUD_REANALISE_CONFIRMACAO_2026-11-07.md",
+    "plan_pr": 261,
+    "plan_head": "4a1bdbb67b5c6e9fa2f1df93a904f7fc66f6f1f5",
+    "plan_merge": "b63ce9f0b5cf865e37990dec8706c0a2dcda38c5",
+    "plan_run": 42339920429,
+    "plan_checks": "SUCCESS nos dois checks; Teste C documental sem execução visual",
+    "red": "4 falhas/47 PASS",
+    "green_focado": "52/52",
+    "backend_changes": false,
+    "private_ui": "NAO_VERIFICADA",
+    "review": "Important corrigido com RED1/GREEN52; minor: ausência de aviso adicional quando conferência explícita falha",
+    "regression": "1080/1080 em40suítes",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "lint_focal": "PASS",
+    "zero_drift": "PASS",
+    "route_tree": "PASS"
   }
 }

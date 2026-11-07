@@ -1,3 +1,19 @@
+## Execução CRUD global — 07/11/2026 — reanálise V1-17
+
+CRUD global permanece EM EXECUÇÃO, V1 não certificada; sem V2–V5/PROD.
+Baseline frontend b76baa4729fa2815f22a8c975a669c9da4bb455f; backend4fec09bf5cab5afc776192b9bef6e70728e1a058. Fonte backend não alterada.
+PLAN261 HEAD4a1bdbb67b5c6e9fa2f1df93a904f7fc66f6f1f5 integrado em b63ce9f0b5cf865e37990dec8706c0a2dcda38c5, dois checksSUCCESS run42339920429. TesteC documental não executou screenshots, como esperado para docs.
+BUILD nesta branch: resultado ambíguo de reanálise não é mais chamado de solicitação registrada; não há retry automático; botão Conferir andamento só lê e não libera reenvio incerto no componente. Troca de requisito descarta callbacks do componente anterior. Conferência atrasada não sobrescreve página nova. RED4falhas/47PASS; revisão encontrou corrida de paginação RED1falha/51PASS; GREEN52/52 focados e1080/1080 em40suítes. Tipos blob8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Revisão independente: Important corrigido por teste; minor diferido = conferência explícita que falha não tem aviso adicional, preserva incerteza e bloqueio. CI/integração do BUILD ainda PENDENTES neste commit.
+
+### Impedimentos específicos, sem certificação presumida
+- Navegador utilizável confirmado nesta rodada. A URL https://scope-and-approval-keeper.lovable.app redirecionou para /login, sem sessão autenticada. Isso substitui a antiga limitação “nenhum navegador”. Não houve prova privada e não foram solicitadas credenciais por texto.
+- Revisão humana do resultado ainda não exposta: o contrato gerado congelado de registrar_resultado_requisito aceita execução,requisito,resultado,justificativa,fundamento,evidências; não recebe revisão esperada nem chave idempotente. O contrato público V117 fornece capacidades executar/reanalisar/abrir, sem capacidade específica registrar revisão. Existência da RPC não basta para garantir a UX de edição concorrente. Próxima investigação dependente precisa seguir aprovação específica ADR-DEV-002/AGENTS antes de examinar ou modificar HML; não inventar autoridade, idempotência ou estado no React.
+- SYS03 N1/N2 e exceções R01/R02/R03 permanecem exatamente conforme decisões anteriores. Não repetir seeds SQL de auth.users.
+
+Próxima tarefa: confirmar checks/merge do BUILD de reanálise; obter sessão HML autorizada para provas privadas; resolver gate específico da revisão humana por plano próprio, atualizar matriz permitida/proibida por domínio e só certificar V1 com evidências exigidas. Não repetir correções integradas255/257/259/261.
+
+---
+
 # Checkpoint prioritário do CRUD global — 07/11/2026
 
 **Estado: EM EXECUÇÃO. CRUD global não concluído e V1 não certificada. V2–V5 e PROD continuam bloqueados pelos gates canônicos.**

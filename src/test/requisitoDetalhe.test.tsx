@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within, act } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { useState } from "react";
 
@@ -504,6 +504,136 @@ describe("V1-17 reanálise", () => {
       await screen.findByText(/Já existe uma análise ativa com escopo diferente/),
     ).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/conflict scope raw/);
+    expect(escritas()).toHaveLength(1);
+  });
+  it.each([false, true])(
+    "timeout com leitura válida (dados mudaram=%s) não alega confirmação nem permite reenvio",
+    async (mudou) => {
+      let leituras = 0;
+      m.rpc.mockImplementation((n: string) => {
+        if (n === SOL) throw new Error("network timeout");
+        leituras++;
+        return {
+          data: detalhe({
+            reanalisar: true,
+            descricao: mudou && leituras > 1 ? "Atualização de outro ator" : "Requisito original",
+          }),
+          error: null,
+        };
+      });
+      const onR = vi.fn();
+      abrir({ onReanalisado: onR });
+      await pronto();
+      fireEvent.click(screen.getByRole("button", { name: /Reanalisar este requisito/ }));
+      expect(
+        await screen.findByText(/Não foi possível confirmar se a reanálise foi registrada/),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/Solicitação registrada/)).toBeNull();
+      const enviar = screen.getByRole("button", { name: /Reanalisar este requisito/ });
+      expect(enviar).toBeDisabled();
+      fireEvent.click(enviar);
+      expect(escritas()).toHaveLength(1);
+      expect(onR).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole("button", { name: "Conferir andamento" }));
+      await waitFor(() => expect(lidas()).toHaveLength(3));
+      expect(enviar).toBeDisabled();
+      expect(escritas()).toHaveLength(1);
+      expect(onR).not.toHaveBeenCalled();
+    },
+  );
+  it("timeout seguido de falha na conferência mantém resultado incerto e bloqueio", async () => {
+    let leituras = 0;
+    m.rpc.mockImplementation((n: string) => {
+      if (n === SOL) throw new Error("timeout");
+      return ++leituras === 1
+        ? { data: detalhe({ reanalisar: true }), error: null }
+        : { data: null, error: { code: "network" } };
+    });
+    abrir();
+    await pronto();
+    fireEvent.click(screen.getByRole("button", { name: /Reanalisar este requisito/ }));
+    expect(
+      await screen.findByText(/Não foi possível confirmar se a reanálise foi registrada/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Reanalisar este requisito/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Conferir andamento" })).toBeEnabled();
+    expect(escritas()).toHaveLength(1);
+  });
+  it("resposta tardia do comando anterior não atualiza callback nem libera comando do requisito novo", async () => {
+    let soltarA: (v: unknown) => void = () => {};
+    let soltarB: (v: unknown) => void = () => {};
+    m.rpc.mockImplementation((n: string, a: Record<string, unknown>) =>
+      n === LER
+        ? { data: detalhe({ r: a["p_id_requisito"] as string, reanalisar: true }), error: null }
+        : new Promise((res) => {
+            if ((a["p_requisitos"] as string[])[0] === R) soltarA = res;
+            else soltarB = res;
+          }),
+    );
+    const onR = vi.fn();
+    const v = abrir({ onReanalisado: onR });
+    await pronto();
+    fireEvent.click(screen.getByRole("button", { name: /Reanalisar este requisito/ }));
+    await waitFor(() => expect(escritas()).toHaveLength(1));
+    v.rerender(
+      <RequirementDrawer
+        idCompetencia={C}
+        idRequisito={R_B}
+        aberto
+        onOpenChange={() => {}}
+        onReanalisado={onR}
+      />,
+    );
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Reanalisar este requisito/ })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Reanalisar este requisito/ }));
+    await waitFor(() => expect(escritas()).toHaveLength(2));
+    await act(async () => {
+      soltarA({ data: EX1, error: null });
+    });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Reanalisar este requisito/ })).toBeDisabled(),
+    );
+    expect(onR).not.toHaveBeenCalled();
+    await act(async () => {
+      soltarB({ data: EX2, error: null });
+    });
+    await waitFor(() => expect(onR).toHaveBeenCalledTimes(1));
+  });
+  it("conferência antiga não sobrescreve página de evidências mais recente", async () => {
+    let n = 0;
+    let soltar: (v: unknown) => void = () => {};
+    m.rpc.mockImplementation((nome: string, a: Record<string, unknown>) => {
+      if (nome === SOL) throw new Error("timeout");
+      n++;
+      if (n === 3)
+        return new Promise((res) => {
+          soltar = res;
+        });
+      const d = detalhe({ reanalisar: true });
+      d.evidencias_paginacao.offset = a["p_evidencias_offset"] as number;
+      d.requisito.descricao =
+        d.evidencias_paginacao.offset === 25
+          ? "Evidência da segunda página"
+          : "Evidência da primeira página";
+      return { data: d, error: null };
+    });
+    abrir();
+    await pronto();
+    fireEvent.click(screen.getByRole("button", { name: /Reanalisar este requisito/ }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Conferir andamento" })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Conferir andamento" }));
+    await waitFor(() => expect(lidas()).toHaveLength(3));
+    fireEvent.click(screen.getByRole("button", { name: "Próxima página de evidências" }));
+    expect(await screen.findByText("Evidência da segunda página")).toBeInTheDocument();
+    await act(async () => {
+      soltar({ data: detalhe({ reanalisar: true }), error: null });
+    });
+    expect(screen.getByText("Evidência da segunda página")).toBeInTheDocument();
+
     expect(escritas()).toHaveLength(1);
   });
   it("timeout ambíguo → 1 escrita + 1 leitura de reconciliação", async () => {

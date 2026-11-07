@@ -78,7 +78,8 @@ export const MENSAGENS_V117 = {
   erro: "Não foi possível carregar o detalhe agora. Tente novamente em instantes.",
   erroSessao: "Não foi possível verificar sua sessão agora. Tente novamente em instantes.",
   reanaliseOk: "Reanálise deste requisito solicitada. Acompanhe o andamento na análise.",
-  reanaliseReconciliada: "Solicitação registrada. Os dados abaixo foram atualizados pelo sistema.",
+  reanaliseIncerta:
+    "Não foi possível confirmar se a reanálise foi registrada. Confira o andamento antes de fazer uma nova solicitação. Os dados exibidos não confirmam o envio.",
   reanaliseFalha: "Não foi possível solicitar a reanálise agora. Tente novamente em instantes.",
   downloadFalha: "Não foi possível baixar o documento agora. Tente novamente em instantes.",
 } as const;

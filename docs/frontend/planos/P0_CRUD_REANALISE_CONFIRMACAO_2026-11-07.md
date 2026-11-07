@@ -29,3 +29,11 @@ Planejamento tecnicamente validado quanto aPRD/escopo/arquitetura/brand/seguran�
 Marca: ContaOS Brand v1.0 / BRAND-01; ler 19_IDENTIDADE_VISUAL_OFICIAL_BRAND_1_0.md e 20_PROMPT_000_BRAND_01.md para qualquer alteração frontend. Preservar assets oficiais, ContaOSMarca, Design System e tokens (REUTILIZAR > ESTENDER > CRIAR), componentes e estados; sem hardcodes, redesign ou bibliotecas paralelas. PLAN deve informar baseline visual, riscos e matriz de aceite; BUILD deve manter consistência; TESTE/TESTE C devem provar 1440/1280/768/390 nos temas claro/escuro, acessibilidade, marca e estados, sem alterações durante Teste C. Se prompt não envolver frontend, declarar impacto visual N/A justificado e garantir ausência de alteração visual.
 Economia Lovable: checar turno/estado/commit antes de enviar; usar GitHub e Supabase diretamente quando possível; consolidar instruções; executar o menor delta; reutilizar testes/evidências válidos; não reenviar turno pendente nem duplicar builds/scans; nunca pular aprovação humana obrigatória, TDD, segurança, CI, Zero-Drift, fidelidade ao PRD, validação visual ou Teste C separado.
 Entregar evidências e classificar: IDENTIDADE VISUAL PASS/FAIL/NÃO VERIFICADO/N/A; ECONOMIA LOVABLE CONFORME/NÃO CONFORME; ZERO-DRIFT PASS/FAIL. Sem prova não declarar PASS.
+
+## Execução e evidência
+PLAN261 integrado b63ce9f0b5cf865e37990dec8706c0a2dcda38c5 após dois checks SUCCESS run42339920429. RED4falhas/47PASS e GREEN51/51 locais em requisitoDetalhe.test.tsx. Demais gates e TesteC do BUILD ainda pendentes. Prova privada não executada: navegador abriu /login sem sessão.
+
+## Revisão independente e decisão
+Revisão somente leitura identificou corrida entre conferência e paginação. Reproduzida em teste (RED1falha/51PASS), corrigida com identidade dos offsets antes de aplicar resposta e GREEN52/52. Requisitos de outro contexto já protegidos por key+cleanup. Achado menor diferido: falha na conferência explícita preserva o aviso incerto e o bloqueio, mas não exibe mensagem nova específica de falha de leitura; não é alegado sucesso. Não ampliar esta emenda para um fluxo novo de revisão humana.
+
+Verificação final local:1080/1080 em40suítes;52/52 focados; TypeScript,build,ESLint focal,ZeroDrift,GOV020 e diffcheck PASS. Nenhum tipo/rota/backend modificado. GatesCI/visual privado ainda não presumidos.
