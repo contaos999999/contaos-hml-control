@@ -1,3 +1,23 @@
+## RETOMADA PRIORITÁRIA PELO LOVABLE — 06/11/2026, America/Bahia
+
+**Registro permanente:** https://github.com/contaos999999/contaos-hml-control/issues/250  
+**Dossiê integral:** [RETOMADA_LOVABLE_CHECKPOINT_INTEGRAL_2026-11-06.md](RETOMADA_LOVABLE_CHECKPOINT_INTEGRAL_2026-11-06.md).
+
+Decisão mais recente do titular: retornar ao agente Lovable para desenvolver o frontend e preparar substituição do executor GitHub Actions, preservando GitHub como repositório e Supabase HML como backend exclusivo. Substitui a preferência de editor da ADR-DEV-001; não equivale a desativação de proteções ou certificação de executor alternativo.
+
+Baseline frontend main consultado: `71362700c83adf438170c2fe9ed35f79601472e7`; último BUILD funcional PR248 merge `23d120f94e295f8031ade24ab785eaa39343c070`. Backend: `4fec09bf5cab5afc776192b9bef6e70728e1a058`, PR96 integrado. API Lovable ainda informa `6b0343b2be5009a13f54a99e897ab27e410c9853`: conferir branch e arquivos reais antes de BUILD; não retroceder entregas ou confiar só no metadado.
+
+**Correção do ponto de parada das entradas anteriores:** o backend de listas JÁ FOI IMPLEMENTADO em Git pelo PLAN95/BUILD96. A migration `20261107001620` e as APIs de listas NÃO foram comprovadas no HML. Não repetir implementação backend nem confundir merge com deploy. Última leitura HML nesta conversa: `20261106230839`; revalidar antes de escrever.
+Run `42321885307`: falha antes do job, anotação observada de cobrança/pagamento/limite; retry observado com a mesma anotação. Consulta mais recente: canonical-deploy failure, real-jwt skipped. Causa financeira específica NÃO apurada.
+
+Ordem executável: P0-A reconciliar fonte/branch/Knowledge/ADR → P0-B provar executor equivalente e manter checks legítimos → P0-C deploy canônico da migration exata + JWT/quarentena/paridade → P0-D frontend listas versionadas → P0-E CRUD permitido de todos os domínios V1 → P0-F UI privada/WCAG/SYS03/RNFs → P0-G certificação V1 → somente então V2→V3→V4→V5→GLOBAL. Detalhes, comandos, APIs, 28 rotas, critérios, hashes e prompts copiáveis estão no dossiê.
+
+Última etapa comprovada: backend listas integrado e impedimento de execução identificado. Próxima: paridade Lovable/GitHub e capacidade do novo executor. **CRUD GLOBAL INCOMPLETO; V1 NÃO CERTIFICADA; V2/PROD BLOQUEADOS.** Registro documental não altera Knowledge, regras, código ou banco. Não afirmar execução 100% pelo Lovable sem demonstrar suporte aos gates, SQL/restore/JWT e revisão independente.
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: adição documental, sem alteração visual ou BUILD. Preservar todo o histórico abaixo; reutilizar provas válidas; não afrouxar tipos, RLS, portões ou rastreabilidade.
+
+---
+
 ## ÚLTIMA ETAPA COMPROVADA — CRUD GLOBAL — 07/11/2026 UTC
 **Frontend main antes deste checkpoint: 23d120f94e295f8031ade24ab785eaa39343c070. Backend: bfd741d5758e77f89de626fdb691ea4bebb943d5. CRUD global NÃO CONCLUÍDO; V1 NÃO CERTIFICADA; V2/PROD bloqueados.**
 
