@@ -35,3 +35,15 @@ Revalidação documental da fonte: PR272 HEAD7841911db9ad39c89bdc3751bffb1350780
 
 ## Revalidação de fonte após PLAN/GATE da prova privada
 Fonte normativa avançou para937bd9b0792b57b5e2677223eab95deb74154761 apenas por documentação da prova privada. Os25 blobs canônicos e catálogo100/97 permanecem exatamente iguais, verificados por Git. Reancorar snapshot sem alterar regra/escopo; este PLAN documental separado exige dois checks verdes antes de retomar BUILD271.
+
+
+## PLAN corretivo V117: contrato JSONB e boolean real
+Prova privada42372068640, backendb619056aef9c00ca7818cfbe61d65c69e7f9060d e frontend508c5ff471b4cb453961c71415d3ac62fbb0d245: login GoTrue UI200 e análise aberta; drawer não carrega e revisão inacessível.38assertions HTTP e quarentena8 PASS; aceitação privada FAIL. Artifact13574406588 SHA256f0c604b73fd9ee8e9764ee575a5d4fc5956a5d862be3e80ba4441e4b6fd01ced; captura sanitizada inspecionada.
+
+Read-only HML confirmou fonte_detalhe/regra_validacao/condicao_aplicabilidade JSONB default{}, efeito_portao BOOLEAN defaulttrue. Getter20261103172929 retorna os tipos originais. Logs12:18–12:24UTC confirmam1POST200 e1OPTIONS200 no detalhe. Health sem achados; security mantém categorias conhecidas9definer/5privadoRLS/1leakedpassword, sem alteração por esta tarefa. Parser frontend usa texto nos4campos e rejeita a resposta válida. Fixtures anteriores usavam somente strings. Não alterar backend para satisfazer mocks.
+
+BUILD exato: src/lib/competencias/requisitoDetalheDados.ts, src/components/competencias/RequirementDrawer.tsx e src/test/requisitoDetalhe.test.tsx. Docs: plano/manifesto/snapshot/checkpoint. Regular38/V1-17, atômicos000/014/021/022/024, RNF007–010. Fonte reancorada em b619 após comparação25blobs/catálogo100/97 idênticos. Nenhum backend, migration, RLS/Auth/PROD, rota, tipo congelado, asset ou layout global novo.
+
+Mudança mínima: aceitar JSON válido nos3campos e adaptar para texto escapado, preservando objeto/array/primitivos e vazio{}, sem executar regra/metadado/HTML. Efeito no portão continua bool autoritativo e é exibido Sim/Não/indisponível; não converter string arbitrária em decisão nem calcular portão. Preservar UUID/offset/capacidades/recibos/negações. Rejeitar não-JSON sem any/dangerouslySetInnerHTML. Fixtures canônicas e testes de JSON vazio/estruturado, true/false e marcação segura como texto.
+
+Sequência: PLAN documental→dois checksSUCCESS mesmoHEAD→merge→GATE separado→RED com resposta canônica rejeitada→BUILDmínimo→GREEN/regressão/tsc/build/guard→revisão independente/TesteC→merge→pin novo no harness e prova HML. Não alterar teste durante avaliação. Reversão por revert frontend, sem apagar história. BRAND-01 e tokens preservados;1440/1280/768/390×claro/escuro, teclado/foco/contraste privados seguem obrigatórios. R01/R02/R03 intactos, sem novas dispensas. Economia por delta GitHub/Actions, sem reduzir gates. CRUD/V1 pendentes, V2 bloqueada.
