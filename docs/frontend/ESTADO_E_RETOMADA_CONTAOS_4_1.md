@@ -1,3 +1,20 @@
+## Checkpoint P0 — 07/11/2026 — prova CRUD privada e diagnóstico pós-descarte
+
+Este bloco prevalece sobre o histórico. CRUDglobal/V1 NÃO CONCLUÍDOS ou CERTIFICADOS. V2–V5 e PROD bloqueados. Não repetir PLAN120/GATE121, BUILD122, FIX123/124 ou diagnóstico125 integrados.
+
+- Backend main `01cde2e96e2fc98d601f9c9dfc865f05af4629b8`, merge125; HEAD testado `773bca8e53986ea730a198f0a9b35cfecec309cd`. CI125: guard42399997601, restore/backup42399997658 epublic-probe42399997583 SUCCESS no mesmoHEAD. Mainrestore/prova nova ainda precisam ser consultados.
+- Frontend main baseline `6ddf8323520a26b92c2dbee3f5b80ac13b40518a`; pin aprovado74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8/FIX291 preservado. Nenhumproduto/tipos modificado nestaexecução.
+- BUILD122 integrado c5b0a31793ead6bace7a28246bcb848c26b0d107; FIX123 integrado97ea8f2a52945510237705a8086e8c0a123fe9bb; FIX124 integrado b30d69575609ae7aaf2fc15a8e0a85c8d0ef4322. São harness do loteCADASTROS_LISTAS, não os18domínios aprovados. Falhasanteriores detalhadas emdocs/backend/P0_CRUD_GLOBAL_PROVA_RESULTADO_2026-11-07.md no backend.
+- ÚltimoHMLreal42399542588/job128484142083 FAIL apósLIST_DRAFT_DISCARD. Cadastro/criação/edição/situações e lista/itens/publicação/encerramento/nova versão/descarte comHTTP200/recibos conforme relatório; confirmaçãoSQL final/capturas/isolamento posteriores não executados. Quarentena4contas/3organizaçõesVERIFICADA, cleanup independenteSUCCESS. Artefato13585021727 SHA256ba6ba6eed294da290f05d0f01e5ba807b9a02a34fdd4e4c707fffa7ac4c5ae85, ZIPbaixado/hashconferido e3relatórioslidos. Não converter sucessoHTTPparcial emPASSdomínio.
+- Diagnóstico125 identificaOPEN/FILL/REVIEW e somenteflagsUIallowlist/últimoHTTP. SemDOM/texto/valores/URL/payload/credenciaispublicados. RED11PASS/1FAIL, GREEN12/12protocolo e42/42suiteNode, sintaxe/gatesPASS. Revisãoindependente semCritical/Important; minor:HTTPcompartilhado entreabas epagepodetornar-seobsoleta apóssegundaaba, testeHTTPinválido incompleto. São limitesdeproveniência, nãoprova decausa. Semmudançatimeouts/retries/mocks/autorização/cleanup.
+- Próxima tarefa exata: consultar mainrestore/backup noSHA01cde2e e provaautomática CRUD; baixarartefato, verificarhash/quarentena e lerfase/flags. Só então corrigircausa demonstrada no harness ou abrirPLAN/GATEproduto se necessário. Seguir loteatéUI/SQL/CAS409/rascunho/isolamento/capturasPASS e, depois, provar14domíniosrestantes da matriz pelo plano vigente. Upload/worker reais,28rotas/quatrolarguras/doistemas/WCAGmanual e retrospectiva continuam obrigatórios conforme aplicabilidade. Nenhuma certificação antecipada.
+- PRsbackend75/77/78/80 consultados: CLOSED/MERGED. NenhumPR frontend aberto na consulta inicial. Comentáriobackend125#6711160238 registra fila. Não usar registros antigos dePR75PLANfrontend comoestadoatual.
+- ZIPmestre recuperado pelo nome do índice:5ee115d12e263d98068288b6bb722f5f303f2d19e1e4c0b5e930e69da03621da; manual1008a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e e97atômicosd9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8 conferidos. Prompt75 efontes de listas/NFR lidos literalmente.25blobs/catálogo100/97 idênticos; snapshot eack reancorados juntos em01cde2e.
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: checkpoint documental, impacto visualN/A; frontend/BRAND01/tipos intocados;GitHubdireto semLovableBUILD. SemDDL/RLS/Edge/Authconfig/PROD. Automaçãohorária não significa vigilânciaemtemporeal.
+
+---
+
 ## Checkpoint P0 — 07/11/2026 — fechamento CRUD global em execução
 
 - Pedido atual: executar auditoria e fechamento CRUDglobal integral mantendo Supabase/RLS/histórico e V1 antesV2. **CRUDglobal eV1 NÃO CONCLUÍDOS/CERTIFICADOS.** Não parar em status nem inventar percentual/prova.
