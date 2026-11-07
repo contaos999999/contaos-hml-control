@@ -62,3 +62,7 @@ Usar exclusivamente a allowlist deste plano: `RequirementDrawer.tsx`, `requisito
 Gate técnico: VALIDADO quanto a requisito de feedback V1-17/FE06 §12, RNF e autoridade do Supabase. BUILD somente depois de commit documental e CI aprovado. Rollback reverte apenas este delta frontend. Backend, HML técnico, Auth e PROD permanecem fora do escopo. A investigação de revisão humana continua bloqueada pelo gate específico de autorização vigente.
 
 O bloco literal ZERO-DRIFT deste plano permanece integralmente aplicável. Fontes canônicas e BRAND-01 reutilizadas do mesmo HEAD já conferido; nenhuma mudança de marca. Matriz visual 1440/1280/768/390 × claro/escuro e estados permanece requerida, sem declarar prova privada não executada.
+
+### Execução da emenda de conferência
+
+PLAN264 integrado em `97eaaa7b4685970add307222834b486bbdbdddc8`, HEAD documental `9c7539a3be0c63d6d99fa2c43b842d45faf41f98`; run42357346038 ambos checks SUCCESS antes do BUILD. RED:3falhas/52PASS, ausência do aviso reproduzida nos três tipos. GREEN final56/56, regressão1084/1084 em40suítes. TypeScript,build,ESLint focal,ZeroDrift,GOV020,diffcheck PASS. Tipos congelados preservados. Revisão independente sem achado crítico/importante; respostas antigas de página não alteram dados nem aviso. CI BUILD e prova visual/privada ainda pendentes neste commit. Nenhum backend/Auth/PROD/rota/dependência modificado.

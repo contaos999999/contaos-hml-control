@@ -63,7 +63,8 @@ type Estado =
   | { tipo: "erro_sessao" }
   | { tipo: TipoErroV117 }
   | { tipo: "ok"; d: DetalheV117 };
-type Aviso = "ok" | "incerta" | "falha" | "conflito" | "sem_permissao" | "invalida";
+type Aviso =
+  "conferencia_falhou" | "ok" | "incerta" | "falha" | "conflito" | "sem_permissao" | "invalida";
 
 const ROT_MEC: Record<string, string> = {
   deterministico: "Determinístico (regra objetiva)",
@@ -291,13 +292,17 @@ function Conteudo({
     trava.current = true;
     const alvo = chave;
     setConferindo(true);
+    setAviso({ k: alvo, a: "incerta" });
     try {
       const x = await obterDetalheRequisito(c, r, o, new AbortController().signal);
       const d = x.error ? null : parseDetalheV117(x.data, c, r, o);
-      if (chaveAtual.current === alvo && offsetsAtuais.current === o && d)
-        setReg({ k: alvo, e: { tipo: "ok", d } });
+      if (chaveAtual.current === alvo && offsetsAtuais.current === o) {
+        if (d) setReg({ k: alvo, e: { tipo: "ok", d } });
+        else setAviso({ k: alvo, a: "conferencia_falhou" });
+      }
     } catch {
-      // Preserva o estado incerto. Conferir nunca reenvia o comando.
+      if (chaveAtual.current === alvo && offsetsAtuais.current === o)
+        setAviso({ k: alvo, a: "conferencia_falhou" });
     } finally {
       if (chaveAtual.current === alvo) {
         trava.current = false;
@@ -422,15 +427,17 @@ function Conteudo({
             ? MENSAGENS_V117.reanaliseOk
             : avisoAtual === "incerta"
               ? MENSAGENS_V117.reanaliseIncerta
-              : avisoAtual === "falha"
-                ? MENSAGENS_V117.reanaliseFalha
-                : avisoAtual === "conflito"
-                  ? MENSAGENS_V117.conflito
-                  : avisoAtual === "sem_permissao"
-                    ? MENSAGENS_V117.sem_permissao
-                    : avisoAtual === "invalida"
-                      ? MENSAGENS_V117.invalida
-                      : ""}
+              : avisoAtual === "conferencia_falhou"
+                ? MENSAGENS_V117.conferenciaFalhou
+                : avisoAtual === "falha"
+                  ? MENSAGENS_V117.reanaliseFalha
+                  : avisoAtual === "conflito"
+                    ? MENSAGENS_V117.conflito
+                    : avisoAtual === "sem_permissao"
+                      ? MENSAGENS_V117.sem_permissao
+                      : avisoAtual === "invalida"
+                        ? MENSAGENS_V117.invalida
+                        : ""}
         </p>
 
         <EvidenceList d={d} onPagina={(v) => mudarOffset("ev", v)} />
