@@ -462,7 +462,7 @@
     "WCAG integral, demais rotas, contraste transitórioV117 e V1 pendentes",
     "PNG768/390 mostram tabela deslocada; últimascolunas/paginação/percursointegral de teclado não comprovados"
   ],
-  "latest_backend_head": "bf25e4bde1cc72a4457c7fd1ff91e51806f7fee1",
+  "latest_backend_head": "c993e38c1f9b9f6a6d45a754945b5b0542fb3ccc",
   "private_runs": [
     {
       "run": 42398052328,
@@ -588,5 +588,33 @@
       "historical_transient_v117_contrast": "OPEN",
       "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS"
     }
+  },
+  "documents_queue": {
+    "backend_main": "c993e38c1f9b9f6a6d45a754945b5b0542fb3ccc",
+    "plan_pr": 132,
+    "plan_head": "5862a5d86f4b95c5ad7eed41ed2eb7d5568d5cd5",
+    "plan_merge": "639e033aaf5e348404dd51a1e9d3d402cca60043",
+    "plan_restore": 42405513402,
+    "gate_pr": 133,
+    "gate_head": "c163e1ee713266e0e328563c7f55f51c1da8511a",
+    "gate_merge": "0dd7501f59d60266b6963285682a3bd1906fdb31",
+    "gate_restore": 42406015398,
+    "build_pr": 134,
+    "build_head": "12bfb1c259e7087f5ff739e4bab0e88545bef16d",
+    "state": "QUARANTINE_SQL_AND_CONCURRENCY_PASS_UPLOAD_DISABLED",
+    "first_sql_ci": {
+      "run": 42407348738,
+      "job": 128507798885,
+      "state": "FAIL_LOCAL_FIXTURE_JSON_INSTEAD_OF_JSONB",
+      "fixed_in": "12bfb1c259e7087f5ff739e4bab0e88545bef16d"
+    },
+    "local_protocol": 20,
+    "local_suite": 50,
+    "independent_review": "Sem Critical/Important no código e no ajuste JSONB; SQL real e corrida ainda dependem do CI",
+    "hml_upload": false,
+    "build_merge": "c993e38c1f9b9f6a6d45a754945b5b0542fb3ccc",
+    "sql_proof_run": 42407629689,
+    "sql_proof_job": 128508656001,
+    "sql_proof": "DOCUMENT_QUARANTINE_LOCAL_SQL_PASS"
   }
 }
