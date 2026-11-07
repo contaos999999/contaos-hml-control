@@ -1,3 +1,22 @@
+Warning: truncated output (original token count: 66313)
+Total output lines: 1498
+
+## Checkpoint P0 — tipografia corrigida e integrada; dependência CORS em PLAN
+
+Este bloco registra a evidência mais recente de tipografia. **Identidade visual integral, CRUD global, integração/auditoria e V1 continuam sem certificação. V2–V5 e PROD permanecem bloqueados.**
+
+- BUILD frontend #309 integrado em `b0e22f5ab7a479ebb8a3c9bd2d907d5052ec81c5`, HEAD `164b10b44eaf5b553efcc7ab4e053b86c4d3b269`. Zero-Drift128551769980 e Teste C128551770379 SUCCESS no run42421827969; protect-types128551700051 SUCCESS no run42421827973. Merge normal com expected_head_sha, sem bypass. Delta de produto: apenas duas linhas em src/styles.css para Inter, Arial, sans-serif, preservando fontes monoespaçadas explícitas.
+- RED real preservado: HEAD24466e1/run42421242066,24falhas públicas por pilha genérica; artefato13593462941 SHA25666a06348e456014fd5749eea5b8ff0fab7b45267afe2f4536e7594fd32116a88. GREEN: artefato13593374754 baixado e SHA25644889c1d42c940cd0e394c7f4851f42e7c9d969412497efc3fd1fb2f22f4b9df conferido. Relatório identifica merge sintéticoa8c56662063763b7e8c2575b54d9b106d6cc9991, distinto do HEAD e merge integrado.
+- GREEN runtime:29superfícies/232casos,24PASS_PUBLICO/0FAIL,208protegidos semsessão. Todos24públicos têm declaração computada Inter, Arial, sans-serif; todos hashes de capturas conferidos,0falhas públicas de contraste por pixels. Revisor independente abriu24GREEN e24RED individuais nas quatro larguras/dois temas, sem corte/sobreposição/regressão ou achados bloqueantes. Prova restrita a formulários vazios e estado “Validando link”; não comprova fonte Inter instalada, envio real de recuperação, redefinição concluída, jornadas privadas ou WCAG integral.
+- Validação local do produto equivalente76ebe714:1152testes/41suítes,24testes do protocoloTesteC,tsc/build/diff PASS. Revisor repetiu54/54BRAND; types preservado em8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Original ZIP/manual100/atômicos97 novamente conferidos com os hashes canônicos do índice.
+- Backend main permanece `a672f44cdeebd3e0a1d3f2bc5b445a9a283e7ba0`. Falha HML42420832115/job128548730992 e quarentena4contas/2organizações preservadas. Causa confirmada por fonte implantada e logs: uploadv6/JWTtrue respondeOPTIONS405 antes dePOST; downloadv4/JWTtrue também não trata preflight. Nenhuma Edge ou ambiente alterado nesta etapa.
+- PLAN backend #137 aberto. HEAD inicial809e768 foi sucedido por93fee8ac9c48537d74b85bc80973c965f37eab57 com proveniência/cleanup separados entre quatro provas locais no pin e smoke publicado adicional, cujo SHA permanece não verificado. Restore42422449447 pertence ao HEAD809e768; **não autoriza merge do HEAD93fee8ac**. Exigir guard/restore/backup no HEAD vivo, revisão e merge do PLAN, GATE separado, RED/BUILD/GREEN/CI/revisão antes de deployHML das duas funções. Lote documental estacionado nessa dependência. Evitar pushes concorrentes: execução que publicou93fee8ac acompanha esta fila backend; este checkpoint apenas registra a evidência frontend.
+- Correção factual mantida: PR75 e80 MERGED; PR77 e78 CLOSED semmerge. Não repetir PLAN132/GATE133 ou provas funcionais anteriores válidas. Seguir frente visual até matriz autenticada28rotas×8,72itensBRAND, teclado/foco/contraste e dados reais aplicáveis; só depois certificar CRUD e integração/auditoria, retrospectiva eV1.
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: checkpoint documental; nenhuma alteração de backend, regra de negócio, permissão, asset ou PROD. Automação horária não significa vigilância contínua entre chamadas.
+
+---
+
 ## Correção factual e revisão independente P0 — 07/11/2026
 
 **Correção vinculante do histórico:** consulta viva ao GitHub confirmou frontend PR75 MERGED (`e5ef492f1af498acca534ddf9b30f352cdca8f61`) e PR80 MERGED (`237d1c5c99816254044a0f908f5630454438659f`), mas PR77 e PR78 estão CLOSED **SEM MERGE**. Portanto a frase histórica “75/77/78/80 já integrados” nos blocos anteriores é incorreta. O RED77 e BUILD78 não devem ser apresentados como merges. A entrega posterior PR83 está MERGED (`66f3a33f15445035aced2b19b7bd354fbc2fb929`, HEAD `e4df6316b244a143c9b9dbf1de682104fecd26c1`). Nenhum dos quatro PRs antigos está aberto. Preservar histórico, sem repetir tarefas ou inventar integrações.
@@ -650,156 +669,7 @@ Criada issue backend **contaos999999/develop#89 — “P0 V1 — contrato: ediç
 **V1 NÃO CERTIFICADA; V2/PROD BLOQUEADOS.** Plano #227 integrado em `52875d47695d559013c43fc73533c4ddfaddff6a`, após dois checks SUCCESS no run42263199286, HEAD11ce366165a8bf5b02308889835e3ccc9e825c29. Fonte backend HEAD conferido01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea inalterado.
 
 ## Falha real e dados preservados
-MASTER criou pelo navegador, na organização V107 concorrência, o contratante **TESTE VISUAL P0 06112026 - SEM VALIDADE**, fantasia TESTE VISUAL P0, tipo Outro, e contrato **TESTE-VISUAL-P0-06112026**, objeto sintético, R$1000, rascunho, início efetivo30/10/2026 e término ausente. Não duplicar. Nenhuma permissão/convite foi alterado. Prova: PR226 comentário6689741619. As listas mostram os registros, porém não permitiam abrir contrato nem editar contratante.
-
-## Execução atual
-PR228 `p0/v1-list-navigation-build-20261106`: RED b2e0c88f2704d0f87a801d639f0d50b93665037d, run42263605285/job128049635432 FAIL esperado com ausência dos links acessíveis de contrato/cadastro. Nenhuma implementação antes desse RED publicado. Testes legados proibiam links de edição, agora navegação esperada com zero DML/RPC/Edge preservado. Correções8fe1ca7e788ef6471be4d3bd718c4fcbd8e77f9b e8090c59a8c212a6e4b82d92b4fa17ff253b981c3 adicionam somente links tabela/card para rotas existentes com o ID retornado pelo backend. Não confundir link com concessão de edição.
-
-**CI GREEN e revisão autenticada desta correção AINDA PENDENTES neste registro.** PR226 visual permanece draft no6b0343b2be5009a13f54a99e897ab27e410c9853, sem merge nem publicação. Preview Lovable permanece branch visual para revisão; versões da main ainda têm visual anterior. Não integrar draft visual sem seus gates.
-
-**Próxima tarefa:** conferir CI final do228, corrigir qualquer falha real, revisar diff e testar links no preview com os registros existentes; então completar todas as telas internas por criações autorizadas no navegador. Depois integrar somente o que tiver gates completos. EditarContratante contém situação ativo/inativo; VisaoGeralContrato não oferece edição/desativação, lacuna a confrontar com requisito/contrato antes de implementar. Sem inventar rota ou endpoint.
-
-## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
-Links usam componentes e tokens existentes, sem mudança de marca, CSS compartilhado, rotas, tipos congelados, API, RBAC, backend ou PROD. Nenhum BUILD do agente Lovable. TDD/CI não equivalem a prova visual4x2 ou certificação das28 rotas.
-
----
-
-## CHECKPOINT P0 — 06/11/2026: prova real de restore sintético integrada e reancoragem canônica
-
-**V1 NÃO CERTIFICADA. V2 e PROD continuam BLOQUEADAS.** HEAD backend de referência `contaos999999/develop@01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea`; frontend main anterior ao presente PR `320b3ab72aacaecc9381cbc41cefc14caa39bbd0`. Fonte 25/25 blobs e catálogo 100 regulares/97 atômicos conferidos **idênticos** no HEAD backend, snapshot e PLANO_ATIVO reancorados sem modificar fontes, BRAND-01 ou types congelados.
-
-### Provas novas desta rodada
-
-- PLAN [backend #86](https://github.com/contaos999999/develop/pull/86) integrado `e7cfb5e7f953a11a8024ab6075fc0661b8277bfa`; BUILD [backend #87](https://github.com/contaos999999/develop/pull/87) integrado `0b790304ae3fd7d8e44dd6cfca1ca6e0a9a64a7f`; evidência [backend #88](https://github.com/contaos999999/develop/pull/88) integrada `01fa7d7a803ba8507a5ca6d89eb4ce45b2893bea`.
-- Zero-Drift do BUILD [run 42168969380](https://github.com/contaos999999/develop/actions/runs/42168969380): SUCCESS.
-- Workflow [run 42168969390](https://github.com/contaos999999/develop/actions/runs/42168969390): **dois jobs SUCCESS**. Job original reconstrói schema; novo job fez backup real de uma organização fictícia com `pg_dump`, destruiu instância local A, recriou instância B e restaurou conteúdo por `pg_restore`. O artifact [13480626051](https://github.com/contaos999999/develop/actions/runs/42168969390/artifacts/13480626051) foi conferido: 1 linha→1 linha, hash SHA-256 idêntico, 126/126 versões de migrations idênticas, RLS `true:false` inalterado, cleanup comprovado, 38 segundos medidos após parada de A. **Não é ensaio RPO/RTO, PITR ou backup integral**, nem testa PROD/Storage ou os três fluxos ressalvados.
-- FAIL histórico [run 42168549551](https://github.com/contaos999999/develop/actions/runs/42168549551) preservado: ID de container obsoleto após `db reset`; fix mínimo `5cffdd1028b72c58397d76b9f8507cfb81074cb0` e reteste PASS. Não falsificar resultado anterior.
-- Snapshot SQL HML somente leitura 06/11/2026 05:29 UTC: sete conexões/60, zero sessões esperando lock, zero deadlocks acumulados; nove filas pgmq sem mensagens pendentes, seis mensagens de histórico arquivadas, seis jobs Cron ativos. **Não é** carga de pico, disponibilidade 99,9% ou prova de todas as metas 500/800ms.
-
-### Última etapa e próximas obrigações
-
-**Última etapa comprovadamente concluída:** provas estruturais/funcionais já integradas do RBAC e nove JWT (377/377), BUILD frontend #183 com 36 suítes/921 testes locais e dois CI aprovados, e agora backup/restore de **uma tabela sintética local**, integrado no backend com dois jobs verdes. Quarentena anterior de 56 contas P0 sintéticas bloqueadas com zero sessões/vínculos/MASTER ativos permanece documentada; esta rodada **não** reutilizou contas.
-
-**Próxima tarefa obrigatória:** SYS-03 recuperação de senha end-to-end com email alias sintético controlado e verificação real de link válido/expirado/reutilizado + novo login; Teste C autenticado de telas privadas/WCAG 1440/1280/768/390 claro/escuro; RNFs latência por rota/carga, backup integral/PITR/RPO/RTO e monitoramento temporal; critérios V1 individualizados (486 literais e 488 históricos) sem falso PASS. Ressalvas R01 upload físico, R02 worker, R03 isolamento A/B real permanecem estritamente limitadas.
-
-Não modificar, promover nem certificar V2/PROD; não declarar certificação V1 pela aprovação do restore local.
-
-### ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
-
-Documentação e snapshot de fontes: **impacto visual N/A**, zero mudanças em frontend executável, Brand-01, tipos congelados, banco remoto, Auth, RLS, Storage ou PROD. Sem usar créditos Lovable; usar provas e implementações já homologadas.
-
----
-
-## CHECKPOINT COMPLEMENTAR P0 — 06/11/2026: auditoria HML e PRs reconciliados
-
-**V1 NÃO CERTIFICADA; V2 E PROD BLOQUEADOS.** Referências na abertura deste trabalho: frontend main `df6ea5ef3403b7612afa257f105d9d65a7f8c1ce` e backend main `67668c61054405368d5c7895f5087ccfa9eb9dfc`; fonte canônica 25/25 e snapshot íntegros. Ver prova nova `docs/frontend/auditorias/P0_V1_BASELINE_HML_OBSERVABILIDADE_2026-11-06.md` (somente leitura, não certificadora).
-
-- PRs frontend #182 e #176 **encerrados sem merge**, branches preservadas. Implementações/testes correspondentes já entraram por #183 e #177, sem substituição nem retorno a código antigo.
-- Revalidação independente HML: 56 contas de teste P0 bloqueadas, zero contas não bloqueadas, sessões, vínculos e MASTER ativos nessas contas; matriz 480 permissões, 10 perfis, 48 ações, versão 5, 52 policies públicas com RBAC. Nove RPCs EXECUTE por authenticated e nenhuma por anon; provas JWT 377/377 preservadas.
-- Logs do gateway em janela padrão 24h: RPC REST 1.057 requisições, 0 HTTP 5xx, P95 upstream 272,5ms; Auth token 70 req, P95 upstream 1.675,8ms. **Não** chamar isso de teste de carga ou latência navegador, nem certificar RNF. Nenhum fluxo /recover foi comprovado.
-- Advisor ainda alerta nove RPCs SECURITY DEFINER e proteção contra senha vazada; não são considerados corrigidos por remoção de aviso. Provas reais de autorização já arquivadas permanecem válidas.
-- **Rastreabilidade 486 × 488:** cruzamento documental adicional em `docs/frontend/auditorias/P0_V1_DIFERENCIAL_486_488_CRITERIOS_2026-11-06.md`. A diferença numérica vem das 12 categorias normalizadas do regular 75 frente às 10 verificações resumidas do manual; **não é equivalência semântica automática**, nem autoriza remover os 2 registros, omitir schema/isolamento A/B ou atestar PASS.
-- **Última etapa comprovada:** investigação independente, reconciliação de PRs obsoletos e crosswalk de proveniência, sem mudar HML. **Próxima:** SYS-03 com alias sintético controlado, Teste C privado com sessão válida, backup/restauração isolados de dados sintéticos e 486/488 critérios com evidência individual. Ressalvas R01/R02/R03 restritas; nenhuma PROD.
-
----
-
-## CHECKPOINT OFICIAL — 06/11/2026: RBAC e provas JWT integrados; execução interrompida pelo ambiente
-
-**V1 NÃO CERTIFICADA. V2 e PROD continuam bloqueados.** Este registro preserva a última etapa comprovadamente concluída e distingue as provas restantes da preparação local não executada.
-
-### HEADs e código integrado
-
-- Frontend: ead42939425b9369ca5f23f361f749894b6bc635, merge do [PR #183](https://github.com/contaos999999/contaos-hml-control/pull/183). HEAD aprovado do BUILD:3917e54eec28019924e1914e2e65054091a0cec8. Os dois checks obrigatórios passaram no [run42157723794](https://github.com/contaos999999/contaos-hml-control/actions/runs/42157723794).
-- Backend: 67668c61054405368d5c7895f5087ccfa9eb9dfc, merge do [PR #85](https://github.com/contaos999999/develop/pull/85). HEAD aprovado:87dcdc306b6b7db41b457adee495a5be58968558; [CI42157462457](https://github.com/contaos999999/develop/actions/runs/42157462457) SUCCESS.
-- Conferência posterior pelo GitHub: ambos os HEADs confirmados; fonte integrada de MatrizPermissoes idêntica ao BUILD testado; relatório377/377 presente no backend integrado.
-- Snapshot reancorado neste checkpoint: 25/25 blobs normativos e catálogo100/97 conferidos sem diferença no backend atual. Não alterar fontes para contornar o gate.
-- Tipos congelados preservados:8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Nenhuma mudança de rota gerada, Brand ou PROD.
-
-### Etapas concluídas com prova
-
-1. Matriz persistente: migração20261106014102 implantada pelo fluxo CLI canônico,126/126 versões em paridade,48ações/480combinações,71políticas adicionais,43funções protegidas. PRs77–79 e deploy42149828772. Não repetir reparo de histórico nem reescrever migration aplicada.
-2. Matriz, organizações e assinador por JWT real:147cenários distintos finais aprovados. Preservadas152tentativas,149PASS e três500históricos corrigidos no PR82; não apagar as falhas anteriores. Concorrência, replay, payload divergente, revogação, interrupção pós-commit e restauração confirmada. Edge storage-sign-upload versão6, verify_jwt=true, fonte aprovada conferida. PR83 e relatório P0_V1_RBAC_JWT_EDGE_RESULTADO_2026-11-06.md.
-3. Nove APIs privilegiadas após RBAC:377/377PASS,94ALLOW,212DENY e71verificações Auth/organizações/RLS/logout. MASTER,dezperfis,semvínculo,gestorA1restrito e leitorB; negações com mesmoJWT após revogar vínculo e sessão. Dados persistidos conferidos:seisrespostas/seisdesfechos autorizados,trêsexecuções históricas e3/3payloads exatos. Mensagens próprias arquivadas3/pendentes0; execuções canceladas3. PR84código e PR85resultado.
-4. Frontend integrado: painel MASTER com consulta/edição real das RPCs existentes, revisão explícita, versão otimista, retry com mesmoUUID, PT409 e invalidação de contexto. Menu comum e contextual por permissões, seletor de organizações existente. Revisão independente corrigiu perda de edição/UUID ao filtrar usuários; dois testes reproduziram RED antigo e passaram com a correção.
-5. Validação frontend:36suítes/921testes locaisPASS; TypeScript/buildPASS; lint sem erros,doisavisos de referências em cleanup. Os dois checks remotos do BUILD passaram. Teste C público/sem credenciais não é certificação visual privada.
-6. Quarentena revalidada por SQL independente após os merges:28contas sintéticas das duasrodadas bloqueadas;0sessões,0MASTER e0vínculos sintéticos ativos;4organizações inativas. Matriz permanece com480entradas e leitor/contratos/consultar=true, valor original. Não reativar nem reutilizar essas contas.
-7. Originais DOCX recuperados e SHA conferido: Manual8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e; atômicosd9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8. O universo literal V1 é486:416anteriores +60dos39–43 +10do75. Histórico488preservado; diferença não dispensa obrigações de outras fontes. Candidato literal ainda não integrado.
-
-### Limites e pendências reais
-
-- Escritas documentais positivas usaram replay semeado, não primeira criação física. Registro de relatório retornou fixture própria existente. Não certificar upload físico nem worker. Permanecem as ressalvas específicas autorizadas, sem ampliá-las para outros requisitos.
-- SYS-03: nenhuma prova real de entrega, link válido/expirado/reutilizado e login com nova senha foi executada nesta etapa. A caixa conectada está disponível, mas seu endereço já pertence a uma conta real Auth: **não redefinir essa conta**. Usar aliases sintéticos novos sob gate. Restrição SMTP é hipótese documental; nenhum bloqueio de envio foi demonstrado porque recover não foi chamado.
-- Teste C privado e WCAG: ainda executar com identidades sintéticas novas e fonte exata, quatro larguras1440/1280/768/390, claro/escuro, teclado, foco, contraste e estados. Não transferir PASS de mocks ou rotas negadas para telas autenticadas.
-- RNFs: completar latência por rota500/800ms, observabilidade prática e recuperação de backup contendo dados sintéticos. Snapshot12conexões/60,sem espera e sem deadlock não é teste de carga ou disponibilidade.
-- Backup isolado: instrumento local em preparação, NÃO executado. Antes de integrar, corrigir cleanup: manter diretório temporário até supabase stop terminar; remover somente recursos próprios e não declarar PASS se stop falhar. Exigir origem/destino vazios e verificar tabelas/IDs/hashes/versões/RLS. Duas instâncias efêmeras sequenciais evitam conflito de pg_cron. CLI2.122.0/Postgres17 no workflow atual. Não exportar HML real, inventar RPO/RTO ou supor necessidade de contratação.
-- Rastreabilidade: integrar os486literais, conservar488históricos e reconciliar cada critério com prova específica. Refinamento local dos70finais identificou31candidatos unitários/estáticos e8comJWT parcial,sem evidência visual. Candidato não é certificação.
-- PR182 contém implementação concorrente nos mesmos arquivos: preservar sua branch e reconciliar antes de eventual merge; não substituir o BUILD183 validado nem apagar testes para resolver conflito. PR176 também permanece fora deste escopo.
-
-### Interrupção e próxima tarefa
-
-O executor tornou-se indisponível e os comandos de preparação retornaram erro de transporte. Não houve nova DDL, fixture SYS03, envio de recuperação ou teste de backup após a interrupção. Não há necessidade de senha,JWT ou service_role pelo chat.
-
-**Última etapa comprovada:** matriz/frontend integrados,377provas das noveAPIs e quarentena independente concluídos. **Próxima tarefa:** restabelecer um executor; ler HEADs atuais e este checkpoint; preservar provas válidas; preparar gate fechado para contas sintéticas SYS03/TesteC privado e ensaio RNF isolado; executar e registrar resultados reais; só depois reconciliar certificação V1. Não iniciar V2.
-
-Artefatos de preparação estavam no workspace transitório, cuja disponibilidade não foi confirmada depois da interrupção. Não depender deles sem conferir integridade. Código entregue e relatórios conclusivos estão nos repositórios; originais normativos continuam identificados por seus hashes.
-
----
-
-## CHECKPOINT P0 — 06/11/2026: BUILD local da matriz e navegação V1
-
-PLAN #180 integrado em 50709cd796d876149c8f011607fc24369ab5d28a, com os dois checks obrigatórios aprovados no run 42155058599. Preservados PLANS #178/#179, PR #176 e fontes normativas. Backend atual: 1edb2c40595e01f7e1e8c5f80160b7b3a4113c12, com 25/25 blobs e catálogo 100/97 iguais. Relatório JWT das nove funções no PR backend #85, ainda não integrado durante este BUILD para preservar o gate de fonte viva.
-
-Implementação: painel MASTER persistente na rota administrativa existente; 480 combinações validadas, revisão antes de salvar, versão otimista, retry com mesmo UUID, recarga após PT409, descarte de respostas antigas e bloqueio síncrono após troca de sessão. Menu comum e contextual das rotas V1 existentes filtrado por permissões efetivas. Seletor de organizações reutilizado. Sem alteração de tipos, Brand, rotas geradas, backend ou PROD.
-
-A revisão independente encontrou perda de edição e UUID ao filtrar a lista de usuários. Corrigido: o painel permanece montado enquanto identidade, organização e acesso forem válidos. Dois testes falharam com a condição antiga e passaram com a correção. Acrescentada conferência do transporte de contexto de competência sob organização exata, ausência e erro.
-
-Validação local concluída: **36 suítes / 921 testes PASS**, TypeScript PASS, lint dos nove arquivos sem erros e com dois avisos de hooks, build PASS, árvore de rotas sem mudança e tipos no blob 8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Mock não equivale a JWT ou visual real. CI remoto e Teste C deste BUILD ainda pendentes.
-
-Backend: rodada matriz/Edge PR #83, com 147 cenários distintos finais aprovados e quarentena de 14 contas sem sessões. Nova rodada das nove APIs: 377/377 PASS, 94 ALLOW e 212 DENY; persistência de seis respostas e seis desfechos, três mensagens próprias arquivadas, 14 contas bloqueadas e zero sessões, no PR #85. Upload físico e worker continuam sem certificação.
-
-Última etapa comprovada: BUILD e regressão local após as correções da revisão. Próxima tarefa: dois checks remotos no SHA exato, Teste C autenticado e visual, SYS-03, RNFs práticos e critérios. A reconciliação original confirmou 486 critérios literais V1; os 488 históricos foram preservados para análise do diferencial. **V1 NÃO CERTIFICADA; V2 bloqueada; PROD intacta.**
-
----
-
-## CHECKPOINT P0 — 05/11/2026: conexão real PostgreSQL HML com secret existente
-
-- O titular confirmou e autorizou usar `CONTAOS_HML_DATABASE_URL` do GitHub Actions Environment `hml`; nenhuma chave foi solicitada ou exposta.
-- PLAN mestre #160 integrado; BUILD [#164](https://github.com/contaos999999/contaos-hml-control/pull/164) integrado na main `6281e05f9bcc9462625d92666917d0371e9d707a` com 2 required checks SUCCESS; backend de referência `3aa4af7a292b80243045e0a426ee6399ba948ff2`.
-- Teste **REAL** via `psql`, run [42064796959](https://github.com/contaos999999/contaos-hml-control/actions/runs/42064796959) job 127375836160 `SUCCESS`: conexão direta PostgreSQL HML, 32 funções SECURITY DEFINER, 9 authenticated/0 anon, nove chamadas RPC efetivamente negadas para `anon` com `42501`, search_path, RLS `public/storage`, bucket privado e view invoker; três transações read-only e rollback. Log e escopo em `docs/frontend/auditorias/P0_V1_PROVA_REAL_HML_POSTGRES_2026-11-05.md`.
-- O teste SQL real **não** é JWT real. Runner HTTP Auth #163 executou 9 negativas sem token, mas run 42063335906 ficou FAIL fechado por ausência de `CONTAOS_HML_TEST_EMAIL`/`CONTAOS_HML_TEST_PASSWORD` ou `CONTAOS_HML_SERVICE_ROLE_KEY` no environment HML. O secret de banco não supre isso. Não marcar B02 como aprovado.
-- A main também recebeu PR de restauração GOV-016 em `21d4f3561e4e3a77bc64349f753a91f79ea6e4ec`; este checkpoint é documental e respeita todos os HEADs posteriores.
-- **Etapa comprovadamente concluída**: `B01_HML_PGSQL_REAL`, sem repetir teste. **Próxima tarefa**: conseguir identidade **sintética** HML pela API oficial de Auth/segredo protegido do environment, executar 9 RPCs com JWT e perfis, fechar provas restantes dos 488 critérios, SYS-03, WCAG e NFRs. **V1 não certificada; V2 bloqueada; PROD intocada.**
-- Ressalvas R01 upload E2E, R02 worker E2E, R03 isolamento multiusuário mantidas, sem PASS; exceção HIBP Pro continua não corrigida.
-
----
-
-## CHECKPOINT P0 — 05/11/2026: 488 itens, evidência íntegra e segurança estrutural HML
-
-**Baselines provados:** frontend main antes deste PR `c5893df43d8038ed91a113410e26097507ab1594` (BUILD #158); backend fonte `contaos999999/develop@3aa4af7a292b80243045e0a426ee6399ba948ff2`; HML `gklhhhyosgasnyoxlrui`. PROD intocada.
-
-**PLAN/BUILD/CI:**
-- PLAN #157, merge `1bd1314`, CI 42054005968 2 checks SUCCESS. BUILD #158, merge `c5893df`, CI 42055040063 2 checks SUCCESS; CI posmerge main 42055439865 2 checks SUCCESS.
-- Matriz `docs/frontend/auditorias/P0_V1_RASTREABILIDADE_COMPLETA_2026-11-05.json`: 45 regulares V1 (00–43 e 75); 416 critérios originais legados (00–38); mais 72 critérios **normalizados** (12 para cada um dos seis prompts finais), total 488. 25 requisitos BRAND/atômicos V1, mais 12 NFR transversais. **Critérios finais normalizados não equivalem à transcrição literal dos outros cinco prompts.** Nenhum item indevidamente certificado. Gate `scripts/p0-v1-traceability-gate.mjs` integrado com 15 autotestes, incluindo negativas de duplicidade, falta de fonte, certificação artificial e perda de itens.
-- Release privada `contaos-v1-testc-evidence-20261105`, 3 ativos, restaurados por SHA-256. Job 42049252141 SUCCESS (gravação/recuperação), job pós-merge 42055439763 SUCCESS; verificações de integridade mensal adicionais com três SHA fixos agora versionadas, mas **execução mensal ainda não comprovada**. Biblioteca `/ContaOS/Evidencias/Teste-C/` possui originais de dois ZIPs recuperados e conferidos.
-- Auto-Lock GOV-011: ensaio real em branches descartáveis, tentativa 3 de run 41805167363, jobs SUCCESS; PR temporário #148 fechado sem merge, branches limpas; não foi provocado drift na main.
-- Segurança HML: 32 funções públicas SECURITY DEFINER, 0 executáveis por `anon`, 9 executáveis por `authenticated`; 8 negativas diretas SQL 42501 e ACL negada para a nona (ferramenta bloqueou tentativa). Bucket `contaos-documentos` privado; zero tabelas sem RLS em `public`/`storage`; policy Storage SELECT restringe authenticated, arquivo fora de quarentena e escopo; view `v_central_excecoes_financeiras` com `security_invoker=true`. Advisor: 9 WARN das RPCs privilegiadas intencionais; um WARN de senhas vazadas no plano Free, **excetuado apenas esse recurso, não tratado como corrigido**.
-- Documento detalhado: `docs/frontend/auditorias/P0_V1_SEGURANCA_RPC_HML_2026-11-05.md`; matriz finais `docs/frontend/auditorias/P0_V1_CRITERIOS_FINAIS_E_LIMITES_2026-11-05.md`; custódia `docs/frontend/auditorias/P0_V1_AUTOLOCK_RECUPERACAO_CUSTODIA_2026-11-05.md`.
-
-**Última etapa comprovadamente concluída:** indexação V1 45/488/37, CI/documentação e controle de custódia, validação estrutural de ACL/RLS/Storage, Auto-Lock isolado. **Não concluída:** certificação funcional irrestrita da V1, autorização por sessões reais de perfis, WCAG/telas privadas, recuperação de senha SYS-03 e NFRs práticos. Não dispensar esses critérios sem aprovação expressa específica. Três únicas ressalvas autorizadas R-01 upload E2E real; R-02 processamento worker real; R-03 isolamento real entre usuários.
-
-**Próxima tarefa:** concluir **provas operacionais fora das três ressalvas** por identidades sintéticas autenticadas HML e evidências de CI/Teste C, fechar as provas específicas dos 488 itens conforme aplicabilidade; executar testes NFR não dependentes de R01/R02/R03, recuperar SYS-03, WCAG privado e critérios de segurança perfil/JWT. Só então emitir `CERTIFICADA_V1_COM_3_RESSALVAS` mediante PR/CI/merge verificado. V2 e PROD continuam bloqueados pelo gate P0. Não repetir os BUILDs já integrados.
-
----
-
-## CHECKPOINT P0 — 05/11/2026: matriz, segurança, Auto-Lock e custódia automática
-
-**HEAD comprovado antes deste checkpoint:** frontend main `5ac459af0aef68e1a82ab36cc656726d1f15f836`; backend develop main `3aa4af7a292b80243045e0a426ee6399ba948ff2`; Supabase HML `gklhhhyosgasnyoxlrui`, PROD intocada.
-
-- PLAN #149 (merge `3b646051`) → BUILD #150 (merge `072bc812`) → rastreabilidade estruturada V1 **45 regulares**, **416 critérios legados**, **25 atômicos BRAND/V1** e **12 NFR transversais**, sem promoção de testes a PASS; detalhe `docs/frontend/auditorias/P0_V1_RASTREABILIDADE_COMPLETA_2026-11-05.json`.
-- PLAN #154 (merge `5feac2e0`) → BUILD #155 (merge `5ac459af`) com **gate automatizado** `scripts/p0-v1-traceability-gate.mjs`, nove testes de integridade e negativas, integrado ao workflow obrigatório Zero-Drift. CI de BUILD [42050975836](https://github.com/contaos999999/contaos-hml-control/actions/runs/42050975836) com dois checks SUCCESS; CI pós-merge da main [42051290828](https://github.com/contaos999999/contaos-hml-control/actions/runs/42051290828) com ambos SUCCESS.
-- Segurança HML: nove funções públicas com SECURITY DEFINER com `anon EXECUTE=false`, `authenticated EXECUTE=true` e search_path fixo; oito negativas 42501 por chamadas diretas `anon` e uma tentativa bloqueada pela ferramenta. Helpers privados bloqueiam execução direta e aplicam controles. Teste adicional com role authenticated **sem JWT** não substitui sessão real; sem DDL, sem alteração Auth, avisos do Advisor não apagados. `auth_leaked_password_protection` fora do escopo por limitação plano Free reconhecida pelo titular.
-- GOV-011 Auto-Lock: attempt 3 do run [41805167363](https://github.com/contaos999999/contaos-hml-control/actions/runs/41805167363) PASS; PR de reparo isolado #148 criado pelo bot, fechado sem merge, branches descartáveis limpas; main e types certificados preservados.
-- Custódia: dois Testes C com ZIPs e SHA256SUMS válidos na Biblioteca `/ContaOS/Evidencias/Teste-C/`; PLAN #151 (merge `45ffcec`), BUILD #152 (merge `cce01d9`), workflow [42049252141](https://github.com/contaos999999/contaos-hml-control/actions/runs/42049252141) SUCCESS criou [Release privada](https://github.com/contaos999999/contaos-hml-control/releases/tag/contaos-v1-testc-evidence-20261105), baixou e verificou os três assets. PR #153 documentou tags, tamanhos, digests e recuperação. Job mensal read-only criado no PR #155, agendado dia 1 às 11:17 UTC; **primeira execução mensal ainda não ocorreu**. Release `immutable=false`, não é WORM.
+MASTER criou pelo navegador, na organização V107 concorrência, o contratante **TESTE VISUAL P0 06112026 - SEM VALIDADE**, fantasia TESTE VISUAL P0, tipo Outro, e contrato **TESTE-VISUAL-P0-06112026**, objeto sintético, R$1000, rascunho, início efetivo30/10/2026 e término ausente. Não duplicar. Nenhuma permissã…6313 tokens truncated…1 (merge `45ffcec`), BUILD #152 (merge `cce01d9`), workflow [42049252141](https://github.com/contaos999999/contaos-hml-control/actions/runs/42049252141) SUCCESS criou [Release privada](https://github.com/contaos999999/contaos-hml-control/releases/tag/contaos-v1-testc-evidence-20261105), baixou e verificou os três assets. PR #153 documentou tags, tamanhos, digests e recuperação. Job mensal read-only criado no PR #155, agendado dia 1 às 11:17 UTC; **primeira execução mensal ainda não ocorreu**. Release `immutable=false`, não é WORM.
 - **Estado da certificação**: `NO_GO_CERTIFICACAO_INTEGRAL_V1`. A integridade da rastreabilidade, restauração isolada Auto-Lock e custódia multi-provedor estão comprovadas em seus escopos; **não** há homologação integral item a item dos 416 critérios, 39–43/75 por critério, segurança JWT/perfil, SYS-03 real, WCAG privada ou NFRs operacionais. Três ressalvas R01 upload E2E, R02 worker E2E e R03 isolamento entre usuários continuam explicitamente aceitas; proteção paga contra senhas vazadas excepcionalmente excluída sem correção. V2 BLOQUEADA e PROD intocada.
 - **Próxima tarefa**: completar apenas provas não produzidas dos gates obrigatórios. Não repetir os testes e controles concluídos. Não emitir `CERTIFICADA_V1_COM_3_RESSALVAS` ainda.
 
