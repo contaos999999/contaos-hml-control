@@ -428,3 +428,37 @@ test("teclado público: saneamento não publica DOM, valores ou canário", async
   assert.equal(JSON.stringify(unknown).includes(canary), false);
   assert.ok(m.publicKeyboardGate("/login", unknown, 0).length);
 });
+
+test("teclado público: recarga deve restaurar HTTP, URL, formulário vazio e rolagem", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.publicKeyboardResetGate, "function");
+  const valid = {
+    http: 200,
+    sameUrl: true,
+    empty: true,
+    controlsReady: true,
+    publicStateValid: true,
+    scrollX: 0,
+    scrollY: 0,
+    pageErrors: 0,
+  };
+  assert.deepEqual(m.publicKeyboardResetGate(valid), []);
+  for (const value of [
+    null,
+    undefined,
+    {},
+    { ...valid, http: 500 },
+    { ...valid, http: 302 },
+    { ...valid, http: 0 },
+    { ...valid, http: "200" },
+    ...["sameUrl", "empty", "controlsReady", "publicStateValid"].map((field) => ({
+      ...valid,
+      [field]: false,
+    })),
+    { ...valid, scrollX: 2 },
+    { ...valid, scrollY: 2 },
+    { ...valid, scrollY: NaN },
+    { ...valid, pageErrors: 1 },
+  ])
+    assert.ok(m.publicKeyboardResetGate(value).length);
+});
