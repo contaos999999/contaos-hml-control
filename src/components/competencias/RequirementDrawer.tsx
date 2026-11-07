@@ -377,7 +377,7 @@ function Conteudo({
             <Par t="Obrigatório" v={simNao(q.obrigatorio)} />
             <Par t="Aplicável" v={simNao(q.aplicavel)} />
             <Par t="Impeditivo" v={simNao(q.impeditivo)} />
-            <Par t="Efeito no portão" v={q.efeito_portao} />
+            <Par t="Efeito no portão" v={simNao(q.efeito_portao)} />
             <Par t="Regra de validação" v={q.regra_validacao} />
             <Par t="Condição de aplicabilidade" v={q.condicao_aplicabilidade} />
           </dl>

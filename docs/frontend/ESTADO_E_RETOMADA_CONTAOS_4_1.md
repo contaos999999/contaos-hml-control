@@ -1,3 +1,18 @@
+## BUILD substituto V117 após GATE278 corrigido
+GATE278 integrado6ce44b0a06c3c9359d92217231dfccd695feec36 com3checksSUCCESS noHEADcb06f95d4dd6bca1e3a2c3b11411b03d37d1cccc. Corrigido context_source_commit para b619,25blobs/catalogoidênticos. PR277 fechado semmerge após rejeição legítima do contextgate. Este BUILD reaplica os3blobs de código/testes já validados1146/1146 em41suítes e118focados, sem mudança de código nem repetição de teste local válido. Novo CI/merge/prova privada obrigatórios. CRUD/V1 pendentes,V2/PROD bloqueados.
+
+## BUILD corretivo V117 em validação, 07/11/2026 UTC
+
+CRUD global em execução; V1 não certificada e V2–V5/PROD bloqueados. Fonte normativa backend b619056aef9c00ca7818cfbe61d65c69e7f9060d,25blobs/catálogo100/97 idênticos, sem mudança de produto backend. PLAN275 e GATE276 integrados em d10af9fc e57f1c09 após3checksSUCCESS nos respectivos HEADs.
+
+Prova privada42372068640: probe público PASS, loginGoTrueUI200 e análise aberta; drawer falhou apesar de1POST200 confirmado nos logsHML. Schema e getter retornam3JSONB e efeito_portao boolean, mas parser esperava strings; fixtures não eram fiéis.38HTTP e quarentena8 PASS. Artifact13574406588 SHA256f0c604b73fd9ee8e9764ee575a5d4fc5956a5d862be3e80ba4441e4b6fd01ced. Não é PASS privado. Os timeouts/erros anteriores de harness foram preservados nos resultados backend; asserções/engine agora unificados1.64.1, público comprovado no PR106.
+
+BUILD nesta branch corrige somente adaptador/render/testes: JSON válido vira texto escapado, sem executar regras ou getters; bool preservado e apresentado Sim/Não. RED1FAIL/58SKIP, revisão independente protoarray RED1FAIL/74SKIP; GREEN118/118 focados e1146/1146 em41suítes. TypeScript/build/ESLint/Zero-Drift/GOV-020/diff-check PASS; types8ea7750b75fd9d76b29c36ce7613392e3ab65e19 preservado. CI e Teste C do novo HEAD ainda pendentes; não declarar integração antes dos checks.
+
+Próxima tarefa: CI→mergeBUILD→atualizar pin do frontend no harness backend, mantendo PLAN100/GATE101 e fonte exata aprovada; corrigir captura para viewport real do drawer, pois fullPage com elemento fixed gera posição deslocada na composição, sem confundir artifact com defeito de CSS. Reexecutar teste privado, inspecionar screenshots e corrigir achados comprovados. PLAN backend103 roteamento aguarda a prova/quarentena; ao retomá-lo, reancorar manifesto e preservar pin atual para não regressar ao508c5ff. Continuar matrizCRUD por domínio e critériosV1/RNF, sem novas ressalvas. Autorização rotineira vigente; sem login pessoal cancelado/INSERT auth.users/PROD.
+
+---
+
 ## Checkpoint da prova privada, 07/11/2026: FAIL em diagnóstico, quarentena comprovada
 
 Prevalece sobre o histórico: CRUD global em execução; V1 não certificada, V2–V5/PROD bloqueados. Frontend funcional383eb225 (BUILD271, HEAD508c5ff, três checks SUCCESS,1129 testes). Checkpoint273 integrado712215fbe6c8907a754ad58a8a32ddb1ffb06c6d. Fonte atual9a66c6309abbd60f33d1bac5e9235aa02bb252a2 reancorada neste snapshot após comparar25blobs e catálogo100/97, todos idênticos; nenhuma mudança de produto ou premissa.
