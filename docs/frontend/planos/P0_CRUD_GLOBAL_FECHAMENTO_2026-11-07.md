@@ -23,3 +23,7 @@ Este PLAN, matriz ePLANO_ATIVO/checkpoint; código limitado aos2arquivos acima p
 
 ## Reversão / ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
 Reverter somente preservação do rascunho se necessário; nenhum dado/histórico apagado. Componentes/tokens/BRAND01 preservados; GitHubdireto, sem BUILD Lovable. Economia não reduz TDD/CI/TesteC/E2E/segurança. Não certificar por contagem de telas/ações. Plano tecnicamente validado, BUILDaguardaGATE/CI integrados.
+
+## GATE separado — validado tecnicamente
+
+PLAN289 HEADe47885debcdf5e5a47e24849e7efc125330bd18e integradoab9f069a9cfbd7a047b760089506c4f009bd507a apósZeroDrift/TesteC/protecttypesSUCCESS no mesmoHEAD. Fonteoriginale28rotas conferidas. Correção do rascunho limitada aos2arquivos indicados. Preservar instância só em erro transitório da leitura com dadosanteriores domesmocontexto;403/sessãonegada mantém dado oculto/semnovocomando. Bloquear revisão e novasoperações enquanto erro/recarga. Repetição explícita da exata intenção pendente após resposta incerta continua disponível apenas no errotransitório, sem novoUUID/reenvio automático;403tambémbloqueiareplay. Testes RED dessasfronteiras antescódigo. Reversão somente frontend. Não transferir autorização de harnessparaDB/RLS/PROD ou declararmocksHML. BUILDaguardaCI/mergedesteGATE.
