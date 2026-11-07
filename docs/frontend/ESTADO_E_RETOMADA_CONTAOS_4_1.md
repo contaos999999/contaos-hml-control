@@ -1,3 +1,18 @@
+## Checkpoint P0 — 2026-11-07 — correção do contraste comprovada no HML
+
+- Correção integrada no frontend PR #284, HEAD 266acf39f3a653137adbd3583add540d4de5f770, merge 344d24adee78d79589b5d3135efd4af21f841c42, após PLAN #282 e GATE #283. Fonte atualizada pelo PR #285, main 5f5afd00d22204b15ac8bb9c456e8bd0d537fc36.
+- Causa comprovada pelo diagnóstico #110: transição de background-color do Sheet produzia contraste temporário 2.1:1 nos textos muted ao alternar tema. RequirementDrawer agora usa transition-transform, preservando movimento e eliminando interpolação de cores. Teste de regressão compila o CSS Tailwind real; RED observado antes da correção.
+- GREEN: 1147 testes em 41 suítes; 119 testes focados; TypeScript, build, lint focal, Zero-Drift e GOV020 aprovados. PR #284: Zero-Drift, Teste C independente e protect-types SUCCESS no mesmo HEAD. Revisão independente sem achados. types.ts preservado (blob 8ea7750b75fd9d76b29c36ce7613392e3ab65e19).
+- Prova real autenticada: https://github.com/contaos999999/develop/actions/runs/42388972023, backend 1fe79dae3de7a2395b65c2c5b07f9fe2ae826c61 / frontend 266acf39f3a653137adbd3583add540d4de5f770. Quatro larguras (1440, 1280, 768, 390) x dois temas: oito verificações automáticas de acessibilidade PASS, zero violações detectadas, zero overflow; foco e teclado PASS em todas. Capturas móveis claro/escuro inspecionadas visualmente.
+- Login real, detalhe autorizado, editor, consulta RLS de evidência, RPC de revisão HTTP 200, atualização do drawer e justificativa persistida na UI PASS.
+- Resultado global da execução permanece FAIL: timeout posterior em CROSS_TENANT_DENIAL. A ausência de violações automáticas não certifica WCAG integral: axe ainda informa verificações incompletas de color-contrast e aria-hidden-focus. Não declarar isolamento aprovado nem V1 certificada.
+- Artefato 13580433863, SHA-256 4317ad724a4b7a130d470fbb10e6fcd8b8eb7014d17aecb8d62fca4d55650711; relatório combinado registra QUARENTENA_VERIFICADA, own_users=8.
+- Backend pin corrigido pelo PR #111, merge 1fe79dae3de7a2395b65c2c5b07f9fe2ae826c61. PR #103 reancorado sem force push, HEAD 1ea696511f66cf9deff323efa85dd275da7302af, guard SUCCESS, ainda sem merge por dependência da prova privada completa.
+- Próxima tarefa: diagnosticar o timeout CROSS_TENANT_DENIAL, corrigir em ciclo governado e repetir aceitação/quarentena; somente após comprovação completa retomar integração do PR #103. Permanecem pendências V1 de isolamento, upload/worker quando exigidos, auditoria manual e retrospectiva. Não avançar V2.
+- CI main frontend 5f5afd00: Zero-Drift, Teste C, protect-types e monitoramento da fila SUCCESS. Nenhuma alteração em PROD.
+
+---
+
 # Checkpoint P0: prova privada atual falha em contraste escuro
 
 07/11/2026. Este bloco prevalece sobre o histórico. **V1 não certificada, CRUD global incompleto, V2–V5 e PROD bloqueados.**
