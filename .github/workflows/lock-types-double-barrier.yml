@@ -1,0 +1,26 @@
+name: ContaOS LOCK-TYPES-01 Double Barrier
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protect-types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Reject generated Supabase types drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected=8ea7750b75fd9d76b29c36ce7613392e3ab65e19
+          actual=$(git hash-object src/integrations/supabase/types.ts)
+          if [[ "$actual" != "$expected" ]]; then
+            echo "::error file=src/integrations/supabase/types.ts::LOCK-TYPES-01 drift detected. Expected $expected; actual $actual. Restore canonical blob before merge."
+            exit 1
+          fi
+          echo "LOCK-TYPES-01 PASS: $actual"
