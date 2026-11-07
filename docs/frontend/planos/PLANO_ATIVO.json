@@ -919,11 +919,32 @@
       "header_ci": 42420100914,
       "backend_diagnostico_pr": 136,
       "backend_head": "a672f44cdeebd3e0a1d3f2bc5b445a9a283e7ba0",
-      "documental_hml": "PENDENTE_NOVA_EXECUCAO",
+      "documental_hml": "FAIL_OPTIONS405_DEPENDENCIA_PLAN_CORS137",
       "crud": "AGUARDA_CERTIFICACAO_VISUAL",
       "integracao_auditoria": "AGUARDA_CERTIFICACAO_CRUD",
       "v1": "NAO_CERTIFICADA",
-      "v2": "BLOQUEADA"
+      "v2": "BLOQUEADA",
+      "tipografia": {
+        "pr": 309,
+        "head": "164b10b44eaf5b553efcc7ab4e053b86c4d3b269",
+        "merge": "b0e22f5ab7a479ebb8a3c9bd2d907d5052ec81c5",
+        "ci": 42421827969,
+        "lock": 42421827973,
+        "artifact": 13593374754,
+        "sha256": "44889c1d42c940cd0e394c7f4851f42e7c9d969412497efc3fd1fb2f22f4b9df",
+        "public_pass": 24,
+        "public_fail": 0,
+        "protected_without_session": 208,
+        "independent_visual": "24GREEN+24RED individuais, sem bloqueantes",
+        "status": "PASS_ESCOPO_PUBLICO_SEM_CERTIFICACAO_INTEGRAL"
+      },
+      "cors_plan": {
+        "pr": 137,
+        "head_observed": "93fee8ac9c48537d74b85bc80973c965f37eab57",
+        "state": "PLAN_ABERTO_EXIGE_CHECKS_HEAD_VIVO",
+        "obsolete_restore": 42422449447,
+        "obsolete_restore_head": "809e7681f847bfea0b4c5f00a10d496aaf8f4c27"
+      }
     }
   }
 }
