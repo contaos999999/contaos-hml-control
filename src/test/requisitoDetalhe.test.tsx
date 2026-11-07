@@ -559,6 +559,38 @@ describe("V1-17 reanálise", () => {
     expect(screen.getByRole("button", { name: "Conferir andamento" })).toBeEnabled();
     expect(escritas()).toHaveLength(1);
   });
+  it.each(["http", "rede", "schema"])(
+    "falha %s na conferência explícita informa e permite conferir novamente",
+    async (tipo) => {
+      let leituras = 0;
+      m.rpc.mockImplementation((n: string) => {
+        if (n === SOL) throw new Error("timeout");
+        if (++leituras === 3) {
+          if (tipo === "rede") throw new Error("network");
+          return tipo === "http"
+            ? { data: null, error: { code: "network" } }
+            : { data: {}, error: null };
+        }
+        return { data: detalhe({ reanalisar: true }), error: null };
+      });
+      const onR = vi.fn();
+      abrir({ onReanalisado: onR });
+      await pronto();
+      fireEvent.click(screen.getByRole("button", { name: /Reanalisar este requisito/ }));
+      await screen.findByText(/Não foi possível confirmar se a reanálise foi registrada/);
+      fireEvent.click(screen.getByRole("button", { name: "Conferir andamento" }));
+      expect(await screen.findByText(/Não foi possível atualizar o andamento/)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Reanalisar este requisito/ })).toBeDisabled();
+      fireEvent.click(screen.getByRole("button", { name: "Conferir andamento" }));
+      await waitFor(() => expect(lidas()).toHaveLength(4));
+      expect(screen.queryByText(/Não foi possível atualizar o andamento/)).toBeNull();
+      expect(
+        screen.getByText(/Não foi possível confirmar se a reanálise foi registrada/),
+      ).toBeInTheDocument();
+      expect(escritas()).toHaveLength(1);
+      expect(onR).not.toHaveBeenCalled();
+    },
+  );
   it("resposta tardia do comando anterior não atualiza callback nem libera comando do requisito novo", async () => {
     let soltarA: (v: unknown) => void = () => {};
     let soltarB: (v: unknown) => void = () => {};
@@ -601,41 +633,49 @@ describe("V1-17 reanálise", () => {
     });
     await waitFor(() => expect(onR).toHaveBeenCalledTimes(1));
   });
-  it("conferência antiga não sobrescreve página de evidências mais recente", async () => {
-    let n = 0;
-    let soltar: (v: unknown) => void = () => {};
-    m.rpc.mockImplementation((nome: string, a: Record<string, unknown>) => {
-      if (nome === SOL) throw new Error("timeout");
-      n++;
-      if (n === 3)
-        return new Promise((res) => {
-          soltar = res;
-        });
-      const d = detalhe({ reanalisar: true });
-      d.evidencias_paginacao.offset = a["p_evidencias_offset"] as number;
-      d.requisito.descricao =
-        d.evidencias_paginacao.offset === 25
-          ? "Evidência da segunda página"
-          : "Evidência da primeira página";
-      return { data: d, error: null };
-    });
-    abrir();
-    await pronto();
-    fireEvent.click(screen.getByRole("button", { name: /Reanalisar este requisito/ }));
-    await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Conferir andamento" })).toBeEnabled(),
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Conferir andamento" }));
-    await waitFor(() => expect(lidas()).toHaveLength(3));
-    fireEvent.click(screen.getByRole("button", { name: "Próxima página de evidências" }));
-    expect(await screen.findByText("Evidência da segunda página")).toBeInTheDocument();
-    await act(async () => {
-      soltar({ data: detalhe({ reanalisar: true }), error: null });
-    });
-    expect(screen.getByText("Evidência da segunda página")).toBeInTheDocument();
+  it.each([false, true])(
+    "conferência antiga (falha=%s) não sobrescreve página ou aviso mais recente",
+    async (falha) => {
+      let n = 0;
+      let soltar: (v: unknown) => void = () => {};
+      m.rpc.mockImplementation((nome: string, a: Record<string, unknown>) => {
+        if (nome === SOL) throw new Error("timeout");
+        n++;
+        if (n === 3)
+          return new Promise((res) => {
+            soltar = res;
+          });
+        const d = detalhe({ reanalisar: true });
+        d.evidencias_paginacao.offset = a["p_evidencias_offset"] as number;
+        d.requisito.descricao =
+          d.evidencias_paginacao.offset === 25
+            ? "Evidência da segunda página"
+            : "Evidência da primeira página";
+        return { data: d, error: null };
+      });
+      abrir();
+      await pronto();
+      fireEvent.click(screen.getByRole("button", { name: /Reanalisar este requisito/ }));
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: "Conferir andamento" })).toBeEnabled(),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Conferir andamento" }));
+      await waitFor(() => expect(lidas()).toHaveLength(3));
+      fireEvent.click(screen.getByRole("button", { name: "Próxima página de evidências" }));
+      expect(await screen.findByText("Evidência da segunda página")).toBeInTheDocument();
+      await act(async () => {
+        soltar(
+          falha
+            ? { data: null, error: { code: "network" } }
+            : { data: detalhe({ reanalisar: true }), error: null },
+        );
+      });
+      expect(screen.getByText("Evidência da segunda página")).toBeInTheDocument();
+      expect(screen.queryByText(/Não foi possível atualizar o andamento/)).toBeNull();
 
-    expect(escritas()).toHaveLength(1);
-  });
+      expect(escritas()).toHaveLength(1);
+    },
+  );
   it("timeout ambíguo → 1 escrita + 1 leitura de reconciliação", async () => {
     m.rpc.mockImplementation((n: string) => {
       if (n === SOL) throw new Error("network timeout");
