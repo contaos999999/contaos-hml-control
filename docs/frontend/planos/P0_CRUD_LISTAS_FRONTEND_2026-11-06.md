@@ -37,3 +37,6 @@ Reverter somente deltafrontend pornovocommit,sem banco. Retorna leitura original
 GitHubdireto,sem LovableBUILD. Baseline AppShell/header/BRAND1.0 jáintegrado. Reusar Button/Dialog/Input/tokens/cartões/tabelasexistentes,sem assetsouCSSglobal. Matriz1440/1280/768/390×claro/escuro comestados eacessibilidade. Semprova privada registrarNÃOVERIFICADO. Menordelta,reusardados/testes,sem duplicarJWT147válido. Economia não reduzTDD,gates,qualidadeouTesteC.
 ## Gate
 PLAN tecnicamente APROVÁVEL dentro do escopo autorizado; BUILD somente após commit documental validado e ambos checksSUCCESS. Sem certificação antecipada.
+
+## Evidência BUILD local — 07/11/2026 UTC
+PLAN254 integrado4de8296 após run42332158390 ambos SUCCESS. Implementação nas quatro fontes autorizadas; sem types/rotas/backend. RED inicial16falhas/2PASS por função não implementada; GREEN39/39 específicos e1056/1056 em40suítes,tsc/build/ESLint focal PASS. Revisão independente encontrou e corrigiu revisão base que mudava emrefetch, liberação antecipada após timeout e opção de cópia fora da página. Segunda revisão39/39 e nenhum crítico/importante. Testes novos incluem refetch concorrente, timeout+mesmoUUID, falha na conferência, logout+resposta tardia, paginação e validação de payload/recibo. Não equivalem à UI autenticada real. CI final e integração ainda exigidos; CRUD global e certificação V1 abertos.
