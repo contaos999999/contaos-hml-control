@@ -301,3 +301,29 @@ test("GOV-014: minúscula coincidência de cores em área ampla não recebe PASS
   assert.equal(result[0].sampleCount, 1);
   assert.equal(pixelContrastDecision(result, 1), "NAO_VERIFICADO");
 });
+
+test("BRAND-01: aceita Inter com alternativa Arial e genérica sans-serif", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.brandTypographyGate, "function");
+  for (const stack of [
+    "Inter, Arial, sans-serif",
+    '"Inter", "Arial", sans-serif',
+    "inter,arial,sans-serif",
+  ])
+    assert.deepEqual(m.brandTypographyGate(stack), []);
+});
+test("BRAND-01: rejeita pilha vazia, genérica ou alternativa fora da ordem institucional", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.brandTypographyGate, "function");
+  for (const stack of [
+    undefined,
+    null,
+    123,
+    "",
+    "system-ui, sans-serif",
+    "Arial, Inter, sans-serif",
+    "Inter, system-ui, Arial, sans-serif",
+    "Inter, Arial, serif",
+  ])
+    assert.equal(m.brandTypographyGate(stack).length, 1);
+});
