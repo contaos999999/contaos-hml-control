@@ -567,7 +567,7 @@
     "scope_changed": false
   },
   "v117_json_contract_fix": {
-    "phase": "GATE_VALIDADO",
+    "phase": "BUILD_EM_VALIDACAO",
     "source_head": "b619056aef9c00ca7818cfbe61d65c69e7f9060d",
     "files": [
       "src/lib/competencias/requisitoDetalheDados.ts",
@@ -584,6 +584,24 @@
     "plan_merge": "d10af9fc9d049667391751a9ee8fee4b84a0dec0",
     "plan_ci": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42372512665",
     "checks": "3SUCCESS",
-    "scope_review": "3JSONB em texto escapado; efeito bool do servidor; nenhuma interpretação/execução de regra."
+    "scope_review": "3JSONB em texto escapado; efeito bool do servidor; nenhuma interpretação/execução de regra.",
+    "gate_pr": 276,
+    "gate_head": "7276e8d975f038021e613e31572cb146d3614230",
+    "gate_merge": "57f1c09bce208910549de52a68dde99c81f018cc",
+    "red": "resposta canônica rejeitada:1FAIL/58SKIP; array com toJSON herdado:1FAIL/74SKIP",
+    "local_focused": 118,
+    "local_regression": 1146,
+    "local_suites": 41,
+    "checks_local": [
+      "TypeScript",
+      "Vite build",
+      "ESLint focal",
+      "Zero-Drift",
+      "GOV-020",
+      "diff-check"
+    ],
+    "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+    "independent_review": "achado array com protótipo customizado corrigido com RED/GREEN, sem executar getter herdado",
+    "private_acceptance": "PENDENTE"
   }
 }

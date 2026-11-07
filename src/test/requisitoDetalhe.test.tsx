@@ -114,11 +114,11 @@ function detalhe(o: Op = {}) {
       criticidade: "alta",
       fonte_tipo: "contrato",
       fonte_referencia: "Cláusula 7",
-      fonte_detalhe: "Item 7.2",
-      efeito_portao: "bloqueia",
+      fonte_detalhe: { item: "7.2" },
+      efeito_portao: true,
       hash_snapshot: "hash-snap",
-      regra_validacao: "Valor líquido = recibo",
-      condicao_aplicabilidade: "Sempre",
+      regra_validacao: { operador: "igual", esperado: "recibo" },
+      condicao_aplicabilidade: {},
     },
     execucao_atual: {
       id: EX2,
@@ -251,6 +251,114 @@ beforeEach(() => {
 });
 
 describe("V1-17 parser fail-closed", () => {
+  it("aceita contrato HML com JSONB vazio e efeito booleano", () => {
+    const d = detalhe();
+    const can = {
+      ...d,
+      requisito: {
+        ...d.requisito,
+        fonte_detalhe: {},
+        regra_validacao: {},
+        condicao_aplicabilidade: {},
+        efeito_portao: true,
+      },
+    };
+    expect(parseDetalheV117(can, C, R, OFFSETS_DETALHE_ZERO)).not.toBeNull();
+  });
+  it("preserva JSON estruturado e primitivos sem interpretar a regra", () => {
+    const d = detalhe();
+    const parsed = parseDetalheV117(
+      {
+        ...d,
+        requisito: {
+          ...d.requisito,
+          fonte_detalhe: { itens: ["A", 0, false, null] },
+          regra_validacao: ["e", { limite: 10 }],
+          condicao_aplicabilidade: false,
+          efeito_portao: false,
+        },
+      },
+      C,
+      R,
+      OFFSETS_DETALHE_ZERO,
+    );
+    expect(parsed?.requisito.fonte_detalhe).toBe('{"itens":["A",0,false,null]}');
+    expect(parsed?.requisito.regra_validacao).toBe('["e",{"limite":10}]');
+    expect(parsed?.requisito.condicao_aplicabilidade).toBe("false");
+    expect(parsed?.requisito.efeito_portao).toBe(false);
+  });
+  it.each(["fonte_detalhe", "regra_validacao", "condicao_aplicabilidade"])(
+    "rejeita valor não JSON em %s",
+    (campo) => {
+      const d = detalhe();
+      expect(
+        parseDetalheV117(
+          { ...d, requisito: { ...d.requisito, [campo]: { valor: undefined } } },
+          C,
+          R,
+          OFFSETS_DETALHE_ZERO,
+        ),
+      ).toBeNull();
+    },
+  );
+  it.each([NaN, Infinity, new Date(), () => "não executar", Symbol("não JSON"), 1n])(
+    "rejeita primitivo/objeto fora do JSON: %s",
+    (valor) => {
+      const d = detalhe();
+      expect(
+        parseDetalheV117(
+          { ...d, requisito: { ...d.requisito, fonte_detalhe: valor } },
+          C,
+          R,
+          OFFSETS_DETALHE_ZERO,
+        ),
+      ).toBeNull();
+    },
+  );
+  it("rejeita ciclo e accessor sem executar metadados", () => {
+    const d = detalhe();
+    const ciclo: Record<string, unknown> = {};
+    ciclo["proprio"] = ciclo;
+    const getter = vi.fn(() => "não executar");
+    const accessor = Object.defineProperty({}, "valor", { get: getter });
+    for (const valor of [ciclo, accessor])
+      expect(
+        parseDetalheV117(
+          { ...d, requisito: { ...d.requisito, fonte_detalhe: valor } },
+          C,
+          R,
+          OFFSETS_DETALHE_ZERO,
+        ),
+      ).toBeNull();
+    expect(getter).not.toHaveBeenCalled();
+  });
+  it("rejeita array com toJSON herdado sem executar getter", () => {
+    const d = detalhe();
+    const executar = vi.fn(() => "alterado");
+    const getter = vi.fn(() => executar);
+    const valor = Object.setPrototypeOf([], Object.defineProperty({}, "toJSON", { get: getter }));
+    expect(
+      parseDetalheV117(
+        { ...d, requisito: { ...d.requisito, fonte_detalhe: valor } },
+        C,
+        R,
+        OFFSETS_DETALHE_ZERO,
+      ),
+    ).toBeNull();
+    expect(getter).not.toHaveBeenCalled();
+    expect(executar).not.toHaveBeenCalled();
+  });
+  it("efeito do portão não aceita texto como booleano", () => {
+    const d = detalhe();
+    expect(
+      parseDetalheV117(
+        { ...d, requisito: { ...d.requisito, efeito_portao: "bloqueia" } },
+        C,
+        R,
+        OFFSETS_DETALHE_ZERO,
+      ),
+    ).toBeNull();
+  });
   const p = (d: unknown) => parseDetalheV117(d, C, R, OFFSETS_DETALHE_ZERO);
   it("aceita contrato v117-v1", () => expect(p(detalhe())).not.toBeNull());
   it("rejeita schema diferente", () =>
@@ -348,6 +456,33 @@ describe("V1-17 gate", () => {
 });
 
 describe("V1-17 conteúdo e estados", () => {
+  it.each([
+    [true, "Sim"],
+    [false, "Não"],
+  ])("exibe efeito do portão %s conforme backend", async (efeito, rotulo) => {
+    const d = detalhe();
+    rpcLeitura(() => ({
+      data: { ...d, requisito: { ...d.requisito, efeito_portao: efeito } },
+      error: null,
+    }));
+    abrir();
+    await pronto();
+    expect(
+      within(screen.getByText("Efeito no portão:").parentElement!).getByText(rotulo as string),
+    ).toBeInTheDocument();
+  });
+  it("JSON de fonte com marcação permanece texto escapado", async () => {
+    const d = detalhe();
+    const fonte = { referencia: "<script>naoExecutar()</script>" };
+    rpcLeitura(() => ({
+      data: { ...d, requisito: { ...d.requisito, fonte_detalhe: fonte } },
+      error: null,
+    }));
+    abrir();
+    await pronto();
+    expect(screen.getByText(JSON.stringify(fonte))).toBeInTheDocument();
+    expect(document.querySelector("script")).toBeNull();
+  });
   it.each([
     ["conforme", "Conforme"],
     ["nao_conforme", "Não conforme"],
