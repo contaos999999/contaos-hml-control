@@ -1,3 +1,12 @@
+## Checkpoint verificado — PR262 integrado
+
+Última etapa comprovada: correção da reanálise V1-17 integrada pelo PR262, merge62cef83b0712a27c5760171a1f289147b1ec11d6, HEAD testado1c0ecd7d5e5e5567ab6b1a3e6dc7c959c47065fa. Run42340518769: Zero-Drift e TesteC Independente SUCCESS no mesmoHEAD; protect-typesSUCCESS. Logs de qualidade conferidos:1080/1080 testes em40suítes,TypeScript/build/guardsSUCCESS. TesteC permanece público/somente leitura; não certifica operação privada do drawer.
+Backend permanece4fec09bf5cab5afc776192b9bef6e70728e1a058. Não houve alteraçãoSupabase/PROD/tipos/rotas.
+Autenticação segura foi solicitada no navegador e cancelada pelo usuário. Nenhuma credencial foi exposta e nenhum login foi comprovado. Navegador deixou de estar disponível após cancelamento; não repetir solicitação sem nova iniciativa do titular. Não confundir cancelamento da autenticação com cancelamento do desenvolvimento.
+CRUD global continua NÃO CONCLUÍDO. Próximas dependências: sessão HML autorizada para prova privada e aprovação específica da investigação do contrato de revisão humana registrar_resultado_requisito, conforme AGENTS/ADR-DEV-002. Não declarar V1 certificada nem iniciarV2–V5/PROD. Minor diferido da revisão: ausência de aviso adicional na falha de conferência explícita; permanece aviso incerto e reenvio bloqueado.
+
+---
+
 ## Execução CRUD global — 07/11/2026 — reanálise V1-17
 
 CRUD global permanece EM EXECUÇÃO, V1 não certificada; sem V2–V5/PROD.
