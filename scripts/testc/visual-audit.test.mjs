@@ -54,12 +54,12 @@ test("P0 V123: Auditoria possui oito casos privados sem PASS autenticado presumi
   );
 });
 
-test("matriz oficial: 28 telas × 4 larguras × 2 temas", () => {
-  assert.equal(ROUTES.length, 28);
+test("matriz oficial: 29 superfícies (28 rotas e drawer) × 4 larguras × 2 temas", () => {
+  assert.equal(ROUTES.length, 29);
   assert.deepEqual(WIDTHS, [1440, 1280, 768, 390]);
   assert.deepEqual(THEMES, ["light", "dark"]);
-  assert.equal(cases().length, 224);
-  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 224);
+  assert.equal(cases().length, 232);
+  assert.equal(new Set(cases().map((x) => x.id + x.width + x.theme)).size, 232);
 });
 test("GOV-016: V118 /competencias/:id/parecer é superfície privada, sem PASS autenticado presumido", () => {
   const rota = ROUTES.find((r) => r.id === "V118");
