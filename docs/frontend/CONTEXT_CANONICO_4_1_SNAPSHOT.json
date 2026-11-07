@@ -2,8 +2,8 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
-  "source_date": "2026-11-06",
+  "source_commit": "744dee8636c164415774e413e76883e08dffbc09",
+  "source_date": "2026-11-07",
   "context_documents": [
     {
       "path": "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -414,138 +414,91 @@
         "regular_id": "16",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "17",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "18",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "19",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "20",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "21",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "22",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "23",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "24",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "25",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "26",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "27",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "001",
-          "002",
-          "004",
-          "005"
-        ]
+        "relevant_atomic_ids": ["000", "001", "002", "004", "005"]
       },
       {
         "regular_id": "28",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "001",
-          "002",
-          "004",
-          "005"
-        ]
+        "relevant_atomic_ids": ["000", "001", "002", "004", "005"]
       },
       {
         "regular_id": "29",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "001",
-          "002",
-          "003",
-          "004",
-          "005"
-        ]
+        "relevant_atomic_ids": ["000", "001", "002", "003", "004", "005"]
       },
       {
         "regular_id": "30",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "011",
-          "012",
-          "013",
-          "014"
-        ]
+        "relevant_atomic_ids": ["000", "011", "012", "013", "014"]
       },
       {
         "regular_id": "31",
@@ -570,162 +523,85 @@
         "regular_id": "32",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "015",
-          "016",
-          "017",
-          "018",
-          "019",
-          "087"
-        ]
+        "relevant_atomic_ids": ["000", "015", "016", "017", "018", "019", "087"]
       },
       {
         "regular_id": "33",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "34",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "35",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "011",
-          "012",
-          "013",
-          "014"
-        ]
+        "relevant_atomic_ids": ["000", "011", "012", "013", "014"]
       },
       {
         "regular_id": "36",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "015",
-          "016",
-          "017",
-          "018",
-          "019"
-        ]
+        "relevant_atomic_ids": ["000", "015", "016", "017", "018", "019"]
       },
       {
         "regular_id": "37",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "020",
-          "021",
-          "022",
-          "023",
-          "024"
-        ]
+        "relevant_atomic_ids": ["000", "020", "021", "022", "023", "024"]
       },
       {
         "regular_id": "38",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "011",
-          "012",
-          "013",
-          "014",
-          "021",
-          "022",
-          "023",
-          "024"
-        ]
+        "relevant_atomic_ids": ["000", "011", "012", "013", "014", "021", "022", "023", "024"]
       },
       {
         "regular_id": "39",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "021",
-          "022",
-          "023"
-        ]
+        "relevant_atomic_ids": ["000", "021", "022", "023"]
       },
       {
         "regular_id": "40",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "067"
-        ]
+        "relevant_atomic_ids": ["000", "067"]
       },
       {
         "regular_id": "41",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "42",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "006",
-          "007",
-          "008",
-          "009",
-          "010"
-        ]
+        "relevant_atomic_ids": ["000", "006", "007", "008", "009", "010"]
       },
       {
         "regular_id": "43",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "006",
-          "007",
-          "008",
-          "009",
-          "010"
-        ]
+        "relevant_atomic_ids": ["000", "006", "007", "008", "009", "010"]
       },
       {
         "regular_id": "44",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "025",
-          "026",
-          "027",
-          "028"
-        ]
+        "relevant_atomic_ids": ["000", "025", "026", "027", "028"]
       },
       {
         "regular_id": "45",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "026",
-          "027",
-          "028"
-        ]
+        "relevant_atomic_ids": ["000", "026", "027", "028"]
       },
       {
         "regular_id": "46",
@@ -749,90 +625,49 @@
         "regular_id": "47",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "033",
-          "034",
-          "035",
-          "036"
-        ]
+        "relevant_atomic_ids": ["000", "033", "034", "035", "036"]
       },
       {
         "regular_id": "48",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "037",
-          "038",
-          "039"
-        ]
+        "relevant_atomic_ids": ["000", "037", "038", "039"]
       },
       {
         "regular_id": "49",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "037",
-          "038",
-          "039"
-        ]
+        "relevant_atomic_ids": ["000", "037", "038", "039"]
       },
       {
         "regular_id": "50",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "044",
-          "047",
-          "048",
-          "049"
-        ]
+        "relevant_atomic_ids": ["000", "044", "047", "048", "049"]
       },
       {
         "regular_id": "51",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "52",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "53",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "044",
-          "045",
-          "046",
-          "047",
-          "048",
-          "049",
-          "050"
-        ]
+        "relevant_atomic_ids": ["000", "044", "045", "046", "047", "048", "049", "050"]
       },
       {
         "regular_id": "54",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "044",
-          "047",
-          "048",
-          "049"
-        ]
+        "relevant_atomic_ids": ["000", "044", "047", "048", "049"]
       },
       {
         "regular_id": "55",
@@ -855,121 +690,67 @@
         "regular_id": "56",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "041",
-          "042",
-          "059"
-        ]
+        "relevant_atomic_ids": ["000", "041", "042", "059"]
       },
       {
         "regular_id": "57",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "059",
-          "060",
-          "061",
-          "062"
-        ]
+        "relevant_atomic_ids": ["000", "059", "060", "061", "062"]
       },
       {
         "regular_id": "58",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "068"
-        ]
+        "relevant_atomic_ids": ["000", "068"]
       },
       {
         "regular_id": "59",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "063",
-          "064",
-          "065",
-          "066",
-          "067",
-          "068",
-          "069",
-          "070"
-        ]
+        "relevant_atomic_ids": ["000", "063", "064", "065", "066", "067", "068", "069", "070"]
       },
       {
         "regular_id": "60",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "075",
-          "076",
-          "077"
-        ]
+        "relevant_atomic_ids": ["000", "075", "076", "077"]
       },
       {
         "regular_id": "61",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "075",
-          "076",
-          "077"
-        ]
+        "relevant_atomic_ids": ["000", "075", "076", "077"]
       },
       {
         "regular_id": "62",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "075",
-          "076",
-          "077"
-        ]
+        "relevant_atomic_ids": ["000", "075", "076", "077"]
       },
       {
         "regular_id": "63",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "075",
-          "076",
-          "077"
-        ]
+        "relevant_atomic_ids": ["000", "075", "076", "077"]
       },
       {
         "regular_id": "64",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "075",
-          "076",
-          "077",
-          "078"
-        ]
+        "relevant_atomic_ids": ["000", "075", "076", "077", "078"]
       },
       {
         "regular_id": "65",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "66",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "67",
@@ -1023,177 +804,91 @@
         "regular_id": "75",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "020",
-          "021",
-          "022",
-          "023"
-        ]
+        "relevant_atomic_ids": ["000", "020", "021", "022", "023"]
       },
       {
         "regular_id": "76",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "025",
-          "026",
-          "027",
-          "028",
-          "029",
-          "030",
-          "031",
-          "032"
-        ]
+        "relevant_atomic_ids": ["000", "025", "026", "027", "028", "029", "030", "031", "032"]
       },
       {
         "regular_id": "77",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "037",
-          "038",
-          "039",
-          "040",
-          "041",
-          "042",
-          "043"
-        ]
+        "relevant_atomic_ids": ["000", "037", "038", "039", "040", "041", "042", "043"]
       },
       {
         "regular_id": "78",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "044",
-          "046",
-          "047",
-          "048",
-          "049"
-        ]
+        "relevant_atomic_ids": ["000", "044", "046", "047", "048", "049"]
       },
       {
         "regular_id": "79",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "003",
-          "044",
-          "045",
-          "047",
-          "048",
-          "049"
-        ]
+        "relevant_atomic_ids": ["000", "003", "044", "045", "047", "048", "049"]
       },
       {
         "regular_id": "80",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "043",
-          "055",
-          "056",
-          "057",
-          "058",
-          "069"
-        ]
+        "relevant_atomic_ids": ["000", "043", "055", "056", "057", "058", "069"]
       },
       {
         "regular_id": "81",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "058"
-        ]
+        "relevant_atomic_ids": ["000", "058"]
       },
       {
         "regular_id": "82",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "055",
-          "057"
-        ]
+        "relevant_atomic_ids": ["000", "055", "057"]
       },
       {
         "regular_id": "83",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "071",
-          "072",
-          "073",
-          "074"
-        ]
+        "relevant_atomic_ids": ["000", "071", "072", "073", "074"]
       },
       {
         "regular_id": "84",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "075",
-          "076",
-          "077",
-          "078"
-        ]
+        "relevant_atomic_ids": ["000", "075", "076", "077", "078"]
       },
       {
         "regular_id": "85",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "079",
-          "080",
-          "081"
-        ]
+        "relevant_atomic_ids": ["000", "079", "080", "081"]
       },
       {
         "regular_id": "86",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "87",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "082",
-          "083",
-          "084"
-        ]
+        "relevant_atomic_ids": ["000", "082", "083", "084"]
       },
       {
         "regular_id": "88",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000"
-        ]
+        "relevant_atomic_ids": ["000"]
       },
       {
         "regular_id": "89",
         "source_verified": true,
         "status": "mapeamento_estrutural_por_tela_extraido_das_fontes",
-        "relevant_atomic_ids": [
-          "000",
-          "082",
-          "083",
-          "084"
-        ]
+        "relevant_atomic_ids": ["000", "082", "083", "084"]
       },
       {
         "regular_id": "90",

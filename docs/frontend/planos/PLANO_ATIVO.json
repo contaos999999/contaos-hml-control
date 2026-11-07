@@ -143,7 +143,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
   "context_read_acknowledged_at": "2026-11-06",
-  "context_source_commit": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
+  "context_source_commit": "744dee8636c164415774e413e76883e08dffbc09",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -174,13 +174,7 @@
   ],
   "prompt_crosswalk": {
     "regular_prompt_id": "75",
-    "direct_atomic_ids": [
-      "000",
-      "020",
-      "021",
-      "022",
-      "023"
-    ],
+    "direct_atomic_ids": ["000", "020", "021", "022", "023"],
     "additional_transversal_atomic_ids": [
       "085",
       "086",
@@ -283,10 +277,10 @@
       "backend": "bfd741d5758e77f89de626fdb691ea4bebb943d5"
     },
     "reanchor_20261107": {
-      "source_commit": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
+      "source_commit": "744dee8636c164415774e413e76883e08dffbc09",
       "canonical_blobs_unchanged": 25,
       "catalog_unchanged": true,
-      "reason": "Backend listas PR96 integrado; fonte viva deve acompanhar sem alterar gates",
+      "reason": "Backend revisão humana PR99 integrado e deploy CLI paritário;25blobsnormativos ecatálogoinvariáveis",
       "v1_certified": false
     }
   },
@@ -315,10 +309,7 @@
       "src/components/administracao/usuarios/MatrizPermissoes.tsx",
       "src/test/rbacMatriz.test.tsx"
     ],
-    "contratos": [
-      "obter_matriz_rbac_master",
-      "atualizar_matriz_rbac_master"
-    ],
+    "contratos": ["obter_matriz_rbac_master", "atualizar_matriz_rbac_master"],
     "backend_head_na_conferencia": "1edb2c40595e01f7e1e8c5f80160b7b3a4113c12",
     "zero_drift_no_code": true,
     "brand_assets_intact": true,
@@ -523,14 +514,25 @@
     "types_ci": 42357723333
   },
   "crud_revisao_humana_backend_gate": {
-    "status": "AUTORIZADO_BUILD_BACKEND_AGUARDANDO_CI_FINAL",
+    "status": "BACKEND_IMPLANTADO_JWT_BLOQUEADO_AUTH_ADMIN_KEY",
     "authorization": "Titular: Autorizado investigação, depois Execute correção canônica e integração com testes reais",
     "backend_plan_pr": 98,
     "backend_plan_merge": "c1e138d7a60641e1059079e83649bc3bb7f31599",
     "backend_build_pr": 99,
-    "backend_build_head": "783f2bf70fde7655aa3b320d575e0cc090048dd0",
+    "backend_build_head": "e63894d48b832239ed5bb3637765041be8a49942",
     "frontend_build_allowed": false,
     "condition": "backend merge, deploy CLI/paridade, JWT real e novo PLAN frontend",
-    "prod": false
+    "prod": false,
+    "backend_build_merge": "744dee8636c164415774e413e76883e08dffbc09",
+    "backend_ci": 42362238665,
+    "backend_main_ci": 42362448129,
+    "canonical_deploy": 42362617182,
+    "hml_migrations": 129,
+    "hml_migration": "20261107094443",
+    "jwt_run": 42362609674,
+    "jwt_job": 128374040482,
+    "jwt_state": "CONFIG_BLOCKED_AUTH_ADMIN_KEY_MISSING",
+    "fixtures_created": false,
+    "next_action": "Configurar Secret CONTAOS_HML_AUTH_ADMIN_KEY no GitHub HML; depois rerun somente failed jobs42362609674; preservar backendmain744dee8 até a prova"
   }
 }
