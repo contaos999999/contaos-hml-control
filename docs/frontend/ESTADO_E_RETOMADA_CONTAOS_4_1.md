@@ -1,3 +1,18 @@
+## Checkpoint P0 — 07/11/2026 — timeout resolvido e PLAN103 integrado
+
+- Causa comprovada: segundo login preenchia formulário SSR antes do binding React; run42390984573 terminou em CROSS_TENANT_LOGIN_REDIRECT com denied_login_form_bound=false e sem login HTTP emitido. PLAN112/GATE113, diagnóstico114/115. Artefato13582175253 SHA2561842b6a412780b4b98eadd8f84fa5246f80320f29619e36ff3e2ba7544df3811.
+- FIX116: HEAD f46373f5b6c7327aadb8471f302f60648c0bc275; merge2943e8ea7e1fa53ecddb70c5614eb0c9e46a5e6e. Ambos logins aguardam onSubmit React funcional antes de preencher; segundo exige GoTrue HTTP200. Sem aumentar timeout30s, retries, mocks, mudança de produto/RLS/Authconfig/PROD ou remoção de assert. RED observado; self-test/sintaxe/17 testes locais GREEN. Revisão independente sem Critical/Important. Guard/restore/backup/public-probe SUCCESS no mesmo HEAD.
+- Prova final real: https://github.com/contaos999999/develop/actions/runs/42391662453 / job128460335194 SUCCESS. Backend2943e8ea7e1fa53ecddb70c5614eb0c9e46a5e6e, frontend266acf39f3a653137adbd3583add540d4de5f770. Relatório HTTP40/40 PASS; navegador43/43 PASS; nenhum assert com falha. Login B HTTP200, negação da competência de outro tenant e ausência do botão de revisão PASS.
+- Oito combinações 1440/1280/768/390 × light/dark: acessibilidade automática/foco/teclado PASS, zero violações detectadas/overflow; revisão escrita, atualização do drawer, justificativa na UI e persistência no banco PASS. QUARENTENA_VERIFICADA own_users8.
+- Artefato13581497168, SHA256477361181d1dbc5ad0e5a19e1173cb68dec734cc6ad1770bb31b51d2b6a2d704, hash do ZIP baixado conferido com GitHub. Sem logs de credenciais, tokens, trace/HAR/storageState.
+- Histórico não apagado: run42390331791 parou antes do segundo login em contraste transitório390/dark (7 nós, incluindo elementos fora do drawer); artefato13581112055 SHA256ba15d730289e973f23db6b98d00fb5167ea89fc2d6aa1b89f55999d8f3774b27. Última rodada passou, mas isto não certifica WCAG manual completa nem elimina investigação de intermitência. Verificações axe incompletas continuam limites declarados.
+- Bloqueio do PR103 pela prova privada encerrado. PR103 reancorado sem forcepush, HEAD7e7eb904421fc3641d17f48325b5c841d22da361, guard SUCCESS e merge534a6d3dec156f60ac31b5b0c7f1fd05ab6bbbe7. Trata-se de PLAN de roteamento de workflows, ainda sem BUILD. Preservados fix116, pin frontend e evidências.
+- Próxima tarefa: GATE separado do PLAN103, depois RED/BUILD/GREEN/revisão/CI do roteamento com skips fora de tarefa/fase, preservando SHA/hash/checks/cleanup e sem deploy fora de escopo. Falhas históricas de listas ao receber manifestoV117 continuam FAIL, não são falhas do CRUD nem autorizaram deploy.
+- Snapshot/ack frontend reancorados juntos no backend534a6d3dec156f60ac31b5b0c7f1fd05ab6bbbe7. Os25 documentos canônicos e catálogo100/97 não mudaram (delta backend somente docs/tasks/harness).
+- V1 NÃO CERTIFICADA. Permanecem critérios globais V1, auditoria manual, retrospectiva e worker/upload quando exigidos. Não iniciar V2. Sem alteração em PROD.
+
+---
+
 ## Checkpoint P0 — 2026-11-07 — correção do contraste comprovada no HML
 
 - Correção integrada no frontend PR #284, HEAD 266acf39f3a653137adbd3583add540d4de5f770, merge 344d24adee78d79589b5d3135efd4af21f841c42, após PLAN #282 e GATE #283. Fonte atualizada pelo PR #285, main 5f5afd00d22204b15ac8bb9c456e8bd0d537fc36.
