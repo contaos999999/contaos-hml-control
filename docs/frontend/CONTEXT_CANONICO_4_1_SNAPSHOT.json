@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "a672f44cdeebd3e0a1d3f2bc5b445a9a283e7ba0",
+  "source_commit": "5743453e729362d4fa841aad16b357b9926c5688",
   "source_date": "2026-11-07",
   "context_documents": [
     {
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "PR backend #136 integrado: diagnóstico sanitizado, sem mudança normativa. 25/25 blobs e catálogo conferidos e iguais. Nova HML pendente; nenhuma certificação."
+  "p0_reanchor_note": "PLAN CORS backend137 integrado, sem Edge edit/deploy. 25/25 blobs e catálogo iguais; fonte viva reancorada. Nenhuma certificação privada/global."
 }
