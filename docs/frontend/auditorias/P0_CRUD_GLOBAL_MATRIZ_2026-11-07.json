@@ -320,7 +320,7 @@
       "severity": "IMPORTANT",
       "file": "src/components/contratos/GerenciarListas.tsx",
       "finding": "q.isError desmonta Formulario e perde rascunho após409/refetchtransitório",
-      "state": "CORRIGIDO_LOCALMENTE_AGUARDANDO_CI_E_HML",
+      "state": "FIX_291_INTEGRADO_CI_SUCCESS_PROVA_PRIVADA_PENDENTE",
       "test_required": "409 -> refetch falha500 -> bloquearmutação/preservardraft -> retryPASS sem perderdados;403continua failclosed",
       "verification": {
         "focused": 42,
@@ -335,7 +335,8 @@
             "failed": 1
           }
         ],
-        "private": "PENDENTE"
+        "private": "PENDENTE",
+        "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8"
       }
     }
   ],
@@ -344,6 +345,24 @@
     "Mocks nao sao provaHML",
     "V1 nao certificada; V2/PROD bloqueados",
     "SYS03 decisoes manuais anteriores preservadas sem repetirporpadrao",
-    "Editor manual de parecer/exportacao auditoria/reprocessamento documental manual nao sao permissoesCRUD novas semfonte/contrato; nao inventarAPI"
+    "Editor manual de parecer/exportacao auditoria/reprocessamento documental manual nao sao permissoesCRUD novas semfonte/contrato; nao inventarAPI",
+    "Runs privados 42398052328/42398802825 falharam por validação/preenchimento do teste. Correções 123/124 integradas; nenhuma aprovação de domínio por execução parcial."
+  ],
+  "latest_backend_head": "b30d69575609ae7aaf2fc15a8e0a85c8d0ef4322",
+  "private_runs": [
+    {
+      "run": 42398052328,
+      "state": "FAIL_HARNESS_RECEIPT",
+      "artifact": 13583744282,
+      "sha256": "528fdc8a960b2cc16002aeeb023976795e86d5d50064c9abf18cfed060e36b9d",
+      "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS"
+    },
+    {
+      "run": 42398802825,
+      "state": "FAIL_FIXTURE_DATES",
+      "artifact": 13584985531,
+      "sha256": "7c715843f300a1fe0cd5a13b6ca8eac577baf5d3549f7579a88ed6244a46e0a5",
+      "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS"
+    }
   ]
 }

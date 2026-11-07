@@ -1,3 +1,22 @@
+## Checkpoint P0 — 07/11/2026 — provas privadas do CRUD em execução
+
+O frontend permanece com a correção #291 integrada e CI aprovado. **CRUD global e V1 não estão concluídos ou certificados.** As falhas abaixo são do teste e continuam registradas como FAIL; as operações parciais não aprovam os domínios.
+
+- Frontend main anterior: `6ddf8323520a26b92c2dbee3f5b80ac13b40518a`, checkpoint #292 com CI principal aprovado. Fonte funcional fixada: `74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8`, integrada por #291 em `46b28e3ae8588b78f32e7f7be2d9221ed5e940d7`. Regressão frontend: 1.150 testes em 41 suítes, foco 42/42; tipos congelados preservados.
+- PLAN backend #120 e GATE #121 integrados. BUILD #122, HEAD `2676d888130ffa32f7935a34a67e7b3671098a32`, integrado em `c5b0a31793ead6bace7a28246bcb848c26b0d107` após guard, restore, backup e prova pública SUCCESS no mesmo HEAD. Protocolo real com Auth Admin API, credenciais administrativas só no Python, ambiente do browser por allowlist e limpeza recuperável em finally e job independente. Sem deploy, produto, DDL, RLS, configuração Auth ou PROD.
+- Primeira HML: run `42398052328`, job `128479623493`, FAIL em LIST_ITEM_CREATE. O teste comparava descrição do item com a do cabeçalho. Artefato `13583744282`, SHA-256 `528fdc8a960b2cc16002aeeb023976795e86d5d50064c9abf18cfed060e36b9d`. Quarentena verificada: quatro usuários e três organizações próprias. Correção #123, HEAD `66f09ad0346360c2539689fd9b77b4989e382add`, integrada em `97ea8f2a52945510237705a8086e8c0a123fe9bb` após quatro checks SUCCESS.
+- A correção #123 também ajustou a indução de falha de leitura. QueryClient real demonstrou que modo offline pausa a consulta antes do transporte. CDP agora bloqueia apenas a URL real da leitura, sem fabricar resposta, e restaura em finally. A prova exige rascunho preservado, confirmação bloqueada e nenhuma escrita durante a falha. Confirmação operacional ainda pendente.
+- Segunda HML: run `42398802825`, job `128481927942`, FAIL em LIST_VERSION_CREATE com HTTP 422. O teste informou início em julho e manteve término em junho herdado da versão anterior; backend rejeitou corretamente. Artefato `13584985531`, SHA-256 `7c715843f300a1fe0cd5a13b6ca8eac577baf5d3549f7579a88ed6244a46e0a5`. Quarentena verificada novamente: quatro usuários e três organizações. Não houve erro de runtime em ambas as execuções.
+- Correção #124, HEAD `8b711281a5628998df9057fb1845621e540595ad`, integrada em `b30d69575609ae7aaf2fc15a8e0a85c8d0ef4322`: o teste limpa o término herdado ao preencher nova vigência aberta. Guard `128482698928`, restore `128482699097`, backup `128482698850` e prova pública `128482698837`: SUCCESS no mesmo HEAD. RED observado, protocolo 11/11 e suíte 41/41; revisão independente sem Critical ou Important.
+
+**Próxima tarefa exata:** acompanhar o restore principal do backend `b30d69575609ae7aaf2fc15a8e0a85c8d0ef4322` e a terceira prova privada CADASTROS_LISTAS. Se falhar, consultar relatório sanitizado, reproduzir a causa, corrigir por RED/GREEN e revisar. Se passar, conferir SQL, isolamento, capturas e quarentena antes de marcar o escopo aprovado e seguir aos 14 domínios restantes. Upload e processamento reais são dependência da publicação orçamentária; não forçar aprovação de arquivo. Nenhum lote parcial certifica CRUD global ou V1.
+
+Snapshot e reconhecimento da fonte reancorados juntos no backend `b30d69575609ae7aaf2fc15a8e0a85c8d0ef4322`; 25 documentos e catálogo sem alteração de conteúdo. Matriz de 28 rotas, 18 domínios e 68 rótulos preservada, com estados não verificados. Contraste intermitente, auditoria manual, worker/upload, critérios V1 e retrospectiva mantêm suas pendências. Não iniciar V2 ou alterar PROD. Não repetir PLAN #120, GATE #121 ou correção #291.
+
+Checkpoint incremental adicional conferido no GitHub: comentário `6711028541` da issue #166. Este arquivo prevalece sobre estados históricos abaixo. O acompanhamento ocorre nesta execução e pela automação horária disponível, sem monitoramento contínuo entre execuções.
+
+---
+
 ## Checkpoint P0 — 07/11/2026 — fechamento CRUD global em execução
 
 - Pedido atual: executar auditoria e fechamento CRUDglobal integral mantendo Supabase/RLS/histórico e V1 antesV2. **CRUDglobal eV1 NÃO CONCLUÍDOS/CERTIFICADOS.** Não parar em status nem inventar percentual/prova.
