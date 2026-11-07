@@ -941,14 +941,17 @@
       "cors_plan": {
         "pr": 137,
         "head_observed": "93fee8ac9c48537d74b85bc80973c965f37eab57",
-        "state": "PLAN_ABERTO_EXIGE_CHECKS_HEAD_VIVO",
+        "state": "PLAN_E_GATE_INTEGRADOS_BUILD_PENDENTE",
         "obsolete_restore": 42422449447,
-        "obsolete_restore_head": "809e7681f847bfea0b4c5f00a10d496aaf8f4c27"
+        "obsolete_restore_head": "809e7681f847bfea0b4c5f00a10d496aaf8f4c27",
+        "plan_merge": "5743453e729362d4fa841aad16b357b9926c5688",
+        "gate_pr": 138,
+        "gate_merge": "42a737acdcdb17f3b0684e8daf82f042696eb9ea"
       }
     },
     "public_keyboard_proof": {
-      "phase": "BUILD",
-      "state": "GREEN_LOCAL_PENDENTE_CI_RUNTIME",
+      "phase": "CHECKPOINT",
+      "state": "PASS_PERCURSO_PUBLICO_WCAG_INTEGRAL_PENDENTE",
       "routes": [
         "/login",
         "/esqueci-senha"
@@ -974,7 +977,22 @@
       "reset_red": "d079839ef17d10cdcfd8232bb030363450c50097",
       "local_protocol": 29,
       "local_directed_tests": 56,
-      "independent_review": "Importantresetresolvido; semCritical/Important pendente; capturas e runtime ainda pendentes"
+      "independent_review": "Importantresetresolvido; semCritical/Important pendente; capturas e runtime ainda pendentes",
+      "build_pr": 314,
+      "build_head": "a9c1c1cb13b4c2a70189509ad1bd4af5f2cfcbae",
+      "build_merge": "add9b06ae162f9f9fe994b31cb7a0bd2adccbda2",
+      "ci": 42424327491,
+      "lock": 42424327335,
+      "artifact": 13594363182,
+      "artifact_sha256": "c42a1b02bfcb7e5f8cdff00b663caaaef13c33a1120da0873ecb78a67a33a5da",
+      "tested_synthetic_merge": "c19fa74ee6a1940c64956acdc150de2025752edd",
+      "keyboard_cases": 16,
+      "focus_steps": 112,
+      "blocked_mutations": 0,
+      "reset_http_200": 16,
+      "manifest_entries": 337,
+      "independent_visual": "112hashes/64conteudos únicos+48retornos iguais;24gerais comparados;semCritical/Important aoescopo",
+      "contrast_aa": "NAO_CERTIFICADO;anelisolado2.63014combranco, avaliarindicadorcompleto"
     }
   }
 }
