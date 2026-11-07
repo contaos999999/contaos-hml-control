@@ -390,8 +390,35 @@
       "ui": "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
       "test": "src/test/trilhaAuditoria.test.tsx",
       "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
-      "private_status": "NAO_VERIFICADO",
-      "retention_rule": "C_U_D_PROIBIDOS_PROMPT75"
+      "private_status": "PASS_ESCOPO_SELECT_FILTROS_PAGINACAO_RLS_RUN42404359665",
+      "retention_rule": "C_U_D_PROIBIDOS_PROMPT75",
+      "private_evidence": {
+        "run": 42404359665,
+        "job": 128498779742,
+        "state": "PASS_BATCH",
+        "batch": "AUDITORIA",
+        "backend_head": "bf25e4bde1cc72a4457c7fd1ff91e51806f7fee1",
+        "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8",
+        "artifact": 13585849628,
+        "sha256": "4f8cbfb967abe0a9991f5b36f63f498590cb47457c10671d6980a8ed07cc8d07",
+        "http_sql_assertions": 52,
+        "browser_assertions": 132,
+        "failures": 0,
+        "completed_domains": [
+          "auditoria"
+        ],
+        "cleanup": "QUARENTENA_VERIFICADA_6_USERS_2_ORGS",
+        "global_complete": false,
+        "limits": [
+          "Consulta/filtros/paginação/roles/RLS; não certifica semântica integral dos atômicos020–023",
+          "Axe0violations não fecha incomplete color-contrast26 em768light/390light/390dark nem label-content-name-mismatch1desktop/tablet",
+          "Locale nativo de datas e marca no menu mobile aberto ainda exigem prova específica",
+          "WCAG integral, demais rotas, contraste transitórioV117 e V1 pendentes",
+          "PNG768/390 mostram tabela deslocada; últimascolunas/paginação/percursointegral de teclado não comprovados"
+        ],
+        "independent_review": "52/132 e16PNG conferidos independentemente;semCritical/Important funcional;visualPARCIAL,contraste não aprovado em768light/390light/dark",
+        "visual_state": "PARTIAL_NOT_CERTIFIED"
+      }
     }
   ],
   "confirmed_findings": [
@@ -428,9 +455,14 @@
     "Editor manual de parecer/exportacao auditoria/reprocessamento documental manual nao sao permissoesCRUD novas semfonte/contrato; nao inventarAPI",
     "Runs privados 42398052328/42398802825 falharam por validação/preenchimento do teste. Correções 123/124 integradas; nenhuma aprovação de domínio por execução parcial.",
     "PASS_BATCH 42402246765 cobre quatro domínios; upload físico/worker e demais domínios não comprovados por este lote. Auditoria visual limitada à gestão de listas.",
-    "PASS funcional do lote não aprova as capturas: revisão independente rejeitou4/8; quatro aceitas somente para o painel. PR130 exige nova prova visual estável, foco/teclado/axe sem certificar WCAG manual."
+    "PASS funcional do lote não aprova as capturas: revisão independente rejeitou4/8; quatro aceitas somente para o painel. PR130 exige nova prova visual estável, foco/teclado/axe sem certificar WCAG manual.",
+    "Consulta/filtros/paginação/roles/RLS; não certifica semântica integral dos atômicos020–023",
+    "Axe0violations não fecha incomplete color-contrast26 em768light/390light/390dark nem label-content-name-mismatch1desktop/tablet",
+    "Locale nativo de datas e marca no menu mobile aberto ainda exigem prova específica",
+    "WCAG integral, demais rotas, contraste transitórioV117 e V1 pendentes",
+    "PNG768/390 mostram tabela deslocada; últimascolunas/paginação/percursointegral de teclado não comprovados"
   ],
-  "latest_backend_head": "aa5f83ede6ea74d377c92dde0fdd830288450e29",
+  "latest_backend_head": "bf25e4bde1cc72a4457c7fd1ff91e51806f7fee1",
   "private_runs": [
     {
       "run": 42398052328,
@@ -465,10 +497,55 @@
       "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
       "global_complete": false,
       "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
+    },
+    {
+      "state": "PASS_BATCH_FUNCTIONAL_AND_VISUAL_SCOPE",
+      "run": 42403737562,
+      "job": 128496890324,
+      "artifact": 13585639602,
+      "sha256": "11b8ef8ad25717723e51fd2eb421d8c3a88de5e90bcd7fe6df2d286f30b40b7c",
+      "browser_assertions": 100,
+      "http_sql_assertions": 37,
+      "screenshots": 16,
+      "independent_review": "Sem Critical/Important no escopo de captura;16PNG abertos; foco/Tab e estado estável conferidos",
+      "axe_violations": 0,
+      "overflow": 0,
+      "incomplete": "label-content-name-mismatch1 nas6variantesdesktop/tablet",
+      "manual_wcag": "PENDENTE",
+      "historical_transient_v117_contrast": "OPEN",
+      "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
+      "batch": "CADASTROS_LISTAS"
+    },
+    {
+      "run": 42404359665,
+      "job": 128498779742,
+      "state": "PASS_BATCH",
+      "batch": "AUDITORIA",
+      "backend_head": "bf25e4bde1cc72a4457c7fd1ff91e51806f7fee1",
+      "frontend_head": "74cd8ef9aa15bd19d33ce1b5d2dc6515f6066db8",
+      "artifact": 13585849628,
+      "sha256": "4f8cbfb967abe0a9991f5b36f63f498590cb47457c10671d6980a8ed07cc8d07",
+      "http_sql_assertions": 52,
+      "browser_assertions": 132,
+      "failures": 0,
+      "completed_domains": [
+        "auditoria"
+      ],
+      "cleanup": "QUARENTENA_VERIFICADA_6_USERS_2_ORGS",
+      "global_complete": false,
+      "limits": [
+        "Consulta/filtros/paginação/roles/RLS; não certifica semântica integral dos atômicos020–023",
+        "Axe0violations não fecha incomplete color-contrast26 em768light/390light/390dark nem label-content-name-mismatch1desktop/tablet",
+        "Locale nativo de datas e marca no menu mobile aberto ainda exigem prova específica",
+        "WCAG integral, demais rotas, contraste transitórioV117 e V1 pendentes",
+        "PNG768/390 mostram tabela deslocada; últimascolunas/paginação/percursointegral de teclado não comprovados"
+      ],
+      "independent_review": "52/132 e16PNG conferidos independentemente;semCritical/Important funcional;visualPARCIAL,contraste não aprovado em768light/390light/dark",
+      "visual_state": "PARTIAL_NOT_CERTIFIED"
     }
   ],
   "visual_gate": {
-    "state": "NOT_APPROVED",
+    "state": "PASS_ESCOPO_CAPTURA_ESTAVEL_COM_RESSALVAS",
     "run": 42402246765,
     "inspected": 8,
     "rejected": 4,
@@ -479,6 +556,37 @@
     "new_images_required": 16,
     "manual_wcag": "PENDENTE",
     "historical_transient_v117_contrast": "OPEN",
-    "fix_merge": "aa5f83ede6ea74d377c92dde0fdd830288450e29"
+    "fix_merge": "aa5f83ede6ea74d377c92dde0fdd830288450e29",
+    "previous_review": {
+      "state": "NOT_APPROVED",
+      "run": 42402246765,
+      "inspected": 8,
+      "rejected": 4,
+      "accepted_panel_only": 4,
+      "reason": "Busy initial captures and clipped panel; mobile header not captured",
+      "fix_pr": 130,
+      "fix_head": "5dccafcc916d1c420fdeb350b0b091cb0af2126c",
+      "new_images_required": 16,
+      "manual_wcag": "PENDENTE",
+      "historical_transient_v117_contrast": "OPEN",
+      "fix_merge": "aa5f83ede6ea74d377c92dde0fdd830288450e29"
+    },
+    "latest": {
+      "state": "PASS_ESCOPO_CAPTURA_ESTAVEL_COM_RESSALVAS",
+      "run": 42403737562,
+      "job": 128496890324,
+      "artifact": 13585639602,
+      "sha256": "11b8ef8ad25717723e51fd2eb421d8c3a88de5e90bcd7fe6df2d286f30b40b7c",
+      "browser_assertions": 100,
+      "http_sql_assertions": 37,
+      "screenshots": 16,
+      "independent_review": "Sem Critical/Important no escopo de captura;16PNG abertos; foco/Tab e estado estável conferidos",
+      "axe_violations": 0,
+      "overflow": 0,
+      "incomplete": "label-content-name-mismatch1 nas6variantesdesktop/tablet",
+      "manual_wcag": "PENDENTE",
+      "historical_transient_v117_contrast": "OPEN",
+      "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS"
+    }
   }
 }
