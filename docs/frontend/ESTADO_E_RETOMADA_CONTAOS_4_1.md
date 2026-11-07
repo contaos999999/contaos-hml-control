@@ -1,3 +1,39 @@
+# Checkpoint P0: contrato V117 corrigido e reteste privado em fila
+
+Data: 07/11/2026 UTC. **CRUD global em execução. V1 não certificada. V2–V5 e PROD bloqueados.** Este bloco prevalece sobre o histórico.
+
+## Última entrega comprovadamente integrada
+
+Frontend [PR #279](https://github.com/contaos999999/contaos-hml-control/pull/279): HEAD testado `f537dadf9fefca79eb800de10a3b68d4e3fe3a3c`, merge `98d2fd376c44b381e4e548010f73dcec47e2df53`. Os três checks passaram no mesmo HEAD: qualidade `128407213358`, proteção de tipos `128407213444` e Teste C `128407213543`. Os checks exigidos pós-merge também passaram.
+
+A correção aceita os três campos JSONB e preserva `efeito_portao` como booleano. O React exibe texto escapado e Sim/Não, sem executar regras ou calcular liberação. Foram aprovados **1.146 testes em 41 suítes**, incluindo **118 testes específicos**, TypeScript, build, ESLint focal, Zero-Drift, GOV-020, escopo e fonte canônica. A revisão independente encontrou um array com `toJSON` herdado; o caso foi reproduzido em RED e corrigido. O blob de `types.ts` continua `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`.
+
+PLAN #275, GATE #276 e GATE de contexto corrigido #278 foram integrados antes do BUILD substituto. O PR #277 foi fechado sem merge após o gate detectar um registro de leitura antigo. A falha permanece no histórico.
+
+O Teste C de #279 é **público e somente leitura**: 224 combinações, 154 capturas. Run `42373816914`, artifact `13575290044`, SHA-256 `503bc4418b0d6278e87634f7eb05ad47d35dda3e5f5bb0e60465dea139faf5d2`. O checkout virtual foi `55bcd4fa08424ca730a19d0c794e1de6722b4412`, associado ao HEAD `f537dadf`. Isso não comprova WCAG ou CRUD privados.
+
+## Prova privada preparada, ainda sem PASS
+
+Backend [PR #107](https://github.com/contaos999999/develop/pull/107): HEAD `1ca603f7a217cd768e8a7d680114c40c0833693e`, merge `6c0f7a0f186ea2a49a5fb9f9fc1a7570e86151b0`. Guard `128407700364`, restauração `128407700555`, backup `128407700735` e sonda pública `128407700543` passaram. A dependência do frontend #279 foi respeitada antes do merge.
+
+O harness aponta para `f537dadf` e está configurado para 24 capturas de viewport, cobrindo topo, formulário e ações em 1440/1280/768/390, claro e escuro. A composição anterior de screenshot fullPage com drawer fixed podia deslocar visualmente a janela na imagem; isso não foi atribuído a um defeito de CSS. O novo relatório registra status HTTP e tipos dos campos, sem payload privado.
+
+A fonte normativa atual é `6c0f7a0f186ea2a49a5fb9f9fc1a7570e86151b0`. Os 25 blobs e o catálogo 100/97 foram comparados e permanecem idênticos. Snapshot e declaração de leitura foram atualizados juntos neste checkpoint. Não houve novo DDL, deploy ou alteração de PROD.
+
+A última prova privada, run `42372068640` no backend `b619056a` e frontend `508c5ff`, concluiu login GoTrue pela UI com HTTP 200 e abriu a análise. O drawer falhou apesar da RPC 200; os tipos HML motivaram a correção #279. As 38 verificações HTTP passaram e a quarentena das oito contas foi comprovada. **Resultado privado: FAIL.** Artifact `13574406588`, SHA-256 `f0c604b73fd9ee8e9764ee575a5d4fc5956a5d862be3e80ba4441e4b6fd01ced`.
+
+Os erros anteriores do harness estão preservados nos resultados backend. Chromium e asserções agora usam a mesma versão 1.64.1; PR e HML têm grupos separados. Segredos permanecem no Python, e Node/Vite/Chromium recebem ambiente por allowlist. A quarentena executa em finally e always. A sonda pública aprovada não conta como PASS privado.
+
+## Fila de continuidade
+
+1. Manter o backend estável enquanto a main exata passa em restauração/backup e dispara o ensaio privado. Ler relatório e capturas, corrigir falhas reais e realizar inspeção visual antes de declarar aceitação.
+2. Retomar o PLAN backend #103, atualmente aberto com guard aprovado, após finalizar a prova e verificar a quarentena. Corrigir o workflow antigo de listas que falhou fora da tarefa antes de deploy. Reancorar seu manifesto no HEAD vigente e preservar o pin `f537dadf`; o manifesto antigo de #103 não pode sobrescrever o pin atual. Seguir GATE separado, RED, BUILD, testes e CI.
+3. Prosseguir com a matriz de CRUD por domínio, critérios V1 e RNFs. Preservar as decisões SYS-03 N1/N2 e as ressalvas R01/R02/R03, sem novas dispensas. Não repetir testes válidos dos mesmos blobs, login pessoal cancelado, INSERT em `auth.users` no HML ou ações em PROD.
+
+A issue #166, comentários `6707132877` e `6707149862`, registra a fila. **Não certificar V1 nem avançar para V2 sem evidências.**
+
+---
+
 ## BUILD substituto V117 após GATE278 corrigido
 GATE278 integrado6ce44b0a06c3c9359d92217231dfccd695feec36 com3checksSUCCESS noHEADcb06f95d4dd6bca1e3a2c3b11411b03d37d1cccc. Corrigido context_source_commit para b619,25blobs/catalogoidênticos. PR277 fechado semmerge após rejeição legítima do contextgate. Este BUILD reaplica os3blobs de código/testes já validados1146/1146 em41suítes e118focados, sem mudança de código nem repetição de teste local válido. Novo CI/merge/prova privada obrigatórios. CRUD/V1 pendentes,V2/PROD bloqueados.
 
