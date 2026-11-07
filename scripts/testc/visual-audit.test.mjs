@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync, readdirSync } from "node:fs";
 import {
   ROUTES,
   WIDTHS,
@@ -14,6 +15,44 @@ import {
   measureRenderedTextContrast,
   pixelContrastDecision,
 } from "./visual-audit.mjs";
+
+test("P0: todas as rotas reais integram o executor, incluindo Auditoria e preservando o drawer", () => {
+  const routeDirectory = new URL("../../src/routes/", import.meta.url);
+  const normalize = (path) =>
+    path
+      .split("/")
+      .map((part) => {
+        if (part.startsWith("$") || /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(part))
+          return ":id";
+        return part.replace(/_$/, "");
+      })
+      .join("/");
+  const pages = readdirSync(routeDirectory)
+    .filter((name) => name.endsWith(".tsx") && name !== "__root.tsx")
+    .map((name) => {
+      const source = readFileSync(new URL(name, routeDirectory), "utf8");
+      const match = source.match(/createFileRoute\(["']([^"']+)["']\)/);
+      assert.ok(match, `Rota não reconhecida: ${name}`);
+      return normalize(match[1]);
+    });
+  assert.equal(pages.length, 28);
+  assert.equal(new Set(pages).size, pages.length);
+  assert.deepEqual([...new Set(ROUTES.map((route) => normalize(route.path)))].sort(), pages.sort());
+  assert.equal(ROUTES.filter((route) => route.requiresDrawer).length, 1);
+  assert.equal(ROUTES.find((route) => route.id === "V117")?.requiresDrawer, true);
+});
+
+test("P0 V123: Auditoria possui oito casos privados sem PASS autenticado presumido", () => {
+  const route = ROUTES.find((item) => item.id === "V123");
+  assert.ok(route, "A rota da Auditoria deve existir no executor independente");
+  assert.equal(route.path, "/administracao/auditoria");
+  assert.notEqual(route.public, true);
+  assert.equal(cases().filter((item) => item.id === "V123").length, 8);
+  assert.equal(
+    classifyProtected({ pathname: route.path, text: "Trilha de auditoria" }),
+    "NAO_VERIFICADO_SESSAO_REAL",
+  );
+});
 
 test("matriz oficial: 28 telas × 4 larguras × 2 temas", () => {
   assert.equal(ROUTES.length, 28);
