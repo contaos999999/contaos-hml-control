@@ -27,6 +27,48 @@ export function ContaOSOrganizationHeader() {
   const [erroSaida, setErroSaida] = useState(false);
   const geracao = useRef(0);
   const saidaEmCurso = useRef(false);
+  const cabecalho = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const header = cabecalho.current;
+    if (!header) return;
+    const root = document.documentElement;
+    const anterior = root.style.scrollPaddingTop;
+    let frame = 0;
+    const revelar = (target: Element | null) => {
+      if (
+        !(target instanceof HTMLElement) ||
+        header.contains(target) ||
+        !header.parentElement?.contains(target)
+      )
+        return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (!target.isConnected || document.activeElement !== target) return;
+        const limite = header.getBoundingClientRect().bottom + 12;
+        const top = target.getBoundingClientRect().top;
+        if (top < limite) window.scrollBy({ top: top - limite, behavior: "instant" });
+      });
+    };
+    const medir = () => {
+      root.style.scrollPaddingTop = `${Math.ceil(header.getBoundingClientRect().height) + 12}px`;
+      revelar(document.activeElement);
+    };
+    const focar = (event: FocusEvent) =>
+      revelar(event.target instanceof Element ? event.target : null);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(medir);
+    observer?.observe(header);
+    medir();
+    window.addEventListener("resize", medir);
+    document.addEventListener("focusin", focar);
+    return () => {
+      observer?.disconnect();
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", medir);
+      document.removeEventListener("focusin", focar);
+      root.style.scrollPaddingTop = anterior;
+    };
+  }, []);
 
   useEffect(() => {
     const invalidar = () => {
@@ -121,8 +163,9 @@ export function ContaOSOrganizationHeader() {
 
   return (
     <header
+      ref={cabecalho}
       aria-label="Organização atual"
-      className="border-b border-border bg-card text-card-foreground"
+      className="sticky top-0 z-20 border-b border-border bg-card text-card-foreground"
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div className="min-w-0 flex-1" aria-live="polite">
