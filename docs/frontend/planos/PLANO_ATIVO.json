@@ -565,5 +565,19 @@
     "source_head": "937bd9b0792b57b5e2677223eab95deb74154761",
     "canonical_blobs": "25identicos",
     "scope_changed": false
+  },
+  "v117_json_contract_fix": {
+    "phase": "PLAN_PROPOSTO",
+    "source_head": "b619056aef9c00ca7818cfbe61d65c69e7f9060d",
+    "files": [
+      "src/lib/competencias/requisitoDetalheDados.ts",
+      "src/components/competencias/RequirementDrawer.tsx",
+      "src/test/requisitoDetalhe.test.tsx"
+    ],
+    "evidence_run": 42372068640,
+    "source_read": "25blobs/catalogoidenticos;schemaJSONB/booleanHML,RPC200",
+    "backend_change": false,
+    "gate_separado": true,
+    "v1_certified": false
   }
 }
