@@ -251,3 +251,52 @@ Continuação do plano único já autorizado pelo titular, sem outro plano fragm
 **Prova local já executada:** dez testes de reprodução falharam antes do BUILD e os mesmos dez passaram após correção local. Regressão identificou testes antigos que pressupunham marca local; adaptar somente asserções de apresentação, preservando autorização. Validação integral e visual ainda pendentes, V1 NO-GO.
 ### ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 Esta emenda pertence ao mesmo plano mestre. Conservar força dos controles com provas negativas explícitas; não mudar o critério para esconder falha. Sem Lovable BUILD e sem biblioteca nova.
+
+
+## Emenda executável única P0 — três certificações sequenciais — 07/11/2026
+
+Decisão expressa do titular nesta sessão: concluir e comunicar 100% da identidade visual e padronização, seguir automaticamente para CRUD global e depois integração/rastreabilidade/auditoria; emitir parecer final somente com evidências. Esta emenda integra o plano mestre existente, não cria plano concorrente nem elimina PLAN→CI→merge→GATE separado→RED→BUILD→GREEN→Teste C→auditoria→checkpoint.
+
+### Baseline, escopo e interfaces
+- Frontend main617364f1aaa770994c52ac7a9cc7c1fd3491bed8; backend mainc993e38c1f9b9f6a6d45a754945b5b0542fb3ccc. Consulta inicial sem PR aberto nos dois repositórios. V1 não certificada.
+- Inventário vinculante desta rodada:28rotas existentes,24organizacionais e4acesso/seletor, mais estados internos como drawer V1-17. Não contar drawer como rota nem omitir Auditoria.
+- Contrato imutável: Frontend→Supabase API/RPC/Edge autenticada→PostgreSQL/Storage/auditoria. Credencial privilegiada nunca no navegador. PROD proibido; types.ts blob8ea7750b75fd9d76b29c36ce7613392e3ab65e19 imutável.
+- Reutilizar matriz P0_CRUD_GLOBAL_MATRIZ_2026-11-07.json, inventário do próprio plano, matriz de rastreabilidade V1 e provas válidas. Não refazer funções pela ausência de certificado global.
+- Esta emenda autoriza sequenciamento e documentação; não amplia allowlist de produto/harness. Delta demonstrado precisa de escopo fechado e GATE separado sob este mesmo plano antes de código. Backend não é alterado por um BUILD visual.
+- V1→certificado integrado→V2→V3→V4→V5 permanece obrigatório. As três frentes são certificadas por versão; parecer global V1–V5 somente após executar os100regulares/97atômicos e as versões futuras. Certificado V1 não recebe rótulo global V1–V5.
+
+### Tarefa 1 — identidade visual e padronização (prioridade imediata)
+Arquivos de produto candidatos: ContaOSAppShell.tsx, ContaOSSidebar.tsx, ContaOSOrganizationHeader.tsx e páginas/testes já enumerados na emenda visual deste plano. Contratos consumidos: resumo SYS05, RBAC e rotas existentes. Saída: matriz individual de28rotas×1440/1280/768/390×light/dark=224variantes, com SHA/ator/estado/captura/hash/resultado e72itens BRAND-01 individualizados.
+- [ ] Reconciliar inventário atual com rotas reais e Teste C; conferir que Auditoria está incluída e distinguir tela de login de tela privada autenticada.
+- [ ] Abrir todas as páginas com sessão própria autorizada e dados reais HML; se fixture depender de upload/worker, executar somente preparação permitida pelo PLAN132/GATE133, sem certificar CRUD antecipadamente.
+- [ ] Provar cabeçalho organizacional persistente entre páginas e fixo durante rolagem; nome/situação corretos, troca A→B/logout sem contexto antigo; nenhum controle duplicado.
+- [ ] Provar sidebar expandida/recolhida/mobile aberta, logos oficiais transparentes, navegação progressiva, acesso MASTER às capacidades previstas sem assumir papel especializado.
+- [ ] Conferir componentes/títulos/cards/tabelas/filtros/paginação/formulários, loading/vazio/erro/sucesso, overflow, PT-BR, foco/Tab/ShiftTab/Escape, labels, contraste e WCAG2.2AA aplicável. Axe inconclusivo exige medição/revisão; não converter emPASS.
+- [ ] Reproduzir cada defeito por teste RED ou evidência visual observada; definir GATE fechado, corrigir mínimo, GREEN e regressão. Teste C posterior independente e sem edição.
+- [ ] Aprovar todos os critérios aplicáveis, justificar N/A individual, dois checks SUCCESS no mesmo HEAD e proteção de tipos; integrar certificado visual/checkpoint e só então comunicar100% e iniciar Tarefa2.
+
+### Tarefa 2 — CRUD global aplicável à V1
+Arquivos e operações: os18domínios/68rótulos da matriz existente, sem criar DELETE de histórico imutável. Consome certificado visual integrado; produz cobertura por operação/papel/contexto/recibo/persistência/evento.
+- [ ] Preservar PASS dos lotes CADASTROS_LISTAS42402246765/42403737562 e AUDITORIA42404359665 apenas em seus escopos e SHAs; reexecutar somente evidência invalidada.
+- [ ] Concluir upload físico TXT/PDF, versão/download/hash/tamanho/worker normal pela tarefa documental autorizada; completar formatos e RNFs exigidos além desse lote mínimo, sem declarar formato não testado aprovado.
+- [ ] Executar13domínios restantes: criação/leitura/edição/situação/transição/remoção permitida, persistência após recarga, negativas de perfil/tenant, concorrência409, idempotência e recuperação de falha. Retenção deve ser justificada pelo contrato, não chamada deCRUDfaltante.
+- [ ] Corrigir FAIL demonstrado por RED→BUILD→GREEN sob gate válido, repetir regressão e Teste C/visual afetados. Nenhum botão sem vínculo real backend.
+- [ ] Matriz sem FAIL ou NAO_VERIFICADO obrigatório; certificado CRUD V1 integrado com CI; comunicar100% e seguir automaticamente à Tarefa3.
+
+### Tarefa 3 — integração, rastreabilidade e auditoria V1
+Consome certificados1e2 e IDs reais. Saída: matriz requisito→prompt→tela/ação→API→entidade/versão→evento/correlation_id→consulta frontend→teste/run/artefato.
+- [ ] Percorrer organização→contratante→contrato→normas/orçamento/listas/documentos→competência→análise/correção/reanálise→parecer→apresentação/protocolo→histórico; verificar links, contexto e retorno, sem rotas órfãs.
+- [ ] Demonstrar eventos de cada ação material aplicável, ator/data/organização/entidade/resultado/correlação e consulta na Trilha; preservar revisões/hash/fontes e distinguir pessoa/automação/IA. A tabela existir não comprova cobertura.
+- [ ] Verificar filtros/paginação por ator/evento/entidade/data/correlação, projeção sem segredos, RBAC/RLS, negativas A/B, integridade/imutabilidade e reconstrução da cadeia. Não exibir payload sensível.
+- [ ] Auditar usuário que perde permissão, acesso direto, resposta tardia após troca A→B, retry com resultado incerto e versões de documento substituídas; nenhum contexto ou evento cruzado indevido.
+- [ ] Consolidar retrospectiva V1 e critérios herdados00–42,43/V1-22,75/V1-23,atômicos000/001–024/085–096 pertinentes; não substituir texto original por catálogo.
+- [ ] Emitir parecer técnico com escopo, métodos, SHAs/PRs/runs/hashes, resultados por critério, riscos e limitações. PASS somente após certificados e checkpoint integrados; V2 liberada apenas pelo certificado V1 próprio.
+
+### Validação técnica e regra de100%
+Ordem e arquitetura coerentes com decisão expressa do titular e fontes canônicas. Aprovação de planejamento não significa teste executado.100%=todos os critérios obrigatórios aplicáveisPASS_REAL com evidência acessível; dispensa não éPASS_REAL. Tela bloqueada, contraste inconclusivo, mock ou check ausente impedem100%. Certificação de produto ainda PENDENTE. Primeira pendência executável: conferir divergência do inventário Teste C e comportamento do header em rolagem; não presumir defeito só pelo nome do componente.
+
+### Revisão de falhas e reversão
+Cobrir contextoA/headerB, header oculto pela rolagem, foco sob elemento fixo, marca móvel aberta sem contraste, rota omitida pelo executor, evento ausente/duplicado e falso sucesso após timeout. Corrigir somente o menor delta autorizado. Reverter PR de produto afetado sem apagar evidências, dados ou eventos. Não alterar workflow/checks para obter aprovação artificial.
+
+### ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+ContaOS Brand v1.0, assets oficiais transparentes e tokens existentes; REUTILIZAR > ESTENDER > CRIAR. Sem design system paralelo, redesenho deSVG, biblioteca nova, backend paralelo ou PROD. GitHub direto, sem BUILD Lovable; reaproveitar provas válidas. TDD/CI/Teste C e auditoria visual independentes preservados.1440/1280/768/390×claro/escuro, marca/estados/foco/contraste devem ser comprovados. Sem prova não declararPASS.
