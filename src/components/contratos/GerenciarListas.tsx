@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { ErroBn } from "@/lib/contratos/baseNormativaDados";
 import { listarListas } from "@/lib/contratos/regrasDados";
 import {
   ErroLista,
@@ -84,8 +85,19 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
     gcTime: 0,
   });
   const d = q.data;
+  const leituraNegada =
+    (q.error instanceof ErroLista && q.error.tipo === "negado") ||
+    (listas.error instanceof ErroBn && listas.error.tipo === "negado");
+  const leituraTransitoria =
+    q.isError && q.error instanceof ErroLista && q.error.tipo === "incerto";
+  const bloquearEdicao =
+    ocupado || !!pendente || q.isError || q.isFetching || listas.isError || listas.isFetching;
   async function enviar(cmd: ComandoLista) {
-    if (ocupado || !vivo.current) return;
+    if (ocupado || !vivo.current || leituraNegada) return;
+    // Uma leitura falha nunca autoriza nova intenção. O replay explícito da
+    // mesma intenção incerta preserva sua chave e é revalidado pelo servidor.
+    if ((q.isError || q.isFetching || listas.isError || listas.isFetching) && cmd !== pendente)
+      return;
     setOcupado(true);
     setErro(null);
     setSucesso(false);
@@ -137,9 +149,11 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
       {(listas.isError || q.isError) && (
         <div role="alert">
           <p>
-            {q.error instanceof ErroLista
-              ? ERROS[q.error.tipo]
-              : "Não foi possível carregar as listas."}
+            {leituraNegada
+              ? ERROS.negado
+              : q.error instanceof ErroLista
+                ? ERROS[q.error.tipo]
+                : "Não foi possível carregar as listas."}
           </p>
           <Button
             type="button"
@@ -153,13 +167,19 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
           </Button>
         </div>
       )}
-      {d && !q.isError && (
+      {d && !leituraNegada && leituraTransitoria && (
+        <p role="status">
+          Não foi possível atualizar a leitura. Seu rascunho foi preservado; novas operações estão
+          bloqueadas até a recuperação.
+        </p>
+      )}
+      {d && !leituraNegada && (!q.isError || leituraTransitoria) && (
         <>
           <label className="block space-y-1">
             <span>Lista selecionada</span>
             <select
               className={CAMPO}
-              disabled={ocupado || !!pendente}
+              disabled={bloquearEdicao}
               value={id ?? ""}
               onChange={(e) => {
                 setSelecionada(e.target.value || null);
@@ -181,7 +201,7 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
             nome="listas"
             pagina={pagina}
             total={listas.data?.total ?? 0}
-            disabled={ocupado || !!pendente}
+            disabled={bloquearEdicao}
             onMudar={(p) => {
               setPagina(p);
               setSelecionada(null);
@@ -216,7 +236,7 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
                   type="button"
                   variant="outline"
                   key={a}
-                  disabled={ocupado || !!pendente}
+                  disabled={bloquearEdicao}
                   onClick={() => escolher(a)}
                 >
                   {ROTULOS_LISTA[a]}
@@ -225,7 +245,7 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
             {d.acoes.criar_item && (
               <Button
                 type="button"
-                disabled={ocupado || !!pendente}
+                disabled={bloquearEdicao}
                 onClick={() => escolher("salvar_item")}
               >
                 Adicionar item
@@ -237,7 +257,7 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
               <span>Versão selecionada</span>
               <select
                 className={CAMPO}
-                disabled={ocupado || !!pendente}
+                disabled={bloquearEdicao}
                 value={d.versao.id}
                 onChange={(e) => {
                   setVersao(e.target.value);
@@ -261,7 +281,7 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
             nome="versões"
             pagina={pv}
             total={d.total_versoes}
-            disabled={ocupado || !!pendente}
+            disabled={bloquearEdicao}
             onMudar={setPv}
           />
           {d.versao && (
@@ -289,7 +309,7 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
                       <Button
                         type="button"
                         variant="outline"
-                        disabled={ocupado || !!pendente}
+                        disabled={bloquearEdicao}
                         onClick={() => escolher("salvar_item", i)}
                       >
                         Editar item {i.codigo}
@@ -299,7 +319,7 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
                       <Button
                         type="button"
                         variant="outline"
-                        disabled={ocupado || !!pendente}
+                        disabled={bloquearEdicao}
                         onClick={() => escolher("remover_item", i)}
                       >
                         Remover item {i.codigo}
@@ -314,7 +334,7 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
             nome="itens"
             pagina={pi}
             total={d.total_itens}
-            disabled={ocupado || !!pendente}
+            disabled={bloquearEdicao}
             onMudar={setPi}
           />
           {form && (
@@ -324,7 +344,7 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
               contexto={c}
               acao={form.acao}
               {...(form.item ? { item: form.item } : {})}
-              disabled={ocupado || !!pendente}
+              disabled={bloquearEdicao}
               onEnviar={enviar}
               onCancelar={() => setForm(null)}
             />
@@ -358,7 +378,11 @@ function Painel({ contexto: c, onFechar }: { contexto: ContextoLista; onFechar: 
           >
             Conferir resultado antes de nova operação
           </Button>
-          <Button type="button" disabled={ocupado} onClick={() => void enviar(pendente)}>
+          <Button
+            type="button"
+            disabled={ocupado || leituraNegada}
+            onClick={() => void enviar(pendente)}
+          >
             Repetir exatamente o mesmo comando
           </Button>
         </div>
@@ -465,6 +489,7 @@ function Formulario({
   }
   function revisar(e: FormEvent) {
     e.preventDefault();
+    if (disabled) return;
     setErro(false);
     try {
       let p: Record<string, unknown> = {};

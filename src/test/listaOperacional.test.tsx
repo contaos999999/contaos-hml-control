@@ -15,6 +15,7 @@ import {
   executarComandoLista,
   type ContextoLista,
 } from "@/lib/contratos/listaOperacionalDados";
+import { ErroBn } from "@/lib/contratos/baseNormativaDados";
 import { GerenciarListas } from "@/components/contratos/GerenciarListas";
 const O = "11111111-1111-4111-8111-111111111111";
 const C = "22222222-2222-4222-8222-222222222222";
@@ -440,4 +441,109 @@ describe("recuperação e concorrência da interface", () => {
       ),
     );
   });
+});
+
+describe("CRUD-LISTA-001: rascunho e negação durante recuperação", () => {
+  it("preserva campos e intenção após conflito, falha transitória de leitura e recuperação", async () => {
+    const { qc } = abrir();
+    await screen.findByText("Histórico preservado.");
+    fireEvent.click(screen.getByRole("button", { name: "Editar lista" }));
+    fireEvent.change(screen.getByLabelText("Nome"), { target: { value: "Rascunho preservado" } });
+    fireEvent.change(screen.getByLabelText("Descrição"), {
+      target: { value: "Descrição preservada" },
+    });
+    fireEvent.change(screen.getByLabelText("Motivo"), {
+      target: { value: "Correção fundamentada" },
+    });
+    m.rpc.mockImplementation((nome: string) =>
+      Promise.resolve(
+        nome === "obter_lista_operacional_v1"
+          ? ok(modelo())
+          : { data: null, error: { code: "PT409" }, status: 409 },
+      ),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Revisar operação" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar operação" }));
+    await screen.findByRole("button", { name: "Atualizar dados e revisar rascunho" });
+    const first = m.rpc.mock.calls.find(([n]) => n === "executar_comando_lista_v1")?.[1];
+    m.rpc.mockResolvedValue({ data: null, error: { code: "NETWORK_FAILURE" }, status: 500 });
+    await act(async () => {
+      await qc.invalidateQueries();
+    });
+    expect(screen.getByLabelText("Nome")).toHaveValue("Rascunho preservado");
+    expect(screen.getByLabelText("Descrição")).toHaveValue("Descrição preservada");
+    expect(screen.getByLabelText("Motivo")).toHaveValue("Correção fundamentada");
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Confirmar operação" })).toBeDisabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar operação" }));
+    expect(m.rpc.mock.calls.filter(([n]) => n === "executar_comando_lista_v1")).toHaveLength(1);
+    m.rpc.mockImplementation((nome: string) =>
+      Promise.resolve(
+        nome === "obter_lista_operacional_v1"
+          ? ok(modelo())
+          : { data: null, error: { code: "PT409" }, status: 409 },
+      ),
+    );
+    await act(async () => {
+      await qc.invalidateQueries();
+    });
+    expect(screen.getByLabelText("Nome")).toHaveValue("Rascunho preservado");
+    expect(screen.getByLabelText("Motivo")).toHaveValue("Correção fundamentada");
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Confirmar operação" })).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar operação" }));
+    await waitFor(() =>
+      expect(m.rpc.mock.calls.filter(([n]) => n === "executar_comando_lista_v1")).toHaveLength(2),
+    );
+    expect(m.rpc.mock.calls.filter(([n]) => n === "executar_comando_lista_v1")[1]?.[1]).toEqual(
+      first,
+    );
+  });
+  it("oculta dados e bloqueia repetição pendente se a recarga for negada pelo backend", async () => {
+    const { qc } = abrir();
+    await screen.findByText("Histórico preservado.");
+    fireEvent.click(screen.getByRole("button", { name: "Editar lista" }));
+    fireEvent.change(screen.getByLabelText("Motivo"), { target: { value: "Intenção anterior" } });
+    m.rpc.mockRejectedValue(new Error("response lost"));
+    fireEvent.click(screen.getByRole("button", { name: "Revisar operação" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar operação" }));
+    await screen.findByRole("button", { name: "Repetir exatamente o mesmo comando" });
+    m.rpc.mockResolvedValue({ data: null, error: { code: "42501" }, status: 403 });
+    await act(async () => {
+      await qc.invalidateQueries();
+    });
+    await waitFor(() => expect(screen.queryByLabelText("Nome")).not.toBeInTheDocument());
+    expect(screen.queryByText("Histórico preservado.")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Repetir exatamente o mesmo comando" }),
+    ).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Repetir exatamente o mesmo comando" }));
+    expect(m.rpc.mock.calls.filter(([n]) => n === "executar_comando_lista_v1")).toHaveLength(1);
+  });
+});
+
+it("negação dos cabeçalhos também oculta dados e bloqueia replay pendente", async () => {
+  const { qc } = abrir();
+  await screen.findByText("Histórico preservado.");
+  fireEvent.click(screen.getByRole("button", { name: "Editar lista" }));
+  fireEvent.change(screen.getByLabelText("Motivo"), { target: { value: "Intenção anterior" } });
+  m.rpc.mockImplementation((nome: string) =>
+    nome === "obter_lista_operacional_v1"
+      ? Promise.resolve(ok(modelo()))
+      : Promise.reject(new Error("response lost")),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Revisar operação" }));
+  fireEvent.click(screen.getByRole("button", { name: "Confirmar operação" }));
+  await screen.findByRole("button", { name: "Repetir exatamente o mesmo comando" });
+  m.listas.mockRejectedValue(new ErroBn("negado"));
+  await act(async () => {
+    await qc.invalidateQueries();
+  });
+  await waitFor(() => expect(screen.queryByLabelText("Nome")).not.toBeInTheDocument());
+  expect(screen.queryByText("Histórico preservado.")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Repetir exatamente o mesmo comando" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Repetir exatamente o mesmo comando" }));
+  expect(m.rpc.mock.calls.filter(([n]) => n === "executar_comando_lista_v1")).toHaveLength(1);
 });

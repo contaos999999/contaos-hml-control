@@ -320,8 +320,23 @@
       "severity": "IMPORTANT",
       "file": "src/components/contratos/GerenciarListas.tsx",
       "finding": "q.isError desmonta Formulario e perde rascunho após409/refetchtransitório",
-      "state": "ABERTO",
-      "test_required": "409 -> refetch falha500 -> bloquearmutação/preservardraft -> retryPASS sem perderdados;403continua failclosed"
+      "state": "CORRIGIDO_LOCALMENTE_AGUARDANDO_CI_E_HML",
+      "test_required": "409 -> refetch falha500 -> bloquearmutação/preservardraft -> retryPASS sem perderdados;403continua failclosed",
+      "verification": {
+        "focused": 42,
+        "regression": 1150,
+        "red": [
+          {
+            "passed": 39,
+            "failed": 2
+          },
+          {
+            "passed": 41,
+            "failed": 1
+          }
+        ],
+        "private": "PENDENTE"
+      }
     }
   ],
   "limits": [
