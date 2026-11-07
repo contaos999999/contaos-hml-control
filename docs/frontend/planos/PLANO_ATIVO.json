@@ -261,6 +261,16 @@
       "ci_run": 42308147045,
       "regressao_local": "966/966",
       "private_authenticated": "NAO_VERIFICADO"
+    },
+    "crud_cadastros": {
+      "pr": 248,
+      "head": "0af23c4e55895f33269f7b7a987ef9fd14a05eee",
+      "merge": "23d120f94e295f8031ade24ab785eaa39343c070",
+      "ci_run": 42316728042,
+      "regressao_local": "1017/1017 em39suítes",
+      "backend_jwt": "50/50 reais",
+      "private_ui": "NAO_VERIFICADA",
+      "backend": "bfd741d5758e77f89de626fdb691ea4bebb943d5"
     }
   },
   "unverified_operational": {
@@ -353,7 +363,7 @@
     "estado": "EM_EXECUCAO_NAO_CONCLUIDO"
   },
   "crud_cadastros_gate": {
-    "status": "BACKEND_PASS_BUILD_FRONTEND",
+    "status": "BUILD_INTEGRADO_CI_PASS_UI_PRIVADA_PENDENTE",
     "backend_pr": 91,
     "backend_deploy_jwt": {
       "status": "PASS",
