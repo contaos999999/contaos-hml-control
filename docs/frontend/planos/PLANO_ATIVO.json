@@ -945,6 +945,23 @@
         "obsolete_restore": 42422449447,
         "obsolete_restore_head": "809e7681f847bfea0b4c5f00a10d496aaf8f4c27"
       }
+    },
+    "public_keyboard_proof": {
+      "phase": "PLAN",
+      "state": "PENDENTE_SEM_EXECUCAO_REAL",
+      "routes": [
+        "/login",
+        "/esqueci-senha"
+      ],
+      "cases": 16,
+      "allowed_build_paths": [
+        "scripts/testc/visual-audit.mjs",
+        "scripts/testc/visual-audit.test.mjs"
+      ],
+      "no_product_changes": true,
+      "no_mutations": true,
+      "full_wcag": false,
+      "sequence": "PLAN checks merge -> GATE separado checks merge -> RED BUILD GREEN -> TesteC CI -> revisão visual -> checkpoint"
     }
   }
 }

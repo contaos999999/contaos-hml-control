@@ -334,3 +334,29 @@ Escopo fechado, todos os caminhos já autorizados: src/styles.css, src/test/bran
 RED antes do CSS: regressão que rejeite pilha genérica sem a ordem Inter/Arial, incluindo valores vazios e fonte inadequada; Teste C deve observar getComputedStyle(document.body).fontFamily nas páginas públicas com fonte real compilada. GREEN: pilha institucional global, regressões, typecheck/build, blob types e assets invariáveis. Prova runtime de declaração da pilha não é prova de disponibilidade local da fonte nem certificação integral de marca/WCAG. Comparar capturas nas quatro larguras/dois temas após aprovação; páginas privadas continuam exigindo sessão real.
 
 BUILD em branch distinta somente após ambos checks SUCCESS no mesmo HEAD e merge deste GATE. Revisão independente e Teste C preservados. Rollback: reverter exclusivamente a definição de tipografia e seu requisito de teste correspondente, mantendo evidência do motivo. Nenhum novo plano concorrente: esta é uma emenda à frente 1 do plano único.
+
+## PLAN complementar da frente visual: percurso público de teclado (07/11/2026)
+
+Contexto:309 e310 integrados, produto pin164b10b,24casos públicosPASS/208sem sessão. A tentativa local de Chromium terminou antes de navegar com socketEPERM; nenhum teste de teclado foi executado ou aprovado. O CI existente é a superfície disponível para a nova prova real. Esta emenda integra o mesmo plano mestre e não constitui certificadoWCAG.
+
+### Escopo fechado e invariantes
+
+Alterar somente scripts/testc/visual-audit.mjs e scripts/testc/visual-audit.test.mjs no BUILD posterior ao GATE separado. Documentação nos caminhos jápermitidos: este plano, PLANO_ATIVO.json, relatório de AppShell e checkpoint. Nenhuma alteração de src/public/tipos/rotas/workflow/dependência/backend/Auth/RLS/permissão/dado/PROD. TesteC permanece sem sessão e com bloqueio preexistente de mutações ao Supabase. Não inserir e-mail, senha, token ou cookie, não submeter formulário, acionar links, autenticar, enviar recuperação ou fabricar estados de sucesso.
+
+### Comportamento da prova e critérios
+
+Executar Tab e Shift+Tab reais exclusivamente em /login e /esqueci-senha vazios, nas quatro larguras/dois temas:16casos. Verificar controles existentes por seletor semântico estável, percurso de avanço e retorno, activeElement correto e foco visível dentro da viewport após rolagem nativa. Não impor ordem nova por CSS ou chamar focus() para fabricar a prova. Controle esperado ausente, sem nome/label ou percurso interrompido deve resultar FAIL, não N/A. A tela /redefinir-senha sem token permanece somente “Validando link”, sem prova de formulário concluído; demais rotas privadas continuam sem aprovação.
+
+Mapear os controles reais atuais: login E-mail, Senha, Esqueci minha senha, Mostrar senha e Entrar; recuperação E-mail, Enviar link e Voltar ao login. Não clicar no botão de revelar senha nem produzir mutação. Identificação/nome são avaliados em memória, relatório guarda apenas IDs fixos/booleans/contagens e motivos fechados. Não registrar valores de campo, DOM/HTML/texto arbitrário, URL de navegação com tokens ou segredos.
+
+Prova de indicador não pode se limitar a :focus-visible. Comparar estilos visuais pertinentes antes/depois do foco real e produzir captura individual do controle focado com hash para revisão humana. Aceitar indicador por outline/ring/borda/sublinhado conforme componente, sem afirmar contraste mínimo, área2px ou conformidadeWCAG integral apenas por flagCSS. Se a medição não demonstra indicador ou a captura falha, resultado explícitoFAIL/inconclusivo; não promover a PASS público com coleta ausente. Restaurar percurso/rolagem antes da captura geral existente para preservar a comparabilidade do TesteC.
+
+### TDD, execução e evidências
+
+PLAN documental → checksSUCCESS no mesmoHEAD → merge → GATE separado fechado → RED dos validadores contra casos ausentes/fora da viewport/sem nome/sem mudança visual/ordem incorreta/coleta incompleta → implementação mínima → GREEN/regressões/gates → TesteC real no CI → revisão independente das capturas → checkpoint integrado. Helpers devem falhar fechados diante de tipos inválidos, nomes desconhecidos e dados extras com canário privado. Não enfraquecer critérios de contraste, tipografia, axe ou classificação privada existentes.
+
+A falta de teclado público é lacuna de evidência, não defeito de produto demonstrado. Se o CI revelar falha real, preservarRED e abrir delta de produto com PLAN/GATE próprio antes de corrigi-lo. Sem edição de produto durante TesteC. Browser de CI falho ou bloqueado não autoriza desativar segurança local, expandir permissões, substituir prova por mock ou declarar conformidade.
+
+Riscos: foco pode rolar o viewport, tooltip pode aparecer ao receber foco e a ordem inclui linkEsqueci antes da senha pela ordemDOM. Usar ordem real observada, sem preferência inventada; preservar foco, tooltips e rolagem naturais. Comparar capturas gerais antes/depois e manter limitações de campos vazios, semenvio, semleitor de tela e semprivadas. Rollback restrito ao requisito adicional de prova no harness, preservando relatórioFAIL histórico, sem modificar produto.
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: prova de apresentação/acessibilidade no executor existente, sem biblioteca/turnoLovable, produto ou backend. V1 e as trêsfrentes continuam pendentes. PLAN tecnicamente APROVÁVEL para rito separado, nenhum BUILD antecipado.
