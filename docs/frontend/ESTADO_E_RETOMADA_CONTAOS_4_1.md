@@ -1,3 +1,21 @@
+# Checkpoint integrado V117, 07/11/2026 UTC
+
+Este registro prevalece sobre o histórico. **CRUD global em execução, V1 não certificada, V2–V5 e PROD bloqueados.**
+
+Última entrega funcional comprovada: PR271 integrado no merge383eb2250747894e1abe12544e83a9025d6f701f, HEAD508c5ff471b4cb453961c71415d3ac62fbb0d245. PLAN269, GATE270 e revalidação de fonte272 integrados antes do fechamento. No mesmo HEAD, protect-types128392615327, Zero-Drift128392614525 e Teste C128392614661 SUCCESS. Run42368864981. Regressão1129/1129 em41 suítes, TypeScript e build aprovados. Types preservado8ea7750b75fd9d76b29c36ce7613392e3ab65e19.
+
+Revisão humana V117: confirmação explícita, CAS backend, evidências aprovadas paginadas, intenção/UUID imutáveis, replay somente explícito após resultado incerto, negações e troca de contexto fail-closed. Revisão independente corrigiu três corridas/recibo anterior com testes. Consulta real HML revelou300/PGRST201 por relação ambígua; FK arquivo+organização+contrato explícita corrigida após RED1FAIL/42PASS e GREEN43/43. Consulta anônima corrigida chega a401/42501 pela ACL; não comprova leitura privada.
+
+Teste C **público/read-only**,224 combinações e167 capturas. Artifact13572682262, ZIP SHA256dcdbc5ff95d6ddd998cd732237088bafe8d50bc71a3b5965be46b18b49945977. Escopo PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA, não certifica WCAG privado ou fluxo autenticado. Job registra checkout do merge virtual033bbcd54e974964dbd00dc22bbdc5f596286ddf, associado ao HEAD508c5ff; não omitir essa distinção.
+
+Backend main937bd9b0792b57b5e2677223eab95deb74154761. Produto backend revisões integrado744dee8, deploy canônico42362617182 SUCCESS,129 migrações paritárias, nova versão aplicada uma vez. JWT real42362609674 tentativa3, job128386155328:38 assertions PASS com Auth Admin oficial e quarentena verificada. Secret funcionou, sem impedimento atual de credencial. Nunca repetir deploy ou provisionar auth.users via INSERT em HML.
+
+Próxima etapa já em execução: backend PLAN100/GATE101 integrados; BUILD102 HEADc8ac779cdfbf82c0991d52d96cc972d4a4b7ae95 publicado. Guard SUCCESS; restore integral e backup sintético ainda pendentes neste checkpoint. Harness privado fixed-path executa frontend pin508c5ff após confirmar integração/checks, login GoTrue pela UI de conta sintética, revisão, evidência RLS, efeito/auditoria persistidos, negação de tenant e1440/1280/768/390×claro/escuro. Administração/banco somente Python, Node/Chromium recebem ambiente allowlist sem secrets; achado da revisão independente corrigido por RED/GREEN. Finally e always promovem quarentena própria. Sem HAR/trace/storageState em artifact. Ainda não executado em HML nem inspecionado visualmente; não marcar PASS antes da evidência.
+
+Fila: concluir checks102→merge permitido→run privado→ler relatório/screenshot→corrigir falhas reais→reconciliar matriz de operações por domínio e critérios V1/RNF. Preservar SYS03 N1/N2 manuais/dispensados da automação e R01/R02/R03 sem novas exceções. Não repetir autenticação pessoal cancelada. PR268 fechado sem merge como checkpoint superado; história preservada. Issue166 atualizada no comentário6706438561. GitHub+Actions e Supabase HML canônicos.
+
+---
+
 ## Delta antes do merge271: evidências PostgREST
 Detectado300/PGRST201 real por relação ambígua versões→arquivos. RED1FAIL/42PASS; relação explícita tenant+contrato corrigida, GREEN43/43. Consulta anônima corrigida é401/42501 por ACL, sem bypass. Não equivale a teste privado. CI do novo HEAD deve passar antes do merge.
 
