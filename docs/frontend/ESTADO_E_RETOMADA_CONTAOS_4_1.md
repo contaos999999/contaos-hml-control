@@ -1480,3 +1480,18 @@ Causa confirmada no HML: upload ACTIVE v6, verify_jwt=true, sem OPTIONS/CORS; lo
 Tipografia #309: GATE #308 integrado; RED real no HEAD 24466e1a5abd64dcace2d973c45b5161173e2aaf/run 42421242066, com 24 falhas públicas exclusivamente na pilha de fontes e zero falhas de contraste medido. Artefato 13593462941, SHA256 66a06348e456014fd5749eea5b8ff0fab7b45267afe2f4536e7594fd32116a88 conferido. Correção mínima local 76ebe71 define Inter, Arial, sans-serif; helper 24/24, BRAND 54/54, tsc/build/gates PASS, revisão independente sem achados. GREEN runtime e capturas ainda pendentes neste registro.
 
 Continuar a frente 1 até prova completa. Nenhuma das três frentes nem V1 chegou a 100%; V2 permanece bloqueada. Não atribuir testes anteriores ao pin posterior nem declarar upload/worker resolvidos apenas com CORS.
+
+
+## Checkpoint P0, 07/11/2026: tipografia GREEN e PLAN CORS integrado
+
+Última etapa concluída: BUILD frontend #309 integrado em b0e22f5ab7a479ebb8a3c9bd2d907d5052ec81c5, após HEAD 164b10b44eaf5b553efcc7ab4e053b86c4d3b269 com Zero-Drift/Teste C SUCCESS no run 42421827969 e LOCK 42421827973 SUCCESS. A auditoria visual das 24 capturas públicas não encontrou regressão; 24 públicos e 120 contrastes passaram. Artefato 13593374754, SHA256 44889c1d42c940cd0e394c7f4851f42e7c9d969412497efc3fd1fb2f22f4b9df, 225 hashes internos conferidos. RED 42421242066 permanece preservado. Os resultados são públicos e delimitados, sem certificação das telas privadas ou de WCAG integral.
+
+Backend PLAN #137 integrado em 5743453e729362d4fa841aad16b357b9926c5688. HEAD aprovado 93fee8ac9c48537d74b85bc80973c965f37eab57: guard 42422472451/job 128553651513 SUCCESS; restore 42422690948 tentativa 2, reconstrução 128554990490 e backup 128554989468 SUCCESS. Tentativa 1 falhou por bind da porta local 54322 no job 128554308227; logs preservados, sem alteração de teste/workflow. Restore antigo no HEAD 809e768 não foi reutilizado para o HEAD final.
+
+Dependência: CORS das duas assinaturas documentais. Segunda HML 42420832115 falhou em WAIT_SIGN_UPLOAD; OPTIONS405 confirmado nos logs e na fonte upload ACTIVE v6. Download ACTIVE v4 também não trata OPTIONS/CORS. Quarentena de quatro usuários e duas organizações verificada; nenhum objeto/job. Nenhuma função foi alterada ou implantada.
+
+O PLAN limita duas origens exatas e preserva JWT/RBAC/RLS. O smoke publicado terá frontend_head=null por falta de SHA de deploy comprovado, sem substituir as quatro provas locais no pin. Serão cinco arquivos/objetos, três documentos e cinco versões, recibos separados e cleanup de todos. Durante PLAN/GATE, o roteamento mantém os jobs materiais desabilitados.
+
+Próxima tarefa: GATE separado CORS, conferir origens, backend HML vivo antes de credenciais, headers do SDK pinado e método de deploy. Só depois RED/BUILD/GREEN/revisão/CI, integração, deploy HML das duas fontes aprovadas com verify_jwt=true e nova prova real. Sem PROD, curinga ou extração de JWT. Snapshot e ack reancorados juntos em 5743453e729362d4fa841aad16b357b9926c5688; 25 blobs e catálogo preservados. Types permanece 8ea7750b75fd9d76b29c36ce7613392e3ab65e19.
+
+Frente 1 continua EM EXECUÇÃO; frentes 2 e 3 aguardam os marcos anteriores. Nenhuma frente ou V1 chegou a 100%; V2 segue BLOQUEADA. A automação horária não representa vigilância em tempo real entre execuções.
