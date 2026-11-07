@@ -526,8 +526,8 @@ describe("P0 CRUD: arquivos e envio normativo", () => {
     fireEvent.click(await within(await screen.findByRole("dialog")).findByRole("button", {name:"Nova versão"}));
     return screen.findByRole("dialog", {name:"Nova versão"});
   }
-  it("alcança arquivo aprovado na segunda página e preserva seleção ao voltar", async () => {
-    cenario({fontes:[fonte(F1,"Lei do contrato",K1)],versoes:[]});
+  it.each([K1,null])("alcança arquivo aprovado e preserva seleção no escopo %s", async (idContrato) => {
+    cenario({fontes:[fonte(F1,"Lei do contrato",idContrato)],versoes:[]});
     const anterior=m.resposta;
     const arquivos=Array.from({length:26},(_,i)=>({id:"arquivo-"+i,nome_original:i===25?"antigo.pdf":"recente-"+i+".pdf",mime:"application/pdf",tamanho:10,status_seguranca:i===25?"aprovado":"pendente",criado_em:"2026-01-01T00:00:00Z"}));
     m.resposta=(c)=>{
@@ -548,6 +548,7 @@ describe("P0 CRUD: arquivos e envio normativo", () => {
     await waitFor(()=>expect(m.rpcChamadas).toHaveLength(1));
     expect(m.rpcChamadas[0]?.args["p_id_arquivo"]).toBe("arquivo-25");
     expect(de("arquivos").some((c)=>JSON.stringify(op(c,"range")[0])==="[25,49]")).toBe(true);
+    expect(op(de("arquivos")[0]!,idContrato===null?"is":"eq")).toContainEqual(["id_contrato",idContrato]);
   });
   it.each(["fonte","versao"])("não renova intenção nem fecha durante envio de %s", async (tipo) => {
     cenario({fontes:[fonte(F1,"Lei do contrato",K1)],versoes:[]});
@@ -576,6 +577,43 @@ describe("P0 CRUD: arquivos e envio normativo", () => {
     expect(within(dlg).getByRole("button",{name:"Cancelar"})).toBeDisabled();
     fireEvent.keyDown(dlg,{key:"Escape",code:"Escape"});
     expect(dlg).toBeInTheDocument();
+    fireEvent.click(within(dlg).getByRole("button",{name:"Close"}));
+    expect(dlg).toBeInTheDocument();
     await act(async()=>{concluir.forEach((r)=>r({data:{correlation_id:"unica"},error:null}));});
   });
+});
+
+it("P0 trava síncrona impede dois cliques antes da próxima renderização", async () => {
+  cenario();
+  let concluir!: (v:unknown)=>void;
+  m.rpc.mockImplementation(()=>new Promise((r)=>{concluir=r;}));
+  montar();
+  fireEvent.click(await screen.findByRole("button",{name:"Nova fonte"}));
+  const dlg=await screen.findByRole("dialog");
+  fireEvent.change(within(dlg).getByLabelText("Tipo"),{target:{value:"lei"}});
+  fireEvent.change(within(dlg).getByLabelText("Título"),{target:{value:"Nova lei"}});
+  const enviar=within(dlg).getByRole("button",{name:"Salvar"});
+  act(()=>{fireEvent.click(enviar);fireEvent.click(enviar);});
+  await waitFor(()=>expect(m.rpcChamadas).toHaveLength(1));
+  await act(async()=>{concluir({data:{correlation_id:"unica"},error:null});});
+});
+it.each(["aprovar","aplicabilidade"])("P0 %s mantém trava e campos durante envio", async (tipo) => {
+  cenario({fontes:[fonte(F1,"Lei do contrato",K1)],versoes:[versao(V1)]});
+  let concluir!: (v:unknown)=>void;
+  m.rpc.mockImplementation(()=>new Promise((r)=>{concluir=r;}));
+  montar();
+  fireEvent.click(await screen.findByRole("button",{name:"Detalhes de Lei do contrato"}));
+  const det=await screen.findByRole("dialog");
+  fireEvent.click(await within(det).findByRole("button",{name:tipo==="aprovar"?"Aprovar versão 2":"Definir aplicabilidade da versão 2"}));
+  const dlg=await screen.findByRole("dialog",{name:tipo==="aprovar"?"Aprovar versão 2":"Aplicabilidade da versão 2"});
+  fireEvent.change(within(dlg).getByLabelText("Fundamento"),{target:{value:"Revisão aprovada"}});
+  if(tipo==="aprovar") fireEvent.click(within(dlg).getByLabelText(/Confirmo que revisei/));
+  else fireEvent.click(within(dlg).getByLabelText("Aplicável"));
+  fireEvent.click(within(dlg).getByRole("button",{name:tipo==="aprovar"?"Aprovar":"Salvar aplicabilidade"}));
+  await waitFor(()=>expect(m.rpcChamadas).toHaveLength(1));
+  expect(within(dlg).getByLabelText("Fundamento")).toBeDisabled();
+  fireEvent.change(within(dlg).getByLabelText("Fundamento"),{target:{value:"Outra revisão"}});
+  fireEvent.click(within(dlg).getByRole("button",{name:tipo==="aprovar"?/Aprovando|Aprovar/:/Salvando|Salvar aplicabilidade/}));
+  expect(m.rpcChamadas).toHaveLength(1);
+  await act(async()=>{concluir({data:{correlation_id:"unica"},error:null});});
 });

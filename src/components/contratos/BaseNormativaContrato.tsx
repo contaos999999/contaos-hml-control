@@ -427,9 +427,28 @@ function TextoVersaoBloco({ idVersao, ctx, org }: { idVersao: string; ctx: Ctx; 
 // ---------- Diálogos de mutação ----------
 function useAcao(onConcluir: (cid: string | null) => void) {
   const [chave, setChave] = useState(novaChave);
-  const mut = useMutation({ mutationFn: (f: (k: string) => Promise<{ correlationId: string | null }>) => f(chave), onSuccess: (r) => onConcluir(r.correlationId) });
-  const renovar = () => { setChave(novaChave()); mut.reset(); };
-  return { mut, renovar };
+  type Acao = (k: string) => Promise<{ correlationId: string | null }>;
+  const trava = useRef(false);
+  const [enviando, setEnviando] = useState(false);
+  const mut = useMutation({
+    mutationFn: (f: Acao) => f(chave),
+    retry: false,
+    onSuccess: (r) => onConcluir(r.correlationId),
+    onSettled: () => { trava.current = false; setEnviando(false); },
+  });
+  const executar = (f: Acao) => {
+    if (trava.current) return;
+    trava.current = true;
+    setEnviando(true);
+    mut.mutate(f);
+  };
+  const renovar = () => {
+    if (trava.current) return false;
+    setChave(novaChave());
+    mut.reset();
+    return true;
+  };
+  return { mut: { ...mut, mutate: executar, isPending: enviando || mut.isPending }, renovar };
 }
 
 function RodapeErro({ erro, onRecarregar }: { erro: unknown; onRecarregar: () => void }) {
@@ -449,7 +468,7 @@ function DialogoFonte({ retorno, fonte, org, contrato, onFechar, onConcluir, onR
   const [f, setF] = useState({ escopo: "contrato", tipo: fonte?.tipo ?? "", titulo: fonte?.titulo ?? "", referencia: fonte?.referencia ?? "", descricao: fonte?.descricao ?? "", situacao: fonte?.situacao ?? "rascunho" });
   const [faltando, setFaltando] = useState(false);
   const { mut, renovar } = useAcao(onConcluir);
-  const mudar = (k: keyof typeof f, v: string) => { setF((x) => ({ ...x, [k]: v })); renovar(); };
+  const mudar = (k: keyof typeof f, v: string) => { if (renovar()) setF((x) => ({ ...x, [k]: v })); };
   const salvar = () => {
     if (!f.tipo.trim() || !f.titulo.trim()) return setFaltando(true);
     setFaltando(false);
@@ -465,8 +484,9 @@ function DialogoFonte({ retorno, fonte, org, contrato, onFechar, onConcluir, onR
     }));
   };
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onFechar(); }}>
+    <Dialog open onOpenChange={(o) => { if (!o && !mut.isPending) onFechar(); }}>
       <DialogContent onCloseAutoFocus={devolverFoco(retorno)} className="max-h-[90vh] overflow-y-auto">
+        <fieldset className="min-w-0 space-y-4" disabled={mut.isPending}>
         <DialogHeader>
           <DialogTitle>{fonte ? "Editar fonte" : "Nova fonte"}</DialogTitle>
           <DialogDescription>{fonte ? "Alterações usam a versão do registro lida para evitar sobrescrita." : "Toda fonte nova é criada como rascunho."}</DialogDescription>
@@ -500,6 +520,7 @@ function DialogoFonte({ retorno, fonte, org, contrato, onFechar, onConcluir, onR
           <Button type="button" variant="outline" className="h-11" onClick={onFechar}>Cancelar</Button>
           <Button type="button" className="h-11" disabled={mut.isPending} onClick={salvar}>{mut.isPending ? "Salvando…" : "Salvar"}</Button>
         </DialogFooter>
+        </fieldset>
       </DialogContent>
     </Dialog>
   );
@@ -513,15 +534,18 @@ function DialogoVersao({ retorno, fonte, org, ctx, onFechar, onConcluir, onRecar
   const [origem, setOrigem] = useState<"texto" | "arquivo">("texto");
   const [conteudo, setConteudo] = useState("");
   const [arquivo, setArquivo] = useState<string | null>(null);
+  const [nomeArquivo, setNomeArquivo] = useState("");
+  const [paginaArquivos, setPaginaArquivos] = useState(0);
+  const qc = useQueryClient();
   const [falta, setFalta] = useState("");
   const { mut, renovar } = useAcao(onConcluir);
   const arquivos = useQuery({
-    queryKey: ["bn-arquivos", ctx.idUsuario, org, fonte.id_contrato, 0],
-    queryFn: ({ signal }) => listarArquivos(org, fonte.id_contrato, 0, signal),
+    queryKey: ["bn-arquivos", ctx.idUsuario, org, fonte.id_contrato, paginaArquivos],
+    queryFn: ({ signal }) => listarArquivos(org, fonte.id_contrato, paginaArquivos, signal),
     enabled: origem === "arquivo",
     retry: false,
   });
-  const alt = <X,>(set: (v: X) => void) => (v: X) => { set(v); renovar(); };
+  const alt = <X,>(set: (v: X) => void) => (v: X) => { if (renovar()) set(v); };
   const registrar = () => {
     if (!inicio) return setFalta("Informe o início da vigência.");
     if (origem === "texto" && !conteudo.trim()) return setFalta("Informe o texto da versão.");
@@ -534,8 +558,9 @@ function DialogoVersao({ retorno, fonte, org, ctx, onFechar, onConcluir, onRecar
     }));
   };
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onFechar(); }}>
+    <Dialog open onOpenChange={(o) => { if (!o && !mut.isPending) onFechar(); }}>
       <DialogContent onCloseAutoFocus={devolverFoco(retorno)} className="max-h-[90vh] overflow-y-auto">
+        <fieldset className="min-w-0 space-y-4" disabled={mut.isPending}>
         <DialogHeader>
           <DialogTitle>Nova versão</DialogTitle>
           <DialogDescription>Versões não são sobrescritas: cada registro cria uma nova versão, numerada e com hash calculado pelo servidor.</DialogDescription>
@@ -565,7 +590,7 @@ function DialogoVersao({ retorno, fonte, org, ctx, onFechar, onConcluir, onRecar
                 const apto = a.status_seguranca === "aprovado";
                 return (
                   <label key={a.id} className={`flex min-h-11 items-center gap-2 text-sm ${apto ? "" : "text-muted-foreground"}`}>
-                    <input type="radio" name="arquivo" disabled={!apto} checked={arquivo === a.id} onChange={() => alt(setArquivo)(a.id)} />
+                    <input type="radio" name="arquivo" disabled={!apto} checked={arquivo === a.id} onChange={() => { if (renovar()) { setArquivo(a.id); setNomeArquivo(a.nome_original); } }} />
                     <span className="break-all">{a.nome_original}</span>
                     <span className="rounded border border-border px-1.5 text-xs">{STATUS_ARQUIVO[a.status_seguranca] ?? a.status_seguranca}</span>
                   </label>
@@ -574,7 +599,15 @@ function DialogoVersao({ retorno, fonte, org, ctx, onFechar, onConcluir, onRecar
               <p className="text-xs text-muted-foreground">Arquivos em análise de segurança não podem ser anexados até serem aprovados.</p>
             </fieldset>
           )}
-          {origem === "arquivo" ? <EnvioArquivo org={org} contrato={fonte.id_contrato} onEnviado={() => void arquivos.refetch()} /> : null}
+          {origem === "arquivo" && arquivo && <p className="break-words text-sm">Arquivo selecionado: {nomeArquivo}</p>}
+          {origem === "arquivo" && ((paginaArquivos > 0 || (arquivos.data?.total ?? 0) > PAGINA_BN) && (
+            <div className="flex flex-wrap items-center gap-2" aria-label="Paginação de arquivos">
+              <Button type="button" variant="outline" className="h-11" disabled={arquivos.isFetching || paginaArquivos === 0} onClick={() => setPaginaArquivos((p) => p - 1)}>Página anterior de arquivos</Button>
+              <span className="text-sm" aria-live="polite">Página {paginaArquivos + 1}</span>
+              <Button type="button" variant="outline" className="h-11" disabled={arquivos.isFetching || !arquivos.data || (paginaArquivos + 1) * PAGINA_BN >= (arquivos.data?.total ?? 0)} onClick={() => setPaginaArquivos((p) => p + 1)}>Próxima página de arquivos</Button>
+            </div>
+          ))}
+          {origem === "arquivo" ? <EnvioArquivo org={org} contrato={fonte.id_contrato} onEnviado={() => { setPaginaArquivos(0); void qc.invalidateQueries({ queryKey: ["bn-arquivos", ctx.idUsuario, org, fonte.id_contrato] }); }} /> : null}
           {falta ? <p role="alert" className="text-sm text-destructive">{falta}</p> : null}
           <RodapeErro erro={mut.error} onRecarregar={onRecarregar} />
         </div>
@@ -582,6 +615,7 @@ function DialogoVersao({ retorno, fonte, org, ctx, onFechar, onConcluir, onRecar
           <Button type="button" variant="outline" className="h-11" onClick={onFechar}>Cancelar</Button>
           <Button type="button" className="h-11" disabled={mut.isPending} onClick={registrar}>{mut.isPending ? "Registrando…" : "Registrar versão"}</Button>
         </DialogFooter>
+        </fieldset>
       </DialogContent>
     </Dialog>
   );
@@ -593,8 +627,9 @@ function DialogoAprovar({ retorno, v, org, onFechar, onConcluir, onRecarregar }:
   const { mut, renovar } = useAcao(onConcluir);
   const pronto = fundamento.trim().length > 0 && confirmo;
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onFechar(); }}>
+    <Dialog open onOpenChange={(o) => { if (!o && !mut.isPending) onFechar(); }}>
       <DialogContent onCloseAutoFocus={devolverFoco(retorno)} className="max-h-[90vh] overflow-y-auto">
+        <fieldset className="min-w-0 space-y-4" disabled={mut.isPending}>
         <DialogHeader>
           <DialogTitle>Aprovar versão {v.versao}</DialogTitle>
           <DialogDescription>Revise hash, origem e vigência. Ator, data e auditoria são registrados pelo servidor.</DialogDescription>
@@ -604,7 +639,7 @@ function DialogoAprovar({ retorno, v, org, onFechar, onConcluir, onRecarregar }:
           <div><dt className="text-xs text-muted-foreground">Origem</dt><dd>{v.id_arquivo ? "Arquivo vinculado" : "Texto"}</dd></div>
           <div><dt className="text-xs text-muted-foreground">Vigência</dt><dd>{formatarDataBr(v.inicio_vigencia)} – {formatarDataBr(v.fim_vigencia)}</dd></div>
         </dl>
-        <label className="block text-sm">Fundamento<textarea className={`${campo} min-h-20 py-2`} value={fundamento} onChange={(e) => { setFundamento(e.target.value); renovar(); }} /></label>
+        <label className="block text-sm">Fundamento<textarea className={`${campo} min-h-20 py-2`} value={fundamento} onChange={(e) => { if (renovar()) setFundamento(e.target.value); }} /></label>
         <label className="flex min-h-11 items-center gap-2 text-sm"><input type="checkbox" checked={confirmo} onChange={(e) => setConfirmo(e.target.checked)} />Confirmo que revisei hash, origem e vigência desta versão.</label>
         <RodapeErro erro={mut.error} onRecarregar={onRecarregar} />
         <DialogFooter>
@@ -614,6 +649,7 @@ function DialogoAprovar({ retorno, v, org, onFechar, onConcluir, onRecarregar }:
             {mut.isPending ? "Aprovando…" : "Aprovar"}
           </Button>
         </DialogFooter>
+        </fieldset>
       </DialogContent>
     </Dialog>
   );
@@ -625,18 +661,19 @@ function DialogoAplic({ retorno, v, a, org, contrato, onFechar, onConcluir, onRe
   const { mut, renovar } = useAcao(onConcluir);
   const pronto = aplicavel !== null && fundamento.trim().length > 0;
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) onFechar(); }}>
+    <Dialog open onOpenChange={(o) => { if (!o && !mut.isPending) onFechar(); }}>
       <DialogContent onCloseAutoFocus={devolverFoco(retorno)} className="max-h-[90vh] overflow-y-auto">
+        <fieldset className="min-w-0 space-y-4" disabled={mut.isPending}>
         <DialogHeader>
           <DialogTitle>Aplicabilidade da versão {v.versao}</DialogTitle>
           <DialogDescription>Somente versões aprovadas podem ter aplicabilidade definida. A decisão é registrada pelo servidor.</DialogDescription>
         </DialogHeader>
         <fieldset className="space-y-1">
           <legend className="text-sm font-medium">Decisão</legend>
-          <label className="flex min-h-11 items-center gap-2 text-sm"><input type="radio" name="aplic" checked={aplicavel === true} onChange={() => { setAplicavel(true); renovar(); }} />Aplicável</label>
-          <label className="flex min-h-11 items-center gap-2 text-sm"><input type="radio" name="aplic" checked={aplicavel === false} onChange={() => { setAplicavel(false); renovar(); }} />Não aplicável</label>
+          <label className="flex min-h-11 items-center gap-2 text-sm"><input type="radio" name="aplic" checked={aplicavel === true} onChange={() => { if (renovar()) setAplicavel(true); }} />Aplicável</label>
+          <label className="flex min-h-11 items-center gap-2 text-sm"><input type="radio" name="aplic" checked={aplicavel === false} onChange={() => { if (renovar()) setAplicavel(false); }} />Não aplicável</label>
         </fieldset>
-        <label className="block text-sm">Fundamento<textarea className={`${campo} min-h-20 py-2`} value={fundamento} onChange={(e) => { setFundamento(e.target.value); renovar(); }} /></label>
+        <label className="block text-sm">Fundamento<textarea className={`${campo} min-h-20 py-2`} value={fundamento} onChange={(e) => { if (renovar()) setFundamento(e.target.value); }} /></label>
         <RodapeErro erro={mut.error} onRecarregar={onRecarregar} />
         <DialogFooter>
           <Button type="button" variant="outline" className="h-11" onClick={onFechar}>Cancelar</Button>
@@ -647,6 +684,7 @@ function DialogoAplic({ retorno, v, a, org, contrato, onFechar, onConcluir, onRe
             {mut.isPending ? "Salvando…" : "Salvar aplicabilidade"}
           </Button>
         </DialogFooter>
+        </fieldset>
       </DialogContent>
     </Dialog>
   );
