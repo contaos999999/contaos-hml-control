@@ -1,3 +1,17 @@
+## Checkpoint da prova privada, 07/11/2026: FAIL em diagnóstico, quarentena comprovada
+
+Prevalece sobre o histórico: CRUD global em execução; V1 não certificada, V2–V5/PROD bloqueados. Frontend funcional383eb225 (BUILD271, HEAD508c5ff, três checks SUCCESS,1129 testes). Checkpoint273 integrado712215fbe6c8907a754ad58a8a32ddb1ffb06c6d. Fonte atual9a66c6309abbd60f33d1bac5e9235aa02bb252a2 reancorada neste snapshot após comparar25blobs e catálogo100/97, todos idênticos; nenhuma mudança de produto ou premissa.
+
+Backend BUILD102 integrado27fe28a, guard/restore/backup SUCCESS; execução privada42369440263/job128394319425 FAIL antes do primeiro check de login no navegador.38 assertions HTTP existentes PASS novamente. Quarentena própria8usuários PASS via finally/always. Artifact13572468983 SHA256da26705cec856869de5f37f3608c068c997955967587bcec73c218c317dae1c6. Sem screenshots privadas ou assertions privadas aprovadas. Não atribuir a falha ao produto sem diagnóstico.
+
+Falha adicional de cleanup: filho Vite permaneceu após término do npm e rm falhou por node_modules não vazio. FIX104 HEADb497c413a9abea20bf0fc1748da3e6b1e686a093 integrado9a66c630 após guard128395715270, restore128395715454 e backup128395715335 SUCCESS. Grupo de processos próprio, TERM/espera/KILL, stopServer em finally interno mesmo se salvar/fechar browser falhar; teste real reproduziu close rejeitado e neto que ignora TERM, depois GREEN. Diagnóstico somente estágios/flags fixas e screenshot após limpar inputs; sem stderr bruto/tokens. Nova execução real aguarda restore da main exata; não repetir deploy.
+
+Fila independente: PLAN103 HEADbc59caa4aea9b18556a844cf7b1fe121ca04995c, guard SUCCESS, ainda não integrado. Corrige workflow antigo de listas que recebeu tarefa V117 e falhou fechado antes de deploy no42369440188/job128394319186. Não reexecutar listas/seed SQL Auth; aplicar skip explícito fora de tarefa/fase após concluir diagnóstico privado. Nenhuma falha vira PASS.
+
+Próxima ação: main9a→restore/backup verdes→workflow privado automático→ler relatório/captura sanitizados→corrigir causa comprovada→repetir prova e inspecionar visualmente→matriz CRUD por domínio/critério e RNFs. Preservar decisões SYS03 N1/N2 e ressalvasR01/R02/R03, sem dispensas novas. Issue166 comentário6706556257 documenta o FAIL e a fila. Não solicitar login pessoal cancelado nem nova aprovação rotineira.
+
+---
+
 # Checkpoint integrado V117, 07/11/2026 UTC
 
 Este registro prevalece sobre o histórico. **CRUD global em execução, V1 não certificada, V2–V5 e PROD bloqueados.**

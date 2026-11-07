@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "937bd9b0792b57b5e2677223eab95deb74154761",
+  "source_commit": "9a66c6309abbd60f33d1bac5e9235aa02bb252a2",
   "source_date": "2026-11-07",
   "context_documents": [
     {
