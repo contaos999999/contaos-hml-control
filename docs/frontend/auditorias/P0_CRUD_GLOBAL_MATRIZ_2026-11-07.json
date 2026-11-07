@@ -1,0 +1,334 @@
+{
+  "schema": "contaos.crud-global.v1.audit",
+  "date": "2026-11-07",
+  "frontend_head": "6363edeb2b980e673ca89c894879f9b196188ded",
+  "backend_head": "a6399adc39e984293c14d7adcf106b00ab76ce50",
+  "version": "V1",
+  "status": "NO_GO_AUDITORIA_E_PROVAS_PENDENTES",
+  "master_zip_sha256": "5ee115d12e263d98068288b6bb722f5f303f2d19e1e4c0b5e930e69da03621da",
+  "regular_source_sha256": "8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e",
+  "atomic_source_sha256": "d9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8",
+  "routes": [
+    "/",
+    "/contratantes",
+    "/contratos",
+    "/esqueci-senha",
+    "/login",
+    "/redefinir-senha",
+    "/selecionar-organizacao",
+    "/administracao/auditoria",
+    "/administracao/usuarios",
+    "/competencias/$id",
+    "/contratantes/novo",
+    "/contratos/$id",
+    "/contratos/novo",
+    "/competencias/$id/analise",
+    "/competencias/$id/apresentar",
+    "/competencias/$id/documentos",
+    "/competencias/$id/parecer",
+    "/contratantes/$id/editar",
+    "/contratos/$id/base-normativa",
+    "/contratos/$id/competencias",
+    "/contratos/$id/documentos",
+    "/contratos/$id/historico",
+    "/contratos/$id/orcamento",
+    "/contratos/$id/regras",
+    "/competencias/$id/apresentacoes/$apresentacaoId",
+    "/contratos/$id/competencias/nova",
+    "/contratos/$id/documentos/$idDocumento",
+    "/contratos/$id/historico/importar"
+  ],
+  "route_count": 28,
+  "access_routes": [
+    "/login",
+    "/esqueci-senha",
+    "/redefinir-senha",
+    "/selecionar-organizacao"
+  ],
+  "organizational_route_count": 24,
+  "domains": [
+    {
+      "id": "organizacoes",
+      "operations": [
+        "criar_organizacao",
+        "listar_organizacoes_disponiveis",
+        "obter_cadastro_operacional_v1",
+        "atualizar_organizacao_v1",
+        "alterar_situacao_organizacao_v1"
+      ],
+      "adapter": "src/lib/cadastros/cadastroOperacionalDados.ts",
+      "ui": "src/components/organizacao/OrganizationSelector.tsx",
+      "test": "src/test/cadastroOperacional.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "PROIBIDO_DELETE_RETENCAO"
+    },
+    {
+      "id": "contratantes",
+      "operations": [
+        "INSERT contratantes",
+        "SELECT contratantes",
+        "atualizar_contratante"
+      ],
+      "adapter": "src/lib/contratantes/editarContratanteDados.ts",
+      "ui": "src/components/contratantes/EditarContratante.tsx",
+      "test": "src/test/editarContratante.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "SEM_DELETE_CANONICO"
+    },
+    {
+      "id": "contratos",
+      "operations": [
+        "INSERT contratos",
+        "SELECT contratos",
+        "classificar_acesso_contrato_v106",
+        "obter_cadastro_operacional_v1",
+        "atualizar_contrato_v1",
+        "alterar_situacao_contrato_v1"
+      ],
+      "adapter": "src/lib/cadastros/cadastroOperacionalDados.ts",
+      "ui": "src/components/contratos/VisaoGeralContrato.tsx",
+      "test": "src/test/cadastroOperacional.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "ENCERRAMENTO_CANCELAMENTO_SEM_APAGAR_HISTORICO"
+    },
+    {
+      "id": "base_normativa",
+      "operations": [
+        "salvar_fonte_normativa_v107",
+        "registrar_versao_fonte_v107",
+        "aprovar_versao_fonte_v107",
+        "definir_aplicabilidade_fonte_v107"
+      ],
+      "adapter": "src/lib/contratos/baseNormativaDados.ts",
+      "ui": "src/components/contratos/BaseNormativaContrato.tsx",
+      "test": "src/test/baseNormativa.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "CORRECAO_POR_VERSAO_SEM_DELETE_HISTORICO"
+    },
+    {
+      "id": "orcamento",
+      "operations": [
+        "salvar_proposta_orcamentaria_v108",
+        "registrar_versao_proposta_v108",
+        "salvar_linha_orcamentaria_v108",
+        "remover_linha_orcamentaria_v108",
+        "publicar_versao_proposta_v108"
+      ],
+      "adapter": "src/lib/contratos/orcamentoDados.ts",
+      "ui": "src/components/contratos/OrcamentoContrato.tsx",
+      "test": "src/test/orcamento.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "REMOVER_LINHA_SOMENTE_RASCUNHO"
+    },
+    {
+      "id": "listas",
+      "operations": [
+        "criar_lista",
+        "editar_lista",
+        "criar_versao",
+        "editar_vigencia_rascunho",
+        "salvar_item",
+        "remover_item",
+        "publicar_versao",
+        "encerrar_vigencia",
+        "alterar_situacao",
+        "descartar_rascunho"
+      ],
+      "adapter": "src/lib/contratos/listaOperacionalDados.ts",
+      "ui": "src/components/contratos/GerenciarListas.tsx",
+      "test": "src/test/listaOperacional.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "REMOVER_ITEM_SOMENTE_RASCUNHO_PUBLICADAS_IMUTAVEIS"
+    },
+    {
+      "id": "regras_preventivas",
+      "operations": [
+        "aprovar_regra_preventiva"
+      ],
+      "adapter": "src/lib/contratos/regrasDados.ts",
+      "ui": "src/components/contratos/RegrasContrato.tsx",
+      "test": "src/test/regrasContrato.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "SEM_EDITOR_GENERICO_V4_ANTES_CERT_V1"
+    },
+    {
+      "id": "documentos_contrato",
+      "operations": [
+        "criar_documento_contrato_completo",
+        "adicionar_versao_documento_contrato",
+        "upload_signed_Storage",
+        "download_signed_Edge"
+      ],
+      "adapter": "src/lib/contratos/documentosDados.ts",
+      "ui": "src/components/contratos/DocumentosContrato.tsx",
+      "test": "src/test/documentosContrato.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "CORRECAO_POR_NOVA_VERSAO"
+    },
+    {
+      "id": "documento_detalhe",
+      "operations": [
+        "definir_vigencia_sugestao_extracao",
+        "revisar_sugestao_extracao",
+        "consultar_processamento_paginas_fragmentos"
+      ],
+      "adapter": "src/lib/contratos/documentoDetalheDados.ts",
+      "ui": "src/components/contratos/DocumentoDetalhe.tsx",
+      "test": "src/test/documentoDetalhe.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "SEM_DELETE_REPROCESSAMENTO_MANUAL_NAO_EXIGIDO_PROMPT32"
+    },
+    {
+      "id": "competencias",
+      "operations": [
+        "criar_competencia",
+        "obter_visao_geral_competencia",
+        "SELECT competencias"
+      ],
+      "adapter": "src/lib/contratos/novaCompetenciaDados.ts",
+      "ui": "src/components/contratos/NovaCompetencia.tsx",
+      "test": "src/test/novaCompetencia.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "SEM_EDICAO_LIVRE_DE_STATUS_CRITICO"
+    },
+    {
+      "id": "documentos_competencia",
+      "operations": [
+        "obter_documentos_competencia_v115",
+        "criar_documento_competencia_v115",
+        "adicionar_versao_documento_competencia_v115"
+      ],
+      "adapter": "src/lib/competencias/competenciaDocumentosDados.ts",
+      "ui": "src/components/competencias/CompetenciaDocumentos.tsx",
+      "test": "src/test/competenciaDocumentos.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "CORRECAO_POR_NOVA_VERSAO"
+    },
+    {
+      "id": "analise_revisao",
+      "operations": [
+        "solicitar_analise_competencia",
+        "solicitar_reanalise_requisitos",
+        "obter_detalhe_requisito_v117",
+        "obter_contexto_revisao_v117",
+        "registrar_revisao_requisito_v117"
+      ],
+      "adapter": "src/lib/competencias/revisaoRequisitoDados.ts",
+      "ui": "src/components/competencias/RequirementDrawer.tsx",
+      "test": "src/test/revisaoRequisito.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "PASS_ESCOPO_REVISAO_RUN42391662453_HTTP40_BROWSER43",
+      "retention_rule": "EXECUCOES_E_EVIDENCIAS_APPEND_ONLY"
+    },
+    {
+      "id": "parecer",
+      "operations": [
+        "solicitar_parecer_interno",
+        "aprovar_parecer_interno"
+      ],
+      "adapter": "src/lib/competencias/parecerInternoDados.ts",
+      "ui": "src/components/competencias/CompetenciaParecer.tsx",
+      "test": "src/test/competenciaParecer.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "SEM_EDITOR_MANUAL_SEM_CONTRATO_BACKEND_AUTORIZADO"
+    },
+    {
+      "id": "apresentacao",
+      "operations": [
+        "aprovar_apresentacao",
+        "registrar_apresentacao"
+      ],
+      "adapter": "src/lib/competencias/apresentacaoDados.ts",
+      "ui": "src/components/competencias/CompetenciaApresentar.tsx",
+      "test": "src/test/competenciaApresentar.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "PACOTE_IMUTAVEL_SEM_DELETE"
+    },
+    {
+      "id": "protocolo",
+      "operations": [
+        "SELECT apresentacoes_contratante",
+        "SELECT pacotes_competencia",
+        "SELECT itens_pacote_competencia"
+      ],
+      "adapter": "src/lib/competencias/protocoloDados.ts",
+      "ui": "src/components/competencias/CompetenciaProtocolo.tsx",
+      "test": "src/test/competenciaProtocolo.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "CONSULTA_IMUTAVEL"
+    },
+    {
+      "id": "historico",
+      "operations": [
+        "registrar_relatorio_historico_hml",
+        "enfileirar_ingestao_historica_hml",
+        "vincular_tratamento_historico_hml"
+      ],
+      "adapter": "src/lib/contratos/ingestaoHistoricoDados.ts",
+      "ui": "src/components/contratos/ImportarHistorico.tsx",
+      "test": "src/test/ingestaoHistorico.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "SEM_APAGAR_RELATORIOS_RESPOSTAS_DESFECHOS"
+    },
+    {
+      "id": "administracao",
+      "operations": [
+        "admin-invite-user",
+        "salvar_vinculo_usuario_adm",
+        "listar_escopo_contratos_usuario_adm + salvar_vinculo_usuario_adm",
+        "obter_matriz_rbac_master",
+        "atualizar_matriz_rbac_master"
+      ],
+      "adapter": "src/lib/administracao/admUsuariosRpc.ts",
+      "ui": "src/components/administracao/usuarios/AdminUsuarios.tsx",
+      "test": "src/test/admUsuarios.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "REVOGAR_VINCULO_NAO_EXCLUI_IDENTIDADE_GLOBAL"
+    },
+    {
+      "id": "auditoria",
+      "operations": [
+        "SELECT eventos_auditoria"
+      ],
+      "adapter": "src/lib/administracao/auditoriaDados.ts",
+      "ui": "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
+      "test": "src/test/trilhaAuditoria.test.tsx",
+      "code_status": "IMPLEMENTADO_INSPECAO_ESTATICA",
+      "private_status": "NAO_VERIFICADO",
+      "retention_rule": "C_U_D_PROIBIDOS_PROMPT75"
+    }
+  ],
+  "confirmed_findings": [
+    {
+      "id": "CRUD-LISTA-001",
+      "severity": "IMPORTANT",
+      "file": "src/components/contratos/GerenciarListas.tsx",
+      "finding": "q.isError desmonta Formulario e perde rascunho após409/refetchtransitório",
+      "state": "ABERTO",
+      "test_required": "409 -> refetch falha500 -> bloquearmutação/preservardraft -> retryPASS sem perderdados;403continua failclosed"
+    }
+  ],
+  "limits": [
+    "Inventario nao e certificacao",
+    "Mocks nao sao provaHML",
+    "V1 nao certificada; V2/PROD bloqueados",
+    "SYS03 decisoes manuais anteriores preservadas sem repetirporpadrao",
+    "Editor manual de parecer/exportacao auditoria/reprocessamento documental manual nao sao permissoesCRUD novas semfonte/contrato; nao inventarAPI"
+  ]
+}
