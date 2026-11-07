@@ -1,3 +1,30 @@
+## Checkpoint verificado em 07/11/2026: PR #265 integrado
+
+Última etapa comprovada: aviso de falha da conferência explícita da reanálise. PR #265 integrado no merge `ec7659708b2e6563274915803c59f8ef22c5aeef`, HEAD testado `78523eea0a850420682356f202a8892aa2fa3fa3`. PLAN #264 foi integrado antes do BUILD: merge `97eaaa7b4685970add307222834b486bbdbdddc8`, CI `42357346038`, ambos checks SUCCESS.
+
+### Evidências desta entrega
+
+- CI BUILD `42357723313`: Zero-Drift e Teste C Independente SUCCESS no mesmo HEAD. Proteção dos tipos `42357723333`: SUCCESS.
+- Logs conferidos: 1.084/1.084 testes em 40 suítes; TypeScript, build e guardas PASS. Revisão independente: 56/56 testes focados, sem achados críticos ou importantes.
+- Teste C: `PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA`, 224 combinações e 214 capturas. Artefato `13568645901`, SHA-256 do ZIP `0648a86b6af3451f10e23f88808c9a3a1c8ba182375de2ec5cb74d7c0f2a6459`. Esta prova pública não comprova o drawer privado autenticado.
+- Erros HTTP, de rede e de resposta inválida geram aviso específico. Nova conferência limpa esse aviso, mas preserva resultado incerto e bloqueio de reenvio. Leitura válida não confirma escrita. Resposta atrasada de página anterior não altera aviso nem dados atuais. O achado menor diferido no PR #262 foi resolvido.
+- Backend de referência `4fec09bf5cab5afc776192b9bef6e70728e1a058` e blob de tipos `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` preservados. Nenhuma alteração de backend, Auth, PROD, rota ou dependência.
+
+### Próxima execução por prioridade
+
+1. Obter autorização específica do titular para investigar, **somente em leitura**, o caso `registrar_resultado_requisito` no backend HML: capacidade efetiva para revisão humana, proteção contra edição concorrente e idempotência. O Gate 1 de ADR-DEV-002 e AGENTS impedem inspeção técnica sem essa decisão. Esta autorização não inclui mudanças SQL, Auth ou PROD.
+2. Após autorização, confirmar se a lacuna é real. Se não for, registrar o contrato e retomar o frontend. Se for, preparar PROMPT e PLAN próprios do backend, validar os gates e eventuais autorizações adicionais antes de implementar. Não inventar capacidade, revisão esperada ou chave idempotente apenas no React.
+3. Quando o titular tomar a iniciativa de disponibilizar sessão HML, executar a prova privada autorizada de operações e estados. A autenticação anterior foi cancelada e não foi solicitada novamente. Nesta rodada, Chrome estava sem sessão e TinyFish Default sem sites autenticados. Não solicitar credenciais por texto nem inserir usuários por SQL em auth.users.
+4. Reconciliar os critérios V1, RNF, WCAG e a matriz por domínio com evidências reais. Preservar as decisões SYS03 N1/N2 e as ressalvas R01/R02/R03. Certificar V1 somente após todos os gates aplicáveis. V2–V5 e PROD continuam bloqueados.
+
+**CRUD global NÃO CONCLUÍDO. V1 NÃO CERTIFICADA.** Os blocos abaixo são históricos; esta seção prevalece nos pontos atualizados.
+
+### Prompt completo para retomada
+
+Continue o ContaOS 4.1 em `contaos999999/contaos-hml-control`, pelo checkpoint mais recente. Reconsulte o HEAD de main. Último BUILD comprovado: PR #265, merge `ec7659708b2e6563274915803c59f8ef22c5aeef`, HEAD `78523eea0a850420682356f202a8892aa2fa3fa3`, CI `42357723313` com ambos checks SUCCESS, 1.084 testes de regressão e 56 focados. Teste C público: 224 combinações, 214 capturas; privado NÃO VERIFICADO. Não repetir PRs #255, #257, #259, #262, #264 ou #265. Leia AGENTS, ADR-DEV-002, a ordem por versão, PLANO_ATIVO e fontes canônicas. Backend de referência `4fec09bf5cab5afc776192b9bef6e70728e1a058`; tipos congelados no blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`. Próxima dependência: autorização específica para investigar somente em leitura o caso `registrar_resultado_requisito`. Não interpretar “Continue” como substituto desse gate. Não investigar backend/Supabase sem essa decisão. A autenticação anterior foi cancelada: não repetir o pedido sem iniciativa do titular. GitHub e Actions são canônicos. CRUD global não concluído, V1 não certificada, V2–V5 e PROD bloqueados. Preservar histórico, decisões SYS03 e ressalvas expressas; não criar dispensas implícitas nem repetir tarefas comprovadas.
+
+---
+
 ## Continuidade 07/11/2026 — feedback de falha da conferência
 
 PLAN264 integrado `97eaaa7b4685970add307222834b486bbdbdddc8`, run42357346038 ambos checks SUCCESS. BUILD implementado, CI/merge ainda pendentes neste commit: falhas HTTP/rede/schema da conferência explícita geram aviso específico, preservam resultado incerto e reenvio bloqueado. Tentar conferir novamente limpa o aviso; leitura válida não confirma escrita. Falha atrasada de página anterior ignorada. RED3falhas/52PASS; GREEN56/56; regressão1084/1084 em40suítes. TypeScript/build/ESLint focal/ZeroDrift/GOV020/diffcheck PASS; revisão independente sem achados importantes. Tipos blob8ea7750b75fd9d76b29c36ce7613392e3ab65e19; backend4fec09bf5cab5afc776192b9bef6e70728e1a058 inalterado.

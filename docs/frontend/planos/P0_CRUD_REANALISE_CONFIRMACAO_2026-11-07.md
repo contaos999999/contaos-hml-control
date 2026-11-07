@@ -66,3 +66,5 @@ O bloco literal ZERO-DRIFT deste plano permanece integralmente aplicável. Fonte
 ### Execução da emenda de conferência
 
 PLAN264 integrado em `97eaaa7b4685970add307222834b486bbdbdddc8`, HEAD documental `9c7539a3be0c63d6d99fa2c43b842d45faf41f98`; run42357346038 ambos checks SUCCESS antes do BUILD. RED:3falhas/52PASS, ausência do aviso reproduzida nos três tipos. GREEN final56/56, regressão1084/1084 em40suítes. TypeScript,build,ESLint focal,ZeroDrift,GOV020,diffcheck PASS. Tipos congelados preservados. Revisão independente sem achado crítico/importante; respostas antigas de página não alteram dados nem aviso. CI BUILD e prova visual/privada ainda pendentes neste commit. Nenhum backend/Auth/PROD/rota/dependência modificado.
+
+Fechamento verificado da emenda: PR265 integrado ec7659708b2e6563274915803c59f8ef22c5aeef, HEAD78523eea0a850420682356f202a8892aa2fa3fa3, run42357723313 ambos checksSUCCESS e1084/1084; proteção42357723333SUCCESS. TesteC público224combinações/214capturas,artefato13568645901. PrivadoNÃO VERIFICADO. Minor anterior resolvido. CRUDglobal eV1 continuam pendentes,sembackend/PROD.
