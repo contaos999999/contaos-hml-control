@@ -1,3 +1,21 @@
+## Checkpoint P0 — 07/11/2026 — PLAN/GATE documental integrado; cleanup em validação
+
+Este bloco prevalece sobre o histórico. **V1 e CRUD global continuam sem certificação.** Os resultados funcionais anteriores de CADASTROS_LISTAS e Auditoria permanecem válidos somente nos respectivos escopos. V2–V5 e PROD bloqueados.
+
+- Backend main `0dd7501f59d60266b6963285682a3bd1906fdb31`. PLAN #132, HEAD `5862a5d86f4b95c5ad7eed41ed2eb7d5568d5cd5`, integrado em `639e033aaf5e348404dd51a1e9d3d402cca60043`. GATE separado #133, HEAD `c163e1ee713266e0e328563c7f55f51c1da8511a`, integrado em 0dd7501. Guard, restore e backup SUCCESS no mesmo HEAD em cada etapa; restores existentes disparados na UI das branches exatas: runs42405513402 e42406015398. Nenhum workflow ou controle foi alterado para obter esses checks.
+- A fase é GATE_PROVA_PRIVADA_DOCUMENTOS; execução material continua desabilitada. O próximo lote comprovará upload físico TXT/PDF, documento/nova versão, download, hash/tamanho e worker normal. Não aprova todos os formatos, IA, multipart, orçamento ou atômicos integrais. O plano preparado no executor foi reutilizado; regular31 e fontes atômicas pertinentes lidos literalmente no ZIP conferido.
+- BUILD parcial #134 implementa apenas recuperação/quarentena de jobs próprios e sua prova SQL descartável. HEAD atual `12bfb1c259e7087f5ff739e4bab0e88545bef16d`. Protocolo20/20 e suíte50/50 locais; revisão independente sem Critical/Important. Ainda não ligado à limpeza HML nem habilitado DOCUMENTOS no inicializador material. Sem novo upload ou worker HML nesta etapa.
+- O primeiro restore do #134, run42407348738/job128507798885, falhou no fixture antes da quarentena: passou json explícito à função existente cujo argumento é jsonb. Cast corrigido no HEAD12bfb1c e revisado independentemente; nova CI obrigatória. O FAIL anterior permanece registrado. Checks do HEAD anterior não autorizam merge.
+- O novo Teste20 do restore executa SQL somente em PostgreSQL127.0.0.1:54322/postgres, com guard anterior ao acesso, sem AuthAdmin/HML/PROD. Verifica escopo próprio, preservação de terceiros e concluídos, recusa de worker ativo e mensagem órfã. Corrida por segunda conexão SQL deve demonstrar bloqueio e preservar processando. **SQL real/corrida ainda PENDENTES na preparação deste checkpoint.** Limpeza inconclusiva mantém FAIL; não forçar aprovado/concluído nem consumir fila global.
+- Próxima ação exata: consultar todos os checks/runs do #134 no HEAD vivo; em FAILURE, ler logs e corrigir sem merge; em SUCCESS de guard/restore/backup/probe no mesmo HEAD, integrar normalmente. Só então implementar o lote DOCUMENTOS e a chamada da quarentena ao fluxo, com RED/GREEN, revisão, novo CI e HML. Não repetir PLAN132/GATE133 ou lotes funcionais válidos.
+- Frontend baseline deste checkpoint `1a03001f60ef67d327638298b2164ac16b207432`, merge #297 com três checks SUCCESS. Snapshot e reconhecimento reancorados juntos em 0dd7501;25 documentos normativos e catálogo sem mudança de blob. Matriz mantém provas e limitações anteriores;13 domínios, auditoria visual/manual, contraste inconclusivo, marca mobile aberta,28rotas/8variantes e retrospectiva ainda precisam de evidência aplicável.
+- Evidências válidas preservadas: Auditoria42404359665,52Auth/SQL+132browser,quarentena6/2; CADASTROS_LISTAS funcional42402246765 e captura estável42403737562,37Auth/SQL+100browser,quarentena4/3. Artefatos/hashes e revisões estão nos blocos anteriores. Nenhuma delas certifica WCAG ou V1.
+- PRs legados75/77/78/80 já integrados. Reconsultar todos os PRs e workflows pendentes antes de terminar cada execução e agir sobre o resultado. Automação horária não equivale a monitoramento contínuo entre execuções.
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: checkpoint documental; produto, tipos, marca, DDL/RLS/Edges, configurações e PROD preservados.
+
+---
+
 ## Checkpoint P0 — 07/11/2026 — Auditoria funcional comprovada; certificação V1 pendente
 
 Este bloco prevalece sobre o histórico. **CRUD global e V1 NÃO certificados.** Não repetir PLAN120/GATE121 nem os lotes funcionais válidos sem causa nova. V2–V5 e PROD permanecem bloqueados.

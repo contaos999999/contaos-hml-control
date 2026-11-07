@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "bf25e4bde1cc72a4457c7fd1ff91e51806f7fee1",
+  "source_commit": "0dd7501f59d60266b6963285682a3bd1906fdb31",
   "source_date": "2026-11-07",
   "context_documents": [
     {
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "ProvaAuditoria42404359665 PASS no escopo;25blobs/catálogo iguais. Não certifica todosatômicos,CRUDglobalouV1."
+  "p0_reanchor_note": "PLAN132/GATE133 documentais integrados;25blobs/catálogo preservados. BUILD134 de cleanup ainda emCI; uploadsHML desabilitados."
 }

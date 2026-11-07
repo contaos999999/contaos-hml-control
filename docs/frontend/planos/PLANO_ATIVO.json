@@ -149,7 +149,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "Codex:25documentos/catálogo iguais no backendbf25e4b; fontes originais conferidas; regular75 e atômicos020–023 lidos; provaAuditoria parcial não certifica todosatômicos.",
   "context_read_acknowledged_at": "2026-11-07",
-  "context_source_commit": "bf25e4bde1cc72a4457c7fd1ff91e51806f7fee1",
+  "context_source_commit": "0dd7501f59d60266b6963285682a3bd1906fdb31",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -674,7 +674,7 @@
     "backend_proof_plan": 120,
     "backend_proof_gate": 121,
     "backend_proof_gate_merge": "34d88b8a77cd3ae2abfca72ee78d441c426e767b",
-    "backend_current_head": "bf25e4bde1cc72a4457c7fd1ff91e51806f7fee1",
+    "backend_current_head": "0dd7501f59d60266b6963285682a3bd1906fdb31",
     "backend_build_pr": 122,
     "backend_build_merge": "c5b0a31793ead6bace7a28246bcb848c26b0d107",
     "backend_fix_prs": [
@@ -750,7 +750,7 @@
         "visual_state": "PARTIAL_NOT_CERTIFIED"
       }
     ],
-    "next_action": "Prova de upload físico e worker documental real sob PLAN/GATE vigente/detalhamento específico preparado; demais13domínios,28rotas/WCAGmanual/BRANDmobile e retrospectiva antes de certificarV1. Não repetir lotes funcionais aprovados sem motivo.",
+    "next_action": "Conferir todos os checks do PR backend134 no HEAD12bfb1c; ler/fixar FAIL. Somente após SQL isolado/corrida e CI completos integrar cleanup. Depois implementar upload DOCUMENTOS e ativar HML em BUILD separado, sob PLAN132/GATE133. Preservar lotes válidos.",
     "backend_diagnostic_pr": 125,
     "backend_diagnostic_merge": "01cde2e96e2fc98d601f9c9dfc865f05af4629b8",
     "latest_pass_batch": {
@@ -847,6 +847,30 @@
       ],
       "independent_review": "52/132 e16PNG conferidos independentemente;semCritical/Important funcional;visualPARCIAL,contraste não aprovado em768light/390light/dark",
       "visual_state": "PARTIAL_NOT_CERTIFIED"
+    },
+    "documents_queue": {
+      "backend_main": "0dd7501f59d60266b6963285682a3bd1906fdb31",
+      "plan_pr": 132,
+      "plan_head": "5862a5d86f4b95c5ad7eed41ed2eb7d5568d5cd5",
+      "plan_merge": "639e033aaf5e348404dd51a1e9d3d402cca60043",
+      "plan_restore": 42405513402,
+      "gate_pr": 133,
+      "gate_head": "c163e1ee713266e0e328563c7f55f51c1da8511a",
+      "gate_merge": "0dd7501f59d60266b6963285682a3bd1906fdb31",
+      "gate_restore": 42406015398,
+      "build_pr": 134,
+      "build_head": "12bfb1c259e7087f5ff739e4bab0e88545bef16d",
+      "state": "QUARANTINE_BUILD_SQL_CI_PENDING_UPLOAD_DISABLED",
+      "first_sql_ci": {
+        "run": 42407348738,
+        "job": 128507798885,
+        "state": "FAIL_LOCAL_FIXTURE_JSON_INSTEAD_OF_JSONB",
+        "fixed_in": "12bfb1c259e7087f5ff739e4bab0e88545bef16d"
+      },
+      "local_protocol": 20,
+      "local_suite": 50,
+      "independent_review": "Sem Critical/Important no código e no ajuste JSONB; SQL real e corrida ainda dependem do CI",
+      "hml_upload": false
     }
   }
 }
