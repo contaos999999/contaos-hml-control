@@ -1,3 +1,22 @@
+## Checkpoint P0 — 07/11/2026 — roteamento HML concluído com evidência
+
+- PLAN103 integrado534a6d3dec156f60ac31b5b0c7f1fd05ab6bbbe7; GATE117 HEADb453b2c75457d29e3272aaaa0f98d8fe5a7b99cb/guard42392703305 SUCCESS, merge8f48e37317c711c6736a33e9a34421c3967326d3.
+- BUILD118 HEAD545231b2ea47198b089085c50c38eb77f93f359a, merge2ebb9e3a639ea837430f3d9f1b4e7acfdbb8bb35. Seleção de tarefa/fase no SHA do restore, contentsread sem acessoHML/secrets/actionswrite. Jobs materiais dependem de scopeSUCCESS e applicabletrue. Origem própria pushmain/restoreSUCCESS; manifesto inválidoFAIL, foraescopoSKIPPED. Gates SHA/hash/allowlist/CI/dispatch/cleanup preservados.
+- TDD RED:13testes,4PASS/9FAIL por falta de scope. GREEN foco13/13, suíte completa node--test30/30, protocoloV117PASS, Context/ZeroDrift/Architecture/security/history/crosswalkPASS e YAMLválido. Revisão independente semCritical/Important,13/13 executados pelo revisor.
+- CI118 no mesmoHEAD: guard42393190669, restore/backup42393190805 e probe42393190673 SUCCESS. Main guard42393429313/restore42393429340 SUCCESS.
+- Prova operacional após merge, HEAD2ebb9e3a639ea837430f3d9f1b4e7acfdbb8bb35:
+  - Listas https://github.com/contaos999999/develop/actions/runs/42393625175 : scope128466217848 SUCCESS; canonical-deploy128466249496 e real-jwt128466249648 SKIPPED.
+  - Revisão https://github.com/contaos999999/develop/actions/runs/42393625123 : scope128466217768 SUCCESS; canonical-deploy128466247984 e real-jwt128466248525 SKIPPED.
+  - Browser https://github.com/contaos999999/develop/actions/runs/42393625096 : scope128466217565 SUCCESS; private-browser128466249394 e public-probe128466218545 SKIPPED.
+- Três logs scope lidos e motivo confirmado: NOT_APPLICABLE_TASK_OR_PHASE: material jobs skipped. Nenhum job material executado, nenhum novo deploy/fixture/JWT fora de escopo. Cadastros42393625068 continuouSKIPPED. Failures históricos de listas permanecemFAIL; não converter skip em prova de CRUD.
+- Restore main: artefato13582580695 SHA256197e1bb8a3ee72b9d67e3a4c517a51242bf1952ee9a5cfa0466bd2a641d5707b; backup13582950289 SHA256dac294b64c078276ea425791a31bfb4ec28dfe7e30994ca57a8dd9a6d41fea99 (metadadosGitHub).
+- RESULTADO119 HEADf5d1192c388183cc5e918de5f707ec74fc2f0c6b/guardSUCCESS, integradoa6399adc39e984293c14d7adcf106b00ab76ce50. Estado PASS somente no escopo de roteamento. Snapshot/ack frontend reancorados juntos neste HEAD,25 fontes e catálogo100/97 invariáveis.
+- Decisão técnica: listas/revisão só autorizam deploy em BUILD_EM_VALIDACAO; fase histórica dePLAN excluída por segurança. Futuras tarefas precisam declararBUILD explicitamente. Browser preserva BUILD_PROVA_PRIVADA_FRONTEND. Limitação minor registrada: testes extraem YAML por regex/avaliam expressõesJS simples, sem assertion específica de checkout.ref; código revisado e validação Actions/skips reais complementam a cobertura.
+- Prova privadaV117 anterior42391662453 PASS (HTTP40/browser43 e quarentena8) preservada sem repetir ações válidas. Falha transitória de contraste42390331791 e limites de auditoria manual continuam registrados.
+- Próxima tarefa: retomar matriz CRUDglobal e lacunas V1 individualmente com fontes, gates, testes e evidências, incluindo contraste transitório, auditoria manual, retrospectiva e upload/worker quando exigidos. CRUDglobal/V1 integrais NÃO CERTIFICADOS. Não iniciar V2 nem alterar PROD.
+
+---
+
 ## Checkpoint P0 — 07/11/2026 — timeout resolvido e PLAN103 integrado
 
 - Causa comprovada: segundo login preenchia formulário SSR antes do binding React; run42390984573 terminou em CROSS_TENANT_LOGIN_REDIRECT com denied_login_form_bound=false e sem login HTTP emitido. PLAN112/GATE113, diagnóstico114/115. Artefato13582175253 SHA2561842b6a412780b4b98eadd8f84fa5246f80320f29619e36ff3e2ba7544df3811.
