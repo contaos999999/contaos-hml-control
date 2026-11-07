@@ -527,7 +527,7 @@
     "types_ci": 42357723333
   },
   "crud_revisao_humana_backend_gate": {
-    "status": "PLAN_CI_PASS_GATE_VALIDADO_BUILD_SEPARADO",
+    "status": "BACKEND_JWT_PASS_FRONTEND_BUILD_EM_VALIDACAO",
     "authorization": "Titular: Autorizado investigação, depois Execute correção canônica e integração com testes reais",
     "backend_plan_pr": 98,
     "backend_plan_merge": "c1e138d7a60641e1059079e83649bc3bb7f31599",
@@ -546,8 +546,15 @@
     "jwt_job": 128386155328,
     "jwt_state": "PASS_38_ASSERTIONS_QUARANTINE_VERIFIED",
     "fixtures_created": false,
-    "next_action": "GATE separado; aguardar CI+merge antes de RED/BUILD",
+    "next_action": "CI BUILD/TesteC,integração e prova privada com fixtures Auth oficiais;sem repetirdeploy",
     "frontend_plan_pr": 269,
-    "frontend_plan_ci": 42367049105
+    "frontend_plan_ci": 42367049105,
+    "frontend_gate_pr": 270,
+    "frontend_gate_merge": "ecc1967c408ef4e9c6c901a895866857e647887e",
+    "frontend_gate_ci": 42367195275,
+    "frontend_local_regression": "1128/1128 em41suítes",
+    "frontend_local_focused": "100/100",
+    "frontend_review": "3Important corrigidos porRED3/GREEN100;semminor diferido",
+    "frontend_private_ui": "NAO_VERIFICADA"
   }
 }
