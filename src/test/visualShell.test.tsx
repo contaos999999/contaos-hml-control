@@ -238,3 +238,105 @@ vi.mock("@tanstack/react-query", () => ({
     clear: m.clear,
   }),
 }));
+
+describe("P0 cabeçalho em rolagem e foco", () => {
+  it("reserva a altura real, acompanha resize e restaura o estilo ao desmontar", async () => {
+    let height = 176;
+    let resize = () => {};
+    const disconnect = vi.fn();
+    const previous = document.documentElement.style.scrollPaddingTop;
+    document.documentElement.style.scrollPaddingTop = "7px";
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => void) {
+          resize = callback;
+        }
+        observe() {}
+        disconnect = disconnect;
+      },
+    );
+    const measure = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        return {
+          top: 0,
+          bottom: height,
+          height,
+          width: 390,
+          left: 0,
+          right: 390,
+          x: 0,
+          y: 0,
+          toJSON() {},
+        } as DOMRect;
+      });
+    try {
+      const { unmount } = render(pagina());
+      await screen.findByText("Organização Alfa");
+      expect(document.documentElement.style.scrollPaddingTop).toBe("188px");
+      height = 224;
+      act(() => resize());
+      expect(document.documentElement.style.scrollPaddingTop).toBe("236px");
+      unmount();
+      expect(disconnect).toHaveBeenCalledOnce();
+      expect(document.documentElement.style.scrollPaddingTop).toBe("7px");
+    } finally {
+      cleanup();
+      measure.mockRestore();
+      vi.unstubAllGlobals();
+      document.documentElement.style.scrollPaddingTop = previous;
+    }
+  });
+  it("revela foco do conteúdo encoberto e preserva foco de header e portal", async () => {
+    const scroll = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
+    vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+      callback(0);
+      return 1;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const measure = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        const header = this.tagName === "HEADER";
+        return {
+          top: header ? 0 : 20,
+          bottom: header ? 176 : 64,
+          height: header ? 176 : 44,
+          width: 390,
+          left: 0,
+          right: 390,
+          x: 0,
+          y: 0,
+          toJSON() {},
+        } as DOMRect;
+      });
+    const portal = document.createElement("button");
+    document.body.append(portal);
+    try {
+      render(
+        pagina(
+          <main>
+            <button>Campo do conteúdo</button>
+          </main>,
+        ),
+      );
+      await screen.findByText("Organização Alfa");
+      screen.getByRole("button", { name: "Sair" }).focus();
+      portal.focus();
+      expect(scroll).not.toHaveBeenCalled();
+      screen.getByRole("button", { name: "Campo do conteúdo" }).focus();
+      expect(scroll).toHaveBeenCalledWith({ top: -168, behavior: "instant" });
+      cleanup();
+      scroll.mockClear();
+      portal.focus();
+      expect(scroll).not.toHaveBeenCalled();
+    } finally {
+      cleanup();
+      portal.remove();
+      scroll.mockRestore();
+      measure.mockRestore();
+      vi.unstubAllGlobals();
+    }
+  });
+});

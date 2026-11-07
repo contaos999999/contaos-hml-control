@@ -253,3 +253,12 @@ Consulta somente leitura a `pg_proc` e `has_function_privilege` no projeto HML `
 - `public.validar_administrador_organizacao`: existe, SECURITY INVOKER, STABLE, EXECUTE authenticated=true, anon=false.
 - Ambas as capacidades possuem contrato backend existente; nenhum DDL foi executado. A autorização efetiva por JWT e o isolamento A/B **não foram comprovados** por essa consulta.
 - Gate de BUILD frontend permanece `EM_VALIDACAO` em `PLANO_ATIVO.json`; não alterar código antes de fechar as verificações canônicas, testes planejados e CI do PLAN. A correção deve reutilizar a RPC implantada, nunca ampliar privilégios.
+
+
+## Correção P0 de rolagem e foco, 07/11/2026
+
+GATE305 integrado d87d17f398c06b3dfabb024351e3afe10e847659 após HEADd18c4cb, run42419611941 ambosSUCCESS e LOCK42419611974SUCCESS. Header recebeu sticky/top0/z20, compensação por altura real com ResizeObserver/resize, revelação do foco restrita ao conteúdo e cleanup de observer/listeners/frame/estilo. Não interfere com foco do próprio header ou portais.
+
+RED local80c1999:12PASS/2FAIL por ausência de compensação e revelação de foco; GREEN39/39 dirigido,1152/1152 em41suítes; tsc/build/ESLint focal/Prettier/ZeroDrift/diffPASS. Types8ea7750b75fd9d76b29c36ce7613392e3ab65e19 preservado. Revisão independente sem Critical/Important/Minor nos dois arquivos. Avisos React act preexistentes não tratados como falhas nem ocultados.
+
+Limites: regressões unitárias usam geometria simulada; navegador local bloqueado antes de abrir página por socket/ptrace. Geometria, zoom, teclado móvel, quatro larguras/dois temas com sessão real e WCAG integral permanecem NÃO VERIFICADOS. Teste C e CI deste BUILD ainda pendentes. Nenhuma frente certificada.

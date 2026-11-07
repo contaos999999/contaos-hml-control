@@ -1446,3 +1446,14 @@ Decisão expressa do titular: todo prompt/requisito frontend V1–V5 deve ser co
 - **Checks pós-merge:** CI frontend da main para `2c39c06c` disparado sob run **42027384536**, estava em fila no primeiro registro; consultar status atual antes da próxima decisão e não presumir concluído.
 - **Próxima tarefa comprovadamente necessária:** fechar os itens B-01..B-07 com evidências reais e PLAN/BUILD apropriados, começando por SYS-03 com conta/caixa HML controlada e reconciliar matriz V1. A ressalva R-03 não justifica dispensar SYS-03. Não repetir PRs #142–#145 nem editar backend ou PROD sem gate próprio.
 - **Governança:** 100 regulares e 97 atômicos mantidos; nenhuma alteração de tipos certificados, migrations, Auth ou PROD nesta rodada. Este checkpoint não substitui o termo de certificação pendente.
+
+
+## Checkpoint P0: cabeçalho e primeira prova documental real, 07/11/2026
+
+Plano único #299 ativo: frente1 identidade visual em execução; frentes2 CRUD e3 integração/auditoria aguardam certificação da anterior. Não avançarV2 sem V1 certificada.
+
+BackendBUILD135 integrado95e3a3fa19034bbef39a286ed56c55d967a55c8c após HEAD3ab6c605 guard42419235014/job128543875066, restore42419235164/jobs128543875646/128543875890 epublic42419234954/job128543875184 SUCCESS. Main guard42419479544 e restore42419479523 SUCCESS. HMLreal42419649579/job128545142604 FAILURE: LOGIN_ADMINISTRADOR200, runtime_errors0, TimeoutError emDOCUMENT_UPLOAD_TXT_V1 antes de upload; causa exata não demonstrada. Artefato13592408409 SHA256b1364e0f3b04421b1c90de58209d4de2195faae131200bfddcd60d42841e03e2. Quarentena verificada4users/2org,0uploads/objects/jobs. Próximo delta backend somente diagnóstico fechado para localizar ação/endpoint, sem suposições nem alteração de produto.
+
+FrontendGATE305 integrado d87d17f após amboschecksSUCCESS42419611941/LOCK42419611974; snapshot/ack reancorados juntos no backend95e3a3f,25blobs ecatálogo iguais. BUILDheader tem REDlocal80c1999, GREEN1152/1152 em41suítes,39/39 dirigido,tsc/build/lintfocal/Prettier/ZeroDrift/diffPASS; revisão independente semachados. CI/merge doBUILD egeometria real/HML ainda pendentes. Navegadorlocal bloqueadosocket/ptrace, semcontorno.
+
+Histórico correto preservado: PR75/80merged; PR77/78closedsemmerge; PR83merged. NenhumPASSglobal, nenhumPROD, nenhumcheckinventado. Próxima fila: CI/mergeheader permitido, diagnósticoHMLdocumental eprova real, capturas privadas/72BRAND/teclado/foco/contraste e demaiscritériosV1 antes de qualquercertificado.
