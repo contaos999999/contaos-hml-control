@@ -300,3 +300,18 @@ Cobrir contextoA/headerB, header oculto pela rolagem, foco sob elemento fixo, ma
 
 ### ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 ContaOS Brand v1.0, assets oficiais transparentes e tokens existentes; REUTILIZAR > ESTENDER > CRIAR. Sem design system paralelo, redesenho deSVG, biblioteca nova, backend paralelo ou PROD. GitHub direto, sem BUILD Lovable; reaproveitar provas válidas. TDD/CI/Teste C e auditoria visual independentes preservados.1440/1280/768/390×claro/escuro, marca/estados/foco/contraste devem ser comprovados. Sem prova não declararPASS.
+
+
+## GATE separado da Tarefa1 — inventário completo do Teste C — 07/11/2026
+PLAN299 integrado em9458262bd228fac3d6a6217869b207f8f739beb5; HEADb8897b8b7e3f63b7543ee56dc60e8a87653c0619, run42416958910 com Zero-Drift e TesteC SUCCESS, proteção de tipos42416958561 SUCCESS. TesteC documental dispensou navegador por escopo; isso não certifica telas. Baseline local1150/1150 testes em41suítes;34/34gates dirigidos.
+
+FAIL de cobertura comprovado: scripts/testc/visual-audit.mjs enumera28superfícies, mas inclui drawerV117 na mesma rota deV116 e omite /administracao/auditoria (V123). Existem28rotas de página e29superfícies com drawer. Corrigir a cobertura, não reduzir o inventário nem trocar drawer porAuditoria.
+
+Allowlist adicional fechada para BUILD posterior ao merge deste GATE: scripts/testc/visual-audit.mjs e scripts/testc/visual-audit.test.mjs. Nenhum workflow será modificado. Só acrescentarV123 privada e testar28páginas+drawer=29superfícies×8=232casos. Teste deriva conjunto decreateFileRoute de src/routes/*.tsx com leitura apenas, normaliza parâmetros e exige igualdade com rotas únicas do executor; exclui somente__root, não exclui Auditoria. Exigir8casosV123 eclassificaçãoNAO_VERIFICADO_SESSAO_REAL quando não há sessão. Rótulos históricos de resultados continuam históricos; o título do teste de contagem atual passa a29superfícies.
+
+TDD: adicionar testes deAuditoria e paridade exata, observarFAIL no código atual, depois incluir rota e corrigir contagem atual para29/232; preservar todosos testes existentes e estados de negação. Rodar node --test scripts/testc/visual-audit.test.mjs, regressão1150Vitest, TypeScript/build/gates eTesteCindependente. Auditoria semsessão éNÃOVERIFICADA, nuncaPASSprivado. A alteração não supre oheaderfixo/contraste/WCAG/72BRAND nem224variantes autenticadas.
+
+Validação técnica: contrato público de rota existe emsrc/routes/administracao.auditoria.tsx; nenhumaRPC/Auth/RLS/dado/asset/tipo/rota deproduto alterado. Reversão: somentePRdeinventário, preservando evidências. GATEAPROVÁVELtecnicamente; BUILDsomenteapósCI/merge protegido desteGATE. Ainda sem certificação dastrêsfrentes.
+
+### ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+Impacto visualN/A: executor de testes, sem mudançadeproduto. BRAND01, assets/tokens/componentes preservados. GitHubdireto semLovableBUILD, reutilizarprovas válidas. Aumentar cobertura semafrouxarclassificação ouchecks; TDD/CI/TesteCisolado obrigatórios. Semprova nãoPASS.
