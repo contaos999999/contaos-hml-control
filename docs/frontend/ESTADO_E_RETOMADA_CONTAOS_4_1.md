@@ -1,3 +1,75 @@
+# Checkpoint prioritário do CRUD global — 07/11/2026
+
+**Estado: EM EXECUÇÃO. CRUD global não concluído e V1 não certificada. V2–V5 e PROD continuam bloqueados pelos gates canônicos.**
+
+Este registro prevalece sobre os checkpoints históricos abaixo. Ele distingue implementação integrada, teste de código, chamada HTTP real e validação privada.
+
+## Última etapa comprovadamente concluída
+
+Frontend `contaos999999/contaos-hml-control`, main funcional `524c870e654d80b3f026cd17c5ffab5b6fcf5bc5`. Backend `contaos999999/develop`, referência `4fec09bf5cab5afc776192b9bef6e70728e1a058`. Supabase HML `gklhhhyosgasnyoxlrui`.
+
+| Entrega | PR / HEAD | Integração e prova |
+| --- | --- | --- |
+| Desenvolvimento canônico GitHub + Actions | #253 / eb1832da | Merge d7125772; run42331994160 aprovado |
+| Dupla barreira de tipos | #252 / b943463c | Merge25c03f6a; runs42332177958/42332177995 aprovados |
+| Gestão versionada de listas | #255 / af6226f1 | Merge8b5dc6b7; run42333206252, ambos checks SUCCESS; 39 testes específicos e1.056 regressões |
+| Permissões efetivas na criação e revisão documental | #257 / 486c59c6 | Merge7b91c737; run42334204350, ambos checks SUCCESS;79 testes específicos e1.067 regressões |
+| Arquivos paginados e envio normativo único | #259 / 9f4a19ca | Merge524c870e; run42337202155, ambos checks SUCCESS;1.075/1.075 em40 suítes |
+
+PLANs #254, #256 e #258 foram integrados antes dos respectivos BUILDs. TypeScript, build e guardas passaram no CI dos BUILDs. Teste C é público e somente leitura; não equivale a teste privado. O blob de `types.ts` permanece `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`; nenhuma rota, SQL, Auth, Storage, Edge, dependência ou PROD foi alterada pelos três BUILDs frontend desta rodada.
+
+## Comportamentos preservados e implementados
+
+- Listas: criar/editar cabeçalho, criar/copiar versão, editar vigência de rascunho, salvar/remover item permitido, publicar, encerrar vigência, ativar/inativar e descartar rascunho. Capacidade, retenção e referências são decididas pelo servidor. Confirmação, motivo, revisão fixa por rascunho, UUID por intenção, replay explícito e conferência após timeout. Nenhum DELETE de histórico/publicada.
+- Contratantes: criar exige `contratantes/criar` efetivo, organização ativa e restrição legada; MASTER sem permissão não ganha ação. Escritas anteriores de edição/situação permanecem na RPC oficial.
+- Sugestões documentais: revisão exige `arquivos/editar`; MASTER confirmado pelo backend dispensa vínculo local conforme helper canônico. Demais perfis conservam a restrição legada. Revalidação bloqueia confirmação preservando o rascunho; negação definitiva encerra a ação. Fonte e vigência continuam obrigatórias quando materiais.
+- Normativa/orçamento: qualquer página de25 arquivos pode ser acessada. ID e nome selecionados sobrevivem à troca de página e a erro/retry. Upload volta à página0. Normativa só aceita arquivo aprovado; orçamento mantém aprovação obrigatória na publicação.
+- Envio normativo: trava síncrona antes da RPC, sem renovação de UUID/reset durante envio; quatro diálogos bloqueiam campos, Cancelar, Escape e X enquanto pendentes. Não há retry automático.
+
+## Mapa de continuidade por domínio V1
+
+Esta tabela é um índice de implementação, não um certificado de cada operação.
+
+| Domínio | Caminho de implementação e autoridade | Testes / estado |
+| --- | --- | --- |
+| Organizações | OrganizationSelector, CriarOrganizacaoForm, GerenciarCadastro; criar_organizacao e APIs canônicas de cadastro/situação | criarOrganizacao e cadastroOperacional; código integrado, privado pendente |
+| Contratantes | ListaContratantes, NovoContratante, EditarContratante; RLS e atualizar_contratante | contratantes, novoContratante, editarContratante; correção de capacidade integrada |
+| Contratos | ListaContratos, NovoContrato, VisaoGeralContrato/GerenciarCadastro; RLS e APIs canônicas de edição/situação | contratos, novoContrato, contratoDetalhe, cadastroOperacional |
+| Fontes normativas | BaseNormativaContrato e baseNormativaDados; salvar/registrar/aprovar/aplicabilidade V107 | baseNormativa; paginação/trava corrigidas #259 |
+| Orçamento | OrcamentoContrato e orcamentoDados; proposta, versão, rubricas, remoção permitida e publicação V108 | orcamento; seleção de arquivos corrigida #259 |
+| Listas/regras | RegrasContrato, GerenciarListas e listaOperacionalDados; duas RPCs canônicas de listas e aprovação preventiva existente | regrasContrato e listaOperacional; gestão integrada #255 |
+| Documentos do contrato | DocumentosContrato, DocumentoDetalhe e adaptadores; upload privado, criação, nova versão, revisão de sugestões | documentosContrato e documentoDetalhe; capacidade corrigida #257 |
+| Competências/documentos | CompetenciasContrato, NovaCompetencia, CompetenciaVisaoGeral/Documentos; criar_competencia e APIs V115 | competenciasContrato, novaCompetencia, competenciaVisaoGeral, competenciaDocumentos |
+| Análise/requisitos | CompetenciaAnalise/RequirementDrawer; APIs V116/V117 e reanálise | competenciaAnalise e requisitoDetalhe; não inventar edição direta de snapshot/resultado |
+| Parecer/apresentação/protocolo | CompetenciaParecer/Apresentar/Protocolo; solicitar/aprovar parecer, aprovar/registrar apresentação | competenciaParecer, competenciaApresentar, competenciaProtocolo |
+| Histórico | HistoricoContrato/ImportarHistorico; registrar/enfileirar/vincular tratamento e leituras preservadas | historicoContrato e ingestaoHistorico |
+| Usuários/RBAC/auditoria | AdminUsuarios, MatrizPermissoes e TrilhaAuditoria; APIs oficiais administrativas | admUsuarios, admUsuariosLogica, rbacMatriz, trilhaAuditoria |
+
+O inventário de117 tabelas não equivale a117 telas editáveis. Não transformar helpers, filas, resultados do motor ou módulos V2–V5 em botões de CRUD por mera presença no catálogo.
+
+## Limites e impedimentos atuais
+
+1. O executor selecionado falhou explicitamente na inicialização: timeout de recuperação ERS e nenhuma execução local disponível. A publicação e os testes de #259 continuaram pelo conector GitHub + Actions. Não há navegador controlável disponível nesta execução para prova privada.
+2. A validação privada autenticada e WCAG em1440/1280/768/390, claro/escuro, ainda não foi executada nesta rodada. Confirmar operações MASTER/perfis e estados de loading/vazio/erro/sucesso com fixture HML controlada; não confundir os screenshots públicos do CI com essa prova.
+3. SYS-03: respeitar decisão documentada do diretor na issue166, comentários6684477825/6684514473/6684535206. N1/N2 = PASS manual e WAIVED/SKIPPED automatizado; N3/N4 = PASS automatizado nos runs42215105856/42215117169. Não repetir por padrão. Demais N5–N9 conservam seus próprios critérios; não declarar toda a campanha concluída por essas quatro decisões. Preflight de secrets passou no run42215117169, portanto não afirmar que faltam credenciais sem nova prova.
+4. Os ensaios anteriores de listas/cadastros obtiveram JWT real por GoTrue, mas o runner provisiona identidades por INSERT emauth.users. Os147 resultados de listas são de HTTP autenticado, não prova de provisionamento oficial, e divergem da regra do plano mestre sobre criação de identidades. Quarentena foi verificada; não reativar nem repetir seeds SQL. Novo ensaio de identidade deve usar Auth oficial e conta sintética controlada.
+5. Reconciliação semântica adicional: `registrar_resultado_requisito` existe no HML, exige `analises/editar`, perfil/contrato e registra revisão humana com auditoria. O drawer V117 implementado oferece leitura/reanálise, não esse comando. A presença da RPC não autoriza automaticamente alterar a UX: confrontar a fonte literal, regras de execução atual, concorrência e ausência de chave idempotente antes de novo PLAN. Não expor edição direta nem declarar essa operação coberta sem prova.
+6. RNFs práticos, matriz individual486/488 e certificação V1 continuam com as pendências registradas. R01 upload real, R02 worker real e R03 isolamento mantêm suas ressalvas próprias; não ampliar dispensas.
+
+## Ordem de execução a partir deste ponto
+
+1. Conferir main e checks dos PRs255/257/259; não refazer entregas integradas nem repetir testes reais válidos sem mudança que justifique.
+2. Executar prova privada V1 por domínio com fixture Auth oficial controlada, contexto/roles e dados sintéticos, em ambiente de navegador utilizável. Registrar limitações e não tocar PROD.
+3. Concluir reconciliação de operações de negócio restantes, começando pela revisão humana de requisito citada acima. Qualquer alteração requer PLAN fechado, fonte FE↔BE e gates antes de BUILD; se o contrato backend não basta, plano backend próprio, sem improvisar regra no React.
+4. Atualizar a matriz de ações permitidas/proibidas e evidências individuais. Só certificar V1 quando os requisitos obrigatórios estiverem satisfeitos ou com a decisão expressa aplicável registrada.
+5. Avançar V2→V5 somente após as certificações exigidas. Nenhum percentual global de conclusão foi atribuído.
+
+## Prompt completo de retomada
+
+> Continue o ContaOS4.1 em `contaos999999/contaos-hml-control`, tomando este checkpoint como estado mais recente. O titular autorizou execução integral do CRUD global sem confirmações rotineiras. GitHub+Actions são canônicos e Supabase HML é o backend. Leia AGENTS, ADR-DEV-002, PLANO_ATIVO, 25 fontes e ordem por versão. Main funcional comprovada `524c870e654d80b3f026cd17c5ffab5b6fcf5bc5`; reconsultar HEAD vivo porque o checkpoint documental pode ser posterior. Backend de referência `4fec09bf5cab5afc776192b9bef6e70728e1a058`. Não repetir PRs255/257/259: listas, capacidades e paginação/trava já integradas com checks aprovados. Último BUILD259 HEAD9f4a19ca,run42337202155,1.075/1.075 em40 suítes,TypeScript/build/Zero-Drift/Teste C público aprovados; tipos8ea7750b fixos. O executor anterior falhou na inicialização, mas o código está preservado no GitHub. Próxima etapa: prova privada V1 com identidade sintética via Auth oficial e reconciliação semântica das operações restantes, incluindo registrar_resultado_requisito antes de qualquer novo BUILD. Preserve a decisão SYS-03 N1/N2 manual/dispensados da automação e N3/N4 automatizados aprovados; não repetir por padrão. Preserve ressalvas R01/R02/R03 e não crie outras. Não provisionar auth.users por SQL. Registre HEADs, CI, testes, artefatos, impedimentos e próxima tarefa com evidências. Não certificar V1 ou iniciar V2/PROD prematuramente.
+
+---
+
 ## CHECKPOINT EM EXECUÇÃO — CRUD GLOBAL — 07/11/2026 UTC (atual)
 Última entrega integrada: listas BUILD255 HEADaf6226f1eafc8c0d6db136da69ea6703f8de2e44,doischecksSUCCESSrun42333206252,merge8b5dc6b79d539885d0c82b1e433181696067c629. Código10ações canônicas,39testes/1056regressão,reviewPASS. Sem prova deUIprivada.
 PLAN256 capacidades integrado496f9c63c9630cb10805a64a8e69ef10356bc8a4,run42333535507 ambosSUCCESS. BUILDcapacidades nesta branch:contratantes/criar efetivo obrigatório; revisão documental combina arquivos/editar comMASTER confirmado no servidor ou perfil legado elegível. NãoMASTER continua sujeito ao vínculo;MASTERsempermissão não ganhaação. Cachecontextual sem5min;refetch bloqueia confirmação preservandorascunho;negaçãodefinitiva encerraação. RED8falhas/68PASS;GREEN79/79,1067/1067 em40suítes,tsc/build/ESLint semregraPrettier legadoPASS. Revisãoindependente semcrítico/importante apóscorreções. CI final+merge aindaPENDENTES.

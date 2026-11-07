@@ -289,16 +289,16 @@
   },
   "unverified_operational": {
     "0": "Teste C privado/autenticado e WCAG privado: NÃO EXECUTADOS; Teste C existente passou no run42157723794, sem ampliar prova pública para privada.",
-    "1": "SYS-03 real: entrega de e-mail, link válido/expirado/reutilizado e login após redefinição ainda NÃO EXECUTADOS. Conta real conectada preservada.",
+    "1": "N1/N2 PASS manual e WAIVED/SKIPPED automatizado por decisão do diretor; N3/N4 PASS automatizado nos runs42215105856/42215117169. Não repetir por padrão. N5–N9 mantêm seus gates próprios.",
     "2": "RNFs práticos: desempenho por rota500/800ms, observabilidade e restauração de dados sintéticos ainda PENDENTES. Restore por migrations não é backup de dados.",
     "3": "486critérios literais V1: candidato documental identificado; integrar diferencial dos488históricos e reconciliar evidência individual antes de certificação.",
     "4": "Executor indisponível durante preparação da próxima etapa. Nenhuma nova fixture SYS03 foi criada e nenhuma credencial precisa ser enviada pelo chat.",
     "5": "V1 não certificada; V2 e PROD bloqueados.",
-    "sys03_recovery_real": "NAO_VERIFICADO",
+    "sys03_recovery_real": "N1/N2 PASS manual e WAIVED/SKIPPED automatizado por decisão do diretor; N3/N4 PASS automatizado nos runs42215105856/42215117169. Não repetir por padrão. N5–N9 mantêm seus gates próprios.",
     "private_testc_wcag": "NAO_VERIFICADO",
     "backup_full_pitr_rpo_rto": "NAO_VERIFICADO",
     "local_one_table_synthetic_restore": "PASS_ESCOPADO_RUN_42168969390",
-    "crud_global": "EM_EXECUCAO: cadastros integrados; listas UI BUILD local verificado aguardando CI/merge; inventário semântico V1 e provas privadas pendentes"
+    "crud_global": "NÃO CONCLUÍDO: código de listas/capacidades/paginação integrado; validação privada e reconciliação semântica das demais operações não certificadas. Executor falhou explicitamente; nenhuma prova privada inventada."
   },
   "p0_note": "PLAN documental VALIDADO, condicionado a CI verde do PR de validação. BUILD separado e posterior ao merge. V1 não certificada.",
   "rbac_emenda_p0": {
@@ -443,7 +443,7 @@
   },
   "crud_capacidades_documentais_gate": {
     "plan": "docs/frontend/planos/P0_CRUD_CAPACIDADES_DOCUMENTAIS_2026-11-07.md",
-    "status": "BUILD_LOCAL_VERIFICADO_AGUARDANDO_CI_E_MERGE",
+    "status": "BUILD_INTEGRADO_CI_PASS_UI_PRIVADA_PENDENTE",
     "backend": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
     "apis_existentes": [
       "consultar_permissoes_efetivas",
@@ -458,13 +458,27 @@
     "local_tests": "79/79 direcionados;1067/1067 em40suítes",
     "typecheck": "PASS",
     "build": "PASS",
-    "review": "Sem crítico/importante após correção de preservação de rascunho durante refetch e combinação de bloqueios"
+    "review": "Sem crítico/importante após correção de preservação de rascunho durante refetch e combinação de bloqueios",
+    "build_pr": 257,
+    "build_head": "486c59c6a7c1bdd848f7129becd2a6c7772a71ba",
+    "build_merge": "7b91c7378e48d528d83601217363da0fa7b3c1af",
+    "build_run": 42334204350
   },
   "crud_arquivos_envio_normativo_gate": {
     "plan": "docs/frontend/planos/P0_CRUD_ARQUIVOS_ENVIO_NORMATIVO_2026-11-07.md",
-    "status": "PLAN_TECNICO_VALIDADO_AGUARDANDO_CI_ANTES_BUILD",
+    "status": "BUILD_INTEGRADO_CI_PASS_UI_PRIVADA_PENDENTE",
     "backend": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
     "backend_changes": false,
-    "private_ui": "NAO_VERIFICADA"
+    "private_ui": "NAO_VERIFICADA",
+    "plan_pr": 258,
+    "plan_run": 42336635664,
+    "build_pr": 259,
+    "build_head": "9f4a19ca2115123d6d3e01d740dc13f725caa2d3",
+    "build_merge": "524c870e654d80b3f026cd17c5ffab5b6fcf5bc5",
+    "build_run": 42337202155,
+    "regression": "1075/1075 em 40 suítes",
+    "red_run": 42336809205,
+    "red": "4 falhas específicas/1067 PASS",
+    "review": "Sem achados críticos/importantes; execução validada no GitHub Actions"
   }
 }

@@ -58,3 +58,11 @@ Cada ponto acima deve ter teste no componente que o controla. Executar regressã
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
 
 GitHub + Actions são canônicos. Reusar botões, tokens, diálogos e padrão de paginação existente. Preservar BRAND-01, PT-BR, foco e teclado. Conferir 1440/1280/768/390, claro/escuro, nos estados aplicáveis; prova privada permanece não verificada até execução real. Tipos fixos no blob `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`. Não antecipar certificação V1, V2 ou PROD.
+
+## Resultado integrado em 07/11/2026
+
+PLAN #258 integrado em `91ad659551cb9c367cde53f00c9d0d5c140c7caa`, após run `42336635664` com ambos os checks SUCCESS. BUILD #259: HEAD `9f4a19ca2115123d6d3e01d740dc13f725caa2d3`, ambos os checks SUCCESS no run `42337202155`, merge `524c870e654d80b3f026cd17c5ffab5b6fcf5bc5`.
+
+RED real no run `42336809205`: quatro falhas específicas e 1.067 testes anteriores aprovados. GREEN final: **1.075/1.075**, 40 suítes, TypeScript, build e guardas do Zero-Drift aprovados. Revisão independente sem achados críticos/importantes. Cobertura inclui seleção antiga/global, preservação de ID, erro de leitura e retry, upload com retorno à primeira página, quatro diálogos em envio, duplo clique antes da renderização, Escape e X. A dívida de formatação legada não foi declarada resolvida.
+
+O executor local falhou ao iniciar por timeout ERS. A sequência RED/GREEN foi executada no GitHub Actions, sem alterar workflows ou contornar gates. Teste C público aprovado; interface privada autenticada continua não verificada. Sem alteração de backend ou PROD.
