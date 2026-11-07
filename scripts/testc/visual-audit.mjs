@@ -134,8 +134,32 @@ export function publicKeyboardGate(route, steps, blockedMutations) {
   return valid ? [] : ["Percurso público de teclado incompleto ou inválido"];
 }
 
-async function collectPublicKeyboard(page, item, output, images, mutationCount) {
+export function publicKeyboardResetGate(state) {
+  const valid =
+    state &&
+    Number.isInteger(state.http) &&
+    state.http >= 200 &&
+    state.http < 300 &&
+    state.sameUrl === true &&
+    state.empty === true &&
+    state.controlsReady === true &&
+    state.publicStateValid === true &&
+    state.pageErrors === 0 &&
+    Number.isFinite(state.scrollX) &&
+    Math.abs(state.scrollX) <= 1 &&
+    Number.isFinite(state.scrollY) &&
+    Math.abs(state.scrollY) <= 1;
+  return valid ? [] : ["Estado inicial público não restaurado após teclado"];
+}
+
+async function collectPublicKeyboard(page, item, output, images, mutationCount, runtimeErrors) {
   const targets = publicKeyboardTargets(item.path);
+  const expectedUrl = page.url();
+  const empty = await page.evaluate(() =>
+    [...document.querySelectorAll("input")].every((e) => e.value === ""),
+  );
+  if (!empty) throw new Error("KEYBOARD_INITIAL_STATE_NOT_EMPTY");
+  let reset;
   const observe = async (target) =>
     page.evaluate(({ selector, name }) => {
       const e = document.querySelector(selector);
@@ -223,8 +247,47 @@ async function collectPublicKeyboard(page, item, output, images, mutationCount) 
       });
     }
   } finally {
-    await page.reload({ waitUntil: "domcontentloaded", timeout: 12000 });
+    const response = await page.reload({ waitUntil: "domcontentloaded", timeout: 12000 });
     await page.waitForTimeout(550);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const state = await page.evaluate(
+      ({ expectedUrl, targets }) => ({
+        sameUrl: window.location.href === expectedUrl,
+        empty: [...document.querySelectorAll("input")].every((e) => e.value === ""),
+        controlsReady: targets.every(({ selector, name }) => {
+          const nodes = document.querySelectorAll(selector),
+            e = nodes[0];
+          if (nodes.length !== 1 || !e || e.disabled) return false;
+          const label =
+            e.getAttribute("aria-label") ||
+            [...(e.labels || [])].map((x) => x.textContent).join(" ") ||
+            e.textContent ||
+            "";
+          return label.trim().replace(/\s+/g, " ") === name;
+        }),
+        scrollX: window.scrollX,
+        scrollY: window.scrollY,
+        lang: document.documentElement.lang,
+        h1: document.querySelectorAll("h1").length,
+        overflow: Math.max(0, document.documentElement.scrollWidth - window.innerWidth),
+        fontFamily: getComputedStyle(document.body).fontFamily,
+      }),
+      { expectedUrl, targets },
+    );
+    const http = response?.status() || 0,
+      pageErrors = runtimeErrors();
+    reset = {
+      http,
+      sameUrl: state.sameUrl,
+      empty: state.empty,
+      controlsReady: state.controlsReady,
+      scrollX: state.scrollX,
+      scrollY: state.scrollY,
+      pageErrors,
+      publicStateValid:
+        publicGate({ http, lang: state.lang, h1: state.h1, overflow: state.overflow, pageErrors })
+          .length === 0 && brandTypographyGate(state.fontFamily).length === 0,
+    };
   }
   const safe = sanitizeKeyboardSteps(steps);
   const blockedMutations = mutationCount();
@@ -232,7 +295,11 @@ async function collectPublicKeyboard(page, item, output, images, mutationCount) 
     scope: "PUBLIC_EMPTY_FORMS_ONLY",
     steps: safe,
     blockedMutations,
-    errors: publicKeyboardGate(item.path, safe, blockedMutations),
+    reset,
+    errors: [
+      ...publicKeyboardGate(item.path, safe, blockedMutations),
+      ...publicKeyboardResetGate(reset),
+    ],
   };
 }
 
@@ -723,6 +790,7 @@ async function run() {
                 output,
                 images,
                 () => blockedMutations,
+                () => errors,
               );
               record.publicAssertions.push(...record.keyboard.errors);
             } catch {
