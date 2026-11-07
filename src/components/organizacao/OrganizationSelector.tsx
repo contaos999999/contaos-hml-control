@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CriarOrganizacaoForm } from "@/components/organizacao/CriarOrganizacaoForm";
+import { GerenciarCadastro } from "@/components/cadastros/GerenciarCadastro";
 import { cn } from "@/lib/utils";
 import {
   definirPreferenciaOrganizacao,
@@ -386,6 +387,9 @@ export function OrganizationSelector() {
         </>
       )}
 
+      {!carregando && !erroTipo && idUsuario && selecionada && !processando && !criando && validos.some(v => v.organizacao?.id === selecionada) && (
+        <GerenciarCadastro key={`${idUsuario}:${selecionada}`} contexto={{ idUsuario, idOrganizacao: selecionada, entidade: "organizacoes", id: selecionada }} onAlterado={() => { void consulta.refetch(); }} />
+      )}
       {!carregando && !erroTipo && idUsuario && !processando && (
         criando ? <CriarOrganizacaoForm key={idUsuario} onCriada={(id) => {
           setCriando(false); setCriada(true); setSelecionada(id);
