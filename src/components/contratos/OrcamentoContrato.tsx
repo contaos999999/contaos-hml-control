@@ -35,6 +35,7 @@ import {
 } from "@/lib/contratos/contratoDetalheDados";
 import {
   ErroBn,
+  PAGINA_BN,
   baixarArquivo,
   enviarArquivo,
   formatarDataHoraBr,
@@ -798,6 +799,7 @@ function Pagina({ c, ctx }: { c: ContratoDetalhe; ctx: Ctx }) {
             />
           ) : dialogo?.tipo === "versao" && proposta ? (
             <FormVersao
+              idUsuario={ctx.idUsuario}
               org={org}
               contrato={c.id}
               proposta={proposta}
@@ -1099,12 +1101,14 @@ function FormProposta({
 }
 
 function FormVersao({
+  idUsuario,
   org,
   contrato,
   proposta,
   onOk,
   onRecarregar,
 }: {
+  idUsuario: string;
   org: string;
   contrato: string;
   proposta: Proposta;
@@ -1114,11 +1118,13 @@ function FormVersao({
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
   const [arq, setArq] = useState("");
+  const [nomeArq, setNomeArq] = useState("");
+  const [paginaArquivos, setPaginaArquivos] = useState(0);
   const [erroCampo, setErroCampo] = useState("");
   const qc = useQueryClient();
   const docs = useQuery({
-    queryKey: ["orcamento", "docs", org, contrato],
-    queryFn: ({ signal }) => listarArquivos(org, contrato, 0, signal),
+    queryKey: ["orcamento", "docs", idUsuario, org, contrato, paginaArquivos],
+    queryFn: ({ signal }) => listarArquivos(org, contrato, paginaArquivos, signal),
     retry: false,
   });
   const e = useEnvio("registrar_versao_proposta_v108");
@@ -1174,10 +1180,11 @@ function FormVersao({
         </div>
         <label className="block text-sm font-medium">
           Documento-base
-          <select className={campo} value={arq} onChange={(x) => setArq(x.target.value)}>
+          <select className={campo} value={arq} disabled={docs.isFetching} onChange={(x) => { setArq(x.target.value); setNomeArq(x.target.selectedOptions[0]?.textContent ?? ""); }}>
             <option value="">
               {docs.isPending ? "Carregando documentos…" : "Selecione um documento do contrato"}
             </option>
+            {arq && !docs.data?.itens.some((a) => a.id === arq) && <option value={arq}>{nomeArq}</option>}
             {(docs.data?.itens ?? []).map((a) => (
               <option
                 key={a.id}
@@ -1186,17 +1193,26 @@ function FormVersao({
             ))}
           </select>
         </label>
+        {(paginaArquivos > 0 || (docs.data?.total ?? 0) > PAGINA_BN) && (
+            <div className="flex flex-wrap items-center gap-2" aria-label="Paginação de arquivos">
+              <Button type="button" variant="outline" className="h-11" disabled={docs.isFetching || paginaArquivos === 0} onClick={() => setPaginaArquivos((p) => p - 1)}>Página anterior de arquivos</Button>
+              <span className="text-sm" aria-live="polite">Página {paginaArquivos + 1}</span>
+              <Button type="button" variant="outline" className="h-11" disabled={docs.isFetching || !docs.data || (paginaArquivos + 1) * PAGINA_BN >= (docs.data?.total ?? 0)} onClick={() => setPaginaArquivos((p) => p + 1)}>Próxima página de arquivos</Button>
+            </div>
+          )}
         {docs.isError ? (
           <p role="alert" className="text-sm text-destructive">
             {MENSAGENS_V108.erroLista}
+            <Button type="button" variant="outline" className="ml-2 h-11" onClick={() => void docs.refetch()}>Tentar novamente arquivos</Button>
           </p>
         ) : null}
         <EnvioArquivo
           org={org}
           contrato={contrato}
-          onEnviado={() =>
-            void qc.invalidateQueries({ queryKey: ["orcamento", "docs", org, contrato] })
-          }
+          onEnviado={() => {
+            setPaginaArquivos(0);
+            void qc.invalidateQueries({ queryKey: ["orcamento", "docs", idUsuario, org, contrato] });
+          }}
         />
         {erroCampo ? (
           <p role="alert" className="text-sm text-destructive">

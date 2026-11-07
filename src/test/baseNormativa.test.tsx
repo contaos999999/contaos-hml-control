@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { readFileSync } from "node:fs";
@@ -518,3 +518,107 @@ describe("V1-07 scan", () => {
 });
 
 void K2;
+
+describe("P0 CRUD: arquivos e envio normativo", () => {
+  async function abrirVersao() {
+    montar();
+    fireEvent.click(await screen.findByRole("button", {name:"Detalhes de Lei do contrato"}));
+    fireEvent.click(await within(await screen.findByRole("dialog")).findByRole("button", {name:"Nova versão"}));
+    return screen.findByRole("dialog", {name:"Nova versão"});
+  }
+  it.each([K1,null])("alcança arquivo aprovado e preserva seleção no escopo %s", async (idContrato) => {
+    cenario({fontes:[fonte(F1,"Lei do contrato",idContrato)],versoes:[]});
+    const anterior=m.resposta;
+    const arquivos=Array.from({length:26},(_,i)=>({id:"arquivo-"+i,nome_original:i===25?"antigo.pdf":"recente-"+i+".pdf",mime:"application/pdf",tamanho:10,status_seguranca:i===25?"aprovado":"pendente",criado_em:"2026-01-01T00:00:00Z"}));
+    m.resposta=(c)=>{
+      if(c.tabela!=="arquivos") return anterior?.(c);
+      const faixa=op(c,"range")[0] as number[] | undefined;
+      return ok(arquivos.slice(faixa?.[0]??0,(faixa?.[1]??24)+1),26);
+    };
+    m.rpc.mockImplementation((nome: string)=>Promise.resolve({data:nome==="confirmar_upload_arquivo"?"arquivo-novo":{correlation_id:"pagina"},error:null}));
+    m.invoke.mockResolvedValue({data:{ok:true,bucket:"contaos-documentos",path:"teste/pagina.pdf",token:"token-fixture",signed_url:"https://example.invalid",usar_upload_resumivel:false,limiar_upload_resumivel_bytes:1},error:null});
+    m.upload.mockResolvedValue({data:{},error:null});
+    const dlg=await abrirVersao();
+    fireEvent.click(within(dlg).getByLabelText("Arquivo já aprovado"));
+    fireEvent.click(await within(dlg).findByRole("button",{name:"Próxima página de arquivos"}));
+    fireEvent.click(await within(dlg).findByLabelText(/antigo.pdf/));
+    fireEvent.change(within(dlg).getByLabelText("Enviar novo arquivo"),{target:{files:[new File(["abc"],"Novo.PDF",{type:"application/pdf"})]}});
+    fireEvent.click(within(dlg).getByRole("button",{name:"Enviar arquivo"}));
+    await within(dlg).findByText(/Arquivo enviado e em análise de segurança/);
+    await within(dlg).findByLabelText(/recente-0.pdf/);
+    expect(m.invoke).toHaveBeenCalledWith("storage-sign-upload",{body:expect.objectContaining({id_organizacao:A,id_contrato:idContrato})});
+    expect(within(dlg).getByText("Arquivo selecionado: antigo.pdf")).toBeInTheDocument();
+    fireEvent.change(within(dlg).getByLabelText("Início da vigência"),{target:{value:"2026-02-01"}});
+    fireEvent.click(within(dlg).getByRole("button",{name:"Registrar versão"}));
+    await waitFor(()=>expect(m.rpcChamadas.filter((c)=>c.nome==="registrar_versao_fonte_v107")).toHaveLength(1));
+    expect(m.rpcChamadas.find((c)=>c.nome==="registrar_versao_fonte_v107")?.args["p_id_arquivo"]).toBe("arquivo-25");
+    expect(de("arquivos").some((c)=>JSON.stringify(op(c,"range")[0])==="[25,49]")).toBe(true);
+    expect(op(de("arquivos")[0]!,idContrato===null?"is":"eq")).toContainEqual(["id_contrato",idContrato]);
+  });
+  it.each(["fonte","versao"])("não renova intenção nem fecha durante envio de %s", async (tipo) => {
+    cenario({fontes:[fonte(F1,"Lei do contrato",K1)],versoes:[]});
+    const concluir: Array<(v:unknown)=>void>=[];
+    m.rpc.mockImplementation(()=>new Promise((r)=>concluir.push(r)));
+    let dlg: HTMLElement;
+    if(tipo==="fonte"){
+      montar();
+      fireEvent.click(await screen.findByRole("button",{name:"Nova fonte"}));
+      dlg=await screen.findByRole("dialog");
+      fireEvent.change(within(dlg).getByLabelText("Tipo"),{target:{value:"lei"}});
+      fireEvent.change(within(dlg).getByLabelText("Título"),{target:{value:"Nova lei"}});
+    } else {
+      dlg=await abrirVersao();
+      fireEvent.change(within(dlg).getByLabelText("Início da vigência"),{target:{value:"2026-02-01"}});
+      fireEvent.change(within(dlg).getByLabelText("Texto da versão"),{target:{value:"Texto original"}});
+    }
+    fireEvent.click(within(dlg).getByRole("button",{name:tipo==="fonte"?"Salvar":"Registrar versão"}));
+    await waitFor(()=>expect(m.rpcChamadas).toHaveLength(1));
+    const campo=within(dlg).getByLabelText(tipo==="fonte"?"Título":"Texto da versão");
+    fireEvent.change(campo,{target:{value:"Alteração durante envio"}});
+    fireEvent.click(within(dlg).getByRole("button",{name:tipo==="fonte"?/Salvando|Salvar/:/Registrando|Registrar versão/}));
+    await act(async()=>{await Promise.resolve();});
+    expect(m.rpcChamadas).toHaveLength(1);
+    expect(campo).toBeDisabled();
+    expect(within(dlg).getByRole("button",{name:"Cancelar"})).toBeDisabled();
+    fireEvent.keyDown(dlg,{key:"Escape",code:"Escape"});
+    expect(dlg).toBeInTheDocument();
+    fireEvent.click(within(dlg).getByRole("button",{name:"Close"}));
+    expect(dlg).toBeInTheDocument();
+    await act(async()=>{concluir.forEach((r)=>r({data:{correlation_id:"unica"},error:null}));});
+  });
+});
+
+it("P0 trava síncrona impede dois cliques antes da próxima renderização", async () => {
+  cenario();
+  let concluir!: (v:unknown)=>void;
+  m.rpc.mockImplementation(()=>new Promise((r)=>{concluir=r;}));
+  montar();
+  fireEvent.click(await screen.findByRole("button",{name:"Nova fonte"}));
+  const dlg=await screen.findByRole("dialog");
+  fireEvent.change(within(dlg).getByLabelText("Tipo"),{target:{value:"lei"}});
+  fireEvent.change(within(dlg).getByLabelText("Título"),{target:{value:"Nova lei"}});
+  const enviar=within(dlg).getByRole("button",{name:"Salvar"});
+  act(()=>{fireEvent.click(enviar);fireEvent.click(enviar);});
+  await waitFor(()=>expect(m.rpcChamadas).toHaveLength(1));
+  await act(async()=>{concluir({data:{correlation_id:"unica"},error:null});});
+});
+it.each(["aprovar","aplicabilidade"])("P0 %s mantém trava e campos durante envio", async (tipo) => {
+  cenario({fontes:[fonte(F1,"Lei do contrato",K1)],versoes:[versao(V1)]});
+  let concluir!: (v:unknown)=>void;
+  m.rpc.mockImplementation(()=>new Promise((r)=>{concluir=r;}));
+  montar();
+  fireEvent.click(await screen.findByRole("button",{name:"Detalhes de Lei do contrato"}));
+  const det=await screen.findByRole("dialog");
+  fireEvent.click(await within(det).findByRole("button",{name:tipo==="aprovar"?"Aprovar versão 2":"Definir aplicabilidade da versão 2"}));
+  const dlg=await screen.findByRole("dialog",{name:tipo==="aprovar"?"Aprovar versão 2":"Aplicabilidade da versão 2"});
+  fireEvent.change(within(dlg).getByLabelText("Fundamento"),{target:{value:"Revisão aprovada"}});
+  if(tipo==="aprovar") fireEvent.click(within(dlg).getByLabelText(/Confirmo que revisei/));
+  else fireEvent.click(within(dlg).getByLabelText("Aplicável"));
+  fireEvent.click(within(dlg).getByRole("button",{name:tipo==="aprovar"?"Aprovar":"Salvar aplicabilidade"}));
+  await waitFor(()=>expect(m.rpcChamadas).toHaveLength(1));
+  expect(within(dlg).getByLabelText("Fundamento")).toBeDisabled();
+  fireEvent.change(within(dlg).getByLabelText("Fundamento"),{target:{value:"Outra revisão"}});
+  fireEvent.click(within(dlg).getByRole("button",{name:tipo==="aprovar"?/Aprovando|Aprovar/:/Salvando|Salvar aplicabilidade/}));
+  expect(m.rpcChamadas).toHaveLength(1);
+  await act(async()=>{concluir({data:{correlation_id:"unica"},error:null});});
+});

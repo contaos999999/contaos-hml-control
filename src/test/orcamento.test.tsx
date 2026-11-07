@@ -682,3 +682,36 @@ describe("V1-08 utilitários e scan estático", () => {
     }
   });
 });
+
+it("P0 CRUD: documento-base antigo é selecionável e permanece selecionado ao voltar", async () => {
+  cenario({propostas:[proposta({situacao:"ativa",versao_atual:1})],versoes:[versao({situacao:"publicada"})],arquivos:[arquivo()]});
+  const anterior=m.resposta;
+  let falharPaginaInicial=false;
+  const arquivos=Array.from({length:26},(_,i)=>({...arquivo(),id:i===25?"arquivo-antigo":ARQ+"-"+i,nome_original:i===25?"antigo.pdf":"base-"+i+".pdf"}));
+  m.resposta=(c)=>{
+    const faixa=op(c,"range")[0] as number[] | undefined;
+    if(c.tabela==="arquivos"&&faixa) {
+      if(falharPaginaInicial&&faixa[0]===0) return {data:null,error:{code:"XX000"},status:500};
+      return ok(arquivos.slice(faixa[0],(faixa[1]??24)+1),26);
+    }
+    return anterior?.(c);
+  };
+  montar();
+  fireEvent.click(await screen.findByRole("button",{name:"Nova versão"}));
+  fireEvent.click(await screen.findByRole("button",{name:"Próxima página de arquivos"}));
+  await screen.findByRole("option",{name:"antigo.pdf — Aprovado"});
+  fireEvent.change(screen.getByLabelText("Documento-base"),{target:{value:"arquivo-antigo"}});
+  falharPaginaInicial=true;
+  fireEvent.click(screen.getByRole("button",{name:"Página anterior de arquivos"}));
+  const repetir=await screen.findByRole("button",{name:"Tentar novamente arquivos"});
+  expect(screen.getByLabelText("Documento-base")).toHaveValue("arquivo-antigo");
+  falharPaginaInicial=false;
+  fireEvent.click(repetir);
+  await screen.findByRole("option",{name:"base-0.pdf — Aprovado"});
+  expect(screen.getByLabelText("Documento-base")).toHaveValue("arquivo-antigo");
+  expect(screen.getByRole("option",{name:"antigo.pdf — Aprovado"})).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Início da vigência"),{target:{value:"2027-01-01"}});
+  fireEvent.click(screen.getByRole("button",{name:"Registrar versão"}));
+  await waitFor(()=>expect(m.rpcChamadas.some((c)=>c.nome==="registrar_versao_proposta_v108")).toBe(true));
+  expect(m.rpcChamadas.find((c)=>c.nome==="registrar_versao_proposta_v108")?.args["p_id_arquivo_origem"]).toBe("arquivo-antigo");
+});
