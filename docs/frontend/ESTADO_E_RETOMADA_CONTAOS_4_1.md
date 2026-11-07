@@ -1,3 +1,32 @@
+## Checkpoint P0 — 07/11/2026 — plano único de três certificações e inventário visual corrigido
+
+Este bloco prevalece sobre o histórico. **Nenhuma das três frentes está certificada a 100%.** A decisão expressa do titular estabelece a ordem: identidade visual e padronização → CRUD global V1 → integração, rastreabilidade e auditoria V1. Comunicar o fechamento de cada frente somente com evidência integral e seguir automaticamente. V1 ainda não certificada; V2–V5 e PROD continuam bloqueados. O parecer global V1–V5 só poderá existir após as versões futuras.
+
+### Integrações comprovadas nesta execução
+- PLAN único #299: HEAD `b8897b8b7e3f63b7543ee56dc60e8a87653c0619`, merge `9458262bd228fac3d6a6217869b207f8f739beb5`; Zero-Drift e Teste C SUCCESS no run42416958910 e proteção de tipos42416958561 SUCCESS. Emenda incorporada ao plano mestre existente, sem plano concorrente.
+- GATE separado #300: HEAD `7c6dfc653cd6435bac8ca174fd33df5ce5bda122`, merge `5f3b2bf80d003241b02e55d4a81917b76ea33154`; dois jobs SUCCESS no run42417150728 e proteção42417150716 SUCCESS.
+- BUILD #301: HEAD `acee00c875ad65abb7434e2316c9b80c740bc5be`, merge `3f168d7a503258cd9014b93cbf3239abd1fb2642`. Dois jobs SUCCESS no run42417377261: Zero-Drift128538311605 e Teste C128538311653; proteção42417377251 SUCCESS. Alterados somente scripts/testc/visual-audit.mjs e scripts/testc/visual-audit.test.mjs.
+- Defeito corrigido: o executor enumerava28superfícies, contava o drawerV117 na mesma rota deV116 e omitia /administracao/auditoria. Agora incluiV123 privada e exige paridade com todas as28rotas reais:29superfícies comdrawer,232casos. Nenhuma rota de produto foi criada ou alterada.
+- RED remoto preservado em `e6924a2a29252c4c2b61b4246dd935e9c6e925bc`: local20PASS/2FAIL por Auditoria ausente. GREEN22/22 do executor e36/36 gates dirigidos. Regressão1150/1150 em41suítes; TypeScript/build/Prettier/Zero-Drift/diff aprovados. Revisão independente executou22/22 e não apontou Critical/Important/Minor. Types preservado em8ea7750b75fd9d76b29c36ce7613392e3ab65e19.
+- Artefato13592241053 baixado e hash conferido: `6690036fd3ed32bdab20c8022dc2ea4bc2ab45a5b050bba31d2e5a6b057ba39e`. Relatório registra checkout de merge sintético `00c6853246279d14237bfb9ecf215f6690f7b095`, não confundir com HEAD da branch ou merge integrado. São29superfícies/232combinações/119capturas;24PASS públicos,0FAIL públicos,208casos protegidos sem sessão. Os8casosV123 existem e continuam NÃO VERIFICADOS ou redirecionados; não são prova de Auditoria autenticada.120medições públicas de contraste por pixelsPASS não certificam contraste privado nem WCAG manual integral.
+
+### Fontes e continuidade preservadas
+- ZIP mestre recuperado nesta execução e SHA256 conferido:5ee115d12e263d98068288b6bb722f5f303f2d19e1e4c0b5e930e69da03621da. Manual100:8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e; caderno97:d9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8. Regular75 literal conferido;25blobs normativos iguais ao snapshot do backendc993e38.
+- Backend permanece `c993e38c1f9b9f6a6d45a754945b5b0542fb3ccc`. Main guard42407867797 e restore42407867795 aparecem SUCCESS. O run CRUD42408055553 foi inspecionado: scopeSUCCESS, private-browserSKIPPED; não houve nova prova HML.
+- Provas reais anteriores de Cadastros/Listas e Auditoria continuam válidas apenas nos respectivos escopos. PLAN132/GATE133 documentais e infraestrutura de quarentena SQL já integrados não devem ser repetidos.
+- Automação existente atualizada com esta ordem de três frentes, mantendo sua periodicidade horária. Isso não significa execução ou monitoramento contínuo entre chamadas.
+
+### Fila executável, sem nova aprovação rotineira
+1. **Frente ativa: IDENTIDADE_VISUAL.** Completar matriz autenticada das28rotas×8variantes e72itensBRAND, estados/keyboard/foco/contraste, sidebar expandida/recolhida/mobile aberta e cabeçalho organizacional persistente. A falta de sticky no código foi observada, mas não constitui ensaio visual de rolagem; confirmar comportamento exigido e reproduzir antes de corrigir, preservando foco e acessibilidade.
+2. Preparar somente as dependências de fixtures necessárias às páginas documentais. Pelo PLAN132/GATE133 backend, integrar recuperação/quarentena ao fluxo e implementar upload físico TXT/PDF/versionamento/download/hash/worker, com RED/GREEN/revisão/CI/HML. Este preparo não certifica nem antecipa o CRUD global. DOCUMENTOS continua bloqueado no inicializador material até o BUILD validado.
+3. Não modificar produto durante Teste C. Falha visual real exige delta fechado sob o mesmo plano mestre e gate separado. Sem mocks/status forçados, novo segredo, mudança de RLS/Edge/Auth config ou PROD.
+4. Somente após certificado visual integrado, comunicar100% e executar fechamento CRUD; depois integração/rastreabilidade/auditoria, retrospectiva e certificadoV1.13domínios e demais critérios obrigatórios continuam pendentes conforme matriz existente.
+5. Ao retomar, consultar HEADs, todos os PRs/checks/runs vivos e agir sobre o resultado na mesma execução. PRs históricos75/77/78/80 e novos299/300/301 já integrados. Não refazer a correção de inventário.
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: esta execução corrigiu somente inventário de teste e documentação. Produto, assets, backend, tipos, rotas, RLS, Auth, Storage, Edge e PROD preservados. GitHub direto, sem BUILD Lovable. Nenhum percentual global ou certificado foi fabricado.
+
+---
+
 ## Atualização P0 — quarentena SQL aprovada; uploads HML ainda desabilitados
 
 Este bloco prevalece sobre a preparação abaixo. BUILD parcial #134 integrado em `c993e38c1f9b9f6a6d45a754945b5b0542fb3ccc`, HEAD testado `12bfb1c259e7087f5ff739e4bab0e88545bef16d`. Guard, restore, backup e prova pública SUCCESS no mesmo HEAD. Restore run42407629689/job128508656001, log lido: `DOCUMENT_QUARANTINE_LOCAL_SQL_PASS`.
