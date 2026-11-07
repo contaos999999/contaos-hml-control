@@ -315,3 +315,10 @@ Validação técnica: contrato público de rota existe emsrc/routes/administraca
 
 ### ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
 Impacto visualN/A: executor de testes, sem mudançadeproduto. BRAND01, assets/tokens/componentes preservados. GitHubdireto semLovableBUILD, reutilizarprovas válidas. Aumentar cobertura semafrouxarclassificação ouchecks; TDD/CI/TesteCisolado obrigatórios. Semprova nãoPASS.
+
+
+## GATE P0 complementar: cabeçalho fixo e foco durante rolagem (07/11/2026)
+
+Requisito já aprovado na frente 1: cabeçalho organizacional persistente e fixo durante rolagem. Inspeção do componente atual constatou ausência de posicionamento fixo/sticky; não equivale a prova visual autenticada. Antes de certificar, executar RED geométrico em navegador real com componente e CSS reais, distinguindo fixture de apresentação de HML. Corrigir somente ContaOSOrganizationHeader.tsx e regressões em src/test/visualShell.test.tsx, ambos já autorizados. Preservar contexto, sessão, permissões, ações, menu, rotas e assets. Sem mudança de backend ou PROD.
+
+Aceite: header permanece visível ao rolar nas quatro larguras/dois temas; foco e âncoras não ficam encobertos, respeitando altura variável, zoom e resize. Restaurar estilos/listeners ao desmontar. Dialogs/drawer devem continuar acima do header. Validar testes existentes, types/build, Zero-Drift, Teste C independente e revisão; navegador com dados simulados prova somente geometria, nunca certificação privada/WCAG integral. HML e auditoria visual real continuam exigidos. Publicar BUILD apenas após este GATE com os dois checks SUCCESS no mesmo HEAD e merge. Rollback: reverter apenas correção frontend.
