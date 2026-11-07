@@ -1,3 +1,133 @@
+## Matriz de certificação visual individual — 07/11/2026
+
+**IDENTIDADE VISUAL: NÃO CERTIFICADA.** Inventário exato com evidência por cenário; nenhum caso protegido recebe PASS por apresentar login ou negar acesso. Esta matriz complementa o plano único #299, GATE #300, BUILD #301 e checkpoint #302 integrado em35907d64d8364f358a46848044d622eda489b9ce.
+
+### Integridade da marca conferida com o ZIP original
+
+Nove assets em uso (quatro SVGs originais e cinco favicons) foram comparados byte a byte com o ZIP mestre recuperado:9/9 idênticos. O derivado branco transparente difere do original exclusivamente pela remoção do retângulo de fundo de49bytes; SHA256 d9fa1c6f1dee18ea74f3dfe8b8ea6b8edb5100b7e863a51cf21597924030b438. Isso comprova integridade e derivação, não legibilidade em todas as páginas. Nenhum asset foi alterado.
+
+O frontend atual não tem manifest/PWA; o BRAND-01 condiciona os itens PWA à existência prévia. Portanto34–38 são N/A nesta implementação; não criar nova PWA só para preencher checklist. A variante vertical também não é aplicada no layout existente: seu uso é N/A, preservado o asset original no pacote.
+
+### 72 itens literais do BRAND-01
+
+PENDENTE nesta matriz significa que ainda falta consolidar toda a prova aplicável ao requisito integral. Evidência de CI ou de arquivo isolado não aprova automaticamente comportamento privado.
+
+| ID | Critério literal | Decisão desta matriz | Evidência disponível / prova faltante |
+|---:|---|---|---|
+| 1 | Login continua funcionando. | PENDENTE | Lotes HML anteriores e testes locais preservados; conferir fluxos/perfis em toda a rodada visual. |
+| 2 | Logout continua funcionando. | PENDENTE | Lotes HML anteriores e testes locais preservados; conferir fluxos/perfis em toda a rodada visual. |
+| 3 | Navegação continua funcionando. | PENDENTE | Lotes HML anteriores e testes locais preservados; conferir fluxos/perfis em toda a rodada visual. |
+| 4 | Rotas continuam funcionando. | PENDENTE | Lotes HML anteriores e testes locais preservados; conferir fluxos/perfis em toda a rodada visual. |
+| 5 | Permissões permanecem iguais. | PENDENTE | Lotes HML anteriores e testes locais preservados; conferir fluxos/perfis em toda a rodada visual. |
+| 6 | Nenhuma regra de negócio foi modificada. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 7 | Nenhum cálculo foi modificado. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 8 | Nenhum status oficial foi modificado. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 9 | Nenhuma integração foi modificada. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 10 | Supabase não recebeu alteração desta tarefa. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 11 | Nenhum secret foi inserido no frontend. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 12 | Nenhuma credencial foi adicionada ao repositório. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 13 | Nenhuma RLS foi alterada. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 14 | Nenhum RPC foi criado ou alterado. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 15 | Nenhuma Edge Function foi criada ou alterada. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 16 | Nenhuma migration foi criada. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 17 | Nenhuma request nova utiliza credencial privilegiada. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 18 | Security scan sem novo Critical. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 19 | Logo horizontal correta. | PENDENTE | 9/9 assets originais idênticos ao ZIP; derivado transparente exato; aplicação privada ainda precisa inspeção. |
+| 20 | Logo vertical correta. | N/A | Layout usa marca horizontal e símbolo; não há ponto existente de aplicação vertical. |
+| 21 | Símbolo correto. | PENDENTE | 9/9 assets originais idênticos ao ZIP; derivado transparente exato; aplicação privada ainda precisa inspeção. |
+| 22 | Cores corretas. | PENDENTE | Exige consolidação da prova individual no escopo visual integral. |
+| 23 | Proporções corretas. | PENDENTE | 9/9 assets originais idênticos ao ZIP; derivado transparente exato; aplicação privada ainda precisa inspeção. |
+| 24 | Nenhum SVG foi redesenhado. | PENDENTE | 9/9 assets originais idênticos ao ZIP; derivado transparente exato; aplicação privada ainda precisa inspeção. |
+| 25 | Nenhuma versão não oficial foi criada. | PENDENTE | 9/9 assets originais idênticos ao ZIP; derivado transparente exato; aplicação privada ainda precisa inspeção. |
+| 26 | Logo funciona em fundo claro. | PENDENTE | Exige consolidação da prova individual no escopo visual integral. |
+| 27 | Logo funciona em fundo escuro. | PENDENTE | Exige consolidação da prova individual no escopo visual integral. |
+| 28 | Monocromática funciona quando necessária. | PENDENTE | Exige consolidação da prova individual no escopo visual integral. |
+| 29 | 16 × 16 legível. | PENDENTE | Favicons idênticos ao ZIP; conferir legibilidade/troca em navegador por item. |
+| 30 | 32 × 32 legível. | PENDENTE | Favicons idênticos ao ZIP; conferir legibilidade/troca em navegador por item. |
+| 31 | 48 × 48 legível. | PENDENTE | Favicons idênticos ao ZIP; conferir legibilidade/troca em navegador por item. |
+| 32 | favicon.ico carregando. | PENDENTE | Favicons idênticos ao ZIP; conferir legibilidade/troca em navegador por item. |
+| 33 | Browser não apresenta ícone antigo. | PENDENTE | Favicons idênticos ao ZIP; conferir legibilidade/troca em navegador por item. |
+| 34 | 192 × 192 correto. | N/A | Não existe PWA/manifest no frontend; aplicação condicional do BRAND-01, sem criação funcional nesta tarefa. |
+| 35 | 512 × 512 correto. | N/A | Não existe PWA/manifest no frontend; aplicação condicional do BRAND-01, sem criação funcional nesta tarefa. |
+| 36 | maskable correto. | N/A | Não existe PWA/manifest no frontend; aplicação condicional do BRAND-01, sem criação funcional nesta tarefa. |
+| 37 | Manifest válido. | N/A | Não existe PWA/manifest no frontend; aplicação condicional do BRAND-01, sem criação funcional nesta tarefa. |
+| 38 | Nenhum comportamento PWA foi alterado. | N/A | Não existe PWA/manifest no frontend; aplicação condicional do BRAND-01, sem criação funcional nesta tarefa. |
+| 39 | Desktop 1440 px correto. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 40 | Desktop 1280 px correto. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 41 | Tablet 768 px correto. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 42 | Mobile 390 px correto. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 43 | Sem overflow horizontal provocado pela marca. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 44 | Sidebar expandida correta. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 45 | Sidebar recolhida correta. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 46 | Navegação mobile correta. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 47 | Marca legível. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 48 | Contraste adequado. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 49 | Nenhum logo escuro sobre fundo escuro. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 50 | Nenhum fundo forçado incompatível com o Design System. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 51 | SVG/imagens possuem descrição adequada quando necessária. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 52 | Marca clicável possui nome acessível. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 53 | Nenhuma informação funcional depende exclusivamente da cor. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 54 | Contraste adequado. | PENDENTE | Teste C público delimitado e provas privadas anteriores parciais; faltam28rotas autenticadas/estados/revisão manual. |
+| 55 | Build passa. | PENDENTE | CI42417377261 SUCCESS; regressão1150/1150, tsc/build e lint. Reter no certificado do SHA final da rodada visual. |
+| 56 | TypeScript passa. | PENDENTE | CI42417377261 SUCCESS; regressão1150/1150, tsc/build e lint. Reter no certificado do SHA final da rodada visual. |
+| 57 | Lint passa. | PENDENTE | CI42417377261 SUCCESS; regressão1150/1150, tsc/build e lint. Reter no certificado do SHA final da rodada visual. |
+| 58 | Testes existentes passam. | PENDENTE | CI42417377261 SUCCESS; regressão1150/1150, tsc/build e lint. Reter no certificado do SHA final da rodada visual. |
+| 59 | Console sem erro. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 60 | Console sem log sensível. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 61 | Sem código morto criado pela tarefa. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 62 | Sem asset duplicado desnecessariamente. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 63 | Sem hardcode visual espalhado pelos componentes. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 64 | Nenhum backend paralelo criado. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 65 | Nenhuma arquitetura modificada. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 66 | Nenhuma regra funcional modificada. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 67 | Nenhuma tela reconstruída desnecessariamente. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 68 | Nenhum componente fora do escopo alterado. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 69 | Nenhuma biblioteca desnecessária adicionada. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 70 | Design System oficial preservado. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 71 | Marca integrada ao Design System, e não criada como sistema paralelo. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+| 72 | Git diff contém somente alterações necessárias ao BRAND-01. | PENDENTE | Diff do BUILD301 apenas em2arquivos do executor; produto src/public idêntico ao pin HML74cd8ef9. Auditar também escopo histórico do BUILD visual antes do certificado. |
+
+### 28 rotas reais e oito variantes por página
+
+Colunas:1440claro/escuro,1280claro/escuro,768claro/escuro,390claro/escuro. PP=PASS público automatizado; NS=sem sessão real; AR=redirecionamento de acesso. PP não aprova WCAG manual. A superfície drawerV117 é adicional e permanece sem sessão nos8casos.
+
+| ID | Rota | 1440 C | 1440 E | 1280 C | 1280 E | 768 C | 768 E | 390 C | 390 E |
+|---|---|---|---|---|---|---|---|---|---|
+| SYS01 | `/login` | PP | PP | PP | PP | PP | PP | PP | PP |
+| SYS02 | `/esqueci-senha` | PP | PP | PP | PP | PP | PP | PP | PP |
+| SYS03 | `/redefinir-senha` | PP | PP | PP | PP | PP | PP | PP | PP |
+| SYS04 | `/selecionar-organizacao` | NS | AR | AR | NS | AR | AR | AR | AR |
+| SYS05 | `/` | NS | NS | AR | AR | NS | AR | AR | NS |
+| ADM01 | `/administracao/usuarios` | NS | NS | NS | AR | AR | AR | AR | AR |
+| V101 | `/contratantes` | NS | AR | NS | NS | AR | AR | AR | AR |
+| V102 | `/contratantes/novo` | NS | NS | NS | AR | NS | AR | NS | AR |
+| V103 | `/contratantes/00000000-0000-4000-8000-000000000001/editar` | NS | AR | AR | AR | AR | AR | AR | NS |
+| V104 | `/contratos` | NS | NS | AR | NS | AR | AR | AR | AR |
+| V105 | `/contratos/novo` | NS | NS | AR | NS | AR | AR | AR | AR |
+| V106 | `/contratos/00000000-0000-4000-8000-000000000001` | AR | AR | AR | NS | NS | AR | AR | AR |
+| V107 | `/contratos/00000000-0000-4000-8000-000000000001/base-normativa` | NS | NS | AR | NS | AR | AR | AR | AR |
+| V108 | `/contratos/00000000-0000-4000-8000-000000000001/orcamento` | NS | AR | AR | NS | AR | NS | AR | AR |
+| V109 | `/contratos/00000000-0000-4000-8000-000000000001/regras` | NS | NS | NS | AR | AR | NS | NS | NS |
+| V110 | `/contratos/00000000-0000-4000-8000-000000000001/documentos` | NS | AR | AR | AR | NS | AR | NS | AR |
+| V111 | `/contratos/00000000-0000-4000-8000-000000000001/documentos/00000000-0000-4000-8000-000000000001` | NS | NS | AR | NS | AR | NS | AR | AR |
+| V112 | `/contratos/00000000-0000-4000-8000-000000000001/competencias` | AR | AR | AR | AR | NS | NS | NS | NS |
+| V113 | `/contratos/00000000-0000-4000-8000-000000000001/competencias/nova` | NS | NS | NS | NS | NS | NS | AR | NS |
+| V114 | `/competencias/00000000-0000-4000-8000-000000000001` | NS | NS | NS | NS | AR | NS | AR | NS |
+| V115 | `/competencias/00000000-0000-4000-8000-000000000001/documentos` | NS | NS | AR | NS | AR | NS | AR | NS |
+| V116 | `/competencias/00000000-0000-4000-8000-000000000001/analise` | NS | NS | AR | NS | NS | NS | NS | AR |
+| V118 | `/competencias/00000000-0000-4000-8000-000000000001/parecer` | NS | NS | NS | AR | NS | NS | NS | AR |
+| V119 | `/competencias/00000000-0000-4000-8000-000000000001/apresentar` | NS | NS | NS | AR | NS | AR | NS | AR |
+| V120 | `/competencias/00000000-0000-4000-8000-000000000001/apresentacoes/00000000-0000-4000-8000-000000000001` | NS | AR | NS | AR | NS | AR | NS | AR |
+| V121 | `/contratos/00000000-0000-4000-8000-000000000001/historico` | NS | NS | NS | AR | NS | AR | NS | AR |
+| V122 | `/contratos/00000000-0000-4000-8000-000000000001/historico/importar` | NS | NS | NS | AR | NS | AR | NS | AR |
+| V123 | `/administracao/auditoria` | NS | NS | NS | AR | NS | NS | NS | AR |
+
+Fonte:artefato13592241053, SHA2566690036fd3ed32bdab20c8022dc2ea4bc2ab45a5b050bba31d2e5a6b057ba39e;232combinações/119capturas,24públicosPASS/208protegidossemSessão. Relatório testou o merge sintético00c6853246279d14237bfb9ecf215f6690f7b095 associado ao HEADacee00c875ad65abb7434e2316c9b80c740bc5be; produto preservado.
+
+### ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE (OBRIGATÓRIO)
+Documentação de evidências, sem produto/assets/backend/tipos/PROD. ContaOS Brand v1.0 preservada; comparação com fonte oficial e reaproveitamento de provas válidas. Sem BUILD Lovable. Nenhuma lacuna foi transformada emPASS.
+
+---
 
 # P0 V1 — BUILD visual compartilhado proposto em 06/11/2026
 **V1 NÃO CERTIFICADA. Código em branch técnica, sem merge ou publicação por este registro.**
