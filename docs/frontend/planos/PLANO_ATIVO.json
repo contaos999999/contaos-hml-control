@@ -147,7 +147,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "Codex: leitura integral canônica preservada e reconferência25blobs/catalogo100/97 em b619; contrato JSONB/boolean HML lido, logs/advisors inspecionados.",
   "context_read_acknowledged_at": "2026-11-07",
-  "context_source_commit": "b619056aef9c00ca7818cfbe61d65c69e7f9060d",
+  "context_source_commit": "6c0f7a0f186ea2a49a5fb9f9fc1a7570e86151b0",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -215,7 +215,7 @@
   "prod_changes_allowed": false,
   "source_proof": {
     "frontend_baseline": "48ff81d804247bfa48be93afcfcaa947c48ecd0d",
-    "normative_head": "b619056aef9c00ca7818cfbe61d65c69e7f9060d",
+    "normative_head": "6c0f7a0f186ea2a49a5fb9f9fc1a7570e86151b0",
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
     "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
@@ -292,6 +292,18 @@
       "catalog_unchanged": true,
       "reason": "Backend revisão humana PR99 integrado e deploy CLI paritário;25blobsnormativos ecatálogoinvariáveis",
       "v1_certified": false
+    },
+    "json_contract_integrated": {
+      "pr": 279,
+      "head": "f537dadf9fefca79eb800de10a3b68d4e3fe3a3c",
+      "merge": "98d2fd376c44b381e4e548010f73dcec47e2df53",
+      "tests": 1146,
+      "ci_quality_job": 128407213358,
+      "ci_test_c_job": 128407213543,
+      "backend_pin_pr": 107,
+      "backend_pin_merge": "6c0f7a0f186ea2a49a5fb9f9fc1a7570e86151b0",
+      "canonical_blobs_unchanged": 25,
+      "catalog_unchanged": true
     }
   },
   "unverified_operational": {
@@ -567,7 +579,7 @@
     "scope_changed": false
   },
   "v117_json_contract_fix": {
-    "phase": "BUILD_SUBSTITUTO_EM_VALIDACAO",
+    "phase": "BUILD_INTEGRADO_PROVA_PRIVADA_PENDENTE",
     "source_head": "b619056aef9c00ca7818cfbe61d65c69e7f9060d",
     "files": [
       "src/lib/competencias/requisitoDetalheDados.ts",
