@@ -262,3 +262,14 @@ GATE305 integrado d87d17f398c06b3dfabb024351e3afe10e847659 após HEADd18c4cb, ru
 RED local80c1999:12PASS/2FAIL por ausência de compensação e revelação de foco; GREEN39/39 dirigido,1152/1152 em41suítes; tsc/build/ESLint focal/Prettier/ZeroDrift/diffPASS. Types8ea7750b75fd9d76b29c36ce7613392e3ab65e19 preservado. Revisão independente sem Critical/Important/Minor nos dois arquivos. Avisos React act preexistentes não tratados como falhas nem ocultados.
 
 Limites: regressões unitárias usam geometria simulada; navegador local bloqueado antes de abrir página por socket/ptrace. Geometria, zoom, teclado móvel, quatro larguras/dois temas com sessão real e WCAG integral permanecem NÃO VERIFICADOS. Teste C e CI deste BUILD ainda pendentes. Nenhuma frente certificada.
+
+
+## Tipografia institucional: RED real e correção mínima, 07/11/2026
+
+O GATE #308 foi integrado em a1029d9a947350797555f1a3e94918ca7d661e79 após ambos checks no run 42420933246 SUCCESS e LOCK 42420933198 SUCCESS. Fonte: seção 5 do manual BRAND-01 original, Inter com Arial como alternativa institucional.
+
+RED de navegador preservado no HEAD 24466e1a5abd64dcace2d973c45b5161173e2aaf: run 42421242066, Zero-Drift job 128549915990 SUCCESS e Teste C job 128549916136 FAILURE. O artefato 13593462941 foi baixado; SHA256 66a06348e456014fd5749eea5b8ff0fab7b45267afe2f4536e7594fd32116a88 conferido. Tested_sha do relatório é o merge sintético 13b23dd066b1158d6cd4b0ebdabecf6b9ad96310. Vinte e quatro falhas públicas, todas exclusivamente pela pilha genérica Apple/Segoe/Roboto antes de Arial; zero falhas de contraste medido. Os demais 200 casos foram redirecionados e oito drawers não tiveram sessão real; não recebem certificação privada.
+
+Correção local 76ebe71: duas linhas de CSS definem --font-sans como Inter, Arial, sans-serif e aplicam a variável no body. Não baixa fontes nem altera SVG, wordmark ou regra monoespaçada explícita. O CSS compilado passou a declarar essa pilha. Detector/helper Node 24/24, BRAND Vitest 54/54, tsc/build/Prettier/Zero-Drift/diff PASS. Types permanece 8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Revisões independentes dos scripts e do CSS sem achados.
+
+GREEN de navegador, capturas finais e CI ainda PENDENTES neste registro. Pilha declarada não comprova Inter instalada, todos os estados privados, zoom ou WCAG integral. Identidade visual continua NÃO CERTIFICADA.
