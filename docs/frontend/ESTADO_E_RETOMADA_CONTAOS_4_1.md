@@ -1,3 +1,12 @@
+## ÚLTIMA ETAPA COMPROVADA — CRUD GLOBAL — 07/11/2026 UTC
+**Frontend main antes deste checkpoint: 23d120f94e295f8031ade24ab785eaa39343c070. Backend: bfd741d5758e77f89de626fdb691ea4bebb943d5. CRUD global NÃO CONCLUÍDO; V1 NÃO CERTIFICADA; V2/PROD bloqueados.**
+
+BUILD248 HEAD0af23c4e55895f33269f7b7a987ef9fd14a05eee integrado em23d120f94e295f8031ade24ab785eaa39343c070 após dois checksSUCCESS run42316728042. Formulários organização/contrato reais,5APIs Supabase jádeployed/JWT50PASS. Regressão1017/1017em39suítes,tsc/buildPASS, revisão independente comos2findingscorrigidos,tiposfixos. TesteC público, UI privada ainda não comprovada. BUILD247 HEAD5134328d integrou73d870e após dois checksSUCCESS,42testes de capacidades/974regressão. Não repetir entregas comprovadas.
+
+Próxima lacuna confirmada: V1-CHK-001..004 configurável/versionadaporvigência; RegrasContrato só lê listas/versões/itens e aprova regra preventiva. HML não tem RPC de gestão de listas; versoes_lista só permite SELECT viaRLS, itens/listas têm INSERT/UPDATE mas sem proteção material de publicada; tocar_atualizado_em causa incremento duplo no header. Próxima tarefa: PLAN backend próprio para CRUDlista/draft/itens/publicação/encerrarvigência/inativação, cópia deversão, concorrênciaheader, fonteaprovada, auditoria, replay e bloqueioDMLdireto. Não implementarV2 por haverRPCs futuras. Históricos/auditoria/versõespublicadas não ganharão DELETE.
+
+Limites: a contagem antiga72RPCs porprefixos não é inventário completo. Catálogoatual127funçõespúblicas,102EXECUTEauthenticated; funçõessemreferência incluemhelpers,APIslegadas e módulosV2–V5, não presumir49lacunasV1. Reconciliar por requisito/domínio antes de certificar. Backendnovo source sómudará após este checkpoint integrado; reancorar frontend nos próximos PLANs.
+
 ## CHECKPOINT EM EXECUÇÃO — CRUD GLOBAL — 07/11/2026 UTC
 Frontend integrado: 73d870e2e00a9c0225b31590ee1d5a6dcf13db29. Backend: bfd741d5758e77f89de626fdb691ea4bebb943d5. CRUD global NÃO CONCLUÍDO; V1 NÃO CERTIFICADA; V2/PROD bloqueados.
 
