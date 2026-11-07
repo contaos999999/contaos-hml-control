@@ -19,7 +19,15 @@ vi.mock("@/integrations/supabase/client", () => {
       then: (a: (v: unknown) => unknown, b?: (e: unknown) => unknown) => run().then(a, b),
     };
   };
-  return { supabase: { auth: { getUser: m.getUser }, rpc } };
+  return {
+    supabase: {
+      auth: {
+        getUser: m.getUser,
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }),
+      },
+      rpc,
+    },
+  };
 });
 vi.mock("@tanstack/react-router", () => ({ useNavigate: () => m.nav }));
 vi.mock("@/lib/contratos/documentosDados", async (orig) => ({
@@ -472,6 +480,13 @@ describe("V1-17 paginação independente", () => {
 });
 
 describe("V1-17 reanálise", () => {
+  it("oferece revisão humana no drawer sem requests adicionais antes de abrir", async () => {
+    abrir();
+    await pronto();
+    expect(screen.getByRole("button", { name: "Revisar resultado" })).toBeInTheDocument();
+    expect(m.rpc.mock.calls.every((c) => c[0] === LER)).toBe(true);
+  });
+
   it("reanalisar=false → sem botão executável", async () => {
     abrir();
     await pronto();
@@ -693,6 +708,56 @@ describe("V1-17 reanálise", () => {
 });
 
 describe("V1-17 troca A/B e acessibilidade", () => {
+  it("troca de requisito durante revisão pendente não deixa novo drawer bloqueado", async () => {
+    let release: (x: unknown) => void = () => {};
+    m.rpc.mockImplementation((n: string, a: Record<string, unknown>) => {
+      if (n === LER) return { data: detalhe({ r: a["p_id_requisito"] as string }), error: null };
+      if (n === "obter_contexto_revisao_v117")
+        return {
+          data: {
+            schema_versao: "revisao-v117",
+            id_competencia: C,
+            id_requisito: R,
+            id_organizacao: ORG,
+            id_contrato: ORG,
+            id_execucao_esperada: EX1,
+            id_resultado_esperado: null,
+            hash_esperado: "a".repeat(64),
+            pode_revisar: true,
+          },
+          error: null,
+        };
+      return new Promise((res) => {
+        release = res;
+      });
+    });
+    const v = abrir();
+    await pronto();
+    fireEvent.click(screen.getByRole("button", { name: "Revisar resultado" }));
+    await screen.findByLabelText("Justificativa da revisão");
+    fireEvent.change(screen.getByLabelText("Justificativa da revisão"), {
+      target: { value: "Fonte conferida" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Revisar e confirmar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirmar revisão" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Fechar" })).toBeDisabled());
+    v.rerender(
+      <RequirementDrawer
+        idCompetencia={C}
+        idRequisito={R_B}
+        aberto
+        onOpenChange={() => {}}
+        onReanalisado={() => {}}
+      />,
+    );
+    await pronto();
+    expect(screen.getByRole("button", { name: "Fechar" })).toBeEnabled();
+    await act(async () => {
+      release({ data: null, error: { code: "PT409" } });
+    });
+    expect(screen.getByRole("button", { name: "Fechar" })).toBeEnabled();
+  });
+
   it("troca de requisito descarta resposta tardia de A", async () => {
     let soltarA: (v: unknown) => void = () => {};
     m.rpc.mockImplementation((_n: string, a: Record<string, unknown>) =>

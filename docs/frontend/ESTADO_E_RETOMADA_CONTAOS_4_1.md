@@ -1,3 +1,17 @@
+## Delta antes do merge271: evidências PostgREST
+Detectado300/PGRST201 real por relação ambígua versões→arquivos. RED1FAIL/42PASS; relação explícita tenant+contrato corrigida, GREEN43/43. Consulta anônima corrigida é401/42501 por ACL, sem bypass. Não equivale a teste privado. CI do novo HEAD deve passar antes do merge.
+
+## Continuidade V117 — JWT real aprovado e integração frontend em validação
+
+07/11/2026. Backendmain744dee8636c164415774e413e76883e08dffbc09 preservado. Run42362609674 tentativa3,job128386155328SUCCESS;logconferidoV117_REVIEW_REAL_JWT_PASS:38asserções,quarentenaverificada. SecretHMLconfigurado pelo titular: impedimento anterior resolvido. Não pedir segredo/autorização novamente e não repetirdeploy.
+PLAN frontend269 integrado2aa7880,run42367049105SUCCESS;GATE270 integradoecc1967,run42367195275SUCCESS. AmboschecksnoHEADexatodecadapasso. Pacotemestre originalrecuperadoeSHA5ee115d12e263d98068288b6bb722f5f303f2d19e1e4c0b5e930e69da03621da verificado,prompt38literalconferido,25/25fontesinalteradas.
+BUILD nesta branch:revisãohumana noDrawerV117,duasRPCsprotegidas,seleçãodeevidênciasRLS/paginada25/tenant/competência,justificativa/fundamento/N/A,confirmação,CASfixo,UUIDporintenção,replayexplícitodomesmopayload,negação/conflito/resultadoincerto,reciboexatoeinvalidadeparecervindadoBE. Nenhumendpointlegado,updateDML,statuslocal,tipos,rotas,backendouPRODalterados.
+REDimportsnovosausentes;vínculodrawerRED1falha/56PASS. Revisãoindependente3ImportantreproduzidosRED3falhas/97PASSecorrigidos:lockcontextualdodrawer,trocasessãoduranteaberturainicial,reciboresultadoantigonegado. GREEN100/100focados,1128/1128regressãoem41suítes,TypeScript/build/lintfocal/ZeroDrift/GOV020PASS;tipos8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Semminordiferido. CI/merge/TesteCdoBUILD ainda pendentes nestecommit;UIprivada não é comprovada por mocks/JWTbackend.
+Fila histórica reconfirmada:75/80integrados;77/78encerradossemmerge. PR251encerradosemmerge nestaexecução:documentoretomavaLovablecontraGitHub+Actions vigente,checkpointssupervenientespreservados;branchhistóricapreservada.
+Próximaação:CI/mergeBUILD V117,sePASSavançar imediatamenteprovasprivadascomfixturesAuthoficiaisviaCI,semrepetirautenticaçãopessoalcancelada. PlanejarharnessbrowserHMLcomfonteFEfixada,JSONsessãotemporárioprivado,quarentena,4larguras×2temas/WCAGeoperaçõesV1pordomínio,seminterceptarbackendcomMOCK. CRUDglobal/V1 nãocertificados;R01/R02/R03eSYS03N1/N2preservados.SemV2–V5/PROD.
+
+---
+
 ## Checkpoint verificado: revisão humana V1-17 implantada no HML, prova JWT bloqueada
 
 **Data: 07/11/2026. CRUD global NÃO CONCLUÍDO. V1 NÃO CERTIFICADA.** V2–V5 e PROD permanecem bloqueados. Este bloco prevalece sobre os registros históricos abaixo.

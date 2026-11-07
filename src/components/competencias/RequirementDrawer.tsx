@@ -21,6 +21,7 @@ import {
   XCircle,
 } from "lucide-react";
 
+import { RevisaoRequisito } from "@/components/competencias/RevisaoRequisito";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -93,13 +94,24 @@ export function RequirementDrawer({
   onOpenChange,
   onReanalisado,
 }: Props) {
+  const chaveDrawer = `${idCompetencia}:${idRequisito}`;
+  const [envioRevisao, setEnvioRevisao] = useState<{ chave: string; ativo: boolean } | null>(null);
+  const revisando = aberto && envioRevisao?.chave === chaveDrawer && envioRevisao.ativo;
+  useEffect(() => {
+    if (!aberto) setEnvioRevisao(null);
+  }, [aberto]);
   const titulo = useRef<HTMLHeadingElement>(null);
   // Elemento de origem (botão "Abrir requisito") para devolver o foco ao fechar.
   const origem = useRef<HTMLElement | null>(null);
   if (aberto && !origem.current && typeof document !== "undefined")
     origem.current = document.activeElement as HTMLElement | null;
   return (
-    <Sheet open={aberto} onOpenChange={onOpenChange}>
+    <Sheet
+      open={aberto}
+      onOpenChange={(v) => {
+        if (!revisando) onOpenChange(v);
+      }}
+    >
       <SheetContent
         side="right"
         className="flex w-full flex-col gap-0 overflow-y-auto p-0 sm:max-w-2xl [&>button:first-child]:hidden"
@@ -134,10 +146,16 @@ export function RequirementDrawer({
             idCompetencia={idCompetencia}
             idRequisito={idRequisito}
             onReanalisado={onReanalisado}
+            onBloqueioChange={(v) => setEnvioRevisao({ chave: chaveDrawer, ativo: v })}
           />
         ) : null}
         <div className="mt-auto border-t border-border p-4">
-          <Button variant="outline" className="min-h-11" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            className="min-h-11"
+            disabled={revisando}
+            onClick={() => onOpenChange(false)}
+          >
             Fechar
           </Button>
         </div>
@@ -150,10 +168,12 @@ function Conteudo({
   idCompetencia,
   idRequisito,
   onReanalisado,
+  onBloqueioChange,
 }: {
   idCompetencia: string;
   idRequisito: string;
   onReanalisado: () => void;
+  onBloqueioChange: (v: boolean) => void;
 }) {
   const navigate = useNavigate();
   const idsOk = uuidValido(idCompetencia) && uuidValido(idRequisito);
@@ -181,6 +201,7 @@ function Conteudo({
   const avisoAtual = aviso && aviso.k === chave ? aviso.a : null;
   const [enviando, setEnviando] = useState<string | null>(null);
   const [incerta, setIncerta] = useState(false);
+  const [revisaoOcupada, setRevisaoOcupada] = useState(false);
   const [conferindo, setConferindo] = useState(false);
   const trava = useRef(false);
   const chaveAtual = useRef(chave);
@@ -248,7 +269,7 @@ function Conteudo({
     setOff({ k: chave, o: { ...o, [k]: v } });
 
   const reanalisar = async () => {
-    if (trava.current || incerta) return;
+    if (trava.current || incerta || revisaoOcupada) return;
     trava.current = true;
     const alvo = chave;
     setEnviando(alvo);
@@ -399,7 +420,11 @@ function Conteudo({
 
         {d.allowed_actions.reanalisar ? (
           <div className="space-y-2">
-            <Button className="min-h-11" disabled={enviandoAqui || incerta} onClick={reanalisar}>
+            <Button
+              className="min-h-11"
+              disabled={enviandoAqui || incerta || revisaoOcupada}
+              onClick={reanalisar}
+            >
               {enviandoAqui ? (
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden="true" />
               ) : (
@@ -440,6 +465,19 @@ function Conteudo({
                         : ""}
         </p>
 
+        <RevisaoRequisito
+          idCompetencia={c}
+          idRequisito={r}
+          bloqueado={enviandoAqui || incerta}
+          onOcupado={(v) => {
+            setRevisaoOcupada(v);
+            onBloqueioChange(v);
+          }}
+          onRevisado={() => {
+            setRecarga((n) => n + 1);
+            onReanalisado();
+          }}
+        />
         <EvidenceList d={d} onPagina={(v) => mudarOffset("ev", v)} />
 
         <Bloco id="v117-ap" titulo="Apontamentos do requisito">
