@@ -202,7 +202,7 @@ export async function listarEvidencias(
     const r = await supabase
       .from("versoes_documento")
       .select(
-        "id,numero_versao,id_organizacao,id_contrato,documentos_competencia!inner(id_competencia,titulo,situacao),arquivos!inner(nome_original,status_seguranca)",
+        "id,numero_versao,id_organizacao,id_contrato,documentos_competencia!inner(id_competencia,titulo,situacao),arquivos!versoes_documento_arquivo_org_contrato_fk!inner(nome_original,status_seguranca)",
         { count: "exact" },
       )
       .eq("id_organizacao", ctx.id_organizacao)

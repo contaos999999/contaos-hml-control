@@ -97,6 +97,24 @@ beforeEach(() => {
   m.from.mockReturnValue({ select: () => q });
 });
 describe("revisão V117 adaptador", () => {
+  it("desambigua a relação de arquivo pelo tenant e contrato", async () => {
+    const query = m.from().select();
+    m.from.mockReturnValue({
+      select: (fields: string) => {
+        if (!fields.includes("arquivos!versoes_documento_arquivo_org_contrato_fk!inner(")) {
+          query.range.mockResolvedValueOnce({
+            data: null,
+            count: null,
+            error: { code: "PGRST201" },
+          });
+        }
+        return query;
+      },
+    });
+    await expect(listarEvidencias(parsed(), 0)).resolves.toMatchObject({
+      itens: [expect.objectContaining({ id: VD })],
+    });
+  });
   it("recibo não pode reapresentar o resultado anterior como novo", async () => {
     const c = montarRevisao({ ...parsed(), id_resultado_esperado: VD }, input(), KEY);
     m.rpc.mockResolvedValue({

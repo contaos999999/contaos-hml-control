@@ -1,3 +1,6 @@
+## Delta antes do merge271: evidências PostgREST
+Detectado300/PGRST201 real por relação ambígua versões→arquivos. RED1FAIL/42PASS; relação explícita tenant+contrato corrigida, GREEN43/43. Consulta anônima corrigida é401/42501 por ACL, sem bypass. Não equivale a teste privado. CI do novo HEAD deve passar antes do merge.
+
 ## Continuidade V117 — JWT real aprovado e integração frontend em validação
 
 07/11/2026. Backendmain744dee8636c164415774e413e76883e08dffbc09 preservado. Run42362609674 tentativa3,job128386155328SUCCESS;logconferidoV117_REVIEW_REAL_JWT_PASS:38asserções,quarentenaverificada. SecretHMLconfigurado pelo titular: impedimento anterior resolvido. Não pedir segredo/autorização novamente e não repetirdeploy.
