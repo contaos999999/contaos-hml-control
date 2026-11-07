@@ -133,7 +133,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "GPT-6 — leitura e conferência dos 25 documentos normativos do develop, fonte recuperada 43 e cruzamento V1-HIS-001..005, RNFs, contrato Supabase HML",
   "context_read_acknowledged_at": "2026-11-06",
-  "context_source_commit": "bfd741d5758e77f89de626fdb691ea4bebb943d5",
+  "context_source_commit": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -201,7 +201,7 @@
   "prod_changes_allowed": false,
   "source_proof": {
     "frontend_baseline": "48ff81d804247bfa48be93afcfcaa947c48ecd0d",
-    "normative_head": "67668c61054405368d5c7895f5087ccfa9eb9dfc",
+    "normative_head": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
     "source_blobs_verified": 25,
     "source_blob_differences": 0,
     "types_sha": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
@@ -271,6 +271,13 @@
       "backend_jwt": "50/50 reais",
       "private_ui": "NAO_VERIFICADA",
       "backend": "bfd741d5758e77f89de626fdb691ea4bebb943d5"
+    },
+    "reanchor_20261107": {
+      "source_commit": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
+      "canonical_blobs_unchanged": 25,
+      "catalog_unchanged": true,
+      "reason": "Backend listas PR96 integrado; fonte viva deve acompanhar sem alterar gates",
+      "v1_certified": false
     }
   },
   "unverified_operational": {
