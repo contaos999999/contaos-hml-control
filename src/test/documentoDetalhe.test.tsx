@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { readFileSync } from "node:fs";
@@ -8,6 +8,7 @@ type Chamada = { tabela: string; ops: Array<[string, unknown[]]> };
 
 const m = vi.hoisted(() => ({
   getUser: vi.fn(),
+  permissoes: vi.fn(),
   nav: vi.fn(),
   rpc: vi.fn(),
   invoke: vi.fn(),
@@ -49,6 +50,10 @@ vi.mock("@/integrations/supabase/client", () => {
     supabase: { auth: { getUser: m.getUser }, from, rpc, functions: { invoke: m.invoke } },
   };
 });
+vi.mock("@/lib/administracao/rbacRpc", async (original) => ({
+  ...(await original<typeof import("@/lib/administracao/rbacRpc")>()),
+  consultarPermissoesEfetivas: m.permissoes,
+}));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.nav,
   createFileRoute: () => (o: unknown) => ({
@@ -284,11 +289,12 @@ function cenario(o: Cen = {}) {
 }
 function montar(id = K1, idDoc = D1) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const view = render(
     <QueryClientProvider client={qc}>
       <DocumentoDetalhe id={id} idDocumento={idDoc} retorno={{}} />
     </QueryClientProvider>,
   );
+  return { ...view, qc };
 }
 const DETALHE = [
   "versoes_documento",
@@ -302,6 +308,14 @@ const semDetalhe = () => DETALHE.forEach((t) => expect(de(t)).toHaveLength(0));
 const cartao = (id: string) => screen.findByTestId(`sugestao-${id}`);
 
 beforeEach(() => {
+  m.permissoes
+    .mockReset()
+    .mockResolvedValue({
+      schema_versao: "rbac-v1",
+      versao: 1,
+      master: false,
+      permissoes: [{ recurso: "arquivos", acao: "editar" }],
+    });
   m.chamadas.length = 0;
   m.rpcChamadas.length = 0;
   m.resposta = null;
@@ -748,7 +762,7 @@ describe("V1-11 perfil para revisão humana (UX; backend é a autoridade)", () =
     expect(eqDe(v[0]!, "id_organizacao")).toBe(A);
     expect(op(v[0]!, "maybeSingle")).toHaveLength(1);
   });
-  it("revisão bem-sucedida refaz sugestões sem reler vinculos_usuarios", async () => {
+  it("revisão bem-sucedida refaz sugestões e revalida capacidade", async () => {
     cenario({ perfil: "gestor_contrato" });
     m.rpc.mockResolvedValue({ data: { status: "rejeitada" }, error: null });
     montar();
@@ -759,7 +773,8 @@ describe("V1-11 perfil para revisão humana (UX; backend é a autoridade)", () =
     expect(await screen.findByText(MENSAGENS_V111.rejeitada)).toBeInTheDocument();
     await waitFor(() => expect(de("sugestoes_extracao_documento").length).toBeGreaterThan(antes));
     await new Promise((r) => setTimeout(r, 50));
-    expect(de("vinculos_usuarios")).toHaveLength(1);
+    await waitFor(() => expect(m.permissoes).toHaveBeenCalledTimes(2));
+    expect(de("vinculos_usuarios")).toHaveLength(2);
   });
   it("leitor vê sugestão, fonte e status, mas nenhuma ação humana nem RPC", async () => {
     cenario({ perfil: "leitor" });
@@ -801,4 +816,83 @@ describe("V1-11 escopo e Zero-Drift", () => {
     );
     expect(fonte).not.toMatch(/COLUNAS_[A-Z_]+ =\s*"[^"]*embedding/);
   });
+});
+
+describe("P0 CRUD revisão documental efetiva", () => {
+  it("MASTER com permissão revisa sem vínculo local", async () => {
+    cenario({ perfil: null });
+    m.permissoes.mockResolvedValue({
+      schema_versao: "rbac-v1",
+      versao: 1,
+      master: true,
+      permissoes: [{ recurso: "arquivos", acao: "editar" }],
+    });
+    montar();
+    expect(
+      await within(await cartao("s-obr")).findByRole("button", { name: /Aprovar/ }),
+    ).toBeInTheDocument();
+    expect(de("vinculos_usuarios")).toHaveLength(0);
+    expect(m.permissoes).toHaveBeenCalledWith(A, K1);
+  });
+  it.each([true, false])("sem arquivos/editar não há revisão, MASTER=%s", async (master) => {
+    cenario({ perfil: "administrador" });
+    m.permissoes.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master, permissoes: [] });
+    montar();
+    const card = await cartao("s-obr");
+    await waitFor(() => expect(m.permissoes).toHaveBeenCalledWith(A, K1));
+    expect(within(card).queryByRole("button", { name: /Aprovar/ })).not.toBeInTheDocument();
+    expect(m.rpcChamadas).toHaveLength(0);
+  });
+  it("falha de consulta mantém conteúdo somente leitura", async () => {
+    cenario({ perfil: "gestor_contrato" });
+    m.permissoes.mockRejectedValue(new Error("offline"));
+    montar();
+    const card = await cartao("s-obr");
+    await waitFor(() => expect(m.permissoes).toHaveBeenCalled());
+    expect(within(card).queryByRole("button", { name: /Aprovar/ })).not.toBeInTheDocument();
+    expect(m.rpcChamadas).toHaveLength(0);
+  });
+});
+
+it("P0 revisão recusa contexto inválido antes de consultar permissões", async () => {
+  const { consultarCapacidadeRevisaoDocumento } =
+    await import("@/lib/contratos/documentoDetalheDados");
+  expect(await consultarCapacidadeRevisaoDocumento(U, A, "invalido")).toBe(false);
+  expect(m.permissoes).not.toHaveBeenCalled();
+});
+
+it("P0 refetch de capacidade preserva rascunho e bloqueia confirmação temporariamente", async () => {
+  cenario();
+  const { qc } = montar();
+  fireEvent.click(within(await cartao("s-class")).getByRole("button", { name: /Aprovar/ }));
+  await screen.findByRole("dialog");
+  fireEvent.change(screen.getByLabelText("Categoria revisada (opcional)"), {
+    target: { value: "Minha categoria" },
+  });
+  let resolver!: (v: unknown) => void;
+  m.permissoes.mockImplementation(
+    () =>
+      new Promise((r) => {
+        resolver = r;
+      }),
+  );
+  act(() => {
+    void qc.invalidateQueries({ queryKey: ["v111", "capacidade-revisao"] });
+  });
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Confirmar aprovação" })).toBeDisabled(),
+  );
+  expect(screen.getByLabelText("Categoria revisada (opcional)")).toHaveValue("Minha categoria");
+  await act(async () => {
+    resolver({
+      schema_versao: "rbac-v1",
+      versao: 1,
+      master: false,
+      permissoes: [{ recurso: "arquivos", acao: "editar" }],
+    });
+  });
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Confirmar aprovação" })).toBeEnabled(),
+  );
+  expect(screen.getByLabelText("Categoria revisada (opcional)")).toHaveValue("Minha categoria");
 });

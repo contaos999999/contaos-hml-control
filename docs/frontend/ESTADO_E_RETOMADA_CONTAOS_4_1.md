@@ -1,3 +1,15 @@
+## CHECKPOINT EM EXECUÇÃO — CRUD GLOBAL — 07/11/2026 UTC (atual)
+Última entrega integrada: listas BUILD255 HEADaf6226f1eafc8c0d6db136da69ea6703f8de2e44,doischecksSUCCESSrun42333206252,merge8b5dc6b79d539885d0c82b1e433181696067c629. Código10ações canônicas,39testes/1056regressão,reviewPASS. Sem prova deUIprivada.
+PLAN256 capacidades integrado496f9c63c9630cb10805a64a8e69ef10356bc8a4,run42333535507 ambosSUCCESS. BUILDcapacidades nesta branch:contratantes/criar efetivo obrigatório; revisão documental combina arquivos/editar comMASTER confirmado no servidor ou perfil legado elegível. NãoMASTER continua sujeito ao vínculo;MASTERsempermissão não ganhaação. Cachecontextual sem5min;refetch bloqueia confirmação preservandorascunho;negaçãodefinitiva encerraação. RED8falhas/68PASS;GREEN79/79,1067/1067 em40suítes,tsc/build/ESLint semregraPrettier legadoPASS. Revisãoindependente semcrítico/importante apóscorreções. CI final+merge aindaPENDENTES.
+
+Próxima lacuna confirmada porrevisãoestática: seletores de arquivo normativo/orçamento estão presos à página0(25itens),impedem arquivos antigos;useAcao normativo renovaUUID+reset duranteRPC se campos mudam, permitindo segundo comando antes de concluir oprimeiro. Preparar PLAN fechado antes deBUILD,com paginação/seleçãopreservada e trava independente/controles bloqueados duranteenvio;sem backend. Depois continuar matriz semânticaV1 e provas privadas.
+
+Limite adicional da evidência JWTlistas/cadastros: o runner existente em supabase/tests prepara identidades sintéticas por INSERT emauth.users e depois autentica viaGoTrue para obterJWT real. Os147resultados são das chamadas HTTPautenticadas, mas o provisionamento diverge da proibição do plano mestre de criaridentidades porSQL. Não usar esse ensaio como prova deprovisionamentoAuthoficial nem certificarV1combase nele; próximo ensaio deidentidade deve usarAuthoficial/fixturecontrolada autorizada,semrepetir seedsSQL. Quarentena foi verificada e nãodeve ser desfeita. Nenhum novo provisionamento realizado nesta correçãofrontend.
+
+GitHub+Actions canônicos,backend4fec09bf5cab5afc776192b9bef6e70728e1a058 intocado,tipo8ea7750b75fd9d76b29c36ce7613392e3ab65e19fixo. CRUDglobalNÃOconcluído,V1NÃOcertificada,V2/PRODbloqueados. Não repetir entregas já integradas;seguir evidência e corrigir lacunas comprovadas.
+
+---
+
 ## CHECKPOINT EM EXECUÇÃO — CRUD GLOBAL — 07/11/2026 UTC (prevalece sobre histórico abaixo)
 Frontend base4de8296b13f0ace421e83519f1c73ac89a208b6f; backend4fec09bf5cab5afc776192b9bef6e70728e1a058. GitHub + Actions são desenvolvimento canônico após PR253 (d7125772;run42331994160), Lovable não participa do BUILD. PR252 (25c03f6a;run42332177958 e42332177995) integra dupla barreira/restauração types; blob8ea7750b75fd9d76b29c36ce7613392e3ab65e19 preservado. PR254 PLAN listas integrado4de8296,run42332158390 ambos SUCCESS.
 

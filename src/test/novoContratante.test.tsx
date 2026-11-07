@@ -12,6 +12,7 @@ const m = vi.hoisted(() => ({
   nav: vi.fn(),
   rpc: vi.fn(),
   invoke: vi.fn(),
+  permissoes: vi.fn(),
   chamadas: [] as Array<{ tabela: string; ops: Array<[string, unknown[]]> }>,
   respostas: {} as { vinculos_usuarios?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown; contratantes?: (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown },
 }));
@@ -38,6 +39,10 @@ vi.mock("@/integrations/supabase/client", () => {
   };
   return { supabase: { auth: { getUser: m.getUser, signOut: m.signOut }, from, rpc: m.rpc, functions: { invoke: m.invoke } } };
 });
+vi.mock("@/lib/administracao/rbacRpc", async (original) => ({
+  ...await original<typeof import("@/lib/administracao/rbacRpc")>(),
+  consultarPermissoesEfetivas: m.permissoes,
+}));
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.nav,
   createFileRoute: () => (o: unknown) => ({ options: o }),
@@ -49,6 +54,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 import { NovoContratante, MENSAGENS_V102 } from "@/components/contratantes/NovoContratante";
+import { ErroRbac } from "@/lib/administracao/rbacRpc";
 import { montarPayload, capacidadePermiteCadastro } from "@/lib/contratantes/novoContratanteDados";
 import { definirPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { Route } from "@/routes/contratantes_.novo";
@@ -83,6 +89,7 @@ const okInsert = () => ({ data: { id: "c1", razao_social: "ACME LTDA", situacao:
 
 beforeEach(() => {
   vi.clearAllMocks();
+  m.permissoes.mockResolvedValue({schema_versao:"rbac-v1",versao:1,master:false,permissoes:[{recurso:"contratantes",acao:"criar"}]});
   m.chamadas.length = 0;
   sessionStorage.clear();
   m.getUser.mockResolvedValue({ data: { user: { id: U } }, error: null });
@@ -357,4 +364,35 @@ describe("P0 V1 MASTER — regressão RED convertida em GREEN", () => {
     expect(await screen.findByText(MENSAGENS_V102.negado)).toBeTruthy();
     expect(screen.queryByLabelText(/Razão social/)).toBeNull();
   });
+});
+
+describe("P0 CRUD permissão efetiva de criação", () => {
+  it.each(["administrador", "administrador_master"])("%s revogado não recebe formulário nem INSERT", async (perfil) => {
+    m.rpc.mockResolvedValue({data:[org(perfil)],error:null});
+    m.permissoes.mockResolvedValue({schema_versao:"rbac-v1",versao:1,master:perfil==="administrador_master",permissoes:[]});
+    montar();
+    await screen.findByText(MENSAGENS_V102.negado);
+    expect(screen.queryByLabelText(/Razão social/)).not.toBeInTheDocument();
+    expect(inserts()).toHaveLength(0);
+  });
+  it("consulta permissão no contexto exato da organização", async () => {
+    montar();
+    await screen.findByLabelText(/Razão social/);
+    expect(m.permissoes).toHaveBeenCalledWith(ORG,null);
+  });
+  it("falha técnica de RBAC não expõe formulário", async () => {
+    m.permissoes.mockRejectedValue(new Error("offline"));
+    montar();
+    await screen.findByText(MENSAGENS_V102.erroGate);
+    expect(screen.queryByLabelText(/Razão social/)).not.toBeInTheDocument();
+    expect(inserts()).toHaveLength(0);
+  });
+});
+
+it("P0 RBAC negado na criação não recebe formulário nem INSERT", async () => {
+  m.permissoes.mockRejectedValue(new ErroRbac("negado"));
+  montar();
+  await screen.findByText(MENSAGENS_V102.negado);
+  expect(screen.queryByLabelText(/Razão social/)).not.toBeInTheDocument();
+  expect(inserts()).toHaveLength(0);
 });

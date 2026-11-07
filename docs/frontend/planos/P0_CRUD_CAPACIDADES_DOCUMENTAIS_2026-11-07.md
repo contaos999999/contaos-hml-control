@@ -43,3 +43,6 @@ Testes porcaso acima nas tarefas1/2; regressão completa,tsc,build,lintfocal sem
 
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
 GitHub+Actions canônicos. Reusar UI e tokens atuais,sem redesign ou assets. PreservarPT-BR,44px,foco,teclado e estados existentes; matriz1440/1280/768/390×claro/escuro privada continua não comprovada. Nenhuma dispensa de testes/gates. CRUD global/V1 permanecem abertos;V2/PROD bloqueados.
+
+## Evidências de BUILD local07/11/2026
+PLAN256 integrado496f9c63 após run42333535507 ambosSUCCESS. RED8falhas/68PASS confirmou as duas divergências. GREEN79/79 nos dois arquivos;regressão1067/1067 em40suítes,tsc/build/ESLint exceto regraPrettier legadoPASS. Lintpadrão legado não declarado limpo. Revisão independente corrigiu perda de diálogo ao refetch e preservou bloqueio porfonte/vigência; teste específicoRED1falha→GREEN. Capacidade transitória bloqueia confirmação sem apagar rascunho;negação definitiva encerra ação. Segunda revisão79/79 semcrítico/importante. Tiposfixos;nenhum backend/rota/asset/PROD alterado. CI final/merge ainda exigidos;sem prova UIprivada.

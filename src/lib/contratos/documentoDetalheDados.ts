@@ -4,6 +4,7 @@
  * Mutações somente pelas RPCs oficiais `definir_vigencia_sugestao_extracao` e
  * `revisar_sugestao_extracao`; o backend decide permissão, lock e efeito.
  */
+import { consultarPermissoesEfetivas, temPermissao } from "@/lib/administracao/rbacRpc";
 import { supabase } from "@/integrations/supabase/client";
 import type { Pagina } from "@/lib/contratos/baseNormativaDados";
 import {
@@ -294,6 +295,23 @@ export async function obterPerfilVinculo(
   const r = await executar(q.maybeSingle(), signal);
   const p = (r.data as { perfil?: unknown } | null)?.perfil;
   return typeof p === "string" ? p : null;
+}
+
+/** Conjunção das permissões efetivas e restrições de revisão conferidas no HML. */
+export async function consultarCapacidadeRevisaoDocumento(
+  idUsuario: string,
+  idOrganizacao: string,
+  idContrato: string,
+  signal?: AbortSignal,
+): Promise<boolean> {
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!idUsuario || !uuid.test(idOrganizacao) || !uuid.test(idContrato)) return false;
+  signal?.throwIfAborted();
+  const efetivas = await consultarPermissoesEfetivas(idOrganizacao, idContrato);
+  signal?.throwIfAborted();
+  if (!temPermissao(efetivas.permissoes, "arquivos", "editar")) return false;
+  if (efetivas.master) return true;
+  return podeRevisar(await obterPerfilVinculo(idUsuario, idOrganizacao, signal));
 }
 
 // ---------- Regras de UX (o backend é a autoridade) ----------

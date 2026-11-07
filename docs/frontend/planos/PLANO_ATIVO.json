@@ -420,7 +420,7 @@
   },
   "crud_listas_ui_gate": {
     "plan": "docs/frontend/planos/P0_CRUD_LISTAS_FRONTEND_2026-11-06.md",
-    "status": "BUILD_LOCAL_VERIFICADO_AGUARDANDO_CI_E_MERGE",
+    "status": "BUILD_INTEGRADO_CI_PASS_UI_PRIVADA_PENDENTE",
     "backend_head": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
     "backend_run": 42321885307,
     "jwt_assertions": 147,
@@ -434,11 +434,15 @@
     "local_tests": "39/39 direcionados;1056/1056 regressão em40suítes",
     "local_tsc": "PASS",
     "local_build": "PASS",
-    "review": "3 findings corrigidos e revisão independente sem críticos/importantes"
+    "review": "3 findings corrigidos e revisão independente sem críticos/importantes",
+    "build_pr": 255,
+    "build_head": "af6226f1eafc8c0d6db136da69ea6703f8de2e44",
+    "build_merge": "8b5dc6b79d539885d0c82b1e433181696067c629",
+    "build_run": 42333206252
   },
   "crud_capacidades_documentais_gate": {
     "plan": "docs/frontend/planos/P0_CRUD_CAPACIDADES_DOCUMENTAIS_2026-11-07.md",
-    "status": "PLAN_TECNICO_VALIDADO_AGUARDANDO_CI_ANTES_BUILD",
+    "status": "BUILD_LOCAL_VERIFICADO_AGUARDANDO_CI_E_MERGE",
     "backend": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
     "apis_existentes": [
       "consultar_permissoes_efetivas",
@@ -446,6 +450,13 @@
       "revisar_sugestao_extracao"
     ],
     "backend_changes": false,
-    "private_ui": "NAO_VERIFICADA"
+    "private_ui": "NAO_VERIFICADA",
+    "plan_pr": 256,
+    "plan_run": 42333535507,
+    "plan_merge": "496f9c63c9630cb10805a64a8e69ef10356bc8a4",
+    "local_tests": "79/79 direcionados;1067/1067 em40suítes",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "review": "Sem crítico/importante após correção de preservação de rascunho durante refetch e combinação de bloqueios"
   }
 }
