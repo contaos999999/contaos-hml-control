@@ -9,7 +9,7 @@
     "validado_em": "2026-11-05",
     "modo_aprovacao": "autorizacao_previa_expressa_titular",
     "aprovacao_humana_exigida": true,
-    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42019842121",
+    "ci_plano_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/42367049105",
     "gates": {
       "prd": "PASS",
       "premissas": "PASS",
@@ -527,13 +527,13 @@
     "types_ci": 42357723333
   },
   "crud_revisao_humana_backend_gate": {
-    "status": "BACKEND_JWT_REAL_PASS_PLAN_FRONTEND",
+    "status": "PLAN_CI_PASS_GATE_VALIDADO_BUILD_SEPARADO",
     "authorization": "Titular: Autorizado investigação, depois Execute correção canônica e integração com testes reais",
     "backend_plan_pr": 98,
     "backend_plan_merge": "c1e138d7a60641e1059079e83649bc3bb7f31599",
     "backend_build_pr": 99,
     "backend_build_head": "e63894d48b832239ed5bb3637765041be8a49942",
-    "frontend_build_allowed": false,
+    "frontend_build_allowed": true,
     "condition": "backend merge, deploy CLI/paridade, JWT real e novo PLAN frontend",
     "prod": false,
     "backend_build_merge": "744dee8636c164415774e413e76883e08dffbc09",
@@ -546,6 +546,8 @@
     "jwt_job": 128386155328,
     "jwt_state": "PASS_38_ASSERTIONS_QUARANTINE_VERIFIED",
     "fixtures_created": false,
-    "next_action": "PLAN frontend com CI verde antes de BUILD"
+    "next_action": "GATE separado; aguardar CI+merge antes de RED/BUILD",
+    "frontend_plan_pr": 269,
+    "frontend_plan_ci": 42367049105
   }
 }
