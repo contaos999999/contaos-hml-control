@@ -32,3 +32,6 @@ PLAN269 integrado2aa7880 após run42367049105SUCCESS. GATE270 integradoecc1967 a
 Prova HTTP somente leitura em HML: arquivos!inner retornou300/PGRST201 por três FKs entre versões e arquivos. RED reproduzido1FAIL/42PASS. Consulta corrigida para arquivos!versoes_documento_arquivo_org_contrato_fk!inner, mantendo fronteira id_arquivo+organização+contrato. GREEN43/43. Repetição pública sem sessão passa da resolução da relação para401/42501, como esperado pela ACL anon, sem conceder acesso. Isso valida o formato e a negação pública, não comprova leitura autenticada. Prova privada permanece pendente. Novo HEAD e CI integral obrigatórios; verde do HEAD anterior não autoriza merge deste delta.
 
 Revalidação documental da fonte: PR272 HEAD7841911db9ad39c89bdc3751bffb13507808bcbc, três checks SUCCESS antes do merge745ce417bfb9fe6e43dc25bb981ea61cde8ac532.25blobs e catálogo preservados em937bd9b. GATE mantém autorização e escopo anteriores, sem alteração de contrato.
+
+## Revalidação de fonte após PLAN/GATE da prova privada
+Fonte normativa avançou para937bd9b0792b57b5e2677223eab95deb74154761 apenas por documentação da prova privada. Os25 blobs canônicos e catálogo100/97 permanecem exatamente iguais, verificados por Git. Reancorar snapshot sem alterar regra/escopo; este PLAN documental separado exige dois checks verdes antes de retomar BUILD271.
