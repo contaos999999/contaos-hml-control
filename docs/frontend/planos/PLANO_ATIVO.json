@@ -556,5 +556,14 @@
     "frontend_local_focused": "100/100",
     "frontend_review": "3Important corrigidos porRED3/GREEN100;semminor diferido",
     "frontend_private_ui": "NAO_VERIFICADA"
+  },
+  "v117_source_revalidation": {
+    "plan_pr": 272,
+    "head": "7841911db9ad39c89bdc3751bffb13507808bcbc",
+    "merge": "745ce417bfb9fe6e43dc25bb981ea61cde8ac532",
+    "checks": "3SUCCESS",
+    "source_head": "937bd9b0792b57b5e2677223eab95deb74154761",
+    "canonical_blobs": "25identicos",
+    "scope_changed": false
   }
 }
