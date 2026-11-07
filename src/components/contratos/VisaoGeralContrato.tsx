@@ -6,6 +6,7 @@ import { AlertCircle, ArrowLeft, Building2, Loader2, RefreshCw, SearchX, ShieldA
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GerenciarCadastro } from "@/components/cadastros/GerenciarCadastro";
 import { obterPreferenciaOrganizacao } from "@/lib/organizacao/preferenciaOrganizacao";
 import { ErroDetalhe, uuidCanonico, formatarBrl, formatarDataBr, obterContrato, texto, type ContratoDetalhe } from "@/lib/contratos/contratoDetalheDados";
 
@@ -126,7 +127,9 @@ function Conteudo({ id, idUsuario, idOrganizacao }: { id: string; idUsuario: str
       </>
     );
   }
-  return <Resumo c={c} />;
+  return <><Resumo c={c} />{c.id_organizacao === idOrganizacao ?
+    <GerenciarCadastro contexto={{ idUsuario, idOrganizacao, entidade: "contratos", id: c.id }} onAlterado={() => { void consulta.refetch(); }} /> :
+    <p role="status">Selecione a organização deste contrato para gerenciar seus dados.</p>}</>;
 }
 
 function Selo({ rotulo, valor }: { rotulo: string; valor: string }) {

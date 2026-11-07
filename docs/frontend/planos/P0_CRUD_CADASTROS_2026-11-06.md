@@ -7,7 +7,7 @@ Backend #90 e emenda #92, BUILD #91: obter_cadastro_operacional_v1, atualizar_or
 
 Seletor organizacional: botão Gerenciar organização selecionada abre formulário inline isolado por usuário/organização. Detalhe do contrato: botão Editar e gerenciar contrato com contexto exato da tela. Ler capacidades/registro do backend apenas quando aberto; leitores recebem estado sem permissão, nunca bypass MASTER por perfil local.
 
-Edição explícita dos três campos organizacionais e quatorze contratuais autorizados no backend. Situação e transições são escolhas retornadas pelo servidor. Motivo obrigatório, confirmação textual da ação, versão exibida e enviada. Encerramento/cancelamento terminais respeitados. Não criar DELETE para dados com retenção: mostrar fundamento de exclusão indisponível, sem apagar auditoria ou história.
+Edição explícita dos três campos organizacionais e treze contratuais autorizados no backend. Situação e transições são escolhas retornadas pelo servidor. Motivo obrigatório, confirmação textual da ação, versão exibida e enviada. Encerramento/cancelamento terminais respeitados. Não criar DELETE para dados com retenção: mostrar fundamento de exclusão indisponível, sem apagar auditoria ou história.
 
 Adapter local fechado, parser estrito de schema, entidade, id/org/versão, capacidades, enums e resultado de mutação. Ausência/API inválida falha fechada. Nenhum supabase.from.update/delete genérico, segredo, SQL, Edge ou alteração de tipos gerados. Campo numérico nulo preservado e validação local apenas conveniência; servidor decide regras.
 
@@ -27,3 +27,7 @@ RED antes do código: testes do adapter e componente para contexto divergente, p
 
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
 Usar componentes/tokens existentes, labels acessíveis, estados carregando/erro/vazio/sucesso, controles44px e layout responsivo. Sem marca adicional nas telas organizacionais. Sem build Lovable. Rollback reverte apenas integração do formulário, preserva servidor/dados/histórico. Não declarar CRUD global/V1 concluído por este delta.
+
+## Evidência backend cumprida e BUILD frontend
+Backendbfd741d, canônico42314729963, JWT50/50run42314717439 e quarentena verificada;127/127paridade. Recibo develop89comentário6699164738 eartifact13550107369,reportSHA14a9fc945e6785341df28f768ce4965423565d1a3edb33823e9e75f8d7aef5f8. Condição backend satisfeita, sem certificação global.
+Frontend:43testes direcionados e1017/1017 em39suítes locais,tsc/buildPASS, tiposfixos. Revisão independente corrigiu preservação só de campos dirty/diff e replayhistórico comleituraatual/cachemonotônico. CI final e UIprivada ainda pendentes.
