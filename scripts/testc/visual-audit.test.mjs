@@ -329,14 +329,23 @@ test("BRAND-01: rejeita pilha vazia, genérica ou alternativa fora da ordem inst
 });
 
 function keyboardFixture(route = "/login") {
-  const ids = route === "/login"
-    ? ["email", "forgot", "password", "visibility", "submit"]
-    : ["email", "submit", "back"];
+  const ids =
+    route === "/login"
+      ? ["email", "forgot", "password", "visibility", "submit"]
+      : ["email", "submit", "back"];
   return [
     ...ids.map((control) => ({ control, direction: "forward" })),
-    ...ids.slice(0, -1).reverse().map((control) => ({ control, direction: "reverse" })),
+    ...ids
+      .slice(0, -1)
+      .reverse()
+      .map((control) => ({ control, direction: "reverse" })),
   ].map((step) => ({
-    ...step, target: true, named: true, visible: true, focusVisible: true, indicator: true,
+    ...step,
+    target: true,
+    named: true,
+    visible: true,
+    focusVisible: true,
+    indicator: true,
     screenshot: `screenshots/${route === "/login" ? "SYS01" : "SYS02"}_1440_dark_keyboard_${step.direction}_${step.control}.png`,
     sha256: "a".repeat(64),
   }));
@@ -345,9 +354,14 @@ function keyboardFixture(route = "/login") {
 test("teclado público: controles reais e prova completa de avanço/retorno", async () => {
   const m = await import("./visual-audit.mjs");
   assert.equal(typeof m.publicKeyboardTargets, "function");
-  assert.deepEqual(m.publicKeyboardTargets("/login").map((x) => x.control),
-    ["email", "forgot", "password", "visibility", "submit"]);
-  assert.deepEqual(m.publicKeyboardTargets("/esqueci-senha").map((x) => x.control), ["email", "submit", "back"]);
+  assert.deepEqual(
+    m.publicKeyboardTargets("/login").map((x) => x.control),
+    ["email", "forgot", "password", "visibility", "submit"],
+  );
+  assert.deepEqual(
+    m.publicKeyboardTargets("/esqueci-senha").map((x) => x.control),
+    ["email", "submit", "back"],
+  );
   assert.deepEqual(m.publicKeyboardTargets("/administracao/auditoria"), []);
   for (const route of ["/login", "/esqueci-senha"])
     assert.deepEqual(m.publicKeyboardGate(route, keyboardFixture(route), 0), []);
@@ -357,9 +371,20 @@ test("teclado público: coleta, ordem e tentativa de mutação falham fechadas",
   const m = await import("./visual-audit.mjs");
   assert.equal(typeof m.publicKeyboardGate, "function");
   const valid = keyboardFixture();
-  const swapped = structuredClone(valid); [swapped[0], swapped[1]] = [swapped[1], swapped[0]];
-  const wrongReturn = structuredClone(valid); wrongReturn[5].control = "email";
-  for (const steps of [undefined, null, {}, [], valid.slice(1), [...valid, valid[0]], swapped, wrongReturn])
+  const swapped = structuredClone(valid);
+  [swapped[0], swapped[1]] = [swapped[1], swapped[0]];
+  const wrongReturn = structuredClone(valid);
+  wrongReturn[5].control = "email";
+  for (const steps of [
+    undefined,
+    null,
+    {},
+    [],
+    valid.slice(1),
+    [...valid, valid[0]],
+    swapped,
+    wrongReturn,
+  ])
     assert.ok(m.publicKeyboardGate("/login", steps, 0).length);
   for (const count of [1, -1, undefined, "0", NaN])
     assert.ok(m.publicKeyboardGate("/login", valid, count).length);
@@ -370,12 +395,18 @@ test("teclado público: nome, alvo, viewport, foco, indicador e captura são obr
   const m = await import("./visual-audit.mjs");
   assert.equal(typeof m.publicKeyboardGate, "function");
   for (const field of ["target", "named", "visible", "focusVisible", "indicator"])
-    for (const value of [false, undefined, 1, "true"]){
-      const steps = keyboardFixture(); steps[2][field] = value;
+    for (const value of [false, undefined, 1, "true"]) {
+      const steps = keyboardFixture();
+      steps[2][field] = value;
       assert.ok(m.publicKeyboardGate("/login", steps, 0).length, field);
     }
-  for (const [field, value] of [["screenshot", null], ["screenshot", "screenshots/private.png"], ["sha256", "not-a-hash"]]){
-    const steps = keyboardFixture(); steps[0][field] = value;
+  for (const [field, value] of [
+    ["screenshot", null],
+    ["screenshot", "screenshots/private.png"],
+    ["sha256", "not-a-hash"],
+  ]) {
+    const steps = keyboardFixture();
+    steps[0][field] = value;
     assert.ok(m.publicKeyboardGate("/login", steps, 0).length);
   }
 });
@@ -384,11 +415,16 @@ test("teclado público: saneamento não publica DOM, valores ou canário", async
   const m = await import("./visual-audit.mjs");
   assert.equal(typeof m.sanitizeKeyboardSteps, "function");
   const canary = "PRIVATE_CANARY_NEVER_EXPORT";
-  const valid = keyboardFixture(); valid[0].html = canary; valid[0].value = canary; valid[0].name = canary;
+  const valid = keyboardFixture();
+  valid[0].html = canary;
+  valid[0].value = canary;
+  valid[0].name = canary;
   const safe = m.sanitizeKeyboardSteps(valid);
   assert.equal(JSON.stringify(safe).includes(canary), false);
   assert.deepEqual(m.publicKeyboardGate("/login", safe, 0), []);
-  const unknown = m.sanitizeKeyboardSteps([{control: canary, direction:canary, screenshot:canary,sha256:canary}]);
+  const unknown = m.sanitizeKeyboardSteps([
+    { control: canary, direction: canary, screenshot: canary, sha256: canary },
+  ]);
   assert.equal(JSON.stringify(unknown).includes(canary), false);
   assert.ok(m.publicKeyboardGate("/login", unknown, 0).length);
 });

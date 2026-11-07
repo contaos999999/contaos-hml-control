@@ -60,6 +60,182 @@ export function brandTypographyGate(fontFamily) {
     ? []
     : ["Pilha tipográfica institucional requer Inter, Arial, sans-serif nessa ordem"];
 }
+const KEYBOARD_TARGETS = {
+  "/login": [
+    { control: "email", selector: "#login-email", name: "E-mail" },
+    { control: "forgot", selector: 'a[href="/esqueci-senha"]', name: "Esqueci minha senha" },
+    { control: "password", selector: "#login-senha", name: "Senha" },
+    {
+      control: "visibility",
+      selector: 'button[aria-controls="login-senha"]',
+      name: "Mostrar senha",
+    },
+    { control: "submit", selector: 'form button[type="submit"]', name: "Entrar" },
+  ],
+  "/esqueci-senha": [
+    { control: "email", selector: "#esqueci-email", name: "E-mail" },
+    { control: "submit", selector: 'form button[type="submit"]', name: "Enviar link" },
+    { control: "back", selector: 'a[href="/login"]', name: "Voltar ao login" },
+  ],
+};
+export function publicKeyboardTargets(route) {
+  return Object.hasOwn(KEYBOARD_TARGETS, route)
+    ? KEYBOARD_TARGETS[route].map((x) => ({ ...x }))
+    : [];
+}
+export function sanitizeKeyboardSteps(steps) {
+  const controls = new Set(["email", "forgot", "password", "visibility", "submit", "back"]);
+  const image =
+    /^screenshots\/(SYS01|SYS02)_(1440|1280|768|390)_(light|dark)_keyboard_(forward|reverse)_(email|forgot|password|visibility|submit|back)\.png$/;
+  return (Array.isArray(steps) ? steps : []).slice(0, 20).map((step) => ({
+    control: controls.has(step?.control) ? step.control : "UNKNOWN",
+    direction: ["forward", "reverse"].includes(step?.direction) ? step.direction : "UNKNOWN",
+    target: step?.target === true,
+    named: step?.named === true,
+    visible: step?.visible === true,
+    focusVisible: step?.focusVisible === true,
+    indicator: step?.indicator === true,
+    screenshot:
+      typeof step?.screenshot === "string" && image.test(step.screenshot) ? step.screenshot : null,
+    sha256:
+      typeof step?.sha256 === "string" && /^[a-f0-9]{64}$/.test(step.sha256) ? step.sha256 : null,
+  }));
+}
+export function publicKeyboardGate(route, steps, blockedMutations) {
+  const targets = publicKeyboardTargets(route);
+  const expected = [
+    ...targets.map((x) => ({ control: x.control, direction: "forward" })),
+    ...targets
+      .slice(0, -1)
+      .reverse()
+      .map((x) => ({ control: x.control, direction: "reverse" })),
+  ];
+  const safe = sanitizeKeyboardSteps(steps);
+  const prefix = route === "/login" ? "screenshots/SYS01_" : "screenshots/SYS02_";
+  const valid =
+    targets.length > 0 &&
+    blockedMutations === 0 &&
+    Array.isArray(steps) &&
+    steps.length === expected.length &&
+    safe.length === expected.length &&
+    safe.every(
+      (step, i) =>
+        step.control === expected[i].control &&
+        step.direction === expected[i].direction &&
+        step.target &&
+        step.named &&
+        step.visible &&
+        step.focusVisible &&
+        step.indicator &&
+        step.sha256 &&
+        step.screenshot?.startsWith(prefix) &&
+        step.screenshot.endsWith(`_${step.direction}_${step.control}.png`),
+    );
+  return valid ? [] : ["Percurso público de teclado incompleto ou inválido"];
+}
+
+async function collectPublicKeyboard(page, item, output, images, mutationCount) {
+  const targets = publicKeyboardTargets(item.path);
+  const observe = async (target) =>
+    page.evaluate(({ selector, name }) => {
+      const e = document.querySelector(selector);
+      if (!e)
+        return { target: false, named: false, visible: false, focusVisible: false, style: null };
+      const s = getComputedStyle(e),
+        r = e.getBoundingClientRect();
+      const label =
+        e.getAttribute("aria-label") ||
+        [...(e.labels || [])].map((x) => x.textContent).join(" ") ||
+        e.textContent ||
+        "";
+      let visible =
+        r.width > 0 &&
+        r.height > 0 &&
+        r.top >= 0 &&
+        r.left >= 0 &&
+        r.bottom <= innerHeight &&
+        r.right <= innerWidth;
+      for (let n = e; n; n = n.parentElement) {
+        const c = getComputedStyle(n);
+        if (c.display === "none" || c.visibility !== "visible" || Number(c.opacity) <= 0)
+          visible = false;
+      }
+      const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      visible = visible && (top === e || e.contains(top));
+      return {
+        target: document.activeElement === e,
+        named: label.trim().replace(/\s+/g, " ") === name,
+        visible,
+        focusVisible: e.matches(":focus-visible"),
+        style: [
+          s.outlineStyle,
+          s.outlineWidth,
+          s.outlineColor,
+          s.boxShadow,
+          s.borderTopColor,
+          s.borderRightColor,
+          s.borderBottomColor,
+          s.borderLeftColor,
+          s.borderTopWidth,
+          s.borderRightWidth,
+          s.borderBottomWidth,
+          s.borderLeftWidth,
+          s.textDecorationLine,
+          s.textDecorationStyle,
+          s.textDecorationColor,
+        ].join("|"),
+      };
+    }, target);
+  const baseline = new Map();
+  for (const target of targets) baseline.set(target.control, (await observe(target)).style);
+  const steps = [];
+  const sequence = [
+    ...targets.map((x) => ({ ...x, direction: "forward" })),
+    ...targets
+      .slice(0, -1)
+      .reverse()
+      .map((x) => ({ ...x, direction: "reverse" })),
+  ];
+  try {
+    for (const target of sequence) {
+      await page.keyboard.press(target.direction === "forward" ? "Tab" : "Shift+Tab");
+      await page.waitForTimeout(180);
+      if (new URL(page.url()).pathname !== item.path) throw new Error("KEYBOARD_ROUTE_CHANGED");
+      const state = await observe(target);
+      const bytes = await page.screenshot({ fullPage: false, animations: "disabled" });
+      const filename = `screenshots/${safeName(item)}_keyboard_${target.direction}_${target.control}.png`;
+      const sha256 = hash(bytes);
+      writeFileSync(join(output, filename), bytes);
+      images.push({ filename, sha256 });
+      steps.push({
+        control: target.control,
+        direction: target.direction,
+        target: state.target,
+        named: state.named,
+        visible: state.visible,
+        focusVisible: state.focusVisible,
+        indicator:
+          state.style !== null &&
+          baseline.get(target.control) !== null &&
+          state.style !== baseline.get(target.control),
+        screenshot: filename,
+        sha256,
+      });
+    }
+  } finally {
+    await page.reload({ waitUntil: "domcontentloaded", timeout: 12000 });
+    await page.waitForTimeout(550);
+  }
+  const safe = sanitizeKeyboardSteps(steps);
+  const blockedMutations = mutationCount();
+  return {
+    scope: "PUBLIC_EMPTY_FORMS_ONLY",
+    steps: safe,
+    blockedMutations,
+    errors: publicKeyboardGate(item.path, safe, blockedMutations),
+  };
+}
+
 export function publicGate({ http, lang, h1, overflow, pageErrors }) {
   const errors = [];
   if (http >= 400) errors.push("rota pública HTTP " + http);
@@ -309,9 +485,11 @@ async function run() {
         },
         { theme: item.theme },
       );
+      let blockedMutations = 0;
       // O Teste C nunca deve enviar mutações ao Supabase.
       await context.route("https://gklhhhyosgasnyoxlrui.supabase.co/**", (route) => {
         if (!["GET", "HEAD", "OPTIONS"].includes(route.request().method())) {
+          blockedMutations += 1;
           return route.abort("blockedbyclient");
         }
         return route.continue();
@@ -537,6 +715,26 @@ async function run() {
             pixelContrast,
             scanCompleted: Boolean(axeScan),
           };
+          if (publicKeyboardTargets(item.path).length) {
+            try {
+              record.keyboard = await collectPublicKeyboard(
+                page,
+                item,
+                output,
+                images,
+                () => blockedMutations,
+              );
+              record.publicAssertions.push(...record.keyboard.errors);
+            } catch {
+              record.keyboard = {
+                scope: "PUBLIC_EMPTY_FORMS_ONLY",
+                steps: [],
+                blockedMutations,
+                errors: ["Prova pública de teclado não concluída"],
+              };
+              record.publicAssertions.push(...record.keyboard.errors);
+            }
+          }
           record.outcome = record.publicAssertions.length ? "FAIL_PUBLICO" : "PASS_PUBLICO";
           record.brandAssetPresent = state.brand;
         } else {
@@ -584,6 +782,8 @@ async function run() {
     protected_no_session: logs.filter(
       (x) => !x.publicAssertions.length && !ROUTES.find((r) => r.id === x.id)?.public,
     ).length,
+    public_keyboard_cases: logs.filter((x) => x.keyboard).length,
+    public_keyboard_fail: logs.filter((x) => x.keyboard?.errors?.length).length,
     authenticated_e2e: "NAO_VERIFICADO",
     rls_ab_real: "NAO_VERIFICADO",
     upload_real: "NAO_VERIFICADO",
