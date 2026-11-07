@@ -1,3 +1,4 @@
+import { GerenciarListas } from "@/components/contratos/GerenciarListas";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -493,6 +494,7 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
     <>
       <Titulo numero={c.numero ?? undefined} />
       <NavSecoes id={c.id} />
+      <GerenciarListas contexto={{ ...ctx, idContrato: c.id }} />
       <SecaoListas contrato={c.id} chave={chave} />
       <SecaoConformidade contrato={c.id} chave={chave} />
       <SecaoPreventivas contrato={c.id} chave={chave} />

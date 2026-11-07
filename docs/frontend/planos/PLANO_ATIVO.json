@@ -295,7 +295,7 @@
     "private_testc_wcag": "NAO_VERIFICADO",
     "backup_full_pitr_rpo_rto": "NAO_VERIFICADO",
     "local_one_table_synthetic_restore": "PASS_ESCOPADO_RUN_42168969390",
-    "crud_global": "NAO_CONCLUIDO: comandos de contratos, ciclo de vida de organizações, demais gates/ações e provas privadas pendentes."
+    "crud_global": "EM_EXECUCAO: cadastros integrados; listas UI BUILD local verificado aguardando CI/merge; inventário semântico V1 e provas privadas pendentes"
   },
   "p0_note": "PLAN documental VALIDADO, condicionado a CI verde do PR de validação. BUILD separado e posterior ao merge. V1 não certificada.",
   "rbac_emenda_p0": {
@@ -418,13 +418,20 @@
   },
   "crud_listas_ui_gate": {
     "plan": "docs/frontend/planos/P0_CRUD_LISTAS_FRONTEND_2026-11-06.md",
-    "status": "PLAN_VALIDADO_AGUARDANDO_CI_ANTES_BUILD",
+    "status": "BUILD_LOCAL_VERIFICADO_AGUARDANDO_CI_E_MERGE",
     "backend_head": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
     "backend_run": 42321885307,
     "jwt_assertions": 147,
     "jwt_passed": 147,
     "artifact": 13558350982,
     "report_sha256": "4c5aa78a4301a25d3aae4268404ce59731b32fb502e8d45bd1794b7f7d656c05",
-    "ui_private": "NAO_VERIFICADA"
+    "ui_private": "NAO_VERIFICADA",
+    "plan_pr": 254,
+    "plan_merge": "4de8296b13f0ace421e83519f1c73ac89a208b6f",
+    "plan_run": 42332158390,
+    "local_tests": "39/39 direcionados;1056/1056 regressão em40suítes",
+    "local_tsc": "PASS",
+    "local_build": "PASS",
+    "review": "3 findings corrigidos e revisão independente sem críticos/importantes"
   }
 }

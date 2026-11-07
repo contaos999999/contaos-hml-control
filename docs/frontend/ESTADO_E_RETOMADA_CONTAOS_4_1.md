@@ -1,3 +1,14 @@
+## CHECKPOINT EM EXECUÇÃO — CRUD GLOBAL — 07/11/2026 UTC (prevalece sobre histórico abaixo)
+Frontend base4de8296b13f0ace421e83519f1c73ac89a208b6f; backend4fec09bf5cab5afc776192b9bef6e70728e1a058. GitHub + Actions são desenvolvimento canônico após PR253 (d7125772;run42331994160), Lovable não participa do BUILD. PR252 (25c03f6a;run42332177958 e42332177995) integra dupla barreira/restauração types; blob8ea7750b75fd9d76b29c36ce7613392e3ab65e19 preservado. PR254 PLAN listas integrado4de8296,run42332158390 ambos SUCCESS.
+
+Backend listas PR96: canônico42321885307 deploySUCCESS e JWT147/147PASS real_authtrue,quarentena5banidos/2orgsinativas/0sessões/0vínculos/0MASTER/0escopos. HML128migrations,20261107001620 presente1x;2APIs públicas INVOKER,anonfalse,authenticatedtrue. Artifact13558350982,reportSHA4c5aa78a4301a25d3aae4268404ce59731b32fb502e8d45bd1794b7f7d656c05; reciboPR96comentário6701396577. Não repetir deploy/JWT sem alteração justificável.
+
+BUILD frontend listas nesta branch: dez ações canônicas,capacidade porservidor,paginação25,retenção/publicada preservadas,motivo+confirmação,versão fixa porrascunho,UUID fixo para replay explícito,conferência bloqueada até releitura confirmada,logout/contexto descarta resposta tardia. RED inicial16falhas/2PASS;GREEN39/39 específicos;1056/1056 em40suítes,tsc/build/ESLint focalPASS; revisão independente sem crítico/importante após3correções. Ainda depende CI noHEADfinal+merge; não é PASS privado.
+
+Próxima execução: confirmar ambos checks do BUILD e integrar; reconciliar todas operaçõesV1 por regra/UI/API/teste, sem transformar117tabelas ouRPCsV2–V5 em permissão. Prosseguir CRUD global sem repetir entregas comprovadas238/240/247/248/252/253/254. UIprivada/WCAG/SYS03/RNF continuam semPASS; V1 não certificada,V2/PROD bloqueados. Auditoria/história/publicadas não recebem DELETE.
+
+---
+
 ## ÚLTIMA ETAPA COMPROVADA — CRUD GLOBAL — 07/11/2026 UTC
 **Frontend main antes deste checkpoint: 23d120f94e295f8031ade24ab785eaa39343c070. Backend: bfd741d5758e77f89de626fdb691ea4bebb943d5. CRUD global NÃO CONCLUÍDO; V1 NÃO CERTIFICADA; V2/PROD bloqueados.**
 
