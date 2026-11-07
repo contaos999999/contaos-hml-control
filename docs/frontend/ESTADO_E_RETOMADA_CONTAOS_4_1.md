@@ -1,3 +1,19 @@
+## Continuidade autorizada: revisão humana V1-17 em execução no backend
+
+O titular respondeu **Autorizado** à investigação somente em leitura de registrar_resultado_requisito e, após o diagnóstico e a proposta de correção canônica, determinou **Execute**. Portanto, o gate de autorização específico mencionado no checkpoint anterior foi atendido. Não pedir novamente essa mesma autorização.
+
+Investigação conferida no HML: definição privada md5 `fe7dc31358fde233e1b41d6a4378817b`, correspondente ao código. A RPC antiga não recebe CAS ou idempotência; existe UNIQUE(execução,requisito), portanto não foi comprovada duplicação nessa mesma execução. A correção preserva o UNIQUE e o histórico mediante nova execução incremental humana.
+
+PLAN backend [#98](https://github.com/contaos999999/develop/pull/98) integrado em `c1e138d7a60641e1059079e83649bc3bb7f31599`, guard `42361197685` SUCCESS antes do BUILD. Implementação e provas no [PR #99](https://github.com/contaos999999/develop/pull/99), HEAD atual `783f2bf70fde7655aa3b320d575e0cc090048dd0`, ainda aguardando CI final e merge neste registro. Migration CLI `20261107094443_p0_v117_revisao_humana.sql`. Plano/resultado completos em `develop/docs/backend/P0_V117_REVISAO_PLAN_2026-11-07.md` e `P0_V117_REVISAO_RESULTADO_2026-11-07.md`.
+
+RED `375c908d`, run `42361330041`: nova RPC inexistente. BUILD intermediário `f677b3b`, run `42361821602`: testes isolados e concorrência PASS, evidências/parecer/histórico/CAS/replay/revogação/reanálise. O delta final acrescentou tenant cruzado, recuperação de fixtures com resposta Auth perdida e tratamento de deadlock; requer novo CI no mesmo HEAD. Revisão independente sem achados importantes remanescentes no delta revisado; JWT real ainda não executado.
+
+Próximas etapas: (1) confirmar CI final do PR99 e integrar; (2) restore de main e deploy CLI canônico com SHA/hash/paridade; (3) JWT real pela API Auth Admin, contas próprias e quarentena verificável; (4) somente depois, PLAN frontend para usar as duas RPCs novas, reancorar fontes e preservar tipos congelados. Workflow contém preflight para credencial Auth Admin HML: se ausente, registrar impedimento sem criar identidades nem substituir por INSERT auth.users. Não alegar ausência de segredo antes do resultado. Não alterar configuração Auth, RLS, Edge ou PROD.
+
+Frontend funcional permanece PR265/266, merge `d8849c28877d97e5503f33c0fc9329b642ae9157`, 1.084 testes e CI/Teste C público aprovados. Nenhuma integração nova de revisão no frontend foi feita nesta etapa. Prova privada continua NÃO VERIFICADA e pedido de autenticação cancelado não será reiterado sem iniciativa. CRUD global NÃO CONCLUÍDO; V1 NÃO CERTIFICADA; V2–V5/PROD bloqueados. Este bloco prevalece sobre a pendência de autorização dos registros históricos abaixo. Não repetir PRs frontend255/257/259/262/264/265/266 nem backend98.
+
+---
+
 ## Checkpoint verificado em 07/11/2026: PR #265 integrado
 
 Última etapa comprovada: aviso de falha da conferência explícita da reanálise. PR #265 integrado no merge `ec7659708b2e6563274915803c59f8ef22c5aeef`, HEAD testado `78523eea0a850420682356f202a8892aa2fa3fa3`. PLAN #264 foi integrado antes do BUILD: merge `97eaaa7b4685970add307222834b486bbdbdddc8`, CI `42357346038`, ambos checks SUCCESS.

@@ -521,5 +521,16 @@
     "build_merge": "ec7659708b2e6563274915803c59f8ef22c5aeef",
     "build_ci": 42357723313,
     "types_ci": 42357723333
+  },
+  "crud_revisao_humana_backend_gate": {
+    "status": "AUTORIZADO_BUILD_BACKEND_AGUARDANDO_CI_FINAL",
+    "authorization": "Titular: Autorizado investigação, depois Execute correção canônica e integração com testes reais",
+    "backend_plan_pr": 98,
+    "backend_plan_merge": "c1e138d7a60641e1059079e83649bc3bb7f31599",
+    "backend_build_pr": 99,
+    "backend_build_head": "783f2bf70fde7655aa3b320d575e0cc090048dd0",
+    "frontend_build_allowed": false,
+    "condition": "backend merge, deploy CLI/paridade, JWT real e novo PLAN frontend",
+    "prod": false
   }
 }
