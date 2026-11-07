@@ -80,8 +80,7 @@ import {
   listarVersoes,
   mensagemErroRevisao,
   obterDocumento,
-  obterPerfilVinculo,
-  podeRevisar,
+  consultarCapacidadeRevisaoDocumento,
   revisarSugestao,
   rotuloMetadado,
   rotuloUsuario,
@@ -147,16 +146,17 @@ export function DocumentoDetalhe({
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground">
-        <nav aria-label="Navegação da página" className="border-b border-border bg-card text-card-foreground">
+        <nav
+          aria-label="Navegação da página"
+          className="border-b border-border bg-card text-card-foreground"
+        >
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-            
             <nav aria-label="Navegação" className="flex flex-wrap gap-2">
               <Button asChild variant="secondary" className="h-11">
                 <Link to="/contratos" activeOptions={{ exact: true }}>
                   <ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Voltar para contratos
                 </Link>
               </Button>
-              
             </nav>
           </div>
         </nav>
@@ -532,14 +532,20 @@ function Detalhe({ doc, ctx }: { doc: Documento; ctx: Ctx }) {
   const [sel, setSel] = useState<Selecao | null>(null);
   const [aviso, setAviso] = useState("");
   const chave = [ctx.idUsuario, ctx.idOrganizacao, doc.id];
-  const perfil = useQuery({
-    queryKey: ["v111", "perfil", ctx.idUsuario, ctx.idOrganizacao],
-    queryFn: ({ signal }) => obterPerfilVinculo(ctx.idUsuario, ctx.idOrganizacao, signal),
+  const capacidade = useQuery({
+    queryKey: ["v111", "capacidade-revisao", ctx.idUsuario, ctx.idOrganizacao, doc.id_contrato],
+    queryFn: ({ signal }) =>
+      consultarCapacidadeRevisaoDocumento(
+        ctx.idUsuario,
+        ctx.idOrganizacao,
+        doc.id_contrato,
+        signal,
+      ),
     retry: false,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
-  // Falha fechada: carregando, erro ou sem vínculo ⇒ somente leitura.
-  const revisor = perfil.isSuccess && podeRevisar(perfil.data);
+  // Falha fechada: somente capacidade efetiva positiva oferece revisão.
+  const revisor = capacidade.isSuccess && capacidade.data === true;
   const versoes = useQuery({
     queryKey: ["v111", "versoes", ...chave, pagina],
     queryFn: ({ signal }) => listarVersoes(doc.id, pagina, signal),
@@ -654,6 +660,7 @@ function Detalhe({ doc, ctx }: { doc: Documento; ctx: Ctx }) {
             idVersao={atual.v.id}
             ctx={ctx}
             revisor={revisor}
+            revalidando={capacidade.isFetching}
             onAviso={setAviso}
           />
         </>
@@ -1078,17 +1085,22 @@ function Sugestoes({
   idVersao,
   ctx,
   revisor,
+  revalidando,
   onAviso,
 }: {
   idVersao: string;
   ctx: Ctx;
   revisor: boolean;
+  revalidando: boolean;
   onAviso: (m: string) => void;
 }) {
   const qc = useQueryClient();
   const [pagina, setPagina] = useState(0);
   const [filtros, setFiltros] = useState<FiltrosSugestao>({ status: "", tipo: "" });
   const [acao, setAcao] = useState<Acao | null>(null);
+  useEffect(() => {
+    if (!revisor && !revalidando) setAcao(null);
+  }, [revisor, revalidando]);
   const chave = ["v111", "sugestoes", ctx.idUsuario, ctx.idOrganizacao, idVersao];
   const q = useQuery({
     queryKey: [...chave, filtros, pagina],
@@ -1099,10 +1111,11 @@ function Sugestoes({
   const concluir = async (m: string) => {
     setAcao(null);
     onAviso(m);
-    // Perfil (vinculos_usuarios) é lido uma única vez por tela: nunca invalidar.
+    // Revalidar capacidade junto da leitura no contexto atual após uma revisão.
     await qc.invalidateQueries({
       queryKey: ["v111"],
-      predicate: (query) => query.queryKey[1] !== "perfil",
+      predicate: (query) =>
+        query.queryKey.includes(ctx.idUsuario) && query.queryKey.includes(ctx.idOrganizacao),
     });
   };
   const itens = q.data?.itens ?? [];
@@ -1166,10 +1179,13 @@ function Sugestoes({
                 s={s}
                 ctx={ctx}
                 revisor={revisor}
+                revalidando={revalidando}
                 requisito={
                   s.id_requisito_sugerido ? q.data?.requisitos[s.id_requisito_sugerido] : undefined
                 }
-                onAcao={(tipo) => setAcao({ tipo, s })}
+                onAcao={(tipo) => {
+                  if (!revalidando) setAcao({ tipo, s });
+                }}
               />
             ))}
           </ul>
@@ -1185,6 +1201,7 @@ function Sugestoes({
       {revisor && acao?.tipo === "vigencia" && (
         <DialogoVigencia
           s={acao.s}
+          bloqueado={revalidando}
           onFechar={() => setAcao(null)}
           onConcluido={concluir}
           onRecarregar={recarregar}
@@ -1193,6 +1210,7 @@ function Sugestoes({
       {revisor && (acao?.tipo === "aprovar" || acao?.tipo === "rejeitar") && (
         <DialogoRevisao
           s={acao.s}
+          bloqueado={revalidando}
           aprovar={acao.tipo === "aprovar"}
           onFechar={() => setAcao(null)}
           onConcluido={concluir}
@@ -1207,12 +1225,14 @@ function CartaoSugestao({
   s,
   ctx,
   revisor,
+  revalidando,
   requisito,
   onAcao,
 }: {
   s: Sugestao;
   ctx: Ctx;
   revisor: boolean;
+  revalidando: boolean;
   requisito: { codigo: string | null; descricao: string } | undefined;
   onAcao: (t: Acao["tipo"]) => void;
 }) {
@@ -1289,7 +1309,7 @@ function CartaoSugestao({
             <Button
               type="button"
               className="h-11"
-              disabled={!!bloqueio}
+              disabled={!!bloqueio || revalidando}
               onClick={() => onAcao("aprovar")}
             >
               <Check className="mr-2 h-4 w-4" aria-hidden /> Aprovar
@@ -1298,6 +1318,7 @@ function CartaoSugestao({
               type="button"
               variant="outline"
               className="h-11"
+              disabled={revalidando}
               onClick={() => onAcao("rejeitar")}
             >
               <X className="mr-2 h-4 w-4" aria-hidden /> Rejeitar
@@ -1307,6 +1328,7 @@ function CartaoSugestao({
                 type="button"
                 variant="outline"
                 className="h-11"
+                disabled={revalidando}
                 onClick={() => onAcao("vigencia")}
               >
                 <CalendarClock className="mr-2 h-4 w-4" aria-hidden /> Definir vigência
@@ -1337,11 +1359,13 @@ function CamposPropostos({ metadados }: { metadados: unknown }) {
 
 function DialogoVigencia({
   s,
+  bloqueado,
   onFechar,
   onConcluido,
   onRecarregar,
 }: {
   s: Sugestao;
+  bloqueado: boolean;
   onFechar: () => void;
   onConcluido: (m: string) => Promise<void>;
   onRecarregar: () => Promise<void>;
@@ -1353,7 +1377,7 @@ function DialogoVigencia({
   const trava = useRef(false);
   const salvar = async (e: FormEvent) => {
     e.preventDefault();
-    if (trava.current) return;
+    if (trava.current || bloqueado) return;
     if (!inicio) return setErro(MENSAGENS_V111.inicioObrigatorio);
     if (fim && fim < inicio) return setErro(MENSAGENS_V111.fimAntes);
     trava.current = true;
@@ -1410,12 +1434,12 @@ function DialogoVigencia({
               type="button"
               variant="ghost"
               className="h-11"
-              disabled={enviando}
+              disabled={enviando || bloqueado}
               onClick={onFechar}
             >
               Cancelar
             </Button>
-            <Button type="submit" className="h-11" disabled={enviando}>
+            <Button type="submit" className="h-11" disabled={enviando || bloqueado}>
               {enviando && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />}
               Salvar vigência
             </Button>
@@ -1428,12 +1452,14 @@ function DialogoVigencia({
 
 function DialogoRevisao({
   s,
+  bloqueado,
   aprovar,
   onFechar,
   onConcluido,
   onRecarregar,
 }: {
   s: Sugestao;
+  bloqueado: boolean;
   aprovar: boolean;
   onFechar: () => void;
   onConcluido: (m: string) => Promise<void>;
@@ -1446,7 +1472,7 @@ function DialogoRevisao({
   const trava = useRef(false);
   const classificacao = s.tipo === "classificacao";
   const confirmar = async () => {
-    if (trava.current) return;
+    if (trava.current || bloqueado) return;
     trava.current = true;
     setEnviando(true);
     setErro("");
@@ -1518,7 +1544,7 @@ function DialogoRevisao({
             type="button"
             variant="ghost"
             className="h-11"
-            disabled={enviando}
+            disabled={enviando || bloqueado}
             onClick={onFechar}
           >
             Cancelar
@@ -1527,7 +1553,7 @@ function DialogoRevisao({
             type="button"
             variant={aprovar ? "default" : "destructive"}
             className="h-11"
-            disabled={enviando}
+            disabled={enviando || bloqueado}
             onClick={() => void confirmar()}
           >
             {enviando && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />}

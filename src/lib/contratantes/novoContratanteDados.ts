@@ -2,6 +2,7 @@
  * V1-02 — Novo contratante. Data API + RLS.
  * O gate de vínculo é apenas UX; a autoridade é a RLS do INSERT em `contratantes`.
  */
+import { consultarPermissoesEfetivas, temPermissao } from "@/lib/administracao/rbacRpc";
 import { supabase } from "@/integrations/supabase/client";
 import { listarOrganizacoesDisponiveis, type OrganizacaoDisponivel } from "@/lib/auth/resolverDestinoPosLogin";
 
@@ -89,7 +90,10 @@ export async function consultarCapacidadeCadastro(idOrganizacao: string, _idUsua
   try {
     const organizacoes = await listarOrganizacoesDisponiveis();
     if (!Array.isArray(organizacoes)) throw new ErroV102("erro");
-    return organizacoes.find((o) => o.id === idOrganizacao) ?? null;
+    const org = organizacoes.find((o) => o.id === idOrganizacao) ?? null;
+    if (!capacidadePermiteCadastro(org)) return null;
+    const efetivas = await consultarPermissoesEfetivas(idOrganizacao, null);
+    return temPermissao(efetivas.permissoes, "contratantes", "criar") ? org : null;
   } catch (erro) {
     if (erro instanceof ErroV102) throw erro;
     const e = erro as { tipo?: string };
