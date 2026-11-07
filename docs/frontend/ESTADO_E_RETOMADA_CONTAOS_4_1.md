@@ -1,3 +1,19 @@
+## Correção factual e revisão independente P0 — 07/11/2026
+
+**Correção vinculante do histórico:** consulta viva ao GitHub confirmou frontend PR75 MERGED (`e5ef492f1af498acca534ddf9b30f352cdca8f61`) e PR80 MERGED (`237d1c5c99816254044a0f908f5630454438659f`), mas PR77 e PR78 estão CLOSED **SEM MERGE**. Portanto a frase histórica “75/77/78/80 já integrados” nos blocos anteriores é incorreta. O RED77 e BUILD78 não devem ser apresentados como merges. A entrega posterior PR83 está MERGED (`66f3a33f15445035aced2b19b7bd354fbc2fb929`, HEAD `e4df6316b244a143c9b9dbf1de682104fecd26c1`). Nenhum dos quatro PRs antigos está aberto. Preservar histórico, sem repetir tarefas ou inventar integrações.
+
+Checkpoint302 foi efetivamente integrado em `35907d64d8364f358a46848044d622eda489b9ce` após os dois jobs SUCCESS no run42417816254 e proteção42417816242 SUCCESS. Auditoria303 integrada em `bba9e828b97b3902dfcbe0ce29aab5d4622c7da8`, HEAD9eada933053c93d7042196665556c54891a2edac, após os dois jobs SUCCESS no run42418055593 e proteção42418055589 SUCCESS. A matriz individual dos72critérios e das28rotas está no relatório de AppShell; nenhum certificado integral foi concedido.
+
+Revisão visual independente abriu24/24PNG públicos individuais do artefato13592241053, sem achados Critical/Important/Minor nos estados capturados. Limites: login/recuperação são formulários vazios e redefinição mostra apenas “Validando link de redefinição...”. Não comprova conclusão de validação, senha nova, erros/sucesso, foco/teclado/leitor de tela ou autenticação. Nenhuma superfície privada foi aprovada. Conferidos120/120hashes do pacote, incluindo relatório/119PNG; matriz privada permanece pendente.
+
+A dependência DOCUMENTOS está em implementação **somente local**, backend ainda `c993e38c1f9b9f6a6d45a754945b5b0542fb3ccc`. Incremento local2b17c057b93d4df5921ad575f1d4c2c4e985ad60 não foi publicado nem executado noHML. Implementou uploads/versionamento/download/worker previstos e conexão da quarentena ao cleanup. Revisão independente encontrou um Important: faltava testar revogação de permissão em sessão já autorizada, distinto de perfil leitor/tenantB. A classificação de domínio documental completo para prova sóTXT/PDF também precisa ser corrigida. **Não ativar material nem integrar esse incremento antes do fix RED→GREEN, regressão, revisão dos achados e CI obrigatório.** A correção está autorizada sob PLAN132/GATE133, sem alterar produto, Auth config, RLS, Edge, workflow ou PROD.
+
+Frente ativa continua IDENTIDADE VISUAL. As fixtures documentais são dependência para páginas reais, sem certificarCRUD antecipadamente. Depois ainda serão necessárias fixtures/jornadas pertinentes de competência, análise, parecer, apresentação/protocolo e histórico, respeitando papéis especializados e contratos existentes. Não usar IDs inexistentes, mocks ou status forçados para chamar28rotas de aprovadas. Somente após visual100% comprovado seguir à certificaçãoCRUD e depois rastreabilidade/auditoria, conforme plano único299. V1 eV2–V5/PROD continuam sem promoção.
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: correção documental e evidências verificadas; nenhum produto, asset, backend, tipo ou PROD alterado. Automação horária segue esta prioridade, sem promessa de vigilância contínua entre chamadas.
+
+---
+
 ## Checkpoint P0 — 07/11/2026 — plano único de três certificações e inventário visual corrigido
 
 Este bloco prevalece sobre o histórico. **Nenhuma das três frentes está certificada a 100%.** A decisão expressa do titular estabelece a ordem: identidade visual e padronização → CRUD global V1 → integração, rastreabilidade e auditoria V1. Comunicar o fechamento de cada frente somente com evidência integral e seguir automaticamente. V1 ainda não certificada; V2–V5 e PROD continuam bloqueados. O parecer global V1–V5 só poderá existir após as versões futuras.
