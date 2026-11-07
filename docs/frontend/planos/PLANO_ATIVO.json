@@ -174,7 +174,13 @@
   ],
   "prompt_crosswalk": {
     "regular_prompt_id": "75",
-    "direct_atomic_ids": ["000", "020", "021", "022", "023"],
+    "direct_atomic_ids": [
+      "000",
+      "020",
+      "021",
+      "022",
+      "023"
+    ],
     "additional_transversal_atomic_ids": [
       "085",
       "086",
@@ -309,7 +315,10 @@
       "src/components/administracao/usuarios/MatrizPermissoes.tsx",
       "src/test/rbacMatriz.test.tsx"
     ],
-    "contratos": ["obter_matriz_rbac_master", "atualizar_matriz_rbac_master"],
+    "contratos": [
+      "obter_matriz_rbac_master",
+      "atualizar_matriz_rbac_master"
+    ],
     "backend_head_na_conferencia": "1edb2c40595e01f7e1e8c5f80160b7b3a4113c12",
     "zero_drift_no_code": true,
     "brand_assets_intact": true,
@@ -495,7 +504,7 @@
     "route_tree": "PASS"
   },
   "crud_reanalise_conferencia_erro_gate": {
-    "status": "BUILD_IMPLEMENTADO_AGUARDANDO_CI",
+    "status": "BUILD_INTEGRADO_CI_SUCCESS_PRIVADO_NAO_VERIFICADO",
     "plan": "docs/frontend/planos/P0_CRUD_REANALISE_CONFIRMACAO_2026-11-07.md",
     "baseline": "632fe8481e9298211e9a341f6a0a47850ae4c078",
     "backend_source_unchanged": "4fec09bf5cab5afc776192b9bef6e70728e1a058",
@@ -506,6 +515,11 @@
     "plan_ci": 42357346038,
     "regression": "1084/1084;40 suites",
     "focused": "56/56",
-    "review": "SEM_ACHADOS_CRITICOS_IMPORTANTES"
+    "review": "SEM_ACHADOS_CRITICOS_IMPORTANTES",
+    "build_pr": 265,
+    "build_head": "78523eea0a850420682356f202a8892aa2fa3fa3",
+    "build_merge": "ec7659708b2e6563274915803c59f8ef22c5aeef",
+    "build_ci": 42357723313,
+    "types_ci": 42357723333
   }
 }
