@@ -273,3 +273,12 @@ RED de navegador preservado no HEAD 24466e1a5abd64dcace2d973c45b5161173e2aaf: ru
 Correção local 76ebe71: duas linhas de CSS definem --font-sans como Inter, Arial, sans-serif e aplicam a variável no body. Não baixa fontes nem altera SVG, wordmark ou regra monoespaçada explícita. O CSS compilado passou a declarar essa pilha. Detector/helper Node 24/24, BRAND Vitest 54/54, tsc/build/Prettier/Zero-Drift/diff PASS. Types permanece 8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Revisões independentes dos scripts e do CSS sem achados.
 
 GREEN de navegador, capturas finais e CI ainda PENDENTES neste registro. Pilha declarada não comprova Inter instalada, todos os estados privados, zoom ou WCAG integral. Identidade visual continua NÃO CERTIFICADA.
+
+
+## GREEN final de tipografia: escopo público delimitado
+
+PR #309 integrado em b0e22f5ab7a479ebb8a3c9bd2d907d5052ec81c5; HEAD aprovado 164b10b44eaf5b553efcc7ab4e053b86c4d3b269. Run 42421827969: jobs 128551769980 e 128551770379 SUCCESS; LOCK 42421827973 SUCCESS. Houve um avanço de HEAD sem diferença de árvore entre 6856401 e 164b10b (tree 9a288fb2dc7622e0130e82a5944bcb514d68a953), cancelando o Teste C anterior; os checks finais pertencem ao HEAD vivo, sem commit adicional para contornar a fila.
+
+Artefato 13593374754: SHA256 44889c1d42c940cd0e394c7f4851f42e7c9d969412497efc3fd1fb2f22f4b9df conferido; 225 entradas SHA256SUMS verificadas. Tested_sha é o merge sintético a8c56662063763b7e8c2575b54d9b106d6cc9991. Das 232 combinações/29 superfícies, 24 públicas passaram e nenhuma falhou; as 24 declaram Inter, Arial, sans-serif. As 120 medições de contraste pixel passaram, sem falha ou inconclusão. Os outros 200 casos foram redirecionados e oito drawers não tinham sessão: não provam páginas privadas.
+
+Revisão visual independente abriu todas as 24 capturas GREEN e três RED. Sem achados; os 24 pares RED/GREEN são idênticos em RGB, pixel a pixel. Isso prova ausência de regressão visual nesses estados neste executor, sem demonstrar fonte Inter instalada ou efetivamente utilizada. SYS01/02 mostram formulários vazios; SYS03 apenas validação de link. Teclado, erro/sucesso, autenticação, zoom, páginas privadas e WCAG integral continuam fora dessa evidência. A matriz BRAND-01 não recebe PASS global por esse resultado público.
