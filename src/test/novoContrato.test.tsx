@@ -11,10 +11,12 @@ const m = vi.hoisted(() => ({
   signOut: vi.fn(),
   nav: vi.fn(),
   rpc: vi.fn(),
+  efetivas: vi.fn(),
   chamadas: [] as Array<{ tabela: string; ops: Array<[string, unknown[]]> }>,
   respostas: {} as Record<string, (c: { tabela: string; ops: Array<[string, unknown[]]> }) => unknown>,
 }));
 
+vi.mock("@/lib/administracao/rbacRpc", async (original) => ({ ...(await original<typeof import("@/lib/administracao/rbacRpc")>()), consultarPermissoesEfetivas: m.efetivas }));
 vi.mock("@/integrations/supabase/client", () => {
   const from = (tabela: string) => {
     const c = { tabela, ops: [] as Array<[string, unknown[]]> };
@@ -93,6 +95,7 @@ beforeEach(() => {
   m.getUser.mockResolvedValue({ data: { user: { id: U } }, error: null });
   definirPreferenciaOrganizacao(U, ORG);
   m.rpc.mockResolvedValue({ data: [org("administrador")], error: null });
+  m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: false, permissoes: [{ recurso: "contratos", acao: "criar" }] });
   m.respostas = {
     contratantes: (c) => {
       const [[de]] = op(c, "range") as [[number, number]];
@@ -129,6 +132,7 @@ describe("V1-05 gate (Master por herança, sem vínculo físico)", () => {
     expect(await screen.findByLabelText(/Número/)).toBeTruthy();
   });
   it("leitor -> negado, zero consulta e zero INSERT", async () => {
+    m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: false, permissoes: [] });
     m.rpc.mockResolvedValue({ data: [org("leitor")], error: null });
     montar();
     expect(await screen.findByText(MENSAGENS_V105.negado)).toBeTruthy();
@@ -151,6 +155,28 @@ describe("V1-05 gate (Master por herança, sem vínculo físico)", () => {
   });
 });
 
+describe("CRUD contrato por capacidade efetiva", () => {
+  it("capacidade permite sem perfil local e consulta contexto organizacional exato", async () => {
+    m.rpc.mockResolvedValue({ data: [org("")], error: null });
+    m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: true, permissoes: [{ recurso: "contratos", acao: "criar" }] });
+    montar(); await screen.findByLabelText(/Número/);
+    expect(m.efetivas).toHaveBeenCalledWith(ORG, null);
+  });
+  it("administrador local não contorna capacidade negada", async () => {
+    m.efetivas.mockResolvedValue({ schema_versao: "rbac-v1", versao: 1, master: true, permissoes: [] });
+    montar(); await screen.findByText(MENSAGENS_V105.negado);
+    expect(buscas()).toHaveLength(0); expect(inserts()).toHaveLength(0);
+  });
+  it("falha de capacidade fecha formulário e oferece tentar novamente", async () => {
+    m.efetivas.mockRejectedValue(new Error("indisponível"));
+    montar(); await screen.findByText(MENSAGENS_V105.erroGate);
+    expect(screen.queryByLabelText(/Número/)).toBeNull(); expect(inserts()).toHaveLength(0);
+  });
+  it("capacidade não permite organização inativa", async () => {
+    m.rpc.mockResolvedValue({ data: [{ ...org("administrador_master"), situacao: "inativa" }], error: null });
+    montar(); await screen.findByText(MENSAGENS_V105.negado); expect(inserts()).toHaveLength(0);
+  });
+});
 describe("V1-05 ContratanteCombobox paginado", () => {
   it("consulta por org SEM filtro situacao, range 0..19 e Carregar mais pede 20..39", async () => {
     montar();
