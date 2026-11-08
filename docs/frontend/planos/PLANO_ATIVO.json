@@ -1347,7 +1347,15 @@
       "head": "af5aaad4e30f4a307c8f0d03d084dc740f95017c",
       "native_red_run": 42507869723,
       "source_failure": "FENCE_LIFECYCLE_NO_NETWORK",
-      "state": "RED_CAUSAL_7_PASS_1_FAIL_SEM_ASSOCIACAO_INFERIDA"
+      "state": "RED_CAUSAL_7_PASS_1_FAIL_SEM_ASSOCIACAO_INFERIDA",
+      "event_order_gate": {
+        "document": "docs/frontend/planos/P0_TRILHA_A_CANCELAMENTO_NATIVO_GATE_2026-11-08.md",
+        "wait_ms_max": 250,
+        "deadline_from_pause_arrival": true,
+        "inferred_network_record": false,
+        "initial_pause_only": true,
+        "state": "GATE_AGUARDA_CI_REVISAO"
+      }
     }
   },
   "trilha_a_24_fixture_plan": {
