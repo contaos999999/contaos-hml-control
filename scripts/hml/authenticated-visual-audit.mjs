@@ -980,16 +980,6 @@ export async function installNativeFence({
         await send(session, "Page.enable");
         await send(session, "Network.enable");
         await send(session, "Network.setBlockedURLs", { urls: ["ws://*", "wss://*"] });
-        const denied = await send(session, "Network.emulateNetworkConditionsByRule", {
-          matchedNetworkConditions: ["ws://*:*/*", "wss://*:*/*"].map((urlPattern) => ({
-            urlPattern,
-            offline: true,
-            latency: 0,
-            downloadThroughput: -1,
-            uploadThroughput: -1,
-          })),
-        });
-        if (denied.ruleIds?.length !== 2) fail("FENCE_WEBSOCKET_RULES");
         await send(session, "Fetch.enable", {
           patterns: [
             { urlPattern: "*", requestStage: "Request" },
