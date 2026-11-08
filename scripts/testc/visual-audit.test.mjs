@@ -827,7 +827,8 @@ async function publicScaleDOMFixture(snapshot, html) {
   return {
     win,
     geometry,
-    capture: (phase) => runInNewContext(`(${snapshot.toString()})(${JSON.stringify(phase)})`, globals),
+    capture: (phase) =>
+      runInNewContext(`(${snapshot.toString()})(${JSON.stringify(phase)})`, globals),
     close: () => {},
   };
 }
