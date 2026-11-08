@@ -1295,7 +1295,7 @@ export async function preparePublicProvenance({
   )
     fail("PREPARE_SECRET_ENV");
   if (!(await sourceTreeClean(root))) fail("PREPARE_DIRTY");
-  for (const cache of [".output", ".tanstack", ".nitro", "dist"])
+  for (const cache of [".output", ".tanstack", ".nitro", "dist", ".wrangler"])
     await rm(join(root, cache), { recursive: true, force: true });
 
   try {
@@ -1423,7 +1423,7 @@ export async function runCli(args = process.argv.slice(2)) {
   );
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  runCli().catch((error) => {
+  runCli().catch(async (error) => {
     console.error(
       JSON.stringify({
         state: "BLOCKED",
@@ -1431,6 +1431,29 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       }),
     );
     process.exitCode = 1;
+    if (
+      process.env.GITHUB_EVENT_NAME === "workflow_dispatch" &&
+      process.env.GITHUB_REF === "refs/heads/main" &&
+      ["--prepare", "--native-guard"].includes(process.argv[2])
+    ) {
+      try {
+        const identity = await harnessIdentity();
+        let native = null;
+        try {
+          const raw = await readFile(".audit-work/native-proof.json", "utf8");
+          if (raw.length <= 16384) native = JSON.parse(raw);
+        } catch {}
+        await writeBlockedPreflight({
+          code: error.code,
+          identity,
+          frontendSha: process.env.CONTAOS_FRONTEND_SHA,
+          deploymentId: process.env.CONTAOS_DEPLOYMENT_ID,
+          native,
+        });
+      } catch {
+        console.error(JSON.stringify({ state: "BLOCKED", code: "PREFLIGHT_ARTIFACT_BLOCKED" }));
+      }
+    }
   });
 }
 
@@ -1518,10 +1541,12 @@ export async function sourceTreeClean(root) {
       ["ls-files", "--others", "--ignored", "--exclude-standard", "-z"],
       options,
     );
-    return ignored.stdout
-      .split("\0")
-      .filter(Boolean)
-      .every((path) => /^(?:node_modules|\.output|\.tanstack|\.nitro|dist)(?:\/|$)/.test(path));
+    for (const path of ignored.stdout.split("\0").filter(Boolean)) {
+      if (/^(?:node_modules|\.output|\.tanstack|\.nitro|dist)(?:\/|$)/.test(path)) continue;
+      if (path !== ".wrangler/deploy/config.json" || !(await generatedWranglerOutputValid(root)))
+        return false;
+    }
+    return true;
   } catch {
     return false;
   }
@@ -2133,5 +2158,72 @@ export function brandStateValid(row) {
     supplement.brandCount === 1 &&
     supplement.screenshot === `screenshots/${caseKey(row)}_menu.png` &&
     hash64(supplement.sha256)
+  );
+}
+
+export async function generatedWranglerOutputValid(root) {
+  try {
+    for (const path of [root, join(root, ".wrangler"), join(root, ".wrangler/deploy")]) {
+      const stat = await lstat(path);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) return false;
+    }
+    if (
+      (await readdir(join(root, ".wrangler"))).join() !== "deploy" ||
+      (await readdir(join(root, ".wrangler/deploy"))).join() !== "config.json"
+    )
+      return false;
+    const path = join(root, ".wrangler/deploy/config.json"),
+      stat = await lstat(path);
+    if (stat.isSymbolicLink() || !stat.isFile() || stat.size > 256) return false;
+    return (
+      (await readFile(path, "utf8")).trim() ===
+      '{"configPath":"../../.output/server/wrangler.json"}'
+    );
+  } catch {
+    return false;
+  }
+}
+export async function writeBlockedPreflight(input, output = resolve("artifacts/trilha-a-private")) {
+  await mkdir(output, { recursive: true, mode: 0o700 });
+  if ((await readdir(output)).length) fail("BLOCKED_ARTIFACT_EXISTS");
+  const identity = input.identity || {},
+    nativeValid = nativeProofValid(input.native, identity);
+  const receipt = {
+    schema: "contaos.preflight.blocked.v1",
+    state: "NO_GO",
+    stage: "PRELOGIN",
+    code: /^[A-Z_]{1,80}$/.test(input.code || "") ? input.code : "HARNESS_FAILURE",
+    harnessSha: hash40(identity.harnessSha) ? identity.harnessSha : "UNVERIFIED",
+    frontendSha: hash40(input.frontendSha) ? input.frontendSha : "UNVERIFIED",
+    deploymentId: /^dpl_[A-Za-z0-9]{8,80}$/.test(input.deploymentId || "")
+      ? input.deploymentId
+      : "UNVERIFIED",
+    privateCasesProven: 0,
+    nativeProofIncluded: nativeValid,
+    v1Certified: false,
+  };
+  const files = new Map([["preflight-blocked.json", JSON.stringify(receipt, null, 2) + "\n"]]);
+  if (nativeValid)
+    files.set(
+      "native-proof.json",
+      JSON.stringify(
+        {
+          schema: "contaos.native.proof.v1",
+          harnessSha: identity.harnessSha,
+          moduleHash: identity.moduleHash,
+          testHash: identity.testHash,
+          passed: 7,
+          failed: 0,
+          skipped: 0,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
+  for (const [name, body] of files) await writeFile(join(output, name), body, { mode: 0o600 });
+  await writeFile(
+    join(output, "SHA256SUMS"),
+    [...files].map(([name, body]) => digest(body) + "  " + name).join("\n") + "\n",
+    { mode: 0o600 },
   );
 }

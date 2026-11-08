@@ -1295,3 +1295,85 @@ test("marca mobile exige prova do menu aberto, sem fabricar marca no estado fech
   assert.equal(valid({ ...base, width: 1440, brandCount: 0 }), false);
   assert.equal(valid({ ...base, surface: "SYS04", brandCount: 1 }), true);
 });
+
+test("saída Wrangler admite somente o JSON gerado, sem arquivo extra ou symlink", async () => {
+  const valid = fn("generatedWranglerOutputValid"),
+    fs = await import("node:fs/promises"),
+    os = await import("node:os"),
+    path = await import("node:path");
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "contaos-wrangler-test-")),
+    outside = await fs.mkdtemp(path.join(os.tmpdir(), "contaos-wrangler-outside-"));
+  const dir = path.join(root, ".wrangler", "deploy"),
+    file = path.join(dir, "config.json"),
+    expected = '{"configPath":"../../.output/server/wrangler.json"}';
+  try {
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(file, expected);
+    assert.equal(await valid(root), true);
+    await fs.writeFile(path.join(dir, "extra.json"), "{}");
+    assert.equal(await valid(root), false);
+    await fs.rm(path.join(dir, "extra.json"));
+    for (const value of [
+      '{"configPath":"../../outside.json"}',
+      '{"configPath":"../../.output/server/wrangler.json","extra":true}',
+      '{"configPath":"bad","configPath":"../../.output/server/wrangler.json"}',
+    ]) {
+      await fs.writeFile(file, value);
+      assert.equal(await valid(root), false);
+    }
+    await fs.writeFile(file, expected);
+    await fs.writeFile(path.join(outside, "config.json"), expected);
+    await fs.rm(file);
+    await fs.symlink(path.join(outside, "config.json"), file);
+    assert.equal(await valid(root), false);
+    await fs.rm(file);
+    await fs.rm(dir, { recursive: true });
+    await fs.symlink(outside, dir);
+    assert.equal(await valid(root), false);
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+    await fs.rm(outside, { recursive: true, force: true });
+  }
+});
+test("bloqueio pré-login preserva atestado válido e hashes sem gravar campo estranho", async () => {
+  const write = fn("writeBlockedPreflight"),
+    fs = await import("node:fs/promises"),
+    os = await import("node:os"),
+    path = await import("node:path"),
+    crypto = await import("node:crypto");
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "contaos-blocked-proof-")),
+    identity = { harnessSha: "a".repeat(40), moduleHash: "b".repeat(64), testHash: "c".repeat(64) },
+    native = sut.nativeProofFromTap("# tests 7\n# pass 7\n# fail 0\n# skipped 0\n", identity);
+  try {
+    await write(
+      {
+        code: "PREPARE_DIRTY",
+        identity,
+        frontendSha: "d".repeat(40),
+        deploymentId: "dpl_synthetic123",
+        native: { ...native, extra: "SYNTHETIC_SECRET_CANARY" },
+        extra: "SYNTHETIC_SECRET_CANARY",
+      },
+      root,
+    );
+    const receipt = JSON.parse(
+      await fs.readFile(path.join(root, "preflight-blocked.json"), "utf8"),
+    );
+    assert.equal(receipt.v1Certified, false);
+    assert.equal(receipt.privateCasesProven, 0);
+    assert.equal(receipt.nativeProofIncluded, true);
+    const sums = await fs.readFile(path.join(root, "SHA256SUMS"), "utf8");
+    for (const line of sums.trim().split("\n")) {
+      const [sha, file] = line.split("  ");
+      const body = await fs.readFile(path.join(root, file));
+      assert.equal(crypto.createHash("sha256").update(body).digest("hex"), sha);
+      assert.equal(body.includes("SYNTHETIC_SECRET_CANARY"), false);
+    }
+    await assert.rejects(
+      write({ code: "PREPARE_DIRTY", identity }, root),
+      (error) => error.code === "BLOCKED_ARTIFACT_EXISTS",
+    );
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});

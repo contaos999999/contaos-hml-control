@@ -1672,3 +1672,12 @@ BUILD #335 integrado em 49cd3025445d28e6ac23f32f6d58b96ae10152a9, CI da main 424
 Disparo manual confirmado: run 42483778550, job 128741124206. Proteção nativa 7/7 PASS no SHA da main; preparação falhou PREPARE_DIRTY antes da etapa com secrets. Nenhuma credencial fornecida e nenhum caso privado capturado/aprovado. Os erros posteriores de SHA256SUMS/artefato foram consequência da ausência do diretório após falha pré-login, não novas falhas de produto.
 
 Causa reproduzida no checkout isolado: único ignorado não admitido `.wrangler/deploy/config.json`, gerado pelo build com configPath ../../.output/server/wrangler.json. Não mudar backend nem dispensar árvore limpa. PLAN corretivo específico prevê reconhecimento exato dessa saída, limpeza antes do build, negativos para adulteração e preservação de atestado/manifesto de bloqueio com hashes. Aguardar CI e integração do PLAN antes do BUILD corretivo. As 18 provas públicas permanecem válidas e não repetidas. V1 NO-GO; privados 0/208 comprovados.
+
+
+### BUILD corretivo da preparação, após PLAN #336
+
+PLAN #336 integrado em 8630cfedddab4c7f49d55f50bdf47e4ab36ddfdf, CI 42484400706/42484400736/42484400715 SUCCESS. Correção limita a exceção à saída canônica .wrangler/deploy/config.json, arquivo regular pequeno, conteúdo exato e diretórios sem symlink/entrada extra. A saída é removida antes do build; árvore limpa continua obrigatória antes e depois. Caso real reproduzido passou de treeClean=false para true somente com esse artefato aprovado.
+
+RED focal de dois comportamentos ausentes; GREEN 4/4, incluindo consumidores de árvore limpa e CLI. Negativos mantêm bloqueio para JSON/caminho/chave extra, arquivo adicional, symlink e .env ignorado. Manifesto de falha pré-login preserva NO-GO, zero casos privados, SHAs e hashes; atestado nativo somente se válido para o mesmo SHA e arquivos. Não sobrescreve saída existente nem reduz o erro principal. O filtro de CI próprio de PR cobre apenas os três arquivos do harness e package/bun.lock; manual e checks obrigatórios intactos.
+
+Revisão independente focal: sem Critical/Important, aprovável após formato/lint e CI no novo HEAD. Nenhuma credencial ou nova captura privada executada. Próxima: integrar BUILD corretivo depois dos checks, reancorar deployment HML e executar preparação corrigida/etapas ainda pendentes. Provas anteriores preservadas; V1 NO-GO.
