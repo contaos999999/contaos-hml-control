@@ -1,4 +1,4 @@
-import { readFile, mkdir, writeFile, lstat } from "node:fs/promises";
+import { readFile, mkdir, writeFile, lstat, rm, readdir } from "node:fs/promises";
 import { resolve, join, basename } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { execFile as execFileCallback } from "node:child_process";
@@ -333,7 +333,9 @@ export function requestAllowed(request = {}) {
     )
       return false;
     if (url.origin === HML_ORIGIN)
-      return ["GET", "HEAD"].includes(method) && !url.pathname.startsWith("/_server");
+      return (
+        ["GET", "HEAD"].includes(method) && !url.search && !url.pathname.startsWith("/_server")
+      );
     if (url.origin !== API_ORIGIN) return false;
     if (method === "OPTIONS")
       return (
@@ -1281,6 +1283,21 @@ export async function preparePublicProvenance({
     fail("PREPARE_CONFIGURATION");
   const root = resolve(sourceRoot),
     env = browserEnvironment(process.env);
+  if (
+    [
+      "CONTAOS_HML_SYNTHETIC_EMAIL",
+      "CONTAOS_HML_SYNTHETIC_PASSWORD",
+      "DATABASE_URL",
+      "AUTH_ADMIN_KEY",
+      "CONTAOS_HML_AUTH_ADMIN_KEY",
+      "GH_TOKEN",
+    ].some((key) => !!process.env[key])
+  )
+    fail("PREPARE_SECRET_ENV");
+  if (!(await sourceTreeClean(root))) fail("PREPARE_DIRTY");
+  for (const cache of [".output", ".tanstack", ".nitro", "dist"])
+    await rm(join(root, cache), { recursive: true, force: true });
+
   try {
     const actual = await execFile("git", ["rev-parse", "HEAD"], { cwd: root, env });
     if (actual.stdout.trim() !== frontendSha) fail("PREPARE_SHA");
@@ -1306,6 +1323,7 @@ export async function preparePublicProvenance({
   } catch {
     fail("PREPARE_BUILD");
   }
+  if (!(await sourceTreeClean(root))) fail("PREPARE_DIRTY");
   const publicRoot = join(root, ".output/public"),
     moduleHashes = {};
   for (const [url, source] of graph.modules) {
@@ -1361,24 +1379,29 @@ export async function preparePublicProvenance({
   };
 }
 export async function runCli(args = process.argv.slice(2)) {
-  if (args.length !== 1 || args[0] !== "--prepare") fail("CLI_MODE");
+  if (args.length !== 1 || !["--prepare", "--native-guard", "--audit"].includes(args[0]))
+    fail("CLI_MODE");
   const harnessRoot = fileURLToPath(new URL("../../", import.meta.url));
   try {
     const options = { cwd: harnessRoot, env: browserEnvironment(process.env), maxBuffer: 4194304 };
     const head = await execFile("git", ["rev-parse", "HEAD"], options);
     if (head.stdout.trim() !== process.env.CONTAOS_HARNESS_SHA) fail("HARNESS_SHA");
-    const committed = await execFile(
-      "git",
-      ["show", "HEAD:scripts/hml/authenticated-visual-audit.mjs"],
-      options,
-    );
-    if (committed.stdout !== (await readFile(fileURLToPath(import.meta.url), "utf8")))
-      fail("HARNESS_DIRTY");
+    for (const path of [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      ".github/workflows/contaos-trilha-a-authenticated.yml",
+    ]) {
+      const committed = await execFile("git", ["show", "HEAD:" + path], options);
+      if (committed.stdout !== (await readFile(join(harnessRoot, path), "utf8")))
+        fail("HARNESS_DIRTY");
+    }
   } catch (error) {
     if (["HARNESS_SHA", "HARNESS_DIRTY"].includes(error.code)) throw error;
     fail("HARNESS_SOURCE");
   }
 
+  if (args[0] === "--native-guard") return nativeGuard();
+  if (args[0] === "--audit") return runAuthenticatedAudit();
   const proof = await preparePublicProvenance({
     sourceRoot: process.env.CONTAOS_FRONTEND_SOURCE,
     frontendSha: process.env.CONTAOS_FRONTEND_SHA,
@@ -1409,4 +1432,618 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     );
     process.exitCode = 1;
   });
+}
+
+export function nativeProofFromTap(tap, identity) {
+  if (
+    typeof tap !== "string" ||
+    !hash40(identity?.harnessSha) ||
+    !hash64(identity?.moduleHash) ||
+    !hash64(identity?.testHash)
+  )
+    fail("NATIVE_PROOF");
+  for (const [key, value] of Object.entries({ tests: 7, pass: 7, fail: 0, skipped: 0 })) {
+    const matches = [...tap.matchAll(new RegExp("^# " + key + " (\\d+)\\s*$", "gm"))];
+    if (matches.length !== 1 || Number(matches[0][1]) !== value) fail("NATIVE_PROOF");
+  }
+  return { schema: "contaos.native.proof.v1", ...identity, passed: 7, failed: 0, skipped: 0 };
+}
+export function nativeProofValid(proof, identity) {
+  return (
+    proof?.schema === "contaos.native.proof.v1" &&
+    hash40(identity?.harnessSha) &&
+    hash64(identity?.moduleHash) &&
+    hash64(identity?.testHash) &&
+    ["harnessSha", "moduleHash", "testHash"].every((k) => proof[k] === identity[k]) &&
+    proof.passed === 7 &&
+    proof.failed === 0 &&
+    proof.skipped === 0
+  );
+}
+async function harnessIdentity() {
+  return {
+    harnessSha: process.env.CONTAOS_HARNESS_SHA,
+    moduleHash: digest(await readFile(fileURLToPath(import.meta.url))),
+    testHash: digest(
+      await readFile(new URL("./authenticated-visual-audit.test.mjs", import.meta.url)),
+    ),
+  };
+}
+async function nativeGuard() {
+  let output;
+  try {
+    const result = await execFile(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=Chromium nativo",
+        "scripts/hml/authenticated-visual-audit.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 180000,
+        maxBuffer: 1048576,
+      },
+    );
+    output = result.stdout;
+  } catch {
+    fail("NATIVE_GUARD");
+  }
+  const proof = nativeProofFromTap(output, await harnessIdentity());
+  await mkdir(".audit-work", { recursive: true, mode: 0o700 });
+  await writeFile(".audit-work/native-proof.json", JSON.stringify(proof), { mode: 0o600 });
+  console.log(
+    JSON.stringify({
+      phase: "NATIVE_GUARD",
+      state: "PASS",
+      cases: 7,
+      harnessSha: proof.harnessSha,
+    }),
+  );
+}
+
+export async function sourceTreeClean(root) {
+  try {
+    const options = { cwd: root, env: browserEnvironment(process.env), maxBuffer: 16777216 };
+    await execFile("git", ["diff", "--quiet", "HEAD"], options);
+    const ordinary = await execFile(
+      "git",
+      ["ls-files", "--others", "--exclude-standard", "-z"],
+      options,
+    );
+    if (ordinary.stdout) return false;
+    const ignored = await execFile(
+      "git",
+      ["ls-files", "--others", "--ignored", "--exclude-standard", "-z"],
+      options,
+    );
+    return ignored.stdout
+      .split("\0")
+      .filter(Boolean)
+      .every((path) => /^(?:node_modules|\.output|\.tanstack|\.nitro|dist)(?:\/|$)/.test(path));
+  } catch {
+    return false;
+  }
+}
+
+export async function verifyPublishedResponse(proof, { url, resourceType, status, body }) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.origin === API_ORIGIN) return status >= 200 && status < 500;
+    if (parsed.origin !== HML_ORIGIN || status !== 200 || !Buffer.isBuffer(body)) return false;
+    if (resourceType === "Document")
+      return (
+        typeof proof.documents?.[parsed.pathname] === "string" &&
+        compareHtml(
+          new TextDecoder("utf-8", { fatal: true }).decode(body),
+          proof.documents[parsed.pathname],
+        )
+      );
+    return assetBytesMatch(await trustedAsset(proof.publicRoot, url), body);
+  } catch {
+    return false;
+  }
+}
+async function literalWords(root) {
+  const words = new Set([
+    "button",
+    "heading",
+    "level",
+    "generic",
+    "paragraph",
+    "navigation",
+    "link",
+    "url",
+    "complementary",
+    "banner",
+    "main",
+    "region",
+    "strong",
+    "emphasis",
+    "list",
+    "listitem",
+    "textbox",
+    "combobox",
+    "option",
+    "selected",
+    "disabled",
+    "checked",
+    "expanded",
+    "pressed",
+    "radio",
+    "radiogroup",
+    "group",
+    "term",
+    "definition",
+    "img",
+    "alert",
+    "status",
+    "dialog",
+    "separator",
+    "checkbox",
+    "spinbutton",
+    "slider",
+    "progressbar",
+    "tab",
+    "tablist",
+    "tabpanel",
+    "row",
+    "cell",
+    "table",
+    "columnheader",
+    "gridcell",
+    "rowgroup",
+    "text",
+    "active",
+  ]);
+  function add(text) {
+    for (const word of text
+      .normalize("NFC")
+      .toLocaleLowerCase("pt-BR")
+      .match(/[\p{L}\p{N}_-]+/gu) || [])
+      words.add(word);
+  }
+  const files = await readdir(join(root, "src"), { recursive: true });
+  for (const file of files) {
+    if (!/\.tsx?$/.test(file) || /(?:^|\/)(?:test|__tests__)(?:\/|$)|\.test\./.test(file)) continue;
+    const source = await readFile(join(root, "src", file), "utf8");
+    const parsed = ts.createSourceFile(
+      file,
+      source,
+      ts.ScriptTarget.Latest,
+      true,
+      file.endsWith("tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+    );
+    function visit(node) {
+      if (ts.isStringLiteralLike(node) || node.kind === ts.SyntaxKind.JsxText) add(node.text);
+      ts.forEachChild(node, visit);
+    }
+    visit(parsed);
+  }
+  for (const value of Object.values(SYNTHETIC_FIXTURE)) add(value);
+  add(
+    "FONTE_SINTETICA_AUDITORIA_HML.txt FONTE SINTETICA TRILHA A 20261108 285 2026 08 11 02 41 773eb577 f4681103",
+  );
+  // Only bounded counters and already declared fixture dates/sizes are allowed.
+  for (let n = 0; n <= 232; n++) words.add(String(n));
+  return words;
+}
+async function inspectPrivacy(page, words) {
+  const snapshot = await page.locator("body").ariaSnapshot();
+  const rendered = await page.evaluate(() => {
+    const visible = (e) =>
+      e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+    const values = [document.body.innerText];
+    for (const element of document.querySelectorAll(
+      "input,textarea,select,[aria-label],[title],[placeholder]",
+    ))
+      if (visible(element)) {
+        for (const key of ["aria-label", "title", "placeholder"])
+          if (element.getAttribute(key)) values.push(element.getAttribute(key));
+        if ("value" in element && element.value) values.push(element.value);
+      }
+    for (const element of document.querySelectorAll("canvas,iframe,object,embed"))
+      if (visible(element)) return null;
+    for (const element of document.querySelectorAll("*"))
+      if (visible(element))
+        for (const pseudo of ["::before", "::after"]) {
+          const content = getComputedStyle(element, pseudo).content;
+          if (content && content !== "none" && content !== "normal") values.push(content);
+        }
+    return values.join("\n");
+  });
+  if (rendered === null || !safeArtifactText(rendered, words) || !safeArtifactText(snapshot, words))
+    return null;
+  return snapshot;
+}
+async function checkFreshDeployment(proof, full) {
+  const html = new TextDecoder("utf-8", { fatal: true }).decode(
+    await boundedPublicFetch(HML_ORIGIN + "/login", 262144),
+  );
+  if (!compareHtml(html, proof.documents["/login"])) fail("DEPLOYMENT_CHANGED");
+  if (full) {
+    const graph = await discoverPublicGraph();
+    extractPublicBuildEnvironment(graph.modules, proof);
+    if (graph.modules.size !== proof.moduleCount) fail("DEPLOYMENT_CHANGED");
+    for (const [url, source] of graph.modules)
+      if (digest(source) !== proof.moduleHashes[new URL(url).pathname]) fail("DEPLOYMENT_CHANGED");
+  }
+}
+async function waitOrganization(page) {
+  await page.waitForFunction(
+    (name) => {
+      const header = document.querySelector('header[aria-label="Organização atual"]');
+      return header?.textContent.includes(name) && /Situação:\s*ativa/i.test(header.textContent);
+    },
+    SYNTHETIC_FIXTURE.organizationName,
+    { timeout: 15000 },
+  );
+}
+async function runAuthenticatedAudit() {
+  const ready = validateConfiguration({
+    origin: HML_ORIGIN,
+    frontendSha: process.env.CONTAOS_FRONTEND_SHA,
+    harnessSha: process.env.CONTAOS_HARNESS_SHA,
+    deploymentId: process.env.CONTAOS_DEPLOYMENT_ID,
+    emailPresent: !!process.env.CONTAOS_HML_SYNTHETIC_EMAIL,
+    passwordPresent: !!process.env.CONTAOS_HML_SYNTHETIC_PASSWORD,
+  });
+  if (!ready.ready) fail(ready.code);
+  if (
+    process.env.GITHUB_EVENT_NAME !== "workflow_dispatch" ||
+    process.env.GITHUB_REF !== "refs/heads/main"
+  )
+    fail("AUDIT_MAIN_ONLY");
+  const native = JSON.parse(await readFile(".audit-work/native-proof.json", "utf8"));
+  if (!nativeProofValid(native, await harnessIdentity())) fail("NATIVE_PROOF");
+  const proof = JSON.parse(await readFile(".audit-work/provenance.json", "utf8"));
+  if (
+    proof.schema !== "contaos.private.provenance.v1" ||
+    proof.harnessSha !== process.env.CONTAOS_HARNESS_SHA ||
+    proof.frontendSha !== process.env.CONTAOS_FRONTEND_SHA ||
+    proof.deploymentId !== process.env.CONTAOS_DEPLOYMENT_ID
+  )
+    fail("PROVENANCE_IDENTITY");
+  const axePath = process.env.CONTAOS_AXE_SOURCE_PATH;
+  if (!axePath) fail("AXE_MISSING");
+  const axe = await readFile(axePath, "utf8");
+  if (axe.length > 2097152 || !axe.includes("4.14.0")) fail("AXE_VERSION");
+  await checkFreshDeployment(proof, true);
+  const words = await literalWords(process.env.CONTAOS_FRONTEND_SOURCE),
+    output = resolve("artifacts/trilha-a-private");
+  await mkdir(join(output, "screenshots"), { recursive: true });
+  await mkdir(join(output, "dom"), { recursive: true });
+  const records = [],
+    hashes = [];
+  let browser,
+    context,
+    fence,
+    proxy,
+    page,
+    loggedIn = false,
+    logoutVerified = false,
+    aborted = null,
+    errors = 0;
+  const { chromium } = await import("playwright");
+  const debug = createServer();
+  await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
+  const debugPort = debug.address().port;
+  await new Promise((resolve) => debug.close(resolve));
+  async function saveScreenshot(key, suffix = "") {
+    const file = `screenshots/${key}${suffix}.png`;
+    const data = await page.screenshot({ fullPage: true, animations: "disabled" });
+    if (data.length > 20971520) fail("SCREENSHOT_LIMIT");
+    await writeFile(join(output, file), data, { mode: 0o600 });
+    const sha = digest(data);
+    hashes.push({ file, sha });
+    return { file, sha };
+  }
+  try {
+    proxy = await startDestinationProxy();
+    browser = await chromium.launch({
+      chromiumSandbox: true,
+      env: browserEnvironment(process.env),
+      proxy: { server: proxy.url },
+      args: [`--remote-debugging-port=${debugPort}`, "--proxy-bypass-list=<-loopback>"],
+    });
+    context = await browser.newContext({
+      viewport: { width: 1440, height: 1000 },
+      serviceWorkers: "block",
+    });
+    page = await context.newPage();
+    page.setDefaultTimeout(15000);
+    page.on("pageerror", () => errors++);
+    const session = await context.newCDPSession(page),
+      { targetInfo } = await session.send("Target.getTargetInfo");
+    await session.detach();
+    fence = await installNativeFence({
+      debugPort,
+      identity: targetInfo,
+      verifyResponse: (response) => verifyPublishedResponse(proof, response),
+      closeContext: async () => context.close(),
+    });
+    await page.goto(HML_ORIGIN + "/login", { waitUntil: "networkidle" });
+    await fence.drain();
+    fence.assertSafe();
+    if (errors !== 0) fail("LOGIN_SCRIPT_ERROR");
+    await page.locator("#login-email").fill(process.env.CONTAOS_HML_SYNTHETIC_EMAIL);
+    await page.locator("#login-senha").fill(process.env.CONTAOS_HML_SYNTHETIC_PASSWORD);
+    await page.getByRole("button", { name: "Entrar", exact: true }).click();
+    await page.waitForURL((url) => url.pathname !== "/login");
+    loggedIn = true;
+    await page.goto(HML_ORIGIN + "/selecionar-organizacao", { waitUntil: "networkidle" });
+    const card = page
+      .getByRole("radio")
+      .filter({ hasText: SYNTHETIC_FIXTURE.organizationName })
+      .filter({ hasText: "Administrador Master" });
+    await card.waitFor();
+    if ((await card.count()) !== 1 || !/Situação:\s*ativa/i.test(await card.innerText()))
+      fail("AUTH_MASTER_FIXTURE");
+    await card.click();
+    await page.getByRole("button", { name: "Continuar", exact: true }).click();
+    await page.waitForURL(HML_ORIGIN + "/");
+    await waitOrganization(page);
+    let surface = null;
+    for (const item of privateCases()) {
+      const key = caseKey(item),
+        record = { ...item, status: "PENDENTE" };
+      records.push(record);
+      if (item.fixtureBlocked) {
+        record.status = "BLOQUEADO_FIXTURE";
+        continue;
+      }
+      await checkFreshDeployment(proof, item.surface !== surface);
+      surface = item.surface;
+      try {
+        const beforeErrors = errors;
+        await page.setViewportSize({ width: item.width, height: 1000 });
+        const response = await page.goto(HML_ORIGIN + item.path, { waitUntil: "networkidle" });
+        await page.evaluate(
+          (theme) => document.documentElement.classList.toggle("dark", theme === "dark"),
+          item.theme,
+        );
+        await page.evaluate(async () => {
+          await document.fonts.ready;
+          await new Promise((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve)),
+          );
+        });
+        if (item.surface !== "SYS04") await waitOrganization(page);
+        await page.waitForFunction(
+          () =>
+            document.querySelectorAll("h1").length === 1 &&
+            !/Carregando|Confirmando organização/.test(document.body.innerText),
+          null,
+          { timeout: 15000 },
+        );
+        await fence.drain();
+        fence.assertSafe();
+        const snapshot = await inspectPrivacy(page, words);
+        if (snapshot === null) {
+          record.status = "BLOQUEADO_PII";
+          continue;
+        }
+        const metrics = await page.evaluate(() => {
+          const visible = (e) =>
+            e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+          const headings = [...document.querySelectorAll("h1")].filter(visible),
+            brands = [...document.querySelectorAll('img[src^="/brand/"]')].filter(visible);
+          return {
+            observedWidth: innerWidth,
+            observedTheme: document.documentElement.classList.contains("dark") ? "dark" : "light",
+            h1: headings.length,
+            badState:
+              headings.some((e) =>
+                /404|acesso negado|não foi possível|não encontrad/i.test(e.textContent),
+              ) ||
+              [...document.querySelectorAll('[role="alert"]')].some(
+                (e) => visible(e) && /negado|falha|não foi possível/i.test(e.textContent),
+              ),
+            overflowX: Math.max(0, document.documentElement.scrollWidth - innerWidth),
+            brandCount: brands.length,
+            fontFamily: getComputedStyle(document.body).fontFamily,
+            langPtBr: document.documentElement.lang === "pt-BR",
+            height: document.documentElement.scrollHeight,
+            organizationHeader: !!document.querySelector('header[aria-label="Organização atual"]'),
+            sidebar: !!document.querySelector("aside"),
+            forms: document.querySelectorAll("form").length,
+          };
+        });
+        if (metrics.height > 30000) {
+          record.status = "BLOQUEADO_PAGE_LIMIT";
+          continue;
+        }
+        await page.addScriptTag({ content: axe });
+        const accessibility = await page.evaluate(async () => {
+          const result = await window.axe.run(document, {
+            runOnly: {
+              type: "tag",
+              values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"],
+            },
+          });
+          return {
+            violations: result.violations.map((v) => ({ id: v.id, count: v.nodes.length })),
+            incomplete: result.incomplete.length,
+          };
+        });
+        const shot = await saveScreenshot(key);
+        const domFile = `dom/${key}.json`,
+          dom = JSON.stringify({
+            surface: item.surface,
+            width: item.width,
+            theme: item.theme,
+            snapshot,
+          });
+        await writeFile(join(output, domFile), dom, { mode: 0o600 });
+        hashes.push({ file: domFile, sha: digest(dom) });
+        Object.assign(record, metrics, {
+          http: response?.status() ?? 0,
+          routeExact: new URL(page.url()).pathname === item.path,
+          sessionVerified: true,
+          organizationVerified: true,
+          shellVerified:
+            item.surface === "SYS04" || (metrics.organizationHeader && metrics.sidebar),
+          privacySafe: true,
+          errors: errors - beforeErrors,
+          blockedMutations: fence.snapshot().blockedRequests,
+          screenshot: shot.file,
+          sha256: shot.sha,
+          dom: domFile,
+          domSha256: digest(dom),
+          accessibility,
+        });
+        record.keyboard = await keyboardProbe(page);
+        record.sidebarSupplement = await sidebarProbe(page, item, key, words, saveScreenshot);
+        record.navigationVerified = await navigationProbe(page, item);
+        record.status =
+          validateCase(record) &&
+          metrics.langPtBr &&
+          !metrics.badState &&
+          accessibility.violations.length === 0 &&
+          record.keyboard.passed &&
+          record.sidebarSupplement.passed &&
+          record.navigationVerified &&
+          /^['"]?Inter['"]?,\s*Arial,\s*sans-serif$/i.test(metrics.fontFamily)
+            ? "PASS_AUTOMATIZADO"
+            : "FAIL";
+        console.log(JSON.stringify({ case: key, status: record.status }));
+      } catch (error) {
+        if (fence.snapshot().failed || error.code === "DEPLOYMENT_CHANGED") throw error;
+        record.status = error.code === "PII_SUPPLEMENT" ? "BLOQUEADO_PII" : "FAIL_UI";
+        if (record.status === "BLOQUEADO_PII") {
+          for (let i = hashes.length - 1; i >= 0; i--)
+            if (
+              hashes[i].file.startsWith("screenshots/" + key) ||
+              hashes[i].file.startsWith("dom/" + key)
+            ) {
+              await rm(join(output, hashes[i].file), { force: true });
+              hashes.splice(i, 1);
+            }
+          for (const field of ["screenshot", "sha256", "dom", "domSha256", "sidebarSupplement"])
+            delete record[field];
+        }
+        console.log(JSON.stringify({ case: key, status: record.status }));
+      }
+    }
+  } catch (error) {
+    aborted = /^[A-Z_]{1,80}$/.test(error?.code ?? "") ? error.code : "RUNTIME_ABORT";
+    if (records.at(-1)?.status === "PENDENTE") records.at(-1).status = "BLOQUEADO_" + aborted;
+  } finally {
+    if (loggedIn && page && !page.isClosed())
+      try {
+        const exit = page.getByRole("button", { name: "Sair", exact: true });
+        if ((await exit.count()) === 1) {
+          await exit.click();
+          await page.waitForURL(HML_ORIGIN + "/login");
+          logoutVerified = true;
+        }
+      } catch {}
+    fence?.close();
+    await browser?.close().catch(() => {});
+    await proxy?.close().catch(() => {});
+    const keys = new Set(records.map(caseKey));
+    for (const item of privateCases())
+      if (!keys.has(caseKey(item)))
+        records.push({
+          ...item,
+          status: item.fixtureBlocked ? "BLOQUEADO_FIXTURE" : "BLOQUEADO_EXECUCAO_INTERROMPIDA",
+        });
+    const report = {
+      schema: "contaos.private.audit.v1",
+      frontendSha: proof.frontendSha,
+      harnessSha: proof.harnessSha,
+      deploymentId: proof.deploymentId,
+      nativeProof: native,
+      csp: "ADICIONAL_LOCAL_DO_AUDITOR",
+      publicProofsRepeated: false,
+      records,
+      summary: summarizeCases(records),
+      logoutVerified,
+      aborted,
+      criteria72: "PENDENTE_REVISAO_INDEPENDENTE",
+      v1Certified: false,
+    };
+    const reportText = JSON.stringify(report, null, 2) + "\n";
+    await writeFile(join(output, "report.json"), reportText, { mode: 0o600 });
+    hashes.push({ file: "report.json", sha: digest(reportText) });
+    await writeFile(
+      join(output, "SHA256SUMS"),
+      hashes.map((h) => `${h.sha}  ${h.file}`).join("\n") + "\n",
+      { mode: 0o600 },
+    );
+  }
+  if (aborted || !logoutVerified || records.some((r) => r.status !== "PASS_AUTOMATIZADO"))
+    fail("AUDIT_INCOMPLETE");
+}
+async function keyboardProbe(page) {
+  let forward = true,
+    backward = true;
+  for (const key of ["Tab", "Tab", "Shift+Tab"]) {
+    await page.keyboard.press(key);
+    const valid = await page.evaluate(() => {
+      const e = document.activeElement;
+      if (!(e instanceof HTMLElement) || e === document.body) return false;
+      const b = e.getBoundingClientRect(),
+        s = getComputedStyle(e);
+      return (
+        b.width > 0 &&
+        b.height > 0 &&
+        b.left >= 0 &&
+        b.right <= innerWidth &&
+        b.top >= 0 &&
+        b.bottom <= innerHeight &&
+        (s.outlineStyle !== "none" || s.boxShadow !== "none")
+      );
+    });
+    if (key === "Shift+Tab") backward &&= valid;
+    else forward &&= valid;
+  }
+  return { passed: forward && backward, forward, backward, coverage: "AMOSTRA_NAO_WCAG_INTEGRAL" };
+}
+async function sidebarProbe(page, item, key, words, save) {
+  if (item.surface === "SYS04") return { passed: true, mode: "ESTRUTURA_SYS04" };
+  if (item.width >= 768) {
+    const collapse = page.getByRole("button", { name: "Recolher menu", exact: true });
+    if ((await collapse.count()) !== 1) return { passed: false, mode: "DESKTOP" };
+    await collapse.click();
+    const expand = page.getByRole("button", { name: "Expandir menu", exact: true });
+    const safe = await inspectPrivacy(page, words);
+    if (safe === null) fail("PII_SUPPLEMENT");
+    const image = await save(key, "_sidebar-recolhida");
+    const collapsed = (await expand.getAttribute("aria-expanded")) === "false";
+    await expand.click();
+    const aside = page.locator("aside");
+    const passed =
+      collapsed &&
+      (await aside.getByRole("link", { name: "Usuários", exact: true }).count()) === 1 &&
+      (await aside.getByRole("link", { name: "Auditoria", exact: true }).count()) === 1;
+    return { passed, mode: "DESKTOP", screenshot: image.file, sha256: image.sha };
+  }
+  const open = page.getByRole("button", { name: "Abrir menu", exact: true });
+  await open.click();
+  const dialog = page.getByRole("dialog", { name: "Menu de navegação" });
+  await dialog.waitFor();
+  if ((await inspectPrivacy(page, words)) === null) fail("PII_SUPPLEMENT");
+  const image = await save(key, "_menu");
+  const admin = await dialog.getByRole("link", { name: "Usuários", exact: true }).count(),
+    audit = await dialog.getByRole("link", { name: "Auditoria", exact: true }).count();
+  await page.keyboard.press("Escape");
+  const focused = await open.evaluate((e) => e === document.activeElement);
+  return {
+    passed: admin === 1 && audit === 1 && focused,
+    mode: "MOBILE",
+    screenshot: image.file,
+    sha256: image.sha,
+  };
+}
+async function navigationProbe(page, item) {
+  if (item.surface === "SYS04") return true;
+  if (item.width < 768) await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
+  const name = item.surface === "SYS05" ? "Contratantes" : "Painel",
+    path = item.surface === "SYS05" ? "/contratantes" : "/";
+  await page.getByRole("link", { name, exact: true }).first().click();
+  await page.waitForURL(HML_ORIGIN + path);
+  await waitOrganization(page);
+  return true;
 }

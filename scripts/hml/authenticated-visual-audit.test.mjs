@@ -1121,3 +1121,114 @@ test("CLI sem modo explícito não pode encerrar com sucesso silencioso", async 
   );
   assert.equal(code, 1);
 });
+
+test("prova nativa exige sete casos reais no mesmo SHA e mesmos arquivos", () => {
+  const make = fn("nativeProofFromTap"),
+    valid = fn("nativeProofValid"),
+    identity = { harnessSha: "a".repeat(40), moduleHash: "b".repeat(64), testHash: "c".repeat(64) };
+  const proof = make("# tests 7\n# pass 7\n# fail 0\n# skipped 0\n", identity);
+  assert.equal(valid(proof, identity), true);
+  for (const tap of [
+    "# tests 7\n# pass 6\n# fail 1\n# skipped 0\n",
+    "# tests 7\n# pass 6\n# fail 0\n# skipped 1\n",
+    "",
+  ])
+    assert.throws(() => make(tap, identity));
+  assert.equal(valid(proof, { ...identity, harnessSha: "d".repeat(40) }), false);
+  assert.equal(valid({ ...proof, moduleHash: "e".repeat(64) }, identity), false);
+});
+
+test("proveniência recusa árvore suja e env ignorado fora do SHA", async () => {
+  const clean = fn("sourceTreeClean");
+  const fs = await import("node:fs/promises"),
+    os = await import("node:os"),
+    path = await import("node:path");
+  const { promisify } = await import("node:util");
+  const run = promisify((await import("node:child_process")).execFile);
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), "contaos-provenance-test-"));
+  const env = {
+    ...sut.browserEnvironment(process.env),
+    GIT_AUTHOR_NAME: "Synthetic",
+    GIT_AUTHOR_EMAIL: "synthetic@example.invalid",
+    GIT_COMMITTER_NAME: "Synthetic",
+    GIT_COMMITTER_EMAIL: "synthetic@example.invalid",
+  };
+  try {
+    await run("git", ["init"], { cwd: root, env });
+    await fs.writeFile(path.join(root, ".gitignore"), ".env.local\nnode_modules/\n.output/\n");
+    await fs.writeFile(path.join(root, "source.ts"), "export const synthetic=1;");
+    await run("git", ["add", "."], { cwd: root, env });
+    await run("git", ["commit", "-m", "synthetic"], { cwd: root, env });
+    assert.equal(await clean(root), true);
+    await fs.writeFile(path.join(root, ".env.local"), "VITE_FAKE=1");
+    assert.equal(await clean(root), false);
+    await fs.rm(path.join(root, ".env.local"));
+    await fs.writeFile(path.join(root, "source.ts"), "export const synthetic=2;");
+    assert.equal(await clean(root), false);
+  } finally {
+    await fs.rm(root, { recursive: true, force: true });
+  }
+});
+
+test("resposta publicada exige documento conhecido e bytes aprovados antes de execução", async () => {
+  const verify = fn("verifyPublishedResponse");
+  const proof = {
+    documents: { "/login": "<!doctype html><p>synthetic</p>" },
+    publicRoot: "/nonexistent",
+  };
+  assert.equal(
+    await verify(proof, {
+      url: HML + "/login",
+      resourceType: "Document",
+      status: 200,
+      body: Buffer.from(proof.documents["/login"]),
+    }),
+    true,
+  );
+  assert.equal(
+    await verify(proof, {
+      url: HML + "/login",
+      resourceType: "Document",
+      status: 200,
+      body: Buffer.from("<!doctype html><p>changed</p>"),
+    }),
+    false,
+  );
+  assert.equal(
+    await verify(proof, {
+      url: HML + "/unknown",
+      resourceType: "Document",
+      status: 200,
+      body: Buffer.from("unknown"),
+    }),
+    false,
+  );
+  assert.equal(
+    await verify(proof, {
+      url: API + "/auth/v1/token?grant_type=password",
+      resourceType: "Fetch",
+      status: 200,
+    }),
+    true,
+  );
+  assert.equal(
+    await verify(proof, {
+      url: HML + "/assets/missing.js",
+      resourceType: "Script",
+      status: 200,
+      body: Buffer.from("payload"),
+    }),
+    false,
+  );
+});
+
+test("frontend não transmite query de fallback de formulário sem hidratação", () => {
+  assert.equal(
+    fn("requestAllowed")({
+      url: HML + "/login?email=synthetic&senha=synthetic",
+      method: "GET",
+      resourceType: "Document",
+    }),
+    false,
+  );
+});

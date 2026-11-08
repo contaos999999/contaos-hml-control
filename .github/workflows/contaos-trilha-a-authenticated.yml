@@ -2,23 +2,33 @@ name: ContaOS Trilha A Autenticada
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [build/trilha-a-authenticated-audit-20261108]
+  workflow_dispatch:
+    inputs:
+      frontend_sha:
+        description: SHA frontend de 40 hex conferido no deployment HML READY
+        required: true
+        type: string
+      deployment_id:
+        description: ID dpl_ conferido no projeto contaos-41-hml
+        required: true
+        type: string
 permissions:
   contents: read
-concurrency:
-  group: trilha-a-protocolo-${{ github.ref }}
-  cancel-in-progress: false
 jobs:
   protocol:
+    if: github.event_name == 'pull_request'
     name: Trilha A protocolo e Chromium sem credenciais
     runs-on: ubuntu-22.04
     timeout-minutes: 15
+    concurrency:
+      group: trilha-a-protocolo-${{ github.ref }}
+      cancel-in-progress: false
+    env:
+      CONTAOS_HARNESS_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
-      - name: Checkout do HEAD analisado
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -26,14 +36,96 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.4"
-      - name: Dependencias congeladas
-        run: bun install --frozen-lockfile
-      - name: Provas do protocolo, sem environment e sem secrets
+      - run: bun install --frozen-lockfile
+      - name: Protocolo sem environment ou secrets
         run: node --test scripts/hml/authenticated-visual-audit.test.mjs
-      - name: Chromium congelado pelo Playwright do lockfile
-        run: ./node_modules/.bin/playwright install --with-deps chromium
-      - name: Fronteira real antes de qualquer autenticacao
-        env:
-          CONTAOS_NATIVE_GUARD: "1"
+      - name: Lint e formato somente dos arquivos novos
         run: |
-          node --test --test-name-pattern='Chromium nativo: (resposta|websocket|controle positivo)' scripts/hml/authenticated-visual-audit.test.mjs
+          bunx eslint scripts/hml/authenticated-visual-audit.mjs scripts/hml/authenticated-visual-audit.test.mjs
+          bunx prettier --check scripts/hml/authenticated-visual-audit.mjs scripts/hml/authenticated-visual-audit.test.mjs .github/workflows/contaos-trilha-a-authenticated.yml
+      - name: Cache do Chromium congelado
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: trilha-a-ubuntu22-playwright-1.58.2-1208
+      - run: ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Comprovar novo comando e atestado nativo completo, sem credenciais
+        run: node scripts/hml/authenticated-visual-audit.mjs --native-guard
+  private:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    name: Trilha A auditoria privada HML
+    runs-on: ubuntu-22.04
+    environment: hml
+    timeout-minutes: 80
+    concurrency:
+      group: trilha-a-authenticated-hml
+      cancel-in-progress: false
+    env:
+      CONTAOS_HARNESS_SHA: ${{ github.sha }}
+      CONTAOS_FRONTEND_SHA: ${{ inputs.frontend_sha }}
+      CONTAOS_DEPLOYMENT_ID: ${{ inputs.deployment_id }}
+      CONTAOS_FRONTEND_SOURCE: ${{ github.workspace }}/frontend-source
+    steps:
+      - name: Checkout imutavel do executor main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+      - name: Validar SHA ancestral antes de baixar ou executar a fonte
+        run: |
+          node --input-type=module - <<'JS'
+          import {execFileSync} from 'node:child_process';
+          const sha=process.env.CONTAOS_FRONTEND_SHA;
+          if(!/^[a-f0-9]{40}$/.test(sha||'')||!/^dpl_[A-Za-z0-9]{8,80}$/.test(process.env.CONTAOS_DEPLOYMENT_ID||''))process.exit(1);
+          if(execFileSync('git',['cat-file','-t',sha],{encoding:'utf8'}).trim()!=='commit')process.exit(1);
+          execFileSync('git',['merge-base','--is-ancestor',sha,'origin/main']);
+          JS
+      - name: Fonte aprovada em checkout separado, sem credenciais persistidas
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.frontend_sha }}
+          path: frontend-source
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Dependencias congeladas do executor
+        run: bun install --frozen-lockfile
+      - name: Dependencias congeladas da fonte aprovada
+        working-directory: frontend-source
+        run: bun install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: trilha-a-ubuntu22-playwright-1.58.2-1208
+      - run: ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Barreira nativa no mesmo HEAD antes de secrets
+        run: node scripts/hml/authenticated-visual-audit.mjs --native-guard
+      - name: Preparacao e SSR sem credenciais privadas
+        run: node scripts/hml/authenticated-visual-audit.mjs --prepare
+      - name: Axe isolado e fixado, sem alterar dependencias do produto
+        run: |
+          npm install --prefix "$RUNNER_TEMP/contaos-trilha-a-axe" --ignore-scripts --no-save --no-package-lock axe-core@4.14.0
+          test -s "$RUNNER_TEMP/contaos-trilha-a-axe/node_modules/axe-core/axe.min.js"
+          echo "CONTAOS_AXE_SOURCE_PATH=$RUNNER_TEMP/contaos-trilha-a-axe/node_modules/axe-core/axe.min.js" >> "$GITHUB_ENV"
+      - name: Somente agora fornecer o par sintetico ao auditor
+        env:
+          CONTAOS_HML_SYNTHETIC_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_EMAIL }}
+          CONTAOS_HML_SYNTHETIC_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_PASSWORD }}
+        run: node scripts/hml/authenticated-visual-audit.mjs --audit
+      - name: Verificar hashes gerados, inclusive em resultado parcial
+        if: always()
+        working-directory: artifacts/trilha-a-private
+        run: sha256sum --check SHA256SUMS
+      - name: Evidencia privada imutavel por 90 dias
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trilha-a-private-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/trilha-a-private/
+          retention-days: 90
+          if-no-files-found: error
