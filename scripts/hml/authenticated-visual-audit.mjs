@@ -4072,7 +4072,8 @@ export function requireSingleRequestOperation(operation) {
  if(operation!=="fixtures")fail("REQUEST_OPERATION");
 }
 
-export async function verifySingleRequestGit(request,sha,git) {
+export async function verifySingleRequestGit(request,sha,git,raw) {
+ if(typeof raw!=="string" || (await git(["show",sha+":"+SINGLE_REQUEST.path]))!==raw)fail("REQUEST_DIRTY");
  if(!hash40(sha) || (await git(["rev-parse","HEAD"])).trim()!==sha)fail("REQUEST_CHECKOUT");
  const parents=(await git(["rev-list","--parents","-n","1",sha])).trim().split(" ");
  if(parents.length!==3 || parents[0]!==sha || parents[1]!==request.approved_parent_sha)fail("REQUEST_PARENT");
@@ -4094,7 +4095,7 @@ export async function verifySingleRequestGit(request,sha,git) {
  return requestShas;
 }
 
-function singleRequestGet({token,publicOnly,fetchImpl=fetch,now=Date.now}) {
+export function singleRequestGet({token,publicOnly,fetchImpl=fetch,now=Date.now}) {
  const deadline=now()+60000;
  return async(path)=>{
    if(path!=="" && !/^\/(?:actions\/|git\/ref\/heads\/main$)/.test(path))fail("REQUEST_API_PATH");
@@ -4108,7 +4109,7 @@ function singleRequestGet({token,publicOnly,fetchImpl=fetch,now=Date.now}) {
    try{return JSON.parse(text);}catch{fail("REQUEST_API_SCHEMA");}
  };
 }
-export async function verifySingleRequest({operation,env=process.env,publicOnly=true,get,git,read=readFile,wait=(ms)=>new Promise(r=>setTimeout(r,ms))}) {
+export async function verifySingleRequest({operation,env=process.env,publicOnly=true,get,git,read=readFile,stat=lstat,wait=(ms)=>new Promise(r=>setTimeout(r,ms))}) {
  singleRequestContext=null;
  if(env.GITHUB_EVENT_NAME==="workflow_dispatch"){
    if(env.GITHUB_REF!=="refs/heads/main")fail("REQUEST_EVENT");
@@ -4119,8 +4120,8 @@ export async function verifySingleRequest({operation,env=process.env,publicOnly=
  git ||= async(args)=>(await execFile("git",args,{cwd:root,env:browserEnvironment(env),maxBuffer:4194304,timeout:10000})).stdout;
  let raw,event;
  try{
-   const path=join(root,SINGLE_REQUEST.path),stat=await lstat(path);
-   if(!stat.isFile()||stat.isSymbolicLink()||stat.size>4096)fail("REQUEST_FILE_MODE");
+   const path=join(root,SINGLE_REQUEST.path),info=await stat(path);
+   if(!info.isFile()||info.isSymbolicLink()||info.size>4096)fail("REQUEST_FILE_MODE");
    raw=await read(path,"utf8");
    const eventRaw=await read(env.GITHUB_EVENT_PATH,"utf8");
    if(Buffer.byteLength(eventRaw)>1048576)fail("REQUEST_EVENT");
@@ -4132,7 +4133,7 @@ export async function verifySingleRequest({operation,env=process.env,publicOnly=
  if(request.operation!==operation)return {selected:false,operation,sha:env.CONTAOS_HARNESS_SHA};
  requireSingleRequestOperation(operation);
  const sha=env.CONTAOS_HARNESS_SHA;
- const requestShas=await verifySingleRequestGit(request,sha,git);
+ const requestShas=await verifySingleRequestGit(request,sha,git,raw);
  get ||= singleRequestGet({token:env.CONTAOS_ACTIONS_READ_TOKEN,publicOnly});
  const repo=await get("");if(repo.full_name!==SINGLE_REQUEST.repository || repo.private!==false)fail("REQUEST_REPOSITORY");
  const expected=SINGLE_REQUEST[operation],opposite=SINGLE_REQUEST[operation==="fixtures"?"audit":"fixtures"];
