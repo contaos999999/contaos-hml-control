@@ -2,8 +2,8 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "f53304fbdab7570fa0f5167a9bcd0c76cded6be6",
-  "source_date": "2026-11-07",
+  "source_commit": "eedf922cdf3fab0673438fb4627c327411819bd2",
+  "source_date": "2026-11-08",
   "context_documents": [
     {
       "path": "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "GATE CORS backend138 integrado; sem Edge edit/deploy.25blobs e catálogo iguais. Prova teclado público em BUILD, sem certificação."
+  "p0_reanchor_note": "Trilha A PLAN autenticado:25/25blobs e catálogo iguais; reancoragem documental sem prova nova de schema/RPC/RLS."
 }

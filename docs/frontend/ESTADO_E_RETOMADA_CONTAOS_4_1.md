@@ -1,3 +1,13 @@
+## Trilha A: PLAN autenticado e documento persistido observado, 08/11/2026
+
+Frontend1a24d36; deploymentHML dpl_9iFUGXPcgXdBSmXa5C5EVcqt1XCX READY/vinculado aoSHA. CI main ZeroDrift42448932672 eLOCK42448932603SUCCESS. Backendnormativo eedf922;25/25blobs ecatálogoidênticos. PLANO_ATIVO existe emdocs/frontend/planos;não usar404daraiz comoausência.
+
+SessãoMASTER legítima renovada. Documento525e54fc-feec-4dc0-b540-1510a3c52485 jápersistido,TXT285bytes/versão1/ativo;semreenviar. Segurança pendente/workerNaFila/tentativas0;nenhuma prova deprocessamento. Fonteformal sintéticaFONTE SINTETICA TRILHA A 20261108 criada pelaUI,rascunho,protocolo2de433a7-a84c-4575-aa2a-7699d2871b55. Semversão/item/snapshot/drawerfabricados. RelatórioTRILHA_A_REANCORAGEM_AUTENTICADA_2026-11-08.md;3PNG+3DOM/6hashes.
+
+PLAN novo P0_TRILHA_A_AUTENTICADA_PLAN_2026-11-08.md comrevisãoindependenteaprovável;CI/mergeaindapendentesnesteregistro. Depois GATE separado fecha proveniência/RPCs/fixtures/versõesantesRED/BUILDexecutorCIread-only208privados/232matriz/72critérios. PR326/328abertos,substituídospelo330,nãointegrar. Não repetir322/323/324ou18provaspúblicas. V1NO-GO/PRODproibido. Histórico abaixo preservado.
+
+---
+
 ## Trilha A: dependencia de upload comprovada e matriz individualizada
 
 PR325 integrado8fead0e155814002d9f5c083ddc54de7a7d8cd67 com CI42448276652/42448276638SUCCESS. V114 ja retestadaPASS; nao repetirfix. Continuidade real V115/V116/V118 carregados eV119 negado conforme backend. Lista sintetica de requisitos criada pelo frontend; nenhumitempublicado. Upload de fonte sintetica falhou; logSupabase04:52:41UTC comprovaOPTIONS405/storage-sign-uploadv6. Dependencia registrada noPRbackend139comentario6717447195, sem alterarTrilhaB. RelatorioTRILHA_A_CONTINUACAO_AUTENTICADA_2026-11-08.md,10capturas/DOMs + TXTfixture +SHA256SUMS. Matriz232casos e72criterios individuais criada semPASSfabricado.
