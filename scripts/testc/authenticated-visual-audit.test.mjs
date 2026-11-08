@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createServer, connect } from "node:net";
 
 const sut = await import("./authenticated-visual-audit.mjs").catch((error) => {
-  if (error.code !== "ERR_MODULE_NOT_FOUND" || !error.message.includes("authenticated-visual-audit.mjs")) throw error;
+  if (
+    error.code !== "ERR_MODULE_NOT_FOUND" ||
+    !error.message.includes("authenticated-visual-audit.mjs")
+  )
+    throw error;
   return {};
 });
 function fn(name) {
@@ -12,59 +17,123 @@ function fn(name) {
 const HML = "https://contaos-41-hml.vercel.app";
 const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
 const config = {
-  origin: HML, frontendSha: "1".repeat(40), harnessSha: "2".repeat(40),
-  deploymentId: "dpl_fixture123", emailPresent: true, passwordPresent: true,
+  origin: HML,
+  frontendSha: "1".repeat(40),
+  harnessSha: "2".repeat(40),
+  deploymentId: "dpl_fixture123",
+  emailPresent: true,
+  passwordPresent: true,
 };
 test("configuração impede login sem segredo ou com destino diferente", () => {
   const validate = fn("validateConfiguration");
   assert.equal(validate(config).ready, true);
-  for (const delta of [{ emailPresent: false }, { passwordPresent: false }, { origin: "https://foreign.invalid" }, { frontendSha: "main" }, { harnessSha: "" }, { deploymentId: "../" }]) {
+  for (const delta of [
+    { emailPresent: false },
+    { passwordPresent: false },
+    { origin: "https://foreign.invalid" },
+    { frontendSha: "main" },
+    { harnessSha: "" },
+    { deploymentId: "../" },
+  ]) {
     assert.equal(validate({ ...config, ...delta }).ready, false);
   }
 });
 test("parser real ignora script inerte sem omitir executáveis", () => {
   const parse = fn("extractScriptEntries");
-  const html = '<!doctype html><!-- <script src="/decoy.js"></script> --><template><script>decoy()</script></template><textarea><script>decoy()</script></textarea><script>bootstrap()</script><script type="module" src="/assets/a.js"></script>';
+  const html =
+    '<!doctype html><!-- <script src="/decoy.js"></script> --><template><script>decoy()</script></template><textarea><script>decoy()</script></textarea><script>bootstrap()</script><script type="module" src="/assets/a.js"></script>';
   const scripts = parse(html);
   assert.equal(scripts.length, 2);
   assert.equal(scripts[0].body, "bootstrap()");
   assert.equal(scripts[1].src, "/assets/a.js");
 });
-for (const html of ['<script src="/assets/a.js" SRC="https://foreign.invalid/a.js"></script>', '<base href="https://foreign.invalid"><script>ok()</script>', '<script nomodule src="/assets/a.js"></script>', '<script type="unexpected">a()</script>']) {
+for (const html of [
+  '<script src="/assets/a.js" SRC="https://foreign.invalid/a.js"></script>',
+  '<base href="https://foreign.invalid"><script>ok()</script>',
+  '<script nomodule src="/assets/a.js"></script>',
+  '<script type="unexpected">a()</script>',
+]) {
   test("HTML ambíguo ou execução não suportada falha fechada: " + html.slice(0, 28), () => {
     const parse = fn("extractScriptEntries");
-    assert.throws(() => parse(html), (e) => e.code === "HTML_POLICY");
+    assert.throws(
+      () => parse(html),
+      (e) => e.code === "HTML_POLICY",
+    );
   });
 }
 test("grafo inclui imports clássicos e templates constantes", () => {
   const imports = fn("scriptImports");
-  assert.deepEqual(imports('import {a} from "./a.js"; export {b} from "./b.js"; const c=()=>import(`./c.js`);'), ["./a.js", "./b.js", "./c.js"]);
+  assert.deepEqual(
+    imports('import {a} from "./a.js"; export {b} from "./b.js"; const c=()=>import(`./c.js`);'),
+    ["./a.js", "./b.js", "./c.js"],
+  );
 });
-for (const code of ['import("./"+name)', 'import(`./${name}.js`)', 'import("https://foreign.invalid/a.js")', 'import("../escape.js")']) {
+for (const code of [
+  'import("./"+name)',
+  "import(`./${name}.js`)",
+  'import("https://foreign.invalid/a.js")',
+  'import("../escape.js")',
+]) {
   test("import não constante ou fora do grafo é negado: " + code, () => {
     const imports = fn("scriptImports");
-    assert.throws(() => imports(code), (e) => e.code === "SCRIPT_POLICY");
+    assert.throws(
+      () => imports(code),
+      (e) => e.code === "SCRIPT_POLICY",
+    );
   });
 }
-const hydration = 'hydrate({matches:R[0]=[R[1]={i:"__root__\\0",u:1794136000000,s:"success",ssr:!0},R[2]={i:"\\0login\\0login",u:1794136000000,s:"success",ssr:!0}]});';
+const hydration =
+  'hydrate({matches:R[0]=[R[1]={i:"__root__\\0",u:1794136000000,s:"success",ssr:!0},R[2]={i:"\\0login\\0login",u:1794136000000,s:"success",ssr:!0}]});';
 test("hidratação admite só os dois timestamps dos matches confiáveis", () => {
   const normalize = fn("normalizeHydration");
   const later = hydration.replaceAll("1794136000000", "1794136000123");
-  assert.equal(normalize(later, hydration), 'hydrate({matches:R[0]=[R[1]={i:"__root__\\0",u:0,s:"success",ssr:!0},R[2]={i:"\\0login\\0login",u:0,s:"success",ssr:!0}]});');
+  assert.equal(
+    normalize(later, hydration),
+    'hydrate({matches:R[0]=[R[1]={i:"__root__\\0",u:0,s:"success",ssr:!0},R[2]={i:"\\0login\\0login",u:0,s:"success",ssr:!0}]});',
+  );
 });
-for (const code of [hydration + ";exfiltrate()", hydration.replace('s:"success"', 's:"foreign"'), hydration.replace("u:1794136000000", "u:Date.now()"), hydration.replace("ssr:!0", "ssr:!0,u:1794136000001"), hydration.replace("hydrate", "executeForeign")]) {
+for (const code of [
+  hydration + ";exfiltrate()",
+  hydration.replace('s:"success"', 's:"foreign"'),
+  hydration.replace("u:1794136000000", "u:Date.now()"),
+  hydration.replace("ssr:!0", "ssr:!0,u:1794136000001"),
+  hydration.replace("hydrate", "executeForeign"),
+]) {
   test("normalização não esconde mudança de código ou campo", () => {
     const normalize = fn("normalizeHydration");
-    assert.throws(() => normalize(code, hydration), (e) => e.code === "HTML_DRIFT");
+    assert.throws(
+      () => normalize(code, hydration),
+      (e) => e.code === "HTML_DRIFT",
+    );
   });
 }
-const html = '<!doctype html><html lang="pt-BR"><body><main>Entrar</main><script>' + hydration + '</script><script type="module" src="/assets/a.js"></script></body></html>';
+const html =
+  '<!doctype html><html lang="pt-BR"><body><main>Entrar</main><script>' +
+  hydration +
+  '</script><script type="module" src="/assets/a.js"></script></body></html>';
 test("paridade cobre o documento inteiro e não apenas scripts", () => {
   const compare = fn("compareHtml");
   assert.equal(compare(html.replaceAll("1794136000000", "1794136000123"), html), true);
-  for (const changed of [html.replace("<main>", '<main onload="exfiltrate()">'), html.replace("<main>", '<iframe srcdoc="bad"></iframe><main>'), html.replace("Entrar", "Tela falsa"), html.replace("/assets/a.js", "javascript:exfiltrate()"), html.replace("<main>", '<object data="https://foreign.invalid"></object><main>')]) {
-    assert.throws(() => compare(changed, html), (e) => ["HTML_DRIFT", "HTML_POLICY"].includes(e.code));
+  for (const changed of [
+    html.replace("<main>", '<main onload="exfiltrate()">'),
+    html.replace("<main>", '<iframe srcdoc="bad"></iframe><main>'),
+    html.replace("Entrar", "Tela falsa"),
+    html.replace("/assets/a.js", "javascript:exfiltrate()"),
+    html.replace("<main>", '<object data="https://foreign.invalid"></object><main>'),
+  ]) {
+    assert.throws(
+      () => compare(changed, html),
+      (e) => ["HTML_DRIFT", "HTML_POLICY"].includes(e.code),
+    );
   }
+});
+test("SSR com NUL conserva bytes originais e normaliza apenas timestamps", () => {
+  const compare = fn("compareHtml"), parse = fn("extractScriptEntries");
+  const trusted = html.replaceAll("\\0", "\0");
+  const actual = trusted.replaceAll("1794136000000", "1794136000123");
+  assert.equal(parse(trusted)[0].body.includes("\0"), true);
+  assert.equal(compare(actual, trusted), true);
+  assert.throws(() => compare(actual.replace("__root__\0", "__root__X"), trusted), (e) => e.code === "HTML_DRIFT");
 });
 const requests = [
   [HML + "/contratos", "GET", true],
@@ -93,28 +162,95 @@ for (const [url, method, expected] of requests) {
 }
 test("worker e websocket são negados mesmo em destino conhecido", () => {
   const allowed = fn("requestAllowed");
-  assert.equal(allowed({ url: HML + "/assets/a.js", method: "GET", resourceType: "worker" }), false);
-  assert.equal(allowed({ url: "wss://gklhhhyosgasnyoxlrui.supabase.co/realtime/v1", method: "GET" }), false);
+  assert.equal(
+    allowed({ url: HML + "/assets/a.js", method: "GET", resourceType: "worker" }),
+    false,
+  );
+  assert.equal(
+    allowed({ url: "wss://gklhhhyosgasnyoxlrui.supabase.co/realtime/v1", method: "GET" }),
+    false,
+  );
 });
 const good = {
-  surface: "V110", width: 1440, theme: "light", observedWidth: 1440, observedTheme: "light",
-  routeExact: true, http: 200, sessionVerified: true, organizationVerified: true,
-  shellVerified: true, h1: 1, overflowX: 0, brandCount: 1, privacySafe: true,
-  errors: 0, blockedMutations: 0, screenshot: "screenshots/V110_1440_light.png",
-  sha256: "a".repeat(64), dom: "dom/V110_1440_light.json", domSha256: "b".repeat(64),
+  surface: "V110",
+  width: 1440,
+  theme: "light",
+  observedWidth: 1440,
+  observedTheme: "light",
+  routeExact: true,
+  http: 200,
+  sessionVerified: true,
+  organizationVerified: true,
+  shellVerified: true,
+  h1: 1,
+  overflowX: 0,
+  brandCount: 1,
+  privacySafe: true,
+  errors: 0,
+  blockedMutations: 0,
+  screenshot: "screenshots/V110_1440_light.png",
+  sha256: "a".repeat(64),
+  dom: "dom/V110_1440_light.json",
+  domSha256: "b".repeat(64),
 };
 test("prova automatizada não certifica visual sem evidência e medidas exatas", () => {
   const validate = fn("validateCase");
   assert.equal(validate(good), true);
-  for (const delta of [{ observedWidth: 1363 }, { observedTheme: "dark" }, { privacySafe: false }, { http: 403 }, { h1: 0 }, { overflowX: 3 }, { brandCount: 2 }, { sha256: "" }, { domSha256: "" }, { screenshot: "../../secret.png" }, { errors: 1 }, { blockedMutations: 1 }, { sessionVerified: false }]) assert.equal(validate({ ...good, ...delta }), false);
+  for (const delta of [
+    { observedWidth: 1363 },
+    { observedTheme: "dark" },
+    { privacySafe: false },
+    { http: 403 },
+    { h1: 0 },
+    { overflowX: 3 },
+    { brandCount: 2 },
+    { sha256: "" },
+    { domSha256: "" },
+    { screenshot: "../../secret.png" },
+    { errors: 1 },
+    { blockedMutations: 1 },
+    { sessionVerified: false },
+  ])
+    assert.equal(validate({ ...good, ...delta }), false);
 });
 test("caso público não entra como nova prova privada", () => {
   assert.equal(fn("validateCase")({ ...good, surface: "SYS01" }), false);
 });
 test("coleção privada incompleta ou duplicada não vira PASS global", () => {
   const summarize = fn("summarizeCases");
-  const surfaces = ["SYS04", "SYS05", "ADM01", "V101", "V102", "V103", "V104", "V105", "V106", "V107", "V108", "V109", "V110", "V111", "V112", "V113", "V114", "V115", "V116", "V117", "V118", "V119", "V120", "V121", "V122", "V123"];
-  const rows = surfaces.flatMap((surface) => [1440, 1280, 768, 390].flatMap((width) => ["light", "dark"].map((theme) => ({ surface, width, theme, status: "BLOQUEADO_FIXTURE" }))));
+  const surfaces = [
+    "SYS04",
+    "SYS05",
+    "ADM01",
+    "V101",
+    "V102",
+    "V103",
+    "V104",
+    "V105",
+    "V106",
+    "V107",
+    "V108",
+    "V109",
+    "V110",
+    "V111",
+    "V112",
+    "V113",
+    "V114",
+    "V115",
+    "V116",
+    "V117",
+    "V118",
+    "V119",
+    "V120",
+    "V121",
+    "V122",
+    "V123",
+  ];
+  const rows = surfaces.flatMap((surface) =>
+    [1440, 1280, 768, 390].flatMap((width) =>
+      ["light", "dark"].map((theme) => ({ surface, width, theme, status: "BLOQUEADO_FIXTURE" })),
+    ),
+  );
   assert.equal(summarize(rows).recorded, 208);
   assert.equal(summarize(rows).globalComplete, false);
   assert.equal(summarize(rows.slice(1)).matrixComplete, false);
@@ -122,6 +258,176 @@ test("coleção privada incompleta ou duplicada não vira PASS global", () => {
 });
 test("sanitização não publica e-mail, documento ou nome fora da fixture", () => {
   const safe = fn("safeArtifactText");
-  assert.equal(safe("Organização ContaOS HML Teste Situação ativa", new Set(["organização", "contaos", "hml", "teste", "situação", "ativa"])), true);
-  for (const value of ["pessoa.real@example.com", "123.456.789-01", "NomeRealNaoAutorizado", "Bearer eyJhbGciOiJIUzI1NiJ9.abc.def"]) assert.equal(safe(value, new Set(["organização", "contaos"])), false);
+  assert.equal(
+    safe(
+      "Organização ContaOS HML Teste Situação ativa",
+      new Set(["organização", "contaos", "hml", "teste", "situação", "ativa"]),
+    ),
+    true,
+  );
+  for (const value of [
+    "pessoa.real@example.com",
+    "123.456.789-01",
+    "NomeRealNaoAutorizado",
+    "Bearer eyJhbGciOiJIUzI1NiJ9.abc.def",
+  ])
+    assert.equal(safe(value, new Set(["organização", "contaos"])), false);
+});
+
+const publicEnv = {
+  VITE_VERCEL_BRANCH_URL: "contaos-41-hml-git-main-contaos9999.vercel.app",
+  VITE_VERCEL_DEPLOYMENT_ID: "dpl_fixture123",
+  VITE_VERCEL_ENV: "production",
+  VITE_VERCEL_GIT_COMMIT_AUTHOR_LOGIN: "contaos9999",
+  VITE_VERCEL_GIT_COMMIT_AUTHOR_NAME: "ContaOS",
+  VITE_VERCEL_GIT_COMMIT_MESSAGE: "Synthetic fixture build",
+  VITE_VERCEL_GIT_COMMIT_REF: "main",
+  VITE_VERCEL_GIT_COMMIT_SHA: "1".repeat(40),
+  VITE_VERCEL_GIT_PREVIOUS_SHA: "",
+  VITE_VERCEL_GIT_PROVIDER: "github",
+  VITE_VERCEL_GIT_PULL_REQUEST_ID: "",
+  VITE_VERCEL_GIT_REPO_ID: "1442722734",
+  VITE_VERCEL_GIT_REPO_OWNER: "contaos999999",
+  VITE_VERCEL_GIT_REPO_SLUG: "contaos-hml-control",
+  VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG: JSON.stringify({
+    analytics: {
+      scriptSrc: "d5945c2254afc21e/script.js",
+      viewEndpoint: "d5945c2254afc21e/view",
+      eventEndpoint: "d5945c2254afc21e/event",
+      sessionEndpoint: "d5945c2254afc21e/session",
+    },
+    speedInsights: { scriptSrc: "ba48403b98e1edac/script.js", endpoint: "ba48403b98e1edac/vitals" },
+  }),
+  VITE_VERCEL_PROJECT_ID: "prj_JtEWXg54EIYcQPwVzFiQyJcVIlFo",
+  VITE_VERCEL_PROJECT_PRODUCTION_URL: "contaos-41-hml.vercel.app",
+  VITE_VERCEL_TARGET_ENV: "production",
+  VITE_VERCEL_URL: "contaos-41-fixture123-contaos9999.vercel.app",
+};
+const clientConfig = {
+  BASE_URL: "/",
+  DEV: false,
+  MODE: "production",
+  PROD: true,
+  SSR: false,
+  TSS_DEV_SERVER: "false",
+  TSS_DEV_SSR_STYLES_BASEPATH: "/",
+  TSS_DEV_SSR_STYLES_ENABLED: "true",
+  TSS_DISABLE_CSRF_MIDDLEWARE_WARNING: "false",
+  TSS_INLINE_CSS_ENABLED: "false",
+  TSS_ROUTER_BASEPATH: "",
+  TSS_SERVER_FN_BASE: "/_serverFn/",
+  VITE_SUPABASE_PROJECT_ID: "gklhhhyosgasnyoxlrui",
+  VITE_SUPABASE_URL: API,
+  VITE_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_sHKZ-UiYCbkEFMqR1QbHMA_iCSLL8Am",
+};
+test("metadados públicos extraídos por AST devem corresponder ao deployment aprovado", () => {
+  const extract = fn("extractPublicBuildEnvironment");
+  const source = "const env=" + JSON.stringify({ ...clientConfig, ...publicEnv }) + ";";
+  const result = extract(new Map([["module.js", source]]), config);
+  assert.equal(Object.keys(result).length, 19);
+  assert.equal(result.VITE_VERCEL_GIT_COMMIT_SHA, "1".repeat(40));
+});
+for (const delta of [
+  { VITE_VERCEL_SECRET: "unexpected" },
+  { VITE_VERCEL_GIT_COMMIT_SHA: "3".repeat(40) },
+  { VITE_VERCEL_GIT_REPO_OWNER: "foreign" },
+  { VITE_SUPABASE_URL: "https://foreign.invalid" },
+  { VITE_SUPABASE_PUBLISHABLE_KEY: "sb_secret_not_permitted" },
+  { VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG: "https://foreign.invalid" },
+]) {
+  test("metadado ambíguo, secreto ou de outro projeto é negado", () => {
+    const extract = fn("extractPublicBuildEnvironment");
+    assert.throws(
+      () =>
+        extract(
+          new Map([
+            [
+              "module.js",
+              "const env=" + JSON.stringify({ ...clientConfig, ...publicEnv, ...delta }) + ";",
+            ],
+          ]),
+          config,
+        ),
+      (e) => e.code === "BUILD_ENV_POLICY",
+    );
+  });
+}
+test("extração não executa propriedades calculadas ou interpoladas", () => {
+  const extract = fn("extractPublicBuildEnvironment");
+  const source =
+    "const env=" +
+    JSON.stringify({ ...clientConfig, ...publicEnv }).replace(
+      '"Synthetic fixture build"',
+      "`${exfiltrate()}`",
+    ) +
+    ";";
+  assert.throws(
+    () => extract(new Map([["module.js", source]]), config),
+    (e) => e.code === "BUILD_ENV_POLICY",
+  );
+});
+test("CSS, fontes e marca devem ter os mesmos bytes antes de entrega ao browser", () => {
+  const compare = fn("assetBytesMatch");
+  for (const bytes of [
+    Buffer.from("body{color:#000}"),
+    Buffer.from([1, 2, 3, 4]),
+    Buffer.from('<svg viewBox="0 0 16 16"></svg>'),
+  ]) {
+    assert.equal(compare(bytes, Buffer.from(bytes)), true);
+    const changed = Buffer.from(bytes);
+    changed[0] ^= 1;
+    assert.equal(compare(bytes, changed), false);
+    assert.equal(compare(bytes, bytes.subarray(1)), false);
+  }
+});
+test("proxy nativo não encaminha CONNECT, HTTP ou bytes para destino não aprovado", async () => {
+  const start = fn("startDestinationProxy");
+  let downstreamConnections = 0,
+    downstreamBytes = 0;
+  const downstream = createServer((socket) => {
+    downstreamConnections++;
+    socket.on("data", (data) => {
+      downstreamBytes += data.length;
+    });
+    socket.end();
+  });
+  await new Promise((resolve, reject) => {
+    downstream.once("error", reject);
+    downstream.listen(0, "127.0.0.1", resolve);
+  });
+  const proxy = await start();
+  try {
+    const port = new URL(proxy.url).port;
+    for (const target of [
+      `127.0.0.1:${downstream.address().port}`,
+      "foreign.invalid:443",
+      "contaos-41-hml.vercel.app.foreign.invalid:443",
+      "user:password@contaos-41-hml.vercel.app:443",
+      "contaos-41-hml.vercel.app:80",
+    ]) {
+      const response = await new Promise((resolve, reject) => {
+        const socket = connect(Number(port), "127.0.0.1");
+        let body = "";
+        socket.setTimeout(3000, () => {
+          socket.destroy();
+          reject(Error("PROXY_TIMEOUT"));
+        });
+        socket.once("error", reject);
+        socket.on("data", (data) => {
+          body += data.toString();
+        });
+        socket.once("end", () => resolve(body));
+        socket.once("connect", () =>
+          socket.write(`CONNECT ${target} HTTP/1.1\r\nHost: ${target}\r\n\r\nSYNTHETIC_CANARY`),
+        );
+      });
+      assert.match(response, /^HTTP\/1\.1 403/);
+    }
+    assert.equal(downstreamConnections, 0);
+    assert.equal(downstreamBytes, 0);
+    assert.equal(proxy.snapshot().blocked, 5);
+  } finally {
+    await proxy.close();
+    await new Promise((resolve) => downstream.close(resolve));
+  }
 });
