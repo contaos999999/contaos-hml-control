@@ -397,3 +397,8 @@ Próxima tarefa: continuar prova autenticada legítima das28rotas/29superfícies
 ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: este checkpoint é documental, preserva limites e histórico; não fabrica certificação.
 
 ---
+
+
+## Emenda Trilha A: refluxo e ampliação textual pública
+
+Após checkpoint321, executar PLAN P0_TRILHA_A_REFLOW_TEXTO_PUBLICO_PLAN_2026-11-08.md e GATE separado antes de alterar os dois scriptsTesteC. Somente18casos públicos separados de refluxo320CSSpx/texto200% por CSS, sem zoom nativo presumido, sem src/workflows/deps/backend/sessão. Matriz232,24públicos base e208privados semsessão preservados. Não certificar WCAG/V1 pelo ensaio parcial.
