@@ -1,0 +1,81 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+    - group "Contexto atual":
+      - paragraph: Contexto atual
+      - link "Resumo da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89
+        - generic: Resumo da competência
+      - link "Documentos da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/documentos
+        - generic: Documentos da competência
+      - link "Análise da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/analise
+        - generic: Análise da competência
+      - link "Parecer da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/parecer
+        - generic: Parecer da competência
+      - link "Apresentações":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/apresentar
+        - generic: Apresentações
+      - link "Contrato da competência":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+        - generic: Contrato da competência
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página":
+  - navigation "Navegação":
+    - link "Voltar à competência":
+      - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89
+      - text: Voltar à competência
+- main:
+  - heading "Parecer interno" [level=1]
+  - paragraph: Competência 11/2026
+  - button "Atualizar":
+    - text: Atualizar
+  - region "Solicitações e decisões":
+    - heading "Solicitações e decisões" [level=2]
+    - paragraph: A solicitação e a decisão são verificadas pelo backend. Esta tela não libera apresentação nem altera o status da competência.
+    - button "Solicitar parecer":
+      - text: Solicitar parecer
+  - region "Versões do parecer":
+    - heading "Versões do parecer" [level=2]
+    - paragraph: Nenhum parecer interno registrado nesta competência.
+    - navigation "Paginação dos pareceres":
+      - generic: 0 a 0 de 0 pareceres
+      - button "Anterior" [disabled]
+      - button "Próxima" [disabled]

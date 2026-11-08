@@ -1,3 +1,11 @@
+## Trilha A: dependencia de upload comprovada e matriz individualizada
+
+PR325 integrado8fead0e155814002d9f5c083ddc54de7a7d8cd67 com CI42448276652/42448276638SUCCESS. V114 ja retestadaPASS; nao repetirfix. Continuidade real V115/V116/V118 carregados eV119 negado conforme backend. Lista sintetica de requisitos criada pelo frontend; nenhumitempublicado. Upload de fonte sintetica falhou; logSupabase04:52:41UTC comprovaOPTIONS405/storage-sign-uploadv6. Dependencia registrada noPRbackend139comentario6717447195, sem alterarTrilhaB. RelatorioTRILHA_A_CONTINUACAO_AUTENTICADA_2026-11-08.md,10capturas/DOMs + TXTfixture +SHA256SUMS. Matriz232casos e72criterios individuais criada semPASSfabricado.
+
+Proxima tarefa: TrilhaB deve integrar/implantar CORS canonicamente e validar explicitamente origemVercelHML, mantendoJWT/RBAC/RLS. Depois repetirupload existente e criarfonte/item/snapshot/drawer pelosfluxosreais. Emparalelo concluir provas visuais emexecutorautorizado4larguras/2temas,WCAG eSYS01texto200%; DevTools estao bloqueados pela politica do navegador. Identidadevisual eV1seguemNO-GO; nenhumapromocaoPROD. Historico abaixo preservado.
+
+---
+
 ## Checkpoint Trilha A: V114 corrigida e retestada, 08/11/2026
 
 Este bloco atualiza a fila histórica. PR330 MERGED `95ddd9cf2a81c009ac1e2fa24165b4ec16cb295d`; head `4de706cbeaefcd5d6015a3ba5685b5e6a703ca4d`, CI42447237649/42447237638 SUCCESS. Deployment `dpl_88NzSV2gnifGoADCmT1UBjXzZd54` READY vinculado a esse merge. Teste autenticado real abriu a mesma competência11/2026 anteriormente falha, preservando bloqueio de apresentação. Relatório `docs/frontend/auditorias/RETESTE_V114_PR330_2026-11-08.md` e PNG/DOM/hashes. Não repetir a correção nem criar outra fixture equivalente.
