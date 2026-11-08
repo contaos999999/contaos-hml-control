@@ -1,0 +1,60 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- main:
+  - heading "Trilha de auditoria" [level=1]
+  - paragraph: Histórico de eventos da organização. Informações sensíveis não são exibidas.
+  - region "Filtros de auditoria":
+    - text: Evento
+    - textbox "Evento"
+    - text: Entidade
+    - textbox "Entidade"
+    - text: ID do usuário
+    - textbox "ID do usuário"
+    - text: Correlation ID
+    - textbox "Correlation ID"
+    - text: Data inicial
+    - textbox "Data inicial"
+    - text: Data final
+    - textbox "Data final"
+  - status: Nenhum evento encontrado para os filtros selecionados.
+  - navigation "Paginação da auditoria":
+    - button "Anterior" [disabled]
+    - generic: Página 1
+    - button "Próxima" [disabled]

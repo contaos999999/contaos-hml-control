@@ -1,0 +1,79 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página":
+  - navigation "Navegação":
+    - link "Contratos":
+      - /url: /contratos
+      - text: Contratos
+- main:
+  - paragraph: Contratos
+  - heading "Novo contrato" [level=1]
+  - paragraph: Cadastre um contrato e vincule-o a um contratante da organização selecionada.
+  - form "Dados do contrato":
+    - heading "Dados do contrato" [level=2]
+    - generic: Número *
+    - textbox "Número"
+    - generic: Contratante *
+    - paragraph: Digite para buscar contratantes desta organização.
+    - combobox "Contratante"
+    - generic: Objeto *
+    - textbox "Objeto"
+    - group "Vigência":
+      - generic: Vigência
+      - generic: Data de início *
+      - textbox "Data de início"
+      - text: Data de término
+      - textbox "Data de término"
+    - text: Valor global (R$)
+    - textbox "Valor global (R$)":
+      - /placeholder: 0,00
+    - text: Valor mensal de referência (R$)
+    - textbox "Valor mensal de referência (R$)":
+      - /placeholder: 0,00
+    - text: Tipo de contrato
+    - textbox "Tipo de contrato"
+    - text: Unidade vinculada
+    - textbox "Unidade vinculada"
+    - text: Fonte de recurso
+    - textbox "Fonte de recurso"
+    - paragraph: "* Campos obrigatórios. Situação inicial e criticidade são definidas pelo cadastro oficial."
+    - link "Cancelar":
+      - /url: /contratos
+    - button "Salvar"

@@ -1,0 +1,195 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página"
+- main:
+  - paragraph: Administração
+  - heading "Usuários e vínculos" [level=1]
+  - button "Convidar ou vincular usuário":
+    - text: Convidar ou vincular usuário
+  - status
+  - region "Filtros":
+    - heading "Filtros" [level=2]
+    - text: Buscar usuários
+    - searchbox "Buscar usuários"
+    - text: Situação do vínculo
+    - combobox "Situação do vínculo":
+      - option "Todos" [selected]
+      - option "Ativos"
+      - option "Inativos"
+  - region "Usuários vinculados":
+    - heading "Usuários vinculados" [level=2]
+    - paragraph: Nenhum usuário vinculado encontrado para os filtros atuais.
+  - region "Matriz de permissões":
+    - heading "Matriz de permissões" [level=2]
+    - paragraph: Administração MASTER. As alterações de perfil valem para todas as organizações. As regras de negócio e os limites de cada vínculo continuam aplicáveis.
+    - status
+    - text: Perfil
+    - combobox "Perfil da matriz":
+      - option "administrador" [selected]
+      - option "auditor"
+      - option "contabilidade"
+      - option "direcao aprovador"
+      - option "financeiro"
+      - option "gestor contrato"
+      - option "juridico conformidade"
+      - option "leitor"
+      - option "prestacao contas"
+      - option "rh dp"
+    - text: Recurso
+    - combobox "Recurso da matriz":
+      - option "Todos os recursos" [selected]
+      - option "analises"
+      - option "apresentacoes"
+      - option "arquivos"
+      - option "auditoria"
+      - option "competencias"
+      - option "contratantes"
+      - option "contratos"
+      - option "dashboard"
+      - option "documentos competencia"
+      - option "documentos contrato"
+      - option "historico"
+      - option "listas"
+      - option "normativos"
+      - option "orcamentos"
+      - option "organizacoes"
+      - option "pareceres"
+      - option "usuarios"
+    - group "Permissões do perfil administrador":
+      - generic: Permissões do perfil administrador
+      - 'checkbox "administrador: analises / consultar" [checked]'
+      - generic: analises / consultar
+      - 'checkbox "administrador: analises / criar" [checked]'
+      - generic: analises / criar
+      - 'checkbox "administrador: analises / editar" [checked]'
+      - generic: analises / editar
+      - 'checkbox "administrador: analises / processar" [checked]'
+      - generic: analises / processar
+      - 'checkbox "administrador: apresentacoes / apresentar" [checked]'
+      - generic: apresentacoes / apresentar
+      - 'checkbox "administrador: apresentacoes / aprovar" [checked]'
+      - generic: apresentacoes / aprovar
+      - 'checkbox "administrador: apresentacoes / consultar" [checked]'
+      - generic: apresentacoes / consultar
+      - 'checkbox "administrador: arquivos / consultar" [checked]'
+      - generic: arquivos / consultar
+      - 'checkbox "administrador: arquivos / criar" [checked]'
+      - generic: arquivos / criar
+      - 'checkbox "administrador: arquivos / editar" [checked]'
+      - generic: arquivos / editar
+      - 'checkbox "administrador: auditoria / consultar" [checked]'
+      - generic: auditoria / consultar
+      - 'checkbox "administrador: competencias / consultar" [checked]'
+      - generic: competencias / consultar
+      - 'checkbox "administrador: competencias / criar" [checked]'
+      - generic: competencias / criar
+      - 'checkbox "administrador: contratantes / consultar" [checked]'
+      - generic: contratantes / consultar
+      - 'checkbox "administrador: contratantes / criar" [checked]'
+      - generic: contratantes / criar
+      - 'checkbox "administrador: contratantes / editar" [checked]'
+      - generic: contratantes / editar
+      - 'checkbox "administrador: contratos / consultar" [checked]'
+      - generic: contratos / consultar
+      - 'checkbox "administrador: contratos / criar" [checked]'
+      - generic: contratos / criar
+      - 'checkbox "administrador: contratos / editar" [checked]'
+      - generic: contratos / editar
+      - 'checkbox "administrador: dashboard / consultar" [checked]'
+      - generic: dashboard / consultar
+      - 'checkbox "administrador: documentos competencia / consultar" [checked]'
+      - generic: documentos competencia / consultar
+      - 'checkbox "administrador: documentos competencia / criar" [checked]'
+      - generic: documentos competencia / criar
+      - 'checkbox "administrador: documentos competencia / editar" [checked]'
+      - generic: documentos competencia / editar
+      - 'checkbox "administrador: documentos contrato / consultar" [checked]'
+      - generic: documentos contrato / consultar
+      - 'checkbox "administrador: documentos contrato / criar" [checked]'
+      - generic: documentos contrato / criar
+      - 'checkbox "administrador: documentos contrato / editar" [checked]'
+      - generic: documentos contrato / editar
+      - 'checkbox "administrador: historico / consultar" [checked]'
+      - generic: historico / consultar
+      - 'checkbox "administrador: historico / criar" [checked]'
+      - generic: historico / criar
+      - 'checkbox "administrador: historico / editar" [checked]'
+      - generic: historico / editar
+      - 'checkbox "administrador: historico / processar" [checked]'
+      - generic: historico / processar
+      - 'checkbox "administrador: listas / consultar" [checked]'
+      - generic: listas / consultar
+      - 'checkbox "administrador: listas / criar" [checked]'
+      - generic: listas / criar
+      - 'checkbox "administrador: listas / editar" [checked]'
+      - generic: listas / editar
+      - 'checkbox "administrador: normativos / aprovar" [checked]'
+      - generic: normativos / aprovar
+      - 'checkbox "administrador: normativos / consultar" [checked]'
+      - generic: normativos / consultar
+      - 'checkbox "administrador: normativos / criar" [checked]'
+      - generic: normativos / criar
+      - 'checkbox "administrador: normativos / editar" [checked]'
+      - generic: normativos / editar
+      - 'checkbox "administrador: orcamentos / aprovar" [checked]'
+      - generic: orcamentos / aprovar
+      - 'checkbox "administrador: orcamentos / consultar" [checked]'
+      - generic: orcamentos / consultar
+      - 'checkbox "administrador: orcamentos / criar" [checked]'
+      - generic: orcamentos / criar
+      - 'checkbox "administrador: orcamentos / editar" [checked]'
+      - generic: orcamentos / editar
+      - 'checkbox "administrador: organizacoes / administrar" [checked]'
+      - generic: organizacoes / administrar
+      - 'checkbox "administrador: organizacoes / consultar" [checked]'
+      - generic: organizacoes / consultar
+      - 'checkbox "administrador: pareceres / aprovar" [checked]'
+      - generic: pareceres / aprovar
+      - 'checkbox "administrador: pareceres / consultar" [checked]'
+      - generic: pareceres / consultar
+      - 'checkbox "administrador: pareceres / criar" [checked]'
+      - generic: pareceres / criar
+      - 'checkbox "administrador: usuarios / administrar" [checked]'
+      - generic: usuarios / administrar
+      - 'checkbox "administrador: usuarios / consultar" [checked]'
+      - generic: usuarios / consultar
+    - paragraph: 0 alteração(ões) pendente(s), incluindo outros filtros.
+    - button "Revisar alterações" [disabled]
+    - button "Descartar alterações" [disabled]

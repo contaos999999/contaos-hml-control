@@ -1,0 +1,79 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página":
+  - navigation "Navegação"
+- main:
+  - paragraph: Gestão contratual
+  - heading "Contratos" [level=1]
+  - paragraph: Contratos autorizados para você na organização selecionada.
+  - region "Contratos":
+    - heading "Contratos" [level=2]
+    - paragraph: 1 contrato(s)
+    - table "Contratos autorizados da organização selecionada":
+      - caption: Contratos autorizados da organização selecionada
+      - rowgroup:
+        - row "Número Objeto Situação Criticidade Sobre Criticidade Vigência Valor global":
+          - columnheader "Número"
+          - columnheader "Objeto"
+          - columnheader "Situação"
+          - columnheader "Criticidade Sobre Criticidade":
+            - text: Criticidade
+            - button "Sobre Criticidade":
+          - columnheader "Vigência"
+          - columnheader "Valor global"
+      - rowgroup:
+        - row "Abrir contrato AUD-A-VERCEL-20261108 Contrato sintético de homologação para auditoria autenticada da Trilha A, sem efeitos financeiros reais. rascunho media 01/01/2026 – — —":
+          - cell "Abrir contrato AUD-A-VERCEL-20261108":
+            - link "Abrir contrato AUD-A-VERCEL-20261108":
+              - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+              - text: AUD-A-VERCEL-20261108
+          - cell "Contrato sintético de homologação para auditoria autenticada da Trilha A, sem efeitos financeiros reais."
+          - cell "rascunho":
+            - generic: rascunho
+          - cell "media":
+            - generic: media
+          - cell "01/01/2026 – —"
+          - cell "—"
+    - navigation "Paginação":
+      - paragraph: Página 1 de 1
+      - button "Anterior" [disabled]:
+        - text: Anterior
+      - button "Próxima" [disabled]:
+        - text: Próxima

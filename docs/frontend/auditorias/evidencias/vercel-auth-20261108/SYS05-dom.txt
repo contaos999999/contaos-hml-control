@@ -1,0 +1,82 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- main:
+  - paragraph: Visão geral
+  - heading "Painel da organização" [level=1]
+  - paragraph: Atualizado em 08/11/2026 00:57:07
+  - status: Ainda não há contratos ou itens visíveis para esta organização.
+  - region "Indicadores de resumo":
+    - heading "Indicadores de resumo" [level=2]
+    - term:
+      - generic: Contratos visíveis
+      - button "Sobre Contratos visíveis":
+    - definition: "0"
+    - term:
+      - generic: Contratos ativos
+      - button "Sobre Contratos ativos":
+    - definition: "0"
+    - term:
+      - generic: Competências em fluxo
+      - button "Sobre Competências em fluxo":
+    - definition: "0"
+    - term:
+      - generic: Competências que exigem atenção
+      - button "Sobre Competências que exigem atenção":
+    - definition: "0"
+    - term:
+      - generic: Itens com prazo vencido
+      - button "Sobre Itens com prazo vencido":
+    - definition: "0"
+    - term:
+      - generic: Atenções abertas
+      - button "Sobre Atenções abertas":
+    - definition: "0"
+  - region "Contratos por situação":
+    - heading "Contratos por situação" [level=2]
+    - paragraph: Nenhum item no momento.
+  - region "Competências por situação":
+    - heading "Competências por situação" [level=2]
+    - paragraph: Nenhum item no momento.
+  - region "Próximos prazos":
+    - heading "Próximos prazos" [level=2]
+    - paragraph: Nenhum item no momento.
+  - region "Atenções prioritárias":
+    - heading "Atenções prioritárias" [level=2]
+    - paragraph: Nenhum item no momento.
