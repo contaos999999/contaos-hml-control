@@ -1333,5 +1333,23 @@
         "state": "REANCORADO_AGUARDA_CI_FINAL"
       }
     }
+  },
+  "trilha_a_24_fixture_plan": {
+    "document": "docs/frontend/planos/P0_TRILHA_A_24_FIXTURES_PLAN_2026-11-08.md",
+    "phase": "PLAN_AGUARDA_CI_REVISAO_GATE_SEPARADO",
+    "surfaces": [
+      "V117",
+      "V119",
+      "V120"
+    ],
+    "cases": 24,
+    "preparer_separate_from_readonly_auditor": true,
+    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "fixture_file": "8cc6ac08-7f5b-469c-ab50-7b33d5a12379",
+    "security_status_observed": "aprovado",
+    "fixture_sha256": "773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103",
+    "new_build_allowlist_not_yet_authorized": true,
+    "backend_prod_auth_rls_changes": false
   }
 }
