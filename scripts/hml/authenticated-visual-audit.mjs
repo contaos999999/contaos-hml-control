@@ -482,7 +482,507 @@ const SYNTHETIC_EXCERPT_PATTERN = new RegExp(
     String.raw`)(?![\p{L}\p{N}_-])`,
   "gu",
 );
-export function classifyArtifactText(text, allowedWords, { snapshot = false } = {}) {
+
+// GATE372: closed technical catalog; never a global word allowlist.
+const privacy78Contexts = new WeakMap();
+const privacy78Pages = new WeakMap();
+const privacy78Proofs = new WeakSet();
+const privacy78RbacProofs = new WeakSet();
+export async function loadPrivacy78Proof() {
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_TECNICA_READONLY.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "5aa39ef35e4a432f4f4f5f29d72ee5773a56e62102948f0e3a31a0529c2d8f18")
+    fail("PRIVACY_PROOF");
+  const freeze = (value) => {
+    if (value && typeof value === "object") {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
+    return value;
+  };
+  const proof = freeze(JSON.parse(bytes));
+  privacy78Proofs.add(proof);
+  return proof;
+}
+
+export async function loadPrivacy78RbacProof() {
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "d70d36f3977f7649dffb2ca0271bb43e181a0244c8e0089e471a86299bcaa897")
+    fail("PRIVACY_PROOF");
+  const freeze = (value) => {
+    if (value && typeof value === "object") {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
+    return value;
+  };
+  const proof = freeze(JSON.parse(bytes));
+  privacy78RbacProofs.add(proof);
+  return proof;
+}
+
+export function privacy78Runtime({ proof, rbacProof = null, install = false }) {
+  const origin = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const rq = rbacProof?.get_contract;
+  const rbacValid =
+    rbacProof?.schema === "contaos.hml.privacy78-rbac-context.v1" &&
+    ["organization", "contract", "competence"].every(
+      (k) => rbacProof.context?.[k] === proof.context[k],
+    ) &&
+    rq?.name === "competence_rbac_gate" &&
+    rq.method === "GET" &&
+    rq.origin === origin &&
+    rq.path === "/rest/v1/competencias" &&
+    rq.shape === "object; maybeSingle" &&
+    JSON.stringify(rq.extract_only) === JSON.stringify(["id_contrato"]) &&
+    Object.keys(rq.query ?? {}).length === 3 &&
+    rq.query.select === "id_contrato" &&
+    rq.query.id === "eq." + proof.context.competence &&
+    rq.query.id_organizacao === "eq." + proof.context.organization &&
+    rq.expected?.id_contrato === proof.context.contract;
+  const rbacEnabled =
+    rbacValid &&
+    (!install ||
+      (location.origin === "https://contaos-41-hml.vercel.app" &&
+        location.pathname === "/competencias/" + proof.context.competence + "/documentos" &&
+        !location.search &&
+        !location.hash));
+  const contracts = rbacEnabled ? [...proof.get_contracts, rq] : proof.get_contracts;
+
+  const match = (raw, method) => {
+    if (method !== "GET" || typeof raw !== "string") return null;
+    let url;
+    try {
+      url = new URL(raw);
+    } catch {
+      return null;
+    }
+    if (url.origin !== origin || url.username || url.password || url.hash) return null;
+    return (
+      contracts.find((c) => {
+        const keys = Object.keys(c.query);
+        return (
+          url.pathname === c.path &&
+          [...url.searchParams].length === keys.length &&
+          keys.every(
+            (k) =>
+              url.searchParams.getAll(k).length === 1 && url.searchParams.get(k) === c.query[k],
+          )
+        );
+      }) ?? null
+    );
+  };
+  const c = proof.context,
+    p = proof.observed.pipeline[0],
+    dates = proof.observed.competencias[0];
+  const expected = {
+    contract_gate: { id: c.contract, id_organizacao: c.organization },
+    upload: {
+      extensoes_permitidas: proof.observed.upload.extensions,
+      tamanho_maximo_bytes: proof.observed.upload.max_bytes,
+    },
+    competencias_page0_no_filters: {
+      id: c.competence,
+      competencia_referencia: dates.reference,
+      periodo_inicio: dates.start,
+      periodo_fim: dates.end,
+    },
+    document_gate: { id: c.document, id_contrato: c.contract },
+    document_versions_page0: {
+      id: c.document_version,
+      id_documento_contrato: c.document,
+      id_arquivo: c.file,
+    },
+    processing_page0: {
+      id: c.processing,
+      id_versao_documento: c.document_version,
+      etapa: p.stage,
+      iniciado_em: p.started,
+      concluido_em: p.completed,
+      criado_em: p.created,
+    },
+  };
+  if (rbacEnabled) expected.competence_rbac_gate = { id_contrato: proof.context.contract };
+  const project = (contract, body) => {
+    const want = expected[contract?.name];
+    if (!want || !body || typeof body !== "object") return null;
+    const array = !contract.shape;
+    if (Array.isArray(body) !== array || (array && body.length > 25)) return null;
+    const rows = array
+      ? body.filter((r) => r && typeof r === "object" && r.id === want.id)
+      : [body];
+    if (rows.length !== 1) return null;
+    if (
+      ["document_versions_page0", "processing_page0"].includes(contract.name) &&
+      body.length !== 1
+    )
+      return null;
+    const row = rows[0];
+    if (
+      !Object.entries(want).every(([k, value]) => JSON.stringify(row[k]) === JSON.stringify(value))
+    )
+      return null;
+    if (contract.name === "document_versions_page0" && typeof row.criado_em !== "string")
+      return null;
+    // No raw row, unselected field or unexpected value crosses the browser boundary.
+    return { name: contract.name, exact: true };
+  };
+  if (!install) return { match, project };
+  const route = location.href,
+    started = performance.now(),
+    seen = new Set();
+  let invalid = false,
+    pending = 0,
+    revision = 0,
+    mutations = null;
+  const invalidate = () => {
+    invalid = true;
+    seen.clear();
+    mutations?.disconnect();
+  };
+  const current = () =>
+    !invalid &&
+    typeof document !== "undefined" &&
+    !!document &&
+    typeof location !== "undefined" &&
+    location?.href === route &&
+    performance.now() - started < 120000;
+  for (const event of ["pagehide", "beforeunload", "popstate", "hashchange"])
+    window.addEventListener(event, invalidate, { once: true });
+  window.addEventListener("contaos:organizacao-alterada", invalidate, { once: true });
+  document.addEventListener("visibilitychange", invalidate, { once: true });
+  if (!window.navigation?.addEventListener) invalidate();
+  else window.navigation.addEventListener("navigate", invalidate, { once: true });
+  const headerCurrent = () => {
+    if (typeof document === "undefined" || !document) return false;
+    const header = document.querySelector('header[aria-label="Organização atual"]');
+    return (
+      !!header?.textContent.includes("ContaOS HML Teste") &&
+      /Situação:\s*ativa/i.test(header.textContent)
+    );
+  };
+  let headerSeen = headerCurrent();
+  // Existing source resets this header on session/auth-generation changes.
+  // No Auth objects, responses, events or headers are intercepted.
+  mutations = new MutationObserver(() => {
+    if (invalid) return;
+    if (typeof document === "undefined" || !document) {
+      invalidate();
+      return;
+    }
+    revision++;
+    const ready = headerCurrent();
+    if (headerSeen && !ready) invalidate();
+    headerSeen ||= ready;
+  });
+  mutations.observe(document, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: true,
+  });
+  const original = window.fetch;
+  window.fetch = function (...args) {
+    // Preserve exact native receiver, arguments, promise, response and rejection.
+    const result = Reflect.apply(original, this, args);
+    let raw,
+      method = "GET";
+    try {
+      const input = args[0],
+        init = args[1];
+      if (typeof input === "string") raw = input;
+      else if (input instanceof URL) raw = input.href;
+      else if (input instanceof Request) {
+        raw = input.url;
+        method = input.method;
+      }
+      if (init != null) {
+        const descriptor = Object.getOwnPropertyDescriptor(init, "method");
+        if (descriptor && !("value" in descriptor)) return result;
+        if (descriptor?.value !== undefined) method = descriptor.value;
+      }
+    } catch {
+      return result;
+    }
+    const contract = match(raw, method);
+    if (!contract) {
+      // Different filtering/pagination/projection cannot inherit a page-zero receipt.
+      // Ignore Auth and all unrelated request/response content completely.
+      try {
+        const url = new URL(raw);
+        if (
+          method === "GET" &&
+          url.origin === origin &&
+          contracts.some((c) => c.path === url.pathname)
+        )
+          invalidate();
+      } catch {}
+      return result;
+    }
+    if (!current()) return result;
+    pending++;
+    const deadline = setTimeout(invalidate, 10000);
+    void result
+      .then(
+        async (response) => {
+          if (
+            !current() ||
+            response.status !== 200 ||
+            response.redirected ||
+            match(response.url, "GET")?.name !== contract.name
+          ) {
+            invalidate();
+            return;
+          }
+          const reader = response.clone().body?.getReader();
+          if (!reader) {
+            invalidate();
+            return;
+          }
+          const chunks = [];
+          let bytes = 0;
+          try {
+            for (;;) {
+              const next = await reader.read();
+              if (next.done) break;
+              bytes += next.value.byteLength;
+              if (bytes > 262144 || !current()) {
+                invalidate();
+                await reader.cancel();
+                return;
+              }
+              chunks.push(next.value);
+            }
+            const buffer = new Uint8Array(bytes);
+            let offset = 0;
+            for (const chunk of chunks) {
+              buffer.set(chunk, offset);
+              offset += chunk.byteLength;
+            }
+            const body = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer));
+            const receipt = project(contract, body);
+            if (!receipt || !current()) invalidate();
+            else seen.add(receipt.name);
+          } finally {
+            reader.releaseLock();
+          }
+        },
+        () => invalidate(),
+      )
+      .catch(() => invalidate())
+      .finally(() => {
+        clearTimeout(deadline);
+        pending--;
+      });
+    return result;
+  };
+  Object.defineProperty(window, "__contaosPrivacy78", {
+    configurable: false,
+    writable: false,
+    value: Object.freeze({
+      invalidate,
+      read: () => {
+        if (headerSeen && !headerCurrent()) invalidate();
+        return current() && pending === 0
+          ? {
+              route,
+              observed: [...seen].sort(),
+              age: Math.floor(performance.now() - started),
+              revision,
+            }
+          : null;
+      },
+    }),
+  });
+}
+
+export function privacy78FieldContext({
+  surface,
+  proof,
+  rbacProof = null,
+  rendered,
+  snapshot,
+  fieldSnapshot,
+  anchored,
+  receipt,
+}) {
+  if (
+    !privacy78Proofs.has(proof) ||
+    !receipt ||
+    typeof receipt !== "object" ||
+    !Array.isArray(receipt.observed)
+  )
+    return null;
+  const rbacTrusted = privacy78RbacProofs.has(rbacProof);
+  if (surface === "V115" && !rbacTrusted) return null;
+  const contracts = rbacTrusted
+    ? [...proof.get_contracts, rbacProof.get_contract]
+    : proof.get_contracts;
+  const path = privateCases().find((i) => i.surface === surface)?.path;
+  const required = {
+    V111: ["contract_gate", "document_gate", "document_versions_page0", "processing_page0"],
+    V112: ["contract_gate", "competencias_page0_no_filters"],
+    V115: ["competence_rbac_gate", "upload"],
+    V122: ["contract_gate", "upload"],
+  }[surface];
+  if (
+    !required ||
+    anchored !== true ||
+    !Object.isFrozen(receipt) ||
+    !Object.isFrozen(receipt.observed) ||
+    receipt.route !== path ||
+    !Number.isFinite(receipt.age) ||
+    receipt.age < 0 ||
+    receipt.age >= 120000 ||
+    new Set(receipt.observed).size !== receipt.observed.length ||
+    receipt.observed.some((name) => !contracts.some((c) => c.name === name)) ||
+    !required.every((name) => receipt.observed.includes(name))
+  )
+    return null;
+  const value = proof.generated_exact_values[surface]?.[0];
+  if (
+    typeof value !== "string" ||
+    ![rendered, snapshot, fieldSnapshot].every(
+      (text) => typeof text === "string" && text.split(value).length === 2,
+    )
+  )
+    return null;
+  if (snapshot.split(fieldSnapshot).length !== 2) return null;
+  const context = Object.freeze({});
+  privacy78Contexts.set(context, {
+    rendered: { original: rendered, remainder: rendered.replace(value, " ") },
+    snapshot: { original: snapshot, remainder: snapshot.replace(value, " ") },
+  });
+  return context;
+}
+
+export function privacy78FieldAnchor({ surface, proof }) {
+  const value = proof.generated_exact_values[surface]?.[0];
+  if (!value) return null;
+  const visible = (e) =>
+    e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+  let nodes = [],
+    selector;
+  if (surface === "V111") {
+    selector = 'section[aria-label="Processamento"] li p';
+    const regions = document.querySelectorAll('section[aria-label="Processamento"]');
+    if (
+      regions.length !== 1 ||
+      regions[0].querySelectorAll("h2").length !== 1 ||
+      regions[0].querySelector("h2").textContent !== "Processamento"
+    )
+      return null;
+    const date = (v) =>
+      new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        dateStyle: "short",
+        timeStyle: "short",
+      })
+        .format(new Date(v))
+        .replace(",", "");
+    const p = proof.observed.pipeline[0],
+      expected =
+        "Registrado em " + date(p.created) + " · " + value + " · Concluído em " + date(p.completed);
+    nodes = [...document.querySelectorAll(selector)].filter(
+      (n) =>
+        visible(n) &&
+        n.textContent === expected &&
+        [...(n.closest("li")?.querySelectorAll("span") ?? [])].filter(
+          (s) => s.textContent === "Etapa: documents",
+        ).length === 1,
+    );
+  } else if (surface === "V112") {
+    selector = "table tbody tr td";
+    for (const table of document.querySelectorAll("table")) {
+      if (
+        !visible(table) ||
+        table.querySelector("caption")?.textContent !== "Competências do contrato"
+      )
+        continue;
+      const columns = [...table.querySelectorAll('thead th[scope="col"]')],
+        period = columns.findIndex((n) => n.textContent === "Período");
+      if (period < 0 || columns.filter((n) => n.textContent === "Período").length !== 1) continue;
+      for (const row of table.querySelectorAll("tbody tr")) {
+        const header = row.querySelector('th[scope="row"]'),
+          target = row.children[period];
+        const links = [...row.querySelectorAll("a")].filter(
+          (a) =>
+            a.getAttribute("href") === "/competencias/" + proof.context.competence &&
+            a.getAttribute("aria-label") === "Abrir competência 11/2026",
+        );
+        if (
+          header?.textContent === "11/2026" &&
+          links.length === 1 &&
+          target?.tagName === "TD" &&
+          visible(target) &&
+          target.textContent === value
+        )
+          nodes.push(target);
+      }
+    }
+  } else if (surface === "V115") {
+    selector = 'section[aria-labelledby="v115-envio"] #v115-arquivo';
+    const inputs = document.querySelectorAll(selector);
+    if (inputs.length !== 1 || !visible(inputs[0]) || inputs[0].type !== "file") return null;
+    const heading = inputs[0].closest("section").querySelectorAll("#v115-envio");
+    if (
+      heading.length !== 1 ||
+      heading[0].tagName !== "H2" ||
+      heading[0].textContent !== "Enviar documento"
+    )
+      return null;
+    const parent = inputs[0].parentElement,
+      labels = parent.querySelectorAll('label[for="v115-arquivo"]');
+    if (labels.length !== 1 || labels[0].textContent.trim() !== "Arquivo") return null;
+    nodes = [...parent.querySelectorAll(":scope > p")].filter(
+      (n) => visible(n) && n.textContent === "Limite: " + value,
+    );
+    selector = 'section[aria-labelledby="v115-envio"] #v115-arquivo ~ p';
+  } else if (surface === "V122") {
+    const inputs = document.querySelectorAll("#historico-arquivos");
+    if (inputs.length !== 1 || !visible(inputs[0]) || inputs[0].type !== "file") return null;
+    const section = inputs[0].closest("section");
+    if (
+      section?.querySelectorAll("h2").length !== 1 ||
+      section.querySelector("h2").textContent !== "1. Selecionar relatórios anteriores"
+    )
+      return null;
+    const labels = section.querySelectorAll('label[for="historico-arquivos"]');
+    if (labels.length !== 1 || labels[0].textContent !== "Arquivos históricos (seleção múltipla)")
+      return null;
+    const expected =
+      "Formatos aceitos: " +
+      value +
+      ". O limite de tamanho e o tipo real são conferidos pelo backend.";
+    nodes = [...section.querySelectorAll(":scope > p")].filter(
+      (n) =>
+        visible(n) &&
+        n.textContent === expected &&
+        !!(n.compareDocumentPosition(inputs[0]) & Node.DOCUMENT_POSITION_FOLLOWING),
+    );
+    selector = "section:has(#historico-arquivos) > p";
+  }
+  if (
+    nodes.length !== 1 ||
+    !selector ||
+    [...nodes[0].attributes].some((a) => a.name !== "class") ||
+    [...nodes[0].childNodes].some((n) => n.nodeType !== Node.TEXT_NODE)
+  )
+    return null;
+  const all = [...document.querySelectorAll(selector)];
+  return { selector, index: all.indexOf(nodes[0]), count: all.length };
+}
+
+export function classifyArtifactText(text, allowedWords, { snapshot = false, fieldContext } = {}) {
   if (typeof text !== "string" || text.length > 1000000 || !(allowedWords instanceof Set))
     return { reason: "INVALID_CONTENT", unknownCount: 0 };
   if (
@@ -491,6 +991,12 @@ export function classifyArtifactText(text, allowedWords, { snapshot = false } = 
     )
   )
     return { reason: "SENSITIVE_PATTERN", unknownCount: 0 };
+  const scoped = privacy78Contexts.get(fieldContext);
+  if (scoped) {
+    const channel = snapshot ? "snapshot" : "rendered";
+    if (text !== scoped[channel].original) return { reason: "INVALID_CONTENT", unknownCount: 0 };
+    text = scoped[channel].remainder;
+  }
   let invalidDate = false;
   let remainder = text
     .normalize("NFC")
@@ -2687,6 +3193,10 @@ export async function literalWords(root) {
   return words;
 }
 async function inspectPrivacy(page, words, diagnostics) {
+  const state = privacy78Pages.get(page),
+    generation = state?.generation;
+  const initialReceipt =
+    state?.verified && (await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null));
   const snapshot = await page.locator("body").ariaSnapshot();
   const rendered = await page.evaluate(() => {
     const visible = (e) =>
@@ -2710,12 +3220,69 @@ async function inspectPrivacy(page, words, diagnostics) {
         }
     return values.join("\n");
   });
+
+  let fieldContext;
+  if (rendered !== null && state?.verified && !state.closed) {
+    const item = privateCases().find((i) => HML_ORIGIN + i.path === page.url());
+    // GATE384 permits GET7 only for the current V115 route and its exact field.
+    if (item && ["V111", "V112", "V115", "V122"].includes(item.surface)) {
+      const receipt = await page.evaluate(() => {
+        const header = document.querySelector('header[aria-label="Organização atual"]');
+        if (
+          !header?.textContent.includes("ContaOS HML Teste") ||
+          !/Situação:\s*ativa/i.test(header.textContent)
+        )
+          return null;
+        return window.__contaosPrivacy78?.read() ?? null;
+      });
+      const anchor =
+        receipt &&
+        initialReceipt &&
+        initialReceipt.revision === receipt.revision &&
+        (await page.evaluate(privacy78FieldAnchor, { surface: item.surface, proof: state.proof }));
+      if (
+        anchor &&
+        receipt.route === page.url() &&
+        generation === state.generation &&
+        !state.closed
+      ) {
+        const locator = page.locator(anchor.selector);
+        if ((await locator.count()) === anchor.count) {
+          const fieldSnapshot = (await locator.nth(anchor.index).ariaSnapshot()).trim();
+          const after = await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null);
+          if (
+            after &&
+            after.route === receipt.route &&
+            after.revision === receipt.revision &&
+            JSON.stringify(after.observed) === JSON.stringify(receipt.observed) &&
+            generation === state.generation &&
+            !state.closed
+          ) {
+            fieldContext = privacy78FieldContext({
+              surface: item.surface,
+              proof: state.proof,
+              rbacProof: state.rbacProof,
+              rendered,
+              snapshot,
+              fieldSnapshot,
+              anchored: true,
+              receipt: Object.freeze({
+                ...after,
+                route: item.path,
+                observed: Object.freeze(after.observed),
+              }),
+            });
+          }
+        }
+      }
+    }
+  }
   const privacy =
     rendered === null
       ? { rendered: { reason: "OPAQUE_MEDIA", unknownCount: 0 } }
       : {
-          rendered: classifyArtifactText(rendered, words),
-          snapshot: classifyArtifactText(snapshot, words, { snapshot: true }),
+          rendered: classifyArtifactText(rendered, words, { fieldContext }),
+          snapshot: classifyArtifactText(snapshot, words, { snapshot: true, fieldContext }),
         };
   if (diagnostics) Object.assign(diagnostics, privacy);
   if (Object.values(privacy).some((result) => result.reason !== "ALLOWED")) return null;
@@ -2887,7 +3454,29 @@ async function runAuthenticatedAudit() {
       viewport: { width: 1440, height: 1000 },
       serviceWorkers: "block",
     });
+    const privacyProof = await loadPrivacy78Proof();
+    const rbacProof = await loadPrivacy78RbacProof();
+    await context.addInitScript(privacy78Runtime, {
+      proof: privacyProof,
+      rbacProof,
+      install: true,
+    });
     page = await context.newPage();
+    const privacyState = {
+      proof: privacyProof,
+      rbacProof,
+      generation: 0,
+      verified: false,
+      closed: false,
+    };
+    privacy78Pages.set(page, privacyState);
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) privacyState.generation++;
+    });
+    page.on("close", () => {
+      privacyState.closed = true;
+      privacyState.verified = false;
+    });
     page.setDefaultTimeout(15000);
     page.on("pageerror", () => errors++);
     const session = await context.newCDPSession(page),
@@ -2937,6 +3526,7 @@ async function runAuthenticatedAudit() {
     await page.waitForURL(HML_ORIGIN + "/");
     await waitOrganization(page);
     flags.organizationConfirmed = true;
+    privacyState.verified = true;
     phase = "CAPTURE_PRIVATE";
     let surface = null;
     for (const item of privateCases()) {
@@ -3155,6 +3745,8 @@ async function runAuthenticatedAudit() {
           : "RUNTIME_ABORT";
     if (records.at(-1)?.status === "PENDENTE") records.at(-1).status = "BLOQUEADO_" + aborted;
   } finally {
+    const privacyState = page && privacy78Pages.get(page);
+    if (privacyState) privacyState.verified = false;
     if (loggedIn && page && !page.isClosed())
       try {
         await settleVerifiedPage(page, fence);
