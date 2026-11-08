@@ -1656,3 +1656,10 @@ O novo workflow permite auditoria manual somente na main, com environment hml, c
 Verificação local do protocolo: 68 PASS, 0 FAIL, 7 casos Chromium não executáveis neste ambiente local. Esses sete exigem CI real, sem atribuir o skip a aprovação. Proveniência pública local WIP: 110 módulos e HTML SSR compatíveis com frontend 4f4379ae e deployment dpl_2FeaWnGpnvkM7gFPuHbajb3mPgWx, checkout frontend limpo. Não atribuir a execução WIP ao SHA de executor informado manualmente; a CLI agora exige HEAD real e três arquivos idênticos aos commits. Prova formal na CI ainda exigida. Fonte normativa 87c18599fc72d658dabcf1b07a534b42b08691fd: 25/25 blobs e catálogo iguais, snapshot e ack atualizados juntos. Nenhuma alteração backend.
 
 Última etapa concluída: barreiras nativas sem credenciais comprovadas. Próxima: CI do novo comando e revisão completa do BUILD #335; integrar somente sem Critical/Important; reancorar o deployment HML e disparar auditoria privada na main. Nenhum login executado pelo harness, 208 privados não aprovados, V1 NO-GO.
+
+
+### Revisão independente do runner e correções focais
+
+HEAD 7eb9e88cf18c4fc727477b31ed577395f47b2b64: CI própria 42482712492 SUCCESS, novo comando nativo 7/7 no mesmo SHA; Zero-Drift 42482712515 SUCCESS; LOCK-TYPES 42482712483 SUCCESS. A revisão completa independente identificou dois Important: estado indisponível V114 em role=status poderia receber PASS e a marca mobile era contada com menu fechado. Nenhum login ocorreu.
+
+Ambos receberam RED focal antes da correção e GREEN 2/2; três consumidores afetados também passaram, total focal 5/5. Estado positivo agora é verificado por superfície, com rejeição de negativas/indisponibilidade em status e conteúdo. V114 exige título operacional com referência; V111 exige título sintético e regiões reais. No mobile, a contagem primária permanece zero quando o menu está fechado e a prova exige marca única no menu aberto, captura suplementar e hash. Desktop e SYS04 mantêm suas exigências. Produto e provas públicas permanecem intactos. Revisão focal e CI do novo commit continuam obrigatórias antes de integrar ou autenticar.

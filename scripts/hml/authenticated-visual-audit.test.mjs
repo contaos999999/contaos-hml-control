@@ -1232,3 +1232,66 @@ test("frontend não transmite query de fallback de formulário sem hidratação"
     false,
   );
 });
+
+test("estado esperado V114 rejeita indisponibilidade ou negativa em role=status", () => {
+  const valid = fn("surfaceStateValid");
+  assert.equal(
+    valid("V114", {
+      headingText: "Competência",
+      statusTexts: ["Competência não encontrada ou indisponível."],
+      mainText: "Competência não encontrada ou indisponível.",
+    }),
+    false,
+  );
+  assert.equal(
+    valid("V114", {
+      headingText: "Competência",
+      statusTexts: ["Você não tem acesso a esta competência."],
+      mainText: "Você não tem acesso a esta competência.",
+    }),
+    false,
+  );
+  assert.equal(
+    valid("V114", {
+      headingText: "Competência novembro/2026",
+      statusTexts: [],
+      mainText: "Competência novembro/2026 Rascunho",
+    }),
+    true,
+  );
+  assert.equal(
+    valid("V111", {
+      headingText: "FONTE_SINTETICA_AUDITORIA_HML",
+      statusTexts: [],
+      mainText: "",
+      regionNames: ["Resumo do documento", "Processamento"],
+    }),
+    true,
+  );
+  assert.equal(
+    valid("V111", {
+      headingText: "FONTE_SINTETICA_AUDITORIA_HML",
+      statusTexts: ["Documento não encontrado ou indisponível."],
+      mainText: "",
+      regionNames: [],
+    }),
+    false,
+  );
+});
+test("marca mobile exige prova do menu aberto, sem fabricar marca no estado fechado", () => {
+  const valid = fn("brandStateValid"),
+    base = { surface: "V114", width: 390, theme: "dark", brandCount: 0 };
+  const supplement = {
+    mode: "MOBILE",
+    brandCount: 1,
+    screenshot: "screenshots/V114_390_dark_menu.png",
+    sha256: "a".repeat(64),
+  };
+  assert.equal(valid(base), false);
+  assert.equal(valid({ ...base, sidebarSupplement: supplement }), true);
+  for (const brandCount of [0, 2])
+    assert.equal(valid({ ...base, sidebarSupplement: { ...supplement, brandCount } }), false);
+  assert.equal(valid({ ...base, width: 1440, brandCount: 1 }), true);
+  assert.equal(valid({ ...base, width: 1440, brandCount: 0 }), false);
+  assert.equal(valid({ ...base, surface: "SYS04", brandCount: 1 }), true);
+});

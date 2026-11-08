@@ -387,7 +387,7 @@ export function validateCase(row = {}) {
       row.shellVerified === true &&
       row.h1 === 1 &&
       row.overflowX === 0 &&
-      row.brandCount === 1 &&
+      brandStateValid(row) &&
       row.privacySafe === true &&
       row.errors === 0 &&
       row.blockedMutations === 0 &&
@@ -1830,6 +1830,26 @@ async function runAuthenticatedAudit() {
           const headings = [...document.querySelectorAll("h1")].filter(visible),
             brands = [...document.querySelectorAll('img[src^="/brand/"]')].filter(visible);
           return {
+            headingText: headings.map((e) => e.textContent).join(" "),
+            statusTexts: [...document.querySelectorAll('[role="status"],[role="alert"]')]
+              .filter(visible)
+              .map((e) => e.textContent),
+            mainText: document.querySelector("main")?.innerText || document.body.innerText,
+            regionNames: [
+              ...document.querySelectorAll(
+                '[role="region"],section[aria-label],section[aria-labelledby]',
+              ),
+            ]
+              .filter(visible)
+              .map(
+                (e) =>
+                  e.getAttribute("aria-label") ||
+                  (e.getAttribute("aria-labelledby") || "")
+                    .split(/\s+/)
+                    .map((id) => document.getElementById(id)?.textContent || "")
+                    .join(" ")
+                    .trim(),
+              ),
             observedWidth: innerWidth,
             observedTheme: document.documentElement.classList.contains("dark") ? "dark" : "light",
             h1: headings.length,
@@ -1850,6 +1870,9 @@ async function runAuthenticatedAudit() {
             forms: document.querySelectorAll("form").length,
           };
         });
+        metrics.badState ||= !surfaceStateValid(item.surface, metrics);
+        for (const field of ["headingText", "statusTexts", "mainText", "regionNames"])
+          delete metrics[field];
         if (metrics.height > 30000) {
           record.status = "BLOQUEADO_PAGE_LIMIT";
           continue;
@@ -2026,13 +2049,15 @@ async function sidebarProbe(page, item, key, words, save) {
   await dialog.waitFor();
   if ((await inspectPrivacy(page, words)) === null) fail("PII_SUPPLEMENT");
   const image = await save(key, "_menu");
+  const brandCount = await page.locator('img[src^="/brand/"]:visible').count();
   const admin = await dialog.getByRole("link", { name: "Usuários", exact: true }).count(),
     audit = await dialog.getByRole("link", { name: "Auditoria", exact: true }).count();
   await page.keyboard.press("Escape");
   const focused = await open.evaluate((e) => e === document.activeElement);
   return {
-    passed: admin === 1 && audit === 1 && focused,
+    passed: admin === 1 && audit === 1 && focused && brandCount === 1,
     mode: "MOBILE",
+    brandCount,
     screenshot: image.file,
     sha256: image.sha,
   };
@@ -2046,4 +2071,67 @@ async function navigationProbe(page, item) {
   await page.waitForURL(HML_ORIGIN + path);
   await waitOrganization(page);
   return true;
+}
+
+export function surfaceStateValid(surface, observation) {
+  const titles = {
+    SYS04: /^Selecionar organização$/,
+    SYS05: /^Painel da organização$/,
+    ADM01: /^Usuários e vínculos$/,
+    V101: /^Contratantes$/,
+    V102: /^Novo contratante$/,
+    V103: /^Editar contratante$/,
+    V104: /^Contratos$/,
+    V105: /^Novo contrato$/,
+    V106: /^Contrato\s+\S/,
+    V107: /^Base normativa$/,
+    V108: /^Orçamento$/,
+    V109: /^Listas e regras$/,
+    V110: /^Central de documentos$/,
+    V111: /^FONTE_SINTETICA_AUDITORIA_HML$/,
+    V112: /^Competências$/,
+    V113: /^Nova competência$/,
+    V114: /^Competência\s+\S/,
+    V115: /^Documentos da competência$/,
+    V116: /^Análise da competência$/,
+    V118: /^Parecer interno$/,
+    V121: /^Histórico do contrato$/,
+    V122: /^Importação de histórico$/,
+    V123: /^Trilha de auditoria$/,
+  };
+  if (
+    !titles[surface]?.test(
+      String(observation?.headingText ?? "")
+        .trim()
+        .replace(/\s+/g, " "),
+    )
+  )
+    return false;
+  const denied =
+    /não encontrad[oa] ou indisponível|você não tem (?:acesso|permissão|autorização)|acesso negado|não foi possível|sessão expirada/i;
+  if (
+    denied.test(observation.mainText ?? "") ||
+    (observation.statusTexts ?? []).some((text) => denied.test(text))
+  )
+    return false;
+  if (
+    surface === "V111" &&
+    !["Resumo do documento", "Processamento"].every((name) =>
+      observation.regionNames?.includes(name),
+    )
+  )
+    return false;
+  return true;
+}
+export function brandStateValid(row) {
+  if (row.surface === "SYS04" || row.width >= 768) return row.brandCount === 1;
+  const supplement = row.sidebarSupplement;
+  return (
+    row.width === 390 &&
+    [0, 1].includes(row.brandCount) &&
+    supplement?.mode === "MOBILE" &&
+    supplement.brandCount === 1 &&
+    supplement.screenshot === `screenshots/${caseKey(row)}_menu.png` &&
+    hash64(supplement.sha256)
+  );
 }
