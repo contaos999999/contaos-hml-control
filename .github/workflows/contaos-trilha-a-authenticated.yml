@@ -11,12 +11,12 @@ on:
   workflow_dispatch:
     inputs:
       frontend_sha:
-        description: SHA frontend de 40 hex conferido no deployment HML READY
-        required: true
+        description: Opcional, junto com deployment_id; vazio descobre HML atual antes do checkout
+        required: false
         type: string
       deployment_id:
-        description: ID dpl_ conferido no projeto contaos-41-hml
-        required: true
+        description: Opcional, junto com frontend_sha; pin obsoleto bloqueia sem substituicao
+        required: false
         type: string
 permissions:
   contents: read
@@ -68,8 +68,6 @@ jobs:
       cancel-in-progress: false
     env:
       CONTAOS_HARNESS_SHA: ${{ github.sha }}
-      CONTAOS_FRONTEND_SHA: ${{ inputs.frontend_sha }}
-      CONTAOS_DEPLOYMENT_ID: ${{ inputs.deployment_id }}
       CONTAOS_FRONTEND_SOURCE: ${{ github.workspace }}/frontend-source
     steps:
       - name: Checkout imutavel do executor main
@@ -83,6 +81,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.4"
+      - name: Dependencias congeladas do executor
+        run: bun install --frozen-lockfile
+      - name: Reancorar deployment HML sem credenciais, antes do checkout da fonte
+        id: deployment
+        env:
+          CONTAOS_REQUESTED_FRONTEND_SHA: ${{ inputs.frontend_sha }}
+          CONTAOS_REQUESTED_DEPLOYMENT_ID: ${{ inputs.deployment_id }}
+        run: node scripts/hml/authenticated-visual-audit.mjs --resolve-deployment
       - name: Validar SHA ancestral antes de baixar ou executar a fonte
         run: |
           node --input-type=module - <<'JS'
@@ -95,12 +101,10 @@ jobs:
       - name: Fonte aprovada em checkout separado, sem credenciais persistidas
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.frontend_sha }}
+          ref: ${{ steps.deployment.outputs.frontend_sha }}
           path: frontend-source
           fetch-depth: 0
           persist-credentials: false
-      - name: Dependencias congeladas do executor
-        run: bun install --frozen-lockfile
       - name: Dependencias congeladas da fonte aprovada
         working-directory: frontend-source
         run: bun install --frozen-lockfile
