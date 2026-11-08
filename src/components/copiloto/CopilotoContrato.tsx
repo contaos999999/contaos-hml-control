@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { EVENTO_ORGANIZACAO_ALTERADA } from "@/lib/organizacao/preferenciaOrganizacao";
 
@@ -45,7 +45,7 @@ export function CopilotoContrato({ contratoId }: { contratoId: string }) {
     };
   }, [contratoId]);
 
-  async function enviar(evento: React.FormEvent<HTMLFormElement>) {
+  async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     const texto = pergunta.trim();
     if (!texto || enviando || texto.length > 12000) return;
