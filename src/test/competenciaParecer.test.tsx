@@ -80,7 +80,7 @@ const visao = (abrir = true) => ({
     situacao: "em_analise", percentual_conformidade: 95, versao_pacote_atual: 1,
     versao_registro: 2, atualizado_em: "2026-03-10T12:00:00Z",
   },
-  portao: { liberado: false, total: 10, avaliados: 8, pendentes: 2,
+  portao: { liberado: false, total: 10, conformes_ou_na_validos: 8, pendentes: 2,
     nao_conformes: 0, inconclusivos: 0, em_analise: 0,
     nao_conformidades_bloqueantes: 0, percentual: 80 },
   blocking_summary: { pendentes: 2, nao_conformes: 0, inconclusivos: 0, em_analise: 0,
