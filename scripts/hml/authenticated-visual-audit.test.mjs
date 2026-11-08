@@ -2363,6 +2363,10 @@ test(
       Object.assign(traffic, { connections: 0, bytes: 0, requests: 0 });
       context = await browser.newContext();
       const page = await context.newPage();
+      // Local inert fixture loaded before the fence: this test isolates request
+      // cancellation; the seven original tests retain the production CSP proof.
+      await page.goto(origin + "/", { waitUntil: "networkidle" });
+      assert.equal(await page.title(), "native cancellation");
       const session = await context.newCDPSession(page),
         { targetInfo } = await session.send("Target.getTargetInfo");
       await session.detach();
@@ -2376,7 +2380,6 @@ test(
           status === 200 && (resourceType !== "Document" || body.equals(Buffer.from(html))),
         closeContext: () => context.close(),
       });
-      await page.goto(origin + "/", { waitUntil: "networkidle" });
       await page.evaluate((url) => {
         window.nativeCancelController = new AbortController();
         void fetch(url, { signal: window.nativeCancelController.signal }).catch(() => {});
