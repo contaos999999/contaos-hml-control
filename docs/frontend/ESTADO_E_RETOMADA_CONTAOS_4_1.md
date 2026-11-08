@@ -1663,3 +1663,12 @@ Verificação local do protocolo: 68 PASS, 0 FAIL, 7 casos Chromium não execut�
 HEAD 7eb9e88cf18c4fc727477b31ed577395f47b2b64: CI própria 42482712492 SUCCESS, novo comando nativo 7/7 no mesmo SHA; Zero-Drift 42482712515 SUCCESS; LOCK-TYPES 42482712483 SUCCESS. A revisão completa independente identificou dois Important: estado indisponível V114 em role=status poderia receber PASS e a marca mobile era contada com menu fechado. Nenhum login ocorreu.
 
 Ambos receberam RED focal antes da correção e GREEN 2/2; três consumidores afetados também passaram, total focal 5/5. Estado positivo agora é verificado por superfície, com rejeição de negativas/indisponibilidade em status e conteúdo. V114 exige título operacional com referência; V111 exige título sintético e regiões reais. No mobile, a contagem primária permanece zero quando o menu está fechado e a prova exige marca única no menu aberto, captura suplementar e hash. Desktop e SYS04 mantêm suas exigências. Produto e provas públicas permanecem intactos. Revisão focal e CI do novo commit continuam obrigatórias antes de integrar ou autenticar.
+
+
+## Teste C privado 42483778550: bloqueio pré-login preservado
+
+BUILD #335 integrado em 49cd3025445d28e6ac23f32f6d58b96ae10152a9, CI da main 42483362294 e LOCK 42483362282 SUCCESS. HML READY confirmado no provedor: dpl_9yRxeM8pNr4TvnGJfwbmdxrgAf2j, fonte Git 49cd3025. Revisão independente aprovada após duas correções focais. Fonte, produto, tipos e backend preservados.
+
+Disparo manual confirmado: run 42483778550, job 128741124206. Proteção nativa 7/7 PASS no SHA da main; preparação falhou PREPARE_DIRTY antes da etapa com secrets. Nenhuma credencial fornecida e nenhum caso privado capturado/aprovado. Os erros posteriores de SHA256SUMS/artefato foram consequência da ausência do diretório após falha pré-login, não novas falhas de produto.
+
+Causa reproduzida no checkout isolado: único ignorado não admitido `.wrangler/deploy/config.json`, gerado pelo build com configPath ../../.output/server/wrangler.json. Não mudar backend nem dispensar árvore limpa. PLAN corretivo específico prevê reconhecimento exato dessa saída, limpeza antes do build, negativos para adulteração e preservação de atestado/manifesto de bloqueio com hashes. Aguardar CI e integração do PLAN antes do BUILD corretivo. As 18 provas públicas permanecem válidas e não repetidas. V1 NO-GO; privados 0/208 comprovados.
