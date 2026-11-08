@@ -411,6 +411,28 @@ test("outputs de workflow contêm apenas os dois identificadores validados", () 
       (e) => e.code === "DEPLOYMENT_INPUT",
     );
 });
+test("classificador reconhece falhas de navegação definidas no Playwright congelado", () => {
+  const classify = fn("classifyRuntimeError");
+  for (const [message, reason] of [
+    ["page.waitForURL: Navigation failed because page crashed!", "PAGE_CRASHED"],
+    ["page.waitForURL: Navigating frame was detached!", "FRAME_DETACHED"],
+    [
+      'page.waitForURL: Navigation to "https://private.invalid/SYNTHETIC_PRIVATE_CANARY" is interrupted by another navigation to "https://private.invalid/"',
+      "NAVIGATION_INTERRUPTED",
+    ],
+    [
+      "page.waitForURL: net::ERR_FAILED at https://private.invalid/SYNTHETIC_PRIVATE_CANARY",
+      "NETWORK_FAILED",
+    ],
+    ["page.waitForURL: net::ERR_EMPTY_RESPONSE", "NETWORK_EMPTY_RESPONSE"],
+    ["page.waitForURL: net::ERR_BLOCKED_BY_CLIENT", "NETWORK_BLOCKED_CLIENT"],
+    ["page.waitForURL: net::ERR_HTTP_RESPONSE_CODE_FAILURE", "NETWORK_HTTP_RESPONSE"],
+  ]) {
+    const value = classify({ name: "Error", message });
+    assert.equal(value.reason, reason);
+    assert.equal(JSON.stringify(value).includes("SYNTHETIC_PRIVATE_CANARY"), false);
+  }
+});
 test("classificador local distingue erro de navegação sem persistir mensagem privada", () => {
   const classify = fn("classifyRuntimeError");
   for (const [message, reason] of [
@@ -569,7 +591,9 @@ test("ambiente do navegador não herda credenciais nem opções de execução", 
   assert.deepEqual(clean, { PATH: "/bin", HOME: "/tmp/fixture", LANG: "pt_BR.UTF-8" });
   assert.equal(JSON.stringify(clean).includes("SYNTHETIC_CANARY"), false);
 });
-async function cdpFixture() {
+async function cdpFixture({ holdFailure = false } = {}) {
+  const failureSent = Promise.withResolvers();
+  let acknowledgeFailure;
   const received = [],
     peers = new Set();
   const identity = { targetId: "own-target", browserContextId: "own-context" };
@@ -598,6 +622,11 @@ async function cdpFixture() {
             error: { code: -32601, message: "SYNTHETIC_CANARY_NOT_FOR_LOGS" },
           }),
         );
+      if (holdFailure && command.method === "Fetch.failRequest") {
+        acknowledgeFailure = () => peer.send(JSON.stringify({ id: command.id, result: {} }));
+        failureSent.resolve();
+        return;
+      }
       const result =
         command.method === "Target.getTargetInfo"
           ? { targetInfo: identity }
@@ -634,6 +663,8 @@ async function cdpFixture() {
     port,
     identity,
     received,
+    failureSent: failureSent.promise,
+    acknowledgeFailure: () => acknowledgeFailure(),
     emit(value) {
       for (const peer of peers) peer.send(JSON.stringify(value));
     },
@@ -644,6 +675,38 @@ async function cdpFixture() {
     },
   };
 }
+test("diagnóstico espera recusa CDP pendente antes de afirmar que a fence não falhou", async () => {
+  const fixture = await cdpFixture({ holdFailure: true });
+  let fence;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {},
+      verifyResponse: async () => false,
+    });
+    fixture.emit({
+      method: "Fetch.requestPaused",
+      sessionId: "initial-session",
+      params: {
+        requestId: "changed-script",
+        request: { url: HML + "/assets/test.js", method: "GET" },
+        resourceType: "Script",
+        responseStatusCode: 200,
+      },
+    });
+    await fixture.failureSent;
+    assert.equal(fence.snapshot().failed, false); // Browser already received failRequest; CDP ack is pending.
+    const pending = fn("settledFenceSnapshot")(fence);
+    fixture.acknowledgeFailure();
+    const snapshot = await pending;
+    assert.equal(snapshot.failed, true);
+    assert.equal(snapshot.failureCode, "FENCE_SOURCE");
+  } finally {
+    fence?.close();
+    await fixture.close();
+  }
+});
 test("transporte CDP conserva sessionId e não propaga erro remoto bruto", async () => {
   const connectCDP = fn("connectNativeCDP"),
     fixture = await cdpFixture();
