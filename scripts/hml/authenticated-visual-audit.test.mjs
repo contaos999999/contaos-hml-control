@@ -4119,6 +4119,25 @@ test(
           "SENSITIVE_PATTERN",
         );
       }
+
+      const v109Proof=await fn("loadPrivacy109Proof")();
+      await page.setContent('<style>.flex{display:flex}.flex-wrap{flex-wrap:wrap}.inline-flex{display:inline-flex}.gap-2{gap:.5rem}</style>'+privacy109Fixture(v109Proof));
+      const v109Anchor=await page.evaluate(fn("privacy109FieldAnchor"),{proof:v109Proof});
+      assert.ok(v109Anchor);
+      const v109Rendered=await page.locator("body").innerText();
+      const v109Snapshot=await page.locator("body").ariaSnapshot();
+      const v109FieldSnapshots=await fn("privacy109FieldSnapshots")(page,v109Anchor);
+      assert.equal(v109FieldSnapshots.length,2);
+      const v109Input={proof:privacyProof,v109Proof,rendered:v109Rendered,snapshot:v109Snapshot,fieldSnapshots:v109FieldSnapshots,anchored:true,
+        receipt:Object.freeze({route:v109Proof.context.route,age:1,observed:Object.freeze(["contract_gate","v109_lists_page0"])})};
+      const v109Context=fn("privacy109FieldContext")(v109Input);
+      assert.ok(v109Context,"V109 real full ARIA mapping");
+      assert.equal(fn("classifyArtifactText")(v109Rendered,words,{fieldContext:v109Context}).reason,"ALLOWED");
+      assert.equal(fn("classifyArtifactText")(v109Snapshot,words,{snapshot:true,fieldContext:v109Context}).reason,"ALLOWED");
+      for(const value of [v109Proof.approved_values.description,v109Proof.approved_values.formatted_updated]){
+        assert.equal(fn("privacy109FieldContext")({...v109Input,rendered:v109Rendered+value}),null);
+        assert.equal(fn("privacy109FieldContext")({...v109Input,snapshot:v109Snapshot+value}),null);
+      }
     } finally {
       release?.();
       await browser?.close();
@@ -4840,4 +4859,23 @@ test("privacy109 fontes e formatter permanecem byte exact",async()=>{
  for(const source of privacy109Raw.sources){const bytes=await readFile(new URL("../../"+source.path,import.meta.url));assert.equal(createHash("sha1").update("blob "+bytes.length+"\0").update(bytes).digest("hex"),source.blob);}
  const f=privacy109Raw.formatter,actual=new Intl.DateTimeFormat(f.locale,{timeZone:f.timeZone,...f.options}).format(new Date(privacy109Raw.approved_values.updated)).replace(",","");
  assert.equal("Atualizada em "+actual,privacy109Raw.approved_values.formatted_updated);
+});
+
+test("privacy109 observer so V109 e falha contexto atual sem heranca",async()=>{
+ for(const surface of ["V109","V122"]){
+  const {dom,w,run}=privacy78Browser();
+  try{
+   dom.reconfigure({url:HML+fn("privateCases")().find(i=>i.surface===surface).path});
+   const v=privacy109Raw.approved_values,c=privacy109Raw.get_contract,url=API+c.path+"?"+new URLSearchParams(c.query);
+   const body=[{id:privacy109Raw.context.list,nome:v.name,descricao:v.description,atualizado_em:v.updated,enviado_por:"CANARIO_PRIVADO"}];
+   const response=new Response(JSON.stringify(body));Object.defineProperty(response,"url",{value:url});
+   w.fetch=()=>Promise.resolve(response);run("privacy78Runtime",{proof:privacy78Proof,v109Proof:privacy109Raw,install:true});
+   await w.fetch(url);await new Promise(r=>setTimeout(r,50));
+   if(surface==="V109"){
+    assert.deepEqual([...w.__contaosPrivacy78.read().observed],["v109_lists_page0"]);
+    assert.equal(JSON.stringify(w.__contaosPrivacy78.read()).includes("CANARIO"),false);
+    w.navigation.dispatchEvent(new w.Event("navigate"));assert.equal(w.__contaosPrivacy78.read(),null);
+   }else assert.ok(!w.__contaosPrivacy78.read()?.observed.includes("v109_lists_page0"));
+  }finally{w.__contaosPrivacy78?.invalidate();dom.window.close();}
+ }
 });
