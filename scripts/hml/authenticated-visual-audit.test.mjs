@@ -4307,3 +4307,16 @@ test("privacy78 quatro hashes fonte correspondem ao recibo",async()=>{
   for(const path of ["src/components/contratos/DocumentoDetalhe.tsx","src/components/contratos/CompetenciasContrato.tsx","src/components/competencias/CompetenciaDocumentos.tsx","src/components/contratos/ImportarHistorico.tsx"])
     assert.equal(createHash("sha256").update(await readFile(new URL("../../"+path,import.meta.url))).digest("hex"),privacy78Proof.source_sha256[path].sha256);
 });
+
+test("privacy78 queued mutation destruction is failclosed without background errors",async()=>{
+  const {JSDOM,VirtualConsole}=require("jsdom"),errors=[];
+  const virtualConsole=new VirtualConsole();virtualConsole.on("jsdomError",()=>errors.push("BACKGROUND_ERROR"));
+  const dom=new JSDOM("<main></main>",{url:HML+"/contratos/"+privacy78Proof.context.contract+"/historico/importar",runScripts:"outside-only",virtualConsole});
+  const w=dom.window;for(const k of ["Request","Response","TextDecoder"])w[k]=globalThis[k];
+  w.navigation=new w.EventTarget();w.fetch=()=>Promise.resolve(new Response("{}"));
+  w.eval("("+fn("privacy78Runtime").toString()+")")({proof:privacy78Proof,install:true});
+  w.document.body.append(w.document.createElement("p"));
+  dom.window.close();
+  await new Promise(r=>setTimeout(r,10));
+  assert.deepEqual(errors,[]);
+});
