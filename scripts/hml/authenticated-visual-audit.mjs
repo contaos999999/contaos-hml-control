@@ -268,7 +268,6 @@ function trustedTimestampRanges(source) {
     if (
       !status ||
       !ts.isStringLiteral(status) ||
-      status.text !== "success" ||
       !time ||
       !ts.isNumericLiteral(time) ||
       !/^\d{13}$/.test(time.text)
@@ -279,9 +278,15 @@ function trustedTimestampRanges(source) {
       !ts.isPrefixUnaryExpression(ssr) ||
       ssr.operator !== ts.SyntaxKind.ExclamationToken ||
       !ts.isNumericLiteral(ssr.operand) ||
-      ssr.operand.text !== "0"
+      !["0", "1"].includes(ssr.operand.text)
     )
       fail("HTML_DRIFT");
+    // These states come exclusively from the trusted local SSR document. A
+    // private ssr:false route is pending on the server, unlike the login route.
+    // No state/flag/identity bytes in the remote payload are normalized.
+    const serverRendered = status.text === "success" && ssr.operand.text === "0";
+    const clientPending = index === 1 && status.text === "pending" && ssr.operand.text === "1";
+    if (!serverRendered && !clientPending) fail("HTML_DRIFT");
     return [time.getStart(file), time.end];
   });
 }
