@@ -4148,3 +4148,45 @@ test("Run78 disabled legítimo dispensa só hit-test, mantendo geometria e clipp
     false,
   );
 });
+
+test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
+  const parse = fn("parseSingleRequest");
+  const row = {schema_version:1,issue:317,operation:"fixtures",request_id:"trilha-a-fixtures-20261108-r1",approved_parent_sha:"a".repeat(40),frontend_sha:"b".repeat(40),deployment_id:"dpl_12345678"};
+  assert.deepEqual(parse(JSON.stringify(row),"fixtures"),row);
+  for (const change of [{extra:1},{schema_version:"1"},{issue:1},{operation:"audit"},{request_id:"unknown"},{frontend_sha:"x"}])
+    assert.throws(()=>parse(JSON.stringify({...row,...change}),"fixtures"));
+  assert.throws(()=>parse(JSON.stringify(row).replace('"issue":317','"issue":317,"issue":317'),"fixtures"));
+  assert.throws(()=>parse(JSON.stringify(row).replace('"issue":317','"issue":317,"\\u0069ssue":317'),"fixtures"));
+  assert.throws(()=>parse(" ".repeat(4097),"fixtures"));
+});
+test("solicitacao unica: origem upstream e identidade corrente exatas", () => {
+  const validate=fn("validateSingleRequestEvent");
+  const sha="a".repeat(40),repo={full_name:"contaos999999/contaos-hml-control"};
+  const upstream={id:91,workflow_id:406076025,path:".github/workflows/contaos-frontend-zero-drift.yml",name:"ContaOS Frontend Zero-Drift",event:"push",head_branch:"main",head_sha:sha,run_attempt:1,status:"completed",conclusion:"success",repository:repo,head_repository:repo};
+  const current={id:92,workflow_id:411426169,path:".github/workflows/contaos-trilha-a-fixtures.yml",name:"ContaOS Trilha A Fixtures",event:"workflow_run",head_branch:"main",head_sha:sha,run_attempt:1,repository:repo,head_repository:repo};
+  const env={GITHUB_EVENT_NAME:"workflow_run",GITHUB_REF:"refs/heads/main",GITHUB_REPOSITORY:repo.full_name,GITHUB_RUN_ID:"92",GITHUB_RUN_ATTEMPT:"1",CONTAOS_HARNESS_SHA:sha};
+  const event={action:"completed",repository:repo,workflow_run:upstream};
+  assert.equal(validate({event,env,upstream,current,operation:"fixtures",mainSha:sha}),sha);
+  for(const change of [{event:"pull_request"},{workflow_id:4},{path:"bad"},{name:"bad"},{run_attempt:2},{conclusion:"failure"},{head_branch:"fork"},{head_sha:"b".repeat(40)},{repository:{full_name:"fork/repo"}}])
+    assert.throws(()=>validate({event,env,upstream:{...upstream,...change},current,operation:"fixtures",mainSha:sha}));
+  assert.throws(()=>validate({event,env:{...env,GITHUB_RUN_ATTEMPT:"2"},upstream,current,operation:"fixtures",mainSha:sha}));
+  assert.throws(()=>validate({event,env,upstream,current:{...current,id:93},operation:"fixtures",mainSha:sha}));
+});
+test("solicitacao unica: paginacao completa e limites fail closed",async()=>{
+  const list=fn("listSingleRequestRuns"); let calls=0;
+  const rows=Array.from({length:101},(_,i)=>({id:i+1}));
+  assert.equal((await list(async(page)=>{calls++;return {total_count:101,workflow_runs:rows.slice((page-1)*100,page*100)};})).length,101);
+  assert.equal(calls,2);
+  for(const body of [{total_count:1001,workflow_runs:[]},{total_count:101,workflow_runs:[]},{total_count:1,workflow_runs:[{id:1},{id:1}]}])
+    await assert.rejects(()=>list(async()=>body));
+  await assert.rejects(()=>list(async()=>{throw new Error("offline");}));
+});
+test("solicitacao unica: duplicatas em qualquer resultado e replay em outro SHA",()=>{
+ const validate=fn("validateSingleRequestRuns"),sha="a".repeat(40),old="b".repeat(40);
+ const run={id:92,event:"workflow_run",head_sha:sha,run_attempt:1,workflow_id:411426169};
+ assert.equal(validate({current:run,runs:[run],requestShas:[sha],workflowId:411426169}),true);
+ for(const status of ["queued","in_progress","completed"])
+   assert.throws(()=>validate({current:run,runs:[run,{...run,id:93,status}],requestShas:[sha],workflowId:411426169}));
+ assert.throws(()=>validate({current:run,runs:[run,{...run,id:93,head_sha:old,conclusion:"cancelled"}],requestShas:[sha,old],workflowId:411426169}));
+ assert.throws(()=>validate({current:{...run,run_attempt:2},runs:[run],requestShas:[sha],workflowId:411426169}));
+});
