@@ -3510,3 +3510,69 @@ test("snapshot diagnóstico de falha não autoriza navegação", async () => {
   );
   assert.equal(navigated, false);
 });
+
+test("drain recusa ociosidade alcançada depois do deadline antes da inspeção", async (t) => {
+  const fixture = await cdpFixture();
+  let fence,
+    wake,
+    clock = 0;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {},
+      verifyResponse: async () => true,
+    });
+    await emitOutstandingNetwork(fixture, fence);
+    const originalTimeout = globalThis.setTimeout;
+    t.mock.method(performance, "now", () => clock);
+    t.mock.method(globalThis, "setTimeout", (callback, delay, ...args) => {
+      if (delay <= 10) {
+        wake = () => callback(...args);
+        return undefined;
+      }
+      return originalTimeout(callback, delay, ...args);
+    });
+    const waiting = fence.drain().then(
+      () => null,
+      (e) => e,
+    );
+    assert.equal(typeof wake, "function");
+    fixture.emit({
+      method: "Network.loadingFinished",
+      sessionId: "initial-session",
+      params: { requestId: "outstanding" },
+    });
+    for (let n = 0; n < 1000 && fence.snapshot().activeNetworkRequests; n++)
+      await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(fence.snapshot().activeNetworkRequests, 0);
+    clock = 10001;
+    wake();
+    assert.equal((await waiting)?.code, "FENCE_DRAIN_TIMEOUT");
+  } finally {
+    t.mock.restoreAll();
+    fence?.close();
+    await fixture.close();
+  }
+});
+
+test("drain revalida deadline imediatamente antes de retornar ocioso", async (t) => {
+  const fixture = await cdpFixture();
+  let fence;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {},
+      verifyResponse: async () => true,
+    });
+    await new Promise((resolve) => setImmediate(resolve));
+    let reads = 0;
+    t.mock.method(performance, "now", () => [0, 9999, 10001][Math.min(reads++, 2)]);
+    await assert.rejects(fence.drain(), (e) => e.code === "FENCE_DRAIN_TIMEOUT");
+  } finally {
+    t.mock.restoreAll();
+    fence?.close();
+    await fixture.close();
+  }
+});

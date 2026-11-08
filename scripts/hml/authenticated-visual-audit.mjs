@@ -1746,15 +1746,19 @@ export async function installNativeFence({
       const deadline = performance.now() + 10000;
       for (;;) {
         if (state.failed || closed) fail(state.failureCode || "FENCE_CDP_CLOSED");
-        const activity = lifecycle.snapshot();
-        if (active.size === 0 && activity.active === 0 && activity.pendingNetwork === 0) {
-          if (state.failed || closed) fail(state.failureCode || "FENCE_CDP_CLOSED");
-          return;
-        }
         const remaining = deadline - performance.now();
         if (remaining <= 0) {
           invalidate({ code: "FENCE_DRAIN_TIMEOUT" });
           fail("FENCE_DRAIN_TIMEOUT");
+        }
+        const activity = lifecycle.snapshot();
+        if (active.size === 0 && activity.active === 0 && activity.pendingNetwork === 0) {
+          if (state.failed || closed) fail(state.failureCode || "FENCE_CDP_CLOSED");
+          if (performance.now() >= deadline) {
+            invalidate({ code: "FENCE_DRAIN_TIMEOUT" });
+            fail("FENCE_DRAIN_TIMEOUT");
+          }
+          return;
         }
         await new Promise((resolve) => setTimeout(resolve, Math.min(10, remaining)));
       }
