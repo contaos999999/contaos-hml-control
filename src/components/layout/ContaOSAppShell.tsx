@@ -15,10 +15,14 @@ import {
 import { rotaSemSidebar } from "@/lib/navegacao/menuV1";
 import { ContaOSSidebar } from "./ContaOSSidebar";
 import { ContaOSOrganizationHeader } from "./ContaOSOrganizationHeader";
-import { validarAdministrador, podeConsultarAuditoria } from "@/lib/administracao/admUsuariosRpc";
+import {
+  validarAdministrador,
+  podeConsultarAuditoria,
+} from "@/lib/administracao/admUsuariosRpc";
 import { Link } from "@tanstack/react-router";
 import { MENU_ADMIN_V1 } from "@/lib/navegacao/menuV1";
 import { Users, ScrollText } from "lucide-react";
+import { CopilotoContrato } from "@/components/copiloto/CopilotoContrato";
 
 /** O shell é apenas apresentação; componentes e RLS preservam a autorização real. */
 export function ContaOSAppShell({ children }: { children: ReactNode }) {
@@ -26,6 +30,12 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   const rotaAdministrativaAtiva = (destino: string) =>
     pathname === destino || pathname.startsWith(`${destino}/`);
   const [liberado, setLiberado] = useState(false);
+  const [contextoCopiloto, setContextoCopiloto] = useState<{
+    rota: string;
+    organizacao: string;
+    contrato: string | null;
+    competencia: string | null;
+  } | null>(null);
   const [revisaoSessao, setRevisaoSessao] = useState(0);
   const [chaveConteudo, setChaveConteudo] = useState(0);
   const [administrador, setAdministrador] = useState(false);
@@ -49,7 +59,9 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     document.body.style.overflow = "hidden";
     const dialogo = dialogoMovelRef.current;
     const focoAnterior =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     const selecionarFocaveis = () =>
       Array.from(
         dialogo?.querySelectorAll<HTMLElement>(
@@ -73,13 +85,15 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       const ultimo = focaveis[focaveis.length - 1];
       if (
         evento.shiftKey &&
-        (document.activeElement === primeiro || !dialogo?.contains(document.activeElement))
+        (document.activeElement === primeiro ||
+          !dialogo?.contains(document.activeElement))
       ) {
         evento.preventDefault();
         ultimo?.focus();
       } else if (
         !evento.shiftKey &&
-        (document.activeElement === ultimo || !dialogo?.contains(document.activeElement))
+        (document.activeElement === ultimo ||
+          !dialogo?.contains(document.activeElement))
       ) {
         evento.preventDefault();
         primeiro?.focus();
@@ -89,7 +103,8 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     return () => {
       document.removeEventListener("keydown", controlarTeclado);
       document.body.style.overflow = overflowAnterior;
-      if (!fechamentoPorNavegacao.current && focoAnterior?.isConnected) focoAnterior.focus();
+      if (!fechamentoPorNavegacao.current && focoAnterior?.isConnected)
+        focoAnterior.focus();
       else if (!fechamentoPorNavegacao.current) botaoMovelRef.current?.focus();
       fechamentoPorNavegacao.current = false;
     };
@@ -111,12 +126,14 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       setAuditoriaPermitida(false);
       setPermissoes([]);
       setContexto({ contrato: null, competencia: null, contratante: null });
+      setContextoCopiloto(null);
       setLiberado(false);
       setMovelAberto(false);
       setRevisaoSessao((atual) => atual + 1);
     };
     document.addEventListener("visibilitychange", revalidarAoRetomar);
-    return () => document.removeEventListener("visibilitychange", revalidarAoRetomar);
+    return () =>
+      document.removeEventListener("visibilitychange", revalidarAoRetomar);
   }, []);
   useEffect(() => {
     const revalidarAoAlterarOrganizacao = () => {
@@ -128,22 +145,35 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       setAuditoriaPermitida(false);
       setPermissoes([]);
       setContexto({ contrato: null, competencia: null, contratante: null });
+      setContextoCopiloto(null);
       setMovelAberto(false);
       setRevisaoSessao((atual) => atual + 1);
     };
-    window.addEventListener(EVENTO_ORGANIZACAO_ALTERADA, revalidarAoAlterarOrganizacao);
+    window.addEventListener(
+      EVENTO_ORGANIZACAO_ALTERADA,
+      revalidarAoAlterarOrganizacao,
+    );
     return () =>
-      window.removeEventListener(EVENTO_ORGANIZACAO_ALTERADA, revalidarAoAlterarOrganizacao);
+      window.removeEventListener(
+        EVENTO_ORGANIZACAO_ALTERADA,
+        revalidarAoAlterarOrganizacao,
+      );
   }, []);
   useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((evento) => {
-      if (evento !== "SIGNED_IN" && evento !== "SIGNED_OUT" && evento !== "USER_UPDATED") return;
+      if (
+        evento !== "SIGNED_IN" &&
+        evento !== "SIGNED_OUT" &&
+        evento !== "USER_UPDATED"
+      )
+        return;
       geracaoAutenticacao.current += 1;
       setLiberado(false);
       setAdministrador(false);
       setAuditoriaPermitida(false);
       setPermissoes([]);
       setContexto({ contrato: null, competencia: null, contratante: null });
+      setContextoCopiloto(null);
       setMovelAberto(false);
       setRevisaoSessao((atual) => atual + 1);
     });
@@ -158,6 +188,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     setAuditoriaPermitida(false);
     setPermissoes([]);
     setContexto({ contrato: null, competencia: null, contratante: null });
+    setContextoCopiloto(null);
     fechamentoPorNavegacao.current = true;
     setMovelAberto(false);
     if (rotaSemSidebar(pathname)) return;
@@ -168,16 +199,30 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       if (sessaoAtual() && organizacao) {
         setLiberado(true);
         const contextoAtual = await resolverContextoRbac(pathname, organizacao);
-        const efetivas = await consultarPermissoesEfetivas(organizacao, contextoAtual.contrato);
+        const efetivas = await consultarPermissoesEfetivas(
+          organizacao,
+          contextoAtual.contrato,
+        );
         if (!sessaoAtual()) return;
         setPermissoes(efetivas.permissoes);
         setContexto(contextoAtual);
-        const autorizado = await validarAdministrador(organizacao).catch(() => false);
+        setContextoCopiloto({
+          rota: pathname,
+          organizacao,
+          contrato: contextoAtual.contrato,
+          competencia: contextoAtual.competencia,
+        });
+        const autorizado = await validarAdministrador(organizacao).catch(
+          () => false,
+        );
         if (sessaoAtual())
           setAdministrador(
-            autorizado === true && temPermissao(efetivas.permissoes, "usuarios", "administrar"),
+            autorizado === true &&
+              temPermissao(efetivas.permissoes, "usuarios", "administrar"),
           );
-        const auditoriaAutorizada = await podeConsultarAuditoria(organizacao).catch(() => false);
+        const auditoriaAutorizada = await podeConsultarAuditoria(
+          organizacao,
+        ).catch(() => false);
         if (sessaoAtual())
           setAuditoriaPermitida(
             auditoriaAutorizada === true &&
@@ -228,15 +273,24 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
                 aoNavegar={() => setMovelAberto(false)}
               />
               {(administrador || auditoriaPermitida) && (
-                <nav aria-label="Administração" className="flex flex-col gap-1 p-3">
+                <nav
+                  aria-label="Administração"
+                  className="flex flex-col gap-1 p-3"
+                >
                   {MENU_ADMIN_V1.filter((item) =>
-                    item.destino === "/administracao/usuarios" ? administrador : auditoriaPermitida,
+                    item.destino === "/administracao/usuarios"
+                      ? administrador
+                      : auditoriaPermitida,
                   ).map((item) => (
                     <Link
                       key={item.destino}
                       to={item.destino}
                       onClick={() => setMovelAberto(false)}
-                      aria-current={rotaAdministrativaAtiva(item.destino) ? "page" : undefined}
+                      aria-current={
+                        rotaAdministrativaAtiva(item.destino)
+                          ? "page"
+                          : undefined
+                      }
                       className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-sidebar-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                     >
                       {item.titulo}
@@ -271,25 +325,39 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
                 {recolhida ? "»" : "«"}
               </button>
             </div>
-            <ContaOSSidebar permissoes={permissoes} contexto={contexto} recolhida={recolhida} />
+            <ContaOSSidebar
+              permissoes={permissoes}
+              contexto={contexto}
+              recolhida={recolhida}
+            />
             {(administrador || auditoriaPermitida) && (
-              <nav aria-label="Administração" className="flex flex-col gap-1 p-3">
+              <nav
+                aria-label="Administração"
+                className="flex flex-col gap-1 p-3"
+              >
                 {MENU_ADMIN_V1.filter((item) =>
-                  item.destino === "/administracao/usuarios" ? administrador : auditoriaPermitida,
+                  item.destino === "/administracao/usuarios"
+                    ? administrador
+                    : auditoriaPermitida,
                 ).map((item) => (
                   <Link
                     key={item.destino}
                     to={item.destino}
                     aria-label={item.titulo}
                     title={recolhida ? item.titulo : undefined}
-                    aria-current={rotaAdministrativaAtiva(item.destino) ? "page" : undefined}
+                    aria-current={
+                      rotaAdministrativaAtiva(item.destino) ? "page" : undefined
+                    }
                     className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-sidebar-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                   >
                     <span className="flex items-center gap-2">
                       {item.destino === "/administracao/usuarios" ? (
                         <Users aria-hidden="true" className="size-4 shrink-0" />
                       ) : (
-                        <ScrollText aria-hidden="true" className="size-4 shrink-0" />
+                        <ScrollText
+                          aria-hidden="true"
+                          className="size-4 shrink-0"
+                        />
                       )}
                       {!recolhida && <span>{item.titulo}</span>}
                     </span>
@@ -325,6 +393,14 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
           </div>
         )}
         <div key={chaveConteudo}>{children}</div>
+        {liberado && !movelAberto && contextoCopiloto?.rota === pathname && (
+          <CopilotoContrato
+            key={`${chaveConteudo}:${revisaoSessao}:${pathname}:${contextoCopiloto.organizacao}`}
+            contratoId={contextoCopiloto.contrato}
+            organizacaoId={contextoCopiloto.organizacao}
+            competenciaId={contextoCopiloto.competencia}
+          />
+        )}
       </div>
     </div>
   );
