@@ -2,7 +2,11 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { EVENTO_ORGANIZACAO_ALTERADA } from "@/lib/organizacao/preferenciaOrganizacao";
 
-type Mensagem = { papel: "usuario" | "assistente"; conteudo: string };
+type Mensagem = {
+  papel: "usuario" | "assistente";
+  conteudo: string;
+  fontes?: Resposta["fontes"];
+};
 type Resposta = {
   ok?: boolean;
   id_sessao?: string;
@@ -29,11 +33,11 @@ export function CopilotoContrato({
   const [pergunta, setPergunta] = useState("");
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [sessao, setSessao] = useState<string | null>(null);
-  const [fontes, setFontes] = useState<Resposta["fontes"]>([]);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const geracao = useRef(0);
   const ocupado = useRef(false);
+  const requisicao = useRef<AbortController | null>(null);
   const [selecionado, setSelecionado] = useState("");
   const [contratos, setContratos] = useState<
     Array<{ id: string; numero: string }>
@@ -46,13 +50,13 @@ export function CopilotoContrato({
   useEffect(() => {
     const limpar = () => {
       geracao.current += 1;
+      requisicao.current?.abort();
       ocupado.current = false;
       setSelecionado("");
       setReferencia(null);
       setContratos([]);
       setSessao(null);
       setMensagens([]);
-      setFontes([]);
       setPergunta("");
       setErro("");
       setEnviando(false);
@@ -70,6 +74,7 @@ export function CopilotoContrato({
     });
     return () => {
       geracao.current += 1;
+      requisicao.current?.abort();
       window.removeEventListener(EVENTO_ORGANIZACAO_ALTERADA, limpar);
       auth.subscription.unsubscribe();
     };
@@ -78,6 +83,7 @@ export function CopilotoContrato({
   useEffect(() => {
     if (!aberto || !competenciaId) return;
     let ativo = true;
+    const epoca = geracao.current;
     setReferencia(null);
     void (async () => {
       try {
@@ -89,7 +95,7 @@ export function CopilotoContrato({
           .eq("id_organizacao", organizacaoId)
           .eq("id_contrato", contratoId)
           .maybeSingle();
-        if (!ativo) return;
+        if (!ativo || epoca !== geracao.current) return;
         const valor = data?.competencia_referencia ?? "";
         if (
           error ||
@@ -101,7 +107,7 @@ export function CopilotoContrato({
           throw new Error("contexto");
         setReferencia(valor);
       } catch {
-        if (ativo)
+        if (ativo && epoca === geracao.current)
           setErro("Não foi possível confirmar o contexto da competência.");
       }
     })();
@@ -113,6 +119,7 @@ export function CopilotoContrato({
   useEffect(() => {
     if (!aberto || contratoId || !organizacaoId) return;
     let ativo = true;
+    const epoca = geracao.current;
     setCarregandoContratos(true);
     setErro("");
     void (async () => {
@@ -123,7 +130,7 @@ export function CopilotoContrato({
           .eq("id_organizacao", organizacaoId)
           .order("numero")
           .limit(100);
-        if (!ativo) return;
+        if (!ativo || epoca !== geracao.current) return;
         if (error || !data?.length) {
           setContratos([]);
           setErro("Não há contratos disponíveis para consulta neste contexto.");
@@ -131,12 +138,12 @@ export function CopilotoContrato({
         }
         setContratos(data);
       } catch {
-        if (ativo) {
+        if (ativo && epoca === geracao.current) {
           setContratos([]);
           setErro("Não foi possível consultar os contratos permitidos.");
         }
       } finally {
-        if (ativo) setCarregandoContratos(false);
+        if (ativo && epoca === geracao.current) setCarregandoContratos(false);
       }
     })();
     return () => {
@@ -146,11 +153,11 @@ export function CopilotoContrato({
 
   function selecionarContrato(id: string) {
     geracao.current += 1;
+    requisicao.current?.abort();
     ocupado.current = false;
     setSelecionado(contratos.some((c) => c.id === id) ? id : "");
     setSessao(null);
     setMensagens([]);
-    setFontes([]);
     setPergunta("");
     setErro("");
     setEnviando(false);
@@ -174,18 +181,27 @@ export function CopilotoContrato({
     setErro("");
     setPergunta("");
     setMensagens((prev) => [...prev, { papel: "usuario", conteudo: texto }]);
+    const controlador = new AbortController();
+    requisicao.current = controlador;
+    const temporizador = window.setTimeout(() => controlador.abort(), 20000);
+    let aoAbortar: () => void = () => {};
+    const cancelamento = new Promise<never>((_, reject) => {
+      aoAbortar = () => reject(new Error("consulta interrompida"));
+      controlador.signal.addEventListener("abort", aoAbortar, { once: true });
+    });
     try {
-      const { data, error } = await supabase.functions.invoke<Resposta>(
-        "copilot-query",
-        {
+      const { data, error } = await Promise.race([
+        supabase.functions.invoke<Resposta>("copilot-query", {
+          signal: controlador.signal,
           body: {
             id_contrato: contratoAtual,
             pergunta: texto,
             ...(referencia ? { data_referencia: referencia } : {}),
             ...(sessao ? { id_sessao: sessao } : {}),
           },
-        },
-      );
+        }),
+        cancelamento,
+      ]);
       if (atual !== geracao.current) return;
       if (error || !data?.ok || !data.resposta || !data.id_sessao) {
         throw new Error(
@@ -195,13 +211,19 @@ export function CopilotoContrato({
       setSessao(data.id_sessao);
       setMensagens((prev) => [
         ...prev,
-        { papel: "assistente", conteudo: data.resposta! },
+        {
+          papel: "assistente",
+          conteudo: data.resposta!,
+          fontes: data.fontes ?? [],
+        },
       ]);
-      setFontes(data.fontes ?? []);
     } catch {
       if (atual === geracao.current)
         setErro("A consulta não foi concluída. Tente novamente.");
     } finally {
+      window.clearTimeout(temporizador);
+      controlador.signal.removeEventListener("abort", aoAbortar);
+      if (requisicao.current === controlador) requisicao.current = null;
       if (atual === geracao.current) {
         ocupado.current = false;
         setEnviando(false);
@@ -228,8 +250,8 @@ export function CopilotoContrato({
         >
           <h2 className="mb-2 font-semibold">Copiloto do contrato</h2>
           <p className="mb-2 text-xs text-muted-foreground">
-            Respostas informativas com fontes. Aprovações e alterações exigem os
-            fluxos oficiais.
+            Respostas informativas com fontes, sujeitas a incerteza e revisão
+            humana. Aprovações e alterações exigem os fluxos oficiais.
           </p>
           <div
             role="log"
@@ -237,24 +259,28 @@ export function CopilotoContrato({
             className="min-h-20 flex-1 space-y-3 overflow-y-auto text-sm"
           >
             {mensagens.map((m, i) => (
-              <p key={i} className="whitespace-pre-wrap break-words">
-                <strong>{m.papel === "usuario" ? "Você" : "Copiloto"}:</strong>{" "}
-                {m.conteudo}
-              </p>
+              <div key={i}>
+                <p className="whitespace-pre-wrap break-words">
+                  <strong>
+                    {m.papel === "usuario" ? "Você" : "Copiloto"}:
+                  </strong>{" "}
+                  {m.conteudo}
+                </p>
+                {m.fontes?.length ? (
+                  <details>
+                    <summary>Fontes da resposta ({m.fontes.length})</summary>
+                    <ul className="list-inside list-disc space-y-2">
+                      {m.fontes.map((f, indice) => (
+                        <li key={indice} className="break-words">
+                          F{indice + 1}: {f.fonte_tipo ?? "Fonte"}
+                          {f.pagina ? ` · página ${f.pagina}` : ""}: {f.trecho}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
+              </div>
             ))}
-            {fontes?.length ? (
-              <details>
-                <summary>Fontes da última resposta ({fontes.length})</summary>
-                <ul className="list-inside list-disc space-y-2">
-                  {fontes.map((f, i) => (
-                    <li key={i} className="break-words">
-                      {f.fonte_tipo ?? "Fonte"}
-                      {f.pagina ? ` · página ${f.pagina}` : ""}: {f.trecho}
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            ) : null}
           </div>
           {erro && (
             <p role="alert" className="my-2 text-sm text-destructive">

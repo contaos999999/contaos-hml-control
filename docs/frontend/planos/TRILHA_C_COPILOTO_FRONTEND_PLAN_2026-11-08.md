@@ -41,3 +41,13 @@ A requisição expressa exige chat nas 27 páginas. A árvore existente contém 
 ## Impedimentos comprovados e ordem
 
 Em c3143edc, Zero-Drift42532656429 e LOCK42532656433 SUCCESS. Implantação Vercel FAILURE por api-deployments-free-per-day; nenhum bypass ou upgrade financeiro automático. Integração e BUILD aguardam resolução do status vermelho. Edge HML v3/JWTtrue não possui geração OpenAI implantada e OPTIONS observado HTTP405 sem CORS; isso impede declarar chat funcional no navegador. Corrigir no repositório backend sob plano próprio da #180 antes da prova autenticada, sem relaxar JWT/RLS ou wildcard CORS.
+
+## Evidência incremental BUILD #379, sem certificação HML
+
+Base: PLAN #378 merge d8594696; RED440f3bd3/run42533505445/job128892643926, 3FAIL/1172PASS esperados (seletor, lista negada, troca usuário). REDlocal AppShell24FAIL/12PASS; competência2FAIL/36PASS. GREEN3408283:38focais e1205regressão PASS, TypeScript/build PASS.
+
+Revisão independente3408283: timeout/aborto e matriz de testes incompleta impediam conclusão. Fontes apenas da última resposta foram reclassificadas como problema de rastreabilidade e corrigidas no mesmo lote. REDlocal /tmp/contaos-c-review-red2.log:4FAIL/39PASS (prazo, aborto por competência, aborto pelo seletor, fontes por resposta). GREENlocal após correção:43/43focais,43suítes/1210testes PASS; tsc/buildPASS; lint0erros/1warning preexistente em botaoMovelRef. Tipos blob8ea7750b75fd9d76b29c36ce7613392e3ab65e19.
+
+Prazo20s cancela transporte por AbortController e libera UI mesmo com Promise pendente; resposta tardia não altera histórico. Trocas de contexto abortam transporte e invalidam geração. Fontes F1..Fn permanecem vinculadas a cada resposta e aviso explicita incerteza/revisão humana. Seletor mostra até100contratos autorizados e orienta a página do contrato além desse limite; nenhum contrato automático.
+
+CI do novo HEAD, implantação HML, JWT/cross-tenant/OpenAI e Teste C autenticado permanecem PENDENTES. Nenhum desses testes locais ou job documental equivale a certificação das27páginas. PROD/A/B/tipos preservados.

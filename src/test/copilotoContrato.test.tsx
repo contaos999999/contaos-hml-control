@@ -92,10 +92,13 @@ describe("Trilha C: contexto autorizado do copiloto", () => {
     expect(spies.invoke).not.toHaveBeenCalled();
     perguntar();
     expect(await screen.findByText(/Resposta permitida/)).toBeInTheDocument();
-    expect(spies.invoke).toHaveBeenCalledWith("copilot-query", {
-      body: { id_contrato: contrato, pergunta: "Quais as obrigações?" },
-    });
-    expect(screen.getByText(/Fontes da última resposta/)).toBeInTheDocument();
+    expect(spies.invoke.mock.calls[0]).toMatchObject([
+      "copilot-query",
+      {
+        body: { id_contrato: contrato, pergunta: "Quais as obrigações?" },
+      },
+    ]);
+    expect(screen.getByText(/Fontes da resposta/)).toBeInTheDocument();
   });
   it("exige seleção explícita de contrato nas páginas sem contrato na rota", async () => {
     render(<CopilotoContrato organizacaoId="org-a" />);
@@ -113,9 +116,12 @@ describe("Trilha C: contexto autorizado do copiloto", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
     expect(await screen.findByText(/Resposta permitida/)).toBeInTheDocument();
-    expect(spies.invoke).toHaveBeenCalledWith("copilot-query", {
-      body: { id_contrato: contrato, pergunta: "Pergunta" },
-    });
+    expect(spies.invoke.mock.calls[0]).toMatchObject([
+      "copilot-query",
+      {
+        body: { id_contrato: contrato, pergunta: "Pergunta" },
+      },
+    ]);
     const query = spies.from.mock.results[0]?.value;
     expect(query.eq).toHaveBeenCalledWith("id_organizacao", "org-a");
   });
@@ -317,13 +323,16 @@ describe("Trilha C: referência autorizada da competência", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
     expect(await screen.findByText(/Resposta permitida/)).toBeInTheDocument();
-    expect(spies.invoke).toHaveBeenCalledWith("copilot-query", {
-      body: {
-        id_contrato: contrato,
-        pergunta: "Quais as obrigações?",
-        data_referencia: "2026-11-01",
+    expect(spies.invoke.mock.calls[0]).toMatchObject([
+      "copilot-query",
+      {
+        body: {
+          id_contrato: contrato,
+          pergunta: "Quais as obrigações?",
+          data_referencia: "2026-11-01",
+        },
       },
-    });
+    ]);
     const q = spies.from.mock.results[0]?.value;
     expect(q.eq).toHaveBeenCalledWith("id_organizacao", "org-a");
     expect(q.eq).toHaveBeenCalledWith("id_contrato", contrato);
@@ -353,5 +362,213 @@ describe("Trilha C: referência autorizada da competência", () => {
       screen.getByRole("button", { name: "Enviar pergunta" }),
     ).toBeDisabled();
     expect(spies.invoke).not.toHaveBeenCalled();
+  });
+});
+
+describe("Trilha C: recuperação e isolamento da execução", () => {
+  it("libera envio após prazo limitado e ignora conclusão tardia", async () => {
+    vi.useFakeTimers();
+    let resolver!: (value: unknown) => void;
+    spies.invoke.mockReturnValue(
+      new Promise((r) => {
+        resolver = r;
+      }),
+    );
+    try {
+      render(<CopilotoContrato contratoId={contrato} />);
+      perguntar();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(20001);
+      });
+      expect(screen.getByRole("alert")).toHaveTextContent(/não foi concluída/i);
+      expect(
+        screen.queryByRole("button", { name: "Consultando..." }),
+      ).not.toBeInTheDocument();
+      await act(async () => {
+        resolver(resposta("Tardia após timeout"));
+      });
+      expect(screen.queryByText(/Tardia após timeout/)).not.toBeInTheDocument();
+      spies.invoke.mockResolvedValueOnce(resposta("Recuperada"));
+      fireEvent.change(screen.getByRole("textbox", { name: "Sua pergunta" }), {
+        target: { value: "Nova pergunta" },
+      });
+      await act(async () => {
+        fireEvent.click(
+          screen.getByRole("button", { name: "Enviar pergunta" }),
+        );
+      });
+      expect(screen.getByText(/Recuperada/)).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("impede duplo submit síncrono e reutiliza sessão somente no mesmo contrato", async () => {
+    let resolver!: (value: unknown) => void;
+    spies.invoke.mockReturnValueOnce(
+      new Promise((r) => {
+        resolver = r;
+      }),
+    );
+    const view = render(<CopilotoContrato contratoId={contrato} />);
+    fireEvent.click(screen.getByRole("button", { name: "Consultar copiloto" }));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Primeira" },
+    });
+    const form = screen.getByRole("textbox").closest("form")!;
+    act(() => {
+      fireEvent.submit(form);
+      fireEvent.submit(form);
+    });
+    expect(spies.invoke).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      resolver(resposta());
+    });
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Segunda" },
+    });
+    fireEvent.submit(form);
+    await screen.findByText(/Fontes da resposta/);
+    expect(spies.invoke.mock.calls[1]?.[1].body.id_sessao).toBe(
+      "00000000-0000-4000-8000-000000000003",
+    );
+    view.rerender(<CopilotoContrato contratoId={outro} />);
+    perguntar("Terceira");
+    await waitFor(() => expect(spies.invoke).toHaveBeenCalledTimes(3));
+    expect(spies.invoke.mock.calls[2]?.[1].body.id_sessao).toBeUndefined();
+  });
+  it("aborta transporte pendente ao trocar competência e não reexibe resposta antiga", async () => {
+    let resolver!: (value: unknown) => void;
+    spies.from.mockImplementation(() => {
+      const q = {
+        select: () => q,
+        eq: () => q,
+        maybeSingle: async () => ({
+          data: { id_contrato: contrato, competencia_referencia: "2026-11-01" },
+          error: null,
+        }),
+      };
+      return q;
+    });
+    spies.invoke.mockReturnValue(
+      new Promise((r) => {
+        resolver = r;
+      }),
+    );
+    const view = render(
+      <CopilotoContrato
+        contratoId={contrato}
+        organizacaoId="org-a"
+        competenciaId={outro}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Consultar copiloto" }));
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Antes" },
+    });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Enviar pergunta" }),
+      ).not.toBeDisabled(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
+    const signal = spies.invoke.mock.calls[0]?.[1].signal;
+    view.rerender(
+      <CopilotoContrato
+        contratoId={contrato}
+        organizacaoId="org-a"
+        competenciaId={contrato}
+      />,
+    );
+    expect(signal?.aborted).toBe(true);
+    await act(async () => {
+      resolver(resposta("Competência antiga"));
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Consultar copiloto" }));
+    expect(screen.queryByText(/Competência antiga/)).not.toBeInTheDocument();
+  });
+  it("troca de contrato pelo seletor cancela consulta e limpa sessão", async () => {
+    let resolver!: (value: unknown) => void;
+    spies.from.mockImplementation(() => {
+      const q = {
+        select: () => q,
+        eq: () => q,
+        order: () => q,
+        limit: async () => ({
+          data: [
+            { id: contrato, numero: "A" },
+            { id: outro, numero: "B" },
+          ],
+          error: null,
+        }),
+      };
+      return q;
+    });
+    spies.invoke.mockReturnValueOnce(
+      new Promise((r) => {
+        resolver = r;
+      }),
+    );
+    render(<CopilotoContrato organizacaoId="org-a" />);
+    fireEvent.click(screen.getByRole("button", { name: "Consultar copiloto" }));
+    const selector = await screen.findByRole("combobox");
+    await screen.findByRole("option", { name: "A" });
+    fireEvent.change(selector, { target: { value: contrato } });
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Antes" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
+    const signal = spies.invoke.mock.calls[0]?.[1].signal;
+    fireEvent.change(selector, { target: { value: outro } });
+    expect(signal?.aborted).toBe(true);
+    await act(async () => {
+      resolver(resposta("Contrato anterior"));
+    });
+    expect(screen.queryByText(/Contrato anterior/)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Depois" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
+    await waitFor(() => expect(spies.invoke).toHaveBeenCalledTimes(2));
+    expect(spies.invoke.mock.calls[1]?.[1].body).toEqual({
+      id_contrato: outro,
+      pergunta: "Depois",
+    });
+  });
+});
+
+describe("Trilha C: fontes por resposta", () => {
+  it("mantém a fonte da primeira resposta após uma segunda consulta", async () => {
+    spies.invoke.mockResolvedValueOnce({
+      data: {
+        ok: true,
+        id_sessao: "sessao",
+        resposta: "Primeira resposta",
+        fontes: [
+          { fonte_tipo: "documento", pagina: 1, trecho: "Fonte primeira" },
+        ],
+      },
+      error: null,
+    });
+    spies.invoke.mockResolvedValueOnce({
+      data: {
+        ok: true,
+        id_sessao: "sessao",
+        resposta: "Segunda resposta",
+        fontes: [
+          { fonte_tipo: "documento", pagina: 2, trecho: "Fonte segunda" },
+        ],
+      },
+      error: null,
+    });
+    render(<CopilotoContrato contratoId={contrato} />);
+    perguntar("Primeira");
+    expect(await screen.findByText(/Primeira resposta/)).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "Segunda" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar pergunta" }));
+    expect(await screen.findByText(/Segunda resposta/)).toBeInTheDocument();
+    expect(screen.getByText(/Fonte primeira/)).toBeInTheDocument();
+    expect(screen.getByText(/Fonte segunda/)).toBeInTheDocument();
   });
 });
