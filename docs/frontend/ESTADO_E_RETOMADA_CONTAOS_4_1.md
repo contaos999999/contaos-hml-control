@@ -1,3 +1,17 @@
+# Continuidade P0: main42abfa5, HML verificado e preparador submetido
+
+Âncora frontend main42abfa51f57c19c09f9a1c487652905f9ec37758; backendnormativo7f91937419ff4f9ddb1642f5cb4e6f2aaff98ac1,25blobs/catalog100/97 iguais e snapshot/PLAN alinhados. GATE372 integrado42abfa5 apósCI42518027986/42518027946 e revisão independente doHEADe8015c84. Recibo5aa39ef35e4a432f4f4f5f29d72ee5773a56e62102948f0e3a31a0529c2d8f18 relido noPR; checkpoint anterior integrado relido blob8aa8d19f6a05019225a02aaa9825dad43f95a31f. O GATE autorizaBUILDfuturo de4campos técnicos, não reclassifica56casos por si.
+
+ConsultaVercelatual: aliasHML contaos-41-hml.vercel.app aponta dpl_AoNgZRZnutXauuPsfQ2shEmUaULS READY, projeto prj_JtEWXg54EIYcQPwVzFiQyJcVIlFo, fonte241dd775d14a0d2a1ec24c93ae3f655c79d3efd2/main; identidade igual à rodada78. Nenhum deployPROD/promote executado. Próxima execução revalida alias/grafo/SSR antescredenciais e falha se identidade mudar.
+
+Preparador completo separado submetido nesteBUILD, ainda NÃO executadoHML e semescritasdenegócio por esteexecutor:3arquivosnovos sobGATE367/368.39testesdeprotocolo/guardasPASS,lints/formatoPASSlocais. Regressõesincluempayloads exatos,24intenções/15s/64KiB, persistênciasíncronaantesPOST,correlaçãoRequest/Response,nãoretryincerto,políticapositivaporendpoint/campo,projeçõesindependentessemherdarstatusantigo,prazoboundedincluindoreadpendente,Authsomenteclosurepreparador e recibosfinaisapenasIDsnegócio. A orquestração usaUI/LinksSPA/leituraslegítimas e únicaexceçãoRPCdocumentoreusoaprovado, nãofabricasnapshot/análise/parecer/status. ExigirCI/oito nativos e revisãoindependente noHEADfinal antesmerge; somente após isso workflowmainHML.39unitários não comprovam fluxoUIrealnem24fixturesprontas.
+
+BUILDvisualisolado emcurso sobGATE371integrado; foco7SRC/2testesshell/2mjs. Preservar18públicos e18baseline nãomóveis;6mobilebaseline têmregressãojustificadaMenu. Resultado/TesteCposterior sódepoisGREEN/CI/revisão/merge/deployHMLprovado. Revisão208PNG/21RED/ledgersjáintegrada eimutável.
+
+Investigaçãoadicional: V109descriçãoproduz4unknown e Atualizadaem1 (diagnósticoefêmerosemexportar/hash deconteúdodesconhecido); SYS04rótulostécnicoslegados eV123pseudônimo operacional consentido exigemGATE/recibosporregistro, semalegarorigemsintéticainexistente nemUUIDgenérico. Nãoencerrar184porbloqueiosintermediários. ÚltimoTesteCcontinua78,96PASSautomáticoscomressalvas/8FAIL/56PII/24fixtures/24baseline,semaborto/logouttrue/313SHA. V1/72/WCAGNÃOcertificados;PROD/tipos/backend/RLS/Authpreservados.
+
+---
+
 # Continuidade P0: GATE visual integrado, preparador e privacidade em correção
 
 Main4190a0a4b7acd34a393ae62ea8010cec1dfdce7a. PLAN369 integrado87a99daaf3746baed09c5ae41ef116c591d54506 apósCI42515269407/42515269339 e revisão; GATE371 integrado4190a0a4 apósCI42516867690/42516867667 e revisão independente. Revisão integral208PNG/matriz208casos/21REDcom63hashes agora durável noGit. Manifesto relido na main, blob09e7ef18454446214a6fb72f507877aff0ed9bfd; CSVcanonizadosLF e hashes conferidos no remoto, sem substituirRun78. BUILDvisual isolado autorizado pelo GATE, não concluído ainda;6mobilebaseline afetadosMenu exigem regressão,18outrosbaseline e18públicos preservados.
