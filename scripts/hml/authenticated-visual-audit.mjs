@@ -771,7 +771,9 @@ export async function connectNativeCDP(port, identity) {
       commands.delete(data.id);
       clearTimeout(pending.timer);
       if (data.error)
-        pending.reject(Object.assign(new Error("CDP_COMMAND"), { code: "CDP_COMMAND" }));
+        pending.reject(
+          Object.assign(new Error("CDP_COMMAND"), { code: "CDP_COMMAND", command: pending.method }),
+        );
       else pending.resolve(data.result ?? {});
     } else {
       try {
@@ -802,7 +804,7 @@ export async function connectNativeCDP(port, identity) {
           commands.delete(id);
           reject(Object.assign(new Error("CDP_TIMEOUT"), { code: "CDP_TIMEOUT" }));
         }, 10000);
-        commands.set(id, { resolve, reject, timer });
+        commands.set(id, { resolve, reject, timer, method });
         socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
       });
     },
@@ -861,16 +863,25 @@ export async function installNativeFence({
     popups: 0,
   };
   let closed = false,
-    resolveInitial;
-  const initial = new Promise((resolve) => {
+    resolveInitial,
+    rejectInitial;
+  const initial = new Promise((resolve, reject) => {
     resolveInitial = resolve;
+    rejectInitial = reject;
   });
+  initial.catch(() => {});
   function invalidate(error) {
     if (state.failed || closed) return;
     state.failed = true;
     state.failureCode = /^(?:CDP|FENCE)_[A-Z_]{1,80}$/.test(error?.code || "")
       ? error.code
       : "FENCE_ASYNC";
+    rejectInitial(
+      Object.assign(new Error(state.failureCode), {
+        code: state.failureCode,
+        ...(typeof error?.command === "string" ? { command: error.command } : {}),
+      }),
+    );
     void Promise.resolve(closeContext()).catch(() => {});
   }
   function track(promise) {
@@ -1126,20 +1137,29 @@ export async function discoverPublicGraph({ fetcher = fetch } = {}) {
   }
   const modules = new Map();
   let bytes = 0;
-  for (let index = 0; index < pending.length; index++) {
-    if (pending.length > 128 || Date.now() > deadline) fail("GRAPH_LIMIT");
-    const url = pending[index],
-      body = await boundedPublicFetch(url, 4194304, fetcher);
-    bytes += body.length;
-    if (bytes > 8388608) fail("GRAPH_LIMIT");
-    let source;
-    try {
-      source = new TextDecoder("utf-8", { fatal: true }).decode(body);
-    } catch {
-      fail("SCRIPT_POLICY");
+  for (let index = 0; index < pending.length;) {
+    if (pending.length > 128) fail("GRAPH_MODULE_LIMIT");
+    if (Date.now() > deadline) fail("GRAPH_DEADLINE");
+    const batch = pending.slice(index, index + 4);
+    index += batch.length;
+    const results = await Promise.all(
+      batch.map(async (url) => {
+        const body = await boundedPublicFetch(url, 4194304, fetcher);
+        bytes += body.length;
+        if (bytes > 8388608) fail("GRAPH_BYTE_LIMIT");
+        let source;
+        try {
+          source = new TextDecoder("utf-8", { fatal: true }).decode(body);
+        } catch {
+          fail("SCRIPT_POLICY");
+        }
+        return { url, source };
+      }),
+    );
+    for (const { url, source } of results) {
+      modules.set(url, source);
+      for (const child of scriptImports(source)) add(child, url);
     }
-    modules.set(url, source);
-    for (const child of scriptImports(source)) add(child, url);
   }
   if (!modules.size) fail("GRAPH_EMPTY");
   return { html, modules, bytes };
