@@ -13,6 +13,22 @@ const require = createRequire(import.meta.url);
 const parse5 = createRequire(require.resolve("jsdom"))("parse5");
 export const HML_ORIGIN = "https://contaos-41-hml.vercel.app";
 export const API_ORIGIN = "https://gklhhhyosgasnyoxlrui.supabase.co";
+const FENCE_COMMANDS = new Set([
+  "Target.getTargetInfo",
+  "Target.autoAttachRelated",
+  "Target.setAutoAttach",
+  "Runtime.runIfWaitingForDebugger",
+  "Page.enable",
+  "Network.enable",
+  "Network.setCacheDisabled",
+  "Network.setBlockedURLs",
+  "Fetch.enable",
+  "Fetch.continueRequest",
+  "Fetch.getResponseBody",
+  "Fetch.fulfillRequest",
+  "Fetch.continueResponse",
+  "Fetch.failRequest",
+]);
 const WIDTHS = [1440, 1280, 768, 390];
 const THEMES = ["light", "dark"];
 export const PRIVATE_SURFACES = [
@@ -910,6 +926,7 @@ export async function installNativeFence({
   const state = {
     failed: false,
     failureCode: null,
+    failureCommand: null,
     verifiedDocuments: 0,
     verifiedScripts: 0,
     verifiedAssets: 0,
@@ -934,6 +951,7 @@ export async function installNativeFence({
     state.failureCode = /^(?:CDP|FENCE)_[A-Z_]{1,80}$/.test(error?.code || "")
       ? error.code
       : "FENCE_ASYNC";
+    state.failureCommand = FENCE_COMMANDS.has(error?.command) ? error.command : null;
     rejectInitial(
       Object.assign(new Error(state.failureCode), {
         code: state.failureCode,
@@ -1816,6 +1834,29 @@ async function waitOrganization(page) {
     { timeout: 15000 },
   );
 }
+async function settleVerifiedPage(page, fence) {
+  await page.waitForLoadState("networkidle");
+  await fence.drain();
+  fence.assertSafe();
+}
+export async function navigateVerifiedPage(page, fence, target) {
+  if (
+    !requestAllowed({ url: target, method: "GET", resourceType: "Document" }) ||
+    new URL(target).origin !== HML_ORIGIN
+  )
+    fail("AUTH_DESTINATION");
+  await settleVerifiedPage(page, fence);
+  const response = await page.goto(target, { waitUntil: "networkidle" });
+  await settleVerifiedPage(page, fence);
+  return response;
+}
+export async function openVerifiedOrganizationSelector(page, fence) {
+  await settleVerifiedPage(page, fence);
+  const current = page.url();
+  if (current === HML_ORIGIN + "/selecionar-organizacao") return;
+  if (current !== HML_ORIGIN + "/") fail("AUTH_DESTINATION");
+  await navigateVerifiedPage(page, fence, HML_ORIGIN + "/selecionar-organizacao");
+}
 async function runAuthenticatedAudit() {
   const ready = validateConfiguration({
     origin: HML_ORIGIN,
@@ -1930,7 +1971,7 @@ async function runAuthenticatedAudit() {
     flags.postLoginNavigation = true;
     loggedIn = true;
     phase = "OPEN_ORG_SELECTOR";
-    await page.goto(HML_ORIGIN + "/selecionar-organizacao", { waitUntil: "networkidle" });
+    await openVerifiedOrganizationSelector(page, fence);
     const card = page
       .getByRole("radio")
       .filter({ hasText: SYNTHETIC_FIXTURE.organizationName })
@@ -1962,7 +2003,7 @@ async function runAuthenticatedAudit() {
       try {
         const beforeErrors = errors;
         await page.setViewportSize({ width: item.width, height: 1000 });
-        const response = await page.goto(HML_ORIGIN + item.path, { waitUntil: "networkidle" });
+        const response = await navigateVerifiedPage(page, fence, HML_ORIGIN + item.path);
         await page.evaluate(
           (theme) => document.documentElement.classList.toggle("dark", theme === "dark"),
           item.theme,
@@ -2137,10 +2178,12 @@ async function runAuthenticatedAudit() {
   } finally {
     if (loggedIn && page && !page.isClosed())
       try {
+        await settleVerifiedPage(page, fence);
         const exit = page.getByRole("button", { name: "Sair", exact: true });
         if ((await exit.count()) === 1) {
           await exit.click();
           await page.waitForURL(HML_ORIGIN + "/login");
+          await settleVerifiedPage(page, fence);
           logoutVerified = true;
         }
       } catch {}
@@ -2480,6 +2523,7 @@ export function runtimeDiagnostics(input = {}) {
     "CDP_TIMEOUT",
     "LOGIN_SCRIPT_ERROR",
     "AUTH_MASTER_FIXTURE",
+    "AUTH_DESTINATION",
     "DEPLOYMENT_CHANGED",
   ]);
   const count = (value) =>
@@ -2487,6 +2531,9 @@ export function runtimeDiagnostics(input = {}) {
   const fence = {
     failed: input.fence?.failed === true,
     failureCode: failures.has(input.fence?.failureCode) ? input.fence.failureCode : null,
+    failureCommand: FENCE_COMMANDS.has(input.fence?.failureCommand)
+      ? input.fence.failureCommand
+      : null,
     redirectStatus:
       Number.isInteger(input.fence?.redirectStatus) &&
       input.fence.redirectStatus >= 300 &&
