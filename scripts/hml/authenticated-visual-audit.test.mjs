@@ -2314,6 +2314,18 @@ test("diagnóstico da reprodução nativa publica somente etapas fechadas", () =
   );
 });
 
+test("diagnóstico de tipos nativos aceita somente enums CDP sem conteúdo", () => {
+  assert.deepEqual(fn("nativeCancellationTypes")("# NATIVE_CANCEL_TYPES Other Fetch"), {
+    network: "Other",
+    fetch: "Fetch",
+  });
+  assert.equal(
+    fn("nativeCancellationTypes")("# NATIVE_CANCEL_TYPES pessoa@example.com Fetch"),
+    null,
+  );
+  assert.equal(fn("nativeCancellationTypes")("# NATIVE_CANCEL_TYPES Other Fetch extra"), null);
+});
+
 test(
   "Chromium nativo: cancelamento inicial real não libera corpo nem transmite ao canário",
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
@@ -2489,6 +2501,11 @@ test(
         "FENCE_CDP_CLOSED",
       ]);
       t.diagnostic("NATIVE_CANCEL_FAILURE " + (allowed.has(candidate) ? candidate : "OTHER"));
+      const observed = proxy?.request();
+      const types = fn("nativeCancellationTypes")(
+        "# NATIVE_CANCEL_TYPES " + observed?.network?.type + " " + observed?.paused?.resourceType,
+      );
+      if (types) t.diagnostic("NATIVE_CANCEL_TYPES " + types.network + " " + types.fetch);
       throw error;
     } finally {
       fence?.close();
