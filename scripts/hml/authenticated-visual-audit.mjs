@@ -1540,11 +1540,18 @@ export async function installNativeFence({
         closed ||
         session.contextId !== identity.browserContextId ||
         session.targetId !== identity.targetId ||
-        !policy({
+        policy({
           url: event.request.url,
           method: event.request.method,
           resourceType: event.resourceType,
-        })
+          postData: event.request.postData,
+          stage:
+            event.responseStatusCode !== undefined || event.responseErrorReason !== undefined
+              ? "RESPONSE"
+              : "REQUEST",
+          interceptionId: event.requestId,
+          sessionId: session.id,
+        }) !== true
       ) {
         state.blockedRequests++;
         fail("FENCE_REQUEST");
@@ -2208,7 +2215,7 @@ export function nativeProofValid(proof, identity) {
     proof.skipped === 0
   );
 }
-async function harnessIdentity() {
+export async function harnessIdentity() {
   return {
     harnessSha: process.env.CONTAOS_HARNESS_SHA,
     moduleHash: digest(await readFile(fileURLToPath(import.meta.url))),
@@ -2562,7 +2569,7 @@ async function inspectPrivacy(page, words, diagnostics) {
   if (Object.values(privacy).some((result) => result.reason !== "ALLOWED")) return null;
   return snapshot;
 }
-async function checkFreshDeployment(proof, full) {
+export async function checkFreshDeployment(proof, full) {
   const html = new TextDecoder("utf-8", { fatal: true }).decode(
     await boundedPublicFetch(HML_ORIGIN + "/login", 262144),
   );
@@ -2575,7 +2582,7 @@ async function checkFreshDeployment(proof, full) {
       if (digest(source) !== proof.moduleHashes[new URL(url).pathname]) fail("DEPLOYMENT_CHANGED");
   }
 }
-async function waitOrganization(page) {
+export async function waitOrganization(page) {
   await page.waitForFunction(
     (name) => {
       const header = document.querySelector('header[aria-label="Organização atual"]');
@@ -2585,7 +2592,7 @@ async function waitOrganization(page) {
     { timeout: 15000 },
   );
 }
-async function settleVerifiedPage(page, fence) {
+export async function settleVerifiedPage(page, fence) {
   await page.waitForLoadState("networkidle");
   await fence.drain();
   fence.assertSafe();
