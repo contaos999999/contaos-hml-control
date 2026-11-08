@@ -637,7 +637,7 @@ test("ambiente do navegador não herda credenciais nem opções de execução", 
   assert.deepEqual(clean, { PATH: "/bin", HOME: "/tmp/fixture", LANG: "pt_BR.UTF-8" });
   assert.equal(JSON.stringify(clean).includes("SYNTHETIC_CANARY"), false);
 });
-async function cdpFixture({ holdFailure = false } = {}) {
+async function cdpFixture({ holdFailure = false, rejectCache = false } = {}) {
   const failureSent = Promise.withResolvers();
   let acknowledgeFailure;
   const received = [],
@@ -661,7 +661,10 @@ async function cdpFixture({ holdFailure = false } = {}) {
     peer.on("message", (raw) => {
       const command = JSON.parse(raw.toString());
       received.push(command);
-      if (command.method === "Fixture.reject")
+      if (
+        command.method === "Fixture.reject" ||
+        (rejectCache && command.method === "Network.setCacheDisabled")
+      )
         return peer.send(
           JSON.stringify({
             id: command.id,
@@ -721,6 +724,86 @@ async function cdpFixture({ holdFailure = false } = {}) {
     },
   };
 }
+test("fence exige resposta completa e confirma cache desabilitado antes do renderer", async () => {
+  const fixture = await cdpFixture();
+  let fence;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {},
+      verifyResponse: async () => true,
+    });
+    const cache = fixture.received.findIndex((c) => c.method === "Network.setCacheDisabled");
+    const resume = fixture.received.findIndex(
+      (c) => c.method === "Runtime.runIfWaitingForDebugger",
+    );
+    assert.ok(cache >= 0 && cache < resume);
+    assert.deepEqual(fixture.received[cache].params, { cacheDisabled: true });
+  } finally {
+    fence?.close();
+    await fixture.close();
+  }
+});
+test("falha ao garantir corpo completo impede inicialização da fence", async () => {
+  const fixture = await cdpFixture({ rejectCache: true });
+  let closed = false;
+  try {
+    await assert.rejects(
+      fn("installNativeFence")({
+        debugPort: fixture.port,
+        identity: fixture.identity,
+        closeContext: async () => {
+          closed = true;
+        },
+        verifyResponse: async () => true,
+      }),
+    );
+    assert.equal(closed, true);
+    assert.equal(
+      fixture.received.some((c) => c.method === "Runtime.runIfWaitingForDebugger"),
+      false,
+    );
+  } finally {
+    await fixture.close();
+  }
+});
+test("304 continua recusado e diagnóstico preserva apenas status HTTP limitado", async () => {
+  const fixture = await cdpFixture(),
+    closed = Promise.withResolvers();
+  let fence;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => closed.resolve(),
+      verifyResponse: async () => true,
+    });
+    fixture.emit({
+      method: "Fetch.requestPaused",
+      sessionId: "initial-session",
+      params: {
+        requestId: "conditional",
+        request: { url: HML + "/assets/a.js", method: "GET" },
+        resourceType: "Script",
+        responseStatusCode: 304,
+      },
+    });
+    await closed.promise;
+    const state = await fn("settledFenceSnapshot")(fence);
+    assert.equal(state.failureCode, "FENCE_REDIRECT");
+    assert.equal(state.redirectStatus, 304);
+    assert.equal(fn("runtimeDiagnostics")({ fence: state }).fence.redirectStatus, 304);
+    for (const redirectStatus of [-1, 200, 400, Infinity, "SYNTHETIC_PRIVATE_CANARY"])
+      assert.equal(
+        fn("runtimeDiagnostics")({ fence: { redirectStatus } }).fence.redirectStatus,
+        null,
+      );
+  } finally {
+    fence?.close();
+    await fixture.close();
+  }
+});
 test("diagnóstico espera recusa CDP pendente antes de afirmar que a fence não falhou", async () => {
   const fixture = await cdpFixture({ holdFailure: true });
   let fence;
@@ -1186,9 +1269,20 @@ for (const scheme of ["ws", "wss"])
         connections++;
         socket.destroy();
       });
-      const source = createHttpServer((_req, res) => {
+      let revalidations = 0;
+      const documentBody =
+        '<!doctype html><title>synthetic guard</title><link rel="icon" href="data:,">';
+      const source = createHttpServer((req, res) => {
+        res.setHeader("etag", '"synthetic-guard-v1"');
+        res.setHeader("cache-control", "no-cache");
+        if (req.headers["if-none-match"] === '"synthetic-guard-v1"') {
+          revalidations++;
+          res.writeHead(304);
+          res.end();
+          return;
+        }
         res.setHeader("content-type", "text/html");
-        res.end('<!doctype html><title>synthetic guard</title><link rel="icon" href="data:,">');
+        res.end(documentBody);
       });
       const debug = createHttpServer();
       await Promise.all(
@@ -1230,7 +1324,8 @@ for (const scheme of ["ws", "wss"])
         fence = await fn("installNativeFence")({
           debugPort: port,
           identity: targetInfo,
-          verifyResponse: async () => true,
+          verifyResponse: async ({ status, body }) =>
+            status === 200 && Buffer.isBuffer(body) && body.equals(Buffer.from(documentBody)),
           policy: (request) =>
             request.url === `http://127.0.0.1:${source.address().port}/` ||
             sut.requestAllowed(request),
@@ -1247,6 +1342,17 @@ for (const scheme of ["ws", "wss"])
           (await delivered.headerValue("content-security-policy"))?.includes("connect-src"),
           "CSP must reach the protected document",
         );
+        for (let reload = 0; reload < 2; reload++)
+          await page.goto(`http://127.0.0.1:${source.address().port}/`, {
+            waitUntil: "networkidle",
+          });
+        await fence.drain();
+        assert.equal(
+          revalidations,
+          0,
+          "auditor must request full bodies, never conditional 304 responses",
+        );
+        assert.equal(fence.snapshot().verifiedDocuments, 3);
         assert.equal(connections, 0, "no late positive-control connection before attempt");
         assert.ok(
           fence.snapshot().verifiedDocuments > 0,
