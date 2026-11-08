@@ -972,16 +972,18 @@ async function cdpFixture({
       const result =
         command.method === "Target.getTargetInfo"
           ? { targetInfo: identity }
-          : command.method === "Fixture.echo"
-            ? { envelopeSession: command.sessionId ?? null }
-            : command.method === "Network.emulateNetworkConditionsByRule"
-              ? { ruleIds: ["deny-ws", "deny-wss"] }
-              : command.method === "Fetch.getResponseBody"
-                ? {
-                    body: Buffer.from("synthetic adulterated script").toString("base64"),
-                    base64Encoded: true,
-                  }
-                : {};
+          : command.method === "Page.getFrameTree"
+            ? { frameTree: { frame: { id: "main-frame", loaderId: "fixture-loader" } } }
+            : command.method === "Fixture.echo"
+              ? { envelopeSession: command.sessionId ?? null }
+              : command.method === "Network.emulateNetworkConditionsByRule"
+                ? { ruleIds: ["deny-ws", "deny-wss"] }
+                : command.method === "Fetch.getResponseBody"
+                  ? {
+                      body: Buffer.from("synthetic adulterated script").toString("base64"),
+                      base64Encoded: true,
+                    }
+                  : {};
       peer.send(JSON.stringify({ id: command.id, result }));
       if (command.method === "Target.autoAttachRelated" && !command.sessionId)
         peer.send(
@@ -1889,13 +1891,16 @@ test("CLI sem modo explícito não pode encerrar com sucesso silencioso", async 
   assert.equal(code, 1);
 });
 
-test("prova nativa exige sete casos reais no mesmo SHA e mesmos arquivos", () => {
+test("prova nativa exige oito casos reais no mesmo SHA e mesmos arquivos", () => {
   const make = fn("nativeProofFromTap"),
     valid = fn("nativeProofValid"),
     identity = { harnessSha: "a".repeat(40), moduleHash: "b".repeat(64), testHash: "c".repeat(64) };
-  const proof = make("# tests 7\n# pass 7\n# fail 0\n# skipped 0\n", identity);
+  const proof = make("# tests 8\n# pass 8\n# fail 0\n# skipped 0\n", identity);
   assert.equal(valid(proof, identity), true);
   for (const tap of [
+    "# tests 7\n# pass 7\n# fail 0\n# skipped 0\n",
+    "# tests 9\n# pass 9\n# fail 0\n# skipped 0\n",
+    "# tests 8\n# tests 8\n# pass 8\n# fail 0\n# skipped 0\n",
     "# tests 7\n# pass 6\n# fail 1\n# skipped 0\n",
     "# tests 7\n# pass 6\n# fail 0\n# skipped 1\n",
     "",
@@ -2110,7 +2115,7 @@ test("bloqueio pré-login preserva atestado válido e hashes sem gravar campo es
     crypto = await import("node:crypto");
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "contaos-blocked-proof-")),
     identity = { harnessSha: "a".repeat(40), moduleHash: "b".repeat(64), testHash: "c".repeat(64) },
-    native = sut.nativeProofFromTap("# tests 7\n# pass 7\n# fail 0\n# skipped 0\n", identity);
+    native = sut.nativeProofFromTap("# tests 8\n# pass 8\n# fail 0\n# skipped 0\n", identity);
   try {
     await write(
       {
@@ -2187,4 +2192,718 @@ test("diagnóstico recusa enums e contadores inesperados", () => {
   assert.equal(diag.fence.verifiedScripts, null);
   assert.equal(diag.proxy.blocked, null);
   assert.equal(JSON.stringify(diag).includes("SYNTHETIC_PRIVATE_CANARY"), false);
+});
+
+// Test-only transparent proxy: delay one original command, never fabricate a
+// browser event or response. The production fence connects directly to Chromium.
+async function nativeCancellationProxy(realPort, canceledUrl) {
+  const metadata = await (await fetch(`http://127.0.0.1:${realPort}/json/version`)).json();
+  const held = Promise.withResolvers(),
+    terminal = Promise.withResolvers(),
+    rejected = Promise.withResolvers();
+  const peers = new Set(),
+    upstreams = new Set(),
+    network = new Map(),
+    observations = [];
+  let paused, command, upstreamForHeld, proxyPort;
+  const server = createHttpServer((req, res) => {
+    if (req.url !== "/json/version") return void res.writeHead(404).end();
+    res.setHeader("content-type", "application/json");
+    res.end(
+      JSON.stringify({
+        ...metadata,
+        webSocketDebuggerUrl: metadata.webSocketDebuggerUrl.replace(
+          `:${realPort}/`,
+          `:${proxyPort}/`,
+        ),
+      }),
+    );
+  });
+  const sockets = new WebSocketServer({ server });
+  sockets.on("connection", (downstream) => {
+    peers.add(downstream);
+    const upstream = new WebSocket(metadata.webSocketDebuggerUrl),
+      queue = [];
+    upstreams.add(upstream);
+    const forward = (text) =>
+      upstream.readyState === WebSocket.OPEN ? upstream.send(text) : queue.push(text);
+    upstream.addEventListener("open", () => {
+      for (const text of queue.splice(0)) upstream.send(text);
+    });
+    upstream.addEventListener("message", ({ data }) => {
+      const text = String(data),
+        event = JSON.parse(text);
+      if (event.method === "Network.requestWillBeSent")
+        network.set(event.sessionId + "|" + event.params.requestId, event.params);
+      if (event.method === "Fetch.requestPaused" && observations.length < 32)
+        observations.push({ ...event.params, sessionId: event.sessionId });
+      if (
+        event.method === "Fetch.requestPaused" &&
+        event.params.request.url === canceledUrl &&
+        event.params.responseStatusCode === undefined
+      )
+        paused = { ...event.params, sessionId: event.sessionId };
+      if (
+        event.method === "Network.loadingFailed" &&
+        paused?.networkId === event.params.requestId &&
+        paused.sessionId === event.sessionId
+      )
+        terminal.resolve({ ...event.params, sessionId: event.sessionId });
+      if (command && event.id === command.id && event.error) rejected.resolve(event.error);
+      if (downstream.readyState === 1) downstream.send(text);
+    });
+    downstream.on("message", (data) => {
+      const text = String(data),
+        event = JSON.parse(text);
+      if (
+        paused &&
+        event.method === "Fetch.continueRequest" &&
+        event.params.requestId === paused.requestId &&
+        event.sessionId === paused.sessionId
+      ) {
+        assert.equal(command, undefined, "one initial continuation only");
+        command = event;
+        upstreamForHeld = upstream;
+        held.resolve();
+      } else forward(text);
+    });
+    downstream.on("close", () => {
+      peers.delete(downstream);
+      upstream.close();
+    });
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  proxyPort = server.address().port;
+  return {
+    port: proxyPort,
+    held: held.promise,
+    terminal: terminal.promise,
+    rejected: rejected.promise,
+    request() {
+      return { paused, network: network.get(paused?.sessionId + "|" + paused?.networkId) };
+    },
+    metadata() {
+      return observations.flatMap((p) => {
+        const n = network.get(p.sessionId + "|" + p.networkId);
+        if (!n) return [];
+        return [
+          "# NATIVE_LIFECYCLE_META " +
+            n.type +
+            " " +
+            p.resourceType +
+            " " +
+            p.request.method +
+            " " +
+            (p.responseStatusCode !== undefined || p.responseErrorReason !== undefined
+              ? "RESPONSE"
+              : "REQUEST") +
+            " " +
+            Number(!!n.frameId) +
+            " " +
+            Number(!!n.frameId && n.frameId === p.frameId) +
+            " " +
+            Number(!!n.loaderId),
+        ];
+      });
+    },
+    release() {
+      assert.ok(command);
+      upstreamForHeld.send(JSON.stringify(command));
+    },
+    async close() {
+      for (const ws of peers) ws.terminate();
+      for (const ws of upstreams) ws.close();
+      await new Promise((resolve) => sockets.close(resolve));
+      await new Promise((resolve) => server.close(resolve));
+    },
+  };
+}
+
+test("diagnóstico da reprodução nativa publica somente etapas fechadas", () => {
+  const diagnose = fn("nativeCancellationDiagnostics");
+  assert.deepEqual(
+    diagnose("# NATIVE_CANCEL_STAGE REQUEST_HELD\n# NATIVE_CANCEL_STAGE ERROR_PROVED\n"),
+    ["REQUEST_HELD", "ERROR_PROVED"],
+  );
+  assert.deepEqual(
+    diagnose(
+      "# NATIVE_CANCEL_STAGE CANARIO_PRIVADO\n# NATIVE_CANCEL_STAGE ERROR_PROVED pessoa@example.com",
+    ),
+    [],
+  );
+  assert.equal(
+    fn("nativeCancellationFailure")("# NATIVE_CANCEL_FAILURE FENCE_REQUEST_LIFECYCLE"),
+    "FENCE_REQUEST_LIFECYCLE",
+  );
+  assert.equal(
+    fn("nativeCancellationFailure")("# NATIVE_CANCEL_FAILURE OTHER pessoa@example.com"),
+    null,
+  );
+});
+
+test("diagnóstico de tipos nativos aceita somente enums CDP sem conteúdo", () => {
+  assert.deepEqual(fn("nativeCancellationTypes")("# NATIVE_CANCEL_TYPES Other Fetch"), {
+    network: "Other",
+    fetch: "Fetch",
+  });
+  assert.equal(
+    fn("nativeCancellationTypes")("# NATIVE_CANCEL_TYPES pessoa@example.com Fetch"),
+    null,
+  );
+  assert.equal(fn("nativeCancellationTypes")("# NATIVE_CANCEL_TYPES Other Fetch extra"), null);
+});
+
+test("diagnóstico de vínculo nativo não publica identificadores nem texto livre", () => {
+  assert.deepEqual(
+    fn("nativeLifecycleMetadata")("# NATIVE_LIFECYCLE_META Preflight Other OPTIONS REQUEST 0 0 0"),
+    [
+      {
+        network: "Preflight",
+        fetch: "Other",
+        method: "OPTIONS",
+        stage: "REQUEST",
+        networkFramePresent: false,
+        sameFrame: false,
+        loaderPresent: false,
+      },
+    ],
+  );
+  assert.deepEqual(
+    fn("nativeLifecycleMetadata")(
+      "# NATIVE_LIFECYCLE_META Preflight Other pessoa@example.com REQUEST 0 0 0",
+    ),
+    [],
+  );
+});
+
+test(
+  "Chromium nativo: cancelamento inicial real não libera corpo nem transmite ao canário",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
+  async (t) => {
+    const { chromium } = await import("playwright");
+    let browser, context, fence, proxy;
+    const traffic = { connections: 0, bytes: 0, requests: 0 };
+    const canary = createHttpServer((req, res) => {
+      traffic.requests++;
+      if (req.url === "/cors-ok") {
+        res.setHeader("access-control-allow-origin", `http://127.0.0.1:${source.address().port}`);
+        res.setHeader("access-control-allow-methods", "POST");
+        res.setHeader("access-control-allow-headers", "x-native-fixture");
+      }
+      res.end("canary");
+    });
+    canary.on("connection", (socket) => {
+      traffic.connections++;
+      socket.on("data", (bytes) => {
+        traffic.bytes += bytes.length;
+      });
+    });
+    const html = '<!doctype html><title>native cancellation</title><link rel="icon" href="data:,">';
+    const source = createHttpServer((req, res) => {
+        if (req.url === "/altered.js") {
+          res.setHeader("content-type", "application/javascript");
+          res.end(`fetch('http://127.0.0.1:${canary.address().port}/leak')`);
+          return;
+        }
+        res.setHeader("content-type", "text/html");
+        res.end(html);
+      }),
+      debug = createHttpServer();
+    await Promise.all(
+      [source, canary, debug].map(
+        (server) => new Promise((resolve) => server.listen(0, "127.0.0.1", resolve)),
+      ),
+    );
+    const realPort = debug.address().port;
+    await new Promise((resolve) => debug.close(resolve));
+    const within = (promise) =>
+      Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          const t = setTimeout(() => reject(Error("native cancellation event missing")), 3000);
+          t.unref();
+        }),
+      ]);
+    try {
+      browser = await chromium.launch({
+        chromiumSandbox: true,
+        env: fn("browserEnvironment")(process.env),
+        args: [`--remote-debugging-port=${realPort}`],
+      });
+      const origin = `http://127.0.0.1:${source.address().port}`,
+        canceledUrl = `http://127.0.0.1:${canary.address().port}/canceled`;
+      const positive = await browser.newContext();
+      const control = await positive.newPage();
+      await control.goto(origin + "/");
+      await control.evaluate(async (url) => {
+        await fetch(url, { mode: "no-cors" });
+      }, canceledUrl);
+      assert.ok(
+        traffic.connections > 0 && traffic.bytes > 0 && traffic.requests > 0,
+        "positive control must demonstrate the independent socket sensor",
+      );
+      t.diagnostic("NATIVE_CANCEL_STAGE SENSOR_PROVED");
+      await positive.close();
+      canary.closeIdleConnections();
+      Object.assign(traffic, { connections: 0, bytes: 0, requests: 0 });
+      context = await browser.newContext();
+      const page = await context.newPage();
+      // Local inert fixture loaded before the fence: this test isolates request
+      // cancellation; the seven original tests retain the production CSP proof.
+      await page.goto(origin + "/", { waitUntil: "networkidle" });
+      assert.equal(await page.title(), "native cancellation");
+      const session = await context.newCDPSession(page),
+        { targetInfo } = await session.send("Target.getTargetInfo");
+      await session.detach();
+      proxy = await nativeCancellationProxy(realPort, canceledUrl);
+      fence = await fn("installNativeFence")({
+        debugPort: proxy.port,
+        identity: targetInfo,
+        policy: (r) =>
+          (r.method === "GET" && (r.url.startsWith(origin + "/") || r.url === canceledUrl)) ||
+          (["OPTIONS", "POST"].includes(r.method) &&
+            r.url === canceledUrl.replace("/canceled", "/cors-ok")),
+        verifyResponse: async ({ resourceType, status, body }) =>
+          resourceType !== "Script" &&
+          status === 200 &&
+          (resourceType !== "Document" || body.equals(Buffer.from(html))),
+        closeContext: () => context.close(),
+      });
+      t.diagnostic("NATIVE_CANCEL_STAGE FENCE_READY");
+      await page.evaluate((url) => {
+        window.nativeCancelController = new AbortController();
+        void fetch(url, { signal: window.nativeCancelController.signal }).catch(() => {});
+      }, canceledUrl);
+      t.diagnostic("NATIVE_CANCEL_STAGE FETCH_STARTED");
+      await within(proxy.held);
+      t.diagnostic("NATIVE_CANCEL_STAGE REQUEST_HELD");
+      await page.evaluate(() => window.nativeCancelController.abort());
+      const terminal = await within(proxy.terminal),
+        record = proxy.request();
+      assert.equal(terminal.canceled, true);
+      assert.equal(terminal.errorText, "net::ERR_ABORTED");
+      assert.equal(terminal.type, "Fetch");
+      t.diagnostic("NATIVE_CANCEL_STAGE TERMINAL_PROVED");
+      assert.equal(record.paused.networkId, terminal.requestId);
+      assert.equal(record.paused.frameId, record.network.frameId);
+      assert.ok(record.network.loaderId);
+      assert.equal(record.network.request.method, "GET");
+      assert.equal(record.network.type, "Fetch");
+      assert.equal(record.paused.resourceType, "XHR");
+      t.diagnostic("NATIVE_CANCEL_TYPES Fetch XHR");
+      t.diagnostic("NATIVE_CANCEL_STAGE IDENTITY_PROVED");
+      proxy.release();
+      const error = await within(proxy.rejected);
+      assert.equal(error.code, -32602);
+      assert.equal(error.message, "Invalid InterceptionId.");
+      t.diagnostic("NATIVE_CANCEL_STAGE ERROR_PROVED");
+      await fence.drain();
+      assert.deepEqual(
+        traffic,
+        { connections: 0, bytes: 0, requests: 0 },
+        "request canceled while paused must never connect or transmit to independent canary",
+      );
+      t.diagnostic("NATIVE_CANCEL_STAGE TRANSPORT_ZERO");
+      assert.equal(
+        fence.snapshot().failed,
+        false,
+        "proven terminal initial cancellation must not close the context",
+      );
+      assert.equal(fence.snapshot().canceledInitialRequests, 1);
+      assert.equal(await page.evaluate(() => document.title), "native cancellation");
+      await page.evaluate(
+        async (url) => {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { "x-native-fixture": "synthetic" },
+            body: "synthetic",
+          });
+          if (!response.ok) throw Error("ordinary CORS request failed");
+        },
+        canceledUrl.replace("/canceled", "/cors-ok"),
+      );
+      await fence.drain();
+      assert.equal(fence.snapshot().failed, false, "ordinary preflight and response remain usable");
+      assert.ok(
+        traffic.requests >= 2 && traffic.bytes > 0,
+        "ordinary allowed CORS traffic is measured",
+      );
+      canary.closeIdleConnections();
+      Object.assign(traffic, { connections: 0, bytes: 0, requests: 0 });
+      await page.addScriptTag({ url: origin + "/altered.js" }).catch(() => {});
+      await fence.drain();
+      assert.equal(fence.snapshot().failed, true);
+      assert.equal(fence.snapshot().failureCode, "FENCE_SOURCE");
+      assert.deepEqual(
+        traffic,
+        { connections: 0, bytes: 0, requests: 0 },
+        "altered response stays blocked after benign cancellation",
+      );
+    } catch (error) {
+      const candidate = fence?.snapshot().failureCode || error?.code;
+      const allowed = new Set([
+        "FENCE_REQUEST_LIFECYCLE",
+        "FENCE_LIFECYCLE_NO_NETWORK",
+        "FENCE_LIFECYCLE_TERMINAL",
+        "FENCE_LIFECYCLE_FRAME",
+        "FENCE_LIFECYCLE_TYPE",
+        "FENCE_REQUEST",
+        "FENCE_SOURCE",
+        "FENCE_TRANSPORT",
+        "CDP_COMMAND",
+        "FENCE_CDP_CLOSED",
+      ]);
+      t.diagnostic("NATIVE_CANCEL_FAILURE " + (allowed.has(candidate) ? candidate : "OTHER"));
+      for (const line of proxy?.metadata() || []) {
+        if (fn("nativeLifecycleMetadata")(line).length) t.diagnostic(line.slice(2));
+      }
+      const observed = proxy?.request();
+      const types = fn("nativeCancellationTypes")(
+        "# NATIVE_CANCEL_TYPES " + observed?.network?.type + " " + observed?.paused?.resourceType,
+      );
+      if (types && candidate === "FENCE_LIFECYCLE_TYPE")
+        t.diagnostic("NATIVE_CANCEL_TYPES " + types.network + " " + types.fetch);
+      throw error;
+    } finally {
+      fence?.close();
+      await browser?.close();
+      await proxy?.close();
+      await new Promise((resolve) => source.close(resolve));
+      await new Promise((resolve) => canary.close(resolve));
+    }
+  },
+);
+
+function lifecycleInput(delta = {}) {
+  const identity = { targetId: "own-target", browserContextId: "own-context" },
+    session = { id: "own-session", targetId: "own-target", contextId: "own-context" },
+    network = {
+      requestId: "network-1",
+      frameId: "main-frame",
+      loaderId: "loader-1",
+      type: "Fetch",
+      timestamp: 1,
+      request: { url: HML + "/", method: "GET" },
+    },
+    pause = {
+      requestId: "fetch-1",
+      networkId: "network-1",
+      frameId: "main-frame",
+      resourceType: "Fetch",
+      request: { url: HML + "/", method: "GET" },
+    },
+    terminal = {
+      requestId: "network-1",
+      type: "Fetch",
+      timestamp: 2,
+      canceled: true,
+      errorText: "net::ERR_ABORTED",
+    },
+    error = {
+      code: "CDP_COMMAND",
+      command: "Fetch.continueRequest",
+      protocolCode: -32602,
+      reason: "INVALID_INTERCEPTION",
+    };
+  const tracker = fn("createRequestLifecycle")(identity);
+  tracker.frame(session, { id: "main-frame", loaderId: "loader-1" });
+  tracker.observe(session, "Network.requestWillBeSent", { ...network, ...delta.network });
+  const ticket = tracker.pause(session, { ...pause, ...delta.pause });
+  tracker.sent(ticket);
+  return { tracker, identity, session, network, pause, ticket, terminal, error };
+}
+
+test("ciclo consume somente uma continuação inicial comprovadamente cancelada", async () => {
+  const f = lifecycleInput();
+  f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+  assert.equal(await f.tracker.handleCanceled(f.ticket, f.error), true);
+  assert.equal(await f.tracker.handleCanceled(f.ticket, f.error), false);
+  assert.equal(f.tracker.snapshot().canceled, 1);
+  assert.throws(
+    () => f.tracker.acknowledge(f.ticket),
+    (e) => e.code === "FENCE_REQUEST_LIFECYCLE",
+  );
+  f.tracker.finish(f.ticket);
+  assert.equal(f.tracker.snapshot().active, 0);
+  f.tracker.close();
+});
+
+test("um NetworkID não aceita dois FetchIDs iniciais distintos", () => {
+  const f = lifecycleInput();
+  assert.throws(
+    () => f.tracker.pause(f.session, { ...f.pause, requestId: "distinct-initial-fetch" }),
+    (e) => e.code === "FENCE_REQUEST_LIFECYCLE",
+  );
+  f.tracker.close();
+});
+test("consumo terminal é exclusivo no registro Network, além do ticket", async () => {
+  const f = lifecycleInput();
+  f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+  const duplicate = { ...f.ticket };
+  assert.equal(await f.tracker.handleCanceled(f.ticket, f.error), true);
+  assert.equal(await f.tracker.handleCanceled(duplicate, f.error), false);
+  assert.equal(f.tracker.snapshot().canceled, 1);
+  f.tracker.close();
+});
+for (const [name, change] of [
+  ["canceledfalse", { canceled: false }],
+  ["errodivergente", { errorText: "net::ERR_FAILED" }],
+  ["tipo", { type: "Script" }],
+  ["outrorequest", { requestId: "network-2" }],
+  ["tempoanterior", { timestamp: 0 }],
+  ["temponan", { timestamp: NaN }],
+  ["bloqueio", { blockedReason: "csp" }],
+  ["cors", { corsErrorStatus: { corsError: "InvalidResponse" } }],
+])
+  test("cancelamento recusa terminal " + name, async () => {
+    const f = lifecycleInput();
+    f.tracker.observe(f.session, "Network.loadingFailed", { ...f.terminal, ...change });
+    const running = f.tracker.handleCanceled(f.ticket, f.error);
+    f.tracker.close();
+    assert.equal(await running, false);
+    assert.equal(f.tracker.snapshot().canceled, 0);
+  });
+for (const command of [
+  "Fetch.getResponseBody",
+  "Fetch.continueResponse",
+  "Fetch.fulfillRequest",
+  "Fetch.failRequest",
+])
+  test("cancelamento não ignora erro de " + command, async () => {
+    const f = lifecycleInput();
+    f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+    assert.equal(await f.tracker.handleCanceled(f.ticket, { ...f.error, command }), false);
+    f.tracker.close();
+  });
+test("cancelamento recusa falta de terminal, ack, resposta e nova geração", async () => {
+  for (const condition of ["missing", "ack", "response", "generation", "closed"]) {
+    const f = lifecycleInput();
+    if (condition === "ack") f.tracker.acknowledge(f.ticket);
+    if (condition === "response")
+      f.tracker.observe(f.session, "Network.responseReceived", {
+        requestId: "network-1",
+        type: "Fetch",
+      });
+    if (condition === "generation")
+      f.tracker.observe(f.session, "Network.requestWillBeSent", {
+        ...f.network,
+        requestId: "next-document",
+        loaderId: "loader-2",
+        type: "Document",
+      });
+    if (condition !== "missing") f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+    if (condition === "closed") f.tracker.close();
+    const running = f.tracker.handleCanceled(f.ticket, f.error);
+    f.tracker.close();
+    assert.equal(await running, false, condition);
+  }
+});
+
+test("ciclo recusa identidade divergente, redirect, reutilização e pause duplicado", () => {
+  for (const key of ["targetId", "contextId", "id"]) {
+    const f = lifecycleInput();
+    assert.throws(() =>
+      f.tracker.observe({ ...f.session, [key]: "foreign" }, "Network.loadingFailed", f.terminal),
+    );
+    f.tracker.close();
+  }
+  for (const delta of [
+    { frameId: "other" },
+    { networkId: "other" },
+    { request: { url: HML + "/other", method: "GET" } },
+    { resourceType: "Script" },
+  ]) {
+    const f = lifecycleInput();
+    assert.throws(() =>
+      f.tracker.pause(f.session, { ...f.pause, requestId: "new-fetch", ...delta }),
+    );
+    f.tracker.close();
+  }
+  const f = lifecycleInput();
+  assert.throws(() => f.tracker.pause(f.session, f.pause));
+  assert.throws(() => f.tracker.observe(f.session, "Network.requestWillBeSent", f.network));
+  f.tracker.close();
+  const g = lifecycleInput();
+  assert.throws(() =>
+    g.tracker.observe(g.session, "Network.requestWillBeSent", {
+      ...g.network,
+      requestId: "redirect",
+      redirectResponse: { status: 302 },
+    }),
+  );
+  g.tracker.close();
+});
+test("ciclo tem mapas limitados e limpa pendências ao fechar", async () => {
+  const f = lifecycleInput();
+  for (let n = 1; n < 1024; n++)
+    f.tracker.observe(f.session, "Network.requestWillBeSent", {
+      ...f.network,
+      requestId: "bounded-" + n,
+    });
+  assert.throws(() =>
+    f.tracker.observe(f.session, "Network.requestWillBeSent", {
+      ...f.network,
+      requestId: "excess",
+    }),
+  );
+  const waiting = f.tracker.handleCanceled(f.ticket, f.error);
+  f.tracker.close();
+  assert.equal(await waiting, false);
+  assert.equal(f.tracker.snapshot().active, 0);
+});
+
+test("ciclo aguarda evento terminal tardio exato sem repetir continuação", async () => {
+  const f = lifecycleInput();
+  const running = f.tracker.handleCanceled(f.ticket, f.error);
+  await new Promise((resolve) => setImmediate(resolve));
+  f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+  assert.equal(await running, true);
+  assert.equal(f.tracker.snapshot().canceled, 1);
+  f.tracker.close();
+});
+test("ciclo não aceita política ou proveniência como cancelamento", async () => {
+  for (const code of ["FENCE_REQUEST", "FENCE_SOURCE", "FENCE_TRANSPORT"]) {
+    const f = lifecycleInput();
+    f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+    assert.equal(await f.tracker.handleCanceled(f.ticket, { ...f.error, code }), false);
+    f.tracker.close();
+  }
+});
+test("tombstones sobrevivem à conclusão e têm teto fechado", () => {
+  const f = lifecycleInput();
+  f.tracker.observe(f.session, "Network.loadingFinished", { requestId: "network-1" });
+  f.tracker.finish(f.ticket);
+  assert.equal(f.tracker.snapshot().active, 0);
+  assert.throws(() => f.tracker.observe(f.session, "Network.requestWillBeSent", f.network));
+  for (let n = 1; n < 65536; n++) {
+    const requestId = "retired-" + n;
+    f.tracker.observe(f.session, "Network.requestWillBeSent", { ...f.network, requestId });
+    f.tracker.observe(f.session, "Network.loadingFinished", { requestId });
+  }
+  assert.equal(f.tracker.snapshot().active, 0);
+  assert.throws(() =>
+    f.tracker.observe(f.session, "Network.requestWillBeSent", {
+      ...f.network,
+      requestId: "overflow",
+    }),
+  );
+  f.tracker.close();
+});
+
+test("par nativo Fetch/XHR mantém tipos originais e autoriza apenas GET cancelado", async () => {
+  const f = lifecycleInput({ pause: { resourceType: "XHR" } });
+  f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+  assert.equal(await f.tracker.handleCanceled(f.ticket, f.error), true);
+  assert.equal(f.tracker.snapshot().canceled, 1);
+  f.tracker.close();
+});
+for (const method of ["POST", "OPTIONS"])
+  test("par Fetch/XHR não autoriza cancelamento " + method, async () => {
+    const request = { url: HML + "/", method };
+    const f = lifecycleInput({ network: { request }, pause: { request, resourceType: "XHR" } });
+    f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+    assert.equal(await f.tracker.handleCanceled(f.ticket, f.error), false);
+    f.tracker.close();
+  });
+test("par Fetch/XHR aceita resposta ordinária estável sem exceção", () => {
+  const f = lifecycleInput({ pause: { resourceType: "XHR" } });
+  f.tracker.acknowledge(f.ticket);
+  f.tracker.finish(f.ticket);
+  const response = f.tracker.pause(f.session, {
+    ...f.pause,
+    resourceType: "XHR",
+    responseStatusCode: 200,
+  });
+  assert.equal(response.stage, "RESPONSE");
+  f.tracker.finish(response);
+  f.tracker.close();
+});
+test("tipo Fetch fica imutável entre estágios, mesmo quando outro par seria válido", () => {
+  const f = lifecycleInput();
+  f.tracker.acknowledge(f.ticket);
+  f.tracker.finish(f.ticket);
+  assert.throws(() =>
+    f.tracker.pause(f.session, { ...f.pause, resourceType: "XHR", responseStatusCode: 200 }),
+  );
+  f.tracker.close();
+});
+for (const [networkType, fetchType] of [
+  ["XHR", "Fetch"],
+  ["Other", "XHR"],
+  ["Fetch", "Other"],
+  ["Preflight", "XHR"],
+  [undefined, undefined],
+  ["UNKNOWN", "UNKNOWN"],
+])
+  test("ciclo recusa par não comprovado " + networkType + "/" + fetchType, () => {
+    assert.throws(() =>
+      lifecycleInput({ network: { type: networkType }, pause: { resourceType: fetchType } }),
+    );
+  });
+
+function ordinaryPreflight(delta = {}) {
+  const request = { url: HML + "/", method: "OPTIONS" };
+  return lifecycleInput({
+    network: { type: "Other", frameId: undefined, loaderId: "", request, ...delta.network },
+    pause: { resourceType: "XHR", request, ...delta.pause },
+  });
+}
+test("preflight ordinário sem Networkframe segue resposta e nunca autoriza cancelamento", async () => {
+  const f = ordinaryPreflight();
+  f.tracker.acknowledge(f.ticket);
+  f.tracker.finish(f.ticket);
+  const response = f.tracker.pause(f.session, {
+    ...f.pause,
+    resourceType: "XHR",
+    request: { url: HML + "/", method: "OPTIONS" },
+    responseStatusCode: 200,
+  });
+  assert.equal(response.stage, "RESPONSE");
+  f.tracker.finish(response);
+  f.tracker.close();
+  const g = ordinaryPreflight();
+  g.tracker.observe(g.session, "Network.loadingFailed", { ...g.terminal, type: "Other" });
+  assert.equal(await g.tracker.handleCanceled(g.ticket, g.error), false);
+  assert.equal(g.tracker.snapshot().canceled, 0);
+  g.tracker.finish(g.ticket);
+  assert.equal(g.tracker.snapshot().active, 0);
+  g.tracker.close();
+});
+for (const delta of [
+  { network: { frameId: "main-frame" } },
+  { network: { loaderId: "loader-1" } },
+  { network: { frameId: null } },
+  { network: { loaderId: null } },
+  { network: { type: "Preflight" } },
+  { network: { timestamp: NaN } },
+  { pause: { frameId: "foreign" } },
+  { pause: { frameId: undefined } },
+  ...["GET", "POST"].map((method) => ({
+    network: { request: { url: HML + "/", method } },
+    pause: { request: { url: HML + "/", method } },
+  })),
+])
+  test("preflight recusa identidade ou método não comprovado " + JSON.stringify(delta), () => {
+    assert.throws(() => ordinaryPreflight(delta));
+  });
+test("preflight recusa mudança de frame, geração e tipo na resposta", () => {
+  for (const condition of ["frame", "generation", "type"]) {
+    const f = ordinaryPreflight();
+    f.tracker.acknowledge(f.ticket);
+    f.tracker.finish(f.ticket);
+    if (condition === "generation")
+      f.tracker.observe(f.session, "Page.frameNavigated", {
+        frame: { id: "main-frame", loaderId: "loader-2" },
+      });
+    assert.throws(() =>
+      f.tracker.pause(f.session, {
+        ...f.pause,
+        resourceType: condition === "type" ? "Other" : "XHR",
+        frameId: condition === "frame" ? "foreign" : "main-frame",
+        request: { url: HML + "/", method: "OPTIONS" },
+        responseStatusCode: 200,
+      }),
+    );
+    f.tracker.close();
+  }
 });

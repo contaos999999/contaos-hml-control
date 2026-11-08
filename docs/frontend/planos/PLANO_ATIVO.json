@@ -1322,6 +1322,15 @@
         "cancellation_eligible": false,
         "state": "GATE361_INTEGRADO",
         "merge": "75f5364aebdfc829781d5a6dfeda0fa55e823a4a"
+      },
+      "build_candidate": {
+        "pr": 359,
+        "code_head": "95deb3832cb082532cdb74b0fee71522cd2ad479",
+        "native_run": 42506645163,
+        "native_pass": 8,
+        "unit_pass": 161,
+        "review": "SEM_CRITICAL_IMPORTANT_CONDICIONADO_CI_HEAD_FINAL",
+        "state": "REANCORADO_AGUARDA_CI_FINAL"
       }
     }
   },
