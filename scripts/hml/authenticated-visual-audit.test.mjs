@@ -1377,3 +1377,47 @@ test("bloqueio pré-login preserva atestado válido e hashes sem gravar campo es
     await fs.rm(root, { recursive: true, force: true });
   }
 });
+
+test("diagnóstico distingue timeout e recusa da fence sem mensagem ou dados privados", () => {
+  const diag = fn("runtimeDiagnostics")({
+    phase: "WAIT_AUTH_DESTINATION",
+    errorName: "TimeoutError",
+    contextClosed: false,
+    routeClass: "LOGIN",
+    fence: {
+      failed: true,
+      failureCode: "FENCE_SOURCE",
+      verifiedDocuments: 1,
+      verifiedScripts: 12,
+      blockedRequests: 0,
+    },
+    proxy: { forwarded: 2, blocked: 0, connectionFailures: 0 },
+    flags: { formLocated: true, submitActivated: true },
+    loginUi: { observed: true, credentialRejected: true },
+    message: "SYNTHETIC_PRIVATE_CANARY",
+    stack: "SYNTHETIC_PRIVATE_CANARY",
+    url: "https://foreign.invalid/SYNTHETIC_PRIVATE_CANARY",
+    headers: { authorization: "SYNTHETIC_PRIVATE_CANARY" },
+  });
+  assert.equal(diag.phase, "WAIT_AUTH_DESTINATION");
+  assert.equal(diag.errorKind, "TIMEOUT");
+  assert.equal(diag.fence.failureCode, "FENCE_SOURCE");
+  assert.equal(diag.flags.formLocated, true);
+  assert.equal(diag.loginUi.credentialRejected, true);
+  assert.equal(JSON.stringify(diag).includes("SYNTHETIC_PRIVATE_CANARY"), false);
+});
+test("diagnóstico recusa enums e contadores inesperados", () => {
+  const diag = fn("runtimeDiagnostics")({
+    phase: "SYNTHETIC_PRIVATE_CANARY",
+    routeClass: "SYNTHETIC_PRIVATE_CANARY",
+    fence: { failureCode: "SYNTHETIC_PRIVATE_CANARY", verifiedScripts: -1 },
+    proxy: { blocked: Infinity },
+    loginUi: { extra: "SYNTHETIC_PRIVATE_CANARY" },
+  });
+  assert.equal(diag.phase, "UNKNOWN");
+  assert.equal(diag.routeClass, "UNAVAILABLE");
+  assert.equal(diag.fence.failureCode, null);
+  assert.equal(diag.fence.verifiedScripts, null);
+  assert.equal(diag.proxy.blocked, null);
+  assert.equal(JSON.stringify(diag).includes("SYNTHETIC_PRIVATE_CANARY"), false);
+});
