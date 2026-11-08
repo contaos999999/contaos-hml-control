@@ -416,8 +416,14 @@ test("classificador reconhece falhas de navegação definidas no Playwright cong
   for (const [message, reason] of [
     ["page.waitForURL: Navigation failed because page crashed!", "PAGE_CRASHED"],
     ["page.waitForURL: Navigating frame was detached!", "FRAME_DETACHED"],
-    ['page.waitForURL: Navigation to "https://private.invalid/SYNTHETIC_PRIVATE_CANARY" is interrupted by another navigation to "https://private.invalid/"', "NAVIGATION_INTERRUPTED"],
-    ["page.waitForURL: net::ERR_FAILED at https://private.invalid/SYNTHETIC_PRIVATE_CANARY", "NETWORK_FAILED"],
+    [
+      'page.waitForURL: Navigation to "https://private.invalid/SYNTHETIC_PRIVATE_CANARY" is interrupted by another navigation to "https://private.invalid/"',
+      "NAVIGATION_INTERRUPTED",
+    ],
+    [
+      "page.waitForURL: net::ERR_FAILED at https://private.invalid/SYNTHETIC_PRIVATE_CANARY",
+      "NETWORK_FAILED",
+    ],
     ["page.waitForURL: net::ERR_EMPTY_RESPONSE", "NETWORK_EMPTY_RESPONSE"],
     ["page.waitForURL: net::ERR_HTTP_RESPONSE_CODE_FAILURE", "NETWORK_HTTP_RESPONSE"],
   ]) {
