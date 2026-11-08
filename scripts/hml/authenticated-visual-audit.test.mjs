@@ -2840,3 +2840,70 @@ for (const [networkType, fetchType] of [
       lifecycleInput({ network: { type: networkType }, pause: { resourceType: fetchType } }),
     );
   });
+
+function ordinaryPreflight(delta = {}) {
+  const request = { url: HML + "/", method: "OPTIONS" };
+  return lifecycleInput({
+    network: { type: "Other", frameId: undefined, loaderId: "", request, ...delta.network },
+    pause: { resourceType: "XHR", request, ...delta.pause },
+  });
+}
+test("preflight ordinário sem Networkframe segue resposta e nunca autoriza cancelamento", async () => {
+  const f = ordinaryPreflight();
+  f.tracker.acknowledge(f.ticket);
+  f.tracker.finish(f.ticket);
+  const response = f.tracker.pause(f.session, {
+    ...f.pause,
+    resourceType: "XHR",
+    request: { url: HML + "/", method: "OPTIONS" },
+    responseStatusCode: 200,
+  });
+  assert.equal(response.stage, "RESPONSE");
+  f.tracker.finish(response);
+  f.tracker.close();
+  const g = ordinaryPreflight();
+  g.tracker.observe(g.session, "Network.loadingFailed", { ...g.terminal, type: "Other" });
+  assert.equal(await g.tracker.handleCanceled(g.ticket, g.error), false);
+  assert.equal(g.tracker.snapshot().canceled, 0);
+  g.tracker.finish(g.ticket);
+  assert.equal(g.tracker.snapshot().active, 0);
+  g.tracker.close();
+});
+for (const delta of [
+  { network: { frameId: "main-frame" } },
+  { network: { loaderId: "loader-1" } },
+  { network: { frameId: null } },
+  { network: { loaderId: null } },
+  { network: { type: "Preflight" } },
+  { network: { timestamp: NaN } },
+  { pause: { frameId: "foreign" } },
+  { pause: { frameId: undefined } },
+  ...["GET", "POST"].map((method) => ({
+    network: { request: { url: HML + "/", method } },
+    pause: { request: { url: HML + "/", method } },
+  })),
+])
+  test("preflight recusa identidade ou método não comprovado " + JSON.stringify(delta), () => {
+    assert.throws(() => ordinaryPreflight(delta));
+  });
+test("preflight recusa mudança de frame, geração e tipo na resposta", () => {
+  for (const condition of ["frame", "generation", "type"]) {
+    const f = ordinaryPreflight();
+    f.tracker.acknowledge(f.ticket);
+    f.tracker.finish(f.ticket);
+    if (condition === "generation")
+      f.tracker.observe(f.session, "Page.frameNavigated", {
+        frame: { id: "main-frame", loaderId: "loader-2" },
+      });
+    assert.throws(() =>
+      f.tracker.pause(f.session, {
+        ...f.pause,
+        resourceType: condition === "type" ? "Other" : "XHR",
+        frameId: condition === "frame" ? "foreign" : "main-frame",
+        request: { url: HML + "/", method: "OPTIONS" },
+        responseStatusCode: 200,
+      }),
+    );
+    f.tracker.close();
+  }
+});
