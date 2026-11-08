@@ -10,6 +10,10 @@ on:
       - .github/workflows/contaos-trilha-a-fixtures.yml
       - package.json
       - bun.lock
+  workflow_run:
+    workflows: ["ContaOS Frontend Zero-Drift"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       frontend_sha:
@@ -23,6 +27,40 @@ on:
 permissions:
   contents: read
 jobs:
+  request:
+    if: github.event_name == 'workflow_run'
+    name: Trilha A solicitacao unica sem credenciais
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      selected: ${{ steps.request.outputs.selected }}
+      sha: ${{ steps.request.outputs.sha }}
+      frontend_sha: ${{ steps.request.outputs.frontend_sha }}
+      deployment_id: ${{ steps.request.outputs.deployment_id }}
+    env:
+      CONTAOS_HARNESS_SHA: ${{ github.event.workflow_run.head_sha }}
+      CONTAOS_REQUEST_OPERATION: fixtures
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+      - run: bun install --frozen-lockfile
+      - name: Provar evento e unicidade somente em metadados Actions
+        id: request
+        env:
+          CONTAOS_ACTIONS_READ_TOKEN: ${{ github.token }}
+        run: node scripts/hml/authenticated-visual-audit.mjs --request-preflight
   protocol:
     if: github.event_name == 'pull_request'
     name: Trilha A protocolo e Chromium sem credenciais
@@ -60,7 +98,8 @@ jobs:
       - name: Comprovar novo comando e atestado nativo completo, sem credenciais
         run: node scripts/hml/authenticated-visual-audit.mjs --native-guard
   private:
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: request
+    if: always() && ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_run' && needs.request.outputs.selected == 'true'))
     name: Trilha A preparacao sintetica HML
     runs-on: ubuntu-22.04
     environment: hml
@@ -69,12 +108,14 @@ jobs:
       group: trilha-a-authenticated-hml
       cancel-in-progress: false
     env:
-      CONTAOS_HARNESS_SHA: ${{ github.sha }}
+      CONTAOS_REQUEST_OPERATION: fixtures
+      CONTAOS_HARNESS_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
       CONTAOS_FRONTEND_SOURCE: ${{ github.workspace }}/frontend-source
     steps:
       - name: Checkout imutavel do executor main
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -88,8 +129,8 @@ jobs:
       - name: Reancorar deployment HML sem credenciais, antes do checkout da fonte
         id: deployment
         env:
-          CONTAOS_REQUESTED_FRONTEND_SHA: ${{ inputs.frontend_sha }}
-          CONTAOS_REQUESTED_DEPLOYMENT_ID: ${{ inputs.deployment_id }}
+          CONTAOS_REQUESTED_FRONTEND_SHA: ${{ github.event_name == 'workflow_run' && needs.request.outputs.frontend_sha || inputs.frontend_sha }}
+          CONTAOS_REQUESTED_DEPLOYMENT_ID: ${{ github.event_name == 'workflow_run' && needs.request.outputs.deployment_id || inputs.deployment_id }}
         run: node scripts/hml/authenticated-visual-audit.mjs --resolve-deployment
       - name: Validar SHA ancestral antes de baixar ou executar a fonte
         run: |
@@ -119,6 +160,9 @@ jobs:
         run: node scripts/hml/authenticated-visual-audit.mjs --native-guard
       - name: Preparacao e SSR sem credenciais privadas
         run: node scripts/hml/authenticated-visual-audit.mjs --prepare
+      - name: Revalidar main e unicidade dentro da concorrencia antes de secrets
+        if: github.event_name == 'workflow_run'
+        run: node scripts/hml/authenticated-visual-audit.mjs --request-revalidate
       - name: Somente agora fornecer o par sintetico ao preparador separado
         env:
           CONTAOS_HML_SYNTHETIC_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_EMAIL }}
