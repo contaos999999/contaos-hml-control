@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "7d83f046c282051baeeeab6b4f61e0ad8bd0cef6",
+  "source_commit": "f25f654f0cba5bae45e817c0fd4b6c3fb22bf994",
   "source_date": "2026-11-08",
   "context_documents": [
     {
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "Trilha A PLAN autenticado:25/25blobs e catálogo iguais; reancoragem documental sem prova nova de schema/RPC/RLS."
+  "p0_reanchor_note": "Reancoragem documental após backend PR181 PLAN scope/quota Trilha C: 25/25 blobs e catálogo100/97 iguais ao snapshot7d83 por GitHub GET em refs fixos. Delta apenas docs/backend/TRILHA_C_SCOPE_QUOTA_HML_PLAN_2026-11-08.md e docs/tasks/active-task.json, lido semanticamente. Sem alteração de contrato, inspeção técnica de schema/RPC/RLS, execução HML ou certificação."
 }
