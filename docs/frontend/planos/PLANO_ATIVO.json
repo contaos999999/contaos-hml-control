@@ -1435,7 +1435,7 @@
   },
   "trilha_a_24_fixture_plan": {
     "document": "docs/frontend/planos/P0_TRILHA_A_24_FIXTURES_PLAN_2026-11-08.md",
-    "phase": "BUILD373_ABERTO_NAO_APROVADO_RECUPERACAO_OBSERVADOR",
+    "phase": "BUILD373_CANDIDATO_RECONSTRUIDO_VALIDACAO_PENDENTE",
     "surfaces": [
       "V117",
       "V119",
@@ -1481,12 +1481,30 @@
     "retification_pr": 368,
     "retification_merge": "6e66efaa2069e8ba44e8d713f8e2967d220126ca",
     "build_pr": 373,
-    "build_head": "d0ca5404cc1779f626b5bb5c64ee8162ce895fef",
+    "build_head": "3af740b185db92a19ca6129a738b384bbf18ebd9",
     "build_merged": false,
     "build_head_not_safe_to_merge": true,
     "old_protocol_tests": 39,
     "old_protocol_tests_not_e2e": true,
-    "preparer_hml_executed": false
+    "preparer_hml_executed": false,
+    "historical_unsafe_head": "d0ca5404cc1779f626b5bb5c64ee8162ce895fef",
+    "historical_unsafe_head_state": "OLD_UNSAFE_PRESERVED",
+    "build_head_state": "CANDIDATE_UNVALIDATED",
+    "integrated_tests_format_review_pending": true,
+    "current_head_ci_snapshot": {
+      "fixtures": {
+        "run": 42534754045,
+        "conclusion": "failure"
+      },
+      "zero_drift": {
+        "run": 42534754110,
+        "status": "in_progress"
+      },
+      "lock_types": {
+        "run": 42534754131,
+        "conclusion": "success"
+      }
+    }
   },
   "trilha_a_visual_run78": {
     "phase": "BUILD374_INTEGRADO_TESTEC_HML_PENDENTE",
@@ -1584,7 +1602,7 @@
       "runtime_version": "v24.22.1"
     },
     "observer_recovery": {
-      "state": "RECONSTRUCTED_NOT_INTEGRATED",
+      "state": "INCORPORATED_CANDIDATE_NOT_MERGED_REVIEW_CI_PENDING",
       "original_reviewed_sha256": "f8287088c6ada70e8df5afc919eff97841bb78ec393c413bc2715c1464bb0c16",
       "reconstructed_sha256": "08559de4801af4ad597cd85c013a4fd441ce3a4024e91c8f61795c6d2be251b8",
       "tests_sha256": "ef593c489b73b9278ce7d62dececb2db371ac25e6a8f44d63c9c4c601c49079d",
@@ -1596,7 +1614,14 @@
       "evidence_reported_by": "COORDENADOR",
       "reconstructed_not_claimed_original_bytes": true,
       "requires_integrated_review_ci_native": true,
-      "no_auth_no_hml_no_mutation": true
+      "no_auth_no_hml_no_mutation": true,
+      "candidate_pr": 373,
+      "candidate_head": "3af740b185db92a19ca6129a738b384bbf18ebd9",
+      "candidate_parents": [
+        "d0ca5404cc1779f626b5bb5c64ee8162ce895fef",
+        "c3f07bf64af728cfeac48bfb0dffae5d90a7c8b6"
+      ],
+      "isolated_pass_not_integrated_validation": true
     },
     "hml_publication": {
       "alias": "https://contaos-41-hml.vercel.app",
@@ -1628,7 +1653,7 @@
       "backend_179": "PLAN_ONLY",
       "new_privacy_gates_not_integrated": true
     },
-    "next_action": "Revisar recuperação do observador e consumidores no preparador373 sem integrar HEAD d0ca; CI no HEAD corrigido; conferir SSR/grafo/8nativos e contexto antes de autenticar. Preparação24fixtures e TesteC visual são fluxos distintos; manter184/PII/72/V1 pendentes.",
+    "next_action": "Concluir formato/testes integrados e revisão do candidato373 reconstruído, sem integrar pela CI antiga do OLD_UNSAFE d0ca nem pela aprovação isolada. CI/nativos no HEAD corrigido; conferir SSR/grafo/contexto HML antes de autenticar. Preparação24fixtures e TesteC visual permanecem fases distintas; manter184/PII/72/V1 pendentes.",
     "protected_single_request_plan": {
       "pr": 380,
       "merge": "c3f07bf64af728cfeac48bfb0dffae5d90a7c8b6",
