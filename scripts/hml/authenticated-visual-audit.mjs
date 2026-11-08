@@ -1712,6 +1712,25 @@ async function harnessIdentity() {
     ),
   };
 }
+export function nativeCancellationDiagnostics(tap) {
+  const allowed = new Set([
+    "SENSOR_PROVED",
+    "REQUEST_HELD",
+    "TERMINAL_PROVED",
+    "IDENTITY_PROVED",
+    "ERROR_PROVED",
+    "TRANSPORT_ZERO",
+  ]);
+  if (typeof tap !== "string" || tap.length > 1048576) return [];
+  return [
+    ...new Set(
+      tap
+        .split("\n")
+        .map((line) => /^# NATIVE_CANCEL_STAGE ([A-Z_]+)$/.exec(line.trim())?.[1])
+        .filter((stage) => allowed.has(stage)),
+    ),
+  ].slice(0, 6);
+}
 async function nativeGuard() {
   let output;
   try {
@@ -1748,6 +1767,7 @@ async function nativeGuard() {
         exitCode: Number.isInteger(error?.code) ? error.code : null,
         signal: ["SIGTERM", "SIGKILL"].includes(error?.signal) ? error.signal : null,
         timedOut: error?.killed === true,
+        cancellationStages: nativeCancellationDiagnostics(stdout),
         tap,
       }),
     );
