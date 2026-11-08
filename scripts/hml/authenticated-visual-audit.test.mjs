@@ -590,7 +590,9 @@ test("ambiente do navegador não herda credenciais nem opções de execução", 
   assert.deepEqual(clean, { PATH: "/bin", HOME: "/tmp/fixture", LANG: "pt_BR.UTF-8" });
   assert.equal(JSON.stringify(clean).includes("SYNTHETIC_CANARY"), false);
 });
-async function cdpFixture() {
+async function cdpFixture({ holdFailure = false } = {}) {
+  const failureSent = Promise.withResolvers();
+  let acknowledgeFailure;
   const received = [],
     peers = new Set();
   const identity = { targetId: "own-target", browserContextId: "own-context" };
@@ -619,6 +621,11 @@ async function cdpFixture() {
             error: { code: -32601, message: "SYNTHETIC_CANARY_NOT_FOR_LOGS" },
           }),
         );
+      if (holdFailure && command.method === "Fetch.failRequest") {
+        acknowledgeFailure = () => peer.send(JSON.stringify({ id: command.id, result: {} }));
+        failureSent.resolve();
+        return;
+      }
       const result =
         command.method === "Target.getTargetInfo"
           ? { targetInfo: identity }
@@ -655,6 +662,8 @@ async function cdpFixture() {
     port,
     identity,
     received,
+    failureSent: failureSent.promise,
+    acknowledgeFailure: () => acknowledgeFailure(),
     emit(value) {
       for (const peer of peers) peer.send(JSON.stringify(value));
     },
@@ -665,6 +674,30 @@ async function cdpFixture() {
     },
   };
 }
+test("diagnóstico espera recusa CDP pendente antes de afirmar que a fence não falhou", async () => {
+  const fixture = await cdpFixture({ holdFailure: true });
+  let fence;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port, identity: fixture.identity,
+      closeContext: async () => {}, verifyResponse: async () => false,
+    });
+    fixture.emit({ method: "Fetch.requestPaused", sessionId: "initial-session", params: {
+      requestId: "changed-script", request: { url: HML + "/assets/test.js", method: "GET" },
+      resourceType: "Script", responseStatusCode: 200,
+    }});
+    await fixture.failureSent;
+    assert.equal(fence.snapshot().failed, false); // Browser already received failRequest; CDP ack is pending.
+    const pending = fn("settledFenceSnapshot")(fence);
+    fixture.acknowledgeFailure();
+    const snapshot = await pending;
+    assert.equal(snapshot.failed, true);
+    assert.equal(snapshot.failureCode, "FENCE_SOURCE");
+  } finally {
+    fence?.close();
+    await fixture.close();
+  }
+});
 test("transporte CDP conserva sessionId e não propaga erro remoto bruto", async () => {
   const connectCDP = fn("connectNativeCDP"),
     fixture = await cdpFixture();
