@@ -534,12 +534,19 @@ export function extractPublicBuildEnvironment(modules, expected) {
     !/^dpl_[A-Za-z0-9]{8,80}$/.test(expected?.deploymentId || "")
   )
     fail("BUILD_ENV_POLICY");
+  // Diagnostic codes contain no values, URLs, tokens, or module contents.
+  const deny = (reason) => {
+    const error = new Error("BUILD_ENV_POLICY");
+    error.code = "BUILD_ENV_POLICY";
+    error.reason = reason;
+    throw error;
+  };
   const allowedKeys = new Set([...PUBLIC_BUILD_KEYS, ...Object.keys(CLIENT_PUBLIC_CONFIG)]);
   let environment = null,
     total = 0;
   for (const source of modules.values()) {
     total += Buffer.byteLength(source);
-    if (total > 8388608) fail("BUILD_ENV_POLICY");
+    if (total > 8388608) deny("MODULE_BYTES_LIMIT");
     const file = parseScript(source, "BUILD_ENV_POLICY");
     function visit(node) {
       if (
@@ -554,19 +561,19 @@ export function extractPublicBuildEnvironment(modules, expected) {
             !allowedKeys.has(property.name.text) ||
             Object.hasOwn(values, property.name.text)
           )
-            fail("BUILD_ENV_POLICY");
+            deny("ENV_OBJECT_PROPERTY");
           values[property.name.text] = literalValue(property.initializer);
         }
-        if (Object.keys(values).length !== allowedKeys.size) fail("BUILD_ENV_POLICY");
+        if (Object.keys(values).length !== allowedKeys.size) deny("ENV_OBJECT_KEY_COUNT");
         for (const [key, value] of Object.entries(CLIENT_PUBLIC_CONFIG))
-          if (values[key] !== value) fail("BUILD_ENV_POLICY");
+          if (values[key] !== value) deny("CLIENT_CONFIG_MISMATCH");
         const next = {};
         for (const key of PUBLIC_BUILD_KEYS) {
-          if (typeof values[key] !== "string") fail("BUILD_ENV_POLICY");
+          if (typeof values[key] !== "string") deny("PUBLIC_CONFIG_TYPE");
           next[key] = values[key];
         }
         if (environment && PUBLIC_BUILD_KEYS.some((key) => next[key] !== environment[key]))
-          fail("BUILD_ENV_POLICY");
+          deny("ENV_OBJECT_CONFLICT");
         environment = next;
       }
       ts.forEachChild(node, visit);
@@ -578,7 +585,7 @@ export function extractPublicBuildEnvironment(modules, expected) {
     environment.VITE_VERCEL_GIT_COMMIT_SHA !== expected.frontendSha ||
     environment.VITE_VERCEL_DEPLOYMENT_ID !== expected.deploymentId
   )
-    fail("BUILD_ENV_POLICY");
+    deny("DEPLOYMENT_IDENTITY_MISMATCH");
   const fixed = {
     VITE_VERCEL_BRANCH_URL: "contaos-41-hml-git-main-contaos9999.vercel.app",
     VITE_VERCEL_ENV: "production",
@@ -593,11 +600,11 @@ export function extractPublicBuildEnvironment(modules, expected) {
     VITE_VERCEL_PROJECT_PRODUCTION_URL: "contaos-41-hml.vercel.app",
   };
   for (const [key, value] of Object.entries(fixed))
-    if (environment[key] !== value) fail("BUILD_ENV_POLICY");
+    if (environment[key] !== value) deny("VERCEL_FIXED_METADATA_MISMATCH");
   if (!/^contaos-41-[a-z0-9]+-contaos9999\.vercel\.app$/.test(environment.VITE_VERCEL_URL))
-    fail("BUILD_ENV_POLICY");
+    deny("VERCEL_URL_POLICY");
   if (environment.VITE_VERCEL_GIT_PREVIOUS_SHA && !hash40(environment.VITE_VERCEL_GIT_PREVIOUS_SHA))
-    fail("BUILD_ENV_POLICY");
+    deny("PREVIOUS_SHA_POLICY");
   validateObservability(environment.VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG);
   return environment;
 }
@@ -1428,6 +1435,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       JSON.stringify({
         state: "BLOCKED",
         code: /^[A-Z_]{1,80}$/.test(error?.code || "") ? error.code : "HARNESS_FAILURE",
+        ...(error?.code === "BUILD_ENV_POLICY" && /^[A-Z_]{1,80}$/.test(error?.reason || "")
+          ? { reason: error.reason }
+          : {}),
       }),
     );
     process.exitCode = 1;
