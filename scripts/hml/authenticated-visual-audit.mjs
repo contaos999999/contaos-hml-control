@@ -509,27 +509,54 @@ export async function loadPrivacy78Proof() {
   return proof;
 }
 
-
 export async function loadPrivacy78RbacProof() {
-  const bytes=await readFile(new URL("../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",import.meta.url));
-  if(digest(bytes)!=="d70d36f3977f7649dffb2ca0271bb43e181a0244c8e0089e471a86299bcaa897")fail("PRIVACY_PROOF");
-  const freeze=value=>{if(value&&typeof value==="object"){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
-  const proof=freeze(JSON.parse(bytes));privacy78RbacProofs.add(proof);return proof;
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "d70d36f3977f7649dffb2ca0271bb43e181a0244c8e0089e471a86299bcaa897")
+    fail("PRIVACY_PROOF");
+  const freeze = (value) => {
+    if (value && typeof value === "object") {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
+    return value;
+  };
+  const proof = freeze(JSON.parse(bytes));
+  privacy78RbacProofs.add(proof);
+  return proof;
 }
 
 export function privacy78Runtime({ proof, rbacProof = null, install = false }) {
   const origin = "https://gklhhhyosgasnyoxlrui.supabase.co";
-  const rq=rbacProof?.get_contract;
-  const rbacValid=rbacProof?.schema==="contaos.hml.privacy78-rbac-context.v1"&&
-    ["organization","contract","competence"].every(k=>rbacProof.context?.[k]===proof.context[k])&&
-    rq?.name==="competence_rbac_gate"&&rq.method==="GET"&&rq.origin===origin&&rq.path==="/rest/v1/competencias"&&
-    rq.shape==="object; maybeSingle"&&JSON.stringify(rq.extract_only)===JSON.stringify(["id_contrato"])&&
-    Object.keys(rq.query??{}).length===3&&rq.query.select==="id_contrato"&&
-    rq.query.id==="eq."+proof.context.competence&&rq.query.id_organizacao==="eq."+proof.context.organization&&
-    rq.expected?.id_contrato===proof.context.contract;
-  const rbacEnabled=rbacValid&&(!install||(location.origin==="https://contaos-41-hml.vercel.app"&&
-    location.pathname==="/competencias/"+proof.context.competence+"/documentos"&&!location.search&&!location.hash));
-  const contracts=rbacEnabled?[...proof.get_contracts,rq]:proof.get_contracts;
+  const rq = rbacProof?.get_contract;
+  const rbacValid =
+    rbacProof?.schema === "contaos.hml.privacy78-rbac-context.v1" &&
+    ["organization", "contract", "competence"].every(
+      (k) => rbacProof.context?.[k] === proof.context[k],
+    ) &&
+    rq?.name === "competence_rbac_gate" &&
+    rq.method === "GET" &&
+    rq.origin === origin &&
+    rq.path === "/rest/v1/competencias" &&
+    rq.shape === "object; maybeSingle" &&
+    JSON.stringify(rq.extract_only) === JSON.stringify(["id_contrato"]) &&
+    Object.keys(rq.query ?? {}).length === 3 &&
+    rq.query.select === "id_contrato" &&
+    rq.query.id === "eq." + proof.context.competence &&
+    rq.query.id_organizacao === "eq." + proof.context.organization &&
+    rq.expected?.id_contrato === proof.context.contract;
+  const rbacEnabled =
+    rbacValid &&
+    (!install ||
+      (location.origin === "https://contaos-41-hml.vercel.app" &&
+        location.pathname === "/competencias/" + proof.context.competence + "/documentos" &&
+        !location.search &&
+        !location.hash));
+  const contracts = rbacEnabled ? [...proof.get_contracts, rq] : proof.get_contracts;
 
   const match = (raw, method) => {
     if (method !== "GET" || typeof raw !== "string") return null;
@@ -584,7 +611,7 @@ export function privacy78Runtime({ proof, rbacProof = null, install = false }) {
       criado_em: p.created,
     },
   };
-  if(rbacEnabled)expected.competence_rbac_gate={id_contrato:proof.context.contract};
+  if (rbacEnabled) expected.competence_rbac_gate = { id_contrato: proof.context.contract };
   const project = (contract, body) => {
     const want = expected[contract?.name];
     if (!want || !body || typeof body !== "object") return null;
@@ -795,9 +822,11 @@ export function privacy78FieldContext({
     !Array.isArray(receipt.observed)
   )
     return null;
-  const rbacTrusted=privacy78RbacProofs.has(rbacProof);
-  if(surface==="V115"&&!rbacTrusted)return null;
-  const contracts=rbacTrusted?[...proof.get_contracts,rbacProof.get_contract]:proof.get_contracts;
+  const rbacTrusted = privacy78RbacProofs.has(rbacProof);
+  if (surface === "V115" && !rbacTrusted) return null;
+  const contracts = rbacTrusted
+    ? [...proof.get_contracts, rbacProof.get_contract]
+    : proof.get_contracts;
   const path = privateCases().find((i) => i.surface === surface)?.path;
   const required = {
     V111: ["contract_gate", "document_gate", "document_versions_page0", "processing_page0"],
@@ -3417,10 +3446,20 @@ async function runAuthenticatedAudit() {
       serviceWorkers: "block",
     });
     const privacyProof = await loadPrivacy78Proof();
-    const rbacProof=await loadPrivacy78RbacProof();
-    await context.addInitScript(privacy78Runtime, { proof: privacyProof, rbacProof, install: true });
+    const rbacProof = await loadPrivacy78RbacProof();
+    await context.addInitScript(privacy78Runtime, {
+      proof: privacyProof,
+      rbacProof,
+      install: true,
+    });
     page = await context.newPage();
-    const privacyState = { proof: privacyProof, rbacProof, generation: 0, verified: false, closed: false };
+    const privacyState = {
+      proof: privacyProof,
+      rbacProof,
+      generation: 0,
+      verified: false,
+      closed: false,
+    };
     privacy78Pages.set(page, privacyState);
     page.on("framenavigated", (frame) => {
       if (frame === page.mainFrame()) privacyState.generation++;
