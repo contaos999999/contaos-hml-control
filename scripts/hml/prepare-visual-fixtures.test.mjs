@@ -1602,6 +1602,13 @@ test("fonte fixa rejeita drift sensível antes de intenção ou recibo", () => {
 });
 
 test("solicitacao unica: preparador nao aceita marcador workflow_run sem prova", () => {
-  assert.equal(typeof sut.preparerEventAllowed,"function");
-  assert.equal(sut.preparerEventAllowed({GITHUB_EVENT_NAME:"workflow_run",GITHUB_REF:"refs/heads/main",CONTAOS_SINGLE_REQUEST_VERIFIED:"true"}),false);
+  assert.equal(typeof sut.preparerEventAllowed, "function");
+  assert.equal(
+    sut.preparerEventAllowed({
+      GITHUB_EVENT_NAME: "workflow_run",
+      GITHUB_REF: "refs/heads/main",
+      CONTAOS_SINGLE_REQUEST_VERIFIED: "true",
+    }),
+    false,
+  );
 });
