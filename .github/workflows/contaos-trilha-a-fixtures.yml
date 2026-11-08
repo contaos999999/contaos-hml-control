@@ -28,7 +28,7 @@ permissions:
   contents: read
 jobs:
   request:
-    if: github.event_name == 'workflow_run'
+    if: github.event_name == 'workflow_run' && github.repository == 'contaos999999/contaos-hml-control' && github.event.action == 'completed' && github.event.workflow_run.event == 'push' && github.event.workflow_run.repository.full_name == 'contaos999999/contaos-hml-control' && github.event.workflow_run.head_repository.full_name == 'contaos999999/contaos-hml-control' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.workflow_id == 406076025 && github.event.workflow_run.path == '.github/workflows/contaos-frontend-zero-drift.yml' && github.event.workflow_run.name == 'ContaOS Frontend Zero-Drift' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.run_attempt == 1 && github.run_attempt == '1' && github.event.workflow_run.head_sha == github.sha
     name: Trilha A solicitacao unica sem credenciais
     runs-on: ubuntu-22.04
     timeout-minutes: 5
@@ -44,6 +44,18 @@ jobs:
       CONTAOS_HARNESS_SHA: ${{ github.event.workflow_run.head_sha }}
       CONTAOS_REQUEST_OPERATION: fixtures
     steps:
+      - name: Bootstrap publico confiavel antes de checkout ou token
+        env:
+          CONTAOS_REQUESTED_EXECUTOR_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          node --input-type=module - <<'JS'
+          const sha=process.env.CONTAOS_REQUESTED_EXECUTOR_SHA;
+          if(!/^[a-f0-9]{40}$/.test(sha||""))process.exit(1);
+          const response=await fetch("https://api.github.com/repos/contaos999999/contaos-hml-control/git/ref/heads/main",{redirect:"error",signal:AbortSignal.timeout(5000),headers:{Accept:"application/vnd.github+json"}});
+          if(response.status!==200)process.exit(1);
+          const body=await response.json();
+          if(body.ref!=="refs/heads/main"||body.object?.sha!==sha)process.exit(1);
+          JS
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
@@ -99,7 +111,7 @@ jobs:
         run: node scripts/hml/authenticated-visual-audit.mjs --native-guard
   private:
     needs: request
-    if: always() && ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_run' && needs.request.outputs.selected == 'true'))
+    if: always() && ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || ((github.event_name == 'workflow_run' && github.repository == 'contaos999999/contaos-hml-control' && github.event.action == 'completed' && github.event.workflow_run.event == 'push' && github.event.workflow_run.repository.full_name == 'contaos999999/contaos-hml-control' && github.event.workflow_run.head_repository.full_name == 'contaos999999/contaos-hml-control' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.workflow_id == 406076025 && github.event.workflow_run.path == '.github/workflows/contaos-frontend-zero-drift.yml' && github.event.workflow_run.name == 'ContaOS Frontend Zero-Drift' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.run_attempt == 1 && github.run_attempt == '1' && github.event.workflow_run.head_sha == github.sha) && needs.request.outputs.selected == 'true'))
     name: Trilha A preparacao sintetica HML
     runs-on: ubuntu-22.04
     environment: hml
@@ -126,6 +138,9 @@ jobs:
           bun-version: "1.4.4"
       - name: Dependencias congeladas do executor
         run: bun install --frozen-lockfile
+      - name: Recibo inicial publico para as fases sem credenciais
+        if: github.event_name == 'workflow_run'
+        run: node scripts/hml/authenticated-visual-audit.mjs --request-revalidate
       - name: Reancorar deployment HML sem credenciais, antes do checkout da fonte
         id: deployment
         env:
