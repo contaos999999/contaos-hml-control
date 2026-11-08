@@ -487,6 +487,7 @@ const SYNTHETIC_EXCERPT_PATTERN = new RegExp(
 const privacy78Contexts = new WeakMap();
 const privacy78Pages = new WeakMap();
 const privacy78Proofs = new WeakSet();
+const privacy78RbacProofs = new WeakSet();
 export async function loadPrivacy78Proof() {
   const bytes = await readFile(
     new URL(
@@ -508,8 +509,28 @@ export async function loadPrivacy78Proof() {
   return proof;
 }
 
-export function privacy78Runtime({ proof, install = false }) {
+
+export async function loadPrivacy78RbacProof() {
+  const bytes=await readFile(new URL("../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",import.meta.url));
+  if(digest(bytes)!=="d70d36f3977f7649dffb2ca0271bb43e181a0244c8e0089e471a86299bcaa897")fail("PRIVACY_PROOF");
+  const freeze=value=>{if(value&&typeof value==="object"){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
+  const proof=freeze(JSON.parse(bytes));privacy78RbacProofs.add(proof);return proof;
+}
+
+export function privacy78Runtime({ proof, rbacProof = null, install = false }) {
   const origin = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const rq=rbacProof?.get_contract;
+  const rbacValid=rbacProof?.schema==="contaos.hml.privacy78-rbac-context.v1"&&
+    ["organization","contract","competence"].every(k=>rbacProof.context?.[k]===proof.context[k])&&
+    rq?.name==="competence_rbac_gate"&&rq.method==="GET"&&rq.origin===origin&&rq.path==="/rest/v1/competencias"&&
+    rq.shape==="object; maybeSingle"&&JSON.stringify(rq.extract_only)===JSON.stringify(["id_contrato"])&&
+    Object.keys(rq.query??{}).length===3&&rq.query.select==="id_contrato"&&
+    rq.query.id==="eq."+proof.context.competence&&rq.query.id_organizacao==="eq."+proof.context.organization&&
+    rq.expected?.id_contrato===proof.context.contract;
+  const rbacEnabled=rbacValid&&(!install||(location.origin==="https://contaos-41-hml.vercel.app"&&
+    location.pathname==="/competencias/"+proof.context.competence+"/documentos"&&!location.search&&!location.hash));
+  const contracts=rbacEnabled?[...proof.get_contracts,rq]:proof.get_contracts;
+
   const match = (raw, method) => {
     if (method !== "GET" || typeof raw !== "string") return null;
     let url;
@@ -520,7 +541,7 @@ export function privacy78Runtime({ proof, install = false }) {
     }
     if (url.origin !== origin || url.username || url.password || url.hash) return null;
     return (
-      proof.get_contracts.find((c) => {
+      contracts.find((c) => {
         const keys = Object.keys(c.query);
         return (
           url.pathname === c.path &&
@@ -563,6 +584,7 @@ export function privacy78Runtime({ proof, install = false }) {
       criado_em: p.created,
     },
   };
+  if(rbacEnabled)expected.competence_rbac_gate={id_contrato:proof.context.contract};
   const project = (contract, body) => {
     const want = expected[contract?.name];
     if (!want || !body || typeof body !== "object") return null;
@@ -673,7 +695,7 @@ export function privacy78Runtime({ proof, install = false }) {
         if (
           method === "GET" &&
           url.origin === origin &&
-          proof.get_contracts.some((c) => c.path === url.pathname)
+          contracts.some((c) => c.path === url.pathname)
         )
           invalidate();
       } catch {}
@@ -759,6 +781,7 @@ export function privacy78Runtime({ proof, install = false }) {
 export function privacy78FieldContext({
   surface,
   proof,
+  rbacProof = null,
   rendered,
   snapshot,
   fieldSnapshot,
@@ -772,11 +795,14 @@ export function privacy78FieldContext({
     !Array.isArray(receipt.observed)
   )
     return null;
+  const rbacTrusted=privacy78RbacProofs.has(rbacProof);
+  if(surface==="V115"&&!rbacTrusted)return null;
+  const contracts=rbacTrusted?[...proof.get_contracts,rbacProof.get_contract]:proof.get_contracts;
   const path = privateCases().find((i) => i.surface === surface)?.path;
   const required = {
     V111: ["contract_gate", "document_gate", "document_versions_page0", "processing_page0"],
     V112: ["contract_gate", "competencias_page0_no_filters"],
-    V115: ["contract_gate", "competencias_page0_no_filters", "upload"],
+    V115: ["competence_rbac_gate", "upload"],
     V122: ["contract_gate", "upload"],
   }[surface];
   if (
@@ -789,7 +815,7 @@ export function privacy78FieldContext({
     receipt.age < 0 ||
     receipt.age >= 120000 ||
     new Set(receipt.observed).size !== receipt.observed.length ||
-    receipt.observed.some((name) => !proof.get_contracts.some((c) => c.name === name)) ||
+    receipt.observed.some((name) => !contracts.some((c) => c.name === name)) ||
     !required.every((name) => receipt.observed.includes(name))
   )
     return null;
@@ -3156,8 +3182,8 @@ async function inspectPrivacy(page, words, diagnostics) {
   let fieldContext;
   if (rendered !== null && state?.verified && !state.closed) {
     const item = privateCases().find((i) => HML_ORIGIN + i.path === page.url());
-    // V115 runtime intentionally disabled: the seventh GET is not authorized by GATE372.
-    if (item && ["V111", "V112", "V122"].includes(item.surface)) {
+    // GATE384 permits GET7 only for the current V115 route and its exact field.
+    if (item && ["V111", "V112", "V115", "V122"].includes(item.surface)) {
       const receipt = await page.evaluate(() => {
         const header = document.querySelector('header[aria-label="Organização atual"]');
         if (
@@ -3193,6 +3219,7 @@ async function inspectPrivacy(page, words, diagnostics) {
             fieldContext = privacy78FieldContext({
               surface: item.surface,
               proof: state.proof,
+              rbacProof: state.rbacProof,
               rendered,
               snapshot,
               fieldSnapshot,
@@ -3390,9 +3417,10 @@ async function runAuthenticatedAudit() {
       serviceWorkers: "block",
     });
     const privacyProof = await loadPrivacy78Proof();
-    await context.addInitScript(privacy78Runtime, { proof: privacyProof, install: true });
+    const rbacProof=await loadPrivacy78RbacProof();
+    await context.addInitScript(privacy78Runtime, { proof: privacyProof, rbacProof, install: true });
     page = await context.newPage();
-    const privacyState = { proof: privacyProof, generation: 0, verified: false, closed: false };
+    const privacyState = { proof: privacyProof, rbacProof, generation: 0, verified: false, closed: false };
     privacy78Pages.set(page, privacyState);
     page.on("framenavigated", (frame) => {
       if (frame === page.mainFrame()) privacyState.generation++;
