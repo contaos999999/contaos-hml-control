@@ -1,0 +1,152 @@
+- complementary:
+  - button [expanded]: «
+  - navigation:
+    - link:
+      - /url: /
+      - generic: Painel
+    - link:
+      - /url: /contratantes
+      - generic: Contratantes
+    - link:
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link:
+      - /url: /contratos
+      - generic: Contratos
+    - link:
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link:
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+    - paragraph: Contexto atual
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+      - generic: Resumo do contrato
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa
+      - generic: Base normativa
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/orcamento
+      - generic: Orçamento
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras
+      - generic: Regras de conformidade
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+      - generic: Documentos do contrato
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+      - generic: Competências do contrato
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias/nova
+      - generic: Nova competência
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico
+      - generic: Histórico do contrato
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico/importar
+      - generic: Importar histórico
+  - navigation:
+    - link:
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link:
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation:
+    - link:
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button:
+      - text: Sair
+- navigation:
+  - navigation:
+    - link:
+      - /url: /contratos
+      - text: Voltar para contratos
+- main:
+  - paragraph: Contrato AUD-A-VERCEL-20261108
+  - heading [level=1]: Central de documentos
+  - navigation:
+    - list:
+      - link:
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+        - text: Visão geral
+      - link:
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa
+        - text: Base normativa
+      - link:
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/orcamento
+        - text: Orçamento
+      - link:
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras
+        - text: Regras
+      - generic: Documentos
+      - link:
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+        - text: Competências
+  - region "Documentos do contrato":
+    - heading [level=2]: Documentos do contrato
+    - button:
+      - text: Atualizar lista
+    - button:
+      - text: Enviar documentos
+    - paragraph
+    - form:
+      - generic: Buscar por título
+      - textbox
+      - generic: Tipo
+      - combobox
+      - generic: Categoria
+      - textbox
+      - generic: Situação
+      - combobox
+      - button: Aplicar filtros
+      - button: Limpar filtros
+    - paragraph: Nenhum documento encontrado para este contrato.
+- dialog "Enviar documentos" [active]:
+  - heading "Enviar documentos" [level=2]
+  - paragraph: Selecione um ou mais arquivos. Cada arquivo gera um documento-base. Os envios vão direto para o armazenamento privado com autorização temporária.
+  - text: Escolher arquivos
+  - paragraph: "ou arraste aqui. Formatos aceitos: PDF, XLSX, CSV, DOCX, PNG, JPG, JPEG, WEBP, TXT, JSON, XML — até 500 MB. Arquivos acima de 100 MB usam envio resumível, com retomada automática."
+  - button "Arquivos"
+  - list "Fila de envio":
+    - generic: FONTE_SINTETICA_AUDITORIA_HML.txt
+    - text: Falhou
+    - generic: Título de FONTE_SINTETICA_AUDITORIA_HML.txt
+    - textbox "Título de FONTE_SINTETICA_AUDITORIA_HML.txt": FONTE_SINTETICA_AUDITORIA_HML
+    - alert: Não foi possível concluir o envio agora. Tente novamente.
+    - button "Tentar novamente FONTE_SINTETICA_AUDITORIA_HML.txt":
+      - text: Tentar novamente
+  - group "Metadados do documento-base":
+    - generic: Metadados do documento-base
+    - generic: Tipo do documento
+    - combobox "Tipo do documento":
+      - option "Contrato"
+      - option "Proposta"
+      - option "Aditivo"
+      - option "Legislação"
+      - option "Portaria"
+      - option "Decreto"
+      - option "Resolução"
+      - option "Manual"
+      - option "Lista de verificação" [selected]
+      - option "Instrução"
+      - option "Outro"
+    - generic: Categoria
+    - textbox "Categoria"
+    - generic: Início da vigência
+    - textbox "Início da vigência"
+    - generic: Fim da vigência
+    - textbox "Fim da vigência"
+    - generic: Observações
+    - textbox "Observações": Fonte sintética para auditoria autenticada da Trilha A, sem dados pessoais ou efeito real.
+  - button "Fechar"
+  - button "Enviar e registrar"
+  - button "Close":
+    - generic: Close

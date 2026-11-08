@@ -1,0 +1,437 @@
+{
+  "source": "contaos999999/develop@f53304f:20_PROMPT_000_BRAND_01.md",
+  "criteria": [
+    {
+      "id": 1,
+      "criterion": "Login continua funcionando.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 2,
+      "criterion": "Logout continua funcionando.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 3,
+      "criterion": "Navegação continua funcionando.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 4,
+      "criterion": "Rotas continuam funcionando.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 5,
+      "criterion": "Permissões permanecem iguais.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 6,
+      "criterion": "Nenhuma regra de negócio foi modificada.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 7,
+      "criterion": "Nenhum cálculo foi modificado.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 8,
+      "criterion": "Nenhum status oficial foi modificado.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 9,
+      "criterion": "Nenhuma integração foi modificada.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 10,
+      "criterion": "Supabase não recebeu alteração desta tarefa.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 11,
+      "criterion": "Nenhum secret foi inserido no frontend.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 12,
+      "criterion": "Nenhuma credencial foi adicionada ao repositório.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 13,
+      "criterion": "Nenhuma RLS foi alterada.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 14,
+      "criterion": "Nenhum RPC foi criado ou alterado.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 15,
+      "criterion": "Nenhuma Edge Function foi criada ou alterada.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 16,
+      "criterion": "Nenhuma migration foi criada.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 17,
+      "criterion": "Nenhuma request nova utiliza credencial privilegiada.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 18,
+      "criterion": "Security scan sem novo Critical.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 19,
+      "criterion": "Logo horizontal correta.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 20,
+      "criterion": "Logo vertical correta.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 21,
+      "criterion": "Símbolo correto.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 22,
+      "criterion": "Cores corretas.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 23,
+      "criterion": "Proporções corretas.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 24,
+      "criterion": "Nenhum SVG foi redesenhado.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 25,
+      "criterion": "Nenhuma versão não oficial foi criada.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 26,
+      "criterion": "Logo funciona em fundo claro.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 27,
+      "criterion": "Logo funciona em fundo escuro.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 28,
+      "criterion": "Monocromática funciona quando necessária.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 29,
+      "criterion": "16 × 16 legível.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 30,
+      "criterion": "32 × 32 legível.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 31,
+      "criterion": "48 × 48 legível.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 32,
+      "criterion": "favicon.ico carregando.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 33,
+      "criterion": "Browser não apresenta ícone antigo.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 34,
+      "criterion": "192 × 192 correto.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 35,
+      "criterion": "512 × 512 correto.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 36,
+      "criterion": "maskable correto.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 37,
+      "criterion": "Manifest válido.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 38,
+      "criterion": "Nenhum comportamento PWA foi alterado.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 39,
+      "criterion": "Desktop 1440 px correto.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 40,
+      "criterion": "Desktop 1280 px correto.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 41,
+      "criterion": "Tablet 768 px correto.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 42,
+      "criterion": "Mobile 390 px correto.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 43,
+      "criterion": "Sem overflow horizontal provocado pela marca.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 44,
+      "criterion": "Sidebar expandida correta.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 45,
+      "criterion": "Sidebar recolhida correta.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 46,
+      "criterion": "Navegação mobile correta.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 47,
+      "criterion": "Marca legível.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 48,
+      "criterion": "Contraste adequado.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 49,
+      "criterion": "Nenhum logo escuro sobre fundo escuro.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 50,
+      "criterion": "Nenhum fundo forçado incompatível com o Design System.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 51,
+      "criterion": "SVG/imagens possuem descrição adequada quando necessária.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 52,
+      "criterion": "Marca clicável possui nome acessível.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 53,
+      "criterion": "Nenhuma informação funcional depende exclusivamente da cor.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 54,
+      "criterion": "Contraste adequado.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 55,
+      "criterion": "Build passa.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 56,
+      "criterion": "TypeScript passa.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 57,
+      "criterion": "Lint passa.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 58,
+      "criterion": "Testes existentes passam.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 59,
+      "criterion": "Console sem erro.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 60,
+      "criterion": "Console sem log sensível.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 61,
+      "criterion": "Sem código morto criado pela tarefa.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 62,
+      "criterion": "Sem asset duplicado desnecessariamente.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 63,
+      "criterion": "Sem hardcode visual espalhado pelos componentes.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 64,
+      "criterion": "Nenhum backend paralelo criado.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 65,
+      "criterion": "Nenhuma arquitetura modificada.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 66,
+      "criterion": "Nenhuma regra funcional modificada.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 67,
+      "criterion": "Nenhuma tela reconstruída desnecessariamente.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 68,
+      "criterion": "Nenhum componente fora do escopo alterado.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 69,
+      "criterion": "Nenhuma biblioteca desnecessária adicionada.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 70,
+      "criterion": "Design System oficial preservado.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 71,
+      "criterion": "Marca integrada ao Design System, e não criada como sistema paralelo.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    },
+    {
+      "id": 72,
+      "criterion": "Git diff contém somente alterações necessárias ao BRAND-01.",
+      "status": "NAO_VERIFICADO_GLOBAL",
+      "evidence": null
+    }
+  ]
+}

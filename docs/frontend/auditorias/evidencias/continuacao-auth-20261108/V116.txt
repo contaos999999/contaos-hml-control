@@ -1,0 +1,151 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+    - group "Contexto atual":
+      - paragraph: Contexto atual
+      - link "Resumo da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89
+        - generic: Resumo da competência
+      - link "Documentos da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/documentos
+        - generic: Documentos da competência
+      - link "Análise da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/analise
+        - generic: Análise da competência
+      - link "Parecer da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/parecer
+        - generic: Parecer da competência
+      - link "Apresentações":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/apresentar
+        - generic: Apresentações
+      - link "Contrato da competência":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+        - generic: Contrato da competência
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página":
+  - navigation "Navegação":
+    - link "Voltar para a competência":
+      - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89
+      - text: Voltar para a competência
+- main:
+  - heading "Análise da competência" [level=1]
+  - paragraph: Competência 11/2026
+  - region "Situação da análise":
+    - heading "Situação da análise" [level=2]
+    - status "Estado da análise":
+      - text: Não analisada
+    - generic: "Situação da competência: rascunho"
+    - button "Executar análise":
+      - text: Executar análise
+    - paragraph:
+      - text: "Reanalisar: indisponível no momento."
+  - region "Percentual de conformidade (backend)":
+    - heading "Percentual de conformidade (backend)" [level=2]
+    - meter "Percentual de conformidade":
+      - paragraph: 0%
+  - region "Resumo do portão (backend)":
+    - heading "Resumo do portão (backend)" [level=2]
+    - paragraph:
+      - text: "Liberado pelo portão: Não"
+    - term: Requisitos avaliados
+    - definition: "0"
+    - term: Conformes ou não aplicáveis válidos
+    - definition: "0"
+    - term: Pendentes
+    - definition: "0"
+    - term: Não conformes
+    - definition: "0"
+    - term: Inconclusivos
+    - definition: "0"
+    - term: Em análise
+    - definition: "0"
+    - term: Não conformidades bloqueantes
+    - definition: "0"
+  - region "Mecanismos":
+    - heading "Mecanismos" [level=2]
+    - button "Sobre os mecanismos":
+    - paragraph: Sem execução registrada.
+  - region "Filtros":
+    - heading "Filtros" [level=2]
+    - text: Resultado
+    - combobox "Resultado":
+      - option "Todos" [selected]
+      - option "Não enviado"
+      - option "Recebido"
+      - option "Pendente"
+      - option "Em análise"
+      - option "Conforme"
+      - option "Não conforme"
+      - option "Inconclusivo"
+      - option "Requer revisão"
+      - option "Não aplicável"
+    - text: Criticidade
+    - combobox "Criticidade":
+      - option "Todos" [selected]
+      - option "Crítica"
+      - option "Alta"
+      - option "Média"
+      - option "Baixa"
+      - option "Informativo"
+    - text: Mecanismo
+    - combobox "Mecanismo":
+      - option "Todos" [selected]
+      - option "Determinístico"
+      - option "Semântico"
+      - option "Humano"
+      - option "Não identificado"
+    - text: Status do apontamento
+    - combobox "Status do apontamento":
+      - option "Todos" [selected]
+      - option "Aberto"
+      - option "Em tratamento"
+      - option "Resolvido"
+      - option "Descartado"
+    - text: Buscar requisito
+    - textbox "Buscar requisito"
+    - button "Aplicar busca"
+  - region "Requisitos analisados":
+    - heading "Requisitos analisados" [level=2]
+    - paragraph: Nenhum requisito analisado para os filtros atuais.
+  - region "Apontamentos":
+    - heading "Apontamentos" [level=2]
+    - paragraph: Nenhum apontamento para os filtros atuais.
+  - region "Histórico de execuções":
+    - heading "Histórico de execuções" [level=2]:
+      - text: Histórico de execuções
+    - paragraph: Nenhuma execução registrada.

@@ -1,0 +1,110 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+    - group "Contexto atual":
+      - paragraph: Contexto atual
+      - link "Resumo da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89
+        - generic: Resumo da competência
+      - link "Documentos da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/documentos
+        - generic: Documentos da competência
+      - link "Análise da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/analise
+        - generic: Análise da competência
+      - link "Parecer da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/parecer
+        - generic: Parecer da competência
+      - link "Apresentações":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/apresentar
+        - generic: Apresentações
+      - link "Contrato da competência":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+        - generic: Contrato da competência
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página":
+  - navigation "Navegação":
+    - link "Voltar para a competência":
+      - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89
+      - text: Voltar para a competência
+- main:
+  - heading "Documentos da competência" [level=1]
+  - paragraph: Competência 11/2026
+  - region "Requisitos documentais do snapshot":
+    - heading "Requisitos documentais do snapshot" [level=2]
+    - status:
+      - text: Documentação completa
+    - term: Documentos
+    - definition: "0"
+    - term: Requisitos documentais
+    - definition: "0"
+    - term: Aplicáveis
+    - definition: "0"
+    - term: Pendentes
+    - definition: "0"
+    - paragraph: O snapshot desta competência não declara requisitos documentais.
+  - region "Enviar documento":
+    - heading "Enviar documento" [level=2]
+    - text: Arquivo
+    - button "Arquivo"
+    - paragraph: "Limite: 500 MB"
+    - text: Requisito documental (opcional)
+    - combobox "Requisito documental (opcional)":
+      - option "Sem vínculo a requisito" [selected]
+    - text: Tipo do documento
+    - combobox "Tipo do documento":
+      - option "Selecione" [selected]
+      - option "Contrato"
+      - option "Proposta"
+      - option "Aditivo"
+      - option "Legislação"
+      - option "Portaria"
+      - option "Decreto"
+      - option "Resolução"
+      - option "Manual"
+      - option "Lista de verificação"
+      - option "Instrução"
+      - option "Outro"
+    - text: Título
+    - textbox "Título"
+    - text: Categoria (opcional)
+    - textbox "Categoria (opcional)"
+    - button "Enviar" [disabled]
+  - region "Documentos vinculados":
+    - heading "Documentos vinculados" [level=2]
+    - paragraph: Nenhum documento vinculado a esta competência.

@@ -1,0 +1,4 @@
+CONTAOS HML - FONTE SINTETICA DE AUDITORIA
+Documento exclusivamente de teste, sem efeitos juridicos ou financeiros.
+Criterio sintetico: anexar um documento de teste identificado como evidencia da auditoria da Trilha A.
+A avaliacao e as permissoes permanecem sob autoridade do backend.
