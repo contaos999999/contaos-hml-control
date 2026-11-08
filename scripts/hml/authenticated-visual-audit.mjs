@@ -2398,7 +2398,15 @@ export function classifyRuntimeError(error = {}) {
   const operation = operations.find(([prefix]) => message.startsWith(prefix))?.[1] || "UNKNOWN";
   let reason = "UNKNOWN";
   if (name === "TimeoutError") reason = "TIMEOUT";
+  else if (message.includes("Navigation failed because page crashed!")) reason = "PAGE_CRASHED";
+  else if (message.includes("Navigating frame was detached!")) reason = "FRAME_DETACHED";
+  else if (message.includes("is interrupted by another navigation"))
+    reason = "NAVIGATION_INTERRUPTED";
   else if (message.includes("net::ERR_ABORTED")) reason = "NAVIGATION_ABORTED";
+  else if (message.includes("net::ERR_FAILED")) reason = "NETWORK_FAILED";
+  else if (message.includes("net::ERR_EMPTY_RESPONSE")) reason = "NETWORK_EMPTY_RESPONSE";
+  else if (message.includes("net::ERR_HTTP_RESPONSE_CODE_FAILURE"))
+    reason = "NETWORK_HTTP_RESPONSE";
   else if (message.includes("Execution context was destroyed")) reason = "CONTEXT_DESTROYED";
   else if (message.includes("Target page, context or browser has been closed"))
     reason = "TARGET_CLOSED";
