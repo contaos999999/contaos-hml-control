@@ -52,7 +52,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "Codex Trilha A: contexto canônico previamente lido na execução coordenadora; 25/25 blobs e catálogo conferidos iguais em42a737ac; AGENTS/P0/índice/checkpoint/PLAN318/GATE estreito relidos, ZIP original conferido. Sem certificação.",
   "context_read_acknowledged_at": "2026-11-08",
-  "context_source_commit": "a1ecb48546e1298d1d35e4f4e4d8b76d4eb59e57",
+  "context_source_commit": "a9abcdf54099c9d3fba8681ccca1b5c9180aef95",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -1107,7 +1107,7 @@
     "state": "LOCALIZACAO_PROPOSTA_CI_PENDENTE_SEM_RUNNER",
     "plan_document": "docs/frontend/planos/P0_TRILHA_A_AUTENTICADA_PLAN_2026-11-08.md",
     "frontend_baseline": "1a24d36fd4a19a1fe70ccf9099aaa11a6d31ac5e",
-    "backend_normative": "a1ecb48546e1298d1d35e4f4e4d8b76d4eb59e57",
+    "backend_normative": "a9abcdf54099c9d3fba8681ccca1b5c9180aef95",
     "deployment": "dpl_9iFUGXPcgXdBSmXa5C5EVcqt1XCX",
     "matrix_cases": 232,
     "private_unproven": 208,
