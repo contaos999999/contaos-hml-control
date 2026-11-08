@@ -115,6 +115,52 @@ const html =
   '<!doctype html><html lang="pt-BR"><body><main>Entrar</main><script>' +
   hydration +
   '</script><script type="module" src="/assets/a.js"></script></body></html>';
+const privateHydration =
+  'hydrate({matches:R[0]=[R[1]={i:"__root__\\0",u:1794136000000,s:"success",ssr:!0},R[2]={i:"\\0selecionar-organizacao\\0selecionar-organizacao",u:1794136000000,s:"pending",ssr:!1}]});';
+const privateHtml = html.replace(hydration, privateHydration);
+test("hidratação privada CSR normaliza somente os dois timestamps do SSR local aprovado", async () => {
+  const actual = privateHtml.replaceAll("1794136000000", "1794136000123");
+  assert.equal(fn("compareHtml")(actual, privateHtml), true);
+  assert.equal(
+    await fn("verifyPublishedResponse")(
+      {
+        documents: { "/selecionar-organizacao": privateHtml },
+      },
+      {
+        url: HML + "/selecionar-organizacao",
+        resourceType: "Document",
+        status: 200,
+        body: Buffer.from(actual),
+      },
+    ),
+    true,
+  );
+});
+test("estado CSR não permite normalizar status, ssr, rota, código ou terceiro timestamp", () => {
+  for (const delta of [
+    privateHtml.replace('s:"pending"', 's:"success"'),
+    privateHtml.replace("ssr:!1", "ssr:!0"),
+    privateHtml.replace("selecionar-organizacao", "private-foreign-route"),
+    privateHtml.replace("u:1794136000000", "u:Date.now()"),
+    privateHtml.replace("ssr:!1", "ssr:!1,u:1794136000001"),
+    privateHtml.replace("</script>", ";exfiltrate()</script>"),
+    privateHtml.replace("<main>", '<main onload="exfiltrate()">'),
+  ])
+    assert.throws(
+      () => fn("compareHtml")(delta, privateHtml),
+      (e) => ["HTML_DRIFT", "HTML_POLICY"].includes(e.code),
+    );
+  for (const trusted of [
+    privateHydration.replace('s:"pending"', 's:"foreign"'),
+    privateHydration.replace("ssr:!1", "ssr:!0"),
+    privateHydration.replace('s:"success"', 's:"pending"'),
+    privateHydration.replace("ssr:!0", "ssr:!1"),
+  ])
+    assert.throws(
+      () => fn("normalizeHydration")(trusted.replaceAll("1794136000000", "1794136000123"), trusted),
+      (e) => e.code === "HTML_DRIFT",
+    );
+});
 test("paridade cobre o documento inteiro e não apenas scripts", () => {
   const compare = fn("compareHtml");
   assert.equal(compare(html.replaceAll("1794136000000", "1794136000123"), html), true);
