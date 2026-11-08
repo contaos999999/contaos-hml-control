@@ -1,3 +1,7 @@
+## Reancoragem durante CI da retificação
+
+Backend avançou para7c8fdb1644058831cc2a7d1bacd931eee18cd997. CI42514790088 bloqueou corretamente por HEAD canônico antigo. Comparação local de cada um dos25blobs e catálogo100/97 confirmou igualdade; snapshot e PLAN reancorados juntos, sem relaxar gate. Delta backend inclui append imutável de versão documental na revisão de metadados, não certificada por esta auditoria. Retificação inclui payload real de criar_competencia: somente contrato/referência; três opcionais omitidos têmDEFAULTNULL no wrapper, sem alterar UI/RPC. Campo160privacidade é histórico; atual56. Escopo184original permanece sem certificação integral.
+
 # Continuidade P0: rodada 78 concluída sem aborto, correções em curso
 
 Âncora main 7038fb10633e738b35a4104aefbb2a3f856843b8; backend normativo e77fec6651aa76917fd6115be64f3052b3ee50d4. GATE367 integrado após CI42511864981/42511864976 e revisão independente. Nenhum preparador ou escrita de negócio implementado até esta retificação. Fonte correta 8b942e46-a29b-40d9-8ad4-04aaf9124a34 confirmada por contrato/título exatos; 2de433a7 é protocolo histórico, não fonte. Recibo somente leitura versionado em evidencias/fixtures-24-20261108/FONTE_REAL_READONLY_20261108.json.
