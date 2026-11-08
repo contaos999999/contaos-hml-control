@@ -42,7 +42,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "Codex Trilha A: contexto canônico previamente lido na execução coordenadora; 25/25 blobs e catálogo conferidos iguais em42a737ac; AGENTS/P0/índice/checkpoint/PLAN318/GATE estreito relidos, ZIP original conferido. Sem certificação. Reancoragem documental da prova de versão HML: 25/25 blobs e catálogo conferidos invariáveis em7ecdf3bda151fb9956beab8cca390f5074548cf2; nenhuma alteração de escopo ou produto.",
   "context_read_acknowledged_at": "2026-11-08",
-  "context_source_commit": "7ecdf3bda151fb9956beab8cca390f5074548cf2",
+  "context_source_commit": "f53304fbdab7570fa0f5167a9bcd0c76cded6be6",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -199,6 +199,13 @@
       "backend_pin_merge": "6c0f7a0f186ea2a49a5fb9f9fc1a7570e86151b0",
       "canonical_blobs_unchanged": 25,
       "catalog_unchanged": true
+    },
+    "vercel_audit_reanchor": {
+      "source_commit": "f53304fbdab7570fa0f5167a9bcd0c76cded6be6",
+      "canonical_blobs_unchanged": 25,
+      "catalog_unchanged": true,
+      "failed_freshness_run": 42445352477,
+      "product_changed": false
     }
   },
   "unverified_operational": {
