@@ -1273,7 +1273,7 @@
       42498347082,
       42498346825
     ],
-    "phase": "BUILD_DRENAGEM_REDE_EM_CI",
+    "phase": "TESTEC78_SEM_ABORTO_CORRECOES_VISUAIS_PRIVACIDADE_FIXTURES",
     "preserved_pass": 24,
     "pending": 184,
     "privacy_blocked": 160,
@@ -1285,24 +1285,23 @@
     "normative_head": "e77fec6651aa76917fd6115be64f3052b3ee50d4",
     "normative_blobs_unchanged": 25,
     "latest_attempt": {
-      "run": 42509889502,
-      "artifact": 13629191253,
-      "partial_pass": 3,
+      "run": 42511641527,
+      "artifact": 13629564203,
+      "automated_pass": 96,
+      "automated_fail": 8,
       "preserved": 24,
-      "privacy_blocked": 8,
-      "interrupted": 148,
+      "privacy_blocked": 56,
       "fixture_blocked": 24,
-      "phase": "CAPTURE_PRIVATE",
-      "master_verified": true,
-      "organization_verified": true,
-      "aborted": "FENCE_LIFECYCLE_FRAME",
-      "preflight_generation_same": false,
-      "logout_verified": false,
-      "zip_sha256": "5e53eba5facd43825f0336bb971ec94d323858e15ff6a4f94acd0c5c00be4602",
-      "report_sha256": "afdffd0f286254fb34c30f40b1a05b3470a5daade8568822a0b5d791f1924377",
-      "hashes_verified": 10,
-      "png": 6,
-      "dom": 3
+      "interrupted": 0,
+      "aborted": null,
+      "logout_verified": true,
+      "zip_sha256": "8dc04bdef43937aea423da1721d1de51137304ded35ed9308cfaaf6da43d7081",
+      "report_sha256": "42706b22271ba27fe4c92cc0a0eee415e44319c01a7a05f94ed84634f20dcb3a",
+      "hashes_verified": 313,
+      "png": 208,
+      "dom": 104,
+      "independent_png_reviewed": 208,
+      "automated_pass_not_visual_certification": true
     },
     "native_cancellation_plan": {
       "plan_pr": 357,
@@ -1396,7 +1395,7 @@
       "native_green": 8,
       "deadline_global_ms": 10000,
       "relaxes_generation": false,
-      "state": "BUILD366_INTEGRADO_TESTEC78_EM_EXECUCAO",
+      "state": "INTEGRADO_TESTEC78_SEM_ABORTO",
       "merge": "2a5ef8043ff26fbe9b4c68b828099f0c7dd70e33",
       "final_head": "d2881eaf90ce48300cbbbdba76ad78fde61d32d0",
       "ci": [
@@ -1404,16 +1403,11 @@
         42511360108,
         42511359927
       ]
-    },
-    "running_attempt": {
-      "run": 42511641527,
-      "harness": "2a5ef8043ff26fbe9b4c68b828099f0c7dd70e33",
-      "state": "DISPARADO_MAIN_AGUARDA_RESULTADO"
     }
   },
   "trilha_a_24_fixture_plan": {
     "document": "docs/frontend/planos/P0_TRILHA_A_24_FIXTURES_PLAN_2026-11-08.md",
-    "phase": "GATE_24_FIXTURES_AGUARDA_CI_REVISAO",
+    "phase": "RETIFICACAO_FONTE_AGUARDA_CI_REVISAO",
     "surfaces": [
       "V117",
       "V119",
@@ -1445,6 +1439,16 @@
     "write_intents_max": 24,
     "discard_allowed": false,
     "auditor_auth_response_capture_allowed": false,
-    "preparer_memory_access_token_only": true
+    "preparer_memory_access_token_only": true,
+    "formal_source_id": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",
+    "historical_protocol": "2de433a7-a84c-4575-aa2a-7699d2871b55",
+    "source_readonly_receipt": "docs/frontend/auditorias/evidencias/fixtures-24-20261108/FONTE_REAL_READONLY_20261108.json",
+    "source_versions_observed": 0,
+    "gate_pr": 367,
+    "gate_merge": "7038fb10633e738b35a4104aefbb2a3f856843b8",
+    "gate_ci": [
+      42511864981,
+      42511864976
+    ]
   }
 }

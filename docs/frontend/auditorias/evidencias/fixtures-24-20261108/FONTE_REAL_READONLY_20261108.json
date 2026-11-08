@@ -1,0 +1,31 @@
+{
+  "schema": "contaos.hml.readonly-fixture-source.v1",
+  "verified_date": "2026-11-08",
+  "project": "gklhhhyosgasnyoxlrui",
+  "read_only": true,
+  "historical_identifier": {
+    "value": "2de433a7-a84c-4575-aa2a-7699d2871b55",
+    "fontes_normativas_rows": 0,
+    "meaning_in_gate355": "protocolo"
+  },
+  "exact_lookup": {
+    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "title": "FONTE SINTETICA TRILHA A 20261108",
+    "rows": 1
+  },
+  "source": {
+    "id": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",
+    "id_organizacao": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+    "id_contrato": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "tipo": "lista_verificacao",
+    "titulo": "FONTE SINTETICA TRILHA A 20261108",
+    "referencia": "Documento HML 525e54fc-feec-4dc0-b540-1510a3c52485; SHA256 773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103",
+    "descricao": "Fonte exclusivamente sintética para auditoria em homologação. Sem efeito jurídico ou financeiro. Vinculação descritiva ao TXT de teste já persistido; não representa análise ou validação de segurança do arquivo.",
+    "situacao": "rascunho",
+    "versao_registro": 1
+  },
+  "source_versions_count": 0,
+  "credentials_or_auth_objects_included": false
+}
+
+

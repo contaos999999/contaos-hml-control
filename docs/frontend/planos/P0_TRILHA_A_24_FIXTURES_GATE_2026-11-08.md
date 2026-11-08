@@ -1,12 +1,17 @@
 # GATE P0: preparação legítima das 24 combinações V117, V119 e V120
 
+## Retificação de identidade antes do BUILD, 08/11/2026
+
+Consulta somente leitura ao projeto HML confirmou zero fontes com ID 2de433a7-a84c-4575-aa2a-7699d2871b55. Esse identificador é o protocolo histórico registrado no GATE355. A busca pelo contrato e título exatos retornou uma única fonte: **8b942e46-a29b-40d9-8ad4-04aaf9124a34**, organização/contrato esperados, rascunho, versão de registro 1, nenhuma versão documental. Este é o único ID de fonte autorizado para o preparador. Reconsultar estado e relações antes de escrever, pois a leitura não é autorização para assumir estado futuro. Recibo: `docs/frontend/auditorias/evidencias/fixtures-24-20261108/FONTE_REAL_READONLY_20261108.json`. Nenhuma escrita de negócio foi executada nesta retificação. As referências históricas anteriores abaixo não substituem esta correção.
+
+
 PLAN #362 integrado em 7bcb9618ef66fe2c03b4e804dbae42d44caba4cb, CI 42506842396/42506842344 e revisão independente. Este GATE é documental e exige sua própria CI, revisão e integração antes do BUILD. Referência: issue #317. Auditoria somente leitura e preparação são executores distintos.
 
 ## Destinos, identidade e precondições
 
 Exclusivamente https://contaos-41-hml.vercel.app e https://gklhhhyosgasnyoxlrui.supabase.co. Organização e87f7e68-c5ae-4077-943b-02a4afd8b6ee, contrato be89ef7e-d839-46c0-9cfb-4da81edf8b74, contratante 041ebf9f-5e32-4744-80d6-d745fa5fc483. A sessão normal deve confirmar MASTER, organização ativa, relações e capacidades oficiais. Divergência fecha sem escrever. Não criar organização, conta, vínculo ou permissão.
 
-Preservar a competência histórica 59072760-4420-4598-82dd-367f41a79e89, novembro de 2026, e os 24 PASS anteriores. Preparar duas competências distintas: outubro de 2026 para V117/V119; setembro de 2026 para V120. Fonte formal existente 2de433a7-a84c-4575-aa2a-7699d2871b55. Arquivo existente 8cc6ac08-7f5b-469c-ab50-7b33d5a12379, documento contratual 525e54fc-feec-4dc0-b540-1510a3c52485, text/plain, 285 bytes, SHA256 773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103. Reconsultar relações e status_seguranca=aprovado antes do vínculo. Nunca modificar segurança ou reuploadar para simular aprovação.
+Preservar a competência histórica 59072760-4420-4598-82dd-367f41a79e89, novembro de 2026, e os 24 PASS anteriores. Preparar duas competências distintas: outubro de 2026 para V117/V119; setembro de 2026 para V120. Fonte formal existente 8b942e46-a29b-40d9-8ad4-04aaf9124a34. Arquivo existente 8cc6ac08-7f5b-469c-ab50-7b33d5a12379, documento contratual 525e54fc-feec-4dc0-b540-1510a3c52485, text/plain, 285 bytes, SHA256 773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103. Reconsultar relações e status_seguranca=aprovado antes do vínculo. Nunca modificar segurança ou reuploadar para simular aprovação.
 
 ## Infraestrutura antes de autenticar
 

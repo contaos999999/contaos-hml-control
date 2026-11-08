@@ -1,5 +1,10 @@
 # PLAN P0: preparar 24 combinações V117/V119/V120 por fluxos legítimos HML
 
+## Retificação de identidade antes do BUILD, 08/11/2026
+
+Consulta somente leitura ao projeto HML confirmou zero fontes com ID 2de433a7-a84c-4575-aa2a-7699d2871b55. Esse identificador é o protocolo histórico registrado no GATE355. A busca pelo contrato e título exatos retornou uma única fonte: **8b942e46-a29b-40d9-8ad4-04aaf9124a34**, organização/contrato esperados, rascunho, versão de registro 1, nenhuma versão documental. Este é o único ID de fonte autorizado para o preparador. Reconsultar estado e relações antes de escrever, pois a leitura não é autorização para assumir estado futuro. Recibo: `docs/frontend/auditorias/evidencias/fixtures-24-20261108/FONTE_REAL_READONLY_20261108.json`. Nenhuma escrita de negócio foi executada nesta retificação. As referências históricas anteriores abaixo não substituem esta correção.
+
+
 ## Objetivo e limites
 
 Completar as três superfícies dependentes de dados, oito combinações cada, preservando 24 baseline e 18 públicos. Auditor somente leitura permanece separado da preparação. HML exclusivo contaos-41-hml.vercel.app e Supabase gklhhhyosgasnyoxlrui. Nenhuma alteração PROD, Auth, schema, grants, RLS, migrations, tipos gerados ou dependências. V1 não certificada por contagem.
