@@ -637,7 +637,7 @@ test("ambiente do navegador não herda credenciais nem opções de execução", 
   assert.deepEqual(clean, { PATH: "/bin", HOME: "/tmp/fixture", LANG: "pt_BR.UTF-8" });
   assert.equal(JSON.stringify(clean).includes("SYNTHETIC_CANARY"), false);
 });
-async function cdpFixture({ holdFailure = false, rejectCache = false } = {}) {
+async function cdpFixture({ holdFailure = false, rejectCache = false, rejectContinue = false } = {}) {
   const failureSent = Promise.withResolvers();
   let acknowledgeFailure;
   const received = [],
@@ -663,7 +663,8 @@ async function cdpFixture({ holdFailure = false, rejectCache = false } = {}) {
       received.push(command);
       if (
         command.method === "Fixture.reject" ||
-        (rejectCache && command.method === "Network.setCacheDisabled")
+        (rejectCache && command.method === "Network.setCacheDisabled") ||
+        (rejectContinue && command.method === "Fetch.continueResponse")
       )
         return peer.send(
           JSON.stringify({
@@ -724,6 +725,68 @@ async function cdpFixture({ holdFailure = false, rejectCache = false } = {}) {
     },
   };
 }
+test("nova navegação aguarda a verificação CDP em curso sem cancelar a resposta", async () => {
+  const fixture=await cdpFixture(), started=Promise.withResolvers(), release=Promise.withResolvers();
+  let fence, verified=false, navigations=0;
+  try {
+    fence=await fn("installNativeFence")({debugPort:fixture.port,identity:fixture.identity,
+      closeContext:async()=>{},verifyResponse:async({url})=>{
+        if(url.endsWith('/slow.js')){started.resolve();await release.promise;verified=true;}
+        return true;
+      }});
+    const response=(id,url,resourceType)=>fixture.emit({method:"Fetch.requestPaused",sessionId:"initial-session",params:{requestId:id,request:{url,method:"GET"},resourceType,responseStatusCode:200}});
+    response('first-document',HML+'/login','Document');
+    response('first-script',HML+'/assets/a.js','Script');
+    await new Promise(resolve=>setImmediate(resolve));await fence.drain();
+    response('slow',HML+'/assets/slow.js','Script');await started.promise;
+    const page={waitForLoadState:async()=>{},goto:async()=>{
+      if(!verified)throw Object.assign(new Error('interrupted verification'),{code:'CDP_COMMAND'});
+      navigations++;return {status:()=>200};
+    }};
+    await assert.rejects(page.goto(),e=>e.code==='CDP_COMMAND');
+    const navigation=fn("navigateVerifiedPage")(page,fence,HML+'/selecionar-organizacao');
+    await new Promise(resolve=>setImmediate(resolve));assert.equal(navigations,0);
+    release.resolve();await navigation;assert.equal(navigations,1);assert.equal(fence.snapshot().failed,false);
+  } finally {release.resolve();fence?.close();await fixture.close();}
+});
+function selectorFixture(path, unsafe=false) {
+  let current=HML+path, idle=false, verified=false, navigations=0;
+  return {
+    page:{url:()=>current,waitForLoadState:async state=>{assert.equal(state,'networkidle');idle=true;},
+      goto:async(target,options)=>{assert.equal(idle&&verified,true);assert.equal(options.waitUntil,'networkidle');navigations++;current=target;return{status:()=>200};}},
+    fence:{drain:async()=>{assert.equal(idle,true);verified=true;},assertSafe:()=>{if(unsafe)throw Object.assign(new Error('blocked'),{code:'FENCE_NOT_PROVEN'});assert.equal(verified,true);}},
+    navigations:()=>navigations,
+  };
+}
+test("seletor já verificado é reutilizado sem recarga redundante após login",async()=>{
+  const fixture=selectorFixture('/selecionar-organizacao');
+  await fn("openVerifiedOrganizationSelector")(fixture.page,fixture.fence);
+  assert.equal(fixture.navigations(),0);
+});
+test("seletor é aberto a partir da raiz somente após rede e fonte estabilizadas",async()=>{
+  const fixture=selectorFixture('/');
+  await fn("openVerifiedOrganizationSelector")(fixture.page,fixture.fence);
+  assert.equal(fixture.navigations(),1);assert.equal(fixture.page.url(),HML+'/selecionar-organizacao');
+});
+test("destino inesperado ou fence insegura não permite navegação adicional",async()=>{
+  for(const [path,unsafe,code]of [['/login',false,'AUTH_DESTINATION'],['/contratos',false,'AUTH_DESTINATION'],['/',true,'FENCE_NOT_PROVEN']]){
+    const fixture=selectorFixture(path,unsafe);
+    await assert.rejects(fn("openVerifiedOrganizationSelector")(fixture.page,fixture.fence),e=>e.code===code);
+    assert.equal(fixture.navigations(),0);
+  }
+});
+test("erro CDP registra só nome de comando permitido, nunca mensagem ou parâmetros",async()=>{
+  const fixture=await cdpFixture({rejectContinue:true}), closed=Promise.withResolvers();let fence;
+  try{
+    fence=await fn("installNativeFence")({debugPort:fixture.port,identity:fixture.identity,closeContext:async()=>closed.resolve(),verifyResponse:async()=>true});
+    fixture.emit({method:'Fetch.requestPaused',sessionId:'initial-session',params:{requestId:'api-response',request:{url:API+'/auth/v1/user',method:'GET'},resourceType:'Fetch',responseStatusCode:200}});
+    await closed.promise;const state=await fn("settledFenceSnapshot")(fence);
+    assert.equal(state.failureCode,'CDP_COMMAND');assert.equal(state.failureCommand,'Fetch.continueResponse');
+    const diagnostic=fn("runtimeDiagnostics")({fence:state});assert.equal(diagnostic.fence.failureCommand,'Fetch.continueResponse');
+    assert.equal(JSON.stringify(diagnostic).includes('SYNTHETIC_CANARY'),false);
+    assert.equal(fn("runtimeDiagnostics")({fence:{failureCommand:'SYNTHETIC_PRIVATE_CANARY'}}).fence.failureCommand,null);
+  }finally{fence?.close();await fixture.close();}
+});
 test("fence exige resposta completa e confirma cache desabilitado antes do renderer", async () => {
   const fixture = await cdpFixture();
   let fence;
