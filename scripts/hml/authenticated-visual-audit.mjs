@@ -2408,7 +2408,7 @@ export async function discoverPublicGraph({ fetcher = fetch } = {}) {
   }
   const modules = new Map();
   let bytes = 0;
-  for (let index = 0; index < pending.length; ) {
+  for (let index = 0; index < pending.length;) {
     if (pending.length > 128) fail("GRAPH_MODULE_LIMIT");
     if (Date.now() > deadline) fail("GRAPH_DEADLINE");
     const batch = pending.slice(index, index + 4);
