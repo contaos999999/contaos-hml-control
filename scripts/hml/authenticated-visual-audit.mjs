@@ -515,10 +515,122 @@ export function classifyArtifactText(text, allowedWords, { snapshot = false } = 
 export function safeArtifactText(text, allowedWords, options) {
   return classifyArtifactText(text, allowedWords, options).reason === "ALLOWED";
 }
+export function run78VisualSelection(item) {
+  if (
+    !item ||
+    !PRIVATE_SURFACES.includes(item.surface) ||
+    !WIDTHS.includes(item.width) ||
+    !THEMES.includes(item.theme)
+  )
+    return null;
+  const baseline = ["V114", "V116", "V118"].includes(item.surface);
+  const focal = ["V101", "V105", "V106", "V107", "V110", "V113", "V121"].includes(item.surface);
+  const mobile = [
+    "SYS05",
+    "ADM01",
+    "V102",
+    "V103",
+    "V104",
+    "V108",
+    "V114",
+    "V116",
+    "V118",
+  ].includes(item.surface);
+  return {
+    required: focal || (item.width === 390 && mobile),
+    ...(baseline
+      ? {
+          baselineRun: 42496235106,
+          baselineFrontendSha: "9b18e4857b03daa6ee09ad3382184480e2014728",
+          baselineZipSha256: "bc2a8b74e1ba9ff008ed67ce0f398c47ce120924cf69b5210d62f8165291d2c6",
+        }
+      : {}),
+  };
+}
+
+export function run78VisualEvidenceValid(row) {
+  const selection = run78VisualSelection(row);
+  if (!selection) return false;
+  if (!selection.required) return true;
+  if (
+    !privateCases().some(
+      (c) =>
+        c.surface === row.surface &&
+        c.width === row.width &&
+        c.theme === row.theme &&
+        c.path === row.path,
+    )
+  )
+    return false;
+  const key = caseKey(row),
+    hash = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+  if (
+    row.screenshot !== `screenshots/${key}.png` ||
+    row.dom !== `dom/${key}.json` ||
+    !hash(row.sha256) ||
+    !hash(row.domSha256)
+  )
+    return false;
+  const ready = (proof, count, mode) => {
+    const context = proof?.image?.context;
+    if (
+      !context ||
+      context.surface !== row.surface ||
+      context.width !== row.width ||
+      context.theme !== row.theme ||
+      context.mode !== mode
+    )
+      return false;
+    const expectedSrc =
+      mode === "SIDEBAR_COLLAPSED"
+        ? "/brand/ContaOS_Simbolo_Branco.svg"
+        : "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg";
+    if (
+      !proof ||
+      proof.phase !== "BEFORE_PNG" ||
+      !Number.isFinite(proof.measuredAt) ||
+      !Number.isFinite(proof.capturedAt) ||
+      proof.measuredAt > proof.capturedAt ||
+      !proof.metrics?.passed ||
+      proof.metrics.viewport?.width !== row.width ||
+      proof.metrics.theme !== row.theme ||
+      !visualGeometryValid(proof.metrics) ||
+      proof.image?.count !== count ||
+      proof.image.images?.length !== count
+    )
+      return false;
+    if (
+      !["geometryPassed", "tablePassed", "datesPassed", "contrastPassed"].every(
+        (k) => proof.metrics[k] === true,
+      )
+    )
+      return false;
+    return proof.image.images.every(
+      (i) =>
+        i.decoded === true &&
+        i.complete === true &&
+        [i.width, i.height, i.naturalWidth, i.naturalHeight].every(
+          (n) => Number.isFinite(n) && n > 0,
+        ) &&
+        i.src === expectedSrc,
+    );
+  };
+  const supplement = row.sidebarSupplement;
+  return (
+    ready(row.visualCapture, row.width < 768 ? 0 : 1, "PRIMARY") &&
+    supplement?.passed === true &&
+    supplement.screenshot ===
+      `screenshots/${key}${row.width < 768 ? "_menu" : "_sidebar-recolhida"}.png` &&
+    hash(supplement.sha256) &&
+    ready(supplement.visualCapture, 1, row.width < 768 ? "MOBILE_MENU" : "SIDEBAR_COLLAPSED")
+  );
+}
+
 export function preservedPrivateCase(item) {
   if (
     !item ||
     !["V114", "V116", "V118"].includes(item.surface) ||
+    item.width === 390 ||
     !WIDTHS.includes(item.width) ||
     !THEMES.includes(item.theme)
   )
@@ -2391,6 +2503,32 @@ async function nativeGuard() {
     fail("NATIVE_GUARD");
   }
   const proof = nativeProofFromTap(output, await harnessIdentity());
+  // Extra image/geometry proof does not count as one of the eight causal fence proofs.
+  try {
+    const visual = await execFile(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=Run78 Chromium isolado",
+        "scripts/hml/authenticated-visual-audit.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 45000,
+        maxBuffer: 1048576,
+      },
+    );
+    if (
+      !/^# pass 1$/m.test(visual.stdout) ||
+      !/^# fail 0$/m.test(visual.stdout) ||
+      !/^# skipped 0$/m.test(visual.stdout)
+    )
+      fail("VISUAL_NATIVE");
+  } catch {
+    fail("VISUAL_NATIVE");
+  }
+
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/native-proof.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -2400,6 +2538,7 @@ async function nativeGuard() {
       sourceOrdering: nativeSourceOrdering(output),
       preflightDrain: nativePreflightDrain(output),
       cases: 8,
+      visualCases: 1,
       harnessSha: proof.harnessSha,
     }),
   );
@@ -2679,7 +2818,8 @@ async function runAuthenticatedAudit() {
   await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
   const debugPort = debug.address().port;
   await new Promise((resolve) => debug.close(resolve));
-  async function saveScreenshot(key, suffix = "") {
+  let captureItem = null;
+  async function saveRawScreenshot(key, suffix = "") {
     const file = `screenshots/${key}${suffix}.png`;
     const data = await page.screenshot({ fullPage: true, animations: "disabled" });
     if (data.length > 20971520) fail("SCREENSHOT_LIMIT");
@@ -2688,6 +2828,43 @@ async function runAuthenticatedAudit() {
     hashes.push({ file, sha });
     return { file, sha };
   }
+  async function saveScreenshot(key, suffix = "") {
+    if (!captureItem) fail("VISUAL_CASE_IDENTITY");
+    const result = await captureVisualEvidence({
+      brand: () =>
+        readyVisualBrand(
+          page,
+          captureItem,
+          suffix === "_menu"
+            ? "MOBILE_MENU"
+            : suffix === "_sidebar-recolhida"
+              ? "SIDEBAR_COLLAPSED"
+              : "PRIMARY",
+        ),
+      drain: async () => {
+        await fence.drain();
+        fence.assertSafe();
+      },
+      stabilize: () =>
+        page.evaluate(
+          () =>
+            new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+        ),
+      measure: () => {
+        if (page.url() !== HML_ORIGIN + captureItem.path) fail("VISUAL_CASE_IDENTITY");
+        return collectVisualMetrics(page, captureItem);
+      },
+      privacy: async () => (await inspectPrivacy(page, words)) !== null,
+      save: () => {
+        if (page.url() !== HML_ORIGIN + captureItem.path) fail("VISUAL_CASE_IDENTITY");
+        fence.assertSafe();
+        return saveRawScreenshot(key, suffix);
+      },
+    });
+    const { shot, ...visualCapture } = result;
+    return { ...shot, visualCapture };
+  }
+
   try {
     phase = "BROWSER_START";
     proxy = await startDestinationProxy();
@@ -2754,8 +2931,9 @@ async function runAuthenticatedAudit() {
     phase = "CAPTURE_PRIVATE";
     let surface = null;
     for (const item of privateCases()) {
+      captureItem = item;
       const key = caseKey(item),
-        record = { ...item, status: "PENDENTE" };
+        record = { ...item, visualSelection: run78VisualSelection(item), status: "PENDENTE" };
       const preserved = preservedPrivateCase(item);
       if (preserved) {
         records.push(preserved);
@@ -2885,6 +3063,7 @@ async function runAuthenticatedAudit() {
           privacySafe: true,
           errors: errors - beforeErrors,
           blockedMutations: fence.snapshot().blockedRequests,
+          visualCapture: shot.visualCapture,
           screenshot: shot.file,
           sha256: shot.sha,
           dom: domFile,
@@ -2896,6 +3075,7 @@ async function runAuthenticatedAudit() {
         record.navigationVerified = await navigationProbe(page, item, fence);
         record.status =
           validateCase(record) &&
+          run78VisualEvidenceValid(record) &&
           metrics.langPtBr &&
           !metrics.badState &&
           accessibility.violations.length === 0 &&
@@ -2908,7 +3088,20 @@ async function runAuthenticatedAudit() {
         console.log(JSON.stringify({ case: key, status: record.status }));
       } catch (error) {
         if (fence.snapshot().failed || error.code === "DEPLOYMENT_CHANGED") throw error;
-        record.status = error.code === "PII_SUPPLEMENT" ? "BLOQUEADO_PII" : "FAIL_UI";
+        record.status = ["PII_SUPPLEMENT", "PII_VISUAL_CAPTURE"].includes(error.code)
+          ? "BLOQUEADO_PII"
+          : "FAIL_UI";
+        if (
+          [
+            "VISUAL_BRAND_INVALID",
+            "VISUAL_BRAND_DECODE",
+            "VISUAL_BRAND_TIMEOUT",
+            "VISUAL_BRAND_COUNT",
+            "VISUAL_MEASUREMENT",
+            "VISUAL_CASE_IDENTITY",
+          ].includes(error.code)
+        )
+          record.visualFailure = error.code;
         if (record.status === "BLOQUEADO_PII") {
           for (let i = hashes.length - 1; i >= 0; i--)
             if (
@@ -2918,7 +3111,14 @@ async function runAuthenticatedAudit() {
               await rm(join(output, hashes[i].file), { force: true });
               hashes.splice(i, 1);
             }
-          for (const field of ["screenshot", "sha256", "dom", "domSha256", "sidebarSupplement"])
+          for (const field of [
+            "screenshot",
+            "sha256",
+            "dom",
+            "domSha256",
+            "sidebarSupplement",
+            "visualCapture",
+          ])
             delete record[field];
         }
         console.log(JSON.stringify({ case: key, status: record.status }));
@@ -2989,6 +3189,342 @@ async function runAuthenticatedAudit() {
   if (aborted || !logoutVerified || records.some((r) => r.status !== "PASS_AUTOMATIZADO"))
     fail("AUDIT_INCOMPLETE");
 }
+/** Serialized into the browser: never return a browser error or arbitrary image URL. */
+export async function decodeBrandImage(image, options) {
+  const context = options?.context,
+    timeoutMs = options?.timeoutMs ?? 5000;
+  const error = (code) => Object.assign(new Error(code), { code });
+  const validContext =
+    context &&
+    [1440, 1280, 768, 390].includes(context.width) &&
+    ["light", "dark"].includes(context.theme) &&
+    (["SYS04", "SYS05", "ADM01"].includes(context.surface) ||
+      /^V(?:10[1-9]|11[0-9]|12[0-3])$/.test(context.surface)) &&
+    ["PRIMARY", "SIDEBAR_COLLAPSED", "MOBILE_MENU"].includes(context.mode);
+  if (
+    !validContext ||
+    (context.surface === "SYS04" && context.mode !== "PRIMARY") ||
+    (context.mode === "MOBILE_MENU" && context.width >= 768) ||
+    (context.mode === "SIDEBAR_COLLAPSED" && context.width < 768)
+  )
+    throw error("VISUAL_BRAND_INVALID");
+  let expectedSrc;
+  if (context.surface === "SYS04")
+    expectedSrc =
+      context.width < 640
+        ? context.theme === "dark"
+          ? "/brand/ContaOS_Simbolo_Navy.svg"
+          : "/brand/ContaOS_Simbolo_Branco.svg"
+        : context.theme === "dark"
+          ? "/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg"
+          : "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg";
+  else if (context.mode === "PRIMARY" && context.width < 768) throw error("VISUAL_BRAND_INVALID");
+  else
+    expectedSrc =
+      context.mode === "SIDEBAR_COLLAPSED"
+        ? "/brand/ContaOS_Simbolo_Branco.svg"
+        : "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg";
+  const src = image.getAttribute("src");
+  if (!image.isConnected || src !== expectedSrc || !Number.isFinite(timeoutMs) || timeoutMs <= 0)
+    throw error("VISUAL_BRAND_INVALID");
+  let timer, loaded, failed;
+  try {
+    await Promise.race([
+      (async () => {
+        if (!image.complete)
+          await new Promise((resolve, reject) => {
+            loaded = resolve;
+            failed = () => reject(error("VISUAL_BRAND_INVALID"));
+            image.addEventListener("load", loaded, { once: true });
+            image.addEventListener("error", failed, { once: true });
+          });
+        if (!image.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0)
+          throw error("VISUAL_BRAND_INVALID");
+        try {
+          await image.decode();
+        } catch {
+          throw error("VISUAL_BRAND_DECODE");
+        }
+      })(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(error("VISUAL_BRAND_TIMEOUT")), timeoutMs);
+      }),
+    ]);
+    const rect = image.getBoundingClientRect();
+    if (
+      !image.isConnected ||
+      image.getAttribute("src") !== src ||
+      !image.complete ||
+      ![rect.width, rect.height, image.naturalWidth, image.naturalHeight].every(
+        (n) => Number.isFinite(n) && n > 0,
+      )
+    )
+      throw error("VISUAL_BRAND_INVALID");
+    return {
+      src,
+      complete: true,
+      naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight,
+      width: rect.width,
+      height: rect.height,
+      decoded: true,
+    };
+  } finally {
+    clearTimeout(timer);
+    if (loaded) image.removeEventListener("load", loaded);
+    if (failed) image.removeEventListener("error", failed);
+  }
+}
+
+/** Shared causal boundary: no screenshot is emitted after a failed/incomplete step. */
+export async function captureVisualEvidence({ brand, drain, stabilize, measure, privacy, save }) {
+  const image = await brand();
+  await drain();
+  await stabilize();
+  const metrics = await measure();
+  if (metrics?.passed !== true) fail("VISUAL_MEASUREMENT");
+  if ((await privacy()) !== true) fail("PII_VISUAL_CAPTURE");
+  const measuredAt = Date.now();
+  const shot = await save();
+  return { image, metrics, phase: "BEFORE_PNG", measuredAt, capturedAt: Date.now(), shot };
+}
+
+export function visualGeometryValid(value) {
+  const validRect = (r) =>
+    r && [r.x, r.y, r.width, r.height].every(Number.isFinite) && r.width > 0 && r.height > 0;
+  if (
+    !value ||
+    !Number.isFinite(value.viewport?.width) ||
+    !Number.isFinite(value.viewport?.height) ||
+    value.viewport.width <= 0 ||
+    value.viewport.height <= 0 ||
+    !Array.isArray(value.targets) ||
+    !Array.isArray(value.pairs)
+  )
+    return false;
+  for (const t of value.targets) {
+    const r = t.rect;
+    if (
+      !validRect(r) ||
+      !t.connected ||
+      !t.visible ||
+      (!t.hit && t.disabled !== true) ||
+      r.x < 0 ||
+      r.y < 0 ||
+      r.x + r.width > value.viewport.width + 0.5 ||
+      r.y + r.height > value.viewport.height + 0.5
+    )
+      return false;
+  }
+  return value.pairs.every((pair) => {
+    if (!Array.isArray(pair) || pair.length !== 2) return false;
+    const [a, b] = pair;
+    return (
+      validRect(a) &&
+      validRect(b) &&
+      !(a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y)
+    );
+  });
+}
+
+/** Real geometry only; labels, values, arbitrary selectors and user text never leave the page. */
+export async function collectVisualMetrics(page, item) {
+  const measured = await page.evaluate(({ surface, theme }) => {
+    const visible = (e) =>
+      e.isConnected &&
+      e.getClientRects().length > 0 &&
+      getComputedStyle(e).visibility !== "hidden" &&
+      getComputedStyle(e).display !== "none";
+    const rect = (e) => {
+      const b = e.getBoundingClientRect();
+      return { x: b.x, y: b.y, width: b.width, height: b.height };
+    };
+    const viewport = { width: innerWidth, height: innerHeight };
+    const controls = [
+      ...document.querySelectorAll('input:not([type="hidden"]),select,textarea,button,a[href]'),
+    ].filter((e) => {
+      if (!visible(e) || e.closest("[inert]")) return false;
+      const r = rect(e);
+      return r.width > 0 && r.height > 0 && r.y >= 0 && r.y + r.height <= innerHeight;
+    });
+    const targets = controls.map((e) => {
+      const r = rect(e),
+        inset = Math.min(3, r.width / 4, r.height / 4);
+      const points = [
+        [r.x + r.width / 2, r.y + r.height / 2],
+        [r.x + inset, r.y + r.height / 2],
+        [r.x + r.width - inset, r.y + r.height / 2],
+        [r.x + r.width / 2, r.y + inset],
+        [r.x + r.width / 2, r.y + r.height - inset],
+      ];
+      return {
+        rect: r,
+        connected: e.isConnected,
+        visible: visible(e),
+        disabled:
+          e.matches(":disabled") ||
+          (e.getAttribute("aria-disabled") === "true" &&
+            e.matches('button,input,select,textarea,a[href],[role="button"]')),
+        hit: points.every(([x, y]) => {
+          const hit = document.elementFromPoint(x, y);
+          return hit === e || e.contains(hit);
+        }),
+      };
+    });
+    let table = null;
+    if (surface === "V101") {
+      const section = document.querySelector('section[aria-labelledby="v101-lista"]');
+      const t = section?.querySelector("table"),
+        cards = section?.querySelector('ul[aria-label="Contratantes (lista compacta)"]');
+      let clipping = 0;
+      if (t && visible(t))
+        for (const cell of t.querySelectorAll("th,td")) {
+          const c = cell.getBoundingClientRect();
+          const range = document.createRange();
+          range.selectNodeContents(cell);
+          for (const r of range.getClientRects())
+            if (r.width > 0 && (r.left < c.left - 0.5 || r.right > c.right + 0.5)) clipping++;
+        }
+      table = {
+        containerWidth: section
+          ? section.clientWidth -
+            parseFloat(getComputedStyle(section).paddingLeft) -
+            parseFloat(getComputedStyle(section).paddingRight)
+          : 0,
+        tableVisible: !!t && visible(t),
+        cardsVisible: !!cards && visible(cards),
+        clipping,
+        helpTargets: t && visible(t) ? [...t.querySelectorAll("button")].map((e) => rect(e)) : [],
+      };
+    }
+    const dates = (
+      surface === "V105" ? ["v105-inicio", "v105-fim"] : surface === "V113" ? ["v113-mes"] : []
+    ).map((id) => {
+      const e = document.getElementById(id);
+      return {
+        id,
+        present: !!e && visible(e),
+        scheme: e ? getComputedStyle(e).colorScheme : "",
+        type: e?.getAttribute("type") ?? "",
+      };
+    });
+    const contrast = [];
+    if (["V106", "V107"].includes(surface)) {
+      const pixel = (color) => {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 1;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, 1, 1);
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1, 1);
+        return [...ctx.getImageData(0, 0, 1, 1).data];
+      };
+      const lum = (rgb) =>
+        rgb
+          .slice(0, 3)
+          .map((v) => {
+            const s = v / 255;
+            return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+          })
+          .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+      for (const e of document.querySelectorAll("main span")) {
+        const name = e.textContent?.trim();
+        if (!["Situação:", "Criticidade:"].includes(name) || !visible(e)) continue;
+        let ancestor = e,
+          bg = null;
+        while (ancestor) {
+          const c = pixel(getComputedStyle(ancestor).backgroundColor);
+          if (c[3] === 255) {
+            bg = c;
+            break;
+          }
+          ancestor = ancestor.parentElement;
+        }
+        const fg = pixel(getComputedStyle(e).color);
+        const ratio =
+          bg && fg[3] === 255
+            ? (Math.max(lum(bg), lum(fg)) + 0.05) / (Math.min(lum(bg), lum(fg)) + 0.05)
+            : 0;
+        contrast.push({
+          node: name === "Situação:" ? "STATUS_LABEL" : "CRITICALITY_LABEL",
+          ratio,
+          threshold: 4.5,
+        });
+      }
+    }
+    return {
+      viewport,
+      targets,
+      pairs: [],
+      table,
+      dates,
+      contrast,
+      theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
+      overflowX: document.documentElement.scrollWidth - innerWidth,
+    };
+  }, item);
+  const identityPassed = measured.viewport.width === item.width && measured.theme === item.theme;
+  const geometryPassed = visualGeometryValid(measured);
+  const tablePassed =
+    !measured.table ||
+    (measured.table.containerWidth > 0 &&
+      measured.table.tableVisible !== measured.table.cardsVisible &&
+      measured.table.clipping === 0 &&
+      measured.table.helpTargets.every((r) => r.width >= 44 && r.height >= 44));
+  const datesPassed = measured.dates.every((d) => d.present && d.scheme === item.theme);
+  const contrastPassed =
+    !["V106", "V107"].includes(item.surface) ||
+    (measured.contrast.length >= (item.surface === "V106" ? 2 : 1) &&
+      measured.contrast.every((c) => Number.isFinite(c.ratio) && c.ratio >= c.threshold));
+  return {
+    ...measured,
+    passed:
+      identityPassed &&
+      geometryPassed &&
+      tablePassed &&
+      datesPassed &&
+      contrastPassed &&
+      measured.overflowX <= 0,
+    identityPassed,
+    geometryPassed,
+    tablePassed,
+    datesPassed,
+    contrastPassed,
+  };
+}
+
+export async function readyVisualBrand(page, item, mode) {
+  if (
+    !run78VisualSelection(item) ||
+    !["PRIMARY", "SIDEBAR_COLLAPSED", "MOBILE_MENU"].includes(mode) ||
+    (item.surface === "SYS04" && mode !== "PRIMARY") ||
+    (mode === "MOBILE_MENU" && item.width >= 768) ||
+    (mode === "SIDEBAR_COLLAPSED" && item.width < 768)
+  )
+    fail("VISUAL_CASE_IDENTITY");
+  const context = { surface: item.surface, width: item.width, theme: item.theme, mode };
+  const required = item.surface === "SYS04" || item.width >= 768 || mode === "MOBILE_MENU";
+  const images = page.locator('img[src^="/brand/"]:visible');
+  const count = await images.count();
+  if (count !== (required ? 1 : 0)) fail("VISUAL_BRAND_COUNT");
+  if (!count) return { count: 0, images: [], context };
+  const receipts = [];
+  for (const image of await images.all()) {
+    try {
+      receipts.push(await image.evaluate(decodeBrandImage, { context, timeoutMs: 5000 }));
+    } catch (error) {
+      fail(
+        ["VISUAL_BRAND_INVALID", "VISUAL_BRAND_DECODE", "VISUAL_BRAND_TIMEOUT"].includes(error.code)
+          ? error.code
+          : (["VISUAL_BRAND_INVALID", "VISUAL_BRAND_DECODE", "VISUAL_BRAND_TIMEOUT"].find((code) =>
+              error.message?.includes(code),
+            ) ?? "VISUAL_BRAND_DECODE"),
+      );
+    }
+  }
+  return { count, images: receipts, context };
+}
+
 async function keyboardProbe(page) {
   let forward = true,
     backward = true;
@@ -3031,7 +3567,13 @@ async function sidebarProbe(page, item, key, words, save) {
       collapsed &&
       (await aside.getByRole("link", { name: "Usuários", exact: true }).count()) === 1 &&
       (await aside.getByRole("link", { name: "Auditoria", exact: true }).count()) === 1;
-    return { passed, mode: "DESKTOP", screenshot: image.file, sha256: image.sha };
+    return {
+      passed,
+      mode: "DESKTOP",
+      screenshot: image.file,
+      sha256: image.sha,
+      visualCapture: image.visualCapture,
+    };
   }
   const open = page.getByRole("button", { name: "Abrir menu", exact: true });
   await open.click();
@@ -3050,6 +3592,7 @@ async function sidebarProbe(page, item, key, words, save) {
     brandCount,
     screenshot: image.file,
     sha256: image.sha,
+    visualCapture: image.visualCapture,
   };
 }
 export async function navigationProbe(page, item, fence) {

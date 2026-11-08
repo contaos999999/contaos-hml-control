@@ -144,3 +144,11 @@
     color: var(--color-foreground);
   }
 }
+
+/* Native date parts follow the application theme only on the reviewed fields. */
+.contaos-date-field {
+  color-scheme: light;
+}
+.dark .contaos-date-field {
+  color-scheme: dark;
+}

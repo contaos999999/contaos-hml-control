@@ -196,21 +196,6 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background text-foreground">
       {liberado && (
         <>
-          <button
-            ref={botaoMovelRef}
-            type="button"
-            inert={movelAberto}
-            aria-label="Abrir menu"
-            aria-expanded={movelAberto}
-            aria-controls="contaos-menu-movel"
-            onClick={() => {
-              fechamentoPorNavegacao.current = false;
-              setMovelAberto((v) => !v);
-            }}
-            className={`fixed bottom-4 right-4 rounded-lg border bg-background p-3 shadow-lg focus-visible:ring-2 focus-visible:ring-ring md:hidden ${movelAberto ? "z-30" : "z-50"}`}
-          >
-            Menu
-          </button>
           {movelAberto && (
             <div
               ref={dialogoMovelRef}
@@ -320,6 +305,25 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
         className={`min-w-0 ${liberado ? (recolhida ? "md:pl-20" : "md:pl-56") : ""}`}
       >
         <ContaOSOrganizationHeader />
+        {liberado && (
+          <div className="flex justify-end border-b border-border bg-background px-4 py-2 md:hidden">
+            <button
+              ref={botaoMovelRef}
+              type="button"
+              inert={movelAberto}
+              aria-label="Abrir menu"
+              aria-expanded={movelAberto}
+              aria-controls="contaos-menu-movel"
+              onClick={() => {
+                fechamentoPorNavegacao.current = false;
+                setMovelAberto((v) => !v);
+              }}
+              className="min-h-11 rounded-lg border bg-background px-3 py-2 shadow-sm focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Menu
+            </button>
+          </div>
+        )}
         <div key={chaveConteudo}>{children}</div>
       </div>
     </div>

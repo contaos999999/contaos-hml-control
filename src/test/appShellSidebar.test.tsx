@@ -119,7 +119,7 @@ describe("P0 sidebar — regressões consolidadas do diálogo móvel", () => {
 });
 
 import { afterEach, beforeEach, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ContaOSAppShell } from "@/components/layout/ContaOSAppShell";
 
 const mocks = vi.hoisted(() => ({
@@ -235,6 +235,39 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(abrir).not.toHaveAttribute("inert");
     expect(document.body.style.overflow).toBe("");
+  });
+
+  it("contém foco no diálogo e devolve ao Menu sem perder o conteúdo", async () => {
+    // JSDOM has no layout; this supplies visibility only, never geometric proof.
+    const rects = vi
+      .spyOn(HTMLElement.prototype, "getClientRects")
+      .mockReturnValue([{}] as unknown as DOMRectList);
+    try {
+      render(
+        <ContaOSAppShell>
+          <main>
+            <button>Campo preservado</button>
+          </main>
+        </ContaOSAppShell>,
+      );
+      const abrir = await screen.findByRole("button", { name: "Abrir menu" });
+      abrir.focus();
+      fireEvent.click(abrir);
+      const dialogo = screen.getByRole("dialog", { name: "Menu de navegação" });
+      const fechar = screen.getByRole("button", { name: "Fechar menu" });
+      expect(document.activeElement).toBe(fechar);
+      const links = within(dialogo).getAllByRole("link");
+      fireEvent.keyDown(document, { key: "Tab", shiftKey: true });
+      expect(document.activeElement).toBe(links[links.length - 1]);
+      fireEvent.keyDown(document, { key: "Tab" });
+      expect(document.activeElement).toBe(fechar);
+      fireEvent.click(fechar);
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(document.activeElement).toBe(abrir);
+      expect(screen.getByRole("button", { name: "Campo preservado" })).toBeInTheDocument();
+    } finally {
+      rects.mockRestore();
+    }
   });
 
   it("nega links administrativos quando a RPC retorna falso", async () => {
