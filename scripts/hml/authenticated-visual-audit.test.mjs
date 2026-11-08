@@ -1030,6 +1030,10 @@ for (const scheme of ["ws", "wss"])
           waitUntil: "networkidle",
         });
         assert.ok(
+          fence.snapshot().verifiedDocuments > 0,
+          "verified response count: " + JSON.stringify(fence.snapshot()),
+        );
+        assert.ok(
           (await delivered.headerValue("content-security-policy"))?.includes("connect-src"),
           "CSP must reach the protected document",
         );

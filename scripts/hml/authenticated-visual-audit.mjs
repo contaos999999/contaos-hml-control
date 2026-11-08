@@ -914,7 +914,7 @@ export async function installNativeFence({
       const response =
         event.responseStatusCode !== undefined || event.responseErrorReason !== undefined;
       if (!response) {
-        await send(session, "Fetch.continueRequest", { requestId });
+        await send(session, "Fetch.continueRequest", { requestId, interceptResponse: true });
         return;
       }
       if (event.responseErrorReason) fail("FENCE_TRANSPORT");
