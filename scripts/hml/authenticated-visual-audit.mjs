@@ -491,15 +491,13 @@ export function classifyArtifactText(text, allowedWords, { snapshot = false } = 
   )
     return { reason: "SENSITIVE_PATTERN", unknownCount: 0 };
   let invalidDate = false;
-  let remainder = text
-    .normalize("NFC")
-    .replace(/Atualizado em \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}(?::\d{2})?(?![\d:])/gu, (value) => {
-      if (!/^Atualizado em 08\/11\/2026 (?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(value)) {
-        invalidDate = true;
-        return value;
-      }
-      return " ";
-    });
+  let remainder = text.normalize("NFC").replace(/Atualizado em [\d/]+[ \t]+[\d:]+/gu, (value) => {
+    if (!/^Atualizado em 08\/11\/2026 (?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(value)) {
+      invalidDate = true;
+      return value;
+    }
+    return " ";
+  });
   if (invalidDate) return { reason: "INVALID_CONTENT", unknownCount: 0 };
   remainder = remainder.replace(SYNTHETIC_EXCERPT_PATTERN, " ");
   if (snapshot)
