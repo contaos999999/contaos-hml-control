@@ -3381,7 +3381,9 @@ export async function prepareCompetencies(io, sourceList) {
   return output;
 }
 
-export function preparerEventAllowed(env) { return singleRequestEventAllowed(env,"fixtures"); }
+export function preparerEventAllowed(env) {
+  return singleRequestEventAllowed(env, "fixtures");
+}
 export function validatePreparerIdentity(env, proof, native, identity, head) {
   return (
     preparerEventAllowed(env) &&
@@ -3944,11 +3946,9 @@ export function fixtureBindingReceipt(sourceList, result) {
 export async function runCli(args = process.argv.slice(2)) {
   if (!Array.isArray(args) || args.length !== 1 || args[0] !== "--prepare-fixtures")
     err("PREPARER_CLI_USAGE");
-  if (process.env.GITHUB_EVENT_NAME === "workflow_run") await verifySingleRequest({operation:"fixtures",publicOnly:true});
-  if (
-    !preparerEventAllowed(process.env)
-  )
-    err("PREPARER_MAIN_ONLY");
+  if (process.env.GITHUB_EVENT_NAME === "workflow_run")
+    await verifySingleRequest({ operation: "fixtures", publicOnly: true });
+  if (!preparerEventAllowed(process.env)) err("PREPARER_MAIN_ONLY");
   return runFixturePreparation();
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
