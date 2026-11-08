@@ -1,3 +1,13 @@
+## Checkpoint P0: comparação real de build main × HML, 08/11/2026
+
+**DIVERGÊNCIA COMPROVADA ENTRE OS ARTEFATOS COMPARADOS.** Main45104916895a1f0972ecec2eec9a541dbd4e0b97 reconstruída com Bun1.4.4/lockfile congelado, buildPASS e fontes limpas. Entryindex-CrkggL7D.js,322713bytes,SHA256f16568e5cacab8cbe739909c6c4489c18494b25c7cabcb320408811569479b8b. HML serveindex-CjzqjoMJ.js,318007bytes,SHA256cbce6433c598f440012543f62e36c5f0bef7986ed198952496bd0d7f2beccc54.108módulos publicados obtidos,1345822bytes;21caminhos+hashes coincidem com a main. Três textos do cabeçalho compartilhado existem no buildmain e estão ausentes do grafo publicado obtido; divergência corroborada pelas capturas autenticadas. Não atribuir diferenças apenas ao hash de arquivo.
+
+MetadadoLovable935bb96 também reconstruído: entryindex-DMDJ_yWG.js,SHA2567a60581b492db06dd5396ec47768b2efc02b45c2a9f0d08e83c293ace0e8ed18,comcabeçalhoatual. Portanto latest_commit_sha não prova o código publicado. x-deployment-id recebido,semvínculo verificável comGit. SHAexatopublicado continuaNÃOIDENTIFICADO. Relatório emanifestos em `docs/frontend/auditorias/COMPARACAO_BUILD_MAIN_HML_2026-11-08.md`. Nenhuma publicação ou mudança de produto realizada.
+
+Próxima tarefa: reconciliar a publicação HML com fonte integrada conhecida e repetir prova de igualdade antes da matriz232/72. Preservar evidências de divergência e evitar repetir código jáintegrado. NO-GOvisual/V1 mantido;V2–V5/PROD bloqueados.
+
+---
+
 ## Checkpoint P0: auditoria autenticada parcial executada em 08/11/2026 UTC
 
 **NO-GO visual; V1 não certificada.** Login real por formulário seguro e seleção da organização ativa ContaOS HML Teste com perfil Administrador Master. Sete superfícies privadas acessadas e capturadas: SYS05, V101, V102, V104, V105, ADM01 e V123. Evidências e limites em `docs/frontend/auditorias/TRILHA_A_AUTENTICADA_2026-11-08.md`, sete JPEGs, sete DOMs, manifesto e SHA256SUMS no diretório `evidencias/auth-20261108`. Não foram preservados senha, tokens ou cookies.

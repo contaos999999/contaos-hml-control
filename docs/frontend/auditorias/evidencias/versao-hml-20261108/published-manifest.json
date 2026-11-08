@@ -1,0 +1,19 @@
+{
+  "retrieved_at_utc": "2026-11-08T03:08:50.705836+00:00",
+  "url": "https://scope-and-approval-keeper.lovable.app",
+  "headers": {
+    "date": "Sun, 08 Nov 2026 03:08:43 GMT",
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-cache, must-revalidate, max-age=0",
+    "x-deployment-id": "psr2.6edf8ab7-c8e7-4ac5-89db-f88b7b2013cb.1794712122.1YGGjkHl-diaiHXokM8II6gqmV2PJVnOQNZJdxz7Jsg"
+  },
+  "html_sha256": "4f42a957b590deed917af76f927a5a1f57199c4e84b34639bdfad0842fa5f3ff",
+  "assets": [
+    {
+      "url": "https://scope-and-approval-keeper.lovable.app/assets/index-CjzqjoMJ.js",
+      "file": "index-CjzqjoMJ.js",
+      "bytes": 318007,
+      "sha256": "cbce6433c598f440012543f62e36c5f0bef7986ed198952496bd0d7f2beccc54"
+    }
+  ]
+}
