@@ -811,7 +811,10 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
       const { chromium } = await import("playwright");
       let browser, context, fence, proxy;
       let connections = 0;
-      const canary = createHttpServer((_req, res) => res.end("canary"));
+      const canary = createHttpServer((_req, res) => {
+        res.setHeader("content-type", "text/html");
+        res.end('<!doctype html><title>canary</title><link rel="icon" href="data:,">');
+      });
       canary.on("connection", () => connections++);
       const debug = createHttpServer();
       await Promise.all(
@@ -843,6 +846,10 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
             debugPort: port,
             identity: targetInfo,
             verifyResponse: async () => true,
+            policy: (request) =>
+              mode === "websocket" && request.url === `http://127.0.0.1:${canary.address().port}/`
+                ? true
+                : sut.requestAllowed(request),
             closeContext: async () => {
               await context.close();
               finished.resolve();
@@ -862,6 +869,11 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
             .evaluate((url) => window.open(url), `http://127.0.0.1:${canary.address().port}/canary`)
             .catch(() => {});
         } else if (mode === "websocket") {
+          await page.goto(`http://127.0.0.1:${canary.address().port}/`, {
+            waitUntil: "networkidle",
+          });
+          canary.closeAllConnections();
+          connections = 0;
           assert.equal(
             await page.evaluate(
               (url) =>
@@ -949,4 +961,98 @@ test("download público interrompe redirect, resposta parcial e excesso de bytes
       (error) => error.code === "PUBLIC_FETCH",
     );
   }
+});
+
+for (const scheme of ["ws", "wss"])
+  test(
+    `Chromium nativo: controle positivo e bloqueio ${scheme}`,
+    { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
+    async () => {
+      const { chromium } = await import("playwright");
+      let browser, context, fence;
+      let connections = 0;
+      const canary = createHttpServer();
+      canary.on("connection", (socket) => {
+        connections++;
+        socket.destroy();
+      });
+      const source = createHttpServer((_req, res) => {
+        res.setHeader("content-type", "text/html");
+        res.end('<!doctype html><title>synthetic guard</title><link rel="icon" href="data:,">');
+      });
+      const debug = createHttpServer();
+      await Promise.all(
+        [canary, source, debug].map(
+          (server) => new Promise((resolve) => server.listen(0, "127.0.0.1", resolve)),
+        ),
+      );
+      const port = debug.address().port;
+      await new Promise((resolve) => debug.close(resolve));
+      try {
+        browser = await chromium.launch({
+          chromiumSandbox: true,
+          env: fn("browserEnvironment")(process.env),
+          args: [`--remote-debugging-port=${port}`],
+        });
+        const attempt = async (page) =>
+          page.evaluate(
+            (url) =>
+              new Promise((resolve) => {
+                const ws = new WebSocket(url);
+                ws.onerror = () => resolve("denied");
+                ws.onopen = () => resolve("opened");
+              }),
+            `${scheme}://127.0.0.1:${canary.address().port}/canary`,
+          );
+        context = await browser.newContext();
+        let page = await context.newPage();
+        await page.goto(`http://127.0.0.1:${source.address().port}/`, { waitUntil: "networkidle" });
+        await attempt(page);
+        assert.ok(connections > 0, "controle positivo deve comprovar transporte ao mesmo canário");
+        await context.close();
+        connections = 0;
+        context = await browser.newContext();
+        page = await context.newPage();
+
+        const session = await context.newCDPSession(page);
+        const { targetInfo } = await session.send("Target.getTargetInfo");
+        await session.detach();
+        fence = await fn("installNativeFence")({
+          debugPort: port,
+          identity: targetInfo,
+          verifyResponse: async () => true,
+          policy: (request) =>
+            request.url === `http://127.0.0.1:${source.address().port}/` ||
+            sut.requestAllowed(request),
+          closeContext: async () => context.close(),
+        });
+        await page.goto(`http://127.0.0.1:${source.address().port}/`, { waitUntil: "networkidle" });
+        assert.equal(await attempt(page), "denied");
+        await fence.drain();
+        assert.equal(connections, 0, "fence deve bloquear antes do primeiro byte");
+      } finally {
+        fence?.close();
+        await browser?.close();
+        for (const server of [canary, source]) {
+          server.closeAllConnections();
+          await new Promise((resolve) => server.close(resolve));
+        }
+      }
+    },
+  );
+
+test("CSP adicional preserva headers e restringe conexões HTTPS sem liberar ws ou wss", () => {
+  const headers = [
+    { name: "Content-Type", value: "text/html" },
+    { name: "Content-Security-Policy", value: "default-src 'self'" },
+  ];
+  const result = fn("guardedResponseHeaders")(headers);
+  assert.deepEqual(result.slice(0, 2), headers);
+  assert.equal(result.length, 3);
+  assert.equal(result[2].name, "Content-Security-Policy");
+  assert.equal(
+    result[2].value,
+    `connect-src ${HML} ${API}; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'`,
+  );
+  assert.throws(() => fn("guardedResponseHeaders")([{ name: "X", value: "bad\r\nheader" }]));
 });

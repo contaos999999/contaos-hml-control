@@ -936,7 +936,15 @@ export async function installNativeFence({
       if (event.resourceType === "Document") state.verifiedDocuments++;
       else if (event.resourceType === "Script") state.verifiedScripts++;
       else if (body) state.verifiedAssets++;
-      await send(session, "Fetch.continueResponse", { requestId });
+      await send(session, "Fetch.continueResponse", {
+        requestId,
+        ...(event.resourceType === "Document"
+          ? {
+              responseCode: event.responseStatusCode,
+              responseHeaders: guardedResponseHeaders(event.responseHeaders),
+            }
+          : {}),
+      });
     } catch (error) {
       await send(session, "Fetch.failRequest", { requestId, errorReason: "BlockedByClient" }).catch(
         () => {},
@@ -1153,4 +1161,26 @@ export async function discoverPublicGraph({ fetcher = fetch } = {}) {
   }
   if (!modules.size) fail("GRAPH_EMPTY");
   return { html, modules, bytes };
+}
+
+export function guardedResponseHeaders(headers) {
+  if (
+    !Array.isArray(headers) ||
+    headers.length > 256 ||
+    headers.some(
+      (h) =>
+        typeof h?.name !== "string" ||
+        typeof h?.value !== "string" ||
+        !/^[A-Za-z0-9-]+$/.test(h.name) ||
+        /[\r\n\0]/.test(h.value),
+    )
+  )
+    fail("FENCE_HEADERS");
+  return [
+    ...headers.map((h) => ({ name: h.name, value: h.value })),
+    {
+      name: "Content-Security-Policy",
+      value: `connect-src ${HML_ORIGIN} ${API_ORIGIN}; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'`,
+    },
+  ];
 }
