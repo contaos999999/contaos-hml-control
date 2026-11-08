@@ -1,7 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { AlertCircle, Building2, CheckCircle2, ChevronLeft, ChevronRight, Info, Loader2, LogOut, MinusCircle, RefreshCw, ShieldAlert } from "lucide-react";
+import {
+  AlertCircle,
+  Building2,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  Loader2,
+  LogOut,
+  MinusCircle,
+  RefreshCw,
+  ShieldAlert,
+} from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -33,7 +45,8 @@ export const MENSAGENS_V101 = {
   buscaInvalidaLista: "Corrija a busca para ver os contratantes.",
 } as const;
 
-const foco = "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+const foco =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 function DicaSituacao() {
   const [aberta, setAberta] = useState(false);
@@ -53,7 +66,9 @@ function DicaSituacao() {
             <Info className="h-3.5 w-3.5" aria-hidden />
           </button>
         </TooltipTrigger>
-        <TooltipContent className="max-w-xs">Situação registrada no cadastro oficial do contratante.</TooltipContent>
+        <TooltipContent className="max-w-xs">
+          Situação registrada no cadastro oficial do contratante.
+        </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
@@ -65,7 +80,9 @@ function SeloSituacao({ s }: { s: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${
-        ativo ? "border-primary/30 bg-primary/10 text-foreground" : "border-border bg-muted text-muted-foreground"
+        ativo
+          ? "border-primary/30 bg-primary/10 text-foreground"
+          : "border-border bg-muted text-muted-foreground"
       }`}
     >
       <Icone className="h-3.5 w-3.5" aria-hidden />
@@ -76,34 +93,59 @@ function SeloSituacao({ s }: { s: string }) {
 
 function Tabela({ itens }: { itens: Contratante[] }) {
   return (
-    <div className="hidden md:block">
+    <div className="hidden @min-[56rem]/lista:block">
       <table className="w-full table-fixed border-collapse text-sm">
         <caption className="sr-only">Contratantes da organização selecionada</caption>
         <thead>
           <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-            <th scope="col" className="w-[26%] py-2 pr-3 font-medium">Razão social</th>
-            <th scope="col" className="w-[18%] py-2 pr-3 font-medium">Nome fantasia</th>
-            <th scope="col" className="w-[17%] py-2 pr-3 font-medium">Documento</th>
-            <th scope="col" className="w-[13%] py-2 pr-3 font-medium">Tipo</th>
-            <th scope="col" className="w-[12%] py-2 pr-3 font-medium">
+            <th scope="col" className="w-[26%] py-2 pr-3 font-medium">
+              Razão social
+            </th>
+            <th scope="col" className="w-[16%] py-2 pr-3 font-medium">
+              Nome fantasia
+            </th>
+            <th scope="col" className="w-[17%] py-2 pr-3 font-medium">
+              Documento
+            </th>
+            <th scope="col" className="w-[11%] py-2 pr-3 font-medium">
+              Tipo
+            </th>
+            <th scope="col" className="w-[16%] py-2 pr-3 font-medium">
               <span className="inline-flex items-center gap-1">
                 Situação <DicaSituacao />
               </span>
             </th>
-            <th scope="col" className="w-[14%] py-2 font-medium">Atualizado em</th>
+            <th scope="col" className="w-[14%] py-2 font-medium">
+              Atualizado em
+            </th>
           </tr>
         </thead>
         <tbody>
           {itens.map((c) => (
             <tr key={c.id} className="border-b border-border/60 align-top">
-              <td className="break-words py-3 pr-3 font-medium text-foreground"><Link to="/contratantes/$id/editar" params={{ id: c.id }} aria-label={`Abrir cadastro de ${c.razao_social}`} className={`inline-flex min-h-11 max-w-full items-center rounded underline underline-offset-4 hover:text-primary ${foco}`}>{c.razao_social}</Link></td>
-              <td className="break-words py-3 pr-3 text-muted-foreground">{c.nome_fantasia || "—"}</td>
-              <td className="break-words py-3 pr-3 tabular-nums">{formatarDocumento(c.documento)}</td>
+              <td className="break-words py-3 pr-3 font-medium text-foreground">
+                <Link
+                  to="/contratantes/$id/editar"
+                  params={{ id: c.id }}
+                  aria-label={`Abrir cadastro de ${c.razao_social}`}
+                  className={`inline-flex min-h-11 max-w-full items-center rounded underline underline-offset-4 hover:text-primary ${foco}`}
+                >
+                  {c.razao_social}
+                </Link>
+              </td>
+              <td className="break-words py-3 pr-3 text-muted-foreground">
+                {c.nome_fantasia || "—"}
+              </td>
+              <td className="break-words py-3 pr-3 tabular-nums">
+                {formatarDocumento(c.documento)}
+              </td>
               <td className="break-words py-3 pr-3">{rotuloTipoPessoa(c.tipo_pessoa)}</td>
               <td className="py-3 pr-3">
                 <SeloSituacao s={c.situacao} />
               </td>
-              <td className="break-words py-3 tabular-nums text-muted-foreground">{formatarDataHora(c.atualizado_em)}</td>
+              <td className="break-words py-3 tabular-nums text-muted-foreground">
+                {formatarDataHora(c.atualizado_em)}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -114,11 +156,22 @@ function Tabela({ itens }: { itens: Contratante[] }) {
 
 function Cards({ itens }: { itens: Contratante[] }) {
   return (
-    <ul aria-label="Contratantes (lista compacta)" className="space-y-3 md:hidden">
+    <ul aria-label="Contratantes (lista compacta)" className="space-y-3 @min-[56rem]/lista:hidden">
       {itens.map((c) => (
         <li key={c.id} className="rounded-lg border border-border bg-background p-4">
-          <p className="break-words font-medium text-foreground"><Link to="/contratantes/$id/editar" params={{ id: c.id }} aria-label={`Abrir cadastro de ${c.razao_social}`} className={`inline-flex min-h-11 max-w-full items-center rounded underline underline-offset-4 hover:text-primary ${foco}`}>{c.razao_social}</Link></p>
-          {c.nome_fantasia && <p className="break-words text-sm text-muted-foreground">{c.nome_fantasia}</p>}
+          <p className="break-words font-medium text-foreground">
+            <Link
+              to="/contratantes/$id/editar"
+              params={{ id: c.id }}
+              aria-label={`Abrir cadastro de ${c.razao_social}`}
+              className={`inline-flex min-h-11 max-w-full items-center rounded underline underline-offset-4 hover:text-primary ${foco}`}
+            >
+              {c.razao_social}
+            </Link>
+          </p>
+          {c.nome_fantasia && (
+            <p className="break-words text-sm text-muted-foreground">{c.nome_fantasia}</p>
+          )}
           <dl className="mt-3 grid grid-cols-1 gap-2 text-sm min-[360px]:grid-cols-2">
             <div className="min-w-0">
               <dt className="text-xs text-muted-foreground">Documento</dt>
@@ -169,7 +222,8 @@ export function ListaContratantes() {
         if (!ativo) return;
         const semSessao =
           !!error &&
-          ((error as { name?: string }).name === "AuthSessionMissingError" || (error as { code?: string }).code === "session_not_found");
+          ((error as { name?: string }).name === "AuthSessionMissingError" ||
+            (error as { code?: string }).code === "session_not_found");
         if (semSessao || (!error && !data.user)) {
           navigate({ to: "/login", replace: true });
           return;
@@ -232,7 +286,8 @@ export function ListaContratantes() {
   const dados = consulta.data;
   const erroFaixa = consulta.error instanceof ErroContratantes && consulta.error.tipo === "faixa";
   useEffect(() => {
-    if (dados && dados.itens.length === 0 && dados.total > 0 && dados.pagina > 1) setPagina(dados.totalPaginas);
+    if (dados && dados.itens.length === 0 && dados.total > 0 && dados.pagina > 1)
+      setPagina(dados.totalPaginas);
     else if (erroFaixa && pagina > 1) setPagina(1);
   }, [dados, erroFaixa, pagina]);
 
@@ -244,9 +299,19 @@ export function ListaContratantes() {
   }
 
   const tipoErro = (e: unknown) => (e instanceof ErroContratantes ? e.tipo : "erro");
-  const ajustandoPagina = !!dados && dados.itens.length === 0 && dados.total > 0 && dados.pagina > 1;
+  const ajustandoPagina =
+    !!dados && dados.itens.length === 0 && dados.total > 0 && dados.pagina > 1;
 
-  type Fase = "verificando" | "erroSessao" | "carregando" | "negado" | "erro" | "buscaInvalida" | "vazio" | "vazioFiltro" | "sucesso";
+  type Fase =
+    | "verificando"
+    | "erroSessao"
+    | "carregando"
+    | "negado"
+    | "erro"
+    | "buscaInvalida"
+    | "vazio"
+    | "vazioFiltro"
+    | "sucesso";
   const fase: Fase = erroSessao
     ? "erroSessao"
     : verificando || !pronto
@@ -260,16 +325,16 @@ export function ListaContratantes() {
           : buscaInvalida
             ? "buscaInvalida"
             : consulta.isError && !erroFaixa
-            ? tipoErro(consulta.error) === "negado"
-              ? "negado"
-              : "erro"
-            : !dados || ajustandoPagina || erroFaixa
-              ? "carregando"
-              : dados.total === 0
-                ? busca || situacao !== "todos"
-                  ? "vazioFiltro"
-                  : "vazio"
-                : "sucesso";
+              ? tipoErro(consulta.error) === "negado"
+                ? "negado"
+                : "erro"
+              : !dados || ajustandoPagina || erroFaixa
+                ? "carregando"
+                : dados.total === 0
+                  ? busca || situacao !== "todos"
+                    ? "vazioFiltro"
+                    : "vazio"
+                  : "sucesso";
 
   function tentarNovamente() {
     if (fase === "erroSessao") {
@@ -284,20 +349,29 @@ export function ListaContratantes() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Cadastros</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            Cadastros
+          </p>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Contratantes</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Consulte os contratantes cadastrados na organização selecionada.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Consulte os contratantes cadastrados na organização selecionada.
+          </p>
         </div>
 
-        {(fase === "verificando" || fase === "erroSessao" || fase === "negado") ? null : (
-          <section aria-labelledby="v101-filtros" className="rounded-xl border border-border bg-card p-4 sm:p-5">
-            <h2 id="v101-filtros" className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        {fase === "verificando" || fase === "erroSessao" || fase === "negado" ? null : (
+          <section
+            aria-labelledby="v101-filtros"
+            className="@container/filtros rounded-xl border border-border bg-card p-4 sm:p-5"
+          >
+            <h2
+              id="v101-filtros"
+              className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+            >
               Filtros
             </h2>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_14rem_auto] md:items-end">
+            <div className="grid grid-cols-1 gap-3 @min-[48rem]/filtros:grid-cols-[minmax(0,1fr)_14rem_auto] @min-[48rem]/filtros:items-end">
               <div className="min-w-0 space-y-1.5">
                 <label htmlFor="v101-busca" className="text-sm font-medium">
                   Buscar por razão social, nome fantasia ou documento
@@ -336,20 +410,34 @@ export function ListaContratantes() {
                   <option value="inativo">Inativos</option>
                 </select>
               </div>
-              <Button type="button" variant="outline" className="h-11" onClick={limparFiltros} disabled={!filtrosAtivos}>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11"
+                onClick={limparFiltros}
+                disabled={!filtrosAtivos}
+              >
                 Limpar filtros
               </Button>
             </div>
           </section>
         )}
 
-        <section aria-labelledby="v101-lista" className="rounded-xl border border-border bg-card p-4 sm:p-5">
+        <section
+          aria-labelledby="v101-lista"
+          className="@container/lista rounded-xl border border-border bg-card p-4 sm:p-5"
+        >
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="v101-lista" className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            <h2
+              id="v101-lista"
+              className="text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+            >
               Contratantes cadastrados
             </h2>
             <p aria-live="polite" className="text-sm text-muted-foreground">
-              {fase === "sucesso" && dados ? `${dados.total.toLocaleString("pt-BR")} contratante(s)` : ""}
+              {fase === "sucesso" && dados
+                ? `${dados.total.toLocaleString("pt-BR")} contratante(s)`
+                : ""}
             </p>
           </div>
 
@@ -360,7 +448,10 @@ export function ListaContratantes() {
           )}
           {fase === "carregando" && (
             <div>
-              <p role="status" className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <p
+                role="status"
+                className="mb-3 flex items-center gap-2 text-sm text-muted-foreground"
+              >
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> {MENSAGENS_V101.carregando}
               </p>
               <div className="space-y-2" aria-hidden>
@@ -371,7 +462,10 @@ export function ListaContratantes() {
             </div>
           )}
           {(fase === "erro" || fase === "erroSessao") && (
-            <div role="alert" className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div
+              role="alert"
+              className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+            >
               <p className="flex items-start gap-2 text-sm">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
                 {fase === "erroSessao" ? MENSAGENS_V101.erroSessao : MENSAGENS_V101.erro}
@@ -382,7 +476,10 @@ export function ListaContratantes() {
             </div>
           )}
           {fase === "negado" && (
-            <div role="alert" className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div
+              role="alert"
+              className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between"
+            >
               <p className="flex items-start gap-2 text-sm">
                 <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
                 {MENSAGENS_V101.negado}
@@ -392,10 +489,19 @@ export function ListaContratantes() {
               </Button>
             </div>
           )}
-          {fase === "buscaInvalida" && <p className="text-sm text-muted-foreground">{MENSAGENS_V101.buscaInvalidaLista}</p>}
-          {fase === "vazio" && <p role="status" className="text-sm text-muted-foreground">{MENSAGENS_V101.vazio}</p>}
+          {fase === "buscaInvalida" && (
+            <p className="text-sm text-muted-foreground">{MENSAGENS_V101.buscaInvalidaLista}</p>
+          )}
+          {fase === "vazio" && (
+            <p role="status" className="text-sm text-muted-foreground">
+              {MENSAGENS_V101.vazio}
+            </p>
+          )}
           {fase === "vazioFiltro" && (
-            <div role="status" className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div
+              role="status"
+              className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+            >
               <p className="text-sm text-muted-foreground">{MENSAGENS_V101.vazioFiltro}</p>
               <Button type="button" variant="outline" className="h-11" onClick={limparFiltros}>
                 Limpar filtros
@@ -406,12 +512,21 @@ export function ListaContratantes() {
             <>
               <Tabela itens={dados.itens} />
               <Cards itens={dados.itens} />
-              <nav aria-label="Paginação" className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <nav
+                aria-label="Paginação"
+                className="mt-4 flex flex-wrap items-center justify-between gap-3"
+              >
                 <p className="text-sm text-muted-foreground">
                   Página {dados.pagina} de {dados.totalPaginas}
                 </p>
                 <div className="flex gap-2">
-                  <Button type="button" variant="outline" className="h-11" disabled={dados.pagina <= 1 || consulta.isFetching} onClick={() => setPagina(dados.pagina - 1)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11"
+                    disabled={dados.pagina <= 1 || consulta.isFetching}
+                    onClick={() => setPagina(dados.pagina - 1)}
+                  >
                     <ChevronLeft className="mr-1 h-4 w-4" aria-hidden /> Anterior
                   </Button>
                   <Button

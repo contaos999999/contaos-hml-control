@@ -44,6 +44,13 @@ export const FIXTURE = Object.freeze({
     "Ensaio sintético HML da Trilha A. A conferência limita-se à presença documental; sem efeito jurídico ou financeiro.",
   excerpt: "CONTAOS HML - FONTE SINTETICA DE AUDITORIA",
 });
+export const SOURCE_FIELDS = Object.freeze({
+  "tipo": "lista_verificacao",
+  "titulo": "FONTE SINTETICA TRILHA A 20261108",
+  "referencia": "Documento HML 525e54fc-feec-4dc0-b540-1510a3c52485; SHA256 773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103",
+  "descricao": "Fonte exclusivamente sintética para auditoria em homologação. Sem efeito jurídico ou financeiro. Vinculação descritiva ao TXT de teste já persistido; não representa análise ou validação de segurança do arquivo."
+});
+const sourceFieldsExact=value=>obj(value)&&Object.entries(SOURCE_FIELDS).every(([key,expected])=>value[key]===expected);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const HASH = /^[0-9a-f]{64}$/;
 const months = ["2026-10-01", "2026-09-01"];
@@ -199,6 +206,7 @@ export function validateBusinessPayload(rpc, p, e = {}) {
           "p_chave_idempotencia",
         ]) &&
         official(s) &&
+        sourceFieldsExact(s) &&
         s.id === FIXTURE.source &&
         p.p_id_organizacao === FIXTURE.organization &&
         p.p_id_contrato === FIXTURE.contract &&
@@ -1186,7 +1194,7 @@ const TABLE_RESPONSE_FIELDS = Object.freeze({
   documentos_competencia:
     "id id_organizacao id_contrato id_competencia id_requisito tipo titulo categoria situacao versao_atual versao_registro",
   versoes_documento:
-    "id id_documento_contrato id_documento_competencia numero_versao id_arquivo hash criado_em",
+    "id id_organizacao id_contrato id_documento_contrato id_documento_competencia numero_versao id_arquivo hash criado_em documentos_competencia arquivos",
   processamentos_documento:
     "id id_versao_documento etapa status tentativas erro_codigo iniciado_em concluido_em criado_em atualizado_em",
   pareceres_internos:
@@ -1244,150 +1252,258 @@ export function projectOfficialResponse(value, depth = 0, strict = false, rootFi
   if (value === null || ["string", "boolean", "number"].includes(typeof value)) return value;
   err("OBSERVATION_SCHEMA");
 }
-export function createOfficialObserver(page) {
-  const pending = new Set(),
-    tables = new Map(),
-    rpcs = new Map(),
-    sequences = new WeakMap();
-  let sequence = 0,
-    failed = false,
-    closed = false;
-  const onRequest = (request) => sequences.set(request, ++sequence);
-  const onResponse = (response) => {
-    if (closed) return;
-    let request, url, table, rpc;
-    try {
-      request = response.request();
-      url = new URL(response.url());
-      if (url.origin !== FIXTURE.api || url.username || url.password || url.hash) return;
-      const tableMatch = /^\/rest\/v1\/([a-z_0-9]+)$/.exec(url.pathname);
-      const rpcMatch = /^\/rest\/v1\/rpc\/([a-z_0-9]+)$/.exec(url.pathname);
-      if (tableMatch && request.method() === "GET" && OBSERVED_TABLES.has(tableMatch[1]))
-        table = tableMatch[1];
-      else if (
-        rpcMatch &&
-        request.method() === "POST" &&
-        !url.search &&
-        OBSERVED_RPCS.has(rpcMatch[1])
-      )
-        rpc = rpcMatch[1];
-      else return;
-    } catch {
-      failed = true;
-      return;
+
+const EXACT_SELECTS=Object.freeze({
+  "contratos": [
+    "id,id_organizacao,id_contratante,numero,objeto,situacao,criticidade,inicio,fim,tipo_contrato,unidade_vinculada,fonte_recurso,valor_global,valor_mensal_referencia,periodicidade,prazo_prestacao_dias,dia_limite_apresentacao,contratante:contratantes!contratos_contratante_org_fk(razao_social,nome_fantasia,documento)"
+  ],
+  "fontes_normativas": [
+    "id,id_organizacao,id_contrato,tipo,titulo,referencia,descricao,situacao,versao_registro,criado_em,atualizado_em"
+  ],
+  "versoes_fontes_normativas": [
+    "id,id_fonte,versao,inicio_vigencia,fim_vigencia,id_arquivo,hash,aprovado_por,aprovado_em,criado_em",
+    "conteudo_texto,metadados"
+  ],
+  "listas_verificacao": [
+    "id,nome,descricao,situacao,versao_atual,versao_registro,atualizado_em"
+  ],
+  "versoes_lista": [
+    "id,id_lista,numero_versao,vigencia_inicio,vigencia_fim,situacao,aprovado_em"
+  ],
+  "itens_lista": [
+    "id,codigo,descricao,categoria,obrigatorio,aplicavel,impeditivo,criticidade,id_fonte_versao,regra_validacao,ordem"
+  ],
+  "competencias": [
+    "id_contrato",
+    "id",
+    "id,competencia_referencia,periodo_inicio,periodo_fim,data_limite,situacao,percentual_conformidade,versao_pacote_atual,atualizado_em"
+  ],
+  "arquivos": [
+    "id,nome_original,mime,tamanho,status_seguranca,criado_em",
+    "id,nome_original,mime,tamanho,sha256,status_seguranca,origem,criado_em",
+    "id,nome_original,mime,tamanho,sha256,status_seguranca,origem,criado_por,criado_em",
+    "id,id_organizacao,id_contrato,status_seguranca"
+  ],
+  "documentos_contrato": [
+    "id,id_contrato,tipo,titulo,categoria,situacao,versao_atual,versao_registro,vigencia_inicio,vigencia_fim,observacoes,criado_em,atualizado_em"
+  ],
+  "versoes_documento": [
+    "id,id_documento_contrato,numero_versao,id_arquivo,hash,metadados_extraidos,enviado_por,criado_em",
+    "id,id_documento_contrato,numero_versao,id_arquivo,hash,motivo_substituicao,metadados_extraidos,enviado_por,criado_em",
+    "id,numero_versao,id_organizacao,id_contrato,documentos_competencia!inner(id_competencia,titulo,situacao),arquivos!versoes_documento_arquivo_org_contrato_fk!inner(nome_original,status_seguranca)",
+    "id,id_organizacao,id_contrato,id_arquivo"
+  ],
+  "processamentos_documento": [
+    "id,id_versao_documento,etapa,status,tentativas,erro_codigo,iniciado_em,concluido_em,criado_em",
+    "id,id_versao_documento,etapa,status,tentativas,erro_codigo,iniciado_em,concluido_em,criado_em,atualizado_em"
+  ],
+  "pareceres_internos": [
+    "id,id_competencia,id_contrato,id_organizacao,autor,texto,status,versao,hash,criado_em,aprovado_por,aprovado_em"
+  ],
+  "apresentacoes_contratante": [
+    "id,id_competencia,id_contrato,id_organizacao,id_pacote,protocolo,forma_apresentacao,apresentado_em,tipo,numero_rodada"
+  ],
+  "pacotes_competencia": [
+    "id,id_competencia,id_contrato,id_organizacao,hash_pacote,numero,tipo,status,congelado_em"
+  ],
+  "itens_pacote_competencia": [
+    "id,id_pacote,id_competencia,id_contrato,id_organizacao,entidade_tipo,entidade_id,versao_id,hash,ordem"
+  ]
+});
+const REVIEW_SELECT="id,numero_versao,id_organizacao,id_contrato,documentos_competencia!inner(id_competencia,titulo,situacao),arquivos!versoes_documento_arquivo_org_contrato_fk!inner(nome_original,status_seguranca)";
+
+const QUERY_KEYS=Object.freeze({
+ contratos:"select id",fontes_normativas:"select id_organizacao id_contrato or situacao order offset limit",
+ versoes_fontes_normativas:"select id id_fonte order offset limit",listas_verificacao:"select id_contrato order offset limit",
+ versoes_lista:"select id_lista order offset limit",itens_lista:"select id_versao_lista order offset limit",
+ competencias:"select id id_organizacao id_contrato competencia_referencia situacao order offset limit",
+ arquivos:"select id id_organizacao id_contrato order offset limit",
+ documentos_contrato:"select id id_contrato tipo categoria situacao titulo order offset limit",
+ versoes_documento:"select id id_documento_contrato id_organizacao id_contrato documentos_competencia.id_competencia documentos_competencia.situacao arquivos.status_seguranca or order offset limit",
+ processamentos_documento:"select id_versao_documento order offset limit",
+ pareceres_internos:"select id_competencia id_organizacao id_contrato order offset limit",
+ apresentacoes_contratante:"select id id_competencia id_organizacao id_contrato",
+ pacotes_competencia:"select id id_competencia id_organizacao id_contrato",
+ itens_pacote_competencia:"select id_pacote id_competencia id_organizacao id_contrato order offset limit"
+});
+const SDK_ORDERS=Object.freeze({
+ fontes_normativas:["titulo.asc,id.asc"],versoes_fontes_normativas:["versao.desc,id.asc"],
+ listas_verificacao:["atualizado_em.desc,id.desc"],versoes_lista:["numero_versao.desc,id.desc"],
+ itens_lista:["ordem.asc,id.asc"],competencias:["competencia_referencia.desc,id.desc"],
+ arquivos:["criado_em.desc,id.asc"],documentos_contrato:["atualizado_em.desc,id.desc"],
+ versoes_documento:["numero_versao.desc,id.desc","criado_em.desc,id.desc"],
+ processamentos_documento:["criado_em.desc,id.desc"],pareceres_internos:["versao.desc,id.desc"],
+ itens_pacote_competencia:["ordem.asc,id.asc"]
+});
+function sdkShape(table,q){
+ const exact=(required,optional=[])=>required.every(k=>Object.hasOwn(q,k))&&Object.keys(q).every(k=>required.includes(k)||optional.includes(k));
+ const page=size=>q.limit===String(size)&&/^(0|[1-9]\d*)$/.test(q.offset||"")&&Number(q.offset)%size===0;
+ let ok=false;
+ switch(table){
+ case "contratos":ok=exact(["select","id"]);break;
+ case "fontes_normativas":ok=exact(["select","id_organizacao","order","offset","limit"],["id_contrato","or","situacao"])&&page(25)&&((Object.hasOwn(q,"id_contrato")?1:0)+(Object.hasOwn(q,"or")?1:0)===1)&&(!q.situacao||["eq.rascunho","eq.ativa","eq.inativa","eq.revogada"].includes(q.situacao));break;
+ case "versoes_fontes_normativas":ok=q.select==="conteudo_texto,metadados"?exact(["select","id"]):exact(["select","id_fonte","order","offset","limit"])&&page(25);break;
+ case "listas_verificacao":ok=exact(["select","id_contrato","order","offset","limit"])&&page(25);break;
+ case "versoes_lista":ok=exact(["select","id_lista","order","offset","limit"])&&page(25);break;
+ case "itens_lista":ok=exact(["select","id_versao_lista","order","offset","limit"])&&page(25);break;
+ case "competencias":ok=q.select==="id_contrato"?exact(["select","id","id_organizacao"]):q.select==="id"?exact(["select","id_contrato","competencia_referencia"]):exact(["select","id_contrato","order","offset","limit"],["competencia_referencia","situacao"])&&page(25);break;
+ case "arquivos":ok=exact(["select","id"])||exact(["select","id","id_organizacao","id_contrato"])||(exact(["select","id_organizacao","id_contrato","order","offset","limit"])&&page(25));break;
+ case "documentos_contrato":ok=exact(["select","id","id_contrato"])||(exact(["select","id_contrato","order","offset","limit"],["tipo","categoria","situacao","titulo"])&&page(25));break;
+ case "versoes_documento":
+  if(q.select===REVIEW_SELECT)ok=exact(["select","id_organizacao","id_contrato","documentos_competencia.id_competencia","documentos_competencia.situacao","arquivos.status_seguranca","order","offset","limit"])&&page(25)&&q.order==="criado_em.desc,id.desc";
+  else if(q.or)ok=exact(["select","or"]);
+  else if(q.id)ok=exact(["select","id","id_organizacao","id_contrato"]);
+  else ok=exact(["select","id_documento_contrato","order","offset","limit"])&&page(20)&&q.order==="numero_versao.desc,id.desc";
+  break;
+ case "processamentos_documento":ok=exact(["select","id_versao_documento","order","offset","limit"])&&(q.id_versao_documento?.startsWith("in.(")?page(1000):page(10));break;
+ case "pareceres_internos":ok=exact(["select","id_competencia","id_organizacao","id_contrato","order","offset","limit"])&&page(25);break;
+ case "apresentacoes_contratante":case "pacotes_competencia":ok=exact(["select","id","id_competencia","id_organizacao","id_contrato"]);break;
+ case "itens_pacote_competencia":ok=exact(["select","id_pacote","id_competencia","id_organizacao","id_contrato","order","offset","limit"])&&page(25);break;
+ }
+ if(!ok)err("OBSERVATION_QUERY");
+}
+const pathValue=(row,key)=>key.split(".").reduce((v,k)=>obj(v)&&Object.hasOwn(v,k)?v[k]:undefined,row);
+function parseObservedQuery(table,url){
+ if(url.pathname!=="/rest/v1/"+table||url.pathname.includes("%"))err("OBSERVATION_QUERY");
+ const q=Object.fromEntries(url.searchParams),pairs=[...url.searchParams];
+ if(pairs.length!==Object.keys(q).length||!QUERY_KEYS[table]||pairs.some(([k])=>!QUERY_KEYS[table].split(" ").includes(k)))err("OBSERVATION_QUERY");
+ if(!EXACT_SELECTS[table]?.includes(q.select))err("OBSERVATION_PROJECTION");
+ const predicates=new Map();
+ for(const[k,v]of pairs){
+  if(k==="select")continue;
+  if(k==="order"){if(!SDK_ORDERS[table]?.includes(v))err("OBSERVATION_QUERY");continue;}
+  if(k==="offset"){if(!/^(0|[1-9]\d{0,5})$/.test(v))err("OBSERVATION_QUERY");continue;}
+  if(k==="limit"){if(!["10","20","25","1000"].includes(v))err("OBSERVATION_QUERY");continue;}
+  if(k==="or"){
+   const sourceOr="(id_contrato.eq."+FIXTURE.contract+",id_contrato.is.null)";
+   const docOr=new RegExp("^\\(and\\(id_documento_contrato\\.eq\\."+FIXTURE.contractualDocument+",numero_versao\\.eq\\.[1-9][0-9]*\\)\\)$");
+   if((table!=="fontes_normativas"||v!==sourceOr)&&(table!=="versoes_documento"||!docOr.test(v)))err("OBSERVATION_QUERY");
+   continue;
+  }
+  if(v.startsWith("eq.")){
+   const value=v.slice(3);
+   if(k==="id_organizacao"&&value!==FIXTURE.organization)err("OBSERVATION_CONTEXT");
+   if(k==="id_contrato"&&value!==FIXTURE.contract)err("OBSERVATION_CONTEXT");
+   if(k==="id_fonte"&&value!==FIXTURE.source)err("OBSERVATION_CONTEXT");
+   if(k==="id_documento_contrato"&&value!==FIXTURE.contractualDocument)err("OBSERVATION_CONTEXT");
+   if((k==="id"||k.startsWith("id_")||k.endsWith(".id_competencia"))&&!uuid(value))err("OBSERVATION_QUERY");
+   if(k==="competencia_referencia"&&!["2026-09-01","2026-10-01","2026-11-01"].includes(value))err("OBSERVATION_CONTEXT");
+   if(k==="documentos_competencia.situacao"&&value!=="ativo")err("OBSERVATION_QUERY");
+   if(k==="arquivos.status_seguranca"&&value!=="aprovado")err("OBSERVATION_QUERY");
+   predicates.set(k,{kind:"eq",value});
+  }else if(v.startsWith("in.(")&&v.endsWith(")")&&["id","id_versao_documento"].includes(k)){
+   const values=v.slice(4,-1).split(",");
+   if(!values.length||values.length>1000||values.some(x=>!uuid(x))||new Set(values).size!==values.length)err("OBSERVATION_QUERY");
+   predicates.set(k,{kind:"in",values});
+  }else if(v==="is.null"&&k==="id_contrato"&&["fontes_normativas","arquivos"].includes(table))predicates.set(k,{kind:"eq",value:null});
+  else err("OBSERVATION_QUERY");
+ }
+ sdkShape(table,q);
+ return{q,predicates,key:JSON.stringify(Object.entries(q).sort(([a],[b])=>a.localeCompare(b)))};
+}
+function matchesObservation(entry,row,where){
+ return Object.entries(where).every(([key,value])=>{
+  const actual=pathValue(row,key);
+  if(actual!==undefined)return actual===value;
+  const bound=entry.predicates.get(key);return bound?.kind==="eq"&&bound.value===value;
+ });
+}
+function coversAbsence(entry,where){
+ const pairs=Object.entries(where);
+ if(!pairs.length||Number(entry.q.offset||0)!==0)return false;
+ if(!pairs.every(([k,v])=>entry.predicates.get(k)?.kind==="eq"&&entry.predicates.get(k).value===v))return false;
+ return[...entry.predicates].every(([k,p])=>p.kind==="eq"&&(Object.hasOwn(where,k)||(["id_organizacao","id_contrato"].includes(k)&&p.value===FIXTURE[k==="id_contrato"?"contract":"organization"])));
+}
+export function createOfficialObserver(page){
+ const pending=new Set(),tables=new Map(),rpcs=new Map(),sequences=new WeakMap();let sequence=0,failed=false,closed=false;
+ const checkBudget=()=>{
+  let bytes=0,count=0;
+  for(const ledger of tables.values())for(const entry of ledger.values()){bytes+=Buffer.byteLength(JSON.stringify(entry.rows));count++;}
+  for(const ledger of rpcs.values())for(const entry of ledger){bytes+=Buffer.byteLength(JSON.stringify([entry.args,entry.value]));count++;}
+  if(bytes>8*1024*1024||count>1024)err("OBSERVATION_LIMIT");
+ };
+ const onRequest=request=>{if(!closed)sequences.set(request,++sequence);};
+ const onResponse=response=>{
+  if(closed)return;let request,url,table,rpc;
+  try{
+   request=response.request();url=new URL(response.url());
+   if(url.origin!==FIXTURE.api||url.username||url.password||url.hash)return;
+   const tm=/^\/rest\/v1\/([a-z_0-9]+)$/.exec(url.pathname),rm=/^\/rest\/v1\/rpc\/([a-z_0-9]+)$/.exec(url.pathname);
+   if(tm&&request.method()==="GET"&&OBSERVED_TABLES.has(tm[1]))table=tm[1];
+   else if(rm&&request.method()==="POST"&&!url.search&&OBSERVED_RPCS.has(rm[1]))rpc=rm[1];
+   else return;
+  }catch{failed=true;return;}
+  const ordinal=sequences.get(request);
+  const task=(async()=>{
+   if(!ordinal)return;
+   let query=null;
+   if(table){try{query=parseObservedQuery(table,url);}catch{return;}}
+   let args={};
+   if(rpc&&request.postData()){
+    args=projectOfficialResponse(parseBusinessJson(request.postData()));
+    if((Object.hasOwn(args,"p_id_organizacao")&&args.p_id_organizacao!==FIXTURE.organization)||(Object.hasOwn(args,"p_id_contrato")&&args.p_id_contrato!==FIXTURE.contract))return;
+   }
+   if(response.status()<200||response.status()>=300)err("OBSERVATION_RESPONSE");
+   const bytes=await response.body();let value;
+   try{
+    if(bytes.length>1048576)err("OBSERVATION_LIMIT");
+    const fields=table?TABLE_RESPONSE_FIELDS[table]:RPC_RESPONSE_FIELDS[rpc]||(BUSINESS_RPCS.includes(rpc)?BUSINESS_RESPONSE_FIELDS:null);
+    if(!fields)err("OBSERVATION_ENDPOINT");
+    value=projectOfficialResponse(JSON.parse(bytes.toString("utf8")),0,false,new Set(fields.split(" ")));
+   }finally{bytes.fill(0);}
+   if(closed)return;
+   if(table){
+    const rows=value===null?[]:Array.isArray(value)?value:[value];
+    if(rows.length>1000)err("OBSERVATION_LIMIT");const ids=new Set();
+    for(const row of rows){
+     if(!obj(row))err("OBSERVATION_SCHEMA");
+     for(const[k,p]of query.predicates){const v=pathValue(row,k);if(v!==undefined&&(p.kind==="eq"?v!==p.value:!p.values.includes(v)))err("OBSERVATION_CONTEXT");}
+     const id=row.id??(query.predicates.get("id")?.kind==="eq"?query.predicates.get("id").value:undefined);
+     if(!uuid(id)||ids.has(id))err("OBSERVATION_SCHEMA");ids.add(id);
     }
-    const ordinal = sequences.get(request) || 0;
-    const task = (async () => {
-      if (response.status() < 200 || response.status() >= 300) return;
-      let bytes = await response.body();
-      if (bytes.length > 1048576) err("OBSERVATION_LIMIT");
-      const fields = table
-        ? TABLE_RESPONSE_FIELDS[table]
-        : RPC_RESPONSE_FIELDS[rpc] ||
-          (BUSINESS_RPCS.includes(rpc) ? BUSINESS_RESPONSE_FIELDS : null);
-      if (!fields) err("OBSERVATION_ENDPOINT");
-      const value = projectOfficialResponse(
-        JSON.parse(bytes.toString("utf8")),
-        0,
-        false,
-        new Set(fields.split(" ")),
-      );
-      bytes.fill(0);
-      bytes = null;
-      if (closed) return;
-      if (table) {
-        const values = value === null ? [] : Array.isArray(value) ? value : [value];
-        const rows = tables.get(table) || new Map();
-        for (const row of values) {
-          if (!obj(row)) err("OBSERVATION_SCHEMA");
-          let id = row.id;
-          if (!uuid(id)) {
-            const idFilter = url.searchParams.getAll("id");
-            if (
-              values.length !== 1 ||
-              idFilter.length !== 1 ||
-              !idFilter[0].startsWith("eq.") ||
-              !uuid(idFilter[0].slice(3))
-            )
-              err("OBSERVATION_SCHEMA");
-            id = idFilter[0].slice(3);
-          }
-          const projections = rows.get(id) || new Map();
-          const signature = Object.keys(row).sort().join("|");
-          if (!projections.has(signature) || projections.get(signature).ordinal <= ordinal)
-            projections.set(signature, { ordinal, row: { ...row, id } });
-          if (projections.size > 16) err("OBSERVATION_LIMIT");
-          rows.set(id, projections);
-        }
-        if (rows.size > 1000) err("OBSERVATION_LIMIT");
-        tables.set(table, rows);
-      } else {
-        let args = {};
-        if (request.postData())
-          args = projectOfficialResponse(parseBusinessJson(request.postData()));
-        const cache = rpcs.get(rpc) || [];
-        cache.push({ ordinal, args, value });
-        cache.sort((a, b) => b.ordinal - a.ordinal);
-        rpcs.set(rpc, cache.slice(0, 64));
-      }
-    })();
-    pending.add(task);
-    task
-      .catch(() => {
-        failed = true;
-      })
-      .finally(() => pending.delete(task));
-  };
-  page.on("request", onRequest);
-  page.on("response", onResponse);
-  const flush = async () => {
-    await Promise.allSettled([...pending]);
-    if (failed || closed) err("OBSERVATION_FAILED");
-  };
-  return Object.freeze({
-    flush,
-    generation() {
-      return sequence;
-    },
-    async observedAfter(name, where, after) {
-      await flush();
-      const matches = name.startsWith("rpc:")
-        ? (rpcs.get(name.slice(4)) || []).filter((v) =>
-            Object.entries(where).every(([k, x]) => v.args[k] === x),
-          )
-        : [...(tables.get(name)?.values() || [])]
-            .flatMap((m) => [...m.values()])
-            .filter((v) => Object.entries(where).every(([k, x]) => v.row[k] === x));
-      return matches.some((v) => v.ordinal > after);
-    },
-    async read(table, where = {}) {
-      await flush();
-      if (!OBSERVED_TABLES.has(table) || !tables.has(table)) err("OBSERVATION_TABLE");
-      return [...tables.get(table).values()]
-        .map((projections) =>
-          [...projections.values()]
-            .sort((a, b) => b.ordinal - a.ordinal)
-            .find((v) => Object.entries(where).every(([key, value]) => v.row[key] === value)),
-        )
-        .filter(Boolean)
-        .map((v) => structuredClone(v.row));
-    },
-    async rpcRead(name, where = {}) {
-      await flush();
-      if (!OBSERVED_RPCS.has(name)) err("OBSERVATION_RPC");
-      const item = (rpcs.get(name) || []).find(({ args }) =>
-        Object.entries(where).every(([key, value]) => args[key] === value),
-      );
-      return item ? structuredClone(item.value) : null;
-    },
-    close() {
-      closed = true;
-      tables.clear();
-      rpcs.clear();
-      page.off("request", onRequest);
-      page.off("response", onResponse);
-    },
-  });
+    const ledger=tables.get(table)||new Map(),prior=ledger.get(query.key);
+    if(!prior||prior.ordinal<ordinal)ledger.set(query.key,{...query,ordinal,rows});
+    if(ledger.size>1024)err("OBSERVATION_LIMIT");tables.set(table,ledger);
+   }else{
+    const cache=rpcs.get(rpc)||[];cache.push({ordinal,args,value});cache.sort((a,b)=>b.ordinal-a.ordinal);rpcs.set(rpc,cache.slice(0,64));
+   }
+   checkBudget();
+  })();
+  pending.add(task);task.catch(()=>{failed=true;}).finally(()=>pending.delete(task));
+ };
+ page.on("request",onRequest);page.on("response",onResponse);
+ const flush=async()=>{await Promise.allSettled([...pending]);if(failed||closed)err("OBSERVATION_FAILED");};
+ function rpcName(name){const bare=name.startsWith("rpc:")?name.slice(4):name;return OBSERVED_RPCS.has(bare)?bare:null;}
+ function entries(table){return[...(tables.get(table)?.values()||[])].sort((a,b)=>b.ordinal-a.ordinal);}
+ function selectLatest(table,options){
+  if(!obj(options)||Object.keys(options).some(k=>k!=="select")||(options.select!==undefined&&!EXACT_SELECTS[table]?.includes(options.select)))err("OBSERVATION_PROJECTION");
+  const ledger=entries(table).filter(e=>options.select===undefined||e.q.select===options.select),latest=new Map();
+  // Deduplicate identity BEFORE filtering state or omitted values.
+  for(const e of ledger)for(const row of e.rows){const id=row.id??e.predicates.get("id")?.value;if(!latest.has(id))latest.set(id,{e,row});}
+  return{ledger,latest};
+ }
+ return Object.freeze({
+  flush,generation:()=>sequence,
+  async observedAfter(name,where={},after,options={}){
+   await flush();const rpc=rpcName(name);
+   if(rpc)return(rpcs.get(rpc)||[]).some(e=>e.ordinal>after&&Object.entries(where).every(([k,v])=>pathValue(e.args,k)===v));
+   if(!OBSERVED_TABLES.has(name))return false;
+   const{latest,ledger}=selectLatest(name,options);
+   for(const e of ledger)if(e.ordinal>after&&e.rows.length===0&&coversAbsence(e,where))return true;
+   const empty=ledger.find(e=>e.rows.length===0&&coversAbsence(e,where));
+   return[...latest.values()].some(({e,row})=>e.ordinal>after&&(!empty||e.ordinal>=empty.ordinal)&&matchesObservation(e,row,where));
+  },
+  async read(table,where={},options={}){
+   await flush();if(!OBSERVED_TABLES.has(table)||!tables.has(table))err("OBSERVATION_TABLE");
+   const{latest,ledger}=selectLatest(table,options),empty=ledger.find(e=>e.rows.length===0&&coversAbsence(e,where));
+   return[...latest.values()].filter(({e,row})=>(!empty||e.ordinal>=empty.ordinal)&&matchesObservation(e,row,where)).map(({row})=>structuredClone(row));
+  },
+  async rpcRead(name,where={}){
+   await flush();const rpc=rpcName(name);if(!rpc)err("OBSERVATION_RPC");
+   const item=(rpcs.get(rpc)||[]).find(e=>Object.entries(where).every(([k,v])=>pathValue(e.args,k)===v));return item?structuredClone(item.value):null;
+  },
+  close(){closed=true;tables.clear();rpcs.clear();page.off("request",onRequest);page.off("response",onResponse);}
+ });
 }
 
 /* Integration snippet only. FIXTURE, hash, uuid, same are existing same-module helpers.
@@ -1462,7 +1578,7 @@ export async function prepareSourceAndList(io) {
         s.id_contrato === FIXTURE.contract &&
         Number.isInteger(s.versao_registro) &&
         s.versao_registro > 0 &&
-        typeof s.titulo === "string",
+        sourceFieldsExact(s),
       "FLOW_SOURCE_CONTEXT",
     );
     source = s;
@@ -1505,9 +1621,10 @@ export async function prepareSourceAndList(io) {
     ];
     return caps;
   };
-  const versionRead = async () => {
+  const versionRead = async (after) => {
+    if (after !== undefined && !(await io.observedAfter("versoes_fontes_normativas",{id_fonte: FIXTURE.source},after,{select:EXACT_SELECTS.versoes_fontes_normativas[0]}))) fail("FLOW_VERSION_READBACK_UNOBSERVED");
     version = one(
-      (await io.read("versoes_fontes_normativas", { id_fonte: FIXTURE.source })).filter(
+      (await io.read("versoes_fontes_normativas", { id_fonte: FIXTURE.source }, { select: EXACT_SELECTS.versoes_fontes_normativas[0] })).filter(
         (v) =>
           hash64(v.hash) &&
           verifiedTextVersions.has(v.id) &&
@@ -1553,7 +1670,7 @@ export async function prepareSourceAndList(io) {
   await click(page, `Detalhes de ${source.titulo}`);
   let sheet = dialog(source.titulo);
   const versions = await allPages(sheet, "Próximas versões", () =>
-    io.read("versoes_fontes_normativas", { id_fonte: source.id }),
+    io.read("versoes_fontes_normativas", { id_fonte: source.id }, { select: EXACT_SELECTS.versoes_fontes_normativas[0] }),
   );
   // A source-version hash is a server digest of structured version fields,
   // NOT SHA256(TXT). Prove the TXT separately using the real expanded GET.
@@ -1567,12 +1684,14 @@ export async function prepareSourceAndList(io) {
       assert(n < 100, "FLOW_VERSION_TEXT_UI_MISSING");
       await click(sheet, "Versões anteriores");
     }
+    const textOrdinal = io.generation();
     await click(sheet, `Ver texto registrado (versão ${v.versao})`);
+    assert(await io.observedAfter("versoes_fontes_normativas",{id:v.id},textOrdinal,{select:"conteudo_texto,metadados"}),"FLOW_VERSION_TEXT_UNOBSERVED");
     // IO joins only the just-observed select=conteudo_texto,metadados&id=eq.ID
     // to the independently observed version identity. It must not invent row ID
     // from response content (this projection omits id), or use a stale text GET.
     const textRow = one(
-      await io.read("versoes_fontes_normativas", { id: v.id }),
+      await io.read("versoes_fontes_normativas", { id: v.id }, { select: "conteudo_texto,metadados" }),
       "FLOW_VERSION_TEXT_UNOBSERVED",
     );
     const exact =
@@ -1618,6 +1737,7 @@ export async function prepareSourceAndList(io) {
     await field(d, "Fim da vigência (opcional)").fill("");
     await field(d, "Texto").check();
     await field(d, "Texto da versão").fill(io.text);
+    const registerOrdinal = io.generation();
     await io.command({
       rpc: "registrar_versao_fonte_v107",
       payload: {
@@ -1642,7 +1762,7 @@ export async function prepareSourceAndList(io) {
     });
     await io.fresh();
     const newlyObserved = (
-      await io.read("versoes_fontes_normativas", { id_fonte: source.id })
+      await io.read("versoes_fontes_normativas", { id_fonte: source.id }, { select: EXACT_SELECTS.versoes_fontes_normativas[0] })
     ).filter(
       (v) =>
         !versions.some((old) => old.id === v.id) &&
@@ -1652,24 +1772,25 @@ export async function prepareSourceAndList(io) {
     );
     const created = one(newlyObserved, "FLOW_CREATED_VERSION_NONUNIQUE");
     assert(await proveText(created), "FLOW_CREATED_VERSION_TEXT_MISMATCH");
-    await versionRead();
+    await versionRead(registerOrdinal);
   } else {
     version = equivalents[0];
     await sourceProof();
   }
   // Locate matching version's button even when pagination starts on last page.
-  for (let n = 0; (await btn(sheet, `Aprovar versão ${version.versao}`).count()) === 0; n++) {
-    assert(n < 100, "FLOW_VERSION_UI_MISSING");
-    await click(sheet, "Versões anteriores");
-  }
   let caps = await sourceProof();
   if (!version.aprovado_em) {
+    for (let n = 0; (await btn(sheet, `Aprovar versão ${version.versao}`).count()) === 0; n++) {
+      assert(n < 100, "FLOW_VERSION_UI_MISSING");
+      await click(sheet, "Versões anteriores");
+    }
     assert(caps.canApprove === true, "FLOW_APPROVE_DENIED");
     await click(sheet, `Aprovar versão ${version.versao}`);
     const d = dialog(`Aprovar versão ${version.versao}`);
     await field(d, "Fundamento").fill(FIXTURE.foundation);
     await field(d, "Confirmo que revisei hash, origem e vigência desta versão.").check();
     const id = version.id;
+    const approvalOrdinal = io.generation();
     await io.command({
       rpc: "aprovar_versao_fonte_v107",
       payload: {
@@ -1688,7 +1809,7 @@ export async function prepareSourceAndList(io) {
         !!r.versao.aprovado_em,
     });
     await io.fresh();
-    await versionRead();
+    await versionRead(approvalOrdinal);
     assert(!!version.aprovado_em, "FLOW_APPROVAL_NOT_READBACK");
   }
   await click(sheet, "Close");
@@ -2020,18 +2141,18 @@ export async function prepareCompetencies(io, sourceList) {
     phaseActive();
     if ((await io.verifyContext()) !== true) stop("COMPETENCE_CONTEXT");
   };
-  const rows = async (table, where) => {
+  const rows = async (table, where, options = {}) => {
     phaseActive();
-    const result = await io.read(table, where);
+    const result = await io.read(table, where, options);
     phaseActive();
     if (!Array.isArray(result)) stop("COMPETENCE_READ_SHAPE");
     return result;
   };
-  const observed = async (name, where, ordinal) => {
+  const observed = async (name, where, ordinal, options = {}) => {
     phaseActive();
     await io.fresh();
     phaseActive();
-    if ((await io.observedAfter(name, where, ordinal)) !== true)
+    if ((await io.observedAfter(name, where, ordinal, options)) !== true)
       stop("COMPETENCE_STALE_OBSERVATION");
   };
   const link = async (path) => {
@@ -2142,12 +2263,13 @@ export async function prepareCompetencies(io, sourceList) {
       "competencias",
       { id_contrato: FIXTURE.contract, competencia_referencia: month },
       ordinal,
+      { select: EXACT_SELECTS.competencias.find(value => value.includes("competencia_referencia,")) },
     );
     const found = (
       await rows("competencias", {
         id_contrato: FIXTURE.contract,
         competencia_referencia: month,
-      })
+      }, { select: EXACT_SELECTS.competencias.find(value => value.includes("competencia_referencia,")) })
     ).filter((r) => r.competencia_referencia === month);
     if (found.length > 1 || found.some((r) => !uuid(r.id) || r.id === FIXTURE.historical))
       stop("COMPETENCE_AMBIGUOUS");
@@ -2427,9 +2549,7 @@ export async function prepareCompetencies(io, sourceList) {
       stop("COMPETENCE_RULE_UNPROVEN");
     }
     if (
-      parsed?.documento?.obrigatorio !== true ||
-      JSON.stringify(parsed.documento.tipos) !== '["outro"]' ||
-      parsed.condicao?.tipo !== "sempre"
+      !same(parsed,{documento:{obrigatorio:true,tipos:["outro"]},condicao:{tipo:"sempre"}})
     )
       stop("COMPETENCE_RULE_UNPROVEN");
     return detail;
@@ -2487,11 +2607,11 @@ export async function prepareCompetencies(io, sourceList) {
       !hash(ctx.hash_esperado)
     )
       stop("COMPETENCE_REVIEW_CONTEXT");
-    await observed("versoes_documento", { "documentos_competencia.id_competencia": c.id }, before);
+    await observed("versoes_documento", { "documentos_competencia.id_competencia": c.id }, before, {select: REVIEW_SELECT});
     const versions = await rows("versoes_documento", {
       "documentos_competencia.id_competencia": c.id,
       id: documentVersion,
-    });
+    }, {select: REVIEW_SELECT});
     if (
       versions.length !== 1 ||
       versions[0].documentos_competencia?.id_competencia !== c.id ||
@@ -3036,6 +3156,7 @@ const PREPARER_FAILURE_CODES = new Set([
   "FLOW_VERSION_TEXT_UI_MISSING",
   "FLOW_VERSION_TEXT_UNOBSERVED",
   "FLOW_VERSION_UI_MISSING",
+  "FLOW_VERSION_READBACK_UNOBSERVED",
   "GATE_AMENDMENT",
   "INTENT_BUDGET",
   "INTENT_FROZEN",
@@ -3182,6 +3303,10 @@ async function runFixturePreparation() {
       if (!/^\/(?:contratos|competencias)\/[a-f0-9-]{36}(?:\/[a-z0-9-]+)*$/.test(path))
         err("PREPARER_SPA_PATH");
       await fresh();
+      if (page.url() === FIXTURE.origin + path) {
+        if (Object.hasOwn(proof.documents,path)) { await goKnown(path); return; }
+        await goKnown(`/contratos/${FIXTURE.contract}/competencias`);
+      }
       const candidates = page.locator(`a[href="${path}"]:visible`);
       let selected = null;
       for (let n = 0; n < (await candidates.count()); n++) {
@@ -3376,8 +3501,9 @@ async function runFixturePreparation() {
     let bindings = null;
     try {
       bindings = fixtureBindingReceipt(sourceList, result);
-    } catch {
+    } catch (error) {
       completed = false;
+      blockedCode = PREPARER_FAILURE_CODES.has(error?.message) ? error.message : "BINDING_SCHEMA";
     }
     collect(bindings);
     const report = {
