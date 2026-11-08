@@ -2090,6 +2090,28 @@ export function nativeCancellationTypes(tap) {
     return null;
   return { network: pairs[0][1], fetch: pairs[0][2] };
 }
+export function nativeLifecycleMetadata(tap) {
+  if (typeof tap !== "string" || tap.length > 1048576) return [];
+  const result = [];
+  for (const line of tap.split("\n")) {
+    const m =
+      /^# NATIVE_LIFECYCLE_META ([A-Za-z]+) ([A-Za-z]+) (GET|POST|OPTIONS) (REQUEST|RESPONSE) ([01]) ([01]) ([01])$/.exec(
+        line.trim(),
+      );
+    if (!m || !CDP_RESOURCE_TYPES.has(m[1]) || !CDP_RESOURCE_TYPES.has(m[2])) continue;
+    result.push({
+      network: m[1],
+      fetch: m[2],
+      method: m[3],
+      stage: m[4],
+      networkFramePresent: m[5] === "1",
+      sameFrame: m[6] === "1",
+      loaderPresent: m[7] === "1",
+    });
+    if (result.length === 8) break;
+  }
+  return result;
+}
 async function nativeGuard() {
   let output;
   try {
@@ -2129,6 +2151,7 @@ async function nativeGuard() {
         cancellationStages: nativeCancellationDiagnostics(stdout),
         cancellationFailure: nativeCancellationFailure(stdout),
         cancellationTypes: nativeCancellationTypes(stdout),
+        lifecycleMetadata: nativeLifecycleMetadata(stdout),
         tap,
       }),
     );
