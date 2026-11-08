@@ -92,7 +92,8 @@
         936
       ],
       "captured_at_utc": "2026-11-08T02:54:50.621899+00:00",
-      "status": "OBSERVADO_AUTENTICADO_DESKTOP_SEM_CERTIFICACAO"
+      "status": "OBSERVADO_AUTENTICADO_DESKTOP_SEM_CERTIFICACAO",
+      "dom_recaptured_at_utc": "2026-11-08T03:02:18.942237+00:00"
     }
   ]
 }

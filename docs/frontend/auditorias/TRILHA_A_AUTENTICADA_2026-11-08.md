@@ -2,7 +2,7 @@
 
 **Parecer: NO-GO. Coleta parcial executada, certificação integral pendente.**
 
-Execução em 08/11/2026 UTC, com login real por formulário seguro, sem leitura ou registro de senha, token ou cookies. A seleção de organização apresentou o perfil Administrador Master. Foi selecionada a organização ativa **ContaOS HML Teste**. O painel e sete superfícies privadas foram acessados com essa sessão. Não houve criação de fixture, escrita de negócio, mudança de permissão, configuração Auth ou intervenção no backend.
+Execução em 08/11/2026 UTC, com login real por formulário seguro, sem leitura ou registro de senha, token ou cookies. A seleção de organização apresentou o perfil Administrador Master. Foi selecionada a organização ativa **ContaOS HML Teste**. O painel e outras seis superfícies privadas foram acessados com essa sessão. Não houve criação de fixture, escrita de negócio, mudança de permissão, configuração Auth ou intervenção no backend.
 
 ## Proveniência
 
