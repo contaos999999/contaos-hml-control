@@ -2861,19 +2861,24 @@ test("tombstones sobrevivem à conclusão e têm teto fechado", () => {
   f.tracker.finish(f.ticket);
   assert.equal(f.tracker.snapshot().active, 0);
   assert.throws(() => f.tracker.observe(f.session, "Network.requestWillBeSent", f.network));
+  // The duplicate is fatal. Use a fresh context for the independent capacity proof.
+  f.tracker.close();
+  const g = lifecycleInput();
+  g.tracker.observe(g.session, "Network.loadingFinished", { requestId: "network-1" });
+  g.tracker.finish(g.ticket);
   for (let n = 1; n < 65536; n++) {
     const requestId = "retired-" + n;
-    f.tracker.observe(f.session, "Network.requestWillBeSent", { ...f.network, requestId });
-    f.tracker.observe(f.session, "Network.loadingFinished", { requestId });
+    g.tracker.observe(g.session, "Network.requestWillBeSent", { ...g.network, requestId });
+    g.tracker.observe(g.session, "Network.loadingFinished", { requestId });
   }
-  assert.equal(f.tracker.snapshot().active, 0);
+  assert.equal(g.tracker.snapshot().active, 0);
   assert.throws(() =>
-    f.tracker.observe(f.session, "Network.requestWillBeSent", {
-      ...f.network,
+    g.tracker.observe(g.session, "Network.requestWillBeSent", {
+      ...g.network,
       requestId: "overflow",
     }),
   );
-  f.tracker.close();
+  g.tracker.close();
 });
 
 test("par nativo Fetch/XHR mantém tipos originais e autoriza apenas GET cancelado", async () => {
@@ -3210,4 +3215,110 @@ test("espera Network não associa registro já terminal nem aceita sessão alhei
     assert.equal(g.tracker.snapshot().pendingNetwork, 0);
     g.tracker.close();
   }
+});
+
+test("FetchID reservado não entra pelo caminho Network já conhecido", async () => {
+  const f = delayedLifecycle();
+  const waiting = f.tracker.pauseWhenObserved(f.session, f.pause, performance.now()).then(
+    () => null,
+    (e) => e,
+  );
+  f.tracker.observe(f.session, "Network.requestWillBeSent", {
+    ...f.network,
+    requestId: "known-network",
+  });
+  await assert.rejects(
+    f.tracker.pauseWhenObserved(
+      f.session,
+      { ...f.pause, networkId: "known-network" },
+      performance.now(),
+    ),
+  );
+  assert.ok((await waiting)?.code);
+  assert.equal(f.tracker.snapshot().pendingNetwork, 0);
+});
+test("Network ordinário não ocupa a reserva de outra pendência no teto1024", async () => {
+  const f = delayedLifecycle();
+  const waiting = f.tracker.pauseWhenObserved(f.session, f.pause, performance.now()).then(
+    () => null,
+    (e) => e,
+  );
+  for (let n = 0; n < 1023; n++)
+    f.tracker.observe(f.session, "Network.requestWillBeSent", {
+      ...f.network,
+      requestId: "known-" + n,
+    });
+  assert.throws(() =>
+    f.tracker.observe(f.session, "Network.requestWillBeSent", {
+      ...f.network,
+      requestId: "excess",
+    }),
+  );
+  assert.ok((await waiting)?.code);
+  assert.equal(f.tracker.snapshot().pendingNetwork, 0);
+});
+function nearReservedTombstoneLimit() {
+  const f = delayedLifecycle();
+  f.tracker.observe(f.session, "Network.requestWillBeSent", {
+    ...f.network,
+    requestId: "known-network",
+  });
+  for (let n = 0; n < 65534; n++) {
+    const requestId = "historical-" + n;
+    f.tracker.observe(f.session, "Network.requestWillBeSent", { ...f.network, requestId });
+    const t = f.tracker.pause(f.session, { ...f.pause, requestId, networkId: requestId });
+    f.tracker.sent(t);
+    f.tracker.acknowledge(t);
+    f.tracker.observe(f.session, "Network.loadingFinished", { requestId });
+    f.tracker.finish(t);
+  }
+  return f;
+}
+for (const boundary of ["Network", "Fetch"])
+  test("tombstones respeitam reserva65536 em caminho ordinário " + boundary, async () => {
+    const f = nearReservedTombstoneLimit();
+    const waiting = f.tracker.pauseWhenObserved(f.session, f.pause, performance.now()).then(
+      () => null,
+      (e) => e,
+    );
+    if (boundary === "Network")
+      assert.throws(() =>
+        f.tracker.observe(f.session, "Network.requestWillBeSent", {
+          ...f.network,
+          requestId: "excess",
+        }),
+      );
+    else {
+      const initial = f.tracker.pause(f.session, {
+        ...f.pause,
+        requestId: "known-fetch",
+        networkId: "known-network",
+      });
+      f.tracker.sent(initial);
+      f.tracker.acknowledge(initial);
+      f.tracker.finish(initial);
+      assert.throws(() =>
+        f.tracker.pause(f.session, {
+          ...f.pause,
+          requestId: "excess-fetch",
+          networkId: "known-network",
+          responseStatusCode: 200,
+        }),
+      );
+    }
+    assert.ok((await waiting)?.code);
+    assert.equal(f.tracker.snapshot().pendingNetwork, 0);
+  });
+
+test("FetchID reservado tampouco entra pelo caminho sem NetworkID", async () => {
+  const f = delayedLifecycle();
+  const waiting = f.tracker.pauseWhenObserved(f.session, f.pause, performance.now()).then(
+    () => null,
+    (e) => e,
+  );
+  await assert.rejects(
+    f.tracker.pauseWhenObserved(f.session, { ...f.pause, networkId: undefined }, performance.now()),
+  );
+  assert.ok((await waiting)?.code);
+  assert.equal(f.tracker.snapshot().pendingNetwork, 0);
 });

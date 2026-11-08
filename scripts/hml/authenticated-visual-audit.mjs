@@ -690,13 +690,16 @@ export function createRequestLifecycle(identity) {
       if (!id(event?.requestId)) fail("FENCE_REQUEST_LIFECYCLE");
       const requestKey = key(session, event.requestId);
       if (method === "Network.requestWillBeSent") {
+        const reserved = pendingNetwork.has(requestKey) ? 1 : 0;
         if (
           event.redirectResponse ||
           seenNetwork.has(requestKey) ||
-          requests.size >= 1024 ||
-          seenNetwork.size >= 65536
-        )
+          requests.size + pendingNetwork.size - reserved >= 1024 ||
+          seenNetwork.size + pendingNetwork.size - reserved >= 65536
+        ) {
+          tracker.close();
           fail("FENCE_REQUEST_LIFECYCLE");
+        }
         seenNetwork.add(requestKey);
         if (
           event.type === "Document" &&
@@ -817,13 +820,21 @@ export function createRequestLifecycle(identity) {
     },
     pause(session, event) {
       own(session);
+      if (
+        !id(event.requestId) ||
+        pendingFetch.has(key(session, event.requestId)) ||
+        (id(event.networkId) && pendingNetwork.has(key(session, event.networkId)))
+      ) {
+        tracker.close();
+        fail("FENCE_REQUEST_LIFECYCLE");
+      }
       // networkId is optional in CDP. Such a pause still uses the ordinary
       // policy/body guard, but is never eligible for cancellation retirement.
       if (!id(event.networkId)) return null;
       const record = requests.get(key(session, event.networkId));
       const frame = frames.get(session.id);
       const reject = (code) => {
-        throw Object.assign(new Error(code), {
+        const error = Object.assign(new Error(code), {
           code,
           lifecycleMetadata: safeLifecycleMetadata({
             network: record?.type,
@@ -841,6 +852,8 @@ export function createRequestLifecycle(identity) {
             terminal: !!record?.terminal,
           }),
         });
+        tracker.close();
+        throw error;
       };
       if (!record) reject("FENCE_LIFECYCLE_NO_NETWORK");
       if (record.terminal) reject("FENCE_LIFECYCLE_TERMINAL");
@@ -896,7 +909,7 @@ export function createRequestLifecycle(identity) {
             previous.record !== record ||
             previous.stage !== "REQUEST" ||
             previous.responsePauseSeen
-          : seenFetch.has(fetchKey) || seenFetch.size >= 65536
+          : seenFetch.has(fetchKey) || seenFetch.size + pendingFetch.size >= 65536
       )
         reject("FENCE_REQUEST_LIFECYCLE");
       if (previous) previous.responsePauseSeen = true;
