@@ -703,12 +703,12 @@ export function createRequestLifecycle(identity) {
       // policy/body guard, but is never eligible for cancellation retirement.
       if (!id(event.networkId)) return null;
       const record = requests.get(key(session, event.networkId));
+      if (!record) fail("FENCE_LIFECYCLE_NO_NETWORK");
+      if (record.terminal) fail("FENCE_LIFECYCLE_TERMINAL");
+      if (record.frameId !== event.frameId) fail("FENCE_LIFECYCLE_FRAME");
+      if (record.type !== event.resourceType) fail("FENCE_LIFECYCLE_TYPE");
       if (
-        !record ||
         !id(event.requestId) ||
-        record.terminal ||
-        record.frameId !== event.frameId ||
-        record.type !== event.resourceType ||
         record.url !== event.request?.url ||
         record.method !== event.request?.method
       )
@@ -2028,6 +2028,10 @@ export function nativeCancellationFailure(tap) {
   if (typeof tap !== "string" || tap.length > 1048576) return null;
   const allowed = new Set([
     "FENCE_REQUEST_LIFECYCLE",
+    "FENCE_LIFECYCLE_NO_NETWORK",
+    "FENCE_LIFECYCLE_TERMINAL",
+    "FENCE_LIFECYCLE_FRAME",
+    "FENCE_LIFECYCLE_TYPE",
     "FENCE_REQUEST",
     "FENCE_SOURCE",
     "FENCE_TRANSPORT",
