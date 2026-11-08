@@ -1,3 +1,15 @@
+## Emenda técnica de tipos observados, 08/11/2026
+
+O BUILD #359 permanece não integrado. RED nativo original: run42503533506/HEAD5ea6cb4a757877bfdb3c52660a74dbd2c257ff85, terminal Network.loadingFailed.type=Fetch, canceled=true/net::ERR_ABORTED, identidade completa, erro original -32602/INVALID_INTERCEPTION, zero tráfego canário. Diagnóstico fechado run42505594696/job128807410763/HEADb2f6233150a08f626ae8e4d24c45684879f92b76 comprovou Network.requestWillBeSent.type=Fetch e Fetch.requestPaused.resourceType=XHR para essa mesma requisição GET. Sete provas anteriores continuam PASS; oitava ainda RED. Não há autorização de merge BUILD por esse diagnóstico.
+
+Emenda restrita ao vínculo dos dois domínios CDP: preservar separadamente o tipo original Network e o tipo original Fetch. Além de igualdade estrita, somente o par exato Network=Fetch/Fetch=XHR pode ser associado. Não normalizar tipos globalmente, não aceitar par inverso, Other, Preflight, tipo ausente/desconhecido ou qualquer outro par divergente. Os demais identificadores, sessão, target, contexto, frame/loader/geração, URL/método, unicidade e limites continuam obrigatórios. O primeiro pause congela também o tipo Fetch; mudança entre estágio inicial e resposta fecha o contexto.
+
+Para esse par divergente, elegibilidade à exceção de cancelamento exclusivamente no GET observado, REQUEST inicial sem ack/resposta/corpo, terminal Network com tipo Fetch exato e todos os requisitos anteriores. POST/OPTIONS pareados podem seguir apenas o fluxo ordinário já permitido por política e validação de resposta; nunca podem usar a exceção de cancelamento com tipos divergentes. Não ampliar URLs, métodos, RPCs ou permissões. O tipo Fetch original continua sendo usado na política e verificação de corpo; o tipo Network original continua sendo usado na prova terminal. Nenhum alias altera decisões de proveniência.
+
+RED unitário novo para o par exato e para estabilidade REQUEST/RESPONSE; negativos par inverso/Other/Preflight/ausente, POST e OPTIONS cancelados, terminal divergente e mudança do tipo Fetch. A oitava prova nativa deve avançar pela continuação retida, cancelamento real, erro original, zero conexões/bytes/requisições ao canário; depois provar preflight/resposta ordinários e resposta adulterada bloqueada. Os sete testes antigos permanecem intactos. Exigir 8/8 nativos, zero skips/failures no HEAD final, CI/LOCK/ZeroDrift e revisão independente. Falha posterior exige diagnóstico próprio, sem ampliar automaticamente esta emenda.
+
+Esta emenda documental deve ter CI/revisão e integração separada antes de implementar o novo pareamento no BUILD #359. Demais cláusulas, rollback, HML exclusivo e V1 NO-GO permanecem aplicáveis.
+
 # GATE P0: ciclo nativo fechado, oito provas e nenhuma continuação alternativa
 
 PLAN357 integrado29f1c3e4bfc1e4f3a561c4a08412922e00a01007; HEADddfa1472, CI42502594842/42502594830SUCCESS e revisão independente. Backend3ef22a3,25fontes/catálogoiguais. Referências: issue317, rodada56/41PASSparciais preservada,24baseline/18públicos válidos,24fixtures específicas ainda pendentes. V1NO-GO.
