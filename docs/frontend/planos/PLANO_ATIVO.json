@@ -1534,7 +1534,7 @@
     "autorizacao": "Titular autorizou Trilha C e integração frontend após PR backend PLAN #179 integrada",
     "backend_plan_pr": 179,
     "frontend_build_pr_previa": 377,
-    "scope": "Chat contextual AppShell sem modificar tipos, backend ou PROD",
-    "gates": "PLAN deve integrar main ANTES de qualquer BUILD; Zero-Drift e Teste C obrigatórios"
+    "scope": "Chat no AppShell nas áreas autenticadas; contrato/competência resolvidos sob RLS, seleção explícita nas telas sem contrato; nenhuma consulta IA sem escopo autorizado",
+    "gates": "PLAN e emenda documental devem ter CI/revisão e integrar antes de BUILD separado; implantação Vercel FAILURE impede merge até resolução; Teste C real e OpenAI/JWT/negativos antes de certificar"
   }
 }
