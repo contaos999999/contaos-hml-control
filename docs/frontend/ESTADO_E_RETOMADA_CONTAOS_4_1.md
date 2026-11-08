@@ -1,3 +1,25 @@
+# Continuidade P0: preparador integrado e reancoragem canônica documental
+
+Snapshot de 08/11/2026, refs vivos conferidos por GitHub GET antes da escrita: frontend `5dc57275d6e95f066ec751fad7a0af50005ab17f`, backend normativo `f25f654f0cba5bae45e817c0fd4b6c3fb22bf994`. Este registro antecede sua própria CI/revisão/integração; não declara a PR documental integrada. Preserva integralmente abaixo os checkpoints anteriores, inclusive candidatos373 antigos como histórico, e mantém o current PLAN e os metadados da Trilha C.
+
+## Última etapa comprovada e fonte canônica
+
+PR373 foi integrada em `5dc57275d6e95f066ec751fad7a0af50005ab17f`, HEAD final `889f7cab17524ac939a47987c5e5ac416fd9f96b`. CIs42535547130 (Fixtures),42535547174 (Zero-Drift) e42535547141 (LOCK-TYPES) SUCCESS no HEAD final; oito provas nativas causais e uma prova visual de browser separada. Revisão estática independente5820191442 sem Critical/Important remanescente no escopo. GitHub GET confirmou blobs módulo `5d671f206dc92c944dcc7fb1a67e509a9e0f1557` e teste `4691261b78a6e455dd6819ef239a247bc30a9ccd`; SHA256 respectivamente `ccf2d3a16d8dbe2717493fb4a564af5cf21cee8a5a8474adc9fade221dee1bc1` e `2477ca7ff8a91e6c5f478c112bb689a6adb66ef8c11b6deb2f859e6438e55063`. Autora reportou66/66PASS semSKIP em Sandbox Node v24.22.1; auditor207PASS/9SKIP. Sandbox e browser local de protocolo não equivalem à execução HML privada. Nenhuma fixture ou autenticação HML concluída é reivindicada.
+
+CI382/Zero42535716455, job128899442585, falhou FONTE_CANONICA_DESATUALIZADA após avanço backend PR181. O bloqueio é preservado, sem alterar scripts ou baixar exigências. Comparação7d83→f25 e GET de cada fonte confirmaram25/25blobs normativos iguais; catálogo100regulares/97atômicos `e54e49e626e65a9c94c81709180fd192a1f0c079` igual; types.ts imutável `8ea7750b75fd9d76b29c36ce7613392e3ab65e19` igual. Snapshot e ack do PLAN são reancorados juntos. Revalidação de integridade não é nova certificação funcional nem substitui leitura semântica.
+
+Delta backend restrito a dois documentos, ambos lidos semanticamente: `docs/backend/TRILHA_C_SCOPE_QUOTA_HML_PLAN_2026-11-08.md` e `docs/tasks/active-task.json`. PR181 define PLAN/GATE de elegibilidade de fontes antes da similaridade, quota transacional e prova JWT/cleanup, com flags de alterações false neste estágio; controles, BUILD revisado, CI/Restore/backup e readback precedem deployment técnico HML e certificação. Não houve alteração dos25documentos, catálogo, SQL, RPC, RLS, Edge, Auth ou dados nesse delta. A leitura desta reancoragem é documental, sem investigação técnica do backend ou execução HML. O PLAN frontend e `trilha_c_copiloto_plan` permanecem iguais aos da base; este recibo não amplia autorização da Trilha C.
+
+## Pendências e próxima tarefa
+
+Última auditoria privada continua Run78/42511641527:96PASS_AUTOMATIZADO com ressalvas,8FAIL históricos de contraste,56bloqueadosPII,24fixtures e24baseline. Escopo original184 não fechado; as24combinações de fixture são fase separada. Preservar18provas públicas e originais208PNG/104DOM/313hashes; nenhum teste público foi repetido. V1,72critérios e WCAG integral continuam NÃO CERTIFICADOS/NO-GO. BUILDvisual374 integrado não recebeu ainda novo TesteC HML focal. GATE367/368/370 e todos os demais gates permanecem integrais.
+
+Próximo: CI/revisão e merge protegido desta reancoragem documental; depois revalidar382 sobre base canônica e concluir seus gates próprios antes de BUILD/evento. Antes de Auth, conferir identidade HML exata, SSR/grafo/assets e prova nativa do executor final. Preparação legítima24fixtures e auditoria focal somente leitura seguem separadas. READY histórico do deployment não atesta a fonte atual nem restauração de quota: HTTP402 ainda registrado para novos deployments/previews, sem alegação de quota liberada. Executor original falhou ERS; fallback Sandbox Node v24.22.1 não é TesteC.
+
+Escopo desta PR: somente CONTEXT_CANONICO_4_1_SNAPSHOT.json, PLANO_ATIVO.json e este checkpoint. Sem SRC, scripts, workflow, dependências, ambiente, tipos, backend ou PROD. Rollback: revert documental por PR, mantendo evidências e sem bypass do freshness. Impacto visual N/A, por documentação somente; economia conforme, por GitHub direto e reutilização das provas válidas. CI desta PR ainda pendente.
+
+---
+
 # Continuidade P0: BUILD visual integrado, recuperação isolada do preparador e HML disponível
 
 Checkpoint documental de 08/11/2026. Base frontend revalidada por GitHub GET: `c3f07bf64af728cfeac48bfb0dffae5d90a7c8b6`; backend normativo `7d83f046c282051baeeeab6b4f61e0ad8bd0cef6`. Preserva o PLAN vigente da Trilha C e todos os registros históricos abaixo. Esta PR não altera código, workflow, dependência, tipo, asset, Auth, dados ou backend e não declara o próprio checkpoint integrado antes de revisão/merge.
