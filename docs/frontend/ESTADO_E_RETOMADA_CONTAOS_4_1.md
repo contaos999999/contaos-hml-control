@@ -1,3 +1,21 @@
+## Reancoragem durante CI da retificação
+
+Backend avançou para7c8fdb1644058831cc2a7d1bacd931eee18cd997. CI42514790088 bloqueou corretamente por HEAD canônico antigo. Comparação local de cada um dos25blobs e catálogo100/97 confirmou igualdade; snapshot e PLAN reancorados juntos, sem relaxar gate. Delta backend inclui append imutável de versão documental na revisão de metadados, não certificada por esta auditoria. Retificação inclui payload real de criar_competencia: somente contrato/referência; três opcionais omitidos têmDEFAULTNULL no wrapper, sem alterar UI/RPC. Campo160privacidade é histórico; atual56. Escopo184original permanece sem certificação integral.
+
+# Continuidade P0: rodada 78 concluída sem aborto, correções em curso
+
+Âncora main 7038fb10633e738b35a4104aefbb2a3f856843b8; backend normativo e77fec6651aa76917fd6115be64f3052b3ee50d4. GATE367 integrado após CI42511864981/42511864976 e revisão independente. Nenhum preparador ou escrita de negócio implementado até esta retificação. Fonte correta 8b942e46-a29b-40d9-8ad4-04aaf9124a34 confirmada por contrato/título exatos; 2de433a7 é protocolo histórico, não fonte. Recibo somente leitura versionado em evidencias/fixtures-24-20261108/FONTE_REAL_READONLY_20261108.json.
+
+Teste C42511641527/rodada78: harness2a5ef804, frontend241dd775, deploymentdpl_AoNgZRZnutXauuPsfQ2shEmUaULS. Sem aborto, logouttrue. 96PASS_AUTOMATIZADO,8FAIL de contraste(V106/V107 claros),56BLOQUEADO_PII(SYS04,V109,V111,V112,V115,V122,V123),24baselinepreservados,24fixtures(V117/V119/V120). Artefato13629564203, ZIP8dc04bdef43937aea423da1721d1de51137304ded35ed9308cfaaf6da43d7081; relatório42706b22271ba27fe4c92cc0a0eee415e44319c01a7a05f94ed84634f20dcb3a. ZIP, membros exatos e313/313SHA256 conferidos:208PNG,104DOM,208casos únicos. AUDIT_INCOMPLETE representa pendências reais, não interrupção do executor.
+
+Revisão independente inspecionou todos208PNG originais em três grupos. Além do contraste, confirmou tabelaV101 comprimida em768 e Menu fixo sobre filtroV110 em390. Calendários escuros têm baixa visibilidade. LogoV121dark_menu ausente visualmente requer distinguir corrida de captura de defeito produto. Portanto96PASSautomáticos não são96aprovações visuais nem prova dos72critérios. Preservar artefatos e defeitos sem promover contagem a certificado.
+
+Próximas ações autorizadas: integrar retificação documental da fonte comCI/revisão; BUILD do preparador separado sobGATE367 comRED→GREEN e oito provas nativas antes de credenciais; criar PLAN/GATE visual específico antes de SRC; resolver catálogo privado somente com proveniência porregistro/campo, semregex ampla, ocultação deUI ou enfraquecimento de segurança. Leitura confirmou origem sintética dos registrosCRUDG por vínculo e app_metadata controlado do gerador HML; três organizações legadas ainda requerem proveniência. Nunca divulgar dados Auth ou desconhecidos nos artefatos.
+
+18públicos/24baseline e todas evidências parciais preservados; não repetir sem regressão demonstrada. LOCK-TYPES8ea7750b75fd9d76b29c36ce7613392e3ab65e19, proteção branch, Zero-Drift, Supabase exclusivo e PROD intocados. Continuar184prioridade0 sem autorizações repetidas. V1NO-GO atéDoD integral,72critérios e revisão independente.
+
+---
+
 # Continuidade P0 Trilha A, 08/11/2026 18:49 UTC
 
 Main 2a5ef8043ff26fbe9b4c68b828099f0c7dd70e33; backend normativo e77fec6651aa76917fd6115be64f3052b3ee50d4, snapshot/PLANO alinhados e25fontes/catalog100/97 iguais. O delta backend inclui wrapper de vigência documental SECURITYDEFINER que delega ao guard privado; não é alteração feita pela Trilha A nem certificação funcional desse backend. Tipos congelados8ea7750b75fd9d76b29c36ce7613392e3ab65e19.

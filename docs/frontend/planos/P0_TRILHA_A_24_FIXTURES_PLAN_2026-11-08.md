@@ -1,12 +1,17 @@
 # PLAN P0: preparar 24 combinações V117/V119/V120 por fluxos legítimos HML
 
+## Retificação de identidade antes do BUILD, 08/11/2026
+
+Consulta somente leitura ao projeto HML confirmou zero fontes com ID 2de433a7-a84c-4575-aa2a-7699d2871b55. Esse identificador é o protocolo histórico registrado no GATE355. A busca pelo contrato e título exatos retornou uma única fonte: **8b942e46-a29b-40d9-8ad4-04aaf9124a34**, organização/contrato esperados, rascunho, versão de registro 1, nenhuma versão documental. Este é o único ID de fonte autorizado para o preparador. Reconsultar estado e relações antes de escrever, pois a leitura não é autorização para assumir estado futuro. Recibo: `docs/frontend/auditorias/evidencias/fixtures-24-20261108/FONTE_REAL_READONLY_20261108.json`. Nenhuma escrita de negócio foi executada nesta retificação. As referências históricas anteriores abaixo não substituem esta correção.
+
+
 ## Objetivo e limites
 
 Completar as três superfícies dependentes de dados, oito combinações cada, preservando 24 baseline e 18 públicos. Auditor somente leitura permanece separado da preparação. HML exclusivo contaos-41-hml.vercel.app e Supabase gklhhhyosgasnyoxlrui. Nenhuma alteração PROD, Auth, schema, grants, RLS, migrations, tipos gerados ou dependências. V1 não certificada por contagem.
 
 ## Precondições comprovadas e descoberta fechada
 
-Contrato sintético be89ef7e-d839-46c0-9cfb-4da81edf8b74, contratante041ebf9f-5e32-4744-80d6-d745fa5fc483. Leitura HML das tabelasdocumentos_contrato/versoes_documento/arquivos confirmou organizaçãoe87f7e68-c5ae-4077-943b-02a4afd8b6ee, arquivo8cc6ac08-7f5b-469c-ab50-7b33d5a12379, status_seguranca=aprovado, MIMEtext/plain,285bytes eSHA773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103. Nenhuma escrita realizada nessa descoberta. Organização visível ContaOS HML Teste deve ser resolvida pela sessão e conferida com contrato antes de qualquer escrita; não inferir UUID. Competência histórica59072760-4420-4598-82dd-367f41a79e89/2026-11 preservada. Fonte formal sintética2de433a7-a84c-4575-aa2a-7699d2871b55 ainda sem versão aprovada. ArquivoTXT285bytes SHA773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103 já existe e não deve ser reuploadado nem promovido artificialmente a seguro. IDs de requisitos, versões, pareceres e apresentação somente das respostas reais do fluxo, validados contra a organização/contrato/competência e recibos sintéticos.
+Contrato sintético be89ef7e-d839-46c0-9cfb-4da81edf8b74, contratante041ebf9f-5e32-4744-80d6-d745fa5fc483. Leitura HML das tabelasdocumentos_contrato/versoes_documento/arquivos confirmou organizaçãoe87f7e68-c5ae-4077-943b-02a4afd8b6ee, arquivo8cc6ac08-7f5b-469c-ab50-7b33d5a12379, status_seguranca=aprovado, MIMEtext/plain,285bytes eSHA773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103. Nenhuma escrita realizada nessa descoberta. Organização visível ContaOS HML Teste deve ser resolvida pela sessão e conferida com contrato antes de qualquer escrita; não inferir UUID. Competência histórica59072760-4420-4598-82dd-367f41a79e89/2026-11 preservada. Fonte formal sintética8b942e46-a29b-40d9-8ad4-04aaf9124a34 ainda sem versão aprovada (identidade retificada por leitura exata). ArquivoTXT285bytes SHA773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103 já existe e não deve ser reuploadado nem promovido artificialmente a seguro. IDs de requisitos, versões, pareceres e apresentação somente das respostas reais do fluxo, validados contra a organização/contrato/competência e recibos sintéticos.
 
 ## Preparação distinta do auditor
 
