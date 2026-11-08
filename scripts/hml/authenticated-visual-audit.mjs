@@ -915,6 +915,7 @@ export async function installNativeFence({
     verifiedAssets: 0,
     blockedRequests: 0,
     redirectBlocks: 0,
+    redirectStatus: null,
     workersPaused: 0,
     workersResumed: 0,
     popups: 0,
@@ -972,6 +973,7 @@ export async function installNativeFence({
       if (event.responseErrorReason) fail("FENCE_TRANSPORT");
       if (event.responseStatusCode >= 300 && event.responseStatusCode < 400) {
         state.redirectBlocks++;
+        state.redirectStatus = event.responseStatusCode;
         fail("FENCE_REDIRECT");
       }
       let body;
@@ -1051,6 +1053,9 @@ export async function installNativeFence({
       (async () => {
         await send(session, "Page.enable");
         await send(session, "Network.enable");
+        // Every intercepted response needs a complete body for byte comparison.
+        // Revalidations (304) remain forbidden; request full responses instead.
+        await send(session, "Network.setCacheDisabled", { cacheDisabled: true });
         await send(session, "Network.setBlockedURLs", { urls: ["ws://*", "wss://*"] });
         await send(session, "Fetch.enable", {
           patterns: [
@@ -2482,6 +2487,12 @@ export function runtimeDiagnostics(input = {}) {
   const fence = {
     failed: input.fence?.failed === true,
     failureCode: failures.has(input.fence?.failureCode) ? input.fence.failureCode : null,
+    redirectStatus:
+      Number.isInteger(input.fence?.redirectStatus) &&
+      input.fence.redirectStatus >= 300 &&
+      input.fence.redirectStatus < 400
+        ? input.fence.redirectStatus
+        : null,
   };
   for (const key of [
     "verifiedDocuments",
