@@ -1435,6 +1435,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
       JSON.stringify({
         state: "BLOCKED",
         code: /^[A-Z_]{1,80}$/.test(error?.code || "") ? error.code : "HARNESS_FAILURE",
+        ...(error?.code === "BUILD_ENV_POLICY" && /^[A-Z_]{1,80}$/.test(error?.reason || "")
+          ? { reason: error.reason }
+          : {}),
       }),
     );
     process.exitCode = 1;
