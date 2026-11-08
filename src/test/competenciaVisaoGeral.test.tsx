@@ -256,7 +256,7 @@ describe("V1-14 renderização do backend", () => {
   });
   it("rejeita portão sem contagem canônica e sem permissões", () => {
     const dado = vg();
-    delete (dado.portao as Record<string, unknown>).conformes_ou_na_validos;
+    delete (dado.portao as Record<string, unknown>)["conformes_ou_na_validos"];
     expect(parseVisaoGeral(dado)).toBeNull();
   });
   it("renderiza status, percentual, 8 campos de bloqueio, portão e 4 ações", async () => {
