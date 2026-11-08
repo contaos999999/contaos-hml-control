@@ -2045,6 +2045,36 @@ export function nativeCancellationFailure(tap) {
     .filter((value) => allowed.has(value));
   return values.length === 1 ? values[0] : null;
 }
+export function nativeCancellationTypes(tap) {
+  if (typeof tap !== "string" || tap.length > 1048576) return null;
+  const types = new Set([
+    "Document",
+    "Stylesheet",
+    "Image",
+    "Media",
+    "Font",
+    "Script",
+    "TextTrack",
+    "XHR",
+    "Fetch",
+    "Prefetch",
+    "EventSource",
+    "WebSocket",
+    "Manifest",
+    "SignedExchange",
+    "Ping",
+    "CSPViolationReport",
+    "Preflight",
+    "Other",
+    "UNKNOWN",
+  ]);
+  const pairs = tap
+    .split("\n")
+    .map((line) => /^# NATIVE_CANCEL_TYPES ([A-Za-z]+) ([A-Za-z]+)$/.exec(line.trim()))
+    .filter(Boolean);
+  if (pairs.length !== 1 || !types.has(pairs[0][1]) || !types.has(pairs[0][2])) return null;
+  return { network: pairs[0][1], fetch: pairs[0][2] };
+}
 async function nativeGuard() {
   let output;
   try {
@@ -2083,6 +2113,7 @@ async function nativeGuard() {
         timedOut: error?.killed === true,
         cancellationStages: nativeCancellationDiagnostics(stdout),
         cancellationFailure: nativeCancellationFailure(stdout),
+        cancellationTypes: nativeCancellationTypes(stdout),
         tap,
       }),
     );
