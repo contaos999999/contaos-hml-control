@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     concurrency:
-      group: trilha-a-protocolo-${{ github.ref }}
+      group: trilha-a-fixtures-protocolo-${{ github.ref }}
       cancel-in-progress: false
     env:
       CONTAOS_HARNESS_SHA: ${{ github.event.pull_request.head.sha }}
