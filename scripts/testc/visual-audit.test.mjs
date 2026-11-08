@@ -837,3 +837,18 @@ test("refluxo/texto: caixa do botão não esconde clipping do texto interno", as
     f.close();
   }
 });
+
+test("refluxo/texto: status SYS03 aceita somente seu texto exato com whitespace de JSX", async () => {
+  const m = await import("./visual-audit.mjs"),
+    pattern = m.publicScalePendingResetPattern();
+  assert.equal(pattern.test(" Validando link de redefinição…"), true);
+  assert.equal(pattern.test("\n Validando link de redefinição… \n"), true);
+  assert.equal(pattern.test("Validando link de redefinição…"), true);
+  for (const text of [
+    "Senha redefinida.",
+    "Outro Validando link de redefinição…",
+    "Validando link de redefinição… outro",
+    "PRIVATE_CANARY",
+  ])
+    assert.equal(pattern.test(text), false);
+});

@@ -604,6 +604,9 @@ export function publicScaleCollectionPass(rows) {
     )
   );
 }
+export function publicScalePendingResetPattern() {
+  return /^\s*Validando link de redefinição…\s*$/;
+}
 async function requiredPublicScaleTargets(page, item) {
   const visible = async (locator) => (await locator.count()) === 1 && (await locator.isVisible());
   const titles = {
@@ -632,7 +635,7 @@ async function requiredPublicScaleTargets(page, item) {
       (await visible(page.getByRole("button", { name: "Enviar link", exact: true })))
     );
   return (
-    (await visible(page.locator("p").filter({ hasText: /^Validando link de redefinição…$/ }))) ||
+    (await visible(page.locator("p").filter({ hasText: publicScalePendingResetPattern() }))) ||
     ((await visible(page.getByRole("alert"))) &&
       (await visible(page.getByRole("link", { name: "Solicitar novo link", exact: true }))))
   );

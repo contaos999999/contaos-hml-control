@@ -214,7 +214,7 @@
     "local_one_table_synthetic_restore": "PASS_ESCOPADO_RUN_42168969390",
     "crud_global": "NÃO CONCLUÍDO: código de listas/capacidades/paginação integrado; validação privada e reconciliação semântica das demais operações não certificadas. Executor falhou explicitamente; nenhuma prova privada inventada."
   },
-  "p0_note": "Trilha A PLAN322/GATE323 integrados. BUILD do auditor público em GREEN local, pendente revisão independente e Chromium real; não alterar produto ou certificar V1.",
+  "p0_note": "Trilha A322/323 integrados;324DRAFT. Artefato RED verificado: asserçãoSYS03 corrigida localmente; Important visual real no login1440/texto200% dois temas exige escopo próprio antes de src. V1 não certificada.",
   "rbac_emenda_p0": {
     "plano_documento": "docs/frontend/planos/P0_V1_ADM01_RBAC_EMENDA_2026-11-06.md",
     "plan_pr": 178,
@@ -1031,7 +1031,7 @@
   },
   "trilha_a_public_scale": {
     "phase": "BUILD",
-    "state": "GREEN_LOCAL_PENDING_CANONICAL_RUNTIME",
+    "state": "LOCAL_FIXES_READY_VISUAL_IMPORTANT_OPEN",
     "baseline_main": "09c5f243c6f52368319845c33b1e511b3e966299",
     "plan_document": "docs/frontend/planos/P0_TRILHA_A_REFLOW_TEXTO_PUBLICO_PLAN_2026-11-08.md",
     "gate_document": "docs/frontend/planos/P0_TRILHA_A_REFLOW_TEXTO_PUBLICO_GATE_2026-11-08.md",
@@ -1068,7 +1068,7 @@
     ],
     "red_primary_result": "29 PASS / 4 expected FAIL; helpers missing",
     "green_local": {
-      "protocol_and_order": 53,
+      "protocol_and_order": 54,
       "vitest_tests": 1163,
       "vitest_files": 42,
       "build": "PASS",
@@ -1078,7 +1078,7 @@
       "route_tree_drift": "PASS",
       "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19"
     },
-    "runtime_visual": "NOT_EXECUTED_YET",
+    "runtime_visual": "FAIL_ESCOPADO_SYS01_1440_TEXT_200_BOTH_THEMES",
     "independent_build_review": "CODIGO_APROVADO_ESCOPADO; recheck test fixture portability pending; runtime/images pending",
     "review_fixes": {
       "state": "CORRECTED_PENDING_RECHECK",
@@ -1097,6 +1097,29 @@
       "cause": "Unit geometry imported jsdom before dependency installation",
       "fix": "Keep all negatives in a dependency-free DOM contract fixture;39/39 pass in isolated directory without node_modules",
       "runtime_harness_changed": false
-    }
+    },
+    "runtime_red": {
+      "head": "dbfc13414067fd763ada6f1ae59b80c876bd0ff5",
+      "tested_synthetic_merge": "64f58ad8f182e7e7ab7cbd6be62008c511cf687a",
+      "run": 42437144483,
+      "job": 128598313508,
+      "artifact": 13600520868,
+      "sha256": "4165d41e73b2b531a26b70001bb2f7868b0ec252a126fac7f9f0e0353192e950",
+      "verified_hashes": 356,
+      "base_public_pass": 24,
+      "base_public_fail": 0,
+      "protected_no_session": 208,
+      "scale_cases": 18,
+      "scale_auto_pass": 12,
+      "scale_assertion_fail": 6,
+      "assertion_fix_local": "93a6b27 RED -> 9ef6f59 exact SYS03 status whitespace",
+      "reviewed_images": 18,
+      "visual_important_images": [
+        "SYS01_1440_light_TEXT_200",
+        "SYS01_1440_dark_TEXT_200"
+      ],
+      "visual_finding": "Institutional cards overlap enlarged text;16 other images without blocking visual finding; no native zoom or full WCAG certification"
+    },
+    "next_required": "Fix harness assertions and portable tests with fresh CI; keep draft while preparing separate PLAN/GATE for actual login layout defect. Do not edit src under this gate."
   }
 }
