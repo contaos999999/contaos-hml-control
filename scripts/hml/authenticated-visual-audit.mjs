@@ -1,4 +1,4 @@
-import { readFile, mkdir, writeFile, lstat, rm, readdir } from "node:fs/promises";
+import { readFile, mkdir, writeFile, appendFile, lstat, rm, readdir } from "node:fs/promises";
 import { resolve, join, basename } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { execFile as execFileCallback } from "node:child_process";
@@ -526,14 +526,8 @@ function validateObservability(raw) {
     fail("BUILD_ENV_POLICY");
   }
 }
-export function extractPublicBuildEnvironment(modules, expected) {
-  if (
-    !(modules instanceof Map) ||
-    modules.size > 128 ||
-    !hash40(expected?.frontendSha) ||
-    !/^dpl_[A-Za-z0-9]{8,80}$/.test(expected?.deploymentId || "")
-  )
-    fail("BUILD_ENV_POLICY");
+function inspectPublicBuildEnvironment(modules) {
+  if (!(modules instanceof Map) || modules.size > 128) fail("BUILD_ENV_POLICY");
   // Diagnostic codes contain no values, URLs, tokens, or module contents.
   const deny = (reason) => {
     const error = new Error("BUILD_ENV_POLICY");
@@ -582,8 +576,8 @@ export function extractPublicBuildEnvironment(modules, expected) {
   }
   if (
     !environment ||
-    environment.VITE_VERCEL_GIT_COMMIT_SHA !== expected.frontendSha ||
-    environment.VITE_VERCEL_DEPLOYMENT_ID !== expected.deploymentId
+    !hash40(environment.VITE_VERCEL_GIT_COMMIT_SHA) ||
+    !/^dpl_[A-Za-z0-9]{8,80}$/.test(environment.VITE_VERCEL_DEPLOYMENT_ID)
   )
     deny("DEPLOYMENT_IDENTITY_MISMATCH");
   const fixed = {
@@ -607,6 +601,50 @@ export function extractPublicBuildEnvironment(modules, expected) {
     deny("PREVIOUS_SHA_POLICY");
   validateObservability(environment.VITE_VERCEL_OBSERVABILITY_CLIENT_CONFIG);
   return environment;
+}
+function deploymentIdentityValid(identity) {
+  return (
+    hash40(identity?.frontendSha) && /^dpl_[A-Za-z0-9]{8,80}$/.test(identity?.deploymentId || "")
+  );
+}
+export function extractPublicBuildEnvironment(modules, expected) {
+  if (!deploymentIdentityValid(expected)) fail("BUILD_ENV_POLICY");
+  const environment = inspectPublicBuildEnvironment(modules);
+  if (
+    environment.VITE_VERCEL_GIT_COMMIT_SHA !== expected.frontendSha ||
+    environment.VITE_VERCEL_DEPLOYMENT_ID !== expected.deploymentId
+  )
+    throw Object.assign(new Error("BUILD_ENV_POLICY"), {
+      code: "BUILD_ENV_POLICY",
+      reason: "DEPLOYMENT_IDENTITY_MISMATCH",
+    });
+  return environment;
+}
+export function resolveDeploymentIdentity(modules, requested = {}) {
+  const empty = (value) => value === undefined || value === "";
+  const automatic = empty(requested.frontendSha) && empty(requested.deploymentId);
+  if (!automatic && !deploymentIdentityValid(requested)) fail("DEPLOYMENT_INPUT");
+  // Discovery returns a candidate, never a proof: ancestry and byte/SSR parity
+  // remain mandatory before this source may receive credentials.
+  const environment = inspectPublicBuildEnvironment(modules);
+  const identity = {
+    frontendSha: environment.VITE_VERCEL_GIT_COMMIT_SHA,
+    deploymentId: environment.VITE_VERCEL_DEPLOYMENT_ID,
+  };
+  if (
+    !automatic &&
+    (requested.frontendSha !== identity.frontendSha ||
+      requested.deploymentId !== identity.deploymentId)
+  )
+    fail("DEPLOYMENT_PIN_STALE");
+  return identity;
+}
+export function deploymentWorkflowOutputs(identity) {
+  if (!deploymentIdentityValid(identity)) fail("DEPLOYMENT_INPUT");
+  return {
+    environment: `CONTAOS_FRONTEND_SHA=${identity.frontendSha}\nCONTAOS_DEPLOYMENT_ID=${identity.deploymentId}\n`,
+    outputs: `frontend_sha=${identity.frontendSha}\ndeployment_id=${identity.deploymentId}\n`,
+  };
 }
 export function assetBytesMatch(expected, actual) {
   return (
@@ -1386,7 +1424,10 @@ export async function preparePublicProvenance({
   };
 }
 export async function runCli(args = process.argv.slice(2)) {
-  if (args.length !== 1 || !["--prepare", "--native-guard", "--audit"].includes(args[0]))
+  if (
+    args.length !== 1 ||
+    !["--resolve-deployment", "--prepare", "--native-guard", "--audit"].includes(args[0])
+  )
     fail("CLI_MODE");
   const harnessRoot = fileURLToPath(new URL("../../", import.meta.url));
   try {
@@ -1409,6 +1450,36 @@ export async function runCli(args = process.argv.slice(2)) {
 
   if (args[0] === "--native-guard") return nativeGuard();
   if (args[0] === "--audit") return runAuthenticatedAudit();
+  if (args[0] === "--resolve-deployment") {
+    if (
+      process.env.GITHUB_EVENT_NAME !== "workflow_dispatch" ||
+      process.env.GITHUB_REF !== "refs/heads/main" ||
+      !process.env.GITHUB_ENV ||
+      !process.env.GITHUB_OUTPUT
+    )
+      fail("RESOLVE_MAIN_ONLY");
+    if (
+      [
+        "CONTAOS_HML_SYNTHETIC_EMAIL",
+        "CONTAOS_HML_SYNTHETIC_PASSWORD",
+        "DATABASE_URL",
+        "AUTH_ADMIN_KEY",
+        "CONTAOS_HML_AUTH_ADMIN_KEY",
+        "GH_TOKEN",
+      ].some((key) => !!process.env[key])
+    )
+      fail("PREPARE_SECRET_ENV");
+    const graph = await discoverPublicGraph();
+    const identity = resolveDeploymentIdentity(graph.modules, {
+      frontendSha: process.env.CONTAOS_REQUESTED_FRONTEND_SHA,
+      deploymentId: process.env.CONTAOS_REQUESTED_DEPLOYMENT_ID,
+    });
+    const output = deploymentWorkflowOutputs(identity);
+    await appendFile(process.env.GITHUB_ENV, output.environment);
+    await appendFile(process.env.GITHUB_OUTPUT, output.outputs);
+    console.log(JSON.stringify({ phase: "DEPLOYMENT_CANDIDATE", ...identity }));
+    return;
+  }
   const proof = await preparePublicProvenance({
     sourceRoot: process.env.CONTAOS_FRONTEND_SOURCE,
     frontendSha: process.env.CONTAOS_FRONTEND_SHA,
@@ -1444,7 +1515,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     if (
       process.env.GITHUB_EVENT_NAME === "workflow_dispatch" &&
       process.env.GITHUB_REF === "refs/heads/main" &&
-      ["--prepare", "--native-guard"].includes(process.argv[2])
+      ["--resolve-deployment", "--prepare", "--native-guard"].includes(process.argv[2])
     ) {
       try {
         const identity = await harnessIdentity();
@@ -2037,6 +2108,7 @@ async function runAuthenticatedAudit() {
     diagnostic = runtimeDiagnostics({
       phase,
       errorName: error?.name,
+      errorMessage: error?.message,
       errorCode: error?.code,
       contextClosed: page?.isClosed(),
       routeClass: runtimeRouteClass(page),
@@ -2304,6 +2376,36 @@ export async function writeBlockedPreflight(input, output = resolve("artifacts/t
   );
 }
 
+export function classifyRuntimeError(error = {}) {
+  const name = [
+    "Error",
+    "TypeError",
+    "ReferenceError",
+    "SyntaxError",
+    "EvalError",
+    "TimeoutError",
+  ].includes(error.name)
+    ? error.name
+    : "UNKNOWN";
+  const message = typeof error.message === "string" ? error.message.slice(0, 16384) : "";
+  const operations = [
+    ["page.waitForURL:", "WAIT_FOR_URL"],
+    ["page.evaluate:", "EVALUATE"],
+    ["page.goto:", "GOTO"],
+    ["locator.click:", "CLICK"],
+    ["locator.waitFor:", "WAIT_FOR_ELEMENT"],
+  ];
+  const operation = operations.find(([prefix]) => message.startsWith(prefix))?.[1] || "UNKNOWN";
+  let reason = "UNKNOWN";
+  if (name === "TimeoutError") reason = "TIMEOUT";
+  else if (message.includes("net::ERR_ABORTED")) reason = "NAVIGATION_ABORTED";
+  else if (message.includes("Execution context was destroyed")) reason = "CONTEXT_DESTROYED";
+  else if (message.includes("Target page, context or browser has been closed"))
+    reason = "TARGET_CLOSED";
+  else if (message.includes("unsafe-eval")) reason = "CSP_EVAL";
+  // Never return any substring of the supplied error, including unknown names.
+  return { name, operation, reason };
+}
 export function runtimeDiagnostics(input = {}) {
   const phases = [
     "AUDIT_PREFLIGHT",
@@ -2397,6 +2499,7 @@ export function runtimeDiagnostics(input = {}) {
     loginUi[key] = loginUi.observed && input.loginUi?.[key] === true;
   return {
     phase: phases.includes(input.phase) ? input.phase : "UNKNOWN",
+    localError: classifyRuntimeError({ name: input.errorName, message: input.errorMessage }),
     errorKind:
       input.errorName === "TimeoutError"
         ? "TIMEOUT"
