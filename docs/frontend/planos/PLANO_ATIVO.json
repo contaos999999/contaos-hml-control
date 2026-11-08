@@ -1308,6 +1308,18 @@
         "exception_method": "GET",
         "require_same_fetch_type_across_stages": true,
         "state": "EMENDA_AGUARDA_CI_REVISAO"
+      },
+      "ordinary_preflight_amendment": {
+        "native_run": 42506146549,
+        "head": "8702771eac8571b23377cec31bec0f5bfcc89a24",
+        "network_type": "Other",
+        "fetch_type": "XHR",
+        "method": "OPTIONS",
+        "network_frame_absent": true,
+        "network_loader_absent": true,
+        "fetch_frame_must_be_own_root": true,
+        "cancellation_eligible": false,
+        "state": "EMENDA_AGUARDA_CI_REVISAO"
       }
     }
   }
