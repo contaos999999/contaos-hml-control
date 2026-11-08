@@ -1510,7 +1510,20 @@ async function nativeGuard() {
       },
     );
     output = result.stdout;
-  } catch {
+  } catch (error) {
+    // Never print the raw subprocess output: it can contain browser URLs or
+    // authentication material. Emit only a bounded, allowlisted TAP summary.
+    const stdout = typeof error?.stdout === "string" ? error.stdout : "";
+    const tap = stdout.split("\\n").filter((line) =>
+      /^(?:not ok \\d+ - Chromium nativo:|# (?:tests|pass|fail|skipped|cancelled|duration_ms) [0-9.]+\\s*)$/.test(line.trim()),
+    ).slice(0, 16);
+    console.error(JSON.stringify({
+      phase: "NATIVE_GUARD",
+      exitCode: Number.isInteger(error?.code) ? error.code : null,
+      signal: ["SIGTERM", "SIGKILL"].includes(error?.signal) ? error.signal : null,
+      timedOut: error?.killed === true,
+      tap,
+    }));
     fail("NATIVE_GUARD");
   }
   const proof = nativeProofFromTap(output, await harnessIdentity());
