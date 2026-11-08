@@ -1179,11 +1179,11 @@
     "login_ui_observed": true,
     "login_ui_credential_rejected": true,
     "transport_blocks": 0,
-    "next_action": "Restabelecer acesso sintético HML seguro ou diagnóstico Auth fechado sob emenda revisada; não inferir senha incorreta apenas do texto UI; depois executar somente etapas privadas pendentes."
+    "next_action": "Continuar PLAN342/GATE343: resolver erro local CDP_COMMAND ao recarregar seletor apos login; nao repetir324/18provas publicas nem trocar credenciais sem evidencia. Privados0PASS/184interrompidos+24fixture."
   },
   "trilha_a_reancoragem_executor": {
     "plan_document": "docs/frontend/planos/P0_TRILHA_A_REANCORAGEM_EXECUTOR_PLAN_2026-11-08.md",
-    "status": "PLAN_VALIDADO_GATE_AGUARDANDO_CI",
+    "status": "CORRECOES_INTEGRADAS_TESTE_C_PARCIAL_CDP_COMMAND",
     "baseline_frontend": "ce845e39c75178e951593915a915ff79938f914d",
     "baseline_backend": "2d01d87654ce580f6f8fdd3446ea4aa78ac7752a",
     "test_c_baseline": 42490769741,
@@ -1197,6 +1197,35 @@
       42491108002,
       42491108049
     ],
-    "gate_document": "docs/frontend/planos/P0_TRILHA_A_REANCORAGEM_EXECUTOR_GATE_2026-11-08.md"
+    "gate_document": "docs/frontend/planos/P0_TRILHA_A_REANCORAGEM_EXECUTOR_GATE_2026-11-08.md",
+    "gate_pr": 343,
+    "gate_merge": "9d6b0131f2afb013d6fc9a732edde5a5f7b39823",
+    "gate_ci": [
+      42491330304,
+      42491330207
+    ],
+    "build_prs": [
+      344,
+      345,
+      346,
+      347
+    ],
+    "latest_build_merge": "5574b0b8a43fbdec943f0d6eee34f0e240967ddb",
+    "latest_build_ci": [
+      42494551214,
+      42494551211,
+      42494551210
+    ],
+    "test_c_run": 42494806048,
+    "test_c_artifact": 13622418809,
+    "test_c_zip_sha256": "59a0f3a2c85dbda8631259f60908e08d4ff31aa239132ccb78bdaaec5cf04d67",
+    "test_c_report_sha256": "09df1dab3cbea0d84561cdaadc6a11143cfde143052b9013a14bcaf7d7654120",
+    "native_passed": 7,
+    "protocol_passed": 96,
+    "post_login_navigation": true,
+    "master_verified": false,
+    "organization_verified": false,
+    "interrupted": 184,
+    "next_action": "Investigar CDP_COMMAND na recarga redundante do seletor, sincronizar verificacoes antes de navegacao; RED/CI/revisao/Teste C. Nao alterar secrets por suposicao."
   }
 }
