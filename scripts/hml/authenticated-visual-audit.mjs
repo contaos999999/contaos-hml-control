@@ -1750,6 +1750,15 @@ async function runAuthenticatedAudit() {
     logoutVerified = false,
     aborted = null,
     errors = 0;
+  let phase = "AUDIT_PREFLIGHT",
+    diagnostic = null;
+  const flags = {
+    formLocated: false,
+    submitActivated: false,
+    postLoginNavigation: false,
+    masterLocated: false,
+    organizationConfirmed: false,
+  };
   const { chromium } = await import("playwright");
   const debug = createServer();
   await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
@@ -1765,6 +1774,7 @@ async function runAuthenticatedAudit() {
     return { file, sha };
   }
   try {
+    phase = "BROWSER_START";
     proxy = await startDestinationProxy();
     browser = await chromium.launch({
       chromiumSandbox: true,
@@ -1788,27 +1798,45 @@ async function runAuthenticatedAudit() {
       verifyResponse: (response) => verifyPublishedResponse(proof, response),
       closeContext: async () => context.close(),
     });
+    phase = "OPEN_LOGIN";
     await page.goto(HML_ORIGIN + "/login", { waitUntil: "networkidle" });
+    phase = "PROVE_LOGIN";
     await fence.drain();
     fence.assertSafe();
     if (errors !== 0) fail("LOGIN_SCRIPT_ERROR");
+    phase = "LOGIN_FORM";
+    await page.locator("#login-email").waitFor({ state: "visible" });
+    await page.locator("#login-senha").waitFor({ state: "visible" });
+    flags.formLocated = true;
+    phase = "FILL_LOGIN";
     await page.locator("#login-email").fill(process.env.CONTAOS_HML_SYNTHETIC_EMAIL);
     await page.locator("#login-senha").fill(process.env.CONTAOS_HML_SYNTHETIC_PASSWORD);
+    phase = "SUBMIT_LOGIN";
     await page.getByRole("button", { name: "Entrar", exact: true }).click();
+    flags.submitActivated = true;
+    phase = "WAIT_AUTH_DESTINATION";
     await page.waitForURL((url) => url.pathname !== "/login");
+    flags.postLoginNavigation = true;
     loggedIn = true;
+    phase = "OPEN_ORG_SELECTOR";
     await page.goto(HML_ORIGIN + "/selecionar-organizacao", { waitUntil: "networkidle" });
     const card = page
       .getByRole("radio")
       .filter({ hasText: SYNTHETIC_FIXTURE.organizationName })
       .filter({ hasText: "Administrador Master" });
+    phase = "CHECK_MASTER";
     await card.waitFor();
     if ((await card.count()) !== 1 || !/Situação:\s*ativa/i.test(await card.innerText()))
       fail("AUTH_MASTER_FIXTURE");
+    flags.masterLocated = true;
+    phase = "SELECT_ORG";
     await card.click();
     await page.getByRole("button", { name: "Continuar", exact: true }).click();
+    phase = "ENTER_ORG";
     await page.waitForURL(HML_ORIGIN + "/");
     await waitOrganization(page);
+    flags.organizationConfirmed = true;
+    phase = "CAPTURE_PRIVATE";
     let surface = null;
     for (const item of privateCases()) {
       const key = caseKey(item),
@@ -1975,7 +2003,24 @@ async function runAuthenticatedAudit() {
       }
     }
   } catch (error) {
-    aborted = /^[A-Z_]{1,80}$/.test(error?.code ?? "") ? error.code : "RUNTIME_ABORT";
+    const fenceState = fence?.snapshot();
+    diagnostic = runtimeDiagnostics({
+      phase,
+      errorName: error?.name,
+      errorCode: error?.code,
+      contextClosed: page?.isClosed(),
+      routeClass: runtimeRouteClass(page),
+      fence: fenceState,
+      proxy: proxy?.snapshot(),
+      flags,
+      loginUi: await loginUiFlags(page),
+    });
+    aborted =
+      fenceState?.failed && diagnostic.fence.failureCode
+        ? diagnostic.fence.failureCode
+        : /^[A-Z_]{1,80}$/.test(error?.code ?? "")
+          ? error.code
+          : "RUNTIME_ABORT";
     if (records.at(-1)?.status === "PENDENTE") records.at(-1).status = "BLOQUEADO_" + aborted;
   } finally {
     if (loggedIn && page && !page.isClosed())
@@ -2009,6 +2054,7 @@ async function runAuthenticatedAudit() {
       summary: summarizeCases(records),
       logoutVerified,
       aborted,
+      diagnostic,
       criteria72: "PENDENTE_REVISAO_INDEPENDENTE",
       v1Certified: false,
     };
@@ -2226,4 +2272,157 @@ export async function writeBlockedPreflight(input, output = resolve("artifacts/t
     [...files].map(([name, body]) => digest(body) + "  " + name).join("\n") + "\n",
     { mode: 0o600 },
   );
+}
+
+export function runtimeDiagnostics(input = {}) {
+  const phases = [
+    "AUDIT_PREFLIGHT",
+    "BROWSER_START",
+    "OPEN_LOGIN",
+    "PROVE_LOGIN",
+    "LOGIN_FORM",
+    "FILL_LOGIN",
+    "SUBMIT_LOGIN",
+    "WAIT_AUTH_DESTINATION",
+    "OPEN_ORG_SELECTOR",
+    "CHECK_MASTER",
+    "SELECT_ORG",
+    "ENTER_ORG",
+    "CAPTURE_PRIVATE",
+    "FINISHED",
+  ];
+  const failures = new Set([
+    "FENCE_REQUEST",
+    "FENCE_TRANSPORT",
+    "FENCE_REDIRECT",
+    "FENCE_BODY_LIMIT",
+    "FENCE_SOURCE",
+    "FENCE_HEADERS",
+    "FENCE_DOCUMENT_BODY",
+    "FENCE_CONTEXT_UNKNOWN",
+    "FENCE_CONTEXT_FOREIGN",
+    "FENCE_WORKER_PAUSED",
+    "FENCE_WORKER_RUNNING",
+    "FENCE_POPUP",
+    "FENCE_TARGET_FAILED",
+    "FENCE_TARGET_DETACHED",
+    "FENCE_CDP_CLOSED",
+    "FENCE_TARGET_TIMEOUT",
+    "FENCE_INITIALIZATION",
+    "FENCE_NOT_PROVEN",
+    "FENCE_ASYNC",
+    "FENCE_CONFIGURATION",
+    "CDP_COMMAND",
+    "CDP_FRAME",
+    "CDP_CLOSED",
+    "CDP_CONNECT",
+    "CDP_ENDPOINT",
+    "CDP_METADATA",
+    "CDP_IDENTITY",
+    "CDP_EVENT",
+    "CDP_TIMEOUT",
+    "LOGIN_SCRIPT_ERROR",
+    "AUTH_MASTER_FIXTURE",
+    "DEPLOYMENT_CHANGED",
+  ]);
+  const count = (value) =>
+    Number.isInteger(value) && value >= 0 && value <= 1000000 ? value : null;
+  const fence = {
+    failed: input.fence?.failed === true,
+    failureCode: failures.has(input.fence?.failureCode) ? input.fence.failureCode : null,
+  };
+  for (const key of [
+    "verifiedDocuments",
+    "verifiedScripts",
+    "verifiedAssets",
+    "blockedRequests",
+    "redirectBlocks",
+    "workersPaused",
+    "workersResumed",
+    "popups",
+  ])
+    fence[key] = count(input.fence?.[key]);
+  const proxy = {};
+  for (const key of ["forwarded", "blocked", "connectionFailures"])
+    proxy[key] = count(input.proxy?.[key]);
+  const flags = {};
+  for (const key of [
+    "formLocated",
+    "submitActivated",
+    "postLoginNavigation",
+    "masterLocated",
+    "organizationConfirmed",
+  ])
+    flags[key] = input.flags?.[key] === true;
+  const loginUi = { observed: input.loginUi?.observed === true };
+  for (const key of [
+    "credentialRejected",
+    "networkError",
+    "noOrganization",
+    "accessLookupError",
+    "accessDenied",
+    "emailInvalid",
+    "passwordInvalid",
+  ])
+    loginUi[key] = loginUi.observed && input.loginUi?.[key] === true;
+  return {
+    phase: phases.includes(input.phase) ? input.phase : "UNKNOWN",
+    errorKind:
+      input.errorName === "TimeoutError"
+        ? "TIMEOUT"
+        : input.contextClosed === true
+          ? "CONTEXT_CLOSED"
+          : failures.has(input.errorCode)
+            ? "HARNESS_ERROR"
+            : "OTHER",
+    routeClass: ["LOGIN", "ORGANIZATION_SELECTOR", "DASHBOARD", "OTHER"].includes(input.routeClass)
+      ? input.routeClass
+      : "UNAVAILABLE",
+    fence,
+    proxy,
+    flags,
+    loginUi,
+  };
+}
+async function loginUiFlags(page) {
+  if (!page || page.isClosed()) return {};
+  try {
+    return await page.evaluate(() => {
+      const visible = (e) =>
+        e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+      const text = [...document.querySelectorAll('[role="alert"],[role="status"]')]
+        .filter(visible)
+        .map((e) => e.textContent)
+        .join("\n");
+      return {
+        observed: true,
+        credentialRejected: text.includes("E-mail ou senha inválidos."),
+        networkError: text.includes("Não foi possível conectar. Tente novamente."),
+        noOrganization: text.includes("Seu usuário não possui acesso ativo a nenhuma organização."),
+        accessLookupError: text.includes("Não foi possível carregar seus acessos."),
+        accessDenied: text.includes("Você não tem permissão para acessar as organizações."),
+        emailInvalid:
+          document.querySelector("#login-email")?.getAttribute("aria-invalid") === "true",
+        passwordInvalid:
+          document.querySelector("#login-senha")?.getAttribute("aria-invalid") === "true",
+      };
+    });
+  } catch {
+    return {};
+  }
+}
+function runtimeRouteClass(page) {
+  try {
+    if (!page || page.isClosed()) return "UNAVAILABLE";
+    const path = new URL(page.url()).pathname;
+    return path === "/login"
+      ? "LOGIN"
+      : path === "/selecionar-organizacao"
+        ? "ORGANIZATION_SELECTOR"
+        : path === "/"
+          ? "DASHBOARD"
+          : "OTHER";
+  } catch {
+    return "UNAVAILABLE";
+  }
 }
