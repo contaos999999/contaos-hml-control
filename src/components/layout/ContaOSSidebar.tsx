@@ -69,9 +69,9 @@ export function ContaOSSidebar({
             <p className="px-3 text-xs font-semibold text-sidebar-foreground/80">Contexto atual</p>
           )}
           {menuContextualV1(contexto, permissoes).map((item) => (
-            <a
+            <Link
               key={item.destino}
-              href={item.destino}
+              to={item.destino}
               onClick={aoNavegar}
               aria-label={item.titulo}
               title={recolhida ? item.titulo : undefined}
@@ -80,7 +80,7 @@ export function ContaOSSidebar({
             >
               <FileText aria-hidden="true" className="size-4 shrink-0" />
               {!recolhida && <span>{item.titulo}</span>}
-            </a>
+            </Link>
           ))}
         </div>
       )}
