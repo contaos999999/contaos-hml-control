@@ -3576,3 +3576,75 @@ test("drain revalida deadline imediatamente antes de retornar ocioso", async (t)
     await fixture.close();
   }
 });
+
+test("política injetada recebe corpo e estágio nativos antes da continuação", async () => {
+  const fixture = await cdpFixture();
+  let fence, observed;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {},
+      verifyResponse: async () => true,
+      policy: (request) => {
+        observed = request;
+        return false;
+      },
+    });
+    fixture.emit({
+      method: "Fetch.requestPaused",
+      sessionId: "initial-session",
+      params: {
+        requestId: "intent-request",
+        resourceType: "XHR",
+        frameId: "main-frame",
+        request: {
+          url: API + "/rest/v1/rpc/criar_competencia",
+          method: "POST",
+          postData: '{"p_id_contrato":"synthetic"}',
+        },
+      },
+    });
+    for (let i = 0; i < 1000 && !fence.snapshot().failed; i++)
+      await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(observed.postData, '{"p_id_contrato":"synthetic"}');
+    assert.equal(observed.stage, "REQUEST");
+    assert.equal(observed.interceptionId, "intent-request");
+    assert.equal(observed.sessionId, "initial-session");
+    assert.equal(fixture.received.filter((x) => x.method === "Fetch.continueRequest").length, 0);
+  } finally {
+    fence?.close();
+    await fixture.close();
+  }
+});
+
+test("política assíncrona nunca equivale a autorização booleana síncrona", async () => {
+  const fixture = await cdpFixture();
+  let fence;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {},
+      verifyResponse: async () => true,
+      policy: () => Promise.resolve(true),
+    });
+    fixture.emit({
+      method: "Fetch.requestPaused",
+      sessionId: "initial-session",
+      params: {
+        requestId: "async-policy",
+        resourceType: "XHR",
+        frameId: "main-frame",
+        request: { url: HML + "/", method: "GET" },
+      },
+    });
+    for (let i = 0; i < 1000 && !fence.snapshot().failed; i++)
+      await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(fence.snapshot().failureCode, "FENCE_REQUEST");
+    assert.equal(fixture.received.filter((x) => x.method === "Fetch.continueRequest").length, 0);
+  } finally {
+    fence?.close();
+    await fixture.close();
+  }
+});
