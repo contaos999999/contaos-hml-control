@@ -4056,6 +4056,7 @@ test(
 
       // Four source-shaped fields under real Chromium ARIA, without HML/Auth.
       const privacyProof = await fn("loadPrivacy78Proof")();
+      const rbacProof=await fn("loadPrivacy78RbacProof")();
       const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
       for (const [surface, html] of Object.entries(privacy78Fixtures())) {
         await page.setContent(html);
@@ -4069,12 +4070,13 @@ test(
           snapshot = (await field.ariaSnapshot()).trim();
         const receipt = Object.freeze({
           route: fn("privateCases")().find((i) => i.surface === surface).path,
-          observed: Object.freeze(privacyProof.get_contracts.map((c) => c.name)),
+          observed: Object.freeze(surface==="V115"?["competence_rbac_gate","upload"]:privacyProof.get_contracts.map((c) => c.name)),
           age: 1,
         });
         const input = {
           surface,
           proof: privacyProof,
+          rbacProof,
           rendered,
           snapshot,
           fieldSnapshot: snapshot,
@@ -4320,18 +4322,20 @@ test("privacy78 projecao fecha config pipeline FK shapes e nao le campos proibid
 });
 test("privacy78 recibo selado intervalo unico contexto e desconhecidos remanescentes", async () => {
   const proof = await fn("loadPrivacy78Proof")();
+  const rbacProof=await fn("loadPrivacy78RbacProof")();
   const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
   assert.ok(Object.isFrozen(proof.context));
   for (const surface of ["V111", "V112", "V115", "V122"]) {
     const value = proof.generated_exact_values[surface][0];
     const receipt = Object.freeze({
       route: fn("privateCases")().find((r) => r.surface === surface).path,
-      observed: Object.freeze(proof.get_contracts.map((c) => c.name)),
+      observed: Object.freeze(surface==="V115"?["competence_rbac_gate","upload"]:proof.get_contracts.map((c) => c.name)),
       age: 1,
     });
     const input = {
       surface,
       proof,
+      rbacProof,
       rendered: value,
       snapshot: value,
       fieldSnapshot: value,
