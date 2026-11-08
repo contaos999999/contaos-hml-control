@@ -1,0 +1,289 @@
+{
+  "schema": "contaos.hml.privacy78-minimal-readonly.v1",
+  "status": "DRAFT_REQUIRES_INDEPENDENT_REVIEW_GATE_CI_AND_MERGE",
+  "verified_date_utc": "2026-11-08",
+  "project": "gklhhhyosgasnyoxlrui",
+  "read_only": true,
+  "context": {
+    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "competence": "59072760-4420-4598-82dd-367f41a79e89",
+    "document": "525e54fc-feec-4dc0-b540-1510a3c52485",
+    "file": "8cc6ac08-7f5b-469c-ab50-7b33d5a12379",
+    "document_version": "2ea42a44-db27-4c4e-801f-9fc5227c2458",
+    "processing": "535c4ad2-d179-411e-8a48-16bbf8929b6e"
+  },
+  "run": 42511641527,
+  "frontend_sha": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+  "harness_sha": "2a5ef8043ff26fbe9b4c68b828099f0c7dd70e33",
+  "report_sha256": "42706b22271ba27fe4c92cc0a0eee415e44319c01a7a05f94ed84634f20dcb3a",
+  "observed": {
+    "upload": {
+      "max_bytes": 524288000,
+      "extensions": [
+        "pdf",
+        "xlsx",
+        "csv",
+        "docx",
+        "png",
+        "jpg",
+        "jpeg",
+        "webp",
+        "txt",
+        "json",
+        "xml"
+      ]
+    },
+    "competencias": [
+      {
+        "reference": "2026-11-01",
+        "start": "2026-11-01",
+        "end": "2026-11-30"
+      }
+    ],
+    "pipeline": [
+      {
+        "stage": "documents",
+        "created": "2026-11-08T05:41:35.77542+00:00",
+        "started": "2026-11-08T11:21:16.567+00:00",
+        "completed": "2026-11-08T11:21:17.436+00:00"
+      }
+    ]
+  },
+  "generated_exact_values": {
+    "V111": [
+      "Iniciado em 08/11/2026 08:21"
+    ],
+    "V112": [
+      "01/11/2026 a 30/11/2026"
+    ],
+    "V115": [
+      "500 MB"
+    ],
+    "V122": [
+      "PDF, XLSX, CSV, DOCX, PNG, JPG, JPEG, WEBP, TXT, JSON, XML"
+    ]
+  },
+  "diagnostic_reproductions": {
+    "V111_source_fragment": {
+      "reason": "UNKNOWN_WORDS",
+      "count": 1
+    },
+    "V112_period": {
+      "reason": "UNKNOWN_WORDS",
+      "count": 1
+    },
+    "V115_limit": {
+      "reason": "UNKNOWN_WORDS",
+      "count": 2
+    },
+    "V122_formats": {
+      "reason": "UNKNOWN_WORDS",
+      "count": 3
+    }
+  },
+  "limits": {
+    "runtime_blocked_dom_not_collected": true,
+    "raw_auth_rows_not_read": true,
+    "user_ids_not_read": true,
+    "correlation_ids_not_read": true,
+    "headers_not_read": true,
+    "unknown_runtime_values_not_exported": true,
+    "snapshot_extra_V112_unresolved": 2,
+    "closed_surfaces_not_automatically_passed": true
+  },
+  "source_sha256": {
+    "scripts/hml/authenticated-visual-audit.mjs": {
+      "commit": "2a5ef8043ff26fbe9b4c68b828099f0c7dd70e33",
+      "sha256": "8454550c8f47a3b01fd15a669e076d04016e8c26792634b49dbc6e9419c90020"
+    },
+    "src/lib/contratos/baseNormativaDados.ts": {
+      "commit": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+      "sha256": "1972b6153004ffc22f643dcfeced0d2a5f59c768f47a6b589cba3fa5d8f99571"
+    },
+    "src/lib/contratos/documentosDados.ts": {
+      "commit": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+      "sha256": "fee60255d8702ef6d85207babc7f846c6656b81bb4fa9f9f586df62f5421f7a8"
+    },
+    "src/lib/contratos/competenciasDados.ts": {
+      "commit": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+      "sha256": "127710e4f17fc1b23c701a9ad017f238b699eb90ca6e16c0c0066d99de9ad97a"
+    },
+    "src/components/contratos/DocumentoDetalhe.tsx": {
+      "commit": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+      "sha256": "4bc835e8a8411cec422dd7fd6c99acd4c843a9520dd879367e8a91ae8e539903"
+    },
+    "src/components/contratos/CompetenciasContrato.tsx": {
+      "commit": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+      "sha256": "2819e6b2a12b1252c74cb7df96ce944e4f7cbf483d65bbb7bebd221b01ff0c97"
+    },
+    "src/components/competencias/CompetenciaDocumentos.tsx": {
+      "commit": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+      "sha256": "ba43002c1aaae39ac028d548ba94d02847f84219e512e884098f38056c109744"
+    },
+    "src/components/contratos/ImportarHistorico.tsx": {
+      "commit": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+      "sha256": "deaf487102773b09dc850cbd26ce6905e3e3115b83eab43abf7fd67e106feb5b"
+    },
+    "src/lib/contratos/documentoDetalheDados.ts": {
+      "commit": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+      "sha256": "7839f616ac5503f67a092b57a47fd425548bef1353b3a9a9909d3fc80ab25489"
+    },
+    "src/lib/contratos/contratoDetalheDados.ts": {
+      "commit": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+      "sha256": "41120b15be5fb3abca7e293e6b82ef9e7c053785adec09168b8520a7efce1b79"
+    }
+  },
+  "relation_proof": {
+    "rows": 1,
+    "version_document_matches": true,
+    "version_file_matches": true,
+    "processing_version_matches": true,
+    "version_org_matches": true,
+    "version_contract_matches": true,
+    "processing_org_matches": true,
+    "processing_contract_matches": true,
+    "method": "SELECT exact IDs with joins and equality booleans; no Auth/user/correlation columns"
+  },
+  "get_contracts": [
+    {
+      "name": "contract_gate",
+      "method": "GET",
+      "path": "/rest/v1/contratos",
+      "query": {
+        "select": "id,id_organizacao,id_contratante,numero,objeto,situacao,criticidade,inicio,fim,tipo_contrato,unidade_vinculada,fonte_recurso,valor_global,valor_mensal_referencia,periodicidade,prazo_prestacao_dias,dia_limite_apresentacao,contratante:contratantes!contratos_contratante_org_fk(razao_social,nome_fantasia,documento)",
+        "id": "eq.be89ef7e-d839-46c0-9cfb-4da81edf8b74"
+      },
+      "shape": "object; maybeSingle",
+      "extract_only": [
+        "id",
+        "id_organizacao"
+      ],
+      "never_extract": [
+        "contratante",
+        "numero",
+        "objeto"
+      ]
+    },
+    {
+      "name": "upload",
+      "method": "GET",
+      "origin": "https://gklhhhyosgasnyoxlrui.supabase.co",
+      "path": "/rest/v1/configuracao_upload",
+      "query": {
+        "select": "extensoes_permitidas,mimes_permitidos,tamanho_maximo_bytes,limiar_upload_resumivel_bytes",
+        "id": "eq.true"
+      },
+      "shape": "object; maybeSingle",
+      "extract_only": [
+        "extensoes_permitidas",
+        "tamanho_maximo_bytes"
+      ],
+      "key_not_projected": "id; bound by query eq.true, not fabricated from response"
+    },
+    {
+      "name": "competencias_page0_no_filters",
+      "method": "GET",
+      "path": "/rest/v1/competencias",
+      "query": {
+        "select": "id,competencia_referencia,periodo_inicio,periodo_fim,data_limite,situacao,percentual_conformidade,versao_pacote_atual,atualizado_em",
+        "id_contrato": "eq.be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+        "order": "competencia_referencia.desc,id.desc",
+        "offset": "0",
+        "limit": "25"
+      },
+      "extract_only": [
+        "id",
+        "competencia_referencia",
+        "periodo_inicio",
+        "periodo_fim"
+      ],
+      "missing_columns_not_fabricated": [
+        "id_organizacao",
+        "id_contrato"
+      ]
+    },
+    {
+      "name": "document_gate",
+      "method": "GET",
+      "path": "/rest/v1/documentos_contrato",
+      "query": {
+        "select": "id,id_contrato,tipo,titulo,categoria,situacao,versao_atual,versao_registro,vigencia_inicio,vigencia_fim,observacoes,criado_em,atualizado_em",
+        "id": "eq.525e54fc-feec-4dc0-b540-1510a3c52485",
+        "id_contrato": "eq.be89ef7e-d839-46c0-9cfb-4da81edf8b74"
+      },
+      "shape": "object; maybeSingle",
+      "extract_only": [
+        "id",
+        "id_contrato"
+      ],
+      "missing_columns_not_fabricated": [
+        "id_organizacao"
+      ]
+    },
+    {
+      "name": "document_versions_page0",
+      "method": "GET",
+      "path": "/rest/v1/versoes_documento",
+      "query": {
+        "select": "id,id_documento_contrato,numero_versao,id_arquivo,hash,motivo_substituicao,metadados_extraidos,enviado_por,criado_em",
+        "id_documento_contrato": "eq.525e54fc-feec-4dc0-b540-1510a3c52485",
+        "order": "numero_versao.desc,id.desc",
+        "offset": "0",
+        "limit": "20"
+      },
+      "extract_only": [
+        "id",
+        "id_documento_contrato",
+        "id_arquivo",
+        "criado_em"
+      ],
+      "never_extract": [
+        "enviado_por",
+        "motivo_substituicao",
+        "metadados_extraidos"
+      ]
+    },
+    {
+      "name": "processing_page0",
+      "method": "GET",
+      "path": "/rest/v1/processamentos_documento",
+      "query": {
+        "select": "id,id_versao_documento,etapa,status,tentativas,erro_codigo,iniciado_em,concluido_em,criado_em,atualizado_em",
+        "id_versao_documento": "eq.2ea42a44-db27-4c4e-801f-9fc5227c2458",
+        "order": "criado_em.desc,id.desc",
+        "offset": "0",
+        "limit": "10"
+      },
+      "extract_only": [
+        "id",
+        "id_versao_documento",
+        "etapa",
+        "iniciado_em",
+        "concluido_em",
+        "criado_em"
+      ],
+      "never_extract": [
+        "erro_codigo"
+      ]
+    }
+  ],
+  "runtime_transport_constraints": {
+    "no_new_fetch": true,
+    "no_new_projection": true,
+    "query_parameter_order_irrelevant_duplicates_rejected": true,
+    "headers_not_read": true,
+    "nonapproved_fields_never_returned_from_browser_projection": true,
+    "origin_all_contracts": "https://gklhhhyosgasnyoxlrui.supabase.co",
+    "query_semantics": "URLSearchParams percent-decoded exact tuples, order keys irrelevant; select/order value order exact; no duplicates/extras",
+    "context_org": "Existing verified organization/session/contract gate plus SQL proof; never imputed to row missing organization projection",
+    "validity": "same native document/navigation generation, session/context/target, exact route; reset on navigation/session/org/route/target/logout/close/failure; no inheritance without current-generation observed GET"
+  },
+  "field_anchor_contract": {
+    "V111": "unique processing item535c4ad2; dates same paragraph; only exact started substring",
+    "V112": "unique competence59072760 rowheader11/2026; period cell only",
+    "V115": "unique Limite paragraph in document form with input#v115-arquivo; exact value only",
+    "V122": "unique Formatos aceitos paragraph in section1 before input#historico-arquivos; exact list only",
+    "occurrence_rule": "exactly once in correct field; duplicate or matching outside field rejected; preserve full remaining node/attributes/neighbors"
+  }
+}
