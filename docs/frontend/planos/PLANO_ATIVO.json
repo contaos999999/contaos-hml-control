@@ -1106,14 +1106,14 @@
     }
   },
   "trilha_a_auth_audit": {
-    "phase": "TESTEC_BLOQUEADO_LOGIN",
-    "state": "LOGIN_REJEITADO_CAUSA_AUTH_NAO_DISTINGUIDA",
+    "phase": "TESTE_C_AUTENTICADO_PARCIAL_CONCLUIDO",
+    "state": "24_PASS_160_PRIVACIDADE_24_FIXTURE_SEM_ABORTO",
     "plan_document": "docs/frontend/planos/P0_TRILHA_A_AUTENTICADA_PLAN_2026-11-08.md",
     "frontend_baseline": "1a24d36fd4a19a1fe70ccf9099aaa11a6d31ac5e",
     "backend_normative": "87c18599fc72d658dabcf1b07a534b42b08691fd",
     "deployment": "dpl_9iFUGXPcgXdBSmXa5C5EVcqt1XCX",
     "matrix_cases": 232,
-    "private_unproven": 208,
+    "private_unproven": 184,
     "brand_criteria": 72,
     "future_paths_only_after_separate_gate": [
       "scripts/hml/authenticated-visual-audit.mjs",
@@ -1133,7 +1133,7 @@
     "gate_document": "docs/frontend/planos/P0_TRILHA_A_AUTENTICADA_GATE_2026-11-08.md",
     "available_fixture_combinations": null,
     "blocked_fixture_combinations": 24,
-    "runtime_authenticated_harness": "LOGIN_REJECTED_NO_PRIVATE_CASES",
+    "runtime_authenticated_harness": "COMPLETED_PARTIAL_LOGOUT_VERIFIED",
     "candidate_fixture_combinations_maximum": 184,
     "gate_independent_review": "APROVAVEL;0Critical/Important após4ajustes,sem autorizarloginantesprovas",
     "gate_pr": 333,
@@ -1184,7 +1184,11 @@
       "test_c_run": 42486890236,
       "login_ui_observed": true,
       "login_ui_credential_rejected": true,
-      "report_sha256": "32c1b73bcd8f6ba7732d987ccbf4ff6dd936acd68cec5690d596f55bf1245aa4"
+      "report_sha256": "32c1b73bcd8f6ba7732d987ccbf4ff6dd936acd68cec5690d596f55bf1245aa4",
+      "phase": "TESTEC_BLOQUEADO_LOGIN",
+      "state": "LOGIN_REJEITADO_CAUSA_AUTH_NAO_DISTINGUIDA",
+      "runtime_authenticated_harness": "LOGIN_REJECTED_NO_PRIVATE_CASES",
+      "private_unproven": 208
     },
     "privacy_blocked_cases": 160,
     "fixture_blocked_cases": 24,
@@ -1249,6 +1253,7 @@
     "artifact_independent_review": "CONCLUIDA_ESCOPO_PARCIAL_24_PASS_24PNG_PRINCIPAIS_6_SUPLEMENTOS",
     "visual_issue": 350,
     "criteria72": "PENDENTE_REVISAO_INTEGRAL",
-    "axe_cases_with_incomplete": 18
+    "axe_cases_with_incomplete": 18,
+    "private_unproven": 184
   }
 }
