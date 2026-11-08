@@ -4148,3 +4148,162 @@ test("Run78 disabled legítimo dispensa só hit-test, mantendo geometria e clipp
     false,
   );
 });
+
+// GATE372 recovery: these are fresh tests, not receipts from the lost worktree.
+const privacy78ProofPath = new URL("../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_TECNICA_READONLY.json", import.meta.url);
+const privacy78Proof = JSON.parse(await (await import("node:fs/promises")).readFile(privacy78ProofPath, "utf8"));
+test("privacy78 fonte real e recibo preservam quatro rejeicoes sem contexto", async () => {
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  for (const [surface,count] of [["V111",1],["V112",1],["V115",2],["V122",3]])
+    assert.deepEqual(fn("classifyArtifactText")(privacy78Proof.generated_exact_values[surface][0],words), {reason:"UNKNOWN_WORDS",unknownCount:count});
+});
+test("privacy78 GET exato rejeita filtro select origem metodo duplicata e ausencia", () => {
+  const runtime=fn("privacy78Runtime")({proof:privacy78Proof});
+  for (const c of privacy78Proof.get_contracts) {
+    const url=API+c.path+"?"+new URLSearchParams(c.query);
+    assert.equal(runtime.match(url,"GET")?.name,c.name);
+    assert.equal(runtime.match(API+c.path+"?"+new URLSearchParams(Object.entries(c.query).reverse()),"GET")?.name,c.name);
+    for (const bad of [url+"&extra=1",url+"&select=x",url+"#x",url.replace(API,HML)])
+      assert.equal(runtime.match(bad,"GET"),null);
+    assert.equal(runtime.match(url,"POST"),null);
+    for (const key of Object.keys(c.query)) {
+      const bad=new URL(url); bad.searchParams.delete(key); assert.equal(runtime.match(bad.href,"GET"),null);
+      bad.searchParams.set(key,"foreign"); assert.equal(runtime.match(bad.href,"GET"),null);
+    }
+  }
+});
+test("privacy78 projecao fecha config pipeline FK shapes e nao le campos proibidos", () => {
+  const runtime=fn("privacy78Runtime")({proof:privacy78Proof});
+  const upload=privacy78Proof.get_contracts.find(c=>c.name==="upload");
+  const row={extensoes_permitidas:privacy78Proof.observed.upload.extensions,tamanho_maximo_bytes:524288000};
+  for(const key of ["user","headers","mimes_permitidos"])
+    Object.defineProperty(row,key,{get(){throw new Error("unselected field read");}});
+  assert.deepEqual(runtime.project(upload,row),{name:"upload",exact:true});
+  assert.equal(runtime.project(upload,[row]),null);
+  assert.equal(runtime.project(upload,{...row,tamanho_maximo_bytes:524288001}),null);
+  assert.equal(runtime.project(upload,{...row,extensoes_permitidas:[...privacy78Proof.observed.upload.extensions].reverse()}),null);
+  const c=privacy78Proof.context,p=privacy78Proof.observed.pipeline[0];
+  const process=privacy78Proof.get_contracts.find(r=>r.name==="processing_page0");
+  const v={id:c.processing,id_versao_documento:c.document_version,etapa:p.stage,iniciado_em:p.started,concluido_em:p.completed,criado_em:p.created};
+  assert.deepEqual(runtime.project(process,[v]),{name:"processing_page0",exact:true});
+  for(const bad of [null,[],{},v,[v,v],[{...v,id_versao_documento:c.document}],[{...v,iniciado_em:p.completed}],[{...v,etapa:"pages"}]])
+    assert.equal(runtime.project(process,bad),null);
+  const version=privacy78Proof.get_contracts.find(r=>r.name==="document_versions_page0");
+  const vr={id:c.document_version,id_documento_contrato:c.document,id_arquivo:c.file,criado_em:p.created};
+  for(const key of ["enviado_por","motivo_substituicao","metadados_extraidos"])
+    Object.defineProperty(vr,key,{get(){throw new Error("unselected version field read");}});
+  assert.deepEqual(runtime.project(version,[vr]),{name:"document_versions_page0",exact:true});
+});
+test("privacy78 recibo selado intervalo unico contexto e desconhecidos remanescentes",async()=>{
+  const proof=await fn("loadPrivacy78Proof")();
+  const words=await fn("literalWords")(new URL("../../",import.meta.url).pathname);
+  assert.ok(Object.isFrozen(proof.context));
+  for(const surface of ["V111","V112","V115","V122"]) {
+    const value=proof.generated_exact_values[surface][0];
+    const receipt=Object.freeze({route:fn("privateCases")().find(r=>r.surface===surface).path,observed:Object.freeze(proof.get_contracts.map(c=>c.name)),age:1});
+    const input={surface,proof,rendered:value,snapshot:value,fieldSnapshot:value,anchored:true,receipt};
+    const fieldContext=fn("privacy78FieldContext")(input);
+    assert.ok(fieldContext,surface);
+    assert.equal(fn("classifyArtifactText")(value,words,{fieldContext}).reason,"ALLOWED");
+    assert.equal(fn("classifyArtifactText")(value,words,{fieldContext:{}}).reason,"UNKNOWN_WORDS");
+    for(const bad of [{anchored:false},{surface:"SYS04"},{proof:privacy78Proof},{rendered:value+value},
+      {receipt:{...receipt}},{receipt:Object.freeze({...receipt,observed:Object.freeze([])})},
+      {receipt:Object.freeze({...receipt,age:120000})},{receipt:Object.freeze({...receipt,route:"/"})}])
+      assert.equal(fn("privacy78FieldContext")({...input,...bad}),null);
+    for(const extra of [" CANARIO_PRIVADO"," pessoa@example.com"," Bearer secret"," 123.456.789-00"]) {
+      const text=value+extra,ctx=fn("privacy78FieldContext")({...input,rendered:text,snapshot:text});
+      assert.notEqual(fn("classifyArtifactText")(text,words,{fieldContext:ctx}).reason,"ALLOWED");
+    }
+    const snapshot=value+" EXTRA_PRIVADO_A EXTRA_PRIVADO_B";
+    const ctx=fn("privacy78FieldContext")({...input,snapshot});
+    assert.deepEqual(fn("classifyArtifactText")(snapshot,words,{snapshot:true,fieldContext:ctx}),{reason:"UNKNOWN_WORDS",unknownCount:2});
+  }
+});
+function privacy78Fixtures(){
+  const c=privacy78Proof.context;
+  return {
+    V111:'<section aria-label="Processamento"><h2>Processamento</h2><ul><li><div><span>Etapa: documents</span></div><p>Registrado em 08/11/2026 02:41 · Iniciado em 08/11/2026 08:21 · Concluído em 08/11/2026 08:21</p></li></ul></section>',
+    V112:'<table><caption>Competências do contrato</caption><thead><tr><th scope="col">Competência</th><th scope="col">Período</th><th scope="col">Ações</th></tr></thead><tbody><tr><th scope="row">11/2026</th><td>01/11/2026 a 30/11/2026</td><td><a href="/competencias/'+c.competence+'" aria-label="Abrir competência 11/2026">Abrir</a></td></tr></tbody></table>',
+    V115:'<section aria-labelledby="v115-envio"><h2 id="v115-envio">Enviar documento</h2><div><label for="v115-arquivo">Arquivo</label><input id="v115-arquivo" type="file"><p>Limite: 500 MB</p></div></section>',
+    V122:'<section><h2>1. Selecionar relatórios anteriores</h2><p>Formatos aceitos: PDF, XLSX, CSV, DOCX, PNG, JPG, JPEG, WEBP, TXT, JSON, XML. O limite de tamanho e o tipo real são conferidos pelo backend.</p><label for="historico-arquivos">Arquivos históricos (seleção múltipla)</label><input id="historico-arquivos" type="file" multiple></section>'
+  };
+}
+function privacy78Browser(html=""){
+  const {JSDOM}=require("jsdom");
+  const dom=new JSDOM(html,{url:HML+"/contratos/"+privacy78Proof.context.contract+"/historico/importar",runScripts:"outside-only"});
+  const w=dom.window;
+  for(const key of ["Request","Response","TextDecoder","TextEncoder"]) w[key]=globalThis[key];
+  w.navigation=new w.EventTarget();
+  w.HTMLElement.prototype.getClientRects=function(){return this.closest("[hidden]")?[]:[{}];};
+  return {dom,w,run:(name,args)=>w.eval("("+fn(name).toString()+")")(args)};
+}
+test("privacy78 DOM source-shaped associa campo e rejeita label copia atributos e cards",()=>{
+  for(const [surface,html] of Object.entries(privacy78Fixtures())) {
+    const {dom,w,run}=privacy78Browser(html);
+    try{
+      const args={surface,proof:privacy78Proof}; const anchor=run("privacy78FieldAnchor",args); assert.ok(anchor,surface);
+      const heading=w.document.querySelector("h2,caption"),old=heading.textContent;
+      heading.textContent="Outro";assert.equal(run("privacy78FieldAnchor",args),null);heading.textContent=old;
+      const node=w.document.querySelectorAll(anchor.selector)[anchor.index];
+      node.setAttribute("aria-label","CANARIO_PRIVADO");assert.equal(run("privacy78FieldAnchor",args),null);node.removeAttribute("aria-label");
+      if(surface==="V122"){const label=w.document.querySelector("label");label.textContent="Arquivo";assert.equal(run("privacy78FieldAnchor",args),null);label.textContent="Arquivos históricos (seleção múltipla)";}
+      w.document.body.innerHTML+=html;assert.equal(run("privacy78FieldAnchor",args),null);
+      if(surface==="V112"){w.document.body.innerHTML="<div><h3>11/2026</h3><p>01/11/2026 a 30/11/2026</p></div>";assert.equal(run("privacy78FieldAnchor",args),null);}
+    }finally{dom.window.close();}
+  }
+});
+test("privacy78 observer preserva fetch args promise response rejeicao e ignora Auth",async()=>{
+  const {dom,w,run}=privacy78Browser();
+  try{
+    const c=privacy78Proof.get_contracts.find(r=>r.name==="upload");
+    const url=API+c.path+"?"+new URLSearchParams(c.query);
+    const response=new Response(JSON.stringify({extensoes_permitidas:privacy78Proof.observed.upload.extensions,tamanho_maximo_bytes:524288000,user:"CANARIO pessoa@example.com"}));
+    Object.defineProperty(response,"url",{value:url});
+    Object.defineProperty(response,"headers",{get(){throw new Error("headers read");}});
+    let next=Promise.resolve(response);const original=next,calls=[];
+    w.fetch=function(...args){calls.push({receiver:this,args});return next;};
+    run("privacy78Runtime",{proof:privacy78Proof,install:true});
+    const init={method:"GET"};Object.defineProperty(init,"headers",{get(){throw new Error("Auth read");}});
+    assert.equal(w.fetch.call(w,url,init),original);assert.equal(calls[0].receiver,w);assert.equal(calls[0].args[1],init);assert.equal(await original,response);
+    assert.equal(w.__contaosPrivacy78.read(),null);
+    await new Promise(r=>setTimeout(r,50));
+    assert.deepEqual([...w.__contaosPrivacy78.read().observed],["upload"]);
+    assert.equal(JSON.stringify(w.__contaosPrivacy78.read()).includes("CANARIO"),false);
+    const auth={get status(){throw new Error("Auth status read");},clone(){throw new Error("Auth clone");}};
+    next=Promise.resolve(auth);assert.equal(w.fetch(API+"/auth/v1/user"),next);await next;await new Promise(r=>setTimeout(r,0));
+    assert.deepEqual([...w.__contaosPrivacy78.read().observed],["upload"]);
+    assert.equal(w.fetch(url+"&extra=1"),next);assert.equal(w.__contaosPrivacy78.read(),null);
+    const rejected=Object.freeze({code:"closed"});next=Promise.reject(rejected);
+    assert.equal(w.fetch(url),next);await assert.rejects(next,e=>e===rejected);
+  }finally{dom.window.close();}
+});
+for(const event of ["pagehide","popstate","contaos:organizacao-alterada","visibilitychange","navigate"]) {
+  test("privacy78 geracao nao herda apos "+event,()=>{
+    const {dom,w,run}=privacy78Browser();
+    try{
+      w.fetch=()=>Promise.resolve(new Response("{}"));run("privacy78Runtime",{proof:privacy78Proof,install:true});assert.ok(w.__contaosPrivacy78.read());
+      (event==="visibilitychange"?w.document:event==="navigate"?w.navigation:w).dispatchEvent(new w.Event(event));
+      assert.equal(w.__contaosPrivacy78.read(),null);w.history.replaceState(null,"",w.location.href);assert.equal(w.__contaosPrivacy78.read(),null);
+    }finally{dom.window.close();}
+  });
+}
+test("privacy78 header sessao e deadline invalidam sem Auth",async()=>{
+  const {dom,w,run}=privacy78Browser('<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header>');
+  try{w.fetch=()=>Promise.resolve(new Response("{}"));run("privacy78Runtime",{proof:privacy78Proof,install:true});
+    assert.ok(w.__contaosPrivacy78.read());w.document.querySelector("header").textContent="Confirmando organização…";assert.equal(w.__contaosPrivacy78.read(),null);
+    w.document.querySelector("header").textContent="ContaOS HML Teste Situação: ativa";assert.equal(w.__contaosPrivacy78.read(),null);
+  }finally{dom.window.close();}
+  const b=privacy78Browser();
+  try{
+    const deadlines=[];b.w.setTimeout=cb=>{deadlines.push(cb);return deadlines.length;};b.w.clearTimeout=()=>{};
+    let finish;const native=new Promise(r=>{finish=r;});b.w.fetch=()=>native;b.run("privacy78Runtime",{proof:privacy78Proof,install:true});
+    const c=privacy78Proof.get_contracts.find(r=>r.name==="upload");
+    assert.equal(b.w.fetch(API+c.path+"?"+new URLSearchParams(c.query)),native);deadlines[0]();assert.equal(b.w.__contaosPrivacy78.read(),null);
+    finish({get status(){throw new Error("expired response read");}});await native;await new Promise(r=>setTimeout(r,0));assert.equal(b.w.__contaosPrivacy78.read(),null);
+  }finally{b.dom.window.close();}
+});
+test("privacy78 quatro hashes fonte correspondem ao recibo",async()=>{
+  const {readFile}=await import("node:fs/promises"),{createHash}=await import("node:crypto");
+  for(const path of ["src/components/contratos/DocumentoDetalhe.tsx","src/components/contratos/CompetenciasContrato.tsx","src/components/competencias/CompetenciaDocumentos.tsx","src/components/contratos/ImportarHistorico.tsx"])
+    assert.equal(createHash("sha256").update(await readFile(new URL("../../"+path,import.meta.url))).digest("hex"),privacy78Proof.source_sha256[path].sha256);
+});
