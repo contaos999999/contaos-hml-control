@@ -994,5 +994,93 @@
       "independent_visual": "112hashes/64conteudos únicos+48retornos iguais;24gerais comparados;semCritical/Important aoescopo",
       "contrast_aa": "NAO_CERTIFICADO;anelisolado2.63014combranco, avaliarindicadorcompleto"
     }
+  },
+  "checkpoint_harness_20261108": {
+    "recorded_at_utc": "2026-11-08T00:28:01.414523+00:00",
+    "frontend_main": "4df11597c0af8040a9ca34d576fb084485643207",
+    "backend_main": "42a737acdcdb17f3b0684e8daf82f042696eb9ea",
+    "backend_draft_pr": 139,
+    "backend_draft_head": "45d16f48ecda23e21784982b585a8ccf0c37830b",
+    "draft_tree": "6f8d978de19aa2d09e56799c7bf8e82f340fe4e8",
+    "routine_actions_authorized": true,
+    "v1_certified": false,
+    "v2_blocked": true,
+    "local_checks": {
+      "node_full_pass": 251,
+      "protocol_pass": 45,
+      "real_html_parser_fixtures": "PASS_RESTRICTED",
+      "real_import_fixtures": "PASS_RESTRICTED",
+      "runtime_green": "NOT_PROVEN"
+    },
+    "reviewed_restricted_fixes": [
+      "independent_own_job_quarantine_after_receipt_failure",
+      "sql_pass_only_after_all_integrity_checks",
+      "inert_html_entry_discovery_including_nomodule_rejection"
+    ],
+    "last_confirmed_ci": {
+      "head": "032441053c105385c34dd82016987b477faee5b8",
+      "guard": {
+        "job": 128575052975,
+        "state": "SUCCESS"
+      },
+      "restore": {
+        "job": 128575053031,
+        "state": "SUCCESS"
+      },
+      "backup": {
+        "job": 128575053326,
+        "state": "SUCCESS"
+      },
+      "public_probe": {
+        "job": 128575053261,
+        "state": "FAILURE"
+      }
+    },
+    "next": [
+      "Read live CI for draft139 and isolate any failure before changes",
+      "Prove effective loaded modules against inspected graph before credentials",
+      "Prevent transmission to unapproved destinations including redirects and popups",
+      "Independent final review and all required SUCCESS checks on same final HEAD",
+      "Integrate BUILD, deploy only two authorized HML Edges with JWT true, then governed five-file proof and cleanup"
+    ],
+    "evidence_comments": [
+      6714867574,
+      6715002135,
+      6715023887
+    ],
+    "limits": [
+      "No HML deployment or new material Auth/document fixture in this execution",
+      "Public probe failures occur before credentials; no runtime GREEN claimed",
+      "Separate published smoke plus four local receipts remain mandatory",
+      "Only hourly scheduled checks between executions; no continuous monitoring claim"
+    ],
+    "current_public_probe": {
+      "head": "45d16f48ecda23e21784982b585a8ccf0c37830b",
+      "run": 42429670320,
+      "job": 128575555940,
+      "state": "FAILURE",
+      "phase": "PROVE_CONFIGURED_CLIENT",
+      "artifact": 13596328940,
+      "sha256": "5a0c0fa364b558a24adf9a99ff6ee936540b38bb70970c0baab89fe224238efa",
+      "download_verified": true
+    },
+    "current_checks_observed": {
+      "guard": {
+        "job": 128575556384,
+        "state": "SUCCESS"
+      },
+      "restore": {
+        "job": 128575556448,
+        "state": "SUCCESS"
+      },
+      "backup": {
+        "job": 128575556577,
+        "state": "IN_PROGRESS"
+      }
+    },
+    "restricted_local_document_checks": {
+      "p0_version_and_visual_protocol": "43/43 PASS",
+      "diff_check": "PASS"
+    }
   }
 }
