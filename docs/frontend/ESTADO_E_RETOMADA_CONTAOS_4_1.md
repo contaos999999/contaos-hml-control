@@ -1,3 +1,31 @@
+## P0 Trilha A: fechamento184 em execução, sem encerramento por resultado parcial, 08/11/2026
+
+Titular reiterou prioridade absoluta: corrigir/testar/preservar provas e resolver184 pendentes automaticamente, sem autorizações repetidas. Execução continua. Última etapa integrada: PLAN352 mergea782e91cc952a2c524b4a3c2c535447c53571c69; GATE353 merge09b73e2846605757b0eaa3011965b046419f2321; BUILD354 mergeb25ee3f70b675f2fddf79a20d36528805bdc0b25, HEAD25a0535bed9b695971ad186b7f654afae6151813. CI42499437350ZeroDrift/42499437348protocolo+nativo7/42499437298LOCK SUCCESS e revisão independente semCritical/Important.105testes locais/CI,1165produto/42suítes,tsc/lint/formatoPASS. Nenhum produto/backend/PROD/secret/tipo/dependência alterado.
+
+Reancoragem viva adicional no GATE355: backend PR168 integrado6121798c961a91df8c8e9275966ff3b439766a55; quatro caminhos docs/testes,25/25blobs+catálogo100/97 iguais porcheckSnapshoterrors[], snapshot/ack atualizados juntos. Nenhuma alteração técnica de backend pela TrilhaA.
+
+Backend main avançou anteriormente por PR167 para9c35f6f62f295a628d2e8444a9e8da1dc0448411; freshness falhou corretamente na primeiraCI354. Comparação dos4caminhos alterados comprova25/25documentos e catálogo100/97idênticos, checkSnapshoterrors[], snapshot/ack reancorados juntos. Tipos8ea7750b75fd9d76b29c36ce7613392e3ab65e19 preservados.
+
+### Rodada imutável52 e limite real
+
+HMLREADYdpl_GjyC62aYx99MvMKCUstyznBExWm2 noSHAfrontend/harnessb25ee3f. Run42499666527/job128789450943, artefato13624629172: ZIP SHA25666900a53151f1b39ff12fc533bbaecfd24aafd3ffdb898c17a058e4ad9b86ef6; report SHA256e02d6e505648c7298d62f2188b5fd27b9a1413aed4ed6688ca3ba229e5943f5b.16/16arquivos do manifesto conferidos,10PNG/5snapshotsDOM-acessibilidade. Link https://github.com/contaos999999/contaos-hml-control/actions/runs/42499666527/artifacts/13624629172 .
+
+Cinco V102 PASS_AUTOMATIZADO parciais (1440claro/escuro,1280claro/escuro,768claro);32BLOQUEADO_PII;1BLOQUEADO_CDP_COMMAND emV102768escuro;146interrompidos;24fixtures V117/V119/V120. AbortoCDP_COMMAND/Fetch.getResponseBody, logoutfalse; semredirect/destinobloqueado/worker/popup. Não declarar nova rodada concluída nem somar5àcertificação. Revisão conferiu16hashes e duasimagens; flagsde navegação têm limitação descrita abaixo. Artefato preservado.
+
+Os24PASS do run42496235106 continuam historicamente válidos noSHA9b18e485/artefato13623288351 (ZIPbc2a8b74e1ba9ff008ed67ce0f398c47ce120924cf69b5210d62f8165291d2c6). BUILD354 osreferencia comoPRESERVADO_BASELINE duranteiteração, masfinallyabortoantesdeles aindarotula24como interrompidos no relatório52. Issoéfalhaderelatório,nãorevogação automática da prova original. Corrigirprioritariamente; semrecapturar24anteriores ou18públicos válidos.
+
+### Causas comprovadas e próxima ação executável
+
+Catálogo anterior recusava número do contrato/protocolo/hash/trechos sintéticos já provados nosDOMs versionados. BUILD354 reconhece apenas trechosexatos, sem liberar suas palavras genericamente, epadrõesCPF/e-mail/JWT continuamproibidos. Novosdiagnósticos contêm somenterazões/contadores, nãovalores. Falhasremanescentesjáreproduzidas emoutrosDOMs aprovados: rolesestruturaissearchbox/caption, rótulosRBACdirecaoaprovador/juridicoconformidade/prestacaocontas/rhdp, descrição sintética docontratante/contrato e datasdeatualização.
+
+Revisão identificou doisImportant concretos: navigationProbeaguardaURL/headerpersistente, semH1destino/networkidle/drain; próximoresizeprecedebarreira. Finallyperde24referênciasapósaborto. CausaexatadocorpoprotocoloCDP aindanãodemonstrada; nãorepetir getResponseBody nemaceitarcorpoausente. GATE355 fechaescopo+negativos/diagnósticofechado ecatálogodeproveniênciaantesdeBUILD. Próximo: CI/revisão/merge355, RED dos2Important ecatálogo, BUILD/GREEN/CI/revisão, TesteCprivadopendente, conferirartefatos econtinuaratéfechar184.
+
+V117/V119/V120 exigempreparaçãolegítimaseparada: fontes/lista/snapshot/requisito/protocolo reais sobRLS,semUUIDfalso/DMLouAPIinventada. Frontend materializasnapshotporcriar_competencia; analisardependênciasindividuaissomentequandocomprovadas. PR139nãopresumidobloqueador. Achado350/72critérios/revisãovisualintegral continuamobrigatórios. V1/TrilhaAglobal NO-GO. NenhumautorizaçãoPROD.
+
+Histórico preservado abaixo.
+
+---
+
 ## Trilha A P0: execução autenticada concluída sem aborto; evidência privada parcial, 08/11/2026
 
 Este é o checkpoint mais recente. Os bloqueios técnicos do executor foram corrigidos e a rodada terminou sem aborto, com logout confirmado. Isso NÃO certifica a Trilha A nem a V1. Frontend/harness auditado: `9b18e4857b03daa6ee09ad3382184480e2014728`; HML READY `dpl_C17iKEF5F7WJJrQdeUaw7UQmmkW3`. Run `42496235106`, job `128779085220`, artefato `13623288351`. As provas pertencem a esse SHA, não ao futuro merge documental deste checkpoint. Backend normativo `2d01d87654ce580f6f8fdd3446ea4aa78ac7752a`, 25 fontes e catálogo preservados.
