@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url";
 import {
   requestAllowed,
   singleRequestEventAllowed,
-  verifySingleRequest,
+  loadSingleRequestProof,
   HML_ORIGIN,
   API_ORIGIN,
   nativeProofValid,
@@ -3947,7 +3947,7 @@ export async function runCli(args = process.argv.slice(2)) {
   if (!Array.isArray(args) || args.length !== 1 || args[0] !== "--prepare-fixtures")
     err("PREPARER_CLI_USAGE");
   if (process.env.GITHUB_EVENT_NAME === "workflow_run")
-    await verifySingleRequest({ operation: "fixtures", publicOnly: true });
+    await loadSingleRequestProof({ operation: "fixtures", fresh:true });
   if (!preparerEventAllowed(process.env)) err("PREPARER_MAIN_ONLY");
   return runFixturePreparation();
 }
