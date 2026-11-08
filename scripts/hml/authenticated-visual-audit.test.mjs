@@ -5373,3 +5373,17 @@ test("solicitacao unica: barreira nativa de fork PR antecede checkout e token", 
     assert.equal(body.includes("Authorization"), false);
   }
 });
+
+test("solicitacao unica: protocolos independentes mantem HML serializado", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const groups = [];
+  for (const file of ["contaos-trilha-a-authenticated.yml", "contaos-trilha-a-fixtures.yml"]) {
+    const source = await readFile(new URL("../../.github/workflows/" + file, import.meta.url), "utf8");
+    const protocol = source.slice(source.indexOf("  protocol:"), source.indexOf("  private:"));
+    const privateJob = source.slice(source.indexOf("  private:"));
+    groups.push(protocol.match(/group: ([^\n]+)/)[1]);
+    assert.equal(privateJob.match(/group: ([^\n]+)/)[1], "trilha-a-authenticated-hml");
+    assert.match(privateJob, /cancel-in-progress: false/);
+  }
+  assert.notEqual(groups[0], groups[1]);
+});
