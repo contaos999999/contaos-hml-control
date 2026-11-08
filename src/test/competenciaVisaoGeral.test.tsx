@@ -100,7 +100,7 @@ function vg(
     portao: {
       liberado: o.liberado ?? false,
       total: 10,
-      avaliados: 6,
+      conformes_ou_na_validos: 6,
       pendentes: 4,
       nao_conformes: o.naoConformes ?? 0,
       inconclusivos: 1,
@@ -243,6 +243,22 @@ describe("V1-14 erros sanitizados", () => {
 });
 
 describe("V1-14 renderização do backend", () => {
+  it("regressão HML: aceita campo canônico conformes_ou_na_validos sem alterar autorização", async () => {
+    const dado = vg({ acoes: { apresentar: false } });
+    const parsed = parseVisaoGeral(dado);
+    expect(parsed?.portao.avaliados).toBe(6);
+    expect(parsed?.allowed_actions.apresentar).toBe(false);
+    m.rpc.mockResolvedValue(ok(dado));
+    montar();
+    await pronto();
+    expect(screen.getByText(/6 de 10 avaliados/)).toBeInTheDocument();
+    expect(acao("apresentar").textContent).toMatch(/Bloqueada pelo backend/);
+  });
+  it("rejeita portão sem contagem canônica e sem permissões", () => {
+    const dado = vg();
+    delete (dado.portao as Record<string, unknown>).conformes_ou_na_validos;
+    expect(parseVisaoGeral(dado)).toBeNull();
+  });
   it("renderiza status, percentual, 8 campos de bloqueio, portão e 4 ações", async () => {
     m.rpc.mockResolvedValue(ok(vg({ percentual: 40 })));
     montar();
