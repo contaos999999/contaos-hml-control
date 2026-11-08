@@ -972,16 +972,18 @@ async function cdpFixture({
       const result =
         command.method === "Target.getTargetInfo"
           ? { targetInfo: identity }
-          : command.method === "Fixture.echo"
-            ? { envelopeSession: command.sessionId ?? null }
-            : command.method === "Network.emulateNetworkConditionsByRule"
-              ? { ruleIds: ["deny-ws", "deny-wss"] }
-              : command.method === "Fetch.getResponseBody"
-                ? {
-                    body: Buffer.from("synthetic adulterated script").toString("base64"),
-                    base64Encoded: true,
-                  }
-                : {};
+          : command.method === "Page.getFrameTree"
+            ? { frameTree: { frame: { id: "main-frame", loaderId: "fixture-loader" } } }
+            : command.method === "Fixture.echo"
+              ? { envelopeSession: command.sessionId ?? null }
+              : command.method === "Network.emulateNetworkConditionsByRule"
+                ? { ruleIds: ["deny-ws", "deny-wss"] }
+                : command.method === "Fetch.getResponseBody"
+                  ? {
+                      body: Buffer.from("synthetic adulterated script").toString("base64"),
+                      base64Encoded: true,
+                    }
+                  : {};
       peer.send(JSON.stringify({ id: command.id, result }));
       if (command.method === "Target.autoAttachRelated" && !command.sessionId)
         peer.send(
@@ -1889,13 +1891,16 @@ test("CLI sem modo explícito não pode encerrar com sucesso silencioso", async 
   assert.equal(code, 1);
 });
 
-test("prova nativa exige sete casos reais no mesmo SHA e mesmos arquivos", () => {
+test("prova nativa exige oito casos reais no mesmo SHA e mesmos arquivos", () => {
   const make = fn("nativeProofFromTap"),
     valid = fn("nativeProofValid"),
     identity = { harnessSha: "a".repeat(40), moduleHash: "b".repeat(64), testHash: "c".repeat(64) };
-  const proof = make("# tests 7\n# pass 7\n# fail 0\n# skipped 0\n", identity);
+  const proof = make("# tests 8\n# pass 8\n# fail 0\n# skipped 0\n", identity);
   assert.equal(valid(proof, identity), true);
   for (const tap of [
+    "# tests 7\n# pass 7\n# fail 0\n# skipped 0\n",
+    "# tests 9\n# pass 9\n# fail 0\n# skipped 0\n",
+    "# tests 8\n# tests 8\n# pass 8\n# fail 0\n# skipped 0\n",
     "# tests 7\n# pass 6\n# fail 1\n# skipped 0\n",
     "# tests 7\n# pass 6\n# fail 0\n# skipped 1\n",
     "",
@@ -2110,7 +2115,7 @@ test("bloqueio pré-login preserva atestado válido e hashes sem gravar campo es
     crypto = await import("node:crypto");
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "contaos-blocked-proof-")),
     identity = { harnessSha: "a".repeat(40), moduleHash: "b".repeat(64), testHash: "c".repeat(64) },
-    native = sut.nativeProofFromTap("# tests 7\n# pass 7\n# fail 0\n# skipped 0\n", identity);
+    native = sut.nativeProofFromTap("# tests 8\n# pass 8\n# fail 0\n# skipped 0\n", identity);
   try {
     await write(
       {
@@ -2308,8 +2313,13 @@ test(
     const { chromium } = await import("playwright");
     let browser, context, fence, proxy;
     const traffic = { connections: 0, bytes: 0, requests: 0 };
-    const canary = createHttpServer((_req, res) => {
+    const canary = createHttpServer((req, res) => {
       traffic.requests++;
+      if (req.url === "/cors-ok") {
+        res.setHeader("access-control-allow-origin", `http://127.0.0.1:${source.address().port}`);
+        res.setHeader("access-control-allow-methods", "POST");
+        res.setHeader("access-control-allow-headers", "x-native-fixture");
+      }
       res.end("canary");
     });
     canary.on("connection", (socket) => {
@@ -2319,7 +2329,12 @@ test(
       });
     });
     const html = '<!doctype html><title>native cancellation</title><link rel="icon" href="data:,">';
-    const source = createHttpServer((_req, res) => {
+    const source = createHttpServer((req, res) => {
+        if (req.url === "/altered.js") {
+          res.setHeader("content-type", "application/javascript");
+          res.end(`fetch('http://127.0.0.1:${canary.address().port}/leak')`);
+          return;
+        }
         res.setHeader("content-type", "text/html");
         res.end(html);
       }),
@@ -2375,9 +2390,13 @@ test(
         debugPort: proxy.port,
         identity: targetInfo,
         policy: (r) =>
-          r.method === "GET" && (r.url.startsWith(origin + "/") || r.url === canceledUrl),
+          (r.method === "GET" && (r.url.startsWith(origin + "/") || r.url === canceledUrl)) ||
+          (["OPTIONS", "POST"].includes(r.method) &&
+            r.url === canceledUrl.replace("/canceled", "/cors-ok")),
         verifyResponse: async ({ resourceType, status, body }) =>
-          status === 200 && (resourceType !== "Document" || body.equals(Buffer.from(html))),
+          resourceType !== "Script" &&
+          status === 200 &&
+          (resourceType !== "Document" || body.equals(Buffer.from(html))),
         closeContext: () => context.close(),
       });
       await page.evaluate((url) => {
@@ -2417,6 +2436,34 @@ test(
       );
       assert.equal(fence.snapshot().canceledInitialRequests, 1);
       assert.equal(await page.evaluate(() => document.title), "native cancellation");
+      await page.evaluate(
+        async (url) => {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { "x-native-fixture": "synthetic" },
+            body: "synthetic",
+          });
+          if (!response.ok) throw Error("ordinary CORS request failed");
+        },
+        canceledUrl.replace("/canceled", "/cors-ok"),
+      );
+      await fence.drain();
+      assert.equal(fence.snapshot().failed, false, "ordinary preflight and response remain usable");
+      assert.ok(
+        traffic.requests >= 2 && traffic.bytes > 0,
+        "ordinary allowed CORS traffic is measured",
+      );
+      canary.closeIdleConnections();
+      Object.assign(traffic, { connections: 0, bytes: 0, requests: 0 });
+      await page.addScriptTag({ url: origin + "/altered.js" }).catch(() => {});
+      await fence.drain();
+      assert.equal(fence.snapshot().failed, true);
+      assert.equal(fence.snapshot().failureCode, "FENCE_SOURCE");
+      assert.deepEqual(
+        traffic,
+        { connections: 0, bytes: 0, requests: 0 },
+        "altered response stays blocked after benign cancellation",
+      );
     } finally {
       fence?.close();
       await browser?.close();
@@ -2514,8 +2561,18 @@ test("cancelamento recusa falta de terminal, ack, resposta e nova geração", as
   for (const condition of ["missing", "ack", "response", "generation", "closed"]) {
     const f = lifecycleInput();
     if (condition === "ack") f.tracker.acknowledge(f.ticket);
-    if (condition === "response") f.tracker.observe(f.session, "Network.responseReceived", {requestId:"network-1", type:"Fetch"});
-    if (condition === "generation") f.tracker.observe(f.session, "Network.requestWillBeSent", {...f.network,requestId:"next-document",loaderId:"loader-2",type:"Document"});
+    if (condition === "response")
+      f.tracker.observe(f.session, "Network.responseReceived", {
+        requestId: "network-1",
+        type: "Fetch",
+      });
+    if (condition === "generation")
+      f.tracker.observe(f.session, "Network.requestWillBeSent", {
+        ...f.network,
+        requestId: "next-document",
+        loaderId: "loader-2",
+        type: "Document",
+      });
     if (condition !== "missing") f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
     if (condition === "closed") f.tracker.close();
     const running = f.tracker.handleCanceled(f.ticket, f.error);
@@ -2575,4 +2632,42 @@ test("ciclo tem mapas limitados e limpa pendências ao fechar", async () => {
   f.tracker.close();
   assert.equal(await waiting, false);
   assert.equal(f.tracker.snapshot().active, 0);
+});
+
+test("ciclo aguarda evento terminal tardio exato sem repetir continuação", async () => {
+  const f = lifecycleInput();
+  const running = f.tracker.handleCanceled(f.ticket, f.error);
+  await new Promise((resolve) => setImmediate(resolve));
+  f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+  assert.equal(await running, true);
+  assert.equal(f.tracker.snapshot().canceled, 1);
+  f.tracker.close();
+});
+test("ciclo não aceita política ou proveniência como cancelamento", async () => {
+  for (const code of ["FENCE_REQUEST", "FENCE_SOURCE", "FENCE_TRANSPORT"]) {
+    const f = lifecycleInput();
+    f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+    assert.equal(await f.tracker.handleCanceled(f.ticket, { ...f.error, code }), false);
+    f.tracker.close();
+  }
+});
+test("tombstones sobrevivem à conclusão e têm teto fechado", () => {
+  const f = lifecycleInput();
+  f.tracker.observe(f.session, "Network.loadingFinished", { requestId: "network-1" });
+  f.tracker.finish(f.ticket);
+  assert.equal(f.tracker.snapshot().active, 0);
+  assert.throws(() => f.tracker.observe(f.session, "Network.requestWillBeSent", f.network));
+  for (let n = 1; n < 65536; n++) {
+    const requestId = "retired-" + n;
+    f.tracker.observe(f.session, "Network.requestWillBeSent", { ...f.network, requestId });
+    f.tracker.observe(f.session, "Network.loadingFinished", { requestId });
+  }
+  assert.equal(f.tracker.snapshot().active, 0);
+  assert.throws(() =>
+    f.tracker.observe(f.session, "Network.requestWillBeSent", {
+      ...f.network,
+      requestId: "overflow",
+    }),
+  );
+  f.tracker.close();
 });
