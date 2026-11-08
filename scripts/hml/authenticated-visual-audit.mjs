@@ -560,6 +560,27 @@ export function classifyCdpError(error) {
 
 // Request identity is kept only in memory. Cancellation never authorizes a
 // response: it can only retire one initial continuation that Chromium rejected.
+const CDP_RESOURCE_TYPES = new Set([
+  "Document",
+  "Stylesheet",
+  "Image",
+  "Media",
+  "Font",
+  "Script",
+  "TextTrack",
+  "XHR",
+  "Fetch",
+  "Prefetch",
+  "EventSource",
+  "WebSocket",
+  "Manifest",
+  "SignedExchange",
+  "Ping",
+  "CSPViolationReport",
+  "Preflight",
+  "Other",
+]);
+
 export function createRequestLifecycle(identity) {
   const frames = new Map(),
     requests = new Map(),
@@ -604,6 +625,7 @@ export function createRequestLifecycle(identity) {
       !ticket.finished &&
       record?.eligible === true &&
       !record.cancellationConsumed &&
+      (ticket.equalTypes || record.method === "GET") &&
       !record.responseSeen &&
       frame?.id === record.frameId &&
       frame?.loaderId === record.loaderId &&
@@ -706,7 +728,15 @@ export function createRequestLifecycle(identity) {
       if (!record) fail("FENCE_LIFECYCLE_NO_NETWORK");
       if (record.terminal) fail("FENCE_LIFECYCLE_TERMINAL");
       if (record.frameId !== event.frameId) fail("FENCE_LIFECYCLE_FRAME");
-      if (record.type !== event.resourceType) fail("FENCE_LIFECYCLE_TYPE");
+      const equalTypes = record.type === event.resourceType;
+      if (
+        !CDP_RESOURCE_TYPES.has(record.type) ||
+        !CDP_RESOURCE_TYPES.has(event.resourceType) ||
+        (!equalTypes && !(record.type === "Fetch" && event.resourceType === "XHR")) ||
+        (record.fetchResourceType !== undefined && record.fetchResourceType !== event.resourceType)
+      )
+        fail("FENCE_LIFECYCLE_TYPE");
+      record.fetchResourceType = event.resourceType;
       if (
         !id(event.requestId) ||
         record.url !== event.request?.url ||
@@ -735,6 +765,7 @@ export function createRequestLifecycle(identity) {
       if (response) record.responseSeen = true;
       const ticket = {
         record,
+        equalTypes,
         sessionId: session.id,
         stage: response ? "RESPONSE" : "REQUEST",
         sent: false,
@@ -2047,32 +2078,16 @@ export function nativeCancellationFailure(tap) {
 }
 export function nativeCancellationTypes(tap) {
   if (typeof tap !== "string" || tap.length > 1048576) return null;
-  const types = new Set([
-    "Document",
-    "Stylesheet",
-    "Image",
-    "Media",
-    "Font",
-    "Script",
-    "TextTrack",
-    "XHR",
-    "Fetch",
-    "Prefetch",
-    "EventSource",
-    "WebSocket",
-    "Manifest",
-    "SignedExchange",
-    "Ping",
-    "CSPViolationReport",
-    "Preflight",
-    "Other",
-    "UNKNOWN",
-  ]);
   const pairs = tap
     .split("\n")
     .map((line) => /^# NATIVE_CANCEL_TYPES ([A-Za-z]+) ([A-Za-z]+)$/.exec(line.trim()))
     .filter(Boolean);
-  if (pairs.length !== 1 || !types.has(pairs[0][1]) || !types.has(pairs[0][2])) return null;
+  if (
+    pairs.length !== 1 ||
+    !CDP_RESOURCE_TYPES.has(pairs[0][1]) ||
+    !CDP_RESOURCE_TYPES.has(pairs[0][2])
+  )
+    return null;
   return { network: pairs[0][1], fetch: pairs[0][2] };
 }
 async function nativeGuard() {
