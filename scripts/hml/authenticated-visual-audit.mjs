@@ -603,6 +603,7 @@ export function createRequestLifecycle(identity) {
       !ticket.consumed &&
       !ticket.finished &&
       record?.eligible === true &&
+      !record.cancellationConsumed &&
       !record.responseSeen &&
       frame?.id === record.frameId &&
       frame?.loaderId === record.loaderId &&
@@ -716,6 +717,10 @@ export function createRequestLifecycle(identity) {
         previous = fetches.get(fetchKey);
       const response =
         event.responseStatusCode !== undefined || event.responseErrorReason !== undefined;
+      if (!response) {
+        if (record.initialFetchId !== undefined) fail("FENCE_REQUEST_LIFECYCLE");
+        record.initialFetchId = event.requestId;
+      }
       if (
         previous
           ? !response ||
@@ -784,6 +789,7 @@ export function createRequestLifecycle(identity) {
       )
         return false;
       ticket.consumed = true;
+      record.cancellationConsumed = true;
       canceled++;
       return true;
     },
