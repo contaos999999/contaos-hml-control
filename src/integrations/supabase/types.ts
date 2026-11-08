@@ -2788,11 +2788,14 @@ export type Database = {
           id: string
           id_contrato: string
           id_organizacao: string
+          observacoes: string | null
           situacao: string
           tipo: string
           titulo: string
           versao_atual: number
           versao_registro: number
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
         }
         Insert: {
           atualizado_em?: string
@@ -2801,11 +2804,14 @@ export type Database = {
           id?: string
           id_contrato: string
           id_organizacao: string
+          observacoes?: string | null
           situacao?: string
           tipo: string
           titulo: string
           versao_atual?: number
           versao_registro?: number
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Update: {
           atualizado_em?: string
@@ -2814,11 +2820,14 @@ export type Database = {
           id?: string
           id_contrato?: string
           id_organizacao?: string
+          observacoes?: string | null
           situacao?: string
           tipo?: string
           titulo?: string
           versao_atual?: number
           versao_registro?: number
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Relationships: [
           {
@@ -4513,11 +4522,16 @@ export type Database = {
           id_versao_proposta: string
           limite_remanejamento_percentual: number | null
           metadados: Json
+          observacoes: string | null
+          permite_remanejamento: boolean
           quantidade: number
           rubrica: string | null
           subrubrica: string | null
+          valor_anual_previsto: number | null
+          valor_mensal_previsto: number | null
           valor_total: number
           valor_unitario: number
+          versao_registro: number
         }
         Insert: {
           codigo: string
@@ -4530,11 +4544,16 @@ export type Database = {
           id_versao_proposta: string
           limite_remanejamento_percentual?: number | null
           metadados?: Json
+          observacoes?: string | null
+          permite_remanejamento?: boolean
           quantidade?: number
           rubrica?: string | null
           subrubrica?: string | null
+          valor_anual_previsto?: number | null
+          valor_mensal_previsto?: number | null
           valor_total?: number
           valor_unitario?: number
+          versao_registro?: number
         }
         Update: {
           codigo?: string
@@ -4547,11 +4566,16 @@ export type Database = {
           id_versao_proposta?: string
           limite_remanejamento_percentual?: number | null
           metadados?: Json
+          observacoes?: string | null
+          permite_remanejamento?: boolean
           quantidade?: number
           rubrica?: string | null
           subrubrica?: string | null
+          valor_anual_previsto?: number | null
+          valor_mensal_previsto?: number | null
           valor_total?: number
           valor_unitario?: number
+          versao_registro?: number
         }
         Relationships: [
           {
@@ -6437,6 +6461,8 @@ export type Database = {
           situacao: string
           tipo: string
           versao_registro: number
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
         }
         Insert: {
           atualizado_em?: string
@@ -6452,6 +6478,8 @@ export type Database = {
           situacao?: string
           tipo?: string
           versao_registro?: number
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Update: {
           atualizado_em?: string
@@ -6467,6 +6495,8 @@ export type Database = {
           situacao?: string
           tipo?: string
           versao_registro?: number
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Relationships: [
           {
@@ -7437,6 +7467,8 @@ export type Database = {
           status: string
           tipo: string
           trecho_fonte: string | null
+          vigencia_fim: string | null
+          vigencia_inicio: string | null
         }
         Insert: {
           categoria_sugerida?: string | null
@@ -7455,6 +7487,8 @@ export type Database = {
           status?: string
           tipo: string
           trecho_fonte?: string | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Update: {
           categoria_sugerida?: string | null
@@ -7473,6 +7507,8 @@ export type Database = {
           status?: string
           tipo?: string
           trecho_fonte?: string | null
+          vigencia_fim?: string | null
+          vigencia_inicio?: string | null
         }
         Relationships: [
           {
@@ -8344,6 +8380,7 @@ export type Database = {
           criado_em: string
           hash: string
           id: string
+          id_arquivo_origem: string | null
           id_contrato: string
           id_organizacao: string
           id_proposta: string
@@ -8359,6 +8396,7 @@ export type Database = {
           criado_em?: string
           hash: string
           id?: string
+          id_arquivo_origem?: string | null
           id_contrato: string
           id_organizacao: string
           id_proposta: string
@@ -8374,6 +8412,7 @@ export type Database = {
           criado_em?: string
           hash?: string
           id?: string
+          id_arquivo_origem?: string | null
           id_contrato?: string
           id_organizacao?: string
           id_proposta?: string
@@ -8390,6 +8429,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "contratos"
             referencedColumns: ["id", "id_organizacao"]
+          },
+          {
+            foreignKeyName: "versoes_proposta_id_arquivo_origem_fkey"
+            columns: ["id_arquivo_origem"]
+            isOneToOne: false
+            referencedRelation: "arquivos"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "versoes_proposta_id_contrato_fkey"
@@ -8658,7 +8704,46 @@ export type Database = {
         Args: { p_id_arquivo: string; p_id_documento: string; p_motivo: string }
         Returns: string
       }
+      adicionar_versao_documento_competencia_v115: {
+        Args: {
+          p_chave_idempotencia: string
+          p_id_arquivo: string
+          p_id_documento: string
+          p_motivo: string
+        }
+        Returns: Json
+      }
+      adicionar_versao_documento_contrato: {
+        Args: {
+          p_chave_idempotencia: string
+          p_id_arquivo: string
+          p_id_documento: string
+          p_motivo: string
+        }
+        Returns: Json
+      }
       agora_brasilia: { Args: never; Returns: string }
+      alterar_situacao_contrato_v1: {
+        Args: {
+          p_id_contrato: string
+          p_id_organizacao: string
+          p_motivo: string
+          p_request_id: string
+          p_situacao: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
+      alterar_situacao_organizacao_v1: {
+        Args: {
+          p_id_organizacao: string
+          p_motivo: string
+          p_request_id: string
+          p_situacao: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
       api_autenticar_cliente: {
         Args: { p_escopo: string; p_identificador: string; p_secret: string }
         Returns: Json
@@ -8700,6 +8785,16 @@ export type Database = {
         Args: { p_id_regra_preventiva: string; p_parecer?: string }
         Returns: string
       }
+      aprovar_versao_fonte_v107: {
+        Args: {
+          p_chave_idempotencia: string
+          p_fundamento: string
+          p_hash_esperado: string
+          p_id_organizacao: string
+          p_id_versao: string
+        }
+        Returns: Json
+      }
       atribuir_alerta_preventivo: {
         Args: { p_id_alerta: string; p_prazo?: string; p_responsavel: string }
         Returns: string
@@ -8714,6 +8809,35 @@ export type Database = {
           p_razao_social: string
           p_situacao: string
           p_tipo_pessoa: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
+      atualizar_contrato_v1: {
+        Args: {
+          p_alteracoes: Json
+          p_id_contrato: string
+          p_id_organizacao: string
+          p_motivo: string
+          p_request_id: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
+      atualizar_matriz_rbac_master: {
+        Args: {
+          p_alteracoes: Json
+          p_request_id: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
+      atualizar_organizacao_v1: {
+        Args: {
+          p_alteracoes: Json
+          p_id_organizacao: string
+          p_motivo: string
+          p_request_id: string
           p_versao_esperada: number
         }
         Returns: Json
@@ -8760,6 +8884,10 @@ export type Database = {
         }
         Returns: string
       }
+      consultar_permissoes_efetivas: {
+        Args: { p_id_contrato?: string; p_id_organizacao: string }
+        Returns: Json
+      }
       criar_acesso_temporario_pacote: {
         Args: {
           p_descricao_destinatario?: string
@@ -8803,6 +8931,43 @@ export type Database = {
         }
         Returns: string
       }
+      criar_documento_competencia_v115: {
+        Args: {
+          p_categoria: string
+          p_chave_idempotencia: string
+          p_id_arquivo: string
+          p_id_competencia: string
+          p_id_requisito: string
+          p_tipo: string
+          p_titulo: string
+        }
+        Returns: Json
+      }
+      criar_documento_contrato: {
+        Args: {
+          p_categoria: string
+          p_chave_idempotencia: string
+          p_id_arquivo: string
+          p_id_contrato: string
+          p_tipo: string
+          p_titulo: string
+        }
+        Returns: Json
+      }
+      criar_documento_contrato_completo: {
+        Args: {
+          p_categoria: string
+          p_chave_idempotencia: string
+          p_id_arquivo: string
+          p_id_contrato: string
+          p_observacoes: string
+          p_tipo: string
+          p_titulo: string
+          p_vigencia_fim: string
+          p_vigencia_inicio: string
+        }
+        Returns: Json
+      }
       criar_organizacao: {
         Args: {
           p_cnpj?: string
@@ -8839,6 +9004,26 @@ export type Database = {
         }
         Returns: undefined
       }
+      definir_aplicabilidade_fonte_v107: {
+        Args: {
+          p_aplicavel: boolean
+          p_atualizado_em_esperado: string
+          p_chave_idempotencia: string
+          p_fundamento: string
+          p_id_contrato: string
+          p_id_organizacao: string
+          p_id_versao: string
+        }
+        Returns: Json
+      }
+      definir_vigencia_sugestao_extracao: {
+        Args: {
+          p_id_sugestao: string
+          p_vigencia_fim: string
+          p_vigencia_inicio: string
+        }
+        Returns: Json
+      }
       definir_vinculo_usuario: {
         Args: {
           p_ativo?: boolean
@@ -8863,9 +9048,26 @@ export type Database = {
         }
         Returns: string
       }
+      enfileirar_ingestao_historica_hml: {
+        Args: { p_id_relatorio: string; p_id_versao_documento: string }
+        Returns: string
+      }
       enfileirar_processamento_documento: {
         Args: { p_chave_idempotencia?: string; p_id_versao_documento: string }
         Returns: string
+      }
+      executar_comando_lista_v1: {
+        Args: {
+          p_acao: string
+          p_id_contrato: string
+          p_id_lista: string
+          p_id_organizacao: string
+          p_motivo: string
+          p_payload: Json
+          p_request_id: string
+          p_versao_esperada: number
+        }
+        Returns: Json
       }
       formatar_data_br: { Args: { p_data: string }; Returns: string }
       formatar_data_hora_br: { Args: { p_data_hora: string }; Returns: string }
@@ -8932,6 +9134,66 @@ export type Database = {
         Args: { p_pagina?: number; p_tamanho?: number }
         Returns: Json
       }
+      obter_analise_competencia_v116: {
+        Args: {
+          p_apontamentos_limite?: number
+          p_apontamentos_offset?: number
+          p_busca?: string
+          p_execucoes_limite?: number
+          p_execucoes_offset?: number
+          p_filtro_apontamento_status?: string
+          p_filtro_criticidade?: string
+          p_filtro_mecanismo?: string
+          p_filtro_resultado?: string
+          p_id_competencia: string
+          p_resultados_limite?: number
+          p_resultados_offset?: number
+        }
+        Returns: Json
+      }
+      obter_cadastro_operacional_v1: {
+        Args: { p_entidade: string; p_id: string; p_id_organizacao: string }
+        Returns: Json
+      }
+      obter_contexto_revisao_v117: {
+        Args: { p_id_competencia: string; p_id_requisito: string }
+        Returns: Json
+      }
+      obter_detalhe_requisito_v117: {
+        Args: {
+          p_apontamentos_limite?: number
+          p_apontamentos_offset?: number
+          p_evidencias_limite?: number
+          p_evidencias_offset?: number
+          p_historico_limite?: number
+          p_historico_offset?: number
+          p_id_competencia: string
+          p_id_requisito: string
+        }
+        Returns: Json
+      }
+      obter_documentos_competencia_v115: {
+        Args: {
+          p_documentos_limite?: number
+          p_documentos_offset?: number
+          p_id_competencia: string
+          p_requisitos_limite?: number
+          p_requisitos_offset?: number
+        }
+        Returns: Json
+      }
+      obter_lista_operacional_v1: {
+        Args: {
+          p_id_contrato: string
+          p_id_lista?: string
+          p_id_organizacao: string
+          p_id_versao?: string
+          p_pagina_itens?: number
+          p_pagina_versoes?: number
+        }
+        Returns: Json
+      }
+      obter_matriz_rbac_master: { Args: never; Returns: Json }
       obter_mensagem_sistema: { Args: { p_codigo: string }; Returns: Json }
       obter_resumo_dashboard: {
         Args: { p_id_organizacao: string }
@@ -8940,6 +9202,14 @@ export type Database = {
       obter_saude_operacional: {
         Args: { p_id_organizacao: string }
         Returns: Json
+      }
+      obter_visao_geral_competencia: {
+        Args: { p_id_competencia: string }
+        Returns: Json
+      }
+      pode_consultar_auditoria_organizacao: {
+        Args: { p_id_organizacao: string }
+        Returns: boolean
       }
       promover_precedente_para_regra: {
         Args: {
@@ -8991,6 +9261,16 @@ export type Database = {
           p_vigencia_inicio: string
         }
         Returns: string
+      }
+      publicar_versao_proposta_v108: {
+        Args: {
+          p_chave_idempotencia: string
+          p_fundamento: string
+          p_hash_esperado: string
+          p_id_organizacao: string
+          p_id_versao: string
+        }
+        Returns: Json
       }
       recalcular_inteligencia_historica: {
         Args: { p_id_contratante: string }
@@ -9049,6 +9329,10 @@ export type Database = {
         }
         Returns: string
       }
+      registrar_relatorio_historico_hml: {
+        Args: { p_competencia: string; p_id_arquivo: string; p_tipo?: string }
+        Returns: string
+      }
       registrar_resultado_requisito: {
         Args: {
           p_evidencias?: Json
@@ -9059,6 +9343,55 @@ export type Database = {
           p_resultado: string
         }
         Returns: string
+      }
+      registrar_revisao_requisito_v117: {
+        Args: {
+          p_evidencias: Json
+          p_fundamento: string
+          p_hash_esperado: string
+          p_id_competencia: string
+          p_id_execucao_esperada: string
+          p_id_requisito: string
+          p_id_resultado_esperado: string
+          p_justificativa: string
+          p_request_id: string
+          p_resultado: string
+        }
+        Returns: Json
+      }
+      registrar_versao_fonte_v107: {
+        Args: {
+          p_chave_idempotencia: string
+          p_conteudo_texto: string
+          p_fim_vigencia: string
+          p_id_arquivo: string
+          p_id_fonte: string
+          p_id_organizacao: string
+          p_inicio_vigencia: string
+          p_metadados: Json
+        }
+        Returns: Json
+      }
+      registrar_versao_proposta_v108: {
+        Args: {
+          p_chave_idempotencia: string
+          p_id_arquivo_origem: string
+          p_id_organizacao: string
+          p_id_proposta: string
+          p_vigencia_fim: string
+          p_vigencia_inicio: string
+        }
+        Returns: Json
+      }
+      remover_linha_orcamentaria_v108: {
+        Args: {
+          p_chave_idempotencia: string
+          p_id_linha: string
+          p_id_organizacao: string
+          p_id_versao_proposta: string
+          p_versao_esperada: number
+        }
+        Returns: Json
       }
       revisar_solucao_tarefa_diligencia: {
         Args: { p_aprovar: boolean; p_fundamento: string; p_id_tarefa: string }
@@ -9080,6 +9413,52 @@ export type Database = {
       }
       rotacionar_cliente_api: { Args: { p_id_cliente: string }; Returns: Json }
       rotacionar_webhook: { Args: { p_id_webhook: string }; Returns: Json }
+      salvar_fonte_normativa_v107: {
+        Args: {
+          p_chave_idempotencia: string
+          p_descricao: string
+          p_id_contrato: string
+          p_id_fonte: string
+          p_id_organizacao: string
+          p_referencia: string
+          p_situacao: string
+          p_tipo: string
+          p_titulo: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
+      salvar_linha_orcamentaria_v108: {
+        Args: {
+          p_chave_idempotencia: string
+          p_codigo: string
+          p_descricao: string
+          p_grupo: string
+          p_id_linha: string
+          p_id_organizacao: string
+          p_id_versao_proposta: string
+          p_limite_remanejamento_percentual: number
+          p_observacoes: string
+          p_permite_remanejamento: boolean
+          p_rubrica: string
+          p_subrubrica: string
+          p_valor_anual: number
+          p_valor_mensal: number
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
+      salvar_proposta_orcamentaria_v108: {
+        Args: {
+          p_chave_idempotencia: string
+          p_id_contrato: string
+          p_id_organizacao: string
+          p_id_proposta: string
+          p_titulo: string
+          p_versao_esperada: number
+        }
+        Returns: Json
+      }
       salvar_vinculo_usuario_adm: {
         Args: {
           p_ativo: boolean
@@ -9162,6 +9541,15 @@ export type Database = {
           p_id_versao_fonte: string
         }
         Returns: string
+      }
+      vincular_tratamento_historico_hml: {
+        Args: {
+          p_desfecho?: string
+          p_fundamento?: string
+          p_id_apontamento: string
+          p_resposta?: string
+        }
+        Returns: Json
       }
       worker_buscar_fragmentos: {
         Args: {
@@ -9300,6 +9688,10 @@ export type Database = {
         Returns: string
       }
       worker_exportar_historico_migrations: { Args: never; Returns: string }
+      worker_finalizar_historico_hml: {
+        Args: { p_erro?: string; p_msg_id: number; p_sucesso: boolean }
+        Returns: undefined
+      }
       worker_finalizar_job: {
         Args: {
           p_erro_codigo?: string
@@ -9325,6 +9717,7 @@ export type Database = {
         Returns: Json
       }
       worker_obter_webhook: { Args: { p_id_evento: string }; Returns: Json }
+      worker_pull_historico_hml: { Args: never; Returns: Json }
       worker_pull_job: {
         Args: { p_fila: string; p_visibility_seconds?: number }
         Returns: Json
