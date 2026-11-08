@@ -665,14 +665,19 @@ test("refluxo/texto: coleção incompleta, duplicada ou com FAIL não recebe PAS
 });
 
 async function publicScaleDOMFixture(snapshot, html) {
-  // Dependency-free DOM fixture: CI executes node:test before npm ci.
-  // Geometry is synthetic; Chromium screenshots remain mandatory for visual PASS.
+  // Dependency-free DOM fixture: CI runs node:test before dependency installation.
+  // Synthetic geometry is never a substitute for Chromium visual evidence.
   const { runInNewContext } = await import("node:vm");
   const elements = [];
   const textNodes = [];
   const root = { lang: "pt-BR", scrollWidth: 320, style: { fontSize: "16px" } };
   const rect = (left = 0, width = 200) => ({
-    left, top: 0, width, height: 20, right: left + width, bottom: 20,
+    left,
+    top: 0,
+    width,
+    height: 20,
+    right: left + width,
+    bottom: 20,
   });
   class HTMLElement {
     constructor(tag, parent = null, text = "", attrs = "") {
@@ -681,7 +686,10 @@ async function publicScaleDOMFixture(snapshot, html) {
       this.textContent = text;
       this.isConnected = true;
       this.namespaceURI = "http://www.w3.org/1999/xhtml";
-      this.style = { fontSize: "14px", overflowX: /overflow-x:hidden/.test(attrs) ? "hidden" : "visible" };
+      this.style = {
+        fontSize: "14px",
+        overflowX: /overflow-x:hidden/.test(attrs) ? "hidden" : "visible",
+      };
       this.value = "";
       elements.push(this);
       if (text) textNodes.push({ textContent: text, parentElement: this });
@@ -695,50 +703,98 @@ async function publicScaleDOMFixture(snapshot, html) {
       }
       return null;
     }
-    matches(selector) { return selector.split(",").includes(this.tag); }
-    getClientRects() { return [this.getBoundingClientRect()]; }
-    getBoundingClientRect() { return this.rect || rect(); }
-    checkVisibility() { return true; }
+    matches(selector) {
+      return selector.split(",").includes(this.tag);
+    }
+    getClientRects() {
+      return [this.getBoundingClientRect()];
+    }
+    getBoundingClientRect() {
+      return this.rect || rect();
+    }
+    checkVisibility() {
+      return true;
+    }
   }
   class HTMLInputElement extends HTMLElement {}
   const body = new HTMLElement("body");
   function create(tag, parent, text = "", attrs = "") {
-    const el = tag === "input" ? new HTMLInputElement(tag, parent, text, attrs) : new HTMLElement(tag, parent, text, attrs);
+    const el =
+      tag === "input"
+        ? new HTMLInputElement(tag, parent, text, attrs)
+        : new HTMLElement(tag, parent, text, attrs);
     geometry(el);
     return el;
   }
   function geometry(el, left = 0, width = 200) {
     el.rect = rect(left, width);
-    Object.assign(el, { clientWidth: width, clientHeight: 20, clientLeft: 0, clientTop: 0, scrollHeight: 20 });
+    Object.assign(el, {
+      clientWidth: width,
+      clientHeight: 20,
+      clientLeft: 0,
+      clientTop: 0,
+      scrollHeight: 20,
+    });
     return el;
   }
   let target;
   if (html.includes('id="box"')) {
-    const box = create("div", body, "", 'overflow-x:hidden');
+    const box = create("div", body, "", "overflow-x:hidden");
     box.style.overflowX = "hidden";
     target = create("input", box);
     target.id = "field";
     box.id = "box";
   } else if (html.includes("<button")) {
-    target = create("button", body, "Texto sintético longo", 'overflow-x:hidden');
+    target = create("button", body, "Texto sintético longo", "overflow-x:hidden");
     target.style.overflowX = "hidden";
   } else {
     target = create("p", body, "Texto sintético");
   }
   const document = {
-    body, documentElement: root,
-    querySelector(selector) { return elements.find((e) => selector === "input" ? e.tag === "input" : selector === "button" ? e.tag === "button" : selector === "#box" ? e.id === "box" : selector === "#field" ? e.id === "field" : false) || null; },
+    body,
+    documentElement: root,
+    querySelector(selector) {
+      return (
+        elements.find((e) =>
+          selector === "input"
+            ? e.tag === "input"
+            : selector === "button"
+              ? e.tag === "button"
+              : selector === "#box"
+                ? e.id === "box"
+                : selector === "#field"
+                  ? e.id === "field"
+                  : false,
+        ) || null
+      );
+    },
     querySelectorAll(selector) {
       const tags = selector.split(",").map((x) => x.trim());
       return elements.filter((e) => tags.includes(e.tag));
     },
-    createElement(tag) { const el = create(tag, null); el.isConnected = false; return el; },
+    createElement(tag) {
+      const el = create(tag, null);
+      el.isConnected = false;
+      return el;
+    },
     createTreeWalker() {
       let index = -1;
-      return { currentNode: null, nextNode() { index++; this.currentNode = textNodes[index]; return Boolean(this.currentNode); } };
+      return {
+        currentNode: null,
+        nextNode() {
+          index++;
+          this.currentNode = textNodes[index];
+          return Boolean(this.currentNode);
+        },
+      };
     },
     createRange() {
-      return { selectNodeContents() {}, getClientRects() { return rangeRects(); } };
+      return {
+        selectNodeContents() {},
+        getClientRects() {
+          return rangeRects();
+        },
+      };
     },
   };
   body.append = (el) => {
@@ -750,10 +806,15 @@ async function publicScaleDOMFixture(snapshot, html) {
   const win = { document, __contaosScaleProbe: null, Range: { prototype: {} } };
   Object.defineProperty(win.Range.prototype, "getClientRects", {
     get: () => rangeRects,
-    set: (fn) => { rangeRects = fn; },
+    set: (fn) => {
+      rangeRects = fn;
+    },
   });
   const globals = {
-    window: win, document, HTMLElement, HTMLInputElement,
+    window: win,
+    document,
+    HTMLElement,
+    HTMLInputElement,
     NodeFilter: { SHOW_TEXT: 4 },
     getComputedStyle: (el) => ({
       fontSize: el.style?.fontSize || "16px",
@@ -764,7 +825,8 @@ async function publicScaleDOMFixture(snapshot, html) {
     innerWidth: 320,
   };
   return {
-    win, geometry,
+    win,
+    geometry,
     capture: (phase) => runInNewContext(`(${snapshot.toString()})(${JSON.stringify(phase)})`, globals),
     close: () => {},
   };
