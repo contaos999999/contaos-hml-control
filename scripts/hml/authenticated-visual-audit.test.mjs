@@ -2287,25 +2287,45 @@ async function nativeCancellationProxy(realPort, canceledUrl) {
   };
 }
 
+test("diagnóstico da reprodução nativa publica somente etapas fechadas", () => {
+  const diagnose = fn("nativeCancellationDiagnostics");
+  assert.deepEqual(
+    diagnose("# NATIVE_CANCEL_STAGE REQUEST_HELD\n# NATIVE_CANCEL_STAGE ERROR_PROVED\n"),
+    ["REQUEST_HELD", "ERROR_PROVED"],
+  );
+  assert.deepEqual(
+    diagnose(
+      "# NATIVE_CANCEL_STAGE CANARIO_PRIVADO\n# NATIVE_CANCEL_STAGE ERROR_PROVED pessoa@example.com",
+    ),
+    [],
+  );
+});
+
 test(
   "Chromium nativo: cancelamento inicial real não libera corpo nem transmite ao canário",
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
-  async () => {
+  async (t) => {
     const { chromium } = await import("playwright");
-    let browser,
-      context,
-      fence,
-      proxy,
-      canceledConnections = 0;
+    let browser, context, fence, proxy;
+    const traffic = { connections: 0, bytes: 0, requests: 0 };
+    const canary = createHttpServer((_req, res) => {
+      traffic.requests++;
+      res.end("canary");
+    });
+    canary.on("connection", (socket) => {
+      traffic.connections++;
+      socket.on("data", (bytes) => {
+        traffic.bytes += bytes.length;
+      });
+    });
     const html = '<!doctype html><title>native cancellation</title><link rel="icon" href="data:,">';
-    const source = createHttpServer((req, res) => {
-        if (req.url === "/canceled") canceledConnections++;
+    const source = createHttpServer((_req, res) => {
         res.setHeader("content-type", "text/html");
         res.end(html);
       }),
       debug = createHttpServer();
     await Promise.all(
-      [source, debug].map(
+      [source, canary, debug].map(
         (server) => new Promise((resolve) => server.listen(0, "127.0.0.1", resolve)),
       ),
     );
@@ -2325,43 +2345,68 @@ test(
         env: fn("browserEnvironment")(process.env),
         args: [`--remote-debugging-port=${realPort}`],
       });
+      const origin = `http://127.0.0.1:${source.address().port}`,
+        canceledUrl = `http://127.0.0.1:${canary.address().port}/canceled`;
+      const positive = await browser.newContext();
+      const control = await positive.newPage();
+      await control.goto(origin + "/");
+      await control.evaluate(async (url) => {
+        await fetch(url, { mode: "no-cors" });
+      }, canceledUrl);
+      assert.ok(
+        traffic.connections > 0 && traffic.bytes > 0 && traffic.requests > 0,
+        "positive control must demonstrate the independent socket sensor",
+      );
+      t.diagnostic("NATIVE_CANCEL_STAGE SENSOR_PROVED");
+      await positive.close();
+      canary.closeIdleConnections();
+      Object.assign(traffic, { connections: 0, bytes: 0, requests: 0 });
       context = await browser.newContext();
       const page = await context.newPage();
       const session = await context.newCDPSession(page),
         { targetInfo } = await session.send("Target.getTargetInfo");
       await session.detach();
-      const origin = `http://127.0.0.1:${source.address().port}`;
-      proxy = await nativeCancellationProxy(realPort, origin + "/canceled");
+      proxy = await nativeCancellationProxy(realPort, canceledUrl);
       fence = await fn("installNativeFence")({
         debugPort: proxy.port,
         identity: targetInfo,
-        policy: (r) => r.method === "GET" && r.url.startsWith(origin + "/"),
+        policy: (r) =>
+          r.method === "GET" && (r.url.startsWith(origin + "/") || r.url === canceledUrl),
         verifyResponse: async ({ resourceType, status, body }) =>
           status === 200 && (resourceType !== "Document" || body.equals(Buffer.from(html))),
         closeContext: () => context.close(),
       });
       await page.goto(origin + "/", { waitUntil: "networkidle" });
-      await page.evaluate(() => {
+      await page.evaluate((url) => {
         window.nativeCancelController = new AbortController();
-        void fetch("/canceled", { signal: window.nativeCancelController.signal }).catch(() => {});
-      });
+        void fetch(url, { signal: window.nativeCancelController.signal }).catch(() => {});
+      }, canceledUrl);
       await within(proxy.held);
+      t.diagnostic("NATIVE_CANCEL_STAGE REQUEST_HELD");
       await page.evaluate(() => window.nativeCancelController.abort());
       const terminal = await within(proxy.terminal),
         record = proxy.request();
       assert.equal(terminal.canceled, true);
       assert.equal(terminal.errorText, "net::ERR_ABORTED");
       assert.equal(terminal.type, "Fetch");
+      t.diagnostic("NATIVE_CANCEL_STAGE TERMINAL_PROVED");
       assert.equal(record.paused.networkId, terminal.requestId);
       assert.equal(record.paused.frameId, record.network.frameId);
       assert.ok(record.network.loaderId);
       assert.equal(record.network.request.method, "GET");
+      t.diagnostic("NATIVE_CANCEL_STAGE IDENTITY_PROVED");
       proxy.release();
       const error = await within(proxy.rejected);
       assert.equal(error.code, -32602);
       assert.equal(error.message, "Invalid InterceptionId.");
+      t.diagnostic("NATIVE_CANCEL_STAGE ERROR_PROVED");
       await fence.drain();
-      assert.equal(canceledConnections, 0, "request canceled while paused must never reach server");
+      assert.deepEqual(
+        traffic,
+        { connections: 0, bytes: 0, requests: 0 },
+        "request canceled while paused must never connect or transmit to independent canary",
+      );
+      t.diagnostic("NATIVE_CANCEL_STAGE TRANSPORT_ZERO");
       assert.equal(
         fence.snapshot().failed,
         false,
@@ -2374,6 +2419,7 @@ test(
       await browser?.close();
       await proxy?.close();
       await new Promise((resolve) => source.close(resolve));
+      await new Promise((resolve) => canary.close(resolve));
     }
   },
 );
