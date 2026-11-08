@@ -1,3 +1,8 @@
+import { readFile, mkdir, writeFile, lstat } from "node:fs/promises";
+import { resolve, join, basename } from "node:path";
+import { pathToFileURL } from "node:url";
+import { execFile as execFileCallback } from "node:child_process";
+import { promisify } from "node:util";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -1183,4 +1188,201 @@ export function guardedResponseHeaders(headers) {
       value: `connect-src ${HML_ORIGIN} ${API_ORIGIN}; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'`,
     },
   ];
+}
+
+export const SYNTHETIC_FIXTURE = Object.freeze({
+  organizationName: "ContaOS HML Teste",
+  contractor: "041ebf9f-5e32-4744-80d6-d745fa5fc483",
+  contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+  competence: "59072760-4420-4598-82dd-367f41a79e89",
+  document: "525e54fc-feec-4dc0-b540-1510a3c52485",
+});
+export function privateCases() {
+  const f = SYNTHETIC_FIXTURE,
+    c = "/contratos/" + f.contract,
+    m = "/competencias/" + f.competence;
+  const routes = {
+    SYS04: "/selecionar-organizacao",
+    SYS05: "/",
+    ADM01: "/administracao/usuarios",
+    V101: "/contratantes",
+    V102: "/contratantes/novo",
+    V103: "/contratantes/" + f.contractor + "/editar",
+    V104: "/contratos",
+    V105: "/contratos/novo",
+    V106: c,
+    V107: c + "/base-normativa",
+    V108: c + "/orcamento",
+    V109: c + "/regras",
+    V110: c + "/documentos",
+    V111: c + "/documentos/" + f.document,
+    V112: c + "/competencias",
+    V113: c + "/competencias/nova",
+    V114: m,
+    V115: m + "/documentos",
+    V116: m + "/analise",
+    V117: null,
+    V118: m + "/parecer",
+    V119: null,
+    V120: null,
+    V121: c + "/historico",
+    V122: c + "/historico/importar",
+    V123: "/administracao/auditoria",
+  };
+  return PRIVATE_SURFACES.flatMap((surface) =>
+    WIDTHS.flatMap((width) =>
+      THEMES.map((theme) => ({
+        surface,
+        width,
+        theme,
+        path: routes[surface],
+        fixtureBlocked: routes[surface] === null,
+      })),
+    ),
+  );
+}
+
+const execFile = promisify(execFileCallback);
+const digest = (value) => createHash("sha256").update(value).digest("hex");
+export async function trustedAsset(root, url) {
+  const target = new URL(publicUrl(url));
+  if (
+    !/^\/(?:assets|brand)\/[A-Za-z0-9_./-]+$/.test(target.pathname) &&
+    !/^\/(?:favicon[^/]*|manifest\.webmanifest)$/.test(target.pathname)
+  )
+    fail("ASSET_PATH");
+  const file = resolve(root, "." + target.pathname);
+  if (!file.startsWith(resolve(root) + "/")) fail("ASSET_PATH");
+  const stat = await lstat(file).catch(() => null);
+  if (!stat?.isFile() || stat.isSymbolicLink() || stat.size > 4194304) fail("ASSET_PATH");
+  return readFile(file);
+}
+export async function preparePublicProvenance({
+  sourceRoot,
+  frontendSha,
+  harnessSha,
+  deploymentId,
+  bun = "bun",
+}) {
+  if (
+    !hash40(frontendSha) ||
+    !hash40(harnessSha) ||
+    !/^dpl_[A-Za-z0-9]{8,80}$/.test(deploymentId ?? "") ||
+    typeof sourceRoot !== "string" ||
+    basename(bun) !== "bun"
+  )
+    fail("PREPARE_CONFIGURATION");
+  const root = resolve(sourceRoot),
+    env = browserEnvironment(process.env);
+  try {
+    const actual = await execFile("git", ["rev-parse", "HEAD"], { cwd: root, env });
+    if (actual.stdout.trim() !== frontendSha) fail("PREPARE_SHA");
+    await execFile("git", ["merge-base", "--is-ancestor", frontendSha, "origin/main"], {
+      cwd: root,
+      env,
+    });
+    const version = await execFile(bun, ["--version"], { cwd: root, env });
+    if (version.stdout.trim() !== "1.4.4") fail("PREPARE_BUN");
+  } catch (error) {
+    if (error.code === "PREPARE_SHA" || error.code === "PREPARE_BUN") throw error;
+    fail("PREPARE_SOURCE");
+  }
+  const graph = await discoverPublicGraph(),
+    publicEnv = extractPublicBuildEnvironment(graph.modules, { frontendSha, deploymentId });
+  try {
+    await execFile(bun, ["run", "build"], {
+      cwd: root,
+      env: { ...env, ...publicEnv },
+      timeout: 180000,
+      maxBuffer: 2097152,
+    });
+  } catch {
+    fail("PREPARE_BUILD");
+  }
+  const publicRoot = join(root, ".output/public"),
+    moduleHashes = {};
+  for (const [url, source] of graph.modules) {
+    const local = await trustedAsset(publicRoot, url),
+      actual = Buffer.from(source);
+    if (!assetBytesMatch(local, actual)) fail("PREPARE_MODULE_DRIFT");
+    moduleHashes[new URL(url).pathname] = digest(local);
+  }
+  let server;
+  try {
+    server = (await import(pathToFileURL(join(root, ".output/server/index.mjs")).href)).default;
+  } catch {
+    fail("PREPARE_SSR");
+  }
+  if (typeof server?.fetch !== "function") fail("PREPARE_SSR");
+  const documents = {};
+  for (const path of new Set([
+    "/login",
+    ...privateCases()
+      .filter((r) => r.path)
+      .map((r) => r.path),
+  ])) {
+    let response;
+    try {
+      response = await server.fetch(new Request(HML_ORIGIN + path), {}, { waitUntil() {} });
+    } catch {
+      fail("PREPARE_SSR");
+    }
+    if (response.status !== 200) fail("PREPARE_SSR");
+    const html = await response.text();
+    extractScriptEntries(html);
+    documents[path] = html;
+  }
+  if (!compareHtml(graph.html, documents["/login"])) fail("PREPARE_HTML_DRIFT");
+  // Re-fetch all modules once after the trusted build. Deployments changing in
+  // this interval invalidate preparation, never an authenticated case.
+  const check = await discoverPublicGraph();
+  extractPublicBuildEnvironment(check.modules, { frontendSha, deploymentId });
+  if (check.modules.size !== graph.modules.size) fail("PREPARE_GRAPH_DRIFT");
+  for (const [url, source] of check.modules)
+    if (digest(source) !== moduleHashes[new URL(url).pathname]) fail("PREPARE_GRAPH_DRIFT");
+  if (!compareHtml(check.html, documents["/login"])) fail("PREPARE_HTML_DRIFT");
+  return {
+    schema: "contaos.private.provenance.v1",
+    frontendSha,
+    harnessSha,
+    deploymentId,
+    moduleCount: graph.modules.size,
+    moduleBytes: graph.bytes,
+    moduleHashes,
+    documents,
+    publicRoot,
+  };
+}
+export async function runCli(args = process.argv.slice(2)) {
+  if (args.length !== 1 || args[0] !== "--prepare") fail("CLI_MODE");
+  const proof = await preparePublicProvenance({
+    sourceRoot: process.env.CONTAOS_FRONTEND_SOURCE,
+    frontendSha: process.env.CONTAOS_FRONTEND_SHA,
+    harnessSha: process.env.CONTAOS_HARNESS_SHA,
+    deploymentId: process.env.CONTAOS_DEPLOYMENT_ID,
+    bun: process.env.CONTAOS_BUN_BINARY || "bun",
+  });
+  await mkdir(".audit-work", { recursive: true, mode: 0o700 });
+  await writeFile(".audit-work/provenance.json", JSON.stringify(proof), { mode: 0o600 });
+  console.log(
+    JSON.stringify({
+      phase: "PUBLIC_PROVENANCE",
+      state: "PASS",
+      frontendSha: proof.frontendSha,
+      harnessSha: proof.harnessSha,
+      deploymentId: proof.deploymentId,
+      modules: proof.moduleCount,
+    }),
+  );
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  runCli().catch((error) => {
+    console.error(
+      JSON.stringify({
+        state: "BLOCKED",
+        code: /^[A-Z_]{1,80}$/.test(error?.code || "") ? error.code : "HARNESS_FAILURE",
+      }),
+    );
+    process.exitCode = 1;
+  });
 }

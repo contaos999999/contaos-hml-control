@@ -1026,7 +1026,18 @@ for (const scheme of ["ws", "wss"])
             sut.requestAllowed(request),
           closeContext: async () => context.close(),
         });
-        await page.goto(`http://127.0.0.1:${source.address().port}/`, { waitUntil: "networkidle" });
+        const delivered = await page.goto(`http://127.0.0.1:${source.address().port}/`, {
+          waitUntil: "networkidle",
+        });
+        assert.ok(
+          (await delivered.headerValue("content-security-policy"))?.includes("connect-src"),
+          "CSP must reach the protected document",
+        );
+        assert.equal(connections, 0, "no late positive-control connection before attempt");
+        assert.ok(
+          fence.snapshot().verifiedDocuments > 0,
+          "document must be verified before attempt",
+        );
         assert.equal(await attempt(page), "denied");
         await fence.drain();
         assert.equal(connections, 0, "fence deve bloquear antes do primeiro byte");
@@ -1055,4 +1066,34 @@ test("CSP adicional preserva headers e restringe conexões HTTPS sem liberar ws 
     `connect-src ${HML} ${API}; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'`,
   );
   assert.throws(() => fn("guardedResponseHeaders")([{ name: "X", value: "bad\r\nheader" }]));
+});
+
+test("matriz privada tem 208 chaves únicas, IDs reais e 24 bloqueios explícitos", () => {
+  const rows = fn("privateCases")();
+  assert.equal(rows.length, 208);
+  assert.equal(new Set(rows.map(sut.caseKey)).size, 208);
+  assert.equal(rows.filter((r) => r.fixtureBlocked).length, 24);
+  assert.equal(
+    rows
+      .filter((r) => r.surface === "V103")
+      .every((r) => r.path.includes("041ebf9f-5e32-4744-80d6-d745fa5fc483")),
+    true,
+  );
+  assert.equal(
+    rows.some((r) => r.path?.includes("00000000-0000-4000")),
+    false,
+  );
+});
+
+test("CLI sem modo explícito não pode encerrar com sucesso silencioso", async () => {
+  const { execFile } = await import("node:child_process");
+  const code = await new Promise((resolve) =>
+    execFile(
+      process.execPath,
+      ["scripts/hml/authenticated-visual-audit.mjs"],
+      { env: sut.browserEnvironment(process.env) },
+      (error) => resolve(error?.code ?? 0),
+    ),
+  );
+  assert.equal(code, 1);
 });
