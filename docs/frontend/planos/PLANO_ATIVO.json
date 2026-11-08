@@ -1299,7 +1299,16 @@
       "future_native_required": 8,
       "existing_native_preserved": 7,
       "prod_allowed": false,
-      "unknown_error_allowed": false
+      "unknown_error_allowed": false,
+      "type_pair_amendment": {
+        "native_run": 42505594696,
+        "diagnostic_head": "b2f6233150a08f626ae8e4d24c45684879f92b76",
+        "network_type": "Fetch",
+        "fetch_type": "XHR",
+        "exception_method": "GET",
+        "require_same_fetch_type_across_stages": true,
+        "state": "EMENDA_AGUARDA_CI_REVISAO"
+      }
     }
   }
 }
