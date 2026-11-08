@@ -1,3 +1,46 @@
+## Trilha A P0: execução autenticada concluída sem aborto; evidência privada parcial, 08/11/2026
+
+Este é o checkpoint mais recente. Os bloqueios técnicos do executor foram corrigidos e a rodada terminou sem aborto, com logout confirmado. Isso NÃO certifica a Trilha A nem a V1. Frontend/harness auditado: `9b18e4857b03daa6ee09ad3382184480e2014728`; HML READY `dpl_C17iKEF5F7WJJrQdeUaw7UQmmkW3`. Run `42496235106`, job `128779085220`, artefato `13623288351`. As provas pertencem a esse SHA, não ao futuro merge documental deste checkpoint. Backend normativo `2d01d87654ce580f6f8fdd3446ea4aa78ac7752a`, 25 fontes e catálogo preservados.
+
+### Resultado e integridade comprovados
+
+- Matriz com 208 chaves privadas únicas e completas: **24 PASS_AUTOMATIZADO**, **160 BLOQUEADO_PII** e **24 BLOQUEADO_FIXTURE**. Nenhum caso interrompido; aborted=null e diagnostic=null; logoutVerified=true. Os 24 PASS têm sessão, organização, shell, rota e navegação verificados pelo runner; validateCase aceitou os 24 e o atestado nativo corresponde aos hashes dos arquivos do mesmo SHA.
+- PASS somente em V114, V116 e V118: oito combinações por superfície, 1440/1280/768/390 × claro/escuro. Os estados comprovados são competência em preparação, análise não executada e parecer vazio. Não comprova executar análise, emitir parecer, CRUD ou completar o fluxo de negócio.
+- 160 bloqueios da barreira de privacidade: SYS04, SYS05, ADM01, V101–V113, V115, V121, V122 e V123, oito combinações cada. Essa classificação conservadora NÃO demonstra, sozinha, existência de PII real; impede exportar conteúdo ainda não aprovado como sintético. Não ampliar whitelist com dados desconhecidos apenas para obter PASS. Nenhum bloqueado possui referência a captura/DOM/suplemento.
+- 24 dependências de fixture permanecem separadas: V117, V119 e V120, oito combinações cada, sem imagens fictícias. Necessitam estados legítimos e planejamento próprio, sem alteração de backend ou permissões por conveniência.
+- **48 PNGs** (24 principais + 24 suplementos de sidebar/menu) e **24 snapshots JSON de DOM/acessibilidade**. ZIP baixado e SHA256 conferido com GitHub: `bc2a8b74e1ba9ff008ed67ce0f398c47ce120924cf69b5210d62f8165291d2c6`. Report SHA256 `60f150f1fb8006cb12baefcaac1cbe182730b13467e1d8387c44d113b4389025`. **73/73 arquivos do SHA256SUMS verificados**, sem arquivo adicional fora do manifesto.
+- Evidência: https://github.com/contaos999999/contaos-hml-control/actions/runs/42496235106/artifacts/13623288351 ; retenção prevista pelo workflow até 06/02/2027. O job terminou FAILURE/AUDIT_INCOMPLETE devido aos bloqueios remanescentes; não houve aborto de runtime. globalComplete=false e v1Certified=false preservados.
+
+### Revisão independente e achado visual
+
+Revisão independente conferiu ZIP/report e 73/73 hashes, 208 chaves, ausência de evidência fictícia nos bloqueados e flags dos 24 PASS. Inspecionou todos os 24 PNGs principais e seis suplementos representativos (desktop recolhido/menu móvel dos três grupos). Sem Critical/Important identificados nesse escopo; não constitui revisão integral dos 72 critérios.
+
+Achado visual Minor aberto em **issue #350**: em V114 e V116, 390 px claro/escuro, o botão flutuante Menu sobrepõe valores à direita do quadro de bloqueios/resumo. Capturas conferidas diretamente; leitura integral desses valores nessa posição não está comprovada. PASS_AUTOMATIZADO não revoga esse achado humano. Corrigir por PLAN/CI/GATE/RED/BUILD/GREEN/Teste C visual separado.
+
+Axe registrou zero violações nos 24 casos, porém **18 casos têm um resultado incompleto**; teclado é amostral. Não certificar WCAG/72 critérios por esses contadores. Organização/status/marca são visíveis nas capturas pertinentes, com as limitações de viewport/estado documentadas.
+
+### Correções do executor e integração
+
+PLAN #342 / GATE #343 e BUILDs #344–#347 constam do checkpoint anterior preservado abaixo. Adicionalmente:
+
+- Checkpoint #348 integrado `00e87fbcf58080a0f4906da8f155b91fcf87d879`, CI `42495257937` / `42495257843` SUCCESS; arquivos relidos no merge e blobs conferidos, sem presumir certificação.
+- BUILD #349 integrado `9b18e4857b03daa6ee09ad3382184480e2014728`, HEAD `bbcb9ebda9b7cb5b82a009212d17a0d72e7c517e`. Zero-Drift `42495809798`, protocolo/nativo `42495809633` e LOCK `42495809621` SUCCESS no mesmo HEAD. Revisão independente sem Critical/Important; 101 testes unitários PASS, sete nativos PASS, regressão do produto 1.165 PASS, typecheck/lint/formato aprovados.
+- Navegação agora aguarda rede e drain/assertSafe, reutiliza seletor já aberto/verificado e só abre o seletor a partir da raiz esperada. A matriz após resize e o logout usam a mesma barreira. Não ignora erro CDP, não amplia timeout nem altera política de transporte. Diagnóstico aceita somente nomes exatos de comandos CDP em allowlist, sem parâmetros/mensagem/corpo/token.
+- REDs de ordenação, reuso, destino inesperado/fence insegura e comando sanitizado preservados na branch. Teste com verificação CDP retida demonstrou ausência de navegação até conclusão. A rodada final não reproduziu os abortos técnicos anteriores.
+
+Última etapa comprovadamente concluída: execução autenticada da matriz privada com resultado parcial e artefatos conferidos, sem aborto e com logout. As credenciais HML existentes funcionaram; nenhum secret foi consultado ou alterado. Produto, backend, PROD, dependências/lock e blob `types.ts` (`8ea7750b75fd9d76b29c36ce7613392e3ab65e19`) intactos. Nenhuma repetição de PLAN/GATE/BUILD #322/#323/#324 ou das 18 provas públicas válidas.
+
+### Próxima tarefa, sem repetir provas válidas
+
+1. Triar os 160 bloqueios de privacidade em PLAN específico, com catálogo de valores/estados sintéticos comprovados e escopo de dados fechado; preservar proibição de e-mail/CPF/token ou dados alheios à fixture. Não enfraquecer a barreira para forçar capturas.
+2. Resolver as 24 fixtures por criação legítima planejada e documentada, sem usar placeholders nem presumir dependência do backend #139.
+3. Corrigir o achado móvel #350 em rito visual próprio e executar os critérios restantes da matriz de 72, inclusive acessibilidade manual, estados e revisão independente. Preservar 24 PASS e suas evidências enquanto não houver regressão comprovada.
+4. V1 e a identidade visual global permanecem NO-GO; DoD integral obrigatório antes de qualquer certificação ou nova versão. Nenhum PROD autorizado.
+
+Histórico anterior preservado abaixo.
+
+---
+
 ## Trilha A P0: identidade automática e CSR corrigidos; auditor ainda bloqueado em recarga, 08/11/2026
 
 Este checkpoint substitui a fila antiga que sugeria atualizar credenciais. Nenhum secret foi lido ou alterado nesta execução. V1 continua NO-GO; 18 provas públicas e PLAN/GATE/BUILD #322/#323/#324 preservados, sem repetição. Backend normativo main `2d01d87654ce580f6f8fdd3446ea4aa78ac7752a`, igual ao snapshot: 25/25 blobs e catálogo conferidos. Frontend de referência `5574b0b8a43fbdec943f0d6eee34f0e240967ddb`, HML alias READY `dpl_FDf3UNTA6WjkKQ3uozzxPnNbQ7Gx`. Este checkpoint não reatribui provas ao SHA documental posterior.
