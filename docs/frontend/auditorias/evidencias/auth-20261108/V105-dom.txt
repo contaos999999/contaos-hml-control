@@ -1,0 +1,79 @@
+Browser tab: 4, Title: "Novo contrato — ContaOS", URL: "https://scope-and-approval-keeper.lovable.app/contratos/novo".
+1 AXWebArea Novo contrato — ContaOS, URL: scope-and-approval-keeper.lovable.app/contratos/novo
+	17 container
+		18 image ContaOS
+		19 button (expanded) Description: Recolher menu, Secondary Actions: Collapse
+		20 container Navegação principal
+			21 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+			22 link Description: Contratantes, Value: scope-and-approval-keeper.lovable.app/contratantes
+			23 link Description: Novo contratante, Value: scope-and-approval-keeper.lovable.app/contratantes/novo
+			24 link Description: Contratos, Value: scope-and-approval-keeper.lovable.app/contratos
+			25 link Description: Novo contrato, Value: scope-and-approval-keeper.lovable.app/contratos/novo
+			26 link Description: Organizações, Value: scope-and-approval-keeper.lovable.app/selecionar-organizacao
+		27 container Administração
+			28 link Description: Usuários, Value: scope-and-approval-keeper.lovable.app/administracao/usuarios
+			29 link Description: Auditoria, Value: scope-and-approval-keeper.lovable.app/administracao/auditoria
+	2 container
+		3 image ContaOS
+		4 container Navegação
+			5 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+			6 link Description: Contratos, Value: scope-and-approval-keeper.lovable.app/contratos
+			7 button Sair
+	8 container
+		9 text CONTRATOS
+		10 heading Novo contrato, Value: 1
+			11 text Novo contrato
+		12 text Cadastre um contrato e vincule-o a um contratante da organização selecionada.
+		30 container DADOS DO CONTRATO
+			31 heading DADOS DO CONTRATO, Value: 2, ID: v105-dados
+				32 text DADOS DO CONTRATO
+			33 container
+				34 text Número
+				35 text field (settable) Número, ID: v105-numero
+			36 text Contratante
+			37 text Digite para buscar contratantes desta organização.
+			38 combo box (collapsed, settable) Contratante, ID: v105-contratante, Secondary Actions: Expand
+			39 container
+				40 text Objeto
+				41 text entry area (settable) Objeto, ID: v105-objeto
+			42 container Vigência
+				43 text Vigência
+				44 container
+					45 text Data de início
+					46 date field (settable) Data de início, ID: v105-inicio
+						47 container
+							48 stepper
+							49 stepper
+							50 stepper
+						51 pop up button Show date picker Show date picker
+				52 container
+					53 text Data de término
+					54 date field (settable) Data de término, ID: v105-fim
+						55 container
+							56 stepper
+							57 stepper
+							58 stepper
+						59 pop up button Show date picker Show date picker
+			60 container
+				61 text Valor global (R$)
+				62 text field (settable) Valor global (R$), ID: v105-valor-global
+			63 container
+				64 text Valor mensal de referência (R$)
+				65 text field (settable) Valor mensal de referência (R$), ID: v105-valor-mensal
+			66 container
+				67 text Tipo de contrato
+				68 text field (settable) Tipo de contrato, ID: v105-tipo
+			69 container
+				70 text Unidade vinculada
+				71 text field (settable) Unidade vinculada, ID: v105-unidade
+			72 container
+				73 text Fonte de recurso
+				74 text field (settable) Fonte de recurso, ID: v105-fonte
+			75 text  Campos obrigatórios. Situação inicial e criticidade são definidas pelo cadastro oficial.
+			76 link Description: Cancelar, Value: scope-and-approval-keeper.lovable.app/contratos
+			77 button Salvar
+	14 container Description: Edit with Lovable, ID: lovable-badge
+		15 link Description: Edit with Lovable, Value: lovable.dev/projects/lovp_3xrb28czks9c8syb56xk9mkhx3?utm_source=lovable-badge, ID: lovable-badge-cta
+		16 button Description: Dismiss, ID: lovable-badge-close
+
+The focused UI element is 1 AXWebArea Novo contrato — ContaOS, URL: scope-and-approval-keeper.lovable.app/contratos/novo

@@ -1,0 +1,32 @@
+Browser tab: 4, Title: "Contratos — ContaOS", URL: "https://scope-and-approval-keeper.lovable.app/contratos".
+1 AXWebArea Contratos — ContaOS, URL: scope-and-approval-keeper.lovable.app/contratos
+	17 container
+		18 image ContaOS
+		19 button (expanded) Description: Recolher menu, Secondary Actions: Collapse
+		20 container Navegação principal
+			21 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+			22 link Description: Contratantes, Value: scope-and-approval-keeper.lovable.app/contratantes
+			23 link Description: Novo contratante, Value: scope-and-approval-keeper.lovable.app/contratantes/novo
+			24 link Description: Contratos, Value: scope-and-approval-keeper.lovable.app/contratos
+			25 link Description: Novo contrato, Value: scope-and-approval-keeper.lovable.app/contratos/novo
+			26 link Description: Organizações, Value: scope-and-approval-keeper.lovable.app/selecionar-organizacao
+		27 container Administração
+			28 link Description: Usuários, Value: scope-and-approval-keeper.lovable.app/administracao/usuarios
+			29 link Description: Auditoria, Value: scope-and-approval-keeper.lovable.app/administracao/auditoria
+	2 container Navegação
+		3 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+		4 link Description: Selecionar organização, Value: scope-and-approval-keeper.lovable.app/selecionar-organizacao
+	5 container
+		6 text GESTÃO CONTRATUAL
+		7 heading Contratos, Value: 1
+			8 text Contratos
+		9 text Contratos autorizados para você na organização selecionada.
+		10 container CONTRATOS
+			11 heading CONTRATOS, Value: 2, ID: v104-lista
+				12 text CONTRATOS
+			30 text Nenhum contrato autorizado nesta organização.
+	14 container Description: Edit with Lovable, ID: lovable-badge
+		15 link Description: Edit with Lovable, Value: lovable.dev/projects/lovp_3xrb28czks9c8syb56xk9mkhx3?utm_source=lovable-badge, ID: lovable-badge-cta
+		16 button Description: Dismiss, ID: lovable-badge-close
+
+The focused UI element is 1 AXWebArea Contratos — ContaOS, URL: scope-and-approval-keeper.lovable.app/contratos

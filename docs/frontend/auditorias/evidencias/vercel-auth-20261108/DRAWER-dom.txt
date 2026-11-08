@@ -1,0 +1,178 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+    - group "Contexto atual":
+      - paragraph: Contexto atual
+      - link "Resumo do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+        - generic: Resumo do contrato
+      - link "Base normativa":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa
+        - generic: Base normativa
+      - link "Orçamento":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/orcamento
+        - generic: Orçamento
+      - link "Regras de conformidade":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras
+        - generic: Regras de conformidade
+      - link "Documentos do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+        - generic: Documentos do contrato
+      - link "Competências do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+        - generic: Competências do contrato
+      - link "Nova competência":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias/nova
+        - generic: Nova competência
+      - link "Histórico do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico
+        - generic: Histórico do contrato
+      - link "Importar histórico":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico/importar
+        - generic: Importar histórico
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página":
+  - navigation "Navegação":
+    - link "Voltar para contratos":
+      - /url: /contratos
+      - text: Voltar para contratos
+- main:
+  - paragraph: Gestão contratual
+  - heading "Contrato AUD-A-VERCEL-20261108" [level=1]
+  - generic: "Situação:"
+  - text: rascunho
+  - generic: "Criticidade:"
+  - text: media
+  - navigation "Seções do contrato":
+    - list:
+      - generic: Visão geral
+      - link "Base normativa":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa
+      - link "Orçamento":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/orcamento
+      - link "Regras":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras
+      - link "Documentos":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+      - link "Competências":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+  - region "Identificação":
+    - heading "Identificação" [level=2]
+    - term: Objeto
+    - definition: Contrato sintético de homologação para auditoria autenticada da Trilha A, sem efeitos financeiros reais.
+    - term: Tipo de contrato
+    - definition: —
+    - term: Unidade vinculada
+    - definition: —
+    - term: Fonte de recurso
+    - definition: —
+  - region "Contratante":
+    - heading "Contratante" [level=2]
+    - term: Razão social
+    - definition: AUDITORIA TRILHA A VERCEL 20261108
+    - term: Nome fantasia
+    - definition: Registro sintético para testes autenticados HML
+    - term: Documento
+    - definition: —
+  - region "Vigência e prazos":
+    - heading "Vigência e prazos" [level=2]
+    - term: Vigência
+    - definition: 01/01/2026 – —
+    - term: Periodicidade
+    - definition: mensal
+    - term: Prazo de prestação (dias)
+    - definition: —
+    - term: Dia-limite de apresentação
+    - definition: —
+  - region "Valores":
+    - heading "Valores" [level=2]
+    - term: Valor global
+    - definition: —
+    - term: Valor mensal de referência
+    - definition: —
+  - region "Gestão do contrato":
+    - heading "Gestão do contrato" [level=2]
+    - button "Fechar gestão"
+    - paragraph:
+      - text: "Situação atual:"
+      - strong: rascunho
+      - text: ·
+      - generic: Versão 1
+    - paragraph: Cadastro retido para preservar vínculos, histórico e auditoria.
+    - group "Dados editáveis do cadastro":
+      - generic: Dados editáveis do cadastro
+      - text: Número
+      - textbox "Número": AUD-A-VERCEL-20261108
+      - text: Objeto
+      - textbox "Objeto": Contrato sintético de homologação para auditoria autenticada da Trilha A, sem efeitos financeiros reais.
+      - text: Tipo de contrato
+      - textbox "Tipo de contrato"
+      - text: Unidade vinculada
+      - textbox "Unidade vinculada"
+      - text: Fonte de recurso
+      - textbox "Fonte de recurso"
+      - text: Data de início
+      - textbox "Data de início": 2026-01-01
+      - text: Data de término
+      - textbox "Data de término"
+      - text: Valor global
+      - spinbutton "Valor global"
+      - text: Valor mensal de referência
+      - spinbutton "Valor mensal de referência"
+      - text: Periodicidade
+      - textbox "Periodicidade": mensal
+      - text: Prazo de prestação em dias
+      - spinbutton "Prazo de prestação em dias"
+      - text: Dia-limite de apresentação
+      - spinbutton "Dia-limite de apresentação"
+      - text: Criticidade
+      - combobox "Criticidade":
+        - option "baixa"
+        - option "media" [selected]
+        - option "alta"
+        - option "critica"
+    - text: Motivo
+    - textbox "Motivo"
+    - button "Revisar edição" [disabled]
+    - text: Nova situação
+    - combobox "Nova situação":
+      - option "Selecione a situação" [selected]
+      - option "ativo"
+      - option "cancelado"
+    - paragraph: A mudança de situação não salva alterações dos campos acima. Encerramento e cancelamento são definitivos neste fluxo.
+    - button "Revisar situação" [disabled]

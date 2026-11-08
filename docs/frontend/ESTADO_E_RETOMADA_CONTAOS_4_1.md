@@ -1,3 +1,37 @@
+## Checkpoint Trilha A: V114 corrigida e retestada, 08/11/2026
+
+Este bloco atualiza a fila histórica. PR330 MERGED `95ddd9cf2a81c009ac1e2fa24165b4ec16cb295d`; head `4de706cbeaefcd5d6015a3ba5685b5e6a703ca4d`, CI42447237649/42447237638 SUCCESS. Deployment `dpl_88NzSV2gnifGoADCmT1UBjXzZd54` READY vinculado a esse merge. Teste autenticado real abriu a mesma competência11/2026 anteriormente falha, preservando bloqueio de apresentação. Relatório `docs/frontend/auditorias/RETESTE_V114_PR330_2026-11-08.md` e PNG/DOM/hashes. Não repetir a correção nem criar outra fixture equivalente.
+
+Evidências históricas PR325 preservadas; conflitos de snapshot/PLANO_ATIVO resolvidos mantendo integralmente a versão main95ddd, com fonte canônica f53304f. O relato antigo de falha V114 corresponde ao deployment4510491 e não prevalece sobre este reteste. PLAN327/329 e BUILD330 integrados; PR326/328 são tentativas anteriores, não integrar.
+
+Pendências reais: auditoria autenticada formal29superfícies×4larguras×2temas=232casos e72critérios; estados de documentos/análise/drawer/parecer/apresentação não comprovados integralmente; teclado/foco/contraste/leitor de tela/zoom nativo; rechecagem SYS01 texto200%1440claro/escuro; revisão independente e checkpoint final com CI no mesmoHEAD. Observações exploratórias privadas não são PASS formal da matriz. V1 e identidade global NÃO CERTIFICADAS. TrilhaB independente; PROD proibido.
+
+---
+
+## Checkpoint P0: comparação real de build main × HML, 08/11/2026
+
+**DIVERGÊNCIA COMPROVADA ENTRE OS ARTEFATOS COMPARADOS.** Main45104916895a1f0972ecec2eec9a541dbd4e0b97 reconstruída com Bun1.4.4/lockfile congelado, buildPASS e fontes limpas. Entryindex-CrkggL7D.js,322713bytes,SHA256f16568e5cacab8cbe739909c6c4489c18494b25c7cabcb320408811569479b8b. HML serveindex-CjzqjoMJ.js,318007bytes,SHA256cbce6433c598f440012543f62e36c5f0bef7986ed198952496bd0d7f2beccc54.108módulos publicados obtidos,1345822bytes;21caminhos+hashes coincidem com a main. Três textos do cabeçalho compartilhado existem no buildmain e estão ausentes do grafo publicado obtido; divergência corroborada pelas capturas autenticadas. Não atribuir diferenças apenas ao hash de arquivo.
+
+MetadadoLovable935bb96 também reconstruído: entryindex-DMDJ_yWG.js,SHA2567a60581b492db06dd5396ec47768b2efc02b45c2a9f0d08e83c293ace0e8ed18,comcabeçalhoatual. Portanto latest_commit_sha não prova o código publicado. x-deployment-id recebido,semvínculo verificável comGit. SHAexatopublicado continuaNÃOIDENTIFICADO. Relatório emanifestos em `docs/frontend/auditorias/COMPARACAO_BUILD_MAIN_HML_2026-11-08.md`. Nenhuma publicação ou mudança de produto realizada.
+
+CI do registro inicial falhou por fonte canônica avançada para7ecdf3bda151fb9956beab8cca390f5074548cf2.25/25blobs ecatálogo comparados iguais; snapshot eack reancorados juntos, sem mudar escopo. A prova de build continua referida àmain4510491; não reatribuir o build à reancoragem documental.
+
+Próxima tarefa: reconciliar a publicação HML com fonte integrada conhecida e repetir prova de igualdade antes da matriz232/72. Preservar evidências de divergência e evitar repetir código jáintegrado. NO-GOvisual/V1 mantido;V2–V5/PROD bloqueados.
+
+---
+
+## Checkpoint P0: auditoria autenticada parcial executada em 08/11/2026 UTC
+
+**NO-GO visual; V1 não certificada.** Login real por formulário seguro e seleção da organização ativa ContaOS HML Teste com perfil Administrador Master. Sete superfícies privadas acessadas e capturadas: SYS05, V101, V102, V104, V105, ADM01 e V123. Evidências e limites em `docs/frontend/auditorias/TRILHA_A_AUTENTICADA_2026-11-08.md`, sete JPEGs, sete DOMs, manifesto e SHA256SUMS no diretório `evidencias/auth-20261108`. Não foram preservados senha, tokens ou cookies.
+
+Frontend main `45104916895a1f0972ecec2eec9a541dbd4e0b97` confirma merge #324. Backend main `765dac8aa1033f6c0ac6478738fac4ab768426e4`, somente referência Git. No HML publicado, bundle observado `assets/index-CjzqjoMJ.js`; projeto Lovable informa latest_commit `935bb96e3d73f7f7d1a8585a4e677db5dd92a379`, diferente da main. Isso não identifica o SHA do bundle: proveniência publicada NÃO VERIFICADA. Marca duplicada em V101/V102/V105 e contexto organizacional ausente em V101/V102/V104/V105/ADM01/V123 observados nas telas carregadas. Main já possui cabeçalho organizacional compartilhado; reconciliar publicação antes de repetir implementação.
+
+Amostra desktop claro1363×936 não certifica nenhum dos232casos formais nem os72BRAND. Listas de contratantes/contratos vazias nesta organização impedem os percursos de detalhe; não significa ausência global de fixtures. Os208casos privados históricos continuam pendentes da matriz completa. ExecutorTesteC e suíteSYS03 de pré-requisitos não realizam login privado. Falha histórica de sobreposição de texto200%SYS01/1440claro-escuro permanece pendente. Nenhum produto/backend/PROD modificado, nenhum trabalho concluído repetido.
+
+**Próxima tarefa:** provar sincronização e SHA publicado HML, reexaminar os achados nessa versão, identificar fixtures legítimas e executar quatro larguras/dois temas/72critérios com prova. Correção, caso ainda necessária no código atual, requer PLAN/GATE antes de BUILD. Não certificar visual/CRUD/auditoria/V1 nem avançarV2 por login ou CI documental verde.
+
+---
+
 ## Checkpoint P0 — Trilha A Sidebar com roteador real integrada; certificações pendentes
 
 Este bloco prevalece sobre a fila anterior para a Trilha A. Identidade visual integral, CRUD global, integração/rastreabilidade/auditoria e V1 continuam NÃO CERTIFICADOS; V2–V5 bloqueadas. A Trilha B possui executor próprio no backend PR139 e mantém suas provas separadas.
@@ -1551,3 +1585,10 @@ A falha do grafo foi reproduzida no parser real: onze imports do entry usam cras
 Próxima fila: resolver o probe sem afrouxar o GATE; concluir prevenção e proveniência; revisão independente e CI; integrar BUILD; implantar somente as duas Edges HML autorizadas, de fonte integrada com JWT true; comprovar preflight positivo/negativo; somente então reativar de modo governado o smoke publicado adicional e as quatro provas locais, com cinco arquivos, três documentos, cinco versões e cleanup completo. Não declarar domínio documental integral, publicação, CRUD global ou V1 certificados. V2 permanece bloqueada. A automação existente continua horária, sem alegação de vigilância contínua entre execuções.
 
 Atualização antes de publicar este checkpoint: no HEAD `45d16f48`, o probe run 42429670320/job 128575555940 falhou em PROVE_CONFIGURED_CLIENT, depois de concluir READ_SCRIPT_GRAPH. Artefato 13596328940 baixado, SHA256 `5a0c0fa364b558a24adf9a99ff6ee936540b38bb70970c0baab89fe224238efa` conferido. Guard 128575556384 e restore 128575556448 SUCCESS; backup 128575556577 ainda em execução nesta leitura. A revisão independente aprovou estritamente as mudanças de imports literais e limite, sem aprovar o cliente efetivo. Validação local deste checkpoint: 43/43 testes de ordem por versão/protocolo visual e diff check PASS. Nenhum resultado pendente foi convertido em sucesso.
+
+
+## 08/11/2026: testes reais autenticados no novo HML Vercel
+
+Deployment dpl_ERHDvDqrvnMCUMDgFU6JbSH9g5LE, fonte main 4510491. Login MASTER e organização ContaOS HML Teste confirmados. Contratante 041ebf9f-5e32-4744-80d6-d745fa5fc483, contrato be89ef7e-d839-46c0-9cfb-4da81edf8b74 e competência 59072760-4420-4598-82dd-367f41a79e89 criados legitimamente pelo frontend e confirmados nas listas. Detalhe da competência falhou em duas tentativas; causa ainda não investigada. 17 rotas privadas + gestão inspecionadas em desktop claro, sem certificar matriz232/WCAG/CRUDglobal. Relatório docs/frontend/auditorias/TRILHA_A_VERCEL_AUTENTICADA_2026-11-08.md. Próximo: autorização para investigação somente leitura da possível lacuna de backend, conforme AGENTS; nenhuma alteração de backend ou produto. PR324 não repetir; V1 NO-GO. Evidência adicionada à proposta PR325, integração e CI deste novo commit ainda pendentes.
+
+CI da prova Vercel 39af397: LOCK SUCCESS, Teste C documental SUCCESS, Zero-Drift FAIL somente freshness (42445352477). Reancoragem documental no backend f53304fbdab7570fa0f5167a9bcd0c76cded6be6 com 25/25 blobs e catálogo iguais; sem leitura de schema/RPC/RLS ou investigação da falha V114. Novo CI obrigatório pendente.

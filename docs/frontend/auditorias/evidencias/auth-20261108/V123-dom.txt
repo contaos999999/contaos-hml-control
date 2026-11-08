@@ -1,0 +1,59 @@
+Browser tab: 4, Title: "Trilha de auditoria — ContaOS", URL: "https://scope-and-approval-keeper.lovable.app/administracao/auditoria".
+1 AXWebArea Trilha de auditoria — ContaOS, URL: scope-and-approval-keeper.lovable.app/administracao/auditoria
+	6 container
+		7 image ContaOS
+		8 button (expanded) Description: Recolher menu, Secondary Actions: Collapse
+		9 container Navegação principal
+			10 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+			11 link Description: Contratantes, Value: scope-and-approval-keeper.lovable.app/contratantes
+			12 link Description: Novo contratante, Value: scope-and-approval-keeper.lovable.app/contratantes/novo
+			13 link Description: Contratos, Value: scope-and-approval-keeper.lovable.app/contratos
+			14 link Description: Novo contrato, Value: scope-and-approval-keeper.lovable.app/contratos/novo
+			15 link Description: Organizações, Value: scope-and-approval-keeper.lovable.app/selecionar-organizacao
+		16 container Administração
+			17 link Description: Usuários, Value: scope-and-approval-keeper.lovable.app/administracao/usuarios
+			18 link Description: Auditoria, Value: scope-and-approval-keeper.lovable.app/administracao/auditoria
+	19 container
+		20 heading Trilha de auditoria, Value: 1
+			21 text Trilha de auditoria
+		22 text Histórico de eventos da organização. Informações sensíveis não são exibidas.
+		23 container Filtros de auditoria
+			24 container
+				25 text Evento
+				26 text field (settable) Evento
+			27 container
+				28 text Entidade
+				29 text field (settable) Entidade
+			30 container
+				31 text ID do usuário
+				32 text field (settable) ID do usuário
+			33 container
+				34 text Correlation ID
+				35 text field (settable) Correlation ID
+			36 container
+				37 text Data inicial
+				38 date field (settable) Data inicial
+					39 container
+						40 stepper
+						41 stepper
+						42 stepper
+					43 pop up button Show date picker Show date picker
+			44 container
+				45 text Data final
+				46 date field (settable) Data final
+					47 container
+						48 stepper
+						49 stepper
+						50 stepper
+					51 pop up button Show date picker Show date picker
+		52 text Nenhum evento encontrado para os filtros selecionados.
+		53 container Paginação da auditoria
+			54 button (disabled) Anterior
+			55 container
+				56 text Página  1
+			57 button (disabled) Próxima
+	3 container Description: Edit with Lovable, ID: lovable-badge
+		4 link Description: Edit with Lovable, Value: lovable.dev/projects/lovp_3xrb28czks9c8syb56xk9mkhx3?utm_source=lovable-badge, ID: lovable-badge-cta
+		5 button Description: Dismiss, ID: lovable-badge-close
+
+The focused UI element is 1 AXWebArea Trilha de auditoria — ContaOS, URL: scope-and-approval-keeper.lovable.app/administracao/auditoria

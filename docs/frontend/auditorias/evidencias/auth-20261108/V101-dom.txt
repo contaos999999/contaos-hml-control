@@ -1,0 +1,49 @@
+Browser tab: 4, Title: "Contratantes — ContaOS", URL: "https://scope-and-approval-keeper.lovable.app/contratantes".
+1 AXWebArea Contratantes — ContaOS, URL: scope-and-approval-keeper.lovable.app/contratantes
+	20 container
+		21 image ContaOS
+		22 button (expanded) Description: Recolher menu, Secondary Actions: Collapse
+		23 container Navegação principal
+			24 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+			25 link Description: Contratantes, Value: scope-and-approval-keeper.lovable.app/contratantes
+			26 link Description: Novo contratante, Value: scope-and-approval-keeper.lovable.app/contratantes/novo
+			27 link Description: Contratos, Value: scope-and-approval-keeper.lovable.app/contratos
+			28 link Description: Novo contrato, Value: scope-and-approval-keeper.lovable.app/contratos/novo
+			29 link Description: Organizações, Value: scope-and-approval-keeper.lovable.app/selecionar-organizacao
+		30 container Administração
+			31 link Description: Usuários, Value: scope-and-approval-keeper.lovable.app/administracao/usuarios
+			32 link Description: Auditoria, Value: scope-and-approval-keeper.lovable.app/administracao/auditoria
+	2 container
+		3 image ContaOS
+		4 container Navegação
+			5 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+			6 link Description: Selecionar organização, Value: scope-and-approval-keeper.lovable.app/selecionar-organizacao
+			7 button Sair
+	8 container
+		9 text CADASTROS
+		10 heading Contratantes, Value: 1
+			11 text Contratantes
+		12 text Consulte os contratantes cadastrados na organização selecionada.
+		33 container FILTROS
+			34 heading FILTROS, Value: 2, ID: v101-filtros
+				35 text FILTROS
+			36 container
+				37 text Buscar por razão social, nome fantasia ou documento
+				38 search text field (settable) Buscar por razão social, nome fantasia ou documento, ID: v101-busca
+			39 container
+				40 text Situação
+				41 pop up button (collapsed, settable) Situação, Value: Todos, ID: v101-situacao, Secondary Actions: Expand
+					42 menu
+						43 (selected) Todos
+						44 Ativos
+						45 Inativos
+			46 button (disabled) Limpar filtros
+		13 container CONTRATANTES CADASTRADOS
+			14 heading CONTRATANTES CADASTRADOS, Value: 2, ID: v101-lista
+				15 text CONTRATANTES CADASTRADOS
+			47 text Nenhum contratante cadastrado nesta organização.
+	17 container Description: Edit with Lovable, ID: lovable-badge
+		18 link Description: Edit with Lovable, Value: lovable.dev/projects/lovp_3xrb28czks9c8syb56xk9mkhx3?utm_source=lovable-badge, ID: lovable-badge-cta
+		19 button Description: Dismiss, ID: lovable-badge-close
+
+The focused UI element is 1 AXWebArea Contratantes — ContaOS, URL: scope-and-approval-keeper.lovable.app/contratantes

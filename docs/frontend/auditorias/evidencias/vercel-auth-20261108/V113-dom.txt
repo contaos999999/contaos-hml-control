@@ -1,0 +1,84 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+    - group "Contexto atual":
+      - paragraph: Contexto atual
+      - link "Resumo do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+        - generic: Resumo do contrato
+      - link "Base normativa":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa
+        - generic: Base normativa
+      - link "Orçamento":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/orcamento
+        - generic: Orçamento
+      - link "Regras de conformidade":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras
+        - generic: Regras de conformidade
+      - link "Documentos do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+        - generic: Documentos do contrato
+      - link "Competências do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+        - generic: Competências do contrato
+      - link "Nova competência":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias/nova
+        - generic: Nova competência
+      - link "Histórico do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico
+        - generic: Histórico do contrato
+      - link "Importar histórico":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico/importar
+        - generic: Importar histórico
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página":
+  - navigation "Navegação":
+    - link "Voltar para contratos":
+      - /url: /contratos
+      - text: Voltar para contratos
+- main:
+  - paragraph: Contrato AUD-A-VERCEL-20261108
+  - heading "Nova competência" [level=1]
+  - form "Dados da competência":
+    - heading "Dados da competência" [level=2]
+    - text: Competência (mês/ano)
+    - textbox "Competência (mês/ano)"
+    - paragraph: Formato MM/AAAA. O período e os requisitos são definidos pelo sistema.
+    - link "Cancelar":
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+    - button "Criar competência"

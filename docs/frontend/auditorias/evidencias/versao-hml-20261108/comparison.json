@@ -1,0 +1,51 @@
+{
+  "verdict": "DIFERENTE_DO_BUILD_DA_MAIN",
+  "main_commit": "45104916895a1f0972ecec2eec9a541dbd4e0b97",
+  "main_entry": {
+    "path": "assets/index-CrkggL7D.js",
+    "sha256": "f16568e5cacab8cbe739909c6c4489c18494b25c7cabcb320408811569479b8b",
+    "bytes": 322713
+  },
+  "published_entry": {
+    "url": "https://scope-and-approval-keeper.lovable.app/assets/index-CjzqjoMJ.js",
+    "file": "index-CjzqjoMJ.js",
+    "bytes": 318007,
+    "sha256": "cbce6433c598f440012543f62e36c5f0bef7986ed198952496bd0d7f2beccc54"
+  },
+  "lovable_metadata_commit": "935bb96e3d73f7f7d1a8585a4e677db5dd92a379",
+  "lovable_metadata_commit_rebuilt_entry": {
+    "path": "assets/index-DMDJ_yWG.js",
+    "sha256": "7a60581b492db06dd5396ec47768b2efc02b45c2a9f0d08e83c293ace0e8ed18",
+    "bytes": 321658
+  },
+  "published_modules_obtained": 108,
+  "published_module_bytes": 1345822,
+  "same_path_and_sha_modules": 21,
+  "marker_checks": {
+    "Organização atual": {
+      "main": [
+        "assets/index-CrkggL7D.js"
+      ],
+      "published_discovered_graph": []
+    },
+    "Confirmando organização": {
+      "main": [
+        "assets/index-CrkggL7D.js"
+      ],
+      "published_discovered_graph": []
+    },
+    "Não foi possível confirmar a organização.": {
+      "main": [
+        "assets/index-CrkggL7D.js"
+      ],
+      "published_discovered_graph": []
+    }
+  },
+  "actual_published_git_commit": "NAO_IDENTIFICADO",
+  "deployment_header_mapped_to_git_commit": false,
+  "limits": [
+    "Build local pode diferir por ambiente, mas a diferença de cabeçalho é também observada na auditoria autenticada.",
+    "Grafo estático descoberto por literais de caminhos; não é rastreamento exaustivo de rede em runtime.",
+    "x-deployment-id obtido, sem mapeamento comprovado para um SHA Git."
+  ]
+}

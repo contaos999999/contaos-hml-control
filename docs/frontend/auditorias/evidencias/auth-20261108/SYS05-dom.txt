@@ -1,0 +1,73 @@
+Browser tab: 4, Title: "Painel da organização — ContaOS", URL: "https://scope-and-approval-keeper.lovable.app/".
+1 AXWebArea Painel da organização — ContaOS, URL: scope-and-approval-keeper.lovable.app/
+	13 container
+		14 image ContaOS
+		15 button (expanded) Description: Recolher menu, Secondary Actions: Collapse
+		16 container Navegação principal
+			17 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+			18 link Description: Contratantes, Value: scope-and-approval-keeper.lovable.app/contratantes
+			19 link Description: Novo contratante, Value: scope-and-approval-keeper.lovable.app/contratantes/novo
+			20 link Description: Contratos, Value: scope-and-approval-keeper.lovable.app/contratos
+			21 link Description: Novo contrato, Value: scope-and-approval-keeper.lovable.app/contratos/novo
+			22 link Description: Organizações, Value: scope-and-approval-keeper.lovable.app/selecionar-organizacao
+		23 container Administração
+			24 link Description: Usuários, Value: scope-and-approval-keeper.lovable.app/administracao/usuarios
+			25 link Description: Auditoria, Value: scope-and-approval-keeper.lovable.app/administracao/auditoria
+	2 container
+		26 text ContaOS HML Teste • Situação:  ativa
+		3 link Description: Trocar organização, Value: scope-and-approval-keeper.lovable.app/selecionar-organizacao
+		4 button Sair
+	5 container
+		6 text VISÃO GERAL
+		7 heading Painel da organização, Value: 1
+			8 text Painel da organização
+		27 text Atualizado em  07/11/2026 23:55:09 Ainda não há contratos ou itens visíveis para esta organização.
+		28 container Indicadores de resumo
+			29 heading Indicadores de resumo, Value: 2, ID: sys05-kpis
+				30 text Indicadores de resumo
+			31 definition list
+				32 container Contratos visíveis Sobre Contratos visíveis
+					33 text Contratos visíveis
+					34 button Sobre Contratos visíveis
+				35 text 0
+				36 container Contratos ativos Sobre Contratos ativos
+					37 text Contratos ativos
+					38 button Sobre Contratos ativos
+				39 text 0
+				40 container Competências em fluxo Sobre Competências em fluxo
+					41 text Competências em fluxo
+					42 button Sobre Competências em fluxo
+				43 text 0
+				44 container Competências que exigem atenção Sobre Competências que exigem atenção
+					45 text Competências que exigem atenção
+					46 button Sobre Competências que exigem atenção
+				47 text 0
+				48 container Itens com prazo vencido Sobre Itens com prazo vencido
+					49 text Itens com prazo vencido
+					50 button Sobre Itens com prazo vencido
+				51 text 0
+				52 container Atenções abertas Sobre Atenções abertas
+					53 text Atenções abertas
+					54 button Sobre Atenções abertas
+				55 text 0
+		56 container CONTRATOS POR SITUAÇÃO
+			57 heading CONTRATOS POR SITUAÇÃO, Value: 2, ID: sys05-contratos
+				58 text CONTRATOS POR SITUAÇÃO
+			59 text Nenhum item no momento.
+		60 container COMPETÊNCIAS POR SITUAÇÃO
+			61 heading COMPETÊNCIAS POR SITUAÇÃO, Value: 2, ID: sys05-competencias
+				62 text COMPETÊNCIAS POR SITUAÇÃO
+			63 text Nenhum item no momento.
+		64 container PRÓXIMOS PRAZOS
+			65 heading PRÓXIMOS PRAZOS, Value: 2, ID: sys05-prazos
+				66 text PRÓXIMOS PRAZOS
+			67 text Nenhum item no momento.
+		68 container ATENÇÕES PRIORITÁRIAS
+			69 heading ATENÇÕES PRIORITÁRIAS, Value: 2, ID: sys05-atencoes
+				70 text ATENÇÕES PRIORITÁRIAS
+			71 text Nenhum item no momento.
+	10 container Description: Edit with Lovable, ID: lovable-badge
+		11 link Description: Edit with Lovable, Value: lovable.dev/projects/lovp_3xrb28czks9c8syb56xk9mkhx3?utm_source=lovable-badge, ID: lovable-badge-cta
+		12 button Description: Dismiss, ID: lovable-badge-close
+
+The focused UI element is 1 AXWebArea Painel da organização — ContaOS, URL: scope-and-approval-keeper.lovable.app/

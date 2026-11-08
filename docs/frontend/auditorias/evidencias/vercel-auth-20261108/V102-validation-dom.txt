@@ -1,0 +1,77 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- main:
+  - paragraph: Cadastros
+  - heading "Novo contratante" [level=1]
+  - paragraph: Cadastre um contratante na organização selecionada.
+  - form "Dados do contratante":
+    - heading "Dados do contratante" [level=2]
+    - alert:
+      - text: Revise os campos destacados antes de salvar.
+    - generic: Razão social *
+    - textbox "Razão social" [active]
+    - paragraph: Informe a razão social.
+    - generic: Tipo de pessoa *
+    - combobox "Tipo de pessoa":
+      - option "Selecione" [selected]
+      - option "Pessoa jurídica"
+      - option "Pessoa física"
+      - option "Órgão público"
+      - option "Outro"
+    - paragraph: Selecione o tipo de pessoa.
+    - generic: Documento
+    - button "Sobre Documento":
+    - textbox "Documento"
+    - text: Nome fantasia
+    - textbox "Nome fantasia"
+    - generic: E-mail
+    - button "Sobre Contato":
+    - textbox "E-mail"
+    - text: Telefone
+    - textbox "Telefone":
+      - /placeholder: (11) 91234-5678
+    - text: Situação
+    - combobox "Situação":
+      - option "Ativo" [selected]
+      - option "Inativo"
+    - paragraph: "* Campos obrigatórios."
+    - link "Cancelar":
+      - /url: /contratantes
+    - button "Salvar"

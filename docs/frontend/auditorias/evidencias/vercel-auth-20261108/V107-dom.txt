@@ -1,0 +1,108 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+    - group "Contexto atual":
+      - paragraph: Contexto atual
+      - link "Resumo do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+        - generic: Resumo do contrato
+      - link "Base normativa":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa
+        - generic: Base normativa
+      - link "Orçamento":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/orcamento
+        - generic: Orçamento
+      - link "Regras de conformidade":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras
+        - generic: Regras de conformidade
+      - link "Documentos do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+        - generic: Documentos do contrato
+      - link "Competências do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+        - generic: Competências do contrato
+      - link "Nova competência":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias/nova
+        - generic: Nova competência
+      - link "Histórico do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico
+        - generic: Histórico do contrato
+      - link "Importar histórico":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico/importar
+        - generic: Importar histórico
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página":
+  - navigation "Navegação":
+    - link "Voltar para contratos":
+      - /url: /contratos
+      - text: Voltar para contratos
+- main:
+  - paragraph: Contrato AUD-A-VERCEL-20261108
+  - heading "Base normativa" [level=1]
+  - navigation "Seções do contrato":
+    - list:
+      - link "Visão geral":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+      - generic: Base normativa
+      - link "Orçamento":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/orcamento
+      - link "Regras":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras
+      - link "Documentos":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+      - link "Competências":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+  - status
+  - region "Fontes normativas":
+    - heading "Fontes normativas" [level=2]
+    - paragraph: Fontes do contrato e globais da organização. Fonte global só se aplica a este contrato com aplicabilidade aprovada.
+    - button "Nova fonte"
+    - text: Escopo
+    - combobox "Escopo":
+      - option "Todos" [selected]
+      - option "Do contrato"
+      - option "Globais da organização"
+    - text: Situação
+    - combobox "Situação":
+      - option "Todas" [selected]
+      - option "rascunho"
+      - option "ativa"
+      - option "inativa"
+      - option "revogada"
+    - paragraph: Nenhuma fonte normativa encontrada para os filtros selecionados.
+  - paragraph: "Cadastro e edição de fontes e versões: administrador, gestor de contrato ou jurídico/conformidade. Aprovação de versão e aplicabilidade: administrador ou direção aprovadora. Mudança de situação: administrador. A permissão final é sempre verificada pelo servidor."

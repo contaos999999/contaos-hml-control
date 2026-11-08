@@ -1,0 +1,86 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- main:
+  - paragraph: Cadastros
+  - heading "Contratantes" [level=1]
+  - paragraph: Consulte os contratantes cadastrados na organização selecionada.
+  - region "Filtros":
+    - heading "Filtros" [level=2]
+    - text: Buscar por razão social, nome fantasia ou documento
+    - searchbox "Buscar por razão social, nome fantasia ou documento"
+    - text: Situação
+    - combobox "Situação":
+      - option "Todos" [selected]
+      - option "Ativos"
+      - option "Inativos"
+    - button "Limpar filtros" [disabled]
+  - region "Contratantes cadastrados":
+    - heading "Contratantes cadastrados" [level=2]
+    - paragraph: 1 contratante(s)
+    - table "Contratantes da organização selecionada":
+      - caption: Contratantes da organização selecionada
+      - rowgroup:
+        - row "Razão social Nome fantasia Documento Tipo Situação Sobre Situação Atualizado em":
+          - columnheader "Razão social"
+          - columnheader "Nome fantasia"
+          - columnheader "Documento"
+          - columnheader "Tipo"
+          - columnheader "Situação Sobre Situação":
+            - text: Situação
+            - button "Sobre Situação":
+          - columnheader "Atualizado em"
+      - rowgroup:
+        - row "Abrir cadastro de AUDITORIA TRILHA A VERCEL 20261108 Registro sintético para testes autenticados HML Não informado Outro Ativo 08/11/2026 00:58":
+          - cell "Abrir cadastro de AUDITORIA TRILHA A VERCEL 20261108":
+            - link "Abrir cadastro de AUDITORIA TRILHA A VERCEL 20261108":
+              - /url: /contratantes/041ebf9f-5e32-4744-80d6-d745fa5fc483/editar
+              - text: AUDITORIA TRILHA A VERCEL 20261108
+          - cell "Registro sintético para testes autenticados HML"
+          - cell "Não informado"
+          - cell "Outro"
+          - cell "Ativo":
+            - text: Ativo
+          - cell "08/11/2026 00:58"
+    - navigation "Paginação":
+      - paragraph: Página 1 de 1
+      - button "Anterior" [disabled]:
+        - text: Anterior
+      - button "Próxima" [disabled]:
+        - text: Próxima

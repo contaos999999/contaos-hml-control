@@ -1,0 +1,57 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- main:
+  - paragraph: Cadastros
+  - heading "Contratantes" [level=1]
+  - paragraph: Consulte os contratantes cadastrados na organização selecionada.
+  - region "Filtros":
+    - heading "Filtros" [level=2]
+    - text: Buscar por razão social, nome fantasia ou documento
+    - searchbox "Buscar por razão social, nome fantasia ou documento"
+    - text: Situação
+    - combobox "Situação":
+      - option "Todos" [selected]
+      - option "Ativos"
+      - option "Inativos"
+    - button "Limpar filtros" [disabled]
+  - region "Contratantes cadastrados":
+    - heading "Contratantes cadastrados" [level=2]
+    - paragraph
+    - status: Nenhum contratante cadastrado nesta organização.
