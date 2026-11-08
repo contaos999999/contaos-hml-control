@@ -2727,7 +2727,7 @@ export async function runCli(args = process.argv.slice(2)) {
   if (["--request-preflight", "--request-revalidate"].includes(args[0]))
     return singleRequestCli(args[0]);
   if (process.env.GITHUB_EVENT_NAME === "workflow_run" && args[0] !== "--native-guard") {
-    await loadSingleRequestProof({operation:process.env.CONTAOS_REQUEST_OPERATION});
+    await loadSingleRequestProof({ operation: process.env.CONTAOS_REQUEST_OPERATION });
   }
   if (args[0] === "--native-guard") return nativeGuard();
   if (args[0] === "--audit") return runAuthenticatedAudit();
@@ -4846,7 +4846,12 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
 export function singleRequestGet({ token, publicOnly, fetchImpl = fetch, now = Date.now }) {
   const deadline = now() + 60000;
   return async (path) => {
-    if (path !== "" && !/^\/(?:actions\/|git\/ref\/heads\/main$|commits\/[a-f0-9]{40}\/pulls\?|pulls\/\d+(?:\/reviews\?|$))/.test(path))
+    if (
+      path !== "" &&
+      !/^\/(?:actions\/|git\/ref\/heads\/main$|commits\/[a-f0-9]{40}\/pulls\?|pulls\/\d+(?:\/reviews\?|$))/.test(
+        path,
+      )
+    )
       fail("REQUEST_API_PATH");
     const remaining = deadline - now();
     if (remaining <= 0) fail("REQUEST_API_TIMEOUT");
@@ -4959,13 +4964,29 @@ export async function verifySingleRequest({
     operation,
     mainSha: main.object?.sha,
   });
-  const associated=await listSingleRequestRows(page=>get("/commits/"+sha+"/pulls?per_page=100&page="+page));
-  if(associated.length!==1 || !Number.isSafeInteger(associated[0].number))fail("REQUEST_PULL");
-  const pull=await get("/pulls/"+associated[0].number);
-  const reviews=await listSingleRequestRows(page=>get("/pulls/"+pull.number+"/reviews?per_page=100&page="+page));
-  const ci=await listSingleRequestRuns(page=>get("/actions/runs?head_sha="+pull.head.sha+"&event=pull_request&per_page=100&page="+page));
-  const secondParent=(await git(["rev-list","--parents","-n","1",sha])).trim().split(" ")[2];
-  const pullProof=validateSingleRequestPull({pull,associated,reviews,ci,request,sha,secondParent});
+  const associated = await listSingleRequestRows((page) =>
+    get("/commits/" + sha + "/pulls?per_page=100&page=" + page),
+  );
+  if (associated.length !== 1 || !Number.isSafeInteger(associated[0].number)) fail("REQUEST_PULL");
+  const pull = await get("/pulls/" + associated[0].number);
+  const reviews = await listSingleRequestRows((page) =>
+    get("/pulls/" + pull.number + "/reviews?per_page=100&page=" + page),
+  );
+  const ci = await listSingleRequestRuns((page) =>
+    get(
+      "/actions/runs?head_sha=" + pull.head.sha + "&event=pull_request&per_page=100&page=" + page,
+    ),
+  );
+  const secondParent = (await git(["rev-list", "--parents", "-n", "1", sha])).trim().split(" ")[2];
+  const pullProof = validateSingleRequestPull({
+    pull,
+    associated,
+    reviews,
+    ci,
+    request,
+    sha,
+    secondParent,
+  });
   const runs = await listSingleRequestRuns((page) =>
     get("/actions/workflows/" + expected.id + "/runs?per_page=100&page=" + page),
   );
@@ -5023,7 +5044,7 @@ export async function verifySingleRequest({
     upstreamId,
     currentRunId: current.id,
     parentSha: request.approved_parent_sha,
-    requestSha256:digest(raw),
+    requestSha256: digest(raw),
     ...pullProof,
   };
 }
@@ -5049,69 +5070,203 @@ async function singleRequestCli(mode) {
         .join(""),
     );
   }
-  if(mode==="--request-revalidate" && result.selected && !result.manual){
-    await mkdir(".audit-work",{recursive:true,mode:0o700});
-    const proof={schema:"contaos.single-request.runtime.v1",createdAt:Date.now(),...result,identity:await harnessIdentity()};
-    await writeFile(".audit-work/single-request.json",JSON.stringify(proof),{mode:0o600});
+  if (mode === "--request-revalidate" && result.selected && !result.manual) {
+    await mkdir(".audit-work", { recursive: true, mode: 0o700 });
+    const proof = {
+      schema: "contaos.single-request.runtime.v1",
+      createdAt: Date.now(),
+      ...result,
+      identity: await harnessIdentity(),
+    };
+    await writeFile(".audit-work/single-request.json", JSON.stringify(proof), { mode: 0o600 });
   }
   console.log(JSON.stringify({ phase: "SINGLE_REQUEST", ...result }));
 }
 
 export async function listSingleRequestRows(getPage) {
- const rows=[],ids=new Set();
- for(let page=1;page<=10;page++){
-  const part=await getPage(page);if(!Array.isArray(part)||part.length>100)fail("REQUEST_PAGINATION");
-  for(const row of part){if(!Number.isSafeInteger(row?.id)||ids.has(row.id))fail("REQUEST_PAGINATION");ids.add(row.id);rows.push(row);}
-  if(part.length<100)return rows;
- }
- fail("REQUEST_PAGINATION");
+  const rows = [],
+    ids = new Set();
+  for (let page = 1; page <= 10; page++) {
+    const part = await getPage(page);
+    if (!Array.isArray(part) || part.length > 100) fail("REQUEST_PAGINATION");
+    for (const row of part) {
+      if (!Number.isSafeInteger(row?.id) || ids.has(row.id)) fail("REQUEST_PAGINATION");
+      ids.add(row.id);
+      rows.push(row);
+    }
+    if (part.length < 100) return rows;
+  }
+  fail("REQUEST_PAGINATION");
 }
-export function validateSingleRequestPull({pull,associated,reviews,ci,request,sha,secondParent}) {
- const repo=SINGLE_REQUEST.repository;
- if(!Array.isArray(associated)||associated.length!==1 || associated[0].number!==pull?.number ||
-  !Number.isSafeInteger(pull.number)||pull.number<=0 || pull.merged!==true || pull.state!=="closed" || !pull.merged_at ||
-  pull.merge_commit_sha!==sha || pull.base?.ref!=="main" || pull.base.repo?.full_name!==repo ||
-  pull.base.sha!==request.approved_parent_sha || pull.head?.repo?.full_name!==repo ||
-  pull.head.sha!==secondParent || !hash40(pull.head.sha) || pull.changed_files!==1)fail("REQUEST_PULL");
- const expected=JSON.stringify({schema:"contaos.single-request.review.v1",request_id:request.request_id,head_sha:pull.head.sha,critical:0,important:0,decision:"APROVAVEL"});
- const latest=reviews.filter(r=>r.user?.login==="contaos9999"&&r.commit_id===pull.head.sha).sort((a,b)=>b.id-a.id)[0];
- if(!latest || latest.state!=="COMMENTED" || latest.body?.trim()!==expected || !latest.submitted_at)fail("REQUEST_REVIEW");
- for(const spec of [{id:SINGLE_REQUEST.upstreamId,name:SINGLE_REQUEST.upstreamName,path:SINGLE_REQUEST.upstreamPath},
-   {id:410005553,name:"ContaOS LOCK-TYPES-01 Double Barrier",path:".github/workflows/lock-types-double-barrier.yml"}]){
-   const latestRun=ci.filter(r=>r.workflow_id===spec.id).sort((a,b)=>b.id-a.id)[0];
-   if(!latestRun || latestRun.name!==spec.name || latestRun.path!==spec.path || latestRun.head_sha!==pull.head.sha ||
-    latestRun.event!=="pull_request" || latestRun.head_branch!==pull.head.ref || latestRun.repository?.full_name!==repo ||
-    latestRun.head_repository?.full_name!==repo || latestRun.status!=="completed" || latestRun.conclusion!=="success")fail("REQUEST_REQUIRED_CI");
- }
- return {pullNumber:pull.number,headSha:pull.head.sha,reviewId:latest.id};
+export function validateSingleRequestPull({
+  pull,
+  associated,
+  reviews,
+  ci,
+  request,
+  sha,
+  secondParent,
+}) {
+  const repo = SINGLE_REQUEST.repository;
+  if (
+    !Array.isArray(associated) ||
+    associated.length !== 1 ||
+    associated[0].number !== pull?.number ||
+    !Number.isSafeInteger(pull.number) ||
+    pull.number <= 0 ||
+    pull.merged !== true ||
+    pull.state !== "closed" ||
+    !pull.merged_at ||
+    pull.merge_commit_sha !== sha ||
+    pull.base?.ref !== "main" ||
+    pull.base.repo?.full_name !== repo ||
+    pull.base.sha !== request.approved_parent_sha ||
+    pull.head?.repo?.full_name !== repo ||
+    pull.head.sha !== secondParent ||
+    !hash40(pull.head.sha) ||
+    pull.changed_files !== 1
+  )
+    fail("REQUEST_PULL");
+  const expected = JSON.stringify({
+    schema: "contaos.single-request.review.v1",
+    request_id: request.request_id,
+    head_sha: pull.head.sha,
+    critical: 0,
+    important: 0,
+    decision: "APROVAVEL",
+  });
+  const latest = reviews
+    .filter((r) => r.user?.login === "contaos9999" && r.commit_id === pull.head.sha)
+    .sort((a, b) => b.id - a.id)[0];
+  if (
+    !latest ||
+    latest.state !== "COMMENTED" ||
+    latest.body?.trim() !== expected ||
+    !latest.submitted_at
+  )
+    fail("REQUEST_REVIEW");
+  for (const spec of [
+    {
+      id: SINGLE_REQUEST.upstreamId,
+      name: SINGLE_REQUEST.upstreamName,
+      path: SINGLE_REQUEST.upstreamPath,
+    },
+    {
+      id: 410005553,
+      name: "ContaOS LOCK-TYPES-01 Double Barrier",
+      path: ".github/workflows/lock-types-double-barrier.yml",
+    },
+  ]) {
+    const latestRun = ci.filter((r) => r.workflow_id === spec.id).sort((a, b) => b.id - a.id)[0];
+    if (
+      !latestRun ||
+      latestRun.name !== spec.name ||
+      latestRun.path !== spec.path ||
+      latestRun.head_sha !== pull.head.sha ||
+      latestRun.event !== "pull_request" ||
+      latestRun.head_branch !== pull.head.ref ||
+      latestRun.repository?.full_name !== repo ||
+      latestRun.head_repository?.full_name !== repo ||
+      latestRun.status !== "completed" ||
+      latestRun.conclusion !== "success"
+    )
+      fail("REQUEST_REQUIRED_CI");
+  }
+  return { pullNumber: pull.number, headSha: pull.head.sha, reviewId: latest.id };
 }
 
-export async function loadSingleRequestProof({operation,env=process.env,read=readFile,stat=lstat,git,identity=harnessIdentity,now=Date.now,fresh=false}) {
- singleRequestContext=null;
- if(env.GITHUB_EVENT_NAME==="workflow_dispatch"){
-   if(env.GITHUB_REF!=="refs/heads/main")fail("REQUEST_EVENT");return true;
- }
- requireSingleRequestOperation(operation);
- if(env.GITHUB_EVENT_NAME!=="workflow_run"||env.GITHUB_REF!=="refs/heads/main"||env.GITHUB_REPOSITORY!==SINGLE_REQUEST.repository||env.GITHUB_RUN_ATTEMPT!=="1")fail("REQUEST_EVENT");
- const root=fileURLToPath(new URL("../../",import.meta.url));
- const proofPath=join(root,".audit-work/single-request.json"),info=await stat(proofPath);
- if(!info.isFile()||info.isSymbolicLink()||info.size>8192)fail("REQUEST_RUNTIME");
- let proof;try{proof=JSON.parse(await read(proofPath,"utf8"));}catch{fail("REQUEST_RUNTIME");}
- const actual=await identity();
- if(proof.schema!=="contaos.single-request.runtime.v1" || proof.selected!==true || proof.operation!==operation ||
-  proof.sha!==env.CONTAOS_HARNESS_SHA || proof.currentRunId!==Number(env.GITHUB_RUN_ID) ||
-  !Number.isSafeInteger(proof.createdAt)||proof.createdAt>now()||now()-proof.createdAt>(fresh?30000:4800000)||
-  proof.identity?.harnessSha!==actual.harnessSha || proof.identity?.moduleHash!==actual.moduleHash ||
-  proof.identity?.testHash!==actual.testHash || actual.harnessSha!==proof.sha)fail("REQUEST_RUNTIME");
- const raw=await read(join(root,SINGLE_REQUEST.path),"utf8"),request=parseSingleRequest(raw,operation);
- if(digest(raw)!==proof.requestSha256 || request.request_id!==proof.requestId || request.frontend_sha!==proof.frontendSha ||
- request.deployment_id!==proof.deploymentId || request.approved_parent_sha!==proof.parentSha)fail("REQUEST_RUNTIME");
- git ||= async(args)=>(await execFile("git",args,{cwd:root,env:browserEnvironment(env),maxBuffer:4194304,timeout:10000})).stdout;
- await verifySingleRequestGit(request,proof.sha,git,raw);
- const event=JSON.parse(await read(env.GITHUB_EVENT_PATH,"utf8")),spec=SINGLE_REQUEST[operation];
- const current={id:proof.currentRunId,workflow_id:spec.id,path:spec.path,name:spec.name,event:"workflow_run",head_branch:"main",head_sha:proof.sha,run_attempt:1,repository:{full_name:SINGLE_REQUEST.repository},head_repository:{full_name:SINGLE_REQUEST.repository}};
- if(event.workflow_run?.id!==proof.upstreamId)fail("REQUEST_RUNTIME");
- validateSingleRequestEvent({event,env,upstream:event.workflow_run,current,operation,mainSha:proof.sha});
- singleRequestContext={operation,sha:proof.sha,runId:env.GITHUB_RUN_ID};
- return true;
+export async function loadSingleRequestProof({
+  operation,
+  env = process.env,
+  read = readFile,
+  stat = lstat,
+  git,
+  identity = harnessIdentity,
+  now = Date.now,
+  fresh = false,
+}) {
+  singleRequestContext = null;
+  if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
+    if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
+    return true;
+  }
+  requireSingleRequestOperation(operation);
+  if (
+    env.GITHUB_EVENT_NAME !== "workflow_run" ||
+    env.GITHUB_REF !== "refs/heads/main" ||
+    env.GITHUB_REPOSITORY !== SINGLE_REQUEST.repository ||
+    env.GITHUB_RUN_ATTEMPT !== "1"
+  )
+    fail("REQUEST_EVENT");
+  const root = fileURLToPath(new URL("../../", import.meta.url));
+  const proofPath = join(root, ".audit-work/single-request.json"),
+    info = await stat(proofPath);
+  if (!info.isFile() || info.isSymbolicLink() || info.size > 8192) fail("REQUEST_RUNTIME");
+  let proof;
+  try {
+    proof = JSON.parse(await read(proofPath, "utf8"));
+  } catch {
+    fail("REQUEST_RUNTIME");
+  }
+  const actual = await identity();
+  if (
+    proof.schema !== "contaos.single-request.runtime.v1" ||
+    proof.selected !== true ||
+    proof.operation !== operation ||
+    proof.sha !== env.CONTAOS_HARNESS_SHA ||
+    proof.currentRunId !== Number(env.GITHUB_RUN_ID) ||
+    !Number.isSafeInteger(proof.createdAt) ||
+    proof.createdAt > now() ||
+    now() - proof.createdAt > (fresh ? 30000 : 4800000) ||
+    proof.identity?.harnessSha !== actual.harnessSha ||
+    proof.identity?.moduleHash !== actual.moduleHash ||
+    proof.identity?.testHash !== actual.testHash ||
+    actual.harnessSha !== proof.sha
+  )
+    fail("REQUEST_RUNTIME");
+  const raw = await read(join(root, SINGLE_REQUEST.path), "utf8"),
+    request = parseSingleRequest(raw, operation);
+  if (
+    digest(raw) !== proof.requestSha256 ||
+    request.request_id !== proof.requestId ||
+    request.frontend_sha !== proof.frontendSha ||
+    request.deployment_id !== proof.deploymentId ||
+    request.approved_parent_sha !== proof.parentSha
+  )
+    fail("REQUEST_RUNTIME");
+  git ||= async (args) =>
+    (
+      await execFile("git", args, {
+        cwd: root,
+        env: browserEnvironment(env),
+        maxBuffer: 4194304,
+        timeout: 10000,
+      })
+    ).stdout;
+  await verifySingleRequestGit(request, proof.sha, git, raw);
+  const event = JSON.parse(await read(env.GITHUB_EVENT_PATH, "utf8")),
+    spec = SINGLE_REQUEST[operation];
+  const current = {
+    id: proof.currentRunId,
+    workflow_id: spec.id,
+    path: spec.path,
+    name: spec.name,
+    event: "workflow_run",
+    head_branch: "main",
+    head_sha: proof.sha,
+    run_attempt: 1,
+    repository: { full_name: SINGLE_REQUEST.repository },
+    head_repository: { full_name: SINGLE_REQUEST.repository },
+  };
+  if (event.workflow_run?.id !== proof.upstreamId) fail("REQUEST_RUNTIME");
+  validateSingleRequestEvent({
+    event,
+    env,
+    upstream: event.workflow_run,
+    current,
+    operation,
+    mainSha: proof.sha,
+  });
+  singleRequestContext = { operation, sha: proof.sha, runId: env.GITHUB_RUN_ID };
+  return true;
 }
