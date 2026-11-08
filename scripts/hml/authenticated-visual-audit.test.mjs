@@ -328,6 +328,49 @@ test("sanitização não publica e-mail, documento ou nome fora da fixture", () 
     assert.equal(safe(value, new Set(["organização", "contaos"])), false);
 });
 
+test("catálogo reconhece somente trechos sintéticos exatos já comprovados", () => {
+  const safe = fn("safeArtifactText"), words = new Set();
+  for (const value of [
+    "AUD-A-VERCEL-20261108",
+    "2de433a7-a84c-4575-aa2a-7699d2871b55",
+    "773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103",
+    "Fonte sintética para auditoria autenticada da Trilha A, sem dados pessoais ou efeito real.",
+  ]) assert.equal(safe(value, words), true, value);
+  for (const value of [
+    "AUD-A-VERCEL-20261109", "prefixAUD-A-VERCEL-20261108", "AUD-A-VERCEL-20261108suffix",
+    "pessoais autenticada sintética", "2de433a7-a84c-4575-aa2a-7699d2871b56",
+    "AUD-A-VERCEL-20261108 pessoa.real@example.com", "123.456.789-01", "Bearer eyJhbGc.abc.def",
+  ]) assert.equal(safe(value, words), false);
+});
+
+test("diagnóstico de privacidade contém apenas razões e contadores limitados", () => {
+  const classify = fn("classifyArtifactText");
+  assert.deepEqual(classify("texto permitido", new Set(["texto", "permitido"])), { reason: "ALLOWED", unknownCount: 0 });
+  assert.deepEqual(classify("CANARIO_PRIVADO desconhecido", new Set()), { reason: "UNKNOWN_WORDS", unknownCount: 2 });
+  for (const value of ["pessoa@example.com", "12345678901", "sb_secret_canario"]) {
+    const result = classify(value, new Set([value]));
+    assert.deepEqual(result, { reason: "SENSITIVE_PATTERN", unknownCount: 0 });
+    assert.equal(JSON.stringify(result).includes(value), false);
+  }
+  assert.deepEqual(classify(null, new Set()), { reason: "INVALID_CONTENT", unknownCount: 0 });
+  assert.equal(classify(Array(500).fill("desconhecido").join(" "), new Set()).unknownCount, 233);
+});
+
+test("retomada preserva exatamente os24 casos anteriores sem nova aprovação", () => {
+  const preserved = fn("preservedPrivateCase");
+  const rows = fn("privateCases")();
+  assert.equal(rows.filter(preserved).length, 24);
+  assert.equal(rows.filter(r => !preserved(r)).length, 184);
+  for (const row of rows.filter(preserved)) {
+    const result = preserved(row);
+    assert.equal(result.status, "PRESERVADO_BASELINE");
+    assert.equal(result.baselineRun, 42496235106);
+    assert.equal(fn("validateCase")(result), false);
+  }
+  assert.equal(preserved({surface:"V114", width:999, theme:"light"}), null);
+  assert.equal(preserved({surface:"SYS04", width:390, theme:"dark"}), null);
+});
+
 const publicEnv = {
   VITE_VERCEL_BRANCH_URL: "contaos-41-hml-git-main-contaos9999.vercel.app",
   VITE_VERCEL_DEPLOYMENT_ID: "dpl_fixture123",
