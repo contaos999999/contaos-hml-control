@@ -14,7 +14,7 @@ Plano mestre: `P0_V1_PLANO_UNICO_AUDITORIA_CORRECAO_CERTIFICACAO_2026-11-05.md`,
 
 A Sidebar usa `Link` do TanStack para o menu comum e `<a href>` para destinos contextuais já existentes. Uma âncora HTML comum não delega a transição ao roteador. A hipótese do PLAN é perda da continuidade da aplicação ao navegar pelo contexto, ainda sem reprodução autenticada em HML. **Não tratar hipótese como defeito visual confirmado por screenshot.**
 
-Os testes legados de AppShell/visualShell substituem `Link` por âncora através de mock global; não podem provar essa transição. Por isso o único novo arquivo de teste autorizado usa o roteador real com histórico em memória e a Sidebar real. Não substituir nem enfraquecer os testes anteriores. Rotas sintéticas somente no fixture de teste, nunca no aplicativo.
+Os testes legados de AppShell/visualShell substituem `Link` por âncora através de mock do módulo nos próprios arquivos de teste; não podem provar essa transição. Por isso o único novo arquivo de teste autorizado usa o roteador real com histórico em memória e a Sidebar real. Não substituir nem enfraquecer os testes anteriores. Rotas sintéticas somente no fixture de teste, nunca no aplicativo.
 
 Se não houver RED funcional reproduzível, encerrar a hipótese e não modificar produto. Se houver RED, corrigir somente a integração do link contextual ao roteador, preservando href, destino, rótulo, ordem, capacidades retornadas e callback móvel. Não ampliar para refactor de menu, foco global, estado de sessão ou autorização.
 
