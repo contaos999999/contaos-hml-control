@@ -329,24 +329,38 @@ test("sanitização não publica e-mail, documento ou nome fora da fixture", () 
 });
 
 test("catálogo reconhece somente trechos sintéticos exatos já comprovados", () => {
-  const safe = fn("safeArtifactText"), words = new Set();
+  const safe = fn("safeArtifactText"),
+    words = new Set();
   for (const value of [
     "AUD-A-VERCEL-20261108",
     "2de433a7-a84c-4575-aa2a-7699d2871b55",
     "773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103",
     "Fonte sintética para auditoria autenticada da Trilha A, sem dados pessoais ou efeito real.",
-  ]) assert.equal(safe(value, words), true, value);
+  ])
+    assert.equal(safe(value, words), true, value);
   for (const value of [
-    "AUD-A-VERCEL-20261109", "prefixAUD-A-VERCEL-20261108", "AUD-A-VERCEL-20261108suffix",
-    "pessoais autenticada sintética", "2de433a7-a84c-4575-aa2a-7699d2871b56",
-    "AUD-A-VERCEL-20261108 pessoa.real@example.com", "123.456.789-01", "Bearer eyJhbGc.abc.def",
-  ]) assert.equal(safe(value, words), false);
+    "AUD-A-VERCEL-20261109",
+    "prefixAUD-A-VERCEL-20261108",
+    "AUD-A-VERCEL-20261108suffix",
+    "pessoais autenticada sintética",
+    "2de433a7-a84c-4575-aa2a-7699d2871b56",
+    "AUD-A-VERCEL-20261108 pessoa.real@example.com",
+    "123.456.789-01",
+    "Bearer eyJhbGc.abc.def",
+  ])
+    assert.equal(safe(value, words), false);
 });
 
 test("diagnóstico de privacidade contém apenas razões e contadores limitados", () => {
   const classify = fn("classifyArtifactText");
-  assert.deepEqual(classify("texto permitido", new Set(["texto", "permitido"])), { reason: "ALLOWED", unknownCount: 0 });
-  assert.deepEqual(classify("CANARIO_PRIVADO desconhecido", new Set()), { reason: "UNKNOWN_WORDS", unknownCount: 2 });
+  assert.deepEqual(classify("texto permitido", new Set(["texto", "permitido"])), {
+    reason: "ALLOWED",
+    unknownCount: 0,
+  });
+  assert.deepEqual(classify("CANARIO_PRIVADO desconhecido", new Set()), {
+    reason: "UNKNOWN_WORDS",
+    unknownCount: 2,
+  });
   for (const value of ["pessoa@example.com", "12345678901", "sb_secret_canario"]) {
     const result = classify(value, new Set([value]));
     assert.deepEqual(result, { reason: "SENSITIVE_PATTERN", unknownCount: 0 });
@@ -360,15 +374,52 @@ test("retomada preserva exatamente os24 casos anteriores sem nova aprovação", 
   const preserved = fn("preservedPrivateCase");
   const rows = fn("privateCases")();
   assert.equal(rows.filter(preserved).length, 24);
-  assert.equal(rows.filter(r => !preserved(r)).length, 184);
+  assert.equal(rows.filter((r) => !preserved(r)).length, 184);
   for (const row of rows.filter(preserved)) {
     const result = preserved(row);
     assert.equal(result.status, "PRESERVADO_BASELINE");
     assert.equal(result.baselineRun, 42496235106);
     assert.equal(fn("validateCase")(result), false);
   }
-  assert.equal(preserved({surface:"V114", width:999, theme:"light"}), null);
-  assert.equal(preserved({surface:"SYS04", width:390, theme:"dark"}), null);
+  assert.equal(preserved({ surface: "V114", width: 999, theme: "light" }), null);
+  assert.equal(preserved({ surface: "SYS04", width: 390, theme: "dark" }), null);
+});
+
+test("DOMs sintéticos versionados mantêm origem SHA256 e passam sem catálogo genérico", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const { createHash } = await import("node:crypto");
+  const { resolve } = await import("node:path");
+  const root = resolve(new URL("../../", import.meta.url).pathname);
+  const words = await fn("literalWords")(root);
+  for (const [file, hash] of [
+    ["V107-fonte-dom.txt", "89fa16ff7c7e0a82e4ed79e9bd9612f606ba2c4bddb7adbed1371bddb2dc28d0"],
+    [
+      "V107-fonte-detalhe-dom.txt",
+      "4b3fdb209b8f476d88aedb5e8d21271d6feec31d8aac01fe758be47f28c40a62",
+    ],
+    ["V111-dom.txt", "8e6ed25cabf1c4edbe82c5d95ff0be7f5fddc2a6f29855b32cc05524636ed596"],
+  ]) {
+    const text = await readFile(
+      resolve(root, "docs/frontend/auditorias/evidencias/reancoragem-auth-20261108", file),
+      "utf8",
+    );
+    assert.equal(createHash("sha256").update(text).digest("hex"), hash);
+    assert.equal(fn("safeArtifactText")(text, words), true, file);
+  }
+  const original = await readFile(
+    resolve(
+      root,
+      "docs/frontend/auditorias/evidencias/continuacao-auth-20261108/FONTE_SINTETICA_AUDITORIA_HML.txt",
+    ),
+    "utf8",
+  );
+  assert.equal(
+    createHash("sha256").update(original).digest("hex"),
+    "773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103",
+  );
+  assert.equal(fn("safeArtifactText")(original, new Set()), true);
+  assert.equal(words.has("pessoais"), false);
+  assert.equal(fn("safeArtifactText")("pessoais autenticada sintética", words), false);
 });
 
 const publicEnv = {
