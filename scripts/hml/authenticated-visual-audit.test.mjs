@@ -2426,3 +2426,153 @@ test(
     }
   },
 );
+
+function lifecycleInput(delta = {}) {
+  const identity = { targetId: "own-target", browserContextId: "own-context" },
+    session = { id: "own-session", targetId: "own-target", contextId: "own-context" },
+    network = {
+      requestId: "network-1",
+      frameId: "main-frame",
+      loaderId: "loader-1",
+      type: "Fetch",
+      timestamp: 1,
+      request: { url: HML + "/", method: "GET" },
+    },
+    pause = {
+      requestId: "fetch-1",
+      networkId: "network-1",
+      frameId: "main-frame",
+      resourceType: "Fetch",
+      request: { url: HML + "/", method: "GET" },
+    },
+    terminal = {
+      requestId: "network-1",
+      type: "Fetch",
+      timestamp: 2,
+      canceled: true,
+      errorText: "net::ERR_ABORTED",
+    },
+    error = {
+      code: "CDP_COMMAND",
+      command: "Fetch.continueRequest",
+      protocolCode: -32602,
+      reason: "INVALID_INTERCEPTION",
+    };
+  const tracker = fn("createRequestLifecycle")(identity);
+  tracker.frame(session, { id: "main-frame", loaderId: "loader-1" });
+  tracker.observe(session, "Network.requestWillBeSent", { ...network, ...delta.network });
+  const ticket = tracker.pause(session, { ...pause, ...delta.pause });
+  tracker.sent(ticket);
+  return { tracker, identity, session, network, pause, ticket, terminal, error };
+}
+
+test("ciclo consume somente uma continuação inicial comprovadamente cancelada", async () => {
+  const f = lifecycleInput();
+  f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+  assert.equal(await f.tracker.handleCanceled(f.ticket, f.error), true);
+  assert.equal(await f.tracker.handleCanceled(f.ticket, f.error), false);
+  assert.equal(f.tracker.snapshot().canceled, 1);
+  assert.throws(
+    () => f.tracker.acknowledge(f.ticket),
+    (e) => e.code === "FENCE_REQUEST_LIFECYCLE",
+  );
+  f.tracker.finish(f.ticket);
+  assert.equal(f.tracker.snapshot().active, 0);
+  f.tracker.close();
+});
+for (const [name, change] of [
+  ["canceledfalse", { canceled: false }],
+  ["errodivergente", { errorText: "net::ERR_FAILED" }],
+  ["tipo", { type: "Script" }],
+  ["outrorequest", { requestId: "network-2" }],
+  ["tempoanterior", { timestamp: 0 }],
+  ["temponan", { timestamp: NaN }],
+  ["bloqueio", { blockedReason: "csp" }],
+  ["cors", { corsErrorStatus: { corsError: "InvalidResponse" } }],
+])
+  test("cancelamento recusa terminal " + name, async () => {
+    const f = lifecycleInput();
+    f.tracker.observe(f.session, "Network.loadingFailed", { ...f.terminal, ...change });
+    const running = f.tracker.handleCanceled(f.ticket, f.error);
+    f.tracker.close();
+    assert.equal(await running, false);
+    assert.equal(f.tracker.snapshot().canceled, 0);
+  });
+for (const command of [
+  "Fetch.getResponseBody",
+  "Fetch.continueResponse",
+  "Fetch.fulfillRequest",
+  "Fetch.failRequest",
+])
+  test("cancelamento não ignora erro de " + command, async () => {
+    const f = lifecycleInput();
+    f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+    assert.equal(await f.tracker.handleCanceled(f.ticket, { ...f.error, command }), false);
+    f.tracker.close();
+  });
+test("cancelamento recusa falta de terminal, ack, resposta e nova geração", async () => {
+  for (const condition of ["missing", "ack", "response", "generation", "closed"]) {
+    const f = lifecycleInput();
+    if (condition === "ack") f.tracker.acknowledge(f.ticket);
+    if (condition === "response") f.tracker.observe(f.session, "Network.responseReceived", {requestId:"network-1", type:"Fetch"});
+    if (condition === "generation") f.tracker.observe(f.session, "Network.requestWillBeSent", {...f.network,requestId:"next-document",loaderId:"loader-2",type:"Document"});
+    if (condition !== "missing") f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+    if (condition === "closed") f.tracker.close();
+    const running = f.tracker.handleCanceled(f.ticket, f.error);
+    f.tracker.close();
+    assert.equal(await running, false, condition);
+  }
+});
+
+test("ciclo recusa identidade divergente, redirect, reutilização e pause duplicado", () => {
+  for (const key of ["targetId", "contextId", "id"]) {
+    const f = lifecycleInput();
+    assert.throws(() =>
+      f.tracker.observe({ ...f.session, [key]: "foreign" }, "Network.loadingFailed", f.terminal),
+    );
+    f.tracker.close();
+  }
+  for (const delta of [
+    { frameId: "other" },
+    { networkId: "other" },
+    { request: { url: HML + "/other", method: "GET" } },
+    { resourceType: "Script" },
+  ]) {
+    const f = lifecycleInput();
+    assert.throws(() =>
+      f.tracker.pause(f.session, { ...f.pause, requestId: "new-fetch", ...delta }),
+    );
+    f.tracker.close();
+  }
+  const f = lifecycleInput();
+  assert.throws(() => f.tracker.pause(f.session, f.pause));
+  assert.throws(() => f.tracker.observe(f.session, "Network.requestWillBeSent", f.network));
+  f.tracker.close();
+  const g = lifecycleInput();
+  assert.throws(() =>
+    g.tracker.observe(g.session, "Network.requestWillBeSent", {
+      ...g.network,
+      requestId: "redirect",
+      redirectResponse: { status: 302 },
+    }),
+  );
+  g.tracker.close();
+});
+test("ciclo tem mapas limitados e limpa pendências ao fechar", async () => {
+  const f = lifecycleInput();
+  for (let n = 1; n < 1024; n++)
+    f.tracker.observe(f.session, "Network.requestWillBeSent", {
+      ...f.network,
+      requestId: "bounded-" + n,
+    });
+  assert.throws(() =>
+    f.tracker.observe(f.session, "Network.requestWillBeSent", {
+      ...f.network,
+      requestId: "excess",
+    }),
+  );
+  const waiting = f.tracker.handleCanceled(f.ticket, f.error);
+  f.tracker.close();
+  assert.equal(await waiting, false);
+  assert.equal(f.tracker.snapshot().active, 0);
+});
