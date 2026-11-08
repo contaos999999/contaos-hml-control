@@ -25,3 +25,11 @@ Testar enums/counters limitados e ausência de conteúdo privado em canários, r
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
 
 Nenhuma alteração de marca, assets, estilos, rotas, tipos, dependências, backend ou PROD. GitHub direto; testes privados não substituem72critérios ou certificação. Gates técnicos de planejamento PRD/premissas/arquitetura/atômicos000/085–096/segurança/NFR/Zero-Drift/TDD/TesteC/rollback conferidos; CI deste GATE ainda precisa ser observada antes do BUILD.
+
+## Emenda: causa reproduzida em evidência sintética já aprovada
+
+Comparação local do catálogo atual com três DOMs versionados sob docs/frontend/auditorias/evidencias/reancoragem-auth-20261108 reproduziu desconhecidos sem login novo. SHA256SUMS: V107-fonte-dom.txt89fa16ff7c7e0a82e4ed79e9bd9612f606ba2c4bddb7adbed1371bddb2dc28d0; V107-fonte-detalhe-dom.txt4b3fdb209b8f476d88aedb5e8d21271d6feec31d8aac01fe758be47f28c40a62; V111-dom.txt8e6ed25cabf1c4edbe82c5d95ff0be7f5fddc2a6f29855b32cc05524636ed596. Conferir hashes antes de utilizar.
+
+Esses registros sintéticos comprovam valores ausentes: contrato AUD-A-VERCEL-20261108; protocolo2de433a7-a84c-4575-aa2a-7699d2871b55; hash773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103; hora08:01; descrição "Fonte exclusivamente sintética para auditoria em homologação. Sem efeito jurídico ou financeiro. Vinculação descritiva ao TXT de teste já persistido; não representa análise ou validação de segurança do arquivo."; observação "Fonte sintética para auditoria autenticada da Trilha A, sem dados pessoais ou efeito real."; rótulos ARIA form e MIME text/plain, tamanho285 bytes, etapa documents. Apenas essas constantes exatas podem compor complemento sintético ao catálogo, com evidência de origem anexada e negativos. Não ingerir o DOM inteiro como whitelist nem aceitar futuros valores automaticamente. O texto285bytes do fixture também tem o SHA acima, mas sua inclusão exige conferência do arquivo original e hash; não inferir conteúdo a partir do nome.
+
+RED reproduzir recusa das constantes pelo catálogo anterior e GREEN comprovar aprovação das constantes fechadas; e-mail/CPF/token e identificadores/nomes desconhecidos continuam recusados, inclusive se tentarem aproveitar palavras do catálogo. Enums/contadores diagnosticarão lacunas restantes sem divulgação. Não afirma que todos160 sejam falsos positivos.
