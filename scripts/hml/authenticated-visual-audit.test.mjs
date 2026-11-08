@@ -5056,9 +5056,50 @@ test("solicitacao unica: prova completa, descarte oposto e main obsoleta", async
     repository: repo,
     head_repository: repo,
   };
-  const pull={id:300,number:90,merged:true,state:"closed",merged_at:"2026-11-08T00:00:00Z",merge_commit_sha:sha,changed_files:1,base:{ref:"main",sha:parent,repo},head:{sha:"d".repeat(40),ref:"request/fixtures",repo}};
-  const review={id:301,state:"COMMENTED",user:{login:"contaos9999"},commit_id:pull.head.sha,submitted_at:"2026-11-08T00:00:00Z",body:JSON.stringify({schema:"contaos.single-request.review.v1",request_id:request.request_id,head_sha:pull.head.sha,critical:0,important:0,decision:"APROVAVEL"})};
-  const requiredCi=[{id:501,workflow_id:406076025,name:spec.upstreamName,path:spec.upstreamPath},{id:502,workflow_id:410005553,name:"ContaOS LOCK-TYPES-01 Double Barrier",path:".github/workflows/lock-types-double-barrier.yml"}].map(r=>({...r,head_sha:pull.head.sha,event:"pull_request",head_branch:pull.head.ref,repository:repo,head_repository:repo,status:"completed",conclusion:"success"}));
+  const pull = {
+    id: 300,
+    number: 90,
+    merged: true,
+    state: "closed",
+    merged_at: "2026-11-08T00:00:00Z",
+    merge_commit_sha: sha,
+    changed_files: 1,
+    base: { ref: "main", sha: parent, repo },
+    head: { sha: "d".repeat(40), ref: "request/fixtures", repo },
+  };
+  const review = {
+    id: 301,
+    state: "COMMENTED",
+    user: { login: "contaos9999" },
+    commit_id: pull.head.sha,
+    submitted_at: "2026-11-08T00:00:00Z",
+    body: JSON.stringify({
+      schema: "contaos.single-request.review.v1",
+      request_id: request.request_id,
+      head_sha: pull.head.sha,
+      critical: 0,
+      important: 0,
+      decision: "APROVAVEL",
+    }),
+  };
+  const requiredCi = [
+    { id: 501, workflow_id: 406076025, name: spec.upstreamName, path: spec.upstreamPath },
+    {
+      id: 502,
+      workflow_id: 410005553,
+      name: "ContaOS LOCK-TYPES-01 Double Barrier",
+      path: ".github/workflows/lock-types-double-barrier.yml",
+    },
+  ].map((r) => ({
+    ...r,
+    head_sha: pull.head.sha,
+    event: "pull_request",
+    head_branch: pull.head.ref,
+    repository: repo,
+    head_repository: repo,
+    status: "completed",
+    conclusion: "success",
+  }));
   const env = {
     GITHUB_EVENT_NAME: "workflow_run",
     GITHUB_REF: "refs/heads/main",
@@ -5083,10 +5124,11 @@ test("solicitacao unica: prova completa, descarte oposto e main obsoleta", async
   };
   const get = async (path) => {
     if (path === "") return { ...repo, private: false };
-    if(path.startsWith("/commits/"))return [pull];
-    if(path==="/pulls/90")return pull;
-    if(path.startsWith("/pulls/90/reviews?"))return [review];
-    if(path.startsWith("/actions/runs?head_sha="))return {total_count:requiredCi.length,workflow_runs:requiredCi};
+    if (path.startsWith("/commits/")) return [pull];
+    if (path === "/pulls/90") return pull;
+    if (path.startsWith("/pulls/90/reviews?")) return [review];
+    if (path.startsWith("/actions/runs?head_sha="))
+      return { total_count: requiredCi.length, workflow_runs: requiredCi };
     if (path === "/git/ref/heads/main") return { object: { sha } };
     if (path === "/actions/workflows/" + spec.fixtures.id)
       return { ...spec.fixtures, state: "active" };
@@ -5105,16 +5147,48 @@ test("solicitacao unica: prova completa, descarte oposto e main obsoleta", async
     throw new Error("unexpected API " + path);
   };
   const options = { operation: "fixtures", env, read, stat, git, get, wait: async () => {} };
-  const result=await verify(options);
+  const result = await verify(options);
   assert.equal(result.selected, true);
-  const identity={harnessSha:sha,moduleHash:"e".repeat(64),testHash:"f".repeat(64)};
-  const runtime={schema:"contaos.single-request.runtime.v1",createdAt:100000,...result,identity};
-  const load=fn("loadSingleRequestProof");
-  const local={operation:"fixtures",env,stat,git,identity:async()=>identity,now:()=>100000,fresh:true,
-    read:async(path)=>path.includes(".audit-work/single-request.json")?JSON.stringify(runtime):read(path)};
-  assert.equal(await load(local),true);
-  for(const delta of [{sha:"f".repeat(40)},{currentRunId:93},{requestId:"other"},{requestSha256:"0".repeat(64)},{createdAt:100001},{createdAt:69999},{identity:{...identity,testHash:"0".repeat(64)}}])
-    await assert.rejects(()=>load({...local,read:async(path)=>path.includes(".audit-work/single-request.json")?JSON.stringify({...runtime,...delta}):read(path)}),{code:"REQUEST_RUNTIME"});
+  const identity = { harnessSha: sha, moduleHash: "e".repeat(64), testHash: "f".repeat(64) };
+  const runtime = {
+    schema: "contaos.single-request.runtime.v1",
+    createdAt: 100000,
+    ...result,
+    identity,
+  };
+  const load = fn("loadSingleRequestProof");
+  const local = {
+    operation: "fixtures",
+    env,
+    stat,
+    git,
+    identity: async () => identity,
+    now: () => 100000,
+    fresh: true,
+    read: async (path) =>
+      path.includes(".audit-work/single-request.json") ? JSON.stringify(runtime) : read(path),
+  };
+  assert.equal(await load(local), true);
+  for (const delta of [
+    { sha: "f".repeat(40) },
+    { currentRunId: 93 },
+    { requestId: "other" },
+    { requestSha256: "0".repeat(64) },
+    { createdAt: 100001 },
+    { createdAt: 69999 },
+    { identity: { ...identity, testHash: "0".repeat(64) } },
+  ])
+    await assert.rejects(
+      () =>
+        load({
+          ...local,
+          read: async (path) =>
+            path.includes(".audit-work/single-request.json")
+              ? JSON.stringify({ ...runtime, ...delta })
+              : read(path),
+        }),
+      { code: "REQUEST_RUNTIME" },
+    );
   await load(local);
   assert.equal(sut.singleRequestEventAllowed(env, "fixtures"), true);
   let apiCalls = 0;
@@ -5167,46 +5241,135 @@ test("solicitacao unica: prova completa, descarte oposto e main obsoleta", async
   );
 });
 
-test("solicitacao unica: PR integrado revisao selada e checks obrigatorios",()=>{
- const validate=fn("validateSingleRequestPull"),repo={full_name:"contaos999999/contaos-hml-control"},sha="a".repeat(40),parent="b".repeat(40),head="d".repeat(40);
- const request={request_id:"trilha-a-fixtures-20261108-r1",approved_parent_sha:parent};
- const pull={id:300,number:90,merged:true,state:"closed",merged_at:"2026-11-08T00:00:00Z",merge_commit_sha:sha,changed_files:1,base:{ref:"main",sha:parent,repo},head:{sha:head,ref:"request/fixtures",repo}};
- const review={id:301,state:"COMMENTED",user:{login:"contaos9999"},commit_id:head,submitted_at:"2026-11-08T00:00:00Z",body:JSON.stringify({schema:"contaos.single-request.review.v1",request_id:request.request_id,head_sha:head,critical:0,important:0,decision:"APROVAVEL"})};
- const ci=[{id:501,workflow_id:406076025,name:sut.SINGLE_REQUEST.upstreamName,path:sut.SINGLE_REQUEST.upstreamPath},{id:502,workflow_id:410005553,name:"ContaOS LOCK-TYPES-01 Double Barrier",path:".github/workflows/lock-types-double-barrier.yml"}].map(r=>({...r,head_sha:head,event:"pull_request",head_branch:pull.head.ref,repository:repo,head_repository:repo,status:"completed",conclusion:"success"}));
- const args={pull,associated:[pull],reviews:[review],ci,request,sha,secondParent:head};
- assert.equal(validate(args).pullNumber,90);
- for(const delta of [{associated:[]},{associated:[pull,pull]},{pull:{...pull,merged:false}},{pull:{...pull,merge_commit_sha:parent}},{pull:{...pull,base:{...pull.base,ref:"fork"}}},{pull:{...pull,head:{...pull.head,repo:{full_name:"fork/repo"}}}},{pull:{...pull,changed_files:2}},{secondParent:parent},{reviews:[]},{reviews:[{...review,state:"DISMISSED"}]},{reviews:[{...review,user:{login:"foreign"}}]},{reviews:[{...review,commit_id:parent}]},{reviews:[{...review,body:"APROVAVEL"}]},{reviews:[{...review,body:review.body.replace('"important":0','"important":1')}]},{ci:[ci[0]]},{ci:[ci[0],{...ci[1],conclusion:"failure"}]},{ci:[...ci,{...ci[1],id:600,status:"in_progress",conclusion:null}]}])
-   assert.throws(()=>validate({...args,...delta}));
+test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () => {
+  const validate = fn("validateSingleRequestPull"),
+    repo = { full_name: "contaos999999/contaos-hml-control" },
+    sha = "a".repeat(40),
+    parent = "b".repeat(40),
+    head = "d".repeat(40);
+  const request = { request_id: "trilha-a-fixtures-20261108-r1", approved_parent_sha: parent };
+  const pull = {
+    id: 300,
+    number: 90,
+    merged: true,
+    state: "closed",
+    merged_at: "2026-11-08T00:00:00Z",
+    merge_commit_sha: sha,
+    changed_files: 1,
+    base: { ref: "main", sha: parent, repo },
+    head: { sha: head, ref: "request/fixtures", repo },
+  };
+  const review = {
+    id: 301,
+    state: "COMMENTED",
+    user: { login: "contaos9999" },
+    commit_id: head,
+    submitted_at: "2026-11-08T00:00:00Z",
+    body: JSON.stringify({
+      schema: "contaos.single-request.review.v1",
+      request_id: request.request_id,
+      head_sha: head,
+      critical: 0,
+      important: 0,
+      decision: "APROVAVEL",
+    }),
+  };
+  const ci = [
+    {
+      id: 501,
+      workflow_id: 406076025,
+      name: sut.SINGLE_REQUEST.upstreamName,
+      path: sut.SINGLE_REQUEST.upstreamPath,
+    },
+    {
+      id: 502,
+      workflow_id: 410005553,
+      name: "ContaOS LOCK-TYPES-01 Double Barrier",
+      path: ".github/workflows/lock-types-double-barrier.yml",
+    },
+  ].map((r) => ({
+    ...r,
+    head_sha: head,
+    event: "pull_request",
+    head_branch: pull.head.ref,
+    repository: repo,
+    head_repository: repo,
+    status: "completed",
+    conclusion: "success",
+  }));
+  const args = {
+    pull,
+    associated: [pull],
+    reviews: [review],
+    ci,
+    request,
+    sha,
+    secondParent: head,
+  };
+  assert.equal(validate(args).pullNumber, 90);
+  for (const delta of [
+    { associated: [] },
+    { associated: [pull, pull] },
+    { pull: { ...pull, merged: false } },
+    { pull: { ...pull, merge_commit_sha: parent } },
+    { pull: { ...pull, base: { ...pull.base, ref: "fork" } } },
+    { pull: { ...pull, head: { ...pull.head, repo: { full_name: "fork/repo" } } } },
+    { pull: { ...pull, changed_files: 2 } },
+    { secondParent: parent },
+    { reviews: [] },
+    { reviews: [{ ...review, state: "DISMISSED" }] },
+    { reviews: [{ ...review, user: { login: "foreign" } }] },
+    { reviews: [{ ...review, commit_id: parent }] },
+    { reviews: [{ ...review, body: "APROVAVEL" }] },
+    { reviews: [{ ...review, body: review.body.replace('"important":0', '"important":1') }] },
+    { ci: [ci[0]] },
+    { ci: [ci[0], { ...ci[1], conclusion: "failure" }] },
+    { ci: [...ci, { ...ci[1], id: 600, status: "in_progress", conclusion: null }] },
+  ])
+    assert.throws(() => validate({ ...args, ...delta }));
 });
-test("solicitacao unica: barreira nativa de fork PR antecede checkout e token",async()=>{
- const {readFile}=await import("node:fs/promises");
- const clauses=[
- "github.event_name == 'workflow_run'",
- "github.repository == 'contaos999999/contaos-hml-control'",
- "github.event.action == 'completed'",
- "github.event.workflow_run.event == 'push'",
- "github.event.workflow_run.repository.full_name == 'contaos999999/contaos-hml-control'",
- "github.event.workflow_run.head_repository.full_name == 'contaos999999/contaos-hml-control'",
- "github.event.workflow_run.head_branch == 'main'",
- "github.event.workflow_run.workflow_id == 406076025",
- "github.event.workflow_run.path == '.github/workflows/contaos-frontend-zero-drift.yml'",
- "github.event.workflow_run.name == 'ContaOS Frontend Zero-Drift'",
- "github.event.workflow_run.conclusion == 'success'",
- "github.event.workflow_run.run_attempt == 1",
- "github.run_attempt == '1'",
- "github.event.workflow_run.head_sha == github.sha"
- ];
- for(const file of ["contaos-trilha-a-authenticated.yml","contaos-trilha-a-fixtures.yml"]){
-  const source=await readFile(new URL("../../.github/workflows/"+file,import.meta.url),"utf8");
-  const request=source.slice(source.indexOf("  request:"),source.indexOf("  protocol:"));
-  const nativeIf=request.split("\n").find(l=>l.trimStart().startsWith("if:"));
-  const privateIf=source.slice(source.indexOf("  private:")).split("\n").find(l=>l.trimStart().startsWith("if:"));
-  for(const clause of clauses){assert.ok(nativeIf.includes(clause),file+clause);assert.ok(privateIf.includes(clause),file+clause);}
-  const bootstrap=request.indexOf("Bootstrap publico confiavel");
-  assert.ok(bootstrap>=0&&bootstrap<request.indexOf("uses: actions/checkout"));
-  assert.ok(request.indexOf("body.object?.sha!==sha")<request.indexOf("uses: actions/checkout"));
-  assert.ok(request.indexOf("CONTAOS_ACTIONS_READ_TOKEN:")>request.indexOf("uses: actions/checkout"));
-  const body=request.slice(bootstrap,request.indexOf("uses: actions/checkout"));
-  assert.equal(body.includes("Authorization"),false);
- }
+test("solicitacao unica: barreira nativa de fork PR antecede checkout e token", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const clauses = [
+    "github.event_name == 'workflow_run'",
+    "github.repository == 'contaos999999/contaos-hml-control'",
+    "github.event.action == 'completed'",
+    "github.event.workflow_run.event == 'push'",
+    "github.event.workflow_run.repository.full_name == 'contaos999999/contaos-hml-control'",
+    "github.event.workflow_run.head_repository.full_name == 'contaos999999/contaos-hml-control'",
+    "github.event.workflow_run.head_branch == 'main'",
+    "github.event.workflow_run.workflow_id == 406076025",
+    "github.event.workflow_run.path == '.github/workflows/contaos-frontend-zero-drift.yml'",
+    "github.event.workflow_run.name == 'ContaOS Frontend Zero-Drift'",
+    "github.event.workflow_run.conclusion == 'success'",
+    "github.event.workflow_run.run_attempt == 1",
+    "github.run_attempt == '1'",
+    "github.event.workflow_run.head_sha == github.sha",
+  ];
+  for (const file of ["contaos-trilha-a-authenticated.yml", "contaos-trilha-a-fixtures.yml"]) {
+    const source = await readFile(
+      new URL("../../.github/workflows/" + file, import.meta.url),
+      "utf8",
+    );
+    const request = source.slice(source.indexOf("  request:"), source.indexOf("  protocol:"));
+    const nativeIf = request.split("\n").find((l) => l.trimStart().startsWith("if:"));
+    const privateIf = source
+      .slice(source.indexOf("  private:"))
+      .split("\n")
+      .find((l) => l.trimStart().startsWith("if:"));
+    for (const clause of clauses) {
+      assert.ok(nativeIf.includes(clause), file + clause);
+      assert.ok(privateIf.includes(clause), file + clause);
+    }
+    const bootstrap = request.indexOf("Bootstrap publico confiavel");
+    assert.ok(bootstrap >= 0 && bootstrap < request.indexOf("uses: actions/checkout"));
+    assert.ok(
+      request.indexOf("body.object?.sha!==sha") < request.indexOf("uses: actions/checkout"),
+    );
+    assert.ok(
+      request.indexOf("CONTAOS_ACTIONS_READ_TOKEN:") > request.indexOf("uses: actions/checkout"),
+    );
+    const body = request.slice(bootstrap, request.indexOf("uses: actions/checkout"));
+    assert.equal(body.includes("Authorization"), false);
+  }
 });
