@@ -1018,10 +1018,9 @@ export async function installNativeFence({
   });
   let timer;
   try {
-    await root.send("Target.setAutoAttach", {
-      autoAttach: true,
+    await root.send("Target.autoAttachRelated", {
+      targetId: identity.targetId,
       waitForDebuggerOnStart: true,
-      flatten: true,
       filter,
     });
     await Promise.race([
@@ -1058,4 +1057,90 @@ export async function installNativeFence({
       root.close();
     },
   };
+}
+
+function publicUrl(value, base = HML_ORIGIN) {
+  let url;
+  try {
+    url = new URL(value, base);
+  } catch {
+    fail("GRAPH_DESTINATION");
+  }
+  if (
+    url.origin !== HML_ORIGIN ||
+    url.username ||
+    url.password ||
+    url.search ||
+    url.hash ||
+    url.pathname.includes("%") ||
+    url.pathname.startsWith("/_server")
+  )
+    fail("GRAPH_DESTINATION");
+  return url.href;
+}
+export async function boundedPublicFetch(value, limit, fetcher = fetch) {
+  const url = publicUrl(value);
+  if (!Number.isInteger(limit) || limit < 1 || limit > 4194304 || typeof fetcher !== "function")
+    fail("PUBLIC_FETCH");
+  try {
+    const response = await fetcher(url, {
+      redirect: "error",
+      credentials: "omit",
+      signal: AbortSignal.timeout(15000),
+      headers: { "cache-control": "no-cache" },
+    });
+    if (response.status !== 200 || response.redirected || response.url !== url || !response.body)
+      fail("PUBLIC_FETCH");
+    const declared = response.headers.get("content-length");
+    if (declared !== null && (!/^\d+$/.test(declared) || Number(declared) > limit))
+      fail("PUBLIC_FETCH");
+    let size = 0;
+    const chunks = [];
+    for await (const chunk of response.body) {
+      size += chunk.length;
+      if (size > limit) fail("PUBLIC_FETCH");
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  } catch {
+    fail("PUBLIC_FETCH");
+  }
+}
+export async function discoverPublicGraph({ fetcher = fetch } = {}) {
+  const deadline = Date.now() + 180000;
+  const html = new TextDecoder("utf-8", { fatal: true }).decode(
+    await boundedPublicFetch(HML_ORIGIN + "/login", 262144, fetcher),
+  );
+  const pending = [];
+  function add(value, base) {
+    const url = publicUrl(value, base);
+    if (!/^\/assets\/[A-Za-z0-9_.-]+\.js$/.test(new URL(url).pathname)) fail("GRAPH_DESTINATION");
+    if (!pending.includes(url)) pending.push(url);
+  }
+  for (const script of extractScriptEntries(html)) {
+    if (script.src) add(script.src, HML_ORIGIN);
+    else if (
+      ["classic", "module", "text/javascript", "application/javascript"].includes(script.type)
+    )
+      for (const child of scriptImports(script.body)) add(child, HML_ORIGIN + "/assets/inline.js");
+  }
+  const modules = new Map();
+  let bytes = 0;
+  for (let index = 0; index < pending.length; index++) {
+    if (pending.length > 128 || Date.now() > deadline) fail("GRAPH_LIMIT");
+    const url = pending[index],
+      body = await boundedPublicFetch(url, 4194304, fetcher);
+    bytes += body.length;
+    if (bytes > 8388608) fail("GRAPH_LIMIT");
+    let source;
+    try {
+      source = new TextDecoder("utf-8", { fatal: true }).decode(body);
+    } catch {
+      fail("SCRIPT_POLICY");
+    }
+    modules.set(url, source);
+    for (const child of scriptImports(source)) add(child, url);
+  }
+  if (!modules.size) fail("GRAPH_EMPTY");
+  return { html, modules, bytes };
 }

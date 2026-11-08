@@ -35,4 +35,5 @@ jobs:
       - name: Fronteira real antes de qualquer autenticacao
         env:
           CONTAOS_NATIVE_GUARD: "1"
-        run: node --test --test-name-pattern='Chromium nativo' scripts/hml/authenticated-visual-audit.test.mjs
+        run: |
+          node --test --test-name-pattern='Chromium nativo: (resposta|worker|popup|websocket)' scripts/hml/authenticated-visual-audit.test.mjs

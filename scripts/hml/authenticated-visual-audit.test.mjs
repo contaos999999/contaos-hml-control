@@ -511,7 +511,7 @@ async function cdpFixture() {
                   }
                 : {};
       peer.send(JSON.stringify({ id: command.id, result }));
-      if (command.method === "Target.setAutoAttach" && !command.sessionId)
+      if (command.method === "Target.autoAttachRelated" && !command.sessionId)
         peer.send(
           JSON.stringify({
             method: "Target.attachedToTarget",
@@ -908,3 +908,45 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
       }
     },
   );
+
+test("grafo público usa parser, limites e somente módulos do HML", async () => {
+  const discover = fn("discoverPublicGraph"),
+    origin = HML;
+  const fixture = new Map([
+    ["/login", '<!doctype html><script type="module" src="/assets/main.js"></script>'],
+    ["/assets/main.js", 'import "./child.js";'],
+    ["/assets/child.js", "export const synthetic=1;"],
+  ]);
+  const fetcher = async (url) => {
+    const response = new Response(fixture.get(new URL(url).pathname), { status: 200 });
+    Object.defineProperty(response, "url", { value: url });
+    return response;
+  };
+  const graph = await discover({ fetcher });
+  assert.equal(graph.modules.size, 2);
+  assert.equal(graph.modules.get(origin + "/assets/child.js"), "export const synthetic=1;");
+  fixture.set("/assets/child.js", 'import("https://foreign.invalid/payload.js")');
+  await assert.rejects(discover({ fetcher }), (error) => error.code === "SCRIPT_POLICY");
+  fixture.set(
+    "/login",
+    '<!doctype html><script src="https://foreign.invalid/payload.js"></script>',
+  );
+  await assert.rejects(discover({ fetcher }), (error) => error.code === "GRAPH_DESTINATION");
+});
+test("download público interrompe redirect, resposta parcial e excesso de bytes", async () => {
+  const bounded = fn("boundedPublicFetch");
+  for (const variant of ["redirect", "status", "size"]) {
+    const fetcher = async (url) => {
+      const response = new Response(variant === "size" ? "x".repeat(21) : "ok", {
+        status: variant === "status" ? 206 : 200,
+      });
+      Object.defineProperty(response, "url", { value: url });
+      if (variant === "redirect") Object.defineProperty(response, "redirected", { value: true });
+      return response;
+    };
+    await assert.rejects(
+      bounded(HML + "/login", 20, fetcher),
+      (error) => error.code === "PUBLIC_FETCH",
+    );
+  }
+});

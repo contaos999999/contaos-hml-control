@@ -52,7 +52,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "Codex Trilha A: contexto canônico previamente lido na execução coordenadora; 25/25 blobs e catálogo conferidos iguais em42a737ac; AGENTS/P0/índice/checkpoint/PLAN318/GATE estreito relidos, ZIP original conferido. Sem certificação.",
   "context_read_acknowledged_at": "2026-11-08",
-  "context_source_commit": "a9abcdf54099c9d3fba8681ccca1b5c9180aef95",
+  "context_source_commit": "601922fbf59accc7606b8ce4c697b6ece961f23e",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -1103,11 +1103,11 @@
     }
   },
   "trilha_a_auth_audit": {
-    "phase": "GATE_AMENDMENT",
-    "state": "LOCALIZACAO_PROPOSTA_CI_PENDENTE_SEM_RUNNER",
+    "phase": "BUILD_PARCIAL",
+    "state": "PR335_RASCUNHO_PROTECAO_NATIVA_EM_CORRECAO",
     "plan_document": "docs/frontend/planos/P0_TRILHA_A_AUTENTICADA_PLAN_2026-11-08.md",
     "frontend_baseline": "1a24d36fd4a19a1fe70ccf9099aaa11a6d31ac5e",
-    "backend_normative": "a9abcdf54099c9d3fba8681ccca1b5c9180aef95",
+    "backend_normative": "601922fbf59accc7606b8ce4c697b6ece961f23e",
     "deployment": "dpl_9iFUGXPcgXdBSmXa5C5EVcqt1XCX",
     "matrix_cases": 232,
     "private_unproven": 208,
@@ -1145,6 +1145,13 @@
     "partial_policy_tests": 52,
     "partial_vitest_tests": 1165,
     "harness_ci_required_same_head": true,
-    "path_amendment_document": "docs/frontend/planos/P0_TRILHA_A_AUTENTICADA_LOCALIZACAO_GATE_2026-11-08.md"
+    "path_amendment_document": "docs/frontend/planos/P0_TRILHA_A_AUTENTICADA_LOCALIZACAO_GATE_2026-11-08.md",
+    "build_pr": 335,
+    "path_amendment_pr": 334,
+    "path_amendment_merge": "4f4379ae3f27ccfe52de4c8b47013a3aaa0ed854",
+    "path_amendment_ci": [
+      42478008487,
+      42478008467
+    ]
   }
 }
