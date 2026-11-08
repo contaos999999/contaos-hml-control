@@ -1,3 +1,30 @@
+## P0 Trilha A: rodada56 amplia evidências, ciclo nativo em investigação, 08/11/2026
+
+Execução dos184pendentes continua autorizada e ativa; não encerrar por resultado parcial. BUILD356 integradoe21970aae502deee8236644a6d5ee2cc76c1eafd após CI42501372087/42501372057/42501372043SUCCESS noHEADb7b113ea,114testes+7nativos,1165produto/42suítes/tsc/lint/formato e revisão independente. Corrigidos os doisImportant do355: finallypreserva24baselineapósaborto e navegaçãoaguardaH1destino/organização/networkidle/drain, barreira antes/depoisresize. Novo catálogoexato deperfis/contratante/contrato, metadadosARIAestruturais e campocompleto de atualização08/11/2026 validado; formatosmalformados rejeitados comcatálogoreal.
+
+### Evidência imutável56, semDoD
+
+HMLREADYdpl_EWnqeHNyaoPdDuXAr34Zbfzhy9rs, frontend/harnesse21970aa. Run42501639458/job128795459654, artefato13626310122. ZIP SHA2566d132c2df9de8a2955c59c97900485351c66d6ca7c8411e38aebb51690735472; report8c3192e2ce013dc820dca7b2658f76cb057fdf13391b59e2fdc0fe4ff25c3981.124/124hashes conferidos independentemente,82PNG/41DOM-acessibilidade,208chavesúnicas.
+Link https://github.com/contaos999999/contaos-hml-control/actions/runs/42501639458/artifacts/13626310122 .
+
+41novosPASS_AUTOMATIZADO parciais: SYS05/ADM01/V101/V102/V103 oito cada eV1041440claro.24referências históricas preservadas(V114/V116/V118);8SYS04BLOQUEADO_PII;1CDP(V1041440escuro);110interrompidos;24fixtures(V117/V119/V120). AbortoCDP_COMMAND, comandoFetch.continueRequest, protocolo-32602,enumINVALID_INTERCEPTION;logoutfalse. Semredirect/worker/popup/destinobloqueado. Não somar41àcertificação nem afirmar roda concluída. Imagens e dados são parciais; revisão visual integral72continua pendente.
+
+Esse erro não comprova sozinho cancelamento. PLAN357 propõe primeiro reproduçãoChromium ecorrelação nativa inequívoca, GATE separado antesdeBUILD. Revisor exige associaçãoFetchID/NetworkID/sessão/target/frame/geração, evento loadingFailed canceledtrue/errorTextnet::ERR_ABORTED, semredirect/reutilização/ambiguidade; eventualtratamento sócontinueRequestinicial e nunca corpo/resposta/política/proveniência. Semretry, nenhuma liberação alternativa, mapasbounded/limpeza/tombstone, oito provasnativas comsete anteriores intactas. Se não houverprova, continua failclosed.
+
+### Reancoragem e dependências específicas
+
+Backend vivo3ef22a371c38e552f9f3c862646eee3242f02411 pósPR169: cinco caminhosdocs/testesharness;25/25blobs ecatálogo100/97 iguais porcheckSnapshoterrors[]. Snapshot/ack reancorados juntos noPLAN357; nenhumbackend/PROD/secret/tipo alterado. Não presumirPR139bloqueador.
+
+InspeçãoHMLsomenteleitura confirmoucompetênciafixture59072760-4420-4598-82dd-367f41a79e89 emrascunho, referência2026-11-01,zero requisitos/zeroapresentações.24fixturesrequeremfluxoslegítimos separados. Fonte/lista/snapshot/análise/parecer/protocolo devem respeitarautoridadesexistentes; não fabricarIDs/portão/aprovação, nãoSQL/DMLdireto.
+
+SYS04Masterglobal lista universoalémfixture. SELECTsomenteleitura retornou73e depois75organizações, semCNPJ. Nomes técnicos não bastam para atestarsinteticidade; catálogo porregistro/campo exigeproveniênciadoconstrutor e rejeiçãodenovos/divergentes. Nãoocultarregiões, não aceitarregexglobal nem mudaRLS. Provas18públicas/24históricas originais seguem preservadas. Achado350 e72critérios continuam obrigatórios; V1NO-GO.
+
+Próxima tarefa concreta: CI/revisão/mergePLAN357; GATE nativo separado; RED real e negativos; BUILD/GREEN/8nativos/CI/revisão; TesteCsomente pendentes e conferência deartefatos; continuar catálogoSYS04 e24fixturesatéDoD. Estecheckpoint écontinuidade, não conclusão.
+
+Histórico preservado abaixo.
+
+---
+
 ## P0 Trilha A: fechamento184 em execução, sem encerramento por resultado parcial, 08/11/2026
 
 Titular reiterou prioridade absoluta: corrigir/testar/preservar provas e resolver184 pendentes automaticamente, sem autorizações repetidas. Execução continua. Última etapa integrada: PLAN352 mergea782e91cc952a2c524b4a3c2c535447c53571c69; GATE353 merge09b73e2846605757b0eaa3011965b046419f2321; BUILD354 mergeb25ee3f70b675f2fddf79a20d36528805bdc0b25, HEAD25a0535bed9b695971ad186b7f654afae6151813. CI42499437350ZeroDrift/42499437348protocolo+nativo7/42499437298LOCK SUCCESS e revisão independente semCritical/Important.105testes locais/CI,1165produto/42suítes,tsc/lint/formatoPASS. Nenhum produto/backend/PROD/secret/tipo/dependência alterado.
