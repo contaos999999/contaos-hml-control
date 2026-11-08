@@ -1,3 +1,45 @@
+## Trilha A P0: identidade automática e CSR corrigidos; auditor ainda bloqueado em recarga, 08/11/2026
+
+Este checkpoint substitui a fila antiga que sugeria atualizar credenciais. Nenhum secret foi lido ou alterado nesta execução. V1 continua NO-GO; 18 provas públicas e PLAN/GATE/BUILD #322/#323/#324 preservados, sem repetição. Backend normativo main `2d01d87654ce580f6f8fdd3446ea4aa78ac7752a`, igual ao snapshot: 25/25 blobs e catálogo conferidos. Frontend de referência `5574b0b8a43fbdec943f0d6eee34f0e240967ddb`, HML alias READY `dpl_FDf3UNTA6WjkKQ3uozzxPnNbQ7Gx`. Este checkpoint não reatribui provas ao SHA documental posterior.
+
+### Integrações e validação
+
+| Etapa | Merge main | CI SUCCESS no HEAD revisado |
+| --- | --- | --- |
+| PLAN #342 | 824f49436dccc5feb15dc61adc42aaa7a3ca10e5 | 42491108002 / 42491108049 |
+| GATE separado #343 | 9d6b0131f2afb013d6fc9a732edde5a5f7b39823 | 42491330304 / 42491330207 |
+| BUILD #344, âncoras automáticas | dbf87ac794fffc50dc3910e291253f99ba4ab142 | 42491697813 / 42491697703 / 42491697685 |
+| BUILD #345, diagnóstico CDP sincronizado | 2fab529bb0e15a8859f96662a0d3d35910d10600 | 42492531630 / 42492530989 / 42492531105 |
+| BUILD #346, hidratação CSR privada | 8f3f2365b46815c52c84bb958f7ea3dec8fae729 | 42493615249 / 42493615150 / 42493615193 |
+| BUILD #347, respostas completas | 5574b0b8a43fbdec943f0d6eee34f0e240967ddb | 42494551214 / 42494551211 / 42494551210 |
+
+Todos passaram por revisão independente sem Critical/Important antes do merge normal. REDs remotos preservados: 60e21d25 (15 FAIL, âncoras/diagnóstico), 091b5f1b (ack CDP), 081920f3 (CSR), 9e955a7a (cache/corpo completo). Último protocolo: 96 PASS e sete provas nativas PASS na CI, incluindo recargas ETag e CSP/canário; regressão do produto 1.165 PASS, typecheck/lint/formato e Zero-Drift/LOCK-TYPES aprovados. Blob dos tipos permanece `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`. Nenhum src/public/dependência/lock/backend/PROD alterado.
+
+### Causas comprovadas e limites
+
+1. `DEPLOYMENT_IDENTITY_MISMATCH`: rodadas usavam inputs antigos contra alias já avançado. Disparo com âncoras atuais passou preparação. Agora ambos campos vazios resolvem uma identidade candidata por AST e validação integral dos 19 metadados, antes do checkout; par explícito incompleto/inválido/obsoleto continua bloqueado sem repin. Ancestralidade, fonte separada, reconstrução/SSR/bytes/hashes/freshness e barreira nativa continuam obrigatórios antes de secrets. Teste C 42491956596 comprovou o modo automático com 110 módulos e SSR PASS.
+2. Diagnóstico precoce podia registrar fence.failed=false antes do ack de Fetch.failRequest. Reprodução CDP com ack retido e RED/GREEN demonstrou a corrida. Coleta agora aguarda drain; somente enums e contadores limitados são persistidos, sem mensagem/stack/URL/corpo/token.
+3. `FENCE_SOURCE` após login: comparador exigia success/SSR true em ambos matches. As 23 rotas privadas do SSR local confiável têm raiz success/true e filho pending/false, conforme ssr:false no produto. Reprodução SEM credenciais em duas respostas HML de / e /selecionar-organizacao e contra fonte local confirmou a divergência. Fix aceita esse par somente no filho LOCAL CONFIÁVEL; o remoto continua limitado aos mesmos dois timestamps de 13 dígitos. Estado, flag, identidade, código e demais bytes não são normalizados. Negativos preservados. Prova local de 110 módulos/24 documentos SHA256 `2174f6ad17cbdd49a321e7270c2db65214dbefc77b3c80fce422d4ceb29ddb68`.
+4. Controle recusava também 304; asset público HML com ETag retornou 304 em consulta condicional. Auditor agora confirma cache HTTP desabilitado por sessão antes de liberar renderer, exigindo corpo completo. Erro do comando bloqueia inicialização; todos 3xx, inclusive 304, permanecem proibidos. Isso não identifica retrospectivamente o status da rodada 42493862169, que não o registrava.
+
+### Rodadas imutáveis e artefatos conferidos
+
+| Run | Resultado observado | ZIP SHA256 / report SHA256 |
+| --- | --- | --- |
+| 42490769741 | Preparação 110 / nativo 7 PASS; WAIT_AUTH_DESTINATION | d045434b38a9be455740f1e39ba01111faf041bf6b5396a82fa48f2ffcd09562 / b1d17e5a70140cdff65faa54586b3f4fc869332229f2c752c417606c463f60f9 |
+| 42491956596 | Âncoras automáticas PASS; erro local ainda UNKNOWN | ba9a9b97a0d4fa82f9e00cdd9a34936f38e3113ea04af2b2d614489aea8ce855 / 5c9b2f8cf18a2fe9d522db891547b02c24847b7e39e76c5d307a8b5d9bc24a47 |
+| 42492790957 | Diagnóstico drenado confirmou FENCE_SOURCE | 6fe9746f8ab53adb21d644d7d03cf828bce3467cdad816d509178436582de981 / 6c4aff51f34c04bc407fb8107ef95f28a8157561ef986c2ae95f566dabf2b8e6 |
+| 42493862169 | Pós-login navegado, 2 documentos; recarga FENCE_REDIRECT | ec5c588f3d07b1bc3b8c2072d1e37f2eb93726d746595c5f53da0b25e34d9f20 / 01963ae4d5dac547b0dc0b8cc20339abbd3646210e0ff24096d2fb8ffba71315 |
+| 42494806048 | Pós-login navegado, 3 docs/94 scripts/10 assets; recarga CDP_COMMAND, zero 3xx | 59a0f3a2c85dbda8631259f60908e08d4ff31aa239132ccb78bdaaec5cf04d67 / 09df1dab3cbea0d84561cdaadc6a11143cfde143052b9013a14bcaf7d7654120 |
+
+Todos os ZIPs foram baixados e seus digests e manifestos conferidos. Último artefato: 13622418809. Nenhum PNG/DOM privado produzido; 0/208 PASS, 184 interrompidos e 24 BLOQUEADO_FIXTURE (V117/V119/V120, oito cada), globalComplete=false, logoutVerified=false. Não promover navegação pós-login a comprovação de MASTER/organização, que ainda não foram confirmados pelo harness.
+
+Última etapa comprovada: resolução automática, segurança nativa, proveniência/SSR e navegação pós-login. Impedimento atual: CDP_COMMAND ao abrir/recarregar seletor, com pedidos possivelmente ainda em curso; o comando exato ainda não foi registrado. Próxima tarefa no escopo PLAN342/GATE343: sincronizar rede/fence antes de nova navegação e reutilizar documento já verificado quando destino já for o seletor; classificar somente nome de comando CDP em allowlist, com RED/GREEN, revisão e CI antes de Teste C. Não ignorar erro CDP, ampliar timeout, liberar destino/3xx ou alterar segurança. Se causa exigir conta/backend, registrar evidência e autorização específica, sem mudar Supabase por inferência.
+
+Depois, executar somente a auditoria privada pendente em main/HML READY, com campos vazios, conferir artefatos e hashes, preservar os 24 casos de fixture separados. 72 critérios, acessibilidade, organização/status/menu MASTER, screenshots/DOMs e revisão visual independente continuam sem DoD integral. Não certificar Trilha A/V1 nem alterar PROD. Histórico anterior preservado abaixo.
+
+---
+
 ## Trilha A: GATE #333 integrado; implementação parcial preservada
 
 GATE #333 integrado em 9fb3852cbacfebaa5011ff0b6a8d1d9f0250a068, HEAD e7ef8ad0fcd48e357f6ad83e62b58467d92ff9e4, CI 42476137269 e LOCK 42476137241 SUCCESS. PLAN #332 já integrado em 52f6fa95. Perfil MASTER da sessão de navegador confirmado; o perfil da conta sintética configurada na CI ainda não foi provado. Secrets existentes CONTAOS_HML_SYNTHETIC_EMAIL/PASSWORD conferidos apenas por nome.
