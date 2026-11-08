@@ -448,6 +448,16 @@ test("datas de atualização completas são limitadas ao dia e relógio aprovado
     assert.equal(safe(text, new Set()), false, text);
 });
 
+test("candidato de data malformada não recai no dicionário real de contadores", async () => {
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  for (const value of [
+    "Atualizado em 08/11/2026 12:34:56:78",
+    "Atualizado em 08/11/2026 12:34:111",
+    "Atualizado em 08/11/2026 25:34:11",
+  ])
+    assert.equal(fn("safeArtifactText")(value, words), false, value);
+});
+
 test("navegação não retorna com header antigo e verificação CDP pendente", async () => {
   const events = [];
   const heading = Promise.withResolvers(),
