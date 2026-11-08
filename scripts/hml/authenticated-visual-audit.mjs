@@ -122,7 +122,8 @@ export function extractScriptEntries(html) {
     scriptingEnabled: true,
     sourceCodeLocationInfo: true,
     onParseError(error) {
-      if (!["missing-doctype", "unexpected-null-character"].includes(error.code)) fail("HTML_POLICY");
+      if (!["missing-doctype", "unexpected-null-character"].includes(error.code))
+        fail("HTML_POLICY");
     },
   });
   function visit(node) {
@@ -156,7 +157,8 @@ export function extractScriptEntries(html) {
       )
         fail("HTML_POLICY");
       const location = node.sourceCodeLocation;
-      if (!location?.endTag || (node.childNodes || []).some((child) => child.nodeName !== "#text")) fail("HTML_POLICY");
+      if (!location?.endTag || (node.childNodes || []).some((child) => child.nodeName !== "#text"))
+        fail("HTML_POLICY");
       // Preserve transport bytes, including SSR's NUL route separators. The HTML
       // parser still determines executable structure; it must not rewrite the
       // body used by the trusted byte comparison.
@@ -661,6 +663,410 @@ export async function startDestinationProxy() {
     close: async () => {
       for (const socket of sockets) socket.destroy();
       await new Promise((resolve) => server.close(resolve));
+    },
+  };
+}
+
+export function browserEnvironment(source = {}) {
+  const result = {};
+  for (const key of ["PATH", "HOME", "TMPDIR", "RUNNER_TEMP", "XDG_CACHE_HOME", "LANG", "TZ", "CI"])
+    if (typeof source[key] === "string" && !source[key].includes("\0")) result[key] = source[key];
+  return result;
+}
+export function nativeDebuggerEndpoint(value, port) {
+  try {
+    const url = new URL(value);
+    if (
+      !Number.isInteger(port) ||
+      port < 1 ||
+      port > 65535 ||
+      url.protocol !== "ws:" ||
+      url.hostname !== "127.0.0.1" ||
+      Number(url.port) !== port ||
+      url.username ||
+      url.password ||
+      url.search ||
+      url.hash ||
+      !/^\/devtools\/browser\/[a-f0-9-]{36}$/i.test(url.pathname)
+    )
+      fail("CDP_ENDPOINT");
+    return url.href;
+  } catch {
+    fail("CDP_ENDPOINT");
+  }
+}
+export async function connectNativeCDP(port, identity) {
+  if (
+    !Number.isInteger(port) ||
+    port < 1 ||
+    port > 65535 ||
+    !identity?.targetId ||
+    !identity?.browserContextId
+  )
+    fail("CDP_ENDPOINT");
+  let endpoint;
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/json/version`, {
+      redirect: "error",
+      credentials: "omit",
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) fail("CDP_METADATA");
+    const chunks = [];
+    let size = 0;
+    for await (const chunk of response.body) {
+      size += chunk.length;
+      if (size > 16384) fail("CDP_METADATA");
+      chunks.push(Buffer.from(chunk));
+    }
+    endpoint = nativeDebuggerEndpoint(
+      JSON.parse(Buffer.concat(chunks).toString("utf8")).webSocketDebuggerUrl,
+      port,
+    );
+  } catch {
+    fail("CDP_METADATA");
+  }
+  const socket = new WebSocket(endpoint);
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      socket.close();
+      reject(Object.assign(new Error("CDP_CONNECT"), { code: "CDP_CONNECT" }));
+    }, 10000);
+    socket.addEventListener(
+      "open",
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+    socket.addEventListener(
+      "error",
+      () => {
+        clearTimeout(timer);
+        reject(Object.assign(new Error("CDP_CONNECT"), { code: "CDP_CONNECT" }));
+      },
+      { once: true },
+    );
+  });
+  let serial = 0,
+    listener = () => {},
+    closedListener = () => {},
+    closed = false;
+  const commands = new Map();
+  function rejectPending(code) {
+    for (const pending of commands.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(Object.assign(new Error(code), { code }));
+    }
+    commands.clear();
+  }
+  socket.addEventListener("message", (event) => {
+    let data;
+    try {
+      if (typeof event.data !== "string" || event.data.length > 8388608) fail("CDP_FRAME");
+      data = JSON.parse(event.data);
+    } catch {
+      rejectPending("CDP_FRAME");
+      socket.close();
+      return;
+    }
+    if (data.id) {
+      const pending = commands.get(data.id);
+      if (!pending) return;
+      commands.delete(data.id);
+      clearTimeout(pending.timer);
+      if (data.error)
+        pending.reject(Object.assign(new Error("CDP_COMMAND"), { code: "CDP_COMMAND" }));
+      else pending.resolve(data.result ?? {});
+    } else {
+      try {
+        listener(data);
+      } catch {
+        rejectPending("CDP_EVENT");
+        socket.close();
+      }
+    }
+  });
+  socket.addEventListener("close", () => {
+    closed = true;
+    rejectPending("CDP_CLOSED");
+    closedListener();
+  });
+  const transport = {
+    send(method, params = {}, sessionId) {
+      if (
+        closed ||
+        socket.readyState !== WebSocket.OPEN ||
+        commands.size >= 2048 ||
+        !/^[A-Za-z]+\.[A-Za-z]+$/.test(method)
+      )
+        return Promise.reject(Object.assign(new Error("CDP_CLOSED"), { code: "CDP_CLOSED" }));
+      const id = ++serial;
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          commands.delete(id);
+          reject(Object.assign(new Error("CDP_TIMEOUT"), { code: "CDP_TIMEOUT" }));
+        }, 10000);
+        commands.set(id, { resolve, reject, timer });
+        socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+      });
+    },
+    onEvent(callback) {
+      listener = callback;
+    },
+    onClose(callback) {
+      closedListener = callback;
+    },
+    close() {
+      closed = true;
+      rejectPending("CDP_CLOSED");
+      socket.close();
+    },
+  };
+  try {
+    const result = await transport.send("Target.getTargetInfo", { targetId: identity.targetId });
+    if (
+      result.targetInfo?.targetId !== identity.targetId ||
+      result.targetInfo?.browserContextId !== identity.browserContextId
+    )
+      fail("CDP_IDENTITY");
+  } catch {
+    transport.close();
+    fail("CDP_IDENTITY");
+  }
+  return transport;
+}
+
+export async function installNativeFence({
+  debugPort,
+  identity,
+  closeContext,
+  verifyResponse,
+  policy = requestAllowed,
+}) {
+  if (
+    typeof closeContext !== "function" ||
+    typeof verifyResponse !== "function" ||
+    typeof policy !== "function"
+  )
+    fail("FENCE_CONFIGURATION");
+  const root = await connectNativeCDP(debugPort, identity);
+  const sessions = new Map(),
+    active = new Set();
+  const state = {
+    failed: false,
+    failureCode: null,
+    verifiedDocuments: 0,
+    verifiedScripts: 0,
+    verifiedAssets: 0,
+    blockedRequests: 0,
+    redirectBlocks: 0,
+    workersPaused: 0,
+    workersResumed: 0,
+    popups: 0,
+  };
+  let closed = false,
+    resolveInitial;
+  const initial = new Promise((resolve) => {
+    resolveInitial = resolve;
+  });
+  function invalidate(error) {
+    if (state.failed || closed) return;
+    state.failed = true;
+    state.failureCode = /^(?:CDP|FENCE)_[A-Z_]{1,80}$/.test(error?.code || "")
+      ? error.code
+      : "FENCE_ASYNC";
+    void Promise.resolve(closeContext()).catch(() => {});
+  }
+  function track(promise) {
+    active.add(promise);
+    promise.catch(invalidate).finally(() => active.delete(promise));
+  }
+  const send = (session, method, params = {}) => root.send(method, params, session.id);
+  async function paused(session, event) {
+    const requestId = event.requestId;
+    try {
+      if (
+        state.failed ||
+        closed ||
+        session.contextId !== identity.browserContextId ||
+        session.targetId !== identity.targetId ||
+        !policy({
+          url: event.request.url,
+          method: event.request.method,
+          resourceType: event.resourceType,
+        })
+      ) {
+        state.blockedRequests++;
+        fail("FENCE_REQUEST");
+      }
+      const response =
+        event.responseStatusCode !== undefined || event.responseErrorReason !== undefined;
+      if (!response) {
+        await send(session, "Fetch.continueRequest", { requestId });
+        return;
+      }
+      if (event.responseErrorReason) fail("FENCE_TRANSPORT");
+      if (event.responseStatusCode >= 300 && event.responseStatusCode < 400) {
+        state.redirectBlocks++;
+        fail("FENCE_REDIRECT");
+      }
+      let body;
+      if (new URL(event.request.url).origin === HML_ORIGIN) {
+        const result = await send(session, "Fetch.getResponseBody", { requestId });
+        if (typeof result.body !== "string" || result.body.length > 5592408)
+          fail("FENCE_BODY_LIMIT");
+        body = Buffer.from(result.body, result.base64Encoded ? "base64" : "utf8");
+        if (body.length > (event.resourceType === "Document" ? 262144 : 4194304))
+          fail("FENCE_BODY_LIMIT");
+      }
+      const verified = await verifyResponse({
+        url: event.request.url,
+        resourceType: event.resourceType,
+        status: event.responseStatusCode,
+        body,
+      });
+      if (verified !== true || state.failed || closed) fail("FENCE_SOURCE");
+      if (event.resourceType === "Document") state.verifiedDocuments++;
+      else if (event.resourceType === "Script") state.verifiedScripts++;
+      else if (body) state.verifiedAssets++;
+      await send(session, "Fetch.continueResponse", { requestId });
+    } catch (error) {
+      await send(session, "Fetch.failRequest", { requestId, errorReason: "BlockedByClient" }).catch(
+        () => {},
+      );
+      invalidate(error);
+    }
+  }
+  const filter = [
+    { type: "page" },
+    { type: "iframe" },
+    { type: "worker" },
+    { type: "shared_worker" },
+    { type: "service_worker" },
+    { exclude: true },
+  ];
+  function attach(event, parent) {
+    const session = {
+      id: event.sessionId,
+      targetId: event.targetInfo.targetId,
+      contextId: event.targetInfo.browserContextId ?? parent?.contextId,
+      type: event.targetInfo.type,
+    };
+    sessions.set(session.id, session);
+    if (!session.contextId) {
+      invalidate({ code: "FENCE_CONTEXT_UNKNOWN" });
+      return;
+    }
+    if (session.contextId !== identity.browserContextId) {
+      track(send(session, "Runtime.runIfWaitingForDebugger"));
+      return;
+    }
+    if (["worker", "shared_worker", "service_worker"].includes(session.type)) {
+      if (event.waitingForDebugger) state.workersPaused++;
+      invalidate({
+        code: event.waitingForDebugger ? "FENCE_WORKER_PAUSED" : "FENCE_WORKER_RUNNING",
+      });
+      return;
+    }
+    if (session.type !== "page" || session.targetId !== identity.targetId) {
+      state.popups++;
+      invalidate({ code: "FENCE_POPUP" });
+      return;
+    }
+    track(
+      (async () => {
+        await send(session, "Page.enable");
+        await send(session, "Network.enable");
+        await send(session, "Network.setBlockedURLs", { urls: ["ws://*", "wss://*"] });
+        const denied = await send(session, "Network.emulateNetworkConditionsByRule", {
+          matchedNetworkConditions: ["ws://*:*/*", "wss://*:*/*"].map((urlPattern) => ({
+            urlPattern,
+            offline: true,
+            latency: 0,
+            downloadThroughput: -1,
+            uploadThroughput: -1,
+          })),
+        });
+        if (denied.ruleIds?.length !== 2) fail("FENCE_WEBSOCKET_RULES");
+        await send(session, "Fetch.enable", {
+          patterns: [
+            { urlPattern: "*", requestStage: "Request" },
+            { urlPattern: "*", requestStage: "Response" },
+          ],
+        });
+        await send(session, "Target.setAutoAttach", {
+          autoAttach: true,
+          waitForDebuggerOnStart: true,
+          flatten: true,
+          filter,
+        });
+        if (state.failed || closed) fail("FENCE_TARGET_FAILED");
+        await send(session, "Runtime.runIfWaitingForDebugger");
+        resolveInitial();
+      })(),
+    );
+  }
+  root.onClose(() => {
+    if (!closed) invalidate({ code: "FENCE_CDP_CLOSED" });
+  });
+  root.onEvent((event) => {
+    const session = sessions.get(event.sessionId);
+    if (event.method === "Target.attachedToTarget") attach(event.params, session);
+    else if (event.method === "Target.detachedFromTarget") {
+      const removed = sessions.get(event.params.sessionId);
+      sessions.delete(event.params.sessionId);
+      if (!closed && removed?.targetId === identity.targetId)
+        invalidate({ code: "FENCE_TARGET_DETACHED" });
+    } else if (session?.contextId === identity.browserContextId) {
+      if (event.method === "Fetch.requestPaused") track(paused(session, event.params));
+      else if (event.method === "Page.windowOpen") {
+        state.popups++;
+        invalidate({ code: "FENCE_POPUP" });
+      }
+    }
+  });
+  let timer;
+  try {
+    await root.send("Target.setAutoAttach", {
+      autoAttach: true,
+      waitForDebuggerOnStart: true,
+      flatten: true,
+      filter,
+    });
+    await Promise.race([
+      initial,
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(
+              Object.assign(new Error("FENCE_TARGET_TIMEOUT"), { code: "FENCE_TARGET_TIMEOUT" }),
+            ),
+          10000,
+        );
+      }),
+    ]);
+    if (state.failed || closed) fail("FENCE_INITIALIZATION");
+  } catch (error) {
+    invalidate(error);
+    root.close();
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+  return {
+    snapshot: () => ({ ...state }),
+    assertSafe() {
+      if (state.failed || closed || state.verifiedDocuments === 0 || state.verifiedScripts === 0)
+        fail("FENCE_NOT_PROVEN");
+    },
+    async drain() {
+      for (let i = 0; active.size && i < 100; i++) await Promise.allSettled([...active]);
+    },
+    close() {
+      closed = true;
+      root.close();
     },
   };
 }

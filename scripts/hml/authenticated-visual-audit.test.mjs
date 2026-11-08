@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createServer, connect } from "node:net";
+import { createServer as createHttpServer } from "node:http";
+import { createRequire } from "node:module";
+const require = createRequire(import.meta.url);
+const { WebSocketServer } = createRequire(require.resolve("jsdom"))("ws");
 
 const sut = await import("./authenticated-visual-audit.mjs").catch((error) => {
   if (
@@ -128,12 +132,16 @@ test("paridade cobre o documento inteiro e não apenas scripts", () => {
   }
 });
 test("SSR com NUL conserva bytes originais e normaliza apenas timestamps", () => {
-  const compare = fn("compareHtml"), parse = fn("extractScriptEntries");
+  const compare = fn("compareHtml"),
+    parse = fn("extractScriptEntries");
   const trusted = html.replaceAll("\\0", "\0");
   const actual = trusted.replaceAll("1794136000000", "1794136000123");
   assert.equal(parse(trusted)[0].body.includes("\0"), true);
   assert.equal(compare(actual, trusted), true);
-  assert.throws(() => compare(actual.replace("__root__\0", "__root__X"), trusted), (e) => e.code === "HTML_DRIFT");
+  assert.throws(
+    () => compare(actual.replace("__root__\0", "__root__X"), trusted),
+    (e) => e.code === "HTML_DRIFT",
+  );
 });
 const requests = [
   [HML + "/contratos", "GET", true],
@@ -431,3 +439,303 @@ test("proxy nativo não encaminha CONNECT, HTTP ou bytes para destino não aprov
     await new Promise((resolve) => downstream.close(resolve));
   }
 });
+test("CDP aceita somente debugger local do processo esperado", () => {
+  const validate = fn("nativeDebuggerEndpoint");
+  const value = "ws://127.0.0.1:41357/devtools/browser/12345678-abcd-4000-9000-123456789abc";
+  assert.equal(validate(value, 41357), value);
+  for (const url of [
+    value.replace("127.0.0.1", "foreign.invalid"),
+    value.replace(":41357", ":41358"),
+    value + "?token=canary",
+    value.replace("/browser/", "/page/"),
+    value.replace("ws:", "wss:"),
+  ]) {
+    assert.throws(
+      () => validate(url, 41357),
+      (e) => e.code === "CDP_ENDPOINT",
+    );
+  }
+});
+test("ambiente do navegador não herda credenciais nem opções de execução", () => {
+  const clean = fn("browserEnvironment")({
+    PATH: "/bin",
+    HOME: "/tmp/fixture",
+    LANG: "pt_BR.UTF-8",
+    CONTAOS_HML_SYNTHETIC_PASSWORD: "SYNTHETIC_CANARY",
+    NODE_OPTIONS: "--require=foreign",
+    HTTP_PROXY: "http://foreign.invalid",
+  });
+  assert.deepEqual(clean, { PATH: "/bin", HOME: "/tmp/fixture", LANG: "pt_BR.UTF-8" });
+  assert.equal(JSON.stringify(clean).includes("SYNTHETIC_CANARY"), false);
+});
+async function cdpFixture() {
+  const received = [],
+    peers = new Set();
+  const identity = { targetId: "own-target", browserContextId: "own-context" };
+  let port;
+  const server = createHttpServer((_req, res) =>
+    res.end(
+      JSON.stringify({
+        webSocketDebuggerUrl: `ws://127.0.0.1:${port}/devtools/browser/12345678-abcd-4000-9000-123456789abc`,
+      }),
+    ),
+  );
+  const ws = new WebSocketServer({ noServer: true });
+  server.on("upgrade", (req, socket, head) =>
+    ws.handleUpgrade(req, socket, head, (peer) => ws.emit("connection", peer)),
+  );
+  ws.on("connection", (peer) => {
+    peers.add(peer);
+    peer.once("close", () => peers.delete(peer));
+    peer.on("message", (raw) => {
+      const command = JSON.parse(raw.toString());
+      received.push(command);
+      if (command.method === "Fixture.reject")
+        return peer.send(
+          JSON.stringify({
+            id: command.id,
+            error: { code: -32601, message: "SYNTHETIC_CANARY_NOT_FOR_LOGS" },
+          }),
+        );
+      const result =
+        command.method === "Target.getTargetInfo"
+          ? { targetInfo: identity }
+          : command.method === "Fixture.echo"
+            ? { envelopeSession: command.sessionId ?? null }
+            : command.method === "Network.emulateNetworkConditionsByRule"
+              ? { ruleIds: ["deny-ws", "deny-wss"] }
+              : command.method === "Fetch.getResponseBody"
+                ? {
+                    body: Buffer.from("synthetic adulterated script").toString("base64"),
+                    base64Encoded: true,
+                  }
+                : {};
+      peer.send(JSON.stringify({ id: command.id, result }));
+      if (command.method === "Target.setAutoAttach" && !command.sessionId)
+        peer.send(
+          JSON.stringify({
+            method: "Target.attachedToTarget",
+            params: {
+              sessionId: "initial-session",
+              targetInfo: { ...identity, type: "page" },
+              waitingForDebugger: false,
+            },
+          }),
+        );
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  port = server.address().port;
+  return {
+    port,
+    identity,
+    received,
+    emit(value) {
+      for (const peer of peers) peer.send(JSON.stringify(value));
+    },
+    async close() {
+      for (const peer of peers) peer.terminate();
+      await new Promise((resolve) => ws.close(resolve));
+      await new Promise((resolve) => server.close(resolve));
+    },
+  };
+}
+test("transporte CDP conserva sessionId e não propaga erro remoto bruto", async () => {
+  const connectCDP = fn("connectNativeCDP"),
+    fixture = await cdpFixture();
+  let client;
+  try {
+    client = await connectCDP(fixture.port, fixture.identity);
+    assert.deepEqual(await client.send("Fixture.echo", {}, "own-session"), {
+      envelopeSession: "own-session",
+    });
+    await assert.rejects(
+      client.send("Fixture.reject"),
+      (error) =>
+        error.code === "CDP_COMMAND" && !JSON.stringify(error).includes("SYNTHETIC_CANARY"),
+    );
+  } finally {
+    client?.close();
+    await fixture.close();
+  }
+});
+test("resposta adulterada é negada no CDP antes de continuar execução", async () => {
+  const install = fn("installNativeFence"),
+    fixture = await cdpFixture();
+  let fence,
+    closed = 0;
+  const finished = Promise.withResolvers();
+  try {
+    fence = await install({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {
+        closed++;
+        finished.resolve();
+      },
+      verifyResponse: async () => false,
+    });
+    fixture.emit({
+      method: "Fetch.requestPaused",
+      sessionId: "initial-session",
+      params: {
+        requestId: "changed-script",
+        request: { url: HML + "/assets/a.js", method: "GET" },
+        resourceType: "Script",
+        responseStatusCode: 200,
+      },
+    });
+    await Promise.race([
+      finished.promise,
+      new Promise((_, reject) => {
+        const timer = setTimeout(() => reject(new Error("fixture event not processed")), 2000);
+        timer.unref();
+      }),
+    ]);
+    await fence.drain();
+    assert.equal(fence.snapshot().failed, true);
+    assert.equal(closed, 1);
+    assert.equal(
+      fixture.received.some(
+        (x) => x.method === "Fetch.continueResponse" && x.params.requestId === "changed-script",
+      ),
+      false,
+    );
+    assert.equal(
+      fixture.received.some(
+        (x) => x.method === "Fetch.failRequest" && x.params.requestId === "changed-script",
+      ),
+      true,
+    );
+  } finally {
+    fence?.close();
+    await fixture.close();
+  }
+});
+test("worker novo permanece pausado e invalida o contexto", async () => {
+  const install = fn("installNativeFence"),
+    fixture = await cdpFixture();
+  let fence,
+    closed = 0;
+  const finished = Promise.withResolvers();
+  try {
+    fence = await install({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {
+        closed++;
+        finished.resolve();
+      },
+      verifyResponse: async () => true,
+    });
+    fixture.emit({
+      method: "Target.attachedToTarget",
+      params: {
+        sessionId: "worker-session",
+        targetInfo: { targetId: "own-worker", browserContextId: "own-context", type: "worker" },
+        waitingForDebugger: true,
+      },
+    });
+    await Promise.race([
+      finished.promise,
+      new Promise((_, reject) => {
+        const timer = setTimeout(() => reject(new Error("fixture event not processed")), 2000);
+        timer.unref();
+      }),
+    ]);
+    await fence.drain();
+    assert.equal(fence.snapshot().failed, true);
+    assert.equal(fence.snapshot().workersPaused, 1);
+    assert.equal(closed, 1);
+    assert.equal(
+      fixture.received.some(
+        (x) => x.sessionId === "worker-session" && x.method === "Runtime.runIfWaitingForDebugger",
+      ),
+      false,
+    );
+  } finally {
+    fence?.close();
+    await fixture.close();
+  }
+});
+
+// Native tests are an additional boundary, never a substitute for policy tests.
+// They require the pinned Playwright Chromium and do not receive HML credentials.
+test(
+  "Chromium nativo: resposta alterada não executa antes do fechamento",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
+  async () => {
+    const { chromium } = await import("playwright");
+    let browser, fence, context;
+    let executions = 0;
+    const canary = createHttpServer((_req, res) => {
+      executions++;
+      res.end("canary");
+    });
+    const source = createHttpServer((req, res) => {
+      res.setHeader(
+        "content-type",
+        req.url === "/altered.js" ? "application/javascript" : "text/html",
+      );
+      res.end(
+        req.url === "/altered.js"
+          ? `fetch('http://127.0.0.1:${canary.address().port}/executed')`
+          : '<!doctype html><script src="/altered.js"></script>',
+      );
+    });
+    const debug = createHttpServer();
+    await Promise.all(
+      [canary, source, debug].map(
+        (server) => new Promise((resolve) => server.listen(0, "127.0.0.1", resolve)),
+      ),
+    );
+    const port = debug.address().port;
+    await new Promise((resolve) => debug.close(resolve));
+    const finished = Promise.withResolvers();
+    try {
+      browser = await chromium.launch({
+        chromiumSandbox: true,
+        env: fn("browserEnvironment")(process.env),
+        args: [`--remote-debugging-port=${port}`],
+      });
+      context = await browser.newContext();
+      const page = await context.newPage();
+      const session = await context.newCDPSession(page);
+      const { targetInfo } = await session.send("Target.getTargetInfo");
+      await session.detach();
+      fence = await fn("installNativeFence")({
+        debugPort: port,
+        identity: targetInfo,
+        policy: () => true,
+        verifyResponse: async ({ resourceType }) => resourceType !== "Script",
+        closeContext: async () => {
+          await context.close();
+          finished.resolve();
+        },
+      });
+      await page.goto(`http://127.0.0.1:${source.address().port}/`).catch(() => {});
+      await Promise.race([
+        finished.promise,
+        new Promise((_, reject) => {
+          const timer = setTimeout(
+            () => reject(new Error("native guard did not close context")),
+            10000,
+          );
+          timer.unref();
+        }),
+      ]);
+      await fence.drain();
+      assert.equal(fence.snapshot().failed, true);
+      assert.equal(executions, 0);
+    } finally {
+      fence?.close();
+      await browser?.close();
+      await Promise.all(
+        [canary, source].map((server) => new Promise((resolve) => server.close(resolve))),
+      );
+    }
+  },
+);

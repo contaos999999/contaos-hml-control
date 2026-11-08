@@ -1,0 +1,38 @@
+name: ContaOS Trilha A Autenticada
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [build/trilha-a-authenticated-audit-20261108]
+permissions:
+  contents: read
+concurrency:
+  group: trilha-a-protocolo-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  protocol:
+    name: Trilha A protocolo e Chromium sem credenciais
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout do HEAD analisado
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+      - name: Dependencias congeladas
+        run: bun install --frozen-lockfile
+      - name: Provas do protocolo, sem environment e sem secrets
+        run: node --test scripts/hml/authenticated-visual-audit.test.mjs
+      - name: Chromium congelado pelo Playwright do lockfile
+        run: ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Fronteira real antes de qualquer autenticacao
+        env:
+          CONTAOS_NATIVE_GUARD: "1"
+        run: node --test --test-name-pattern='Chromium nativo' scripts/hml/authenticated-visual-audit.test.mjs
