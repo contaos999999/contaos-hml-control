@@ -336,7 +336,9 @@ test("metadados públicos extraídos por AST devem corresponder ao deployment ap
   assert.equal(result.VITE_VERCEL_GIT_COMMIT_SHA, "1".repeat(40));
 });
 const deploymentModules = (delta = {}) =>
-  new Map([["module.js", "const env=" + JSON.stringify({ ...clientConfig, ...publicEnv, ...delta }) + ";"]]);
+  new Map([
+    ["module.js", "const env=" + JSON.stringify({ ...clientConfig, ...publicEnv, ...delta }) + ";"],
+  ]);
 test("reancoragem descobre identidade validada sem pins e preserva pins explícitos", () => {
   const resolve = fn("resolveDeploymentIdentity");
   const expected = { frontendSha: config.frontendSha, deploymentId: config.deploymentId };
@@ -351,27 +353,50 @@ for (const pins of [
   { frontendSha: config.frontendSha, deploymentId: "dpl_oldfixture123" },
   { frontendSha: "main", deploymentId: config.deploymentId },
   { frontendSha: config.frontendSha, deploymentId: "dpl_inject123\nEVIL=1" },
-]) test("reancoragem nunca substitui pin incompleto, inválido ou obsoleto", () => {
-  assert.throws(() => fn("resolveDeploymentIdentity")(deploymentModules(), pins),
-    (e) => ["DEPLOYMENT_INPUT", "DEPLOYMENT_PIN_STALE"].includes(e.code));
-});
+])
+  test("reancoragem nunca substitui pin incompleto, inválido ou obsoleto", () => {
+    assert.throws(
+      () => fn("resolveDeploymentIdentity")(deploymentModules(), pins),
+      (e) => ["DEPLOYMENT_INPUT", "DEPLOYMENT_PIN_STALE"].includes(e.code),
+    );
+  });
 for (const delta of [
   { VITE_VERCEL_GIT_COMMIT_SHA: "main" },
   { VITE_VERCEL_DEPLOYMENT_ID: "dpl_inject123\nEVIL=1" },
   { VITE_VERCEL_PROJECT_ID: "foreign" },
   { VITE_VERCEL_GIT_REPO_OWNER: "foreign" },
   { VITE_VERCEL_SECRET: "SYNTHETIC_PRIVATE_CANARY" },
-]) test("descoberta automática rejeita identidade inválida e configuração estrangeira", () => {
-  assert.throws(() => fn("resolveDeploymentIdentity")(deploymentModules(delta)),
-    (e) => e.code === "BUILD_ENV_POLICY");
-});
+])
+  test("descoberta automática rejeita identidade inválida e configuração estrangeira", () => {
+    assert.throws(
+      () => fn("resolveDeploymentIdentity")(deploymentModules(delta)),
+      (e) => e.code === "BUILD_ENV_POLICY",
+    );
+  });
 test("descoberta automática rejeita ausência, conflito e expressão executável", () => {
   const resolve = fn("resolveDeploymentIdentity");
   const conflict = deploymentModules();
-  conflict.set("other.js", deploymentModules({ VITE_VERCEL_GIT_COMMIT_SHA: "3".repeat(40) }).get("module.js"));
-  for (const modules of [new Map(), new Map([["module.js", "const empty={};"]]), conflict,
-    new Map([["module.js", deploymentModules().get("module.js").replace('"Synthetic fixture build"', '`${exfiltrate()}`')]])])
-    assert.throws(() => resolve(modules), (e) => e.code === "BUILD_ENV_POLICY");
+  conflict.set(
+    "other.js",
+    deploymentModules({ VITE_VERCEL_GIT_COMMIT_SHA: "3".repeat(40) }).get("module.js"),
+  );
+  for (const modules of [
+    new Map(),
+    new Map([["module.js", "const empty={};"]]),
+    conflict,
+    new Map([
+      [
+        "module.js",
+        deploymentModules()
+          .get("module.js")
+          .replace('"Synthetic fixture build"', "`${exfiltrate()}`"),
+      ],
+    ]),
+  ])
+    assert.throws(
+      () => resolve(modules),
+      (e) => e.code === "BUILD_ENV_POLICY",
+    );
 });
 test("outputs de workflow contêm apenas os dois identificadores validados", () => {
   const format = fn("deploymentWorkflowOutputs");
@@ -381,13 +406,22 @@ test("outputs de workflow contêm apenas os dois identificadores validados", () 
     outputs: `frontend_sha=${identity.frontendSha}\ndeployment_id=${identity.deploymentId}\n`,
   });
   for (const delta of [{ frontendSha: "main" }, { deploymentId: "dpl_inject123\nEVIL=1" }])
-    assert.throws(() => format({ ...identity, ...delta }), (e) => e.code === "DEPLOYMENT_INPUT");
+    assert.throws(
+      () => format({ ...identity, ...delta }),
+      (e) => e.code === "DEPLOYMENT_INPUT",
+    );
 });
 test("classificador local distingue erro de navegação sem persistir mensagem privada", () => {
   const classify = fn("classifyRuntimeError");
   for (const [message, reason] of [
-    ["page.waitForURL: net::ERR_ABORTED at https://private.invalid/SYNTHETIC_PRIVATE_CANARY", "NAVIGATION_ABORTED"],
-    ["page.evaluate: Execution context was destroyed, most likely because of a navigation.", "CONTEXT_DESTROYED"],
+    [
+      "page.waitForURL: net::ERR_ABORTED at https://private.invalid/SYNTHETIC_PRIVATE_CANARY",
+      "NAVIGATION_ABORTED",
+    ],
+    [
+      "page.evaluate: Execution context was destroyed, most likely because of a navigation.",
+      "CONTEXT_DESTROYED",
+    ],
     ["page.waitForURL: Target page, context or browser has been closed", "TARGET_CLOSED"],
     ["page.evaluate: Refused to evaluate a string as JavaScript because unsafe-eval", "CSP_EVAL"],
     ["SYNTHETIC_PRIVATE_CANARY", "UNKNOWN"],
@@ -396,8 +430,10 @@ test("classificador local distingue erro de navegação sem persistir mensagem p
     assert.equal(value.reason, reason);
     assert.equal(JSON.stringify(value).includes("SYNTHETIC_PRIVATE_CANARY"), false);
   }
-  assert.deepEqual(classify({ name: "SYNTHETIC_PRIVATE_CANARY", message: "SYNTHETIC_PRIVATE_CANARY" }),
-    { name: "UNKNOWN", operation: "UNKNOWN", reason: "UNKNOWN" });
+  assert.deepEqual(
+    classify({ name: "SYNTHETIC_PRIVATE_CANARY", message: "SYNTHETIC_PRIVATE_CANARY" }),
+    { name: "UNKNOWN", operation: "UNKNOWN", reason: "UNKNOWN" },
+  );
   assert.equal(classify({ name: "TimeoutError" }).reason, "TIMEOUT");
 });
 for (const delta of [
