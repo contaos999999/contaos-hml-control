@@ -212,7 +212,7 @@
     "local_one_table_synthetic_restore": "PASS_ESCOPADO_RUN_42168969390",
     "crud_global": "NÃO CONCLUÍDO: código de listas/capacidades/paginação integrado; validação privada e reconciliação semântica das demais operações não certificadas. Executor falhou explicitamente; nenhuma prova privada inventada."
   },
-  "p0_note": "Trilha A: PLAN318 integrado comCI verde; GATE separado estreito Sidebar+teste de router real, aguardando CI/revisão/merge. Não implementar antes disso. V1 não certificada.",
+  "p0_note": "Trilha A: PLAN318/GATE319 integrados com CI SUCCESS; RED funcional preservado, BUILD local GREEN e revisao independente aprovada; aguardar CI e merge deste BUILD. V1 nao certificada.",
   "rbac_emenda_p0": {
     "plano_documento": "docs/frontend/planos/P0_V1_ADM01_RBAC_EMENDA_2026-11-06.md",
     "plan_pr": 178,
@@ -973,8 +973,8 @@
     }
   },
   "trilha_a_sidebar_router_gate": {
-    "phase": "GATE_SEPARADO",
-    "state": "PENDENTE_CI_REVISAO_MERGE_SEM_BUILD",
+    "phase": "BUILD_GREEN_LOCAL",
+    "state": "PENDENTE_CI_BUILD_MERGE",
     "plan_pr": 318,
     "plan_head": "99248f40a65753c86512f3fe657e4b896036ff35",
     "plan_merge": "4818e68c17799102e7ef50a8e26659e6ab07aaf2",
@@ -991,6 +991,28 @@
     "real_router_test": true,
     "backend_changes": false,
     "private_hml": "NAO_VERIFICADO",
-    "v1_certified": false
+    "v1_certified": false,
+    "gate_pr": 319,
+    "gate_head": "c4f72e97e27ed0d09fc8c7b02638ab46042bb91e",
+    "gate_merge": "9e4990908f127ad32c883822a20f8caf47b59f2b",
+    "gate_ci": [
+      42433375944,
+      42433375807
+    ],
+    "red_local_commit": "f9ff06792fa3b417880f2c4dd33f95401e0836c4",
+    "red_result": "4 FAIL esperados / 7 PASS; interceptacao router false antes do fix",
+    "green_local": {
+      "router": 11,
+      "directed": 76,
+      "full_tests": 1163,
+      "full_files": 42,
+      "tsc": "PASS",
+      "lint_focal": "PASS",
+      "build": "PASS",
+      "zero_drift": "PASS",
+      "p0": "PASS",
+      "route_tree_drift": "PASS"
+    },
+    "independent_review": "APROVADO; sem Critical/Important; fixture real em memoria nao equivale HML privada/WCAG"
   }
 }
