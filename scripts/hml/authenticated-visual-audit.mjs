@@ -1,6 +1,6 @@
 import { readFile, mkdir, writeFile, lstat } from "node:fs/promises";
 import { resolve, join, basename } from "node:path";
-import { pathToFileURL } from "node:url";
+import { pathToFileURL, fileURLToPath } from "node:url";
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { createRequire } from "node:module";
@@ -923,7 +923,7 @@ export async function installNativeFence({
         fail("FENCE_REDIRECT");
       }
       let body;
-      if (new URL(event.request.url).origin === HML_ORIGIN) {
+      if (new URL(event.request.url).origin === HML_ORIGIN || event.resourceType === "Document") {
         const result = await send(session, "Fetch.getResponseBody", { requestId });
         if (typeof result.body !== "string" || result.body.length > 5592408)
           fail("FENCE_BODY_LIMIT");
@@ -941,15 +941,22 @@ export async function installNativeFence({
       if (event.resourceType === "Document") state.verifiedDocuments++;
       else if (event.resourceType === "Script") state.verifiedScripts++;
       else if (body) state.verifiedAssets++;
-      await send(session, "Fetch.continueResponse", {
-        requestId,
-        ...(event.resourceType === "Document"
-          ? {
-              responseCode: event.responseStatusCode,
-              responseHeaders: guardedResponseHeaders(event.responseHeaders),
-            }
-          : {}),
-      });
+      if (event.resourceType === "Document") {
+        if (!Buffer.isBuffer(body)) fail("FENCE_DOCUMENT_BODY");
+        const responseHeaders = guardedResponseHeaders(event.responseHeaders).filter(
+          (header) =>
+            !["content-length", "content-encoding", "transfer-encoding"].includes(
+              header.name.toLowerCase(),
+            ),
+        );
+        responseHeaders.push({ name: "Content-Length", value: String(body.length) });
+        await send(session, "Fetch.fulfillRequest", {
+          requestId,
+          responseCode: event.responseStatusCode,
+          responseHeaders,
+          body: body.toString("base64"),
+        });
+      } else await send(session, "Fetch.continueResponse", { requestId });
     } catch (error) {
       await send(session, "Fetch.failRequest", { requestId, errorReason: "BlockedByClient" }).catch(
         () => {},
@@ -1355,6 +1362,23 @@ export async function preparePublicProvenance({
 }
 export async function runCli(args = process.argv.slice(2)) {
   if (args.length !== 1 || args[0] !== "--prepare") fail("CLI_MODE");
+  const harnessRoot = fileURLToPath(new URL("../../", import.meta.url));
+  try {
+    const options = { cwd: harnessRoot, env: browserEnvironment(process.env), maxBuffer: 4194304 };
+    const head = await execFile("git", ["rev-parse", "HEAD"], options);
+    if (head.stdout.trim() !== process.env.CONTAOS_HARNESS_SHA) fail("HARNESS_SHA");
+    const committed = await execFile(
+      "git",
+      ["show", "HEAD:scripts/hml/authenticated-visual-audit.mjs"],
+      options,
+    );
+    if (committed.stdout !== (await readFile(fileURLToPath(import.meta.url), "utf8")))
+      fail("HARNESS_DIRTY");
+  } catch (error) {
+    if (["HARNESS_SHA", "HARNESS_DIRTY"].includes(error.code)) throw error;
+    fail("HARNESS_SOURCE");
+  }
+
   const proof = await preparePublicProvenance({
     sourceRoot: process.env.CONTAOS_FRONTEND_SOURCE,
     frontendSha: process.env.CONTAOS_FRONTEND_SHA,

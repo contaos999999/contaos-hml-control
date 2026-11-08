@@ -1042,7 +1042,27 @@ for (const scheme of ["ws", "wss"])
           fence.snapshot().verifiedDocuments > 0,
           "document must be verified before attempt",
         );
+        await page.evaluate(() => {
+          window.syntheticCspViolations = [];
+          document.addEventListener("securitypolicyviolation", (event) => {
+            window.syntheticCspViolations.push({
+              directive: event.effectiveDirective,
+              policy: event.originalPolicy,
+            });
+          });
+        });
         assert.equal(await attempt(page), "denied");
+        assert.equal(
+          await page.evaluate(() =>
+            window.syntheticCspViolations.some(
+              (event) =>
+                event.directive === "connect-src" &&
+                event.policy.includes("connect-src https://contaos-41-hml.vercel.app"),
+            ),
+          ),
+          true,
+          "native CSP must report blocked connect-src",
+        );
         await fence.drain();
         assert.equal(connections, 0, "fence deve bloquear antes do primeiro byte");
       } finally {

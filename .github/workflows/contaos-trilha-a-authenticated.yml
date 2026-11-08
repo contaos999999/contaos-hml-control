@@ -36,4 +36,4 @@ jobs:
         env:
           CONTAOS_NATIVE_GUARD: "1"
         run: |
-          node --test --test-name-pattern='Chromium nativo: (websocket|controle positivo)' scripts/hml/authenticated-visual-audit.test.mjs
+          node --test --test-name-pattern='Chromium nativo: (resposta|websocket|controle positivo)' scripts/hml/authenticated-visual-audit.test.mjs
