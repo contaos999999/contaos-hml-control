@@ -1435,7 +1435,7 @@
   },
   "trilha_a_24_fixture_plan": {
     "document": "docs/frontend/planos/P0_TRILHA_A_24_FIXTURES_PLAN_2026-11-08.md",
-    "phase": "RETIFICACAO_FONTE_AGUARDA_CI_REVISAO",
+    "phase": "BUILD373_CANDIDATO_RECONSTRUIDO_VALIDACAO_PENDENTE",
     "surfaces": [
       "V117",
       "V119",
@@ -1448,7 +1448,7 @@
     "fixture_file": "8cc6ac08-7f5b-469c-ab50-7b33d5a12379",
     "security_status_observed": "aprovado",
     "fixture_sha256": "773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103",
-    "new_build_allowlist_not_yet_authorized": true,
+    "new_build_allowlist_not_yet_authorized": false,
     "backend_prod_auth_rls_changes": false,
     "pr": 362,
     "merge": "7bcb9618ef66fe2c03b4e804dbae42d44caba4cb",
@@ -1477,10 +1477,37 @@
     "gate_ci": [
       42511864981,
       42511864976
-    ]
+    ],
+    "retification_pr": 368,
+    "retification_merge": "6e66efaa2069e8ba44e8d713f8e2967d220126ca",
+    "build_pr": 373,
+    "build_head": "3af740b185db92a19ca6129a738b384bbf18ebd9",
+    "build_merged": false,
+    "build_head_not_safe_to_merge": true,
+    "old_protocol_tests": 39,
+    "old_protocol_tests_not_e2e": true,
+    "preparer_hml_executed": false,
+    "historical_unsafe_head": "d0ca5404cc1779f626b5bb5c64ee8162ce895fef",
+    "historical_unsafe_head_state": "OLD_UNSAFE_PRESERVED",
+    "build_head_state": "CANDIDATE_UNVALIDATED",
+    "integrated_tests_format_review_pending": true,
+    "current_head_ci_snapshot": {
+      "fixtures": {
+        "run": 42534754045,
+        "conclusion": "failure"
+      },
+      "zero_drift": {
+        "run": 42534754110,
+        "status": "in_progress"
+      },
+      "lock_types": {
+        "run": 42534754131,
+        "conclusion": "success"
+      }
+    }
   },
   "trilha_a_visual_run78": {
-    "phase": "GATE371_INTEGRADO_AGUARDA_BUILD",
+    "phase": "BUILD374_INTEGRADO_TESTEC_HML_PENDENTE",
     "document": "docs/frontend/planos/TRILHA_A_VISUAL_RUN78_PLAN_2026-11-08.md",
     "gate_required_separately": true,
     "baseline_run": 42511641527,
@@ -1508,10 +1535,22 @@
     "gate_ci": [
       42516867690,
       42516867667
-    ]
+    ],
+    "build_pr": 374,
+    "build_head": "ce9cf2343eb2b39525e8daa2b5574329913f9d5f",
+    "build_merge": "ec59265dc375554828656b24ad82293f411cd464",
+    "build_ci": [
+      42519336546,
+      42519336566,
+      42519336552
+    ],
+    "independent_code_review": "VR01_SYS04_E_VR02_DISABLED_RESOLVIDOS_SEM_CRITICAL_IMPORTANT",
+    "native_causal_pass": 8,
+    "isolated_visual_browser_pass": 1,
+    "private_hml_after_build_tested": false
   },
   "trilha_a_privacy_run78": {
-    "phase": "GATE_SUBMETIDO_CI_REVISAO",
+    "phase": "GATE372_INTEGRADO_CATALOGO_EM_CORRECAO",
     "gate_document": "docs/frontend/planos/TRILHA_A_PRIVACIDADE_RUN78_GATE_2026-11-08.md",
     "proof": "docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_TECNICA_READONLY.json",
     "proof_sha256": "5aa39ef35e4a432f4f4f5f29d72ee5773a56e62102948f0e3a31a0529c2d8f18",
@@ -1527,7 +1566,10 @@
       "V109",
       "V123"
     ],
-    "global_complete": false
+    "global_complete": false,
+    "gate_pr": 372,
+    "gate_merge": "42abfa51f57c19c09f9a1c487652905f9ec37758",
+    "new_pseudonym_or_legacy_label_gates_integrated": false
   },
   "trilha_c_copiloto_plan": {
     "status": "PLAN_ADITIVO_PRE_BUILD",
@@ -1536,5 +1578,91 @@
     "frontend_build_pr_previa": 377,
     "scope": "Chat no AppShell nas áreas autenticadas; contrato/competência resolvidos sob RLS, seleção explícita nas telas sem contrato; nenhuma consulta IA sem escopo autorizado",
     "gates": "PLAN e emenda documental devem ter CI/revisão e integrar antes de BUILD separado; implantação Vercel FAILURE impede merge até resolução; Teste C real e OpenAI/JWT/negativos antes de certificar"
+  },
+  "checkpoint_retomada_mcp_20261108": {
+    "phase": "RECUPERACAO_DOCUMENTAL_E_OBSERVADOR_ISOLADO_SEM_HML",
+    "frontend_base": "c3f07bf64af728cfeac48bfb0dffae5d90a7c8b6",
+    "backend_normative": "7d83f046c282051baeeeab6b4f61e0ad8bd0cef6",
+    "source_verification": {
+      "method": "GITHUB_GET_PINNED_REFS",
+      "snapshot_blob": "d4254b2bcb3c20221dd55d004d61c40b9dc6ec4b",
+      "normative_blobs": 25,
+      "normative_matches": 25,
+      "catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
+      "catalog_match": true,
+      "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+      "types_certified_match": true
+    },
+    "environment": {
+      "executor": "FAILED_ERS_READINESS_TIMEOUT",
+      "cua_used": false,
+      "fallback": "NODE24_22_1_SANDBOX_ISOLATED_ONLY",
+      "not_teste_c": true,
+      "runtime_version_command": "cmd_9fdae2f0c73148febe5e313ff2d3",
+      "runtime_version": "v24.22.1"
+    },
+    "observer_recovery": {
+      "state": "INCORPORATED_CANDIDATE_NOT_MERGED_REVIEW_CI_PENDING",
+      "original_reviewed_sha256": "f8287088c6ada70e8df5afc919eff97841bb78ec393c413bc2715c1464bb0c16",
+      "reconstructed_sha256": "08559de4801af4ad597cd85c013a4fd441ce3a4024e91c8f61795c6d2be251b8",
+      "tests_sha256": "ef593c489b73b9278ce7d62dececb2db371ac25e6a8f44d63c9c4c601c49079d",
+      "test_command": "cmd_6391513186244998ab30c9eca006",
+      "hash_command": "cmd_010d6c3459234f4799b2bacf3893",
+      "runtime": "Node v24.22.1",
+      "passed": 26,
+      "failed": 0,
+      "evidence_reported_by": "COORDENADOR",
+      "reconstructed_not_claimed_original_bytes": true,
+      "requires_integrated_review_ci_native": true,
+      "no_auth_no_hml_no_mutation": true,
+      "candidate_pr": 373,
+      "candidate_head": "3af740b185db92a19ca6129a738b384bbf18ebd9",
+      "candidate_parents": [
+        "d0ca5404cc1779f626b5bb5c64ee8162ce895fef",
+        "c3f07bf64af728cfeac48bfb0dffae5d90a7c8b6"
+      ],
+      "isolated_pass_not_integrated_validation": true
+    },
+    "hml_publication": {
+      "alias": "https://contaos-41-hml.vercel.app",
+      "project": "prj_JtEWXg54EIYcQPwVzFiQyJcVIlFo",
+      "deployment": "dpl_3YN7ULKFArns9ZgyyAZ5q4GyQtP7",
+      "ready_state": "READY",
+      "source": "git",
+      "git_sha": "6c5d4824fc2a7bac61f1031de33ea1aaf1d1d0a1",
+      "git_ref": "main",
+      "provider_target": "production",
+      "technical_target_is_hml": true,
+      "visual374_is_ancestor": true,
+      "quota_http402": "PREVIEWS_NEW_DEPLOYS_STILL_RATE_LIMITED_LIVE_DEPLOYMENT_READY",
+      "ssr_graph_native_proof_required_before_auth": true,
+      "no_private_audit_from_ready_state": true,
+      "quota_restored_not_proven": true
+    },
+    "last_private_audit": 42511641527,
+    "original_pending_scope": 184,
+    "fixture_combinations_separate": 24,
+    "public_proofs_preserved": 18,
+    "new_private_hml_executed": false,
+    "v1_certified": false,
+    "issue_checkpoint": "https://github.com/contaos999999/contaos-hml-control/issues/317#issuecomment-6728430247",
+    "concurrent_changes": {
+      "frontend_prs_375_376_378": "DOCUMENTAL_ONLY",
+      "frontend_build_377": "OPEN_NOT_INTEGRATED",
+      "trilha_c_plan_preserved": true,
+      "backend_179": "PLAN_ONLY",
+      "new_privacy_gates_not_integrated": true
+    },
+    "next_action": "Concluir formato/testes integrados e revisão do candidato373 reconstruído, sem integrar pela CI antiga do OLD_UNSAFE d0ca nem pela aprovação isolada. CI/nativos no HEAD corrigido; conferir SSR/grafo/contexto HML antes de autenticar. Preparação24fixtures e TesteC visual permanecem fases distintas; manter184/PII/72/V1 pendentes.",
+    "protected_single_request_plan": {
+      "pr": 380,
+      "merge": "c3f07bf64af728cfeac48bfb0dffae5d90a7c8b6",
+      "ci": [
+        42534367851,
+        42534367836
+      ],
+      "review_comment": 6728553281,
+      "state": "PLAN_ONLY_GATE_BUILD_REQUIRED_NO_DISPATCH"
+    }
   }
 }
