@@ -739,3 +739,172 @@ test(
     }
   },
 );
+
+test("artefato recusa telefone e identificadores desconhecidos mesmo com formato válido", () => {
+  const safe = fn("safeArtifactText");
+  for (const value of ["1133334444", "f".repeat(32), "87ebff63-e844-4264-8c05-a92b6aabbcc1"])
+    assert.equal(safe(value, new Set()), false);
+  assert.equal(
+    safe(
+      "42 87ebff63-e844-4264-8c05-a92b6aabbcc1",
+      new Set(["42", "87ebff63-e844-4264-8c05-a92b6aabbcc1"]),
+    ),
+    true,
+  );
+});
+test("fence anexa todos os tipos de target, sem permitir execução de worklet desconhecido", async () => {
+  const fixture = await cdpFixture(),
+    done = Promise.withResolvers();
+  let fence;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => done.resolve(),
+      verifyResponse: async () => true,
+    });
+    const auto = fixture.received.filter((x) => x.method === "Target.setAutoAttach");
+    assert.equal(
+      auto.every(
+        (x) =>
+          !x.params.filter || x.params.filter.some((item) => !item.type && item.exclude !== true),
+      ),
+      true,
+    );
+    fixture.emit({
+      method: "Target.attachedToTarget",
+      params: {
+        sessionId: "worklet-session",
+        targetInfo: {
+          targetId: "unknown-worklet",
+          browserContextId: "own-context",
+          type: "worklet",
+        },
+        waitingForDebugger: true,
+      },
+    });
+    await Promise.race([
+      done.promise,
+      new Promise((_, reject) => {
+        const t = setTimeout(() => reject(new Error("worklet was not blocked")), 2000);
+        t.unref();
+      }),
+    ]);
+    assert.equal(fence.snapshot().failed, true);
+    assert.equal(
+      fixture.received.some(
+        (x) => x.sessionId === "worklet-session" && x.method === "Runtime.runIfWaitingForDebugger",
+      ),
+      false,
+    );
+  } finally {
+    fence?.close();
+    await fixture.close();
+  }
+});
+
+for (const mode of ["worker", "popup", "websocket", "proxy"])
+  test(
+    `Chromium nativo: ${mode} não transmite ao canário`,
+    { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
+    async () => {
+      const { chromium } = await import("playwright");
+      let browser, context, fence, proxy;
+      let connections = 0;
+      const canary = createHttpServer((_req, res) => res.end("canary"));
+      canary.on("connection", () => connections++);
+      const debug = createHttpServer();
+      await Promise.all(
+        [canary, debug].map(
+          (server) => new Promise((resolve) => server.listen(0, "127.0.0.1", resolve)),
+        ),
+      );
+      const port = debug.address().port;
+      await new Promise((resolve) => debug.close(resolve));
+      const finished = Promise.withResolvers();
+      try {
+        if (mode === "proxy") proxy = await fn("startDestinationProxy")();
+        browser = await chromium.launch({
+          chromiumSandbox: true,
+          env: fn("browserEnvironment")(process.env),
+          args: [
+            `--remote-debugging-port=${port}`,
+            ...(proxy ? ["--proxy-bypass-list=<-loopback>"] : []),
+          ],
+          ...(proxy ? { proxy: { server: proxy.url } } : {}),
+        });
+        context = await browser.newContext();
+        const page = await context.newPage();
+        if (mode !== "proxy") {
+          const session = await context.newCDPSession(page);
+          const { targetInfo } = await session.send("Target.getTargetInfo");
+          await session.detach();
+          fence = await fn("installNativeFence")({
+            debugPort: port,
+            identity: targetInfo,
+            verifyResponse: async () => true,
+            closeContext: async () => {
+              await context.close();
+              finished.resolve();
+            },
+          });
+        }
+        if (mode === "worker") {
+          await page
+            .evaluate((url) => {
+              new Worker(
+                URL.createObjectURL(new Blob([`fetch('${url}')`], { type: "text/javascript" })),
+              );
+            }, `http://127.0.0.1:${canary.address().port}/canary`)
+            .catch(() => {});
+        } else if (mode === "popup") {
+          await page
+            .evaluate((url) => window.open(url), `http://127.0.0.1:${canary.address().port}/canary`)
+            .catch(() => {});
+        } else if (mode === "websocket") {
+          assert.equal(
+            await page.evaluate(
+              (url) =>
+                new Promise((resolve) => {
+                  const ws = new WebSocket(url);
+                  ws.onerror = () => resolve("denied");
+                  ws.onopen = () => resolve("opened");
+                }),
+              `ws://127.0.0.1:${canary.address().port}/canary`,
+            ),
+            "denied",
+          );
+        } else {
+          assert.equal(
+            await page.evaluate(
+              (url) =>
+                fetch(url).then(
+                  () => false,
+                  () => true,
+                ),
+              `http://127.0.0.1:${canary.address().port}/canary`,
+            ),
+            true,
+          );
+          assert.ok(proxy.snapshot().blocked > 0);
+        }
+        if (mode === "worker" || mode === "popup")
+          await Promise.race([
+            finished.promise,
+            new Promise((_, reject) => {
+              const timer = setTimeout(() => reject(new Error("target was not stopped")), 10000);
+              timer.unref();
+            }),
+          ]);
+        await fence?.drain();
+        if (mode === "worker") assert.ok(fence.snapshot().workersPaused > 0);
+        if (mode === "popup") assert.ok(fence.snapshot().popups > 0);
+        assert.equal(connections, 0);
+      } finally {
+        fence?.close();
+        await browser?.close();
+        await proxy?.close();
+        await new Promise((resolve) => canary.close(resolve));
+      }
+    },
+  );

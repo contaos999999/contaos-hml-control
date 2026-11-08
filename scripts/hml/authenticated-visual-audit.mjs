@@ -431,13 +431,7 @@ export function safeArtifactText(text, allowedWords) {
       .normalize("NFC")
       .toLocaleLowerCase("pt-BR")
       .match(/[\p{L}\p{N}_-]+/gu) || [];
-  return words.every(
-    (word) =>
-      allowedWords.has(word) ||
-      /^\d{1,10}$/.test(word) ||
-      /^[a-f0-9]{32}$/.test(word) ||
-      /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(word),
-  );
+  return words.every((word) => allowedWords.has(word));
 }
 
 export const PUBLIC_BUILD_KEYS = [
@@ -939,14 +933,9 @@ export async function installNativeFence({
       invalidate(error);
     }
   }
-  const filter = [
-    { type: "page" },
-    { type: "iframe" },
-    { type: "worker" },
-    { type: "shared_worker" },
-    { type: "service_worker" },
-    { exclude: true },
-  ];
+  // Browser and tab are protocol containers, not executable renderer targets.
+  // Every renderer type, including future worklets, is paused and inspected.
+  const filter = [{ type: "browser", exclude: true }, { type: "tab", exclude: true }, {}];
   function attach(event, parent) {
     const session = {
       id: event.sessionId,
@@ -960,7 +949,7 @@ export async function installNativeFence({
       return;
     }
     if (session.contextId !== identity.browserContextId) {
-      track(send(session, "Runtime.runIfWaitingForDebugger"));
+      invalidate({ code: "FENCE_CONTEXT_FOREIGN" });
       return;
     }
     if (["worker", "shared_worker", "service_worker"].includes(session.type)) {
