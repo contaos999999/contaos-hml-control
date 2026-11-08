@@ -2438,6 +2438,9 @@ test(
       assert.equal(record.paused.frameId, record.network.frameId);
       assert.ok(record.network.loaderId);
       assert.equal(record.network.request.method, "GET");
+      assert.equal(record.network.type, "Fetch");
+      assert.equal(record.paused.resourceType, "XHR");
+      t.diagnostic("NATIVE_CANCEL_TYPES Fetch XHR");
       t.diagnostic("NATIVE_CANCEL_STAGE IDENTITY_PROVED");
       proxy.release();
       const error = await within(proxy.rejected);
@@ -2505,7 +2508,8 @@ test(
       const types = fn("nativeCancellationTypes")(
         "# NATIVE_CANCEL_TYPES " + observed?.network?.type + " " + observed?.paused?.resourceType,
       );
-      if (types) t.diagnostic("NATIVE_CANCEL_TYPES " + types.network + " " + types.fetch);
+      if (types && candidate === "FENCE_LIFECYCLE_TYPE")
+        t.diagnostic("NATIVE_CANCEL_TYPES " + types.network + " " + types.fetch);
       throw error;
     } finally {
       fence?.close();
@@ -2732,3 +2736,54 @@ test("tombstones sobrevivem à conclusão e têm teto fechado", () => {
   );
   f.tracker.close();
 });
+
+test("par nativo Fetch/XHR mantém tipos originais e autoriza apenas GET cancelado", async () => {
+  const f = lifecycleInput({ pause: { resourceType: "XHR" } });
+  f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+  assert.equal(await f.tracker.handleCanceled(f.ticket, f.error), true);
+  assert.equal(f.tracker.snapshot().canceled, 1);
+  f.tracker.close();
+});
+for (const method of ["POST", "OPTIONS"])
+  test("par Fetch/XHR não autoriza cancelamento " + method, async () => {
+    const request = { url: HML + "/", method };
+    const f = lifecycleInput({ network: { request }, pause: { request, resourceType: "XHR" } });
+    f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+    assert.equal(await f.tracker.handleCanceled(f.ticket, f.error), false);
+    f.tracker.close();
+  });
+test("par Fetch/XHR aceita resposta ordinária estável sem exceção", () => {
+  const f = lifecycleInput({ pause: { resourceType: "XHR" } });
+  f.tracker.acknowledge(f.ticket);
+  f.tracker.finish(f.ticket);
+  const response = f.tracker.pause(f.session, {
+    ...f.pause,
+    resourceType: "XHR",
+    responseStatusCode: 200,
+  });
+  assert.equal(response.stage, "RESPONSE");
+  f.tracker.finish(response);
+  f.tracker.close();
+});
+test("tipo Fetch fica imutável entre estágios, mesmo quando outro par seria válido", () => {
+  const f = lifecycleInput();
+  f.tracker.acknowledge(f.ticket);
+  f.tracker.finish(f.ticket);
+  assert.throws(() =>
+    f.tracker.pause(f.session, { ...f.pause, resourceType: "XHR", responseStatusCode: 200 }),
+  );
+  f.tracker.close();
+});
+for (const [networkType, fetchType] of [
+  ["XHR", "Fetch"],
+  ["Other", "XHR"],
+  ["Fetch", "Other"],
+  ["Preflight", "XHR"],
+  [undefined, undefined],
+  ["UNKNOWN", "UNKNOWN"],
+])
+  test("ciclo recusa par não comprovado " + networkType + "/" + fetchType, () => {
+    assert.throws(() =>
+      lifecycleInput({ network: { type: networkType }, pause: { resourceType: fetchType } }),
+    );
+  });
