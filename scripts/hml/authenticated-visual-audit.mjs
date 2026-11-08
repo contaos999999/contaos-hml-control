@@ -1514,8 +1514,8 @@ async function nativeGuard() {
     // Never print the raw subprocess output: it can contain browser URLs or
     // authentication material. Emit only a bounded, allowlisted TAP summary.
     const stdout = typeof error?.stdout === "string" ? error.stdout : "";
-    const tap = stdout.split("\\n").filter((line) =>
-      /^(?:not ok \\d+ - Chromium nativo:|# (?:tests|pass|fail|skipped|cancelled|duration_ms) [0-9.]+\\s*)$/.test(line.trim()),
+    const tap = stdout.split("\n").filter((line) =>
+      /^(?:not ok \d+ - Chromium nativo:|# (?:tests|pass|fail|skipped|cancelled|duration_ms) [0-9.]+\s*)$/.test(line.trim()),
     ).slice(0, 16);
     console.error(JSON.stringify({
       phase: "NATIVE_GUARD",
