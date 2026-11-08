@@ -19,6 +19,7 @@ const FENCE_COMMANDS = new Set([
   "Target.setAutoAttach",
   "Runtime.runIfWaitingForDebugger",
   "Page.enable",
+  "Page.getFrameTree",
   "Network.enable",
   "Network.setCacheDisabled",
   "Network.setBlockedURLs",
@@ -557,6 +558,261 @@ export function classifyCdpError(error) {
   };
 }
 
+// Request identity is kept only in memory. Cancellation never authorizes a
+// response: it can only retire one initial continuation that Chromium rejected.
+export function createRequestLifecycle(identity) {
+  const frames = new Map(),
+    requests = new Map(),
+    fetches = new Map();
+  const seenNetwork = new Set(),
+    seenFetch = new Set();
+  let closed = false,
+    canceled = 0;
+  const id = (value) => typeof value === "string" && value.length > 0 && value.length <= 512;
+  const key = (session, value) => session.id + "|" + value;
+  function own(session, requireFrame = true) {
+    if (
+      closed ||
+      !id(session?.id) ||
+      session.targetId !== identity.targetId ||
+      session.contextId !== identity.browserContextId ||
+      (requireFrame && !frames.has(session.id))
+    )
+      fail("FENCE_REQUEST_LIFECYCLE");
+  }
+  function terminal(record, value) {
+    if (record.terminal) fail("FENCE_REQUEST_LIFECYCLE");
+    record.terminal = value;
+    for (const resolve of record.waiters) resolve();
+    record.waiters.clear();
+    cleanup(record);
+  }
+  function cleanup(record) {
+    if (!record.terminal || record.active > 0) return;
+    requests.delete(record.key);
+    for (const fetchKey of record.fetchKeys) fetches.delete(fetchKey);
+  }
+  function foundation(ticket, error) {
+    const record = ticket?.record,
+      frame = frames.get(ticket?.sessionId);
+    return (
+      !closed &&
+      ticket?.stage === "REQUEST" &&
+      ticket.sent &&
+      !ticket.acked &&
+      !ticket.consumed &&
+      !ticket.finished &&
+      record?.eligible === true &&
+      !record.responseSeen &&
+      frame?.id === record.frameId &&
+      frame?.loaderId === record.loaderId &&
+      frame?.generation === record.generation &&
+      error?.code === "CDP_COMMAND" &&
+      error.command === "Fetch.continueRequest" &&
+      error.protocolCode === -32602 &&
+      error.reason === "INVALID_INTERCEPTION"
+    );
+  }
+  return {
+    frame(session, frame) {
+      own(session, false);
+      if (!id(frame?.id) || (frames.has(session.id) && frames.get(session.id).id !== frame.id))
+        fail("FENCE_REQUEST_LIFECYCLE");
+      frames.set(session.id, { id: frame.id, loaderId: frame.loaderId || "", generation: 1 });
+    },
+    observe(session, method, event) {
+      own(session);
+      const frame = frames.get(session.id);
+      if (method === "Page.frameNavigated") {
+        if (
+          event.frame?.id === frame.id &&
+          id(event.frame.loaderId) &&
+          event.frame.loaderId !== frame.loaderId
+        ) {
+          frame.loaderId = event.frame.loaderId;
+          frame.generation++;
+        }
+        return;
+      }
+      if (!id(event?.requestId)) fail("FENCE_REQUEST_LIFECYCLE");
+      const requestKey = key(session, event.requestId);
+      if (method === "Network.requestWillBeSent") {
+        if (
+          event.redirectResponse ||
+          seenNetwork.has(requestKey) ||
+          requests.size >= 1024 ||
+          seenNetwork.size >= 65536
+        )
+          fail("FENCE_REQUEST_LIFECYCLE");
+        seenNetwork.add(requestKey);
+        if (
+          event.type === "Document" &&
+          event.frameId === frame.id &&
+          id(event.loaderId) &&
+          event.loaderId !== frame.loaderId
+        ) {
+          frame.loaderId = event.loaderId;
+          frame.generation++;
+        }
+        const record = {
+          key: requestKey,
+          sessionId: session.id,
+          networkId: event.requestId,
+          frameId: event.frameId,
+          loaderId: event.loaderId,
+          generation: frame.generation,
+          type: event.type,
+          url: event.request?.url,
+          method: event.request?.method,
+          startedAt: event.timestamp,
+          eligible:
+            event.frameId === frame.id &&
+            id(event.loaderId) &&
+            event.loaderId === frame.loaderId &&
+            Number.isFinite(event.timestamp) &&
+            event.timestamp >= 0,
+          responseSeen: false,
+          terminal: null,
+          active: 0,
+          fetchKeys: new Set(),
+          waiters: new Set(),
+        };
+        requests.set(requestKey, record);
+        return;
+      }
+      const record = requests.get(requestKey);
+      if (!record) return; // An unrelated terminal cannot authorize any pause.
+      if (method === "Network.responseReceived") {
+        if (record.terminal) fail("FENCE_REQUEST_LIFECYCLE");
+        record.responseSeen = true;
+      } else if (method === "Network.loadingFailed") {
+        terminal(record, {
+          kind: "FAILED",
+          canceled: event.canceled === true,
+          aborted: event.errorText === "net::ERR_ABORTED",
+          type: event.type,
+          timestamp: event.timestamp,
+          blocked: event.blockedReason !== undefined || event.corsErrorStatus !== undefined,
+        });
+      } else if (method === "Network.loadingFinished") terminal(record, { kind: "FINISHED" });
+    },
+    pause(session, event) {
+      own(session);
+      // networkId is optional in CDP. Such a pause still uses the ordinary
+      // policy/body guard, but is never eligible for cancellation retirement.
+      if (!id(event.networkId)) return null;
+      const record = requests.get(key(session, event.networkId));
+      if (
+        !record ||
+        !id(event.requestId) ||
+        record.terminal ||
+        record.frameId !== event.frameId ||
+        record.type !== event.resourceType ||
+        record.url !== event.request?.url ||
+        record.method !== event.request?.method
+      )
+        fail("FENCE_REQUEST_LIFECYCLE");
+      const fetchKey = key(session, event.requestId),
+        previous = fetches.get(fetchKey);
+      const response =
+        event.responseStatusCode !== undefined || event.responseErrorReason !== undefined;
+      if (
+        previous
+          ? !response ||
+            previous.record !== record ||
+            previous.stage !== "REQUEST" ||
+            previous.responsePauseSeen
+          : seenFetch.has(fetchKey) || seenFetch.size >= 65536
+      )
+        fail("FENCE_REQUEST_LIFECYCLE");
+      if (previous) previous.responsePauseSeen = true;
+      else seenFetch.add(fetchKey);
+      if (response) record.responseSeen = true;
+      const ticket = {
+        record,
+        sessionId: session.id,
+        stage: response ? "RESPONSE" : "REQUEST",
+        sent: false,
+        acked: false,
+        consumed: false,
+        finished: false,
+        attempted: false,
+        responsePauseSeen: false,
+      };
+      fetches.set(fetchKey, ticket);
+      record.fetchKeys.add(fetchKey);
+      record.active++;
+      return ticket;
+    },
+    sent(ticket) {
+      if (!ticket) return;
+      if (closed || ticket.sent || ticket.consumed || ticket.finished || ticket.stage !== "REQUEST")
+        fail("FENCE_REQUEST_LIFECYCLE");
+      ticket.sent = true;
+    },
+    acknowledge(ticket) {
+      if (!ticket) return;
+      if (closed || ticket.consumed || ticket.finished || !ticket.sent)
+        fail("FENCE_REQUEST_LIFECYCLE");
+      ticket.acked = true;
+    },
+    async handleCanceled(ticket, error) {
+      if (!foundation(ticket, error) || ticket.attempted) return false;
+      ticket.attempted = true;
+      const record = ticket.record;
+      if (!record.terminal)
+        await new Promise((resolve) => {
+          let timer;
+          const done = () => {
+            clearTimeout(timer);
+            record.waiters.delete(done);
+            resolve();
+          };
+          record.waiters.add(done);
+          timer = setTimeout(done, 250);
+        });
+      const proof = record.terminal;
+      if (
+        !foundation(ticket, error) ||
+        proof?.kind !== "FAILED" ||
+        !proof.canceled ||
+        !proof.aborted ||
+        proof.blocked ||
+        proof.type !== record.type ||
+        !Number.isFinite(proof.timestamp) ||
+        proof.timestamp < record.startedAt
+      )
+        return false;
+      ticket.consumed = true;
+      canceled++;
+      return true;
+    },
+    finish(ticket) {
+      if (!ticket || ticket.finished) return;
+      ticket.finished = true;
+      ticket.record.active--;
+      cleanup(ticket.record);
+    },
+    snapshot() {
+      return {
+        active: requests.size,
+        networkTombstones: seenNetwork.size,
+        fetchTombstones: seenFetch.size,
+        canceled,
+      };
+    },
+    close() {
+      closed = true;
+      for (const record of requests.values()) for (const resolve of record.waiters) resolve();
+      frames.clear();
+      requests.clear();
+      fetches.clear();
+      seenNetwork.clear();
+      seenFetch.clear();
+    },
+  };
+}
+
 export const PUBLIC_BUILD_KEYS = [
   "VITE_VERCEL_BRANCH_URL",
   "VITE_VERCEL_DEPLOYMENT_ID",
@@ -1020,6 +1276,7 @@ export async function installNativeFence({
   )
     fail("FENCE_CONFIGURATION");
   const root = await connectNativeCDP(debugPort, identity);
+  const lifecycle = createRequestLifecycle(identity);
   const sessions = new Map(),
     active = new Set();
   const state = {
@@ -1049,6 +1306,7 @@ export async function installNativeFence({
   function invalidate(error) {
     if (state.failed || closed) return;
     state.failed = true;
+    lifecycle.close();
     state.failureCode = /^(?:CDP|FENCE)_[A-Z_]{1,80}$/.test(error?.code || "")
       ? error.code
       : "FENCE_ASYNC";
@@ -1078,6 +1336,7 @@ export async function installNativeFence({
   const send = (session, method, params = {}) => root.send(method, params, session.id);
   async function paused(session, event) {
     const requestId = event.requestId;
+    let ticket;
     try {
       if (
         state.failed ||
@@ -1093,10 +1352,13 @@ export async function installNativeFence({
         state.blockedRequests++;
         fail("FENCE_REQUEST");
       }
+      ticket = lifecycle.pause(session, event);
       const response =
         event.responseStatusCode !== undefined || event.responseErrorReason !== undefined;
       if (!response) {
+        lifecycle.sent(ticket);
         await send(session, "Fetch.continueRequest", { requestId, interceptResponse: true });
+        lifecycle.acknowledge(ticket);
         return;
       }
       if (event.responseErrorReason) fail("FENCE_TRANSPORT");
@@ -1141,10 +1403,13 @@ export async function installNativeFence({
         });
       } else await send(session, "Fetch.continueResponse", { requestId });
     } catch (error) {
+      if (!state.failed && !closed && (await lifecycle.handleCanceled(ticket, error))) return;
       await send(session, "Fetch.failRequest", { requestId, errorReason: "BlockedByClient" }).catch(
         () => {},
       );
       invalidate(error);
+    } finally {
+      lifecycle.finish(ticket);
     }
   }
   // Browser and tab are protocol containers, not executable renderer targets.
@@ -1181,6 +1446,9 @@ export async function installNativeFence({
     track(
       (async () => {
         await send(session, "Page.enable");
+        const frameTree = await send(session, "Page.getFrameTree");
+        lifecycle.frame(session, frameTree.frameTree?.frame);
+        session.lifecycleReady = true;
         await send(session, "Network.enable");
         // Every intercepted response needs a complete body for byte comparison.
         // Revalidations (304) remain forbidden; request full responses instead.
@@ -1216,7 +1484,23 @@ export async function installNativeFence({
       if (!closed && removed?.targetId === identity.targetId)
         invalidate({ code: "FENCE_TARGET_DETACHED" });
     } else if (session?.contextId === identity.browserContextId) {
-      if (event.method === "Fetch.requestPaused") track(paused(session, event.params));
+      if (closed || state.failed) return;
+      if (
+        session.lifecycleReady &&
+        [
+          "Network.requestWillBeSent",
+          "Network.responseReceived",
+          "Network.loadingFailed",
+          "Network.loadingFinished",
+          "Page.frameNavigated",
+        ].includes(event.method)
+      ) {
+        try {
+          lifecycle.observe(session, event.method, event.params);
+        } catch (error) {
+          invalidate(error);
+        }
+      } else if (event.method === "Fetch.requestPaused") track(paused(session, event.params));
       else if (event.method === "Page.windowOpen") {
         state.popups++;
         invalidate({ code: "FENCE_POPUP" });
@@ -1251,7 +1535,7 @@ export async function installNativeFence({
     clearTimeout(timer);
   }
   return {
-    snapshot: () => ({ ...state }),
+    snapshot: () => ({ ...state, canceledInitialRequests: lifecycle.snapshot().canceled }),
     assertSafe() {
       if (state.failed || closed || state.verifiedDocuments === 0 || state.verifiedScripts === 0)
         fail("FENCE_NOT_PROVEN");
@@ -1261,6 +1545,7 @@ export async function installNativeFence({
     },
     close() {
       closed = true;
+      lifecycle.close();
       root.close();
     },
   };
@@ -1685,11 +1970,11 @@ export function nativeProofFromTap(tap, identity) {
     !hash64(identity?.testHash)
   )
     fail("NATIVE_PROOF");
-  for (const [key, value] of Object.entries({ tests: 7, pass: 7, fail: 0, skipped: 0 })) {
+  for (const [key, value] of Object.entries({ tests: 8, pass: 8, fail: 0, skipped: 0 })) {
     const matches = [...tap.matchAll(new RegExp("^# " + key + " (\\d+)\\s*$", "gm"))];
     if (matches.length !== 1 || Number(matches[0][1]) !== value) fail("NATIVE_PROOF");
   }
-  return { schema: "contaos.native.proof.v1", ...identity, passed: 7, failed: 0, skipped: 0 };
+  return { schema: "contaos.native.proof.v1", ...identity, passed: 8, failed: 0, skipped: 0 };
 }
 export function nativeProofValid(proof, identity) {
   return (
@@ -1698,7 +1983,7 @@ export function nativeProofValid(proof, identity) {
     hash64(identity?.moduleHash) &&
     hash64(identity?.testHash) &&
     ["harnessSha", "moduleHash", "testHash"].every((k) => proof[k] === identity[k]) &&
-    proof.passed === 7 &&
+    proof.passed === 8 &&
     proof.failed === 0 &&
     proof.skipped === 0
   );
@@ -1780,7 +2065,7 @@ async function nativeGuard() {
     JSON.stringify({
       phase: "NATIVE_GUARD",
       state: "PASS",
-      cases: 7,
+      cases: 8,
       harnessSha: proof.harnessSha,
     }),
   );
@@ -2567,7 +2852,7 @@ export async function writeBlockedPreflight(input, output = resolve("artifacts/t
           harnessSha: identity.harnessSha,
           moduleHash: identity.moduleHash,
           testHash: identity.testHash,
-          passed: 7,
+          passed: 8,
           failed: 0,
           skipped: 0,
         },
@@ -2647,6 +2932,7 @@ export function runtimeDiagnostics(input = {}) {
   ];
   const failures = new Set([
     "FENCE_REQUEST",
+    "FENCE_REQUEST_LIFECYCLE",
     "FENCE_TRANSPORT",
     "FENCE_REDIRECT",
     "FENCE_BODY_LIMIT",
@@ -2706,6 +2992,7 @@ export function runtimeDiagnostics(input = {}) {
         : null,
   };
   for (const key of [
+    "canceledInitialRequests",
     "verifiedDocuments",
     "verifiedScripts",
     "verifiedAssets",
