@@ -449,6 +449,16 @@ export function summarizeCases(rows) {
 // Match whole excerpts; do not add their individual words to the global dictionary.
 const SYNTHETIC_EXCERPTS = Object.freeze([
   "AUD-A-VERCEL-20261108",
+  "AUDITORIA TRILHA A VERCEL 20261108",
+  "Registro sintético para testes autenticados HML",
+  "Contrato sintético de homologação para auditoria autenticada da Trilha A, sem efeitos financeiros reais.",
+  "direcao aprovador",
+  "juridico conformidade",
+  "prestacao contas",
+  "rh dp",
+  "08/11/2026 00:58",
+  "01/01/2026",
+  "2026-01-01",
   "2de433a7-a84c-4575-aa2a-7699d2871b55",
   "773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103",
   "08/11/2026 08:01",
@@ -471,7 +481,7 @@ const SYNTHETIC_EXCERPT_PATTERN = new RegExp(
     String.raw`)(?![\p{L}\p{N}_-])`,
   "gu",
 );
-export function classifyArtifactText(text, allowedWords) {
+export function classifyArtifactText(text, allowedWords, { snapshot = false } = {}) {
   if (typeof text !== "string" || text.length > 1000000 || !(allowedWords instanceof Set))
     return { reason: "INVALID_CONTENT", unknownCount: 0 };
   if (
@@ -480,13 +490,29 @@ export function classifyArtifactText(text, allowedWords) {
     )
   )
     return { reason: "SENSITIVE_PATTERN", unknownCount: 0 };
-  const remainder = text.normalize("NFC").replace(SYNTHETIC_EXCERPT_PATTERN, " ");
+  let invalidDate = false;
+  let remainder = text
+    .normalize("NFC")
+    .replace(/Atualizado em(?=[ \t]+\d)[^\r\n]*/gu, (candidate, offset, full) => {
+      // Validate the entire labelled field, including malformed suffixes.
+      const quoted = full[offset - 1] === '"';
+      const value = quoted && candidate.endsWith('"') ? candidate.slice(0, -1) : candidate;
+      if (!/^Atualizado em 08\/11\/2026 (?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(value)) {
+        invalidDate = true;
+        return value;
+      }
+      return " ";
+    });
+  if (invalidDate) return { reason: "INVALID_CONTENT", unknownCount: 0 };
+  remainder = remainder.replace(SYNTHETIC_EXCERPT_PATTERN, " ");
+  if (snapshot)
+    remainder = remainder.replace(/^[\t ]*-\s+(?:application|caption|searchbox)(?=[:\s])/gmu, "");
   const words = remainder.toLocaleLowerCase("pt-BR").match(/[\p{L}\p{N}_-]+/gu) || [];
   const unknownCount = Math.min(233, words.filter((word) => !allowedWords.has(word)).length);
   return { reason: unknownCount ? "UNKNOWN_WORDS" : "ALLOWED", unknownCount };
 }
-export function safeArtifactText(text, allowedWords) {
-  return classifyArtifactText(text, allowedWords).reason === "ALLOWED";
+export function safeArtifactText(text, allowedWords, options) {
+  return classifyArtifactText(text, allowedWords, options).reason === "ALLOWED";
 }
 export function preservedPrivateCase(item) {
   if (
@@ -503,6 +529,31 @@ export function preservedPrivateCase(item) {
     baselineArtifact: 13623288351,
     baselineFrontendSha: "9b18e4857b03daa6ee09ad3382184480e2014728",
     baselineZipSha256: "bc2a8b74e1ba9ff008ed67ce0f398c47ce120924cf69b5210d62f8165291d2c6",
+  };
+}
+
+export function completePrivateRecords(records) {
+  const keys = new Set(records.map(caseKey));
+  for (const item of privateCases())
+    if (!keys.has(caseKey(item)))
+      records.push(
+        preservedPrivateCase(item) || {
+          ...item,
+          status: item.fixtureBlocked ? "BLOQUEADO_FIXTURE" : "BLOQUEADO_EXECUCAO_INTERROMPIDA",
+        },
+      );
+  return records;
+}
+export function classifyCdpError(error) {
+  const codes = new Set([-32000, -32600, -32601, -32602, -32700]);
+  const reasons = new Map([
+    ["No resource with given identifier found", "NO_RESOURCE"],
+    ["Invalid InterceptionId.", "INVALID_INTERCEPTION"],
+    ["Can only get response body on requests captured after headers received.", "BODY_STAGE"],
+  ]);
+  return {
+    protocolCode: codes.has(error?.code) ? error.code : null,
+    reason: reasons.get(error?.message) || "OTHER",
   };
 }
 
@@ -889,7 +940,11 @@ export async function connectNativeCDP(port, identity) {
       clearTimeout(pending.timer);
       if (data.error)
         pending.reject(
-          Object.assign(new Error("CDP_COMMAND"), { code: "CDP_COMMAND", command: pending.method }),
+          Object.assign(new Error("CDP_COMMAND"), {
+            code: "CDP_COMMAND",
+            command: pending.method,
+            ...classifyCdpError(data.error),
+          }),
         );
       else pending.resolve(data.result ?? {});
     } else {
@@ -971,6 +1026,8 @@ export async function installNativeFence({
     failed: false,
     failureCode: null,
     failureCommand: null,
+    failureProtocolCode: null,
+    failureReason: null,
     verifiedDocuments: 0,
     verifiedScripts: 0,
     verifiedAssets: 0,
@@ -996,6 +1053,16 @@ export async function installNativeFence({
       ? error.code
       : "FENCE_ASYNC";
     state.failureCommand = FENCE_COMMANDS.has(error?.command) ? error.command : null;
+    state.failureProtocolCode = [-32000, -32600, -32601, -32602, -32700].includes(
+      error?.protocolCode,
+    )
+      ? error.protocolCode
+      : null;
+    state.failureReason = ["NO_RESOURCE", "INVALID_INTERCEPTION", "BODY_STAGE", "OTHER"].includes(
+      error?.reason,
+    )
+      ? error.reason
+      : null;
     rejectInitial(
       Object.assign(new Error(state.failureCode), {
         code: state.failureCode,
@@ -1857,7 +1924,7 @@ async function inspectPrivacy(page, words, diagnostics) {
       ? { rendered: { reason: "OPAQUE_MEDIA", unknownCount: 0 } }
       : {
           rendered: classifyArtifactText(rendered, words),
-          snapshot: classifyArtifactText(snapshot, words),
+          snapshot: classifyArtifactText(snapshot, words, { snapshot: true }),
         };
   if (diagnostics) Object.assign(diagnostics, privacy);
   if (Object.values(privacy).some((result) => result.reason !== "ALLOWED")) return null;
@@ -1890,6 +1957,11 @@ async function settleVerifiedPage(page, fence) {
   await page.waitForLoadState("networkidle");
   await fence.drain();
   fence.assertSafe();
+}
+export async function resizeVerifiedPage(page, fence, width) {
+  await settleVerifiedPage(page, fence);
+  await page.setViewportSize({ width, height: 1000 });
+  await settleVerifiedPage(page, fence);
 }
 export async function navigateVerifiedPage(page, fence, target) {
   if (
@@ -2059,7 +2131,7 @@ async function runAuthenticatedAudit() {
       surface = item.surface;
       try {
         const beforeErrors = errors;
-        await page.setViewportSize({ width: item.width, height: 1000 });
+        await resizeVerifiedPage(page, fence, item.width);
         const response = await navigateVerifiedPage(page, fence, HML_ORIGIN + item.path);
         await page.evaluate(
           (theme) => document.documentElement.classList.toggle("dark", theme === "dark"),
@@ -2182,7 +2254,7 @@ async function runAuthenticatedAudit() {
         });
         record.keyboard = await keyboardProbe(page);
         record.sidebarSupplement = await sidebarProbe(page, item, key, words, saveScreenshot);
-        record.navigationVerified = await navigationProbe(page, item);
+        record.navigationVerified = await navigationProbe(page, item, fence);
         record.status =
           validateCase(record) &&
           metrics.langPtBr &&
@@ -2249,13 +2321,7 @@ async function runAuthenticatedAudit() {
     fence?.close();
     await browser?.close().catch(() => {});
     await proxy?.close().catch(() => {});
-    const keys = new Set(records.map(caseKey));
-    for (const item of privateCases())
-      if (!keys.has(caseKey(item)))
-        records.push({
-          ...item,
-          status: item.fixtureBlocked ? "BLOQUEADO_FIXTURE" : "BLOQUEADO_EXECUCAO_INTERROMPIDA",
-        });
+    completePrivateRecords(records);
     const report = {
       schema: "contaos.private.audit.v1",
       frontendSha: proof.frontendSha,
@@ -2347,14 +2413,23 @@ async function sidebarProbe(page, item, key, words, save) {
     sha256: image.sha,
   };
 }
-async function navigationProbe(page, item) {
+export async function navigationProbe(page, item, fence) {
   if (item.surface === "SYS04") return true;
+  await settleVerifiedPage(page, fence);
   if (item.width < 768) await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
   const name = item.surface === "SYS05" ? "Contratantes" : "Painel",
     path = item.surface === "SYS05" ? "/contratantes" : "/";
   await page.getByRole("link", { name, exact: true }).first().click();
   await page.waitForURL(HML_ORIGIN + path);
+  await page
+    .getByRole("heading", {
+      level: 1,
+      name: item.surface === "SYS05" ? "Contratantes" : "Painel da organização",
+      exact: true,
+    })
+    .waitFor({ state: "visible" });
   await waitOrganization(page);
+  await settleVerifiedPage(page, fence);
   return true;
 }
 
@@ -2588,6 +2663,16 @@ export function runtimeDiagnostics(input = {}) {
   const count = (value) =>
     Number.isInteger(value) && value >= 0 && value <= 1000000 ? value : null;
   const fence = {
+    failureProtocolCode: [-32000, -32600, -32601, -32602, -32700].includes(
+      input.fence?.failureProtocolCode,
+    )
+      ? input.fence.failureProtocolCode
+      : null,
+    failureReason: ["NO_RESOURCE", "INVALID_INTERCEPTION", "BODY_STAGE", "OTHER"].includes(
+      input.fence?.failureReason,
+    )
+      ? input.fence.failureReason
+      : null,
     failed: input.fence?.failed === true,
     failureCode: failures.has(input.fence?.failureCode) ? input.fence.failureCode : null,
     failureCommand: FENCE_COMMANDS.has(input.fence?.failureCommand)
