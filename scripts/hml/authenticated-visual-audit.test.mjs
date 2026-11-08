@@ -411,6 +411,21 @@ test("outputs de workflow contêm apenas os dois identificadores validados", () 
       (e) => e.code === "DEPLOYMENT_INPUT",
     );
 });
+test("classificador reconhece falhas de navegação definidas no Playwright congelado", () => {
+  const classify = fn("classifyRuntimeError");
+  for (const [message, reason] of [
+    ["page.waitForURL: Navigation failed because page crashed!", "PAGE_CRASHED"],
+    ["page.waitForURL: Navigating frame was detached!", "FRAME_DETACHED"],
+    ['page.waitForURL: Navigation to "https://private.invalid/SYNTHETIC_PRIVATE_CANARY" is interrupted by another navigation to "https://private.invalid/"', "NAVIGATION_INTERRUPTED"],
+    ["page.waitForURL: net::ERR_FAILED at https://private.invalid/SYNTHETIC_PRIVATE_CANARY", "NETWORK_FAILED"],
+    ["page.waitForURL: net::ERR_EMPTY_RESPONSE", "NETWORK_EMPTY_RESPONSE"],
+    ["page.waitForURL: net::ERR_HTTP_RESPONSE_CODE_FAILURE", "NETWORK_HTTP_RESPONSE"],
+  ]) {
+    const value = classify({ name: "Error", message });
+    assert.equal(value.reason, reason);
+    assert.equal(JSON.stringify(value).includes("SYNTHETIC_PRIVATE_CANARY"), false);
+  }
+});
 test("classificador local distingue erro de navegação sem persistir mensagem privada", () => {
   const classify = fn("classifyRuntimeError");
   for (const [message, reason] of [
