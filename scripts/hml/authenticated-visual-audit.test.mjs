@@ -4053,6 +4053,27 @@ test(
           .passed,
         true,
       );
+
+      // Four source-shaped fields under real Chromium ARIA, without HML/Auth.
+      const privacyProof=await fn("loadPrivacy78Proof")();
+      const words=await fn("literalWords")(new URL("../../",import.meta.url).pathname);
+      for(const [surface,html] of Object.entries(privacy78Fixtures())){
+        await page.setContent(html);
+        const anchor=await page.evaluate(fn("privacy78FieldAnchor"),{surface,proof:privacyProof});
+        assert.ok(anchor,surface);
+        const field=page.locator(anchor.selector).nth(anchor.index);
+        const rendered=await field.innerText(),snapshot=(await field.ariaSnapshot()).trim();
+        const receipt=Object.freeze({route:fn("privateCases")().find(i=>i.surface===surface).path,observed:Object.freeze(privacyProof.get_contracts.map(c=>c.name)),age:1});
+        const input={surface,proof:privacyProof,rendered,snapshot,fieldSnapshot:snapshot,anchored:true,receipt};
+        const fieldContext=fn("privacy78FieldContext")(input);
+        assert.ok(fieldContext,surface);
+        assert.equal(fn("classifyArtifactText")(rendered,words,{fieldContext}).reason,"ALLOWED",surface);
+        assert.equal(fn("classifyArtifactText")(snapshot,words,{snapshot:true,fieldContext}).reason,"ALLOWED",surface);
+        assert.equal(fn("privacy78FieldContext")({...input,rendered:rendered+privacyProof.generated_exact_values[surface][0]}),null);
+        await field.evaluate(e=>e.setAttribute("aria-label","pessoa@example.com"));
+        assert.equal(await page.evaluate(fn("privacy78FieldAnchor"),{surface,proof:privacyProof}),null);
+        assert.equal(fn("classifyArtifactText")(rendered+" "+await field.getAttribute("aria-label"),words).reason,"SENSITIVE_PATTERN");
+      }
     } finally {
       release?.();
       await browser?.close();
