@@ -1183,13 +1183,20 @@
   },
   "trilha_a_reancoragem_executor": {
     "plan_document": "docs/frontend/planos/P0_TRILHA_A_REANCORAGEM_EXECUTOR_PLAN_2026-11-08.md",
-    "status": "PLAN_AGUARDANDO_CI_E_GATE_SEPARADO",
+    "status": "PLAN_VALIDADO_GATE_AGUARDANDO_CI",
     "baseline_frontend": "ce845e39c75178e951593915a915ff79938f914d",
     "baseline_backend": "2d01d87654ce580f6f8fdd3446ea4aa78ac7752a",
     "test_c_baseline": 42490769741,
     "provenance_modules_passed": 110,
     "private_passed": 0,
     "fixture_blocked": 24,
-    "global_complete": false
+    "global_complete": false,
+    "plan_pr": 342,
+    "plan_merge": "824f49436dccc5feb15dc61adc42aaa7a3ca10e5",
+    "plan_ci": [
+      42491108002,
+      42491108049
+    ],
+    "gate_document": "docs/frontend/planos/P0_TRILHA_A_REANCORAGEM_EXECUTOR_GATE_2026-11-08.md"
   }
 }
