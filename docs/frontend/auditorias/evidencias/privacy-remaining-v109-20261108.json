@@ -1,0 +1,108 @@
+{
+  "schema": "contaos.hml.privacy-remaining-v109.v1",
+  "frontend_commit": "5f3bc0837a49c716a3041846c7a4cc3d1a939496",
+  "project": "gklhhhyosgasnyoxlrui",
+  "classification": "CAMPO_TECNICO_SEM_PII",
+  "context": {
+    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "list": "1613484c-87ee-4276-a464-d1a378134fc9",
+    "surface": "V109",
+    "route": "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras"
+  },
+  "discovery": {
+    "gate_merge": "8b593c58579810226c61dcaf68ea18881454b934",
+    "gate_blob": "bbd976fa63faf306c11c4fe795bb311e68eee7d1",
+    "wrapper_comment": 6728810286,
+    "independent_review": 5820231975,
+    "public_enum_receipt": 6728837051,
+    "precheck": {
+      "rows": 1,
+      "organization_matches": true,
+      "contract_matches": true,
+      "length_matches": true,
+      "updated_matches": true
+    },
+    "single_read": true,
+    "codepoints": 79,
+    "sensitive_patterns_passed": 6,
+    "independent_semantic_decision": "CAMPO_TECNICO_SEM_PII",
+    "no_reread": true
+  },
+  "approved_values": {
+    "name": "AUDITORIA TRILHA A REQUISITOS 20261108",
+    "description": "Lista sintética HML para testar navegação, análise e drawer, sem efeitos reais.",
+    "updated": "2026-11-08T04:50:40.455572+00:00",
+    "formatted_updated": "Atualizada em 08/11/2026 01:50"
+  },
+  "sources": [
+    {
+      "path": "src/components/contratos/RegrasContrato.tsx",
+      "blob": "031bf0022387133a3e4d0e5d9298871344f58f97"
+    },
+    {
+      "path": "src/lib/contratos/regrasDados.ts",
+      "blob": "a604c2ff28e20a082bdb81d0661d156af891a1fe"
+    },
+    {
+      "path": "src/lib/contratos/baseNormativaDados.ts",
+      "blob": "bdc59706f2ceb66bd1fbb4048df7fdf2e39d36fb"
+    }
+  ],
+  "formatter": {
+    "locale": "pt-BR",
+    "timeZone": "America/Sao_Paulo",
+    "options": {
+      "day": "2-digit",
+      "month": "2-digit",
+      "year": "numeric",
+      "hour": "2-digit",
+      "minute": "2-digit"
+    },
+    "postprocess": "replace(\",\", \"\")",
+    "verified_generated": "08/11/2026 01:50"
+  },
+  "get_contract": {
+    "method": "GET",
+    "origin": "https://gklhhhyosgasnyoxlrui.supabase.co",
+    "path": "/rest/v1/listas_verificacao",
+    "query": {
+      "select": "id,nome,descricao,situacao,versao_atual,versao_registro,atualizado_em",
+      "id_contrato": "eq.be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      "order": "atualizado_em.desc,id.desc",
+      "offset": "0",
+      "limit": "25"
+    },
+    "shape": "array",
+    "extract_only_target_row": [
+      "id",
+      "nome",
+      "descricao",
+      "atualizado_em"
+    ],
+    "target_occurrences": 1,
+    "never_fabricate": [
+      "id_contrato",
+      "id_organizacao"
+    ],
+    "contract_bound_by_query": true,
+    "organization_bound_by_existing_contract_gate": true
+  },
+  "anchors": {
+    "section": "section[aria-labelledby=v109-listas]",
+    "list": "direct ul containing li target via unique button aria-controls=v109-lista-1613484c-87ee-4276-a464-d1a378134fc9",
+    "description": "target li direct leading div > div.min-w-0 > p carrying exact descricao; same div first p exact nome",
+    "updated": "span within metadata p in same div; exact full Atualizada em generated value",
+    "intervals_separate": 2,
+    "aria_mapping_required": true
+  },
+  "limits": {
+    "surface_only": "V109",
+    "same_generation": true,
+    "no_new_request": true,
+    "no_auth_capture": true,
+    "no_global_dictionary": true,
+    "no_original_receipt_changes": true,
+    "no_pass_claim": true
+  }
+}
