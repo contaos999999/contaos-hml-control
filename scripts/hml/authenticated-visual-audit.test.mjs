@@ -2188,3 +2188,192 @@ test("diagnóstico recusa enums e contadores inesperados", () => {
   assert.equal(diag.proxy.blocked, null);
   assert.equal(JSON.stringify(diag).includes("SYNTHETIC_PRIVATE_CANARY"), false);
 });
+
+// Test-only transparent proxy: delay one original command, never fabricate a
+// browser event or response. The production fence connects directly to Chromium.
+async function nativeCancellationProxy(realPort, canceledUrl) {
+  const metadata = await (await fetch(`http://127.0.0.1:${realPort}/json/version`)).json();
+  const held = Promise.withResolvers(),
+    terminal = Promise.withResolvers(),
+    rejected = Promise.withResolvers();
+  const peers = new Set(),
+    upstreams = new Set(),
+    network = new Map();
+  let paused, command, upstreamForHeld, proxyPort;
+  const server = createHttpServer((req, res) => {
+    if (req.url !== "/json/version") return void res.writeHead(404).end();
+    res.setHeader("content-type", "application/json");
+    res.end(
+      JSON.stringify({
+        ...metadata,
+        webSocketDebuggerUrl: metadata.webSocketDebuggerUrl.replace(
+          `:${realPort}/`,
+          `:${proxyPort}/`,
+        ),
+      }),
+    );
+  });
+  const sockets = new WebSocketServer({ server });
+  sockets.on("connection", (downstream) => {
+    peers.add(downstream);
+    const upstream = new WebSocket(metadata.webSocketDebuggerUrl),
+      queue = [];
+    upstreams.add(upstream);
+    const forward = (text) =>
+      upstream.readyState === WebSocket.OPEN ? upstream.send(text) : queue.push(text);
+    upstream.addEventListener("open", () => {
+      for (const text of queue.splice(0)) upstream.send(text);
+    });
+    upstream.addEventListener("message", ({ data }) => {
+      const text = String(data),
+        event = JSON.parse(text);
+      if (event.method === "Network.requestWillBeSent")
+        network.set(event.params.requestId, event.params);
+      if (
+        event.method === "Fetch.requestPaused" &&
+        event.params.request.url === canceledUrl &&
+        event.params.responseStatusCode === undefined
+      )
+        paused = { ...event.params, sessionId: event.sessionId };
+      if (
+        event.method === "Network.loadingFailed" &&
+        paused?.networkId === event.params.requestId &&
+        paused.sessionId === event.sessionId
+      )
+        terminal.resolve({ ...event.params, sessionId: event.sessionId });
+      if (command && event.id === command.id && event.error) rejected.resolve(event.error);
+      if (downstream.readyState === 1) downstream.send(text);
+    });
+    downstream.on("message", (data) => {
+      const text = String(data),
+        event = JSON.parse(text);
+      if (
+        paused &&
+        event.method === "Fetch.continueRequest" &&
+        event.params.requestId === paused.requestId &&
+        event.sessionId === paused.sessionId
+      ) {
+        assert.equal(command, undefined, "one initial continuation only");
+        command = event;
+        upstreamForHeld = upstream;
+        held.resolve();
+      } else forward(text);
+    });
+    downstream.on("close", () => {
+      peers.delete(downstream);
+      upstream.close();
+    });
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  proxyPort = server.address().port;
+  return {
+    port: proxyPort,
+    held: held.promise,
+    terminal: terminal.promise,
+    rejected: rejected.promise,
+    request() {
+      return { paused, network: network.get(paused?.networkId) };
+    },
+    release() {
+      assert.ok(command);
+      upstreamForHeld.send(JSON.stringify(command));
+    },
+    async close() {
+      for (const ws of peers) ws.terminate();
+      for (const ws of upstreams) ws.close();
+      await new Promise((resolve) => sockets.close(resolve));
+      await new Promise((resolve) => server.close(resolve));
+    },
+  };
+}
+
+test(
+  "Chromium nativo: cancelamento inicial real não libera corpo nem transmite ao canário",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
+  async () => {
+    const { chromium } = await import("playwright");
+    let browser,
+      context,
+      fence,
+      proxy,
+      canceledConnections = 0;
+    const html = '<!doctype html><title>native cancellation</title><link rel="icon" href="data:,">';
+    const source = createHttpServer((req, res) => {
+        if (req.url === "/canceled") canceledConnections++;
+        res.setHeader("content-type", "text/html");
+        res.end(html);
+      }),
+      debug = createHttpServer();
+    await Promise.all(
+      [source, debug].map(
+        (server) => new Promise((resolve) => server.listen(0, "127.0.0.1", resolve)),
+      ),
+    );
+    const realPort = debug.address().port;
+    await new Promise((resolve) => debug.close(resolve));
+    const within = (promise) =>
+      Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          const t = setTimeout(() => reject(Error("native cancellation event missing")), 3000);
+          t.unref();
+        }),
+      ]);
+    try {
+      browser = await chromium.launch({
+        chromiumSandbox: true,
+        env: fn("browserEnvironment")(process.env),
+        args: [`--remote-debugging-port=${realPort}`],
+      });
+      context = await browser.newContext();
+      const page = await context.newPage();
+      const session = await context.newCDPSession(page),
+        { targetInfo } = await session.send("Target.getTargetInfo");
+      await session.detach();
+      const origin = `http://127.0.0.1:${source.address().port}`;
+      proxy = await nativeCancellationProxy(realPort, origin + "/canceled");
+      fence = await fn("installNativeFence")({
+        debugPort: proxy.port,
+        identity: targetInfo,
+        policy: (r) => r.method === "GET" && r.url.startsWith(origin + "/"),
+        verifyResponse: async ({ resourceType, status, body }) =>
+          status === 200 && (resourceType !== "Document" || body.equals(Buffer.from(html))),
+        closeContext: () => context.close(),
+      });
+      await page.goto(origin + "/", { waitUntil: "networkidle" });
+      await page.evaluate(() => {
+        window.nativeCancelController = new AbortController();
+        void fetch("/canceled", { signal: window.nativeCancelController.signal }).catch(() => {});
+      });
+      await within(proxy.held);
+      await page.evaluate(() => window.nativeCancelController.abort());
+      const terminal = await within(proxy.terminal),
+        record = proxy.request();
+      assert.equal(terminal.canceled, true);
+      assert.equal(terminal.errorText, "net::ERR_ABORTED");
+      assert.equal(terminal.type, "Fetch");
+      assert.equal(record.paused.networkId, terminal.requestId);
+      assert.equal(record.paused.frameId, record.network.frameId);
+      assert.ok(record.network.loaderId);
+      assert.equal(record.network.request.method, "GET");
+      proxy.release();
+      const error = await within(proxy.rejected);
+      assert.equal(error.code, -32602);
+      assert.equal(error.message, "Invalid InterceptionId.");
+      await fence.drain();
+      assert.equal(canceledConnections, 0, "request canceled while paused must never reach server");
+      assert.equal(
+        fence.snapshot().failed,
+        false,
+        "proven terminal initial cancellation must not close the context",
+      );
+      assert.equal(fence.snapshot().canceledInitialRequests, 1);
+      assert.equal(await page.evaluate(() => document.title), "native cancellation");
+    } finally {
+      fence?.close();
+      await browser?.close();
+      await proxy?.close();
+      await new Promise((resolve) => source.close(resolve));
+    }
+  },
+);
