@@ -2347,7 +2347,7 @@ async function sidebarProbe(page, item, key, words, save) {
     sha256: image.sha,
   };
 }
-async function navigationProbe(page, item) {
+export async function navigationProbe(page, item) {
   if (item.surface === "SYS04") return true;
   if (item.width < 768) await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
   const name = item.surface === "SYS05" ? "Contratantes" : "Painel",
