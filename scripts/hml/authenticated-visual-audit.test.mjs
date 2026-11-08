@@ -2304,6 +2304,14 @@ test("diagnóstico da reprodução nativa publica somente etapas fechadas", () =
     ),
     [],
   );
+  assert.equal(
+    fn("nativeCancellationFailure")("# NATIVE_CANCEL_FAILURE FENCE_REQUEST_LIFECYCLE"),
+    "FENCE_REQUEST_LIFECYCLE",
+  );
+  assert.equal(
+    fn("nativeCancellationFailure")("# NATIVE_CANCEL_FAILURE OTHER pessoa@example.com"),
+    null,
+  );
 });
 
 test(
@@ -2399,10 +2407,12 @@ test(
           (resourceType !== "Document" || body.equals(Buffer.from(html))),
         closeContext: () => context.close(),
       });
+      t.diagnostic("NATIVE_CANCEL_STAGE FENCE_READY");
       await page.evaluate((url) => {
         window.nativeCancelController = new AbortController();
         void fetch(url, { signal: window.nativeCancelController.signal }).catch(() => {});
       }, canceledUrl);
+      t.diagnostic("NATIVE_CANCEL_STAGE FETCH_STARTED");
       await within(proxy.held);
       t.diagnostic("NATIVE_CANCEL_STAGE REQUEST_HELD");
       await page.evaluate(() => window.nativeCancelController.abort());
@@ -2464,6 +2474,18 @@ test(
         { connections: 0, bytes: 0, requests: 0 },
         "altered response stays blocked after benign cancellation",
       );
+    } catch (error) {
+      const candidate = fence?.snapshot().failureCode || error?.code;
+      const allowed = new Set([
+        "FENCE_REQUEST_LIFECYCLE",
+        "FENCE_REQUEST",
+        "FENCE_SOURCE",
+        "FENCE_TRANSPORT",
+        "CDP_COMMAND",
+        "FENCE_CDP_CLOSED",
+      ]);
+      t.diagnostic("NATIVE_CANCEL_FAILURE " + (allowed.has(candidate) ? candidate : "OTHER"));
+      throw error;
     } finally {
       fence?.close();
       await browser?.close();
