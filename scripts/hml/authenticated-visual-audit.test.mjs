@@ -4608,3 +4608,64 @@ test("privacy78 queued mutation destruction is failclosed without background err
   await new Promise((r) => setTimeout(r, 10));
   assert.deepEqual(errors, []);
 });
+
+test("privacy78 GET7 RED real DTO sem id org e query estrita",async()=>{
+  const {readFile}=await import("node:fs/promises");
+  const raw=JSON.parse(await readFile(new URL("../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",import.meta.url),"utf8"));
+  const r=fn("privacy78Runtime")({proof:privacy78Proof,rbacProof:raw});
+  const c=raw.get_contract,url=API+c.path+"?"+new URLSearchParams(c.query);
+  assert.equal(r.match(url,"GET")?.name,"competence_rbac_gate");
+  assert.deepEqual(r.project(c,{id_contrato:raw.context.contract}),{name:"competence_rbac_gate",exact:true});
+  for(const key of Object.keys(c.query)){
+    const bad=new URL(url);bad.searchParams.delete(key);assert.equal(r.match(bad.href,"GET"),null);
+    bad.searchParams.set(key,"foreign");assert.equal(r.match(bad.href,"GET"),null);
+  }
+  for(const bad of [url+"&id=x",url+"&extra=1",url+"&select=id,id_contrato",url+"#x",url.replace(API,HML)])
+    assert.equal(r.match(bad,"GET"),null);
+  for(const body of [null,[],[{id_contrato:raw.context.contract}],{id_contrato:null},{id_contrato:"foreign"},{}])
+    assert.equal(r.project(c,body),null);
+  const row={id_contrato:raw.context.contract};
+  for(const key of ["id","id_organizacao","user","headers","metadata"])
+    Object.defineProperty(row,key,{get(){throw new Error("unprojected GET7 field read");}});
+  assert.deepEqual(r.project(c,row),{name:"competence_rbac_gate",exact:true});
+});
+test("privacy78 GET7 exige recibo separado selado mais upload atual para V115",async()=>{
+  const proof=await fn("loadPrivacy78Proof")(),rbacProof=await fn("loadPrivacy78RbacProof")();
+  const value=proof.generated_exact_values.V115[0],route=fn("privateCases")().find(r=>r.surface==="V115").path;
+  const input={surface:"V115",proof,rbacProof,rendered:value,snapshot:value,fieldSnapshot:value,anchored:true,
+    receipt:Object.freeze({route,age:1,observed:Object.freeze(["competence_rbac_gate","upload"])})};
+  assert.ok(fn("privacy78FieldContext")(input));
+  for(const delta of [{rbacProof:null},{rbacProof:{...rbacProof}},{surface:"V122"},{rendered:value+value},
+    {receipt:Object.freeze({...input.receipt,observed:Object.freeze(["competence_rbac_gate"])})},
+    {receipt:Object.freeze({...input.receipt,observed:Object.freeze(["upload"])})},
+    {receipt:Object.freeze({...input.receipt,route:"/"})},{receipt:Object.freeze({...input.receipt,age:120000})}])
+    assert.equal(fn("privacy78FieldContext")({...input,...delta}),null);
+  const words=await fn("literalWords")(new URL("../../",import.meta.url).pathname);
+  for(const suffix of [" pessoa@example.com"," CANARIO_PRIVADO"]){
+    const text=value+suffix,ctx=fn("privacy78FieldContext")({...input,rendered:text,snapshot:text});
+    assert.notEqual(fn("classifyArtifactText")(text,words,{fieldContext:ctx}).reason,"ALLOWED");
+  }
+  const {readFile}=await import("node:fs/promises"),{createHash}=await import("node:crypto");
+  assert.equal(createHash("sha256").update(await readFile(new URL("../../"+rbacProof.source.path,import.meta.url))).digest("hex"),rbacProof.source.sha256);
+});
+test("privacy78 GET7 browser scope exige rota V115 e nao herda apos navegacao",async()=>{
+  const {readFile}=await import("node:fs/promises");
+  const rbacProof=JSON.parse(await readFile(new URL("../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",import.meta.url),"utf8"));
+  for(const surface of ["V115","V122"]){
+    const {dom,w,run}=privacy78Browser();
+    try{
+      dom.reconfigure({url:HML+fn("privateCases")().find(r=>r.surface===surface).path});
+      const contract=rbacProof.get_contract,url=API+contract.path+"?"+new URLSearchParams(contract.query);
+      const response=new Response(JSON.stringify({id_contrato:rbacProof.context.contract,user:"CANARIO_PRIVADO"}));
+      Object.defineProperty(response,"url",{value:url});
+      w.fetch=()=>Promise.resolve(response);
+      run("privacy78Runtime",{proof:privacy78Proof,rbacProof,install:true});
+      await w.fetch(url);await new Promise(r=>setTimeout(r,50));
+      if(surface==="V115"){
+        assert.deepEqual([...w.__contaosPrivacy78.read().observed],["competence_rbac_gate"]);
+        assert.equal(JSON.stringify(w.__contaosPrivacy78.read()).includes("CANARIO"),false);
+        w.navigation.dispatchEvent(new w.Event("navigate"));assert.equal(w.__contaosPrivacy78.read(),null);
+      }else assert.equal(w.__contaosPrivacy78.read(),null);
+    }finally{w.__contaosPrivacy78?.invalidate();dom.window.close();}
+  }
+});
