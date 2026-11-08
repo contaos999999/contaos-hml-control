@@ -1,3 +1,13 @@
+## Trilha A: GATE #333 integrado; implementação parcial preservada
+
+GATE #333 integrado em 9fb3852cbacfebaa5011ff0b6a8d1d9f0250a068, HEAD e7ef8ad0fcd48e357f6ad83e62b58467d92ff9e4, CI 42476137269 e LOCK 42476137241 SUCCESS. PLAN #332 já integrado em 52f6fa95. Perfil MASTER da sessão de navegador confirmado; o perfil da conta sintética configurada na CI ainda não foi provado. Secrets existentes CONTAOS_HML_SYNTHETIC_EMAIL/PASSWORD conferidos apenas por nome.
+
+RED remoto 3fd4cfad → GREEN parcial 5f46c822: 52/52 testes da política, HTML completo e proxy TCP; 42 suítes/1.165 regressões e TypeScript PASS. O runner, a proteção nativa em Chromium e o workflow privado ainda não existem. Nenhum login foi executado pela CI. Branch build/trilha-a-authenticated-audit-20261108 preservada, sem PR e sem merge de código.
+
+Emenda documental proposta P0_TRILHA_A_AUTENTICADA_LOCALIZACAO_GATE_2026-11-08.md: mover somente o novo auditor e seu teste de scripts/testc/ para scripts/hml/, evitando acionar automaticamente as 18 provas públicas válidas. Não alterar detector, checks, produto ou workflow público. Exigir CI próprio do harness no mesmo HEAD. Revisão independente aprovável; CI e merge desta emenda ainda pendentes neste registro. Depois continuar RED/BUILD/GREEN/Teste C, sem repetir entregas integradas. V1 NO-GO e PROD proibido.
+
+---
+
 ## Trilha A: PLAN #332 integrado; GATE autenticado proposto
 
 PLAN #332 efetivamente integrado em `52f6fa95e0f9399f44471296d878aee3492de377`, HEAD `fc4b86e70f143f3b827827094ac9a6ee5e4afe74`, CI 42474481317 e LOCK 42474481247 SUCCESS. Leitura do PLAN na main confirmou a integração. HML `dpl_FndVxKraPqQHiaS8egANanm8MtiU` READY, vinculado ao mesmo SHA. PRs #326 e #328 encerrados sem merge, substituídos pelo #330; branches e histórico preservados.
