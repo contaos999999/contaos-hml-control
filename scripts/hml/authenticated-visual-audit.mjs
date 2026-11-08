@@ -727,16 +727,39 @@ export function createRequestLifecycle(identity) {
       const record = requests.get(key(session, event.networkId));
       if (!record) fail("FENCE_LIFECYCLE_NO_NETWORK");
       if (record.terminal) fail("FENCE_LIFECYCLE_TERMINAL");
-      if (record.frameId !== event.frameId) fail("FENCE_LIFECYCLE_FRAME");
+      const frame = frames.get(session.id);
+      const absent = (value) => value === undefined || value === "";
+      const ordinaryPreflight =
+        record.type === "Other" &&
+        event.resourceType === "XHR" &&
+        record.method === "OPTIONS" &&
+        event.request?.method === "OPTIONS" &&
+        absent(record.frameId) &&
+        absent(record.loaderId) &&
+        event.frameId === frame.id &&
+        id(frame.loaderId) &&
+        record.generation === frame.generation &&
+        Number.isFinite(record.startedAt) &&
+        record.startedAt >= 0;
+      if (
+        event.frameId !== frame.id ||
+        (!ordinaryPreflight && record.frameId !== event.frameId) ||
+        (record.fetchFrameId !== undefined && record.fetchFrameId !== event.frameId)
+      )
+        fail("FENCE_LIFECYCLE_FRAME");
       const equalTypes = record.type === event.resourceType;
       if (
         !CDP_RESOURCE_TYPES.has(record.type) ||
         !CDP_RESOURCE_TYPES.has(event.resourceType) ||
-        (!equalTypes && !(record.type === "Fetch" && event.resourceType === "XHR")) ||
+        (!equalTypes &&
+          !ordinaryPreflight &&
+          !(record.type === "Fetch" && event.resourceType === "XHR")) ||
         (record.fetchResourceType !== undefined && record.fetchResourceType !== event.resourceType)
       )
         fail("FENCE_LIFECYCLE_TYPE");
       record.fetchResourceType = event.resourceType;
+      record.fetchFrameId = event.frameId;
+      if (ordinaryPreflight) record.eligible = false;
       if (
         !id(event.requestId) ||
         record.url !== event.request?.url ||
