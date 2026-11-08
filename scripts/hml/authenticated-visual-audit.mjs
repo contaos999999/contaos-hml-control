@@ -612,7 +612,9 @@ function safeLifecycleMetadata(input) {
 export function createRequestLifecycle(identity) {
   const frames = new Map(),
     requests = new Map(),
-    fetches = new Map();
+    fetches = new Map(),
+    pendingNetwork = new Map();
+  const pendingFetch = new Set();
   const seenNetwork = new Set(),
     seenFetch = new Set();
   let closed = false,
@@ -664,7 +666,7 @@ export function createRequestLifecycle(identity) {
       error.reason === "INVALID_INTERCEPTION"
     );
   }
-  return {
+  const tracker = {
     frame(session, frame) {
       own(session, false);
       if (!id(frame?.id) || (frames.has(session.id) && frames.get(session.id).id !== frame.id))
@@ -729,6 +731,7 @@ export function createRequestLifecycle(identity) {
           waiters: new Set(),
         };
         requests.set(requestKey, record);
+        pendingNetwork.get(requestKey)?.done(true);
         return;
       }
       const record = requests.get(requestKey);
@@ -746,6 +749,71 @@ export function createRequestLifecycle(identity) {
           blocked: event.blockedReason !== undefined || event.corsErrorStatus !== undefined,
         });
       } else if (method === "Network.loadingFinished") terminal(record, { kind: "FINISHED" });
+    },
+    async pauseWhenObserved(session, event, receivedAt = performance.now()) {
+      own(session);
+      if (
+        !id(event.networkId) ||
+        requests.has(key(session, event.networkId)) ||
+        seenNetwork.has(key(session, event.networkId))
+      )
+        return tracker.pause(session, event);
+      const requestKey = key(session, event.networkId),
+        fetchKey = key(session, event.requestId),
+        frame = frames.get(session.id);
+      const reject = (code) => {
+        tracker.close();
+        fail(code);
+      };
+      if (
+        !id(event.requestId) ||
+        event.frameId !== frame.id ||
+        !id(frame.loaderId) ||
+        event.responseStatusCode !== undefined ||
+        event.responseErrorReason !== undefined ||
+        !Number.isFinite(receivedAt) ||
+        receivedAt > performance.now() ||
+        performance.now() - receivedAt >= 250 ||
+        pendingNetwork.has(requestKey) ||
+        pendingFetch.has(fetchKey) ||
+        seenFetch.has(fetchKey) ||
+        pendingNetwork.size >= 1024 ||
+        requests.size + pendingNetwork.size >= 1024 ||
+        seenNetwork.size + pendingNetwork.size >= 65536 ||
+        seenFetch.size + pendingFetch.size >= 65536
+      )
+        reject("FENCE_REQUEST_LIFECYCLE");
+      const initial = { id: frame.id, loaderId: frame.loaderId, generation: frame.generation };
+      const arrived = await new Promise((resolve) => {
+        let timer,
+          settled = false;
+        const done = (value) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          pendingNetwork.delete(requestKey);
+          pendingFetch.delete(fetchKey);
+          resolve(value);
+        };
+        pendingFetch.add(fetchKey);
+        pendingNetwork.set(requestKey, { done });
+        timer = setTimeout(() => done(false), Math.max(0, 250 - (performance.now() - receivedAt)));
+      });
+      if (!arrived || closed || performance.now() - receivedAt >= 250)
+        reject("FENCE_LIFECYCLE_NO_NETWORK");
+      const current = frames.get(session.id);
+      if (
+        current?.id !== initial.id ||
+        current?.loaderId !== initial.loaderId ||
+        current?.generation !== initial.generation
+      )
+        reject("FENCE_LIFECYCLE_FRAME");
+      try {
+        return tracker.pause(session, event);
+      } catch (error) {
+        tracker.close();
+        throw error;
+      }
     },
     pause(session, event) {
       own(session);
@@ -904,6 +972,7 @@ export function createRequestLifecycle(identity) {
     snapshot() {
       return {
         active: requests.size,
+        pendingNetwork: pendingNetwork.size,
         networkTombstones: seenNetwork.size,
         fetchTombstones: seenFetch.size,
         canceled,
@@ -911,6 +980,9 @@ export function createRequestLifecycle(identity) {
     },
     close() {
       closed = true;
+      for (const pending of [...pendingNetwork.values()]) pending.done(false);
+      pendingNetwork.clear();
+      pendingFetch.clear();
       for (const record of requests.values()) for (const resolve of record.waiters) resolve();
       frames.clear();
       requests.clear();
@@ -919,6 +991,7 @@ export function createRequestLifecycle(identity) {
       seenFetch.clear();
     },
   };
+  return tracker;
 }
 
 export const PUBLIC_BUILD_KEYS = [
@@ -1445,6 +1518,7 @@ export async function installNativeFence({
   }
   const send = (session, method, params = {}) => root.send(method, params, session.id);
   async function paused(session, event) {
+    const receivedAt = performance.now();
     const requestId = event.requestId;
     let ticket;
     try {
@@ -1462,7 +1536,7 @@ export async function installNativeFence({
         state.blockedRequests++;
         fail("FENCE_REQUEST");
       }
-      ticket = lifecycle.pause(session, event);
+      ticket = await lifecycle.pauseWhenObserved(session, event, receivedAt);
       const response =
         event.responseStatusCode !== undefined || event.responseErrorReason !== undefined;
       if (!response) {
@@ -2149,6 +2223,22 @@ export function nativeCancellationFailure(tap) {
     .filter((value) => allowed.has(value));
   return values.length === 1 ? values[0] : null;
 }
+export function nativeSourceOrdering(tap) {
+  if (typeof tap !== "string" || tap.length > 1048576) return null;
+  const lines = tap
+    .split("\n")
+    .map((line) => /^# NATIVE_SOURCE_ORDER ([01]) ([01]) ([01]) ([012]) ([01])$/.exec(line.trim()))
+    .filter(Boolean);
+  if (lines.length !== 1) return null;
+  const m = lines[0];
+  return {
+    originalNetworkObserved: m[1] === "1",
+    initialPauseObserved: m[2] === "1",
+    networkDelivered: Number(m[3]),
+    initialContinuations: Number(m[4]),
+    continuationBeforeNetwork: m[5] === "1",
+  };
+}
 export function nativeSourceFailure(tap) {
   if (typeof tap !== "string" || tap.length > 1048576) return null;
   return nativeCancellationFailure(
@@ -2234,6 +2324,7 @@ async function nativeGuard() {
         cancellationStages: nativeCancellationDiagnostics(stdout),
         cancellationFailure: nativeCancellationFailure(stdout),
         sourceFailure: nativeSourceFailure(stdout),
+        sourceOrdering: nativeSourceOrdering(stdout),
         cancellationTypes: nativeCancellationTypes(stdout),
         lifecycleMetadata: nativeLifecycleMetadata(stdout),
         tap,
@@ -2248,6 +2339,7 @@ async function nativeGuard() {
     JSON.stringify({
       phase: "NATIVE_GUARD",
       state: "PASS",
+      sourceOrdering: nativeSourceOrdering(output),
       cases: 8,
       harnessSha: proof.harnessSha,
     }),

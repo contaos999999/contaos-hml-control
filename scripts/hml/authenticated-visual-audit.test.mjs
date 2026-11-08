@@ -1415,7 +1415,7 @@ test(
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
   async (t) => {
     const { chromium } = await import("playwright");
-    let browser, fence, context;
+    let browser, fence, context, proxy;
     let executions = 0;
     const canary = createHttpServer((_req, res) => {
       executions++;
@@ -1452,8 +1452,13 @@ test(
       const session = await context.newCDPSession(page);
       const { targetInfo } = await session.send("Target.getTargetInfo");
       await session.detach();
+      proxy = await nativeCancellationProxy(
+        port,
+        `http://127.0.0.1:${source.address().port}/altered.js`,
+        { orderSource: true },
+      );
       fence = await fn("installNativeFence")({
-        debugPort: port,
+        debugPort: proxy.port,
         identity: targetInfo,
         policy: () => true,
         verifyResponse: async ({ resourceType }) => resourceType !== "Script",
@@ -1476,16 +1481,37 @@ test(
       await fence.drain();
       assert.equal(fence.snapshot().failed, true);
       t.diagnostic("NATIVE_SOURCE_FAILURE " + fence.snapshot().failureCode);
+      const ordering = proxy.sourceOrdering();
+      t.diagnostic(
+        "NATIVE_SOURCE_ORDER " +
+          Number(ordering.originalNetworkObserved) +
+          " " +
+          Number(ordering.initialPauseObserved) +
+          " " +
+          ordering.networkDelivered +
+          " " +
+          ordering.initialContinuations +
+          " " +
+          Number(ordering.continuationBeforeNetwork),
+      );
       assert.equal(
         fence.snapshot().failureCode,
         "FENCE_SOURCE",
         "must reach provenance rejection, not an earlier lifecycle failure",
       );
       assert.equal(fence.snapshot().verifiedDocuments, 1);
+      assert.deepEqual(ordering, {
+        originalNetworkObserved: true,
+        initialPauseObserved: true,
+        networkDelivered: 1,
+        initialContinuations: 1,
+        continuationBeforeNetwork: false,
+      });
       assert.equal(executions, 0);
     } finally {
       fence?.close();
       await browser?.close();
+      await proxy?.close();
       await Promise.all(
         [canary, source].map((server) => new Promise((resolve) => server.close(resolve))),
       );
@@ -2209,7 +2235,7 @@ test("diagnóstico recusa enums e contadores inesperados", () => {
 
 // Test-only transparent proxy: delay one original command, never fabricate a
 // browser event or response. The production fence connects directly to Chromium.
-async function nativeCancellationProxy(realPort, canceledUrl) {
+async function nativeCancellationProxy(realPort, canceledUrl, { orderSource = false } = {}) {
   const metadata = await (await fetch(`http://127.0.0.1:${realPort}/json/version`)).json();
   const held = Promise.withResolvers(),
     terminal = Promise.withResolvers(),
@@ -2219,6 +2245,23 @@ async function nativeCancellationProxy(realPort, canceledUrl) {
     network = new Map(),
     observations = [];
   let paused, command, upstreamForHeld, proxyPort;
+  let originalNetwork,
+    networkDownstream,
+    sourcePaused = false,
+    deliveryTimer;
+  let deliveredNetwork = 0,
+    sourceContinuations = 0,
+    earlyContinuation = false;
+  function deliverOriginalNetwork() {
+    if (!orderSource || !originalNetwork || !sourcePaused || deliveryTimer || deliveredNetwork)
+      return;
+    deliveryTimer = setTimeout(() => {
+      if (networkDownstream.readyState === 1) {
+        deliveredNetwork++;
+        networkDownstream.send(originalNetwork);
+      }
+    }, 15);
+  }
   const server = createHttpServer((req, res) => {
     if (req.url !== "/json/version") return void res.writeHead(404).end();
     res.setHeader("content-type", "application/json");
@@ -2248,14 +2291,27 @@ async function nativeCancellationProxy(realPort, canceledUrl) {
         event = JSON.parse(text);
       if (event.method === "Network.requestWillBeSent")
         network.set(event.sessionId + "|" + event.params.requestId, event.params);
+      if (
+        orderSource &&
+        event.method === "Network.requestWillBeSent" &&
+        event.params.request.url === canceledUrl
+      ) {
+        assert.equal(originalNetwork, undefined, "one original Network event");
+        originalNetwork = text;
+        networkDownstream = downstream;
+        deliverOriginalNetwork();
+        return;
+      }
       if (event.method === "Fetch.requestPaused" && observations.length < 32)
         observations.push({ ...event.params, sessionId: event.sessionId });
       if (
         event.method === "Fetch.requestPaused" &&
         event.params.request.url === canceledUrl &&
         event.params.responseStatusCode === undefined
-      )
+      ) {
         paused = { ...event.params, sessionId: event.sessionId };
+        sourcePaused = true;
+      }
       if (
         event.method === "Network.loadingFailed" &&
         paused?.networkId === event.params.requestId &&
@@ -2264,6 +2320,7 @@ async function nativeCancellationProxy(realPort, canceledUrl) {
         terminal.resolve({ ...event.params, sessionId: event.sessionId });
       if (command && event.id === command.id && event.error) rejected.resolve(event.error);
       if (downstream.readyState === 1) downstream.send(text);
+      deliverOriginalNetwork();
     });
     downstream.on("message", (data) => {
       const text = String(data),
@@ -2274,6 +2331,12 @@ async function nativeCancellationProxy(realPort, canceledUrl) {
         event.params.requestId === paused.requestId &&
         event.sessionId === paused.sessionId
       ) {
+        if (orderSource) {
+          sourceContinuations++;
+          earlyContinuation ||= deliveredNetwork !== 1;
+          forward(text);
+          return;
+        }
         assert.equal(command, undefined, "one initial continuation only");
         command = event;
         upstreamForHeld = upstream;
@@ -2289,6 +2352,15 @@ async function nativeCancellationProxy(realPort, canceledUrl) {
   proxyPort = server.address().port;
   return {
     port: proxyPort,
+    sourceOrdering() {
+      return {
+        originalNetworkObserved: !!originalNetwork,
+        initialPauseObserved: sourcePaused,
+        networkDelivered: deliveredNetwork,
+        initialContinuations: sourceContinuations,
+        continuationBeforeNetwork: earlyContinuation,
+      };
+    },
     held: held.promise,
     terminal: terminal.promise,
     rejected: rejected.promise,
@@ -2324,6 +2396,7 @@ async function nativeCancellationProxy(realPort, canceledUrl) {
       upstreamForHeld.send(JSON.stringify(command));
     },
     async close() {
+      clearTimeout(deliveryTimer);
       for (const ws of peers) ws.terminate();
       for (const ws of upstreams) ws.close();
       await new Promise((resolve) => sockets.close(resolve));
@@ -2966,4 +3039,175 @@ test("metadados runtime são somente enums e booleanos fechados", () => {
       .fence.lifecycleMetadata,
     null,
   );
+});
+
+function delayedLifecycle() {
+  const f = lifecycleInput();
+  f.tracker.close();
+  f.tracker = fn("createRequestLifecycle")(f.identity);
+  f.tracker.frame(f.session, { id: "main-frame", loaderId: "loader-1" });
+  return f;
+}
+test("pause inicial espera Network original antes de devolver ticket", async () => {
+  const f = delayedLifecycle();
+  let settled = false;
+  const waiting = f.tracker.pauseWhenObserved(f.session, f.pause, performance.now()).then((t) => {
+    settled = true;
+    return t;
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(settled, false);
+  assert.equal(f.tracker.snapshot().pendingNetwork, 1);
+  f.tracker.observe(f.session, "Network.requestWillBeSent", f.network);
+  const ticket = await waiting;
+  assert.equal(ticket.record.networkId, f.network.requestId);
+  assert.equal(f.tracker.snapshot().pendingNetwork, 0);
+  f.tracker.sent(ticket);
+  f.tracker.close();
+});
+test("pause sem Network expira e evento tardio nunca ressuscita tracker", async () => {
+  const f = delayedLifecycle();
+  await assert.rejects(
+    f.tracker.pauseWhenObserved(f.session, f.pause, performance.now()),
+    (e) => e.code === "FENCE_LIFECYCLE_NO_NETWORK",
+  );
+  assert.equal(f.tracker.snapshot().pendingNetwork, 0);
+  assert.throws(() => f.tracker.observe(f.session, "Network.requestWillBeSent", f.network));
+});
+for (const condition of [
+  "expired",
+  "response",
+  "missingId",
+  "foreignFrame",
+  "duplicateNetwork",
+  "duplicateFetch",
+  "generation",
+  "wrongNetwork",
+  "closed",
+])
+  test("espera Network falha fechada " + condition, async () => {
+    const f = delayedLifecycle();
+    if (["expired", "response", "missingId", "foreignFrame"].includes(condition)) {
+      await assert.rejects(
+        f.tracker.pauseWhenObserved(
+          f.session,
+          {
+            ...f.pause,
+            ...(condition === "response" ? { responseStatusCode: 200 } : {}),
+            ...(condition === "missingId" ? { requestId: "" } : {}),
+            ...(condition === "foreignFrame" ? { frameId: "foreign" } : {}),
+          },
+          performance.now() - (condition === "expired" ? 251 : 0),
+        ),
+      );
+      f.tracker.close();
+      return;
+    }
+    const waiting = f.tracker.pauseWhenObserved(f.session, f.pause, performance.now()).then(
+      () => null,
+      (e) => e,
+    );
+    if (condition === "duplicateNetwork" || condition === "duplicateFetch")
+      await assert.rejects(
+        f.tracker.pauseWhenObserved(
+          f.session,
+          {
+            ...f.pause,
+            ...(condition === "duplicateNetwork"
+              ? { requestId: "other-fetch" }
+              : { networkId: "other-network" }),
+          },
+          performance.now(),
+        ),
+      );
+    if (condition === "generation") {
+      f.tracker.observe(f.session, "Page.frameNavigated", {
+        frame: { id: "main-frame", loaderId: "loader-2" },
+      });
+      f.tracker.observe(f.session, "Network.requestWillBeSent", f.network);
+    }
+    if (condition === "wrongNetwork") {
+      f.tracker.observe(f.session, "Network.requestWillBeSent", {
+        ...f.network,
+        requestId: "other-network",
+      });
+      assert.equal(f.tracker.snapshot().pendingNetwork, 1);
+      f.tracker.close();
+    }
+    if (condition === "closed") f.tracker.close();
+    assert.ok((await waiting)?.code);
+    assert.equal(f.tracker.snapshot().pendingNetwork, 0);
+    f.tracker.close();
+  });
+test("espera Network revalida URL método e tipo recebidos sem inventar registro", async () => {
+  for (const delta of [
+    { type: "Script" },
+    { request: { url: HML + "/different", method: "GET" } },
+    { request: { url: HML + "/", method: "POST" } },
+  ]) {
+    const f = delayedLifecycle();
+    const waiting = f.tracker.pauseWhenObserved(f.session, f.pause, performance.now()).then(
+      () => null,
+      (e) => e,
+    );
+    f.tracker.observe(f.session, "Network.requestWillBeSent", { ...f.network, ...delta });
+    assert.ok((await waiting)?.code);
+    f.tracker.close();
+  }
+});
+test("espera Network tem teto1024 e fecha todas as pendências no excesso", async () => {
+  const f = delayedLifecycle(),
+    waiting = [];
+  for (let n = 0; n < 1024; n++)
+    waiting.push(
+      f.tracker
+        .pauseWhenObserved(
+          f.session,
+          { ...f.pause, requestId: "f-" + n, networkId: "n-" + n },
+          performance.now(),
+        )
+        .then(
+          () => false,
+          () => true,
+        ),
+    );
+  await assert.rejects(
+    f.tracker.pauseWhenObserved(
+      f.session,
+      { ...f.pause, requestId: "excess", networkId: "excess" },
+      performance.now(),
+    ),
+  );
+  assert.equal((await Promise.all(waiting)).every(Boolean), true);
+  assert.equal(f.tracker.snapshot().pendingNetwork, 0);
+});
+
+test("prova da ordenação nativa aceita apenas cinco indicadores fechados", () => {
+  assert.deepEqual(fn("nativeSourceOrdering")("# NATIVE_SOURCE_ORDER 1 1 1 1 0"), {
+    originalNetworkObserved: true,
+    initialPauseObserved: true,
+    networkDelivered: 1,
+    initialContinuations: 1,
+    continuationBeforeNetwork: false,
+  });
+  assert.equal(fn("nativeSourceOrdering")("# NATIVE_SOURCE_ORDER pessoa@example.com"), null);
+});
+
+test("espera Network não associa registro já terminal nem aceita sessão alheia", async () => {
+  const f = delayedLifecycle();
+  const waiting = f.tracker.pauseWhenObserved(f.session, f.pause, performance.now()).then(
+    () => null,
+    (e) => e,
+  );
+  f.tracker.observe(f.session, "Network.requestWillBeSent", f.network);
+  f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+  assert.ok((await waiting)?.code);
+  for (const field of ["id", "targetId", "contextId"]) {
+    const g = delayedLifecycle();
+    await assert.rejects(
+      g.tracker.pauseWhenObserved({ ...g.session, [field]: "foreign" }, g.pause, performance.now()),
+    );
+    assert.equal(g.tracker.snapshot().pendingNetwork, 0);
+    g.tracker.close();
+  }
 });
