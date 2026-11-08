@@ -534,9 +534,9 @@ export function privacy78Runtime({proof,install=false}) {
   };
   if(!install)return {match,project};
   const route=location.href,started=performance.now(),seen=new Set();
-  let invalid=false,pending=0,revision=0;
-  const invalidate=()=>{invalid=true;seen.clear();};
-  const current=()=>!invalid&&location.href===route&&performance.now()-started<120000;
+  let invalid=false,pending=0,revision=0,mutations=null;
+  const invalidate=()=>{invalid=true;seen.clear();mutations?.disconnect();};
+  const current=()=>!invalid&&typeof document!=="undefined"&&!!document&&typeof location!=="undefined"&&location?.href===route&&performance.now()-started<120000;
   for(const event of ["pagehide","beforeunload","popstate","hashchange"])
     window.addEventListener(event,invalidate,{once:true});
   window.addEventListener("contaos:organizacao-alterada",invalidate,{once:true});
@@ -544,13 +544,16 @@ export function privacy78Runtime({proof,install=false}) {
   if(!window.navigation?.addEventListener)invalidate();
   else window.navigation.addEventListener("navigate",invalidate,{once:true});
   const headerCurrent=()=>{
+    if(typeof document==="undefined"||!document)return false;
     const header=document.querySelector('header[aria-label="Organização atual"]');
     return !!header?.textContent.includes("ContaOS HML Teste")&&/Situação:\s*ativa/i.test(header.textContent);
   };
   let headerSeen=headerCurrent();
   // Existing source resets this header on session/auth-generation changes.
   // No Auth objects, responses, events or headers are intercepted.
-  const mutations=new MutationObserver(()=>{
+  mutations=new MutationObserver(()=>{
+    if(invalid)return;
+    if(typeof document==="undefined"||!document){invalidate();return;}
     revision++;const ready=headerCurrent();
     if(headerSeen&&!ready)invalidate();headerSeen||=ready;
   });
