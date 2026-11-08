@@ -1732,7 +1732,12 @@ export async function installNativeFence({
     clearTimeout(timer);
   }
   return {
-    snapshot: () => ({ ...state, canceledInitialRequests: lifecycle.snapshot().canceled }),
+    snapshot: () => ({
+      ...state,
+      canceledInitialRequests: lifecycle.snapshot().canceled,
+      activeNetworkRequests: lifecycle.snapshot().active,
+      pendingNetworkAssociations: lifecycle.snapshot().pendingNetwork,
+    }),
     assertSafe() {
       if (state.failed || closed || state.verifiedDocuments === 0 || state.verifiedScripts === 0)
         fail("FENCE_NOT_PROVEN");
@@ -2236,6 +2241,19 @@ export function nativeCancellationFailure(tap) {
     .filter((value) => allowed.has(value));
   return values.length === 1 ? values[0] : null;
 }
+export function nativePreflightDrain(tap) {
+  if (typeof tap !== "string" || tap.length > 1048576) return null;
+  const lines = tap
+    .split("\n")
+    .map((line) => /^# NATIVE_PREFLIGHT_DRAIN ([01]) ([01]) ([01])$/.exec(line.trim()))
+    .filter(Boolean);
+  if (lines.length !== 1) return null;
+  return {
+    originalOptionsObserved: lines[0][1] === "1",
+    returnedBeforeRelease: lines[0][2] === "1",
+    activeNetworkBeforeRelease: lines[0][3] === "1",
+  };
+}
 export function nativeSourceOrdering(tap) {
   if (typeof tap !== "string" || tap.length > 1048576) return null;
   const lines = tap
@@ -2338,6 +2356,7 @@ async function nativeGuard() {
         cancellationFailure: nativeCancellationFailure(stdout),
         sourceFailure: nativeSourceFailure(stdout),
         sourceOrdering: nativeSourceOrdering(stdout),
+        preflightDrain: nativePreflightDrain(stdout),
         cancellationTypes: nativeCancellationTypes(stdout),
         lifecycleMetadata: nativeLifecycleMetadata(stdout),
         tap,
@@ -2353,6 +2372,7 @@ async function nativeGuard() {
       phase: "NATIVE_GUARD",
       state: "PASS",
       sourceOrdering: nativeSourceOrdering(output),
+      preflightDrain: nativePreflightDrain(output),
       cases: 8,
       harnessSha: proof.harnessSha,
     }),
@@ -3286,6 +3306,8 @@ export function runtimeDiagnostics(input = {}) {
   };
   for (const key of [
     "canceledInitialRequests",
+    "activeNetworkRequests",
+    "pendingNetworkAssociations",
     "verifiedDocuments",
     "verifiedScripts",
     "verifiedAssets",

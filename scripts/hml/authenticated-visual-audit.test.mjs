@@ -2469,12 +2469,19 @@ test(
     const { chromium } = await import("playwright");
     let browser, context, fence, proxy;
     const traffic = { connections: 0, bytes: 0, requests: 0 };
+    const preflightRequested = Promise.withResolvers();
+    let pendingPreflight;
     const canary = createHttpServer((req, res) => {
       traffic.requests++;
       if (req.url === "/cors-ok") {
         res.setHeader("access-control-allow-origin", `http://127.0.0.1:${source.address().port}`);
         res.setHeader("access-control-allow-methods", "POST");
         res.setHeader("access-control-allow-headers", "x-native-fixture");
+        if (req.method === "OPTIONS") {
+          pendingPreflight = res;
+          preflightRequested.resolve();
+          return;
+        }
       }
       res.end("canary");
     });
@@ -2597,18 +2604,43 @@ test(
       );
       assert.equal(fence.snapshot().canceledInitialRequests, 1);
       assert.equal(await page.evaluate(() => document.title), "native cancellation");
-      await page.evaluate(
-        async (url) => {
-          const response = await fetch(url, {
-            method: "POST",
-            headers: { "x-native-fixture": "synthetic" },
-            body: "synthetic",
-          });
-          if (!response.ok) throw Error("ordinary CORS request failed");
-        },
-        canceledUrl.replace("/canceled", "/cors-ok"),
+      const ordinaryRequest = page
+        .evaluate(
+          async (url) => {
+            const response = await fetch(url, {
+              method: "POST",
+              headers: { "x-native-fixture": "synthetic" },
+              body: "synthetic",
+            });
+            if (!response.ok) throw Error("ordinary CORS request failed");
+          },
+          canceledUrl.replace("/canceled", "/cors-ok"),
+        )
+        .then(
+          () => true,
+          () => false,
+        );
+      await within(preflightRequested.promise);
+      let drained = false;
+      const draining = fence.drain().then(() => {
+        drained = true;
+      });
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      t.diagnostic(
+        "NATIVE_PREFLIGHT_DRAIN 1 " +
+          Number(drained) +
+          " " +
+          Number(fence.snapshot().activeNetworkRequests > 0),
       );
-      await fence.drain();
+      assert.equal(
+        drained,
+        false,
+        "drain must retain the real outstanding OPTIONS and parent request",
+      );
+      pendingPreflight.end("canary");
+      assert.equal(await ordinaryRequest, true);
+      await draining;
+      assert.equal(fence.snapshot().activeNetworkRequests, 0);
       assert.equal(fence.snapshot().failed, false, "ordinary preflight and response remain usable");
       assert.ok(
         traffic.requests >= 2 && traffic.bytes > 0,
@@ -2651,6 +2683,8 @@ test(
         t.diagnostic("NATIVE_CANCEL_TYPES " + types.network + " " + types.fetch);
       throw error;
     } finally {
+      if (pendingPreflight && !pendingPreflight.writableEnded && !pendingPreflight.destroyed)
+        pendingPreflight.end("canary");
       fence?.close();
       await browser?.close();
       await proxy?.close();
@@ -3321,4 +3355,13 @@ test("FetchID reservado tampouco entra pelo caminho sem NetworkID", async () => 
   );
   assert.ok((await waiting)?.code);
   assert.equal(f.tracker.snapshot().pendingNetwork, 0);
+});
+
+test("prova de drenagem nativa não aceita identificadores ou conteúdo", () => {
+  assert.deepEqual(fn("nativePreflightDrain")("# NATIVE_PREFLIGHT_DRAIN 1 0 1"), {
+    originalOptionsObserved: true,
+    returnedBeforeRelease: false,
+    activeNetworkBeforeRelease: true,
+  });
+  assert.equal(fn("nativePreflightDrain")("# NATIVE_PREFLIGHT_DRAIN 1 pessoa@example.com 1"), null);
 });
