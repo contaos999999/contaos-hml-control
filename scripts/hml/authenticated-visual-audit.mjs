@@ -530,7 +530,99 @@ export async function loadPrivacy78RbacProof() {
   return proof;
 }
 
-export function privacy78Runtime({ proof, rbacProof = null, install = false }) {
+
+const privacy109Proofs=new WeakSet();
+export async function loadPrivacy109Proof(){
+ const bytes=await readFile(new URL("../../docs/frontend/auditorias/evidencias/privacy-remaining-v109-20261108.json",import.meta.url));
+ if(digest(bytes)!=="506b940f76402f89f173c63553084452ea4ebc25da3bcf4ef29d3dd9dbb0f577")fail("PRIVACY_PROOF");
+ const freeze=v=>{if(v&&typeof v==="object"){Object.values(v).forEach(freeze);Object.freeze(v);}return v;};
+ const proof=freeze(JSON.parse(bytes));privacy109Proofs.add(proof);return proof;
+}
+
+export function privacy109FieldContext({proof,v109Proof,rendered,snapshot,fieldSnapshots,anchored,receipt}){
+ if(!privacy78Proofs.has(proof)||!privacy109Proofs.has(v109Proof)||anchored!==true||
+  !receipt||!Object.isFrozen(receipt)||!Array.isArray(receipt.observed)||!Object.isFrozen(receipt.observed)||
+  receipt.route!==v109Proof.context.route||receipt.route!==privateCases().find(i=>i.surface==="V109").path||
+  !Number.isFinite(receipt.age)||receipt.age<0||receipt.age>=120000||
+  !["contract_gate","v109_lists_page0"].every(n=>receipt.observed.includes(n))||
+  new Set(receipt.observed).size!==receipt.observed.length||
+  receipt.observed.some(n=>n!=="v109_lists_page0"&&!proof.get_contracts.some(c=>c.name===n))||
+  !Array.isArray(fieldSnapshots)||fieldSnapshots.length!==2||
+  ![rendered,snapshot,...fieldSnapshots].every(t=>typeof t==="string"&&t.length<=1000000))return null;
+ const values=[v109Proof.approved_values.description,v109Proof.approved_values.formatted_updated];
+ if(!values.every((v,i)=>rendered.split(v).length===2&&snapshot.split(v).length===2&&
+  fieldSnapshots[i].split(v).length===2&&!fieldSnapshots[1-i].includes(v)))return null;
+ // Only indentation of the exact same ARIA subtree may differ. No token,
+ // role, name or unknown neighbour is normalized or removed.
+ const locate=(whole,fragment)=>{
+  const lines=whole.split("\n"),wanted=fragment.trim().split("\n"),matches=[];
+  let offset=0;
+  for(let i=0;i<lines.length;i++){
+   const indent=lines[i].match(/^ */)[0];
+   if(wanted.every((line,j)=>lines[i+j]===indent+line)){
+    const end=offset+lines.slice(i,i+wanted.length).join("\n").length;
+    matches.push({start:offset,end});
+   }
+   offset+=lines[i].length+1;
+  }
+  return matches.length===1?matches[0]:null;
+ };
+ const snapshotRanges=fieldSnapshots.map(f=>locate(snapshot,f));
+ if(snapshotRanges.some(x=>!x)||snapshotRanges[0].end>snapshotRanges[1].start)return null;
+ const intervals=(text)=>values.map(v=>({start:text.indexOf(v),end:text.indexOf(v)+v.length}));
+ const sr=intervals(snapshot);
+ if(sr.some((x,i)=>x.start<snapshotRanges[i].start||x.end>snapshotRanges[i].end))return null;
+ const erase=(text,ranges)=>[...ranges].sort((a,b)=>b.start-a.start).reduce((s,r)=>s.slice(0,r.start)+" "+s.slice(r.end),text);
+ const context=Object.freeze({});
+ privacy78Contexts.set(context,{rendered:{original:rendered,remainder:erase(rendered,intervals(rendered))},
+ snapshot:{original:snapshot,remainder:erase(snapshot,sr)}});
+ return context;
+}
+
+export function privacy109FieldAnchor({proof}){
+ if(proof?.context?.surface!=="V109"||!/^[0-9a-f-]{36}$/.test(proof.context.list))return null;
+ const visible=e=>e&&e.getClientRects().length>0&&getComputedStyle(e).visibility!=="hidden";
+ const plain=e=>e&&[...e.attributes].every(a=>a.name==="class")&&
+  [...e.childNodes].every(n=>n.nodeType===Node.TEXT_NODE);
+ const sections=document.querySelectorAll('section[aria-labelledby="v109-listas"]');
+ if(sections.length!==1||!visible(sections[0])||document.querySelectorAll("#v109-listas").length!==1)return null;
+ const section=sections[0],heading=section.querySelectorAll(":scope > h2#v109-listas"),uls=section.querySelectorAll(":scope > ul");
+ if(heading.length!==1||heading[0].textContent!=="Listas de verificação"||uls.length!==1)return null;
+ const v=proof.approved_values,controls="v109-lista-"+proof.context.list;
+ const buttons=[...document.querySelectorAll("button")].filter(b=>b.getAttribute("aria-controls")===controls);
+ if(buttons.length!==1)return null;
+ const button=buttons[0],leading=button.parentElement,li=leading?.parentElement;
+ if(!visible(button)||button.getAttribute("aria-expanded")!=="false"||
+  button.getAttribute("aria-label")!=="Ver versões e itens de "+v.name||
+  button.textContent!=="Ver versões e itens"||li?.tagName!=="LI"||li.parentElement!==uls[0]||
+  leading.tagName!=="DIV"||li.children.length!==1||document.getElementById(controls))return null;
+ const containers=leading.querySelectorAll(":scope > div.min-w-0");
+ if(containers.length!==1)return null;
+ const ps=containers[0].querySelectorAll(":scope > p");
+ if(ps.length!==3||containers[0].children.length!==3||!plain(ps[0])||ps[0].textContent!==v.name||
+  !plain(ps[1])||ps[1].textContent!==v.description||!visible(ps[1])||
+  [...ps[2].attributes].some(a=>a.name!=="class"))return null;
+ const spans=ps[2].querySelectorAll(":scope > span");
+ if(spans.length!==3||ps[2].children.length!==3||!plain(spans[2])||
+  !spans[2].classList.contains("text-muted-foreground")||!visible(spans[2])||
+  spans[2].textContent!==v.formatted_updated||
+  [...ps[2].childNodes].some(n=>n.nodeType!==Node.ELEMENT_NODE&&(n.nodeType!==Node.TEXT_NODE||n.textContent.trim())))return null;
+ return {row:'section[aria-labelledby="v109-listas"] > ul > li',
+ control:'button[aria-controls="'+controls+'"]',paragraphs:":scope > div > div.min-w-0 > p",
+ descriptionIndex:1,metadataIndex:2,paragraphCount:3};
+}
+
+export async function privacy109FieldSnapshots(page,anchor){
+ if(!anchor)return null;
+ const row=page.locator(anchor.row).filter({has:page.locator(anchor.control)});
+ if(await row.count()!==1)return null;
+ const paragraphs=row.locator(anchor.paragraphs);
+ if(await paragraphs.count()!==anchor.paragraphCount)return null;
+ return [(await paragraphs.nth(anchor.descriptionIndex).ariaSnapshot()).trim(),
+  (await paragraphs.nth(anchor.metadataIndex).ariaSnapshot()).trim()];
+}
+
+export function privacy78Runtime({ proof, rbacProof = null, v109Proof = null, install = false }) {
   const origin = "https://gklhhhyosgasnyoxlrui.supabase.co";
   const rq = rbacProof?.get_contract;
   const rbacValid =
@@ -556,7 +648,17 @@ export function privacy78Runtime({ proof, rbacProof = null, install = false }) {
         location.pathname === "/competencias/" + proof.context.competence + "/documentos" &&
         !location.search &&
         !location.hash));
-  const contracts = rbacEnabled ? [...proof.get_contracts, rq] : proof.get_contracts;
+
+ const vq=v109Proof?.get_contract;
+ const v109Valid=v109Proof?.schema==="contaos.hml.privacy-remaining-v109.v1"&&v109Proof.classification==="CAMPO_TECNICO_SEM_PII"&&
+  v109Proof.context?.organization===proof.context.organization&&v109Proof.context.contract===proof.context.contract&&v109Proof.context.surface==="V109"&&
+  v109Proof.context.route==="/contratos/"+proof.context.contract+"/regras"&&vq?.method==="GET"&&vq.origin===origin&&
+  vq.path==="/rest/v1/listas_verificacao"&&vq.shape==="array"&&Object.keys(vq.query??{}).length===5&&
+  vq.query.select==="id,nome,descricao,situacao,versao_atual,versao_registro,atualizado_em"&&
+  vq.query.id_contrato==="eq."+proof.context.contract&&vq.query.order==="atualizado_em.desc,id.desc"&&vq.query.offset==="0"&&vq.query.limit==="25";
+ const v109Enabled=v109Valid&&(!install||(location.origin==="https://contaos-41-hml.vercel.app"&&location.pathname===v109Proof.context.route&&!location.search&&!location.hash));
+ const contracts=[...proof.get_contracts,...(rbacEnabled?[rq]:[]),...(v109Enabled?[{...vq,name:"v109_lists_page0"}]:[])];
+
 
   const match = (raw, method) => {
     if (method !== "GET" || typeof raw !== "string") return null;
@@ -612,10 +714,26 @@ export function privacy78Runtime({ proof, rbacProof = null, install = false }) {
     },
   };
   if (rbacEnabled) expected.competence_rbac_gate = { id_contrato: proof.context.contract };
+
+ const micros=value=>{
+  if(typeof value!=="string")return null;
+  const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?(Z|([+-])(\d{2}):(\d{2}))$/.exec(value);
+  if(!m)return null;
+  const y=+m[1],mo=+m[2],d=+m[3],h=+m[4],mi=+m[5],se=+m[6],oh=+(m[10]??0),om=+(m[11]??0);
+  const leap=y%4===0&&(y%100!==0||y%400===0),days=[31,leap?29:28,31,30,31,30,31,31,30,31,30,31];
+  if(y<1||mo<1||mo>12||d<1||d>days[mo-1]||h>23||mi>59||se>59||oh>14||om>59||(oh===14&&om!==0))return null;
+  const yy=y-(mo<=2?1:0),era=Math.floor(yy/400),yoe=yy-era*400;
+  const doy=Math.floor((153*(mo+(mo>2?-3:9))+2)/5)+d-1;
+  const date=era*146097+yoe*365+Math.floor(yoe/4)-Math.floor(yoe/100)+doy-719468;
+  const offset=(m[9]==="-"?-1:1)*(oh*3600+om*60);
+  return BigInt(date*86400+h*3600+mi*60+se-offset)*1000000n+BigInt((m[7]??"").padEnd(6,"0"));
+ };
+ if(v109Enabled)expected.v109_lists_page0={id:v109Proof.context.list,nome:v109Proof.approved_values.name,descricao:v109Proof.approved_values.description};
+
   const project = (contract, body) => {
     const want = expected[contract?.name];
     if (!want || !body || typeof body !== "object") return null;
-    const array = !contract.shape;
+    const array = !contract.shape || contract.shape === "array";
     if (Array.isArray(body) !== array || (array && body.length > 25)) return null;
     const rows = array
       ? body.filter((r) => r && typeof r === "object" && r.id === want.id)
@@ -627,6 +745,7 @@ export function privacy78Runtime({ proof, rbacProof = null, install = false }) {
     )
       return null;
     const row = rows[0];
+    if(contract.name==="v109_lists_page0"&&(micros(row.atualizado_em)===null||micros(row.atualizado_em)!==micros(v109Proof.approved_values.updated)))return null;
     if (
       !Object.entries(want).every(([k, value]) => JSON.stringify(row[k]) === JSON.stringify(value))
     )
@@ -3209,60 +3328,37 @@ async function inspectPrivacy(page, words, diagnostics) {
   });
 
   let fieldContext;
-  if (rendered !== null && state?.verified && !state.closed) {
-    const item = privateCases().find((i) => HML_ORIGIN + i.path === page.url());
-    // GATE384 permits GET7 only for the current V115 route and its exact field.
-    if (item && ["V111", "V112", "V115", "V122"].includes(item.surface)) {
-      const receipt = await page.evaluate(() => {
-        const header = document.querySelector('header[aria-label="Organização atual"]');
-        if (
-          !header?.textContent.includes("ContaOS HML Teste") ||
-          !/Situação:\s*ativa/i.test(header.textContent)
-        )
-          return null;
-        return window.__contaosPrivacy78?.read() ?? null;
-      });
-      const anchor =
-        receipt &&
-        initialReceipt &&
-        initialReceipt.revision === receipt.revision &&
-        (await page.evaluate(privacy78FieldAnchor, { surface: item.surface, proof: state.proof }));
-      if (
-        anchor &&
-        receipt.route === page.url() &&
-        generation === state.generation &&
-        !state.closed
-      ) {
-        const locator = page.locator(anchor.selector);
-        if ((await locator.count()) === anchor.count) {
-          const fieldSnapshot = (await locator.nth(anchor.index).ariaSnapshot()).trim();
-          const after = await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null);
-          if (
-            after &&
-            after.route === receipt.route &&
-            after.revision === receipt.revision &&
-            JSON.stringify(after.observed) === JSON.stringify(receipt.observed) &&
-            generation === state.generation &&
-            !state.closed
-          ) {
-            fieldContext = privacy78FieldContext({
-              surface: item.surface,
-              proof: state.proof,
-              rbacProof: state.rbacProof,
-              rendered,
-              snapshot,
-              fieldSnapshot,
-              anchored: true,
-              receipt: Object.freeze({
-                ...after,
-                route: item.path,
-                observed: Object.freeze(after.observed),
-              }),
-            });
-          }
-        }
+  if(rendered!==null&&state?.verified&&!state.closed){
+   const item=privateCases().find(i=>HML_ORIGIN+i.path===page.url());
+   if(item&&["V109","V111","V112","V115","V122"].includes(item.surface)){
+    const receipt=await page.evaluate(()=>{
+     const header=document.querySelector('header[aria-label="Organização atual"]');
+     if(!header?.textContent.includes("ContaOS HML Teste")||!/Situação:\s*ativa/i.test(header.textContent))return null;
+     return window.__contaosPrivacy78?.read()??null;
+    });
+    const is109=item.surface==="V109";
+    const anchor=receipt&&initialReceipt&&initialReceipt.revision===receipt.revision&&
+     await page.evaluate(is109?privacy109FieldAnchor:privacy78FieldAnchor,
+       is109?{proof:state.v109Proof}:{surface:item.surface,proof:state.proof});
+    if(anchor&&receipt.route===page.url()&&generation===state.generation&&!state.closed){
+     let fieldSnapshot=null,fieldSnapshots=null;
+     if(is109)fieldSnapshots=await privacy109FieldSnapshots(page,anchor);
+     else{
+      const locator=page.locator(anchor.selector);
+      if(await locator.count()===anchor.count)fieldSnapshot=(await locator.nth(anchor.index).ariaSnapshot()).trim();
+     }
+     if(fieldSnapshot!==null||fieldSnapshots!==null){
+      const after=await page.evaluate(()=>window.__contaosPrivacy78?.read()??null);
+      if(after&&after.route===receipt.route&&after.revision===receipt.revision&&
+       JSON.stringify(after.observed)===JSON.stringify(receipt.observed)&&generation===state.generation&&!state.closed){
+       const currentReceipt=Object.freeze({...after,route:item.path,observed:Object.freeze(after.observed)});
+       fieldContext=is109?
+        privacy109FieldContext({proof:state.proof,v109Proof:state.v109Proof,rendered,snapshot,fieldSnapshots,anchored:true,receipt:currentReceipt}):
+        privacy78FieldContext({surface:item.surface,proof:state.proof,rbacProof:state.rbacProof,rendered,snapshot,fieldSnapshot,anchored:true,receipt:currentReceipt});
       }
+     }
     }
+   }
   }
   const privacy =
     rendered === null
@@ -3447,15 +3543,18 @@ async function runAuthenticatedAudit() {
     });
     const privacyProof = await loadPrivacy78Proof();
     const rbacProof = await loadPrivacy78RbacProof();
+    const v109Proof=await loadPrivacy109Proof();
     await context.addInitScript(privacy78Runtime, {
       proof: privacyProof,
       rbacProof,
+      v109Proof,
       install: true,
     });
     page = await context.newPage();
     const privacyState = {
       proof: privacyProof,
       rbacProof,
+      v109Proof,
       generation: 0,
       verified: false,
       closed: false,
