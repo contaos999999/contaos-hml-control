@@ -43,6 +43,90 @@ export function cases() {
     WIDTHS.flatMap((width) => THEMES.map((theme) => ({ ...route, width, theme }))),
   );
 }
+export function publicScaleCases() {
+  return ROUTES.filter((route) => route.public).flatMap((route) =>
+    THEMES.flatMap((theme) => [
+      { id: route.id, route: route.path, width: 320, theme, mode: "REFLOW_320" },
+      { id: route.id, route: route.path, width: 390, theme, mode: "TEXT_200" },
+      { id: route.id, route: route.path, width: 1440, theme, mode: "TEXT_200" },
+    ]),
+  );
+}
+export function sanitizePublicScaleRecord(row) {
+  const item = publicScaleCases().find((x) =>
+    ["id", "width", "theme", "mode"].every((key) => x[key] === row?.[key]),
+  );
+  const numeric = (n, max = 100000) =>
+    typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= max ? n : null;
+  const integer = (n, max = 100000) => (Number.isInteger(n) ? numeric(n, max) : null);
+  const filename = item
+    ? `screenshots/${item.id}_${item.width}_${item.theme}_${item.mode}.png`
+    : null;
+  return {
+    id: item?.id ?? "UNKNOWN",
+    route: item && row?.route === item.route ? item.route : null,
+    width: item?.width ?? null,
+    theme: item?.theme ?? "UNKNOWN",
+    mode: item?.mode ?? "UNKNOWN",
+    http: integer(row?.http, 599),
+    pathExact: row?.pathExact === true,
+    langPtBr: row?.langPtBr === true,
+    h1: integer(row?.h1, 100),
+    targetsComplete: row?.targetsComplete === true,
+    formsEmpty: row?.formsEmpty === true,
+    overflowX: numeric(row?.overflowX),
+    clipped: integer(row?.clipped),
+    blockedMutations: integer(row?.blockedMutations),
+    pageErrors: integer(row?.pageErrors),
+    rootBefore: numeric(row?.rootBefore, 2048),
+    rootAfter: numeric(row?.rootAfter, 2048),
+    sampleBefore: integer(row?.sampleBefore, 512),
+    sampleAfter: integer(row?.sampleAfter, 512),
+    measurements:
+      Array.isArray(row?.measurements) && row.measurements.length <= 512
+        ? row.measurements.map((x) => ({
+            index: integer(x?.index, 511),
+            before: numeric(x?.before, 2048),
+            after: numeric(x?.after, 2048),
+            matched: x?.matched === true,
+          }))
+        : [],
+    screenshot: filename && row?.screenshot === filename ? filename : null,
+    sha256:
+      typeof row?.sha256 === "string" && /^[a-f0-9]{64}$/.test(row.sha256) ? row.sha256 : null,
+  };
+}
+export function publicScaleGate(record) {
+  const r = sanitizePublicScaleRecord(record),
+    errors = [];
+  if (r.id === "UNKNOWN" || !r.route || !r.screenshot || !r.sha256)
+    errors.push("PUBLIC_SCALE_CASE_INVALID");
+  if (
+    !(r.http >= 200 && r.http < 300) ||
+    !r.pathExact ||
+    !r.langPtBr ||
+    r.h1 !== 1 ||
+    !r.targetsComplete ||
+    !r.formsEmpty ||
+    r.pageErrors !== 0 ||
+    r.blockedMutations !== 0
+  )
+    errors.push("PUBLIC_SCALE_STATE_INCOMPLETE");
+  if (r.overflowX === null || r.overflowX > 1 || r.clipped !== 0)
+    errors.push("PUBLIC_SCALE_LAYOUT");
+  const factor = r.mode === "TEXT_200" ? 2 : 1;
+  const ratio = (before, after) =>
+    before > 0 && after > 0 && Math.abs(after / before - factor) <= 0.02;
+  if (
+    !ratio(r.rootBefore, r.rootAfter) ||
+    !r.sampleBefore ||
+    r.sampleBefore !== r.sampleAfter ||
+    r.measurements.length !== r.sampleBefore ||
+    !r.measurements.every((x, index) => x.index === index && x.matched && ratio(x.before, x.after))
+  )
+    errors.push("PUBLIC_SCALE_SAMPLE");
+  return errors;
+}
 export function brandTypographyGate(fontFamily) {
   const stack =
     typeof fontFamily === "string"
@@ -505,6 +589,254 @@ function hash(content) {
 function safeName(item) {
   return item.id + "_" + item.width + "_" + item.theme;
 }
+export function publicScaleCollectionPass(rows) {
+  const expected = publicScaleCases(),
+    key = (row) => `${row.id}:${row.width}:${row.theme}:${row.mode}`;
+  return (
+    Array.isArray(rows) &&
+    rows.length === expected.length &&
+    new Set(rows.map(key)).size === expected.length &&
+    rows.every(
+      (row) =>
+        expected.some((item) => key(item) === key(row)) &&
+        row.outcome === "PASS_PUBLIC_SCALE" &&
+        publicScaleGate(row).length === 0,
+    )
+  );
+}
+async function requiredPublicScaleTargets(page, item) {
+  const visible = async (locator) => (await locator.count()) === 1 && (await locator.isVisible());
+  const titles = {
+    SYS01: "Bem-vindo de volta",
+    SYS02: "Recuperar acesso",
+    SYS03: "Definir nova senha",
+  };
+  if (!(await visible(page.getByRole("heading", { level: 1, name: titles[item.id], exact: true }))))
+    return false;
+  if (item.id === "SYS01")
+    return (
+      (await visible(page.getByLabel("E-mail", { exact: true }))) &&
+      (await visible(page.getByLabel("Senha", { exact: true }))) &&
+      (await visible(page.locator('label[for="login-email"]'))) &&
+      (await visible(page.locator('label[for="login-senha"]'))) &&
+      (await visible(page.getByRole("link", { name: "Esqueci minha senha", exact: true }))) &&
+      (await visible(page.getByRole("button", { name: "Mostrar senha", exact: true }))) &&
+      (await visible(page.getByRole("button", { name: "Entrar", exact: true })))
+    );
+  if (!(await visible(page.getByRole("link", { name: "Voltar ao login", exact: true }))))
+    return false;
+  if (item.id === "SYS02")
+    return (
+      (await visible(page.getByLabel("E-mail", { exact: true }))) &&
+      (await visible(page.locator('label[for="esqueci-email"]'))) &&
+      (await visible(page.getByRole("button", { name: "Enviar link", exact: true })))
+    );
+  return (
+    (await visible(
+      page.locator("p").filter({ hasText: /^\s*Validando link de redefinição(?:…|\.\.\.)\s*$/ }),
+    )) ||
+    ((await visible(page.getByRole("alert"))) &&
+      (await visible(page.getByRole("link", { name: "Solicitar novo link", exact: true }))))
+  );
+}
+export function capturePublicScaleDOM(phase) {
+  if (!["before", "after"].includes(phase)) throw Error("PUBLIC_SCALE_PHASE");
+  const visible = (el) =>
+    el instanceof HTMLElement &&
+    el.namespaceURI === "http://www.w3.org/1999/xhtml" &&
+    !el.closest(".sr-only") &&
+    el.isConnected &&
+    el.getClientRects().length > 0 &&
+    el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true });
+  const candidates = () => {
+    const nodes = new Set(),
+      walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode,
+        el = node.parentElement;
+      if (
+        node.textContent.trim() &&
+        visible(el) &&
+        el.closest("h1,h2,p,label,a,button,span,li") &&
+        !el.closest("script,style,svg")
+      )
+        nodes.add(el);
+    }
+    for (const control of document.querySelectorAll("input,button,a,select,textarea"))
+      if (visible(control)) nodes.add(control);
+    return [...nodes];
+  };
+  if (phase === "before") {
+    const nodes = candidates();
+    window.__contaosScaleProbe = nodes;
+    return {
+      root: Number.parseFloat(getComputedStyle(document.documentElement).fontSize),
+      fonts: nodes.map((el) => Number.parseFloat(getComputedStyle(el).fontSize)),
+    };
+  }
+  const nodes = window.__contaosScaleProbe || [];
+  const current = candidates();
+  const sameSample = current.length === nodes.length && nodes.every((el) => current.includes(el));
+  let clipped = 0;
+  for (const el of nodes) {
+    if (!visible(el)) continue;
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const textRects = [
+      ...range.getClientRects(),
+      ...(el.matches("input,button,a,select,textarea") ? [el.getBoundingClientRect()] : []),
+    ].filter((r) => r.width > 0 && r.height > 0);
+    if (el instanceof HTMLInputElement && el.scrollHeight > el.clientHeight + 1) clipped += 1;
+    let ancestor = el;
+    while (ancestor) {
+      const style = getComputedStyle(ancestor),
+        rect = ancestor.getBoundingClientRect();
+      const x = /^(hidden|clip)$/.test(style.overflowX),
+        y = /^(hidden|clip)$/.test(style.overflowY);
+      const left = rect.left + ancestor.clientLeft,
+        top = rect.top + ancestor.clientTop;
+      if (
+        textRects.some(
+          (r) =>
+            (x && (r.left < left - 1 || r.right > left + ancestor.clientWidth + 1)) ||
+            (y && (r.top < top - 1 || r.bottom > top + ancestor.clientHeight + 1)),
+        )
+      ) {
+        clipped += 1;
+        break;
+      }
+      ancestor = ancestor.parentElement;
+    }
+  }
+  return {
+    pathname: location.pathname,
+    origin: location.origin,
+    lang: document.documentElement.lang,
+    h1: document.querySelectorAll("h1").length,
+    root: Number.parseFloat(getComputedStyle(document.documentElement).fontSize),
+    overflowX: Math.max(0, document.documentElement.scrollWidth - innerWidth),
+    clipped,
+    formsEmpty: [...document.querySelectorAll("input")].every((el) => el.value === ""),
+    fonts: nodes.map((el, index) => ({
+      index,
+      after: Number.parseFloat(getComputedStyle(el).fontSize),
+      matched: sameSample && visible(el),
+    })),
+    sampleAfter: current.length,
+  };
+}
+export async function collectPublicScale(browser, { output, base, images }) {
+  const rows = [];
+  mkdirSync(join(output, "screenshots"), { recursive: true });
+  for (const item of publicScaleCases()) {
+    let context,
+      blockedMutations = 0,
+      pageErrors = 0;
+    const record = { ...item };
+    try {
+      context = await browser.newContext({
+        viewport: { width: item.width, height: 900 },
+        locale: "pt-BR",
+        timezoneId: "America/Sao_Paulo",
+        colorScheme: item.theme,
+        reducedMotion: "reduce",
+        permissions: [],
+      });
+      await context.addInitScript(
+        ({ theme }) => {
+          try {
+            localStorage.setItem("theme", theme);
+          } catch {
+            /* Sem sessão. */
+          }
+          const apply = () => document.documentElement.classList.toggle("dark", theme === "dark");
+          if (document.documentElement) apply();
+          else document.addEventListener("DOMContentLoaded", apply, { once: true });
+        },
+        { theme: item.theme },
+      );
+      await context.route("https://gklhhhyosgasnyoxlrui.supabase.co/**", (route) => {
+        if (!["GET", "HEAD", "OPTIONS"].includes(route.request().method())) {
+          blockedMutations += 1;
+          return route.abort("blockedbyclient");
+        }
+        return route.continue();
+      });
+      const page = await context.newPage();
+      page.on("pageerror", () => {
+        pageErrors += 1;
+      });
+      const response = await page.goto(base + item.route, {
+        waitUntil: "domcontentloaded",
+        timeout: 12000,
+      });
+      await page.waitForTimeout(550);
+      record.http = response?.status() || 0;
+      const requiredBefore = await requiredPublicScaleTargets(page, item);
+      const before = await page.evaluate(capturePublicScaleDOM, "before");
+      record.rootBefore = before.root;
+      record.sampleBefore = before.fonts.length;
+      if (item.mode === "TEXT_200") {
+        await page.evaluate((font) => {
+          if (!Number.isFinite(font) || font <= 0) throw Error("PUBLIC_SCALE_ROOT");
+          document.documentElement.style.setProperty("font-size", `${font * 2}px`, "important");
+        }, before.root);
+      }
+      await page.evaluate(
+        () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+      );
+      const after = await page.evaluate(capturePublicScaleDOM, "after");
+      record.pathExact = after.pathname === item.route && after.origin === new URL(base).origin;
+      record.langPtBr = after.lang === "pt-BR";
+      record.h1 = after.h1;
+      record.rootAfter = after.root;
+      record.overflowX = after.overflowX;
+      record.clipped = after.clipped;
+      record.formsEmpty = after.formsEmpty;
+      record.sampleAfter = after.sampleAfter;
+      record.measurements = after.fonts.map((x) => ({ ...x, before: before.fonts[x.index] }));
+      record.targetsComplete = requiredBefore && (await requiredPublicScaleTargets(page, item));
+      if (record.pathExact) {
+        const bytes = await page.screenshot({ fullPage: true, animations: "disabled" });
+        record.screenshot = `screenshots/${item.id}_${item.width}_${item.theme}_${item.mode}.png`;
+        record.sha256 = hash(bytes);
+        writeFileSync(join(output, record.screenshot), bytes);
+        images.push({ filename: record.screenshot, sha256: record.sha256 });
+      }
+    } catch {
+      pageErrors += 1;
+    } finally {
+      if (context) {
+        try {
+          await context.close();
+        } catch {
+          pageErrors += 1;
+        }
+      }
+      record.blockedMutations = blockedMutations;
+      record.pageErrors = pageErrors;
+      const safe = sanitizePublicScaleRecord(record),
+        errors = publicScaleGate(safe);
+      rows.push({
+        ...safe,
+        errors,
+        outcome: errors.length ? "FAIL_PUBLIC_SCALE" : "PASS_PUBLIC_SCALE",
+      });
+    }
+  }
+  const report = {
+    schema: "contaos.public-scale.v1",
+    scope: "PUBLIC_NO_CREDENTIALS_ONLY",
+    native_browser_zoom: "NAO_VERIFICADO",
+    wcag_full_certification: "NAO_VERIFICADO",
+    cases: rows.length,
+    rows,
+  };
+  const file = join(output, "public-scale.json");
+  writeFileSync(file, JSON.stringify(report, null, 2) + "\n");
+  images.push({ filename: "public-scale.json", sha256: hash(readFileSync(file)) });
+  return rows;
+}
 async function run() {
   const modulePath = process.env.CONTAOS_PLAYWRIGHT_MODULE;
   if (!modulePath) throw new Error("Playwright não instalado no executor independente.");
@@ -525,6 +857,7 @@ async function run() {
   mkdirSync(screenshotDir, { recursive: true });
   const logs = [];
   const images = [];
+  let scaleRows = [];
   const browser = await chromium.launch({ headless: true });
   const started = new Date().toISOString();
   try {
@@ -829,6 +1162,7 @@ async function run() {
         await context.close();
       }
     }
+    scaleRows = await collectPublicScale(browser, { output, base, images });
   } finally {
     await browser.close();
   }
@@ -844,7 +1178,7 @@ async function run() {
     themes: THEMES,
     scenarios: ROUTES.length,
     combinations: cases().length,
-    screenshots: images.length,
+    screenshots: images.filter((x) => x.filename.endsWith(".png")).length,
     public_pass: logs.filter((x) => x.outcome === "PASS_PUBLICO").length,
     public_fail: logs.filter((x) => x.outcome === "FAIL_PUBLICO").length,
     protected_no_session: logs.filter(
@@ -852,6 +1186,12 @@ async function run() {
     ).length,
     public_keyboard_cases: logs.filter((x) => x.keyboard).length,
     public_keyboard_fail: logs.filter((x) => x.keyboard?.errors?.length).length,
+    public_scale_cases: scaleRows.length,
+    public_scale_expected_cases: publicScaleCases().length,
+    public_scale_complete: publicScaleCollectionPass(scaleRows),
+    public_scale_fail: scaleRows.filter((x) => x.outcome === "FAIL_PUBLIC_SCALE").length,
+    public_scale_report: "public-scale.json",
+    native_browser_zoom: "NAO_VERIFICADO",
     authenticated_e2e: "NAO_VERIFICADO",
     rls_ab_real: "NAO_VERIFICADO",
     upload_real: "NAO_VERIFICADO",
@@ -874,9 +1214,10 @@ async function run() {
       0,
     ),
     wcag_full_certification: "NAO_VERIFICADO_EXIGE_SESSAO_REAL_E_REVISAO_MANUAL",
-    verdict: logs.some((x) => x.outcome === "FAIL_PUBLICO")
-      ? "FAIL"
-      : "PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA",
+    verdict:
+      logs.some((x) => x.outcome === "FAIL_PUBLICO") || !publicScaleCollectionPass(scaleRows)
+        ? "FAIL"
+        : "PASS_ESCOPADO_PUBLICO_SESSAO_REAL_NAO_VERIFICADA",
     rows: logs,
   };
   const file = join(output, "relatorio.json");

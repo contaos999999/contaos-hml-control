@@ -462,3 +462,427 @@ test("teclado público: recarga deve restaurar HTTP, URL, formulário vazio e ro
   ])
     assert.ok(m.publicKeyboardResetGate(value).length);
 });
+
+const escalaValida = () => ({
+  id: "SYS01",
+  route: "/login",
+  width: 390,
+  theme: "light",
+  mode: "TEXT_200",
+  http: 200,
+  pathExact: true,
+  langPtBr: true,
+  h1: 1,
+  targetsComplete: true,
+  formsEmpty: true,
+  overflowX: 0,
+  clipped: 0,
+  blockedMutations: 0,
+  pageErrors: 0,
+  rootBefore: 16,
+  rootAfter: 32,
+  sampleBefore: 2,
+  sampleAfter: 2,
+  measurements: [
+    { index: 0, before: 14, after: 28, matched: true },
+    { index: 1, before: 16, after: 32, matched: true },
+  ],
+  screenshot: "screenshots/SYS01_390_light_TEXT_200.png",
+  sha256: "a".repeat(64),
+});
+
+test("refluxo/texto: 18 casos públicos separados preservam os 232 casos base", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.publicScaleCases, "function");
+  const extra = m.publicScaleCases();
+  assert.equal(extra.length, 18);
+  assert.equal(new Set(extra.map((x) => `${x.id}:${x.theme}:${x.mode}:${x.width}`)).size, 18);
+  assert.deepEqual([...new Set(extra.map((x) => x.id))], ["SYS01", "SYS02", "SYS03"]);
+  assert.equal(extra.filter((x) => x.mode === "REFLOW_320" && x.width === 320).length, 6);
+  assert.equal(
+    extra.filter((x) => x.mode === "TEXT_200" && [390, 1440].includes(x.width)).length,
+    12,
+  );
+  assert.equal(m.cases().length, 232);
+});
+
+test("refluxo/texto: escala real e amostra estável são obrigatórias", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.publicScaleGate, "function");
+  assert.deepEqual(m.publicScaleGate(escalaValida()), []);
+  for (const patch of [
+    { rootAfter: 16 },
+    { measurements: [{ index: 0, before: 14, after: 14, matched: true }] },
+    { sampleBefore: 0, sampleAfter: 0, measurements: [] },
+    { sampleAfter: 1 },
+    { measurements: [{ index: 0, before: 14, after: 28, matched: false }] },
+    { measurements: [{ index: 0, before: 14, after: Infinity, matched: true }] },
+    { measurements: [{ index: 0, before: NaN, after: 28, matched: true }] },
+    {
+      measurements: [
+        { index: 0, before: 14, after: 28, matched: true },
+        { index: 0, before: 16, after: 32, matched: true },
+      ],
+    },
+  ])
+    assert.notDeepEqual(m.publicScaleGate({ ...escalaValida(), ...patch }), []);
+});
+
+test("refluxo/texto: overflow, clipping, mutação e estado público incompleto falham", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.publicScaleGate, "function");
+  for (const patch of [
+    { overflowX: 2 },
+    { clipped: 1 },
+    { blockedMutations: 1 },
+    { pageErrors: 1 },
+    { targetsComplete: false },
+    { formsEmpty: false },
+    { http: 500 },
+    { pathExact: false },
+    { langPtBr: false },
+    { h1: 0 },
+    { id: "V123" },
+    { width: 768 },
+    { theme: "private" },
+    { rootAfter: Infinity },
+    { overflowX: NaN },
+    { screenshot: "../PRIVATE_CANARY" },
+    { sha256: "bad" },
+  ])
+    assert.notDeepEqual(m.publicScaleGate({ ...escalaValida(), ...patch }), []);
+  const reflow = {
+    ...escalaValida(),
+    width: 320,
+    mode: "REFLOW_320",
+    rootAfter: 16,
+    measurements: [
+      { index: 0, before: 14, after: 14, matched: true },
+      { index: 1, before: 16, after: 16, matched: true },
+    ],
+    screenshot: "screenshots/SYS01_320_light_REFLOW_320.png",
+  };
+  assert.deepEqual(m.publicScaleGate(reflow), []);
+});
+
+test("refluxo/texto: relatório rejeita canários, números não finitos e paths arbitrários", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.sanitizePublicScaleRecord, "function");
+  const row = m.sanitizePublicScaleRecord({
+    ...escalaValida(),
+    html: "PRIVATE_CANARY",
+    password: "PRIVATE_CANARY",
+    url: "PRIVATE_CANARY",
+    measurements: [{ index: 0, before: 14, after: 28, matched: true, value: "PRIVATE_CANARY" }],
+  });
+  assert(!JSON.stringify(row).includes("PRIVATE_CANARY"));
+  assert.equal(
+    m.sanitizePublicScaleRecord({ ...escalaValida(), overflowX: Infinity }).overflowX,
+    null,
+  );
+  assert.equal(
+    m.sanitizePublicScaleRecord({ ...escalaValida(), screenshot: "../private.png" }).screenshot,
+    null,
+  );
+  assert.equal(
+    m.sanitizePublicScaleRecord({
+      ...escalaValida(),
+      measurements: Array.from({ length: 513 }, (_, index) => ({
+        index,
+        before: 14,
+        after: 28,
+        matched: true,
+      })),
+    }).measurements.length,
+    0,
+  );
+});
+
+test("refluxo/texto: falha de contexto mantém 18 FAIL e nunca publica erro bruto", async () => {
+  const m = await import("./visual-audit.mjs");
+  const { mkdtempSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  assert.equal(typeof m.collectPublicScale, "function");
+  const output = mkdtempSync(join(tmpdir(), "contaos-scale-")),
+    images = [];
+  try {
+    const rows = await m.collectPublicScale(
+      {
+        newContext: async () => {
+          throw Error("PRIVATE_CANARY");
+        },
+      },
+      { output, base: "http://127.0.0.1:4173", images },
+    );
+    assert.equal(rows.length, 18);
+    assert(rows.every((x) => x.outcome === "FAIL_PUBLIC_SCALE"));
+    assert(!JSON.stringify(rows).includes("PRIVATE_CANARY"));
+    assert(!readFileSync(join(output, "public-scale.json"), "utf8").includes("PRIVATE_CANARY"));
+    assert(
+      images.some((x) => x.filename === "public-scale.json" && /^[a-f0-9]{64}$/.test(x.sha256)),
+    );
+  } finally {
+    rmSync(output, { recursive: true, force: true });
+  }
+});
+
+test("refluxo/texto: registro ausente ou desconhecido falha sem lançar dado bruto", async () => {
+  const m = await import("./visual-audit.mjs");
+  for (const row of [undefined, null, {}, { id: "PRIVATE_CANARY" }]) {
+    assert.doesNotThrow(() => m.sanitizePublicScaleRecord(row));
+    assert.notDeepEqual(m.publicScaleGate(row), []);
+    assert(!JSON.stringify(m.sanitizePublicScaleRecord(row)).includes("PRIVATE_CANARY"));
+  }
+});
+
+test("refluxo/texto: coleção incompleta, duplicada ou com FAIL não recebe PASS global", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.publicScaleCollectionPass, "function");
+  const rows = m.publicScaleCases().map((item) => ({
+    ...escalaValida(),
+    ...item,
+    rootAfter: item.mode === "TEXT_200" ? 32 : 16,
+    measurements: [14, 16].map((before, index) => ({
+      index,
+      before,
+      after: before * (item.mode === "TEXT_200" ? 2 : 1),
+      matched: true,
+    })),
+    screenshot: `screenshots/${item.id}_${item.width}_${item.theme}_${item.mode}.png`,
+    outcome: "PASS_PUBLIC_SCALE",
+    errors: [],
+  }));
+  assert.equal(m.publicScaleCollectionPass(rows), true);
+  assert.equal(m.publicScaleCollectionPass([]), false);
+  assert.equal(m.publicScaleCollectionPass(rows.slice(1)), false);
+  assert.equal(m.publicScaleCollectionPass([...rows.slice(1), rows[1]]), false);
+  assert.equal(
+    m.publicScaleCollectionPass([{ ...rows[0], outcome: "FAIL_PUBLIC_SCALE" }, ...rows.slice(1)]),
+    false,
+  );
+  assert.equal(m.publicScaleCollectionPass([{ ...rows[0], clipped: 1 }, ...rows.slice(1)]), false);
+});
+
+async function publicScaleDOMFixture(snapshot, html) {
+  // Dependency-free DOM fixture: CI runs node:test before dependency installation.
+  // Synthetic geometry is never a substitute for Chromium visual evidence.
+  const { runInNewContext } = await import("node:vm");
+  const elements = [];
+  const textNodes = [];
+  const root = { lang: "pt-BR", scrollWidth: 320, style: { fontSize: "16px" } };
+  const rect = (left = 0, width = 200) => ({
+    left,
+    top: 0,
+    width,
+    height: 20,
+    right: left + width,
+    bottom: 20,
+  });
+  class HTMLElement {
+    constructor(tag, parent = null, text = "", attrs = "") {
+      this.tag = tag;
+      this.parentElement = parent;
+      this.textContent = text;
+      this.isConnected = true;
+      this.namespaceURI = "http://www.w3.org/1999/xhtml";
+      this.style = {
+        fontSize: "14px",
+        overflowX: /overflow-x:hidden/.test(attrs) ? "hidden" : "visible",
+      };
+      this.value = "";
+      elements.push(this);
+      if (text) textNodes.push({ textContent: text, parentElement: this });
+    }
+    closest(selector) {
+      const tags = selector.split(",").map((x) => x.trim());
+      let el = this;
+      while (el) {
+        if (tags.includes(el.tag)) return el;
+        el = el.parentElement;
+      }
+      return null;
+    }
+    matches(selector) {
+      return selector.split(",").includes(this.tag);
+    }
+    getClientRects() {
+      return [this.getBoundingClientRect()];
+    }
+    getBoundingClientRect() {
+      return this.rect || rect();
+    }
+    checkVisibility() {
+      return true;
+    }
+  }
+  class HTMLInputElement extends HTMLElement {}
+  const body = new HTMLElement("body");
+  function create(tag, parent, text = "", attrs = "") {
+    const el =
+      tag === "input"
+        ? new HTMLInputElement(tag, parent, text, attrs)
+        : new HTMLElement(tag, parent, text, attrs);
+    geometry(el);
+    return el;
+  }
+  function geometry(el, left = 0, width = 200) {
+    el.rect = rect(left, width);
+    Object.assign(el, {
+      clientWidth: width,
+      clientHeight: 20,
+      clientLeft: 0,
+      clientTop: 0,
+      scrollHeight: 20,
+    });
+    return el;
+  }
+  let target;
+  if (html.includes('id="box"')) {
+    const box = create("div", body, "", "overflow-x:hidden");
+    box.style.overflowX = "hidden";
+    target = create("input", box);
+    target.id = "field";
+    box.id = "box";
+  } else if (html.includes("<button")) {
+    target = create("button", body, "Texto sintético longo", "overflow-x:hidden");
+    target.style.overflowX = "hidden";
+  } else {
+    target = create("p", body, "Texto sintético");
+  }
+  const document = {
+    body,
+    documentElement: root,
+    querySelector(selector) {
+      return (
+        elements.find((e) =>
+          selector === "input"
+            ? e.tag === "input"
+            : selector === "button"
+              ? e.tag === "button"
+              : selector === "#box"
+                ? e.id === "box"
+                : selector === "#field"
+                  ? e.id === "field"
+                  : false,
+        ) || null
+      );
+    },
+    querySelectorAll(selector) {
+      const tags = selector.split(",").map((x) => x.trim());
+      return elements.filter((e) => tags.includes(e.tag));
+    },
+    createElement(tag) {
+      const el = create(tag, null);
+      el.isConnected = false;
+      return el;
+    },
+    createTreeWalker() {
+      let index = -1;
+      return {
+        currentNode: null,
+        nextNode() {
+          index++;
+          this.currentNode = textNodes[index];
+          return Boolean(this.currentNode);
+        },
+      };
+    },
+    createRange() {
+      return {
+        selectNodeContents() {},
+        getClientRects() {
+          return rangeRects();
+        },
+      };
+    },
+  };
+  body.append = (el) => {
+    el.parentElement = body;
+    el.isConnected = true;
+    if (el.textContent) textNodes.push({ textContent: el.textContent, parentElement: el });
+  };
+  let rangeRects = () => [];
+  const win = { document, __contaosScaleProbe: null, Range: { prototype: {} } };
+  Object.defineProperty(win.Range.prototype, "getClientRects", {
+    get: () => rangeRects,
+    set: (fn) => {
+      rangeRects = fn;
+    },
+  });
+  const globals = {
+    window: win,
+    document,
+    HTMLElement,
+    HTMLInputElement,
+    NodeFilter: { SHOW_TEXT: 4 },
+    getComputedStyle: (el) => ({
+      fontSize: el.style?.fontSize || "16px",
+      overflowX: el.style?.overflowX || "visible",
+      overflowY: "visible",
+    }),
+    location: { pathname: "/login", origin: "http://127.0.0.1:4173" },
+    innerWidth: 320,
+  };
+  return {
+    win,
+    geometry,
+    capture: (phase) =>
+      runInNewContext(`(${snapshot.toString()})(${JSON.stringify(phase)})`, globals),
+    close: () => {},
+  };
+}
+
+test("refluxo/texto: input vazio cortado por ancestral restritivo é detectado", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.capturePublicScaleDOM, "function");
+  const f = await publicScaleDOMFixture(
+    m.capturePublicScaleDOM,
+    '<div id="box" style="overflow-x:hidden"><input id="field"></div>',
+  );
+  try {
+    f.geometry(f.win.document.querySelector("#box"), 0, 100);
+    f.geometry(f.win.document.querySelector("#field"), 50, 100);
+    f.capture("before");
+    assert.equal(f.win.document.querySelector("input").value, "");
+    assert(f.capture("after").clipped > 0);
+  } finally {
+    f.close();
+  }
+});
+
+test("refluxo/texto: novo texto posterior invalida a identidade da amostra", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.capturePublicScaleDOM, "function");
+  const f = await publicScaleDOMFixture(m.capturePublicScaleDOM, "<p>Texto sintético</p>");
+  try {
+    const before = f.capture("before");
+    const added = f.win.document.createElement("p");
+    added.textContent = "Outro texto sintético";
+    f.win.document.body.append(added);
+    f.geometry(added);
+    const after = f.capture("after");
+    assert.equal(after.sampleAfter, before.fonts.length + 1);
+    assert(after.fonts.every((x) => !x.matched));
+  } finally {
+    f.close();
+  }
+});
+
+test("refluxo/texto: caixa do botão não esconde clipping do texto interno", async () => {
+  const m = await import("./visual-audit.mjs");
+  const f = await publicScaleDOMFixture(
+    m.capturePublicScaleDOM,
+    '<button style="overflow-x:hidden">Texto sintético longo</button>',
+  );
+  try {
+    f.geometry(f.win.document.querySelector("button"), 0, 100);
+    f.win.Range.prototype.getClientRects = () => [
+      { left: 0, right: 300, top: 0, bottom: 20, width: 300, height: 20 },
+    ];
+    f.capture("before");
+    assert(f.capture("after").clipped > 0);
+  } finally {
+    f.close();
+  }
+});

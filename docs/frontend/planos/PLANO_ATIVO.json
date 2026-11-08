@@ -214,7 +214,7 @@
     "local_one_table_synthetic_restore": "PASS_ESCOPADO_RUN_42168969390",
     "crud_global": "NÃO CONCLUÍDO: código de listas/capacidades/paginação integrado; validação privada e reconciliação semântica das demais operações não certificadas. Executor falhou explicitamente; nenhuma prova privada inventada."
   },
-  "p0_note": "Trilha A: checkpoint321 integrado; próximo ensaio independente público de refluxo320CSS/texto200%, PLAN antes de GATE separado e BUILD. Privadas/V1 não certificadas.",
+  "p0_note": "Trilha A PLAN322/GATE323 integrados. BUILD do auditor público em GREEN local, pendente revisão independente e Chromium real; não alterar produto ou certificar V1.",
   "rbac_emenda_p0": {
     "plano_documento": "docs/frontend/planos/P0_V1_ADM01_RBAC_EMENDA_2026-11-06.md",
     "plan_pr": 178,
@@ -1030,8 +1030,8 @@
     "tested_synthetic_merge": "cbcded828d94492913e13118a62fcafbb867b74c"
   },
   "trilha_a_public_scale": {
-    "phase": "GATE",
-    "state": "PENDENTE_CI_GATE_SEPARADO",
+    "phase": "BUILD",
+    "state": "GREEN_LOCAL_PENDING_CANONICAL_RUNTIME",
     "baseline_main": "09c5f243c6f52368319845c33b1e511b3e966299",
     "plan_document": "docs/frontend/planos/P0_TRILHA_A_REFLOW_TEXTO_PUBLICO_PLAN_2026-11-08.md",
     "gate_document": "docs/frontend/planos/P0_TRILHA_A_REFLOW_TEXTO_PUBLICO_GATE_2026-11-08.md",
@@ -1051,6 +1051,45 @@
       42435786033,
       42435786037
     ],
-    "independent_plan_review": "APROVADO_SEM_CRITICAL_IMPORTANT; precisão de alvos no GATE"
+    "independent_plan_review": "APROVADO_SEM_CRITICAL_IMPORTANT; precisão de alvos no GATE",
+    "gate_pr": 323,
+    "gate_head": "b073caf3b6a559f5a7035e6b52651ab0eb3b6d88",
+    "gate_merge": "8d96478905e82d5535094df9a7565f440485d656",
+    "gate_check_jobs": [
+      128595125444,
+      128595125810,
+      128595124767
+    ],
+    "red_local_commits": [
+      "57c331e",
+      "03921ce",
+      "9b51610",
+      "e35f3d4"
+    ],
+    "red_primary_result": "29 PASS / 4 expected FAIL; helpers missing",
+    "green_local": {
+      "protocol_and_order": 53,
+      "vitest_tests": 1163,
+      "vitest_files": 42,
+      "build": "PASS",
+      "tsc": "PASS",
+      "lint": "PASS_AFTER_FORMAT_FIX",
+      "prettier": "PASS",
+      "route_tree_drift": "PASS",
+      "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19"
+    },
+    "runtime_visual": "NOT_EXECUTED_YET",
+    "independent_build_review": "PENDING",
+    "review_fixes": {
+      "state": "CORRECTED_PENDING_RECHECK",
+      "red_reproduction": "f6b6acd:36 PASS/2 FAIL for clipped empty input and added text",
+      "green_commits": [
+        "19da4a3",
+        "55ca13a"
+      ],
+      "geometry_fixture": "JSDOM synthetic layout; not real browser proof",
+      "red_control_text": "680a0c5:38 PASS/1 FAIL, button text clipping",
+      "green_control_text": "492852d"
+    }
   }
 }
