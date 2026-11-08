@@ -1,0 +1,19 @@
+# GATE separado: reancoragem segura do executor da Trilha A
+
+PLAN #342 integrado em824f49436dccc5feb15dc61adc42aaa7a3ca10e5, após Zero-Drift42491108002 e LOCK42491108049 SUCCESS no HEAD85fb09bb292b4a02ff1d85f88accb9e24820fbc4; Teste C documental SUCCESS sem reexecutar a matriz pública. Revisão independente APROVÁVEL sem Critical/Important. Este commit não implementa código.
+
+Validação técnica: PASS para fidelidade ao PRD/premissas/arquitetura, regular75 e transversais000/085–096, preservação de BRAND-01, segurança, NFRs, Zero-Drift, TDD planejado, TesteC planejado e rollback. Fonte backend2d01d87654ce580f6f8fdd3446ea4aa78ac7752a, mesma do snapshot. Sem necessidade de novo contrato backend, permissão ou segredo. V1 continua NO-GO, sem iniciar V2.
+
+Autorização fechada após CI verde e integração deste GATE: scripts/hml/authenticated-visual-audit.mjs, scripts/hml/authenticated-visual-audit.test.mjs e .github/workflows/contaos-trilha-a-authenticated.yml; documentos PLAN/GATE, PLANO_ATIVO e checkpoint. Nenhuma fonte do produto, public, tipo certificado, dependência, lock, backend ou PROD.
+
+## Sequência executável
+
+1. RED: testar descoberta AST da identidade candidata e rejeições (ausente, objeto conflitante, chaves extras, segredo, template interpolado, origem/projeto estrangeiro), pins vazios/corretos/incompletos/obsoletos e classificação sanitizada do erro local com canários de segredo. Executar e registrar falhas esperadas antes de implementação.
+2. BUILD: reutilizar validação completa extractPublicBuildEnvironment, sem enfraquecê-la. Novo modo --resolve-deployment somente workflow_dispatch/main e sem secrets. Resolver uma vez pelo alias HML fixo; revalidar todos os metadados; exportar exclusivamente valores estruturados e de formato limitado ao GITHUB_ENV e GITHUB_OUTPUT. Dois campos vazios optam por descoberta; par explícito nunca é reescrito. Instalar dependências frozen do executor antes da descoberta; validar ancestralidade antes de checkout/build da fonte; usar SHA resolvido no checkout separado. Nenhuma API de gerenciamento Vercel ou novo secret necessário. A identidade descoberta não comprova integridade: --prepare/SSR/bytes/freshness e barreira nativa continuam bloqueantes antes do login.
+3. Diagnóstico local: classificador retorna somente enums fixos (operação Playwright, tipo local e motivo como NAVIGATION_ABORTED/CONTEXT_DESTROYED/TARGET_CLOSED/TIMEOUT/CSP/UNKNOWN), sem mensagem, stack, URL, corpo, header ou tokens. Não coletar respostas de sucesso Auth. O diagnóstico não é uma correção de login. Se permanecer UNKNOWN, não inventar causa; somente correção com reprodução e RED, sem mudar segurança/timeout por tentativa.
+4. GREEN: protocolo e negativos, lint/formato focal, regressão do produto, typecheck/build/Zero-Drift e hash LOCK-TYPES. Barreira nativa7/7 do mesmo SHA; revisão independente e CI antes do merge. Rollback por PR desses três arquivos sem dados.
+5. Teste C imutável main/HML READY: dispatch com campos vazios, confirmar identidade resolvida e preparação PASS, acompanhar somente etapa autenticada pendente. Conferir artefato baixado/SHA256, sem repetir18provas públicas. Nenhuma alteração do executor durante Teste C. Falha local com causa demonstrada retorna a RED dentro deste escopo; lacuna de conta/backend requer intervenção externa específica, sem bypass.
+
+184candidatos+24fixture(V117/V119/V120) continuam separados. 72critérios,4larguras×2temas,estados,acessibilidade,marca/menu/organização e revisão visual independentes são DoD do produto, não podem ser dados como PASS por protocolo do runner. Nenhum privado aprovado até aqui.
+
+ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: preservar Brand1.0, componentes, fontes e Supabase exclusivo; executar diretamente no GitHub sem BUILD Lovable; economia não dispensa gates, TDD ou evidências. Nenhum PROD ou autenticação do produto alterado.
