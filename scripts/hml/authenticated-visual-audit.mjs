@@ -581,6 +581,34 @@ const CDP_RESOURCE_TYPES = new Set([
   "Other",
 ]);
 
+function safeLifecycleMetadata(input) {
+  if (
+    !input ||
+    !CDP_RESOURCE_TYPES.has(input.network) ||
+    !CDP_RESOURCE_TYPES.has(input.fetch) ||
+    !["GET", "HEAD", "POST", "OPTIONS"].includes(input.method) ||
+    !["REQUEST", "RESPONSE"].includes(input.stage)
+  )
+    return null;
+  const result = {
+    network: input.network,
+    fetch: input.fetch,
+    method: input.method,
+    stage: input.stage,
+  };
+  for (const key of [
+    "networkFramePresent",
+    "sameFrame",
+    "loaderPresent",
+    "ownFetchFrame",
+    "generationSame",
+    "terminal",
+  ]) {
+    if (typeof input[key] !== "boolean") return null;
+    result[key] = input[key];
+  }
+  return result;
+}
 export function createRequestLifecycle(identity) {
   const frames = new Map(),
     requests = new Map(),
@@ -725,9 +753,29 @@ export function createRequestLifecycle(identity) {
       // policy/body guard, but is never eligible for cancellation retirement.
       if (!id(event.networkId)) return null;
       const record = requests.get(key(session, event.networkId));
-      if (!record) fail("FENCE_LIFECYCLE_NO_NETWORK");
-      if (record.terminal) fail("FENCE_LIFECYCLE_TERMINAL");
       const frame = frames.get(session.id);
+      const reject = (code) => {
+        throw Object.assign(new Error(code), {
+          code,
+          lifecycleMetadata: safeLifecycleMetadata({
+            network: record?.type,
+            fetch: event.resourceType,
+            method: event.request?.method,
+            stage:
+              event.responseStatusCode !== undefined || event.responseErrorReason !== undefined
+                ? "RESPONSE"
+                : "REQUEST",
+            networkFramePresent: !!record?.frameId,
+            sameFrame: !!record?.frameId && record.frameId === event.frameId,
+            loaderPresent: !!record?.loaderId,
+            ownFetchFrame: event.frameId === frame.id,
+            generationSame: record?.generation === frame.generation,
+            terminal: !!record?.terminal,
+          }),
+        });
+      };
+      if (!record) reject("FENCE_LIFECYCLE_NO_NETWORK");
+      if (record.terminal) reject("FENCE_LIFECYCLE_TERMINAL");
       const absent = (value) => value === undefined || value === "";
       const ordinaryPreflight =
         record.type === "Other" &&
@@ -746,7 +794,7 @@ export function createRequestLifecycle(identity) {
         (!ordinaryPreflight && record.frameId !== event.frameId) ||
         (record.fetchFrameId !== undefined && record.fetchFrameId !== event.frameId)
       )
-        fail("FENCE_LIFECYCLE_FRAME");
+        reject("FENCE_LIFECYCLE_FRAME");
       const equalTypes = record.type === event.resourceType;
       if (
         !CDP_RESOURCE_TYPES.has(record.type) ||
@@ -756,7 +804,7 @@ export function createRequestLifecycle(identity) {
           !(record.type === "Fetch" && event.resourceType === "XHR")) ||
         (record.fetchResourceType !== undefined && record.fetchResourceType !== event.resourceType)
       )
-        fail("FENCE_LIFECYCLE_TYPE");
+        reject("FENCE_LIFECYCLE_TYPE");
       record.fetchResourceType = event.resourceType;
       record.fetchFrameId = event.frameId;
       if (ordinaryPreflight) record.eligible = false;
@@ -765,13 +813,13 @@ export function createRequestLifecycle(identity) {
         record.url !== event.request?.url ||
         record.method !== event.request?.method
       )
-        fail("FENCE_REQUEST_LIFECYCLE");
+        reject("FENCE_REQUEST_LIFECYCLE");
       const fetchKey = key(session, event.requestId),
         previous = fetches.get(fetchKey);
       const response =
         event.responseStatusCode !== undefined || event.responseErrorReason !== undefined;
       if (!response) {
-        if (record.initialFetchId !== undefined) fail("FENCE_REQUEST_LIFECYCLE");
+        if (record.initialFetchId !== undefined) reject("FENCE_REQUEST_LIFECYCLE");
         record.initialFetchId = event.requestId;
       }
       if (
@@ -782,7 +830,7 @@ export function createRequestLifecycle(identity) {
             previous.responsePauseSeen
           : seenFetch.has(fetchKey) || seenFetch.size >= 65536
       )
-        fail("FENCE_REQUEST_LIFECYCLE");
+        reject("FENCE_REQUEST_LIFECYCLE");
       if (previous) previous.responsePauseSeen = true;
       else seenFetch.add(fetchKey);
       if (response) record.responseSeen = true;
@@ -1342,6 +1390,7 @@ export async function installNativeFence({
   const state = {
     failed: false,
     failureCode: null,
+    lifecycleMetadata: null,
     failureCommand: null,
     failureProtocolCode: null,
     failureReason: null,
@@ -1366,6 +1415,7 @@ export async function installNativeFence({
   function invalidate(error) {
     if (state.failed || closed) return;
     state.failed = true;
+    state.lifecycleMetadata = safeLifecycleMetadata(error?.lifecycleMetadata);
     lifecycle.close();
     state.failureCode = /^(?:CDP|FENCE)_[A-Z_]{1,80}$/.test(error?.code || "")
       ? error.code
@@ -2099,6 +2149,16 @@ export function nativeCancellationFailure(tap) {
     .filter((value) => allowed.has(value));
   return values.length === 1 ? values[0] : null;
 }
+export function nativeSourceFailure(tap) {
+  if (typeof tap !== "string" || tap.length > 1048576) return null;
+  return nativeCancellationFailure(
+    tap
+      .split("\n")
+      .filter((line) => line.trim().startsWith("# NATIVE_SOURCE_FAILURE "))
+      .map((line) => line.trim().replace("# NATIVE_SOURCE_FAILURE ", "# NATIVE_CANCEL_FAILURE "))
+      .join("\n"),
+  );
+}
 export function nativeCancellationTypes(tap) {
   if (typeof tap !== "string" || tap.length > 1048576) return null;
   const pairs = tap
@@ -2173,6 +2233,7 @@ async function nativeGuard() {
         timedOut: error?.killed === true,
         cancellationStages: nativeCancellationDiagnostics(stdout),
         cancellationFailure: nativeCancellationFailure(stdout),
+        sourceFailure: nativeSourceFailure(stdout),
         cancellationTypes: nativeCancellationTypes(stdout),
         lifecycleMetadata: nativeLifecycleMetadata(stdout),
         tap,
@@ -3055,6 +3116,10 @@ export function runtimeDiagnostics(input = {}) {
   const failures = new Set([
     "FENCE_REQUEST",
     "FENCE_REQUEST_LIFECYCLE",
+    "FENCE_LIFECYCLE_NO_NETWORK",
+    "FENCE_LIFECYCLE_TERMINAL",
+    "FENCE_LIFECYCLE_FRAME",
+    "FENCE_LIFECYCLE_TYPE",
     "FENCE_TRANSPORT",
     "FENCE_REDIRECT",
     "FENCE_BODY_LIMIT",
@@ -3091,6 +3156,7 @@ export function runtimeDiagnostics(input = {}) {
   const count = (value) =>
     Number.isInteger(value) && value >= 0 && value <= 1000000 ? value : null;
   const fence = {
+    lifecycleMetadata: safeLifecycleMetadata(input.fence?.lifecycleMetadata),
     failureProtocolCode: [-32000, -32600, -32601, -32602, -32700].includes(
       input.fence?.failureProtocolCode,
     )

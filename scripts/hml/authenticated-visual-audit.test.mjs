@@ -1413,7 +1413,7 @@ test("worker novo permanece pausado e invalida o contexto", async () => {
 test(
   "Chromium nativo: resposta alterada não executa antes do fechamento",
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
-  async () => {
+  async (t) => {
     const { chromium } = await import("playwright");
     let browser, fence, context;
     let executions = 0;
@@ -1475,6 +1475,13 @@ test(
       ]);
       await fence.drain();
       assert.equal(fence.snapshot().failed, true);
+      t.diagnostic("NATIVE_SOURCE_FAILURE " + fence.snapshot().failureCode);
+      assert.equal(
+        fence.snapshot().failureCode,
+        "FENCE_SOURCE",
+        "must reach provenance rejection, not an earlier lifecycle failure",
+      );
+      assert.equal(fence.snapshot().verifiedDocuments, 1);
       assert.equal(executions, 0);
     } finally {
       fence?.close();
@@ -1655,8 +1662,14 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
             }),
           ]);
         await fence?.drain();
-        if (mode === "worker") assert.ok(fence.snapshot().workersPaused > 0);
-        if (mode === "popup") assert.ok(fence.snapshot().popups > 0);
+        if (mode === "worker") {
+          assert.ok(fence.snapshot().workersPaused > 0);
+          assert.equal(fence.snapshot().failureCode, "FENCE_WORKER_PAUSED");
+        }
+        if (mode === "popup") {
+          assert.ok(fence.snapshot().popups > 0);
+          assert.equal(fence.snapshot().failureCode, "FENCE_POPUP");
+        }
         assert.equal(connections, 0);
       } finally {
         fence?.close();
@@ -2906,4 +2919,51 @@ test("preflight recusa mudança de frame, geração e tipo na resposta", () => {
     );
     f.tracker.close();
   }
+});
+
+test("diagnóstico runtime mantém códigos exatos novos sem conteúdo privado", () => {
+  for (const code of [
+    "FENCE_LIFECYCLE_NO_NETWORK",
+    "FENCE_LIFECYCLE_TERMINAL",
+    "FENCE_LIFECYCLE_FRAME",
+    "FENCE_LIFECYCLE_TYPE",
+  ])
+    assert.equal(
+      fn("runtimeDiagnostics")({ fence: { failureCode: code } }).fence.failureCode,
+      code,
+    );
+  assert.equal(
+    fn("nativeSourceFailure")("# NATIVE_SOURCE_FAILURE FENCE_LIFECYCLE_TYPE"),
+    "FENCE_LIFECYCLE_TYPE",
+  );
+  assert.equal(fn("nativeSourceFailure")("# NATIVE_SOURCE_FAILURE pessoa@example.com"), null);
+});
+test("metadados runtime são somente enums e booleanos fechados", () => {
+  const allowed = {
+    network: "Script",
+    fetch: "Script",
+    method: "GET",
+    stage: "REQUEST",
+    networkFramePresent: true,
+    sameFrame: true,
+    loaderPresent: true,
+    ownFetchFrame: true,
+    generationSame: true,
+    terminal: false,
+  };
+  const d = fn("runtimeDiagnostics")({
+    fence: {
+      lifecycleMetadata: {
+        ...allowed,
+        url: "https://private.invalid",
+        authorization: "Bearer SECRET",
+      },
+    },
+  });
+  assert.deepEqual(d.fence.lifecycleMetadata, allowed);
+  assert.equal(
+    fn("runtimeDiagnostics")({ fence: { lifecycleMetadata: { ...allowed, network: "SECRET" } } })
+      .fence.lifecycleMetadata,
+    null,
+  );
 });
