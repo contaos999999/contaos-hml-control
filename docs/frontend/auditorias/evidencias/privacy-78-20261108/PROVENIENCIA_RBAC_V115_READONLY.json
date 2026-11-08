@@ -1,0 +1,62 @@
+{
+  "schema": "contaos.hml.privacy78-rbac-context.v1",
+  "read_only": true,
+  "verified_date_utc": "2026-11-08",
+  "frontend_commit": "31b68f3cadbdc13a82bae23a43c35616f873d70b",
+  "project": "gklhhhyosgasnyoxlrui",
+  "context": {
+    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "competence": "59072760-4420-4598-82dd-367f41a79e89"
+  },
+  "source": {
+    "path": "src/lib/administracao/rbacRpc.ts",
+    "blob": "7ab2e931088231d9af971a74ea57651a80b53ef5",
+    "sha256": "044544f35deeccf3a7903db5574a5b13d06c4788d5f9bfcaad9d86374b650035",
+    "function": "resolverContextoRbac",
+    "lines": [
+      165,
+      189
+    ]
+  },
+  "get_contract": {
+    "name": "competence_rbac_gate",
+    "method": "GET",
+    "origin": "https://gklhhhyosgasnyoxlrui.supabase.co",
+    "path": "/rest/v1/competencias",
+    "query": {
+      "select": "id_contrato",
+      "id": "eq.59072760-4420-4598-82dd-367f41a79e89",
+      "id_organizacao": "eq.e87f7e68-c5ae-4077-943b-02a4afd8b6ee"
+    },
+    "shape": "object; maybeSingle",
+    "extract_only": [
+      "id_contrato"
+    ],
+    "expected": {
+      "id_contrato": "be89ef7e-d839-46c0-9cfb-4da81edf8b74"
+    },
+    "bound_by_query_only": [
+      "id",
+      "id_organizacao"
+    ],
+    "no_fabricated_response_fields": true
+  },
+  "relation_proof": {
+    "method": "SELECT count and equality booleans for fixed competence; no Auth/user/correlation fields",
+    "rows": 1,
+    "contract_matches": true,
+    "organization_matches": true
+  },
+  "limits": {
+    "no_new_request": true,
+    "no_auth_capture": true,
+    "no_headers": true,
+    "no_new_network_permission": true,
+    "browser_projection_only": true,
+    "surface": "V115",
+    "field": "Limite / 500 MB",
+    "requires_upload_get_same_generation": true,
+    "requires_master_organization_and_route_context": true
+  }
+}
