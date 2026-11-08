@@ -2006,6 +2006,8 @@ async function harnessIdentity() {
 export function nativeCancellationDiagnostics(tap) {
   const allowed = new Set([
     "SENSOR_PROVED",
+    "FENCE_READY",
+    "FETCH_STARTED",
     "REQUEST_HELD",
     "TERMINAL_PROVED",
     "IDENTITY_PROVED",
@@ -2020,7 +2022,24 @@ export function nativeCancellationDiagnostics(tap) {
         .map((line) => /^# NATIVE_CANCEL_STAGE ([A-Z_]+)$/.exec(line.trim())?.[1])
         .filter((stage) => allowed.has(stage)),
     ),
-  ].slice(0, 6);
+  ].slice(0, 8);
+}
+export function nativeCancellationFailure(tap) {
+  if (typeof tap !== "string" || tap.length > 1048576) return null;
+  const allowed = new Set([
+    "FENCE_REQUEST_LIFECYCLE",
+    "FENCE_REQUEST",
+    "FENCE_SOURCE",
+    "FENCE_TRANSPORT",
+    "CDP_COMMAND",
+    "FENCE_CDP_CLOSED",
+    "OTHER",
+  ]);
+  const values = tap
+    .split("\n")
+    .map((line) => /^# NATIVE_CANCEL_FAILURE ([A-Z_]+)$/.exec(line.trim())?.[1])
+    .filter((value) => allowed.has(value));
+  return values.length === 1 ? values[0] : null;
 }
 async function nativeGuard() {
   let output;
@@ -2059,6 +2078,7 @@ async function nativeGuard() {
         signal: ["SIGTERM", "SIGKILL"].includes(error?.signal) ? error.signal : null,
         timedOut: error?.killed === true,
         cancellationStages: nativeCancellationDiagnostics(stdout),
+        cancellationFailure: nativeCancellationFailure(stdout),
         tap,
       }),
     );
