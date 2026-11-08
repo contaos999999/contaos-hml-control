@@ -1,0 +1,67 @@
+Browser tab: 4, Title: "Novo contratante — ContaOS", URL: "https://scope-and-approval-keeper.lovable.app/contratantes/novo".
+1 AXWebArea Novo contratante — ContaOS, URL: scope-and-approval-keeper.lovable.app/contratantes/novo
+	17 container
+		18 image ContaOS
+		19 button (expanded) Description: Recolher menu, Secondary Actions: Collapse
+		20 container Navegação principal
+			21 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+			22 link Description: Contratantes, Value: scope-and-approval-keeper.lovable.app/contratantes
+			23 link Description: Novo contratante, Value: scope-and-approval-keeper.lovable.app/contratantes/novo
+			24 link Description: Contratos, Value: scope-and-approval-keeper.lovable.app/contratos
+			25 link Description: Novo contrato, Value: scope-and-approval-keeper.lovable.app/contratos/novo
+			26 link Description: Organizações, Value: scope-and-approval-keeper.lovable.app/selecionar-organizacao
+		27 container Administração
+			28 link Description: Usuários, Value: scope-and-approval-keeper.lovable.app/administracao/usuarios
+			29 link Description: Auditoria, Value: scope-and-approval-keeper.lovable.app/administracao/auditoria
+	2 container
+		3 image ContaOS
+		4 container Navegação
+			5 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+			6 link Description: Contratantes, Value: scope-and-approval-keeper.lovable.app/contratantes
+			7 button Sair
+	8 container
+		9 text CADASTROS
+		10 heading Novo contratante, Value: 1
+			11 text Novo contratante
+		12 text Cadastre um contratante na organização selecionada.
+		30 container DADOS DO CONTRATANTE
+			31 heading DADOS DO CONTRATANTE, Value: 2, ID: v102-dados
+				32 text DADOS DO CONTRATANTE
+			33 container
+				34 text Razão social
+				35 text field (settable) Razão social, ID: v102-razao
+			36 container
+				37 text Tipo de pessoa
+				38 pop up button (collapsed, settable) Tipo de pessoa, Value: Selecione, ID: v102-tipo, Secondary Actions: Expand
+					39 menu
+						40 (selected) Selecione
+						41 Pessoa jurídica
+						42 Pessoa física
+						43 Órgão público
+						44 Outro
+			45 text Documento
+			46 button Sobre Documento
+			47 text field (settable) Documento, ID: v102-documento
+			48 container
+				49 text Nome fantasia
+				50 text field (settable) Nome fantasia, ID: v102-fantasia
+			51 text E-mail
+			52 button Sobre Contato
+			53 text field (settable) E-mail
+			54 container
+				55 text Telefone
+				56 text field (settable) Telefone
+			57 container
+				58 text Situação
+				59 pop up button (collapsed, settable) Situação, Value: Ativo, ID: v102-situacao, Secondary Actions: Expand
+					60 menu
+						61 (selected) Ativo
+						62 Inativo
+			63 text  Campos obrigatórios.
+			64 link Description: Cancelar, Value: scope-and-approval-keeper.lovable.app/contratantes
+			65 button Salvar
+	14 container Description: Edit with Lovable, ID: lovable-badge
+		15 link Description: Edit with Lovable, Value: lovable.dev/projects/lovp_3xrb28czks9c8syb56xk9mkhx3?utm_source=lovable-badge, ID: lovable-badge-cta
+		16 button Description: Dismiss, ID: lovable-badge-close
+
+The focused UI element is 1 AXWebArea Novo contratante — ContaOS, URL: scope-and-approval-keeper.lovable.app/contratantes/novo

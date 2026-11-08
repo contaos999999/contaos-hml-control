@@ -1,0 +1,234 @@
+Browser tab: 4, Title: "Usuários e vínculos — ContaOS", URL: "https://scope-and-approval-keeper.lovable.app/administracao/usuarios".
+1 AXWebArea Usuários e vínculos — ContaOS, URL: scope-and-approval-keeper.lovable.app/administracao/usuarios
+	10 container
+		11 image ContaOS
+		12 button (expanded) Description: Recolher menu, Secondary Actions: Collapse
+		13 container Navegação principal
+			14 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+			15 link Description: Contratantes, Value: scope-and-approval-keeper.lovable.app/contratantes
+			16 link Description: Novo contratante, Value: scope-and-approval-keeper.lovable.app/contratantes/novo
+			17 link Description: Contratos, Value: scope-and-approval-keeper.lovable.app/contratos
+			18 link Description: Novo contrato, Value: scope-and-approval-keeper.lovable.app/contratos/novo
+			19 link Description: Organizações, Value: scope-and-approval-keeper.lovable.app/selecionar-organizacao
+		20 container Administração
+			21 link Description: Usuários, Value: scope-and-approval-keeper.lovable.app/administracao/usuarios
+			22 link Description: Auditoria, Value: scope-and-approval-keeper.lovable.app/administracao/auditoria
+	2 container
+		3 link Description: Painel, Value: scope-and-approval-keeper.lovable.app/
+		4 button Sair
+	5 container
+		23 text ADMINISTRAÇÃO
+		6 heading Usuários e vínculos, Value: 1
+			24 text Usuários e vínculos
+		25 button Convidar ou vincular usuário
+		26 container Filtros
+			27 heading Filtros, Value: 2, ID: adm01-filtros
+				28 text Filtros
+			29 text Buscar usuários
+			30 search text field (settable) Buscar usuários, ID: adm01-busca
+			31 text Situação do vínculo
+			32 pop up button (collapsed, settable) Situação do vínculo, Value: Todos, ID: adm01-situacao, Secondary Actions: Expand
+				33 menu
+					34 (selected) Todos
+					35 Ativos
+					36 Inativos
+		37 container USUÁRIOS VINCULADOS
+			38 heading USUÁRIOS VINCULADOS, Value: 2, ID: adm01-lista
+				39 text USUÁRIOS VINCULADOS
+			40 text Nenhum usuário vinculado encontrado para os filtros atuais.
+		41 container Matriz de permissões
+			42 heading Matriz de permissões, Value: 2, ID: rbac-titulo
+				43 text Matriz de permissões
+			44 text Administração MASTER. As alterações de perfil valem para todas as organizações. As regras de negócio e os limites de cada vínculo continuam aplicáveis.
+			45 container
+				46 text Perfil
+				47 pop up button (collapsed, settable) Description: Perfil da matriz, Value: administrador, Secondary Actions: Expand
+					48 menu
+						49 (selected) administrador
+						50 auditor
+						51 contabilidade
+						52 direcao aprovador
+						53 financeiro
+						54 gestor contrato
+						55 juridico conformidade
+						56 leitor
+						57 prestacao contas
+						58 rh dp
+			59 container
+				60 text Recurso
+				61 pop up button (collapsed, settable) Description: Recurso da matriz, Value: Todos os recursos, Secondary Actions: Expand
+					62 menu
+						63 (selected) Todos os recursos
+						64 analises
+						65 apresentacoes
+						66 arquivos
+						67 auditoria
+						68 competencias
+						69 contratantes
+						70 contratos
+						71 dashboard
+						72 documentos competencia
+						73 documentos contrato
+						74 historico
+						75 listas
+						76 normativos
+						77 orcamentos
+						78 organizacoes
+						79 pareceres
+						80 usuarios
+			81 container Permissões do perfil administrador
+				82 container
+					83 text Permissões do perfil  administrador
+				84 container
+					85 checkbox (settable, integer) Description: administrador: analises / consultar, Value: 1
+					86 text analises  /  consultar
+				87 container
+					88 checkbox (settable, integer) Description: administrador: analises / criar, Value: 1
+					89 text analises  /  criar
+				90 container
+					91 checkbox (settable, integer) Description: administrador: analises / editar, Value: 1
+					92 text analises  /  editar
+				93 container
+					94 checkbox (settable, integer) Description: administrador: analises / processar, Value: 1
+					95 text analises  /  processar
+				96 container
+					97 checkbox (settable, integer) Description: administrador: apresentacoes / apresentar, Value: 1
+					98 text apresentacoes  /  apresentar
+				99 container
+					100 checkbox (settable, integer) Description: administrador: apresentacoes / aprovar, Value: 1
+					101 text apresentacoes  /  aprovar
+				102 container
+					103 checkbox (settable, integer) Description: administrador: apresentacoes / consultar, Value: 1
+					104 text apresentacoes  /  consultar
+				105 container
+					106 checkbox (settable, integer) Description: administrador: arquivos / consultar, Value: 1
+					107 text arquivos  /  consultar
+				108 container
+					109 checkbox (settable, integer) Description: administrador: arquivos / criar, Value: 1
+					110 text arquivos  /  criar
+				111 container
+					112 checkbox (settable, integer) Description: administrador: arquivos / editar, Value: 1
+					113 text arquivos  /  editar
+				114 container
+					115 checkbox (settable, integer) Description: administrador: auditoria / consultar, Value: 1
+					116 text auditoria  /  consultar
+				117 container
+					118 checkbox (settable, integer) Description: administrador: competencias / consultar, Value: 1
+					119 text competencias  /  consultar
+				120 container
+					121 checkbox (settable, integer) Description: administrador: competencias / criar, Value: 1
+					122 text competencias  /  criar
+				123 container
+					124 checkbox (settable, integer) Description: administrador: contratantes / consultar, Value: 1
+					125 text contratantes  /  consultar
+				126 container
+					127 checkbox (settable, integer) Description: administrador: contratantes / criar, Value: 1
+					128 text contratantes  /  criar
+				129 container
+					130 checkbox (settable, integer) Description: administrador: contratantes / editar, Value: 1
+					131 text contratantes  /  editar
+				132 container
+					133 checkbox (settable, integer) Description: administrador: contratos / consultar, Value: 1
+					134 text contratos  /  consultar
+				135 container
+					136 checkbox (settable, integer) Description: administrador: contratos / criar, Value: 1
+					137 text contratos  /  criar
+				138 container
+					139 checkbox (settable, integer) Description: administrador: contratos / editar, Value: 1
+					140 text contratos  /  editar
+				141 container
+					142 checkbox (settable, integer) Description: administrador: dashboard / consultar, Value: 1
+					143 text dashboard  /  consultar
+				144 container
+					145 checkbox (settable, integer) Description: administrador: documentos competencia / consultar, Value: 1
+					146 text documentos competencia  /  consultar
+				147 container
+					148 checkbox (settable, integer) Description: administrador: documentos competencia / criar, Value: 1
+					149 text documentos competencia  /  criar
+				150 container
+					151 checkbox (settable, integer) Description: administrador: documentos competencia / editar, Value: 1
+					152 text documentos competencia  /  editar
+				153 container
+					154 checkbox (settable, integer) Description: administrador: documentos contrato / consultar, Value: 1
+					155 text documentos contrato  /  consultar
+				156 container
+					157 checkbox (settable, integer) Description: administrador: documentos contrato / criar, Value: 1
+					158 text documentos contrato  /  criar
+				159 container
+					160 checkbox (settable, integer) Description: administrador: documentos contrato / editar, Value: 1
+					161 text documentos contrato  /  editar
+				162 container
+					163 checkbox (settable, integer) Description: administrador: historico / consultar, Value: 1
+					164 text historico  /  consultar
+				165 container
+					166 checkbox (settable, integer) Description: administrador: historico / criar, Value: 1
+					167 text historico  /  criar
+				168 container
+					169 checkbox (settable, integer) Description: administrador: historico / editar, Value: 1
+					170 text historico  /  editar
+				171 container
+					172 checkbox (settable, integer) Description: administrador: historico / processar, Value: 1
+					173 text historico  /  processar
+				174 container
+					175 checkbox (settable, integer) Description: administrador: listas / consultar, Value: 1
+					176 text listas  /  consultar
+				177 container
+					178 checkbox (settable, integer) Description: administrador: listas / criar, Value: 1
+					179 text listas  /  criar
+				180 container
+					181 checkbox (settable, integer) Description: administrador: listas / editar, Value: 1
+					182 text listas  /  editar
+				183 container
+					184 checkbox (settable, integer) Description: administrador: normativos / aprovar, Value: 1
+					185 text normativos  /  aprovar
+				186 container
+					187 checkbox (settable, integer) Description: administrador: normativos / consultar, Value: 1
+					188 text normativos  /  consultar
+				189 container
+					190 checkbox (settable, integer) Description: administrador: normativos / criar, Value: 1
+					191 text normativos  /  criar
+				192 container
+					193 checkbox (settable, integer) Description: administrador: normativos / editar, Value: 1
+					194 text normativos  /  editar
+				195 container
+					196 checkbox (settable, integer) Description: administrador: orcamentos / aprovar, Value: 1
+					197 text orcamentos  /  aprovar
+				198 container
+					199 checkbox (settable, integer) Description: administrador: orcamentos / consultar, Value: 1
+					200 text orcamentos  /  consultar
+				201 container
+					202 checkbox (settable, integer) Description: administrador: orcamentos / criar, Value: 1
+					203 text orcamentos  /  criar
+				204 container
+					205 checkbox (settable, integer) Description: administrador: orcamentos / editar, Value: 1
+					206 text orcamentos  /  editar
+				207 container
+					208 checkbox (settable, integer) Description: administrador: organizacoes / administrar, Value: 1
+					209 text organizacoes  /  administrar
+				210 container
+					211 checkbox (settable, integer) Description: administrador: organizacoes / consultar, Value: 1
+					212 text organizacoes  /  consultar
+				213 container
+					214 checkbox (settable, integer) Description: administrador: pareceres / aprovar, Value: 1
+					215 text pareceres  /  aprovar
+				216 container
+					217 checkbox (settable, integer) Description: administrador: pareceres / consultar, Value: 1
+					218 text pareceres  /  consultar
+				219 container
+					220 checkbox (settable, integer) Description: administrador: pareceres / criar, Value: 1
+					221 text pareceres  /  criar
+				222 container
+					223 checkbox (settable, integer) Description: administrador: usuarios / administrar, Value: 1
+					224 text usuarios  /  administrar
+				225 container
+					226 checkbox (settable, integer) Description: administrador: usuarios / consultar, Value: 1
+					227 text usuarios  /  consultar
+			228 container
+				229 text 0  alteração(ões) pendente(s), incluindo outros filtros.
+			230 button (disabled) Revisar alterações
+			231 button (disabled) Descartar alterações
+	7 container Description: Edit with Lovable, ID: lovable-badge
+		8 link Description: Edit with Lovable, Value: lovable.dev/projects/lovp_3xrb28czks9c8syb56xk9mkhx3?utm_source=lovable-badge, ID: lovable-badge-cta
+		9 button Description: Dismiss, ID: lovable-badge-close
+
+The focused UI element is 1 AXWebArea Usuários e vínculos — ContaOS, URL: scope-and-approval-keeper.lovable.app/administracao/usuarios

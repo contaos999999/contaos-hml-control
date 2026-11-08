@@ -1,3 +1,15 @@
+## Checkpoint P0: auditoria autenticada parcial executada em 08/11/2026 UTC
+
+**NO-GO visual; V1 não certificada.** Login real por formulário seguro e seleção da organização ativa ContaOS HML Teste com perfil Administrador Master. Sete superfícies privadas acessadas e capturadas: SYS05, V101, V102, V104, V105, ADM01 e V123. Evidências e limites em `docs/frontend/auditorias/TRILHA_A_AUTENTICADA_2026-11-08.md`, sete JPEGs, sete DOMs, manifesto e SHA256SUMS no diretório `evidencias/auth-20261108`. Não foram preservados senha, tokens ou cookies.
+
+Frontend main `45104916895a1f0972ecec2eec9a541dbd4e0b97` confirma merge #324. Backend main `765dac8aa1033f6c0ac6478738fac4ab768426e4`, somente referência Git. No HML publicado, bundle observado `assets/index-CjzqjoMJ.js`; projeto Lovable informa latest_commit `935bb96e3d73f7f7d1a8585a4e677db5dd92a379`, diferente da main. Isso não identifica o SHA do bundle: proveniência publicada NÃO VERIFICADA. Marca duplicada em V101/V102/V105 e contexto organizacional ausente em V101/V102/V104/V105/ADM01/V123 observados nas telas carregadas. Main já possui cabeçalho organizacional compartilhado; reconciliar publicação antes de repetir implementação.
+
+Amostra desktop claro1363×936 não certifica nenhum dos232casos formais nem os72BRAND. Listas de contratantes/contratos vazias nesta organização impedem os percursos de detalhe; não significa ausência global de fixtures. Os208casos privados históricos continuam pendentes da matriz completa. ExecutorTesteC e suíteSYS03 de pré-requisitos não realizam login privado. Falha histórica de sobreposição de texto200%SYS01/1440claro-escuro permanece pendente. Nenhum produto/backend/PROD modificado, nenhum trabalho concluído repetido.
+
+**Próxima tarefa:** provar sincronização e SHA publicado HML, reexaminar os achados nessa versão, identificar fixtures legítimas e executar quatro larguras/dois temas/72critérios com prova. Correção, caso ainda necessária no código atual, requer PLAN/GATE antes de BUILD. Não certificar visual/CRUD/auditoria/V1 nem avançarV2 por login ou CI documental verde.
+
+---
+
 ## Checkpoint P0 — Trilha A Sidebar com roteador real integrada; certificações pendentes
 
 Este bloco prevalece sobre a fila anterior para a Trilha A. Identidade visual integral, CRUD global, integração/rastreabilidade/auditoria e V1 continuam NÃO CERTIFICADOS; V2–V5 bloqueadas. A Trilha B possui executor próprio no backend PR139 e mantém suas provas separadas.

@@ -1,0 +1,3 @@
+Browser tab: 4, Title: "Trilha de auditoria — ContaOS", URL: "https://scope-and-approval-keeper.lovable.app/administracao/auditoria".
+There has been no change in the accessibility tree.
+The focused UI element is 1 AXWebArea Trilha de auditoria — ContaOS, URL: scope-and-approval-keeper.lovable.app/administracao/auditoria

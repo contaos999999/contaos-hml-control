@@ -1,0 +1,98 @@
+{
+  "schema": "contaos.authenticated-audit-observation.v1",
+  "verdict": "NO_GO",
+  "frontend_main": "45104916895a1f0972ecec2eec9a541dbd4e0b97",
+  "backend_main": "765dac8aa1033f6c0ac6478738fac4ab768426e4",
+  "published_sha": "NAO_VERIFICADO",
+  "lovable_latest_commit_metadata": "935bb96e3d73f7f7d1a8585a4e677db5dd92a379",
+  "bundle": "assets/index-CjzqjoMJ.js",
+  "origin": "https://scope-and-approval-keeper.lovable.app",
+  "organization": "ContaOS HML Teste",
+  "role": "Administrador Master",
+  "viewport_css": {
+    "width": 1363,
+    "height": 936
+  },
+  "theme": "light",
+  "matrix_cases_certified": 0,
+  "surfaces_observed": 7,
+  "evidence": [
+    {
+      "surface": "SYS05",
+      "file": "SYS05-desktop.jpg",
+      "sha256": "628944a111ecfd6455eae590c321c5850f342813f4908f21cbd3b5bc6a835192",
+      "image_size": [
+        1363,
+        936
+      ],
+      "captured_at_utc": "2026-11-08T02:55:14.765693+00:00",
+      "status": "OBSERVADO_AUTENTICADO_DESKTOP_SEM_CERTIFICACAO"
+    },
+    {
+      "surface": "V101",
+      "file": "V101-desktop.jpg",
+      "sha256": "b15d5a46c4b40984e641164c9534a5f057b9f9ddc9c57a978397135906b3e523",
+      "image_size": [
+        1363,
+        936
+      ],
+      "captured_at_utc": "2026-11-08T02:54:57.521833+00:00",
+      "status": "OBSERVADO_AUTENTICADO_DESKTOP_SEM_CERTIFICACAO"
+    },
+    {
+      "surface": "V102",
+      "file": "V102-desktop.jpg",
+      "sha256": "24d09be974b4d8ac83cd665bc6a62918bfc1cbd82d94ce00496a841f23e1f2f5",
+      "image_size": [
+        1363,
+        936
+      ],
+      "captured_at_utc": "2026-11-08T02:55:21.605641+00:00",
+      "status": "OBSERVADO_AUTENTICADO_DESKTOP_SEM_CERTIFICACAO"
+    },
+    {
+      "surface": "V104",
+      "file": "V104-desktop.jpg",
+      "sha256": "9b66f1bbfafbb73fdea70febfdd35a57ba1f73272c19568ba1c86d162d32b5d3",
+      "image_size": [
+        1363,
+        936
+      ],
+      "captured_at_utc": "2026-11-08T02:55:02.593790+00:00",
+      "status": "OBSERVADO_AUTENTICADO_DESKTOP_SEM_CERTIFICACAO"
+    },
+    {
+      "surface": "V105",
+      "file": "V105-desktop.jpg",
+      "sha256": "04c9f8585ea21395615526e87fb2788ce73107a98942180a0fc087015a8b1b9e",
+      "image_size": [
+        1348,
+        926
+      ],
+      "captured_at_utc": "2026-11-08T02:55:30.233566+00:00",
+      "status": "OBSERVADO_AUTENTICADO_DESKTOP_SEM_CERTIFICACAO"
+    },
+    {
+      "surface": "ADM01",
+      "file": "ADM01-desktop.jpg",
+      "sha256": "3d7bae50a52611dfae82730fee8c407ee1703ef7a6ea6bdfff8988ebfdb34ea1",
+      "image_size": [
+        1348,
+        926
+      ],
+      "captured_at_utc": "2026-11-08T02:55:08.553745+00:00",
+      "status": "OBSERVADO_AUTENTICADO_DESKTOP_SEM_CERTIFICACAO"
+    },
+    {
+      "surface": "V123",
+      "file": "V123-desktop.jpg",
+      "sha256": "a2cda76801ef0a95ce0a870cf7bbc672472e9b8eedcfbf278293841202901100",
+      "image_size": [
+        1363,
+        936
+      ],
+      "captured_at_utc": "2026-11-08T02:54:50.621899+00:00",
+      "status": "OBSERVADO_AUTENTICADO_DESKTOP_SEM_CERTIFICACAO"
+    }
+  ]
+}
