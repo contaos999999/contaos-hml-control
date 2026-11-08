@@ -19,10 +19,12 @@ import { validarAdministrador, podeConsultarAuditoria } from "@/lib/administraca
 import { Link } from "@tanstack/react-router";
 import { MENU_ADMIN_V1 } from "@/lib/navegacao/menuV1";
 import { Users, ScrollText } from "lucide-react";
+import { CopilotoContrato } from "@/components/copiloto/CopilotoContrato";
 
 /** O shell é apenas apresentação; componentes e RLS preservam a autorização real. */
 export function ContaOSAppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const contratoIdNoCaminho = pathname.match(/^\/contratos\/([0-9a-fA-F-]{36})(?:\/|$)/)?.[1] ?? null;
   const rotaAdministrativaAtiva = (destino: string) =>
     pathname === destino || pathname.startsWith(`${destino}/`);
   const [liberado, setLiberado] = useState(false);
@@ -325,6 +327,9 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
           </div>
         )}
         <div key={chaveConteudo}>{children}</div>
+        {liberado && !movelAberto && contratoIdNoCaminho && (
+          <CopilotoContrato key={`${chaveConteudo}:${contratoIdNoCaminho}`} contratoId={contratoIdNoCaminho} />
+        )}
       </div>
     </div>
   );
