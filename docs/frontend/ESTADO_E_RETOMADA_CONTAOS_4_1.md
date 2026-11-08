@@ -1,3 +1,38 @@
+# Checkpoint P0 Trilha A, 08/11/2026 18:02 UTC: continuar184, sem certificação V1
+
+## Âncoras e última etapa integrada
+
+- Main351fe855ceee021984db6c27621f47146aec3c1f: BUILD359 integrado após revisão independente e CI final8/8nativos42507081232, ZeroDrift42507081207, LOCK42507081244 noHEAD9b58aa89351804911c8230d73b839cd8d884cdac. Código/testes blobsded4ab8fade8609a63451f45fc5c72df26105293/a74c46b3f1b95f9d22e82ef5b4a3bafa39fae7f7;161unitários locaisPASS. Corrige erro inicial comprovadamente cancelado, sem retry/liberação de corpo. PLAN357merge29f1c3e4bfc1e4f3a561c4a08412922e00a01007; GATE358merge6b2f178468b917c50f9b1d067f122d83782a0a85; emendas360mergea6754bf2bb42600086bfb3690ad8a72147308de3 e361merge75f5364aebdfc829781d5a6dfeda0fa55e823a4a.
+- Backend normativo43b3dfcbf7998fd2b4a1beeeb9a7116236d30559/PR170. Snapshot+PLANO coerentes;25blobs e catálogo100/97 iguais, checkSnapshoterrors[]. Mudanças backend somenteworkflows/harness/docs nesse delta; sem presumirPR139dependência.
+- PLAN24fixtures362 integrado7bcb9618ef66fe2c03b4e804dbae42d44caba4cb, HEADdb34f213ffb1016aa56987c786afacc5d73c8205, CI42506842396/42506842344SUCCESS e revisão independente. Nenhum BUILD/preparador ou escrita de negócio autorizado por esse PLAN antes do GATE específico separado.
+- LOCK-TYPES8ea7750b75fd9d76b29c36ce7613392e3ab65e19 preservado. Nenhuma alteração PROD/Auth/RLS/schema/tipos/dependências.
+
+## Teste C mais recente, resultado fechado e artefatos
+
+Run42507315340/rodada70 executado na main351fe855. HML resolvido pelo alias atual, deploymentdpl_2KLVYeBh6TDL8c37K9Z2YUWsuVbc READY, fonte29f1c3e4bfc1e4f3a561c4a08412922e00a01007 ancestral aprovada. Oito nativos no executor351fe855PASS e proveniência110módulos/SSR PASS antes de credenciais. Não substituir pin por SHAinventado nem exigir rebuild desnecessário de produto quando só executor/docs mudaram.
+
+Auditoria interrompida em OPEN_LOGIN antes de localizar/preencher/submeter formulário: documento verificado1, scripts0, fencefechou contexto, código omitido pelo catálogo diagnóstico atual. NÃO é erro demonstrado de credenciais. Não coletou screenshot/DOM privado novo e não enviou o par no formulário. Nenhuma nova aprovação privada.208registrosúnicos:24PRESERVADO_BASELINE,160BLOQUEADO_EXECUCAO_INTERROMPIDA,24BLOQUEADO_FIXTURE(V117/V119/V120×8). Logoutfalse, globalCompletefalse.
+
+Artefato13627652820, ZIP SHA2567aae3dda22163c176011edd9db7f62099488619c3b3ae1485a565f58e3559b00, relatório SHA256afc5808b4d3266c47d7c5cf7d891b0dc9a21565f13f78b4a000833631637ce58. Download/digest/membro exato SHA256SUMS verificados1/1, PNG0/DOM0. Não sobrescrever ou tratar como conclusão dos184.
+
+## Trabalho em curso e próxima tarefa exata
+
+PR363aberto, HEADaf5aaad4e30f4a307c8f0d03d084dc740f95017c, somente2mjs do auditor. REDunitário2FAIL/161PASS, GREENlocal163PASS/8SKIP; CI/revisão nativa ainda pendentes neste checkpoint. Acrescenta quatro códigos fechados lifecycle e metadados enums/booleanos, nuncaURLs/IDs/corpos/tokens. Fortalece prova antiga de script adulterado: exigir FENCE_SOURCE e documento verificado, além de ausência de execução. Antes ela podia contar fechamento por causa anterior como PASS; por isso8/8técnicos anteriores não encerram a análise causal. Worker/popup também ganham código causal. Nenhum relaxamento de associação, política ou exceção implementado nesse PR.
+
+Próxima ação: examinar CI363 para RED causal/proveniência; corrigir somente causa demonstrada sob GATE próprio quando necessário, exigir8/8 completos e checks/revisão noHEADfinal; merge normal e repetir TesteC dos pendentes. Se diagnóstico não identificar causa ainda, manter failclosed e obter somente metadados técnicos controlados. Preservar24baseline/18públicos e os artefatos parciais anteriores.
+
+Em paralelo autorizado: preparar GATE específico24fixtures após PLAN362, enumerando RPCs/payloads/intenção/limites/reconciliação/recibos e retenção; formulário normal MASTER, mesma organizaçãoe87f7e68-c5ae-4077-943b-02a4afd8b6ee e contratobe89ef7e-d839-46c0-9cfb-4da81edf8b74. Leitura HML comprovou arquivo8cc6ac08-7f5b-469c-ab50-7b33d5a12379, documento525e54fc-feec-4dc0-b540-1510a3c52485, status_segurancaaprovado, MIMEtext/plain,285bytes,SHA773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103. Nenhuma promoção de segurança por teste, DML ou AuthAdmin. Fonte formal2de433a7-a84c-4575-aa2a-7699d2871b55 ainda deve ganhar versão/aprovação real pelo fluxo, lista e novas competênciasOutubro/Setembro separadas doNovembrohistórico.
+
+## Evidência preservada e DoD ainda pendente
+
+- Não repetir322/323/324 ou18públicos aprovados sem regressão comprovada.
+- Baseline42496235106:24PASS V114/V116/V118×8, artefato13623288351 ZIPbc2a8b74e1ba9ff008ed67ce0f398c47ce120924cf69b5210d62f8165291d2c6, relatório60f150f1fb8006cb12baefcaac1cbe182730b13467e1d8387c44d113b4389025,73hashes/48PNG/24DOM, logouttrue. Preservado por referência, não recapturado.
+- Rodada56/run42501639458:41PASSparciais e24preservados,8SYS04privacidade,110interrompidos,24fixture; artefato13626310122 ZIP6d132c2df9de8a2955c59c97900485351c66d6ca7c8411e38aebb51690735472, relatório8c3192e2ce013dc820dca7b2658f76cb057fdf13391b59e2fdc0fe4ff25c3981,124/124hashes/82PNG/41DOM. Não equivalem a72critérios ou DoD global.
+- SYS04: catálogo global contém registros sintéticos de testes paralelos; nomes/CNPJvazio não bastam para liberar tudo. Exigir origem por registro/campo e snapshot fechado, semregex ampla ou esconder regiões para fingir defaultcompleto.
+-24fixtures ainda sem captura;72critérios, BRAND01/AppShell/sidebar/organização/status/menuMASTER/navegação/acessibilidade, revisão independente integral e issue350 permanecem pendentes. V1NO-GO atéDoD integral. Continuar184sem autorização repetida e sem parar em resultados parciais.
+
+---
+
 ## P0 Trilha A: rodada56 amplia evidências, ciclo nativo em investigação, 08/11/2026
 
 Execução dos184pendentes continua autorizada e ativa; não encerrar por resultado parcial. BUILD356 integradoe21970aae502deee8236644a6d5ee2cc76c1eafd após CI42501372087/42501372057/42501372043SUCCESS noHEADb7b113ea,114testes+7nativos,1165produto/42suítes/tsc/lint/formato e revisão independente. Corrigidos os doisImportant do355: finallypreserva24baselineapósaborto e navegaçãoaguardaH1destino/organização/networkidle/drain, barreira antes/depoisresize. Novo catálogoexato deperfis/contratante/contrato, metadadosARIAestruturais e campocompleto de atualização08/11/2026 validado; formatosmalformados rejeitados comcatálogoreal.
