@@ -2,6 +2,12 @@ name: ContaOS Trilha A Autenticada
 on:
   pull_request:
     branches: [main]
+    paths:
+      - scripts/hml/authenticated-visual-audit.mjs
+      - scripts/hml/authenticated-visual-audit.test.mjs
+      - .github/workflows/contaos-trilha-a-authenticated.yml
+      - package.json
+      - bun.lock
   workflow_dispatch:
     inputs:
       frontend_sha:
