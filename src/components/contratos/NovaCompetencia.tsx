@@ -91,16 +91,17 @@ export function NovaCompetencia({ id }: { id: string }) {
   const idC = idOk ? uuidCanonico(id) : id;
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav aria-label="Navegação da página" className="border-b border-border bg-card text-card-foreground">
+      <nav
+        aria-label="Navegação da página"
+        className="border-b border-border bg-card text-card-foreground"
+      >
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-          
           <nav aria-label="Navegação" className="flex flex-wrap gap-2">
             <Button asChild variant="secondary" className="h-11">
               <Link to="/contratos" activeOptions={{ exact: true }}>
                 <ArrowLeft className="mr-2 h-4 w-4" aria-hidden /> Voltar para contratos
               </Link>
             </Button>
-            
           </nav>
         </div>
       </nav>
@@ -195,7 +196,10 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
     retry: false,
   });
   const c = contrato.data;
-  const contextoDivergente = !!c && (uuidCanonico(c.id) !== id || uuidCanonico(c.id_organizacao) !== uuidCanonico(ctx.idOrganizacao));
+  const contextoDivergente =
+    !!c &&
+    (uuidCanonico(c.id) !== id ||
+      uuidCanonico(c.id_organizacao) !== uuidCanonico(ctx.idOrganizacao));
   const contratoOk = !!c && !contextoDivergente;
   const perfil = useQuery({
     queryKey: ["v113", "capacidade-criar", ctx.idUsuario, ctx.idOrganizacao, id],
@@ -229,7 +233,16 @@ function GateContrato({ id, ctx }: { id: string; ctx: Ctx }) {
       </>
     );
   }
-  if (contextoDivergente) return <><Titulo /><Aviso icone={<ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />} mensagem={MENSAGENS_V113.negado} /></>;
+  if (contextoDivergente)
+    return (
+      <>
+        <Titulo />
+        <Aviso
+          icone={<ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />}
+          mensagem={MENSAGENS_V113.negado}
+        />
+      </>
+    );
   if (!contratoOk || !c)
     return (
       <>
@@ -380,7 +393,7 @@ function MonthPicker({
         aria-invalid={invalido || undefined}
         aria-describedby="v113-mes-ajuda"
         onChange={(e) => onMudar(e.target.value)}
-        className="block h-11 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="contaos-date-field block h-11 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
       <p id="v113-mes-ajuda" className="text-xs text-muted-foreground">
         Formato MM/AAAA. O período e os requisitos são definidos pelo sistema.

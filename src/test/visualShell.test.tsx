@@ -340,3 +340,13 @@ describe("P0 cabeçalho em rolagem e foco", () => {
     }
   });
 });
+
+it("apresenta organização antes do acionador móvel e mantém conteúdo depois dele", async () => {
+  render(pagina());
+  const header = await screen.findByRole("banner", { name: "Organização atual" });
+  const menu = await screen.findByRole("button", { name: "Abrir menu" });
+  const main = screen.getByRole("main");
+  expect(header.compareDocumentPosition(menu) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(menu.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(screen.getByText("Organização Alfa")).toBeInTheDocument();
+});

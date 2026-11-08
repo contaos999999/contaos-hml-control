@@ -370,11 +370,11 @@ test("diagnóstico de privacidade contém apenas razões e contadores limitados"
   assert.equal(classify(Array(500).fill("desconhecido").join(" "), new Set()).unknownCount, 233);
 });
 
-test("retomada preserva exatamente os24 casos anteriores sem nova aprovação", () => {
+test("retomada preserva18 casos desktop e exige recaptura dos6 móveis", () => {
   const preserved = fn("preservedPrivateCase");
   const rows = fn("privateCases")();
-  assert.equal(rows.filter(preserved).length, 24);
-  assert.equal(rows.filter((r) => !preserved(r)).length, 184);
+  assert.equal(rows.filter(preserved).length, 18);
+  assert.equal(rows.filter((r) => !preserved(r)).length, 190);
   for (const row of rows.filter(preserved)) {
     const result = preserved(row);
     assert.equal(result.status, "PRESERVADO_BASELINE");
@@ -385,12 +385,12 @@ test("retomada preserva exatamente os24 casos anteriores sem nova aprovação", 
   assert.equal(preserved({ surface: "SYS04", width: 390, theme: "dark" }), null);
 });
 
-test("aborto precoce não substitui as24 provas históricas por interrupções", () => {
+test("aborto preserva18 provas desktop e não inventa captura dos6 móveis", () => {
   const rows = fn("completePrivateRecords")([]);
   assert.equal(rows.length, 208);
-  assert.equal(rows.filter((r) => r.status === "PRESERVADO_BASELINE").length, 24);
+  assert.equal(rows.filter((r) => r.status === "PRESERVADO_BASELINE").length, 18);
   assert.equal(rows.filter((r) => r.status === "BLOQUEADO_FIXTURE").length, 24);
-  assert.equal(rows.filter((r) => r.status === "BLOQUEADO_EXECUCAO_INTERROMPIDA").length, 160);
+  assert.equal(rows.filter((r) => r.status === "BLOQUEADO_EXECUCAO_INTERROMPIDA").length, 166);
   assert.equal(fn("summarizeCases")(rows).passed, 0);
   const visited = [{ ...fn("privateCases")()[0], status: "BLOQUEADO_PII" }];
   assert.equal(fn("completePrivateRecords")(visited)[0], visited[0]);
@@ -3647,4 +3647,504 @@ test("política assíncrona nunca equivale a autorização booleana síncrona", 
     fence?.close();
     await fixture.close();
   }
+});
+
+// Run78: removing the readiness barrier must allow an early PNG and fail these tests.
+test("Run78 captura somente depois de decode, drenagem, medidas e privacidade", async () => {
+  const events = [];
+  let release;
+  const ready = new Promise((resolve) => {
+    release = resolve;
+  });
+  const capture = fn("captureVisualEvidence")({
+    brand: async () => {
+      events.push("decode-start");
+      await ready;
+      events.push("decode-end");
+      return { decoded: true };
+    },
+    drain: async () => {
+      events.push("drain");
+    },
+    stabilize: async () => {
+      events.push("raf");
+    },
+    measure: async () => {
+      events.push("measure");
+      return { passed: true };
+    },
+    privacy: async () => {
+      events.push("privacy");
+      return true;
+    },
+    save: async () => {
+      events.push("png");
+      return { file: "synthetic.png" };
+    },
+  });
+  await Promise.resolve();
+  assert.deepEqual(events, ["decode-start"]);
+  release();
+  const result = await capture;
+  assert.deepEqual(events, [
+    "decode-start",
+    "decode-end",
+    "drain",
+    "raf",
+    "measure",
+    "privacy",
+    "png",
+  ]);
+  assert.equal(result.phase, "BEFORE_PNG");
+});
+for (const stage of ["brand", "drain", "stabilize", "measure", "privacy"]) {
+  test(`Run78 falha em ${stage} impede qualquer PNG`, async () => {
+    let saved = 0;
+    const steps = {
+      brand: async () => ({ decoded: true }),
+      drain: async () => {},
+      stabilize: async () => {},
+      measure: async () => ({ passed: true }),
+      privacy: async () => true,
+      save: async () => {
+        saved++;
+      },
+    };
+    steps[stage] = async () => {
+      throw Object.assign(new Error("synthetic"), { code: "VISUAL_TEST" });
+    };
+    await assert.rejects(fn("captureVisualEvidence")(steps));
+    assert.equal(saved, 0);
+  });
+}
+test("Run78 medidas ou privacidade incompletas não aprovam captura", async () => {
+  for (const change of [
+    { measure: async () => ({}) },
+    { measure: async () => ({ passed: false }) },
+    { privacy: async () => false },
+  ]) {
+    let saved = 0;
+    await assert.rejects(
+      fn("captureVisualEvidence")({
+        brand: async () => ({}),
+        drain: async () => {},
+        stabilize: async () => {},
+        measure: async () => ({ passed: true }),
+        privacy: async () => true,
+        save: async () => {
+          saved++;
+        },
+        ...change,
+      }),
+    );
+    assert.equal(saved, 0);
+  }
+});
+test("Run78 marca: espera decode pendente e rejeita imagem inválida ou timeout", async () => {
+  const image = (delta = {}) => ({
+    isConnected: true,
+    complete: true,
+    naturalWidth: 900,
+    naturalHeight: 220,
+    getAttribute: () => "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+    getBoundingClientRect: () => ({ width: 131, height: 32 }),
+    decode: async () => {},
+    ...delta,
+  });
+  let release;
+  let complete = false;
+  const pending = fn("decodeBrandImage")(
+    image({
+      decode: () =>
+        new Promise((resolve) => {
+          release = resolve;
+        }),
+    }),
+    { context: { surface: "V110", width: 1440, theme: "light", mode: "PRIMARY" }, timeoutMs: 200 },
+  ).then((v) => {
+    complete = true;
+    return v;
+  });
+  await Promise.resolve();
+  assert.equal(complete, false);
+  release();
+  assert.equal((await pending).decoded, true);
+  for (const delta of [
+    { naturalWidth: 0 },
+    { naturalHeight: 0 },
+    { isConnected: false },
+    { getAttribute: () => "/other.svg" },
+    { getBoundingClientRect: () => ({ width: 0, height: 32 }) },
+    {
+      decode: async () => {
+        throw Error("private browser message");
+      },
+    },
+    { decode: () => new Promise(() => {}) },
+  ]) {
+    await assert.rejects(
+      fn("decodeBrandImage")(image(delta), {
+        context: { surface: "V110", width: 1440, theme: "light", mode: "PRIMARY" },
+        timeoutMs: 10,
+      }),
+      (e) => /^VISUAL_BRAND_(INVALID|DECODE|TIMEOUT)$/.test(e.code),
+    );
+  }
+});
+test("Run78 seis baseline móveis são recapturáveis e preservam origem histórica", () => {
+  const cases = fn("privateCases")();
+  const mobile = cases.filter(
+    (c) => ["V114", "V116", "V118"].includes(c.surface) && c.width === 390,
+  );
+  assert.equal(mobile.length, 6);
+  for (const row of mobile) {
+    assert.equal(fn("preservedPrivateCase")(row), null);
+    assert.equal(fn("run78VisualSelection")(row).baselineRun, 42496235106);
+    assert.equal(fn("run78VisualSelection")(row).required, true);
+  }
+  assert.equal(cases.filter((c) => fn("preservedPrivateCase")(c)).length, 18);
+  assert.equal(cases.filter((c) => fn("run78VisualSelection")(c)?.required).length, 74);
+  assert.equal(fn("run78VisualSelection")({ surface: "V114", width: 391, theme: "light" }), null);
+});
+test("Run78 checker geométrico rejeita interseção, caixas inválidas e oclusão", () => {
+  const check = fn("visualGeometryValid");
+  const box = { x: 0, y: 0, width: 44, height: 44 };
+  assert.equal(
+    check({
+      viewport: { width: 390, height: 640 },
+      targets: [{ rect: box, connected: true, visible: true, hit: true }],
+      pairs: [],
+    }),
+    true,
+  );
+  for (const delta of [{ width: 0 }, { x: -1 }, { width: Infinity }, { y: NaN }, { x: 380 }])
+    assert.equal(
+      check({
+        viewport: { width: 390, height: 640 },
+        targets: [{ rect: { ...box, ...delta }, connected: true, visible: true, hit: true }],
+        pairs: [],
+      }),
+      false,
+    );
+  for (const state of [{ connected: false }, { visible: false }, { hit: false }])
+    assert.equal(
+      check({
+        viewport: { width: 390, height: 640 },
+        targets: [{ rect: box, connected: true, visible: true, hit: true, ...state }],
+        pairs: [],
+      }),
+      false,
+    );
+  assert.equal(
+    check({
+      viewport: { width: 390, height: 640 },
+      targets: [],
+      pairs: [[box, { ...box, x: 43 }]],
+    }),
+    false,
+  );
+  assert.equal(
+    check({
+      viewport: { width: 390, height: 640 },
+      targets: [],
+      pairs: [[box, { ...box, x: 44 }]],
+    }),
+    true,
+  );
+});
+
+test("Run78 rejeita aprovação focal sem PNG DOM hashes identidade e medidas anteriores", () => {
+  const check = fn("run78VisualEvidenceValid");
+  const item = fn("privateCases")().find(
+    (c) => c.surface === "V110" && c.width === 390 && c.theme === "light",
+  );
+  const proof = {
+    phase: "BEFORE_PNG",
+    measuredAt: 1,
+    capturedAt: 2,
+    metrics: {
+      passed: true,
+      geometryPassed: true,
+      tablePassed: true,
+      datesPassed: true,
+      contrastPassed: true,
+      viewport: { width: 390, height: 1000 },
+      theme: "light",
+      targets: [],
+      pairs: [],
+    },
+    image: {
+      count: 0,
+      images: [],
+      context: { surface: "V110", width: 390, theme: "light", mode: "PRIMARY" },
+    },
+  };
+  const row = {
+    ...item,
+    screenshot: "screenshots/V110_390_light.png",
+    sha256: "a".repeat(64),
+    dom: "dom/V110_390_light.json",
+    domSha256: "b".repeat(64),
+    visualCapture: proof,
+    sidebarSupplement: {
+      passed: true,
+      screenshot: "screenshots/V110_390_light_menu.png",
+      sha256: "c".repeat(64),
+      visualCapture: {
+        ...proof,
+        image: {
+          count: 1,
+          context: { surface: "V110", width: 390, theme: "light", mode: "MOBILE_MENU" },
+          images: [
+            {
+              decoded: true,
+              complete: true,
+              naturalWidth: 900,
+              naturalHeight: 220,
+              width: 131,
+              height: 32,
+              src: "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+            },
+          ],
+        },
+      },
+    },
+  };
+  assert.equal(check(row), true);
+  for (const delta of [
+    { path: "/foreign" },
+    { width: 391 },
+    { sha256: null },
+    { dom: null },
+    { visualCapture: null },
+    {
+      visualCapture: {
+        ...proof,
+        image: {
+          ...proof.image,
+          context: { surface: "SYS04", width: 390, theme: "light", mode: "PRIMARY" },
+        },
+      },
+    },
+    {
+      visualCapture: {
+        ...proof,
+        metrics: { ...proof.metrics, viewport: { width: 1280, height: 1000 } },
+      },
+    },
+    { visualCapture: { ...proof, metrics: { ...proof.metrics, theme: "dark" } } },
+    { visualCapture: { ...proof, measuredAt: 3 } },
+    { visualCapture: { ...proof, metrics: {} } },
+    { sidebarSupplement: { ...row.sidebarSupplement, visualCapture: proof } },
+  ])
+    assert.equal(check({ ...row, ...delta }), false);
+});
+
+// Additional isolated browser proof; the eight native fence tests keep their identity.
+// Selected separately by --native-guard, after their independent 8/8 proof.
+test(
+  "Run78 Chromium isolado: decode real retardado quebrado e hit-test",
+  {
+    skip: process.env.CONTAOS_NATIVE_GUARD !== "1",
+    timeout: 30000,
+  },
+  async () => {
+    const { chromium } = await import("playwright");
+    const { readFile } = await import("node:fs/promises");
+    const image = await readFile(
+      new URL(
+        "../../public/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+        import.meta.url,
+      ),
+    );
+    let release,
+      observed,
+      broken = false,
+      browser;
+    const requested = new Promise((resolve) => {
+      observed = resolve;
+    });
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    const server = createHttpServer(async (req, res) => {
+      if (req.url === "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg") {
+        observed();
+        await gate;
+        res.setHeader("content-type", "image/svg+xml");
+        res.end(broken ? "broken" : image);
+      } else {
+        res.setHeader("content-type", "text/html");
+        res.end(
+          '<!doctype html><img alt="ContaOS" width="131" height="32" src="/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg">',
+        );
+      }
+    });
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    try {
+      browser = await chromium.launch({ chromiumSandbox: true });
+      const page = await browser.newPage({ viewport: { width: 390, height: 640 } });
+      const origin = `http://127.0.0.1:${server.address().port}`;
+      await page.goto(origin, { waitUntil: "domcontentloaded" });
+      await requested;
+      let finished = false;
+      const pending = fn("readyVisualBrand")(
+        page,
+        { surface: "V121", width: 390, theme: "light" },
+        "MOBILE_MENU",
+      ).then((v) => {
+        finished = true;
+        return v;
+      });
+      await page.evaluate(() => new Promise((r) => requestAnimationFrame(r)));
+      assert.equal(finished, false);
+      release();
+      assert.equal((await pending).images[0].decoded, true);
+      await page
+        .locator("img")
+        .evaluate((img) => img.cloneNode(true) && img.after(img.cloneNode(true)));
+      await assert.rejects(
+        fn("readyVisualBrand")(
+          page,
+          { surface: "V121", width: 390, theme: "light" },
+          "MOBILE_MENU",
+        ),
+        (e) => e.code === "VISUAL_BRAND_COUNT",
+      );
+      broken = true;
+      await page.reload({ waitUntil: "load" });
+      await assert.rejects(
+        fn("readyVisualBrand")(
+          page,
+          { surface: "V121", width: 390, theme: "light" },
+          "MOBILE_MENU",
+        ),
+        (e) => e.code === "VISUAL_BRAND_INVALID",
+      );
+      await page.setContent(
+        '<!doctype html><main><select aria-label="Situação" style="position:absolute;left:20px;top:200px;width:200px;height:44px"><option>Todas</option></select><div id="cover" style="position:absolute;left:100px;top:200px;width:100px;height:44px;background:white;z-index:5"></div></main>',
+      );
+      assert.equal(
+        (await fn("collectVisualMetrics")(page, { surface: "V110", width: 390, theme: "light" }))
+          .passed,
+        false,
+      );
+      await page.locator("select").evaluate((e) => {
+        e.disabled = true;
+        e.style.pointerEvents = "none";
+      });
+      assert.equal(
+        (await fn("collectVisualMetrics")(page, { surface: "V110", width: 390, theme: "light" }))
+          .passed,
+        true,
+      );
+      await page.locator("select").evaluate((e) => {
+        e.disabled = false;
+        e.style.pointerEvents = "auto";
+      });
+      assert.equal(
+        (await fn("collectVisualMetrics")(page, { surface: "V110", width: 390, theme: "light" }))
+          .passed,
+        false,
+      );
+      await page.locator("#cover").evaluate((e) => e.remove());
+      assert.equal(
+        (await fn("collectVisualMetrics")(page, { surface: "V110", width: 390, theme: "light" }))
+          .passed,
+        true,
+      );
+    } finally {
+      release?.();
+      await browser?.close();
+      server.closeAllConnections();
+      await new Promise((resolve) => server.close(resolve));
+    }
+  },
+);
+
+test("Run78 troca de src durante decode invalida prontidão", async () => {
+  let calls = 0;
+  await assert.rejects(
+    fn("decodeBrandImage")(
+      {
+        isConnected: true,
+        complete: true,
+        naturalWidth: 900,
+        naturalHeight: 220,
+        getAttribute: () =>
+          ++calls === 1
+            ? "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"
+            : "/changed.svg",
+        getBoundingClientRect: () => ({ width: 131, height: 32 }),
+        decode: async () => {},
+      },
+      {
+        context: { surface: "V110", width: 1440, theme: "light", mode: "PRIMARY" },
+        timeoutMs: 100,
+      },
+    ),
+    (e) => e.code === "VISUAL_BRAND_INVALID",
+  );
+});
+
+test("Run78 marca respeita contexto SYS04 navy e não libera navy na sidebar", async () => {
+  const image = (src) => ({
+    isConnected: true,
+    complete: true,
+    naturalWidth: 900,
+    naturalHeight: 220,
+    getAttribute: () => src,
+    getBoundingClientRect: () => ({ width: 131, height: 32 }),
+    decode: async () => {},
+  });
+  const decode = fn("decodeBrandImage");
+  for (const [width, src] of [
+    [1440, "/brand/ContaOS_Logo_Horizontal_Mono_Navy.svg"],
+    [390, "/brand/ContaOS_Simbolo_Navy.svg"],
+  ])
+    assert.equal(
+      (
+        await decode(image(src), {
+          context: { surface: "SYS04", width, theme: "dark", mode: "PRIMARY" },
+          timeoutMs: 100,
+        })
+      ).decoded,
+      true,
+    );
+  for (const context of [
+    { surface: "V121", width: 390, theme: "dark", mode: "MOBILE_MENU" },
+    { surface: "V101", width: 1440, theme: "dark", mode: "SIDEBAR_COLLAPSED" },
+    { surface: "SYS04", width: 390, theme: "light", mode: "PRIMARY" },
+  ])
+    await assert.rejects(
+      decode(image("/brand/ContaOS_Simbolo_Navy.svg"), { context, timeoutMs: 100 }),
+    );
+  await assert.rejects(
+    decode(image("/foreign.svg"), {
+      context: { surface: "SYS04", width: 390, theme: "dark", mode: "PRIMARY" },
+      timeoutMs: 100,
+    }),
+  );
+});
+test("Run78 disabled legítimo dispensa só hit-test, mantendo geometria e clipping", () => {
+  const target = {
+    rect: { x: 20, y: 20, width: 100, height: 44 },
+    connected: true,
+    visible: true,
+    hit: false,
+    disabled: true,
+  };
+  const sample = { viewport: { width: 390, height: 640 }, targets: [target], pairs: [] };
+  assert.equal(fn("visualGeometryValid")(sample), true);
+  assert.equal(
+    fn("visualGeometryValid")({ ...sample, targets: [{ ...target, disabled: false }] }),
+    false,
+  );
+  assert.equal(
+    fn("visualGeometryValid")({
+      ...sample,
+      targets: [{ ...target, rect: { ...target.rect, x: -1 } }],
+    }),
+    false,
+  );
 });
