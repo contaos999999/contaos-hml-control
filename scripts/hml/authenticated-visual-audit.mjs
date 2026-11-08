@@ -1732,13 +1732,36 @@ export async function installNativeFence({
     clearTimeout(timer);
   }
   return {
-    snapshot: () => ({ ...state, canceledInitialRequests: lifecycle.snapshot().canceled }),
+    snapshot: () => ({
+      ...state,
+      canceledInitialRequests: lifecycle.snapshot().canceled,
+      activeNetworkRequests: lifecycle.snapshot().active,
+      pendingNetworkAssociations: lifecycle.snapshot().pendingNetwork,
+    }),
     assertSafe() {
       if (state.failed || closed || state.verifiedDocuments === 0 || state.verifiedScripts === 0)
         fail("FENCE_NOT_PROVEN");
     },
     async drain() {
-      for (let i = 0; active.size && i < 100; i++) await Promise.allSettled([...active]);
+      const deadline = performance.now() + 10000;
+      for (;;) {
+        if (state.failed || closed) fail(state.failureCode || "FENCE_CDP_CLOSED");
+        const remaining = deadline - performance.now();
+        if (remaining <= 0) {
+          invalidate({ code: "FENCE_DRAIN_TIMEOUT" });
+          fail("FENCE_DRAIN_TIMEOUT");
+        }
+        const activity = lifecycle.snapshot();
+        if (active.size === 0 && activity.active === 0 && activity.pendingNetwork === 0) {
+          if (state.failed || closed) fail(state.failureCode || "FENCE_CDP_CLOSED");
+          if (performance.now() >= deadline) {
+            invalidate({ code: "FENCE_DRAIN_TIMEOUT" });
+            fail("FENCE_DRAIN_TIMEOUT");
+          }
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, Math.min(10, remaining)));
+      }
     },
     close() {
       closed = true;
@@ -2219,6 +2242,7 @@ export function nativeCancellationFailure(tap) {
   if (typeof tap !== "string" || tap.length > 1048576) return null;
   const allowed = new Set([
     "FENCE_REQUEST_LIFECYCLE",
+    "FENCE_DRAIN_TIMEOUT",
     "FENCE_LIFECYCLE_NO_NETWORK",
     "FENCE_LIFECYCLE_TERMINAL",
     "FENCE_LIFECYCLE_FRAME",
@@ -2235,6 +2259,19 @@ export function nativeCancellationFailure(tap) {
     .map((line) => /^# NATIVE_CANCEL_FAILURE ([A-Z_]+)$/.exec(line.trim())?.[1])
     .filter((value) => allowed.has(value));
   return values.length === 1 ? values[0] : null;
+}
+export function nativePreflightDrain(tap) {
+  if (typeof tap !== "string" || tap.length > 1048576) return null;
+  const lines = tap
+    .split("\n")
+    .map((line) => /^# NATIVE_PREFLIGHT_DRAIN ([01]) ([01]) ([01])$/.exec(line.trim()))
+    .filter(Boolean);
+  if (lines.length !== 1) return null;
+  return {
+    originalOptionsObserved: lines[0][1] === "1",
+    returnedBeforeRelease: lines[0][2] === "1",
+    activeNetworkBeforeRelease: lines[0][3] === "1",
+  };
 }
 export function nativeSourceOrdering(tap) {
   if (typeof tap !== "string" || tap.length > 1048576) return null;
@@ -2338,6 +2375,7 @@ async function nativeGuard() {
         cancellationFailure: nativeCancellationFailure(stdout),
         sourceFailure: nativeSourceFailure(stdout),
         sourceOrdering: nativeSourceOrdering(stdout),
+        preflightDrain: nativePreflightDrain(stdout),
         cancellationTypes: nativeCancellationTypes(stdout),
         lifecycleMetadata: nativeLifecycleMetadata(stdout),
         tap,
@@ -2353,6 +2391,7 @@ async function nativeGuard() {
       phase: "NATIVE_GUARD",
       state: "PASS",
       sourceOrdering: nativeSourceOrdering(output),
+      preflightDrain: nativePreflightDrain(output),
       cases: 8,
       harnessSha: proof.harnessSha,
     }),
@@ -3159,7 +3198,10 @@ export async function writeBlockedPreflight(input, output = resolve("artifacts/t
 export async function settledFenceSnapshot(fence) {
   // The browser can report navigation failure before Fetch.failRequest is
   // acknowledged. Wait for our pending checks before describing fence state.
-  await fence?.drain();
+  // Diagnostic inspection cannot authorize navigation. The ordinary drain stays strict.
+  try {
+    await fence?.drain();
+  } catch {}
   return fence?.snapshot();
 }
 export function classifyRuntimeError(error = {}) {
@@ -3221,6 +3263,7 @@ export function runtimeDiagnostics(input = {}) {
   const failures = new Set([
     "FENCE_REQUEST",
     "FENCE_REQUEST_LIFECYCLE",
+    "FENCE_DRAIN_TIMEOUT",
     "FENCE_LIFECYCLE_NO_NETWORK",
     "FENCE_LIFECYCLE_TERMINAL",
     "FENCE_LIFECYCLE_FRAME",
@@ -3286,6 +3329,8 @@ export function runtimeDiagnostics(input = {}) {
   };
   for (const key of [
     "canceledInitialRequests",
+    "activeNetworkRequests",
+    "pendingNetworkAssociations",
     "verifiedDocuments",
     "verifiedScripts",
     "verifiedAssets",
