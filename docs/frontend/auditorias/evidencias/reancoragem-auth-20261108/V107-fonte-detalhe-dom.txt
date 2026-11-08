@@ -1,0 +1,124 @@
+- complementary:
+  - button [expanded]: «
+  - navigation:
+    - link:
+      - /url: /
+      - generic: Painel
+    - link:
+      - /url: /contratantes
+      - generic: Contratantes
+    - link:
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link:
+      - /url: /contratos
+      - generic: Contratos
+    - link:
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link:
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+    - paragraph: Contexto atual
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+      - generic: Resumo do contrato
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa
+      - generic: Base normativa
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/orcamento
+      - generic: Orçamento
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras
+      - generic: Regras de conformidade
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+      - generic: Documentos do contrato
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+      - generic: Competências do contrato
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias/nova
+      - generic: Nova competência
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico
+      - generic: Histórico do contrato
+    - link:
+      - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico/importar
+      - generic: Importar histórico
+  - navigation:
+    - link:
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link:
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation:
+    - link:
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button:
+      - text: Sair
+- navigation:
+  - navigation:
+    - link:
+      - /url: /contratos
+      - text: Voltar para contratos
+- main:
+  - paragraph: Contrato AUD-A-VERCEL-20261108
+  - heading [level=1]: Base normativa
+  - navigation:
+    - list:
+      - link:
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+        - text: Visão geral
+      - generic: Base normativa
+      - link:
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/orcamento
+        - text: Orçamento
+      - link:
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras
+        - text: Regras
+      - link:
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+        - text: Documentos
+      - link:
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+        - text: Competências
+  - status: "Operação concluída. Protocolo: 2de433a7-a84c-4575-aa2a-7699d2871b55"
+  - region:
+    - heading [level=2]: Fontes normativas
+    - paragraph: Fontes do contrato e globais da organização. Fonte global só se aplica a este contrato com aplicabilidade aprovada.
+    - button: Nova fonte
+    - text: Escopo
+    - combobox
+    - text: Situação
+    - combobox
+    - list:
+      - paragraph: FONTE SINTETICA TRILHA A 20261108
+      - paragraph: lista_verificacao · Documento HML 525e54fc-feec-4dc0-b540-1510a3c52485; SHA256 773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103 · Atualizada em 08/11/2026 08:01
+      - generic: Do contrato
+      - generic: "Situação:"
+      - text: rascunho
+      - button: Detalhes
+      - button: Editar
+  - paragraph: "Cadastro e edição de fontes e versões: administrador, gestor de contrato ou jurídico/conformidade. Aprovação de versão e aplicabilidade: administrador ou direção aprovadora. Mudança de situação: administrador. A permissão final é sempre verificada pelo servidor."
+- dialog "FONTE SINTETICA TRILHA A 20261108":
+  - button "Close":
+    - generic: Close
+  - heading "FONTE SINTETICA TRILHA A 20261108" [level=2]
+  - paragraph: "Do contrato · Situação: rascunho"
+  - term: Tipo
+  - definition: lista_verificacao
+  - term: Referência
+  - definition: Documento HML 525e54fc-feec-4dc0-b540-1510a3c52485; SHA256 773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103
+  - term: Descrição
+  - definition: Fonte exclusivamente sintética para auditoria em homologação. Sem efeito jurídico ou financeiro. Vinculação descritiva ao TXT de teste já persistido; não representa análise ou validação de segurança do arquivo.
+  - heading "Versões" [level=3]
+  - button "Nova versão" [active]
+  - paragraph: Esta fonte ainda não possui versões registradas.

@@ -1,0 +1,190 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+    - group "Contexto atual":
+      - paragraph: Contexto atual
+      - link "Resumo do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+        - generic: Resumo do contrato
+      - link "Base normativa":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa
+        - generic: Base normativa
+      - link "Orçamento":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/orcamento
+        - generic: Orçamento
+      - link "Regras de conformidade":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/regras
+        - generic: Regras de conformidade
+      - link "Documentos do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+        - generic: Documentos do contrato
+      - link "Competências do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+        - generic: Competências do contrato
+      - link "Nova competência":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias/nova
+        - generic: Nova competência
+      - link "Histórico do contrato":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico
+        - generic: Histórico do contrato
+      - link "Importar histórico":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/historico/importar
+        - generic: Importar histórico
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página":
+  - navigation "Navegação":
+    - link "Voltar para contratos":
+      - /url: /contratos
+      - text: Voltar para contratos
+- main:
+  - navigation "Trilha":
+    - list:
+      - link "Contratos":
+        - /url: /contratos
+      - text: /
+      - link "Contrato AUD-A-VERCEL-20261108":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+      - text: /
+      - link "Documentos":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+      - text: /
+      - listitem: FONTE_SINTETICA_AUDITORIA_HML
+  - paragraph: Contrato AUD-A-VERCEL-20261108 — Documento
+  - heading "FONTE_SINTETICA_AUDITORIA_HML" [level=1]
+  - link "Voltar para Documentos":
+    - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos
+    - text: Voltar para Documentos
+  - paragraph
+  - region "Resumo do documento":
+    - heading "Resumo do documento" [level=2]
+    - term: Tipo
+    - definition: Lista de verificação
+    - term: Categoria informada
+    - definition: —
+    - term: Situação
+    - definition: Ativo
+    - term: Vigência
+    - definition: Sem vigência informada
+    - term: Versão atual
+    - definition: Versão 1
+    - term: Observações
+    - definition: Fonte sintética para auditoria autenticada da Trilha A, sem dados pessoais ou efeito real.
+  - region "Histórico de versões":
+    - heading "Histórico de versões" [level=2]
+    - button "Sobre o histórico de versões":
+    - list:
+      - generic: Versão 1
+      - text: Versão atual
+      - paragraph: Enviada em 08/11/2026 02:41
+      - paragraph: "Motivo: —"
+      - button "Versão 1 selecionada" [pressed]
+  - region "Cadeia de evidência":
+    - heading "Cadeia de evidência — versão 1" [level=2]
+    - button "Sobre a cadeia de evidência":
+    - term: Arquivo
+    - definition: FONTE_SINTETICA_AUDITORIA_HML.txt
+    - term: Tipo de arquivo (MIME)
+    - definition: text/plain
+    - term: Tamanho
+    - definition: 285 bytes
+    - term: Origem
+    - definition: Envio pelo usuário
+    - term: Enviada em
+    - definition: 08/11/2026 02:41
+    - term: Enviada por
+    - definition:
+      - generic: Você
+    - term:
+      - text: Hash da versão
+      - button "Hash completo da versão" [active]:
+    - definition: 773eb577…f4681103
+    - term:
+      - text: SHA-256 do arquivo
+      - button "SHA-256 completo do arquivo":
+    - definition: 773eb577…f4681103
+    - term: Motivo da substituição
+    - definition: —
+    - generic: Verificação pendente
+    - paragraph: A verificação de segurança ainda está em andamento.
+  - region "Processamento":
+    - heading "Processamento" [level=2]
+    - button "Sobre o processamento":
+    - button "Atualizar processamento":
+      - text: Atualizar processamento
+    - list:
+      - generic: Na fila
+      - generic: "Etapa: documents"
+      - generic: "Tentativas: 0"
+      - paragraph: Registrado em 08/11/2026 02:41
+  - region "Metadados extraídos":
+    - heading "Metadados extraídos" [level=2]
+    - button "Sobre os metadados extraídos":
+    - paragraph: Sem metadados extraídos para esta versão.
+  - region "Páginas extraídas":
+    - heading "Páginas extraídas" [level=2]
+    - paragraph: Nenhuma página extraída para esta versão.
+  - region "Fragmentos":
+    - heading "Fragmentos" [level=2]
+    - form "Filtro de fragmentos":
+      - generic: Filtrar por página
+      - spinbutton "Filtrar por página"
+      - button "Aplicar"
+      - button "Limpar"
+    - paragraph: Nenhum fragmento encontrado.
+  - region "Sugestões de IA":
+    - heading "Sugestões de IA" [level=2]
+    - button "Sobre as sugestões de IA":
+    - generic: Status
+    - combobox "Status":
+      - option "Todos" [selected]
+      - option "Pendente de revisão"
+      - option "Aprovada"
+      - option "Rejeitada"
+      - option "Substituída"
+    - generic: Tipo de sugestão
+    - combobox "Tipo de sugestão":
+      - option "Todos" [selected]
+      - option "Classificação"
+      - option "Metadado"
+      - option "Cláusula"
+      - option "Obrigação"
+      - option "Prazo"
+      - option "Documento exigido"
+      - option "Restrição"
+      - option "Regra candidata"
+    - paragraph: Nenhuma sugestão de IA para esta versão.
