@@ -4,6 +4,8 @@
 
 MetadadoLovable935bb96 também reconstruído: entryindex-DMDJ_yWG.js,SHA2567a60581b492db06dd5396ec47768b2efc02b45c2a9f0d08e83c293ace0e8ed18,comcabeçalhoatual. Portanto latest_commit_sha não prova o código publicado. x-deployment-id recebido,semvínculo verificável comGit. SHAexatopublicado continuaNÃOIDENTIFICADO. Relatório emanifestos em `docs/frontend/auditorias/COMPARACAO_BUILD_MAIN_HML_2026-11-08.md`. Nenhuma publicação ou mudança de produto realizada.
 
+CI do registro inicial falhou por fonte canônica avançada para7ecdf3bda151fb9956beab8cca390f5074548cf2.25/25blobs ecatálogo comparados iguais; snapshot eack reancorados juntos, sem mudar escopo. A prova de build continua referida àmain4510491; não reatribuir o build à reancoragem documental.
+
 Próxima tarefa: reconciliar a publicação HML com fonte integrada conhecida e repetir prova de igualdade antes da matriz232/72. Preservar evidências de divergência e evitar repetir código jáintegrado. NO-GOvisual/V1 mantido;V2–V5/PROD bloqueados.
 
 ---
