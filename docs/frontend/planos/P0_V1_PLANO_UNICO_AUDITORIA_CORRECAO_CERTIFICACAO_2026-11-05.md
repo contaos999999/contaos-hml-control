@@ -397,4 +397,3 @@ Próxima tarefa: continuar prova autenticada legítima das28rotas/29superfícies
 ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE: este checkpoint é documental, preserva limites e histórico; não fabrica certificação.
 
 ---
-
