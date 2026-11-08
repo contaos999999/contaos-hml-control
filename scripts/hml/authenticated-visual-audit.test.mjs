@@ -4120,23 +4120,55 @@ test(
         );
       }
 
-      const v109Proof=await fn("loadPrivacy109Proof")();
-      await page.setContent('<style>.flex{display:flex}.flex-wrap{flex-wrap:wrap}.inline-flex{display:inline-flex}.gap-2{gap:.5rem}</style>'+privacy109Fixture(v109Proof));
-      const v109Anchor=await page.evaluate(fn("privacy109FieldAnchor"),{proof:v109Proof});
+      const v109Proof = await fn("loadPrivacy109Proof")();
+      await page.setContent(
+        "<style>.flex{display:flex}.flex-wrap{flex-wrap:wrap}.inline-flex{display:inline-flex}.gap-2{gap:.5rem}</style>" +
+          privacy109Fixture(v109Proof),
+      );
+      const v109Anchor = await page.evaluate(fn("privacy109FieldAnchor"), { proof: v109Proof });
       assert.ok(v109Anchor);
-      const v109Rendered=await page.locator("body").innerText();
-      const v109Snapshot=await page.locator("body").ariaSnapshot();
-      const v109FieldSnapshots=await fn("privacy109FieldSnapshots")(page,v109Anchor);
-      assert.equal(v109FieldSnapshots.length,2);
-      const v109Input={proof:privacyProof,v109Proof,rendered:v109Rendered,snapshot:v109Snapshot,fieldSnapshots:v109FieldSnapshots,anchored:true,
-        receipt:Object.freeze({route:v109Proof.context.route,age:1,observed:Object.freeze(["contract_gate","v109_lists_page0"])})};
-      const v109Context=fn("privacy109FieldContext")(v109Input);
-      assert.ok(v109Context,"V109 real full ARIA mapping");
-      assert.equal(fn("classifyArtifactText")(v109Rendered,words,{fieldContext:v109Context}).reason,"ALLOWED");
-      assert.equal(fn("classifyArtifactText")(v109Snapshot,words,{snapshot:true,fieldContext:v109Context}).reason,"ALLOWED");
-      for(const value of [v109Proof.approved_values.description,v109Proof.approved_values.formatted_updated]){
-        assert.equal(fn("privacy109FieldContext")({...v109Input,rendered:v109Rendered+value}),null);
-        assert.equal(fn("privacy109FieldContext")({...v109Input,snapshot:v109Snapshot+value}),null);
+      const v109Rendered = await page.locator("body").innerText();
+      const v109Snapshot = await page.locator("body").ariaSnapshot();
+      const v109FieldSnapshots = await fn("privacy109FieldSnapshots")(page, v109Anchor);
+      assert.equal(v109FieldSnapshots.length, 2);
+      const v109Input = {
+        proof: privacyProof,
+        v109Proof,
+        rendered: v109Rendered,
+        snapshot: v109Snapshot,
+        fieldSnapshots: v109FieldSnapshots,
+        anchored: true,
+        receipt: Object.freeze({
+          route: v109Proof.context.route,
+          age: 1,
+          observed: Object.freeze(["contract_gate", "v109_lists_page0"]),
+        }),
+      };
+      const v109Context = fn("privacy109FieldContext")(v109Input);
+      assert.ok(v109Context, "V109 real full ARIA mapping");
+      assert.equal(
+        fn("classifyArtifactText")(v109Rendered, words, { fieldContext: v109Context }).reason,
+        "ALLOWED",
+      );
+      assert.equal(
+        fn("classifyArtifactText")(v109Snapshot, words, {
+          snapshot: true,
+          fieldContext: v109Context,
+        }).reason,
+        "ALLOWED",
+      );
+      for (const value of [
+        v109Proof.approved_values.description,
+        v109Proof.approved_values.formatted_updated,
+      ]) {
+        assert.equal(
+          fn("privacy109FieldContext")({ ...v109Input, rendered: v109Rendered + value }),
+          null,
+        );
+        assert.equal(
+          fn("privacy109FieldContext")({ ...v109Input, snapshot: v109Snapshot + value }),
+          null,
+        );
       }
     } finally {
       release?.();
@@ -4785,97 +4817,269 @@ test("privacy78 GET7 browser scope exige rota V115 e nao herda apos navegacao", 
 });
 
 // GATE389: two separate V109 intervals, not global vocabulary.
-const privacy109Raw=JSON.parse(await(await import("node:fs/promises")).readFile(new URL("../../docs/frontend/auditorias/evidencias/privacy-remaining-v109-20261108.json",import.meta.url),"utf8"));
-function privacy109Fixture(p=privacy109Raw){
- const v=p.approved_values,id="v109-lista-"+p.context.list;
- return '<main><h1>Regras</h1><section aria-labelledby="v109-listas" class="space-y-3"><h2 id="v109-listas">Listas de verificação</h2><ul class="space-y-3"><li class="rounded-lg"><div class="flex"><div class="min-w-0"><p class="break-words font-medium">'+v.name+'</p><p class="break-words text-sm text-muted-foreground">'+v.description+'</p><p class="mt-1 flex flex-wrap gap-2 text-xs"><span class="inline-flex">Rascunho</span><span class="inline-flex">Versão atual: 1</span><span class="text-muted-foreground">'+v.formatted_updated+'</span></p></div><button type="button" aria-expanded="false" aria-controls="'+id+'" aria-label="Ver versões e itens de '+v.name+'">Ver versões e itens</button></div></li></ul></section></main>';
+const privacy109Raw = JSON.parse(
+  await (
+    await import("node:fs/promises")
+  ).readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-remaining-v109-20261108.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+function privacy109Fixture(p = privacy109Raw) {
+  const v = p.approved_values,
+    id = "v109-lista-" + p.context.list;
+  return (
+    '<main><h1>Regras</h1><section aria-labelledby="v109-listas" class="space-y-3"><h2 id="v109-listas">Listas de verificação</h2><ul class="space-y-3"><li class="rounded-lg"><div class="flex"><div class="min-w-0"><p class="break-words font-medium">' +
+    v.name +
+    '</p><p class="break-words text-sm text-muted-foreground">' +
+    v.description +
+    '</p><p class="mt-1 flex flex-wrap gap-2 text-xs"><span class="inline-flex">Rascunho</span><span class="inline-flex">Versão atual: 1</span><span class="text-muted-foreground">' +
+    v.formatted_updated +
+    '</span></p></div><button type="button" aria-expanded="false" aria-controls="' +
+    id +
+    '" aria-label="Ver versões e itens de ' +
+    v.name +
+    '">Ver versões e itens</button></div></li></ul></section></main>'
+  );
 }
-function privacy109Texts(p=privacy109Raw){
- const v=p.approved_values,description="- paragraph: "+v.description,metadata='- paragraph:\n  - text: Rascunho\n  - text: "Versão atual: 1"\n  - text: '+v.formatted_updated;
- return {rendered:"Regras\nListas de verificação\n"+v.name+"\n"+v.description+"\nRascunho\nVersão atual: 1\n"+v.formatted_updated+"\nVer versões e itens",
- snapshot:'- main:\n  - heading "Regras" [level=1]\n  - region "Listas de verificação":\n    - heading "Listas de verificação" [level=2]\n    - list:\n      - listitem:\n        - paragraph: '+v.name+'\n        '+description+'\n        '+metadata.replaceAll("\n","\n        ")+'\n        - button "Ver versões e itens de '+v.name+'"\n',
- fieldSnapshots:[description,metadata]};
+function privacy109Texts(p = privacy109Raw) {
+  const v = p.approved_values,
+    description = "- paragraph: " + v.description,
+    metadata =
+      '- paragraph:\n  - text: Rascunho\n  - text: "Versão atual: 1"\n  - text: ' +
+      v.formatted_updated;
+  return {
+    rendered:
+      "Regras\nListas de verificação\n" +
+      v.name +
+      "\n" +
+      v.description +
+      "\nRascunho\nVersão atual: 1\n" +
+      v.formatted_updated +
+      "\nVer versões e itens",
+    snapshot:
+      '- main:\n  - heading "Regras" [level=1]\n  - region "Listas de verificação":\n    - heading "Listas de verificação" [level=2]\n    - list:\n      - listitem:\n        - paragraph: ' +
+      v.name +
+      "\n        " +
+      description +
+      "\n        " +
+      metadata.replaceAll("\n", "\n        ") +
+      '\n        - button "Ver versões e itens de ' +
+      v.name +
+      '"\n',
+    fieldSnapshots: [description, metadata],
+  };
 }
-test("privacy109 RED classifier real rejeita os dois intervalos sem contexto",async()=>{
- const words=await fn("literalWords")(new URL("../../",import.meta.url).pathname);
- assert.equal(Array.from(privacy109Raw.approved_values.description).length,79);
- for(const text of [privacy109Raw.approved_values.description,privacy109Raw.approved_values.formatted_updated])
-   assert.equal(fn("classifyArtifactText")(text,words).reason,"UNKNOWN_WORDS");
- const t=privacy109Texts();
- assert.equal(fn("classifyArtifactText")(t.rendered,words).reason,"UNKNOWN_WORDS");
- assert.equal(fn("classifyArtifactText")(t.snapshot,words,{snapshot:true}).reason,"UNKNOWN_WORDS");
+test("privacy109 RED classifier real rejeita os dois intervalos sem contexto", async () => {
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  assert.equal(Array.from(privacy109Raw.approved_values.description).length, 79);
+  for (const text of [
+    privacy109Raw.approved_values.description,
+    privacy109Raw.approved_values.formatted_updated,
+  ])
+    assert.equal(fn("classifyArtifactText")(text, words).reason, "UNKNOWN_WORDS");
+  const t = privacy109Texts();
+  assert.equal(fn("classifyArtifactText")(t.rendered, words).reason, "UNKNOWN_WORDS");
+  assert.equal(
+    fn("classifyArtifactText")(t.snapshot, words, { snapshot: true }).reason,
+    "UNKNOWN_WORDS",
+  );
 });
-test("privacy109 GET exato projeta so alvo, preserva microssegundos e ignora getters",()=>{
- const run=fn("privacy78Runtime")({proof:privacy78Proof,v109Proof:privacy109Raw});
- const c={...privacy109Raw.get_contract,name:"v109_lists_page0"},url=API+c.path+"?"+new URLSearchParams(c.query);
- assert.equal(run.match(url,"GET")?.name,c.name);
- const v=privacy109Raw.approved_values,row={id:privacy109Raw.context.list,nome:v.name,descricao:v.description,atualizado_em:v.updated};
- for(const key of ["situacao","versao_atual","versao_registro","user","headers","id_contrato","id_organizacao"])
-   Object.defineProperty(row,key,{get(){throw new Error("unapproved V109 field read");}});
- assert.deepEqual(run.project(c,[row]),{name:c.name,exact:true});
- for(const date of ["2026-11-08T04:50:40.455572Z","2026-11-08T01:50:40.455572-03:00"])
-   assert.deepEqual(run.project(c,[{...row,atualizado_em:date}]),{name:c.name,exact:true});
- for(const date of ["2026-11-08T04:50:40.455573+00:00","2026-11-08T04:50:40.455000Z","2026-11-08T04:50:40.4555721Z","2026-02-30T04:50:40.455572Z"])
-   assert.equal(run.project(c,[{...row,atualizado_em:date}]),null);
- for(const body of [[],[row,row],row,null,[{...row,id:"foreign"}],[{...row,nome:"foreign"}],[{...row,descricao:v.description+" extra"}]])
-   assert.equal(run.project(c,body),null);
- for(const key of Object.keys(c.query)){
-   const bad=new URL(url);bad.searchParams.delete(key);assert.equal(run.match(bad.href,"GET"),null);
-   bad.searchParams.set(key,"foreign");assert.equal(run.match(bad.href,"GET"),null);
- }
- for(const bad of [url+"&offset=0",url+"&extra=1",url+"#x",url.replace(API,HML)])assert.equal(run.match(bad,"GET"),null);
+test("privacy109 GET exato projeta so alvo, preserva microssegundos e ignora getters", () => {
+  const run = fn("privacy78Runtime")({ proof: privacy78Proof, v109Proof: privacy109Raw });
+  const c = { ...privacy109Raw.get_contract, name: "v109_lists_page0" },
+    url = API + c.path + "?" + new URLSearchParams(c.query);
+  assert.equal(run.match(url, "GET")?.name, c.name);
+  const v = privacy109Raw.approved_values,
+    row = {
+      id: privacy109Raw.context.list,
+      nome: v.name,
+      descricao: v.description,
+      atualizado_em: v.updated,
+    };
+  for (const key of [
+    "situacao",
+    "versao_atual",
+    "versao_registro",
+    "user",
+    "headers",
+    "id_contrato",
+    "id_organizacao",
+  ])
+    Object.defineProperty(row, key, {
+      get() {
+        throw new Error("unapproved V109 field read");
+      },
+    });
+  assert.deepEqual(run.project(c, [row]), { name: c.name, exact: true });
+  for (const date of ["2026-11-08T04:50:40.455572Z", "2026-11-08T01:50:40.455572-03:00"])
+    assert.deepEqual(run.project(c, [{ ...row, atualizado_em: date }]), {
+      name: c.name,
+      exact: true,
+    });
+  for (const date of [
+    "2026-11-08T04:50:40.455573+00:00",
+    "2026-11-08T04:50:40.455000Z",
+    "2026-11-08T04:50:40.4555721Z",
+    "2026-02-30T04:50:40.455572Z",
+  ])
+    assert.equal(run.project(c, [{ ...row, atualizado_em: date }]), null);
+  for (const body of [
+    [],
+    [row, row],
+    row,
+    null,
+    [{ ...row, id: "foreign" }],
+    [{ ...row, nome: "foreign" }],
+    [{ ...row, descricao: v.description + " extra" }],
+  ])
+    assert.equal(run.project(c, body), null);
+  for (const key of Object.keys(c.query)) {
+    const bad = new URL(url);
+    bad.searchParams.delete(key);
+    assert.equal(run.match(bad.href, "GET"), null);
+    bad.searchParams.set(key, "foreign");
+    assert.equal(run.match(bad.href, "GET"), null);
+  }
+  for (const bad of [url + "&offset=0", url + "&extra=1", url + "#x", url.replace(API, HML)])
+    assert.equal(run.match(bad, "GET"), null);
 });
-test("privacy109 selo e dois intervalos preservam full DOM ARIA e vizinhos",async()=>{
- const proof=await fn("loadPrivacy78Proof")(),v109Proof=await fn("loadPrivacy109Proof")(),texts=privacy109Texts(v109Proof);
- const input={proof,v109Proof,...texts,anchored:true,receipt:Object.freeze({route:v109Proof.context.route,observed:Object.freeze(["contract_gate","v109_lists_page0"]),age:1})};
- const context=fn("privacy109FieldContext")(input);assert.ok(context);
- const words=await fn("literalWords")(new URL("../../",import.meta.url).pathname);
- assert.equal(fn("classifyArtifactText")(texts.rendered,words,{fieldContext:context}).reason,"ALLOWED");
- assert.equal(fn("classifyArtifactText")(texts.snapshot,words,{snapshot:true,fieldContext:context}).reason,"ALLOWED");
- for(const delta of [{anchored:false},{v109Proof:privacy109Raw},{fieldSnapshots:[texts.fieldSnapshots[1],texts.fieldSnapshots[0]]},
-  {rendered:texts.rendered+v109Proof.approved_values.description},{snapshot:texts.snapshot+v109Proof.approved_values.formatted_updated},
-  {receipt:Object.freeze({...input.receipt,route:"/"})},{receipt:Object.freeze({...input.receipt,age:120000})},
-  {receipt:Object.freeze({...input.receipt,observed:Object.freeze(["v109_lists_page0"])})}])
-  assert.equal(fn("privacy109FieldContext")({...input,...delta}),null);
- for(const suffix of [" CANARIO_PRIVADO"," pessoa@example.com"," Bearer x"," 123.456.789-00"]){
-  const rendered=texts.rendered+suffix,snapshot=texts.snapshot+suffix,fieldContext=fn("privacy109FieldContext")({...input,rendered,snapshot});
-  assert.notEqual(fn("classifyArtifactText")(rendered,words,{fieldContext}).reason,"ALLOWED");
-  assert.notEqual(fn("classifyArtifactText")(snapshot,words,{snapshot:true,fieldContext}).reason,"ALLOWED");
- }
+test("privacy109 selo e dois intervalos preservam full DOM ARIA e vizinhos", async () => {
+  const proof = await fn("loadPrivacy78Proof")(),
+    v109Proof = await fn("loadPrivacy109Proof")(),
+    texts = privacy109Texts(v109Proof);
+  const input = {
+    proof,
+    v109Proof,
+    ...texts,
+    anchored: true,
+    receipt: Object.freeze({
+      route: v109Proof.context.route,
+      observed: Object.freeze(["contract_gate", "v109_lists_page0"]),
+      age: 1,
+    }),
+  };
+  const context = fn("privacy109FieldContext")(input);
+  assert.ok(context);
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  assert.equal(
+    fn("classifyArtifactText")(texts.rendered, words, { fieldContext: context }).reason,
+    "ALLOWED",
+  );
+  assert.equal(
+    fn("classifyArtifactText")(texts.snapshot, words, { snapshot: true, fieldContext: context })
+      .reason,
+    "ALLOWED",
+  );
+  for (const delta of [
+    { anchored: false },
+    { v109Proof: privacy109Raw },
+    { fieldSnapshots: [texts.fieldSnapshots[1], texts.fieldSnapshots[0]] },
+    { rendered: texts.rendered + v109Proof.approved_values.description },
+    { snapshot: texts.snapshot + v109Proof.approved_values.formatted_updated },
+    { receipt: Object.freeze({ ...input.receipt, route: "/" }) },
+    { receipt: Object.freeze({ ...input.receipt, age: 120000 }) },
+    { receipt: Object.freeze({ ...input.receipt, observed: Object.freeze(["v109_lists_page0"]) }) },
+  ])
+    assert.equal(fn("privacy109FieldContext")({ ...input, ...delta }), null);
+  for (const suffix of [
+    " CANARIO_PRIVADO",
+    " pessoa@example.com",
+    " Bearer x",
+    " 123.456.789-00",
+  ]) {
+    const rendered = texts.rendered + suffix,
+      snapshot = texts.snapshot + suffix,
+      fieldContext = fn("privacy109FieldContext")({ ...input, rendered, snapshot });
+    assert.notEqual(
+      fn("classifyArtifactText")(rendered, words, { fieldContext }).reason,
+      "ALLOWED",
+    );
+    assert.notEqual(
+      fn("classifyArtifactText")(snapshot, words, { snapshot: true, fieldContext }).reason,
+      "ALLOWED",
+    );
+  }
 });
-test("privacy109 DOM source button aria-controls fecha regiao label copia e no",()=>{
- const {dom,w,run}=privacy78Browser(privacy109Fixture());
- try{
-  const args={proof:privacy109Raw};assert.ok(run("privacy109FieldAnchor",args));
-  const control=w.document.querySelector("button");control.setAttribute("aria-controls","v109-lista-foreign");assert.equal(run("privacy109FieldAnchor",args),null);control.setAttribute("aria-controls","v109-lista-"+privacy109Raw.context.list);
-  const p=w.document.querySelectorAll(".min-w-0 > p")[1];p.setAttribute("aria-label","CANARIO_PRIVADO");assert.equal(run("privacy109FieldAnchor",args),null);p.removeAttribute("aria-label");
-  p.textContent+=" extra";assert.equal(run("privacy109FieldAnchor",args),null);p.textContent=privacy109Raw.approved_values.description;
-  w.document.querySelector("h2").textContent="Outro";assert.equal(run("privacy109FieldAnchor",args),null);
-  w.document.body.innerHTML=privacy109Fixture()+privacy109Fixture();assert.equal(run("privacy109FieldAnchor",args),null);
- }finally{dom.window.close();}
+test("privacy109 DOM source button aria-controls fecha regiao label copia e no", () => {
+  const { dom, w, run } = privacy78Browser(privacy109Fixture());
+  try {
+    const args = { proof: privacy109Raw };
+    assert.ok(run("privacy109FieldAnchor", args));
+    const control = w.document.querySelector("button");
+    control.setAttribute("aria-controls", "v109-lista-foreign");
+    assert.equal(run("privacy109FieldAnchor", args), null);
+    control.setAttribute("aria-controls", "v109-lista-" + privacy109Raw.context.list);
+    const p = w.document.querySelectorAll(".min-w-0 > p")[1];
+    p.setAttribute("aria-label", "CANARIO_PRIVADO");
+    assert.equal(run("privacy109FieldAnchor", args), null);
+    p.removeAttribute("aria-label");
+    p.textContent += " extra";
+    assert.equal(run("privacy109FieldAnchor", args), null);
+    p.textContent = privacy109Raw.approved_values.description;
+    w.document.querySelector("h2").textContent = "Outro";
+    assert.equal(run("privacy109FieldAnchor", args), null);
+    w.document.body.innerHTML = privacy109Fixture() + privacy109Fixture();
+    assert.equal(run("privacy109FieldAnchor", args), null);
+  } finally {
+    dom.window.close();
+  }
 });
-test("privacy109 fontes e formatter permanecem byte exact",async()=>{
- const {readFile}=await import("node:fs/promises"),{createHash}=await import("node:crypto");
- for(const source of privacy109Raw.sources){const bytes=await readFile(new URL("../../"+source.path,import.meta.url));assert.equal(createHash("sha1").update("blob "+bytes.length+"\0").update(bytes).digest("hex"),source.blob);}
- const f=privacy109Raw.formatter,actual=new Intl.DateTimeFormat(f.locale,{timeZone:f.timeZone,...f.options}).format(new Date(privacy109Raw.approved_values.updated)).replace(",","");
- assert.equal("Atualizada em "+actual,privacy109Raw.approved_values.formatted_updated);
+test("privacy109 fontes e formatter permanecem byte exact", async () => {
+  const { readFile } = await import("node:fs/promises"),
+    { createHash } = await import("node:crypto");
+  for (const source of privacy109Raw.sources) {
+    const bytes = await readFile(new URL("../../" + source.path, import.meta.url));
+    assert.equal(
+      createHash("sha1")
+        .update("blob " + bytes.length + "\0")
+        .update(bytes)
+        .digest("hex"),
+      source.blob,
+    );
+  }
+  const f = privacy109Raw.formatter,
+    actual = new Intl.DateTimeFormat(f.locale, { timeZone: f.timeZone, ...f.options })
+      .format(new Date(privacy109Raw.approved_values.updated))
+      .replace(",", "");
+  assert.equal("Atualizada em " + actual, privacy109Raw.approved_values.formatted_updated);
 });
 
-test("privacy109 observer so V109 e falha contexto atual sem heranca",async()=>{
- for(const surface of ["V109","V122"]){
-  const {dom,w,run}=privacy78Browser();
-  try{
-   dom.reconfigure({url:HML+fn("privateCases")().find(i=>i.surface===surface).path});
-   const v=privacy109Raw.approved_values,c=privacy109Raw.get_contract,url=API+c.path+"?"+new URLSearchParams(c.query);
-   const body=[{id:privacy109Raw.context.list,nome:v.name,descricao:v.description,atualizado_em:v.updated,enviado_por:"CANARIO_PRIVADO"}];
-   const response=new Response(JSON.stringify(body));Object.defineProperty(response,"url",{value:url});
-   w.fetch=()=>Promise.resolve(response);run("privacy78Runtime",{proof:privacy78Proof,v109Proof:privacy109Raw,install:true});
-   await w.fetch(url);await new Promise(r=>setTimeout(r,50));
-   if(surface==="V109"){
-    assert.deepEqual([...w.__contaosPrivacy78.read().observed],["v109_lists_page0"]);
-    assert.equal(JSON.stringify(w.__contaosPrivacy78.read()).includes("CANARIO"),false);
-    w.navigation.dispatchEvent(new w.Event("navigate"));assert.equal(w.__contaosPrivacy78.read(),null);
-   }else assert.ok(!w.__contaosPrivacy78.read()?.observed.includes("v109_lists_page0"));
-  }finally{w.__contaosPrivacy78?.invalidate();dom.window.close();}
- }
+test("privacy109 observer so V109 e falha contexto atual sem heranca", async () => {
+  for (const surface of ["V109", "V122"]) {
+    const { dom, w, run } = privacy78Browser();
+    try {
+      dom.reconfigure({ url: HML + fn("privateCases")().find((i) => i.surface === surface).path });
+      const v = privacy109Raw.approved_values,
+        c = privacy109Raw.get_contract,
+        url = API + c.path + "?" + new URLSearchParams(c.query);
+      const body = [
+        {
+          id: privacy109Raw.context.list,
+          nome: v.name,
+          descricao: v.description,
+          atualizado_em: v.updated,
+          enviado_por: "CANARIO_PRIVADO",
+        },
+      ];
+      const response = new Response(JSON.stringify(body));
+      Object.defineProperty(response, "url", { value: url });
+      w.fetch = () => Promise.resolve(response);
+      run("privacy78Runtime", { proof: privacy78Proof, v109Proof: privacy109Raw, install: true });
+      await w.fetch(url);
+      await new Promise((r) => setTimeout(r, 50));
+      if (surface === "V109") {
+        assert.deepEqual([...w.__contaosPrivacy78.read().observed], ["v109_lists_page0"]);
+        assert.equal(JSON.stringify(w.__contaosPrivacy78.read()).includes("CANARIO"), false);
+        w.navigation.dispatchEvent(new w.Event("navigate"));
+        assert.equal(w.__contaosPrivacy78.read(), null);
+      } else assert.ok(!w.__contaosPrivacy78.read()?.observed.includes("v109_lists_page0"));
+    } finally {
+      w.__contaosPrivacy78?.invalidate();
+      dom.window.close();
+    }
+  }
 });
