@@ -425,6 +425,7 @@ test("classificador reconhece falhas de navegação definidas no Playwright cong
       "NETWORK_FAILED",
     ],
     ["page.waitForURL: net::ERR_EMPTY_RESPONSE", "NETWORK_EMPTY_RESPONSE"],
+    ["page.waitForURL: net::ERR_BLOCKED_BY_CLIENT", "NETWORK_BLOCKED_CLIENT"],
     ["page.waitForURL: net::ERR_HTTP_RESPONSE_CODE_FAILURE", "NETWORK_HTTP_RESPONSE"],
   ]) {
     const value = classify({ name: "Error", message });
@@ -679,13 +680,21 @@ test("diagnóstico espera recusa CDP pendente antes de afirmar que a fence não 
   let fence;
   try {
     fence = await fn("installNativeFence")({
-      debugPort: fixture.port, identity: fixture.identity,
-      closeContext: async () => {}, verifyResponse: async () => false,
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {},
+      verifyResponse: async () => false,
     });
-    fixture.emit({ method: "Fetch.requestPaused", sessionId: "initial-session", params: {
-      requestId: "changed-script", request: { url: HML + "/assets/test.js", method: "GET" },
-      resourceType: "Script", responseStatusCode: 200,
-    }});
+    fixture.emit({
+      method: "Fetch.requestPaused",
+      sessionId: "initial-session",
+      params: {
+        requestId: "changed-script",
+        request: { url: HML + "/assets/test.js", method: "GET" },
+        resourceType: "Script",
+        responseStatusCode: 200,
+      },
+    });
     await fixture.failureSent;
     assert.equal(fence.snapshot().failed, false); // Browser already received failRequest; CDP ack is pending.
     const pending = fn("settledFenceSnapshot")(fence);
