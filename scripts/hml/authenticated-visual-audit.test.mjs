@@ -385,6 +385,74 @@ test("retomada preserva exatamente os24 casos anteriores sem nova aprovação", 
   assert.equal(preserved({ surface: "SYS04", width: 390, theme: "dark" }), null);
 });
 
+test("aborto precoce não substitui as24 provas históricas por interrupções", () => {
+  const rows = fn("completePrivateRecords")([]);
+  assert.equal(rows.length, 208);
+  assert.equal(rows.filter(r => r.status === "PRESERVADO_BASELINE").length, 24);
+  assert.equal(rows.filter(r => r.status === "BLOQUEADO_FIXTURE").length, 24);
+  assert.equal(rows.filter(r => r.status === "BLOQUEADO_EXECUCAO_INTERROMPIDA").length, 160);
+  assert.equal(fn("summarizeCases")(rows).passed, 0);
+  const visited = [{...fn("privateCases")()[0], status:"BLOQUEADO_PII"}];
+  assert.equal(fn("completePrivateRecords")(visited)[0], visited[0]);
+});
+
+test("catálogo fechado de perfis e fixtures não libera recombinações", () => {
+  const safe = fn("safeArtifactText");
+  for(const text of ["direcao aprovador", "juridico conformidade", "prestacao contas", "rh dp", "Registro sintético para testes autenticados HML", "Contrato sintético de homologação para auditoria autenticada da Trilha A, sem efeitos financeiros reais."])
+    assert.equal(safe(text,new Set()),true,text);
+  for(const text of ["direcao contas", "rh aprovador", "Registro sintético desconhecido", "AUDITORIA TRILHA A VERCEL 20261109"])
+    assert.equal(safe(text,new Set()),false);
+});
+
+test("metadados ARIA são reconhecidos somente na posição estrutural do snapshot", () => {
+  const classify=fn("classifyArtifactText");
+  assert.equal(classify('- application:\n  - caption: teste\n  - searchbox "teste"',new Set(["teste"]),{snapshot:true}).reason,"ALLOWED");
+  for(const text of ['application caption searchbox','- application: pessoa_nao_autorizada'])
+    assert.equal(classify(text,new Set(),{snapshot:true}).reason,"UNKNOWN_WORDS");
+  assert.equal(classify('- searchbox "teste"',new Set(["teste"])).reason,"UNKNOWN_WORDS");
+});
+
+test("datas de atualização completas são limitadas ao dia e relógio aprovados", () => {
+  const safe=fn("safeArtifactText");
+  for(const text of ["Atualizado em 08/11/2026 13:09:07", "Atualizado em 08/11/2026 00:58", "01/01/2026", "2026-01-01"])
+    assert.equal(safe(text,new Set()),true,text);
+  for(const text of ["Atualizado em 09/11/2026 13:09:07", "Atualizado em 08/11/2026 24:01:00", "Atualizado em 08/11/2026 13:60:00", "13:09:07", "Atualizado em 08/11/2026 13:09:07 pessoa@example.com"])
+    assert.equal(safe(text,new Set()),false,text);
+});
+
+test("navegação não retorna com header antigo e verificação CDP pendente", async () => {
+  const events=[]; const heading=Promise.withResolvers(),drain=Promise.withResolvers();
+  let drainCount=0,completed=false;
+  const page={
+    getByRole(role){return role==='link'?{first(){return{async click(){events.push('click')}}}}:{async waitFor(){events.push('heading');await heading.promise}}},
+    async waitForURL(){events.push('url')}, async waitForFunction(){events.push('org')},
+    async waitForLoadState(){events.push('networkidle')}
+  },fence={async drain(){events.push('drain');if(++drainCount===2)await drain.promise},assertSafe(){events.push('safe')}};
+  const running=fn("navigationProbe")(page,{surface:'V102',width:1440},fence).then(()=>{completed=true});
+  await new Promise(r=>setImmediate(r));
+  assert.equal(completed,false);assert.ok(events.includes('heading'));
+  heading.resolve();await new Promise(r=>setImmediate(r));assert.equal(completed,false);
+  drain.resolve();await running;assert.equal(completed,true);
+  assert.ok(events.indexOf('safe')<events.indexOf('click'));
+});
+
+test("resize aguarda a cerca antes de alterar o viewport", async () => {
+  const gate=Promise.withResolvers(),events=[];let count=0;
+  const page={async waitForLoadState(){},async setViewportSize(){events.push('resize')}};
+  const fence={async drain(){if(++count===1)await gate.promise},assertSafe(){events.push('safe')}};
+  const running=fn("resizeVerifiedPage")(page,fence,390);
+  await new Promise(r=>setImmediate(r));assert.deepEqual(events,[]);
+  gate.resolve();await running;assert.equal(events[0],'safe');assert.equal(events[1],'resize');
+});
+
+test("erro CDP diagnóstico recusa texto e códigos inesperados", () => {
+  const classify=fn("classifyCdpError");
+  assert.deepEqual(classify({code:-32000,message:'No resource with given identifier found'}),{protocolCode:-32000,reason:'NO_RESOURCE'});
+  const out=classify({code:12345,message:'CANARIO_PRIVADO pessoa@example.com'});
+  assert.deepEqual(out,{protocolCode:null,reason:'OTHER'});
+  assert.equal(JSON.stringify(out).includes('CANARIO'),false);
+});
+
 test("DOMs sintéticos versionados mantêm origem SHA256 e passam sem catálogo genérico", async () => {
   const { readFile } = await import("node:fs/promises");
   const { createHash } = await import("node:crypto");
