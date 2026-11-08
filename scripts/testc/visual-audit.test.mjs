@@ -462,3 +462,63 @@ test("teclado público: recarga deve restaurar HTTP, URL, formulário vazio e ro
   ])
     assert.ok(m.publicKeyboardResetGate(value).length);
 });
+
+const escalaValida = () => ({
+  id: "SYS01", route: "/login", width: 390, theme: "light", mode: "TEXT_200",
+  http: 200, pathExact: true, langPtBr: true, h1: 1, targetsComplete: true,
+  formsEmpty: true, overflowX: 0, clipped: 0, blockedMutations: 0, pageErrors: 0,
+  rootBefore: 16, rootAfter: 32, sampleBefore: 2, sampleAfter: 2,
+  measurements: [{ index: 0, before: 14, after: 28, matched: true }, { index: 1, before: 16, after: 32, matched: true }],
+  screenshot: "screenshots/SYS01_390_light_TEXT_200.png", sha256: "a".repeat(64),
+});
+
+test("refluxo/texto: 18 casos públicos separados preservam os 232 casos base", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.publicScaleCases, "function");
+  const extra = m.publicScaleCases();
+  assert.equal(extra.length, 18);
+  assert.equal(new Set(extra.map(x => `${x.id}:${x.theme}:${x.mode}:${x.width}`)).size, 18);
+  assert.deepEqual([...new Set(extra.map(x => x.id))], ["SYS01", "SYS02", "SYS03"]);
+  assert.equal(extra.filter(x => x.mode === "REFLOW_320" && x.width === 320).length, 6);
+  assert.equal(extra.filter(x => x.mode === "TEXT_200" && [390, 1440].includes(x.width)).length, 12);
+  assert.equal(m.cases().length, 232);
+});
+
+test("refluxo/texto: escala real e amostra estável são obrigatórias", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.publicScaleGate, "function");
+  assert.deepEqual(m.publicScaleGate(escalaValida()), []);
+  for (const patch of [
+    { rootAfter: 16 }, { measurements: [{ index: 0, before: 14, after: 14, matched: true }] },
+    { sampleBefore: 0, sampleAfter: 0, measurements: [] }, { sampleAfter: 1 },
+    { measurements: [{ index: 0, before: 14, after: 28, matched: false }] },
+    { measurements: [{ index: 0, before: 14, after: Infinity, matched: true }] },
+    { measurements: [{ index: 0, before: NaN, after: 28, matched: true }] },
+    { measurements: [{ index: 0, before: 14, after: 28, matched: true }, { index: 0, before: 16, after: 32, matched: true }] },
+  ]) assert.notDeepEqual(m.publicScaleGate({ ...escalaValida(), ...patch }), []);
+});
+
+test("refluxo/texto: overflow, clipping, mutação e estado público incompleto falham", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.publicScaleGate, "function");
+  for (const patch of [
+    { overflowX: 2 }, { clipped: 1 }, { blockedMutations: 1 }, { pageErrors: 1 },
+    { targetsComplete: false }, { formsEmpty: false }, { http: 500 }, { pathExact: false },
+    { langPtBr: false }, { h1: 0 }, { id: "V123" }, { width: 768 }, { theme: "private" },
+    { rootAfter: Infinity }, { overflowX: NaN }, { screenshot: "../PRIVATE_CANARY" }, { sha256: "bad" },
+  ]) assert.notDeepEqual(m.publicScaleGate({ ...escalaValida(), ...patch }), []);
+  const reflow = { ...escalaValida(), width: 320, mode: "REFLOW_320", rootAfter: 16,
+    measurements: [{ index: 0, before: 14, after: 14, matched: true }, { index: 1, before: 16, after: 16, matched: true }],
+    screenshot: "screenshots/SYS01_320_light_REFLOW_320.png" };
+  assert.deepEqual(m.publicScaleGate(reflow), []);
+});
+
+test("refluxo/texto: relatório rejeita canários, números não finitos e paths arbitrários", async () => {
+  const m = await import("./visual-audit.mjs");
+  assert.equal(typeof m.sanitizePublicScaleRecord, "function");
+  const row = m.sanitizePublicScaleRecord({ ...escalaValida(), html: "PRIVATE_CANARY", password: "PRIVATE_CANARY", url: "PRIVATE_CANARY", measurements: [{ index: 0, before: 14, after: 28, matched: true, value: "PRIVATE_CANARY" }] });
+  assert(!JSON.stringify(row).includes("PRIVATE_CANARY"));
+  assert.equal(m.sanitizePublicScaleRecord({ ...escalaValida(), overflowX: Infinity }).overflowX, null);
+  assert.equal(m.sanitizePublicScaleRecord({ ...escalaValida(), screenshot: "../private.png" }).screenshot, null);
+  assert.equal(m.sanitizePublicScaleRecord({ ...escalaValida(), measurements: Array.from({ length: 513 }, (_, index) => ({ index, before: 14, after: 28, matched: true })) }).measurements.length, 0);
+});
