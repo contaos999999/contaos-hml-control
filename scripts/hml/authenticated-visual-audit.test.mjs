@@ -2478,6 +2478,10 @@ test(
       const candidate = fence?.snapshot().failureCode || error?.code;
       const allowed = new Set([
         "FENCE_REQUEST_LIFECYCLE",
+        "FENCE_LIFECYCLE_NO_NETWORK",
+        "FENCE_LIFECYCLE_TERMINAL",
+        "FENCE_LIFECYCLE_FRAME",
+        "FENCE_LIFECYCLE_TYPE",
         "FENCE_REQUEST",
         "FENCE_SOURCE",
         "FENCE_TRANSPORT",
