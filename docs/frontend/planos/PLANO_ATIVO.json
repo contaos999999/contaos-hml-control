@@ -1079,7 +1079,7 @@
       "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19"
     },
     "runtime_visual": "NOT_EXECUTED_YET",
-    "independent_build_review": "PENDING",
+    "independent_build_review": "CODIGO_APROVADO_ESCOPADO; recheck test fixture portability pending; runtime/images pending",
     "review_fixes": {
       "state": "CORRECTED_PENDING_RECHECK",
       "red_reproduction": "f6b6acd:36 PASS/2 FAIL for clipped empty input and added text",
@@ -1087,9 +1087,16 @@
         "19da4a3",
         "55ca13a"
       ],
-      "geometry_fixture": "JSDOM synthetic layout; not real browser proof",
+      "geometry_fixture": "Dependency-free unit DOM contract and synthetic geometry; not real browser/layout proof",
       "red_control_text": "680a0c5:38 PASS/1 FAIL, button text clipping",
       "green_control_text": "492852d"
+    },
+    "ci_failure_repaired": {
+      "head": "dbfc13414067fd763ada6f1ae59b80c876bd0ff5",
+      "job": 128598313295,
+      "cause": "Unit geometry imported jsdom before dependency installation",
+      "fix": "Keep all negatives in a dependency-free DOM contract fixture;39/39 pass in isolated directory without node_modules",
+      "runtime_harness_changed": false
     }
   }
 }

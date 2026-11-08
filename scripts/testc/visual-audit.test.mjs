@@ -664,13 +664,45 @@ test("refluxo/texto: coleção incompleta, duplicada ou com FAIL não recebe PAS
   assert.equal(m.publicScaleCollectionPass([{ ...rows[0], clipped: 1 }, ...rows.slice(1)]), false);
 });
 
-async function publicScaleDOMFixture(snapshot, html) {
-  const { JSDOM } = await import("jsdom");
+async function publicScaleDOMFixture(snapshot, kind) {
   const { runInNewContext } = await import("node:vm");
-  const dom = new JSDOM(`<html style="font-size:16px"><body>${html}</body></html>`, {
-    url: "http://127.0.0.1:4173/login",
-  });
-  const win = dom.window;
+  // Contract-only geometry fixture: no browser/layout claim and no external dependency.
+  class Element {
+    constructor(tag, text = "") {
+      this.tag = tag;
+      this.text = text;
+      this.isConnected = true;
+      this.namespaceURI = "http://www.w3.org/1999/xhtml";
+      this.style = { fontSize: "14px" };
+      this.value = "";
+      this.parentElement = null;
+    }
+    closest(selector) {
+      if (selector === ".sr-only" || selector === "script,style,svg") return null;
+      return this;
+    }
+    matches(selector) {
+      return selector.split(",").includes(this.tag);
+    }
+    append(el) {
+      el.parentElement = this;
+      nodes.push(el);
+    }
+    set textContent(text) {
+      this.text = text;
+    }
+  }
+  class Input extends Element {
+    constructor() {
+      super("input");
+    }
+  }
+  const nodes = [],
+    html = new Element("html"),
+    body = new Element("body");
+  html.style.fontSize = "16px";
+  body.parentElement = html;
+  const range = { getClientRects: () => [] };
   const rect = (left = 0, width = 200) => ({
     left,
     top: 0,
@@ -683,26 +715,70 @@ async function publicScaleDOMFixture(snapshot, html) {
     el.getClientRects = () => [rect(left, width)];
     el.getBoundingClientRect = () => rect(left, width);
     el.checkVisibility = () => true;
-    for (const [key, value] of Object.entries({
+    Object.assign(el, {
       clientWidth: width,
       clientHeight: 20,
       clientLeft: 0,
       clientTop: 0,
       scrollHeight: 20,
-    }))
-      Object.defineProperty(el, key, { configurable: true, value });
-    el.style.fontSize = "14px";
+    });
   }
-  for (const el of win.document.querySelectorAll("body *")) geometry(el);
-  win.Range.prototype.getClientRects = () => [];
+  const box = new Element("div"),
+    field = new Input(),
+    paragraph = new Element("p", "Texto sintético"),
+    button = new Element("button", "Texto sintético longo");
+  if (kind === "input") {
+    box.style.overflowX = "hidden";
+    body.append(box);
+    box.append(field);
+  } else if (kind === "button") {
+    button.style.overflowX = "hidden";
+    body.append(button);
+  } else body.append(paragraph);
+  for (const el of [html, body, ...nodes]) geometry(el);
+  const document = {
+    documentElement: html,
+    body,
+    querySelector(selector) {
+      return selector === "#box"
+        ? box
+        : selector === "#field" || selector === "input"
+          ? field
+          : selector === "button"
+            ? button
+            : null;
+    },
+    querySelectorAll(selector) {
+      return nodes.filter((el) => el.matches(selector));
+    },
+    createElement(tag) {
+      return new Element(tag);
+    },
+    createRange() {
+      return { selectNodeContents() {}, getClientRects: () => range.getClientRects() };
+    },
+    createTreeWalker() {
+      const texts = nodes
+        .filter((el) => el.text)
+        .map((el) => ({ textContent: el.text, parentElement: el }));
+      let i = 0;
+      return {
+        nextNode() {
+          this.currentNode = texts[i++];
+          return Boolean(this.currentNode);
+        },
+      };
+    },
+  };
+  const win = { document, Range: { prototype: range } };
   const globals = {
     window: win,
-    document: win.document,
-    HTMLElement: win.HTMLElement,
-    HTMLInputElement: win.HTMLInputElement,
-    NodeFilter: win.NodeFilter,
-    getComputedStyle: win.getComputedStyle.bind(win),
-    location: win.location,
+    document,
+    HTMLElement: Element,
+    HTMLInputElement: Input,
+    NodeFilter: { SHOW_TEXT: 4 },
+    getComputedStyle: (el) => el.style,
+    location: { pathname: "/login", origin: "http://127.0.0.1:4173" },
     innerWidth: 320,
   };
   return {
@@ -710,17 +786,14 @@ async function publicScaleDOMFixture(snapshot, html) {
     geometry,
     capture: (phase) =>
       runInNewContext(`(${snapshot.toString()})(${JSON.stringify(phase)})`, globals),
-    close: () => win.close(),
+    close() {},
   };
 }
 
 test("refluxo/texto: input vazio cortado por ancestral restritivo é detectado", async () => {
   const m = await import("./visual-audit.mjs");
   assert.equal(typeof m.capturePublicScaleDOM, "function");
-  const f = await publicScaleDOMFixture(
-    m.capturePublicScaleDOM,
-    '<div id="box" style="overflow-x:hidden"><input id="field"></div>',
-  );
+  const f = await publicScaleDOMFixture(m.capturePublicScaleDOM, "input");
   try {
     f.geometry(f.win.document.querySelector("#box"), 0, 100);
     f.geometry(f.win.document.querySelector("#field"), 50, 100);
@@ -752,10 +825,7 @@ test("refluxo/texto: novo texto posterior invalida a identidade da amostra", asy
 
 test("refluxo/texto: caixa do botão não esconde clipping do texto interno", async () => {
   const m = await import("./visual-audit.mjs");
-  const f = await publicScaleDOMFixture(
-    m.capturePublicScaleDOM,
-    '<button style="overflow-x:hidden">Texto sintético longo</button>',
-  );
+  const f = await publicScaleDOMFixture(m.capturePublicScaleDOM, "button");
   try {
     f.geometry(f.win.document.querySelector("button"), 0, 100);
     f.win.Range.prototype.getClientRects = () => [
