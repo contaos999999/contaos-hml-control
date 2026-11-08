@@ -2203,7 +2203,8 @@ async function nativeCancellationProxy(realPort, canceledUrl) {
     rejected = Promise.withResolvers();
   const peers = new Set(),
     upstreams = new Set(),
-    network = new Map();
+    network = new Map(),
+    observations = [];
   let paused, command, upstreamForHeld, proxyPort;
   const server = createHttpServer((req, res) => {
     if (req.url !== "/json/version") return void res.writeHead(404).end();
@@ -2233,7 +2234,9 @@ async function nativeCancellationProxy(realPort, canceledUrl) {
       const text = String(data),
         event = JSON.parse(text);
       if (event.method === "Network.requestWillBeSent")
-        network.set(event.params.requestId, event.params);
+        network.set(event.sessionId + "|" + event.params.requestId, event.params);
+      if (event.method === "Fetch.requestPaused" && observations.length < 32)
+        observations.push({ ...event.params, sessionId: event.sessionId });
       if (
         event.method === "Fetch.requestPaused" &&
         event.params.request.url === canceledUrl &&
@@ -2277,7 +2280,31 @@ async function nativeCancellationProxy(realPort, canceledUrl) {
     terminal: terminal.promise,
     rejected: rejected.promise,
     request() {
-      return { paused, network: network.get(paused?.networkId) };
+      return { paused, network: network.get(paused?.sessionId + "|" + paused?.networkId) };
+    },
+    metadata() {
+      return observations.flatMap((p) => {
+        const n = network.get(p.sessionId + "|" + p.networkId);
+        if (!n) return [];
+        return [
+          "# NATIVE_LIFECYCLE_META " +
+            n.type +
+            " " +
+            p.resourceType +
+            " " +
+            p.request.method +
+            " " +
+            (p.responseStatusCode !== undefined || p.responseErrorReason !== undefined
+              ? "RESPONSE"
+              : "REQUEST") +
+            " " +
+            Number(!!n.frameId) +
+            " " +
+            Number(!!n.frameId && n.frameId === p.frameId) +
+            " " +
+            Number(!!n.loaderId),
+        ];
+      });
     },
     release() {
       assert.ok(command);
@@ -2324,6 +2351,29 @@ test("diagnóstico de tipos nativos aceita somente enums CDP sem conteúdo", () 
     null,
   );
   assert.equal(fn("nativeCancellationTypes")("# NATIVE_CANCEL_TYPES Other Fetch extra"), null);
+});
+
+test("diagnóstico de vínculo nativo não publica identificadores nem texto livre", () => {
+  assert.deepEqual(
+    fn("nativeLifecycleMetadata")("# NATIVE_LIFECYCLE_META Preflight Other OPTIONS REQUEST 0 0 0"),
+    [
+      {
+        network: "Preflight",
+        fetch: "Other",
+        method: "OPTIONS",
+        stage: "REQUEST",
+        networkFramePresent: false,
+        sameFrame: false,
+        loaderPresent: false,
+      },
+    ],
+  );
+  assert.deepEqual(
+    fn("nativeLifecycleMetadata")(
+      "# NATIVE_LIFECYCLE_META Preflight Other pessoa@example.com REQUEST 0 0 0",
+    ),
+    [],
+  );
 });
 
 test(
@@ -2504,6 +2554,9 @@ test(
         "FENCE_CDP_CLOSED",
       ]);
       t.diagnostic("NATIVE_CANCEL_FAILURE " + (allowed.has(candidate) ? candidate : "OTHER"));
+      for (const line of proxy?.metadata() || []) {
+        if (fn("nativeLifecycleMetadata")(line).length) t.diagnostic(line.slice(2));
+      }
       const observed = proxy?.request();
       const types = fn("nativeCancellationTypes")(
         "# NATIVE_CANCEL_TYPES " + observed?.network?.type + " " + observed?.paused?.resourceType,
