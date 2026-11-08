@@ -1,3 +1,28 @@
+# Continuidade P0: privacidade integrada, descoberta V109 e workflow bloqueado
+
+Checkpoint de08/11/2026, frontend base `574619615e4901ba187616bce65010590f277333` e backend normativo `4bda8189de1e3b3d18ffe74e1db5574d8405284c`. Revalidar refs vivos antes de agir. Esta PR contém somente este checkpoint, PLANO_ATIVO.json e CONTEXT_CANONICO_4_1_SNAPSHOT.json, preservando currentPLAN, os metadados das três trilhas e todo o histórico abaixo. Sua CI/revisão/integração ainda não é presumida.
+
+## Etapas comprovadas
+
+- PR382 integrada em `5f3bc0837a49c716a3041846c7a4cc3d1a939496`, HEAD final `e9bd82bdd4c05f814f2ccc44a229517add4549ef`, preservando o código revisado3b140 com merge documental. Auth42536287873, Fixtures42536287792, Zero-Drift42536287799 e LOCK42536287715 SUCCESS; revisão independente5820207268 e coordenador6728823611. Sete contratos GET fechados,224PASS/9SKIP Node e oito provas nativas causais mais uma visual de browser separada. Sem Auth ou nova auditoria HML. Isso não reclassifica casos Run78 como PASS.
+- PR386 discovery integrada em `8b593c58579810226c61dcaf68ea18881454b934`; GATE de aceitação389 integrado em `574619615e4901ba187616bce65010590f277333`. Uma única leitura controlada da descrição V109,79codepoints, com seis padrões sensíveis e decisão semântica independente CAMPO_TECNICO_SEM_PII, registrada no recibo enum-only6728837051. Nenhum raw desconhecido foi publicado; este checkpoint não repetiu a leitura. O GATE389 delimita dois intervalos técnicos, GET/DTO/âncoras/geração exatos e exige BUILD separado com TDD/revisão/CI antes de TesteC. SYS04/V123/V112 continuam fora dessa autorização específica. Não ampliar dicionário nem liberar caso por presunção.
+- PR387 reancoragem integrada em `10a2992e71f6afed366f59f188b5616dad2c3a42`:25/25blobs canônicos, catálogo100/97 e types.ts certificado iguais no normativof25. A prova é a conferência documental já registrada, sem repetir testes públicos nem alegar nova investigação de schema/RPC/RLS. Essa conferênciaf25 permanece histórica; currentPLAN e TrilhaC preservados.
+
+
+A revalidação pré-escrita detectou avanço backend PR183 para `4bda8189de1e3b3d18ffe74e1db5574d8405284c`. GitHub GET individual confirmou novamente25/25blobs e catálogo100/97 iguais, types imutável igual. Snapshot e ack avançam juntos para4bda. Deltaf25→4bda: somente PLANscopequota e active-task, lidos semanticamente; GATE de catálogo exato de nove funções futuras, sem glob ou exclusão do catálogo real, provas nativas de owner/assinatura/ACL/bodyMD5/EXECUTE/Restore exigidas. Nenhum SQL/Edge/guard foi implementado por esse delta documental, e não se atribui publicação/certificação HML. CI/revisão desta reancoragem continuam obrigatórias, sem bypass do gate de fonte viva.
+
+## PR388 bloqueada e próxima tarefa
+
+PR388 continua OPEN/BLOQUEADA no snapshot revisado `2683d2d128d072278a3ae763d3c08bbec176296d`; autora está corrigindo. Revisão independente5820251906 identificou RQ02 CRITICAL: checkout e execução do SHA do evento antes de barreira nativa de confiança, permitindo que código não confiável falsifique o output que seleciona job privado; e RQ01 IMPORTANT: ausência de prova do PR integrado de solicitação por metadados, apesar dos pais/diffJSON. Não integrar ou executar nesse estado. O parecer REQUEST_CHANGES foi tecnicamente recusado pelo GitHub por usar a conexão do mesmo ator autor; COMMENT preserva explicitamente o bloqueio, sem aprovação. Novo HEAD exige rechecagem independente, CI/nativos e correções demonstradas antes de merge.
+
+Nenhuma solicitação JSON foi criada e nenhuma preparação de fixtures ou evento HML foi executado por este trabalho. PLAN380/GATE383 e GATE367/368/370 continuam íntegros. Próximas ações: concluir os fixes388 e rever o HEAD final; BUILDV109 somente no escopo389 integrado, com RED/GREEN/CI/revisão; depois cumprir proveniência/identidade HML e demais gates antes de solicitação e execução, em fases separadas. Não fornecer token Actions a build/browser, nem secrets a código de evento não validado. Conservar concorrência HML, sandbox e políticas existentes.
+
+Última auditoria autenticada permanece Run78/42511641527:184originais não fechados,24combinações de fixture separadas,18provas públicas preservadas,72critérios/WCAG integral/V1 NÃO CERTIFICADOS. Preparador373 integrado não equivale a fixture criada; privacidade382 integrada não equivale a nova captura. Nenhum resultado Sandbox é TesteC. Continuar desenvolvimento sem repetir provas válidas; a conversa está longa e este registro preserva a continuidade, sem recomendar interrupção.
+
+Escopo documental exato: CONTEXT_CANONICO_4_1_SNAPSHOT.json, PLANO_ATIVO.json e ESTADO_E_RETOMADA_CONTAOS_4_1.md. Sem código/workflow/env/dependências/tipos/Auth/backend/PROD; impacto visual N/A justificado. CI e revisão do coordenador antes do merge protegido; rollback documental por PR sem apagar evidências. O autor deste checkpoint não fará merge.
+
+---
+
 # Continuidade P0: preparador integrado e reancoragem canônica documental
 
 Snapshot de 08/11/2026, refs vivos conferidos por GitHub GET antes da escrita: frontend `5dc57275d6e95f066ec751fad7a0af50005ab17f`, backend normativo `f25f654f0cba5bae45e817c0fd4b6c3fb22bf994`. Este registro antecede sua própria CI/revisão/integração; não declara a PR documental integrada. Preserva integralmente abaixo os checkpoints anteriores, inclusive candidatos373 antigos como histórico, e mantém o current PLAN e os metadados da Trilha C.
