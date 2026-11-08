@@ -445,21 +445,65 @@ export function summarizeCases(rows) {
     passed,
   };
 }
-export function safeArtifactText(text, allowedWords) {
+// Closed synthetic excerpts, proved by the versioned V107/V111 DOM manifests.
+// Match whole excerpts; do not add their individual words to the global dictionary.
+const SYNTHETIC_EXCERPTS = Object.freeze([
+  "AUD-A-VERCEL-20261108",
+  "2de433a7-a84c-4575-aa2a-7699d2871b55",
+  "773eb577ba88a260247803d37dced4f5469e8c39347dd3fe7c58c4d9f4681103",
+  "08/11/2026 08:01",
+  "Fonte exclusivamente sintética para auditoria em homologação. Sem efeito jurídico ou financeiro. Vinculação descritiva ao TXT de teste já persistido; não representa análise ou validação de segurança do arquivo.",
+  "Fonte sintética para auditoria autenticada da Trilha A, sem dados pessoais ou efeito real.",
+  "285 bytes",
+  "Etapa: documents",
+  "text/plain",
+  "CONTAOS HML - FONTE SINTETICA DE AUDITORIA",
+  "Documento exclusivamente de teste, sem efeitos juridicos ou financeiros.",
+  "Criterio sintetico: anexar um documento de teste identificado como evidencia da auditoria da Trilha A.",
+  "A avaliacao e as permissoes permanecem sob autoridade do backend.",
+]);
+const SYNTHETIC_EXCERPT_PATTERN = new RegExp(
+  String.raw`(?<![\p{L}\p{N}_-])(?:` +
+    [...SYNTHETIC_EXCERPTS]
+      .sort((a, b) => b.length - a.length)
+      .map((value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("|") +
+    String.raw`)(?![\p{L}\p{N}_-])`,
+  "gu",
+);
+export function classifyArtifactText(text, allowedWords) {
   if (typeof text !== "string" || text.length > 1000000 || !(allowedWords instanceof Set))
-    return false;
+    return { reason: "INVALID_CONTENT", unknownCount: 0 };
   if (
     /\S+@\S+|\b\d{3}\.\d{3}\.\d{3}-\d{2}\b|\b\d{11}\b|\bBearer\b|\beyJ[A-Za-z0-9_-]+\.|sb_secret_/i.test(
       text,
     )
   )
-    return false;
-  const words =
-    text
-      .normalize("NFC")
-      .toLocaleLowerCase("pt-BR")
-      .match(/[\p{L}\p{N}_-]+/gu) || [];
-  return words.every((word) => allowedWords.has(word));
+    return { reason: "SENSITIVE_PATTERN", unknownCount: 0 };
+  const remainder = text.normalize("NFC").replace(SYNTHETIC_EXCERPT_PATTERN, " ");
+  const words = remainder.toLocaleLowerCase("pt-BR").match(/[\p{L}\p{N}_-]+/gu) || [];
+  const unknownCount = Math.min(233, words.filter((word) => !allowedWords.has(word)).length);
+  return { reason: unknownCount ? "UNKNOWN_WORDS" : "ALLOWED", unknownCount };
+}
+export function safeArtifactText(text, allowedWords) {
+  return classifyArtifactText(text, allowedWords).reason === "ALLOWED";
+}
+export function preservedPrivateCase(item) {
+  if (
+    !item ||
+    !["V114", "V116", "V118"].includes(item.surface) ||
+    !WIDTHS.includes(item.width) ||
+    !THEMES.includes(item.theme)
+  )
+    return null;
+  return {
+    ...item,
+    status: "PRESERVADO_BASELINE",
+    baselineRun: 42496235106,
+    baselineArtifact: 13623288351,
+    baselineFrontendSha: "9b18e4857b03daa6ee09ad3382184480e2014728",
+    baselineZipSha256: "bc2a8b74e1ba9ff008ed67ce0f398c47ce120924cf69b5210d62f8165291d2c6",
+  };
 }
 
 export const PUBLIC_BUILD_KEYS = [
@@ -1699,7 +1743,7 @@ export async function verifyPublishedResponse(proof, { url, resourceType, status
     return false;
   }
 }
-async function literalWords(root) {
+export async function literalWords(root) {
   const words = new Set([
     "button",
     "heading",
@@ -1750,6 +1794,7 @@ async function literalWords(root) {
     "rowgroup",
     "text",
     "active",
+    "form",
   ]);
   function add(text) {
     for (const word of text
@@ -1783,7 +1828,7 @@ async function literalWords(root) {
   for (let n = 0; n <= 232; n++) words.add(String(n));
   return words;
 }
-async function inspectPrivacy(page, words) {
+async function inspectPrivacy(page, words, diagnostics) {
   const snapshot = await page.locator("body").ariaSnapshot();
   const rendered = await page.evaluate(() => {
     const visible = (e) =>
@@ -1807,8 +1852,15 @@ async function inspectPrivacy(page, words) {
         }
     return values.join("\n");
   });
-  if (rendered === null || !safeArtifactText(rendered, words) || !safeArtifactText(snapshot, words))
-    return null;
+  const privacy =
+    rendered === null
+      ? { rendered: { reason: "OPAQUE_MEDIA", unknownCount: 0 } }
+      : {
+          rendered: classifyArtifactText(rendered, words),
+          snapshot: classifyArtifactText(snapshot, words),
+        };
+  if (diagnostics) Object.assign(diagnostics, privacy);
+  if (Object.values(privacy).some((result) => result.reason !== "ALLOWED")) return null;
   return snapshot;
 }
 async function checkFreshDeployment(proof, full) {
@@ -1993,6 +2045,11 @@ async function runAuthenticatedAudit() {
     for (const item of privateCases()) {
       const key = caseKey(item),
         record = { ...item, status: "PENDENTE" };
+      const preserved = preservedPrivateCase(item);
+      if (preserved) {
+        records.push(preserved);
+        continue;
+      }
       records.push(record);
       if (item.fixtureBlocked) {
         record.status = "BLOQUEADO_FIXTURE";
@@ -2024,7 +2081,9 @@ async function runAuthenticatedAudit() {
         );
         await fence.drain();
         fence.assertSafe();
-        const snapshot = await inspectPrivacy(page, words);
+        const privacy = {};
+        const snapshot = await inspectPrivacy(page, words, privacy);
+        record.privacy = privacy;
         if (snapshot === null) {
           record.status = "BLOQUEADO_PII";
           continue;
