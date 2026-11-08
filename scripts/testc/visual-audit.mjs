@@ -632,7 +632,9 @@ async function requiredPublicScaleTargets(page, item) {
       (await visible(page.getByRole("button", { name: "Enviar link", exact: true })))
     );
   return (
-    (await visible(page.locator("p").filter({ hasText: /^Validando link de redefinição(?:…|\.\.\.)$/ }))) ||
+    (await visible(
+      page.locator("p").filter({ hasText: /^Validando link de redefinição(?:…|\.\.\.)$/ }),
+    )) ||
     ((await visible(page.getByRole("alert"))) &&
       (await visible(page.getByRole("link", { name: "Solicitar novo link", exact: true }))))
   );
