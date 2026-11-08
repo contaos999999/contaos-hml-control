@@ -1743,7 +1743,21 @@ export async function installNativeFence({
         fail("FENCE_NOT_PROVEN");
     },
     async drain() {
-      for (let i = 0; active.size && i < 100; i++) await Promise.allSettled([...active]);
+      const deadline = performance.now() + 10000;
+      for (;;) {
+        if (state.failed || closed) fail(state.failureCode || "FENCE_CDP_CLOSED");
+        const activity = lifecycle.snapshot();
+        if (active.size === 0 && activity.active === 0 && activity.pendingNetwork === 0) {
+          if (state.failed || closed) fail(state.failureCode || "FENCE_CDP_CLOSED");
+          return;
+        }
+        const remaining = deadline - performance.now();
+        if (remaining <= 0) {
+          invalidate({ code: "FENCE_DRAIN_TIMEOUT" });
+          fail("FENCE_DRAIN_TIMEOUT");
+        }
+        await new Promise((resolve) => setTimeout(resolve, Math.min(10, remaining)));
+      }
     },
     close() {
       closed = true;
@@ -2224,6 +2238,7 @@ export function nativeCancellationFailure(tap) {
   if (typeof tap !== "string" || tap.length > 1048576) return null;
   const allowed = new Set([
     "FENCE_REQUEST_LIFECYCLE",
+    "FENCE_DRAIN_TIMEOUT",
     "FENCE_LIFECYCLE_NO_NETWORK",
     "FENCE_LIFECYCLE_TERMINAL",
     "FENCE_LIFECYCLE_FRAME",
@@ -3179,7 +3194,10 @@ export async function writeBlockedPreflight(input, output = resolve("artifacts/t
 export async function settledFenceSnapshot(fence) {
   // The browser can report navigation failure before Fetch.failRequest is
   // acknowledged. Wait for our pending checks before describing fence state.
-  await fence?.drain();
+  // Diagnostic inspection cannot authorize navigation. The ordinary drain stays strict.
+  try {
+    await fence?.drain();
+  } catch {}
   return fence?.snapshot();
 }
 export function classifyRuntimeError(error = {}) {
@@ -3241,6 +3259,7 @@ export function runtimeDiagnostics(input = {}) {
   const failures = new Set([
     "FENCE_REQUEST",
     "FENCE_REQUEST_LIFECYCLE",
+    "FENCE_DRAIN_TIMEOUT",
     "FENCE_LIFECYCLE_NO_NETWORK",
     "FENCE_LIFECYCLE_TERMINAL",
     "FENCE_LIFECYCLE_FRAME",

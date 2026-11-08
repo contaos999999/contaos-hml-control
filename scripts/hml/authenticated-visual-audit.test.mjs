@@ -1341,7 +1341,7 @@ test("resposta adulterada é negada no CDP antes de continuar execução", async
         timer.unref();
       }),
     ]);
-    await fence.drain();
+    await fn("settledFenceSnapshot")(fence);
     assert.equal(fence.snapshot().failed, true);
     assert.equal(closed, 1);
     assert.equal(
@@ -1392,7 +1392,7 @@ test("worker novo permanece pausado e invalida o contexto", async () => {
         timer.unref();
       }),
     ]);
-    await fence.drain();
+    await fn("settledFenceSnapshot")(fence);
     assert.equal(fence.snapshot().failed, true);
     assert.equal(fence.snapshot().workersPaused, 1);
     assert.equal(closed, 1);
@@ -1478,7 +1478,7 @@ test(
           timer.unref();
         }),
       ]);
-      await fence.drain();
+      await fn("settledFenceSnapshot")(fence);
       assert.equal(fence.snapshot().failed, true);
       t.diagnostic("NATIVE_SOURCE_FAILURE " + fence.snapshot().failureCode);
       const ordering = proxy.sourceOrdering();
@@ -1687,7 +1687,8 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
               timer.unref();
             }),
           ]);
-        await fence?.drain();
+        if (mode === "worker" || mode === "popup") await fn("settledFenceSnapshot")(fence);
+        else await fence?.drain();
         if (mode === "worker") {
           assert.ok(fence.snapshot().workersPaused > 0);
           assert.equal(fence.snapshot().failureCode, "FENCE_WORKER_PAUSED");
@@ -2649,7 +2650,7 @@ test(
       canary.closeIdleConnections();
       Object.assign(traffic, { connections: 0, bytes: 0, requests: 0 });
       await page.addScriptTag({ url: origin + "/altered.js" }).catch(() => {});
-      await fence.drain();
+      await fn("settledFenceSnapshot")(fence);
       assert.equal(fence.snapshot().failed, true);
       assert.equal(fence.snapshot().failureCode, "FENCE_SOURCE");
       assert.deepEqual(
@@ -2661,6 +2662,7 @@ test(
       const candidate = fence?.snapshot().failureCode || error?.code;
       const allowed = new Set([
         "FENCE_REQUEST_LIFECYCLE",
+        "FENCE_DRAIN_TIMEOUT",
         "FENCE_LIFECYCLE_NO_NETWORK",
         "FENCE_LIFECYCLE_TERMINAL",
         "FENCE_LIFECYCLE_FRAME",
@@ -3357,6 +3359,122 @@ test("FetchID reservado tampouco entra pelo caminho sem NetworkID", async () => 
   assert.equal(f.tracker.snapshot().pendingNetwork, 0);
 });
 
+async function emitOutstandingNetwork(fixture, fence, requestId = "outstanding") {
+  fixture.emit({
+    method: "Network.requestWillBeSent",
+    sessionId: "initial-session",
+    params: {
+      requestId,
+      frameId: "main-frame",
+      loaderId: "fixture-loader",
+      type: "Fetch",
+      timestamp: 1,
+      request: { url: HML + "/", method: "GET" },
+    },
+  });
+  for (let i = 0; i < 1000 && !fence.snapshot().activeNetworkRequests; i++)
+    await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(fence.snapshot().activeNetworkRequests > 0);
+}
+test("drain aguarda evento terminal Network antes de permitir navegação", async () => {
+  const fixture = await cdpFixture();
+  let fence;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {},
+      verifyResponse: async () => true,
+    });
+    await emitOutstandingNetwork(fixture, fence);
+    let returned = false;
+    const waiting = fence.drain().then(() => {
+      returned = true;
+    });
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(returned, false);
+    fixture.emit({
+      method: "Network.loadingFinished",
+      sessionId: "initial-session",
+      params: { requestId: "outstanding" },
+    });
+    await waiting;
+    assert.equal(fence.snapshot().activeNetworkRequests, 0);
+  } finally {
+    fence?.close();
+    await fixture.close();
+  }
+});
+test("drain tem deadline global10s que outro evento não renova", { timeout: 15000 }, async () => {
+  const fixture = await cdpFixture();
+  let fence, timer;
+  try {
+    fence = await fn("installNativeFence")({
+      debugPort: fixture.port,
+      identity: fixture.identity,
+      closeContext: async () => {},
+      verifyResponse: async () => true,
+    });
+    await emitOutstandingNetwork(fixture, fence);
+    timer = setTimeout(
+      () =>
+        fixture.emit({
+          method: "Network.requestWillBeSent",
+          sessionId: "initial-session",
+          params: {
+            requestId: "late",
+            frameId: "main-frame",
+            loaderId: "fixture-loader",
+            type: "Fetch",
+            timestamp: 2,
+            request: { url: HML + "/", method: "GET" },
+          },
+        }),
+      5000,
+    );
+    const start = performance.now();
+    await assert.rejects(fence.drain(), (e) => e.code === "FENCE_DRAIN_TIMEOUT");
+    assert.ok(performance.now() - start >= 9500 && performance.now() - start < 13000);
+    assert.equal(fence.snapshot().failureCode, "FENCE_DRAIN_TIMEOUT");
+  } finally {
+    clearTimeout(timer);
+    fence?.close();
+    await fixture.close();
+  }
+});
+for (const condition of ["close", "fatal"])
+  test("drain não permite avanço após " + condition, async () => {
+    const fixture = await cdpFixture();
+    let fence;
+    try {
+      fence = await fn("installNativeFence")({
+        debugPort: fixture.port,
+        identity: fixture.identity,
+        closeContext: async () => {},
+        verifyResponse: async () => true,
+      });
+      await emitOutstandingNetwork(fixture, fence);
+      const waiting = fence.drain().then(
+        () => null,
+        (e) => e,
+      );
+      if (condition === "close") fence.close();
+      else
+        fixture.emit({
+          method: "Network.requestWillBeSent",
+          sessionId: "initial-session",
+          params: {
+            requestId: "outstanding",
+            type: "Fetch",
+            request: { url: HML + "/", method: "GET" },
+          },
+        });
+      assert.ok((await waiting)?.code);
+    } finally {
+      fence?.close();
+      await fixture.close();
+    }
+  });
 test("prova de drenagem nativa não aceita identificadores ou conteúdo", () => {
   assert.deepEqual(fn("nativePreflightDrain")("# NATIVE_PREFLIGHT_DRAIN 1 0 1"), {
     originalOptionsObserved: true,
@@ -3364,4 +3482,31 @@ test("prova de drenagem nativa não aceita identificadores ou conteúdo", () => 
     activeNetworkBeforeRelease: true,
   });
   assert.equal(fn("nativePreflightDrain")("# NATIVE_PREFLIGHT_DRAIN 1 pessoa@example.com 1"), null);
+});
+
+test("snapshot diagnóstico de falha não autoriza navegação", async () => {
+  let navigated = false;
+  const fence = {
+    drain: async () => {
+      throw Object.assign(new Error("FENCE_SOURCE"), { code: "FENCE_SOURCE" });
+    },
+    snapshot: () => ({ failed: true, failureCode: "FENCE_SOURCE" }),
+    assertSafe: () => {
+      throw Error("failed");
+    },
+  };
+  assert.equal((await fn("settledFenceSnapshot")(fence)).failureCode, "FENCE_SOURCE");
+  await assert.rejects(
+    fn("navigateVerifiedPage")(
+      {
+        waitForLoadState: async () => {},
+        goto: async () => {
+          navigated = true;
+        },
+      },
+      fence,
+      HML + "/",
+    ),
+  );
+  assert.equal(navigated, false);
 });
