@@ -1,3 +1,13 @@
+## Trilha A: PLAN #332 integrado; GATE autenticado proposto
+
+PLAN #332 efetivamente integrado em `52f6fa95e0f9399f44471296d878aee3492de377`, HEAD `fc4b86e70f143f3b827827094ac9a6ee5e4afe74`, CI 42474481317 e LOCK 42474481247 SUCCESS. Leitura do PLAN na main confirmou a integração. HML `dpl_FndVxKraPqQHiaS8egANanm8MtiU` READY, vinculado ao mesmo SHA. PRs #326 e #328 encerrados sem merge, substituídos pelo #330; branches e histórico preservados.
+
+Investigação sem credenciais: os metadados públicos VITE_VERCEL explicam 13 caminhos diferentes. O rebuild Bun 1.4.4 com lock congelado e 19 valores públicos reproduziu 110/110 módulos descobertos no HML. SSR de login com quatro scripts; normalização restrita de dois timestamps AST coincide. Manifesto build-parity-discovery.json. Trata-se de descoberta exploratória, sem certificar parser, proteção nativa ou casos privados. Nenhum arquivo env, produto ou configuração Vercel alterado.
+
+GATE separado P0_TRILHA_A_AUTENTICADA_GATE_2026-11-08.md fecha proveniência, transporte, fixtures e TDD. Revisão independente documental aprovável, sem Critical/Important; CI e merge ainda pendentes neste registro. Backend normativo a1ecb485, 25/25 blobs e catálogo iguais, snapshot/ack atualizados juntos; BUILD somente após sua integração. Há até 184 combinações privadas candidatas, ainda sujeitas a autenticação, PII e proveniência; 24 de V117/V119/V120 dependem de estados reais ainda ausentes. Não fabricar PASS. V1, WCAG, 72 critérios e 232 casos continuam pendentes; PROD proibido.
+
+---
+
 ## Trilha A: PLAN autenticado e documento persistido observado, 08/11/2026
 
 Frontend1a24d36; deploymentHML dpl_9iFUGXPcgXdBSmXa5C5EVcqt1XCX READY/vinculado aoSHA. CI main ZeroDrift42448932672 eLOCK42448932603SUCCESS. Backendnormativo eedf922;25/25blobs ecatálogoidênticos. PLANO_ATIVO existe emdocs/frontend/planos;não usar404daraiz comoausência.
