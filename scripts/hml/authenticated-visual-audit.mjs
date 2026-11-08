@@ -2104,7 +2104,7 @@ async function runAuthenticatedAudit() {
       }
     }
   } catch (error) {
-    const fenceState = fence?.snapshot();
+    const fenceState = await settledFenceSnapshot(fence);
     diagnostic = runtimeDiagnostics({
       phase,
       errorName: error?.name,
@@ -2376,6 +2376,12 @@ export async function writeBlockedPreflight(input, output = resolve("artifacts/t
   );
 }
 
+export async function settledFenceSnapshot(fence) {
+  // The browser can report navigation failure before Fetch.failRequest is
+  // acknowledged. Wait for our pending checks before describing fence state.
+  await fence?.drain();
+  return fence?.snapshot();
+}
 export function classifyRuntimeError(error = {}) {
   const name = [
     "Error",
@@ -2404,6 +2410,7 @@ export function classifyRuntimeError(error = {}) {
     reason = "NAVIGATION_INTERRUPTED";
   else if (message.includes("net::ERR_ABORTED")) reason = "NAVIGATION_ABORTED";
   else if (message.includes("net::ERR_FAILED")) reason = "NETWORK_FAILED";
+  else if (message.includes("net::ERR_BLOCKED_BY_CLIENT")) reason = "NETWORK_BLOCKED_CLIENT";
   else if (message.includes("net::ERR_EMPTY_RESPONSE")) reason = "NETWORK_EMPTY_RESPONSE";
   else if (message.includes("net::ERR_HTTP_RESPONSE_CODE_FAILURE"))
     reason = "NETWORK_HTTP_RESPONSE";
