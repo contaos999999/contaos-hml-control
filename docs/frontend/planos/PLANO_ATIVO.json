@@ -212,7 +212,7 @@
     "local_one_table_synthetic_restore": "PASS_ESCOPADO_RUN_42168969390",
     "crud_global": "NÃO CONCLUÍDO: código de listas/capacidades/paginação integrado; validação privada e reconciliação semântica das demais operações não certificadas. Executor falhou explicitamente; nenhuma prova privada inventada."
   },
-  "p0_note": "Trilha A: PLAN318/GATE319 integrados com CI SUCCESS; RED funcional preservado, BUILD local GREEN e revisao independente aprovada; aguardar CI e merge deste BUILD. V1 nao certificada.",
+  "p0_note": "Trilha A PLAN318/GATE319/BUILD320 integrados com CI SUCCESS e revisoes independentes; checkpoint documental. Fixture real e publico PASS escopado; privadas e V1 nao certificadas.",
   "rbac_emenda_p0": {
     "plano_documento": "docs/frontend/planos/P0_V1_ADM01_RBAC_EMENDA_2026-11-06.md",
     "plan_pr": 178,
@@ -973,8 +973,8 @@
     }
   },
   "trilha_a_sidebar_router_gate": {
-    "phase": "BUILD_GREEN_LOCAL",
-    "state": "PENDENTE_CI_BUILD_MERGE",
+    "phase": "CHECKPOINT",
+    "state": "BUILD_INTEGRADO_SEM_CERTIFICACAO_GLOBAL",
     "plan_pr": 318,
     "plan_head": "99248f40a65753c86512f3fe657e4b896036ff35",
     "plan_merge": "4818e68c17799102e7ef50a8e26659e6ab07aaf2",
@@ -1013,6 +1013,18 @@
       "p0": "PASS",
       "route_tree_drift": "PASS"
     },
-    "independent_review": "APROVADO; sem Critical/Important; fixture real em memoria nao equivale HML privada/WCAG"
+    "independent_review": "APROVADO; sem Critical/Important; fixture real em memoria nao equivale HML privada/WCAG",
+    "build_pr": 320,
+    "build_head": "13b95bb288c4bc7dedbbf7604a06e7eea319650f",
+    "build_merge": "4b412e3d716021113e797d252be88db0cbc45d43",
+    "ci": 42433873794,
+    "lock_ci": 42433873807,
+    "artifact": 13598384876,
+    "artifact_sha256": "1a5d448a2963ab05b7b53a970a202ba9a1a5becb22581c8548b7d05132743636",
+    "hash_entries": 263,
+    "public_pass": 24,
+    "protected_no_session": 208,
+    "visual_review": "Revisão visual independente inspecionou40PNG reais:24públicas individuais e16amostras de foco dos8controles únicos em390escuro/1440claro, semCritical/Important. Minor: tooltipMostrarSenha sobrepõe temporariamente parteEsqueciSenha, mantendo alvo visível; sem evidência de introdução pelo delta. Sem baseline pareado. SYS03 comprova apenasValidandoLink, não redefinição efetiva.",
+    "tested_synthetic_merge": "cbcded828d94492913e13118a62fcafbb867b74c"
   }
 }
