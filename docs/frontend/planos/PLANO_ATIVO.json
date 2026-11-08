@@ -42,8 +42,8 @@
     "docs/frontend/planos/P0_V114_FIXTURES_RPC_COMPARTILHADA_2026-11-08.md",
     "src/test/competenciaApresentar.test.tsx",
     "src/test/competenciaParecer.test.tsx",
-    "scripts/testc/authenticated-visual-audit.mjs",
-    "scripts/testc/authenticated-visual-audit.test.mjs",
+    "scripts/hml/authenticated-visual-audit.mjs",
+    "scripts/hml/authenticated-visual-audit.test.mjs",
     ".github/workflows/contaos-trilha-a-authenticated.yml",
     "docs/frontend/planos/P0_TRILHA_A_AUTENTICADA_GATE_2026-11-08.md"
   ],
@@ -1103,8 +1103,8 @@
     }
   },
   "trilha_a_auth_audit": {
-    "phase": "GATE",
-    "state": "GATE_PROPOSTO_BUILD_BLOQUEADO_ATE_CI_MERGE",
+    "phase": "GATE_AMENDMENT",
+    "state": "LOCALIZACAO_PROPOSTA_CI_PENDENTE_SEM_RUNNER",
     "plan_document": "docs/frontend/planos/P0_TRILHA_A_AUTENTICADA_PLAN_2026-11-08.md",
     "frontend_baseline": "1a24d36fd4a19a1fe70ccf9099aaa11a6d31ac5e",
     "backend_normative": "a1ecb48546e1298d1d35e4f4e4d8b76d4eb59e57",
@@ -1113,8 +1113,8 @@
     "private_unproven": 208,
     "brand_criteria": 72,
     "future_paths_only_after_separate_gate": [
-      "scripts/testc/authenticated-visual-audit.mjs",
-      "scripts/testc/authenticated-visual-audit.test.mjs",
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
       ".github/workflows/contaos-trilha-a-authenticated.yml"
     ],
     "independent_plan_review": "APROVAVEL; 2Important resolvidos:PII e deployment mutável;sem Critical/Important remanescente",
@@ -1132,6 +1132,19 @@
     "blocked_fixture_combinations": 24,
     "runtime_authenticated_harness": "NOT_IMPLEMENTED",
     "candidate_fixture_combinations_maximum": 184,
-    "gate_independent_review": "APROVAVEL;0Critical/Important após4ajustes,sem autorizarloginantesprovas"
+    "gate_independent_review": "APROVAVEL;0Critical/Important após4ajustes,sem autorizarloginantesprovas",
+    "gate_pr": 333,
+    "gate_head": "e7ef8ad0fcd48e357f6ad83e62b58467d92ff9e4",
+    "gate_merge": "9fb3852cbacfebaa5011ff0b6a8d1d9f0250a068",
+    "gate_ci": [
+      42476137269,
+      42476137241
+    ],
+    "red_remote": "3fd4cfad059d433710eb5a6e0fa054c327c5d891",
+    "partial_green_remote": "5f46c82282f6c03ed5962ac26f1d907b2a065b84",
+    "partial_policy_tests": 52,
+    "partial_vitest_tests": 1165,
+    "harness_ci_required_same_head": true,
+    "path_amendment_document": "docs/frontend/planos/P0_TRILHA_A_AUTENTICADA_LOCALIZACAO_GATE_2026-11-08.md"
   }
 }
