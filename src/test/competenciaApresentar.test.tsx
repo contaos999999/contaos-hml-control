@@ -68,7 +68,7 @@ function visao(situacao = "em_analise", apresentar = true) {
       versao_registro: 2, atualizado_em: "2026-03-10T12:00:00Z",
     },
     portao: {
-      liberado: true, total: 10, avaliados: 10, pendentes: 0,
+      liberado: true, total: 10, conformes_ou_na_validos: 10, pendentes: 0,
       nao_conformes: 0, inconclusivos: 0, em_analise: 0,
       nao_conformidades_bloqueantes: 0, percentual: 100,
     },

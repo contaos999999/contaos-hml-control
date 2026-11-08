@@ -1,0 +1,125 @@
+- complementary:
+  - img "ContaOS"
+  - button "Recolher menu" [expanded]: «
+  - navigation "Navegação principal":
+    - link "Painel":
+      - /url: /
+      - generic: Painel
+    - link "Contratantes":
+      - /url: /contratantes
+      - generic: Contratantes
+    - link "Novo contratante":
+      - /url: /contratantes/novo
+      - generic: Novo contratante
+    - link "Contratos":
+      - /url: /contratos
+      - generic: Contratos
+    - link "Novo contrato":
+      - /url: /contratos/novo
+      - generic: Novo contrato
+    - link "Organizações":
+      - /url: /selecionar-organizacao
+      - generic: Organizações
+    - group "Contexto atual":
+      - paragraph: Contexto atual
+      - link "Resumo da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89
+        - generic: Resumo da competência
+      - link "Documentos da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/documentos
+        - generic: Documentos da competência
+      - link "Análise da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/analise
+        - generic: Análise da competência
+      - link "Parecer da competência":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/parecer
+        - generic: Parecer da competência
+      - link "Apresentações":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/apresentar
+        - generic: Apresentações
+      - link "Contrato da competência":
+        - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74
+        - generic: Contrato da competência
+  - navigation "Administração":
+    - link "Usuários":
+      - /url: /administracao/usuarios
+      - generic: Usuários
+    - link "Auditoria":
+      - /url: /administracao/auditoria
+      - generic: Auditoria
+- banner "Organização atual":
+  - paragraph: Organização
+  - paragraph: ContaOS HML Teste
+  - paragraph: "Situação: ativa"
+  - navigation "Ações da sessão":
+    - link "Trocar organização":
+      - /url: /selecionar-organizacao
+      - text: Trocar organização
+    - button "Sair":
+      - text: Sair
+- navigation "Navegação da página":
+  - navigation "Navegação":
+    - link "Voltar para contratos":
+      - /url: /contratos
+      - text: Voltar para contratos
+- main:
+  - heading "Competência 11/2026" [level=1]
+  - 'status "Situação: rascunho"':
+    - generic: rascunho
+  - link "Voltar para competências":
+    - /url: /contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/competencias
+    - text: Voltar para competências
+  - tablist "Áreas da competência":
+    - tab "Visão geral" [selected]
+    - tab "Documentos"
+    - tab "Análise"
+    - tab "Parecer"
+    - tab "Apresentação" [disabled]:
+      - text: Apresentação
+  - region "Estado":
+    - heading "Estado" [level=2]
+    - paragraph:
+      - text: Em preparação
+    - paragraph: Documentos e requisitos em preparação, conforme dados do backend.
+  - region "Conformidade":
+    - heading "Conformidade" [level=2]
+    - paragraph: 0,00%
+    - meter "Percentual de conformidade informado pelo backend"
+    - paragraph: "Portão: 0 de 0 avaliados · 0,00%"
+  - region "Bloqueios":
+    - heading "Bloqueios" [level=2]
+    - paragraph:
+      - text: Não liberado pelo backend
+    - term: Pendentes
+    - definition: "0"
+    - term: Não conformes
+    - definition: "0"
+    - term: Inconclusivos
+    - definition: "0"
+    - term: Em análise
+    - definition: "0"
+    - term: Não conformidades bloqueantes
+    - definition: "0"
+    - term: Parecer aprovado
+    - definition: Não
+    - term: Análise concluída (atual)
+    - definition: Não
+    - term: Aprovação de apresentação (atual)
+    - definition: Não
+  - region "Ações permitidas":
+    - heading "Ações permitidas" [level=2]
+    - list:
+      - generic: Abrir documentos
+      - text: Permitida pelo backend
+      - link "Abrir documentos":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/documentos
+      - generic: Analisar
+      - text: Permitida pelo backend
+      - link "Analisar":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/analise
+      - generic: Abrir parecer
+      - text: Permitida pelo backend
+      - link "Abrir parecer":
+        - /url: /competencias/59072760-4420-4598-82dd-367f41a79e89/parecer
+      - generic: Apresentar
+      - text: Bloqueada pelo backend

@@ -1,3 +1,13 @@
+## Checkpoint Trilha A: V114 corrigida e retestada, 08/11/2026
+
+Este bloco atualiza a fila histórica. PR330 MERGED `95ddd9cf2a81c009ac1e2fa24165b4ec16cb295d`; head `4de706cbeaefcd5d6015a3ba5685b5e6a703ca4d`, CI42447237649/42447237638 SUCCESS. Deployment `dpl_88NzSV2gnifGoADCmT1UBjXzZd54` READY vinculado a esse merge. Teste autenticado real abriu a mesma competência11/2026 anteriormente falha, preservando bloqueio de apresentação. Relatório `docs/frontend/auditorias/RETESTE_V114_PR330_2026-11-08.md` e PNG/DOM/hashes. Não repetir a correção nem criar outra fixture equivalente.
+
+Evidências históricas PR325 preservadas; conflitos de snapshot/PLANO_ATIVO resolvidos mantendo integralmente a versão main95ddd, com fonte canônica f53304f. O relato antigo de falha V114 corresponde ao deployment4510491 e não prevalece sobre este reteste. PLAN327/329 e BUILD330 integrados; PR326/328 são tentativas anteriores, não integrar.
+
+Pendências reais: auditoria autenticada formal29superfícies×4larguras×2temas=232casos e72critérios; estados de documentos/análise/drawer/parecer/apresentação não comprovados integralmente; teclado/foco/contraste/leitor de tela/zoom nativo; rechecagem SYS01 texto200%1440claro/escuro; revisão independente e checkpoint final com CI no mesmoHEAD. Observações exploratórias privadas não são PASS formal da matriz. V1 e identidade global NÃO CERTIFICADAS. TrilhaB independente; PROD proibido.
+
+---
+
 ## Checkpoint P0: comparação real de build main × HML, 08/11/2026
 
 **DIVERGÊNCIA COMPROVADA ENTRE OS ARTEFATOS COMPARADOS.** Main45104916895a1f0972ecec2eec9a541dbd4e0b97 reconstruída com Bun1.4.4/lockfile congelado, buildPASS e fontes limpas. Entryindex-CrkggL7D.js,322713bytes,SHA256f16568e5cacab8cbe739909c6c4489c18494b25c7cabcb320408811569479b8b. HML serveindex-CjzqjoMJ.js,318007bytes,SHA256cbce6433c598f440012543f62e36c5f0bef7986ed198952496bd0d7f2beccc54.108módulos publicados obtidos,1345822bytes;21caminhos+hashes coincidem com a main. Três textos do cabeçalho compartilhado existem no buildmain e estão ausentes do grafo publicado obtido; divergência corroborada pelas capturas autenticadas. Não atribuir diferenças apenas ao hash de arquivo.
