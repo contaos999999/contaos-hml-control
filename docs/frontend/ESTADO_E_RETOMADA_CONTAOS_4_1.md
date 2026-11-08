@@ -1,3 +1,15 @@
+# Continuidade P0: GATE visual integrado, preparador e privacidade em correção
+
+Main4190a0a4b7acd34a393ae62ea8010cec1dfdce7a. PLAN369 integrado87a99daaf3746baed09c5ae41ef116c591d54506 apósCI42515269407/42515269339 e revisão; GATE371 integrado4190a0a4 apósCI42516867690/42516867667 e revisão independente. Revisão integral208PNG/matriz208casos/21REDcom63hashes agora durável noGit. Manifesto relido na main, blob09e7ef18454446214a6fb72f507877aff0ed9bfd; CSVcanonizadosLF e hashes conferidos no remoto, sem substituirRun78. BUILDvisual isolado autorizado pelo GATE, não concluído ainda;6mobilebaseline afetadosMenu exigem regressão,18outrosbaseline e18públicos preservados.
+
+BUILD370 integrado daf71df6864b7186c3e95c4b55c26f0a3c274ac4 após193unitários/8nativoscausais42515457883/Zero42515457698/LOCK42515457850 e revisão. Exporta helpers e passa corpo/estágio/IDsCDP efêmeros à política síncrona, sem opção de escrita no auditor. Preparador separado ainda NÃO integrado/não executadoHML; sua revisão encontrou mistura de campos antigos e prazo tardio, corrigidos com testes de reprodução. Fundação/orquestração em integração local sobGATE367/368.36unitários de protocolo/guardas PASS não equivalem a fluxo real. Hash formal da versão é calculado pelo backend, distinto do hashTXT; conteúdo/metadados devem ser conferidos por leitura legítima antesaprovar/reusar.
+
+GATEprivacidade deste PR propõe SOMENTE4trechos técnicos comprovados e contexto/campo/GET/geração exatos. Recibo5aa39ef35e4a432f4f4f5f29d72ee5773a56e62102948f0e3a31a0529c2d8f18. V112extras2/SYS04/V109/V123 permanecem bloqueados atéprova específica; nenhum dos56 foi reclassificado. Backendnormativod063b0b65362fdd71473571dd1069866c9263172,25blobs/catalog100/97 iguais porcomparaçãoGit; delta desde7c8fdb1 sóworkflows/harness/docs,semSQL. Não enfraquecer freshness.
+
+ÚltimoTesteCcontinua78:96PASSautomáticos comressalvas/8FAIL/56PII/24fixtures/24baseline,313SHAverificados,semaborto/logouttrue. Próximas tarefas: concluir/revisar preparador comCI/provasnativas e executarfluxolegítimoHML; terminarBUILDvisual comRED/GREEN/CI/revisão/TesteC; integrarGATEprivacy antescatálogofechado e resolverproveniênciasrestantes. Continuar184P0automaticamente, semcertV1/72/WCAGatéDoDintegral. NenhumPROD/tipos/RLS/Auth/schema/backendalterado.
+
+---
+
 ## Reancoragem durante CI da retificação
 
 Backend avançou para7c8fdb1644058831cc2a7d1bacd931eee18cd997. CI42514790088 bloqueou corretamente por HEAD canônico antigo. Comparação local de cada um dos25blobs e catálogo100/97 confirmou igualdade; snapshot e PLAN reancorados juntos, sem relaxar gate. Delta backend inclui append imutável de versão documental na revisão de metadados, não certificada por esta auditoria. Retificação inclui payload real de criar_competencia: somente contrato/referência; três opcionais omitidos têmDEFAULTNULL no wrapper, sem alterar UI/RPC. Campo160privacidade é histórico; atual56. Escopo184original permanece sem certificação integral.
