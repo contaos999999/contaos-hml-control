@@ -4190,3 +4190,92 @@ test("solicitacao unica: duplicatas em qualquer resultado e replay em outro SHA"
  assert.throws(()=>validate({current:run,runs:[run,{...run,id:93,head_sha:old,conclusion:"cancelled"}],requestShas:[sha,old],workflowId:411426169}));
  assert.throws(()=>validate({current:{...run,run_attempt:2},runs:[run],requestShas:[sha],workflowId:411426169}));
 });
+
+test("solicitacao unica: auditoria bloqueada ate binding real",()=>{
+ assert.throws(()=>fn("requireSingleRequestOperation")("audit"),{code:"AUDIT_BINDING_PENDING"});
+ assert.doesNotThrow(()=>fn("requireSingleRequestOperation")("fixtures"));
+});
+test("solicitacao unica: GET publico nunca envia Authorization",async()=>{
+ let options;
+ const get=fn("singleRequestGet")({publicOnly:true,token:"DO_NOT_SEND",fetchImpl:async(url,o)=>{options=o;return {status:200,text:async()=>JSON.stringify({ok:true})};}});
+ assert.deepEqual(await get(""),{ok:true});
+ assert.equal(Object.hasOwn(options.headers,"Authorization"),false);
+ assert.equal(options.redirect,"error");
+ await assert.rejects(()=>get("/unexpected"),{code:"REQUEST_API_PATH"});
+ const fail=fn("singleRequestGet")({publicOnly:true,fetchImpl:async()=>({status:403})});
+ await assert.rejects(()=>fail(""),{code:"REQUEST_API_UNAVAILABLE"});
+});
+test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes",async()=>{
+ const verify=fn("verifySingleRequestGit"),sha="a".repeat(40),parent="b".repeat(40);
+ const request={schema_version:1,issue:317,operation:"fixtures",request_id:"trilha-a-fixtures-20261108-r1",approved_parent_sha:parent,frontend_sha:"c".repeat(40),deployment_id:"dpl_12345678"};
+ const raw=JSON.stringify(request),path=fn("parseSingleRequest")&&sut.SINGLE_REQUEST.path;
+ const git=async(args)=>{
+   if(args[0]==="show")return raw;
+   if(args[0]==="rev-parse")return sha+"\n";
+   if(args[0]==="rev-list")return [sha,parent,"d".repeat(40)].join(" ")+"\n";
+   if(args[0]==="merge-base")return "";
+   if(args[0]==="diff-tree")return "A\t"+path+"\n";
+   if(args[0]==="ls-tree")return "100644 blob "+"e".repeat(40)+"\t"+path+"\n";
+   if(args[0]==="log")return sha+"\n";
+   throw new Error("unexpected git");
+ };
+ assert.deepEqual(await verify(request,sha,git,raw),[sha]);
+ const cases=[
+ ["rev-parse","f".repeat(40)],
+ ["rev-list",[sha,"f".repeat(40),"d".repeat(40)].join(" ")],
+ ["rev-list",[sha,parent].join(" ")],
+ ["diff-tree","M\tsrc/evil.ts\nA\t"+path],
+ ["diff-tree","R100\tx\t"+path],
+ ["ls-tree","120000 blob "+"e".repeat(40)+"\t"+path],
+ ["log",Array(1001).fill(sha).join("\n")]
+ ];
+ for(const [command,value] of cases)
+   await assert.rejects(()=>verify(request,sha,async(args)=>args[0]===command?value:git(args),raw));
+ await assert.rejects(()=>verify(request,sha,git,raw+" "),{code:"REQUEST_DIRTY"});
+});
+test("solicitacao unica: prova completa, descarte oposto e main obsoleta",async()=>{
+ const verify=fn("verifySingleRequest"),sha="a".repeat(40),parent="b".repeat(40);
+ const repo={full_name:"contaos999999/contaos-hml-control"};
+ const request={schema_version:1,issue:317,operation:"fixtures",request_id:"trilha-a-fixtures-20261108-r1",approved_parent_sha:parent,frontend_sha:"c".repeat(40),deployment_id:"dpl_12345678"};
+ const raw=JSON.stringify(request),spec=sut.SINGLE_REQUEST;
+ const upstream={id:91,workflow_id:406076025,path:spec.upstreamPath,name:spec.upstreamName,event:"push",head_branch:"main",head_sha:sha,run_attempt:1,status:"completed",conclusion:"success",repository:repo,head_repository:repo};
+ const current={id:92,workflow_id:spec.fixtures.id,path:spec.fixtures.path,name:spec.fixtures.name,event:"workflow_run",head_branch:"main",head_sha:sha,run_attempt:1,repository:repo,head_repository:repo};
+ const env={GITHUB_EVENT_NAME:"workflow_run",GITHUB_REF:"refs/heads/main",GITHUB_REPOSITORY:repo.full_name,GITHUB_RUN_ID:"92",GITHUB_RUN_ATTEMPT:"1",CONTAOS_HARNESS_SHA:sha,GITHUB_EVENT_PATH:"event.json"};
+ const event={action:"completed",repository:repo,workflow_run:upstream};
+ const read=async(path)=>path==="event.json"?JSON.stringify(event):raw;
+ const stat=async()=>({isFile:()=>true,isSymbolicLink:()=>false,size:raw.length});
+ const git=async(args)=>{
+   if(args[0]==="show")return raw;
+   if(args[0]==="rev-parse")return sha;
+   if(args[0]==="rev-list")return [sha,parent,"d".repeat(40)].join(" ");
+   if(args[0]==="merge-base")return "";
+   if(args[0]==="diff-tree")return "A\t"+spec.path;
+   if(args[0]==="ls-tree")return "100644 blob "+"e".repeat(40)+"\t"+spec.path;
+   if(args[0]==="log")return sha;
+   throw new Error("unexpected git");
+ };
+ const get=async(path)=>{
+   if(path==="")return {...repo,private:false};
+   if(path==="/git/ref/heads/main")return {object:{sha}};
+   if(path==="/actions/workflows/"+spec.fixtures.id)return {...spec.fixtures,state:"active"};
+   if(path==="/actions/workflows/"+spec.audit.id)return {...spec.audit,state:"active"};
+   if(path==="/actions/runs/91")return upstream;
+   if(path==="/actions/runs/92")return current;
+   if(path.startsWith("/actions/workflows/"+spec.fixtures.id+"/runs?"))return {total_count:1,workflow_runs:[current]};
+   if(path.startsWith("/actions/workflows/"+spec.audit.id+"/runs?"))return {total_count:1,workflow_runs:[{...current,id:93,workflow_id:spec.audit.id}]};
+   if(path.startsWith("/actions/runs/93/jobs?"))return {total_count:1,jobs:[{name:spec.audit.privateName,conclusion:"skipped"}]};
+   throw new Error("unexpected API "+path);
+ };
+ const options={operation:"fixtures",env,read,stat,git,get,wait:async()=>{}};
+ assert.equal((await verify(options)).selected,true);
+ assert.equal(sut.singleRequestEventAllowed(env,"fixtures"),true);
+ let apiCalls=0;
+ assert.equal((await verify({...options,operation:"audit",get:async()=>{apiCalls++;throw new Error("API forbidden");}})).selected,false);
+ assert.equal(apiCalls,0);
+ assert.equal(sut.singleRequestEventAllowed(env,"fixtures"),false);
+ let mainCalls=0;
+ await assert.rejects(()=>verify({...options,get:async(path)=>path==="/git/ref/heads/main"&&++mainCalls===2?{object:{sha:"f".repeat(40)}}:get(path)}),{code:"REQUEST_STALE"});
+ for(const conclusion of ["success","failure",null])
+   await assert.rejects(()=>verify({...options,get:async(path)=>path.startsWith("/actions/runs/93/jobs?")?{total_count:1,jobs:[{name:spec.audit.privateName,conclusion}]}:get(path)}),{code:"REQUEST_OPPOSITE"});
+ await assert.rejects(()=>verify({...options,stat:async()=>({isFile:()=>true,isSymbolicLink:()=>true,size:1})}),{code:"REQUEST_EVENT_FILE"});
+});
