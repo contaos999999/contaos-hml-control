@@ -80,6 +80,10 @@ export function parseVisaoGeral(data: unknown): VisaoGeral | null {
   if (!ehObj(data)) return null;
   const { competencia: c, portao: p, blocking_summary: b, allowed_actions: a } = data;
   if (!ehObj(c) || !ehObj(p) || !ehObj(b) || !ehObj(a)) return null;
+  // A RPC canônica retorna conformes_ou_na_validos; `avaliados` é somente
+  // um alias de apresentação. Não modificar portão nem permissões no cliente.
+  const avaliados = p["conformes_ou_na_validos"];
+  if (!num(avaliados)) return null;
   const ok =
     todos(c, ["id", "id_contrato", "id_organizacao", "competencia_referencia", "situacao"], str) &&
     todos(c, ["periodo_inicio", "periodo_fim", "data_limite", "atualizado_em"], strN) &&
@@ -89,7 +93,6 @@ export function parseVisaoGeral(data: unknown): VisaoGeral | null {
       p,
       [
         "total",
-        "avaliados",
         "pendentes",
         "nao_conformes",
         "inconclusivos",
@@ -116,7 +119,8 @@ export function parseVisaoGeral(data: unknown): VisaoGeral | null {
       bool,
     ) &&
     todos(a, ["abrir_documentos", "analisar", "abrir_parecer", "apresentar"], bool);
-  return ok ? (data as unknown as VisaoGeral) : null;
+  if (!ok) return null;
+  return { ...(data as Obj), portao: { ...p, avaliados } } as VisaoGeral;
 }
 
 export type TipoErroVisaoGeral = "sem_permissao" | "nao_encontrada" | "erro";
