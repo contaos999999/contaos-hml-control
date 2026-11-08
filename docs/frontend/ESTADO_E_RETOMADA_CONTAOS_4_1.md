@@ -1,3 +1,7 @@
+## Atualização18:05UTC, RED causal confirmado e reancoragem
+
+PR363/HEADaf5aaad4e30f4a307c8f0d03d084dc740f95017c, native42507869723/job128814321047:7PASS/1FAIL, sourceFailure=FENCE_LIFECYCLE_NO_NETWORK. O teste fortalecido demonstrou que faltava registro Network no instante do pause do script, antes de alcançar FENCE_SOURCE. Isso ainda NÃO prova que o evento chegará depois sem continuação. Próxima etapa: GATE separado para espera única≤250ms mantendo pause retido, associação somente após Network.requestWillBeSent REAL e revalidação integral, semretry/registroinferido/comandoalternativo; timeout/fechamento/ambiguidade falham fechados e evento tardio não ressuscita pendência. Prova nativa deve demonstrar sequência causal real e8/8 completos antesmerge. Backend avançouf8f6b414e63761c21f95e6839ba757d49786b808, somente4caminhosharness/docs,25blobs/catalogiguaisporcheckSnapshoterrors[]; snapshot/PLAN reancorados juntos nestecheckpoint. PR363continuaaberto semmerge. Nenhumacredencialfoipreenchida na rodada70;24baseline/18públicospreservados.
+
 # Checkpoint P0 Trilha A, 08/11/2026 18:02 UTC: continuar184, sem certificação V1
 
 ## Âncoras e última etapa integrada
