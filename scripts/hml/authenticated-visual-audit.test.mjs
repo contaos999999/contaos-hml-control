@@ -2527,6 +2527,24 @@ test("ciclo consume somente uma continuação inicial comprovadamente cancelada"
   assert.equal(f.tracker.snapshot().active, 0);
   f.tracker.close();
 });
+
+test("um NetworkID não aceita dois FetchIDs iniciais distintos", () => {
+  const f = lifecycleInput();
+  assert.throws(
+    () => f.tracker.pause(f.session, { ...f.pause, requestId: "distinct-initial-fetch" }),
+    (e) => e.code === "FENCE_REQUEST_LIFECYCLE",
+  );
+  f.tracker.close();
+});
+test("consumo terminal é exclusivo no registro Network, além do ticket", async () => {
+  const f = lifecycleInput();
+  f.tracker.observe(f.session, "Network.loadingFailed", f.terminal);
+  const duplicate = { ...f.ticket };
+  assert.equal(await f.tracker.handleCanceled(f.ticket, f.error), true);
+  assert.equal(await f.tracker.handleCanceled(duplicate, f.error), false);
+  assert.equal(f.tracker.snapshot().canceled, 1);
+  f.tracker.close();
+});
 for (const [name, change] of [
   ["canceledfalse", { canceled: false }],
   ["errodivergente", { errorText: "net::ERR_FAILED" }],
