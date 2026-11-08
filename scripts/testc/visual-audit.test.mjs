@@ -665,52 +665,108 @@ test("refluxo/texto: coleção incompleta, duplicada ou com FAIL não recebe PAS
 });
 
 async function publicScaleDOMFixture(snapshot, html) {
-  const { JSDOM } = await import("jsdom");
+  // Dependency-free DOM fixture: CI executes node:test before npm ci.
+  // Geometry is synthetic; Chromium screenshots remain mandatory for visual PASS.
   const { runInNewContext } = await import("node:vm");
-  const dom = new JSDOM(`<html style="font-size:16px"><body>${html}</body></html>`, {
-    url: "http://127.0.0.1:4173/login",
-  });
-  const win = dom.window;
+  const elements = [];
+  const textNodes = [];
+  const root = { lang: "pt-BR", scrollWidth: 320, style: { fontSize: "16px" } };
   const rect = (left = 0, width = 200) => ({
-    left,
-    top: 0,
-    width,
-    height: 20,
-    right: left + width,
-    bottom: 20,
+    left, top: 0, width, height: 20, right: left + width, bottom: 20,
   });
-  function geometry(el, left = 0, width = 200) {
-    el.getClientRects = () => [rect(left, width)];
-    el.getBoundingClientRect = () => rect(left, width);
-    el.checkVisibility = () => true;
-    for (const [key, value] of Object.entries({
-      clientWidth: width,
-      clientHeight: 20,
-      clientLeft: 0,
-      clientTop: 0,
-      scrollHeight: 20,
-    }))
-      Object.defineProperty(el, key, { configurable: true, value });
-    el.style.fontSize = "14px";
+  class HTMLElement {
+    constructor(tag, parent = null, text = "", attrs = "") {
+      this.tag = tag;
+      this.parentElement = parent;
+      this.textContent = text;
+      this.isConnected = true;
+      this.namespaceURI = "http://www.w3.org/1999/xhtml";
+      this.style = { fontSize: "14px", overflowX: /overflow-x:hidden/.test(attrs) ? "hidden" : "visible" };
+      this.value = "";
+      elements.push(this);
+      if (text) textNodes.push({ textContent: text, parentElement: this });
+    }
+    closest(selector) {
+      const tags = selector.split(",").map((x) => x.trim());
+      let el = this;
+      while (el) {
+        if (tags.includes(el.tag)) return el;
+        el = el.parentElement;
+      }
+      return null;
+    }
+    matches(selector) { return selector.split(",").includes(this.tag); }
+    getClientRects() { return [this.getBoundingClientRect()]; }
+    getBoundingClientRect() { return this.rect || rect(); }
+    checkVisibility() { return true; }
   }
-  for (const el of win.document.querySelectorAll("body *")) geometry(el);
-  win.Range.prototype.getClientRects = () => [];
+  class HTMLInputElement extends HTMLElement {}
+  const body = new HTMLElement("body");
+  function create(tag, parent, text = "", attrs = "") {
+    const el = tag === "input" ? new HTMLInputElement(tag, parent, text, attrs) : new HTMLElement(tag, parent, text, attrs);
+    geometry(el);
+    return el;
+  }
+  function geometry(el, left = 0, width = 200) {
+    el.rect = rect(left, width);
+    Object.assign(el, { clientWidth: width, clientHeight: 20, clientLeft: 0, clientTop: 0, scrollHeight: 20 });
+    return el;
+  }
+  let target;
+  if (html.includes('id="box"')) {
+    const box = create("div", body, "", 'overflow-x:hidden');
+    box.style.overflowX = "hidden";
+    target = create("input", box);
+    target.id = "field";
+    box.id = "box";
+  } else if (html.includes("<button")) {
+    target = create("button", body, "Texto sintético longo", 'overflow-x:hidden');
+    target.style.overflowX = "hidden";
+  } else {
+    target = create("p", body, "Texto sintético");
+  }
+  const document = {
+    body, documentElement: root,
+    querySelector(selector) { return elements.find((e) => selector === "input" ? e.tag === "input" : selector === "button" ? e.tag === "button" : selector === "#box" ? e.id === "box" : selector === "#field" ? e.id === "field" : false) || null; },
+    querySelectorAll(selector) {
+      const tags = selector.split(",").map((x) => x.trim());
+      return elements.filter((e) => tags.includes(e.tag));
+    },
+    createElement(tag) { const el = create(tag, null); el.isConnected = false; return el; },
+    createTreeWalker() {
+      let index = -1;
+      return { currentNode: null, nextNode() { index++; this.currentNode = textNodes[index]; return Boolean(this.currentNode); } };
+    },
+    createRange() {
+      return { selectNodeContents() {}, getClientRects() { return rangeRects(); } };
+    },
+  };
+  body.append = (el) => {
+    el.parentElement = body;
+    el.isConnected = true;
+    if (el.textContent) textNodes.push({ textContent: el.textContent, parentElement: el });
+  };
+  let rangeRects = () => [];
+  const win = { document, __contaosScaleProbe: null, Range: { prototype: {} } };
+  Object.defineProperty(win.Range.prototype, "getClientRects", {
+    get: () => rangeRects,
+    set: (fn) => { rangeRects = fn; },
+  });
   const globals = {
-    window: win,
-    document: win.document,
-    HTMLElement: win.HTMLElement,
-    HTMLInputElement: win.HTMLInputElement,
-    NodeFilter: win.NodeFilter,
-    getComputedStyle: win.getComputedStyle.bind(win),
-    location: win.location,
+    window: win, document, HTMLElement, HTMLInputElement,
+    NodeFilter: { SHOW_TEXT: 4 },
+    getComputedStyle: (el) => ({
+      fontSize: el.style?.fontSize || "16px",
+      overflowX: el.style?.overflowX || "visible",
+      overflowY: "visible",
+    }),
+    location: { pathname: "/login", origin: "http://127.0.0.1:4173" },
     innerWidth: 320,
   };
   return {
-    win,
-    geometry,
-    capture: (phase) =>
-      runInNewContext(`(${snapshot.toString()})(${JSON.stringify(phase)})`, globals),
-    close: () => win.close(),
+    win, geometry,
+    capture: (phase) => runInNewContext(`(${snapshot.toString()})(${JSON.stringify(phase)})`, globals),
+    close: () => {},
   };
 }
 
