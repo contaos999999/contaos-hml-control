@@ -2476,7 +2476,6 @@
     "r2_run": 42553093050,
     "r2_artifact": 13645999071,
     "r2_new_receipts": 0,
-    "r2_intents": 0,
     "r2_bindings": null,
     "r2_logout_verified": false,
     "r2_primary": "TIMEOUT_SOURCE_FORM_FIELD",
@@ -2491,6 +2490,8 @@
     "r1_confirmed_intents": 2,
     "r3_new_intents_max": 22,
     "audit_binding_pending": true,
-    "no_auth_or_rerun_by_gate": true
+    "no_auth_or_rerun_by_gate": true,
+    "r2_derived_intent_count": 0,
+    "r2_count_proof": "receipts=[] + brokerseal persisted before POST + sourcepath before SOURCE_ACTIVATE_COMMAND; report has no intentCount field"
   }
 }
