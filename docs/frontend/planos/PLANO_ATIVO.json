@@ -3304,5 +3304,44 @@
     "r12_reader_allowed": false,
     "auth_authorized_by_document": false,
     "prod_changes_allowed": false
+  },
+  "trilha_a_r13_canonical_hml_ci_recovery": {
+    "status": "EMENDA_DOCUMENTAL_CHECKPOINT_CI_SEM_WAIVER",
+    "gate": "docs/frontend/planos/TRILHA_A_R13_PERFIL_CANONICO_HML_GATE_2026-11-09.md",
+    "incident_head": "6605fbfc40359a1565abbffc8b8358ff4cf44b83",
+    "incident_runs": [
+      42671473829,
+      42671473179
+    ],
+    "incident_run_attempt": 1,
+    "incident_run_conclusions": [
+      "failure",
+      "failure"
+    ],
+    "incident_jobs_count": 0,
+    "incident_check_runs_count": 0,
+    "primary_annotation": "Internal server error",
+    "correlation_ids": [
+      "8be6e456-3daf-4d03-909d-900a8e7a6915",
+      "4bad98ff-996f-40a7-9426-d3f670126d0d"
+    ],
+    "failed_jobs_retry_run": 42671473829,
+    "failed_jobs_retry_http_status": 403,
+    "failed_jobs_retry_message": "This workflow run cannot be retried",
+    "retry_created_attempt_two": false,
+    "checkpoint_comment": 6747808208,
+    "maximum_documentary_recovery_prs": 1,
+    "new_main_must_descend_from_integrated_gate": "6605fbfc40359a1565abbffc8b8358ff4cf44b83",
+    "pr_ci_success_required": true,
+    "new_push_ci_success_required": true,
+    "force_status_or_protection_waiver_allowed": false,
+    "business_r12_replay_allowed": false,
+    "operation_issued_at_checkpoint": false,
+    "operational_profile_or_build_scope_changed": false,
+    "allowed_recovery_paths": [
+      "docs/frontend/planos/TRILHA_A_R13_PERFIL_CANONICO_HML_GATE_2026-11-09.md",
+      "docs/frontend/planos/PLANO_ATIVO.json",
+      "docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md"
+    ]
   }
 }
