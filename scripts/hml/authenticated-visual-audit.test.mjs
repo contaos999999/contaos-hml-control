@@ -12127,3 +12127,90 @@ test("R13 actual local Master loader rejects missing R12 proof without a network
   await assert.rejects(() => sut.loadSingleRequestProof(local), { code: "RECOVERY_R12_PROOF" });
   assert.equal(sut.singleRequestEventAllowed(f.env, "fixtures"), false);
 });
+
+function r13IgnoredBuildCommand(approvedSha) {
+  if (typeof approvedSha !== "string" || !/^[a-f0-9]{40}$/.test(approvedSha))
+    throw Error("R13_IGNORED_BUILD_SHA");
+  return (
+    'if [ "$VERCEL_ENV" = "production" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "' +
+    approvedSha +
+    '" ]; then exit 1; else exit 0; fi'
+  );
+}
+async function r13PosixExit(command, variables) {
+  const { execFile } = await import("node:child_process"),
+    env = Object.create(null),
+    allowed = new Set(["VERCEL_ENV", "VERCEL_GIT_COMMIT_SHA"]);
+  for (const [key, d] of Object.entries(Object.getOwnPropertyDescriptors(variables))) {
+    assert.ok(allowed.has(key));
+    assert.ok(Object.hasOwn(d, "value"));
+    assert.equal(typeof d.value, "string");
+    env[key] = d.value;
+  }
+  assert.ok(Object.keys(env).length <= 2);
+  return new Promise((resolve, reject) =>
+    execFile(
+      "/bin/sh",
+      ["-c", command],
+      { env, timeout: 3000, maxBuffer: 4096 },
+      (error, stdout, stderr) => {
+        if (stdout !== "" || stderr !== "" || (error && error.code !== 1)) {
+          reject(Error("R13_POSIX_EXECUTION"));
+          return;
+        }
+        resolve(error ? 1 : 0);
+      },
+    ),
+  );
+}
+test("R13 POSIX ignored-build template admits only the approved production SHA", async () => {
+  const approved = "631090724d6b85483737c60a44d322f268fc1c8c",
+    command = r13IgnoredBuildCommand(approved);
+  assert.equal(
+    command,
+    'if [ "$VERCEL_ENV" = "production" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "631090724d6b85483737c60a44d322f268fc1c8c" ]; then exit 1; else exit 0; fi',
+  );
+  for (const bad of [
+    undefined,
+    null,
+    {},
+    "",
+    "a".repeat(39),
+    "a".repeat(41),
+    "g".repeat(40),
+    approved + "\n",
+    approved + '"; exit 1; #',
+  ])
+    assert.throws(() => r13IgnoredBuildCommand(bad), /R13_IGNORED_BUILD_SHA/);
+  for (const [env, expected] of [
+    [{ VERCEL_ENV: "production", VERCEL_GIT_COMMIT_SHA: approved }, 1],
+    [{ VERCEL_ENV: "preview", VERCEL_GIT_COMMIT_SHA: approved }, 0],
+    [
+      {
+        VERCEL_ENV: "production",
+        VERCEL_GIT_COMMIT_SHA: "348649f6a0af5d468ad2ac401b2fd96afa125cc1",
+      },
+      0,
+    ],
+    [{ VERCEL_GIT_COMMIT_SHA: approved }, 0],
+    [{ VERCEL_ENV: "production" }, 0],
+    [{}, 0],
+    [{ VERCEL_ENV: 'production"; exit 1; #', VERCEL_GIT_COMMIT_SHA: approved }, 0],
+    [{ VERCEL_ENV: "production", VERCEL_GIT_COMMIT_SHA: approved + '"; exit 1; #' }, 0],
+    [{ VERCEL_ENV: "production", VERCEL_GIT_COMMIT_SHA: "$(exit 1)" }, 0],
+  ])
+    assert.equal(await r13PosixExit(command, env), expected);
+  const observedOld =
+    'if [ "$VERCEL_ENV" = "preview" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "348649f6a0af5d468ad2ac401b2fd96afa125cc1" ]; then exit 1; else exit 0; fi';
+  assert.equal(
+    await r13PosixExit(observedOld, {
+      VERCEL_ENV: "preview",
+      VERCEL_GIT_COMMIT_SHA: "348649f6a0af5d468ad2ac401b2fd96afa125cc1",
+    }),
+    1,
+  );
+  assert.equal(
+    await r13PosixExit(observedOld, { VERCEL_ENV: "production", VERCEL_GIT_COMMIT_SHA: approved }),
+    0,
+  );
+});
