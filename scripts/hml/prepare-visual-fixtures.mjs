@@ -128,97 +128,175 @@ const listKeys = [
 ];
 
 export const R1_RECOVERY_DOCUMENT = freeze({
-  "schema": "contaos.fixture.receipts.v1",
-  "receipts": [
+  schema: "contaos.fixture.receipts.v1",
+  receipts: [
     {
-      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",
-      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
-      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
-      "workflowRun": "42540864527",
-      "schema": "contaos.fixture.intent.v1",
-      "rpc": "registrar_versao_fonte_v107",
-      "requestId": "08141ffd-56c1-4c50-b58f-32912d1006b2",
-      "state": "sealed",
-      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
-      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
-      "payloadSha256": "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467"
+      frontendSha: "866608620909bf313a6c2192736330222f9219ad",
+      harnessSha: "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      deploymentId: "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      workflowRun: "42540864527",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "registrar_versao_fonte_v107",
+      requestId: "08141ffd-56c1-4c50-b58f-32912d1006b2",
+      state: "sealed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467",
     },
     {
-      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",
-      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
-      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
-      "workflowRun": "42540864527",
-      "schema": "contaos.fixture.intent.v1",
-      "rpc": "registrar_versao_fonte_v107",
-      "requestId": "08141ffd-56c1-4c50-b58f-32912d1006b2",
-      "state": "confirmed",
-      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
-      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
-      "payloadSha256": "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467"
+      frontendSha: "866608620909bf313a6c2192736330222f9219ad",
+      harnessSha: "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      deploymentId: "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      workflowRun: "42540864527",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "registrar_versao_fonte_v107",
+      requestId: "08141ffd-56c1-4c50-b58f-32912d1006b2",
+      state: "confirmed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467",
     },
     {
-      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",
-      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
-      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
-      "workflowRun": "42540864527",
-      "schema": "contaos.fixture.intent.v1",
-      "rpc": "aprovar_versao_fonte_v107",
-      "requestId": "437a3c66-4bed-45e3-b73e-8696bdf4a791",
-      "state": "sealed",
-      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
-      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
-      "payloadSha256": "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769"
+      frontendSha: "866608620909bf313a6c2192736330222f9219ad",
+      harnessSha: "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      deploymentId: "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      workflowRun: "42540864527",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "aprovar_versao_fonte_v107",
+      requestId: "437a3c66-4bed-45e3-b73e-8696bdf4a791",
+      state: "sealed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769",
     },
     {
-      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",
-      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
-      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
-      "workflowRun": "42540864527",
-      "schema": "contaos.fixture.intent.v1",
-      "rpc": "aprovar_versao_fonte_v107",
-      "requestId": "437a3c66-4bed-45e3-b73e-8696bdf4a791",
-      "state": "confirmed",
-      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
-      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
-      "payloadSha256": "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769"
-    }
-  ]
+      frontendSha: "866608620909bf313a6c2192736330222f9219ad",
+      harnessSha: "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      deploymentId: "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      workflowRun: "42540864527",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "aprovar_versao_fonte_v107",
+      requestId: "437a3c66-4bed-45e3-b73e-8696bdf4a791",
+      state: "confirmed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769",
+    },
+  ],
 });
 const R1_RECEIPTS_SHA256 = "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9";
 const recoveryProofs = new WeakSet();
 export function validateR1RecoveryDocument(input = R1_RECOVERY_DOCUMENT) {
   const bytes = JSON.stringify(input, null, 2) + "\n";
   if (hash(bytes) !== R1_RECEIPTS_SHA256) err("RECOVERY_LEDGER");
-  if (!keys(input, ["schema","receipts"]) || input.schema !== "contaos.fixture.receipts.v1" ||
-      !Array.isArray(input.receipts) || input.receipts.length !== 4) err("RECOVERY_LEDGER");
+  if (
+    !keys(input, ["schema", "receipts"]) ||
+    input.schema !== "contaos.fixture.receipts.v1" ||
+    !Array.isArray(input.receipts) ||
+    input.receipts.length !== 4
+  )
+    err("RECOVERY_LEDGER");
   for (const receipt of input.receipts) safeReceipt(receipt);
   return freeze(structuredClone(input));
 }
 export function reconcileR1Recovery(input) {
   validateR1RecoveryDocument(input?.ledger);
-  const s=input.source,v=input.version;
-  if(input.sourceCount!==1 || !official(s) || s.id!==FIXTURE.source || !sourceFieldsExact(s) ||
-     !official(v) || !uuid(v.id) || v.source!==FIXTURE.source || !HASH.test(v.hash||"") ||
-     v.approved!==true || v.textVerified!==true || v.effective!==true || v.file!==null ||
-     input.listObserved!==true || ![0,1].includes(input.listCount)) err("RECOVERY_STATE");
-  if(input.listCount===0 ? input.canCreateList!==true :
-    !(input.listState?.verified===true && input.listState.active===true &&
-      input.listState.published===true && input.listState.ruleVerified===true &&
-      input.listState.sourceVersion===v.id))err("RECOVERY_LIST");
-  const proof=freeze({schema:"contaos.fixture.recovery.v1",sourceVersion:v.id,sourceHash:v.hash,ledgerSha256:R1_RECEIPTS_SHA256});
+  const s = input.source,
+    v = input.version;
+  if (
+    input.sourceCount !== 1 ||
+    !official(s) ||
+    s.id !== FIXTURE.source ||
+    !sourceFieldsExact(s) ||
+    !official(v) ||
+    !uuid(v.id) ||
+    v.source !== FIXTURE.source ||
+    !HASH.test(v.hash || "") ||
+    v.approved !== true ||
+    v.textVerified !== true ||
+    v.effective !== true ||
+    v.file !== null ||
+    input.listObserved !== true ||
+    ![0, 1].includes(input.listCount)
+  )
+    err("RECOVERY_STATE");
+  if (
+    input.listCount === 0
+      ? input.canCreateList !== true
+      : !(
+          input.listState?.verified === true &&
+          input.listState.active === true &&
+          input.listState.published === true &&
+          input.listState.ruleVerified === true &&
+          input.listState.sourceVersion === v.id
+        )
+  )
+    err("RECOVERY_LIST");
+  const proof = freeze({
+    schema: "contaos.fixture.recovery.v1",
+    sourceVersion: v.id,
+    sourceHash: v.hash,
+    ledgerSha256: R1_RECEIPTS_SHA256,
+  });
   recoveryProofs.add(proof);
   return proof;
 }
 export const DIAGNOSTIC_SUBPHASES = Object.freeze([
- "PREFLIGHT","LOGIN","SOURCE_AND_LIST","COMPETENCIES","FINAL_READBACK",
- "SOURCE_NAVIGATE","SOURCE_GET","SOURCE_VERSION_GET","SOURCE_TEXT_PROOF","SOURCE_RECONCILE",
- "SOURCE_VERSION_READ","SOURCE_UI_CONTROL","SOURCE_FORM_FIELD","SOURCE_REGISTER_COMMAND",
- "SOURCE_APPROVE_COMMAND","SOURCE_ACTIVATE_COMMAND","SOURCE_SHEET_CLOSE","SOURCE_REFRESH",
- "RECOVERY_READ","RECOVERY_RETURN","V109_NAVIGATE","LIST_PANEL_OPEN","LIST_GET","LIST_MODEL_READ",
- "LIST_UI_CONTROL","LIST_FORM_FIELD","LIST_COMMAND","LIST_REFRESH",
- "COMPETENCY_UI","COMPETENCY_GET","COMPETENCY_COMMAND","COMPETENCY_RECONCILE",
- "UI_CONFIRM_FENCE","UI_CONFIRM_CONTROL","UI_CONFIRM_CLICK","UI_CONFIRM_BEFORE","UI_CONFIRM_AFTER",
- "RUNTIME_FRESH","RUNTIME_NAVIGATE","RUNTIME_CONTEXT","RUNTIME_COMMAND","LOGOUT","CLEANUP","SOURCE_NAVIGATION","SOURCE_RECONCILIATION","SOURCE_REGISTER","SOURCE_REGISTER_READBACK","SOURCE_APPROVAL","SOURCE_APPROVAL_READBACK","SOURCE_CLOSE","SOURCE_VERIFICATION","SOURCE_ACTIVATION","SOURCE_ACTIVATION_READBACK","LIST_NAVIGATION","LIST_RECONCILIATION"
+  "PREFLIGHT",
+  "LOGIN",
+  "SOURCE_AND_LIST",
+  "COMPETENCIES",
+  "FINAL_READBACK",
+  "SOURCE_NAVIGATE",
+  "SOURCE_GET",
+  "SOURCE_VERSION_GET",
+  "SOURCE_TEXT_PROOF",
+  "SOURCE_RECONCILE",
+  "SOURCE_VERSION_READ",
+  "SOURCE_UI_CONTROL",
+  "SOURCE_FORM_FIELD",
+  "SOURCE_REGISTER_COMMAND",
+  "SOURCE_APPROVE_COMMAND",
+  "SOURCE_ACTIVATE_COMMAND",
+  "SOURCE_SHEET_CLOSE",
+  "SOURCE_REFRESH",
+  "RECOVERY_READ",
+  "RECOVERY_RETURN",
+  "V109_NAVIGATE",
+  "LIST_PANEL_OPEN",
+  "LIST_GET",
+  "LIST_MODEL_READ",
+  "LIST_UI_CONTROL",
+  "LIST_FORM_FIELD",
+  "LIST_COMMAND",
+  "LIST_REFRESH",
+  "COMPETENCY_UI",
+  "COMPETENCY_GET",
+  "COMPETENCY_COMMAND",
+  "COMPETENCY_RECONCILE",
+  "UI_CONFIRM_FENCE",
+  "UI_CONFIRM_CONTROL",
+  "UI_CONFIRM_CLICK",
+  "UI_CONFIRM_BEFORE",
+  "UI_CONFIRM_AFTER",
+  "RUNTIME_FRESH",
+  "RUNTIME_NAVIGATE",
+  "RUNTIME_CONTEXT",
+  "RUNTIME_COMMAND",
+  "LOGOUT",
+  "CLEANUP",
+  "SOURCE_NAVIGATION",
+  "SOURCE_RECONCILIATION",
+  "SOURCE_REGISTER",
+  "SOURCE_REGISTER_READBACK",
+  "SOURCE_APPROVAL",
+  "SOURCE_APPROVAL_READBACK",
+  "SOURCE_CLOSE",
+  "SOURCE_VERIFICATION",
+  "SOURCE_ACTIVATION",
+  "SOURCE_ACTIVATION_READBACK",
+  "LIST_NAVIGATION",
+  "LIST_RECONCILIATION",
 ]);
 
 const PREPARER_DIAGNOSTIC_STEPS = new Set(DIAGNOSTIC_SUBPHASES);
@@ -234,59 +312,156 @@ export function preparerFailureDiagnostic(input) {
   };
 }
 
-const PREPARER_NATIVE_CODES = new Set(["FENCE_ASYNC","FENCE_BODY_LIMIT","FENCE_CDP_CLOSED","FENCE_CONFIGURATION","FENCE_CONTEXT_FOREIGN","FENCE_CONTEXT_UNKNOWN","FENCE_DOCUMENT_BODY","FENCE_DRAIN_TIMEOUT","FENCE_HEADERS","FENCE_INITIALIZATION","FENCE_LIFECYCLE_FRAME","FENCE_LIFECYCLE_NO_NETWORK","FENCE_LIFECYCLE_TERMINAL","FENCE_LIFECYCLE_TYPE","FENCE_NOT_PROVEN","FENCE_POPUP","FENCE_READY","FENCE_REDIRECT","FENCE_REQUEST","FENCE_REQUEST_LIFECYCLE","FENCE_SOURCE","FENCE_TARGET_DETACHED","FENCE_TARGET_FAILED","FENCE_TARGET_TIMEOUT","FENCE_TRANSPORT","FENCE_WORKER_PAUSED","FENCE_WORKER_RUNNING"]);
-function preparationErrorData(error,key) {
+const PREPARER_NATIVE_CODES = new Set([
+  "FENCE_ASYNC",
+  "FENCE_BODY_LIMIT",
+  "FENCE_CDP_CLOSED",
+  "FENCE_CONFIGURATION",
+  "FENCE_CONTEXT_FOREIGN",
+  "FENCE_CONTEXT_UNKNOWN",
+  "FENCE_DOCUMENT_BODY",
+  "FENCE_DRAIN_TIMEOUT",
+  "FENCE_HEADERS",
+  "FENCE_INITIALIZATION",
+  "FENCE_LIFECYCLE_FRAME",
+  "FENCE_LIFECYCLE_NO_NETWORK",
+  "FENCE_LIFECYCLE_TERMINAL",
+  "FENCE_LIFECYCLE_TYPE",
+  "FENCE_NOT_PROVEN",
+  "FENCE_POPUP",
+  "FENCE_READY",
+  "FENCE_REDIRECT",
+  "FENCE_REQUEST",
+  "FENCE_REQUEST_LIFECYCLE",
+  "FENCE_SOURCE",
+  "FENCE_TARGET_DETACHED",
+  "FENCE_TARGET_FAILED",
+  "FENCE_TARGET_TIMEOUT",
+  "FENCE_TRANSPORT",
+  "FENCE_WORKER_PAUSED",
+  "FENCE_WORKER_RUNNING",
+]);
+function preparationErrorData(error, key) {
   try {
-    if(!error || !["object","function"].includes(typeof error))return undefined;
-    let descriptor=Object.getOwnPropertyDescriptor(error,key);
-    if(!descriptor && key==="name")descriptor=Object.getOwnPropertyDescriptor(Object.getPrototypeOf(error)||{},key);
-    return descriptor && "value" in descriptor && typeof descriptor.value==="string" ? descriptor.value : undefined;
-  }catch{return undefined;}
+    if (!error || !["object", "function"].includes(typeof error)) return undefined;
+    let descriptor = Object.getOwnPropertyDescriptor(error, key);
+    if (!descriptor && key === "name")
+      descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(error) || {}, key);
+    return descriptor && "value" in descriptor && typeof descriptor.value === "string"
+      ? descriptor.value
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 function classifyPreparationFailure(error) {
-  const suppliedName=preparationErrorData(error,"name");
-  const name=["Error","TypeError","ReferenceError","SyntaxError","TimeoutError"].includes(suppliedName)?suppliedName:"UNKNOWN";
-  const suppliedCode=preparationErrorData(error,"code"),message=preparationErrorData(error,"message");
-  const code=PREPARER_NATIVE_CODES.has(suppliedCode)?suppliedCode:
-    PREPARER_FAILURE_CODES.has(suppliedCode)?suppliedCode:
-    PREPARER_FAILURE_CODES.has(message)?message:
-    name==="TimeoutError"?"PREPARER_TIMEOUT":"PREPARER_UNCLASSIFIED";
-  const compatible=preparerFailureDiagnostic({errorName:name});
-  return {code,errorName:name,failureClass:PREPARER_NATIVE_CODES.has(code)?"NATIVE_FENCE":compatible.errorKind==="TIMEOUT"?"TIMEOUT":code==="PREPARER_UNCLASSIFIED"?"UNKNOWN":"PROTOCOL"};
+  const suppliedName = preparationErrorData(error, "name");
+  const name = ["Error", "TypeError", "ReferenceError", "SyntaxError", "TimeoutError"].includes(
+    suppliedName,
+  )
+    ? suppliedName
+    : "UNKNOWN";
+  const suppliedCode = preparationErrorData(error, "code"),
+    message = preparationErrorData(error, "message");
+  const code = PREPARER_NATIVE_CODES.has(suppliedCode)
+    ? suppliedCode
+    : PREPARER_FAILURE_CODES.has(suppliedCode)
+      ? suppliedCode
+      : PREPARER_FAILURE_CODES.has(message)
+        ? message
+        : name === "TimeoutError"
+          ? "PREPARER_TIMEOUT"
+          : "PREPARER_UNCLASSIFIED";
+  const compatible = preparerFailureDiagnostic({ errorName: name });
+  return {
+    code,
+    errorName: name,
+    failureClass: PREPARER_NATIVE_CODES.has(code)
+      ? "NATIVE_FENCE"
+      : compatible.errorKind === "TIMEOUT"
+        ? "TIMEOUT"
+        : code === "PREPARER_UNCLASSIFIED"
+          ? "UNKNOWN"
+          : "PROTOCOL",
+  };
 }
 export function createPreparationDiagnostics() {
-  const stack=[];let primary=null,lastCompleted=null,cleaning=false,logoutAttempted=false,logoutVerified=false,cleanupFailure=null;
-  const capture=(error)=>{
-    if(!primary)primary={...classifyPreparationFailure(error),subphase:stack.at(-1)||"PREFLIGHT",subphasePath:stack.slice(-12)};
+  const stack = [];
+  let primary = null,
+    lastCompleted = null,
+    cleaning = false,
+    logoutAttempted = false,
+    logoutVerified = false,
+    cleanupFailure = null;
+  const capture = (error) => {
+    if (!primary)
+      primary = {
+        ...classifyPreparationFailure(error),
+        subphase: stack.at(-1) || "PREFLIGHT",
+        subphasePath: stack.slice(-12),
+      };
     return primary.code;
   };
   return Object.freeze({
     capture,
-    async step(subphase,execute){
-      if(!DIAGNOSTIC_SUBPHASES.includes(subphase)||typeof execute!=="function")err("DIAGNOSTIC_SUBPHASE");
+    async step(subphase, execute) {
+      if (!DIAGNOSTIC_SUBPHASES.includes(subphase) || typeof execute !== "function")
+        err("DIAGNOSTIC_SUBPHASE");
       stack.push(subphase);
-      try{const value=await execute();if(!cleaning&&!primary)lastCompleted=subphase;return value;}
-      catch(error){if(!cleaning)capture(error);throw error;}
-      finally{stack.pop();}
+      try {
+        const value = await execute();
+        if (!cleaning && !primary) lastCompleted = subphase;
+        return value;
+      } catch (error) {
+        if (!cleaning) capture(error);
+        throw error;
+      } finally {
+        stack.pop();
+      }
     },
-    async cleanup(execute){
-      logoutAttempted=true;cleaning=true;
-      try{logoutVerified=(await execute())===true;cleanupFailure=logoutVerified?null:"LOGOUT_NOT_VERIFIED";}
-      catch{logoutVerified=false;cleanupFailure="LOGOUT_FAILED";}
-      finally{cleaning=false;}
+    async cleanup(execute) {
+      logoutAttempted = true;
+      cleaning = true;
+      try {
+        logoutVerified = (await execute()) === true;
+        cleanupFailure = logoutVerified ? null : "LOGOUT_NOT_VERIFIED";
+      } catch {
+        logoutVerified = false;
+        cleanupFailure = "LOGOUT_FAILED";
+      } finally {
+        cleaning = false;
+      }
       return logoutVerified;
     },
-    snapshot(){return freeze({primaryFailure:primary?.code||null,failureClass:primary?.failureClass||null,errorName:primary?.errorName||null,subphase:primary?.subphase||stack.at(-1)||lastCompleted||"PREFLIGHT",subphasePath:primary?.subphasePath||stack.slice(-12),lastCompletedSubphase:lastCompleted,logoutAttempted,logoutVerified,cleanupFailure});}
+    snapshot() {
+      return freeze({
+        primaryFailure: primary?.code || null,
+        failureClass: primary?.failureClass || null,
+        errorName: primary?.errorName || null,
+        subphase: primary?.subphase || stack.at(-1) || lastCompleted || "PREFLIGHT",
+        subphasePath: primary?.subphasePath || stack.slice(-12),
+        lastCompletedSubphase: lastCompleted,
+        logoutAttempted,
+        logoutVerified,
+        cleanupFailure,
+      });
+    },
   });
 }
-let activePreparationDiagnostics=null;
-async function tracedPreparation(subphase,execute){
-  return activePreparationDiagnostics?activePreparationDiagnostics.step(subphase,execute):execute();
+let activePreparationDiagnostics = null;
+async function tracedPreparation(subphase, execute) {
+  return activePreparationDiagnostics
+    ? activePreparationDiagnostics.step(subphase, execute)
+    : execute();
 }
-export async function withPreparationDiagnostics(diagnostics,execute){
-  if(activePreparationDiagnostics)err("DIAGNOSTIC_REENTRANT");
-  activePreparationDiagnostics=diagnostics;
-  try{return await execute();}finally{activePreparationDiagnostics=null;}
+export async function withPreparationDiagnostics(diagnostics, execute) {
+  if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
+  activePreparationDiagnostics = diagnostics;
+  try {
+    return await execute();
+  } finally {
+    activePreparationDiagnostics = null;
+  }
 }
 
 export const BUSINESS_RPCS = Object.freeze([
@@ -831,7 +1006,8 @@ export function createIntentBroker({
       return true;
     },
     arm({ rpc, payload, requestId, uiGeneratedKey, verified, evidence = {} } = {}) {
-      if (recovery && ["registrar_versao_fonte_v107","aprovar_versao_fonte_v107"].includes(rpc)) err("RECOVERY_CONFIRMED_OPERATION");
+      if (recovery && ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"].includes(rpc))
+        err("RECOVERY_CONFIRMED_OPERATION");
       if (!recoveryAuthorized) err("RECOVERY_READ_ONLY");
       if (frozen) err("INTENT_FROZEN");
       if (active) err("INTENT_PENDING");
@@ -1237,11 +1413,15 @@ export async function confirmUiIntent({
     typeof settleVerifiedPage !== "function"
   )
     err("UI_CONFIGURATION");
-  await tracedPreparation("UI_CONFIRM_FENCE", async () => (fence.drain()));
+  await tracedPreparation("UI_CONFIRM_FENCE", async () => fence.drain());
   fence.assertSafe();
   const control = scope.getByRole("button", { name: button, exact: true });
-  if ((await tracedPreparation("UI_CONFIRM_CONTROL", async () => (control.count()))) !== 1 || !(await tracedPreparation("UI_CONFIRM_CONTROL", async () => (control.isEnabled())))) err("UI_CAPABILITY");
-  const fresh = await tracedPreparation("UI_CONFIRM_BEFORE", async () => (reconcile("before")));
+  if (
+    (await tracedPreparation("UI_CONFIRM_CONTROL", async () => control.count())) !== 1 ||
+    !(await tracedPreparation("UI_CONFIRM_CONTROL", async () => control.isEnabled()))
+  )
+    err("UI_CAPABILITY");
+  const fresh = await tracedPreparation("UI_CONFIRM_BEFORE", async () => reconcile("before"));
   if (
     fresh?.verified?.context !== true ||
     fresh?.verified?.capability !== true ||
@@ -1260,9 +1440,9 @@ export async function confirmUiIntent({
     ...(key ? { uiGeneratedKey: key } : { requestId: randomUUID() }),
   });
   try {
-    await tracedPreparation("UI_CONFIRM_CLICK", async () => (control.click()));
-    await tracedPreparation("UI_CONFIRM_FENCE", async () => (settleVerifiedPage(page, fence)));
-    const after = await tracedPreparation("UI_CONFIRM_AFTER", async () => (reconcile("after")));
+    await tracedPreparation("UI_CONFIRM_CLICK", async () => control.click());
+    await tracedPreparation("UI_CONFIRM_FENCE", async () => settleVerifiedPage(page, fence));
+    const after = await tracedPreparation("UI_CONFIRM_AFTER", async () => reconcile("after"));
     if (after?.confirmed !== true) {
       broker.resolve("uncertain");
       err("UI_UNCERTAIN");
@@ -1983,7 +2163,8 @@ export function createOfficialObserver(page) {
  */
 export async function prepareSourceAndList(io) {
   const { page } = io;
-  const recovery = io.recoveryLedger === undefined ? null : validateR1RecoveryDocument(io.recoveryLedger);
+  const recovery =
+    io.recoveryLedger === undefined ? null : validateR1RecoveryDocument(io.recoveryLedger);
   const fail = (code) => {
     throw new Error(code);
   };
@@ -2017,15 +2198,17 @@ export async function prepareSourceAndList(io) {
   const btn = (s, name) => s.getByRole("button", { name, exact: true });
   const enabled = async (locator, code) => {
     assert(
-      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (locator.count()))) === 1 && (await tracedPreparation("SOURCE_UI_CONTROL", async () => (locator.isVisible()))) && (await tracedPreparation("SOURCE_UI_CONTROL", async () => (locator.isEnabled()))),
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () => locator.count())) === 1 &&
+        (await tracedPreparation("SOURCE_UI_CONTROL", async () => locator.isVisible())) &&
+        (await tracedPreparation("SOURCE_UI_CONTROL", async () => locator.isEnabled())),
       code,
     );
   };
   const click = async (s, name) => {
     const b = btn(s, name);
-    await tracedPreparation("SOURCE_UI_CONTROL", async () => (enabled(b, "FLOW_BUTTON_UNAVAILABLE")));
-    await tracedPreparation("SOURCE_UI_CONTROL", async () => (b.click()));
-    await tracedPreparation("SOURCE_REFRESH", async () => (io.fresh()));
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => enabled(b, "FLOW_BUTTON_UNAVAILABLE"));
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => b.click());
+    await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
   };
   const field = (s, name) => s.getByLabel(name, { exact: true });
   const dialog = (name) => page.getByRole("dialog", { name, exact: true });
@@ -2035,7 +2218,9 @@ export async function prepareSourceAndList(io) {
   };
   const sourceRow = async () => {
     const s = one(
-      await tracedPreparation("SOURCE_GET", async () => (io.read("fontes_normativas", { id: FIXTURE.source }))),
+      await tracedPreparation("SOURCE_GET", async () =>
+        io.read("fontes_normativas", { id: FIXTURE.source }),
+      ),
       "FLOW_SOURCE_NONUNIQUE",
     );
     assert(
@@ -2060,7 +2245,7 @@ export async function prepareSourceAndList(io) {
     return s;
   };
   const sourceProof = async () => {
-    await tracedPreparation("SOURCE_RECONCILE", async () => (sourceRow()));
+    await tracedPreparation("SOURCE_RECONCILE", async () => sourceRow());
     assert(
       uuid(version.id) &&
         version.id_fonte === source.id &&
@@ -2071,7 +2256,7 @@ export async function prepareSourceAndList(io) {
         version.id_arquivo === null,
       "FLOW_SOURCE_VERSION_MISMATCH",
     );
-    const caps = await tracedPreparation("SOURCE_RECONCILE", async () => (io.sourceCapabilities()));
+    const caps = await tracedPreparation("SOURCE_RECONCILE", async () => io.sourceCapabilities());
     assert(checkedOfficial(caps), "FLOW_SOURCE_CAPABILITY_CONTEXT");
     evidence.sourceVersions = [
       {
@@ -2090,18 +2275,22 @@ export async function prepareSourceAndList(io) {
   const versionRead = async (after) => {
     if (
       after !== undefined &&
-      !(await tracedPreparation("SOURCE_VERSION_GET", async () => (io.observedAfter("versoes_fontes_normativas", { id_fonte: FIXTURE.source }, after, {
-        select: EXACT_SELECTS.versoes_fontes_normativas[0],
-      }))))
+      !(await tracedPreparation("SOURCE_VERSION_GET", async () =>
+        io.observedAfter("versoes_fontes_normativas", { id_fonte: FIXTURE.source }, after, {
+          select: EXACT_SELECTS.versoes_fontes_normativas[0],
+        }),
+      ))
     )
       fail("FLOW_VERSION_READBACK_UNOBSERVED");
     version = one(
       (
-        await tracedPreparation("SOURCE_VERSION_GET", async () => (io.read(
-          "versoes_fontes_normativas",
-          { id_fonte: FIXTURE.source },
-          { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
-        )))
+        await tracedPreparation("SOURCE_VERSION_GET", async () =>
+          io.read(
+            "versoes_fontes_normativas",
+            { id_fonte: FIXTURE.source },
+            { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
+          ),
+        )
       ).filter(
         (v) =>
           hash64(v.hash) &&
@@ -2112,7 +2301,7 @@ export async function prepareSourceAndList(io) {
       ),
       "FLOW_EQUIVALENT_VERSION_NONUNIQUE",
     );
-    await tracedPreparation("SOURCE_RECONCILE", async () => (sourceProof()));
+    await tracedPreparation("SOURCE_RECONCILE", async () => sourceProof());
     return version;
   };
   // GET cache must distinguish observed absence from not yet observed. Walk every UI page.
@@ -2121,68 +2310,92 @@ export async function prepareSourceAndList(io) {
     let turns = 0;
     while (true) {
       assert(++turns <= 100, "FLOW_PAGE_LIMIT");
-      for (const r of await tracedPreparation("SOURCE_UI_CONTROL", async () => (readRows()))) {
+      for (const r of await tracedPreparation("SOURCE_UI_CONTROL", async () => readRows())) {
         assert(uuid(r.id), "FLOW_ROW_ID");
         seen.set(r.id, r);
       }
       const next = btn(scope, nextName);
-      if ((await tracedPreparation("SOURCE_UI_CONTROL", async () => (next.count()))) === 0 || !(await tracedPreparation("SOURCE_UI_CONTROL", async () => (next.isEnabled())))) break;
-      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(scope, nextName)));
+      if (
+        (await tracedPreparation("SOURCE_UI_CONTROL", async () => next.count())) === 0 ||
+        !(await tracedPreparation("SOURCE_UI_CONTROL", async () => next.isEnabled()))
+      )
+        break;
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(scope, nextName));
     }
     return [...seen.values()];
   };
-  await tracedPreparation("SOURCE_NAVIGATE", async () => (io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`)));
+  await tracedPreparation("SOURCE_NAVIGATE", async () =>
+    io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`),
+  );
   // Locate exact official source through existing source-list pagination, never create source.
-  const sources = await tracedPreparation("SOURCE_GET", async () => (allPages(page, "Próxima página", () => io.read("fontes_normativas", {}))));
+  const sources = await tracedPreparation("SOURCE_GET", async () =>
+    allPages(page, "Próxima página", () => io.read("fontes_normativas", {})),
+  );
   assert(
     sources.some((s) => s.id === FIXTURE.source),
     "FLOW_SOURCE_NOT_IN_UI_GET",
   );
-  await tracedPreparation("SOURCE_RECONCILE", async () => (sourceRow()));
+  await tracedPreparation("SOURCE_RECONCILE", async () => sourceRow());
   // Return through a KNOWN SSR path so its list starts at page zero, then find source button.
-  await tracedPreparation("SOURCE_NAVIGATE", async () => (io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`)));
-  for (let n = 0; (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(page, `Detalhes de ${source.titulo}`).count()))) === 0; n++) {
+  await tracedPreparation("SOURCE_NAVIGATE", async () =>
+    io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`),
+  );
+  for (
+    let n = 0;
+    (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+      btn(page, `Detalhes de ${source.titulo}`).count(),
+    )) === 0;
+    n++
+  ) {
     assert(n < 100, "FLOW_SOURCE_UI_MISSING");
-    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(page, "Próxima página")));
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => click(page, "Próxima página"));
   }
-  await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(page, `Detalhes de ${source.titulo}`)));
+  await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+    click(page, `Detalhes de ${source.titulo}`),
+  );
   let sheet = dialog(source.titulo);
-  const versions = await tracedPreparation("SOURCE_VERSION_GET", async () => (allPages(sheet, "Próximas versões", () =>
-    io.read(
-      "versoes_fontes_normativas",
-      { id_fonte: source.id },
-      { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
+  const versions = await tracedPreparation("SOURCE_VERSION_GET", async () =>
+    allPages(sheet, "Próximas versões", () =>
+      io.read(
+        "versoes_fontes_normativas",
+        { id_fonte: source.id },
+        { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
+      ),
     ),
-  )));
+  );
   // A source-version hash is a server digest of structured version fields,
   // NOT SHA256(TXT). Prove the TXT separately using the real expanded GET.
   const proveText = async (v) => {
     assert(uuid(v.id) && hash64(v.hash) && v.id_fonte === source.id, "FLOW_VERSION_ID_HASH");
     for (
       let n = 0;
-      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, `Ver texto registrado (versão ${v.versao})`).count()))) === 0;
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, `Ver texto registrado (versão ${v.versao})`).count(),
+      )) === 0;
       n++
     ) {
       assert(n < 100, "FLOW_VERSION_TEXT_UI_MISSING");
-      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Versões anteriores")));
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Versões anteriores"));
     }
     const textOrdinal = io.generation();
-    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, `Ver texto registrado (versão ${v.versao})`)));
+    await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+      click(sheet, `Ver texto registrado (versão ${v.versao})`),
+    );
     assert(
-      await tracedPreparation("SOURCE_VERSION_GET", async () => (io.observedAfter("versoes_fontes_normativas", { id: v.id }, textOrdinal, {
-        select: "conteudo_texto,metadados",
-      }))),
+      await tracedPreparation("SOURCE_VERSION_GET", async () =>
+        io.observedAfter("versoes_fontes_normativas", { id: v.id }, textOrdinal, {
+          select: "conteudo_texto,metadados",
+        }),
+      ),
       "FLOW_VERSION_TEXT_UNOBSERVED",
     );
     // IO joins only the just-observed select=conteudo_texto,metadados&id=eq.ID
     // to the independently observed version identity. It must not invent row ID
     // from response content (this projection omits id), or use a stale text GET.
     const textRow = one(
-      await tracedPreparation("SOURCE_VERSION_GET", async () => (io.read(
-        "versoes_fontes_normativas",
-        { id: v.id },
-        { select: "conteudo_texto,metadados" },
-      ))),
+      await tracedPreparation("SOURCE_VERSION_GET", async () =>
+        io.read("versoes_fontes_normativas", { id: v.id }, { select: "conteudo_texto,metadados" }),
+      ),
       "FLOW_VERSION_TEXT_UNOBSERVED",
     );
     const exact =
@@ -2190,7 +2403,7 @@ export async function prepareSourceAndList(io) {
       hash(textRow.conteudo_texto) === FIXTURE.fileHash &&
       same(textRow.metadados, {});
     if (exact) verifiedTextVersions.add(v.id);
-    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Ocultar texto")));
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Ocultar texto"));
     return exact;
   };
   const equivalents = [];
@@ -2199,66 +2412,86 @@ export async function prepareSourceAndList(io) {
   )) {
     // Move back to first page to locate each candidate deterministically.
     while (
-      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, "Versões anteriores").count()))) === 1 &&
-      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, "Versões anteriores").isEnabled())))
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, "Versões anteriores").count(),
+      )) === 1 &&
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, "Versões anteriores").isEnabled(),
+      ))
     )
-      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Versões anteriores")));
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Versões anteriores"));
     for (
       let n = 0;
-      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, `Ver texto registrado (versão ${v.versao})`).count()))) === 0;
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, `Ver texto registrado (versão ${v.versao})`).count(),
+      )) === 0;
       n++
     ) {
       assert(n < 100, "FLOW_VERSION_CANDIDATE_UI_MISSING");
-      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Próximas versões")));
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Próximas versões"));
     }
-    if (await tracedPreparation("SOURCE_TEXT_PROOF", async () => (proveText(v)))) equivalents.push(v);
+    if (await tracedPreparation("SOURCE_TEXT_PROOF", async () => proveText(v))) equivalents.push(v);
   }
   assert(equivalents.length <= 1, "FLOW_DUPLICATE_EQUIVALENT_VERSION");
   if (recovery && equivalents.length !== 1) fail("RECOVERY_STATE");
   if (equivalents.length === 0) {
     while (
-      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, "Versões anteriores").count()))) === 1 &&
-      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, "Versões anteriores").isEnabled())))
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, "Versões anteriores").count(),
+      )) === 1 &&
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, "Versões anteriores").isEnabled(),
+      ))
     )
-      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Versões anteriores")));
-    const caps = await tracedPreparation("SOURCE_RECONCILE", async () => (io.sourceCapabilities()));
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Versões anteriores"));
+    const caps = await tracedPreparation("SOURCE_RECONCILE", async () => io.sourceCapabilities());
     assert(checkedOfficial(caps) && caps.canRegister === true, "FLOW_REGISTER_DENIED");
-    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Nova versão")));
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Nova versão"));
     const d = dialog("Nova versão");
-    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Início da vigência").fill("2026-01-01")));
-    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Fim da vigência (opcional)").fill("")));
-    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Texto").check()));
-    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Texto da versão").fill(io.text)));
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Início da vigência").fill("2026-01-01"),
+    );
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Fim da vigência (opcional)").fill(""),
+    );
+    await tracedPreparation("SOURCE_FORM_FIELD", async () => field(d, "Texto").check());
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Texto da versão").fill(io.text),
+    );
     const registerOrdinal = io.generation();
-    await tracedPreparation("SOURCE_REGISTER_COMMAND", async () => (io.command({
-      rpc: "registrar_versao_fonte_v107",
-      payload: {
-        p_id_organizacao: FIXTURE.organization,
-        p_id_fonte: FIXTURE.source,
-        p_inicio_vigencia: "2026-01-01",
-        p_fim_vigencia: null,
-        p_id_arquivo: null,
-        p_conteudo_texto: io.text,
-        p_metadados: {},
-      },
-      evidence,
-      scope: d,
-      button: "Registrar versão",
-      confirmAfter: (r) =>
-        r?.schema_versao === "v107-v1" &&
-        uuid(r?.versao?.id) &&
-        r.versao.id_fonte === FIXTURE.source &&
-        hash64(r.versao.hash) &&
-        r.versao.conteudo_texto === io.text &&
-        same(r.versao.metadados, {}),
-    })));
-    await tracedPreparation("SOURCE_REFRESH", async () => (io.fresh()));
+    await tracedPreparation("SOURCE_REGISTER_COMMAND", async () =>
+      io.command({
+        rpc: "registrar_versao_fonte_v107",
+        payload: {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_fonte: FIXTURE.source,
+          p_inicio_vigencia: "2026-01-01",
+          p_fim_vigencia: null,
+          p_id_arquivo: null,
+          p_conteudo_texto: io.text,
+          p_metadados: {},
+        },
+        evidence,
+        scope: d,
+        button: "Registrar versão",
+        confirmAfter: (r) =>
+          r?.schema_versao === "v107-v1" &&
+          uuid(r?.versao?.id) &&
+          r.versao.id_fonte === FIXTURE.source &&
+          hash64(r.versao.hash) &&
+          r.versao.conteudo_texto === io.text &&
+          same(r.versao.metadados, {}),
+      }),
+    );
+    await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
     const newlyObserved = (
-      await tracedPreparation("SOURCE_VERSION_GET", async () => (io.read(
-        "versoes_fontes_normativas",
-        { id_fonte: source.id },
-        { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
-      )))
+      await tracedPreparation("SOURCE_VERSION_GET", async () =>
+        io.read(
+          "versoes_fontes_normativas",
+          { id_fonte: source.id },
+          { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
+        ),
+      )
     ).filter(
       (v) =>
         !versions.some((old) => old.id === v.id) &&
@@ -2267,124 +2500,238 @@ export async function prepareSourceAndList(io) {
         v.id_arquivo === null,
     );
     const created = one(newlyObserved, "FLOW_CREATED_VERSION_NONUNIQUE");
-    assert(await tracedPreparation("SOURCE_TEXT_PROOF", async () => (proveText(created))), "FLOW_CREATED_VERSION_TEXT_MISMATCH");
-    await tracedPreparation("SOURCE_VERSION_READ", async () => (versionRead(registerOrdinal)));
+    assert(
+      await tracedPreparation("SOURCE_TEXT_PROOF", async () => proveText(created)),
+      "FLOW_CREATED_VERSION_TEXT_MISMATCH",
+    );
+    await tracedPreparation("SOURCE_VERSION_READ", async () => versionRead(registerOrdinal));
   } else {
     version = equivalents[0];
-    await tracedPreparation("SOURCE_RECONCILE", async () => (sourceProof()));
+    await tracedPreparation("SOURCE_RECONCILE", async () => sourceProof());
   }
   // Locate matching version's button even when pagination starts on last page.
-  let caps = await tracedPreparation("SOURCE_RECONCILE", async () => (sourceProof()));
+  let caps = await tracedPreparation("SOURCE_RECONCILE", async () => sourceProof());
   if (recovery && !version.aprovado_em) fail("RECOVERY_STATE");
   if (!version.aprovado_em) {
-    for (let n = 0; (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, `Aprovar versão ${version.versao}`).count()))) === 0; n++) {
+    for (
+      let n = 0;
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, `Aprovar versão ${version.versao}`).count(),
+      )) === 0;
+      n++
+    ) {
       assert(n < 100, "FLOW_VERSION_UI_MISSING");
-      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Versões anteriores")));
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Versões anteriores"));
     }
     assert(caps.canApprove === true, "FLOW_APPROVE_DENIED");
-    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, `Aprovar versão ${version.versao}`)));
+    await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+      click(sheet, `Aprovar versão ${version.versao}`),
+    );
     const d = dialog(`Aprovar versão ${version.versao}`);
-    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Fundamento").fill(FIXTURE.foundation)));
-    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Confirmo que revisei hash, origem e vigência desta versão.").check()));
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Fundamento").fill(FIXTURE.foundation),
+    );
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Confirmo que revisei hash, origem e vigência desta versão.").check(),
+    );
     const id = version.id;
     const approvalOrdinal = io.generation();
-    await tracedPreparation("SOURCE_APPROVE_COMMAND", async () => (io.command({
-      rpc: "aprovar_versao_fonte_v107",
-      payload: {
-        p_id_organizacao: FIXTURE.organization,
-        p_id_versao: id,
-        p_hash_esperado: version.hash,
-        p_fundamento: FIXTURE.foundation,
-      },
-      evidence,
-      scope: d,
-      button: "Aprovar",
-      confirmAfter: (r) =>
-        r?.schema_versao === "v107-v1" &&
-        r?.versao?.id === id &&
-        r.versao.hash === version.hash &&
-        !!r.versao.aprovado_em,
-    })));
-    await tracedPreparation("SOURCE_REFRESH", async () => (io.fresh()));
-    await tracedPreparation("SOURCE_VERSION_READ", async () => (versionRead(approvalOrdinal)));
+    await tracedPreparation("SOURCE_APPROVE_COMMAND", async () =>
+      io.command({
+        rpc: "aprovar_versao_fonte_v107",
+        payload: {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_versao: id,
+          p_hash_esperado: version.hash,
+          p_fundamento: FIXTURE.foundation,
+        },
+        evidence,
+        scope: d,
+        button: "Aprovar",
+        confirmAfter: (r) =>
+          r?.schema_versao === "v107-v1" &&
+          r?.versao?.id === id &&
+          r.versao.hash === version.hash &&
+          !!r.versao.aprovado_em,
+      }),
+    );
+    await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
+    await tracedPreparation("SOURCE_VERSION_READ", async () => versionRead(approvalOrdinal));
     assert(!!version.aprovado_em, "FLOW_APPROVAL_NOT_READBACK");
   }
-  await tracedPreparation("SOURCE_SHEET_CLOSE", async () => (click(sheet, "Close")));
+  await tracedPreparation("SOURCE_SHEET_CLOSE", async () => click(sheet, "Close"));
   if (recovery) {
     await tracedPreparation("RECOVERY_READ", async () => {
-      await tracedPreparation("V109_NAVIGATE", async () => (io.link(`/contratos/${FIXTURE.contract}/regras`)));
-      await tracedPreparation("LIST_PANEL_OPEN", async () => (click(page, "Gerenciar listas")));
-      const region=page.getByRole("region",{name:"Gestão de listas",exact:true});
-      const rows=await tracedPreparation("LIST_GET", async () => (allPages(region,"Próxima página de listas",()=>io.read("listas_verificacao",{}))));
-      const matching=rows.filter(r=>r.nome===FIXTURE.listName);
-      assert(matching.length<=1,"RECOVERY_LIST");
-      let state=null;
-      if(matching.length===1){
-        for(let n=0;(await tracedPreparation("SOURCE_UI_CONTROL", async () => (field(region,"Lista selecionada").locator(`option[value="${matching[0].id}"]`).count())))===0;n++){
-          assert(n<100,"FLOW_LIST_UI_MISSING");await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(region,"Página anterior de listas")));
+      await tracedPreparation("V109_NAVIGATE", async () =>
+        io.link(`/contratos/${FIXTURE.contract}/regras`),
+      );
+      await tracedPreparation("LIST_PANEL_OPEN", async () => click(page, "Gerenciar listas"));
+      const region = page.getByRole("region", { name: "Gestão de listas", exact: true });
+      const rows = await tracedPreparation("LIST_GET", async () =>
+        allPages(region, "Próxima página de listas", () => io.read("listas_verificacao", {})),
+      );
+      const matching = rows.filter((r) => r.nome === FIXTURE.listName);
+      assert(matching.length <= 1, "RECOVERY_LIST");
+      let state = null;
+      if (matching.length === 1) {
+        for (
+          let n = 0;
+          (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+            field(region, "Lista selecionada").locator(`option[value="${matching[0].id}"]`).count(),
+          )) === 0;
+          n++
+        ) {
+          assert(n < 100, "FLOW_LIST_UI_MISSING");
+          await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+            click(region, "Página anterior de listas"),
+          );
         }
-        await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(region,"Lista selecionada").selectOption(matching[0].id)));
-        await tracedPreparation("SOURCE_REFRESH", async () => (io.fresh()));
+        await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+          field(region, "Lista selecionada").selectOption(matching[0].id),
+        );
+        await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
       }
-      const model=await tracedPreparation("LIST_MODEL_READ", async () => (io.rpcRead("obter_lista_operacional_v1")));
-      assert(model?.schema_versao==="crud-lista-v1"&&model.id_organizacao===FIXTURE.organization&&model.id_contrato===FIXTURE.contract&&checkedOfficial(model),"FLOW_MODEL_CONTEXT");
-      if(matching.length===1){
-        const l=model.lista,v=model.versao,items=model.itens;
-        assert(l&&v&&l.id===matching[0].id&&l.nome===FIXTURE.listName&&l.descricao===FIXTURE.listDescription&&checkedOfficial(l)&&checkedOfficial(v)&&v.id_lista===l.id&&v.vigencia_inicio==="2026-01-01"&&v.vigencia_fim===null&&model.total_itens===1&&Array.isArray(items)&&items.length===1,"RECOVERY_LIST");
-        const item=items[0],expected={codigo:"AUD-A-TXT-001",descricao:"Presença do documento TXT sintético de auditoria.",categoria:"documental",obrigatorio:true,aplicavel:true,impeditivo:true,criticidade:"alta",ordem:1,id_fonte_versao:version.id,regra_validacao:{documento:{obrigatorio:true,tipos:["outro"]},condicao:{tipo:"sempre"}}};
-        assert(uuid(item.id)&&checkedOfficial(item)&&item.id_versao_lista===v.id&&Object.entries(expected).every(([k,x])=>same(item[k],x)),"RECOVERY_LIST");
-        state={verified:true,active:l.situacao==="ativa",published:v.situacao==="publicada",ruleVerified:true,sourceVersion:version.id};
+      const model = await tracedPreparation("LIST_MODEL_READ", async () =>
+        io.rpcRead("obter_lista_operacional_v1"),
+      );
+      assert(
+        model?.schema_versao === "crud-lista-v1" &&
+          model.id_organizacao === FIXTURE.organization &&
+          model.id_contrato === FIXTURE.contract &&
+          checkedOfficial(model),
+        "FLOW_MODEL_CONTEXT",
+      );
+      if (matching.length === 1) {
+        const l = model.lista,
+          v = model.versao,
+          items = model.itens;
+        assert(
+          l &&
+            v &&
+            l.id === matching[0].id &&
+            l.nome === FIXTURE.listName &&
+            l.descricao === FIXTURE.listDescription &&
+            checkedOfficial(l) &&
+            checkedOfficial(v) &&
+            v.id_lista === l.id &&
+            v.vigencia_inicio === "2026-01-01" &&
+            v.vigencia_fim === null &&
+            model.total_itens === 1 &&
+            Array.isArray(items) &&
+            items.length === 1,
+          "RECOVERY_LIST",
+        );
+        const item = items[0],
+          expected = {
+            codigo: "AUD-A-TXT-001",
+            descricao: "Presença do documento TXT sintético de auditoria.",
+            categoria: "documental",
+            obrigatorio: true,
+            aplicavel: true,
+            impeditivo: true,
+            criticidade: "alta",
+            ordem: 1,
+            id_fonte_versao: version.id,
+            regra_validacao: {
+              documento: { obrigatorio: true, tipos: ["outro"] },
+              condicao: { tipo: "sempre" },
+            },
+          };
+        assert(
+          uuid(item.id) &&
+            checkedOfficial(item) &&
+            item.id_versao_lista === v.id &&
+            Object.entries(expected).every(([k, x]) => same(item[k], x)),
+          "RECOVERY_LIST",
+        );
+        state = {
+          verified: true,
+          active: l.situacao === "ativa",
+          published: v.situacao === "publicada",
+          ruleVerified: true,
+          sourceVersion: version.id,
+        };
       }
-      const proof=reconcileR1Recovery({ledger:recovery,source:{...source,...context,version:source.versao_registro},version:{...context,id:version.id,source:source.id,hash:version.hash,approved:!!version.aprovado_em,textVerified:verifiedTextVersions.has(version.id),effective:version.inicio_vigencia==="2026-01-01"&&version.fim_vigencia===null,file:version.id_arquivo},sourceCount:1,listCount:matching.length,listObserved:true,listState:state,canCreateList:model.acoes?.criar_lista===true});
-      assert(typeof io.recoveryReady==="function","RECOVERY_PROOF");
+      const proof = reconcileR1Recovery({
+        ledger: recovery,
+        source: { ...source, ...context, version: source.versao_registro },
+        version: {
+          ...context,
+          id: version.id,
+          source: source.id,
+          hash: version.hash,
+          approved: !!version.aprovado_em,
+          textVerified: verifiedTextVersions.has(version.id),
+          effective: version.inicio_vigencia === "2026-01-01" && version.fim_vigencia === null,
+          file: version.id_arquivo,
+        },
+        sourceCount: 1,
+        listCount: matching.length,
+        listObserved: true,
+        listState: state,
+        canCreateList: model.acoes?.criar_lista === true,
+      });
+      assert(typeof io.recoveryReady === "function", "RECOVERY_PROOF");
       io.recoveryReady(proof);
     });
-    await tracedPreparation("RECOVERY_RETURN",()=>io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`));
+    await tracedPreparation("RECOVERY_RETURN", () =>
+      io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`),
+    );
   }
   if (source.situacao !== "ativa") {
-    caps = await tracedPreparation("SOURCE_RECONCILE", async () => (sourceProof()));
+    caps = await tracedPreparation("SOURCE_RECONCILE", async () => sourceProof());
     assert(caps.canActivate === true, "FLOW_ACTIVATE_DENIED");
-    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(page, `Editar ${source.titulo}`)));
+    await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+      click(page, `Editar ${source.titulo}`),
+    );
     const d = dialog("Editar fonte");
-    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Situação").selectOption("ativa")));
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Situação").selectOption("ativa"),
+    );
     const before = source.versao_registro;
-    await tracedPreparation("SOURCE_ACTIVATE_COMMAND", async () => (io.command({
-      rpc: "salvar_fonte_normativa_v107",
-      payload: {
-        p_id_organizacao: FIXTURE.organization,
-        p_id_contrato: FIXTURE.contract,
-        p_id_fonte: source.id,
-        p_tipo: source.tipo,
-        p_titulo: source.titulo,
-        p_referencia: source.referencia,
-        p_descricao: source.descricao,
-        p_situacao: "ativa",
-        p_versao_esperada: before,
-      },
-      evidence,
-      scope: d,
-      button: "Salvar",
-      confirmAfter: (r) =>
-        r?.schema_versao === "v107-v1" &&
-        r?.fonte?.id === FIXTURE.source &&
-        r.fonte.situacao === "ativa" &&
-        r.fonte.versao_registro === before + 1,
-    })));
-    await tracedPreparation("SOURCE_REFRESH", async () => (io.fresh()));
-    await tracedPreparation("SOURCE_RECONCILE", async () => (sourceRow()));
+    await tracedPreparation("SOURCE_ACTIVATE_COMMAND", async () =>
+      io.command({
+        rpc: "salvar_fonte_normativa_v107",
+        payload: {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_contrato: FIXTURE.contract,
+          p_id_fonte: source.id,
+          p_tipo: source.tipo,
+          p_titulo: source.titulo,
+          p_referencia: source.referencia,
+          p_descricao: source.descricao,
+          p_situacao: "ativa",
+          p_versao_esperada: before,
+        },
+        evidence,
+        scope: d,
+        button: "Salvar",
+        confirmAfter: (r) =>
+          r?.schema_versao === "v107-v1" &&
+          r?.fonte?.id === FIXTURE.source &&
+          r.fonte.situacao === "ativa" &&
+          r.fonte.versao_registro === before + 1,
+      }),
+    );
+    await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
+    await tracedPreparation("SOURCE_RECONCILE", async () => sourceRow());
     assert(source.situacao === "ativa", "FLOW_ACTIVE_NOT_READBACK");
   }
-  await tracedPreparation("SOURCE_RECONCILE", async () => (sourceProof()));
-  await tracedPreparation("V109_NAVIGATE", async () => (io.link(`/contratos/${FIXTURE.contract}/regras`)));
-  await tracedPreparation("LIST_PANEL_OPEN", async () => (click(page, "Gerenciar listas")));
+  await tracedPreparation("SOURCE_RECONCILE", async () => sourceProof());
+  await tracedPreparation("V109_NAVIGATE", async () =>
+    io.link(`/contratos/${FIXTURE.contract}/regras`),
+  );
+  await tracedPreparation("LIST_PANEL_OPEN", async () => click(page, "Gerenciar listas"));
   const panel = page.getByRole("region", { name: "Gestão de listas", exact: true });
-  const headers = await tracedPreparation("LIST_GET", async () => (allPages(panel, "Próxima página de listas", () =>
-    io.read("listas_verificacao", {}),
-  )));
+  const headers = await tracedPreparation("LIST_GET", async () =>
+    allPages(panel, "Próxima página de listas", () => io.read("listas_verificacao", {})),
+  );
   const matches = headers.filter((l) => l.nome === FIXTURE.listName);
   assert(matches.length <= 1, "FLOW_LIST_DUPLICATE");
   const readModel = async () => {
-    const d = await tracedPreparation("LIST_MODEL_READ", async () => (io.rpcRead("obter_lista_operacional_v1")));
+    const d = await tracedPreparation("LIST_MODEL_READ", async () =>
+      io.rpcRead("obter_lista_operacional_v1"),
+    );
     assert(
       d?.schema_versao === "crud-lista-v1" &&
         d.id_organizacao === FIXTURE.organization &&
@@ -2412,7 +2759,7 @@ export async function prepareSourceAndList(io) {
   });
   const ruleOK = (i) => Object.entries(itemExpected()).every(([k, v]) => same(i[k], v));
   const listProof = async () => {
-    const d = await tracedPreparation("LIST_MODEL_READ", async () => (readModel()));
+    const d = await tracedPreparation("LIST_MODEL_READ", async () => readModel());
     assert(
       d.lista &&
         d.versao &&
@@ -2446,121 +2793,155 @@ export async function prepareSourceAndList(io) {
     return d;
   };
   const listCommand = async (action, payload, label, setup = async () => {}) => {
-    const d = await tracedPreparation("LIST_MODEL_READ", async () => (readModel()));
+    const d = await tracedPreparation("LIST_MODEL_READ", async () => readModel());
     assert(
       d.acoes?.[action === "salvar_item" ? "criar_item" : action] === true,
       "FLOW_LIST_CAPABILITY_DENIED",
     );
-    if (action !== "criar_lista") await tracedPreparation("LIST_MODEL_READ", async () => (listProof()));
-    await tracedPreparation("LIST_UI_CONTROL", async () => (click(panel, label)));
+    if (action !== "criar_lista")
+      await tracedPreparation("LIST_MODEL_READ", async () => listProof());
+    await tracedPreparation("LIST_UI_CONTROL", async () => click(panel, label));
     const form = panel.locator("form").filter({
       has: page.getByRole("heading", {
         name: action === "salvar_item" ? "Salvar item" : label,
         exact: true,
       }),
     });
-    assert((await tracedPreparation("LIST_UI_CONTROL", async () => (form.count()))) === 1, "FLOW_LIST_FORM_NONUNIQUE");
-    await tracedPreparation("LIST_UI_CONTROL", async () => (setup(form)));
-    await tracedPreparation("LIST_FORM_FIELD", async () => (field(form, "Motivo").fill(FIXTURE.reason)));
-    await tracedPreparation("LIST_UI_CONTROL", async () => (click(form, "Revisar operação")));
+    assert(
+      (await tracedPreparation("LIST_UI_CONTROL", async () => form.count())) === 1,
+      "FLOW_LIST_FORM_NONUNIQUE",
+    );
+    await tracedPreparation("LIST_UI_CONTROL", async () => setup(form));
+    await tracedPreparation("LIST_FORM_FIELD", async () =>
+      field(form, "Motivo").fill(FIXTURE.reason),
+    );
+    await tracedPreparation("LIST_UI_CONTROL", async () => click(form, "Revisar operação"));
     const prev = action === "criar_lista" ? null : d.lista.versao_registro;
-    await tracedPreparation("LIST_COMMAND", async () => (io.command({
-      rpc: "executar_comando_lista_v1",
-      payload: {
-        p_id_organizacao: FIXTURE.organization,
-        p_id_contrato: FIXTURE.contract,
-        p_id_lista: action === "criar_lista" ? null : d.lista.id,
-        p_versao_esperada: prev,
-        p_acao: action,
-        p_payload: payload,
-        p_motivo: FIXTURE.reason,
-      },
-      evidence,
-      scope: form,
-      button: "Confirmar operação",
-      confirmAfter: (r) =>
-        r?.schema_versao === "crud-lista-v1" &&
-        r.acao === action &&
-        r.id_organizacao === FIXTURE.organization &&
-        r.id_contrato === FIXTURE.contract &&
-        uuid(r.lista?.id) &&
-        r.lista.nome === FIXTURE.listName &&
-        r.lista.versao_registro === (prev === null ? 1 : prev + 1) &&
-        (action === "criar_lista" || r.lista.id === d.lista.id) &&
-        uuid(r.evento_id),
-    })));
-    await tracedPreparation("LIST_REFRESH", async () => (io.fresh()));
-    await tracedPreparation("LIST_MODEL_READ", async () => (listProof()));
+    await tracedPreparation("LIST_COMMAND", async () =>
+      io.command({
+        rpc: "executar_comando_lista_v1",
+        payload: {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_contrato: FIXTURE.contract,
+          p_id_lista: action === "criar_lista" ? null : d.lista.id,
+          p_versao_esperada: prev,
+          p_acao: action,
+          p_payload: payload,
+          p_motivo: FIXTURE.reason,
+        },
+        evidence,
+        scope: form,
+        button: "Confirmar operação",
+        confirmAfter: (r) =>
+          r?.schema_versao === "crud-lista-v1" &&
+          r.acao === action &&
+          r.id_organizacao === FIXTURE.organization &&
+          r.id_contrato === FIXTURE.contract &&
+          uuid(r.lista?.id) &&
+          r.lista.nome === FIXTURE.listName &&
+          r.lista.versao_registro === (prev === null ? 1 : prev + 1) &&
+          (action === "criar_lista" || r.lista.id === d.lista.id) &&
+          uuid(r.evento_id),
+      }),
+    );
+    await tracedPreparation("LIST_REFRESH", async () => io.fresh());
+    await tracedPreparation("LIST_MODEL_READ", async () => listProof());
   };
   if (matches.length === 0) {
-    await tracedPreparation("LIST_FORM_FIELD", async () => (listCommand(
-      "criar_lista",
-      {
-        nome: FIXTURE.listName,
-        descricao: FIXTURE.listDescription,
-        vigencia_inicio: "2026-01-01",
-        vigencia_fim: null,
-      },
-      "Criar lista",
-      async (f) => {
-        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Nome").fill(FIXTURE.listName)));
-        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Descrição").fill(FIXTURE.listDescription)));
-        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Início da vigência").fill("2026-01-01")));
-        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Fim da vigência").fill("")));
-      },
-    )));
+    await tracedPreparation("LIST_FORM_FIELD", async () =>
+      listCommand(
+        "criar_lista",
+        {
+          nome: FIXTURE.listName,
+          descricao: FIXTURE.listDescription,
+          vigencia_inicio: "2026-01-01",
+          vigencia_fim: null,
+        },
+        "Criar lista",
+        async (f) => {
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Nome").fill(FIXTURE.listName),
+          );
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Descrição").fill(FIXTURE.listDescription),
+          );
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Início da vigência").fill("2026-01-01"),
+          );
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Fim da vigência").fill(""),
+          );
+        },
+      ),
+    );
   } else {
     // Find the already-observed target's page; no synthetic option or direct navigation.
     for (
       let n = 0;
-      (await tracedPreparation("LIST_UI_CONTROL", async () => (field(panel, "Lista selecionada")
-        .locator(`option[value="${matches[0].id}"]`)
-        .count()))) === 0;
+      (await tracedPreparation("LIST_UI_CONTROL", async () =>
+        field(panel, "Lista selecionada").locator(`option[value="${matches[0].id}"]`).count(),
+      )) === 0;
       n++
     ) {
       assert(n < 100, "FLOW_LIST_UI_MISSING");
-      await tracedPreparation("LIST_UI_CONTROL", async () => (click(panel, "Página anterior de listas")));
+      await tracedPreparation("LIST_UI_CONTROL", async () =>
+        click(panel, "Página anterior de listas"),
+      );
     }
-    await tracedPreparation("LIST_FORM_FIELD", async () => (field(panel, "Lista selecionada").selectOption(matches[0].id)));
-    await tracedPreparation("LIST_REFRESH", async () => (io.fresh()));
-    await tracedPreparation("LIST_MODEL_READ", async () => (listProof()));
+    await tracedPreparation("LIST_FORM_FIELD", async () =>
+      field(panel, "Lista selecionada").selectOption(matches[0].id),
+    );
+    await tracedPreparation("LIST_REFRESH", async () => io.fresh());
+    await tracedPreparation("LIST_MODEL_READ", async () => listProof());
   }
-  await tracedPreparation("LIST_MODEL_READ", async () => (listProof()));
+  await tracedPreparation("LIST_MODEL_READ", async () => listProof());
   if (model.itens.length === 0) {
     assert(model.versao.situacao === "rascunho", "FLOW_PUBLISHED_EMPTY_LIST");
-    await tracedPreparation("LIST_FORM_FIELD", async () => (listCommand(
-      "salvar_item",
-      { id_versao: model.versao.id, id_item: null, ...itemExpected() },
-      "Adicionar item",
-      async (f) => {
-        for (const [label, value] of [
-          ["Código", "AUD-A-TXT-001"],
-          ["Descrição do item", "Presença do documento TXT sintético de auditoria."],
-          ["Categoria", "documental"],
-          ["Identificador da versão da fonte formal", version.id],
-          ["Ordem", "1"],
-        ])
-          await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, label).fill(value)));
-        for (const label of ["Obrigatório", "Aplicável", "Impeditivo"])
-          await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, label).check()));
-        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Criticidade").selectOption("alta")));
-        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Regra de validação e condição (JSON)").fill(
-          JSON.stringify(itemExpected().regra_validacao),
-        )));
-      },
-    )));
+    await tracedPreparation("LIST_FORM_FIELD", async () =>
+      listCommand(
+        "salvar_item",
+        { id_versao: model.versao.id, id_item: null, ...itemExpected() },
+        "Adicionar item",
+        async (f) => {
+          for (const [label, value] of [
+            ["Código", "AUD-A-TXT-001"],
+            ["Descrição do item", "Presença do documento TXT sintético de auditoria."],
+            ["Categoria", "documental"],
+            ["Identificador da versão da fonte formal", version.id],
+            ["Ordem", "1"],
+          ])
+            await tracedPreparation("LIST_FORM_FIELD", async () => field(f, label).fill(value));
+          for (const label of ["Obrigatório", "Aplicável", "Impeditivo"])
+            await tracedPreparation("LIST_FORM_FIELD", async () => field(f, label).check());
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Criticidade").selectOption("alta"),
+          );
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Regra de validação e condição (JSON)").fill(
+              JSON.stringify(itemExpected().regra_validacao),
+            ),
+          );
+        },
+      ),
+    );
   }
   if (model.versao.situacao !== "publicada") {
     assert(model.versao.situacao === "rascunho", "FLOW_VERSION_STATE");
-    await tracedPreparation("LIST_UI_CONTROL", async () => (listCommand("publicar_versao", { id_versao: model.versao.id }, "Publicar versão")));
+    await tracedPreparation("LIST_UI_CONTROL", async () =>
+      listCommand("publicar_versao", { id_versao: model.versao.id }, "Publicar versão"),
+    );
     assert(model.versao.situacao === "publicada", "FLOW_PUBLICATION_NOT_READBACK");
   }
   if (model.lista.situacao !== "ativa") {
-    await tracedPreparation("LIST_FORM_FIELD", async () => (listCommand("alterar_situacao", { situacao: "ativa" }, "Alterar situação", async (f) => {
-      await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Situação").selectOption("ativa")));
-    })));
+    await tracedPreparation("LIST_FORM_FIELD", async () =>
+      listCommand("alterar_situacao", { situacao: "ativa" }, "Alterar situação", async (f) => {
+        await tracedPreparation("LIST_FORM_FIELD", async () =>
+          field(f, "Situação").selectOption("ativa"),
+        );
+      }),
+    );
   }
-  await tracedPreparation("LIST_MODEL_READ", async () => (listProof()));
+  await tracedPreparation("LIST_MODEL_READ", async () => listProof());
   assert(
     model.lista.situacao === "ativa" &&
       model.versao.situacao === "publicada" &&
@@ -2626,10 +3007,13 @@ export async function prepareCompetencies(io, sourceList) {
     ![sourceList.sourceVersionId, sourceList.listId, sourceList.listVersionId].every(uuid)
   )
     stop("COMPETENCE_SOURCE_LIST");
-  await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
-  if ((await tracedPreparation("COMPETENCY_UI", async () => (io.verifyContext()))) !== true) stop("COMPETENCE_CONTEXT");
+  await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
+  if ((await tracedPreparation("COMPETENCY_UI", async () => io.verifyContext())) !== true)
+    stop("COMPETENCE_CONTEXT");
   // Read the actual official UI RPC DTO, not assumed convenience flags such as list.active.
-  const sourceModel = await tracedPreparation("COMPETENCY_GET", async () => (io.rpcRead("obter_lista_operacional_v1")));
+  const sourceModel = await tracedPreparation("COMPETENCY_GET", async () =>
+    io.rpcRead("obter_lista_operacional_v1"),
+  );
   if (
     sourceModel?.schema_versao !== "crud-lista-v1" ||
     sourceModel.id_organizacao !== FIXTURE.organization ||
@@ -2665,40 +3049,50 @@ export async function prepareCompetencies(io, sourceList) {
   const verifiedItemId = sourceItem.id;
   const context = async () => {
     phaseActive();
-    await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     phaseActive();
-    if ((await tracedPreparation("COMPETENCY_UI", async () => (io.verifyContext()))) !== true) stop("COMPETENCE_CONTEXT");
+    if ((await tracedPreparation("COMPETENCY_UI", async () => io.verifyContext())) !== true)
+      stop("COMPETENCE_CONTEXT");
   };
   const rows = async (table, where, options = {}) => {
     phaseActive();
-    const result = await tracedPreparation("COMPETENCY_GET", async () => (io.read(table, where, options)));
+    const result = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.read(table, where, options),
+    );
     phaseActive();
     if (!Array.isArray(result)) stop("COMPETENCE_READ_SHAPE");
     return result;
   };
   const observed = async (name, where, ordinal, options = {}) => {
     phaseActive();
-    await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     phaseActive();
-    if ((await tracedPreparation("COMPETENCY_UI", async () => (io.observedAfter(name, where, ordinal, options)))) !== true)
+    if (
+      (await tracedPreparation("COMPETENCY_UI", async () =>
+        io.observedAfter(name, where, ordinal, options),
+      )) !== true
+    )
       stop("COMPETENCE_STALE_OBSERVATION");
   };
   const link = async (path) => {
     phaseActive();
-    await tracedPreparation("COMPETENCY_UI", async () => (io.link(path)));
+    await tracedPreparation("COMPETENCY_UI", async () => io.link(path));
     phaseActive();
-    await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     phaseActive();
   };
   const click = async (name, scope = io.page) => {
     phaseActive();
     const button = scope.getByRole("button", { name, exact: true });
-    if ((await tracedPreparation("COMPETENCY_UI", async () => (button.count()))) !== 1 || !(await tracedPreparation("COMPETENCY_UI", async () => (button.isEnabled()))))
+    if (
+      (await tracedPreparation("COMPETENCY_UI", async () => button.count())) !== 1 ||
+      !(await tracedPreparation("COMPETENCY_UI", async () => button.isEnabled()))
+    )
       stop("COMPETENCE_CONTROL_UNAVAILABLE");
     phaseActive();
-    await tracedPreparation("COMPETENCY_UI", async () => (button.click()));
+    await tracedPreparation("COMPETENCY_UI", async () => button.click());
     phaseActive();
-    await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     phaseActive();
   };
   async function poll(read, ready, refresh) {
@@ -3529,7 +3923,7 @@ export async function prepareCompetencies(io, sourceList) {
     const receipt = { month, state: "partial" };
     output.competencies.push(receipt);
     try {
-      const initial = await tracedPreparation("COMPETENCY_UI", async () => (createOrReuse(month)));
+      const initial = await tracedPreparation("COMPETENCY_UI", async () => createOrReuse(month));
       const c = { ...initial, month };
       receipt.id = c.id;
       if (
@@ -3540,16 +3934,16 @@ export async function prepareCompetencies(io, sourceList) {
         receipt.state = c.view.competencia.situacao;
         stop("COMPETENCE_EXISTING_REGISTRATION_LINK_UNAVAILABLE");
       }
-      await tracedPreparation("COMPETENCY_UI", async () => (ensureDocument(c)));
+      await tracedPreparation("COMPETENCY_UI", async () => ensureDocument(c));
       receipt.requirementId = c.requirementId;
       receipt.documentId = c.documentId;
-      let a = await tracedPreparation("COMPETENCY_UI", async () => (ensureAnalysis(c)));
-      a = await tracedPreparation("COMPETENCY_UI", async () => (reviewIfNeeded(c, a)));
+      let a = await tracedPreparation("COMPETENCY_UI", async () => ensureAnalysis(c));
+      a = await tracedPreparation("COMPETENCY_UI", async () => reviewIfNeeded(c, a));
       receipt.executionId = c.executionId;
       receipt.documentVersionId = c.documentVersionId || null;
-      await tracedPreparation("COMPETENCY_UI", async () => (opinion(c)));
+      await tracedPreparation("COMPETENCY_UI", async () => opinion(c));
       receipt.opinionId = c.opinionId;
-      await tracedPreparation("COMPETENCY_UI", async () => (present(c, month === "2026-09-01")));
+      await tracedPreparation("COMPETENCY_UI", async () => present(c, month === "2026-09-01"));
       receipt.state = c.state;
       if (c.presentationId) {
         receipt.presentationId = c.presentationId;
@@ -3568,8 +3962,8 @@ export async function prepareCompetencies(io, sourceList) {
         : "COMPETENCE_DEPENDENCY_BLOCKED";
       if (temporalAborted) break;
       try {
-        await tracedPreparation("COMPETENCY_UI", async () => (io.page.keyboard.press("Escape")));
-        await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
+        await tracedPreparation("COMPETENCY_UI", async () => io.page.keyboard.press("Escape"));
+        await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
       } catch {
         /* Remain partial; never issue a compensating mutation. */
       }
@@ -3606,7 +4000,15 @@ export function validatePreparerIdentity(env, proof, native, identity, head) {
   );
 }
 const PREPARER_FAILURE_CODES = new Set([
-  "RECOVERY_LEDGER","RECOVERY_STATE","RECOVERY_LIST","RECOVERY_READ_ONLY","RECOVERY_PROOF","RECOVERY_CONFIRMED_OPERATION","DIAGNOSTIC_SUBPHASE","DIAGNOSTIC_REENTRANT","PREPARER_TIMEOUT",
+  "RECOVERY_LEDGER",
+  "RECOVERY_STATE",
+  "RECOVERY_LIST",
+  "RECOVERY_READ_ONLY",
+  "RECOVERY_PROOF",
+  "RECOVERY_CONFIRMED_OPERATION",
+  "DIAGNOSTIC_SUBPHASE",
+  "DIAGNOSTIC_REENTRANT",
+  "PREPARER_TIMEOUT",
   "BINDING_CODE",
   "BINDING_HASH",
   "BINDING_ID",
@@ -3761,9 +4163,9 @@ const PREPARER_FAILURE_CODES = new Set([
 ]);
 async function runFixturePreparation() {
   validateR1RecoveryDocument();
-  const diagnostics=createPreparationDiagnostics();
-  if(activePreparationDiagnostics)err("DIAGNOSTIC_REENTRANT");
-  activePreparationDiagnostics=diagnostics;
+  const diagnostics = createPreparationDiagnostics();
+  if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
+  activePreparationDiagnostics = diagnostics;
   let browser,
     proxy,
     fence,
@@ -3778,8 +4180,12 @@ async function runFixturePreparation() {
     blockedCode = null,
     recoveryState = null;
   const output = resolve("artifacts/trilha-a-fixtures");
-  await tracedPreparation("PREFLIGHT", async () => (mkdir(output, { recursive: true })));
-  writeFileSync(join(output,"receipts-r1.json"),JSON.stringify(R1_RECOVERY_DOCUMENT,null,2)+"\n",{mode:0o600});
+  await tracedPreparation("PREFLIGHT", async () => mkdir(output, { recursive: true }));
+  writeFileSync(
+    join(output, "receipts-r1.json"),
+    JSON.stringify(R1_RECOVERY_DOCUMENT, null, 2) + "\n",
+    { mode: 0o600 },
+  );
   const receiptPath = join(output, "receipts.json");
   writeFileSync(
     receiptPath,
@@ -3793,11 +4199,27 @@ async function runFixturePreparation() {
     workflowRun: process.env.GITHUB_RUN_ID,
   };
   try {
-    const native = JSON.parse(await tracedPreparation("PREFLIGHT", async () => (readFile(".audit-work/native-proof.json", "utf8"))));
-    const proof = JSON.parse(await tracedPreparation("PREFLIGHT", async () => (readFile(".audit-work/provenance.json", "utf8"))));
+    const native = JSON.parse(
+      await tracedPreparation("PREFLIGHT", async () =>
+        readFile(".audit-work/native-proof.json", "utf8"),
+      ),
+    );
+    const proof = JSON.parse(
+      await tracedPreparation("PREFLIGHT", async () =>
+        readFile(".audit-work/provenance.json", "utf8"),
+      ),
+    );
     const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
     execFileSync("git", ["diff", "--quiet", "HEAD"], { stdio: "ignore" });
-    if (!validatePreparerIdentity(process.env, proof, native, await tracedPreparation("PREFLIGHT", async () => (harnessIdentity())), head))
+    if (
+      !validatePreparerIdentity(
+        process.env,
+        proof,
+        native,
+        await tracedPreparation("PREFLIGHT", async () => harnessIdentity()),
+        head,
+      )
+    )
       err("PREPARER_IDENTITY");
     for (const file of [
       "scripts/hml/prepare-visual-fixtures.mjs",
@@ -3810,90 +4232,126 @@ async function runFixturePreparation() {
       }).trim();
       if (actual !== expected) err("PREPARER_IDENTITY");
     }
-    await tracedPreparation("PREFLIGHT", async () => (checkFreshDeployment(proof, true)));
+    await tracedPreparation("PREFLIGHT", async () => checkFreshDeployment(proof, true));
     const persist = createReceiptWriter(receiptPath, identity);
-    const broker = createIntentBroker({ persist, competenceGateAmended: true, recoveryLedger:R1_RECOVERY_DOCUMENT });
+    const broker = createIntentBroker({
+      persist,
+      competenceGateAmended: true,
+      recoveryLedger: R1_RECOVERY_DOCUMENT,
+    });
     const debug = createServer();
-    await tracedPreparation("PREFLIGHT", async () => (new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve))));
+    await tracedPreparation(
+      "PREFLIGHT",
+      async () => new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve)),
+    );
     const debugPort = debug.address().port;
-    await tracedPreparation("PREFLIGHT", async () => (new Promise((resolve) => debug.close(resolve))));
-    const { chromium } = await tracedPreparation("PREFLIGHT", async () => (import("playwright")));
-    proxy = await tracedPreparation("PREFLIGHT", async () => (startDestinationProxy()));
-    browser = await tracedPreparation("PREFLIGHT", async () => (chromium.launch({
-      chromiumSandbox: true,
-      env: browserEnvironment(process.env),
-      proxy: { server: proxy.url },
-      args: [`--remote-debugging-port=${debugPort}`, "--proxy-bypass-list=<-loopback>"],
-    })));
-    const context = await tracedPreparation("PREFLIGHT", async () => (browser.newContext({
-      viewport: { width: 1440, height: 1000 },
-      serviceWorkers: "block",
-    })));
-    page = await tracedPreparation("PREFLIGHT", async () => (context.newPage()));
+    await tracedPreparation(
+      "PREFLIGHT",
+      async () => new Promise((resolve) => debug.close(resolve)),
+    );
+    const { chromium } = await tracedPreparation("PREFLIGHT", async () => import("playwright"));
+    proxy = await tracedPreparation("PREFLIGHT", async () => startDestinationProxy());
+    browser = await tracedPreparation("PREFLIGHT", async () =>
+      chromium.launch({
+        chromiumSandbox: true,
+        env: browserEnvironment(process.env),
+        proxy: { server: proxy.url },
+        args: [`--remote-debugging-port=${debugPort}`, "--proxy-bypass-list=<-loopback>"],
+      }),
+    );
+    const context = await tracedPreparation("PREFLIGHT", async () =>
+      browser.newContext({
+        viewport: { width: 1440, height: 1000 },
+        serviceWorkers: "block",
+      }),
+    );
+    page = await tracedPreparation("PREFLIGHT", async () => context.newPage());
     page.setDefaultTimeout(15000);
     let scriptError = false;
     page.on("pageerror", () => {
       scriptError = true;
     });
-    const session = await tracedPreparation("PREFLIGHT", async () => (context.newCDPSession(page))),
-      { targetInfo } = await tracedPreparation("PREFLIGHT", async () => (session.send("Target.getTargetInfo")));
-    await tracedPreparation("PREFLIGHT", async () => (session.detach()));
-    fence = await tracedPreparation("PREFLIGHT", async () => (installNativeFence({
-      debugPort,
-      identity: targetInfo,
-      policy: broker.policy,
-      verifyResponse: (r) => verifyPublishedResponse(proof, r),
-      closeContext: () => context.close(),
-    })));
+    const session = await tracedPreparation("PREFLIGHT", async () => context.newCDPSession(page)),
+      { targetInfo } = await tracedPreparation("PREFLIGHT", async () =>
+        session.send("Target.getTargetInfo"),
+      );
+    await tracedPreparation("PREFLIGHT", async () => session.detach());
+    fence = await tracedPreparation("PREFLIGHT", async () =>
+      installNativeFence({
+        debugPort,
+        identity: targetInfo,
+        policy: broker.policy,
+        verifyResponse: (r) => verifyPublishedResponse(proof, r),
+        closeContext: () => context.close(),
+      }),
+    );
     observer = createOfficialObserver(page);
     const fresh = async () => {
-      await tracedPreparation("RUNTIME_FRESH", async () => (settleVerifiedPage(page, fence)));
-      await tracedPreparation("RUNTIME_FRESH", async () => (observer.flush()));
+      await tracedPreparation("RUNTIME_FRESH", async () => settleVerifiedPage(page, fence));
+      await tracedPreparation("RUNTIME_FRESH", async () => observer.flush());
       if (scriptError) err("PREPARER_SCRIPT");
     };
     const goKnown = async (path) => {
       if (!Object.hasOwn(proof.documents, path)) err("PREPARER_SSR_PATH");
-      await tracedPreparation("PREFLIGHT", async () => (checkFreshDeployment(proof, false)));
-      await tracedPreparation("RUNTIME_NAVIGATE", async () => (navigateVerifiedPage(page, fence, FIXTURE.origin + path)));
-      await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
+      await tracedPreparation("PREFLIGHT", async () => checkFreshDeployment(proof, false));
+      await tracedPreparation("RUNTIME_NAVIGATE", async () =>
+        navigateVerifiedPage(page, fence, FIXTURE.origin + path),
+      );
+      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
     };
     const link = async (path) => {
       if (!/^\/(?:contratos|competencias)\/[a-f0-9-]{36}(?:\/[a-z0-9-]+)*$/.test(path))
         err("PREPARER_SPA_PATH");
-      await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
+      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
       if (page.url() === FIXTURE.origin + path) {
         if (Object.hasOwn(proof.documents, path)) {
-          await tracedPreparation("PREFLIGHT", async () => (goKnown(path)));
+          await tracedPreparation("PREFLIGHT", async () => goKnown(path));
           return;
         }
-        await tracedPreparation("PREFLIGHT", async () => (goKnown(`/contratos/${FIXTURE.contract}/competencias`)));
+        await tracedPreparation("PREFLIGHT", async () =>
+          goKnown(`/contratos/${FIXTURE.contract}/competencias`),
+        );
       }
       const candidates = page.locator(`a[href="${path}"]:visible`);
       let selected = null;
-      for (let n = 0; n < (await tracedPreparation("PREFLIGHT", async () => (candidates.count()))); n++) {
+      for (
+        let n = 0;
+        n < (await tracedPreparation("PREFLIGHT", async () => candidates.count()));
+        n++
+      ) {
         const item = candidates.nth(n);
-        if ((await tracedPreparation("PREFLIGHT", async () => (item.isEnabled()))) && (await tracedPreparation("PREFLIGHT", async () => (item.getAttribute("aria-disabled")))) !== "true") {
+        if (
+          (await tracedPreparation("PREFLIGHT", async () => item.isEnabled())) &&
+          (await tracedPreparation("PREFLIGHT", async () => item.getAttribute("aria-disabled"))) !==
+            "true"
+        ) {
           selected = item;
           break;
         }
       }
       if (!selected) err("PREPARER_SPA_LINK");
-      await tracedPreparation("RUNTIME_NAVIGATE", async () => (selected.click()));
-      await tracedPreparation("RUNTIME_NAVIGATE", async () => (page.waitForURL(FIXTURE.origin + path)));
-      await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
+      await tracedPreparation("RUNTIME_NAVIGATE", async () => selected.click());
+      await tracedPreparation("RUNTIME_NAVIGATE", async () =>
+        page.waitForURL(FIXTURE.origin + path),
+      );
+      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
     };
     let contextVerified = false;
     const verifyContext = async () => {
-      await tracedPreparation("PREFLIGHT", async () => (waitOrganization(page)));
+      await tracedPreparation("PREFLIGHT", async () => waitOrganization(page));
       let contracts;
       try {
-        contracts = await tracedPreparation("RUNTIME_CONTEXT", async () => (observer.read("contratos", { id: FIXTURE.contract })));
+        contracts = await tracedPreparation("RUNTIME_CONTEXT", async () =>
+          observer.read("contratos", { id: FIXTURE.contract }),
+        );
       } catch {
         contracts = [];
       }
       if (!contracts.length && !contextVerified) {
-        await tracedPreparation("PREFLIGHT", async () => (goKnown(`/contratos/${FIXTURE.contract}`)));
-        contracts = await tracedPreparation("RUNTIME_CONTEXT", async () => (observer.read("contratos", { id: FIXTURE.contract })));
+        await tracedPreparation("PREFLIGHT", async () => goKnown(`/contratos/${FIXTURE.contract}`));
+        contracts = await tracedPreparation("RUNTIME_CONTEXT", async () =>
+          observer.read("contratos", { id: FIXTURE.contract }),
+        );
       }
       if (
         contracts.length !== 1 ||
@@ -3912,10 +4370,12 @@ async function runFixturePreparation() {
       verifyContext,
     });
     phase = "LOGIN";
-    await tracedPreparation("LOGIN", async () => (runtime.login({
-      email: process.env.CONTAOS_HML_SYNTHETIC_EMAIL,
-      password: process.env.CONTAOS_HML_SYNTHETIC_PASSWORD,
-    })));
+    await tracedPreparation("LOGIN", async () =>
+      runtime.login({
+        email: process.env.CONTAOS_HML_SYNTHETIC_EMAIL,
+        password: process.env.CONTAOS_HML_SYNTHETIC_PASSWORD,
+      }),
+    );
     const official = (row) => {
       if (
         obj(row) &&
@@ -3940,12 +4400,14 @@ async function runFixturePreparation() {
       };
     };
     const sourceCapabilities = async () => {
-      await tracedPreparation("PREFLIGHT", async () => (runtime.context()));
-      await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
-      const caps = await tracedPreparation("PREFLIGHT", async () => (observer.rpcRead("consultar_permissoes_efetivas", {
-        p_id_organizacao: FIXTURE.organization,
-        p_id_contrato: FIXTURE.contract,
-      })));
+      await tracedPreparation("PREFLIGHT", async () => runtime.context());
+      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
+      const caps = await tracedPreparation("PREFLIGHT", async () =>
+        observer.rpcRead("consultar_permissoes_efetivas", {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_contrato: FIXTURE.contract,
+        }),
+      );
       if (
         caps?.schema_versao !== "rbac-v1" ||
         caps.master !== true ||
@@ -3967,40 +4429,53 @@ async function runFixturePreparation() {
       };
     };
     const command = async ({ rpc, payload, evidence = {}, button, scope, confirmAfter }) => {
-      await tracedPreparation("PREFLIGHT", async () => (runtime.context()));
-      await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
+      await tracedPreparation("PREFLIGHT", async () => runtime.context());
+      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
       if (typeof confirmAfter !== "function") err("PREPARER_RECONCILIATION");
       const verified = { context: true, capability: true, reconciled: true };
       let value;
       const operationGeneration = observer.generation();
-      await tracedPreparation("RUNTIME_FRESH", async () => (confirmUiIntent({
-        page,
-        fence,
-        broker,
-        rpc,
-        payload,
-        evidence,
-        button,
-        scope,
-        verified,
-        settleVerifiedPage: async () => fresh(),
-        reconcile: async (stage) => {
-          if (stage === "before") {
-            await tracedPreparation("PREFLIGHT", async () => (runtime.context()));
-            return { payload, evidence, verified };
-          }
-          await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
-          if (!(await tracedPreparation("PREFLIGHT", async () => (observer.observedAfter("rpc:" + rpc, {}, operationGeneration)))))
-            err("PREPARER_RESPONSE_UNCONFIRMED");
-          value = await tracedPreparation("PREFLIGHT", async () => (observer.rpcRead(rpc)));
-          return { confirmed: (await tracedPreparation("PREFLIGHT", async () => (confirmAfter(value)))) === true };
-        },
-      })));
+      await tracedPreparation("RUNTIME_FRESH", async () =>
+        confirmUiIntent({
+          page,
+          fence,
+          broker,
+          rpc,
+          payload,
+          evidence,
+          button,
+          scope,
+          verified,
+          settleVerifiedPage: async () => fresh(),
+          reconcile: async (stage) => {
+            if (stage === "before") {
+              await tracedPreparation("PREFLIGHT", async () => runtime.context());
+              return { payload, evidence, verified };
+            }
+            await tracedPreparation("RUNTIME_FRESH", async () => fresh());
+            if (
+              !(await tracedPreparation("PREFLIGHT", async () =>
+                observer.observedAfter("rpc:" + rpc, {}, operationGeneration),
+              ))
+            )
+              err("PREPARER_RESPONSE_UNCONFIRMED");
+            value = await tracedPreparation("PREFLIGHT", async () => observer.rpcRead(rpc));
+            return {
+              confirmed:
+                (await tracedPreparation("PREFLIGHT", async () => confirmAfter(value))) === true,
+            };
+          },
+        }),
+      );
       return value;
     };
     const io = {
-      recoveryLedger:R1_RECOVERY_DOCUMENT,
-      recoveryReady:(proof)=>{broker.authorizeRecovery(proof);recoveryState=proof;return true;},
+      recoveryLedger: R1_RECOVERY_DOCUMENT,
+      recoveryReady: (proof) => {
+        broker.authorizeRecovery(proof);
+        recoveryState = proof;
+        return true;
+      },
       page,
       fence,
       runtime,
@@ -4019,21 +4494,25 @@ async function runFixturePreparation() {
       wait: (ms) => new Promise((resolve) => setTimeout(resolve, Math.max(2000, ms))),
       abortPhase: async () => {
         fence.close();
-        await tracedPreparation("PREFLIGHT", async () => (context.close()));
+        await tracedPreparation("PREFLIGHT", async () => context.close());
       },
-      text: await tracedPreparation("PREFLIGHT", async () => (readFile(
-        "docs/frontend/auditorias/evidencias/continuacao-auth-20261108/FONTE_SINTETICA_AUDITORIA_HML.txt",
-        "utf8",
-      ))),
+      text: await tracedPreparation("PREFLIGHT", async () =>
+        readFile(
+          "docs/frontend/auditorias/evidencias/continuacao-auth-20261108/FONTE_SINTETICA_AUDITORIA_HML.txt",
+          "utf8",
+        ),
+      ),
     };
     phase = "SOURCE_AND_LIST";
-    sourceList = await tracedPreparation("SOURCE_AND_LIST", async () => (prepareSourceAndList(io)));
+    sourceList = await tracedPreparation("SOURCE_AND_LIST", async () => prepareSourceAndList(io));
     phase = "COMPETENCIES";
-    result = await tracedPreparation("COMPETENCIES", async () => (prepareCompetencies(io, sourceList)));
+    result = await tracedPreparation("COMPETENCIES", async () =>
+      prepareCompetencies(io, sourceList),
+    );
     phase = "FINAL_READBACK";
-    await tracedPreparation("PREFLIGHT", async () => (runtime.context()));
-    await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
-    await tracedPreparation("PREFLIGHT", async () => (checkFreshDeployment(proof, true)));
+    await tracedPreparation("PREFLIGHT", async () => runtime.context());
+    await tracedPreparation("RUNTIME_FRESH", async () => fresh());
+    await tracedPreparation("PREFLIGHT", async () => checkFreshDeployment(proof, true));
     if (result?.state !== "confirmed") err("PREPARER_INCOMPLETE");
     completed = true;
   } catch (error) {
@@ -4042,7 +4521,9 @@ async function runFixturePreparation() {
   } finally {
     if (runtime) {
       try {
-        logoutVerified = await tracedPreparation("LOGOUT", async () => (diagnostics.cleanup(()=>runtime.logout())));
+        logoutVerified = await tracedPreparation("LOGOUT", async () =>
+          diagnostics.cleanup(() => runtime.logout()),
+        );
       } catch {
         logoutVerified = false;
       } finally {
@@ -4051,8 +4532,8 @@ async function runFixturePreparation() {
     }
     observer?.close();
     fence?.close();
-    await tracedPreparation("PREFLIGHT", async () => (browser?.close().catch(() => {})));
-    await tracedPreparation("PREFLIGHT", async () => (proxy?.close().catch(() => {})));
+    await tracedPreparation("PREFLIGHT", async () => browser?.close().catch(() => {}));
+    await tracedPreparation("PREFLIGHT", async () => proxy?.close().catch(() => {}));
     const safeIds = [];
     const collect = (value) => {
       if (uuid(value)) safeIds.push(value);
@@ -4070,8 +4551,16 @@ async function runFixturePreparation() {
     const report = {
       schema: "contaos.fixture.preparation.v1",
       failure: blockedCode,
-      diagnostics:diagnostics.snapshot(),
-      recovery:{ledgerSha256:R1_RECEIPTS_SHA256,priorWorkflowRun:"42540864527",confirmedBefore:2,maxNewIntentions:22,reconciled:!!recoveryState,sourceVersion:recoveryState?.sourceVersion||null,sourceHash:recoveryState?.sourceHash||null},
+      diagnostics: diagnostics.snapshot(),
+      recovery: {
+        ledgerSha256: R1_RECEIPTS_SHA256,
+        priorWorkflowRun: "42540864527",
+        confirmedBefore: 2,
+        maxNewIntentions: 22,
+        reconciled: !!recoveryState,
+        sourceVersion: recoveryState?.sourceVersion || null,
+        sourceHash: recoveryState?.sourceHash || null,
+      },
       bindings,
       ...identity,
       phase,
@@ -4087,13 +4576,13 @@ async function runFixturePreparation() {
     for (const name of ["receipts.json", "report.json", "receipts-r1.json"])
       sums +=
         createHash("sha256")
-          .update(await tracedPreparation("PREFLIGHT", async () => (readFile(join(output, name)))))
+          .update(await tracedPreparation("PREFLIGHT", async () => readFile(join(output, name))))
           .digest("hex") +
         "  " +
         name +
         "\n";
     writeFileSync(join(output, "SHA256SUMS"), sums, { mode: 0o600 });
-    activePreparationDiagnostics=null;
+    activePreparationDiagnostics = null;
   }
   if (!completed || !logoutVerified) err("PREPARER_INCOMPLETE");
 }
