@@ -1141,3 +1141,15 @@ test("R9 complete manifest still produces zero proof for observation failure wit
   });
   assert.equal(output, "");
 });
+
+test("R10 immutable artifact layout appends R9 originals after the existing observation diagnostic", () => {
+  assert.equal(FILES.length, 16, "R10_MANIFEST_APPEND_ABSENT");
+  assert.equal(Object.keys(HISTORY).length, 13);
+  assert.deepEqual(FILES.slice(-3), [
+    "observation-diagnostic.json",
+    "receipts-r9.json",
+    "recovery-r9.json",
+  ]);
+  assert.equal(PIN.run, 42638883189);
+  assert.equal(PIN.artifact, 13683268867);
+});
