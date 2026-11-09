@@ -5085,7 +5085,7 @@ test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "b".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5295,7 +5295,7 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "c".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5337,7 +5337,7 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5564,7 +5564,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     sha = "a".repeat(40),
     parent = "b".repeat(40),
     head = "d".repeat(40);
-  const request = { request_id: "trilha-a-fixtures-20261108-r1", approved_parent_sha: parent };
+  const request = { request_id: "trilha-a-fixtures-20261109-r2", approved_parent_sha: parent };
   const pull = {
     id: 300,
     number: 90,
@@ -5714,7 +5714,7 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -5760,7 +5760,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5786,6 +5786,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
   assert.deepEqual(ancestors, [
     sut.SINGLE_REQUEST.gateSha,
     sut.SINGLE_REQUEST.fixturesSha,
+    sut.SINGLE_REQUEST.recoveryGateSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   let calls = 0;
@@ -6540,6 +6541,28 @@ test("privacy112 link requires source attributes and exact plain span subtree", 
   }
 });
 
+test("R2 nonce corrente rejeita R1 e historico reconhece apenas R1 consumido", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261108-r1",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.throws(() => fn("parseSingleRequest")(JSON.stringify(row), "fixtures"));
+  assert.equal(
+    fn("parseSingleRequest")(JSON.stringify(row), "fixtures", { historical: true }).request_id,
+    row.request_id,
+  );
+  assert.throws(() =>
+    fn("parseSingleRequest")(JSON.stringify({ ...row, request_id: "unknown" }), "fixtures", {
+      historical: true,
+    }),
+  );
+});
+
 test("popup policy: launch args are closed and require the restrictive switch", () => {
   const args = fn("nativeBrowserArgs")(9222);
   assert.deepEqual(args, ["--remote-debugging-port=9222", "--block-new-web-contents"]);
@@ -6585,7 +6608,10 @@ test("popup policy: both authenticated consumers and native tests use the proved
     "utf8",
   );
   assert.equal(/browser = await launchNativeBrowser\(/.test(audit), true);
-  assert.equal(/browser = await launchNativeBrowser\(/.test(preparer), true);
+  assert.equal(
+    /await tracedPreparation\("PREFLIGHT", async \(\) =>\s*launchNativeBrowser\(/.test(preparer),
+    true,
+  );
   assert.equal(/chromium\.launch\(/.test(preparer), false);
 });
 

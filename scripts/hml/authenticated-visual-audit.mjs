@@ -5317,12 +5317,14 @@ export const SINGLE_REQUEST = Object.freeze({
   upstreamName: "ContaOS Frontend Zero-Drift",
   gateSha: "31b68f3cadbdc13a82bae23a43c35616f873d70b",
   autoGateSha: "122242fd421b348aef229683c0d3969611bce1db",
+  recoveryGateSha: "581e161718d7f784961e2fef6bd1a75ba9295637",
+  spentFixtureNonce: "trilha-a-fixtures-20261108-r1",
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261108-r1",
+    nonce: "trilha-a-fixtures-20261109-r2",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -5346,7 +5348,7 @@ function singleRequestIdentityMode(request) {
   fail("REQUEST_SCHEMA");
 }
 
-export function parseSingleRequest(raw, operation) {
+export function parseSingleRequest(raw, operation, { historical = false } = {}) {
   if (typeof raw !== "string" || Buffer.byteLength(raw) > 4096) fail("REQUEST_JSON");
   let parsed;
   try {
@@ -5414,7 +5416,12 @@ export function parseSingleRequest(raw, operation) {
     parsed.issue !== 317 ||
     !["fixtures", "audit"].includes(parsed.operation) ||
     (operation && parsed.operation !== operation) ||
-    parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce ||
+    (parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce &&
+      !(
+        historical &&
+        parsed.operation === "fixtures" &&
+        parsed.request_id === SINGLE_REQUEST.spentFixtureNonce
+      )) ||
     !hash40(parsed.approved_parent_sha)
   )
     fail("REQUEST_SCHEMA");
@@ -5547,6 +5554,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
   if (parents.length !== 3 || parents[0] !== sha || parents[1] !== request.approved_parent_sha)
     fail("REQUEST_PARENT");
   const ancestors = [SINGLE_REQUEST.gateSha, SINGLE_REQUEST.fixturesSha];
+  if (request.operation === "fixtures") ancestors.push(SINGLE_REQUEST.recoveryGateSha);
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
   ancestors.push(mode === "AUTO_DISCOVER" ? SINGLE_REQUEST.autoGateSha : request.frontend_sha);
@@ -5586,7 +5594,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
   for (const commit of commits) {
     if (!hash40(commit)) fail("REQUEST_HISTORY");
     const raw = await git(["show", commit + ":" + SINGLE_REQUEST.path]);
-    const historic = parseSingleRequest(raw);
+    const historic = parseSingleRequest(raw, undefined, { historical: true });
     if (historic.request_id === request.request_id) requestShas.push(commit);
   }
   return requestShas;
