@@ -72,3 +72,18 @@ RED/GREEN deve cobrir DTO válido/inválido, boolean|null e placeholder; listage
 O inventário real é28rotas mais drawerV117:29superfícies x4larguras1440/1280/768/390 x2temas =232combinações. Rotas de acesso sem sessão são avaliadas conforme seu escopo e nunca chamadas de PASS autenticado. A auditoria deve distinguir navegação, CRUD autorizado e C13, provar o produto servido/deployment e o harness, registrar papel/contexto/fontes, screenshots originais e SHA256, e obter revisão independente das evidências. Preservar as provas A/B com sua origem. PII, fixture ausente, negado, skip ou mera presença do chat não viram PASS integral. Nenhuma certificação C/P0/V1 antes de todos os controles aplicáveis aprovados.
 
 Rollback: reverter apenas commits do futuro BUILD C, preservando integrações A/B e o histórico documental. Não há migração nesta emenda.
+
+
+## Reconciliação PR379 com main, 09/11/2026, gate pré-BUILD
+
+Base frontend c9dc5e062885793d3ad69430b822c14f3c6f2dc8; backend 5eca44aebead3183e81b5c1af0d1dffa5fb8feb6. API final-readback42596392357 permanece API_PASS_UI_PENDING, sem repetição. PR484 já integrada em451aa3de com as seis correções e gates42645748686/42645748507; preservar seus quatro blobs C13.
+
+Análise dos quatro commits exclusivos:440f3bd é RED histórico;3408283 implementa seleção RLS, contexto temporal, invalidação e montagem transversal;9bc106c adiciona aborto e fontes por resposta, porém seu timeout20s foi superado pelo PLAN450 e transporte50s atual;dd27b7e é merge histórico da main8666086 e não autoriza reaplicar alterações A/B. Nenhum cherry-pick cego nem restauração do componente antigo.
+
+Resíduo funcional confirmado no AppShell: contexto sem identidade da rota pode montar uma instância nova com contrato da rota anterior antes de o efeito limpar o estado. Recuperar somente a identidade da rota resolvida e condicionar montagem à igualdade com pathname. Preservar todo o restante do Shell atual, RBAC, modal/foco/menu e os quatro blobs C13. Recuperar a cobertura contextual perdida em testes afetados, sem restaurar a política obsoleta de retry20s.
+
+Escopo fechado: este documento;PLANO_ATIVO.json;src/components/layout/ContaOSAppShell.tsx;src/test/appShellSidebar.test.tsx;src/test/copilotoContrato.test.tsx;ESTADO_E_RETOMADA_CONTAOS_4_1.md. Todos já allowlisted. Não alterar rotas/routeTree/types/brand/dependências/backend/Auth/RLS/PROD. Atômicos e NFRs aplicáveis herdados do PLAN450: contexto autorizado, privacidade, rastreabilidade, acessibilidade e segurança; não inaugura versão ou requisito novo. Validação técnica PASS de escopo mínimo e compatibilidade com PLAN450 e PR484; não constitui teste ou certificação.
+
+Sequência: commit documental e CI verde antes de BUILD; RED causal de navegação observando mounts durante render e descarte de contexto pendente; GREEN mínimo e testes afetados AppShell/Copiloto. Reconciliação de ancestralidade por merge verdadeiro dos quatro commits, resolvendo conflitos explicitamente pela implementação atual mais o resíduo aprovado. Zero-Drift/LOCK/Teste C exigidos no HEAD final, revisão independente antes de integração. Suítes globais impostas pelo CI não serão executadas outra vez manualmente. Não repetir provas API/HML já válidas. Nenhum deploy autorizado por este gate.
+
+Rollback: reverter somente o delta residual de AppShell/testes/documentação, mantendo as integrações A/B e PR484. Main somente via PR protegido com gates verdes; checkpoint backend138 com HEADs/resultados/pendências. Auditoria autenticada e certificação global continuam pendentes.
