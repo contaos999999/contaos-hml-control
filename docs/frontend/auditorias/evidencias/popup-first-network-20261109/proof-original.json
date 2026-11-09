@@ -1,0 +1,213 @@
+{
+  "schema": "contaos.popup.local-forensic.v1",
+  "noAuth": true,
+  "noHml": true,
+  "sourceUnmodified": true,
+  "trials": [
+    {
+      "trial": 0,
+      "baseHead": "2486d8c57847804ef198babd4c9acb07f75f0462",
+      "connections": 1,
+      "bytes": 644,
+      "requests": 1,
+      "timeline": [
+        {
+          "ms": 205.514,
+          "event": "CDP_SEND",
+          "method": "Target.autoAttachRelated"
+        },
+        {
+          "ms": 206.459,
+          "event": "CDP_ATTACHED",
+          "type": "page",
+          "waiting": false,
+          "own": true
+        },
+        {
+          "ms": 211.411,
+          "event": "CDP_SEND",
+          "method": "Target.setAutoAttach"
+        },
+        {
+          "ms": 212.068,
+          "event": "CDP_SEND",
+          "method": "Runtime.runIfWaitingForDebugger"
+        },
+        {
+          "ms": 212.523,
+          "event": "FENCE_INSTALLED"
+        },
+        {
+          "ms": 239.795,
+          "event": "CDP_WINDOW_OPEN"
+        },
+        {
+          "ms": 240.217,
+          "event": "CLOSE_CONTEXT_START"
+        },
+        {
+          "ms": 241.352,
+          "event": "TCP_CONNECTION"
+        },
+        {
+          "ms": 246.747,
+          "event": "HTTP_REQUEST",
+          "method": "GET",
+          "pathExact": true
+        },
+        {
+          "ms": 248.723,
+          "event": "TCP_DATA",
+          "length": 644
+        },
+        {
+          "ms": 250.984,
+          "event": "PW_REQUEST"
+        },
+        {
+          "ms": 278.646,
+          "event": "PW_POPUP_PAGE"
+        },
+        {
+          "ms": 280.388,
+          "event": "CLOSE_CONTEXT_END"
+        },
+        {
+          "ms": 280.669,
+          "event": "SNAPSHOT",
+          "failure": "FENCE_POPUP",
+          "popups": 1
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "baseHead": "2486d8c57847804ef198babd4c9acb07f75f0462",
+      "connections": 0,
+      "bytes": 0,
+      "requests": 0,
+      "timeline": [
+        {
+          "ms": 142.003,
+          "event": "CDP_SEND",
+          "method": "Target.autoAttachRelated"
+        },
+        {
+          "ms": 144.701,
+          "event": "CDP_ATTACHED",
+          "type": "page",
+          "waiting": false,
+          "own": true
+        },
+        {
+          "ms": 148.185,
+          "event": "CDP_SEND",
+          "method": "Target.setAutoAttach"
+        },
+        {
+          "ms": 151.021,
+          "event": "CDP_SEND",
+          "method": "Runtime.runIfWaitingForDebugger"
+        },
+        {
+          "ms": 151.614,
+          "event": "FENCE_INSTALLED"
+        },
+        {
+          "ms": 161.976,
+          "event": "CDP_WINDOW_OPEN"
+        },
+        {
+          "ms": 162.084,
+          "event": "CLOSE_CONTEXT_START"
+        },
+        {
+          "ms": 180.889,
+          "event": "CLOSE_CONTEXT_END"
+        },
+        {
+          "ms": 180.943,
+          "event": "SNAPSHOT",
+          "failure": "FENCE_POPUP",
+          "popups": 1
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "baseHead": "2486d8c57847804ef198babd4c9acb07f75f0462",
+      "connections": 1,
+      "bytes": 644,
+      "requests": 1,
+      "timeline": [
+        {
+          "ms": 146.82,
+          "event": "CDP_SEND",
+          "method": "Target.autoAttachRelated"
+        },
+        {
+          "ms": 148.014,
+          "event": "CDP_ATTACHED",
+          "type": "page",
+          "waiting": false,
+          "own": true
+        },
+        {
+          "ms": 151.537,
+          "event": "CDP_SEND",
+          "method": "Target.setAutoAttach"
+        },
+        {
+          "ms": 152.004,
+          "event": "CDP_SEND",
+          "method": "Runtime.runIfWaitingForDebugger"
+        },
+        {
+          "ms": 152.353,
+          "event": "FENCE_INSTALLED"
+        },
+        {
+          "ms": 178.389,
+          "event": "CDP_WINDOW_OPEN"
+        },
+        {
+          "ms": 178.457,
+          "event": "CLOSE_CONTEXT_START"
+        },
+        {
+          "ms": 178.788,
+          "event": "TCP_CONNECTION"
+        },
+        {
+          "ms": 182.564,
+          "event": "HTTP_REQUEST",
+          "method": "GET",
+          "pathExact": true
+        },
+        {
+          "ms": 191.808,
+          "event": "TCP_DATA",
+          "length": 644
+        },
+        {
+          "ms": 192.198,
+          "event": "PW_REQUEST"
+        },
+        {
+          "ms": 212.867,
+          "event": "PW_POPUP_PAGE"
+        },
+        {
+          "ms": 213.806,
+          "event": "CLOSE_CONTEXT_END"
+        },
+        {
+          "ms": 213.863,
+          "event": "SNAPSHOT",
+          "failure": "FENCE_POPUP",
+          "popups": 1
+        }
+      ]
+    }
+  ]
+}
