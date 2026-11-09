@@ -10923,3 +10923,53 @@ test("R12 auth protocol rejects a newer partial September read instead of reusin
     observer.close();
   }
 });
+
+test("R12 actual report recovery retains its ten fields while reservation stays in the intent ledger", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs"),
+    { readFile } = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const src = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8"),
+    ast = ts.createSourceFile("prep.mjs", src, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS),
+    nodes = [];
+  function visit(n) {
+    nodes.push(n);
+    ts.forEachChild(n, visit);
+  }
+  visit(ast);
+  const entry = nodes.find(
+      (n) => ts.isFunctionDeclaration(n) && n.name?.text === "runFixturePreparation",
+    ),
+    report = nodes.find(
+      (n) =>
+        ts.isVariableDeclaration(n) &&
+        n.name.getText(ast) === "report" &&
+        n.pos >= entry.pos &&
+        n.end <= entry.end,
+    ),
+    recovery = report.initializer.properties
+      .find((p) => p.name?.getText(ast) === "recovery")
+      .initializer.getText(ast);
+  const env = {
+    R1_RECEIPTS_SHA256: prep.R1_RECOVERY_DOCUMENT.receiptsSha256,
+    validatedBudget: { confirmedBefore: 10, priorReserved: 1, maxNewIntentions: 13 },
+    R3_RECOVERY_DOCUMENT: prep.R3_RECOVERY_DOCUMENT,
+    r4Recovery: prep.R4_RECOVERY_DOCUMENT,
+    recoveryState: null,
+  };
+  const value = new Function(...Object.keys(env), "return (" + recovery + ");")(
+    ...Object.values(env),
+  );
+  assert.deepEqual(Object.keys(value), [
+    "ledgerSha256",
+    "priorWorkflowRun",
+    "confirmedBefore",
+    "maxNewIntentions",
+    "r3ReceiptsSha256",
+    "r3WorkflowRun",
+    "r4ZeroAuth",
+    "reconciled",
+    "sourceVersion",
+    "sourceHash",
+  ]);
+  assert.equal(Object.hasOwn(value, "priorReserved"), false);
+});
