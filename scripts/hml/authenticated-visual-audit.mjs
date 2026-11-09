@@ -6730,6 +6730,7 @@ export const SINGLE_REQUEST = Object.freeze({
   autoGateSha: "122242fd421b348aef229683c0d3969611bce1db",
   recoveryGateSha: "581e161718d7f784961e2fef6bd1a75ba9295637",
   metadataGateSha: "2704e63969880f81842102190ebc0337a3b9b551",
+  observationGateSha: "01fc65e5ede32309fe544fce7852c24b6f2a1e72",
   listSelectionGateSha: "18424c16bcdc6d035e91e2dc8b7257ea755097d0",
   navigationGateSha: "ffffc501e5b5665026ff847bca1d2bf6df17fa73",
   bootstrapGateSha: "a8f3da12dcfeca858904b60e1b32c50df73a7d4a",
@@ -6743,13 +6744,14 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-a-fixtures-20261109-r5",
     "trilha-a-fixtures-20261109-r6",
     "trilha-a-fixtures-20261109-r7",
+    "trilha-a-fixtures-20261109-r8",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r8",
+    nonce: "trilha-a-fixtures-20261109-r9",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -6987,6 +6989,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.navigationGateSha,
       SINGLE_REQUEST.listSelectionGateSha,
       SINGLE_REQUEST.metadataGateSha,
+      SINGLE_REQUEST.observationGateSha,
     );
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
