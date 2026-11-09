@@ -4831,6 +4831,75 @@ async function nativeGuard() {
       if (!isProxy(error)) {
         const descriptor = Object.getOwnPropertyDescriptor(error, "stdout");
         const stdout = descriptor && "value" in descriptor ? descriptor.value : null;
+        const stages =
+          typeof stdout === "string"
+            ? [
+                ...stdout.matchAll(
+                  /^(?:# |    # )R7_LIST_SELECTOR_STAGE (\{[^\r\n]{1,240}\})\r?$/gm,
+                ),
+              ]
+            : [];
+        const errors =
+          typeof stdout === "string"
+            ? [
+                ...stdout.matchAll(
+                  /^(?:# |    # )R7_LIST_SELECTOR_ERROR (\{[^\r\n]{1,240}\})\r?$/gm,
+                ),
+              ]
+            : [];
+        const safeStages = [];
+        for (const match of stages.slice(0, 8)) {
+          const value = JSON.parse(match[1]);
+          if (
+            Object.keys(value).sort().join("|") === "stage" &&
+            ["ENTER", "FRAGMENT_BEGIN", "FRAGMENT_READY"].includes(value.stage)
+          )
+            safeStages.push({ stage: value.stage });
+          else if (
+            Object.keys(value).sort().join("|") === "calls|selections|stage" &&
+            value.stage === "AST_READY" &&
+            [value.calls, value.selections].every((n) => Number.isInteger(n) && n >= 0 && n <= 8)
+          )
+            safeStages.push({
+              stage: "AST_READY",
+              calls: value.calls,
+              selections: value.selections,
+            });
+        }
+        let safeError = null;
+        if (errors.length === 1) {
+          const value = JSON.parse(errors[0][1]);
+          if (
+            Object.keys(value).sort().join("|") === "actual|errorName|expected|operator" &&
+            [
+              "Error",
+              "TypeError",
+              "ReferenceError",
+              "SyntaxError",
+              "TimeoutError",
+              "UNKNOWN",
+            ].includes(value.errorName) &&
+            ["strictEqual", "deepStrictEqual", "==", "===", "OTHER"].includes(value.operator) &&
+            [value.actual, value.expected].every(
+              (n) => n === null || (Number.isInteger(n) && n >= 0 && n <= 8),
+            )
+          )
+            safeError = {
+              errorName: value.errorName,
+              operator: value.operator,
+              actual: value.actual,
+              expected: value.expected,
+            };
+        }
+        console.log(
+          JSON.stringify({
+            phase: "NATIVE_SELECTOR_RED",
+            state: "SETUP_DIAGNOSTIC",
+            stdoutKind: typeof stdout === "string" ? "STRING" : "ABSENT",
+            stages: safeStages,
+            error: safeError,
+          }),
+        );
         const markers =
           typeof stdout === "string"
             ? [...stdout.matchAll(/^# R7_LIST_SELECTOR_RED (\{[^\r\n]{1,240}\})\r?$/gm)]

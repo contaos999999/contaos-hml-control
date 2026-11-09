@@ -2497,6 +2497,7 @@ function r7PanelMarkup({ total = 1, pagina = 0, disabled = false, mode = "normal
   return { html, target, rows };
 }
 async function r7ProbeListConsumers(page, ast) {
+  console.log("R7_LIST_SELECTOR_STAGE " + JSON.stringify({ stage: "ENTER" }));
   const require = createRequire(import.meta.url),
     ts = require("typescript");
   const calls = [],
@@ -2511,17 +2512,28 @@ async function r7ProbeListConsumers(page, ast) {
         calls.push(node);
     }
     if (
-      ts.isExpressionStatement(node) &&
-      node.getText(ast).includes(".selectOption(") &&
-      (node.getText(ast).includes('field(region, "Lista selecionada")') ||
-        node.getText(ast).includes('field(panel, "Lista selecionada")') ||
-        node.getText(ast).includes("listSelectionControl(region") ||
-        node.getText(ast).includes("listSelectionControl(panel"))
-    )
-      selections.push(node);
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === "selectOption" &&
+      [
+        'field(region, "Lista selecionada")',
+        'field(panel, "Lista selecionada")',
+        "listSelectionControl(region",
+        "listSelectionControl(panel",
+      ].some((target) => node.expression.expression.getText(ast).includes(target))
+    ) {
+      let statement = node.parent;
+      while (statement && !ts.isExpressionStatement(statement)) statement = statement.parent;
+      assert.ok(statement);
+      if (!selections.includes(statement)) selections.push(statement);
+    }
     ts.forEachChild(node, visit);
   };
   visit(ast);
+  console.log(
+    "R7_LIST_SELECTOR_STAGE " +
+      JSON.stringify({ stage: "AST_READY", calls: calls.length, selections: selections.length }),
+  );
   assert.equal(calls.length, 4, "all four production list control uses are exercised");
   assert.equal(selections.length, 2, "both production selection consumers are exercised");
   let fieldInitializer;
@@ -2534,7 +2546,9 @@ async function r7ProbeListConsumers(page, ast) {
   assert.ok(fieldInitializer);
   const field = new Function("return (" + fieldInitializer + ");")();
   const trace = async (_, run) => run();
-  const fixture = r7PanelMarkup();
+  console.log("R7_LIST_SELECTOR_STAGE " + JSON.stringify({ stage: "FRAGMENT_BEGIN" }));
+  const fixture = r7PanelMarkup({ total: 2 });
+  console.log("R7_LIST_SELECTOR_STAGE " + JSON.stringify({ stage: "FRAGMENT_READY" }));
   for (const call of calls) {
     await page.setContent(fixture.html);
     const scope = page.getByRole("region", { name: "Gestão de listas", exact: true });
@@ -2772,7 +2786,32 @@ test(
         }
       }
       assert.equal(additional, 17);
-      await r7ProbeListConsumers(page, ast);
+      try {
+        await r7ProbeListConsumers(page, ast);
+      } catch (error) {
+        const diagnostics = sut.createPreparationDiagnostics();
+        diagnostics.capture(error);
+        const read = (key) => {
+          const descriptor = Object.getOwnPropertyDescriptor(error, key);
+          return descriptor && "value" in descriptor ? descriptor.value : undefined;
+        };
+        const actual = read("actual"),
+          expected = read("expected"),
+          operator = read("operator");
+        console.log(
+          "R7_LIST_SELECTOR_ERROR " +
+            JSON.stringify({
+              errorName: diagnostics.snapshot().errorName,
+              operator: ["strictEqual", "deepStrictEqual", "==", "==="].includes(operator)
+                ? operator
+                : "OTHER",
+              actual: Number.isInteger(actual) && actual >= 0 && actual <= 8 ? actual : null,
+              expected:
+                Number.isInteger(expected) && expected >= 0 && expected <= 8 ? expected : null,
+            }),
+        );
+        throw error;
+      }
     } finally {
       await browser.close();
     }
