@@ -13,23 +13,25 @@ Fase1 somente metadata de página atual. Fase2 requer catálogo de IDs/lengths/t
 ApósGATEintegrado, confirmar esquema porinformation_schema apenas nomes/tipos necessários (public.eventos_auditoria: id,id_organizacao,criado_em,evento,entidade,origem,id_usuario,id_entidade,correlation_id) e executar uma vez SQL:
 
 ```sql
-WITH page AS (
+WITH scoped AS (
  SELECT id,criado_em,evento,entidade,origem,id_usuario,id_entidade,correlation_id
  FROM public.eventos_auditoria
  WHERE id_organizacao='e87f7e68-c5ae-4077-943b-02a4afd8b6ee'::uuid
+), page AS (
+ SELECT id,criado_em,char_length(evento)::int AS event_length,
+        char_length(entidade)::int AS entity_length,
+        char_length(origem)::int AS origin_length,
+        id_usuario IS NULL AS actor_null,id_entidade IS NULL AS entity_id_null,
+        correlation_id IS NULL AS correlation_null
+ FROM scoped
  ORDER BY criado_em DESC,id DESC LIMIT 25 OFFSET 0
 )
-SELECT id,criado_em,char_length(evento)::int AS event_length,
-       char_length(entidade)::int AS entity_length,
-       char_length(origem)::int AS origin_length,
-       id_usuario IS NULL AS actor_null,id_entidade IS NULL AS entity_id_null,
-       correlation_id IS NULL AS correlation_null,
-       (SELECT count(*)::int FROM public.eventos_auditoria
-        WHERE id_organizacao='e87f7e68-c5ae-4077-943b-02a4afd8b6ee'::uuid) AS total
-FROM page ORDER BY criado_em DESC,id DESC;
+SELECT (SELECT count(*)::int FROM scoped) AS total,
+       coalesce(jsonb_agg(to_jsonb(page) ORDER BY criado_em DESC,id DESC),'[]'::jsonb) AS rows
+FROM page;
 ```
 
-Retorno máximo25objetos. Campos técnicos ID/timestamp/lengths/nullbooleans/count apenas; sem atores/correlação raw ou label/evento desconhecido. Usar wrapper interno para rejeitarshape/limites, sem erro bruto. Registrar count0comoestado vazio real, sem inventar eventos.
+Retornoexato: um único objetoSQL com únicaschaves total:inteiro e rows:array contendo no máximo25objetosmetadata; aggregate gera envelope mesmo quando a página está vazia. Campos técnicos ID/timestamp/lengths/nullbooleans/count apenas; sem atores/correlação raw ou label/evento desconhecido. Usar wrapper interno para rejeitarshape/limites, sem erro bruto. Registrar count0comoestado vazio real, sem inventar eventos.
 
 ## Fase2 controlada, ainda não autorizada
 
@@ -49,8 +51,8 @@ Padrõessensíveisoriginais primeiro sobre rendered/snapshotintegrais. Remanesce
 
 ## Execução e recibo público desta fase
 
-WrapperJavaScript concreto será submetido à revisão independente ANTES da execução. Ferramenta SQL somente projeto fixo e query literal acima; parser deve selecionar bloco real de dados em início de linha, não marcador citado no aviso. Validarobjetosexatos/max25/IDsUUID/distintos/ordemdecrescente e lengths0..120, nullbooleans, timestampISOválido e totalinteiro0..1000000. Se total0 exigirarrayvazio; para total>0 exigirmin(total,25)linhas e mesmototalemtodas. Schema/tipoausente, erro, totalmaior/shape/mismatch produz enumBLOQUEADO_METADATA, sem resultado/erro bruto. Nenhum pattern de conteúdo autoriza leitura de labels nestafase.
+WrapperJavaScript concreto será submetido à revisão independente ANTES da execução. Ferramenta SQL somente projeto fixo e query literal acima; parser deve selecionar bloco real de dados em início de linha, não marcador citado no aviso. Validar exatamente um objetoSQL com chaves total/rows, totalinteiro0..1000000 e rowsarraymáximo25. Cada item tem únicaschaves id,criado_em,event_length,entity_length,origin_length,actor_null,entity_id_null,correlation_null, comIDsUUIDdistintos, lengthsinteiros0..120 e nullbooleans estritos. Se total0 exigirrows[]; se total>0 exigirmin(total,25)itens. Verificar ordemcriado_emdesc,id_desc preservando microssegundos: decompor timestampISOemcalendário/offset/fração exata, validar data real, converter instante para inteiroBigInt de microssegundos sem Date como comparação, rejeitando fraçãoalém6/offsetinválido; emempate compararUUIDhexcanônico emordemdesc. Não arredondar/truncar microssegundos nem usar somenteordemDate/milissegundos. Schema/tipoausente, erro, totalmaior/shape/mismatch produz enumBLOQUEADO_METADATA, sem resultado/erro bruto. Nenhum pattern de conteúdo autoriza leitura de labels nestafase.
 
-O recibo posterior poderá publicar apenas IDs de eventos, timestamps, comprimentos, nullbooleans e count retornados porSQL1, comHEAD/run/decisão técnica; não labels/eventos/atores/correlaçãoraw. Métadados fixados servirão ao desenho da emenda; não autorização global de datas/IDs. Contagem/ordem de nova página ou alteração posterior exige nova prova revisada, sem substituir o conjunto silenciosamente. SQL1 usa RLS/projeto autorizado da ferramenta, não alteraAuth/permissão nem chamaGET/Auth.
+O recibo posterior poderá publicar apenas IDs de eventos, timestamps, comprimentos, nullbooleans e count retornados porSQL1, comHEAD/run/decisão técnica; não labels/eventos/atores/correlaçãoraw. Métadados fixados servirão ao desenho da emenda; não autorização global de datas/IDs. Contagem/ordem de nova página ou alteração posterior exige nova prova revisada, sem substituir o conjunto silenciosamente. SQL1 é leitura administrativa restrita pela ferramenta conectada ao projetoHMLfixo, potencialmente com bypassRLS. Nenhuma alegação de RLS autorizando ou limitando essa leitura: o limite é o WHERE explícito da organização, as colunas/countsmetadados enumerados e a página≤25, sob autorização específica desteGATE. Não alteraAuth/permissão nem chamaGET/Auth.
 
 Allowlist destaPR: somente este documento. Semcódigo,SRC,workflow,tipos,dependencies,backend,SQLDDL/DML,Auth/RLS/grants/Edge/RPC,PROD ou credenciais. PR391 e demais filas seguem independentes. SQL2/futurocatálogo obrigatoriamente emPRseparada comrecibos/CI/revisão/merge; nenhumconteúdo privado desconhecido poderáserpublicado por esteGATE.
