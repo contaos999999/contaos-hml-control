@@ -26,3 +26,11 @@ Env mínimo sem HOME/NODE_OPTIONS/DEBUG/proxy/TLS/GITHUB_OUTPUT/credenciais. Dir
 RED causal consumidores existentes para PIN/layout/budget/R15enums, sem import ausente/syntaxerror/mock como diagnósticoR16. GREEN suite Node reader real/negativos estruturais/FS/child/proof/privacy, lintfmt e CI2 no HEADfinal, revisão independente0Critical/Important e merge normal expectedHEAD. Testes técnicos não substituem o artefato.
 Após merge, executar somente inspeção estática automática existente e conferir run/job/proof efetivos,24hashes,3rawhashes/bytes/identidades. Actualdiagnóstico decide próximoGATE corretivo ou bindings/catalog/184, sem repetirR16 nem novaAuthantes disso. LeitorR15/originais preservados no histórico.
 Inventário208/232 permanece, prioridade184novos/24históricosduasorigens,72critérios/DoD não certificados por leitor. Checkpoint issue317 com prova real e pendências, sem V1 antecipada.
+
+## Complemento de reconciliação e recorte desta execução
+
+Preservar nos IDs históricos negados também o UUID R15 `6e6b6afb-2216-42ef-bd89-571301e97e1f`. Recibo novo aprovar_parecer_interno com o hash conhecido `bc724b1683269170b4b1d8ddd98f405bb1c07d5c1dde5709e63802099365e8b3` deve ser recusado mesmo com requestId novo, conservando a negação R11 e as duas reservas. Isso deriva do produtor R16 e não amplia dados divulgados nem regra de negócio.
+
+Este GATE autoriza somente leitura do artefato. A prioridade184 mencionada acima pertence ao programa mais amplo da Trilha A e não seleciona casos de auditoria aqui. Na presente execução da Trilha C, o titular determinou somente8IDs/64combinações, preservando19anteriores sem repetir testes. Esse recorte está documentado em TRILHA_C_OITO_TELAS_2026-11-09.md; não elevar inventário anterior sem PNG/SHA a certificado. Auditoria futura exige seu PLAN/GATE focal próprio após bindings reais, sem usar este leitor para liberar AUDIT_BINDING_PENDING.
+
+GATE532/HEAD54d2e0d5b647dcac1c63edc062fcd2cb703fb659, criado concorrentemente, fica preservado como ancestral desta consolidação. O diff final contém apenas este documento; não integrar dois GATEs paralelos. CI e revisão exigidos no HEAD consolidado antes de BUILD.
