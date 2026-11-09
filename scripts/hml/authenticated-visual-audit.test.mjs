@@ -5923,6 +5923,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     sut.SINGLE_REQUEST.navigationGateSha,
     sut.SINGLE_REQUEST.listSelectionGateSha,
     sut.SINGLE_REQUEST.metadataGateSha,
+    sut.SINGLE_REQUEST.observationGateSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   await assert.rejects(

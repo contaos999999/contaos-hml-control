@@ -5612,6 +5612,10 @@ test("R9 real October consumers refuse missing confirmed document or a new analy
       "ReferenceError",
       "test binds every real source dependency",
     );
+    assert.equal(
+      observedError.message,
+      name === "ensureDocument" ? "RECOVERY_R8_DOCUMENT" : "RECOVERY_R8_ANALYSIS",
+    );
     assert.equal(commands, 0, name + " must fail before any replay");
   }
 });
@@ -5740,4 +5744,525 @@ test("R9 actual artifact writer appends R8 originals and the separate observatio
   } finally {
     await fs.rm(output, { recursive: true, force: true });
   }
+});
+
+function r9Broker(options = {}) {
+  return broker({
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+    recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+    recoveryLedgerR8: R9_R8_DOCUMENT,
+    ...options,
+  });
+}
+test("R9 exact R8 ledger rejects mutations and hostile objects without reading them", () => {
+  assert.deepEqual(sut.validateR8RecoveryDocument(R9_R8_DOCUMENT), R9_R8_DOCUMENT);
+  const clone = () => structuredClone(R9_R8_DOCUMENT);
+  for (const value of [
+    undefined,
+    null,
+    {},
+    { ...clone(), extra: "CANARY" },
+    { ...clone(), reportRaw: clone().reportRaw + " " },
+    { ...clone(), receiptsRaw: clone().receiptsRaw.replace("confirmed", "sealed") },
+    { ...clone(), workflowRun: "1" },
+  ])
+    assert.throws(() => sut.validateR8RecoveryDocument(value), /RECOVERY_R8_LEDGER/);
+  let reads = 0;
+  const getter = clone();
+  Object.defineProperty(getter, "reportRaw", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  const handler = {
+    get() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+    ownKeys() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+    getPrototypeOf() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+  };
+  const revoked = Proxy.revocable(clone(), handler);
+  revoked.revoke();
+  for (const value of [
+    getter,
+    new Proxy(clone(), handler),
+    revoked.proxy,
+    Object.create(new Proxy({}, handler)),
+  ])
+    assert.throws(() => sut.validateR8RecoveryDocument(value), /RECOVERY_R8_LEDGER/);
+  assert.equal(reads, 0);
+  assert.throws(
+    () => sut.reconcileR1Recovery({ ...r6RecoveryState(), ledgerR8: undefined }),
+    /RECOVERY_R8_LEDGER/,
+  );
+});
+test("R9 semantic replay denies complete October intents with fresh UUIDs but permits September", () => {
+  const bindings = JSON.parse(R9_R8_DOCUMENT.reportRaw).bindings,
+    c = bindings.competencies[0],
+    context = {
+      official: true,
+      current: true,
+      organization: FIXTURE.organization,
+      contract: FIXTURE.contract,
+    };
+  const evidence = {
+    competencies: [{ ...context, id: c.id, month: c.month }],
+    requirements: [{ ...context, id: c.requirementId, competency: c.id, code: "AUD-A-TXT-001" }],
+    file: {
+      ...context,
+      id: FIXTURE.file,
+      document: FIXTURE.contractualDocument,
+      status: "aprovado",
+      mime: "text/plain",
+      bytes: 285,
+      sha256: FIXTURE.fileHash,
+    },
+  };
+  const attempts = [
+    [
+      "criar_documento_competencia_v115",
+      {
+        p_id_competencia: c.id,
+        p_tipo: "outro",
+        p_titulo: "Documento TXT sintético Trilha A.",
+        p_categoria: "documental",
+        p_id_requisito: c.requirementId,
+        p_id_arquivo: FIXTURE.file,
+        p_chave_idempotencia: randomUUID(),
+      },
+    ],
+    ["solicitar_analise_competencia", { p_id_competencia: c.id, p_tipo: "completa" }],
+  ];
+  let arms = 0;
+  const b = r9Broker({
+    beforeArm: () => {
+      arms++;
+      return true;
+    },
+  });
+  b.authorizeRecovery(sut.reconcileR1Recovery(r6RecoveryState()));
+  for (const [rpc, payload] of attempts) {
+    assert.equal(sut.validateBusinessPayload(rpc, payload, evidence), true);
+    assert.throws(
+      () =>
+        b.arm({
+          rpc,
+          payload,
+          requestId: randomUUID(),
+          verified: { context: true, capability: true, reconciled: true },
+          evidence,
+        }),
+      /RECOVERY_CONFIRMED_OPERATION/,
+    );
+  }
+  assert.equal(b.snapshot().count, 10);
+  assert.equal(arms, 0);
+  const sep = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies[1];
+  const payload = { p_id_competencia: sep.id, p_tipo: "completa" },
+    sepEvidence = { competencies: [{ ...context, id: sep.id, month: sep.month }] };
+  assert.equal(
+    sut.validateBusinessPayload("solicitar_analise_competencia", payload, sepEvidence),
+    true,
+  );
+  b.arm({
+    rpc: "solicitar_analise_competencia",
+    payload,
+    requestId: randomUUID(),
+    verified: { context: true, capability: true, reconciled: true },
+    evidence: sepEvidence,
+  });
+  assert.equal(arms, 1);
+  assert.equal(b.snapshot().count, 11);
+  assert.deepEqual(sut.preparationIntentSummary(b), {
+    count: 11,
+    frozen: false,
+    pending: true,
+    sent: false,
+    priorConfirmed: 10,
+    newArmedCount: 1,
+    maxIntentions: 24,
+    maxNewIntentions: 14,
+  });
+});
+test("R9 replay guard rejects proxies and accessors before callbacks without reading them", () => {
+  const c = JSON.parse(R9_R8_DOCUMENT.reportRaw).bindings.competencies[0];
+  let reads = 0,
+    arms = 0;
+  const base = { p_id_competencia: c.id, p_tipo: "completa" },
+    accessor = { ...base };
+  Object.defineProperty(accessor, "p_id_competencia", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  const handler = {
+    get() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+    getPrototypeOf() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+    ownKeys() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+  };
+  const revoked = Proxy.revocable({ ...base }, handler);
+  revoked.revoke();
+  for (const authorized of [false, true])
+    for (const payload of [accessor, new Proxy({ ...base }, handler), revoked.proxy]) {
+      const b = r9Broker({
+        beforeArm: () => {
+          arms++;
+          return true;
+        },
+      });
+      if (authorized) b.authorizeRecovery(sut.reconcileR1Recovery(r6RecoveryState()));
+      assert.throws(
+        () =>
+          b.arm({
+            rpc: "solicitar_analise_competencia",
+            payload,
+            requestId: randomUUID(),
+            verified: { context: true, capability: true, reconciled: true },
+          }),
+        authorized ? /INTENT_PAYLOAD/ : /RECOVERY_READ_ONLY/,
+      );
+      assert.equal(b.snapshot().count, 10);
+    }
+  assert.equal(reads, 0);
+  assert.equal(arms, 0);
+});
+
+function r9Identity() {
+  const { frontendSha, harnessSha, deploymentId, workflowRun } = JSON.parse(
+    R9_R8_DOCUMENT.reportRaw,
+  );
+  return { frontendSha, harnessSha, deploymentId, workflowRun };
+}
+test("R9 observation schema accepts only the literal stage matrix and current provenance", () => {
+  const identity = r9Identity(),
+    make = sut.createObservationDiagnostic,
+    validate = sut.validateObservationDiagnostic;
+  const empty = make(identity);
+  assert.equal(empty.firstFailure, null);
+  assert.equal(empty.schema, "contaos.fixture.observation.v1");
+  assert.equal(Object.isFrozen(empty), true);
+  assert.deepEqual(Object.keys(empty), [
+    "schema",
+    "frontendSha",
+    "harnessSha",
+    "deploymentId",
+    "workflowRun",
+    "firstFailure",
+  ]);
+  for (const contractKind of [
+    "TABLE:contratos",
+    "RPC:obter_analise_competencia_v116",
+    "UNKNOWN",
+    "RPC:private_canary",
+  ])
+    for (const stage of [
+      "REQUEST_BINDING",
+      "REQUEST_ARGS",
+      "HTTP_STATUS",
+      "BODY_READ",
+      "RESPONSE_PROJECTION",
+      "RESPONSE_CONTEXT",
+      "OBSERVATION_LIMIT",
+      "UNAVAILABLE",
+      "CANARY",
+    ])
+      for (const statusHTTP of ["NONE", 99, 200, 299, 300, 503, 600])
+        for (const requestFailure of ["NONE", "ABORTED", "OTHER", "UNAVAILABLE", "CANARY"]) {
+          const known = ["TABLE:contratos", "RPC:obter_analise_competencia_v116"].includes(
+            contractKind,
+          );
+          let ok =
+            stage === "UNAVAILABLE"
+              ? contractKind === "UNKNOWN" &&
+                statusHTTP === "NONE" &&
+                requestFailure === "UNAVAILABLE"
+              : known &&
+                (stage === "HTTP_STATUS"
+                  ? Number.isInteger(statusHTTP) &&
+                    statusHTTP >= 100 &&
+                    statusHTTP <= 599 &&
+                    !(statusHTTP >= 200 && statusHTTP <= 299) &&
+                    requestFailure === "NONE"
+                  : stage === "BODY_READ"
+                    ? Number.isInteger(statusHTTP) &&
+                      statusHTTP >= 200 &&
+                      statusHTTP <= 299 &&
+                      ["NONE", "ABORTED", "OTHER", "UNAVAILABLE"].includes(requestFailure)
+                    : [
+                        "REQUEST_BINDING",
+                        "REQUEST_ARGS",
+                        "RESPONSE_PROJECTION",
+                        "RESPONSE_CONTEXT",
+                        "OBSERVATION_LIMIT",
+                      ].includes(stage) &&
+                      statusHTTP === "NONE" &&
+                      requestFailure === "NONE" &&
+                      (!["REQUEST_BINDING", "REQUEST_ARGS"].includes(stage) ||
+                        contractKind.startsWith("RPC:")));
+          const value = { contractKind, stage, statusHTTP, requestFailure };
+          if (ok) {
+            const result = make(identity, value);
+            assert.deepEqual(validate(result, identity), result);
+            assert.equal(Object.isFrozen(result.firstFailure), true);
+          } else assert.throws(() => make(identity, value), /OBSERVATION_DIAGNOSTIC/);
+        }
+  for (const key of Object.keys(identity))
+    assert.throws(
+      () =>
+        validate(empty, {
+          ...identity,
+          [key]:
+            key === "workflowRun"
+              ? "1"
+              : key === "deploymentId"
+                ? "dpl_other12345"
+                : "f".repeat(40),
+        }),
+      /OBSERVATION_DIAGNOSTIC/,
+    );
+  for (const value of [
+    { ...empty, extra: "CANARY" },
+    { ...empty, schema: "CANARY" },
+    {
+      ...empty,
+      firstFailure: {
+        contractKind: "RPC:private_canary",
+        stage: "HTTP_STATUS",
+        statusHTTP: 503,
+        requestFailure: "NONE",
+      },
+    },
+  ])
+    assert.throws(() => validate(value, identity), /OBSERVATION_DIAGNOSTIC/);
+});
+test("R9 observation identity and nested records reject accessors proxies and canaries without reads", () => {
+  const identity = r9Identity(),
+    valid = sut.createObservationDiagnostic(identity, {
+      contractKind: "RPC:obter_analise_competencia_v116",
+      stage: "BODY_READ",
+      statusHTTP: 200,
+      requestFailure: "UNAVAILABLE",
+    });
+  let reads = 0;
+  const handler = {
+    get() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+    ownKeys() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+    getPrototypeOf() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+  };
+  const top = structuredClone(valid);
+  Object.defineProperty(top, "firstFailure", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  const nested = structuredClone(valid);
+  Object.defineProperty(nested.firstFailure, "stage", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  const revoked = Proxy.revocable(structuredClone(valid), handler);
+  revoked.revoke();
+  const symbol = structuredClone(valid);
+  symbol[Symbol("CANARY")] = 1;
+  for (const value of [
+    top,
+    nested,
+    new Proxy(structuredClone(valid), handler),
+    revoked.proxy,
+    Object.create(new Proxy({}, handler)),
+    symbol,
+    { ...structuredClone(valid), firstFailure: new Proxy({}, handler) },
+  ])
+    assert.throws(
+      () => sut.validateObservationDiagnostic(value, identity),
+      /OBSERVATION_DIAGNOSTIC/,
+    );
+  const badIdentity = { ...identity };
+  Object.defineProperty(badIdentity, "frontendSha", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  assert.throws(() => sut.createObservationDiagnostic(badIdentity), /OBSERVATION_DIAGNOSTIC/);
+  assert.throws(
+    () =>
+      sut.createObservationDiagnostic({
+        ...identity,
+        frontendSha: {
+          toString() {
+            reads++;
+            throw Error("PRIVATE_CANARY");
+          },
+        },
+      }),
+    /OBSERVATION_DIAGNOSTIC/,
+  );
+  assert.equal(reads, 0);
+  assert.equal(JSON.stringify(valid).includes("PRIVATE_CANARY"), false);
+});
+async function r9ResponseFailure({ status = 200, failure = () => null, body } = {}) {
+  const { EventEmitter } = await import("node:events"),
+    page = new EventEmitter(),
+    observer = sut.createOfficialObserver(page);
+  const request = {
+    url: () => FIXTURE.api + "/rest/v1/rpc/obter_analise_competencia_v116",
+    method: () => "POST",
+    postData: () => null,
+    failure,
+  };
+  const rejected = new Proxy(
+    {},
+    {
+      get() {
+        throw Error("PRIVATE_CANARY");
+      },
+      getPrototypeOf() {
+        throw Error("PRIVATE_CANARY");
+      },
+    },
+  );
+  page.emit("request", request);
+  page.emit("response", {
+    request: () => request,
+    url: request.url,
+    status: typeof status === "function" ? status : () => status,
+    body:
+      body ??
+      (async () => {
+        throw rejected;
+      }),
+  });
+  await assert.rejects(() => observer.flush(), /OBSERVATION_FAILED/);
+  const record = observer.observationFailure();
+  observer.close();
+  assert.deepEqual(observer.observationFailure(), record);
+  return record;
+}
+test("R9 body read classifies only trusted request failure literals and never passes aborts", async () => {
+  const base = {
+    contractKind: "RPC:obter_analise_competencia_v116",
+    stage: "BODY_READ",
+    statusHTTP: 200,
+  };
+  let reads = 0;
+  const accessor = {};
+  Object.defineProperty(accessor, "errorText", {
+    get() {
+      reads++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  const proxy = new Proxy(
+    {},
+    {
+      get() {
+        reads++;
+        throw Error("PRIVATE_CANARY");
+      },
+      ownKeys() {
+        reads++;
+        throw Error("PRIVATE_CANARY");
+      },
+      getPrototypeOf() {
+        reads++;
+        throw Error("PRIVATE_CANARY");
+      },
+    },
+  );
+  for (const [failure, expected] of [
+    [() => null, "NONE"],
+    [() => ({ errorText: "net::ERR_ABORTED" }), "ABORTED"],
+    [() => ({ errorText: "net::ERR_ABORTED extra PRIVATE_CANARY" }), "OTHER"],
+    [() => ({ errorText: "net::ERR_CONNECTION_RESET" }), "OTHER"],
+    [() => accessor, "UNAVAILABLE"],
+    [() => proxy, "UNAVAILABLE"],
+    [
+      () => {
+        throw proxy;
+      },
+      "UNAVAILABLE",
+    ],
+    [() => ({}), "UNAVAILABLE"],
+  ])
+    assert.deepEqual(await r9ResponseFailure({ failure }), { ...base, requestFailure: expected });
+  assert.equal(reads, 0);
+  for (const status of [
+    () => {
+      throw proxy;
+    },
+    () => 0,
+    () => NaN,
+    () => "200",
+  ])
+    assert.deepEqual(await r9ResponseFailure({ status }), {
+      contractKind: "UNKNOWN",
+      stage: "UNAVAILABLE",
+      statusHTTP: "NONE",
+      requestFailure: "UNAVAILABLE",
+    });
+  const { EventEmitter } = await import("node:events"),
+    page = new EventEmitter(),
+    fresh = sut.createOfficialObserver(page);
+  assert.equal(fresh.observationFailure(), null);
+  fresh.close();
+  assert.equal(fresh.observationFailure(), null);
+});
+
+test("R9 missing R8 ledger cannot construct a recovery broker even with a valid R8 proof", () => {
+  const proof = sut.reconcileR1Recovery(r6RecoveryState());
+  assert.ok(Object.isFrozen(proof));
+  const options = {
+    persist: () => true,
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+    recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+  };
+  for (const value of [undefined, null])
+    assert.throws(() => {
+      const b = sut.createIntentBroker({ ...options, recoveryLedgerR8: value });
+      b.authorizeRecovery(proof);
+    }, /RECOVERY_R8_LEDGER/);
 });
