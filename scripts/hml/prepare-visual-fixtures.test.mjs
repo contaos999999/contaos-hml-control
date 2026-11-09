@@ -4887,3 +4887,69 @@ test("R6 current readback identities must match intact R5 bindings before recove
     assert.throws(() => sut.reconcileR1Recovery(x));
   }
 });
+
+test("R6 locked and authorized replay boundaries reject nested accessors and proxies without reads", () => {
+  let reads = 0;
+  const fail = () => {
+    reads++;
+    throw Error("CANARY");
+  };
+  const nested = {};
+  Object.defineProperty(nested, "id_versao", { get: fail, enumerable: true });
+  const rootGetter = {};
+  Object.defineProperty(rootGetter, "p_acao", { get: fail, enumerable: true });
+  const proxy = new Proxy({}, { get: fail, getPrototypeOf: fail, ownKeys: fail });
+  const revoked = Proxy.revocable({}, {});
+  revoked.revoke();
+  const b = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings;
+  const payloads = [
+    rootGetter,
+    proxy,
+    revoked.proxy,
+    { p_acao: "salvar_item", p_id_lista: b.listId, p_payload: nested },
+    { p_acao: "salvar_item", p_id_lista: b.listId, p_payload: proxy },
+    { p_acao: "salvar_item", p_id_lista: b.listId, p_payload: revoked.proxy },
+  ];
+  for (const authorized of [false, true]) {
+    for (const payload of payloads) {
+      let beforeArm = 0;
+      const instance = broker({
+        recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+        recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+        recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+        recoveryLedgerR5: R6_R5_DOCUMENT,
+        beforeArm: () => {
+          beforeArm++;
+          return true;
+        },
+      });
+      if (authorized) instance.authorizeRecovery(sut.reconcileR1Recovery(r6RecoveryState()));
+      assert.throws(
+        () => instance.arm({
+          rpc: "executar_comando_lista_v1",
+          payload,
+          requestId: randomUUID(),
+          verified: { context: true, capability: true, reconciled: true },
+        }),
+        { message: authorized ? "INTENT_PAYLOAD" : "RECOVERY_READ_ONLY" },
+      );
+      assert.equal(instance.snapshot().count, 8);
+      assert.equal(beforeArm, 0);
+    }
+  }
+  assert.equal(reads, 0);
+});
+test("R6 diagnostics reject a proxy prototype without invoking descriptor traps", async () => {
+  let traps = 0;
+  const prototype = new Proxy({}, {
+    getOwnPropertyDescriptor() {
+      traps++;
+      throw Error("CANARY");
+    },
+  });
+  const failure = Object.create(prototype);
+  const d = sut.createPreparationDiagnostics();
+  await d.step("COMPETENCIES", () => r6RunMonthCatch(failure, d));
+  assert.equal(d.snapshot().primaryFailure, "PREPARER_UNCLASSIFIED");
+  assert.equal(traps, 0);
+});
