@@ -119,11 +119,12 @@ describe("P0 sidebar — regressões consolidadas do diálogo móvel", () => {
 });
 
 import { afterEach, beforeEach, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ContaOSAppShell } from "@/components/layout/ContaOSAppShell";
 
 const mocks = vi.hoisted(() => ({
   pathname: "/",
+  copilotoCommits: [] as Array<{ rota: string; contrato: string | null | undefined }>,
   getUser: vi.fn(),
   validarAdministrador: vi.fn(),
   podeConsultarAuditoria: vi.fn(),
@@ -177,6 +178,21 @@ vi.mock("@/lib/administracao/rbacRpc", async () => ({
   consultarPermissoesEfetivas: mocks.efetivas,
   resolverContextoRbac: mocks.contexto,
 }));
+// Observe committed child contexts before the parent passive effect can clear them.
+// Keep the real Copiloto so its lifecycle remains part of the integration.
+vi.mock("@/components/copiloto/CopilotoContrato", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/components/copiloto/CopilotoContrato")>();
+  const { useLayoutEffect } = await import("react");
+  return {
+    CopilotoContrato: (props: Parameters<typeof original.CopilotoContrato>[0]) => {
+      useLayoutEffect(() => {
+        mocks.copilotoCommits.push({ rota: mocks.pathname, contrato: props.contratoId });
+      });
+      return <original.CopilotoContrato {...props} />;
+    },
+  };
+});
+
 describe("P0 sidebar — testes DOM reais do modal", () => {
   beforeEach(() => {
     mocks.efetivas.mockReset().mockResolvedValue({
@@ -199,6 +215,7 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
       contratante: null,
     });
     mocks.pathname = "/";
+    mocks.copilotoCommits.length = 0;
     mocks.getUser.mockReset().mockResolvedValue({
       data: { user: { id: "usuario-teste" } },
       error: null,
@@ -215,6 +232,131 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
     cleanup();
     document.body.style.overflow = "";
   });
+
+  it("não monta o Copiloto com contrato anterior durante o commit da nova rota", async () => {
+    mocks.pathname = "/contratos/contrato-a";
+    mocks.contexto.mockResolvedValue({
+      contrato: "contrato-a",
+      competencia: null,
+      contratante: null,
+    });
+    const view = render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    await screen.findByRole("button", { name: "Consultar copiloto" });
+    let resolver!: (value: { contrato: string; competencia: null; contratante: null }) => void;
+    mocks.contexto.mockReturnValue(
+      new Promise((r) => {
+        resolver = r;
+      }),
+    );
+    mocks.pathname = "/contratos/contrato-b";
+    view.rerender(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    await waitFor(() =>
+      expect(mocks.contexto).toHaveBeenCalledWith("/contratos/contrato-b", "org-teste"),
+    );
+    // Checking only the settled DOM would miss the stale mount before useEffect.
+    expect(mocks.copilotoCommits.filter((c) => c.rota === "/contratos/contrato-b")).toEqual([]);
+    await act(async () =>
+      resolver({ contrato: "contrato-b", competencia: null, contratante: null }),
+    );
+    await screen.findByRole("button", { name: "Consultar copiloto" });
+    expect(
+      mocks.copilotoCommits
+        .filter((c) => c.rota === "/contratos/contrato-b")
+        .map((c) => c.contrato),
+    ).toEqual(["contrato-b"]);
+  });
+
+  it("descarta resolução da rota antiga depois que o novo contexto foi confirmado", async () => {
+    let resolver!: (value: { contrato: string; competencia: null; contratante: null }) => void;
+    mocks.pathname = "/contratos/contrato-a";
+    mocks.contexto.mockReturnValueOnce(
+      new Promise((r) => {
+        resolver = r;
+      }),
+    );
+    const view = render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    await waitFor(() =>
+      expect(mocks.contexto).toHaveBeenCalledWith("/contratos/contrato-a", "org-teste"),
+    );
+    mocks.contexto.mockResolvedValue({
+      contrato: "contrato-b",
+      competencia: null,
+      contratante: null,
+    });
+    mocks.pathname = "/contratos/contrato-b";
+    view.rerender(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    await screen.findByRole("button", { name: "Consultar copiloto" });
+    await act(async () =>
+      resolver({ contrato: "contrato-a", competencia: null, contratante: null }),
+    );
+    expect(mocks.copilotoCommits.map((c) => c.contrato)).toEqual(["contrato-b"]);
+    expect(screen.getByRole("button", { name: "Consultar copiloto" })).toBeInTheDocument();
+  });
+
+  const privadasCopiloto = [
+    "/",
+    "/contratantes",
+    "/contratantes/novo",
+    "/contratantes/id/editar",
+    "/contratos",
+    "/contratos/novo",
+    "/contratos/id",
+    ...[
+      "base-normativa",
+      "competencias",
+      "competencias/nova",
+      "documentos",
+      "documentos/doc",
+      "historico",
+      "historico/importar",
+      "orcamento",
+      "regras",
+    ].map((p) => "/contratos/id/" + p),
+    ...["", "/analise", "/apresentacoes/ap", "/apresentar", "/documentos", "/parecer"].map(
+      (p) => "/competencias/id" + p,
+    ),
+    "/administracao/usuarios",
+    "/administracao/auditoria",
+  ];
+  it.each(privadasCopiloto)("mantém a montagem contextual na área privada %s", async (rota) => {
+    mocks.pathname = rota;
+    render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    expect(await screen.findByRole("button", { name: "Consultar copiloto" })).toBeInTheDocument();
+  });
+  it.each(["/login", "/esqueci-senha", "/redefinir-senha", "/selecionar-organizacao"])(
+    "não monta contexto privado na superfície de acesso %s",
+    async (rota) => {
+      mocks.pathname = rota;
+      render(
+        <ContaOSAppShell>
+          <p>Acesso</p>
+        </ContaOSAppShell>,
+      );
+      await act(async () => {});
+      expect(screen.queryByRole("button", { name: "Consultar copiloto" })).not.toBeInTheDocument();
+      expect(mocks.copilotoCommits).toEqual([]);
+    },
+  );
 
   it("abre o diálogo, torna o fundo inerte e restaura rolagem após Escape", async () => {
     render(

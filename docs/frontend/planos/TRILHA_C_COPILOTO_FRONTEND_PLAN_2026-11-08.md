@@ -72,3 +72,39 @@ RED/GREEN deve cobrir DTO válido/inválido, boolean|null e placeholder; listage
 O inventário real é28rotas mais drawerV117:29superfícies x4larguras1440/1280/768/390 x2temas =232combinações. Rotas de acesso sem sessão são avaliadas conforme seu escopo e nunca chamadas de PASS autenticado. A auditoria deve distinguir navegação, CRUD autorizado e C13, provar o produto servido/deployment e o harness, registrar papel/contexto/fontes, screenshots originais e SHA256, e obter revisão independente das evidências. Preservar as provas A/B com sua origem. PII, fixture ausente, negado, skip ou mera presença do chat não viram PASS integral. Nenhuma certificação C/P0/V1 antes de todos os controles aplicáveis aprovados.
 
 Rollback: reverter apenas commits do futuro BUILD C, preservando integrações A/B e o histórico documental. Não há migração nesta emenda.
+
+
+## Reconciliação PR379 com main, 09/11/2026, gate pré-BUILD
+
+Base frontend c9dc5e062885793d3ad69430b822c14f3c6f2dc8; backend 5eca44aebead3183e81b5c1af0d1dffa5fb8feb6. API final-readback42596392357 permanece API_PASS_UI_PENDING, sem repetição. PR484 já integrada em451aa3de com as seis correções e gates42645748686/42645748507; preservar seus quatro blobs C13.
+
+Análise dos quatro commits exclusivos:440f3bd é RED histórico;3408283 implementa seleção RLS, contexto temporal, invalidação e montagem transversal;9bc106c adiciona aborto e fontes por resposta, porém seu timeout20s foi superado pelo PLAN450 e transporte50s atual;dd27b7e é merge histórico da main8666086 e não autoriza reaplicar alterações A/B. Nenhum cherry-pick cego nem restauração do componente antigo.
+
+Resíduo funcional confirmado no AppShell: contexto sem identidade da rota pode montar uma instância nova com contrato da rota anterior antes de o efeito limpar o estado. Recuperar somente a identidade da rota resolvida e condicionar montagem à igualdade com pathname. Preservar todo o restante do Shell atual, RBAC, modal/foco/menu e os quatro blobs C13. Recuperar a cobertura contextual perdida em testes afetados, sem restaurar a política obsoleta de retry20s.
+
+Escopo fechado: este documento;PLANO_ATIVO.json;src/components/layout/ContaOSAppShell.tsx;src/test/appShellSidebar.test.tsx;src/test/copilotoContrato.test.tsx;ESTADO_E_RETOMADA_CONTAOS_4_1.md. Todos já allowlisted. Não alterar rotas/routeTree/types/brand/dependências/backend/Auth/RLS/PROD. Atômicos e NFRs aplicáveis herdados do PLAN450: contexto autorizado, privacidade, rastreabilidade, acessibilidade e segurança; não inaugura versão ou requisito novo. Validação técnica PASS de escopo mínimo e compatibilidade com PLAN450 e PR484; não constitui teste ou certificação.
+
+Sequência: commit documental e CI verde antes de BUILD; RED causal de navegação observando mounts durante render e descarte de contexto pendente; GREEN mínimo e testes afetados AppShell/Copiloto. Reconciliação de ancestralidade por merge verdadeiro dos quatro commits, resolvendo conflitos explicitamente pela implementação atual mais o resíduo aprovado. Zero-Drift/LOCK/Teste C exigidos no HEAD final, revisão independente antes de integração. Suítes globais impostas pelo CI não serão executadas outra vez manualmente. Não repetir provas API/HML já válidas. Nenhum deploy autorizado por este gate.
+
+Rollback: reverter somente o delta residual de AppShell/testes/documentação, mantendo as integrações A/B e PR484. Main somente via PR protegido com gates verdes; checkpoint backend138 com HEADs/resultados/pendências. Auditoria autenticada e certificação global continuam pendentes.
+
+
+### Resolução explícita dos quatro conflitos
+
+Ensaio de merge real mainc9dc5e0+dd27b7e2 identificou exatamente4conflitos: este PLAN(content),CopilotoContrato.tsx(add/add),ContaOSAppShell.tsx(content),copilotoContrato.test.tsx(add/add). PLAN conserva integralmente C13PLAN450 e acrescenta abaixo o registro antigo como arquivo histórico. Componente e teste C13 ficam byte-exatos da main/PR484, não substituídos pelos arquivos antigos. AppShell conserva main e recupera apenas rota no contexto/setter/guard. Cobertura24privadas+4acesso do antigo teste é recuperada em appShellSidebar.test.tsx, mais dois casos causais da reconciliação. Demais testes históricos permanecem em seus commits, sem afirmar reexecução no novoHEAD; timeout20s/retry antigo foi expressamente superado por50s e reconciliação incerta C13.
+
+RED77ed8353:56casos/1FAIL55PASS local, causa mount{rotaB,contratoA};logSHA256378a9762f4f9b9eee60ffdfa20986cd923f9396e2e70468185e81a275e4cb396. GREEN mínimo:94PASS em4arquivos afetados(AppShell/visualShell/Copiloto/DTO),tscPASS. Após ajuste somente de formatação,56AppShellPASS;eslint0erros/1warning preexistente botaoMovelRef. Nenhuma suíte global executada manualmente, nenhumAPI/HML repetido. Tipos8ea7750b75fd9d76b29c36ce7613392e3ab65e19. CI final e revisão do HEAD final ainda pendentes neste registro.
+
+### Registro histórico da PR379, preservado sem reatribuição ao produto atual
+
+O texto seguinte descreve exclusivamente a implementação antiga. O prazo20s e o estadoPENDENTE ali citados não descrevem a implementação atual;50s/PLAN450/PR484 prevalecem. Não transforma os43testes históricos em prova do HEAD resultante.
+
+## Evidência incremental BUILD #379, sem certificação HML
+
+Base: PLAN #378 merge d8594696; RED440f3bd3/run42533505445/job128892643926, 3FAIL/1172PASS esperados (seletor, lista negada, troca usuário). REDlocal AppShell24FAIL/12PASS; competência2FAIL/36PASS. GREEN3408283:38focais e1205regressão PASS, TypeScript/build PASS.
+
+Revisão independente3408283: timeout/aborto e matriz de testes incompleta impediam conclusão. Fontes apenas da última resposta foram reclassificadas como problema de rastreabilidade e corrigidas no mesmo lote. REDlocal /tmp/contaos-c-review-red2.log:4FAIL/39PASS (prazo, aborto por competência, aborto pelo seletor, fontes por resposta). GREENlocal após correção:43/43focais,43suítes/1210testes PASS; tsc/buildPASS; lint0erros/1warning preexistente em botaoMovelRef. Tipos blob8ea7750b75fd9d76b29c36ce7613392e3ab65e19.
+
+Prazo20s cancela transporte por AbortController e libera UI mesmo com Promise pendente; resposta tardia não altera histórico. Trocas de contexto abortam transporte e invalidam geração. Fontes F1..Fn permanecem vinculadas a cada resposta e aviso explicita incerteza/revisão humana. Seletor mostra até100contratos autorizados e orienta a página do contrato além desse limite; nenhum contrato automático.
+
+CI do novo HEAD, implantação HML, JWT/cross-tenant/OpenAI e Teste C autenticado permanecem PENDENTES. Nenhum desses testes locais ou job documental equivale a certificação das27páginas. PROD/A/B/tipos preservados.

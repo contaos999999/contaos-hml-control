@@ -3192,5 +3192,19 @@
       "scripts/hml/inspect-fixture-artifact.test.mjs"
     ],
     "post_terminal_reader_separate_pr_ci_review_required": true
+  },
+  "trilha_c_pr379_reconciliation": {
+    "status": "VALIDADO_PRE_BUILD_CI_OBRIGATORIO",
+    "base_main": "c9dc5e062885793d3ad69430b822c14f3c6f2dc8",
+    "historical_head": "dd27b7e2f059cc71cff21c1d4dbe38a24e6d4261",
+    "plan_document": "docs/frontend/planos/TRILHA_C_COPILOTO_FRONTEND_PLAN_2026-11-08.md",
+    "build_paths": [
+      "src/components/layout/ContaOSAppShell.tsx",
+      "src/test/appShellSidebar.test.tsx",
+      "src/test/copilotoContrato.test.tsx"
+    ],
+    "preserve_pr484": true,
+    "deploy_authorized": false,
+    "certified": false
   }
 }
