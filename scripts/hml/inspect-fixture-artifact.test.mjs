@@ -588,3 +588,26 @@ test("R6 real downloader consumer fixes child inputs and keeps errors and privat
     /INSPECTION_DEADLINE/,
   );
 });
+
+test("R6 downstream role UUID syntax matches producer versions one through eight", () => {
+  const r = report();
+  r.bindings.competencies[0].executionId = "aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa";
+  r.ids.push(r.bindings.competencies[0].executionId);
+  // Producer collects in object traversal order, not insertion into the report ids array.
+  const ids = [];
+  const collect = (v) => {
+    if (
+      typeof v === "string" &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(v)
+    )
+      ids.push(v);
+    else if (Array.isArray(v)) v.forEach(collect);
+    else if (v && typeof v === "object") Object.values(v).forEach(collect);
+  };
+  collect(r.bindings);
+  r.ids = [...new Set(ids)];
+  assert.equal(
+    validateRecords(r, empty()).report.bindings.competencies[0].executionId,
+    r.bindings.competencies[0].executionId,
+  );
+});
