@@ -970,6 +970,7 @@ export function readManifest(root, deadline = () => {}) {
   };
 }
 export function buildProof(root, inspection, deadline = () => {}) {
+  inspection = plain(inspection);
   check(
     keys(inspection, ["run", "head"]) &&
       /^\d+$/.test(inspection.run) &&
