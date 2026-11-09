@@ -206,6 +206,7 @@ export function validateR1RecoveryDocument(input) {
 
 export async function reconcileRecoveryCompetencies(io) {
   validateR5RecoveryDocument(io.recoveryLedgerR5);
+  validateR6RecoveryDocument(io.recoveryLedgerR6);
   const result = [];
   const select = EXACT_SELECTS.competencias.find((value) =>
     value.includes("competencia_referencia,"),
@@ -260,6 +261,7 @@ export function reconcileR1Recovery(input) {
   validateR3RecoveryDocument(input?.ledgerR3);
   validateR4RecoveryDocument(input?.ledgerR4);
   validateR5RecoveryDocument(input?.ledgerR5);
+  validateR6RecoveryDocument(input?.ledgerR6);
   const expected = R5_BINDINGS;
   if (
     input.listCount !== 1 ||
@@ -560,6 +562,85 @@ export function validateR5RecoveryDocument(input) {
   return freeze(clean);
 }
 const R5_BINDINGS = freeze(JSON.parse(R5_RECOVERY_DOCUMENT.reportRaw).bindings);
+export const R6_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r6.v1",
+  workflowRun: "42585173702",
+  artifactId: "13658434738",
+  requestId: "trilha-a-fixtures-20261109-r6",
+  harnessSha: "9cd01a472146c67c4a3cae5f3d9a6b5d7448716a",
+  zipSha256: "10e55ed5856aac2879188ab5f2df3b1f4a98b180de21dd7abcb470c162f9d68c",
+  reportSha256: "8fd354bf2177f47a7b124a9d53e606de91880a45b2d94daebe46185403ebbeff",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "FLOW_BUTTON_UNAVAILABLE",\n  "diagnostics": {\n    "primaryFailure": "FLOW_BUTTON_UNAVAILABLE",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "SOURCE_UI_CONTROL",\n    "subphasePath": [\n      "SOURCE_AND_LIST",\n      "RECOVERY_READ",\n      "SOURCE_UI_CONTROL",\n      "SOURCE_UI_CONTROL"\n    ],\n    "lastCompletedSubphase": "SOURCE_UI_CONTROL",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 8,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 8,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 16\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 8,\n    "maxNewIntentions": 16,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": false,\n    "sourceVersion": null,\n    "sourceHash": null\n  },\n  "bindings": null,\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "9cd01a472146c67c4a3cae5f3d9a6b5d7448716a",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42585173702",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+});
+export function validateR6RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R6_LEDGER");
+  let descriptors;
+  try {
+    descriptors = Object.getOwnPropertyDescriptors(input);
+  } catch {
+    err("RECOVERY_R6_LEDGER");
+  }
+  const names = Object.keys(R6_RECOVERY_DOCUMENT),
+    clean = {};
+  if (Reflect.ownKeys(descriptors).length !== names.length) err("RECOVERY_R6_LEDGER");
+  for (const key of names) {
+    const descriptor = descriptors[key];
+    if (!descriptor || !Object.hasOwn(descriptor, "value") || typeof descriptor.value !== "string")
+      err("RECOVERY_R6_LEDGER");
+    clean[key] = descriptor.value;
+  }
+  if (
+    !same(clean, R6_RECOVERY_DOCUMENT) ||
+    hash(JSON.stringify(clean, null, 2) + "\n") !==
+      "98136adfe0c84c274ca31534b847b640a35f2577d2ad6197e451324a51ac7e03" ||
+    hash(clean.reportRaw) !== R6_RECOVERY_DOCUMENT.reportSha256 ||
+    hash(clean.receiptsRaw) !== R6_RECOVERY_DOCUMENT.receiptsSha256
+  )
+    err("RECOVERY_R6_LEDGER");
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw);
+  if (
+    JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
+    JSON.stringify(receipts) + "\n" !== clean.receiptsRaw ||
+    !same(receipts, { schema: "contaos.fixture.receipts.v1", receipts: [] }) ||
+    report.schema !== "contaos.fixture.preparation.v1" ||
+    report.workflowRun !== clean.workflowRun ||
+    report.harnessSha !== clean.harnessSha ||
+    report.frontendSha !== "437c788e32f0325dd15c9d2e7277c10129bcb462" ||
+    report.deploymentId !== "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp" ||
+    report.failure !== "FLOW_BUTTON_UNAVAILABLE" ||
+    report.phase !== "SOURCE_AND_LIST" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.logoutAttempted !== true ||
+    report.diagnostics.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    report.bindings !== null ||
+    !same(report.ids, []) ||
+    !same(report.intentLedger, {
+      count: 8,
+      frozen: false,
+      pending: false,
+      sent: false,
+      priorConfirmed: 8,
+      newArmedCount: 0,
+      maxIntentions: 24,
+      maxNewIntentions: 16,
+    }) ||
+    report.recovery.reconciled !== false ||
+    report.recovery.sourceVersion !== null ||
+    report.recovery.sourceHash !== null ||
+    report.recovery.confirmedBefore !== 8 ||
+    report.recovery.maxNewIntentions !== 16
+  )
+    err("RECOVERY_R6_LEDGER");
+  validateR4RecoveryDocument(report.recovery.r4ZeroAuth);
+  return freeze(clean);
+}
+
 function confirmedR5Replay(rpc, payload) {
   const ownData = (value) => {
     if (isProxy(value) || !obj(value)) err("INTENT_PAYLOAD");
@@ -592,11 +673,12 @@ function confirmedR5Replay(rpc, payload) {
   );
 }
 
-function recoveryBudget(ledger, ledgerR3, ledgerR4, ledgerR5) {
+function recoveryBudget(ledger, ledgerR3, ledgerR4, ledgerR5, ledgerR6) {
   const prior = validateR1RecoveryDocument(ledger),
     r3 = validateR3RecoveryDocument(ledgerR3);
   validateR4RecoveryDocument(ledgerR4);
   const r5 = JSON.parse(validateR5RecoveryDocument(ledgerR5).receiptsRaw);
+  validateR6RecoveryDocument(ledgerR6);
   const confirmedBefore = [...prior.receipts, ...r3.receipts, ...r5.receipts].filter(
     (row) => row.state === "confirmed",
   ).length;
@@ -672,6 +754,27 @@ export async function sourceStatusControl(dialog) {
     (await control.evaluate((el) => el.tagName)) !== "SELECT"
   )
     err("FLOW_SOURCE_CONTROL");
+  return control;
+}
+
+export async function listSelectionControl(scope, expectedId) {
+  if (
+    (await scope.count()) !== 1 ||
+    (await scope.getAttribute("aria-label")) !== "Gestão de listas"
+  )
+    err("FLOW_LIST_UI_MISSING");
+  const title = scope.getByText("Lista selecionada", { exact: true });
+  if ((await title.count()) !== 1 || !(await title.isVisible())) err("FLOW_LIST_UI_MISSING");
+  const label = title.locator("xpath=parent::label");
+  if ((await label.count()) !== 1) err("FLOW_LIST_UI_MISSING");
+  const control = label.locator(":scope > select");
+  if ((await control.count()) !== 1 || !(await control.isVisible()) || !(await control.isEnabled()))
+    err("FLOW_LIST_UI_MISSING");
+  if (expectedId !== undefined) {
+    if (!uuid(expectedId) || expectedId !== R5_BINDINGS.listId) err("FLOW_LIST_UI_MISSING");
+    if ((await control.locator(`option[value="${expectedId}"]`).count()) !== 1)
+      err("FLOW_LIST_UI_MISSING");
+  }
   return control;
 }
 
@@ -1406,6 +1509,7 @@ export function createIntentBroker({
   recoveryLedgerR3,
   recoveryLedgerR4,
   recoveryLedgerR5,
+  recoveryLedgerR6,
   beforeArm,
 } = {}) {
   const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
@@ -1413,11 +1517,18 @@ export function createIntentBroker({
     !recovery &&
     (recoveryLedgerR3 !== undefined ||
       recoveryLedgerR4 !== undefined ||
-      recoveryLedgerR5 !== undefined)
+      recoveryLedgerR5 !== undefined ||
+      recoveryLedgerR6 !== undefined)
   )
     err("RECOVERY_R3_LEDGER");
   const budget = recovery
-    ? recoveryBudget(recoveryLedger, recoveryLedgerR3, recoveryLedgerR4, recoveryLedgerR5)
+    ? recoveryBudget(
+        recoveryLedger,
+        recoveryLedgerR3,
+        recoveryLedgerR4,
+        recoveryLedgerR5,
+        recoveryLedgerR6,
+      )
     : null;
   let recoveryAuthorized = !recovery;
   let active = null,
@@ -3022,6 +3133,7 @@ export async function prepareSourceAndList(io) {
     validateR3RecoveryDocument(io.recoveryLedgerR3);
     validateR4RecoveryDocument(io.recoveryLedgerR4);
     validateR5RecoveryDocument(io.recoveryLedgerR5);
+    validateR6RecoveryDocument(io.recoveryLedgerR6);
   }
   const fail = (code) => {
     throw new Error(code);
@@ -3436,7 +3548,9 @@ export async function prepareSourceAndList(io) {
         for (
           let n = 0;
           (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
-            field(region, "Lista selecionada").locator(`option[value="${matching[0].id}"]`).count(),
+            (await tracedPreparation("SOURCE_UI_CONTROL", async () => listSelectionControl(region)))
+              .locator(`option[value="${matching[0].id}"]`)
+              .count(),
           )) === 0;
           n++
         ) {
@@ -3446,7 +3560,11 @@ export async function prepareSourceAndList(io) {
           );
         }
         await tracedPreparation("SOURCE_FORM_FIELD", async () =>
-          field(region, "Lista selecionada").selectOption(matching[0].id),
+          (
+            await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+              listSelectionControl(region, matching[0].id),
+            )
+          ).selectOption(matching[0].id),
         );
         await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
       }
@@ -3534,6 +3652,7 @@ export async function prepareSourceAndList(io) {
         ledgerR3: io.recoveryLedgerR3,
         ledgerR4: io.recoveryLedgerR4,
         ledgerR5: io.recoveryLedgerR5,
+        ledgerR6: io.recoveryLedgerR6,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -3765,7 +3884,9 @@ export async function prepareSourceAndList(io) {
     for (
       let n = 0;
       (await tracedPreparation("LIST_UI_CONTROL", async () =>
-        field(panel, "Lista selecionada").locator(`option[value="${matches[0].id}"]`).count(),
+        (await tracedPreparation("LIST_UI_CONTROL", async () => listSelectionControl(panel)))
+          .locator(`option[value="${matches[0].id}"]`)
+          .count(),
       )) === 0;
       n++
     ) {
@@ -3775,7 +3896,11 @@ export async function prepareSourceAndList(io) {
       );
     }
     await tracedPreparation("LIST_FORM_FIELD", async () =>
-      field(panel, "Lista selecionada").selectOption(matches[0].id),
+      (
+        await tracedPreparation("LIST_UI_CONTROL", async () =>
+          listSelectionControl(panel, matches[0].id),
+        )
+      ).selectOption(matches[0].id),
     );
     await tracedPreparation("LIST_REFRESH", async () => io.fresh());
     await tracedPreparation("LIST_MODEL_READ", async () => listProof());
@@ -3895,6 +4020,7 @@ export async function prepareCompetencies(io, sourceList) {
     stop("COMPETENCE_SOURCE_LIST");
   if (io.recoveryLedgerR5) {
     validateR5RecoveryDocument(io.recoveryLedgerR5);
+    validateR6RecoveryDocument(io.recoveryLedgerR6);
     for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
       if (sourceList[key] !== R5_BINDINGS[key]) stop("RECOVERY_LIST");
   }
@@ -4121,6 +4247,7 @@ export async function prepareCompetencies(io, sourceList) {
     let existing = await tracedPreparation("COMPETENCY_UI", async () => listMonth(month));
     if (io.recoveryLedgerR5) {
       validateR5RecoveryDocument(io.recoveryLedgerR5);
+      validateR6RecoveryDocument(io.recoveryLedgerR6);
       const expected = R5_BINDINGS.competencies.find((c) => c.month === month);
       if (!expected || existing.length !== 1 || existing[0].id !== expected.id)
         stop("RECOVERY_STATE");
@@ -5024,6 +5151,7 @@ export function validatePreparerIdentity(env, proof, native, identity, head) {
 }
 const PREPARER_FAILURE_CODES = new Set([
   "RECOVERY_R5_LEDGER",
+  "RECOVERY_R6_LEDGER",
   "RECOVERY_R4_PROOF",
   "RECOVERY_R3_LEDGER",
   "RECOVERY_SOURCE_INACTIVE",
@@ -5197,11 +5325,13 @@ async function runFixturePreparation() {
   validateR2RecoveryDocument(R2_RECOVERY_DOCUMENT);
   const r4Recovery = validateR4RecoveryDocument(getValidatedR4ZeroAuth());
   const r5Recovery = validateR5RecoveryDocument(R5_RECOVERY_DOCUMENT);
+  const r6Recovery = validateR6RecoveryDocument(R6_RECOVERY_DOCUMENT);
   const validatedBudget = recoveryBudget(
     R1_RECOVERY_DOCUMENT,
     R3_RECOVERY_DOCUMENT,
     r4Recovery,
     r5Recovery,
+    r6Recovery,
   );
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
@@ -5282,6 +5412,7 @@ async function runFixturePreparation() {
       recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
       recoveryLedgerR4: r4Recovery,
       recoveryLedgerR5: r5Recovery,
+      recoveryLedgerR6: r6Recovery,
       beforeArm: (rpc, payload, evidence, binding) =>
         observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
@@ -5543,6 +5674,7 @@ async function runFixturePreparation() {
       recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
       recoveryLedgerR4: r4Recovery,
       recoveryLedgerR5: r5Recovery,
+      recoveryLedgerR6: r6Recovery,
       recoveryReady: (proof) => {
         broker.authorizeRecovery(proof);
         recoveryState = proof;
@@ -5674,6 +5806,14 @@ async function runFixturePreparation() {
       JSON.stringify(R5_RECOVERY_DOCUMENT, null, 2) + "\n",
       { mode: 0o600 },
     );
+    writeFileSync(join(output, "receipts-r6.json"), R6_RECOVERY_DOCUMENT.receiptsRaw, {
+      mode: 0o600,
+    });
+    writeFileSync(
+      join(output, "recovery-r6.json"),
+      JSON.stringify(R6_RECOVERY_DOCUMENT, null, 2) + "\n",
+      { mode: 0o600 },
+    );
     let sums = "";
     writeFileSync(
       join(output, "recovery-r2.json"),
@@ -5689,6 +5829,8 @@ async function runFixturePreparation() {
       "recovery-r3.json",
       "receipts-r5.json",
       "recovery-r5.json",
+      "receipts-r6.json",
+      "recovery-r6.json",
     ])
       sums +=
         createHash("sha256")

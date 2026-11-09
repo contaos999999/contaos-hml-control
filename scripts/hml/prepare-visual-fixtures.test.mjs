@@ -1,6 +1,6 @@
 import * as sut from "./prepare-visual-fixtures.mjs";
 import test from "node:test";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 import {
   createIntentBroker,
@@ -1701,6 +1701,7 @@ function r2Reconciliation(delta = {}) {
     ledgerR3: sut.R3_RECOVERY_DOCUMENT,
     ledgerR4: sut.R4_RECOVERY_DOCUMENT,
     ledgerR5: R6_R5_DOCUMENT,
+    ledgerR6: sut.R6_RECOVERY_DOCUMENT,
     source: { ...context, id: FIXTURE.source, ...sut.SOURCE_FIELDS, version: 1, situacao: "ativa" },
     version: {
       ...context,
@@ -1738,6 +1739,7 @@ test("R2 ledger omitido undefined ou null não emite prova de reconciliação", 
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
   });
   for (const input of [
     omitted,
@@ -1766,6 +1768,7 @@ test("R2 reconcilia somente estado oficial unico aprovado antes de armar", () =>
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
   });
   assert.throws(() => r6AnalysisArm(b), { message: "RECOVERY_READ_ONLY" });
   assert.throws(() => b.authorizeRecovery({ ...proof }), { message: "RECOVERY_PROOF" });
@@ -1804,6 +1807,7 @@ test("R6 contabiliza oito anteriores e limita novas intencoes a16", () => {
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
   for (let n = 0; n < 16; n++) {
@@ -2411,6 +2415,220 @@ function r3SourceListMarkup() {
   }));
 }
 
+function r7PanelMarkup({ total = 1, pagina = 0, disabled = false, mode = "normal" } = {}) {
+  const require = createRequire(import.meta.url);
+  const fs = require("fs"),
+    ts = require("typescript"),
+    React = require("react");
+  const { renderToStaticMarkup } = require("react-dom/server");
+  const path = "src/components/contratos/GerenciarListas.tsx";
+  const source = fs.readFileSync(path, "utf8");
+  const ast = ts.createSourceFile(path, source, 99, true, ts.ScriptKind.TSX);
+  const nodes = [];
+  const visit = (node) => {
+    nodes.push(node);
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  const label = nodes.find(
+    (node) =>
+      ts.isJsxElement(node) &&
+      node.openingElement.tagName.getText(ast) === "label" &&
+      node.getText(ast).includes("<span>Lista selecionada</span>"),
+  );
+  const pagination = ast.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "Paginacao",
+  );
+  assert.ok(label);
+  assert.ok(pagination);
+  const section = nodes.find(
+    (node) =>
+      ts.isJsxElement(node) &&
+      node.openingElement.tagName.getText(ast) === "section" &&
+      node.openingElement.attributes.properties.some(
+        (a) =>
+          ts.isJsxAttribute(a) &&
+          a.name.getText(ast) === "aria-label" &&
+          a.initializer?.getText(ast) === '"Gestão de listas"',
+      ),
+  );
+  assert.ok(section);
+  const code =
+    pagination.getText(ast) +
+    "\nfunction Probe({listas,id,bloquearEdicao,pagina,total,mode}) {" +
+    "const setSelecionada=()=>{},setVersao=()=>{},setPv=()=>{},setPi=()=>{},setForm=()=>{};" +
+    "return (" +
+    section.openingElement.getText(ast) +
+    label.getText(ast) +
+    '{mode==="duplicateLabel" && (' +
+    label.getText(ast) +
+    ")}" +
+    '<Paginacao nome="listas" pagina={pagina} total={total} disabled={bloquearEdicao} onMudar={()=>{}} />' +
+    section.closingElement.getText(ast) +
+    ");}";
+  const js = ts.transpileModule(code, {
+    compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const Probe = new Function("React", "Button", "CAMPO", js + ";return Probe;")(
+    React,
+    ({ children, ...props }) => React.createElement("button", props, children),
+    "",
+  );
+  const target = JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.listId;
+  const other = "11111111-1111-4111-8111-111111111111";
+  const rows = Array.from({ length: Math.min(total, 25) }, (_, i) => ({
+    id: i === 0 ? target : other.slice(0, -2) + String(i).padStart(2, "0"),
+    nome: i === 0 ? FIXTURE.listName : "Lista controle " + i,
+  }));
+  if (mode === "duplicateOption") rows.push({ ...rows[0] });
+  if (mode === "missingOption") rows.splice(0, 1);
+  let html = renderToStaticMarkup(
+    React.createElement(Probe, {
+      listas: { data: { itens: rows, total } },
+      id: rows.at(-1)?.id ?? "",
+      bloquearEdicao: disabled,
+      pagina,
+      total,
+      mode,
+    }),
+  );
+  if (mode === "foreign")
+    html = html.replace('aria-label="Gestão de listas"', 'aria-label="Outro contexto"');
+  if (mode === "wrongTag") html = html.replace(/<label/g, "<div").replace(/<\/label>/g, "</div>");
+  if (mode === "missingTitle")
+    html = html.replace("<span>Lista selecionada</span>", "<span>Outro campo</span>");
+  if (mode === "duplicateSelect") html = html.replace(/(<select[\s\S]*?<\/select>)/, "$1$1");
+  return { html, target, rows };
+}
+async function r7ProbeListConsumers(page, ast) {
+  const require = createRequire(import.meta.url),
+    ts = require("typescript");
+  const calls = [],
+    selections = [];
+  const visit = (node) => {
+    if (ts.isCallExpression(node)) {
+      const text = node.expression.getText(ast);
+      if (
+        (text === "field" && node.arguments[1]?.getText(ast) === '"Lista selecionada"') ||
+        text === "listSelectionControl"
+      )
+        calls.push(node);
+    }
+    if (
+      ts.isCallExpression(node) &&
+      ts.isPropertyAccessExpression(node.expression) &&
+      node.expression.name.text === "selectOption" &&
+      [
+        'field(region, "Lista selecionada")',
+        'field(panel, "Lista selecionada")',
+        "listSelectionControl(region",
+        "listSelectionControl(panel",
+      ].some((target) => node.expression.expression.getText(ast).includes(target))
+    ) {
+      let statement = node.parent;
+      while (statement && !ts.isExpressionStatement(statement)) statement = statement.parent;
+      assert.ok(statement);
+      if (!selections.includes(statement)) selections.push(statement);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  assert.equal(calls.length, 4, "all four production list control uses are exercised");
+  assert.equal(selections.length, 2, "both production selection consumers are exercised");
+  let fieldInitializer;
+  const findField = (node) => {
+    if (ts.isVariableDeclaration(node) && node.name.getText(ast) === "field")
+      fieldInitializer ??= node.initializer.getText(ast);
+    ts.forEachChild(node, findField);
+  };
+  findField(ast);
+  assert.ok(fieldInitializer);
+  const field = new Function("return (" + fieldInitializer + ");")();
+  const trace = async (_, run) => run();
+  const fixture = r7PanelMarkup({ total: 2 });
+  for (const call of calls) {
+    await page.setContent(fixture.html);
+    const scope = page.getByRole("region", { name: "Gestão de listas", exact: true });
+    const control = await new (Object.getPrototypeOf(async () => {}).constructor)(
+      "field",
+      "listSelectionControl",
+      "region",
+      "panel",
+      "matching",
+      "matches",
+      "return await (" + call.getText(ast) + ");",
+    )(
+      field,
+      sut.listSelectionControl,
+      scope,
+      scope,
+      [{ id: fixture.target }],
+      [{ id: fixture.target }],
+    );
+    assert.equal(await scope.locator("option[value='" + fixture.target + "']").count(), 1);
+    assert.equal(
+      await scope.getByLabel("Lista selecionada", { exact: true }).count(),
+      0,
+      "real Playwright label text includes options",
+    );
+    assert.equal(
+      await control.count(),
+      1,
+      "production lookup must find the real select even when its wrapped exact label does not",
+    );
+  }
+  for (const statement of selections) {
+    await page.setContent(fixture.html);
+    const scope = page.getByRole("region", { name: "Gestão de listas", exact: true });
+    assert.notEqual(await scope.locator("select").inputValue(), fixture.target);
+    await new (Object.getPrototypeOf(async () => {}).constructor)(
+      "field",
+      "listSelectionControl",
+      "region",
+      "panel",
+      "matching",
+      "matches",
+      "tracedPreparation",
+      statement.getText(ast),
+    )(
+      field,
+      sut.listSelectionControl,
+      scope,
+      scope,
+      [{ id: fixture.target }],
+      [{ id: fixture.target }],
+      trace,
+    );
+    assert.equal(await scope.locator("select").inputValue(), fixture.target);
+  }
+  for (const total of [1, 25, 26, 51]) {
+    for (const pagina of new Set([0, Math.ceil(total / 25) - 1])) {
+      const f = r7PanelMarkup({ total, pagina });
+      await page.setContent(f.html);
+      const scope = page.getByRole("region", { name: "Gestão de listas", exact: true });
+      assert.equal(await (await sut.listSelectionControl(scope, f.target)).count(), 1);
+      const prev = scope.getByRole("button", { name: "Página anterior de listas", exact: true });
+      assert.equal(await prev.count(), total > 25 ? 1 : 0);
+      if (total > 25) assert.equal(await prev.isEnabled(), pagina > 0);
+    }
+  }
+  for (const mode of [
+    "duplicateLabel",
+    "duplicateOption",
+    "missingOption",
+    "foreign",
+    "wrongTag",
+    "missingTitle",
+    "duplicateSelect",
+    "disabled",
+  ]) {
+    const f = r7PanelMarkup({ mode, disabled: mode === "disabled" });
+    await page.setContent(f.html);
+    const scope = page.locator("section");
+    await assert.rejects(sut.listSelectionControl(scope, f.target), /FLOW_LIST_UI_MISSING/);
+  }
+}
+
 test(
   "R3 Chromium sourceforms exact controls and actual source consumer",
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1" },
@@ -2556,6 +2774,7 @@ test(
         }
       }
       assert.equal(additional, 17);
+      await r7ProbeListConsumers(page, ast);
     } finally {
       await browser.close();
     }
@@ -2816,6 +3035,7 @@ test("R4 validates explicit original R3 ledger and debits exactly one prior acti
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 8);
   for (const rpc of [
@@ -2982,6 +3202,7 @@ test("R4 report derives real arm sent and terminal scalars without request ident
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
   assert.deepEqual(sut.preparationIntentSummary(b), {
@@ -3550,6 +3771,7 @@ test("R6 recovery requires fresh ordinary reads and exact original month identit
     const events = [];
     const io = {
       recoveryLedgerR5: R6_R5_DOCUMENT,
+      recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
       generation: () => generation,
       goKnown: async () => {
         generation++;
@@ -3907,6 +4129,7 @@ test("R5 explicit R4 proof is required before recovery broker and preserves thre
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
     recoveryLedgerR4: clean,
     recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().confirmedBefore, 8);
   assert.equal(b.snapshot().maxNewIntentions, 16);
@@ -4457,6 +4680,7 @@ test("R6 recovery broker debits original five R5 confirmations before any new ar
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 8);
   assert.equal(b.snapshot().confirmedBefore, 8);
@@ -4621,6 +4845,7 @@ test("R6 semantic replay rejects complete new UUID intents but permits another v
       recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
       recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
       recoveryLedgerR5: R6_R5_DOCUMENT,
+      recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     });
   for (const [rpc, p] of attempts) {
     const requestId = randomUUID(),
@@ -4918,6 +5143,7 @@ test("R6 locked and authorized replay boundaries reject nested accessors and pro
         recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
         recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
         recoveryLedgerR5: R6_R5_DOCUMENT,
+        recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
         beforeArm: () => {
           beforeArm++;
           return true;
@@ -4956,4 +5182,158 @@ test("R6 diagnostics reject a proxy prototype without invoking descriptor traps"
   await d.step("COMPETENCIES", () => r6RunMonthCatch(failure, d));
   assert.equal(d.snapshot().primaryFailure, "PREPARER_UNCLASSIFIED");
   assert.equal(traps, 0);
+});
+
+test("R7 original R6 zero-intent document is exact and rejects getters proxies and mutations", () => {
+  const original = {
+    schema: "contaos.fixture.recovery-r6.v1",
+    workflowRun: "42585173702",
+    artifactId: "13658434738",
+    requestId: "trilha-a-fixtures-20261109-r6",
+    harnessSha: "9cd01a472146c67c4a3cae5f3d9a6b5d7448716a",
+    zipSha256: "10e55ed5856aac2879188ab5f2df3b1f4a98b180de21dd7abcb470c162f9d68c",
+    reportSha256: "8fd354bf2177f47a7b124a9d53e606de91880a45b2d94daebe46185403ebbeff",
+    receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+    reportRaw:
+      '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "FLOW_BUTTON_UNAVAILABLE",\n  "diagnostics": {\n    "primaryFailure": "FLOW_BUTTON_UNAVAILABLE",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "SOURCE_UI_CONTROL",\n    "subphasePath": [\n      "SOURCE_AND_LIST",\n      "RECOVERY_READ",\n      "SOURCE_UI_CONTROL",\n      "SOURCE_UI_CONTROL"\n    ],\n    "lastCompletedSubphase": "SOURCE_UI_CONTROL",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 8,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 8,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 16\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 8,\n    "maxNewIntentions": 16,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": false,\n    "sourceVersion": null,\n    "sourceHash": null\n  },\n  "bindings": null,\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "9cd01a472146c67c4a3cae5f3d9a6b5d7448716a",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42585173702",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [],\n  "v1Certified": false\n}\n',
+    receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  };
+  assert.equal(typeof sut.validateR6RecoveryDocument, "function");
+  assert.deepEqual(sut.validateR6RecoveryDocument(original), original);
+  const canonical = JSON.stringify(original, null, 2) + "\n";
+  assert.equal(Buffer.byteLength(canonical), 2599);
+  assert.equal(
+    createHash("sha256").update(canonical).digest("hex"),
+    "98136adfe0c84c274ca31534b847b640a35f2577d2ad6197e451324a51ac7e03",
+  );
+  for (const delta of [
+    { workflowRun: "42585173703" },
+    { requestId: "trilha-a-fixtures-20261109-r7" },
+    { extra: true },
+    { reportRaw: original.reportRaw.replace('"newArmedCount": 0', '"newArmedCount": 1') },
+    { receiptsRaw: original.receiptsRaw.replace("[]", "[{}]") },
+    { reportRaw: original.reportRaw.replace('"logoutVerified": true', '"logoutVerified": false') },
+  ])
+    assert.throws(
+      () => sut.validateR6RecoveryDocument({ ...original, ...delta }),
+      /RECOVERY_R6_LEDGER/,
+    );
+  let traps = 0;
+  const fail = () => {
+    traps++;
+    throw Error("CANARY");
+  };
+  const accessor = { ...original };
+  Object.defineProperty(accessor, "reportRaw", { enumerable: true, get: fail });
+  const proxy = new Proxy(original, {
+    get: fail,
+    getPrototypeOf: fail,
+    ownKeys: fail,
+    getOwnPropertyDescriptor: fail,
+  });
+  const revoked = Proxy.revocable(original, {});
+  revoked.revoke();
+  for (const input of [undefined, null, {}, accessor, proxy, revoked.proxy])
+    assert.throws(() => sut.validateR6RecoveryDocument(input), /RECOVERY_R6_LEDGER/);
+  assert.equal(traps, 0);
+  const instance = broker({
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+    recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: original,
+  });
+  assert.equal(instance.snapshot().count, 8);
+  assert.equal(instance.snapshot().maxNewIntentions, 16);
+  assert.throws(
+    () =>
+      broker({
+        recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+        recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+        recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+        recoveryLedgerR5: R6_R5_DOCUMENT,
+      }),
+    /RECOVERY_R6_LEDGER/,
+  );
+});
+
+test("R7 actual artifact writer appends two exact R6 histories and ten hashed data members", async () => {
+  const fs = await import("node:fs/promises");
+  const sync = await import("node:fs");
+  const { join } = await import("node:path");
+  const { tmpdir } = await import("node:os");
+  const source = await fs.readFile(
+    new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf('    writeFileSync(join(output, "receipts-r3.json")');
+  const marker = '    writeFileSync(join(output, "SHA256SUMS"), sums, { mode: 0o600 });';
+  const end = source.indexOf(marker, start) + marker.length;
+  assert.ok(start > 0 && end > start);
+  const output = await fs.mkdtemp(join(tmpdir(), "contaos-r7-writer-"));
+  try {
+    for (const name of ["receipts.json", "report.json", "receipts-r1.json"])
+      await fs.writeFile(
+        join(output, name),
+        name === "report.json"
+          ? sut.R6_RECOVERY_DOCUMENT.reportRaw
+          : name === "receipts-r1.json"
+            ? JSON.stringify(sut.R1_RECOVERY_DOCUMENT, null, 2) + "\n"
+            : sut.R6_RECOVERY_DOCUMENT.receiptsRaw,
+      );
+    await new (Object.getPrototypeOf(async () => {}).constructor)(
+      "output",
+      "writeFileSync",
+      "join",
+      "R2_RECOVERY_DOCUMENT",
+      "R3_RECOVERY_DOCUMENT",
+      "R5_RECOVERY_DOCUMENT",
+      "R6_RECOVERY_DOCUMENT",
+      "createHash",
+      "readFile",
+      "tracedPreparation",
+      source.slice(start, end),
+    )(
+      output,
+      sync.writeFileSync,
+      join,
+      sut.R2_RECOVERY_DOCUMENT,
+      sut.R3_RECOVERY_DOCUMENT,
+      sut.R5_RECOVERY_DOCUMENT,
+      sut.R6_RECOVERY_DOCUMENT,
+      createHash,
+      fs.readFile,
+      async (_, run) => run(),
+    );
+    const names = (await fs.readdir(output)).sort();
+    assert.equal(names.length, 11);
+    const manifest = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
+    assert.equal(manifest.length, 10);
+    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 10);
+    for (const line of manifest) {
+      assert.match(line, /^[0-9a-f]{64}  [a-z0-9.-]+$/);
+      const bytes = await fs.readFile(join(output, line.slice(66)));
+      assert.equal(createHash("sha256").update(bytes).digest("hex"), line.slice(0, 64));
+    }
+    assert.equal(
+      createHash("sha256")
+        .update(await fs.readFile(join(output, "receipts-r1.json")))
+        .digest("hex"),
+      "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
+    );
+    assert.equal(
+      await fs.readFile(join(output, "receipts-r6.json"), "utf8"),
+      sut.R6_RECOVERY_DOCUMENT.receiptsRaw,
+    );
+    assert.equal(
+      await fs.readFile(join(output, "recovery-r6.json"), "utf8"),
+      JSON.stringify(sut.R6_RECOVERY_DOCUMENT, null, 2) + "\n",
+    );
+    assert.equal(
+      await fs.readFile(join(output, "receipts-r5.json"), "utf8"),
+      sut.R5_RECOVERY_DOCUMENT.receiptsRaw,
+    );
+  } finally {
+    await fs.rm(output, { recursive: true, force: true });
+  }
 });

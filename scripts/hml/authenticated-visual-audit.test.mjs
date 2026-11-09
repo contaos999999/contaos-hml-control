@@ -5199,7 +5199,7 @@ test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r6",
+    request_id: "trilha-a-fixtures-20261109-r7",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "b".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5409,7 +5409,7 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r6",
+    request_id: "trilha-a-fixtures-20261109-r7",
     approved_parent_sha: parent,
     frontend_sha: "c".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5453,7 +5453,7 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r6",
+    request_id: "trilha-a-fixtures-20261109-r7",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5685,7 +5685,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     sha = "a".repeat(40),
     parent = "b".repeat(40),
     head = "d".repeat(40);
-  const request = { request_id: "trilha-a-fixtures-20261109-r6", approved_parent_sha: parent };
+  const request = { request_id: "trilha-a-fixtures-20261109-r7", approved_parent_sha: parent };
   const pull = {
     id: 300,
     number: 90,
@@ -5835,7 +5835,7 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r6",
+    request_id: "trilha-a-fixtures-20261109-r7",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -5881,7 +5881,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r6",
+    request_id: "trilha-a-fixtures-20261109-r7",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5913,6 +5913,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     sut.SINGLE_REQUEST.readbackGateSha,
     sut.SINGLE_REQUEST.bootstrapGateSha,
     sut.SINGLE_REQUEST.navigationGateSha,
+    sut.SINGLE_REQUEST.listSelectionGateSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   await assert.rejects(
@@ -7867,7 +7868,7 @@ test("R3 only current nonce executes and exact R1 R2 remain spent", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r6",
+    request_id: "trilha-a-fixtures-20261109-r7",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -8511,12 +8512,12 @@ test("R5 rejects divergent R4 metadata private execution attempts duplicates and
     code: "RECOVERY_R4_PROOF",
   });
 });
-test("R6 is the only executable fixture nonce and R1 through R5 remain historical", () => {
+test("R7 is the only executable fixture nonce and R1 through R6 remain historical", () => {
   const req = {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r6",
+    request_id: "trilha-a-fixtures-20261109-r7",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -8528,6 +8529,7 @@ test("R6 is the only executable fixture nonce and R1 through R5 remain historica
     "trilha-a-fixtures-20261109-r3",
     "trilha-a-fixtures-20261109-r4",
     "trilha-a-fixtures-20261109-r5",
+    "trilha-a-fixtures-20261109-r6",
   ]) {
     assert.throws(() => sut.parseSingleRequest(JSON.stringify({ ...req, request_id: nonce })), {
       code: "REQUEST_SCHEMA",
@@ -8565,12 +8567,12 @@ test("R5 runtime refuses missing or forged R4 proof before exposing broker evide
     assert.throws(() => sut.validateR4ZeroAuthProof(value), { code: "RECOVERY_R4_PROOF" });
 });
 
-test("R6 is sole executable fixture nonce and all five original requests remain spent", async () => {
+test("R7 is sole executable fixture nonce and all six original requests remain spent", async () => {
   const request = {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r6",
+    request_id: "trilha-a-fixtures-20261109-r7",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -8582,6 +8584,7 @@ test("R6 is sole executable fixture nonce and all five original requests remain 
     "trilha-a-fixtures-20261109-r3",
     "trilha-a-fixtures-20261109-r4",
     "trilha-a-fixtures-20261109-r5",
+    "trilha-a-fixtures-20261109-r6",
   ]) {
     assert.throws(() => sut.parseSingleRequest(JSON.stringify({ ...request, request_id: nonce })), {
       code: "REQUEST_SCHEMA",
