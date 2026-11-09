@@ -3840,7 +3840,59 @@ test("R4 approved minimal projections TABLE5 causal observer cases", async () =>
   }
 });
 
-function r4EmitMutation(page, rpc, payload, ack = {}, bodyWait) {
+test("R16 exact void approval accepts 204 empty body without confirming business", async () => {
+  const f = await r4ObserverFixture();
+  const payload = {
+    p_id_parecer: FIXTURE.source,
+    p_aprovar: true,
+    p_fundamento: FIXTURE.foundation,
+  };
+  try {
+    f.observer.markMutation("aprovar_parecer_interno", payload, {
+      opinions: [{ id: FIXTURE.source, competency: FIXTURE.contract }],
+    });
+    r4EmitMutation(f.page, "aprovar_parecer_interno", payload, null, undefined, 204, "");
+    await f.observer.flush();
+    assert.equal(f.observer.observationFailure(), null);
+  } finally {
+    f.observer.close();
+  }
+});
+
+test("R16 empty responses remain closed for other RPCs and malformed void responses", async () => {
+  for (const [rpc, status, raw] of [
+    ["solicitar_parecer_interno", 204, ""],
+    ["aprovar_parecer_interno", 200, ""],
+    ["aprovar_parecer_interno", 204, "{}"],
+    ["aprovar_parecer_interno", 403, ""],
+  ]) {
+    const f = await r4ObserverFixture();
+    try {
+      r4EmitMutation(f.page, rpc, {}, null, undefined, status, raw);
+      await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+    } finally {
+      f.observer.close();
+    }
+  }
+});
+
+test("R16 empty GET is never treated as void mutation acknowledgement", async () => {
+  const f = await r4ObserverFixture();
+  try {
+    const request = f.request();
+    f.page.emit("response", {
+      request: () => request,
+      url: request.url,
+      status: () => 204,
+      body: async () => Buffer.alloc(0),
+    });
+    await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+  } finally {
+    f.observer.close();
+  }
+});
+
+function r4EmitMutation(page, rpc, payload, ack = {}, bodyWait, status = 200, rawBody) {
   const request = {
     method: () => "POST",
     postData: () => JSON.stringify(payload),
@@ -3850,10 +3902,10 @@ function r4EmitMutation(page, rpc, payload, ack = {}, bodyWait) {
   page.emit("response", {
     request: () => request,
     url: request.url,
-    status: () => 200,
+    status: () => status,
     body: async () => {
       if (bodyWait) await bodyWait;
-      return Buffer.from(JSON.stringify(ack));
+      return Buffer.from(rawBody === undefined ? JSON.stringify(ack) : rawBody);
     },
   });
   return request;
