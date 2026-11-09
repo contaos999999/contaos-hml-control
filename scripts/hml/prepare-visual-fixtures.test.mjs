@@ -2672,3 +2672,59 @@ async function r3AttestedBrowser() {
   const { launchNativeBrowser } = await import("./authenticated-visual-audit.mjs");
   return launchNativeBrowser({ debugPort });
 }
+
+test("R3 source control preserves native timeout identity and diagnostic subphase", async () => {
+  const timeout = Object.assign(new Error("PRIVATE_CANARY_TOKEN_URL_STACK"), {
+    name: "TimeoutError",
+  });
+  let options;
+  const control = {
+    count: async () => 0,
+    waitFor: async (value) => {
+      options = value;
+      throw timeout;
+    },
+  };
+  const diagnostics = sut.createPreparationDiagnostics();
+  let observed;
+  try {
+    await diagnostics.step("SOURCE_FORM_FIELD", () =>
+      sut.sourceStatusControl({ getByRole: () => control }),
+    );
+  } catch (error) {
+    observed = error;
+  }
+  assert.equal(observed, timeout);
+  assert.deepEqual(options, { state: "visible" });
+  diagnostics.capture(observed);
+  assert.equal(diagnostics.snapshot().primaryFailure, "PREPARER_TIMEOUT");
+  assert.equal(diagnostics.snapshot().subphase, "SOURCE_FORM_FIELD");
+  assert.equal(JSON.stringify(diagnostics.snapshot()).includes("PRIVATE_CANARY"), false);
+  let waitCalls = 0;
+  await assert.rejects(
+    sut.sourceStatusControl({
+      getByRole: () => ({ count: async () => 2, waitFor: async () => waitCalls++ }),
+    }),
+    /FLOW_SOURCE_CONTROL/,
+  );
+  assert.equal(waitCalls, 0);
+  let getterReads = 0;
+  const hostile = {
+    get name() {
+      getterReads++;
+      throw Error("PRIVATE_CANARY");
+    },
+  };
+  await assert.rejects(
+    sut.sourceStatusControl({
+      getByRole: () => ({
+        count: async () => 0,
+        waitFor: async () => {
+          throw hostile;
+        },
+      }),
+    }),
+    /FLOW_SOURCE_CONTROL/,
+  );
+  assert.equal(getterReads, 0);
+});

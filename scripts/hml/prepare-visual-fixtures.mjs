@@ -339,7 +339,8 @@ export async function sourceStatusControl(dialog) {
   if ((await control.count()) > 1) err("FLOW_SOURCE_CONTROL");
   try {
     await control.waitFor({ state: "visible" });
-  } catch {
+  } catch (error) {
+    if (preparationErrorData(error, "name") === "TimeoutError") throw error;
     err("FLOW_SOURCE_CONTROL");
   }
   if (
