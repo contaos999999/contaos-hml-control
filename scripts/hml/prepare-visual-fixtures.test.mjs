@@ -1994,3 +1994,17 @@ test("R2 cada await relevante do codigo real passa pela barreira diagnostica", a
   );
   assert.match(code, /recoveryLedger:R1_RECOVERY_DOCUMENT|recoveryLedger: R1_RECOVERY_DOCUMENT/);
 });
+
+test("R2 cleanup sincrono preserva primaria e report mesmo com logout verificado", async () => {
+  const d = sut.createPreparationDiagnostics();
+  await assert.rejects(() => d.step("SOURCE_VERSION_READ", async () => { throw new TypeError("PRIMARY_CANARY"); }));
+  await d.cleanup(async () => true);
+  assert.equal(d.snapshot().logoutVerified, true);
+  assert.equal(typeof d.finishCleanup, "function");
+  await d.finishCleanup("RUNTIME_CLEAR_FAILED", () => { throw new Error("CLEANUP_CANARY"); });
+  assert.equal(d.snapshot().primaryFailure, "PREPARER_UNCLASSIFIED");
+  assert.equal(d.snapshot().cleanupFailure, "RUNTIME_CLEAR_FAILED");
+  assert.equal(d.snapshot().logoutVerified, true);
+  assert.equal(/CANARY|stack|https/.test(JSON.stringify(d.snapshot())), false);
+  await assert.rejects(() => d.finishCleanup("UNKNOWN_CANARY", () => {}), { message: "DIAGNOSTIC_SUBPHASE" });
+});
