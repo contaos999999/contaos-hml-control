@@ -615,7 +615,6 @@ export function validateRecords(reportInput, receiptsInput) {
       "ledgerSha256",
       "priorWorkflowRun",
       "confirmedBefore",
-      "priorReserved",
       "maxNewIntentions",
       "r3ReceiptsSha256",
       "r3WorkflowRun",
@@ -629,7 +628,6 @@ export function validateRecords(reportInput, receiptsInput) {
     q.ledgerSha256 === HISTORY["receipts-r1.json"] &&
       q.priorWorkflowRun === "42540864527" &&
       q.confirmedBefore === 10 &&
-      q.priorReserved === 1 &&
       q.maxNewIntentions === 13 &&
       q.r3ReceiptsSha256 === HISTORY["receipts-r3.json"] &&
       q.r3WorkflowRun === "42559214436",

@@ -69,7 +69,6 @@ const BASE = {
     ledgerSha256: "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
     priorWorkflowRun: "42540864527",
     confirmedBefore: 10,
-    priorReserved: 1,
     maxNewIntentions: 13,
     r3ReceiptsSha256: "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",
     r3WorkflowRun: "42559214436",
@@ -1244,7 +1243,6 @@ test("R13 pins the actual original artifact and preserves the reserved R11 inten
     maxIntentions: 24,
     maxNewIntentions: 13,
   };
-  r.recovery.priorReserved = 1;
   r.recovery.maxNewIntentions = 13;
   const result = validateRecords(r, empty());
   assert.equal(result.observations.priorReserved, 1);
@@ -1254,7 +1252,7 @@ test("R13 pins the actual original artifact and preserves the reserved R11 inten
     (r) => (r.intentLedger.count = 10),
     (r) => (r.intentLedger.priorConfirmed = 11),
     (r) => (r.intentLedger.maxNewIntentions = 14),
-    (r) => (r.recovery.priorReserved = 0),
+    (r) => (r.recovery.priorReserved = 1),
   ]) {
     const bad = clone(r);
     mutate(bad);
