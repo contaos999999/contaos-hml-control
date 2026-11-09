@@ -4858,7 +4858,7 @@ async function nativeGuard() {
           else if (
             Object.keys(value).sort().join("|") === "calls|selections|stage" &&
             value.stage === "AST_READY" &&
-            [value.calls, value.selections].every((n) => Number.isInteger(n) && n >= 0 && n <= 8)
+            [value.calls, value.selections].every((n) => Number.isInteger(n) && n >= 0 && n <= 4)
           )
             safeStages.push({
               stage: "AST_READY",
@@ -4881,7 +4881,7 @@ async function nativeGuard() {
             ].includes(value.errorName) &&
             ["strictEqual", "deepStrictEqual", "==", "===", "OTHER"].includes(value.operator) &&
             [value.actual, value.expected].every(
-              (n) => n === null || (Number.isInteger(n) && n >= 0 && n <= 8),
+              (n) => n === null || (Number.isInteger(n) && n >= 0 && n <= 4),
             )
           )
             safeError = {

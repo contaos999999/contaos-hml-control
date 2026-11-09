@@ -2805,9 +2805,9 @@ test(
               operator: ["strictEqual", "deepStrictEqual", "==", "==="].includes(operator)
                 ? operator
                 : "OTHER",
-              actual: Number.isInteger(actual) && actual >= 0 && actual <= 8 ? actual : null,
+              actual: Number.isInteger(actual) && actual >= 0 && actual <= 4 ? actual : null,
               expected:
-                Number.isInteger(expected) && expected >= 0 && expected <= 8 ? expected : null,
+                Number.isInteger(expected) && expected >= 0 && expected <= 4 ? expected : null,
             }),
         );
         throw error;
