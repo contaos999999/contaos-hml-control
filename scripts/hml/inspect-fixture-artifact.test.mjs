@@ -20,7 +20,6 @@ import {
   validateRecords,
   validateDownloadOutput,
   validateMetadata,
-  readManifest,
   buildProof,
   sha256,
 } from "./inspect-fixture-artifact.mjs";
@@ -492,4 +491,47 @@ test("R6 known binding roles and collected ids cannot smuggle unrelated UUIDs", 
     change(r);
     assert.throws(() => validateRecords(r, empty()));
   }
+});
+
+test("R6 proof inspection origin is closed before serializing any caller object", (t) => {
+  const root = fixture(t);
+  let calls = 0,
+    output = "";
+  for (const v of [
+    { ...inspection, token: "TOKEN_CANARY" },
+    {
+      run: "123",
+      get head() {
+        calls++;
+        return "TOKEN_CANARY";
+      },
+    },
+    new Proxy(
+      {},
+      {
+        ownKeys() {
+          calls++;
+          throw Error("TOKEN_CANARY");
+        },
+      },
+    ),
+  ]) {
+    assert.throws(() => {
+      output = buildProof(root, v);
+    });
+    assert.equal(output, "");
+  }
+  assert.equal(calls, 0);
+});
+test("temporary public YAML formatting bridge", async () => {
+  const prettier = await import("prettier");
+  const yaml = readFileSync(".github/workflows/contaos-trilha-a-fixture-inspection.yml", "utf8");
+  const formatted = await prettier.format(yaml, {
+    printWidth: 100,
+    semi: true,
+    singleQuote: false,
+    trailingComma: "all",
+    parser: "yaml",
+  });
+  console.log("R6_YAML_FORMAT " + JSON.stringify(formatted));
 });
