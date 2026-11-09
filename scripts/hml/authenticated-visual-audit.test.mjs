@@ -12633,3 +12633,65 @@ test("R13 local cache rejects cross proof and stale refresh before private conte
     globalThis.fetch = originalFetch;
   }
 });
+
+test("R14 the sole new fixture nonce is accepted while consumed R13 is spent", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r14",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(row), "fixtures"), row);
+  assert.throws(
+    () =>
+      sut.parseSingleRequest(
+        JSON.stringify({ ...row, request_id: "trilha-a-fixtures-20261109-r13" }),
+        "fixtures",
+      ),
+    /REQUEST_/,
+  );
+});
+
+test("R14 actual Git verifier requires recovery and corrected UI gates in the approved parent", async () => {
+  const sha = "a".repeat(40),
+    parent = "b".repeat(40),
+    path = sut.SINGLE_REQUEST.path,
+    row = {
+      schema_version: 1,
+      issue: 317,
+      operation: "fixtures",
+      request_id: sut.SINGLE_REQUEST.fixtures.nonce,
+      approved_parent_sha: parent,
+      frontend_sha: "",
+      deployment_id: "",
+    },
+    raw = JSON.stringify(row),
+    ancestors = [];
+  const git = async (args) => {
+    if (args[0] === "show") return raw;
+    if (args[0] === "rev-parse") return sha;
+    if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ");
+    if (args[0] === "merge-base") {
+      assert.equal(args[3], parent);
+      ancestors.push(args[2]);
+      return "";
+    }
+    if (args[0] === "diff-tree") return "M\t" + path;
+    if (args[0] === "ls-tree") return "100644 blob " + "e".repeat(40) + "\t" + path;
+    if (args[0] === "log") return sha;
+    throw Error("UNEXPECTED_GIT");
+  };
+  await sut.verifySingleRequestGit(row, sha, git, raw);
+  for (const gate of [
+    "83792d243982bda854d81d518dc41dbc5e54b90d",
+    "8d43ae8f94b39d81b8125d087a1c9a968e2d8ad7",
+    "d29b9dacc14da0921584e7fc9d47ad8e39e2f88e",
+    "396857e5684e2dd00b697718d46b5710eefc72fc",
+    "dc5f1c6a958604903ffc8c348daed92f32679890",
+    "c5a96ad40c7e4bec08738b5a7cfceaf3ddd0b399",
+  ])
+    assert.ok(ancestors.includes(gate));
+});

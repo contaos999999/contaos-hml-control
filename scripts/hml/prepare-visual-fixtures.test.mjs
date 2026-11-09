@@ -9954,3 +9954,121 @@ test("R12 cloned foreign and already consumed October seals cannot authorize ano
     f.observer.close();
   }
 });
+
+const R14_R13_DOCUMENT = {
+  schema: "contaos.fixture.recovery-r13.v1",
+  workflowRun: "42685547737",
+  artifactId: "13704636643",
+  requestId: "trilha-a-fixtures-20261109-r13",
+  harnessSha: "f39e32ca1009b23aaae19dcbd01e282df2bf0847",
+  zipSha256: "7d097d83d5b622d4277be39d2155800223e18fccfe9258ba1adabf337c1e5307",
+  reportSha256: "877dca165c4d46a61b8f5ea1946a6a223ceb17e9b64b9ef4067d8e24d5b7aa81",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  observationSha256: "f6f4ea8b51e4ec9ab3e8aca8e4fb6c3367d808174e884ca4c6119d6a06c33aeb",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "FLOW_LIST_UI_MISSING",\n  "diagnostics": {\n    "primaryFailure": "FLOW_LIST_UI_MISSING",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "LIST_UI_CONTROL",\n    "subphasePath": [\n      "SOURCE_AND_LIST",\n      "LIST_UI_CONTROL",\n      "LIST_UI_CONTROL"\n    ],\n    "lastCompletedSubphase": "LIST_GET",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 11,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 10,\n    "priorReserved": 1,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 13\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 13,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": null,\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "f39e32ca1009b23aaae19dcbd01e282df2bf0847",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42685547737",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "f39e32ca1009b23aaae19dcbd01e282df2bf0847",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42685547737",\n  "firstFailure": null\n}\n',
+};
+test("R14 the canonical original R13 document preserves its compact empty receipts", async () => {
+  const { createHash } = await import("node:crypto");
+  assert.equal(Buffer.byteLength(JSON.stringify(R14_R13_DOCUMENT, null, 2) + "\n"), 3108);
+  assert.equal(
+    createHash("sha256")
+      .update(JSON.stringify(R14_R13_DOCUMENT, null, 2) + "\n")
+      .digest("hex"),
+    "92bf8114d857b2061b0a2ce67cfb908f2dd1c71e1800b567bfecf52c17e12da9",
+  );
+  assert.equal(Buffer.byteLength(R14_R13_DOCUMENT.receiptsRaw), 55);
+  assert.equal(
+    JSON.stringify(JSON.parse(R14_R13_DOCUMENT.receiptsRaw)) + "\n",
+    R14_R13_DOCUMENT.receiptsRaw,
+  );
+  assert.deepEqual(
+    sut.validateR11RecoveryDocument(sut.R11_RECOVERY_DOCUMENT),
+    sut.R11_RECOVERY_DOCUMENT,
+  );
+  assert.equal(
+    JSON.stringify(JSON.parse(sut.R11_RECOVERY_DOCUMENT.receiptsRaw), null, 2) + "\n",
+    sut.R11_RECOVERY_DOCUMENT.receiptsRaw,
+  );
+});
+test("R14 recovery broker rejects an omitted R13 document before any effect", () => {
+  let effects = 0;
+  for (const recoveryLedgerR13 of [undefined, null])
+    assert.throws(
+      () =>
+        sut.createIntentBroker({
+          ...r12RecoveryOptions(),
+          recoveryLedgerR13,
+          persist: () => {
+            effects++;
+            return true;
+          },
+          beforeArm: () => {
+            effects++;
+          },
+        }),
+      /RECOVERY_R13_LEDGER/,
+    );
+  assert.equal(effects, 0);
+});
+test("R14 actual runtime bootstrap requires R13 before diagnostics and forwards it to the real budget", async () => {
+  const audit = await import("./authenticated-visual-audit.mjs"),
+    source = await r6SourceNodes(),
+    entry = source.named("runFixturePreparation"),
+    statements = entry.body.statements,
+    stop = statements.findIndex((n) => n.getText(source.ast).startsWith("const diagnostics"));
+  assert.ok(stop > 0);
+  const prefix = statements
+    .slice(0, stop)
+    .map((n) => n.getText(source.ast))
+    .join("\n");
+  const env = {
+    err: (code) => {
+      throw Error(code);
+    },
+    getValidatedR4ZeroAuth: () => sut.R4_RECOVERY_DOCUMENT,
+    getValidatedR7ZeroAuth: () => sut.R7_RECOVERY_DOCUMENT,
+  };
+  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) {
+    env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
+    env["R" + n + "_RECOVERY_DOCUMENT"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
+  }
+  env.validateR13RecoveryDocument = audit.validateR13RecoveryDocument;
+  env.R13_RECOVERY_DOCUMENT = R14_R13_DOCUMENT;
+  const runtime = new Function(
+    ...Object.keys(env),
+    source.named("recoveryBudget").getText(source.ast) + ";" + prefix + ";return validatedBudget;",
+  );
+  assert.deepEqual(runtime(...Object.values(env)), {
+    confirmedBefore: 10,
+    priorReserved: 1,
+    maxNewIntentions: 13,
+  });
+  for (const value of [undefined, null])
+    assert.throws(
+      () =>
+        runtime(...Object.keys(env).map((k) => (k === "R13_RECOVERY_DOCUMENT" ? value : env[k]))),
+      /RECOVERY_R13_LEDGER/,
+    );
+});
+
+test("R14 actual artifact writer appends only the two original R13 history members", async () => {
+  const s = await r6SourceNodes(),
+    entry = s.named("runFixturePreparation");
+  const loop = s.nodes.find(
+    (n) =>
+      s.ts.isForOfStatement(n) &&
+      n.pos >= entry.pos &&
+      n.end <= entry.end &&
+      s.ts.isArrayLiteralExpression(n.expression) &&
+      n.expression.elements.some((e) => e.text === "receipts-r11.json"),
+  );
+  assert.ok(loop);
+  const names = loop.expression.elements.map((e) => e.text);
+  assert.equal(names.length, 22);
+  assert.deepEqual(names.slice(-2), ["receipts-r13.json", "recovery-r13.json"]);
+  assert.equal(new Set(names).size, 22);
+});
