@@ -4896,6 +4896,7 @@ export const SINGLE_REQUEST = Object.freeze({
   upstreamPath: ".github/workflows/contaos-frontend-zero-drift.yml",
   upstreamName: "ContaOS Frontend Zero-Drift",
   gateSha: "31b68f3cadbdc13a82bae23a43c35616f873d70b",
+  autoGateSha: "122242fd421b348aef229683c0d3969611bce1db",
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
@@ -4913,6 +4914,17 @@ export const SINGLE_REQUEST = Object.freeze({
   }),
 });
 let singleRequestContext = null;
+
+function singleRequestIdentityMode(request) {
+  if (request.frontend_sha === "" && request.deployment_id === "") return "AUTO_DISCOVER";
+  if (
+    hash40(request.frontend_sha) &&
+    typeof request.deployment_id === "string" &&
+    /^dpl_[A-Za-z0-9]{8,80}$/.test(request.deployment_id)
+  )
+    return "EXPLICIT";
+  fail("REQUEST_SCHEMA");
+}
 
 export function parseSingleRequest(raw, operation) {
   if (typeof raw !== "string" || Buffer.byteLength(raw) > 4096) fail("REQUEST_JSON");
@@ -4983,11 +4995,10 @@ export function parseSingleRequest(raw, operation) {
     !["fixtures", "audit"].includes(parsed.operation) ||
     (operation && parsed.operation !== operation) ||
     parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce ||
-    !hash40(parsed.approved_parent_sha) ||
-    !hash40(parsed.frontend_sha) ||
-    !/^dpl_[A-Za-z0-9]{8,80}$/.test(parsed.deployment_id || "")
+    !hash40(parsed.approved_parent_sha)
   )
     fail("REQUEST_SCHEMA");
+  singleRequestIdentityMode(parsed);
   return Object.freeze({ ...parsed });
 }
 
@@ -5108,13 +5119,18 @@ export function requireSingleRequestOperation(operation) {
 }
 
 export async function verifySingleRequestGit(request, sha, git, raw) {
+  const mode = singleRequestIdentityMode(request);
   if (typeof raw !== "string" || (await git(["show", sha + ":" + SINGLE_REQUEST.path])) !== raw)
     fail("REQUEST_DIRTY");
   if (!hash40(sha) || (await git(["rev-parse", "HEAD"])).trim() !== sha) fail("REQUEST_CHECKOUT");
   const parents = (await git(["rev-list", "--parents", "-n", "1", sha])).trim().split(" ");
   if (parents.length !== 3 || parents[0] !== sha || parents[1] !== request.approved_parent_sha)
     fail("REQUEST_PARENT");
-  for (const ancestor of [SINGLE_REQUEST.gateSha, SINGLE_REQUEST.fixturesSha, request.frontend_sha])
+  const ancestors = [SINGLE_REQUEST.gateSha, SINGLE_REQUEST.fixturesSha];
+  // Automatic discovery proves the real source later, before its separate checkout.
+  // The request itself still needs the integrated amendment and all original gates.
+  ancestors.push(mode === "AUTO_DISCOVER" ? SINGLE_REQUEST.autoGateSha : request.frontend_sha);
+  for (const ancestor of ancestors)
     await git(["merge-base", "--is-ancestor", ancestor, parents[1]]);
   const diff = (
     await git([
