@@ -2,8 +2,8 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "9b55a308c04fe914c9ff3f96b92151c7a41dff98",
-  "source_date": "2026-11-08",
+  "source_commit": "65767bfe58c5c9818824ab0ada38d9f412c19054",
+  "source_date": "2026-11-09",
   "context_documents": [
     {
       "path": "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "Reancoragem após backendPR183 GATE catálogo exato9funções futuras:25/25blobs e catálogo100/97 invariáveis por GitHub GET. Delta apenas PLANscopequota e active-task, lido semanticamente; sem SQL/Edge/guard implementado, publicaçãoHML ou certificação funcional. Preserva fonte viva e exige CI/revisão."
+  "p0_reanchor_note": "Reancoragem documental Trilha A no backend65767bfe:25/25blobs canônicos e catálogo100/97 iguais; types8ea congelado. Delta9b55→65767bfe em cinco caminhos: consumer Edge copilot-query, teste copilot_openai_contract, hook Restore, PLAN e active-task. Edge Copilot passa a validar Auth/JWT e sessão, fontes por userClient/RLS com limites, permissões canônicas e reserva antes de embedding/OpenAI, lease/deadline/finalização fenced e revalidação de fontes antes do provedor; CORS é restrito e request-scoped. Nenhuma migration, tabela, RLS, grant ou contrato de API consumida pela Trilha A foi alterado nesse delta. Não comprova deployment ou certificação HML da Trilha C. Fonte viva e guard freshness obrigatórios; a leitura não recertificaTrilhaC."
 }
