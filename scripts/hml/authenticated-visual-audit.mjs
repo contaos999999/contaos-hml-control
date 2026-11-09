@@ -3307,6 +3307,81 @@ export function nativeLifecycleMetadata(tap) {
   }
   return result;
 }
+export function nativeVisualDiagnostic(stdout) {
+  const invalid = () => ({ state: "INVALID" });
+  if (typeof stdout !== "string" || Buffer.byteLength(stdout) > 1048576) return invalid();
+  const lines = stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(
+      (line) =>
+        line.startsWith("# V102_NATIVE_DIAGNOSTIC") || line.startsWith("V102_NATIVE_DIAGNOSTIC"),
+    );
+  if (lines.length === 0) return { state: "MISSING" };
+  if (lines.length > 16) return invalid();
+  const stages = ["SOURCE_EXTRACT", "CSS_COMPILE", "MEASURE"],
+    seen = new Set();
+  const fields = ["lastStage", "width", "theme", "targetCount", "notHit", "geometry"];
+  let last = null,
+    previous = -1;
+  for (const line of lines) {
+    const match = /^(?:# )?V102_NATIVE_DIAGNOSTIC (.{1,512})$/.exec(line);
+    if (!match) return invalid();
+    let row;
+    try {
+      row = JSON.parse(match[1]);
+    } catch {
+      return invalid();
+    }
+    if (
+      !row ||
+      Array.isArray(row) ||
+      typeof row !== "object" ||
+      Object.keys(row).length !== fields.length ||
+      fields.some((key) => !Object.hasOwn(row, key)) ||
+      JSON.stringify(row) !== match[1]
+    )
+      return invalid();
+    const ordinal = stages.indexOf(row.lastStage);
+    if (ordinal < previous || ordinal < 0) return invalid();
+    previous = ordinal;
+    if (row.lastStage !== "MEASURE") {
+      if (fields.slice(1).some((key) => row[key] !== null)) return invalid();
+    } else {
+      if (![1440, 1280, 768, 390].includes(row.width) || !["LIGHT", "DARK"].includes(row.theme))
+        return invalid();
+      const unobserved = row.targetCount === null && row.notHit === null && row.geometry === null;
+      if (
+        !unobserved &&
+        (!Number.isInteger(row.targetCount) ||
+          row.targetCount < 0 ||
+          row.targetCount > 64 ||
+          !Number.isInteger(row.notHit) ||
+          row.notHit < 0 ||
+          row.notHit > row.targetCount ||
+          typeof row.geometry !== "boolean")
+      )
+        return invalid();
+    }
+    const identity =
+      row.lastStage === "MEASURE"
+        ? row.lastStage + ":" + row.width + ":" + row.theme
+        : row.lastStage;
+    if (seen.has(identity)) return invalid();
+    seen.add(identity);
+    last = {
+      state: "OBSERVED",
+      lastStage: row.lastStage,
+      width: row.width,
+      theme: row.theme,
+      targetCount: row.targetCount,
+      notHit: row.notHit,
+      geometry: row.geometry,
+    };
+  }
+  return last;
+}
+
 async function nativeGuard() {
   let output;
   try {
@@ -3378,7 +3453,13 @@ async function nativeGuard() {
       !/^# skipped 0$/m.test(visual.stdout)
     )
       fail("VISUAL_NATIVE");
-  } catch {
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        phase: "VISUAL_NATIVE",
+        v102: nativeVisualDiagnostic(typeof error?.stdout === "string" ? error.stdout : ""),
+      }),
+    );
     fail("VISUAL_NATIVE");
   }
 
