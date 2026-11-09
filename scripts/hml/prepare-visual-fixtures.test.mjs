@@ -1997,16 +1997,24 @@ test("R2 cada await relevante do codigo real passa pela barreira diagnostica", a
 
 test("R2 cleanup sincrono preserva primaria e report mesmo com logout verificado", async () => {
   const d = sut.createPreparationDiagnostics();
-  await assert.rejects(() => d.step("SOURCE_VERSION_READ", async () => { throw new TypeError("PRIMARY_CANARY"); }));
+  await assert.rejects(() =>
+    d.step("SOURCE_VERSION_READ", async () => {
+      throw new TypeError("PRIMARY_CANARY");
+    }),
+  );
   await d.cleanup(async () => true);
   assert.equal(d.snapshot().logoutVerified, true);
   assert.equal(typeof d.finishCleanup, "function");
-  await d.finishCleanup("RUNTIME_CLEAR_FAILED", () => { throw new Error("CLEANUP_CANARY"); });
+  await d.finishCleanup("RUNTIME_CLEAR_FAILED", () => {
+    throw new Error("CLEANUP_CANARY");
+  });
   assert.equal(d.snapshot().primaryFailure, "PREPARER_UNCLASSIFIED");
   assert.equal(d.snapshot().cleanupFailure, "RUNTIME_CLEAR_FAILED");
   assert.equal(d.snapshot().logoutVerified, true);
   assert.equal(/CANARY|stack|https/.test(JSON.stringify(d.snapshot())), false);
-  await assert.rejects(() => d.finishCleanup("UNKNOWN_CANARY", () => {}), { message: "DIAGNOSTIC_SUBPHASE" });
+  await assert.rejects(() => d.finishCleanup("UNKNOWN_CANARY", () => {}), {
+    message: "DIAGNOSTIC_SUBPHASE",
+  });
 });
 
 test("R2 consumidor real verifyContext recupera GET ausente sem envenenar primaria", async () => {
@@ -2014,7 +2022,13 @@ test("R2 consumidor real verifyContext recupera GET ausente sem envenenar primar
   const { readFile } = await import("node:fs/promises");
   const vm = await import("node:vm");
   const code = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8");
-  const sf = ts.createSourceFile("preparer.mjs", code, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  const sf = ts.createSourceFile(
+    "preparer.mjs",
+    code,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
   let initializer;
   function find(node) {
     if (ts.isVariableDeclaration(node) && node.name.getText(sf) === "verifyContext")
@@ -2024,16 +2038,29 @@ test("R2 consumidor real verifyContext recupera GET ausente sem envenenar primar
   find(sf);
   assert.equal(typeof initializer, "string");
   const d = sut.createPreparationDiagnostics();
-  let reads = 0, visits = 0;
+  let reads = 0,
+    visits = 0;
   const context = {
-    page: {}, FIXTURE, contextVerified: false,
+    page: {},
+    FIXTURE,
+    contextVerified: false,
     waitOrganization: async () => {},
-    observer: { read: async () => {
-      reads++;
-      if (reads === 1) throw new Error("OBSERVATION_TABLE");
-      return [{ id: FIXTURE.contract, id_organizacao: FIXTURE.organization, id_contratante: FIXTURE.contractor }];
-    } },
-    goKnown: async () => { visits++; },
+    observer: {
+      read: async () => {
+        reads++;
+        if (reads === 1) throw new Error("OBSERVATION_TABLE");
+        return [
+          {
+            id: FIXTURE.contract,
+            id_organizacao: FIXTURE.organization,
+            id_contratante: FIXTURE.contractor,
+          },
+        ];
+      },
+    },
+    goKnown: async () => {
+      visits++;
+    },
     tracedPreparation: (subphase, execute) => d.step(subphase, execute),
   };
   const verify = vm.runInNewContext("(" + initializer + ")", context);
@@ -2042,9 +2069,11 @@ test("R2 consumidor real verifyContext recupera GET ausente sem envenenar primar
   assert.equal(visits, 1);
   assert.equal(context.contextVerified, true);
   assert.equal(d.snapshot().primaryFailure, null);
-  await assert.rejects(() => d.step("SOURCE_VERSION_READ", async () => {
-    throw Object.assign(new Error("LATER_CANARY"), { name: "TimeoutError" });
-  }));
+  await assert.rejects(() =>
+    d.step("SOURCE_VERSION_READ", async () => {
+      throw Object.assign(new Error("LATER_CANARY"), { name: "TimeoutError" });
+    }),
+  );
   assert.equal(d.snapshot().primaryFailure, "PREPARER_TIMEOUT");
   assert.equal(d.snapshot().subphase, "SOURCE_VERSION_READ");
 });
@@ -2053,31 +2082,57 @@ test("R2 causa tecnica sobrevive ao wrapper real UI_UNCERTAIN sem alterar broker
   const d = sut.createPreparationDiagnostics();
   const b = sut.createIntentBroker({ persist: () => true, competenceGateAmended: true });
   const verified = { context: true, capability: true, reconciled: true };
-  const scope = { getByRole: () => ({
-    count: async () => 1,
-    isEnabled: async () => true,
-    click: async () => { throw Object.assign(new Error("PRIVATE_CANARY"), { name: "TimeoutError" }); },
-  }) };
-  await assert.rejects(() => sut.withPreparationDiagnostics(d, () =>
-    d.step("SOURCE_AND_LIST", () => sut.confirmUiIntent({
-      page: {}, scope, fence: { drain: async () => {}, assertSafe: () => {} },
-      broker: b, rpc: "criar_competencia", payload, evidence: {}, verified,
-      button: "offline", settleVerifiedPage: async () => {},
-      reconcile: async () => ({ payload, evidence: {}, verified }),
-    })),
-  ), { message: "UI_UNCERTAIN" });
+  const scope = {
+    getByRole: () => ({
+      count: async () => 1,
+      isEnabled: async () => true,
+      click: async () => {
+        throw Object.assign(new Error("PRIVATE_CANARY"), { name: "TimeoutError" });
+      },
+    }),
+  };
+  await assert.rejects(
+    () =>
+      sut.withPreparationDiagnostics(d, () =>
+        d.step("SOURCE_AND_LIST", () =>
+          sut.confirmUiIntent({
+            page: {},
+            scope,
+            fence: { drain: async () => {}, assertSafe: () => {} },
+            broker: b,
+            rpc: "criar_competencia",
+            payload,
+            evidence: {},
+            verified,
+            button: "offline",
+            settleVerifiedPage: async () => {},
+            reconcile: async () => ({ payload, evidence: {}, verified }),
+          }),
+        ),
+      ),
+    { message: "UI_UNCERTAIN" },
+  );
   assert.equal(d.snapshot().primaryFailure, "PREPARER_TIMEOUT");
   assert.equal(d.snapshot().subphase, "UI_CONFIRM_CLICK");
   assert.equal(JSON.stringify(d.snapshot()).includes("PRIVATE_CANARY"), false);
   assert.equal(b.snapshot().sent, false);
 });
 test("R2 candidato recuperado nao reaparece quando o mesmo erro e reutilizado", async () => {
-  const d = sut.createPreparationDiagnostics(), error = new Error("OBSERVATION_TABLE");
+  const d = sut.createPreparationDiagnostics(),
+    error = new Error("OBSERVATION_TABLE");
   await d.step("LOGIN", async () => {
-    try { await d.step("RUNTIME_CONTEXT", async () => { throw error; }); } catch {}
+    try {
+      await d.step("RUNTIME_CONTEXT", async () => {
+        throw error;
+      });
+    } catch {}
   });
   assert.equal(d.snapshot().primaryFailure, null);
-  await assert.rejects(() => d.step("SOURCE_VERSION_READ", async () => { throw error; }));
+  await assert.rejects(() =>
+    d.step("SOURCE_VERSION_READ", async () => {
+      throw error;
+    }),
+  );
   assert.equal(d.snapshot().primaryFailure, "OBSERVATION_TABLE");
   assert.equal(d.snapshot().subphase, "SOURCE_VERSION_READ");
 });
