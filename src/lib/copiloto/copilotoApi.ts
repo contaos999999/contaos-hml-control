@@ -33,27 +33,27 @@ const flagValida = (v: unknown) =>
   v === undefined || v === null || typeof v === "boolean";
 
 export function validarPaginaSessoes(v: unknown): PaginaSessoes {
-  if (!valido(v) || v.ok !== true || !Array.isArray(v.sessoes) ||
-      !cursorValido(v.proximo_cursor) || !v.sessoes.every((s: unknown) =>
-        valido(s) && typeof s.id === "string" && s.id.length > 0 &&
-        (s.titulo === null || typeof s.titulo === "string") &&
-        statusValido(s.status) &&
-        (s.data_referencia === null || typeof s.data_referencia === "string")))
+  if (!valido(v) || v["ok"] !== true || !Array.isArray(v["sessoes"]) ||
+      !cursorValido(v["proximo_cursor"]) || !v["sessoes"].every((s: unknown) =>
+        valido(s) && typeof s["id"] === "string" && s["id"].length > 0 &&
+        (s["titulo"] === null || typeof s["titulo"] === "string") &&
+        statusValido(s["status"]) &&
+        (s["data_referencia"] === null || typeof s["data_referencia"] === "string")))
     throw new Error("Resposta de sessões inválida");
   return v as unknown as PaginaSessoes;
 }
 export function validarPaginaHistorico(v: unknown): PaginaHistorico {
-  if (!valido(v) || v.ok !== true || !valido(v.sessao) ||
-      typeof v.sessao.id !== "string" || !statusValido(v.sessao.status) ||
-      !Array.isArray(v.mensagens) || !cursorValido(v.proximo_cursor) ||
-      !v.mensagens.every((m: unknown) =>
-        valido(m) && typeof m.id === "string" &&
-        (m.papel === "usuario" || m.papel === "assistente") &&
-        (m.conteudo === null || typeof m.conteudo === "string") &&
-        typeof m.conteudo_disponivel === "boolean" &&
-        (m.fontes === undefined || Array.isArray(m.fontes)) &&
-        flagValida(m.incerteza) && flagValida(m.conflito_historico) &&
-        flagValida(m.baixa_confianca)))
+  if (!valido(v) || v["ok"] !== true || !valido(v["sessao"]) ||
+      typeof v["sessao"].id !== "string" || !statusValido(v["sessao"].status) ||
+      !Array.isArray(v["mensagens"]) || !cursorValido(v["proximo_cursor"]) ||
+      !v["mensagens"].every((m: unknown) =>
+        valido(m) && typeof m["id"] === "string" &&
+        (m["papel"] === "usuario" || m["papel"] === "assistente") &&
+        (m["conteudo"] === null || typeof m["conteudo"] === "string") &&
+        typeof m["conteudo_disponivel"] === "boolean" &&
+        (m["fontes"] === undefined || Array.isArray(m["fontes"])) &&
+        flagValida(m["incerteza"]) && flagValida(m["conflito_historico"]) &&
+        flagValida(m["baixa_confianca"])))
     throw new Error("Histórico inválido");
   return v as unknown as PaginaHistorico;
 }
@@ -65,7 +65,7 @@ export async function acaoCopiloto<T>(
   if (!contratoId) throw new Error("Contrato obrigatório");
   if (acao !== "listar_sessoes" && !opcoes.sessaoId) throw new Error("Sessão obrigatória");
   const { data, error } = await supabase.functions.invoke("copilot-query", {
-    signal: opcoes.signal,
+    ...(opcoes.signal ? { signal: opcoes.signal } : {}),
     body: {
       action: acao,
       id_contrato: contratoId,
@@ -75,10 +75,10 @@ export async function acaoCopiloto<T>(
       limite: 20,
     },
   });
-  if (error || !valido(data) || data.ok !== true) throw new Error("Consulta indisponível ou acesso negado");
+  if (error || !valido(data) || data["ok"] !== true) throw new Error("Consulta indisponível ou acesso negado");
   if (acao === "listar_sessoes") return validarPaginaSessoes(data) as T;
   if (acao === "historico") return validarPaginaHistorico(data) as T;
-  if (data.id_sessao !== opcoes.sessaoId || data.status !== "encerrada")
+  if (data["id_sessao"] !== opcoes.sessaoId || data["status"] !== "encerrada")
     throw new Error("Encerramento não confirmado");
   return data as T;
 }
