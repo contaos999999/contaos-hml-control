@@ -8464,8 +8464,14 @@ export async function verifyR12ZeroAuth({ get, git, parentSha } = {}) {
         row.conclusion !== spec.conclusion ||
         row.repository?.full_name !== repo ||
         row.repository?.id !== 1442722734 ||
+        row.repository?.private !== false ||
+        row.repository?.owner?.id !== 352205055 ||
+        row.repository?.owner?.login !== "contaos999999" ||
         row.head_repository?.full_name !== repo ||
         row.head_repository?.id !== 1442722734 ||
+        row.head_repository?.private !== false ||
+        row.head_repository?.owner?.id !== 352205055 ||
+        row.head_repository?.owner?.login !== "contaos999999" ||
         !validTime(row.created_at) ||
         !validTime(row.updated_at) ||
         Date.parse(row.updated_at) < Date.parse(row.created_at)
@@ -8961,9 +8967,9 @@ export async function verifySingleRequest({
   wait = (ms) => new Promise((r) => setTimeout(r, ms)),
 }) {
   singleRequestContext = null;
-  const metadataToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
   validatedR7ZeroAuth = null;
   validatedR12ZeroAuth = null;
+  const metadataToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
     if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
     return { selected: true, operation, sha: env.CONTAOS_HARNESS_SHA, manual: true };
@@ -9270,11 +9276,11 @@ export async function loadSingleRequestProof({
   now = Date.now,
   fresh = false,
 }) {
-  requestEnvironmentChain(env);
   singleRequestContext = null;
   validatedR4ZeroAuth = null;
   validatedR7ZeroAuth = null;
   validatedR12ZeroAuth = null;
+  requestEnvironmentChain(env);
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
     assertRequestMetadataEnvironment(env, { requireToken: false });
     if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");

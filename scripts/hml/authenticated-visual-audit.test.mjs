@@ -12402,7 +12402,9 @@ test("R13 actual loader clears its warm context and R12 cache before rejecting a
       },
     },
   );
-  await assert.rejects(() => sut.loadSingleRequestProof({ ...local, env }));
+  await assert.rejects(() => sut.loadSingleRequestProof({ ...local, env }), {
+    code: "PREPARE_SECRET_ENV",
+  });
   assert.equal(sut.singleRequestEventAllowed(f.env, "fixtures"), false);
   assert.throws(() => sut.getValidatedR12ZeroAuth(), { code: "RECOVERY_R12_PROOF" });
   assert.equal(traps, 0);
@@ -12423,8 +12425,211 @@ test("R13 actual controller clears its warm R12 cache before rejecting a hostile
       },
     },
   );
-  await assert.rejects(() => sut.verifySingleRequest({ ...f.options, env }));
+  await assert.rejects(() => sut.verifySingleRequest({ ...f.options, env }), {
+    code: "PREPARE_SECRET_ENV",
+  });
   assert.equal(sut.singleRequestEventAllowed(f.env, "fixtures"), false);
   assert.throws(() => sut.getValidatedR12ZeroAuth(), { code: "RECOVERY_R12_PROOF" });
   assert.equal(traps, 0);
+});
+
+test("R13 R12 metadata proof is closed to altered runs attempts jobs steps artifacts and sources", async () => {
+  const valid = await r13R12Fixture(),
+    parentSha = "6605fbfc40359a1565abbffc8b8358ff4cf44b83";
+  assert.deepEqual(
+    await sut.verifyR12ZeroAuth({ get: valid.get, git: valid.git, parentSha }),
+    R13_R12_PROOF,
+  );
+  assert.equal(valid.requests.length, 10);
+  assert.equal(new Set(valid.requests).size, 10);
+  const run = "/actions/runs/42666864017",
+    jobs = run + "/attempts/1/jobs?per_page=100&page=1",
+    artifacts = run + "/artifacts?per_page=100&page=1";
+  const mutations = [
+    (m) => (m[run].head_sha = "f".repeat(40)),
+    (m) => (m[run].head_branch = "other"),
+    (m) => (m[run].event = "push"),
+    (m) => (m[run].run_attempt = 2),
+    (m) => (m[run].status = "queued"),
+    (m) => (m[run].conclusion = "success"),
+    (m) => (m[run].workflow_id = 1),
+    (m) => (m[run].path = "foreign"),
+    (m) => (m[run].repository.id = 1),
+    (m) => (m[run].head_repository.full_name = "foreign/repo"),
+    (m) => (m[run].created_at = "invalid"),
+    (m) => (m[run].updated_at = "2000-01-01T00:00:00Z"),
+    (m) => (m[run + "/attempts/1"].run_attempt = 2),
+    (m) => (m[run + "/attempts/1"].id = 1),
+    (m) => (m[jobs].total_count = 4),
+    (m) => m[jobs].jobs.push({ ...m[jobs].jobs[0] }),
+    (m) => m[jobs].jobs.pop(),
+    (m) => (m[jobs].jobs.find((j) => j.id === 129333370334).name = "unknown"),
+    (m) => (m[jobs].jobs.find((j) => j.id === 129333370334).run_id = 1),
+    (m) => (m[jobs].jobs.find((j) => j.id === 129333370334).run_attempt = 2),
+    (m) => (m[jobs].jobs.find((j) => j.id === 129333370334).head_sha = "f".repeat(40)),
+    (m) => (m[jobs].jobs.find((j) => j.id === 129333370334).head_branch = "other"),
+    (m) =>
+      (m[jobs].jobs
+        .find((j) => j.id === 129333370334)
+        .steps.find((s) => s.number === 7).conclusion = "success"),
+    (m) =>
+      (m[jobs].jobs.find((j) => j.id === 129333370334).steps.find((s) => s.number === 7).name =
+        "unknown"),
+    (m) =>
+      (m[jobs].jobs
+        .find((j) => j.id === 129333370334)
+        .steps.find((s) => s.number === 16).conclusion = "success"),
+    (m) =>
+      (m[jobs].jobs.find((j) => j.id === 129333370334).steps = m[jobs].jobs
+        .find((j) => j.id === 129333370334)
+        .steps.filter((s) => s.number !== 16)),
+    (m) =>
+      m[jobs].jobs
+        .find((j) => j.id === 129333370334)
+        .steps.push({ ...m[jobs].jobs.find((j) => j.id === 129333370334).steps[0] }),
+    (m) =>
+      (m[jobs].jobs
+        .find((j) => j.id === 129333370334)
+        .steps.find((s) => s.number === 16).started_at = "invalid"),
+    (m) => (m[artifacts].total_count = 1),
+    (m) => m[artifacts].artifacts.push({ id: 1 }),
+  ];
+  for (const change of mutations) {
+    const f = await r13R12Fixture();
+    change(f.responses);
+    await assert.rejects(() => sut.verifyR12ZeroAuth({ get: f.get, git: f.git, parentSha }), {
+      code: "RECOVERY_R12_PROOF",
+    });
+    assert.equal(new Set(f.requests).size, f.requests.length);
+    assert.ok(f.requests.length <= 10);
+  }
+  for (const path of [
+    ".github/workflows/contaos-trilha-a-fixtures.yml",
+    ".github/workflows/contaos-trilha-a-authenticated.yml",
+    "scripts/hml/authenticated-visual-audit.mjs",
+    "scripts/hml/prepare-visual-fixtures.mjs",
+  ]) {
+    const f = await r13R12Fixture();
+    await assert.rejects(
+      () =>
+        sut.verifyR12ZeroAuth({
+          get: f.get,
+          git: async (args) =>
+            args[0] === "show" && args[1].endsWith(":" + path) ? "changed" : f.git(args),
+          parentSha,
+        }),
+      { code: "RECOVERY_R12_PROOF" },
+    );
+    assert.equal(f.requests.length, 0);
+  }
+  const f = await r13R12Fixture();
+  await assert.rejects(
+    () =>
+      sut.verifyR12ZeroAuth({
+        get: f.get,
+        git: async () => {
+          throw Error("CANARY");
+        },
+        parentSha,
+      }),
+    { code: "RECOVERY_R12_PROOF" },
+  );
+  assert.equal(f.requests.length, 0);
+});
+test("R13 R12 cache validator rejects hostile and cross proofs without reading private values", () => {
+  let reads = 0,
+    traps = 0;
+  const getter = { ...R13_R12_PROOF };
+  Object.defineProperty(getter, "headSha", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  const symbol = { ...R13_R12_PROOF };
+  symbol[Symbol("CANARY")] = true;
+  const proxy = new Proxy(
+    {},
+    {
+      get() {
+        traps++;
+        throw Error("CANARY");
+      },
+      getPrototypeOf() {
+        traps++;
+        throw Error("CANARY");
+      },
+      ownKeys() {
+        traps++;
+        throw Error("CANARY");
+      },
+    },
+  );
+  const revoked = Proxy.revocable({}, {});
+  revoked.revoke();
+  const prototype = Object.create(proxy);
+  for (const value of [
+    undefined,
+    null,
+    {},
+    sut.R7_ZERO_AUTH_PROOF,
+    Object.fromEntries(Object.entries(R13_R12_PROOF).reverse()),
+    { ...R13_R12_PROOF, derivedNewBusinessIntents: 1 },
+    { ...R13_R12_PROOF, attempt: 2 },
+    { ...R13_R12_PROOF, headSha: "f".repeat(40) },
+    { ...R13_R12_PROOF, extra: true },
+    getter,
+    symbol,
+    proxy,
+    revoked.proxy,
+    prototype,
+  ]) {
+    assert.throws(() => sut.validateR12ZeroAuthProof(value), { code: "RECOVERY_R12_PROOF" });
+  }
+  assert.deepEqual(
+    sut.validateR12ZeroAuthProof(Object.freeze({ ...R13_R12_PROOF })),
+    R13_R12_PROOF,
+  );
+  assert.equal(reads, 0);
+  assert.equal(traps, 0);
+});
+test("R13 local cache rejects cross proof and stale refresh before private context without metadata GET", async () => {
+  const originalFetch = globalThis.fetch;
+  let gets = 0;
+  globalThis.fetch = async () => {
+    gets++;
+    throw Error("UNEXPECTED_METADATA_GET");
+  };
+  try {
+    const { f, local, runtime } = await r13WarmLocalProof();
+    for (const r12ZeroAuth of [
+      undefined,
+      null,
+      sut.R7_ZERO_AUTH_PROOF,
+      { ...R13_R12_PROOF, attempt: 2 },
+      Object.fromEntries(Object.entries(R13_R12_PROOF).reverse()),
+    ]) {
+      await assert.rejects(
+        () =>
+          sut.loadSingleRequestProof({
+            ...local,
+            read: async (path) =>
+              path.includes(".audit-work/single-request.json")
+                ? JSON.stringify({ ...runtime, r12ZeroAuth })
+                : f.read(path),
+          }),
+        { code: "RECOVERY_R12_PROOF" },
+      );
+      assert.equal(sut.singleRequestEventAllowed(f.env, "fixtures"), false);
+      assert.throws(() => sut.getValidatedR12ZeroAuth(), { code: "RECOVERY_R12_PROOF" });
+    }
+    await assert.rejects(() => sut.loadSingleRequestProof({ ...local, now: () => 130001 }), {
+      code: "REQUEST_RUNTIME",
+    });
+    assert.equal(sut.singleRequestEventAllowed(f.env, "fixtures"), false);
+    assert.equal(gets, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
