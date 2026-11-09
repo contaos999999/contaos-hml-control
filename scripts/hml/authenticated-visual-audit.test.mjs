@@ -13841,3 +13841,74 @@ test("R15 signal caps each real attempt at five seconds without inspecting throw
   const elapsed = performance.now() - started;
   assert.ok(elapsed >= 4500 && elapsed < 10000);
 });
+
+test("R15 named TimeoutError without an aborted own signal is never retried", async () => {
+  let calls = 0;
+  const get = sut.singleRequestGet({
+    publicOnly: true,
+    env: {},
+    diagnostic: true,
+    fetchImpl: async () => {
+      calls++;
+      throw Object.assign(new Error("PRIVATE_CANARY"), { name: "TimeoutError" });
+    },
+  });
+  await assert.rejects(get("/actions/runs/1/jobs?per_page=100&page=1"), (error) => {
+    assert.equal(sut.requestApiDiagnostic(error).category, "TRANSPORT");
+    return true;
+  });
+  assert.equal(calls, 1);
+});
+test("R15 Master ENV introduced by the first timeout blocks the second fetch", async () => {
+  let calls = 0;
+  let ticks = 0;
+  const token = "R15_METADATA_CANARY";
+  const env = { CONTAOS_ACTIONS_READ_TOKEN: token };
+  const get = sut.singleRequestGet({
+    token,
+    publicOnly: false,
+    env,
+    now: () => (ticks++ === 0 ? 0 : 59995),
+    fetchImpl: async (url, options) =>
+      new Promise((resolve, reject) => {
+        calls++;
+        const hold = setTimeout(() => reject(Error("ENV_CANARY")), 100);
+        options.signal.addEventListener(
+          "abort",
+          () => {
+            clearTimeout(hold);
+            env.MASTER_PASSWORD = "PRIVATE_CANARY";
+            reject(Error("ENV_CANARY"));
+          },
+          { once: true },
+        );
+      }),
+  });
+  await assert.rejects(get("/actions/runs/1/jobs?per_page=100&page=1"), {
+    code: "PREPARE_SECRET_ENV",
+  });
+  assert.equal(calls, 1);
+});
+test("R15 a complete body after the shared deadline is rejected without retry", async () => {
+  let calls = 0;
+  let clock = 0;
+  const get = sut.singleRequestGet({
+    publicOnly: true,
+    env: {},
+    now: () => clock,
+    fetchImpl: async () => {
+      calls++;
+      return {
+        status: 200,
+        text: async () => {
+          clock = 60001;
+          return "{}";
+        },
+      };
+    },
+  });
+  await assert.rejects(get("/actions/runs/1/jobs?per_page=100&page=1"), {
+    code: "REQUEST_API_TIMEOUT",
+  });
+  assert.equal(calls, 1);
+});
