@@ -11,6 +11,8 @@ import {
   requestAllowed,
   singleRequestEventAllowed,
   loadSingleRequestProof,
+  R15_RECOVERY_DOCUMENT,
+  validateR15RecoveryDocument,
   R13_RECOVERY_DOCUMENT,
   validateR13RecoveryDocument,
   R4_ZERO_AUTH_PROOF,
@@ -34,7 +36,12 @@ import {
   openVerifiedOrganizationSelector,
 } from "./authenticated-visual-audit.mjs";
 
-export { R13_RECOVERY_DOCUMENT, validateR13RecoveryDocument };
+export {
+  R13_RECOVERY_DOCUMENT,
+  validateR13RecoveryDocument,
+  R15_RECOVERY_DOCUMENT,
+  validateR15RecoveryDocument,
+};
 
 export const FIXTURE = Object.freeze({
   origin: HML_ORIGIN,
@@ -287,6 +294,7 @@ export async function reconcileRecoveryCompetencies(io, captureOpinion) {
   validateR9RecoveryDocument(io.recoveryLedgerR9);
   validateR10RecoveryDocument(io.recoveryLedgerR10);
   validateR13RecoveryDocument(io.recoveryLedgerR13);
+  validateR15RecoveryDocument(io.recoveryLedgerR15);
   validateR11RecoveryDocument(io.recoveryLedgerR11);
   if (
     captureOpinion !== undefined &&
@@ -344,6 +352,7 @@ export async function reconcileRecoveryCompetencies(io, captureOpinion) {
 
 export async function reconcileRecoveryOpinion(io) {
   validateR13RecoveryDocument(io.recoveryLedgerR13);
+  validateR15RecoveryDocument(io.recoveryLedgerR15);
   validateR11RecoveryDocument(io.recoveryLedgerR11);
   if (
     ["generation", "link", "fresh", "observedAfter", "sealRecoveryOpinion"].some(
@@ -383,6 +392,7 @@ export function reconcileR1Recovery(input) {
   validateR9RecoveryDocument(input?.ledgerR9);
   validateR10RecoveryDocument(input?.ledgerR10);
   validateR13RecoveryDocument(input?.ledgerR13);
+  validateR15RecoveryDocument(input?.ledgerR15);
   validateR11RecoveryDocument(input?.ledgerR11);
   const expected = R5_BINDINGS;
   if (
@@ -1263,6 +1273,7 @@ function recoveryBudget(
   ledgerR10,
   ledgerR11,
   ledgerR13,
+  ledgerR15,
 ) {
   const prior = validateR1RecoveryDocument(ledger),
     r3 = validateR3RecoveryDocument(ledgerR3);
@@ -1278,13 +1289,14 @@ function recoveryBudget(
   validateR9RecoveryDocument(ledgerR9);
   validateR10RecoveryDocument(ledgerR10);
   validateR13RecoveryDocument(ledgerR13);
+  validateR15RecoveryDocument(ledgerR15);
   validateR11RecoveryDocument(ledgerR11);
   const total = confirmedBefore + r8.receipts.filter((row) => row.state === "confirmed").length;
   if (total !== 10) err("RECOVERY_R8_LEDGER");
   return Object.freeze({
     confirmedBefore: total,
-    priorReserved: 1,
-    maxNewIntentions: 24 - total - 1,
+    priorReserved: 2,
+    maxNewIntentions: 24 - total - 2,
   });
 }
 
@@ -2141,10 +2153,12 @@ export function createIntentBroker({
   recoveryLedgerR10,
   recoveryLedgerR11,
   recoveryLedgerR13,
+  recoveryLedgerR15,
   identity,
   beforeArm,
 } = {}) {
   validateR13RecoveryDocument(recoveryLedgerR13);
+  validateR15RecoveryDocument(recoveryLedgerR15);
   const recoveryIdentity = identity === undefined ? null : observationIdentity(identity);
   const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
   if (
@@ -2173,6 +2187,7 @@ export function createIntentBroker({
         recoveryLedgerR10,
         recoveryLedgerR11,
         recoveryLedgerR13,
+        recoveryLedgerR15,
       )
     : null;
   let recoveryAuthorized = !recovery;
@@ -2188,6 +2203,7 @@ export function createIntentBroker({
             ...JSON.parse(R5_RECOVERY_DOCUMENT.receiptsRaw).receipts,
             ...JSON.parse(validateR8RecoveryDocument(recoveryLedgerR8).receiptsRaw).receipts,
             ...JSON.parse(validateR11RecoveryDocument(recoveryLedgerR11).receiptsRaw).receipts,
+            ...JSON.parse(validateR15RecoveryDocument(recoveryLedgerR15).receiptsRaw).receipts,
           ].map((r) => r.requestId)
         : [],
     );
@@ -2294,7 +2310,13 @@ export function createIntentBroker({
       if (recovery && confirmedR5Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
       if (recovery && confirmedR8Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
       if (recovery && reservedR11Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
-      if (recovery) assertRecoveryOpinion(api);
+      if (recovery) {
+        assertRecoveryOpinion(api);
+        if (rpc === "aprovar_parecer_interno") {
+          const record = recoveryOpinionProofs.get(recoveryBrokerOwners.get(api)?.opinion);
+          if (!record?.permitsApproval(payload)) err("RECOVERY_CONFIRMED_OPERATION");
+        }
+      }
       if (frozen) err("INTENT_FROZEN");
       if (active) err("INTENT_PENDING");
       if (count >= 24) err("INTENT_BUDGET");
@@ -2385,8 +2407,8 @@ export function preparationIntentSummary(broker) {
   const state = broker.snapshot();
   if (
     state.confirmedBefore !== 10 ||
-    state.maxNewIntentions !== 13 ||
-    state.priorReserved !== 1 ||
+    state.maxNewIntentions !== 12 ||
+    state.priorReserved !== 2 ||
     !Number.isInteger(state.count) ||
     state.count < state.confirmedBefore + state.priorReserved ||
     state.count > 24
@@ -2490,8 +2512,10 @@ export function createRuntimeLogin({
   openOrganizationSelector,
   verifyContext,
   recoveryLedgerR13,
+  recoveryLedgerR15,
 } = {}) {
   validateR13RecoveryDocument(recoveryLedgerR13);
+  validateR15RecoveryDocument(recoveryLedgerR15);
   if (
     !page ||
     !fence ||
@@ -2783,8 +2807,15 @@ export async function confirmUiIntent({
   }
 }
 /** Caller supplies only execution code; cleanup runs after login and every failure. */
-export async function withRuntimeLogin(runtime, credentials, execute, recoveryLedgerR13) {
+export async function withRuntimeLogin(
+  runtime,
+  credentials,
+  execute,
+  recoveryLedgerR13,
+  recoveryLedgerR15,
+) {
   validateR13RecoveryDocument(recoveryLedgerR13);
+  validateR15RecoveryDocument(recoveryLedgerR15);
   if (!runtime || typeof execute !== "function") err("LOGIN_CONFIGURATION");
   try {
     await runtime.login(credentials);
@@ -4093,7 +4124,19 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
             : RPC_RESPONSE_FIELDS[rpc] ||
               (BUSINESS_RPCS.includes(rpc) ? BUSINESS_RESPONSE_FIELDS : null);
           if (!fields) err("OBSERVATION_ENDPOINT");
-          const decoded = JSON.parse(bytes.toString("utf8"));
+          let decoded;
+          if (status === 204) {
+            if (
+              rpc !== "aprovar_parecer_interno" ||
+              request.method() !== "POST" ||
+              !mutation ||
+              mutation.request !== request ||
+              mutation.rpc !== rpc ||
+              bytes.length !== 0
+            )
+              err("OBSERVATION_RESPONSE");
+            decoded = null;
+          } else decoded = JSON.parse(bytes.toString("utf8"));
           value = Object.hasOwn(SCOPED_RPC_FIELDS, rpc)
             ? projectScopedRpcResponse(rpc, decoded)
             : projectOfficialResponse(decoded, 0, false, new Set(fields.split(" ")));
@@ -4440,6 +4483,8 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
           hash: row.hash,
         }),
       );
+    if (observed.row.status !== "aprovado" || !opinionIso(observed.row.aprovado_em))
+      err("RECOVERY_R15_OPINION");
     const token = Object.freeze({});
     let current = { ...observed.row, ordinal: observed.ordinal },
       invalid = false;
@@ -4448,6 +4493,18 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
       identity: observerIdentity,
       documentHash: "29f674764a2c8f953f764fcb6a40d8c330e441b488dfcab56a6ee4f9f389c423",
       consumed: false,
+      permitsApproval(payload) {
+        if (isProxy(payload) || !obj(payload)) return false;
+        const descriptor = Object.getOwnPropertyDescriptor(payload, "p_id_parecer");
+        if (!descriptor || !Object.hasOwn(descriptor, "value")) return false;
+        const next = opinionObservation(R5_BINDINGS.competencies[1].id, after);
+        return (
+          !!next?.row &&
+          next.row.id === descriptor.value &&
+          next.row.status === "rascunho" &&
+          next.row.aprovado_em === null
+        );
+      },
       check() {
         if (invalid) err("RECOVERY_R11_OPINION");
         let next;
@@ -4703,6 +4760,7 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
  */
 export async function prepareSourceAndList(io) {
   validateR13RecoveryDocument(io?.recoveryLedgerR13);
+  validateR15RecoveryDocument(io?.recoveryLedgerR15);
   const { page } = io;
   const recovery =
     io.recoveryLedger === undefined ? null : validateR1RecoveryDocument(io.recoveryLedger);
@@ -4716,6 +4774,7 @@ export async function prepareSourceAndList(io) {
     validateR9RecoveryDocument(io.recoveryLedgerR9);
     validateR10RecoveryDocument(io.recoveryLedgerR10);
     validateR13RecoveryDocument(io.recoveryLedgerR13);
+    validateR15RecoveryDocument(io.recoveryLedgerR15);
     validateR11RecoveryDocument(io.recoveryLedgerR11);
   }
   const fail = (code) => {
@@ -5246,6 +5305,7 @@ export async function prepareSourceAndList(io) {
         ledgerR10: io.recoveryLedgerR10,
         ledgerR11: io.recoveryLedgerR11,
         ledgerR13: io.recoveryLedgerR13,
+        ledgerR15: io.recoveryLedgerR15,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -5574,6 +5634,7 @@ export async function prepareSourceAndList(io) {
  */
 export async function prepareCompetencies(io, sourceList) {
   validateR13RecoveryDocument(io?.recoveryLedgerR13);
+  validateR15RecoveryDocument(io?.recoveryLedgerR15);
   const stop = (code) => {
     throw new Error(code);
   };
@@ -5620,6 +5681,7 @@ export async function prepareCompetencies(io, sourceList) {
     validateR9RecoveryDocument(io.recoveryLedgerR9);
     validateR10RecoveryDocument(io.recoveryLedgerR10);
     validateR13RecoveryDocument(io.recoveryLedgerR13);
+    validateR15RecoveryDocument(io.recoveryLedgerR15);
     validateR11RecoveryDocument(io.recoveryLedgerR11);
     for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
       if (sourceList[key] !== R5_BINDINGS[key]) stop("RECOVERY_LIST");
@@ -5825,6 +5887,7 @@ export async function prepareCompetencies(io, sourceList) {
       validateR9RecoveryDocument(io.recoveryLedgerR9);
       validateR10RecoveryDocument(io.recoveryLedgerR10);
       validateR13RecoveryDocument(io.recoveryLedgerR13);
+      validateR15RecoveryDocument(io.recoveryLedgerR15);
       validateR11RecoveryDocument(io.recoveryLedgerR11);
       const expected = R5_BINDINGS.competencies.find((c) => c.month === month);
       if (!expected || existing.length !== 1 || existing[0].id !== expected.id)
@@ -6760,6 +6823,8 @@ const PREPARER_FAILURE_CODES = new Set([
   "RECOVERY_R10_LEDGER",
   "RECOVERY_R11_LEDGER",
   "RECOVERY_R13_LEDGER",
+  "RECOVERY_R15_LEDGER",
+  "RECOVERY_R15_OPINION",
   "RECOVERY_R11_OPINION",
   "RECOVERY_R8_DOCUMENT",
   "RECOVERY_R8_ANALYSIS",
@@ -6933,6 +6998,7 @@ async function runFixturePreparation() {
   const r9Recovery = validateR9RecoveryDocument(R9_RECOVERY_DOCUMENT);
   const r10Recovery = validateR10RecoveryDocument(R10_RECOVERY_DOCUMENT);
   const r13Recovery = validateR13RecoveryDocument(R13_RECOVERY_DOCUMENT);
+  const r15Recovery = validateR15RecoveryDocument(R15_RECOVERY_DOCUMENT);
   const r11Recovery = validateR11RecoveryDocument(R11_RECOVERY_DOCUMENT);
   const validatedBudget = recoveryBudget(
     R1_RECOVERY_DOCUMENT,
@@ -6946,6 +7012,7 @@ async function runFixturePreparation() {
     r10Recovery,
     r11Recovery,
     r13Recovery,
+    r15Recovery,
   );
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
@@ -7034,6 +7101,7 @@ async function runFixturePreparation() {
       recoveryLedgerR10: r10Recovery,
       recoveryLedgerR11: r11Recovery,
       recoveryLedgerR13: r13Recovery,
+      recoveryLedgerR15: r15Recovery,
       beforeArm: (rpc, payload, evidence, binding) =>
         observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
@@ -7211,6 +7279,7 @@ async function runFixturePreparation() {
     };
     runtime = createRuntimeLogin({
       recoveryLedgerR13: r13Recovery,
+      recoveryLedgerR15: r15Recovery,
       page,
       fence,
       waitOrganization,
@@ -7330,6 +7399,7 @@ async function runFixturePreparation() {
       recoveryLedgerR10: r10Recovery,
       recoveryLedgerR11: r11Recovery,
       recoveryLedgerR13: r13Recovery,
+      recoveryLedgerR15: r15Recovery,
       sealRecoveryOpinion: (after) => observer.sealRecoveryOpinion(broker, after),
       recoveryReady: (proof, opinionProof) => {
         broker.authorizeRecovery(proof, opinionProof);
@@ -7514,6 +7584,10 @@ async function runFixturePreparation() {
     writeFileSync(join(output, "recovery-r13.json"), JSON.stringify(r13Recovery, null, 2) + "\n", {
       mode: 0o600,
     });
+    writeFileSync(join(output, "receipts-r15.json"), r15Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r15.json"), JSON.stringify(r15Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
     let sums = "";
     writeFileSync(
       join(output, "recovery-r2.json"),
@@ -7543,6 +7617,8 @@ async function runFixturePreparation() {
       "recovery-r11.json",
       "receipts-r13.json",
       "recovery-r13.json",
+      "receipts-r15.json",
+      "recovery-r15.json",
     ])
       sums +=
         createHash("sha256")

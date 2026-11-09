@@ -5937,6 +5937,9 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     sut.SINGLE_REQUEST.asynchronousOpinionGateSha,
     sut.SINGLE_REQUEST.canonicalProfileGateSha,
     sut.SINGLE_REQUEST.r13RecoveryGateSha,
+    sut.SINGLE_REQUEST.r15RecoveryGateSha,
+    sut.SINGLE_REQUEST.void204GateSha,
+    sut.SINGLE_REQUEST.void204BuildSha,
     sut.SINGLE_REQUEST.metadataTimeoutGateSha,
     sut.SINGLE_REQUEST.metadataTimeoutPlanSha,
     sut.SINGLE_REQUEST.uiSecurityRecoveryGateSha,
@@ -10458,16 +10461,16 @@ test("R12 auth protocol executes the real preparer runtime budget with every ori
     R1_RECOVERY_DOCUMENT: prep.R1_RECOVERY_DOCUMENT,
     R3_RECOVERY_DOCUMENT: prep.R3_RECOVERY_DOCUMENT,
   };
-  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13])
+  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15])
     env["validateR" + n + "RecoveryDocument"] = prep["validateR" + n + "RecoveryDocument"];
-  for (const n of [4, 5, 6, 7, 8, 9, 10, 11, 13])
+  for (const n of [4, 5, 6, 7, 8, 9, 10, 11, 13, 15])
     env["r" + n + "Recovery"] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   assert.deepEqual(
     new Function(
       ...Object.keys(env),
       named("recoveryBudget").getText(ast) + ";return " + init + ";",
     )(...Object.values(env)),
-    { confirmedBefore: 10, priorReserved: 1, maxNewIntentions: 13 },
+    { confirmedBefore: 10, priorReserved: 2, maxNewIntentions: 12 },
   );
 });
 
@@ -10509,7 +10512,7 @@ test("R12 auth protocol rejects a partial pending October GET before any further
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
@@ -10537,11 +10540,11 @@ test("R12 auth protocol rejects a partial pending October GET before any further
       id_competencia: comp,
       id_organizacao: fixture.organization,
       id_contrato: fixture.contract,
-      status: "rascunho",
+      status: "aprovado",
       versao: 1,
       hash: "c".repeat(64),
       criado_em: "2026-11-09T00:00:00Z",
-      aprovado_em: null,
+      aprovado_em: "2026-11-09T00:01:00Z",
       autor: null,
       texto: "Fixture local",
       aprovado_por: null,
@@ -10592,7 +10595,7 @@ test("R12 auth protocol rejects a partial pending October GET before any further
         }),
       { message: "RECOVERY_R11_OPINION" },
     );
-    assert.equal(broker.snapshot().count, 11);
+    assert.equal(broker.snapshot().count, 12);
   } finally {
     observer.close();
   }
@@ -10636,7 +10639,7 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
@@ -10664,11 +10667,11 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
       id_competencia: comp,
       id_organizacao: fixture.organization,
       id_contrato: fixture.contract,
-      status: "rascunho",
+      status: "aprovado",
       versao: 1,
       hash: "c".repeat(64),
       criado_em: "2026-11-09T00:00:00Z",
-      aprovado_em: null,
+      aprovado_em: "2026-11-09T00:01:00Z",
       autor: null,
       texto: "Fixture local",
       aprovado_por: null,
@@ -10719,7 +10722,7 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
         }),
       { message: "RECOVERY_R11_OPINION" },
     );
-    assert.equal(broker.snapshot().count, 11);
+    assert.equal(broker.snapshot().count, 12);
   } finally {
     observer.close();
   }
@@ -10763,7 +10766,7 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
@@ -10791,11 +10794,11 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
       id_competencia: comp,
       id_organizacao: fixture.organization,
       id_contrato: fixture.contract,
-      status: "rascunho",
+      status: "aprovado",
       versao: 1,
       hash: "c".repeat(64),
       criado_em: "2026-11-09T00:00:00Z",
-      aprovado_em: null,
+      aprovado_em: "2026-11-09T00:01:00Z",
       autor: null,
       texto: "Fixture local",
       aprovado_por: null,
@@ -10851,7 +10854,7 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
         }),
       { message: "RECOVERY_R11_OPINION" },
     );
-    assert.equal(broker.snapshot().count, 11);
+    assert.equal(broker.snapshot().count, 12);
   } finally {
     observer.close();
   }
@@ -12928,7 +12931,7 @@ test("R13 request nonce is accepted and the preAuth R12 nonce stays spent", () =
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r15",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -13691,7 +13694,7 @@ test("R15 spends R14 and admits only the next governed fixture nonce", () => {
     deployment_id: "",
   };
   assert.throws(() => sut.parseSingleRequest(JSON.stringify(request)), /REQUEST_SCHEMA/);
-  request.request_id = "trilha-a-fixtures-20261109-r15";
+  request.request_id = sut.SINGLE_REQUEST.fixtures.nonce;
   assert.equal(sut.parseSingleRequest(JSON.stringify(request)).request_id, request.request_id);
 });
 
@@ -13911,4 +13914,52 @@ test("R15 a complete body after the shared deadline is rejected without retry", 
     code: "REQUEST_API_TIMEOUT",
   });
   assert.equal(calls, 1);
+});
+test("R16 current nonce spends R15 and requires both recovery and void ancestors", async () => {
+  const f = await r13ControllerFixture();
+  const old = { ...JSON.parse(f.raw), request_id: "trilha-a-fixtures-20261109-r15" };
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify(old)), /REQUEST_SCHEMA/);
+  assert.equal(sut.parseSingleRequest(f.raw).request_id, "trilha-a-fixtures-20261109-r16");
+  for (const ancestor of [
+    sut.SINGLE_REQUEST.r15RecoveryGateSha,
+    sut.SINGLE_REQUEST.void204GateSha,
+    sut.SINGLE_REQUEST.void204BuildSha,
+  ]) {
+    let missing = false;
+    await assert.rejects(
+      () =>
+        sut.verifySingleRequest({
+          ...f.options,
+          git: async (args) => {
+            if (args[0] === "merge-base" && args[2] === ancestor) {
+              missing = true;
+              throw Error("R16_REQUIRED_ANCESTOR");
+            }
+            return f.git(args);
+          },
+        }),
+      /R16_REQUIRED_ANCESTOR/,
+    );
+    assert.equal(missing, true);
+  }
+});
+test("R16 original recovery validator is shared by both real consumers", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs");
+  assert.equal(prep.validateR15RecoveryDocument, sut.validateR15RecoveryDocument);
+  const raw = JSON.stringify(sut.R15_RECOVERY_DOCUMENT, null, 2) + "\n";
+  const { createHash } = await import("node:crypto");
+  assert.equal(Buffer.byteLength(raw), 6244);
+  assert.equal(
+    createHash("sha256").update(raw).digest("hex"),
+    "de792c8803bbe232871c9eac468ad8baede31a88b1ec5aa238647a15267b645a",
+  );
+  assert.deepEqual(
+    sut.validateR15RecoveryDocument(sut.R15_RECOVERY_DOCUMENT),
+    sut.R15_RECOVERY_DOCUMENT,
+  );
+  assert.throws(
+    () =>
+      sut.validateR15RecoveryDocument({ ...sut.R15_RECOVERY_DOCUMENT, workflowRun: "42705850329" }),
+    /RECOVERY_R15_LEDGER/,
+  );
 });
