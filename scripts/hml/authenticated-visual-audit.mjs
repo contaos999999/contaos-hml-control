@@ -483,6 +483,20 @@ const SYNTHETIC_EXCERPT_PATTERN = new RegExp(
   "gu",
 );
 
+export function privacySys04Literal(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+export function privacySys04Supplement(tap) {
+  if (typeof tap !== "string") return null;
+  const expected = { tests: 2, pass: 2, fail: 0, skipped: 0, cancelled: 0 };
+  return Object.entries(expected).every(([k, v]) => {
+    const matches = [...tap.matchAll(new RegExp("^# " + k + " ([0-9]+)$", "gm"))];
+    return matches.length === 1 && Number(matches[0][1]) === v;
+  })
+    ? 2
+    : null;
+}
+
 const privacySys04Proofs = new WeakSet();
 export async function loadPrivacySys04Proof() {
   const bytes = await readFile(
@@ -713,6 +727,18 @@ export function privacySys04Anchor({ proof, receipt }) {
     return null;
   const group = groups[0],
     cards = [...group.children];
+  const checked = cards.filter((c) => c.getAttribute("aria-checked") === "true");
+  if (
+    checked.length > 1 ||
+    cards.some(
+      (c) =>
+        !["true", "false"].includes(c.getAttribute("aria-checked")) ||
+        !["0", "-1"].includes(c.getAttribute("tabindex")),
+    )
+  )
+    return null;
+  const focused = checked[0] ?? cards[0];
+  if (cards.some((c) => c.getAttribute("tabindex") !== (c === focused ? "0" : "-1"))) return null;
   if (
     cards.length !== receipt.ids.length ||
     group.querySelectorAll('[role="radio"]').length !== cards.length
@@ -730,6 +756,9 @@ export function privacySys04Anchor({ proof, receipt }) {
     )
       return null;
     const children = [...card.children];
+    const selected = card.getAttribute("aria-checked") === "true";
+    if ((children.length === 3) !== selected || children[0]?.children.length !== (selected ? 1 : 0))
+      return null;
     if (
       children.length < 2 ||
       children.length > 3 ||
@@ -824,6 +853,7 @@ export function privacySys04FieldContext({
     anchored !== true ||
     receipt?.route !== "/selecionar-organizacao" ||
     !Number.isInteger(receipt.revision) ||
+    !Number.isInteger(receipt.age) ||
     receipt.age < 0 ||
     receipt.age >= 120000 ||
     !anchor ||
@@ -838,7 +868,7 @@ export function privacySys04FieldContext({
   const strip = (text, values) => {
     let out = text;
     for (const value of [...new Set(values)].sort((a, b) => b.length - a.length)) {
-      const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\// GATE372:");
+      const escaped = privacySys04Literal(value);
       out = out.replace(
         new RegExp("(?<![\\p{L}\\p{N}_-])" + escaped + "(?![\\p{L}\\p{N}_-])", "gu"),
         " ",
@@ -951,6 +981,25 @@ export async function loadPrivacy78RbacProof() {
   const proof = freeze(JSON.parse(bytes));
   privacy78RbacProofs.add(proof);
   return proof;
+}
+
+export async function loadPrivacyWireProof() {
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-wire-cardinality-20261109.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "60e0ac641d0ddfa273b3dde46d1aad14c53ed5742932f84dcc207f14d68c42e7")
+    fail("PRIVACY_PROOF");
+  const freeze = (value) => {
+    if (value && typeof value === "object") {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
+    return value;
+  };
+  return freeze(JSON.parse(bytes));
 }
 
 const privacy109Proofs = new WeakSet();
@@ -1156,8 +1205,24 @@ export async function privacy109FieldSnapshots(page, anchor) {
   ];
 }
 
-export function privacy78Runtime({ proof, rbacProof = null, v109Proof = null, install = false }) {
+export function privacy78Runtime({
+  proof,
+  rbacProof = null,
+  v109Proof = null,
+  wireProof = null,
+  install = false,
+}) {
   const origin = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  // Only the four approved maybeSingle transports use singleton HTTP arrays.
+  // Their DTO normalization occurs later inside postgrest-js, after this observer.
+  const wireNames = ["contract_gate", "document_gate", "upload", "competence_rbac_gate"];
+  const wireValid =
+    wireProof?.schema === "contaos.hml.privacy-wire-cardinality.v1" &&
+    wireProof.dependency?.package === "@supabase/postgrest-js" &&
+    wireProof.dependency.version === "2.118.0" &&
+    wireProof.approved_wire?.wire_shape === "array" &&
+    wireProof.approved_wire.exact_length === 1 &&
+    JSON.stringify(wireProof.approved_wire.contract_names) === JSON.stringify(wireNames);
   const rq = rbacProof?.get_contract;
   const rbacValid =
     rbacProof?.schema === "contaos.hml.privacy78-rbac-context.v1" &&
@@ -1322,6 +1387,18 @@ export function privacy78Runtime({ proof, rbacProof = null, v109Proof = null, in
   const project = (contract, body) => {
     const want = expected[contract?.name];
     if (!want || !body || typeof body !== "object") return null;
+    if (wireNames.includes(contract.name)) {
+      if (
+        !wireValid ||
+        !Array.isArray(body) ||
+        body.length !== 1 ||
+        !body[0] ||
+        typeof body[0] !== "object" ||
+        Array.isArray(body[0])
+      )
+        return null;
+      body = body[0];
+    }
     const array = !contract.shape || contract.shape === "array";
     if (Array.isArray(body) !== array || (array && body.length > 25)) return null;
     const rows = array
@@ -3481,32 +3558,6 @@ export async function runCli(args = process.argv.slice(2)) {
     bun: process.env.CONTAOS_BUN_BINARY || "bun",
   });
 
-  // SYS04 DOM/ARIA proof is a separate supplement; native causal8 and Run78 visual1 retain identity.
-  try {
-    const sys04 = await execFile(
-      process.execPath,
-      [
-        "--test",
-        "--test-reporter=tap",
-        "--test-name-pattern=^SYS04 (source component|browser observer)",
-        "scripts/hml/authenticated-visual-audit.test.mjs",
-      ],
-      {
-        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
-        timeout: 120000,
-        maxBuffer: 1048576,
-      },
-    );
-    if (
-      !/^# pass 2$/m.test(sys04.stdout) ||
-      !/^# fail 0$/m.test(sys04.stdout) ||
-      !/^# skipped 0$/m.test(sys04.stdout)
-    )
-      fail("SYS04_NATIVE");
-  } catch {
-    fail("SYS04_NATIVE");
-  }
-
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/provenance.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -3785,6 +3836,29 @@ async function nativeGuard() {
     fail("VISUAL_NATIVE");
   }
 
+  // SYS04 DOM/ARIA proof is a separate supplement; native causal8 and Run78 visual1 retain identity.
+  let sys04BrowserCases = null;
+  try {
+    const sys04 = await execFile(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=^SYS04 (source component|browser observer)",
+        "scripts/hml/authenticated-visual-audit.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 120000,
+        maxBuffer: 1048576,
+      },
+    );
+    sys04BrowserCases = privacySys04Supplement(sys04.stdout);
+    if (sys04BrowserCases !== 2) fail("SYS04_NATIVE");
+  } catch {
+    fail("SYS04_NATIVE");
+  }
+
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/native-proof.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -3795,7 +3869,7 @@ async function nativeGuard() {
       preflightDrain: nativePreflightDrain(output),
       cases: 8,
       visualCases: 1,
-      sys04BrowserCases: 2,
+      sys04BrowserCases,
       harnessSha: proof.harnessSha,
     }),
   );
@@ -4254,10 +4328,12 @@ async function runAuthenticatedAudit() {
     const v109Proof = await loadPrivacy109Proof();
     const sys04Proof = await loadPrivacySys04Proof();
     await context.addInitScript(privacySys04Runtime, { proof: sys04Proof, install: true });
+    const wireProof = await loadPrivacyWireProof();
     await context.addInitScript(privacy78Runtime, {
       proof: privacyProof,
       rbacProof,
       v109Proof,
+      wireProof,
       install: true,
     });
     page = await context.newPage();
