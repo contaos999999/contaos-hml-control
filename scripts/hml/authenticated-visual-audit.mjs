@@ -8981,8 +8981,6 @@ export function singleRequestGet({
   if (!publicOnly && token !== environmentToken) fail("REQUEST_API_TOKEN");
   const deadline = now() + 60000;
   return async (path) => {
-    const currentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
-    if (!publicOnly && token !== currentToken) fail("REQUEST_API_TOKEN");
     if (
       path !== "" &&
       !/^\/(?:actions\/|git\/ref\/heads\/main$|commits\/[a-f0-9]{40}\/pulls\?|pulls\/\d+(?:\/reviews\?|$))/.test(
@@ -8990,59 +8988,59 @@ export function singleRequestGet({
       )
     )
       fail("REQUEST_API_PATH");
-    const remaining = deadline - now();
-    if (remaining <= 0) fail("REQUEST_API_TIMEOUT");
-    const headers = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
-    if (!publicOnly) {
-      if (typeof token !== "string" || !token) fail("REQUEST_API_TOKEN");
-      headers.Authorization = "Bearer " + token;
-    }
-    let response;
     const endpointKind = requestEndpointKind(path);
-    let lastTransportCategory = "TRANSPORT";
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const budget = deadline - now();
-      if (budget <= 0) break;
-      const signal = AbortSignal.timeout(Math.min(12000, budget));
+    const url = "https://api.github.com/repos/" + SINGLE_REQUEST.repository + path;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const currentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
+      if (!publicOnly && token !== currentToken) fail("REQUEST_API_TOKEN");
+      const remaining = deadline - now();
+      if (remaining <= 0) fail("REQUEST_API_TIMEOUT");
+      const headers = {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      };
+      if (!publicOnly) {
+        if (typeof token !== "string" || !token) fail("REQUEST_API_TOKEN");
+        headers.Authorization = "Bearer " + token;
+      }
+      const signal = AbortSignal.timeout(Math.min(5000, remaining));
+      let response;
       try {
-        response = await fetchImpl(
-          "https://api.github.com/repos/" + SINGLE_REQUEST.repository + path,
-          { headers, redirect: "error", signal },
-        );
-        break;
+        response = await fetchImpl(url, { headers, redirect: "error", signal });
       } catch {
-        lastTransportCategory = signal.aborted ? "TIMEOUT" : "TRANSPORT";
+        if (signal.aborted && attempt === 0 && deadline - now() > 0) continue;
+        failRequestApi(
+          "REQUEST_API_UNAVAILABLE",
+          endpointKind,
+          "NONE",
+          signal.aborted ? "TIMEOUT" : "TRANSPORT",
+          diagnostic,
+        );
+      }
+      if (response.status !== 200)
+        failRequestApi("REQUEST_API_UNAVAILABLE", endpointKind, response.status, "HTTP", diagnostic);
+      let body;
+      try {
+        body = await response.text();
+      } catch {
+        if (signal.aborted && attempt === 0 && deadline - now() > 0) continue;
+        failRequestApi(
+          "REQUEST_API_UNAVAILABLE",
+          endpointKind,
+          200,
+          signal.aborted ? "TIMEOUT" : "TRANSPORT",
+          diagnostic,
+        );
+      }
+      if (typeof body !== "string") fail("REQUEST_API_SCHEMA");
+      if (Buffer.byteLength(body) > 4194304) fail("REQUEST_API_LIMIT");
+      try {
+        return JSON.parse(body);
+      } catch {
+        fail("REQUEST_API_SCHEMA");
       }
     }
-    if (!response)
-      failRequestApi(
-        "REQUEST_API_UNAVAILABLE",
-        endpointKind,
-        "NONE",
-        lastTransportCategory,
-        diagnostic,
-      );
-    if (response.status !== 200)
-      failRequestApi("REQUEST_API_UNAVAILABLE", endpointKind, response.status, "HTTP", diagnostic);
-    let text;
-    try {
-      text = await response.text();
-    } catch {
-      failRequestApi(
-        "REQUEST_API_UNAVAILABLE",
-        endpointKind,
-        200,
-        signal.aborted ? "TIMEOUT" : "TRANSPORT",
-        diagnostic,
-      );
-    }
-    if (typeof text !== "string") fail("REQUEST_API_SCHEMA");
-    if (Buffer.byteLength(text) > 4194304) fail("REQUEST_API_LIMIT");
-    try {
-      return JSON.parse(text);
-    } catch {
-      fail("REQUEST_API_SCHEMA");
-    }
+    fail("REQUEST_API_TIMEOUT");
   };
 }
 export async function verifySingleRequest({
