@@ -5210,14 +5210,25 @@ export async function resizeVerifiedPage(page, fence, width) {
   await page.setViewportSize({ width, height: 1000 });
   await settleVerifiedPage(page, fence);
 }
-export async function navigateVerifiedPage(page, fence, target) {
+export async function navigateVerifiedPage(page, fence, target, beforeNavigate) {
   if (
     !requestAllowed({ url: target, method: "GET", resourceType: "Document" }) ||
     new URL(target).origin !== HML_ORIGIN
   )
     fail("AUTH_DESTINATION");
   await settleVerifiedPage(page, fence);
-  const response = await page.goto(target, { waitUntil: "networkidle" });
+  if (
+    beforeNavigate !== undefined &&
+    (typeof beforeNavigate !== "function" || isProxy(beforeNavigate))
+  )
+    fail("AUTH_DESTINATION");
+  const timeout = beforeNavigate === undefined ? undefined : beforeNavigate();
+  if (timeout !== undefined && (!Number.isInteger(timeout) || timeout < 1 || timeout > 15000))
+    fail("AUTH_DESTINATION");
+  const response = await page.goto(target, {
+    waitUntil: "networkidle",
+    ...(timeout === undefined ? {} : { timeout }),
+  });
   await settleVerifiedPage(page, fence);
   return response;
 }
@@ -6731,6 +6742,7 @@ export const SINGLE_REQUEST = Object.freeze({
   recoveryGateSha: "581e161718d7f784961e2fef6bd1a75ba9295637",
   metadataGateSha: "2704e63969880f81842102190ebc0337a3b9b551",
   observationGateSha: "01fc65e5ede32309fe544fce7852c24b6f2a1e72",
+  competenceReadGateSha: "472eaa2221016375aee7c7698aa837358b6b6975",
   listSelectionGateSha: "18424c16bcdc6d035e91e2dc8b7257ea755097d0",
   navigationGateSha: "ffffc501e5b5665026ff847bca1d2bf6df17fa73",
   bootstrapGateSha: "a8f3da12dcfeca858904b60e1b32c50df73a7d4a",
@@ -6745,13 +6757,14 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-a-fixtures-20261109-r6",
     "trilha-a-fixtures-20261109-r7",
     "trilha-a-fixtures-20261109-r8",
+    "trilha-a-fixtures-20261109-r9",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r9",
+    nonce: "trilha-a-fixtures-20261109-r10",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -6990,6 +7003,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.listSelectionGateSha,
       SINGLE_REQUEST.metadataGateSha,
       SINGLE_REQUEST.observationGateSha,
+      SINGLE_REQUEST.competenceReadGateSha,
     );
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.

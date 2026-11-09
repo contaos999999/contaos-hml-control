@@ -25,7 +25,9 @@ function broker(options = {}) {
     readPolicy: () => false,
     persist: () => true,
     competenceGateAmended: true,
-    ...(options.recoveryLedger ? { recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT } : {}),
+    ...(options.recoveryLedger
+      ? { recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT, recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT }
+      : {}),
     ...options,
   });
 }
@@ -1705,6 +1707,7 @@ function r2Reconciliation(delta = {}) {
     ledgerR6: sut.R6_RECOVERY_DOCUMENT,
     ledgerR7: sut.R7_RECOVERY_DOCUMENT,
     ledgerR8: sut.R8_RECOVERY_DOCUMENT,
+    ledgerR9: sut.R9_RECOVERY_DOCUMENT,
     source: { ...context, id: FIXTURE.source, ...sut.SOURCE_FIELDS, version: 1, situacao: "ativa" },
     version: {
       ...context,
@@ -1745,6 +1748,7 @@ test("R2 ledger omitido undefined ou null não emite prova de reconciliação", 
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   });
   for (const input of [
     omitted,
@@ -1776,6 +1780,7 @@ test("R2 reconcilia somente estado oficial unico aprovado antes de armar", () =>
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   });
   assert.throws(() => r6AnalysisArm(b), { message: "RECOVERY_READ_ONLY" });
   assert.throws(() => b.authorizeRecovery({ ...proof }), { message: "RECOVERY_PROOF" });
@@ -1817,6 +1822,7 @@ test("R9 contabiliza dez anteriores e limita novas intencoes a14", () => {
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
   for (let n = 0; n < 14; n++) {
@@ -3047,6 +3053,7 @@ test("R4 validates explicit original R3 ledger and debits exactly one prior acti
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 10);
   for (const rpc of [
@@ -3216,6 +3223,7 @@ test("R4 report derives real arm sent and terminal scalars without request ident
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
   assert.deepEqual(sut.preparationIntentSummary(b), {
@@ -3787,6 +3795,9 @@ test("R6 recovery requires fresh ordinary reads and exact original month identit
       recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
       recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
       recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+      recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+      ...r10BudgetApi(),
+      fresh: async () => {},
       generation: () => generation,
       goKnown: async () => {
         generation++;
@@ -4147,6 +4158,7 @@ test("R5 explicit R4 proof is required before recovery broker and preserves thre
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().confirmedBefore, 10);
   assert.equal(b.snapshot().maxNewIntentions, 14);
@@ -4700,6 +4712,7 @@ test("R9 recovery broker preserves R5 originals and debits two R8 confirmations 
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 10);
   assert.equal(b.snapshot().confirmedBefore, 10);
@@ -4867,6 +4880,7 @@ test("R6 semantic replay rejects complete new UUID intents but permits another v
       recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
       recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
       recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+      recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
     });
   for (const [rpc, p] of attempts) {
     const requestId = randomUUID(),
@@ -5167,6 +5181,7 @@ test("R6 locked and authorized replay boundaries reject nested accessors and pro
         recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
         recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
         recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+        recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
         beforeArm: () => {
           beforeArm++;
           return true;
@@ -5267,6 +5282,7 @@ test("R7 original R6 zero-intent document is exact and rejects getters proxies a
     recoveryLedgerR6: original,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   });
   assert.equal(instance.snapshot().count, 10);
   assert.equal(instance.snapshot().maxNewIntentions, 14);
@@ -5282,7 +5298,7 @@ test("R7 original R6 zero-intent document is exact and rejects getters proxies a
   );
 });
 
-test("R8 actual artifact writer appends R7 and R8 proofs and preserves fourteen hashed data members", async () => {
+test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen hashed data members", async () => {
   const fs = await import("node:fs/promises");
   const sync = await import("node:fs");
   const { join } = await import("node:path");
@@ -5316,6 +5332,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves fourteen 
       "R6_RECOVERY_DOCUMENT",
       "r7Recovery",
       "r8Recovery",
+      "r9Recovery",
       "observationDiagnostic",
       "createHash",
       "readFile",
@@ -5331,6 +5348,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves fourteen 
       sut.R6_RECOVERY_DOCUMENT,
       sut.R7_RECOVERY_DOCUMENT,
       sut.R8_RECOVERY_DOCUMENT,
+      sut.R9_RECOVERY_DOCUMENT,
       sut.createObservationDiagnostic(
         (({ frontendSha, harnessSha, deploymentId, workflowRun }) => ({
           frontendSha,
@@ -5344,10 +5362,10 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves fourteen 
       async (_, run) => run(),
     );
     const names = (await fs.readdir(output)).sort();
-    assert.equal(names.length, 15);
+    assert.equal(names.length, 17);
     const manifest = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(manifest.length, 14);
-    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 14);
+    assert.equal(manifest.length, 16);
+    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 16);
     for (const line of manifest) {
       assert.match(line, /^[0-9a-f]{64}  [a-z0-9.-]+$/);
       const bytes = await fs.readFile(join(output, line.slice(66)));
@@ -5465,6 +5483,7 @@ test("R9 R7 ledger validation blocks forged proof alongside ten historical confi
     recoveryLedgerR6: input.ledgerR6,
     recoveryLedgerR7: input.ledgerR7,
     recoveryLedgerR8: input.ledgerR8,
+    recoveryLedgerR9: input.ledgerR9,
   });
   assert.equal(b.snapshot().count, 10);
   assert.equal(b.snapshot().maxNewIntentions, 14);
@@ -5529,6 +5548,7 @@ test("R9 real broker charges the two original R8 confirmations and leaves fourte
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: R9_R8_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().confirmedBefore, 10);
   assert.equal(b.snapshot().count, 10);
@@ -5575,6 +5595,7 @@ test("R9 real October consumers refuse missing confirmed document or a new analy
     };
     const io = {
       recoveryLedgerR8: R9_R8_DOCUMENT,
+      recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
       official: (v) => v,
       fresh: async () => {},
       command: async () => {
@@ -5708,6 +5729,7 @@ test("R9 actual artifact writer appends R8 originals and the separate observatio
       R6_RECOVERY_DOCUMENT: sut.R6_RECOVERY_DOCUMENT,
       r7Recovery: sut.R7_RECOVERY_DOCUMENT,
       r8Recovery: R9_R8_DOCUMENT,
+      r9Recovery: sut.R9_RECOVERY_DOCUMENT,
       observationDiagnostic,
       createHash,
       readFile: fs.readFile,
@@ -5719,9 +5741,9 @@ test("R9 actual artifact writer appends R8 originals and the separate observatio
     )(...Object.values(env));
     const names = (await fs.readdir(output)).sort(),
       lines = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(names.length, 15);
-    assert.equal(lines.length, 14);
-    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 14);
+    assert.equal(names.length, 17);
+    assert.equal(lines.length, 16);
+    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 16);
     for (const line of lines)
       assert.equal(
         createHash("sha256")
@@ -5767,6 +5789,7 @@ function r9Broker(options = {}) {
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: R9_R8_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
     ...options,
   });
 }
@@ -6272,6 +6295,7 @@ test("R9 missing R8 ledger cannot construct a recovery broker even with a valid 
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   };
   for (const value of [undefined, null])
     assert.throws(() => {
@@ -6431,6 +6455,7 @@ async function r9ExistingConsumer(
     commands = 0;
   const io = {
     recoveryLedgerR8: R9_R8_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
     official: (v) => v,
     fresh: async () => {
       events.push("fresh");
@@ -6653,6 +6678,7 @@ test("R10 recovery requires the exact zero-intent R9 document before constructin
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: R9_R8_DOCUMENT,
+    recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
   };
   for (const recoveryLedgerR9 of [undefined, null])
     assert.throws(
@@ -6716,6 +6742,9 @@ test("R10 actual recovery consumer waits for the new monthly request instead of 
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: R9_R8_DOCUMENT,
     recoveryLedgerR9: R10_R9_DOCUMENT,
+    readBarrier: observer.readBarrier,
+    assertReadBarrier: observer.assertReadBarrier,
+    readBarrierRemaining: observer.readBarrierRemaining,
     generation: observer.generation,
     observedAfter: observer.waitObservedAfter,
     read: observer.read,
@@ -6759,3 +6788,13 @@ test("R10 actual recovery consumer waits for the new monthly request instead of 
     observer.close();
   }
 });
+
+function r10BudgetApi() {
+  const { EventEmitter } = createRequire(import.meta.url)("node:events");
+  const observer = sut.createOfficialObserver(new EventEmitter());
+  return {
+    readBarrier: observer.readBarrier,
+    assertReadBarrier: observer.assertReadBarrier,
+    readBarrierRemaining: observer.readBarrierRemaining,
+  };
+}
