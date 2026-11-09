@@ -59,8 +59,8 @@ WITH expected(id,legal_len,fantasy_len,state,updated) AS (VALUES
         char_length(o.razao_social)=e.legal_len AND char_length(o.nome_fantasia) IS NOT DISTINCT FROM e.fantasy_len AND o.situacao=e.state AND o.atualizado_em=e.updated AND o.cnpj IS NULL AS matches
  FROM expected e JOIN public.organizacoes o ON o.id=e.id
 ), guard AS (
- SELECT count(*)=37 AND count(DISTINCT id)=37 AND coalesce(bool_and(matches),false)
- AND coalesce(bool_and(char_length(razao_social) BETWEEN 1 AND 200 AND (nome_fantasia IS NULL OR char_length(nome_fantasia) BETWEEN 1 AND 200)),false)
+ SELECT count(*)=37 AND count(DISTINCT id)=37 AND coalesce(bool_and(coalesce(matches,false)),false)
+ AND coalesce(bool_and(coalesce(char_length(razao_social) BETWEEN 1 AND 200 AND (nome_fantasia IS NULL OR char_length(nome_fantasia) BETWEEN 1 AND 200),false)),false)
  AND coalesce(sum(char_length(razao_social)+coalesce(char_length(nome_fantasia),0)),12001)<=12000 AS ok FROM checked
 )
 SELECT (SELECT count(*)::int FROM checked) AS rows,(SELECT count(DISTINCT id)::int FROM checked) AS unique_ids,guard.ok AS all_metadata_match FROM guard;
