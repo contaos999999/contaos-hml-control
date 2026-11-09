@@ -3763,9 +3763,11 @@ async function runFixturePreparation() {
   let phase = "PREFLIGHT",
     result = null,
     sourceList = null,
-    blockedCode = null;
+    blockedCode = null,
+    recoveryState = null;
   const output = resolve("artifacts/trilha-a-fixtures");
   await tracedPreparation("PREFLIGHT", async () => (mkdir(output, { recursive: true })));
+  writeFileSync(join(output,"receipts-r1.json"),JSON.stringify(R1_RECOVERY_DOCUMENT,null,2)+"\n",{mode:0o600});
   const receiptPath = join(output, "receipts.json");
   writeFileSync(
     receiptPath,
@@ -3986,7 +3988,7 @@ async function runFixturePreparation() {
     };
     const io = {
       recoveryLedger:R1_RECOVERY_DOCUMENT,
-      recoveryReady:(proof)=>broker.authorizeRecovery(proof),
+      recoveryReady:(proof)=>{broker.authorizeRecovery(proof);recoveryState=proof;return true;},
       page,
       fence,
       runtime,
@@ -4057,6 +4059,7 @@ async function runFixturePreparation() {
       schema: "contaos.fixture.preparation.v1",
       failure: blockedCode,
       diagnostics:diagnostics.snapshot(),
+      recovery:{ledgerSha256:R1_RECEIPTS_SHA256,priorWorkflowRun:"42540864527",confirmedBefore:2,maxNewIntentions:22,reconciled:!!recoveryState,sourceVersion:recoveryState?.sourceVersion||null,sourceHash:recoveryState?.sourceHash||null},
       bindings,
       ...identity,
       phase,
@@ -4069,7 +4072,7 @@ async function runFixturePreparation() {
       mode: 0o600,
     });
     let sums = "";
-    for (const name of ["receipts.json", "report.json"])
+    for (const name of ["receipts.json", "report.json", "receipts-r1.json"])
       sums +=
         createHash("sha256")
           .update(await tracedPreparation("PREFLIGHT", async () => (readFile(join(output, name)))))
