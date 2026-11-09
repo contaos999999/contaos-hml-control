@@ -3886,3 +3886,73 @@ test("R5 explicit R4 proof is required before recovery broker and preserves thre
       /RECOVERY_CONFIRMED_OPERATION/,
     );
 });
+
+test("R5 actual CLI loads recovery before runtime for both authorized events and denies another branch", async () => {
+  const fs = await import("node:fs/promises");
+  const source = await fs.readFile(
+    new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+    "utf8",
+  );
+  const body = source
+    .slice(source.indexOf("export async function runCli("), source.indexOf("\nif (process.argv[1]"))
+    .replace("export async function", "async function");
+  for (const event of ["workflow_run", "workflow_dispatch"]) {
+    const events = [];
+    let ready = false;
+    const env = {
+      GITHUB_EVENT_NAME: event,
+      GITHUB_REF: "refs/heads/main",
+      GITHUB_RUN_ATTEMPT: "1",
+    };
+    const run = new Function(
+      "process",
+      "loadSingleRequestProof",
+      "preparerEventAllowed",
+      "runFixturePreparation",
+      "err",
+      body + "\nreturn runCli;",
+    )(
+      { env, argv: [] },
+      async (options) => {
+        assert.deepEqual(options, { operation: "fixtures", fresh: true });
+        events.push("LOAD_PUBLIC_PROOF");
+        ready = true;
+      },
+      () => true,
+      async () => {
+        assert.equal(ready, true, "runtime getter cannot precede recovery loader");
+        events.push("RUNTIME_GETTER");
+        return true;
+      },
+      (code) => {
+        throw Error(code);
+      },
+    );
+    assert.equal(await run(["--prepare-fixtures"]), true);
+    assert.deepEqual(events, ["LOAD_PUBLIC_PROOF", "RUNTIME_GETTER"]);
+  }
+  let runtime = 0;
+  const env = { GITHUB_EVENT_NAME: "workflow_dispatch", GITHUB_REF: "refs/heads/foreign" };
+  const run = new Function(
+    "process",
+    "loadSingleRequestProof",
+    "preparerEventAllowed",
+    "runFixturePreparation",
+    "err",
+    body + "\nreturn runCli;",
+  )(
+    { env, argv: [] },
+    async () => {
+      if (env.GITHUB_REF !== "refs/heads/main") throw Error("REQUEST_EVENT");
+    },
+    sut.preparerEventAllowed,
+    async () => {
+      runtime++;
+    },
+    (code) => {
+      throw Error(code);
+    },
+  );
+  await assert.rejects(() => run(["--prepare-fixtures"]));
+  assert.equal(runtime, 0);
+});
