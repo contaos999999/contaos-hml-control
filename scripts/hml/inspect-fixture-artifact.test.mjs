@@ -813,9 +813,10 @@ test("R9 observation matrix accepts only the exact producer table/RPC contracts"
   for (const kind of OBSERVATION_KINDS) {
     for (const stage of ["RESPONSE_PROJECTION", "RESPONSE_CONTEXT", "OBSERVATION_LIMIT"]) {
       const first = { contractKind: kind, stage, statusHTTP: "NONE", requestFailure: "NONE" };
-      assert.deepEqual(validateObservationDiagnostic(observation(first), report()).firstFailure, {
-        ...first,
-      });
+      assert.equal(
+        JSON.stringify(validateObservationDiagnostic(observation(first), report()).firstFailure),
+        JSON.stringify(first),
+      );
     }
     for (const status of [100, 199, 300, 403, 429, 503, 599]) {
       assert.equal(
