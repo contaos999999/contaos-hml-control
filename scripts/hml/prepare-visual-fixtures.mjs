@@ -1,5 +1,6 @@
 /** Dedicated fixture preparer. Never imported by the read-only audit CLI. */
 import { createHash, randomUUID } from "node:crypto";
+import { isProxy } from "node:util/types";
 import { writeFileSync, renameSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { readFile, mkdir } from "node:fs/promises";
@@ -204,6 +205,7 @@ export function validateR1RecoveryDocument(input) {
 }
 
 export async function reconcileRecoveryCompetencies(io) {
+  validateR5RecoveryDocument(io.recoveryLedgerR5);
   const result = [];
   const select = EXACT_SELECTS.competencias.find((value) =>
     value.includes("competencia_referencia,"),
@@ -217,7 +219,8 @@ export async function reconcileRecoveryCompetencies(io) {
     const rows = await io.read("competencias", where, { select, after });
     if (!(
       Array.isArray(rows) &&
-      rows.length <= 1 &&
+      rows.length === 1 &&
+      rows[0].id === R5_BINDINGS.competencies.find((c) => c.month === month)?.id &&
       rows.every(
         (row) =>
           uuid(row.id) && row.id !== FIXTURE.historical && row.competencia_referencia === month,
@@ -247,7 +250,7 @@ export async function reconcileRecoveryCompetencies(io) {
       ))
         err("RECOVERY_STATE");
     }
-    result.push({ month, observed: true, count: rows.length });
+    result.push({ month, id: rows[0].id, observed: true, count: rows.length });
   }
   return result;
 }
@@ -256,6 +259,23 @@ export function reconcileR1Recovery(input) {
   validateR1RecoveryDocument(input?.ledger);
   validateR3RecoveryDocument(input?.ledgerR3);
   validateR4RecoveryDocument(input?.ledgerR4);
+  validateR5RecoveryDocument(input?.ledgerR5);
+  const expected = R5_BINDINGS;
+  if (
+    input.listCount !== 1 ||
+    input.listState?.id !== expected.listId ||
+    input.listState?.versionId !== expected.listVersionId ||
+    input.listState?.itemId !== expected.itemId ||
+    input.version?.id !== expected.sourceVersionId ||
+    input.version?.hash !== JSON.parse(R5_RECOVERY_DOCUMENT.reportRaw).recovery.sourceHash ||
+    !Array.isArray(input.competencies) ||
+    !expected.competencies.every((c) =>
+      input.competencies.some(
+        (r) => r.month === c.month && r.id === c.id && r.count === 1 && r.observed === true,
+      ),
+    )
+  )
+    err("RECOVERY_STATE");
   if (
     !Array.isArray(input.competencies) ||
     input.competencies.length !== months.length ||
@@ -433,14 +453,154 @@ export function validateR4RecoveryDocument(input) {
   if (!same(input, R4_RECOVERY_DOCUMENT)) err("RECOVERY_R4_PROOF");
   return freeze(structuredClone(input));
 }
-function recoveryBudget(ledger, ledgerR3, ledgerR4) {
+
+export const R5_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r5.v1",
+  workflowRun: "42578223154",
+  artifactId: "13656530451",
+  requestId: "trilha-a-fixtures-20261109-r5",
+  harnessSha: "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",
+  zipSha256: "5380c9c1a5b18e75e7a0e09e41902c826eae0a9cb1f9589f7f34a819f463985b",
+  reportSha256: "c631d266351fa609600dbcdbe60f1d1a54d8fac76e740c10d80017277a6f55ba",
+  receiptsSha256: "fd97a387cae0e16af65c6923f453ac83262e58447176c3c558b1c10bc15c5eeb",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "PREPARER_INCOMPLETE",\n  "diagnostics": {\n    "primaryFailure": "PREPARER_INCOMPLETE",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "PREFLIGHT",\n    "subphasePath": [],\n    "lastCompletedSubphase": "PREFLIGHT",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 8,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 3,\n    "newArmedCount": 5,\n    "maxIntentions": 24,\n    "maxNewIntentions": 21\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 3,\n    "maxNewIntentions": 21,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "partial",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "id": "79bdc139-ed10-4c91-905e-b32b9a824d27",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42578223154",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "79bdc139-ed10-4c91-905e-b32b9a824d27"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "da4e924e-2ed1-4ccd-b847-fc95a44cc383",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "54e6e65b94eb4874e50fe5764348e1a67804aa4df82547033dd9ccff7690f340"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "da4e924e-2ed1-4ccd-b847-fc95a44cc383",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "54e6e65b94eb4874e50fe5764348e1a67804aa4df82547033dd9ccff7690f340"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "31ddaf25-fb66-4cdc-be84-8612e77b17dc",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "3cbe64f69528818238bf16a0dcf02d739bab03f7eea62aff5a7f4f58e52b6a73"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "31ddaf25-fb66-4cdc-be84-8612e77b17dc",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "3cbe64f69528818238bf16a0dcf02d739bab03f7eea62aff5a7f4f58e52b6a73"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "cf429997-d0b6-45bd-880a-be4b103f79bb",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "7c3f9c79fb8b58ff93186827b68ca6dbbe147787d21f8b15c1eb555977bc0b3f"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "cf429997-d0b6-45bd-880a-be4b103f79bb",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "7c3f9c79fb8b58ff93186827b68ca6dbbe147787d21f8b15c1eb555977bc0b3f"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "499dc2a2-c0a2-4a19-9ccb-11c534096f7e",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1c8f192c563e7dc74b6889b916fdf33eb563ca05dbb10d638c51b351dc7f8083"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "499dc2a2-c0a2-4a19-9ccb-11c534096f7e",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1c8f192c563e7dc74b6889b916fdf33eb563ca05dbb10d638c51b351dc7f8083"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "655ae00f-ed36-4a13-a637-bc8b77375783",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1a90a321fa24f8af03c9dc9997b18d21981353cd86ce7e06ba2c51af698e0415"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "655ae00f-ed36-4a13-a637-bc8b77375783",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1a90a321fa24f8af03c9dc9997b18d21981353cd86ce7e06ba2c51af698e0415"\n    }\n  ]\n}\n',
+});
+export function validateR5RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R5_LEDGER");
+  let descriptors;
+  try {
+    descriptors = Object.getOwnPropertyDescriptors(input);
+  } catch {
+    err("RECOVERY_R5_LEDGER");
+  }
+  const names = Object.keys(R5_RECOVERY_DOCUMENT);
+  if (Reflect.ownKeys(descriptors).length !== names.length) err("RECOVERY_R5_LEDGER");
+  const clean = {};
+  for (const key of names) {
+    const d = descriptors[key];
+    if (!d || !Object.hasOwn(d, "value") || typeof d.value !== "string") err("RECOVERY_R5_LEDGER");
+    clean[key] = d.value;
+  }
+  if (
+    !same(clean, R5_RECOVERY_DOCUMENT) ||
+    hash(clean.reportRaw) !== R5_RECOVERY_DOCUMENT.reportSha256 ||
+    hash(clean.receiptsRaw) !== R5_RECOVERY_DOCUMENT.receiptsSha256
+  )
+    err("RECOVERY_R5_LEDGER");
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw);
+  if (
+    JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
+    JSON.stringify(receipts, null, 2) + "\n" !== clean.receiptsRaw ||
+    report.schema !== "contaos.fixture.preparation.v1" ||
+    report.workflowRun !== clean.workflowRun ||
+    report.harnessSha !== clean.harnessSha ||
+    report.frontendSha !== "437c788e32f0325dd15c9d2e7277c10129bcb462" ||
+    report.deploymentId !== "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    !same(report.intentLedger, {
+      count: 8,
+      frozen: false,
+      pending: false,
+      sent: false,
+      priorConfirmed: 3,
+      newArmedCount: 5,
+      maxIntentions: 24,
+      maxNewIntentions: 21,
+    }) ||
+    !keys(receipts, ["schema", "receipts"]) ||
+    receipts.schema !== "contaos.fixture.receipts.v1" ||
+    receipts.receipts.length !== 10
+  )
+    err("RECOVERY_R5_LEDGER");
+  const historical = new Set(
+    [...R1_RECOVERY_DOCUMENT.receipts, ...R3_RECOVERY_DOCUMENT.receipts].map((r) => r.requestId),
+  );
+  const ids = new Set();
+  for (let i = 0; i < 10; i += 2) {
+    const sealed = receipts.receipts[i],
+      confirmed = receipts.receipts[i + 1];
+    safeReceipt(sealed);
+    safeReceipt(confirmed);
+    if (
+      !keys(sealed, [
+        "frontendSha",
+        "harnessSha",
+        "deploymentId",
+        "workflowRun",
+        "schema",
+        "rpc",
+        "requestId",
+        "state",
+        "organization",
+        "contract",
+        "payloadSha256",
+      ]) ||
+      !same({ ...sealed, state: "confirmed" }, confirmed) ||
+      sealed.state !== "sealed" ||
+      confirmed.state !== "confirmed" ||
+      historical.has(sealed.requestId) ||
+      ids.has(sealed.requestId) ||
+      sealed.workflowRun !== clean.workflowRun ||
+      sealed.harnessSha !== report.harnessSha ||
+      sealed.frontendSha !== report.frontendSha ||
+      sealed.deploymentId !== report.deploymentId ||
+      sealed.organization !== FIXTURE.organization ||
+      sealed.contract !== FIXTURE.contract ||
+      sealed.rpc !== (i < 6 ? "executar_comando_lista_v1" : "criar_competencia")
+    )
+      err("RECOVERY_R5_LEDGER");
+    ids.add(sealed.requestId);
+  }
+  return freeze(clean);
+}
+const R5_BINDINGS = freeze(JSON.parse(R5_RECOVERY_DOCUMENT.reportRaw).bindings);
+function confirmedR5Replay(rpc, payload) {
+  const ownData = (value) => {
+    if (isProxy(value) || !obj(value)) err("INTENT_PAYLOAD");
+    const descriptors = Object.getOwnPropertyDescriptors(value);
+    if (Reflect.ownKeys(descriptors).some((key) => !Object.hasOwn(descriptors[key], "value")))
+      err("INTENT_PAYLOAD");
+    return Object.fromEntries(Object.entries(descriptors).map(([key, d]) => [key, d.value]));
+  };
+  const p = ownData(payload);
+  if (rpc === "criar_competencia")
+    return (
+      p.p_id_contrato === FIXTURE.contract &&
+      R5_BINDINGS.competencies.some((c) => c.month === p.p_competencia_referencia)
+    );
+  if (rpc !== "executar_comando_lista_v1") return false;
+  const q = ownData(p.p_payload);
+  if (p.p_acao === "criar_lista")
+    return (
+      p.p_id_organizacao === FIXTURE.organization &&
+      p.p_id_contrato === FIXTURE.contract &&
+      q.nome === FIXTURE.listName
+    );
+  if (p.p_id_lista !== R5_BINDINGS.listId) return false;
+  return (
+    (p.p_acao === "salvar_item" &&
+      q.id_versao === R5_BINDINGS.listVersionId &&
+      q.codigo === "AUD-A-TXT-001" &&
+      q.id_fonte_versao === R5_BINDINGS.sourceVersionId) ||
+    (p.p_acao === "publicar_versao" && q.id_versao === R5_BINDINGS.listVersionId)
+  );
+}
+
+function recoveryBudget(ledger, ledgerR3, ledgerR4, ledgerR5) {
   const prior = validateR1RecoveryDocument(ledger),
     r3 = validateR3RecoveryDocument(ledgerR3);
   validateR4RecoveryDocument(ledgerR4);
-  const confirmedBefore = [...prior.receipts, ...r3.receipts].filter(
+  const r5 = JSON.parse(validateR5RecoveryDocument(ledgerR5).receiptsRaw);
+  const confirmedBefore = [...prior.receipts, ...r3.receipts, ...r5.receipts].filter(
     (row) => row.state === "confirmed",
   ).length;
-  if (confirmedBefore !== 3) err("RECOVERY_R3_LEDGER");
+  if (confirmedBefore !== 8) err("RECOVERY_R5_LEDGER");
   return Object.freeze({ confirmedBefore, maxNewIntentions: 24 - confirmedBefore });
 }
 
@@ -617,10 +777,14 @@ const PREPARER_NATIVE_CODES = new Set([
 ]);
 function preparationErrorData(error, key) {
   try {
-    if (!error || !["object", "function"].includes(typeof error)) return undefined;
+    if (!error || !["object", "function"].includes(typeof error) || isProxy(error))
+      return undefined;
     let descriptor = Object.getOwnPropertyDescriptor(error, key);
-    if (!descriptor && key === "name")
-      descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(error) || {}, key);
+    if (!descriptor && key === "name") {
+      const prototype = Object.getPrototypeOf(error);
+      if (isProxy(prototype)) return undefined;
+      descriptor = Object.getOwnPropertyDescriptor(prototype || {}, key);
+    }
     return descriptor && "value" in descriptor && typeof descriptor.value === "string"
       ? descriptor.value
       : undefined;
@@ -676,6 +840,7 @@ export function createPreparationDiagnostics() {
       found = null;
     for (let depth = 0; depth < 8 && object(value) && !seen.has(value); depth++) {
       seen.add(value);
+      if (isProxy(value)) break;
       const entry = observed.get(value);
       if (entry?.generation === generation) found = entry;
       try {
@@ -1240,20 +1405,34 @@ export function createIntentBroker({
   recoveryLedger,
   recoveryLedgerR3,
   recoveryLedgerR4,
+  recoveryLedgerR5,
   beforeArm,
 } = {}) {
   const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
-  if (!recovery && (recoveryLedgerR3 !== undefined || recoveryLedgerR4 !== undefined))
+  if (
+    !recovery &&
+    (recoveryLedgerR3 !== undefined ||
+      recoveryLedgerR4 !== undefined ||
+      recoveryLedgerR5 !== undefined)
+  )
     err("RECOVERY_R3_LEDGER");
   const budget = recovery
-    ? recoveryBudget(recoveryLedger, recoveryLedgerR3, recoveryLedgerR4)
+    ? recoveryBudget(recoveryLedger, recoveryLedgerR3, recoveryLedgerR4, recoveryLedgerR5)
     : null;
   let recoveryAuthorized = !recovery;
   let active = null,
     count = budget?.confirmedBefore || 0,
     frozen = false;
   const accepted = new Map(),
-    usedIds = new Set();
+    usedIds = new Set(
+      recovery
+        ? [
+            ...R1_RECOVERY_DOCUMENT.receipts,
+            ...R3_RECOVERY_DOCUMENT.receipts,
+            ...JSON.parse(R5_RECOVERY_DOCUMENT.receiptsRaw).receipts,
+          ].map((r) => r.requestId)
+        : [],
+    );
   function persistSafe(receipt) {
     try {
       const result = persist(receipt);
@@ -1352,6 +1531,7 @@ export function createIntentBroker({
       )
         err("RECOVERY_CONFIRMED_OPERATION");
       if (!recoveryAuthorized) err("RECOVERY_READ_ONLY");
+      if (recovery && confirmedR5Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
       if (frozen) err("INTENT_FROZEN");
       if (active) err("INTENT_PENDING");
       if (count >= 24) err("INTENT_BUDGET");
@@ -1435,10 +1615,10 @@ export function preparationIntentSummary(broker) {
   if (!broker) return null;
   const state = broker.snapshot();
   if (
-    state.confirmedBefore !== 3 ||
-    state.maxNewIntentions !== 21 ||
+    state.confirmedBefore !== 8 ||
+    state.maxNewIntentions !== 16 ||
     !Number.isInteger(state.count) ||
-    state.count < 3 ||
+    state.count < 8 ||
     state.count > 24
   )
     err("RECOVERY_R3_LEDGER");
@@ -2841,6 +3021,7 @@ export async function prepareSourceAndList(io) {
   if (recovery) {
     validateR3RecoveryDocument(io.recoveryLedgerR3);
     validateR4RecoveryDocument(io.recoveryLedgerR4);
+    validateR5RecoveryDocument(io.recoveryLedgerR5);
   }
   const fail = (code) => {
     throw new Error(code);
@@ -3334,6 +3515,9 @@ export async function prepareSourceAndList(io) {
           "RECOVERY_LIST",
         );
         state = {
+          id: l.id,
+          versionId: v.id,
+          itemId: model.itens[0].id,
           verified: true,
           active: l.situacao === "ativa",
           published: v.situacao === "publicada",
@@ -3349,6 +3533,7 @@ export async function prepareSourceAndList(io) {
         ledger: recovery,
         ledgerR3: io.recoveryLedgerR3,
         ledgerR4: io.recoveryLedgerR4,
+        ledgerR5: io.recoveryLedgerR5,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -3708,6 +3893,11 @@ export async function prepareCompetencies(io, sourceList) {
     ![sourceList.sourceVersionId, sourceList.listId, sourceList.listVersionId].every(uuid)
   )
     stop("COMPETENCE_SOURCE_LIST");
+  if (io.recoveryLedgerR5) {
+    validateR5RecoveryDocument(io.recoveryLedgerR5);
+    for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
+      if (sourceList[key] !== R5_BINDINGS[key]) stop("RECOVERY_LIST");
+  }
   await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
   if ((await tracedPreparation("COMPETENCY_UI", async () => io.verifyContext())) !== true)
     stop("COMPETENCE_CONTEXT");
@@ -3775,9 +3965,9 @@ export async function prepareCompetencies(io, sourceList) {
     )
       stop("COMPETENCE_STALE_OBSERVATION");
   };
-  const link = async (path) => {
+  const link = async (path, options) => {
     phaseActive();
-    await tracedPreparation("COMPETENCY_UI", async () => io.link(path));
+    await tracedPreparation("COMPETENCY_UI", async () => io.link(path, options));
     phaseActive();
     await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     phaseActive();
@@ -3929,6 +4119,12 @@ export async function prepareCompetencies(io, sourceList) {
   async function createOrReuse(month) {
     await tracedPreparation("COMPETENCY_UI", async () => context());
     let existing = await tracedPreparation("COMPETENCY_UI", async () => listMonth(month));
+    if (io.recoveryLedgerR5) {
+      validateR5RecoveryDocument(io.recoveryLedgerR5);
+      const expected = R5_BINDINGS.competencies.find((c) => c.month === month);
+      if (!expected || existing.length !== 1 || existing[0].id !== expected.id)
+        stop("RECOVERY_STATE");
+    }
     if (!existing.length) {
       await tracedPreparation("COMPETENCY_UI", async () => link(listPath + "/nova"));
       await tracedPreparation("COMPETENCY_UI", async () =>
@@ -3965,8 +4161,14 @@ export async function prepareCompetencies(io, sourceList) {
     };
   }
   async function approvedContractFile() {
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      link(contractBase, { contextual: "contract_summary" }),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () => context());
     const ordinal = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => link(contractBase + "/documentos"));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      link(contractBase + "/documentos", { contextual: "contract_documents" }),
+    );
     await tracedPreparation("COMPETENCY_UI", async () =>
       observed("documentos_contrato", { id_contrato: FIXTURE.contract }, ordinal),
     );
@@ -4776,8 +4978,10 @@ export async function prepareCompetencies(io, sourceList) {
         presentationApproved: true,
       };
     } catch (error) {
-      receipt.code = /^COMPETENCE_[A-Z_]+$/.test(error?.message || "")
-        ? error.message
+      activePreparationDiagnostics?.capture(error);
+      const safeCode = classifyPreparationFailure(error).code;
+      receipt.code = safeCode.startsWith("COMPETENCE_")
+        ? safeCode
         : "COMPETENCE_DEPENDENCY_BLOCKED";
       if (temporalAborted) break;
       try {
@@ -4819,6 +5023,7 @@ export function validatePreparerIdentity(env, proof, native, identity, head) {
   );
 }
 const PREPARER_FAILURE_CODES = new Set([
+  "RECOVERY_R5_LEDGER",
   "RECOVERY_R4_PROOF",
   "RECOVERY_R3_LEDGER",
   "RECOVERY_SOURCE_INACTIVE",
@@ -4991,7 +5196,13 @@ async function runFixturePreparation() {
   validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);
   validateR2RecoveryDocument(R2_RECOVERY_DOCUMENT);
   const r4Recovery = validateR4RecoveryDocument(getValidatedR4ZeroAuth());
-  const validatedBudget = recoveryBudget(R1_RECOVERY_DOCUMENT, R3_RECOVERY_DOCUMENT, r4Recovery);
+  const r5Recovery = validateR5RecoveryDocument(R5_RECOVERY_DOCUMENT);
+  const validatedBudget = recoveryBudget(
+    R1_RECOVERY_DOCUMENT,
+    R3_RECOVERY_DOCUMENT,
+    r4Recovery,
+    r5Recovery,
+  );
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
   activePreparationDiagnostics = diagnostics;
@@ -5070,6 +5281,7 @@ async function runFixturePreparation() {
       recoveryLedger: R1_RECOVERY_DOCUMENT,
       recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
       recoveryLedgerR4: r4Recovery,
+      recoveryLedgerR5: r5Recovery,
       beforeArm: (rpc, payload, evidence, binding) =>
         observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
@@ -5127,7 +5339,7 @@ async function runFixturePreparation() {
       );
       await tracedPreparation("RUNTIME_FRESH", async () => fresh());
     };
-    const link = async (path) => {
+    const link = async (path, options) => {
       if (!/^\/(?:contratos|competencias)\/[a-f0-9-]{36}(?:\/[a-z0-9-]+)*$/.test(path))
         err("PREPARER_SPA_PATH");
       await tracedPreparation("RUNTIME_FRESH", async () => fresh());
@@ -5140,11 +5352,40 @@ async function runFixturePreparation() {
           goKnown(`/contratos/${FIXTURE.contract}/competencias`),
         );
       }
-      const candidates = page.locator(`a[href="${path}"]:visible`);
       let selected = null;
+      if (options !== undefined) {
+        const spec = {
+          contract_summary: ["/contratos/" + FIXTURE.contract, "Contrato da competência"],
+          contract_documents: [
+            "/contratos/" + FIXTURE.contract + "/documentos",
+            "Documentos do contrato",
+          ],
+        }[options?.contextual];
+        if (!keys(options, ["contextual"]) || !spec || path !== spec[0]) err("PREPARER_SPA_PATH");
+        const nav = page.getByRole("navigation", { name: "Navegação principal", exact: true });
+        if ((await tracedPreparation("PREFLIGHT", async () => nav.count())) !== 1)
+          err("PREPARER_SPA_LINK");
+        const group = nav.getByRole("group", { name: "Contexto atual", exact: true });
+        if ((await tracedPreparation("PREFLIGHT", async () => group.count())) !== 1)
+          err("PREPARER_SPA_LINK");
+        const target = group.getByRole("link", { name: spec[1], exact: true });
+        if (
+          (await tracedPreparation("PREFLIGHT", async () => target.count())) !== 1 ||
+          !(await tracedPreparation("PREFLIGHT", async () => target.isVisible())) ||
+          !(await tracedPreparation("PREFLIGHT", async () => target.isEnabled())) ||
+          (await tracedPreparation("PREFLIGHT", async () => target.getAttribute("href"))) !==
+            path ||
+          (await tracedPreparation("PREFLIGHT", async () =>
+            target.getAttribute("aria-disabled"),
+          )) === "true"
+        )
+          err("PREPARER_SPA_LINK");
+        selected = target;
+      }
+      const candidates = page.locator(`a[href="${path}"]:visible`);
       for (
         let n = 0;
-        n < (await tracedPreparation("PREFLIGHT", async () => candidates.count()));
+        !selected && n < (await tracedPreparation("PREFLIGHT", async () => candidates.count()));
         n++
       ) {
         const item = candidates.nth(n);
@@ -5301,6 +5542,7 @@ async function runFixturePreparation() {
       recoveryLedger: R1_RECOVERY_DOCUMENT,
       recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
       recoveryLedgerR4: r4Recovery,
+      recoveryLedgerR5: r5Recovery,
       recoveryReady: (proof) => {
         broker.authorizeRecovery(proof);
         recoveryState = proof;
@@ -5424,6 +5666,14 @@ async function runFixturePreparation() {
       JSON.stringify(R3_RECOVERY_DOCUMENT, null, 2) + "\n",
       { mode: 0o600 },
     );
+    writeFileSync(join(output, "receipts-r5.json"), R5_RECOVERY_DOCUMENT.receiptsRaw, {
+      mode: 0o600,
+    });
+    writeFileSync(
+      join(output, "recovery-r5.json"),
+      JSON.stringify(R5_RECOVERY_DOCUMENT, null, 2) + "\n",
+      { mode: 0o600 },
+    );
     let sums = "";
     writeFileSync(
       join(output, "recovery-r2.json"),
@@ -5437,6 +5687,8 @@ async function runFixturePreparation() {
       "recovery-r2.json",
       "receipts-r3.json",
       "recovery-r3.json",
+      "receipts-r5.json",
+      "recovery-r5.json",
     ])
       sums +=
         createHash("sha256")
