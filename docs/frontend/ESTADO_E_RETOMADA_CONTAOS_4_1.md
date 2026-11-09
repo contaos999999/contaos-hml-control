@@ -1,3 +1,7 @@
+## 2026-11-09 | GATE R15: correção estrita do transporte externo512 e prova R14
+
+PLAN513merge1282198/review5832530162/CI42696531055+42696530807SUCCESS. GATE separado2auditmjs define2tentativas≤5s/sóTIMEOUTfetchoubody/sinalporattempt/deadline60s/ENVtokenporattempt/Master0GET; corrige signalforaescopo512 semReferenceError/errobruto. ProvaR14originalS6a62:10GETlógicos≤20físicos,4Gitblobsoriginais,matriz3runs/attempt1/jobs/artifacts0/cache9fresh30/resetantesENV. R14spent/nonce15futura; DocR13/UI507/10+1+13/R12cache/writer22+SHA23/HISTORY19/native18preservados. Nenhum Auth/SQL/deploy/rerun/request autorizado por este documento. Histórico integral abaixo.
+
 ## 2026-11-09 | Incidente PR512 externo: PLAN R15 não adota política ampliada
 
 Main869ccbe830d89717ee2091c1b36044d414fa67bf integrou externamente PR512/a9c0 apesarDRAFT/Important5832413282. Código3tentativas/12s/TRANSPORT/tokenfora não autorizado por este PLAN. Merge documental normal preserva esse baseline explicitamente; GATE separado deverá autorizar correção BUILD2auditmjs para2tentativas≤5s/sóTIMEOUTtipado/ENVporattempt/deadline60s/Master0GET antes de qualquer nonce15. ProvaR14 continuaS6a62/blobsoriginais; DocR13/budget10+1+13/cacheR12/UI507/writer22+SHA23/HISTORY19 intactos. Sem Auth/deploy/request/código nesta emenda. Histórico integral abaixo.

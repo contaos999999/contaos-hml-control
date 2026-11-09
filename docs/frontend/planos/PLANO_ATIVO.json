@@ -3598,5 +3598,33 @@
     "requires_separate_gate_before_code": true,
     "requires_corrected_build_before_nonce15": true,
     "auth_authorized": false
+  },
+  "trilha_a_r15_metadata_timeout_gate": {
+    "document": "docs/frontend/planos/TRILHA_A_R15_METADADOS_TIMEOUT_RECUPERACAO_GATE_2026-11-09.md",
+    "plan_merge_sha": "1282198bfc72ac4a119856139e6b95d9e14177dc",
+    "r14_source_sha": "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+    "source_audit_blob": "cbfb86149e89fb48a39d6c6b769167720b4004d0",
+    "source_preparer_blob": "79a7384eba8acd22a460c4bde11acb14100d2e07",
+    "logical_gets": 10,
+    "max_physical_gets": 20,
+    "max_attempts": 2,
+    "max_attempt_ms": 5000,
+    "global_deadline_ms": 60000,
+    "retry_only": "TYPED_TIMEOUT_FETCH_OR_BODY",
+    "same_signal_fetch_body": true,
+    "environment_per_attempt": true,
+    "master_gets": 0,
+    "master_fresh_ms": 30000,
+    "r14_cache_fields": 9,
+    "prior_confirmed": 10,
+    "prior_reserved": 1,
+    "max_new_intentions": 13,
+    "artifact_data_members": 22,
+    "artifact_total_members": 23,
+    "artifact_historical_members": 19,
+    "native_cases_preserved": 18,
+    "sourceforms_preserved": 5,
+    "auth_authorized": false,
+    "deploy_authorized": false
   }
 }
