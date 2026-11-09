@@ -4473,7 +4473,7 @@ export async function captureVisualEvidence({ brand, drain, stabilize, measure, 
       visualDiagnostic: visualMeasurementDiagnostic(metrics),
     });
     visualFailureSummaries.set(error, summarizeVisualFailure(metrics));
-    visualLegacyFailureSummaries.set(error, error.visualDiagnostic);
+    visualLegacyFailureSummaries.set(error, Object.freeze({ ...error.visualDiagnostic }));
     throw error;
   }
   if ((await privacy()) !== true) fail("PII_VISUAL_CAPTURE");
