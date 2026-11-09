@@ -5022,7 +5022,11 @@ export function parseSingleRequest(raw, operation, { historical = false } = {}) 
     !["fixtures", "audit"].includes(parsed.operation) ||
     (operation && parsed.operation !== operation) ||
     (parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce &&
-      !(historical && parsed.operation === "fixtures" && parsed.request_id === SINGLE_REQUEST.spentFixtureNonce)) ||
+      !(
+        historical &&
+        parsed.operation === "fixtures" &&
+        parsed.request_id === SINGLE_REQUEST.spentFixtureNonce
+      )) ||
     !hash40(parsed.approved_parent_sha)
   )
     fail("REQUEST_SCHEMA");
