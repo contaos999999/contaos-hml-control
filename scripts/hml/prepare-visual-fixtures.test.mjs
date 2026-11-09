@@ -2009,12 +2009,10 @@ test("R2 cada await relevante do codigo real passa pela barreira diagnostica", a
   }
   visit(sf);
   assert.ok(count >= 197);
-  assert.ok(
-    code.indexOf(
-      "validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);",
-      code.indexOf("async function runFixturePreparation"),
-    ) < code.indexOf('phase = "LOGIN"', code.indexOf("async function runFixturePreparation")),
-  );
+  const entry = code.indexOf("async function runFixturePreparation");
+  const ledger = code.indexOf("validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);", entry);
+  const login = code.indexOf('phase = "LOGIN"', entry);
+  assert.ok(entry >= 0 && ledger > entry && login > ledger);
   assert.match(code, /recoveryLedger:R1_RECOVERY_DOCUMENT|recoveryLedger: R1_RECOVERY_DOCUMENT/);
 });
 
@@ -2158,4 +2156,11 @@ test("R2 candidato recuperado nao reaparece quando o mesmo erro e reutilizado", 
   );
   assert.equal(d.snapshot().primaryFailure, "OBSERVATION_TABLE");
   assert.equal(d.snapshot().subphase, "SOURCE_VERSION_READ");
+});
+
+test("R2 ledger explicitamente ausente nunca vira documento aprovado por default", () => {
+  for (const absent of [undefined, null, {}, { schema: "contaos.fixture.receipts.v1" }])
+    assert.throws(() => sut.validateR1RecoveryDocument(absent), { message: "RECOVERY_LEDGER" });
+  assert.throws(() => sut.reconcileR1Recovery(r2Reconciliation({ ledger: undefined })), { message: "RECOVERY_LEDGER" });
+  assert.throws(() => sut.reconcileR1Recovery(r2Reconciliation({ ledger: null })), { message: "RECOVERY_LEDGER" });
 });
