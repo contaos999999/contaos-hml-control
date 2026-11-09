@@ -12360,3 +12360,71 @@ test("R13 actual controller rejects private or missing-public R12 repository met
       });
     }
 });
+
+async function r13WarmLocalProof() {
+  const f = await r13ControllerFixture(),
+    result = await sut.verifySingleRequest(f.options),
+    identity = { harnessSha: f.sha, moduleHash: "e".repeat(64), testHash: "f".repeat(64) },
+    runtime = {
+      schema: "contaos.single-request.runtime.v1",
+      createdAt: 100000,
+      ...result,
+      identity,
+    };
+  const local = {
+    operation: "fixtures",
+    env: f.env,
+    stat: f.stat,
+    git: f.git,
+    identity: async () => identity,
+    now: () => 100000,
+    fresh: true,
+    read: async (path) =>
+      path.includes(".audit-work/single-request.json") ? JSON.stringify(runtime) : f.read(path),
+  };
+  await sut.loadSingleRequestProof(local);
+  assert.deepEqual(sut.getValidatedR12ZeroAuth(), R13_R12_PROOF);
+  return { f, local, runtime };
+}
+test("R13 actual loader clears its warm context and R12 cache before rejecting a hostile environment", async () => {
+  const { f, local } = await r13WarmLocalProof();
+  let traps = 0;
+  const env = new Proxy(
+    {},
+    {
+      get() {
+        traps++;
+        throw Error("CANARY");
+      },
+      getPrototypeOf() {
+        traps++;
+        throw Error("CANARY");
+      },
+    },
+  );
+  await assert.rejects(() => sut.loadSingleRequestProof({ ...local, env }));
+  assert.equal(sut.singleRequestEventAllowed(f.env, "fixtures"), false);
+  assert.throws(() => sut.getValidatedR12ZeroAuth(), { code: "RECOVERY_R12_PROOF" });
+  assert.equal(traps, 0);
+});
+test("R13 actual controller clears its warm R12 cache before rejecting a hostile environment", async () => {
+  const { f } = await r13WarmLocalProof();
+  let traps = 0;
+  const env = new Proxy(
+    {},
+    {
+      get() {
+        traps++;
+        throw Error("CANARY");
+      },
+      getPrototypeOf() {
+        traps++;
+        throw Error("CANARY");
+      },
+    },
+  );
+  await assert.rejects(() => sut.verifySingleRequest({ ...f.options, env }));
+  assert.equal(sut.singleRequestEventAllowed(f.env, "fixtures"), false);
+  assert.throws(() => sut.getValidatedR12ZeroAuth(), { code: "RECOVERY_R12_PROOF" });
+  assert.equal(traps, 0);
+});
