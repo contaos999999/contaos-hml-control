@@ -13,7 +13,6 @@ import { resolve, join, basename, dirname, isAbsolute } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
-import { isProxy } from "node:util/types";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
@@ -4826,114 +4825,7 @@ async function nativeGuard() {
     );
     preparerSourceFormsCases = preparerSourceFormsSupplement(result.stdout);
     if (preparerSourceFormsCases !== 2) fail("PREPARER_SOURCEFORMS_NATIVE");
-  } catch (error) {
-    try {
-      if (!isProxy(error)) {
-        const descriptor = Object.getOwnPropertyDescriptor(error, "stdout");
-        const stdout = descriptor && "value" in descriptor ? descriptor.value : null;
-        const stages =
-          typeof stdout === "string"
-            ? [
-                ...stdout.matchAll(
-                  /^(?:# |    # )R7_LIST_SELECTOR_STAGE (\{[^\r\n]{1,240}\})\r?$/gm,
-                ),
-              ]
-            : [];
-        const errors =
-          typeof stdout === "string"
-            ? [
-                ...stdout.matchAll(
-                  /^(?:# |    # )R7_LIST_SELECTOR_ERROR (\{[^\r\n]{1,240}\})\r?$/gm,
-                ),
-              ]
-            : [];
-        const safeStages = [];
-        for (const match of stages.slice(0, 8)) {
-          const value = JSON.parse(match[1]);
-          if (
-            Object.keys(value).sort().join("|") === "stage" &&
-            ["ENTER", "FRAGMENT_BEGIN", "FRAGMENT_READY"].includes(value.stage)
-          )
-            safeStages.push({ stage: value.stage });
-          else if (
-            Object.keys(value).sort().join("|") === "calls|selections|stage" &&
-            value.stage === "AST_READY" &&
-            [value.calls, value.selections].every((n) => Number.isInteger(n) && n >= 0 && n <= 4)
-          )
-            safeStages.push({
-              stage: "AST_READY",
-              calls: value.calls,
-              selections: value.selections,
-            });
-        }
-        let safeError = null;
-        if (errors.length === 1) {
-          const value = JSON.parse(errors[0][1]);
-          if (
-            Object.keys(value).sort().join("|") === "actual|errorName|expected|operator" &&
-            [
-              "Error",
-              "TypeError",
-              "ReferenceError",
-              "SyntaxError",
-              "TimeoutError",
-              "UNKNOWN",
-            ].includes(value.errorName) &&
-            ["strictEqual", "deepStrictEqual", "==", "===", "OTHER"].includes(value.operator) &&
-            [value.actual, value.expected].every(
-              (n) => n === null || (Number.isInteger(n) && n >= 0 && n <= 4),
-            )
-          )
-            safeError = {
-              errorName: value.errorName,
-              operator: value.operator,
-              actual: value.actual,
-              expected: value.expected,
-            };
-        }
-        console.log(
-          JSON.stringify({
-            phase: "NATIVE_SELECTOR_RED",
-            state: "SETUP_DIAGNOSTIC",
-            stdoutKind: typeof stdout === "string" ? "STRING" : "ABSENT",
-            stages: safeStages,
-            error: safeError,
-          }),
-        );
-        const markers =
-          typeof stdout === "string"
-            ? [...stdout.matchAll(/^# R7_LIST_SELECTOR_RED (\{[^\r\n]{1,240}\})\r?$/gm)]
-            : [];
-        if (markers.length === 1) {
-          const receipt = JSON.parse(markers[0][1]);
-          if (
-            receipt &&
-            typeof receipt === "object" &&
-            !Array.isArray(receipt) &&
-            Object.keys(receipt).sort().join("|") ===
-              "consumerCount|expectedCount|oldExactCount|optionCount|schema" &&
-            receipt.schema === "contaos.list-selector.red.v1" &&
-            receipt.expectedCount === 1 &&
-            [receipt.optionCount, receipt.oldExactCount, receipt.consumerCount].every(
-              (n) => Number.isInteger(n) && n >= 0 && n <= 1,
-            )
-          )
-            console.log(
-              JSON.stringify({
-                phase: "NATIVE_SELECTOR_RED",
-                state: "OBSERVED_FAILURE",
-                schema: "contaos.list-selector.red.v1",
-                optionCount: receipt.optionCount,
-                oldExactCount: receipt.oldExactCount,
-                consumerCount: receipt.consumerCount,
-                expectedCount: 1,
-              }),
-            );
-        }
-      }
-    } catch {
-      // Only the closed technical receipt is eligible for output.
-    }
+  } catch {
     fail("PREPARER_SOURCEFORMS_NATIVE");
   }
 
@@ -6819,6 +6711,7 @@ export const SINGLE_REQUEST = Object.freeze({
   gateSha: "31b68f3cadbdc13a82bae23a43c35616f873d70b",
   autoGateSha: "122242fd421b348aef229683c0d3969611bce1db",
   recoveryGateSha: "581e161718d7f784961e2fef6bd1a75ba9295637",
+  listSelectionGateSha: "18424c16bcdc6d035e91e2dc8b7257ea755097d0",
   navigationGateSha: "ffffc501e5b5665026ff847bca1d2bf6df17fa73",
   bootstrapGateSha: "a8f3da12dcfeca858904b60e1b32c50df73a7d4a",
   readbackGateSha: "cd79ed9012e644f2ef65636eb1c30049301b74a5",
@@ -6829,13 +6722,14 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-a-fixtures-20261109-r3",
     "trilha-a-fixtures-20261109-r4",
     "trilha-a-fixtures-20261109-r5",
+    "trilha-a-fixtures-20261109-r6",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r6",
+    nonce: "trilha-a-fixtures-20261109-r7",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -7071,6 +6965,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.readbackGateSha,
       SINGLE_REQUEST.bootstrapGateSha,
       SINGLE_REQUEST.navigationGateSha,
+      SINGLE_REQUEST.listSelectionGateSha,
     );
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
