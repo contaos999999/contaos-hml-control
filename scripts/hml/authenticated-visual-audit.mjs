@@ -4635,6 +4635,30 @@ export function nativeVisualDiagnostic(stdout) {
   return last;
 }
 
+export function preparerSourceFormsSupplement(tap) {
+  if (
+    typeof tap !== "string" ||
+    !/^TAP version 13$/m.test(tap) ||
+    !/^1\.\.2$/m.test(tap) ||
+    /^not ok|# SKIP|# TODO/m.test(tap)
+  )
+    return null;
+  const names = [
+    "R3 Chromium sourceforms exact controls and actual source consumer",
+    "R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay",
+  ];
+  const oks = [...tap.matchAll(/^ok [0-9]+ - (.+)$/gm)].map((x) => x[1]);
+  if (oks.length !== 2 || names.some((name, i) => oks[i] !== name)) return null;
+  return Object.entries({ tests: 2, pass: 2, fail: 0, skipped: 0, cancelled: 0 }).every(
+    ([k, v]) => {
+      const m = [...tap.matchAll(new RegExp("^# " + k + " ([0-9]+)$", "gm"))];
+      return m.length === 1 && Number(m[0][1]) === v;
+    },
+  )
+    ? 2
+    : null;
+}
+
 async function nativeGuard() {
   let output;
   try {
@@ -4783,6 +4807,28 @@ async function nativeGuard() {
     fail("V123_NATIVE");
   }
 
+  let preparerSourceFormsCases;
+  try {
+    const result = await execFile(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=^R3 Chromium sourceforms",
+        "scripts/hml/prepare-visual-fixtures.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 60000,
+        maxBuffer: 1048576,
+      },
+    );
+    preparerSourceFormsCases = preparerSourceFormsSupplement(result.stdout);
+    if (preparerSourceFormsCases !== 2) fail("PREPARER_SOURCEFORMS_NATIVE");
+  } catch {
+    fail("PREPARER_SOURCEFORMS_NATIVE");
+  }
+
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/native-proof.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -4793,6 +4839,7 @@ async function nativeGuard() {
       preflightDrain: nativePreflightDrain(output),
       cases: 8,
       visualCases: 1,
+      preparerSourceFormsCases,
       sys04BrowserCases,
       v112BrowserCases,
       v123BrowserCases,
@@ -6665,12 +6712,16 @@ export const SINGLE_REQUEST = Object.freeze({
   autoGateSha: "122242fd421b348aef229683c0d3969611bce1db",
   recoveryGateSha: "581e161718d7f784961e2fef6bd1a75ba9295637",
   spentFixtureNonce: "trilha-a-fixtures-20261108-r1",
+  spentFixtureNonces: Object.freeze([
+    "trilha-a-fixtures-20261108-r1",
+    "trilha-a-fixtures-20261109-r2",
+  ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r2",
+    nonce: "trilha-a-fixtures-20261109-r3",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -6766,7 +6817,7 @@ export function parseSingleRequest(raw, operation, { historical = false } = {}) 
       !(
         historical &&
         parsed.operation === "fixtures" &&
-        parsed.request_id === SINGLE_REQUEST.spentFixtureNonce
+        SINGLE_REQUEST.spentFixtureNonces.includes(parsed.request_id)
       )) ||
     !hash40(parsed.approved_parent_sha)
   )

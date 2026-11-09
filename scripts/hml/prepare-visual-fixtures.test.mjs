@@ -456,7 +456,7 @@ function fakeRuntimePage({ logoutFails = false, wrongContext = false } = {}) {
     off: (k) => listeners.delete(k),
     goto: async () => {},
     locator: () => control("field"),
-    getByRole: (r, o) => control(o?.name || r),
+    getByRole: (r, o) => (r === "dialog" ? { count: async () => 0 } : control(o?.name || r)),
     waitForURL: async () => {},
     evaluate: async () => 204,
   };
@@ -2178,3 +2178,365 @@ test("popup policy: preparer awaits the shared proved launcher before context an
   assert.equal(source.includes("chromium.launch("), false);
   assert.equal(source.includes('await import("playwright")'), false);
 });
+
+test("R3 explicit empty-operation ledger rejects missing or modified proofs", () => {
+  assert.equal(sut.validateR2RecoveryDocument(sut.R2_RECOVERY_DOCUMENT).derivedIntentCount, 0);
+  for (const input of [undefined, null, {}, { ...sut.R2_RECOVERY_DOCUMENT, derivedIntentCount: 1 }])
+    assert.throws(() => sut.validateR2RecoveryDocument(input), /RECOVERY_R2_LEDGER/);
+});
+test("R3 bounded logout refuses unknown or duplicated overlay before Sair", async () => {
+  let clicked = 0;
+  const unknown = {
+    count: async () => 1,
+    elementHandle: async () => ({}),
+    evaluate: async () => "unknown",
+    getByRole: () => ({ count: async () => 0 }),
+  };
+  const page = {
+    getByRole: (role) => (role === "dialog" ? unknown : { click: async () => clicked++ }),
+  };
+  await assert.rejects(sut.dismissPreparationOverlays(page), /LOGOUT_OVERLAY/);
+  assert.equal(clicked, 0);
+});
+
+import { createRequire } from "node:module";
+function r3SourceFonteMarkup() {
+  const require = createRequire(import.meta.url);
+  const fs = require("fs"),
+    ts = require("typescript"),
+    React = require("react"),
+    { renderToStaticMarkup } = require("react-dom/server");
+  const p = "src/components/contratos/BaseNormativaContrato.tsx",
+    src = fs.readFileSync(p, "utf8"),
+    ast = ts.createSourceFile(p, src, 99, true, 4);
+  const f = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "DialogoFonte",
+  );
+  const js = ts.transpileModule(f.getText(ast), {
+    compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const wrap =
+    (tag) =>
+    ({ children }) =>
+      React.createElement(tag, null, children);
+  const names = [
+    "React",
+    "useState",
+    "useAcao",
+    "Dialog",
+    "DialogContent",
+    "DialogHeader",
+    "DialogTitle",
+    "DialogDescription",
+    "DialogFooter",
+    "Button",
+    "RodapeErro",
+    "devolverFoco",
+    "campo",
+    "SITUACOES_FONTE",
+  ];
+  const values = [
+    React,
+    React.useState,
+    () => ({ mut: { isPending: false, error: null }, renovar: () => true }),
+    ...["div", "div", "div", "h2", "p", "div", "button"].map(wrap),
+    () => null,
+    () => () => {},
+    "",
+    ["rascunho", "ativa", "inativa"],
+  ];
+  const C = new Function(...names, js + ";return DialogoFonte")(...values);
+  const html = renderToStaticMarkup(
+    React.createElement(C, {
+      fonte: {
+        id: "synthetic",
+        id_contrato: "synthetic",
+        situacao: "rascunho",
+        tipo: "lista_verificacao",
+        titulo: "fixture",
+      },
+      org: "synthetic",
+      contrato: "synthetic",
+      onFechar() {},
+      onConcluir() {},
+      onRecarregar() {},
+    }),
+  );
+  return html;
+}
+
+function r3SourceListMarkup() {
+  const require = createRequire(import.meta.url);
+  const fs = require("fs"),
+    ts = require("typescript"),
+    React = require("react"),
+    { renderToStaticMarkup } = require("react-dom/server"),
+    { JSDOM } = require("jsdom"),
+    { queryAllByLabelText, queryAllByRole } = require("@testing-library/dom");
+  const p = "src/components/contratos/GerenciarListas.tsx",
+    src = fs.readFileSync(p, "utf8"),
+    ast = ts.createSourceFile(p, src, 99, true, 4),
+    f = ast.statements.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "Formulario");
+  const js = ts.transpileModule(f.getText(ast), {
+    compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const C = new Function(
+    "React",
+    "useState",
+    "Button",
+    "CAMPO",
+    "ROTULOS_LISTA",
+    js + ";return Formulario",
+  )(
+    React,
+    React.useState,
+    ({ children, ...props }) => React.createElement("button", props, children),
+    "",
+    {
+      criar_lista: "Nova lista",
+      salvar_item: "Adicionar item",
+      publicar_versao: "Publicar versão",
+      alterar_situacao: "Alterar situação",
+    },
+  );
+  const want = {
+    criar_lista: ["Nome", "Descrição", "Início da vigência", "Fim da vigência", "Motivo"],
+    salvar_item: [
+      "Código",
+      "Descrição do item",
+      "Categoria",
+      "Obrigatório",
+      "Aplicável",
+      "Impeditivo",
+      "Criticidade",
+      "Identificador da versão da fonte formal",
+      "Ordem",
+      "Regra de validação e condição (JSON)",
+      "Motivo",
+    ],
+    publicar_versao: ["Motivo"],
+    alterar_situacao: ["Situação", "Motivo"],
+  };
+  return Object.entries(want).map(([acao, labels]) => ({
+    labels,
+    html: renderToStaticMarkup(
+      React.createElement(C, {
+        modelo: {
+          lista: { situacao: "rascunho", versao_registro: 1 },
+          versao: { id: "synthetic" },
+          versoes: [],
+        },
+        contexto: {},
+        acao,
+        disabled: false,
+        onEnviar() {},
+        onCancelar() {},
+      }),
+    ),
+  }));
+}
+
+test(
+  "R3 Chromium sourceforms exact controls and actual source consumer",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1" },
+  async () => {
+    const require = createRequire(import.meta.url),
+      fs = require("fs"),
+      ts = require("typescript"),
+      { chromium } = await import("playwright");
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const page = await browser.newPage();
+      await page.route("**/*", (r) => r.abort());
+      await page.setContent(
+        '<div role="dialog" aria-label="Editar fonte">' + r3SourceFonteMarkup() + "</div>",
+      );
+      const dialog = page.getByRole("dialog", { name: "Editar fonte", exact: true });
+      assert.equal(await dialog.getByLabel("Situação", { exact: true }).count(), 0);
+      assert.equal(
+        await dialog.getByRole("combobox", { name: sut.SOURCE_STATUS_NAME, exact: true }).count(),
+        1,
+      );
+      const source = fs.readFileSync(
+          new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+          "utf8",
+        ),
+        ast = ts.createSourceFile("preparer.mjs", source, 99, true, 1);
+      let consumer = null;
+      function visit(n) {
+        if (
+          ts.isExpressionStatement(n) &&
+          n.getText(ast).includes("sourceStatusControl(d)") &&
+          n.getText(ast).includes("selectOption")
+        )
+          consumer = n.getText(ast);
+        ts.forEachChild(n, visit);
+      }
+      visit(ast);
+      assert.ok(consumer);
+      await new (Object.getPrototypeOf(async () => {}).constructor)(
+        "d",
+        "sourceStatusControl",
+        "tracedPreparation",
+        consumer,
+      )(dialog, sut.sourceStatusControl, async (_, fn) => fn());
+      assert.equal(
+        await dialog
+          .getByRole("combobox", { name: sut.SOURCE_STATUS_NAME, exact: true })
+          .inputValue(),
+        "ativa",
+      );
+      await page.setContent(
+        '<div role="dialog" aria-label="Editar fonte">' +
+          r3SourceFonteMarkup() +
+          r3SourceFonteMarkup() +
+          "</div>",
+      );
+      await assert.rejects(
+        sut.sourceStatusControl(page.getByRole("dialog")),
+        /FLOW_SOURCE_CONTROL/,
+      );
+      let controls = 0;
+      for (const entry of r3SourceListMarkup()) {
+        await page.setContent(entry.html);
+        for (const label of entry.labels) {
+          assert.equal(
+            await (
+              ["Criticidade", "Situação"].includes(label)
+                ? page.getByRole("combobox", { name: label, exact: true })
+                : label === "Regra de validação e condição (JSON)"
+                  ? page.getByRole("textbox", { name: label, exact: true })
+                  : page.getByLabel(label, { exact: true })
+            ).count(),
+            1,
+            label,
+          );
+          controls++;
+        }
+        assert.equal(
+          await page.getByRole("button", { name: "Revisar operação", exact: true }).count(),
+          1,
+        );
+      }
+      assert.equal(controls, 19);
+      const remaining = r3RemainingSourceMarkup();
+      let additional = 0;
+      for (const group of remaining.reports.flat()) {
+        const fields = group.fields || group.labels;
+        const file = group.path
+          ? "/vercel/r3-fragments-" + group.path.split("/").pop() + ".html"
+          : "/vercel/r3-" + group.name + ".html";
+        const html = remaining.outputs[file];
+        assert.ok(html, file);
+        await page.setContent(html);
+        for (const field of fields) {
+          const label = field.label;
+          assert.equal(await page.getByLabel(label, { exact: true }).count(), 1, label);
+          additional++;
+        }
+      }
+      assert.equal(additional, 17);
+    } finally {
+      await browser.close();
+    }
+  },
+);
+test(
+  "R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1" },
+  async () => {
+    const { chromium } = await import("playwright");
+    const browserCode = r3BrowserBundle(
+      'import React from "react";import{createRoot}from"react-dom/client";import * as D from "@radix-ui/react-dialog";\nfunction App(){const[a,A]=React.useState(true),[b,B]=React.useState(true);const e=React.createElement;return e(React.Fragment,null,e("button",{onClick:()=>location.href="/login"},"Sair"),e(D.Root,{open:a,onOpenChange:A},e(D.Portal,null,e(D.Overlay),e(D.Content,null,e(D.Title,null,"FONTE SINTETICA TRILHA A 20261108"),e(D.Description,null,"Offline"),e(D.Close,null,"Close"),e(D.Root,{open:b,onOpenChange:B},e(D.Portal,null,e(D.Overlay),e(D.Content,null,e(D.Title,null,"Editar fonte"),e(D.Description,null,"Offline"),e(D.Close,null,"Cancelar"))))))));}createRoot(document.getElementById("root")).render(React.createElement(App));',
+    );
+    const browser = await chromium.launch({ headless: true });
+    try {
+      const page = await browser.newPage();
+      let auth = 0;
+      await page.route("**/*", (route) => {
+        if (route.request().url().includes("/auth/")) auth++;
+        return route.fulfill({ contentType: "text/html", body: '<div id="root"></div>' });
+      });
+      await page.goto(FIXTURE.origin + "/");
+      await page.addScriptTag({ content: browserCode });
+      await page.getByRole("dialog", { name: "Editar fonte", exact: true }).waitFor();
+      assert.equal(await page.getByRole("button", { name: "Sair", exact: true }).count(), 0);
+      const runtime = sut.createRuntimeLogin({
+        page,
+        fence: { drain: async () => {}, assertSafe() {} },
+        waitOrganization: async () => {},
+        openOrganizationSelector: async () => {},
+        verifyContext: async () => true,
+      });
+      assert.equal(await runtime.logout(), true);
+      assert.equal(new URL(page.url()).pathname, "/login");
+      assert.equal(auth, 0);
+      runtime.clear();
+      await page.setContent(
+        '<div role="dialog" aria-label="Unknown"><button>Cancelar</button></div>',
+      );
+      await assert.rejects(sut.dismissPreparationOverlays(page), /LOGOUT_OVERLAY/);
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+function r3BrowserBundle(entry) {
+  const require = createRequire(import.meta.url),
+    fs = require("fs"),
+    ts = require("typescript"),
+    modules = [],
+    ids = new Map();
+  function add(file) {
+    if (ids.has(file)) return ids.get(file);
+    const id = modules.length;
+    ids.set(file, id);
+    modules.push(null);
+    const source = fs.readFileSync(file, "utf8"),
+      deps = {};
+    for (const match of source.matchAll(/require\(["']([^"']+)["']\)/g)) {
+      const resolver = createRequire(file);
+      deps[match[1]] = add(resolver.resolve(match[1]));
+    }
+    modules[id] = { source: file.endsWith(".json") ? "module.exports=" + source : source, deps };
+    return id;
+  }
+  const source = ts.transpileModule(entry, {
+      compilerOptions: {
+        module: ts.ModuleKind.CommonJS,
+        esModuleInterop: true,
+        target: ts.ScriptTarget.ES2022,
+      },
+    }).outputText,
+    deps = {};
+  for (const match of source.matchAll(/require\(["']([^"']+)["']\)/g))
+    deps[match[1]] = add(require.resolve(match[1]));
+  const root = modules.length;
+  modules.push({ source, deps });
+  return (
+    '(function(){const process={env:{NODE_ENV:"production"}}, modules=' +
+    JSON.stringify(modules) +
+    ',cache={};function load(id){if(cache[id])return cache[id].exports;const m=cache[id]={exports:{}};const row=modules[id];new Function("require","module","exports","process",row.source)(name=>load(row.deps[name]),m,m.exports,process);return m.exports;}load(' +
+    root +
+    ");})();"
+  );
+}
+
+function r3RemainingSourceMarkup() {
+  const requireReal = createRequire(import.meta.url),
+    fs = requireReal("fs"),
+    outputs = {},
+    reports = [];
+  const require = (name) =>
+    name === "fs"
+      ? { ...fs, writeFileSync: (path, html) => (outputs[path] = html) }
+      : requireReal(name);
+  const console = { log: (text) => reports.push(JSON.parse(text)) };
+  for (const script of [
+    "require=require('module').createRequire(process.cwd()+'/package.json');const fs=require('fs'),ts=require('typescript'),React=require('react'),{renderToStaticMarkup}=require('react-dom/server'),{JSDOM}=require('jsdom'),{queryAllByLabelText,queryAllByRole}=require('@testing-library/dom');const src=fs.readFileSync('src/components/contratos/BaseNormativaContrato.tsx','utf8'),ast=ts.createSourceFile('source.tsx',src,99,true,4);const wrap=t=>({children,...p})=>React.createElement(t,{type:p.type,disabled:p.disabled},children);const env={React,useState:React.useState,useAcao:()=>({mut:{isPending:false,error:null},renovar:()=>true}),useQueryClient:()=>({}),useQuery:()=>({data:{itens:[],total:0},isError:false,isFetching:false}),Dialog:wrap('div'),DialogContent:wrap('div'),DialogHeader:wrap('div'),DialogTitle:wrap('h2'),DialogDescription:wrap('p'),DialogFooter:wrap('div'),Button:wrap('button'),RodapeErro:()=>null,devolverFoco:()=>()=>{},campo:'',formatarDataBr:v=>v||'—'};for(const[name,labels,button,props]of [['DialogoVersao',['Início da vigência','Fim da vigência (opcional)','Texto','Texto da versão'],'Registrar versão',{fonte:{id:'synthetic',id_contrato:'synthetic'},ctx:{idUsuario:'synthetic'}}],['DialogoAprovar',['Fundamento','Confirmo que revisei hash, origem e vigência desta versão.'],'Aprovar',{v:{id:'synthetic',versao:1,hash:'a'.repeat(64),inicio_vigencia:'2026-01-01',fim_vigencia:null}}]]){const f=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text===name);const js=ts.transpileModule(f.getText(ast),{compilerOptions:{jsx:ts.JsxEmit.React,target:ts.ScriptTarget.ES2022}}).outputText;const C=new Function(...Object.keys(env),js+';return '+name)(...Object.values(env));const html=renderToStaticMarkup(React.createElement(C,{...props,org:'synthetic',onFechar(){},onConcluir(){},onRecarregar(){}}));fs.writeFileSync('/vercel/r3-'+name+'.html',html);const d=new JSDOM(html).window.document;console.log(JSON.stringify({name,labels:labels.map(label=>({label,count:queryAllByLabelText(d.body,label,{exact:true}).length})),button:{name:button,count:queryAllByRole(d.body,'button',{name:button,exact:true}).length}}));}",
+    "require=require('module').createRequire(process.cwd()+'/package.json');const fs=require('fs'),ts=require('typescript'),React=require('react'),{renderToStaticMarkup}=require('react-dom/server'),{JSDOM}=require('jsdom'),{queryAllByLabelText}=require('@testing-library/dom');const files=[['src/components/contratos/CompetenciasContrato.tsx',['Competência']],['src/components/contratos/NovaCompetencia.tsx',['Competência (mês/ano)']],['src/components/competencias/RevisaoRequisito.tsx',['Resultado da revisão','Justificativa da revisão','Fundamento da revisão','Página da evidência 1','Trecho da evidência 1']],['src/components/competencias/CompetenciaParecer.tsx',['Fundamento (opcional)']],['src/components/competencias/CompetenciaApresentar.tsx',['Fundamento da aprovação (opcional)','Protocolo (se disponível)','Forma da apresentação (se disponível)']]];const env={React,Input:p=>React.createElement('input',p),Textarea:p=>React.createElement('textarea',p),prefix:'offline',i:0,ev:{pagina:1,trecho:''},filtros:{mes:'',situacao:''},valor:'2026-10',desabilitado:false,invalido:false,CAMPO:'',resultado:'conforme',RESULTADOS_REVISAO:['conforme'],rotuloResultado:x=>x,justificativa:'',fundamento:'',decisao:{aprovar:true},protocolo:'',forma:'',formaApresentacao:'',ocupado:false,pendente:false,enviando:false,mutacaoPendente:false,confirmacao:null,intencao:{current:null}};let reports=[];for(const[p,wanted]of files){const src=fs.readFileSync(p,'utf8'),a=ts.createSourceFile(p,src,99,true,4),labels=[];function walk(n){if(ts.isJsxElement(n)&&n.openingElement.tagName.getText(a)==='label'&&n.parent.children){const ix=n.parent.children.indexOf(n),control=n.parent.children.slice(ix+1).find(x=>ts.isJsxElement(x)||ts.isJsxSelfClosingElement(x));if(control){const text=n.children.filter(ts.isJsxText).map(x=>x.getText(a)).join(' ').replace(/\\s+/g,' ').trim();if(wanted.some(w=>w.startsWith(text)))labels.push([n,control]);}}ts.forEachChild(n,walk)}walk(a);const fragments=[];for(const[label,control]of labels){const js=ts.transpileModule('function Fixture(){return <>'+label.getText(a)+control.getText(a)+'</>}',{compilerOptions:{jsx:ts.JsxEmit.React,target:ts.ScriptTarget.ES2022}}).outputText;const C=new Function(...Object.keys(env),js+';return Fixture')(...Object.values(env));fragments.push(renderToStaticMarkup(React.createElement(C)));}const html=fragments.join('');const d=new JSDOM(html).window.document;fs.writeFileSync('/vercel/r3-fragments-'+p.split('/').pop()+'.html',html);reports.push({path:p,method:'SOURCE_AST_LABEL_AND_ADJACENT_CONTROL_NOT_FULL_COMPONENT',fields:wanted.map(label=>({label,count:queryAllByLabelText(d.body,label,{exact:true}).length}))});}console.log(JSON.stringify(reports));",
+  ])
+    new Function("require", "console", script.replace(/^require=[^;]+;/, ""))(require, console);
+  return { outputs, reports };
+}
