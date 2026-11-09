@@ -1651,6 +1651,7 @@ function r2Reconciliation(delta = {}) {
     })),
     ledger: sut.R1_RECOVERY_DOCUMENT,
     ledgerR3: sut.R3_RECOVERY_DOCUMENT,
+    ledgerR4: sut.R4_RECOVERY_DOCUMENT,
     source: { ...context, id: FIXTURE.source, ...sut.SOURCE_FIELDS, version: 1, situacao: "ativa" },
     version: {
       ...context,
@@ -1677,6 +1678,7 @@ test("R2 ledger omitido undefined ou null não emite prova de reconciliação", 
     persist: () => true,
     recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
   });
   for (const input of [
     omitted,
@@ -1703,6 +1705,7 @@ test("R2 reconcilia somente estado oficial unico aprovado antes de armar", () =>
     competenceGateAmended: true,
     recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
   });
   assert.throws(() => arm(b), { message: "RECOVERY_READ_ONLY" });
   assert.throws(() => b.authorizeRecovery({ ...proof }), { message: "RECOVERY_PROOF" });
@@ -1739,6 +1742,7 @@ test("R2 contabiliza duas anteriores e limita novas intencoes a22", () => {
     competenceGateAmended: true,
     recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
   for (let n = 0; n < 21; n++) {
@@ -2749,6 +2753,7 @@ test("R4 validates explicit original R3 ledger and debits exactly one prior acti
   const b = broker({
     recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 3);
   for (const rpc of [
@@ -2913,6 +2918,7 @@ test("R4 report derives real arm sent and terminal scalars without request ident
   const b = broker({
     recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
     recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
   assert.deepEqual(sut.preparationIntentSummary(b), {
@@ -3840,4 +3846,43 @@ test("R4 causal RPC read validates options before returning an admitted snapshot
       { message: "OBSERVATION_ORDINAL" },
     );
   o.close();
+});
+
+test("R5 explicit R4 proof is required before recovery broker and preserves three plus twenty one", () => {
+  assert.equal(typeof sut.validateR4RecoveryDocument, "function");
+  const clean = sut.validateR4RecoveryDocument(sut.R4_RECOVERY_DOCUMENT);
+  assert.equal(clean.derivedNewBusinessIntents, 0);
+  for (const value of [
+    undefined,
+    null,
+    {},
+    { ...clean, derivedNewBusinessIntents: 1 },
+    { ...clean, attempt: 2 },
+  ])
+    assert.throws(() => sut.validateR4RecoveryDocument(value), /RECOVERY_R4_PROOF/);
+  assert.throws(
+    () =>
+      sut.createIntentBroker({
+        recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+        recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+      }),
+    /RECOVERY_R4_PROOF/,
+  );
+  const b = sut.createIntentBroker({
+    persist: () => true,
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: clean,
+  });
+  assert.equal(b.snapshot().confirmedBefore, 3);
+  assert.equal(b.snapshot().maxNewIntentions, 21);
+  for (const rpc of [
+    "registrar_versao_fonte_v107",
+    "aprovar_versao_fonte_v107",
+    "salvar_fonte_normativa_v107",
+  ])
+    assert.throws(
+      () => b.arm({ rpc, payload: {}, requestId: randomUUID() }),
+      /RECOVERY_CONFIRMED_OPERATION/,
+    );
 });

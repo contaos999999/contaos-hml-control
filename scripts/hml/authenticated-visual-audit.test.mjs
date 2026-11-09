@@ -18,6 +18,7 @@ function fn(name) {
   assert.equal(typeof sut[name], "function", `${name}: comportamento ainda não implementado`);
   return sut[name];
 }
+const R5_R4_HEAD = "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72";
 const HML = "https://contaos-41-hml.vercel.app";
 const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
 const config = {
@@ -5198,7 +5199,7 @@ test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r4",
+    request_id: "trilha-a-fixtures-20261109-r5",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "b".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5408,7 +5409,7 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r4",
+    request_id: "trilha-a-fixtures-20261109-r5",
     approved_parent_sha: parent,
     frontend_sha: "c".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5416,6 +5417,8 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
   const raw = JSON.stringify(request),
     path = fn("parseSingleRequest") && sut.SINGLE_REQUEST.path;
   const git = async (args) => {
+    if (args[0] === "show" && args[1].startsWith(R5_R4_HEAD + ":"))
+      return (await r5R4Fixture()).git(args);
     if (args[0] === "show") return raw;
     if (args[0] === "rev-parse") return sha + "\n";
     if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ") + "\n";
@@ -5450,7 +5453,7 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r4",
+    request_id: "trilha-a-fixtures-20261109-r5",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5541,6 +5544,8 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
   const stat = async () => ({ isFile: () => true, isSymbolicLink: () => false, size: raw.length });
   const git = async (args) => {
     assert.equal(args.includes(""), false, "Git nunca recebe SHA vazio");
+    if (args[0] === "show" && args[1].startsWith(R5_R4_HEAD + ":"))
+      return (await r5R4Fixture()).git(args);
     if (args[0] === "show") return raw;
     if (args[0] === "rev-parse") return sha;
     if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ");
@@ -5550,7 +5555,10 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     if (args[0] === "log") return sha;
     throw new Error("unexpected git");
   };
+  const r4Fixture = await r5R4Fixture();
   const get = async (path) => {
+    if (path.includes(R5_R4_HEAD) || /42568309807|42568382053|42568382029/.test(path))
+      return r4Fixture.get(path);
     if (path === "") return { ...repo, private: false };
     if (path.startsWith("/commits/")) return [pull];
     if (path === "/pulls/90") return pull;
@@ -5677,7 +5685,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     sha = "a".repeat(40),
     parent = "b".repeat(40),
     head = "d".repeat(40);
-  const request = { request_id: "trilha-a-fixtures-20261109-r4", approved_parent_sha: parent };
+  const request = { request_id: "trilha-a-fixtures-20261109-r5", approved_parent_sha: parent };
   const pull = {
     id: 300,
     number: 90,
@@ -5827,7 +5835,7 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r4",
+    request_id: "trilha-a-fixtures-20261109-r5",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -5873,7 +5881,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r4",
+    request_id: "trilha-a-fixtures-20261109-r5",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5883,6 +5891,8 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     ancestors = [];
   const git = async (args) => {
     assert.equal(args.includes(""), false, "Git nunca recebe SHA vazio");
+    if (args[0] === "show" && args[1].startsWith(R5_R4_HEAD + ":"))
+      return (await r5R4Fixture()).git(args);
     if (args[0] === "show") return raw;
     if (args[0] === "rev-parse") return sha;
     if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ");
@@ -5901,6 +5911,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     sut.SINGLE_REQUEST.fixturesSha,
     sut.SINGLE_REQUEST.recoveryGateSha,
     sut.SINGLE_REQUEST.readbackGateSha,
+    sut.SINGLE_REQUEST.bootstrapGateSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   await assert.rejects(
@@ -7855,7 +7866,7 @@ test("R3 only current nonce executes and exact R1 R2 remain spent", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r4",
+    request_id: "trilha-a-fixtures-20261109-r5",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -8323,4 +8334,231 @@ test("R3 native supplement rejects incomplete skipped fabricated or failed TAP",
     "not ok 1 - failure",
   ])
     assert.equal(sut.preparerSourceFormsSupplement(tap), null);
+});
+
+async function r5R4Fixture() {
+  const { execFileSync } = await import("node:child_process");
+  const repo = { full_name: "contaos999999/contaos-hml-control" };
+  const definitions = [
+    [
+      42568309807,
+      406076025,
+      "contaos-frontend-zero-drift.yml",
+      "push",
+      "failure",
+      "2026-11-09T05:36:46Z",
+      "2026-11-09T05:37:28Z",
+    ],
+    [
+      42568382053,
+      411426169,
+      "contaos-trilha-a-fixtures.yml",
+      "workflow_run",
+      "skipped",
+      "2026-11-09T05:37:31Z",
+      "2026-11-09T05:37:41Z",
+    ],
+    [
+      42568382029,
+      411115674,
+      "contaos-trilha-a-authenticated.yml",
+      "workflow_run",
+      "skipped",
+      "2026-11-09T05:37:31Z",
+      "2026-11-09T05:37:32Z",
+    ],
+  ];
+  const runs = definitions.map(
+    ([id, workflow_id, path, event, conclusion, created_at, updated_at]) => ({
+      id,
+      workflow_id,
+      path: ".github/workflows/" + path,
+      event,
+      conclusion,
+      created_at,
+      updated_at,
+      head_sha: R5_R4_HEAD,
+      head_branch: "main",
+      run_attempt: 1,
+      status: "completed",
+      repository: repo,
+      head_repository: repo,
+    }),
+  );
+  const skipped = (id, name) => ({
+    id,
+    name,
+    status: "completed",
+    conclusion: "skipped",
+    steps: [],
+  });
+  const jobs = [
+    [
+      {
+        id: 128999621110,
+        name: "ContaOS Frontend Zero-Drift",
+        status: "completed",
+        conclusion: "failure",
+        steps: [{ name: "Setup Bun", status: "completed", conclusion: "failure" }],
+      },
+      {
+        id: 128999621372,
+        name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        status: "completed",
+        conclusion: "success",
+        steps: [],
+      },
+    ],
+    [
+      skipped(128999841934, "Trilha A solicitacao unica sem credenciais"),
+      skipped(128999842395, "Trilha A protocolo e Chromium sem credenciais"),
+      skipped(128999842616, "Trilha A preparacao sintetica HML"),
+    ],
+    [
+      skipped(128999842036, "Trilha A solicitacao unica sem credenciais"),
+      skipped(128999885461, "Trilha A auditoria privada HML"),
+      skipped(128999889276, "Trilha A protocolo e Chromium sem credenciais"),
+    ],
+  ];
+  const requests = [];
+  const get = async (path) => {
+    requests.push(path);
+    for (let i = 0; i < runs.length; i++) {
+      const r = runs[i];
+      if (path === "/actions/runs/" + r.id) return structuredClone(r);
+      if (path === "/actions/runs/" + r.id + "/attempts/1/jobs?per_page=100&page=1")
+        return { total_count: jobs[i].length, jobs: structuredClone(jobs[i]) };
+      if (
+        path ===
+        "/actions/workflows/" +
+          r.workflow_id +
+          "/runs?head_sha=" +
+          R5_R4_HEAD +
+          "&event=" +
+          r.event +
+          "&per_page=100&page=1"
+      )
+        return { total_count: 1, workflow_runs: [structuredClone(r)] };
+    }
+    throw Error("R5_UNEXPECTED_ENDPOINT");
+  };
+  const git = async (args) => {
+    if (args[0] === "merge-base") return "";
+    return execFileSync("git", args, { encoding: "utf8", maxBuffer: 1048576 });
+  };
+  return { runs, jobs, get, git, requests };
+}
+test("R5 proves original R4 skipped private jobs through exact live metadata and source blobs", async () => {
+  const f = await r5R4Fixture();
+  const proof = await fn("verifyR4ZeroAuth")(f);
+  assert.equal(proof.derivedNewBusinessIntents, 0);
+  assert.equal(proof.headSha, R5_R4_HEAD);
+  assert.equal(proof.proof, "GITHUB_ACTIONS_LIVE_METADATA");
+  assert.equal(f.requests.length, 9);
+  assert.equal(
+    f.requests.some((x) => /logs|artifacts|auth|supabase/i.test(x)),
+    false,
+  );
+  assert.equal(fn("validateR4ZeroAuthProof")(proof), true);
+});
+test("R5 rejects divergent R4 metadata private execution attempts duplicates and incomplete pagination", async () => {
+  for (const mode of [
+    "head",
+    "runId",
+    "attempt",
+    "time",
+    "private",
+    "steps",
+    "missing",
+    "unknown",
+    "duplicate",
+    "extraRun",
+    "http",
+    "pagination",
+  ]) {
+    const f = await r5R4Fixture();
+    if (mode === "head") f.runs[0].head_sha = "a".repeat(40);
+    if (mode === "runId") f.runs[1].id++;
+    if (mode === "attempt") f.runs[2].run_attempt = 2;
+    if (mode === "time") f.runs[1].created_at = "2026-11-09T05:37:00Z";
+    if (mode === "private") f.jobs[1][2].conclusion = "success";
+    if (mode === "steps")
+      f.jobs[2][1].steps = [{ name: "Auth canary-secret", conclusion: "success" }];
+    if (mode === "missing") f.jobs[1].pop();
+    if (mode === "unknown") f.jobs[2][0].name = "unknown";
+    if (mode === "duplicate") f.jobs[1][0] = f.jobs[1][1];
+    const get = async (path) => {
+      if (mode === "http") throw Error("PRIVATE_CANARY_TOKEN_URL");
+      const v = await f.get(path);
+      if (path.includes("/runs?")) {
+        if (mode === "extraRun")
+          return {
+            total_count: 2,
+            workflow_runs: [...v.workflow_runs, { ...v.workflow_runs[0], id: 999 }],
+          };
+        if (mode === "pagination") return { total_count: 101, workflow_runs: v.workflow_runs };
+      }
+      return v;
+    };
+    await assert.rejects(
+      () => fn("verifyR4ZeroAuth")({ ...f, get }),
+      (e) => e.code === "RECOVERY_R4_PROOF" && !String(e).includes("CANARY"),
+    );
+  }
+  const f = await r5R4Fixture();
+  await assert.rejects(() => fn("verifyR4ZeroAuth")({ ...f, git: async () => "" }), {
+    code: "RECOVERY_R4_PROOF",
+  });
+});
+test("R5 is the only executable fixture nonce and R4 remains historical", () => {
+  const req = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r5",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.equal(sut.parseSingleRequest(JSON.stringify(req)).request_id, req.request_id);
+  for (const nonce of [
+    "trilha-a-fixtures-20261108-r1",
+    "trilha-a-fixtures-20261109-r2",
+    "trilha-a-fixtures-20261109-r3",
+    "trilha-a-fixtures-20261109-r4",
+  ]) {
+    assert.throws(() => sut.parseSingleRequest(JSON.stringify({ ...req, request_id: nonce })), {
+      code: "REQUEST_SCHEMA",
+    });
+    assert.equal(
+      sut.parseSingleRequest(JSON.stringify({ ...req, request_id: nonce }), undefined, {
+        historical: true,
+      }).request_id,
+      nonce,
+    );
+  }
+});
+
+test("R5 runtime refuses missing or forged R4 proof before exposing broker evidence", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const result = spawnSync(
+    process.execPath,
+    [
+      "--input-type=module",
+      "-e",
+      "import{getValidatedR4ZeroAuth}from'./scripts/hml/authenticated-visual-audit.mjs';try{getValidatedR4ZeroAuth();process.exitCode=2}catch(e){if(e.code!=='RECOVERY_R4_PROOF')process.exitCode=3;else console.log(e.code)}",
+    ],
+    { cwd: new URL("../../", import.meta.url), encoding: "utf8" },
+  );
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout.trim(), "RECOVERY_R4_PROOF");
+  assert.equal(result.stderr, "");
+  for (const value of [
+    null,
+    {},
+    { ...sut.R4_ZERO_AUTH_PROOF, attempt: 2 },
+    { ...sut.R4_ZERO_AUTH_PROOF, derivedNewBusinessIntents: 1 },
+    { ...sut.R4_ZERO_AUTH_PROOF, extra: true },
+  ])
+    assert.throws(() => sut.validateR4ZeroAuthProof(value), { code: "RECOVERY_R4_PROOF" });
 });
