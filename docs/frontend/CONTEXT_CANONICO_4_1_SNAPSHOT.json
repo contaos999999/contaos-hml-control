@@ -2,7 +2,7 @@
   "schema": "contaos.frontend.canonical-source-snapshot.v1",
   "source_repo": "contaos999999/develop",
   "source_branch": "main",
-  "source_commit": "65767bfe58c5c9818824ab0ada38d9f412c19054",
+  "source_commit": "8dc073d7ad4344231f99169a2180465a3354fe4c",
   "source_date": "2026-11-09",
   "context_documents": [
     {
@@ -1263,5 +1263,5 @@
     "Rastreabilidade 100/97 não é sinônimo de 100/97 features implementadas. Prompts ainda sem mapeamento atômico efetivo devem ficar BLOQUEADOS até revisão pontual."
   ],
   "safe_scope": "Apenas snapshot de DOCUMENTAÇÃO canônica; não inspeciona schemas, RPCs, RLS, dados ou funcionamento backend sem autorização.",
-  "p0_reanchor_note": "Reancoragem documental Trilha A no backend65767bfe:25/25blobs canônicos e catálogo100/97 iguais; types8ea congelado. Delta9b55→65767bfe em cinco caminhos: consumer Edge copilot-query, teste copilot_openai_contract, hook Restore, PLAN e active-task. Edge Copilot passa a validar Auth/JWT e sessão, fontes por userClient/RLS com limites, permissões canônicas e reserva antes de embedding/OpenAI, lease/deadline/finalização fenced e revalidação de fontes antes do provedor; CORS é restrito e request-scoped. Nenhuma migration, tabela, RLS, grant ou contrato de API consumida pela Trilha A foi alterado nesse delta. Não comprova deployment ou certificação HML da Trilha C. Fonte viva e guard freshness obrigatórios; a leitura não recertificaTrilhaC."
+  "p0_reanchor_note": "Reancoragem documental Trilha A no backend8dc073d7:25/25blobs canônicos, catálogo100/97 e types8ea preservados. Delta65767bfe→8dc073d7 em três caminhos: PLAN/active-task e duas fixtures unitárias no p0_crud_global_remaining.test.mjs. As fixtures usam snapshotB completo com SHA256 fixo validado antes do parse, mantendo mutações negativas, assertions e routing; testes não herdam flags mutáveis da tarefa corrente. Nenhuma fonte de produto, workflow, SQL, Edge, RLS, Auth, Storage ou API anterior alterada nesse delta. Não implica execução, deployment ou certificação HML da Trilha C. Fonte viva e freshness obrigatórios."
 }
