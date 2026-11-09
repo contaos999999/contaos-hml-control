@@ -5901,9 +5901,24 @@ test("Run114 diagnóstico limita contadores e ignora getters de campos não auto
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: -40000 }).overflowX, -30000);
 });
 
-test("R2 nonce corrente rejeita R1 e historico reconhece apenas R1 consumido",()=>{
- const row={schema_version:1,issue:317,operation:"fixtures",request_id:"trilha-a-fixtures-20261108-r1",approved_parent_sha:"a".repeat(40),frontend_sha:"",deployment_id:""};
- assert.throws(()=>fn("parseSingleRequest")(JSON.stringify(row),"fixtures"));
- assert.equal(fn("parseSingleRequest")(JSON.stringify(row),"fixtures",{historical:true}).request_id,row.request_id);
- assert.throws(()=>fn("parseSingleRequest")(JSON.stringify({...row,request_id:"unknown"}),"fixtures",{historical:true}));
+test("R2 nonce corrente rejeita R1 e historico reconhece apenas R1 consumido", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261108-r1",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.throws(() => fn("parseSingleRequest")(JSON.stringify(row), "fixtures"));
+  assert.equal(
+    fn("parseSingleRequest")(JSON.stringify(row), "fixtures", { historical: true }).request_id,
+    row.request_id,
+  );
+  assert.throws(() =>
+    fn("parseSingleRequest")(JSON.stringify({ ...row, request_id: "unknown" }), "fixtures", {
+      historical: true,
+    }),
+  );
 });
