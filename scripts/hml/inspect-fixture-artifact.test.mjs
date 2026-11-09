@@ -20,6 +20,7 @@ import {
   validateRecords,
   validateDownloadOutput,
   validateMetadata,
+  executeOfficialTool,
   buildProof,
   sha256,
 } from "./inspect-fixture-artifact.mjs";
@@ -523,15 +524,67 @@ test("R6 proof inspection origin is closed before serializing any caller object"
   }
   assert.equal(calls, 0);
 });
-test("temporary public YAML formatting bridge", async () => {
-  const prettier = await import("prettier");
-  const yaml = readFileSync(".github/workflows/contaos-trilha-a-fixture-inspection.yml", "utf8");
-  const formatted = await prettier.format(yaml, {
-    printWidth: 100,
-    semi: true,
-    singleQuote: false,
-    trailingComma: "all",
-    parser: "yaml",
-  });
-  console.log("R6_YAML_FORMAT " + JSON.stringify(formatted));
+
+test("R6 real downloader consumer fixes child inputs and keeps errors and private logs captured", () => {
+  let observed;
+  const run = (result) =>
+    executeOfficialTool(
+      "/fixed/tool",
+      "/fixed/output",
+      "TEST_TOKEN",
+      () => 30000,
+      (bin, args, options) => {
+        observed = { bin, args, options };
+        return result;
+      },
+    );
+  assert.equal(run({ ...downloaded(), signal: null, error: undefined }), true);
+  assert.equal(observed.bin, process.execPath);
+  assert.deepEqual(observed.args, ["/fixed/tool/dist/index.js"]);
+  assert.deepEqual(
+    Object.keys(observed.options.env).sort(),
+    [
+      "INPUT_ARTIFACT-IDS",
+      "INPUT_RUN-ID",
+      "INPUT_REPOSITORY",
+      "INPUT_GITHUB-TOKEN",
+      "INPUT_MERGE-MULTIPLE",
+      "INPUT_PATH",
+      "INPUT_NAME",
+      "INPUT_PATTERN",
+      "GITHUB_API_URL",
+      "GITHUB_SERVER_URL",
+    ].sort(),
+  );
+  assert.equal(observed.options.env["INPUT_ARTIFACT-IDS"], String(PIN.artifact));
+  assert.equal(observed.options.env["INPUT_RUN-ID"], String(PIN.run));
+  assert.equal(observed.options.killSignal, "SIGKILL");
+  assert.equal(observed.options.stdio, "pipe");
+  assert.ok(observed.options.maxBuffer * 2 <= 1048576);
+  for (const result of [
+    { ...downloaded(), error: new Error("SECRET_CANARY") },
+    { ...downloaded(), signal: "SIGKILL" },
+    { ...downloaded(), status: null },
+    { ...downloaded(), stdout: downloaded().stdout + "::warning::TOKEN_CANARY" },
+    { ...downloaded(), stderr: "::error::TOKEN_CANARY" },
+  ])
+    assert.throws(
+      () => run(result),
+      (error) => error.message === "INSPECTION_DOWNLOAD",
+    );
+  assert.throws(
+    () =>
+      executeOfficialTool(
+        "/fixed/tool",
+        "/fixed/output",
+        "TEST_TOKEN",
+        () => {
+          throw Error("INSPECTION_DEADLINE");
+        },
+        () => {
+          throw Error("must not spawn");
+        },
+      ),
+    /INSPECTION_DEADLINE/,
+  );
 });
