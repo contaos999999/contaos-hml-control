@@ -1430,3 +1430,20 @@ test("R15 refuses rewritten R13 history even with a recomputed manifest", (t) =>
     assert.throws(() => buildProof(root, inspection));
   }
 });
+
+for (const code of ["RECOVERY_R13_LEDGER", "RECOVERY_R11_OPINION"]) {
+  test("R15 retains the producer's closed failure " + code, () => {
+    const value = report();
+    value.failure = code;
+    value.diagnostics.primaryFailure = code;
+    const verified = validateRecords(value, empty());
+    assert.equal(verified.report.failure, code);
+    assert.equal(verified.report.completed, false);
+  });
+}
+test("R15 rejects an unknown recovery enum without accepting its shared prefix", () => {
+  const value = report();
+  value.failure = "RECOVERY_R13_PRIVATE_CANARY";
+  value.diagnostics.primaryFailure = "RECOVERY_R13_PRIVATE_CANARY";
+  assert.throws(() => validateRecords(value, empty()));
+});
