@@ -3361,5 +3361,48 @@
       "scripts/hml/authenticated-visual-audit.mjs",
       "scripts/hml/authenticated-visual-audit.test.mjs"
     ]
+  },
+  "trilha_a_r13_ignored_build_step_correction": {
+    "status": "EMENDA_OPERACIONAL_UMA_CORRETIVA_APOS_CI_REVISAO_MERGE",
+    "gate": "docs/frontend/planos/TRILHA_A_R13_PERFIL_CANONICO_HML_GATE_2026-11-09.md",
+    "baseline_main": "631090724d6b85483737c60a44d322f268fc1c8c",
+    "baseline_push_zero": 42676353061,
+    "baseline_push_lock": 42676352564,
+    "first_create_deployment_id": "dpl_EVidGdx215jyxxd2sZG8PvM2kfJJ",
+    "first_create_state": "CANCELED",
+    "first_create_checkpoint": 6748412332,
+    "primary_error_link": "ignored-build-step",
+    "prior_guard_effective_source": "PRIMARY_VERCEL_BUILD_LOG",
+    "project_summary_exposes_guard": false,
+    "additional_corrective_create_calls_maximum": 1,
+    "total_create_calls_maximum": 2,
+    "persistent_project_settings_allowed_fields": [
+      "commandForIgnoringBuildStep"
+    ],
+    "persistent_setting_may_remain_after_failure": true,
+    "new_guard_environment": "production",
+    "new_guard_sha_must_equal_new_approved_main": true,
+    "new_guard_allow_exit_code": 1,
+    "new_guard_other_exit_code": 0,
+    "new_guard_allow_marker": "CONTAOS_HML_PINNED_BUILD_ALLOW_EXIT_1",
+    "new_guard_other_stdout_empty": true,
+    "real_posix_truth_table_required_before_call": true,
+    "actual_d3_literal_required": true,
+    "pr_and_new_push_ci_success_required": true,
+    "api_guard_echo_required_if_exposed": true,
+    "missing_api_guard_echo_must_be_declared": true,
+    "new_build_exact_guard_marker_and_ready_required": true,
+    "automatic_rollback_or_extra_settings_calls_allowed": false,
+    "retry_or_third_create_allowed": false,
+    "old_hml_deployment_artifacts_preserved": true,
+    "business_build_scope_unchanged": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "confirmed_before": 10,
+    "prior_reserved": 1,
+    "max_new_intentions": 13,
+    "auth_authorized_by_document": false,
+    "prod_changes_allowed": false
   }
 }
