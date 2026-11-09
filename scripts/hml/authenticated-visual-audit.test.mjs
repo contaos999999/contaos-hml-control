@@ -10453,3 +10453,130 @@ test("R12 auth protocol executes the real preparer runtime budget with every ori
     { confirmedBefore: 10, priorReserved: 1, maxNewIntentions: 13 },
   );
 });
+
+test("R12 auth protocol rejects a partial pending October GET before any further recovery arm", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs"),
+    { readFile } = await import("node:fs/promises"),
+    { EventEmitter } = await import("node:events"),
+    { randomUUID } = await import("node:crypto"),
+    ts = (await import("typescript")).default;
+  const source = await readFile(
+      new URL("./prepare-visual-fixtures.test.mjs", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile(
+      "prep.test.mjs",
+      source,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.JS,
+    ),
+    nodes = [];
+  function visit(n) {
+    nodes.push(n);
+    ts.forEachChild(n, visit);
+  }
+  visit(ast);
+  const named = (name) =>
+    nodes.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === name).getText(ast);
+  const fixture = prep.FIXTURE,
+    identity = {
+      frontendSha: "a".repeat(40),
+      harnessSha: "b".repeat(40),
+      deploymentId: "dpl_R12ReadOnlyFixture",
+      workflowRun: "123456789",
+    };
+  const env = { sut: prep, FIXTURE: fixture, R6_R5_DOCUMENT: prep.R5_RECOVERY_DOCUMENT };
+  const reconciliation = new Function(
+    ...Object.keys(env),
+    named("r2Reconciliation") + ";return r2Reconciliation();",
+  )(...Object.values(env));
+  const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11])
+    options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
+  const broker = prep.createIntentBroker(options),
+    page = new EventEmitter(),
+    observer = prep.createOfficialObserver(page, {
+      identity,
+      wait: () => new Promise(setImmediate),
+    });
+  const sdk = await readFile(
+      new URL("../../src/lib/competencias/parecerInternoDados.ts", import.meta.url),
+      "utf8",
+    ),
+    select = sdk.match(/export const COLUNAS_PARECERES\s*=\s*"([^"]+)"/)[1],
+    comp = JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0].id,
+    query = {
+      select,
+      id_competencia: "eq." + comp,
+      id_organizacao: "eq." + fixture.organization,
+      id_contrato: "eq." + fixture.contract,
+      order: "versao.desc,id.desc",
+      offset: "0",
+      limit: "25",
+    },
+    row = {
+      id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      id_competencia: comp,
+      id_organizacao: fixture.organization,
+      id_contrato: fixture.contract,
+      status: "rascunho",
+      versao: 1,
+      hash: "c".repeat(64),
+      criado_em: "2026-11-09T00:00:00Z",
+      aprovado_em: null,
+      autor: null,
+      texto: "Fixture local",
+      aprovado_por: null,
+    };
+  const emit = (q, body) => {
+    const url = fixture.api + "/rest/v1/pareceres_internos?" + new URLSearchParams(q),
+      request = { url: () => url, method: () => "GET", postData: () => null, failure: () => null };
+    page.emit("request", request);
+    if (body)
+      page.emit("response", {
+        request: () => request,
+        url: () => url,
+        status: () => 200,
+        body: async () => Buffer.from(JSON.stringify(body)),
+      });
+  };
+  try {
+    const after = observer.generation();
+    emit(query, [row]);
+    await observer.flush();
+    broker.authorizeRecovery(
+      prep.reconcileR1Recovery(reconciliation),
+      observer.sealRecoveryOpinion(broker, after),
+    );
+    const partial = { ...query };
+    delete partial.order;
+    emit(partial);
+    const sep = JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id;
+    assert.throws(
+      () =>
+        broker.arm({
+          rpc: "solicitar_analise_competencia",
+          payload: { p_id_competencia: sep, p_tipo: "completa" },
+          requestId: randomUUID(),
+          verified: { context: true, capability: true, reconciled: true },
+          evidence: {
+            competencies: [
+              {
+                official: true,
+                current: true,
+                organization: fixture.organization,
+                contract: fixture.contract,
+                id: sep,
+                month: "2026-09-01",
+              },
+            ],
+          },
+        }),
+      { message: "RECOVERY_R11_OPINION" },
+    );
+    assert.equal(broker.snapshot().count, 11);
+  } finally {
+    observer.close();
+  }
+});
