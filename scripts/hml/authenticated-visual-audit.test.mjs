@@ -5931,6 +5931,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     sut.SINGLE_REQUEST.competenceReadGateSha,
     sut.SINGLE_REQUEST.contextualProjectionGateSha,
     sut.SINGLE_REQUEST.asynchronousOpinionGateSha,
+    sut.SINGLE_REQUEST.canonicalProfileGateSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   await assert.rejects(
@@ -10995,10 +10996,20 @@ const R13_R12_RESPONSES = {
     repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
     head_repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
   },
   "/actions/runs/42666600147/attempts/1": {
@@ -11017,10 +11028,20 @@ const R13_R12_RESPONSES = {
     repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
     head_repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
   },
   "/actions/runs/42666600147/attempts/1/jobs?per_page=100&page=1": {
@@ -11380,10 +11401,20 @@ const R13_R12_RESPONSES = {
     repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
     head_repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
   },
   "/actions/runs/42666864017/attempts/1": {
@@ -11402,10 +11433,20 @@ const R13_R12_RESPONSES = {
     repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
     head_repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
   },
   "/actions/runs/42666864017/attempts/1/jobs?per_page=100&page=1": {
@@ -11712,10 +11753,20 @@ const R13_R12_RESPONSES = {
     repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
     head_repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
   },
   "/actions/runs/42666864220/attempts/1": {
@@ -11734,10 +11785,20 @@ const R13_R12_RESPONSES = {
     repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
     head_repository: {
       id: 1442722734,
       full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
     },
   },
   "/actions/runs/42666864220/attempts/1/jobs?per_page=100&page=1": {
@@ -11864,7 +11925,6 @@ const R13_R12_RESPONSES = {
     artifacts: [],
   },
 };
-
 const R13_R12_PROOF = Object.freeze({
   schema: "contaos.single-request.r12-zero-auth.v1",
   headSha: "3d6bea3e938459f348130bf1d04431a072dba081",
@@ -12271,3 +12331,32 @@ test(
     );
   },
 );
+
+test("R13 actual controller rejects a foreign R12 repository owner identity", async () => {
+  for (const key of ["repository", "head_repository"])
+    for (const field of ["id", "login"]) {
+      const f = await r13ControllerFixture(),
+        row = f.r12Fixture.responses["/actions/runs/42666864017"];
+      row[key].owner[field] = field === "id" ? 1 : "foreign";
+      await assert.rejects(() => sut.verifySingleRequest(f.options), {
+        code: "RECOVERY_R12_PROOF",
+      });
+    }
+});
+test("R13 actual controller rejects missing R12 repository owner metadata", async () => {
+  for (const key of ["repository", "head_repository"]) {
+    const f = await r13ControllerFixture();
+    delete f.r12Fixture.responses["/actions/runs/42666864017"][key].owner;
+    await assert.rejects(() => sut.verifySingleRequest(f.options), { code: "RECOVERY_R12_PROOF" });
+  }
+});
+test("R13 actual controller rejects private or missing-public R12 repository metadata", async () => {
+  for (const key of ["repository", "head_repository"])
+    for (const value of [true, undefined]) {
+      const f = await r13ControllerFixture();
+      f.r12Fixture.responses["/actions/runs/42666864017"][key].private = value;
+      await assert.rejects(() => sut.verifySingleRequest(f.options), {
+        code: "RECOVERY_R12_PROOF",
+      });
+    }
+});
