@@ -5199,7 +5199,7 @@ test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r11",
+    request_id: "trilha-a-fixtures-20261109-r12",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "b".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5409,7 +5409,7 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r11",
+    request_id: "trilha-a-fixtures-20261109-r12",
     approved_parent_sha: parent,
     frontend_sha: "c".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5455,7 +5455,7 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r11",
+    request_id: "trilha-a-fixtures-20261109-r12",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5691,7 +5691,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     sha = "a".repeat(40),
     parent = "b".repeat(40),
     head = "d".repeat(40);
-  const request = { request_id: "trilha-a-fixtures-20261109-r11", approved_parent_sha: parent };
+  const request = { request_id: "trilha-a-fixtures-20261109-r12", approved_parent_sha: parent };
   const pull = {
     id: 300,
     number: 90,
@@ -5841,7 +5841,7 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r11",
+    request_id: "trilha-a-fixtures-20261109-r12",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -5887,7 +5887,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r11",
+    request_id: "trilha-a-fixtures-20261109-r12",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5926,6 +5926,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     sut.SINGLE_REQUEST.observationGateSha,
     sut.SINGLE_REQUEST.competenceReadGateSha,
     sut.SINGLE_REQUEST.contextualProjectionGateSha,
+    sut.SINGLE_REQUEST.asynchronousOpinionGateSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   await assert.rejects(
@@ -7880,7 +7881,7 @@ test("R3 only current nonce executes and exact R1 R2 remain spent", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r11",
+    request_id: "trilha-a-fixtures-20261109-r12",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -8529,7 +8530,7 @@ test("R8 is the only executable fixture nonce and R1 through R7 remain historica
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r11",
+    request_id: "trilha-a-fixtures-20261109-r12",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -8585,7 +8586,7 @@ test("R8 is sole executable fixture nonce and all seven original requests remain
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r11",
+    request_id: "trilha-a-fixtures-20261109-r12",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -10270,7 +10271,7 @@ test("R9 request accepts only the new nonce and keeps R8 spent", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r11",
+    request_id: "trilha-a-fixtures-20261109-r12",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -10339,23 +10340,24 @@ test("R10 native failure diagnostic admits only the eight exact TAP titles", () 
   assert.equal(JSON.stringify(value).includes("PRIVATE_CANARY"), false);
 });
 
-test("R10 sourceforms supplement proves exactly four named successes without changing native base eight", () => {
+test("R10 sourceforms supplement proves exactly five named successes without changing native base eight", () => {
   const names = [
     "R3 Chromium sourceforms exact controls and actual source consumer",
     "R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay",
     "R3 Chromium sourceforms competence read barriers and actual recovery consumer",
     "R3 Chromium sourceforms scoped V116 V117 projection and actual SDK parsers",
+    "R3 Chromium sourceforms asynchronous opinion queue acceptance and actual opinion consumer",
   ];
   const tap =
     "TAP version 13\n" +
     names.map((name, i) => "ok " + (i + 1) + " - " + name).join("\n") +
-    "\n1..4\n# tests 4\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n";
-  assert.equal(sut.preparerSourceFormsSupplement(tap), 4);
+    "\n1..5\n# tests 5\n# pass 5\n# fail 0\n# cancelled 0\n# skipped 0\n";
+  assert.equal(sut.preparerSourceFormsSupplement(tap), 5);
   for (const altered of [
-    tap.replace("1..4", "1..2"),
-    tap.replace("# pass 4", "# pass 2"),
-    tap.replace(names[3], "PRIVATE_CANARY"),
-    tap.replace("ok 4", "not ok 4"),
+    tap.replace("1..5", "1..2"),
+    tap.replace("# pass 5", "# pass 2"),
+    tap.replace(names[4], "PRIVATE_CANARY"),
+    tap.replace("ok 5", "not ok 5"),
     tap + "# skipped 1\n",
   ])
     assert.equal(sut.preparerSourceFormsSupplement(altered), null);
@@ -10371,7 +10373,7 @@ test("R11 new request nonce is accepted while R10 remains spent", () => {
     frontend_sha: "",
     deployment_id: "",
   };
-  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(row), "fixtures"), row);
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify(row), "fixtures"), /REQUEST_/);
   assert.throws(
     () =>
       sut.parseSingleRequest(
@@ -10380,4 +10382,594 @@ test("R11 new request nonce is accepted while R10 remains spent", () => {
       ),
     /REQUEST_/,
   );
+});
+
+test("R12 new request nonce is accepted while the uncertain R11 request remains spent", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r12",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(row), "fixtures"), row);
+  assert.throws(
+    () =>
+      sut.parseSingleRequest(
+        JSON.stringify({ ...row, request_id: "trilha-a-fixtures-20261109-r11" }),
+        "fixtures",
+      ),
+    /REQUEST_/,
+  );
+});
+
+test("R12 auth protocol validates the actual original nonempty R11 recovery document", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs");
+  assert.deepEqual(
+    prep.validateR11RecoveryDocument(prep.R11_RECOVERY_DOCUMENT),
+    prep.R11_RECOVERY_DOCUMENT,
+  );
+});
+test("R12 auth protocol executes the real preparer runtime budget with every original proof", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs"),
+    { readFile } = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8"),
+    ast = ts.createSourceFile("prep.mjs", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS),
+    nodes = [];
+  function visit(n) {
+    nodes.push(n);
+    ts.forEachChild(n, visit);
+  }
+  visit(ast);
+  const named = (name) => nodes.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === name);
+  const entry = named("runFixturePreparation"),
+    init = nodes
+      .find(
+        (n) =>
+          ts.isVariableDeclaration(n) &&
+          n.pos >= entry.pos &&
+          n.end <= entry.end &&
+          n.name.getText(ast) === "validatedBudget",
+      )
+      .initializer.getText(ast);
+  const env = {
+    err: (code) => {
+      throw Error(code);
+    },
+    R1_RECOVERY_DOCUMENT: prep.R1_RECOVERY_DOCUMENT,
+    R3_RECOVERY_DOCUMENT: prep.R3_RECOVERY_DOCUMENT,
+  };
+  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    env["validateR" + n + "RecoveryDocument"] = prep["validateR" + n + "RecoveryDocument"];
+  for (const n of [4, 5, 6, 7, 8, 9, 10, 11])
+    env["r" + n + "Recovery"] = prep["R" + n + "_RECOVERY_DOCUMENT"];
+  assert.deepEqual(
+    new Function(
+      ...Object.keys(env),
+      named("recoveryBudget").getText(ast) + ";return " + init + ";",
+    )(...Object.values(env)),
+    { confirmedBefore: 10, priorReserved: 1, maxNewIntentions: 13 },
+  );
+});
+
+test("R12 auth protocol rejects a partial pending October GET before any further recovery arm", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs"),
+    { readFile } = await import("node:fs/promises"),
+    { EventEmitter } = await import("node:events"),
+    { randomUUID } = await import("node:crypto"),
+    ts = (await import("typescript")).default;
+  const source = await readFile(
+      new URL("./prepare-visual-fixtures.test.mjs", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile(
+      "prep.test.mjs",
+      source,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.JS,
+    ),
+    nodes = [];
+  function visit(n) {
+    nodes.push(n);
+    ts.forEachChild(n, visit);
+  }
+  visit(ast);
+  const named = (name) =>
+    nodes.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === name).getText(ast);
+  const fixture = prep.FIXTURE,
+    identity = {
+      frontendSha: "a".repeat(40),
+      harnessSha: "b".repeat(40),
+      deploymentId: "dpl_R12ReadOnlyFixture",
+      workflowRun: "123456789",
+    };
+  const env = { sut: prep, FIXTURE: fixture, R6_R5_DOCUMENT: prep.R5_RECOVERY_DOCUMENT };
+  const reconciliation = new Function(
+    ...Object.keys(env),
+    named("r2Reconciliation") + ";return r2Reconciliation();",
+  )(...Object.values(env));
+  const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11])
+    options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
+  const broker = prep.createIntentBroker(options),
+    page = new EventEmitter(),
+    observer = prep.createOfficialObserver(page, {
+      identity,
+      wait: () => new Promise(setImmediate),
+    });
+  const sdk = await readFile(
+      new URL("../../src/lib/competencias/parecerInternoDados.ts", import.meta.url),
+      "utf8",
+    ),
+    select = sdk.match(/export const COLUNAS_PARECERES\s*=\s*"([^"]+)"/)[1],
+    comp = JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0].id,
+    query = {
+      select,
+      id_competencia: "eq." + comp,
+      id_organizacao: "eq." + fixture.organization,
+      id_contrato: "eq." + fixture.contract,
+      order: "versao.desc,id.desc",
+      offset: "0",
+      limit: "25",
+    },
+    row = {
+      id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      id_competencia: comp,
+      id_organizacao: fixture.organization,
+      id_contrato: fixture.contract,
+      status: "rascunho",
+      versao: 1,
+      hash: "c".repeat(64),
+      criado_em: "2026-11-09T00:00:00Z",
+      aprovado_em: null,
+      autor: null,
+      texto: "Fixture local",
+      aprovado_por: null,
+    };
+  const emit = (q, body) => {
+    const url = fixture.api + "/rest/v1/pareceres_internos?" + new URLSearchParams(q),
+      request = { url: () => url, method: () => "GET", postData: () => null, failure: () => null };
+    page.emit("request", request);
+    if (body)
+      page.emit("response", {
+        request: () => request,
+        url: () => url,
+        status: () => 200,
+        body: async () => Buffer.from(JSON.stringify(body)),
+      });
+  };
+  try {
+    const after = observer.generation();
+    emit(query, [row]);
+    await observer.flush();
+    broker.authorizeRecovery(
+      prep.reconcileR1Recovery(reconciliation),
+      observer.sealRecoveryOpinion(broker, after),
+    );
+    const partial = { ...query };
+    delete partial.order;
+    emit(partial);
+    const sep = JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id;
+    assert.throws(
+      () =>
+        broker.arm({
+          rpc: "solicitar_analise_competencia",
+          payload: { p_id_competencia: sep, p_tipo: "completa" },
+          requestId: randomUUID(),
+          verified: { context: true, capability: true, reconciled: true },
+          evidence: {
+            competencies: [
+              {
+                official: true,
+                current: true,
+                organization: fixture.organization,
+                contract: fixture.contract,
+                id: sep,
+                month: "2026-09-01",
+              },
+            ],
+          },
+        }),
+      { message: "RECOVERY_R11_OPINION" },
+    );
+    assert.equal(broker.snapshot().count, 11);
+  } finally {
+    observer.close();
+  }
+});
+
+test("R12 auth protocol rejects a unscoped pending opinion GET before any further recovery arm", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs"),
+    { readFile } = await import("node:fs/promises"),
+    { EventEmitter } = await import("node:events"),
+    { randomUUID } = await import("node:crypto"),
+    ts = (await import("typescript")).default;
+  const source = await readFile(
+      new URL("./prepare-visual-fixtures.test.mjs", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile(
+      "prep.test.mjs",
+      source,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.JS,
+    ),
+    nodes = [];
+  function visit(n) {
+    nodes.push(n);
+    ts.forEachChild(n, visit);
+  }
+  visit(ast);
+  const named = (name) =>
+    nodes.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === name).getText(ast);
+  const fixture = prep.FIXTURE,
+    identity = {
+      frontendSha: "a".repeat(40),
+      harnessSha: "b".repeat(40),
+      deploymentId: "dpl_R12ReadOnlyFixture",
+      workflowRun: "123456789",
+    };
+  const env = { sut: prep, FIXTURE: fixture, R6_R5_DOCUMENT: prep.R5_RECOVERY_DOCUMENT };
+  const reconciliation = new Function(
+    ...Object.keys(env),
+    named("r2Reconciliation") + ";return r2Reconciliation();",
+  )(...Object.values(env));
+  const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11])
+    options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
+  const broker = prep.createIntentBroker(options),
+    page = new EventEmitter(),
+    observer = prep.createOfficialObserver(page, {
+      identity,
+      wait: () => new Promise(setImmediate),
+    });
+  const sdk = await readFile(
+      new URL("../../src/lib/competencias/parecerInternoDados.ts", import.meta.url),
+      "utf8",
+    ),
+    select = sdk.match(/export const COLUNAS_PARECERES\s*=\s*"([^"]+)"/)[1],
+    comp = JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0].id,
+    query = {
+      select,
+      id_competencia: "eq." + comp,
+      id_organizacao: "eq." + fixture.organization,
+      id_contrato: "eq." + fixture.contract,
+      order: "versao.desc,id.desc",
+      offset: "0",
+      limit: "25",
+    },
+    row = {
+      id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      id_competencia: comp,
+      id_organizacao: fixture.organization,
+      id_contrato: fixture.contract,
+      status: "rascunho",
+      versao: 1,
+      hash: "c".repeat(64),
+      criado_em: "2026-11-09T00:00:00Z",
+      aprovado_em: null,
+      autor: null,
+      texto: "Fixture local",
+      aprovado_por: null,
+    };
+  const emit = (q, body) => {
+    const url = fixture.api + "/rest/v1/pareceres_internos?" + new URLSearchParams(q),
+      request = { url: () => url, method: () => "GET", postData: () => null, failure: () => null };
+    page.emit("request", request);
+    if (body)
+      page.emit("response", {
+        request: () => request,
+        url: () => url,
+        status: () => 200,
+        body: async () => Buffer.from(JSON.stringify(body)),
+      });
+  };
+  try {
+    const after = observer.generation();
+    emit(query, [row]);
+    await observer.flush();
+    broker.authorizeRecovery(
+      prep.reconcileR1Recovery(reconciliation),
+      observer.sealRecoveryOpinion(broker, after),
+    );
+    const partial = { ...query };
+    delete partial.id_competencia;
+    emit(partial);
+    const sep = JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id;
+    assert.throws(
+      () =>
+        broker.arm({
+          rpc: "solicitar_analise_competencia",
+          payload: { p_id_competencia: sep, p_tipo: "completa" },
+          requestId: randomUUID(),
+          verified: { context: true, capability: true, reconciled: true },
+          evidence: {
+            competencies: [
+              {
+                official: true,
+                current: true,
+                organization: fixture.organization,
+                contract: fixture.contract,
+                id: sep,
+                month: "2026-09-01",
+              },
+            ],
+          },
+        }),
+      { message: "RECOVERY_R11_OPINION" },
+    );
+    assert.equal(broker.snapshot().count, 11);
+  } finally {
+    observer.close();
+  }
+});
+
+test("R12 auth protocol rejects a non-equality pending October GET before any further recovery arm", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs"),
+    { readFile } = await import("node:fs/promises"),
+    { EventEmitter } = await import("node:events"),
+    { randomUUID } = await import("node:crypto"),
+    ts = (await import("typescript")).default;
+  const source = await readFile(
+      new URL("./prepare-visual-fixtures.test.mjs", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile(
+      "prep.test.mjs",
+      source,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.JS,
+    ),
+    nodes = [];
+  function visit(n) {
+    nodes.push(n);
+    ts.forEachChild(n, visit);
+  }
+  visit(ast);
+  const named = (name) =>
+    nodes.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === name).getText(ast);
+  const fixture = prep.FIXTURE,
+    identity = {
+      frontendSha: "a".repeat(40),
+      harnessSha: "b".repeat(40),
+      deploymentId: "dpl_R12ReadOnlyFixture",
+      workflowRun: "123456789",
+    };
+  const env = { sut: prep, FIXTURE: fixture, R6_R5_DOCUMENT: prep.R5_RECOVERY_DOCUMENT };
+  const reconciliation = new Function(
+    ...Object.keys(env),
+    named("r2Reconciliation") + ";return r2Reconciliation();",
+  )(...Object.values(env));
+  const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11])
+    options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
+  const broker = prep.createIntentBroker(options),
+    page = new EventEmitter(),
+    observer = prep.createOfficialObserver(page, {
+      identity,
+      wait: () => new Promise(setImmediate),
+    });
+  const sdk = await readFile(
+      new URL("../../src/lib/competencias/parecerInternoDados.ts", import.meta.url),
+      "utf8",
+    ),
+    select = sdk.match(/export const COLUNAS_PARECERES\s*=\s*"([^"]+)"/)[1],
+    comp = JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0].id,
+    query = {
+      select,
+      id_competencia: "eq." + comp,
+      id_organizacao: "eq." + fixture.organization,
+      id_contrato: "eq." + fixture.contract,
+      order: "versao.desc,id.desc",
+      offset: "0",
+      limit: "25",
+    },
+    row = {
+      id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      id_competencia: comp,
+      id_organizacao: fixture.organization,
+      id_contrato: fixture.contract,
+      status: "rascunho",
+      versao: 1,
+      hash: "c".repeat(64),
+      criado_em: "2026-11-09T00:00:00Z",
+      aprovado_em: null,
+      autor: null,
+      texto: "Fixture local",
+      aprovado_por: null,
+    };
+  const emit = (q, body) => {
+    const url = fixture.api + "/rest/v1/pareceres_internos?" + new URLSearchParams(q),
+      request = { url: () => url, method: () => "GET", postData: () => null, failure: () => null };
+    page.emit("request", request);
+    if (body)
+      page.emit("response", {
+        request: () => request,
+        url: () => url,
+        status: () => 200,
+        body: async () => Buffer.from(JSON.stringify(body)),
+      });
+  };
+  try {
+    const after = observer.generation();
+    emit(query, [row]);
+    await observer.flush();
+    broker.authorizeRecovery(
+      prep.reconcileR1Recovery(reconciliation),
+      observer.sealRecoveryOpinion(broker, after),
+    );
+    const partial = { ...query };
+    partial.id_competencia =
+      "in.(" +
+      comp +
+      "," +
+      JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id +
+      ")";
+    emit(partial);
+    const sep = JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id;
+    assert.throws(
+      () =>
+        broker.arm({
+          rpc: "solicitar_analise_competencia",
+          payload: { p_id_competencia: sep, p_tipo: "completa" },
+          requestId: randomUUID(),
+          verified: { context: true, capability: true, reconciled: true },
+          evidence: {
+            competencies: [
+              {
+                official: true,
+                current: true,
+                organization: fixture.organization,
+                contract: fixture.contract,
+                id: sep,
+                month: "2026-09-01",
+              },
+            ],
+          },
+        }),
+      { message: "RECOVERY_R11_OPINION" },
+    );
+    assert.equal(broker.snapshot().count, 11);
+  } finally {
+    observer.close();
+  }
+});
+
+test("R12 auth protocol rejects a newer partial September read instead of reusing an older postACK query", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs"),
+    { readFile } = await import("node:fs/promises"),
+    { EventEmitter } = await import("node:events");
+  const sdk = await readFile(
+      new URL("../../src/lib/competencias/parecerInternoDados.ts", import.meta.url),
+      "utf8",
+    ),
+    select = sdk.match(/export const COLUNAS_PARECERES\s*=\s*"([^"]+)"/)[1],
+    f = prep.FIXTURE,
+    c = JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id;
+  let now = 0;
+  const page = new EventEmitter(),
+    observer = prep.createOfficialObserver(page, {
+      now: () => now,
+      wait: async () => {
+        now += 300001;
+      },
+    });
+  const payload = { p_id_competencia: c },
+    query = {
+      select,
+      id_competencia: "eq." + c,
+      id_organizacao: "eq." + f.organization,
+      id_contrato: "eq." + f.contract,
+      order: "versao.desc,id.desc",
+      offset: "0",
+      limit: "25",
+    },
+    row = {
+      id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      id_competencia: c,
+      id_organizacao: f.organization,
+      id_contrato: f.contract,
+      status: "rascunho",
+      versao: 1,
+      hash: "c".repeat(64),
+      criado_em: "2026-11-09T00:00:00Z",
+      aprovado_em: null,
+      autor: null,
+      texto: "Fixture local",
+      aprovado_por: null,
+    };
+  const emit = (method, path, value, body) => {
+    const url = f.api + "/rest/v1/" + path,
+      r = {
+        url: () => url,
+        method: () => method,
+        postData: () => (body ? JSON.stringify(body) : null),
+        failure: () => null,
+      };
+    page.emit("request", r);
+    if (value !== undefined)
+      page.emit("response", {
+        request: () => r,
+        url: () => url,
+        status: () => 200,
+        body: async () => Buffer.from(JSON.stringify(value)),
+      });
+  };
+  try {
+    observer.markMutation("solicitar_parecer_interno", payload, {});
+    emit("POST", "rpc/solicitar_parecer_interno", "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", payload);
+    await observer.flush();
+    emit("GET", "pareceres_internos?" + new URLSearchParams(query), [row]);
+    await observer.flush();
+    const partial = { ...query };
+    delete partial.order;
+    emit("GET", "pareceres_internos?" + new URLSearchParams(partial));
+    await assert.rejects(
+      () =>
+        observer.read("pareceres_internos", {
+          id_competencia: c,
+          id_organizacao: f.organization,
+          id_contrato: f.contract,
+        }),
+      /PHASE_TIMEOUT|OBSERVATION_FAILED|RECOVERY_R11_OPINION/,
+    );
+  } finally {
+    observer.close();
+  }
+});
+
+test("R12 actual report recovery retains its ten fields while reservation stays in the intent ledger", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs"),
+    { readFile } = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const src = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8"),
+    ast = ts.createSourceFile("prep.mjs", src, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS),
+    nodes = [];
+  function visit(n) {
+    nodes.push(n);
+    ts.forEachChild(n, visit);
+  }
+  visit(ast);
+  const entry = nodes.find(
+      (n) => ts.isFunctionDeclaration(n) && n.name?.text === "runFixturePreparation",
+    ),
+    report = nodes.find(
+      (n) =>
+        ts.isVariableDeclaration(n) &&
+        n.name.getText(ast) === "report" &&
+        n.pos >= entry.pos &&
+        n.end <= entry.end,
+    ),
+    recovery = report.initializer.properties
+      .find((p) => p.name?.getText(ast) === "recovery")
+      .initializer.getText(ast);
+  const env = {
+    R1_RECEIPTS_SHA256: prep.R1_RECOVERY_DOCUMENT.receiptsSha256,
+    validatedBudget: { confirmedBefore: 10, priorReserved: 1, maxNewIntentions: 13 },
+    R3_RECOVERY_DOCUMENT: prep.R3_RECOVERY_DOCUMENT,
+    r4Recovery: prep.R4_RECOVERY_DOCUMENT,
+    recoveryState: null,
+  };
+  const value = new Function(...Object.keys(env), "return (" + recovery + ");")(
+    ...Object.values(env),
+  );
+  assert.deepEqual(Object.keys(value), [
+    "ledgerSha256",
+    "priorWorkflowRun",
+    "confirmedBefore",
+    "maxNewIntentions",
+    "r3ReceiptsSha256",
+    "r3WorkflowRun",
+    "r4ZeroAuth",
+    "reconciled",
+    "sourceVersion",
+    "sourceHash",
+  ]);
+  assert.equal(Object.hasOwn(value, "priorReserved"), false);
 });
