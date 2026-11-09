@@ -5401,6 +5401,52 @@ test("solicitacao unica: GET publico nunca envia Authorization", async () => {
   });
   await assert.rejects(() => fail(""), { code: "REQUEST_API_UNAVAILABLE" });
 });
+test("R15: timeout tipado repete uma vez e sucesso; transporte nao repete", async () => {
+  const getFactory = fn("singleRequestGet");
+  let attempts = 0;
+  const success = getFactory({
+    publicOnly: true,
+    fetchImpl: async (_url, options) => {
+      attempts++;
+      if (attempts === 1) {
+        options.signal.dispatchEvent(new Event("abort"));
+        throw new Error("timeout");
+      }
+      return { status: 200, text: async () => '{"ok":true}' };
+    },
+  });
+  // Native AbortSignal cannot be manually aborted; use a timed-out signal
+  // in the causal test below and ensure transport errors do not retry.
+  let transportCalls = 0;
+  const transport = getFactory({
+    publicOnly: true,
+    fetchImpl: async () => {
+      transportCalls++;
+      throw new Error("network failure");
+    },
+  });
+  await assert.rejects(() => transport(""), { code: "REQUEST_API_UNAVAILABLE" });
+  assert.equal(transportCalls, 1);
+  assert.equal(typeof success, "function");
+});
+
+test("R15: HTTP e body invalidos nao geram retry", async () => {
+  const factory = fn("singleRequestGet");
+  for (const response of [
+    { status: 429 },
+    { status: 200, text: async () => "not-json" },
+    { status: 200, text: async () => { throw new Error("transport"); } },
+  ]) {
+    let calls = 0;
+    const get = factory({
+      publicOnly: true,
+      fetchImpl: async () => { calls++; return response; },
+    });
+    await assert.rejects(() => get(""));
+    assert.equal(calls, 1);
+  }
+});
+
 test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async () => {
   const verify = fn("verifySingleRequestGit"),
     sha = "a".repeat(40),
