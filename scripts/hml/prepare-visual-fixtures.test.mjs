@@ -10244,7 +10244,7 @@ async function r16VoidObserverFixture() {
     new URL("../../src/lib/competencias/parecerInternoDados.ts", import.meta.url),
     "utf8",
   );
-  const select = sdk.match(/export const COLUNAS_PARECERES\\s*=\\s*"([^"]+)"/)[1];
+  const select = sdk.match(/export const COLUNAS_PARECERES\s*=\s*"([^"]+)"/)[1];
   const competency = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies[0].id;
   const opinion = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
   const where = {
