@@ -1613,57 +1613,140 @@ test("solicitacao unica: preparador nao aceita marcador workflow_run sem prova",
   );
 });
 
-test("R2 ledger recupera exatamente quatro recibos R1 e rejeita adulteracao",()=>{
- assert.equal(typeof sut.validateR1RecoveryDocument,"function");
- const doc=sut.R1_RECOVERY_DOCUMENT;
- assert.equal(sut.validateR1RecoveryDocument(doc).receipts.length,4);
- assert.ok(Object.isFrozen(doc)&&Object.isFrozen(doc.receipts)&&doc.receipts.every(Object.isFrozen));
- for(const mutate of [
-  d=>d.receipts.pop(),d=>d.receipts.reverse(),d=>d.receipts[0].state="uncertain",
-  d=>d.receipts[0].payloadSha256="0".repeat(64),d=>d.receipts[0].contract=id,
-  d=>d.receipts[0].requestId=id,d=>d.receipts[0].extra="CANARIO",
-  d=>d.receipts[0].workflowRun="1",d=>d.receipts[0].harnessSha="0".repeat(40)
- ]){const bad=structuredClone(doc);mutate(bad);assert.throws(()=>sut.validateR1RecoveryDocument(bad));}
+test("R2 ledger recupera exatamente quatro recibos R1 e rejeita adulteracao", () => {
+  assert.equal(typeof sut.validateR1RecoveryDocument, "function");
+  const doc = sut.R1_RECOVERY_DOCUMENT;
+  assert.equal(sut.validateR1RecoveryDocument(doc).receipts.length, 4);
+  assert.ok(
+    Object.isFrozen(doc) && Object.isFrozen(doc.receipts) && doc.receipts.every(Object.isFrozen),
+  );
+  for (const mutate of [
+    (d) => d.receipts.pop(),
+    (d) => d.receipts.reverse(),
+    (d) => (d.receipts[0].state = "uncertain"),
+    (d) => (d.receipts[0].payloadSha256 = "0".repeat(64)),
+    (d) => (d.receipts[0].contract = id),
+    (d) => (d.receipts[0].requestId = id),
+    (d) => (d.receipts[0].extra = "CANARIO"),
+    (d) => (d.receipts[0].workflowRun = "1"),
+    (d) => (d.receipts[0].harnessSha = "0".repeat(40)),
+  ]) {
+    const bad = structuredClone(doc);
+    mutate(bad);
+    assert.throws(() => sut.validateR1RecoveryDocument(bad));
+  }
 });
-function r2Reconciliation(delta={}) {
- const context={official:true,current:true,organization:FIXTURE.organization,contract:FIXTURE.contract};
- return {ledger:sut.R1_RECOVERY_DOCUMENT,source:{...context,id:FIXTURE.source,...sut.SOURCE_FIELDS,version:1,situacao:"ativa"},version:{...context,id,source:FIXTURE.source,hash:"a".repeat(64),approved:true,textVerified:true,effective:true,file:null},sourceCount:1,listCount:0,listObserved:true,listState:null,canCreateList:true,...delta};
+function r2Reconciliation(delta = {}) {
+  const context = {
+    official: true,
+    current: true,
+    organization: FIXTURE.organization,
+    contract: FIXTURE.contract,
+  };
+  return {
+    ledger: sut.R1_RECOVERY_DOCUMENT,
+    source: { ...context, id: FIXTURE.source, ...sut.SOURCE_FIELDS, version: 1, situacao: "ativa" },
+    version: {
+      ...context,
+      id,
+      source: FIXTURE.source,
+      hash: "a".repeat(64),
+      approved: true,
+      textVerified: true,
+      effective: true,
+      file: null,
+    },
+    sourceCount: 1,
+    listCount: 0,
+    listObserved: true,
+    listState: null,
+    canCreateList: true,
+    ...delta,
+  };
 }
-test("R2 reconcilia somente estado oficial unico aprovado antes de armar",()=>{
- assert.equal(typeof sut.reconcileR1Recovery,"function");
- const proof=sut.reconcileR1Recovery(r2Reconciliation());
- assert.ok(Object.isFrozen(proof));
- const b=sut.createIntentBroker({persist:()=>true,competenceGateAmended:true,recoveryLedger:sut.R1_RECOVERY_DOCUMENT});
- assert.throws(()=>arm(b),{message:"RECOVERY_READ_ONLY"});
- assert.throws(()=>b.authorizeRecovery({...proof}),{message:"RECOVERY_PROOF"});
- assert.equal(b.authorizeRecovery(proof),true);
- assert.equal(b.snapshot().count,2);
- for(const rpc of ["registrar_versao_fonte_v107","aprovar_versao_fonte_v107"])
-  assert.throws(()=>b.arm({rpc,payload:{},requestId:randomUUID(),verified:{context:true,capability:true,reconciled:true}}),{message:"RECOVERY_CONFIRMED_OPERATION"});
- for(const delta of [{sourceCount:0},{sourceCount:2},{listObserved:false},{listCount:2},{canCreateList:false},{version:{...r2Reconciliation().version,approved:false}},{version:{...r2Reconciliation().version,textVerified:false}},{version:{...r2Reconciliation().version,source:id}},{source:{...r2Reconciliation().source,current:false}},{listCount:1,listState:{active:false}}])
-  assert.throws(()=>sut.reconcileR1Recovery(r2Reconciliation(delta)));
+test("R2 reconcilia somente estado oficial unico aprovado antes de armar", () => {
+  assert.equal(typeof sut.reconcileR1Recovery, "function");
+  const proof = sut.reconcileR1Recovery(r2Reconciliation());
+  assert.ok(Object.isFrozen(proof));
+  const b = sut.createIntentBroker({
+    persist: () => true,
+    competenceGateAmended: true,
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+  });
+  assert.throws(() => arm(b), { message: "RECOVERY_READ_ONLY" });
+  assert.throws(() => b.authorizeRecovery({ ...proof }), { message: "RECOVERY_PROOF" });
+  assert.equal(b.authorizeRecovery(proof), true);
+  assert.equal(b.snapshot().count, 2);
+  for (const rpc of ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"])
+    assert.throws(
+      () =>
+        b.arm({
+          rpc,
+          payload: {},
+          requestId: randomUUID(),
+          verified: { context: true, capability: true, reconciled: true },
+        }),
+      { message: "RECOVERY_CONFIRMED_OPERATION" },
+    );
+  for (const delta of [
+    { sourceCount: 0 },
+    { sourceCount: 2 },
+    { listObserved: false },
+    { listCount: 2 },
+    { canCreateList: false },
+    { version: { ...r2Reconciliation().version, approved: false } },
+    { version: { ...r2Reconciliation().version, textVerified: false } },
+    { version: { ...r2Reconciliation().version, source: id } },
+    { source: { ...r2Reconciliation().source, current: false } },
+    { listCount: 1, listState: { active: false } },
+  ])
+    assert.throws(() => sut.reconcileR1Recovery(r2Reconciliation(delta)));
 });
-test("R2 contabiliza duas anteriores e limita novas intencoes a22",()=>{
- const b=sut.createIntentBroker({persist:()=>true,competenceGateAmended:true,recoveryLedger:sut.R1_RECOVERY_DOCUMENT});
- b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
- for(let n=0;n<22;n++){arm(b);assert.equal(b.policy(request()),true);assert.equal(b.policy({...request(),stage:"RESPONSE"}),true);b.resolve("confirmed");}
- assert.equal(b.snapshot().count,24);
- assert.throws(()=>arm(b),{message:"INTENT_BUDGET"});
+test("R2 contabiliza duas anteriores e limita novas intencoes a22", () => {
+  const b = sut.createIntentBroker({
+    persist: () => true,
+    competenceGateAmended: true,
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+  });
+  b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
+  for (let n = 0; n < 22; n++) {
+    arm(b);
+    assert.equal(b.policy(request()), true);
+    assert.equal(b.policy({ ...request(), stage: "RESPONSE" }), true);
+    b.resolve("confirmed");
+  }
+  assert.equal(b.snapshot().count, 24);
+  assert.throws(() => arm(b), { message: "INTENT_BUDGET" });
 });
-test("R2 diagnostico conserva subfase primaria e cleanup separado sem canarios",async()=>{
- assert.equal(typeof sut.createPreparationDiagnostics,"function");
- const d=sut.createPreparationDiagnostics();
- const error=Object.assign(new Error("CANARIO https://secret.invalid Bearer SECRET pessoa@example.com"),{name:"TimeoutError"});
- await assert.rejects(()=>d.step("SOURCE_VERSION_READ",async()=>{await d.step("RUNTIME_FRESH",async()=>{throw error;});}),e=>e===error);
- await d.cleanup(async()=>{throw new Error("SECOND_CANARIO");});
- const r=d.snapshot();
- assert.equal(r.primaryFailure,"PREPARER_TIMEOUT");
- assert.equal(r.subphase,"RUNTIME_FRESH");
- assert.deepEqual(r.subphasePath,["SOURCE_VERSION_READ","RUNTIME_FRESH"]);
- assert.equal(r.logoutVerified,false);
- assert.ok(r.cleanupFailure);
- assert.equal(/CANARIO|secret|Bearer|@|stack|https/.test(JSON.stringify(r)),false);
- await assert.rejects(()=>d.step("UNKNOWN_CANARIO",async()=>{}),{message:"DIAGNOSTIC_SUBPHASE"});
+test("R2 diagnostico conserva subfase primaria e cleanup separado sem canarios", async () => {
+  assert.equal(typeof sut.createPreparationDiagnostics, "function");
+  const d = sut.createPreparationDiagnostics();
+  const error = Object.assign(
+    new Error("CANARIO https://secret.invalid Bearer SECRET pessoa@example.com"),
+    { name: "TimeoutError" },
+  );
+  await assert.rejects(
+    () =>
+      d.step("SOURCE_VERSION_READ", async () => {
+        await d.step("RUNTIME_FRESH", async () => {
+          throw error;
+        });
+      }),
+    (e) => e === error,
+  );
+  await d.cleanup(async () => {
+    throw new Error("SECOND_CANARIO");
+  });
+  const r = d.snapshot();
+  assert.equal(r.primaryFailure, "PREPARER_TIMEOUT");
+  assert.equal(r.subphase, "RUNTIME_FRESH");
+  assert.deepEqual(r.subphasePath, ["SOURCE_VERSION_READ", "RUNTIME_FRESH"]);
+  assert.equal(r.logoutVerified, false);
+  assert.ok(r.cleanupFailure);
+  assert.equal(/CANARIO|secret|Bearer|@|stack|https/.test(JSON.stringify(r)), false);
+  await assert.rejects(() => d.step("UNKNOWN_CANARIO", async () => {}), {
+    message: "DIAGNOSTIC_SUBPHASE",
+  });
 });
 
 test("Run27 diagnóstico identifica timeout sem exportar mensagem ou objeto privado", () => {
@@ -1697,78 +1780,217 @@ test("Run27 diagnóstico desconhecido permanece fechado e não serializa canári
   });
 });
 
-test("R2 duas confirmacoes reais de protocolo e proximo await conserva causa tecnica",async()=>{
- const {readFileSync}=await import("node:fs");
- const {createIntentBroker,confirmUiIntent,FIXTURE,SOURCE_FIELDS}=sut;
- const diagnostics=sut.createPreparationDiagnostics();
- await assert.rejects(()=>sut.withPreparationDiagnostics(diagnostics,async()=>{
- const id="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-const official={official:true,current:true,organization:FIXTURE.organization,contract:FIXTURE.contract};
-const evidence={source:{...official,id:FIXTURE.source,...SOURCE_FIELDS,version:1},sourceVersions:[{...official,id,source:FIXTURE.source,hash:FIXTURE.fileHash,canApprove:true,state:"rascunho"}]};
-const text=readFileSync(new URL("../../docs/frontend/auditorias/evidencias/continuacao-auth-20261108/FONTE_SINTETICA_AUDITORIA_HML.txt",import.meta.url),"utf8");
-const commands=[
- ["registrar_versao_fonte_v107",{p_id_organizacao:FIXTURE.organization,p_id_fonte:FIXTURE.source,p_inicio_vigencia:"2026-01-01",p_fim_vigencia:null,p_id_arquivo:null,p_conteudo_texto:text,p_metadados:{}}],
- ["aprovar_versao_fonte_v107",{p_id_organizacao:FIXTURE.organization,p_id_versao:id,p_hash_esperado:FIXTURE.fileHash,p_fundamento:FIXTURE.foundation}]
-];
-const receipts=[];
-const broker=createIntentBroker({persist:r=>{receipts.push(r);return true;},competenceGateAmended:true});
-const verified={context:true,capability:true,reconciled:true};
-for(let index=0;index<commands.length;index++){
- const [rpc,payload]=commands[index];
- const control={count:async()=>1,isEnabled:async()=>true,click:async()=>{
-  const body={...payload,p_chave_idempotencia:index===0?"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb":"cccccccc-cccc-4ccc-8ccc-cccccccccccc"};
-  const request={url:FIXTURE.api+"/rest/v1/rpc/"+rpc,method:"POST",postData:JSON.stringify(body),stage:"REQUEST",sessionId:"offline",interceptionId:"offline-"+index};
-  assert.equal(broker.policy(request),true);
-  assert.equal(broker.policy({...request,stage:"RESPONSE"}),true);
- }};
- assert.equal(await confirmUiIntent({page:{},scope:{getByRole:()=>control},fence:{drain:async()=>{},assertSafe:()=>{}},broker,rpc,payload,evidence,verified,button:"offline",settleVerifiedPage:async()=>{},reconcile:async phase=>phase==="before"?{payload,evidence,verified}:{confirmed:true}}),true);
-}
-assert.equal(receipts.filter(r=>r.state==="confirmed").length,2);
+test("R2 duas confirmacoes reais de protocolo e proximo await conserva causa tecnica", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { createIntentBroker, confirmUiIntent, FIXTURE, SOURCE_FIELDS } = sut;
+  const diagnostics = sut.createPreparationDiagnostics();
+  await assert.rejects(() =>
+    sut.withPreparationDiagnostics(diagnostics, async () => {
+      const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+      const official = {
+        official: true,
+        current: true,
+        organization: FIXTURE.organization,
+        contract: FIXTURE.contract,
+      };
+      const evidence = {
+        source: { ...official, id: FIXTURE.source, ...SOURCE_FIELDS, version: 1 },
+        sourceVersions: [
+          {
+            ...official,
+            id,
+            source: FIXTURE.source,
+            hash: FIXTURE.fileHash,
+            canApprove: true,
+            state: "rascunho",
+          },
+        ],
+      };
+      const text = readFileSync(
+        new URL(
+          "../../docs/frontend/auditorias/evidencias/continuacao-auth-20261108/FONTE_SINTETICA_AUDITORIA_HML.txt",
+          import.meta.url,
+        ),
+        "utf8",
+      );
+      const commands = [
+        [
+          "registrar_versao_fonte_v107",
+          {
+            p_id_organizacao: FIXTURE.organization,
+            p_id_fonte: FIXTURE.source,
+            p_inicio_vigencia: "2026-01-01",
+            p_fim_vigencia: null,
+            p_id_arquivo: null,
+            p_conteudo_texto: text,
+            p_metadados: {},
+          },
+        ],
+        [
+          "aprovar_versao_fonte_v107",
+          {
+            p_id_organizacao: FIXTURE.organization,
+            p_id_versao: id,
+            p_hash_esperado: FIXTURE.fileHash,
+            p_fundamento: FIXTURE.foundation,
+          },
+        ],
+      ];
+      const receipts = [];
+      const broker = createIntentBroker({
+        persist: (r) => {
+          receipts.push(r);
+          return true;
+        },
+        competenceGateAmended: true,
+      });
+      const verified = { context: true, capability: true, reconciled: true };
+      for (let index = 0; index < commands.length; index++) {
+        const [rpc, payload] = commands[index];
+        const control = {
+          count: async () => 1,
+          isEnabled: async () => true,
+          click: async () => {
+            const body = {
+              ...payload,
+              p_chave_idempotencia:
+                index === 0
+                  ? "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"
+                  : "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+            };
+            const request = {
+              url: FIXTURE.api + "/rest/v1/rpc/" + rpc,
+              method: "POST",
+              postData: JSON.stringify(body),
+              stage: "REQUEST",
+              sessionId: "offline",
+              interceptionId: "offline-" + index,
+            };
+            assert.equal(broker.policy(request), true);
+            assert.equal(broker.policy({ ...request, stage: "RESPONSE" }), true);
+          },
+        };
+        assert.equal(
+          await confirmUiIntent({
+            page: {},
+            scope: { getByRole: () => control },
+            fence: { drain: async () => {}, assertSafe: () => {} },
+            broker,
+            rpc,
+            payload,
+            evidence,
+            verified,
+            button: "offline",
+            settleVerifiedPage: async () => {},
+            reconcile: async (phase) =>
+              phase === "before" ? { payload, evidence, verified } : { confirmed: true },
+          }),
+          true,
+        );
+      }
+      assert.equal(receipts.filter((r) => r.state === "confirmed").length, 2);
 
- await diagnostics.step("SOURCE_VERSION_READ",async()=>{throw Object.assign(new Error("CANARY_SECRET https://private.invalid"),{name:"TimeoutError"});});
- }));
- const report=diagnostics.snapshot();
- assert.equal(report.primaryFailure,"PREPARER_TIMEOUT");
- assert.equal(report.subphase,"SOURCE_VERSION_READ");
- assert.equal(JSON.stringify(report).includes("CANARY"),false);
+      await diagnostics.step("SOURCE_VERSION_READ", async () => {
+        throw Object.assign(new Error("CANARY_SECRET https://private.invalid"), {
+          name: "TimeoutError",
+        });
+      });
+    }),
+  );
+  const report = diagnostics.snapshot();
+  assert.equal(report.primaryFailure, "PREPARER_TIMEOUT");
+  assert.equal(report.subphase, "SOURCE_VERSION_READ");
+  assert.equal(JSON.stringify(report).includes("CANARY"), false);
 });
-test("R2 cada subfase fechada preserva falha primaria quando logout falha",async()=>{
- for(const subphase of sut.DIAGNOSTIC_SUBPHASES){
-   const d=sut.createPreparationDiagnostics();
-   await assert.rejects(()=>d.step(subphase,async()=>{throw new TypeError("PRIVATE_URL token");}));
-   const before=d.snapshot();
-   await d.cleanup(async()=>false);
-   const after=d.snapshot();
-   assert.equal(after.subphase,subphase);
-   assert.equal(after.primaryFailure,before.primaryFailure);
-   assert.equal(after.cleanupFailure,"LOGOUT_NOT_VERIFIED");
-   assert.equal(/PRIVATE_URL|token/.test(JSON.stringify(after)),false);
- }
+test("R2 cada subfase fechada preserva falha primaria quando logout falha", async () => {
+  for (const subphase of sut.DIAGNOSTIC_SUBPHASES) {
+    const d = sut.createPreparationDiagnostics();
+    await assert.rejects(() =>
+      d.step(subphase, async () => {
+        throw new TypeError("PRIVATE_URL token");
+      }),
+    );
+    const before = d.snapshot();
+    await d.cleanup(async () => false);
+    const after = d.snapshot();
+    assert.equal(after.subphase, subphase);
+    assert.equal(after.primaryFailure, before.primaryFailure);
+    assert.equal(after.cleanupFailure, "LOGOUT_NOT_VERIFIED");
+    assert.equal(/PRIVATE_URL|token/.test(JSON.stringify(after)), false);
+  }
 });
 
-test("R2 erro privado com getters nao e acessado e fence usa enum comprovado",async()=>{
- const d=sut.createPreparationDiagnostics();
- const error={name:"TimeoutError",get message(){assert.fail("message getter");},get stack(){assert.fail("stack getter");},get payload(){assert.fail("payload getter");}};
- await assert.rejects(()=>d.step("SOURCE_VERSION_READ",async()=>{throw error;}),e=>e===error);
- assert.equal(d.snapshot().primaryFailure,"PREPARER_TIMEOUT");
- const fence=sut.createPreparationDiagnostics();
- await assert.rejects(()=>fence.step("RUNTIME_FRESH",async()=>{throw Object.assign(new Error("PRIVATE"),{code:"FENCE_REQUEST"});}));
- assert.equal(fence.snapshot().failureClass,"NATIVE_FENCE");
- assert.equal(fence.snapshot().primaryFailure,"FENCE_REQUEST");
+test("R2 erro privado com getters nao e acessado e fence usa enum comprovado", async () => {
+  const d = sut.createPreparationDiagnostics();
+  const error = {
+    name: "TimeoutError",
+    get message() {
+      assert.fail("message getter");
+    },
+    get stack() {
+      assert.fail("stack getter");
+    },
+    get payload() {
+      assert.fail("payload getter");
+    },
+  };
+  await assert.rejects(
+    () =>
+      d.step("SOURCE_VERSION_READ", async () => {
+        throw error;
+      }),
+    (e) => e === error,
+  );
+  assert.equal(d.snapshot().primaryFailure, "PREPARER_TIMEOUT");
+  const fence = sut.createPreparationDiagnostics();
+  await assert.rejects(() =>
+    fence.step("RUNTIME_FRESH", async () => {
+      throw Object.assign(new Error("PRIVATE"), { code: "FENCE_REQUEST" });
+    }),
+  );
+  assert.equal(fence.snapshot().failureClass, "NATIVE_FENCE");
+  assert.equal(fence.snapshot().primaryFailure, "FENCE_REQUEST");
 });
-test("R2 cada await relevante do codigo real passa pela barreira diagnostica",async()=>{
- const ts=await import("typescript"),{readFile}=await import("node:fs/promises");
- const code=await readFile(new URL("./prepare-visual-fixtures.mjs",import.meta.url),"utf8");
- const sf=ts.createSourceFile("preparer.mjs",code,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
- const targets=new Set(["confirmUiIntent","prepareSourceAndList","prepareCompetencies","runFixturePreparation"]);
- let owner=null,count=0;
- function visit(node){
-   const previous=owner;
-   if(ts.isFunctionDeclaration(node)&&node.name)owner=targets.has(node.name.text)?node.name.text:null;
-   if(owner&&ts.isAwaitExpression(node)){count++;assert.ok(node.expression.getText(sf).startsWith("tracedPreparation("),owner+" await sem enum");}
-   ts.forEachChild(node,visit);owner=previous;
- }
- visit(sf);assert.ok(count>=197);
- assert.ok(code.indexOf("validateR1RecoveryDocument();",code.indexOf("async function runFixturePreparation"))<code.indexOf('phase = "LOGIN"',code.indexOf("async function runFixturePreparation")));
- assert.match(code,/recoveryLedger:R1_RECOVERY_DOCUMENT|recoveryLedger: R1_RECOVERY_DOCUMENT/);
+test("R2 cada await relevante do codigo real passa pela barreira diagnostica", async () => {
+  const ts = await import("typescript"),
+    { readFile } = await import("node:fs/promises");
+  const code = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8");
+  const sf = ts.createSourceFile(
+    "preparer.mjs",
+    code,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
+  const targets = new Set([
+    "confirmUiIntent",
+    "prepareSourceAndList",
+    "prepareCompetencies",
+    "runFixturePreparation",
+  ]);
+  let owner = null,
+    count = 0;
+  function visit(node) {
+    const previous = owner;
+    if (ts.isFunctionDeclaration(node) && node.name)
+      owner = targets.has(node.name.text) ? node.name.text : null;
+    if (owner && ts.isAwaitExpression(node)) {
+      count++;
+      assert.ok(
+        node.expression.getText(sf).startsWith("tracedPreparation("),
+        owner + " await sem enum",
+      );
+    }
+    ts.forEachChild(node, visit);
+    owner = previous;
+  }
+  visit(sf);
+  assert.ok(count >= 197);
+  assert.ok(
+    code.indexOf(
+      "validateR1RecoveryDocument();",
+      code.indexOf("async function runFixturePreparation"),
+    ) < code.indexOf('phase = "LOGIN"', code.indexOf("async function runFixturePreparation")),
+  );
+  assert.match(code, /recoveryLedger:R1_RECOVERY_DOCUMENT|recoveryLedger: R1_RECOVERY_DOCUMENT/);
 });
