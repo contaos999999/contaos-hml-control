@@ -916,63 +916,80 @@ export function readManifest(root, deadline = () => {}) {
     dir.isDirectory() && !dir.isSymbolicLink() && realpathSync(root) === root,
     "INSPECTION_FILES",
   );
-  const names = readdirSync(root);
   check(
-    names.length === 9 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
+    typeof constants.O_DIRECTORY === "number" && typeof constants.O_NOFOLLOW === "number",
     "INSPECTION_FILES",
   );
-  const buffers = {};
-  let total = 0;
-  for (const name of [...FILES, "SHA256SUMS"]) {
-    deadline();
-    const path = join(root, name),
-      before = lstatSync(path);
+  const dirfd = openSync(root, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+  try {
+    check(sameStat(dir, fstatSync(dirfd)), "INSPECTION_FILES");
+    // Linux fd anchor prevents a renamed/replaced parent path from redirecting reads.
+    const anchored = "/proc/self/fd/" + dirfd;
+    const names = readdirSync(anchored);
     check(
-      before.isFile() &&
-        !before.isSymbolicLink() &&
-        before.nlink === 1 &&
-        before.size >= 0 &&
-        before.size <= (name === "SHA256SUMS" ? 4096 : 65536),
+      names.length === 9 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
       "INSPECTION_FILES",
     );
-    total += before.size;
-    check(total <= 262144, "INSPECTION_FILES");
-    const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-    try {
-      const opened = fstatSync(fd);
-      check(sameStat(before, opened), "INSPECTION_FILES");
-      const data = Buffer.alloc(before.size + 1);
-      let size = 0,
-        n;
-      while ((n = readSync(fd, data, size, data.length - size, null)) > 0) {
-        size += n;
-        check(size <= before.size, "INSPECTION_FILES");
-      }
+    const buffers = {};
+    let total = 0;
+    for (const name of [...FILES, "SHA256SUMS"]) {
+      deadline();
+      const path = join(anchored, name),
+        before = lstatSync(path);
       check(
-        size === before.size &&
-          sameStat(opened, fstatSync(fd)) &&
-          sameStat(opened, lstatSync(path)),
+        before.isFile() &&
+          !before.isSymbolicLink() &&
+          before.nlink === 1 &&
+          before.size >= 0 &&
+          before.size <= (name === "SHA256SUMS" ? 4096 : 65536),
         "INSPECTION_FILES",
       );
-      buffers[name] = data.subarray(0, size);
-    } finally {
-      closeSync(fd);
+      total += before.size;
+      check(total <= 262144, "INSPECTION_FILES");
+      const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+      try {
+        const opened = fstatSync(fd);
+        check(sameStat(before, opened), "INSPECTION_FILES");
+        const data = Buffer.alloc(before.size + 1);
+        let size = 0,
+          n;
+        while ((n = readSync(fd, data, size, data.length - size, null)) > 0) {
+          size += n;
+          check(size <= before.size, "INSPECTION_FILES");
+        }
+        check(
+          size === before.size &&
+            sameStat(opened, fstatSync(fd)) &&
+            sameStat(opened, lstatSync(path)),
+          "INSPECTION_FILES",
+        );
+        buffers[name] = data.subarray(0, size);
+      } finally {
+        closeSync(fd);
+      }
     }
+    check(
+      sameStat(dir, fstatSync(dirfd)) &&
+        sameStat(dir, lstatSync(root)) &&
+        realpathSync(root) === root,
+      "INSPECTION_FILES",
+    );
+    const manifest = FILES.map((name) => sha256(buffers[name]) + "  " + name + "\n").join("");
+    check(buffers.SHA256SUMS.equals(Buffer.from(manifest)), "INSPECTION_MANIFEST");
+    for (const [name, digest] of Object.entries(HISTORY))
+      check(sha256(buffers[name]) === digest, "INSPECTION_HISTORY");
+    deadline();
+    return {
+      buffers,
+      manifest: FILES.map((name) => ({
+        name,
+        bytes: buffers[name].length,
+        sha256: sha256(buffers[name]),
+      })),
+    };
+  } finally {
+    closeSync(dirfd);
   }
-  check(sameStat(dir, lstatSync(root)) && realpathSync(root) === root, "INSPECTION_FILES");
-  const manifest = FILES.map((name) => sha256(buffers[name]) + "  " + name + "\n").join("");
-  check(buffers.SHA256SUMS.equals(Buffer.from(manifest)), "INSPECTION_MANIFEST");
-  for (const [name, digest] of Object.entries(HISTORY))
-    check(sha256(buffers[name]) === digest, "INSPECTION_HISTORY");
-  deadline();
-  return {
-    buffers,
-    manifest: FILES.map((name) => ({
-      name,
-      bytes: buffers[name].length,
-      sha256: sha256(buffers[name]),
-    })),
-  };
 }
 export function buildProof(root, inspection, deadline = () => {}) {
   inspection = plain(inspection);
