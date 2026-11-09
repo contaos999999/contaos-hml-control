@@ -1442,11 +1442,7 @@ test(
     await new Promise((resolve) => debug.close(resolve));
     const finished = Promise.withResolvers();
     try {
-      browser = await chromium.launch({
-        chromiumSandbox: true,
-        env: fn("browserEnvironment")(process.env),
-        args: [`--remote-debugging-port=${port}`],
-      });
+      browser = await fn("launchNativeBrowser")({ chromium, debugPort: port });
       context = await browser.newContext();
       const page = await context.newPage();
       const session = await context.newCDPSession(page);
@@ -1606,14 +1602,10 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
       const finished = Promise.withResolvers();
       try {
         if (mode === "proxy") proxy = await fn("startDestinationProxy")();
-        browser = await chromium.launch({
-          chromiumSandbox: true,
-          env: fn("browserEnvironment")(process.env),
-          args: [
-            `--remote-debugging-port=${port}`,
-            ...(proxy ? ["--proxy-bypass-list=<-loopback>"] : []),
-          ],
-          ...(proxy ? { proxy: { server: proxy.url } } : {}),
+        browser = await fn("launchNativeBrowser")({
+          chromium,
+          debugPort: port,
+          ...(proxy ? { proxy: proxy.url } : {}),
         });
         context = await browser.newContext();
         const page = await context.newPage();
@@ -1698,6 +1690,7 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
           assert.equal(fence.snapshot().failureCode, "FENCE_POPUP");
         }
         assert.equal(connections, 0);
+        if (mode === "popup") await popupPolicyVariants();
       } finally {
         fence?.close();
         await browser?.close();
@@ -1786,11 +1779,7 @@ for (const scheme of ["ws", "wss"])
       const port = debug.address().port;
       await new Promise((resolve) => debug.close(resolve));
       try {
-        browser = await chromium.launch({
-          chromiumSandbox: true,
-          env: fn("browserEnvironment")(process.env),
-          args: [`--remote-debugging-port=${port}`],
-        });
+        browser = await fn("launchNativeBrowser")({ chromium, debugPort: port });
         const attempt = async (page) =>
           page.evaluate(
             (url) =>
@@ -2519,11 +2508,7 @@ test(
         }),
       ]);
     try {
-      browser = await chromium.launch({
-        chromiumSandbox: true,
-        env: fn("browserEnvironment")(process.env),
-        args: [`--remote-debugging-port=${realPort}`],
-      });
+      browser = await fn("launchNativeBrowser")({ chromium, debugPort: realPort });
       const origin = `http://127.0.0.1:${source.address().port}`,
         canceledUrl = `http://127.0.0.1:${canary.address().port}/canceled`;
       const positive = await browser.newContext();
@@ -3982,7 +3967,7 @@ test(
     });
     await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
     try {
-      browser = await chromium.launch({ chromiumSandbox: true });
+      browser = await launchIsolatedProvedBrowser(chromium);
       const page = await browser.newPage({ viewport: { width: 390, height: 640 } });
       const origin = `http://127.0.0.1:${server.address().port}`;
       await page.goto(origin, { waitUntil: "domcontentloaded" });
@@ -5100,7 +5085,7 @@ test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "b".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5310,7 +5295,7 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "c".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5352,7 +5337,7 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5579,7 +5564,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     sha = "a".repeat(40),
     parent = "b".repeat(40),
     head = "d".repeat(40);
-  const request = { request_id: "trilha-a-fixtures-20261108-r1", approved_parent_sha: parent };
+  const request = { request_id: "trilha-a-fixtures-20261109-r2", approved_parent_sha: parent };
   const pull = {
     id: 300,
     number: 90,
@@ -5729,7 +5714,7 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -5775,7 +5760,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5801,6 +5786,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
   assert.deepEqual(ancestors, [
     sut.SINGLE_REQUEST.gateSha,
     sut.SINGLE_REQUEST.fixturesSha,
+    sut.SINGLE_REQUEST.recoveryGateSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   let calls = 0;
@@ -6027,7 +6013,7 @@ test(
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
   async () => {
     const { chromium } = await import("playwright");
-    const browser = await chromium.launch({ chromiumSandbox: true });
+    const browser = await launchIsolatedProvedBrowser(chromium);
     const proof = await fn("loadPrivacy78Proof")(),
       words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
     try {
@@ -6553,6 +6539,334 @@ test("privacy112 link requires source attributes and exact plain span subtree", 
       dom.window.close();
     }
   }
+});
+
+test("R2 nonce corrente rejeita R1 e historico reconhece apenas R1 consumido", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261108-r1",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.throws(() => fn("parseSingleRequest")(JSON.stringify(row), "fixtures"));
+  assert.equal(
+    fn("parseSingleRequest")(JSON.stringify(row), "fixtures", { historical: true }).request_id,
+    row.request_id,
+  );
+  assert.throws(() =>
+    fn("parseSingleRequest")(JSON.stringify({ ...row, request_id: "unknown" }), "fixtures", {
+      historical: true,
+    }),
+  );
+});
+
+test("popup policy: launch args are closed and require the restrictive switch", () => {
+  const args = fn("nativeBrowserArgs")(9222);
+  assert.deepEqual(args, ["--remote-debugging-port=9222", "--block-new-web-contents"]);
+  assert.deepEqual(fn("nativeBrowserArgs")(9222, true), [
+    ...args,
+    "--proxy-bypass-list=<-loopback>",
+  ]);
+  for (const port of [undefined, 0, -1, 1.5, 65536, "9222"])
+    assert.throws(() => fn("nativeBrowserArgs")(port), { code: "BROWSER_POLICY" });
+});
+test("popup policy: actual command line and version reject missing overrides and unsafe switches", () => {
+  const check = fn("verifyNativeBrowserPolicy");
+  const args = ["/trusted/chrome-headless-shell", "--headless", "--block-new-web-contents"];
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  assert.equal(check(args, version), true);
+  for (const bad of [
+    null,
+    {},
+    [],
+    args.slice(0, 2),
+    [...args, "--block-new-web-contents"],
+    [...args, "--block-new-web-contents=false"],
+    [...args, "--no-sandbox=false"],
+    [...args, "--disable-web-security=false"],
+    [...args, "--disable-setuid-sandbox"],
+    [...args, "--ignore-certificate-errors=true"],
+    [...args, "--allow-running-insecure-content"],
+    [...args, null],
+    [...args, "SYNTHETIC_SECRET_CANARY\n"],
+  ])
+    assert.throws(() => check(bad, version), { code: "BROWSER_POLICY" });
+  for (const product of ["Chrome/145.0.7632.6", "HeadlessChrome/146.0.0.0", undefined])
+    assert.throws(() => check(args, { product }), { code: "BROWSER_POLICY" });
+});
+test("popup policy: both authenticated consumers and native tests use the proved launcher", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const audit = await readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const preparer = await readFile(
+    new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+    "utf8",
+  );
+  assert.equal(/browser = await launchNativeBrowser\(/.test(audit), true);
+  assert.equal(
+    /await tracedPreparation\("PREFLIGHT", async \(\) =>\s*launchNativeBrowser\(/.test(preparer),
+    true,
+  );
+  assert.equal(/chromium\.launch\(/.test(preparer), false);
+});
+
+test("popup policy: unknown binary blocks before launch and never returns a browser", async () => {
+  let launches = 0;
+  await assert.rejects(
+    fn("launchNativeBrowser")({
+      chromium: { executablePath: () => "/untrusted/chrome", launch: () => launches++ },
+      debugPort: 9222,
+    }),
+    { code: "BROWSER_POLICY" },
+  );
+  assert.equal(launches, 0);
+});
+
+async function popupPolicyVariants() {
+  const { chromium } = await import("playwright");
+  const traffic = { connections: 0, bytes: 0, requests: 0 };
+  const canary = createHttpServer((_req, res) => {
+    traffic.requests++;
+    res.end("canary");
+  });
+  canary.on("connection", (socket) => {
+    traffic.connections++;
+    socket.on("data", (data) => (traffic.bytes += data.length));
+  });
+  await new Promise((r) => canary.listen(0, "127.0.0.1", r));
+  const url = `http://127.0.0.1:${canary.address().port}/canary`;
+  let browser, context, fence;
+  try {
+    // Unrestricted control is test-only and never receives credentials.
+    browser = await chromium.launch({ chromiumSandbox: true });
+    assert.equal(browser.version(), "145.0.7632.6");
+    context = await browser.newContext();
+    const control = await context.newPage();
+    const opened = context.waitForEvent("page");
+    await control.evaluate((url) => window.open(url), url);
+    await (await opened).waitForLoadState();
+    assert.ok(traffic.connections > 0 && traffic.bytes > 0 && traffic.requests > 0);
+    await browser.close();
+    browser = null;
+    canary.closeAllConnections();
+    for (const mode of ["open", "noopener", "anchor", "form"]) {
+      traffic.connections = traffic.bytes = traffic.requests = 0;
+      const debug = createHttpServer();
+      await new Promise((r) => debug.listen(0, "127.0.0.1", r));
+      const port = debug.address().port;
+      await new Promise((r) => debug.close(r));
+      browser = await fn("launchNativeBrowser")({ chromium, debugPort: port });
+      context = await browser.newContext({ serviceWorkers: "block" });
+      const page = await context.newPage();
+      const session = await context.newCDPSession(page);
+      const { targetInfo } = await session.send("Target.getTargetInfo");
+      await session.detach();
+      const detected = Promise.withResolvers(),
+        release = Promise.withResolvers();
+      let closePending;
+      fence = await fn("installNativeFence")({
+        debugPort: port,
+        identity: targetInfo,
+        verifyResponse: async () => true,
+        closeContext: () => {
+          detected.resolve();
+          closePending = release.promise.then(() => context.close());
+          return closePending;
+        },
+      });
+      try {
+        await page.evaluate(
+          ({ url, mode }) => {
+            if (mode === "open") window.open(url);
+            else if (mode === "noopener") window.open(url, "_blank", "noopener");
+            else if (mode === "anchor") {
+              const a = document.createElement("a");
+              a.href = url;
+              a.target = "_blank";
+              a.rel = "noopener";
+              document.body.append(a);
+              a.click();
+            } else {
+              const f = document.createElement("form");
+              f.action = url;
+              f.target = "_blank";
+              f.method = "POST";
+              document.body.append(f);
+              f.submit();
+            }
+          },
+          { url, mode },
+        );
+        await Promise.race([
+          detected.promise,
+          new Promise((_, reject) => {
+            const timer = setTimeout(() => reject(Error("popup not detected")), 3000);
+            timer.unref();
+          }),
+        ]);
+        await new Promise((r) => setTimeout(r, 150));
+        assert.deepEqual(traffic, { connections: 0, bytes: 0, requests: 0 });
+        assert.equal(fence.snapshot().failureCode, "FENCE_POPUP");
+        assert.ok(fence.snapshot().popups > 0);
+      } finally {
+        release.resolve();
+        await closePending;
+        fence.close();
+        fence = null;
+        await browser.close();
+        browser = null;
+      }
+    }
+  } finally {
+    fence?.close();
+    await browser?.close();
+    canary.closeAllConnections();
+    await new Promise((r) => canary.close(r));
+  }
+}
+
+async function launchIsolatedProvedBrowser(chromium) {
+  const debug = createHttpServer();
+  await new Promise((r) => debug.listen(0, "127.0.0.1", r));
+  const port = debug.address().port;
+  await new Promise((r) => debug.close(r));
+  return fn("launchNativeBrowser")({ chromium, debugPort: port });
+}
+
+test("popup policy: actual launcher closes on post-launch command or identity failure", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const ts = await import("typescript");
+  const { dirname, join, isAbsolute } = await import("node:path");
+  const source = await readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const file = ts.createSourceFile(
+    "audit.mjs",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
+  const launch = file.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "launchNativeBrowser",
+  );
+  assert.ok(launch?.body);
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+  const run = new AsyncFunction(
+    "chromium",
+    "debugPort",
+    "proxy",
+    "require",
+    "process",
+    "isAbsolute",
+    "dirname",
+    "join",
+    "nativeBinaryIdentity",
+    "nativeBrowserArgs",
+    "browserEnvironment",
+    "verifyNativeBrowserPolicy",
+    "fail",
+    "let browser;" + launch.body.getText(file).slice(1, -1).replace("let browser;", ""),
+  );
+  const expected =
+    "/cache/chromium_headless_shell-1208/chrome-headless-shell-linux64/chrome-headless-shell";
+  for (const scenario of ["command", "version", "identity", "detach"]) {
+    let closed = false,
+      contexts = 0;
+    const browser = {
+      close: async () => {
+        closed = true;
+      },
+      newContext: () => {
+        contexts++;
+      },
+      newBrowserCDPSession: async () => ({
+        send: async (method) => {
+          if (scenario === "command") throw Error("SYNTHETIC_SECRET_CANARY");
+          return method === "Browser.getVersion"
+            ? {
+                product:
+                  scenario === "version" ? "Chrome/145.0.7632.6" : "HeadlessChrome/145.0.7632.6",
+              }
+            : {
+                arguments: [
+                  scenario === "identity" ? "/foreign" : expected,
+                  "--headless",
+                  "--block-new-web-contents",
+                  "--remote-debugging-port=9222",
+                ],
+              };
+        },
+        detach: async () => {
+          if (scenario === "detach") throw Error("SYNTHETIC_SECRET_CANARY");
+        },
+      }),
+    };
+    const chromium = {
+      executablePath: () => "/cache/chromium-1208/chrome-linux64/chrome",
+      launch: async (options) => {
+        assert.equal(options.chromiumSandbox, true);
+        assert.equal(options.executablePath, expected);
+        return browser;
+      },
+    };
+    const fail = (code) => {
+      const error = Error(code);
+      error.code = code;
+      throw error;
+    };
+    await assert.rejects(
+      run(
+        chromium,
+        9222,
+        undefined,
+        () => ({ version: "1.58.2" }),
+        { platform: "linux", arch: "x64", env: {} },
+        isAbsolute,
+        dirname,
+        join,
+        async (path) => path,
+        fn("nativeBrowserArgs"),
+        fn("browserEnvironment"),
+        fn("verifyNativeBrowserPolicy"),
+        fail,
+      ),
+      (error) =>
+        error.code === "BROWSER_POLICY" && !String(error).includes("SYNTHETIC_SECRET_CANARY"),
+    );
+    assert.equal(closed, true);
+    assert.equal(contexts, 0);
+  }
+});
+
+test("popup policy: POSIX aliases terminator and duplicate debugging switches fail closed", () => {
+  const check = fn("verifyNativeBrowserPolicy"),
+    version = { product: "HeadlessChrome/145.0.7632.6" };
+  const args = [
+    "/trusted/chrome-headless-shell",
+    "--headless",
+    "--block-new-web-contents",
+    "--remote-debugging-port=9222",
+  ];
+  for (const value of [
+    "-no-sandbox",
+    "-disable-web-security=true",
+    "-remote-debugging-port=9333",
+    "--remote-debugging-port",
+    "-block-new-web-contents",
+    "-headless",
+    "--unsafely-treat-insecure-origin-as-secure=http://127.0.0.1",
+  ])
+    assert.throws(() => check([...args, value], version), { code: "BROWSER_POLICY" });
+  assert.throws(() => check([args[0], "--", ...args.slice(1)], version), {
+    code: "BROWSER_POLICY",
+  });
 });
 
 const privacy123Raw = JSON.parse(
