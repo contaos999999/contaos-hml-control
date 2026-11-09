@@ -5545,6 +5545,8 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
   const read = async (path) => (path === "event.json" ? JSON.stringify(event) : raw);
   const stat = async () => ({ isFile: () => true, isSymbolicLink: () => false, size: raw.length });
   const git = async (args) => {
+    if (args[0] === "show" && args[1].startsWith("6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36:"))
+      return r14Fixture.git(args);
     if (args[0] === "show" && args[1].startsWith("3d6bea3e938459f348130bf1d04431a072dba081:"))
       return r12Fixture.git(args);
     assert.equal(args.includes(""), false, "Git nunca recebe SHA vazio");
@@ -5562,9 +5564,11 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     throw new Error("unexpected git");
   };
   const r12Fixture = await r13R12Fixture();
+  const r14Fixture = await r15R14Fixture();
   const r4Fixture = await r5R4Fixture();
   const r7Fixture = await r8R7Fixture();
   const get = async (path) => {
+    if (/42694401246|42694609672|42694609740/.test(path)) return r14Fixture.get(path);
     if (/42666600147|42666864017|42666864220/.test(path)) return r12Fixture.get(path);
     if (/42601246471|42601383933|42601384052/.test(path)) return r7Fixture.get(path);
     if (path.includes(R5_R4_HEAD) || /42568309807|42568382053|42568382029/.test(path))
