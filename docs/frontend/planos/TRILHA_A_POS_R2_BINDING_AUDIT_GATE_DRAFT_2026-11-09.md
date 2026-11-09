@@ -43,7 +43,7 @@ Scanner sensível original primeiro; depois reconhecimento de campo/contexto/pro
 
 ## Complemento pós-R3: campos afetados e limites das rotas
 
-R3 ainda não fornece bindings finais neste draft. Não executar consultas, consumir nonce ou atualizar catálogo por inferência. Preservar exatamente184casos originais e seu ledger;24fixtures são três superfícies×8, não novo universo192. Nenhuma liberação de AUDIT_BINDING_PENDING até recibos reais e vínculos fechados.
+R3 ainda não fornece bindings finais neste draft. Não executar consultas, consumir nonce ou atualizar catálogo por inferência. Preservar exatamente184casos originais e seu ledger;24fixtures são três superfícies×8 dentro desse escopo. Run124histórico:96PASSauto provisórios+8FAIL_UI+56PII+24FIXTURE=184; resultados posteriores devem permanecer separados por origem/HEAD/run, sem reatribuir PASS ou certificar qualquer caso por este draft. Nenhuma liberação de AUDIT_BINDING_PENDING até recibos reais e vínculos fechados.
 
 | Superfície/campo afetado | Registro posterior exigido | Limite |
 |---|---|---|
