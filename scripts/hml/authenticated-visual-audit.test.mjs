@@ -5199,7 +5199,7 @@ test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r12",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "b".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5409,7 +5409,7 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r12",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
     approved_parent_sha: parent,
     frontend_sha: "c".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5455,7 +5455,7 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r12",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5545,6 +5545,8 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
   const read = async (path) => (path === "event.json" ? JSON.stringify(event) : raw);
   const stat = async () => ({ isFile: () => true, isSymbolicLink: () => false, size: raw.length });
   const git = async (args) => {
+    if (args[0] === "show" && args[1].startsWith("3d6bea3e938459f348130bf1d04431a072dba081:"))
+      return r12Fixture.git(args);
     assert.equal(args.includes(""), false, "Git nunca recebe SHA vazio");
     if (args[0] === "show" && args[1].startsWith("bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215:"))
       return (await r8R7Fixture()).git(args);
@@ -5559,9 +5561,11 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     if (args[0] === "log") return sha;
     throw new Error("unexpected git");
   };
+  const r12Fixture = await r13R12Fixture();
   const r4Fixture = await r5R4Fixture();
   const r7Fixture = await r8R7Fixture();
   const get = async (path) => {
+    if (/42666600147|42666864017|42666864220/.test(path)) return r12Fixture.get(path);
     if (/42601246471|42601383933|42601384052/.test(path)) return r7Fixture.get(path);
     if (path.includes(R5_R4_HEAD) || /42568309807|42568382053|42568382029/.test(path))
       return r4Fixture.get(path);
@@ -5691,7 +5695,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     sha = "a".repeat(40),
     parent = "b".repeat(40),
     head = "d".repeat(40);
-  const request = { request_id: "trilha-a-fixtures-20261109-r12", approved_parent_sha: parent };
+  const request = { request_id: sut.SINGLE_REQUEST.fixtures.nonce, approved_parent_sha: parent };
   const pull = {
     id: 300,
     number: 90,
@@ -5841,7 +5845,7 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r12",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -5887,7 +5891,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r12",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -7881,7 +7885,7 @@ test("R3 only current nonce executes and exact R1 R2 remain spent", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r12",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -8530,7 +8534,7 @@ test("R8 is the only executable fixture nonce and R1 through R7 remain historica
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r12",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -8586,7 +8590,7 @@ test("R8 is sole executable fixture nonce and all seven original requests remain
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r12",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -10210,7 +10214,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     "deps",
     `const {isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,singleRequestGet}=deps;
     ${environmentSource}
-    let singleRequestContext=null,validatedR4ZeroAuth=null,validatedR7ZeroAuth=null;
+    let singleRequestContext=null,validatedR4ZeroAuth=null,validatedR7ZeroAuth=null,validatedR12ZeroAuth=null;
     ${sut.loadSingleRequestProof.toString().replaceAll("import.meta.url", "sourceModuleUrl")}
     return {load:loadSingleRequestProof,current:()=>validatedR7ZeroAuth};`,
   );
@@ -10271,7 +10275,7 @@ test("R9 request accepts only the new nonce and keeps R8 spent", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r12",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -10394,7 +10398,7 @@ test("R12 new request nonce is accepted while the uncertain R11 request remains 
     frontend_sha: "",
     deployment_id: "",
   };
-  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(row), "fixtures"), row);
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify(row), "fixtures"), /REQUEST_/);
   assert.throws(
     () =>
       sut.parseSingleRequest(
@@ -12073,7 +12077,7 @@ test("R13 actual request Git contract requires its integrated gate in the approv
     f.gitCalls.some(
       (args) =>
         args.join(" ") ===
-        "merge-base --is-ancestor 6605fbfc40359a1565abbffc8b8358ff4cf44b83 " + f.parent,
+        "merge-base --is-ancestor 0024b3c6739ab6296ec12338f11cf792d3a5f84b " + f.parent,
     ),
   );
 });
@@ -12240,3 +12244,30 @@ test("R13 POSIX ignored-build template admits only the approved production SHA",
     JSON.stringify({ phase: "R13_POSIX_PROOF", state: "PASS", harnessSha, approvedSha: approved }),
   );
 });
+
+test(
+  "R13 canonical restored public deployment is discovered live before any new nonce",
+  { timeout: 210000 },
+  async () => {
+    const graph = await sut.discoverPublicGraph();
+    const expected = {
+      frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
+      deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
+    };
+    assert.deepEqual(sut.resolveDeploymentIdentity(graph.modules, expected), expected);
+    assert.ok(graph.modules.size > 0 && graph.modules.size <= 128);
+    assert.ok(Number.isSafeInteger(graph.bytes) && graph.bytes > 0 && graph.bytes <= 8388608);
+    const { harnessSha } = await sut.harnessIdentity();
+    console.log(
+      JSON.stringify({
+        phase: "R13_PUBLIC_DEPLOYMENT_PROBE",
+        state: "PASS",
+        harnessSha,
+        frontendSha: expected.frontendSha,
+        deploymentId: expected.deploymentId,
+        moduleCount: graph.modules.size,
+        bytes: graph.bytes,
+      }),
+    );
+  },
+);
