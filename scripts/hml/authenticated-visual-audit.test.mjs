@@ -13510,12 +13510,15 @@ test("R15 transport never retries generic fetch failure or reads error getters",
   let calls = 0;
   let traps = 0;
   const token = "R15_METADATA_CANARY";
-  const error = new Proxy({}, {
-    get() {
-      traps++;
-      throw Error("PRIVATE_CANARY");
+  const error = new Proxy(
+    {},
+    {
+      get() {
+        traps++;
+        throw Error("PRIVATE_CANARY");
+      },
     },
-  });
+  );
   const get = sut.singleRequestGet({
     token,
     publicOnly: false,
@@ -13576,15 +13579,21 @@ test("R15 body timeout repeats the same GET once and accepts only the second com
       urls.push(url);
       return {
         status: 200,
-        text: calls === 1
-          ? () => new Promise((resolve, reject) => {
-              const hold = setTimeout(() => reject(Error("BODY_CANARY")), 100);
-              options.signal.addEventListener("abort", () => {
-                clearTimeout(hold);
-                reject(Error("BODY_CANARY"));
-              }, { once: true });
-            })
-          : async () => '{"total_count":0,"jobs":[]}',
+        text:
+          calls === 1
+            ? () =>
+                new Promise((resolve, reject) => {
+                  const hold = setTimeout(() => reject(Error("BODY_CANARY")), 100);
+                  options.signal.addEventListener(
+                    "abort",
+                    () => {
+                      clearTimeout(hold);
+                      reject(Error("BODY_CANARY"));
+                    },
+                    { once: true },
+                  );
+                })
+            : async () => '{"total_count":0,"jobs":[]}',
       };
     },
   });
@@ -13603,14 +13612,19 @@ test("R15 exhausted typed timeouts have no third attempt", async () => {
     env: {},
     diagnostic: true,
     now: () => (ticks++ === 0 ? 0 : 59995),
-    fetchImpl: async (url, options) => new Promise((resolve, reject) => {
-      calls++;
-      const hold = setTimeout(() => reject(Error("TIMEOUT_CANARY")), 100);
-      options.signal.addEventListener("abort", () => {
-        clearTimeout(hold);
-        reject(Error("TIMEOUT_CANARY"));
-      }, { once: true });
-    }),
+    fetchImpl: async (url, options) =>
+      new Promise((resolve, reject) => {
+        calls++;
+        const hold = setTimeout(() => reject(Error("TIMEOUT_CANARY")), 100);
+        options.signal.addEventListener(
+          "abort",
+          () => {
+            clearTimeout(hold);
+            reject(Error("TIMEOUT_CANARY"));
+          },
+          { once: true },
+        );
+      }),
   });
   await assert.rejects(get("/actions/runs/1/jobs?per_page=100&page=1"), (error) => {
     assert.equal(sut.requestApiDiagnostic(error).category, "TIMEOUT");
@@ -13628,15 +13642,20 @@ test("R15 revalidates the token before a timeout retry", async () => {
     publicOnly: false,
     env,
     now: () => (ticks++ === 0 ? 0 : 59995),
-    fetchImpl: async (url, options) => new Promise((resolve, reject) => {
-      calls++;
-      const hold = setTimeout(() => reject(Error("TOKEN_CANARY")), 100);
-      options.signal.addEventListener("abort", () => {
-        clearTimeout(hold);
-        env.CONTAOS_ACTIONS_READ_TOKEN = "CHANGED";
-        reject(Error("TOKEN_CANARY"));
-      }, { once: true });
-    }),
+    fetchImpl: async (url, options) =>
+      new Promise((resolve, reject) => {
+        calls++;
+        const hold = setTimeout(() => reject(Error("TOKEN_CANARY")), 100);
+        options.signal.addEventListener(
+          "abort",
+          () => {
+            clearTimeout(hold);
+            env.CONTAOS_ACTIONS_READ_TOKEN = "CHANGED";
+            reject(Error("TOKEN_CANARY"));
+          },
+          { once: true },
+        );
+      }),
   });
   await assert.rejects(get("/actions/runs/1/jobs?per_page=100&page=1"), {
     code: "REQUEST_API_TOKEN",
@@ -13679,14 +13698,30 @@ test("R15 spends R14 and admits only the next governed fixture nonce", () => {
 test("R15 original R14 proof uses ten closed endpoints and rejects any private execution", async () => {
   const f = await r15R14Fixture();
   const parentSha = sut.SINGLE_REQUEST.metadataTimeoutGateSha;
-  assert.deepEqual(await sut.verifyR14ZeroAuth({ get: f.get, git: f.git, parentSha }), R15_R14_PROOF);
+  assert.deepEqual(
+    await sut.verifyR14ZeroAuth({ get: f.get, git: f.git, parentSha }),
+    R15_R14_PROOF,
+  );
   assert.equal(f.requests.length, 10);
   for (const change of [
-    (r) => { r["/actions/runs/42694609672/attempts/1/jobs?per_page=100&page=1"].jobs[2].conclusion = "success"; },
-    (r) => { r["/actions/runs/42694609672/artifacts?per_page=100&page=1"].total_count = 1; },
-    (r) => { r["/actions/runs/42694609740/attempts/1/jobs?per_page=100&page=1"].jobs[0].steps.find((s) => s.number === 13).conclusion = "skipped"; },
-    (r) => { r["/actions/runs/42694609672"].run_attempt = 2; },
-    (r) => { r["/actions/runs/42694401246"].head_repository.owner.id = 1; },
+    (r) => {
+      r["/actions/runs/42694609672/attempts/1/jobs?per_page=100&page=1"].jobs[2].conclusion =
+        "success";
+    },
+    (r) => {
+      r["/actions/runs/42694609672/artifacts?per_page=100&page=1"].total_count = 1;
+    },
+    (r) => {
+      r["/actions/runs/42694609740/attempts/1/jobs?per_page=100&page=1"].jobs[0].steps.find(
+        (s) => s.number === 13,
+      ).conclusion = "skipped";
+    },
+    (r) => {
+      r["/actions/runs/42694609672"].run_attempt = 2;
+    },
+    (r) => {
+      r["/actions/runs/42694401246"].head_repository.owner.id = 1;
+    },
   ]) {
     const bad = await r15R14Fixture();
     change(bad.responses);
@@ -13694,11 +13729,14 @@ test("R15 original R14 proof uses ten closed endpoints and rejects any private e
       code: "RECOVERY_R14_PROOF",
     });
   }
-  await assert.rejects(sut.verifyR14ZeroAuth({
-    get: f.get,
-    parentSha,
-    git: async (args) => (args[0] === "show" ? (await f.git(args)) + " " : f.git(args)),
-  }), { code: "RECOVERY_R14_PROOF" });
+  await assert.rejects(
+    sut.verifyR14ZeroAuth({
+      get: f.get,
+      parentSha,
+      git: async (args) => (args[0] === "show" ? (await f.git(args)) + " " : f.git(args)),
+    }),
+    { code: "RECOVERY_R14_PROOF" },
+  );
 });
 test("R15 R14 cache is nine ordered own data fields without getter or Proxy effects", () => {
   assert.equal(Object.keys(sut.validateR14ZeroAuthProof(R15_R14_PROOF)).length, 9);
@@ -13717,11 +13755,20 @@ test("R15 R14 cache is nine ordered own data fields without getter or Proxy effe
     undefined,
     {},
     accessor,
-    new Proxy({}, { ownKeys() { reads++; throw Error("PRIVATE_CANARY"); } }),
+    new Proxy(
+      {},
+      {
+        ownKeys() {
+          reads++;
+          throw Error("PRIVATE_CANARY");
+        },
+      },
+    ),
     revoked.proxy,
     { ...R15_R14_PROOF, attempt: 2 },
     Object.fromEntries(Object.entries(R15_R14_PROOF).reverse()),
-  ]) assert.throws(() => sut.validateR14ZeroAuthProof(value), /RECOVERY_R14_PROOF/);
+  ])
+    assert.throws(() => sut.validateR14ZeroAuthProof(value), /RECOVERY_R14_PROOF/);
   assert.equal(reads, 0);
 });
 test("R15 actual controller and Master loader require R14 proof and publish caches atomically", async () => {
@@ -13757,10 +13804,13 @@ test("R15 actual controller and Master loader require R14 proof and publish cach
   assert.equal(sut.singleRequestEventAllowed(f.env, "fixtures"), false);
   assert.throws(() => sut.getValidatedR12ZeroAuth(), /RECOVERY_R12_PROOF/);
   assert.throws(() => sut.getValidatedR14ZeroAuth(), /RECOVERY_R14_PROOF/);
-  await assert.rejects(sut.verifySingleRequest({
-    ...f.options,
-    env: { ...f.env, MASTER_PASSWORD: "PRIVATE_CANARY" },
-  }), { code: "PREPARE_SECRET_ENV" });
+  await assert.rejects(
+    sut.verifySingleRequest({
+      ...f.options,
+      env: { ...f.env, MASTER_PASSWORD: "PRIVATE_CANARY" },
+    }),
+    { code: "PREPARE_SECRET_ENV" },
+  );
   assert.throws(() => sut.getValidatedR14ZeroAuth(), /RECOVERY_R14_PROOF/);
   assert.equal(f.r14Fixture.requests.length, before);
 });
@@ -13775,10 +13825,14 @@ test("R15 signal caps each real attempt at five seconds without inspecting throw
       if (calls > 1) return { status: 200, text: async () => "{}" };
       return new Promise((resolve, reject) => {
         const hold = setTimeout(() => reject(Error("UNABORTED_CANARY")), 6500);
-        options.signal.addEventListener("abort", () => {
-          clearTimeout(hold);
-          reject(Error("TIMEOUT_CANARY"));
-        }, { once: true });
+        options.signal.addEventListener(
+          "abort",
+          () => {
+            clearTimeout(hold);
+            reject(Error("TIMEOUT_CANARY"));
+          },
+          { once: true },
+        );
       });
     },
   });

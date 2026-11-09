@@ -9228,7 +9228,6 @@ export async function verifyR14ZeroAuth({ get, git, parentSha } = {}) {
   }
 }
 
-
 export const R4_ZERO_AUTH_PROOF = Object.freeze({
   schema: "contaos.fixture.recovery-r4.v1",
   headSha: "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",
@@ -9628,7 +9627,13 @@ export function singleRequestGet({
       }
       if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
       if (response.status !== 200)
-        failRequestApi("REQUEST_API_UNAVAILABLE", endpointKind, response.status, "HTTP", diagnostic);
+        failRequestApi(
+          "REQUEST_API_UNAVAILABLE",
+          endpointKind,
+          response.status,
+          "HTTP",
+          diagnostic,
+        );
       let body;
       try {
         body = await response.text();
@@ -10100,10 +10105,8 @@ export async function loadSingleRequestProof({
     restoredR4 = Object.freeze({ ...proof.r4ZeroAuth });
   }
   const restoredR7 = validateR7ZeroAuthProof(proof.r7ZeroAuth);
-  const restoredR12 =
-    operation === "fixtures" ? validateR12ZeroAuthProof(proof.r12ZeroAuth) : null;
-  const restoredR14 =
-    operation === "fixtures" ? validateR14ZeroAuthProof(proof.r14ZeroAuth) : null;
+  const restoredR12 = operation === "fixtures" ? validateR12ZeroAuthProof(proof.r12ZeroAuth) : null;
+  const restoredR14 = operation === "fixtures" ? validateR14ZeroAuthProof(proof.r14ZeroAuth) : null;
   if (restoredR4) validatedR4ZeroAuth = restoredR4;
   validatedR7ZeroAuth = restoredR7;
   if (restoredR12) validatedR12ZeroAuth = restoredR12;
