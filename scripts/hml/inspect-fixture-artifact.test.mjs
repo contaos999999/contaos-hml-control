@@ -334,6 +334,7 @@ test("R6 missing ledger/bindings retains UNKNOWN without inventing zero operatio
   const r = report();
   r.intentLedger = null;
   r.bindings = null;
+  r.ids = [];
   const v = validateRecords(r, empty()).observations;
   assert.equal(v.newArmedCount, "UNKNOWN");
   assert.equal(v.newConfirmed, "UNKNOWN");
@@ -451,4 +452,44 @@ test("R6 workflow grants actions read only to protected main inspector and has n
     ),
   );
   assert.ok(yaml.includes(PIN.tool));
+});
+
+test("R6 official pinned bundle parses and fails closed without token or environment", () => {
+  const path = ".fixture-inspection-tool/dist/index.js";
+  const bytes = readFileSync(path);
+  assert.ok(bytes.length > 0);
+  const git = spawnSync("git", ["-C", ".fixture-inspection-tool", "hash-object", "dist/index.js"], {
+    encoding: "utf8",
+    env: { PATH: "/usr/bin:/bin" },
+  });
+  assert.equal(git.status, 0);
+  assert.equal(git.stdout.trim(), PIN.bundle);
+  const parsed = spawnSync(process.execPath, ["--check", path], {
+    env: {},
+    encoding: "utf8",
+    timeout: 10000,
+    maxBuffer: 65536,
+  });
+  assert.equal(parsed.status, 0);
+  const smoke = spawnSync(process.execPath, [path], {
+    env: {},
+    encoding: "utf8",
+    timeout: 10000,
+    maxBuffer: 65536,
+  });
+  assert.equal(smoke.status, 1);
+  assert.equal(smoke.signal, null);
+  assert.ok(!smoke.error);
+});
+test("R6 known binding roles and collected ids cannot smuggle unrelated UUIDs", () => {
+  for (const change of [
+    (r) => (r.bindings.listId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+    (r) => (r.bindings.competencies[0].id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+    (r) => (r.recovery.sourceHash = "a".repeat(64)),
+    (r) => r.ids.push("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
+  ]) {
+    const r = report();
+    change(r);
+    assert.throws(() => validateRecords(r, empty()));
+  }
 });
