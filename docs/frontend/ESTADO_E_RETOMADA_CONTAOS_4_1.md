@@ -1,6 +1,6 @@
-## 2026-11-09 | Emenda limitada GATE R13: pushCI6605 sem jobs e retry403
+## 2026-11-09 | Emenda CI R13: experimento restrito em2runs-on na mesmaPR497
 
-Main6605fbfc:Zero42671473829/LOCK42671473179FAILattempt1/jobs0/checkruns0, anotações primárias Internal server error (correlações8be6e456/4bad98ff), sem teste de código. Única tentativa oficial failed-jobs retryZero retornou403This workflow run cannot be retried/semattempt2. Checkpoint6747808208 verificado. Emenda propõe UMA PRdocumental checkpoint nos3paths existentes, CI/revisão/merge normal e PRCI+pushCI do NOVO mainSUCCESS obrigatórios antes de Dsha/deploy. Não rerunall/R12, não checkwaiver/env/billing/security/timeout/código; preservarSRC/public/deps/types/auditor/preparerR12. PerfilGITmainHML/publicprobe/fixed11/R11Doc10+1+13/18nativas/20+SHA21 intocados. Primeira operaçãoVercel ainda NÃOemitida. Histórico integral abaixo byteexato.
+Incidente6605/PR497df30:falhasInternalservererror antesjobs;403failed-jobsZero não gerouattempt2, posteriorúnicobatchUIpúblicogerouattempt2(ZeroFAILsemquality/TestC129351763045SUCCESS,LOCKFAILjobs0). TestCtambémubuntu-latest/26.04.1; PR496latestPASS:raizrunnerNÃOprovada. Patchproposto SAMEPR497apenasfrontend-quality/protect-types deubuntu-latest→ubuntu-22.04,1linha/arquivo,reversebytesD1asserted. PLANO82prefix+LOCKpath=83; Auth/Fixtures/TestCYAML/auditor/preparer/SRC/types/deps/lock intactos. PRCI+pushCIreais SUCCESS e revisõespatch antesnovaDsha/únicaHMLop; se22também0jobs, pararsemterceirorunner/loop/waiver. NenhumAuth/SQL/deploy/replayR12;businessBUILD2mjs/fixed11/reserva10+1+13/18nativas inalterados. Histórico integral abaixo byteexato.
 
 ## 2026-11-09 | GATE R13 documental: uma build GITmain no mesmo HML e prova R12
 
