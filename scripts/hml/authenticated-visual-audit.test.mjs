@@ -4383,7 +4383,7 @@ test("privacy78 recibo selado intervalo unico contexto e desconhecidos remanesce
   const rbacProof = await fn("loadPrivacy78RbacProof")();
   const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
   assert.ok(Object.isFrozen(proof.context));
-  for (const surface of ["V111", "V112", "V115", "V122"]) {
+  for (const surface of ["V111", "V115", "V122"]) {
     const value = proof.generated_exact_values[surface][0];
     const receipt = Object.freeze({
       route: fn("privateCases")().find((r) => r.surface === surface).path,
@@ -4447,10 +4447,6 @@ function privacy78Fixtures() {
   const c = privacy78Proof.context;
   return {
     V111: '<section aria-label="Processamento"><h2>Processamento</h2><ul><li><div><span>Etapa: documents</span></div><p>Registrado em 08/11/2026 02:41 · Iniciado em 08/11/2026 08:21 · Concluído em 08/11/2026 08:21</p></li></ul></section>',
-    V112:
-      '<table><caption>Competências do contrato</caption><thead><tr><th scope="col">Competência</th><th scope="col">Período</th><th scope="col">Ações</th></tr></thead><tbody><tr><th scope="row">11/2026</th><td>01/11/2026 a 30/11/2026</td><td><a href="/competencias/' +
-      c.competence +
-      '" aria-label="Abrir competência 11/2026">Abrir</a></td></tr></tbody></table>',
     V115: '<section aria-labelledby="v115-envio"><h2 id="v115-envio">Enviar documento</h2><div><label for="v115-arquivo">Arquivo</label><input id="v115-arquivo" type="file"><p>Limite: 500 MB</p></div></section>',
     V122: '<section><h2>1. Selecionar relatórios anteriores</h2><p>Formatos aceitos: PDF, XLSX, CSV, DOCX, PNG, JPG, JPEG, WEBP, TXT, JSON, XML. O limite de tamanho e o tipo real são conferidos pelo backend.</p><label for="historico-arquivos">Arquivos históricos (seleção múltipla)</label><input id="historico-arquivos" type="file" multiple></section>',
   };
@@ -6274,6 +6270,300 @@ test("SYS04 supplement accepts only factual complete two-test TAP", () => {
   ])
     assert.equal(parse(tap), null);
 });
+
+function privacy112Fixture() {
+  return (
+    '<section aria-labelledby="v112-lista"><div><h2 id="v112-lista">Lista de competências</h2></div>' +
+    '<div class="overflow-x-auto rounded-lg border border-border"><table class="w-full min-w-[56rem] text-sm"><caption class="sr-only">Competências do contrato</caption><thead class="bg-muted/50"><tr><th scope="col">Competência</th><th scope="col">Período</th><th scope="col">Data limite</th><th scope="col">Situação</th><th scope="col">Conformidade</th><th scope="col">Versão do pacote</th><th scope="col">Ações</th></tr></thead><tbody><tr class="border-t border-border"><th scope="row">11/2026</th><td>01/11/2026 a 30/11/2026</td><td>—</td><td><span class="inline-flex"><span data-status>—</span></span></td><td><span data-percentual>—</span></td><td>—</td><td><a href="/competencias/59072760-4420-4598-82dd-367f41a79e89" aria-label="Abrir competência 11/2026"><span>Abrir competência</span></a></td></tr></tbody></table></div>' +
+    "</section>"
+  );
+}
+function privacy112Texts() {
+  const value = privacy78Proof.generated_exact_values.V112[0];
+  const header = '- rowheader "11/2026"';
+  const cell = '- cell "' + value + '"';
+  const row =
+    '- row "11/2026 ' +
+    value +
+    ' — — — — Abrir competência 11/2026":\n' +
+    "  " +
+    header +
+    "\n  " +
+    cell +
+    '\n  - cell "—"\n  - cell "—"\n  - cell "—"\n  - cell "—"\n  - cell "Abrir competência 11/2026":\n    - link "Abrir competência 11/2026":\n      - /url: /competencias/' +
+    privacy78Proof.context.competence;
+  return {
+    rendered: "Lista de competências\n11/2026 " + value + " — — — — Abrir competência",
+    snapshot:
+      '- heading "Lista de competências" [level=2]\n- table:\n  ' + row.replaceAll("\n", "\n  "),
+    fieldSnapshots: [row, header, cell],
+  };
+}
+test("privacy112 RED real row aggregate and cell require scoped structural exemption", async () => {
+  const proof = await fn("loadPrivacy78Proof")(),
+    texts = privacy112Texts();
+  const input = {
+    proof,
+    ...texts,
+    anchored: true,
+    receipt: Object.freeze({
+      route: fn("privateCases")().find((i) => i.surface === "V112").path,
+      observed: Object.freeze(["contract_gate", "competencias_page0_no_filters"]),
+      age: 1,
+    }),
+  };
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  assert.equal(fn("classifyArtifactText")(texts.rendered, words).unknownCount, 1);
+  assert.equal(
+    fn("classifyArtifactText")(texts.snapshot, words, { snapshot: true }).unknownCount,
+    3,
+  );
+  const context = fn("privacy112FieldContext")(input);
+  assert.ok(context);
+  for (const channel of ["rendered", "snapshot"])
+    assert.equal(
+      fn("classifyArtifactText")(texts[channel], words, {
+        snapshot: channel === "snapshot",
+        fieldContext: context,
+      }).reason,
+      "ALLOWED",
+    );
+  for (const delta of [
+    { anchored: false },
+    { proof: privacy78Proof },
+    { receipt: { ...input.receipt } },
+    { receipt: Object.freeze({ ...input.receipt, age: 120000 }) },
+    { receipt: Object.freeze({ ...input.receipt, observed: Object.freeze([]) }) },
+    { receipt: Object.freeze({ ...input.receipt, route: "/" }) },
+    { fieldSnapshots: texts.fieldSnapshots.slice(0, 2) },
+    { snapshot: texts.snapshot + "\n" + texts.fieldSnapshots[2] },
+    { rendered: texts.rendered + proof.generated_exact_values.V112[0] },
+    { snapshot: texts.snapshot.replace('rowheader "11/2026"', 'rowheader "10/2026"') },
+    { snapshot: texts.snapshot.replace("01/11/2026", "01/10/2026") },
+  ])
+    assert.equal(fn("privacy112FieldContext")({ ...input, ...delta }), null);
+  for (const extra of [
+    " CANARIO_PRIVADO",
+    " rowheader",
+    " pessoa@example.com",
+    " Bearer secret",
+    " 123.456.789-00",
+  ]) {
+    for (const channel of ["rendered", "snapshot"]) {
+      const changed = { ...input, [channel]: texts[channel] + extra },
+        ctx = fn("privacy112FieldContext")(changed);
+      assert.notEqual(
+        fn("classifyArtifactText")(changed[channel], words, {
+          snapshot: channel === "snapshot",
+          fieldContext: ctx,
+        }).reason,
+        "ALLOWED",
+      );
+    }
+  }
+});
+test("privacy112 DOM closes section seven columns header same row link and plain period", () => {
+  for (const mutate of [
+    null,
+    (d) => (d.querySelector("h2").textContent = "Outro"),
+    (d) => d.querySelector("thead th").remove(),
+    (d) => (d.querySelector("th[scope=row]").textContent = "10/2026"),
+    (d) => d.querySelector("td").setAttribute("aria-label", "CANARIO_PRIVADO"),
+    (d) => (d.querySelector("a").href = "/competencias/foreign"),
+    (d) => (d.body.innerHTML += privacy112Fixture()),
+    (d) => d.querySelector("td").appendChild(d.createElement("span")),
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy112Fixture());
+    try {
+      if (mutate) mutate(w.document);
+      assert.equal(!!run("privacy112FieldAnchor", { proof: privacy78Proof }), !mutate);
+    } finally {
+      dom.window.close();
+    }
+  }
+});
+
+test(
+  "privacy112 Chromium full DOM ARIA matrix preserves scoped intervals and unknown neighbours",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
+  async () => {
+    const { chromium } = await import("playwright");
+    const browser = await chromium.launch({ chromiumSandbox: true });
+    const proof = await fn("loadPrivacy78Proof")(),
+      words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+    try {
+      const page = await browser.newPage();
+      await page.route("**/*", (r) => r.abort());
+      let matrixCases = 0;
+      for (const width of [1440, 1280, 768, 390])
+        for (const theme of ["light", "dark"]) {
+          matrixCases++;
+          await page.setViewportSize({ width, height: 900 });
+          await page.emulateMedia({ colorScheme: theme });
+          await page.setContent(
+            "<!doctype html><style>table{min-width:56rem}caption{position:absolute;width:1px;height:1px;overflow:hidden}</style>" +
+              privacy112Fixture(),
+          );
+          const anchor = await page.evaluate(fn("privacy112FieldAnchor"), { proof });
+          assert.ok(anchor);
+          const fieldSnapshots = await fn("privacy112FieldSnapshots")(page, anchor);
+          assert.ok(fieldSnapshots);
+          const rendered = await page.evaluate(() => document.body.innerText),
+            snapshot = await page.locator("body").ariaSnapshot();
+          const input = {
+            proof,
+            rendered,
+            snapshot,
+            fieldSnapshots,
+            anchored: true,
+            receipt: Object.freeze({
+              route: fn("privateCases")().find((i) => i.surface === "V112").path,
+              observed: Object.freeze(["contract_gate", "competencias_page0_no_filters"]),
+              age: 1,
+            }),
+          };
+          assert.equal(fn("classifyArtifactText")(rendered, words).unknownCount, 1);
+          assert.equal(
+            fn("classifyArtifactText")(snapshot, words, { snapshot: true }).unknownCount,
+            3,
+          );
+          const ctx = fn("privacy112FieldContext")(input);
+          assert.ok(ctx);
+          assert.equal(
+            fn("classifyArtifactText")(rendered, words, { fieldContext: ctx }).reason,
+            "ALLOWED",
+          );
+          assert.equal(
+            fn("classifyArtifactText")(snapshot, words, { snapshot: true, fieldContext: ctx })
+              .reason,
+            "ALLOWED",
+          );
+          await page
+            .locator("tbody tr td")
+            .nth(2)
+            .evaluate((n) => n.setAttribute("aria-label", "CANARIO_PRIVADO"));
+          const changed = await page.locator("body").ariaSnapshot();
+          const changedFields = await fn("privacy112FieldSnapshots")(page, anchor);
+          const changedContext = fn("privacy112FieldContext")({
+            ...input,
+            snapshot: changed,
+            fieldSnapshots: changedFields,
+          });
+          assert.notEqual(
+            fn("classifyArtifactText")(changed, words, {
+              snapshot: true,
+              fieldContext: changedContext,
+            }).reason,
+            "ALLOWED",
+          );
+          await page
+            .locator("tbody tr td")
+            .nth(2)
+            .evaluate((n) => n.removeAttribute("aria-label"));
+          await page
+            .locator("tbody a")
+            .evaluate((n) => n.setAttribute("aria-labelledby", "v112-lista"));
+          assert.ok(
+            (await page.locator("tbody a").ariaSnapshot()).includes('link "Lista de competências"'),
+          );
+          assert.equal(await page.evaluate(fn("privacy112FieldAnchor"), { proof }), null);
+        }
+      assert.equal(matrixCases, 8);
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+test("privacy112 rejects copies cards structural injection foreign records and stale evidence", async () => {
+  const proof = await fn("loadPrivacy78Proof")(),
+    texts = privacy112Texts(),
+    value = proof.generated_exact_values.V112[0];
+  const input = {
+    proof,
+    ...texts,
+    anchored: true,
+    receipt: Object.freeze({
+      route: fn("privateCases")().find((i) => i.surface === "V112").path,
+      observed: Object.freeze(["contract_gate", "competencias_page0_no_filters"]),
+      age: 1,
+    }),
+  };
+  for (const delta of [
+    {
+      fieldSnapshots: [
+        texts.fieldSnapshots[0],
+        '- rowheader "11/2026 CANARIO_PRIVADO"',
+        texts.fieldSnapshots[2],
+      ],
+    },
+    {
+      fieldSnapshots: [
+        texts.fieldSnapshots[0].replace("  - rowheader", "  - cell"),
+        texts.fieldSnapshots[1],
+        texts.fieldSnapshots[2],
+      ],
+    },
+    {
+      fieldSnapshots: [
+        texts.fieldSnapshots[0].replace('  - cell "—"\n', ""),
+        texts.fieldSnapshots[1],
+        texts.fieldSnapshots[2],
+      ],
+    },
+    { snapshot: texts.snapshot + '\n- paragraph "' + value + '"' },
+    { snapshot: texts.snapshot + "\n" + texts.fieldSnapshots[0] },
+    { snapshot: texts.snapshot.replace("11/2026", "09/2026") },
+    {
+      receipt: Object.freeze({
+        ...input.receipt,
+        observed: Object.freeze(["contract_gate", "competencias_page0_no_filters", "foreign"]),
+      }),
+    },
+    {
+      receipt: Object.freeze({
+        ...input.receipt,
+        observed: Object.freeze([
+          "contract_gate",
+          "competencias_page0_no_filters",
+          "contract_gate",
+        ]),
+      }),
+    },
+    { receipt: Object.freeze({ ...input.receipt, age: -1 }) },
+  ])
+    assert.equal(fn("privacy112FieldContext")({ ...input, ...delta }), null);
+  assert.equal(
+    fn("privacy78FieldContext")({
+      surface: "V112",
+      proof,
+      rendered: value,
+      snapshot: value,
+      fieldSnapshot: value,
+      anchored: true,
+      receipt: input.receipt,
+    }),
+    null,
+  );
+  for (const mutate of [
+    (d) => (d.querySelector("thead th:nth-child(2)").textContent = "Outro"),
+    (d) => d.querySelector("th[scope=row]").setAttribute("aria-label", "CANARIO_PRIVADO"),
+    (d) => d.querySelector("a").setAttribute("aria-label", "Abrir competência 10/2026"),
+    (d) => d.querySelector("tbody").appendChild(d.querySelector("tbody tr").cloneNode(true)),
+    (d) => (d.querySelector("tbody td").textContent = "01/10/2026 a 31/10/2026"),
+    (d) => (d.querySelector("table").outerHTML = "<article>11/2026 " + value + "</article>"),
+    (d) => (d.querySelector("h2").id = "foreign"),
+    (d) => (d.querySelector("table").hidden = true),
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy112Fixture());
+    try {
+      mutate(w.document);
+      assert.equal(run("privacy112FieldAnchor", { proof }), null);
+    } finally {
+      dom.window.close();
+    }
+  }
+});
 const privacyWireRaw = JSON.parse(
   await (
     await import("node:fs/promises")
@@ -6536,3 +6826,92 @@ async function privacyWireChromium(browser, words) {
     }
   }
 }
+
+test("privacy112 rejects non-source row labels and period attributes", () => {
+  for (const [selector, key, value] of [
+    ["tbody tr", "aria-label", "11/2026 01/11/2026 a 30/11/2026"],
+    ["tbody tr", "aria-labelledby", "foreign"],
+    ["tbody tr td", "scope", "CANARIO_PRIVADO"],
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy112Fixture());
+    try {
+      w.document.querySelector(selector).setAttribute(key, value);
+      assert.equal(run("privacy112FieldAnchor", { proof: privacy78Proof }), null);
+    } finally {
+      dom.window.close();
+    }
+  }
+});
+
+test("privacy112 supplement accepts only its factual complete browser TAP", () => {
+  const parse = fn("privacy112Supplement"),
+    good =
+      "ok 1 - privacy112 Chromium full DOM ARIA matrix preserves scoped intervals and unknown neighbours\n# tests 1\n# pass 1\n# fail 0\n# skipped 0\n# cancelled 0\n";
+  assert.equal(parse(good), 1);
+  for (const bad of [
+    "",
+    good.replace("# pass 1", "# pass 0"),
+    good.replace("# fail 0", "# fail 1"),
+    good.replace("# skipped 0", "# skipped 1"),
+    good.replace("# cancelled 0", "# cancelled 1"),
+    good + "# tests 1\n",
+    good.replace("ok 1 - privacy112 Chromium", "ok 1 - wrong Chromium"),
+  ])
+    assert.equal(parse(bad), null);
+});
+test("privacy112 supplemental process is inside nativeGuard after causal proofs", async () => {
+  const { readFile } = await import("node:fs/promises"),
+    source = await readFile(new URL("./authenticated-visual-audit.mjs", import.meta.url), "utf8"),
+    ts = await import("typescript");
+  const ast = ts.createSourceFile(
+    "auditor.mjs",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
+  const guard = ast.statements
+    .find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "nativeGuard")
+    .getText(ast);
+  assert.ok(guard.includes("--test-name-pattern=^privacy112 Chromium full DOM ARIA matrix"));
+  assert.ok(
+    guard.indexOf("--test-name-pattern=^privacy112") >
+      guard.indexOf("--test-name-pattern=Run78 Chromium isolado"),
+  );
+  assert.ok(
+    guard.indexOf("privacy112Supplement(supplement.stdout)") <
+      guard.indexOf('await mkdir(".audit-work"'),
+  );
+  const prepare =
+    ast.statements
+      .find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "cli")
+      ?.getText(ast) ?? "";
+  assert.equal(prepare.includes("--test-name-pattern=^privacy112"), false);
+});
+
+test("privacy112 link requires source attributes and exact plain span subtree", () => {
+  for (const mutate of [
+    (d) => {
+      const label = d.createElement("span");
+      label.id = "known-literal";
+      label.hidden = true;
+      label.textContent = "Competências";
+      d.body.appendChild(label);
+      d.querySelector("tbody a").setAttribute("aria-labelledby", "known-literal");
+    },
+    (d) => d.querySelector("tbody a").setAttribute("aria-describedby", "known-literal"),
+    (d) => d.querySelector("tbody a").setAttribute("title", "CANARIO_PRIVADO"),
+    (d) => d.querySelector("tbody a").setAttribute("aria-label", "Abrir outra competência"),
+    (d) => d.querySelector("tbody a span").setAttribute("aria-label", "Competências"),
+    (d) => (d.querySelector("tbody a span").textContent = "Competências"),
+    (d) => d.querySelector("tbody a").appendChild(d.createElement("span")),
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy112Fixture());
+    try {
+      mutate(w.document);
+      assert.equal(run("privacy112FieldAnchor", { proof: privacy78Proof }), null);
+    } finally {
+      dom.window.close();
+    }
+  }
+});
