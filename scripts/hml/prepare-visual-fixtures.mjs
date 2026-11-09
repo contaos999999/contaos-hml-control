@@ -3548,7 +3548,7 @@ export async function prepareSourceAndList(io) {
         for (
           let n = 0;
           (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
-            (await listSelectionControl(region))
+            (await tracedPreparation("SOURCE_UI_CONTROL", async () => listSelectionControl(region)))
               .locator(`option[value="${matching[0].id}"]`)
               .count(),
           )) === 0;
@@ -3560,7 +3560,11 @@ export async function prepareSourceAndList(io) {
           );
         }
         await tracedPreparation("SOURCE_FORM_FIELD", async () =>
-          (await listSelectionControl(region, matching[0].id)).selectOption(matching[0].id),
+          (
+            await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+              listSelectionControl(region, matching[0].id),
+            )
+          ).selectOption(matching[0].id),
         );
         await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
       }
@@ -3880,7 +3884,9 @@ export async function prepareSourceAndList(io) {
     for (
       let n = 0;
       (await tracedPreparation("LIST_UI_CONTROL", async () =>
-        (await listSelectionControl(panel)).locator(`option[value="${matches[0].id}"]`).count(),
+        (await tracedPreparation("LIST_UI_CONTROL", async () => listSelectionControl(panel)))
+          .locator(`option[value="${matches[0].id}"]`)
+          .count(),
       )) === 0;
       n++
     ) {
@@ -3890,7 +3896,11 @@ export async function prepareSourceAndList(io) {
       );
     }
     await tracedPreparation("LIST_FORM_FIELD", async () =>
-      (await listSelectionControl(panel, matches[0].id)).selectOption(matches[0].id),
+      (
+        await tracedPreparation("LIST_UI_CONTROL", async () =>
+          listSelectionControl(panel, matches[0].id),
+        )
+      ).selectOption(matches[0].id),
     );
     await tracedPreparation("LIST_REFRESH", async () => io.fresh());
     await tracedPreparation("LIST_MODEL_READ", async () => listProof());
