@@ -207,22 +207,59 @@ export function validateR1RecoveryDocument(input) {
   return freeze(structuredClone(input));
 }
 
+export async function readCompetenceMonth(io, month, navigate) {
+  if (
+    !months.includes(month) ||
+    typeof navigate !== "function" ||
+    typeof io.readBarrier !== "function" ||
+    typeof io.assertReadBarrier !== "function" ||
+    typeof io.readBarrierRemaining !== "function" ||
+    typeof io.drainReads !== "function"
+  )
+    err("OBSERVATION_ORDINAL");
+  const select = EXACT_SELECTS.competencias.find((v) => v.includes("competencia_referencia,"));
+  return io.readBarrier(async (budget) => {
+    const guard = () => io.assertReadBarrier(budget);
+    guard();
+    const initial = io.generation();
+    await navigate(budget);
+    guard();
+    await io.observedAfter("competencias", { id_contrato: FIXTURE.contract }, initial, {
+      select,
+      readBudget: budget,
+    });
+    guard();
+    await io.fresh();
+    guard();
+    await io.drainReads(budget);
+    guard();
+    const after = io.generation();
+    guard();
+    await io.page
+      .getByLabel("Competência", { exact: true })
+      .fill(month.slice(0, 7), { timeout: io.readBarrierRemaining(budget) });
+    guard();
+    const rows = await io.read(
+      "competencias",
+      { id_contrato: FIXTURE.contract, competencia_referencia: month },
+      { select, after, queryScope: "RECOVERY_COMPETENCE_MONTH", readBudget: budget },
+    );
+    guard();
+    return rows;
+  });
+}
+
 export async function reconcileRecoveryCompetencies(io) {
   validateR5RecoveryDocument(io.recoveryLedgerR5);
   validateR6RecoveryDocument(io.recoveryLedgerR6);
   validateR7RecoveryDocument(io.recoveryLedgerR7);
   validateR8RecoveryDocument(io.recoveryLedgerR8);
+  validateR9RecoveryDocument(io.recoveryLedgerR9);
   const result = [];
-  const select = EXACT_SELECTS.competencias.find((value) =>
-    value.includes("competencia_referencia,"),
-  );
   for (const month of months) {
-    const after = io.generation();
-    await io.goKnown("/contratos/" + FIXTURE.contract + "/competencias");
-    await io.page.getByLabel("Competência", { exact: true }).fill(month.slice(0, 7));
-    const where = { id_contrato: FIXTURE.contract, competencia_referencia: month };
-    await io.observedAfter("competencias", where, after, { select });
-    const rows = await io.read("competencias", where, { select, after });
+    const rows = await readCompetenceMonth(io, month, (budget) =>
+      io.goKnown("/contratos/" + FIXTURE.contract + "/competencias", budget),
+    );
     if (!(
       Array.isArray(rows) &&
       rows.length === 1 &&
@@ -269,6 +306,7 @@ export function reconcileR1Recovery(input) {
   validateR6RecoveryDocument(input?.ledgerR6);
   validateR7RecoveryDocument(input?.ledgerR7);
   validateR8RecoveryDocument(input?.ledgerR8);
+  validateR9RecoveryDocument(input?.ledgerR9);
   const expected = R5_BINDINGS;
   if (
     input.listCount !== 1 ||
@@ -754,6 +792,102 @@ export function validateR8RecoveryDocument(input) {
   return freeze(clean);
 }
 const R8_BINDINGS = freeze(JSON.parse(R8_RECOVERY_DOCUMENT.reportRaw).bindings);
+
+export const R9_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r9.v1",
+  workflowRun: "42621964900",
+  artifactId: "13676832673",
+  requestId: "trilha-a-fixtures-20261109-r9",
+  harnessSha: "2ed3097691f39025b49a015d86223da61a2b45e5",
+  zipSha256: "89a35fb6de1e437a93c8074cb563745108d5e968878d929c8663dcaff700f500",
+  reportSha256: "4163c5266ed9715ceafa3650af55a42348636cfbccceb9c8f124b55ab1eac31e",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  observationSha256: "6beb2ab824c183a65b1bd7334a4a6ab7ca878a0c6cab999a32dfd39a4ec5cad6",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "OBSERVATION_FAILED",\n  "diagnostics": {\n    "primaryFailure": "OBSERVATION_FAILED",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "RUNTIME_FRESH",\n    "subphasePath": [\n      "SOURCE_AND_LIST",\n      "RECOVERY_READ",\n      "RECOVERY_READ",\n      "RUNTIME_FRESH",\n      "RUNTIME_FRESH"\n    ],\n    "lastCompletedSubphase": "RUNTIME_FRESH",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 10,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 10,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 14\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 14,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": false,\n    "sourceVersion": null,\n    "sourceHash": null\n  },\n  "bindings": null,\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "2ed3097691f39025b49a015d86223da61a2b45e5",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42621964900",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "2ed3097691f39025b49a015d86223da61a2b45e5",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42621964900",\n  "firstFailure": {\n    "contractKind": "TABLE:competencias",\n    "stage": "BODY_READ",\n    "statusHTTP": 200,\n    "requestFailure": "ABORTED"\n  }\n}\n',
+});
+export function validateR9RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R9_LEDGER");
+  const names = Object.keys(R9_RECOVERY_DOCUMENT),
+    ds = Object.getOwnPropertyDescriptors(input),
+    clean = {};
+  if (Reflect.ownKeys(ds).length !== names.length) err("RECOVERY_R9_LEDGER");
+  for (const key of names) {
+    const d = ds[key];
+    if (!d || !Object.hasOwn(d, "value") || d.enumerable !== true || typeof d.value !== "string")
+      err("RECOVERY_R9_LEDGER");
+    clean[key] = d.value;
+  }
+  if (
+    !same(clean, R9_RECOVERY_DOCUMENT) ||
+    hash(JSON.stringify(clean, null, 2) + "\n") !==
+      "71e20cc2dfd5888ab22228efe2b253eea316194ce0503e262ad58aef516078b8" ||
+    hash(clean.reportRaw) !== clean.reportSha256 ||
+    hash(clean.receiptsRaw) !== clean.receiptsSha256 ||
+    hash(clean.observationRaw) !== clean.observationSha256
+  )
+    err("RECOVERY_R9_LEDGER");
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw),
+    observation = JSON.parse(clean.observationRaw);
+  if (
+    JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
+    JSON.stringify(receipts) + "\n" !== clean.receiptsRaw ||
+    JSON.stringify(observation, null, 2) + "\n" !== clean.observationRaw ||
+    report.schema !== "contaos.fixture.preparation.v1" ||
+    report.workflowRun !== clean.workflowRun ||
+    report.harnessSha !== clean.harnessSha ||
+    report.frontendSha !== "437c788e32f0325dd15c9d2e7277c10129bcb462" ||
+    report.deploymentId !== "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp" ||
+    report.failure !== "OBSERVATION_FAILED" ||
+    report.phase !== "SOURCE_AND_LIST" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.logoutAttempted !== true ||
+    report.diagnostics.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    report.bindings !== null ||
+    !same(report.ids, []) ||
+    !same(report.intentLedger, {
+      count: 10,
+      frozen: false,
+      pending: false,
+      sent: false,
+      priorConfirmed: 10,
+      newArmedCount: 0,
+      maxIntentions: 24,
+      maxNewIntentions: 14,
+    }) ||
+    !same(receipts, { schema: "contaos.fixture.receipts.v1", receipts: [] }) ||
+    report.recovery.confirmedBefore !== 10 ||
+    report.recovery.maxNewIntentions !== 14 ||
+    report.recovery.reconciled !== false ||
+    report.recovery.sourceVersion !== null ||
+    report.recovery.sourceHash !== null
+  )
+    err("RECOVERY_R9_LEDGER");
+  validateR4RecoveryDocument(report.recovery.r4ZeroAuth);
+  validateObservationDiagnostic(observation, {
+    frontendSha: report.frontendSha,
+    harnessSha: report.harnessSha,
+    deploymentId: report.deploymentId,
+    workflowRun: report.workflowRun,
+  });
+  if (
+    !same(observation.firstFailure, {
+      contractKind: "TABLE:competencias",
+      stage: "BODY_READ",
+      statusHTTP: 200,
+      requestFailure: "ABORTED",
+    })
+  )
+    err("RECOVERY_R9_LEDGER");
+  return freeze(clean);
+}
+
 function confirmedR8Replay(rpc, payload) {
   if (!["criar_documento_competencia_v115", "solicitar_analise_competencia"].includes(rpc))
     return false;
@@ -830,7 +964,16 @@ export function validateR7RecoveryDocument(input) {
   return freeze(clean);
 }
 
-function recoveryBudget(ledger, ledgerR3, ledgerR4, ledgerR5, ledgerR6, ledgerR7, ledgerR8) {
+function recoveryBudget(
+  ledger,
+  ledgerR3,
+  ledgerR4,
+  ledgerR5,
+  ledgerR6,
+  ledgerR7,
+  ledgerR8,
+  ledgerR9,
+) {
   const prior = validateR1RecoveryDocument(ledger),
     r3 = validateR3RecoveryDocument(ledgerR3);
   validateR4RecoveryDocument(ledgerR4);
@@ -842,6 +985,7 @@ function recoveryBudget(ledger, ledgerR3, ledgerR4, ledgerR5, ledgerR6, ledgerR7
   ).length;
   if (confirmedBefore !== 8) err("RECOVERY_R5_LEDGER");
   const r8 = JSON.parse(validateR8RecoveryDocument(ledgerR8).receiptsRaw);
+  validateR9RecoveryDocument(ledgerR9);
   const total = confirmedBefore + r8.receipts.filter((row) => row.state === "confirmed").length;
   if (total !== 10) err("RECOVERY_R8_LEDGER");
   return Object.freeze({ confirmedBefore: total, maxNewIntentions: 24 - total });
@@ -1673,6 +1817,7 @@ export function createIntentBroker({
   recoveryLedgerR6,
   recoveryLedgerR7,
   recoveryLedgerR8,
+  recoveryLedgerR9,
   beforeArm,
 } = {}) {
   const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
@@ -1683,7 +1828,8 @@ export function createIntentBroker({
       recoveryLedgerR5 !== undefined ||
       recoveryLedgerR6 !== undefined ||
       recoveryLedgerR7 !== undefined ||
-      recoveryLedgerR8 !== undefined)
+      recoveryLedgerR8 !== undefined ||
+      recoveryLedgerR9 !== undefined)
   )
     err("RECOVERY_R3_LEDGER");
   const budget = recovery
@@ -1695,6 +1841,7 @@ export function createIntentBroker({
         recoveryLedgerR6,
         recoveryLedgerR7,
         recoveryLedgerR8,
+        recoveryLedgerR9,
       )
     : null;
   let recoveryAuthorized = !recovery;
@@ -2974,7 +3121,8 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     sequences = new WeakMap();
   let sequence = 0,
     failed = false,
-    closed = false;
+    closed = false,
+    sealing = false;
   let firstFailure = null;
   const recordFailure = (contractKind, stage, statusHTTP = "NONE", requestFailure = "NONE") => {
     failed = true;
@@ -2990,6 +3138,227 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       });
     }
   };
+
+  const readBudgets = new WeakMap(),
+    pendingReads = new Set(),
+    latestReads = new Map(),
+    readAssociations = new WeakMap();
+  const readClock = typeof now === "function" ? now : () => performance.now();
+  function unavailableRead() {
+    recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
+    err("OBSERVATION_FAILED");
+  }
+  function budgetState(token) {
+    const state = readBudgets.get(token);
+    if (!state || state.released) err("OBSERVATION_ORDINAL");
+    const current = readClock();
+    if (
+      state.expired ||
+      !Number.isFinite(current) ||
+      current < state.last ||
+      current >= state.deadline
+    ) {
+      state.expired = true;
+      unavailableRead();
+    }
+    state.last = current;
+    if (failed || closed) err("OBSERVATION_FAILED");
+    return state;
+  }
+  function budgetRemaining(token) {
+    const state = budgetState(token),
+      remaining = state.deadline - state.last;
+    if (!Number.isFinite(remaining) || remaining <= 0) {
+      state.expired = true;
+      unavailableRead();
+    }
+    return Math.ceil(remaining);
+  }
+  async function withReadBudget(execute, token) {
+    if (typeof execute !== "function" || isProxy(execute)) err("OBSERVATION_ORDINAL");
+    const owns = token === undefined;
+    if (owns) {
+      const current = readClock();
+      if (!Number.isFinite(current)) unavailableRead();
+      token = Object.freeze({});
+      readBudgets.set(token, {
+        deadline: current + 15000,
+        last: current,
+        expired: false,
+        released: false,
+      });
+    }
+    budgetState(token);
+    let timer;
+    try {
+      const value = await Promise.race([
+        Promise.resolve().then(() => {
+          budgetState(token);
+          return execute(token);
+        }),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            const state = readBudgets.get(token);
+            if (state) state.expired = true;
+            recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
+            reject(new Error("OBSERVATION_FAILED"));
+          }, budgetRemaining(token));
+        }),
+      ]);
+      budgetState(token);
+      return value;
+    } catch (error) {
+      budgetState(token);
+      throw error;
+    } finally {
+      clearTimeout(timer);
+      if (owns) {
+        const state = readBudgets.get(token);
+        if (state) state.released = true;
+      }
+    }
+  }
+  function dataOptions(value) {
+    if (isProxy(value) || !obj(value)) err("OBSERVATION_PROJECTION");
+    const ds = Object.getOwnPropertyDescriptors(value),
+      clean = {};
+    for (const key of Reflect.ownKeys(ds)) {
+      if (
+        typeof key !== "string" ||
+        !["select", "after", "queryScope", "readBudget"].includes(key) ||
+        !Object.hasOwn(ds[key], "value")
+      )
+        err("OBSERVATION_PROJECTION");
+      clean[key] = ds[key].value;
+    }
+    if (Object.hasOwn(clean, "readBudget")) budgetState(clean.readBudget);
+    return clean;
+  }
+  function monthOptions(table, where, after, value) {
+    const options = dataOptions(value);
+    if (!Object.hasOwn(options, "queryScope")) return { options, scoped: false };
+    if (
+      options.queryScope !== "RECOVERY_COMPETENCE_MONTH" ||
+      table !== "competencias" ||
+      isProxy(where) ||
+      !obj(where)
+    )
+      err("OBSERVATION_PROJECTION");
+    const ds = Object.getOwnPropertyDescriptors(where);
+    if (
+      Reflect.ownKeys(ds).length !== 2 ||
+      ["id_contrato", "competencia_referencia"].some(
+        (k) => !ds[k] || !Object.hasOwn(ds[k], "value"),
+      )
+    )
+      err("OBSERVATION_PROJECTION");
+    if (
+      ds.id_contrato.value !== FIXTURE.contract ||
+      !months.includes(ds.competencia_referencia.value) ||
+      options.select !==
+        EXACT_SELECTS.competencias.find((v) => v.includes("competencia_referencia,"))
+    )
+      err("OBSERVATION_PROJECTION");
+    const ordinal = after === undefined ? options.after : after;
+    if (
+      !Number.isSafeInteger(ordinal) ||
+      ordinal < 0 ||
+      (options.after !== undefined && options.after !== ordinal)
+    )
+      err("OBSERVATION_ORDINAL");
+    if (causalFloor(table, where)) err("OBSERVATION_MUTATION");
+    return {
+      options: { ...options, after: ordinal },
+      scoped: true,
+      where: Object.freeze({
+        id_contrato: ds.id_contrato.value,
+        competencia_referencia: ds.competencia_referencia.value,
+      }),
+    };
+  }
+  function legacyReadOptions(options) {
+    const { readBudget, queryScope, ...legacy } = options;
+    return legacy;
+  }
+  function latestMonth(where, after, select) {
+    const relevant = [...latestReads.values()]
+      .filter(
+        (e) =>
+          e.table === "competencias" &&
+          (e.query.predicates.get("id_contrato")?.value === where.id_contrato ||
+            e.contractFromResponse === where.id_contrato) &&
+          (!e.query.predicates.has("competencia_referencia") ||
+            e.query.predicates.get("competencia_referencia").value ===
+              where.competencia_referencia),
+      )
+      .sort((a, b) => b.ordinal - a.ordinal);
+    const latest = relevant[0];
+    if (!latest || latest.ordinal <= after || !latest.done) return null;
+    const { q, predicates, key } = latest.query;
+    if (
+      q.select !== select ||
+      predicates.size !== 2 ||
+      predicates.get("id_contrato")?.kind !== "eq" ||
+      predicates.get("id_contrato")?.value !== where.id_contrato ||
+      predicates.get("competencia_referencia")?.kind !== "eq" ||
+      predicates.get("competencia_referencia").value !== where.competencia_referencia ||
+      q.offset !== "0" ||
+      q.limit !== "25" ||
+      q.order !== "competencia_referencia.desc,id.desc" ||
+      Object.hasOwn(q, "situacao")
+    )
+      return null;
+    const entry = tables.get("competencias")?.get(key);
+    if (!entry || entry.ordinal !== latest.ordinal) return null;
+    return entry.rows.filter((row) => matchesObservation(entry, row, where));
+  }
+  function observeReadRequest(request, url, ordinal) {
+    const method = request.method(),
+      table = /^\/rest\/v1\/([a-z_0-9]+)$/.exec(url.pathname)?.[1],
+      rpc = /^\/rest\/v1\/rpc\/([a-z_0-9]+)$/.exec(url.pathname)?.[1];
+    if (url.origin !== FIXTURE.api || url.username || url.password || url.hash) return;
+    let record, key;
+    if (method === "GET" && OBSERVED_TABLES.has(table)) {
+      let query;
+      try {
+        query = parseObservedQuery(table, url);
+      } catch {
+        return;
+      }
+      record = { table, query, ordinal, done: false };
+      key = "TABLE:" + table + ":" + query.key;
+    } else if (
+      method === "POST" &&
+      !url.search &&
+      OBSERVED_RPCS.has(rpc) &&
+      !BUSINESS_RPCS.includes(rpc)
+    ) {
+      let args;
+      try {
+        args = request.postData()
+          ? projectOfficialResponse(parseBusinessJson(request.postData()))
+          : {};
+      } catch {
+        return;
+      }
+      if (
+        (Object.hasOwn(args, "p_id_organizacao") &&
+          args.p_id_organizacao !== FIXTURE.organization) ||
+        (Object.hasOwn(args, "p_id_contrato") && args.p_id_contrato !== FIXTURE.contract)
+      )
+        return;
+      record = { rpc, ordinal, done: false };
+      key = "RPC:" + rpc + ":" + canonical(args);
+    } else return;
+    readAssociations.set(request, record);
+    pendingReads.add(record);
+    latestReads.set(key, record);
+    if (pendingReads.size > 1024 || latestReads.size > 1024) {
+      recordFailure(table ? "TABLE:" + table : "RPC:" + rpc, "OBSERVATION_LIMIT");
+      err("OBSERVATION_LIMIT");
+    }
+  }
+
   const checkBudget = () => {
     let bytes = 0,
       count = 0;
@@ -3006,11 +3375,12 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     if (bytes > 8 * 1024 * 1024 || count > 1024) err("OBSERVATION_LIMIT");
   };
   const onRequest = (request) => {
-    if (!closed) {
+    if (!closed && !sealing) {
       sequences.set(request, ++sequence);
       let requestContract = "UNKNOWN";
       try {
         const url = new URL(request.url());
+        observeReadRequest(request, url, sequence);
         const rpc =
           url.origin === FIXTURE.api &&
           request.method() === "POST" &&
@@ -3066,6 +3436,7 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     let request, url, table, rpc;
     try {
       request = response.request();
+      if (sealing && !sequences.has(request)) return;
       url = new URL(response.url());
       if (url.origin !== FIXTURE.api || url.username || url.password || url.hash) return;
       const tm = /^\/rest\/v1\/([a-z_0-9]+)$/.exec(url.pathname),
@@ -3079,6 +3450,7 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       return;
     }
     const ordinal = sequences.get(request);
+    const readRecord = readAssociations.get(request);
     const mutation = mutationRequests.get(request),
       responseOrdinal = sequence;
     const contractKind = table ? "TABLE:" + table : "RPC:" + rpc;
@@ -3174,6 +3546,12 @@ export function createOfficialObserver(page, { wait, now } = {}) {
             if (!uuid(id) || ids.has(id)) err("OBSERVATION_SCHEMA");
             ids.add(id);
           }
+          if (
+            readRecord &&
+            table === "competencias" &&
+            rows.some((row) => row.id_contrato === FIXTURE.contract)
+          )
+            readRecord.contractFromResponse = FIXTURE.contract;
           const ledger = tables.get(table) || new Map(),
             prior = ledger.get(query.key);
           if (!prior || prior.ordinal < ordinal) ledger.set(query.key, { ...query, ordinal, rows });
@@ -3190,7 +3568,15 @@ export function createOfficialObserver(page, { wait, now } = {}) {
         }
         stage = "OBSERVATION_LIMIT";
         checkBudget();
+        if (readRecord) {
+          readRecord.done = true;
+          pendingReads.delete(readRecord);
+        }
       } catch (error) {
+        if (readRecord) {
+          readRecord.done = true;
+          pendingReads.delete(readRecord);
+        }
         if (stage === "UNAVAILABLE") recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
         else recordFailure(contractKind, stage, statusHTTP, requestFailure);
         throw error;
@@ -3380,22 +3766,56 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     },
     async waitObservedAfter(name, where, after, options = {}) {
       if (!Number.isSafeInteger(after) || after < 0) err("OBSERVATION_ORDINAL");
-      return waitOfficialPhase({
-        read: () => api.observedAfter(name, where, after, options),
-        ready: (value) => value === true,
-        ...(wait ? { wait } : {}),
-        ...(now ? { now } : {}),
-      });
+      const state = monthOptions(name, where, after, options);
+      if (!state.scoped && state.options.readBudget === undefined)
+        return waitOfficialPhase({
+          read: () => api.observedAfter(name, where, after, state.options),
+          ready: (value) => value === true,
+          ...(wait ? { wait } : {}),
+          ...(now ? { now } : {}),
+        });
+      const execute = (budget) =>
+        waitOfficialPhase({
+          read: () =>
+            api.observedAfter(name, where, after, { ...state.options, readBudget: budget }),
+          ready: (value) => value === true,
+          timeout: budgetRemaining(budget),
+          ...(wait ? { wait } : {}),
+          now: readClock,
+        });
+      return withReadBudget(execute, state.options.readBudget);
     },
     flush,
+    readBarrier: withReadBudget,
+    assertReadBarrier: (token) => {
+      budgetState(token);
+      return true;
+    },
+    readBarrierRemaining: budgetRemaining,
+    async drainReads(token) {
+      return withReadBudget(async (budget) => {
+        for (;;) {
+          budgetState(budget);
+          await withReadBudget(() => flush(), budget);
+          budgetState(budget);
+          if (pendingReads.size === 0 && pending.size === 0) return true;
+          await (wait ? wait(10) : new Promise((resolve) => setTimeout(resolve, 10)));
+          budgetState(budget);
+        }
+      }, token);
+    },
     observationFailure: () => firstFailure,
     async seal() {
+      sealing = true;
       page.off("request", onRequest);
-      page.off("response", onResponse);
       let timer;
       try {
         await Promise.race([
-          Promise.allSettled([...pending]),
+          (async () => {
+            await Promise.allSettled([...pending]);
+            while (!closed && (pendingReads.size || pending.size))
+              await new Promise((resolve) => setTimeout(resolve, 10));
+          })(),
           new Promise((resolve) => {
             timer = setTimeout(() => {
               recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
@@ -3406,42 +3826,81 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       } finally {
         clearTimeout(timer);
         closed = true;
+        page.off("response", onResponse);
       }
       return firstFailure;
     },
     generation: () => sequence,
     async observedAfter(name, where = {}, after, options = {}) {
-      await flush();
-      const rpc = rpcName(name);
-      if (rpc)
-        return (rpcs.get(rpc) || []).some(
-          (e) =>
+      const state = monthOptions(name, where, after, options);
+      const perform = async (budget) => {
+        await flush();
+        if (budget) budgetState(budget);
+        if (state.scoped)
+          return (
+            pendingReads.size === 0 &&
+            latestMonth(state.where, state.options.after, state.options.select) !== null
+          );
+        const rpc = rpcName(name);
+        if (rpc)
+          return (rpcs.get(rpc) || []).some(
+            (e) =>
+              e.ordinal > after &&
+              (state.options.after === undefined || e.ordinal > state.options.after) &&
+              Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
+          );
+        if (!OBSERVED_TABLES.has(name)) return false;
+        const { latest, ledger } = selectLatest(name, legacyReadOptions(state.options));
+        for (const e of ledger)
+          if (e.ordinal > after && e.rows.length === 0 && coversAbsence(e, where)) return true;
+        const empty = ledger.find((e) => e.rows.length === 0 && coversAbsence(e, where));
+        return [...latest.values()].some(
+          ({ e, row }) =>
             e.ordinal > after &&
-            (options.after === undefined || e.ordinal > options.after) &&
-            Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
+            (!empty || e.ordinal >= empty.ordinal) &&
+            matchesObservation(e, row, where),
         );
-      if (!OBSERVED_TABLES.has(name)) return false;
-      const { latest, ledger } = selectLatest(name, options);
-      for (const e of ledger)
-        if (e.ordinal > after && e.rows.length === 0 && coversAbsence(e, where)) return true;
-      const empty = ledger.find((e) => e.rows.length === 0 && coversAbsence(e, where));
-      return [...latest.values()].some(
-        ({ e, row }) =>
-          e.ordinal > after &&
-          (!empty || e.ordinal >= empty.ordinal) &&
-          matchesObservation(e, row, where),
-      );
+      };
+      return state.scoped || state.options.readBudget !== undefined
+        ? withReadBudget(perform, state.options.readBudget)
+        : perform();
     },
-
     async read(table, where = {}, options = {}) {
+      const state = monthOptions(table, where, undefined, options);
+      if (state.scoped)
+        return withReadBudget(async (budget) => {
+          const value = await waitOfficialPhase({
+            read: async () => {
+              await flush();
+              budgetState(budget);
+              if (pendingReads.size) return null;
+              return latestMonth(state.where, state.options.after, state.options.select);
+            },
+            ready: (rows) => rows !== null,
+            timeout: budgetRemaining(budget),
+            ...(wait ? { wait } : {}),
+            now: readClock,
+          });
+          budgetState(budget);
+          return structuredClone(value);
+        }, state.options.readBudget);
       const barrier = causalFloor(table, where);
-      if (barrier) {
-        where = { ...barrier.where, ...where };
-        const validated = await waitTarget(barrier, where, options);
-        return structuredClone(validated.value);
-      }
-      await flush();
-      return tableRows(table, where, options).map((row) => structuredClone(row));
+      const perform = async (budget) => {
+        if (barrier) {
+          const bound = { ...barrier.where, ...where };
+          const validated = await waitTarget(barrier, bound, legacyReadOptions(state.options));
+          if (budget) budgetState(budget);
+          return structuredClone(validated.value);
+        }
+        await flush();
+        if (budget) budgetState(budget);
+        return tableRows(table, where, legacyReadOptions(state.options)).map((row) =>
+          structuredClone(row),
+        );
+      };
+      return state.options.readBudget !== undefined
+        ? withReadBudget(perform, state.options.readBudget)
+        : perform();
     },
     async rpcRead(name, where = {}, options = {}) {
       const rpc = rpcName(name);
@@ -3475,6 +3934,8 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       rpcs.clear();
       floors.length = 0;
       mutations.length = 0;
+      pendingReads.clear();
+      latestReads.clear();
       page.off("request", onRequest);
       page.off("response", onResponse);
     },
@@ -3503,6 +3964,7 @@ export async function prepareSourceAndList(io) {
     validateR6RecoveryDocument(io.recoveryLedgerR6);
     validateR7RecoveryDocument(io.recoveryLedgerR7);
     validateR8RecoveryDocument(io.recoveryLedgerR8);
+    validateR9RecoveryDocument(io.recoveryLedgerR9);
   }
   const fail = (code) => {
     throw new Error(code);
@@ -4024,6 +4486,7 @@ export async function prepareSourceAndList(io) {
         ledgerR6: io.recoveryLedgerR6,
         ledgerR7: io.recoveryLedgerR7,
         ledgerR8: io.recoveryLedgerR8,
+        ledgerR9: io.recoveryLedgerR9,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -4394,6 +4857,7 @@ export async function prepareCompetencies(io, sourceList) {
     validateR6RecoveryDocument(io.recoveryLedgerR6);
     validateR7RecoveryDocument(io.recoveryLedgerR7);
     validateR8RecoveryDocument(io.recoveryLedgerR8);
+    validateR9RecoveryDocument(io.recoveryLedgerR9);
     for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
       if (sourceList[key] !== R5_BINDINGS[key]) stop("RECOVERY_LIST");
   }
@@ -4577,44 +5041,16 @@ export async function prepareCompetencies(io, sourceList) {
     );
   }
   async function listMonth(month) {
-    // A real navigation remounts the list, so unchanged filters never fake freshness.
-    const ordinal = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => link(listPath));
-    await tracedPreparation("COMPETENCY_UI", async () =>
-      io.page.getByLabel("Competência", { exact: true }).fill(month.slice(0, 7)),
-    );
-    await tracedPreparation("COMPETENCY_UI", async () =>
-      observed(
-        "competencias",
-        { id_contrato: FIXTURE.contract, competencia_referencia: month },
-        ordinal,
-        {
-          select: EXACT_SELECTS.competencias.find((value) =>
-            value.includes("competencia_referencia,"),
-          ),
-        },
-      ),
-    );
     const found = (
-      await tracedPreparation("COMPETENCY_UI", async () =>
-        rows(
-          "competencias",
-          {
-            id_contrato: FIXTURE.contract,
-            competencia_referencia: month,
-          },
-          {
-            select: EXACT_SELECTS.competencias.find((value) =>
-              value.includes("competencia_referencia,"),
-            ),
-          },
-        ),
+      await tracedPreparation("COMPETENCY_UI", () =>
+        readCompetenceMonth(io, month, (budget) => io.link(listPath, undefined, budget)),
       )
     ).filter((r) => r.competencia_referencia === month);
     if (found.length > 1 || found.some((r) => !uuid(r.id) || r.id === FIXTURE.historical))
       stop("COMPETENCE_AMBIGUOUS");
     return found;
   }
+
   async function createOrReuse(month) {
     await tracedPreparation("COMPETENCY_UI", async () => context());
     let existing = await tracedPreparation("COMPETENCY_UI", async () => listMonth(month));
@@ -4623,6 +5059,7 @@ export async function prepareCompetencies(io, sourceList) {
       validateR6RecoveryDocument(io.recoveryLedgerR6);
       validateR7RecoveryDocument(io.recoveryLedgerR7);
       validateR8RecoveryDocument(io.recoveryLedgerR8);
+      validateR9RecoveryDocument(io.recoveryLedgerR9);
       const expected = R5_BINDINGS.competencies.find((c) => c.month === month);
       if (!expected || existing.length !== 1 || existing[0].id !== expected.id)
         stop("RECOVERY_STATE");
@@ -5555,6 +5992,7 @@ const PREPARER_FAILURE_CODES = new Set([
   "RECOVERY_LIST",
   "RECOVERY_READ_ONLY",
   "RECOVERY_R8_LEDGER",
+  "RECOVERY_R9_LEDGER",
   "RECOVERY_R8_DOCUMENT",
   "RECOVERY_R8_ANALYSIS",
   "RECOVERY_PROOF",
@@ -5724,6 +6162,7 @@ async function runFixturePreparation() {
   const r6Recovery = validateR6RecoveryDocument(R6_RECOVERY_DOCUMENT);
   const r7Recovery = validateR7RecoveryDocument(getValidatedR7ZeroAuth());
   const r8Recovery = validateR8RecoveryDocument(R8_RECOVERY_DOCUMENT);
+  const r9Recovery = validateR9RecoveryDocument(R9_RECOVERY_DOCUMENT);
   const validatedBudget = recoveryBudget(
     R1_RECOVERY_DOCUMENT,
     R3_RECOVERY_DOCUMENT,
@@ -5732,6 +6171,7 @@ async function runFixturePreparation() {
     r6Recovery,
     r7Recovery,
     r8Recovery,
+    r9Recovery,
   );
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
@@ -5815,6 +6255,7 @@ async function runFixturePreparation() {
       recoveryLedgerR6: r6Recovery,
       recoveryLedgerR7: r7Recovery,
       recoveryLedgerR8: r8Recovery,
+      recoveryLedgerR9: r9Recovery,
       beforeArm: (rpc, payload, evidence, binding) =>
         observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
@@ -5864,25 +6305,41 @@ async function runFixturePreparation() {
       await tracedPreparation("RUNTIME_FRESH", async () => observer.flush());
       if (scriptError) err("PREPARER_SCRIPT");
     };
-    const goKnown = async (path) => {
-      if (!Object.hasOwn(proof.documents, path)) err("PREPARER_SSR_PATH");
-      await tracedPreparation("PREFLIGHT", async () => checkFreshDeployment(proof, false));
-      await tracedPreparation("RUNTIME_NAVIGATE", async () =>
-        navigateVerifiedPage(page, fence, FIXTURE.origin + path),
-      );
-      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
-    };
-    const link = async (path, options) => {
+    const goKnown = async (path, readBudget) =>
+      observer.readBarrier(async (budget) => {
+        const guard = () => observer.assertReadBarrier(budget);
+        guard();
+        if (!Object.hasOwn(proof.documents, path)) err("PREPARER_SSR_PATH");
+        await tracedPreparation("PREFLIGHT", () => checkFreshDeployment(proof, false));
+        guard();
+        await tracedPreparation("RUNTIME_FRESH", () => observer.drainReads(budget));
+        guard();
+        await tracedPreparation("RUNTIME_NAVIGATE", () =>
+          navigateVerifiedPage(page, fence, FIXTURE.origin + path, () =>
+            observer.readBarrierRemaining(budget),
+          ),
+        );
+        guard();
+        await tracedPreparation("RUNTIME_FRESH", () => fresh());
+        guard();
+      }, readBudget);
+    const link = async (path, options, readBudget) => {
+      const guard = () =>
+        readBudget === undefined ? true : observer.assertReadBarrier(readBudget);
+      guard();
       if (!/^\/(?:contratos|competencias)\/[a-f0-9-]{36}(?:\/[a-z0-9-]+)*$/.test(path))
         err("PREPARER_SPA_PATH");
-      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
+      await tracedPreparation("RUNTIME_FRESH", async () =>
+        readBudget === undefined ? fresh() : observer.readBarrier(() => fresh(), readBudget),
+      );
+      guard();
       if (page.url() === FIXTURE.origin + path) {
         if (Object.hasOwn(proof.documents, path)) {
-          await tracedPreparation("PREFLIGHT", async () => goKnown(path));
+          await tracedPreparation("PREFLIGHT", async () => goKnown(path, readBudget));
           return;
         }
         await tracedPreparation("PREFLIGHT", async () =>
-          goKnown(`/contratos/${FIXTURE.contract}/competencias`),
+          goKnown(`/contratos/${FIXTURE.contract}/competencias`, readBudget),
         );
       }
       let selected = null;
@@ -5932,7 +6389,17 @@ async function runFixturePreparation() {
         }
       }
       if (!selected) err("PREPARER_SPA_LINK");
-      await tracedPreparation("RUNTIME_NAVIGATE", async () => selected.click());
+      guard();
+      if (readBudget !== undefined) {
+        await tracedPreparation("RUNTIME_FRESH", () => observer.drainReads(readBudget));
+        guard();
+      }
+      await tracedPreparation("RUNTIME_NAVIGATE", async () =>
+        selected.click(
+          readBudget === undefined ? {} : { timeout: observer.readBarrierRemaining(readBudget) },
+        ),
+      );
+      guard();
       await tracedPreparation("RUNTIME_NAVIGATE", async () =>
         page.waitForURL(FIXTURE.origin + path),
       );
@@ -6080,6 +6547,7 @@ async function runFixturePreparation() {
       recoveryLedgerR6: r6Recovery,
       recoveryLedgerR7: r7Recovery,
       recoveryLedgerR8: r8Recovery,
+      recoveryLedgerR9: r9Recovery,
       recoveryReady: (proof) => {
         broker.authorizeRecovery(proof);
         recoveryState = proof;
@@ -6097,6 +6565,10 @@ async function runFixturePreparation() {
       sourceCapabilities,
       command,
       read: observer.read,
+      readBarrier: observer.readBarrier,
+      assertReadBarrier: observer.assertReadBarrier,
+      readBarrierRemaining: observer.readBarrierRemaining,
+      drainReads: observer.drainReads,
       rpcRead: observer.rpcRead,
       generation: observer.generation,
       observedAfter: observer.waitObservedAfter,
@@ -6242,6 +6714,10 @@ async function runFixturePreparation() {
       JSON.stringify(observationDiagnostic, null, 2) + "\n",
       { mode: 0o600 },
     );
+    writeFileSync(join(output, "receipts-r9.json"), r9Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r9.json"), JSON.stringify(r9Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
     let sums = "";
     writeFileSync(
       join(output, "recovery-r2.json"),
@@ -6263,6 +6739,8 @@ async function runFixturePreparation() {
       "receipts-r8.json",
       "recovery-r8.json",
       "observation-diagnostic.json",
+      "receipts-r9.json",
+      "recovery-r9.json",
     ])
       sums +=
         createHash("sha256")

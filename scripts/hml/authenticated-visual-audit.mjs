@@ -4456,6 +4456,30 @@ export async function harnessIdentity() {
     ),
   };
 }
+export function nativeFailedCases(tap) {
+  if (typeof tap !== "string" || tap.length > 1048576) return [];
+  const names = new Map([
+      ["Chromium nativo: resposta alterada não executa antes do fechamento", "SOURCE_RESPONSE"],
+      ["Chromium nativo: worker não transmite ao canário", "WORKER"],
+      ["Chromium nativo: popup não transmite ao canário", "POPUP"],
+      ["Chromium nativo: websocket não transmite ao canário", "WEBSOCKET"],
+      ["Chromium nativo: proxy não transmite ao canário", "PROXY"],
+      ["Chromium nativo: controle positivo e bloqueio ws", "WS"],
+      ["Chromium nativo: controle positivo e bloqueio wss", "WSS"],
+      [
+        "Chromium nativo: cancelamento inicial real não libera corpo nem transmite ao canário",
+        "CANCELLATION",
+      ],
+    ]),
+    found = [];
+  for (const line of tap.split("\n")) {
+    const title = /^not ok [0-9]+ - (.+)$/.exec(line.trim())?.[1],
+      code = names.get(title);
+    if (code && !found.includes(code)) found.push(code);
+  }
+  return found.slice(0, 8);
+}
+
 export function nativeCancellationDiagnostics(tap) {
   const allowed = new Set([
     "SENSOR_PROVED",
@@ -4653,23 +4677,24 @@ export function preparerSourceFormsSupplement(tap) {
   if (
     typeof tap !== "string" ||
     !/^TAP version 13$/m.test(tap) ||
-    !/^1\.\.2$/m.test(tap) ||
+    !/^1\.\.3$/m.test(tap) ||
     /^not ok|# SKIP|# TODO/m.test(tap)
   )
     return null;
   const names = [
     "R3 Chromium sourceforms exact controls and actual source consumer",
     "R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay",
+    "R3 Chromium sourceforms competence read barriers and actual recovery consumer",
   ];
   const oks = [...tap.matchAll(/^ok [0-9]+ - (.+)$/gm)].map((x) => x[1]);
-  if (oks.length !== 2 || names.some((name, i) => oks[i] !== name)) return null;
-  return Object.entries({ tests: 2, pass: 2, fail: 0, skipped: 0, cancelled: 0 }).every(
+  if (oks.length !== 3 || names.some((name, i) => oks[i] !== name)) return null;
+  return Object.entries({ tests: 3, pass: 3, fail: 0, skipped: 0, cancelled: 0 }).every(
     ([k, v]) => {
       const m = [...tap.matchAll(new RegExp("^# " + k + " ([0-9]+)$", "gm"))];
       return m.length === 1 && Number(m[0][1]) === v;
     },
   )
-    ? 2
+    ? 3
     : null;
 }
 
@@ -4709,6 +4734,7 @@ async function nativeGuard() {
         exitCode: Number.isInteger(error?.code) ? error.code : null,
         signal: ["SIGTERM", "SIGKILL"].includes(error?.signal) ? error.signal : null,
         timedOut: error?.killed === true,
+        failedCases: nativeFailedCases(stdout),
         cancellationStages: nativeCancellationDiagnostics(stdout),
         cancellationFailure: nativeCancellationFailure(stdout),
         sourceFailure: nativeSourceFailure(stdout),
@@ -4838,7 +4864,7 @@ async function nativeGuard() {
       },
     );
     preparerSourceFormsCases = preparerSourceFormsSupplement(result.stdout);
-    if (preparerSourceFormsCases !== 2) fail("PREPARER_SOURCEFORMS_NATIVE");
+    if (preparerSourceFormsCases !== 3) fail("PREPARER_SOURCEFORMS_NATIVE");
   } catch {
     fail("PREPARER_SOURCEFORMS_NATIVE");
   }
@@ -5210,14 +5236,25 @@ export async function resizeVerifiedPage(page, fence, width) {
   await page.setViewportSize({ width, height: 1000 });
   await settleVerifiedPage(page, fence);
 }
-export async function navigateVerifiedPage(page, fence, target) {
+export async function navigateVerifiedPage(page, fence, target, beforeNavigate) {
   if (
     !requestAllowed({ url: target, method: "GET", resourceType: "Document" }) ||
     new URL(target).origin !== HML_ORIGIN
   )
     fail("AUTH_DESTINATION");
   await settleVerifiedPage(page, fence);
-  const response = await page.goto(target, { waitUntil: "networkidle" });
+  if (
+    beforeNavigate !== undefined &&
+    (typeof beforeNavigate !== "function" || isProxy(beforeNavigate))
+  )
+    fail("AUTH_DESTINATION");
+  const timeout = beforeNavigate === undefined ? undefined : beforeNavigate();
+  if (timeout !== undefined && (!Number.isInteger(timeout) || timeout < 1 || timeout > 15000))
+    fail("AUTH_DESTINATION");
+  const response = await page.goto(target, {
+    waitUntil: "networkidle",
+    ...(timeout === undefined ? {} : { timeout }),
+  });
   await settleVerifiedPage(page, fence);
   return response;
 }
@@ -6731,6 +6768,7 @@ export const SINGLE_REQUEST = Object.freeze({
   recoveryGateSha: "581e161718d7f784961e2fef6bd1a75ba9295637",
   metadataGateSha: "2704e63969880f81842102190ebc0337a3b9b551",
   observationGateSha: "01fc65e5ede32309fe544fce7852c24b6f2a1e72",
+  competenceReadGateSha: "472eaa2221016375aee7c7698aa837358b6b6975",
   listSelectionGateSha: "18424c16bcdc6d035e91e2dc8b7257ea755097d0",
   navigationGateSha: "ffffc501e5b5665026ff847bca1d2bf6df17fa73",
   bootstrapGateSha: "a8f3da12dcfeca858904b60e1b32c50df73a7d4a",
@@ -6745,13 +6783,14 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-a-fixtures-20261109-r6",
     "trilha-a-fixtures-20261109-r7",
     "trilha-a-fixtures-20261109-r8",
+    "trilha-a-fixtures-20261109-r9",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r9",
+    nonce: "trilha-a-fixtures-20261109-r10",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -6990,6 +7029,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.listSelectionGateSha,
       SINGLE_REQUEST.metadataGateSha,
       SINGLE_REQUEST.observationGateSha,
+      SINGLE_REQUEST.competenceReadGateSha,
     );
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
