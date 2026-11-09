@@ -1109,7 +1109,7 @@ export function readManifest(root, deadline = () => {}) {
     const anchored = "/proc/self/fd/" + dirfd;
     const names = readdirSync(anchored);
     check(
-      names.length === 23 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
+      names.length === 25 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
       "INSPECTION_FILES",
     );
     const buffers = {};
