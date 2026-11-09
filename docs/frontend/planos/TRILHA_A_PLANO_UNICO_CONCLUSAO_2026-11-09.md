@@ -5,6 +5,9 @@ Data: 09/11/2026. Issue #317. Autorização expressa do titular nesta sessão: e
 Concluir 29 superfícies, 232 combinações e 72 critérios com evidência autenticada HML e revisão independente. Frontend → Supabase API/RPC/Edge → PostgreSQL/Storage/auditoria permanece obrigatório. Não certifica V1 por si só.
 
 ## Baseline verificável
+Estado histórico abaixo preservado em sua origem; não representa freshness ou completude atual. Atualização coordenada: main d1ce01204219516a85745d250b5a79afe59c220f após PR443, HEADd94b6ebab50ab7054b89259e1b4746041b4e8f1e/revisão5821861865/Zero42565438215/LOCK42565438170SUCCESS, source+ack63a8164d9d89427fdf0ce82ede66800a9ad0d63c conferidos no merge. Freshness exige novo GET vivo antes da próxima etapa, nunca inferência por CI anterior.
+
+PR440 foi integrado externamente ainda WIP; seu HEAD54a9 e checks não fecham os12readbacks. PR442 é o complemento causal pendente, com achados/revisão/CI do HEAD final ainda obrigatórios. ReciboRootissue3176732691988 registra FIXTURE.org incorreto no recovery de competências existentes e necessidade de caso positivo não-vazio. Não tratar revisão de54a9 como aceite suficiente do complemento. PR432 integrado d2d4 permanece preparatório, semliberarAUDIT_BINDING_PENDING ouproveniência. Nenhuma requestR4 emitida por este plano.
 - Frontend main c764b6676af250b759ed3daf6ca22fd9f2f5b606; PR440 integrado, head 54a9d6a8630badcc9f4d2e8be41099eaff344f1c.
 - Backend main 0ec86f5d0b1df2afffc1c778eac1c44e1962f63b.
 - No HEAD440: Zero-Drift, Teste C, protect-types e dois checks de protocolo/Chromium SUCCESS; etapas privadas SKIPPED.
@@ -16,7 +19,7 @@ Concluir 29 superfícies, 232 combinações e 72 critérios com evidência auten
 - 18 provas públicas adicionais preservadas; não repetir PLAN322/GATE323/BUILD324.
 
 ## Execução única, com etapas verificáveis
-- [ ] 1. Conferir patch final440, todos os12 estágios/DTOs e provas nativas; obter revisão independente rastreável no SHA54a9. Corrigir apenas achados reproduzidos, com RED→fix→GREEN focal e CI do novo HEAD.
+- [ ] 1. Fechar complemento causal442 sobre440WIP: corrigir achados reproduzidos, inclusive recovery de competências existentes com organização correta e caso positivo não-vazio; conferir todos12estágios/DTOs/readbacks/provas nativas por RED→fix→GREEN. Herdar443 por merge normal semreescreverhistórico, preservar códigos concorrentes, executar CI no novoHEAD e obter revisão independente rastreável desse HEADfinal. Não certificar por checks/revisão do54a9 anterior.
 - [ ] 2. Preparar requestR4 separado, JSON fechado de7 chaves, pai aprovado vivo e nonceR4 exclusivo. Integrar somente após CI/revisão canônica. REQUEST_SCHEMA atual não justifica relaxar o guard nem rerun do requestR3.
 - [ ] 3. Executar a única R4 governada após provar deployment/alias/SSR/módulos, origem do produto e origem separada do harness. Reconciliar fonte ativa por leitura ordinária; negar as3 operações já confirmadas. Conferir report/receipts/broker/logout/cleanup/bindings e todos SHA256; congelar resultado incerto.
 - [ ] 4. Completar24fixtures e bindings reais. Retomar432 e catálogo433 com gates específicos, IDs/recibos existentes e escopo mínimo. Não ampliar permissões de PII nem fabricar catálogo/IDs.
@@ -32,6 +35,6 @@ Não tocar PROD, types.ts/blob8ea7750b, proteção de branch, JWT/RLS/CSP/TLS/sa
 Rollback: revert rastreável via PR do delta novo; jamais refazer operações de negócio, compensar dados por hipótese ou reescrever histórico.
 
 ## Continuidade
-Última etapa comprovada: integração440 e checks acima; execuçãoR4 não comprovada.
-Próxima tarefa: revisão independente do patch final440 e validação dos12 estágios antes do requestR4.
+Última etapa comprovada: integração440WIP/432preparatório e reancoragem443comreadback; complemento442 ainda pendente de achados/CI/revisão final. ExecuçãoR4 não comprovada.
+Próxima tarefa: fechar achados442, validar12estágios, CI/revisão doHEADfinal e merge protegido antes do requestR4 separado.
 Trilha A/72critérios/V1 continuam não certificados. Este documento é PLAN, não evidência de execução ou autorização para contornar controles.
