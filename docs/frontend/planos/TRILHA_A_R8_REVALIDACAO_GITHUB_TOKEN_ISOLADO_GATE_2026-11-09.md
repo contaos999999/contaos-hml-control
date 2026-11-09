@@ -62,7 +62,7 @@ verifyR7ZeroAuth somente10GETs autenticados pré-secrets: três runsfixos+attemp
 
 Guardarproofvalidado noprooflocalde request, validarclosedshapeantesMastersemGET. Preparer valida9fields/números/strings/digest comNodeisProxyantesreflexão/ownDatadescriptors/zero getters e símboloextra, anteslogin/brokerarm/runtimeSource. Errosnovosfechados RECOVERY_R7_PROOF/RECOVERY_R7_LEDGER apenas. Metadatafailnãoviraresultadonegócio.
 
-Oito confirmações históricas+maxNew16/teto24 inalterados; R1–R7spent; semreplay/compensação. Writerpreserva os10dadosR7planejados (8históricosanteR6+receipts-r6/recovery-r6) eAPPEND APENAS recovery-r7.json9keys316/SHA687712. Nunca report-r7/receipts-r7/logouttrue. Manifesto11dados+SHA256SUMS=12membros/HISTORY9; ordem10nomesatuais+recovery-r7.json, todoshashesanterioresintactos. Report15/recovery10 inalterados.
+Oito confirmações históricas+maxNew16/teto24 inalterados; R1–R7spent; semreplay/compensação. Writerpreserva os10dadosR7planejados (8dadosanteR6+receipts-r6/recovery-r6) eAPPEND APENAS recovery-r7.json9keys316/SHA687712. Nunca report-r7/receipts-r7/logouttrue. Manifesto11dados+SHA256SUMS=12membros/HISTORY9; ordem10nomesatuais+recovery-r7.json, todoshashesanterioresintactos. Report15/recovery10 inalterados.
 
 ## RED→BUILD→GREEN
 
@@ -84,3 +84,9 @@ SeR8produzirartifactterminalreal, autorizaPRdistinto nos3existentes: scripts/hml
 Preservarpolítica459: Node24builtins,tooloficiald3f86a106a0bac45b974a628896c90dbdf5c8093/bundle374211f852b2a8155a0211c72e85dacc81bb69f3, digestcalculado/capturaprivada,corewarning/coreerror/digestwarningsbloqueiam(NodeDeprecationstderrprivadopermitidoconforme459),deadline30s/1MiB/bounds/FDNOFOLLOW/manifest/roles/zeroPII/semoutputparcial. CIunit/review/Zero/LOCK/lintfmt/protectedmergebeforepushmainreadonly. Root+revisorconferemoriginais/hash/recibos/ledger/logout/bindings.
 
 PLANOmantertodosvalores/pathsC13/462/461e acrescentar2docsPLAN/GATE+seçãoR8. STATEpreservarsufixointegral+checkpointverdadeiro.184casosoriginais/24fixtures/208/232/72/V1nãoencerradosporesteGATE;18públicosPR324/Run124204PNG102DOM306hashes e C13 preservadossemrepetiçãoinjustificada. Apósbindingsverificados,GATEauditespecíficoantes208screenshots/DOM/SHA/revisão/ledger184/72. RollbacksóPR,semnegócio/PROD.
+
+## Reancoragem documental antes do BUILD
+
+Reancoragem0e855783→367fc8c5:4commits/3paths lidos (docs/tasks/active-task.json, plans/c13-hml-cors-origin-20261109.md, supabase/functions/copilot-query/index.ts). CódigoalteraumaúnicalinhaORIGENS_CORS, acrescentandoorigemexata https://contaos-41-nygkrrbkq-contaos9999.vercel.app; preservaorigensanteriores,semwildcard/headers/JWT/RLS/quota/payload/LLM/RPC/migration ouAPIdopreparadorAalterados. DocsautorizamhotfixHML/readscopepróprio; não éprovadedeploy/execução/C13.25/25normativasiguais emárvorecompleta600/truncatedfalse,catálogoe54e49e626e65a9c94c81709180fd192a1f0c079/10097 etypes8ea7750b75fd9d76b29c36ce7613392e3ab65e19preservados. A segueindependente,semaguardarCdeploy/139,guardHEADvivoinalterado.
+
+CIinicial42604889311/job129118213993FAILexclusivamentefonteHEADvivo;LOCK42604889334PASS/TesteC129118214290SUCCESSescopado. EsteGATEagoraaltera4docs:próprioGATE/PLANO/ESTADO e docs/frontend/CONTEXT_CANONICO_4_1_SNAPSHOT.json. Snapshot.source_commit+PLANO.context_source_commit apontam juntos367;appendnotas/ack/sourceproof, semreescrevernormative_headhistórico6c0/C13frozen545/ouprovasR7S0e. NovoCI/reviewnoHEADfinalantesintegração.

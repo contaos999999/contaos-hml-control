@@ -1,3 +1,9 @@
+# Reancoragem adicional do GATE R8
+
+Reancoragem0e855783→367fc8c5:4commits/3paths lidos (docs/tasks/active-task.json, plans/c13-hml-cors-origin-20261109.md, supabase/functions/copilot-query/index.ts). CódigoalteraumaúnicalinhaORIGENS_CORS, acrescentandoorigemexata https://contaos-41-nygkrrbkq-contaos9999.vercel.app; preservaorigensanteriores,semwildcard/headers/JWT/RLS/quota/payload/LLM/RPC/migration ouAPIdopreparadorAalterados. DocsautorizamhotfixHML/readscopepróprio; não éprovadedeploy/execução/C13.25/25normativasiguais emárvorecompleta600/truncatedfalse,catálogoe54e49e626e65a9c94c81709180fd192a1f0c079/10097 etypes8ea7750b75fd9d76b29c36ce7613392e3ab65e19preservados. A segueindependente,semaguardarCdeploy/139,guardHEADvivoinalterado.
+
+FalhaCI42604889311foiapenasfreshness; atualizar4docssemrelaxarguard. GATEaindaaguardaCI/revisãointegração. FonteR7originalSbc7continuahistórica0e;C13frozenhistórico545preservado. NenhumaAuth/SQL/códigoporestaâncora.
+
 # Checkpoint P0 R8, 09/11/2026: GATE documental, BUILD pendente
 
 PLAN466 integradoe61bea0548d20a48c4e927cb97eef0a62a6b3e33/HEAD80fbf1749304a415592bdec03304801b8b0102a5/review5824813022/CI42604054248 e42604054088SUCCESS. Base50c7930d755acb9f3f0eef3385b51ee665a2665f inclui C13PR464; seus5paths e todo histórico preservados. Backend0e85578323ae272ba79915f9b872386d437cbc83/25fontes/cat10097/types8ea estáveis. HML437/F3READYúltimoGET, sem atribuirnovoC13ao produto437.
