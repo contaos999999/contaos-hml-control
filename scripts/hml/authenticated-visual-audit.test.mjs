@@ -6033,8 +6033,10 @@ test(
     try {
       const page = await browser.newPage();
       await page.route("**/*", (r) => r.abort());
+      let matrixCases = 0;
       for (const width of [1440, 1280, 768, 390])
         for (const theme of ["light", "dark"]) {
+          matrixCases++;
           await page.setViewportSize({ width, height: 900 });
           await page.emulateMedia({ colorScheme: theme });
           await page.setContent(
@@ -6093,7 +6095,19 @@ test(
             }).reason,
             "ALLOWED",
           );
+          await page
+            .locator("tbody tr td")
+            .nth(2)
+            .evaluate((n) => n.removeAttribute("aria-label"));
+          await page
+            .locator("tbody a")
+            .evaluate((n) => n.setAttribute("aria-labelledby", "v112-lista"));
+          assert.ok(
+            (await page.locator("tbody a").ariaSnapshot()).includes('link "Lista de competências"'),
+          );
+          assert.equal(await page.evaluate(fn("privacy112FieldAnchor"), { proof }), null);
         }
+      assert.equal(matrixCases, 8);
     } finally {
       await browser.close();
     }
@@ -6461,6 +6475,79 @@ test("privacy112 rejects non-source row labels and period attributes", () => {
     const { dom, w, run } = privacy78Browser(privacy112Fixture());
     try {
       w.document.querySelector(selector).setAttribute(key, value);
+      assert.equal(run("privacy112FieldAnchor", { proof: privacy78Proof }), null);
+    } finally {
+      dom.window.close();
+    }
+  }
+});
+
+test("privacy112 supplement accepts only its factual complete browser TAP", () => {
+  const parse = fn("privacy112Supplement"),
+    good =
+      "ok 1 - privacy112 Chromium full DOM ARIA matrix preserves scoped intervals and unknown neighbours\n# tests 1\n# pass 1\n# fail 0\n# skipped 0\n# cancelled 0\n";
+  assert.equal(parse(good), 1);
+  for (const bad of [
+    "",
+    good.replace("# pass 1", "# pass 0"),
+    good.replace("# fail 0", "# fail 1"),
+    good.replace("# skipped 0", "# skipped 1"),
+    good.replace("# cancelled 0", "# cancelled 1"),
+    good + "# tests 1\n",
+    good.replace("ok 1 - privacy112 Chromium", "ok 1 - wrong Chromium"),
+  ])
+    assert.equal(parse(bad), null);
+});
+test("privacy112 supplemental process is inside nativeGuard after causal proofs", async () => {
+  const { readFile } = await import("node:fs/promises"),
+    source = await readFile(new URL("./authenticated-visual-audit.mjs", import.meta.url), "utf8"),
+    ts = await import("typescript");
+  const ast = ts.createSourceFile(
+    "auditor.mjs",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
+  const guard = ast.statements
+    .find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "nativeGuard")
+    .getText(ast);
+  assert.ok(guard.includes("--test-name-pattern=^privacy112 Chromium full DOM ARIA matrix"));
+  assert.ok(
+    guard.indexOf("--test-name-pattern=^privacy112") >
+      guard.indexOf("--test-name-pattern=Run78 Chromium isolado"),
+  );
+  assert.ok(
+    guard.indexOf("privacy112Supplement(supplement.stdout)") <
+      guard.indexOf('await mkdir(".audit-work"'),
+  );
+  const prepare =
+    ast.statements
+      .find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "cli")
+      ?.getText(ast) ?? "";
+  assert.equal(prepare.includes("--test-name-pattern=^privacy112"), false);
+});
+
+test("privacy112 link requires source attributes and exact plain span subtree", () => {
+  for (const mutate of [
+    (d) => {
+      const label = d.createElement("span");
+      label.id = "known-literal";
+      label.hidden = true;
+      label.textContent = "Competências";
+      d.body.appendChild(label);
+      d.querySelector("tbody a").setAttribute("aria-labelledby", "known-literal");
+    },
+    (d) => d.querySelector("tbody a").setAttribute("aria-describedby", "known-literal"),
+    (d) => d.querySelector("tbody a").setAttribute("title", "CANARIO_PRIVADO"),
+    (d) => d.querySelector("tbody a").setAttribute("aria-label", "Abrir outra competência"),
+    (d) => d.querySelector("tbody a span").setAttribute("aria-label", "Competências"),
+    (d) => (d.querySelector("tbody a span").textContent = "Competências"),
+    (d) => d.querySelector("tbody a").appendChild(d.createElement("span")),
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy112Fixture());
+    try {
+      mutate(w.document);
       assert.equal(run("privacy112FieldAnchor", { proof: privacy78Proof }), null);
     } finally {
       dom.window.close();

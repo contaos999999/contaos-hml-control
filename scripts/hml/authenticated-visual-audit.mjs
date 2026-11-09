@@ -1142,6 +1142,23 @@ export function privacy78Runtime({
   });
 }
 
+export function privacy112Supplement(tap) {
+  if (typeof tap !== "string") return null;
+  if (
+    !/^ok 1 - privacy112 Chromium full DOM ARIA matrix preserves scoped intervals and unknown neighbours$/m.test(
+      tap,
+    )
+  )
+    return null;
+  const expected = { tests: 1, pass: 1, fail: 0, skipped: 0, cancelled: 0 };
+  return Object.entries(expected).every(([key, value]) => {
+    const matches = [...tap.matchAll(new RegExp("^# " + key + " ([0-9]+)$", "gm"))];
+    return matches.length === 1 && Number(matches[0][1]) === value;
+  })
+    ? 1
+    : null;
+}
+
 export function privacy112FieldContext({
   proof,
   rendered,
@@ -1300,6 +1317,14 @@ export function privacy112FieldAnchor({ proof }) {
       plain(target) &&
       visible(target) &&
       links.length === 1 &&
+      [...links[0].attributes].every((a) => ["href", "aria-label", "class"].includes(a.name)) &&
+      links[0].childNodes.length === 1 &&
+      links[0].firstChild.nodeType === Node.ELEMENT_NODE &&
+      links[0].firstChild.tagName === "SPAN" &&
+      links[0].firstChild.attributes.length === 0 &&
+      links[0].firstChild.childNodes.length === 1 &&
+      links[0].firstChild.firstChild.nodeType === Node.TEXT_NODE &&
+      links[0].firstChild.textContent === "Abrir competência" &&
       cells[6].contains(links[0]) &&
       links[0].getAttribute("href") === "/competencias/" + proof.context.competence &&
       links[0].getAttribute("aria-label") === "Abrir competência 11/2026"
@@ -3537,6 +3562,28 @@ async function nativeGuard() {
     fail("VISUAL_NATIVE");
   }
 
+  let v112BrowserCases;
+  try {
+    const supplement = await execFile(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=^privacy112 Chromium full DOM ARIA matrix",
+        "scripts/hml/authenticated-visual-audit.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 45000,
+        maxBuffer: 1048576,
+      },
+    );
+    v112BrowserCases = privacy112Supplement(supplement.stdout);
+    if (v112BrowserCases !== 1) fail("V112_NATIVE");
+  } catch {
+    fail("V112_NATIVE");
+  }
+
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/native-proof.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -3547,6 +3594,7 @@ async function nativeGuard() {
       preflightDrain: nativePreflightDrain(output),
       cases: 8,
       visualCases: 1,
+      v112BrowserCases,
       harnessSha: proof.harnessSha,
     }),
   );
