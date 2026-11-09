@@ -2771,13 +2771,6 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       return tableRows(table, where, options).map((row) => structuredClone(row));
     },
     async rpcRead(name, where = {}, options = {}) {
-      const barrier = causalFloor(name, where);
-      if (barrier) {
-        where = { ...barrier.where, ...where };
-        const validated = await waitTarget(barrier, where, options);
-        return structuredClone(validated.value);
-      }
-      await flush();
       const rpc = rpcName(name);
       if (!rpc) err("OBSERVATION_RPC");
       if (
@@ -2786,6 +2779,13 @@ export function createOfficialObserver(page, { wait, now } = {}) {
         (options.after !== undefined && (!Number.isSafeInteger(options.after) || options.after < 0))
       )
         err("OBSERVATION_ORDINAL");
+      const barrier = causalFloor(name, where);
+      if (barrier) {
+        where = { ...barrier.where, ...where };
+        const validated = await waitTarget(barrier, where, options);
+        return structuredClone(validated.value);
+      }
+      await flush();
       const item = rpcItem(rpc, where, options);
       if (
         barrier?.versionId &&

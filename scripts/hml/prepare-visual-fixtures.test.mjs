@@ -3792,3 +3792,52 @@ test("R4 competence creation waits for ACK identity in completed ordinary month 
     observer.close();
   }
 });
+
+test("R4 causal RPC read validates options before returning an admitted snapshot", async () => {
+  const { EventEmitter } = await import("node:events");
+  const createOfficialObserver = sut.createOfficialObserver,
+    F = FIXTURE;
+  const C = "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa",
+    NEW = "cccccccc-3333-4333-8333-cccccccccccc",
+    p = new EventEmitter();
+  let clock = 0;
+  const o = createOfficialObserver(p, {
+    now: () => clock,
+    wait: async () => {
+      clock += 5000;
+    },
+  });
+  function q(rpc, b) {
+    const r = {
+      url: () => F.api + "/rest/v1/rpc/" + rpc,
+      method: () => "POST",
+      postData: () => JSON.stringify(b),
+    };
+    p.emit("request", r);
+    return r;
+  }
+  function a(r, v) {
+    p.emit("response", {
+      request: () => r,
+      url: r.url,
+      status: () => 200,
+      body: async () => Buffer.from(JSON.stringify(v)),
+    });
+  }
+  o.markMutation("solicitar_analise_competencia", { p_id_competencia: C }, {});
+  a(q("solicitar_analise_competencia", { p_id_competencia: C }), NEW);
+  await o.flush();
+  a(q("obter_analise_competencia_v116", { p_id_competencia: C }), {
+    schema_versao: "v116-v1",
+    competencia: { id: C, id_organizacao: F.organization, id_contrato: F.contract },
+    execucao_atual: { id: NEW },
+    estado_analise: "complete",
+  });
+  await o.flush();
+  for (const options of [{ unexpected: true }, { after: "1" }, { after: -1 }, null])
+    await assert.rejects(
+      o.rpcRead("obter_analise_competencia_v116", { p_id_competencia: C }, options),
+      { message: "OBSERVATION_ORDINAL" },
+    );
+  o.close();
+});
