@@ -7874,3 +7874,58 @@ test("R11 recovery requires the original zero-intent R10 proof before constructi
   assert.equal(broker.snapshot().count, 10);
   assert.equal(broker.snapshot().maxNewIntentions, 14);
 });
+
+test("R11 actual runtime budget initializer receives its mandatory R10 proof", async () => {
+  const s = await r6SourceNodes();
+  const entry = s.named("runFixturePreparation");
+  const entryNodes = s.nodes.filter((n) => n.pos >= entry.pos && n.end <= entry.end);
+  const initializer = entryNodes
+    .find((n) => s.ts.isVariableDeclaration(n) && n.name.getText(s.ast) === "validatedBudget")
+    .initializer.getText(s.ast);
+  const budgetSource = s.named("recoveryBudget").getText(s.ast);
+  const env = {};
+  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10])
+    env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
+  env.err = (code) => {
+    throw Error(code);
+  };
+  env.R1_RECOVERY_DOCUMENT = sut.R1_RECOVERY_DOCUMENT;
+  env.R3_RECOVERY_DOCUMENT = sut.R3_RECOVERY_DOCUMENT;
+  for (const n of [4, 5, 6, 7, 8, 9, 10])
+    env["r" + n + "Recovery"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
+  const result = new Function(...Object.keys(env), budgetSource + ";return " + initializer + ";")(
+    ...Object.values(env),
+  );
+  assert.deepEqual(result, { confirmedBefore: 10, maxNewIntentions: 14 });
+});
+test("R11 scoped DTO objects and mechanism counts never accept arrays", () => {
+  for (const [path, value] of [
+    ["mecanismos", []],
+    ["mecanismos", [0]],
+    ["competencia", []],
+    ["execucao_atual", []],
+  ]) {
+    const raw = r11SqlV116();
+    raw[path] = value;
+    assert.throws(
+      () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+      /OBSERVATION_/,
+    );
+  }
+});
+test("R11 typed action pagination and blocking envelopes reject foreign fields", () => {
+  for (const path of [
+    "allowed_actions",
+    "resultados_paginacao",
+    "execucoes_paginacao",
+    "apontamentos_paginacao",
+    "blocking_summary",
+  ]) {
+    const raw = r11SqlV116();
+    raw[path] = { nome: "TECHNICAL_CANARY" };
+    assert.throws(
+      () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+      /OBSERVATION_/,
+    );
+  }
+});
