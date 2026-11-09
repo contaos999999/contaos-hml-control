@@ -34,6 +34,7 @@ const PREPARER_DIAGNOSTIC_STEPS = new Set([
   "SOURCE_APPROVAL",
   "SOURCE_APPROVAL_READBACK",
   "SOURCE_CLOSE",
+  "SOURCE_VERIFICATION",
   "SOURCE_ACTIVATION",
   "SOURCE_ACTIVATION_READBACK",
   "LIST_NAVIGATION",
@@ -2074,6 +2075,7 @@ export async function prepareSourceAndList(io) {
   }
   assert(equivalents.length <= 1, "FLOW_DUPLICATE_EQUIVALENT_VERSION");
   if (equivalents.length === 0) {
+    step("SOURCE_REGISTER");
     while (
       (await btn(sheet, "Versões anteriores").count()) === 1 &&
       (await btn(sheet, "Versões anteriores").isEnabled())
@@ -2088,7 +2090,6 @@ export async function prepareSourceAndList(io) {
     await field(d, "Texto").check();
     await field(d, "Texto da versão").fill(io.text);
     const registerOrdinal = io.generation();
-    step("SOURCE_REGISTER");
     await io.command({
       rpc: "registrar_versao_fonte_v107",
       payload: {
@@ -2136,6 +2137,7 @@ export async function prepareSourceAndList(io) {
   // Locate matching version's button even when pagination starts on last page.
   let caps = await sourceProof();
   if (!version.aprovado_em) {
+    step("SOURCE_APPROVAL");
     for (let n = 0; (await btn(sheet, `Aprovar versão ${version.versao}`).count()) === 0; n++) {
       assert(n < 100, "FLOW_VERSION_UI_MISSING");
       await click(sheet, "Versões anteriores");
@@ -2147,7 +2149,6 @@ export async function prepareSourceAndList(io) {
     await field(d, "Confirmo que revisei hash, origem e vigência desta versão.").check();
     const id = version.id;
     const approvalOrdinal = io.generation();
-    step("SOURCE_APPROVAL");
     await io.command({
       rpc: "aprovar_versao_fonte_v107",
       payload: {
@@ -2172,14 +2173,15 @@ export async function prepareSourceAndList(io) {
   }
   step("SOURCE_CLOSE");
   await click(sheet, "Close");
+  step("SOURCE_VERIFICATION");
   if (source.situacao !== "ativa") {
+    step("SOURCE_ACTIVATION");
     caps = await sourceProof();
     assert(caps.canActivate === true, "FLOW_ACTIVATE_DENIED");
     await click(page, `Editar ${source.titulo}`);
     const d = dialog("Editar fonte");
     await field(d, "Situação").selectOption("ativa");
     const before = source.versao_registro;
-    step("SOURCE_ACTIVATION");
     await io.command({
       rpc: "salvar_fonte_normativa_v107",
       payload: {
@@ -2207,6 +2209,7 @@ export async function prepareSourceAndList(io) {
     await sourceRow();
     assert(source.situacao === "ativa", "FLOW_ACTIVE_NOT_READBACK");
   }
+  step("SOURCE_VERIFICATION");
   await sourceProof();
   step("LIST_NAVIGATION");
   await io.link(`/contratos/${FIXTURE.contract}/regras`);
