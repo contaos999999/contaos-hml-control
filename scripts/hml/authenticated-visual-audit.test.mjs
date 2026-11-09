@@ -4054,6 +4054,85 @@ test(
         true,
       );
 
+      // Source-backed V102 layout fragment, compiled with the installed Tailwind.
+      // This is an isolated geometry regression, never a claim of real HML UI.
+      const v102Source = await readFile(
+        new URL("../../src/components/contratantes/NovoContratante.tsx", import.meta.url),
+        "utf8",
+      );
+      const v102Focus = v102Source.match(/const foco = "([^"]+)";/)?.[1];
+      const v102Dica = v102Source.slice(
+        v102Source.indexOf("function Dica("),
+        v102Source.indexOf("function Aviso("),
+      );
+      const v102Button = v102Dica
+        .match(/className=\{`([^`]+)`\}/)?.[1]
+        ?.replace("${foco}", v102Focus);
+      const v102Input = v102Source
+        .match(/const campo = `([^`]+)`;/)?.[1]
+        ?.replace("${foco}", v102Focus);
+      const v102Label = v102Source.match(/const label = "([^"]+)";/)?.[1];
+      const v102Rows = [
+        ...v102Source.matchAll(
+          /<div className="([^"]+)">\s*<div className="([^"]+)">\s*<label htmlFor=\{IDS\.(documento|email)\}/g,
+        ),
+      ];
+      assert.ok(v102Focus && v102Button && v102Input && v102Label);
+      assert.deepEqual(
+        v102Rows.map((r) => r[3]),
+        ["documento", "email"],
+      );
+      const v102Grid = v102Source.match(/<div className="(grid grid-cols-1[^"]+)"/)[1];
+      const v102Main = v102Source.match(/<main className="([^"]+)"/)[1];
+      const v102Classes = [
+        v102Button,
+        v102Input,
+        v102Label,
+        v102Grid,
+        v102Main,
+        ...v102Rows.flatMap((r) => [r[1], r[2]]),
+      ];
+      assert.ok(v102Classes.every((s) => typeof s === "string" && !/["<>${}]/.test(s)));
+      const { compile } = await import("@tailwindcss/node");
+      const v102Css = await compile(
+        await readFile(new URL("../../src/styles.css", import.meta.url), "utf8"),
+        { base: new URL("../../src/", import.meta.url).pathname, onDependency: () => {} },
+      );
+      const v102Compiled = v102Css.build(v102Classes.flatMap((s) => s.split(/\s+/)));
+      for (const width of [1440, 1280, 768, 390]) {
+        await page.setViewportSize({ width, height: 1000 });
+        for (const theme of ["light", "dark"]) {
+          await page.setContent(
+            `<!doctype html><html class="${theme === "dark" ? "dark" : ""}"><head><style>${v102Compiled}</style></head><body><main class="${v102Main}"><div class="${v102Grid}">${v102Rows.map((r) => `<div class="${r[1]}"><div class="${r[2]}"><label class="${v102Label}" for="isolated-${r[3]}">${r[3]}</label><button type="button" class="${v102Button}" aria-label="Ajuda isolada ${r[3]}">i</button></div><input id="isolated-${r[3]}" class="${v102Input}"></div>`).join("")}</div></main></body></html>`,
+          );
+          const geometry = await fn("collectVisualMetrics")(page, {
+            surface: "V102",
+            width,
+            theme,
+          });
+          assert.equal(geometry.targets.length, 4);
+          assert.equal(
+            geometry.passed,
+            true,
+            JSON.stringify({
+              isolatedV102: true,
+              width,
+              theme,
+              notHit: geometry.targets.filter((t) => !t.hit).length,
+            }),
+          );
+          const helps = await page.getByRole("button").all();
+          for (const help of helps) {
+            const box = await help.evaluate((e) => ({
+              width: e.getBoundingClientRect().width,
+              height: e.getBoundingClientRect().height,
+            }));
+            assert.ok(box.width >= 44 && box.height >= 44);
+          }
+        }
+      }
+      await page.setViewportSize({ width: 390, height: 640 });
+
       // Four source-shaped fields under real Chromium ARIA, without HML/Auth.
       const privacyProof = await fn("loadPrivacy78Proof")();
       const rbacProof = await fn("loadPrivacy78RbacProof")();
