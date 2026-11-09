@@ -5736,47 +5736,96 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     { frontend_sha: "", deployment_id: undefined },
     { frontend_sha: " ", deployment_id: " " },
     { frontend_sha: "bad", deployment_id: "dpl_12345678" },
-  ]) assert.throws(() => parse(JSON.stringify({ ...row, ...pair }), "fixtures"));
-  for (const delta of [{ mode: "AUTO_DISCOVER" }, { request_id: "unknown" }, { operation: "audit" }])
+  ])
+    assert.throws(() => parse(JSON.stringify({ ...row, ...pair }), "fixtures"));
+  for (const delta of [
+    { mode: "AUTO_DISCOVER" },
+    { request_id: "unknown" },
+    { operation: "audit" },
+  ])
     assert.throws(() => parse(JSON.stringify({ ...row, ...delta }), "fixtures"));
-  assert.throws(() => parse(JSON.stringify(row).replace('"frontend_sha":""', '"frontend_sha":"","frontend_sha":""'), "fixtures"));
+  assert.throws(() =>
+    parse(
+      JSON.stringify(row).replace('"frontend_sha":""', '"frontend_sha":"","frontend_sha":""'),
+      "fixtures",
+    ),
+  );
   const explicit = { ...row, frontend_sha: "b".repeat(40), deployment_id: "dpl_12345678" };
   assert.deepEqual(parse(JSON.stringify(explicit), "fixtures"), explicit);
-  assert.throws(() => fn("requireSingleRequestOperation")("audit"), { code: "AUDIT_BINDING_PENDING" });
+  assert.throws(() => fn("requireSingleRequestOperation")("audit"), {
+    code: "AUDIT_BINDING_PENDING",
+  });
 });
 
 test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarada", async () => {
-  const verify = fn("verifySingleRequestGit"), sha = "a".repeat(40), parent = "b".repeat(40);
-  const row = { schema_version: 1, issue: 317, operation: "fixtures", request_id: "trilha-a-fixtures-20261108-r1", approved_parent_sha: parent, frontend_sha: "", deployment_id: "" };
-  const raw = JSON.stringify(row), path = sut.SINGLE_REQUEST.path, ancestors = [];
+  const verify = fn("verifySingleRequestGit"),
+    sha = "a".repeat(40),
+    parent = "b".repeat(40);
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261108-r1",
+    approved_parent_sha: parent,
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  const raw = JSON.stringify(row),
+    path = sut.SINGLE_REQUEST.path,
+    ancestors = [];
   const git = async (args) => {
     assert.equal(args.includes(""), false, "Git nunca recebe SHA vazio");
     if (args[0] === "show") return raw;
     if (args[0] === "rev-parse") return sha;
     if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ");
-    if (args[0] === "merge-base") { ancestors.push(args[2]); return ""; }
+    if (args[0] === "merge-base") {
+      ancestors.push(args[2]);
+      return "";
+    }
     if (args[0] === "diff-tree") return "A\t" + path;
     if (args[0] === "ls-tree") return "100644 blob " + "e".repeat(40) + "\t" + path;
     if (args[0] === "log") return sha;
     throw new Error("unexpected Git command");
   };
   assert.deepEqual(await verify(row, sha, git, raw), [sha]);
-  assert.deepEqual(ancestors, [sut.SINGLE_REQUEST.gateSha, sut.SINGLE_REQUEST.fixturesSha, sut.SINGLE_REQUEST.autoGateSha]);
+  assert.deepEqual(ancestors, [
+    sut.SINGLE_REQUEST.gateSha,
+    sut.SINGLE_REQUEST.fixturesSha,
+    sut.SINGLE_REQUEST.autoGateSha,
+  ]);
   let calls = 0;
-  await assert.rejects(() => verify({ ...row, deployment_id: "dpl_12345678" }, sha, async () => { calls++; return raw; }, raw));
+  await assert.rejects(() =>
+    verify(
+      { ...row, deployment_id: "dpl_12345678" },
+      sha,
+      async () => {
+        calls++;
+        return raw;
+      },
+      raw,
+    ),
+  );
   assert.equal(calls, 0, "par parcial rejeitado antes de Git");
 });
 
 test("solicitacao unica: identidade descoberta continua obrigatoria antes do checkout", async () => {
   const { readFile } = await import("node:fs/promises");
   for (const file of ["contaos-trilha-a-authenticated.yml", "contaos-trilha-a-fixtures.yml"]) {
-    const source = await readFile(new URL("../../.github/workflows/" + file, import.meta.url), "utf8");
-    const resolve = source.indexOf("run: node scripts/hml/authenticated-visual-audit.mjs --resolve-deployment", source.indexOf("  private:"));
+    const source = await readFile(
+      new URL("../../.github/workflows/" + file, import.meta.url),
+      "utf8",
+    );
+    const resolve = source.indexOf(
+      "run: node scripts/hml/authenticated-visual-audit.mjs --resolve-deployment",
+      source.indexOf("  private:"),
+    );
     const ancestry = source.indexOf("'merge-base','--is-ancestor',sha,'origin/main'", resolve);
     const checkout = source.indexOf("ref: ${{ steps.deployment.outputs.frontend_sha }}", resolve);
     assert.ok(resolve >= 0 && ancestry > resolve && checkout > ancestry);
     assert.match(source.slice(resolve, ancestry), /CONTAOS_FRONTEND_SHA/);
     assert.match(source.slice(resolve, ancestry), /CONTAOS_DEPLOYMENT_ID/);
   }
-  assert.throws(() => fn("deploymentWorkflowOutputs")({ frontendSha: "", deploymentId: "" }), { code: "DEPLOYMENT_INPUT" });
+  assert.throws(() => fn("deploymentWorkflowOutputs")({ frontendSha: "", deploymentId: "" }), {
+    code: "DEPLOYMENT_INPUT",
+  });
 });
