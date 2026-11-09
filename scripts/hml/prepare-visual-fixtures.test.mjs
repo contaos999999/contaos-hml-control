@@ -1645,6 +1645,7 @@ function r2Reconciliation(delta = {}) {
   };
   return {
     ledger: sut.R1_RECOVERY_DOCUMENT,
+    ledgerR3: sut.R3_RECOVERY_DOCUMENT,
     source: { ...context, id: FIXTURE.source, ...sut.SOURCE_FIELDS, version: 1, situacao: "ativa" },
     version: {
       ...context,
@@ -1670,6 +1671,7 @@ test("R2 ledger omitido undefined ou null não emite prova de reconciliação", 
   const broker = sut.createIntentBroker({
     persist: () => true,
     recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
   });
   for (const input of [
     omitted,
@@ -1679,7 +1681,7 @@ test("R2 ledger omitido undefined ou null não emite prova de reconciliação", 
     assert.throws(() => broker.authorizeRecovery(sut.reconcileR1Recovery(input)), {
       message: "RECOVERY_LEDGER",
     });
-    assert.equal(broker.snapshot().count, 2);
+    assert.equal(broker.snapshot().count, 3);
     assert.throws(() => arm(broker), { message: "RECOVERY_READ_ONLY" });
   }
   assert.throws(() => sut.validateR1RecoveryDocument(), { message: "RECOVERY_LEDGER" });
@@ -1695,11 +1697,12 @@ test("R2 reconcilia somente estado oficial unico aprovado antes de armar", () =>
     persist: () => true,
     competenceGateAmended: true,
     recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
   });
   assert.throws(() => arm(b), { message: "RECOVERY_READ_ONLY" });
   assert.throws(() => b.authorizeRecovery({ ...proof }), { message: "RECOVERY_PROOF" });
   assert.equal(b.authorizeRecovery(proof), true);
-  assert.equal(b.snapshot().count, 2);
+  assert.equal(b.snapshot().count, 3);
   for (const rpc of ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"])
     assert.throws(
       () =>
@@ -1730,9 +1733,10 @@ test("R2 contabiliza duas anteriores e limita novas intencoes a22", () => {
     persist: () => true,
     competenceGateAmended: true,
     recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
-  for (let n = 0; n < 22; n++) {
+  for (let n = 0; n < 21; n++) {
     arm(b);
     assert.equal(b.policy(request()), true);
     assert.equal(b.policy({ ...request(), stage: "RESPONSE" }), true);
@@ -2727,4 +2731,257 @@ test("R3 source control preserves native timeout identity and diagnostic subphas
     /FLOW_SOURCE_CONTROL/,
   );
   assert.equal(getterReads, 0);
+});
+
+test("R4 validates explicit original R3 ledger and debits exactly one prior activation", () => {
+  assert.equal(typeof sut.validateR3RecoveryDocument, "function");
+  const ledger = sut.validateR3RecoveryDocument(sut.R3_RECOVERY_DOCUMENT);
+  assert.equal(ledger.receipts.length, 2);
+  assert.equal(ledger.receipts[0].state, "sealed");
+  assert.equal(ledger.receipts[1].state, "confirmed");
+  for (const input of [undefined, null, {}, { ...sut.R3_RECOVERY_DOCUMENT, receipts: [] }])
+    assert.throws(() => sut.validateR3RecoveryDocument(input), /RECOVERY_R3_LEDGER/);
+  const b = broker({
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+  });
+  assert.equal(b.snapshot().count, 3);
+  for (const rpc of [
+    "registrar_versao_fonte_v107",
+    "aprovar_versao_fonte_v107",
+    "salvar_fonte_normativa_v107",
+  ])
+    assert.throws(
+      () => b.arm({ rpc, requestId: randomUUID(), payload: {} }),
+      /RECOVERY_CONFIRMED_OPERATION/,
+    );
+  assert.throws(() => broker({ recoveryLedger: sut.R1_RECOVERY_DOCUMENT }), /RECOVERY_R3_LEDGER/);
+});
+
+async function r4ObserverFixture(options = {}) {
+  const { EventEmitter } = await import("node:events"),
+    fs = await import("node:fs/promises");
+  const src = await fs.readFile(
+    new URL("../../src/lib/contratos/baseNormativaDados.ts", import.meta.url),
+    "utf8",
+  );
+  const select = src.match(/export const COLUNAS_FONTE\s*=\s*"([^"]+)"/)[1];
+  const page = new EventEmitter(),
+    observer = sut.createOfficialObserver(page, options);
+  const query = {
+    select,
+    id_organizacao: "eq." + FIXTURE.organization,
+    id_contrato: "eq." + FIXTURE.contract,
+    order: "titulo.asc,id.asc",
+    offset: "0",
+    limit: "25",
+  };
+  const row = (situacao) => ({
+    id: FIXTURE.source,
+    id_organizacao: FIXTURE.organization,
+    id_contrato: FIXTURE.contract,
+    ...sut.SOURCE_FIELDS,
+    situacao,
+    versao_registro: situacao === "ativa" ? 2 : 1,
+  });
+  const request = (q = query) => {
+    const url = FIXTURE.api + "/rest/v1/fontes_normativas?" + new URLSearchParams(q),
+      r = { method: () => "GET", postData: () => null, url: () => url };
+    page.emit("request", r);
+    return r;
+  };
+  const response = (r, rows, bodyWait) =>
+    page.emit("response", {
+      request: () => r,
+      url: r.url,
+      status: () => 200,
+      body: async () => {
+        if (bodyWait) await bodyWait;
+        return Buffer.from(JSON.stringify(rows));
+      },
+    });
+  return { page, observer, query, row, request, response };
+}
+test("R4 causal source read waits for admitted UI GET and completed response after capture", async () => {
+  const f = await r4ObserverFixture({ wait: () => new Promise((r) => setTimeout(r, 10)) });
+  f.response(f.request(), [f.row("rascunho")]);
+  await f.observer.flush();
+  const oldInFlight = f.request();
+  // Historical reproduction only: R4 broker separately forbids saving this source again.
+  f.observer.markMutation?.("salvar_fonte_normativa_v107", { p_id_fonte: FIXTURE.source });
+  let complete;
+  const completion = new Promise((r) => (complete = r));
+  let settled = false;
+  const read = f.observer.read("fontes_normativas", { id: FIXTURE.source }).then((rows) => {
+    settled = true;
+    return rows;
+  });
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(settled, false);
+  const q = { ...f.query };
+  delete q.id_contrato;
+  q.or = "(id_contrato.eq." + FIXTURE.contract + ",id_contrato.is.null)";
+  f.response(f.request(q), [f.row("ativa")], completion);
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(settled, false);
+  complete();
+  assert.equal((await read)[0].situacao, "ativa");
+  f.response(oldInFlight, [f.row("rascunho")]);
+  await f.observer.flush();
+  assert.equal(
+    (await f.observer.read("fontes_normativas", { id: FIXTURE.source }))[0].situacao,
+    "ativa",
+  );
+  f.observer.close();
+});
+test("R4 causal source rejects stale prebarrier request drift and wrong identity without new network", async () => {
+  for (const mode of ["cache", "inflight", "drift", "foreign"]) {
+    let clock = 0;
+    const f = await r4ObserverFixture({
+      now: () => clock,
+      wait: async () => {
+        clock += 300001;
+      },
+    });
+    f.response(f.request(), [f.row("rascunho")]);
+    await f.observer.flush();
+    const prior = f.request();
+    f.observer.markMutation("salvar_fonte_normativa_v107", { p_id_fonte: FIXTURE.source });
+    if (mode === "inflight") f.response(prior, [f.row("ativa")]);
+    if (mode === "drift") f.response(f.request({ ...f.query, evil: "true" }), [f.row("ativa")]);
+    if (mode === "foreign")
+      f.response(f.request(), [{ ...f.row("ativa"), id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }]);
+    const requests = f.observer.generation();
+    await assert.rejects(
+      f.observer.read("fontes_normativas", { id: FIXTURE.source }),
+      /PHASE_TIMEOUT/,
+    );
+    assert.equal(f.observer.generation(), requests);
+    f.observer.close();
+  }
+});
+test("R4 captures the request floor before validated arm and exposes every mutation target", () => {
+  const events = [];
+  const b = broker({
+    beforeArm: (rpc, p) => {
+      events.push([rpc, p]);
+      return true;
+    },
+  });
+  arm(b);
+  assert.equal(events.length, 1);
+  assert.equal(events[0][0], "criar_competencia");
+  for (const rpc of sut.BUSINESS_RPCS) {
+    const targets = sut.readbackTargets(
+      rpc,
+      {
+        p_id_competencia: id,
+        p_id_requisito: id,
+        p_id_versao: id,
+        p_id_lista: id,
+        p_id_parecer: id,
+        p_competencia_referencia: "2026-10-01",
+      },
+      { opinions: [{ id, competency: id }] },
+    );
+    assert.ok(targets.length > 0);
+    assert.ok(targets.every((x) => typeof x.name === "string" && x.where));
+  }
+  assert.throws(() => sut.readbackTargets("unknown", {}), /OBSERVATION_MUTATION/);
+});
+
+test("R4 report derives real arm sent and terminal scalars without request identifiers", () => {
+  const b = broker({
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+  });
+  b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
+  assert.deepEqual(sut.preparationIntentSummary(b), {
+    count: 3,
+    frozen: false,
+    pending: false,
+    sent: false,
+    priorConfirmed: 3,
+    newArmedCount: 0,
+    maxIntentions: 24,
+    maxNewIntentions: 21,
+  });
+  arm(b);
+  let state = sut.preparationIntentSummary(b);
+  assert.equal(state.count, 4);
+  assert.equal(state.newArmedCount, 1);
+  assert.equal(state.pending, true);
+  assert.equal(state.sent, false);
+  assert.equal(b.policy(request()), true);
+  assert.equal(sut.preparationIntentSummary(b).sent, true);
+  b.resolve("confirmed");
+  assert.equal(sut.preparationIntentSummary(b).pending, false);
+  assert.equal(Object.hasOwn(sut.preparationIntentSummary(b), "requestId"), false);
+  assert.equal(sut.preparationIntentSummary(null), null);
+});
+
+test("R4 actual recovery model initializer uses the already observed matching list", async () => {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+      new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile("preparer.mjs", source, 99, true, 1);
+  let statement;
+  function visit(n) {
+    if (
+      ts.isVariableStatement(n) &&
+      n.getText(ast).startsWith("const model =") &&
+      n.getText(ast).includes('io.rpcRead("obter_lista_operacional_v1"')
+    )
+      statement = n.getText(ast);
+    ts.forEachChild(n, visit);
+  }
+  visit(ast);
+  assert.ok(statement);
+  const result = await new (Object.getPrototypeOf(async () => {}).constructor)(
+    "io",
+    "matching",
+    "FIXTURE",
+    "tracedPreparation",
+    statement + ";return model;",
+  )(
+    {
+      rpcRead: async (name, args) => {
+        assert.equal(name, "obter_lista_operacional_v1");
+        assert.equal(args.p_id_lista, id);
+        return { verified: true };
+      },
+    },
+    [{ id }],
+    FIXTURE,
+    async (_, fn) => fn(),
+  );
+  assert.equal(result.verified, true);
+});
+
+test("R4 closed recovery and observation codes survive cleanup without private diagnostics", async () => {
+  for (const code of [
+    "RECOVERY_R3_LEDGER",
+    "RECOVERY_SOURCE_INACTIVE",
+    "FLOW_LIST_READBACK_VERSION",
+    "OBSERVATION_MUTATION",
+    "OBSERVATION_ORDINAL",
+  ]) {
+    const d = sut.createPreparationDiagnostics();
+    try {
+      await d.step("RECOVERY_READ", () => {
+        throw Error(code);
+      });
+    } catch (error) {
+      d.capture(error);
+    }
+    await d.cleanup(() => {
+      throw Error("PRIVATE_TOKEN_URL");
+    });
+    assert.equal(d.snapshot().primaryFailure, code);
+    assert.equal(d.snapshot().cleanupFailure, "LOGOUT_FAILED");
+    assert.equal(JSON.stringify(d.snapshot()).includes("PRIVATE_TOKEN"), false);
+  }
 });
