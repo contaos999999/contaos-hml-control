@@ -7497,3 +7497,62 @@ test("R10 guard in the actual navigation helper rejects expiry after settle befo
   assert.equal(gotos, 0);
   f.observer.close();
 });
+
+test("R10 newest query projection never falls back to an older exact month", async () => {
+  for (const kind of ["unfiltered", "empty", "idOnly"]) {
+    const f = await r10QueryFixture();
+    f.response(f.request(), [f.row]);
+    await f.observer.flush();
+    const q = { ...f.full };
+    if (kind === "unfiltered") delete q.competencia_referencia;
+    const newer =
+      kind === "idOnly"
+        ? f.request({
+            select: "id_contrato",
+            id: "eq." + f.row.id,
+            id_organizacao: "eq." + FIXTURE.organization,
+          })
+        : f.request(q);
+    f.response(
+      newer,
+      kind === "idOnly" ? { id_contrato: FIXTURE.contract } : kind === "empty" ? [] : [f.row],
+    );
+    await f.observer.flush();
+    if (kind === "empty") {
+      assert.deepEqual(await f.observer.read("competencias", f.where, f.mode), []);
+    } else {
+      let settled = false;
+      const reading = f.observer.read("competencias", f.where, f.mode).then((rows) => {
+        settled = true;
+        return rows;
+      });
+      await new Promise(setImmediate);
+      try {
+        assert.equal(settled, false, kind);
+      } finally {
+        f.response(f.request(), [f.row]);
+        assert.deepEqual(await reading, [f.row]);
+      }
+    }
+    f.observer.close();
+  }
+});
+test("R10 an older request without headers blocks a newer completed query until its body settles", async () => {
+  const f = await r10QueryFixture();
+  const old = f.request();
+  f.response(f.request(), [f.row]);
+  await f.observer.flush();
+  let settled = false;
+  const reading = f.observer.read("competencias", f.where, f.mode).then((rows) => {
+    settled = true;
+    return rows;
+  });
+  await new Promise(setImmediate);
+  try {
+    assert.equal(settled, false);
+  } finally {
+    f.response(old, [{ ...f.row, situacao: "em_analise" }]);
+    assert.deepEqual(await reading, [f.row]);
+    f.observer.close();
+  }
+});
