@@ -2639,6 +2639,29 @@ async function r7ProbeListConsumers(page, ast) {
     );
     assert.equal(await scope.locator("select").inputValue(), fixture.target);
   }
+  // Render the real JSX selector as it crosses the component's asynchronous loading state.
+  // DOM timers are offline test fixtures; no application request or business command runs.
+  for (const mode of ["enable", "mount"]) {
+    const delayed = r7PanelMarkup({ disabled: mode === "enable" });
+    await page.setContent(
+      mode === "mount"
+        ? '<section aria-label="Gestão de listas"><p role="status">Carregando listas e permissões…</p></section>'
+        : delayed.html,
+    );
+    await page.evaluate(
+      ({ mode, html }) => {
+        setTimeout(() => {
+          const section = document.querySelector('section[aria-label="Gestão de listas"]');
+          if (mode === "mount") section.outerHTML = html;
+          else section.querySelector("select").disabled = false;
+        }, 150);
+      },
+      { mode, html: delayed.html },
+    );
+    const scope = page.getByRole("region", { name: "Gestão de listas", exact: true });
+    assert.equal(await (await sut.listSelectionControl(scope, delayed.target)).count(), 1);
+    assert.equal(await scope.locator("select").isEnabled(), true);
+  }
   for (const total of [1, 25, 26, 51]) {
     for (const pagina of new Set([0, Math.ceil(total / 25) - 1])) {
       const f = r7PanelMarkup({ total, pagina });
