@@ -2168,3 +2168,12 @@ test("R2 ledger explicitamente ausente nunca vira documento aprovado por default
     message: "RECOVERY_LEDGER",
   });
 });
+
+test("popup policy: preparer awaits the shared proved launcher before context and login", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8");
+  const launch = source.indexOf("launchNativeBrowser({ chromium, debugPort, proxy: proxy.url })");
+  const context = source.indexOf("browser.newContext(", launch);
+  assert.ok(launch > 0 && context > launch);
+  assert.equal(source.includes("chromium.launch("), false);
+});
