@@ -16,7 +16,7 @@ ZeroAuth/zero novas operações R7 são DERIVADOS de Step16SKIP e fonteS examina
 
 ## Diagnóstico demonstrado e limite
 
-singleRequestCli --request-revalidate fixa publicOnly=true nos Steps5 e15. Cada verifyfixturesSUCCESS exige mínimo24GETs (9R4+15outros), mais paginação/espera oposta. loadSingleRequestProof nos Steps6/14/16 lê arquivo/identidade/git/evento/digests/R4 local: ZERO GETs SINGLE_REQUEST. Não alegar96GETs por quatro processos.
+singleRequestCli --request-revalidate fixa publicOnly=true nas etapas Recibo inicial publico para as fases sem credenciais e Revalidar main e unicidade dentro da concorrencia antes de secrets (R7: steps6 e15). Cada verifyfixturesSUCCESS exige mínimo24GETs (9R4+15outros), mais paginação/espera oposta. loadSingleRequestProof nas fases resolver deployment/preparação/execução privada (R7: steps7/14/16) lê arquivo/identidade/git/evento/digests/R4 local: ZERO GETs SINGLE_REQUEST. Não alegar96GETs por quatro processos.
 
 REQUEST_API_UNAVAILABLE mistura catchfetch eHTTPstatus!=200; não preservou status/endpoint. Rate-limit,403/429/5xx,rede/redirect/timeout5s são hipóteses, não causas retroativamente comprovadas. Fato corrigível: autorização crítica depende de GitHubAPI pública não autenticada. O novo desenho autentica as mesmas leituras em processo sem Master e torna eventual falha futura diagnosticável por campos técnicos fechados.
 
