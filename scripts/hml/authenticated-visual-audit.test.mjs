@@ -5761,7 +5761,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     throw new Error("unexpected Git command");
   };
   assert.deepEqual(await verify(row, sha, git, raw), [sha]);
-  assert.deepEqual(ancestors, [sut.SINGLE_REQUEST.gateSha, sut.SINGLE_REQUEST.fixturesSha]);
+  assert.deepEqual(ancestors, [sut.SINGLE_REQUEST.gateSha, sut.SINGLE_REQUEST.fixturesSha, sut.SINGLE_REQUEST.autoGateSha]);
   let calls = 0;
   await assert.rejects(() => verify({ ...row, deployment_id: "dpl_12345678" }, sha, async () => { calls++; return raw; }, raw));
   assert.equal(calls, 0, "par parcial rejeitado antes de Git");
