@@ -5198,7 +5198,7 @@ test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "b".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5408,7 +5408,7 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "c".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5450,7 +5450,7 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5677,7 +5677,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     sha = "a".repeat(40),
     parent = "b".repeat(40),
     head = "d".repeat(40);
-  const request = { request_id: "trilha-a-fixtures-20261108-r1", approved_parent_sha: parent };
+  const request = { request_id: "trilha-a-fixtures-20261109-r2", approved_parent_sha: parent };
   const pull = {
     id: 300,
     number: 90,
@@ -5827,7 +5827,7 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -5873,7 +5873,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5899,6 +5899,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
   assert.deepEqual(ancestors, [
     sut.SINGLE_REQUEST.gateSha,
     sut.SINGLE_REQUEST.fixturesSha,
+    sut.SINGLE_REQUEST.recoveryGateSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   let calls = 0;
@@ -6041,11 +6042,7 @@ test(
         onSelecionar: () => {},
       }),
     );
-    const browser = await chromium.launch({
-      headless: true,
-      chromiumSandbox: true,
-      executablePath: process.env.CONTAOS_CHROMIUM_EXECUTABLE,
-    });
+    const browser = await launchIsolatedProvedBrowser(chromium);
     try {
       for (const width of [1440, 1280, 768, 390])
         for (const theme of ["light", "dark"]) {
@@ -6231,11 +6228,7 @@ test(
           perfil: "administrador_master",
         },
       ];
-    const browser = await chromium.launch({
-      headless: true,
-      chromiumSandbox: true,
-      executablePath: process.env.CONTAOS_CHROMIUM_EXECUTABLE,
-    });
+    const browser = await launchIsolatedProvedBrowser(chromium);
     try {
       for (const wrong of [false, true]) {
         const context = await browser.newContext();
@@ -7315,6 +7308,28 @@ test("FAIL_UI diagnóstico: consumidor real decide aborto sem ler getters ou err
   assert.equal(reads, 0);
 });
 
+test("R2 nonce corrente rejeita R1 e historico reconhece apenas R1 consumido", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261108-r1",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.throws(() => fn("parseSingleRequest")(JSON.stringify(row), "fixtures"));
+  assert.equal(
+    fn("parseSingleRequest")(JSON.stringify(row), "fixtures", { historical: true }).request_id,
+    row.request_id,
+  );
+  assert.throws(() =>
+    fn("parseSingleRequest")(JSON.stringify({ ...row, request_id: "unknown" }), "fixtures", {
+      historical: true,
+    }),
+  );
+});
+
 test("popup policy: launch args are closed and require the restrictive switch", () => {
   const args = fn("nativeBrowserArgs")(9222);
   assert.deepEqual(args, ["--remote-debugging-port=9222", "--block-new-web-contents"]);
@@ -7389,7 +7404,10 @@ test("popup policy: both authenticated consumers and native tests use the proved
     "utf8",
   );
   assert.equal(/browser = await launchNativeBrowser\(/.test(audit), true);
-  assert.equal(/browser = await launchNativeBrowser\(/.test(preparer), true);
+  assert.equal(
+    /await tracedPreparation\("PREFLIGHT", async \(\) =>\s*launchNativeBrowser\(/.test(preparer),
+    true,
+  );
   assert.equal(/chromium\.launch\(/.test(preparer), false);
 });
 
@@ -7740,4 +7758,59 @@ test("popup policy: production launcher resolves pinned SDK internally without i
   assert.ok(body.includes('require("playwright/package.json").version'));
   assert.ok(body.includes('"browsers.json"'));
   assert.ok(body.indexOf('shells[0].revision !== "1208"') < body.indexOf("chromium.launch"));
+});
+
+const OBSERVED_GRAPHICS = [
+  "--use-gl=angle",
+  "--use-angle=swiftshader-webgl",
+  "--ozone-platform=headless",
+];
+test("popup policy: pinned Shell internal graphics tokens must match observed argv exactly", () => {
+  const { args, expected } = popupPolicyFixture();
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  const observed = [...args.filter((a) => !OBSERVED_GRAPHICS.includes(a)), ...OBSERVED_GRAPHICS];
+  assert.equal(fn("verifyNativeBrowserPolicy")(observed, version, expected), true);
+  for (const token of OBSERVED_GRAPHICS) {
+    const name = token.split("=")[0];
+    for (const bad of [
+      observed.filter((a) => a !== token),
+      [...observed, token],
+      observed.map((a) => (a === token ? name + "=unknown" : a)),
+      observed.map((a) => (a === token ? token.slice(1) : a)),
+    ])
+      assert.throws(() => fn("verifyNativeBrowserPolicy")(bad, version, expected), {
+        code: "BROWSER_POLICY",
+      });
+  }
+});
+test("popup policy: single-prefix bypasses and switch terminator never pass", () => {
+  const { args, expected } = popupPolicyFixture();
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  for (const extra of [
+    ["-no-sandbox"],
+    ["-disable-web-security=false"],
+    ["-remote-debugging-port=0"],
+    ["--"],
+  ])
+    assert.throws(() => fn("verifyNativeBrowserPolicy")([...args, ...extra], version, expected), {
+      code: "BROWSER_POLICY",
+    });
+});
+
+test("popup policy: attested pre-commit flag multiplicity is exactly two", () => {
+  const { args, expected } = popupPolicyFixture();
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  assert.equal(args.filter((a) => a === "--allow-pre-commit-input").length, 2);
+  assert.equal(fn("verifyNativeBrowserPolicy")(args, version, expected), true);
+  const stripped = args.filter((a) => a !== "--allow-pre-commit-input");
+  for (const count of [0, 1, 3])
+    assert.throws(
+      () =>
+        fn("verifyNativeBrowserPolicy")(
+          [...stripped, ...Array(count).fill("--allow-pre-commit-input")],
+          version,
+          expected,
+        ),
+      { code: "BROWSER_POLICY" },
+    );
 });
