@@ -1702,6 +1702,7 @@ function r2Reconciliation(delta = {}) {
     ledgerR4: sut.R4_RECOVERY_DOCUMENT,
     ledgerR5: R6_R5_DOCUMENT,
     ledgerR6: sut.R6_RECOVERY_DOCUMENT,
+    ledgerR7: sut.R7_RECOVERY_DOCUMENT,
     source: { ...context, id: FIXTURE.source, ...sut.SOURCE_FIELDS, version: 1, situacao: "ativa" },
     version: {
       ...context,
@@ -1740,6 +1741,7 @@ test("R2 ledger omitido undefined ou null não emite prova de reconciliação", 
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
   });
   for (const input of [
     omitted,
@@ -1769,6 +1771,7 @@ test("R2 reconcilia somente estado oficial unico aprovado antes de armar", () =>
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
   });
   assert.throws(() => r6AnalysisArm(b), { message: "RECOVERY_READ_ONLY" });
   assert.throws(() => b.authorizeRecovery({ ...proof }), { message: "RECOVERY_PROOF" });
@@ -1808,6 +1811,7 @@ test("R6 contabiliza oito anteriores e limita novas intencoes a16", () => {
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
   for (let n = 0; n < 16; n++) {
@@ -3036,6 +3040,7 @@ test("R4 validates explicit original R3 ledger and debits exactly one prior acti
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 8);
   for (const rpc of [
@@ -3203,6 +3208,7 @@ test("R4 report derives real arm sent and terminal scalars without request ident
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
   assert.deepEqual(sut.preparationIntentSummary(b), {
@@ -3772,6 +3778,7 @@ test("R6 recovery requires fresh ordinary reads and exact original month identit
     const io = {
       recoveryLedgerR5: R6_R5_DOCUMENT,
       recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+      recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
       generation: () => generation,
       goKnown: async () => {
         generation++;
@@ -4130,6 +4137,7 @@ test("R5 explicit R4 proof is required before recovery broker and preserves thre
     recoveryLedgerR4: clean,
     recoveryLedgerR5: R6_R5_DOCUMENT,
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().confirmedBefore, 8);
   assert.equal(b.snapshot().maxNewIntentions, 16);
@@ -4144,7 +4152,7 @@ test("R5 explicit R4 proof is required before recovery broker and preserves thre
     );
 });
 
-test("R5 actual CLI loads recovery before runtime for both authorized events and denies another branch", async () => {
+test("R8 actual CLI loads recovery before runtime for workflow_run and denies another branch", async () => {
   const fs = await import("node:fs/promises");
   const source = await fs.readFile(
     new URL("./prepare-visual-fixtures.mjs", import.meta.url),
@@ -4153,7 +4161,7 @@ test("R5 actual CLI loads recovery before runtime for both authorized events and
   const body = source
     .slice(source.indexOf("export async function runCli("), source.indexOf("\nif (process.argv[1]"))
     .replace("export async function", "async function");
-  for (const event of ["workflow_run", "workflow_dispatch"]) {
+  for (const event of ["workflow_run"]) {
     const events = [];
     let ready = false;
     const env = {
@@ -4681,6 +4689,7 @@ test("R6 recovery broker debits original five R5 confirmations before any new ar
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
     recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 8);
   assert.equal(b.snapshot().confirmedBefore, 8);
@@ -4846,6 +4855,7 @@ test("R6 semantic replay rejects complete new UUID intents but permits another v
       recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
       recoveryLedgerR5: R6_R5_DOCUMENT,
       recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+      recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     });
   for (const [rpc, p] of attempts) {
     const requestId = randomUUID(),
@@ -5144,6 +5154,7 @@ test("R6 locked and authorized replay boundaries reject nested accessors and pro
         recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
         recoveryLedgerR5: R6_R5_DOCUMENT,
         recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+        recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
         beforeArm: () => {
           beforeArm++;
           return true;
@@ -5242,6 +5253,7 @@ test("R7 original R6 zero-intent document is exact and rejects getters proxies a
     recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
     recoveryLedgerR5: R6_R5_DOCUMENT,
     recoveryLedgerR6: original,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
   });
   assert.equal(instance.snapshot().count, 8);
   assert.equal(instance.snapshot().maxNewIntentions, 16);
@@ -5257,7 +5269,7 @@ test("R7 original R6 zero-intent document is exact and rejects getters proxies a
   );
 });
 
-test("R7 actual artifact writer appends two exact R6 histories and ten hashed data members", async () => {
+test("R8 actual artifact writer appends only R7 proof and preserves eleven hashed data members", async () => {
   const fs = await import("node:fs/promises");
   const sync = await import("node:fs");
   const { join } = await import("node:path");
@@ -5289,6 +5301,7 @@ test("R7 actual artifact writer appends two exact R6 histories and ten hashed da
       "R3_RECOVERY_DOCUMENT",
       "R5_RECOVERY_DOCUMENT",
       "R6_RECOVERY_DOCUMENT",
+      "r7Recovery",
       "createHash",
       "readFile",
       "tracedPreparation",
@@ -5301,15 +5314,16 @@ test("R7 actual artifact writer appends two exact R6 histories and ten hashed da
       sut.R3_RECOVERY_DOCUMENT,
       sut.R5_RECOVERY_DOCUMENT,
       sut.R6_RECOVERY_DOCUMENT,
+      sut.R7_RECOVERY_DOCUMENT,
       createHash,
       fs.readFile,
       async (_, run) => run(),
     );
     const names = (await fs.readdir(output)).sort();
-    assert.equal(names.length, 11);
+    assert.equal(names.length, 12);
     const manifest = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(manifest.length, 10);
-    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 10);
+    assert.equal(manifest.length, 11);
+    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 11);
     for (const line of manifest) {
       assert.match(line, /^[0-9a-f]{64}  [a-z0-9.-]+$/);
       const bytes = await fs.readFile(join(output, line.slice(66)));
@@ -5330,6 +5344,20 @@ test("R7 actual artifact writer appends two exact R6 histories and ten hashed da
       JSON.stringify(sut.R6_RECOVERY_DOCUMENT, null, 2) + "\n",
     );
     assert.equal(
+      await fs.readFile(join(output, "recovery-r7.json"), "utf8"),
+      JSON.stringify(sut.R7_RECOVERY_DOCUMENT, null, 2) + "\n",
+    );
+    assert.equal(
+      createHash("sha256")
+        .update(await fs.readFile(join(output, "recovery-r7.json")))
+        .digest("hex"),
+      "687712aa5ab15072afc65aceacdff52ce5d94c6ba9f2ceccf6867e4636bd1c4e",
+    );
+    assert.equal(
+      names.some((name) => ["report-r7.json", "receipts-r7.json"].includes(name)),
+      false,
+    );
+    assert.equal(
       await fs.readFile(join(output, "receipts-r5.json"), "utf8"),
       sut.R5_RECOVERY_DOCUMENT.receiptsRaw,
     );
@@ -5348,4 +5376,107 @@ test("R8 reconciliation requires live R7 zero-auth proof instead of assuming the
   ]) {
     assert.throws(() => sut.reconcileR1Recovery({ ...valid, ledgerR7 }), /RECOVERY_R7_LEDGER/);
   }
+});
+
+test("R8 R7 ledger validation blocks forged proof and retains eight historical confirmations", () => {
+  const proof = sut.R7_RECOVERY_DOCUMENT;
+  assert.equal(Buffer.byteLength(JSON.stringify(proof, null, 2) + "\n"), 316);
+  assert.deepEqual(sut.validateR7RecoveryDocument(proof), proof);
+  let reads = 0;
+  const getter = { ...proof };
+  Object.defineProperty(getter, "headSha", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  const proxy = new Proxy(proof, {
+    get() {
+      reads++;
+      throw Error("CANARY");
+    },
+    ownKeys() {
+      reads++;
+      throw Error("CANARY");
+    },
+    getPrototypeOf() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  const revoked = Proxy.revocable(proof, {});
+  revoked.revoke();
+  const prototype = new Proxy(
+    {},
+    {
+      getOwnPropertyDescriptor() {
+        reads++;
+        throw Error("CANARY");
+      },
+    },
+  );
+  const wrapped = Object.assign(Object.create(prototype), proof);
+  const extra = { ...proof };
+  extra[Symbol("extra")] = true;
+  for (const value of [
+    null,
+    {},
+    getter,
+    proxy,
+    revoked.proxy,
+    wrapped,
+    extra,
+    { ...proof, derivedNewBusinessIntents: 1 },
+  ])
+    assert.throws(() => sut.validateR7RecoveryDocument(value), /RECOVERY_R7_LEDGER/);
+  assert.equal(reads, 0);
+  const input = r2Reconciliation();
+  assert.doesNotThrow(() => sut.reconcileR1Recovery(input));
+  const b = broker({
+    recoveryLedger: input.ledger,
+    recoveryLedgerR3: input.ledgerR3,
+    recoveryLedgerR4: input.ledgerR4,
+    recoveryLedgerR5: input.ledgerR5,
+    recoveryLedgerR6: input.ledgerR6,
+    recoveryLedgerR7: input.ledgerR7,
+  });
+  assert.equal(b.snapshot().count, 8);
+  assert.equal(b.snapshot().maxNewIntentions, 16);
+  assert.throws(() => b.arm(), /RECOVERY_READ_ONLY/);
+});
+
+test("R8 actual fixture CLI rejects manual main before proof GET or login", async () => {
+  const { readFile } = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8");
+  const ast = ts.createSourceFile("preparer.mjs", source, 99, true, ts.ScriptKind.JS);
+  const fn = ast.statements.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "runCli");
+  assert.ok(fn);
+  let loads = 0,
+    runtime = 0;
+  const env = { GITHUB_EVENT_NAME: "workflow_dispatch", GITHUB_REF: "refs/heads/main" };
+  const run = new Function(
+    "process",
+    "loadSingleRequestProof",
+    "preparerEventAllowed",
+    "runFixturePreparation",
+    "err",
+    fn.getText(ast).replace(/^export\s+/, "") + ";return runCli;",
+  )(
+    { env, argv: [] },
+    async () => {
+      loads++;
+    },
+    () => true,
+    async () => {
+      runtime++;
+    },
+    (code) => {
+      throw Error(code);
+    },
+  );
+  await assert.rejects(run(["--prepare-fixtures"]), /PREPARER_MAIN_ONLY/);
+  assert.equal(loads, 0);
+  assert.equal(runtime, 0);
 });
