@@ -56,6 +56,59 @@ export function preparerFailureDiagnostic(input) {
   };
 }
 
+export const R1_FIXTURE_RECEIPTS =
+  '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",\n      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",\n      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",\n      "workflowRun": "42540864527",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "registrar_versao_fonte_v107",\n      "requestId": "08141ffd-56c1-4c50-b58f-32912d1006b2",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467"\n    },\n    {\n      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",\n      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",\n      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",\n      "workflowRun": "42540864527",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "registrar_versao_fonte_v107",\n      "requestId": "08141ffd-56c1-4c50-b58f-32912d1006b2",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467"\n    },\n    {\n      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",\n      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",\n      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",\n      "workflowRun": "42540864527",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_versao_fonte_v107",\n      "requestId": "437a3c66-4bed-45e3-b73e-8696bdf4a791",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769"\n    },\n    {\n      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",\n      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",\n      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",\n      "workflowRun": "42540864527",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_versao_fonte_v107",\n      "requestId": "437a3c66-4bed-45e3-b73e-8696bdf4a791",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769"\n    }\n  ]\n}\n';
+
+export function validateFixtureResumeLedger(raw) {
+  if (
+    typeof raw !== "string" ||
+    Buffer.byteLength(raw) > 8192 ||
+    hash(raw) !== "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9"
+  )
+    err("RESUME_LEDGER");
+  const ledger = JSON.parse(raw);
+  const expected = [
+    [
+      "registrar_versao_fonte_v107",
+      "08141ffd-56c1-4c50-b58f-32912d1006b2",
+      "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467",
+    ],
+    [
+      "aprovar_versao_fonte_v107",
+      "437a3c66-4bed-45e3-b73e-8696bdf4a791",
+      "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769",
+    ],
+  ];
+  if (
+    ledger.schema !== "contaos.fixture.receipts.v1" ||
+    !Array.isArray(ledger.receipts) ||
+    ledger.receipts.length !== 4
+  )
+    err("RESUME_LEDGER");
+  for (let i = 0; i < 4; i++) {
+    const row = ledger.receipts[i],
+      [rpc, requestId, payloadSha256] = expected[Math.floor(i / 2)];
+    safeReceipt(row);
+    if (
+      row.rpc !== rpc ||
+      row.requestId !== requestId ||
+      row.payloadSha256 !== payloadSha256 ||
+      row.state !== (i % 2 ? "confirmed" : "sealed") ||
+      row.organization !== FIXTURE.organization ||
+      row.contract !== FIXTURE.contract ||
+      row.workflowRun !== "42540864527" ||
+      row.frontendSha !== "866608620909bf313a6c2192736330222f9219ad" ||
+      row.harnessSha !== "fca0798d3eba81e8daa3a876a255f34b66ff39f9" ||
+      row.deploymentId !== "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY"
+    )
+      err("RESUME_LEDGER");
+  }
+  return Object.freeze({
+    consumedIntents: 2,
+    requestIds: Object.freeze(expected.map((r) => r[1])),
+  });
+}
+
 export const FIXTURE = Object.freeze({
   origin: HML_ORIGIN,
   api: API_ORIGIN,
@@ -602,12 +655,16 @@ export function createIntentBroker({
   persist,
   now = () => performance.now(),
   competenceGateAmended = false,
+  resumeLedger,
+  resumeReady,
 } = {}) {
+  const resume = resumeLedger === undefined ? null : validateFixtureResumeLedger(resumeLedger);
+  if (resume && typeof resumeReady !== "function") err("RESUME_GUARD");
   let active = null,
-    count = 0,
+    count = resume?.consumedIntents ?? 0,
     frozen = false;
   const accepted = new Map(),
-    usedIds = new Set();
+    usedIds = new Set(resume?.requestIds ?? []);
   function persistSafe(receipt) {
     try {
       const result = persist(receipt);
@@ -691,6 +748,9 @@ export function createIntentBroker({
   return Object.freeze({
     policy,
     arm({ rpc, payload, requestId, uiGeneratedKey, verified, evidence = {} } = {}) {
+      if (resume && ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"].includes(rpc))
+        err("RESUME_FORBIDDEN");
+      if (resume && resumeReady() !== true) err("RESUME_READONLY");
       if (frozen) err("INTENT_FROZEN");
       if (active) err("INTENT_PENDING");
       if (count >= 24) err("INTENT_BUDGET");
