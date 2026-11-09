@@ -1,3 +1,49 @@
+# Checkpoint P0: continuidade ativa, cerca de popup em correção e aceites pendentes
+
+Registro de 09/11/2026. O desenvolvimento continua; este checkpoint previne perda de contexto e não recomenda encerrar a conversa. CI, revisão do coordenador e integração deste PR ainda são exigidas antes de declarar o registro oficialmente integrado. Os capítulos anteriores permanecem históricos e íntegros abaixo; este bloco consolida o estado observado mais recente.
+
+## Referências e fonte conferida
+
+- Frontend main observado: `f4ac3c135acd0906b4b1749bad0301e40d04411a`. Desde `5e4c93e4fe41ef9e09f631a3dd27558ac6bafdda`, mudou somente o GATE V102, com 12 linhas documentais; o delta externo foi preservado.
+- Backend main observado e nova âncora: `39e7baeeec3990b664ca54c6f3ae09e9f7ea3e63`; âncora anterior `1a08988ebf58a38c0647d497725fd713aa7be90c`. Comparação GitHub de árvore completa não truncada confirmou 25/25 blobs canônicos, catálogo `e54e49e626e65a9c94c81709180fd192a1f0c079` com 100 regulares/97 atômicos e tipos imutáveis `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`.
+- Delta 1a→39e lido: quatro caminhos. Restore acrescenta quatro filtros em cada evento; os documentos/active-task da C registram a ativação; ai_envelope passa a usar snapshot B completo com hash fixo, preservando expectativas e routing. Nenhuma alteração de SRC, SQL, RLS ou contrato de API consumido pela Trilha A nesse delta. Snapshot e ack avançam juntos, sem relaxar freshness, presumir deployment/certificação C ou aguardar outro deploy para essa leitura documental.
+- Vercel GET confirmou READY no deployment HML `dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY`, alias contaos-41-hml.vercel.app, fonte `866608620909bf313a6c2192736330222f9219ad`. O target técnico HML aparece como production no provedor; isso não autoriza PROD nem prova uma auditoria privada.
+
+## Últimas execuções e limites
+
+A última auditoria com relatório e manifesto comprovados continua sendo **42540293545**: artefato 13641796040, 208 registros, 99 PASS_AUTOMATIZADO, 51 BLOQUEADO_PII, 16 FAIL_UI, 18 baseline preservados e 24 fixtures bloqueadas. Soma 208; 298/298 hashes conferidos, 198 PNG e 99 DOM, sem aborto e com logout confirmado. ZIP SHA256 `8f18ed9a37c0fea9c2f17fb31b70d68d0a55ebdf34db915bb2da0f94bc7d0245`; relatório `eb0e8853c905fdf708ecfe5f537ccdfe91c72c588e67cec27fa3f55cd3687c6a`. Não equivale a 99 imagens certificadas, 184 casos encerrados ou aceite visual integral.
+
+Existe execução externa posterior **42542802124/Run124**, artefato 13642651045, fonte866608 e harness `a688ba030955229426ff8cd2584af3ffc86921bd` do diagnóstico399. Download e verificação integral do relatório/manifesto continuam pendentes neste registro; nenhuma contagem nova é atribuída e ela não substitui a prova anterior. Preservar ambas e revisar os originais.
+
+Preparador **42540864527/R1**: request394 e nonce `trilha-a-fixtures-20261108-r1` CONSUMIDOS. Foram comprovadas duas operações reais, registrar_versao_fonte_v107 e aprovar_versao_fonte_v107; quatro entradas sealed/confirmed não significam quatro mutações. Falha SOURCE_AND_LIST/PREPARER_UNCLASSIFIED, completed=false, bindings finais ausentes e logout não comprovado. Artefato13641024365; ZIP `a7ebb6d3f23ebe61668bc03ab4e20e78556e0bcaf05a7c212dd63703b662c8c8`, report `ab2e5dfb57197fb3978b1d7510e71aed189a5072a0545c7b895cf9ab9d0c7607`, receipts `381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9`. Não repetir nonce, declarar zero mutações ou 24 fixtures prontas. Reconciliar o estado antes de qualquer retomada autorizada.
+
+## Entregas e candidatos
+
+Gates integrados, sem certificação operacional implícita: 391/SYS04 `e49991ad`, 401/V123metadata `2486d8c`, 402/wire `5a3d853`, 404/fixtures `581e161`, 405/diagnóstico `8e0f5f1`, 407/V112 `bdeeca1`, 408/V123SQL2 `a191ce3` e 415/popup `5e4c93e`. HEADs/merges completos estão no objeto checkpoint_trilha_a_20261109 do PLANO_ATIVO; nenhum catálogo é autorização global de palavras, datas ou UUIDs.
+
+CODE411/wire está integrado em `4334938cad7fbbaab8d29ea2ab5376aff2dc7210`; CODE399/diagnóstico externo em `a688ba030955229426ff8cd2584af3ffc86921bd`. Seus controles permanecem preservados.
+
+| PR BUILD | HEAD observado | Situação comprovada |
+|---|---|---|
+| 409/SYS04 | `95351a63c8eedaedcd13620430c35195ec0ac27f` | CI verde 42545103705,42545103675,42545103711,42545103722; revisão final/merge pendentes. Native8 + visual1 + suplementosSYS04=2 no HEAD exato não apagam a race reproduzida. |
+| 413 | `2b8ec1a562c136199be26b3b789bca051e49fb8b` | Aberta, sem integração presumida. |
+| 416 | `95372558c60f48ddfab96509aeeebbc540f9de71` | Aberta, sem integração presumida. |
+| 417/V112 | `b5f0d7c6821bd675e571b926d79f3301f9d9786e` | Correção/revisão em andamento, sem integração presumida. |
+
+V123 SQL2 foi executada uma única vez, com revisão do wrapper V2 no comentário6729918485 e recibo semântico independente6729946735: 10 eventos, 60 campos, 50 CAMPO_TECNICO_SEM_PII e 10 ATOR_OPERACIONAL_PSEUDONIMO_AUTORIZADO, acordo60/60 e zero inconclusivos. Sem lookup de identidade ou consultas adicionais. Catálogo de aceitação ainda exige GATE/CI/revisão/merge; não houve novo caso HML aprovado por esse recibo.
+
+## Impedimento de segurança e sequência imediata
+
+**NO-GO para nova Auth, tanto no auditor quanto no preparador.** A race de popup é real e preexistente: GET ao canário em 2/3 ensaios, porque fechar o contexto de modo assíncrono não impede seu primeiro transporte. Não é simples preconnect/ambiente; um CI verde pontual não revoga a falha. GATE415 está integrado em5e4c93e; review_plan implementa a correção restrita a quatro mjs no Sandbox5. Antes de liberar Auth: native8 com TCP zero e assertions preservadas, caminho positivo autorizado da main, revisão independente, CI no HEAD final e integração. Nenhuma leitura Auth, login, replay ou execução HML é autorizada por este checkpoint.
+
+**Última etapa comprovadamente concluída:** gates documentais e descoberta semântica V123; CODE411/399 integrados; candidato409 testado e com CI verde. Ainda não é homologação HML dessas correções.
+
+**Próximas tarefas:** concluir a cerca de popup; revisar/reancorar e integrar os BUILD409/413/416/417 conforme suas provas; produzir o catálogo V123 por evento com os bytes já aprovados, sem repetir SQL2; reconciliar as duas operações R1. Só após resolver a cerca, revalidar fonte/deployment/SSR e executar o Teste C governado, mantendo revisão visual independente e critérios individuais.
+
+Preservados: 18 públicos aprovados, 18 baseline atuais e 24 históricos em suas respectivas origens, Run78 e todas as evidências válidas. Os 72 BRAND continuam **NAO_VERIFICADO_GLOBAL**; a matriz 232/29 superfícies não está certificada. **V1 NO-GO; V2–V5 e PROD bloqueados.** Trilha C e histórico anterior mantidos. Esta atualização não executa SQL/Auth/HML/DML, não altera SRC/workflows/tipos e não encerra o desenvolvimento.
+
+---
+
 # Continuidade P0: auditoria incompleta e preparador com duas operações confirmadas
 
 Checkpoint de09/11/2026. PR394 integrada em `fca0798d3eba81e8daa3a876a255f34b66ff39f9`, request_id/nonce `trilha-a-fixtures-20261108-r1` agora CONSUMIDO pela execução42540864527. A informação anterior de nonce não consumido permanece apenas histórica. Nenhum replay autorizado; esta atualização documental não executa Auth nem escrita HML. CI/revisão/merge deste novo HEAD documental ainda pendentes.
