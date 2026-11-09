@@ -1414,7 +1414,6 @@ test(
   "Chromium nativo: resposta alterada não executa antes do fechamento",
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
   async (t) => {
-    const { chromium } = await import("playwright");
     let browser, fence, context, proxy;
     let executions = 0;
     const canary = createHttpServer((_req, res) => {
@@ -1442,11 +1441,7 @@ test(
     await new Promise((resolve) => debug.close(resolve));
     const finished = Promise.withResolvers();
     try {
-      browser = await chromium.launch({
-        chromiumSandbox: true,
-        env: fn("browserEnvironment")(process.env),
-        args: [`--remote-debugging-port=${port}`],
-      });
+      browser = await fn("launchNativeBrowser")(port);
       context = await browser.newContext();
       const page = await context.newPage();
       const session = await context.newCDPSession(page);
@@ -1587,122 +1582,203 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
     `Chromium nativo: ${mode} não transmite ao canário`,
     { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
     async () => {
-      const { chromium } = await import("playwright");
-      let browser, context, fence, proxy;
-      let connections = 0;
-      const canary = createHttpServer((_req, res) => {
-        res.setHeader("content-type", "text/html");
-        res.end('<!doctype html><title>canary</title><link rel="icon" href="data:,">');
-      });
-      canary.on("connection", () => connections++);
-      const debug = createHttpServer();
-      await Promise.all(
-        [canary, debug].map(
-          (server) => new Promise((resolve) => server.listen(0, "127.0.0.1", resolve)),
-        ),
-      );
-      const port = debug.address().port;
-      await new Promise((resolve) => debug.close(resolve));
-      const finished = Promise.withResolvers();
-      try {
-        if (mode === "proxy") proxy = await fn("startDestinationProxy")();
-        browser = await chromium.launch({
-          chromiumSandbox: true,
-          env: fn("browserEnvironment")(process.env),
-          args: [
-            `--remote-debugging-port=${port}`,
-            ...(proxy ? ["--proxy-bypass-list=<-loopback>"] : []),
-          ],
-          ...(proxy ? { proxy: { server: proxy.url } } : {}),
+      for (const popupVariant of mode === "popup"
+        ? ["window-open", "window-open-noopener", "anchor-noopener", "form-post"]
+        : ["window-open"]) {
+        let browser, context, fence, proxy;
+        let connections = 0,
+          bytes = 0,
+          requests = 0,
+          popupDenied = false;
+        const positiveHit = Promise.withResolvers();
+        const canary = createHttpServer((_req, res) => {
+          requests++;
+          positiveHit.resolve();
+          res.setHeader("content-type", "text/html");
+          res.end('<!doctype html><title>canary</title><link rel="icon" href="data:,">');
         });
-        context = await browser.newContext();
-        const page = await context.newPage();
-        if (mode !== "proxy") {
-          const session = await context.newCDPSession(page);
-          const { targetInfo } = await session.send("Target.getTargetInfo");
-          await session.detach();
-          fence = await fn("installNativeFence")({
-            debugPort: port,
-            identity: targetInfo,
-            verifyResponse: async () => true,
-            policy: (request) =>
-              mode === "websocket" && request.url === `http://127.0.0.1:${canary.address().port}/`
-                ? true
-                : sut.requestAllowed(request),
-            closeContext: async () => {
-              await context.close();
-              finished.resolve();
-            },
+        canary.on("connection", (socket) => {
+          connections++;
+          socket.on("data", (b) => {
+            bytes += b.length;
           });
-        }
-        if (mode === "worker") {
-          await page
-            .evaluate((url) => {
-              new Worker(
-                URL.createObjectURL(new Blob([`fetch('${url}')`], { type: "text/javascript" })),
-              );
-            }, `http://127.0.0.1:${canary.address().port}/canary`)
-            .catch(() => {});
-        } else if (mode === "popup") {
-          await page
-            .evaluate((url) => window.open(url), `http://127.0.0.1:${canary.address().port}/canary`)
-            .catch(() => {});
-        } else if (mode === "websocket") {
-          await page.goto(`http://127.0.0.1:${canary.address().port}/`, {
-            waitUntil: "networkidle",
-          });
-          canary.closeAllConnections();
-          connections = 0;
-          assert.equal(
-            await page.evaluate(
-              (url) =>
-                new Promise((resolve) => {
-                  const ws = new WebSocket(url);
-                  ws.onerror = () => resolve("denied");
-                  ws.onopen = () => resolve("opened");
-                }),
-              `ws://127.0.0.1:${canary.address().port}/canary`,
-            ),
-            "denied",
-          );
-        } else {
-          assert.equal(
-            await page.evaluate(
-              (url) =>
-                fetch(url).then(
-                  () => false,
-                  () => true,
+        });
+        const debug = createHttpServer();
+        await Promise.all(
+          [canary, debug].map(
+            (server) => new Promise((resolve) => server.listen(0, "127.0.0.1", resolve)),
+          ),
+        );
+        const port = debug.address().port;
+        await new Promise((resolve) => debug.close(resolve));
+        const finished = Promise.withResolvers();
+        try {
+          if (mode === "proxy") proxy = await fn("startDestinationProxy")();
+          if (mode === "popup") {
+            const { chromium } = await import("playwright");
+            let positive;
+            try {
+              positive = await chromium.launch({
+                chromiumSandbox: true,
+                env: fn("browserEnvironment")(process.env),
+              });
+              const cdp = await positive.newBrowserCDPSession();
+              assert.equal(
+                (await cdp.send("Browser.getBrowserCommandLine")).arguments.includes(
+                  "--block-new-web-contents",
                 ),
-              `http://127.0.0.1:${canary.address().port}/canary`,
-            ),
-            true,
-          );
-          assert.ok(proxy.snapshot().blocked > 0);
+                false,
+              );
+              await cdp.detach();
+              const control = await positive.newPage();
+              await control.evaluate(
+                (url) => window.open(url),
+                "http://127.0.0.1:" + canary.address().port + "/canary",
+              );
+              let timer;
+              try {
+                await Promise.race([
+                  positiveHit.promise,
+                  new Promise((_, reject) => {
+                    timer = setTimeout(() => reject(Error("positive popup sensor missing")), 2000);
+                  }),
+                ]);
+              } finally {
+                clearTimeout(timer);
+              }
+              await new Promise((r) => setImmediate(r));
+              assert.ok(connections > 0 && bytes > 0 && requests > 0);
+            } finally {
+              await positive?.close();
+            }
+            canary.closeAllConnections();
+            connections = 0;
+            bytes = 0;
+            requests = 0;
+          }
+          browser = await fn("launchNativeBrowser")(port, proxy?.url);
+          context = await browser.newContext();
+          const page = await context.newPage();
+          if (mode !== "proxy") {
+            const session = await context.newCDPSession(page);
+            const { targetInfo } = await session.send("Target.getTargetInfo");
+            await session.detach();
+            fence = await fn("installNativeFence")({
+              debugPort: port,
+              identity: targetInfo,
+              verifyResponse: async () => true,
+              policy: (request) =>
+                mode === "websocket" && request.url === `http://127.0.0.1:${canary.address().port}/`
+                  ? true
+                  : sut.requestAllowed(request),
+              closeContext: async () => {
+                if (mode === "popup") await new Promise((r) => setTimeout(r, 100));
+                await context.close();
+                finished.resolve();
+              },
+            });
+          }
+          if (mode === "worker") {
+            await page
+              .evaluate((url) => {
+                new Worker(
+                  URL.createObjectURL(new Blob([`fetch('${url}')`], { type: "text/javascript" })),
+                );
+              }, `http://127.0.0.1:${canary.address().port}/canary`)
+              .catch(() => {});
+          } else if (mode === "popup") {
+            await page
+              .evaluate(
+                ({ url, variant }) => {
+                  if (variant === "window-open") return window.open(url) === null;
+                  if (variant === "window-open-noopener")
+                    return window.open(url, "_blank", "noopener") === null;
+                  if (variant === "anchor-noopener") {
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.target = "_blank";
+                    a.rel = "noopener";
+                    document.body.append(a);
+                    a.click();
+                    return true;
+                  }
+                  const f = document.createElement("form");
+                  f.action = url;
+                  f.method = "POST";
+                  f.target = "_blank";
+                  document.body.append(f);
+                  f.submit();
+                  return true;
+                },
+                {
+                  url: "http://127.0.0.1:" + canary.address().port + "/canary",
+                  variant: popupVariant,
+                },
+              )
+              .then((v) => {
+                popupDenied = v === true;
+              })
+              .catch(() => {});
+          } else if (mode === "websocket") {
+            await page.goto(`http://127.0.0.1:${canary.address().port}/`, {
+              waitUntil: "networkidle",
+            });
+            canary.closeAllConnections();
+            connections = 0;
+            assert.equal(
+              await page.evaluate(
+                (url) =>
+                  new Promise((resolve) => {
+                    const ws = new WebSocket(url);
+                    ws.onerror = () => resolve("denied");
+                    ws.onopen = () => resolve("opened");
+                  }),
+                `ws://127.0.0.1:${canary.address().port}/canary`,
+              ),
+              "denied",
+            );
+          } else {
+            assert.equal(
+              await page.evaluate(
+                (url) =>
+                  fetch(url).then(
+                    () => false,
+                    () => true,
+                  ),
+                `http://127.0.0.1:${canary.address().port}/canary`,
+              ),
+              true,
+            );
+            assert.ok(proxy.snapshot().blocked > 0);
+          }
+          if (mode === "worker" || mode === "popup")
+            await Promise.race([
+              finished.promise,
+              new Promise((_, reject) => {
+                const timer = setTimeout(() => reject(new Error("target was not stopped")), 10000);
+                timer.unref();
+              }),
+            ]);
+          if (mode === "worker" || mode === "popup") await fn("settledFenceSnapshot")(fence);
+          else await fence?.drain();
+          if (mode === "worker") {
+            assert.ok(fence.snapshot().workersPaused > 0);
+            assert.equal(fence.snapshot().failureCode, "FENCE_WORKER_PAUSED");
+          }
+          if (mode === "popup") {
+            assert.ok(fence.snapshot().popups > 0);
+            assert.equal(fence.snapshot().failureCode, "FENCE_POPUP");
+            assert.equal(popupDenied, true);
+            assert.equal(bytes, 0);
+            assert.equal(requests, 0);
+          }
+          assert.equal(connections, 0);
+        } finally {
+          fence?.close();
+          await browser?.close();
+          await proxy?.close();
+          await new Promise((resolve) => canary.close(resolve));
         }
-        if (mode === "worker" || mode === "popup")
-          await Promise.race([
-            finished.promise,
-            new Promise((_, reject) => {
-              const timer = setTimeout(() => reject(new Error("target was not stopped")), 10000);
-              timer.unref();
-            }),
-          ]);
-        if (mode === "worker" || mode === "popup") await fn("settledFenceSnapshot")(fence);
-        else await fence?.drain();
-        if (mode === "worker") {
-          assert.ok(fence.snapshot().workersPaused > 0);
-          assert.equal(fence.snapshot().failureCode, "FENCE_WORKER_PAUSED");
-        }
-        if (mode === "popup") {
-          assert.ok(fence.snapshot().popups > 0);
-          assert.equal(fence.snapshot().failureCode, "FENCE_POPUP");
-        }
-        assert.equal(connections, 0);
-      } finally {
-        fence?.close();
-        await browser?.close();
-        await proxy?.close();
-        await new Promise((resolve) => canary.close(resolve));
       }
     },
   );
@@ -1754,7 +1830,6 @@ for (const scheme of ["ws", "wss"])
     `Chromium nativo: controle positivo e bloqueio ${scheme}`,
     { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
     async () => {
-      const { chromium } = await import("playwright");
       let browser, context, fence;
       let connections = 0;
       const canary = createHttpServer();
@@ -1786,11 +1861,7 @@ for (const scheme of ["ws", "wss"])
       const port = debug.address().port;
       await new Promise((resolve) => debug.close(resolve));
       try {
-        browser = await chromium.launch({
-          chromiumSandbox: true,
-          env: fn("browserEnvironment")(process.env),
-          args: [`--remote-debugging-port=${port}`],
-        });
+        browser = await fn("launchNativeBrowser")(port);
         const attempt = async (page) =>
           page.evaluate(
             (url) =>
@@ -2467,7 +2538,6 @@ test(
   "Chromium nativo: cancelamento inicial real não libera corpo nem transmite ao canário",
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
   async (t) => {
-    const { chromium } = await import("playwright");
     let browser, context, fence, proxy;
     const traffic = { connections: 0, bytes: 0, requests: 0 };
     const preflightRequested = Promise.withResolvers();
@@ -2519,11 +2589,7 @@ test(
         }),
       ]);
     try {
-      browser = await chromium.launch({
-        chromiumSandbox: true,
-        env: fn("browserEnvironment")(process.env),
-        args: [`--remote-debugging-port=${realPort}`],
-      });
+      browser = await fn("launchNativeBrowser")(realPort);
       const origin = `http://127.0.0.1:${source.address().port}`,
         canceledUrl = `http://127.0.0.1:${canary.address().port}/canceled`;
       const positive = await browser.newContext();
@@ -6553,4 +6619,98 @@ test("privacy112 link requires source attributes and exact plain span subtree", 
       dom.window.close();
     }
   }
+});
+
+test("native browser arguments keep mandatory popup policy and fixed transport", () => {
+  assert.deepEqual(fn("nativeBrowserArguments")(9222), [
+    "--remote-debugging-port=9222",
+    "--block-new-web-contents",
+  ]);
+  assert.deepEqual(fn("nativeBrowserArguments")(9222, "http://127.0.0.1:8888"), [
+    "--remote-debugging-port=9222",
+    "--block-new-web-contents",
+    "--proxy-bypass-list=<-loopback>",
+  ]);
+  for (const port of [0, 65536, "9222", null])
+    assert.throws(() => fn("nativeBrowserArguments")(port));
+  for (const proxy of [
+    "https://127.0.0.1:8888",
+    "http://foreign.invalid:8888",
+    "http://u:p@127.0.0.1:8888",
+  ])
+    assert.throws(() => fn("nativeBrowserArguments")(9222, proxy));
+});
+function nativePolicyFixture() {
+  const executablePath =
+    "/fixture/chromium_headless_shell-1208/chrome-headless-shell-linux64/chrome-headless-shell";
+  return {
+    platform: "linux",
+    architecture: "x64",
+    sdkVersion: "1.58.2",
+    revision: "1208",
+    executablePath,
+    realPath: executablePath,
+    regularFile: true,
+    symlink: false,
+    size: 183557344,
+    sha256: "27e55cc30e487493b89b663085d6deeb0707be201a568657c922fac9076c317c",
+    product: "HeadlessChrome/145.0.7632.6",
+    debugPort: 9222,
+    arguments: [
+      executablePath,
+      "--enable-automation",
+      "--headless",
+      "--remote-debugging-port=9222",
+      "--block-new-web-contents",
+    ],
+  };
+}
+test("native browser policy requires actual supported binary and argv", () => {
+  const valid = nativePolicyFixture();
+  assert.equal(fn("nativeBrowserPolicyValid")(valid), true);
+  for (const delta of [
+    { size: 1 },
+    { sha256: "0".repeat(64) },
+    { sdkVersion: "1.64.1" },
+    { revision: "1209" },
+    { product: "Chrome/145.0.7632.6" },
+    { realPath: "/other/chrome" },
+    { regularFile: false },
+    { symlink: true },
+    { platform: "darwin" },
+    { architecture: "arm64" },
+    { debugPort: 9223 },
+  ])
+    assert.equal(fn("nativeBrowserPolicyValid")({ ...valid, ...delta }), false);
+});
+for (const mode of [
+  "missing",
+  "duplicate",
+  "false-value",
+  "no-sandbox-value",
+  "web-security",
+  "tls-bypass",
+  "normal-chrome",
+  "invalid-args",
+]) {
+  test("native browser policy blocks " + mode, () => {
+    const input = nativePolicyFixture();
+    if (mode === "missing") input.arguments.pop();
+    if (mode === "duplicate") input.arguments.push("--block-new-web-contents");
+    if (mode === "false-value")
+      input.arguments[input.arguments.length - 1] = "--block-new-web-contents=false";
+    if (mode === "no-sandbox-value") input.arguments.push("--no-sandbox=false");
+    if (mode === "web-security") input.arguments.push("--disable-web-security=true");
+    if (mode === "tls-bypass") input.arguments.push("--ignore-certificate-errors-spki-list=canary");
+    if (mode === "normal-chrome")
+      input.arguments[0] = "/fixture/chromium-1208/chrome-linux64/chrome";
+    if (mode === "invalid-args") input.arguments = [null];
+    assert.equal(fn("nativeBrowserPolicyValid")(input), false);
+  });
+}
+
+test("native browser policy rejects bare debugging port override", () => {
+  const p = nativePolicyFixture();
+  p.arguments.push("--remote-debugging-port");
+  assert.equal(fn("nativeBrowserPolicyValid")(p), false);
 });

@@ -16,7 +16,7 @@ import {
   harnessIdentity,
   checkFreshDeployment,
   startDestinationProxy,
-  browserEnvironment,
+  launchNativeBrowser,
   installNativeFence,
   verifyPublishedResponse,
   settleVerifiedPage,
@@ -3603,14 +3603,8 @@ async function runFixturePreparation() {
     await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
     const debugPort = debug.address().port;
     await new Promise((resolve) => debug.close(resolve));
-    const { chromium } = await import("playwright");
     proxy = await startDestinationProxy();
-    browser = await chromium.launch({
-      chromiumSandbox: true,
-      env: browserEnvironment(process.env),
-      proxy: { server: proxy.url },
-      args: [`--remote-debugging-port=${debugPort}`, "--proxy-bypass-list=<-loopback>"],
-    });
+    browser = await launchNativeBrowser(debugPort, proxy.url);
     const context = await browser.newContext({
       viewport: { width: 1440, height: 1000 },
       serviceWorkers: "block",
