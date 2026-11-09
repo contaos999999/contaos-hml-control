@@ -92,9 +92,9 @@
   "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Gate CI do plano mestre e matriz de aceite comprovado; demais gates permanecem PENDENTE e BUILD bloqueado. Escopo agrupado documentado, gate ainda condicionado à conferência canônica e CI; não alterar código sem validação. Snapshot reancorado no HEAD backend pós-RPC sem alteração dos 25 blobs normativos. Demais gates ainda exigem evidência. Gates PASS significam somente validação do planejamento do Prompt 75, com TDD e Teste C planejados, não executados; BUILD requer CI verde deste PR antes de iniciar. Emenda documental P0 (05/11/2026): teste de regressão preexistente ADM-01 precisa refletir a sexta RPC pública somente-leitura para capacidade da Auditoria. Caminho adicionado à allowlist para BUILD posterior a esta emenda validada por CI; não altera permissões, RLS, backend, identidade visual ou PROD. Testes e bloqueios negativos permanecem exigidos. EMENDA P0 V1 (05/11): corrigir falta de sinalização síncrona de mudança da organização preferida entre SYS-04 e AppShell na mesma rota, evitando exibição obsoleta de permissões. Acrescentados somente preferência organizacional e seu teste de regressão à allowlist, mantendo lógica do backend RLS como autoridade. Cobertura de logout, corrida assíncrona, idempotência, menu e CI. Corrigir antes da certificação. O aceite condicional das três ressalvas não dispensa outros requisitos ainda NÃO VERIFICADOS. EMENDA P0 V1 #166: escopo autorizado para correção de gate MASTER em Novo Contratante, após PLAN #173 e GATE #174 integrados; inclusão exclusiva dos dois arquivos de implementação e teste V1-02. Sem autorizar backend/PROD, sem dispensar TDD RED, CI e Teste C. Gate RPC/RLS como autoridade. EMENDA RBAC V1 aprovada: PR frontend #178 integrado em 6cd922a0738549d421b57a704ec17e6c6ac541cd, dois checks SUCCESS run 42154230082. Escopo src/lib/administracao/rbacRpc.ts, src/components/administracao/usuarios/MatrizPermissoes.tsx, src/test/rbacMatriz.test.tsx; AdminUsuarios.tsx preexistente. Sem rotas novas, backend, PROD, Brand, tipos, SQL. BUILD em PR distinto após CI do presente gate. EMENDA06/11: matriz MASTER e navegação contextual já implementada V1, sob RPC rbac-v1 e dados RLS, contratos descritos no aditivo da emenda. Sem tocar PR176, tipos, rotas geradas, Brand, backend ou PROD. CI deste commit anterior ao BUILD obrigatório. CHECKPOINT06/11: BUILD183 integrado após dois checks SUCCESS; testes locais36suítes/921PASS. Reancoragem documental no backend67668c6 com25/25fontes e catálogo iguais. Executor ficou indisponível depois da conclusão das rodadasJWT e da quarentena; retomar itens pendentes sem repetir casos válidos. Reancoragem documental P0 06/11: backend #86/#87/#88, restore de uma tabela sintética com 126 migrations, RLS e SHA preservados; não constitui RPO/RTO/PITR ou certificação da V1. Fonte normativa 25/25 e catálogo imutáveis. EMENDA SYS-03 06/11: PLAN #194, GATE #195 e escopo #196 integrados, somente autorização de arquivos de testes SYS-03 em PR separado; não constitui RED, BUILD, GREEN, Teste C E2E ou certificação. Fixture/mailbox sintética e execução controlada obrigatórias; sem alteração Auth/RLS/PROD. EMENDA SYS-03 BUILD 06/11: RED comprovado no PR #198, run 42188704481, três falhas esperadas para otp_expired/otp_disabled/invalid_grant; autorizar somente src/components/auth/ResetPasswordForm.tsx em gate separado, sem tocar Supabase/PROD; BUILD posterior e CI GREEN obrigatórios. EMENDA P0 SYS-03 E2E INFRA 06/11: permitir apenas package.json, package-lock.json, playwright.config.ts e tests/hml/sys03-harness-readiness.spec.ts para runner Playwright com versão travada e smoke público sem autenticação. Fixture mailbox e secrets HML ainda bloqueados; não autoriza testes com contas reais nem PROD. Exigir gate CI SUCCESS antes do BUILD. RETIFICAÇÃO GATE 06/11: repositório usa bun.lock versionado (170005 bytes) e não possui package-lock.json. Trocar autorização package-lock.json por bun.lock; não gerar lockfile npm paralelo. Build Playwright apenas após checks verdes deste gate. GATE SYS-03 DEPENDENCY BOT 06/11: autorizar workflow dedicado, manual, para gerar bun.lock por Bun real e abrir PR separado de package.json + bun.lock. Workflow somente HML, permissions contents:write e pull-requests:write estritamente no job de geração; nunca commit direto main, não acessar secrets nem PROD. Execução só após checks verdes do gate e revisão do workflow. GATE SYS-03 HML Playwright smoke: autorizar workflow manual read-only com Bun frozen, instalação browser Chromium no runner, execução somente testes públicos sem login/token, sem secrets, sem banco e sem PROD; evidência de run, status e commit. Não equivale à certificação N1-N9. EMENDA VISUAL 06/11: escopo fechado das 24 páginas organizacionais, AppShell/sidebar, cabeçalho compartilhado e tokens centralizados; inventário constatado de 28 rotas totais, não 27. Apenas apresentação e regressões correspondentes. Gate documental separado, aguardar ambos checks no mesmo HEAD antes do RED/BUILD. Sem alterar APIs, auth, RBAC, tipos, rotas, assets ou backend. EMENDA DE COMPATIBILIDADE DO GUARD VISUAL: inspeção de scripts/frontend-zero-drift.mjs linhas 51-55 exige marca local em cada tela, em conflito com marca exclusiva na sidebar aprovada no PR223. Autorizar somente atualização semântica desse verificador e autotestes negativos dedicados: marca obrigatória nas quatro rotas de acesso/seletor, proibida nas 24 páginas organizacionais, AppShell/header/sidebar obrigatórios no root. Não remover controle, relaxar tipos/secrets, modificar workflows ou declarar screenshots por código. Executar RED antes do fix. EMENDA INTEGRACAO LISTAS 06/11: plano P0_V1_INTEGRACAO_LISTAS_2026-11-06.md; somente links das listas aos registros existentes em layouts tabela/card e testes correspondentes. Nenhuma escrita/permissao nova. BUILD apenas apos CI verde desta emenda. Teste legado de ausencia de links sera substituido pela prova de navegacao sem remover zero DML/RPC/Edge. EMENDA CRUD TRANSVERSAL V1-03 06/11: plano P0_V103_CRUD_MASTER_2026-11-06.md. Substituir gate de vínculo local por capacidade efetiva contratantes/editar retornada pelo backend, sem bypass MASTER. Preservar atualizar_contratante, situação, concorrência e RLS. Invalidação de cache limitada à organização após sucesso. BUILD separado após CI. CHECKPOINT CRUD 06/11: plano233 e gate234 integrados. BUILD235 integrou correção da edição de contratantes por permissão efetiva, preservando RPC/situação e cache por usuário/org; CI42304938668 dois checks SUCCESS, sem comprovar sessão privada. Backend57 reconciliado apenas documentalmente; 25 fontes/catálogo invariáveis. EMENDA PRIORIDADE CRUD GLOBAL: P0_CRUD_ORGANIZACAO_2026-11-06.md, criação de organização via RPC criar_organizacao existente; sessão ativa conforme backend, sem gate MASTER inventado. Sem escrita direta ou backend/tipos/rotas; BUILD separado após checks verdes deste gate. Operações restantes seguem pendentes. EMENDA SYS01: permitir somente botão onNavegar('/selecionar-organizacao') no estado sem-acesso e regressão login.test.tsx; sem mudança Auth, credenciais ou sessão. GATE antes do BUILD. EMENDA CRUD V1-13: P0_CRUD_COMPETENCIA_2026-11-06.md; substituir perfil/vínculo local por competencias/criar efetivo no org/contrato exatos; sem bypass MASTER, RPC criar_competencia preservada. Validar contexto e negar divergência, sem cache infinito. BUILD separado após CI/merge deste gate. PRIORIDADE CRUD GLOBAL REFORÇADA: BUILD238 criação de organizações e BUILD240 capacidade de criar competências integrados, ambos com dois checks SUCCESS. Nenhuma certificação global/privada; restantes da matriz continuam pendentes. EMENDA CRUD CADASTROS: cinco APIs canônicas backend #90/#91/#92. Formulário inline para organizações e contratos, capacidades e transições somente do servidor, motivo, versão esperada e chaveUUID. Gate documental separado; BUILD só após dois checks deste PLAN, backend integrado/deploy/JWT real PASS e snapshot reancorado no HEAD vivo. Nenhuma atualização direta, tipos congelados, rota nova, segredo ou backend pelo frontend. EMENDA CRUD CAPACIDADES: NovoContrato e ImportarHistorico passam a consultar contratos/criar e historico/criar efetivos, mantendo organização ativa e contexto exato, sem bypass MASTER nem regras por perfil local. Fontes e assinaturas existentes preservadas; testes novoContrato/ingestaoHistorico e quatro arquivos já autorizados. Gate documental separado com dois checks antes de RED/BUILD. REANCORAGEM BUILD capacidades: backendbfd741d pós-correções de workflow93/94,25/25blobs e catálogo invariáveis. Este BUILD245 usa apenas APIs existentes de RBAC/INSERT/histórico, sem depender das cinco novas APIs; formulário CRUD novo permanece bloqueado até deploy/JWT. RETIFICAÇÃO Context Gate: PLAN244 reaplicou source_commit5ef5646 enquanto snapshot já9f786f15. BUILD245 bloqueou corretamente antes dos testes. Este gate documental recompõe ambos embfd741d; novo BUILD partirá desta base validada, preservando branch/CI245 como histórico, sem force-push. BACKEND CRUD PASS: canônico42314729963,127/127paridade eJWTreal50/50run42314717439/quarentenaverificada. Condição backend doPLAN242 cumprida. Formulários usam13camposcontratuais e3organizacionais permitidos, confirmação/motivo/versão/UUID, semDELETE; regressão local1017/1017 em39suítes, tsc/buildPASS; revisão corrigiu merge dirty e replaysemregressãodecache. CI/privado/certificaçãoglobal ainda exigem prova própria. EMENDA CRUD LISTAS: plano P0_CRUD_LISTAS_FRONTEND_2026-11-06.md autorizado pelo titular; consumir duas APIs de listas implantadas/JWT147PASS, dez ações canônicas; sem backend, rotas, types ou PROD. BUILD após CI documental aprovado. EMENDA capacidades documentais: corrigir criação de contratantes revogada e revisão documental MASTER semvínculo pela conjunçãoRBAC+restriçãolegada conforme HML,sem backend novo; BUILD após CI+merge documental. EMENDA arquivos e envio normativo: paginação25 já existente,seleção preservada,contexto completo,trava síncrona e campos/fechamento bloqueados duranteRPC; nenhuma API nova. BUILD após CI e merge deste gate documental. EMENDA07/11: P0_CRUD_REANALISE_CONFIRMACAO_2026-11-07.md, confirmação honesta após timeout e bloqueio de reenvio incerto no drawerV117. BUILD separado após CI documental SUCCESS. Sem backend ou nova ação de revisão humana. Emenda continuidade V1-17: feedback específico de falha ao conferir resultado incerto, preservando bloqueio de reenvio, contexto/página e ausência de confirmação de escrita. BUILD somente após CI documental; sem backend ou autenticação nova. EMENDA V117 revisão humana: plano P0_V117_REVISAO_FRONTEND_2026-11-07.md, duasRPCs protegidas jáHML/JWT38PASS,seleçãoRLS paginada de evidências,CAS/UUID/replay explícito;sem backend/tipos/rotas. BUILDsomenteapósCI documentalSUCCESS. EMENDA CONTRASTE V117: P0_V117_CONTRASTE_2026-11-07.md autoriza somente transition-transform noSheetContent doRequirementDrawer e regressão requisitoDetalhe.test.tsx jáallowlisted, apósGATE/CI. Falha real2.1:1 durante interpolação de fundo; preservar paleta e movimento. Titular determinou implementar imediatamente; sembackend/PROD. CHECKPOINT CONTRASTE: frontend284 HEAD266acf39 integrado344d24ad após3checksSUCCESS;1147testes/119focados e revisão independente semachados. Backendpin111 integrado1fe79dae. Mainfrontend344 falhou corretamente por fonteantiga2e apósmerge111; estecommit reancora snapshot/ack juntos sem alterar controle. HML ainda pendente. CHECKPOINT TIMEOUT: fix116 integrado2943e8ea, prova privada42391662453 PASS HTTP40/browser43 e quarentena8. PLAN103 integrado534a6d3dec156f60ac31b5b0c7f1fd05ab6bbbe7; próximoGATE separado antes doBUILD de roteamento; V1 não certificada. Snapshot/ack reancorados juntos, fontes/catálogo inalterados. CHECKPOINT ROTEAMENTO: BUILD118 integrado2ebb9e3a; runs42393625175/123/096 comprovaram3scopesSUCCESS/materialSKIPPED sem HML. Resultado119 integradoa6399adc39e984293c14d7adcf106b00ab76ce50. Snapshot/ack reancorados juntos; fontes/catálogo invariáveis. Próxima auditoriaCRUDglobal/V1 sem certificação indevida. PLAN FECHAMENTO CRUDGLOBAL07/11: inventário28rotas/18domínios, fonteoriginalZIP/hashesconferidos. CRUD-LISTA-001 perda de rascunho após409/refetchtransitório; somenteGerenciarListas/teste jáautorizados, GATE separado antesBUILD. Matriz honesta de evidências eprova privada global posterior por harnessbackendpróprio; nenhumDELETE/permissaoinventada, V1 nãocertificada. GATE CRUDGLOBAL: PLAN289 integrado com3checksSUCCESS; fontes/matriz revisadas e escopo2arquivos. Resguardar403/sessão, CAS/UUID e replayexplícito semnovenvioporefeito. BUILD sóapósCI/mergedesteGATE. BUILD CRUD-LISTA-001: draftpreservadoapós409/refetchtransitório;novasoperaçõesbloqueadasemfalha/fetch,403 de detalhe OUcabeçalhos oculta dados eimpedereplay. RED39/2 eheader41/1;GREEN1150/1150/foco42,tsc/build/lintfocal/gatesPASS;CI eHML ainda pendentes. CHECKPOINT CRUDGLOBAL07/11: PLAN289/GATE290/FIX291 integrados,1150testes e3checksSUCCESS. BackendPLAN120/GATE121 integrados34d88b8a77cd3ae2abfca72ee78d441c426e767b; harnessprivado em preparação, nenhumPASSglobal. Snapshot/ackreancoradosjuntos. Checkpoint: protocolo privado implementado nos PRs backend 122–124, 41 testes locais, duas falhas do teste preservadas com quarentena verificada. Nova HML pendente; nenhuma certificação global. Emenda visual: PASS funcional37/76 preservado;4capturas rejeitadas por instabilidade/corte,4aceitas só painel. PRbackend130 trata gatevisual, sem fecharWCAG/V1. EMENDA V1-14 08/11: causa comprovada na resposta RPC do portão de competência; campo canônico conformes_ou_na_validos e alias de exibição avaliados. Autorizar exclusivamente parser e teste após CI e merge do PLAN V114. PR326 inicial bloqueado corretamente pelo scope gate, não integrar sem novo BUILD sobre PLAN prévio. Sem backend/RLS/RBAC/types/PROD; reteste autenticado obrigatório. REANCORAGEM V114 08/11: backend main f53304f; comparação GitHub 765dac8..f53304f 9 commits e somente docs/backend/P0_CORS_DOCUMENTAL_HML_GATE_2026-11-07.md e docs/tasks/active-task.json alterados, nenhum dos 25 documentos normativos nem catálogo 100/97. Snapshot e PLAN reancorados em conjunto; verificar CI vivo antes de BUILD. EMENDA V114 08/11: RED do BUILD #328 CI 42446316835, 7 falhas por fixtures V118/V119 usando portao.avaliados legado. Autorizar apenas substituição do campo por conformes_ou_na_validos nesses dois testes, sem flexibilizar parser, RBAC/RLS ou backend. Novo BUILD somente após PLAN CI verde e merge.",
   "context_pack_version": "4.1",
   "context_read_acknowledged": true,
-  "context_read_by": "Codex: GitHub GET25/25canônicos/catálogo100/97 e types8ea iguais; leitura semântica delta8dc→1a08988e documentalC13/fase3, sem código/deploymentC ou alteraçãoAPIA. Guards/freshness preservados. Reancoragem adicional39e7baee:25/25blobs canônicos e catálogo100/97 idênticos em árvore completa. Delta1a089→39e7 lido integralmente: quatro paths de trigger adicionados aos filtros Restore sem mudar jobs/controles, setup de fixture unitária ai_envelope passou a snapshotB completo com SHA fixo, e dois documentos de ativação. Nenhuma mudança de fonte runtime/API/SQL/RLS/Auth/Edge ou consumidor A, nem aplicação HML/PROD.",
+  "context_read_by": "Codex: GitHub GET25/25canônicos/catálogo100/97 e types8ea iguais; leitura semântica delta8dc→1a08988e documentalC13/fase3, sem código/deploymentC ou alteraçãoAPIA. Guards/freshness preservados. Reancoragem adicional39e7baee:25/25blobs canônicos e catálogo100/97 idênticos em árvore completa. Delta1a089→39e7 lido integralmente: quatro paths de trigger adicionados aos filtros Restore sem mudar jobs/controles, setup de fixture unitária ai_envelope passou a snapshotB completo com SHA fixo, e dois documentos de ativação. Nenhuma mudança de fonte runtime/API/SQL/RLS/Auth/Edge ou consumidor A, nem aplicação HML/PROD. Reancoragem290613c9 após driftCI42546465358:25/25blobs canônicos e catálogo100/97 iguais em árvore recursiva não truncada; types8ea7750b preservado. Delta39e→2906 contém EdgeC13 real: ações listar_sessoes/historico/encerrar_sessao, consultas próprias fixadas por ator/org/contrato/data/sessão e status, cursor composto preserva microssegundos com .eq/.lt parametrizados, DTO limitado com revalidação de fontes/permissões e indisponibilidade fechada. Encerramento altera somente sessão própria ativa; listagem/histórico não iniciam inferência/reserva. Caminho perguntar mantém reserva/quota/lease/finalização preexistentes. Testecontrato e dois documentos também mudam; nenhum SQL/migration/RLS/Authschema/grant, SRC/tipos frontend ou consumidor API da Trilha A alterado. Isso não certifica C13, multi-turn, deployment ou aplicação HML; segurança A segue independente sem aguardar Cdeploy.",
   "context_read_acknowledged_at": "2026-11-09",
-  "context_source_commit": "39e7baeeec3990b664ca54c6f3ae09e9f7ea3e63",
+  "context_source_commit": "290613c977efb16fe512980db96a276dd897f97d",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -405,6 +405,32 @@
       "failed_freshness_job": 128926320772,
       "source_gate_preserved": true,
       "current_plan_and_trilha_metadata_preserved": true,
+      "new_hml_execution": false
+    },
+    "reanchor_after_backend_c13_runtime_20261109": {
+      "frontend_base": "316a7d21b5dbad486970937d0f7ed4fb2e64f426",
+      "backend_previous": "39e7baeeec3990b664ca54c6f3ae09e9f7ea3e63",
+      "backend_current": "290613c977efb16fe512980db96a276dd897f97d",
+      "method": "GITHUB_GET_PINNED_COMPARE_RECURSIVE_TREE",
+      "normative_blobs_compared": 25,
+      "normative_blobs_equal": 25,
+      "catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
+      "catalog_equal": true,
+      "regular_total": 100,
+      "atomic_total": 97,
+      "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+      "types_equal": true,
+      "backend_delta_files": [
+        "docs/backend/TRILHA_C_SCOPE_QUOTA_HML_PLAN_2026-11-08.md",
+        "docs/tasks/active-task.json",
+        "supabase/functions/copilot-query/index.ts",
+        "supabase/tests/copilot_openai_contract.test.mjs"
+      ],
+      "semantic_delta": "Reancoragem290613c9 após driftCI42546465358:25/25blobs canônicos e catálogo100/97 iguais em árvore recursiva não truncada; types8ea7750b preservado. Delta39e→2906 contém EdgeC13 real: ações listar_sessoes/historico/encerrar_sessao, consultas próprias fixadas por ator/org/contrato/data/sessão e status, cursor composto preserva microssegundos com .eq/.lt parametrizados, DTO limitado com revalidação de fontes/permissões e indisponibilidade fechada. Encerramento altera somente sessão própria ativa; listagem/histórico não iniciam inferência/reserva. Caminho perguntar mantém reserva/quota/lease/finalização preexistentes. Testecontrato e dois documentos também mudam; nenhum SQL/migration/RLS/Authschema/grant, SRC/tipos frontend ou consumidor API da Trilha A alterado. Isso não certifica C13, multi-turn, deployment ou aplicação HML; segurança A segue independente sem aguardar Cdeploy.",
+      "failed_freshness_run": 42546465358,
+      "failed_freshness_job": 128932427137,
+      "source_gate_preserved": true,
+      "trilha_c_certified": false,
       "new_hml_execution": false
     }
   },
@@ -1646,7 +1672,8 @@
       "dom": 104,
       "independent_png_reviewed": 208,
       "automated_pass_not_visual_certification": true
-    }
+    },
+    "latest_continuity_checkpoint": "checkpoint_trilha_a_20261109"
   },
   "trilha_a_24_fixture_plan": {
     "document": "docs/frontend/planos/P0_TRILHA_A_24_FIXTURES_PLAN_2026-11-08.md",
@@ -1761,7 +1788,8 @@
       "report_sha256": "ab2e5dfb57197fb3978b1d7510e71aed189a5072a0545c7b895cf9ab9d0c7607",
       "receipts_sha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
       "receipt_payload_hashes_present": true
-    }
+    },
+    "authentication_hold": "NO_GO_POPUP_FIRST_NETWORK"
   },
   "trilha_a_visual_run78": {
     "phase": "BUILD374_INTEGRADO_TESTEC_HML_PENDENTE",
@@ -1826,7 +1854,8 @@
     "global_complete": false,
     "gate_pr": 372,
     "gate_merge": "42abfa51f57c19c09f9a1c487652905f9ec37758",
-    "new_pseudonym_or_legacy_label_gates_integrated": false
+    "new_pseudonym_or_legacy_label_gates_integrated": false,
+    "latest_continuity_checkpoint": "checkpoint_trilha_a_20261109"
   },
   "trilha_c_copiloto_plan": {
     "status": "PLAN_ADITIVO_PRE_BUILD",
@@ -2035,5 +2064,301 @@
     "product_modified": false,
     "deployed": false,
     "v1_certified": false
+  },
+  "checkpoint_trilha_a_20261109": {
+    "schema": "contaos.trilha-a.continuity-checkpoint.v1",
+    "recorded_date_utc": "2026-11-09",
+    "state": "CONTINUIDADE_ATIVA_NO_GO_V1_AUTH_HOLD_POPUP",
+    "frontend_main_observed": "316a7d21b5dbad486970937d0f7ed4fb2e64f426",
+    "backend_main_observed": "290613c977efb16fe512980db96a276dd897f97d",
+    "previous_normative": "1a08988ebf58a38c0647d497725fd713aa7be90c",
+    "normative_review": {
+      "method": "GITHUB_GET_PINNED_COMPARE_AND_RECURSIVE_TREE",
+      "canonical_blobs_equal": 25,
+      "catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
+      "regular_ids": 100,
+      "atomic_ids": 97,
+      "types_blob": "8ea7750b75fd9d76b29c36ce7613392e3ab65e19",
+      "delta_paths": [
+        ".github/workflows/restore-isolado.yml",
+        "docs/backend/TRILHA_C_SCOPE_QUOTA_HML_PLAN_2026-11-08.md",
+        "docs/tasks/active-task.json",
+        "supabase/tests/remaining_domains/ai_envelope.test.mjs"
+      ],
+      "delta_semantics": "Restore adiciona quatro filtros em cada evento; docs/active-task C; ai_envelope usa snapshotB completo/hash6d83a56f preservando expectativas/routing. Nenhuma mudança de SRC/SQL/RLS/API consumida pela Trilha A.",
+      "deploy_or_trilha_c_certified": false
+    },
+    "hml_publication": {
+      "deployment": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      "ready_state": "READY",
+      "alias": "https://contaos-41-hml.vercel.app",
+      "source": "866608620909bf313a6c2192736330222f9219ad",
+      "provider_target": "production",
+      "technical_target_is_hml": true,
+      "verified_via": "VERCEL_GET_DEPLOYMENT",
+      "ready_not_private_audit": true
+    },
+    "latest_private_audit": {
+      "run": 42542802124,
+      "artifact": 13642651045,
+      "frontend": "866608620909bf313a6c2192736330222f9219ad",
+      "harness": "a688ba030955229426ff8cd2584af3ffc86921bd",
+      "deployment": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      "records": 208,
+      "matrix_complete": true,
+      "global_complete": false,
+      "automated_pass": 102,
+      "privacy_blocked": 56,
+      "fail_ui": 8,
+      "preserved_baseline_current": 18,
+      "fixture_blocked": 24,
+      "hashes_verified": 307,
+      "png": 204,
+      "dom": 102,
+      "zip_bytes": 16298440,
+      "zip_sha256": "10e02841060b4b949e3aab80ec0d823350c43836146dbf00e3c57445bd33731e",
+      "report_sha256": "0775768b2acda7874ceda36507499a79c5926cb7f3e3846d2eff1ff3d91582d5",
+      "aborted": null,
+      "logout_verified": true,
+      "public_proofs_repeated": false,
+      "independent_visual_certification": false,
+      "independent_visual_originals_pending": 204,
+      "verified_by": "ROOT_SANDBOX5",
+      "v102": {
+        "cases": 8,
+        "geometry": false,
+        "failed_hit_count": 2,
+        "target_count": 22,
+        "identity": true,
+        "table": true,
+        "dates": true,
+        "contrast": true,
+        "overflow_x": 0,
+        "controls_identified": false,
+        "gate_hypothesis_preserved": 418
+      },
+      "scope_accounting": {
+        "matrix208": {
+          "automated_pass": 102,
+          "fail_ui": 8,
+          "privacy": 56,
+          "fixture": 24,
+          "preserved_baseline": 18
+        },
+        "original184": {
+          "provisional_automated_pass": 96,
+          "fail_ui": 8,
+          "privacy": 56,
+          "fixture": 24
+        },
+        "original_baseline24": {
+          "preserved": 18,
+          "mobile_retested_auto_pass": 6
+        },
+        "automated_pass_not_closed_cases": true
+      }
+    },
+    "preparer_r1": {
+      "run": 42540864527,
+      "request_pr": 394,
+      "request_nonce": "trilha-a-fixtures-20261108-r1",
+      "consumed": true,
+      "replay_allowed": false,
+      "confirmed_operations": 2,
+      "operations": [
+        "registrar_versao_fonte_v107",
+        "aprovar_versao_fonte_v107"
+      ],
+      "completed": false,
+      "final_bindings": null,
+      "logout_verified": false,
+      "artifact": 13641024365,
+      "zip_sha256": "a7ebb6d3f23ebe61668bc03ab4e20e78556e0bcaf05a7c212dd63703b662c8c8",
+      "report_sha256": "ab2e5dfb57197fb3978b1d7510e71aed189a5072a0545c7b895cf9ab9d0c7607",
+      "receipts_sha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9"
+    },
+    "integrated_gates": [
+      {
+        "pr": 391,
+        "head": "b1161333393d8096c064dbd3dffaab674cb4f7ef",
+        "merged": true,
+        "merge": "e49991adf091189fd50dcaea45fce612eb5a7f05"
+      },
+      {
+        "pr": 401,
+        "head": "52cea00df61bf795f888d00e048b3a2cf313c850",
+        "merged": true,
+        "merge": "2486d8c57847804ef198babd4c9acb07f75f0462"
+      },
+      {
+        "pr": 402,
+        "head": "9e58a7a7f68a54c274d0f502b101f819076e6d4d",
+        "merged": true,
+        "merge": "5a3d85316162b690330f8df01db7fe3ad7fac82d"
+      },
+      {
+        "pr": 404,
+        "head": "f9d3a024e9203505e6549ebabcb828b8fe7e8dc7",
+        "merged": true,
+        "merge": "581e161718d7f784961e2fef6bd1a75ba9295637"
+      },
+      {
+        "pr": 405,
+        "head": "d8aa77c9cbc420728e8094d3397681314fab898e",
+        "merged": true,
+        "merge": "8e0f5f1d65b8ab6cdfa2cf278df442d0d3eb4d68"
+      },
+      {
+        "pr": 407,
+        "head": "7cb0370c7a06b7f8399625195b8b2659bd82e608",
+        "merged": true,
+        "merge": "bdeeca13aa356bc42ad04400f9a783cd873d8f51"
+      },
+      {
+        "pr": 408,
+        "head": "edbb4d242f88c2d0d9194cc896185abb4d1e1100",
+        "merged": true,
+        "merge": "a191ce3af74a15feb0fad8e2c681c6d05ee9aef0"
+      },
+      {
+        "pr": 415,
+        "head": "7babfd35b2fdeeb2ce95883830a1d5db119ad15a",
+        "merged": true,
+        "merge": "5e4c93e4fe41ef9e09f631a3dd27558ac6bafdda"
+      }
+    ],
+    "integrated_code": [
+      {
+        "pr": 411,
+        "merge": "4334938cad7fbbaab8d29ea2ab5376aff2dc7210",
+        "scope": "wire-cardinality four closed maybeSingle GETs"
+      },
+      {
+        "pr": 399,
+        "merge": "a688ba030955229426ff8cd2584af3ffc86921bd",
+        "scope": "diagnóstico visual externo preservado"
+      }
+    ],
+    "candidate_builds": [
+      {
+        "pr": 409,
+        "head": "7fdc3182cbd225483c647c91c898781e483fe644",
+        "state": "REANCHORED_DOCUMENTARY_CI_PENDING_REVIEW_NOT_MERGED",
+        "ci": [
+          42545103705,
+          42545103675,
+          42545103711,
+          42545103722
+        ],
+        "native_causal_ci_pass": 8,
+        "visual_supplement": 1,
+        "sys04_browser_supplement": 2,
+        "does_not_clear_popup_hold": true,
+        "previous_ci_head": "95351a63c8eedaedcd13620430c35195ec0ac27f"
+      },
+      {
+        "pr": 413,
+        "head": "2b8ec1a562c136199be26b3b789bca051e49fb8b",
+        "state": "OPEN_NOT_MERGED"
+      },
+      {
+        "pr": 416,
+        "head": "b7c80d81ef6299fb8302e4604006b7401a8f4c8e",
+        "state": "OPEN_IMPORTANT_FIX_PENDING_NOT_MERGED"
+      },
+      {
+        "pr": 417,
+        "head": "285538018912fb240713df939e7dafad31d4957b",
+        "state": "OPEN_REVIEW_FIX_PENDING_NOT_MERGED"
+      }
+    ],
+    "v123_discovery": {
+      "sql2_executions": 1,
+      "events": 10,
+      "fields": 60,
+      "technical_non_pii": 50,
+      "operational_pseudonym": 10,
+      "agreement": 60,
+      "inconclusive": 0,
+      "identity_lookups": 0,
+      "additional_queries": 0,
+      "wrapper_review_comment": 6729918485,
+      "semantic_receipt_comment": 6729946735,
+      "acceptance_catalog": "PENDING_GATE_CI_REVIEW_MERGE",
+      "new_hml_case_pass": false
+    },
+    "popup_hold": {
+      "state": "NO_GO_NEW_AUTH_BOTH_AUDITOR_AND_PREPARER",
+      "real_race_confirmed_on_baseline": true,
+      "http_get_trials": "2/3",
+      "root_cause": "asynchronous closeContext does not block first popup transport",
+      "gate_pr": 415,
+      "gate_merge": "5e4c93e4fe41ef9e09f631a3dd27558ac6bafdda",
+      "build_owner": "review_plan",
+      "future_scope": "four mjs under GATE415",
+      "release_requires": [
+        "native8 zero TCP with assertions unchanged",
+        "positive authorized main-frame path",
+        "independent review",
+        "CI on final HEAD",
+        "integration"
+      ],
+      "ci_green_not_clearance": true,
+      "discarded_experiment": {
+        "approach": "temporary context.route",
+        "connections": 0,
+        "authorized_main_path": "FAILED_SDK_CORS_AUTO204",
+        "candidate_state": "DISCARDED_NOT_A_FIX",
+        "next_investigation": "CDP guard alternative",
+        "zero_connections_alone_not_acceptance": true
+      }
+    },
+    "preserved": {
+      "public_approved": 18,
+      "baseline_current": 18,
+      "baseline_historical": 24,
+      "run78": true,
+      "brand72_status": "NAO_VERIFICADO_GLOBAL",
+      "v1_certified": false,
+      "v2_v5_prod_blocked": true,
+      "trilha_c_plan_and_history": true
+    },
+    "last_proven_stage": "Run124/42542802124: relatório e307hashes verificados pelo coordenador; descoberta semânticaV123 concluída; wire411/diagnóstico399 integrados; candidato409CIverde sem novo TesteC após suas correções.",
+    "next_tasks": [
+      "Concluir correção popup GATE415 com zeroTCP nativo8, caminho positivo, revisão/CI/merge antes de Auth.",
+      "Revisar/integrar BUILD409/413/416/417 somente após seus checks e preservando branches/escopos.",
+      "Preparar catálogo de aceitação V123 com os bytes aprovados por evento, sem nova SQL2 ou lookup de identidade.",
+      "Reconciliar duas operações R1 e diagnóstico das fixtures; não repetir nonce consumido ou declarar24fixtures prontas.",
+      "Depois de liberar cerca, revalidar fontes/deployment/SSR/provas e executar Teste C autorizado; revisar originais e72critérios individualmente."
+    ],
+    "checkpoint_ci_and_root_review_required": true,
+    "no_new_auth_hml_sql_or_dml_by_checkpoint": true,
+    "checkpoint_integrated_at_authoring": false,
+    "historical_verified_audit114": {
+      "run": 42540293545,
+      "artifact": 13641796040,
+      "frontend": "866608620909bf313a6c2192736330222f9219ad",
+      "harness": "866608620909bf313a6c2192736330222f9219ad",
+      "deployment": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      "records": 208,
+      "automated_pass": 99,
+      "privacy_blocked": 51,
+      "fail_ui": 16,
+      "preserved_baseline_current": 18,
+      "fixture_blocked": 24,
+      "hashes_verified": 298,
+      "png": 198,
+      "dom": 99,
+      "zip_sha256": "8f18ed9a37c0fea9c2f17fb31b70d68d0a55ebdf34db915bb2da0f94bc7d0245",
+      "report_sha256": "eb0e8853c905fdf708ecfe5f537ccdfe91c72c588e67cec27fa3f55cd3687c6a",
+      "aborted": null,
+      "logout_verified": true,
+      "public_proofs_repeated": false,
+      "independent_visual_certification": false
+    },
+    "canonical_context_inherited_from_pr": 419,
+    "canonical_snapshot_preserved_blob": "b6bc0841a11c427fe66fc4ee721ed4400d039467",
+    "latest_reanchor_review": "source_proof.reanchor_after_backend_c13_runtime_20261109",
+    "canonical_snapshot_preserved_blob_is_previous_pr419": true
   }
 }
