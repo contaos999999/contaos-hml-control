@@ -181,13 +181,17 @@ export function CopilotoContrato({
   }
 
   async function listarSessoes(mais = false) {
-    if (!contratoAtual || !contextoTemporalPronto || ocupado.current) return;
+    if (!contratoAtual || !contextoTemporalPronto || ocupado.current || (mais && !cursorSessoes)) return;
     const epoca = geracao.current;
     const controlador = new AbortController();
     requisicao.current?.abort();
     requisicao.current = controlador;
     setCarregandoHistorico(true);
     setErro("");
+    if (!mais) {
+      setMensagens([]);
+      setCursorHistorico(null);
+    }
     try {
       const pagina = await acaoCopiloto<PaginaSessoes>("listar_sessoes", contratoAtual, {
         referencia, cursor: mais ? cursorSessoes : null, signal: controlador.signal,
@@ -209,7 +213,7 @@ export function CopilotoContrato({
   }
 
   async function carregarHistorico(id: string, mais = false) {
-    if (!contratoAtual || !contextoTemporalPronto || ocupado.current) return;
+    if (!contratoAtual || !contextoTemporalPronto || ocupado.current || (mais && !cursorHistorico)) return;
     const epoca = ++geracao.current;
     requisicao.current?.abort();
     const controlador = new AbortController();
@@ -328,6 +332,7 @@ export function CopilotoContrato({
         );
       }
       setSessao(data.id_sessao);
+      setIncerto(false);
       setMensagens((prev) => [
         ...prev,
         {
