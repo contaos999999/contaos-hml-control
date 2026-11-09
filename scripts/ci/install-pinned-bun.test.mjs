@@ -325,3 +325,138 @@ test("seven workflow bootstrap consumers run units and pinned installer before f
     }
   }
 });
+
+test("USTAR numeric high bits are rejected instead of being masked as ASCII octal", () => {
+  const t = archive();
+  t[100] |= 128;
+  t.fill(32, 148, 156);
+  const sum = [...t.subarray(0, 512)].reduce((a, b) => a + b, 0);
+  t.write(sum.toString(8).padStart(6, "0") + "\0 ", 148);
+  assert.throws(() => sut().parseTar(t));
+});
+test("failure enums never invoke getters proxies or expose unknown error canaries", () => {
+  let reads = 0;
+  const error = {
+    get message() {
+      reads++;
+      throw new Error("CANARY_PRIVATE");
+    },
+  };
+  assert.equal(sut().failureCode(error), "BUN_INSTALL_FAILED");
+  assert.equal(reads, 0);
+  assert.equal(sut().failureCode(new Error("CANARY_PRIVATE")), "BUN_INSTALL_FAILED");
+  assert.equal(sut().failureCode(new Error("BUN_DEADLINE")), "BUN_DEADLINE");
+  assert.equal(
+    sut().failureCode(
+      new Proxy(
+        {},
+        {
+          getOwnPropertyDescriptor() {
+            throw new Error("CANARY_PRIVATE");
+          },
+        },
+      ),
+    ),
+    "BUN_INSTALL_FAILED",
+  );
+});
+test("CLI fails with closed technical enum and no canary or arbitrary URL output", () => {
+  const script = new URL("./install-pinned-bun.mjs", import.meta.url);
+  for (const args of [[], ["https://CANARY_PRIVATE.invalid/override"]]) {
+    try {
+      childProcess.execFileSync(process.execPath, [script.pathname, ...args], {
+        env: { RUNNER_TEMP: "relative", GITHUB_PATH: "relative", TOKEN: "CANARY_PRIVATE" },
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      assert.fail("must fail");
+    } catch (e) {
+      assert.equal(e.status, 1);
+      assert.equal(e.stdout, "");
+      assert.ok(!e.stderr.includes("CANARY_PRIVATE"));
+      const out = JSON.parse(e.stderr);
+      assert.equal(out.state, "FAIL");
+      assert.ok(["BUN_ENV", "BUN_INSTALL_FAILED"].includes(out.code));
+    }
+  }
+});
+
+const fixtureFetch = globalThis.fetch;
+let officialFixture;
+async function officialArchiveFixture() {
+  if (!officialFixture)
+    officialFixture = (async () => {
+      const r = await fixtureFetch(
+        "https://registry.npmjs.org/@oven/bun-linux-x64/-/bun-linux-x64-1.4.4.tgz",
+        { redirect: "error", signal: AbortSignal.timeout(30000) },
+      );
+      assert.equal(r.status, 200);
+      const bytes = Buffer.from(await r.arrayBuffer());
+      sut().validateArchive(bytes);
+      return bytes;
+    })();
+  return officialFixture;
+}
+for (const mode of ["deadline", "swap", "wrong-version"])
+  test(
+    "verified installer rejects " + mode + " and rolls back only its own publication",
+    async (t) => {
+      const bytes = await officialArchiveFixture(),
+        f = await envFixture();
+      const old = { RUNNER_TEMP: process.env.RUNNER_TEMP, GITHUB_PATH: process.env.GITHUB_PATH };
+      Object.assign(process.env, f.env);
+      const victim = path.join(f.dir, "victim");
+      await fs.mkdir(victim);
+      await fs.writeFile(path.join(victim, "bun"), "UNVERIFIED_CANARY");
+      let clock = 0,
+        executions = 0;
+      t.mock.method(performance, "now", () => clock);
+      t.mock.method(globalThis, "fetch", async () => response(bytes));
+      const originalOpen = fs.open.bind(fs);
+      t.mock.method(fs, "open", async (name, ...args) => {
+        const h = await originalOpen(name, ...args);
+        if (mode === "deadline" && name === f.target && args[0] & 1024) {
+          const close = h.close.bind(h);
+          h.close = async () => {
+            await close();
+            clock = 30001;
+          };
+        }
+        return h;
+      });
+      t.mock.method(childProcess, "execFile", (file, args, options, callback) => {
+        executions++;
+        assert.equal(path.isAbsolute(file), true);
+        assert.deepEqual(args, ["--version"]);
+        assert.deepEqual(options.env, {});
+        assert.equal(options.cwd, path.dirname(file));
+        assert.ok(options.timeout <= 30000);
+        (async () => {
+          if (mode === "swap") {
+            await fs.rename(options.cwd, options.cwd + "-original");
+            await fs.symlink(victim, options.cwd);
+          }
+          callback(null, mode === "wrong-version" ? "1.4.5\n" : "1.4.4\n", "");
+        })().catch(callback);
+      });
+      try {
+        await assert.rejects(sut().installPinnedBun());
+        assert.equal(executions, 1);
+        assert.equal(await fs.readFile(f.target, "utf8"), "");
+        assert.equal(await fs.readFile(path.join(victim, "bun"), "utf8"), "UNVERIFIED_CANARY");
+        await assert.rejects(fs.lstat(path.join(victim, "bunx")), { code: "ENOENT" });
+        assert.deepEqual((await fs.readdir(f.dir)).sort(), ["_runner_file_commands", "victim"]);
+      } finally {
+        for (const k of Object.keys(old)) {
+          if (old[k] === undefined) delete process.env[k];
+          else process.env[k] = old[k];
+        }
+        await fs.rm(f.dir, { recursive: true, force: true });
+      }
+    },
+  );
+
+test("gzip output limit refuses a decompression bomb before tar publication", () => {
+  const gz = gzipSync(Buffer.alloc(128 * 1024 * 1024 + 1));
+  assert.throws(() => sut().decodeGzip(gz), { message: "BUN_GZIP" });
+});

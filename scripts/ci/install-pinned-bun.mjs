@@ -106,6 +106,7 @@ function tarText(header, start, end) {
 }
 function octal(header, start, end) {
   if (header.subarray(start, end).every((x) => x === 0)) return 0;
+  if (header.subarray(start, end).some((byte) => byte > 127)) fail("BUN_TAR");
   const value = header.subarray(start, end).toString("ascii");
   if (!/^[0-7]+[ \0]*$/.test(value)) fail("BUN_TAR");
   const n = Number.parseInt(value, 8);
@@ -335,6 +336,10 @@ export async function installPinnedBun() {
   const control = new AbortController(),
     expires = performance.now() + 30000;
   const timer = setTimeout(() => control.abort(), 30000);
+  let env = null,
+    ownStat = null,
+    executableStat = null,
+    publication = null;
   let own = null,
     binaryHandle = null,
     pathHandle = null,
@@ -343,8 +348,69 @@ export async function installPinnedBun() {
     aborted(control.signal);
     if (performance.now() >= expires) fail("BUN_DEADLINE");
   };
+
+  const revalidateOwned = async () => {
+    check();
+    const directory = await fs.lstat(own);
+    if (
+      !directory.isDirectory() ||
+      directory.isSymbolicLink() ||
+      !sameIdentity(directory, ownStat) ||
+      (directory.mode & 0o777) !== 0o700 ||
+      (await fs.realpath(own)) !== own
+    )
+      fail("BUN_WRITE");
+    if (executableStat) {
+      const executable = path.join(own, "bun"),
+        stat = await fs.lstat(executable);
+      if (
+        !stat.isFile() ||
+        stat.isSymbolicLink() ||
+        stat.nlink !== 1 ||
+        !sameIdentity(stat, executableStat) ||
+        (await fs.realpath(executable)) !== executable
+      )
+        fail("BUN_WRITE");
+    }
+    check();
+  };
+  const rollback = async () => {
+    if (!publication) return;
+    const h = await fs.open(publication.file, constants.O_RDWR | constants.O_NOFOLLOW);
+    try {
+      const stat = await h.stat(),
+        tail = Buffer.alloc(publication.line.length);
+      if (!sameIdentity(stat, publication.stat) || stat.size !== publication.offset + tail.length)
+        fail("BUN_WRITE");
+      const read = await h.read(tail, 0, tail.length, publication.offset);
+      if (read.bytesRead !== tail.length || !tail.equals(publication.line)) fail("BUN_WRITE");
+      await h.truncate(publication.offset);
+      await h.sync();
+      publication = null;
+    } finally {
+      await h.close();
+    }
+  };
+  const cleanupOwned = async () => {
+    if (!own) return;
+    // Never recurse through a name whose directory identity changed.
+    const named = await fs.lstat(own).catch(() => null);
+    if (named?.isSymbolicLink()) await fs.unlink(own);
+    if (!ownStat || !env) return;
+    for (const name of await fs.readdir(env.runnerTemp)) {
+      const candidate = path.join(env.runnerTemp, name),
+        stat = await fs.lstat(candidate).catch(() => null);
+      if (
+        stat?.isDirectory() &&
+        !stat.isSymbolicLink() &&
+        sameIdentity(stat, ownStat) &&
+        (await fs.realpath(candidate)) === candidate
+      )
+        await fs.rm(candidate, { recursive: true, force: true });
+    }
+  };
   try {
-    const env = await validateEnvironment(process.env);
+    env = await validateEnvironment(process.env);
     check();
     const archive = await downloadArchive(control.signal);
     check();
@@ -352,6 +418,7 @@ export async function installPinnedBun() {
     check();
     // A private directory is not created until the complete archive is verified.
     own = await fs.mkdtemp(path.join(env.runnerTemp, "contaos-bun-"));
+    ownStat = await fs.lstat(own);
     await fs.chmod(own, 0o700);
     if ((await fs.realpath(own)) !== own || (await fs.lstat(own)).mode % 512 !== 0o700)
       fail("BUN_WRITE");
@@ -377,6 +444,7 @@ export async function installPinnedBun() {
       namedStat.isSymbolicLink()
     )
       fail("BUN_WRITE");
+    executableStat = openStat;
     await binaryHandle.chmod(0o700);
     await binaryHandle.close();
     binaryHandle = null;
@@ -405,7 +473,9 @@ export async function installPinnedBun() {
     );
     check();
     verifyVersion(stdout);
+    await revalidateOwned();
     await fs.symlink("bun", path.join(own, "bunx"));
+    await revalidateOwned();
     const current = await validateEnvironment(process.env);
     if (
       current.runnerTemp !== env.runnerTemp ||
@@ -421,15 +491,24 @@ export async function installPinnedBun() {
     if (!sameIdentity(before, env.pathStat) || before.nlink !== 1) fail("BUN_ENV");
     check();
     try {
+      publication = {
+        file: env.pathFile,
+        stat: before,
+        offset: before.size,
+        line: Buffer.from(own + "\n"),
+      };
       await pathHandle.writeFile(own + "\n", "utf8");
       await pathHandle.sync();
       check();
     } catch (error) {
       await pathHandle.truncate(before.size);
+      publication = null;
       throw error;
     }
     await pathHandle.close();
     pathHandle = null;
+    await revalidateOwned();
+    check();
     success = true;
     return Object.freeze({
       phase: "BUN_BOOTSTRAP",
@@ -443,26 +522,37 @@ export async function installPinnedBun() {
   } finally {
     clearTimeout(timer);
     control.abort();
-    await binaryHandle?.close().catch(() => {});
-    await pathHandle?.close().catch(() => {});
-    if (!success && own) await fs.rm(own, { recursive: true, force: true });
+    if (binaryHandle) await binaryHandle.close().catch(() => {});
+    if (pathHandle) await pathHandle.close().catch(() => {});
+    if (!success) {
+      if (publication) await rollback();
+      await cleanupOwned();
+    }
   }
 }
+const codes = new Set([
+  "BUN_PLATFORM",
+  "BUN_DEADLINE",
+  "BUN_DOWNLOAD",
+  "BUN_DOWNLOAD_SIZE",
+  "BUN_ARCHIVE_INTEGRITY",
+  "BUN_GZIP",
+  "BUN_TAR",
+  "BUN_PACKAGE",
+  "BUN_BINARY",
+  "BUN_ENV",
+  "BUN_WRITE",
+  "BUN_VERSION",
+]);
+export function failureCode(error) {
+  let message;
+  try {
+    message = Object.getOwnPropertyDescriptor(error, "message")?.value;
+  } catch {}
+  return codes.has(message) ? message : "BUN_INSTALL_FAILED";
+}
+
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
-  const codes = new Set([
-    "BUN_PLATFORM",
-    "BUN_DEADLINE",
-    "BUN_DOWNLOAD",
-    "BUN_DOWNLOAD_SIZE",
-    "BUN_ARCHIVE_INTEGRITY",
-    "BUN_GZIP",
-    "BUN_TAR",
-    "BUN_PACKAGE",
-    "BUN_BINARY",
-    "BUN_ENV",
-    "BUN_WRITE",
-    "BUN_VERSION",
-  ]);
   try {
     if (process.argv.length !== 2) fail("BUN_ENV");
     console.log(JSON.stringify(await installPinnedBun()));
@@ -471,7 +561,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       JSON.stringify({
         phase: "BUN_BOOTSTRAP",
         state: "FAIL",
-        code: codes.has(error?.message) ? error.message : "BUN_INSTALL_FAILED",
+        code: failureCode(error),
       }),
     );
     process.exitCode = 1;
