@@ -2503,7 +2503,11 @@
       "ready": "READY",
       "source": "437c788e32f0325dd15c9d2e7277c10129bcb462",
       "verified": "VERCEL_GET_DEPLOYMENT_ALIAS",
-      "new_audit_certified": false
+      "new_audit_certified": false,
+      "identity_note": "Distinção operacional comprovada: compare437→1b6f contém somente harness scripts/hml e documentação/request/evidência; nenhum SRC/public/produto mudou. frontendSha437 identifica o produto servido, harnessSha identifica separadamente a main/execução do auditor ou preparador. Não exigir igualdade entre eles e não solicitar redeploy só por script novo. AUTO_DISCOVER deve provar437 ancestral do approved_parent_sha, deployment/alias/SSR/110módulos e proveniência do harness independente; divergência real continua fail-closed. EvidênciasRun124 mantêm sua origem866/a688/EcPd, sem substituição.",
+      "src_public_changes_437_to_1b6f": 0,
+      "frontend_harness_equality_required": false,
+      "redeploy_for_harness_only_required": false
     },
     "gate434": {
       "merge": "d492b99fb1f71c71167528147e064924945f6d42",

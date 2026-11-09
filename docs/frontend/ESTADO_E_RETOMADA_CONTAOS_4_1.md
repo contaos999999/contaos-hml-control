@@ -2,7 +2,7 @@
 
 09/11/2026. Desenvolvimento em continuidade. Main observada `1b6f120f5346a65f9578c07c07a9498772783fb1`; backend vivo `a4ff442bcca9add0df5bad01f20d62c9c8fd385b`, alinhado ao snapshot/ack a4ff já integrado. Sem nova reancoragem. Este PR é checkpoint documental; sua própria integração ainda depende de CI/revisão/merge do coordenador. Todo o STATE anterior permanece íntegro abaixo.
 
-Vercel GET pelo alias HML confirmou **READY**, deployment `dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp`, fonte `437c788e32f0325dd15c9d2e7277c10129bcb462`. Essa publicação F3 não contém por presunção os códigos integrados depois de437; READY não homologa os novos BUILD ou suas telas.
+Vercel GET pelo alias HML confirmou **READY**, deployment `dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp`, fonte `437c788e32f0325dd15c9d2e7277c10129bcb462`. READY não homologa os novos BUILD ou suas telas. Distinção operacional comprovada: compare437→1b6f contém somente harness scripts/hml e documentação/request/evidência; nenhum SRC/public/produto mudou. frontendSha437 identifica o produto servido, harnessSha identifica separadamente a main/execução do auditor ou preparador. Não exigir igualdade entre eles e não solicitar redeploy só por script novo. AUTO_DISCOVER deve provar437 ancestral do approved_parent_sha, deployment/alias/SSR/110módulos e proveniência do harness independente; divergência real continua fail-closed. EvidênciasRun124 mantêm sua origem866/a688/EcPd, sem substituição.
 
 **Entregas comprovadamente integradas:**
 - GATE434: merge `d492b99fb1f71c71167528147e064924945f6d42`, revisão5821203381, CI42554046981/42554046960SUCCESS; readback GATE74a736e7, PLANO5696902c e snapshotfd3568d5 confirmados. Autoriza BUILD posterior delimitado, não execuçãoAuth por si.
