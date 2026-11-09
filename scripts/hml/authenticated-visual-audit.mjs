@@ -1142,6 +1142,212 @@ export function privacy78Runtime({
   });
 }
 
+export function privacy112Supplement(tap) {
+  if (typeof tap !== "string") return null;
+  if (
+    !/^ok 1 - privacy112 Chromium full DOM ARIA matrix preserves scoped intervals and unknown neighbours$/m.test(
+      tap,
+    )
+  )
+    return null;
+  const expected = { tests: 1, pass: 1, fail: 0, skipped: 0, cancelled: 0 };
+  return Object.entries(expected).every(([key, value]) => {
+    const matches = [...tap.matchAll(new RegExp("^# " + key + " ([0-9]+)$", "gm"))];
+    return matches.length === 1 && Number(matches[0][1]) === value;
+  })
+    ? 1
+    : null;
+}
+
+export function privacy112FieldContext({
+  proof,
+  rendered,
+  snapshot,
+  fieldSnapshots,
+  anchored,
+  receipt,
+}) {
+  if (
+    !privacy78Proofs.has(proof) ||
+    anchored !== true ||
+    !receipt ||
+    !Object.isFrozen(receipt) ||
+    !Array.isArray(receipt.observed) ||
+    !Object.isFrozen(receipt.observed) ||
+    receipt.route !== privateCases().find((i) => i.surface === "V112").path ||
+    !Number.isFinite(receipt.age) ||
+    receipt.age < 0 ||
+    receipt.age >= 120000 ||
+    new Set(receipt.observed).size !== receipt.observed.length ||
+    receipt.observed.some((n) => !proof.get_contracts.some((c) => c.name === n)) ||
+    !["contract_gate", "competencias_page0_no_filters"].every((n) =>
+      receipt.observed.includes(n),
+    ) ||
+    !Array.isArray(fieldSnapshots) ||
+    fieldSnapshots.length !== 3 ||
+    ![rendered, snapshot, ...fieldSnapshots].every(
+      (t) => typeof t === "string" && t.length <= 1000000,
+    )
+  )
+    return null;
+  const value = proof.generated_exact_values.V112[0],
+    [row, header, cell] = fieldSnapshots;
+  if (
+    value !== "01/11/2026 a 30/11/2026" ||
+    rendered.split(value).length !== 2 ||
+    snapshot.split(value).length !== 3 ||
+    row.split(value).length !== 3 ||
+    header !== '- rowheader "11/2026"' ||
+    cell !== '- cell "' + value + '"'
+  )
+    return null;
+  const lines = row.split("\n");
+  if (
+    !lines[0].startsWith('- row "11/2026 ' + value + " ") ||
+    !lines[0].endsWith('":') ||
+    lines[0].split(value).length !== 2 ||
+    lines[1] !== "  " + header ||
+    lines[2] !== "  " + cell ||
+    lines.filter((l) => /^  - (?:rowheader|cell)(?: |:)/.test(l)).length !== 7
+  )
+    return null;
+  const matches = [];
+  let offset = 0;
+  const whole = snapshot.split("\n");
+  for (let i = 0; i < whole.length; i++) {
+    const indent = whole[i].match(/^ */)[0];
+    if (lines.every((l, j) => whole[i + j] === indent + l)) matches.push({ offset, indent });
+    offset += whole[i].length + 1;
+  }
+  if (matches.length !== 1) return null;
+  const { offset: start, indent } = matches[0];
+  const first = start + indent.length + lines[0].indexOf(value);
+  // Offsets are derived only from the exact same unique row subtree.
+  const headerStart = start + indent.length + lines[0].length + 1 + indent.length;
+  const cellStart = headerStart + lines[1].length + 1 + indent.length;
+  const ranges = [
+    { start: first, end: first + value.length },
+    {
+      start: cellStart + lines[2].indexOf(value),
+      end: cellStart + lines[2].indexOf(value) + value.length,
+    },
+    { start: headerStart + 4, end: headerStart + 13 },
+  ];
+  if (
+    snapshot.slice(ranges[2].start, ranges[2].end) !== "rowheader" ||
+    snapshot.slice(ranges[1].start, ranges[1].end) !== value
+  )
+    return null;
+  const erase = (text, rs) =>
+    [...rs]
+      .sort((a, b) => b.start - a.start)
+      .reduce((s, r) => s.slice(0, r.start) + " " + s.slice(r.end), text);
+  const context = Object.freeze({});
+  privacy78Contexts.set(context, {
+    rendered: { original: rendered, remainder: rendered.replace(value, " ") },
+    snapshot: { original: snapshot, remainder: erase(snapshot, ranges) },
+  });
+  return context;
+}
+export function privacy112FieldAnchor({ proof }) {
+  const value = proof?.generated_exact_values?.V112?.[0];
+  if (value !== "01/11/2026 a 30/11/2026") return null;
+  const visible = (e) =>
+    e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+  const plain = (e) =>
+    e &&
+    [...e.attributes].every(
+      (a) => a.name === "class" || (e.tagName === "TH" && a.name === "scope"),
+    ) &&
+    [...e.childNodes].every((n) => n.nodeType === Node.TEXT_NODE);
+  const selector = 'section[aria-labelledby="v112-lista"]';
+  const sections = document.querySelectorAll(selector);
+  if (
+    sections.length !== 1 ||
+    !visible(sections[0]) ||
+    document.querySelectorAll("#v112-lista").length !== 1
+  )
+    return null;
+  const section = sections[0],
+    headings = section.querySelectorAll(":scope > div:first-child > h2#v112-lista"),
+    tables = section.querySelectorAll("table");
+  if (
+    headings.length !== 1 ||
+    headings[0].textContent !== "Lista de competências" ||
+    tables.length !== 1
+  )
+    return null;
+  const table = tables[0],
+    columns = [...table.querySelectorAll('thead th[scope="col"]')],
+    expected = [
+      "Competência",
+      "Período",
+      "Data limite",
+      "Situação",
+      "Conformidade",
+      "Versão do pacote",
+      "Ações",
+    ];
+  if (
+    !visible(table) ||
+    table.querySelectorAll("caption").length !== 1 ||
+    table.querySelector("caption").textContent !== "Competências do contrato" ||
+    columns.length !== 7 ||
+    columns.some((c, i) => c.textContent !== expected[i])
+  )
+    return null;
+  const rows = [...table.querySelectorAll("tbody tr")],
+    found = [];
+  for (let index = 0; index < rows.length; index++) {
+    const row = rows[index],
+      cells = [...row.children],
+      header = cells[0],
+      target = cells[1],
+      links = [...row.querySelectorAll("a")];
+    if (
+      [...row.attributes].every((a) => a.name === "class") &&
+      cells.length === 7 &&
+      cells.slice(1).every((c) => c.tagName === "TD") &&
+      header.tagName === "TH" &&
+      header.getAttribute("scope") === "row" &&
+      header.textContent === "11/2026" &&
+      plain(header) &&
+      target.tagName === "TD" &&
+      target.textContent === value &&
+      plain(target) &&
+      visible(target) &&
+      links.length === 1 &&
+      [...links[0].attributes].every((a) => ["href", "aria-label", "class"].includes(a.name)) &&
+      links[0].childNodes.length === 1 &&
+      links[0].firstChild.nodeType === Node.ELEMENT_NODE &&
+      links[0].firstChild.tagName === "SPAN" &&
+      links[0].firstChild.attributes.length === 0 &&
+      links[0].firstChild.childNodes.length === 1 &&
+      links[0].firstChild.firstChild.nodeType === Node.TEXT_NODE &&
+      links[0].firstChild.textContent === "Abrir competência" &&
+      cells[6].contains(links[0]) &&
+      links[0].getAttribute("href") === "/competencias/" + proof.context.competence &&
+      links[0].getAttribute("aria-label") === "Abrir competência 11/2026"
+    )
+      found.push(index);
+  }
+  if (found.length !== 1) return null;
+  return { selector: selector + " table tbody tr", index: found[0], count: rows.length };
+}
+export async function privacy112FieldSnapshots(page, anchor) {
+  if (!anchor) return null;
+  const rows = page.locator(anchor.selector);
+  if ((await rows.count()) !== anchor.count) return null;
+  const row = rows.nth(anchor.index),
+    cells = row.locator(":scope > th, :scope > td");
+  if ((await cells.count()) !== 7) return null;
+  return [
+    (await row.ariaSnapshot()).trim(),
+    (await cells.nth(0).ariaSnapshot()).trim(),
+    (await cells.nth(1).ariaSnapshot()).trim(),
+  ];
+}
+
 export function privacy78FieldContext({
   surface,
   proof,
@@ -1152,6 +1358,7 @@ export function privacy78FieldContext({
   anchored,
   receipt,
 }) {
+  if (surface === "V112") return null;
   if (
     !privacy78Proofs.has(proof) ||
     !receipt ||
@@ -1238,34 +1445,7 @@ export function privacy78FieldAnchor({ surface, proof }) {
         ).length === 1,
     );
   } else if (surface === "V112") {
-    selector = "table tbody tr td";
-    for (const table of document.querySelectorAll("table")) {
-      if (
-        !visible(table) ||
-        table.querySelector("caption")?.textContent !== "Competências do contrato"
-      )
-        continue;
-      const columns = [...table.querySelectorAll('thead th[scope="col"]')],
-        period = columns.findIndex((n) => n.textContent === "Período");
-      if (period < 0 || columns.filter((n) => n.textContent === "Período").length !== 1) continue;
-      for (const row of table.querySelectorAll("tbody tr")) {
-        const header = row.querySelector('th[scope="row"]'),
-          target = row.children[period];
-        const links = [...row.querySelectorAll("a")].filter(
-          (a) =>
-            a.getAttribute("href") === "/competencias/" + proof.context.competence &&
-            a.getAttribute("aria-label") === "Abrir competência 11/2026",
-        );
-        if (
-          header?.textContent === "11/2026" &&
-          links.length === 1 &&
-          target?.tagName === "TD" &&
-          visible(target) &&
-          target.textContent === value
-        )
-          nodes.push(target);
-      }
-    }
+    return null;
   } else if (surface === "V115") {
     selector = 'section[aria-labelledby="v115-envio"] #v115-arquivo';
     const inputs = document.querySelectorAll(selector);
@@ -3382,6 +3562,28 @@ async function nativeGuard() {
     fail("VISUAL_NATIVE");
   }
 
+  let v112BrowserCases;
+  try {
+    const supplement = await execFile(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=^privacy112 Chromium full DOM ARIA matrix",
+        "scripts/hml/authenticated-visual-audit.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 45000,
+        maxBuffer: 1048576,
+      },
+    );
+    v112BrowserCases = privacy112Supplement(supplement.stdout);
+    if (v112BrowserCases !== 1) fail("V112_NATIVE");
+  } catch {
+    fail("V112_NATIVE");
+  }
+
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/native-proof.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -3392,6 +3594,7 @@ async function nativeGuard() {
       preflightDrain: nativePreflightDrain(output),
       cases: 8,
       visualCases: 1,
+      v112BrowserCases,
       harnessSha: proof.harnessSha,
     }),
   );
@@ -3569,12 +3772,13 @@ async function inspectPrivacy(page, words, diagnostics) {
         return window.__contaosPrivacy78?.read() ?? null;
       });
       const is109 = item.surface === "V109";
+      const is112 = item.surface === "V112";
       const anchor =
         receipt &&
         initialReceipt &&
         initialReceipt.revision === receipt.revision &&
         (await page.evaluate(
-          is109 ? privacy109FieldAnchor : privacy78FieldAnchor,
+          is109 ? privacy109FieldAnchor : is112 ? privacy112FieldAnchor : privacy78FieldAnchor,
           is109 ? { proof: state.v109Proof } : { surface: item.surface, proof: state.proof },
         ));
       if (
@@ -3586,6 +3790,7 @@ async function inspectPrivacy(page, words, diagnostics) {
         let fieldSnapshot = null,
           fieldSnapshots = null;
         if (is109) fieldSnapshots = await privacy109FieldSnapshots(page, anchor);
+        else if (is112) fieldSnapshots = await privacy112FieldSnapshots(page, anchor);
         else {
           const locator = page.locator(anchor.selector);
           if ((await locator.count()) === anchor.count)
@@ -3616,16 +3821,25 @@ async function inspectPrivacy(page, words, diagnostics) {
                   anchored: true,
                   receipt: currentReceipt,
                 })
-              : privacy78FieldContext({
-                  surface: item.surface,
-                  proof: state.proof,
-                  rbacProof: state.rbacProof,
-                  rendered,
-                  snapshot,
-                  fieldSnapshot,
-                  anchored: true,
-                  receipt: currentReceipt,
-                });
+              : is112
+                ? privacy112FieldContext({
+                    proof: state.proof,
+                    rendered,
+                    snapshot,
+                    fieldSnapshots,
+                    anchored: true,
+                    receipt: currentReceipt,
+                  })
+                : privacy78FieldContext({
+                    surface: item.surface,
+                    proof: state.proof,
+                    rbacProof: state.rbacProof,
+                    rendered,
+                    snapshot,
+                    fieldSnapshot,
+                    anchored: true,
+                    receipt: currentReceipt,
+                  });
           }
         }
       }
