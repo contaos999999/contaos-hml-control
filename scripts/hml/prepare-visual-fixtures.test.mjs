@@ -9577,7 +9577,8 @@ async function r12NativeOpinionProbe(browser) {
     { createServer } = await import("node:http");
   const dir = await fs.mkdtemp(join(tmpdir(), "contaos-r12-opinion-"));
   const c = {
-      id: JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id,
+      id: JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings
+        .competencies[1].id,
       month: "2026-09-01",
       evidence: {},
     },
@@ -9586,11 +9587,15 @@ async function r12NativeOpinionProbe(browser) {
   let server,
     page,
     observer,
+    recoveryPhase = false,
+    recoveryReads = 0,
     materialized = false,
     foreignBody = false,
     queued = 0,
     reads = 0,
     callbacks = 0;
+  const recoveredBindings = JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw)
+    .bindings.competencies;
   const row = {
     id: opinionID,
     id_competencia: c.id,
@@ -9605,6 +9610,23 @@ async function r12NativeOpinionProbe(browser) {
     aprovado_por: null,
     aprovado_em: null,
   };
+  const recoveryArgs = (rpc, id) =>
+    rpc === "obter_analise_competencia_v116"
+      ? {
+          p_id_competencia: id,
+          p_resultados_offset: 0,
+          p_resultados_limite: 25,
+          p_execucoes_offset: 0,
+          p_execucoes_limite: 10,
+          p_apontamentos_offset: 0,
+          p_apontamentos_limite: 25,
+          p_filtro_resultado: null,
+          p_filtro_criticidade: null,
+          p_filtro_mecanismo: null,
+          p_filtro_apontamento_status: null,
+          p_busca: null,
+        }
+      : { p_id_competencia: id };
   try {
     const bundle = await r12BuildOpinionSDKBundle(dir);
     server = createServer((req, res) => {
@@ -9626,7 +9648,10 @@ async function r12NativeOpinionProbe(browser) {
         res.end();
         return;
       }
-      if (req.method === "POST" && u.pathname === "/rest/v1/rpc/solicitar_parecer_interno") {
+      if (
+        req.method === "POST" &&
+        u.pathname === "/rest/v1/rpc/solicitar_parecer_interno"
+      ) {
         let raw = "";
         req.on("data", (x) => {
           raw += x;
@@ -9640,12 +9665,22 @@ async function r12NativeOpinionProbe(browser) {
         });
         return;
       }
-      if (req.method === "GET" && u.pathname === "/rest/v1/pareceres_internos") {
+      if (
+        req.method === "GET" &&
+        u.pathname === "/rest/v1/pareceres_internos"
+      ) {
         const requested = u.searchParams.get("id_competencia");
-        const oct = JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0].id;
+        const oct = JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings
+          .competencies[0].id;
         assert.ok(["eq." + c.id, "eq." + oct].includes(requested));
-        assert.equal(u.searchParams.get("id_contrato"), "eq." + FIXTURE.contract);
-        assert.equal(u.searchParams.get("id_organizacao"), "eq." + FIXTURE.organization);
+        assert.equal(
+          u.searchParams.get("id_contrato"),
+          "eq." + FIXTURE.contract,
+        );
+        assert.equal(
+          u.searchParams.get("id_organizacao"),
+          "eq." + FIXTURE.organization,
+        );
         reads++;
         res.writeHead(200, {
           "content-type": "application/json",
@@ -9665,14 +9700,53 @@ async function r12NativeOpinionProbe(browser) {
                           aprovado_em: "2026-11-09T00:01:00Z",
                         }
                       : {}),
+                    ...(recoveryPhase
+                      ? {
+                          id: recoveredBindings.find(
+                            (item) => item.id === requested.slice(3),
+                          ).opinionId,
+                          status: "aprovado",
+                          aprovado_em: "2026-11-09T00:01:00Z",
+                        }
+                      : {}),
                     ...(foreignBody
-                      ? { id_organizacao: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee" }
+                      ? {
+                          id_organizacao:
+                            "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+                        }
                       : {}),
                   },
                 ]
               : [],
           ),
         );
+        return;
+      }
+      if (
+        req.method === "POST" &&
+        [
+          "/rest/v1/rpc/obter_documentos_competencia_v115",
+          "/rest/v1/rpc/obter_analise_competencia_v116",
+        ].includes(u.pathname)
+      ) {
+        assert.equal(recoveryPhase, true);
+        let raw = "";
+        req.on("data", (chunk) => {
+          raw += chunk;
+          assert.ok(raw.length < 4096);
+        });
+        req.on("end", () => {
+          const args = JSON.parse(raw);
+          const binding = recoveredBindings.find(
+            (item) => item.id === args.p_id_competencia,
+          );
+          assert.ok(binding);
+          const rpc = u.pathname.split("/").at(-1);
+          assert.deepEqual(args, recoveryArgs(rpc, binding.id));
+          recoveryReads++;
+          res.writeHead(200, { "content-type": "application/json" });
+          res.end(JSON.stringify(r17RecoveryData(binding)[rpc]));
+        });
         return;
       }
       res.writeHead(404);
@@ -9685,10 +9759,15 @@ async function r12NativeOpinionProbe(browser) {
       "utf8",
     );
     assert.equal(source.split("api: API_ORIGIN,").length, 2);
-    source = source.replace("api: API_ORIGIN,", "api: " + JSON.stringify(origin) + ",");
+    source = source.replace(
+      "api: API_ORIGIN,",
+      "api: " + JSON.stringify(origin) + ",",
+    );
     source = source.replace(
       '"./authenticated-visual-audit.mjs"',
-      JSON.stringify(new URL("./authenticated-visual-audit.mjs", import.meta.url).href),
+      JSON.stringify(
+        new URL("./authenticated-visual-audit.mjs", import.meta.url).href,
+      ),
     );
     await fs.writeFile(join(dir, "observer.mjs"), source);
     const local = await import(pathToFileURL(join(dir, "observer.mjs")).href);
@@ -9745,13 +9824,23 @@ async function r12NativeOpinionProbe(browser) {
       "broker",
       "err",
       "return " + wrapper,
-    )(runtime, fresh, tracedPreparation, observer, confirmUiIntent, page, {}, {}, stop);
+    )(
+      runtime,
+      fresh,
+      tracedPreparation,
+      observer,
+      confirmUiIntent,
+      page,
+      {},
+      {},
+      stop,
+    );
     const io = {
       generation: observer.generation,
       recoveryLedgerR11: local.R11_RECOVERY_DOCUMENT,
       recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
       recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
-    recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+      // Queue adapter phase has no recovery owner; DocR16 is proved separately below.
       command,
       fresh,
     };
@@ -9784,7 +9873,9 @@ async function r12NativeOpinionProbe(browser) {
         if (name === "Aprovar parecer") throw Error("R12_APPROVAL_READY");
         assert.equal(name, "Atualizar");
         materialized = true;
-        await page.getByRole("button", { name: "Atualizar", exact: true }).click();
+        await page
+          .getByRole("button", { name: "Atualizar", exact: true })
+          .click();
         await list();
       },
       phaseActive: () => true,
@@ -9818,18 +9909,40 @@ async function r12NativeOpinionProbe(browser) {
       assert.equal(Object.hasOwn(clean[0], key), false);
     assert.equal(observer.observationFailure(), null);
     observer.close();
+    recoveryPhase = true;
     observer = local.createOfficialObserver(page, {
       identity: R12_TEST_IDENTITY,
       wait: () => new Promise((resolve) => setTimeout(resolve, 5)),
     });
-    const oct = JSON.parse(local.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0].id,
+    const oct = JSON.parse(local.R5_RECOVERY_DOCUMENT.reportRaw).bindings
+        .competencies[0].id,
       owner = local.createIntentBroker(r12RecoveryOptions()),
       floor = observer.generation();
-    await page.evaluate(
-      ([id, org, contract]) => window.__opinions(id, org, contract),
-      [oct, FIXTURE.organization, FIXTURE.contract],
-    );
+    for (const binding of recoveredBindings) {
+      for (const rpc of [
+        "obter_documentos_competencia_v115",
+        "obter_analise_competencia_v116",
+      ]) {
+        await page.evaluate(
+          async ([name, args]) => {
+            const response = await fetch("/rest/v1/rpc/" + name, {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(args),
+            });
+            if (!response.ok) throw Error("R17_NATIVE_RECOVERY_HTTP");
+            await response.json();
+          },
+          [rpc, recoveryArgs(rpc, binding.id)],
+        );
+      }
+      await page.evaluate(
+        ([id, org, contract]) => window.__opinions(id, org, contract),
+        [binding.id, FIXTURE.organization, FIXTURE.contract],
+      );
+    }
     await observer.flush();
+    assert.equal(recoveryReads, 4);
     owner.authorizeRecovery(
       local.reconcileR1Recovery(r2Reconciliation()),
       observer.sealRecoveryOpinion(owner, floor),
@@ -9865,6 +9978,7 @@ async function r12NativeOpinionProbe(browser) {
     r6AnalysisArm(owner);
     assert.equal(owner.snapshot().count, 17);
     observer.close();
+    recoveryPhase = false;
     let clock = 0;
     observer = local.createOfficialObserver(page, {
       now: () => clock,
@@ -9873,7 +9987,11 @@ async function r12NativeOpinionProbe(browser) {
       },
     });
     await list(); // A completed pre-ACK cache is not a post-ACK readback.
-    observer.markMutation("solicitar_parecer_interno", { p_id_competencia: c.id }, {});
+    observer.markMutation(
+      "solicitar_parecer_interno",
+      { p_id_competencia: c.id },
+      {},
+    );
     assert.equal(await page.evaluate((id) => window.__queue(id), c.id), job);
     await observer.flush();
     await assert.rejects(
@@ -9909,6 +10027,7 @@ async function r12NativeOpinionProbe(browser) {
     await fs.rm(dir, { recursive: true, force: true });
   }
 }
+
 test(
   "R3 Chromium sourceforms asynchronous opinion queue acceptance and actual opinion consumer",
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 90000 },
