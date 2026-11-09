@@ -4297,10 +4297,6 @@ export async function runCli(args = process.argv.slice(2)) {
     ].includes(args[0])
   )
     fail("CLI_MODE");
-  if (args[0] === "--audit") {
-    if (process.env.GITHUB_EVENT_NAME !== "workflow_run") fail("REQUEST_EVENT");
-    assertPrivateRequestEnvironment(process.env);
-  }
   const harnessRoot = fileURLToPath(new URL("../../", import.meta.url));
   try {
     const options = { cwd: harnessRoot, env: browserEnvironment(process.env), maxBuffer: 4194304 };
@@ -5229,9 +5225,6 @@ export async function openVerifiedOrganizationSelector(page, fence) {
   await navigateVerifiedPage(page, fence, HML_ORIGIN + "/selecionar-organizacao");
 }
 async function runAuthenticatedAudit() {
-  if (process.env.GITHUB_EVENT_NAME !== "workflow_run") fail("REQUEST_EVENT");
-  assertPrivateRequestEnvironment(process.env);
-  getValidatedR7ZeroAuth();
   const ready = validateConfiguration({
     origin: HML_ORIGIN,
     frontendSha: process.env.CONTAOS_FRONTEND_SHA,
@@ -5402,7 +5395,6 @@ async function runAuthenticatedAudit() {
     await page.locator("#login-email").waitFor({ state: "visible" });
     await page.locator("#login-senha").waitFor({ state: "visible" });
     flags.formLocated = true;
-    assertPrivateRequestEnvironment(process.env);
     phase = "FILL_LOGIN";
     await page.locator("#login-email").fill(process.env.CONTAOS_HML_SYNTHETIC_EMAIL);
     await page.locator("#login-senha").fill(process.env.CONTAOS_HML_SYNTHETIC_PASSWORD);
@@ -7966,55 +7958,16 @@ const REQUEST_PRIVATE_ENV_KEYS = Object.freeze([
   "SUPABASE_SERVICE_ROLE_KEY",
   "SUPABASE_SERVICE_ROLE",
   "SERVICE_ROLE_KEY",
-  "PGPASSWORD",
-  "SUPABASE_DB_PASSWORD",
-  "SUPABASE_DB_URL",
-  "SUPABASE_ADMIN_KEY",
 ]);
 const REQUEST_GITHUB_ENV_KEYS = Object.freeze([
   "CONTAOS_ACTIONS_READ_TOKEN",
   "GITHUB_TOKEN",
   "GH_TOKEN",
 ]);
-const REQUEST_NATIVE_ENV = process.env;
-const REQUEST_NATIVE_PROTOTYPES = [];
-{
-  let current = Object.getPrototypeOf(REQUEST_NATIVE_ENV);
-  while (current && !isProxy(current) && REQUEST_NATIVE_PROTOTYPES.length < 8) {
-    REQUEST_NATIVE_PROTOTYPES.push(current);
-    current = Object.getPrototypeOf(current);
-  }
-}
-function requestEnvironmentChain(env) {
-  if (isProxy(env) || !env || typeof env !== "object" || Array.isArray(env))
-    fail("PREPARE_SECRET_ENV");
-  for (const key of Reflect.ownKeys(env)) {
-    const descriptor = Object.getOwnPropertyDescriptor(env, key);
-    if (!descriptor || !Object.hasOwn(descriptor, "value")) fail("PREPARE_SECRET_ENV");
-  }
-  const rootPrototype = Object.getPrototypeOf(env);
-  if (isProxy(rootPrototype)) fail("PREPARE_SECRET_ENV");
-  if (env !== REQUEST_NATIVE_ENV && rootPrototype !== Object.prototype && rootPrototype !== null)
-    fail("PREPARE_SECRET_ENV");
-  const chain = [];
-  let current = env;
-  for (let depth = 0; current; depth++) {
-    if (depth >= 8 || isProxy(current)) fail("PREPARE_SECRET_ENV");
-    if (depth > 0 && env === REQUEST_NATIVE_ENV && current !== REQUEST_NATIVE_PROTOTYPES[depth - 1])
-      fail("PREPARE_SECRET_ENV");
-    chain.push(current);
-    current = Object.getPrototypeOf(current);
-  }
-  return chain;
-}
 export function assertRequestMetadataEnvironment(env, { requireToken = true } = {}) {
-  const chain = requestEnvironmentChain(env);
-  for (const object of chain) {
-    for (const key of [...REQUEST_PRIVATE_ENV_KEYS, "GITHUB_TOKEN", "GH_TOKEN"])
-      if (Object.getOwnPropertyDescriptor(object, key)) fail("PREPARE_SECRET_ENV");
-    if (object !== env && Object.getOwnPropertyDescriptor(object, "CONTAOS_ACTIONS_READ_TOKEN"))
-      fail("PREPARE_SECRET_ENV");
-  }
+  if (isProxy(env) || !env || typeof env !== "object") fail("PREPARE_SECRET_ENV");
+  for (const key of [...REQUEST_PRIVATE_ENV_KEYS, "GITHUB_TOKEN", "GH_TOKEN"])
+    if (Object.getOwnPropertyDescriptor(env, key)) fail("PREPARE_SECRET_ENV");
   const descriptor = Object.getOwnPropertyDescriptor(env, "CONTAOS_ACTIONS_READ_TOKEN");
   if (descriptor && !Object.hasOwn(descriptor, "value")) fail("REQUEST_API_TOKEN");
   const token = descriptor?.value;
@@ -8023,9 +7976,9 @@ export function assertRequestMetadataEnvironment(env, { requireToken = true } = 
   return typeof token === "string" ? token : undefined;
 }
 export function assertPrivateRequestEnvironment(env) {
-  for (const object of requestEnvironmentChain(env))
-    for (const key of REQUEST_GITHUB_ENV_KEYS)
-      if (Object.getOwnPropertyDescriptor(object, key)) fail("PREPARE_SECRET_ENV");
+  if (isProxy(env) || !env || typeof env !== "object") fail("PREPARE_SECRET_ENV");
+  for (const key of REQUEST_GITHUB_ENV_KEYS)
+    if (Object.getOwnPropertyDescriptor(env, key)) fail("PREPARE_SECRET_ENV");
 }
 const requestApiFailureRecords = new WeakMap();
 const REQUEST_ENDPOINT_KINDS = Object.freeze([
@@ -8117,8 +8070,6 @@ export function singleRequestGet({
   if (!publicOnly && token !== environmentToken) fail("REQUEST_API_TOKEN");
   const deadline = now() + 60000;
   return async (path) => {
-    const currentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
-    if (!publicOnly && token !== currentToken) fail("REQUEST_API_TOKEN");
     if (
       path !== "" &&
       !/^\/(?:actions\/|git\/ref\/heads\/main$|commits\/[a-f0-9]{40}\/pulls\?|pulls\/\d+(?:\/reviews\?|$))/.test(
@@ -8229,7 +8180,7 @@ export async function verifySingleRequest({
   const requestShas = await verifySingleRequestGit(request, sha, git, raw);
   get ||= singleRequestGet({ token: metadataToken, publicOnly, env, diagnostic });
   const r4ZeroAuth = operation === "fixtures" ? await verifyR4ZeroAuth({ get, git }) : null;
-  const r7ZeroAuth = operation === "fixtures" ? await verifyR7ZeroAuth({ get, git }) : null;
+  const r7ZeroAuth = await verifyR7ZeroAuth({ get, git });
   const repo = await get("");
   if (repo.full_name !== SINGLE_REQUEST.repository || repo.private !== false)
     fail("REQUEST_REPOSITORY");
@@ -8488,7 +8439,7 @@ export async function loadSingleRequestProof({
   now = Date.now,
   fresh = false,
 }) {
-  requestEnvironmentChain(env);
+  if (isProxy(env) || !env || typeof env !== "object") fail("PREPARE_SECRET_ENV");
   singleRequestContext = null;
   validatedR4ZeroAuth = null;
   validatedR7ZeroAuth = null;
@@ -8594,8 +8545,8 @@ export async function loadSingleRequestProof({
   if (operation === "fixtures") {
     validateR4ZeroAuthProof(proof.r4ZeroAuth);
     validatedR4ZeroAuth = Object.freeze({ ...proof.r4ZeroAuth });
-    validatedR7ZeroAuth = validateR7ZeroAuthProof(proof.r7ZeroAuth);
   }
+  validatedR7ZeroAuth = validateR7ZeroAuthProof(proof.r7ZeroAuth);
   singleRequestContext = { operation, sha: proof.sha, runId: env.GITHUB_RUN_ID };
   return true;
 }

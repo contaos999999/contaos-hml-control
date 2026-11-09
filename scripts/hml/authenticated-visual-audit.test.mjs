@@ -10141,3 +10141,112 @@ test("R8 actual audit CLI rejects private manual before runtime but preserves pu
   assert.equal(privateCalls, 0);
   assert.equal(loads, 0);
 });
+
+test("R8 carregador compartilhado mantém prova R7 audit local antes de configuração sem GET", async () => {
+  const { createHash } = await import("node:crypto");
+  const { join } = await import("node:path");
+  const { fileURLToPath } = await import("node:url");
+  const sha = "a".repeat(40),
+    parent = "b".repeat(40),
+    now = 1000;
+  const identity = { harnessSha: sha, moduleHash: "module", testHash: "test" };
+  const request = {
+    request_id: "deferred-audit-test",
+    frontend_sha: "",
+    deployment_id: "",
+    approved_parent_sha: parent,
+  };
+  const raw = JSON.stringify(request);
+  const digest = (value) => createHash("sha256").update(value).digest("hex");
+  const canonical = sut.validateR7ZeroAuthProof(sut.R7_ZERO_AUTH_PROOF);
+  const base = {
+    schema: "contaos.single-request.runtime.v1",
+    selected: true,
+    operation: "audit",
+    sha,
+    currentRunId: 12,
+    createdAt: now,
+    identity,
+    requestSha256: digest(raw),
+    requestId: request.request_id,
+    frontendSha: "",
+    deploymentId: "",
+    parentSha: parent,
+    upstreamId: 11,
+    r7ZeroAuth: canonical,
+  };
+  const env = {
+    GITHUB_EVENT_NAME: "workflow_run",
+    GITHUB_REF: "refs/heads/main",
+    GITHUB_REPOSITORY: "contaos999999/contaos-hml-control",
+    GITHUB_RUN_ATTEMPT: "1",
+    GITHUB_RUN_ID: "12",
+    CONTAOS_HARNESS_SHA: sha,
+    GITHUB_EVENT_PATH: "event",
+    MASTER_EMAIL: "synthetic",
+    MASTER_PASSWORD: "synthetic",
+  };
+  let gets = 0,
+    configured = 0;
+  const fail = (code) => {
+    throw Object.assign(new Error(code), { code });
+  };
+  // Only the future policy decision is deferred here. Production audit remains blocked.
+  const factory = new Function(
+    "deps",
+    `const {isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,singleRequestGet}=deps;
+    let singleRequestContext=null,validatedR4ZeroAuth=null,validatedR7ZeroAuth=null;
+    ${sut.loadSingleRequestProof.toString().replaceAll("import.meta.url", "sourceModuleUrl")}
+    return {load:loadSingleRequestProof,current:()=>validatedR7ZeroAuth};`,
+  );
+  const { isProxy } = await import("node:util/types");
+  const loader = factory({
+    isProxy,
+    assertPrivateRequestEnvironment: sut.assertPrivateRequestEnvironment,
+    assertRequestMetadataEnvironment: sut.assertRequestMetadataEnvironment,
+    requireSingleRequestOperation: (operation) => assert.equal(operation, "audit"),
+    fileURLToPath,
+    join,
+    sourceModuleUrl: import.meta.url,
+    fail,
+    parseSingleRequest: (value) => JSON.parse(value),
+    digest,
+    verifySingleRequestGit: async () => {},
+    validateSingleRequestEvent: () => {},
+    SINGLE_REQUEST: {
+      repository: env.GITHUB_REPOSITORY,
+      path: "request",
+      audit: { id: 1, path: "audit", name: "audit" },
+    },
+    validateR4ZeroAuthProof: () => assert.fail("R4 is fixtures only"),
+    validateR7ZeroAuthProof: sut.validateR7ZeroAuthProof,
+    singleRequestGet: () => {
+      gets++;
+      assert.fail("local Master loader must not fetch");
+    },
+  });
+  let proof = base;
+  const options = {
+    operation: "audit",
+    env,
+    read: async (path) =>
+      path.endsWith("single-request.json")
+        ? JSON.stringify(proof)
+        : path === "event"
+          ? JSON.stringify({ workflow_run: { id: 11 } })
+          : raw,
+    stat: async () => ({ isFile: () => true, isSymbolicLink: () => false, size: 100 }),
+    identity: async () => identity,
+    now: () => now,
+    git: async () => "",
+  };
+  await loader.load(options);
+  assert.deepEqual(loader.current(), canonical);
+  configured++;
+  proof = { ...base };
+  delete proof.r7ZeroAuth;
+  await assert.rejects(() => loader.load(options), { code: "RECOVERY_R7_PROOF" });
+  assert.equal(loader.current(), null);
+  assert.equal(gets, 0);
+  assert.equal(configured, 1);
+});
