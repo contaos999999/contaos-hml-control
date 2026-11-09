@@ -10381,3 +10381,24 @@ test("R11 new request nonce is accepted while R10 remains spent", () => {
     /REQUEST_/,
   );
 });
+
+test("R12 new request nonce is accepted while the uncertain R11 request remains spent", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r12",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(row), "fixtures"), row);
+  assert.throws(
+    () =>
+      sut.parseSingleRequest(
+        JSON.stringify({ ...row, request_id: "trilha-a-fixtures-20261109-r11" }),
+        "fixtures",
+      ),
+    /REQUEST_/,
+  );
+});

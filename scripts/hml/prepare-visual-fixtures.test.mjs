@@ -8662,3 +8662,208 @@ test("R11 every recovery entry rejects missing hostile or cross-proof R10 before
   assert.equal(traps, 0);
   assert.equal(effects, 0);
 });
+
+const R12_R11_DOCUMENT = {
+  schema: "contaos.fixture.recovery-r11.v1",
+  workflowRun: "42650825191",
+  artifactId: "13690462160",
+  requestId: "trilha-a-fixtures-20261109-r11",
+  harnessSha: "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",
+  zipSha256: "eb445aadc6876e116040946157c2c4a1bd6bfd79f494945649dbd63e6d74eb50",
+  reportSha256: "fcee36850806601be988dedf4afe49fe10e6fccc6640f2b7e0a63a870541dc1a",
+  receiptsSha256: "603a302a92902da2978ddabb20d7972dd9713d39d8838024bfaa89cfb1af33e8",
+  observationSha256: "59eb0943c77cbcc75e0e022d3ebb75cc74384faf73c5f64e6b5dc2cb29059a47",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "PHASE_TIMEOUT",\n  "diagnostics": {\n    "primaryFailure": "PHASE_TIMEOUT",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "COMPETENCY_GET",\n    "subphasePath": [\n      "COMPETENCIES",\n      "COMPETENCY_UI",\n      "COMPETENCY_COMMAND",\n      "RUNTIME_FRESH",\n      "UI_CONFIRM_AFTER",\n      "PREFLIGHT",\n      "COMPETENCY_RECONCILE",\n      "COMPETENCY_UI",\n      "COMPETENCY_GET"\n    ],\n    "lastCompletedSubphase": "COMPETENCY_UI",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 11,\n    "frozen": true,\n    "pending": true,\n    "sent": true,\n    "priorConfirmed": 10,\n    "newArmedCount": 1,\n    "maxIntentions": 24,\n    "maxNewIntentions": 14\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 14,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "partial",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "executionId": "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42650825191",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n    "3c174678-a6ec-4415-9d25-6e8a859de2cb"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42650825191",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_parecer_interno",\n      "requestId": "af968191-7d60-4adb-9c60-ebd5f0741e8e",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42650825191",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_parecer_interno",\n      "requestId": "af968191-7d60-4adb-9c60-ebd5f0741e8e",\n      "state": "uncertain",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d"\n    }\n  ]\n}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42650825191",\n  "firstFailure": null\n}\n',
+};
+
+function r12RecoveryOptions(delta = {}) {
+  return {
+    persist: () => true,
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+    recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+    recoveryLedgerR8: R9_R8_DOCUMENT,
+    recoveryLedgerR9: R10_R9_DOCUMENT,
+    recoveryLedgerR10: R11_R10_DOCUMENT,
+    recoveryLedgerR11: R12_R11_DOCUMENT,
+    ...delta,
+  };
+}
+async function r12OpinionReadback(rows) {
+  const { EventEmitter } = await import("node:events"),
+    { readFile } = await import("node:fs/promises");
+  const sdk = await readFile(
+    new URL("../../src/lib/competencias/parecerInternoDados.ts", import.meta.url),
+    "utf8",
+  );
+  const select = sdk.match(/export const COLUNAS_PARECERES\s*=\s*"([^"]+)"/)[1];
+  let clock = 0;
+  const page = new EventEmitter(),
+    observer = sut.createOfficialObserver(page, {
+      now: () => clock,
+      wait: async () => {
+        clock += 300001;
+      },
+    });
+  const competency = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies[0].id;
+  const job = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    opinion = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    payload = { p_id_competencia: competency };
+  function emit(method, path, value, body) {
+    const url = FIXTURE.api + "/rest/v1/" + path;
+    const request = {
+      url: () => url,
+      method: () => method,
+      postData: () => (body === undefined ? null : JSON.stringify(body)),
+      failure: () => null,
+    };
+    page.emit("request", request);
+    page.emit("response", {
+      request: () => request,
+      url: () => url,
+      status: () => 200,
+      body: async () => Buffer.from(JSON.stringify(value)),
+    });
+  }
+  observer.markMutation("solicitar_parecer_interno", payload, {});
+  emit("POST", "rpc/solicitar_parecer_interno", job, payload);
+  await observer.flush();
+  const where = {
+    id_competencia: competency,
+    id_organizacao: FIXTURE.organization,
+    id_contrato: FIXTURE.contract,
+  };
+  const q = {
+    select,
+    ...Object.fromEntries(Object.entries(where).map(([k, v]) => [k, "eq." + v])),
+    order: "versao.desc,id.desc",
+    offset: "0",
+    limit: "25",
+  };
+  const row = {
+    id: opinion,
+    ...where,
+    autor: null,
+    texto: "Fixture local",
+    status: "rascunho",
+    versao: 1,
+    hash: "c".repeat(64),
+    criado_em: "2026-11-09T00:00:00Z",
+    aprovado_por: null,
+    aprovado_em: null,
+  };
+  emit("GET", "pareceres_internos?" + new URLSearchParams(q), rows ? [row] : []);
+  await observer.flush();
+  return { observer, where, job, opinion };
+}
+test("R12 a distinct opinion UUID satisfies the real post-ACK readback without equating it to the job", async () => {
+  const f = await r12OpinionReadback(true);
+  try {
+    const rows = await f.observer.read("pareceres_internos", f.where);
+    assert.equal(rows[0].id, f.opinion);
+    assert.notEqual(rows[0].id, f.job);
+    assert.equal(f.observer.observationFailure(), null);
+  } finally {
+    f.observer.close();
+  }
+});
+test("R12 the real post-ACK empty opinion read returns to the bounded consumer poll", async () => {
+  const f = await r12OpinionReadback(false);
+  try {
+    assert.deepEqual(await f.observer.read("pareceres_internos", f.where), []);
+    assert.equal(f.observer.observationFailure(), null);
+  } finally {
+    f.observer.close();
+  }
+});
+test("R12 actual opinion queue callback accepts its ACK without reading a materialized opinion", async () => {
+  const s = await r6SourceNodes(),
+    opinion = s.named("opinion");
+  const object = s.nodes.find(
+    (n) =>
+      s.ts.isObjectLiteralExpression(n) &&
+      n.pos >= opinion.pos &&
+      n.end <= opinion.end &&
+      n.properties.some(
+        (p) =>
+          p.name?.getText(s.ast) === "rpc" &&
+          p.initializer?.getText(s.ast) === '"solicitar_parecer_interno"',
+      ),
+  );
+  assert.ok(object);
+  const callback = object.properties
+    .find((p) => p.name?.getText(s.ast) === "confirmAfter")
+    .initializer.getText(s.ast);
+  let reads = 0;
+  const job = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const after = new Function(
+    "tracedPreparation",
+    "io",
+    "readOpinion",
+    "uuid",
+    "p",
+    "return " + callback + ";",
+  )(
+    async (_phase, run) => run(),
+    { fresh: async () => {} },
+    async () => {
+      reads++;
+      return { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" };
+    },
+    (value) => typeof value === "string" && /^[a-f0-9-]{36}$/.test(value),
+    null,
+  );
+  assert.equal(await after(job), true);
+  assert.equal(reads, 0);
+});
+test("R12 the original uncertain R11 document is mandatory before constructing a recovery broker", () => {
+  for (const recoveryLedgerR11 of [undefined, null])
+    assert.throws(
+      () => sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR11 })),
+      /RECOVERY_R11_LEDGER/,
+    );
+});
+test("R12 a recovery broker reserves the uncertain slot without promoting it to confirmed", () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions()),
+    snapshot = b.snapshot();
+  assert.deepEqual(Object.keys(snapshot), [
+    "count",
+    "frozen",
+    "pending",
+    "sent",
+    "priorConfirmed",
+    "priorReserved",
+    "newArmedCount",
+    "maxIntentions",
+    "maxNewIntentions",
+  ]);
+  assert.deepEqual(snapshot, {
+    count: 11,
+    frozen: false,
+    pending: false,
+    sent: false,
+    priorConfirmed: 10,
+    priorReserved: 1,
+    newArmedCount: 0,
+    maxIntentions: 24,
+    maxNewIntentions: 13,
+  });
+});
+test("R12 a historical reconciliation without a current October opinion proof cannot authorize recovery", () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions());
+  assert.throws(
+    () =>
+      b.authorizeRecovery(
+        sut.reconcileR1Recovery(r2Reconciliation({ ledgerR11: R12_R11_DOCUMENT })),
+      ),
+    /RECOVERY_R11_OPINION/,
+  );
+});
