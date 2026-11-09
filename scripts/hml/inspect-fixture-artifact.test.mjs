@@ -28,7 +28,7 @@ import {
   sha256,
 } from "./inspect-fixture-artifact.mjs";
 
-// Technical projections only. These are not the unread R6 report or a business replay.
+// Technical projections only. These are not the unread R8 report or a business replay.
 const BASE = {
   schema: "contaos.fixture.preparation.v1",
   failure: "PREPARER_INCOMPLETE",
@@ -98,9 +98,9 @@ const BASE = {
     ],
   },
   frontendSha: "437c788e32f0325dd15c9d2e7277c10129bcb462",
-  harnessSha: "9cd01a472146c67c4a3cae5f3d9a6b5d7448716a",
+  harnessSha: "dea3ab73c9b47de1126054380b002c37b060ff84",
   deploymentId: "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",
-  workflowRun: "42585173702",
+  workflowRun: "42611391440",
   phase: "FINAL_READBACK",
   completed: false,
   logoutVerified: true,
@@ -117,6 +117,7 @@ const BASE = {
   ],
   v1Certified: false,
 };
+
 const HISTORICAL = {
   "receipts-r1.json":
     '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",\n      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",\n      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",\n      "workflowRun": "42540864527",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "registrar_versao_fonte_v107",\n      "requestId": "08141ffd-56c1-4c50-b58f-32912d1006b2",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467"\n    },\n    {\n      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",\n      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",\n      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",\n      "workflowRun": "42540864527",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "registrar_versao_fonte_v107",\n      "requestId": "08141ffd-56c1-4c50-b58f-32912d1006b2",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467"\n    },\n    {\n      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",\n      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",\n      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",\n      "workflowRun": "42540864527",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_versao_fonte_v107",\n      "requestId": "437a3c66-4bed-45e3-b73e-8696bdf4a791",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769"\n    },\n    {\n      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",\n      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",\n      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",\n      "workflowRun": "42540864527",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_versao_fonte_v107",\n      "requestId": "437a3c66-4bed-45e3-b73e-8696bdf4a791",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769"\n    }\n  ]\n}\n',
@@ -130,7 +131,13 @@ const HISTORICAL = {
     '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "da4e924e-2ed1-4ccd-b847-fc95a44cc383",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "54e6e65b94eb4874e50fe5764348e1a67804aa4df82547033dd9ccff7690f340"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "da4e924e-2ed1-4ccd-b847-fc95a44cc383",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "54e6e65b94eb4874e50fe5764348e1a67804aa4df82547033dd9ccff7690f340"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "31ddaf25-fb66-4cdc-be84-8612e77b17dc",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "3cbe64f69528818238bf16a0dcf02d739bab03f7eea62aff5a7f4f58e52b6a73"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "31ddaf25-fb66-4cdc-be84-8612e77b17dc",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "3cbe64f69528818238bf16a0dcf02d739bab03f7eea62aff5a7f4f58e52b6a73"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "cf429997-d0b6-45bd-880a-be4b103f79bb",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "7c3f9c79fb8b58ff93186827b68ca6dbbe147787d21f8b15c1eb555977bc0b3f"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "cf429997-d0b6-45bd-880a-be4b103f79bb",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "7c3f9c79fb8b58ff93186827b68ca6dbbe147787d21f8b15c1eb555977bc0b3f"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "499dc2a2-c0a2-4a19-9ccb-11c534096f7e",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1c8f192c563e7dc74b6889b916fdf33eb563ca05dbb10d638c51b351dc7f8083"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "499dc2a2-c0a2-4a19-9ccb-11c534096f7e",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1c8f192c563e7dc74b6889b916fdf33eb563ca05dbb10d638c51b351dc7f8083"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "655ae00f-ed36-4a13-a637-bc8b77375783",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1a90a321fa24f8af03c9dc9997b18d21981353cd86ce7e06ba2c51af698e0415"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "655ae00f-ed36-4a13-a637-bc8b77375783",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1a90a321fa24f8af03c9dc9997b18d21981353cd86ce7e06ba2c51af698e0415"\n    }\n  ]\n}\n',
   "recovery-r5.json":
     '{\n  "schema": "contaos.fixture.recovery-r5.v1",\n  "workflowRun": "42578223154",\n  "artifactId": "13656530451",\n  "requestId": "trilha-a-fixtures-20261109-r5",\n  "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n  "zipSha256": "5380c9c1a5b18e75e7a0e09e41902c826eae0a9cb1f9589f7f34a819f463985b",\n  "reportSha256": "c631d266351fa609600dbcdbe60f1d1a54d8fac76e740c10d80017277a6f55ba",\n  "receiptsSha256": "fd97a387cae0e16af65c6923f453ac83262e58447176c3c558b1c10bc15c5eeb",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"PREPARER_INCOMPLETE\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"PREPARER_INCOMPLETE\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"PREFLIGHT\\",\\n    \\"subphasePath\\": [],\\n    \\"lastCompletedSubphase\\": \\"PREFLIGHT\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 8,\\n    \\"frozen\\": false,\\n    \\"pending\\": false,\\n    \\"sent\\": false,\\n    \\"priorConfirmed\\": 3,\\n    \\"newArmedCount\\": 5,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 21\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 3,\\n    \\"maxNewIntentions\\": 21,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": true,\\n    \\"sourceVersion\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"sourceHash\\": \\"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\\"\\n  },\\n  \\"bindings\\": {\\n    \\"sourceVersionId\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"listId\\": \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"listVersionId\\": \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"itemId\\": \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"source\\": \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"competencies\\": [\\n      {\\n        \\"month\\": \\"2026-10-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"id\\": \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n        \\"code\\": \\"COMPETENCE_DEPENDENCY_BLOCKED\\"\\n      },\\n      {\\n        \\"month\\": \\"2026-09-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"id\\": \\"79bdc139-ed10-4c91-905e-b32b9a824d27\\",\\n        \\"code\\": \\"COMPETENCE_DEPENDENCY_BLOCKED\\"\\n      }\\n    ]\\n  },\\n  \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n  \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n  \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n  \\"workflowRun\\": \\"42578223154\\",\\n  \\"phase\\": \\"FINAL_READBACK\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [\\n    \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n    \\"79bdc139-ed10-4c91-905e-b32b9a824d27\\"\\n  ],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\n  \\"schema\\": \\"contaos.fixture.receipts.v1\\",\\n  \\"receipts\\": [\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42578223154\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"executar_comando_lista_v1\\",\\n      \\"requestId\\": \\"da4e924e-2ed1-4ccd-b847-fc95a44cc383\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"54e6e65b94eb4874e50fe5764348e1a67804aa4df82547033dd9ccff7690f340\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42578223154\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"executar_comando_lista_v1\\",\\n      \\"requestId\\": \\"da4e924e-2ed1-4ccd-b847-fc95a44cc383\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"54e6e65b94eb4874e50fe5764348e1a67804aa4df82547033dd9ccff7690f340\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42578223154\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"executar_comando_lista_v1\\",\\n      \\"requestId\\": \\"31ddaf25-fb66-4cdc-be84-8612e77b17dc\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"3cbe64f69528818238bf16a0dcf02d739bab03f7eea62aff5a7f4f58e52b6a73\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42578223154\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"executar_comando_lista_v1\\",\\n      \\"requestId\\": \\"31ddaf25-fb66-4cdc-be84-8612e77b17dc\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"3cbe64f69528818238bf16a0dcf02d739bab03f7eea62aff5a7f4f58e52b6a73\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42578223154\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"executar_comando_lista_v1\\",\\n      \\"requestId\\": \\"cf429997-d0b6-45bd-880a-be4b103f79bb\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"7c3f9c79fb8b58ff93186827b68ca6dbbe147787d21f8b15c1eb555977bc0b3f\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42578223154\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"executar_comando_lista_v1\\",\\n      \\"requestId\\": \\"cf429997-d0b6-45bd-880a-be4b103f79bb\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"7c3f9c79fb8b58ff93186827b68ca6dbbe147787d21f8b15c1eb555977bc0b3f\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42578223154\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"criar_competencia\\",\\n      \\"requestId\\": \\"499dc2a2-c0a2-4a19-9ccb-11c534096f7e\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"1c8f192c563e7dc74b6889b916fdf33eb563ca05dbb10d638c51b351dc7f8083\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42578223154\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"criar_competencia\\",\\n      \\"requestId\\": \\"499dc2a2-c0a2-4a19-9ccb-11c534096f7e\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"1c8f192c563e7dc74b6889b916fdf33eb563ca05dbb10d638c51b351dc7f8083\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42578223154\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"criar_competencia\\",\\n      \\"requestId\\": \\"655ae00f-ed36-4a13-a637-bc8b77375783\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"1a90a321fa24f8af03c9dc9997b18d21981353cd86ce7e06ba2c51af698e0415\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42578223154\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"criar_competencia\\",\\n      \\"requestId\\": \\"655ae00f-ed36-4a13-a637-bc8b77375783\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"1a90a321fa24f8af03c9dc9997b18d21981353cd86ce7e06ba2c51af698e0415\\"\\n    }\\n  ]\\n}\\n"\n}\n',
+  "receipts-r6.json": '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  "recovery-r6.json":
+    '{\n  "schema": "contaos.fixture.recovery-r6.v1",\n  "workflowRun": "42585173702",\n  "artifactId": "13658434738",\n  "requestId": "trilha-a-fixtures-20261109-r6",\n  "harnessSha": "9cd01a472146c67c4a3cae5f3d9a6b5d7448716a",\n  "zipSha256": "10e55ed5856aac2879188ab5f2df3b1f4a98b180de21dd7abcb470c162f9d68c",\n  "reportSha256": "8fd354bf2177f47a7b124a9d53e606de91880a45b2d94daebe46185403ebbeff",\n  "receiptsSha256": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"FLOW_BUTTON_UNAVAILABLE\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"FLOW_BUTTON_UNAVAILABLE\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"SOURCE_UI_CONTROL\\",\\n    \\"subphasePath\\": [\\n      \\"SOURCE_AND_LIST\\",\\n      \\"RECOVERY_READ\\",\\n      \\"SOURCE_UI_CONTROL\\",\\n      \\"SOURCE_UI_CONTROL\\"\\n    ],\\n    \\"lastCompletedSubphase\\": \\"SOURCE_UI_CONTROL\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 8,\\n    \\"frozen\\": false,\\n    \\"pending\\": false,\\n    \\"sent\\": false,\\n    \\"priorConfirmed\\": 8,\\n    \\"newArmedCount\\": 0,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 16\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 8,\\n    \\"maxNewIntentions\\": 16,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": false,\\n    \\"sourceVersion\\": null,\\n    \\"sourceHash\\": null\\n  },\\n  \\"bindings\\": null,\\n  \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n  \\"harnessSha\\": \\"9cd01a472146c67c4a3cae5f3d9a6b5d7448716a\\",\\n  \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n  \\"workflowRun\\": \\"42585173702\\",\\n  \\"phase\\": \\"SOURCE_AND_LIST\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\"schema\\":\\"contaos.fixture.receipts.v1\\",\\"receipts\\":[]}\\n"\n}\n',
+  "recovery-r7.json":
+    '{\n  "schema": "contaos.fixture.recovery-r7.v1",\n  "headSha": "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",\n  "upstreamRun": 42601246471,\n  "fixturesRun": 42601383933,\n  "auditRun": 42601384052,\n  "privateJob": 129106715983,\n  "attempt": 1,\n  "derivedNewBusinessIntents": 0,\n  "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n}\n',
 };
+
 const empty = () => ({ schema: "contaos.fixture.receipts.v1", receipts: [] });
 const clone = (v) => structuredClone(v);
 const report = () => clone(BASE);
@@ -221,9 +228,9 @@ function metadataFixture() {
   const jobs = {
     total_count: 3,
     jobs: [
-      [129053161135, "Trilha A solicitacao unica sem credenciais", "success"],
-      [129053162669, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-      [129053499534, "Trilha A preparacao sintetica HML", "failure"],
+      [129140419219, "Trilha A solicitacao unica sem credenciais", "success"],
+      [129140421628, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+      [129140789918, "Trilha A preparacao sintetica HML", "failure"],
     ].map(([id, name, conclusion]) => ({
       id,
       name,
@@ -236,7 +243,7 @@ function metadataFixture() {
   };
   return { run, upstream, artifact, artifacts: { total_count: 1, artifacts: [artifact] }, jobs };
 }
-test("R6 official digest is mandatory independently of successful child exit", () => {
+test("R8 official digest is mandatory independently of successful child exit", () => {
   assert.equal(validateDownloadOutput(downloaded()), true);
   for (const change of [
     { stdout: "" },
@@ -249,7 +256,7 @@ test("R6 official digest is mandatory independently of successful child exit", (
   ])
     assert.throws(() => validateDownloadOutput({ ...downloaded(), ...change }));
 });
-test("R6 never reemits private child output and rejects getter/Proxy inputs", () => {
+test("R8 never reemits private child output and rejects getter/Proxy inputs", () => {
   let calls = 0;
   const getter = {
     status: 0,
@@ -280,7 +287,7 @@ test("R6 never reemits private child output and rejects getter/Proxy inputs", ()
     true,
   );
 });
-test("R6 metadata target, owner, uniqueness and attempt are fixed", () => {
+test("R8 metadata target, owner, uniqueness and attempt are fixed", () => {
   assert.equal(validateMetadata(metadataFixture()), true);
   for (const mutate of [
     (v) => (v.run.run_attempt = 2),
@@ -299,7 +306,7 @@ test("R6 metadata target, owner, uniqueness and attempt are fixed", () => {
     assert.throws(() => validateMetadata(v));
   }
 });
-test("R6 canonical UTF8 original has no hidden duplicate fields or trailer", () => {
+test("R8 canonical UTF8 original has no hidden duplicate fields or trailer", () => {
   const r = report(),
     raw = text(r);
   assert.equal(canonicalJson(Buffer.from(raw)).raw, raw);
@@ -315,7 +322,7 @@ test("R6 canonical UTF8 original has no hidden duplicate fields or trailer", () 
   );
   assert.throws(() => canonicalJson(Buffer.from(text(empty())), "receipts"));
 });
-test("R6 synthetic report projection validates closed fifteen-key schema", () => {
+test("R8 synthetic report projection validates closed fifteen-key schema", () => {
   assert.equal(validateRecords(report(), empty()).observations.newArmedCount, 0);
   for (const mutate of [
     (r) => (r.secret = "TOKEN_CANARY"),
@@ -333,7 +340,7 @@ test("R6 synthetic report projection validates closed fifteen-key schema", () =>
     assert.throws(() => validateRecords(r, empty()));
   }
 });
-test("R6 missing ledger/bindings retains UNKNOWN without inventing zero operations", () => {
+test("R8 missing ledger/bindings retains UNKNOWN without inventing zero operations", () => {
   const r = report();
   r.intentLedger = null;
   r.bindings = null;
@@ -343,7 +350,7 @@ test("R6 missing ledger/bindings retains UNKNOWN without inventing zero operatio
   assert.equal(v.newConfirmed, "UNKNOWN");
   assert.equal(v.bindings, "UNKNOWN");
 });
-test("R6 rows have eleven required keys and receipt state is not confirmed by inference", () => {
+test("R8 rows have eleven required keys and receipt state is not confirmed by inference", () => {
   const r = report();
   r.intentLedger.count = 9;
   r.intentLedger.newArmedCount = 1;
@@ -372,20 +379,20 @@ test("R6 rows have eleven required keys and receipt state is not confirmed by in
     assert.throws(() => validateRecords(r, { ...empty(), receipts: [v] }));
   }
 });
-test("R6 original six historical byte hashes match protected PLAN", () => {
+test("R8 original nine historical byte hashes match protected PLAN", () => {
   for (const [name, raw] of Object.entries(HISTORICAL))
     assert.equal(sha256(Buffer.from(raw)), HISTORY[name]);
 });
-test("R6 entire directory validates before one bounded proof is produced", (t) => {
+test("R8 entire directory validates before one bounded proof is produced", (t) => {
   const root = fixture(t),
     proof = JSON.parse(buildProof(root, inspection));
   assert.equal(proof.type, "FIXTURE_INSPECTION_PROOF");
-  assert.equal(proof.manifest.length, 8);
+  assert.equal(proof.manifest.length, 11);
   assert.equal(proof.reportRaw, readFileSync(join(root, "report.json"), "utf8"));
   assert.equal(proof.receiptsRaw, readFileSync(join(root, "receipts.json"), "utf8"));
   assert.ok(Buffer.byteLength(JSON.stringify(proof)) <= 65536);
 });
-test("R6 unknown member/nested directory and symlinks/hardlinks fail closed", (t) => {
+test("R8 unknown member/nested directory and symlinks/hardlinks fail closed", (t) => {
   for (const kind of ["extra", "directory", "symlink", "hardlink"]) {
     const root = fixture(t);
     if (kind === "extra") writeFileSync(join(root, "unknown.png"), "TOKEN_CANARY");
@@ -401,7 +408,7 @@ test("R6 unknown member/nested directory and symlinks/hardlinks fail closed", (t
     assert.throws(() => buildProof(root, inspection));
   }
 });
-test("R6 manifest order/hash/history and late schema errors never produce partial proof", (t) => {
+test("R8 manifest order/hash/history and late schema errors never produce partial proof", (t) => {
   for (const kind of ["order", "hash", "historical", "schema", "oversize"]) {
     const root = fixture(t, (content) => {
       if (kind === "historical") content["recovery-r5.json"] += " ";
@@ -424,7 +431,7 @@ test("R6 manifest order/hash/history and late schema errors never produce partia
     assert.equal(output, "");
   }
 });
-test("R6 shared deadline remains enforced before final proof publication", (t) => {
+test("R8 shared deadline remains enforced before final proof publication", (t) => {
   const root = fixture(t);
   let calls = 0,
     output = "";
@@ -435,7 +442,7 @@ test("R6 shared deadline remains enforced before final proof publication", (t) =
   });
   assert.equal(output, "");
 });
-test("R6 CLI rejects arbitrary arguments before metadata or downloader and emits only generic enum", () => {
+test("R8 CLI rejects arbitrary arguments before metadata or downloader and emits only generic enum", () => {
   const child = spawnSync(
     process.execPath,
     ["scripts/hml/inspect-fixture-artifact.mjs", "--url=TOKEN_CANARY"],
@@ -445,7 +452,7 @@ test("R6 CLI rejects arbitrary arguments before metadata or downloader and emits
   assert.equal(child.stdout, "");
   assert.equal(child.stderr, "FIXTURE_INSPECTION_FAILED\n");
 });
-test("R6 workflow grants actions read only to protected main inspector and has no authorization runtime", () => {
+test("R8 workflow grants actions read only to protected main inspector and has no authorization runtime", () => {
   const yaml = readFileSync(".github/workflows/contaos-trilha-a-fixture-inspection.yml", "utf8");
   assert.ok(yaml.includes("github.event_name == 'push' && github.ref == 'refs/heads/main'"));
   assert.equal((yaml.match(/actions: read/g) || []).length, 1);
@@ -457,7 +464,7 @@ test("R6 workflow grants actions read only to protected main inspector and has n
   assert.ok(yaml.includes(PIN.tool));
 });
 
-test("R6 official pinned bundle parses and fails closed without token or environment", () => {
+test("R8 official pinned bundle parses and fails closed without token or environment", () => {
   const path = ".fixture-inspection-tool/dist/index.js";
   const bytes = readFileSync(path);
   assert.ok(bytes.length > 0);
@@ -484,7 +491,7 @@ test("R6 official pinned bundle parses and fails closed without token or environ
   assert.equal(smoke.signal, null);
   assert.ok(!smoke.error);
 });
-test("R6 known binding roles and collected ids cannot smuggle unrelated UUIDs", () => {
+test("R8 known binding roles and collected ids cannot smuggle unrelated UUIDs", () => {
   for (const change of [
     (r) => (r.bindings.listId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
     (r) => (r.bindings.competencies[0].id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
@@ -497,7 +504,7 @@ test("R6 known binding roles and collected ids cannot smuggle unrelated UUIDs", 
   }
 });
 
-test("R6 proof inspection origin is closed before serializing any caller object", (t) => {
+test("R8 proof inspection origin is closed before serializing any caller object", (t) => {
   const root = fixture(t);
   let calls = 0,
     output = "";
@@ -528,7 +535,7 @@ test("R6 proof inspection origin is closed before serializing any caller object"
   assert.equal(calls, 0);
 });
 
-test("R6 real downloader consumer fixes child inputs and keeps errors and private logs captured", () => {
+test("R8 real downloader consumer fixes child inputs and keeps errors and private logs captured", () => {
   let observed;
   const run = (result) =>
     executeOfficialTool(
@@ -592,7 +599,7 @@ test("R6 real downloader consumer fixes child inputs and keeps errors and privat
   );
 });
 
-test("R6 downstream role UUID syntax matches producer versions one through eight", () => {
+test("R8 downstream role UUID syntax matches producer versions one through eight", () => {
   const r = report();
   r.bindings.competencies[0].executionId = "aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa";
   r.ids.push(r.bindings.competencies[0].executionId);
@@ -615,7 +622,7 @@ test("R6 downstream role UUID syntax matches producer versions one through eight
   );
 });
 
-test("R6 armed intentions without a complete confirmed receipt ledger remain UNKNOWN", () => {
+test("R8 armed intentions without a complete confirmed receipt ledger remain UNKNOWN", () => {
   const r = report();
   r.intentLedger.count = 9;
   r.intentLedger.newArmedCount = 1;
@@ -639,7 +646,7 @@ test("R6 armed intentions without a complete confirmed receipt ledger remain UNK
   assert.equal(validateRecords(frozen, empty()).observations.newConfirmed, "UNKNOWN");
 });
 
-test("R6 directory FD prevents parent replacement from redirecting any artifact read", (t) => {
+test("R8 directory FD prevents parent replacement from redirecting any artifact read", (t) => {
   const root = fixture(t),
     victim = fixture(t),
     original = root + "-original";
@@ -660,4 +667,55 @@ test("R6 directory FD prevents parent replacement from redirecting any artifact 
   });
   assert.equal(output, "");
   assert.equal(lstatSync(watched).atimeMs, before);
+});
+
+test("appended R6 history is immutable, ordered, and canonically empty where produced", () => {
+  assert.deepEqual(FILES.slice(-3), ["receipts-r6.json", "recovery-r6.json", "recovery-r7.json"]);
+  assert.equal(FILES.length, 11);
+  assert.equal(Object.keys(HISTORY).length, 9);
+  assert.equal(
+    HISTORY["receipts-r6.json"],
+    "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  );
+  assert.equal(
+    HISTORY["recovery-r6.json"],
+    "98136adfe0c84c274ca31534b847b640a35f2577d2ad6197e451324a51ac7e03",
+  );
+  const receipts = canonicalJson(Buffer.from(HISTORICAL["receipts-r6.json"]), "receipts");
+  assert.equal(receipts.value.receipts.length, 0);
+  const document = canonicalJson(Buffer.from(HISTORICAL["recovery-r6.json"])).value;
+  assert.equal(Object.keys(document).length, 10);
+  assert.equal(document.receiptsRaw, receipts.raw);
+  const r = report();
+  r.failure = "RECOVERY_R6_LEDGER";
+  r.diagnostics.primaryFailure = "RECOVERY_R6_LEDGER";
+  assert.equal(validateRecords(r, empty()).report.failure, "RECOVERY_R6_LEDGER");
+});
+
+test("R7 zero-auth history contains only its nine-field metadata proof", () => {
+  assert.equal(FILES.at(-1), "recovery-r7.json");
+  assert.ok(!FILES.includes("receipts-r7.json") && !FILES.includes("report-r7.json"));
+  const raw = HISTORICAL["recovery-r7.json"];
+  assert.equal(Buffer.byteLength(raw), 316);
+  assert.equal(
+    sha256(Buffer.from(raw)),
+    "687712aa5ab15072afc65aceacdff52ce5d94c6ba9f2ceccf6867e4636bd1c4e",
+  );
+  const document = canonicalJson(Buffer.from(raw)).value;
+  assert.equal(Object.keys(document).length, 9);
+  assert.equal(document.derivedNewBusinessIntents, 0);
+  const r = report();
+  r.failure = "RECOVERY_R7_LEDGER";
+  r.diagnostics.primaryFailure = "RECOVERY_R7_LEDGER";
+  assert.equal(validateRecords(r, empty()).report.failure, "RECOVERY_R7_LEDGER");
+});
+
+test("R8 literal target is terminal attempt one and cannot be selected through caller inputs", () => {
+  assert.equal(PIN.run, 42611391440);
+  assert.equal(PIN.head, "dea3ab73c9b47de1126054380b002c37b060ff84");
+  assert.equal(PIN.upstream, 42611241610);
+  assert.equal(PIN.artifact, 13670961904);
+  assert.equal(PIN.size, 11240);
+  assert.equal(PIN.name, "trilha-a-fixtures-42611391440-1");
+  assert.equal(PIN.digest, "698e58fe9184b194cc1866b4c119d4df45ba23ccc5704665469a99793cce2fa9");
 });
