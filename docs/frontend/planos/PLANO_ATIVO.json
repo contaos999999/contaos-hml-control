@@ -3482,5 +3482,30 @@
     "deploy_authorized_by_document": false,
     "src_or_yaml_changes_allowed": false,
     "prod_changes_allowed": false
+  },
+  "trilha_a_r14_recovery_gate": {
+    "status": "GATE_R14_BUILD_APOS_CI_REVISAO_MERGE",
+    "plan_merge": "396857e5684e2dd00b697718d46b5710eefc72fc",
+    "gate": "docs/frontend/planos/TRILHA_A_R14_RECUPERACAO_R13_AUTH_GATE_2026-11-09.md",
+    "ui_build_merge": "c5a96ad40c7e4bec08738b5a7cfceaf3ddd0b399",
+    "ui_build_head": "84a4d4f5d1ae8acfc596c5e89a61d0c9a084fc31",
+    "doc_r13_sha256": "92bf8114d857b2061b0a2ce67cfb908f2dd1c71e1800b567bfecf52c17e12da9",
+    "doc_r13_fields": 12,
+    "doc_r13_bytes": 3108,
+    "nonce_future": "trilha-a-fixtures-20261109-r14",
+    "spent_r13": true,
+    "new_gets": 0,
+    "new_env": 0,
+    "prior_confirmed": 10,
+    "prior_reserved": 1,
+    "max_new_intentions": 13,
+    "artifact_data_members": 22,
+    "artifact_total_members": 23,
+    "artifact_historical_members": 19,
+    "native_total": 18,
+    "sourceforms": 5,
+    "auth_authorized_by_document": false,
+    "deploy_authorized": false,
+    "certified": false
   }
 }
