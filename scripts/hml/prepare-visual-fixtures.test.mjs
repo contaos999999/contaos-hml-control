@@ -10396,12 +10396,18 @@ test("R16 void projection requires the original associated mutation request", as
   }
 });
 test("R16 nonempty associated 204 and malformed JSON fail and zero their buffers", async () => {
-  for (const [status, raw] of [[204, '{"private":"R16_PRIVATE_CANARY"}'], [200, "{"]]) {
+  for (const [status, raw] of [
+    [204, '{"private":"R16_PRIVATE_CANARY"}'],
+    [200, "{"],
+  ]) {
     const f = await r16VoidObserverFixture();
     try {
       const body = f.ack({ status, raw });
       await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
-      assert.equal(body.bytes.every((byte) => byte === 0), true);
+      assert.equal(
+        body.bytes.every((byte) => byte === 0),
+        true,
+      );
       assert.equal(JSON.stringify(f.observer.observationFailure()).includes("CANARY"), false);
     } finally {
       f.observer.close();
