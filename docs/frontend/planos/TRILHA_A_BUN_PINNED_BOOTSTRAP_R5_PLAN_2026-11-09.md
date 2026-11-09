@@ -41,6 +41,8 @@ GATE deve enumerar as SETE ocorrênciassetup-bun nas trêsworkflows(Zero1/Auth3/
 
 Literalproposto futuro trilha-a-fixtures-20261109-r5. R1/R2/R3/R4 consumidosreconhecidos somentehistórico, R5únicoexecutável apósBUILDintegrado. Mantertrêsoperaçõesconfirmadas(R1duas+R3ativação), máximoglobais24 e21novas; negar registrar_versao_fonte_v107/aprovar_versao_fonte_v107/salvar_fonte_normativa_v107 mesmo comnovaUUID. R4préAuthnão consomeintenção denegócio, mas consomenonce/identidadederequest; não reporbudgetnemreativarfonte.
 
+Decisão a fechar noGATE: provaR4zeroAuth por GitHubmetadataread-only bounded anteslogin/requestpreflight, com IDsfixos/hashesHEAD/attempt1/statusSKIPPED e enumeração completa limitada comprovando exatamenteumrunAudit e umFixtures paraHEADR4; origemworkflow/repo/event/caminho/parentupstream exatos. Ausência/duplicidade/attempt2/página incompleta/falhadeconsulta/privadoexecutado bloqueiam. Não confiar sóemstaticruntimecount3, não exigirreportprivadoinexistente, não lerlogsAuth/secrets oucriarconsultaHML. GATEenumerará endpointsGitHub/IDs/paginação/datasetliteral e novosnegativos antesBUILD.
+
 LedgerR4minimizado deve provar upstreamfailure/download e ambosjobsprivadosSKIPPED/attempt1/HEAD/nonce, preservarledgersR1/R2/R3ehashesoriginais. Anteslogin/broker validarorigem/histórico; count3/remaining21derivados explicitamente. Nãoexigirreportprivadoinexistente ouinventarreceipt/logoutR4. Sehistóricoadulterado/ausente/ambíguo, bloquear.
 
 ## RED→GREEN e aceite
