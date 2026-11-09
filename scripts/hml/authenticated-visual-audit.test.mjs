@@ -10566,9 +10566,20 @@ test("R12 auth protocol rejects a partial pending October GET before any further
   };
   try {
     const after = observer.generation();
-    const emitRecoveryData = new Function("FIXTURE", "R6_R5_DOCUMENT", named("r11SqlV116") + ";" + named("r17RecoveryData") + ";" + named("r17EmitRecoveryData") + ";return r17EmitRecoveryData;")(fixture, prep.R5_RECOVERY_DOCUMENT);
+    const emitRecoveryData = new Function(
+      "FIXTURE",
+      "R6_R5_DOCUMENT",
+      named("r11SqlV116") +
+        ";" +
+        named("r17RecoveryData") +
+        ";" +
+        named("r17EmitRecoveryData") +
+        ";return r17EmitRecoveryData;",
+    )(fixture, prep.R5_RECOVERY_DOCUMENT);
     for (const c of JSON.parse(prep.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
-      emit({ ...query, id_competencia: "eq." + c.id }, [{ ...row, id: c.opinionId, id_competencia: c.id }]);
+      emit({ ...query, id_competencia: "eq." + c.id }, [
+        { ...row, id: c.opinionId, id_competencia: c.id },
+      ]);
       emitRecoveryData(page, c);
     }
     await observer.flush();
@@ -10697,9 +10708,20 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
   };
   try {
     const after = observer.generation();
-    const emitRecoveryData = new Function("FIXTURE", "R6_R5_DOCUMENT", named("r11SqlV116") + ";" + named("r17RecoveryData") + ";" + named("r17EmitRecoveryData") + ";return r17EmitRecoveryData;")(fixture, prep.R5_RECOVERY_DOCUMENT);
+    const emitRecoveryData = new Function(
+      "FIXTURE",
+      "R6_R5_DOCUMENT",
+      named("r11SqlV116") +
+        ";" +
+        named("r17RecoveryData") +
+        ";" +
+        named("r17EmitRecoveryData") +
+        ";return r17EmitRecoveryData;",
+    )(fixture, prep.R5_RECOVERY_DOCUMENT);
     for (const c of JSON.parse(prep.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
-      emit({ ...query, id_competencia: "eq." + c.id }, [{ ...row, id: c.opinionId, id_competencia: c.id }]);
+      emit({ ...query, id_competencia: "eq." + c.id }, [
+        { ...row, id: c.opinionId, id_competencia: c.id },
+      ]);
       emitRecoveryData(page, c);
     }
     await observer.flush();
@@ -10828,9 +10850,20 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
   };
   try {
     const after = observer.generation();
-    const emitRecoveryData = new Function("FIXTURE", "R6_R5_DOCUMENT", named("r11SqlV116") + ";" + named("r17RecoveryData") + ";" + named("r17EmitRecoveryData") + ";return r17EmitRecoveryData;")(fixture, prep.R5_RECOVERY_DOCUMENT);
+    const emitRecoveryData = new Function(
+      "FIXTURE",
+      "R6_R5_DOCUMENT",
+      named("r11SqlV116") +
+        ";" +
+        named("r17RecoveryData") +
+        ";" +
+        named("r17EmitRecoveryData") +
+        ";return r17EmitRecoveryData;",
+    )(fixture, prep.R5_RECOVERY_DOCUMENT);
     for (const c of JSON.parse(prep.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
-      emit({ ...query, id_competencia: "eq." + c.id }, [{ ...row, id: c.opinionId, id_competencia: c.id }]);
+      emit({ ...query, id_competencia: "eq." + c.id }, [
+        { ...row, id: c.opinionId, id_competencia: c.id },
+      ]);
       emitRecoveryData(page, c);
     }
     await observer.flush();
@@ -13988,9 +14021,34 @@ test("R17 original R16 validator is shared, immutable and rejects hostile docume
   assert.equal(Object.isFrozen(clean), true);
   let effects = 0;
   const getter = { ...doc };
-  Object.defineProperty(getter, "reportRaw", { enumerable: true, get() { effects++; return doc.reportRaw; } });
-  const proxy = new Proxy(doc, { get() { effects++; throw Error("TRAP"); }, ownKeys() { effects++; throw Error("TRAP"); } });
-  for (const value of [undefined, null, {}, { ...doc, artifactId: "13713326447" }, { ...doc, reportRaw: "{}\n" }, { ...doc, extra: true }, Object.fromEntries(Object.entries(doc).reverse()), getter, proxy]) {
+  Object.defineProperty(getter, "reportRaw", {
+    enumerable: true,
+    get() {
+      effects++;
+      return doc.reportRaw;
+    },
+  });
+  const proxy = new Proxy(doc, {
+    get() {
+      effects++;
+      throw Error("TRAP");
+    },
+    ownKeys() {
+      effects++;
+      throw Error("TRAP");
+    },
+  });
+  for (const value of [
+    undefined,
+    null,
+    {},
+    { ...doc, artifactId: "13713326447" },
+    { ...doc, reportRaw: "{}\n" },
+    { ...doc, extra: true },
+    Object.fromEntries(Object.entries(doc).reverse()),
+    getter,
+    proxy,
+  ]) {
     assert.throws(() => sut.validateR16RecoveryDocument(value), /RECOVERY_R16_LEDGER/);
   }
   assert.equal(effects, 0);

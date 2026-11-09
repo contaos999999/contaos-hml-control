@@ -5683,7 +5683,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       "92bf8114d857b2061b0a2ce67cfb908f2dd1c71e1800b567bfecf52c17e12da9",
     );
 
-    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 24);
+    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 26);
     for (const line of manifest) {
       assert.match(line, /^[0-9a-f]{64}  [a-z0-9.-]+$/);
       const bytes = await fs.readFile(join(output, line.slice(66)));
