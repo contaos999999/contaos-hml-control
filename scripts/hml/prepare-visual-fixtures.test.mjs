@@ -7946,3 +7946,81 @@ test("R11 R10 recovery document preserves the original own-key order", () => {
   const reversed = Object.fromEntries(Object.entries(literal).reverse());
   assert.throws(() => sut.validateR10RecoveryDocument(reversed), /RECOVERY_R10_LEDGER/);
 });
+
+test("R11 typed action pagination and blocking envelopes reject every scalar kind", () => {
+  for (const path of ["allowed_actions", "resultados_paginacao", "blocking_summary"])
+    for (const value of ["TECHNICAL_CANARY", 42, true]) {
+      const raw = r11SqlV116();
+      raw[path] = value;
+      assert.throws(
+        () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+        /OBSERVATION_/,
+      );
+    }
+});
+test("R11 metadata omissions never inspect their values while foreign metadata stays fatal", () => {
+  const { proxy, revoke } = Proxy.revocable({}, {});
+  revoke();
+  let reads = 0,
+    traps = 0;
+  const hostile = new Proxy(
+    {},
+    {
+      get() {
+        traps++;
+        throw Error("CANARY");
+      },
+      ownKeys() {
+        traps++;
+        throw Error("CANARY");
+      },
+      getPrototypeOf() {
+        traps++;
+        throw Error("CANARY");
+      },
+    },
+  );
+  for (const path of ["execucao_atual", "execucoes", "resultados"]) {
+    for (const value of [hostile, proxy]) {
+      const raw = r11SqlV116();
+      const target = path === "execucao_atual" ? raw.execucao_atual : raw[path][0];
+      target.metadados = value;
+      const clean = sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw);
+      assert.equal(
+        Object.hasOwn(
+          path === "execucao_atual" ? clean.execucao_atual : clean[path][0],
+          "metadados",
+        ),
+        false,
+      );
+    }
+    const raw = r11SqlV116();
+    const target = path === "execucao_atual" ? raw.execucao_atual : raw[path][0];
+    Object.defineProperty(target, "metadados", {
+      enumerable: true,
+      get() {
+        reads++;
+        throw Error("CANARY");
+      },
+    });
+    sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw);
+  }
+  const raw = r11SqlV116();
+  Object.defineProperty(raw.competencia, "metadados", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  assert.throws(
+    () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+    /OBSERVATION_/,
+  );
+  assert.throws(
+    () => sut.projectOfficialResponse({ metadados: { canary: true } }),
+    /OBSERVATION_METADATA/,
+  );
+  assert.equal(reads, 0);
+  assert.equal(traps, 0);
+});
