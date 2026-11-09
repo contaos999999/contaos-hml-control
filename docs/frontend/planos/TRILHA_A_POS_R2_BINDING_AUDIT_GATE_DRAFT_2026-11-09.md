@@ -41,6 +41,29 @@ GATE389 cobre somente os dois intervalos antigos V109, não novos registros. GAT
 
 Scanner sensível original primeiro; depois reconhecimento de campo/contexto/proveniência exatos. Nenhuma regex global UUID/data/palavra, masking, corte de DOM, filtro de UI, mudança de RLS ou liberação de vizinhos desconhecidos. Nome repetido não identifica card: preservar bijeção ordenada e subtree/multiset aprovados. Actor UUID operacional pseudônimo tem escopo consentido, não é declaração synthetic nem lookup de identidade. Sem Authresponse/headers/cookies/storage/trace/HAR/PIIbruta. Recibos técnicos minimizados não autorizam exportar conteúdo desconhecido.
 
+## Complemento pós-R3: campos afetados e limites das rotas
+
+R3 ainda não fornece bindings finais neste draft. Não executar consultas, consumir nonce ou atualizar catálogo por inferência. Preservar exatamente184casos originais e seu ledger;24fixtures são três superfícies×8, não novo universo192. Nenhuma liberação de AUDIT_BINDING_PENDING até recibos reais e vínculos fechados.
+
+| Superfície/campo afetado | Registro posterior exigido | Limite |
+|---|---|---|
+| V107 atualizado_em da fonte após ativação | valor técnico observado oficialmente, formatoUI real e proveniência vinculada à operação/registro real | não copiar timestampR1/R2, não globalregexdate |
+| V109 lista nova criada/reconciliada pelas fixtures | listId/listVersionId/itemId e nome/descrição/datas/estado efetivamente visíveis da lista nova | listaantiga1613484c-87ee-4276-a464-d1a378134fc9 NÃO presumida alterada; GATE389 antigo não autoriza nova lista |
+| V112 linhas2026-09/2026-10 | IDs técnicos, meses, estados, datas, ordem e projeçãoARIA reais das duas novas linhas | manter todaslinhas/background íntegros e desconhecidos bloqueados |
+| V117 drawer de requisitoOct | competência/análise/execução/requisito/resultado efetivos e DOM completo de drawer+análiseOct ao fundo | não cortar ou ocultar background para passar scanner; não usar requisitoNov por conveniência |
+| V114/V115/V116/V118 da matriz | continuam competência históricaNov59072760-4420-4598-82dd-367f41a79e89 | R3 não autoriza mutarNov nem trocar essas rotas porSep/Oct implicitamente |
+| V123 novos eventos apósfixtures | rito/catalogação separado433 e dados atuais revisados | este draft não antecipaaceite nem repete descobertaV123 |
+
+A topologia de rotas da auditoria permanece a aprovada: somente V117/V119 usamOct e V120 usaSep nos vínculos propostos. A necessidade de backgroundOct emV117 não troca V116 formal da matriz, que continuaNov. OutrosIDs só mudam com prova e GATE específico; nenhum alias/routing por semelhança.
+
+### Recibos não equivalem a catálogo de conteúdo
+
+safeReceipt minimiza IDs sem semântica de roles e contém hashes de payload; esses hashes não revelam timestamps/bytes visíveis nem provam coluna/role de cada UUID. fixtureBindingReceipt atribui roles técnicas de fonte/lista/item/competências/documentos/execução/parecer/apresentação/pacote, mas não transporta timestamps. Nenhum dos dois fornece sozinho catálogo completo de privacidade da UI.
+
+Portanto o documento de aceitação posterior deve distinguir: (a) ID e role comprovados pelo binding; (b) operação/proveniência/hashes do recibo; (c) valor/timestamp e contextoDOM realmente vistos por leitura ordinária oficial já autorizada. Campos ausentes permanecem PENDENTE. Usar exclusivamente UI/SDK e observaçõesjáaprovadas, método/endpoint/corpo/cols/paginação fechados. Nem receipt nem role/allowed_actions autorizam novaSQL/RPC/query ou rede. Se não houver prova no conjunto existente, preparar GATE específico de leitura mínima ANTES de ler, preservando classificação/PII e semAuthcapture.
+
+Não inferir datas por relógio do run, hashes por descrição, nomes por template ou situação por sucesso de mutação. Validar sourceformat/fuso/tamanho e relações atuais; scanneroriginalprimeiro e unknownneighborsbloqueiam. Esses vínculos são pendências de evidência, não motivo para remover barreiras.
+
 ## GATE final e BUILD posterior separados
 
 Este draft deve permanecer aberto até os campos impeditivos serem preenchidos e revistos. O GATE final deverá versionar catálogo/recibo técnico novo em docs/frontend/auditorias/evidencias/, com schema fechado e hashes reais, sem modificar seis/sete recibos históricos. CI e revisão independente no HEAD final, integração coordenada APÓS encerrado freezeR2; só então BUILD.
