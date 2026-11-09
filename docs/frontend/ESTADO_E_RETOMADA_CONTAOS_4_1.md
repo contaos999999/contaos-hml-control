@@ -1,3 +1,29 @@
+# Continuidade P0: auditoria incompleta e preparador com duas operações confirmadas
+
+Checkpoint de09/11/2026. PR394 integrada em `fca0798d3eba81e8daa3a876a255f34b66ff39f9`, request_id/nonce `trilha-a-fixtures-20261108-r1` agora CONSUMIDO pela execução42540864527. A informação anterior de nonce não consumido permanece apenas histórica. Nenhum replay autorizado; esta atualização documental não executa Auth nem escrita HML. CI/revisão/merge deste novo HEAD documental ainda pendentes.
+
+## Preparador42540864527: falha parcial com operações reais
+
+Preflight sem credenciais job128915236031 PASS; job privado128915387461 FAIL. Executor/harness `fca0798d3eba81e8daa3a876a255f34b66ff39f9`, fonte `866608620909bf313a6c2192736330222f9219ad`, deployment `dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY`. ProveniênciaSSR110 PASS e barreira nativa antes de secrets passaram. Relatório: `PREPARER_UNCLASSIFIED`, fase `SOURCE_AND_LIST`, completed=false, logoutVerified=false, bindings=null, v1Certified=false. A causa específica ainda não foi demonstrada pelo enum genérico.
+
+Artefato13641024365, ZIP1315bytes SHA256 `a7ebb6d3f23ebe61668bc03ab4e20e78556e0bcaf05a7c212dd63703b662c8c8`. Revisão independente review_request_plan conferiu ZIP e manifesto: report.json SHA256 `ab2e5dfb57197fb3978b1d7510e71aed189a5072a0545c7b895cf9ab9d0c7607`; receipts.json SHA256 `381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9`. As quatro entradas possuem payloadSha25664hex, sem exportar payload/Auth. Quatro entradas de recibo (sealed+confirmed) comprovam DUAS operações reais: `registrar_versao_fonte_v107` e `aprovar_versao_fonte_v107`. Não declarar zero mutações,24fixtures prontas, bindings finais, readback final ou logout comprovados. Não repetir preparador antes de diagnosticar e reconciliar o estado observado sob gate aplicável; nenhuma limpeza destrutiva inferida.
+
+## Auditoria manual42540293545: matriz completa, resultado incompleto
+
+Frontend/harness `866608620909bf313a6c2192736330222f9219ad`, deployment `dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY`. Resultado `AUDIT_INCOMPLETE`:208registros, matrixComplete=true, globalComplete=false, aborted=null, diagnostic=null e logoutVerified=true. Contagens fechadas:99PASS_AUTOMATIZADO,51BLOQUEADO_PII,16FAIL_UI,18PRESERVADO_BASELINE e24BLOQUEADO_FIXTURE, soma208. publicProofsRepeated=false e v1Certified=false.
+
+Artefato13641796040, ZIP16017156bytes SHA256 `8f18ed9a37c0fea9c2f17fb31b70d68d0a55ebdf34db915bb2da0f94bc7d0245`; report SHA256 `eb0e8853c905fdf708ecfe5f537ccdfe91c72c588e67cec27fa3f55cd3687c6a`. Root conferiu298/298hashes em Sandbox4:198PNG e99DOM, sem presumir208casos screenshotados ou capturar51PII. Por superfície: ADM01/SYS05/V101/V103/V104/V105/V106/V107/V110/V113/V121 têm8PASS cada; V1028FAIL; V1085PASS/3FAIL; V1095FAIL/3PII; SYS04/V111/V112/V115/V122/V123 têm8PII cada; V114/V116/V118 têm6BASELINE/2PASS cada; V117/V119/V120 têm8FIXTURE cada. As99aprovações automáticas NÃO equivalem a184privados encerrados nem a revisão visual independente concluída. Revisão das imagens/FAIL_UI16 e72critérios permanece pendente; não confundir matriz completa com DoD, WCAG integral ou V1. Run78 e suas evidências históricas continuam preservados.
+
+## Reancoragem documental adicional após leitura de fonte viva
+
+Backend main avançou de9b55 para `65767bfe58c5c9818824ab0ada38d9f412c19054`. GitHub GET novamente confirma25/25blobs canônicos e catálogo100/97 iguais; types.ts mantém blob8ea7750b75fd9d76b29c36ce7613392e3ab65e19. Delta9b55→65767bfe em cinco caminhos: consumer Edge copilot-query, teste copilot_openai_contract, hook Restore, PLAN e active-task. Edge Copilot passa a validar Auth/JWT e sessão, fontes por userClient/RLS com limites, permissões canônicas e reserva antes de embedding/OpenAI, lease/deadline/finalização fenced e revalidação de fontes antes do provedor; CORS é restrito e request-scoped. Nenhuma migration, tabela, RLS, grant ou contrato de API consumida pela Trilha A foi alterado nesse delta. Não comprova deployment ou certificação HML da Trilha C. Snapshot e ack avançam juntos; nenhum guard de freshness é relaxado. PR391 requer reancoragem/CI próprios sobre o contexto integrado, não autorização de código pela falha exclusiva de fonte.
+
+## Próxima tarefa e limites
+
+Root concluirá revisão visual e diagnóstico dos16FAIL_UI e do preparador; reconciliar as duas operações confirmadas antes de qualquer nova solicitação. No estado atual:24fixtures sem comprovação final, privacidade51bloqueada e NO-GO/V1 mantido. PR398 permanece somente snapshot/PLANO/checkpoint e aguarda novaCI, revisão e autorização de merge do coordenador. Fonte viva `65767bfe58c5c9818824ab0ada38d9f412c19054`, tipos imutáveis e demais trilhas preservados.
+
+---
+
 # Continuidade P0: contexto vivo9b55 e execução de fixtures pendente
 
 Checkpoint de09/11/2026, frontend base `866608620909bf313a6c2192736330222f9219ad`, contendo BUILD396 integrado em `c0dfb51d4861211a1bf6591bad1b9339eb84f357`; backend normativo `9b55a308c04fe914c9ff3f96b92151c7a41dff98`. Este PR altera somente snapshot, ack/recibo no PLANO_ATIVO e checkpoint. CurrentPLAN, trilhas e histórico preservados. CI/revisão/integração deste PR ainda não presumidas.
