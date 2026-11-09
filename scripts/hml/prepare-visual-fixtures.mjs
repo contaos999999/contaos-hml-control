@@ -243,6 +243,116 @@ export function reconcileR1Recovery(input) {
   recoveryProofs.add(proof);
   return proof;
 }
+export const R2_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r2.v1",
+  workflowRun: "42553093050",
+  artifactId: "13645999071",
+  requestId: "trilha-a-fixtures-20261109-r2",
+  frontendSha: "437c788e32f0325dd15c9d2e7277c10129bcb462",
+  harnessSha: "bc14a9e232bf5abab07f71635866ea586e4ade37",
+  zipSha256: "c6b33596bd1454388d0989506c74ccbaece749d0c4bcf0b45fbdb0f692927475",
+  reportSha256: "d986f375e1cba68be5f78b61544d241ef5f4c71f126611112c960226a939e805",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  derivedIntentCount: 0,
+  proof: "receipts+brokerInvariant+sourcePath",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "PREPARER_TIMEOUT",\n  "diagnostics": {\n    "primaryFailure": "PREPARER_TIMEOUT",\n    "failureClass": "TIMEOUT",\n    "errorName": "TimeoutError",\n    "subphase": "SOURCE_FORM_FIELD",\n    "subphasePath": [\n      "SOURCE_AND_LIST",\n      "SOURCE_FORM_FIELD"\n    ],\n    "lastCompletedSubphase": "SOURCE_UI_CONTROL",\n    "logoutAttempted": true,\n    "logoutVerified": false,\n    "cleanupFailure": "LOGOUT_FAILED"\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 2,\n    "maxNewIntentions": 22,\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": null,\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "bc14a9e232bf5abab07f71635866ea586e4ade37",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42553093050",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": false,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+});
+export function validateR2RecoveryDocument(input) {
+  if (
+    !same(input, R2_RECOVERY_DOCUMENT) ||
+    hash(input?.reportRaw) !== R2_RECOVERY_DOCUMENT.reportSha256 ||
+    hash(input?.receiptsRaw) !== R2_RECOVERY_DOCUMENT.receiptsSha256
+  )
+    err("RECOVERY_R2_LEDGER");
+  const report = JSON.parse(input.reportRaw),
+    receipts = JSON.parse(input.receiptsRaw);
+  if (
+    !keys(receipts, ["schema", "receipts"]) ||
+    receipts.schema !== "contaos.fixture.receipts.v1" ||
+    !Array.isArray(receipts.receipts) ||
+    receipts.receipts.length !== 0 ||
+    report.completed !== false ||
+    report.recovery?.reconciled !== true ||
+    report.diagnostics?.subphase !== "SOURCE_FORM_FIELD" ||
+    report.diagnostics?.lastCompletedSubphase !== "SOURCE_UI_CONTROL" ||
+    Object.hasOwn(report, "intentCount")
+  )
+    err("RECOVERY_R2_LEDGER");
+  return freeze(structuredClone(input));
+}
+export async function dismissPreparationOverlays(page) {
+  // Visible dialogs are the active Radix modal stack. Hidden underlying dialogs
+  // are considered only after the upper layer has closed through ordinary UI.
+  const known = new Set([
+    "Editar fonte",
+    "Nova versão",
+    "FONTE SINTETICA TRILHA A 20261108",
+    "Confirmar aprovação",
+    "Confirmar aprovação institucional",
+    "Confirmar envio ao contratante",
+    "Detalhe do requisito",
+  ]);
+  for (let depth = 0; depth < 8; depth++) {
+    const dialogs = page.getByRole("dialog");
+    const count = await dialogs.count();
+    if (count === 0) return true;
+    if (count !== 1) err("LOGOUT_OVERLAY");
+    const overlay = dialogs;
+    const element = await overlay.elementHandle();
+    if (!element) err("LOGOUT_OVERLAY");
+    const title = await overlay.evaluate((el) => {
+      const ids = (el.getAttribute("aria-labelledby") || "").split(/\s+/).filter(Boolean);
+      return (
+        ids
+          .map((id) => document.getElementById(id)?.textContent || "")
+          .join(" ")
+          .trim() ||
+        el.getAttribute("aria-label") ||
+        ""
+      );
+    });
+    if (!known.has(title) && !/^Aprovar versão [1-9][0-9]*$/.test(title)) err("LOGOUT_OVERLAY");
+    const close = overlay.getByRole("button", { name: "Close", exact: true });
+    const cancel = overlay.getByRole("button", {
+      name: title === "Detalhe do requisito" ? "Fechar" : "Cancelar",
+      exact: true,
+    });
+    if ((await cancel.count()) === 1) {
+      if (!(await cancel.isEnabled())) err("LOGOUT_OVERLAY");
+      await cancel.click();
+    } else if (title !== "Detalhe do requisito" && (await close.count()) === 1) {
+      if (!(await close.isEnabled())) err("LOGOUT_OVERLAY");
+      await close.click();
+    } else err("LOGOUT_OVERLAY");
+    await element.waitForElementState("hidden", { timeout: 3000 });
+    await element.dispose();
+  }
+  err("LOGOUT_OVERLAY");
+}
+
+export const SOURCE_STATUS_NAME =
+  "Situação Mudança de situação exige administrador; ativação exige versão aprovada.";
+export async function sourceStatusControl(dialog) {
+  const control = dialog.getByRole("combobox", { name: SOURCE_STATUS_NAME, exact: true });
+  if ((await control.count()) > 1) err("FLOW_SOURCE_CONTROL");
+  try {
+    await control.waitFor({ state: "visible" });
+  } catch (error) {
+    if (preparationErrorData(error, "name") === "TimeoutError") throw error;
+    err("FLOW_SOURCE_CONTROL");
+  }
+  if (
+    (await control.count()) !== 1 ||
+    !(await control.isVisible()) ||
+    !(await control.isEnabled()) ||
+    (await control.evaluate((el) => el.tagName)) !== "SELECT"
+  )
+    err("FLOW_SOURCE_CONTROL");
+  return control;
+}
+
 export const DIAGNOSTIC_SUBPHASES = Object.freeze([
   "PREFLIGHT",
   "LOGIN",
@@ -1308,6 +1418,7 @@ export function createRuntimeLogin({
     page.off("response", onResponse);
     await Promise.allSettled([...pending]);
     try {
+      await dismissPreparationOverlays(page);
       await page.getByRole("button", { name: "Sair", exact: true }).click();
       await page.waitForURL((url) => url.origin === FIXTURE.origin && url.pathname === "/login");
       await fence.drain();
@@ -2749,7 +2860,9 @@ export async function prepareSourceAndList(io) {
     );
     const d = dialog("Editar fonte");
     await tracedPreparation("SOURCE_FORM_FIELD", async () =>
-      field(d, "Situação").selectOption("ativa"),
+      (
+        await tracedPreparation("SOURCE_FORM_FIELD", async () => sourceStatusControl(d))
+      ).selectOption("ativa"),
     );
     const before = source.versao_registro;
     await tracedPreparation("SOURCE_ACTIVATE_COMMAND", async () =>
@@ -2977,12 +3090,12 @@ export async function prepareSourceAndList(io) {
           for (const label of ["Obrigatório", "Aplicável", "Impeditivo"])
             await tracedPreparation("LIST_FORM_FIELD", async () => field(f, label).check());
           await tracedPreparation("LIST_FORM_FIELD", async () =>
-            field(f, "Criticidade").selectOption("alta"),
+            f.getByRole("combobox", { name: "Criticidade", exact: true }).selectOption("alta"),
           );
           await tracedPreparation("LIST_FORM_FIELD", async () =>
-            field(f, "Regra de validação e condição (JSON)").fill(
-              JSON.stringify(itemExpected().regra_validacao),
-            ),
+            f
+              .getByRole("textbox", { name: "Regra de validação e condição (JSON)", exact: true })
+              .fill(JSON.stringify(itemExpected().regra_validacao)),
           );
         },
       ),
@@ -2999,7 +3112,7 @@ export async function prepareSourceAndList(io) {
     await tracedPreparation("LIST_FORM_FIELD", async () =>
       listCommand("alterar_situacao", { situacao: "ativa" }, "Alterar situação", async (f) => {
         await tracedPreparation("LIST_FORM_FIELD", async () =>
-          field(f, "Situação").selectOption("ativa"),
+          f.getByRole("combobox", { name: "Situação", exact: true }).selectOption("ativa"),
         );
       }),
     );
@@ -4345,6 +4458,7 @@ const PREPARER_FAILURE_CODES = new Set([
 ]);
 async function runFixturePreparation() {
   validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);
+  validateR2RecoveryDocument(R2_RECOVERY_DOCUMENT);
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
   activePreparationDiagnostics = diagnostics;
@@ -4760,7 +4874,12 @@ async function runFixturePreparation() {
       mode: 0o600,
     });
     let sums = "";
-    for (const name of ["receipts.json", "report.json", "receipts-r1.json"])
+    writeFileSync(
+      join(output, "recovery-r2.json"),
+      JSON.stringify(R2_RECOVERY_DOCUMENT, null, 2) + "\n",
+      { mode: 0o600 },
+    );
+    for (const name of ["receipts.json", "report.json", "receipts-r1.json", "recovery-r2.json"])
       sums +=
         createHash("sha256")
           .update(await tracedPreparation("PREFLIGHT", async () => readFile(join(output, name))))

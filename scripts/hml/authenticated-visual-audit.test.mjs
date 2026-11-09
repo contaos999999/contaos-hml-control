@@ -5198,7 +5198,7 @@ test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r2",
+    request_id: "trilha-a-fixtures-20261109-r3",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "b".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5408,7 +5408,7 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r2",
+    request_id: "trilha-a-fixtures-20261109-r3",
     approved_parent_sha: parent,
     frontend_sha: "c".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5450,7 +5450,7 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r2",
+    request_id: "trilha-a-fixtures-20261109-r3",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5677,7 +5677,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     sha = "a".repeat(40),
     parent = "b".repeat(40),
     head = "d".repeat(40);
-  const request = { request_id: "trilha-a-fixtures-20261109-r2", approved_parent_sha: parent };
+  const request = { request_id: "trilha-a-fixtures-20261109-r3", approved_parent_sha: parent };
   const pull = {
     id: 300,
     number: 90,
@@ -5827,7 +5827,7 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r2",
+    request_id: "trilha-a-fixtures-20261109-r3",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -5873,7 +5873,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r2",
+    request_id: "trilha-a-fixtures-20261109-r3",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -7835,6 +7835,23 @@ test("popup policy: POSIX aliases terminator and duplicate debugging switches fa
   });
 });
 
+test("R3 only current nonce executes and exact R1 R2 remain spent", () => {
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r3",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  for (const nonce of ["trilha-a-fixtures-20261108-r1", "trilha-a-fixtures-20261109-r2"]) {
+    const raw = JSON.stringify({ ...request, request_id: nonce });
+    assert.throws(() => sut.parseSingleRequest(raw), /REQUEST_SCHEMA/);
+    assert.equal(sut.parseSingleRequest(raw, undefined, { historical: true }).request_id, nonce);
+  }
+});
+
 const privacy123Raw = JSON.parse(
   await (
     await import("node:fs/promises")
@@ -8278,4 +8295,13 @@ test("privacy123 source blobs and all exact formatted instants remain catalog-bo
   });
   for (const event of privacy123Raw.events)
     assert.equal(fmt.format(new Date(event.criado_em)), event.formatted_created);
+});
+
+test("R3 native supplement rejects incomplete skipped fabricated or failed TAP", () => {
+  for (const tap of [
+    "",
+    "TAP version 13\n1..2\n# tests 2\n# pass 2\n# fail 0\n# skipped 0\n# cancelled 0",
+    "not ok 1 - failure",
+  ])
+    assert.equal(sut.preparerSourceFormsSupplement(tap), null);
 });
