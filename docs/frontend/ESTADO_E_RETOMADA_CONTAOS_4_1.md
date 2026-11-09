@@ -1,3 +1,15 @@
+# Checkpoint Trilha C: correção contextual integrada, prova API em execução, frontend PLAN condicional
+
+Backend5459536e7f7121e2f26758841acd520f84e0ad9d congelado; PR379/head dd27b7e2f059cc71cff21c1d4dbe38a24e6d4261 congelada. PR200 corrigiu classificador SDK da revogação, PR206 corrigiu barreira da fixture própria e PR209 corrigiu instrução contextual após log fechado SEM_CITACAO. Edgev7 ACTIVE/JWTtrue, fonte09c3995e1f17bb3b7bfd112872d4f1461ab7e3cb/SHA2566c1ee9d5a87077ffd8120cd118bbe6ca9b1ab49380be99ae46b8b6bfd8bd80d9, bundle89844a77b91d8be69dfc186208ac46055c361eeadfa6ca37a3ea2655a1b4c30d. GREEN140focais/568totais; CI/Restore e revisão independentes registrados no GATE138.
+
+Prova42571726664/#9, readiness129010395298SUCCESS, material129010437339IN_PROGRESS; PRE6733569504, nonce75706a06dd3734b42c34e226ffe18946 consumido. Três turnos reais OpenAI gpt-4.1-mini com fontes persistidas, segundo com Plano Aurora, confirmados por leitura restrita da fixture. Ainda faltam término JWT natural, resultado integral, limpeza no mesmo job e independente, readback Edge fresco, recibo POST imutável e finalreadback. Não alterar backendmain/379head até esses controles. Não reutilizar nonce ou acelerar expiração. Resultado máximo desta prova é API_PASS_UI_PENDING, nunca certificação UI/P0.
+
+Emenda C13 no PLAN existente detalha retomada persistente/paginação/encerramento/flags/revalidação/reconciliação de timeout, por quatro ações já existentes na Edge. É PLAN condicional sem BUILD/Auth; exige CI/revisão/integração e, após API/limpeza/POST aprovados, GATE próprio antes de tocar produto/379. Inventário real29superfícies x4larguras x2temas=232, sem chamar acesso público ou skip de PASS autenticado. Próxima tarefa: encerrar prova API com artefatos/hashes/limpeza/POST, depois GATE e RED/GREEN na integração379 preservando Shell A/B. Reancoragem25blobs/catálogo/types imutáveis contra5459536.
+
+Checkpoint A anterior e todo seu histórico preservados abaixo. Nenhuma liberação R5/Auth/A, nenhuma nova operação empresarial, nenhuma alteração de suas pendências/provas pela emenda C. A última situação de A continua sendo a de seus próprios checkpoints e gates. Esta emenda documental não é prova de integração até CI/revisão/merge/readback registrados.
+
+---
+
 # Checkpoint R4 pré-Auth: bootstrap504 e recuperaçãoR5 governada
 
 R4upstream42568309807/attempt1/HEAD4c3a92 falhouSetupBun1.4.4GitHubHTTP504x3 apósfreshness7fPASS. Fixtures42568382053 e Audit42568382029SKIPPED; metadataActionsconferidahead/workflow/event/attempt1/timestamps/jobs,reciboRoot6733173778. NenhumAuth iniciado;0novasoperações éDERIVADO dasfasesprivadasSKIPPED+broker/nãoaberturaAuth,não campo reportprivado inexistente. R4nonceconsumido;NÃOrerunupstream/attempt2.
