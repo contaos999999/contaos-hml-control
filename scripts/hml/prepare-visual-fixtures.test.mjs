@@ -2161,6 +2161,10 @@ test("R2 candidato recuperado nao reaparece quando o mesmo erro e reutilizado", 
 test("R2 ledger explicitamente ausente nunca vira documento aprovado por default", () => {
   for (const absent of [undefined, null, {}, { schema: "contaos.fixture.receipts.v1" }])
     assert.throws(() => sut.validateR1RecoveryDocument(absent), { message: "RECOVERY_LEDGER" });
-  assert.throws(() => sut.reconcileR1Recovery(r2Reconciliation({ ledger: undefined })), { message: "RECOVERY_LEDGER" });
-  assert.throws(() => sut.reconcileR1Recovery(r2Reconciliation({ ledger: null })), { message: "RECOVERY_LEDGER" });
+  assert.throws(() => sut.reconcileR1Recovery(r2Reconciliation({ ledger: undefined })), {
+    message: "RECOVERY_LEDGER",
+  });
+  assert.throws(() => sut.reconcileR1Recovery(r2Reconciliation({ ledger: null })), {
+    message: "RECOVERY_LEDGER",
+  });
 });
