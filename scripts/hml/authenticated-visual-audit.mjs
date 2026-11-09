@@ -483,6 +483,459 @@ const SYNTHETIC_EXCERPT_PATTERN = new RegExp(
   "gu",
 );
 
+export function privacySys04Literal(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+export function privacySys04Supplement(tap) {
+  if (typeof tap !== "string") return null;
+  const expected = { tests: 2, pass: 2, fail: 0, skipped: 0, cancelled: 0 };
+  return Object.entries(expected).every(([k, v]) => {
+    const matches = [...tap.matchAll(new RegExp("^# " + k + " ([0-9]+)$", "gm"))];
+    return matches.length === 1 && Number(matches[0][1]) === v;
+  })
+    ? 2
+    : null;
+}
+
+const privacySys04Proofs = new WeakSet();
+export async function loadPrivacySys04Proof() {
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-remaining-sys04-20261108.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "a4a6f3f9f3c23a248effcf7471cad6e7a89b58b89c0345315b750c74a3e105df")
+    fail("PRIVACY_PROOF");
+  const freeze = (v) => {
+    if (v && typeof v === "object") {
+      Object.values(v).forEach(freeze);
+      Object.freeze(v);
+    }
+    return v;
+  };
+  const proof = freeze(JSON.parse(bytes));
+  privacySys04Proofs.add(proof);
+  return proof;
+}
+export function privacySys04Runtime({ proof, install = false }) {
+  const target =
+    "https://gklhhhyosgasnyoxlrui.supabase.co/rest/v1/rpc/listar_organizacoes_disponiveis";
+  const catalog = [
+    ...(proof?.legacy ?? []),
+    ...(proof?.constructor_closed ?? []),
+    ...(proof?.discovered_closed ?? []),
+  ];
+  const valid =
+    proof?.schema === "contaos.hml.privacy-remaining-sys04.v1" &&
+    catalog.length === 109 &&
+    new Set(catalog.map((r) => r.id)).size === 109;
+  const match = (raw, method, body) =>
+    valid &&
+    raw === target &&
+    method === "POST" &&
+    typeof body === "string" &&
+    body.trim() === "{}";
+  const project = (body) => {
+    if (!valid || !Array.isArray(body) || body.length < 1 || body.length > 109) return null;
+    const ids = [];
+    for (const r of body) {
+      if (
+        !r ||
+        typeof r !== "object" ||
+        Array.isArray(r) ||
+        Object.keys(r).sort().join() !== "cnpj,id,nome_fantasia,perfil,razao_social,situacao" ||
+        ids.includes(r.id)
+      )
+        return null;
+      const expected = catalog.find((v) => v.id === r.id);
+      if (
+        !expected ||
+        r.perfil !== "administrador_master" ||
+        r.cnpj !== null ||
+        !["razao_social", "nome_fantasia", "situacao"].every((k) => r[k] === expected[k])
+      )
+        return null;
+      ids.push(r.id);
+    }
+    return { ids };
+  };
+  if (!install) return { match, project };
+  if (
+    location.origin !== "https://contaos-41-hml.vercel.app" ||
+    location.pathname !== "/selecionar-organizacao" ||
+    location.search ||
+    location.hash
+  )
+    return;
+  const route = location.href,
+    started = performance.now();
+  let invalid = false,
+    pending = 0,
+    revision = 0,
+    ids = null,
+    seenGroup = false;
+  const invalidate = () => {
+    invalid = true;
+    ids = null;
+  };
+  const current = () => !invalid && location.href === route && performance.now() - started < 120000;
+  for (const event of [
+    "pagehide",
+    "beforeunload",
+    "popstate",
+    "hashchange",
+    "contaos:organizacao-alterada",
+  ])
+    window.addEventListener(event, invalidate, { once: true });
+  document.addEventListener("visibilitychange", invalidate, { once: true });
+  if (!window.navigation?.addEventListener) invalidate();
+  else window.navigation.addEventListener("navigate", invalidate, { once: true });
+  new MutationObserver(() => {
+    revision++;
+    const group = document.querySelectorAll(
+      '[role="radiogroup"][aria-labelledby="sys04-titulo-lista"]',
+    );
+    if (seenGroup && group.length !== 1) invalidate();
+    seenGroup ||= group.length === 1;
+  }).observe(document, { subtree: true, childList: true, characterData: true, attributes: true });
+  const original = window.fetch;
+  window.fetch = function (...args) {
+    const result = Reflect.apply(original, this, args);
+    let raw,
+      method = "GET",
+      body;
+    try {
+      const [input, init] = args;
+      if (typeof input === "string") raw = input;
+      else if (input instanceof URL) raw = input.href;
+      else if (input instanceof Request) {
+        raw = input.url;
+        method = input.method;
+      }
+      for (const k of ["method", "body"]) {
+        const d = init == null ? null : Object.getOwnPropertyDescriptor(init, k);
+        if (d && !("value" in d)) {
+          if (raw === target) invalidate();
+          return result;
+        }
+        if (k === "method" && d?.value !== undefined) method = d.value;
+        if (k === "body") body = d?.value;
+      }
+    } catch {
+      return result;
+    }
+    if (raw !== target) {
+      try {
+        const u = new URL(raw);
+        if (u.origin + u.pathname === target) invalidate();
+      } catch {}
+      return result;
+    }
+    if (!match(raw, method, body) || !current()) {
+      invalidate();
+      return result;
+    }
+    pending++;
+    const timer = setTimeout(invalidate, 10000);
+    void result
+      .then(async (response) => {
+        if (
+          !current() ||
+          response.status !== 200 ||
+          response.redirected ||
+          response.url !== target
+        ) {
+          invalidate();
+          return;
+        }
+        const reader = response.clone().body?.getReader();
+        if (!reader) {
+          invalidate();
+          return;
+        }
+        const chunks = [];
+        let size = 0;
+        try {
+          for (;;) {
+            const item = await reader.read();
+            if (item.done) break;
+            size += item.value.byteLength;
+            if (size > 262144 || !current()) {
+              invalidate();
+              await reader.cancel();
+              return;
+            }
+            chunks.push(item.value);
+          }
+          const bytes = new Uint8Array(size);
+          let offset = 0;
+          for (const c of chunks) {
+            bytes.set(c, offset);
+            offset += c.byteLength;
+          }
+          const receipt = project(
+            JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)),
+          );
+          if (!receipt || !current()) invalidate();
+          else ids = receipt.ids;
+        } finally {
+          reader.releaseLock();
+        }
+      }, invalidate)
+      .catch(invalidate)
+      .finally(() => {
+        clearTimeout(timer);
+        pending--;
+      });
+    return result;
+  };
+  Object.defineProperty(window, "__contaosPrivacySys04", {
+    configurable: false,
+    writable: false,
+    value: Object.freeze({
+      invalidate,
+      read: () =>
+        current() && pending === 0 && ids
+          ? {
+              route: "/selecionar-organizacao",
+              ids: [...ids],
+              revision,
+              age: Math.floor(performance.now() - started),
+            }
+          : null,
+    }),
+  });
+}
+export function privacySys04Anchor({ proof, receipt }) {
+  if (
+    !receipt ||
+    receipt.route !== "/selecionar-organizacao" ||
+    !Array.isArray(receipt.ids) ||
+    new Set(receipt.ids).size !== receipt.ids.length
+  )
+    return null;
+  const catalog = [...proof.legacy, ...proof.constructor_closed, ...proof.discovered_closed];
+  const groups = document.querySelectorAll(
+    '[role="radiogroup"][aria-labelledby="sys04-titulo-lista"]',
+  );
+  if (
+    groups.length !== 1 ||
+    document.querySelectorAll("#sys04-titulo-lista").length !== 1 ||
+    document.querySelector("#sys04-titulo-lista").textContent !== "Organizações disponíveis"
+  )
+    return null;
+  const group = groups[0],
+    cards = [...group.children];
+  const checked = cards.filter((c) => c.getAttribute("aria-checked") === "true");
+  if (
+    checked.length > 1 ||
+    cards.some(
+      (c) =>
+        !["true", "false"].includes(c.getAttribute("aria-checked")) ||
+        !["0", "-1"].includes(c.getAttribute("tabindex")),
+    )
+  )
+    return null;
+  const focused = checked[0] ?? cards[0];
+  if (cards.some((c) => c.getAttribute("tabindex") !== (c === focused ? "0" : "-1"))) return null;
+  if (
+    cards.length !== receipt.ids.length ||
+    group.querySelectorAll('[role="radio"]').length !== cards.length
+  )
+    return null;
+  const result = [];
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i],
+      row = catalog.find((r) => r.id === receipt.ids[i]);
+    if (
+      !row ||
+      card.getAttribute("role") !== "radio" ||
+      card.querySelectorAll('[role="radio"]').length ||
+      !card.getClientRects().length
+    )
+      return null;
+    const children = [...card.children];
+    const selected = card.getAttribute("aria-checked") === "true";
+    if ((children.length === 3) !== selected || children[0]?.children.length !== (selected ? 1 : 0))
+      return null;
+    if (
+      children.length < 2 ||
+      children.length > 3 ||
+      children[0].tagName !== "SPAN" ||
+      children[0].getAttribute("aria-hidden") !== "true" ||
+      children[0].textContent !== "" ||
+      children[1].tagName !== "DIV" ||
+      !children[1].classList.contains("min-w-0")
+    )
+      return null;
+    if (
+      children[2] &&
+      (children[2].tagName !== "SPAN" ||
+        !children[2].classList.contains("sr-only") ||
+        children[2].textContent !== "Selecionada")
+    )
+      return null;
+    const content = [...children[1].children],
+      second = !!row.nome_fantasia && row.nome_fantasia !== row.razao_social;
+    const labels = [row.nome_fantasia || row.razao_social, ...(second ? [row.razao_social] : [])];
+    if (content.length !== labels.length + 1) return null;
+    for (let j = 0; j < labels.length; j++)
+      if (
+        content[j].tagName !== "P" ||
+        content[j].childNodes.length !== 1 ||
+        content[j].firstChild.nodeType !== Node.TEXT_NODE ||
+        content[j].textContent !== labels[j]
+      )
+        return null;
+    const dl = content.at(-1);
+    if (dl.tagName !== "DL" || dl.children.length !== 3) return null;
+    const terms = ["CNPJ:", "Perfil:", "Situação:"],
+      values = ["—", "Administrador Master", row.situacao];
+    for (let j = 0; j < 3; j++) {
+      const pair = dl.children[j],
+        nodes = [...pair.children];
+      if (
+        pair.tagName !== "DIV" ||
+        nodes.length !== 2 ||
+        nodes[0].tagName !== "DT" ||
+        nodes[1].tagName !== "DD" ||
+        nodes[0].textContent !== terms[j] ||
+        nodes[1].textContent !== values[j] ||
+        nodes.some((n) => n.childNodes.length !== 1 || n.firstChild.nodeType !== Node.TEXT_NODE)
+      )
+        return null;
+    }
+    // No unknown descendant text or attributes can be consumed as approved fields.
+    const allowedAttrs = new Set([
+      "class",
+      "role",
+      "aria-checked",
+      "tabindex",
+      "aria-hidden",
+      "viewBox",
+      "fill",
+      "stroke",
+      "stroke-width",
+      "stroke-linecap",
+      "stroke-linejoin",
+      "d",
+      "width",
+      "height",
+      "xmlns",
+    ]);
+    if (
+      [card, ...card.querySelectorAll("*")].some((n) =>
+        [...n.attributes].some((a) => !allowedAttrs.has(a.name)),
+      )
+    )
+      return null;
+    const expectedText =
+      labels.join("") +
+      terms.map((t, j) => t + values[j]).join("") +
+      (children[2] ? "Selecionada" : "");
+    if (card.textContent !== expectedText) return null;
+    result.push({ id: row.id, text: card.innerText, values: labels });
+  }
+  return { ids: [...receipt.ids], cards: result };
+}
+export function privacySys04FieldContext({
+  proof,
+  receipt,
+  anchor,
+  rendered,
+  snapshot,
+  cardSnapshots,
+  anchored,
+}) {
+  if (
+    !privacySys04Proofs.has(proof) ||
+    anchored !== true ||
+    receipt?.route !== "/selecionar-organizacao" ||
+    !Number.isInteger(receipt.revision) ||
+    !Number.isInteger(receipt.age) ||
+    receipt.age < 0 ||
+    receipt.age >= 120000 ||
+    !anchor ||
+    JSON.stringify(anchor.ids) !== JSON.stringify(receipt.ids) ||
+    anchor.cards.length !== receipt.ids.length ||
+    !Array.isArray(cardSnapshots) ||
+    cardSnapshots.length !== receipt.ids.length ||
+    typeof rendered !== "string" ||
+    typeof snapshot !== "string"
+  )
+    return null;
+  const strip = (text, values) => {
+    let out = text;
+    for (const value of [...new Set(values)].sort((a, b) => b.length - a.length)) {
+      const escaped = privacySys04Literal(value);
+      out = out.replace(
+        new RegExp("(?<![\\p{L}\\p{N}_-])" + escaped + "(?![\\p{L}\\p{N}_-])", "gu"),
+        " ",
+      );
+    }
+    return out;
+  };
+  const replaceBlocks = (full, blocks, snap) => {
+    let result = full;
+    const expected = new Map();
+    for (const block of blocks) {
+      const key = block.text;
+      const entry = expected.get(key) || { count: 0, values: block.values };
+      if (JSON.stringify(entry.values) !== JSON.stringify(block.values)) return null;
+      entry.count++;
+      expected.set(key, entry);
+    }
+    for (const [key, { count, values }] of expected) {
+      if (!key) return null;
+      if (!snap) {
+        const parts = result.split(key);
+        if (parts.length - 1 !== count) return null;
+        result = parts.join(strip(key, values));
+      } else {
+        const lines = result.split("\n"),
+          wanted = key.trim().split("\n"),
+          matches = [];
+        for (let i = 0; i < lines.length; i++) {
+          const indent = lines[i].match(/^ */)[0];
+          if (wanted.every((l, j) => lines[i + j] === indent + l)) matches.push({ i, indent });
+        }
+        if (matches.length !== count) return null;
+        for (const { i, indent } of matches.reverse())
+          lines.splice(
+            i,
+            wanted.length,
+            ...strip(wanted.join("\n"), values)
+              .split("\n")
+              .map((l) => indent + l),
+          );
+        result = lines.join("\n");
+      }
+    }
+    return result;
+  };
+  const cards = anchor.cards;
+  if (
+    cards.some(
+      (c, i) => c.id !== receipt.ids[i] || typeof c.text !== "string" || !Array.isArray(c.values),
+    )
+  )
+    return null;
+  const rr = replaceBlocks(rendered, cards, false);
+  const ss = replaceBlocks(
+    snapshot,
+    cards.map((c, i) => ({ text: cardSnapshots[i], values: c.values })),
+    true,
+  );
+  if (rr === null || ss === null) return null;
+  const context = Object.freeze({});
+  privacy78Contexts.set(context, {
+    rendered: { original: rendered, remainder: rr },
+    snapshot: { original: snapshot, remainder: ss },
+  });
+  return context;
+}
+
 // GATE372: closed technical catalog; never a global word allowlist.
 const privacy78Contexts = new WeakMap();
 const privacy78Pages = new WeakMap();
@@ -1142,6 +1595,212 @@ export function privacy78Runtime({
   });
 }
 
+export function privacy112Supplement(tap) {
+  if (typeof tap !== "string") return null;
+  if (
+    !/^ok 1 - privacy112 Chromium full DOM ARIA matrix preserves scoped intervals and unknown neighbours$/m.test(
+      tap,
+    )
+  )
+    return null;
+  const expected = { tests: 1, pass: 1, fail: 0, skipped: 0, cancelled: 0 };
+  return Object.entries(expected).every(([key, value]) => {
+    const matches = [...tap.matchAll(new RegExp("^# " + key + " ([0-9]+)$", "gm"))];
+    return matches.length === 1 && Number(matches[0][1]) === value;
+  })
+    ? 1
+    : null;
+}
+
+export function privacy112FieldContext({
+  proof,
+  rendered,
+  snapshot,
+  fieldSnapshots,
+  anchored,
+  receipt,
+}) {
+  if (
+    !privacy78Proofs.has(proof) ||
+    anchored !== true ||
+    !receipt ||
+    !Object.isFrozen(receipt) ||
+    !Array.isArray(receipt.observed) ||
+    !Object.isFrozen(receipt.observed) ||
+    receipt.route !== privateCases().find((i) => i.surface === "V112").path ||
+    !Number.isFinite(receipt.age) ||
+    receipt.age < 0 ||
+    receipt.age >= 120000 ||
+    new Set(receipt.observed).size !== receipt.observed.length ||
+    receipt.observed.some((n) => !proof.get_contracts.some((c) => c.name === n)) ||
+    !["contract_gate", "competencias_page0_no_filters"].every((n) =>
+      receipt.observed.includes(n),
+    ) ||
+    !Array.isArray(fieldSnapshots) ||
+    fieldSnapshots.length !== 3 ||
+    ![rendered, snapshot, ...fieldSnapshots].every(
+      (t) => typeof t === "string" && t.length <= 1000000,
+    )
+  )
+    return null;
+  const value = proof.generated_exact_values.V112[0],
+    [row, header, cell] = fieldSnapshots;
+  if (
+    value !== "01/11/2026 a 30/11/2026" ||
+    rendered.split(value).length !== 2 ||
+    snapshot.split(value).length !== 3 ||
+    row.split(value).length !== 3 ||
+    header !== '- rowheader "11/2026"' ||
+    cell !== '- cell "' + value + '"'
+  )
+    return null;
+  const lines = row.split("\n");
+  if (
+    !lines[0].startsWith('- row "11/2026 ' + value + " ") ||
+    !lines[0].endsWith('":') ||
+    lines[0].split(value).length !== 2 ||
+    lines[1] !== "  " + header ||
+    lines[2] !== "  " + cell ||
+    lines.filter((l) => /^  - (?:rowheader|cell)(?: |:)/.test(l)).length !== 7
+  )
+    return null;
+  const matches = [];
+  let offset = 0;
+  const whole = snapshot.split("\n");
+  for (let i = 0; i < whole.length; i++) {
+    const indent = whole[i].match(/^ */)[0];
+    if (lines.every((l, j) => whole[i + j] === indent + l)) matches.push({ offset, indent });
+    offset += whole[i].length + 1;
+  }
+  if (matches.length !== 1) return null;
+  const { offset: start, indent } = matches[0];
+  const first = start + indent.length + lines[0].indexOf(value);
+  // Offsets are derived only from the exact same unique row subtree.
+  const headerStart = start + indent.length + lines[0].length + 1 + indent.length;
+  const cellStart = headerStart + lines[1].length + 1 + indent.length;
+  const ranges = [
+    { start: first, end: first + value.length },
+    {
+      start: cellStart + lines[2].indexOf(value),
+      end: cellStart + lines[2].indexOf(value) + value.length,
+    },
+    { start: headerStart + 4, end: headerStart + 13 },
+  ];
+  if (
+    snapshot.slice(ranges[2].start, ranges[2].end) !== "rowheader" ||
+    snapshot.slice(ranges[1].start, ranges[1].end) !== value
+  )
+    return null;
+  const erase = (text, rs) =>
+    [...rs]
+      .sort((a, b) => b.start - a.start)
+      .reduce((s, r) => s.slice(0, r.start) + " " + s.slice(r.end), text);
+  const context = Object.freeze({});
+  privacy78Contexts.set(context, {
+    rendered: { original: rendered, remainder: rendered.replace(value, " ") },
+    snapshot: { original: snapshot, remainder: erase(snapshot, ranges) },
+  });
+  return context;
+}
+export function privacy112FieldAnchor({ proof }) {
+  const value = proof?.generated_exact_values?.V112?.[0];
+  if (value !== "01/11/2026 a 30/11/2026") return null;
+  const visible = (e) =>
+    e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+  const plain = (e) =>
+    e &&
+    [...e.attributes].every(
+      (a) => a.name === "class" || (e.tagName === "TH" && a.name === "scope"),
+    ) &&
+    [...e.childNodes].every((n) => n.nodeType === Node.TEXT_NODE);
+  const selector = 'section[aria-labelledby="v112-lista"]';
+  const sections = document.querySelectorAll(selector);
+  if (
+    sections.length !== 1 ||
+    !visible(sections[0]) ||
+    document.querySelectorAll("#v112-lista").length !== 1
+  )
+    return null;
+  const section = sections[0],
+    headings = section.querySelectorAll(":scope > div:first-child > h2#v112-lista"),
+    tables = section.querySelectorAll("table");
+  if (
+    headings.length !== 1 ||
+    headings[0].textContent !== "Lista de competências" ||
+    tables.length !== 1
+  )
+    return null;
+  const table = tables[0],
+    columns = [...table.querySelectorAll('thead th[scope="col"]')],
+    expected = [
+      "Competência",
+      "Período",
+      "Data limite",
+      "Situação",
+      "Conformidade",
+      "Versão do pacote",
+      "Ações",
+    ];
+  if (
+    !visible(table) ||
+    table.querySelectorAll("caption").length !== 1 ||
+    table.querySelector("caption").textContent !== "Competências do contrato" ||
+    columns.length !== 7 ||
+    columns.some((c, i) => c.textContent !== expected[i])
+  )
+    return null;
+  const rows = [...table.querySelectorAll("tbody tr")],
+    found = [];
+  for (let index = 0; index < rows.length; index++) {
+    const row = rows[index],
+      cells = [...row.children],
+      header = cells[0],
+      target = cells[1],
+      links = [...row.querySelectorAll("a")];
+    if (
+      [...row.attributes].every((a) => a.name === "class") &&
+      cells.length === 7 &&
+      cells.slice(1).every((c) => c.tagName === "TD") &&
+      header.tagName === "TH" &&
+      header.getAttribute("scope") === "row" &&
+      header.textContent === "11/2026" &&
+      plain(header) &&
+      target.tagName === "TD" &&
+      target.textContent === value &&
+      plain(target) &&
+      visible(target) &&
+      links.length === 1 &&
+      [...links[0].attributes].every((a) => ["href", "aria-label", "class"].includes(a.name)) &&
+      links[0].childNodes.length === 1 &&
+      links[0].firstChild.nodeType === Node.ELEMENT_NODE &&
+      links[0].firstChild.tagName === "SPAN" &&
+      links[0].firstChild.attributes.length === 0 &&
+      links[0].firstChild.childNodes.length === 1 &&
+      links[0].firstChild.firstChild.nodeType === Node.TEXT_NODE &&
+      links[0].firstChild.textContent === "Abrir competência" &&
+      cells[6].contains(links[0]) &&
+      links[0].getAttribute("href") === "/competencias/" + proof.context.competence &&
+      links[0].getAttribute("aria-label") === "Abrir competência 11/2026"
+    )
+      found.push(index);
+  }
+  if (found.length !== 1) return null;
+  return { selector: selector + " table tbody tr", index: found[0], count: rows.length };
+}
+export async function privacy112FieldSnapshots(page, anchor) {
+  if (!anchor) return null;
+  const rows = page.locator(anchor.selector);
+  if ((await rows.count()) !== anchor.count) return null;
+  const row = rows.nth(anchor.index),
+    cells = row.locator(":scope > th, :scope > td");
+  if ((await cells.count()) !== 7) return null;
+  return [
+    (await row.ariaSnapshot()).trim(),
+    (await cells.nth(0).ariaSnapshot()).trim(),
+    (await cells.nth(1).ariaSnapshot()).trim(),
+  ];
+}
+
 export function privacy78FieldContext({
   surface,
   proof,
@@ -1152,6 +1811,7 @@ export function privacy78FieldContext({
   anchored,
   receipt,
 }) {
+  if (surface === "V112") return null;
   if (
     !privacy78Proofs.has(proof) ||
     !receipt ||
@@ -1238,34 +1898,7 @@ export function privacy78FieldAnchor({ surface, proof }) {
         ).length === 1,
     );
   } else if (surface === "V112") {
-    selector = "table tbody tr td";
-    for (const table of document.querySelectorAll("table")) {
-      if (
-        !visible(table) ||
-        table.querySelector("caption")?.textContent !== "Competências do contrato"
-      )
-        continue;
-      const columns = [...table.querySelectorAll('thead th[scope="col"]')],
-        period = columns.findIndex((n) => n.textContent === "Período");
-      if (period < 0 || columns.filter((n) => n.textContent === "Período").length !== 1) continue;
-      for (const row of table.querySelectorAll("tbody tr")) {
-        const header = row.querySelector('th[scope="row"]'),
-          target = row.children[period];
-        const links = [...row.querySelectorAll("a")].filter(
-          (a) =>
-            a.getAttribute("href") === "/competencias/" + proof.context.competence &&
-            a.getAttribute("aria-label") === "Abrir competência 11/2026",
-        );
-        if (
-          header?.textContent === "11/2026" &&
-          links.length === 1 &&
-          target?.tagName === "TD" &&
-          visible(target) &&
-          target.textContent === value
-        )
-          nodes.push(target);
-      }
-    }
+    return null;
   } else if (surface === "V115") {
     selector = 'section[aria-labelledby="v115-envio"] #v115-arquivo';
     const inputs = document.querySelectorAll(selector);
@@ -3104,6 +3737,7 @@ export async function runCli(args = process.argv.slice(2)) {
     deploymentId: process.env.CONTAOS_DEPLOYMENT_ID,
     bun: process.env.CONTAOS_BUN_BINARY || "bun",
   });
+
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/provenance.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -3463,6 +4097,51 @@ async function nativeGuard() {
     fail("VISUAL_NATIVE");
   }
 
+  // SYS04 DOM/ARIA proof is a separate supplement; native causal8 and Run78 visual1 retain identity.
+  let sys04BrowserCases = null;
+  try {
+    const sys04 = await execFile(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=^SYS04 (source component|browser observer)",
+        "scripts/hml/authenticated-visual-audit.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 120000,
+        maxBuffer: 1048576,
+      },
+    );
+    sys04BrowserCases = privacySys04Supplement(sys04.stdout);
+    if (sys04BrowserCases !== 2) fail("SYS04_NATIVE");
+  } catch {
+    fail("SYS04_NATIVE");
+  }
+
+  let v112BrowserCases;
+  try {
+    const supplement = await execFile(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=^privacy112 Chromium full DOM ARIA matrix",
+        "scripts/hml/authenticated-visual-audit.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 45000,
+        maxBuffer: 1048576,
+      },
+    );
+    v112BrowserCases = privacy112Supplement(supplement.stdout);
+    if (v112BrowserCases !== 1) fail("V112_NATIVE");
+  } catch {
+    fail("V112_NATIVE");
+  }
+
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/native-proof.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -3473,6 +4152,8 @@ async function nativeGuard() {
       preflightDrain: nativePreflightDrain(output),
       cases: 8,
       visualCases: 1,
+      sys04BrowserCases,
+      v112BrowserCases,
       harnessSha: proof.harnessSha,
     }),
   );
@@ -3610,6 +4291,8 @@ export async function literalWords(root) {
 async function inspectPrivacy(page, words, diagnostics) {
   const state = privacy78Pages.get(page),
     generation = state?.generation;
+  const sys04Initial =
+    state?.verified && (await page.evaluate(() => window.__contaosPrivacySys04?.read() ?? null));
   const initialReceipt =
     state?.verified && (await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null));
   const snapshot = await page.locator("body").ariaSnapshot();
@@ -3650,12 +4333,13 @@ async function inspectPrivacy(page, words, diagnostics) {
         return window.__contaosPrivacy78?.read() ?? null;
       });
       const is109 = item.surface === "V109";
+      const is112 = item.surface === "V112";
       const anchor =
         receipt &&
         initialReceipt &&
         initialReceipt.revision === receipt.revision &&
         (await page.evaluate(
-          is109 ? privacy109FieldAnchor : privacy78FieldAnchor,
+          is109 ? privacy109FieldAnchor : is112 ? privacy112FieldAnchor : privacy78FieldAnchor,
           is109 ? { proof: state.v109Proof } : { surface: item.surface, proof: state.proof },
         ));
       if (
@@ -3667,6 +4351,7 @@ async function inspectPrivacy(page, words, diagnostics) {
         let fieldSnapshot = null,
           fieldSnapshots = null;
         if (is109) fieldSnapshots = await privacy109FieldSnapshots(page, anchor);
+        else if (is112) fieldSnapshots = await privacy112FieldSnapshots(page, anchor);
         else {
           const locator = page.locator(anchor.selector);
           if ((await locator.count()) === anchor.count)
@@ -3697,19 +4382,63 @@ async function inspectPrivacy(page, words, diagnostics) {
                   anchored: true,
                   receipt: currentReceipt,
                 })
-              : privacy78FieldContext({
-                  surface: item.surface,
-                  proof: state.proof,
-                  rbacProof: state.rbacProof,
-                  rendered,
-                  snapshot,
-                  fieldSnapshot,
-                  anchored: true,
-                  receipt: currentReceipt,
-                });
+              : is112
+                ? privacy112FieldContext({
+                    proof: state.proof,
+                    rendered,
+                    snapshot,
+                    fieldSnapshots,
+                    anchored: true,
+                    receipt: currentReceipt,
+                  })
+                : privacy78FieldContext({
+                    surface: item.surface,
+                    proof: state.proof,
+                    rbacProof: state.rbacProof,
+                    rendered,
+                    snapshot,
+                    fieldSnapshot,
+                    anchored: true,
+                    receipt: currentReceipt,
+                  });
           }
         }
       }
+    }
+  }
+  if (
+    rendered !== null &&
+    state?.verified &&
+    !state.closed &&
+    sys04Initial &&
+    page.url() === HML_ORIGIN + "/selecionar-organizacao"
+  ) {
+    const anchor = await page.evaluate(privacySys04Anchor, {
+      proof: state.sys04Proof,
+      receipt: sys04Initial,
+    });
+    if (anchor) {
+      const radios = page.locator(
+        '[role="radiogroup"][aria-labelledby="sys04-titulo-lista"] > [role="radio"]',
+      );
+      const cardSnapshots = await Promise.all((await radios.all()).map((n) => n.ariaSnapshot()));
+      const after = await page.evaluate(() => window.__contaosPrivacySys04?.read() ?? null);
+      if (
+        after &&
+        JSON.stringify(after.ids) === JSON.stringify(sys04Initial.ids) &&
+        after.revision === sys04Initial.revision &&
+        state.generation === generation &&
+        !state.closed
+      )
+        fieldContext = privacySys04FieldContext({
+          proof: state.sys04Proof,
+          receipt: after,
+          anchor,
+          rendered,
+          snapshot,
+          cardSnapshots,
+          anchored: true,
+        });
     }
   }
   const privacy =
@@ -3829,7 +4558,8 @@ async function runAuthenticatedAudit() {
   await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
   const debugPort = debug.address().port;
   await new Promise((resolve) => debug.close(resolve));
-  let captureItem = null;
+  let captureItem = null,
+    captureMode = null;
   async function saveRawScreenshot(key, suffix = "") {
     const file = `screenshots/${key}${suffix}.png`;
     const data = await page.screenshot({ fullPage: true, animations: "disabled" });
@@ -3840,6 +4570,12 @@ async function runAuthenticatedAudit() {
     return { file, sha };
   }
   async function saveScreenshot(key, suffix = "") {
+    captureMode =
+      suffix === "_menu"
+        ? "MOBILE_MENU"
+        : suffix === "_sidebar-recolhida"
+          ? "SIDEBAR_COLLAPSED"
+          : "PRIMARY";
     if (!captureItem) fail("VISUAL_CASE_IDENTITY");
     const result = await captureVisualEvidence({
       brand: () =>
@@ -3892,6 +4628,8 @@ async function runAuthenticatedAudit() {
     const privacyProof = await loadPrivacy78Proof();
     const rbacProof = await loadPrivacy78RbacProof();
     const v109Proof = await loadPrivacy109Proof();
+    const sys04Proof = await loadPrivacySys04Proof();
+    await context.addInitScript(privacySys04Runtime, { proof: sys04Proof, install: true });
     const wireProof = await loadPrivacyWireProof();
     await context.addInitScript(privacy78Runtime, {
       proof: privacyProof,
@@ -3905,6 +4643,7 @@ async function runAuthenticatedAudit() {
       proof: privacyProof,
       rbacProof,
       v109Proof,
+      sys04Proof,
       generation: 0,
       verified: false,
       closed: false,
@@ -3985,6 +4724,8 @@ async function runAuthenticatedAudit() {
       }
       await checkFreshDeployment(proof, item.surface !== surface);
       surface = item.surface;
+      let diagnosticStage = "CASE_NAVIGATION";
+      captureMode = null;
       try {
         const beforeErrors = errors;
         await resizeVerifiedPage(page, fence, item.width);
@@ -3999,6 +4740,7 @@ async function runAuthenticatedAudit() {
             requestAnimationFrame(() => requestAnimationFrame(resolve)),
           );
         });
+        diagnosticStage = "WAIT_SURFACE";
         if (item.surface !== "SYS04") await waitOrganization(page);
         await page.waitForFunction(
           () =>
@@ -4009,6 +4751,7 @@ async function runAuthenticatedAudit() {
         );
         await fence.drain();
         fence.assertSafe();
+        diagnosticStage = "PRIVACY_PRIMARY";
         const privacy = {};
         const snapshot = await inspectPrivacy(page, words, privacy);
         record.privacy = privacy;
@@ -4016,6 +4759,7 @@ async function runAuthenticatedAudit() {
           record.status = "BLOQUEADO_PII";
           continue;
         }
+        diagnosticStage = "READ_UI_METRICS";
         const metrics = await page.evaluate(() => {
           const visible = (e) =>
             e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
@@ -4069,6 +4813,7 @@ async function runAuthenticatedAudit() {
           record.status = "BLOQUEADO_PAGE_LIMIT";
           continue;
         }
+        diagnosticStage = "AXE";
         await page.addScriptTag({ content: axe });
         const accessibility = await page.evaluate(async () => {
           const result = await window.axe.run(document, {
@@ -4082,7 +4827,9 @@ async function runAuthenticatedAudit() {
             incomplete: result.incomplete.length,
           };
         });
+        diagnosticStage = "CAPTURE_PRIMARY";
         const shot = await saveScreenshot(key);
+        diagnosticStage = "SAVE_DOM";
         const domFile = `dom/${key}.json`,
           dom = JSON.stringify({
             surface: item.surface,
@@ -4109,9 +4856,14 @@ async function runAuthenticatedAudit() {
           domSha256: digest(dom),
           accessibility,
         });
+        diagnosticStage = "KEYBOARD";
         record.keyboard = await keyboardProbe(page);
+        diagnosticStage = "CAPTURE_SUPPLEMENT";
+        captureMode = item.width >= 768 ? "SIDEBAR_COLLAPSED" : "MOBILE_MENU";
         record.sidebarSupplement = await sidebarProbe(page, item, key, words, saveScreenshot);
+        diagnosticStage = "NAVIGATION_PROBE";
         record.navigationVerified = await navigationProbe(page, item, fence);
+        diagnosticStage = "FINAL_CASE_CHECK";
         record.status =
           validateCase(record) &&
           run78VisualEvidenceValid(record) &&
@@ -4126,23 +4878,7 @@ async function runAuthenticatedAudit() {
             : "FAIL";
         console.log(JSON.stringify({ case: key, status: record.status }));
       } catch (error) {
-        if (fence.snapshot().failed || error.code === "DEPLOYMENT_CHANGED") throw error;
-        record.status = ["PII_SUPPLEMENT", "PII_VISUAL_CAPTURE"].includes(error.code)
-          ? "BLOQUEADO_PII"
-          : "FAIL_UI";
-        if (
-          [
-            "VISUAL_BRAND_INVALID",
-            "VISUAL_BRAND_DECODE",
-            "VISUAL_BRAND_TIMEOUT",
-            "VISUAL_BRAND_COUNT",
-            "VISUAL_MEASUREMENT",
-            "VISUAL_CASE_IDENTITY",
-          ].includes(error.code)
-        )
-          record.visualFailure = error.code;
-        if (error.code === "VISUAL_MEASUREMENT" && error.visualDiagnostic)
-          record.visualDiagnostic = error.visualDiagnostic;
+        recordCaseFailure(record, error, diagnosticStage, captureMode, fence.snapshot().failed);
         if (record.status === "BLOQUEADO_PII") {
           for (let i = hashes.length - 1; i >= 0; i--)
             if (
@@ -4336,6 +5072,208 @@ export function visualMeasurementDiagnostic(metrics) {
   };
 }
 
+const visualFailureSummaries = new WeakMap();
+const visualLegacyFailureSummaries = new WeakMap();
+const CASE_DIAGNOSTIC_STAGES = new Set([
+  "CASE_NAVIGATION",
+  "WAIT_SURFACE",
+  "PRIVACY_PRIMARY",
+  "READ_UI_METRICS",
+  "AXE",
+  "CAPTURE_PRIMARY",
+  "CAPTURE_SUPPLEMENT",
+  "KEYBOARD",
+  "NAVIGATION_PROBE",
+  "SAVE_DOM",
+  "FINAL_CASE_CHECK",
+]);
+const VISUAL_FAILURE_CODES = new Set([
+  "VISUAL_BRAND_INVALID",
+  "VISUAL_BRAND_DECODE",
+  "VISUAL_BRAND_TIMEOUT",
+  "VISUAL_BRAND_COUNT",
+  "VISUAL_MEASUREMENT",
+  "VISUAL_CASE_IDENTITY",
+]);
+/** No text/selector/exception object is a diagnostic field. */
+export function summarizeVisualFailure(metrics) {
+  const invalid = () => ({ observed: false, state: "INVALID" });
+  const finite = (n, low = -100000, high = 100000) =>
+    typeof n === "number" && Number.isFinite(n) && n >= low && n <= high;
+  const count = (n) => Number.isInteger(n) && n >= 0 && n <= 100000;
+  const rectValid = (r) =>
+    r &&
+    finite(r.x) &&
+    finite(r.y) &&
+    finite(r.width, Number.MIN_VALUE) &&
+    finite(r.height, Number.MIN_VALUE);
+  try {
+    const flags = {};
+    for (const k of [
+      "identityPassed",
+      "geometryPassed",
+      "tablePassed",
+      "datesPassed",
+      "contrastPassed",
+    ]) {
+      if (typeof metrics?.[k] !== "boolean") return invalid();
+      flags[k] = metrics[k];
+    }
+    const v = metrics.viewport;
+    if (
+      !WIDTHS.includes(v?.width) ||
+      !Number.isInteger(v.height) ||
+      !finite(v.height, 1, 30000) ||
+      !finite(metrics.overflowX) ||
+      !["light", "dark"].includes(metrics.theme) ||
+      !Array.isArray(metrics.targets) ||
+      metrics.targets.length > 256 ||
+      !Array.isArray(metrics.dates) ||
+      metrics.dates.length > 3 ||
+      !Array.isArray(metrics.contrast) ||
+      metrics.contrast.length > 100
+    )
+      return invalid();
+    const counts = {
+      targetsExamined: metrics.targets.length,
+      invalidRect: 0,
+      disconnected: 0,
+      invisible: 0,
+      notHit: 0,
+      boundsX: 0,
+      boundsY: 0,
+    };
+    const failedTargets = [];
+    for (const t of metrics.targets) {
+      if (
+        !t ||
+        !Number.isInteger(t.ordinal) ||
+        t.ordinal < 0 ||
+        t.ordinal > 255 ||
+        !["INPUT", "SELECT", "TEXTAREA", "BUTTON", "LINK"].includes(t.kind) ||
+        !rectValid(t.rect) ||
+        ["connected", "visible", "disabled", "hit"].some((k) => typeof t[k] !== "boolean")
+      )
+        return invalid();
+      const r = t.rect,
+        disconnected = !t.connected,
+        invisible = !t.visible;
+      const notHit = !t.hit && !t.disabled,
+        boundsX = r.x < 0 || r.x + r.width > v.width + 0.5;
+      const boundsY = r.y < 0 || r.y + r.height > v.height + 0.5;
+      counts.disconnected += +disconnected;
+      counts.invisible += +invisible;
+      counts.notHit += +notHit;
+      counts.boundsX += +boundsX;
+      counts.boundsY += +boundsY;
+      if ((disconnected || invisible || notHit || boundsX || boundsY) && failedTargets.length < 8)
+        failedTargets.push({
+          ordinal: t.ordinal,
+          kind: t.kind,
+          rect: {
+            x: Math.round(r.x * 100) / 100,
+            y: Math.round(r.y * 100) / 100,
+            width: Math.round(r.width * 100) / 100,
+            height: Math.round(r.height * 100) / 100,
+          },
+          connected: t.connected,
+          visible: t.visible,
+          disabled: t.disabled,
+          hit: t.hit,
+        });
+    }
+    let table = null;
+    if (metrics.table !== null) {
+      if (
+        !metrics.table ||
+        !count(metrics.table.clipping) ||
+        !Array.isArray(metrics.table.helpTargets) ||
+        metrics.table.helpTargets.length > 256 ||
+        !metrics.table.helpTargets.every(rectValid)
+      )
+        return invalid();
+      table = {
+        clipping: metrics.table.clipping,
+        helpBelow44: metrics.table.helpTargets.filter((r) => r.width < 44 || r.height < 44).length,
+      };
+    }
+    let absent = 0,
+      schemeMismatch = 0;
+    for (const d of metrics.dates) {
+      if (
+        !d ||
+        typeof d.present !== "boolean" ||
+        !["", "normal", "light", "dark", "light dark", "dark light"].includes(d.scheme)
+      )
+        return invalid();
+      absent += +!d.present;
+      schemeMismatch += +(d.present && d.scheme !== metrics.theme);
+    }
+    for (const c of metrics.contrast)
+      if (!c || !finite(c.ratio, 0, 100) || c.threshold !== 4.5) return invalid();
+    return {
+      observed: true,
+      state: "VALID",
+      viewport: { width: v.width, height: v.height },
+      flags,
+      overflowX: Math.round(metrics.overflowX * 100) / 100,
+      counts,
+      failedTargets,
+      table,
+      dates: { absent, schemeMismatch },
+      contrast: {
+        count: metrics.contrast.length,
+        minimum: metrics.contrast.length
+          ? Math.round(Math.min(...metrics.contrast.map((c) => c.ratio)) * 10000) / 10000
+          : null,
+        threshold: 4.5,
+      },
+    };
+  } catch {
+    return invalid();
+  }
+}
+/** The actual per-case report consumer; never spread/read an arbitrary exception. */
+export function recordCaseFailure(record, error, stage, mode = null, fenceFailed = false) {
+  const field = (key) => {
+    try {
+      const d = error && Object.getOwnPropertyDescriptor(error, key);
+      return d && "value" in d ? d.value : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const code = field("code"),
+    name = field("name");
+  if (fenceFailed || code === "DEPLOYMENT_CHANGED") throw error;
+  record.status = ["PII_SUPPLEMENT", "PII_VISUAL_CAPTURE"].includes(code)
+    ? "BLOQUEADO_PII"
+    : "FAIL_UI";
+  if (VISUAL_FAILURE_CODES.has(code)) record.visualFailure = code;
+  if (error && typeof error === "object" && visualLegacyFailureSummaries.has(error))
+    record.visualDiagnostic = visualLegacyFailureSummaries.get(error);
+  const capture = stage === "CAPTURE_PRIMARY" || stage === "CAPTURE_SUPPLEMENT";
+  record.diagnostic = {
+    schema: "contaos.case.failure.v1",
+    stage: CASE_DIAGNOSTIC_STAGES.has(stage) ? stage : null,
+    errorKind: VISUAL_FAILURE_CODES.has(code)
+      ? "KNOWN_VISUAL"
+      : name === "TimeoutError"
+        ? "TIMEOUT"
+        : name === "TargetClosedError"
+          ? "TARGET_CLOSED"
+          : name === "EvaluationError"
+            ? "EVALUATION"
+            : "OTHER",
+    mode: capture && ["PRIMARY", "SIDEBAR_COLLAPSED", "MOBILE_MENU"].includes(mode) ? mode : null,
+    visual:
+      error && typeof error === "object" && visualFailureSummaries.has(error)
+        ? visualFailureSummaries.get(error)
+        : { observed: false, state: "UNOBSERVED" },
+  };
+  return record;
+}
+
 /** Shared causal boundary: no screenshot is emitted after a failed/incomplete step. */
 export async function captureVisualEvidence({ brand, drain, stabilize, measure, privacy, save }) {
   const image = await brand();
@@ -4347,6 +5285,8 @@ export async function captureVisualEvidence({ brand, drain, stabilize, measure, 
       code: "VISUAL_MEASUREMENT",
       visualDiagnostic: visualMeasurementDiagnostic(metrics),
     });
+    visualFailureSummaries.set(error, summarizeVisualFailure(metrics));
+    visualLegacyFailureSummaries.set(error, Object.freeze({ ...error.visualDiagnostic }));
     throw error;
   }
   if ((await privacy()) !== true) fail("PII_VISUAL_CAPTURE");
@@ -4413,7 +5353,7 @@ export async function collectVisualMetrics(page, item) {
       const r = rect(e);
       return r.width > 0 && r.height > 0 && r.y >= 0 && r.y + r.height <= innerHeight;
     });
-    const targets = controls.map((e) => {
+    const targets = controls.map((e, ordinal) => {
       const r = rect(e),
         inset = Math.min(3, r.width / 4, r.height / 4);
       const points = [
@@ -4424,6 +5364,16 @@ export async function collectVisualMetrics(page, item) {
         [r.x + r.width / 2, r.y + r.height - inset],
       ];
       return {
+        ordinal,
+        kind: e.matches("input")
+          ? "INPUT"
+          : e.matches("select")
+            ? "SELECT"
+            : e.matches("textarea")
+              ? "TEXTAREA"
+              : e.matches("button")
+                ? "BUTTON"
+                : "LINK",
         rect: r,
         connected: e.isConnected,
         visible: visible(e),

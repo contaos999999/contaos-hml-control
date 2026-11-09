@@ -4497,7 +4497,7 @@ test("privacy78 recibo selado intervalo unico contexto e desconhecidos remanesce
   const rbacProof = await fn("loadPrivacy78RbacProof")();
   const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
   assert.ok(Object.isFrozen(proof.context));
-  for (const surface of ["V111", "V112", "V115", "V122"]) {
+  for (const surface of ["V111", "V115", "V122"]) {
     const value = proof.generated_exact_values[surface][0];
     const receipt = Object.freeze({
       route: fn("privateCases")().find((r) => r.surface === surface).path,
@@ -4561,10 +4561,6 @@ function privacy78Fixtures() {
   const c = privacy78Proof.context;
   return {
     V111: '<section aria-label="Processamento"><h2>Processamento</h2><ul><li><div><span>Etapa: documents</span></div><p>Registrado em 08/11/2026 02:41 · Iniciado em 08/11/2026 08:21 · Concluído em 08/11/2026 08:21</p></li></ul></section>',
-    V112:
-      '<table><caption>Competências do contrato</caption><thead><tr><th scope="col">Competência</th><th scope="col">Período</th><th scope="col">Ações</th></tr></thead><tbody><tr><th scope="row">11/2026</th><td>01/11/2026 a 30/11/2026</td><td><a href="/competencias/' +
-      c.competence +
-      '" aria-label="Abrir competência 11/2026">Abrir</a></td></tr></tbody></table>',
     V115: '<section aria-labelledby="v115-envio"><h2 id="v115-envio">Enviar documento</h2><div><label for="v115-arquivo">Arquivo</label><input id="v115-arquivo" type="file"><p>Limite: 500 MB</p></div></section>',
     V122: '<section><h2>1. Selecionar relatórios anteriores</h2><p>Formatos aceitos: PDF, XLSX, CSV, DOCX, PNG, JPG, JPEG, WEBP, TXT, JSON, XML. O limite de tamanho e o tipo real são conferidos pelo backend.</p><label for="historico-arquivos">Arquivos históricos (seleção múltipla)</label><input id="historico-arquivos" type="file" multiple></section>',
   };
@@ -5958,6 +5954,383 @@ test("solicitacao unica: identidade descoberta continua obrigatoria antes do che
   });
 });
 
+test("SYS04 closed RPC rejects unknown rows without exporting them", async () => {
+  const proof = await fn("loadPrivacySys04Proof")();
+  const runtime = fn("privacySys04Runtime")({ proof });
+  const rows = [...proof.legacy, ...proof.constructor_closed, ...proof.discovered_closed];
+  const dto = rows.map(({ id, razao_social, nome_fantasia, cnpj, situacao }) => ({
+    id,
+    razao_social,
+    nome_fantasia,
+    cnpj,
+    situacao,
+    perfil: "administrador_master",
+  }));
+  const url = API + "/rest/v1/rpc/listar_organizacoes_disponiveis";
+  assert.equal(runtime.match(url, "POST", "{}"), true);
+  for (const body of ["null", "[]", '{"x":1}'])
+    assert.equal(runtime.match(url, "POST", body), false);
+  assert.equal(runtime.match(url + "?x=1", "POST", "{}"), false);
+  assert.equal(runtime.match(url, "GET", "{}"), false);
+  const projected = runtime.project(dto);
+  assert.deepEqual(projected, { ids: dto.map((r) => r.id) });
+  for (const change of [
+    (r) => r.push({ ...r[0] }),
+    (r) => (r[0].cnpj = "123"),
+    (r) => (r[0].razao_social = "unknown-canary"),
+    (r) => (r[0].perfil = "administrador"),
+    (r) => (r[0].extra = "canary"),
+    (r) => (r[0].id = "00000000-0000-4000-8000-000000000001"),
+  ]) {
+    const altered = structuredClone(dto);
+    change(altered);
+    assert.equal(runtime.project(altered), null);
+  }
+  assert.equal(JSON.stringify(projected).includes("razao_social"), false);
+});
+
+test(
+  "SYS04 source component full subtree binds duplicate labels in eight Chromium cases",
+  { skip: process.env.CONTAOS_SYS04_BROWSER !== "1" && process.env.CONTAOS_NATIVE_GUARD !== "1" },
+  async () => {
+    const { readFile } = await import("node:fs/promises");
+    const ts = (await import("typescript")).default;
+    const React = await import("react");
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { chromium } = await import("playwright");
+    const source = await readFile(
+      new URL("../../src/components/organizacao/OrganizationSelector.tsx", import.meta.url),
+      "utf8",
+    );
+    const ast = ts.createSourceFile(
+      "selector.tsx",
+      source,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const wanted = new Set(["formatarCnpj", "OrganizationCard", "OrganizationList"]);
+    const statements = ast.statements
+      .filter((s) => ts.isFunctionDeclaration(s) && wanted.has(s.name?.text))
+      .map((s) => s.getText(ast).replace(/^export /, ""))
+      .join("\n");
+    const js = ts.transpileModule(statements, {
+      compilerOptions: {
+        jsx: ts.JsxEmit.React,
+        target: ts.ScriptTarget.ES2022,
+        module: ts.ModuleKind.CommonJS,
+      },
+    }).outputText;
+    const Component = new Function(
+      "React",
+      "useRef",
+      "cn",
+      "Check",
+      "rotuloPerfil",
+      js + ";return OrganizationList",
+    )(
+      React,
+      React.useRef,
+      (...v) => v.filter(Boolean).join(" "),
+      () => React.createElement("svg", { "aria-hidden": true }),
+      (p) => (p === "administrador_master" ? "Administrador Master" : p),
+    );
+    const proof = await fn("loadPrivacySys04Proof")();
+    const all = [...proof.legacy, ...proof.constructor_closed, ...proof.discovered_closed];
+    const duplicate = proof.discovered_closed
+      .filter((r) => r.razao_social === "V117 synthetic review")
+      .slice(0, 2);
+    assert.equal(duplicate.length, 2);
+    const chosen = all;
+    const dto = chosen.map(({ id, razao_social, nome_fantasia, cnpj, situacao }) => ({
+      id,
+      razao_social,
+      nome_fantasia,
+      cnpj,
+      situacao,
+      perfil: "administrador_master",
+    }));
+    const html = renderToStaticMarkup(
+      React.createElement(Component, {
+        vinculos: dto.map((r) => ({ id: r.id, perfil: r.perfil, organizacao: r })),
+        selecionada: dto[0].id,
+        onSelecionar: () => {},
+      }),
+    );
+    const browser = await chromium.launch({
+      headless: true,
+      chromiumSandbox: true,
+      executablePath: process.env.CONTAOS_CHROMIUM_EXECUTABLE,
+    });
+    try {
+      for (const width of [1440, 1280, 768, 390])
+        for (const theme of ["light", "dark"]) {
+          const page = await browser.newPage({
+            viewport: { width, height: 1000 },
+            colorScheme: theme,
+          });
+          await page.route("**/*", (route) => route.abort());
+          await page.setContent('<main class="' + theme + '">' + html + "</main>");
+          const receipt = {
+            route: "/selecionar-organizacao",
+            ids: dto.map((r) => r.id),
+            revision: 1,
+            age: 1,
+          };
+          const anchor = await page.evaluate(fn("privacySys04Anchor"), { proof, receipt });
+          assert.ok(anchor, JSON.stringify({ width, theme }));
+          const rendered = await page.locator("body").innerText(),
+            snapshot = await page.locator("body").ariaSnapshot();
+          const cards = await page.getByRole("radio").all();
+          const snapshots = await Promise.all(cards.map((c) => c.ariaSnapshot()));
+          const context = fn("privacySys04FieldContext")({
+            proof,
+            receipt,
+            anchor,
+            rendered,
+            snapshot,
+            cardSnapshots: snapshots,
+            anchored: true,
+          });
+          assert.ok(context);
+          for (const delta of [
+            { proof: structuredClone(proof) },
+            { anchored: false },
+            { receipt: { ...receipt, age: 120000 } },
+            { receipt: { ...receipt, age: -1 } },
+            { receipt: { ...receipt, age: undefined } },
+            { receipt: { ...receipt, age: NaN } },
+            { anchor: { ...anchor, ids: [...anchor.ids].reverse() } },
+          ])
+            assert.equal(
+              sut.privacySys04FieldContext({
+                proof,
+                receipt,
+                anchor,
+                rendered,
+                snapshot,
+                cardSnapshots: snapshots,
+                anchored: true,
+                ...delta,
+              }),
+              null,
+            );
+          assert.notEqual(sut.classifyArtifactText(rendered, new Set()).reason, "ALLOWED");
+          const words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+          assert.equal(
+            sut.classifyArtifactText(rendered, words, { fieldContext: context }).reason,
+            "ALLOWED",
+          );
+          assert.equal(
+            sut.classifyArtifactText(snapshot, words, { snapshot: true, fieldContext: context })
+              .reason,
+            "ALLOWED",
+          );
+          assert.equal(
+            sut.classifyArtifactText(rendered + " outsideunknown", words, { fieldContext: context })
+              .reason,
+            "INVALID_CONTENT",
+          );
+          assert.equal(
+            sut.classifyArtifactText(rendered + " x@example.com", words, { fieldContext: context })
+              .reason,
+            "SENSITIVE_PATTERN",
+          );
+          await page
+            .getByRole("radio")
+            .first()
+            .locator("p")
+            .first()
+            .evaluate((n) => (n.textContent = "unknown-canary"));
+          assert.equal(await page.evaluate(sut.privacySys04Anchor, { proof, receipt }), null);
+          await page.setContent("<main>" + html + "</main>");
+          await page
+            .getByRole("radio")
+            .first()
+            .evaluate((n) => n.setAttribute("title", "x@example.com"));
+          assert.equal(await page.evaluate(sut.privacySys04Anchor, { proof, receipt }), null);
+
+          if (width === 1440 && theme === "light") {
+            for (const mutation of [
+              "invalid",
+              "missing",
+              "false-selected",
+              "tab-missing",
+              "tab-extra",
+              "selected-missing",
+            ]) {
+              await page.setContent("<main>" + html + "</main>");
+              await page
+                .getByRole("radio")
+                .first()
+                .evaluate((n, m) => {
+                  if (m === "invalid") n.setAttribute("aria-checked", "unknown");
+                  if (m === "missing") n.removeAttribute("aria-checked");
+                  if (m === "false-selected") n.setAttribute("aria-checked", "false");
+                  if (m === "tab-missing") n.removeAttribute("tabindex");
+                  if (m === "tab-extra") n.parentElement.children[1].setAttribute("tabindex", "0");
+                  if (m === "selected-missing") n.querySelector(".sr-only").remove();
+                }, mutation);
+              assert.equal(
+                await page.evaluate(sut.privacySys04Anchor, { proof, receipt }),
+                null,
+                mutation,
+              );
+            }
+          }
+          await page.close();
+        }
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+test("SYS04 source SDK emits readonly POST with empty object and never calls Auth", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const ts = (await import("typescript")).default;
+  const { createClient } = await import("@supabase/supabase-js");
+  const source = await readFile(
+    new URL("../../src/lib/auth/resolverDestinoPosLogin.ts", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile(
+    "resolver.ts",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const statement = ast.statements
+    .find((s) => ts.isFunctionDeclaration(s) && s.name?.text === "listarOrganizacoesDisponiveis")
+    .getText(ast)
+    .replace(/^export /, "");
+  const js = ts.transpileModule(statement, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+  }).outputText;
+  const seen = [];
+  const client = createClient(API, "public-fixture-key", {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: {
+      fetch: async (input, init) => {
+        seen.push({ url: String(input), method: init.method, body: init.body });
+        return new Response("[]", { status: 200, headers: { "Content-Type": "application/json" } });
+      },
+    },
+  });
+  const call = new Function(
+    "supabase",
+    "ErroOrganizacoes",
+    "classificarErroOrganizacoes",
+    js + ";return listarOrganizacoesDisponiveis",
+  )(client, Error, () => "erro");
+  assert.deepEqual(await call(), []);
+  assert.deepEqual(seen, [
+    { url: API + "/rest/v1/rpc/listar_organizacoes_disponiveis", method: "POST", body: "{}" },
+  ]);
+});
+
+test(
+  "SYS04 browser observer seals native response and invalidates mismatched body and route",
+  { skip: process.env.CONTAOS_SYS04_BROWSER !== "1" && process.env.CONTAOS_NATIVE_GUARD !== "1" },
+  async () => {
+    const { chromium } = await import("playwright");
+    const proof = await fn("loadPrivacySys04Proof")();
+    const row = proof.legacy[0],
+      dto = [
+        {
+          id: row.id,
+          razao_social: row.razao_social,
+          nome_fantasia: row.nome_fantasia,
+          cnpj: null,
+          situacao: row.situacao,
+          perfil: "administrador_master",
+        },
+      ];
+    const browser = await chromium.launch({
+      headless: true,
+      chromiumSandbox: true,
+      executablePath: process.env.CONTAOS_CHROMIUM_EXECUTABLE,
+    });
+    try {
+      for (const wrong of [false, true]) {
+        const context = await browser.newContext();
+        await context.route("**/*", (route) =>
+          route.fulfill({
+            status: 200,
+            contentType:
+              route.request().resourceType() === "document" ? "text/html" : "application/json",
+            body:
+              route.request().resourceType() === "document" ? "<main></main>" : JSON.stringify(dto),
+          }),
+        );
+        await context.addInitScript(sut.privacySys04Runtime, { proof, install: true });
+        const page = await context.newPage();
+        await page.goto(HML + "/selecionar-organizacao");
+        const response = await page.evaluate(
+          async ({ API, wrong }) => {
+            const r = await fetch(API + "/rest/v1/rpc/listar_organizacoes_disponiveis", {
+              method: "POST",
+              body: wrong ? '{"extra":1}' : "{}",
+            });
+            return await r.json();
+          },
+          { API, wrong },
+        );
+        assert.deepEqual(response, dto);
+        await page.waitForTimeout(30);
+        const receipt = await page.evaluate(() => window.__contaosPrivacySys04.read());
+        if (wrong) assert.equal(receipt, null);
+        else {
+          assert.deepEqual(receipt.ids, [row.id]);
+          assert.equal(JSON.stringify(receipt).includes("razao_social"), false);
+          await page.evaluate(() => history.pushState({}, "", "/selecionar-organizacao?unknown=1"));
+          assert.equal(await page.evaluate(() => window.__contaosPrivacySys04.read()), null);
+        }
+        await context.close();
+      }
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+test("diagnóstico legado não compartilha alias mutável do erro com o relatório", async () => {
+  const canary = "CANARY_PRIVATE_NEVER_EXPORT";
+  let captured;
+  await assert.rejects(
+    () =>
+      fn("captureVisualEvidence")({
+        brand: async () => ({}),
+        drain: async () => {},
+        stabilize: async () => {},
+        measure: async () => ({
+          passed: false,
+          identityPassed: true,
+          geometryPassed: false,
+          tablePassed: true,
+          datesPassed: true,
+          contrastPassed: true,
+          targets: [],
+          overflowX: 0,
+        }),
+        privacy: async () => true,
+        save: async () => assert.fail("falha não pode salvar imagem"),
+      }),
+    (error) => {
+      captured = error;
+      return error.code === "VISUAL_MEASUREMENT";
+    },
+  );
+  captured.visualDiagnostic.secret = canary;
+  captured.visualDiagnostic.identity = false;
+  const record = {};
+  fn("recordCaseFailure")(record, captured, "CAPTURE_PRIMARY");
+  assert.equal(JSON.stringify(record).includes(canary), false);
+  assert.equal(record.visualDiagnostic.identity, true);
+  assert.equal(record.status, "FAIL_UI");
+});
+
 test("V102 diagnóstico nativo projeta somente checkpoint e números fechados", () => {
   const row = {
     lastStage: "MEASURE",
@@ -6084,6 +6457,492 @@ test("Run114 diagnóstico limita contadores e ignora getters de campos não auto
   });
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: 40000 }).overflowX, 30000);
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: -40000 }).overflowX, -30000);
+});
+
+test("SYS04 literal interval pattern treats metacharacters as data", () => {
+  const literal = fn("privacySys04Literal");
+  for (const value of ["a.b", "a[b]", "a(b)", "a+b", "a?b", "a$b", "a^b", "a|b", "a\\b"]) {
+    const pattern = new RegExp("^" + literal(value) + "$", "u");
+    assert.equal(pattern.test(value), true);
+    assert.equal(pattern.test("other"), false);
+  }
+  assert.equal(new RegExp("^" + literal("a.b") + "$").test("axb"), false);
+});
+test("SYS04 supplement accepts only factual complete two-test TAP", () => {
+  const parse = fn("privacySys04Supplement");
+  assert.equal(parse("# tests 2\n# pass 2\n# fail 0\n# skipped 0\n# cancelled 0\n"), 2);
+  for (const tap of [
+    "",
+    "# pass 2\n",
+    "# tests 2\n# pass 1\n# fail 1\n# skipped 0\n# cancelled 0\n",
+    "# tests 2\n# pass 2\n# fail 0\n# skipped 1\n# cancelled 0\n",
+  ])
+    assert.equal(parse(tap), null);
+});
+
+function privacy112Fixture() {
+  return (
+    '<section aria-labelledby="v112-lista"><div><h2 id="v112-lista">Lista de competências</h2></div>' +
+    '<div class="overflow-x-auto rounded-lg border border-border"><table class="w-full min-w-[56rem] text-sm"><caption class="sr-only">Competências do contrato</caption><thead class="bg-muted/50"><tr><th scope="col">Competência</th><th scope="col">Período</th><th scope="col">Data limite</th><th scope="col">Situação</th><th scope="col">Conformidade</th><th scope="col">Versão do pacote</th><th scope="col">Ações</th></tr></thead><tbody><tr class="border-t border-border"><th scope="row">11/2026</th><td>01/11/2026 a 30/11/2026</td><td>—</td><td><span class="inline-flex"><span data-status>—</span></span></td><td><span data-percentual>—</span></td><td>—</td><td><a href="/competencias/59072760-4420-4598-82dd-367f41a79e89" aria-label="Abrir competência 11/2026"><span>Abrir competência</span></a></td></tr></tbody></table></div>' +
+    "</section>"
+  );
+}
+function privacy112Texts() {
+  const value = privacy78Proof.generated_exact_values.V112[0];
+  const header = '- rowheader "11/2026"';
+  const cell = '- cell "' + value + '"';
+  const row =
+    '- row "11/2026 ' +
+    value +
+    ' — — — — Abrir competência 11/2026":\n' +
+    "  " +
+    header +
+    "\n  " +
+    cell +
+    '\n  - cell "—"\n  - cell "—"\n  - cell "—"\n  - cell "—"\n  - cell "Abrir competência 11/2026":\n    - link "Abrir competência 11/2026":\n      - /url: /competencias/' +
+    privacy78Proof.context.competence;
+  return {
+    rendered: "Lista de competências\n11/2026 " + value + " — — — — Abrir competência",
+    snapshot:
+      '- heading "Lista de competências" [level=2]\n- table:\n  ' + row.replaceAll("\n", "\n  "),
+    fieldSnapshots: [row, header, cell],
+  };
+}
+test("privacy112 RED real row aggregate and cell require scoped structural exemption", async () => {
+  const proof = await fn("loadPrivacy78Proof")(),
+    texts = privacy112Texts();
+  const input = {
+    proof,
+    ...texts,
+    anchored: true,
+    receipt: Object.freeze({
+      route: fn("privateCases")().find((i) => i.surface === "V112").path,
+      observed: Object.freeze(["contract_gate", "competencias_page0_no_filters"]),
+      age: 1,
+    }),
+  };
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  assert.equal(fn("classifyArtifactText")(texts.rendered, words).unknownCount, 1);
+  assert.equal(
+    fn("classifyArtifactText")(texts.snapshot, words, { snapshot: true }).unknownCount,
+    3,
+  );
+  const context = fn("privacy112FieldContext")(input);
+  assert.ok(context);
+  for (const channel of ["rendered", "snapshot"])
+    assert.equal(
+      fn("classifyArtifactText")(texts[channel], words, {
+        snapshot: channel === "snapshot",
+        fieldContext: context,
+      }).reason,
+      "ALLOWED",
+    );
+  for (const delta of [
+    { anchored: false },
+    { proof: privacy78Proof },
+    { receipt: { ...input.receipt } },
+    { receipt: Object.freeze({ ...input.receipt, age: 120000 }) },
+    { receipt: Object.freeze({ ...input.receipt, observed: Object.freeze([]) }) },
+    { receipt: Object.freeze({ ...input.receipt, route: "/" }) },
+    { fieldSnapshots: texts.fieldSnapshots.slice(0, 2) },
+    { snapshot: texts.snapshot + "\n" + texts.fieldSnapshots[2] },
+    { rendered: texts.rendered + proof.generated_exact_values.V112[0] },
+    { snapshot: texts.snapshot.replace('rowheader "11/2026"', 'rowheader "10/2026"') },
+    { snapshot: texts.snapshot.replace("01/11/2026", "01/10/2026") },
+  ])
+    assert.equal(fn("privacy112FieldContext")({ ...input, ...delta }), null);
+  for (const extra of [
+    " CANARIO_PRIVADO",
+    " rowheader",
+    " pessoa@example.com",
+    " Bearer secret",
+    " 123.456.789-00",
+  ]) {
+    for (const channel of ["rendered", "snapshot"]) {
+      const changed = { ...input, [channel]: texts[channel] + extra },
+        ctx = fn("privacy112FieldContext")(changed);
+      assert.notEqual(
+        fn("classifyArtifactText")(changed[channel], words, {
+          snapshot: channel === "snapshot",
+          fieldContext: ctx,
+        }).reason,
+        "ALLOWED",
+      );
+    }
+  }
+});
+test("privacy112 DOM closes section seven columns header same row link and plain period", () => {
+  for (const mutate of [
+    null,
+    (d) => (d.querySelector("h2").textContent = "Outro"),
+    (d) => d.querySelector("thead th").remove(),
+    (d) => (d.querySelector("th[scope=row]").textContent = "10/2026"),
+    (d) => d.querySelector("td").setAttribute("aria-label", "CANARIO_PRIVADO"),
+    (d) => (d.querySelector("a").href = "/competencias/foreign"),
+    (d) => (d.body.innerHTML += privacy112Fixture()),
+    (d) => d.querySelector("td").appendChild(d.createElement("span")),
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy112Fixture());
+    try {
+      if (mutate) mutate(w.document);
+      assert.equal(!!run("privacy112FieldAnchor", { proof: privacy78Proof }), !mutate);
+    } finally {
+      dom.window.close();
+    }
+  }
+});
+
+test(
+  "privacy112 Chromium full DOM ARIA matrix preserves scoped intervals and unknown neighbours",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 30000 },
+  async () => {
+    const { chromium } = await import("playwright");
+    const browser = await chromium.launch({ chromiumSandbox: true });
+    const proof = await fn("loadPrivacy78Proof")(),
+      words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+    try {
+      const page = await browser.newPage();
+      await page.route("**/*", (r) => r.abort());
+      let matrixCases = 0;
+      for (const width of [1440, 1280, 768, 390])
+        for (const theme of ["light", "dark"]) {
+          matrixCases++;
+          await page.setViewportSize({ width, height: 900 });
+          await page.emulateMedia({ colorScheme: theme });
+          await page.setContent(
+            "<!doctype html><style>table{min-width:56rem}caption{position:absolute;width:1px;height:1px;overflow:hidden}</style>" +
+              privacy112Fixture(),
+          );
+          const anchor = await page.evaluate(fn("privacy112FieldAnchor"), { proof });
+          assert.ok(anchor);
+          const fieldSnapshots = await fn("privacy112FieldSnapshots")(page, anchor);
+          assert.ok(fieldSnapshots);
+          const rendered = await page.evaluate(() => document.body.innerText),
+            snapshot = await page.locator("body").ariaSnapshot();
+          const input = {
+            proof,
+            rendered,
+            snapshot,
+            fieldSnapshots,
+            anchored: true,
+            receipt: Object.freeze({
+              route: fn("privateCases")().find((i) => i.surface === "V112").path,
+              observed: Object.freeze(["contract_gate", "competencias_page0_no_filters"]),
+              age: 1,
+            }),
+          };
+          assert.equal(fn("classifyArtifactText")(rendered, words).unknownCount, 1);
+          assert.equal(
+            fn("classifyArtifactText")(snapshot, words, { snapshot: true }).unknownCount,
+            3,
+          );
+          const ctx = fn("privacy112FieldContext")(input);
+          assert.ok(ctx);
+          assert.equal(
+            fn("classifyArtifactText")(rendered, words, { fieldContext: ctx }).reason,
+            "ALLOWED",
+          );
+          assert.equal(
+            fn("classifyArtifactText")(snapshot, words, { snapshot: true, fieldContext: ctx })
+              .reason,
+            "ALLOWED",
+          );
+          await page
+            .locator("tbody tr td")
+            .nth(2)
+            .evaluate((n) => n.setAttribute("aria-label", "CANARIO_PRIVADO"));
+          const changed = await page.locator("body").ariaSnapshot();
+          const changedFields = await fn("privacy112FieldSnapshots")(page, anchor);
+          const changedContext = fn("privacy112FieldContext")({
+            ...input,
+            snapshot: changed,
+            fieldSnapshots: changedFields,
+          });
+          assert.notEqual(
+            fn("classifyArtifactText")(changed, words, {
+              snapshot: true,
+              fieldContext: changedContext,
+            }).reason,
+            "ALLOWED",
+          );
+          await page
+            .locator("tbody tr td")
+            .nth(2)
+            .evaluate((n) => n.removeAttribute("aria-label"));
+          await page
+            .locator("tbody a")
+            .evaluate((n) => n.setAttribute("aria-labelledby", "v112-lista"));
+          assert.ok(
+            (await page.locator("tbody a").ariaSnapshot()).includes('link "Lista de competências"'),
+          );
+          assert.equal(await page.evaluate(fn("privacy112FieldAnchor"), { proof }), null);
+        }
+      assert.equal(matrixCases, 8);
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+test("privacy112 rejects copies cards structural injection foreign records and stale evidence", async () => {
+  const proof = await fn("loadPrivacy78Proof")(),
+    texts = privacy112Texts(),
+    value = proof.generated_exact_values.V112[0];
+  const input = {
+    proof,
+    ...texts,
+    anchored: true,
+    receipt: Object.freeze({
+      route: fn("privateCases")().find((i) => i.surface === "V112").path,
+      observed: Object.freeze(["contract_gate", "competencias_page0_no_filters"]),
+      age: 1,
+    }),
+  };
+  for (const delta of [
+    {
+      fieldSnapshots: [
+        texts.fieldSnapshots[0],
+        '- rowheader "11/2026 CANARIO_PRIVADO"',
+        texts.fieldSnapshots[2],
+      ],
+    },
+    {
+      fieldSnapshots: [
+        texts.fieldSnapshots[0].replace("  - rowheader", "  - cell"),
+        texts.fieldSnapshots[1],
+        texts.fieldSnapshots[2],
+      ],
+    },
+    {
+      fieldSnapshots: [
+        texts.fieldSnapshots[0].replace('  - cell "—"\n', ""),
+        texts.fieldSnapshots[1],
+        texts.fieldSnapshots[2],
+      ],
+    },
+    { snapshot: texts.snapshot + '\n- paragraph "' + value + '"' },
+    { snapshot: texts.snapshot + "\n" + texts.fieldSnapshots[0] },
+    { snapshot: texts.snapshot.replace("11/2026", "09/2026") },
+    {
+      receipt: Object.freeze({
+        ...input.receipt,
+        observed: Object.freeze(["contract_gate", "competencias_page0_no_filters", "foreign"]),
+      }),
+    },
+    {
+      receipt: Object.freeze({
+        ...input.receipt,
+        observed: Object.freeze([
+          "contract_gate",
+          "competencias_page0_no_filters",
+          "contract_gate",
+        ]),
+      }),
+    },
+    { receipt: Object.freeze({ ...input.receipt, age: -1 }) },
+  ])
+    assert.equal(fn("privacy112FieldContext")({ ...input, ...delta }), null);
+  assert.equal(
+    fn("privacy78FieldContext")({
+      surface: "V112",
+      proof,
+      rendered: value,
+      snapshot: value,
+      fieldSnapshot: value,
+      anchored: true,
+      receipt: input.receipt,
+    }),
+    null,
+  );
+  for (const mutate of [
+    (d) => (d.querySelector("thead th:nth-child(2)").textContent = "Outro"),
+    (d) => d.querySelector("th[scope=row]").setAttribute("aria-label", "CANARIO_PRIVADO"),
+    (d) => d.querySelector("a").setAttribute("aria-label", "Abrir competência 10/2026"),
+    (d) => d.querySelector("tbody").appendChild(d.querySelector("tbody tr").cloneNode(true)),
+    (d) => (d.querySelector("tbody td").textContent = "01/10/2026 a 31/10/2026"),
+    (d) => (d.querySelector("table").outerHTML = "<article>11/2026 " + value + "</article>"),
+    (d) => (d.querySelector("h2").id = "foreign"),
+    (d) => (d.querySelector("table").hidden = true),
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy112Fixture());
+    try {
+      mutate(w.document);
+      assert.equal(run("privacy112FieldAnchor", { proof }), null);
+    } finally {
+      dom.window.close();
+    }
+  }
+});
+
+const diagnosticMetrics = (delta = {}) => ({
+  viewport: { width: 390, height: 1000 },
+  theme: "light",
+  passed: false,
+  identityPassed: true,
+  geometryPassed: false,
+  tablePassed: true,
+  datesPassed: true,
+  contrastPassed: true,
+  overflowX: 0,
+  table: null,
+  dates: [],
+  contrast: [],
+  pairs: [],
+  targets: [
+    {
+      ordinal: 0,
+      kind: "INPUT",
+      rect: { x: 16, y: 100, width: 200, height: 44 },
+      connected: true,
+      visible: true,
+      disabled: false,
+      hit: false,
+    },
+  ],
+  ...delta,
+});
+test("FAIL_UI diagnóstico: guard real retém causa fechada no report sem PNG", async () => {
+  let saves = 0,
+    privacy = 0;
+  const record = {};
+  try {
+    await fn("captureVisualEvidence")({
+      brand: async () => ({ decoded: true }),
+      drain: async () => {},
+      stabilize: async () => {},
+      measure: async () => diagnosticMetrics(),
+      privacy: async () => {
+        privacy++;
+        return true;
+      },
+      save: async () => {
+        saves++;
+      },
+    });
+    assert.fail("guard deve falhar");
+  } catch (error) {
+    fn("recordCaseFailure")(record, error, "CAPTURE_PRIMARY");
+  }
+  assert.equal(saves, 0);
+  assert.equal(privacy, 0);
+  assert.equal(record.status, "FAIL_UI");
+  assert.equal(record.visualFailure, "VISUAL_MEASUREMENT");
+  assert.equal(record.diagnostic.stage, "CAPTURE_PRIMARY");
+  assert.equal(record.diagnostic.errorKind, "KNOWN_VISUAL");
+  assert.equal(record.diagnostic.visual.flags.geometryPassed, false);
+  assert.equal(record.diagnostic.visual.counts.notHit, 1);
+  assert.deepEqual(record.diagnostic.visual.failedTargets[0], {
+    ordinal: 0,
+    kind: "INPUT",
+    rect: { x: 16, y: 100, width: 200, height: 44 },
+    connected: true,
+    visible: true,
+    disabled: false,
+    hit: false,
+  });
+});
+test("FAIL_UI diagnóstico: exceção antes de privacy não exporta objeto lançado", () => {
+  const canary = "private.person@example.invalid Bearer NEVER_EXPORT";
+  const record = {};
+  fn("recordCaseFailure")(
+    record,
+    Object.assign(new Error(canary), {
+      name: canary,
+      code: canary,
+      cause: canary,
+      visualDiagnostic: { raw: canary },
+      stack: canary,
+    }),
+    "PRIVACY_PRIMARY",
+  );
+  assert.equal(record.status, "FAIL_UI");
+  assert.equal(record.diagnostic.stage, "PRIVACY_PRIMARY");
+  assert.equal(record.diagnostic.errorKind, "OTHER");
+  assert.deepEqual(record.diagnostic.visual, { observed: false, state: "UNOBSERVED" });
+  assert.equal(JSON.stringify(record).includes(canary), false);
+  const invalid = {};
+  fn("recordCaseFailure")(
+    invalid,
+    {
+      get code() {
+        throw Error(canary);
+      },
+    },
+    canary,
+  );
+  assert.equal(invalid.diagnostic.stage, null);
+  assert.equal(JSON.stringify(invalid).includes(canary), false);
+});
+test("FAIL_UI diagnóstico: métricas malformadas não viram zeros ou strings públicas", () => {
+  const summary = fn("summarizeVisualFailure");
+  for (const delta of [
+    { viewport: { width: "390", height: 1000 } },
+    { overflowX: Infinity },
+    { geometryPassed: "false" },
+    { targets: Array(257).fill(diagnosticMetrics().targets[0]) },
+    { targets: [{ ...diagnosticMetrics().targets[0], kind: "private.person@example.invalid" }] },
+    { targets: [{ ...diagnosticMetrics().targets[0], ordinal: 256 }] },
+    {
+      targets: [{ ...diagnosticMetrics().targets[0], rect: { x: NaN, y: 0, width: 1, height: 1 } }],
+    },
+  ])
+    assert.deepEqual(summary(diagnosticMetrics(delta)), { observed: false, state: "INVALID" });
+  const valid = summary(diagnosticMetrics({ privatePayload: "NEVER_EXPORT" }));
+  assert.equal(valid.observed, true);
+  assert.equal(JSON.stringify(valid).includes("NEVER_EXPORT"), false);
+});
+test("FAIL_UI diagnóstico: disabled dispensa apenas hit e limites continuam causais", () => {
+  const summary = fn("summarizeVisualFailure"),
+    geometry = fn("visualGeometryValid");
+  const target = diagnosticMetrics().targets[0];
+  for (const [disabled, x, expected, notHit, boundsX] of [
+    [false, 16, false, 1, 0],
+    [true, 16, true, 0, 0],
+    [false, 16, false, 1, 0],
+    [true, 380, false, 0, 1],
+  ]) {
+    const metrics = diagnosticMetrics({
+      targets: [{ ...target, disabled, rect: { ...target.rect, x } }],
+    });
+    assert.equal(geometry(metrics), expected);
+    const result = summary(metrics);
+    assert.equal(result.counts.notHit, notHit);
+    assert.equal(result.counts.boundsX, boundsX);
+  }
+});
+test("FAIL_UI diagnóstico: no máximo oito alvos sem texto com contagem integral", () => {
+  const result = fn("summarizeVisualFailure")(
+    diagnosticMetrics({
+      targets: Array.from({ length: 9 }, (_, ordinal) => ({
+        ...diagnosticMetrics().targets[0],
+        ordinal,
+      })),
+      table: { clipping: 2, helpTargets: [{ x: 0, y: 0, width: 20, height: 44 }] },
+      dates: [
+        { present: false, scheme: "light" },
+        { present: true, scheme: "dark" },
+      ],
+      contrast: [{ ratio: 3.5, threshold: 4.5 }],
+    }),
+  );
+  assert.equal(result.counts.targetsExamined, 9);
+  assert.equal(result.counts.notHit, 9);
+  assert.equal(result.failedTargets.length, 8);
+  assert.deepEqual(result.table, { clipping: 2, helpBelow44: 1 });
+  assert.deepEqual(result.dates, { absent: 1, schemeMismatch: 1 });
+  assert.deepEqual(result.contrast, { count: 1, minimum: 3.5, threshold: 4.5 });
+});
+test("FAIL_UI diagnóstico: PII conserva bloqueio e código desconhecido não é publicado", () => {
+  for (const code of ["PII_SUPPLEMENT", "PII_VISUAL_CAPTURE"]) {
+    const record = {};
+    fn("recordCaseFailure")(record, { code, message: "NEVER_EXPORT" }, "CAPTURE_SUPPLEMENT");
+    assert.equal(record.status, "BLOQUEADO_PII");
+    assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
+  }
+  const record = {};
+  fn("recordCaseFailure")(record, { name: "TimeoutError", code: "NEVER_EXPORT" }, "WAIT_SURFACE");
+  assert.equal(record.diagnostic.errorKind, "TIMEOUT");
+  assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
 });
 
 const privacyWireRaw = JSON.parse(
@@ -6348,3 +7207,126 @@ async function privacyWireChromium(browser, words) {
     }
   }
 }
+
+test("privacy112 rejects non-source row labels and period attributes", () => {
+  for (const [selector, key, value] of [
+    ["tbody tr", "aria-label", "11/2026 01/11/2026 a 30/11/2026"],
+    ["tbody tr", "aria-labelledby", "foreign"],
+    ["tbody tr td", "scope", "CANARIO_PRIVADO"],
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy112Fixture());
+    try {
+      w.document.querySelector(selector).setAttribute(key, value);
+      assert.equal(run("privacy112FieldAnchor", { proof: privacy78Proof }), null);
+    } finally {
+      dom.window.close();
+    }
+  }
+});
+
+test("privacy112 supplement accepts only its factual complete browser TAP", () => {
+  const parse = fn("privacy112Supplement"),
+    good =
+      "ok 1 - privacy112 Chromium full DOM ARIA matrix preserves scoped intervals and unknown neighbours\n# tests 1\n# pass 1\n# fail 0\n# skipped 0\n# cancelled 0\n";
+  assert.equal(parse(good), 1);
+  for (const bad of [
+    "",
+    good.replace("# pass 1", "# pass 0"),
+    good.replace("# fail 0", "# fail 1"),
+    good.replace("# skipped 0", "# skipped 1"),
+    good.replace("# cancelled 0", "# cancelled 1"),
+    good + "# tests 1\n",
+    good.replace("ok 1 - privacy112 Chromium", "ok 1 - wrong Chromium"),
+  ])
+    assert.equal(parse(bad), null);
+});
+test("privacy112 supplemental process is inside nativeGuard after causal proofs", async () => {
+  const { readFile } = await import("node:fs/promises"),
+    source = await readFile(new URL("./authenticated-visual-audit.mjs", import.meta.url), "utf8"),
+    ts = await import("typescript");
+  const ast = ts.createSourceFile(
+    "auditor.mjs",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
+  const guard = ast.statements
+    .find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "nativeGuard")
+    .getText(ast);
+  assert.ok(guard.includes("--test-name-pattern=^privacy112 Chromium full DOM ARIA matrix"));
+  assert.ok(
+    guard.indexOf("--test-name-pattern=^privacy112") >
+      guard.indexOf("--test-name-pattern=Run78 Chromium isolado"),
+  );
+  assert.ok(
+    guard.indexOf("privacy112Supplement(supplement.stdout)") <
+      guard.indexOf('await mkdir(".audit-work"'),
+  );
+  const prepare =
+    ast.statements
+      .find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "cli")
+      ?.getText(ast) ?? "";
+  assert.equal(prepare.includes("--test-name-pattern=^privacy112"), false);
+});
+
+test("privacy112 link requires source attributes and exact plain span subtree", () => {
+  for (const mutate of [
+    (d) => {
+      const label = d.createElement("span");
+      label.id = "known-literal";
+      label.hidden = true;
+      label.textContent = "Competências";
+      d.body.appendChild(label);
+      d.querySelector("tbody a").setAttribute("aria-labelledby", "known-literal");
+    },
+    (d) => d.querySelector("tbody a").setAttribute("aria-describedby", "known-literal"),
+    (d) => d.querySelector("tbody a").setAttribute("title", "CANARIO_PRIVADO"),
+    (d) => d.querySelector("tbody a").setAttribute("aria-label", "Abrir outra competência"),
+    (d) => d.querySelector("tbody a span").setAttribute("aria-label", "Competências"),
+    (d) => (d.querySelector("tbody a span").textContent = "Competências"),
+    (d) => d.querySelector("tbody a").appendChild(d.createElement("span")),
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy112Fixture());
+    try {
+      mutate(w.document);
+      assert.equal(run("privacy112FieldAnchor", { proof: privacy78Proof }), null);
+    } finally {
+      dom.window.close();
+    }
+  }
+});
+
+test("FAIL_UI diagnóstico: consumidor real decide aborto sem ler getters ou erro nulo", () => {
+  const consume = fn("recordCaseFailure");
+  let reads = 0;
+  const poison = {};
+  for (const key of ["name", "code", "message", "stack", "cause"])
+    Object.defineProperty(poison, key, {
+      get() {
+        reads++;
+        throw Error("NEVER_EXPORT");
+      },
+    });
+  for (const error of [poison, null, undefined, "NEVER_EXPORT"]) {
+    const record = {};
+    assert.doesNotThrow(() => consume(record, error, "PRIVACY_PRIMARY", null, false));
+    assert.equal(record.status, "FAIL_UI");
+    assert.equal(record.diagnostic.errorKind, "OTHER");
+    assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
+  }
+  assert.equal(reads, 0);
+  const deployment = Object.assign(new Error("NEVER_EXPORT"), { code: "DEPLOYMENT_CHANGED" });
+  for (const [error, fenceFailed] of [
+    [deployment, false],
+    [poison, true],
+  ]) {
+    const record = {};
+    assert.throws(
+      () => consume(record, error, "CASE_NAVIGATION", null, fenceFailed),
+      (caught) => caught === error,
+    );
+    assert.deepEqual(record, {});
+  }
+  assert.equal(reads, 0);
+});
