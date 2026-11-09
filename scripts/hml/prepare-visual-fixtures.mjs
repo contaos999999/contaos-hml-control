@@ -1086,7 +1086,7 @@ export function validateR11RecoveryDocument(input) {
     observation = JSON.parse(clean.observationRaw);
   if (
     JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
-    JSON.stringify(receipts) + "\n" !== clean.receiptsRaw ||
+    JSON.stringify(receipts, null, 2) + "\n" !== clean.receiptsRaw ||
     JSON.stringify(observation, null, 2) + "\n" !== clean.observationRaw ||
     report.schema !== "contaos.fixture.preparation.v1" ||
     report.workflowRun !== clean.workflowRun ||
