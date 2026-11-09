@@ -10,8 +10,8 @@ describe("C13 contratos de DTO", () => {
   });
   it("preserva conteúdo revogado e flags null como desconhecidos", () => {
     const pagina=validarPaginaHistorico({ok:true,sessao:{id:"s1",status:"encerrada"},mensagens:[{id:"m1",papel:"assistente",conteudo:null,conteudo_disponivel:false,fontes:[],incerteza:null,conflito_historico:null,baixa_confianca:null}],proximo_cursor:null});
-    expect(pagina.mensagens[0].conteudo).toBeNull();
-    expect(pagina.mensagens[0].incerteza).toBeNull();
+    expect(pagina.mensagens[0]?.conteudo).toBeNull();
+    expect(pagina.mensagens[0]?.incerteza).toBeNull();
   });
   it("rejeita flags não booleanas e cursor sintético", () => {
     expect(() => validarPaginaHistorico({ok:true,sessao:{id:"s1",status:"ativa"},mensagens:[{id:"m1",papel:"usuario",conteudo:"x",conteudo_disponivel:true,incerteza:"false"}],proximo_cursor:null})).toThrow();
