@@ -2351,6 +2351,21 @@ test(
       await page.setContent(
         '<div role="dialog" aria-label="Editar fonte">' + r3SourceFonteMarkup() + "</div>",
       );
+
+      await page.setContent('<div role="dialog" aria-label="Editar fonte"></div>');
+      const delayedMarkup = r3SourceFonteMarkup();
+      await page.evaluate(
+        (html) =>
+          setTimeout(() => (document.querySelector('[role="dialog"]').innerHTML = html), 100),
+        delayedMarkup,
+      );
+      const delayedControl = await sut.sourceStatusControl(
+        page.getByRole("dialog", { name: "Editar fonte", exact: true }),
+      );
+      assert.equal(await delayedControl.count(), 1);
+      await page.setContent(
+        '<div role="dialog" aria-label="Editar fonte">' + r3SourceFonteMarkup() + "</div>",
+      );
       const dialog = page.getByRole("dialog", { name: "Editar fonte", exact: true });
       assert.equal(await dialog.getByLabel("Situação", { exact: true }).count(), 0);
       assert.equal(

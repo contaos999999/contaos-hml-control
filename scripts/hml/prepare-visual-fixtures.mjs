@@ -336,6 +336,12 @@ export const SOURCE_STATUS_NAME =
   "Situação Mudança de situação exige administrador; ativação exige versão aprovada.";
 export async function sourceStatusControl(dialog) {
   const control = dialog.getByRole("combobox", { name: SOURCE_STATUS_NAME, exact: true });
+  if ((await control.count()) > 1) err("FLOW_SOURCE_CONTROL");
+  try {
+    await control.waitFor({ state: "visible" });
+  } catch {
+    err("FLOW_SOURCE_CONTROL");
+  }
   if (
     (await control.count()) !== 1 ||
     !(await control.isVisible()) ||
