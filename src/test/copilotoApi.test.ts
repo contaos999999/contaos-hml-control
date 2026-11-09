@@ -26,3 +26,9 @@ describe("C13 contratos de DTO", () => {
     expect(() => validarPaginaHistorico({ok:true,sessao:{id:"s1",status:"ativa"},mensagens:[],proximo_cursor:12})).toThrow();
   });
 });
+
+describe('C13 fonte DTO defensivo', () => {
+  it.each([[null], [{ trecho: {} }], [{ pagina: -1 }], [{ pagina: 1.5 }], [{ fonte_tipo: 7 }]].map(fontes => ({ fontes })))('rejeita fontes que não podem ser renderizadas: $fontes', ({ fontes }) => {
+    expect(() => validarPaginaHistorico({ ok: true, sessao: { id: 's1', status: 'ativa' }, mensagens: [{ id: 'm1', papel: 'assistente', conteudo: 'x', conteudo_disponivel: true, fontes }], proximo_cursor: null })).toThrow();
+  });
+});
