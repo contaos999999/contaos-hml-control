@@ -12129,7 +12129,11 @@ test("R13 actual local Master loader rejects missing R12 proof without a network
 });
 
 function r13IgnoredBuildCommand(approvedSha) {
-  if (typeof approvedSha !== "string" || !/^[a-f0-9]{40}$/.test(approvedSha))
+  if (
+    typeof approvedSha !== "string" ||
+    approvedSha.length !== 40 ||
+    !/^[a-f0-9]{40}$/.test(approvedSha)
+  )
     throw Error("R13_IGNORED_BUILD_SHA");
   return (
     'if [ "$VERCEL_ENV" = "production" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "' +
