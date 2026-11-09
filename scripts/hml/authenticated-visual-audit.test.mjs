@@ -5899,3 +5899,75 @@ test("Run114 diagnóstico limita contadores e ignora getters de campos não auto
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: 40000 }).overflowX, 30000);
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: -40000 }).overflowX, -30000);
 });
+
+const privacyWireRaw = JSON.parse(
+  await (await import("node:fs/promises")).readFile(
+    new URL("../../docs/frontend/auditorias/evidencias/privacy-wire-cardinality-20261109.json", import.meta.url), "utf8",
+  ),
+);
+function privacyWireCases() {
+  const c = privacy78Proof.context;
+  return [
+    ["contract_gate", { id: c.contract, id_organizacao: c.organization }],
+    ["document_gate", { id: c.document, id_contrato: c.contract }],
+    ["upload", { extensoes_permitidas: privacy78Proof.observed.upload.extensions, tamanho_maximo_bytes: privacy78Proof.observed.upload.max_bytes }],
+    ["competence_rbac_gate", { id_contrato: c.contract }],
+  ];
+}
+async function privacyWireRbac() {
+  return JSON.parse(await (await import("node:fs/promises")).readFile(new URL("../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json", import.meta.url), "utf8"));
+}
+test("privacy wire SDK real 2.118 entrega objeto mas observador exige array unitario", async () => {
+  const { PostgrestClient } = require("@supabase/postgrest-js");
+  const rbacProof = await privacyWireRbac();
+  const runtime = fn("privacy78Runtime")({ proof: privacy78Proof, rbacProof, wireProof: privacyWireRaw });
+  for (const [name, row] of privacyWireCases()) {
+    const c = [...privacy78Proof.get_contracts, rbacProof.get_contract].find((x) => x.name === name);
+    let receipt = null, calls = 0;
+    const client = new PostgrestClient(API + "/rest/v1", {
+      fetch: async () => {
+        calls++;
+        const response = new Response(JSON.stringify([row]), { status: 200 });
+        receipt = runtime.project(c, await response.clone().json());
+        return response;
+      },
+    });
+    let query = client.from(c.path.split("/").at(-1)).select(c.query.select);
+    for (const [key, value] of Object.entries(c.query))
+      if (key !== "select") query = query.eq(key, value.slice(3));
+    const result = await query.maybeSingle();
+    assert.equal(calls, 1);
+    assert.equal(result.error, null);
+    assert.deepEqual(result.data, row);
+    assert.deepEqual(receipt, { name, exact: true }, name);
+    assert.equal(runtime.project(c, result.data), null, "DTO nao e corpo wire");
+  }
+});
+test("privacy wire selo separado e lista fechada de quatro contratos", async () => {
+  const proof = await fn("loadPrivacyWireProof")();
+  assert.ok(Object.isFrozen(proof));
+  assert.ok(Object.isFrozen(proof.approved_wire.contract_names));
+  assert.deepEqual(proof.approved_wire.contract_names, privacyWireCases().map(([name]) => name));
+});
+test("privacy wire rejeita cardinalidade shape contexto e valores sem ler campos extras", async () => {
+  const rbacProof = await privacyWireRbac();
+  const runtime = fn("privacy78Runtime")({ proof: privacy78Proof, rbacProof, wireProof: privacyWireRaw });
+  for (const [name, row] of privacyWireCases()) {
+    const c = [...privacy78Proof.get_contracts, rbacProof.get_contract].find((x) => x.name === name);
+    for (const key of ["user", "headers", "metadata"])
+      Object.defineProperty(row, key, { get() { throw new Error("wire unprojected field read"); } });
+    assert.deepEqual(runtime.project(c, [row]), { name, exact: true });
+    for (const body of [row, [], [row, row], [[row]], [null], [1], ["x"], [{}]])
+      assert.equal(runtime.project(c, body), null, name);
+    const missing = { ...row };
+    delete missing[Object.keys(missing)[0]];
+    assert.equal(runtime.project(c, [missing]), null);
+    const absent = fn("privacy78Runtime")({ proof: privacy78Proof, rbacProof });
+    assert.equal(absent.project(c, [row]), null);
+    const tampered = fn("privacy78Runtime")({ proof: privacy78Proof, rbacProof, wireProof: { ...privacyWireRaw, approved_wire: { ...privacyWireRaw.approved_wire, contract_names: [...privacyWireRaw.approved_wire.contract_names, "foreign"] } } });
+    assert.equal(tampered.project(c, [row]), null);
+    const url = API + c.path + "?" + new URLSearchParams(c.query);
+    assert.equal(runtime.match(url + "&extra=1", "GET"), null);
+    assert.equal(runtime.match(url + "&select=x", "GET"), null);
+  }
+});
