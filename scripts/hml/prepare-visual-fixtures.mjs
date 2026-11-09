@@ -3390,7 +3390,6 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     flush,
     observationFailure: () => firstFailure,
     async seal() {
-      closed = true;
       page.off("request", onRequest);
       page.off("response", onResponse);
       let timer;
@@ -3406,6 +3405,7 @@ export function createOfficialObserver(page, { wait, now } = {}) {
         ]);
       } finally {
         clearTimeout(timer);
+        closed = true;
       }
       return firstFailure;
     },
