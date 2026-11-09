@@ -1,3 +1,7 @@
+## 2026-11-09 | GATE R11 documental: projeção contextual V116/V117
+
+PLAN482 integrado em c9b0118f9289c7d44d87ec4e4745e5d99ba531bd. GATEproposto em docs/frontend/planos/TRILHA_A_R11_PROJECAO_V116_V117_GATE_2026-11-09.md; BUILD somente após CI/revisão/merge. R10original42638883189 inspecionado42641761717: RESPONSE_PROJECTIONV116,10históricas/0novas/max14/logouttrue; campo bruto causal não identificado. PróximoBUILD4mjs: projeçãoRPC/pathfechada, recuperaçãoR10mandatory,nonceR11,negaçõessemânticas preservadas; nenhumAuth autorizado pelo documento. Native17 é requisito futuro (base8+suplemento4), não resultado executado. Artefato futuro18+SHA19/HISTORY15. Preservar184/72/V1NO-GO,18públicos/Run124307hashes/C13/fonte5eca. Histórico integral abaixo mantido byte a byte.
+
 # Reancoragem adicional do GATE R8
 
 Reancoragem0e855783→367fc8c5:4commits/3paths lidos (docs/tasks/active-task.json, plans/c13-hml-cors-origin-20261109.md, supabase/functions/copilot-query/index.ts). CódigoalteraumaúnicalinhaORIGENS_CORS, acrescentandoorigemexata https://contaos-41-nygkrrbkq-contaos9999.vercel.app; preservaorigensanteriores,semwildcard/headers/JWT/RLS/quota/payload/LLM/RPC/migration ouAPIdopreparadorAalterados. DocsautorizamhotfixHML/readscopepróprio; não éprovadedeploy/execução/C13.25/25normativasiguais emárvorecompleta600/truncatedfalse,catálogoe54e49e626e65a9c94c81709180fd192a1f0c079/10097 etypes8ea7750b75fd9d76b29c36ce7613392e3ab65e19preservados. A segueindependente,semaguardarCdeploy/139,guardHEADvivoinalterado.
