@@ -2662,6 +2662,24 @@ async function r7ProbeListConsumers(page, ast) {
     assert.equal(await (await sut.listSelectionControl(scope, delayed.target)).count(), 1);
     assert.equal(await scope.locator("select").isEnabled(), true);
   }
+  // A second source-shaped label appearing during the enabled wait must never
+  // turn an initially unique field into an accepted ambiguous field.
+  {
+    const late = r7PanelMarkup({ total: 2, disabled: true });
+    await page.setContent(late.html);
+    const scope = page.getByRole("region", { name: "Gestão de listas", exact: true });
+    const result = sut.listSelectionControl(scope, late.target);
+    await page.evaluate(() => {
+      setTimeout(() => {
+        const section = document.querySelector('section[aria-label="Gestão de listas"]');
+        section.insertAdjacentHTML("beforeend", "<label><span>Lista selecionada</span></label>");
+        section.querySelector("select").disabled = false;
+      }, 1000);
+    });
+    await assert.rejects(result, /FLOW_LIST_UI_MISSING/);
+    assert.equal(await scope.getByText("Lista selecionada", { exact: true }).count(), 2);
+    assert.equal(await scope.locator("select").count(), 1);
+  }
   for (const total of [1, 25, 26, 51]) {
     for (const pagina of new Set([0, Math.ceil(total / 25) - 1])) {
       const f = r7PanelMarkup({ total, pagina });
