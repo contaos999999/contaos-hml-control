@@ -626,8 +626,19 @@ export function validateRecords(reportInput, receiptsInput) {
       ? uuid(q.sourceVersion) && hash(q.sourceHash)
       : q.sourceVersion === null && q.sourceHash === null,
   );
+  if (q.reconciled)
+    check(
+      q.sourceVersion === "1ebbfd0b-c50c-405d-8806-321f18e179e0" &&
+        q.sourceHash === "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1",
+    );
   if (r.bindings !== null) {
     const b = r.bindings;
+    check(
+      b.sourceVersionId === "1ebbfd0b-c50c-405d-8806-321f18e179e0" &&
+        b.listId === "bf71906b-87a4-42f5-8371-5f597ef2ad9b" &&
+        b.listVersionId === "e49ef6dd-13b0-491d-8646-5a7bcd5298cf" &&
+        b.itemId === "e7065876-a620-4dbb-9b4e-992fa4fead83",
+    );
     check(
       closed(
         b,
@@ -691,12 +702,27 @@ export function validateRecords(reportInput, receiptsInput) {
         if (Object.hasOwn(c, "packageHash")) check(hash(c.packageHash));
         if (Object.hasOwn(c, "code"))
           check(FAILURES.has(c.code) && c.code.startsWith("COMPETENCE_"));
+        if (Object.hasOwn(c, "id"))
+          check(
+            c.id ===
+              (c.month === "2026-09-01"
+                ? "79bdc139-ed10-4c91-905e-b32b9a824d27"
+                : "50c26274-a36f-48e0-b2fe-5a1caf5d6a49"),
+          );
         if (c.state !== "partial") check(uuid(c.id));
         if (c.month === "2026-09-01" && c.state === "aguardando_contratante")
           check(uuid(c.presentationId) && uuid(c.packageId) && hash(c.packageHash));
       }
     }
   }
+  const collected = [];
+  const collect = (value) => {
+    if (uuid(value)) collected.push(value);
+    else if (Array.isArray(value)) value.forEach(collect);
+    else if (object(value)) Object.values(value).forEach(collect);
+  };
+  collect(r.bindings);
+  check(equal(r.ids, [...new Set(collected)].slice(0, 32)));
   check(
     keys(e, ["schema", "receipts"]) &&
       e.schema === "contaos.fixture.receipts.v1" &&
