@@ -26,7 +26,11 @@ function broker(options = {}) {
     persist: () => true,
     competenceGateAmended: true,
     ...(options.recoveryLedger
-      ? { recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT, recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT }
+      ? {
+          recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
+          recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+          recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
+        }
       : {}),
     ...options,
   });
@@ -1708,6 +1712,7 @@ function r2Reconciliation(delta = {}) {
     ledgerR7: sut.R7_RECOVERY_DOCUMENT,
     ledgerR8: sut.R8_RECOVERY_DOCUMENT,
     ledgerR9: sut.R9_RECOVERY_DOCUMENT,
+    ledgerR10: sut.R10_RECOVERY_DOCUMENT,
     source: { ...context, id: FIXTURE.source, ...sut.SOURCE_FIELDS, version: 1, situacao: "ativa" },
     version: {
       ...context,
@@ -1749,6 +1754,7 @@ test("R2 ledger omitido undefined ou null não emite prova de reconciliação", 
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   });
   for (const input of [
     omitted,
@@ -1781,6 +1787,7 @@ test("R2 reconcilia somente estado oficial unico aprovado antes de armar", () =>
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   });
   assert.throws(() => r6AnalysisArm(b), { message: "RECOVERY_READ_ONLY" });
   assert.throws(() => b.authorizeRecovery({ ...proof }), { message: "RECOVERY_PROOF" });
@@ -1823,6 +1830,7 @@ test("R9 contabiliza dez anteriores e limita novas intencoes a14", () => {
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
   for (let n = 0; n < 14; n++) {
@@ -2963,7 +2971,7 @@ test("R3 sourceforms cannot bypass the attested native factory", async () => {
     assert.equal(/chromium\.launch|import\("playwright"\)/.test(body), false);
     checked++;
   }
-  assert.equal(checked, 3);
+  assert.equal(checked, 4);
 });
 
 async function r3AttestedBrowser() {
@@ -3054,6 +3062,7 @@ test("R4 validates explicit original R3 ledger and debits exactly one prior acti
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 10);
   for (const rpc of [
@@ -3224,6 +3233,7 @@ test("R4 report derives real arm sent and terminal scalars without request ident
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   });
   b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
   assert.deepEqual(sut.preparationIntentSummary(b), {
@@ -3404,6 +3414,7 @@ test("R4 approved minimal projections RPC5 causal observer cases", async () => {
       rpc: "obter_analise_competencia_v116",
       args: { p_id_competencia: C },
       old: {
+        mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
         schema_versao: "v116-v1",
         competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
         estado_analise: "not_analyzed",
@@ -3411,6 +3422,7 @@ test("R4 approved minimal projections RPC5 causal observer cases", async () => {
         resultados: [],
       },
       fresh: {
+        mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
         schema_versao: "v116-v1",
         competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
         estado_analise: "queued",
@@ -3426,6 +3438,7 @@ test("R4 approved minimal projections RPC5 causal observer cases", async () => {
       rpc: "obter_analise_competencia_v116",
       args: { p_id_competencia: C },
       old: {
+        mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
         schema_versao: "v116-v1",
         competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
         estado_analise: "complete",
@@ -3433,6 +3446,7 @@ test("R4 approved minimal projections RPC5 causal observer cases", async () => {
         resultados: [],
       },
       fresh: {
+        mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
         schema_versao: "v116-v1",
         competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
         estado_analise: "complete",
@@ -3796,6 +3810,7 @@ test("R6 recovery requires fresh ordinary reads and exact original month identit
       recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
       recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
       recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+      recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
       ...r10BudgetApi(),
       fresh: async () => {},
       generation: () => generation,
@@ -3952,6 +3967,7 @@ test("R4 readback returns the validated ACK identity without a later reselect", 
     });
   }
   const dto = (id) => ({
+    mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
     schema_versao: "v116-v1",
     competencia: { id: C, id_organizacao: F.organization, id_contrato: F.contract },
     execucao_atual: { id },
@@ -4012,6 +4028,7 @@ test("R4 postACK analysis refuses old execution identity in otherwise valid comp
   a(q("solicitar_analise_competencia", { p_id_competencia: C }), NEW);
   await o.flush();
   a(q("obter_analise_competencia_v116", { p_id_competencia: C }), {
+    mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
     schema_versao: "v116-v1",
     competencia: { id: C, id_organizacao: F.organization, id_contrato: F.contract },
     execucao_atual: { id: OLD },
@@ -4115,6 +4132,7 @@ test("R4 causal RPC read validates options before returning an admitted snapshot
   a(q("solicitar_analise_competencia", { p_id_competencia: C }), NEW);
   await o.flush();
   a(q("obter_analise_competencia_v116", { p_id_competencia: C }), {
+    mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
     schema_versao: "v116-v1",
     competencia: { id: C, id_organizacao: F.organization, id_contrato: F.contract },
     execucao_atual: { id: NEW },
@@ -4159,6 +4177,7 @@ test("R5 explicit R4 proof is required before recovery broker and preserves thre
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().confirmedBefore, 10);
   assert.equal(b.snapshot().maxNewIntentions, 14);
@@ -4713,6 +4732,7 @@ test("R9 recovery broker preserves R5 originals and debits two R8 confirmations 
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 10);
   assert.equal(b.snapshot().confirmedBefore, 10);
@@ -4881,6 +4901,7 @@ test("R6 semantic replay rejects complete new UUID intents but permits another v
       recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
       recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
       recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+      recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
     });
   for (const [rpc, p] of attempts) {
     const requestId = randomUUID(),
@@ -5182,6 +5203,7 @@ test("R6 locked and authorized replay boundaries reject nested accessors and pro
         recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
         recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
         recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+        recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
         beforeArm: () => {
           beforeArm++;
           return true;
@@ -5283,6 +5305,7 @@ test("R7 original R6 zero-intent document is exact and rejects getters proxies a
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   });
   assert.equal(instance.snapshot().count, 10);
   assert.equal(instance.snapshot().maxNewIntentions, 14);
@@ -5333,6 +5356,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       "r7Recovery",
       "r8Recovery",
       "r9Recovery",
+      "r10Recovery",
       "observationDiagnostic",
       "createHash",
       "readFile",
@@ -5349,6 +5373,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       sut.R7_RECOVERY_DOCUMENT,
       sut.R8_RECOVERY_DOCUMENT,
       sut.R9_RECOVERY_DOCUMENT,
+      sut.R10_RECOVERY_DOCUMENT,
       sut.createObservationDiagnostic(
         (({ frontendSha, harnessSha, deploymentId, workflowRun }) => ({
           frontendSha,
@@ -5362,10 +5387,10 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       async (_, run) => run(),
     );
     const names = (await fs.readdir(output)).sort();
-    assert.equal(names.length, 17);
+    assert.equal(names.length, 19);
     const manifest = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(manifest.length, 16);
-    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 16);
+    assert.equal(manifest.length, 18);
+    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 18);
     for (const line of manifest) {
       assert.match(line, /^[0-9a-f]{64}  [a-z0-9.-]+$/);
       const bytes = await fs.readFile(join(output, line.slice(66)));
@@ -5484,6 +5509,7 @@ test("R9 R7 ledger validation blocks forged proof alongside ten historical confi
     recoveryLedgerR7: input.ledgerR7,
     recoveryLedgerR8: input.ledgerR8,
     recoveryLedgerR9: input.ledgerR9,
+    recoveryLedgerR10: input.ledgerR10,
   });
   assert.equal(b.snapshot().count, 10);
   assert.equal(b.snapshot().maxNewIntentions, 14);
@@ -5549,6 +5575,7 @@ test("R9 real broker charges the two original R8 confirmations and leaves fourte
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: R9_R8_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().confirmedBefore, 10);
   assert.equal(b.snapshot().count, 10);
@@ -5596,6 +5623,7 @@ test("R9 real October consumers refuse missing confirmed document or a new analy
     const io = {
       recoveryLedgerR8: R9_R8_DOCUMENT,
       recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+      recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
       official: (v) => v,
       fresh: async () => {},
       command: async () => {
@@ -5730,6 +5758,7 @@ test("R9 actual artifact writer appends R8 originals and the separate observatio
       r7Recovery: sut.R7_RECOVERY_DOCUMENT,
       r8Recovery: R9_R8_DOCUMENT,
       r9Recovery: sut.R9_RECOVERY_DOCUMENT,
+      r10Recovery: sut.R10_RECOVERY_DOCUMENT,
       observationDiagnostic,
       createHash,
       readFile: fs.readFile,
@@ -5741,9 +5770,9 @@ test("R9 actual artifact writer appends R8 originals and the separate observatio
     )(...Object.values(env));
     const names = (await fs.readdir(output)).sort(),
       lines = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(names.length, 17);
-    assert.equal(lines.length, 16);
-    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 16);
+    assert.equal(names.length, 19);
+    assert.equal(lines.length, 18);
+    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 18);
     for (const line of lines)
       assert.equal(
         createHash("sha256")
@@ -5790,6 +5819,7 @@ function r9Broker(options = {}) {
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: R9_R8_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
     ...options,
   });
 }
@@ -6296,6 +6326,7 @@ test("R9 missing R8 ledger cannot construct a recovery broker even with a valid 
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   };
   for (const value of [undefined, null])
     assert.throws(() => {
@@ -6456,6 +6487,7 @@ async function r9ExistingConsumer(
   const io = {
     recoveryLedgerR8: R9_R8_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
     official: (v) => v,
     fresh: async () => {
       events.push("fresh");
@@ -6480,6 +6512,7 @@ async function r9ExistingConsumer(
       assert.equal(rpc, "obter_analise_competencia_v116");
       const estado_analise = analysisStates[Math.min(reads - 1, analysisStates.length - 1)];
       return {
+        mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
         schema_versao: "v116-v1",
         competencia,
         estado_analise,
@@ -6680,13 +6713,18 @@ test("R10 recovery requires the exact zero-intent R9 document before constructin
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: R9_R8_DOCUMENT,
     recoveryLedgerR9: sut.R9_RECOVERY_DOCUMENT,
+    recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
   };
   for (const recoveryLedgerR9 of [undefined, null])
     assert.throws(
       () => sut.createIntentBroker({ ...options, recoveryLedgerR9 }),
       /RECOVERY_R9_LEDGER/,
     );
-  const b = sut.createIntentBroker({ ...options, recoveryLedgerR9: R10_R9_DOCUMENT });
+  const b = sut.createIntentBroker({
+    ...options,
+    recoveryLedgerR9: R10_R9_DOCUMENT,
+    recoveryLedgerR10: R11_R10_DOCUMENT,
+  });
   assert.equal(b.snapshot().count, 10);
   assert.equal(b.snapshot().maxNewIntentions, 14);
 });
@@ -6743,6 +6781,7 @@ test("R10 actual recovery consumer waits for the new monthly request instead of 
     recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
     recoveryLedgerR8: R9_R8_DOCUMENT,
     recoveryLedgerR9: R10_R9_DOCUMENT,
+    recoveryLedgerR10: R11_R10_DOCUMENT,
     readBarrier: observer.readBarrier,
     assertReadBarrier: observer.assertReadBarrier,
     readBarrierRemaining: observer.readBarrierRemaining,
@@ -7300,6 +7339,7 @@ async function r10NativeCompetenceProbe(browser) {
       recoveryLedgerR7: local.R7_RECOVERY_DOCUMENT,
       recoveryLedgerR8: local.R8_RECOVERY_DOCUMENT,
       recoveryLedgerR9: local.R9_RECOVERY_DOCUMENT,
+      recoveryLedgerR10: local.R10_RECOVERY_DOCUMENT,
       readBarrier: orderedObserver.readBarrier,
       assertReadBarrier: orderedObserver.assertReadBarrier,
       readBarrierRemaining: orderedObserver.readBarrierRemaining,
@@ -7627,4 +7667,998 @@ test("R10 monotonic rollback is fatal and a valid primary failure survives an un
   );
   assert.equal(g.observer.observationFailure(), null);
   g.observer.close();
+});
+
+const R11_R10_DOCUMENT = {
+  schema: "contaos.fixture.recovery-r10.v1",
+  workflowRun: "42638883189",
+  artifactId: "13683268867",
+  requestId: "trilha-a-fixtures-20261109-r10",
+  harnessSha: "a3a5df2b4e99705d214a509ba035f155c7ae8de9",
+  zipSha256: "b306e1a4b89e839da5244e2b0ddc589f502618a2253dbcbb61415f68cc448a43",
+  reportSha256: "858c21b7eb05e379f6c92dd84cc5f7afe0d75406ab105d3b279b2f0d53703ef2",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  observationSha256: "0b11018aae5529f19ccb6476bf8b1202f3a7e9ba8fab8811252a48b2904ddecf",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "OBSERVATION_FAILED",\n  "diagnostics": {\n    "primaryFailure": "OBSERVATION_FAILED",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "RUNTIME_FRESH",\n    "subphasePath": [\n      "COMPETENCIES",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "RUNTIME_FRESH",\n      "RUNTIME_FRESH"\n    ],\n    "lastCompletedSubphase": "RUNTIME_FRESH",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 10,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 10,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 14\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 14,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "partial",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "a3a5df2b4e99705d214a509ba035f155c7ae8de9",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42638883189",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "a3a5df2b4e99705d214a509ba035f155c7ae8de9",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42638883189",\n  "firstFailure": {\n    "contractKind": "RPC:obter_analise_competencia_v116",\n    "stage": "RESPONSE_PROJECTION",\n    "statusHTTP": "NONE",\n    "requestFailure": "NONE"\n  }\n}\n',
+};
+
+function r11SqlV116(metadataPath) {
+  // SQL5eca7113db6d6009020e96883f685c239a5abdf9b797: complete RPC envelope.
+  const id = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies[0].id;
+  const execution = {
+    id,
+    tipo: "completa",
+    status: "concluida",
+    hash_entrada: "a".repeat(64),
+    motor: "contaos",
+    versao_motor: "2.0",
+    provedor: null,
+    modelo: null,
+    prompt_versao: null,
+    iniciada_por: id,
+    iniciada_em: null,
+    concluida_em: null,
+    erro_codigo: null,
+    requisitos_afetados: [],
+    metadados: {},
+    criado_em: null,
+  };
+  const result = {
+    id_resultado: id,
+    id_requisito: id,
+    requisito: {
+      codigo: "FIXTURE",
+      descricao: "Fixture",
+      categoria: "outro",
+      criticidade: "baixa",
+      obrigatorio: true,
+      aplicavel: true,
+      impeditivo: false,
+      efeito_portao: false,
+      fonte_tipo: null,
+      fonte_referencia: null,
+      fonte_detalhe: null,
+    },
+    resultado: "conforme",
+    mecanismo: "deterministico",
+    confianca: 1,
+    justificativa: null,
+    fundamento: null,
+    hash_evidencias: null,
+    metadados: {},
+    evidencias: [],
+    criado_em: null,
+  };
+  const value = {
+    schema_versao: "v116-v1",
+    competencia: {
+      id,
+      id_organizacao: FIXTURE.organization,
+      id_contrato: FIXTURE.contract,
+      competencia_referencia: "2026-10-01",
+      periodo_inicio: "2026-10-01",
+      periodo_fim: null,
+      situacao: "em_analise",
+    },
+    estado_analise: "complete",
+    stale: false,
+    hash_contexto_atual: "a".repeat(64),
+    execucao_atual: execution,
+    percentual: 100,
+    blocking_summary: {
+      total: 1,
+      conformes_ou_na_validos: 1,
+      pendentes: 0,
+      nao_conformes: 0,
+      inconclusivos: 0,
+      em_analise: 0,
+      nao_conformidades_bloqueantes: 0,
+      percentual: 100,
+      liberado: true,
+    },
+    allowed_actions: { executar_analise: false, reanalisar: true, abrir_requisito: true },
+    mecanismos: { deterministico: 1, semantico: 0, humano: 0, nao_identificado: 0 },
+    resultados: [result],
+    resultados_paginacao: { offset: 0, limite: 25, total: 1 },
+    execucoes: [{ ...execution, contexto_atual: true }],
+    execucoes_paginacao: { offset: 0, limite: 10, total: 1 },
+    apontamentos: [
+      {
+        id,
+        id_requisito: id,
+        requisito: {
+          codigo: "FIXTURE",
+          descricao: "Fixture",
+          categoria: "outro",
+          criticidade: "baixa",
+        },
+        descricao: "Fixture",
+        severidade: "baixa",
+        status: "aberto",
+        origem: "deterministico",
+        regra_violada: null,
+        acao_sugerida: "Conferir fixture",
+        fonte: {},
+        criado_em: null,
+        atualizado_em: null,
+      },
+    ],
+    apontamentos_paginacao: { offset: 0, limite: 25, total: 1 },
+  };
+  if (metadataPath === "execucao_atual")
+    value.execucao_atual.metadados = { origem: "revisao_humana" };
+  if (metadataPath === "execucoes") value.execucoes[0].metadados = { origem: "revisao_humana" };
+  if (metadataPath === "resultados") value.resultados[0].metadados = { origem: "revisao_humana" };
+  return value;
+}
+async function r11ObserveV116(value) {
+  const { EventEmitter } = await import("node:events");
+  const page = new EventEmitter(),
+    observer = sut.createOfficialObserver(page, { wait: () => new Promise(setImmediate) });
+  const args = {
+    p_id_competencia: value.competencia.id,
+    p_resultados_offset: 0,
+    p_resultados_limite: 25,
+    p_execucoes_offset: 0,
+    p_execucoes_limite: 10,
+    p_apontamentos_offset: 0,
+    p_apontamentos_limite: 25,
+    p_filtro_resultado: null,
+    p_filtro_criticidade: null,
+    p_filtro_mecanismo: null,
+    p_filtro_apontamento_status: null,
+    p_busca: null,
+  };
+  const url = FIXTURE.api + "/rest/v1/rpc/obter_analise_competencia_v116";
+  const request = {
+    url: () => url,
+    method: () => "POST",
+    postData: () => JSON.stringify(args),
+    failure: () => null,
+  };
+  page.emit("request", request);
+  page.emit("response", {
+    request: () => request,
+    url: () => url,
+    status: () => 200,
+    body: async () => Buffer.from(JSON.stringify(value)),
+  });
+  return { observer, args };
+}
+async function r11ActualV116Parser() {
+  const { readFile } = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await readFile(
+    new URL("../../src/lib/competencias/competenciaAnaliseDados.ts", import.meta.url),
+    "utf8",
+  );
+  const code = ts.transpileModule(source, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+  }).outputText;
+  const exports = {};
+  new Function("require", "exports", code)((name) => {
+    assert.equal(name, "@/integrations/supabase/client");
+    return { supabase: {} };
+  }, exports);
+  return exports.parseAnaliseV116;
+}
+for (const path of ["execucao_atual", "execucoes", "resultados"])
+  test(
+    "R11 SQL V116 " + path + " metadata is omitted before the real observer projects the DTO",
+    async () => {
+      const f = await r11ObserveV116(r11SqlV116(path));
+      try {
+        await f.observer.flush();
+        assert.equal(f.observer.observationFailure(), null);
+        const projected = await f.observer.rpcRead("obter_analise_competencia_v116", f.args);
+        const parsed = (await r11ActualV116Parser())(projected);
+        assert.ok(parsed, "actual SDK must accept the observed complete SQL shape");
+        assert.deepEqual(parsed.mecanismos, {
+          deterministico: 1,
+          semantico: 0,
+          humano: 0,
+          nao_identificado: 0,
+        });
+        assert.equal(parsed.apontamentos[0].acao_sugerida, "Conferir fixture");
+        assert.equal(Object.hasOwn(projected.execucao_atual, "metadados"), false);
+        assert.equal(Object.hasOwn(projected.execucoes[0], "metadados"), false);
+        assert.equal(Object.hasOwn(projected.resultados[0], "metadados"), false);
+      } finally {
+        f.observer.close();
+      }
+    },
+  );
+test("R11 recovery requires the original zero-intent R10 proof before constructing a broker", () => {
+  const options = {
+    persist: () => true,
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+    recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+    recoveryLedgerR8: R9_R8_DOCUMENT,
+    recoveryLedgerR9: R10_R9_DOCUMENT,
+    recoveryLedgerR10: R11_R10_DOCUMENT,
+  };
+  for (const recoveryLedgerR10 of [undefined, null])
+    assert.throws(
+      () => sut.createIntentBroker({ ...options, recoveryLedgerR10 }),
+      /RECOVERY_R10_LEDGER/,
+    );
+  const broker = sut.createIntentBroker({ ...options, recoveryLedgerR10: R11_R10_DOCUMENT });
+  assert.equal(broker.snapshot().count, 10);
+  assert.equal(broker.snapshot().maxNewIntentions, 14);
+});
+
+test("R11 actual runtime budget initializer receives its mandatory R10 proof", async () => {
+  const s = await r6SourceNodes();
+  const entry = s.named("runFixturePreparation");
+  const entryNodes = s.nodes.filter((n) => n.pos >= entry.pos && n.end <= entry.end);
+  const initializer = entryNodes
+    .find((n) => s.ts.isVariableDeclaration(n) && n.name.getText(s.ast) === "validatedBudget")
+    .initializer.getText(s.ast);
+  const budgetSource = s.named("recoveryBudget").getText(s.ast);
+  const env = {};
+  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10])
+    env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
+  env.err = (code) => {
+    throw Error(code);
+  };
+  env.R1_RECOVERY_DOCUMENT = sut.R1_RECOVERY_DOCUMENT;
+  env.R3_RECOVERY_DOCUMENT = sut.R3_RECOVERY_DOCUMENT;
+  for (const n of [4, 5, 6, 7, 8, 9, 10])
+    env["r" + n + "Recovery"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
+  const result = new Function(...Object.keys(env), budgetSource + ";return " + initializer + ";")(
+    ...Object.values(env),
+  );
+  assert.deepEqual(result, { confirmedBefore: 10, maxNewIntentions: 14 });
+});
+test("R11 scoped DTO objects and mechanism counts never accept arrays", () => {
+  for (const [path, value] of [
+    ["mecanismos", []],
+    ["mecanismos", [0]],
+    ["competencia", []],
+    ["execucao_atual", []],
+  ]) {
+    const raw = r11SqlV116();
+    raw[path] = value;
+    assert.throws(
+      () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+      /OBSERVATION_/,
+    );
+  }
+});
+test("R11 typed action pagination and blocking envelopes reject foreign fields", () => {
+  for (const path of [
+    "allowed_actions",
+    "resultados_paginacao",
+    "execucoes_paginacao",
+    "apontamentos_paginacao",
+    "blocking_summary",
+  ]) {
+    const raw = r11SqlV116();
+    raw[path] = { nome: "TECHNICAL_CANARY" };
+    assert.throws(
+      () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+      /OBSERVATION_/,
+    );
+  }
+});
+
+test("R11 R10 recovery document preserves the original own-key order", () => {
+  const literal = sut.R10_RECOVERY_DOCUMENT;
+  assert.deepEqual(sut.validateR10RecoveryDocument(literal), literal);
+  const reversed = Object.fromEntries(Object.entries(literal).reverse());
+  assert.throws(() => sut.validateR10RecoveryDocument(reversed), /RECOVERY_R10_LEDGER/);
+});
+
+test("R11 typed action pagination and blocking envelopes reject every scalar kind", () => {
+  for (const path of ["allowed_actions", "resultados_paginacao", "blocking_summary"])
+    for (const value of ["TECHNICAL_CANARY", 42, true]) {
+      const raw = r11SqlV116();
+      raw[path] = value;
+      assert.throws(
+        () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+        /OBSERVATION_/,
+      );
+    }
+});
+test("R11 metadata omissions never inspect their values while foreign metadata stays fatal", () => {
+  const { proxy, revoke } = Proxy.revocable({}, {});
+  revoke();
+  let reads = 0,
+    traps = 0;
+  const hostile = new Proxy(
+    {},
+    {
+      get() {
+        traps++;
+        throw Error("CANARY");
+      },
+      ownKeys() {
+        traps++;
+        throw Error("CANARY");
+      },
+      getPrototypeOf() {
+        traps++;
+        throw Error("CANARY");
+      },
+    },
+  );
+  for (const path of ["execucao_atual", "execucoes", "resultados"]) {
+    for (const value of [hostile, proxy]) {
+      const raw = r11SqlV116();
+      const target = path === "execucao_atual" ? raw.execucao_atual : raw[path][0];
+      target.metadados = value;
+      const clean = sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw);
+      assert.equal(
+        Object.hasOwn(
+          path === "execucao_atual" ? clean.execucao_atual : clean[path][0],
+          "metadados",
+        ),
+        false,
+      );
+    }
+    const raw = r11SqlV116();
+    const target = path === "execucao_atual" ? raw.execucao_atual : raw[path][0];
+    Object.defineProperty(target, "metadados", {
+      enumerable: true,
+      get() {
+        reads++;
+        throw Error("CANARY");
+      },
+    });
+    sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw);
+  }
+  const raw = r11SqlV116();
+  Object.defineProperty(raw.competencia, "metadados", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  assert.throws(
+    () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+    /OBSERVATION_/,
+  );
+  assert.throws(
+    () => sut.projectOfficialResponse({ metadados: { canary: true } }),
+    /OBSERVATION_METADATA/,
+  );
+  assert.equal(reads, 0);
+  assert.equal(traps, 0);
+});
+
+function r11SqlV117() {
+  const a = r11SqlV116(),
+    id = a.competencia.id;
+  return {
+    schema_versao: "v117-v1",
+    competencia: {
+      id,
+      id_organizacao: FIXTURE.organization,
+      id_contrato: FIXTURE.contract,
+      competencia_referencia: "2026-10-01",
+      situacao: "em_analise",
+    },
+    requisito: {
+      id,
+      codigo: "FIXTURE",
+      descricao: "Fixture",
+      categoria: "outro",
+      origem_tipo: "item_lista",
+      origem_id: id,
+      origem_versao: null,
+      obrigatorio: true,
+      aplicavel: true,
+      impeditivo: false,
+      criticidade: "baixa",
+      fonte_tipo: null,
+      fonte_referencia: null,
+      fonte_detalhe: null,
+      efeito_portao: false,
+      hash_snapshot: null,
+      regra_validacao: {
+        documento: { obrigatorio: true, tipos: ["outro"] },
+        condicao: { tipo: "sempre" },
+      },
+      condicao_aplicabilidade: { tipo: "sempre" },
+    },
+    execucao_atual: {
+      id,
+      tipo: "completa",
+      status: "concluida",
+      hash_entrada: null,
+      motor: "contaos",
+      versao_motor: "2.0",
+      provedor: null,
+      modelo: null,
+      prompt_versao: null,
+      iniciada_em: null,
+      concluida_em: null,
+      criado_em: null,
+    },
+    resultado_atual: null,
+    resultado_referencia: null,
+    na_validade: null,
+    allowed_actions: a.allowed_actions,
+    evidencias: [],
+    evidencias_paginacao: { offset: 0, limite: 25, total: 0 },
+    historico: [],
+    historico_paginacao: { offset: 0, limite: 25, total: 0 },
+    apontamentos: a.apontamentos.map(
+      ({
+        id,
+        descricao,
+        severidade,
+        status,
+        origem,
+        regra_violada,
+        acao_sugerida,
+        fonte,
+        criado_em,
+        atualizado_em,
+      }) => ({
+        id,
+        descricao,
+        severidade,
+        status,
+        origem,
+        regra_violada,
+        acao_sugerida,
+        fonte,
+        criado_em,
+        atualizado_em,
+      }),
+    ),
+    apontamentos_paginacao: a.apontamentos_paginacao,
+  };
+}
+async function r11BuildSDKBundle(directory) {
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { fileURLToPath } = await import("node:url"),
+    { execFile } = await import("node:child_process"),
+    { promisify } = await import("node:util"),
+    ts = (await import("typescript")).default;
+  const repository = fileURLToPath(new URL("../../", import.meta.url));
+  await fs.symlink(join(repository, "node_modules"), join(directory, "node_modules"), "dir");
+  const require = createRequire(import.meta.url),
+    pgRequire = createRequire(require.resolve("@supabase/supabase-js")),
+    pgPath = pgRequire.resolve("@supabase/postgrest-js");
+  for (const [file, output] of [
+    ["competenciaAnaliseDados.ts", "v116.ts"],
+    ["requisitoDetalheDados.ts", "v117.ts"],
+  ]) {
+    let source = await fs.readFile(
+      new URL("../../src/lib/competencias/" + file, import.meta.url),
+      "utf8",
+    );
+    const client = 'import { supabase } from "@/integrations/supabase/client";';
+    assert.equal(source.split(client).length, 2);
+    source = source.replace(
+      client,
+      "import {PostgrestClient} from " +
+        JSON.stringify(pgPath) +
+        "; const supabase=new PostgrestClient(location.origin+'/rest/v1');",
+    );
+    if (output === "v117.ts") {
+      const uuidImport =
+        'import { uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";';
+      assert.equal(source.split(uuidImport).length, 2);
+      source = source.replace(uuidImport, 'import {uuidCanonico,uuidValido} from "./uuid";');
+    }
+    await fs.writeFile(join(directory, output), source);
+  }
+  const uuidSource = await fs.readFile(
+      new URL("../../src/lib/contratos/contratoDetalheDados.ts", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile(
+      "uuid.ts",
+      uuidSource,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
+  const uuids = ast.statements.filter(
+    (n) =>
+      ts.isVariableStatement(n) &&
+      n.declarationList.declarations.some((d) =>
+        ["UUID", "uuidValido", "uuidCanonico"].includes(d.name.getText(ast)),
+      ),
+  );
+  assert.equal(uuids.length, 3);
+  await fs.writeFile(join(directory, "uuid.ts"), uuids.map((n) => n.getText(ast)).join("\n"));
+  const entry = join(directory, "entry.ts");
+  await fs.writeFile(
+    entry,
+    [
+      'import * as a from "./v116"; import * as d from "./v117";',
+      'window.__request=async(kind,id,rid)=>{const result=kind==="v116"?await a.obterAnaliseCompetencia(id,a.FILTROS_VAZIOS,a.OFFSETS_ZERO,new AbortController().signal):await d.obterDetalheRequisito(id,rid,d.OFFSETS_DETALHE_ZERO,new AbortController().signal);return {ok:!result.error};};',
+      'window.__parse=(kind,value,id,rid)=>{const p=kind==="v116"?a.parseAnaliseV116(value):d.parseDetalheV117(value,id,rid,d.OFFSETS_DETALHE_ZERO);return {accepted:p!==null,mechanisms:p?.mecanismos??null,action:p?.apontamentos?.[0]?.acao_sugerida??null,condition:p?.requisito?.condicao_aplicabilidade??null};};',
+    ].join("\n"),
+  );
+  await promisify(execFile)(
+    "bun",
+    [
+      "build",
+      entry,
+      "--target=browser",
+      "--format=esm",
+      "--outfile=" + join(directory, "entry.js"),
+    ],
+    { cwd: repository, env: { PATH: process.env.PATH }, timeout: 30000, maxBuffer: 1048576 },
+  );
+  return fs.readFile(join(directory, "entry.js"));
+}
+async function r11NativeSDKProbe(browser) {
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { tmpdir } = await import("node:os"),
+    { pathToFileURL } = await import("node:url"),
+    { createServer } = await import("node:http");
+  const dir = await fs.mkdtemp(join(tmpdir(), "contaos-r11-sdk-"));
+  let server, page, observer;
+  let writes = 0,
+    reads = 0;
+  let kind = "v116",
+    body = r11SqlV116();
+  const id = body.competencia.id;
+  try {
+    const bundle = await r11BuildSDKBundle(dir);
+    server = createServer((req, res) => {
+      const url = new URL(req.url, "http://127.0.0.1");
+      if (req.method === "GET" && url.pathname === "/") {
+        res.writeHead(200, { "content-type": "text/html" });
+        res.end('<!doctype html><script type="module" src="/entry.js"></script>');
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/entry.js") {
+        res.writeHead(200, { "content-type": "text/javascript" });
+        res.end(bundle);
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/favicon.ico") {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+      if (
+        req.method === "POST" &&
+        url.pathname ===
+          "/rest/v1/rpc/" +
+            (kind === "v116" ? "obter_analise_competencia_v116" : "obter_detalhe_requisito_v117")
+      ) {
+        let raw = "";
+        req.on("data", (chunk) => {
+          raw += chunk;
+          assert.ok(raw.length <= 65536);
+        });
+        req.on("end", () => {
+          const args = JSON.parse(raw);
+          assert.equal(args.p_id_competencia, id);
+          if (kind === "v116") {
+            assert.equal(args.p_resultados_limite, 25);
+            assert.equal(args.p_execucoes_limite, 10);
+            assert.equal(args.p_resultados_offset, 0);
+            assert.equal(args.p_filtro_resultado, null);
+          } else {
+            assert.equal(args.p_id_requisito, id);
+            assert.equal(args.p_evidencias_limite, 25);
+            assert.equal(args.p_evidencias_offset, 0);
+          }
+          reads++;
+          res.writeHead(200, { "content-type": "application/json" });
+          res.end(JSON.stringify(body));
+        });
+        return;
+      }
+      writes++;
+      res.writeHead(404);
+      res.end();
+    });
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const origin = "http://127.0.0.1:" + server.address().port;
+    let source = await fs.readFile(
+      new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+      "utf8",
+    );
+    assert.equal(source.split("api: API_ORIGIN,").length, 2);
+    source = source.replace("api: API_ORIGIN,", "api: " + JSON.stringify(origin) + ",");
+    const dependency = '"./authenticated-visual-audit.mjs"';
+    assert.equal(source.split(dependency).length, 2);
+    source = source.replace(
+      dependency,
+      JSON.stringify(new URL("./authenticated-visual-audit.mjs", import.meta.url).href),
+    );
+    const modulePath = join(dir, "observer.mjs");
+    await fs.writeFile(modulePath, source);
+    const local = await import(pathToFileURL(modulePath).href);
+    page = await browser.newPage();
+    await page.goto(origin);
+    await page.waitForFunction(() => typeof window.__parse === "function");
+    const ast = await r6SourceNodes();
+    const analysisSource = ast.named("analysis").getText(ast.ast);
+    const analyze = (value) =>
+      new Function("io", "tracedPreparation", "stop", analysisSource + ";return analysis;")(
+        { rpcRead: async () => value },
+        async (_stage, run) => run(),
+        (code) => {
+          throw Error(code);
+        },
+      )({ id, month: "2026-10-01" });
+    for (const current of ["v116", "v117"]) {
+      kind = current;
+      body = kind === "v116" ? r11SqlV116() : r11SqlV117();
+      if (kind === "v116") {
+        body.execucao_atual.metadados = {
+          origem: "revisao_humana",
+          revisor: "TECHNICAL_PRIVATE_CANARY",
+        };
+        body.execucoes[0].metadados = { origem: "revisao_humana" };
+        body.resultados[0].metadados = { origem: "revisao_humana" };
+      }
+      observer = local.createOfficialObserver(page, {
+        wait: () => new Promise((resolve) => setTimeout(resolve, 5)),
+      });
+      assert.deepEqual(
+        await page.evaluate(([k, c, r]) => window.__request(k, c, r), [kind, id, id]),
+        { ok: true },
+      );
+      await observer.flush();
+      const rpc =
+        kind === "v116" ? "obter_analise_competencia_v116" : "obter_detalhe_requisito_v117";
+      const clean = await observer.rpcRead(rpc, {
+        p_id_competencia: id,
+        ...(kind === "v117" ? { p_id_requisito: id } : {}),
+      });
+      const parsed = await page.evaluate(
+        ([k, v, c, r]) => window.__parse(k, v, c, r),
+        [kind, clean, id, id],
+      );
+      assert.equal(parsed.accepted, true);
+      assert.equal(parsed.action, "Conferir fixture");
+      assert.equal(JSON.stringify(clean).includes("TECHNICAL_PRIVATE_CANARY"), false);
+      if (kind === "v116") {
+        assert.deepEqual(parsed.mechanisms, {
+          deterministico: 1,
+          semantico: 0,
+          humano: 0,
+          nao_identificado: 0,
+        });
+        assert.equal((await analyze(clean)).competencia.id, id);
+        const wrong = structuredClone(clean);
+        wrong.competencia.id = FIXTURE.historical;
+        await assert.rejects(() => analyze(wrong), /COMPETENCE_ANALYSIS_RELATION/);
+      } else {
+        assert.equal(Object.hasOwn(clean.requisito, "condicao_aplicabilidade"), false);
+        assert.equal(parsed.condition, null);
+        const wrong = structuredClone(clean);
+        wrong.requisito.id = FIXTURE.historical;
+        assert.equal(
+          (await page.evaluate(([v, c, r]) => window.__parse("v117", v, c, r), [wrong, id, id]))
+            .accepted,
+          false,
+        );
+      }
+      assert.equal(observer.observationFailure(), null);
+      observer.close();
+      observer = null;
+    }
+    kind = "v117";
+    body = r11SqlV117();
+    body.execucao_atual.metadados = { canary: "FOREIGN_METADATA" };
+    observer = local.createOfficialObserver(page, {
+      wait: () => new Promise((resolve) => setTimeout(resolve, 5)),
+    });
+    await page.evaluate(([c, r]) => window.__request("v117", c, r), [id, id]);
+    await assert.rejects(() => observer.flush(), /OBSERVATION_FAILED/);
+    assert.equal(observer.observationFailure().stage, "RESPONSE_PROJECTION");
+    assert.equal(reads, 3);
+    assert.equal(writes, 0);
+  } finally {
+    observer?.close();
+    await page?.close();
+    if (server)
+      await new Promise((resolve) => {
+        server.close(resolve);
+        server.closeAllConnections();
+      });
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+}
+test(
+  "R3 Chromium sourceforms scoped V116 V117 projection and actual SDK parsers",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 90000 },
+  async () => {
+    const browser = await r3AttestedBrowser();
+    try {
+      await r11NativeSDKProbe(browser);
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+test("R11 SDK bundle compiles the actual parsers and read adapters offline", async () => {
+  const fs = await import("node:fs/promises"),
+    { tmpdir } = await import("node:os"),
+    { join } = await import("node:path");
+  const dir = await fs.mkdtemp(join(tmpdir(), "contaos-r11-bundle-"));
+  try {
+    assert.ok((await r11BuildSDKBundle(dir)).length > 1000);
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("R11 mechanism counts retain the SQL empty case and reject every non-contract value", async () => {
+  const empty = r11SqlV116();
+  empty.execucao_atual = null;
+  empty.execucoes = [];
+  empty.resultados = [];
+  empty.mecanismos = {};
+  const clean = sut.projectScopedRpcResponse("obter_analise_competencia_v116", empty);
+  assert.deepEqual(clean.mecanismos, {});
+  assert.equal((await r11ActualV116Parser())(clean).mecanismos, null);
+  for (const value of [
+    {},
+    { deterministico: 1 },
+    { deterministico: 1, semantico: 0, humano: 0, nao_identificado: 0, extra: 0 },
+    null,
+    [],
+    [0],
+    true,
+    "0",
+  ])
+    assert.throws(
+      () =>
+        sut.projectScopedRpcResponse("obter_analise_competencia_v116", {
+          ...r11SqlV116(),
+          mecanismos: value,
+        }),
+      /OBSERVATION_/,
+    );
+  for (const name of ["deterministico", "semantico", "humano", "nao_identificado"])
+    for (const value of ["1", true, null, NaN, Infinity, -1, 0.5]) {
+      const raw = r11SqlV116();
+      raw.mecanismos[name] = value;
+      assert.throws(
+        () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+        /OBSERVATION_/,
+      );
+    }
+  let reads = 0;
+  const raw = r11SqlV116();
+  Object.defineProperty(raw.mecanismos, "humano", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  assert.throws(
+    () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+    /OBSERVATION_/,
+  );
+  assert.equal(reads, 0);
+});
+test("R11 suggested action is local typed bounded and never permits foreign siblings", () => {
+  let reads = 0;
+  for (const [rpc, make] of [
+    ["obter_analise_competencia_v116", r11SqlV116],
+    ["obter_detalhe_requisito_v117", r11SqlV117],
+  ]) {
+    for (const value of [null, "Conferir fixture"]) {
+      const raw = make();
+      raw.apontamentos[0].acao_sugerida = value;
+      assert.equal(sut.projectScopedRpcResponse(rpc, raw).apontamentos[0].acao_sugerida, value);
+    }
+    for (const value of [42, true, [], {}, "x".repeat(65537)]) {
+      const raw = make();
+      raw.apontamentos[0].acao_sugerida = value;
+      assert.throws(() => sut.projectScopedRpcResponse(rpc, raw), /OBSERVATION_/);
+    }
+    for (const key of ["acao_sugerida", "unknown_neighbor", "email"]) {
+      const raw = make();
+      Object.defineProperty(raw.execucao_atual, key, {
+        enumerable: true,
+        get() {
+          reads++;
+          throw Error("CANARY");
+        },
+      });
+      assert.throws(() => sut.projectScopedRpcResponse(rpc, raw), /OBSERVATION_/);
+    }
+    const raw = make();
+    raw.resultados_paginacao = { offset: 0, limite: 25, total: 0, unknown_neighbor: true };
+    assert.throws(() => sut.projectScopedRpcResponse(rpc, raw), /OBSERVATION_/);
+  }
+  assert.equal(reads, 0);
+});
+test("R11 typed pagination action and blocking values reject malformed primitives and getters", () => {
+  let reads = 0;
+  for (const [path, key, bad] of [
+    ["allowed_actions", "executar_analise", "true"],
+    ["resultados_paginacao", "offset", -1],
+    ["execucoes_paginacao", "limite", 25],
+    ["apontamentos_paginacao", "total", 0.5],
+    ["blocking_summary", "liberado", 1],
+    ["blocking_summary", "total", -1],
+    ["blocking_summary", "percentual", NaN],
+    ["blocking_summary", "percentual", 101],
+  ]) {
+    const raw = r11SqlV116();
+    raw[path][key] = bad;
+    assert.throws(
+      () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+      /OBSERVATION_/,
+    );
+  }
+  for (const path of ["allowed_actions", "resultados_paginacao", "blocking_summary"]) {
+    for (const value of [[], null, "x", 1, true]) {
+      const raw = r11SqlV116();
+      raw[path] = value;
+      assert.throws(
+        () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+        /OBSERVATION_/,
+      );
+    }
+    const raw = r11SqlV116();
+    Object.defineProperty(raw[path], "email", {
+      enumerable: true,
+      get() {
+        reads++;
+        throw Error("CANARY");
+      },
+    });
+    assert.throws(
+      () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+      /OBSERVATION_/,
+    );
+  }
+  assert.equal(reads, 0);
+});
+test("R11 every recovery entry rejects missing hostile or cross-proof R10 before effects", async () => {
+  let reads = 0,
+    traps = 0,
+    effects = 0;
+  const proxy = new Proxy(
+    {},
+    {
+      get() {
+        traps++;
+        throw Error("CANARY");
+      },
+      ownKeys() {
+        traps++;
+        throw Error("CANARY");
+      },
+      getPrototypeOf() {
+        traps++;
+        throw Error("CANARY");
+      },
+    },
+  );
+  const revoked = Proxy.revocable({}, {});
+  revoked.revoke();
+  const accessor = { ...R11_R10_DOCUMENT };
+  Object.defineProperty(accessor, "reportRaw", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  const symbol = { ...R11_R10_DOCUMENT };
+  symbol[Symbol("CANARY")] = true;
+  const values = [
+    undefined,
+    null,
+    {},
+    sut.R9_RECOVERY_DOCUMENT,
+    { ...R11_R10_DOCUMENT, reportSha256: "0".repeat(64) },
+    { ...R11_R10_DOCUMENT, reportRaw: R11_R10_DOCUMENT.reportRaw + " " },
+    { ...R11_R10_DOCUMENT, workflowRun: "1" },
+    { ...R11_R10_DOCUMENT, extra: true },
+    Object.fromEntries(Object.entries(R11_R10_DOCUMENT).reverse()),
+    accessor,
+    symbol,
+    proxy,
+    revoked.proxy,
+  ];
+  const source = await r6SourceNodes(),
+    entry = source.named("runFixturePreparation");
+  const statements = entry.body.statements,
+    stop = statements.findIndex((n) => n.getText(source.ast).startsWith("const diagnostics"));
+  assert.ok(stop > 0);
+  const prefix = statements
+    .slice(0, stop)
+    .map((n) => n.getText(source.ast))
+    .join("\n");
+  assert.ok(prefix.includes("validateR10RecoveryDocument(R10_RECOVERY_DOCUMENT)"));
+  const env = {
+    err: (code) => {
+      throw Error(code);
+    },
+    getValidatedR4ZeroAuth: () => sut.R4_RECOVERY_DOCUMENT,
+    getValidatedR7ZeroAuth: () => sut.R7_RECOVERY_DOCUMENT,
+  };
+  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+    env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
+    env["R" + n + "_RECOVERY_DOCUMENT"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
+  }
+  const runtime = new Function(
+    ...Object.keys(env),
+    source.named("recoveryBudget").getText(source.ast) + ";" + prefix,
+  );
+  const proof = r2Reconciliation(),
+    binding = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings;
+  for (const value of values) {
+    const io = {
+      page: {},
+      runtime: {},
+      broker: {},
+      recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+      recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+      recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+      recoveryLedgerR5: R6_R5_DOCUMENT,
+      recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+      recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+      recoveryLedgerR8: R9_R8_DOCUMENT,
+      recoveryLedgerR9: R10_R9_DOCUMENT,
+      recoveryLedgerR10: value,
+    };
+    for (const name of [
+      "read",
+      "rpcRead",
+      "fresh",
+      "link",
+      "command",
+      "official",
+      "verifyContext",
+      "generation",
+      "observedAfter",
+    ])
+      io[name] = () => {
+        effects++;
+        throw Error("CANARY_EFFECT");
+      };
+    assert.throws(
+      () =>
+        sut.createIntentBroker({
+          ...io,
+          persist: () => {
+            effects++;
+            return true;
+          },
+          beforeArm: () => {
+            effects++;
+          },
+        }),
+      /RECOVERY_R10_LEDGER/,
+    );
+    assert.throws(
+      () => sut.reconcileR1Recovery({ ...proof, ledgerR10: value }),
+      /RECOVERY_R10_LEDGER/,
+    );
+    await assert.rejects(() => sut.reconcileRecoveryCompetencies(io), /RECOVERY_R10_LEDGER/);
+    await assert.rejects(() => sut.prepareSourceAndList(io), /RECOVERY_R10_LEDGER/);
+    await assert.rejects(() => sut.prepareCompetencies(io, binding), /RECOVERY_R10_LEDGER/);
+    assert.throws(
+      () =>
+        runtime(...Object.keys(env).map((k) => (k === "R10_RECOVERY_DOCUMENT" ? value : env[k]))),
+      /RECOVERY_R10_LEDGER/,
+    );
+  }
+  assert.equal(reads, 0);
+  assert.equal(traps, 0);
+  assert.equal(effects, 0);
 });

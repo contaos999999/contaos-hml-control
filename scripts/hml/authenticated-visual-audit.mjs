@@ -4677,7 +4677,7 @@ export function preparerSourceFormsSupplement(tap) {
   if (
     typeof tap !== "string" ||
     !/^TAP version 13$/m.test(tap) ||
-    !/^1\.\.3$/m.test(tap) ||
+    !/^1\.\.4$/m.test(tap) ||
     /^not ok|# SKIP|# TODO/m.test(tap)
   )
     return null;
@@ -4685,16 +4685,17 @@ export function preparerSourceFormsSupplement(tap) {
     "R3 Chromium sourceforms exact controls and actual source consumer",
     "R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay",
     "R3 Chromium sourceforms competence read barriers and actual recovery consumer",
+    "R3 Chromium sourceforms scoped V116 V117 projection and actual SDK parsers",
   ];
   const oks = [...tap.matchAll(/^ok [0-9]+ - (.+)$/gm)].map((x) => x[1]);
-  if (oks.length !== 3 || names.some((name, i) => oks[i] !== name)) return null;
-  return Object.entries({ tests: 3, pass: 3, fail: 0, skipped: 0, cancelled: 0 }).every(
+  if (oks.length !== 4 || names.some((name, i) => oks[i] !== name)) return null;
+  return Object.entries({ tests: 4, pass: 4, fail: 0, skipped: 0, cancelled: 0 }).every(
     ([k, v]) => {
       const m = [...tap.matchAll(new RegExp("^# " + k + " ([0-9]+)$", "gm"))];
       return m.length === 1 && Number(m[0][1]) === v;
     },
   )
-    ? 3
+    ? 4
     : null;
 }
 
@@ -4864,7 +4865,7 @@ async function nativeGuard() {
       },
     );
     preparerSourceFormsCases = preparerSourceFormsSupplement(result.stdout);
-    if (preparerSourceFormsCases !== 3) fail("PREPARER_SOURCEFORMS_NATIVE");
+    if (preparerSourceFormsCases !== 4) fail("PREPARER_SOURCEFORMS_NATIVE");
   } catch {
     fail("PREPARER_SOURCEFORMS_NATIVE");
   }
@@ -6769,6 +6770,7 @@ export const SINGLE_REQUEST = Object.freeze({
   metadataGateSha: "2704e63969880f81842102190ebc0337a3b9b551",
   observationGateSha: "01fc65e5ede32309fe544fce7852c24b6f2a1e72",
   competenceReadGateSha: "472eaa2221016375aee7c7698aa837358b6b6975",
+  contextualProjectionGateSha: "0c82ccb9cb87c8226ad76af60d44a691eae24c8a",
   listSelectionGateSha: "18424c16bcdc6d035e91e2dc8b7257ea755097d0",
   navigationGateSha: "ffffc501e5b5665026ff847bca1d2bf6df17fa73",
   bootstrapGateSha: "a8f3da12dcfeca858904b60e1b32c50df73a7d4a",
@@ -6784,13 +6786,14 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-a-fixtures-20261109-r7",
     "trilha-a-fixtures-20261109-r8",
     "trilha-a-fixtures-20261109-r9",
+    "trilha-a-fixtures-20261109-r10",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r10",
+    nonce: "trilha-a-fixtures-20261109-r11",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -7030,6 +7033,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.metadataGateSha,
       SINGLE_REQUEST.observationGateSha,
       SINGLE_REQUEST.competenceReadGateSha,
+      SINGLE_REQUEST.contextualProjectionGateSha,
     );
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.

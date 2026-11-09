@@ -5199,7 +5199,7 @@ test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r10",
+    request_id: "trilha-a-fixtures-20261109-r11",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "b".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5409,7 +5409,7 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r10",
+    request_id: "trilha-a-fixtures-20261109-r11",
     approved_parent_sha: parent,
     frontend_sha: "c".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5455,7 +5455,7 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r10",
+    request_id: "trilha-a-fixtures-20261109-r11",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5691,7 +5691,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     sha = "a".repeat(40),
     parent = "b".repeat(40),
     head = "d".repeat(40);
-  const request = { request_id: "trilha-a-fixtures-20261109-r10", approved_parent_sha: parent };
+  const request = { request_id: "trilha-a-fixtures-20261109-r11", approved_parent_sha: parent };
   const pull = {
     id: 300,
     number: 90,
@@ -5841,7 +5841,7 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r10",
+    request_id: "trilha-a-fixtures-20261109-r11",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -5887,7 +5887,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r10",
+    request_id: "trilha-a-fixtures-20261109-r11",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5925,6 +5925,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     sut.SINGLE_REQUEST.metadataGateSha,
     sut.SINGLE_REQUEST.observationGateSha,
     sut.SINGLE_REQUEST.competenceReadGateSha,
+    sut.SINGLE_REQUEST.contextualProjectionGateSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   await assert.rejects(
@@ -7879,7 +7880,7 @@ test("R3 only current nonce executes and exact R1 R2 remain spent", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r10",
+    request_id: "trilha-a-fixtures-20261109-r11",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -8528,7 +8529,7 @@ test("R8 is the only executable fixture nonce and R1 through R7 remain historica
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r10",
+    request_id: "trilha-a-fixtures-20261109-r11",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -8584,7 +8585,7 @@ test("R8 is sole executable fixture nonce and all seven original requests remain
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r10",
+    request_id: "trilha-a-fixtures-20261109-r11",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -10269,7 +10270,7 @@ test("R9 request accepts only the new nonce and keeps R8 spent", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r10",
+    request_id: "trilha-a-fixtures-20261109-r11",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -10295,7 +10296,7 @@ test("R10 request accepts its new nonce and keeps R9 spent", () => {
     frontend_sha: "",
     deployment_id: "",
   };
-  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(row), "fixtures"), row);
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify(row), "fixtures"), /REQUEST_/);
   assert.throws(
     () =>
       sut.parseSingleRequest(
@@ -10338,23 +10339,45 @@ test("R10 native failure diagnostic admits only the eight exact TAP titles", () 
   assert.equal(JSON.stringify(value).includes("PRIVATE_CANARY"), false);
 });
 
-test("R10 sourceforms supplement proves exactly three named successes without changing native base eight", () => {
+test("R10 sourceforms supplement proves exactly four named successes without changing native base eight", () => {
   const names = [
     "R3 Chromium sourceforms exact controls and actual source consumer",
     "R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay",
     "R3 Chromium sourceforms competence read barriers and actual recovery consumer",
+    "R3 Chromium sourceforms scoped V116 V117 projection and actual SDK parsers",
   ];
   const tap =
     "TAP version 13\n" +
     names.map((name, i) => "ok " + (i + 1) + " - " + name).join("\n") +
-    "\n1..3\n# tests 3\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n";
-  assert.equal(sut.preparerSourceFormsSupplement(tap), 3);
+    "\n1..4\n# tests 4\n# pass 4\n# fail 0\n# cancelled 0\n# skipped 0\n";
+  assert.equal(sut.preparerSourceFormsSupplement(tap), 4);
   for (const altered of [
-    tap.replace("1..3", "1..2"),
-    tap.replace("# pass 3", "# pass 2"),
-    tap.replace(names[2], "PRIVATE_CANARY"),
-    tap.replace("ok 3", "not ok 3"),
+    tap.replace("1..4", "1..2"),
+    tap.replace("# pass 4", "# pass 2"),
+    tap.replace(names[3], "PRIVATE_CANARY"),
+    tap.replace("ok 4", "not ok 4"),
     tap + "# skipped 1\n",
   ])
     assert.equal(sut.preparerSourceFormsSupplement(altered), null);
+});
+
+test("R11 new request nonce is accepted while R10 remains spent", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r11",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(row), "fixtures"), row);
+  assert.throws(
+    () =>
+      sut.parseSingleRequest(
+        JSON.stringify({ ...row, request_id: "trilha-a-fixtures-20261109-r10" }),
+        "fixtures",
+      ),
+    /REQUEST_/,
+  );
 });
