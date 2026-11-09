@@ -3,7 +3,7 @@
   "issue": 317,
   "operation": "fixtures",
   "request_id": "trilha-a-fixtures-20261108-r1",
-  "approved_parent_sha": "542784936cbcc98a55f64e761209ad949725f79a",
-  "frontend_sha": "6c5d4824fc2a7bac61f1031de33ea1aaf1d1d0a1",
-  "deployment_id": "dpl_3YN7ULKFArns9ZgyyAZ5q4GyQtP7"
+  "approved_parent_sha": "866608620909bf313a6c2192736330222f9219ad",
+  "frontend_sha": "",
+  "deployment_id": ""
 }
