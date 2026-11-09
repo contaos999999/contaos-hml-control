@@ -4198,7 +4198,8 @@ export function visualMeasurementDiagnostic(metrics) {
     dates: metrics?.datesPassed === true,
     contrast: metrics?.contrastPassed === true,
     targetCount: targets.length,
-    failedHitCount: targets.filter((target) => target?.hit === false && target.disabled !== true).length,
+    failedHitCount: targets.filter((target) => target?.hit === false && target.disabled !== true)
+      .length,
     overflowX: Number.isFinite(metrics?.overflowX)
       ? Math.max(-30000, Math.min(30000, metrics.overflowX))
       : null,
