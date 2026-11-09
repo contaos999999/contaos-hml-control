@@ -1617,9 +1617,10 @@ test("popup policy: preparer awaits the shared proved launcher before context an
   const { readFile } = await import("node:fs/promises");
   const source = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8");
   const launch = source.indexOf(
-    "browser = await launchNativeBrowser({ chromium, debugPort, proxy: proxy.url })",
+    "browser = await launchNativeBrowser({ debugPort, proxy: proxy.url })",
   );
   const context = source.indexOf("const context = await browser.newContext", launch);
   assert.ok(launch > 0 && context > launch);
   assert.equal(source.includes("chromium.launch("), false);
+  assert.equal(source.includes('await import("playwright")'), false);
 });

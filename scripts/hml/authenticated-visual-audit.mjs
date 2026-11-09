@@ -14,6 +14,7 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import { connect } from "node:net";
@@ -2896,17 +2897,54 @@ export function nativeBrowserArgs(debugPort, useProxy = false) {
   ];
 }
 
-export function verifyNativeBrowserPolicy(args, version) {
-  const forbidden = new Set([
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-    "--disable-web-security",
-    "--allow-running-insecure-content",
-    "--ignore-certificate-errors",
-    "--ignore-certificate-errors-spki-list",
-    "--disable-site-isolation-trials",
-    "--allow-insecure-localhost",
-  ]);
+// Exact Linux x64 launch switches from the pinned Playwright 1.58.2 launcher.
+// Preserve SDK duplicates and reject every unrecognized switch or positional argument.
+const NATIVE_SDK_ARGUMENTS = Object.freeze([
+  "--disable-field-trial-config",
+  "--disable-background-networking",
+  "--disable-background-timer-throttling",
+  "--disable-backgrounding-occluded-windows",
+  "--disable-back-forward-cache",
+  "--disable-breakpad",
+  "--disable-client-side-phishing-detection",
+  "--disable-component-extensions-with-background-pages",
+  "--disable-component-update",
+  "--no-default-browser-check",
+  "--disable-default-apps",
+  "--disable-dev-shm-usage",
+  "--disable-extensions",
+  "--disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints",
+  "--enable-features=CDPScreenshotNewSurface",
+  "--allow-pre-commit-input",
+  "--disable-hang-monitor",
+  "--disable-ipc-flooding-protection",
+  "--disable-popup-blocking",
+  "--disable-prompt-on-repost",
+  "--disable-renderer-backgrounding",
+  "--force-color-profile=srgb",
+  "--metrics-recording-only",
+  "--no-first-run",
+  "--password-store=basic",
+  "--use-mock-keychain",
+  "--no-service-autorun",
+  "--export-tagged-pdf",
+  "--disable-search-engine-choice-screen",
+  "--unsafely-disable-devtools-self-xss-warnings",
+  "--edge-skip-compat-layer-relaunch",
+  "--enable-automation",
+  "--disable-infobars",
+  "--disable-search-engine-choice-screen",
+  "--disable-sync",
+  "--enable-unsafe-swiftshader",
+  "--headless",
+  "--hide-scrollbars",
+  "--mute-audio",
+  "--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4",
+  "--remote-debugging-pipe",
+  "--no-startup-window",
+]);
+
+export function verifyNativeBrowserPolicy(args, version, expected) {
   if (
     !Array.isArray(args) ||
     args.length < 3 ||
@@ -2917,11 +2955,42 @@ export function verifyNativeBrowserPolicy(args, version) {
     ) ||
     args.reduce((n, a) => n + a.length, 0) > 65536 ||
     version?.product !== "HeadlessChrome/145.0.7632.6" ||
-    !args.includes("--headless") ||
-    args.filter((a) => a.split("=")[0] === POPUP_SWITCH).length !== 1 ||
-    !args.includes(POPUP_SWITCH) ||
-    args.some((a) => forbidden.has(a.split("=")[0]))
+    !expected ||
+    typeof expected.executablePath !== "string" ||
+    !isAbsolute(expected.executablePath) ||
+    args[0] !== expected.executablePath ||
+    !Number.isInteger(expected.debugPort) ||
+    expected.debugPort < 1 ||
+    expected.debugPort > 65535
   )
+    fail("BROWSER_POLICY");
+  const proxy = expected.proxy;
+  if (
+    proxy !== undefined &&
+    (typeof proxy !== "string" ||
+      !/^http:\/\/127\.0\.0\.1:[1-9][0-9]{0,4}$/.test(proxy) ||
+      Number(new URL(proxy).port) > 65535)
+  )
+    fail("BROWSER_POLICY");
+  const profiles = args.filter((a) => a.split("=")[0] === "--user-data-dir");
+  if (profiles.length !== 1 || !profiles[0].startsWith("--user-data-dir=")) fail("BROWSER_POLICY");
+  const profile = profiles[0].slice("--user-data-dir=".length);
+  if (
+    !isAbsolute(profile) ||
+    dirname(profile) !== tmpdir() ||
+    !/^playwright_chromiumdev_profile-[a-zA-Z0-9]+$/.test(basename(profile))
+  )
+    fail("BROWSER_POLICY");
+  const exact = [
+    expected.executablePath,
+    ...NATIVE_SDK_ARGUMENTS,
+    ...nativeBrowserArgs(expected.debugPort, proxy !== undefined),
+    profiles[0],
+    ...(proxy === undefined ? [] : ["--proxy-server=" + proxy, "--proxy-bypass-list=<-loopback>"]),
+  ];
+  const actual = [...args].sort();
+  exact.sort();
+  if (actual.length !== exact.length || actual.some((value, i) => value !== exact[i]))
     fail("BROWSER_POLICY");
   return true;
 }
@@ -2947,10 +3016,19 @@ async function nativeBinaryIdentity(path) {
 
 // Return no browser until the exact pinned binary and its actual launch policy agree.
 // No custom executable, caller-supplied args or policy bypass is accepted.
-export async function launchNativeBrowser({ chromium, debugPort, proxy } = {}) {
+export async function launchNativeBrowser({ debugPort, proxy } = {}) {
   let browser;
   try {
+    const { chromium } = await import("playwright");
+    const sdkVersion = require("playwright/package.json").version;
+    const coreRoot = dirname(require.resolve("playwright-core/package.json"));
+    const registry = JSON.parse(await readFile(join(coreRoot, "browsers.json"), "utf8"));
+    const shells = registry.browsers.filter((entry) => entry.name === "chromium-headless-shell");
     if (
+      sdkVersion !== "1.58.2" ||
+      shells.length !== 1 ||
+      shells[0].revision !== "1208" ||
+      shells[0].browserVersion !== "145.0.7632.6" ||
       process.platform !== "linux" ||
       process.arch !== "x64" ||
       require("playwright-core/package.json").version !== "1.58.2" ||
@@ -2987,7 +3065,7 @@ export async function launchNativeBrowser({ chromium, debugPort, proxy } = {}) {
     try {
       const command = await session.send("Browser.getBrowserCommandLine");
       const version = await session.send("Browser.getVersion");
-      verifyNativeBrowserPolicy(command.arguments, version);
+      verifyNativeBrowserPolicy(command.arguments, version, { executablePath, debugPort, proxy });
       if (
         (await nativeBinaryIdentity(command.arguments[0])) !== executablePath ||
         command.arguments.filter((a) => a.startsWith("--remote-debugging-port=")).length !== 1 ||
@@ -4690,7 +4768,6 @@ async function runAuthenticatedAudit() {
     masterLocated: false,
     organizationConfirmed: false,
   };
-  const { chromium } = await import("playwright");
   const debug = createServer();
   await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
   const debugPort = debug.address().port;
@@ -4752,7 +4829,7 @@ async function runAuthenticatedAudit() {
   try {
     phase = "BROWSER_START";
     proxy = await startDestinationProxy();
-    browser = await launchNativeBrowser({ chromium, debugPort, proxy: proxy.url });
+    browser = await launchNativeBrowser({ debugPort, proxy: proxy.url });
     context = await browser.newContext({
       viewport: { width: 1440, height: 1000 },
       serviceWorkers: "block",

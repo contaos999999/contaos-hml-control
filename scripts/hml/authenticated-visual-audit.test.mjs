@@ -1442,7 +1442,7 @@ test(
     await new Promise((resolve) => debug.close(resolve));
     const finished = Promise.withResolvers();
     try {
-      browser = await fn("launchNativeBrowser")({ chromium, debugPort: port });
+      browser = await fn("launchNativeBrowser")({ debugPort: port });
       context = await browser.newContext();
       const page = await context.newPage();
       const session = await context.newCDPSession(page);
@@ -1603,7 +1603,6 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
       try {
         if (mode === "proxy") proxy = await fn("startDestinationProxy")();
         browser = await fn("launchNativeBrowser")({
-          chromium,
           debugPort: port,
           ...(proxy ? { proxy: proxy.url } : {}),
         });
@@ -1779,7 +1778,7 @@ for (const scheme of ["ws", "wss"])
       const port = debug.address().port;
       await new Promise((resolve) => debug.close(resolve));
       try {
-        browser = await fn("launchNativeBrowser")({ chromium, debugPort: port });
+        browser = await fn("launchNativeBrowser")({ debugPort: port });
         const attempt = async (page) =>
           page.evaluate(
             (url) =>
@@ -2508,7 +2507,7 @@ test(
         }),
       ]);
     try {
-      browser = await fn("launchNativeBrowser")({ chromium, debugPort: realPort });
+      browser = await fn("launchNativeBrowser")({ debugPort: realPort });
       const origin = `http://127.0.0.1:${source.address().port}`,
         canceledUrl = `http://127.0.0.1:${canary.address().port}/canceled`;
       const positive = await browser.newContext();
@@ -7326,11 +7325,36 @@ test("popup policy: launch args are closed and require the restrictive switch", 
   for (const port of [undefined, 0, -1, 1.5, 65536, "9222"])
     assert.throws(() => fn("nativeBrowserArgs")(port), { code: "BROWSER_POLICY" });
 });
+function popupPolicyFixture({
+  executablePath = "/trusted/chrome-headless-shell",
+  debugPort = 9222,
+  proxy,
+} = {}) {
+  const path = require("node:path");
+  const root = path.dirname(require.resolve("playwright-core/package.json"));
+  const { chromiumSwitches } = require(path.join(root, "lib/server/chromium/chromiumSwitches.js"));
+  const args = [
+    executablePath,
+    ...chromiumSwitches(false),
+    "--enable-unsafe-swiftshader",
+    "--headless",
+    "--hide-scrollbars",
+    "--mute-audio",
+    "--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4",
+    ...(proxy === undefined ? [] : ["--proxy-server=" + proxy, "--proxy-bypass-list=<-loopback>"]),
+    ...fn("nativeBrowserArgs")(debugPort, proxy !== undefined),
+    "--user-data-dir=" +
+      path.join(require("node:os").tmpdir(), "playwright_chromiumdev_profile-Test123"),
+    "--remote-debugging-pipe",
+    "--no-startup-window",
+  ];
+  return { args, expected: { executablePath, debugPort, proxy } };
+}
 test("popup policy: actual command line and version reject missing overrides and unsafe switches", () => {
   const check = fn("verifyNativeBrowserPolicy");
-  const args = ["/trusted/chrome-headless-shell", "--headless", "--block-new-web-contents"];
+  const { args, expected } = popupPolicyFixture();
   const version = { product: "HeadlessChrome/145.0.7632.6" };
-  assert.equal(check(args, version), true);
+  assert.equal(check(args, version, expected), true);
   for (const bad of [
     null,
     {},
@@ -7346,9 +7370,9 @@ test("popup policy: actual command line and version reject missing overrides and
     [...args, null],
     [...args, "SYNTHETIC_SECRET_CANARY\n"],
   ])
-    assert.throws(() => check(bad, version), { code: "BROWSER_POLICY" });
+    assert.throws(() => check(bad, version, expected), { code: "BROWSER_POLICY" });
   for (const product of ["Chrome/145.0.7632.6", "HeadlessChrome/146.0.0.0", undefined])
-    assert.throws(() => check(args, { product }), { code: "BROWSER_POLICY" });
+    assert.throws(() => check(args, { product }, expected), { code: "BROWSER_POLICY" });
 });
 test("popup policy: both authenticated consumers and native tests use the proved launcher", async () => {
   const { readFile } = await import("node:fs/promises");
@@ -7365,16 +7389,49 @@ test("popup policy: both authenticated consumers and native tests use the proved
   assert.equal(/chromium\.launch\(/.test(preparer), false);
 });
 
-test("popup policy: unknown binary blocks before launch and never returns a browser", async () => {
-  let launches = 0;
-  await assert.rejects(
-    fn("launchNativeBrowser")({
-      chromium: { executablePath: () => "/untrusted/chrome", launch: () => launches++ },
-      debugPort: 9222,
-    }),
-    { code: "BROWSER_POLICY" },
+test("popup policy: unknown binary blocks before filesystem access or browser launch", async () => {
+  const ts = await import("typescript");
+  const { readFile } = await import("node:fs/promises");
+  const text = await readFile(new URL("./authenticated-visual-audit.mjs", import.meta.url), "utf8");
+  const file = ts.createSourceFile(
+    "audit.mjs",
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
   );
-  assert.equal(launches, 0);
+  const identity = file.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "nativeBinaryIdentity",
+  );
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+  const check = new AsyncFunction(
+    "path",
+    "isAbsolute",
+    "lstat",
+    "fail",
+    identity.body.getText(file).slice(1, -1),
+  );
+  let accesses = 0;
+  const fail = (code) => {
+    throw Object.assign(Error(code), { code });
+  };
+  for (const path of [
+    "relative/chrome",
+    "/untrusted/chrome",
+    "/cache/chromium_headless_shell-1209/chrome-headless-shell-linux64/chrome-headless-shell",
+  ])
+    await assert.rejects(
+      check(
+        path,
+        require("node:path").isAbsolute,
+        () => {
+          accesses++;
+        },
+        fail,
+      ),
+      { code: "BROWSER_BINARY" },
+    );
+  assert.equal(accesses, 0);
 });
 
 async function popupPolicyVariants() {
@@ -7410,7 +7467,7 @@ async function popupPolicyVariants() {
       await new Promise((r) => debug.listen(0, "127.0.0.1", r));
       const port = debug.address().port;
       await new Promise((r) => debug.close(r));
-      browser = await fn("launchNativeBrowser")({ chromium, debugPort: port });
+      browser = await fn("launchNativeBrowser")({ debugPort: port });
       context = await browser.newContext({ serviceWorkers: "block" });
       const page = await context.newPage();
       const session = await context.newCDPSession(page);
@@ -7485,7 +7542,7 @@ async function launchIsolatedProvedBrowser(chromium) {
   await new Promise((r) => debug.listen(0, "127.0.0.1", r));
   const port = debug.address().port;
   await new Promise((r) => debug.close(r));
-  return fn("launchNativeBrowser")({ chromium, debugPort: port });
+  return fn("launchNativeBrowser")({ debugPort: port });
 }
 
 test("popup policy: actual launcher closes on post-launch command or identity failure", async () => {
@@ -7513,6 +7570,7 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
     "debugPort",
     "proxy",
     "require",
+    "readFile",
     "process",
     "isAbsolute",
     "dirname",
@@ -7522,11 +7580,24 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
     "browserEnvironment",
     "verifyNativeBrowserPolicy",
     "fail",
-    "let browser;" + launch.body.getText(file).slice(1, -1).replace("let browser;", ""),
+    "let browser;" +
+      launch.body
+        .getText(file)
+        .slice(1, -1)
+        .replace("let browser;", "")
+        .replace('const { chromium } = await import("playwright");', ""),
   );
   const expected =
     "/cache/chromium_headless_shell-1208/chrome-headless-shell-linux64/chrome-headless-shell";
-  for (const scenario of ["command", "version", "identity", "detach"]) {
+  for (const scenario of [
+    "command",
+    "version",
+    "identity",
+    "detach",
+    "unknown",
+    "bare-port",
+    "proxy-override",
+  ]) {
     let closed = false,
       contexts = 0;
     const browser = {
@@ -7546,10 +7617,14 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
               }
             : {
                 arguments: [
-                  scenario === "identity" ? "/foreign" : expected,
-                  "--headless",
-                  "--block-new-web-contents",
-                  "--remote-debugging-port=9222",
+                  ...popupPolicyFixture({
+                    executablePath: scenario === "identity" ? "/foreign" : expected,
+                  }).args,
+                  ...(scenario === "unknown" ? ["--unknown-switch=false"] : []),
+                  ...(scenario === "bare-port" ? ["--remote-debugging-port", "0"] : []),
+                  ...(scenario === "proxy-override"
+                    ? ["--proxy-server=http://foreign.invalid:8181"]
+                    : []),
                 ],
               };
         },
@@ -7576,7 +7651,8 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
         chromium,
         9222,
         undefined,
-        () => ({ version: "1.58.2" }),
+        require,
+        readFile,
         { platform: "linux", arch: "x64", env: {} },
         isAbsolute,
         dirname,
@@ -7597,7 +7673,7 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
 
 test("popup policy: unknown argv and bare overrides never authorize the real launcher", () => {
   const check = fn("verifyNativeBrowserPolicy");
-  const args = ["/trusted/chrome-headless-shell", "--headless", "--block-new-web-contents"];
+  const { args, expected } = popupPolicyFixture();
   const version = { product: "HeadlessChrome/145.0.7632.6" };
   for (const extra of [
     ["--proxy-server=http://foreign.invalid:8181"],
@@ -7605,5 +7681,59 @@ test("popup policy: unknown argv and bare overrides never authorize the real lau
     ["--disable-blink-features=BlockCredentialedSubresources"],
     ["--remote-debugging-port", "0"],
     ["--unknown-switch=false"],
-  ]) assert.throws(() => check([...args, ...extra], version), { code: "BROWSER_POLICY" });
+  ])
+    assert.throws(() => check([...args, ...extra], version, expected), { code: "BROWSER_POLICY" });
+});
+
+test("popup policy: exact proxy context rejects replacement omission duplication and positional overrides", () => {
+  const { args, expected } = popupPolicyFixture({ proxy: "http://127.0.0.1:8181" });
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  const check = fn("verifyNativeBrowserPolicy");
+  assert.equal(check(args, version, expected), true);
+  for (const bad of [
+    args.filter((a) => !a.startsWith("--proxy-server=")),
+    args.map((a) => (a.startsWith("--proxy-server=") ? "--proxy-server=http://127.0.0.1:8182" : a)),
+    [...args, "--proxy-bypass-list=*"],
+    [...args, "--headless"],
+    [...args, "--headless=false"],
+    [...args, "--remote-debugging-port=0"],
+    [...args, "--disable-features=WebSecurity"],
+    [...args, "--disable-web-security=false"],
+    [...args, "about:blank"],
+    args.map((a) => (a.startsWith("--user-data-dir=") ? "--user-data-dir=/foreign/profile" : a)),
+  ])
+    assert.throws(() => check(bad, version, expected), { code: "BROWSER_POLICY" });
+  assert.throws(() => check(args, version), { code: "BROWSER_POLICY" });
+  assert.throws(() => check(args, version, { ...expected, debugPort: 9223 }), {
+    code: "BROWSER_POLICY",
+  });
+  assert.throws(() => check(args, version, { ...expected, proxy: undefined }), {
+    code: "BROWSER_POLICY",
+  });
+});
+
+test("popup policy: production launcher resolves pinned SDK internally without injected chromium", async () => {
+  const ts = await import("typescript");
+  const { readFile } = await import("node:fs/promises");
+  const text = await readFile(new URL("./authenticated-visual-audit.mjs", import.meta.url), "utf8");
+  const file = ts.createSourceFile(
+    "audit.mjs",
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
+  const launch = file.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "launchNativeBrowser",
+  );
+  assert.ok(launch);
+  assert.equal(
+    launch.parameters[0].name.elements.some((node) => node.name?.text === "chromium"),
+    false,
+  );
+  const body = launch.body.getText(file);
+  assert.ok(body.indexOf('await import("playwright")') < body.indexOf("chromium.launch"));
+  assert.ok(body.includes('require("playwright/package.json").version'));
+  assert.ok(body.includes('"browsers.json"'));
+  assert.ok(body.indexOf('shells[0].revision !== "1208"') < body.indexOf("chromium.launch"));
 });
