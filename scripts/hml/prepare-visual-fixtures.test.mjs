@@ -1972,8 +1972,8 @@ test("R2 cada await relevante do codigo real passa pela barreira diagnostica", a
     count = 0;
   function visit(node) {
     const previous = owner;
-    if (ts.isFunctionDeclaration(node) && node.name)
-      owner = targets.has(node.name.text) ? node.name.text : null;
+    if (ts.isFunctionDeclaration(node) && node.name && targets.has(node.name.text))
+      owner = node.name.text;
     if (owner && ts.isAwaitExpression(node)) {
       count++;
       assert.ok(
@@ -2007,4 +2007,44 @@ test("R2 cleanup sincrono preserva primaria e report mesmo com logout verificado
   assert.equal(d.snapshot().logoutVerified, true);
   assert.equal(/CANARY|stack|https/.test(JSON.stringify(d.snapshot())), false);
   await assert.rejects(() => d.finishCleanup("UNKNOWN_CANARY", () => {}), { message: "DIAGNOSTIC_SUBPHASE" });
+});
+
+test("R2 consumidor real verifyContext recupera GET ausente sem envenenar primaria", async () => {
+  const ts = (await import("typescript")).default;
+  const { readFile } = await import("node:fs/promises");
+  const vm = await import("node:vm");
+  const code = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8");
+  const sf = ts.createSourceFile("preparer.mjs", code, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  let initializer;
+  function find(node) {
+    if (ts.isVariableDeclaration(node) && node.name.getText(sf) === "verifyContext")
+      initializer = node.initializer.getText(sf);
+    ts.forEachChild(node, find);
+  }
+  find(sf);
+  assert.equal(typeof initializer, "string");
+  const d = sut.createPreparationDiagnostics();
+  let reads = 0, visits = 0;
+  const context = {
+    page: {}, FIXTURE, contextVerified: false,
+    waitOrganization: async () => {},
+    observer: { read: async () => {
+      reads++;
+      if (reads === 1) throw new Error("OBSERVATION_TABLE");
+      return [{ id: FIXTURE.contract, id_organizacao: FIXTURE.organization, id_contratante: FIXTURE.contractor }];
+    } },
+    goKnown: async () => { visits++; },
+    tracedPreparation: (subphase, execute) => d.step(subphase, execute),
+  };
+  const verify = vm.runInNewContext("(" + initializer + ")", context);
+  assert.equal(await d.step("LOGIN", verify), true);
+  assert.equal(reads, 2);
+  assert.equal(visits, 1);
+  assert.equal(context.contextVerified, true);
+  assert.equal(d.snapshot().primaryFailure, null);
+  await assert.rejects(() => d.step("SOURCE_VERSION_READ", async () => {
+    throw Object.assign(new Error("LATER_CANARY"), { name: "TimeoutError" });
+  }));
+  assert.equal(d.snapshot().primaryFailure, "PREPARER_TIMEOUT");
+  assert.equal(d.snapshot().subphase, "SOURCE_VERSION_READ");
 });
