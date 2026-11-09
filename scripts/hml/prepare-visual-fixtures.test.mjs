@@ -7331,7 +7331,11 @@ async function r10NativeCompetenceProbe(browser) {
         );
         orderedObserver.assertReadBarrier(budget);
       },
-      link: async (path) => {
+      link: async (path, _options, budget) => {
+        if (path === "/contratos/" + FIXTURE.contract + "/competencias") {
+          await io.goKnown(path, budget);
+          return;
+        }
         links++;
         const anchor = orderedPage
           .locator("a")
@@ -7368,12 +7372,50 @@ async function r10NativeCompetenceProbe(browser) {
       result,
       bindings.map((c) => ({ month: c.month, id: c.id, observed: true, count: 1 })),
     );
+    phase = "ordered-second";
+    const sourceAst = await r6SourceNodes();
+    const actualListMonth = sourceAst.named("listMonth").getText(sourceAst.ast);
+    const second = new Function(
+      "io",
+      "listPath",
+      "tracedPreparation",
+      "readCompetenceMonth",
+      "uuid",
+      "FIXTURE",
+      "stop",
+      actualListMonth + ";return listMonth;",
+    )(
+      io,
+      "/contratos/" + FIXTURE.contract + "/competencias",
+      async (_phase, run) => run(),
+      local.readCompetenceMonth,
+      (value) => typeof value === "string" && /^[a-f0-9-]{36}$/.test(value),
+      FIXTURE,
+      (code) => {
+        throw Error(code);
+      },
+    );
+    const secondFlow = second(bindings[0].month);
+    const secondInitial = await next("ordered-second", null);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(fills, 2);
+    assert.equal(links, 2);
+    secondInitial.release();
+    const secondMonthly = await next("ordered-second", bindings[0].month);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(fills, 3);
+    assert.equal(links, 2);
+    secondMonthly.release();
+    assert.deepEqual(
+      (await secondFlow).map((row) => row.id),
+      [bindings[0].id],
+    );
     await orderedObserver.drainReads();
     assert.equal(orderedObserver.observationFailure(), null);
     assert.equal(orderedAborts - abortsBefore, 0);
     assert.equal(commands, 0);
     assert.equal(writes, 0);
-    assert.equal(fills, 2);
+    assert.equal(fills, 3);
     assert.equal(links, 2);
     assert.deepEqual(
       seen.filter((s) => s.phase === "ordered").map((s) => s.month),
@@ -7405,3 +7447,53 @@ test(
     }
   },
 );
+
+test("R10 one monotonic budget covers nested read methods and records deadline failure", async () => {
+  let clock = 0;
+  const f = await r10QueryFixture({
+    now: () => clock,
+    wait: async () => {
+      clock += 16000;
+    },
+  });
+  f.request();
+  await assert.rejects(
+    () => f.observer.read("competencias", f.where, f.mode),
+    /OBSERVATION_FAILED|PHASE_TIMEOUT/,
+  );
+  assert.deepEqual(f.observer.observationFailure(), {
+    contractKind: "UNKNOWN",
+    stage: "UNAVAILABLE",
+    statusHTTP: "NONE",
+    requestFailure: "UNAVAILABLE",
+  });
+  f.observer.close();
+});
+test("R10 guard in the actual navigation helper rejects expiry after settle before goto", async () => {
+  const audit = await import("./authenticated-visual-audit.mjs");
+  let clock = 0,
+    gotos = 0;
+  const f = await r10QueryFixture({ now: () => clock });
+  await assert.rejects(
+    () =>
+      f.observer.readBarrier(async (budget) => {
+        const page = {
+          waitForLoadState: async () => {
+            clock = 15001;
+          },
+          goto: async () => {
+            gotos++;
+          },
+        };
+        await audit.navigateVerifiedPage(
+          page,
+          { drain: async () => {}, assertSafe: () => {} },
+          FIXTURE.origin + "/contratos/" + FIXTURE.contract + "/competencias",
+          () => f.observer.readBarrierRemaining(budget),
+        );
+      }),
+    /OBSERVATION_FAILED/,
+  );
+  assert.equal(gotos, 0);
+  f.observer.close();
+});
