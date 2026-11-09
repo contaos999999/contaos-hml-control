@@ -2554,14 +2554,24 @@ async function r7ProbeListConsumers(page, ast) {
       [{ id: fixture.target }],
       [{ id: fixture.target }],
     );
-    assert.equal(await scope.locator("option[value='" + fixture.target + "']").count(), 1);
+    const optionCount = await scope.locator("option[value='" + fixture.target + "']").count();
+    const oldExactCount = await scope.getByLabel("Lista selecionada", { exact: true }).count();
+    const consumerCount = await control.count();
+    if (call === calls[0])
+      console.log(
+        "R7_LIST_SELECTOR_RED " +
+          JSON.stringify({
+            schema: "contaos.list-selector.red.v1",
+            optionCount,
+            oldExactCount,
+            consumerCount,
+            expectedCount: 1,
+          }),
+      );
+    assert.equal(optionCount, 1);
+    assert.equal(oldExactCount, 0, "real Playwright label text includes options");
     assert.equal(
-      await scope.getByLabel("Lista selecionada", { exact: true }).count(),
-      0,
-      "real Playwright label text includes options",
-    );
-    assert.equal(
-      await control.count(),
+      consumerCount,
       1,
       "production lookup must find the real select even when its wrapped exact label does not",
     );

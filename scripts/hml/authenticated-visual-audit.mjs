@@ -13,6 +13,7 @@ import { resolve, join, basename, dirname, isAbsolute } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
+import { isProxy } from "node:util/types";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
@@ -4825,7 +4826,45 @@ async function nativeGuard() {
     );
     preparerSourceFormsCases = preparerSourceFormsSupplement(result.stdout);
     if (preparerSourceFormsCases !== 2) fail("PREPARER_SOURCEFORMS_NATIVE");
-  } catch {
+  } catch (error) {
+    try {
+      if (!isProxy(error)) {
+        const descriptor = Object.getOwnPropertyDescriptor(error, "stdout");
+        const stdout = descriptor && "value" in descriptor ? descriptor.value : null;
+        const markers =
+          typeof stdout === "string"
+            ? [...stdout.matchAll(/^# R7_LIST_SELECTOR_RED (\{[^\r\n]{1,240}\})\r?$/gm)]
+            : [];
+        if (markers.length === 1) {
+          const receipt = JSON.parse(markers[0][1]);
+          if (
+            receipt &&
+            typeof receipt === "object" &&
+            !Array.isArray(receipt) &&
+            Object.keys(receipt).sort().join("|") ===
+              "consumerCount|expectedCount|oldExactCount|optionCount|schema" &&
+            receipt.schema === "contaos.list-selector.red.v1" &&
+            receipt.expectedCount === 1 &&
+            [receipt.optionCount, receipt.oldExactCount, receipt.consumerCount].every(
+              (n) => Number.isInteger(n) && n >= 0 && n <= 1,
+            )
+          )
+            console.log(
+              JSON.stringify({
+                phase: "NATIVE_SELECTOR_RED",
+                state: "OBSERVED_FAILURE",
+                schema: "contaos.list-selector.red.v1",
+                optionCount: receipt.optionCount,
+                oldExactCount: receipt.oldExactCount,
+                consumerCount: receipt.consumerCount,
+                expectedCount: 1,
+              }),
+            );
+        }
+      }
+    } catch {
+      // Only the closed technical receipt is eligible for output.
+    }
     fail("PREPARER_SOURCEFORMS_NATIVE");
   }
 
