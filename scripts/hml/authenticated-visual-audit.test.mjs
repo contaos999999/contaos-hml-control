@@ -10305,3 +10305,35 @@ test("R10 request accepts its new nonce and keeps R9 spent", () => {
     /REQUEST_/,
   );
 });
+
+test("R10 native failure diagnostic admits only the eight exact TAP titles", () => {
+  const titles = [
+    ["Chromium nativo: resposta alterada não executa antes do fechamento", "SOURCE_RESPONSE"],
+    ["Chromium nativo: worker não transmite ao canário", "WORKER"],
+    ["Chromium nativo: popup não transmite ao canário", "POPUP"],
+    ["Chromium nativo: websocket não transmite ao canário", "WEBSOCKET"],
+    ["Chromium nativo: proxy não transmite ao canário", "PROXY"],
+    ["Chromium nativo: controle positivo e bloqueio ws", "WS"],
+    ["Chromium nativo: controle positivo e bloqueio wss", "WSS"],
+    [
+      "Chromium nativo: cancelamento inicial real não libera corpo nem transmite ao canário",
+      "CANCELLATION",
+    ],
+  ];
+  assert.deepEqual(
+    sut.nativeFailedCases(
+      "TAP version 13\n" +
+        titles.map(([title], i) => "not ok " + (i + 1) + " - " + title).join("\n"),
+    ),
+    titles.map(([, code]) => code),
+  );
+  for (const raw of [
+    "not ok 1 - PRIVATE_CANARY",
+    "not ok 1 - " + titles[0][0] + " https://private.invalid",
+    "Error PRIVATE_CANARY",
+    null,
+  ])
+    assert.deepEqual(sut.nativeFailedCases(raw), []);
+  const value = sut.nativeFailedCases("not ok 1 - " + titles[0][0]);
+  assert.equal(JSON.stringify(value).includes("PRIVATE_CANARY"), false);
+});

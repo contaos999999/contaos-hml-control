@@ -6745,6 +6745,7 @@ test("R10 actual recovery consumer waits for the new monthly request instead of 
     readBarrier: observer.readBarrier,
     assertReadBarrier: observer.assertReadBarrier,
     readBarrierRemaining: observer.readBarrierRemaining,
+    drainReads: observer.drainReads,
     generation: observer.generation,
     observedAfter: observer.waitObservedAfter,
     read: observer.read,
@@ -6796,6 +6797,7 @@ function r10BudgetApi() {
     readBarrier: observer.readBarrier,
     assertReadBarrier: observer.assertReadBarrier,
     readBarrierRemaining: observer.readBarrierRemaining,
+    drainReads: observer.drainReads,
   };
 }
 
@@ -6955,4 +6957,111 @@ test("R10 seal records fatal unavailable for an admitted read that never reached
   });
   f.observer.close();
   await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+});
+
+async function r10BuildCompetenceBundle(directory) {
+  const fs = await import("node:fs/promises");
+  const { join } = await import("node:path");
+  const { fileURLToPath } = await import("node:url");
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const ts = (await import("typescript")).default;
+  const require = createRequire(import.meta.url);
+  const pgRequire = createRequire(require.resolve("@supabase/supabase-js"));
+  const pgPath = pgRequire.resolve("@supabase/postgrest-js");
+  const repository = fileURLToPath(new URL("../../", import.meta.url));
+  await fs.symlink(join(repository, "node_modules"), join(directory, "node_modules"), "dir");
+  const sdk = await fs.readFile(
+    new URL("../../src/lib/contratos/competenciasDados.ts", import.meta.url),
+    "utf8",
+  );
+  const sdkImport = 'import { supabase } from "@/integrations/supabase/client";';
+  assert.equal(sdk.split(sdkImport).length, 2);
+  await fs.writeFile(
+    join(directory, "sdk.ts"),
+    sdk.replace(
+      sdkImport,
+      "import { PostgrestClient } from " +
+        JSON.stringify(pgPath) +
+        ";\nconst supabase = new PostgrestClient(globalThis.location.origin + '/rest/v1');",
+    ),
+  );
+  const component = await fs.readFile(
+    new URL("../../src/components/contratos/CompetenciasContrato.tsx", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile(
+    "CompetenciasContrato.tsx",
+    component,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+  const wanted = new Set([
+    "ListaCompetencias",
+    "FilterBar",
+    "Pagination",
+    "CompetenceTable",
+    "StatusBadge",
+    "PercentGauge",
+    "Carregando",
+    "Alerta",
+  ]);
+  const selected = ast.statements
+    .filter(
+      (node) =>
+        (ts.isFunctionDeclaration(node) && wanted.has(node.name?.text)) ||
+        (ts.isVariableStatement(node) &&
+          node.declarationList.declarations.some((d) =>
+            ["MENSAGENS_V112", "TH", "TD"].includes(d.name.getText(ast)),
+          )),
+    )
+    .map((node) => node.getText(ast));
+  assert.equal(selected.length, wanted.size + 3);
+  const source = [
+    'import React, { useState } from "react";',
+    'import {createRoot} from "react-dom/client";',
+    'import {QueryClient, QueryClientProvider, useQuery, keepPreviousData} from "@tanstack/react-query";',
+    "import {PostgrestClient} from " + JSON.stringify(pgPath) + ";",
+    'import {listarCompetencias, FILTROS_COMPETENCIA_VAZIOS, PAGINA_COMPETENCIAS, SITUACOES_COMPETENCIA, formatarCompetencia, formatarPercentual, ErroCompetencia} from "./sdk";',
+    'const Icon=()=> <svg aria-hidden="true"/>; const Loader2=Icon,RefreshCw=Icon,AlertCircle=Icon,CircleDot=Icon;',
+    'const formatarDataBr=(v)=>v??"—";',
+    "function Button({asChild,children,variant,size,...props}){return asChild?children:<button {...props}>{children}</button>;}",
+    'function Link({to,params,children,activeOptions,...props}){const href=to.replace("$id",params?.id??"");return <a href={href} {...props}>{children}</a>;}',
+    ...selected,
+    'const api=new PostgrestClient(location.origin+"/rest/v1");',
+    'window.__mount=async()=>{ const match=/^\\/competencias\\/([a-f0-9-]{36})$/.exec(location.pathname); if(match){await api.rpc("obter_visao_geral_competencia",{p_id_competencia:match[1]});return;} const client=new QueryClient();createRoot(document.getElementById("root")).render(<QueryClientProvider client={client}><ListaCompetencias contrato=' +
+      JSON.stringify(FIXTURE.contract) +
+      ' chave={["fixture",' +
+      JSON.stringify(FIXTURE.organization) +
+      "," +
+      JSON.stringify(FIXTURE.contract) +
+      "]} /></QueryClientProvider>);};",
+  ].join("\n");
+  const entry = join(directory, "entry.tsx");
+  await fs.writeFile(entry, source);
+  await promisify(execFile)(
+    "bun",
+    [
+      "build",
+      entry,
+      "--target=browser",
+      "--format=esm",
+      "--outfile=" + join(directory, "entry.js"),
+    ],
+    { cwd: repository, env: { PATH: process.env.PATH }, timeout: 30000, maxBuffer: 1048576 },
+  );
+  return fs.readFile(join(directory, "entry.js"));
+}
+test("R10 browser fixture compiles the real competence component and readonly SDK offline", async () => {
+  const fs = await import("node:fs/promises"),
+    { tmpdir } = await import("node:os"),
+    { join } = await import("node:path"),
+    dir = await fs.mkdtemp(join(tmpdir(), "contaos-r10-bundle-"));
+  try {
+    const bundle = await r10BuildCompetenceBundle(dir);
+    assert.ok(bundle.length > 1000);
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
 });

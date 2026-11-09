@@ -4456,6 +4456,30 @@ export async function harnessIdentity() {
     ),
   };
 }
+export function nativeFailedCases(tap) {
+  if (typeof tap !== "string" || tap.length > 1048576) return [];
+  const names = new Map([
+      ["Chromium nativo: resposta alterada não executa antes do fechamento", "SOURCE_RESPONSE"],
+      ["Chromium nativo: worker não transmite ao canário", "WORKER"],
+      ["Chromium nativo: popup não transmite ao canário", "POPUP"],
+      ["Chromium nativo: websocket não transmite ao canário", "WEBSOCKET"],
+      ["Chromium nativo: proxy não transmite ao canário", "PROXY"],
+      ["Chromium nativo: controle positivo e bloqueio ws", "WS"],
+      ["Chromium nativo: controle positivo e bloqueio wss", "WSS"],
+      [
+        "Chromium nativo: cancelamento inicial real não libera corpo nem transmite ao canário",
+        "CANCELLATION",
+      ],
+    ]),
+    found = [];
+  for (const line of tap.split("\n")) {
+    const title = /^not ok [0-9]+ - (.+)$/.exec(line.trim())?.[1],
+      code = names.get(title);
+    if (code && !found.includes(code)) found.push(code);
+  }
+  return found.slice(0, 8);
+}
+
 export function nativeCancellationDiagnostics(tap) {
   const allowed = new Set([
     "SENSOR_PROVED",
@@ -4709,6 +4733,7 @@ async function nativeGuard() {
         exitCode: Number.isInteger(error?.code) ? error.code : null,
         signal: ["SIGTERM", "SIGKILL"].includes(error?.signal) ? error.signal : null,
         timedOut: error?.killed === true,
+        failedCases: nativeFailedCases(stdout),
         cancellationStages: nativeCancellationDiagnostics(stdout),
         cancellationFailure: nativeCancellationFailure(stdout),
         sourceFailure: nativeSourceFailure(stdout),

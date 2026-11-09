@@ -213,7 +213,8 @@ export async function readCompetenceMonth(io, month, navigate) {
     typeof navigate !== "function" ||
     typeof io.readBarrier !== "function" ||
     typeof io.assertReadBarrier !== "function" ||
-    typeof io.readBarrierRemaining !== "function"
+    typeof io.readBarrierRemaining !== "function" ||
+    typeof io.drainReads !== "function"
   )
     err("OBSERVATION_ORDINAL");
   const select = EXACT_SELECTS.competencias.find((v) => v.includes("competencia_referencia,"));
@@ -229,6 +230,8 @@ export async function readCompetenceMonth(io, month, navigate) {
     });
     guard();
     await io.fresh();
+    guard();
+    await io.drainReads(budget);
     guard();
     const after = io.generation();
     guard();
@@ -3290,6 +3293,9 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     const { q, predicates, key } = latest.query;
     if (
       q.select !== select ||
+      predicates.size !== 2 ||
+      predicates.get("id_contrato")?.kind !== "eq" ||
+      predicates.get("id_contrato")?.value !== where.id_contrato ||
       predicates.get("competencia_referencia")?.kind !== "eq" ||
       predicates.get("competencia_referencia").value !== where.competencia_referencia ||
       q.offset !== "0" ||
@@ -3800,7 +3806,11 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       let timer;
       try {
         await Promise.race([
-          Promise.allSettled([...pending]),
+          (async () => {
+            await Promise.allSettled([...pending]);
+            while (!closed && (pendingReads.size || pending.size))
+              await new Promise((resolve) => setTimeout(resolve, 10));
+          })(),
           new Promise((resolve) => {
             timer = setTimeout(() => {
               recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
@@ -3857,6 +3867,7 @@ export function createOfficialObserver(page, { wait, now } = {}) {
             read: async () => {
               await flush();
               budgetState(budget);
+              if (pendingReads.size) return null;
               return latestMonth(state.where, state.options.after, state.options.select);
             },
             ready: (rows) => rows !== null,
@@ -6373,6 +6384,10 @@ async function runFixturePreparation() {
       }
       if (!selected) err("PREPARER_SPA_LINK");
       guard();
+      if (readBudget !== undefined) {
+        await tracedPreparation("RUNTIME_FRESH", () => observer.drainReads(readBudget));
+        guard();
+      }
       await tracedPreparation("RUNTIME_NAVIGATE", async () =>
         selected.click(
           readBudget === undefined ? {} : { timeout: observer.readBarrierRemaining(readBudget) },
@@ -6547,6 +6562,7 @@ async function runFixturePreparation() {
       readBarrier: observer.readBarrier,
       assertReadBarrier: observer.assertReadBarrier,
       readBarrierRemaining: observer.readBarrierRemaining,
+      drainReads: observer.drainReads,
       rpcRead: observer.rpcRead,
       generation: observer.generation,
       observedAfter: observer.waitObservedAfter,
