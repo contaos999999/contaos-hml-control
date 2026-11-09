@@ -10,6 +10,9 @@ import {
   requestAllowed,
   singleRequestEventAllowed,
   loadSingleRequestProof,
+  R4_ZERO_AUTH_PROOF,
+  validateR4ZeroAuthProof,
+  getValidatedR4ZeroAuth,
   HML_ORIGIN,
   API_ORIGIN,
   nativeProofValid,
@@ -252,6 +255,7 @@ export async function reconcileRecoveryCompetencies(io) {
 export function reconcileR1Recovery(input) {
   validateR1RecoveryDocument(input?.ledger);
   validateR3RecoveryDocument(input?.ledgerR3);
+  validateR4RecoveryDocument(input?.ledgerR4);
   if (
     !Array.isArray(input.competencies) ||
     input.competencies.length !== months.length ||
@@ -423,9 +427,16 @@ export function validateR3RecoveryDocument(input) {
   }
   return freeze(structuredClone(input));
 }
-function recoveryBudget(ledger, ledgerR3) {
+export const R4_RECOVERY_DOCUMENT = freeze({ ...R4_ZERO_AUTH_PROOF });
+export function validateR4RecoveryDocument(input) {
+  validateR4ZeroAuthProof(input);
+  if (!same(input, R4_RECOVERY_DOCUMENT)) err("RECOVERY_R4_PROOF");
+  return freeze(structuredClone(input));
+}
+function recoveryBudget(ledger, ledgerR3, ledgerR4) {
   const prior = validateR1RecoveryDocument(ledger),
     r3 = validateR3RecoveryDocument(ledgerR3);
+  validateR4RecoveryDocument(ledgerR4);
   const confirmedBefore = [...prior.receipts, ...r3.receipts].filter(
     (row) => row.state === "confirmed",
   ).length;
@@ -1228,11 +1239,15 @@ export function createIntentBroker({
   competenceGateAmended = false,
   recoveryLedger,
   recoveryLedgerR3,
+  recoveryLedgerR4,
   beforeArm,
 } = {}) {
   const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
-  if (!recovery && recoveryLedgerR3 !== undefined) err("RECOVERY_R3_LEDGER");
-  const budget = recovery ? recoveryBudget(recoveryLedger, recoveryLedgerR3) : null;
+  if (!recovery && (recoveryLedgerR3 !== undefined || recoveryLedgerR4 !== undefined))
+    err("RECOVERY_R3_LEDGER");
+  const budget = recovery
+    ? recoveryBudget(recoveryLedger, recoveryLedgerR3, recoveryLedgerR4)
+    : null;
   let recoveryAuthorized = !recovery;
   let active = null,
     count = budget?.confirmedBefore || 0,
@@ -2823,7 +2838,10 @@ export async function prepareSourceAndList(io) {
   const { page } = io;
   const recovery =
     io.recoveryLedger === undefined ? null : validateR1RecoveryDocument(io.recoveryLedger);
-  if (recovery) validateR3RecoveryDocument(io.recoveryLedgerR3);
+  if (recovery) {
+    validateR3RecoveryDocument(io.recoveryLedgerR3);
+    validateR4RecoveryDocument(io.recoveryLedgerR4);
+  }
   const fail = (code) => {
     throw new Error(code);
   };
@@ -3330,6 +3348,7 @@ export async function prepareSourceAndList(io) {
         competencies,
         ledger: recovery,
         ledgerR3: io.recoveryLedgerR3,
+        ledgerR4: io.recoveryLedgerR4,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -4800,6 +4819,7 @@ export function validatePreparerIdentity(env, proof, native, identity, head) {
   );
 }
 const PREPARER_FAILURE_CODES = new Set([
+  "RECOVERY_R4_PROOF",
   "RECOVERY_R3_LEDGER",
   "RECOVERY_SOURCE_INACTIVE",
   "FLOW_LIST_READBACK_VERSION",
@@ -4970,7 +4990,8 @@ const PREPARER_FAILURE_CODES = new Set([
 async function runFixturePreparation() {
   validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);
   validateR2RecoveryDocument(R2_RECOVERY_DOCUMENT);
-  const validatedBudget = recoveryBudget(R1_RECOVERY_DOCUMENT, R3_RECOVERY_DOCUMENT);
+  const r4Recovery = validateR4RecoveryDocument(getValidatedR4ZeroAuth());
+  const validatedBudget = recoveryBudget(R1_RECOVERY_DOCUMENT, R3_RECOVERY_DOCUMENT, r4Recovery);
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
   activePreparationDiagnostics = diagnostics;
@@ -5048,6 +5069,7 @@ async function runFixturePreparation() {
       competenceGateAmended: true,
       recoveryLedger: R1_RECOVERY_DOCUMENT,
       recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
+      recoveryLedgerR4: r4Recovery,
       beforeArm: (rpc, payload, evidence, binding) =>
         observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
@@ -5278,6 +5300,7 @@ async function runFixturePreparation() {
     const io = {
       recoveryLedger: R1_RECOVERY_DOCUMENT,
       recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
+      recoveryLedgerR4: r4Recovery,
       recoveryReady: (proof) => {
         broker.authorizeRecovery(proof);
         recoveryState = proof;
@@ -5377,6 +5400,7 @@ async function runFixturePreparation() {
         ...validatedBudget,
         r3ReceiptsSha256: R3_RECOVERY_DOCUMENT.receiptsSha256,
         r3WorkflowRun: R3_RECOVERY_DOCUMENT.workflowRun,
+        r4ZeroAuth: r4Recovery,
         reconciled: !!recoveryState,
         sourceVersion: recoveryState?.sourceVersion || null,
         sourceHash: recoveryState?.sourceHash || null,
@@ -5493,7 +5517,7 @@ export function fixtureBindingReceipt(sourceList, result) {
 export async function runCli(args = process.argv.slice(2)) {
   if (!Array.isArray(args) || args.length !== 1 || args[0] !== "--prepare-fixtures")
     err("PREPARER_CLI_USAGE");
-  if (process.env.GITHUB_EVENT_NAME === "workflow_run")
+  if (["workflow_run", "workflow_dispatch"].includes(process.env.GITHUB_EVENT_NAME))
     await loadSingleRequestProof({ operation: "fixtures", fresh: true });
   if (!preparerEventAllowed(process.env)) err("PREPARER_MAIN_ONLY");
   return runFixturePreparation();

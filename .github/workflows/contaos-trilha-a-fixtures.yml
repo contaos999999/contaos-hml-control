@@ -3,6 +3,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "scripts/ci/install-pinned-bun.mjs"
+      - "scripts/ci/install-pinned-bun.test.mjs"
       - scripts/hml/prepare-visual-fixtures.mjs
       - scripts/hml/prepare-visual-fixtures.test.mjs
       - scripts/hml/authenticated-visual-audit.mjs
@@ -64,9 +66,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.4.4"
+      - run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
       - run: bun install --frozen-lockfile
       - name: Provar evento e unicidade somente em metadados Actions
         id: request
@@ -88,12 +90,13 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.4.4"
+      - run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
       - run: bun install --frozen-lockfile
       - name: Protocolo sem environment ou secrets
         run: node --test scripts/hml/authenticated-visual-audit.test.mjs scripts/hml/prepare-visual-fixtures.test.mjs
@@ -133,9 +136,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.4.4"
+      - run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
       - name: Dependencias congeladas do executor
         run: bun install --frozen-lockfile
       - name: Recibo inicial publico para as fases sem credenciais

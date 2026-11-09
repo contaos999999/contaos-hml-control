@@ -6711,19 +6711,21 @@ export const SINGLE_REQUEST = Object.freeze({
   gateSha: "31b68f3cadbdc13a82bae23a43c35616f873d70b",
   autoGateSha: "122242fd421b348aef229683c0d3969611bce1db",
   recoveryGateSha: "581e161718d7f784961e2fef6bd1a75ba9295637",
+  bootstrapGateSha: "a8f3da12dcfeca858904b60e1b32c50df73a7d4a",
   readbackGateSha: "cd79ed9012e644f2ef65636eb1c30049301b74a5",
   spentFixtureNonce: "trilha-a-fixtures-20261108-r1",
   spentFixtureNonces: Object.freeze([
     "trilha-a-fixtures-20261108-r1",
     "trilha-a-fixtures-20261109-r2",
     "trilha-a-fixtures-20261109-r3",
+    "trilha-a-fixtures-20261109-r4",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r4",
+    nonce: "trilha-a-fixtures-20261109-r5",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -6954,7 +6956,11 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
     fail("REQUEST_PARENT");
   const ancestors = [SINGLE_REQUEST.gateSha, SINGLE_REQUEST.fixturesSha];
   if (request.operation === "fixtures")
-    ancestors.push(SINGLE_REQUEST.recoveryGateSha, SINGLE_REQUEST.readbackGateSha);
+    ancestors.push(
+      SINGLE_REQUEST.recoveryGateSha,
+      SINGLE_REQUEST.readbackGateSha,
+      SINGLE_REQUEST.bootstrapGateSha,
+    );
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
   ancestors.push(mode === "AUTO_DISCOVER" ? SINGLE_REQUEST.autoGateSha : request.frontend_sha);
@@ -6998,6 +7004,193 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
     if (historic.request_id === request.request_id) requestShas.push(commit);
   }
   return requestShas;
+}
+
+export const R4_ZERO_AUTH_PROOF = Object.freeze({
+  schema: "contaos.fixture.recovery-r4.v1",
+  headSha: "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",
+  upstreamRun: 42568309807,
+  fixturesRun: 42568382053,
+  auditRun: 42568382029,
+  attempt: 1,
+  derivedNewBusinessIntents: 0,
+  proof: "GITHUB_ACTIONS_LIVE_METADATA",
+});
+let validatedR4ZeroAuth = null;
+export function validateR4ZeroAuthProof(value) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value) ||
+    Object.keys(value).length !== Object.keys(R4_ZERO_AUTH_PROOF).length ||
+    Object.entries(R4_ZERO_AUTH_PROOF).some(([key, expected]) => value[key] !== expected)
+  )
+    fail("RECOVERY_R4_PROOF");
+  return true;
+}
+export function getValidatedR4ZeroAuth() {
+  validateR4ZeroAuthProof(validatedR4ZeroAuth);
+  return Object.freeze({ ...validatedR4ZeroAuth });
+}
+/** Actions metadata only. Never reads logs, artifacts, Auth, or HML endpoints. */
+export async function verifyR4ZeroAuth({ get, git } = {}) {
+  try {
+    if (typeof get !== "function" || typeof git !== "function") fail("RECOVERY_R4_PROOF");
+    const head = R4_ZERO_AUTH_PROOF.headSha,
+      repo = SINGLE_REQUEST.repository;
+    const specs = [
+      {
+        id: 42568309807,
+        workflow: 406076025,
+        path: ".github/workflows/contaos-frontend-zero-drift.yml",
+        event: "push",
+        conclusion: "failure",
+        created: "2026-11-09T05:36:46Z",
+        updated: "2026-11-09T05:37:28Z",
+        jobs: [
+          [128999621110, "ContaOS Frontend Zero-Drift", "failure"],
+          [
+            128999621372,
+            "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+            "success",
+          ],
+        ],
+      },
+      {
+        id: 42568382053,
+        workflow: 411426169,
+        path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+        event: "workflow_run",
+        conclusion: "skipped",
+        created: "2026-11-09T05:37:31Z",
+        updated: "2026-11-09T05:37:41Z",
+        blob: "9fc9fc40d67394dd92cfaa63d7fe25ea6c2f4316",
+        jobs: [
+          [128999841934, "Trilha A solicitacao unica sem credenciais", "skipped"],
+          [128999842395, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+          [128999842616, "Trilha A preparacao sintetica HML", "skipped"],
+        ],
+      },
+      {
+        id: 42568382029,
+        workflow: 411115674,
+        path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+        event: "workflow_run",
+        conclusion: "skipped",
+        created: "2026-11-09T05:37:31Z",
+        updated: "2026-11-09T05:37:32Z",
+        blob: "45f9d90094cc68aaeb22f5f170d20c2abcfa8159",
+        jobs: [
+          [128999842036, "Trilha A solicitacao unica sem credenciais", "skipped"],
+          [128999885461, "Trilha A auditoria privada HML", "skipped"],
+          [128999889276, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+        ],
+      },
+    ];
+    const checkRun = (r, s) => {
+      if (
+        !r ||
+        r.id !== s.id ||
+        r.workflow_id !== s.workflow ||
+        r.head_sha !== head ||
+        r.head_branch !== "main" ||
+        r.event !== s.event ||
+        r.path !== s.path ||
+        r.run_attempt !== 1 ||
+        r.status !== "completed" ||
+        r.conclusion !== s.conclusion ||
+        r.repository?.full_name !== repo ||
+        r.head_repository?.full_name !== repo ||
+        r.created_at !== s.created ||
+        r.updated_at !== s.updated ||
+        Date.parse(r.updated_at) < Date.parse(r.created_at) ||
+        (s.event === "workflow_run" && Date.parse(r.created_at) < Date.parse(specs[0].updated))
+      )
+        fail("RECOVERY_R4_PROOF");
+    };
+    const pages = async (base, key) => {
+      const rows = [],
+        ids = new Set();
+      let total;
+      for (let page = 1; page <= 10; page++) {
+        const part = await get(base + "&page=" + page);
+        if (
+          !part ||
+          !Number.isSafeInteger(part.total_count) ||
+          part.total_count < 0 ||
+          part.total_count > 1000 ||
+          (total !== undefined && part.total_count !== total) ||
+          !Array.isArray(part[key])
+        )
+          fail("RECOVERY_R4_PROOF");
+        total = part.total_count;
+        if (part[key].length !== Math.min(100, total - rows.length)) fail("RECOVERY_R4_PROOF");
+        for (const row of part[key]) {
+          if (!Number.isSafeInteger(row?.id) || row.id <= 0 || ids.has(row.id))
+            fail("RECOVERY_R4_PROOF");
+          ids.add(row.id);
+          rows.push(row);
+        }
+        if (rows.length === total) return rows;
+      }
+      fail("RECOVERY_R4_PROOF");
+    };
+    await git(["merge-base", "--is-ancestor", head, "HEAD"]);
+    await git(["merge-base", "--is-ancestor", "a8f3da12dcfeca858904b60e1b32c50df73a7d4a", "HEAD"]);
+    for (const s of specs) {
+      checkRun(await get("/actions/runs/" + s.id), s);
+      const runs = await pages(
+        "/actions/workflows/" +
+          s.workflow +
+          "/runs?head_sha=" +
+          head +
+          "&event=" +
+          s.event +
+          "&per_page=100",
+        "workflow_runs",
+      );
+      if (runs.length !== 1) fail("RECOVERY_R4_PROOF");
+      checkRun(runs[0], s);
+      const jobs = await pages("/actions/runs/" + s.id + "/attempts/1/jobs?per_page=100", "jobs");
+      if (jobs.length !== s.jobs.length) fail("RECOVERY_R4_PROOF");
+      for (const [id, name, conclusion] of s.jobs) {
+        const matches = jobs.filter((j) => j.id === id && j.name === name);
+        if (matches.length !== 1) fail("RECOVERY_R4_PROOF");
+        const j = matches[0];
+        if (
+          j.status !== "completed" ||
+          j.conclusion !== conclusion ||
+          !Array.isArray(j.steps) ||
+          (s.event === "workflow_run" && j.steps.length !== 0)
+        )
+          fail("RECOVERY_R4_PROOF");
+        if (id === 128999621110) {
+          const setup = j.steps.filter((step) => step.name === "Setup Bun");
+          if (
+            setup.length !== 1 ||
+            setup[0].status !== "completed" ||
+            setup[0].conclusion !== "failure"
+          )
+            fail("RECOVERY_R4_PROOF");
+        }
+      }
+      if (s.blob) {
+        const raw = await git(["show", head + ":" + s.path]);
+        if (
+          typeof raw !== "string" ||
+          Buffer.byteLength(raw) > 65536 ||
+          createHash("sha1")
+            .update("blob " + Buffer.byteLength(raw) + "\0")
+            .update(raw)
+            .digest("hex") !== s.blob
+        )
+          fail("RECOVERY_R4_PROOF");
+      }
+    }
+    return Object.freeze({ ...R4_ZERO_AUTH_PROOF });
+  } catch {
+    fail("RECOVERY_R4_PROOF");
+  }
 }
 
 export function singleRequestGet({ token, publicOnly, fetchImpl = fetch, now = Date.now }) {
@@ -7088,6 +7281,7 @@ export async function verifySingleRequest({
   const sha = env.CONTAOS_HARNESS_SHA;
   const requestShas = await verifySingleRequestGit(request, sha, git, raw);
   get ||= singleRequestGet({ token: env.CONTAOS_ACTIONS_READ_TOKEN, publicOnly });
+  const r4ZeroAuth = operation === "fixtures" ? await verifyR4ZeroAuth({ get, git }) : null;
   const repo = await get("");
   if (repo.full_name !== SINGLE_REQUEST.repository || repo.private !== false)
     fail("REQUEST_REPOSITORY");
@@ -7203,6 +7397,7 @@ export async function verifySingleRequest({
     parentSha: request.approved_parent_sha,
     requestSha256: digest(raw),
     ...pullProof,
+    ...(r4ZeroAuth ? { r4ZeroAuth } : {}),
   };
 }
 async function singleRequestCli(mode) {
@@ -7343,8 +7538,25 @@ export async function loadSingleRequestProof({
   fresh = false,
 }) {
   singleRequestContext = null;
+  validatedR4ZeroAuth = null;
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
     if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
+    if (operation === "fixtures") {
+      const root = fileURLToPath(new URL("../../", import.meta.url));
+      git ||= async (args) =>
+        (
+          await execFile("git", args, {
+            cwd: root,
+            env: browserEnvironment(env),
+            maxBuffer: 1048576,
+            timeout: 10000,
+          })
+        ).stdout;
+      validatedR4ZeroAuth = await verifyR4ZeroAuth({
+        get: singleRequestGet({ publicOnly: true }),
+        git,
+      });
+    }
     return true;
   }
   requireSingleRequestOperation(operation);
@@ -7424,6 +7636,10 @@ export async function loadSingleRequestProof({
     operation,
     mainSha: proof.sha,
   });
+  if (operation === "fixtures") {
+    validateR4ZeroAuthProof(proof.r4ZeroAuth);
+    validatedR4ZeroAuth = Object.freeze({ ...proof.r4ZeroAuth });
+  }
   singleRequestContext = { operation, sha: proof.sha, runId: env.GITHUB_RUN_ID };
   return true;
 }

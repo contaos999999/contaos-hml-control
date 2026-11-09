@@ -55,8 +55,13 @@ jobs:
           CONTAOS_CANONICAL_READ_TOKEN: ${{ secrets.CONTAOS_CANONICAL_READ_TOKEN }}
         run: |
           node scripts/context-freshness-gate.mjs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
       - name: GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada
