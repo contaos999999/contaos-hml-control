@@ -3968,40 +3968,63 @@ async function r6SourceNodes() {
   const link=nodes.find(n=>ts.isVariableDeclaration(n)&&n.name.getText(ast)==="link"&&n.initializer?.getText(ast).includes("PREPARER_SPA_PATH"));
   return {ts,code,ast,nodes,named,link:link.initializer.getText(ast)};
 }
+
 async function r6ApprovedFileHarness(mode="ok") {
   const {readFile}=await import("node:fs/promises");
-  const source=await r6SourceNodes();
+  const source=await r6SourceNodes(),ts=source.ts;
+  const React=await import("react"),{renderToStaticMarkup}=await import("react-dom/server");
+  const {JSDOM}=await import("jsdom"),{queryAllByRole}=await import("@testing-library/dom");
+  const compile=(text,env,name)=>{
+    const js=ts.transpileModule(text.replace(/^export\s+/,""),{compilerOptions:{target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.React}}).outputText;
+    return new Function(...Object.keys(env),js+";return "+name+";")(...Object.values(env));
+  };
   const menuText=await readFile(new URL("../../src/lib/navegacao/menuV1.ts",import.meta.url),"utf8");
-  const menuAst=source.ts.createSourceFile("menu.ts",menuText,99,true,source.ts.ScriptKind.TS);
-  const menuNode=menuAst.statements.find(n=>source.ts.isFunctionDeclaration(n)&&n.name?.text==="menuContextualV1");
-  const js=source.ts.transpileModule(menuNode.getText(menuAst).replace("export ",""),{compilerOptions:{target:source.ts.ScriptTarget.ES2022}}).outputText;
-  const menu=new Function("permitido",js+";return menuContextualV1;")(()=>true);
+  const menuAst=ts.createSourceFile("menu.ts",menuText,99,true,ts.ScriptKind.TS);
+  const menuNode=menuAst.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==="menuContextualV1");
+  const menu=compile(menuNode.getText(menuAst),{permitido:()=>true},"menuContextualV1");
+  const sidebarText=await readFile(new URL("../../src/components/layout/ContaOSSidebar.tsx",import.meta.url),"utf8");
+  const sidebarAst=ts.createSourceFile("sidebar.tsx",sidebarText,99,true,ts.ScriptKind.TSX);
+  const sidebarNode=sidebarAst.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text==="ContaOSSidebar");
+  const summaryText=await readFile(new URL("../../src/components/contratos/VisaoGeralContrato.tsx",import.meta.url),"utf8");
+  const summaryAst=ts.createSourceFile("summary.tsx",summaryText,99,true,ts.ScriptKind.TSX);
+  let navNode;
+  function visit(n){if(ts.isJsxElement(n)&&n.openingElement.tagName.getText(summaryAst)==="nav"&&n.openingElement.attributes.getText(summaryAst).includes('aria-label="Seções do contrato"'))navNode=n;ts.forEachChild(n,visit);}
+  visit(summaryAst);assert.ok(navNode);
   const C="50c26274-a36f-48e0-b2fe-5a1caf5d6a49",V="2ea42a44-db27-4c4e-801f-9fc5227c2458";
-  let current="/competencias/"+C,sequence=10,documentOrdinal=null;
+  let current="/competencias/"+C,sequence=10,documentOrdinal=null,dom=null;
   const clicks=[];
-  const items=()=>{
-    const rows=menu({competencia:current.startsWith("/competencias/")?C:null,contrato:FIXTURE.contract},[]);
-    let paths=rows.map(x=>x.destino);
-    if(mode==="missing")paths=paths.filter(x=>x!=="/contratos/"+FIXTURE.contract);
-    if(mode==="duplicate"&&current.startsWith("/competencias/"))paths.push("/contratos/"+FIXTURE.contract);
-    return paths;
-  };
-  const page={
-    url:()=>FIXTURE.origin+current,
-    locator:selector=>{
-      const path=/^a\[href="([^"]+)"\]:visible$/.exec(selector)?.[1];assert.ok(path);
-      return{count:async()=>items().filter(x=>x===path).length,nth:()=>({
-        isEnabled:async()=>true,getAttribute:async()=>null,click:async()=>{
-          assert.ok(items().includes(path),"only source-real anchors can be clicked");
-          if(path.endsWith("/documentos"))documentOrdinal=sequence;
-          current=path;clicks.push(path);sequence++;
-        }
-      })};
-    },
-    waitForURL:async url=>assert.equal(FIXTURE.origin+current,url),
-  };
-  const trace=async(_phase,execute)=>execute();
-  const error=code=>{throw new Error(code);};
+  const Link=({to,params,children,...attrs})=>React.createElement("a",{...attrs,href:params?to.replace("$id",params.id):to},children);
+  const Sidebar=compile(sidebarNode.getText(sidebarAst),{React,Link,useRouterState:()=>current,menuComumPermitido:()=>[],menuContextualV1:menu,LayoutDashboard:()=>null,Building2:()=>null,FileText:()=>null},"ContaOSSidebar");
+  const Nav=compile("function ContractNav({c}){return ("+navNode.getText(summaryAst)+");}",{React,Link},"ContractNav");
+  function render(){
+    dom?.window.close();
+    const context={competencia:current.startsWith("/competencias/")?C:null,contrato:mode==="foreign"?C:FIXTURE.contract};
+    const html=renderToStaticMarkup(React.createElement(React.Fragment,null,React.createElement(Sidebar,{contexto:context}),!context.competencia&&React.createElement(Nav,{c:{id:FIXTURE.contract}})));
+    dom=new JSDOM(html);
+    const group=dom.window.document.querySelector('[role="group"][aria-label="Contexto atual"]');
+    const parent=group?.querySelector('a[href="/contratos/'+FIXTURE.contract+'"]');
+    if(mode==="missing")parent?.remove();
+    if(mode==="duplicate"&&parent)group.append(parent.cloneNode(true));
+    if(!context.competencia)
+      assert.equal(dom.window.document.querySelectorAll('a[href="/contratos/'+FIXTURE.contract+'/documentos"]').length,2,"real sidebar and summary both expose documents");
+  }
+  render();
+  const locator=getNodes=>({
+    count:async()=>getNodes().length,nth:i=>locator(()=>[getNodes()[i]].filter(Boolean)),
+    getByRole:(role,options)=>locator(()=>getNodes().flatMap(root=>queryAllByRole(root,role,{name:options.name,exact:options.exact}))),
+    locator:selector=>locator(()=>getNodes().flatMap(root=>[...root.querySelectorAll(selector.replaceAll(":visible",""))])),
+    isVisible:async()=>getNodes().length===1,isEnabled:async()=>getNodes().length===1&&!getNodes()[0].disabled,
+    getAttribute:async name=>getNodes()[0]?.getAttribute(name),
+    click:async()=>{
+      const nodes=getNodes();assert.equal(nodes.length,1);const path=nodes[0].getAttribute("href");assert.ok(path);
+      if(path.endsWith("/documentos"))documentOrdinal=sequence;
+      current=path;clicks.push(path);sequence++;render();
+    }
+  });
+  const page={url:()=>FIXTURE.origin+current,locator:selector=>locator(()=>[...dom.window.document.querySelectorAll(selector.replaceAll(":visible",""))]),
+    getByRole:(role,options)=>locator(()=>queryAllByRole(dom.window.document.body,role,{name:options.name,exact:options.exact})),
+    waitForURL:async url=>assert.equal(FIXTURE.origin+current,url)};
+  const trace=async(_phase,execute)=>execute(),error=code=>{throw new Error(code);};
   const link=new Function("page","FIXTURE","proof","fresh","goKnown","err","tracedPreparation","return ("+source.link+");")(
     page,FIXTURE,{documents:{}},async()=>{},async()=>assert.fail("SSR bypass"),error,trace
   );
@@ -4011,12 +4034,12 @@ async function r6ApprovedFileHarness(mode="ok") {
   const rows=async table=>table==="documentos_contrato"?[{id:FIXTURE.contractualDocument,id_contrato:FIXTURE.contract,situacao:"ativo",versao_atual:1}]:
     table==="versoes_documento"?[{id:V,id_documento_contrato:FIXTURE.contractualDocument,id_arquivo:FIXTURE.file,numero_versao:1}]:
     [{id:FIXTURE.file,status_seguranca:"aprovado",mime:"text/plain",tamanho:285,sha256:mode==="sha"?"b".repeat(64):FIXTURE.fileHash}];
-  const helpers=[source.named("official"),source.named("approvedFile"),source.named("approvedContractFile")].map(n=>n.getText(source.ast)).join("\n");
-  const run=new Function("io","FIXTURE","link","tracedPreparation","observed","rows","uuid","stop","obj","contractBase","context",helpers+";return approvedContractFile;")(
+  const helpers=[source.named("official"),source.named("approvedFile"),source.named("approvedContractFile")].map(n=>n.getText(source.ast).replace(/^export\s+/,"")).join("\n");
+  const inner=new Function("io","FIXTURE","link","tracedPreparation","observed","rows","uuid","stop","obj","contractBase","context",helpers+";return approvedContractFile;")(
     io,FIXTURE,link,trace,observed,rows,v=>/^[0-9a-f-]{36}$/.test(v),error,v=>v!==null&&typeof v==="object","/contratos/"+FIXTURE.contract,
     async()=>{if(mode==="foreign")error("COMPETENCE_CONTEXT");}
   );
-  return{run,clicks,current:()=>current};
+  return{run:async()=>{try{return await inner();}finally{dom?.window.close();}},clicks,current:()=>current};
 }
 test("R6 source-real approved file follows contract then documents through unique contextual anchors",async()=>{
   const f=await r6ApprovedFileHarness();
@@ -4134,4 +4157,71 @@ test("R6 unknown COMPETENCE prefix remains generic rather than becoming a receip
   assert.ok(result.every(x=>x.code==="COMPETENCE_DEPENDENCY_BLOCKED"));
   assert.equal(d.snapshot().primaryFailure,"PREPARER_UNCLASSIFIED");
   assert.equal(JSON.stringify({result,diagnostics:d.snapshot()}).includes("SEMANTICAMENTE"),false);
+});
+
+
+test("R6 real QueryClient and SDK remount emit ordinary immutable-chain reads without forced refetch",async()=>{
+  const fs=await import("node:fs/promises"),ts=(await import("typescript")).default;
+  const {createRequire}=await import("node:module"),require=createRequire(import.meta.url);
+  const {QueryClient,QueryObserver}=await import("@tanstack/react-query");
+  const pgRequire=createRequire(require.resolve("@supabase/supabase-js"));
+  const {PostgrestClient}=pgRequire("@supabase/postgrest-js");
+  const {EventEmitter}=await import("node:events"),page=new EventEmitter(),observer=sut.createOfficialObserver(page);
+  const version="2ea42a44-db27-4c4e-801f-9fc5227c2458";
+  const docs=[{id:FIXTURE.contractualDocument,id_contrato:FIXTURE.contract,tipo:"outro",titulo:"Fonte sintética",categoria:"documental",situacao:"ativo",versao_atual:1,versao_registro:1}];
+  const versions=[{id:version,id_documento_contrato:FIXTURE.contractualDocument,numero_versao:1,id_arquivo:FIXTURE.file,hash:FIXTURE.fileHash,criado_em:"2026-01-01T00:00:00Z"}];
+  const files=[{id:FIXTURE.file,nome_original:"FONTE_SINTETICA_AUDITORIA_HML.txt",mime:"text/plain",tamanho:285,sha256:FIXTURE.fileHash,status_seguranca:"aprovado",origem:"sintetica",criado_em:"2026-01-01T00:00:00Z"}];
+  const requests=[];
+  const transport=async(raw,init={})=>{
+    const url=new URL(String(raw));assert.equal(url.origin,FIXTURE.api);
+    assert.equal(init.method||"GET","GET");assert.ok(!url.pathname.includes("/auth/"));
+    const table=url.pathname.split("/").at(-1);
+    const data={documentos_contrato:docs,versoes_documento:versions,arquivos:files,processamentos_documento:[],sugestoes_extracao_documento:[]}[table];
+    assert.ok(data,"only ordinary SDK tables");
+    const request={url:()=>url.href,method:()=>"GET",postData:()=>null};
+    requests.push({table,url:url.href});page.emit("request",request);
+    page.emit("response",{request:()=>request,url:()=>url.href,status:()=>200,body:async()=>Buffer.from(JSON.stringify(data))});
+    return new Response(JSON.stringify(data),{status:200,headers:{"content-type":"application/json","content-range":"0-"+Math.max(0,data.length-1)+"/"+data.length}});
+  };
+  const supabase=new PostgrestClient(FIXTURE.api+"/rest/v1",{fetch:transport});
+  const sdkText=await fs.readFile(new URL("../../src/lib/contratos/documentosDados.ts",import.meta.url),"utf8");
+  const sdkJs=ts.transpileModule(sdkText,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+  const module={exports:{}};
+  new Function("require","module","exports",sdkJs)(name=>{assert.equal(name,"@/integrations/supabase/client");return{supabase};},module,module.exports);
+  const sdk=module.exports;
+  const comp=await fs.readFile(new URL("../../src/components/contratos/DocumentosContrato.tsx",import.meta.url),"utf8");
+  const ast=ts.createSourceFile("DocumentosContrato.tsx",comp,99,true,ts.ScriptKind.TSX),queryOptions={};
+  const visit=n=>{
+    if(ts.isVariableDeclaration(n)&&["lista","resumos"].includes(n.name.getText(ast))&&ts.isCallExpression(n.initializer)&&n.initializer.expression.getText(ast)==="useQuery")
+      queryOptions[n.name.getText(ast)]=n.initializer.arguments[0].getText(ast);
+    ts.forEachChild(n,visit);
+  };visit(ast);assert.deepEqual(Object.keys(queryOptions).sort(),["lista","resumos"]);
+  const router=await fs.readFile(new URL("../../src/router.tsx",import.meta.url),"utf8");
+  const routerAst=ts.createSourceFile("router.tsx",router,99,true,ts.ScriptKind.TSX);let clientInitializer;
+  function findClient(n){if(ts.isVariableDeclaration(n)&&n.name.getText(routerAst)==="queryClient")clientInitializer=n.initializer.getText(routerAst);ts.forEachChild(n,findClient);}
+  findClient(routerAst);assert.equal(clientInitializer,"new QueryClient()");
+  const client=new Function("QueryClient","return "+clientInitializer)(QueryClient);
+  const env={chave:["synthetic-user",FIXTURE.organization,FIXTURE.contract],contrato:FIXTURE.contract,filtros:{busca:"",tipo:"",categoria:"",situacao:""},pagina:0,
+    listarDocumentos:sdk.listarDocumentos,obterResumos:sdk.obterResumos,emAndamento:sdk.emAndamento,atrasoPolling:sdk.atrasoPolling,ciclos:{current:0},docs:[],ids:[]};
+  const options=name=>new Function(...Object.keys(env),"return ("+queryOptions[name]+");")(...Object.values(env));
+  const active=[];
+  async function mount(name){
+    const q=new QueryObserver(client,options(name));active.push(q);
+    return new Promise((resolve,reject)=>{
+      q.subscribe(value=>{if(value.isError)reject(value.error);else if(value.isSuccess&&!value.isFetching)resolve(value.data);});
+      const value=q.getCurrentResult();if(value.isError)reject(value.error);else if(value.isSuccess&&!value.isFetching)resolve(value.data);
+    });
+  }
+  async function visitDocuments(){
+    const list=await mount("lista");env.docs=list.itens;env.ids=list.itens.map(d=>d.id+":"+d.versao_atual);
+    const summaries=await mount("resumos");assert.equal(summaries[FIXTURE.contractualDocument].arquivo.sha256,FIXTURE.fileHash);
+    while(active.length)active.pop().destroy();await observer.flush();
+  }
+  try{
+    await visitDocuments();const after=observer.generation(),before=requests.length;
+    await visitDocuments();
+    assert.ok(requests.length>before,"current source options remount produce new ordinary requests");
+    for(const [table,where]of [["documentos_contrato",{id:FIXTURE.contractualDocument,id_contrato:FIXTURE.contract}],["versoes_documento",{id_documento_contrato:FIXTURE.contractualDocument}],["arquivos",{id:FIXTURE.file}]])
+      assert.equal(await observer.observedAfter(table,where,after),true,table);
+  }finally{while(active.length)active.pop().destroy();client.clear();observer.close();}
 });
