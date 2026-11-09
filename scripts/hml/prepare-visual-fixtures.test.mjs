@@ -10791,24 +10791,28 @@ test("R16 original uncertain UUID remains consumed even for an unrelated allowed
   await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
   const f = r12AuthorizedContexts.get(b);
   try {
-    assert.throws(() => b.arm({
-      rpc: "solicitar_analise_competencia",
-      payload: r6AnalysisPayload,
-      requestId: "6e6b6afb-2216-42ef-bd89-571301e97e1f",
-      verified: { context: true, capability: true, reconciled: true },
-      evidence: {
-        competencies: [
-          {
-            official: true,
-            current: true,
-            organization: FIXTURE.organization,
-            contract: FIXTURE.contract,
-            id: r6AnalysisPayload.p_id_competencia,
-            month: "2026-09-01",
+    assert.throws(
+      () =>
+        b.arm({
+          rpc: "solicitar_analise_competencia",
+          payload: r6AnalysisPayload,
+          requestId: "6e6b6afb-2216-42ef-bd89-571301e97e1f",
+          verified: { context: true, capability: true, reconciled: true },
+          evidence: {
+            competencies: [
+              {
+                official: true,
+                current: true,
+                organization: FIXTURE.organization,
+                contract: FIXTURE.contract,
+                id: r6AnalysisPayload.p_id_competencia,
+                month: "2026-09-01",
+              },
+            ],
           },
-        ],
-      },
-    }), /INTENT_PAYLOAD/);
+        }),
+      /INTENT_PAYLOAD/,
+    );
     assert.equal(receipts.length, 0);
     assert.equal(b.snapshot().count, 12);
     assert.equal(b.snapshot().pending, false);
