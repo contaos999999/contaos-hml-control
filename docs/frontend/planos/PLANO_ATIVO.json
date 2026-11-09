@@ -2493,5 +2493,107 @@
     "no_auth_or_rerun_by_gate": true,
     "r2_derived_intent_count": 0,
     "r2_count_proof": "receipts=[] + brokerseal persisted before POST + sourcepath before SOURCE_ACTIVATE_COMMAND; report has no intentCount field"
+  },
+  "checkpoint_pos_r2_20261109": {
+    "recorded_date_utc": "2026-11-09",
+    "frontend_main_observed": "1b6f120f5346a65f9578c07c07a9498772783fb1",
+    "backend_main_observed": "a4ff442bcca9add0df5bad01f20d62c9c8fd385b",
+    "hml": {
+      "deployment": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",
+      "ready": "READY",
+      "source": "437c788e32f0325dd15c9d2e7277c10129bcb462",
+      "verified": "VERCEL_GET_DEPLOYMENT_ALIAS",
+      "new_audit_certified": false
+    },
+    "gate434": {
+      "merge": "d492b99fb1f71c71167528147e064924945f6d42",
+      "head": "bfe1b71d8fa57d24f34823b91bb0e24b9a607150",
+      "ci": [
+        42554046981,
+        42554046960
+      ],
+      "review": 5821203381,
+      "readback": true
+    },
+    "review430": {
+      "merge": "c6bf35472a4cfafe82ca59092150585a518d9928",
+      "ci": [
+        42554296553,
+        42554296518
+      ],
+      "review": 5821222206,
+      "cases": 102,
+      "original_png_reviewed": 204,
+      "dom_contextualized": 102,
+      "hashes_checked": 306,
+      "divergences": 0,
+      "critical": 0,
+      "important": 0,
+      "minor": 2,
+      "ledger_blob": "4376dda39d691d2d5ae4cfacd803c0ae9915a33c",
+      "origin": "866608/a688/EcPd",
+      "does_not_certify_new_source437": true
+    },
+    "code424": {
+      "merge": "1b6f120f5346a65f9578c07c07a9498772783fb1",
+      "review": 5821232888,
+      "code_review": 5821138610,
+      "ci": [
+        42554347188,
+        42554347139,
+        42554347213,
+        42554347146
+      ],
+      "native": {
+        "causal": 8,
+        "visual": 1,
+        "sys04": 2,
+        "v112": 1,
+        "v123": 1
+      },
+      "hml_verified": false,
+      "current_catalog_certified": false
+    },
+    "r2": {
+      "run": 42553093050,
+      "artifact": 13645999071,
+      "state": "FAIL",
+      "phase": "SOURCE_FORM_FIELD",
+      "failure": "TIMEOUT",
+      "last_completed": "SOURCE_UI_CONTROL",
+      "new_receipts": 0,
+      "derived_intent_count": 0,
+      "derived_proof": "receipts=[] + brokerseal before POST + sourcepath before SOURCE_ACTIVATE_COMMAND; report has no intentCount",
+      "r1_confirmed_operations_preserved": 2,
+      "recovery": true,
+      "bindings": null,
+      "logout_verified": false,
+      "cleanup_failure": "LOGOUT_FAILED",
+      "zip_sha256": "c6b33596bd1454388d0989506c74ccbaece749d0c4bcf0b45fbdb0f692927475",
+      "report_sha256": "d986f375e1cba68be5f78b61544d241ef5f4c71f126611112c960226a939e805",
+      "receipts_sha256": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+      "receipts_comments": [
+        6731148616,
+        6731207484
+      ],
+      "nonce_consumed": true,
+      "rerun_allowed": false,
+      "native8_pass": true
+    },
+    "r3": {
+      "state": "BUILD_IN_PROGRESS_AFTER_GATE434",
+      "workspace": "/vercel/r3build",
+      "ready": false,
+      "auth_active": false,
+      "new_request_allowed_by_checkpoint": false
+    },
+    "draft432": {
+      "state": "PENDING_REAL_BINDINGS_NO_AUDIT_RELEASE"
+    },
+    "last_proven": "R2 report/integrity/causal source review; GATE434, review430 and CODE424 integrated/readback. No R3 completed or new TestC.",
+    "next": "Complete source-real all-controls/logout R3 BUILD, CI/native/review/merge; then separate R3 request with fresh parent/nonce, single execution and artifact review. No R1/R2 replay.",
+    "original184_closed": false,
+    "brand72": "NAO_VERIFICADO_GLOBAL",
+    "v1_certified": false
   }
 }
