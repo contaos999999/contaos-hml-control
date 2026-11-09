@@ -1745,3 +1745,30 @@ test("R2 cada subfase fechada preserva falha primaria quando logout falha",async
    assert.equal(/PRIVATE_URL|token/.test(JSON.stringify(after)),false);
  }
 });
+
+test("R2 erro privado com getters nao e acessado e fence usa enum comprovado",async()=>{
+ const d=sut.createPreparationDiagnostics();
+ const error={name:"TimeoutError",get message(){assert.fail("message getter");},get stack(){assert.fail("stack getter");},get payload(){assert.fail("payload getter");}};
+ await assert.rejects(()=>d.step("SOURCE_VERSION_READ",async()=>{throw error;}),e=>e===error);
+ assert.equal(d.snapshot().primaryFailure,"PREPARER_TIMEOUT");
+ const fence=sut.createPreparationDiagnostics();
+ await assert.rejects(()=>fence.step("RUNTIME_FRESH",async()=>{throw Object.assign(new Error("PRIVATE"),{code:"FENCE_REQUEST"});}));
+ assert.equal(fence.snapshot().failureClass,"NATIVE_FENCE");
+ assert.equal(fence.snapshot().primaryFailure,"FENCE_REQUEST");
+});
+test("R2 cada await relevante do codigo real passa pela barreira diagnostica",async()=>{
+ const ts=await import("typescript"),{readFile}=await import("node:fs/promises");
+ const code=await readFile(new URL("./prepare-visual-fixtures.mjs",import.meta.url),"utf8");
+ const sf=ts.createSourceFile("preparer.mjs",code,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+ const targets=new Set(["confirmUiIntent","prepareSourceAndList","prepareCompetencies","runFixturePreparation"]);
+ let owner=null,count=0;
+ function visit(node){
+   const previous=owner;
+   if(ts.isFunctionDeclaration(node)&&node.name)owner=targets.has(node.name.text)?node.name.text:null;
+   if(owner&&ts.isAwaitExpression(node)){count++;assert.ok(node.expression.getText(sf).startsWith("tracedPreparation("),owner+" await sem enum");}
+   ts.forEachChild(node,visit);owner=previous;
+ }
+ visit(sf);assert.ok(count>=197);
+ assert.ok(code.indexOf("validateR1RecoveryDocument();",code.indexOf("async function runFixturePreparation"))<code.indexOf('phase = "LOGIN"',code.indexOf("async function runFixturePreparation")));
+ assert.match(code,/recoveryLedger:R1_RECOVERY_DOCUMENT|recoveryLedger: R1_RECOVERY_DOCUMENT/);
+});
