@@ -10878,7 +10878,7 @@ function r17View(snapshot = 0) {
       periodo_fim: null,
       data_limite: null,
       atualizado_em: null,
-      situacao: "preparando",
+      situacao: "em_analise",
       percentual_conformidade: snapshot,
       versao_pacote_atual: null,
       versao_registro: 1,
