@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { readFileSync } from "node:fs";
@@ -387,6 +387,23 @@ describe("P0 CRUD permissão efetiva de criação", () => {
     expect(screen.queryByLabelText(/Razão social/)).not.toBeInTheDocument();
     expect(inserts()).toHaveLength(0);
   });
+});
+
+it.each([
+  ["Sobre Documento", "Opcional. CPF, CNPJ ou outro identificador"],
+  ["Sobre Contato", "E-mail e telefone são opcionais"],
+])("V102 ajuda %s abre por foco e clique sem enviar formulário", async (nome, texto) => {
+  montar();
+  await screen.findByLabelText(/Razão social/);
+  const ajuda = screen.getByRole("button", { name: nome, exact: true });
+  expect(ajuda).toHaveAttribute("type", "button");
+  act(() => ajuda.focus());
+  expect(await screen.findByRole("tooltip")).toHaveTextContent(texto);
+  fireEvent.keyDown(ajuda, { key: "Escape" });
+  await waitFor(() => expect(screen.queryByRole("tooltip")).not.toBeInTheDocument());
+  fireEvent.click(ajuda);
+  expect(await screen.findByRole("tooltip")).toHaveTextContent(texto);
+  expect(inserts()).toHaveLength(0);
 });
 
 it("P0 RBAC negado na criação não recebe formulário nem INSERT", async () => {
