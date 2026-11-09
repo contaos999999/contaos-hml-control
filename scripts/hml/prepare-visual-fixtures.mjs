@@ -4515,8 +4515,8 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
       }
       const docs = document.documentos?.filter((d) => d.requisito?.id === c.requirementId);
       const d = docs?.[0];
-      if (document.estado_documental !== "complete" || docs?.length !== 1 || d?.id !== c.documentId || d.situacao !== "ativo" || d.arquivo?.id !== FIXTURE.file || d.arquivo.sha256 !== FIXTURE.fileHash || d.arquivo.status_seguranca !== "aprovado" || !uuid(d.versao?.id)) err("RECOVERY_R16_OPINION");
-      if (analysis.estado_analise !== "complete" || analysis.stale === true || analysis.execucao_atual?.id !== c.executionId) err("RECOVERY_R16_OPINION");
+      if (document.schema_versao !== "v115-v1" || document.estado_documental !== "complete" || document.requisitos_documentais?.filter((r) => r.id === c.requirementId).length !== 1 || docs?.length !== 1 || d?.id !== c.documentId || d.situacao !== "ativo" || d.arquivo?.id !== FIXTURE.file || d.arquivo.sha256 !== FIXTURE.fileHash || d.arquivo.status_seguranca !== "aprovado" || !uuid(d.versao?.id) || d.versao.id_arquivo !== FIXTURE.file) err("RECOVERY_R16_OPINION");
+      if (analysis.schema_versao !== "v116-v1" || analysis.estado_analise !== "complete" || analysis.stale !== false || analysis.execucao_atual?.id !== c.executionId || analysis.execucao_atual.status !== "concluida") err("RECOVERY_R16_OPINION");
       return hash(JSON.stringify({ opinion: { id: row.id, competency: row.id_competencia, organization: row.id_organizacao, contract: row.id_contrato, version: row.versao, hash: row.hash, status: row.status, created: row.criado_em, approved: row.aprovado_em }, document: { id: d.id, requirement: d.requisito.id, version: d.versao.id, file: d.arquivo.id, sha256: d.arquivo.sha256 }, analysis: { id: analysis.execucao_atual.id, status: analysis.execucao_atual.status } }));
     };
     const snapshots = bindings.map(read), token = Object.freeze({});

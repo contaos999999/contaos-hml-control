@@ -3386,7 +3386,7 @@ test("R4 report derives real arm sent and terminal scalars without request ident
   });
   r6AnalysisArm(b);
   let state = sut.preparationIntentSummary(b);
-  assert.equal(state.count, 13);
+  assert.equal(state.count, 17);
   assert.equal(state.newArmedCount, 1);
   assert.equal(state.pending, true);
   assert.equal(state.sent, false);
@@ -5651,14 +5651,16 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
     const names = (await fs.readdir(output)).sort();
     assert.equal(names.length, 27);
     const manifest = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(manifest.length, 24);
+    assert.equal(manifest.length, 26);
     const { HISTORY } = await import("./inspect-fixture-artifact.mjs");
     const history = {
       ...HISTORY,
       "receipts-r15.json": sut.R15_RECOVERY_DOCUMENT.receiptsSha256,
       "recovery-r15.json": "de792c8803bbe232871c9eac468ad8baede31a88b1ec5aa238647a15267b645a",
+      "receipts-r16.json": sut.R16_RECOVERY_DOCUMENT.receiptsSha256,
+      "recovery-r16.json": "f5427aa65d4ab75637df290b72b6a8c07a5a7ce30f1b2dc5a4328720133bdd86",
     };
-    assert.equal(Object.keys(history).length, 21);
+    assert.equal(Object.keys(history).length, 23);
     for (const [name, expected] of Object.entries(history))
       assert.equal(
         createHash("sha256")
@@ -6767,7 +6769,7 @@ async function r9ExistingConsumer(
   name,
   {
     documentMode = "valid",
-    analysisStates = ["queued", "processing", "complete"],
+    analysisStates = ["complete"],
     analysisDelta = {},
   } = {},
 ) {
@@ -6842,7 +6844,7 @@ async function r9ExistingConsumer(
         competencia,
         estado_analise,
         stale: false,
-        execucao_atual: estado_analise === "not_analyzed" ? null : { id, status: estado_analise },
+        execucao_atual: estado_analise === "not_analyzed" ? null : { id: JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0].executionId, status: estado_analise },
         resultados: [],
         allowed_actions: { executar_analise: true },
         ...analysisDelta,
@@ -6916,9 +6918,9 @@ test("R9 real October document and analysis consumers reuse existing DTO identit
   const analysis = await r9ExistingConsumer("ensureAnalysis");
   assert.equal(analysis.error, null);
   assert.equal(analysis.commands, 0);
-  assert.equal(analysis.c.executionId, id);
-  assert.equal(analysis.reads, 3);
-  assert.equal(analysis.events.filter((v) => v === "refreshArea").length, 2);
+  assert.equal(analysis.c.executionId, JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0].executionId);
+  assert.equal(analysis.reads, 2);
+  assert.equal(analysis.events.filter((v) => v === "refreshArea").length, 1);
   for (const [options, expected] of [
     [{ documentMode: "missing" }, "RECOVERY_R8_DOCUMENT"],
     [{ documentMode: "duplicate" }, "RECOVERY_R8_DOCUMENT"],
@@ -6930,6 +6932,8 @@ test("R9 real October document and analysis consumers reuse existing DTO identit
   }
   for (const [options, expected] of [
     [{ analysisStates: ["not_analyzed"] }, "RECOVERY_R8_ANALYSIS"],
+    [{ analysisStates: ["queued"] }, "RECOVERY_R16_OPINION"],
+    [{ analysisStates: ["processing"] }, "RECOVERY_R16_OPINION"],
     [{ analysisStates: ["failed"] }, "COMPETENCE_ANALYSIS_FAILED"],
     [{ analysisDelta: { stale: true } }, "COMPETENCE_ANALYSIS_FAILED"],
     [
@@ -10178,13 +10182,13 @@ test("R12 the inherited uncertain request is permanently spent even with a new s
       );
     }
     assert.equal(b.snapshot().count, 16);
-    assert.equal(sut.preparationIntentSummary(b).priorConfirmed, 10);
+    assert.equal(sut.preparationIntentSummary(b).priorConfirmed, 14);
     assert.equal(sut.preparationIntentSummary(b).priorReserved, 2);
   } finally {
     f.observer.close();
   }
 });
-test("R16 twelve new confirmations retain both reserved slots and never emit a current fake historical receipt", async () => {
+test("R17 eight new confirmations retain both reserved slots and never emit a current fake historical receipt", async () => {
   const receipts = [],
     b = sut.createIntentBroker(
       r12RecoveryOptions({
@@ -10618,10 +10622,10 @@ test("R16 recovery missing DocR15 blocks the actual broker before effects", () =
 test("R16 recovery counts both historical uncertain intentions without reimbursement", () => {
   const b = sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR15: R16_R15_DOCUMENT }));
   const s = b.snapshot();
-  assert.equal(s.count, 12);
-  assert.equal(s.confirmedBefore, 10);
+  assert.equal(s.count, 16);
+  assert.equal(s.confirmedBefore, 14);
   assert.equal(s.priorReserved, 2);
-  assert.equal(s.maxNewIntentions, 12);
+  assert.equal(s.maxNewIntentions, 8);
   assert.equal(sut.preparationIntentSummary(b).newArmedCount, 0);
 });
 test("R16 recovery draft October opinion cannot authorize any later business arm", async () => {
@@ -11140,7 +11144,9 @@ test("R17 canonical gate failures keep their exact closed reason before any pres
     assert.equal(result.error?.message, "COMPETENCE_PRESENTATION_GATE_" + expected);
   }
   for (const snapshot of ["100", NaN, Infinity, -1, 101, undefined]) {
-    const result = await r17PresentBoundary(r17View(snapshot));
+    const view = r17View(100);
+    view.competencia.percentual_conformidade = snapshot;
+    const result = await r17PresentBoundary(view);
     assert.equal(result.commands, 0);
     assert.equal(result.error?.message, "COMPETENCE_PRESENTATION_GATE_PERCENT");
   }
@@ -11295,3 +11301,35 @@ test("R17 permission revoked after a confirmed approval blocks binding and regis
 });
 
 
+
+test("R17 both approved opinion histories are owner-bound and cannot drift before a new arm", async () => {
+  for (const index of [0, 1]) {
+    const b = sut.createIntentBroker(r12RecoveryOptions());
+    await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+    const f = r12AuthorizedContexts.get(b);
+    const c = JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[index];
+    try {
+      f.emit([{ ...f.row, id: c.opinionId, id_competencia: c.id, hash: "f".repeat(64) }], { ...f.query, id_competencia: "eq." + c.id });
+      await f.observer.flush();
+      assert.throws(() => r6AnalysisArm(b), /RECOVERY_R(?:11|16)_OPINION/);
+      assert.equal(b.snapshot().count, 16);
+      assert.equal(b.snapshot().pending, false);
+    } finally { f.observer.close(); }
+  }
+});
+test("R17 four confirmed effects stay denied with changed UUIDs and equivalent caller evidence", async () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions());
+  await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(b);
+  const c = JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1];
+  try {
+    for (const [rpc, payload] of [
+      ["criar_documento_competencia_v115", { p_id_competencia: c.id, p_id_requisito: c.requirementId, p_titulo: "equivalent altered title" }],
+      ["solicitar_analise_competencia", { p_id_competencia: c.id, p_tipo: "completa" }],
+      ["solicitar_parecer_interno", { p_id_competencia: c.id }],
+      ["aprovar_parecer_interno", { p_id_parecer: c.opinionId, p_aprovar: true, p_fundamento: "altered foundation" }],
+    ]) assert.throws(() => b.arm({ rpc, payload, requestId: randomUUID(), verified: { context: true, capability: true, reconciled: true }, evidence: {} }), /RECOVERY_CONFIRMED_OPERATION/);
+    assert.equal(b.snapshot().count, 16);
+    assert.equal(b.snapshot().pending, false);
+  } finally { f.observer.close(); }
+});
