@@ -389,19 +389,37 @@ function classifyPreparationFailure(error) {
 }
 export function createPreparationDiagnostics() {
   const stack = [];
-  let primary = null,
-    lastCompleted = null,
-    cleaning = false,
-    logoutAttempted = false,
-    logoutVerified = false,
-    cleanupFailure = null;
+  const observed = new WeakMap();
+  let generation = 0;
+  let primary = null, lastCompleted = null, cleaning = false;
+  let logoutAttempted = false, logoutVerified = false, cleanupFailure = null;
+  const object = (value) => value !== null && ["object", "function"].includes(typeof value);
+  const candidate = (error) => {
+    const seen = new WeakSet();
+    let value = error, found = null;
+    for (let depth = 0; depth < 8 && object(value) && !seen.has(value); depth++) {
+      seen.add(value);
+      const entry = observed.get(value);
+      if (entry?.generation === generation) found = entry;
+      try {
+        const descriptor = Object.getOwnPropertyDescriptor(value, "cause");
+        value = descriptor && "value" in descriptor ? descriptor.value : null;
+      } catch { break; }
+    }
+    return found;
+  };
+  const observe = (error) => {
+    const entry = candidate(error) || {
+      ...classifyPreparationFailure(error),
+      generation,
+      subphase: stack.at(-1) || "PREFLIGHT",
+      subphasePath: stack.slice(-12),
+    };
+    if (object(error)) observed.set(error, entry);
+    return entry;
+  };
   const capture = (error) => {
-    if (!primary)
-      primary = {
-        ...classifyPreparationFailure(error),
-        subphase: stack.at(-1) || "PREFLIGHT",
-        subphasePath: stack.slice(-12),
-      };
+    primary ||= observe(error);
     return primary.code;
   };
   return Object.freeze({
@@ -409,20 +427,25 @@ export function createPreparationDiagnostics() {
     async step(subphase, execute) {
       if (!DIAGNOSTIC_SUBPHASES.includes(subphase) || typeof execute !== "function")
         err("DIAGNOSTIC_SUBPHASE");
+      if (stack.length === 0) generation++;
       stack.push(subphase);
       try {
         const value = await execute();
         if (!cleaning && !primary) lastCompleted = subphase;
         return value;
       } catch (error) {
-        if (!cleaning) capture(error);
+        if (!cleaning) {
+          observe(error);
+          // A nested failure may be deliberately recovered by the consumer.
+          // Seal only the rejection that escapes the outer await boundary.
+          if (stack.length === 1) capture(error);
+        }
         throw error;
-      } finally {
-        stack.pop();
-      }
+      } finally { stack.pop(); }
     },
     async cleanup(execute) {
       logoutAttempted = true;
+      const previous = cleaning;
       cleaning = true;
       try {
         logoutVerified = (await execute()) === true;
@@ -430,26 +453,17 @@ export function createPreparationDiagnostics() {
       } catch {
         logoutVerified = false;
         cleanupFailure ||= "LOGOUT_FAILED";
-      } finally {
-        cleaning = false;
-      }
+      } finally { cleaning = previous; }
       return logoutVerified;
     },
     async finishCleanup(code, execute) {
-      if (
-        !["RUNTIME_CLEAR_FAILED", "OBSERVER_CLOSE_FAILED", "FENCE_CLOSE_FAILED", "BROWSER_CLOSE_FAILED", "PROXY_CLOSE_FAILED"].includes(code) ||
-        typeof execute !== "function"
-      )
+      if (!["RUNTIME_CLEAR_FAILED", "OBSERVER_CLOSE_FAILED", "FENCE_CLOSE_FAILED", "BROWSER_CLOSE_FAILED", "PROXY_CLOSE_FAILED"].includes(code) || typeof execute !== "function")
         err("DIAGNOSTIC_SUBPHASE");
       const previous = cleaning;
       cleaning = true;
-      try {
-        await execute();
-      } catch {
-        cleanupFailure ||= code;
-      } finally {
-        cleaning = previous;
-      }
+      try { await execute(); }
+      catch { cleanupFailure ||= code; }
+      finally { cleaning = previous; }
     },
     snapshot() {
       return freeze({
@@ -458,10 +472,7 @@ export function createPreparationDiagnostics() {
         errorName: primary?.errorName || null,
         subphase: primary?.subphase || stack.at(-1) || lastCompleted || "PREFLIGHT",
         subphasePath: primary?.subphasePath || stack.slice(-12),
-        lastCompletedSubphase: lastCompleted,
-        logoutAttempted,
-        logoutVerified,
-        cleanupFailure,
+        lastCompletedSubphase: lastCompleted, logoutAttempted, logoutVerified, cleanupFailure,
       });
     },
   });
@@ -1467,9 +1478,9 @@ export async function confirmUiIntent({
     }
     broker.resolve("confirmed");
     return true;
-  } catch {
+  } catch (error) {
     if (broker.snapshot().sent && !broker.snapshot().frozen) broker.resolve("uncertain");
-    err("UI_UNCERTAIN");
+    throw new Error("UI_UNCERTAIN", { cause: error });
   }
 }
 /** Caller supplies only execution code; cleanup runs after login and every failure. */
