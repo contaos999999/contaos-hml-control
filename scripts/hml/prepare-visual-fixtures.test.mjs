@@ -8713,7 +8713,7 @@ async function r12OpinionReadback(rows) {
         clock += 300001;
       },
     });
-  const competency = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies[0].id;
+  const competency = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies[1].id;
   const job = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     opinion = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
     payload = { p_id_competencia: competency };
