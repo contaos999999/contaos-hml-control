@@ -3207,6 +3207,9 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       ]);
       budgetState(token);
       return value;
+    } catch (error) {
+      budgetState(token);
+      throw error;
     } finally {
       clearTimeout(timer);
       if (owns) {
