@@ -5409,7 +5409,9 @@ test("R15: timeout tipado repete uma vez e transporte nao repete", async () => {
     fetchImpl: async (_url, options) => {
       attempts++;
       if (attempts === 1) {
-        await new Promise((resolve) => options.signal.addEventListener("abort", resolve, { once: true }));
+        await new Promise((resolve) =>
+          options.signal.addEventListener("abort", resolve, { once: true }),
+        );
         throw new Error("timeout");
       }
       return { status: 200, text: async () => '{"ok":true}' };
@@ -5434,12 +5436,20 @@ test("R15: HTTP e body invalidos nao geram retry", async () => {
   for (const response of [
     { status: 429 },
     { status: 200, text: async () => "not-json" },
-    { status: 200, text: async () => { throw new Error("transport"); } },
+    {
+      status: 200,
+      text: async () => {
+        throw new Error("transport");
+      },
+    },
   ]) {
     let calls = 0;
     const get = factory({
       publicOnly: true,
-      fetchImpl: async () => { calls++; return response; },
+      fetchImpl: async () => {
+        calls++;
+        return response;
+      },
     });
     await assert.rejects(() => get(""));
     assert.equal(calls, 1);
