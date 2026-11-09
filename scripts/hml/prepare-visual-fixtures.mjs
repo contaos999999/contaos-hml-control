@@ -25,6 +25,36 @@ import {
   openVerifiedOrganizationSelector,
 } from "./authenticated-visual-audit.mjs";
 
+const PREPARER_DIAGNOSTIC_STEPS = new Set([
+  "PREFLIGHT",
+  "SOURCE_NAVIGATION",
+  "SOURCE_RECONCILIATION",
+  "SOURCE_REGISTER",
+  "SOURCE_REGISTER_READBACK",
+  "SOURCE_APPROVAL",
+  "SOURCE_APPROVAL_READBACK",
+  "SOURCE_CLOSE",
+  "SOURCE_ACTIVATION",
+  "SOURCE_ACTIVATION_READBACK",
+  "LIST_NAVIGATION",
+  "LIST_RECONCILIATION",
+  "LIST_COMMAND",
+  "COMPETENCIES",
+  "FINAL_READBACK",
+]);
+
+export function preparerFailureDiagnostic(input) {
+  return {
+    step: PREPARER_DIAGNOSTIC_STEPS.has(input?.step) ? input.step : "UNCLASSIFIED",
+    errorKind:
+      input?.errorName === "TimeoutError"
+        ? "TIMEOUT"
+        : input?.errorName === "Error"
+          ? "ERROR"
+          : "OTHER",
+  };
+}
+
 export const FIXTURE = Object.freeze({
   origin: HML_ORIGIN,
   api: API_ORIGIN,
@@ -1810,6 +1840,7 @@ export function createOfficialObserver(page) {
  */
 export async function prepareSourceAndList(io) {
   const { page } = io;
+  const step = (value) => io.diagnosticStep?.(value);
   const fail = (code) => {
     throw new Error(code);
   };
@@ -1957,6 +1988,7 @@ export async function prepareSourceAndList(io) {
     }
     return [...seen.values()];
   };
+  step("SOURCE_NAVIGATION");
   await io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`);
   // Locate exact official source through existing source-list pagination, never create source.
   const sources = await allPages(page, "Próxima página", () => io.read("fontes_normativas", {}));
@@ -2019,6 +2051,7 @@ export async function prepareSourceAndList(io) {
     await click(sheet, "Ocultar texto");
     return exact;
   };
+  step("SOURCE_RECONCILIATION");
   const equivalents = [];
   for (const v of versions.filter(
     (v) => v.inicio_vigencia === "2026-01-01" && v.fim_vigencia === null && v.id_arquivo === null,
@@ -2055,6 +2088,7 @@ export async function prepareSourceAndList(io) {
     await field(d, "Texto").check();
     await field(d, "Texto da versão").fill(io.text);
     const registerOrdinal = io.generation();
+    step("SOURCE_REGISTER");
     await io.command({
       rpc: "registrar_versao_fonte_v107",
       payload: {
@@ -2077,6 +2111,7 @@ export async function prepareSourceAndList(io) {
         r.versao.conteudo_texto === io.text &&
         same(r.versao.metadados, {}),
     });
+    step("SOURCE_REGISTER_READBACK");
     await io.fresh();
     const newlyObserved = (
       await io.read(
@@ -2112,6 +2147,7 @@ export async function prepareSourceAndList(io) {
     await field(d, "Confirmo que revisei hash, origem e vigência desta versão.").check();
     const id = version.id;
     const approvalOrdinal = io.generation();
+    step("SOURCE_APPROVAL");
     await io.command({
       rpc: "aprovar_versao_fonte_v107",
       payload: {
@@ -2129,10 +2165,12 @@ export async function prepareSourceAndList(io) {
         r.versao.hash === version.hash &&
         !!r.versao.aprovado_em,
     });
+    step("SOURCE_APPROVAL_READBACK");
     await io.fresh();
     await versionRead(approvalOrdinal);
     assert(!!version.aprovado_em, "FLOW_APPROVAL_NOT_READBACK");
   }
+  step("SOURCE_CLOSE");
   await click(sheet, "Close");
   if (source.situacao !== "ativa") {
     caps = await sourceProof();
@@ -2141,6 +2179,7 @@ export async function prepareSourceAndList(io) {
     const d = dialog("Editar fonte");
     await field(d, "Situação").selectOption("ativa");
     const before = source.versao_registro;
+    step("SOURCE_ACTIVATION");
     await io.command({
       rpc: "salvar_fonte_normativa_v107",
       payload: {
@@ -2163,14 +2202,17 @@ export async function prepareSourceAndList(io) {
         r.fonte.situacao === "ativa" &&
         r.fonte.versao_registro === before + 1,
     });
+    step("SOURCE_ACTIVATION_READBACK");
     await io.fresh();
     await sourceRow();
     assert(source.situacao === "ativa", "FLOW_ACTIVE_NOT_READBACK");
   }
   await sourceProof();
+  step("LIST_NAVIGATION");
   await io.link(`/contratos/${FIXTURE.contract}/regras`);
   await click(page, "Gerenciar listas");
   const panel = page.getByRole("region", { name: "Gestão de listas", exact: true });
+  step("LIST_RECONCILIATION");
   const headers = await allPages(panel, "Próxima página de listas", () =>
     io.read("listas_verificacao", {}),
   );
@@ -2239,6 +2281,7 @@ export async function prepareSourceAndList(io) {
     return d;
   };
   const listCommand = async (action, payload, label, setup = async () => {}) => {
+    step("LIST_COMMAND");
     const d = await readModel();
     assert(
       d.acoes?.[action === "salvar_item" ? "criar_item" : action] === true,
@@ -3561,6 +3604,8 @@ async function runFixturePreparation() {
     logoutVerified = false,
     completed = false;
   let phase = "PREFLIGHT",
+    diagnosticStep = "PREFLIGHT",
+    diagnostic = null,
     result = null,
     sourceList = null,
     blockedCode = null;
@@ -3785,6 +3830,9 @@ async function runFixturePreparation() {
       return value;
     };
     const io = {
+      diagnosticStep: (value) => {
+        diagnosticStep = preparerFailureDiagnostic({ step: value }).step;
+      },
       page,
       fence,
       runtime,
@@ -3813,14 +3861,17 @@ async function runFixturePreparation() {
     phase = "SOURCE_AND_LIST";
     sourceList = await prepareSourceAndList(io);
     phase = "COMPETENCIES";
+    diagnosticStep = "COMPETENCIES";
     result = await prepareCompetencies(io, sourceList);
     phase = "FINAL_READBACK";
+    diagnosticStep = "FINAL_READBACK";
     await runtime.context();
     await fresh();
     await checkFreshDeployment(proof, true);
     if (result?.state !== "confirmed") err("PREPARER_INCOMPLETE");
     completed = true;
   } catch (error) {
+    diagnostic = preparerFailureDiagnostic({ step: diagnosticStep, errorName: error?.name });
     blockedCode = PREPARER_FAILURE_CODES.has(error?.message)
       ? error.message
       : "PREPARER_UNCLASSIFIED";
@@ -3856,6 +3907,7 @@ async function runFixturePreparation() {
     const report = {
       schema: "contaos.fixture.preparation.v1",
       failure: blockedCode,
+      diagnostic,
       bindings,
       ...identity,
       phase,
