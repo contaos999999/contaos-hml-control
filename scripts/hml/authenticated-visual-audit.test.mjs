@@ -6844,3 +6844,27 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
     assert.equal(contexts, 0);
   }
 });
+
+test("popup policy: POSIX aliases terminator and duplicate debugging switches fail closed", () => {
+  const check = fn("verifyNativeBrowserPolicy"),
+    version = { product: "HeadlessChrome/145.0.7632.6" };
+  const args = [
+    "/trusted/chrome-headless-shell",
+    "--headless",
+    "--block-new-web-contents",
+    "--remote-debugging-port=9222",
+  ];
+  for (const value of [
+    "-no-sandbox",
+    "-disable-web-security=true",
+    "-remote-debugging-port=9333",
+    "--remote-debugging-port",
+    "-block-new-web-contents",
+    "-headless",
+    "--unsafely-treat-insecure-origin-as-secure=http://127.0.0.1",
+  ])
+    assert.throws(() => check([...args, value], version), { code: "BROWSER_POLICY" });
+  assert.throws(() => check([args[0], "--", ...args.slice(1)], version), {
+    code: "BROWSER_POLICY",
+  });
+});

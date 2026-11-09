@@ -2445,14 +2445,15 @@ export function nativeBrowserArgs(debugPort, useProxy = false) {
 
 export function verifyNativeBrowserPolicy(args, version) {
   const forbidden = new Set([
-    "--no-sandbox",
-    "--disable-setuid-sandbox",
-    "--disable-web-security",
-    "--allow-running-insecure-content",
-    "--ignore-certificate-errors",
-    "--ignore-certificate-errors-spki-list",
-    "--disable-site-isolation-trials",
-    "--allow-insecure-localhost",
+    "no-sandbox",
+    "disable-setuid-sandbox",
+    "disable-web-security",
+    "allow-running-insecure-content",
+    "ignore-certificate-errors",
+    "ignore-certificate-errors-spki-list",
+    "disable-site-isolation-trials",
+    "allow-insecure-localhost",
+    "unsafely-treat-insecure-origin-as-secure",
   ]);
   if (
     !Array.isArray(args) ||
@@ -2464,10 +2465,20 @@ export function verifyNativeBrowserPolicy(args, version) {
     ) ||
     args.reduce((n, a) => n + a.length, 0) > 65536 ||
     version?.product !== "HeadlessChrome/145.0.7632.6" ||
-    !args.includes("--headless") ||
-    args.filter((a) => a.split("=")[0] === POPUP_SWITCH).length !== 1 ||
-    !args.includes(POPUP_SWITCH) ||
-    args.some((a) => forbidden.has(a.split("=")[0]))
+    args.includes("--")
+  )
+    fail("BROWSER_POLICY");
+  const key = (a) =>
+    /^--?[^-]/.test(a) ? a.replace(/^--?/, "").split("=")[0].toLowerCase() : null;
+  for (const name of ["headless", "block-new-web-contents"]) {
+    if (args.filter((a) => key(a) === name).length !== 1 || !args.includes("--" + name))
+      fail("BROWSER_POLICY");
+  }
+  const debugging = args.filter((a) => key(a) === "remote-debugging-port");
+  if (
+    debugging.length > 1 ||
+    (debugging.length === 1 && !/^--remote-debugging-port=[1-9][0-9]{0,4}$/.test(debugging[0])) ||
+    args.some((a) => forbidden.has(key(a)))
   )
     fail("BROWSER_POLICY");
   return true;
