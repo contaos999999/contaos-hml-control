@@ -4677,7 +4677,7 @@ export function preparerSourceFormsSupplement(tap) {
   if (
     typeof tap !== "string" ||
     !/^TAP version 13$/m.test(tap) ||
-    !/^1\.\.4$/m.test(tap) ||
+    !/^1\.\.5$/m.test(tap) ||
     /^not ok|# SKIP|# TODO/m.test(tap)
   )
     return null;
@@ -4686,16 +4686,17 @@ export function preparerSourceFormsSupplement(tap) {
     "R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay",
     "R3 Chromium sourceforms competence read barriers and actual recovery consumer",
     "R3 Chromium sourceforms scoped V116 V117 projection and actual SDK parsers",
+    "R3 Chromium sourceforms asynchronous opinion queue acceptance and actual opinion consumer",
   ];
   const oks = [...tap.matchAll(/^ok [0-9]+ - (.+)$/gm)].map((x) => x[1]);
-  if (oks.length !== 4 || names.some((name, i) => oks[i] !== name)) return null;
-  return Object.entries({ tests: 4, pass: 4, fail: 0, skipped: 0, cancelled: 0 }).every(
+  if (oks.length !== 5 || names.some((name, i) => oks[i] !== name)) return null;
+  return Object.entries({ tests: 5, pass: 5, fail: 0, skipped: 0, cancelled: 0 }).every(
     ([k, v]) => {
       const m = [...tap.matchAll(new RegExp("^# " + k + " ([0-9]+)$", "gm"))];
       return m.length === 1 && Number(m[0][1]) === v;
     },
   )
-    ? 4
+    ? 5
     : null;
 }
 
@@ -4865,7 +4866,7 @@ async function nativeGuard() {
       },
     );
     preparerSourceFormsCases = preparerSourceFormsSupplement(result.stdout);
-    if (preparerSourceFormsCases !== 4) fail("PREPARER_SOURCEFORMS_NATIVE");
+    if (preparerSourceFormsCases !== 5) fail("PREPARER_SOURCEFORMS_NATIVE");
   } catch {
     fail("PREPARER_SOURCEFORMS_NATIVE");
   }

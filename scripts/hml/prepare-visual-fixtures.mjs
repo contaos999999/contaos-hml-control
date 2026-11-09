@@ -3654,6 +3654,7 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
     failed = false,
     closed = false,
     sealing = false;
+  let invalidRecoveryOpinionOrdinal = 0;
   let firstFailure = null;
   const recordFailure = (contractKind, stage, statusHTTP = "NONE", requestFailure = "NONE") => {
     failed = true;
@@ -3854,6 +3855,15 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
       try {
         query = parseObservedQuery(table, url);
       } catch {
+        // A rejected query is never admitted. Its known October scope still
+        // invalidates an earlier recovery seal before any further intention.
+        if (
+          table === "pareceres_internos" &&
+          url.searchParams
+            .getAll("id_competencia")
+            .some((value) => value === "eq." + R5_BINDINGS.competencies[0].id)
+        )
+          invalidRecoveryOpinionOrdinal = ordinal;
         return;
       }
       record = { table, query, ordinal, done: false };
@@ -4312,7 +4322,8 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
     );
   }
   function opinionObservation(competency, after) {
-    if (closed || sealing || failed) err("RECOVERY_R11_OPINION");
+    if (closed || sealing || failed || invalidRecoveryOpinionOrdinal > after)
+      err("RECOVERY_R11_OPINION");
     const relevant = (record) =>
       record.table === "pareceres_internos" &&
       record.query.predicates.get("id_competencia")?.value === competency;

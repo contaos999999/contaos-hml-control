@@ -8915,7 +8915,7 @@ test("R12 a recovery broker reserves the uncertain slot without promoting it to 
     "maxNewIntentions",
   ]);
   assert.deepEqual(snapshot, {
-    count: 12,
+    count: 11,
     frozen: false,
     pending: false,
     sent: false,
@@ -9162,3 +9162,324 @@ test("R12 the real recovery callsite captures October opinion while its real sou
   assert.equal(actual.opinionProof, token);
   assert.equal(actual.competencies.length, 2);
 });
+
+async function r12BuildOpinionSDKBundle(directory) {
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { fileURLToPath } = await import("node:url"),
+    { execFile } = await import("node:child_process"),
+    { promisify } = await import("node:util"),
+    ts = (await import("typescript")).default;
+  const repository = fileURLToPath(new URL("../../", import.meta.url));
+  await fs.symlink(join(repository, "node_modules"), join(directory, "node_modules"), "dir");
+  const require = createRequire(import.meta.url),
+    pgRequire = createRequire(require.resolve("@supabase/supabase-js")),
+    pgPath = pgRequire.resolve("@supabase/postgrest-js");
+  for (const [file, output] of [["parecerInternoDados.ts", "opinion.ts"]]) {
+    let source = await fs.readFile(
+      new URL("../../src/lib/competencias/" + file, import.meta.url),
+      "utf8",
+    );
+    const client = 'import { supabase } from "@/integrations/supabase/client";';
+    assert.equal(source.split(client).length, 2);
+    source = source.replace(
+      client,
+      "import {PostgrestClient} from " +
+        JSON.stringify(pgPath) +
+        "; const supabase=new PostgrestClient(location.origin+'/rest/v1');",
+    );
+    if (output === "opinion.ts") {
+      const uuidImport =
+        'import { uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";';
+      assert.equal(source.split(uuidImport).length, 2);
+      source = source.replace(uuidImport, 'import {uuidCanonico,uuidValido} from "./uuid";');
+    }
+    await fs.writeFile(join(directory, output), source);
+  }
+  const uuidSource = await fs.readFile(
+      new URL("../../src/lib/contratos/contratoDetalheDados.ts", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile(
+      "uuid.ts",
+      uuidSource,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
+  const uuids = ast.statements.filter(
+    (n) =>
+      ts.isVariableStatement(n) &&
+      n.declarationList.declarations.some((d) =>
+        ["UUID", "uuidValido", "uuidCanonico"].includes(d.name.getText(ast)),
+      ),
+  );
+  assert.equal(uuids.length, 3);
+  await fs.writeFile(join(directory, "uuid.ts"), uuids.map((n) => n.getText(ast)).join("\n"));
+  const entry = join(directory, "entry.ts");
+  await fs.writeFile(
+    entry,
+    [
+      'import * as p from "./opinion";',
+      "window.__queue=async id=>p.solicitarParecer(id);",
+      "window.__opinions=async(c,o,k)=>{const pge=await p.listarPareceres(c,o,k,0,new AbortController().signal);return {count:pge.itens.length,ids:pge.itens.map(r=>r.id)};};",
+    ].join("\n"),
+  );
+  await promisify(execFile)(
+    "bun",
+    [
+      "build",
+      entry,
+      "--target=browser",
+      "--format=esm",
+      "--outfile=" + join(directory, "entry.js"),
+    ],
+    { cwd: repository, env: { PATH: process.env.PATH }, timeout: 30000, maxBuffer: 1048576 },
+  );
+  return fs.readFile(join(directory, "entry.js"));
+}
+
+async function r12NativeOpinionProbe(browser) {
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { tmpdir } = await import("node:os"),
+    { pathToFileURL } = await import("node:url"),
+    { createServer } = await import("node:http");
+  const dir = await fs.mkdtemp(join(tmpdir(), "contaos-r12-opinion-"));
+  const c = {
+      id: JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id,
+      month: "2026-09-01",
+      evidence: {},
+    },
+    job = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    opinionID = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  let server,
+    page,
+    observer,
+    materialized = false,
+    queued = 0,
+    reads = 0,
+    callbacks = 0;
+  const row = {
+    id: opinionID,
+    id_competencia: c.id,
+    id_contrato: FIXTURE.contract,
+    id_organizacao: FIXTURE.organization,
+    autor: null,
+    texto: "Fixture local",
+    status: "rascunho",
+    versao: 1,
+    hash: "c".repeat(64),
+    criado_em: "2026-11-09T00:00:00Z",
+    aprovado_por: null,
+    aprovado_em: null,
+  };
+  try {
+    const bundle = await r12BuildOpinionSDKBundle(dir);
+    server = createServer((req, res) => {
+      const u = new URL(req.url, "http://127.0.0.1");
+      if (req.method === "GET" && u.pathname === "/") {
+        res.writeHead(200, { "content-type": "text/html" });
+        res.end(
+          '<!doctype html><button id="refresh">Atualizar</button><script type="module" src="/entry.js"></script>',
+        );
+        return;
+      }
+      if (req.method === "GET" && u.pathname === "/entry.js") {
+        res.writeHead(200, { "content-type": "text/javascript" });
+        res.end(bundle);
+        return;
+      }
+      if (req.method === "GET" && u.pathname === "/favicon.ico") {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+      if (req.method === "POST" && u.pathname === "/rest/v1/rpc/solicitar_parecer_interno") {
+        let raw = "";
+        req.on("data", (x) => {
+          raw += x;
+          assert.ok(raw.length < 4096);
+        });
+        req.on("end", () => {
+          assert.deepEqual(JSON.parse(raw), { p_id_competencia: c.id });
+          queued++;
+          res.writeHead(200, { "content-type": "application/json" });
+          res.end(JSON.stringify(job));
+        });
+        return;
+      }
+      if (req.method === "GET" && u.pathname === "/rest/v1/pareceres_internos") {
+        assert.equal(u.searchParams.get("id_competencia"), "eq." + c.id);
+        assert.equal(u.searchParams.get("id_contrato"), "eq." + FIXTURE.contract);
+        assert.equal(u.searchParams.get("id_organizacao"), "eq." + FIXTURE.organization);
+        reads++;
+        res.writeHead(200, {
+          "content-type": "application/json",
+          "content-range": materialized ? "0-0/1" : "*/0",
+        });
+        res.end(JSON.stringify(materialized ? [row] : []));
+        return;
+      }
+      res.writeHead(404);
+      res.end();
+    });
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const origin = "http://127.0.0.1:" + server.address().port;
+    let source = await fs.readFile(
+      new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+      "utf8",
+    );
+    assert.equal(source.split("api: API_ORIGIN,").length, 2);
+    source = source.replace("api: API_ORIGIN,", "api: " + JSON.stringify(origin) + ",");
+    source = source.replace(
+      '"./authenticated-visual-audit.mjs"',
+      JSON.stringify(new URL("./authenticated-visual-audit.mjs", import.meta.url).href),
+    );
+    await fs.writeFile(join(dir, "observer.mjs"), source);
+    const local = await import(pathToFileURL(join(dir, "observer.mjs")).href);
+    page = await browser.newPage();
+    await page.goto(origin);
+    await page.waitForFunction(() => typeof window.__queue === "function");
+    observer = local.createOfficialObserver(page, {
+      wait: () => new Promise((resolve) => setTimeout(resolve, 5)),
+    });
+    const ast = await r6SourceNodes(),
+      tracedPreparation = async (_stage, run) => run(),
+      stop = (code) => {
+        throw Error(code);
+      },
+      uuid = (v) => typeof v === "string" && /^[a-f0-9-]{36}$/.test(v),
+      hash = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+    const list = async () => {
+      const result = await page.evaluate(
+        ([id, org, contract]) => window.__opinions(id, org, contract),
+        [c.id, FIXTURE.organization, FIXTURE.contract],
+      );
+      await observer.flush();
+      return result;
+    };
+    const fresh = async () => observer.flush(),
+      runtime = { context: async () => true };
+    const wrapper = ast.nodes
+      .find(
+        (n) =>
+          ast.ts.isVariableDeclaration(n) &&
+          n.name.getText(ast.ast) === "command" &&
+          n.initializer?.getText(ast.ast).includes("confirmUiIntent"),
+      )
+      .initializer.getText(ast.ast);
+    const confirmUiIntent = async ({ rpc, payload, reconcile }) => {
+      await reconcile("before");
+      observer.markMutation(rpc, payload, {});
+      assert.equal(await page.evaluate((id) => window.__queue(id), c.id), job);
+      await observer.flush();
+      const before = reads;
+      assert.equal((await list()).count, 0);
+      assert.equal((await reconcile("after")).confirmed, true);
+      assert.equal(reads, before + 1);
+      callbacks++;
+    };
+    const command = new Function(
+      "runtime",
+      "fresh",
+      "tracedPreparation",
+      "observer",
+      "confirmUiIntent",
+      "page",
+      "fence",
+      "broker",
+      "err",
+      "return " + wrapper,
+    )(runtime, fresh, tracedPreparation, observer, confirmUiIntent, page, {}, {}, stop);
+    const io = {
+      generation: observer.generation,
+      recoveryLedgerR11: local.R11_RECOVERY_DOCUMENT,
+      command,
+      fresh,
+    };
+    const env = {
+      io,
+      tracedPreparation,
+      stop,
+      uuid,
+      hash,
+      FIXTURE: local.FIXTURE,
+      R5_BINDINGS: JSON.parse(local.R5_RECOVERY_DOCUMENT.reportRaw).bindings,
+      c,
+      overview: async () => ({
+        blocking_summary: { analise_concluida_atual: true },
+        allowed_actions: { abrir_parecer: true },
+      }),
+      link: async (path) => {
+        assert.equal(path, "/competencias/" + c.id + "/parecer");
+        await list();
+      },
+      observed: async () => true,
+      rows: observer.read,
+      inContext: (r, id) => {
+        assert.equal(r.id, id);
+        assert.equal(r.id_competencia, c.id);
+        assert.equal(r.id_contrato, FIXTURE.contract);
+        assert.equal(r.id_organizacao, FIXTURE.organization);
+      },
+      click: async (name) => {
+        if (name === "Aprovar parecer") throw Error("R12_APPROVAL_READY");
+        assert.equal(name, "Atualizar");
+        materialized = true;
+        await page.getByRole("button", { name: "Atualizar", exact: true }).click();
+        await list();
+      },
+      phaseActive: () => true,
+      wait: () => new Promise((resolve) => setTimeout(resolve, 5)),
+      waitOfficialPhase: local.waitOfficialPhase,
+      temporalAborted: false,
+    };
+    const Async = Object.getPrototypeOf(async () => {}).constructor;
+    await assert.rejects(
+      () =>
+        new Async(
+          ...Object.keys(env),
+          ast.named("poll").getText(ast.ast) +
+            ";" +
+            ast.named("opinion").getText(ast.ast) +
+            ";return opinion(c);",
+        )(...Object.values(env)),
+      { message: "R12_APPROVAL_READY" },
+    );
+    assert.equal(queued, 1);
+    assert.equal(callbacks, 1);
+    assert.ok(reads >= 3);
+    assert.notEqual(job, opinionID);
+    const clean = await observer.read("pareceres_internos", {
+      id_competencia: c.id,
+      id_organizacao: FIXTURE.organization,
+      id_contrato: FIXTURE.contract,
+    });
+    assert.equal(clean[0].id, opinionID);
+    for (const key of ["texto", "autor", "aprovado_por"])
+      assert.equal(Object.hasOwn(clean[0], key), false);
+    assert.equal(observer.observationFailure(), null);
+  } finally {
+    observer?.close();
+    await page?.close();
+    if (server)
+      await new Promise((resolve) => {
+        server.close(resolve);
+        server.closeAllConnections();
+      });
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+}
+test(
+  "R3 Chromium sourceforms asynchronous opinion queue acceptance and actual opinion consumer",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 90000 },
+  async () => {
+    const browser = await r3AttestedBrowser();
+    try {
+      await r12NativeOpinionProbe(browser);
+    } finally {
+      await browser.close();
+    }
+  },
+);
