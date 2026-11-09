@@ -3579,5 +3579,24 @@
     "requires_separate_gate": true,
     "auth_authorized": false,
     "code_authorized": false
+  },
+  "trilha_a_r15_external_transport_incident": {
+    "main_sha": "869ccbe830d89717ee2091c1b36044d414fa67bf",
+    "pr": 512,
+    "head_sha": "a9c0a771918cefaf8cc4d4d131197e762ad98c3d",
+    "important_review": 5832413282,
+    "external_policy_adopted": false,
+    "observed_attempts": 3,
+    "observed_attempt_ms": 12000,
+    "observed_generic_transport_retry": true,
+    "required_attempts": 2,
+    "required_attempt_ms": 5000,
+    "required_timeout_only": true,
+    "required_environment_validation_each_attempt": true,
+    "required_global_deadline_ms": 60000,
+    "r14_proof_source_unchanged": "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+    "requires_separate_gate_before_code": true,
+    "requires_corrected_build_before_nonce15": true,
+    "auth_authorized": false
   }
 }
