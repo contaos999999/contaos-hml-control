@@ -38,7 +38,7 @@ Documentos PLAN/GATE/PLANO/ESTADO próprios. Nenhum workflow, bootstrap, SRC/pub
 
 - Origem competência não expõe anchor direto de documentos; usar primeiro resumo do contrato, depois documentos, com prova de URL/contexto e links reais.
 - Cache legítimo de arquivo/versão não cria uma nova chamada HTTP por conveniência. Antes do GATE, conferir política real de cache/loader e fechar como provar cadeia imutável já observada e pai atual, mantendo IDs/hash/contexto/exclusividade. Se não houver prova segura no transporte existente, bloquear e emendar antes do BUILD.
-- Erro interno recuperado parcialmente deve conservar enum/subfase seguros no recibo da competência sem expor message/stack/URL/DOM/payload/PII. Getters/proxies/cause arbitrários não podem ser invocados por diagnóstico.
+- Erro interno recuperado parcialmente deve conservar enum/subfase seguros no report existente sem expor message/stack/URL/DOM/payload/PII. Getters/proxies/cause arbitrários não podem ser invocados por diagnóstico.
 - Recibos R5 adulterados, par ausente/duplicado/uncertain, identidade divergente, bindings trocados e histórico reescrito bloqueiam antes do login.
 - Recriação da lista, publicação repetida, nova competência de mesmo mês, reset de budget, nonce histórico e request sem ancestry bloqueiam. Nenhuma compensação de negócio.
 
@@ -51,7 +51,7 @@ Documentos PLAN/GATE/PLANO/ESTADO próprios. Nenhum workflow, bootstrap, SRC/pub
 
 ## Tarefa2: diagnóstico e ledger8+16
 
-- [ ] Adicionar RED para erro interno não COMPETENCE_* seguido de retorno partial; enum/subfase real devem permanecer minimizados e não ser substituídos por causa falsa. UNKNOWN continua fechado.
+- [ ] Adicionar RED para erro interno não COMPETENCE_* seguido de retorno partial; a primeira causa global deve ser capturada pelo classificador já existente antes do resumo por competência, conservando enum/subfase minimizados no report sem novos campos. O code parcial COMPETENCE_* não vira prova de dependência; UNKNOWN continua fechado.
 - [ ] Validar documento R5 literal pelas hashes acima, schema/chaves exatos, identidade/run/head/deployment, cinco pares confirmados e ausência de pending/uncertain. Relacionar binding com origem antes de usar.
 - [ ] Calcular priorConfirmed8/maxNew16 sem reescrever R5 maxNew21. Negar replay das oito confirmações, inclusive via requestId novo/payload equivalente; não negar operações futuras distintas necessárias.
 - [ ] Reconciliar fonte/lista/item e ambas competências existentes por leituras ordinárias/UI, exigindo IDs/mês/organização/contrato exatos, sem criação substituta nem novo SQL/RPC/query. Nov continua59072760-4420-4598-82dd-367f41a79e89.
