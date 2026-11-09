@@ -5337,3 +5337,15 @@ test("R7 actual artifact writer appends two exact R6 histories and ten hashed da
     await fs.rm(output, { recursive: true, force: true });
   }
 });
+
+test("R8 reconciliation requires live R7 zero-auth proof instead of assuming the unchanged budget", () => {
+  const valid = r2Reconciliation();
+  for (const ledgerR7 of [
+    undefined,
+    null,
+    {},
+    { schema: "contaos.fixture.recovery-r7.v1", derivedNewBusinessIntents: 1 },
+  ]) {
+    assert.throws(() => sut.reconcileR1Recovery({ ...valid, ledgerR7 }), /RECOVERY_R7_LEDGER/);
+  }
+});

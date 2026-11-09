@@ -8610,3 +8610,156 @@ test("R7 is sole executable fixture nonce and all six original requests remain s
   );
   assert.throws(() => guard("audit"), { code: "AUDIT_BINDING_PENDING" });
 });
+
+async function r8InvokeMetadataCli(env) {
+  const { readFile } = await import("node:fs/promises");
+  const ts = (await import("typescript")).default;
+  const source = await readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
+  const fn = ast.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "singleRequestCli",
+  );
+  assert.ok(fn);
+  const calls = [];
+  const invoke = new Function(
+    "process",
+    "fail",
+    "verifySingleRequest",
+    "appendFile",
+    "mkdir",
+    "writeFile",
+    "harnessIdentity",
+    "console",
+    "assertRequestMetadataEnvironment",
+    fn.getText(ast) + ";return singleRequestCli;",
+  )(
+    { env },
+    (code) => {
+      throw Object.assign(new Error(code), { code });
+    },
+    async (args) => {
+      calls.push(args);
+      return { selected: false };
+    },
+    async () => assert.fail("no output"),
+    async () => assert.fail("no output"),
+    async () => assert.fail("no output"),
+    async () => assert.fail("no identity"),
+    { log() {} },
+    sut.assertRequestMetadataEnvironment,
+  );
+  return { calls, run: () => invoke("--request-revalidate") };
+}
+test("R8 actual metadata CLI authenticates revalidation and rejects missing token before verification", async () => {
+  const env = {
+    CONTAOS_REQUEST_OPERATION: "fixtures",
+    CONTAOS_ACTIONS_READ_TOKEN: "CANARY_METADATA_TOKEN",
+  };
+  const allowed = await r8InvokeMetadataCli(env);
+  await allowed.run();
+  assert.equal(allowed.calls.length, 1);
+  assert.equal(allowed.calls[0].publicOnly, false, "the real CLI must authenticate revalidation");
+  const denied = await r8InvokeMetadataCli({ CONTAOS_REQUEST_OPERATION: "fixtures" });
+  await assert.rejects(denied.run(), { code: "REQUEST_API_TOKEN" });
+  assert.equal(denied.calls.length, 0);
+});
+test("R8 effective caller environment refuses private aliases before the real CLI verifier", async () => {
+  for (const key of [
+    "CONTAOS_HML_SYNTHETIC_EMAIL",
+    "CONTAOS_HML_SYNTHETIC_PASSWORD",
+    "MASTER_EMAIL",
+    "MASTER_PASSWORD",
+    "DATABASE_URL",
+    "DB_PASSWORD",
+    "AUTH_ADMIN_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "GITHUB_TOKEN",
+    "GH_TOKEN",
+  ]) {
+    const fixture = await r8InvokeMetadataCli({
+      CONTAOS_REQUEST_OPERATION: "fixtures",
+      CONTAOS_ACTIONS_READ_TOKEN: "CANARY_METADATA_TOKEN",
+      [key]: "CANARY_PRIVATE",
+    });
+    await assert.rejects(fixture.run(), { code: "PREPARE_SECRET_ENV" }, key);
+    assert.equal(fixture.calls.length, 0, key);
+  }
+});
+function r8WorkflowIsolation(doc) {
+  const readset = { contents: "read", actions: "read", "pull-requests": "read" };
+  assert.deepEqual(doc.jobs.request.permissions, readset);
+  assert.deepEqual(doc.jobs.private.permissions, readset);
+  assert.equal(Object.hasOwn(doc.env || {}, "CONTAOS_ACTIONS_READ_TOKEN"), false);
+  let tokenSteps = 0;
+  for (const [jobName, job] of Object.entries(doc.jobs)) {
+    assert.equal(Object.hasOwn(job.env || {}, "CONTAOS_ACTIONS_READ_TOKEN"), false);
+    for (const step of job.steps || []) {
+      const metadata =
+        jobName === "private" &&
+        [
+          "Recibo inicial publico para as fases sem credenciais",
+          "Revalidar main e unicidade dentro da concorrencia antes de secrets",
+        ].includes(step.name);
+      const preflight =
+        jobName === "request" && String(step.run || "").includes("--request-preflight");
+      if (metadata || preflight) {
+        assert.deepEqual(step.env, { CONTAOS_ACTIONS_READ_TOKEN: "${{ github.token }}" });
+        tokenSteps++;
+      } else assert.equal(Object.hasOwn(step.env || {}, "CONTAOS_ACTIONS_READ_TOKEN"), false);
+    }
+  }
+  assert.equal(tokenSteps, 3);
+}
+test("R8 parsed workflows isolate ephemeral read token and exact read scopes with negative controls", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const eslintRequire = createRequire(require.resolve("eslint"));
+  const yamlRequire = createRequire(eslintRequire.resolve("@eslint/eslintrc"));
+  const yaml = yamlRequire("js-yaml");
+  for (const name of ["authenticated", "fixtures"]) {
+    const raw = await readFile(
+      new URL("../../.github/workflows/contaos-trilha-a-" + name + ".yml", import.meta.url),
+      "utf8",
+    );
+    const doc = yaml.load(raw);
+    r8WorkflowIsolation(doc);
+    for (const mutate of [
+      (d) => {
+        delete d.jobs.private.permissions.actions;
+      },
+      (d) => {
+        d.jobs.private.permissions.contents = "write";
+      },
+      (d) => {
+        d.jobs.private.permissions["id-token"] = "write";
+      },
+      (d) => {
+        d.jobs.request.permissions["pull-requests"] = "write";
+      },
+      (d) => {
+        d.env = { CONTAOS_ACTIONS_READ_TOKEN: "CANARY" };
+      },
+      (d) => {
+        d.jobs.private.env.CONTAOS_ACTIONS_READ_TOKEN = "CANARY";
+      },
+      (d) => {
+        d.jobs.private.steps.find(
+          (s) =>
+            String(s.run || "").includes("--prepare-fixtures") ||
+            String(s.run || "").endsWith("--audit"),
+        ).env.CONTAOS_ACTIONS_READ_TOKEN = "CANARY";
+      },
+      (d) => {
+        d.jobs.private.steps.find((s) => String(s.run || "").includes("--prepare")).env = {
+          CONTAOS_ACTIONS_READ_TOKEN: "CANARY",
+        };
+      },
+    ]) {
+      const changed = structuredClone(doc);
+      mutate(changed);
+      assert.throws(() => r8WorkflowIsolation(changed));
+    }
+  }
+});
