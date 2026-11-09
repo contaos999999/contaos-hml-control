@@ -2455,5 +2455,41 @@
       42550770708
     ],
     "remaining": "CI do HEAD documental reancorado; HML/R2/V1 não certificados."
+  },
+  "trilha_a_v123_pos_r2_discovery": {
+    "state": "DRAFT_PREPARATORY_NO_EXECUTION",
+    "gate_document": "docs/frontend/planos/PRIVACY_V123_POS_R2_METADATA_GATE_2026-11-09.md",
+    "metadata_query_executed": false,
+    "content_fields_read": false,
+    "auth_executed": false,
+    "page": {
+      "index": 0,
+      "limit": 25,
+      "order": "criado_em.desc,id.desc",
+      "filters": "ALL_SIX_EMPTY"
+    },
+    "metadata_only": [
+      "event_id",
+      "criado_em",
+      "ordinal",
+      "total_count",
+      "observed_rows",
+      "six_field_json_types_and_codepoint_lengths"
+    ],
+    "requires": [
+      "R2 terminal reconciled and receipts verified",
+      "this Gate CI independent review and integration after R2",
+      "concrete metadata wrapper independent review before one execution",
+      "separate content Gate CI review merge before six fields",
+      "independent semantic concordance before persistence"
+    ],
+    "old_sql1_sql2_scope_reusable": false,
+    "old_ten_event_catalog_auto_update": false,
+    "actor_pseudonym_consent_reused_only_as_category": true,
+    "identity_lookup_allowed": false,
+    "new_catalog": null,
+    "build424_preserved_head": "c51802ecd692928f236b59ed7557357d0f885e9c",
+    "main_merge_during_r2_allowed": false,
+    "new_hml_pass": false
   }
 }
