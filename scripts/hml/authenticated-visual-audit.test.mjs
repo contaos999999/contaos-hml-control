@@ -10283,3 +10283,24 @@ test("R9 request accepts only the new nonce and keeps R8 spent", () => {
     /REQUEST_/,
   );
 });
+
+test("R10 request accepts its new nonce and keeps R9 spent", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r10",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(row), "fixtures"), row);
+  assert.throws(
+    () =>
+      sut.parseSingleRequest(
+        JSON.stringify({ ...row, request_id: "trilha-a-fixtures-20261109-r9" }),
+        "fixtures",
+      ),
+    /REQUEST_/,
+  );
+});

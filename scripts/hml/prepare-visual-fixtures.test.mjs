@@ -6626,3 +6626,136 @@ test("R9 sealing an admitted delayed table still validates context before closin
   assert.deepEqual(f.observer.observationFailure(), first);
   await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
 });
+
+const R10_R9_DOCUMENT = {
+  schema: "contaos.fixture.recovery-r9.v1",
+  workflowRun: "42621964900",
+  artifactId: "13676832673",
+  requestId: "trilha-a-fixtures-20261109-r9",
+  harnessSha: "2ed3097691f39025b49a015d86223da61a2b45e5",
+  zipSha256: "89a35fb6de1e437a93c8074cb563745108d5e968878d929c8663dcaff700f500",
+  reportSha256: "4163c5266ed9715ceafa3650af55a42348636cfbccceb9c8f124b55ab1eac31e",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  observationSha256: "6beb2ab824c183a65b1bd7334a4a6ab7ca878a0c6cab999a32dfd39a4ec5cad6",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "OBSERVATION_FAILED",\n  "diagnostics": {\n    "primaryFailure": "OBSERVATION_FAILED",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "RUNTIME_FRESH",\n    "subphasePath": [\n      "SOURCE_AND_LIST",\n      "RECOVERY_READ",\n      "RECOVERY_READ",\n      "RUNTIME_FRESH",\n      "RUNTIME_FRESH"\n    ],\n    "lastCompletedSubphase": "RUNTIME_FRESH",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 10,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 10,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 14\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 14,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": false,\n    "sourceVersion": null,\n    "sourceHash": null\n  },\n  "bindings": null,\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "2ed3097691f39025b49a015d86223da61a2b45e5",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42621964900",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "2ed3097691f39025b49a015d86223da61a2b45e5",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42621964900",\n  "firstFailure": {\n    "contractKind": "TABLE:competencias",\n    "stage": "BODY_READ",\n    "statusHTTP": 200,\n    "requestFailure": "ABORTED"\n  }\n}\n',
+};
+test("R10 recovery requires the exact zero-intent R9 document before constructing a broker", () => {
+  const options = {
+    persist: () => true,
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+    recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+    recoveryLedgerR8: R9_R8_DOCUMENT,
+  };
+  for (const recoveryLedgerR9 of [undefined, null])
+    assert.throws(
+      () => sut.createIntentBroker({ ...options, recoveryLedgerR9 }),
+      /RECOVERY_R9_LEDGER/,
+    );
+  const b = sut.createIntentBroker({ ...options, recoveryLedgerR9: R10_R9_DOCUMENT });
+  assert.equal(b.snapshot().count, 10);
+  assert.equal(b.snapshot().maxNewIntentions, 14);
+});
+test("R10 actual recovery consumer waits for the new monthly request instead of the initial unfiltered row", async () => {
+  const { EventEmitter } = await import("node:events"),
+    { readFile } = await import("node:fs/promises");
+  const sdk = await readFile(
+      new URL("../../src/lib/contratos/competenciasDados.ts", import.meta.url),
+      "utf8",
+    ),
+    select = sdk.match(/export const COLUNAS_COMPETENCIA\s*=\s*"([^"]+)"/)[1];
+  const page = new EventEmitter(),
+    observer = sut.createOfficialObserver(page, { wait: () => new Promise(setImmediate) });
+  const rows = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies.map((c) => ({
+    id: c.id,
+    competencia_referencia: c.month,
+    periodo_inicio: c.month,
+    periodo_fim: c.month,
+    data_limite: null,
+    situacao: "preparando",
+    percentual_conformidade: 0,
+    versao_pacote_atual: null,
+    atualizado_em: null,
+  }));
+  const q = {
+    select,
+    id_contrato: "eq." + FIXTURE.contract,
+    order: "competencia_referencia.desc,id.desc",
+    offset: "0",
+    limit: "25",
+  };
+  const request = (query) => {
+    const url = FIXTURE.api + "/rest/v1/competencias?" + new URLSearchParams(query),
+      r = { method: () => "GET", url: () => url, postData: () => null, failure: () => null };
+    page.emit("request", r);
+    return r;
+  };
+  const response = (request, value) =>
+    page.emit("response", {
+      request: () => request,
+      url: request.url,
+      status: () => 200,
+      body: async () => Buffer.from(JSON.stringify(value)),
+    });
+  let monthlyRequest,
+    startedResolve,
+    links = 0;
+  const started = new Promise((resolve) => {
+    startedResolve = resolve;
+  });
+  const io = {
+    recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+    recoveryLedgerR8: R9_R8_DOCUMENT,
+    recoveryLedgerR9: R10_R9_DOCUMENT,
+    generation: observer.generation,
+    observedAfter: observer.waitObservedAfter,
+    read: observer.read,
+    rpcRead: observer.rpcRead,
+    fresh: () => observer.flush(),
+    goKnown: async () => {
+      response(request(q), rows);
+      await observer.flush();
+    },
+    page: {
+      getByLabel: (name, options) => {
+        assert.equal(name, "Competência");
+        assert.deepEqual(options, { exact: true });
+        return {
+          fill: async (month) => {
+            assert.equal(month, "2026-10");
+            monthlyRequest = request({ ...q, competencia_referencia: "eq." + month + "-01" });
+            startedResolve();
+          },
+        };
+      },
+    },
+    link: async () => {
+      links++;
+      throw Error("TEST_STOP_AT_LINK");
+    },
+  };
+  const task = sut.reconcileRecoveryCompetencies(io).catch((error) => error);
+  await started;
+  await new Promise(setImmediate);
+  try {
+    assert.equal(
+      links,
+      0,
+      "initial unfiltered row must not authorize navigation while monthly request has no response",
+    );
+  } finally {
+    if (monthlyRequest) response(monthlyRequest, [rows[0]]);
+    await task;
+    await observer.flush();
+    observer.close();
+  }
+});
