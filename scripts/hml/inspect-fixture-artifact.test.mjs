@@ -107,9 +107,9 @@ const BASE = {
     ],
   },
   frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
-  harnessSha: "f39e32ca1009b23aaae19dcbd01e282df2bf0847",
+  harnessSha: "dd895a5c30acbb39c821153d86477985ae94b939",
   deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
-  workflowRun: "42685547737",
+  workflowRun: "42703523206",
   phase: "FINAL_READBACK",
   completed: false,
   logoutVerified: true,
@@ -160,6 +160,9 @@ const HISTORICAL = {
     '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42650825191",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_parecer_interno",\n      "requestId": "af968191-7d60-4adb-9c60-ebd5f0741e8e",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42650825191",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_parecer_interno",\n      "requestId": "af968191-7d60-4adb-9c60-ebd5f0741e8e",\n      "state": "uncertain",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d"\n    }\n  ]\n}\n',
   "recovery-r11.json":
     '{\n  "schema": "contaos.fixture.recovery-r11.v1",\n  "workflowRun": "42650825191",\n  "artifactId": "13690462160",\n  "requestId": "trilha-a-fixtures-20261109-r11",\n  "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n  "zipSha256": "eb445aadc6876e116040946157c2c4a1bd6bfd79f494945649dbd63e6d74eb50",\n  "reportSha256": "fcee36850806601be988dedf4afe49fe10e6fccc6640f2b7e0a63a870541dc1a",\n  "receiptsSha256": "603a302a92902da2978ddabb20d7972dd9713d39d8838024bfaa89cfb1af33e8",\n  "observationSha256": "59eb0943c77cbcc75e0e022d3ebb75cc74384faf73c5f64e6b5dc2cb29059a47",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"PHASE_TIMEOUT\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"PHASE_TIMEOUT\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"COMPETENCY_GET\\",\\n    \\"subphasePath\\": [\\n      \\"COMPETENCIES\\",\\n      \\"COMPETENCY_UI\\",\\n      \\"COMPETENCY_COMMAND\\",\\n      \\"RUNTIME_FRESH\\",\\n      \\"UI_CONFIRM_AFTER\\",\\n      \\"PREFLIGHT\\",\\n      \\"COMPETENCY_RECONCILE\\",\\n      \\"COMPETENCY_UI\\",\\n      \\"COMPETENCY_GET\\"\\n    ],\\n    \\"lastCompletedSubphase\\": \\"COMPETENCY_UI\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 11,\\n    \\"frozen\\": true,\\n    \\"pending\\": true,\\n    \\"sent\\": true,\\n    \\"priorConfirmed\\": 10,\\n    \\"newArmedCount\\": 1,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 14\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 10,\\n    \\"maxNewIntentions\\": 14,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": true,\\n    \\"sourceVersion\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"sourceHash\\": \\"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\\"\\n  },\\n  \\"bindings\\": {\\n    \\"sourceVersionId\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"listId\\": \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"listVersionId\\": \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"itemId\\": \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"source\\": \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"competencies\\": [\\n      {\\n        \\"month\\": \\"2026-10-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"id\\": \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n        \\"requirementId\\": \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n        \\"documentId\\": \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n        \\"executionId\\": \\"3c174678-a6ec-4415-9d25-6e8a859de2cb\\",\\n        \\"code\\": \\"COMPETENCE_DEPENDENCY_BLOCKED\\"\\n      },\\n      {\\n        \\"month\\": \\"2026-09-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"code\\": \\"COMPETENCE_DEPENDENCY_BLOCKED\\"\\n      }\\n    ]\\n  },\\n  \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n  \\"harnessSha\\": \\"7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e\\",\\n  \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n  \\"workflowRun\\": \\"42650825191\\",\\n  \\"phase\\": \\"FINAL_READBACK\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [\\n    \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n    \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n    \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n    \\"3c174678-a6ec-4415-9d25-6e8a859de2cb\\"\\n  ],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\n  \\"schema\\": \\"contaos.fixture.receipts.v1\\",\\n  \\"receipts\\": [\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42650825191\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"solicitar_parecer_interno\\",\\n      \\"requestId\\": \\"af968191-7d60-4adb-9c60-ebd5f0741e8e\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42650825191\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"solicitar_parecer_interno\\",\\n      \\"requestId\\": \\"af968191-7d60-4adb-9c60-ebd5f0741e8e\\",\\n      \\"state\\": \\"uncertain\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d\\"\\n    }\\n  ]\\n}\\n",\n  "observationRaw": "{\\n  \\"schema\\": \\"contaos.fixture.observation.v1\\",\\n  \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n  \\"harnessSha\\": \\"7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e\\",\\n  \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n  \\"workflowRun\\": \\"42650825191\\",\\n  \\"firstFailure\\": null\\n}\\n"\n}\n',
+  "receipts-r13.json": '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  "recovery-r13.json":
+    '{\n  "schema": "contaos.fixture.recovery-r13.v1",\n  "workflowRun": "42685547737",\n  "artifactId": "13704636643",\n  "requestId": "trilha-a-fixtures-20261109-r13",\n  "harnessSha": "f39e32ca1009b23aaae19dcbd01e282df2bf0847",\n  "zipSha256": "7d097d83d5b622d4277be39d2155800223e18fccfe9258ba1adabf337c1e5307",\n  "reportSha256": "877dca165c4d46a61b8f5ea1946a6a223ceb17e9b64b9ef4067d8e24d5b7aa81",\n  "receiptsSha256": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",\n  "observationSha256": "f6f4ea8b51e4ec9ab3e8aca8e4fb6c3367d808174e884ca4c6119d6a06c33aeb",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"FLOW_LIST_UI_MISSING\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"FLOW_LIST_UI_MISSING\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"LIST_UI_CONTROL\\",\\n    \\"subphasePath\\": [\\n      \\"SOURCE_AND_LIST\\",\\n      \\"LIST_UI_CONTROL\\",\\n      \\"LIST_UI_CONTROL\\"\\n    ],\\n    \\"lastCompletedSubphase\\": \\"LIST_GET\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 11,\\n    \\"frozen\\": false,\\n    \\"pending\\": false,\\n    \\"sent\\": false,\\n    \\"priorConfirmed\\": 10,\\n    \\"priorReserved\\": 1,\\n    \\"newArmedCount\\": 0,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 13\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 10,\\n    \\"maxNewIntentions\\": 13,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": true,\\n    \\"sourceVersion\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"sourceHash\\": \\"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\\"\\n  },\\n  \\"bindings\\": null,\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"f39e32ca1009b23aaae19dcbd01e282df2bf0847\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42685547737\\",\\n  \\"phase\\": \\"SOURCE_AND_LIST\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\"schema\\":\\"contaos.fixture.receipts.v1\\",\\"receipts\\":[]}\\n",\n  "observationRaw": "{\\n  \\"schema\\": \\"contaos.fixture.observation.v1\\",\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"f39e32ca1009b23aaae19dcbd01e282df2bf0847\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42685547737\\",\\n  \\"firstFailure\\": null\\n}\\n"\n}\n',
 };
 
 const empty = () => ({ schema: "contaos.fixture.receipts.v1", receipts: [] });
@@ -264,9 +267,9 @@ function metadataFixture() {
   const jobs = {
     total_count: 3,
     jobs: [
-      [129391263915, "Trilha A solicitacao unica sem credenciais", "success"],
-      [129391266154, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-      [129391860451, "Trilha A preparacao sintetica HML", "failure"],
+      [129454201287, "Trilha A solicitacao unica sem credenciais", "success"],
+      [129454203909, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+      [129454678528, "Trilha A preparacao sintetica HML", "failure"],
     ].map(([id, name, conclusion]) => ({
       id,
       name,
@@ -423,7 +426,7 @@ test("R10 entire directory validates before one bounded proof is produced", (t) 
   const root = fixture(t),
     proof = JSON.parse(buildProof(root, inspection));
   assert.equal(proof.type, "FIXTURE_INSPECTION_PROOF");
-  assert.equal(proof.manifest.length, 20);
+  assert.equal(proof.manifest.length, 22);
   assert.equal(proof.reportRaw, readFileSync(join(root, "report.json"), "utf8"));
   assert.equal(proof.receiptsRaw, readFileSync(join(root, "receipts.json"), "utf8"));
   assert.ok(Buffer.byteLength(JSON.stringify(proof)) <= 65536);
@@ -711,8 +714,8 @@ test("appended R6 history is immutable, ordered, and canonically empty where pro
     "recovery-r6.json",
     "recovery-r7.json",
   ]);
-  assert.equal(FILES.length, 20);
-  assert.equal(Object.keys(HISTORY).length, 17);
+  assert.equal(FILES.length, 22);
+  assert.equal(Object.keys(HISTORY).length, 19);
   assert.equal(
     HISTORY["receipts-r6.json"],
     "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
@@ -751,13 +754,13 @@ test("R7 zero-auth history contains only its nine-field metadata proof", () => {
 });
 
 test("R10 literal target is terminal attempt one and cannot be selected through caller inputs", () => {
-  assert.equal(PIN.run, 42685547737);
-  assert.equal(PIN.head, "f39e32ca1009b23aaae19dcbd01e282df2bf0847");
-  assert.equal(PIN.upstream, 42685263821);
-  assert.equal(PIN.artifact, 13704636643);
-  assert.equal(PIN.size, 19861);
-  assert.equal(PIN.name, "trilha-a-fixtures-42685547737-1");
-  assert.equal(PIN.digest, "7d097d83d5b622d4277be39d2155800223e18fccfe9258ba1adabf337c1e5307");
+  assert.equal(PIN.run, 42703523206);
+  assert.equal(PIN.head, "dd895a5c30acbb39c821153d86477985ae94b939");
+  assert.equal(PIN.upstream, 42703248266);
+  assert.equal(PIN.artifact, 13713326447);
+  assert.equal(PIN.size, 22442);
+  assert.equal(PIN.name, "trilha-a-fixtures-42703523206-1");
+  assert.equal(PIN.digest, "49a1075f93ac229929399b940f8a7792bd6aa7d70ead4beb7449006d7ae68262");
 });
 
 test("R10 observation diagnostic validator is required before any technical proof", async () => {
@@ -1011,7 +1014,7 @@ test("R10 observation has six ordered own fields and four ordered failure primit
 test("R10 one proof publishes exact observationRaw only after the complete fourteen-file validation", (t) => {
   const root = fixture(t),
     output = JSON.parse(buildProof(root, inspection));
-  assert.equal(output.manifest.length, 20);
+  assert.equal(output.manifest.length, 22);
   assert.equal(
     output.observationRaw,
     readFileSync(join(root, "observation-diagnostic.json"), "utf8"),
@@ -1019,8 +1022,8 @@ test("R10 one proof publishes exact observationRaw only after the complete fourt
   assert.equal(JSON.parse(output.observationRaw).firstFailure, null);
   assert.equal(JSON.parse(output.reportRaw).completed, false);
   assert.equal(output.observations.priorConfirmed, 10);
-  assert.equal(FILES.length, 20);
-  assert.equal(Object.keys(HISTORY).length, 17);
+  assert.equal(FILES.length, 22);
+  assert.equal(Object.keys(HISTORY).length, 19);
   assert.deepEqual(FILES.slice(11, 14), [
     "receipts-r8.json",
     "recovery-r8.json",
@@ -1154,15 +1157,15 @@ test("R10 complete manifest still produces zero proof for observation failure wi
 });
 
 test("R10 immutable artifact layout appends R9 originals after the existing observation diagnostic", () => {
-  assert.equal(FILES.length, 20, "R10_MANIFEST_APPEND_ABSENT");
-  assert.equal(Object.keys(HISTORY).length, 17);
+  assert.equal(FILES.length, 22, "R10_MANIFEST_APPEND_ABSENT");
+  assert.equal(Object.keys(HISTORY).length, 19);
   assert.deepEqual(FILES.slice(13, 16), [
     "observation-diagnostic.json",
     "receipts-r9.json",
     "recovery-r9.json",
   ]);
-  assert.equal(PIN.run, 42685547737);
-  assert.equal(PIN.artifact, 13704636643);
+  assert.equal(PIN.run, 42703523206);
+  assert.equal(PIN.artifact, 13713326447);
 });
 
 test("R10 preserves original R9 report receipts and observation inside the pinned twelve-field recovery document", () => {
@@ -1192,16 +1195,16 @@ test("R10 preserves original R9 report receipts and observation inside the pinne
 });
 
 test("R11 terminal target requires the two R10 originals appended after all sixteen existing data files", () => {
-  assert.equal(FILES.length, 20, "R11_MANIFEST_APPEND_ABSENT");
-  assert.equal(Object.keys(HISTORY).length, 17);
-  assert.deepEqual(FILES.slice(-6, -2), [
+  assert.equal(FILES.length, 22, "R11_MANIFEST_APPEND_ABSENT");
+  assert.equal(Object.keys(HISTORY).length, 19);
+  assert.deepEqual(FILES.slice(14, 18), [
     "receipts-r9.json",
     "recovery-r9.json",
     "receipts-r10.json",
     "recovery-r10.json",
   ]);
-  assert.equal(PIN.run, 42685547737);
-  assert.equal(PIN.artifact, 13704636643);
+  assert.equal(PIN.run, 42703523206);
+  assert.equal(PIN.artifact, 13713326447);
 });
 
 test("R11 preserves the twelve-field R10 document and all three original raw hashes", () => {
@@ -1225,12 +1228,12 @@ test("R11 preserves the twelve-field R10 document and all three original raw has
 });
 
 test("R13 pins the actual original artifact and preserves the reserved R11 intent", () => {
-  assert.equal(PIN.run, 42685547737);
-  assert.equal(PIN.head, "f39e32ca1009b23aaae19dcbd01e282df2bf0847");
-  assert.equal(PIN.artifact, 13704636643);
-  assert.equal(PIN.digest, "7d097d83d5b622d4277be39d2155800223e18fccfe9258ba1adabf337c1e5307");
-  assert.equal(FILES.length, 20);
-  assert.equal(Object.keys(HISTORY).length, 17);
+  assert.equal(PIN.run, 42703523206);
+  assert.equal(PIN.head, "dd895a5c30acbb39c821153d86477985ae94b939");
+  assert.equal(PIN.artifact, 13713326447);
+  assert.equal(PIN.digest, "49a1075f93ac229929399b940f8a7792bd6aa7d70ead4beb7449006d7ae68262");
+  assert.equal(FILES.length, 22);
+  assert.equal(Object.keys(HISTORY).length, 19);
   const r = report();
   r.intentLedger = {
     count: 11,
@@ -1277,7 +1280,7 @@ test("R13 refuses the spent October opinion even under a new request UUID", () =
   assert.throws(() => validateRecords(r, { ...empty(), receipts: [receipt] }));
 });
 test("R13 appends the exact R11 uncertain originals without promoting or refunding them", (t) => {
-  assert.deepEqual(FILES.slice(-2), ["receipts-r11.json", "recovery-r11.json"]);
+  assert.deepEqual(FILES.slice(18, 20), ["receipts-r11.json", "recovery-r11.json"]);
   const original = canonicalJson(Buffer.from(HISTORICAL["recovery-r11.json"])).value;
   assert.equal(Object.keys(original).length, 12);
   assert.equal(original.receiptsRaw, HISTORICAL["receipts-r11.json"]);
@@ -1287,7 +1290,7 @@ test("R13 appends the exact R11 uncertain originals without promoting or refundi
     ["sealed", "uncertain"],
   );
   assert.equal(rows[1].requestId, "af968191-7d60-4adb-9c60-ebd5f0741e8e");
-  for (const name of FILES.slice(-2)) {
+  for (const name of FILES.slice(18, 20)) {
     const root = fixture(t);
     rmSync(join(root, name));
     assert.throws(() => buildProof(root, inspection));
@@ -1296,4 +1299,134 @@ test("R13 appends the exact R11 uncertain originals without promoting or refundi
     files["receipts-r11.json"] = receiptText(empty());
   });
   assert.throws(() => buildProof(root, inspection));
+});
+
+const R15_FILES = [
+  "receipts.json",
+  "report.json",
+  "receipts-r1.json",
+  "recovery-r2.json",
+  "receipts-r3.json",
+  "recovery-r3.json",
+  "receipts-r5.json",
+  "recovery-r5.json",
+  "receipts-r6.json",
+  "recovery-r6.json",
+  "recovery-r7.json",
+  "receipts-r8.json",
+  "recovery-r8.json",
+  "observation-diagnostic.json",
+  "receipts-r9.json",
+  "recovery-r9.json",
+  "receipts-r10.json",
+  "recovery-r10.json",
+  "receipts-r11.json",
+  "recovery-r11.json",
+  "receipts-r13.json",
+  "recovery-r13.json",
+];
+const R15_HISTORY = {
+  "receipts-r13.json": '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  "recovery-r13.json":
+    '{\n  "schema": "contaos.fixture.recovery-r13.v1",\n  "workflowRun": "42685547737",\n  "artifactId": "13704636643",\n  "requestId": "trilha-a-fixtures-20261109-r13",\n  "harnessSha": "f39e32ca1009b23aaae19dcbd01e282df2bf0847",\n  "zipSha256": "7d097d83d5b622d4277be39d2155800223e18fccfe9258ba1adabf337c1e5307",\n  "reportSha256": "877dca165c4d46a61b8f5ea1946a6a223ceb17e9b64b9ef4067d8e24d5b7aa81",\n  "receiptsSha256": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",\n  "observationSha256": "f6f4ea8b51e4ec9ab3e8aca8e4fb6c3367d808174e884ca4c6119d6a06c33aeb",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"FLOW_LIST_UI_MISSING\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"FLOW_LIST_UI_MISSING\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"LIST_UI_CONTROL\\",\\n    \\"subphasePath\\": [\\n      \\"SOURCE_AND_LIST\\",\\n      \\"LIST_UI_CONTROL\\",\\n      \\"LIST_UI_CONTROL\\"\\n    ],\\n    \\"lastCompletedSubphase\\": \\"LIST_GET\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 11,\\n    \\"frozen\\": false,\\n    \\"pending\\": false,\\n    \\"sent\\": false,\\n    \\"priorConfirmed\\": 10,\\n    \\"priorReserved\\": 1,\\n    \\"newArmedCount\\": 0,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 13\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 10,\\n    \\"maxNewIntentions\\": 13,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": true,\\n    \\"sourceVersion\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"sourceHash\\": \\"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\\"\\n  },\\n  \\"bindings\\": null,\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"f39e32ca1009b23aaae19dcbd01e282df2bf0847\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42685547737\\",\\n  \\"phase\\": \\"SOURCE_AND_LIST\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\"schema\\":\\"contaos.fixture.receipts.v1\\",\\"receipts\\":[]}\\n",\n  "observationRaw": "{\\n  \\"schema\\": \\"contaos.fixture.observation.v1\\",\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"f39e32ca1009b23aaae19dcbd01e282df2bf0847\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42685547737\\",\\n  \\"firstFailure\\": null\\n}\\n"\n}\n',
+};
+function r15Metadata() {
+  const m = metadataFixture();
+  for (const run of [m.run, m.upstream]) {
+    run.head_sha = "dd895a5c30acbb39c821153d86477985ae94b939";
+  }
+  m.run.id = 42703523206;
+  m.upstream.id = 42703248266;
+  Object.assign(m.artifact, {
+    id: 13713326447,
+    name: "trilha-a-fixtures-42703523206-1",
+    size_in_bytes: 22442,
+    digest: "sha256:49a1075f93ac229929399b940f8a7792bd6aa7d70ead4beb7449006d7ae68262",
+    workflow_run: {
+      id: 42703523206,
+      repository_id: 1442722734,
+      head_repository_id: 1442722734,
+      head_sha: "dd895a5c30acbb39c821153d86477985ae94b939",
+      head_branch: "main",
+    },
+  });
+  m.jobs.jobs = [
+    [129454201287, "Trilha A solicitacao unica sem credenciais", "success"],
+    [129454203909, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+    [129454678528, "Trilha A preparacao sintetica HML", "failure"],
+  ].map(([id, name, conclusion]) => ({
+    id,
+    name,
+    conclusion,
+    status: "completed",
+    run_id: 42703523206,
+    run_attempt: 1,
+    head_sha: "dd895a5c30acbb39c821153d86477985ae94b939",
+  }));
+  return m;
+}
+function r15Directory(t) {
+  const root = fixture(t);
+  for (const [name, raw] of Object.entries(R15_HISTORY)) writeFileSync(join(root, name), raw);
+  writeFileSync(
+    join(root, "SHA256SUMS"),
+    R15_FILES.map((name) => sha256(readFileSync(join(root, name))) + "  " + name + "\n").join(""),
+  );
+  return root;
+}
+test("R15 live original metadata admits only the terminal artifact and three exact jobs", () => {
+  assert.equal(validateMetadata(r15Metadata()), true);
+  for (const mutate of [
+    (m) => (m.jobs.jobs[2].id = 129391860451),
+    (m) => (m.run.id = 42685547737),
+    (m) => (m.artifact.id = 13704636643),
+    (m) => (m.artifact.size_in_bytes = 19861),
+    (m) => (m.jobs.jobs[2].run_attempt = 2),
+  ]) {
+    const bad = r15Metadata();
+    mutate(bad);
+    assert.throws(() => validateMetadata(bad), /INSPECTION_METADATA/);
+  }
+});
+test("R15 complete directory proves all twenty-two files before releasing original bytes", (t) => {
+  const proof = JSON.parse(buildProof(r15Directory(t), inspection));
+  assert.deepEqual(
+    proof.manifest.map((entry) => entry.name),
+    R15_FILES,
+  );
+  assert.equal(proof.source.run, 42703523206);
+  assert.equal(proof.source.artifact, 13713326447);
+  assert.equal(
+    proof.manifest[20].sha256,
+    "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  );
+  assert.equal(
+    proof.manifest[21].sha256,
+    "92bf8114d857b2061b0a2ce67cfb908f2dd1c71e1800b567bfecf52c17e12da9",
+  );
+});
+test("R15 rejects the old twenty-file layout instead of publishing a partial proof", (t) => {
+  const root = fixture(t);
+  for (const name of ["receipts-r13.json", "recovery-r13.json"])
+    rmSync(join(root, name), { force: true });
+  writeFileSync(
+    join(root, "SHA256SUMS"),
+    R15_FILES.slice(0, 20)
+      .map((name) => sha256(readFileSync(join(root, name))) + "  " + name + "\n")
+      .join(""),
+  );
+  assert.throws(() => buildProof(root, inspection), /INSPECTION_FILES/);
+});
+test("R15 refuses rewritten R13 history even with a recomputed manifest", (t) => {
+  for (const name of ["receipts-r13.json", "recovery-r13.json"]) {
+    const root = r15Directory(t);
+    writeFileSync(join(root, name), "{}\n");
+    writeFileSync(
+      join(root, "SHA256SUMS"),
+      R15_FILES.map((entry) => sha256(readFileSync(join(root, entry))) + "  " + entry + "\n").join(
+        "",
+      ),
+    );
+    assert.throws(() => buildProof(root, inspection));
+  }
 });
