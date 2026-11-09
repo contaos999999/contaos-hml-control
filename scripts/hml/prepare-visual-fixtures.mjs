@@ -1357,10 +1357,23 @@ export async function listSelectionControl(scope, expectedId) {
   )
     err("FLOW_LIST_UI_MISSING");
   const title = scope.getByText("Lista selecionada", { exact: true });
+  if ((await title.count()) > 1) err("FLOW_LIST_UI_MISSING");
+  try {
+    await title.waitFor({ state: "visible", timeout: 3000 });
+  } catch {
+    err("FLOW_LIST_UI_MISSING");
+  }
   if ((await title.count()) !== 1 || !(await title.isVisible())) err("FLOW_LIST_UI_MISSING");
   const label = title.locator("xpath=parent::label");
   if ((await label.count()) !== 1) err("FLOW_LIST_UI_MISSING");
   const control = label.locator(":scope > select");
+  if ((await control.count()) > 1) err("FLOW_LIST_UI_MISSING");
+  try {
+    await control.waitFor({ state: "visible", timeout: 3000 });
+    await label.locator(":scope > select:enabled").waitFor({ state: "visible", timeout: 3000 });
+  } catch {
+    err("FLOW_LIST_UI_MISSING");
+  }
   if ((await control.count()) !== 1 || !(await control.isVisible()) || !(await control.isEnabled()))
     err("FLOW_LIST_UI_MISSING");
   if (expectedId !== undefined) {
