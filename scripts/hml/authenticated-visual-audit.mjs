@@ -6711,17 +6711,19 @@ export const SINGLE_REQUEST = Object.freeze({
   gateSha: "31b68f3cadbdc13a82bae23a43c35616f873d70b",
   autoGateSha: "122242fd421b348aef229683c0d3969611bce1db",
   recoveryGateSha: "581e161718d7f784961e2fef6bd1a75ba9295637",
+  readbackGateSha: "cd79ed9012e644f2ef65636eb1c30049301b74a5",
   spentFixtureNonce: "trilha-a-fixtures-20261108-r1",
   spentFixtureNonces: Object.freeze([
     "trilha-a-fixtures-20261108-r1",
     "trilha-a-fixtures-20261109-r2",
+    "trilha-a-fixtures-20261109-r3",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r3",
+    nonce: "trilha-a-fixtures-20261109-r4",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -6951,7 +6953,8 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
   if (parents.length !== 3 || parents[0] !== sha || parents[1] !== request.approved_parent_sha)
     fail("REQUEST_PARENT");
   const ancestors = [SINGLE_REQUEST.gateSha, SINGLE_REQUEST.fixturesSha];
-  if (request.operation === "fixtures") ancestors.push(SINGLE_REQUEST.recoveryGateSha);
+  if (request.operation === "fixtures")
+    ancestors.push(SINGLE_REQUEST.recoveryGateSha, SINGLE_REQUEST.readbackGateSha);
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
   ancestors.push(mode === "AUTO_DISCOVER" ? SINGLE_REQUEST.autoGateSha : request.frontend_sha);

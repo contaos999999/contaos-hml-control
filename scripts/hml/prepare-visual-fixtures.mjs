@@ -201,12 +201,14 @@ export function validateR1RecoveryDocument(input) {
 }
 export function reconcileR1Recovery(input) {
   validateR1RecoveryDocument(input?.ledger);
+  validateR3RecoveryDocument(input?.ledgerR3);
   const s = input.source,
     v = input.version;
   if (
     input.sourceCount !== 1 ||
     !official(s) ||
     s.id !== FIXTURE.source ||
+    s.situacao !== "ativa" ||
     !sourceFieldsExact(s) ||
     !Number.isInteger(s.version) ||
     s.version < 1 ||
@@ -282,6 +284,94 @@ export function validateR2RecoveryDocument(input) {
     err("RECOVERY_R2_LEDGER");
   return freeze(structuredClone(input));
 }
+export const R3_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r3.v1",
+  workflowRun: "42559214436",
+  artifactId: "13648722477",
+  requestId: "trilha-a-fixtures-20261109-r3",
+  frontendSha: "437c788e32f0325dd15c9d2e7277c10129bcb462",
+  harnessSha: "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",
+  zipSha256: "44cd6eec0dcec9cf5ceaa2283d8a07b04cf64e8c1391ad2c6a5aaed32104c560",
+  reportSha256: "e1d0cabcd5aeec18a695627c5b06ef49e36dba262117390e1fddb8ec04555931",
+  receiptsSha256: "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "FLOW_ACTIVE_NOT_READBACK",\n  "diagnostics": {\n    "primaryFailure": "FLOW_ACTIVE_NOT_READBACK",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "SOURCE_AND_LIST",\n    "subphasePath": [\n      "SOURCE_AND_LIST"\n    ],\n    "lastCompletedSubphase": "SOURCE_RECONCILE",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 2,\n    "maxNewIntentions": 22,\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": null,\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42559214436",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42559214436",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "salvar_fonte_normativa_v107",\n      "requestId": "309caf6c-5551-4e2b-ae33-4607a95ea025",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42559214436",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "salvar_fonte_normativa_v107",\n      "requestId": "309caf6c-5551-4e2b-ae33-4607a95ea025",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34"\n    }\n  ]\n}\n',
+  receipts: [
+    {
+      frontendSha: "437c788e32f0325dd15c9d2e7277c10129bcb462",
+      harnessSha: "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",
+      deploymentId: "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",
+      workflowRun: "42559214436",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "salvar_fonte_normativa_v107",
+      requestId: "309caf6c-5551-4e2b-ae33-4607a95ea025",
+      state: "sealed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34",
+    },
+    {
+      frontendSha: "437c788e32f0325dd15c9d2e7277c10129bcb462",
+      harnessSha: "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",
+      deploymentId: "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",
+      workflowRun: "42559214436",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "salvar_fonte_normativa_v107",
+      requestId: "309caf6c-5551-4e2b-ae33-4607a95ea025",
+      state: "confirmed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34",
+    },
+  ],
+});
+
+export function validateR3RecoveryDocument(input) {
+  if (
+    !same(input, R3_RECOVERY_DOCUMENT) ||
+    hash(input?.reportRaw) !== R3_RECOVERY_DOCUMENT.reportSha256 ||
+    hash(input?.receiptsRaw) !== R3_RECOVERY_DOCUMENT.receiptsSha256
+  )
+    err("RECOVERY_R3_LEDGER");
+  const report = JSON.parse(input.reportRaw),
+    original = JSON.parse(input.receiptsRaw);
+  if (
+    !keys(original, ["schema", "receipts"]) ||
+    original.schema !== "contaos.fixture.receipts.v1" ||
+    !same(original.receipts, input.receipts) ||
+    input.receipts.length !== 2 ||
+    report.workflowRun !== input.workflowRun ||
+    report.harnessSha !== input.harnessSha ||
+    report.frontendSha !== input.frontendSha ||
+    report.failure !== "FLOW_ACTIVE_NOT_READBACK" ||
+    report.logoutVerified !== true ||
+    report.completed !== false
+  )
+    err("RECOVERY_R3_LEDGER");
+  for (const [i, receipt] of input.receipts.entries()) {
+    safeReceipt(receipt);
+    if (
+      receipt.rpc !== "salvar_fonte_normativa_v107" ||
+      receipt.requestId !== "309caf6c-5551-4e2b-ae33-4607a95ea025" ||
+      receipt.state !== ["sealed", "confirmed"][i] ||
+      receipt.payloadSha256 !== "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34"
+    )
+      err("RECOVERY_R3_LEDGER");
+  }
+  return freeze(structuredClone(input));
+}
+function recoveryBudget(ledger, ledgerR3) {
+  const prior = validateR1RecoveryDocument(ledger),
+    r3 = validateR3RecoveryDocument(ledgerR3);
+  const confirmedBefore = [...prior.receipts, ...r3.receipts].filter(
+    (row) => row.state === "confirmed",
+  ).length;
+  if (confirmedBefore !== 3) err("RECOVERY_R3_LEDGER");
+  return Object.freeze({ confirmedBefore, maxNewIntentions: 24 - confirmedBefore });
+}
+
 export async function dismissPreparationOverlays(page) {
   // Visible dialogs are the active Radix modal stack. Hidden underlying dialogs
   // are considered only after the upper layer has closed through ordinary UI.
@@ -1076,11 +1166,15 @@ export function createIntentBroker({
   now = () => performance.now(),
   competenceGateAmended = false,
   recoveryLedger,
+  recoveryLedgerR3,
+  beforeArm,
 } = {}) {
   const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
+  if (!recovery && recoveryLedgerR3 !== undefined) err("RECOVERY_R3_LEDGER");
+  const budget = recovery ? recoveryBudget(recoveryLedger, recoveryLedgerR3) : null;
   let recoveryAuthorized = !recovery;
   let active = null,
-    count = recovery ? 2 : 0,
+    count = budget?.confirmedBefore || 0,
     frozen = false;
   const accepted = new Map(),
     usedIds = new Set();
@@ -1172,7 +1266,14 @@ export function createIntentBroker({
       return true;
     },
     arm({ rpc, payload, requestId, uiGeneratedKey, verified, evidence = {} } = {}) {
-      if (recovery && ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"].includes(rpc))
+      if (
+        recovery &&
+        [
+          "registrar_versao_fonte_v107",
+          "aprovar_versao_fonte_v107",
+          "salvar_fonte_normativa_v107",
+        ].includes(rpc)
+      )
         err("RECOVERY_CONFIRMED_OPERATION");
       if (!recoveryAuthorized) err("RECOVERY_READ_ONLY");
       if (frozen) err("INTENT_FROZEN");
@@ -1201,6 +1302,11 @@ export function createIntentBroker({
         uiKeyByRpc[rpc] ||
         (rpc === "criar_documento_competencia_v115" ? "p_chave_idempotencia" : null);
       if (!uiGeneratedKey && bodyKey && payload[bodyKey] !== requestId) err("INTENT_KEY");
+      if (
+        beforeArm !== undefined &&
+        (typeof beforeArm !== "function" || beforeArm(rpc, payload, evidence) !== true)
+      )
+        err("OBSERVATION_MUTATION");
       active = {
         rpc,
         payload: freeze(structuredClone(payload)),
@@ -1242,10 +1348,35 @@ export function createIntentBroker({
         pending: !!active,
         sent: !!active?.sent,
         requestId: active?.requestId || null,
+        ...(budget || {}),
       });
     },
   });
 }
+
+export function preparationIntentSummary(broker) {
+  if (!broker) return null;
+  const state = broker.snapshot();
+  if (
+    state.confirmedBefore !== 3 ||
+    state.maxNewIntentions !== 21 ||
+    !Number.isInteger(state.count) ||
+    state.count < 3 ||
+    state.count > 24
+  )
+    err("RECOVERY_R3_LEDGER");
+  return Object.freeze({
+    count: state.count,
+    frozen: state.frozen,
+    pending: state.pending,
+    sent: state.sent,
+    priorConfirmed: state.confirmedBefore,
+    newArmedCount: state.count - state.confirmedBefore,
+    maxIntentions: 24,
+    maxNewIntentions: state.maxNewIntentions,
+  });
+}
+
 export async function waitOfficialPhase({
   read,
   ready,
@@ -2108,7 +2239,85 @@ function coversAbsence(entry, where) {
           p.value === FIXTURE[k === "id_contrato" ? "contract" : "organization"])),
   );
 }
-export function createOfficialObserver(page) {
+
+export function readbackTargets(rpc, payload = {}, evidence = {}) {
+  const comp =
+    payload.p_id_competencia ||
+    (rpc === "aprovar_parecer_interno"
+      ? evidence.opinions?.find((row) => row.id === payload.p_id_parecer)?.competency
+      : undefined);
+  const context = { id_organizacao: FIXTURE.organization, id_contrato: FIXTURE.contract };
+  const c = { p_id_competencia: comp };
+  const mapping = {
+    registrar_versao_fonte_v107: [["versoes_fontes_normativas", { id_fonte: FIXTURE.source }]],
+    aprovar_versao_fonte_v107: [["versoes_fontes_normativas", { id: payload.p_id_versao }]],
+    salvar_fonte_normativa_v107: [["fontes_normativas", { id: FIXTURE.source }]],
+    executar_comando_lista_v1: [
+      [
+        "obter_lista_operacional_v1",
+        {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_contrato: FIXTURE.contract,
+          ...(payload.p_id_lista ? { p_id_lista: payload.p_id_lista } : {}),
+        },
+      ],
+    ],
+    criar_competencia: [
+      [
+        "competencias",
+        { id_contrato: FIXTURE.contract, competencia_referencia: payload.p_competencia_referencia },
+      ],
+    ],
+    criar_documento_competencia_v115: [
+      ["obter_documentos_competencia_v115", c],
+      ["obter_visao_geral_competencia", c],
+    ],
+    solicitar_analise_competencia: [
+      ["obter_analise_competencia_v116", c],
+      ["obter_visao_geral_competencia", c],
+    ],
+    registrar_revisao_requisito_v117: [
+      ["obter_analise_competencia_v116", c],
+      ["obter_visao_geral_competencia", c],
+      ["obter_detalhe_requisito_v117", { ...c, p_id_requisito: payload.p_id_requisito }],
+    ],
+    solicitar_parecer_interno: [
+      ["pareceres_internos", { ...context, id_competencia: comp }],
+      ["obter_visao_geral_competencia", c],
+    ],
+    aprovar_parecer_interno: [
+      ["pareceres_internos", { ...context, id_competencia: comp, id: payload.p_id_parecer }],
+      ["obter_visao_geral_competencia", c],
+    ],
+    aprovar_apresentacao: [["obter_visao_geral_competencia", c]],
+    registrar_apresentacao: [
+      ["apresentacoes_contratante", { id_competencia: comp }],
+      ["pacotes_competencia", { id_competencia: comp }],
+      ["itens_pacote_competencia", { id_competencia: comp }],
+      ["obter_visao_geral_competencia", c],
+    ],
+  };
+  const targets = mapping[rpc];
+  if (
+    !targets ||
+    targets.some(
+      ([name, where]) =>
+        Object.values(where).some((v) => v === undefined) ||
+        (!OBSERVED_TABLES.has(name) && !OBSERVED_RPCS.has(name)),
+    )
+  )
+    err("OBSERVATION_MUTATION");
+  return targets.map(([name, where]) => ({
+    name,
+    where,
+    ...(rpc === "executar_comando_lista_v1" && evidence.list?.versionId
+      ? { versionId: evidence.list.versionId }
+      : {}),
+  }));
+}
+
+export function createOfficialObserver(page, { wait, now } = {}) {
+  const floors = [];
   const pending = new Set(),
     tables = new Map(),
     rpcs = new Map(),
@@ -2247,12 +2456,16 @@ export function createOfficialObserver(page) {
   function selectLatest(table, options) {
     if (
       !obj(options) ||
-      Object.keys(options).some((k) => k !== "select") ||
+      Object.keys(options).some((k) => !["select", "after"].includes(k)) ||
+      (options.after !== undefined &&
+        (!Number.isSafeInteger(options.after) || options.after < 0)) ||
       (options.select !== undefined && !EXACT_SELECTS[table]?.includes(options.select))
     )
       err("OBSERVATION_PROJECTION");
     const ledger = entries(table).filter(
-        (e) => options.select === undefined || e.q.select === options.select,
+        (e) =>
+          (options.select === undefined || e.q.select === options.select) &&
+          (options.after === undefined || e.ordinal > options.after),
       ),
       latest = new Map();
     // Deduplicate identity BEFORE filtering state or omitted values.
@@ -2263,7 +2476,36 @@ export function createOfficialObserver(page) {
       }
     return { ledger, latest };
   }
-  return Object.freeze({
+  function causalFloor(name, where) {
+    const bare = rpcName(name) || name;
+    return (
+      floors
+        .filter(
+          (f) =>
+            f.name === bare &&
+            !Object.entries(where).some(([k, v]) => Object.hasOwn(f.where, k) && f.where[k] !== v),
+        )
+        .sort((a, b) => b.ordinal - a.ordinal)[0] || null
+    );
+  }
+  const api = {
+    markMutation(rpc, payload, evidence) {
+      if (closed || failed) err("OBSERVATION_FAILED");
+      const ordinal = sequence;
+      for (const target of readbackTargets(rpc, payload, evidence))
+        floors.push({ ...target, ordinal });
+      if (floors.length > 1024) err("OBSERVATION_LIMIT");
+      return true;
+    },
+    async waitObservedAfter(name, where, after, options = {}) {
+      if (!Number.isSafeInteger(after) || after < 0) err("OBSERVATION_ORDINAL");
+      return waitOfficialPhase({
+        read: () => api.observedAfter(name, where, after, options),
+        ready: (value) => value === true,
+        ...(wait ? { wait } : {}),
+        ...(now ? { now } : {}),
+      });
+    },
     flush,
     generation: () => sequence,
     async observedAfter(name, where = {}, after, options = {}) {
@@ -2273,6 +2515,7 @@ export function createOfficialObserver(page) {
         return (rpcs.get(rpc) || []).some(
           (e) =>
             e.ordinal > after &&
+            (options.after === undefined || e.ordinal > options.after) &&
             Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
         );
       if (!OBSERVED_TABLES.has(name)) return false;
@@ -2288,6 +2531,12 @@ export function createOfficialObserver(page) {
       );
     },
     async read(table, where = {}, options = {}) {
+      const barrier = causalFloor(table, where);
+      if (barrier) {
+        where = { ...barrier.where, ...where };
+        options = { ...options, after: Math.max(options.after || 0, barrier.ordinal) };
+        await api.waitObservedAfter(table, where, options.after, options);
+      }
       await flush();
       if (!OBSERVED_TABLES.has(table) || !tables.has(table)) err("OBSERVATION_TABLE");
       const { latest, ledger } = selectLatest(table, options),
@@ -2299,23 +2548,40 @@ export function createOfficialObserver(page) {
         )
         .map(({ row }) => structuredClone(row));
     },
-    async rpcRead(name, where = {}) {
+    async rpcRead(name, where = {}, options = {}) {
+      const barrier = causalFloor(name, where);
+      if (barrier) {
+        where = { ...barrier.where, ...where };
+        options = { ...options, after: Math.max(options.after || 0, barrier.ordinal) };
+        await api.waitObservedAfter(name, where, options.after);
+      }
       await flush();
       const rpc = rpcName(name);
       if (!rpc) err("OBSERVATION_RPC");
-      const item = (rpcs.get(rpc) || []).find((e) =>
-        Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
+      const item = (rpcs.get(rpc) || []).find(
+        (e) =>
+          (options.after === undefined || e.ordinal > options.after) &&
+          Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
       );
+      if (
+        barrier?.versionId &&
+        (!item ||
+          item.value?.versao?.id !== barrier.versionId ||
+          (item.args.p_id_versao !== null && item.args.p_id_versao !== barrier.versionId))
+      )
+        err("OBSERVATION_CONTEXT");
       return item ? structuredClone(item.value) : null;
     },
     close() {
       closed = true;
       tables.clear();
       rpcs.clear();
+      floors.length = 0;
       page.off("request", onRequest);
       page.off("response", onResponse);
     },
-  });
+  };
+  return Object.freeze(api);
 }
 
 /* Integration snippet only. FIXTURE, hash, uuid, same are existing same-module helpers.
@@ -2332,6 +2598,7 @@ export async function prepareSourceAndList(io) {
   const { page } = io;
   const recovery =
     io.recoveryLedger === undefined ? null : validateR1RecoveryDocument(io.recoveryLedger);
+  if (recovery) validateR3RecoveryDocument(io.recoveryLedgerR3);
   const fail = (code) => {
     throw new Error(code);
   };
@@ -2503,6 +2770,7 @@ export async function prepareSourceAndList(io) {
     "FLOW_SOURCE_NOT_IN_UI_GET",
   );
   await tracedPreparation("SOURCE_RECONCILE", async () => sourceRow());
+  if (recovery) assert(source.situacao === "ativa", "RECOVERY_SOURCE_INACTIVE");
   // Return through a KNOWN SSR path so its list starts at page zero, then find source button.
   await tracedPreparation("SOURCE_NAVIGATE", async () =>
     io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`),
@@ -2759,7 +3027,11 @@ export async function prepareSourceAndList(io) {
         await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
       }
       const model = await tracedPreparation("LIST_MODEL_READ", async () =>
-        io.rpcRead("obter_lista_operacional_v1"),
+        io.rpcRead("obter_lista_operacional_v1", {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_contrato: FIXTURE.contract,
+          ...(model?.lista?.id ? { p_id_lista: model.lista.id } : {}),
+        }),
       );
       assert(
         model?.schema_versao === "crud-lista-v1" &&
@@ -2828,6 +3100,7 @@ export async function prepareSourceAndList(io) {
       }
       const proof = reconcileR1Recovery({
         ledger: recovery,
+        ledgerR3: io.recoveryLedgerR3,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -3022,6 +3295,10 @@ export async function prepareSourceAndList(io) {
     );
     await tracedPreparation("LIST_REFRESH", async () => io.fresh());
     await tracedPreparation("LIST_MODEL_READ", async () => listProof());
+    assert(
+      model.lista.versao_registro === (prev === null ? 1 : prev + 1),
+      "FLOW_LIST_READBACK_VERSION",
+    );
   };
   if (matches.length === 0) {
     await tracedPreparation("LIST_FORM_FIELD", async () =>
@@ -4459,6 +4736,7 @@ const PREPARER_FAILURE_CODES = new Set([
 async function runFixturePreparation() {
   validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);
   validateR2RecoveryDocument(R2_RECOVERY_DOCUMENT);
+  const validatedBudget = recoveryBudget(R1_RECOVERY_DOCUMENT, R3_RECOVERY_DOCUMENT);
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
   activePreparationDiagnostics = diagnostics;
@@ -4467,6 +4745,7 @@ async function runFixturePreparation() {
     fence,
     observer,
     runtime,
+    broker,
     page,
     logoutVerified = false,
     completed = false;
@@ -4530,10 +4809,13 @@ async function runFixturePreparation() {
     }
     await tracedPreparation("PREFLIGHT", async () => checkFreshDeployment(proof, true));
     const persist = createReceiptWriter(receiptPath, identity);
-    const broker = createIntentBroker({
+    broker = createIntentBroker({
       persist,
       competenceGateAmended: true,
       recoveryLedger: R1_RECOVERY_DOCUMENT,
+      recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
+      beforeArm: (rpc, payload, evidence) =>
+        observer?.markMutation(rpc, payload, evidence) === true,
     });
     const debug = createServer();
     await tracedPreparation(
@@ -4761,6 +5043,7 @@ async function runFixturePreparation() {
     };
     const io = {
       recoveryLedger: R1_RECOVERY_DOCUMENT,
+      recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
       recoveryReady: (proof) => {
         broker.authorizeRecovery(proof);
         recoveryState = proof;
@@ -4780,7 +5063,7 @@ async function runFixturePreparation() {
       read: observer.read,
       rpcRead: observer.rpcRead,
       generation: observer.generation,
-      observedAfter: observer.observedAfter,
+      observedAfter: observer.waitObservedAfter,
       wait: (ms) => new Promise((resolve) => setTimeout(resolve, Math.max(2000, ms))),
       abortPhase: async () => {
         fence.close();
@@ -4853,11 +5136,13 @@ async function runFixturePreparation() {
       schema: "contaos.fixture.preparation.v1",
       failure: blockedCode || (cleanupOk ? null : "PREPARER_CLEANUP"),
       diagnostics: diagnostics.snapshot(),
+      intentLedger: preparationIntentSummary(broker),
       recovery: {
         ledgerSha256: R1_RECEIPTS_SHA256,
         priorWorkflowRun: "42540864527",
-        confirmedBefore: 2,
-        maxNewIntentions: 22,
+        ...validatedBudget,
+        r3ReceiptsSha256: R3_RECOVERY_DOCUMENT.receiptsSha256,
+        r3WorkflowRun: R3_RECOVERY_DOCUMENT.workflowRun,
         reconciled: !!recoveryState,
         sourceVersion: recoveryState?.sourceVersion || null,
         sourceHash: recoveryState?.sourceHash || null,
@@ -4873,13 +5158,28 @@ async function runFixturePreparation() {
     writeFileSync(join(output, "report.json"), JSON.stringify(report, null, 2) + "\n", {
       mode: 0o600,
     });
+    writeFileSync(join(output, "receipts-r3.json"), R3_RECOVERY_DOCUMENT.receiptsRaw, {
+      mode: 0o600,
+    });
+    writeFileSync(
+      join(output, "recovery-r3.json"),
+      JSON.stringify(R3_RECOVERY_DOCUMENT, null, 2) + "\n",
+      { mode: 0o600 },
+    );
     let sums = "";
     writeFileSync(
       join(output, "recovery-r2.json"),
       JSON.stringify(R2_RECOVERY_DOCUMENT, null, 2) + "\n",
       { mode: 0o600 },
     );
-    for (const name of ["receipts.json", "report.json", "receipts-r1.json", "recovery-r2.json"])
+    for (const name of [
+      "receipts.json",
+      "report.json",
+      "receipts-r1.json",
+      "recovery-r2.json",
+      "receipts-r3.json",
+      "recovery-r3.json",
+    ])
       sums +=
         createHash("sha256")
           .update(await tracedPreparation("PREFLIGHT", async () => readFile(join(output, name))))
