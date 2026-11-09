@@ -4907,7 +4907,7 @@ test("R6 semantic replay rejects complete new UUID intents but permits another v
     verified: { context: true, capability: true, reconciled: true },
     evidence,
   });
-  assert.equal(b.snapshot().count, 9);
+  assert.equal(b.snapshot().count, 11);
 });
 
 test("R6 unknown COMPETENCE prefix remains generic rather than becoming a receipt code", async () => {
@@ -6602,4 +6602,27 @@ test("R9 bounded observer seal drains an admitted body failure and preserves it 
   observer.close();
   assert.equal(observer.observationFailure().stage, "BODY_READ");
   await assert.rejects(() => observer.flush(), /OBSERVATION_FAILED/);
+});
+
+test("R9 sealing an admitted delayed table still validates context before closing", async () => {
+  const f = await r4ObserverFixture();
+  let release;
+  const wait = new Promise((resolve) => {
+    release = resolve;
+  });
+  const foreign = { ...f.row("ativa"), id_organizacao: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" };
+  f.response(f.request(), [foreign], wait);
+  const draining = f.observer.seal();
+  release();
+  await draining;
+  const first = f.observer.observationFailure();
+  f.observer.close();
+  assert.deepEqual(first, {
+    contractKind: "TABLE:fontes_normativas",
+    stage: "RESPONSE_CONTEXT",
+    statusHTTP: "NONE",
+    requestFailure: "NONE",
+  });
+  assert.deepEqual(f.observer.observationFailure(), first);
+  await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
 });
