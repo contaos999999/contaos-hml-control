@@ -2011,7 +2011,7 @@ test("R2 cada await relevante do codigo real passa pela barreira diagnostica", a
   assert.ok(count >= 197);
   assert.ok(
     code.indexOf(
-      "validateR1RecoveryDocument();",
+      "validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);",
       code.indexOf("async function runFixturePreparation"),
     ) < code.indexOf('phase = "LOGIN"', code.indexOf("async function runFixturePreparation")),
   );

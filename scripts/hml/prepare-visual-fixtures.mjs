@@ -186,7 +186,7 @@ export const R1_RECOVERY_DOCUMENT = freeze({
 });
 const R1_RECEIPTS_SHA256 = "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9";
 const recoveryProofs = new WeakSet();
-export function validateR1RecoveryDocument(input = R1_RECOVERY_DOCUMENT) {
+export function validateR1RecoveryDocument(input) {
   const bytes = JSON.stringify(input, null, 2) + "\n";
   if (hash(bytes) !== R1_RECEIPTS_SHA256) err("RECOVERY_LEDGER");
   if (
@@ -4344,7 +4344,7 @@ const PREPARER_FAILURE_CODES = new Set([
   "UI_UNCERTAIN",
 ]);
 async function runFixturePreparation() {
-  validateR1RecoveryDocument();
+  validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
   activePreparationDiagnostics = diagnostics;
