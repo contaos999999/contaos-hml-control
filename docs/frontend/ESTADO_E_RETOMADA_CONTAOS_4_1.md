@@ -1,3 +1,26 @@
+# Continuidade P0: contexto vivo9b55 e execução de fixtures pendente
+
+Checkpoint de09/11/2026, frontend base `866608620909bf313a6c2192736330222f9219ad`, contendo BUILD396 integrado em `c0dfb51d4861211a1bf6591bad1b9339eb84f357`; backend normativo `9b55a308c04fe914c9ff3f96b92151c7a41dff98`. Este PR altera somente snapshot, ack/recibo no PLANO_ATIVO e checkpoint. CurrentPLAN, trilhas e histórico preservados. CI/revisão/integração deste PR ainda não presumidas.
+
+## Fonte e limites
+
+Conferidos por GitHub GET:25/25 blobs canônicos iguais, catálogo `e54e49e626e65a9c94c81709180fd192a1f0c079` com100/97 IDs preservados e types.ts no blob imutável `8ea7750b75fd9d76b29c36ce7613392e3ab65e19`. O delta foi lido semanticamente: Delta4bda→9b55 contém migration aditiva de nove funções Copilot (três privadas sem EXECUTE externo e seis worker com EXECUTE somente service_role), elegibilidade documental/precedentes, sessão/RBAC canônicos, reserva/quota/lease e conclusão transacional. Restore compara assinatura, owner, ACL e corpo exatos e inclui testes SQL/concorrência; ajustes de fixtures de governança não alteram os consumidores A. Nenhuma Edge Function, guard existente, tabela, RLS ou assinatura/grant de API anterior foi modificada nesse delta. Não comprova aplicação da migration, deployment ou certificação HML da Trilha C.
+
+PR391 Zero-Drift42539653568/job128911511483 falhou especificamente no HEAD normativo obsoleto4bda; isso não constitui reprovação de CODE391. A reancoragem não modifica nem contorna freshness e não autoriza CODE391 sem sua CI/revisão. Não aguardar deployment da Trilha C para esta conferência documental da A.
+
+## Continuidade das etapas
+
+- BUILD396 modo automático integrado em `c0dfb51d4861211a1bf6591bad1b9339eb84f357`: checks42539395932/42539395941/42539395948/42539395940 SUCCESS;311PASS/9SKIP unitários, oito provas nativas e uma visual; revisão5820398596. PR392 integrada em `8074d23dfed1568041620e9b95b6b119dc99f001` e PR388 em `e108cbf1d9b9c9b52bea67c994bd8796b0313ea4`, confirmadas por GitHub GET.
+- GATE395 integrado em `122242fd421b348aef229683c0d3969611bce1db` admite exclusivamente o par vazio `''/''` no modo automático antes do checkout da Fonte Real. Pins e proveniência resolvidos continuam obrigatórios. PR394 permanece draft: nonce `604f81c0c1630c10f26bc11abc38c9483cc2dc14` NÃO consumido, porque deployment mudou (`6Y`/`e108` no recibo operacional); reancorar a solicitação após integrar contexto e revalidar fonte/deployment vivos.
+- PR391 documental109safeLabels sob GATE393: discovery executado uma vez,38safe, revisão root+cadastros/recibo6729144915. Nenhuma repetição da coleta neste checkpoint; CODE391 aguarda CI/revisão aplicáveis.
+- Última prova Run78 preservada:184 privados como objetivo prioritário,24 fixtures ainda sem execução comprovada por este registro,24baseline históricos preservados e72 critérios sem certificação integral. Nenhum novo Auth, fixture, login ou DML HML executado nesta reancoragem. NO-GO/V1 e limites visuais/privacidade anteriores continuam vigentes; não converter evidência antiga em PASS novo.
+
+## Próxima tarefa
+
+Integrar esta reancoragem somente após CI e revisão independente; revalidar request/deployment de394 e prosseguir com execução prioritária das fixtures sob os gates já integrados. Nenhuma alteração de código, workflow, guard, backend ou PROD neste PR. Revalidar refs antes de escrever ou executar.
+
+---
+
 # Continuidade P0: privacidade integrada, descoberta V109 e workflow bloqueado
 
 Checkpoint de08/11/2026, frontend base `574619615e4901ba187616bce65010590f277333` e backend normativo `4bda8189de1e3b3d18ffe74e1db5574d8405284c`. Revalidar refs vivos antes de agir. Esta PR contém somente este checkpoint, PLANO_ATIVO.json e CONTEXT_CANONICO_4_1_SNAPSHOT.json, preservando currentPLAN, os metadados das três trilhas e todo o histórico abaixo. Sua CI/revisão/integração ainda não é presumida.
