@@ -5833,22 +5833,39 @@ test("solicitacao unica: identidade descoberta continua obrigatoria antes do che
 test("Run114 medição falha preserva diagnóstico fechado sem screenshot ou texto privado", async () => {
   let saved = false;
   const metrics = {
-    passed: false, identityPassed: true, geometryPassed: false,
-    tablePassed: true, datesPassed: true, contrastPassed: true,
-    overflowX: 0, targets: [{ hit: false, disabled: false }, { hit: true }],
+    passed: false,
+    identityPassed: true,
+    geometryPassed: false,
+    tablePassed: true,
+    datesPassed: true,
+    contrastPassed: true,
+    overflowX: 0,
+    targets: [{ hit: false, disabled: false }, { hit: true }],
     secret: "CANARY_PRIVATE_NEVER_EXPORT",
   };
   await assert.rejects(
-    () => fn("captureVisualEvidence")({
-      brand: async () => ({}), drain: async () => {}, stabilize: async () => {},
-      measure: async () => metrics, privacy: async () => true,
-      save: async () => { saved = true; },
-    }),
+    () =>
+      fn("captureVisualEvidence")({
+        brand: async () => ({}),
+        drain: async () => {},
+        stabilize: async () => {},
+        measure: async () => metrics,
+        privacy: async () => true,
+        save: async () => {
+          saved = true;
+        },
+      }),
     (error) => {
       assert.equal(error.code, "VISUAL_MEASUREMENT");
       assert.deepEqual(error.visualDiagnostic, {
-        identity: true, geometry: false, table: true, dates: true, contrast: true,
-        targetCount: 2, failedHitCount: 1, overflowX: 0,
+        identity: true,
+        geometry: false,
+        table: true,
+        dates: true,
+        contrast: true,
+        targetCount: 2,
+        failedHitCount: 1,
+        overflowX: 0,
       });
       assert.equal(JSON.stringify(error.visualDiagnostic).includes("CANARY"), false);
       return true;
@@ -5858,14 +5875,26 @@ test("Run114 medição falha preserva diagnóstico fechado sem screenshot ou tex
 });
 test("Run114 diagnóstico limita contadores e ignora getters de campos não autorizados", () => {
   const metrics = {
-    identityPassed: true, geometryPassed: true, tablePassed: true,
-    datesPassed: true, contrastPassed: true, overflowX: Infinity,
+    identityPassed: true,
+    geometryPassed: true,
+    tablePassed: true,
+    datesPassed: true,
+    contrastPassed: true,
+    overflowX: Infinity,
     targets: Array.from({ length: 600 }, () => ({ hit: false, disabled: true })),
-    get secret() { assert.fail("não ler campo privado"); },
+    get secret() {
+      assert.fail("não ler campo privado");
+    },
   };
   assert.deepEqual(fn("visualMeasurementDiagnostic")(metrics), {
-    identity: true, geometry: true, table: true, dates: true, contrast: true,
-    targetCount: 500, failedHitCount: 0, overflowX: null,
+    identity: true,
+    geometry: true,
+    table: true,
+    dates: true,
+    contrast: true,
+    targetCount: 500,
+    failedHitCount: 0,
+    overflowX: null,
   });
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: 40000 }).overflowX, 30000);
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: -40000 }).overflowX, -30000);
