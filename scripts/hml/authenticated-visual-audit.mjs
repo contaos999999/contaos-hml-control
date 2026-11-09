@@ -1,5 +1,15 @@
-import { readFile, mkdir, writeFile, appendFile, lstat, rm, readdir } from "node:fs/promises";
-import { resolve, join, basename } from "node:path";
+import { createReadStream } from "node:fs";
+import {
+  readFile,
+  mkdir,
+  writeFile,
+  appendFile,
+  lstat,
+  rm,
+  readdir,
+  realpath,
+} from "node:fs/promises";
+import { resolve, join, basename, dirname, isAbsolute } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
@@ -2414,6 +2424,144 @@ export async function startDestinationProxy() {
   };
 }
 
+const NATIVE_BINARY_SHA256 = "27e55cc30e487493b89b663085d6deeb0707be201a568657c922fac9076c317c";
+const NATIVE_BINARY_SIZE = 183557344;
+const POPUP_SWITCH = "--block-new-web-contents";
+
+export function nativeBrowserArgs(debugPort, useProxy = false) {
+  if (
+    !Number.isInteger(debugPort) ||
+    debugPort < 1 ||
+    debugPort > 65535 ||
+    typeof useProxy !== "boolean"
+  )
+    fail("BROWSER_POLICY");
+  return [
+    `--remote-debugging-port=${debugPort}`,
+    POPUP_SWITCH,
+    ...(useProxy ? ["--proxy-bypass-list=<-loopback>"] : []),
+  ];
+}
+
+export function verifyNativeBrowserPolicy(args, version) {
+  const forbidden = new Set([
+    "no-sandbox",
+    "disable-setuid-sandbox",
+    "disable-web-security",
+    "allow-running-insecure-content",
+    "ignore-certificate-errors",
+    "ignore-certificate-errors-spki-list",
+    "disable-site-isolation-trials",
+    "allow-insecure-localhost",
+    "unsafely-treat-insecure-origin-as-secure",
+  ]);
+  if (
+    !Array.isArray(args) ||
+    args.length < 3 ||
+    args.length > 256 ||
+    args.some(
+      (a) =>
+        typeof a !== "string" || a.length === 0 || a.length > 8192 || /[\x00-\x1f\x7f]/.test(a),
+    ) ||
+    args.reduce((n, a) => n + a.length, 0) > 65536 ||
+    version?.product !== "HeadlessChrome/145.0.7632.6" ||
+    args.includes("--")
+  )
+    fail("BROWSER_POLICY");
+  const key = (a) =>
+    /^--?[^-]/.test(a) ? a.replace(/^--?/, "").split("=")[0].toLowerCase() : null;
+  for (const name of ["headless", "block-new-web-contents"]) {
+    if (args.filter((a) => key(a) === name).length !== 1 || !args.includes("--" + name))
+      fail("BROWSER_POLICY");
+  }
+  const debugging = args.filter((a) => key(a) === "remote-debugging-port");
+  if (
+    debugging.length > 1 ||
+    (debugging.length === 1 && !/^--remote-debugging-port=[1-9][0-9]{0,4}$/.test(debugging[0])) ||
+    args.some((a) => forbidden.has(key(a)))
+  )
+    fail("BROWSER_POLICY");
+  return true;
+}
+
+async function nativeBinaryIdentity(path) {
+  if (
+    !isAbsolute(path) ||
+    !/\/chromium_headless_shell-1208\/chrome-headless-shell-linux64\/chrome-headless-shell$/.test(
+      path,
+    )
+  )
+    fail("BROWSER_BINARY");
+  const stat = await lstat(path);
+  if (!stat.isFile() || stat.isSymbolicLink() || stat.size !== NATIVE_BINARY_SIZE)
+    fail("BROWSER_BINARY");
+  const resolved = await realpath(path);
+  if (resolved !== path) fail("BROWSER_BINARY");
+  const hash = createHash("sha256");
+  for await (const chunk of createReadStream(path)) hash.update(chunk);
+  if (hash.digest("hex") !== NATIVE_BINARY_SHA256) fail("BROWSER_BINARY");
+  return resolved;
+}
+
+// Return no browser until the exact pinned binary and its actual launch policy agree.
+// No custom executable, caller-supplied args or policy bypass is accepted.
+export async function launchNativeBrowser({ chromium, debugPort, proxy } = {}) {
+  let browser;
+  try {
+    if (
+      process.platform !== "linux" ||
+      process.arch !== "x64" ||
+      require("playwright-core/package.json").version !== "1.58.2" ||
+      typeof chromium?.executablePath !== "function"
+    )
+      fail("BROWSER_BINARY");
+    const regular = chromium.executablePath();
+    if (!isAbsolute(regular) || !/\/chromium-1208\/chrome-linux64\/chrome$/.test(regular))
+      fail("BROWSER_BINARY");
+    const executablePath = await nativeBinaryIdentity(
+      join(
+        dirname(dirname(dirname(regular))),
+        "chromium_headless_shell-1208",
+        "chrome-headless-shell-linux64",
+        "chrome-headless-shell",
+      ),
+    );
+    if (
+      proxy !== undefined &&
+      (typeof proxy !== "string" ||
+        !/^http:\/\/127\.0\.0\.1:[1-9][0-9]{0,4}$/.test(proxy) ||
+        Number(new URL(proxy).port) > 65535)
+    )
+      fail("BROWSER_POLICY");
+    const args = nativeBrowserArgs(debugPort, proxy !== undefined);
+    browser = await chromium.launch({
+      executablePath,
+      chromiumSandbox: true,
+      env: browserEnvironment(process.env),
+      args,
+      ...(proxy ? { proxy: { server: proxy } } : {}),
+    });
+    const session = await browser.newBrowserCDPSession();
+    try {
+      const command = await session.send("Browser.getBrowserCommandLine");
+      const version = await session.send("Browser.getVersion");
+      verifyNativeBrowserPolicy(command.arguments, version);
+      if (
+        (await nativeBinaryIdentity(command.arguments[0])) !== executablePath ||
+        command.arguments.filter((a) => a.startsWith("--remote-debugging-port=")).length !== 1 ||
+        !command.arguments.includes(`--remote-debugging-port=${debugPort}`)
+      )
+        fail("BROWSER_POLICY");
+    } finally {
+      await session.detach();
+    }
+    return browser;
+  } catch {
+    await browser?.close().catch(() => {});
+    fail("BROWSER_POLICY");
+  }
+}
+
 export function browserEnvironment(source = {}) {
   const result = {};
   for (const key of ["PATH", "HOME", "TMPDIR", "RUNNER_TEMP", "XDG_CACHE_HOME", "LANG", "TZ", "CI"])
@@ -4019,12 +4167,7 @@ async function runAuthenticatedAudit() {
   try {
     phase = "BROWSER_START";
     proxy = await startDestinationProxy();
-    browser = await chromium.launch({
-      chromiumSandbox: true,
-      env: browserEnvironment(process.env),
-      proxy: { server: proxy.url },
-      args: [`--remote-debugging-port=${debugPort}`, "--proxy-bypass-list=<-loopback>"],
-    });
+    browser = await launchNativeBrowser({ chromium, debugPort, proxy: proxy.url });
     context = await browser.newContext({
       viewport: { width: 1440, height: 1000 },
       serviceWorkers: "block",
@@ -5403,12 +5546,14 @@ export const SINGLE_REQUEST = Object.freeze({
   upstreamName: "ContaOS Frontend Zero-Drift",
   gateSha: "31b68f3cadbdc13a82bae23a43c35616f873d70b",
   autoGateSha: "122242fd421b348aef229683c0d3969611bce1db",
+  recoveryGateSha: "581e161718d7f784961e2fef6bd1a75ba9295637",
+  spentFixtureNonce: "trilha-a-fixtures-20261108-r1",
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261108-r1",
+    nonce: "trilha-a-fixtures-20261109-r2",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -5432,7 +5577,7 @@ function singleRequestIdentityMode(request) {
   fail("REQUEST_SCHEMA");
 }
 
-export function parseSingleRequest(raw, operation) {
+export function parseSingleRequest(raw, operation, { historical = false } = {}) {
   if (typeof raw !== "string" || Buffer.byteLength(raw) > 4096) fail("REQUEST_JSON");
   let parsed;
   try {
@@ -5500,7 +5645,12 @@ export function parseSingleRequest(raw, operation) {
     parsed.issue !== 317 ||
     !["fixtures", "audit"].includes(parsed.operation) ||
     (operation && parsed.operation !== operation) ||
-    parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce ||
+    (parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce &&
+      !(
+        historical &&
+        parsed.operation === "fixtures" &&
+        parsed.request_id === SINGLE_REQUEST.spentFixtureNonce
+      )) ||
     !hash40(parsed.approved_parent_sha)
   )
     fail("REQUEST_SCHEMA");
@@ -5633,6 +5783,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
   if (parents.length !== 3 || parents[0] !== sha || parents[1] !== request.approved_parent_sha)
     fail("REQUEST_PARENT");
   const ancestors = [SINGLE_REQUEST.gateSha, SINGLE_REQUEST.fixturesSha];
+  if (request.operation === "fixtures") ancestors.push(SINGLE_REQUEST.recoveryGateSha);
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
   ancestors.push(mode === "AUTO_DISCOVER" ? SINGLE_REQUEST.autoGateSha : request.frontend_sha);
@@ -5672,7 +5823,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
   for (const commit of commits) {
     if (!hash40(commit)) fail("REQUEST_HISTORY");
     const raw = await git(["show", commit + ":" + SINGLE_REQUEST.path]);
-    const historic = parseSingleRequest(raw);
+    const historic = parseSingleRequest(raw, undefined, { historical: true });
     if (historic.request_id === request.request_id) requestShas.push(commit);
   }
   return requestShas;

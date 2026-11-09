@@ -16,7 +16,7 @@ import {
   harnessIdentity,
   checkFreshDeployment,
   startDestinationProxy,
-  browserEnvironment,
+  launchNativeBrowser,
   installNativeFence,
   verifyPublishedResponse,
   settleVerifiedPage,
@@ -126,6 +126,400 @@ const listKeys = [
   "p_motivo",
   "p_request_id",
 ];
+
+export const R1_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.receipts.v1",
+  receipts: [
+    {
+      frontendSha: "866608620909bf313a6c2192736330222f9219ad",
+      harnessSha: "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      deploymentId: "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      workflowRun: "42540864527",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "registrar_versao_fonte_v107",
+      requestId: "08141ffd-56c1-4c50-b58f-32912d1006b2",
+      state: "sealed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467",
+    },
+    {
+      frontendSha: "866608620909bf313a6c2192736330222f9219ad",
+      harnessSha: "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      deploymentId: "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      workflowRun: "42540864527",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "registrar_versao_fonte_v107",
+      requestId: "08141ffd-56c1-4c50-b58f-32912d1006b2",
+      state: "confirmed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467",
+    },
+    {
+      frontendSha: "866608620909bf313a6c2192736330222f9219ad",
+      harnessSha: "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      deploymentId: "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      workflowRun: "42540864527",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "aprovar_versao_fonte_v107",
+      requestId: "437a3c66-4bed-45e3-b73e-8696bdf4a791",
+      state: "sealed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769",
+    },
+    {
+      frontendSha: "866608620909bf313a6c2192736330222f9219ad",
+      harnessSha: "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      deploymentId: "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      workflowRun: "42540864527",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "aprovar_versao_fonte_v107",
+      requestId: "437a3c66-4bed-45e3-b73e-8696bdf4a791",
+      state: "confirmed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769",
+    },
+  ],
+});
+const R1_RECEIPTS_SHA256 = "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9";
+const recoveryProofs = new WeakSet();
+export function validateR1RecoveryDocument(input) {
+  const bytes = JSON.stringify(input, null, 2) + "\n";
+  if (hash(bytes) !== R1_RECEIPTS_SHA256) err("RECOVERY_LEDGER");
+  if (
+    !keys(input, ["schema", "receipts"]) ||
+    input.schema !== "contaos.fixture.receipts.v1" ||
+    !Array.isArray(input.receipts) ||
+    input.receipts.length !== 4
+  )
+    err("RECOVERY_LEDGER");
+  for (const receipt of input.receipts) safeReceipt(receipt);
+  return freeze(structuredClone(input));
+}
+export function reconcileR1Recovery(input) {
+  validateR1RecoveryDocument(input?.ledger);
+  const s = input.source,
+    v = input.version;
+  if (
+    input.sourceCount !== 1 ||
+    !official(s) ||
+    s.id !== FIXTURE.source ||
+    !sourceFieldsExact(s) ||
+    !Number.isInteger(s.version) ||
+    s.version < 1 ||
+    !official(v) ||
+    !uuid(v.id) ||
+    v.source !== FIXTURE.source ||
+    !HASH.test(v.hash || "") ||
+    v.approved !== true ||
+    v.textVerified !== true ||
+    v.effective !== true ||
+    v.file !== null ||
+    input.listObserved !== true ||
+    ![0, 1].includes(input.listCount)
+  )
+    err("RECOVERY_STATE");
+  if (
+    input.listCount === 0
+      ? input.canCreateList !== true
+      : !(
+          input.listState?.verified === true &&
+          input.listState.active === true &&
+          input.listState.published === true &&
+          input.listState.ruleVerified === true &&
+          input.listState.sourceVersion === v.id
+        )
+  )
+    err("RECOVERY_LIST");
+  const proof = freeze({
+    schema: "contaos.fixture.recovery.v1",
+    sourceVersion: v.id,
+    sourceHash: v.hash,
+    ledgerSha256: R1_RECEIPTS_SHA256,
+  });
+  recoveryProofs.add(proof);
+  return proof;
+}
+export const DIAGNOSTIC_SUBPHASES = Object.freeze([
+  "PREFLIGHT",
+  "LOGIN",
+  "SOURCE_AND_LIST",
+  "COMPETENCIES",
+  "FINAL_READBACK",
+  "SOURCE_NAVIGATE",
+  "SOURCE_GET",
+  "SOURCE_VERSION_GET",
+  "SOURCE_TEXT_PROOF",
+  "SOURCE_RECONCILE",
+  "SOURCE_VERSION_READ",
+  "SOURCE_UI_CONTROL",
+  "SOURCE_FORM_FIELD",
+  "SOURCE_REGISTER_COMMAND",
+  "SOURCE_APPROVE_COMMAND",
+  "SOURCE_ACTIVATE_COMMAND",
+  "SOURCE_SHEET_CLOSE",
+  "SOURCE_REFRESH",
+  "RECOVERY_READ",
+  "RECOVERY_RETURN",
+  "V109_NAVIGATE",
+  "LIST_PANEL_OPEN",
+  "LIST_GET",
+  "LIST_MODEL_READ",
+  "LIST_UI_CONTROL",
+  "LIST_FORM_FIELD",
+  "LIST_COMMAND",
+  "LIST_REFRESH",
+  "COMPETENCY_UI",
+  "COMPETENCY_GET",
+  "COMPETENCY_COMMAND",
+  "COMPETENCY_RECONCILE",
+  "UI_CONFIRM_FENCE",
+  "UI_CONFIRM_CONTROL",
+  "UI_CONFIRM_CLICK",
+  "UI_CONFIRM_BEFORE",
+  "UI_CONFIRM_AFTER",
+  "RUNTIME_FRESH",
+  "RUNTIME_NAVIGATE",
+  "RUNTIME_CONTEXT",
+  "RUNTIME_COMMAND",
+  "LOGOUT",
+  "CLEANUP",
+  "SOURCE_NAVIGATION",
+  "SOURCE_RECONCILIATION",
+  "SOURCE_REGISTER",
+  "SOURCE_REGISTER_READBACK",
+  "SOURCE_APPROVAL",
+  "SOURCE_APPROVAL_READBACK",
+  "SOURCE_CLOSE",
+  "SOURCE_VERIFICATION",
+  "SOURCE_ACTIVATION",
+  "SOURCE_ACTIVATION_READBACK",
+  "LIST_NAVIGATION",
+  "LIST_RECONCILIATION",
+]);
+
+const PREPARER_DIAGNOSTIC_STEPS = new Set(DIAGNOSTIC_SUBPHASES);
+export function preparerFailureDiagnostic(input) {
+  return {
+    step: PREPARER_DIAGNOSTIC_STEPS.has(input?.step) ? input.step : "UNCLASSIFIED",
+    errorKind:
+      input?.errorName === "TimeoutError"
+        ? "TIMEOUT"
+        : input?.errorName === "Error"
+          ? "ERROR"
+          : "OTHER",
+  };
+}
+
+const PREPARER_NATIVE_CODES = new Set([
+  "FENCE_ASYNC",
+  "FENCE_BODY_LIMIT",
+  "FENCE_CDP_CLOSED",
+  "FENCE_CONFIGURATION",
+  "FENCE_CONTEXT_FOREIGN",
+  "FENCE_CONTEXT_UNKNOWN",
+  "FENCE_DOCUMENT_BODY",
+  "FENCE_DRAIN_TIMEOUT",
+  "FENCE_HEADERS",
+  "FENCE_INITIALIZATION",
+  "FENCE_LIFECYCLE_FRAME",
+  "FENCE_LIFECYCLE_NO_NETWORK",
+  "FENCE_LIFECYCLE_TERMINAL",
+  "FENCE_LIFECYCLE_TYPE",
+  "FENCE_NOT_PROVEN",
+  "FENCE_POPUP",
+  "FENCE_READY",
+  "FENCE_REDIRECT",
+  "FENCE_REQUEST",
+  "FENCE_REQUEST_LIFECYCLE",
+  "FENCE_SOURCE",
+  "FENCE_TARGET_DETACHED",
+  "FENCE_TARGET_FAILED",
+  "FENCE_TARGET_TIMEOUT",
+  "FENCE_TRANSPORT",
+  "FENCE_WORKER_PAUSED",
+  "FENCE_WORKER_RUNNING",
+]);
+function preparationErrorData(error, key) {
+  try {
+    if (!error || !["object", "function"].includes(typeof error)) return undefined;
+    let descriptor = Object.getOwnPropertyDescriptor(error, key);
+    if (!descriptor && key === "name")
+      descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(error) || {}, key);
+    return descriptor && "value" in descriptor && typeof descriptor.value === "string"
+      ? descriptor.value
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+function classifyPreparationFailure(error) {
+  const suppliedName = preparationErrorData(error, "name");
+  const name = ["Error", "TypeError", "ReferenceError", "SyntaxError", "TimeoutError"].includes(
+    suppliedName,
+  )
+    ? suppliedName
+    : "UNKNOWN";
+  const suppliedCode = preparationErrorData(error, "code"),
+    message = preparationErrorData(error, "message");
+  const code = PREPARER_NATIVE_CODES.has(suppliedCode)
+    ? suppliedCode
+    : PREPARER_FAILURE_CODES.has(suppliedCode)
+      ? suppliedCode
+      : PREPARER_FAILURE_CODES.has(message)
+        ? message
+        : name === "TimeoutError"
+          ? "PREPARER_TIMEOUT"
+          : "PREPARER_UNCLASSIFIED";
+  const compatible = preparerFailureDiagnostic({ errorName: name });
+  return {
+    code,
+    errorName: name,
+    failureClass: PREPARER_NATIVE_CODES.has(code)
+      ? "NATIVE_FENCE"
+      : compatible.errorKind === "TIMEOUT"
+        ? "TIMEOUT"
+        : code === "PREPARER_UNCLASSIFIED"
+          ? "UNKNOWN"
+          : "PROTOCOL",
+  };
+}
+export function createPreparationDiagnostics() {
+  const stack = [];
+  const observed = new WeakMap();
+  let generation = 0;
+  let primary = null,
+    lastCompleted = null,
+    cleaning = false;
+  let logoutAttempted = false,
+    logoutVerified = false,
+    cleanupFailure = null;
+  const object = (value) => value !== null && ["object", "function"].includes(typeof value);
+  const candidate = (error) => {
+    const seen = new WeakSet();
+    let value = error,
+      found = null;
+    for (let depth = 0; depth < 8 && object(value) && !seen.has(value); depth++) {
+      seen.add(value);
+      const entry = observed.get(value);
+      if (entry?.generation === generation) found = entry;
+      try {
+        const descriptor = Object.getOwnPropertyDescriptor(value, "cause");
+        value = descriptor && "value" in descriptor ? descriptor.value : null;
+      } catch {
+        break;
+      }
+    }
+    return found;
+  };
+  const observe = (error) => {
+    const entry = candidate(error) || {
+      ...classifyPreparationFailure(error),
+      generation,
+      subphase: stack.at(-1) || "PREFLIGHT",
+      subphasePath: stack.slice(-12),
+    };
+    if (object(error)) observed.set(error, entry);
+    return entry;
+  };
+  const capture = (error) => {
+    primary ||= observe(error);
+    return primary.code;
+  };
+  return Object.freeze({
+    capture,
+    async step(subphase, execute) {
+      if (!DIAGNOSTIC_SUBPHASES.includes(subphase) || typeof execute !== "function")
+        err("DIAGNOSTIC_SUBPHASE");
+      if (stack.length === 0) generation++;
+      stack.push(subphase);
+      try {
+        const value = await execute();
+        if (!cleaning && !primary) lastCompleted = subphase;
+        return value;
+      } catch (error) {
+        if (!cleaning) {
+          observe(error);
+          // A nested failure may be deliberately recovered by the consumer.
+          // Seal only the rejection that escapes the outer await boundary.
+          if (stack.length === 1) capture(error);
+        }
+        throw error;
+      } finally {
+        stack.pop();
+      }
+    },
+    async cleanup(execute) {
+      logoutAttempted = true;
+      const previous = cleaning;
+      cleaning = true;
+      try {
+        logoutVerified = (await execute()) === true;
+        if (!logoutVerified) cleanupFailure ||= "LOGOUT_NOT_VERIFIED";
+      } catch {
+        logoutVerified = false;
+        cleanupFailure ||= "LOGOUT_FAILED";
+      } finally {
+        cleaning = previous;
+      }
+      return logoutVerified;
+    },
+    async finishCleanup(code, execute) {
+      if (
+        ![
+          "RUNTIME_CLEAR_FAILED",
+          "OBSERVER_CLOSE_FAILED",
+          "FENCE_CLOSE_FAILED",
+          "BROWSER_CLOSE_FAILED",
+          "PROXY_CLOSE_FAILED",
+        ].includes(code) ||
+        typeof execute !== "function"
+      )
+        err("DIAGNOSTIC_SUBPHASE");
+      const previous = cleaning;
+      cleaning = true;
+      try {
+        await execute();
+      } catch {
+        cleanupFailure ||= code;
+      } finally {
+        cleaning = previous;
+      }
+    },
+    snapshot() {
+      return freeze({
+        primaryFailure: primary?.code || null,
+        failureClass: primary?.failureClass || null,
+        errorName: primary?.errorName || null,
+        subphase: primary?.subphase || stack.at(-1) || lastCompleted || "PREFLIGHT",
+        subphasePath: primary?.subphasePath || stack.slice(-12),
+        lastCompletedSubphase: lastCompleted,
+        logoutAttempted,
+        logoutVerified,
+        cleanupFailure,
+      });
+    },
+  });
+}
+let activePreparationDiagnostics = null;
+async function tracedPreparation(subphase, execute) {
+  return activePreparationDiagnostics
+    ? activePreparationDiagnostics.step(subphase, execute)
+    : execute();
+}
+export async function withPreparationDiagnostics(diagnostics, execute) {
+  if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
+  activePreparationDiagnostics = diagnostics;
+  try {
+    return await execute();
+  } finally {
+    activePreparationDiagnostics = null;
+  }
+}
+
 export const BUSINESS_RPCS = Object.freeze([
   "registrar_versao_fonte_v107",
   "aprovar_versao_fonte_v107",
@@ -571,9 +965,12 @@ export function createIntentBroker({
   persist,
   now = () => performance.now(),
   competenceGateAmended = false,
+  recoveryLedger,
 } = {}) {
+  const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
+  let recoveryAuthorized = !recovery;
   let active = null,
-    count = 0,
+    count = recovery ? 2 : 0,
     frozen = false;
   const accepted = new Map(),
     usedIds = new Set();
@@ -659,7 +1056,15 @@ export function createIntentBroker({
   }
   return Object.freeze({
     policy,
+    authorizeRecovery(proof) {
+      if (!recovery || !recoveryProofs.has(proof)) err("RECOVERY_PROOF");
+      recoveryAuthorized = true;
+      return true;
+    },
     arm({ rpc, payload, requestId, uiGeneratedKey, verified, evidence = {} } = {}) {
+      if (recovery && ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"].includes(rpc))
+        err("RECOVERY_CONFIRMED_OPERATION");
+      if (!recoveryAuthorized) err("RECOVERY_READ_ONLY");
       if (frozen) err("INTENT_FROZEN");
       if (active) err("INTENT_PENDING");
       if (count >= 24) err("INTENT_BUDGET");
@@ -1064,11 +1469,15 @@ export async function confirmUiIntent({
     typeof settleVerifiedPage !== "function"
   )
     err("UI_CONFIGURATION");
-  await fence.drain();
+  await tracedPreparation("UI_CONFIRM_FENCE", async () => fence.drain());
   fence.assertSafe();
   const control = scope.getByRole("button", { name: button, exact: true });
-  if ((await control.count()) !== 1 || !(await control.isEnabled())) err("UI_CAPABILITY");
-  const fresh = await reconcile("before");
+  if (
+    (await tracedPreparation("UI_CONFIRM_CONTROL", async () => control.count())) !== 1 ||
+    !(await tracedPreparation("UI_CONFIRM_CONTROL", async () => control.isEnabled()))
+  )
+    err("UI_CAPABILITY");
+  const fresh = await tracedPreparation("UI_CONFIRM_BEFORE", async () => reconcile("before"));
   if (
     fresh?.verified?.context !== true ||
     fresh?.verified?.capability !== true ||
@@ -1087,18 +1496,18 @@ export async function confirmUiIntent({
     ...(key ? { uiGeneratedKey: key } : { requestId: randomUUID() }),
   });
   try {
-    await control.click();
-    await settleVerifiedPage(page, fence);
-    const after = await reconcile("after");
+    await tracedPreparation("UI_CONFIRM_CLICK", async () => control.click());
+    await tracedPreparation("UI_CONFIRM_FENCE", async () => settleVerifiedPage(page, fence));
+    const after = await tracedPreparation("UI_CONFIRM_AFTER", async () => reconcile("after"));
     if (after?.confirmed !== true) {
       broker.resolve("uncertain");
       err("UI_UNCERTAIN");
     }
     broker.resolve("confirmed");
     return true;
-  } catch {
+  } catch (error) {
     if (broker.snapshot().sent && !broker.snapshot().frozen) broker.resolve("uncertain");
-    err("UI_UNCERTAIN");
+    throw new Error("UI_UNCERTAIN", { cause: error });
   }
 }
 /** Caller supplies only execution code; cleanup runs after login and every failure. */
@@ -1810,6 +2219,8 @@ export function createOfficialObserver(page) {
  */
 export async function prepareSourceAndList(io) {
   const { page } = io;
+  const recovery =
+    io.recoveryLedger === undefined ? null : validateR1RecoveryDocument(io.recoveryLedger);
   const fail = (code) => {
     throw new Error(code);
   };
@@ -1843,15 +2254,17 @@ export async function prepareSourceAndList(io) {
   const btn = (s, name) => s.getByRole("button", { name, exact: true });
   const enabled = async (locator, code) => {
     assert(
-      (await locator.count()) === 1 && (await locator.isVisible()) && (await locator.isEnabled()),
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () => locator.count())) === 1 &&
+        (await tracedPreparation("SOURCE_UI_CONTROL", async () => locator.isVisible())) &&
+        (await tracedPreparation("SOURCE_UI_CONTROL", async () => locator.isEnabled())),
       code,
     );
   };
   const click = async (s, name) => {
     const b = btn(s, name);
-    await enabled(b, "FLOW_BUTTON_UNAVAILABLE");
-    await b.click();
-    await io.fresh();
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => enabled(b, "FLOW_BUTTON_UNAVAILABLE"));
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => b.click());
+    await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
   };
   const field = (s, name) => s.getByLabel(name, { exact: true });
   const dialog = (name) => page.getByRole("dialog", { name, exact: true });
@@ -1861,7 +2274,9 @@ export async function prepareSourceAndList(io) {
   };
   const sourceRow = async () => {
     const s = one(
-      await io.read("fontes_normativas", { id: FIXTURE.source }),
+      await tracedPreparation("SOURCE_GET", async () =>
+        io.read("fontes_normativas", { id: FIXTURE.source }),
+      ),
       "FLOW_SOURCE_NONUNIQUE",
     );
     assert(
@@ -1886,7 +2301,7 @@ export async function prepareSourceAndList(io) {
     return s;
   };
   const sourceProof = async () => {
-    await sourceRow();
+    await tracedPreparation("SOURCE_RECONCILE", async () => sourceRow());
     assert(
       uuid(version.id) &&
         version.id_fonte === source.id &&
@@ -1897,7 +2312,7 @@ export async function prepareSourceAndList(io) {
         version.id_arquivo === null,
       "FLOW_SOURCE_VERSION_MISMATCH",
     );
-    const caps = await io.sourceCapabilities();
+    const caps = await tracedPreparation("SOURCE_RECONCILE", async () => io.sourceCapabilities());
     assert(checkedOfficial(caps), "FLOW_SOURCE_CAPABILITY_CONTEXT");
     evidence.sourceVersions = [
       {
@@ -1916,17 +2331,21 @@ export async function prepareSourceAndList(io) {
   const versionRead = async (after) => {
     if (
       after !== undefined &&
-      !(await io.observedAfter("versoes_fontes_normativas", { id_fonte: FIXTURE.source }, after, {
-        select: EXACT_SELECTS.versoes_fontes_normativas[0],
-      }))
+      !(await tracedPreparation("SOURCE_VERSION_GET", async () =>
+        io.observedAfter("versoes_fontes_normativas", { id_fonte: FIXTURE.source }, after, {
+          select: EXACT_SELECTS.versoes_fontes_normativas[0],
+        }),
+      ))
     )
       fail("FLOW_VERSION_READBACK_UNOBSERVED");
     version = one(
       (
-        await io.read(
-          "versoes_fontes_normativas",
-          { id_fonte: FIXTURE.source },
-          { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
+        await tracedPreparation("SOURCE_VERSION_GET", async () =>
+          io.read(
+            "versoes_fontes_normativas",
+            { id_fonte: FIXTURE.source },
+            { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
+          ),
         )
       ).filter(
         (v) =>
@@ -1938,7 +2357,7 @@ export async function prepareSourceAndList(io) {
       ),
       "FLOW_EQUIVALENT_VERSION_NONUNIQUE",
     );
-    await sourceProof();
+    await tracedPreparation("SOURCE_RECONCILE", async () => sourceProof());
     return version;
   };
   // GET cache must distinguish observed absence from not yet observed. Walk every UI page.
@@ -1947,37 +2366,57 @@ export async function prepareSourceAndList(io) {
     let turns = 0;
     while (true) {
       assert(++turns <= 100, "FLOW_PAGE_LIMIT");
-      for (const r of await readRows()) {
+      for (const r of await tracedPreparation("SOURCE_UI_CONTROL", async () => readRows())) {
         assert(uuid(r.id), "FLOW_ROW_ID");
         seen.set(r.id, r);
       }
       const next = btn(scope, nextName);
-      if ((await next.count()) === 0 || !(await next.isEnabled())) break;
-      await click(scope, nextName);
+      if (
+        (await tracedPreparation("SOURCE_UI_CONTROL", async () => next.count())) === 0 ||
+        !(await tracedPreparation("SOURCE_UI_CONTROL", async () => next.isEnabled()))
+      )
+        break;
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(scope, nextName));
     }
     return [...seen.values()];
   };
-  await io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`);
+  await tracedPreparation("SOURCE_NAVIGATE", async () =>
+    io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`),
+  );
   // Locate exact official source through existing source-list pagination, never create source.
-  const sources = await allPages(page, "Próxima página", () => io.read("fontes_normativas", {}));
+  const sources = await tracedPreparation("SOURCE_GET", async () =>
+    allPages(page, "Próxima página", () => io.read("fontes_normativas", {})),
+  );
   assert(
     sources.some((s) => s.id === FIXTURE.source),
     "FLOW_SOURCE_NOT_IN_UI_GET",
   );
-  await sourceRow();
+  await tracedPreparation("SOURCE_RECONCILE", async () => sourceRow());
   // Return through a KNOWN SSR path so its list starts at page zero, then find source button.
-  await io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`);
-  for (let n = 0; (await btn(page, `Detalhes de ${source.titulo}`).count()) === 0; n++) {
+  await tracedPreparation("SOURCE_NAVIGATE", async () =>
+    io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`),
+  );
+  for (
+    let n = 0;
+    (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+      btn(page, `Detalhes de ${source.titulo}`).count(),
+    )) === 0;
+    n++
+  ) {
     assert(n < 100, "FLOW_SOURCE_UI_MISSING");
-    await click(page, "Próxima página");
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => click(page, "Próxima página"));
   }
-  await click(page, `Detalhes de ${source.titulo}`);
+  await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+    click(page, `Detalhes de ${source.titulo}`),
+  );
   let sheet = dialog(source.titulo);
-  const versions = await allPages(sheet, "Próximas versões", () =>
-    io.read(
-      "versoes_fontes_normativas",
-      { id_fonte: source.id },
-      { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
+  const versions = await tracedPreparation("SOURCE_VERSION_GET", async () =>
+    allPages(sheet, "Próximas versões", () =>
+      io.read(
+        "versoes_fontes_normativas",
+        { id_fonte: source.id },
+        { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
+      ),
     ),
   );
   // A source-version hash is a server digest of structured version fields,
@@ -1986,28 +2425,32 @@ export async function prepareSourceAndList(io) {
     assert(uuid(v.id) && hash64(v.hash) && v.id_fonte === source.id, "FLOW_VERSION_ID_HASH");
     for (
       let n = 0;
-      (await btn(sheet, `Ver texto registrado (versão ${v.versao})`).count()) === 0;
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, `Ver texto registrado (versão ${v.versao})`).count(),
+      )) === 0;
       n++
     ) {
       assert(n < 100, "FLOW_VERSION_TEXT_UI_MISSING");
-      await click(sheet, "Versões anteriores");
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Versões anteriores"));
     }
     const textOrdinal = io.generation();
-    await click(sheet, `Ver texto registrado (versão ${v.versao})`);
+    await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+      click(sheet, `Ver texto registrado (versão ${v.versao})`),
+    );
     assert(
-      await io.observedAfter("versoes_fontes_normativas", { id: v.id }, textOrdinal, {
-        select: "conteudo_texto,metadados",
-      }),
+      await tracedPreparation("SOURCE_VERSION_GET", async () =>
+        io.observedAfter("versoes_fontes_normativas", { id: v.id }, textOrdinal, {
+          select: "conteudo_texto,metadados",
+        }),
+      ),
       "FLOW_VERSION_TEXT_UNOBSERVED",
     );
     // IO joins only the just-observed select=conteudo_texto,metadados&id=eq.ID
     // to the independently observed version identity. It must not invent row ID
     // from response content (this projection omits id), or use a stale text GET.
     const textRow = one(
-      await io.read(
-        "versoes_fontes_normativas",
-        { id: v.id },
-        { select: "conteudo_texto,metadados" },
+      await tracedPreparation("SOURCE_VERSION_GET", async () =>
+        io.read("versoes_fontes_normativas", { id: v.id }, { select: "conteudo_texto,metadados" }),
       ),
       "FLOW_VERSION_TEXT_UNOBSERVED",
     );
@@ -2016,7 +2459,7 @@ export async function prepareSourceAndList(io) {
       hash(textRow.conteudo_texto) === FIXTURE.fileHash &&
       same(textRow.metadados, {});
     if (exact) verifiedTextVersions.add(v.id);
-    await click(sheet, "Ocultar texto");
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Ocultar texto"));
     return exact;
   };
   const equivalents = [];
@@ -2025,64 +2468,85 @@ export async function prepareSourceAndList(io) {
   )) {
     // Move back to first page to locate each candidate deterministically.
     while (
-      (await btn(sheet, "Versões anteriores").count()) === 1 &&
-      (await btn(sheet, "Versões anteriores").isEnabled())
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, "Versões anteriores").count(),
+      )) === 1 &&
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, "Versões anteriores").isEnabled(),
+      ))
     )
-      await click(sheet, "Versões anteriores");
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Versões anteriores"));
     for (
       let n = 0;
-      (await btn(sheet, `Ver texto registrado (versão ${v.versao})`).count()) === 0;
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, `Ver texto registrado (versão ${v.versao})`).count(),
+      )) === 0;
       n++
     ) {
       assert(n < 100, "FLOW_VERSION_CANDIDATE_UI_MISSING");
-      await click(sheet, "Próximas versões");
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Próximas versões"));
     }
-    if (await proveText(v)) equivalents.push(v);
+    if (await tracedPreparation("SOURCE_TEXT_PROOF", async () => proveText(v))) equivalents.push(v);
   }
   assert(equivalents.length <= 1, "FLOW_DUPLICATE_EQUIVALENT_VERSION");
+  if (recovery && equivalents.length !== 1) fail("RECOVERY_STATE");
   if (equivalents.length === 0) {
     while (
-      (await btn(sheet, "Versões anteriores").count()) === 1 &&
-      (await btn(sheet, "Versões anteriores").isEnabled())
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, "Versões anteriores").count(),
+      )) === 1 &&
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, "Versões anteriores").isEnabled(),
+      ))
     )
-      await click(sheet, "Versões anteriores");
-    const caps = await io.sourceCapabilities();
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Versões anteriores"));
+    const caps = await tracedPreparation("SOURCE_RECONCILE", async () => io.sourceCapabilities());
     assert(checkedOfficial(caps) && caps.canRegister === true, "FLOW_REGISTER_DENIED");
-    await click(sheet, "Nova versão");
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Nova versão"));
     const d = dialog("Nova versão");
-    await field(d, "Início da vigência").fill("2026-01-01");
-    await field(d, "Fim da vigência (opcional)").fill("");
-    await field(d, "Texto").check();
-    await field(d, "Texto da versão").fill(io.text);
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Início da vigência").fill("2026-01-01"),
+    );
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Fim da vigência (opcional)").fill(""),
+    );
+    await tracedPreparation("SOURCE_FORM_FIELD", async () => field(d, "Texto").check());
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Texto da versão").fill(io.text),
+    );
     const registerOrdinal = io.generation();
-    await io.command({
-      rpc: "registrar_versao_fonte_v107",
-      payload: {
-        p_id_organizacao: FIXTURE.organization,
-        p_id_fonte: FIXTURE.source,
-        p_inicio_vigencia: "2026-01-01",
-        p_fim_vigencia: null,
-        p_id_arquivo: null,
-        p_conteudo_texto: io.text,
-        p_metadados: {},
-      },
-      evidence,
-      scope: d,
-      button: "Registrar versão",
-      confirmAfter: (r) =>
-        r?.schema_versao === "v107-v1" &&
-        uuid(r?.versao?.id) &&
-        r.versao.id_fonte === FIXTURE.source &&
-        hash64(r.versao.hash) &&
-        r.versao.conteudo_texto === io.text &&
-        same(r.versao.metadados, {}),
-    });
-    await io.fresh();
+    await tracedPreparation("SOURCE_REGISTER_COMMAND", async () =>
+      io.command({
+        rpc: "registrar_versao_fonte_v107",
+        payload: {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_fonte: FIXTURE.source,
+          p_inicio_vigencia: "2026-01-01",
+          p_fim_vigencia: null,
+          p_id_arquivo: null,
+          p_conteudo_texto: io.text,
+          p_metadados: {},
+        },
+        evidence,
+        scope: d,
+        button: "Registrar versão",
+        confirmAfter: (r) =>
+          r?.schema_versao === "v107-v1" &&
+          uuid(r?.versao?.id) &&
+          r.versao.id_fonte === FIXTURE.source &&
+          hash64(r.versao.hash) &&
+          r.versao.conteudo_texto === io.text &&
+          same(r.versao.metadados, {}),
+      }),
+    );
+    await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
     const newlyObserved = (
-      await io.read(
-        "versoes_fontes_normativas",
-        { id_fonte: source.id },
-        { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
+      await tracedPreparation("SOURCE_VERSION_GET", async () =>
+        io.read(
+          "versoes_fontes_normativas",
+          { id_fonte: source.id },
+          { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
+        ),
       )
     ).filter(
       (v) =>
@@ -2092,92 +2556,245 @@ export async function prepareSourceAndList(io) {
         v.id_arquivo === null,
     );
     const created = one(newlyObserved, "FLOW_CREATED_VERSION_NONUNIQUE");
-    assert(await proveText(created), "FLOW_CREATED_VERSION_TEXT_MISMATCH");
-    await versionRead(registerOrdinal);
+    assert(
+      await tracedPreparation("SOURCE_TEXT_PROOF", async () => proveText(created)),
+      "FLOW_CREATED_VERSION_TEXT_MISMATCH",
+    );
+    await tracedPreparation("SOURCE_VERSION_READ", async () => versionRead(registerOrdinal));
   } else {
     version = equivalents[0];
-    await sourceProof();
+    await tracedPreparation("SOURCE_RECONCILE", async () => sourceProof());
   }
   // Locate matching version's button even when pagination starts on last page.
-  let caps = await sourceProof();
+  let caps = await tracedPreparation("SOURCE_RECONCILE", async () => sourceProof());
+  if (recovery && !version.aprovado_em) fail("RECOVERY_STATE");
   if (!version.aprovado_em) {
-    for (let n = 0; (await btn(sheet, `Aprovar versão ${version.versao}`).count()) === 0; n++) {
+    for (
+      let n = 0;
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+        btn(sheet, `Aprovar versão ${version.versao}`).count(),
+      )) === 0;
+      n++
+    ) {
       assert(n < 100, "FLOW_VERSION_UI_MISSING");
-      await click(sheet, "Versões anteriores");
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => click(sheet, "Versões anteriores"));
     }
     assert(caps.canApprove === true, "FLOW_APPROVE_DENIED");
-    await click(sheet, `Aprovar versão ${version.versao}`);
+    await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+      click(sheet, `Aprovar versão ${version.versao}`),
+    );
     const d = dialog(`Aprovar versão ${version.versao}`);
-    await field(d, "Fundamento").fill(FIXTURE.foundation);
-    await field(d, "Confirmo que revisei hash, origem e vigência desta versão.").check();
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Fundamento").fill(FIXTURE.foundation),
+    );
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Confirmo que revisei hash, origem e vigência desta versão.").check(),
+    );
     const id = version.id;
     const approvalOrdinal = io.generation();
-    await io.command({
-      rpc: "aprovar_versao_fonte_v107",
-      payload: {
-        p_id_organizacao: FIXTURE.organization,
-        p_id_versao: id,
-        p_hash_esperado: version.hash,
-        p_fundamento: FIXTURE.foundation,
-      },
-      evidence,
-      scope: d,
-      button: "Aprovar",
-      confirmAfter: (r) =>
-        r?.schema_versao === "v107-v1" &&
-        r?.versao?.id === id &&
-        r.versao.hash === version.hash &&
-        !!r.versao.aprovado_em,
-    });
-    await io.fresh();
-    await versionRead(approvalOrdinal);
+    await tracedPreparation("SOURCE_APPROVE_COMMAND", async () =>
+      io.command({
+        rpc: "aprovar_versao_fonte_v107",
+        payload: {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_versao: id,
+          p_hash_esperado: version.hash,
+          p_fundamento: FIXTURE.foundation,
+        },
+        evidence,
+        scope: d,
+        button: "Aprovar",
+        confirmAfter: (r) =>
+          r?.schema_versao === "v107-v1" &&
+          r?.versao?.id === id &&
+          r.versao.hash === version.hash &&
+          !!r.versao.aprovado_em,
+      }),
+    );
+    await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
+    await tracedPreparation("SOURCE_VERSION_READ", async () => versionRead(approvalOrdinal));
     assert(!!version.aprovado_em, "FLOW_APPROVAL_NOT_READBACK");
   }
-  await click(sheet, "Close");
-  if (source.situacao !== "ativa") {
-    caps = await sourceProof();
-    assert(caps.canActivate === true, "FLOW_ACTIVATE_DENIED");
-    await click(page, `Editar ${source.titulo}`);
-    const d = dialog("Editar fonte");
-    await field(d, "Situação").selectOption("ativa");
-    const before = source.versao_registro;
-    await io.command({
-      rpc: "salvar_fonte_normativa_v107",
-      payload: {
-        p_id_organizacao: FIXTURE.organization,
-        p_id_contrato: FIXTURE.contract,
-        p_id_fonte: source.id,
-        p_tipo: source.tipo,
-        p_titulo: source.titulo,
-        p_referencia: source.referencia,
-        p_descricao: source.descricao,
-        p_situacao: "ativa",
-        p_versao_esperada: before,
-      },
-      evidence,
-      scope: d,
-      button: "Salvar",
-      confirmAfter: (r) =>
-        r?.schema_versao === "v107-v1" &&
-        r?.fonte?.id === FIXTURE.source &&
-        r.fonte.situacao === "ativa" &&
-        r.fonte.versao_registro === before + 1,
+  await tracedPreparation("SOURCE_SHEET_CLOSE", async () => click(sheet, "Close"));
+  if (recovery) {
+    await tracedPreparation("RECOVERY_READ", async () => {
+      await tracedPreparation("V109_NAVIGATE", async () =>
+        io.link(`/contratos/${FIXTURE.contract}/regras`),
+      );
+      await tracedPreparation("LIST_PANEL_OPEN", async () => click(page, "Gerenciar listas"));
+      const region = page.getByRole("region", { name: "Gestão de listas", exact: true });
+      const rows = await tracedPreparation("LIST_GET", async () =>
+        allPages(region, "Próxima página de listas", () => io.read("listas_verificacao", {})),
+      );
+      const matching = rows.filter((r) => r.nome === FIXTURE.listName);
+      assert(matching.length <= 1, "RECOVERY_LIST");
+      let state = null;
+      if (matching.length === 1) {
+        for (
+          let n = 0;
+          (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+            field(region, "Lista selecionada").locator(`option[value="${matching[0].id}"]`).count(),
+          )) === 0;
+          n++
+        ) {
+          assert(n < 100, "FLOW_LIST_UI_MISSING");
+          await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+            click(region, "Página anterior de listas"),
+          );
+        }
+        await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+          field(region, "Lista selecionada").selectOption(matching[0].id),
+        );
+        await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
+      }
+      const model = await tracedPreparation("LIST_MODEL_READ", async () =>
+        io.rpcRead("obter_lista_operacional_v1"),
+      );
+      assert(
+        model?.schema_versao === "crud-lista-v1" &&
+          model.id_organizacao === FIXTURE.organization &&
+          model.id_contrato === FIXTURE.contract &&
+          checkedOfficial(model),
+        "FLOW_MODEL_CONTEXT",
+      );
+      if (matching.length === 1) {
+        const l = model.lista,
+          v = model.versao,
+          items = model.itens;
+        assert(
+          l &&
+            v &&
+            l.id === matching[0].id &&
+            uuid(l.id) &&
+            uuid(v.id) &&
+            Number.isInteger(l.versao_registro) &&
+            l.versao_registro > 0 &&
+            Number.isInteger(v.numero_versao) &&
+            v.numero_versao > 0 &&
+            l.versao_atual === v.numero_versao &&
+            l.nome === FIXTURE.listName &&
+            l.descricao === FIXTURE.listDescription &&
+            checkedOfficial(l) &&
+            checkedOfficial(v) &&
+            v.id_lista === l.id &&
+            v.vigencia_inicio === "2026-01-01" &&
+            v.vigencia_fim === null &&
+            model.total_itens === 1 &&
+            Array.isArray(items) &&
+            items.length === 1,
+          "RECOVERY_LIST",
+        );
+        const item = items[0],
+          expected = {
+            codigo: "AUD-A-TXT-001",
+            descricao: "Presença do documento TXT sintético de auditoria.",
+            categoria: "documental",
+            obrigatorio: true,
+            aplicavel: true,
+            impeditivo: true,
+            criticidade: "alta",
+            ordem: 1,
+            id_fonte_versao: version.id,
+            regra_validacao: {
+              documento: { obrigatorio: true, tipos: ["outro"] },
+              condicao: { tipo: "sempre" },
+            },
+          };
+        assert(
+          uuid(item.id) &&
+            checkedOfficial(item) &&
+            item.id_versao_lista === v.id &&
+            Object.entries(expected).every(([k, x]) => same(item[k], x)),
+          "RECOVERY_LIST",
+        );
+        state = {
+          verified: true,
+          active: l.situacao === "ativa",
+          published: v.situacao === "publicada",
+          ruleVerified: true,
+          sourceVersion: version.id,
+        };
+      }
+      const proof = reconcileR1Recovery({
+        ledger: recovery,
+        source: { ...source, ...context, version: source.versao_registro },
+        version: {
+          ...context,
+          id: version.id,
+          source: source.id,
+          hash: version.hash,
+          approved: !!version.aprovado_em,
+          textVerified: verifiedTextVersions.has(version.id),
+          effective: version.inicio_vigencia === "2026-01-01" && version.fim_vigencia === null,
+          file: version.id_arquivo,
+        },
+        sourceCount: 1,
+        listCount: matching.length,
+        listObserved: true,
+        listState: state,
+        canCreateList: model.acoes?.criar_lista === true,
+      });
+      assert(typeof io.recoveryReady === "function", "RECOVERY_PROOF");
+      io.recoveryReady(proof);
     });
-    await io.fresh();
-    await sourceRow();
+    await tracedPreparation("RECOVERY_RETURN", () =>
+      io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`),
+    );
+  }
+  if (source.situacao !== "ativa") {
+    caps = await tracedPreparation("SOURCE_RECONCILE", async () => sourceProof());
+    assert(caps.canActivate === true, "FLOW_ACTIVATE_DENIED");
+    await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+      click(page, `Editar ${source.titulo}`),
+    );
+    const d = dialog("Editar fonte");
+    await tracedPreparation("SOURCE_FORM_FIELD", async () =>
+      field(d, "Situação").selectOption("ativa"),
+    );
+    const before = source.versao_registro;
+    await tracedPreparation("SOURCE_ACTIVATE_COMMAND", async () =>
+      io.command({
+        rpc: "salvar_fonte_normativa_v107",
+        payload: {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_contrato: FIXTURE.contract,
+          p_id_fonte: source.id,
+          p_tipo: source.tipo,
+          p_titulo: source.titulo,
+          p_referencia: source.referencia,
+          p_descricao: source.descricao,
+          p_situacao: "ativa",
+          p_versao_esperada: before,
+        },
+        evidence,
+        scope: d,
+        button: "Salvar",
+        confirmAfter: (r) =>
+          r?.schema_versao === "v107-v1" &&
+          r?.fonte?.id === FIXTURE.source &&
+          r.fonte.situacao === "ativa" &&
+          r.fonte.versao_registro === before + 1,
+      }),
+    );
+    await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
+    await tracedPreparation("SOURCE_RECONCILE", async () => sourceRow());
     assert(source.situacao === "ativa", "FLOW_ACTIVE_NOT_READBACK");
   }
-  await sourceProof();
-  await io.link(`/contratos/${FIXTURE.contract}/regras`);
-  await click(page, "Gerenciar listas");
+  await tracedPreparation("SOURCE_RECONCILE", async () => sourceProof());
+  await tracedPreparation("V109_NAVIGATE", async () =>
+    io.link(`/contratos/${FIXTURE.contract}/regras`),
+  );
+  await tracedPreparation("LIST_PANEL_OPEN", async () => click(page, "Gerenciar listas"));
   const panel = page.getByRole("region", { name: "Gestão de listas", exact: true });
-  const headers = await allPages(panel, "Próxima página de listas", () =>
-    io.read("listas_verificacao", {}),
+  const headers = await tracedPreparation("LIST_GET", async () =>
+    allPages(panel, "Próxima página de listas", () => io.read("listas_verificacao", {})),
   );
   const matches = headers.filter((l) => l.nome === FIXTURE.listName);
   assert(matches.length <= 1, "FLOW_LIST_DUPLICATE");
   const readModel = async () => {
-    const d = await io.rpcRead("obter_lista_operacional_v1");
+    const d = await tracedPreparation("LIST_MODEL_READ", async () =>
+      io.rpcRead("obter_lista_operacional_v1"),
+    );
     assert(
       d?.schema_versao === "crud-lista-v1" &&
         d.id_organizacao === FIXTURE.organization &&
@@ -2205,7 +2822,7 @@ export async function prepareSourceAndList(io) {
   });
   const ruleOK = (i) => Object.entries(itemExpected()).every(([k, v]) => same(i[k], v));
   const listProof = async () => {
-    const d = await readModel();
+    const d = await tracedPreparation("LIST_MODEL_READ", async () => readModel());
     assert(
       d.lista &&
         d.versao &&
@@ -2239,121 +2856,155 @@ export async function prepareSourceAndList(io) {
     return d;
   };
   const listCommand = async (action, payload, label, setup = async () => {}) => {
-    const d = await readModel();
+    const d = await tracedPreparation("LIST_MODEL_READ", async () => readModel());
     assert(
       d.acoes?.[action === "salvar_item" ? "criar_item" : action] === true,
       "FLOW_LIST_CAPABILITY_DENIED",
     );
-    if (action !== "criar_lista") await listProof();
-    await click(panel, label);
+    if (action !== "criar_lista")
+      await tracedPreparation("LIST_MODEL_READ", async () => listProof());
+    await tracedPreparation("LIST_UI_CONTROL", async () => click(panel, label));
     const form = panel.locator("form").filter({
       has: page.getByRole("heading", {
         name: action === "salvar_item" ? "Salvar item" : label,
         exact: true,
       }),
     });
-    assert((await form.count()) === 1, "FLOW_LIST_FORM_NONUNIQUE");
-    await setup(form);
-    await field(form, "Motivo").fill(FIXTURE.reason);
-    await click(form, "Revisar operação");
+    assert(
+      (await tracedPreparation("LIST_UI_CONTROL", async () => form.count())) === 1,
+      "FLOW_LIST_FORM_NONUNIQUE",
+    );
+    await tracedPreparation("LIST_UI_CONTROL", async () => setup(form));
+    await tracedPreparation("LIST_FORM_FIELD", async () =>
+      field(form, "Motivo").fill(FIXTURE.reason),
+    );
+    await tracedPreparation("LIST_UI_CONTROL", async () => click(form, "Revisar operação"));
     const prev = action === "criar_lista" ? null : d.lista.versao_registro;
-    await io.command({
-      rpc: "executar_comando_lista_v1",
-      payload: {
-        p_id_organizacao: FIXTURE.organization,
-        p_id_contrato: FIXTURE.contract,
-        p_id_lista: action === "criar_lista" ? null : d.lista.id,
-        p_versao_esperada: prev,
-        p_acao: action,
-        p_payload: payload,
-        p_motivo: FIXTURE.reason,
-      },
-      evidence,
-      scope: form,
-      button: "Confirmar operação",
-      confirmAfter: (r) =>
-        r?.schema_versao === "crud-lista-v1" &&
-        r.acao === action &&
-        r.id_organizacao === FIXTURE.organization &&
-        r.id_contrato === FIXTURE.contract &&
-        uuid(r.lista?.id) &&
-        r.lista.nome === FIXTURE.listName &&
-        r.lista.versao_registro === (prev === null ? 1 : prev + 1) &&
-        (action === "criar_lista" || r.lista.id === d.lista.id) &&
-        uuid(r.evento_id),
-    });
-    await io.fresh();
-    await listProof();
+    await tracedPreparation("LIST_COMMAND", async () =>
+      io.command({
+        rpc: "executar_comando_lista_v1",
+        payload: {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_contrato: FIXTURE.contract,
+          p_id_lista: action === "criar_lista" ? null : d.lista.id,
+          p_versao_esperada: prev,
+          p_acao: action,
+          p_payload: payload,
+          p_motivo: FIXTURE.reason,
+        },
+        evidence,
+        scope: form,
+        button: "Confirmar operação",
+        confirmAfter: (r) =>
+          r?.schema_versao === "crud-lista-v1" &&
+          r.acao === action &&
+          r.id_organizacao === FIXTURE.organization &&
+          r.id_contrato === FIXTURE.contract &&
+          uuid(r.lista?.id) &&
+          r.lista.nome === FIXTURE.listName &&
+          r.lista.versao_registro === (prev === null ? 1 : prev + 1) &&
+          (action === "criar_lista" || r.lista.id === d.lista.id) &&
+          uuid(r.evento_id),
+      }),
+    );
+    await tracedPreparation("LIST_REFRESH", async () => io.fresh());
+    await tracedPreparation("LIST_MODEL_READ", async () => listProof());
   };
   if (matches.length === 0) {
-    await listCommand(
-      "criar_lista",
-      {
-        nome: FIXTURE.listName,
-        descricao: FIXTURE.listDescription,
-        vigencia_inicio: "2026-01-01",
-        vigencia_fim: null,
-      },
-      "Criar lista",
-      async (f) => {
-        await field(f, "Nome").fill(FIXTURE.listName);
-        await field(f, "Descrição").fill(FIXTURE.listDescription);
-        await field(f, "Início da vigência").fill("2026-01-01");
-        await field(f, "Fim da vigência").fill("");
-      },
+    await tracedPreparation("LIST_FORM_FIELD", async () =>
+      listCommand(
+        "criar_lista",
+        {
+          nome: FIXTURE.listName,
+          descricao: FIXTURE.listDescription,
+          vigencia_inicio: "2026-01-01",
+          vigencia_fim: null,
+        },
+        "Criar lista",
+        async (f) => {
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Nome").fill(FIXTURE.listName),
+          );
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Descrição").fill(FIXTURE.listDescription),
+          );
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Início da vigência").fill("2026-01-01"),
+          );
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Fim da vigência").fill(""),
+          );
+        },
+      ),
     );
   } else {
     // Find the already-observed target's page; no synthetic option or direct navigation.
     for (
       let n = 0;
-      (await field(panel, "Lista selecionada")
-        .locator(`option[value="${matches[0].id}"]`)
-        .count()) === 0;
+      (await tracedPreparation("LIST_UI_CONTROL", async () =>
+        field(panel, "Lista selecionada").locator(`option[value="${matches[0].id}"]`).count(),
+      )) === 0;
       n++
     ) {
       assert(n < 100, "FLOW_LIST_UI_MISSING");
-      await click(panel, "Página anterior de listas");
+      await tracedPreparation("LIST_UI_CONTROL", async () =>
+        click(panel, "Página anterior de listas"),
+      );
     }
-    await field(panel, "Lista selecionada").selectOption(matches[0].id);
-    await io.fresh();
-    await listProof();
+    await tracedPreparation("LIST_FORM_FIELD", async () =>
+      field(panel, "Lista selecionada").selectOption(matches[0].id),
+    );
+    await tracedPreparation("LIST_REFRESH", async () => io.fresh());
+    await tracedPreparation("LIST_MODEL_READ", async () => listProof());
   }
-  await listProof();
+  await tracedPreparation("LIST_MODEL_READ", async () => listProof());
   if (model.itens.length === 0) {
     assert(model.versao.situacao === "rascunho", "FLOW_PUBLISHED_EMPTY_LIST");
-    await listCommand(
-      "salvar_item",
-      { id_versao: model.versao.id, id_item: null, ...itemExpected() },
-      "Adicionar item",
-      async (f) => {
-        for (const [label, value] of [
-          ["Código", "AUD-A-TXT-001"],
-          ["Descrição do item", "Presença do documento TXT sintético de auditoria."],
-          ["Categoria", "documental"],
-          ["Identificador da versão da fonte formal", version.id],
-          ["Ordem", "1"],
-        ])
-          await field(f, label).fill(value);
-        for (const label of ["Obrigatório", "Aplicável", "Impeditivo"])
-          await field(f, label).check();
-        await field(f, "Criticidade").selectOption("alta");
-        await field(f, "Regra de validação e condição (JSON)").fill(
-          JSON.stringify(itemExpected().regra_validacao),
-        );
-      },
+    await tracedPreparation("LIST_FORM_FIELD", async () =>
+      listCommand(
+        "salvar_item",
+        { id_versao: model.versao.id, id_item: null, ...itemExpected() },
+        "Adicionar item",
+        async (f) => {
+          for (const [label, value] of [
+            ["Código", "AUD-A-TXT-001"],
+            ["Descrição do item", "Presença do documento TXT sintético de auditoria."],
+            ["Categoria", "documental"],
+            ["Identificador da versão da fonte formal", version.id],
+            ["Ordem", "1"],
+          ])
+            await tracedPreparation("LIST_FORM_FIELD", async () => field(f, label).fill(value));
+          for (const label of ["Obrigatório", "Aplicável", "Impeditivo"])
+            await tracedPreparation("LIST_FORM_FIELD", async () => field(f, label).check());
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Criticidade").selectOption("alta"),
+          );
+          await tracedPreparation("LIST_FORM_FIELD", async () =>
+            field(f, "Regra de validação e condição (JSON)").fill(
+              JSON.stringify(itemExpected().regra_validacao),
+            ),
+          );
+        },
+      ),
     );
   }
   if (model.versao.situacao !== "publicada") {
     assert(model.versao.situacao === "rascunho", "FLOW_VERSION_STATE");
-    await listCommand("publicar_versao", { id_versao: model.versao.id }, "Publicar versão");
+    await tracedPreparation("LIST_UI_CONTROL", async () =>
+      listCommand("publicar_versao", { id_versao: model.versao.id }, "Publicar versão"),
+    );
     assert(model.versao.situacao === "publicada", "FLOW_PUBLICATION_NOT_READBACK");
   }
   if (model.lista.situacao !== "ativa") {
-    await listCommand("alterar_situacao", { situacao: "ativa" }, "Alterar situação", async (f) => {
-      await field(f, "Situação").selectOption("ativa");
-    });
+    await tracedPreparation("LIST_FORM_FIELD", async () =>
+      listCommand("alterar_situacao", { situacao: "ativa" }, "Alterar situação", async (f) => {
+        await tracedPreparation("LIST_FORM_FIELD", async () =>
+          field(f, "Situação").selectOption("ativa"),
+        );
+      }),
+    );
   }
-  await listProof();
+  await tracedPreparation("LIST_MODEL_READ", async () => listProof());
   assert(
     model.lista.situacao === "ativa" &&
       model.versao.situacao === "publicada" &&
@@ -2419,10 +3070,13 @@ export async function prepareCompetencies(io, sourceList) {
     ![sourceList.sourceVersionId, sourceList.listId, sourceList.listVersionId].every(uuid)
   )
     stop("COMPETENCE_SOURCE_LIST");
-  await io.fresh();
-  if ((await io.verifyContext()) !== true) stop("COMPETENCE_CONTEXT");
+  await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
+  if ((await tracedPreparation("COMPETENCY_UI", async () => io.verifyContext())) !== true)
+    stop("COMPETENCE_CONTEXT");
   // Read the actual official UI RPC DTO, not assumed convenience flags such as list.active.
-  const sourceModel = await io.rpcRead("obter_lista_operacional_v1");
+  const sourceModel = await tracedPreparation("COMPETENCY_GET", async () =>
+    io.rpcRead("obter_lista_operacional_v1"),
+  );
   if (
     sourceModel?.schema_versao !== "crud-lista-v1" ||
     sourceModel.id_organizacao !== FIXTURE.organization ||
@@ -2458,65 +3112,77 @@ export async function prepareCompetencies(io, sourceList) {
   const verifiedItemId = sourceItem.id;
   const context = async () => {
     phaseActive();
-    await io.fresh();
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     phaseActive();
-    if ((await io.verifyContext()) !== true) stop("COMPETENCE_CONTEXT");
+    if ((await tracedPreparation("COMPETENCY_UI", async () => io.verifyContext())) !== true)
+      stop("COMPETENCE_CONTEXT");
   };
   const rows = async (table, where, options = {}) => {
     phaseActive();
-    const result = await io.read(table, where, options);
+    const result = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.read(table, where, options),
+    );
     phaseActive();
     if (!Array.isArray(result)) stop("COMPETENCE_READ_SHAPE");
     return result;
   };
   const observed = async (name, where, ordinal, options = {}) => {
     phaseActive();
-    await io.fresh();
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     phaseActive();
-    if ((await io.observedAfter(name, where, ordinal, options)) !== true)
+    if (
+      (await tracedPreparation("COMPETENCY_UI", async () =>
+        io.observedAfter(name, where, ordinal, options),
+      )) !== true
+    )
       stop("COMPETENCE_STALE_OBSERVATION");
   };
   const link = async (path) => {
     phaseActive();
-    await io.link(path);
+    await tracedPreparation("COMPETENCY_UI", async () => io.link(path));
     phaseActive();
-    await io.fresh();
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     phaseActive();
   };
   const click = async (name, scope = io.page) => {
     phaseActive();
     const button = scope.getByRole("button", { name, exact: true });
-    if ((await button.count()) !== 1 || !(await button.isEnabled()))
+    if (
+      (await tracedPreparation("COMPETENCY_UI", async () => button.count())) !== 1 ||
+      !(await tracedPreparation("COMPETENCY_UI", async () => button.isEnabled()))
+    )
       stop("COMPETENCE_CONTROL_UNAVAILABLE");
     phaseActive();
-    await button.click();
+    await tracedPreparation("COMPETENCY_UI", async () => button.click());
     phaseActive();
-    await io.fresh();
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     phaseActive();
   };
   async function poll(read, ready, refresh) {
     let initial = true;
     try {
-      return await waitOfficialPhase({
-        timeout: 300000,
-        wait,
-        read: async () => {
-          phaseActive();
-          // UI refresh belongs to the bounded read, under the SAME phase deadline.
-          if (!initial) {
-            await refresh();
+      return await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+        waitOfficialPhase({
+          timeout: 300000,
+          wait,
+          read: async () => {
             phaseActive();
-          }
-          initial = false;
-          const value = await read();
-          phaseActive();
-          return value;
-        },
-        ready: (value) => {
-          phaseActive();
-          return ready(value) === true;
-        },
-      });
+            // UI refresh belongs to the bounded read, under the SAME phase deadline.
+            if (!initial) {
+              await tracedPreparation("COMPETENCY_UI", async () => refresh());
+              phaseActive();
+            }
+            initial = false;
+            const value = await tracedPreparation("COMPETENCY_RECONCILE", async () => read());
+            phaseActive();
+            return value;
+          },
+          ready: (value) => {
+            phaseActive();
+            return ready(value) === true;
+          },
+        }),
+      );
     } catch (error) {
       if (error?.message === "PHASE_TIMEOUT") {
         temporalAborted = true;
@@ -2524,7 +3190,9 @@ export async function prepareCompetencies(io, sourceList) {
         // then stop the entire executor; never start another month's mutation.
         if (typeof io.abortPhase === "function") {
           try {
-            await io.abortPhase("COMPETENCE_PHASE_TIMEOUT");
+            await tracedPreparation("COMPETENCY_UI", async () =>
+              io.abortPhase("COMPETENCE_PHASE_TIMEOUT"),
+            );
           } catch {
             /* main finally also closes context */
           }
@@ -2546,11 +3214,15 @@ export async function prepareCompetencies(io, sourceList) {
   }
   async function overview(id, month) {
     const ordinal = io.generation();
-    await link(`/competencias/${id}`);
-    await observed("obter_visao_geral_competencia", { p_id_competencia: id }, ordinal);
-    const value = await io.rpcRead("obter_visao_geral_competencia", {
-      p_id_competencia: id,
-    });
+    await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${id}`));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed("obter_visao_geral_competencia", { p_id_competencia: id }, ordinal),
+    );
+    const value = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead("obter_visao_geral_competencia", {
+        p_id_competencia: id,
+      }),
+    );
     inContext(value?.competencia, id);
     if (value.competencia.competencia_referencia !== month || id === FIXTURE.historical)
       stop("COMPETENCE_MONTH");
@@ -2570,38 +3242,46 @@ export async function prepareCompetencies(io, sourceList) {
     };
   }
   async function refreshArea(id, month, area, rpc) {
-    await overview(id, month);
+    await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(id, month));
     const ordinal = io.generation();
-    await link(`/competencias/${id}/${area}`);
-    await observed(rpc, { p_id_competencia: id }, ordinal);
+    await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${id}/${area}`));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed(rpc, { p_id_competencia: id }, ordinal),
+    );
   }
   async function listMonth(month) {
     // A real navigation remounts the list, so unchanged filters never fake freshness.
     const ordinal = io.generation();
-    await link(listPath);
-    await io.page.getByLabel("Competência", { exact: true }).fill(month.slice(0, 7));
-    await observed(
-      "competencias",
-      { id_contrato: FIXTURE.contract, competencia_referencia: month },
-      ordinal,
-      {
-        select: EXACT_SELECTS.competencias.find((value) =>
-          value.includes("competencia_referencia,"),
-        ),
-      },
+    await tracedPreparation("COMPETENCY_UI", async () => link(listPath));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      io.page.getByLabel("Competência", { exact: true }).fill(month.slice(0, 7)),
     );
-    const found = (
-      await rows(
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed(
         "competencias",
-        {
-          id_contrato: FIXTURE.contract,
-          competencia_referencia: month,
-        },
+        { id_contrato: FIXTURE.contract, competencia_referencia: month },
+        ordinal,
         {
           select: EXACT_SELECTS.competencias.find((value) =>
             value.includes("competencia_referencia,"),
           ),
         },
+      ),
+    );
+    const found = (
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        rows(
+          "competencias",
+          {
+            id_contrato: FIXTURE.contract,
+            competencia_referencia: month,
+          },
+          {
+            select: EXACT_SELECTS.competencias.find((value) =>
+              value.includes("competencia_referencia,"),
+            ),
+          },
+        ),
       )
     ).filter((r) => r.competencia_referencia === month);
     if (found.length > 1 || found.some((r) => !uuid(r.id) || r.id === FIXTURE.historical))
@@ -2609,31 +3289,35 @@ export async function prepareCompetencies(io, sourceList) {
     return found;
   }
   async function createOrReuse(month) {
-    await context();
-    let existing = await listMonth(month);
+    await tracedPreparation("COMPETENCY_UI", async () => context());
+    let existing = await tracedPreparation("COMPETENCY_UI", async () => listMonth(month));
     if (!existing.length) {
-      await link(listPath + "/nova");
-      await io.page.getByLabel("Competência (mês/ano)", { exact: true }).fill(month.slice(0, 7));
-      await context();
-      await io.command({
-        rpc: "criar_competencia",
-        payload: {
-          p_id_contrato: FIXTURE.contract,
-          p_competencia_referencia: month,
-        },
-        evidence: {},
-        button: "Criar competência",
-        confirmAfter: async () => {
-          await link(listPath);
-          existing = await listMonth(month);
-          return existing.length === 1;
-        },
-      });
+      await tracedPreparation("COMPETENCY_UI", async () => link(listPath + "/nova"));
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        io.page.getByLabel("Competência (mês/ano)", { exact: true }).fill(month.slice(0, 7)),
+      );
+      await tracedPreparation("COMPETENCY_UI", async () => context());
+      await tracedPreparation("COMPETENCY_COMMAND", async () =>
+        io.command({
+          rpc: "criar_competencia",
+          payload: {
+            p_id_contrato: FIXTURE.contract,
+            p_competencia_referencia: month,
+          },
+          evidence: {},
+          button: "Criar competência",
+          confirmAfter: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () => link(listPath));
+            existing = await tracedPreparation("COMPETENCY_UI", async () => listMonth(month));
+            return existing.length === 1;
+          },
+        }),
+      );
       if (existing.length !== 1) stop("COMPETENCE_CREATE_UNCERTAIN");
     }
     const id = existing[0].id;
     // Anchor must be real and match the reconciled ID, never goto a fabricated path.
-    const view = await overview(id, month);
+    const view = await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(id, month));
     if (view.competencia.situacao === "cancelada" || view.competencia.situacao === "encerrada")
       stop("COMPETENCE_TERMINAL");
     return {
@@ -2644,31 +3328,43 @@ export async function prepareCompetencies(io, sourceList) {
   }
   async function approvedContractFile() {
     const ordinal = io.generation();
-    await link(contractBase + "/documentos");
-    await observed("documentos_contrato", { id_contrato: FIXTURE.contract }, ordinal);
-    const docs = await rows("documentos_contrato", {
-      id_contrato: FIXTURE.contract,
-      id: FIXTURE.contractualDocument,
-    });
+    await tracedPreparation("COMPETENCY_UI", async () => link(contractBase + "/documentos"));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed("documentos_contrato", { id_contrato: FIXTURE.contract }, ordinal),
+    );
+    const docs = await tracedPreparation("COMPETENCY_UI", async () =>
+      rows("documentos_contrato", {
+        id_contrato: FIXTURE.contract,
+        id: FIXTURE.contractualDocument,
+      }),
+    );
     if (
       docs.length !== 1 ||
       docs[0].id_contrato !== FIXTURE.contract ||
       docs[0].situacao !== "ativo"
     )
       stop("COMPETENCE_APPROVED_FILE_RELATION");
-    await observed(
-      "versoes_documento",
-      { id_documento_contrato: FIXTURE.contractualDocument },
-      ordinal,
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed(
+        "versoes_documento",
+        { id_documento_contrato: FIXTURE.contractualDocument },
+        ordinal,
+      ),
     );
     const versions = (
-      await rows("versoes_documento", {
-        id_documento_contrato: FIXTURE.contractualDocument,
-      })
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        rows("versoes_documento", {
+          id_documento_contrato: FIXTURE.contractualDocument,
+        }),
+      )
     ).filter((v) => v.id_arquivo === FIXTURE.file && v.numero_versao === docs[0].versao_atual);
     if (versions.length !== 1 || !uuid(versions[0].id)) stop("COMPETENCE_APPROVED_FILE_VERSION");
-    await observed("arquivos", { id: FIXTURE.file }, ordinal);
-    const files = await rows("arquivos", { id: FIXTURE.file });
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed("arquivos", { id: FIXTURE.file }, ordinal),
+    );
+    const files = await tracedPreparation("COMPETENCY_UI", async () =>
+      rows("arquivos", { id: FIXTURE.file }),
+    );
     if (files.length !== 1) stop("COMPETENCE_APPROVED_FILE");
     const f = files[0];
     // Official projection validates the joined contract/document/version/file chain.
@@ -2692,9 +3388,11 @@ export async function prepareCompetencies(io, sourceList) {
     return checked;
   }
   async function readDocuments(c) {
-    const value = await io.rpcRead("obter_documentos_competencia_v115", {
-      p_id_competencia: c.id,
-    });
+    const value = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead("obter_documentos_competencia_v115", {
+        p_id_competencia: c.id,
+      }),
+    );
     inContext(value?.competencia, c.id);
     if (
       value.competencia.competencia_referencia !== c.month ||
@@ -2710,14 +3408,18 @@ export async function prepareCompetencies(io, sourceList) {
   }
   async function ensureDocument(c) {
     // Reconsult persisted approved asset immediately before linking, through contract UI.
-    const file = await approvedContractFile();
-    await link(listPath);
-    await listMonth(c.month);
-    await refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115");
-    const loaded = await poll(
-      () => readDocuments(c),
-      (x) => !!x.requirement,
-      () => refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
+    const file = await tracedPreparation("COMPETENCY_UI", async () => approvedContractFile());
+    await tracedPreparation("COMPETENCY_UI", async () => link(listPath));
+    await tracedPreparation("COMPETENCY_UI", async () => listMonth(c.month));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
+    );
+    const loaded = await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      poll(
+        () => readDocuments(c),
+        (x) => !!x.requirement,
+        () => refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
+      ),
     );
     const q = loaded.requirement;
     if (
@@ -2772,39 +3474,47 @@ export async function prepareCompetencies(io, sourceList) {
         p_id_arquivo: FIXTURE.file,
         p_chave_idempotencia: randomUUID(),
       };
-      await io.runtime.reuseDocument({
-        broker: io.broker,
-        payload,
-        evidence,
-        settleVerifiedPage: async () => io.fresh(),
-        reconcile: async () => {
-          await refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115");
-          const d = await readDocuments(c);
-          return {
-            payload,
-            evidence,
-            verified: {
-              ...verified,
-              capability: d.value.capacidades?.pode_enviar === true,
-            },
-            confirmed: !!matchingDocument(d.value),
-          };
-        },
-      });
+      await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+        io.runtime.reuseDocument({
+          broker: io.broker,
+          payload,
+          evidence,
+          settleVerifiedPage: async () => io.fresh(),
+          reconcile: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () =>
+              refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
+            );
+            const d = await tracedPreparation("COMPETENCY_RECONCILE", async () => readDocuments(c));
+            return {
+              payload,
+              evidence,
+              verified: {
+                ...verified,
+                capability: d.value.capacidades?.pode_enviar === true,
+              },
+              confirmed: !!matchingDocument(d.value),
+            };
+          },
+        }),
+      );
     }
-    const ready = await poll(
-      () => readDocuments(c),
-      (x) => !!matchingDocument(x.value) && x.value.estado_documental === "complete",
-      () => refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
+    const ready = await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      poll(
+        () => readDocuments(c),
+        (x) => !!matchingDocument(x.value) && x.value.estado_documental === "complete",
+        () => refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
+      ),
     );
     const d = matchingDocument(ready.value);
     c.documentId = d.id;
     c.evidence = evidence;
   }
   async function analysis(c) {
-    const a = await io.rpcRead("obter_analise_competencia_v116", {
-      p_id_competencia: c.id,
-    });
+    const a = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead("obter_analise_competencia_v116", {
+        p_id_competencia: c.id,
+      }),
+    );
     if (
       a?.schema_versao !== "v116-v1" ||
       a?.competencia?.id !== c.id ||
@@ -2821,45 +3531,55 @@ export async function prepareCompetencies(io, sourceList) {
     return a;
   }
   async function ensureAnalysis(c) {
-    await refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116");
-    let a = await analysis(c);
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116"),
+    );
+    let a = await tracedPreparation("COMPETENCY_RECONCILE", async () => analysis(c));
     if (a.estado_analise === "not_analyzed") {
       if (a.allowed_actions?.executar_analise !== true) stop("COMPETENCE_ANALYSIS_DENIED");
-      await io.command({
-        rpc: "solicitar_analise_competencia",
-        payload: { p_id_competencia: c.id, p_tipo: "completa" },
-        evidence: c.evidence,
-        button: "Executar análise",
-        confirmAfter: async () => {
-          await io.fresh();
-          a = await analysis(c);
-          return (
-            uuid(a.execucao_atual?.id) &&
-            ["queued", "processing", "complete"].includes(a.estado_analise)
-          );
-        },
-      });
+      await tracedPreparation("COMPETENCY_COMMAND", async () =>
+        io.command({
+          rpc: "solicitar_analise_competencia",
+          payload: { p_id_competencia: c.id, p_tipo: "completa" },
+          evidence: c.evidence,
+          button: "Executar análise",
+          confirmAfter: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
+            a = await tracedPreparation("COMPETENCY_RECONCILE", async () => analysis(c));
+            return (
+              uuid(a.execucao_atual?.id) &&
+              ["queued", "processing", "complete"].includes(a.estado_analise)
+            );
+          },
+        }),
+      );
     }
-    a = await poll(
-      () => analysis(c),
-      (v) => v.estado_analise === "complete" && uuid(v.execucao_atual?.id),
-      () => refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116"),
+    a = await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      poll(
+        () => analysis(c),
+        (v) => v.estado_analise === "complete" && uuid(v.execucao_atual?.id),
+        () => refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116"),
+      ),
     );
     c.executionId = a.execucao_atual.id;
     return a;
   }
   async function inspectRequirement(c) {
     const ordinal = io.generation();
-    await click("Abrir requisito " + code);
-    await observed(
-      "obter_detalhe_requisito_v117",
-      { p_id_competencia: c.id, p_id_requisito: c.requirementId },
-      ordinal,
+    await tracedPreparation("COMPETENCY_UI", async () => click("Abrir requisito " + code));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed(
+        "obter_detalhe_requisito_v117",
+        { p_id_competencia: c.id, p_id_requisito: c.requirementId },
+        ordinal,
+      ),
     );
-    const detail = await io.rpcRead("obter_detalhe_requisito_v117", {
-      p_id_competencia: c.id,
-      p_id_requisito: c.requirementId,
-    });
+    const detail = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead("obter_detalhe_requisito_v117", {
+        p_id_competencia: c.id,
+        p_id_requisito: c.requirementId,
+      }),
+    );
     if (
       detail?.schema_versao !== "v117-v1" ||
       detail?.competencia?.id !== c.id ||
@@ -2895,11 +3615,11 @@ export async function prepareCompetencies(io, sourceList) {
       (r) => r.id_requisito === c.requirementId && r.requisito?.codigo === code,
     );
     if (targets.length !== 1 || !uuid(targets[0].id_resultado)) stop("COMPETENCE_RESULT_UNPROVEN");
-    const detail = await inspectRequirement(c);
+    const detail = await tracedPreparation("COMPETENCY_UI", async () => inspectRequirement(c));
     // Do not review unrelated requirements or override an already conforming result.
     if (targets[0].resultado === "conforme") {
-      await io.page.keyboard.press("Escape");
-      await io.fresh();
+      await tracedPreparation("COMPETENCY_UI", async () => io.page.keyboard.press("Escape"));
+      await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
       return a;
     }
     if (detail.execucao_atual?.id !== a.execucao_atual.id) stop("COMPETENCE_REVIEW_STALE");
@@ -2921,16 +3641,20 @@ export async function prepareCompetencies(io, sourceList) {
       exact: true,
     });
     const before = io.generation();
-    await click("Revisar resultado", region);
-    await observed(
-      "obter_contexto_revisao_v117",
-      { p_id_competencia: c.id, p_id_requisito: c.requirementId },
-      before,
+    await tracedPreparation("COMPETENCY_UI", async () => click("Revisar resultado", region));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed(
+        "obter_contexto_revisao_v117",
+        { p_id_competencia: c.id, p_id_requisito: c.requirementId },
+        before,
+      ),
     );
-    const ctx = await io.rpcRead("obter_contexto_revisao_v117", {
-      p_id_competencia: c.id,
-      p_id_requisito: c.requirementId,
-    });
+    const ctx = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead("obter_contexto_revisao_v117", {
+        p_id_competencia: c.id,
+        p_id_requisito: c.requirementId,
+      }),
+    );
     if (
       ctx?.schema_versao !== "revisao-v117" ||
       ctx.id_competencia !== c.id ||
@@ -2943,16 +3667,20 @@ export async function prepareCompetencies(io, sourceList) {
       !hash(ctx.hash_esperado)
     )
       stop("COMPETENCE_REVIEW_CONTEXT");
-    await observed("versoes_documento", { "documentos_competencia.id_competencia": c.id }, before, {
-      select: REVIEW_SELECT,
-    });
-    const versions = await rows(
-      "versoes_documento",
-      {
-        "documentos_competencia.id_competencia": c.id,
-        id: documentVersion,
-      },
-      { select: REVIEW_SELECT },
+    await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      observed("versoes_documento", { "documentos_competencia.id_competencia": c.id }, before, {
+        select: REVIEW_SELECT,
+      }),
+    );
+    const versions = await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      rows(
+        "versoes_documento",
+        {
+          "documentos_competencia.id_competencia": c.id,
+          id: documentVersion,
+        },
+        { select: REVIEW_SELECT },
+      ),
     );
     if (
       versions.length !== 1 ||
@@ -2964,22 +3692,31 @@ export async function prepareCompetencies(io, sourceList) {
     )
       stop("COMPETENCE_REVIEW_DOCUMENT_VERSION");
     const v = versions[0];
-    await region.getByLabel("Resultado da revisão", { exact: true }).selectOption("conforme");
-    await region
-      .getByLabel("Justificativa da revisão", { exact: true })
-      .fill(FIXTURE.reviewJustification);
-    await region
-      .getByLabel("Fundamento da revisão", { exact: true })
-      .fill(FIXTURE.reviewFoundation);
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      region.getByLabel("Resultado da revisão", { exact: true }).selectOption("conforme"),
+    );
+    await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      region
+        .getByLabel("Justificativa da revisão", { exact: true })
+        .fill(FIXTURE.reviewJustification),
+    );
+    await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      region.getByLabel("Fundamento da revisão", { exact: true }).fill(FIXTURE.reviewFoundation),
+    );
     const checkbox = region.getByRole("checkbox", {
       name: `Selecionar ${v.arquivos.nome_original} versão ${v.numero_versao}`,
       exact: true,
     });
-    if ((await checkbox.count()) !== 1) stop("COMPETENCE_REVIEW_EVIDENCE_AMBIGUOUS");
-    await checkbox.check();
-    await region.getByLabel("Página da evidência 1", { exact: true }).fill("1");
-    await region.getByLabel("Trecho da evidência 1", { exact: true }).fill(FIXTURE.excerpt);
-    await click("Revisar e confirmar", region);
+    if ((await tracedPreparation("COMPETENCY_UI", async () => checkbox.count())) !== 1)
+      stop("COMPETENCE_REVIEW_EVIDENCE_AMBIGUOUS");
+    await tracedPreparation("COMPETENCY_UI", async () => checkbox.check());
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      region.getByLabel("Página da evidência 1", { exact: true }).fill("1"),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      region.getByLabel("Trecho da evidência 1", { exact: true }).fill(FIXTURE.excerpt),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () => click("Revisar e confirmar", region));
     const evidence = {
       ...c.evidence,
       review: io.official({
@@ -2998,62 +3735,70 @@ export async function prepareCompetencies(io, sourceList) {
         documentVersion,
       }),
     };
-    await io.command({
-      rpc: "registrar_revisao_requisito_v117",
-      payload: {
-        p_id_competencia: c.id,
-        p_id_requisito: c.requirementId,
-        p_id_execucao_esperada: ctx.id_execucao_esperada,
-        p_id_resultado_esperado: ctx.id_resultado_esperado,
-        p_hash_esperado: ctx.hash_esperado,
-        p_resultado: "conforme",
-        p_justificativa: FIXTURE.reviewJustification,
-        p_fundamento: FIXTURE.reviewFoundation,
-        p_evidencias: [
-          {
-            id_versao_documento: documentVersion,
-            pagina: 1,
-            trecho: FIXTURE.excerpt,
-          },
-        ],
-      },
-      evidence,
-      button: "Confirmar revisão",
-      scope: region,
-      confirmAfter: async () => {
-        await io.page.keyboard.press("Escape");
-        await refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116");
-        a = await analysis(c);
-        const result = a.resultados.find((r) => r.id_requisito === c.requirementId);
-        return (
-          a.estado_analise === "complete" &&
-          uuid(a.execucao_atual?.id) &&
-          a.execucao_atual.id !== ctx.id_execucao_esperada &&
-          result?.resultado === "conforme" &&
-          uuid(result.id_resultado) &&
-          result.id_resultado !== ctx.id_resultado_esperado
-        );
-      },
-    });
+    await tracedPreparation("COMPETENCY_COMMAND", async () =>
+      io.command({
+        rpc: "registrar_revisao_requisito_v117",
+        payload: {
+          p_id_competencia: c.id,
+          p_id_requisito: c.requirementId,
+          p_id_execucao_esperada: ctx.id_execucao_esperada,
+          p_id_resultado_esperado: ctx.id_resultado_esperado,
+          p_hash_esperado: ctx.hash_esperado,
+          p_resultado: "conforme",
+          p_justificativa: FIXTURE.reviewJustification,
+          p_fundamento: FIXTURE.reviewFoundation,
+          p_evidencias: [
+            {
+              id_versao_documento: documentVersion,
+              pagina: 1,
+              trecho: FIXTURE.excerpt,
+            },
+          ],
+        },
+        evidence,
+        button: "Confirmar revisão",
+        scope: region,
+        confirmAfter: async () => {
+          await tracedPreparation("COMPETENCY_UI", async () => io.page.keyboard.press("Escape"));
+          await tracedPreparation("COMPETENCY_UI", async () =>
+            refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116"),
+          );
+          a = await tracedPreparation("COMPETENCY_RECONCILE", async () => analysis(c));
+          const result = a.resultados.find((r) => r.id_requisito === c.requirementId);
+          return (
+            a.estado_analise === "complete" &&
+            uuid(a.execucao_atual?.id) &&
+            a.execucao_atual.id !== ctx.id_execucao_esperada &&
+            result?.resultado === "conforme" &&
+            uuid(result.id_resultado) &&
+            result.id_resultado !== ctx.id_resultado_esperado
+          );
+        },
+      }),
+    );
     c.executionId = a.execucao_atual.id;
     return a;
   }
   async function opinion(c) {
-    let view = await overview(c.id, c.month);
+    let view = await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(c.id, c.month));
     if (
       view.blocking_summary?.analise_concluida_atual !== true ||
       view.allowed_actions?.abrir_parecer !== true
     )
       stop("COMPETENCE_OPINION_GATE");
     let ordinal = io.generation();
-    await link(`/competencias/${c.id}/parecer`);
-    await observed("pareceres_internos", { id_competencia: c.id }, ordinal);
+    await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${c.id}/parecer`));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed("pareceres_internos", { id_competencia: c.id }, ordinal),
+    );
     const readOpinion = async () => {
-      const list = await rows("pareceres_internos", {
-        id_competencia: c.id,
-        id_contrato: FIXTURE.contract,
-        id_organizacao: FIXTURE.organization,
-      });
+      const list = await tracedPreparation("COMPETENCY_UI", async () =>
+        rows("pareceres_internos", {
+          id_competencia: c.id,
+          id_contrato: FIXTURE.contract,
+          id_organizacao: FIXTURE.organization,
+        }),
+      );
       for (const row of list) {
         inContext(row, row.id);
         if (
@@ -3071,10 +3816,12 @@ export async function prepareCompetencies(io, sourceList) {
     };
     const refresh = async () => {
       const n = io.generation();
-      await click("Atualizar");
-      await observed("pareceres_internos", { id_competencia: c.id }, n);
+      await tracedPreparation("COMPETENCY_UI", async () => click("Atualizar"));
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        observed("pareceres_internos", { id_competencia: c.id }, n),
+      );
     };
-    let p = await readOpinion();
+    let p = await tracedPreparation("COMPETENCY_RECONCILE", async () => readOpinion());
     if (!p) {
       const evidence = {
         ...c.evidence,
@@ -3082,26 +3829,30 @@ export async function prepareCompetencies(io, sourceList) {
         analysisComplete: true,
         opinionGate: true,
       };
-      await io.command({
-        rpc: "solicitar_parecer_interno",
-        payload: { p_id_competencia: c.id },
-        evidence,
-        button: "Solicitar parecer",
-        confirmAfter: async () => {
-          await io.fresh();
-          p = await readOpinion();
-          return !!p && uuid(p.id);
-        },
-      });
+      await tracedPreparation("COMPETENCY_COMMAND", async () =>
+        io.command({
+          rpc: "solicitar_parecer_interno",
+          payload: { p_id_competencia: c.id },
+          evidence,
+          button: "Solicitar parecer",
+          confirmAfter: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
+            p = await tracedPreparation("COMPETENCY_RECONCILE", async () => readOpinion());
+            return !!p && uuid(p.id);
+          },
+        }),
+      );
     }
-    p = await poll(
-      readOpinion,
-      (x) =>
-        !!x &&
-        uuid(x.id) &&
-        hash(x.hash) &&
-        !["queued", "processing", "pendente", "processando"].includes(x.status),
-      refresh,
+    p = await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      poll(
+        readOpinion,
+        (x) =>
+          !!x &&
+          uuid(x.id) &&
+          hash(x.hash) &&
+          !["queued", "processing", "pendente", "processando"].includes(x.status),
+        refresh,
+      ),
     );
     if (
       ["failed", "error", "cancelado", "reprovado"].includes(p.status) ||
@@ -3109,39 +3860,43 @@ export async function prepareCompetencies(io, sourceList) {
     )
       stop("COMPETENCE_OPINION_FAILED");
     if (p.status !== "aprovado" || !p.aprovado_em) {
-      await click("Aprovar parecer");
+      await tracedPreparation("COMPETENCY_UI", async () => click("Aprovar parecer"));
       const dialog = io.page.getByRole("dialog", {
         name: "Confirmar aprovação",
         exact: true,
       });
-      await dialog.getByLabel("Fundamento (opcional)", { exact: true }).fill(FIXTURE.foundation);
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        dialog.getByLabel("Fundamento (opcional)", { exact: true }).fill(FIXTURE.foundation),
+      );
       const evidence = {
         ...c.evidence,
         opinions: [{ ...io.official(p), competency: c.id }],
       };
       const id = p.id;
-      await io.command({
-        rpc: "aprovar_parecer_interno",
-        payload: {
-          p_id_parecer: id,
-          p_aprovar: true,
-          p_fundamento: FIXTURE.foundation,
-        },
-        evidence,
-        button: "Confirmar decisão",
-        scope: dialog,
-        confirmAfter: async () => {
-          await io.fresh();
-          p = await readOpinion();
-          return p?.id === id && p.status === "aprovado" && !!p.aprovado_em;
-        },
-      });
+      await tracedPreparation("COMPETENCY_COMMAND", async () =>
+        io.command({
+          rpc: "aprovar_parecer_interno",
+          payload: {
+            p_id_parecer: id,
+            p_aprovar: true,
+            p_fundamento: FIXTURE.foundation,
+          },
+          evidence,
+          button: "Confirmar decisão",
+          scope: dialog,
+          confirmAfter: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
+            p = await tracedPreparation("COMPETENCY_RECONCILE", async () => readOpinion());
+            return p?.id === id && p.status === "aprovado" && !!p.aprovado_em;
+          },
+        }),
+      );
     }
     c.opinionId = p.id;
     return p;
   }
   async function present(c, register) {
-    let view = await overview(c.id, c.month);
+    let view = await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(c.id, c.month));
     if (
       ["apresentado", "aguardando_contratante", "validada", "reapresentado"].includes(
         view.competencia.situacao,
@@ -3156,8 +3911,8 @@ export async function prepareCompetencies(io, sourceList) {
       v.competencia.percentual_conformidade === 100;
     if (!ready(view) || view.allowed_actions?.apresentar !== true)
       stop("COMPETENCE_PRESENTATION_GATE");
-    await link(`/competencias/${c.id}/apresentar`);
-    await io.fresh();
+    await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${c.id}/apresentar`));
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     const evidence = {
       ...c.evidence,
       analysisCurrent: true,
@@ -3168,38 +3923,46 @@ export async function prepareCompetencies(io, sourceList) {
     if (view.competencia.situacao !== "pode_apresentar_contratante") {
       if (view.blocking_summary.aprovacao_apresentacao_atual === true)
         stop("COMPETENCE_PRESENTATION_STATE");
-      await io.page
-        .getByLabel("Fundamento da aprovação (opcional)", { exact: true })
-        .fill(FIXTURE.foundation);
-      await click("Aprovar apresentação");
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        io.page
+          .getByLabel("Fundamento da aprovação (opcional)", { exact: true })
+          .fill(FIXTURE.foundation),
+      );
+      await tracedPreparation("COMPETENCY_UI", async () => click("Aprovar apresentação"));
       const dialog = io.page.getByRole("dialog", {
         name: "Confirmar aprovação institucional",
         exact: true,
       });
       const approvalOrdinal = io.generation();
-      await io.command({
-        rpc: "aprovar_apresentacao",
-        payload: { p_id_competencia: c.id, p_fundamento: FIXTURE.foundation },
-        evidence,
-        button: "Confirmar aprovação",
-        scope: dialog,
-        confirmAfter: async () => {
-          await observed(
-            "obter_visao_geral_competencia",
-            { p_id_competencia: c.id },
-            approvalOrdinal,
-          );
-          view = await io.rpcRead("obter_visao_geral_competencia", {
-            p_id_competencia: c.id,
-          });
-          return (
-            view?.competencia?.id === c.id &&
-            view.competencia.situacao === "pode_apresentar_contratante" &&
-            view.blocking_summary?.aprovacao_apresentacao_atual === true &&
-            ready(view)
-          );
-        },
-      });
+      await tracedPreparation("COMPETENCY_COMMAND", async () =>
+        io.command({
+          rpc: "aprovar_apresentacao",
+          payload: { p_id_competencia: c.id, p_fundamento: FIXTURE.foundation },
+          evidence,
+          button: "Confirmar aprovação",
+          scope: dialog,
+          confirmAfter: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () =>
+              observed(
+                "obter_visao_geral_competencia",
+                { p_id_competencia: c.id },
+                approvalOrdinal,
+              ),
+            );
+            view = await tracedPreparation("COMPETENCY_GET", async () =>
+              io.rpcRead("obter_visao_geral_competencia", {
+                p_id_competencia: c.id,
+              }),
+            );
+            return (
+              view?.competencia?.id === c.id &&
+              view.competencia.situacao === "pode_apresentar_contratante" &&
+              view.blocking_summary?.aprovacao_apresentacao_atual === true &&
+              ready(view)
+            );
+          },
+        }),
+      );
     }
     c.state = view.competencia.situacao;
     if (!register) return;
@@ -3209,70 +3972,85 @@ export async function prepareCompetencies(io, sourceList) {
       view.blocking_summary?.aprovacao_apresentacao_atual !== true
     )
       stop("COMPETENCE_REGISTER_GATE");
-    await io.page
-      .getByLabel("Protocolo (se disponível)", { exact: true })
-      .fill("HML-TRILHA-A-20261108");
-    await io.page
-      .getByLabel("Forma da apresentação (se disponível)", { exact: true })
-      .fill("Ensaio sintético em homologação.");
-    await click("Registrar apresentação");
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      io.page
+        .getByLabel("Protocolo (se disponível)", { exact: true })
+        .fill("HML-TRILHA-A-20261108"),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      io.page
+        .getByLabel("Forma da apresentação (se disponível)", { exact: true })
+        .fill("Ensaio sintético em homologação."),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () => click("Registrar apresentação"));
     const dialog = io.page.getByRole("dialog", {
       name: "Confirmar envio ao contratante",
       exact: true,
     });
     let presentationId = null;
-    await io.command({
-      rpc: "registrar_apresentacao",
-      payload: {
-        p_id_competencia: c.id,
-        p_protocolo: "HML-TRILHA-A-20261108",
-        p_forma_apresentacao: "Ensaio sintético em homologação.",
-      },
-      evidence: {
-        ...evidence,
-        presentationApproved: true,
-        allowedRegister: true,
-      },
-      button: "Confirmar registro",
-      scope: dialog,
-      confirmAfter: async () => {
-        const result = io.page.getByRole("link", {
-          name: "Abrir registro da apresentação",
-          exact: true,
-        });
-        if ((await result.count()) !== 1) return false;
-        const href = await result.getAttribute("href");
-        const match = new RegExp("^/competencias/" + c.id + "/apresentacoes/([0-9a-f-]{36})$").exec(
-          href || "",
-        );
-        if (!match || !uuid(match[1])) return false;
-        presentationId = match[1];
-        const n = io.generation();
-        await link(href);
-        await observed(
-          "apresentacoes_contratante",
-          { id: presentationId, id_competencia: c.id },
-          n,
-        );
-        await observed("pacotes_competencia", { id_competencia: c.id }, n);
-        await observed("itens_pacote_competencia", { id_competencia: c.id }, n);
-        return await readPackage(c, presentationId);
-      },
-    });
+    await tracedPreparation("COMPETENCY_COMMAND", async () =>
+      io.command({
+        rpc: "registrar_apresentacao",
+        payload: {
+          p_id_competencia: c.id,
+          p_protocolo: "HML-TRILHA-A-20261108",
+          p_forma_apresentacao: "Ensaio sintético em homologação.",
+        },
+        evidence: {
+          ...evidence,
+          presentationApproved: true,
+          allowedRegister: true,
+        },
+        button: "Confirmar registro",
+        scope: dialog,
+        confirmAfter: async () => {
+          const result = io.page.getByRole("link", {
+            name: "Abrir registro da apresentação",
+            exact: true,
+          });
+          if ((await tracedPreparation("COMPETENCY_UI", async () => result.count())) !== 1)
+            return false;
+          const href = await tracedPreparation("COMPETENCY_UI", async () =>
+            result.getAttribute("href"),
+          );
+          const match = new RegExp(
+            "^/competencias/" + c.id + "/apresentacoes/([0-9a-f-]{36})$",
+          ).exec(href || "");
+          if (!match || !uuid(match[1])) return false;
+          presentationId = match[1];
+          const n = io.generation();
+          await tracedPreparation("COMPETENCY_UI", async () => link(href));
+          await tracedPreparation("COMPETENCY_UI", async () =>
+            observed("apresentacoes_contratante", { id: presentationId, id_competencia: c.id }, n),
+          );
+          await tracedPreparation("COMPETENCY_UI", async () =>
+            observed("pacotes_competencia", { id_competencia: c.id }, n),
+          );
+          await tracedPreparation("COMPETENCY_UI", async () =>
+            observed("itens_pacote_competencia", { id_competencia: c.id }, n),
+          );
+          return await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+            readPackage(c, presentationId),
+          );
+        },
+      }),
+    );
     if (!presentationId) stop("COMPETENCE_REGISTER_UNCERTAIN");
     c.presentationId = presentationId;
-    view = await overview(c.id, c.month);
+    view = await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(c.id, c.month));
     if (view.competencia.situacao !== "aguardando_contratante")
       stop("COMPETENCE_REGISTER_STATE_UNPROVEN");
     c.state = view.competencia.situacao;
   }
   async function readPackage(c, id) {
-    const list = await rows("apresentacoes_contratante", {
-      id,
-      id_competencia: c.id,
-      id_contrato: FIXTURE.contract,
-      id_organizacao: FIXTURE.organization,
-    });
+    const list = await tracedPreparation("COMPETENCY_UI", async () =>
+      rows("apresentacoes_contratante", {
+        id,
+        id_competencia: c.id,
+        id_contrato: FIXTURE.contract,
+        id_organizacao: FIXTURE.organization,
+      }),
+    );
     if (list.length !== 1) return false;
     const a = list[0];
     inContext(a, id);
@@ -3284,23 +4062,27 @@ export async function prepareCompetencies(io, sourceList) {
       !a.apresentado_em
     )
       stop("COMPETENCE_PACKAGE_RELATION");
-    const listPk = await rows("pacotes_competencia", {
-      id: a.id_pacote,
-      id_competencia: c.id,
-      id_contrato: FIXTURE.contract,
-      id_organizacao: FIXTURE.organization,
-    });
+    const listPk = await tracedPreparation("COMPETENCY_UI", async () =>
+      rows("pacotes_competencia", {
+        id: a.id_pacote,
+        id_competencia: c.id,
+        id_contrato: FIXTURE.contract,
+        id_organizacao: FIXTURE.organization,
+      }),
+    );
     if (listPk.length !== 1) return false;
     const p = listPk[0];
     inContext(p, a.id_pacote);
     if (p.id_competencia !== c.id || !hash(p.hash_pacote) || !p.congelado_em)
       stop("COMPETENCE_PACKAGE_UNPROVEN");
-    const items = await rows("itens_pacote_competencia", {
-      id_pacote: p.id,
-      id_competencia: c.id,
-      id_contrato: FIXTURE.contract,
-      id_organizacao: FIXTURE.organization,
-    });
+    const items = await tracedPreparation("COMPETENCY_UI", async () =>
+      rows("itens_pacote_competencia", {
+        id_pacote: p.id,
+        id_competencia: c.id,
+        id_contrato: FIXTURE.contract,
+        id_organizacao: FIXTURE.organization,
+      }),
+    );
     if (!items.length) stop("COMPETENCE_PACKAGE_EMPTY");
     for (const item of items) {
       if (
@@ -3322,7 +4104,7 @@ export async function prepareCompetencies(io, sourceList) {
     const receipt = { month, state: "partial" };
     output.competencies.push(receipt);
     try {
-      const initial = await createOrReuse(month);
+      const initial = await tracedPreparation("COMPETENCY_UI", async () => createOrReuse(month));
       const c = { ...initial, month };
       receipt.id = c.id;
       if (
@@ -3333,16 +4115,16 @@ export async function prepareCompetencies(io, sourceList) {
         receipt.state = c.view.competencia.situacao;
         stop("COMPETENCE_EXISTING_REGISTRATION_LINK_UNAVAILABLE");
       }
-      await ensureDocument(c);
+      await tracedPreparation("COMPETENCY_UI", async () => ensureDocument(c));
       receipt.requirementId = c.requirementId;
       receipt.documentId = c.documentId;
-      let a = await ensureAnalysis(c);
-      a = await reviewIfNeeded(c, a);
+      let a = await tracedPreparation("COMPETENCY_UI", async () => ensureAnalysis(c));
+      a = await tracedPreparation("COMPETENCY_UI", async () => reviewIfNeeded(c, a));
       receipt.executionId = c.executionId;
       receipt.documentVersionId = c.documentVersionId || null;
-      await opinion(c);
+      await tracedPreparation("COMPETENCY_UI", async () => opinion(c));
       receipt.opinionId = c.opinionId;
-      await present(c, month === "2026-09-01");
+      await tracedPreparation("COMPETENCY_UI", async () => present(c, month === "2026-09-01"));
       receipt.state = c.state;
       if (c.presentationId) {
         receipt.presentationId = c.presentationId;
@@ -3361,8 +4143,8 @@ export async function prepareCompetencies(io, sourceList) {
         : "COMPETENCE_DEPENDENCY_BLOCKED";
       if (temporalAborted) break;
       try {
-        await io.page.keyboard.press("Escape");
-        await io.fresh();
+        await tracedPreparation("COMPETENCY_UI", async () => io.page.keyboard.press("Escape"));
+        await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
       } catch {
         /* Remain partial; never issue a compensating mutation. */
       }
@@ -3399,6 +4181,16 @@ export function validatePreparerIdentity(env, proof, native, identity, head) {
   );
 }
 const PREPARER_FAILURE_CODES = new Set([
+  "RECOVERY_LEDGER",
+  "RECOVERY_STATE",
+  "RECOVERY_LIST",
+  "RECOVERY_READ_ONLY",
+  "RECOVERY_PROOF",
+  "RECOVERY_CONFIRMED_OPERATION",
+  "DIAGNOSTIC_SUBPHASE",
+  "DIAGNOSTIC_REENTRANT",
+  "PREPARER_TIMEOUT",
+  "PREPARER_CLEANUP",
   "BINDING_CODE",
   "BINDING_HASH",
   "BINDING_ID",
@@ -3552,6 +4344,10 @@ const PREPARER_FAILURE_CODES = new Set([
   "UI_UNCERTAIN",
 ]);
 async function runFixturePreparation() {
+  validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);
+  const diagnostics = createPreparationDiagnostics();
+  if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
+  activePreparationDiagnostics = diagnostics;
   let browser,
     proxy,
     fence,
@@ -3563,9 +4359,15 @@ async function runFixturePreparation() {
   let phase = "PREFLIGHT",
     result = null,
     sourceList = null,
-    blockedCode = null;
+    blockedCode = null,
+    recoveryState = null;
   const output = resolve("artifacts/trilha-a-fixtures");
-  await mkdir(output, { recursive: true });
+  await tracedPreparation("PREFLIGHT", async () => mkdir(output, { recursive: true }));
+  writeFileSync(
+    join(output, "receipts-r1.json"),
+    JSON.stringify(R1_RECOVERY_DOCUMENT, null, 2) + "\n",
+    { mode: 0o600 },
+  );
   const receiptPath = join(output, "receipts.json");
   writeFileSync(
     receiptPath,
@@ -3579,11 +4381,27 @@ async function runFixturePreparation() {
     workflowRun: process.env.GITHUB_RUN_ID,
   };
   try {
-    const native = JSON.parse(await readFile(".audit-work/native-proof.json", "utf8"));
-    const proof = JSON.parse(await readFile(".audit-work/provenance.json", "utf8"));
+    const native = JSON.parse(
+      await tracedPreparation("PREFLIGHT", async () =>
+        readFile(".audit-work/native-proof.json", "utf8"),
+      ),
+    );
+    const proof = JSON.parse(
+      await tracedPreparation("PREFLIGHT", async () =>
+        readFile(".audit-work/provenance.json", "utf8"),
+      ),
+    );
     const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
     execFileSync("git", ["diff", "--quiet", "HEAD"], { stdio: "ignore" });
-    if (!validatePreparerIdentity(process.env, proof, native, await harnessIdentity(), head))
+    if (
+      !validatePreparerIdentity(
+        process.env,
+        proof,
+        native,
+        await tracedPreparation("PREFLIGHT", async () => harnessIdentity()),
+        head,
+      )
+    )
       err("PREPARER_IDENTITY");
     for (const file of [
       "scripts/hml/prepare-visual-fixtures.mjs",
@@ -3596,90 +4414,121 @@ async function runFixturePreparation() {
       }).trim();
       if (actual !== expected) err("PREPARER_IDENTITY");
     }
-    await checkFreshDeployment(proof, true);
+    await tracedPreparation("PREFLIGHT", async () => checkFreshDeployment(proof, true));
     const persist = createReceiptWriter(receiptPath, identity);
-    const broker = createIntentBroker({ persist, competenceGateAmended: true });
+    const broker = createIntentBroker({
+      persist,
+      competenceGateAmended: true,
+      recoveryLedger: R1_RECOVERY_DOCUMENT,
+    });
     const debug = createServer();
-    await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
+    await tracedPreparation(
+      "PREFLIGHT",
+      async () => new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve)),
+    );
     const debugPort = debug.address().port;
-    await new Promise((resolve) => debug.close(resolve));
-    const { chromium } = await import("playwright");
-    proxy = await startDestinationProxy();
-    browser = await chromium.launch({
-      chromiumSandbox: true,
-      env: browserEnvironment(process.env),
-      proxy: { server: proxy.url },
-      args: [`--remote-debugging-port=${debugPort}`, "--proxy-bypass-list=<-loopback>"],
-    });
-    const context = await browser.newContext({
-      viewport: { width: 1440, height: 1000 },
-      serviceWorkers: "block",
-    });
-    page = await context.newPage();
+    await tracedPreparation(
+      "PREFLIGHT",
+      async () => new Promise((resolve) => debug.close(resolve)),
+    );
+    const { chromium } = await tracedPreparation("PREFLIGHT", async () => import("playwright"));
+    proxy = await tracedPreparation("PREFLIGHT", async () => startDestinationProxy());
+    browser = await tracedPreparation("PREFLIGHT", async () =>
+      launchNativeBrowser({ chromium, debugPort, proxy: proxy.url }),
+    );
+    const context = await tracedPreparation("PREFLIGHT", async () =>
+      browser.newContext({
+        viewport: { width: 1440, height: 1000 },
+        serviceWorkers: "block",
+      }),
+    );
+    page = await tracedPreparation("PREFLIGHT", async () => context.newPage());
     page.setDefaultTimeout(15000);
     let scriptError = false;
     page.on("pageerror", () => {
       scriptError = true;
     });
-    const session = await context.newCDPSession(page),
-      { targetInfo } = await session.send("Target.getTargetInfo");
-    await session.detach();
-    fence = await installNativeFence({
-      debugPort,
-      identity: targetInfo,
-      policy: broker.policy,
-      verifyResponse: (r) => verifyPublishedResponse(proof, r),
-      closeContext: () => context.close(),
-    });
+    const session = await tracedPreparation("PREFLIGHT", async () => context.newCDPSession(page)),
+      { targetInfo } = await tracedPreparation("PREFLIGHT", async () =>
+        session.send("Target.getTargetInfo"),
+      );
+    await tracedPreparation("PREFLIGHT", async () => session.detach());
+    fence = await tracedPreparation("PREFLIGHT", async () =>
+      installNativeFence({
+        debugPort,
+        identity: targetInfo,
+        policy: broker.policy,
+        verifyResponse: (r) => verifyPublishedResponse(proof, r),
+        closeContext: () => context.close(),
+      }),
+    );
     observer = createOfficialObserver(page);
     const fresh = async () => {
-      await settleVerifiedPage(page, fence);
-      await observer.flush();
+      await tracedPreparation("RUNTIME_FRESH", async () => settleVerifiedPage(page, fence));
+      await tracedPreparation("RUNTIME_FRESH", async () => observer.flush());
       if (scriptError) err("PREPARER_SCRIPT");
     };
     const goKnown = async (path) => {
       if (!Object.hasOwn(proof.documents, path)) err("PREPARER_SSR_PATH");
-      await checkFreshDeployment(proof, false);
-      await navigateVerifiedPage(page, fence, FIXTURE.origin + path);
-      await fresh();
+      await tracedPreparation("PREFLIGHT", async () => checkFreshDeployment(proof, false));
+      await tracedPreparation("RUNTIME_NAVIGATE", async () =>
+        navigateVerifiedPage(page, fence, FIXTURE.origin + path),
+      );
+      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
     };
     const link = async (path) => {
       if (!/^\/(?:contratos|competencias)\/[a-f0-9-]{36}(?:\/[a-z0-9-]+)*$/.test(path))
         err("PREPARER_SPA_PATH");
-      await fresh();
+      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
       if (page.url() === FIXTURE.origin + path) {
         if (Object.hasOwn(proof.documents, path)) {
-          await goKnown(path);
+          await tracedPreparation("PREFLIGHT", async () => goKnown(path));
           return;
         }
-        await goKnown(`/contratos/${FIXTURE.contract}/competencias`);
+        await tracedPreparation("PREFLIGHT", async () =>
+          goKnown(`/contratos/${FIXTURE.contract}/competencias`),
+        );
       }
       const candidates = page.locator(`a[href="${path}"]:visible`);
       let selected = null;
-      for (let n = 0; n < (await candidates.count()); n++) {
+      for (
+        let n = 0;
+        n < (await tracedPreparation("PREFLIGHT", async () => candidates.count()));
+        n++
+      ) {
         const item = candidates.nth(n);
-        if ((await item.isEnabled()) && (await item.getAttribute("aria-disabled")) !== "true") {
+        if (
+          (await tracedPreparation("PREFLIGHT", async () => item.isEnabled())) &&
+          (await tracedPreparation("PREFLIGHT", async () => item.getAttribute("aria-disabled"))) !==
+            "true"
+        ) {
           selected = item;
           break;
         }
       }
       if (!selected) err("PREPARER_SPA_LINK");
-      await selected.click();
-      await page.waitForURL(FIXTURE.origin + path);
-      await fresh();
+      await tracedPreparation("RUNTIME_NAVIGATE", async () => selected.click());
+      await tracedPreparation("RUNTIME_NAVIGATE", async () =>
+        page.waitForURL(FIXTURE.origin + path),
+      );
+      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
     };
     let contextVerified = false;
     const verifyContext = async () => {
-      await waitOrganization(page);
+      await tracedPreparation("PREFLIGHT", async () => waitOrganization(page));
       let contracts;
       try {
-        contracts = await observer.read("contratos", { id: FIXTURE.contract });
+        contracts = await tracedPreparation("RUNTIME_CONTEXT", async () =>
+          observer.read("contratos", { id: FIXTURE.contract }),
+        );
       } catch {
         contracts = [];
       }
       if (!contracts.length && !contextVerified) {
-        await goKnown(`/contratos/${FIXTURE.contract}`);
-        contracts = await observer.read("contratos", { id: FIXTURE.contract });
+        await tracedPreparation("PREFLIGHT", async () => goKnown(`/contratos/${FIXTURE.contract}`));
+        contracts = await tracedPreparation("RUNTIME_CONTEXT", async () =>
+          observer.read("contratos", { id: FIXTURE.contract }),
+        );
       }
       if (
         contracts.length !== 1 ||
@@ -3698,10 +4547,12 @@ async function runFixturePreparation() {
       verifyContext,
     });
     phase = "LOGIN";
-    await runtime.login({
-      email: process.env.CONTAOS_HML_SYNTHETIC_EMAIL,
-      password: process.env.CONTAOS_HML_SYNTHETIC_PASSWORD,
-    });
+    await tracedPreparation("LOGIN", async () =>
+      runtime.login({
+        email: process.env.CONTAOS_HML_SYNTHETIC_EMAIL,
+        password: process.env.CONTAOS_HML_SYNTHETIC_PASSWORD,
+      }),
+    );
     const official = (row) => {
       if (
         obj(row) &&
@@ -3726,12 +4577,14 @@ async function runFixturePreparation() {
       };
     };
     const sourceCapabilities = async () => {
-      await runtime.context();
-      await fresh();
-      const caps = await observer.rpcRead("consultar_permissoes_efetivas", {
-        p_id_organizacao: FIXTURE.organization,
-        p_id_contrato: FIXTURE.contract,
-      });
+      await tracedPreparation("PREFLIGHT", async () => runtime.context());
+      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
+      const caps = await tracedPreparation("PREFLIGHT", async () =>
+        observer.rpcRead("consultar_permissoes_efetivas", {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_contrato: FIXTURE.contract,
+        }),
+      );
       if (
         caps?.schema_versao !== "rbac-v1" ||
         caps.master !== true ||
@@ -3753,38 +4606,53 @@ async function runFixturePreparation() {
       };
     };
     const command = async ({ rpc, payload, evidence = {}, button, scope, confirmAfter }) => {
-      await runtime.context();
-      await fresh();
+      await tracedPreparation("PREFLIGHT", async () => runtime.context());
+      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
       if (typeof confirmAfter !== "function") err("PREPARER_RECONCILIATION");
       const verified = { context: true, capability: true, reconciled: true };
       let value;
       const operationGeneration = observer.generation();
-      await confirmUiIntent({
-        page,
-        fence,
-        broker,
-        rpc,
-        payload,
-        evidence,
-        button,
-        scope,
-        verified,
-        settleVerifiedPage: async () => fresh(),
-        reconcile: async (stage) => {
-          if (stage === "before") {
-            await runtime.context();
-            return { payload, evidence, verified };
-          }
-          await fresh();
-          if (!(await observer.observedAfter("rpc:" + rpc, {}, operationGeneration)))
-            err("PREPARER_RESPONSE_UNCONFIRMED");
-          value = await observer.rpcRead(rpc);
-          return { confirmed: (await confirmAfter(value)) === true };
-        },
-      });
+      await tracedPreparation("RUNTIME_FRESH", async () =>
+        confirmUiIntent({
+          page,
+          fence,
+          broker,
+          rpc,
+          payload,
+          evidence,
+          button,
+          scope,
+          verified,
+          settleVerifiedPage: async () => fresh(),
+          reconcile: async (stage) => {
+            if (stage === "before") {
+              await tracedPreparation("PREFLIGHT", async () => runtime.context());
+              return { payload, evidence, verified };
+            }
+            await tracedPreparation("RUNTIME_FRESH", async () => fresh());
+            if (
+              !(await tracedPreparation("PREFLIGHT", async () =>
+                observer.observedAfter("rpc:" + rpc, {}, operationGeneration),
+              ))
+            )
+              err("PREPARER_RESPONSE_UNCONFIRMED");
+            value = await tracedPreparation("PREFLIGHT", async () => observer.rpcRead(rpc));
+            return {
+              confirmed:
+                (await tracedPreparation("PREFLIGHT", async () => confirmAfter(value))) === true,
+            };
+          },
+        }),
+      );
       return value;
     };
     const io = {
+      recoveryLedger: R1_RECOVERY_DOCUMENT,
+      recoveryReady: (proof) => {
+        broker.authorizeRecovery(proof);
+        recoveryState = proof;
+        return true;
+      },
       page,
       fence,
       runtime,
@@ -3803,42 +4671,57 @@ async function runFixturePreparation() {
       wait: (ms) => new Promise((resolve) => setTimeout(resolve, Math.max(2000, ms))),
       abortPhase: async () => {
         fence.close();
-        await context.close();
+        await tracedPreparation("PREFLIGHT", async () => context.close());
       },
-      text: await readFile(
-        "docs/frontend/auditorias/evidencias/continuacao-auth-20261108/FONTE_SINTETICA_AUDITORIA_HML.txt",
-        "utf8",
+      text: await tracedPreparation("PREFLIGHT", async () =>
+        readFile(
+          "docs/frontend/auditorias/evidencias/continuacao-auth-20261108/FONTE_SINTETICA_AUDITORIA_HML.txt",
+          "utf8",
+        ),
       ),
     };
     phase = "SOURCE_AND_LIST";
-    sourceList = await prepareSourceAndList(io);
+    sourceList = await tracedPreparation("SOURCE_AND_LIST", async () => prepareSourceAndList(io));
     phase = "COMPETENCIES";
-    result = await prepareCompetencies(io, sourceList);
+    result = await tracedPreparation("COMPETENCIES", async () =>
+      prepareCompetencies(io, sourceList),
+    );
     phase = "FINAL_READBACK";
-    await runtime.context();
-    await fresh();
-    await checkFreshDeployment(proof, true);
+    await tracedPreparation("PREFLIGHT", async () => runtime.context());
+    await tracedPreparation("RUNTIME_FRESH", async () => fresh());
+    await tracedPreparation("PREFLIGHT", async () => checkFreshDeployment(proof, true));
     if (result?.state !== "confirmed") err("PREPARER_INCOMPLETE");
     completed = true;
   } catch (error) {
-    blockedCode = PREPARER_FAILURE_CODES.has(error?.message)
-      ? error.message
-      : "PREPARER_UNCLASSIFIED";
+    blockedCode = diagnostics.capture(error);
     throw error;
   } finally {
     if (runtime) {
       try {
-        logoutVerified = (await runtime.logout()) === true;
+        logoutVerified = await tracedPreparation("LOGOUT", async () =>
+          diagnostics.cleanup(() => runtime.logout()),
+        );
       } catch {
         logoutVerified = false;
       } finally {
-        runtime.clear();
+        await tracedPreparation("CLEANUP", async () =>
+          diagnostics.finishCleanup("RUNTIME_CLEAR_FAILED", () => runtime.clear()),
+        );
       }
     }
-    observer?.close();
-    fence?.close();
-    await browser?.close().catch(() => {});
-    await proxy?.close().catch(() => {});
+    await tracedPreparation("CLEANUP", async () =>
+      diagnostics.finishCleanup("OBSERVER_CLOSE_FAILED", () => observer?.close()),
+    );
+    await tracedPreparation("CLEANUP", async () =>
+      diagnostics.finishCleanup("FENCE_CLOSE_FAILED", () => fence?.close()),
+    );
+    await tracedPreparation("CLEANUP", async () =>
+      diagnostics.finishCleanup("BROWSER_CLOSE_FAILED", () => browser?.close()),
+    );
+    await tracedPreparation("CLEANUP", async () =>
+      diagnostics.finishCleanup("PROXY_CLOSE_FAILED", () => proxy?.close()),
+    );
+    const cleanupOk = diagnostics.snapshot().cleanupFailure === null;
     const safeIds = [];
     const collect = (value) => {
       if (uuid(value)) safeIds.push(value);
@@ -3850,16 +4733,26 @@ async function runFixturePreparation() {
       bindings = fixtureBindingReceipt(sourceList, result);
     } catch (error) {
       completed = false;
-      blockedCode = PREPARER_FAILURE_CODES.has(error?.message) ? error.message : "BINDING_SCHEMA";
+      blockedCode ||= diagnostics.capture(error);
     }
     collect(bindings);
     const report = {
       schema: "contaos.fixture.preparation.v1",
-      failure: blockedCode,
+      failure: blockedCode || (cleanupOk ? null : "PREPARER_CLEANUP"),
+      diagnostics: diagnostics.snapshot(),
+      recovery: {
+        ledgerSha256: R1_RECEIPTS_SHA256,
+        priorWorkflowRun: "42540864527",
+        confirmedBefore: 2,
+        maxNewIntentions: 22,
+        reconciled: !!recoveryState,
+        sourceVersion: recoveryState?.sourceVersion || null,
+        sourceHash: recoveryState?.sourceHash || null,
+      },
       bindings,
       ...identity,
       phase,
-      completed: completed && logoutVerified,
+      completed: completed && logoutVerified && cleanupOk,
       logoutVerified,
       ids: [...new Set(safeIds)].slice(0, 32),
       v1Certified: false,
@@ -3868,17 +4761,19 @@ async function runFixturePreparation() {
       mode: 0o600,
     });
     let sums = "";
-    for (const name of ["receipts.json", "report.json"])
+    for (const name of ["receipts.json", "report.json", "receipts-r1.json"])
       sums +=
         createHash("sha256")
-          .update(await readFile(join(output, name)))
+          .update(await tracedPreparation("PREFLIGHT", async () => readFile(join(output, name))))
           .digest("hex") +
         "  " +
         name +
         "\n";
     writeFileSync(join(output, "SHA256SUMS"), sums, { mode: 0o600 });
+    activePreparationDiagnostics = null;
   }
-  if (!completed || !logoutVerified) err("PREPARER_INCOMPLETE");
+  if (!completed || !logoutVerified || diagnostics.snapshot().cleanupFailure)
+    err("PREPARER_INCOMPLETE");
 }
 
 export function fixtureBindingReceipt(sourceList, result) {

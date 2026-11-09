@@ -1,3 +1,15 @@
+# Checkpoint: barreira popup corrigida e revisões414/416 concluídas por snapshot
+
+PR425 integrado por merge normal1cd6572e4f52337249c495f5d482b8140013abcb, HEADa8cbaf3870dbd54c55ff52309b261081ab0354a2. CI Auth42548376460/Fixtures42548376356/Zero42548376508/LOCK42548376384 SUCCESS. Revisão independente5820851099 semCritical/Important. Job128938235675 confirmou native8+visual1+V112browser1 noSHAexato; OPTIONSoriginalObserved=true,returnedBeforeRelease=false,activeNetworkBeforeRelease=true. Launcher compartilhado por auditor/preparador/nativeproof exige binárioHeadlessShell1208 por caminho/tamanho/SHA27e55 e argv/versão reais antes de devolverBrowser. Switch --block-new-web-contents único; sandbox/CSP/TLS/CORS/CDP/proxy intactos, semPlaywrightrouting. Popuporiginal mantémFENCE_POPUP/TCP0 e inclui controlepositivo semflag+4modos/fechamentoretido150ms/TCPbytesHTTP0. Downloadlocal veio truncado; prova nativa válida é a CI, não local.
+
+Revisões independentes414beac4b24 e416795b0bb8 registradas5820831420/5820831503, sem novosCritical/Important. No416, ledger ausente e diagnóstico recuperado corrigidos;340PASS/10SKIP locais afetados, semAuth. Integração425 em416bb316e7a preserva tracedPreparation no launcher, ledger/nonce/2RPCnegadas/22novas/cleanup;22focaisPASS0SKIP, revisão favorável. Zero42548720321 bloqueou somente HEADnormativo antesBUILD; CI/nativos doHEADfinal ainda precisam ser conferidos. PR414 recebeu integração externa SYS04/diagnóstico/popup5bd6e003; parecer técnico anterior não é autorização para dispensar recheck doHEADfinal.
+
+Reancoragem eea93e73→19cd7b52 após comparação de árvore completa:25/25documentos normativos e catálogo100/97 iguais, tipos8ea intactos. Delta6paths lido: migration aditiva de classificadorprivado/três políticasrestrictive rawchat, SQLtests/rollback e catálogo exato mais2docs. APIs e fontesfrontend A nãoalteradas; não comprova aplicaçãoHML/TrilhaC. Snapshot/ack reancorados juntos; guards nãoflexibilizados.
+
+NenhumaAuth/R2/deploy nova nesta correção. R1 permanece consumido comduas operações; nenhum replay. Provas públicas18,Run78/114/124 e demais resultados preservados. Run124 continua102PASSauto/8FAIL_UI/56PII/24fixtures/18baseline; não promove V102HML nem certifica72/WCAG/V1. Próxima: checks e revisão finais das integrações414/416, mergeprotegido; eventual execuçãoHML só sobgatespróprios e fonte/deployment novamentecomprovados.
+
+---
+
 # Checkpoint P0: continuidade ativa, cerca de popup em correção e aceites pendentes
 
 Registro de 09/11/2026. O desenvolvimento continua; este checkpoint previne perda de contexto e não recomenda encerrar a conversa. CI, revisão do coordenador e integração deste PR ainda são exigidas antes de declarar o registro oficialmente integrado. Os capítulos anteriores permanecem históricos e íntegros abaixo; este bloco consolida o estado observado mais recente.
