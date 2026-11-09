@@ -73,7 +73,7 @@ function Dica({ rotulo, texto }: { rotulo: string; texto: string }) {
               e.preventDefault();
               setAberta(true);
             }}
-            className={`-my-3 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-muted-foreground ${foco}`}
+            className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded text-muted-foreground ${foco}`}
           >
             <Info className="h-3.5 w-3.5" aria-hidden />
           </button>
