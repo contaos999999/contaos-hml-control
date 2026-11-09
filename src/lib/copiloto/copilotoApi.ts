@@ -44,7 +44,7 @@ export function validarPaginaSessoes(v: unknown): PaginaSessoes {
 }
 export function validarPaginaHistorico(v: unknown): PaginaHistorico {
   if (!valido(v) || v["ok"] !== true || !valido(v["sessao"]) ||
-      typeof v["sessao"].id !== "string" || !statusValido(v["sessao"].status) ||
+      typeof v["sessao"]["id"] !== "string" || !statusValido(v["sessao"]["status"]) ||
       !Array.isArray(v["mensagens"]) || !cursorValido(v["proximo_cursor"]) ||
       !v["mensagens"].every((m: unknown) =>
         valido(m) && typeof m["id"] === "string" &&
