@@ -1,0 +1,55 @@
+name: ContaOS Trilha A Fixture Inspection
+on:
+  pull_request:
+    paths:
+      - .github/workflows/contaos-trilha-a-fixture-inspection.yml
+      - scripts/hml/inspect-fixture-artifact.mjs
+      - scripts/hml/inspect-fixture-artifact.test.mjs
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/contaos-trilha-a-fixture-inspection.yml
+      - scripts/hml/inspect-fixture-artifact.mjs
+      - scripts/hml/inspect-fixture-artifact.test.mjs
+permissions:
+  contents: read
+concurrency:
+  group: trilha-a-fixture-inspection-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: node --test scripts/hml/inspect-fixture-artifact.test.mjs
+  inspect:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'contaos999999/contaos-hml-control'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/checkout@v4
+        with:
+          repository: actions/download-artifact
+          ref: d3f86a106a0bac45b974a628896c90dbdf5c8093
+          path: .fixture-inspection-tool
+          persist-credentials: false
+      - run: node scripts/hml/inspect-fixture-artifact.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
