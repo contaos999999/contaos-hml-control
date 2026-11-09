@@ -2342,9 +2342,8 @@ test(
   async () => {
     const require = createRequire(import.meta.url),
       fs = require("fs"),
-      ts = require("typescript"),
-      { chromium } = await import("playwright");
-    const browser = await chromium.launch({ headless: true });
+      ts = require("typescript");
+    const browser = await r3AttestedBrowser();
     try {
       const page = await browser.newPage();
       await page.route("**/*", (r) => r.abort());
@@ -2445,11 +2444,10 @@ test(
   "R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay",
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1" },
   async () => {
-    const { chromium } = await import("playwright");
     const browserCode = r3BrowserBundle(
       'import React from "react";import{createRoot}from"react-dom/client";import * as D from "@radix-ui/react-dialog";\nfunction App(){const[a,A]=React.useState(true),[b,B]=React.useState(true);const e=React.createElement;return e(React.Fragment,null,e("button",{onClick:()=>location.href="/login"},"Sair"),e(D.Root,{open:a,onOpenChange:A},e(D.Portal,null,e(D.Overlay),e(D.Content,null,e(D.Title,null,"FONTE SINTETICA TRILHA A 20261108"),e(D.Description,null,"Offline"),e(D.Close,null,"Close"),e(D.Root,{open:b,onOpenChange:B},e(D.Portal,null,e(D.Overlay),e(D.Content,null,e(D.Title,null,"Editar fonte"),e(D.Description,null,"Offline"),e(D.Close,null,"Cancelar"))))))));}createRoot(document.getElementById("root")).render(React.createElement(App));',
     );
-    const browser = await chromium.launch({ headless: true });
+    const browser = await r3AttestedBrowser();
     try {
       const page = await browser.newPage();
       let auth = 0;
@@ -2539,4 +2537,45 @@ function r3RemainingSourceMarkup() {
   ])
     new Function("require", "console", script.replace(/^require=[^;]+;/, ""))(require, console);
   return { outputs, reports };
+}
+
+test("R3 sourceforms cannot bypass the attested native factory", async () => {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+    new URL("./prepare-visual-fixtures.test.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("tests.mjs", source, 99, true, 1);
+  let checked = 0;
+  for (const statement of ast.statements) {
+    if (!ts.isExpressionStatement(statement) || !ts.isCallExpression(statement.expression))
+      continue;
+    const call = statement.expression;
+    if (
+      !ts.isStringLiteral(call.arguments[0]) ||
+      !call.arguments[0].text.startsWith("R3 Chromium sourceforms")
+    )
+      continue;
+    const body = call.arguments.at(-1).getText(ast);
+    assert.ok(body.includes("r3AttestedBrowser()"));
+    assert.equal(/chromium\.launch|import\("playwright"\)/.test(body), false);
+    checked++;
+  }
+  assert.equal(checked, 2);
+});
+
+async function r3AttestedBrowser() {
+  const { createServer } = await import("node:net");
+  const debug = createServer();
+  await new Promise((resolve, reject) => {
+    debug.once("error", reject);
+    debug.listen(0, "127.0.0.1", resolve);
+  });
+  const debugPort = debug.address().port;
+  await new Promise((resolve, reject) =>
+    debug.close((error) => (error ? reject(error) : resolve())),
+  );
+  const { launchNativeBrowser } = await import("./authenticated-visual-audit.mjs");
+  return launchNativeBrowser({ debugPort });
 }
