@@ -7594,3 +7594,16 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
     assert.equal(contexts, 0);
   }
 });
+
+test("popup policy: unknown argv and bare overrides never authorize the real launcher", () => {
+  const check = fn("verifyNativeBrowserPolicy");
+  const args = ["/trusted/chrome-headless-shell", "--headless", "--block-new-web-contents"];
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  for (const extra of [
+    ["--proxy-server=http://foreign.invalid:8181"],
+    ["--remote-debugging-address=0.0.0.0"],
+    ["--disable-blink-features=BlockCredentialedSubresources"],
+    ["--remote-debugging-port", "0"],
+    ["--unknown-switch=false"],
+  ]) assert.throws(() => check([...args, ...extra], version), { code: "BROWSER_POLICY" });
+});
