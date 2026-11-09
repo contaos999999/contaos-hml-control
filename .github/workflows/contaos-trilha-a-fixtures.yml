@@ -37,6 +37,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      pull-requests: read
     outputs:
       selected: ${{ steps.request.outputs.selected }}
       sha: ${{ steps.request.outputs.sha }}
@@ -114,6 +115,10 @@ jobs:
         run: node scripts/hml/authenticated-visual-audit.mjs --native-guard
   private:
     needs: request
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
     if: always() && ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || ((github.event_name == 'workflow_run' && github.repository == 'contaos999999/contaos-hml-control' && github.event.action == 'completed' && github.event.workflow_run.event == 'push' && github.event.workflow_run.repository.full_name == 'contaos999999/contaos-hml-control' && github.event.workflow_run.head_repository.full_name == 'contaos999999/contaos-hml-control' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.workflow_id == 406076025 && github.event.workflow_run.path == '.github/workflows/contaos-frontend-zero-drift.yml' && github.event.workflow_run.name == 'ContaOS Frontend Zero-Drift' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.run_attempt == 1 && github.run_attempt == '1' && github.event.workflow_run.head_sha == github.sha) && needs.request.outputs.selected == 'true'))
     name: Trilha A preparacao sintetica HML
     runs-on: ubuntu-22.04
@@ -143,6 +148,8 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Recibo inicial publico para as fases sem credenciais
         if: github.event_name == 'workflow_run'
+        env:
+          CONTAOS_ACTIONS_READ_TOKEN: ${{ github.token }}
         run: node scripts/hml/authenticated-visual-audit.mjs --request-revalidate
       - name: Reancorar deployment HML sem credenciais, antes do checkout da fonte
         id: deployment
@@ -180,6 +187,8 @@ jobs:
         run: node scripts/hml/authenticated-visual-audit.mjs --prepare
       - name: Revalidar main e unicidade dentro da concorrencia antes de secrets
         if: github.event_name == 'workflow_run'
+        env:
+          CONTAOS_ACTIONS_READ_TOKEN: ${{ github.token }}
         run: node scripts/hml/authenticated-visual-audit.mjs --request-revalidate
       - name: Somente agora fornecer o par sintetico ao preparador separado
         env:

@@ -14,6 +14,9 @@ import {
   R4_ZERO_AUTH_PROOF,
   validateR4ZeroAuthProof,
   getValidatedR4ZeroAuth,
+  R7_ZERO_AUTH_PROOF,
+  getValidatedR7ZeroAuth,
+  assertPrivateRequestEnvironment,
   HML_ORIGIN,
   API_ORIGIN,
   nativeProofValid,
@@ -207,6 +210,7 @@ export function validateR1RecoveryDocument(input) {
 export async function reconcileRecoveryCompetencies(io) {
   validateR5RecoveryDocument(io.recoveryLedgerR5);
   validateR6RecoveryDocument(io.recoveryLedgerR6);
+  validateR7RecoveryDocument(io.recoveryLedgerR7);
   const result = [];
   const select = EXACT_SELECTS.competencias.find((value) =>
     value.includes("competencia_referencia,"),
@@ -262,6 +266,7 @@ export function reconcileR1Recovery(input) {
   validateR4RecoveryDocument(input?.ledgerR4);
   validateR5RecoveryDocument(input?.ledgerR5);
   validateR6RecoveryDocument(input?.ledgerR6);
+  validateR7RecoveryDocument(input?.ledgerR7);
   const expected = R5_BINDINGS;
   if (
     input.listCount !== 1 ||
@@ -673,12 +678,44 @@ function confirmedR5Replay(rpc, payload) {
   );
 }
 
-function recoveryBudget(ledger, ledgerR3, ledgerR4, ledgerR5, ledgerR6) {
+export const R7_RECOVERY_DOCUMENT = freeze({ ...R7_ZERO_AUTH_PROOF });
+export function validateR7RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R7_LEDGER");
+  let descriptors;
+  try {
+    descriptors = Object.getOwnPropertyDescriptors(input);
+  } catch {
+    err("RECOVERY_R7_LEDGER");
+  }
+  const keys = Object.keys(R7_ZERO_AUTH_PROOF),
+    clean = {};
+  if (Reflect.ownKeys(descriptors).length !== keys.length) err("RECOVERY_R7_LEDGER");
+  for (const key of keys) {
+    const descriptor = descriptors[key];
+    if (
+      !descriptor ||
+      !Object.hasOwn(descriptor, "value") ||
+      descriptor.enumerable !== true ||
+      descriptor.value !== R7_ZERO_AUTH_PROOF[key]
+    )
+      err("RECOVERY_R7_LEDGER");
+    clean[key] = descriptor.value;
+  }
+  if (
+    hash(JSON.stringify(clean, null, 2) + "\n") !==
+    "687712aa5ab15072afc65aceacdff52ce5d94c6ba9f2ceccf6867e4636bd1c4e"
+  )
+    err("RECOVERY_R7_LEDGER");
+  return freeze(clean);
+}
+
+function recoveryBudget(ledger, ledgerR3, ledgerR4, ledgerR5, ledgerR6, ledgerR7) {
   const prior = validateR1RecoveryDocument(ledger),
     r3 = validateR3RecoveryDocument(ledgerR3);
   validateR4RecoveryDocument(ledgerR4);
   const r5 = JSON.parse(validateR5RecoveryDocument(ledgerR5).receiptsRaw);
   validateR6RecoveryDocument(ledgerR6);
+  validateR7RecoveryDocument(ledgerR7);
   const confirmedBefore = [...prior.receipts, ...r3.receipts, ...r5.receipts].filter(
     (row) => row.state === "confirmed",
   ).length;
@@ -1510,6 +1547,7 @@ export function createIntentBroker({
   recoveryLedgerR4,
   recoveryLedgerR5,
   recoveryLedgerR6,
+  recoveryLedgerR7,
   beforeArm,
 } = {}) {
   const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
@@ -1518,7 +1556,8 @@ export function createIntentBroker({
     (recoveryLedgerR3 !== undefined ||
       recoveryLedgerR4 !== undefined ||
       recoveryLedgerR5 !== undefined ||
-      recoveryLedgerR6 !== undefined)
+      recoveryLedgerR6 !== undefined ||
+      recoveryLedgerR7 !== undefined)
   )
     err("RECOVERY_R3_LEDGER");
   const budget = recovery
@@ -1528,6 +1567,7 @@ export function createIntentBroker({
         recoveryLedgerR4,
         recoveryLedgerR5,
         recoveryLedgerR6,
+        recoveryLedgerR7,
       )
     : null;
   let recoveryAuthorized = !recovery;
@@ -3134,6 +3174,7 @@ export async function prepareSourceAndList(io) {
     validateR4RecoveryDocument(io.recoveryLedgerR4);
     validateR5RecoveryDocument(io.recoveryLedgerR5);
     validateR6RecoveryDocument(io.recoveryLedgerR6);
+    validateR7RecoveryDocument(io.recoveryLedgerR7);
   }
   const fail = (code) => {
     throw new Error(code);
@@ -3653,6 +3694,7 @@ export async function prepareSourceAndList(io) {
         ledgerR4: io.recoveryLedgerR4,
         ledgerR5: io.recoveryLedgerR5,
         ledgerR6: io.recoveryLedgerR6,
+        ledgerR7: io.recoveryLedgerR7,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -4021,6 +4063,7 @@ export async function prepareCompetencies(io, sourceList) {
   if (io.recoveryLedgerR5) {
     validateR5RecoveryDocument(io.recoveryLedgerR5);
     validateR6RecoveryDocument(io.recoveryLedgerR6);
+    validateR7RecoveryDocument(io.recoveryLedgerR7);
     for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
       if (sourceList[key] !== R5_BINDINGS[key]) stop("RECOVERY_LIST");
   }
@@ -4248,6 +4291,7 @@ export async function prepareCompetencies(io, sourceList) {
     if (io.recoveryLedgerR5) {
       validateR5RecoveryDocument(io.recoveryLedgerR5);
       validateR6RecoveryDocument(io.recoveryLedgerR6);
+      validateR7RecoveryDocument(io.recoveryLedgerR7);
       const expected = R5_BINDINGS.competencies.find((c) => c.month === month);
       if (!expected || existing.length !== 1 || existing[0].id !== expected.id)
         stop("RECOVERY_STATE");
@@ -5152,6 +5196,9 @@ export function validatePreparerIdentity(env, proof, native, identity, head) {
 const PREPARER_FAILURE_CODES = new Set([
   "RECOVERY_R5_LEDGER",
   "RECOVERY_R6_LEDGER",
+  "RECOVERY_R7_LEDGER",
+  "RECOVERY_R7_PROOF",
+  "PREPARE_SECRET_ENV",
   "RECOVERY_R4_PROOF",
   "RECOVERY_R3_LEDGER",
   "RECOVERY_SOURCE_INACTIVE",
@@ -5326,12 +5373,14 @@ async function runFixturePreparation() {
   const r4Recovery = validateR4RecoveryDocument(getValidatedR4ZeroAuth());
   const r5Recovery = validateR5RecoveryDocument(R5_RECOVERY_DOCUMENT);
   const r6Recovery = validateR6RecoveryDocument(R6_RECOVERY_DOCUMENT);
+  const r7Recovery = validateR7RecoveryDocument(getValidatedR7ZeroAuth());
   const validatedBudget = recoveryBudget(
     R1_RECOVERY_DOCUMENT,
     R3_RECOVERY_DOCUMENT,
     r4Recovery,
     r5Recovery,
     r6Recovery,
+    r7Recovery,
   );
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
@@ -5413,6 +5462,7 @@ async function runFixturePreparation() {
       recoveryLedgerR4: r4Recovery,
       recoveryLedgerR5: r5Recovery,
       recoveryLedgerR6: r6Recovery,
+      recoveryLedgerR7: r7Recovery,
       beforeArm: (rpc, payload, evidence, binding) =>
         observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
@@ -5569,6 +5619,7 @@ async function runFixturePreparation() {
       openOrganizationSelector: openVerifiedOrganizationSelector,
       verifyContext,
     });
+    assertPrivateRequestEnvironment(process.env);
     phase = "LOGIN";
     await tracedPreparation("LOGIN", async () =>
       runtime.login({
@@ -5675,6 +5726,7 @@ async function runFixturePreparation() {
       recoveryLedgerR4: r4Recovery,
       recoveryLedgerR5: r5Recovery,
       recoveryLedgerR6: r6Recovery,
+      recoveryLedgerR7: r7Recovery,
       recoveryReady: (proof) => {
         broker.authorizeRecovery(proof);
         recoveryState = proof;
@@ -5814,6 +5866,9 @@ async function runFixturePreparation() {
       JSON.stringify(R6_RECOVERY_DOCUMENT, null, 2) + "\n",
       { mode: 0o600 },
     );
+    writeFileSync(join(output, "recovery-r7.json"), JSON.stringify(r7Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
     let sums = "";
     writeFileSync(
       join(output, "recovery-r2.json"),
@@ -5831,6 +5886,7 @@ async function runFixturePreparation() {
       "recovery-r5.json",
       "receipts-r6.json",
       "recovery-r6.json",
+      "recovery-r7.json",
     ])
       sums +=
         createHash("sha256")
@@ -5911,8 +5967,8 @@ export function fixtureBindingReceipt(sourceList, result) {
 export async function runCli(args = process.argv.slice(2)) {
   if (!Array.isArray(args) || args.length !== 1 || args[0] !== "--prepare-fixtures")
     err("PREPARER_CLI_USAGE");
-  if (["workflow_run", "workflow_dispatch"].includes(process.env.GITHUB_EVENT_NAME))
-    await loadSingleRequestProof({ operation: "fixtures", fresh: true });
+  if (process.env.GITHUB_EVENT_NAME !== "workflow_run") err("PREPARER_MAIN_ONLY");
+  await loadSingleRequestProof({ operation: "fixtures", fresh: true });
   if (!preparerEventAllowed(process.env)) err("PREPARER_MAIN_ONLY");
   return runFixturePreparation();
 }

@@ -13,6 +13,7 @@ import { resolve, join, basename, dirname, isAbsolute } from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
+import { isProxy } from "node:util/types";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
@@ -4194,6 +4195,8 @@ export async function preparePublicProvenance({
       "AUTH_ADMIN_KEY",
       "CONTAOS_HML_AUTH_ADMIN_KEY",
       "GH_TOKEN",
+      "GITHUB_TOKEN",
+      "CONTAOS_ACTIONS_READ_TOKEN",
     ].some((key) => !!process.env[key])
   )
     fail("PREPARE_SECRET_ENV");
@@ -4294,6 +4297,10 @@ export async function runCli(args = process.argv.slice(2)) {
     ].includes(args[0])
   )
     fail("CLI_MODE");
+  if (args[0] === "--audit") {
+    if (process.env.GITHUB_EVENT_NAME !== "workflow_run") fail("REQUEST_EVENT");
+    assertPrivateRequestEnvironment(process.env);
+  }
   const harnessRoot = fileURLToPath(new URL("../../", import.meta.url));
   try {
     const options = { cwd: harnessRoot, env: browserEnvironment(process.env), maxBuffer: 4194304 };
@@ -4316,7 +4323,10 @@ export async function runCli(args = process.argv.slice(2)) {
   if (["--request-preflight", "--request-revalidate"].includes(args[0]))
     return singleRequestCli(args[0]);
   if (process.env.GITHUB_EVENT_NAME === "workflow_run" && args[0] !== "--native-guard") {
-    await loadSingleRequestProof({ operation: process.env.CONTAOS_REQUEST_OPERATION });
+    await loadSingleRequestProof({
+      operation: process.env.CONTAOS_REQUEST_OPERATION,
+      fresh: args[0] === "--audit",
+    });
   }
   if (args[0] === "--native-guard") return nativeGuard();
   if (args[0] === "--audit") return runAuthenticatedAudit();
@@ -4335,6 +4345,8 @@ export async function runCli(args = process.argv.slice(2)) {
         "AUTH_ADMIN_KEY",
         "CONTAOS_HML_AUTH_ADMIN_KEY",
         "GH_TOKEN",
+        "GITHUB_TOKEN",
+        "CONTAOS_ACTIONS_READ_TOKEN",
       ].some((key) => !!process.env[key])
     )
       fail("PREPARE_SECRET_ENV");
@@ -4372,9 +4384,11 @@ export async function runCli(args = process.argv.slice(2)) {
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   runCli().catch(async (error) => {
+    const apiDiagnostic = requestApiDiagnostic(error);
     console.error(
       JSON.stringify({
         state: "BLOCKED",
+        ...(apiDiagnostic ? { api: apiDiagnostic } : {}),
         code: /^[A-Z_]{1,80}$/.test(error?.code || "") ? error.code : "HARNESS_FAILURE",
         ...(error?.code === "BUILD_ENV_POLICY" && /^[A-Z_]{1,80}$/.test(error?.reason || "")
           ? { reason: error.reason }
@@ -5215,6 +5229,9 @@ export async function openVerifiedOrganizationSelector(page, fence) {
   await navigateVerifiedPage(page, fence, HML_ORIGIN + "/selecionar-organizacao");
 }
 async function runAuthenticatedAudit() {
+  if (process.env.GITHUB_EVENT_NAME !== "workflow_run") fail("REQUEST_EVENT");
+  assertPrivateRequestEnvironment(process.env);
+  getValidatedR7ZeroAuth();
   const ready = validateConfiguration({
     origin: HML_ORIGIN,
     frontendSha: process.env.CONTAOS_FRONTEND_SHA,
@@ -5385,6 +5402,7 @@ async function runAuthenticatedAudit() {
     await page.locator("#login-email").waitFor({ state: "visible" });
     await page.locator("#login-senha").waitFor({ state: "visible" });
     flags.formLocated = true;
+    assertPrivateRequestEnvironment(process.env);
     phase = "FILL_LOGIN";
     await page.locator("#login-email").fill(process.env.CONTAOS_HML_SYNTHETIC_EMAIL);
     await page.locator("#login-senha").fill(process.env.CONTAOS_HML_SYNTHETIC_PASSWORD);
@@ -6711,6 +6729,7 @@ export const SINGLE_REQUEST = Object.freeze({
   gateSha: "31b68f3cadbdc13a82bae23a43c35616f873d70b",
   autoGateSha: "122242fd421b348aef229683c0d3969611bce1db",
   recoveryGateSha: "581e161718d7f784961e2fef6bd1a75ba9295637",
+  metadataGateSha: "2704e63969880f81842102190ebc0337a3b9b551",
   listSelectionGateSha: "18424c16bcdc6d035e91e2dc8b7257ea755097d0",
   navigationGateSha: "ffffc501e5b5665026ff847bca1d2bf6df17fa73",
   bootstrapGateSha: "a8f3da12dcfeca858904b60e1b32c50df73a7d4a",
@@ -6723,13 +6742,14 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-a-fixtures-20261109-r4",
     "trilha-a-fixtures-20261109-r5",
     "trilha-a-fixtures-20261109-r6",
+    "trilha-a-fixtures-20261109-r7",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r7",
+    nonce: "trilha-a-fixtures-20261109-r8",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -6966,6 +6986,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.bootstrapGateSha,
       SINGLE_REQUEST.navigationGateSha,
       SINGLE_REQUEST.listSelectionGateSha,
+      SINGLE_REQUEST.metadataGateSha,
     );
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
@@ -7010,6 +7031,731 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
     if (historic.request_id === request.request_id) requestShas.push(commit);
   }
   return requestShas;
+}
+
+export const R7_ZERO_AUTH_PROOF = Object.freeze({
+  schema: "contaos.fixture.recovery-r7.v1",
+  headSha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+  upstreamRun: 42601246471,
+  fixturesRun: 42601383933,
+  auditRun: 42601384052,
+  privateJob: 129106715983,
+  attempt: 1,
+  derivedNewBusinessIntents: 0,
+  proof: "GITHUB_ACTIONS_LIVE_METADATA",
+});
+let validatedR7ZeroAuth = null;
+export function validateR7ZeroAuthProof(value) {
+  if (isProxy(value) || !value || typeof value !== "object" || Array.isArray(value))
+    fail("RECOVERY_R7_PROOF");
+  const prototype = Object.getPrototypeOf(value);
+  if (isProxy(prototype) || (prototype !== Object.prototype && prototype !== null))
+    fail("RECOVERY_R7_PROOF");
+  const descriptors = Object.getOwnPropertyDescriptors(value),
+    names = Object.keys(R7_ZERO_AUTH_PROOF);
+  if (Reflect.ownKeys(descriptors).length !== names.length) fail("RECOVERY_R7_PROOF");
+  const clean = {};
+  for (const key of names) {
+    const d = descriptors[key];
+    if (
+      !d ||
+      !Object.hasOwn(d, "value") ||
+      d.enumerable !== true ||
+      d.value !== R7_ZERO_AUTH_PROOF[key]
+    )
+      fail("RECOVERY_R7_PROOF");
+    clean[key] = d.value;
+  }
+  if (
+    digest(JSON.stringify(clean, null, 2) + "\n") !==
+    "687712aa5ab15072afc65aceacdff52ce5d94c6ba9f2ceccf6867e4636bd1c4e"
+  )
+    fail("RECOVERY_R7_PROOF");
+  return Object.freeze(clean);
+}
+export function getValidatedR7ZeroAuth() {
+  return validateR7ZeroAuthProof(validatedR7ZeroAuth);
+}
+export async function verifyR7ZeroAuth({ get, git } = {}) {
+  try {
+    if (typeof get !== "function" || typeof git !== "function") fail("RECOVERY_R7_PROOF");
+    const head = R7_ZERO_AUTH_PROOF.headSha,
+      repo = SINGLE_REQUEST.repository;
+    const specs = [
+      {
+        id: 42601246471,
+        workflow: 406076025,
+        path: ".github/workflows/contaos-frontend-zero-drift.yml",
+        name: "ContaOS Frontend Zero-Drift",
+        event: "push",
+        conclusion: "success",
+        jobs: [
+          {
+            id: 129105989688,
+            name: "ContaOS Frontend Zero-Drift",
+            conclusion: "success",
+            steps: [
+              {
+                number: 1,
+                name: "Set up job",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 2,
+                name: "Checkout immutable commit",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 3,
+                name: "P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 4,
+                name: "P0 V1 — autotestes do inventario e dispensas",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 5,
+                name: "P0 V1 — integridade dos 416 critérios, 45 prompts e 37 atomicos",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 6,
+                name: "P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 7,
+                name: "Autoteste do guard (casos permitidos e proibidos)",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 8,
+                name: "Verificar contrato de seguranca do Auto-Lock por PR",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 9,
+                name: "Verificar fronteira frontend/backend e PLAN validado prévio",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 10,
+                name: "Autotestes do snapshot canônico e matriz de telas",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 11,
+                name: "Verificar HEAD vivo do repositório normativo antes de BUILD",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 12,
+                name: "GOV-003 — exigir token valido e fonte viva antes do merge",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 13,
+                name: "Run actions/setup-node@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 14,
+                name: "Setup Bun",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 15,
+                name: "Install frozen dependencies",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 16,
+                name: "GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 17,
+                name: "Lint e formatacao do saneamento transversal",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 18,
+                name: "Production build — geração canônica TanStack antes dos testes longos",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 19,
+                name: "GOV-020 — bloquear divergência entre routeTree gerado e commit",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 20,
+                name: "Full regression — Vitest 2 workers",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 21,
+                name: "TypeScript typecheck",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 22,
+                name: "Brand-01, PT-BR, secrets and types integrity",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 43,
+                name: "Post Run actions/setup-node@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 44,
+                name: "Post Checkout immutable commit",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 45,
+                name: "Complete job",
+                status: "completed",
+                conclusion: "success",
+              },
+            ],
+          },
+          {
+            id: 129105990079,
+            name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+            conclusion: "success",
+            steps: [
+              {
+                number: 1,
+                name: "Set up job",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 2,
+                name: "Checkout SHA imutavel, apenas leitura",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 3,
+                name: "Detectar escopo de auditoria visual",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 4,
+                name: "Setup Bun",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 5,
+                name: "Instalar dependencias congeladas",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 6,
+                name: "Cache do Chromium Playwright 1.64.1",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 7,
+                name: "Instalar Playwright isolado, sem atualizar package/lock",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 8,
+                name: "Executar servidor de desenvolvimento isolado do mesmo SHA",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 9,
+                name: "GOV-020 — verificar routeTree após Vite dev e antes do Playwright",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 10,
+                name: "Teste C Playwright — 24 telas, 4 larguras, 2 temas",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 11,
+                name: "Evidencia permanente de screenshots e SHA256SUMS",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 12,
+                name: "Confirmar que nenhuma fonte versionada foi editada",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 24,
+                name: "Post Checkout SHA imutavel, apenas leitura",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 25,
+                name: "Complete job",
+                status: "completed",
+                conclusion: "success",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 42601383933,
+        workflow: 411426169,
+        path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+        name: "ContaOS Trilha A Fixtures",
+        event: "workflow_run",
+        conclusion: "failure",
+        jobs: [
+          {
+            id: 129106437562,
+            name: "Trilha A solicitacao unica sem credenciais",
+            conclusion: "success",
+            steps: [
+              {
+                number: 1,
+                name: "Set up job",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 2,
+                name: "Bootstrap publico confiavel antes de checkout ou token",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 3,
+                name: "Run actions/checkout@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 4,
+                name: "Run actions/setup-node@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 5,
+                name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 6,
+                name: "Run bun install --frozen-lockfile",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 7,
+                name: "Provar evento e unicidade somente em metadados Actions",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 13,
+                name: "Post Run actions/setup-node@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 14,
+                name: "Post Run actions/checkout@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 15,
+                name: "Complete job",
+                status: "completed",
+                conclusion: "success",
+              },
+            ],
+          },
+          {
+            id: 129106439491,
+            name: "Trilha A protocolo e Chromium sem credenciais",
+            conclusion: "skipped",
+            steps: [],
+          },
+          {
+            id: 129106715983,
+            name: "Trilha A preparacao sintetica HML",
+            conclusion: "failure",
+            steps: [
+              {
+                number: 1,
+                name: "Set up job",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 2,
+                name: "Checkout imutavel do executor main",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 3,
+                name: "Run actions/setup-node@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 4,
+                name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 5,
+                name: "Dependencias congeladas do executor",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 6,
+                name: "Recibo inicial publico para as fases sem credenciais",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 7,
+                name: "Reancorar deployment HML sem credenciais, antes do checkout da fonte",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 8,
+                name: "Validar SHA ancestral antes de baixar ou executar a fonte",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 9,
+                name: "Fonte aprovada em checkout separado, sem credenciais persistidas",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 10,
+                name: "Dependencias congeladas da fonte aprovada",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 11,
+                name: "Run actions/cache@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 12,
+                name: "Run ./node_modules/.bin/playwright install --with-deps chromium",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 13,
+                name: "Barreira nativa no mesmo HEAD antes de secrets",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 14,
+                name: "Preparacao e SSR sem credenciais privadas",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 15,
+                name: "Revalidar main e unicidade dentro da concorrencia antes de secrets",
+                status: "completed",
+                conclusion: "failure",
+              },
+              {
+                number: 16,
+                name: "Somente agora fornecer o par sintetico ao preparador separado",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 17,
+                name: "Verificar hashes gerados, inclusive em resultado parcial",
+                status: "completed",
+                conclusion: "failure",
+              },
+              {
+                number: 18,
+                name: "Evidencia privada imutavel por 90 dias",
+                status: "completed",
+                conclusion: "failure",
+              },
+              {
+                number: 33,
+                name: "Post Run actions/cache@v4",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 34,
+                name: "Post Fonte aprovada em checkout separado, sem credenciais persistidas",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 35,
+                name: "Post Run actions/setup-node@v4",
+                status: "completed",
+                conclusion: "skipped",
+              },
+              {
+                number: 36,
+                name: "Post Checkout imutavel do executor main",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 37,
+                name: "Complete job",
+                status: "completed",
+                conclusion: "success",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        id: 42601384052,
+        workflow: 411115674,
+        path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+        name: "ContaOS Trilha A Autenticada",
+        event: "workflow_run",
+        conclusion: "success",
+        jobs: [
+          {
+            id: 129106437990,
+            name: "Trilha A solicitacao unica sem credenciais",
+            conclusion: "success",
+            steps: [
+              {
+                number: 1,
+                name: "Set up job",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 2,
+                name: "Bootstrap publico confiavel antes de checkout ou token",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 3,
+                name: "Run actions/checkout@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 4,
+                name: "Run actions/setup-node@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 5,
+                name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 6,
+                name: "Run bun install --frozen-lockfile",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 7,
+                name: "Provar evento e unicidade somente em metadados Actions",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 13,
+                name: "Post Run actions/setup-node@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 14,
+                name: "Post Run actions/checkout@v4",
+                status: "completed",
+                conclusion: "success",
+              },
+              {
+                number: 15,
+                name: "Complete job",
+                status: "completed",
+                conclusion: "success",
+              },
+            ],
+          },
+          {
+            id: 129106440087,
+            name: "Trilha A protocolo e Chromium sem credenciais",
+            conclusion: "skipped",
+            steps: [],
+          },
+          {
+            id: 129106589401,
+            name: "Trilha A auditoria privada HML",
+            conclusion: "skipped",
+            steps: [],
+          },
+        ],
+      },
+    ];
+    const validTime = (value) => typeof value === "string" && Number.isFinite(Date.parse(value));
+    const checkRun = (row, spec) => {
+      if (
+        !row ||
+        row.id !== spec.id ||
+        row.workflow_id !== spec.workflow ||
+        row.path !== spec.path ||
+        row.name !== spec.name ||
+        row.head_sha !== head ||
+        row.head_branch !== "main" ||
+        row.event !== spec.event ||
+        row.run_attempt !== 1 ||
+        row.status !== "completed" ||
+        row.conclusion !== spec.conclusion ||
+        row.repository?.full_name !== repo ||
+        row.repository?.id !== 1442722734 ||
+        row.head_repository?.full_name !== repo ||
+        row.head_repository?.id !== 1442722734 ||
+        !validTime(row.created_at) ||
+        !validTime(row.updated_at) ||
+        Date.parse(row.updated_at) < Date.parse(row.created_at)
+      )
+        fail("RECOVERY_R7_PROOF");
+    };
+    await git(["merge-base", "--is-ancestor", head, "HEAD"]);
+    for (const spec of specs) {
+      checkRun(await get("/actions/runs/" + spec.id), spec);
+      checkRun(await get("/actions/runs/" + spec.id + "/attempts/1"), spec);
+      const part = await get("/actions/runs/" + spec.id + "/attempts/1/jobs?per_page=100&page=1");
+      if (
+        part?.total_count !== spec.jobs.length ||
+        !Array.isArray(part.jobs) ||
+        part.jobs.length !== spec.jobs.length ||
+        new Set(part.jobs.map((j) => j.id)).size !== spec.jobs.length
+      )
+        fail("RECOVERY_R7_PROOF");
+      for (const expected of spec.jobs) {
+        const rows = part.jobs.filter((j) => j.id === expected.id && j.name === expected.name);
+        if (rows.length !== 1) fail("RECOVERY_R7_PROOF");
+        const job = rows[0];
+        if (
+          job.run_id !== spec.id ||
+          job.run_attempt !== 1 ||
+          job.head_sha !== head ||
+          job.head_branch !== "main" ||
+          job.status !== "completed" ||
+          job.conclusion !== expected.conclusion ||
+          !Array.isArray(job.steps) ||
+          job.steps.length !== expected.steps.length ||
+          new Set(job.steps.map((s) => s.number)).size !== expected.steps.length
+        )
+          fail("RECOVERY_R7_PROOF");
+        for (const step of expected.steps) {
+          const actual = job.steps.filter((s) => s.number === step.number);
+          if (
+            actual.length !== 1 ||
+            ["name", "status", "conclusion"].some((key) => actual[0][key] !== step[key]) ||
+            !validTime(actual[0].started_at) ||
+            !validTime(actual[0].completed_at) ||
+            Date.parse(actual[0].completed_at) < Date.parse(actual[0].started_at)
+          )
+            fail("RECOVERY_R7_PROOF");
+        }
+      }
+    }
+    const artifacts = await get(
+      "/actions/runs/" + R7_ZERO_AUTH_PROOF.fixturesRun + "/artifacts?per_page=100&page=1",
+    );
+    if (
+      artifacts?.total_count !== 0 ||
+      !Array.isArray(artifacts.artifacts) ||
+      artifacts.artifacts.length !== 0
+    )
+      fail("RECOVERY_R7_PROOF");
+    const sources = [
+      [
+        ".github/workflows/contaos-trilha-a-fixtures.yml",
+        "818af06317c72038abe23cd85f4a95f4ea4d1d3c",
+      ],
+      ["scripts/hml/authenticated-visual-audit.mjs", "ed7324f59364a103d572b45e4956573ed14a894f"],
+      ["scripts/hml/prepare-visual-fixtures.mjs", "03f4a3a8d52b7ddc78ec7a34d32b8de6d47c173e"],
+    ];
+    for (const [path, sha] of sources) {
+      const raw = await git(["show", head + ":" + path]);
+      if (
+        typeof raw !== "string" ||
+        Buffer.byteLength(raw) > 1048576 ||
+        createHash("sha1")
+          .update("blob " + Buffer.byteLength(raw) + "\0")
+          .update(raw)
+          .digest("hex") !== sha
+      )
+        fail("RECOVERY_R7_PROOF");
+    }
+    return validateR7ZeroAuthProof(R7_ZERO_AUTH_PROOF);
+  } catch (error) {
+    failRequestProof("RECOVERY_R7_PROOF", error);
+  }
 }
 
 export const R4_ZERO_AUTH_PROOF = Object.freeze({
@@ -7194,14 +7940,185 @@ export async function verifyR4ZeroAuth({ get, git } = {}) {
       }
     }
     return Object.freeze({ ...R4_ZERO_AUTH_PROOF });
-  } catch {
-    fail("RECOVERY_R4_PROOF");
+  } catch (error) {
+    failRequestProof("RECOVERY_R4_PROOF", error);
   }
 }
 
-export function singleRequestGet({ token, publicOnly, fetchImpl = fetch, now = Date.now }) {
+const REQUEST_PRIVATE_ENV_KEYS = Object.freeze([
+  "CONTAOS_HML_SYNTHETIC_EMAIL",
+  "CONTAOS_HML_SYNTHETIC_PASSWORD",
+  "CONTAOS_HML_MASTER_EMAIL",
+  "CONTAOS_HML_MASTER_PASSWORD",
+  "HML_MASTER_EMAIL",
+  "HML_MASTER_PASSWORD",
+  "MASTER_EMAIL",
+  "MASTER_PASSWORD",
+  "DATABASE_URL",
+  "DIRECT_URL",
+  "DB_URL",
+  "DB_PASSWORD",
+  "POSTGRES_URL",
+  "POSTGRES_PASSWORD",
+  "AUTH_ADMIN_KEY",
+  "CONTAOS_HML_AUTH_ADMIN_KEY",
+  "SUPABASE_AUTH_ADMIN_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "SUPABASE_SERVICE_ROLE",
+  "SERVICE_ROLE_KEY",
+  "PGPASSWORD",
+  "SUPABASE_DB_PASSWORD",
+  "SUPABASE_DB_URL",
+  "SUPABASE_ADMIN_KEY",
+]);
+const REQUEST_GITHUB_ENV_KEYS = Object.freeze([
+  "CONTAOS_ACTIONS_READ_TOKEN",
+  "GITHUB_TOKEN",
+  "GH_TOKEN",
+]);
+const REQUEST_NATIVE_ENV = process.env;
+const REQUEST_NATIVE_PROTOTYPES = [];
+{
+  let current = Object.getPrototypeOf(REQUEST_NATIVE_ENV);
+  while (current && !isProxy(current) && REQUEST_NATIVE_PROTOTYPES.length < 8) {
+    REQUEST_NATIVE_PROTOTYPES.push(current);
+    current = Object.getPrototypeOf(current);
+  }
+}
+function requestEnvironmentChain(env) {
+  if (isProxy(env) || !env || typeof env !== "object" || Array.isArray(env))
+    fail("PREPARE_SECRET_ENV");
+  for (const key of Reflect.ownKeys(env)) {
+    const descriptor = Object.getOwnPropertyDescriptor(env, key);
+    if (!descriptor || !Object.hasOwn(descriptor, "value")) fail("PREPARE_SECRET_ENV");
+  }
+  const rootPrototype = Object.getPrototypeOf(env);
+  if (isProxy(rootPrototype)) fail("PREPARE_SECRET_ENV");
+  if (env !== REQUEST_NATIVE_ENV && rootPrototype !== Object.prototype && rootPrototype !== null)
+    fail("PREPARE_SECRET_ENV");
+  const chain = [];
+  let current = env;
+  for (let depth = 0; current; depth++) {
+    if (depth >= 8 || isProxy(current)) fail("PREPARE_SECRET_ENV");
+    if (depth > 0 && env === REQUEST_NATIVE_ENV && current !== REQUEST_NATIVE_PROTOTYPES[depth - 1])
+      fail("PREPARE_SECRET_ENV");
+    chain.push(current);
+    current = Object.getPrototypeOf(current);
+  }
+  return chain;
+}
+export function assertRequestMetadataEnvironment(env, { requireToken = true } = {}) {
+  const chain = requestEnvironmentChain(env);
+  for (const object of chain) {
+    for (const key of [...REQUEST_PRIVATE_ENV_KEYS, "GITHUB_TOKEN", "GH_TOKEN"])
+      if (Object.getOwnPropertyDescriptor(object, key)) fail("PREPARE_SECRET_ENV");
+    if (object !== env && Object.getOwnPropertyDescriptor(object, "CONTAOS_ACTIONS_READ_TOKEN"))
+      fail("PREPARE_SECRET_ENV");
+  }
+  const descriptor = Object.getOwnPropertyDescriptor(env, "CONTAOS_ACTIONS_READ_TOKEN");
+  if (descriptor && !Object.hasOwn(descriptor, "value")) fail("REQUEST_API_TOKEN");
+  const token = descriptor?.value;
+  if (requireToken && (typeof token !== "string" || !token || /[\r\n\0]/.test(token)))
+    fail("REQUEST_API_TOKEN");
+  return typeof token === "string" ? token : undefined;
+}
+export function assertPrivateRequestEnvironment(env) {
+  for (const object of requestEnvironmentChain(env))
+    for (const key of REQUEST_GITHUB_ENV_KEYS)
+      if (Object.getOwnPropertyDescriptor(object, key)) fail("PREPARE_SECRET_ENV");
+}
+const requestApiFailureRecords = new WeakMap();
+const REQUEST_ENDPOINT_KINDS = Object.freeze([
+  "REPOSITORY",
+  "WORKFLOW",
+  "WORKFLOW_RUNS",
+  "ALL_RUNS",
+  "RUN",
+  "RUN_ATTEMPT",
+  "RUN_JOBS",
+  "RUN_ARTIFACTS",
+  "MAIN_REF",
+  "COMMIT_PULLS",
+  "PULL",
+  "PULL_REVIEWS",
+]);
+function requestEndpointKind(path) {
+  if (path === "") return "REPOSITORY";
+  if (path === "/git/ref/heads/main") return "MAIN_REF";
+  if (/^\/actions\/workflows\/\d+$/.test(path)) return "WORKFLOW";
+  if (/^\/actions\/workflows\/\d+\/runs\?/.test(path)) return "WORKFLOW_RUNS";
+  if (/^\/actions\/runs\?/.test(path)) return "ALL_RUNS";
+  if (/^\/actions\/runs\/\d+$/.test(path)) return "RUN";
+  if (/^\/actions\/runs\/\d+\/attempts\/1$/.test(path)) return "RUN_ATTEMPT";
+  if (/^\/actions\/runs\/\d+(?:\/attempts\/1)?\/jobs\?/.test(path)) return "RUN_JOBS";
+  if (/^\/actions\/runs\/\d+\/artifacts\?/.test(path)) return "RUN_ARTIFACTS";
+  if (/^\/commits\/[a-f0-9]{40}\/pulls\?/.test(path)) return "COMMIT_PULLS";
+  if (/^\/pulls\/\d+$/.test(path)) return "PULL";
+  if (/^\/pulls\/\d+\/reviews\?/.test(path)) return "PULL_REVIEWS";
+  return null;
+}
+export function requestApiDiagnostic(error) {
+  if (isProxy(error) || !error || !["object", "function"].includes(typeof error)) return null;
+  const record = requestApiFailureRecords.get(error);
+  if (
+    !record ||
+    !REQUEST_ENDPOINT_KINDS.includes(record.endpointKind) ||
+    !["HTTP", "TIMEOUT", "TRANSPORT"].includes(record.category) ||
+    !(
+      record.statusHTTP === "NONE" ||
+      (Number.isInteger(record.statusHTTP) && record.statusHTTP >= 100 && record.statusHTTP <= 599)
+    )
+  )
+    return null;
+  return Object.freeze({
+    schema: "contaos.single-request.api-failure.v1",
+    phase: "REQUEST_API",
+    endpointKind: record.endpointKind,
+    statusHTTP: record.statusHTTP,
+    category: record.category,
+  });
+}
+function failRequestApi(code, endpointKind, statusHTTP, category, diagnostic) {
+  const error = Object.assign(new Error(code), { code });
+  if (
+    diagnostic === true &&
+    REQUEST_ENDPOINT_KINDS.includes(endpointKind) &&
+    ["HTTP", "TIMEOUT", "TRANSPORT"].includes(category) &&
+    (statusHTTP === "NONE" ||
+      (Number.isInteger(statusHTTP) && statusHTTP >= 100 && statusHTTP <= 599))
+  )
+    requestApiFailureRecords.set(error, Object.freeze({ endpointKind, statusHTTP, category }));
+  throw error;
+}
+function failRequestProof(code, source) {
+  const error = Object.assign(new Error(code), { code }),
+    diagnostic = requestApiDiagnostic(source);
+  if (diagnostic)
+    requestApiFailureRecords.set(
+      error,
+      Object.freeze({
+        endpointKind: diagnostic.endpointKind,
+        statusHTTP: diagnostic.statusHTTP,
+        category: diagnostic.category,
+      }),
+    );
+  throw error;
+}
+
+export function singleRequestGet({
+  token,
+  publicOnly,
+  env = process.env,
+  diagnostic = false,
+  fetchImpl = fetch,
+  now = Date.now,
+}) {
+  const environmentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
+  if (!publicOnly && token !== environmentToken) fail("REQUEST_API_TOKEN");
   const deadline = now() + 60000;
   return async (path) => {
+    const currentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
+    if (!publicOnly && token !== currentToken) fail("REQUEST_API_TOKEN");
     if (
       path !== "" &&
       !/^\/(?:actions\/|git\/ref\/heads\/main$|commits\/[a-f0-9]{40}\/pulls\?|pulls\/\d+(?:\/reviews\?|$))/.test(
@@ -7217,16 +8134,37 @@ export function singleRequestGet({ token, publicOnly, fetchImpl = fetch, now = D
       headers.Authorization = "Bearer " + token;
     }
     let response;
+    const signal = AbortSignal.timeout(Math.min(5000, remaining));
+    const endpointKind = requestEndpointKind(path);
     try {
       response = await fetchImpl(
         "https://api.github.com/repos/" + SINGLE_REQUEST.repository + path,
-        { headers, redirect: "error", signal: AbortSignal.timeout(Math.min(5000, remaining)) },
+        { headers, redirect: "error", signal },
       );
     } catch {
-      fail("REQUEST_API_UNAVAILABLE");
+      failRequestApi(
+        "REQUEST_API_UNAVAILABLE",
+        endpointKind,
+        "NONE",
+        signal.aborted ? "TIMEOUT" : "TRANSPORT",
+        diagnostic,
+      );
     }
-    if (response.status !== 200) fail("REQUEST_API_UNAVAILABLE");
-    const text = await response.text();
+    if (response.status !== 200)
+      failRequestApi("REQUEST_API_UNAVAILABLE", endpointKind, response.status, "HTTP", diagnostic);
+    let text;
+    try {
+      text = await response.text();
+    } catch {
+      failRequestApi(
+        "REQUEST_API_UNAVAILABLE",
+        endpointKind,
+        200,
+        signal.aborted ? "TIMEOUT" : "TRANSPORT",
+        diagnostic,
+      );
+    }
+    if (typeof text !== "string") fail("REQUEST_API_SCHEMA");
     if (Buffer.byteLength(text) > 4194304) fail("REQUEST_API_LIMIT");
     try {
       return JSON.parse(text);
@@ -7239,6 +8177,7 @@ export async function verifySingleRequest({
   operation,
   env = process.env,
   publicOnly = true,
+  diagnostic = false,
   get,
   git,
   read = readFile,
@@ -7246,6 +8185,8 @@ export async function verifySingleRequest({
   wait = (ms) => new Promise((r) => setTimeout(r, ms)),
 }) {
   singleRequestContext = null;
+  const metadataToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
+  validatedR7ZeroAuth = null;
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
     if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
     return { selected: true, operation, sha: env.CONTAOS_HARNESS_SHA, manual: true };
@@ -7286,8 +8227,9 @@ export async function verifySingleRequest({
   requireSingleRequestOperation(operation);
   const sha = env.CONTAOS_HARNESS_SHA;
   const requestShas = await verifySingleRequestGit(request, sha, git, raw);
-  get ||= singleRequestGet({ token: env.CONTAOS_ACTIONS_READ_TOKEN, publicOnly });
+  get ||= singleRequestGet({ token: metadataToken, publicOnly, env, diagnostic });
   const r4ZeroAuth = operation === "fixtures" ? await verifyR4ZeroAuth({ get, git }) : null;
+  const r7ZeroAuth = await verifyR7ZeroAuth({ get, git });
   const repo = await get("");
   if (repo.full_name !== SINGLE_REQUEST.repository || repo.private !== false)
     fail("REQUEST_REPOSITORY");
@@ -7404,14 +8346,17 @@ export async function verifySingleRequest({
     requestSha256: digest(raw),
     ...pullProof,
     ...(r4ZeroAuth ? { r4ZeroAuth } : {}),
+    ...(r7ZeroAuth ? { r7ZeroAuth } : {}),
   };
 }
 async function singleRequestCli(mode) {
+  assertRequestMetadataEnvironment(process.env);
   const operation = process.env.CONTAOS_REQUEST_OPERATION;
   if (!["fixtures", "audit"].includes(operation)) fail("REQUEST_OPERATION");
   const result = await verifySingleRequest({
     operation,
-    publicOnly: mode === "--request-revalidate",
+    publicOnly: false,
+    diagnostic: true,
   });
   if (mode === "--request-preflight") {
     if (!process.env.GITHUB_OUTPUT) fail("REQUEST_OUTPUT");
@@ -7543,9 +8488,12 @@ export async function loadSingleRequestProof({
   now = Date.now,
   fresh = false,
 }) {
+  requestEnvironmentChain(env);
   singleRequestContext = null;
   validatedR4ZeroAuth = null;
+  validatedR7ZeroAuth = null;
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
+    assertRequestMetadataEnvironment(env, { requireToken: false });
     if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
     if (operation === "fixtures") {
       const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -7559,12 +8507,13 @@ export async function loadSingleRequestProof({
           })
         ).stdout;
       validatedR4ZeroAuth = await verifyR4ZeroAuth({
-        get: singleRequestGet({ publicOnly: true }),
+        get: singleRequestGet({ publicOnly: true, env }),
         git,
       });
     }
     return true;
   }
+  assertPrivateRequestEnvironment(env);
   requireSingleRequestOperation(operation);
   if (
     env.GITHUB_EVENT_NAME !== "workflow_run" ||
@@ -7646,6 +8595,7 @@ export async function loadSingleRequestProof({
     validateR4ZeroAuthProof(proof.r4ZeroAuth);
     validatedR4ZeroAuth = Object.freeze({ ...proof.r4ZeroAuth });
   }
+  validatedR7ZeroAuth = validateR7ZeroAuthProof(proof.r7ZeroAuth);
   singleRequestContext = { operation, sha: proof.sha, runId: env.GITHUB_RUN_ID };
   return true;
 }
