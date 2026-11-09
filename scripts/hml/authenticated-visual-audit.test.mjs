@@ -10403,3 +10403,53 @@ test("R12 new request nonce is accepted while the uncertain R11 request remains 
     /REQUEST_/,
   );
 });
+
+test("R12 auth protocol validates the actual original nonempty R11 recovery document", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs");
+  assert.deepEqual(
+    prep.validateR11RecoveryDocument(prep.R11_RECOVERY_DOCUMENT),
+    prep.R11_RECOVERY_DOCUMENT,
+  );
+});
+test("R12 auth protocol executes the real preparer runtime budget with every original proof", async () => {
+  const prep = await import("./prepare-visual-fixtures.mjs"),
+    { readFile } = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8"),
+    ast = ts.createSourceFile("prep.mjs", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS),
+    nodes = [];
+  function visit(n) {
+    nodes.push(n);
+    ts.forEachChild(n, visit);
+  }
+  visit(ast);
+  const named = (name) => nodes.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === name);
+  const entry = named("runFixturePreparation"),
+    init = nodes
+      .find(
+        (n) =>
+          ts.isVariableDeclaration(n) &&
+          n.pos >= entry.pos &&
+          n.end <= entry.end &&
+          n.name.getText(ast) === "validatedBudget",
+      )
+      .initializer.getText(ast);
+  const env = {
+    err: (code) => {
+      throw Error(code);
+    },
+    R1_RECOVERY_DOCUMENT: prep.R1_RECOVERY_DOCUMENT,
+    R3_RECOVERY_DOCUMENT: prep.R3_RECOVERY_DOCUMENT,
+  };
+  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    env["validateR" + n + "RecoveryDocument"] = prep["validateR" + n + "RecoveryDocument"];
+  for (const n of [4, 5, 6, 7, 8, 9, 10, 11])
+    env["r" + n + "Recovery"] = prep["R" + n + "_RECOVERY_DOCUMENT"];
+  assert.deepEqual(
+    new Function(
+      ...Object.keys(env),
+      named("recoveryBudget").getText(ast) + ";return " + init + ";",
+    )(...Object.values(env)),
+    { confirmedBefore: 10, priorReserved: 1, maxNewIntentions: 13 },
+  );
+});
