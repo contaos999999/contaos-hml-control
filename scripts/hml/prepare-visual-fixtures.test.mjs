@@ -2662,6 +2662,34 @@ async function r7ProbeListConsumers(page, ast) {
     assert.equal(await (await sut.listSelectionControl(scope, delayed.target)).count(), 1);
     assert.equal(await scope.locator("select").isEnabled(), true);
   }
+  // Readiness must not accept an anchor changed during the enabled wait.
+  for (const mode of ["duplicateTitle", "foreignRegion", "hiddenTitle"]) {
+    const late = r7PanelMarkup({ total: 2, disabled: true });
+    await page.setContent(late.html);
+    const scope =
+      mode === "foreignRegion"
+        ? page.locator("section")
+        : page.getByRole("region", { name: "Gestão de listas", exact: true });
+    const result = sut.listSelectionControl(scope, late.target);
+    await page.evaluate((mode) => {
+      setTimeout(() => {
+        const section = document.querySelector('section[aria-label="Gestão de listas"]');
+        if (mode === "duplicateTitle")
+          section.insertAdjacentHTML("beforeend", "<label><span>Lista selecionada</span></label>");
+        else if (mode === "foreignRegion") section.setAttribute("aria-label", "Outro contexto");
+        else section.querySelector("label > span").hidden = true;
+        section.querySelector("select").disabled = false;
+      }, 1000);
+    }, mode);
+    await assert.rejects(result, /FLOW_LIST_UI_MISSING/);
+    assert.equal(await scope.locator("select").count(), 1);
+    if (mode === "duplicateTitle")
+      assert.equal(await scope.getByText("Lista selecionada", { exact: true }).count(), 2);
+    else if (mode === "foreignRegion")
+      assert.equal(await scope.getAttribute("aria-label"), "Outro contexto");
+    else
+      assert.equal(await scope.getByText("Lista selecionada", { exact: true }).isVisible(), false);
+  }
   for (const total of [1, 25, 26, 51]) {
     for (const pagina of new Set([0, Math.ceil(total / 25) - 1])) {
       const f = r7PanelMarkup({ total, pagina });

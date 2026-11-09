@@ -1374,6 +1374,16 @@ export async function listSelectionControl(scope, expectedId) {
   } catch {
     err("FLOW_LIST_UI_MISSING");
   }
+  // Readiness can change the surrounding DOM. Revalidate the complete source
+  // anchor after the last wait, before accepting its unique control or option.
+  if (
+    (await scope.count()) !== 1 ||
+    (await scope.getAttribute("aria-label")) !== "Gestão de listas" ||
+    (await title.count()) !== 1 ||
+    !(await title.isVisible()) ||
+    (await label.count()) !== 1
+  )
+    err("FLOW_LIST_UI_MISSING");
   if ((await control.count()) !== 1 || !(await control.isVisible()) || !(await control.isEnabled()))
     err("FLOW_LIST_UI_MISSING");
   if (expectedId !== undefined) {
