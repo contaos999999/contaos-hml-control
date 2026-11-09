@@ -218,14 +218,29 @@ export const DIAGNOSTIC_SUBPHASES = Object.freeze([
  "LIST_UI_CONTROL","LIST_FORM_FIELD","LIST_COMMAND","LIST_REFRESH",
  "COMPETENCY_UI","COMPETENCY_GET","COMPETENCY_COMMAND","COMPETENCY_RECONCILE",
  "UI_CONFIRM_FENCE","UI_CONFIRM_CONTROL","UI_CONFIRM_CLICK","UI_CONFIRM_BEFORE","UI_CONFIRM_AFTER",
- "RUNTIME_FRESH","RUNTIME_NAVIGATE","RUNTIME_CONTEXT","RUNTIME_COMMAND","LOGOUT","CLEANUP"
+ "RUNTIME_FRESH","RUNTIME_NAVIGATE","RUNTIME_CONTEXT","RUNTIME_COMMAND","LOGOUT","CLEANUP","SOURCE_NAVIGATION","SOURCE_RECONCILIATION","SOURCE_REGISTER","SOURCE_REGISTER_READBACK","SOURCE_APPROVAL","SOURCE_APPROVAL_READBACK","SOURCE_CLOSE","SOURCE_VERIFICATION","SOURCE_ACTIVATION","SOURCE_ACTIVATION_READBACK","LIST_NAVIGATION","LIST_RECONCILIATION"
 ]);
+
+const PREPARER_DIAGNOSTIC_STEPS = new Set(DIAGNOSTIC_SUBPHASES);
+export function preparerFailureDiagnostic(input) {
+  return {
+    step: PREPARER_DIAGNOSTIC_STEPS.has(input?.step) ? input.step : "UNCLASSIFIED",
+    errorKind:
+      input?.errorName === "TimeoutError"
+        ? "TIMEOUT"
+        : input?.errorName === "Error"
+          ? "ERROR"
+          : "OTHER",
+  };
+}
+
 function classifyPreparationFailure(error) {
   const name=["Error","TypeError","ReferenceError","SyntaxError","TimeoutError"].includes(error?.name)?error.name:"UNKNOWN";
   const code=PREPARER_FAILURE_CODES.has(error?.code)?error.code:
     PREPARER_FAILURE_CODES.has(error?.message)?error.message:
     name==="TimeoutError"?"PREPARER_TIMEOUT":"PREPARER_UNCLASSIFIED";
-  return {code,errorName:name,failureClass:name==="TimeoutError"?"TIMEOUT":code==="PREPARER_UNCLASSIFIED"?"UNKNOWN":"PROTOCOL"};
+  const compatible=preparerFailureDiagnostic({errorName:name});
+  return {code,errorName:name,failureClass:compatible.errorKind==="TIMEOUT"?"TIMEOUT":code==="PREPARER_UNCLASSIFIED"?"UNKNOWN":"PROTOCOL"};
 }
 export function createPreparationDiagnostics() {
   const stack=[];let primary=null,lastCompleted=null,cleaning=false,logoutAttempted=false,logoutVerified=false,cleanupFailure=null;
@@ -238,7 +253,7 @@ export function createPreparationDiagnostics() {
     async step(subphase,execute){
       if(!DIAGNOSTIC_SUBPHASES.includes(subphase)||typeof execute!=="function")err("DIAGNOSTIC_SUBPHASE");
       stack.push(subphase);
-      try{const value=await execute();if(!cleaning)lastCompleted=subphase;return value;}
+      try{const value=await execute();if(!cleaning&&!primary)lastCompleted=subphase;return value;}
       catch(error){if(!cleaning)capture(error);throw error;}
       finally{stack.pop();}
     },
@@ -1210,11 +1225,11 @@ export async function confirmUiIntent({
     typeof settleVerifiedPage !== "function"
   )
     err("UI_CONFIGURATION");
-  await fence.drain();
+  await tracedPreparation("UI_CONFIRM_FENCE", async () => (fence.drain()));
   fence.assertSafe();
   const control = scope.getByRole("button", { name: button, exact: true });
-  if ((await control.count()) !== 1 || !(await control.isEnabled())) err("UI_CAPABILITY");
-  const fresh = await reconcile("before");
+  if ((await tracedPreparation("UI_CONFIRM_CONTROL", async () => (control.count()))) !== 1 || !(await tracedPreparation("UI_CONFIRM_CONTROL", async () => (control.isEnabled())))) err("UI_CAPABILITY");
+  const fresh = await tracedPreparation("UI_CONFIRM_BEFORE", async () => (reconcile("before")));
   if (
     fresh?.verified?.context !== true ||
     fresh?.verified?.capability !== true ||
@@ -1233,9 +1248,9 @@ export async function confirmUiIntent({
     ...(key ? { uiGeneratedKey: key } : { requestId: randomUUID() }),
   });
   try {
-    await control.click();
-    await settleVerifiedPage(page, fence);
-    const after = await reconcile("after");
+    await tracedPreparation("UI_CONFIRM_CLICK", async () => (control.click()));
+    await tracedPreparation("UI_CONFIRM_FENCE", async () => (settleVerifiedPage(page, fence)));
+    const after = await tracedPreparation("UI_CONFIRM_AFTER", async () => (reconcile("after")));
     if (after?.confirmed !== true) {
       broker.resolve("uncertain");
       err("UI_UNCERTAIN");
@@ -1990,15 +2005,15 @@ export async function prepareSourceAndList(io) {
   const btn = (s, name) => s.getByRole("button", { name, exact: true });
   const enabled = async (locator, code) => {
     assert(
-      (await locator.count()) === 1 && (await locator.isVisible()) && (await locator.isEnabled()),
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (locator.count()))) === 1 && (await tracedPreparation("SOURCE_UI_CONTROL", async () => (locator.isVisible()))) && (await tracedPreparation("SOURCE_UI_CONTROL", async () => (locator.isEnabled()))),
       code,
     );
   };
   const click = async (s, name) => {
     const b = btn(s, name);
-    await enabled(b, "FLOW_BUTTON_UNAVAILABLE");
-    await b.click();
-    await io.fresh();
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => (enabled(b, "FLOW_BUTTON_UNAVAILABLE")));
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => (b.click()));
+    await tracedPreparation("SOURCE_REFRESH", async () => (io.fresh()));
   };
   const field = (s, name) => s.getByLabel(name, { exact: true });
   const dialog = (name) => page.getByRole("dialog", { name, exact: true });
@@ -2008,7 +2023,7 @@ export async function prepareSourceAndList(io) {
   };
   const sourceRow = async () => {
     const s = one(
-      await io.read("fontes_normativas", { id: FIXTURE.source }),
+      await tracedPreparation("SOURCE_GET", async () => (io.read("fontes_normativas", { id: FIXTURE.source }))),
       "FLOW_SOURCE_NONUNIQUE",
     );
     assert(
@@ -2033,7 +2048,7 @@ export async function prepareSourceAndList(io) {
     return s;
   };
   const sourceProof = async () => {
-    await sourceRow();
+    await tracedPreparation("SOURCE_RECONCILE", async () => (sourceRow()));
     assert(
       uuid(version.id) &&
         version.id_fonte === source.id &&
@@ -2044,7 +2059,7 @@ export async function prepareSourceAndList(io) {
         version.id_arquivo === null,
       "FLOW_SOURCE_VERSION_MISMATCH",
     );
-    const caps = await io.sourceCapabilities();
+    const caps = await tracedPreparation("SOURCE_RECONCILE", async () => (io.sourceCapabilities()));
     assert(checkedOfficial(caps), "FLOW_SOURCE_CAPABILITY_CONTEXT");
     evidence.sourceVersions = [
       {
@@ -2063,18 +2078,18 @@ export async function prepareSourceAndList(io) {
   const versionRead = async (after) => {
     if (
       after !== undefined &&
-      !(await io.observedAfter("versoes_fontes_normativas", { id_fonte: FIXTURE.source }, after, {
+      !(await tracedPreparation("SOURCE_VERSION_GET", async () => (io.observedAfter("versoes_fontes_normativas", { id_fonte: FIXTURE.source }, after, {
         select: EXACT_SELECTS.versoes_fontes_normativas[0],
-      }))
+      }))))
     )
       fail("FLOW_VERSION_READBACK_UNOBSERVED");
     version = one(
       (
-        await io.read(
+        await tracedPreparation("SOURCE_VERSION_GET", async () => (io.read(
           "versoes_fontes_normativas",
           { id_fonte: FIXTURE.source },
           { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
-        )
+        )))
       ).filter(
         (v) =>
           hash64(v.hash) &&
@@ -2085,7 +2100,7 @@ export async function prepareSourceAndList(io) {
       ),
       "FLOW_EQUIVALENT_VERSION_NONUNIQUE",
     );
-    await sourceProof();
+    await tracedPreparation("SOURCE_RECONCILE", async () => (sourceProof()));
     return version;
   };
   // GET cache must distinguish observed absence from not yet observed. Walk every UI page.
@@ -2094,68 +2109,68 @@ export async function prepareSourceAndList(io) {
     let turns = 0;
     while (true) {
       assert(++turns <= 100, "FLOW_PAGE_LIMIT");
-      for (const r of await readRows()) {
+      for (const r of await tracedPreparation("SOURCE_UI_CONTROL", async () => (readRows()))) {
         assert(uuid(r.id), "FLOW_ROW_ID");
         seen.set(r.id, r);
       }
       const next = btn(scope, nextName);
-      if ((await next.count()) === 0 || !(await next.isEnabled())) break;
-      await click(scope, nextName);
+      if ((await tracedPreparation("SOURCE_UI_CONTROL", async () => (next.count()))) === 0 || !(await tracedPreparation("SOURCE_UI_CONTROL", async () => (next.isEnabled())))) break;
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(scope, nextName)));
     }
     return [...seen.values()];
   };
-  await io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`);
+  await tracedPreparation("SOURCE_NAVIGATE", async () => (io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`)));
   // Locate exact official source through existing source-list pagination, never create source.
-  const sources = await allPages(page, "Próxima página", () => io.read("fontes_normativas", {}));
+  const sources = await tracedPreparation("SOURCE_GET", async () => (allPages(page, "Próxima página", () => io.read("fontes_normativas", {}))));
   assert(
     sources.some((s) => s.id === FIXTURE.source),
     "FLOW_SOURCE_NOT_IN_UI_GET",
   );
-  await sourceRow();
+  await tracedPreparation("SOURCE_RECONCILE", async () => (sourceRow()));
   // Return through a KNOWN SSR path so its list starts at page zero, then find source button.
-  await io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`);
-  for (let n = 0; (await btn(page, `Detalhes de ${source.titulo}`).count()) === 0; n++) {
+  await tracedPreparation("SOURCE_NAVIGATE", async () => (io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`)));
+  for (let n = 0; (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(page, `Detalhes de ${source.titulo}`).count()))) === 0; n++) {
     assert(n < 100, "FLOW_SOURCE_UI_MISSING");
-    await click(page, "Próxima página");
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(page, "Próxima página")));
   }
-  await click(page, `Detalhes de ${source.titulo}`);
+  await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(page, `Detalhes de ${source.titulo}`)));
   let sheet = dialog(source.titulo);
-  const versions = await allPages(sheet, "Próximas versões", () =>
+  const versions = await tracedPreparation("SOURCE_VERSION_GET", async () => (allPages(sheet, "Próximas versões", () =>
     io.read(
       "versoes_fontes_normativas",
       { id_fonte: source.id },
       { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
     ),
-  );
+  )));
   // A source-version hash is a server digest of structured version fields,
   // NOT SHA256(TXT). Prove the TXT separately using the real expanded GET.
   const proveText = async (v) => {
     assert(uuid(v.id) && hash64(v.hash) && v.id_fonte === source.id, "FLOW_VERSION_ID_HASH");
     for (
       let n = 0;
-      (await btn(sheet, `Ver texto registrado (versão ${v.versao})`).count()) === 0;
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, `Ver texto registrado (versão ${v.versao})`).count()))) === 0;
       n++
     ) {
       assert(n < 100, "FLOW_VERSION_TEXT_UI_MISSING");
-      await click(sheet, "Versões anteriores");
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Versões anteriores")));
     }
     const textOrdinal = io.generation();
-    await click(sheet, `Ver texto registrado (versão ${v.versao})`);
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, `Ver texto registrado (versão ${v.versao})`)));
     assert(
-      await io.observedAfter("versoes_fontes_normativas", { id: v.id }, textOrdinal, {
+      await tracedPreparation("SOURCE_VERSION_GET", async () => (io.observedAfter("versoes_fontes_normativas", { id: v.id }, textOrdinal, {
         select: "conteudo_texto,metadados",
-      }),
+      }))),
       "FLOW_VERSION_TEXT_UNOBSERVED",
     );
     // IO joins only the just-observed select=conteudo_texto,metadados&id=eq.ID
     // to the independently observed version identity. It must not invent row ID
     // from response content (this projection omits id), or use a stale text GET.
     const textRow = one(
-      await io.read(
+      await tracedPreparation("SOURCE_VERSION_GET", async () => (io.read(
         "versoes_fontes_normativas",
         { id: v.id },
         { select: "conteudo_texto,metadados" },
-      ),
+      ))),
       "FLOW_VERSION_TEXT_UNOBSERVED",
     );
     const exact =
@@ -2163,7 +2178,7 @@ export async function prepareSourceAndList(io) {
       hash(textRow.conteudo_texto) === FIXTURE.fileHash &&
       same(textRow.metadados, {});
     if (exact) verifiedTextVersions.add(v.id);
-    await click(sheet, "Ocultar texto");
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Ocultar texto")));
     return exact;
   };
   const equivalents = [];
@@ -2172,38 +2187,38 @@ export async function prepareSourceAndList(io) {
   )) {
     // Move back to first page to locate each candidate deterministically.
     while (
-      (await btn(sheet, "Versões anteriores").count()) === 1 &&
-      (await btn(sheet, "Versões anteriores").isEnabled())
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, "Versões anteriores").count()))) === 1 &&
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, "Versões anteriores").isEnabled())))
     )
-      await click(sheet, "Versões anteriores");
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Versões anteriores")));
     for (
       let n = 0;
-      (await btn(sheet, `Ver texto registrado (versão ${v.versao})`).count()) === 0;
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, `Ver texto registrado (versão ${v.versao})`).count()))) === 0;
       n++
     ) {
       assert(n < 100, "FLOW_VERSION_CANDIDATE_UI_MISSING");
-      await click(sheet, "Próximas versões");
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Próximas versões")));
     }
-    if (await proveText(v)) equivalents.push(v);
+    if (await tracedPreparation("SOURCE_TEXT_PROOF", async () => (proveText(v)))) equivalents.push(v);
   }
   assert(equivalents.length <= 1, "FLOW_DUPLICATE_EQUIVALENT_VERSION");
   if (recovery && equivalents.length !== 1) fail("RECOVERY_STATE");
   if (equivalents.length === 0) {
     while (
-      (await btn(sheet, "Versões anteriores").count()) === 1 &&
-      (await btn(sheet, "Versões anteriores").isEnabled())
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, "Versões anteriores").count()))) === 1 &&
+      (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, "Versões anteriores").isEnabled())))
     )
-      await click(sheet, "Versões anteriores");
-    const caps = await io.sourceCapabilities();
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Versões anteriores")));
+    const caps = await tracedPreparation("SOURCE_RECONCILE", async () => (io.sourceCapabilities()));
     assert(checkedOfficial(caps) && caps.canRegister === true, "FLOW_REGISTER_DENIED");
-    await click(sheet, "Nova versão");
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Nova versão")));
     const d = dialog("Nova versão");
-    await field(d, "Início da vigência").fill("2026-01-01");
-    await field(d, "Fim da vigência (opcional)").fill("");
-    await field(d, "Texto").check();
-    await field(d, "Texto da versão").fill(io.text);
+    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Início da vigência").fill("2026-01-01")));
+    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Fim da vigência (opcional)").fill("")));
+    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Texto").check()));
+    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Texto da versão").fill(io.text)));
     const registerOrdinal = io.generation();
-    await io.command({
+    await tracedPreparation("SOURCE_REGISTER_COMMAND", async () => (io.command({
       rpc: "registrar_versao_fonte_v107",
       payload: {
         p_id_organizacao: FIXTURE.organization,
@@ -2224,14 +2239,14 @@ export async function prepareSourceAndList(io) {
         hash64(r.versao.hash) &&
         r.versao.conteudo_texto === io.text &&
         same(r.versao.metadados, {}),
-    });
-    await io.fresh();
+    })));
+    await tracedPreparation("SOURCE_REFRESH", async () => (io.fresh()));
     const newlyObserved = (
-      await io.read(
+      await tracedPreparation("SOURCE_VERSION_GET", async () => (io.read(
         "versoes_fontes_normativas",
         { id_fonte: source.id },
         { select: EXACT_SELECTS.versoes_fontes_normativas[0] },
-      )
+      )))
     ).filter(
       (v) =>
         !versions.some((old) => old.id === v.id) &&
@@ -2240,28 +2255,28 @@ export async function prepareSourceAndList(io) {
         v.id_arquivo === null,
     );
     const created = one(newlyObserved, "FLOW_CREATED_VERSION_NONUNIQUE");
-    assert(await proveText(created), "FLOW_CREATED_VERSION_TEXT_MISMATCH");
-    await versionRead(registerOrdinal);
+    assert(await tracedPreparation("SOURCE_TEXT_PROOF", async () => (proveText(created))), "FLOW_CREATED_VERSION_TEXT_MISMATCH");
+    await tracedPreparation("SOURCE_VERSION_READ", async () => (versionRead(registerOrdinal)));
   } else {
     version = equivalents[0];
-    await sourceProof();
+    await tracedPreparation("SOURCE_RECONCILE", async () => (sourceProof()));
   }
   // Locate matching version's button even when pagination starts on last page.
-  let caps = await sourceProof();
+  let caps = await tracedPreparation("SOURCE_RECONCILE", async () => (sourceProof()));
   if (recovery && !version.aprovado_em) fail("RECOVERY_STATE");
   if (!version.aprovado_em) {
-    for (let n = 0; (await btn(sheet, `Aprovar versão ${version.versao}`).count()) === 0; n++) {
+    for (let n = 0; (await tracedPreparation("SOURCE_UI_CONTROL", async () => (btn(sheet, `Aprovar versão ${version.versao}`).count()))) === 0; n++) {
       assert(n < 100, "FLOW_VERSION_UI_MISSING");
-      await click(sheet, "Versões anteriores");
+      await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, "Versões anteriores")));
     }
     assert(caps.canApprove === true, "FLOW_APPROVE_DENIED");
-    await click(sheet, `Aprovar versão ${version.versao}`);
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(sheet, `Aprovar versão ${version.versao}`)));
     const d = dialog(`Aprovar versão ${version.versao}`);
-    await field(d, "Fundamento").fill(FIXTURE.foundation);
-    await field(d, "Confirmo que revisei hash, origem e vigência desta versão.").check();
+    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Fundamento").fill(FIXTURE.foundation)));
+    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Confirmo que revisei hash, origem e vigência desta versão.").check()));
     const id = version.id;
     const approvalOrdinal = io.generation();
-    await io.command({
+    await tracedPreparation("SOURCE_APPROVE_COMMAND", async () => (io.command({
       rpc: "aprovar_versao_fonte_v107",
       payload: {
         p_id_organizacao: FIXTURE.organization,
@@ -2277,29 +2292,29 @@ export async function prepareSourceAndList(io) {
         r?.versao?.id === id &&
         r.versao.hash === version.hash &&
         !!r.versao.aprovado_em,
-    });
-    await io.fresh();
-    await versionRead(approvalOrdinal);
+    })));
+    await tracedPreparation("SOURCE_REFRESH", async () => (io.fresh()));
+    await tracedPreparation("SOURCE_VERSION_READ", async () => (versionRead(approvalOrdinal)));
     assert(!!version.aprovado_em, "FLOW_APPROVAL_NOT_READBACK");
   }
-  await click(sheet, "Close");
+  await tracedPreparation("SOURCE_SHEET_CLOSE", async () => (click(sheet, "Close")));
   if (recovery) {
     await tracedPreparation("RECOVERY_READ", async () => {
-      await io.link(`/contratos/${FIXTURE.contract}/regras`);
-      await click(page, "Gerenciar listas");
+      await tracedPreparation("V109_NAVIGATE", async () => (io.link(`/contratos/${FIXTURE.contract}/regras`)));
+      await tracedPreparation("LIST_PANEL_OPEN", async () => (click(page, "Gerenciar listas")));
       const region=page.getByRole("region",{name:"Gestão de listas",exact:true});
-      const rows=await allPages(region,"Próxima página de listas",()=>io.read("listas_verificacao",{}));
+      const rows=await tracedPreparation("LIST_GET", async () => (allPages(region,"Próxima página de listas",()=>io.read("listas_verificacao",{}))));
       const matching=rows.filter(r=>r.nome===FIXTURE.listName);
       assert(matching.length<=1,"RECOVERY_LIST");
       let state=null;
       if(matching.length===1){
-        for(let n=0;(await field(region,"Lista selecionada").locator(`option[value="${matching[0].id}"]`).count())===0;n++){
-          assert(n<100,"FLOW_LIST_UI_MISSING");await click(region,"Página anterior de listas");
+        for(let n=0;(await tracedPreparation("SOURCE_UI_CONTROL", async () => (field(region,"Lista selecionada").locator(`option[value="${matching[0].id}"]`).count())))===0;n++){
+          assert(n<100,"FLOW_LIST_UI_MISSING");await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(region,"Página anterior de listas")));
         }
-        await field(region,"Lista selecionada").selectOption(matching[0].id);
-        await io.fresh();
+        await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(region,"Lista selecionada").selectOption(matching[0].id)));
+        await tracedPreparation("SOURCE_REFRESH", async () => (io.fresh()));
       }
-      const model=await io.rpcRead("obter_lista_operacional_v1");
+      const model=await tracedPreparation("LIST_MODEL_READ", async () => (io.rpcRead("obter_lista_operacional_v1")));
       assert(model?.schema_versao==="crud-lista-v1"&&model.id_organizacao===FIXTURE.organization&&model.id_contrato===FIXTURE.contract&&checkedOfficial(model),"FLOW_MODEL_CONTEXT");
       if(matching.length===1){
         const l=model.lista,v=model.versao,items=model.itens;
@@ -2315,13 +2330,13 @@ export async function prepareSourceAndList(io) {
     await tracedPreparation("RECOVERY_RETURN",()=>io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`));
   }
   if (source.situacao !== "ativa") {
-    caps = await sourceProof();
+    caps = await tracedPreparation("SOURCE_RECONCILE", async () => (sourceProof()));
     assert(caps.canActivate === true, "FLOW_ACTIVATE_DENIED");
-    await click(page, `Editar ${source.titulo}`);
+    await tracedPreparation("SOURCE_UI_CONTROL", async () => (click(page, `Editar ${source.titulo}`)));
     const d = dialog("Editar fonte");
-    await field(d, "Situação").selectOption("ativa");
+    await tracedPreparation("SOURCE_FORM_FIELD", async () => (field(d, "Situação").selectOption("ativa")));
     const before = source.versao_registro;
-    await io.command({
+    await tracedPreparation("SOURCE_ACTIVATE_COMMAND", async () => (io.command({
       rpc: "salvar_fonte_normativa_v107",
       payload: {
         p_id_organizacao: FIXTURE.organization,
@@ -2342,22 +2357,22 @@ export async function prepareSourceAndList(io) {
         r?.fonte?.id === FIXTURE.source &&
         r.fonte.situacao === "ativa" &&
         r.fonte.versao_registro === before + 1,
-    });
-    await io.fresh();
-    await sourceRow();
+    })));
+    await tracedPreparation("SOURCE_REFRESH", async () => (io.fresh()));
+    await tracedPreparation("SOURCE_RECONCILE", async () => (sourceRow()));
     assert(source.situacao === "ativa", "FLOW_ACTIVE_NOT_READBACK");
   }
-  await sourceProof();
-  await io.link(`/contratos/${FIXTURE.contract}/regras`);
-  await click(page, "Gerenciar listas");
+  await tracedPreparation("SOURCE_RECONCILE", async () => (sourceProof()));
+  await tracedPreparation("V109_NAVIGATE", async () => (io.link(`/contratos/${FIXTURE.contract}/regras`)));
+  await tracedPreparation("LIST_PANEL_OPEN", async () => (click(page, "Gerenciar listas")));
   const panel = page.getByRole("region", { name: "Gestão de listas", exact: true });
-  const headers = await allPages(panel, "Próxima página de listas", () =>
+  const headers = await tracedPreparation("LIST_GET", async () => (allPages(panel, "Próxima página de listas", () =>
     io.read("listas_verificacao", {}),
-  );
+  )));
   const matches = headers.filter((l) => l.nome === FIXTURE.listName);
   assert(matches.length <= 1, "FLOW_LIST_DUPLICATE");
   const readModel = async () => {
-    const d = await io.rpcRead("obter_lista_operacional_v1");
+    const d = await tracedPreparation("LIST_MODEL_READ", async () => (io.rpcRead("obter_lista_operacional_v1")));
     assert(
       d?.schema_versao === "crud-lista-v1" &&
         d.id_organizacao === FIXTURE.organization &&
@@ -2385,7 +2400,7 @@ export async function prepareSourceAndList(io) {
   });
   const ruleOK = (i) => Object.entries(itemExpected()).every(([k, v]) => same(i[k], v));
   const listProof = async () => {
-    const d = await readModel();
+    const d = await tracedPreparation("LIST_MODEL_READ", async () => (readModel()));
     assert(
       d.lista &&
         d.versao &&
@@ -2419,25 +2434,25 @@ export async function prepareSourceAndList(io) {
     return d;
   };
   const listCommand = async (action, payload, label, setup = async () => {}) => {
-    const d = await readModel();
+    const d = await tracedPreparation("LIST_MODEL_READ", async () => (readModel()));
     assert(
       d.acoes?.[action === "salvar_item" ? "criar_item" : action] === true,
       "FLOW_LIST_CAPABILITY_DENIED",
     );
-    if (action !== "criar_lista") await listProof();
-    await click(panel, label);
+    if (action !== "criar_lista") await tracedPreparation("LIST_MODEL_READ", async () => (listProof()));
+    await tracedPreparation("LIST_UI_CONTROL", async () => (click(panel, label)));
     const form = panel.locator("form").filter({
       has: page.getByRole("heading", {
         name: action === "salvar_item" ? "Salvar item" : label,
         exact: true,
       }),
     });
-    assert((await form.count()) === 1, "FLOW_LIST_FORM_NONUNIQUE");
-    await setup(form);
-    await field(form, "Motivo").fill(FIXTURE.reason);
-    await click(form, "Revisar operação");
+    assert((await tracedPreparation("LIST_UI_CONTROL", async () => (form.count()))) === 1, "FLOW_LIST_FORM_NONUNIQUE");
+    await tracedPreparation("LIST_UI_CONTROL", async () => (setup(form)));
+    await tracedPreparation("LIST_FORM_FIELD", async () => (field(form, "Motivo").fill(FIXTURE.reason)));
+    await tracedPreparation("LIST_UI_CONTROL", async () => (click(form, "Revisar operação")));
     const prev = action === "criar_lista" ? null : d.lista.versao_registro;
-    await io.command({
+    await tracedPreparation("LIST_COMMAND", async () => (io.command({
       rpc: "executar_comando_lista_v1",
       payload: {
         p_id_organizacao: FIXTURE.organization,
@@ -2461,12 +2476,12 @@ export async function prepareSourceAndList(io) {
         r.lista.versao_registro === (prev === null ? 1 : prev + 1) &&
         (action === "criar_lista" || r.lista.id === d.lista.id) &&
         uuid(r.evento_id),
-    });
-    await io.fresh();
-    await listProof();
+    })));
+    await tracedPreparation("LIST_REFRESH", async () => (io.fresh()));
+    await tracedPreparation("LIST_MODEL_READ", async () => (listProof()));
   };
   if (matches.length === 0) {
-    await listCommand(
+    await tracedPreparation("LIST_FORM_FIELD", async () => (listCommand(
       "criar_lista",
       {
         nome: FIXTURE.listName,
@@ -2476,32 +2491,32 @@ export async function prepareSourceAndList(io) {
       },
       "Criar lista",
       async (f) => {
-        await field(f, "Nome").fill(FIXTURE.listName);
-        await field(f, "Descrição").fill(FIXTURE.listDescription);
-        await field(f, "Início da vigência").fill("2026-01-01");
-        await field(f, "Fim da vigência").fill("");
+        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Nome").fill(FIXTURE.listName)));
+        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Descrição").fill(FIXTURE.listDescription)));
+        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Início da vigência").fill("2026-01-01")));
+        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Fim da vigência").fill("")));
       },
-    );
+    )));
   } else {
     // Find the already-observed target's page; no synthetic option or direct navigation.
     for (
       let n = 0;
-      (await field(panel, "Lista selecionada")
+      (await tracedPreparation("LIST_UI_CONTROL", async () => (field(panel, "Lista selecionada")
         .locator(`option[value="${matches[0].id}"]`)
-        .count()) === 0;
+        .count()))) === 0;
       n++
     ) {
       assert(n < 100, "FLOW_LIST_UI_MISSING");
-      await click(panel, "Página anterior de listas");
+      await tracedPreparation("LIST_UI_CONTROL", async () => (click(panel, "Página anterior de listas")));
     }
-    await field(panel, "Lista selecionada").selectOption(matches[0].id);
-    await io.fresh();
-    await listProof();
+    await tracedPreparation("LIST_FORM_FIELD", async () => (field(panel, "Lista selecionada").selectOption(matches[0].id)));
+    await tracedPreparation("LIST_REFRESH", async () => (io.fresh()));
+    await tracedPreparation("LIST_MODEL_READ", async () => (listProof()));
   }
-  await listProof();
+  await tracedPreparation("LIST_MODEL_READ", async () => (listProof()));
   if (model.itens.length === 0) {
     assert(model.versao.situacao === "rascunho", "FLOW_PUBLISHED_EMPTY_LIST");
-    await listCommand(
+    await tracedPreparation("LIST_FORM_FIELD", async () => (listCommand(
       "salvar_item",
       { id_versao: model.versao.id, id_item: null, ...itemExpected() },
       "Adicionar item",
@@ -2513,27 +2528,27 @@ export async function prepareSourceAndList(io) {
           ["Identificador da versão da fonte formal", version.id],
           ["Ordem", "1"],
         ])
-          await field(f, label).fill(value);
+          await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, label).fill(value)));
         for (const label of ["Obrigatório", "Aplicável", "Impeditivo"])
-          await field(f, label).check();
-        await field(f, "Criticidade").selectOption("alta");
-        await field(f, "Regra de validação e condição (JSON)").fill(
+          await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, label).check()));
+        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Criticidade").selectOption("alta")));
+        await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Regra de validação e condição (JSON)").fill(
           JSON.stringify(itemExpected().regra_validacao),
-        );
+        )));
       },
-    );
+    )));
   }
   if (model.versao.situacao !== "publicada") {
     assert(model.versao.situacao === "rascunho", "FLOW_VERSION_STATE");
-    await listCommand("publicar_versao", { id_versao: model.versao.id }, "Publicar versão");
+    await tracedPreparation("LIST_UI_CONTROL", async () => (listCommand("publicar_versao", { id_versao: model.versao.id }, "Publicar versão")));
     assert(model.versao.situacao === "publicada", "FLOW_PUBLICATION_NOT_READBACK");
   }
   if (model.lista.situacao !== "ativa") {
-    await listCommand("alterar_situacao", { situacao: "ativa" }, "Alterar situação", async (f) => {
-      await field(f, "Situação").selectOption("ativa");
-    });
+    await tracedPreparation("LIST_FORM_FIELD", async () => (listCommand("alterar_situacao", { situacao: "ativa" }, "Alterar situação", async (f) => {
+      await tracedPreparation("LIST_FORM_FIELD", async () => (field(f, "Situação").selectOption("ativa")));
+    })));
   }
-  await listProof();
+  await tracedPreparation("LIST_MODEL_READ", async () => (listProof()));
   assert(
     model.lista.situacao === "ativa" &&
       model.versao.situacao === "publicada" &&
@@ -2599,10 +2614,10 @@ export async function prepareCompetencies(io, sourceList) {
     ![sourceList.sourceVersionId, sourceList.listId, sourceList.listVersionId].every(uuid)
   )
     stop("COMPETENCE_SOURCE_LIST");
-  await io.fresh();
-  if ((await io.verifyContext()) !== true) stop("COMPETENCE_CONTEXT");
+  await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
+  if ((await tracedPreparation("COMPETENCY_UI", async () => (io.verifyContext()))) !== true) stop("COMPETENCE_CONTEXT");
   // Read the actual official UI RPC DTO, not assumed convenience flags such as list.active.
-  const sourceModel = await io.rpcRead("obter_lista_operacional_v1");
+  const sourceModel = await tracedPreparation("COMPETENCY_GET", async () => (io.rpcRead("obter_lista_operacional_v1")));
   if (
     sourceModel?.schema_versao !== "crud-lista-v1" ||
     sourceModel.id_organizacao !== FIXTURE.organization ||
@@ -2638,40 +2653,40 @@ export async function prepareCompetencies(io, sourceList) {
   const verifiedItemId = sourceItem.id;
   const context = async () => {
     phaseActive();
-    await io.fresh();
+    await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
     phaseActive();
-    if ((await io.verifyContext()) !== true) stop("COMPETENCE_CONTEXT");
+    if ((await tracedPreparation("COMPETENCY_UI", async () => (io.verifyContext()))) !== true) stop("COMPETENCE_CONTEXT");
   };
   const rows = async (table, where, options = {}) => {
     phaseActive();
-    const result = await io.read(table, where, options);
+    const result = await tracedPreparation("COMPETENCY_GET", async () => (io.read(table, where, options)));
     phaseActive();
     if (!Array.isArray(result)) stop("COMPETENCE_READ_SHAPE");
     return result;
   };
   const observed = async (name, where, ordinal, options = {}) => {
     phaseActive();
-    await io.fresh();
+    await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
     phaseActive();
-    if ((await io.observedAfter(name, where, ordinal, options)) !== true)
+    if ((await tracedPreparation("COMPETENCY_UI", async () => (io.observedAfter(name, where, ordinal, options)))) !== true)
       stop("COMPETENCE_STALE_OBSERVATION");
   };
   const link = async (path) => {
     phaseActive();
-    await io.link(path);
+    await tracedPreparation("COMPETENCY_UI", async () => (io.link(path)));
     phaseActive();
-    await io.fresh();
+    await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
     phaseActive();
   };
   const click = async (name, scope = io.page) => {
     phaseActive();
     const button = scope.getByRole("button", { name, exact: true });
-    if ((await button.count()) !== 1 || !(await button.isEnabled()))
+    if ((await tracedPreparation("COMPETENCY_UI", async () => (button.count()))) !== 1 || !(await tracedPreparation("COMPETENCY_UI", async () => (button.isEnabled()))))
       stop("COMPETENCE_CONTROL_UNAVAILABLE");
     phaseActive();
-    await button.click();
+    await tracedPreparation("COMPETENCY_UI", async () => (button.click()));
     phaseActive();
-    await io.fresh();
+    await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
     phaseActive();
   };
   async function poll(read, ready, refresh) {
@@ -3502,7 +3517,7 @@ export async function prepareCompetencies(io, sourceList) {
     const receipt = { month, state: "partial" };
     output.competencies.push(receipt);
     try {
-      const initial = await createOrReuse(month);
+      const initial = await tracedPreparation("COMPETENCY_UI", async () => (createOrReuse(month)));
       const c = { ...initial, month };
       receipt.id = c.id;
       if (
@@ -3513,16 +3528,16 @@ export async function prepareCompetencies(io, sourceList) {
         receipt.state = c.view.competencia.situacao;
         stop("COMPETENCE_EXISTING_REGISTRATION_LINK_UNAVAILABLE");
       }
-      await ensureDocument(c);
+      await tracedPreparation("COMPETENCY_UI", async () => (ensureDocument(c)));
       receipt.requirementId = c.requirementId;
       receipt.documentId = c.documentId;
-      let a = await ensureAnalysis(c);
-      a = await reviewIfNeeded(c, a);
+      let a = await tracedPreparation("COMPETENCY_UI", async () => (ensureAnalysis(c)));
+      a = await tracedPreparation("COMPETENCY_UI", async () => (reviewIfNeeded(c, a)));
       receipt.executionId = c.executionId;
       receipt.documentVersionId = c.documentVersionId || null;
-      await opinion(c);
+      await tracedPreparation("COMPETENCY_UI", async () => (opinion(c)));
       receipt.opinionId = c.opinionId;
-      await present(c, month === "2026-09-01");
+      await tracedPreparation("COMPETENCY_UI", async () => (present(c, month === "2026-09-01")));
       receipt.state = c.state;
       if (c.presentationId) {
         receipt.presentationId = c.presentationId;
@@ -3541,8 +3556,8 @@ export async function prepareCompetencies(io, sourceList) {
         : "COMPETENCE_DEPENDENCY_BLOCKED";
       if (temporalAborted) break;
       try {
-        await io.page.keyboard.press("Escape");
-        await io.fresh();
+        await tracedPreparation("COMPETENCY_UI", async () => (io.page.keyboard.press("Escape")));
+        await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
       } catch {
         /* Remain partial; never issue a compensating mutation. */
       }
@@ -3750,7 +3765,7 @@ async function runFixturePreparation() {
     sourceList = null,
     blockedCode = null;
   const output = resolve("artifacts/trilha-a-fixtures");
-  await mkdir(output, { recursive: true });
+  await tracedPreparation("PREFLIGHT", async () => (mkdir(output, { recursive: true })));
   const receiptPath = join(output, "receipts.json");
   writeFileSync(
     receiptPath,
@@ -3764,11 +3779,11 @@ async function runFixturePreparation() {
     workflowRun: process.env.GITHUB_RUN_ID,
   };
   try {
-    const native = JSON.parse(await readFile(".audit-work/native-proof.json", "utf8"));
-    const proof = JSON.parse(await readFile(".audit-work/provenance.json", "utf8"));
+    const native = JSON.parse(await tracedPreparation("PREFLIGHT", async () => (readFile(".audit-work/native-proof.json", "utf8"))));
+    const proof = JSON.parse(await tracedPreparation("PREFLIGHT", async () => (readFile(".audit-work/provenance.json", "utf8"))));
     const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
     execFileSync("git", ["diff", "--quiet", "HEAD"], { stdio: "ignore" });
-    if (!validatePreparerIdentity(process.env, proof, native, await harnessIdentity(), head))
+    if (!validatePreparerIdentity(process.env, proof, native, await tracedPreparation("PREFLIGHT", async () => (harnessIdentity())), head))
       err("PREPARER_IDENTITY");
     for (const file of [
       "scripts/hml/prepare-visual-fixtures.mjs",
@@ -3781,90 +3796,90 @@ async function runFixturePreparation() {
       }).trim();
       if (actual !== expected) err("PREPARER_IDENTITY");
     }
-    await checkFreshDeployment(proof, true);
+    await tracedPreparation("PREFLIGHT", async () => (checkFreshDeployment(proof, true)));
     const persist = createReceiptWriter(receiptPath, identity);
     const broker = createIntentBroker({ persist, competenceGateAmended: true, recoveryLedger:R1_RECOVERY_DOCUMENT });
     const debug = createServer();
-    await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
+    await tracedPreparation("PREFLIGHT", async () => (new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve))));
     const debugPort = debug.address().port;
-    await new Promise((resolve) => debug.close(resolve));
-    const { chromium } = await import("playwright");
-    proxy = await startDestinationProxy();
-    browser = await chromium.launch({
+    await tracedPreparation("PREFLIGHT", async () => (new Promise((resolve) => debug.close(resolve))));
+    const { chromium } = await tracedPreparation("PREFLIGHT", async () => (import("playwright")));
+    proxy = await tracedPreparation("PREFLIGHT", async () => (startDestinationProxy()));
+    browser = await tracedPreparation("PREFLIGHT", async () => (chromium.launch({
       chromiumSandbox: true,
       env: browserEnvironment(process.env),
       proxy: { server: proxy.url },
       args: [`--remote-debugging-port=${debugPort}`, "--proxy-bypass-list=<-loopback>"],
-    });
-    const context = await browser.newContext({
+    })));
+    const context = await tracedPreparation("PREFLIGHT", async () => (browser.newContext({
       viewport: { width: 1440, height: 1000 },
       serviceWorkers: "block",
-    });
-    page = await context.newPage();
+    })));
+    page = await tracedPreparation("PREFLIGHT", async () => (context.newPage()));
     page.setDefaultTimeout(15000);
     let scriptError = false;
     page.on("pageerror", () => {
       scriptError = true;
     });
-    const session = await context.newCDPSession(page),
-      { targetInfo } = await session.send("Target.getTargetInfo");
-    await session.detach();
-    fence = await installNativeFence({
+    const session = await tracedPreparation("PREFLIGHT", async () => (context.newCDPSession(page))),
+      { targetInfo } = await tracedPreparation("PREFLIGHT", async () => (session.send("Target.getTargetInfo")));
+    await tracedPreparation("PREFLIGHT", async () => (session.detach()));
+    fence = await tracedPreparation("PREFLIGHT", async () => (installNativeFence({
       debugPort,
       identity: targetInfo,
       policy: broker.policy,
       verifyResponse: (r) => verifyPublishedResponse(proof, r),
       closeContext: () => context.close(),
-    });
+    })));
     observer = createOfficialObserver(page);
     const fresh = async () => {
-      await settleVerifiedPage(page, fence);
-      await observer.flush();
+      await tracedPreparation("RUNTIME_FRESH", async () => (settleVerifiedPage(page, fence)));
+      await tracedPreparation("RUNTIME_FRESH", async () => (observer.flush()));
       if (scriptError) err("PREPARER_SCRIPT");
     };
     const goKnown = async (path) => {
       if (!Object.hasOwn(proof.documents, path)) err("PREPARER_SSR_PATH");
-      await checkFreshDeployment(proof, false);
-      await navigateVerifiedPage(page, fence, FIXTURE.origin + path);
-      await fresh();
+      await tracedPreparation("PREFLIGHT", async () => (checkFreshDeployment(proof, false)));
+      await tracedPreparation("RUNTIME_NAVIGATE", async () => (navigateVerifiedPage(page, fence, FIXTURE.origin + path)));
+      await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
     };
     const link = async (path) => {
       if (!/^\/(?:contratos|competencias)\/[a-f0-9-]{36}(?:\/[a-z0-9-]+)*$/.test(path))
         err("PREPARER_SPA_PATH");
-      await fresh();
+      await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
       if (page.url() === FIXTURE.origin + path) {
         if (Object.hasOwn(proof.documents, path)) {
-          await goKnown(path);
+          await tracedPreparation("PREFLIGHT", async () => (goKnown(path)));
           return;
         }
-        await goKnown(`/contratos/${FIXTURE.contract}/competencias`);
+        await tracedPreparation("PREFLIGHT", async () => (goKnown(`/contratos/${FIXTURE.contract}/competencias`)));
       }
       const candidates = page.locator(`a[href="${path}"]:visible`);
       let selected = null;
-      for (let n = 0; n < (await candidates.count()); n++) {
+      for (let n = 0; n < (await tracedPreparation("PREFLIGHT", async () => (candidates.count()))); n++) {
         const item = candidates.nth(n);
-        if ((await item.isEnabled()) && (await item.getAttribute("aria-disabled")) !== "true") {
+        if ((await tracedPreparation("PREFLIGHT", async () => (item.isEnabled()))) && (await tracedPreparation("PREFLIGHT", async () => (item.getAttribute("aria-disabled")))) !== "true") {
           selected = item;
           break;
         }
       }
       if (!selected) err("PREPARER_SPA_LINK");
-      await selected.click();
-      await page.waitForURL(FIXTURE.origin + path);
-      await fresh();
+      await tracedPreparation("RUNTIME_NAVIGATE", async () => (selected.click()));
+      await tracedPreparation("RUNTIME_NAVIGATE", async () => (page.waitForURL(FIXTURE.origin + path)));
+      await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
     };
     let contextVerified = false;
     const verifyContext = async () => {
-      await waitOrganization(page);
+      await tracedPreparation("PREFLIGHT", async () => (waitOrganization(page)));
       let contracts;
       try {
-        contracts = await observer.read("contratos", { id: FIXTURE.contract });
+        contracts = await tracedPreparation("RUNTIME_CONTEXT", async () => (observer.read("contratos", { id: FIXTURE.contract })));
       } catch {
         contracts = [];
       }
       if (!contracts.length && !contextVerified) {
-        await goKnown(`/contratos/${FIXTURE.contract}`);
-        contracts = await observer.read("contratos", { id: FIXTURE.contract });
+        await tracedPreparation("PREFLIGHT", async () => (goKnown(`/contratos/${FIXTURE.contract}`)));
+        contracts = await tracedPreparation("RUNTIME_CONTEXT", async () => (observer.read("contratos", { id: FIXTURE.contract })));
       }
       if (
         contracts.length !== 1 ||
@@ -3883,10 +3898,10 @@ async function runFixturePreparation() {
       verifyContext,
     });
     phase = "LOGIN";
-    await runtime.login({
+    await tracedPreparation("LOGIN", async () => (runtime.login({
       email: process.env.CONTAOS_HML_SYNTHETIC_EMAIL,
       password: process.env.CONTAOS_HML_SYNTHETIC_PASSWORD,
-    });
+    })));
     const official = (row) => {
       if (
         obj(row) &&
@@ -3911,12 +3926,12 @@ async function runFixturePreparation() {
       };
     };
     const sourceCapabilities = async () => {
-      await runtime.context();
-      await fresh();
-      const caps = await observer.rpcRead("consultar_permissoes_efetivas", {
+      await tracedPreparation("PREFLIGHT", async () => (runtime.context()));
+      await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
+      const caps = await tracedPreparation("PREFLIGHT", async () => (observer.rpcRead("consultar_permissoes_efetivas", {
         p_id_organizacao: FIXTURE.organization,
         p_id_contrato: FIXTURE.contract,
-      });
+      })));
       if (
         caps?.schema_versao !== "rbac-v1" ||
         caps.master !== true ||
@@ -3938,13 +3953,13 @@ async function runFixturePreparation() {
       };
     };
     const command = async ({ rpc, payload, evidence = {}, button, scope, confirmAfter }) => {
-      await runtime.context();
-      await fresh();
+      await tracedPreparation("PREFLIGHT", async () => (runtime.context()));
+      await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
       if (typeof confirmAfter !== "function") err("PREPARER_RECONCILIATION");
       const verified = { context: true, capability: true, reconciled: true };
       let value;
       const operationGeneration = observer.generation();
-      await confirmUiIntent({
+      await tracedPreparation("RUNTIME_FRESH", async () => (confirmUiIntent({
         page,
         fence,
         broker,
@@ -3957,16 +3972,16 @@ async function runFixturePreparation() {
         settleVerifiedPage: async () => fresh(),
         reconcile: async (stage) => {
           if (stage === "before") {
-            await runtime.context();
+            await tracedPreparation("PREFLIGHT", async () => (runtime.context()));
             return { payload, evidence, verified };
           }
-          await fresh();
-          if (!(await observer.observedAfter("rpc:" + rpc, {}, operationGeneration)))
+          await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
+          if (!(await tracedPreparation("PREFLIGHT", async () => (observer.observedAfter("rpc:" + rpc, {}, operationGeneration)))))
             err("PREPARER_RESPONSE_UNCONFIRMED");
-          value = await observer.rpcRead(rpc);
-          return { confirmed: (await confirmAfter(value)) === true };
+          value = await tracedPreparation("PREFLIGHT", async () => (observer.rpcRead(rpc)));
+          return { confirmed: (await tracedPreparation("PREFLIGHT", async () => (confirmAfter(value)))) === true };
         },
-      });
+      })));
       return value;
     };
     const io = {
@@ -3990,21 +4005,21 @@ async function runFixturePreparation() {
       wait: (ms) => new Promise((resolve) => setTimeout(resolve, Math.max(2000, ms))),
       abortPhase: async () => {
         fence.close();
-        await context.close();
+        await tracedPreparation("PREFLIGHT", async () => (context.close()));
       },
-      text: await readFile(
+      text: await tracedPreparation("PREFLIGHT", async () => (readFile(
         "docs/frontend/auditorias/evidencias/continuacao-auth-20261108/FONTE_SINTETICA_AUDITORIA_HML.txt",
         "utf8",
-      ),
+      ))),
     };
     phase = "SOURCE_AND_LIST";
-    sourceList = await prepareSourceAndList(io);
+    sourceList = await tracedPreparation("SOURCE_AND_LIST", async () => (prepareSourceAndList(io)));
     phase = "COMPETENCIES";
-    result = await prepareCompetencies(io, sourceList);
+    result = await tracedPreparation("COMPETENCIES", async () => (prepareCompetencies(io, sourceList)));
     phase = "FINAL_READBACK";
-    await runtime.context();
-    await fresh();
-    await checkFreshDeployment(proof, true);
+    await tracedPreparation("PREFLIGHT", async () => (runtime.context()));
+    await tracedPreparation("RUNTIME_FRESH", async () => (fresh()));
+    await tracedPreparation("PREFLIGHT", async () => (checkFreshDeployment(proof, true)));
     if (result?.state !== "confirmed") err("PREPARER_INCOMPLETE");
     completed = true;
   } catch (error) {
@@ -4013,7 +4028,7 @@ async function runFixturePreparation() {
   } finally {
     if (runtime) {
       try {
-        logoutVerified = await diagnostics.cleanup(()=>runtime.logout());
+        logoutVerified = await tracedPreparation("LOGOUT", async () => (diagnostics.cleanup(()=>runtime.logout())));
       } catch {
         logoutVerified = false;
       } finally {
@@ -4022,8 +4037,8 @@ async function runFixturePreparation() {
     }
     observer?.close();
     fence?.close();
-    await browser?.close().catch(() => {});
-    await proxy?.close().catch(() => {});
+    await tracedPreparation("PREFLIGHT", async () => (browser?.close().catch(() => {})));
+    await tracedPreparation("PREFLIGHT", async () => (proxy?.close().catch(() => {})));
     const safeIds = [];
     const collect = (value) => {
       if (uuid(value)) safeIds.push(value);
@@ -4057,7 +4072,7 @@ async function runFixturePreparation() {
     for (const name of ["receipts.json", "report.json"])
       sums +=
         createHash("sha256")
-          .update(await readFile(join(output, name)))
+          .update(await tracedPreparation("PREFLIGHT", async () => (readFile(join(output, name)))))
           .digest("hex") +
         "  " +
         name +
