@@ -841,11 +841,9 @@ function recoveryBudget(ledger, ledgerR3, ledgerR4, ledgerR5, ledgerR6, ledgerR7
     (row) => row.state === "confirmed",
   ).length;
   if (confirmedBefore !== 8) err("RECOVERY_R5_LEDGER");
-  const r8 =
-    ledgerR8 === undefined ? null : JSON.parse(validateR8RecoveryDocument(ledgerR8).receiptsRaw);
-  const total =
-    confirmedBefore + (r8 ? r8.receipts.filter((row) => row.state === "confirmed").length : 0);
-  if (total !== (r8 ? 10 : 8)) err("RECOVERY_R8_LEDGER");
+  const r8 = JSON.parse(validateR8RecoveryDocument(ledgerR8).receiptsRaw);
+  const total = confirmedBefore + r8.receipts.filter((row) => row.state === "confirmed").length;
+  if (total !== 10) err("RECOVERY_R8_LEDGER");
   return Object.freeze({ confirmedBefore: total, maxNewIntentions: 24 - total });
 }
 
@@ -1710,9 +1708,7 @@ export function createIntentBroker({
             ...R1_RECOVERY_DOCUMENT.receipts,
             ...R3_RECOVERY_DOCUMENT.receipts,
             ...JSON.parse(R5_RECOVERY_DOCUMENT.receiptsRaw).receipts,
-            ...(recoveryLedgerR8 === undefined
-              ? []
-              : JSON.parse(validateR8RecoveryDocument(recoveryLedgerR8).receiptsRaw).receipts),
+            ...JSON.parse(validateR8RecoveryDocument(recoveryLedgerR8).receiptsRaw).receipts,
           ].map((r) => r.requestId)
         : [],
     );
@@ -1815,8 +1811,7 @@ export function createIntentBroker({
         err("RECOVERY_CONFIRMED_OPERATION");
       if (!recoveryAuthorized) err("RECOVERY_READ_ONLY");
       if (recovery && confirmedR5Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
-      if (recoveryLedgerR8 !== undefined && confirmedR8Replay(rpc, payload))
-        err("RECOVERY_CONFIRMED_OPERATION");
+      if (recovery && confirmedR8Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
       if (frozen) err("INTENT_FROZEN");
       if (active) err("INTENT_PENDING");
       if (count >= 24) err("INTENT_BUDGET");
@@ -1900,10 +1895,8 @@ export function preparationIntentSummary(broker) {
   if (!broker) return null;
   const state = broker.snapshot();
   if (
-    !(
-      [8, 10].includes(state.confirmedBefore) &&
-      state.maxNewIntentions === 24 - state.confirmedBefore
-    ) ||
+    state.confirmedBefore !== 10 ||
+    state.maxNewIntentions !== 14 ||
     !Number.isInteger(state.count) ||
     state.count < state.confirmedBefore ||
     state.count > 24
@@ -3093,117 +3086,118 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       statusHTTP = "NONE",
       requestFailure = "NONE";
     const task = (async () => {
-      if (!ordinal) return;
-      let query = null;
-      if (table) {
-        try {
-          query = parseObservedQuery(table, url);
-        } catch {
-          return;
-        }
-      }
-      let args = {};
-      if (rpc && request.postData()) {
-        args = projectOfficialResponse(parseBusinessJson(request.postData()));
-        if (
-          (Object.hasOwn(args, "p_id_organizacao") &&
-            args.p_id_organizacao !== FIXTURE.organization) ||
-          (Object.hasOwn(args, "p_id_contrato") && args.p_id_contrato !== FIXTURE.contract)
-        )
-          return;
-      }
-      stage = "UNAVAILABLE";
-      const status = response.status();
-      if (!Number.isInteger(status) || status < 100 || status > 599) err("OBSERVATION_RESPONSE");
-      if (status < 200 || status > 299) {
-        stage = "HTTP_STATUS";
-        statusHTTP = status;
-        err("OBSERVATION_RESPONSE");
-      }
-      stage = "BODY_READ";
-      statusHTTP = status;
-      let bytes;
       try {
-        bytes = await response.body();
-      } catch (error) {
-        requestFailure = observedRequestFailure(request);
-        throw error;
-      }
-      stage = "RESPONSE_PROJECTION";
-      statusHTTP = "NONE";
-      let value;
-      try {
-        if (bytes.length > 1048576) {
-          stage = "OBSERVATION_LIMIT";
-          err("OBSERVATION_LIMIT");
-        }
-        const fields = table
-          ? TABLE_RESPONSE_FIELDS[table]
-          : RPC_RESPONSE_FIELDS[rpc] ||
-            (BUSINESS_RPCS.includes(rpc) ? BUSINESS_RESPONSE_FIELDS : null);
-        if (!fields) err("OBSERVATION_ENDPOINT");
-        value = projectOfficialResponse(
-          JSON.parse(bytes.toString("utf8")),
-          0,
-          false,
-          new Set(fields.split(" ")),
-        );
-      } finally {
-        bytes.fill(0);
-      }
-      if (closed) return;
-      if (mutation) {
-        mutation.responseOrdinal = responseOrdinal;
-        mutation.ack = value;
-        mutation.admitted = true;
-      }
-      if (table) {
-        stage = "RESPONSE_CONTEXT";
-        const rows = value === null ? [] : Array.isArray(value) ? value : [value];
-        if (rows.length > 1000) {
-          stage = "OBSERVATION_LIMIT";
-          err("OBSERVATION_LIMIT");
-        }
-        const ids = new Set();
-        for (const row of rows) {
-          if (!obj(row)) err("OBSERVATION_SCHEMA");
-          for (const [k, p] of query.predicates) {
-            const v = pathValue(row, k);
-            if (v !== undefined && (p.kind === "eq" ? v !== p.value : !p.values.includes(v)))
-              err("OBSERVATION_CONTEXT");
+        if (!ordinal) return;
+        let query = null;
+        if (table) {
+          try {
+            query = parseObservedQuery(table, url);
+          } catch {
+            return;
           }
-          const id =
-            row.id ??
-            (query.predicates.get("id")?.kind === "eq"
-              ? query.predicates.get("id").value
-              : undefined);
-          if (!uuid(id) || ids.has(id)) err("OBSERVATION_SCHEMA");
-          ids.add(id);
         }
-        const ledger = tables.get(table) || new Map(),
-          prior = ledger.get(query.key);
-        if (!prior || prior.ordinal < ordinal) ledger.set(query.key, { ...query, ordinal, rows });
-        if (ledger.size > 1024) {
-          stage = "OBSERVATION_LIMIT";
-          err("OBSERVATION_LIMIT");
+        let args = {};
+        if (rpc && request.postData()) {
+          args = projectOfficialResponse(parseBusinessJson(request.postData()));
+          if (
+            (Object.hasOwn(args, "p_id_organizacao") &&
+              args.p_id_organizacao !== FIXTURE.organization) ||
+            (Object.hasOwn(args, "p_id_contrato") && args.p_id_contrato !== FIXTURE.contract)
+          )
+            return;
         }
-        tables.set(table, ledger);
-      } else {
-        const cache = rpcs.get(rpc) || [];
-        cache.push({ ordinal, args, value });
-        cache.sort((a, b) => b.ordinal - a.ordinal);
-        rpcs.set(rpc, cache.slice(0, 64));
-      }
-      stage = "OBSERVATION_LIMIT";
-      checkBudget();
-    })();
-    pending.add(task);
-    task
-      .catch(() => {
+        stage = "UNAVAILABLE";
+        const status = response.status();
+        if (!Number.isInteger(status) || status < 100 || status > 599) err("OBSERVATION_RESPONSE");
+        if (status < 200 || status > 299) {
+          stage = "HTTP_STATUS";
+          statusHTTP = status;
+          err("OBSERVATION_RESPONSE");
+        }
+        stage = "BODY_READ";
+        statusHTTP = status;
+        let bytes;
+        try {
+          bytes = await response.body();
+        } catch (error) {
+          requestFailure = observedRequestFailure(request);
+          throw error;
+        }
+        stage = "RESPONSE_PROJECTION";
+        statusHTTP = "NONE";
+        let value;
+        try {
+          if (bytes.length > 1048576) {
+            stage = "OBSERVATION_LIMIT";
+            err("OBSERVATION_LIMIT");
+          }
+          const fields = table
+            ? TABLE_RESPONSE_FIELDS[table]
+            : RPC_RESPONSE_FIELDS[rpc] ||
+              (BUSINESS_RPCS.includes(rpc) ? BUSINESS_RESPONSE_FIELDS : null);
+          if (!fields) err("OBSERVATION_ENDPOINT");
+          value = projectOfficialResponse(
+            JSON.parse(bytes.toString("utf8")),
+            0,
+            false,
+            new Set(fields.split(" ")),
+          );
+        } finally {
+          bytes.fill(0);
+        }
+        if (closed) return;
+        if (mutation) {
+          mutation.responseOrdinal = responseOrdinal;
+          mutation.ack = value;
+          mutation.admitted = true;
+        }
+        if (table) {
+          stage = "RESPONSE_CONTEXT";
+          const rows = value === null ? [] : Array.isArray(value) ? value : [value];
+          if (rows.length > 1000) {
+            stage = "OBSERVATION_LIMIT";
+            err("OBSERVATION_LIMIT");
+          }
+          const ids = new Set();
+          for (const row of rows) {
+            if (!obj(row)) err("OBSERVATION_SCHEMA");
+            for (const [k, p] of query.predicates) {
+              const v = pathValue(row, k);
+              if (v !== undefined && (p.kind === "eq" ? v !== p.value : !p.values.includes(v)))
+                err("OBSERVATION_CONTEXT");
+            }
+            const id =
+              row.id ??
+              (query.predicates.get("id")?.kind === "eq"
+                ? query.predicates.get("id").value
+                : undefined);
+            if (!uuid(id) || ids.has(id)) err("OBSERVATION_SCHEMA");
+            ids.add(id);
+          }
+          const ledger = tables.get(table) || new Map(),
+            prior = ledger.get(query.key);
+          if (!prior || prior.ordinal < ordinal) ledger.set(query.key, { ...query, ordinal, rows });
+          if (ledger.size > 1024) {
+            stage = "OBSERVATION_LIMIT";
+            err("OBSERVATION_LIMIT");
+          }
+          tables.set(table, ledger);
+        } else {
+          const cache = rpcs.get(rpc) || [];
+          cache.push({ ordinal, args, value });
+          cache.sort((a, b) => b.ordinal - a.ordinal);
+          rpcs.set(rpc, cache.slice(0, 64));
+        }
+        stage = "OBSERVATION_LIMIT";
+        checkBudget();
+      } catch (error) {
         if (stage === "UNAVAILABLE") recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
         else recordFailure(contractKind, stage, statusHTTP, requestFailure);
-      })
-      .finally(() => pending.delete(task));
+        throw error;
+      }
+    })();
+    pending.add(task);
+    task.catch(() => {}).finally(() => pending.delete(task));
   };
   page.on("request", onRequest);
   page.on("response", onResponse);
@@ -3395,6 +3389,26 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     },
     flush,
     observationFailure: () => firstFailure,
+    async seal() {
+      closed = true;
+      page.off("request", onRequest);
+      page.off("response", onResponse);
+      let timer;
+      try {
+        await Promise.race([
+          Promise.allSettled([...pending]),
+          new Promise((resolve) => {
+            timer = setTimeout(() => {
+              recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
+              resolve();
+            }, 3000);
+          }),
+        ]);
+      } finally {
+        clearTimeout(timer);
+      }
+      return firstFailure;
+    },
     generation: () => sequence,
     async observedAfter(name, where = {}, after, options = {}) {
       await flush();
@@ -6128,7 +6142,10 @@ async function runFixturePreparation() {
       }
     }
     await tracedPreparation("CLEANUP", async () =>
-      diagnostics.finishCleanup("OBSERVER_CLOSE_FAILED", () => observer?.close()),
+      diagnostics.finishCleanup("OBSERVER_CLOSE_FAILED", async () => {
+        await tracedPreparation("CLEANUP", async () => observer?.seal());
+        observer?.close();
+      }),
     );
     await tracedPreparation("CLEANUP", async () =>
       diagnostics.finishCleanup("FENCE_CLOSE_FAILED", () => fence?.close()),
@@ -6158,6 +6175,10 @@ async function runFixturePreparation() {
       identity,
       observer?.observationFailure() ?? null,
     );
+    if (observationDiagnostic.firstFailure !== null) {
+      completed = false;
+      blockedCode ||= diagnostics.capture(new Error("OBSERVATION_FAILED"));
+    }
     const report = {
       schema: "contaos.fixture.preparation.v1",
       failure: blockedCode || (cleanupOk ? null : "PREPARER_CLEANUP"),
