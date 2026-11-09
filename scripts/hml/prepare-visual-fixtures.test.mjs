@@ -5480,3 +5480,251 @@ test("R8 actual fixture CLI rejects manual main before proof GET or login", asyn
   assert.equal(loads, 0);
   assert.equal(runtime, 0);
 });
+
+const R9_R8_DOCUMENT = {
+  schema: "contaos.fixture.recovery-r8.v1",
+  workflowRun: "42611391440",
+  artifactId: "13670961904",
+  requestId: "trilha-a-fixtures-20261109-r8",
+  harnessSha: "dea3ab73c9b47de1126054380b002c37b060ff84",
+  zipSha256: "698e58fe9184b194cc1866b4c119d4df45ba23ccc5704665469a99793cce2fa9",
+  reportSha256: "e913478993f895726f9e207c975533ee4a6fd3d9dac8dd0a319919fcf06c67cb",
+  receiptsSha256: "20af329dd9c441e4ede575fa6cb94a65c3d136ad777613170045c696328fad25",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "OBSERVATION_FAILED",\n  "diagnostics": {\n    "primaryFailure": "OBSERVATION_FAILED",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "RUNTIME_FRESH",\n    "subphasePath": [\n      "COMPETENCIES",\n      "COMPETENCY_UI",\n      "COMPETENCY_RECONCILE",\n      "COMPETENCY_RECONCILE",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "RUNTIME_FRESH",\n      "RUNTIME_FRESH"\n    ],\n    "lastCompletedSubphase": "RUNTIME_FRESH",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 10,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 8,\n    "newArmedCount": 2,\n    "maxIntentions": 24,\n    "maxNewIntentions": 16\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 8,\n    "maxNewIntentions": 16,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "partial",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42611391440",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_documento_competencia_v115",\n      "requestId": "6d730eb7-8c38-4474-813d-d39672454444",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "c9418ddaaa3e21de73da0a62acc2a945b3c9bf8c12107cadf4f4bfc518cf4154"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_documento_competencia_v115",\n      "requestId": "6d730eb7-8c38-4474-813d-d39672454444",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "c9418ddaaa3e21de73da0a62acc2a945b3c9bf8c12107cadf4f4bfc518cf4154"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_analise_competencia",\n      "requestId": "a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "f26357fe955a3312c19cf8a1a678c545da95c8f330a272bc08f8aec964c7ffb1"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_analise_competencia",\n      "requestId": "a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "f26357fe955a3312c19cf8a1a678c545da95c8f330a272bc08f8aec964c7ffb1"\n    }\n  ]\n}\n',
+};
+test("R9 real broker charges the two original R8 confirmations and leaves fourteen", () => {
+  const b = broker({
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+    recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+    recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+    recoveryLedgerR5: R6_R5_DOCUMENT,
+    recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+    recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+    recoveryLedgerR8: R9_R8_DOCUMENT,
+  });
+  assert.equal(b.snapshot().confirmedBefore, 10);
+  assert.equal(b.snapshot().count, 10);
+  assert.equal(b.snapshot().maxNewIntentions, 14);
+  assert.equal(JSON.parse(R9_R8_DOCUMENT.reportRaw).intentLedger.priorConfirmed, 8);
+  assert.equal(JSON.parse(R9_R8_DOCUMENT.reportRaw).intentLedger.maxNewIntentions, 16);
+});
+test("R9 real October consumers refuse missing confirmed document or a new analysis request", async () => {
+  const source = await r6SourceNodes();
+  const report = JSON.parse(R9_R8_DOCUMENT.reportRaw),
+    c0 = report.bindings.competencies[0];
+  const c = { ...c0, month: "2026-10-01", evidence: { competencies: [] } };
+  const r8Bindings = { ...report.bindings };
+  const trace = async (_stage, run) => run();
+  const stop = (code) => {
+    throw Error(code);
+  };
+  const uuid = (value) => typeof value === "string" && /^[a-f0-9-]{36}$/.test(value);
+  const compile = (name, env) =>
+    new Function(...Object.keys(env), source.named(name).getText(source.ast) + ";return " + name)(
+      ...Object.values(env),
+    );
+  for (const name of ["ensureDocument", "ensureAnalysis"]) {
+    let commands = 0,
+      observedError = null;
+    const requirement = {
+      id: c.requirementId,
+      obrigatorio: true,
+      aplicavel: true,
+      impeditivo: true,
+      categoria: "documental",
+      tipos_esperados: ["outro"],
+    };
+    const loaded = {
+      requirement,
+      value: {
+        competencia: {
+          id: c.id,
+          id_organizacao: FIXTURE.organization,
+          id_contrato: FIXTURE.contract,
+        },
+        documentos: [],
+      },
+    };
+    const io = {
+      recoveryLedgerR8: R9_R8_DOCUMENT,
+      official: (v) => v,
+      fresh: async () => {},
+      command: async () => {
+        commands++;
+        throw Error("TEST_COMMAND_REACHED");
+      },
+      runtime: {
+        reuseDocument: async () => {
+          commands++;
+          throw Error("TEST_COMMAND_REACHED");
+        },
+      },
+    };
+    const env = {
+      io,
+      R8_BINDINGS: r8Bindings,
+      R8_RECOVERY_DOCUMENT: R9_R8_DOCUMENT,
+      tracedPreparation: trace,
+      approvedContractFile: async () => ({}),
+      link: async () => {},
+      listPath: "/known",
+      listMonth: async () => {},
+      refreshArea: async () => {},
+      poll: async (read) => read(),
+      readDocuments: async () => loaded,
+      analysis: async () => ({
+        estado_analise: "not_analyzed",
+        allowed_actions: { executar_analise: true },
+        resultados: [],
+        execucao_atual: null,
+      }),
+      stop,
+      uuid,
+      code: "AUD-A-TXT-001",
+      FIXTURE,
+      randomUUID,
+      matchingDocument: () => null,
+    };
+    try {
+      await compile(name, env)({ ...c });
+    } catch (error) {
+      observedError = error;
+    }
+    assert.ok(observedError instanceof Error);
+    assert.notEqual(
+      observedError.name,
+      "ReferenceError",
+      "test binds every real source dependency",
+    );
+    assert.equal(commands, 0, name + " must fail before any replay");
+  }
+});
+test("R9 real observer preserves first closed failure through close and a later error", async () => {
+  const { EventEmitter } = await import("node:events");
+  const page = new EventEmitter(),
+    observer = sut.createOfficialObserver(page);
+  const emit = (status, body) => {
+    const request = {
+      url: () => FIXTURE.api + "/rest/v1/rpc/obter_analise_competencia_v116",
+      method: () => "POST",
+      postData: () => null,
+      failure: () => null,
+    };
+    page.emit("request", request);
+    page.emit("response", { request: () => request, url: request.url, status: () => status, body });
+  };
+  emit(503, async () => {
+    assert.fail("HTTP failure must not read response body");
+  });
+  await assert.rejects(() => observer.flush(), /OBSERVATION_FAILED/);
+  const first = observer.observationFailure?.() ?? null;
+  assert.deepEqual(first, {
+    contractKind: "RPC:obter_analise_competencia_v116",
+    stage: "HTTP_STATUS",
+    statusHTTP: 503,
+    requestFailure: "NONE",
+  });
+  emit(200, async () => {
+    throw Object.create(null);
+  });
+  await assert.rejects(() => observer.flush(), /OBSERVATION_FAILED/);
+  observer.close();
+  assert.deepEqual(observer.observationFailure(), first);
+  assert.equal(Object.isFrozen(first), true);
+});
+
+test("R9 actual artifact writer appends R8 originals and the separate observation record", async () => {
+  const fs = await import("node:fs/promises"),
+    sync = await import("node:fs"),
+    { join } = await import("node:path"),
+    { tmpdir } = await import("node:os");
+  const source = await fs.readFile(
+    new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+    "utf8",
+  );
+  const start = source.indexOf('    writeFileSync(join(output, "receipts-r3.json")'),
+    marker = '    writeFileSync(join(output, "SHA256SUMS"), sums, { mode: 0o600 });',
+    end = source.indexOf(marker, start) + marker.length;
+  assert.ok(start > 0 && end > start);
+  const output = await fs.mkdtemp(join(tmpdir(), "contaos-r9-writer-"));
+  const actual = JSON.parse(R9_R8_DOCUMENT.reportRaw),
+    identity = {
+      frontendSha: actual.frontendSha,
+      harnessSha: actual.harnessSha,
+      deploymentId: actual.deploymentId,
+      workflowRun: actual.workflowRun,
+    };
+  const observationDiagnostic = {
+    schema: "contaos.fixture.observation.v1",
+    ...identity,
+    firstFailure: null,
+  };
+  try {
+    for (const [name, raw] of [
+      ["receipts.json", R9_R8_DOCUMENT.receiptsRaw],
+      ["report.json", R9_R8_DOCUMENT.reportRaw],
+      ["receipts-r1.json", JSON.stringify(sut.R1_RECOVERY_DOCUMENT, null, 2) + "\n"],
+    ])
+      await fs.writeFile(join(output, name), raw);
+    const env = {
+      output,
+      writeFileSync: sync.writeFileSync,
+      join,
+      R2_RECOVERY_DOCUMENT: sut.R2_RECOVERY_DOCUMENT,
+      R3_RECOVERY_DOCUMENT: sut.R3_RECOVERY_DOCUMENT,
+      R5_RECOVERY_DOCUMENT: sut.R5_RECOVERY_DOCUMENT,
+      R6_RECOVERY_DOCUMENT: sut.R6_RECOVERY_DOCUMENT,
+      r7Recovery: sut.R7_RECOVERY_DOCUMENT,
+      r8Recovery: R9_R8_DOCUMENT,
+      observationDiagnostic,
+      createHash,
+      readFile: fs.readFile,
+      tracedPreparation: async (_, run) => run(),
+    };
+    await new (Object.getPrototypeOf(async () => {}).constructor)(
+      ...Object.keys(env),
+      source.slice(start, end),
+    )(...Object.values(env));
+    const names = (await fs.readdir(output)).sort(),
+      lines = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
+    assert.equal(names.length, 15);
+    assert.equal(lines.length, 14);
+    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 14);
+    for (const line of lines)
+      assert.equal(
+        createHash("sha256")
+          .update(await fs.readFile(join(output, line.slice(66))))
+          .digest("hex"),
+        line.slice(0, 64),
+      );
+    assert.equal(
+      await fs.readFile(join(output, "receipts-r8.json"), "utf8"),
+      R9_R8_DOCUMENT.receiptsRaw,
+    );
+    assert.equal(
+      await fs.readFile(join(output, "recovery-r8.json"), "utf8"),
+      JSON.stringify(R9_R8_DOCUMENT, null, 2) + "\n",
+    );
+    const emitted = JSON.parse(
+      await fs.readFile(join(output, "observation-diagnostic.json"), "utf8"),
+    );
+    assert.deepEqual(emitted, observationDiagnostic);
+    assert.deepEqual(Object.keys(emitted), [
+      "schema",
+      "frontendSha",
+      "harnessSha",
+      "deploymentId",
+      "workflowRun",
+      "firstFailure",
+    ]);
+    assert.equal(
+      Object.keys(JSON.parse(await fs.readFile(join(output, "report.json"), "utf8"))).length,
+      15,
+    );
+  } finally {
+    await fs.rm(output, { recursive: true, force: true });
+  }
+});

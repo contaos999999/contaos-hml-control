@@ -10261,3 +10261,24 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
   assert.equal(gets, 0);
   assert.equal(configured, 1);
 });
+
+test("R9 request accepts only the new nonce and keeps R8 spent", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r9",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(row), "fixtures"), row);
+  assert.throws(
+    () =>
+      sut.parseSingleRequest(
+        JSON.stringify({ ...row, request_id: "trilha-a-fixtures-20261109-r8" }),
+        "fixtures",
+      ),
+    /REQUEST_/,
+  );
+});
