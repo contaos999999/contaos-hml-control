@@ -5791,6 +5791,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
   assert.deepEqual(ancestors, [
     sut.SINGLE_REQUEST.gateSha,
     sut.SINGLE_REQUEST.fixturesSha,
+    sut.SINGLE_REQUEST.recoveryGateSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   let calls = 0;
