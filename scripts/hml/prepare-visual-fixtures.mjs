@@ -8,6 +8,8 @@ import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 import {
   requestAllowed,
+  singleRequestEventAllowed,
+  loadSingleRequestProof,
   HML_ORIGIN,
   API_ORIGIN,
   nativeProofValid,
@@ -3379,10 +3381,12 @@ export async function prepareCompetencies(io, sourceList) {
   return output;
 }
 
+export function preparerEventAllowed(env) {
+  return singleRequestEventAllowed(env, "fixtures");
+}
 export function validatePreparerIdentity(env, proof, native, identity, head) {
   return (
-    env.GITHUB_EVENT_NAME === "workflow_dispatch" &&
-    env.GITHUB_REF === "refs/heads/main" &&
+    preparerEventAllowed(env) &&
     env.GITHUB_SHA === env.CONTAOS_HARNESS_SHA &&
     head === env.CONTAOS_HARNESS_SHA &&
     /^[a-f0-9]{40}$/.test(head || "") &&
@@ -3942,11 +3946,9 @@ export function fixtureBindingReceipt(sourceList, result) {
 export async function runCli(args = process.argv.slice(2)) {
   if (!Array.isArray(args) || args.length !== 1 || args[0] !== "--prepare-fixtures")
     err("PREPARER_CLI_USAGE");
-  if (
-    process.env.GITHUB_EVENT_NAME !== "workflow_dispatch" ||
-    process.env.GITHUB_REF !== "refs/heads/main"
-  )
-    err("PREPARER_MAIN_ONLY");
+  if (process.env.GITHUB_EVENT_NAME === "workflow_run")
+    await loadSingleRequestProof({ operation: "fixtures", fresh: true });
+  if (!preparerEventAllowed(process.env)) err("PREPARER_MAIN_ONLY");
   return runFixturePreparation();
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
