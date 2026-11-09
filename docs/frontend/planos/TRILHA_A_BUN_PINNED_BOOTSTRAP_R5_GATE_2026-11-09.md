@@ -14,30 +14,30 @@ Downloadruntime SOMENTE https://registry.npmjs.org/@oven/bun-linux-x64/-/bun-lin
 
 ## Aquisição, extração e publicação
 
-Node24builtinssemdependênciasnovas. Somentelinux/x64,HTTPSúnicoorigin/URLliteral acima,semuserinfo/query/fragment. RedirectDENYsempre,qualquer3xxfalha,semfollow. Status200 ebodybounded64MiBcomlimite enquanto streaming,contentlength quando presente coerente. HTTPdeadline30s e deadlineglobal60s cobrindodownload,gunzip/parse,write,version;abort/cancelcloserecursos. Semretriesautomáticosnestehelper,semextendertimeoutdinâmico.
+Node24builtinssemdependênciasnovas. Somentelinux/x64,HTTPSúnicoorigin/URLliteral acima,semuserinfo/query/fragment. RedirectDENYsempre,qualquer3xxfalha,semfollow. Status200 ebodybounded64MiBcomlimite enquanto streaming,contentlength quando presente coerente. Deadlineúnicoend-to-end30s cobrindodownload,gunzip/parse,write,version;abort/cancelcloserecursos. Semretriesautomáticosnestehelper,semextendertimeoutdinâmico.
 
-Verificarbytesexatos+SRIsha512+tgzSHA256ANTESgunzip. Gunzip commaxOutputLength128MiB e validação de stream completo; se trailer inválido,extra gzipmember/bytes ouambiguidade não suportada, bloquear. Parsetarchecksum/size/mode/type/path/termination/padding rigoroso. AceitarapenasUSTARregular e3entradasexatasuniques; negarPAX/GNUlongname/sparse/links/symlinks/hardlinks/devices/directoriesextras,duplicatas,pathabsolute/backslash/traversal/NULinterior/entrysizeoverflow/paddingnãozero/headerambíguo/trailingnãozero. Não usar shelltar ou extrairconteúdoarbitrário.
+Verificarbytesexatos+SRIsha512+tgzSHA256ANTESgunzip. Gunzip commaxOutputLength128MiB e validação de stream completo; se trailer inválido,extra gzipmember/bytes ouambiguidade não suportada, bloquear. Parsetarchecksum/size/mode/type/path/termination/padding rigoroso, exatamente dois blocosEOFzero e somente paddingzero final; negarconcatenação/trailerambíguo. AceitarapenasUSTARregular e3entradasexatasuniques; negarPAX/GNUlongname/sparse/links/symlinks/hardlinks/devices/directoriesextras,duplicatas,pathabsolute/backslash/traversal/NULinterior/entrysizeoverflow/paddingnãozero/headerambíguo/trailingnãozero. Não usar shelltar ou extrairconteúdoarbitrário.
 
-Anteschmod/execverificarbinSHA/tamanho/ELF,packageJSONstrictfieldsnecessáriossemduplicatasambíguas,nomeversãoOSCPU. Escrita somente dobinário emdiretório novo mkdtempprivado0700 dentroRUNNER_TEMPabsolutocanônicoreal,nãoreusável/nãosymlink. Arquivowx0600,verificarpóswritehash/tamanho/lstatregular,nãooverwrite,entãochmod0700. Sequalquerfalha,cleanupdo diretóriopróprio semseguirlinks; não modificaroutraspaths.
+Anteschmod/execverificarbinSHA/tamanho/ELF,packageJSONstrictfieldsnecessáriossemduplicatasambíguas,nomeversãoOSCPU. Escrita somente dobinário emdiretório novo mkdtempprivado0700 dentroRUNNER_TEMPabsolutocanônicoreal,nãoreusável/nãosymlink. Arquivowx0600,verificarpóswritehash/tamanho/lstatregular,nãooverwrite,entãochmod0700;usarO_EXCL/O_NOFOLLOWondeaplicável e revalidarhandle/pathidentidade. Sequalquerfalha,cleanupdo diretóriopróprio semseguirlinks; não modificaroutraspaths.
 
 RUNNER_TEMP obrigatórioabsoluto e realpath=lstatsemcomponentesymlink,dirreal; GITHUB_PATH obrigatórioabsoluto/regular/nãosymlink no diretóriocanônico doRunnercommandfiles vinculadoaRUNNER_TEMP. Ohelper falha seausentes/relativos/foraescopo,semusarCWDou/tmpfallback. Tratarvariáveiscomo dados,semexpansãoshell. NãoaceitarCLIURL/hash/patharbitrário nemcallbacks paraexecprod. Nãoexporenv/payload/caminhocomsegredo.
 
-Somenteapósintegridadetotal ewriteverificado executar caminhoABSOLUTO dobinário com --version,envmínimo e cwdtemppróprio,timeoutlimitadoprazo restante; exigirsaídaexata1.4.4. Não invocar bunpreexistente/PATHprimeiro. Apenasdepois publicar diretórioabsoluto validado emGITHUB_PATH; seprecisarbumx,criarlinkcontroladobunx→bunno diretóriopróprio,negarpayloadlink. SeGITHUB_PATHwritefalha,helperfalha e nãodeclarainstalado. Atécompletar,nãoexec/BunPATHwrite. Logsomenteenum/checksumsconstantes/versão,piorerrofechado,semerrobruto/URLdinâmica/env/tokens.
+Somenteapósintegridadetotal ewriteverificado executar caminhoABSOLUTO dobinário com --version,envVAZIO(noHOME/BUN*/NODE_OPTIONS/LD_PRELOAD nemherança),cwdtemppróprio,timeoutlimitadoprazo restante; exigirsaídaexata1.4.4. Não invocar bunpreexistente/PATHprimeiro. Apenasdepois publicar diretórioabsoluto validado emGITHUB_PATH; seprecisarbumx,criarlinkcontroladobunx→bunno diretóriopróprio,negarpayloadlink. SeGITHUB_PATHwritefalha,helperfalha e nãodeclarainstalado. Sucessopreserva bináriopróprio atéfimdojob paraosstepsBun;falharemovetemppróprio. Atécompletar,nãoexec/BunPATHwrite. Logsomenteenum/checksumsconstantes/versão,piorerrofechado,semerrobruto/URLdinâmica/env/tokens.
 
 ## Sete steps e Node
 
 Substituir7usesoven-sh/setup-bun nas3workflows,semnovajob/permissions/if/environment/concurrency/secrets/workflowtrigger:
-| Workflow/job | Novo nome do step |
+| Workflow/job | Identidade preservada do step |
 |---|---|
-|contaos-frontend-zero-drift.yml/frontend-quality|Bootstrap Bun1.4.4 verificado|
-|contaos-trilha-a-authenticated.yml/request|Bootstrap Bun1.4.4 verificado|
+|contaos-frontend-zero-drift.yml/frontend-quality|Setup Bun|
+|contaos-trilha-a-authenticated.yml/request|step anteriormente semname (preservarposição/semrename)|
 |contaos-trilha-a-authenticated.yml/protocol|Bootstrap Bun1.4.4 verificado|
 |contaos-trilha-a-authenticated.yml/private|Bootstrap Bun1.4.4 verificado|
 |contaos-trilha-a-fixtures.yml/request|Bootstrap Bun1.4.4 verificado|
 |contaos-trilha-a-fixtures.yml/protocol|Bootstrap Bun1.4.4 verificado|
 |contaos-trilha-a-fixtures.yml/private|Bootstrap Bun1.4.4 verificado|
 
-Todos run node scripts/ci/install-pinned-bun.mjs antesbuninstallfrozenlockfile; Auth/FixturesjáNode24,Zeroacrescentaactions/setup-node@v4node-version24anteshelper. Semalterardependências/lock/comandosfrozen/tests/build; ZeroaindaprovefreshnessantesBUILD; bootstrap/testesocorremantespassodecredenciaisprivadas. NomeSetupBunantigoé substituídosomenteporstepbootstrap,nãotrocarordemderito/native.
+Todos run node scripts/ci/install-pinned-bun.mjs antesbuninstallfrozenlockfile; Auth/FixturesjáNode24,Zeroacrescentaactions/setup-node@v4node-version24anteshelper. Semalterardependências/lock/comandosfrozen/tests/build; ZeroaindaprovefreshnessantesBUILD; bootstrap/testesocorremantespassodecredenciaisprivadas. NomeSetupBun doZero permanece; seisstepsanonimos preservamposição e não precisamname novo. Executar unithelpers eCLIsemBun/appdeps emNode24antesinstalardependências; preservarordemderito/native.
 
 ## R4 zeroAuth: provaActionsread-only exata anteslogin
 
@@ -52,7 +52,7 @@ LedgerR4constante minimizeIDs/HEAD/workflowpaths/attempt/conclusões+proveniênc
 
 ## Allowlist e TDD
 
-Só9paths apósGATEintegrado: scripts/ci/install-pinned-bun.mjs e .test.mjs;3workflowsacima;4existentes scripts/hml/prepare-visual-fixtures.mjs/.test.mjs e authenticated-visual-audit.mjs/.test.mjs paraR5histórico/provaR4somente. SemSRC/public/types/deps/lock/backend/PROD/factory/cercas/networkpolicy. NenhumGITHUB_TOKENadicionadopassoprivado;requestproofviametadatanãorecebecredenciaisHML.
+Só9paths apósGATEintegrado: scripts/ci/install-pinned-bun.mjs e .test.mjs;3workflowsacima;4existentes scripts/hml/prepare-visual-fixtures.mjs/.test.mjs e authenticated-visual-audit.mjs/.test.mjs paraR5histórico/provaR4somente. SemSRC/public/types/deps/lock/backend/PROD/factory/cercas/networkpolicy. Exceção fechada de triggerpaths: permitir somenteadição dosdoispathshelpers acima aos filtrospaths deCIAuth/Fixtures paraque futurasmudançasnesseshelpers reexecutemprotocolosnativos; nãoalterarif/private/eventconditions,permissions,environmentoutriggersemânticaalém desses2paths. NenhumGITHUB_TOKENadicionadopassoprivado;requestproofviametadatanãorecebecredenciaisHML.
 
 REDcausalmetadata/setup504 e oldnonceR4executávelapósconsumo;GREENhelperpositivooficialpin/linuxx64/Bun1.4.4real e negativosURL/redirect/bodylimit/deadline/size/SRI/tgz/binSHA/tarambiguidade/symlink/duplicate/relativeenv/pathsymlink/unsupportedOS/versionerrada. Assert0exec/0PATHwriteantesintegridade,canáriosenv/URL/errobrutoausentes,cleanuppróprio. Networkmocksonlynosnegativoshelper/testes,produçãofixorigidosemcallback.
 
