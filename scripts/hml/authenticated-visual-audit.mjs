@@ -8998,22 +8998,24 @@ export function singleRequestGet({
       headers.Authorization = "Bearer " + token;
     }
     let response;
-    const signal = AbortSignal.timeout(Math.min(5000, remaining));
     const endpointKind = requestEndpointKind(path);
-    try {
-      response = await fetchImpl(
-        "https://api.github.com/repos/" + SINGLE_REQUEST.repository + path,
-        { headers, redirect: "error", signal },
-      );
-    } catch {
-      failRequestApi(
-        "REQUEST_API_UNAVAILABLE",
-        endpointKind,
-        "NONE",
-        signal.aborted ? "TIMEOUT" : "TRANSPORT",
-        diagnostic,
-      );
+    let lastTransportCategory = "TRANSPORT";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const budget = deadline - now();
+      if (budget <= 0) break;
+      const signal = AbortSignal.timeout(Math.min(12000, budget));
+      try {
+        response = await fetchImpl(
+          "https://api.github.com/repos/" + SINGLE_REQUEST.repository + path,
+          { headers, redirect: "error", signal },
+        );
+        break;
+      } catch {
+        lastTransportCategory = signal.aborted ? "TIMEOUT" : "TRANSPORT";
+      }
     }
+    if (!response)
+      failRequestApi("REQUEST_API_UNAVAILABLE", endpointKind, "NONE", lastTransportCategory, diagnostic);
     if (response.status !== 200)
       failRequestApi("REQUEST_API_UNAVAILABLE", endpointKind, response.status, "HTTP", diagnostic);
     let text;
