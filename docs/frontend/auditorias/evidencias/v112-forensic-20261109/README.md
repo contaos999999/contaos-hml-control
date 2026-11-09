@@ -23,9 +23,9 @@ Diagnóstico contrafactual somente em memória: retirar as duas ocorrências do 
 - SRC original:241dd775d14a0d2a1ec24c93ae3f655c79d3efd2; CompetenciasContrato.tsx SHA2562819e6b2a12b1252c74cb7df96ce944e4f7cbf483d65bbb7bebd221b01ff0c97.
 - SRC comparativo atual:fca0798d3eba81e8daa3a876a255f34b66ff39f9.
 - fixture.html SHA256573782fc3abf5f306cede0d9f3ebb1563a8daa2ab1ed8d1beebac273354f0b04.
-- forensic.mjs SHA2567d8105c5df7cd113a36d4a4e22da30184bb153fe36ef57895da845a47d8fd142.
-- proof.json SHA2569910d67382e61bf803a6fe831375f3874d45f779384abe403dafe450204c055f.
-- Execução real final no Sandbox:cmd_f329e8c5fd7d4c0f86d649e6ed0a, exit0. O comando cmd_2344f416f7fe445fae28c9c0e47c registra o resumo técnico. Não reutilizar resultados locais antigos como se fossem este experimento.
+- forensic.mjs SHA25685720cfff83c81d4aac6cf3f5388fa1e327eff57578a83f69891e193f32b1426.
+- proof.json SHA25691caaf64323ea7a170c2d3dfaf797d6859ac8643adc735045a34317196419808.
+- Execução forense final:cmd_a2da326667da4eb3811fc88006a9, exit0. Resumo/preflight:cmd_e5fdb0fbe2ac4bc0b64f9cde93d5. Não reutilizar resultados locais antigos como se fossem este experimento.
 
 ## Reprodução isolada
 
@@ -34,3 +34,7 @@ O script usa o layout/vercel/v112-forensic para seus próprios arquivos, /vercel
 ## Limites
 
 A fixture contém apenas referência/períodoNov já aprovado; demais células de negócio são placeholders—, explicitamente não valores de um registro real. Não reproduz o corpo bloqueado do run nem prova que todo desconhecido HML seja esse trio, apesar de reproduzir as contagens1/3 e explicar causalmente as duas ocorrências extras locais. Não salva ARIA bruto, DOM bruto ou screenshot. Não é Teste C de produto, PASS de8casos V112, resolução56PII,72/WCAG/V1. Alteração de helper/catálogo de V112 requer emendaGATE própria, CI/revisão/merge e validação runtime posterior. A forma tabela permanece no SRC conferido em todas as larguras; não foi presumida uma representação em cards.
+
+## Preflight repetido antes da análise AST
+
+Esta execução nova verificou ambos os HEADs, git status limpo em src, igualdade exata entre arquivos regulares SRC e git ls-files (212 arquivos por árvore), hashes de cada arquivo e SHA256 do manifesto completo. proof.json registra srcTree, manifestSha256, literalWordsCount e literalWordsSha256 para cada pin. Não se atribui esse preflight retroativamente à primeira execução. A saída REAL_ARIA_COMPLETE e os 16 casos foram conferidos; exit0 isolado não equivale a teste aprovado. Uma futura CI deve afirmar explicitamente estado, matriz e contagens.

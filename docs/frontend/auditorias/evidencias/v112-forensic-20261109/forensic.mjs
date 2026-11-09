@@ -20,10 +20,25 @@ const proof={schema:"contaos.v112.offline-forensic.v1",readOnly:true,noHmlNetwor
  dataset:{approvedPeriodOnly:true,otherBusinessCells:"UNSPECIFIED_PLACEHOLDERS_NOT_RUNTIME_VALUES"},
  hostOS:Object.fromEntries(fs.readFileSync("/etc/os-release","utf8").split("\n").filter(l=>/^(ID|VERSION_ID)=/.test(l)).map(l=>{const i=l.indexOf("=");return[l.slice(0,i),l.slice(i+1).replaceAll('"',"")];})),
  source:[],cases:[],browserState:"NOT_RUN",limits:["LOCAL_SOURCE_SHAPED_FIXTURE_ONLY","NO_RAW_ARIA_SAVED","NO_UNKNOWN_TEXT_HASHED","NO_RUN78_PASS_RECLASSIFIED","NO_WCAG_V1_CERTIFICATION"]};
+function sourcePreflight(dir,pin){
+ const git=args=>cp.execFileSync("git",args,{cwd:dir,encoding:"utf8"}).trim();
+ const head=git(["rev-parse","HEAD"]);
+ if(head!==pin)throw new Error("SOURCE_PIN");
+ if(git(["status","--porcelain","--untracked-files=all","--","src"]))throw new Error("SOURCE_DIRTY");
+ const tracked=cp.execFileSync("git",["ls-files","-z","--","src"],{cwd:dir,encoding:"utf8"}).split("\0").filter(Boolean).sort();
+ const actual=[];function walk(relative){for(const entry of fs.readdirSync(dir+"/"+relative,{withFileTypes:true})){
+  const path=relative+"/"+entry.name;if(entry.isDirectory())walk(path);else if(entry.isFile())actual.push(path);else throw new Error("SOURCE_NONREGULAR");}}
+ walk("src");actual.sort();
+ if(JSON.stringify(actual)!==JSON.stringify(tracked))throw new Error("SOURCE_FILESET");
+ const manifest=actual.map(path=>path+":"+sha(fs.readFileSync(dir+"/"+path))).join("\n");
+ return {head,srcTree:git(["rev-parse","HEAD:src"]),trackedWorkingTreeClean:true,exactSourceFileSet:true,files:actual.length,manifestSha256:sha(manifest)};
+}
+proof.sourceTreePreflight={RUN78_SOURCE:sourcePreflight(originalRoot,proof.frontendSha),CURRENT_SOURCE:sourcePreflight(currentRoot,proof.currentSourceSha)};
+
 const words=await harness.literalWords(originalRoot);
 for(const[label,src]of [["RUN78_SOURCE",originalRoot],["CURRENT_SOURCE",currentRoot]]){
  const w=await harness.literalWords(src);
- proof.source.push({source:label,tokenAllow:{CONNECTOR_A:w.has("a"),DAY_START_01:w.has("01"),ROWHEADER:w.has("rowheader"),METER:w.has("meter")},
+ proof.source.push({source:label,literalWordsCount:w.size,literalWordsSha256:sha([...w].sort().join("\n")),tokenAllow:{CONNECTOR_A:w.has("a"),DAY_START_01:w.has("01"),ROWHEADER:w.has("rowheader"),METER:w.has("meter")},
  period:harness.classifyArtifactText(period,w)});
 }
 function categories(text){

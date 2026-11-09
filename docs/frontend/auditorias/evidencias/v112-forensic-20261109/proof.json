@@ -7,7 +7,7 @@
   "frontendSha": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
   "currentSourceSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
   "fixtureSha256": "573782fc3abf5f306cede0d9f3ebb1563a8daa2ab1ed8d1beebac273354f0b04",
-  "scriptSha256": "7d8105c5df7cd113a36d4a4e22da30184bb153fe36ef57895da845a47d8fd142",
+  "scriptSha256": "85720cfff83c81d4aac6cf3f5388fa1e327eff57578a83f69891e193f32b1426",
   "harnessFileSha256": "8454550c8f47a3b01fd15a669e076d04016e8c26792634b49dbc6e9419c90020",
   "componentSha256": "2819e6b2a12b1252c74cb7df96ce944e4f7cbf483d65bbb7bebd221b01ff0c97",
   "playwrightVersion": "1.58.2",
@@ -28,6 +28,8 @@
   "source": [
     {
       "source": "RUN78_SOURCE",
+      "literalWordsCount": 3851,
+      "literalWordsSha256": "d131be73f99d623a5adfc459250ff075695d2b20dc4b2adb878a9b2156d920d1",
       "tokenAllow": {
         "CONNECTOR_A": true,
         "DAY_START_01": false,
@@ -41,6 +43,8 @@
     },
     {
       "source": "CURRENT_SOURCE",
+      "literalWordsCount": 3852,
+      "literalWordsSha256": "9749cb3a8afdfe92795e7816db77300f26fbe03d462bc43d541d86de19da7a29",
       "tokenAllow": {
         "CONNECTOR_A": true,
         "DAY_START_01": false,
@@ -591,6 +595,24 @@
     "NO_RUN78_PASS_RECLASSIFIED",
     "NO_WCAG_V1_CERTIFICATION"
   ],
+  "sourceTreePreflight": {
+    "RUN78_SOURCE": {
+      "head": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
+      "srcTree": "474698ac559906845d53496d984cdf0845323b4b",
+      "trackedWorkingTreeClean": true,
+      "exactSourceFileSet": true,
+      "files": 212,
+      "manifestSha256": "203a6672ff912025c9c1b2e79b6aeab21186a9e510c295d2974e7e3d421f6b94"
+    },
+    "CURRENT_SOURCE": {
+      "head": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      "srcTree": "425b9703e71765a9d0451713350ad8fa8fe222e9",
+      "trackedWorkingTreeClean": true,
+      "exactSourceFileSet": true,
+      "files": 212,
+      "manifestSha256": "a097e5a7ea03af6e42868accac260077653c44b89a3ca41f0d89c3b37ca5a34a"
+    }
+  },
   "binaryVersion": "Google Chrome for Testing 145.0.7632.6",
   "actualArgPolicy": {
     "forbiddenSwitches": 0,

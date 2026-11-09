@@ -4011,6 +4011,8 @@ async function runAuthenticatedAudit() {
           ].includes(error.code)
         )
           record.visualFailure = error.code;
+        if (error.code === "VISUAL_MEASUREMENT" && error.visualDiagnostic)
+          record.visualDiagnostic = error.visualDiagnostic;
         if (record.status === "BLOQUEADO_PII") {
           for (let i = hashes.length - 1; i >= 0; i--)
             if (
@@ -4187,13 +4189,36 @@ export async function decodeBrandImage(image, options) {
   }
 }
 
+export function visualMeasurementDiagnostic(metrics) {
+  const targets = Array.isArray(metrics?.targets) ? metrics.targets.slice(0, 500) : [];
+  return {
+    identity: metrics?.identityPassed === true,
+    geometry: metrics?.geometryPassed === true,
+    table: metrics?.tablePassed === true,
+    dates: metrics?.datesPassed === true,
+    contrast: metrics?.contrastPassed === true,
+    targetCount: targets.length,
+    failedHitCount: targets.filter((target) => target?.hit === false && target.disabled !== true)
+      .length,
+    overflowX: Number.isFinite(metrics?.overflowX)
+      ? Math.max(-30000, Math.min(30000, metrics.overflowX))
+      : null,
+  };
+}
+
 /** Shared causal boundary: no screenshot is emitted after a failed/incomplete step. */
 export async function captureVisualEvidence({ brand, drain, stabilize, measure, privacy, save }) {
   const image = await brand();
   await drain();
   await stabilize();
   const metrics = await measure();
-  if (metrics?.passed !== true) fail("VISUAL_MEASUREMENT");
+  if (metrics?.passed !== true) {
+    const error = Object.assign(new Error("VISUAL_MEASUREMENT"), {
+      code: "VISUAL_MEASUREMENT",
+      visualDiagnostic: visualMeasurementDiagnostic(metrics),
+    });
+    throw error;
+  }
   if ((await privacy()) !== true) fail("PII_VISUAL_CAPTURE");
   const measuredAt = Date.now();
   const shot = await save();
