@@ -7391,7 +7391,8 @@ async function runFixturePreparation() {
       recovery: {
         ledgerSha256: R1_RECEIPTS_SHA256,
         priorWorkflowRun: "42540864527",
-        ...validatedBudget,
+        confirmedBefore: validatedBudget.confirmedBefore,
+        maxNewIntentions: validatedBudget.maxNewIntentions,
         r3ReceiptsSha256: R3_RECOVERY_DOCUMENT.receiptsSha256,
         r3WorkflowRun: R3_RECOVERY_DOCUMENT.workflowRun,
         r4ZeroAuth: r4Recovery,

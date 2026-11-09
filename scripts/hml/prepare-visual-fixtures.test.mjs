@@ -2986,7 +2986,7 @@ test("R3 sourceforms cannot bypass the attested native factory", async () => {
     assert.equal(/chromium\.launch|import\("playwright"\)/.test(body), false);
     checked++;
   }
-  assert.equal(checked, 4);
+  assert.equal(checked, 5);
 });
 
 async function r3AttestedBrowser() {
@@ -3266,7 +3266,7 @@ test("R4 report derives real arm sent and terminal scalars without request ident
   });
   r6AnalysisArm(b);
   let state = sut.preparationIntentSummary(b);
-  assert.equal(state.count, 11);
+  assert.equal(state.count, 12);
   assert.equal(state.newArmedCount, 1);
   assert.equal(state.pending, true);
   assert.equal(state.sent, false);
@@ -9257,6 +9257,7 @@ async function r12NativeOpinionProbe(browser) {
     page,
     observer,
     materialized = false,
+    foreignBody = false,
     queued = 0,
     reads = 0,
     callbacks = 0;
@@ -9310,7 +9311,9 @@ async function r12NativeOpinionProbe(browser) {
         return;
       }
       if (req.method === "GET" && u.pathname === "/rest/v1/pareceres_internos") {
-        assert.equal(u.searchParams.get("id_competencia"), "eq." + c.id);
+        const requested = u.searchParams.get("id_competencia");
+        const oct = JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0].id;
+        assert.ok(["eq." + c.id, "eq." + oct].includes(requested));
         assert.equal(u.searchParams.get("id_contrato"), "eq." + FIXTURE.contract);
         assert.equal(u.searchParams.get("id_organizacao"), "eq." + FIXTURE.organization);
         reads++;
@@ -9318,7 +9321,24 @@ async function r12NativeOpinionProbe(browser) {
           "content-type": "application/json",
           "content-range": materialized ? "0-0/1" : "*/0",
         });
-        res.end(JSON.stringify(materialized ? [row] : []));
+        res.end(
+          JSON.stringify(
+            materialized
+              ? [
+                  {
+                    ...row,
+                    id_competencia: requested.slice(3),
+                    ...(requested === "eq." + oct
+                      ? { id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd" }
+                      : {}),
+                    ...(foreignBody
+                      ? { id_organizacao: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee" }
+                      : {}),
+                  },
+                ]
+              : [],
+          ),
+        );
         return;
       }
       res.writeHead(404);
@@ -9460,6 +9480,87 @@ async function r12NativeOpinionProbe(browser) {
     for (const key of ["texto", "autor", "aprovado_por"])
       assert.equal(Object.hasOwn(clean[0], key), false);
     assert.equal(observer.observationFailure(), null);
+    observer.close();
+    observer = local.createOfficialObserver(page, {
+      identity: R12_TEST_IDENTITY,
+      wait: () => new Promise((resolve) => setTimeout(resolve, 5)),
+    });
+    const oct = JSON.parse(local.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0].id,
+      owner = local.createIntentBroker(r12RecoveryOptions()),
+      floor = observer.generation();
+    await page.evaluate(
+      ([id, org, contract]) => window.__opinions(id, org, contract),
+      [oct, FIXTURE.organization, FIXTURE.contract],
+    );
+    await observer.flush();
+    owner.authorizeRecovery(
+      local.reconcileR1Recovery(r2Reconciliation()),
+      observer.sealRecoveryOpinion(owner, floor),
+    );
+    assert.throws(
+      () =>
+        owner.arm({
+          rpc: "solicitar_parecer_interno",
+          payload: { p_id_competencia: oct },
+          requestId: randomUUID(),
+          verified: { context: true, capability: true, reconciled: true },
+          evidence: {
+            competencies: [
+              {
+                official: true,
+                current: true,
+                organization: FIXTURE.organization,
+                contract: FIXTURE.contract,
+                id: oct,
+                month: "2026-10-01",
+              },
+            ],
+            analysisCurrent: true,
+            analysisComplete: true,
+            opinionGate: true,
+          },
+        }),
+      /RECOVERY_CONFIRMED_OPERATION/,
+    );
+    assert.equal(local.preparationIntentSummary(owner).priorReserved, 1);
+    assert.equal(owner.snapshot().count, 11);
+    await list();
+    r6AnalysisArm(owner);
+    assert.equal(owner.snapshot().count, 12);
+    observer.close();
+    let clock = 0;
+    observer = local.createOfficialObserver(page, {
+      now: () => clock,
+      wait: async () => {
+        clock += 300001;
+      },
+    });
+    await list(); // A completed pre-ACK cache is not a post-ACK readback.
+    observer.markMutation("solicitar_parecer_interno", { p_id_competencia: c.id }, {});
+    assert.equal(await page.evaluate((id) => window.__queue(id), c.id), job);
+    await observer.flush();
+    await assert.rejects(
+      () =>
+        observer.read("pareceres_internos", {
+          id_competencia: c.id,
+          id_contrato: FIXTURE.contract,
+          id_organizacao: FIXTURE.organization,
+        }),
+      /PHASE_TIMEOUT/,
+    );
+    observer.close();
+    observer = local.createOfficialObserver(page, {
+      wait: () => new Promise((resolve) => setTimeout(resolve, 5)),
+    });
+    foreignBody = true;
+    await assert.rejects(() =>
+      page.evaluate(
+        ([id, org, contract]) => window.__opinions(id, org, contract),
+        [c.id, FIXTURE.organization, FIXTURE.contract],
+      ),
+    );
+    await assert.rejects(() => observer.flush(), /OBSERVATION_FAILED/);
+    assert.equal(observer.observationFailure().stage, "RESPONSE_CONTEXT");
   } finally {
     observer?.close();
     await page?.close();
@@ -9504,7 +9605,9 @@ test("R12 an admitted current approval advances the same October identity withou
   const f = r12AuthorizedContexts.get(b),
     payload = { p_id_parecer: f.row.id, p_aprovar: true, p_fundamento: FIXTURE.foundation };
   try {
-    f.observer.markMutation("aprovar_parecer_interno", payload, {});
+    f.observer.markMutation("aprovar_parecer_interno", payload, {
+      opinions: [{ id: f.row.id, competency: f.row.id_competencia }],
+    });
     r4EmitMutation(f.page, "aprovar_parecer_interno", payload, {});
     await f.observer.flush();
     f.emit([{ ...f.row, status: "aprovado", aprovado_em: "2026-11-09T12:00:00.123456+00:00" }]);
