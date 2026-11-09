@@ -3542,27 +3542,74 @@ test("R4 postACK stale DTO waits for expected state and version without another 
   f.observer.close();
 });
 
-test("R6 recovery requires fresh ordinary reads and exact original month identities",async()=>{
- const expected=JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies;
- const run=async(mode)=>{
-   let current,generation=0;const events=[];
-   const io={recoveryLedgerR5:R6_R5_DOCUMENT,generation:()=>generation,
-    goKnown:async()=>{generation++;},
-    page:{getByLabel:(name,opts)=>{assert.equal(name,"Competência");assert.equal(opts.exact,true);return{fill:async value=>{current=value+"-01";}};}},
-    observedAfter:async(name,where,floor)=>{assert.ok(generation>floor);if(mode==="stale")throw Error("OBSERVATION_ORDINAL");events.push(name);},
-    read:async()=>{const c=expected.find(c=>c.month===current);return mode==="missing"?[]:[{id:mode==="wrongId"?id:c.id,competencia_referencia:current}];},
-    link:async path=>{assert.equal(path,"/competencias/"+expected.find(c=>c.month===current).id);generation++;},
-    rpcRead:async()=>({competencia:{id:expected.find(c=>c.month===current).id,id_organizacao:mode==="foreign"?id:FIXTURE.organization,id_contrato:FIXTURE.contract,competencia_referencia:current,situacao:mode==="terminal"?"encerrada":"em_preparacao"}})
-   };
-   return sut.reconcileRecoveryCompetencies(io);
- };
- const result=await run("valid");
- assert.deepEqual(result,expected.map(c=>({month:c.month,id:c.id,observed:true,count:1})));
- for(const mode of ["missing","wrongId","foreign","terminal"])await assert.rejects(run(mode),{message:"RECOVERY_STATE"});
- await assert.rejects(run("stale"),{message:"OBSERVATION_ORDINAL"});
- const proof=r2Reconciliation();
- for(const competencies of [undefined,[],[...proof.competencies].reverse(),proof.competencies.map(c=>({...c,observed:false}))])
- assert.throws(()=>sut.reconcileR1Recovery({...proof,competencies}),{message:"RECOVERY_STATE"});
+test("R6 recovery requires fresh ordinary reads and exact original month identities", async () => {
+  const expected = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies;
+  const run = async (mode) => {
+    let current,
+      generation = 0;
+    const events = [];
+    const io = {
+      recoveryLedgerR5: R6_R5_DOCUMENT,
+      generation: () => generation,
+      goKnown: async () => {
+        generation++;
+      },
+      page: {
+        getByLabel: (name, opts) => {
+          assert.equal(name, "Competência");
+          assert.equal(opts.exact, true);
+          return {
+            fill: async (value) => {
+              current = value + "-01";
+            },
+          };
+        },
+      },
+      observedAfter: async (name, where, floor) => {
+        assert.ok(generation > floor);
+        if (mode === "stale") throw Error("OBSERVATION_ORDINAL");
+        events.push(name);
+      },
+      read: async () => {
+        const c = expected.find((c) => c.month === current);
+        return mode === "missing"
+          ? []
+          : [{ id: mode === "wrongId" ? id : c.id, competencia_referencia: current }];
+      },
+      link: async (path) => {
+        assert.equal(path, "/competencias/" + expected.find((c) => c.month === current).id);
+        generation++;
+      },
+      rpcRead: async () => ({
+        competencia: {
+          id: expected.find((c) => c.month === current).id,
+          id_organizacao: mode === "foreign" ? id : FIXTURE.organization,
+          id_contrato: FIXTURE.contract,
+          competencia_referencia: current,
+          situacao: mode === "terminal" ? "encerrada" : "em_preparacao",
+        },
+      }),
+    };
+    return sut.reconcileRecoveryCompetencies(io);
+  };
+  const result = await run("valid");
+  assert.deepEqual(
+    result,
+    expected.map((c) => ({ month: c.month, id: c.id, observed: true, count: 1 })),
+  );
+  for (const mode of ["missing", "wrongId", "foreign", "terminal"])
+    await assert.rejects(run(mode), { message: "RECOVERY_STATE" });
+  await assert.rejects(run("stale"), { message: "OBSERVATION_ORDINAL" });
+  const proof = r2Reconciliation();
+  for (const competencies of [
+    undefined,
+    [],
+    [...proof.competencies].reverse(),
+    proof.competencies.map((c) => ({ ...c, observed: false })),
+  ])
+    assert.throws(() => sut.reconcileR1Recovery({ ...proof, competencies }), {
+      message: "RECOVERY_STATE",
+    });
 });
 
 test("R4 real mutation association rejects foreign sameRPC payload and wrong UUID before ACK", async () => {
@@ -4145,7 +4192,11 @@ async function r6ApprovedFileHarness(mode = "ok") {
     async () => assert.fail("SSR bypass"),
     error,
     trace,
-    (v,names) => v !== null && typeof v === "object" && Object.keys(v).length === names.length && names.every(k=>Object.hasOwn(v,k)),
+    (v, names) =>
+      v !== null &&
+      typeof v === "object" &&
+      Object.keys(v).length === names.length &&
+      names.every((k) => Object.hasOwn(v, k)),
   );
   const parent = {
     official: true,
@@ -4269,7 +4320,12 @@ async function r6RunMonthCatch(failure, diagnostics) {
     tracedPreparation: (p, f) => diagnostics.step(p, f),
     io: { page: { keyboard: { press: async () => {} } }, fresh: async () => {} },
   };
-  const constants = ["DIAGNOSTIC_SUBPHASES", "PREPARER_NATIVE_CODES", "PREPARER_FAILURE_CODES", "PREPARER_DIAGNOSTIC_STEPS"]
+  const constants = [
+    "DIAGNOSTIC_SUBPHASES",
+    "PREPARER_NATIVE_CODES",
+    "PREPARER_FAILURE_CODES",
+    "PREPARER_DIAGNOSTIC_STEPS",
+  ]
     .map((name) => {
       const node = s.nodes.find(
         (n) => s.ts.isVariableDeclaration(n) && n.name.getText(s.ast) === name,
@@ -4465,10 +4521,16 @@ test("R6 original R5 hashes identity exact pairs and bindings reject mutation wi
   });
   assert.throws(() => sut.validateR5RecoveryDocument(getter), /RECOVERY_R5_LEDGER/);
   assert.throws(() => sut.validateR5RecoveryDocument(proxy), /RECOVERY_R5_LEDGER/);
-  const prototypeProxy=new Proxy(clone(),{getPrototypeOf(){reads++;throw Error("CANARY");}});
-  const revoked=Proxy.revocable(clone(),{});revoked.revoke();
-  assert.throws(()=>sut.validateR5RecoveryDocument(prototypeProxy),/RECOVERY_R5_LEDGER/);
-  assert.throws(()=>sut.validateR5RecoveryDocument(revoked.proxy),/RECOVERY_R5_LEDGER/);
+  const prototypeProxy = new Proxy(clone(), {
+    getPrototypeOf() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  const revoked = Proxy.revocable(clone(), {});
+  revoked.revoke();
+  assert.throws(() => sut.validateR5RecoveryDocument(prototypeProxy), /RECOVERY_R5_LEDGER/);
+  assert.throws(() => sut.validateR5RecoveryDocument(revoked.proxy), /RECOVERY_R5_LEDGER/);
   assert.equal(reads, 0);
 });
 test("R6 semantic replay rejects complete new UUID intents but permits another valid action of the same RPC", () => {
@@ -4823,33 +4885,5 @@ test("R6 current readback identities must match intact R5 bindings before recove
     const x = r6RecoveryState();
     mutate(x);
     assert.throws(() => sut.reconcileR1Recovery(x));
-  }
-});
-
-test("R6 temporary public-source formatter bridge", async () => {
-  const fs = await import("node:fs/promises"),
-    crypto = await import("node:crypto"),
-    prettier = await import("prettier");
-  const paths = [
-    "authenticated-visual-audit.mjs",
-    "authenticated-visual-audit.test.mjs",
-    "prepare-visual-fixtures.mjs",
-    "prepare-visual-fixtures.test.mjs",
-  ];
-  for (const path of paths) {
-    const raw = await fs.readFile(new URL("./" + path, import.meta.url), "utf8");
-    const formatted = await prettier.format(raw, {
-      filepath: path,
-      ...(await prettier.resolveConfig(new URL("../../package.json", import.meta.url).pathname)),
-    });
-    const encoded = Buffer.from(formatted).toString("base64"),
-      chunks = encoded.match(/.{1,1500}/g) || [];
-    const hash = (x) => crypto.createHash("sha256").update(x).digest("hex");
-    console.log(
-      "R6FORMAT " +
-        JSON.stringify({ path, oldSha: hash(raw), newSha: hash(formatted), total: chunks.length }),
-    );
-    for (let i = 0; i < chunks.length; i++)
-      console.log("R6FORMAT " + JSON.stringify({ path, i, data: chunks[i] }));
   }
 });
