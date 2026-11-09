@@ -1447,3 +1447,74 @@ test("R15 rejects an unknown recovery enum without accepting its shared prefix",
   value.diagnostics.primaryFailure = "RECOVERY_R13_PRIVATE_CANARY";
   assert.throws(() => validateRecords(value, empty()));
 });
+
+function r16TechnicalReport() {
+  const r = report();
+  Object.assign(r.intentLedger, {
+    count: 12,
+    priorConfirmed: 10,
+    priorReserved: 2,
+    newArmedCount: 0,
+    maxIntentions: 24,
+    maxNewIntentions: 12,
+  });
+  r.recovery.maxNewIntentions = 12;
+  return r;
+}
+test("R16 producer budget admits two reserved intentions without refund or promotion", () => {
+  const result = validateRecords(r16TechnicalReport(), empty());
+  assert.equal(result.observations.priorReserved, 2);
+  assert.equal(result.observations.newArmedCount, 0);
+  assert.equal(result.observations.newConfirmed, 0);
+});
+test("R16 producer recovery diagnostics admit only the two exact new enums", () => {
+  for (const code of ["RECOVERY_R15_LEDGER", "RECOVERY_R15_OPINION"]) {
+    const r = r16TechnicalReport();
+    r.failure = code;
+    r.diagnostics.primaryFailure = code;
+    assert.doesNotThrow(() => validateRecords(r, empty()));
+  }
+});
+test("R16 original run metadata is accepted only at the new immutable artifact pin", () => {
+  const m = metadataFixture();
+  Object.assign(m.run, {
+    id: 42713640896,
+    head_sha: "10cac45b655d5eece9881fdf83545887c371d548",
+  });
+  Object.assign(m.upstream, {
+    id: 42713471816,
+    head_sha: "10cac45b655d5eece9881fdf83545887c371d548",
+  });
+  Object.assign(m.artifact, {
+    id: 13717457216,
+    name: "trilha-a-fixtures-42713640896-1",
+    size_in_bytes: 25487,
+    digest: "sha256:39eb9b34bd2c3b58df9b28cb666e0911538b24763eeb744f75fd5675a91a7305",
+    workflow_run: {
+      id: 42713640896,
+      repository_id: 1442722734,
+      head_repository_id: 1442722734,
+      head_sha: "10cac45b655d5eece9881fdf83545887c371d548",
+      head_branch: "main",
+    },
+  });
+  for (const [index, id] of [129489390633, 129489393425, 129489866611].entries())
+    Object.assign(m.jobs.jobs[index], {
+      id,
+      run_id: 42713640896,
+      head_sha: "10cac45b655d5eece9881fdf83545887c371d548",
+    });
+  assert.equal(validateMetadata(m), true);
+});
+test("R16 refuses the former twenty-two member data layout before publishing any proof", (t) => {
+  const root = fixture(t);
+  for (const name of ["receipts-r15.json", "recovery-r15.json"])
+    rmSync(join(root, name), { force: true });
+  writeFileSync(
+    join(root, "SHA256SUMS"),
+    FILES.slice(0, 22)
+      .map((name) => sha256(readFileSync(join(root, name))) + "  " + name + "\n")
+      .join(""),
+  );
+  assert.throws(() => buildProof(root, inspection));
+});
