@@ -13,6 +13,14 @@ describe("C13 contratos de DTO", () => {
     expect(pagina.mensagens[0]?.conteudo).toBeNull();
     expect(pagina.mensagens[0]?.incerteza).toBeNull();
   });
+  it("rejeita sessões sem cursor explícito e evita assumir paginação", () => {
+    expect(() => validarPaginaSessoes({ ok: true, sessoes: [], proximo_cursor: undefined })).toThrow();
+    expect(() => validarPaginaHistorico({ ok: true, sessao: { id: "s1", status: "ativa" }, mensagens: [], proximo_cursor: undefined })).toThrow();
+  });
+  it("rejeita histórico com sessão inválida ou mensagem sem ID", () => {
+    expect(() => validarPaginaHistorico({ ok: true, sessao: { id: "s1", status: "revogada" }, mensagens: [], proximo_cursor: null })).toThrow();
+    expect(() => validarPaginaHistorico({ ok: true, sessao: { id: "s1", status: "ativa" }, mensagens: [{ papel: "usuario", conteudo: "x", conteudo_disponivel: true }], proximo_cursor: null })).toThrow();
+  });
   it("rejeita flags não booleanas e cursor sintético", () => {
     expect(() => validarPaginaHistorico({ok:true,sessao:{id:"s1",status:"ativa"},mensagens:[{id:"m1",papel:"usuario",conteudo:"x",conteudo_disponivel:true,incerteza:"false"}],proximo_cursor:null})).toThrow();
     expect(() => validarPaginaHistorico({ok:true,sessao:{id:"s1",status:"ativa"},mensagens:[],proximo_cursor:12})).toThrow();
