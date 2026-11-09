@@ -8,7 +8,7 @@ Originais attempt1/head3d6bea3e938459f348130bf1d04431a072dba081: upstreamZero426
 
 R12 não produziu report, receipts, observação, bindings ou recibo de logout. Não fabricar documento de recuperação/recibos nem declarar logouttrue. Não há artefato para leitor R12; não retargetar o leitor a outro run ou executar download manual. NonceR12 gasto; não rerun/cancel/dispatch.
 
-O deployment HMLdpl_CMfAWLLrqXEM9K1SLETaF4PQQg4S/source348649f6a0af5d468ad2ac401b2fd96afa125cc1 estava READY. A API distingue targetstaging/refSHA/aliasgitSHA desse deployment do perfil antigo F3 production/main/git-main. A comparação exata dos VITE compilados continua pendente no ensaio somente leitura TinyFish16ceb93e-2509-457b-b8af-c6c15e5c3b24; não atribuir o enum a uma chave compilada específica sem resultado. READY e identidade API não substituem validação do bundle compilado.
+O deployment HMLdpl_CMfAWLLrqXEM9K1SLETaF4PQQg4S/source348649f6a0af5d468ad2ac401b2fd96afa125cc1 estava READY. A API distingue targetstaging/refSHA/aliasgitSHA desse deployment do perfil antigo F3 production/main/git-main. O ensaio somente leitura TinyFish16ceb93e-2509-457b-b8af-c6c15e5c3b24 terminou sem obter bytes JS ou inspecionar o objeto VITE compilado; alegações DOM de paths/valores sem raw/prova foram descartadas. Não atribuir o enum a uma chave compilada específica. A origem CLI e API primárias sustentam a correção do perfil; o novo bundle deverá passar o validador fixed11 existente após o deployment canônico. READY e identidade API não substituem validação do bundle compilado.
 
 ## Decisão: manter a política e restaurar o perfil
 
