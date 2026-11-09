@@ -19,6 +19,8 @@ PLANO mantém todos os valores/paths prévios e acrescenta exatamente esses trê
 
 Workflow pull_request(paths3) executa testes Node24 somente, permissions contents:read, semenvironment/secrets/tokenactions. O job de inspeção roda automaticamente apenas push emmain(paths3), depois de CI/revisão/mergeprotegido. Permissions apenas contents:read/actions:read; token efêmeroGitHub somenteparaGETsGHe downloader. Sempull_request_target/workflow_run/dispatch/inputarbitrário/write/OIDC/Master/servicerole. Concurrencyprópria cancel-in-progressfalse, timeoutjob5min. Inspeção read-only de um artefato imutável não é rerunR6 nem novoAuth; correção futura do leitor exige novoHEAD/CI/review, sem repetir negócio.
 
+No job PR de testes, pode-se reutilizar o bootstrap Bun1.4.4 já aprovado (scripts/ci/install-pinned-bun.mjs Gitblob3491e78880b5d239b853aebc2e812f4bd3d6f492, conferir antesexec) e bun install --frozen-lockfile somente para ESLint/Prettier existentes. Não adicionar/atualizar package/lock/dependências. Os testes continuam node --test em Node24; inspector de main permanece Nodebuiltins sem appdeps/Bun. Executar ESLint dos dois mjs novos e Prettier --check dos três paths. Isto esclarece tooling de qualidade, não concede token/actions/secrets ao jobPR.
+
 ## Downloader oficial executado com saída privada capturada
 
 Checkout separado actions/download-artifact commit d3f86a106a0bac45b974a628896c90dbdf5c8093, dist/index.js Gitblob374211f852b2a8155a0211c72e85dacc81bb69f3. Confirmar toolHEAD/diffquiet e hashGitblob exato antesexec. README/src e BUNDLEEXATO4.797.011chars foram conferidos: core.info emite literalmente SHA256 digest of downloaded artifact is <hex>; digestMismatch gera core.warning e SUCCESS. Logo SUCCESS sozinho é insuficiente.
