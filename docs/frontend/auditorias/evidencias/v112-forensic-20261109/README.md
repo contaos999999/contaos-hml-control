@@ -25,7 +25,7 @@ Diagnóstico contrafactual somente em memória: retirar as duas ocorrências do 
 - fixture.html SHA256573782fc3abf5f306cede0d9f3ebb1563a8daa2ab1ed8d1beebac273354f0b04.
 - forensic.mjs SHA2567d8105c5df7cd113a36d4a4e22da30184bb153fe36ef57895da845a47d8fd142.
 - proof.json SHA2569910d67382e61bf803a6fe831375f3874d45f779384abe403dafe450204c055f.
-- Execução forense final no Sandbox:cmd_2344f416f7fe445fae28c9c0e47c registra resumo. Não reutilizar resultados locais antigos como se fossem este experimento.
+- Execução real final no Sandbox:cmd_f329e8c5fd7d4c0f86d649e6ed0a, exit0. O comando cmd_2344f416f7fe445fae28c9c0e47c registra o resumo técnico. Não reutilizar resultados locais antigos como se fossem este experimento.
 
 ## Reprodução isolada
 
