@@ -10192,9 +10192,20 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     throw Object.assign(new Error(code), { code });
   };
   // Only the future policy decision is deferred here. Production audit remains blocked.
+  const { readFile: readSource } = await import("node:fs/promises");
+  const productionSource = await readSource(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const environmentSource = productionSource.slice(
+    productionSource.indexOf("const REQUEST_NATIVE_ENV ="),
+    productionSource.indexOf("export function assertRequestMetadataEnvironment"),
+  );
+  assert.ok(environmentSource.includes("function requestEnvironmentChain(env)"));
   const factory = new Function(
     "deps",
     `const {isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,singleRequestGet}=deps;
+    ${environmentSource}
     let singleRequestContext=null,validatedR4ZeroAuth=null,validatedR7ZeroAuth=null;
     ${sut.loadSingleRequestProof.toString().replaceAll("import.meta.url", "sourceModuleUrl")}
     return {load:loadSingleRequestProof,current:()=>validatedR7ZeroAuth};`,
