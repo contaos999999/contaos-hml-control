@@ -3121,7 +3121,8 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     sequences = new WeakMap();
   let sequence = 0,
     failed = false,
-    closed = false;
+    closed = false,
+    sealing = false;
   let firstFailure = null;
   const recordFailure = (contractKind, stage, statusHTTP = "NONE", requestFailure = "NONE") => {
     failed = true;
@@ -3371,7 +3372,7 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     if (bytes > 8 * 1024 * 1024 || count > 1024) err("OBSERVATION_LIMIT");
   };
   const onRequest = (request) => {
-    if (!closed) {
+    if (!closed && !sealing) {
       sequences.set(request, ++sequence);
       let requestContract = "UNKNOWN";
       try {
@@ -3432,6 +3433,7 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     let request, url, table, rpc;
     try {
       request = response.request();
+      if (sealing && !sequences.has(request)) return;
       url = new URL(response.url());
       if (url.origin !== FIXTURE.api || url.username || url.password || url.hash) return;
       const tm = /^\/rest\/v1\/([a-z_0-9]+)$/.exec(url.pathname),
@@ -3801,8 +3803,8 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     },
     observationFailure: () => firstFailure,
     async seal() {
+      sealing = true;
       page.off("request", onRequest);
-      page.off("response", onResponse);
       let timer;
       try {
         await Promise.race([
@@ -3821,6 +3823,7 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       } finally {
         clearTimeout(timer);
         closed = true;
+        page.off("response", onResponse);
       }
       return firstFailure;
     },

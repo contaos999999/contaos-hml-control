@@ -2963,7 +2963,7 @@ test("R3 sourceforms cannot bypass the attested native factory", async () => {
     assert.equal(/chromium\.launch|import\("playwright"\)/.test(body), false);
     checked++;
   }
-  assert.equal(checked, 2);
+  assert.equal(checked, 3);
 });
 
 async function r3AttestedBrowser() {
@@ -6615,9 +6615,10 @@ test("R9 bounded observer seal drains an admitted body failure and preserves it 
   assert.equal(observer.observationFailure(), null);
   const draining = observer.seal();
   assert.equal(page.listenerCount("request"), 0);
-  assert.equal(page.listenerCount("response"), 0);
+  assert.equal(page.listenerCount("response"), 1);
   rejectBody(Object.create(null));
   await draining;
+  assert.equal(page.listenerCount("response"), 0);
   assert.deepEqual(observer.observationFailure(), {
     contractKind: "RPC:obter_analise_competencia_v116",
     stage: "BODY_READ",
@@ -7075,3 +7076,332 @@ test("R10 seal completes a response for an already admitted request within its d
   assert.equal(f.observer.observationFailure(), null);
   f.observer.close();
 });
+
+async function r10NativeCompetenceProbe(browser) {
+  const fs = await import("node:fs/promises");
+  const { join } = await import("node:path");
+  const { tmpdir } = await import("node:os");
+  const { pathToFileURL } = await import("node:url");
+  const { createServer } = await import("node:http");
+  const dir = await fs.mkdtemp(join(tmpdir(), "contaos-r10-native-"));
+  let server, firstPage, orderedPage, firstObserver, orderedObserver;
+  const pending = [],
+    seen = [];
+  let phase = "cancel",
+    aborted = 0,
+    orderedAborts = 0,
+    writes = 0;
+  const bindings = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies;
+  const rows = bindings.map((c) => ({
+    id: c.id,
+    competencia_referencia: c.month,
+    periodo_inicio: c.month,
+    periodo_fim: null,
+    data_limite: null,
+    situacao: "preparando",
+    percentual_conformidade: 0,
+    versao_pacote_atual: null,
+    atualizado_em: null,
+  }));
+  try {
+    const bundle = await r10BuildCompetenceBundle(dir);
+    const sdk = await fs.readFile(
+      new URL("../../src/lib/contratos/competenciasDados.ts", import.meta.url),
+      "utf8",
+    );
+    const select = sdk.match(/export const COLUNAS_COMPETENCIA\s*=\s*"([^"]+)"/)[1];
+    const html =
+      '<!doctype html><html><body><div id="root"></div><script type="module" src="/entry.js"></script></body></html>';
+    server = createServer((req, res) => {
+      const url = new URL(req.url, "http://127.0.0.1");
+      if (req.method === "GET" && url.pathname === "/entry.js") {
+        res.writeHead(200, { "content-type": "text/javascript" });
+        res.end(bundle);
+        return;
+      }
+      if (
+        req.method === "GET" &&
+        (url.pathname === "/" ||
+          url.pathname.startsWith("/contratos/") ||
+          url.pathname.startsWith("/competencias/"))
+      ) {
+        res.writeHead(200, { "content-type": "text/html" });
+        res.end(html);
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/favicon.ico") {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+      if (req.method === "POST" && url.pathname === "/rest/v1/rpc/obter_visao_geral_competencia") {
+        let raw = "";
+        req.on("data", (chunk) => {
+          raw += chunk;
+        });
+        req.on("end", () => {
+          const args = JSON.parse(raw),
+            c = bindings.find((value) => value.id === args.p_id_competencia);
+          assert.ok(c);
+          assert.deepEqual(Object.keys(args), ["p_id_competencia"]);
+          res.writeHead(200, { "content-type": "application/json" });
+          res.end(
+            JSON.stringify({
+              competencia: {
+                id: c.id,
+                id_organizacao: FIXTURE.organization,
+                id_contrato: FIXTURE.contract,
+                competencia_referencia: c.month,
+                situacao: "preparando",
+              },
+            }),
+          );
+        });
+        return;
+      }
+      if (req.method !== "GET" || url.pathname !== "/rest/v1/competencias") {
+        writes++;
+        res.writeHead(400);
+        res.end();
+        return;
+      }
+      const q = Object.fromEntries(url.searchParams);
+      assert.equal(q.select, select);
+      assert.equal(q.id_contrato, "eq." + FIXTURE.contract);
+      assert.equal(q.order, "competencia_referencia.desc,id.desc");
+      assert.equal(q.offset, "0");
+      assert.equal(q.limit, "25");
+      assert.deepEqual(
+        Object.keys(q).sort(),
+        [
+          "select",
+          "id_contrato",
+          "order",
+          "offset",
+          "limit",
+          ...(q.competencia_referencia ? ["competencia_referencia"] : []),
+        ].sort(),
+      );
+      const month = q.competencia_referencia?.slice(3);
+      if (month) assert.ok(bindings.some((c) => c.month === month));
+      const data = month ? rows.filter((row) => row.competencia_referencia === month) : rows;
+      seen.push({ phase, month: month || null });
+      const body = JSON.stringify(data);
+      res.writeHead(200, {
+        "content-type": "application/json",
+        "content-range": "0-" + Math.max(0, data.length - 1) + "/" + data.length,
+      });
+      if (phase === "cancel" && month) {
+        res.end(body);
+        return;
+      }
+      res.flushHeaders();
+      res.write("[");
+      let released = false;
+      const entry = {
+        phase,
+        month: month || null,
+        taken: false,
+        release() {
+          if (released) return;
+          released = true;
+          if (!res.destroyed) res.end(body.slice(1));
+        },
+      };
+      pending.push(entry);
+      res.once("close", () => {
+        if (!res.writableFinished) {
+          aborted++;
+          if (entry.phase === "ordered") orderedAborts++;
+        }
+      });
+    });
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const origin = "http://127.0.0.1:" + server.address().port;
+    const source = await fs.readFile(
+      new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+      "utf8",
+    );
+    assert.equal(source.split("  api: API_ORIGIN,").length, 2);
+    assert.equal(source.split('from "./authenticated-visual-audit.mjs"').length, 2);
+    const isolated = source
+      .replace("  api: API_ORIGIN,", "  api: " + JSON.stringify(origin) + ",")
+      .replace(
+        'from "./authenticated-visual-audit.mjs"',
+        "from " + JSON.stringify(new URL("./authenticated-visual-audit.mjs", import.meta.url).href),
+      );
+    const modulePath = join(dir, "isolated-preparer.mjs");
+    await fs.writeFile(modulePath, isolated);
+    const local = await import(pathToFileURL(modulePath).href);
+    const next = async (currentPhase, month) => {
+      const start = performance.now();
+      for (;;) {
+        const entry = pending.find(
+          (p) => !p.taken && p.phase === currentPhase && p.month === month,
+        );
+        if (entry) {
+          entry.taken = true;
+          return entry;
+        }
+        if (performance.now() - start > 12000) throw Error("TEST_PENDING_RESPONSE_TIMEOUT");
+        await new Promise((resolve) => setTimeout(resolve, 5));
+      }
+    };
+    const mount = async (page, timeout = 12000, guard = () => {}) => {
+      await page.waitForFunction(() => typeof window.__mount === "function", undefined, {
+        timeout,
+      });
+      guard();
+      await page.evaluate(() => window.__mount());
+      guard();
+    };
+    firstPage = await browser.newPage();
+    firstObserver = local.createOfficialObserver(firstPage);
+    await firstPage.goto(origin + "/", { waitUntil: "domcontentloaded" });
+    const initialResponse = firstPage.waitForResponse(
+      (r) =>
+        new URL(r.url()).pathname === "/rest/v1/competencias" &&
+        !new URL(r.url()).searchParams.has("competencia_referencia"),
+    );
+    await mount(firstPage);
+    const response = await initialResponse;
+    const failed = firstPage.waitForEvent("requestfailed", {
+      predicate: (request) => request === response.request(),
+      timeout: 12000,
+    });
+    await firstPage.getByLabel("Competência", { exact: true }).fill("2026-10");
+    const request = await failed;
+    assert.equal(request.failure()?.errorText, "net::ERR_ABORTED");
+    await assert.rejects(() => firstObserver.flush(), /OBSERVATION_FAILED/);
+    assert.deepEqual(firstObserver.observationFailure(), {
+      contractKind: "TABLE:competencias",
+      stage: "BODY_READ",
+      statusHTTP: 200,
+      requestFailure: "ABORTED",
+    });
+    await firstObserver.seal();
+    firstObserver.close();
+    await firstPage.close();
+    firstPage = null;
+    phase = "ordered";
+    assert.ok(aborted >= 1);
+    const abortsBefore = orderedAborts;
+    orderedPage = await browser.newPage();
+    orderedObserver = local.createOfficialObserver(orderedPage);
+    let fills = 0,
+      links = 0,
+      commands = 0;
+    const io = {
+      recoveryLedgerR5: local.R5_RECOVERY_DOCUMENT,
+      recoveryLedgerR6: local.R6_RECOVERY_DOCUMENT,
+      recoveryLedgerR7: local.R7_RECOVERY_DOCUMENT,
+      recoveryLedgerR8: local.R8_RECOVERY_DOCUMENT,
+      recoveryLedgerR9: local.R9_RECOVERY_DOCUMENT,
+      readBarrier: orderedObserver.readBarrier,
+      assertReadBarrier: orderedObserver.assertReadBarrier,
+      readBarrierRemaining: orderedObserver.readBarrierRemaining,
+      drainReads: orderedObserver.drainReads,
+      generation: orderedObserver.generation,
+      observedAfter: orderedObserver.waitObservedAfter,
+      read: orderedObserver.read,
+      rpcRead: orderedObserver.rpcRead,
+      fresh: () => orderedObserver.flush(),
+      page: {
+        getByLabel: (label, options) => ({
+          fill: async (...args) => {
+            fills++;
+            return orderedPage.getByLabel(label, options).fill(...args);
+          },
+        }),
+      },
+      goKnown: async (path, budget) => {
+        orderedObserver.assertReadBarrier(budget);
+        await orderedObserver.drainReads(budget);
+        orderedObserver.assertReadBarrier(budget);
+        await orderedPage.goto(origin + path, {
+          waitUntil: "domcontentloaded",
+          timeout: orderedObserver.readBarrierRemaining(budget),
+        });
+        orderedObserver.assertReadBarrier(budget);
+        await mount(orderedPage, orderedObserver.readBarrierRemaining(budget), () =>
+          orderedObserver.assertReadBarrier(budget),
+        );
+        orderedObserver.assertReadBarrier(budget);
+      },
+      link: async (path) => {
+        links++;
+        const anchor = orderedPage
+          .locator("a")
+          .filter({ has: orderedPage.locator("span", { hasText: "Abrir competência" }) });
+        assert.ok((await anchor.count()) >= 1);
+        await orderedPage.locator('a[href="' + path + '"]').click();
+        await orderedPage.waitForURL(origin + path);
+        await mount(orderedPage);
+      },
+      command: async () => {
+        commands++;
+        throw Error("TEST_MUTATION_DENIED");
+      },
+    };
+    const flowing = local.reconcileRecoveryCompetencies(io);
+    for (let i = 0; i < bindings.length; i++) {
+      const initial = await next("ordered", null);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.equal(fills, i);
+      assert.equal(links, i);
+      initial.release();
+      const monthly = await next("ordered", bindings[i].month);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      assert.equal(fills, i + 1);
+      assert.equal(links, i);
+      assert.equal(
+        await orderedPage.getByLabel("Competência", { exact: true }).inputValue(),
+        bindings[i].month.slice(0, 7),
+      );
+      monthly.release();
+    }
+    const result = await flowing;
+    assert.deepEqual(
+      result,
+      bindings.map((c) => ({ month: c.month, id: c.id, observed: true, count: 1 })),
+    );
+    await orderedObserver.drainReads();
+    assert.equal(orderedObserver.observationFailure(), null);
+    assert.equal(orderedAborts - abortsBefore, 0);
+    assert.equal(commands, 0);
+    assert.equal(writes, 0);
+    assert.equal(fills, 2);
+    assert.equal(links, 2);
+    assert.deepEqual(
+      seen.filter((s) => s.phase === "ordered").map((s) => s.month),
+      [null, bindings[0].month, null, bindings[1].month],
+    );
+  } finally {
+    for (const entry of pending) entry.release();
+    firstObserver?.close();
+    orderedObserver?.close();
+    await firstPage?.close();
+    await orderedPage?.close();
+    if (server)
+      await new Promise((resolve) => {
+        server.close(resolve);
+        server.closeAllConnections();
+      });
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+}
+test(
+  "R3 Chromium sourceforms competence read barriers and actual recovery consumer",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 90000 },
+  async () => {
+    const browser = await r3AttestedBrowser();
+    try {
+      await r10NativeCompetenceProbe(browser);
+    } finally {
+      await browser.close();
+    }
+  },
+);

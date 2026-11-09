@@ -10337,3 +10337,24 @@ test("R10 native failure diagnostic admits only the eight exact TAP titles", () 
   const value = sut.nativeFailedCases("not ok 1 - " + titles[0][0]);
   assert.equal(JSON.stringify(value).includes("PRIVATE_CANARY"), false);
 });
+
+test("R10 sourceforms supplement proves exactly three named successes without changing native base eight", () => {
+  const names = [
+    "R3 Chromium sourceforms exact controls and actual source consumer",
+    "R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay",
+    "R3 Chromium sourceforms competence read barriers and actual recovery consumer",
+  ];
+  const tap =
+    "TAP version 13\n" +
+    names.map((name, i) => "ok " + (i + 1) + " - " + name).join("\n") +
+    "\n1..3\n# tests 3\n# pass 3\n# fail 0\n# cancelled 0\n# skipped 0\n";
+  assert.equal(sut.preparerSourceFormsSupplement(tap), 3);
+  for (const altered of [
+    tap.replace("1..3", "1..2"),
+    tap.replace("# pass 3", "# pass 2"),
+    tap.replace(names[2], "PRIVATE_CANARY"),
+    tap.replace("ok 3", "not ok 3"),
+    tap + "# skipped 1\n",
+  ])
+    assert.equal(sut.preparerSourceFormsSupplement(altered), null);
+});
