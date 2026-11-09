@@ -6451,3 +6451,19 @@ async function privacyWireChromium(browser, words) {
     }
   }
 }
+
+test("privacy112 rejects non-source row labels and period attributes", () => {
+  for (const [selector, key, value] of [
+    ["tbody tr", "aria-label", "11/2026 01/11/2026 a 30/11/2026"],
+    ["tbody tr", "aria-labelledby", "foreign"],
+    ["tbody tr td", "scope", "CANARIO_PRIVADO"],
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy112Fixture());
+    try {
+      w.document.querySelector(selector).setAttribute(key, value);
+      assert.equal(run("privacy112FieldAnchor", { proof: privacy78Proof }), null);
+    } finally {
+      dom.window.close();
+    }
+  }
+});

@@ -1239,7 +1239,9 @@ export function privacy112FieldAnchor({ proof }) {
     e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
   const plain = (e) =>
     e &&
-    [...e.attributes].every((a) => a.name === "class" || a.name === "scope") &&
+    [...e.attributes].every(
+      (a) => a.name === "class" || (e.tagName === "TH" && a.name === "scope"),
+    ) &&
     [...e.childNodes].every((n) => n.nodeType === Node.TEXT_NODE);
   const selector = 'section[aria-labelledby="v112-lista"]';
   const sections = document.querySelectorAll(selector);
@@ -1286,6 +1288,7 @@ export function privacy112FieldAnchor({ proof }) {
       target = cells[1],
       links = [...row.querySelectorAll("a")];
     if (
+      [...row.attributes].every((a) => a.name === "class") &&
       cells.length === 7 &&
       cells.slice(1).every((c) => c.tagName === "TD") &&
       header.tagName === "TH" &&
