@@ -332,7 +332,7 @@
     "reanchor_after_backend_edge_20261109": {
       "frontend_base": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
       "backend_previous": "9b55a308c04fe914c9ff3f96b92151c7a41dff98",
-      "backend_current": "8dc073d7ad4344231f99169a2180465a3354fe4c",
+      "backend_current": "65767bfe58c5c9818824ab0ada38d9f412c19054",
       "method": "GITHUB_GET_PINNED_REFS",
       "normative_blobs_compared": 25,
       "normative_blobs_equal": 25,
