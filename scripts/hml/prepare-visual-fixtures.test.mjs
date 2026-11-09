@@ -10,6 +10,36 @@ import {
   waitOfficialPhase,
 } from "./prepare-visual-fixtures.mjs";
 const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+test("Run27 diagnóstico identifica timeout sem exportar mensagem ou objeto privado", () => {
+  assert.equal(typeof sut.preparerFailureDiagnostic, "function");
+  const input = {
+    step: "SOURCE_APPROVAL_READBACK",
+    errorName: "TimeoutError",
+    get message() {
+      assert.fail("mensagem privada não pode ser lida");
+    },
+    get payload() {
+      assert.fail("payload privado não pode ser lido");
+    },
+  };
+  assert.deepEqual(sut.preparerFailureDiagnostic(input), {
+    step: "SOURCE_APPROVAL_READBACK",
+    errorKind: "TIMEOUT",
+  });
+});
+test("Run27 diagnóstico desconhecido permanece fechado e não serializa canário", () => {
+  assert.equal(typeof sut.preparerFailureDiagnostic, "function");
+  const result = sut.preparerFailureDiagnostic({
+    step: "CANARY_PRIVATE_ROUTE",
+    errorName: "CANARY_PRIVATE_EXCEPTION",
+  });
+  assert.deepEqual(result, { step: "UNCLASSIFIED", errorKind: "OTHER" });
+  assert.equal(JSON.stringify(result).includes("CANARY"), false);
+  assert.deepEqual(sut.preparerFailureDiagnostic(null), {
+    step: "UNCLASSIFIED",
+    errorKind: "OTHER",
+  });
+});
 const payload = { p_id_contrato: FIXTURE.contract, p_competencia_referencia: "2026-10-01" };
 const request = (body = payload, extra = {}) => ({
   url: FIXTURE.api + "/rest/v1/rpc/criar_competencia",
