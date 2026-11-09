@@ -12691,3 +12691,173 @@ test("R14 spends R13 and admits only the governed next fixture nonce", () => {
   request.request_id = "trilha-a-fixtures-20261109-r14";
   assert.equal(sut.parseSingleRequest(JSON.stringify(request)).request_id, request.request_id);
 });
+
+test("R15 transport never retries generic fetch failure or reads error getters", async () => {
+  let calls = 0;
+  let traps = 0;
+  const token = "R15_METADATA_CANARY";
+  const error = new Proxy({}, {
+    get() {
+      traps++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  const get = sut.singleRequestGet({
+    token,
+    publicOnly: false,
+    diagnostic: true,
+    env: { CONTAOS_ACTIONS_READ_TOKEN: token },
+    fetchImpl: async () => {
+      calls++;
+      throw error;
+    },
+  });
+  await assert.rejects(get("/actions/runs/1/jobs?per_page=100&page=1"), (caught) => {
+    assert.equal(sut.requestApiDiagnostic(caught).category, "TRANSPORT");
+    return true;
+  });
+  assert.equal(calls, 1);
+  assert.equal(traps, 0);
+});
+test("R15 body transport failure stays closed without retry or ReferenceError", async () => {
+  let calls = 0;
+  const get = sut.singleRequestGet({
+    publicOnly: true,
+    env: {},
+    diagnostic: true,
+    fetchImpl: async () => {
+      calls++;
+      return {
+        status: 200,
+        text: async () => {
+          throw Error("PRIVATE_BODY_CANARY");
+        },
+      };
+    },
+  });
+  await assert.rejects(get("/actions/runs/1/jobs?per_page=100&page=1"), (error) => {
+    assert.equal(error.code, "REQUEST_API_UNAVAILABLE");
+    assert.deepEqual(sut.requestApiDiagnostic(error), {
+      schema: "contaos.single-request.api-failure.v1",
+      phase: "REQUEST_API",
+      endpointKind: "RUN_JOBS",
+      statusHTTP: 200,
+      category: "TRANSPORT",
+    });
+    return true;
+  });
+  assert.equal(calls, 1);
+});
+test("R15 body timeout repeats the same GET once and accepts only the second complete body", async () => {
+  let calls = 0;
+  let ticks = 0;
+  const urls = [];
+  const get = sut.singleRequestGet({
+    publicOnly: true,
+    env: {},
+    diagnostic: true,
+    now: () => (ticks++ === 0 ? 0 : 59995),
+    fetchImpl: async (url, options) => {
+      calls++;
+      urls.push(url);
+      return {
+        status: 200,
+        text: calls === 1
+          ? () => new Promise((resolve, reject) => {
+              const hold = setTimeout(() => reject(Error("BODY_CANARY")), 100);
+              options.signal.addEventListener("abort", () => {
+                clearTimeout(hold);
+                reject(Error("BODY_CANARY"));
+              }, { once: true });
+            })
+          : async () => '{"total_count":0,"jobs":[]}',
+      };
+    },
+  });
+  assert.deepEqual(await get("/actions/runs/1/jobs?per_page=100&page=1"), {
+    total_count: 0,
+    jobs: [],
+  });
+  assert.equal(calls, 2);
+  assert.equal(urls[0], urls[1]);
+});
+test("R15 exhausted typed timeouts have no third attempt", async () => {
+  let calls = 0;
+  let ticks = 0;
+  const get = sut.singleRequestGet({
+    publicOnly: true,
+    env: {},
+    diagnostic: true,
+    now: () => (ticks++ === 0 ? 0 : 59995),
+    fetchImpl: async (url, options) => new Promise((resolve, reject) => {
+      calls++;
+      const hold = setTimeout(() => reject(Error("TIMEOUT_CANARY")), 100);
+      options.signal.addEventListener("abort", () => {
+        clearTimeout(hold);
+        reject(Error("TIMEOUT_CANARY"));
+      }, { once: true });
+    }),
+  });
+  await assert.rejects(get("/actions/runs/1/jobs?per_page=100&page=1"), (error) => {
+    assert.equal(sut.requestApiDiagnostic(error).category, "TIMEOUT");
+    return true;
+  });
+  assert.equal(calls, 2);
+});
+test("R15 revalidates the token before a timeout retry", async () => {
+  let calls = 0;
+  let ticks = 0;
+  const token = "R15_METADATA_CANARY";
+  const env = { CONTAOS_ACTIONS_READ_TOKEN: token };
+  const get = sut.singleRequestGet({
+    token,
+    publicOnly: false,
+    env,
+    now: () => (ticks++ === 0 ? 0 : 59995),
+    fetchImpl: async (url, options) => new Promise((resolve, reject) => {
+      calls++;
+      const hold = setTimeout(() => reject(Error("TOKEN_CANARY")), 100);
+      options.signal.addEventListener("abort", () => {
+        clearTimeout(hold);
+        env.CONTAOS_ACTIONS_READ_TOKEN = "CHANGED";
+        reject(Error("TOKEN_CANARY"));
+      }, { once: true });
+    }),
+  });
+  await assert.rejects(get("/actions/runs/1/jobs?per_page=100&page=1"), {
+    code: "REQUEST_API_TOKEN",
+  });
+  assert.equal(calls, 1);
+});
+test("R15 does not accept a response after the shared deadline", async () => {
+  let clock = 0;
+  let calls = 0;
+  const get = sut.singleRequestGet({
+    publicOnly: true,
+    env: {},
+    now: () => clock,
+    fetchImpl: async () => {
+      calls++;
+      clock = 60001;
+      return { status: 200, text: async () => "{}" };
+    },
+  });
+  await assert.rejects(get("/actions/runs/1/jobs?per_page=100&page=1"), {
+    code: "REQUEST_API_TIMEOUT",
+  });
+  assert.equal(calls, 1);
+});
+test("R15 spends R14 and admits only the next governed fixture nonce", () => {
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r14",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify(request)), /REQUEST_SCHEMA/);
+  request.request_id = "trilha-a-fixtures-20261109-r15";
+  assert.equal(sut.parseSingleRequest(JSON.stringify(request)).request_id, request.request_id);
+});
