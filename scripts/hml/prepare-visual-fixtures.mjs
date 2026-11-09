@@ -275,7 +275,7 @@ export async function readCompetenceMonth(io, month, navigate) {
   });
 }
 
-export async function reconcileRecoveryCompetencies(io) {
+export async function reconcileRecoveryCompetencies(io, captureOpinion) {
   validateR5RecoveryDocument(io.recoveryLedgerR5);
   validateR6RecoveryDocument(io.recoveryLedgerR6);
   validateR7RecoveryDocument(io.recoveryLedgerR7);
@@ -283,6 +283,11 @@ export async function reconcileRecoveryCompetencies(io) {
   validateR9RecoveryDocument(io.recoveryLedgerR9);
   validateR10RecoveryDocument(io.recoveryLedgerR10);
   validateR11RecoveryDocument(io.recoveryLedgerR11);
+  if (
+    captureOpinion !== undefined &&
+    (typeof captureOpinion !== "function" || isProxy(captureOpinion))
+  )
+    err("RECOVERY_R11_OPINION");
   const result = [];
   for (const month of months) {
     const rows = await readCompetenceMonth(io, month, (budget) =>
@@ -320,6 +325,12 @@ export async function reconcileRecoveryCompetencies(io) {
         !["cancelada", "encerrada"].includes(c.situacao)
       ))
         err("RECOVERY_STATE");
+    }
+    if (month === R5_BINDINGS.competencies[0].month && captureOpinion) {
+      const opinionProof = await tracedPreparation("RECOVERY_READ", () =>
+        reconcileRecoveryOpinion(io),
+      );
+      captureOpinion(opinionProof);
     }
     result.push({ month, id: rows[0].id, observed: true, count: rows.length });
   }
@@ -5157,12 +5168,13 @@ export async function prepareSourceAndList(io) {
           sourceVersion: version.id,
         };
       }
+      let opinionProof;
       const competencies = await tracedPreparation("RECOVERY_READ", () =>
-        reconcileRecoveryCompetencies(io),
+        reconcileRecoveryCompetencies(io, (captured) => {
+          opinionProof = captured;
+        }),
       );
-      const opinionProof = await tracedPreparation("RECOVERY_READ", () =>
-        reconcileRecoveryOpinion(io),
-      );
+      if (!opinionProof) throw new Error("RECOVERY_R11_OPINION");
       const proof = reconcileR1Recovery({
         competencies,
         ledger: recovery,
