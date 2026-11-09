@@ -5090,7 +5090,7 @@ test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "b".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5300,7 +5300,7 @@ test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "c".repeat(40),
     deployment_id: "dpl_12345678",
@@ -5342,7 +5342,7 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5569,7 +5569,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     sha = "a".repeat(40),
     parent = "b".repeat(40),
     head = "d".repeat(40);
-  const request = { request_id: "trilha-a-fixtures-20261108-r1", approved_parent_sha: parent };
+  const request = { request_id: "trilha-a-fixtures-20261109-r2", approved_parent_sha: parent };
   const pull = {
     id: 300,
     number: 90,
@@ -5719,7 +5719,7 @@ test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -5765,7 +5765,7 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261108-r1",
+    request_id: "trilha-a-fixtures-20261109-r2",
     approved_parent_sha: parent,
     frontend_sha: "",
     deployment_id: "",
@@ -5898,4 +5898,11 @@ test("Run114 diagnóstico limita contadores e ignora getters de campos não auto
   });
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: 40000 }).overflowX, 30000);
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: -40000 }).overflowX, -30000);
+});
+
+test("R2 nonce corrente rejeita R1 e historico reconhece apenas R1 consumido",()=>{
+ const row={schema_version:1,issue:317,operation:"fixtures",request_id:"trilha-a-fixtures-20261108-r1",approved_parent_sha:"a".repeat(40),frontend_sha:"",deployment_id:""};
+ assert.throws(()=>fn("parseSingleRequest")(JSON.stringify(row),"fixtures"));
+ assert.equal(fn("parseSingleRequest")(JSON.stringify(row),"fixtures",{historical:true}).request_id,row.request_id);
+ assert.throws(()=>fn("parseSingleRequest")(JSON.stringify({...row,request_id:"unknown"}),"fixtures",{historical:true}));
 });
