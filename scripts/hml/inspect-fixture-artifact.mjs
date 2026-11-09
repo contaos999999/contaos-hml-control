@@ -1048,6 +1048,32 @@ function toolReady(tool, remaining) {
   check(git(["status", "--porcelain"]) === "", "INSPECTION_TOOL");
   check(git(["hash-object", "dist/index.js"]) === PIN.bundle, "INSPECTION_TOOL");
 }
+export function executeOfficialTool(tool, root, token, remaining, spawn = spawnSync) {
+  const result = spawn(process.execPath, [join(tool, "dist/index.js")], {
+    cwd: tool,
+    encoding: "utf8",
+    env: {
+      "INPUT_ARTIFACT-IDS": String(PIN.artifact),
+      "INPUT_RUN-ID": String(PIN.run),
+      INPUT_REPOSITORY: PIN.repository,
+      "INPUT_GITHUB-TOKEN": token,
+      "INPUT_MERGE-MULTIPLE": "true",
+      INPUT_PATH: root,
+      INPUT_NAME: "",
+      INPUT_PATTERN: "",
+      GITHUB_API_URL: "https://api.github.com",
+      GITHUB_SERVER_URL: "https://github.com",
+    },
+    stdio: "pipe",
+    timeout: remaining(),
+    killSignal: "SIGKILL",
+    maxBuffer: 524288,
+  });
+  remaining();
+  check(!result.error && !result.signal, "INSPECTION_DOWNLOAD");
+  validateDownloadOutput({ status: result.status, stdout: result.stdout, stderr: result.stderr });
+  return true;
+}
 export async function runInspection() {
   const started = performance.now();
   const remaining = () => {
@@ -1083,29 +1109,7 @@ export async function runInspection() {
   await metadata(process.env.GITHUB_TOKEN, remaining);
   mkdirSync(root, { mode: 0o700 });
   check((lstatSync(root).mode & 0o777) === 0o700, "INSPECTION_FILES");
-  const result = spawnSync(process.execPath, [join(tool, "dist/index.js")], {
-    cwd: tool,
-    encoding: "utf8",
-    env: {
-      "INPUT_ARTIFACT-IDS": String(PIN.artifact),
-      "INPUT_RUN-ID": String(PIN.run),
-      INPUT_REPOSITORY: PIN.repository,
-      "INPUT_GITHUB-TOKEN": process.env.GITHUB_TOKEN,
-      "INPUT_MERGE-MULTIPLE": "true",
-      INPUT_PATH: root,
-      INPUT_NAME: "",
-      INPUT_PATTERN: "",
-      GITHUB_API_URL: "https://api.github.com",
-      GITHUB_SERVER_URL: "https://github.com",
-    },
-    stdio: "pipe",
-    timeout: remaining(),
-    killSignal: "SIGKILL",
-    maxBuffer: 524288,
-  });
-  remaining();
-  check(!result.error && !result.signal, "INSPECTION_DOWNLOAD");
-  validateDownloadOutput({ status: result.status, stdout: result.stdout, stderr: result.stderr });
+  executeOfficialTool(tool, root, process.env.GITHUB_TOKEN, remaining);
   const output = buildProof(root, inspection, remaining);
   remaining();
   process.stdout.write(output);
