@@ -2971,7 +2971,7 @@ test("R3 sourceforms cannot bypass the attested native factory", async () => {
     assert.equal(/chromium\.launch|import\("playwright"\)/.test(body), false);
     checked++;
   }
-  assert.equal(checked, 3);
+  assert.equal(checked, 4);
 });
 
 async function r3AttestedBrowser() {
@@ -7749,7 +7749,17 @@ function r11SqlV116(metadataPath) {
     hash_contexto_atual: "a".repeat(64),
     execucao_atual: execution,
     percentual: 100,
-    blocking_summary: {},
+    blocking_summary: {
+      total: 1,
+      conformes_ou_na_validos: 1,
+      pendentes: 0,
+      nao_conformes: 0,
+      inconclusivos: 0,
+      em_analise: 0,
+      nao_conformidades_bloqueantes: 0,
+      percentual: 100,
+      liberado: true,
+    },
     allowed_actions: { executar_analise: false, reanalisar: true, abrir_requisito: true },
     mecanismos: { deterministico: 1, semantico: 0, humano: 0, nao_identificado: 0 },
     resultados: [result],
@@ -8023,4 +8033,368 @@ test("R11 metadata omissions never inspect their values while foreign metadata s
   );
   assert.equal(reads, 0);
   assert.equal(traps, 0);
+});
+
+function r11SqlV117() {
+  const a = r11SqlV116(),
+    id = a.competencia.id;
+  return {
+    schema_versao: "v117-v1",
+    competencia: {
+      id,
+      id_organizacao: FIXTURE.organization,
+      id_contrato: FIXTURE.contract,
+      competencia_referencia: "2026-10-01",
+      situacao: "em_analise",
+    },
+    requisito: {
+      id,
+      codigo: "FIXTURE",
+      descricao: "Fixture",
+      categoria: "outro",
+      origem_tipo: "item_lista",
+      origem_id: id,
+      origem_versao: null,
+      obrigatorio: true,
+      aplicavel: true,
+      impeditivo: false,
+      criticidade: "baixa",
+      fonte_tipo: null,
+      fonte_referencia: null,
+      fonte_detalhe: null,
+      efeito_portao: false,
+      hash_snapshot: null,
+      regra_validacao: {
+        documento: { obrigatorio: true, tipos: ["outro"] },
+        condicao: { tipo: "sempre" },
+      },
+      condicao_aplicabilidade: { tipo: "sempre" },
+    },
+    execucao_atual: {
+      id,
+      tipo: "completa",
+      status: "concluida",
+      hash_entrada: null,
+      motor: "contaos",
+      versao_motor: "2.0",
+      provedor: null,
+      modelo: null,
+      prompt_versao: null,
+      iniciada_em: null,
+      concluida_em: null,
+      criado_em: null,
+    },
+    resultado_atual: null,
+    resultado_referencia: null,
+    na_validade: null,
+    allowed_actions: a.allowed_actions,
+    evidencias: [],
+    evidencias_paginacao: { offset: 0, limite: 25, total: 0 },
+    historico: [],
+    historico_paginacao: { offset: 0, limite: 25, total: 0 },
+    apontamentos: a.apontamentos.map(
+      ({
+        id,
+        descricao,
+        severidade,
+        status,
+        origem,
+        regra_violada,
+        acao_sugerida,
+        fonte,
+        criado_em,
+        atualizado_em,
+      }) => ({
+        id,
+        descricao,
+        severidade,
+        status,
+        origem,
+        regra_violada,
+        acao_sugerida,
+        fonte,
+        criado_em,
+        atualizado_em,
+      }),
+    ),
+    apontamentos_paginacao: a.apontamentos_paginacao,
+  };
+}
+async function r11BuildSDKBundle(directory) {
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { fileURLToPath } = await import("node:url"),
+    { execFile } = await import("node:child_process"),
+    { promisify } = await import("node:util"),
+    ts = (await import("typescript")).default;
+  const repository = fileURLToPath(new URL("../../", import.meta.url));
+  await fs.symlink(join(repository, "node_modules"), join(directory, "node_modules"), "dir");
+  const require = createRequire(import.meta.url),
+    pgRequire = createRequire(require.resolve("@supabase/supabase-js")),
+    pgPath = pgRequire.resolve("@supabase/postgrest-js");
+  for (const [file, output] of [
+    ["competenciaAnaliseDados.ts", "v116.ts"],
+    ["requisitoDetalheDados.ts", "v117.ts"],
+  ]) {
+    let source = await fs.readFile(
+      new URL("../../src/lib/competencias/" + file, import.meta.url),
+      "utf8",
+    );
+    const client = 'import { supabase } from "@/integrations/supabase/client";';
+    assert.equal(source.split(client).length, 2);
+    source = source.replace(
+      client,
+      "import {PostgrestClient} from " +
+        JSON.stringify(pgPath) +
+        "; const supabase=new PostgrestClient(location.origin+'/rest/v1');",
+    );
+    if (output === "v117.ts") {
+      const uuidImport =
+        'import { uuidCanonico, uuidValido } from "@/lib/contratos/contratoDetalheDados";';
+      assert.equal(source.split(uuidImport).length, 2);
+      source = source.replace(uuidImport, 'import {uuidCanonico,uuidValido} from "./uuid";');
+    }
+    await fs.writeFile(join(directory, output), source);
+  }
+  const uuidSource = await fs.readFile(
+      new URL("../../src/lib/contratos/contratoDetalheDados.ts", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile(
+      "uuid.ts",
+      uuidSource,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
+  const uuids = ast.statements.filter(
+    (n) =>
+      ts.isVariableStatement(n) &&
+      n.declarationList.declarations.some((d) =>
+        ["UUID", "uuidValido", "uuidCanonico"].includes(d.name.getText(ast)),
+      ),
+  );
+  assert.equal(uuids.length, 3);
+  await fs.writeFile(join(directory, "uuid.ts"), uuids.map((n) => n.getText(ast)).join("\n"));
+  const entry = join(directory, "entry.ts");
+  await fs.writeFile(
+    entry,
+    [
+      'import * as a from "./v116"; import * as d from "./v117";',
+      'window.__request=async(kind,id,rid)=>{const result=kind==="v116"?await a.obterAnaliseCompetencia(id,a.FILTROS_VAZIOS,a.OFFSETS_ZERO,new AbortController().signal):await d.obterDetalheRequisito(id,rid,d.OFFSETS_DETALHE_ZERO,new AbortController().signal);return {ok:!result.error};};',
+      'window.__parse=(kind,value,id,rid)=>{const p=kind==="v116"?a.parseAnaliseV116(value):d.parseDetalheV117(value,id,rid,d.OFFSETS_DETALHE_ZERO);return {accepted:p!==null,mechanisms:p?.mecanismos??null,action:p?.apontamentos?.[0]?.acao_sugerida??null,condition:p?.requisito?.condicao_aplicabilidade??null};};',
+    ].join("\n"),
+  );
+  await promisify(execFile)(
+    "bun",
+    [
+      "build",
+      entry,
+      "--target=browser",
+      "--format=esm",
+      "--outfile=" + join(directory, "entry.js"),
+    ],
+    { cwd: repository, env: { PATH: process.env.PATH }, timeout: 30000, maxBuffer: 1048576 },
+  );
+  return fs.readFile(join(directory, "entry.js"));
+}
+async function r11NativeSDKProbe(browser) {
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { tmpdir } = await import("node:os"),
+    { pathToFileURL } = await import("node:url"),
+    { createServer } = await import("node:http");
+  const dir = await fs.mkdtemp(join(tmpdir(), "contaos-r11-sdk-"));
+  let server, page, observer;
+  let writes = 0,
+    reads = 0;
+  let kind = "v116",
+    body = r11SqlV116();
+  const id = body.competencia.id;
+  try {
+    const bundle = await r11BuildSDKBundle(dir);
+    server = createServer((req, res) => {
+      const url = new URL(req.url, "http://127.0.0.1");
+      if (req.method === "GET" && url.pathname === "/") {
+        res.writeHead(200, { "content-type": "text/html" });
+        res.end('<!doctype html><script type="module" src="/entry.js"></script>');
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/entry.js") {
+        res.writeHead(200, { "content-type": "text/javascript" });
+        res.end(bundle);
+        return;
+      }
+      if (req.method === "GET" && url.pathname === "/favicon.ico") {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+      if (
+        req.method === "POST" &&
+        url.pathname ===
+          "/rest/v1/rpc/" +
+            (kind === "v116" ? "obter_analise_competencia_v116" : "obter_detalhe_requisito_v117")
+      ) {
+        let raw = "";
+        req.on("data", (chunk) => {
+          raw += chunk;
+          assert.ok(raw.length <= 65536);
+        });
+        req.on("end", () => {
+          const args = JSON.parse(raw);
+          assert.equal(args.p_id_competencia, id);
+          if (kind === "v116") {
+            assert.equal(args.p_resultados_limite, 25);
+            assert.equal(args.p_execucoes_limite, 10);
+            assert.equal(args.p_resultados_offset, 0);
+            assert.equal(args.p_filtro_resultado, null);
+          } else {
+            assert.equal(args.p_id_requisito, id);
+            assert.equal(args.p_evidencias_limite, 25);
+            assert.equal(args.p_evidencias_offset, 0);
+          }
+          reads++;
+          res.writeHead(200, { "content-type": "application/json" });
+          res.end(JSON.stringify(body));
+        });
+        return;
+      }
+      writes++;
+      res.writeHead(404);
+      res.end();
+    });
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const origin = "http://127.0.0.1:" + server.address().port;
+    let source = await fs.readFile(
+      new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+      "utf8",
+    );
+    assert.equal(source.split("api: API_ORIGIN,").length, 2);
+    source = source.replace("api: API_ORIGIN,", "api: " + JSON.stringify(origin) + ",");
+    const dependency = '"./authenticated-visual-audit.mjs"';
+    assert.equal(source.split(dependency).length, 2);
+    source = source.replace(
+      dependency,
+      JSON.stringify(new URL("./authenticated-visual-audit.mjs", import.meta.url).href),
+    );
+    const modulePath = join(dir, "observer.mjs");
+    await fs.writeFile(modulePath, source);
+    const local = await import(pathToFileURL(modulePath).href);
+    page = await browser.newPage();
+    await page.goto(origin);
+    await page.waitForFunction(() => typeof window.__parse === "function");
+    const ast = await r6SourceNodes();
+    const analysisSource = ast.named("analysis").getText(ast.ast);
+    const analyze = (value) =>
+      new Function("io", "tracedPreparation", "stop", analysisSource + ";return analysis;")(
+        { rpcRead: async () => value },
+        async (_stage, run) => run(),
+        (code) => {
+          throw Error(code);
+        },
+      )({ id, month: "2026-10-01" });
+    for (const current of ["v116", "v117"]) {
+      kind = current;
+      body = kind === "v116" ? r11SqlV116() : r11SqlV117();
+      if (kind === "v116") {
+        body.execucao_atual.metadados = {
+          origem: "revisao_humana",
+          revisor: "TECHNICAL_PRIVATE_CANARY",
+        };
+        body.execucoes[0].metadados = { origem: "revisao_humana" };
+        body.resultados[0].metadados = { origem: "revisao_humana" };
+      }
+      observer = local.createOfficialObserver(page, {
+        wait: () => new Promise((resolve) => setTimeout(resolve, 5)),
+      });
+      assert.deepEqual(
+        await page.evaluate(([k, c, r]) => window.__request(k, c, r), [kind, id, id]),
+        { ok: true },
+      );
+      await observer.flush();
+      const rpc =
+        kind === "v116" ? "obter_analise_competencia_v116" : "obter_detalhe_requisito_v117";
+      const clean = await observer.rpcRead(rpc, {
+        p_id_competencia: id,
+        ...(kind === "v117" ? { p_id_requisito: id } : {}),
+      });
+      const parsed = await page.evaluate(
+        ([k, v, c, r]) => window.__parse(k, v, c, r),
+        [kind, clean, id, id],
+      );
+      assert.equal(parsed.accepted, true);
+      assert.equal(parsed.action, "Conferir fixture");
+      assert.equal(JSON.stringify(clean).includes("TECHNICAL_PRIVATE_CANARY"), false);
+      if (kind === "v116") {
+        assert.deepEqual(parsed.mechanisms, {
+          deterministico: 1,
+          semantico: 0,
+          humano: 0,
+          nao_identificado: 0,
+        });
+        assert.equal((await analyze(clean)).competencia.id, id);
+        const wrong = structuredClone(clean);
+        wrong.competencia.id = FIXTURE.historical;
+        await assert.rejects(() => analyze(wrong), /COMPETENCE_ANALYSIS_RELATION/);
+      } else {
+        assert.equal(Object.hasOwn(clean.requisito, "condicao_aplicabilidade"), false);
+        assert.equal(parsed.condition, null);
+        const wrong = structuredClone(clean);
+        wrong.requisito.id = FIXTURE.historical;
+        assert.equal(
+          (await page.evaluate(([v, c, r]) => window.__parse("v117", v, c, r), [wrong, id, id]))
+            .accepted,
+          false,
+        );
+      }
+      assert.equal(observer.observationFailure(), null);
+      observer.close();
+      observer = null;
+    }
+    kind = "v117";
+    body = r11SqlV117();
+    body.execucao_atual.metadados = { canary: "FOREIGN_METADATA" };
+    observer = local.createOfficialObserver(page, {
+      wait: () => new Promise((resolve) => setTimeout(resolve, 5)),
+    });
+    await page.evaluate(([c, r]) => window.__request("v117", c, r), [id, id]);
+    await assert.rejects(() => observer.flush(), /OBSERVATION_FAILED/);
+    assert.equal(observer.observationFailure().stage, "RESPONSE_PROJECTION");
+    assert.equal(reads, 3);
+    assert.equal(writes, 0);
+  } finally {
+    observer?.close();
+    await page?.close();
+    if (server)
+      await new Promise((resolve) => {
+        server.close(resolve);
+        server.closeAllConnections();
+      });
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+}
+test(
+  "R3 Chromium sourceforms scoped V116 V117 projection and actual SDK parsers",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 90000 },
+  async () => {
+    const browser = await r3AttestedBrowser();
+    try {
+      await r11NativeSDKProbe(browser);
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+test("R11 SDK bundle compiles the actual parsers and read adapters offline", async () => {
+  const fs = await import("node:fs/promises"),
+    { tmpdir } = await import("node:os"),
+    { join } = await import("node:path");
+  const dir = await fs.mkdtemp(join(tmpdir(), "contaos-r11-bundle-"));
+  try {
+    assert.ok((await r11BuildSDKBundle(dir)).length > 1000);
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
 });

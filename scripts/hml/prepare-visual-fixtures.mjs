@@ -3028,7 +3028,7 @@ export function projectScopedRpcResponse(rpc, value) {
       }
       return result;
     }
-    if (contract[path] && input !== null) err("OBSERVATION_SCHEMA");
+    if (fieldList && input !== null) err("OBSERVATION_SCHEMA");
     if (path === "mecanismos") err("OBSERVATION_SCHEMA");
     if (typeof input === "string" && input.length > 65536) err("OBSERVATION_LIMIT");
     if (
