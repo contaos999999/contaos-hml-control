@@ -6303,3 +6303,62 @@ test("R9 synchronous observed HTTP failure wins before later classification and 
   assert.deepEqual(immediate, expected);
   assert.deepEqual(after, expected);
 });
+
+test("R9 actual final report refuses success when the observer failed after final freshness", async () => {
+  const { readFile } = await import("node:fs/promises"),
+    { join } = await import("node:path");
+  const source = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8"),
+    ast = await r6SourceNodes();
+  const run = ast.named("runFixturePreparation"),
+    start = source.indexOf("    const cleanupOk =", run.pos);
+  const marker = '    writeFileSync(join(output, "receipts-r3.json")',
+    end = source.indexOf(marker, start);
+  assert.ok(
+    start > run.pos &&
+      end > start &&
+      source.slice(start, end).includes("const observationDiagnostic"),
+  );
+  const failure = {
+    contractKind: "RPC:obter_analise_competencia_v116",
+    stage: "HTTP_STATUS",
+    statusHTTP: 503,
+    requestFailure: "NONE",
+  };
+  for (const earlier of [null, "PREPARER_CONTEXT"]) {
+    const emitted = new Map(),
+      diagnostics = sut.createPreparationDiagnostics();
+    if (earlier) diagnostics.capture(Error(earlier));
+    const env = {
+      output: "/test-only",
+      identity: r9Identity(),
+      observer: { observationFailure: () => failure },
+      completed: true,
+      logoutVerified: true,
+      blockedCode: earlier,
+      diagnostics,
+      sourceList: null,
+      result: null,
+      recoveryState: null,
+      validatedBudget: { confirmedBefore: 10, maxNewIntentions: 14 },
+      r4Recovery: sut.R4_RECOVERY_DOCUMENT,
+      R1_RECEIPTS_SHA256: sut.R1_RECEIPTS_SHA256,
+      R3_RECOVERY_DOCUMENT: sut.R3_RECOVERY_DOCUMENT,
+      fixtureBindingReceipt: sut.fixtureBindingReceipt,
+      createObservationDiagnostic: sut.createObservationDiagnostic,
+      uuid: () => false,
+      obj: (value) => value !== null && typeof value === "object" && !Array.isArray(value),
+      phase: "FINAL_READBACK",
+      join,
+      writeFileSync: (path, bytes) => emitted.set(path, bytes),
+    };
+    await new (Object.getPrototypeOf(async () => {}).constructor)(
+      ...Object.keys(env),
+      source.slice(start, end),
+    )(...Object.values(env));
+    const report = JSON.parse(emitted.get(join(env.output, "report.json")));
+    assert.equal(report.completed, false);
+    assert.equal(report.failure, earlier ?? "OBSERVATION_FAILED");
+    assert.equal(report.diagnostics.primaryFailure, earlier ?? "OBSERVATION_FAILED");
+    assert.equal(report.logoutVerified, true);
+  }
+});
