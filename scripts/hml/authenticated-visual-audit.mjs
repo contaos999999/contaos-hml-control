@@ -9015,7 +9015,13 @@ export function singleRequestGet({
       }
     }
     if (!response)
-      failRequestApi("REQUEST_API_UNAVAILABLE", endpointKind, "NONE", lastTransportCategory, diagnostic);
+      failRequestApi(
+        "REQUEST_API_UNAVAILABLE",
+        endpointKind,
+        "NONE",
+        lastTransportCategory,
+        diagnostic,
+      );
     if (response.status !== 200)
       failRequestApi("REQUEST_API_UNAVAILABLE", endpointKind, response.status, "HTTP", diagnostic);
     let text;
