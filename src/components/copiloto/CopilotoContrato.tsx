@@ -4,6 +4,7 @@ import { acaoCopiloto, type PaginaSessoes, type PaginaHistorico, type SessaoCopi
 import { EVENTO_ORGANIZACAO_ALTERADA } from "@/lib/organizacao/preferenciaOrganizacao";
 
 type Mensagem = {
+  id?: string;
   papel: "usuario" | "assistente";
   conteudo: string;
   fontes?: Resposta["fontes"];
@@ -45,6 +46,7 @@ export function CopilotoContrato({
   const geracao = useRef(0);
   const ocupado = useRef(false);
   const requisicao = useRef<AbortController | null>(null);
+  const ultimaSessao = useRef<string | null>(null);
   const [selecionado, setSelecionado] = useState("");
   const [contratos, setContratos] = useState<
     Array<{ id: string; numero: string }>
@@ -62,6 +64,7 @@ export function CopilotoContrato({
       setSelecionado("");
       setReferencia(null);
       setContratos([]);
+      ultimaSessao.current = null;
       setSessao(null);
       setSessoes([]);
       setCursorSessoes(null);
@@ -168,6 +171,7 @@ export function CopilotoContrato({
     requisicao.current?.abort();
     ocupado.current = false;
     setSelecionado(contratos.some((c) => c.id === id) ? id : "");
+    ultimaSessao.current = null;
     setSessao(null);
     setSessoes([]);
     setCursorSessoes(null);
@@ -213,7 +217,7 @@ export function CopilotoContrato({
   }
 
   async function carregarHistorico(id: string, mais = false) {
-    if (!contratoAtual || !contextoTemporalPronto || ocupado.current || (mais && !cursorHistorico)) return;
+    if (!contratoAtual || !contextoTemporalPronto || ocupado.current || (mais && (!cursorHistorico || ultimaSessao.current !== id))) return;
     const epoca = ++geracao.current;
     requisicao.current?.abort();
     const controlador = new AbortController();
@@ -221,6 +225,7 @@ export function CopilotoContrato({
     setCarregandoHistorico(true);
     setErro("");
     if (!mais) {
+      ultimaSessao.current = id;
       setSessao(id);
       setMensagens([]);
       setCursorHistorico(null);
@@ -231,11 +236,14 @@ export function CopilotoContrato({
       });
       if (epoca !== geracao.current || controlador.signal.aborted) return;
       const convertidas: Mensagem[] = pagina.mensagens.map((m) => ({
+        id: m.id,
         papel: m.papel,
         conteudo: m.conteudo_disponivel && m.conteudo !== null ? m.conteudo : "[Conteúdo indisponível ou revogado]",
         fontes: m.conteudo_disponivel ? (m.fontes ?? []) : [],
       }));
-      setMensagens((anteriores) => mais ? [...convertidas, ...anteriores] : convertidas);
+      setMensagens((anteriores) => mais
+        ? [...convertidas.filter((nova) => !anteriores.some((antiga) => antiga.id === nova.id)), ...anteriores]
+        : convertidas);
       setCursorHistorico(pagina.proximo_cursor);
       setEncerrada(pagina.sessao.status === "encerrada");
       setIncerto(false);
@@ -250,7 +258,9 @@ export function CopilotoContrato({
   }
 
   async function encerrarSessao() {
-    if (!sessao || !contratoAtual || ocupado.current) return;
+    if (!sessao || !contratoAtual || ocupado.current || carregandoHistorico) return;
+    if (!window.confirm("Encerrar esta conversa? Ela ficará somente para leitura.")) return;
+    ocupado.current = true;
     const epoca = geracao.current;
     setCarregandoHistorico(true);
     try {
@@ -261,11 +271,15 @@ export function CopilotoContrato({
     } catch {
       if (epoca === geracao.current) setErro("Encerramento não confirmado. Consulte novamente antes de repetir.");
     } finally {
-      if (epoca === geracao.current) setCarregandoHistorico(false);
+      if (epoca === geracao.current) {
+        ocupado.current = false;
+        setCarregandoHistorico(false);
+      }
     }
   }
 
   function novaConversa() {
+    ultimaSessao.current = null;
     geracao.current++;
     requisicao.current?.abort();
     ocupado.current = false;
@@ -284,6 +298,23 @@ export function CopilotoContrato({
     // Revalidar sessões a cada abertura/contexto; não reusar cache sensível.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aberto, contratoAtual, referencia, contextoTemporalPronto]);
+
+  useEffect(() => {
+    if (!aberto || !contratoAtual || !contextoTemporalPronto) return;
+    const atualizar = () => {
+      if (document.visibilityState === "visible" && !ocupado.current) {
+        void listarSessoes();
+        if (sessao) void carregarHistorico(sessao);
+      }
+    };
+    window.addEventListener("focus", atualizar);
+    document.addEventListener("visibilitychange", atualizar);
+    return () => {
+      window.removeEventListener("focus", atualizar);
+      document.removeEventListener("visibilitychange", atualizar);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberto, contratoAtual, contextoTemporalPronto, sessao]);
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
