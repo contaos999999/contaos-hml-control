@@ -7556,3 +7556,75 @@ test("R10 an older request without headers blocks a newer completed query until 
     f.observer.close();
   }
 });
+
+test("R10 scoped options reject foreign surfaces months keys accessors and tokens before observing", async () => {
+  const cases = [
+    { table: "documentos_contrato" },
+    { mode: { queryScope: "OTHER" } },
+    { where: { competencia_referencia: "2026-11-01" } },
+    { where: { situacao: "preparando" } },
+    { mode: { readBudget: {} } },
+    { mode: { after: -1 } },
+    { mode: { select: "id" } },
+  ];
+  for (const c of cases) {
+    const f = await r10QueryFixture();
+    await assert.rejects(
+      () =>
+        f.observer.read(
+          c.table || "competencias",
+          { ...f.where, ...c.where },
+          { ...f.mode, ...c.mode },
+        ),
+      /OBSERVATION_(PROJECTION|ORDINAL)/,
+    );
+    assert.equal(f.observer.generation(), 0);
+    assert.equal(f.observer.observationFailure(), null);
+    f.observer.close();
+  }
+  const rpc = await r10QueryFixture();
+  await assert.rejects(
+    () => rpc.observer.rpcRead("obter_visao_geral_competencia", {}, rpc.mode),
+    /OBSERVATION_ORDINAL/,
+  );
+  rpc.observer.close();
+  const f = await r10QueryFixture();
+  let reads = 0;
+  const where = {
+    id_contrato: FIXTURE.contract,
+    get competencia_referencia() {
+      reads++;
+      throw Error("CANARY");
+    },
+  };
+  await assert.rejects(
+    () => f.observer.read("competencias", where, f.mode),
+    /OBSERVATION_PROJECTION/,
+  );
+  assert.equal(reads, 0);
+  f.observer.close();
+});
+test("R10 monotonic rollback is fatal and a valid primary failure survives an unexpired budget", async () => {
+  let clock = 100;
+  const f = await r10QueryFixture({ now: () => clock });
+  await assert.rejects(
+    () =>
+      f.observer.readBarrier(async () => {
+        clock = 99;
+      }),
+    /OBSERVATION_FAILED/,
+  );
+  assert.equal(f.observer.observationFailure().stage, "UNAVAILABLE");
+  f.observer.close();
+  const g = await r10QueryFixture();
+  const primary = Error("TEST_PRIMARY");
+  await assert.rejects(
+    () =>
+      g.observer.readBarrier(async () => {
+        throw primary;
+      }),
+    (error) => error === primary,
+  );
+  assert.equal(g.observer.observationFailure(), null);
+  g.observer.close();
+});
