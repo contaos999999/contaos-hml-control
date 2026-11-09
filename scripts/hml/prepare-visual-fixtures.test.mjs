@@ -2195,15 +2195,8 @@ test("R3 bounded logout refuses unknown or duplicated overlay before Sair", asyn
   const page = {
     getByRole: (role) => (role === "dialog" ? unknown : { click: async () => clicked++ }),
   };
-  await page.evaluate(() => {
-    window.cleanupClicks = 0;
-    document
-      .querySelectorAll("button")
-      .forEach((button) => button.addEventListener("click", () => window.cleanupClicks++));
-  });
   await assert.rejects(sut.dismissPreparationOverlays(page), /LOGOUT_OVERLAY/);
   assert.equal(await page.getByRole("dialog", { name: "Unknown", exact: true }).count(), 1);
-  assert.equal(await page.evaluate(() => window.cleanupClicks), 0);
   assert.equal(clicked, 0);
 });
 
@@ -2548,7 +2541,15 @@ test(
         await page.setContent(
           '<div role="dialog" aria-label="Unknown"><button>Cancelar</button><button>Close</button></div><button>Sair</button>',
         );
+        await page.evaluate(() => {
+          window.cleanupClicks = 0;
+          document
+            .querySelectorAll("button")
+            .forEach((button) => button.addEventListener("click", () => window.cleanupClicks++));
+        });
         await assert.rejects(sut.dismissPreparationOverlays(page), /LOGOUT_OVERLAY/);
+        assert.equal(await page.getByRole("dialog", { name: "Unknown", exact: true }).count(), 1);
+        assert.equal(await page.evaluate(() => window.cleanupClicks), 0);
         await page.close();
       }
     } finally {
