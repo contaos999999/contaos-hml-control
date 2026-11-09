@@ -237,7 +237,7 @@ export async function reconcileRecoveryCompetencies(io) {
       const c = value?.competencia;
       if (!(
         c?.id === rows[0].id &&
-        c.id_organizacao === FIXTURE.org &&
+        c.id_organizacao === FIXTURE.organization &&
         c.id_contrato === FIXTURE.contract &&
         c.competencia_referencia === month &&
         !["cancelada", "encerrada"].includes(c.situacao)
@@ -1365,7 +1365,8 @@ export function createIntentBroker({
       if (!uiGeneratedKey && bodyKey && payload[bodyKey] !== requestId) err("INTENT_KEY");
       if (
         beforeArm !== undefined &&
-        (typeof beforeArm !== "function" || beforeArm(rpc, payload, evidence) !== true)
+        (typeof beforeArm !== "function" ||
+          beforeArm(rpc, payload, evidence, { requestId, uiGeneratedKey, bodyKey }) !== true)
       )
         err("OBSERVATION_MUTATION");
       active = {
@@ -2397,13 +2398,49 @@ export function createOfficialObserver(page, { wait, now } = {}) {
           url.origin === FIXTURE.api &&
           request.method() === "POST" &&
           /^\/rest\/v1\/rpc\/([a-z_0-9]+)$/.exec(url.pathname)?.[1];
-        const mutation = mutations.findLast((m) => m.rpc === rpc && !m.request);
+        const candidates = mutations.filter((m) => m.rpc === rpc && !m.request);
+        if (candidates.length > 1) {
+          failed = true;
+          return;
+        }
+        const mutation = candidates[0];
         if (mutation) {
+          if (url.search || url.username || url.password || url.hash) {
+            failed = true;
+            return;
+          }
+          const body = JSON.parse(request.postData());
+          if (!body || typeof body !== "object" || Array.isArray(body)) {
+            failed = true;
+            return;
+          }
+          const expected = structuredClone(mutation.payload),
+            binding = mutation.binding;
+          if (binding?.uiGeneratedKey) {
+            const key = binding.uiGeneratedKey;
+            if (!uuid(body[key])) {
+              failed = true;
+              return;
+            }
+            expected[key] = body[key];
+          } else if (
+            binding?.bodyKey &&
+            (!uuid(binding.requestId) || body[binding.bodyKey] !== binding.requestId)
+          ) {
+            failed = true;
+            return;
+          }
+          if (!same(body, expected)) {
+            failed = true;
+            return;
+          }
           mutation.request = request;
           mutation.requestOrdinal = sequence;
           mutationRequests.set(request, mutation);
         }
-      } catch {}
+      } catch {
+        failed = true;
+      }
     }
   };
   const onResponse = (response) => {
@@ -2598,7 +2635,8 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     if (rpc === "criar_competencia")
       return (
         data.length === 1 &&
-        uuid(data[0].id) &&
+        uuid(ack) &&
+        data[0].id === ack &&
         data[0].competencia_referencia === p.p_competencia_referencia
       );
     if (rpc === "criar_documento_competencia_v115")
@@ -2612,13 +2650,14 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       );
     if (rpc === "solicitar_analise_competencia")
       return (
-        uuid(data?.execucao_atual?.id) &&
+        uuid(ack) &&
+        data?.execucao_atual?.id === ack &&
         ["queued", "processing", "complete"].includes(data.estado_analise)
       );
     if (rpc === "registrar_revisao_requisito_v117")
       return uuid(data?.execucao_atual?.id) && data.execucao_atual.id !== p.p_id_execucao_esperada;
     if (rpc === "solicitar_parecer_interno")
-      return data.length >= 1 && data.every((row) => uuid(row.id));
+      return uuid(ack) && data.length === 1 && data[0].id === ack;
     if (rpc === "aprovar_parecer_interno")
       return (
         data.length === 1 &&
@@ -2632,7 +2671,9 @@ export function createOfficialObserver(page, { wait, now } = {}) {
         data?.blocking_summary?.aprovacao_apresentacao_atual === true
       );
     if (rpc === "registrar_apresentacao")
-      return data.length >= 1 && data.every((row) => uuid(row.id));
+      return target.name === "apresentacoes_contratante"
+        ? uuid(ack) && data.length === 1 && data[0].id === ack
+        : data.length >= 1 && data.every((row) => uuid(row.id));
     return false;
   }
 
@@ -2646,23 +2687,32 @@ export function createOfficialObserver(page, { wait, now } = {}) {
           filtered = { ...options, after };
         if (!(await api.observedAfter(target.name, where, after, filtered))) return false;
         const rpc = rpcName(target.name),
-          data = rpc
-            ? rpcItem(rpc, where, filtered)?.value
-            : tableRows(target.name, where, filtered);
-        return expectedReadback(target, data);
+          item = rpc ? rpcItem(rpc, where, filtered) : null,
+          data = rpc ? item?.value : tableRows(target.name, where, filtered);
+        if (
+          target.versionId &&
+          (!item ||
+            item.value?.versao?.id !== target.versionId ||
+            (item.args.p_id_versao !== null && item.args.p_id_versao !== target.versionId))
+        )
+          return false;
+        return expectedReadback(target, data)
+          ? freeze({ value: structuredClone(data), minimumOrdinal: after })
+          : false;
       },
-      ready: (value) => value === true,
+      ready: (value) => value !== false,
       ...(wait ? { wait } : {}),
       ...(now ? { now } : {}),
     });
   }
   const api = {
-    markMutation(rpc, payload, evidence) {
+    markMutation(rpc, payload, evidence, binding = null) {
       if (closed || failed) err("OBSERVATION_FAILED");
       const ordinal = sequence;
       const mutation = {
         rpc,
-        payload,
+        payload: freeze(structuredClone(payload)),
+        binding: binding === null ? null : freeze(structuredClone(binding)),
         ordinal,
         request: null,
         requestOrdinal: null,
@@ -2714,11 +2764,8 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       const barrier = causalFloor(table, where);
       if (barrier) {
         where = { ...barrier.where, ...where };
-        await waitTarget(barrier, where, options);
-        options = {
-          ...options,
-          after: Math.max(options.after || 0, barrier.mutation.responseOrdinal),
-        };
+        const validated = await waitTarget(barrier, where, options);
+        return structuredClone(validated.value);
       }
       await flush();
       return tableRows(table, where, options).map((row) => structuredClone(row));
@@ -2727,11 +2774,8 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       const barrier = causalFloor(name, where);
       if (barrier) {
         where = { ...barrier.where, ...where };
-        await waitTarget(barrier, where, options);
-        options = {
-          ...options,
-          after: Math.max(options.after || 0, barrier.mutation.responseOrdinal),
-        };
+        const validated = await waitTarget(barrier, where, options);
+        return structuredClone(validated.value);
       }
       await flush();
       const rpc = rpcName(name);
@@ -5004,8 +5048,8 @@ async function runFixturePreparation() {
       competenceGateAmended: true,
       recoveryLedger: R1_RECOVERY_DOCUMENT,
       recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
-      beforeArm: (rpc, payload, evidence) =>
-        observer?.markMutation(rpc, payload, evidence) === true,
+      beforeArm: (rpc, payload, evidence, binding) =>
+        observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
     const debug = createServer();
     await tracedPreparation(
