@@ -2813,5 +2813,27 @@
     "confirmed_business_operations": 3,
     "new_intents_max": 21,
     "auth_authorized_by_document": false
+  },
+  "trilha_a_r6_navigation_recovery": {
+    "status": "GATE_DOCUMENTAL_SEM_AUTH",
+    "plan": "docs/frontend/planos/TRILHA_A_R6_NAVEGACAO_RECUPERACAO_PLAN_2026-11-09.md",
+    "plan_merge": "3e23a7b1077a9364942d81f000ffd4db4b885b8f",
+    "gate": "docs/frontend/planos/TRILHA_A_R6_NAVEGACAO_RECUPERACAO_GATE_2026-11-09.md",
+    "r5_run": 42578223154,
+    "r5_artifact": 13656530451,
+    "r5_report_sha256": "c631d266351fa609600dbcdbe60f1d1a54d8fac76e740c10d80017277a6f55ba",
+    "r5_receipts_sha256": "fd97a387cae0e16af65c6923f453ac83262e58447176c3c558b1c10bc15c5eeb",
+    "confirmed_before": 8,
+    "max_new_intentions": 16,
+    "max_total_intentions": 24,
+    "nonce_future": "trilha-a-fixtures-20261109-r6",
+    "audit_state": "AUDIT_BINDING_PENDING",
+    "auth_authorized": false,
+    "build_paths": [
+      "scripts/hml/prepare-visual-fixtures.mjs",
+      "scripts/hml/prepare-visual-fixtures.test.mjs",
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ]
   }
 }
