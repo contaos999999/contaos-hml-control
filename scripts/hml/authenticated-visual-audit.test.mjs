@@ -12172,11 +12172,11 @@ async function r13PosixExit(command, variables) {
   );
 }
 test("R13 POSIX ignored-build template admits only the approved production SHA", async () => {
-  const approved = "631090724d6b85483737c60a44d322f268fc1c8c",
+  const approved = "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
     command = r13IgnoredBuildCommand(approved);
   assert.equal(
     command,
-    'if [ "$VERCEL_ENV" = "production" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "631090724d6b85483737c60a44d322f268fc1c8c" ]; then echo CONTAOS_HML_PINNED_BUILD_ALLOW_EXIT_1; exit 1; else exit 0; fi',
+    'if [ "$VERCEL_ENV" = "production" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "0024b3c6739ab6296ec12338f11cf792d3a5f84b" ]; then echo CONTAOS_HML_PINNED_BUILD_ALLOW_EXIT_1; exit 1; else exit 0; fi',
   );
   for (const bad of [
     undefined,
@@ -12221,7 +12221,15 @@ test("R13 POSIX ignored-build template admits only the approved production SHA",
     { exit: 1, stdout: "" },
   );
   assert.deepEqual(
-    await r13PosixExit(observedOld, { VERCEL_ENV: "production", VERCEL_GIT_COMMIT_SHA: approved }),
+    await r13PosixExit(observedOld, {
+      VERCEL_ENV: "production",
+      VERCEL_GIT_COMMIT_SHA: "631090724d6b85483737c60a44d322f268fc1c8c",
+    }),
     { exit: 0, stdout: "" },
+  );
+  const { harnessSha } = await sut.harnessIdentity();
+  assert.match(harnessSha, /^[a-f0-9]{40}$/);
+  console.log(
+    JSON.stringify({ phase: "R13_POSIX_PROOF", state: "PASS", harnessSha, approvedSha: approved }),
   );
 });
