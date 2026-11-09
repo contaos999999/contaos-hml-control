@@ -2455,5 +2455,33 @@
       42550770708
     ],
     "remaining": "CI do HEAD documental reancorado; HML/R2/V1 não certificados."
+  },
+  "trilha_a_r3_controles_logout_gate": {
+    "state": "GATE_ONLY_BUILD_AFTER_CI_REVIEW_MERGE",
+    "gate_path": "docs/frontend/planos/TRILHA_A_FIXTURES_R3_CONTROLES_LOGOUT_GATE_2026-11-09.md",
+    "spent_nonces": [
+      "trilha-a-fixtures-20261108-r1",
+      "trilha-a-fixtures-20261109-r2"
+    ],
+    "future_nonce": "trilha-a-fixtures-20261109-r3",
+    "r2_run": 42553093050,
+    "r2_artifact": 13645999071,
+    "r2_new_receipts": 0,
+    "r2_intents": 0,
+    "r2_bindings": null,
+    "r2_logout_verified": false,
+    "r2_primary": "TIMEOUT_SOURCE_FORM_FIELD",
+    "source_ui_blob": "e68fc6352f4bf52f5a6c9c205d327f509c608ca4",
+    "future_paths": [
+      "scripts/hml/prepare-visual-fixtures.mjs",
+      "scripts/hml/prepare-visual-fixtures.test.mjs",
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "global_intents_max": 24,
+    "r1_confirmed_intents": 2,
+    "r3_new_intents_max": 22,
+    "audit_binding_pending": true,
+    "no_auth_or_rerun_by_gate": true
   }
 }
