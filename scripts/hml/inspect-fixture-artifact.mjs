@@ -1,6 +1,6 @@
 /**
- * Read-only R15 artifact inspection. No application imports, browser, Auth or SQL.
- * Contracts snapshot producer 79a7384 and R15 GATE; GATE458 reader policy is preserved.
+ * Read-only R16 artifact inspection. No application imports, browser, Auth or SQL.
+ * Contracts snapshot producer 9d33527 and R16 GATE; GATE458 reader policy is preserved.
  */
 import { createHash } from "node:crypto";
 import {
@@ -22,14 +22,14 @@ import { pathToFileURL } from "node:url";
 export const PIN = Object.freeze({
   repository: "contaos999999/contaos-hml-control",
   repositoryId: 1442722734,
-  run: 42703523206,
+  run: 42713640896,
   workflow: 411426169,
-  head: "dd895a5c30acbb39c821153d86477985ae94b939",
-  upstream: 42703248266,
-  artifact: 13713326447,
-  size: 22442,
-  name: "trilha-a-fixtures-42703523206-1",
-  digest: "49a1075f93ac229929399b940f8a7792bd6aa7d70ead4beb7449006d7ae68262",
+  head: "10cac45b655d5eece9881fdf83545887c371d548",
+  upstream: 42713471816,
+  artifact: 13717457216,
+  size: 25487,
+  name: "trilha-a-fixtures-42713640896-1",
+  digest: "39eb9b34bd2c3b58df9b28cb666e0911538b24763eeb744f75fd5675a91a7305",
   tool: "d3f86a106a0bac45b974a628896c90dbdf5c8093",
   bundle: "374211f852b2a8155a0211c72e85dacc81bb69f3",
   frontend: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
@@ -61,6 +61,8 @@ export const FILES = Object.freeze([
   "recovery-r11.json",
   "receipts-r13.json",
   "recovery-r13.json",
+  "receipts-r15.json",
+  "recovery-r15.json",
 ]);
 export const HISTORY = Object.freeze({
   "receipts-r1.json": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
@@ -82,6 +84,8 @@ export const HISTORY = Object.freeze({
   "recovery-r11.json": "29f674764a2c8f953f764fcb6a40d8c330e441b488dfcab56a6ee4f9f389c423",
   "receipts-r13.json": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
   "recovery-r13.json": "92bf8114d857b2061b0a2ce67cfb908f2dd1c71e1800b567bfecf52c17e12da9",
+  "receipts-r15.json": "3652e7766ef218067642137effb805d448c72f86da3c402a583b5fcf7aa29007",
+  "recovery-r15.json": "de792c8803bbe232871c9eac468ad8baede31a88b1ec5aa238647a15267b645a",
 });
 const HISTORICAL_IDS = new Set([
   "af968191-7d60-4adb-9c60-ebd5f0741e8e",
@@ -95,6 +99,7 @@ const HISTORICAL_IDS = new Set([
   "655ae00f-ed36-4a13-a637-bc8b77375783",
   "6d730eb7-8c38-4474-813d-d39672454444",
   "a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4",
+  "6e6b6afb-2216-42ef-bd89-571301e97e1f",
 ]);
 const SUBPHASES = new Set([
   "PREFLIGHT",
@@ -184,6 +189,8 @@ const FAILURES = new Set([
   "RECOVERY_R10_LEDGER",
   "RECOVERY_R11_LEDGER",
   "RECOVERY_R13_LEDGER",
+  "RECOVERY_R15_LEDGER",
+  "RECOVERY_R15_OPINION",
   "RECOVERY_R11_OPINION",
   "RECOVERY_R8_LEDGER",
   "RECOVERY_R8_DOCUMENT",
@@ -601,12 +608,12 @@ export function validateRecords(reportInput, receiptsInput) {
       ]),
     );
     check(
-      integer(ledger.count, 11, 24) &&
+      integer(ledger.count, 12, 24) &&
         ledger.priorConfirmed === 10 &&
-        ledger.priorReserved === 1 &&
-        ledger.newArmedCount === ledger.count - 11 &&
+        ledger.priorReserved === 2 &&
+        ledger.newArmedCount === ledger.count - 12 &&
         ledger.maxIntentions === 24 &&
-        ledger.maxNewIntentions === 13,
+        ledger.maxNewIntentions === 12,
     );
     check(
       bool(ledger.frozen) &&
@@ -634,7 +641,7 @@ export function validateRecords(reportInput, receiptsInput) {
     q.ledgerSha256 === HISTORY["receipts-r1.json"] &&
       q.priorWorkflowRun === "42540864527" &&
       q.confirmedBefore === 10 &&
-      q.maxNewIntentions === 13 &&
+      q.maxNewIntentions === 12 &&
       q.r3ReceiptsSha256 === HISTORY["receipts-r3.json"] &&
       q.r3WorkflowRun === "42559214436",
   );
@@ -778,7 +785,7 @@ export function validateRecords(reportInput, receiptsInput) {
     keys(e, ["schema", "receipts"]) &&
       e.schema === "contaos.fixture.receipts.v1" &&
       Array.isArray(e.receipts) &&
-      e.receipts.length <= 26,
+      e.receipts.length <= 24,
   );
   const seen = new Map();
   for (const row of e.receipts) {
@@ -807,6 +814,10 @@ export function validateRecords(reportInput, receiptsInput) {
           row.rpc === "solicitar_parecer_interno" &&
           row.payloadSha256 === "b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d"
         ) &&
+        !(
+          row.rpc === "aprovar_parecer_interno" &&
+          row.payloadSha256 === "bc724b1683269170b4b1d8ddd98f405bb1c07d5c1dde5709e63802099365e8b3"
+        ) &&
         row.organization === PIN.organization &&
         row.contract === PIN.contract &&
         hash(row.payloadSha256),
@@ -822,13 +833,13 @@ export function validateRecords(reportInput, receiptsInput) {
     else check(row.state === "sealed");
     seen.set(row.requestId, row);
   }
-  check(seen.size <= 13 && (ledger !== null ? seen.size <= ledger.newArmedCount : seen.size === 0));
+  check(seen.size <= 12 && (ledger !== null ? seen.size <= ledger.newArmedCount : seen.size === 0));
   return {
     report: r,
     receipts: e,
     observations: {
       priorConfirmed: 10,
-      priorReserved: 1,
+      priorReserved: 2,
       newArmedCount: ledger?.newArmedCount ?? "UNKNOWN",
       newConfirmed:
         ledger === null ||
@@ -1047,9 +1058,9 @@ export function validateMetadata(input) {
     "INSPECTION_METADATA",
   );
   const specs = [
-    [129454201287, "Trilha A solicitacao unica sem credenciais", "success"],
-    [129454203909, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-    [129454678528, "Trilha A preparacao sintetica HML", "failure"],
+    [129489390633, "Trilha A solicitacao unica sem credenciais", "success"],
+    [129489393425, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+    [129489866611, "Trilha A preparacao sintetica HML", "failure"],
   ];
   check(
     jobs.total_count === 3 && Array.isArray(jobs.jobs) && jobs.jobs.length === 3,
