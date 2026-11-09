@@ -8398,3 +8398,267 @@ test("R11 SDK bundle compiles the actual parsers and read adapters offline", asy
     await fs.rm(dir, { recursive: true, force: true });
   }
 });
+
+test("R11 mechanism counts retain the SQL empty case and reject every non-contract value", async () => {
+  const empty = r11SqlV116();
+  empty.execucao_atual = null;
+  empty.execucoes = [];
+  empty.resultados = [];
+  empty.mecanismos = {};
+  const clean = sut.projectScopedRpcResponse("obter_analise_competencia_v116", empty);
+  assert.deepEqual(clean.mecanismos, {});
+  assert.equal((await r11ActualV116Parser())(clean).mecanismos, null);
+  for (const value of [
+    {},
+    { deterministico: 1 },
+    { deterministico: 1, semantico: 0, humano: 0, nao_identificado: 0, extra: 0 },
+    null,
+    [],
+    [0],
+    true,
+    "0",
+  ])
+    assert.throws(
+      () =>
+        sut.projectScopedRpcResponse("obter_analise_competencia_v116", {
+          ...r11SqlV116(),
+          mecanismos: value,
+        }),
+      /OBSERVATION_/,
+    );
+  for (const name of ["deterministico", "semantico", "humano", "nao_identificado"])
+    for (const value of ["1", true, null, NaN, Infinity, -1, 0.5]) {
+      const raw = r11SqlV116();
+      raw.mecanismos[name] = value;
+      assert.throws(
+        () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+        /OBSERVATION_/,
+      );
+    }
+  let reads = 0;
+  const raw = r11SqlV116();
+  Object.defineProperty(raw.mecanismos, "humano", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  assert.throws(
+    () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+    /OBSERVATION_/,
+  );
+  assert.equal(reads, 0);
+});
+test("R11 suggested action is local typed bounded and never permits foreign siblings", () => {
+  let reads = 0;
+  for (const [rpc, make] of [
+    ["obter_analise_competencia_v116", r11SqlV116],
+    ["obter_detalhe_requisito_v117", r11SqlV117],
+  ]) {
+    for (const value of [null, "Conferir fixture"]) {
+      const raw = make();
+      raw.apontamentos[0].acao_sugerida = value;
+      assert.equal(sut.projectScopedRpcResponse(rpc, raw).apontamentos[0].acao_sugerida, value);
+    }
+    for (const value of [42, true, [], {}, "x".repeat(65537)]) {
+      const raw = make();
+      raw.apontamentos[0].acao_sugerida = value;
+      assert.throws(() => sut.projectScopedRpcResponse(rpc, raw), /OBSERVATION_/);
+    }
+    for (const key of ["acao_sugerida", "unknown_neighbor", "email"]) {
+      const raw = make();
+      Object.defineProperty(raw.execucao_atual, key, {
+        enumerable: true,
+        get() {
+          reads++;
+          throw Error("CANARY");
+        },
+      });
+      assert.throws(() => sut.projectScopedRpcResponse(rpc, raw), /OBSERVATION_/);
+    }
+    const raw = make();
+    raw.resultados_paginacao = { offset: 0, limite: 25, total: 0, unknown_neighbor: true };
+    assert.throws(() => sut.projectScopedRpcResponse(rpc, raw), /OBSERVATION_/);
+  }
+  assert.equal(reads, 0);
+});
+test("R11 typed pagination action and blocking values reject malformed primitives and getters", () => {
+  let reads = 0;
+  for (const [path, key, bad] of [
+    ["allowed_actions", "executar_analise", "true"],
+    ["resultados_paginacao", "offset", -1],
+    ["execucoes_paginacao", "limite", 25],
+    ["apontamentos_paginacao", "total", 0.5],
+    ["blocking_summary", "liberado", 1],
+    ["blocking_summary", "total", -1],
+    ["blocking_summary", "percentual", NaN],
+    ["blocking_summary", "percentual", 101],
+  ]) {
+    const raw = r11SqlV116();
+    raw[path][key] = bad;
+    assert.throws(
+      () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+      /OBSERVATION_/,
+    );
+  }
+  for (const path of ["allowed_actions", "resultados_paginacao", "blocking_summary"]) {
+    for (const value of [[], null, "x", 1, true]) {
+      const raw = r11SqlV116();
+      raw[path] = value;
+      assert.throws(
+        () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+        /OBSERVATION_/,
+      );
+    }
+    const raw = r11SqlV116();
+    Object.defineProperty(raw[path], "email", {
+      enumerable: true,
+      get() {
+        reads++;
+        throw Error("CANARY");
+      },
+    });
+    assert.throws(
+      () => sut.projectScopedRpcResponse("obter_analise_competencia_v116", raw),
+      /OBSERVATION_/,
+    );
+  }
+  assert.equal(reads, 0);
+});
+test("R11 every recovery entry rejects missing hostile or cross-proof R10 before effects", async () => {
+  let reads = 0,
+    traps = 0,
+    effects = 0;
+  const proxy = new Proxy(
+    {},
+    {
+      get() {
+        traps++;
+        throw Error("CANARY");
+      },
+      ownKeys() {
+        traps++;
+        throw Error("CANARY");
+      },
+      getPrototypeOf() {
+        traps++;
+        throw Error("CANARY");
+      },
+    },
+  );
+  const revoked = Proxy.revocable({}, {});
+  revoked.revoke();
+  const accessor = { ...R11_R10_DOCUMENT };
+  Object.defineProperty(accessor, "reportRaw", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  const symbol = { ...R11_R10_DOCUMENT };
+  symbol[Symbol("CANARY")] = true;
+  const values = [
+    undefined,
+    null,
+    {},
+    sut.R9_RECOVERY_DOCUMENT,
+    { ...R11_R10_DOCUMENT, reportSha256: "0".repeat(64) },
+    { ...R11_R10_DOCUMENT, reportRaw: R11_R10_DOCUMENT.reportRaw + " " },
+    { ...R11_R10_DOCUMENT, workflowRun: "1" },
+    { ...R11_R10_DOCUMENT, extra: true },
+    Object.fromEntries(Object.entries(R11_R10_DOCUMENT).reverse()),
+    accessor,
+    symbol,
+    proxy,
+    revoked.proxy,
+  ];
+  const source = await r6SourceNodes(),
+    entry = source.named("runFixturePreparation");
+  const statements = entry.body.statements,
+    stop = statements.findIndex((n) => n.getText(source.ast).startsWith("const diagnostics"));
+  assert.ok(stop > 0);
+  const prefix = statements
+    .slice(0, stop)
+    .map((n) => n.getText(source.ast))
+    .join("\n");
+  assert.ok(prefix.includes("validateR10RecoveryDocument(R10_RECOVERY_DOCUMENT)"));
+  const env = {
+    err: (code) => {
+      throw Error(code);
+    },
+    getValidatedR4ZeroAuth: () => sut.R4_RECOVERY_DOCUMENT,
+    getValidatedR7ZeroAuth: () => sut.R7_RECOVERY_DOCUMENT,
+  };
+  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+    env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
+    env["R" + n + "_RECOVERY_DOCUMENT"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
+  }
+  const runtime = new Function(
+    ...Object.keys(env),
+    source.named("recoveryBudget").getText(source.ast) + ";" + prefix,
+  );
+  const proof = r2Reconciliation(),
+    binding = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings;
+  for (const value of values) {
+    const io = {
+      page: {},
+      runtime: {},
+      broker: {},
+      recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+      recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+      recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+      recoveryLedgerR5: R6_R5_DOCUMENT,
+      recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+      recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+      recoveryLedgerR8: R9_R8_DOCUMENT,
+      recoveryLedgerR9: R10_R9_DOCUMENT,
+      recoveryLedgerR10: value,
+    };
+    for (const name of [
+      "read",
+      "rpcRead",
+      "fresh",
+      "link",
+      "command",
+      "official",
+      "verifyContext",
+      "generation",
+      "observedAfter",
+    ])
+      io[name] = () => {
+        effects++;
+        throw Error("CANARY_EFFECT");
+      };
+    assert.throws(
+      () =>
+        sut.createIntentBroker({
+          ...io,
+          persist: () => {
+            effects++;
+            return true;
+          },
+          beforeArm: () => {
+            effects++;
+          },
+        }),
+      /RECOVERY_R10_LEDGER/,
+    );
+    assert.throws(
+      () => sut.reconcileR1Recovery({ ...proof, ledgerR10: value }),
+      /RECOVERY_R10_LEDGER/,
+    );
+    await assert.rejects(() => sut.reconcileRecoveryCompetencies(io), /RECOVERY_R10_LEDGER/);
+    await assert.rejects(() => sut.prepareSourceAndList(io), /RECOVERY_R10_LEDGER/);
+    await assert.rejects(() => sut.prepareCompetencies(io, binding), /RECOVERY_R10_LEDGER/);
+    assert.throws(
+      () =>
+        runtime(...Object.keys(env).map((k) => (k === "R10_RECOVERY_DOCUMENT" ? value : env[k]))),
+      /RECOVERY_R10_LEDGER/,
+    );
+  }
+  assert.equal(reads, 0);
+  assert.equal(traps, 0);
+  assert.equal(effects, 0);
+});
