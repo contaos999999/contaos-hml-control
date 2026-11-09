@@ -426,14 +426,30 @@ export function createPreparationDiagnostics() {
       cleaning = true;
       try {
         logoutVerified = (await execute()) === true;
-        cleanupFailure = logoutVerified ? null : "LOGOUT_NOT_VERIFIED";
+        if (!logoutVerified) cleanupFailure ||= "LOGOUT_NOT_VERIFIED";
       } catch {
         logoutVerified = false;
-        cleanupFailure = "LOGOUT_FAILED";
+        cleanupFailure ||= "LOGOUT_FAILED";
       } finally {
         cleaning = false;
       }
       return logoutVerified;
+    },
+    async finishCleanup(code, execute) {
+      if (
+        !["RUNTIME_CLEAR_FAILED", "OBSERVER_CLOSE_FAILED", "FENCE_CLOSE_FAILED", "BROWSER_CLOSE_FAILED", "PROXY_CLOSE_FAILED"].includes(code) ||
+        typeof execute !== "function"
+      )
+        err("DIAGNOSTIC_SUBPHASE");
+      const previous = cleaning;
+      cleaning = true;
+      try {
+        await execute();
+      } catch {
+        cleanupFailure ||= code;
+      } finally {
+        cleaning = previous;
+      }
     },
     snapshot() {
       return freeze({
@@ -4018,6 +4034,7 @@ const PREPARER_FAILURE_CODES = new Set([
   "DIAGNOSTIC_SUBPHASE",
   "DIAGNOSTIC_REENTRANT",
   "PREPARER_TIMEOUT",
+  "PREPARER_CLEANUP",
   "BINDING_CODE",
   "BINDING_HASH",
   "BINDING_ID",
@@ -4536,13 +4553,24 @@ async function runFixturePreparation() {
       } catch {
         logoutVerified = false;
       } finally {
-        runtime.clear();
+        await tracedPreparation("CLEANUP", async () =>
+          diagnostics.finishCleanup("RUNTIME_CLEAR_FAILED", () => runtime.clear()),
+        );
       }
     }
-    observer?.close();
-    fence?.close();
-    await tracedPreparation("PREFLIGHT", async () => browser?.close().catch(() => {}));
-    await tracedPreparation("PREFLIGHT", async () => proxy?.close().catch(() => {}));
+    await tracedPreparation("CLEANUP", async () =>
+      diagnostics.finishCleanup("OBSERVER_CLOSE_FAILED", () => observer?.close()),
+    );
+    await tracedPreparation("CLEANUP", async () =>
+      diagnostics.finishCleanup("FENCE_CLOSE_FAILED", () => fence?.close()),
+    );
+    await tracedPreparation("CLEANUP", async () =>
+      diagnostics.finishCleanup("BROWSER_CLOSE_FAILED", () => browser?.close()),
+    );
+    await tracedPreparation("CLEANUP", async () =>
+      diagnostics.finishCleanup("PROXY_CLOSE_FAILED", () => proxy?.close()),
+    );
+    const cleanupOk = diagnostics.snapshot().cleanupFailure === null;
     const safeIds = [];
     const collect = (value) => {
       if (uuid(value)) safeIds.push(value);
@@ -4559,7 +4587,7 @@ async function runFixturePreparation() {
     collect(bindings);
     const report = {
       schema: "contaos.fixture.preparation.v1",
-      failure: blockedCode,
+      failure: blockedCode || (cleanupOk ? null : "PREPARER_CLEANUP"),
       diagnostics: diagnostics.snapshot(),
       recovery: {
         ledgerSha256: R1_RECEIPTS_SHA256,
@@ -4573,7 +4601,7 @@ async function runFixturePreparation() {
       bindings,
       ...identity,
       phase,
-      completed: completed && logoutVerified,
+      completed: completed && logoutVerified && cleanupOk,
       logoutVerified,
       ids: [...new Set(safeIds)].slice(0, 32),
       v1Certified: false,
@@ -4593,7 +4621,8 @@ async function runFixturePreparation() {
     writeFileSync(join(output, "SHA256SUMS"), sums, { mode: 0o600 });
     activePreparationDiagnostics = null;
   }
-  if (!completed || !logoutVerified) err("PREPARER_INCOMPLETE");
+  if (!completed || !logoutVerified || diagnostics.snapshot().cleanupFailure)
+    err("PREPARER_INCOMPLETE");
 }
 
 export function fixtureBindingReceipt(sourceList, result) {
