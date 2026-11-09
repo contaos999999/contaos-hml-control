@@ -1665,3 +1665,34 @@ test("R2 diagnostico conserva subfase primaria e cleanup separado sem canarios",
  assert.equal(/CANARIO|secret|Bearer|@|stack|https/.test(JSON.stringify(r)),false);
  await assert.rejects(()=>d.step("UNKNOWN_CANARIO",async()=>{}),{message:"DIAGNOSTIC_SUBPHASE"});
 });
+
+test("Run27 diagnóstico identifica timeout sem exportar mensagem ou objeto privado", () => {
+  assert.equal(typeof sut.preparerFailureDiagnostic, "function");
+  const input = {
+    step: "SOURCE_APPROVAL_READBACK",
+    errorName: "TimeoutError",
+    get message() {
+      assert.fail("mensagem privada não pode ser lida");
+    },
+    get payload() {
+      assert.fail("payload privado não pode ser lido");
+    },
+  };
+  assert.deepEqual(sut.preparerFailureDiagnostic(input), {
+    step: "SOURCE_APPROVAL_READBACK",
+    errorKind: "TIMEOUT",
+  });
+});
+test("Run27 diagnóstico desconhecido permanece fechado e não serializa canário", () => {
+  assert.equal(typeof sut.preparerFailureDiagnostic, "function");
+  const result = sut.preparerFailureDiagnostic({
+    step: "CANARY_PRIVATE_ROUTE",
+    errorName: "CANARY_PRIVATE_EXCEPTION",
+  });
+  assert.deepEqual(result, { step: "UNCLASSIFIED", errorKind: "OTHER" });
+  assert.equal(JSON.stringify(result).includes("CANARY"), false);
+  assert.deepEqual(sut.preparerFailureDiagnostic(null), {
+    step: "UNCLASSIFIED",
+    errorKind: "OTHER",
+  });
+});
