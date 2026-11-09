@@ -1,0 +1,89 @@
+{
+  "schema": "contaos.trilha-c.certificacao-parcial.v1",
+  "date": "2026-11-09",
+  "status": "NO_GO_AUTH_REQUIRED",
+  "frontend_commit": "348649f6a0af5d468ad2ac401b2fd96afa125cc1",
+  "tested_head": "9018a01d4a0cde4924498e944a8bf9bf7c7ac8db",
+  "ci_synthetic_merge": "764ea7a0d42bbe6379391a75c9b97b3b014656d7",
+  "source_tree": "aac14d6558ff412c4740c752c52d8490252ef7ff",
+  "same_tree_verified": true,
+  "deployment": {
+    "id": "dpl_CMfAWLLrqXEM9K1SLETaF4PQQg4S",
+    "url": "https://contaos-41-j86ef7qku-contaos9999.vercel.app",
+    "alias": "https://contaos-41-hml.vercel.app",
+    "target": "staging",
+    "state": "READY",
+    "controlled_build_count": 1,
+    "production_changed": false
+  },
+  "artifact": {
+    "id": 13695375147,
+    "run": 42659986233,
+    "bytes": 38558278,
+    "zip_sha256": "260fefbb9d224fcb2b3d49050642359b326feddd424d7b5f92f0b39f945f89af",
+    "files_verified": 356,
+    "mismatches": 0,
+    "png": 354,
+    "members": 357,
+    "scope": "PUBLIC_CI_NO_AUTH",
+    "public_cases_pass": 24,
+    "protected_cases_no_session": 208,
+    "manifest_sha256": "bf6b006ef3aa2dc23662d591322a93d34a41685cd58dcbf20da1a8ea8bb253e3"
+  },
+  "canonical_inventory": {
+    "surfaces": 29,
+    "distinct_paths": 28,
+    "combinations": 232,
+    "widths": [
+      1440,
+      1280,
+      768,
+      390
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "authenticated_pass_current_hml": 0,
+    "fixture_binding_pending": [
+      "V117",
+      "V119",
+      "V120"
+    ],
+    "legacy_label_27_not_used_as_coverage": true
+  },
+  "auth_readiness": {
+    "run": "d8293c66-9354-4484-95b9-32f46ea7d9f2",
+    "result": "AUTH_REQUIRED",
+    "attempted_on_previous_hml_origin": true,
+    "credentials_entered": false,
+    "local_credentials_present": false,
+    "cloud_browser_authenticated": false,
+    "profile_login_handoff_offered": true
+  },
+  "existing_a_harness": {
+    "audit_block": "AUDIT_BINDING_PENDING",
+    "fixture_request_run": 42661550770,
+    "fixture_request_job": 129314135815,
+    "fixture_request_failure": "REQUEST_PARENT",
+    "auth_material_job": "SKIPPED"
+  },
+  "api_proof_preserved": {
+    "run": 42596392357,
+    "artifact": 13663262831,
+    "sha256": "5e2177afc72b78e0a8e6109bb8795633886c8052c37a756832f616a8c5066795",
+    "result": "API_PASS_UI_PENDING",
+    "repeated": false
+  },
+  "c13_ui_pending": [
+    "encerramento autenticado com confirmação nativa e readback",
+    "paginação real com cursor e posição de leitura",
+    "revalidação de fontes revogadas após foco/reabertura",
+    "auditoria autenticada individual e revisão independente"
+  ],
+  "next_action": "Restaurar sessão no alias HML, executar somente casos autenticados pendentes, anexar PNG originais e SHA256; não publicar novo deploy por harness/documentação.",
+  "evidence_files": {
+    "MATRIZ_CANONICA_232.csv": "6ba1c9001ad5d3a207598b4d125fc715749af1351fa798c8c340ae01dfd7c634",
+    "PUBLIC_CI_SHA256SUMS": "bf6b006ef3aa2dc23662d591322a93d34a41685cd58dcbf20da1a8ea8bb253e3"
+  }
+}
