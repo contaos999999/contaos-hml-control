@@ -2195,7 +2195,15 @@ test("R3 bounded logout refuses unknown or duplicated overlay before Sair", asyn
   const page = {
     getByRole: (role) => (role === "dialog" ? unknown : { click: async () => clicked++ }),
   };
+  await page.evaluate(() => {
+    window.cleanupClicks = 0;
+    document
+      .querySelectorAll("button")
+      .forEach((button) => button.addEventListener("click", () => window.cleanupClicks++));
+  });
   await assert.rejects(sut.dismissPreparationOverlays(page), /LOGOUT_OVERLAY/);
+  assert.equal(await page.getByRole("dialog", { name: "Unknown", exact: true }).count(), 1);
+  assert.equal(await page.evaluate(() => window.cleanupClicks), 0);
   assert.equal(clicked, 0);
 });
 
@@ -2398,6 +2406,37 @@ test(
       let controls = 0;
       for (const entry of r3SourceListMarkup()) {
         await page.setContent(entry.html);
+
+        // The corresponding statements are extracted from the production driver,
+        // so reverting a selector in its actual consumer makes this proof fail.
+        for (const label of entry.labels.filter((x) =>
+          ["Criticidade", "Situação", "Regra de validação e condição (JSON)"].includes(x),
+        )) {
+          assert.equal(await page.getByLabel(label, { exact: true }).count(), 0);
+          let expression = null;
+          function visitControl(n) {
+            if (
+              ts.isExpressionStatement(n) &&
+              /f\s*\.\s*getByRole/.test(n.getText(ast)) &&
+              n.getText(ast).includes(JSON.stringify(label))
+            )
+              expression = n.getText(ast);
+            ts.forEachChild(n, visitControl);
+          }
+          visitControl(ast);
+          assert.ok(expression, label);
+          await new (Object.getPrototypeOf(async () => {}).constructor)(
+            "f",
+            "tracedPreparation",
+            "itemExpected",
+            expression,
+          )(
+            page,
+            async (_, fn) => fn(),
+            () => ({ regra_validacao: {} }),
+          );
+        }
+
         for (const label of entry.labels) {
           assert.equal(
             await (
@@ -2444,36 +2483,74 @@ test(
   "R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay",
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1" },
   async () => {
-    const browserCode = r3BrowserBundle(
-      'import React from "react";import{createRoot}from"react-dom/client";import * as D from "@radix-ui/react-dialog";\nfunction App(){const[a,A]=React.useState(true),[b,B]=React.useState(true);const e=React.createElement;return e(React.Fragment,null,e("button",{onClick:()=>location.href="/login"},"Sair"),e(D.Root,{open:a,onOpenChange:A},e(D.Portal,null,e(D.Overlay),e(D.Content,null,e(D.Title,null,"FONTE SINTETICA TRILHA A 20261108"),e(D.Description,null,"Offline"),e(D.Close,null,"Close"),e(D.Root,{open:b,onOpenChange:B},e(D.Portal,null,e(D.Overlay),e(D.Content,null,e(D.Title,null,"Editar fonte"),e(D.Description,null,"Offline"),e(D.Close,null,"Cancelar"))))))));}createRoot(document.getElementById("root")).render(React.createElement(App));',
-    );
+    const sourceBundle =
+      'import React from "react";import{createRoot}from"react-dom/client";import * as D from "@radix-ui/react-dialog";\nfunction App(){const[a,A]=React.useState(true),[b,B]=React.useState(true);const e=React.createElement;return e(React.Fragment,null,e("button",{onClick:()=>location.href="/login"},"Sair"),e(D.Root,{open:a,onOpenChange:A},e(D.Portal,null,e(D.Overlay),e(D.Content,null,e(D.Title,null,"FONTE SINTETICA TRILHA A 20261108"),e(D.Description,null,"Offline"),e(D.Close,null,"Close"),e(D.Root,{open:b,onOpenChange:B},e(D.Portal,null,e(D.Overlay),e(D.Content,null,e(D.Title,null,"Editar fonte"),e(D.Description,null,"Offline"),e(D.Close,null,"Cancelar"))))))));}createRoot(document.getElementById("root")).render(React.createElement(App));';
     const browser = await r3AttestedBrowser();
     try {
-      const page = await browser.newPage();
-      let auth = 0;
-      await page.route("**/*", (route) => {
-        if (route.request().url().includes("/auth/")) auth++;
-        return route.fulfill({ contentType: "text/html", body: '<div id="root"></div>' });
-      });
-      await page.goto(FIXTURE.origin + "/");
-      await page.addScriptTag({ content: browserCode });
-      await page.getByRole("dialog", { name: "Editar fonte", exact: true }).waitFor();
-      assert.equal(await page.getByRole("button", { name: "Sair", exact: true }).count(), 0);
-      const runtime = sut.createRuntimeLogin({
-        page,
-        fence: { drain: async () => {}, assertSafe() {} },
-        waitOrganization: async () => {},
-        openOrganizationSelector: async () => {},
-        verifyContext: async () => true,
-      });
-      assert.equal(await runtime.logout(), true);
-      assert.equal(new URL(page.url()).pathname, "/login");
-      assert.equal(auth, 0);
-      runtime.clear();
-      await page.setContent(
-        '<div role="dialog" aria-label="Unknown"><button>Cancelar</button></div>',
-      );
-      await assert.rejects(sut.dismissPreparationOverlays(page), /LOGOUT_OVERLAY/);
+      for (const title of [
+        "Editar fonte",
+        "Confirmar aprovação",
+        "Confirmar aprovação institucional",
+        "Confirmar envio ao contratante",
+        "Detalhe do requisito",
+      ]) {
+        const browserCode = r3BrowserBundle(
+          sourceBundle
+            .replaceAll('"Editar fonte"', JSON.stringify(title))
+            .replaceAll(
+              '"Cancelar"',
+              JSON.stringify(title === "Detalhe do requisito" ? "Fechar" : "Cancelar"),
+            ),
+        );
+        const page = await browser.newPage();
+        let auth = 0;
+        await page.route("**/*", (route) => {
+          if (route.request().url().includes("/auth/")) auth++;
+          return route.fulfill({ contentType: "text/html", body: '<div id="root"></div>' });
+        });
+        await page.goto(FIXTURE.origin + "/");
+        await page.addScriptTag({ content: browserCode });
+        await page.getByRole("dialog", { name: title, exact: true }).waitFor();
+        assert.equal(await page.getByRole("button", { name: "Sair", exact: true }).count(), 0);
+        const runtime = sut.createRuntimeLogin({
+          page,
+          fence: { drain: async () => {}, assertSafe() {} },
+          waitOrganization: async () => {},
+          openOrganizationSelector: async () => {},
+          verifyContext: async () => true,
+        });
+        assert.equal(await runtime.logout(), true);
+        assert.equal(new URL(page.url()).pathname, "/login");
+        assert.equal(auth, 0);
+        runtime.clear();
+        const busySource = sourceBundle
+          .replace('e(D.Close,null,"Cancelar")', 'e(D.Close,{disabled:true},"Cancelar")')
+          .replaceAll('"Editar fonte"', JSON.stringify(title))
+          .replaceAll(
+            '"Cancelar"',
+            JSON.stringify(title === "Detalhe do requisito" ? "Fechar" : "Cancelar"),
+          );
+        assert.ok(busySource.includes("disabled:true"));
+        await page.goto(FIXTURE.origin + "/");
+        await page.addScriptTag({ content: r3BrowserBundle(busySource) });
+        await page.getByRole("dialog", { name: title, exact: true }).waitFor();
+        const busyRuntime = sut.createRuntimeLogin({
+          page,
+          fence: { drain: async () => {}, assertSafe() {} },
+          waitOrganization: async () => {},
+          openOrganizationSelector: async () => {},
+          verifyContext: async () => true,
+        });
+        await assert.rejects(busyRuntime.logout(), /LOGOUT_FAILED/);
+        assert.equal(new URL(page.url()).pathname, "/");
+        assert.equal(auth, 0);
+        busyRuntime.clear();
+        await page.setContent(
+          '<div role="dialog" aria-label="Unknown"><button>Cancelar</button><button>Close</button></div><button>Sair</button>',
+        );
+        await assert.rejects(sut.dismissPreparationOverlays(page), /LOGOUT_OVERLAY/);
+        await page.close();
+      }
     } finally {
       await browser.close();
     }

@@ -289,13 +289,10 @@ export async function dismissPreparationOverlays(page) {
     "Editar fonte",
     "Nova versão",
     "FONTE SINTETICA TRILHA A 20261108",
-    "Nova competência",
-    "Registrar parecer",
-    "Preparar apresentação",
-    "Apresentar pacote",
-    "Revisar operação",
-    "Confirmar operação",
-    "Alterar situação",
+    "Confirmar aprovação",
+    "Confirmar aprovação institucional",
+    "Confirmar envio ao contratante",
+    "Detalhe do requisito",
   ]);
   for (let depth = 0; depth < 8; depth++) {
     const dialogs = page.getByRole("dialog");
@@ -318,11 +315,14 @@ export async function dismissPreparationOverlays(page) {
     });
     if (!known.has(title) && !/^Aprovar versão [1-9][0-9]*$/.test(title)) err("LOGOUT_OVERLAY");
     const close = overlay.getByRole("button", { name: "Close", exact: true });
-    const cancel = overlay.getByRole("button", { name: "Cancelar", exact: true });
+    const cancel = overlay.getByRole("button", {
+      name: title === "Detalhe do requisito" ? "Fechar" : "Cancelar",
+      exact: true,
+    });
     if ((await cancel.count()) === 1) {
       if (!(await cancel.isEnabled())) err("LOGOUT_OVERLAY");
       await cancel.click();
-    } else if ((await close.count()) === 1) {
+    } else if (title !== "Detalhe do requisito" && (await close.count()) === 1) {
       if (!(await close.isEnabled())) err("LOGOUT_OVERLAY");
       await close.click();
     } else err("LOGOUT_OVERLAY");
