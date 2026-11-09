@@ -1,0 +1,137 @@
+{
+  "schema": "contaos.v123.metadata.sql1.v1",
+  "gate_pr": 401,
+  "gate_head": "52cea00df61bf795f888d00e048b3a2cf313c850",
+  "gate_merge": "2486d8c57847804ef198babd4c9acb07f75f0462",
+  "wrapper_comment": 6729712422,
+  "independent_review_comment": 6729733282,
+  "execution_count": 1,
+  "schema_verification": "SCHEMA_VALIDATED_9_OF_9",
+  "state": "METADATA_VALIDATED",
+  "project": "gklhhhyosgasnyoxlrui",
+  "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+  "page": {
+    "offset": 0,
+    "limit": 25,
+    "order": "criado_em.desc,id.desc",
+    "filters": "EMPTY"
+  },
+  "total": 10,
+  "rows": [
+    {
+      "id": "b787a52b-844f-4b38-804c-cc80236f30f9",
+      "criado_em": "2026-11-09T00:40:31.843518+00:00",
+      "event_length": 18,
+      "entity_length": 25,
+      "origin_length": 7,
+      "actor_null": false,
+      "entity_id_null": false,
+      "correlation_null": false
+    },
+    {
+      "id": "29e6c03a-281b-4e86-9cef-f1ff89911385",
+      "criado_em": "2026-11-09T00:40:30.63594+00:00",
+      "event_length": 20,
+      "entity_length": 25,
+      "origin_length": 7,
+      "actor_null": false,
+      "entity_id_null": false,
+      "correlation_null": false
+    },
+    {
+      "id": "e4ee5b43-cb40-44b6-b883-5f73e79c3ada",
+      "criado_em": "2026-11-08T11:01:27.195787+00:00",
+      "event_length": 14,
+      "entity_length": 17,
+      "origin_length": 7,
+      "actor_null": false,
+      "entity_id_null": false,
+      "correlation_null": false
+    },
+    {
+      "id": "dcd60ec0-e36c-4c7d-aa4a-b82c311e06d2",
+      "criado_em": "2026-11-08T05:41:35.77542+00:00",
+      "event_length": 35,
+      "entity_length": 19,
+      "origin_length": 7,
+      "actor_null": false,
+      "entity_id_null": false,
+      "correlation_null": false
+    },
+    {
+      "id": "8e37f6ee-589c-4cad-ae90-e953680c4b96",
+      "criado_em": "2026-11-08T05:41:35.77542+00:00",
+      "event_length": 23,
+      "entity_length": 19,
+      "origin_length": 7,
+      "actor_null": false,
+      "entity_id_null": false,
+      "correlation_null": false
+    },
+    {
+      "id": "109133b6-d311-43db-81ae-54736e4e11d2",
+      "criado_em": "2026-11-08T05:26:30.074829+00:00",
+      "event_length": 23,
+      "entity_length": 8,
+      "origin_length": 7,
+      "actor_null": false,
+      "entity_id_null": false,
+      "correlation_null": false
+    },
+    {
+      "id": "c2779309-82cd-40eb-b5ca-278b0b7d3646",
+      "criado_em": "2026-11-08T04:50:40.455572+00:00",
+      "event_length": 24,
+      "entity_length": 18,
+      "origin_length": 7,
+      "actor_null": false,
+      "entity_id_null": false,
+      "correlation_null": false
+    },
+    {
+      "id": "6b0992e9-7751-44d1-bb35-c9b53007072c",
+      "criado_em": "2026-11-08T04:00:25.793962+00:00",
+      "event_length": 17,
+      "entity_length": 12,
+      "origin_length": 7,
+      "actor_null": false,
+      "entity_id_null": false,
+      "correlation_null": false
+    },
+    {
+      "id": "030dde4c-de6a-423a-8c35-9a601cdedfaf",
+      "criado_em": "2026-11-08T03:59:41.922811+00:00",
+      "event_length": 14,
+      "entity_length": 9,
+      "origin_length": 7,
+      "actor_null": false,
+      "entity_id_null": false,
+      "correlation_null": false
+    },
+    {
+      "id": "6da8c1f0-2c93-4039-9bf8-5d0dcf77a5e1",
+      "criado_em": "2026-11-08T03:58:51.143282+00:00",
+      "event_length": 17,
+      "entity_length": 12,
+      "origin_length": 7,
+      "actor_null": false,
+      "entity_id_null": false,
+      "correlation_null": false
+    }
+  ],
+  "provenance": "COORDINATOR_EXECUTED_SQL1_ONCE_AND_RELAYED_VALIDATED_TECHNICAL_METADATA",
+  "labels_status": "UNKNOWN_NOT_READ",
+  "actor_values_status": "NOT_READ",
+  "entity_id_values_status": "NOT_READ",
+  "correlation_values_status": "NOT_READ",
+  "sql2_executed": false,
+  "latest_two_event_relation": "TIMESTAMPS_AFTER_FIXTURES_R1_CONFIRMED_OPERATIONS_NOT_LABEL_CONTENT_OR_IDENTITY_PROOF",
+  "limits": [
+    "NO_LABEL_CONTENT",
+    "NO_UNKNOWN_HASH",
+    "NO_AUTH_LOOKUP",
+    "NO_CURRENT_OR_FUTURE_PAGE_CERTIFICATION",
+    "NO_RUNTIME_PASS",
+    "R2_OR_ANY_NEW_EVENT_INVALIDATES_PAGE_PROOF"
+  ]
+}
