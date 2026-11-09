@@ -4431,10 +4431,9 @@ async function runFixturePreparation() {
       "PREFLIGHT",
       async () => new Promise((resolve) => debug.close(resolve)),
     );
-    const { chromium } = await tracedPreparation("PREFLIGHT", async () => import("playwright"));
     proxy = await tracedPreparation("PREFLIGHT", async () => startDestinationProxy());
     browser = await tracedPreparation("PREFLIGHT", async () =>
-      launchNativeBrowser({ chromium, debugPort, proxy: proxy.url }),
+      launchNativeBrowser({ debugPort, proxy: proxy.url }),
     );
     const context = await tracedPreparation("PREFLIGHT", async () =>
       browser.newContext({
