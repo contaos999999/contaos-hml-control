@@ -7814,3 +7814,23 @@ test("popup policy: attested pre-commit flag multiplicity is exactly two", () =>
       { code: "BROWSER_POLICY" },
     );
 });
+
+test("popup policy: POSIX aliases terminator and duplicate debugging switches fail closed", () => {
+  const check = fn("verifyNativeBrowserPolicy"),
+    version = { product: "HeadlessChrome/145.0.7632.6" };
+  const { args, expected } = popupPolicyFixture();
+  assert.equal(check(args, version, expected), true);
+  for (const value of [
+    "-no-sandbox",
+    "-disable-web-security=true",
+    "-remote-debugging-port=9333",
+    "--remote-debugging-port",
+    "-block-new-web-contents",
+    "-headless",
+    "--unsafely-treat-insecure-origin-as-secure=http://127.0.0.1",
+  ])
+    assert.throws(() => check([...args, value], version, expected), { code: "BROWSER_POLICY" });
+  assert.throws(() => check([args[0], "--", ...args.slice(1)], version, expected), {
+    code: "BROWSER_POLICY",
+  });
+});
