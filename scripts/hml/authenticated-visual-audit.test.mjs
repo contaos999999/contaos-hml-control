@@ -6554,3 +6554,96 @@ test("privacy112 link requires source attributes and exact plain span subtree", 
     }
   }
 });
+
+const privacy123Raw = JSON.parse(
+  await (await import("node:fs/promises")).readFile(
+    new URL("../../docs/frontend/auditorias/evidencias/privacy-v123-20261109/PROVENIENCIA_V123_READONLY.json", import.meta.url), "utf8",
+  ),
+);
+function privacy123Values(event) {
+  return privacy123Raw.visible_columns.map(({ catalog_field }) => event[catalog_field]);
+}
+function privacy123Texts() {
+  const fieldSnapshots = privacy123Raw.events.map((event, catalogIndex) => {
+    const values = privacy123Values(event);
+    const cells = values.map((value) => '- cell "' + value + '"');
+    return { catalogIndex, rendered: values.join("\t"), row: '- row "' + values.join(" ") + '":\n' + cells.map((cell) => "  " + cell).join("\n"), cells };
+  });
+  return {
+    rendered: "Trilha de auditoria\n" + fieldSnapshots.map((x) => x.rendered).join("\n"),
+    snapshot: '- heading "Trilha de auditoria" [level=1]\n- region "Eventos de auditoria":\n  - table:\n' + fieldSnapshots.map((x) => "    " + x.row.replaceAll("\n", "\n    ")).join("\n"),
+    fieldSnapshots,
+  };
+}
+function privacy123Fixture() {
+  const escape = (s) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
+  const labels = ["Evento", "Entidade", "ID do usuário", "Correlation ID", "Data inicial", "Data final"];
+  return '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header><main><header><h1>Trilha de auditoria</h1><p>Histórico de eventos da organização. Informações sensíveis não são exibidas.</p></header><section aria-label="Filtros de auditoria">' +
+    labels.map((label, i) => '<label>' + label + '<input' + (i >= 4 ? ' type="date"' : "") + '></label>').join("") +
+    '</section><div role="region" aria-label="Eventos de auditoria" tabindex="0"><table><caption>Eventos de auditoria da organização</caption><thead><tr>' +
+    privacy123Raw.visible_columns.map(({ label }) => '<th scope="col">' + label + '</th>').join("") +
+    '</tr></thead><tbody>' + privacy123Raw.events.map((e) => '<tr>' + privacy123Values(e).map((value) => '<td class="break-words">' + escape(value) + '</td>').join("") + '</tr>').join("") +
+    '</tbody></table></div><nav aria-label="Paginação da auditoria"><button disabled>Anterior</button><span aria-live="polite">Página 1</span><button disabled>Próxima</button></nav></main>';
+}
+function privacy123Receipt() {
+  return Object.freeze({ route: privacy123Raw.context.route, age: 1, observed: Object.freeze(["v123_events_page0"]) });
+}
+test("privacy123 RED real classifier requires sealed catalog and original full field intervals", async () => {
+  const proof = await fn("loadPrivacy78Proof")(), texts = privacy123Texts();
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  assert.equal(fn("classifyArtifactText")(texts.rendered, words).reason, "UNKNOWN_WORDS");
+  assert.equal(fn("classifyArtifactText")(texts.snapshot, words, { snapshot: true }).reason, "UNKNOWN_WORDS");
+  const v123Proof = await fn("loadPrivacy123Proof")();
+  const input = { proof, v123Proof, ...texts, anchored: true, receipt: privacy123Receipt() };
+  const fieldContext = fn("privacy123FieldContext")(input);
+  assert.ok(fieldContext);
+  for (const channel of ["rendered", "snapshot"])
+    assert.equal(fn("classifyArtifactText")(texts[channel], words, { fieldContext, snapshot: channel === "snapshot" }).reason, "ALLOWED");
+  for (const delta of [
+    { proof: privacy78Proof }, { v123Proof: privacy123Raw }, { anchored: false },
+    { receipt: { ...input.receipt } },
+    { receipt: Object.freeze({ ...input.receipt, route: "/" }) },
+    { receipt: Object.freeze({ ...input.receipt, age: 120000 }) },
+    { receipt: Object.freeze({ ...input.receipt, observed: Object.freeze([]) }) },
+    { fieldSnapshots: [...texts.fieldSnapshots].reverse() },
+    { rendered: texts.rendered + privacy123Raw.events[0].id_usuario },
+    { snapshot: texts.snapshot + texts.fieldSnapshots[0].cells[0] },
+  ]) assert.equal(fn("privacy123FieldContext")({ ...input, ...delta }), null);
+  for (const suffix of [" CANARIO_PRIVADO", " pessoa@example.com", " Bearer secret", " 123.456.789-00"]) {
+    for (const channel of ["rendered", "snapshot"]) {
+      const changed = { ...input, [channel]: texts[channel] + suffix };
+      const ctx = fn("privacy123FieldContext")(changed);
+      assert.notEqual(fn("classifyArtifactText")(changed[channel], words, { fieldContext: ctx, snapshot: channel === "snapshot" }).reason, "ALLOWED");
+    }
+  }
+});
+test("privacy123 RED exact ordered eight-key GET rejects drift and unknown projection", () => {
+  const runtime = fn("privacy78Runtime")({ proof: privacy78Proof, wireProof: privacyWireRaw, v123Proof: privacy123Raw });
+  const c = privacy123Raw.get_contract, url = API + c.path + "?" + new URLSearchParams(c.query);
+  assert.equal(runtime.match(url, "GET")?.name, "v123_events_page0");
+  const rows = privacy123Raw.events.map(({ formatted_created, ...row }) => row);
+  assert.deepEqual(runtime.project(c, rows), { name: c.name, exact: true });
+  for (const bad of [url + "&extra=1", url + "&limit=25", url.replace(API, HML)]) assert.equal(runtime.match(bad, "GET"), null);
+  for (const mutate of [
+    (a) => a.pop(), (a) => a.push({ ...a[0] }), (a) => a.reverse(),
+    (a) => a[0].id = a[1].id, (a) => a[0].origem += "x",
+    (a) => a[0].id_usuario = null, (a) => a[0].correlation_id = ["foreign"],
+    (a) => a[0].criado_em = "2026-11-09T00:40:31.843519+00:00",
+    (a) => a[0].extra = "CANARIO_PRIVADO",
+  ]) { const bad = structuredClone(rows); mutate(bad); assert.equal(runtime.project(c, bad), null); }
+});
+test("privacy123 RED DOM maps unique complete tuples and rejects copied hidden or changed cells", () => {
+  for (const mutate of [
+    null,
+    (d) => d.querySelector("tbody td").setAttribute("aria-label", "CANARIO_PRIVADO"),
+    (d) => d.querySelector("tbody").appendChild(d.querySelector("tbody tr").cloneNode(true)),
+    (d) => d.querySelector("tbody tr").remove(),
+    (d) => d.querySelector("input").value = "CANARIO_PRIVADO",
+    (d) => d.querySelector("thead th").textContent = "Outro",
+    (d) => d.querySelector("tbody td").appendChild(d.createElement("span")),
+  ]) {
+    const { dom, w, run } = privacy78Browser(privacy123Fixture());
+    try { if (mutate) mutate(w.document); assert.equal(!!run("privacy123FieldAnchor", { proof: privacy123Raw }), !mutate); }
+    finally { dom.window.close(); }
+  }
+});
