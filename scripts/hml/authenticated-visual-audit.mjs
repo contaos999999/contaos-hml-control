@@ -3701,7 +3701,8 @@ async function runAuthenticatedAudit() {
   await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
   const debugPort = debug.address().port;
   await new Promise((resolve) => debug.close(resolve));
-  let captureItem = null;
+  let captureItem = null,
+    captureMode = null;
   async function saveRawScreenshot(key, suffix = "") {
     const file = `screenshots/${key}${suffix}.png`;
     const data = await page.screenshot({ fullPage: true, animations: "disabled" });
@@ -3712,6 +3713,12 @@ async function runAuthenticatedAudit() {
     return { file, sha };
   }
   async function saveScreenshot(key, suffix = "") {
+    captureMode =
+      suffix === "_menu"
+        ? "MOBILE_MENU"
+        : suffix === "_sidebar-recolhida"
+          ? "SIDEBAR_COLLAPSED"
+          : "PRIMARY";
     if (!captureItem) fail("VISUAL_CASE_IDENTITY");
     const result = await captureVisualEvidence({
       brand: () =>
@@ -3855,6 +3862,8 @@ async function runAuthenticatedAudit() {
       }
       await checkFreshDeployment(proof, item.surface !== surface);
       surface = item.surface;
+      let diagnosticStage = "CASE_NAVIGATION";
+      captureMode = null;
       try {
         const beforeErrors = errors;
         await resizeVerifiedPage(page, fence, item.width);
@@ -3869,6 +3878,7 @@ async function runAuthenticatedAudit() {
             requestAnimationFrame(() => requestAnimationFrame(resolve)),
           );
         });
+        diagnosticStage = "WAIT_SURFACE";
         if (item.surface !== "SYS04") await waitOrganization(page);
         await page.waitForFunction(
           () =>
@@ -3879,6 +3889,7 @@ async function runAuthenticatedAudit() {
         );
         await fence.drain();
         fence.assertSafe();
+        diagnosticStage = "PRIVACY_PRIMARY";
         const privacy = {};
         const snapshot = await inspectPrivacy(page, words, privacy);
         record.privacy = privacy;
@@ -3886,6 +3897,7 @@ async function runAuthenticatedAudit() {
           record.status = "BLOQUEADO_PII";
           continue;
         }
+        diagnosticStage = "READ_UI_METRICS";
         const metrics = await page.evaluate(() => {
           const visible = (e) =>
             e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
@@ -3939,6 +3951,7 @@ async function runAuthenticatedAudit() {
           record.status = "BLOQUEADO_PAGE_LIMIT";
           continue;
         }
+        diagnosticStage = "AXE";
         await page.addScriptTag({ content: axe });
         const accessibility = await page.evaluate(async () => {
           const result = await window.axe.run(document, {
@@ -3952,7 +3965,9 @@ async function runAuthenticatedAudit() {
             incomplete: result.incomplete.length,
           };
         });
+        diagnosticStage = "CAPTURE_PRIMARY";
         const shot = await saveScreenshot(key);
+        diagnosticStage = "SAVE_DOM";
         const domFile = `dom/${key}.json`,
           dom = JSON.stringify({
             surface: item.surface,
@@ -3979,9 +3994,14 @@ async function runAuthenticatedAudit() {
           domSha256: digest(dom),
           accessibility,
         });
+        diagnosticStage = "KEYBOARD";
         record.keyboard = await keyboardProbe(page);
+        diagnosticStage = "CAPTURE_SUPPLEMENT";
+        captureMode = item.width >= 768 ? "SIDEBAR_COLLAPSED" : "MOBILE_MENU";
         record.sidebarSupplement = await sidebarProbe(page, item, key, words, saveScreenshot);
+        diagnosticStage = "NAVIGATION_PROBE";
         record.navigationVerified = await navigationProbe(page, item, fence);
+        diagnosticStage = "FINAL_CASE_CHECK";
         record.status =
           validateCase(record) &&
           run78VisualEvidenceValid(record) &&
@@ -3997,22 +4017,7 @@ async function runAuthenticatedAudit() {
         console.log(JSON.stringify({ case: key, status: record.status }));
       } catch (error) {
         if (fence.snapshot().failed || error.code === "DEPLOYMENT_CHANGED") throw error;
-        record.status = ["PII_SUPPLEMENT", "PII_VISUAL_CAPTURE"].includes(error.code)
-          ? "BLOQUEADO_PII"
-          : "FAIL_UI";
-        if (
-          [
-            "VISUAL_BRAND_INVALID",
-            "VISUAL_BRAND_DECODE",
-            "VISUAL_BRAND_TIMEOUT",
-            "VISUAL_BRAND_COUNT",
-            "VISUAL_MEASUREMENT",
-            "VISUAL_CASE_IDENTITY",
-          ].includes(error.code)
-        )
-          record.visualFailure = error.code;
-        if (error.code === "VISUAL_MEASUREMENT" && error.visualDiagnostic)
-          record.visualDiagnostic = error.visualDiagnostic;
+        recordCaseFailure(record, error, diagnosticStage, captureMode);
         if (record.status === "BLOQUEADO_PII") {
           for (let i = hashes.length - 1; i >= 0; i--)
             if (
@@ -4206,6 +4211,207 @@ export function visualMeasurementDiagnostic(metrics) {
   };
 }
 
+const visualFailureSummaries = new WeakMap();
+const visualLegacyFailureSummaries = new WeakMap();
+const CASE_DIAGNOSTIC_STAGES = new Set([
+  "CASE_NAVIGATION",
+  "WAIT_SURFACE",
+  "PRIVACY_PRIMARY",
+  "READ_UI_METRICS",
+  "AXE",
+  "CAPTURE_PRIMARY",
+  "CAPTURE_SUPPLEMENT",
+  "KEYBOARD",
+  "NAVIGATION_PROBE",
+  "SAVE_DOM",
+  "FINAL_CASE_CHECK",
+]);
+const VISUAL_FAILURE_CODES = new Set([
+  "VISUAL_BRAND_INVALID",
+  "VISUAL_BRAND_DECODE",
+  "VISUAL_BRAND_TIMEOUT",
+  "VISUAL_BRAND_COUNT",
+  "VISUAL_MEASUREMENT",
+  "VISUAL_CASE_IDENTITY",
+]);
+/** No text/selector/exception object is a diagnostic field. */
+export function summarizeVisualFailure(metrics) {
+  const invalid = () => ({ observed: false, state: "INVALID" });
+  const finite = (n, low = -100000, high = 100000) =>
+    typeof n === "number" && Number.isFinite(n) && n >= low && n <= high;
+  const count = (n) => Number.isInteger(n) && n >= 0 && n <= 100000;
+  const rectValid = (r) =>
+    r &&
+    finite(r.x) &&
+    finite(r.y) &&
+    finite(r.width, Number.MIN_VALUE) &&
+    finite(r.height, Number.MIN_VALUE);
+  try {
+    const flags = {};
+    for (const k of [
+      "identityPassed",
+      "geometryPassed",
+      "tablePassed",
+      "datesPassed",
+      "contrastPassed",
+    ]) {
+      if (typeof metrics?.[k] !== "boolean") return invalid();
+      flags[k] = metrics[k];
+    }
+    const v = metrics.viewport;
+    if (
+      !WIDTHS.includes(v?.width) ||
+      !Number.isInteger(v.height) ||
+      !finite(v.height, 1, 30000) ||
+      !finite(metrics.overflowX) ||
+      !["light", "dark"].includes(metrics.theme) ||
+      !Array.isArray(metrics.targets) ||
+      metrics.targets.length > 256 ||
+      !Array.isArray(metrics.dates) ||
+      metrics.dates.length > 3 ||
+      !Array.isArray(metrics.contrast) ||
+      metrics.contrast.length > 100
+    )
+      return invalid();
+    const counts = {
+      targetsExamined: metrics.targets.length,
+      invalidRect: 0,
+      disconnected: 0,
+      invisible: 0,
+      notHit: 0,
+      boundsX: 0,
+      boundsY: 0,
+    };
+    const failedTargets = [];
+    for (const t of metrics.targets) {
+      if (
+        !t ||
+        !Number.isInteger(t.ordinal) ||
+        t.ordinal < 0 ||
+        t.ordinal > 255 ||
+        !["INPUT", "SELECT", "TEXTAREA", "BUTTON", "LINK"].includes(t.kind) ||
+        !rectValid(t.rect) ||
+        ["connected", "visible", "disabled", "hit"].some((k) => typeof t[k] !== "boolean")
+      )
+        return invalid();
+      const r = t.rect,
+        disconnected = !t.connected,
+        invisible = !t.visible;
+      const notHit = !t.hit && !t.disabled,
+        boundsX = r.x < 0 || r.x + r.width > v.width + 0.5;
+      const boundsY = r.y < 0 || r.y + r.height > v.height + 0.5;
+      counts.disconnected += +disconnected;
+      counts.invisible += +invisible;
+      counts.notHit += +notHit;
+      counts.boundsX += +boundsX;
+      counts.boundsY += +boundsY;
+      if ((disconnected || invisible || notHit || boundsX || boundsY) && failedTargets.length < 8)
+        failedTargets.push({
+          ordinal: t.ordinal,
+          kind: t.kind,
+          rect: {
+            x: Math.round(r.x * 100) / 100,
+            y: Math.round(r.y * 100) / 100,
+            width: Math.round(r.width * 100) / 100,
+            height: Math.round(r.height * 100) / 100,
+          },
+          connected: t.connected,
+          visible: t.visible,
+          disabled: t.disabled,
+          hit: t.hit,
+        });
+    }
+    let table = null;
+    if (metrics.table !== null) {
+      if (
+        !metrics.table ||
+        !count(metrics.table.clipping) ||
+        !Array.isArray(metrics.table.helpTargets) ||
+        metrics.table.helpTargets.length > 256 ||
+        !metrics.table.helpTargets.every(rectValid)
+      )
+        return invalid();
+      table = {
+        clipping: metrics.table.clipping,
+        helpBelow44: metrics.table.helpTargets.filter((r) => r.width < 44 || r.height < 44).length,
+      };
+    }
+    let absent = 0,
+      schemeMismatch = 0;
+    for (const d of metrics.dates) {
+      if (
+        !d ||
+        typeof d.present !== "boolean" ||
+        !["", "normal", "light", "dark", "light dark", "dark light"].includes(d.scheme)
+      )
+        return invalid();
+      absent += +!d.present;
+      schemeMismatch += +(d.present && d.scheme !== metrics.theme);
+    }
+    for (const c of metrics.contrast)
+      if (!c || !finite(c.ratio, 0, 100) || c.threshold !== 4.5) return invalid();
+    return {
+      observed: true,
+      state: "VALID",
+      viewport: { width: v.width, height: v.height },
+      flags,
+      overflowX: Math.round(metrics.overflowX * 100) / 100,
+      counts,
+      failedTargets,
+      table,
+      dates: { absent, schemeMismatch },
+      contrast: {
+        count: metrics.contrast.length,
+        minimum: metrics.contrast.length
+          ? Math.round(Math.min(...metrics.contrast.map((c) => c.ratio)) * 10000) / 10000
+          : null,
+        threshold: 4.5,
+      },
+    };
+  } catch {
+    return invalid();
+  }
+}
+/** The actual per-case report consumer; never spread/read an arbitrary exception. */
+export function recordCaseFailure(record, error, stage, mode = null) {
+  const field = (key) => {
+    try {
+      const d = error && Object.getOwnPropertyDescriptor(error, key);
+      return d && "value" in d ? d.value : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const code = field("code"),
+    name = field("name");
+  record.status = ["PII_SUPPLEMENT", "PII_VISUAL_CAPTURE"].includes(code)
+    ? "BLOQUEADO_PII"
+    : "FAIL_UI";
+  if (VISUAL_FAILURE_CODES.has(code)) record.visualFailure = code;
+  if (error && typeof error === "object" && visualLegacyFailureSummaries.has(error))
+    record.visualDiagnostic = visualLegacyFailureSummaries.get(error);
+  const capture = stage === "CAPTURE_PRIMARY" || stage === "CAPTURE_SUPPLEMENT";
+  record.diagnostic = {
+    schema: "contaos.case.failure.v1",
+    stage: CASE_DIAGNOSTIC_STAGES.has(stage) ? stage : null,
+    errorKind: VISUAL_FAILURE_CODES.has(code)
+      ? "KNOWN_VISUAL"
+      : name === "TimeoutError"
+        ? "TIMEOUT"
+        : name === "TargetClosedError"
+          ? "TARGET_CLOSED"
+          : name === "EvaluationError"
+            ? "EVALUATION"
+            : "OTHER",
+    mode: capture && ["PRIMARY", "SIDEBAR_COLLAPSED", "MOBILE_MENU"].includes(mode) ? mode : null,
+    visual:
+      error && typeof error === "object" && visualFailureSummaries.has(error)
+        ? visualFailureSummaries.get(error)
+        : { observed: false, state: "UNOBSERVED" },
+  };
+  return record;
+}
+
 /** Shared causal boundary: no screenshot is emitted after a failed/incomplete step. */
 export async function captureVisualEvidence({ brand, drain, stabilize, measure, privacy, save }) {
   const image = await brand();
@@ -4217,6 +4423,8 @@ export async function captureVisualEvidence({ brand, drain, stabilize, measure, 
       code: "VISUAL_MEASUREMENT",
       visualDiagnostic: visualMeasurementDiagnostic(metrics),
     });
+    visualFailureSummaries.set(error, summarizeVisualFailure(metrics));
+    visualLegacyFailureSummaries.set(error, error.visualDiagnostic);
     throw error;
   }
   if ((await privacy()) !== true) fail("PII_VISUAL_CAPTURE");
@@ -4283,7 +4491,7 @@ export async function collectVisualMetrics(page, item) {
       const r = rect(e);
       return r.width > 0 && r.height > 0 && r.y >= 0 && r.y + r.height <= innerHeight;
     });
-    const targets = controls.map((e) => {
+    const targets = controls.map((e, ordinal) => {
       const r = rect(e),
         inset = Math.min(3, r.width / 4, r.height / 4);
       const points = [
@@ -4294,6 +4502,16 @@ export async function collectVisualMetrics(page, item) {
         [r.x + r.width / 2, r.y + r.height - inset],
       ];
       return {
+        ordinal,
+        kind: e.matches("input")
+          ? "INPUT"
+          : e.matches("select")
+            ? "SELECT"
+            : e.matches("textarea")
+              ? "TEXTAREA"
+              : e.matches("button")
+                ? "BUTTON"
+                : "LINK",
         rect: r,
         connected: e.isConnected,
         visible: visible(e),
