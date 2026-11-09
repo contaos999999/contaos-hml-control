@@ -1,6 +1,6 @@
 /**
- * Read-only R6 artifact inspection. No application imports, browser, Auth or SQL.
- * Contracts are snapshots of producer 9cd01a4 / blob72f9fe78 and GATE458.
+ * Read-only R8 artifact inspection. No application imports, browser, Auth or SQL.
+ * Contracts snapshot producer c32f51c9 and GATE467; GATE458 reader policy is preserved.
  */
 import { createHash } from "node:crypto";
 import {
@@ -22,14 +22,14 @@ import { pathToFileURL } from "node:url";
 export const PIN = Object.freeze({
   repository: "contaos999999/contaos-hml-control",
   repositoryId: 1442722734,
-  run: 42585173702,
+  run: 42611391440,
   workflow: 411426169,
-  head: "9cd01a472146c67c4a3cae5f3d9a6b5d7448716a",
-  upstream: 42585029040,
-  artifact: 13658434738,
-  size: 8366,
-  name: "trilha-a-fixtures-42585173702-1",
-  digest: "10e55ed5856aac2879188ab5f2df3b1f4a98b180de21dd7abcb470c162f9d68c",
+  head: "dea3ab73c9b47de1126054380b002c37b060ff84",
+  upstream: 42611241610,
+  artifact: 13670961904,
+  size: 11240,
+  name: "trilha-a-fixtures-42611391440-1",
+  digest: "698e58fe9184b194cc1866b4c119d4df45ba23ccc5704665469a99793cce2fa9",
   tool: "d3f86a106a0bac45b974a628896c90dbdf5c8093",
   bundle: "374211f852b2a8155a0211c72e85dacc81bb69f3",
   frontend: "437c788e32f0325dd15c9d2e7277c10129bcb462",
@@ -47,6 +47,9 @@ export const FILES = Object.freeze([
   "recovery-r3.json",
   "receipts-r5.json",
   "recovery-r5.json",
+  "receipts-r6.json",
+  "recovery-r6.json",
+  "recovery-r7.json",
 ]);
 export const HISTORY = Object.freeze({
   "receipts-r1.json": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
@@ -55,6 +58,9 @@ export const HISTORY = Object.freeze({
   "recovery-r3.json": "db27ca1ab4a4ba6da14dab4c2879670e420c969fde183f0fd6730c654c197f4f",
   "receipts-r5.json": "fd97a387cae0e16af65c6923f453ac83262e58447176c3c558b1c10bc15c5eeb",
   "recovery-r5.json": "a92027cc0a7c9e2ce97f233c7aa1920205a158282ba6b955f7279cd9d8ae2dae",
+  "receipts-r6.json": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  "recovery-r6.json": "98136adfe0c84c274ca31534b847b640a35f2577d2ad6197e451324a51ac7e03",
+  "recovery-r7.json": "687712aa5ab15072afc65aceacdff52ce5d94c6ba9f2ceccf6867e4636bd1c4e",
 });
 const HISTORICAL_IDS = new Set([
   "08141ffd-56c1-4c50-b58f-32912d1006b2",
@@ -135,6 +141,10 @@ const RPCS = new Set([
   "registrar_apresentacao",
 ]);
 const FAILURES = new Set([
+  "RECOVERY_R7_PROOF",
+  "PREPARE_SECRET_ENV",
+  "RECOVERY_R7_LEDGER",
+  "RECOVERY_R6_LEDGER",
   "RECOVERY_R5_LEDGER",
   "RECOVERY_R4_PROOF",
   "RECOVERY_R3_LEDGER",
@@ -876,9 +886,9 @@ export function validateMetadata(input) {
     "INSPECTION_METADATA",
   );
   const specs = [
-    [129053161135, "Trilha A solicitacao unica sem credenciais", "success"],
-    [129053162669, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-    [129053499534, "Trilha A preparacao sintetica HML", "failure"],
+    [129140419219, "Trilha A solicitacao unica sem credenciais", "success"],
+    [129140421628, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+    [129140789918, "Trilha A preparacao sintetica HML", "failure"],
   ];
   check(
     jobs.total_count === 3 && Array.isArray(jobs.jobs) && jobs.jobs.length === 3,
@@ -927,7 +937,7 @@ export function readManifest(root, deadline = () => {}) {
     const anchored = "/proc/self/fd/" + dirfd;
     const names = readdirSync(anchored);
     check(
-      names.length === 9 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
+      names.length === 12 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
       "INSPECTION_FILES",
     );
     const buffers = {};
