@@ -2580,6 +2580,7 @@ async function r7ProbeListConsumers(page, ast) {
   for (const statement of selections) {
     await page.setContent(fixture.html);
     const scope = page.getByRole("region", { name: "Gestão de listas", exact: true });
+    assert.notEqual(await scope.locator("select").inputValue(), fixture.target);
     await new (Object.getPrototypeOf(async () => {}).constructor)(
       "field",
       "listSelectionControl",
