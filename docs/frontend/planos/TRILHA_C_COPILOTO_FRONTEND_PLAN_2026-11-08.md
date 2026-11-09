@@ -87,3 +87,24 @@ Escopo fechado: este documento;PLANO_ATIVO.json;src/components/layout/ContaOSApp
 Sequência: commit documental e CI verde antes de BUILD; RED causal de navegação observando mounts durante render e descarte de contexto pendente; GREEN mínimo e testes afetados AppShell/Copiloto. Reconciliação de ancestralidade por merge verdadeiro dos quatro commits, resolvendo conflitos explicitamente pela implementação atual mais o resíduo aprovado. Zero-Drift/LOCK/Teste C exigidos no HEAD final, revisão independente antes de integração. Suítes globais impostas pelo CI não serão executadas outra vez manualmente. Não repetir provas API/HML já válidas. Nenhum deploy autorizado por este gate.
 
 Rollback: reverter somente o delta residual de AppShell/testes/documentação, mantendo as integrações A/B e PR484. Main somente via PR protegido com gates verdes; checkpoint backend138 com HEADs/resultados/pendências. Auditoria autenticada e certificação global continuam pendentes.
+
+
+### Resolução explícita dos quatro conflitos
+
+Ensaio de merge real mainc9dc5e0+dd27b7e2 identificou exatamente4conflitos: este PLAN(content),CopilotoContrato.tsx(add/add),ContaOSAppShell.tsx(content),copilotoContrato.test.tsx(add/add). PLAN conserva integralmente C13PLAN450 e acrescenta abaixo o registro antigo como arquivo histórico. Componente e teste C13 ficam byte-exatos da main/PR484, não substituídos pelos arquivos antigos. AppShell conserva main e recupera apenas rota no contexto/setter/guard. Cobertura24privadas+4acesso do antigo teste é recuperada em appShellSidebar.test.tsx, mais dois casos causais da reconciliação. Demais testes históricos permanecem em seus commits, sem afirmar reexecução no novoHEAD; timeout20s/retry antigo foi expressamente superado por50s e reconciliação incerta C13.
+
+RED77ed8353:56casos/1FAIL55PASS local, causa mount{rotaB,contratoA};logSHA256378a9762f4f9b9eee60ffdfa20986cd923f9396e2e70468185e81a275e4cb396. GREEN mínimo:94PASS em4arquivos afetados(AppShell/visualShell/Copiloto/DTO),tscPASS. Após ajuste somente de formatação,56AppShellPASS;eslint0erros/1warning preexistente botaoMovelRef. Nenhuma suíte global executada manualmente, nenhumAPI/HML repetido. Tipos8ea7750b75fd9d76b29c36ce7613392e3ab65e19. CI final e revisão do HEAD final ainda pendentes neste registro.
+
+### Registro histórico da PR379, preservado sem reatribuição ao produto atual
+
+O texto seguinte descreve exclusivamente a implementação antiga. O prazo20s e o estadoPENDENTE ali citados não descrevem a implementação atual;50s/PLAN450/PR484 prevalecem. Não transforma os43testes históricos em prova do HEAD resultante.
+
+## Evidência incremental BUILD #379, sem certificação HML
+
+Base: PLAN #378 merge d8594696; RED440f3bd3/run42533505445/job128892643926, 3FAIL/1172PASS esperados (seletor, lista negada, troca usuário). REDlocal AppShell24FAIL/12PASS; competência2FAIL/36PASS. GREEN3408283:38focais e1205regressão PASS, TypeScript/build PASS.
+
+Revisão independente3408283: timeout/aborto e matriz de testes incompleta impediam conclusão. Fontes apenas da última resposta foram reclassificadas como problema de rastreabilidade e corrigidas no mesmo lote. REDlocal /tmp/contaos-c-review-red2.log:4FAIL/39PASS (prazo, aborto por competência, aborto pelo seletor, fontes por resposta). GREENlocal após correção:43/43focais,43suítes/1210testes PASS; tsc/buildPASS; lint0erros/1warning preexistente em botaoMovelRef. Tipos blob8ea7750b75fd9d76b29c36ce7613392e3ab65e19.
+
+Prazo20s cancela transporte por AbortController e libera UI mesmo com Promise pendente; resposta tardia não altera histórico. Trocas de contexto abortam transporte e invalidam geração. Fontes F1..Fn permanecem vinculadas a cada resposta e aviso explicita incerteza/revisão humana. Seletor mostra até100contratos autorizados e orienta a página do contrato além desse limite; nenhum contrato automático.
+
+CI do novo HEAD, implantação HML, JWT/cross-tenant/OpenAI e Teste C autenticado permanecem PENDENTES. Nenhum desses testes locais ou job documental equivale a certificação das27páginas. PROD/A/B/tipos preservados.

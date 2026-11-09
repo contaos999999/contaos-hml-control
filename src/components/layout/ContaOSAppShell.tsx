@@ -27,7 +27,12 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   const rotaAdministrativaAtiva = (destino: string) =>
     pathname === destino || pathname.startsWith(`${destino}/`);
   const [liberado, setLiberado] = useState(false);
-  const [contextoCopiloto, setContextoCopiloto] = useState<{ organizacao: string; contrato: string | null; competencia: string | null } | null>(null);
+  const [contextoCopiloto, setContextoCopiloto] = useState<{
+    rota: string;
+    organizacao: string;
+    contrato: string | null;
+    competencia: string | null;
+  } | null>(null);
   const [revisaoSessao, setRevisaoSessao] = useState(0);
   const [chaveConteudo, setChaveConteudo] = useState(0);
   const [administrador, setAdministrador] = useState(false);
@@ -163,7 +168,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     setAuditoriaPermitida(false);
     setPermissoes([]);
     setContexto({ contrato: null, competencia: null, contratante: null });
-      setContextoCopiloto(null);
+    setContextoCopiloto(null);
     fechamentoPorNavegacao.current = true;
     setMovelAberto(false);
     if (rotaSemSidebar(pathname)) return;
@@ -178,7 +183,12 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
         if (!sessaoAtual()) return;
         setPermissoes(efetivas.permissoes);
         setContexto(contextoAtual);
-        setContextoCopiloto({ organizacao, contrato: contextoAtual.contrato, competencia: contextoAtual.competencia });
+        setContextoCopiloto({
+          rota: pathname,
+          organizacao,
+          contrato: contextoAtual.contrato,
+          competencia: contextoAtual.competencia,
+        });
         const autorizado = await validarAdministrador(organizacao).catch(() => false);
         if (sessaoAtual())
           setAdministrador(
@@ -332,8 +342,13 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
           </div>
         )}
         <div key={chaveConteudo}>{children}</div>
-        {liberado && !movelAberto && contextoCopiloto && (
-          <CopilotoContrato key={`${chaveConteudo}:${revisaoSessao}:${pathname}:${contextoCopiloto.organizacao}`} contratoId={contextoCopiloto.contrato} organizacaoId={contextoCopiloto.organizacao} competenciaId={contextoCopiloto.competencia} />
+        {liberado && !movelAberto && contextoCopiloto?.rota === pathname && (
+          <CopilotoContrato
+            key={`${chaveConteudo}:${revisaoSessao}:${pathname}:${contextoCopiloto.organizacao}`}
+            contratoId={contextoCopiloto.contrato}
+            organizacaoId={contextoCopiloto.organizacao}
+            competenciaId={contextoCopiloto.competencia}
+          />
         )}
       </div>
     </div>

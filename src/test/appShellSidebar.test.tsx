@@ -235,52 +235,123 @@ describe("P0 sidebar — testes DOM reais do modal", () => {
 
   it("não monta o Copiloto com contrato anterior durante o commit da nova rota", async () => {
     mocks.pathname = "/contratos/contrato-a";
-    mocks.contexto.mockResolvedValue({ contrato: "contrato-a", competencia: null, contratante: null });
-    const view = render(<ContaOSAppShell><p>Conteúdo</p></ContaOSAppShell>);
+    mocks.contexto.mockResolvedValue({
+      contrato: "contrato-a",
+      competencia: null,
+      contratante: null,
+    });
+    const view = render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
     await screen.findByRole("button", { name: "Consultar copiloto" });
     let resolver!: (value: { contrato: string; competencia: null; contratante: null }) => void;
-    mocks.contexto.mockReturnValue(new Promise((r) => { resolver = r; }));
+    mocks.contexto.mockReturnValue(
+      new Promise((r) => {
+        resolver = r;
+      }),
+    );
     mocks.pathname = "/contratos/contrato-b";
-    view.rerender(<ContaOSAppShell><p>Conteúdo</p></ContaOSAppShell>);
-    await waitFor(() => expect(mocks.contexto).toHaveBeenCalledWith("/contratos/contrato-b", "org-teste"));
+    view.rerender(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    await waitFor(() =>
+      expect(mocks.contexto).toHaveBeenCalledWith("/contratos/contrato-b", "org-teste"),
+    );
     // Checking only the settled DOM would miss the stale mount before useEffect.
     expect(mocks.copilotoCommits.filter((c) => c.rota === "/contratos/contrato-b")).toEqual([]);
-    await act(async () => resolver({ contrato: "contrato-b", competencia: null, contratante: null }));
+    await act(async () =>
+      resolver({ contrato: "contrato-b", competencia: null, contratante: null }),
+    );
     await screen.findByRole("button", { name: "Consultar copiloto" });
-    expect(mocks.copilotoCommits.filter((c) => c.rota === "/contratos/contrato-b").map((c) => c.contrato)).toEqual(["contrato-b"]);
+    expect(
+      mocks.copilotoCommits
+        .filter((c) => c.rota === "/contratos/contrato-b")
+        .map((c) => c.contrato),
+    ).toEqual(["contrato-b"]);
   });
 
   it("descarta resolução da rota antiga depois que o novo contexto foi confirmado", async () => {
     let resolver!: (value: { contrato: string; competencia: null; contratante: null }) => void;
     mocks.pathname = "/contratos/contrato-a";
-    mocks.contexto.mockReturnValueOnce(new Promise((r) => { resolver = r; }));
-    const view = render(<ContaOSAppShell><p>Conteúdo</p></ContaOSAppShell>);
-    await waitFor(() => expect(mocks.contexto).toHaveBeenCalledWith("/contratos/contrato-a", "org-teste"));
-    mocks.contexto.mockResolvedValue({ contrato: "contrato-b", competencia: null, contratante: null });
+    mocks.contexto.mockReturnValueOnce(
+      new Promise((r) => {
+        resolver = r;
+      }),
+    );
+    const view = render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    await waitFor(() =>
+      expect(mocks.contexto).toHaveBeenCalledWith("/contratos/contrato-a", "org-teste"),
+    );
+    mocks.contexto.mockResolvedValue({
+      contrato: "contrato-b",
+      competencia: null,
+      contratante: null,
+    });
     mocks.pathname = "/contratos/contrato-b";
-    view.rerender(<ContaOSAppShell><p>Conteúdo</p></ContaOSAppShell>);
+    view.rerender(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
     await screen.findByRole("button", { name: "Consultar copiloto" });
-    await act(async () => resolver({ contrato: "contrato-a", competencia: null, contratante: null }));
+    await act(async () =>
+      resolver({ contrato: "contrato-a", competencia: null, contratante: null }),
+    );
     expect(mocks.copilotoCommits.map((c) => c.contrato)).toEqual(["contrato-b"]);
     expect(screen.getByRole("button", { name: "Consultar copiloto" })).toBeInTheDocument();
   });
 
   const privadasCopiloto = [
-    "/", "/contratantes", "/contratantes/novo", "/contratantes/id/editar",
-    "/contratos", "/contratos/novo", "/contratos/id",
-    ...["base-normativa", "competencias", "competencias/nova", "documentos", "documentos/doc", "historico", "historico/importar", "orcamento", "regras"].map((p) => "/contratos/id/" + p),
-    ...["", "/analise", "/apresentacoes/ap", "/apresentar", "/documentos", "/parecer"].map((p) => "/competencias/id" + p),
-    "/administracao/usuarios", "/administracao/auditoria",
+    "/",
+    "/contratantes",
+    "/contratantes/novo",
+    "/contratantes/id/editar",
+    "/contratos",
+    "/contratos/novo",
+    "/contratos/id",
+    ...[
+      "base-normativa",
+      "competencias",
+      "competencias/nova",
+      "documentos",
+      "documentos/doc",
+      "historico",
+      "historico/importar",
+      "orcamento",
+      "regras",
+    ].map((p) => "/contratos/id/" + p),
+    ...["", "/analise", "/apresentacoes/ap", "/apresentar", "/documentos", "/parecer"].map(
+      (p) => "/competencias/id" + p,
+    ),
+    "/administracao/usuarios",
+    "/administracao/auditoria",
   ];
   it.each(privadasCopiloto)("mantém a montagem contextual na área privada %s", async (rota) => {
     mocks.pathname = rota;
-    render(<ContaOSAppShell><p>Conteúdo</p></ContaOSAppShell>);
+    render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
     expect(await screen.findByRole("button", { name: "Consultar copiloto" })).toBeInTheDocument();
   });
   it.each(["/login", "/esqueci-senha", "/redefinir-senha", "/selecionar-organizacao"])(
-    "não monta contexto privado na superfície de acesso %s", async (rota) => {
+    "não monta contexto privado na superfície de acesso %s",
+    async (rota) => {
       mocks.pathname = rota;
-      render(<ContaOSAppShell><p>Acesso</p></ContaOSAppShell>);
+      render(
+        <ContaOSAppShell>
+          <p>Acesso</p>
+        </ContaOSAppShell>,
+      );
       await act(async () => {});
       expect(screen.queryByRole("button", { name: "Consultar copiloto" })).not.toBeInTheDocument();
       expect(mocks.copilotoCommits).toEqual([]);
