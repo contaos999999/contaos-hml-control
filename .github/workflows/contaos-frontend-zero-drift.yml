@@ -16,7 +16,7 @@ concurrency:
 jobs:
   frontend-quality:
     name: ContaOS Frontend Zero-Drift
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 25
     steps:
       - name: Checkout immutable commit

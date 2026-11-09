@@ -2,9 +2,27 @@
 
 Issue #317, prioridade0. PLAN494 integrado7b2dd9161016981f8da7401ceba94305a691c19b, PLANblobf9bdccc70dad96f058fde1d3d415578fd5f43da4. Este GATE somente libera a operação HML e o BUILD abaixo depois de CI/revisão independente/merge protegido. Não libera Auth, SQL, request, rerun de negócio ou projetoPROD. C13/491/492/source_proof/types8ea/catalog100/97/25normativas e históricos permanecem intactos.
 
+## Recuperação CI limitada: incidente6605 e experimento controlado2runners
+
+O primeiro main que integrou este GATE, 6605fbfc40359a1565abbffc8b8358ff4cf44b83, teve Zero42671473829 eLOCK42671473179 FAILURE/attempt1 ANTES de criar jobs: jobs[]/total_count0/checkruns0. UI pública primária: Internal server error, correlaçõesZero8be6e456-3daf-4d03-909d-900a8e7a6915 eLOCK4bad98ff-996f-40a7-9426-d3f670126d0d. Nenhum teste de código nesses pushes; FAILURE não é SUCCESS. Checkpoint6747808208 registra causa/readback. Primeira operaçãoVercel ainda não foi emitida.
+
+Uma chamada oficial rerun-failed-jobs do Zero retornou HTTP403 "This workflow run cannot be retried", sem attempt2. Depois, uma única recuperação oficial por UI nos dois runs públicos D1 foi aceita como attempt2, sem debug/Auth/R12: ZeroFAIL sem jobfrontend-quality, mas TestC129351763045SUCCESS; LOCKFAIL/jobs0. A distinção de tempo é obrigatória: o403 inicial não gerou attempt2; a chamadaUI posterior gerou. PR497 originaldf30 também falhou antesjobs: Zero42672899874/LOCK42672899369, correlações61ac5b7a-9a24-4b38-a03e-78f6aeb11a55 e b496214f-7e37-4df3-b936-2bfd4f0f2313. Nenhum desses fatos aprova deploy.
+
+Não há raiz de runner demonstrada. TestC usa ubuntu-latest e log realUbuntu26.04.1/imageubuntu-26.04/version20261101.186.1; não é22.04. PR496Zero42672086203/LOCK42672086268 também passaram emlatest; Auth/Fixtures em22.04 funcionaram. Isso não prova que latest causa as falhas nem que22.04 as corrige.
+
+Esta MESMA PR497 recebe UM experimento reversível restrito de infraestrutura: apenas jobfrontend-quality de .github/workflows/contaos-frontend-zero-drift.yml e jobprotect-types de .github/workflows/lock-types-double-barrier.yml passam runs-on: ubuntu-latest para runs-on: ubuntu-22.04, UMA ocorrência por arquivo. BasesD1 respectivas9d9d6ef94775661c9de898a2c6540cc6a5b38c48 e f42c763367359ad9e19e94869502a0ee359d0d2d. Antes do push, assert estrutural: reverter somente os dois valores reproduz bytes originaisD1 integralmente. Nenhuma outra linhaYAML muda: events/if/actions/perms/secrets/timeout/hash/guard/cache/steps/names intactos. Auth/Fixtures/TestCYAML, auditor/preparer/testes, SRC/public/types/deps/lock permanecem byte-exatos.
+
+A proibiçãoYAML deste GATE é revogada SOMENTE para essas duas linhas deste experimento de CI. BUILD de negócio posterior permanece2auditmjs, sem YAML. PLANO preserva82paths em prefixo e acrescenta somente .github/workflows/lock-types-double-barrier.yml, total83; ZeroYAML já permitido. Três docs existentes explicitam o incidente e este recorte, sem novo PLAN/PR/código de negócio/controller ou aumento de orçamento.
+
+Exigir revisão independente geral/privacidade do PATCH concreto, Zeroquality+LOCK+TesteC reais e PRCI terminalSUCCESS no HEAD final; depois integração NORMAL protegida e PUSHZero/LOCK do novo main terminalSUCCESS antes de qualquer operação HML. Não forçar status/check, pular proteção, mudar semântica de checks, timeout/billing/env/security ou reinterpretar ausência de jobs como aprovação. Se22.04 também falhar antesjobs, parar e investigar; não terceiro runner, retryloop ou novo commit vazio para contornar gates. Se iniciar e passar, isso prova somente o HEAD validado em22.04, não a causa do incidente.
+
+O Dsha operacional será o NOVO main aprovado descendente do GATE6605 e desta emenda, com PRCI e pushCI próprios SUCCESS reais. Root registra SHA/pais/árvore/runIDs após integração e prova main==Dsha imediatamente antes da operação. Diff6605→Dsha permitido somente nos três paths documentais desta emenda e nessas duas runs-on; reversão das duas linhas deve recuperar todos os arquivos não documentaisD1. Auditor/preparerR12 permanecem12549d9cf6058ebb098832d71ca5b9ad9a0c2e0d/c4979dc74ecd033c2a38d479115e7d1302060d37 até BUILD2mjs autorizado.
+
+Exceção é limitada a este incidente e a esta PR497, sem rerun-all adicional/originaisR12 ou novo pedido de negócio. PerfilGITmainHML/uma freshbuild/forceNew1/aliasbinding/fixed11/publicliveprobe/R12zeroAuth/cache/R11reserva/18nativas/20+SHA21 permanecem integrais. Nenhum Auth/SQL/deploy está autorizado antes das condições acima.
+
 ## Operação única no mesmo projeto HML
 
-Depois do merge deste GATE, Root fixa como Dsha o SHA real do main aprovado que integra este GATE, com checks aplicáveis SUCCESS e readback de Git/parents/árvore. Antes da chamada, main deve continuar exatamente nesse SHA. Criar UMA nova build pelo create-deployment oficial no projeto prj_JtEWXg54EIYcQPwVzFiQyJcVIlFo/namecontaos-41-hml/time team_yeAabFPw9FQ4nS68g7LASDEJ, repositórioGitHub1442722734/contaos999999/contaos-hml-control. gitSource.type=github,repoId=1442722734,ref=main; target=production é o rótulo técnico deste projeto HML. Query forceNew=1 permite build fresca/bypass de deduplicação, não prova bypass de ignore-build.
+Depois do merge protegido desta emenda, Root fixa como Dsha o NOVO main aprovado descendente deste GATE integrado, com PRCI e pushCI próprios terminalSUCCESS e readback de Git/parents/árvore, conforme a cláusula de recuperação limitada acima. Antes da chamada, main deve continuar exatamente nesse SHA. Criar UMA nova build pelo create-deployment oficial no projeto prj_JtEWXg54EIYcQPwVzFiQyJcVIlFo/namecontaos-41-hml/time team_yeAabFPw9FQ4nS68g7LASDEJ, repositórioGitHub1442722734/contaos999999/contaos-hml-control. gitSource.type=github,repoId=1442722734,ref=main; target=production é o rótulo técnico deste projeto HML. Query forceNew=1 permite build fresca/bypass de deduplicação, não prova bypass de ignore-build.
 
 Não herdar/redeploy CMf: deploymentId ewithLatestCommit omitidos. projectSettings/customEnv/skipAutoDetectionConfirmation e overrides de ignoreCommand/buildsettings omitidos; configurações podem persistir, portanto não tratá-las como descartáveis por build. Sem Turbo/env/secrets/billing/segurança/meta/gitMetadata spoof/sourceupload avulso/refSHA/projeto alternativo. Se CANCELED/ERROR, guardar API/logs permitidos e investigar antes de nova proposta; não retry cego, não inferir motivo pelo buildEvents vazio.
 
@@ -45,7 +63,7 @@ verifyR12ZeroAuth usa o transporte singleRequestGet existente e dez GETs fixos: 
 
 ## Cache existente e BUILD mínimo2mjs
 
-Somente scripts/hml/authenticated-visual-audit.mjs e scripts/hml/authenticated-visual-audit.test.mjs. Não editar preparer/teste/YAML/deps/lock/SRC/types/backend/transporte/fence/políticasfixed11.
+Somente scripts/hml/authenticated-visual-audit.mjs e scripts/hml/authenticated-visual-audit.test.mjs. Não editar preparer/teste/YAML/deps/lock/SRC/types/backend/transporte/fence/políticasfixed11 no BUILD2mjs; a única exceçãoYAML é o experimentoCI de duas runs-on fechado acima.
 
 Noncefixtures futuro trilha-a-fixtures-20261109-r13; R12 acrescentado aos gastos. Acrescentar ancestralidade deste GATE integrado ao contratoGit. verifyR12ZeroAuth é chamado no controller verifySingleRequest existente depois da seleção da operaçãofixtures/R13, antes de emitirselected/autorização. O subscriber oposto continua saindo antes de API/private. Executar nas chamadas preflight e Step15, com tokenread-only isolado existente; não passar token a browser/build/Master.
 
