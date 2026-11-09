@@ -719,3 +719,21 @@ test("R8 literal target is terminal attempt one and cannot be selected through c
   assert.equal(PIN.name, "trilha-a-fixtures-42611391440-1");
   assert.equal(PIN.digest, "698e58fe9184b194cc1866b4c119d4df45ba23ccc5704665469a99793cce2fa9");
 });
+
+test("R9 observation diagnostic validator is required before any technical proof", async () => {
+  const reader = await import("./inspect-fixture-artifact.mjs");
+  assert.equal(
+    typeof reader.validateObservationDiagnostic,
+    "function",
+    "R9_OBSERVATION_VALIDATOR_ABSENT",
+  );
+  const observation = {
+    schema: "contaos.fixture.observation.v1",
+    frontendSha: PIN.frontend,
+    harnessSha: PIN.head,
+    deploymentId: PIN.deployment,
+    workflowRun: String(PIN.run),
+    firstFailure: null,
+  };
+  assert.equal(reader.validateObservationDiagnostic(observation, report()).firstFailure, null);
+});
