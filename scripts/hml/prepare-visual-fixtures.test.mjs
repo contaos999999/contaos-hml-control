@@ -4925,12 +4925,13 @@ test("R6 locked and authorized replay boundaries reject nested accessors and pro
       });
       if (authorized) instance.authorizeRecovery(sut.reconcileR1Recovery(r6RecoveryState()));
       assert.throws(
-        () => instance.arm({
-          rpc: "executar_comando_lista_v1",
-          payload,
-          requestId: randomUUID(),
-          verified: { context: true, capability: true, reconciled: true },
-        }),
+        () =>
+          instance.arm({
+            rpc: "executar_comando_lista_v1",
+            payload,
+            requestId: randomUUID(),
+            verified: { context: true, capability: true, reconciled: true },
+          }),
         { message: authorized ? "INTENT_PAYLOAD" : "RECOVERY_READ_ONLY" },
       );
       assert.equal(instance.snapshot().count, 8);
@@ -4941,40 +4942,18 @@ test("R6 locked and authorized replay boundaries reject nested accessors and pro
 });
 test("R6 diagnostics reject a proxy prototype without invoking descriptor traps", async () => {
   let traps = 0;
-  const prototype = new Proxy({}, {
-    getOwnPropertyDescriptor() {
-      traps++;
-      throw Error("CANARY");
+  const prototype = new Proxy(
+    {},
+    {
+      getOwnPropertyDescriptor() {
+        traps++;
+        throw Error("CANARY");
+      },
     },
-  });
+  );
   const failure = Object.create(prototype);
   const d = sut.createPreparationDiagnostics();
   await d.step("COMPETENCIES", () => r6RunMonthCatch(failure, d));
   assert.equal(d.snapshot().primaryFailure, "PREPARER_UNCLASSIFIED");
   assert.equal(traps, 0);
-});
-
-test("R6 temporary frozen public formatter bridge", async () => {
-  const fs = await import("node:fs/promises");
-  const crypto = await import("node:crypto");
-  const prettier = await import("prettier");
-  const { createRequire } = await import("node:module");
-  const require = createRequire(import.meta.url);
-  const emit = (path, raw) => {
-    const chunks = Buffer.from(raw).toString("base64").match(/.{1,1500}/g) || [];
-    console.log("R6FORMAT " + JSON.stringify({
-      path, total: chunks.length, version: prettier.version,
-      newSha: crypto.createHash("sha256").update(raw).digest("hex"),
-    }));
-    for (let i = 0; i < chunks.length; i++)
-      console.log("R6FORMAT " + JSON.stringify({ path, i, data: chunks[i] }));
-  };
-  const config = await prettier.resolveConfig(new URL("../../package.json", import.meta.url).pathname);
-  emit("formatter-config.json", JSON.stringify(config));
-  for (const path of ["prettier/standalone", "prettier/plugins/babel", "prettier/plugins/estree"])
-    emit(path, await fs.readFile(require.resolve(path), "utf8"));
-  for (const path of ["prepare-visual-fixtures.mjs", "prepare-visual-fixtures.test.mjs"]) {
-    const raw = await fs.readFile(new URL("./" + path, import.meta.url), "utf8");
-    emit(path, await prettier.format(raw, { filepath: path, ...config }));
-  }
 });
