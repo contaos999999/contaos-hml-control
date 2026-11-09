@@ -8897,3 +8897,37 @@ test("R12 a historical reconciliation without a current October opinion proof ca
     /RECOVERY_R11_OPINION/,
   );
 });
+
+test("R12 the original nonempty R11 receipt document validates in its actual pretty format", () => {
+  assert.deepEqual(sut.validateR11RecoveryDocument(R12_R11_DOCUMENT), R12_R11_DOCUMENT);
+  const receipts = JSON.parse(R12_R11_DOCUMENT.receiptsRaw);
+  assert.equal(JSON.stringify(receipts, null, 2) + "\n", R12_R11_DOCUMENT.receiptsRaw);
+  assert.notEqual(JSON.stringify(receipts) + "\n", R12_R11_DOCUMENT.receiptsRaw);
+});
+test("R12 the actual runtime budget call accepts all original proofs including reserved R11", async () => {
+  const s = await r6SourceNodes(),
+    entry = s.named("runFixturePreparation");
+  const n = s.nodes.find(
+    (n) =>
+      s.ts.isVariableDeclaration(n) &&
+      n.pos >= entry.pos &&
+      n.end <= entry.end &&
+      n.name.getText(s.ast) === "validatedBudget",
+  );
+  const env = {
+    err: (code) => {
+      throw Error(code);
+    },
+    R1_RECOVERY_DOCUMENT: sut.R1_RECOVERY_DOCUMENT,
+    R3_RECOVERY_DOCUMENT: sut.R3_RECOVERY_DOCUMENT,
+  };
+  for (const i of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+    env["validateR" + i + "RecoveryDocument"] = sut["validateR" + i + "RecoveryDocument"];
+  for (const i of [4, 5, 6, 7, 8, 9, 10, 11])
+    env["r" + i + "Recovery"] = sut["R" + i + "_RECOVERY_DOCUMENT"];
+  const actual = new Function(
+    ...Object.keys(env),
+    s.named("recoveryBudget").getText(s.ast) + ";return " + n.initializer.getText(s.ast) + ";",
+  )(...Object.values(env));
+  assert.deepEqual(actual, { confirmedBefore: 10, priorReserved: 1, maxNewIntentions: 13 });
+});
