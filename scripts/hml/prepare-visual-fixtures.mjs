@@ -234,13 +234,25 @@ export function preparerFailureDiagnostic(input) {
   };
 }
 
+const PREPARER_NATIVE_CODES = new Set(["FENCE_ASYNC","FENCE_BODY_LIMIT","FENCE_CDP_CLOSED","FENCE_CONFIGURATION","FENCE_CONTEXT_FOREIGN","FENCE_CONTEXT_UNKNOWN","FENCE_DOCUMENT_BODY","FENCE_DRAIN_TIMEOUT","FENCE_HEADERS","FENCE_INITIALIZATION","FENCE_LIFECYCLE_FRAME","FENCE_LIFECYCLE_NO_NETWORK","FENCE_LIFECYCLE_TERMINAL","FENCE_LIFECYCLE_TYPE","FENCE_NOT_PROVEN","FENCE_POPUP","FENCE_READY","FENCE_REDIRECT","FENCE_REQUEST","FENCE_REQUEST_LIFECYCLE","FENCE_SOURCE","FENCE_TARGET_DETACHED","FENCE_TARGET_FAILED","FENCE_TARGET_TIMEOUT","FENCE_TRANSPORT","FENCE_WORKER_PAUSED","FENCE_WORKER_RUNNING"]);
+function preparationErrorData(error,key) {
+  try {
+    if(!error || !["object","function"].includes(typeof error))return undefined;
+    let descriptor=Object.getOwnPropertyDescriptor(error,key);
+    if(!descriptor && key==="name")descriptor=Object.getOwnPropertyDescriptor(Object.getPrototypeOf(error)||{},key);
+    return descriptor && "value" in descriptor && typeof descriptor.value==="string" ? descriptor.value : undefined;
+  }catch{return undefined;}
+}
 function classifyPreparationFailure(error) {
-  const name=["Error","TypeError","ReferenceError","SyntaxError","TimeoutError"].includes(error?.name)?error.name:"UNKNOWN";
-  const code=PREPARER_FAILURE_CODES.has(error?.code)?error.code:
-    PREPARER_FAILURE_CODES.has(error?.message)?error.message:
+  const suppliedName=preparationErrorData(error,"name");
+  const name=["Error","TypeError","ReferenceError","SyntaxError","TimeoutError"].includes(suppliedName)?suppliedName:"UNKNOWN";
+  const suppliedCode=preparationErrorData(error,"code"),message=preparationErrorData(error,"message");
+  const code=PREPARER_NATIVE_CODES.has(suppliedCode)?suppliedCode:
+    PREPARER_FAILURE_CODES.has(suppliedCode)?suppliedCode:
+    PREPARER_FAILURE_CODES.has(message)?message:
     name==="TimeoutError"?"PREPARER_TIMEOUT":"PREPARER_UNCLASSIFIED";
   const compatible=preparerFailureDiagnostic({errorName:name});
-  return {code,errorName:name,failureClass:compatible.errorKind==="TIMEOUT"?"TIMEOUT":code==="PREPARER_UNCLASSIFIED"?"UNKNOWN":"PROTOCOL"};
+  return {code,errorName:name,failureClass:PREPARER_NATIVE_CODES.has(code)?"NATIVE_FENCE":compatible.errorKind==="TIMEOUT"?"TIMEOUT":code==="PREPARER_UNCLASSIFIED"?"UNKNOWN":"PROTOCOL"};
 }
 export function createPreparationDiagnostics() {
   const stack=[];let primary=null,lastCompleted=null,cleaning=false,logoutAttempted=false,logoutVerified=false,cleanupFailure=null;
