@@ -1644,6 +1644,11 @@ function r2Reconciliation(delta = {}) {
     contract: FIXTURE.contract,
   };
   return {
+    competencies: ["2026-10-01", "2026-09-01"].map((month) => ({
+      month,
+      observed: true,
+      count: 0,
+    })),
     ledger: sut.R1_RECOVERY_DOCUMENT,
     ledgerR3: sut.R3_RECOVERY_DOCUMENT,
     source: { ...context, id: FIXTURE.source, ...sut.SOURCE_FIELDS, version: 1, situacao: "ativa" },
@@ -2808,7 +2813,14 @@ test("R4 causal source read waits for admitted UI GET and completed response aft
   await f.observer.flush();
   const oldInFlight = f.request();
   // Historical reproduction only: R4 broker separately forbids saving this source again.
-  f.observer.markMutation?.("salvar_fonte_normativa_v107", { p_id_fonte: FIXTURE.source });
+  f.observer.markMutation?.("salvar_fonte_normativa_v107", {
+    p_id_fonte: FIXTURE.source,
+    p_versao_esperada: 1,
+  });
+  r4EmitMutation(f.page, "salvar_fonte_normativa_v107", {
+    p_id_fonte: FIXTURE.source,
+    p_versao_esperada: 1,
+  });
   let complete;
   const completion = new Promise((r) => (complete = r));
   let settled = false;
@@ -2846,7 +2858,14 @@ test("R4 causal source rejects stale prebarrier request drift and wrong identity
     f.response(f.request(), [f.row("rascunho")]);
     await f.observer.flush();
     const prior = f.request();
-    f.observer.markMutation("salvar_fonte_normativa_v107", { p_id_fonte: FIXTURE.source });
+    f.observer.markMutation("salvar_fonte_normativa_v107", {
+      p_id_fonte: FIXTURE.source,
+      p_versao_esperada: 1,
+    });
+    r4EmitMutation(f.page, "salvar_fonte_normativa_v107", {
+      p_id_fonte: FIXTURE.source,
+      p_versao_esperada: 1,
+    });
     if (mode === "inflight") f.response(prior, [f.row("ativa")]);
     if (mode === "drift") f.response(f.request({ ...f.query, evil: "true" }), [f.row("ativa")]);
     if (mode === "foreign")
@@ -2984,4 +3003,481 @@ test("R4 closed recovery and observation codes survive cleanup without private d
     assert.equal(d.snapshot().cleanupFailure, "LOGOUT_FAILED");
     assert.equal(JSON.stringify(d.snapshot()).includes("PRIVATE_TOKEN"), false);
   }
+});
+
+test("R4 approved minimal projections RPC5 causal observer cases", async () => {
+  const { EventEmitter } = await import("node:events");
+  const createOfficialObserver = sut.createOfficialObserver;
+  const F = FIXTURE,
+    C = "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa",
+    L = "bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb",
+    V = "cccccccc-3333-4333-8333-cccccccccccc";
+  const cases = [
+    {
+      name: "LIST_READ_RPC",
+      mutation: "executar_comando_lista_v1",
+      payload: { p_id_lista: L },
+      rpc: "obter_lista_operacional_v1",
+      args: {
+        p_id_organizacao: F.organization,
+        p_id_contrato: F.contract,
+        p_id_lista: L,
+        p_id_versao: null,
+        p_pagina_itens: 0,
+        p_pagina_versoes: 0,
+      },
+      old: {
+        schema_versao: "crud-lista-v1",
+        id_organizacao: F.organization,
+        id_contrato: F.contract,
+        lista: { id: L, nome: "synthetic", versao_registro: 1 },
+        versao: { id: V },
+        itens: [],
+      },
+      fresh: {
+        schema_versao: "crud-lista-v1",
+        id_organizacao: F.organization,
+        id_contrato: F.contract,
+        lista: { id: L, nome: "synthetic", versao_registro: 2 },
+        versao: { id: V },
+        itens: [],
+      },
+      check: (v) => v.lista.versao_registro === 2,
+    },
+    {
+      name: "OVERVIEW_AFTER_APPROVAL",
+      mutation: "aprovar_apresentacao",
+      payload: { p_id_competencia: C },
+      rpc: "obter_visao_geral_competencia",
+      args: { p_id_competencia: C },
+      old: {
+        competencia: {
+          id: C,
+          id_contrato: F.contract,
+          id_organizacao: F.organization,
+          situacao: "preparando",
+        },
+      },
+      fresh: {
+        competencia: {
+          id: C,
+          id_contrato: F.contract,
+          id_organizacao: F.organization,
+          situacao: "pode_apresentar_contratante",
+        },
+      },
+      check: (v) => v.competencia.situacao === "pode_apresentar_contratante",
+    },
+    {
+      name: "DOCUMENTS_AFTER_REUSE",
+      mutation: "criar_documento_competencia_v115",
+      payload: { p_id_competencia: C },
+      rpc: "obter_documentos_competencia_v115",
+      args: { p_id_competencia: C },
+      old: {
+        schema_versao: "v115-v1",
+        competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
+        documentos: [],
+      },
+      fresh: {
+        schema_versao: "v115-v1",
+        competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
+        documentos: [{ id: V, tipo: "outro", situacao: "ativo" }],
+      },
+      check: (v) => v.documentos.length === 1,
+    },
+    {
+      name: "ANALYSIS_AFTER_START",
+      mutation: "solicitar_analise_competencia",
+      payload: { p_id_competencia: C },
+      rpc: "obter_analise_competencia_v116",
+      args: { p_id_competencia: C },
+      old: {
+        schema_versao: "v116-v1",
+        competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
+        estado_analise: "not_analyzed",
+        execucao_atual: null,
+        resultados: [],
+      },
+      fresh: {
+        schema_versao: "v116-v1",
+        competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
+        estado_analise: "queued",
+        execucao_atual: { id: V, status: "pendente" },
+        resultados: [],
+      },
+      check: (v) => v.execucao_atual?.id === V,
+    },
+    {
+      name: "ANALYSIS_AFTER_REVIEW",
+      mutation: "registrar_revisao_requisito_v117",
+      payload: { p_id_competencia: C, p_id_requisito: L },
+      rpc: "obter_analise_competencia_v116",
+      args: { p_id_competencia: C },
+      old: {
+        schema_versao: "v116-v1",
+        competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
+        estado_analise: "complete",
+        execucao_atual: { id: L },
+        resultados: [],
+      },
+      fresh: {
+        schema_versao: "v116-v1",
+        competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
+        estado_analise: "complete",
+        execucao_atual: { id: V },
+        resultados: [{ id_requisito: L, id_resultado: V, resultado: "conforme" }],
+      },
+      check: (v) => v.execucao_atual.id === V,
+    },
+  ];
+  function rpcEmitter(page) {
+    return (rpc, args, value) => {
+      const request = {
+        method: () => "POST",
+        postData: () => JSON.stringify(args),
+        url: () => F.api + "/rest/v1/rpc/" + rpc,
+      };
+      page.emit("request", request);
+      page.emit("response", {
+        request: () => request,
+        url: request.url,
+        status: () => 200,
+        body: async () => Buffer.from(JSON.stringify(value)),
+      });
+    };
+  }
+  const results = [];
+  for (const c of cases) {
+    if (c.mutation === "executar_comando_lista_v1") {
+      c.payload.p_versao_esperada = 1;
+    }
+    if (c.mutation === "criar_documento_competencia_v115") {
+      c.payload.p_id_arquivo = F.file;
+      c.payload.p_id_requisito = L;
+      c.fresh.documentos = c.fresh.documentos.map((d) => ({
+        ...d,
+        situacao: "ativo",
+        arquivo: { id: F.file },
+        requisito: { id: L },
+      }));
+    }
+    if (c.mutation === "registrar_revisao_requisito_v117")
+      c.payload.p_id_execucao_esperada = c.old.execucao_atual.id;
+    if (c.mutation === "aprovar_apresentacao") {
+      c.fresh.competencia.situacao = "pode_apresentar_contratante";
+      c.fresh.blocking_summary = {
+        ...c.fresh.blocking_summary,
+        aprovacao_apresentacao_atual: true,
+      };
+    }
+    let tick = 0,
+      waits = 0;
+    const page = new EventEmitter(),
+      emit = rpcEmitter(page);
+    let observer;
+    observer = createOfficialObserver(page, {
+      now: () => tick,
+      wait: async () => {
+        tick += 2000;
+        waits++;
+        emit(c.rpc, c.args, c.fresh);
+        await observer.flush();
+      },
+    });
+    emit(c.rpc, c.args, c.old);
+    await observer.flush();
+    observer.markMutation(c.mutation, c.payload, {});
+    r4EmitMutation(page, c.mutation, c.payload, { lista: { id: c.fresh.lista?.id } });
+    const read = await observer.rpcRead(c.rpc, c.args);
+    assert.equal(c.check(read), true, c.name);
+    assert.equal(waits, 1);
+    results.push({ name: c.name, delayedFreshAccepted: true, oldIgnored: true });
+    observer.close();
+  }
+});
+
+test("R4 approved minimal projections TABLE5 causal observer cases", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { EventEmitter } = await import("node:events");
+  const createOfficialObserver = sut.createOfficialObserver;
+  const F = FIXTURE,
+    C = "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa",
+    P = "bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb",
+    K = "cccccccc-3333-4333-8333-cccccccccccc",
+    I = "dddddddd-4444-4444-8444-dddddddddddd";
+  const root = new URL("../../src/lib/competencias/", import.meta.url).pathname,
+    s1 = readFileSync(root + "parecerInternoDados.ts", "utf8"),
+    s2 = readFileSync(root + "protocoloDados.ts", "utf8");
+  const col = (s, n) => s.match(new RegExp("(?:)?const " + n + '\\s*=\\s*"([^"]+)"'))[1];
+  const context = { id_competencia: C, id_organizacao: F.organization, id_contrato: F.contract },
+    queryContext = {
+      id_competencia: "eq." + C,
+      id_organizacao: "eq." + F.organization,
+      id_contrato: "eq." + F.contract,
+    };
+  const opinionQ = {
+    select: col(s1, "COLUNAS_PARECERES"),
+    ...queryContext,
+    order: "versao.desc,id.desc",
+    offset: "0",
+    limit: "25",
+  };
+  const cases = [
+    {
+      name: "OPINION_REQUEST",
+      mutation: "solicitar_parecer_interno",
+      payload: { p_id_competencia: C },
+      table: "pareceres_internos",
+      q: opinionQ,
+      where: context,
+      row: { id: P, ...context, versao: 1, status: "pronto", hash: "a".repeat(64) },
+    },
+    {
+      name: "OPINION_APPROVAL",
+      mutation: "aprovar_parecer_interno",
+      payload: { p_id_parecer: P },
+      evidence: { opinions: [{ id: P, competency: C }] },
+      table: "pareceres_internos",
+      q: opinionQ,
+      where: { ...context, id: P },
+      row: {
+        id: P,
+        ...context,
+        versao: 1,
+        status: "aprovado",
+        hash: "a".repeat(64),
+        aprovado_em: "2026-11-09T00:00:00Z",
+      },
+    },
+    {
+      name: "PRESENTATION_RECORD",
+      mutation: "registrar_apresentacao",
+      payload: { p_id_competencia: C },
+      table: "apresentacoes_contratante",
+      q: { select: col(s2, "COL_AP"), ...queryContext, id: "eq." + P },
+      where: { ...context, id: P },
+      row: {
+        id: P,
+        ...context,
+        id_pacote: K,
+        protocolo: "synthetic",
+        forma_apresentacao: "synthetic",
+        apresentado_em: "2026-11-09T00:00:00Z",
+        tipo: "inicial",
+        numero_rodada: 1,
+      },
+    },
+    {
+      name: "PACKAGE_RECORD",
+      mutation: "registrar_apresentacao",
+      payload: { p_id_competencia: C },
+      table: "pacotes_competencia",
+      q: { select: col(s2, "COL_PK"), ...queryContext, id: "eq." + K },
+      where: { ...context, id: K },
+      row: {
+        id: K,
+        ...context,
+        hash_pacote: "a".repeat(64),
+        numero: 1,
+        tipo: "inicial",
+        status: "congelado",
+        congelado_em: "2026-11-09T00:00:00Z",
+      },
+    },
+    {
+      name: "PACKAGE_ITEMS",
+      mutation: "registrar_apresentacao",
+      payload: { p_id_competencia: C },
+      table: "itens_pacote_competencia",
+      q: {
+        select: col(s2, "COL_ITENS"),
+        ...queryContext,
+        id_pacote: "eq." + K,
+        order: "ordem.asc,id.asc",
+        offset: "0",
+        limit: "25",
+      },
+      where: { ...context, id_pacote: K },
+      row: {
+        id: I,
+        ...context,
+        id_pacote: K,
+        entidade_tipo: "documento",
+        entidade_id: P,
+        versao_id: K,
+        hash: "a".repeat(64),
+        ordem: 1,
+      },
+    },
+  ];
+  const results = [];
+  for (const c of cases) {
+    const page = new EventEmitter();
+    let n = 0;
+    let o;
+    function emit(rows) {
+      const r = {
+        method: () => "GET",
+        postData: () => null,
+        url: () => F.api + "/rest/v1/" + c.table + "?" + new URLSearchParams(c.q),
+      };
+      page.emit("request", r);
+      page.emit("response", {
+        request: () => r,
+        url: r.url,
+        status: () => 200,
+        body: async () => Buffer.from(JSON.stringify(rows)),
+      });
+    }
+    o = createOfficialObserver(page, {
+      now: () => n * 2000,
+      wait: async () => {
+        n++;
+        emit([c.row]);
+        await o.flush();
+      },
+    });
+    emit([]);
+    await o.flush();
+    o.markMutation(c.mutation, c.payload, c.evidence || {});
+    r4EmitMutation(page, c.mutation, c.payload);
+    const v = await o.read(c.table, c.where);
+    assert.equal(v.length, 1, c.name);
+    assert.equal(v[0].id, c.row.id, c.name);
+    assert.equal(n, 1);
+    results.push({ name: c.name, freshContextRead: true });
+    o.close();
+  }
+});
+
+function r4EmitMutation(page, rpc, payload, ack = {}, bodyWait) {
+  const request = {
+    method: () => "POST",
+    postData: () => JSON.stringify(payload),
+    url: () => FIXTURE.api + "/rest/v1/rpc/" + rpc,
+  };
+  page.emit("request", request);
+  page.emit("response", {
+    request: () => request,
+    url: request.url,
+    status: () => 200,
+    body: async () => {
+      if (bodyWait) await bodyWait;
+      return Buffer.from(JSON.stringify(ack));
+    },
+  });
+  return request;
+}
+
+test("R4 mutation response boundary excludes arm and precommit windows but accepts fast postACK refetch", async () => {
+  const f = await r4ObserverFixture({ wait: () => new Promise((r) => setTimeout(r, 5)) });
+  f.response(f.request(), [f.row("rascunho")]);
+  await f.observer.flush();
+  const payload = { p_id_fonte: FIXTURE.source, p_versao_esperada: 1 };
+  f.observer.markMutation("salvar_fonte_normativa_v107", payload);
+  let settled = false;
+  const read = f.observer.read("fontes_normativas", { id: FIXTURE.source }).then((rows) => {
+    settled = true;
+    return rows;
+  });
+  f.response(f.request(), [f.row("ativa")]);
+  await new Promise((r) => setTimeout(r, 15));
+  assert.equal(settled, false, "GET after arm before POST is not proof");
+  const request = {
+    method: () => "POST",
+    postData: () => JSON.stringify(payload),
+    url: () => FIXTURE.api + "/rest/v1/rpc/salvar_fonte_normativa_v107",
+  };
+  f.page.emit("request", request);
+  f.response(f.request(), [f.row("ativa")]);
+  await new Promise((r) => setTimeout(r, 15));
+  assert.equal(settled, false, "GET while mutation is uncommitted is not proof");
+  let release;
+  const body = new Promise((r) => (release = r));
+  f.page.emit("response", {
+    request: () => request,
+    url: request.url,
+    status: () => 200,
+    body: async () => {
+      await body;
+      return Buffer.from("{}");
+    },
+  });
+  f.response(f.request(), [f.row("ativa")]);
+  await new Promise((r) => setTimeout(r, 15));
+  assert.equal(settled, false, "ACK body must be admitted before readback");
+  release();
+  assert.equal((await read)[0].versao_registro, 2);
+  f.observer.close();
+});
+test("R4 postACK stale DTO waits for expected state and version without another mutation", async () => {
+  const f = await r4ObserverFixture({ wait: () => new Promise((r) => setTimeout(r, 5)) });
+  f.response(f.request(), [f.row("rascunho")]);
+  await f.observer.flush();
+  const payload = { p_id_fonte: FIXTURE.source, p_versao_esperada: 1 };
+  f.observer.markMutation("salvar_fonte_normativa_v107", payload);
+  r4EmitMutation(f.page, "salvar_fonte_normativa_v107", payload);
+  f.response(f.request(), [f.row("rascunho")]);
+  await f.observer.flush();
+  let settled = false;
+  const read = f.observer.read("fontes_normativas", { id: FIXTURE.source }).then((rows) => {
+    settled = true;
+    return rows;
+  });
+  await new Promise((r) => setTimeout(r, 15));
+  assert.equal(settled, false);
+  f.response(f.request(), [{ ...f.row("ativa"), versao_registro: 1 }]);
+  await new Promise((r) => setTimeout(r, 15));
+  assert.equal(settled, false, "state alone does not prove version+1");
+  f.response(f.request(), [f.row("ativa")]);
+  assert.equal((await read)[0].situacao, "ativa");
+  f.observer.close();
+});
+
+test("R4 recovery requires completed ordinary reads for both months before authorization", async () => {
+  const events = [];
+  let generation = 0;
+  const io = {
+    generation: () => generation,
+    goKnown: async () => {
+      events.push("navigate");
+      generation++;
+    },
+    page: {
+      getByLabel: (name, options) => {
+        assert.equal(name, "Competência");
+        assert.equal(options.exact, true);
+        return { fill: async (month) => events.push(month) };
+      },
+    },
+    observedAfter: async (name, where, floor) => {
+      assert.equal(name, "competencias");
+      assert.ok(generation > floor);
+      events.push("completed:" + where.competencia_referencia);
+    },
+    read: async (name, where, options) => {
+      assert.ok(events.includes("completed:" + where.competencia_referencia));
+      assert.ok(Number.isInteger(options.after));
+      return [];
+    },
+  };
+  const result = await sut.reconcileRecoveryCompetencies(io);
+  assert.deepEqual(
+    result.map((x) => x.month),
+    ["2026-10-01", "2026-09-01"],
+  );
+  assert.ok(result.every((x) => x.observed === true && x.count === 0));
+  await assert.rejects(
+    sut.reconcileRecoveryCompetencies({
+      ...io,
+      observedAfter: async () => {
+        throw new Error("OBSERVATION_ORDINAL");
+      },
+      read: async () => {
+        throw new Error("must not read cache");
+      },
+    }),
+    { message: "OBSERVATION_ORDINAL" },
+  );
 });

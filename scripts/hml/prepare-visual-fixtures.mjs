@@ -199,9 +199,70 @@ export function validateR1RecoveryDocument(input) {
   for (const receipt of input.receipts) safeReceipt(receipt);
   return freeze(structuredClone(input));
 }
+
+export async function reconcileRecoveryCompetencies(io) {
+  const result = [];
+  const select = EXACT_SELECTS.competencias.find((value) =>
+    value.includes("competencia_referencia,"),
+  );
+  for (const month of months) {
+    const after = io.generation();
+    await io.goKnown("/contratos/" + FIXTURE.contract + "/competencias");
+    await io.page.getByLabel("Competência", { exact: true }).fill(month.slice(0, 7));
+    const where = { id_contrato: FIXTURE.contract, competencia_referencia: month };
+    await io.observedAfter("competencias", where, after, { select });
+    const rows = await io.read("competencias", where, { select, after });
+    if (!(
+      Array.isArray(rows) &&
+      rows.length <= 1 &&
+      rows.every(
+        (row) =>
+          uuid(row.id) && row.id !== FIXTURE.historical && row.competencia_referencia === month,
+      )
+    ))
+      err("RECOVERY_STATE");
+    if (rows.length) {
+      const detailAfter = io.generation();
+      await io.link("/competencias/" + rows[0].id);
+      await io.observedAfter(
+        "obter_visao_geral_competencia",
+        { p_id_competencia: rows[0].id },
+        detailAfter,
+      );
+      const value = await io.rpcRead(
+        "obter_visao_geral_competencia",
+        { p_id_competencia: rows[0].id },
+        { after: detailAfter },
+      );
+      const c = value?.competencia;
+      if (!(
+        c?.id === rows[0].id &&
+        c.id_organizacao === FIXTURE.org &&
+        c.id_contrato === FIXTURE.contract &&
+        c.competencia_referencia === month &&
+        !["cancelada", "encerrada"].includes(c.situacao)
+      ))
+        err("RECOVERY_STATE");
+    }
+    result.push({ month, observed: true, count: rows.length });
+  }
+  return result;
+}
+
 export function reconcileR1Recovery(input) {
   validateR1RecoveryDocument(input?.ledger);
   validateR3RecoveryDocument(input?.ledgerR3);
+  if (
+    !Array.isArray(input.competencies) ||
+    input.competencies.length !== months.length ||
+    !months.every(
+      (month, i) =>
+        input.competencies[i]?.month === month &&
+        input.competencies[i].observed === true &&
+        [0, 1].includes(input.competencies[i].count),
+    )
+  )
+    err("RECOVERY_STATE");
   const s = input.source,
     v = input.version;
   if (
@@ -2268,33 +2329,18 @@ export function readbackTargets(rpc, payload = {}, evidence = {}) {
         { id_contrato: FIXTURE.contract, competencia_referencia: payload.p_competencia_referencia },
       ],
     ],
-    criar_documento_competencia_v115: [
-      ["obter_documentos_competencia_v115", c],
-      ["obter_visao_geral_competencia", c],
-    ],
-    solicitar_analise_competencia: [
-      ["obter_analise_competencia_v116", c],
-      ["obter_visao_geral_competencia", c],
-    ],
-    registrar_revisao_requisito_v117: [
-      ["obter_analise_competencia_v116", c],
-      ["obter_visao_geral_competencia", c],
-      ["obter_detalhe_requisito_v117", { ...c, p_id_requisito: payload.p_id_requisito }],
-    ],
-    solicitar_parecer_interno: [
-      ["pareceres_internos", { ...context, id_competencia: comp }],
-      ["obter_visao_geral_competencia", c],
-    ],
+    criar_documento_competencia_v115: [["obter_documentos_competencia_v115", c]],
+    solicitar_analise_competencia: [["obter_analise_competencia_v116", c]],
+    registrar_revisao_requisito_v117: [["obter_analise_competencia_v116", c]],
+    solicitar_parecer_interno: [["pareceres_internos", { ...context, id_competencia: comp }]],
     aprovar_parecer_interno: [
       ["pareceres_internos", { ...context, id_competencia: comp, id: payload.p_id_parecer }],
-      ["obter_visao_geral_competencia", c],
     ],
     aprovar_apresentacao: [["obter_visao_geral_competencia", c]],
     registrar_apresentacao: [
       ["apresentacoes_contratante", { id_competencia: comp }],
       ["pacotes_competencia", { id_competencia: comp }],
       ["itens_pacote_competencia", { id_competencia: comp }],
-      ["obter_visao_geral_competencia", c],
     ],
   };
   const targets = mapping[rpc];
@@ -2318,6 +2364,8 @@ export function readbackTargets(rpc, payload = {}, evidence = {}) {
 
 export function createOfficialObserver(page, { wait, now } = {}) {
   const floors = [];
+  const mutations = [],
+    mutationRequests = new WeakMap();
   const pending = new Set(),
     tables = new Map(),
     rpcs = new Map(),
@@ -2341,7 +2389,22 @@ export function createOfficialObserver(page, { wait, now } = {}) {
     if (bytes > 8 * 1024 * 1024 || count > 1024) err("OBSERVATION_LIMIT");
   };
   const onRequest = (request) => {
-    if (!closed) sequences.set(request, ++sequence);
+    if (!closed) {
+      sequences.set(request, ++sequence);
+      try {
+        const url = new URL(request.url());
+        const rpc =
+          url.origin === FIXTURE.api &&
+          request.method() === "POST" &&
+          /^\/rest\/v1\/rpc\/([a-z_0-9]+)$/.exec(url.pathname)?.[1];
+        const mutation = mutations.findLast((m) => m.rpc === rpc && !m.request);
+        if (mutation) {
+          mutation.request = request;
+          mutation.requestOrdinal = sequence;
+          mutationRequests.set(request, mutation);
+        }
+      } catch {}
+    }
   };
   const onResponse = (response) => {
     if (closed) return;
@@ -2361,6 +2424,8 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       return;
     }
     const ordinal = sequences.get(request);
+    const mutation = mutationRequests.get(request),
+      responseOrdinal = sequence;
     const task = (async () => {
       if (!ordinal) return;
       let query = null;
@@ -2401,6 +2466,11 @@ export function createOfficialObserver(page, { wait, now } = {}) {
         bytes.fill(0);
       }
       if (closed) return;
+      if (mutation) {
+        mutation.responseOrdinal = responseOrdinal;
+        mutation.ack = value;
+        mutation.admitted = true;
+      }
       if (table) {
         const rows = value === null ? [] : Array.isArray(value) ? value : [value];
         if (rows.length > 1000) err("OBSERVATION_LIMIT");
@@ -2488,12 +2558,121 @@ export function createOfficialObserver(page, { wait, now } = {}) {
         .sort((a, b) => b.ordinal - a.ordinal)[0] || null
     );
   }
+
+  function tableRows(table, where, options) {
+    if (!OBSERVED_TABLES.has(table) || !tables.has(table)) err("OBSERVATION_TABLE");
+    const { latest, ledger } = selectLatest(table, options),
+      empty = ledger.find((e) => e.rows.length === 0 && coversAbsence(e, where));
+    return [...latest.values()]
+      .filter(
+        ({ e, row }) => (!empty || e.ordinal >= empty.ordinal) && matchesObservation(e, row, where),
+      )
+      .map(({ row }) => row);
+  }
+  function rpcItem(rpc, where, options) {
+    return (rpcs.get(rpc) || []).find(
+      (e) =>
+        (options.after === undefined || e.ordinal > options.after) &&
+        Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
+    );
+  }
+
+  function expectedReadback(target, data) {
+    const { rpc, payload: p, ack } = target.mutation;
+    if (rpc === "salvar_fonte_normativa_v107")
+      return (
+        data.length === 1 &&
+        data[0].situacao === "ativa" &&
+        (!Number.isInteger(p.p_versao_esperada) ||
+          data[0].versao_registro === p.p_versao_esperada + 1)
+      );
+    if (rpc === "registrar_versao_fonte_v107") return data.length === 1 && uuid(data[0].id);
+    if (rpc === "aprovar_versao_fonte_v107") return data.length === 1 && !!data[0].aprovado_em;
+    if (rpc === "executar_comando_lista_v1")
+      return (
+        data?.lista?.versao_registro ===
+          (p.p_versao_esperada === null ? 1 : p.p_versao_esperada + 1) &&
+        data.lista.id === (p.p_id_lista || ack?.lista?.id) &&
+        (!target.versionId || data.versao?.id === target.versionId)
+      );
+    if (rpc === "criar_competencia")
+      return (
+        data.length === 1 &&
+        uuid(data[0].id) &&
+        data[0].competencia_referencia === p.p_competencia_referencia
+      );
+    if (rpc === "criar_documento_competencia_v115")
+      return (
+        data?.documentos?.some(
+          (d) =>
+            d.situacao === "ativo" &&
+            d.arquivo?.id === p.p_id_arquivo &&
+            d.requisito?.id === p.p_id_requisito,
+        ) === true
+      );
+    if (rpc === "solicitar_analise_competencia")
+      return (
+        uuid(data?.execucao_atual?.id) &&
+        ["queued", "processing", "complete"].includes(data.estado_analise)
+      );
+    if (rpc === "registrar_revisao_requisito_v117")
+      return uuid(data?.execucao_atual?.id) && data.execucao_atual.id !== p.p_id_execucao_esperada;
+    if (rpc === "solicitar_parecer_interno")
+      return data.length >= 1 && data.every((row) => uuid(row.id));
+    if (rpc === "aprovar_parecer_interno")
+      return (
+        data.length === 1 &&
+        data[0].id === p.p_id_parecer &&
+        data[0].status === "aprovado" &&
+        !!data[0].aprovado_em
+      );
+    if (rpc === "aprovar_apresentacao")
+      return (
+        data?.competencia?.situacao === "pode_apresentar_contratante" &&
+        data?.blocking_summary?.aprovacao_apresentacao_atual === true
+      );
+    if (rpc === "registrar_apresentacao")
+      return data.length >= 1 && data.every((row) => uuid(row.id));
+    return false;
+  }
+
+  async function waitTarget(target, where, options) {
+    return waitOfficialPhase({
+      read: async () => {
+        await flush();
+        const m = target.mutation;
+        if (!m.admitted || m.responseOrdinal === null) return false;
+        const after = Math.max(options.after || 0, m.responseOrdinal),
+          filtered = { ...options, after };
+        if (!(await api.observedAfter(target.name, where, after, filtered))) return false;
+        const rpc = rpcName(target.name),
+          data = rpc
+            ? rpcItem(rpc, where, filtered)?.value
+            : tableRows(target.name, where, filtered);
+        return expectedReadback(target, data);
+      },
+      ready: (value) => value === true,
+      ...(wait ? { wait } : {}),
+      ...(now ? { now } : {}),
+    });
+  }
   const api = {
     markMutation(rpc, payload, evidence) {
       if (closed || failed) err("OBSERVATION_FAILED");
       const ordinal = sequence;
+      const mutation = {
+        rpc,
+        payload,
+        ordinal,
+        request: null,
+        requestOrdinal: null,
+        responseOrdinal: null,
+        admitted: false,
+        ack: null,
+      };
+      mutations.push(mutation);
       for (const target of readbackTargets(rpc, payload, evidence))
-        floors.push({ ...target, ordinal });
+        floors.push({ ...target, ordinal, mutation });
       if (floors.length > 1024) err("OBSERVATION_LIMIT");
       return true;
     },
@@ -2530,39 +2709,40 @@ export function createOfficialObserver(page, { wait, now } = {}) {
           matchesObservation(e, row, where),
       );
     },
+
     async read(table, where = {}, options = {}) {
       const barrier = causalFloor(table, where);
       if (barrier) {
         where = { ...barrier.where, ...where };
-        options = { ...options, after: Math.max(options.after || 0, barrier.ordinal) };
-        await api.waitObservedAfter(table, where, options.after, options);
+        await waitTarget(barrier, where, options);
+        options = {
+          ...options,
+          after: Math.max(options.after || 0, barrier.mutation.responseOrdinal),
+        };
       }
       await flush();
-      if (!OBSERVED_TABLES.has(table) || !tables.has(table)) err("OBSERVATION_TABLE");
-      const { latest, ledger } = selectLatest(table, options),
-        empty = ledger.find((e) => e.rows.length === 0 && coversAbsence(e, where));
-      return [...latest.values()]
-        .filter(
-          ({ e, row }) =>
-            (!empty || e.ordinal >= empty.ordinal) && matchesObservation(e, row, where),
-        )
-        .map(({ row }) => structuredClone(row));
+      return tableRows(table, where, options).map((row) => structuredClone(row));
     },
     async rpcRead(name, where = {}, options = {}) {
       const barrier = causalFloor(name, where);
       if (barrier) {
         where = { ...barrier.where, ...where };
-        options = { ...options, after: Math.max(options.after || 0, barrier.ordinal) };
-        await api.waitObservedAfter(name, where, options.after);
+        await waitTarget(barrier, where, options);
+        options = {
+          ...options,
+          after: Math.max(options.after || 0, barrier.mutation.responseOrdinal),
+        };
       }
       await flush();
       const rpc = rpcName(name);
       if (!rpc) err("OBSERVATION_RPC");
-      const item = (rpcs.get(rpc) || []).find(
-        (e) =>
-          (options.after === undefined || e.ordinal > options.after) &&
-          Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
-      );
+      if (
+        !obj(options) ||
+        Object.keys(options).some((k) => k !== "after") ||
+        (options.after !== undefined && (!Number.isSafeInteger(options.after) || options.after < 0))
+      )
+        err("OBSERVATION_ORDINAL");
+      const item = rpcItem(rpc, where, options);
       if (
         barrier?.versionId &&
         (!item ||
@@ -2577,6 +2757,7 @@ export function createOfficialObserver(page, { wait, now } = {}) {
       tables.clear();
       rpcs.clear();
       floors.length = 0;
+      mutations.length = 0;
       page.off("request", onRequest);
       page.off("response", onResponse);
     },
@@ -3098,7 +3279,11 @@ export async function prepareSourceAndList(io) {
           sourceVersion: version.id,
         };
       }
+      const competencies = await tracedPreparation("RECOVERY_READ", () =>
+        reconcileRecoveryCompetencies(io),
+      );
       const proof = reconcileR1Recovery({
+        competencies,
         ledger: recovery,
         ledgerR3: io.recoveryLedgerR3,
         source: { ...source, ...context, version: source.versao_registro },
