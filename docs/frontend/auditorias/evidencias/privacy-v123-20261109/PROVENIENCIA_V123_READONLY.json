@@ -1,0 +1,312 @@
+{
+  "schema": "contaos.hml.privacy-v123-exact-catalog.v1",
+  "status": "REQUIRES_GATE_CI_INDEPENDENT_REVIEW_AND_MERGE_BEFORE_BUILD",
+  "verified_date_utc": "2026-11-09",
+  "document_base": "5e4c93e4fe41ef9e09f631a3dd27558ac6bafdda",
+  "context": {
+    "surface": "V123",
+    "origin": "https://contaos-41-hml.vercel.app",
+    "route": "/administracao/auditoria",
+    "project": "gklhhhyosgasnyoxlrui",
+    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee"
+  },
+  "provenance": {
+    "plan_pr": 385,
+    "discovery_gate_pr": 408,
+    "discovery_gate_merge": "a191ce3af74a15feb0fad8e2c681c6d05ee9aef0",
+    "metadata_receipt": {
+      "path": "docs/frontend/auditorias/evidencias/v123-metadata-20261109/METADATA_SQL1.json",
+      "commit": "a191ce3af74a15feb0fad8e2c681c6d05ee9aef0",
+      "blob": "f3a751c5ae38508313de36f58633141157f1d1ce"
+    },
+    "sql2_wrapper_v2_comment": 6729889266,
+    "wrapper_independent_review_comment": 6729918485,
+    "semantic_independent_receipt_comment": 6729946735,
+    "sql1_execution_count": 1,
+    "sql2_execution_count": 1,
+    "reviewer_count": 2,
+    "review_agreement_count": 60,
+    "technical_field_decisions": 50,
+    "operational_actor_field_decisions": 10,
+    "blocked_decisions": 0,
+    "inconclusive_decisions": 0,
+    "new_queries_for_catalog": 0
+  },
+  "sources": [
+    {
+      "path": "src/components/administracao/auditoria/TrilhaAuditoria.tsx",
+      "blob": "7ef709c1a7bae0fb53f7255e78240d1b35a039f4"
+    },
+    {
+      "path": "src/lib/administracao/auditoriaDados.ts",
+      "blob": "446e34255c98fdeb99182889b8992028d9573be3"
+    }
+  ],
+  "field_decisions_scoped_to_each_catalog_event": {
+    "evento": "CAMPO_TECNICO_SEM_PII",
+    "entidade": "CAMPO_TECNICO_SEM_PII",
+    "origem": "CAMPO_TECNICO_SEM_PII",
+    "id_usuario": "ATOR_OPERACIONAL_PSEUDONIMO_AUTORIZADO",
+    "id_entidade": "CAMPO_TECNICO_SEM_PII",
+    "correlation_id": "CAMPO_TECNICO_SEM_PII"
+  },
+  "actor_limits": {
+    "event_bound_only": true,
+    "no_auth_or_identity_lookup": true,
+    "no_current_session_actor_equality_required": true,
+    "no_synthetic_identity_claim": true,
+    "no_generic_uuid_authorization": true
+  },
+  "get_contract": {
+    "name": "v123_events_page0",
+    "method": "GET",
+    "origin": "https://gklhhhyosgasnyoxlrui.supabase.co",
+    "path": "/rest/v1/eventos_auditoria",
+    "query": {
+      "select": "id,criado_em,evento,entidade,origem,id_usuario,id_entidade,correlation_id",
+      "id_organizacao": "eq.e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      "order": "criado_em.desc,id.desc",
+      "offset": "0",
+      "limit": "25"
+    },
+    "shape": "array",
+    "row_keys": [
+      "id",
+      "criado_em",
+      "evento",
+      "entidade",
+      "origem",
+      "id_usuario",
+      "id_entidade",
+      "correlation_id"
+    ],
+    "exact_rows": 10,
+    "sql_catalog_total": 10,
+    "wire_total_observation": "NOT_PROJECTED_HEADERS_NOT_READ",
+    "organization_bound_by_query": true,
+    "never_fabricate": [
+      "id_organizacao",
+      "total"
+    ],
+    "allowed_browser_projection": "exact eight keys of the ten catalog events only; return validation enum/count only",
+    "http_status": 200,
+    "max_body_bytes": 262144,
+    "request_deadline_ms": 10000
+  },
+  "formatter": {
+    "locale": "pt-BR",
+    "timeZone": "America/Sao_Paulo",
+    "dateStyle": "short",
+    "timeStyle": "medium",
+    "postprocess": "NONE",
+    "preserve_comma": true,
+    "include_seconds": true,
+    "instant_guard": "BIGINT_MICROSECONDS_NO_DATE_TRUNCATION"
+  },
+  "visible_columns": [
+    {
+      "label": "Data e hora",
+      "catalog_field": "formatted_created"
+    },
+    {
+      "label": "Evento",
+      "catalog_field": "evento"
+    },
+    {
+      "label": "Entidade",
+      "catalog_field": "entidade"
+    },
+    {
+      "label": "Usuário",
+      "catalog_field": "id_usuario"
+    },
+    {
+      "label": "Correlação",
+      "catalog_field": "correlation_id"
+    }
+  ],
+  "events": [
+    {
+      "id": "b787a52b-844f-4b38-804c-cc80236f30f9",
+      "criado_em": "2026-11-09T00:40:31.843518+00:00",
+      "evento": "V107VersaoAprovada",
+      "entidade": "versoes_fontes_normativas",
+      "origem": "usuario",
+      "id_usuario": "f044c709-0936-4d3e-a496-dc59d6c35285",
+      "id_entidade": "1ebbfd0b-c50c-405d-8806-321f18e179e0",
+      "correlation_id": "6cad94cc-2e94-4d8d-b2ab-4178b2bb92cc",
+      "formatted_created": "08/11/2026, 21:40:31"
+    },
+    {
+      "id": "29e6c03a-281b-4e86-9cef-f1ff89911385",
+      "criado_em": "2026-11-09T00:40:30.63594+00:00",
+      "evento": "V107VersaoRegistrada",
+      "entidade": "versoes_fontes_normativas",
+      "origem": "usuario",
+      "id_usuario": "f044c709-0936-4d3e-a496-dc59d6c35285",
+      "id_entidade": "1ebbfd0b-c50c-405d-8806-321f18e179e0",
+      "correlation_id": "1ed43474-01c8-4bd5-9894-f6b9d0d70241",
+      "formatted_created": "08/11/2026, 21:40:30"
+    },
+    {
+      "id": "e4ee5b43-cb40-44b6-b883-5f73e79c3ada",
+      "criado_em": "2026-11-08T11:01:27.195787+00:00",
+      "evento": "V107FonteSalva",
+      "entidade": "fontes_normativas",
+      "origem": "usuario",
+      "id_usuario": "f044c709-0936-4d3e-a496-dc59d6c35285",
+      "id_entidade": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",
+      "correlation_id": "2de433a7-a84c-4575-aa2a-7699d2871b55",
+      "formatted_created": "08/11/2026, 08:01:27"
+    },
+    {
+      "id": "dcd60ec0-e36c-4c7d-aa4a-b82c311e06d2",
+      "criado_em": "2026-11-08T05:41:35.77542+00:00",
+      "evento": "DocumentoContratoMetadadosCompletos",
+      "entidade": "documentos_contrato",
+      "origem": "usuario",
+      "id_usuario": "f044c709-0936-4d3e-a496-dc59d6c35285",
+      "id_entidade": "525e54fc-feec-4dc0-b540-1510a3c52485",
+      "correlation_id": "b06ddba4-f824-4bd7-93f7-c27aa079e6c2",
+      "formatted_created": "08/11/2026, 02:41:35"
+    },
+    {
+      "id": "8e37f6ee-589c-4cad-ae90-e953680c4b96",
+      "criado_em": "2026-11-08T05:41:35.77542+00:00",
+      "evento": "DocumentoContratoCriado",
+      "entidade": "documentos_contrato",
+      "origem": "usuario",
+      "id_usuario": "f044c709-0936-4d3e-a496-dc59d6c35285",
+      "id_entidade": "525e54fc-feec-4dc0-b540-1510a3c52485",
+      "correlation_id": "79d5083f-828e-487e-9ffb-9961ceca64f3",
+      "formatted_created": "08/11/2026, 02:41:35"
+    },
+    {
+      "id": "109133b6-d311-43db-81ae-54736e4e11d2",
+      "criado_em": "2026-11-08T05:26:30.074829+00:00",
+      "evento": "UploadArquivoConfirmado",
+      "entidade": "arquivos",
+      "origem": "usuario",
+      "id_usuario": "f044c709-0936-4d3e-a496-dc59d6c35285",
+      "id_entidade": "8cc6ac08-7f5b-469c-ab50-7b33d5a12379",
+      "correlation_id": "4a6598fc-5266-4c91-99fb-5d34eade3428",
+      "formatted_created": "08/11/2026, 02:26:30"
+    },
+    {
+      "id": "c2779309-82cd-40eb-b5ca-278b0b7d3646",
+      "criado_em": "2026-11-08T04:50:40.455572+00:00",
+      "evento": "ListaOperacionalAlterada",
+      "entidade": "listas_verificacao",
+      "origem": "usuario",
+      "id_usuario": "f044c709-0936-4d3e-a496-dc59d6c35285",
+      "id_entidade": "1613484c-87ee-4276-a464-d1a378134fc9",
+      "correlation_id": "b899e186-0f03-45b1-b047-7817af625ace",
+      "formatted_created": "08/11/2026, 01:50:40"
+    },
+    {
+      "id": "6b0992e9-7751-44d1-bb35-c9b53007072c",
+      "criado_em": "2026-11-08T04:00:25.793962+00:00",
+      "evento": "CompetenciaCriada",
+      "entidade": "competencias",
+      "origem": "usuario",
+      "id_usuario": "f044c709-0936-4d3e-a496-dc59d6c35285",
+      "id_entidade": "59072760-4420-4598-82dd-367f41a79e89",
+      "correlation_id": "da0efaed-6999-4e76-a017-7c73be7f9f28",
+      "formatted_created": "08/11/2026, 01:00:25"
+    },
+    {
+      "id": "030dde4c-de6a-423a-8c35-9a601cdedfaf",
+      "criado_em": "2026-11-08T03:59:41.922811+00:00",
+      "evento": "ContratoCriado",
+      "entidade": "contratos",
+      "origem": "usuario",
+      "id_usuario": "f044c709-0936-4d3e-a496-dc59d6c35285",
+      "id_entidade": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      "correlation_id": "e7d1976f-a94e-4663-a02f-ae793e0f4bd9",
+      "formatted_created": "08/11/2026, 00:59:41"
+    },
+    {
+      "id": "6da8c1f0-2c93-4039-9bf8-5d0dcf77a5e1",
+      "criado_em": "2026-11-08T03:58:51.143282+00:00",
+      "evento": "ContratanteCriado",
+      "entidade": "contratantes",
+      "origem": "usuario",
+      "id_usuario": "f044c709-0936-4d3e-a496-dc59d6c35285",
+      "id_entidade": "041ebf9f-5e32-4744-80d6-d745fa5fc483",
+      "correlation_id": "55560023-3d9b-4a44-af21-d42779f18b4a",
+      "formatted_created": "08/11/2026, 00:58:51"
+    }
+  ],
+  "anchors": {
+    "region": "div[role=\"region\"][aria-label=\"Eventos de auditoria\"]",
+    "caption": "Eventos de auditoria da organização",
+    "header_columns": [
+      "Data e hora",
+      "Evento",
+      "Entidade",
+      "Usuário",
+      "Correlação"
+    ],
+    "row_count": 10,
+    "cells_per_row": 5,
+    "row_identity": "unique complete five-cell tuple mapped bijectively to a catalog event; then require API order",
+    "row_ids_not_in_dom": true,
+    "dom_cells": "direct plain-text TD nodes, exact full value, no attributes except class, no extra children",
+    "filters": "six source-labelled inputs empty, including both date fields",
+    "pagination": "unique source nav; Página 1; Anterior and Próxima disabled",
+    "rendered_mapping": "unique exact source row.innerText with five cell strings separated by TAB; map local cell intervals into original full rendered",
+    "aria_mapping": "unique exact row subtree in original full body snapshot, differing only by fixed indentation; five values appear in row accessible name and their own cell names",
+    "aria_field_representations_per_cell": 2,
+    "intervals_only": true,
+    "no_full_row_or_subtree_removal": true,
+    "no_global_replacement": true,
+    "duplicate_values": "expected repeated actor/entity/date values permitted only at their catalog-owned intervals; substring contained in another owned longer field is not an extra occurrence; any uncovered copy rejects"
+  },
+  "local_source_shaped_fixture": {
+    "state": "VALIDATED_NO_HML",
+    "node": "24.22.1",
+    "chromium_sandbox": true,
+    "rows_validated": 10,
+    "cells_validated": 50,
+    "rendered_tab_rows_validated": 10,
+    "node_browser_formatter_equal": 10,
+    "row_accessible_name_and_cell_value_copies": 2,
+    "external_requests": 0,
+    "semantic_queries": 0,
+    "not_a_runtime_capture": true
+  },
+  "validity": {
+    "same_navigation_document_session_org_target_route": true,
+    "max_age_ms": 120000,
+    "no_cache_inheritance": true,
+    "reset_on": [
+      "navigation",
+      "document replacement",
+      "session change",
+      "organization change",
+      "target change",
+      "route change",
+      "logout",
+      "close",
+      "GET failure",
+      "timeout",
+      "request mismatch",
+      "row mismatch",
+      "known new audit-producing operation including R2"
+    ],
+    "new_events_expire_catalog": true,
+    "no_current_or_future_page_certification": true
+  },
+  "preservation": {
+    "sensitive_patterns_on_original_first": true,
+    "full_rendered_snapshot_remaining_classified": true,
+    "original_png_dom_unchanged": true,
+    "opaque_media_and_limits_preserved": true,
+    "no_new_request": true,
+    "no_auth_or_headers": true,
+    "no_product_or_dependency_change": true,
+    "no_global_dictionary": true,
+    "no_runtime_pass_claim": true,
+    "original_proofs_byte_preserved": true
+  }
+}

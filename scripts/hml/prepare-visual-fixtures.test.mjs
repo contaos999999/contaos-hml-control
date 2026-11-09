@@ -1613,44 +1613,13 @@ test("solicitacao unica: preparador nao aceita marcador workflow_run sem prova",
   );
 });
 
-test("preparer uses verified native launcher with its exact port and proxy", async () => {
-  const { readFile } = await import("node:fs/promises"),
-    ts = (await import("typescript")).default;
-  const text = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8");
-  const source = ts.createSourceFile(
-      "preparer.mjs",
-      text,
-      ts.ScriptTarget.Latest,
-      true,
-      ts.ScriptKind.JS,
-    ),
-    calls = [];
-  function visit(n) {
-    if (
-      ts.isCallExpression(n) &&
-      ts.isIdentifier(n.expression) &&
-      n.expression.text === "launchNativeBrowser"
-    )
-      calls.push(n);
-    ts.forEachChild(n, visit);
-  }
-  visit(source);
-  assert.equal(calls.length, 1);
-  const invoke = new Function(
-    "launchNativeBrowser",
-    "debugPort",
-    "proxy",
-    "return " + calls[0].getText(source),
+test("popup policy: preparer awaits the shared proved launcher before context and login", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8");
+  const launch = source.indexOf(
+    "browser = await launchNativeBrowser({ chromium, debugPort, proxy: proxy.url })",
   );
-  let received;
-  const value = invoke(
-    (...args) => {
-      received = args;
-      return "verified-browser";
-    },
-    4141,
-    { url: "http://127.0.0.1:8181" },
-  );
-  assert.equal(value, "verified-browser");
-  assert.deepEqual(received, [4141, "http://127.0.0.1:8181"]);
+  const context = source.indexOf("const context = await browser.newContext", launch);
+  assert.ok(launch > 0 && context > launch);
+  assert.equal(source.includes("chromium.launch("), false);
 });
