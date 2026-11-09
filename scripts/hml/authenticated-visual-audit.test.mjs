@@ -6647,3 +6647,105 @@ test("privacy123 RED DOM maps unique complete tuples and rejects copied hidden o
     finally { dom.window.close(); }
   }
 });
+
+test("privacy123 native boundary requires factual complete supplemental TAP before proof", async () => {
+  const good = "ok 1 - privacy123 Chromium full DOM ARIA matrix binds approved ordered page\n# tests 1\n# pass 1\n# fail 0\n# skipped 0\n# cancelled 0\n";
+  assert.equal(fn("privacy123Supplement")(good), 1);
+  for (const bad of ["", good.replace("# pass 1", "# pass 0"), good.replace("# skipped 0", "# skipped 1"), good + "# tests 1\n"])
+    assert.equal(fn("privacy123Supplement")(bad), null);
+  const { readFile } = await import("node:fs/promises"), ts = await import("typescript");
+  const source = await readFile(new URL("./authenticated-visual-audit.mjs", import.meta.url), "utf8");
+  const ast = ts.createSourceFile("auditor.mjs", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  const guard = ast.statements.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "nativeGuard").getText(ast);
+  assert.ok(guard.includes("--test-name-pattern=^privacy123 Chromium full DOM ARIA matrix"));
+  assert.ok(guard.indexOf("privacy123Supplement(supplement.stdout)") < guard.indexOf('await mkdir(".audit-work"'));
+});
+test("privacy123 Chromium full DOM ARIA matrix binds approved ordered page",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 45000 },
+  async () => {
+    const { chromium } = await import("playwright"), { readFile } = await import("node:fs/promises");
+    const sdkFile = require.resolve("@supabase/postgrest-js").replace(/index\.cjs$/, "index.mjs");
+    const sdkModule = "data:text/javascript;base64," + (await readFile(sdkFile)).toString("base64");
+    const proof = await fn("loadPrivacy78Proof")(), v123Proof = await fn("loadPrivacy123Proof")();
+    const wireProof = await fn("loadPrivacyWireProof")(), words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+    const browser = await chromium.launch({ chromiumSandbox: true });
+    let matrix = 0;
+    try {
+      for (const width of [1440, 1280, 768, 390]) for (const theme of ["light", "dark"]) {
+        const page = await browser.newPage({ viewport: { width, height: 900 }, colorScheme: theme, serviceWorkers: "block" });
+        try {
+          const html = '<meta charset="utf-8"><style>table{min-width:48rem;table-layout:fixed}td{overflow-wrap:anywhere}caption{position:absolute;width:1px;height:1px;overflow:hidden}div[role=region]{overflow-x:auto}</style>' + privacy123Fixture();
+          await page.route("**/*", (route) => route.fulfill({ contentType: "text/html", body: html }));
+          await page.goto(HML + v123Proof.context.route);
+          await page.evaluate((dark) => document.documentElement.classList.toggle("dark", dark), theme === "dark");
+          await page.evaluate(({ data }) => {
+            window.__v123SyntheticBody = data;
+            window.__v123SyntheticCalls = 0;
+            window.fetch = function (url) {
+              window.__v123SyntheticCalls++;
+              const response = new Response(JSON.stringify(window.__v123SyntheticBody), { status: 200, headers: { "content-range": "0-9/10" } });
+              Object.defineProperty(response, "url", { value: String(url) });
+              return Promise.resolve(response);
+            };
+          }, { data: v123Proof.events.map(({ formatted_created, ...row }) => row) });
+          await page.evaluate(fn("privacy78Runtime"), { proof, wireProof, v123Proof, install: true });
+          assert.deepEqual(await page.evaluate(() => window.__contaosPrivacy78.read().observed), []);
+          const sdkResult = await page.evaluate(async ({ sdkModule, origin, organization }) => {
+            const { PostgrestClient } = await import(sdkModule);
+            const client = new PostgrestClient(origin + "/rest/v1", { fetch: window.fetch });
+            const result = await client.from("eventos_auditoria")
+              .select("id,criado_em,evento,entidade,origem,id_usuario,id_entidade,correlation_id", { count: "exact" })
+              .eq("id_organizacao", organization).order("criado_em", { ascending: false })
+              .order("id", { ascending: false }).range(0, 24);
+            return { rows: result.data?.length, sdkCount: result.count, error: !!result.error };
+          }, { sdkModule, origin: API, organization: v123Proof.context.organization });
+          assert.deepEqual(sdkResult, { rows: 10, sdkCount: 10, error: false });
+          await page.waitForFunction(() => window.__contaosPrivacy78?.read()?.observed.includes("v123_events_page0"));
+          assert.equal(await page.evaluate(() => window.__v123SyntheticCalls), 1);
+          const collect = async () => {
+            const anchor = await page.evaluate(fn("privacy123FieldAnchor"), { proof: v123Proof });
+            assert.ok(anchor, "complete source DOM");
+            const fieldSnapshots = await fn("privacy123FieldSnapshots")(page, anchor);
+            const rendered = await page.evaluate(() => {
+              const values = [document.body.innerText];
+              for (const e of document.querySelectorAll("input,textarea,select,[aria-label],[title],[placeholder]"))
+                if (e.getClientRects().length && getComputedStyle(e).visibility !== "hidden") {
+                  for (const key of ["aria-label", "title", "placeholder"]) if (e.getAttribute(key)) values.push(e.getAttribute(key));
+                  if ("value" in e && e.value) values.push(e.value);
+                }
+              return values.join("\n");
+            });
+            const snapshot = await page.locator("body").ariaSnapshot();
+            const receipt = await page.evaluate(() => window.__contaosPrivacy78.read());
+            const input = { proof, v123Proof, rendered, snapshot, fieldSnapshots, anchored: true,
+              receipt: receipt && Object.freeze({ ...receipt, route: v123Proof.context.route, observed: Object.freeze(receipt.observed) }) };
+            return { input, context: fn("privacy123FieldContext")(input) };
+          };
+          const original = await collect();
+          assert.ok(original.context, "100 ARIA and 50 rendered cell intervals");
+          for (const channel of ["rendered", "snapshot"])
+            assert.equal(fn("classifyArtifactText")(original.input[channel], words, { fieldContext: original.context, snapshot: channel === "snapshot" }).reason, "ALLOWED");
+          await page.evaluate(() => { const n = document.createElement("p"); n.id = "negative"; n.setAttribute("aria-label", "CANARIO_PRIVADO"); document.body.append(n); });
+          const unknown = await collect();
+          for (const channel of ["rendered", "snapshot"])
+            assert.notEqual(fn("classifyArtifactText")(unknown.input[channel], words, { fieldContext: unknown.context, snapshot: channel === "snapshot" }).reason, "ALLOWED");
+          await page.locator("#negative").evaluate((n) => n.textContent = "pessoa@example.com");
+          const sensitive = await collect();
+          for (const channel of ["rendered", "snapshot"])
+            assert.equal(fn("classifyArtifactText")(sensitive.input[channel], words, { fieldContext: sensitive.context, snapshot: channel === "snapshot" }).reason, "SENSITIVE_PATTERN");
+          await page.locator("#negative").evaluate((n) => n.remove());
+          await page.evaluate((actor) => { const n = document.createElement("p"); n.id = "copy"; n.textContent = actor; document.body.append(n); }, v123Proof.events[0].id_usuario);
+          assert.equal((await collect()).context, null);
+          await page.locator("#copy").evaluate((n) => n.remove());
+          await page.locator("tbody tr").first().evaluate((n) => n.setAttribute("aria-labelledby", "known-literal"));
+          assert.equal(await page.evaluate(fn("privacy123FieldAnchor"), { proof: v123Proof }), null);
+          await page.locator("tbody tr").first().evaluate((n) => n.removeAttribute("aria-labelledby"));
+          await page.evaluate(() => window.dispatchEvent(new PopStateEvent("popstate")));
+          assert.equal(await page.evaluate(() => window.__contaosPrivacy78.read()), null);
+          matrix++;
+        } finally { await page.close(); }
+      }
+      assert.equal(matrix, 8);
+    } finally { await browser.close(); }
+  },
+);
