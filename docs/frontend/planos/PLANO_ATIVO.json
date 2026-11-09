@@ -2634,5 +2634,30 @@
     "brand72": "NAO_VERIFICADO_GLOBAL",
     "v1_certified": false,
     "latest_reanchor": "source_proof.reanchor_after_c13_fk_activation"
+  },
+  "trilha_a_r4_readback_gate": {
+    "state": "GATE_ONLY_BUILD_AFTER_CI_REVIEW_MERGE",
+    "path": "docs/frontend/planos/TRILHA_A_FIXTURES_R4_READBACK_LEDGER_GATE_2026-11-09.md",
+    "nonce_future": "trilha-a-fixtures-20261109-r4",
+    "spent": [
+      "trilha-a-fixtures-20261108-r1",
+      "trilha-a-fixtures-20261109-r2",
+      "trilha-a-fixtures-20261109-r3"
+    ],
+    "r3_run": 42559214436,
+    "r3_artifact": 13648722477,
+    "r3_failure": "FLOW_ACTIVE_NOT_READBACK",
+    "r3_logout_verified": true,
+    "r3_bindings": null,
+    "total_confirmed_operations": 3,
+    "new_intents_max": 21,
+    "denied": [
+      "registrar_versao_fonte_v107",
+      "aprovar_versao_fonte_v107",
+      "salvar_fonte_normativa_v107"
+    ],
+    "r3_request": "309caf6c-5551-4e2b-ae33-4607a95ea025",
+    "r3_payload_sha256": "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34",
+    "no_auth_or_rerun_by_gate": true
   }
 }
