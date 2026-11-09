@@ -7929,3 +7929,10 @@ test("R11 typed action pagination and blocking envelopes reject foreign fields",
     );
   }
 });
+
+test("R11 R10 recovery document preserves the original own-key order", () => {
+  const literal = sut.R10_RECOVERY_DOCUMENT;
+  assert.deepEqual(sut.validateR10RecoveryDocument(literal), literal);
+  const reversed = Object.fromEntries(Object.entries(literal).reverse());
+  assert.throws(() => sut.validateR10RecoveryDocument(reversed), /RECOVERY_R10_LEDGER/);
+});
