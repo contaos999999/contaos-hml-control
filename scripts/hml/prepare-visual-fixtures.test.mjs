@@ -41,6 +41,54 @@ test("Run27 diagnóstico desconhecido permanece fechado e não serializa canári
   });
 });
 const payload = { p_id_contrato: FIXTURE.contract, p_competencia_referencia: "2026-10-01" };
+test("R2 recusa ledger ausente adulterado incompleto ou incerto antes de intenção", () => {
+  assert.equal(typeof sut.validateFixtureResumeLedger, "function");
+  assert.equal(typeof sut.R1_FIXTURE_RECEIPTS, "string");
+  assert.equal(sut.validateFixtureResumeLedger(sut.R1_FIXTURE_RECEIPTS).consumedIntents, 2);
+  const original = JSON.parse(sut.R1_FIXTURE_RECEIPTS);
+  for (const changed of [
+    null,
+    "",
+    JSON.stringify({ ...original, receipts: original.receipts.slice(0, 3) }),
+    JSON.stringify({
+      ...original,
+      receipts: original.receipts.map((r) => ({ ...r, state: "uncertain" })),
+    }),
+    sut.R1_FIXTURE_RECEIPTS.replace("confirmed", "CANARY"),
+  ])
+    assert.throws(() => sut.validateFixtureResumeLedger(changed), /RESUME_LEDGER/);
+});
+test("R2 permanece somente leitura até reconciliação e proíbe repetir registro/aprovação", () => {
+  let ready = false;
+  const b = broker({ resumeLedger: sut.R1_FIXTURE_RECEIPTS, resumeReady: () => ready });
+  assert.throws(() => arm(b), /RESUME_READONLY/);
+  assert.equal(b.snapshot().count, 2);
+  ready = true;
+  for (const rpc of ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"])
+    assert.throws(
+      () =>
+        b.arm({
+          rpc,
+          payload: {},
+          requestId: randomUUID(),
+          verified: { context: true, capability: true, reconciled: true },
+        }),
+      /RESUME_FORBIDDEN/,
+    );
+  assert.equal(b.snapshot().count, 2);
+  arm(b);
+  assert.equal(b.policy(request()), true);
+});
+test("R2 contabiliza duas confirmações anteriores e permite no máximo22 novas intenções", () => {
+  const b = broker({ resumeLedger: sut.R1_FIXTURE_RECEIPTS, resumeReady: () => true });
+  for (let i = 0; i < 22; i++) {
+    arm(b);
+    assert.equal(b.policy(request()), true);
+    b.resolve("confirmed");
+  }
+  assert.equal(b.snapshot().count, 24);
+  assert.throws(() => arm(b), /INTENT_BUDGET/);
+});
 const request = (body = payload, extra = {}) => ({
   url: FIXTURE.api + "/rest/v1/rpc/criar_competencia",
   method: "POST",
