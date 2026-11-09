@@ -5932,6 +5932,11 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     sut.SINGLE_REQUEST.contextualProjectionGateSha,
     sut.SINGLE_REQUEST.asynchronousOpinionGateSha,
     sut.SINGLE_REQUEST.canonicalProfileGateSha,
+    sut.SINGLE_REQUEST.r13RecoveryGateSha,
+    sut.SINGLE_REQUEST.uiSecurityRecoveryGateSha,
+    sut.SINGLE_REQUEST.listReadinessSecuritySha,
+    sut.SINGLE_REQUEST.listReadinessBuildSha,
+    sut.SINGLE_REQUEST.r14PlanSha,
     sut.SINGLE_REQUEST.autoGateSha,
   ]);
   await assert.rejects(
@@ -10447,9 +10452,9 @@ test("R12 auth protocol executes the real preparer runtime budget with every ori
     R1_RECOVERY_DOCUMENT: prep.R1_RECOVERY_DOCUMENT,
     R3_RECOVERY_DOCUMENT: prep.R3_RECOVERY_DOCUMENT,
   };
-  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13])
     env["validateR" + n + "RecoveryDocument"] = prep["validateR" + n + "RecoveryDocument"];
-  for (const n of [4, 5, 6, 7, 8, 9, 10, 11])
+  for (const n of [4, 5, 6, 7, 8, 9, 10, 11, 13])
     env["r" + n + "Recovery"] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   assert.deepEqual(
     new Function(
@@ -10498,7 +10503,7 @@ test("R12 auth protocol rejects a partial pending October GET before any further
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
@@ -10625,7 +10630,7 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
@@ -10752,7 +10757,7 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
@@ -12109,7 +12114,7 @@ test("R13 request nonce is accepted and the preAuth R12 nonce stays spent", () =
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261109-r13",
+    request_id: "trilha-a-fixtures-20261109-r14",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -12632,4 +12637,57 @@ test("R13 local cache rejects cross proof and stale refresh before private conte
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("R14 recovery document is mandatory, byte exact, and rejects hostile authority", () => {
+  const validate = fn("validateR13RecoveryDocument");
+  const doc = sut.R13_RECOVERY_DOCUMENT;
+  assert.equal(validate(doc).schema, "contaos.fixture.recovery-r13.v1");
+  for (const bad of [
+    undefined,
+    null,
+    {},
+    { ...doc, reportRaw: doc.reportRaw + " " },
+    { ...doc, receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}' },
+  ])
+    assert.throws(() => validate(bad), /RECOVERY_R13_LEDGER/);
+  let calls = 0;
+  const getter = { ...doc };
+  Object.defineProperty(getter, "reportRaw", {
+    enumerable: true,
+    get() {
+      calls++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  assert.throws(() => validate(getter), /RECOVERY_R13_LEDGER/);
+  assert.throws(
+    () =>
+      validate(
+        new Proxy(doc, {
+          get() {
+            calls++;
+            throw Error("PRIVATE_CANARY");
+          },
+        }),
+      ),
+    /RECOVERY_R13_LEDGER/,
+  );
+  assert.equal(calls, 0);
+  const reordered = Object.fromEntries(Object.entries(doc).reverse());
+  assert.throws(() => validate(reordered), /RECOVERY_R13_LEDGER/);
+});
+test("R14 spends R13 and admits only the governed next fixture nonce", () => {
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r13",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify(request)), /REQUEST_SCHEMA/);
+  request.request_id = "trilha-a-fixtures-20261109-r14";
+  assert.equal(sut.parseSingleRequest(JSON.stringify(request)).request_id, request.request_id);
 });

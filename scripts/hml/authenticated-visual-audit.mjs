@@ -6758,6 +6758,77 @@ function runtimeRouteClass(page) {
   }
 }
 
+export const R13_RECOVERY_DOCUMENT = Object.freeze({
+  schema: "contaos.fixture.recovery-r13.v1",
+  workflowRun: "42685547737",
+  artifactId: "13704636643",
+  requestId: "trilha-a-fixtures-20261109-r13",
+  harnessSha: "f39e32ca1009b23aaae19dcbd01e282df2bf0847",
+  zipSha256: "7d097d83d5b622d4277be39d2155800223e18fccfe9258ba1adabf337c1e5307",
+  reportSha256: "877dca165c4d46a61b8f5ea1946a6a223ceb17e9b64b9ef4067d8e24d5b7aa81",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  observationSha256: "f6f4ea8b51e4ec9ab3e8aca8e4fb6c3367d808174e884ca4c6119d6a06c33aeb",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "FLOW_LIST_UI_MISSING",\n  "diagnostics": {\n    "primaryFailure": "FLOW_LIST_UI_MISSING",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "LIST_UI_CONTROL",\n    "subphasePath": [\n      "SOURCE_AND_LIST",\n      "LIST_UI_CONTROL",\n      "LIST_UI_CONTROL"\n    ],\n    "lastCompletedSubphase": "LIST_GET",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 11,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 10,\n    "priorReserved": 1,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 13\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 13,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": null,\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "f39e32ca1009b23aaae19dcbd01e282df2bf0847",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42685547737",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "f39e32ca1009b23aaae19dcbd01e282df2bf0847",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42685547737",\n  "firstFailure": null\n}\n',
+});
+export function validateR13RecoveryDocument(input) {
+  if (isProxy(input) || !input || typeof input !== "object" || Array.isArray(input))
+    fail("RECOVERY_R13_LEDGER");
+  const proto = Object.getPrototypeOf(input);
+  if (isProxy(proto) || (proto !== Object.prototype && proto !== null)) fail("RECOVERY_R13_LEDGER");
+  const names = Object.keys(R13_RECOVERY_DOCUMENT),
+    ds = Object.getOwnPropertyDescriptors(input),
+    own = Reflect.ownKeys(ds),
+    clean = {};
+  if (own.length !== names.length || own.some((k, i) => k !== names[i]))
+    fail("RECOVERY_R13_LEDGER");
+  for (const k of names) {
+    const d = ds[k];
+    if (!d || !Object.hasOwn(d, "value") || !d.enumerable || d.value !== R13_RECOVERY_DOCUMENT[k])
+      fail("RECOVERY_R13_LEDGER");
+    clean[k] = d.value;
+  }
+  const raw = JSON.stringify(clean, null, 2) + "\n";
+  if (
+    Buffer.byteLength(raw) !== 3108 ||
+    digest(raw) !== "92bf8114d857b2061b0a2ce67cfb908f2dd1c71e1800b567bfecf52c17e12da9"
+  )
+    fail("RECOVERY_R13_LEDGER");
+  for (const [rawKey, hashKey, bytes] of [
+    ["reportRaw", "reportSha256", 1891],
+    ["receiptsRaw", "receiptsSha256", 55],
+    ["observationRaw", "observationSha256", 280],
+  ])
+    if (Buffer.byteLength(clean[rawKey]) !== bytes || digest(clean[rawKey]) !== clean[hashKey])
+      fail("RECOVERY_R13_LEDGER");
+  const r = JSON.parse(clean.reportRaw),
+    e = JSON.parse(clean.receiptsRaw),
+    o = JSON.parse(clean.observationRaw);
+  if (
+    r.failure !== "FLOW_LIST_UI_MISSING" ||
+    r.completed !== false ||
+    r.bindings !== null ||
+    r.ids.length !== 0 ||
+    r.logoutVerified !== true ||
+    r.diagnostics.cleanupFailure !== null ||
+    r.intentLedger.count !== 11 ||
+    r.intentLedger.priorConfirmed !== 10 ||
+    r.intentLedger.priorReserved !== 1 ||
+    r.intentLedger.newArmedCount !== 0 ||
+    r.intentLedger.maxNewIntentions !== 13 ||
+    r.intentLedger.frozen !== false ||
+    r.intentLedger.pending !== false ||
+    r.intentLedger.sent !== false ||
+    e.receipts.length !== 0 ||
+    o.firstFailure !== null
+  )
+    fail("RECOVERY_R13_LEDGER");
+  return Object.freeze(clean);
+}
+
 // A request authorizes one selected operation, never a general workflow_run login.
 export const SINGLE_REQUEST = Object.freeze({
   repository: "contaos999999/contaos-hml-control",
@@ -6773,6 +6844,11 @@ export const SINGLE_REQUEST = Object.freeze({
   competenceReadGateSha: "472eaa2221016375aee7c7698aa837358b6b6975",
   contextualProjectionGateSha: "0c82ccb9cb87c8226ad76af60d44a691eae24c8a",
   asynchronousOpinionGateSha: "c9dc5e062885793d3ad69430b822c14f3c6f2dc8",
+  uiSecurityRecoveryGateSha: "83792d243982bda854d81d518dc41dbc5e54b90d",
+  listReadinessSecuritySha: "8d43ae8f94b39d81b8125d087a1c9a968e2d8ad7",
+  r13RecoveryGateSha: "d29b9dacc14da0921584e7fc9d47ad8e39e2f88e",
+  listReadinessBuildSha: "c5a96ad40c7e4bec08738b5a7cfceaf3ddd0b399",
+  r14PlanSha: "396857e5684e2dd00b697718d46b5710eefc72fc",
   canonicalProfileGateSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
   listSelectionGateSha: "18424c16bcdc6d035e91e2dc8b7257ea755097d0",
   navigationGateSha: "ffffc501e5b5665026ff847bca1d2bf6df17fa73",
@@ -6792,13 +6868,14 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-a-fixtures-20261109-r10",
     "trilha-a-fixtures-20261109-r11",
     "trilha-a-fixtures-20261109-r12",
+    "trilha-a-fixtures-20261109-r13",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r13",
+    nonce: "trilha-a-fixtures-20261109-r14",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -7041,6 +7118,11 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.contextualProjectionGateSha,
       SINGLE_REQUEST.asynchronousOpinionGateSha,
       SINGLE_REQUEST.canonicalProfileGateSha,
+      SINGLE_REQUEST.r13RecoveryGateSha,
+      SINGLE_REQUEST.uiSecurityRecoveryGateSha,
+      SINGLE_REQUEST.listReadinessSecuritySha,
+      SINGLE_REQUEST.listReadinessBuildSha,
+      SINGLE_REQUEST.r14PlanSha,
     );
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
@@ -9008,6 +9090,7 @@ export async function verifySingleRequest({
   if (request.operation !== operation)
     return { selected: false, operation, sha: env.CONTAOS_HARNESS_SHA };
   requireSingleRequestOperation(operation);
+  validateR13RecoveryDocument(R13_RECOVERY_DOCUMENT);
   const sha = env.CONTAOS_HARNESS_SHA;
   const requestShas = await verifySingleRequestGit(request, sha, git, raw);
   get ||= singleRequestGet({ token: metadataToken, publicOnly, env, diagnostic });
@@ -9281,6 +9364,7 @@ export async function loadSingleRequestProof({
   validatedR7ZeroAuth = null;
   validatedR12ZeroAuth = null;
   requestEnvironmentChain(env);
+  if (operation === "fixtures") validateR13RecoveryDocument(R13_RECOVERY_DOCUMENT);
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
     assertRequestMetadataEnvironment(env, { requireToken: false });
     if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
