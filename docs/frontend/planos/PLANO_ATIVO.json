@@ -90,7 +90,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "Codex: revalidação25blobs e catálogo por GitHub GET no HEAD4bda, mesmos blobsf25; leitura semântica delta documental PR183 catálogo exato9funções/active-task; sem execuçãoHML ou certificação funcional.",
   "context_read_acknowledged_at": "2026-11-08",
-  "context_source_commit": "9b55a308c04fe914c9ff3f96b92151c7a41dff98",
+  "context_source_commit": "65767bfe58c5c9818824ab0ada38d9f412c19054",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
