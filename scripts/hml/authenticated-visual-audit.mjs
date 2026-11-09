@@ -9018,7 +9018,13 @@ export function singleRequestGet({
         );
       }
       if (response.status !== 200)
-        failRequestApi("REQUEST_API_UNAVAILABLE", endpointKind, response.status, "HTTP", diagnostic);
+        failRequestApi(
+          "REQUEST_API_UNAVAILABLE",
+          endpointKind,
+          response.status,
+          "HTTP",
+          diagnostic,
+        );
       let body;
       try {
         body = await response.text();
