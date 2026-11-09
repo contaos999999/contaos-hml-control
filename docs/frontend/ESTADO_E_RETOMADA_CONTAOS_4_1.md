@@ -1,3 +1,7 @@
+## 2026-11-09 | GATE R14: dependência507 corrigida e integrada antes do Auth BUILD
+
+Corretiva507merge8d43ae8f94b39d81b8125d087a1c9a968e2d8ad7/HEAD2a281552fa791633834218806121221206345c9b aprovada (f19f0638/9a70379a), pós-espera/cardinalidade fechada;504c5a sozinho é insuficiente. Fixtures42690818488/job129409757404Node540/522PASS0FAIL18SKIP/helper30lintfmt e18nativeSHA2a/orderingdrainPASS;Zero42690818556/LOCK42690818617SUCCESS/reviews5832091769+5832092463. Emenda3docs exigeancestor507+GateD29+PLAN396857 antes BUILDrecuperação, preservaDocR13canonical3108/SHA92bf/bodybyteexato, NEWGET0/R12cache9/10+1+13/22dados+SHA23HISTORY19. NenhumaAuth/SQL/deploy/request/código nesta emenda. Histórico/C13/frentes anteriores integralmente preservados abaixo.
+
 ## 2026-11-09 | PLAN R14 Auth/recuperação: R13zeroarmado e dependênciaUI separada
 
 R13original42685547737/inspeção42687417968:FLOW_LIST_UI_MISSING apósLIST_GET/newArmed0/confirmed0/logouttrue/cleanupnull,20hashesconferidos; firstFailureNULLnãoPASS eR13nãoézeroAuth. DocR13canônico12fields3108/SHA92bf8114d857b2061b0a2ce67cfb908f2dd1c71e1800b567bfecf52c17e12da9 obrigatórioanteslogin/arm. PLANAuthonly preserva10confirmadas+1reservada/max13/R11UNCERTAINdenyOct/R12cache9, nonceR14/spentR13 ewriter22dados+SHA23/HISTORY19. UI503docmergeddc5f/BUILD504separado: GateR14SÓapósHEADrealUIGREENrevisadointegrado, semduplicarhelper/SRC. MecanismoReacthipótese, não causa provada. Nenhumcódigo/Auth/SQL/deploy/request liberado. Histórico/C13/frentes anteriores integralmente preservados abaixo.
