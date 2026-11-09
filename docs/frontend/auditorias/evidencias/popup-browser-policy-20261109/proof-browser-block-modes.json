@@ -1,0 +1,281 @@
+{
+  "schema": "contaos.popup.browser-block-experiment.v1",
+  "closureDelayMs": 100,
+  "noAuth": true,
+  "noHml": true,
+  "sourceUnmodified": true,
+  "trials": [
+    {
+      "trial": 0,
+      "mode": "window-open",
+      "baseHead": "2486d8c57847804ef198babd4c9acb07f75f0462",
+      "connections": 0,
+      "bytes": 0,
+      "requests": 0,
+      "timeline": [
+        {
+          "ms": 129.034,
+          "event": "BROWSER_POLICY",
+          "requiredFlag": true,
+          "headlessShell": true,
+          "forbiddenCount": 0,
+          "version": "HeadlessChrome/145.0.7632.6"
+        },
+        {
+          "ms": 215.466,
+          "event": "CDP_SEND",
+          "method": "Target.autoAttachRelated"
+        },
+        {
+          "ms": 216.41,
+          "event": "CDP_ATTACHED",
+          "type": "page",
+          "waiting": false,
+          "own": true
+        },
+        {
+          "ms": 221.484,
+          "event": "CDP_SEND",
+          "method": "Target.setAutoAttach"
+        },
+        {
+          "ms": 222.149,
+          "event": "CDP_SEND",
+          "method": "Runtime.runIfWaitingForDebugger"
+        },
+        {
+          "ms": 222.62,
+          "event": "FENCE_INSTALLED"
+        },
+        {
+          "ms": 229.453,
+          "event": "EVALUATED",
+          "mode": "window-open",
+          "blockedReturn": true
+        },
+        {
+          "ms": 229.575,
+          "event": "CDP_WINDOW_OPEN"
+        },
+        {
+          "ms": 229.896,
+          "event": "CLOSE_CONTEXT_START"
+        },
+        {
+          "ms": 342.083,
+          "event": "CLOSE_CONTEXT_END"
+        },
+        {
+          "ms": 342.348,
+          "event": "SNAPSHOT",
+          "failure": "FENCE_POPUP",
+          "popups": 1
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "mode": "window-open-noopener",
+      "baseHead": "2486d8c57847804ef198babd4c9acb07f75f0462",
+      "connections": 0,
+      "bytes": 0,
+      "requests": 0,
+      "timeline": [
+        {
+          "ms": 76.494,
+          "event": "BROWSER_POLICY",
+          "requiredFlag": true,
+          "headlessShell": true,
+          "forbiddenCount": 0,
+          "version": "HeadlessChrome/145.0.7632.6"
+        },
+        {
+          "ms": 149.148,
+          "event": "CDP_SEND",
+          "method": "Target.autoAttachRelated"
+        },
+        {
+          "ms": 149.906,
+          "event": "CDP_ATTACHED",
+          "type": "page",
+          "waiting": false,
+          "own": true
+        },
+        {
+          "ms": 157.865,
+          "event": "CDP_SEND",
+          "method": "Target.setAutoAttach"
+        },
+        {
+          "ms": 158.326,
+          "event": "CDP_SEND",
+          "method": "Runtime.runIfWaitingForDebugger"
+        },
+        {
+          "ms": 158.684,
+          "event": "FENCE_INSTALLED"
+        },
+        {
+          "ms": 164.859,
+          "event": "EVALUATED",
+          "mode": "window-open-noopener",
+          "blockedReturn": true
+        },
+        {
+          "ms": 165.025,
+          "event": "CDP_WINDOW_OPEN"
+        },
+        {
+          "ms": 165.32,
+          "event": "CLOSE_CONTEXT_START"
+        },
+        {
+          "ms": 277.743,
+          "event": "CLOSE_CONTEXT_END"
+        },
+        {
+          "ms": 277.807,
+          "event": "SNAPSHOT",
+          "failure": "FENCE_POPUP",
+          "popups": 1
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "mode": "anchor-noopener",
+      "baseHead": "2486d8c57847804ef198babd4c9acb07f75f0462",
+      "connections": 0,
+      "bytes": 0,
+      "requests": 0,
+      "timeline": [
+        {
+          "ms": 73.934,
+          "event": "BROWSER_POLICY",
+          "requiredFlag": true,
+          "headlessShell": true,
+          "forbiddenCount": 0,
+          "version": "HeadlessChrome/145.0.7632.6"
+        },
+        {
+          "ms": 140.617,
+          "event": "CDP_SEND",
+          "method": "Target.autoAttachRelated"
+        },
+        {
+          "ms": 141.77,
+          "event": "CDP_ATTACHED",
+          "type": "page",
+          "waiting": false,
+          "own": true
+        },
+        {
+          "ms": 145.069,
+          "event": "CDP_SEND",
+          "method": "Target.setAutoAttach"
+        },
+        {
+          "ms": 145.71,
+          "event": "CDP_SEND",
+          "method": "Runtime.runIfWaitingForDebugger"
+        },
+        {
+          "ms": 146.195,
+          "event": "FENCE_INSTALLED"
+        },
+        {
+          "ms": 152.079,
+          "event": "EVALUATED",
+          "mode": "anchor-noopener",
+          "blockedReturn": false
+        },
+        {
+          "ms": 153.497,
+          "event": "CDP_WINDOW_OPEN"
+        },
+        {
+          "ms": 153.566,
+          "event": "CLOSE_CONTEXT_START"
+        },
+        {
+          "ms": 263.104,
+          "event": "CLOSE_CONTEXT_END"
+        },
+        {
+          "ms": 263.156,
+          "event": "SNAPSHOT",
+          "failure": "FENCE_POPUP",
+          "popups": 1
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "mode": "form-post",
+      "baseHead": "2486d8c57847804ef198babd4c9acb07f75f0462",
+      "connections": 0,
+      "bytes": 0,
+      "requests": 0,
+      "timeline": [
+        {
+          "ms": 82.267,
+          "event": "BROWSER_POLICY",
+          "requiredFlag": true,
+          "headlessShell": true,
+          "forbiddenCount": 0,
+          "version": "HeadlessChrome/145.0.7632.6"
+        },
+        {
+          "ms": 146.053,
+          "event": "CDP_SEND",
+          "method": "Target.autoAttachRelated"
+        },
+        {
+          "ms": 146.856,
+          "event": "CDP_ATTACHED",
+          "type": "page",
+          "waiting": false,
+          "own": true
+        },
+        {
+          "ms": 151.169,
+          "event": "CDP_SEND",
+          "method": "Target.setAutoAttach"
+        },
+        {
+          "ms": 151.617,
+          "event": "CDP_SEND",
+          "method": "Runtime.runIfWaitingForDebugger"
+        },
+        {
+          "ms": 152.005,
+          "event": "FENCE_INSTALLED"
+        },
+        {
+          "ms": 157.614,
+          "event": "EVALUATED",
+          "mode": "form-post",
+          "blockedReturn": false
+        },
+        {
+          "ms": 157.72,
+          "event": "CDP_WINDOW_OPEN"
+        },
+        {
+          "ms": 157.787,
+          "event": "CLOSE_CONTEXT_START"
+        },
+        {
+          "ms": 268.81,
+          "event": "CLOSE_CONTEXT_END"
+        },
+        {
+          "ms": 268.895,
+          "event": "SNAPSHOT",
+          "failure": "FENCE_POPUP",
+          "popups": 1
+        }
+      ]
+    }
+  ]
+}
