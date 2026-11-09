@@ -391,12 +391,17 @@ export function createPreparationDiagnostics() {
   const stack = [];
   const observed = new WeakMap();
   let generation = 0;
-  let primary = null, lastCompleted = null, cleaning = false;
-  let logoutAttempted = false, logoutVerified = false, cleanupFailure = null;
+  let primary = null,
+    lastCompleted = null,
+    cleaning = false;
+  let logoutAttempted = false,
+    logoutVerified = false,
+    cleanupFailure = null;
   const object = (value) => value !== null && ["object", "function"].includes(typeof value);
   const candidate = (error) => {
     const seen = new WeakSet();
-    let value = error, found = null;
+    let value = error,
+      found = null;
     for (let depth = 0; depth < 8 && object(value) && !seen.has(value); depth++) {
       seen.add(value);
       const entry = observed.get(value);
@@ -404,7 +409,9 @@ export function createPreparationDiagnostics() {
       try {
         const descriptor = Object.getOwnPropertyDescriptor(value, "cause");
         value = descriptor && "value" in descriptor ? descriptor.value : null;
-      } catch { break; }
+      } catch {
+        break;
+      }
     }
     return found;
   };
@@ -441,7 +448,9 @@ export function createPreparationDiagnostics() {
           if (stack.length === 1) capture(error);
         }
         throw error;
-      } finally { stack.pop(); }
+      } finally {
+        stack.pop();
+      }
     },
     async cleanup(execute) {
       logoutAttempted = true;
@@ -453,17 +462,32 @@ export function createPreparationDiagnostics() {
       } catch {
         logoutVerified = false;
         cleanupFailure ||= "LOGOUT_FAILED";
-      } finally { cleaning = previous; }
+      } finally {
+        cleaning = previous;
+      }
       return logoutVerified;
     },
     async finishCleanup(code, execute) {
-      if (!["RUNTIME_CLEAR_FAILED", "OBSERVER_CLOSE_FAILED", "FENCE_CLOSE_FAILED", "BROWSER_CLOSE_FAILED", "PROXY_CLOSE_FAILED"].includes(code) || typeof execute !== "function")
+      if (
+        ![
+          "RUNTIME_CLEAR_FAILED",
+          "OBSERVER_CLOSE_FAILED",
+          "FENCE_CLOSE_FAILED",
+          "BROWSER_CLOSE_FAILED",
+          "PROXY_CLOSE_FAILED",
+        ].includes(code) ||
+        typeof execute !== "function"
+      )
         err("DIAGNOSTIC_SUBPHASE");
       const previous = cleaning;
       cleaning = true;
-      try { await execute(); }
-      catch { cleanupFailure ||= code; }
-      finally { cleaning = previous; }
+      try {
+        await execute();
+      } catch {
+        cleanupFailure ||= code;
+      } finally {
+        cleaning = previous;
+      }
     },
     snapshot() {
       return freeze({
@@ -472,7 +496,10 @@ export function createPreparationDiagnostics() {
         errorName: primary?.errorName || null,
         subphase: primary?.subphase || stack.at(-1) || lastCompleted || "PREFLIGHT",
         subphasePath: primary?.subphasePath || stack.slice(-12),
-        lastCompletedSubphase: lastCompleted, logoutAttempted, logoutVerified, cleanupFailure,
+        lastCompletedSubphase: lastCompleted,
+        logoutAttempted,
+        logoutVerified,
+        cleanupFailure,
       });
     },
   });
@@ -3134,26 +3161,28 @@ export async function prepareCompetencies(io, sourceList) {
   async function poll(read, ready, refresh) {
     let initial = true;
     try {
-      return await tracedPreparation("COMPETENCY_RECONCILE", async () => (waitOfficialPhase({
-        timeout: 300000,
-        wait,
-        read: async () => {
-          phaseActive();
-          // UI refresh belongs to the bounded read, under the SAME phase deadline.
-          if (!initial) {
-            await tracedPreparation("COMPETENCY_UI", async () => (refresh()));
+      return await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+        waitOfficialPhase({
+          timeout: 300000,
+          wait,
+          read: async () => {
             phaseActive();
-          }
-          initial = false;
-          const value = await tracedPreparation("COMPETENCY_RECONCILE", async () => (read()));
-          phaseActive();
-          return value;
-        },
-        ready: (value) => {
-          phaseActive();
-          return ready(value) === true;
-        },
-      })));
+            // UI refresh belongs to the bounded read, under the SAME phase deadline.
+            if (!initial) {
+              await tracedPreparation("COMPETENCY_UI", async () => refresh());
+              phaseActive();
+            }
+            initial = false;
+            const value = await tracedPreparation("COMPETENCY_RECONCILE", async () => read());
+            phaseActive();
+            return value;
+          },
+          ready: (value) => {
+            phaseActive();
+            return ready(value) === true;
+          },
+        }),
+      );
     } catch (error) {
       if (error?.message === "PHASE_TIMEOUT") {
         temporalAborted = true;
@@ -3161,7 +3190,9 @@ export async function prepareCompetencies(io, sourceList) {
         // then stop the entire executor; never start another month's mutation.
         if (typeof io.abortPhase === "function") {
           try {
-            await tracedPreparation("COMPETENCY_UI", async () => (io.abortPhase("COMPETENCE_PHASE_TIMEOUT")));
+            await tracedPreparation("COMPETENCY_UI", async () =>
+              io.abortPhase("COMPETENCE_PHASE_TIMEOUT"),
+            );
           } catch {
             /* main finally also closes context */
           }
@@ -3183,11 +3214,15 @@ export async function prepareCompetencies(io, sourceList) {
   }
   async function overview(id, month) {
     const ordinal = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => (link(`/competencias/${id}`)));
-    await tracedPreparation("COMPETENCY_UI", async () => (observed("obter_visao_geral_competencia", { p_id_competencia: id }, ordinal)));
-    const value = await tracedPreparation("COMPETENCY_GET", async () => (io.rpcRead("obter_visao_geral_competencia", {
-      p_id_competencia: id,
-    })));
+    await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${id}`));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed("obter_visao_geral_competencia", { p_id_competencia: id }, ordinal),
+    );
+    const value = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead("obter_visao_geral_competencia", {
+        p_id_competencia: id,
+      }),
+    );
     inContext(value?.competencia, id);
     if (value.competencia.competencia_referencia !== month || id === FIXTURE.historical)
       stop("COMPETENCE_MONTH");
@@ -3207,70 +3242,82 @@ export async function prepareCompetencies(io, sourceList) {
     };
   }
   async function refreshArea(id, month, area, rpc) {
-    await tracedPreparation("COMPETENCY_RECONCILE", async () => (overview(id, month)));
+    await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(id, month));
     const ordinal = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => (link(`/competencias/${id}/${area}`)));
-    await tracedPreparation("COMPETENCY_UI", async () => (observed(rpc, { p_id_competencia: id }, ordinal)));
+    await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${id}/${area}`));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed(rpc, { p_id_competencia: id }, ordinal),
+    );
   }
   async function listMonth(month) {
     // A real navigation remounts the list, so unchanged filters never fake freshness.
     const ordinal = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => (link(listPath)));
-    await tracedPreparation("COMPETENCY_UI", async () => (io.page.getByLabel("Competência", { exact: true }).fill(month.slice(0, 7))));
-    await tracedPreparation("COMPETENCY_UI", async () => (observed(
-      "competencias",
-      { id_contrato: FIXTURE.contract, competencia_referencia: month },
-      ordinal,
-      {
-        select: EXACT_SELECTS.competencias.find((value) =>
-          value.includes("competencia_referencia,"),
-        ),
-      },
-    )));
-    const found = (
-      await tracedPreparation("COMPETENCY_UI", async () => (rows(
+    await tracedPreparation("COMPETENCY_UI", async () => link(listPath));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      io.page.getByLabel("Competência", { exact: true }).fill(month.slice(0, 7)),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed(
         "competencias",
-        {
-          id_contrato: FIXTURE.contract,
-          competencia_referencia: month,
-        },
+        { id_contrato: FIXTURE.contract, competencia_referencia: month },
+        ordinal,
         {
           select: EXACT_SELECTS.competencias.find((value) =>
             value.includes("competencia_referencia,"),
           ),
         },
-      )))
+      ),
+    );
+    const found = (
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        rows(
+          "competencias",
+          {
+            id_contrato: FIXTURE.contract,
+            competencia_referencia: month,
+          },
+          {
+            select: EXACT_SELECTS.competencias.find((value) =>
+              value.includes("competencia_referencia,"),
+            ),
+          },
+        ),
+      )
     ).filter((r) => r.competencia_referencia === month);
     if (found.length > 1 || found.some((r) => !uuid(r.id) || r.id === FIXTURE.historical))
       stop("COMPETENCE_AMBIGUOUS");
     return found;
   }
   async function createOrReuse(month) {
-    await tracedPreparation("COMPETENCY_UI", async () => (context()));
-    let existing = await tracedPreparation("COMPETENCY_UI", async () => (listMonth(month)));
+    await tracedPreparation("COMPETENCY_UI", async () => context());
+    let existing = await tracedPreparation("COMPETENCY_UI", async () => listMonth(month));
     if (!existing.length) {
-      await tracedPreparation("COMPETENCY_UI", async () => (link(listPath + "/nova")));
-      await tracedPreparation("COMPETENCY_UI", async () => (io.page.getByLabel("Competência (mês/ano)", { exact: true }).fill(month.slice(0, 7))));
-      await tracedPreparation("COMPETENCY_UI", async () => (context()));
-      await tracedPreparation("COMPETENCY_COMMAND", async () => (io.command({
-        rpc: "criar_competencia",
-        payload: {
-          p_id_contrato: FIXTURE.contract,
-          p_competencia_referencia: month,
-        },
-        evidence: {},
-        button: "Criar competência",
-        confirmAfter: async () => {
-          await tracedPreparation("COMPETENCY_UI", async () => (link(listPath)));
-          existing = await tracedPreparation("COMPETENCY_UI", async () => (listMonth(month)));
-          return existing.length === 1;
-        },
-      })));
+      await tracedPreparation("COMPETENCY_UI", async () => link(listPath + "/nova"));
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        io.page.getByLabel("Competência (mês/ano)", { exact: true }).fill(month.slice(0, 7)),
+      );
+      await tracedPreparation("COMPETENCY_UI", async () => context());
+      await tracedPreparation("COMPETENCY_COMMAND", async () =>
+        io.command({
+          rpc: "criar_competencia",
+          payload: {
+            p_id_contrato: FIXTURE.contract,
+            p_competencia_referencia: month,
+          },
+          evidence: {},
+          button: "Criar competência",
+          confirmAfter: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () => link(listPath));
+            existing = await tracedPreparation("COMPETENCY_UI", async () => listMonth(month));
+            return existing.length === 1;
+          },
+        }),
+      );
       if (existing.length !== 1) stop("COMPETENCE_CREATE_UNCERTAIN");
     }
     const id = existing[0].id;
     // Anchor must be real and match the reconciled ID, never goto a fabricated path.
-    const view = await tracedPreparation("COMPETENCY_RECONCILE", async () => (overview(id, month)));
+    const view = await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(id, month));
     if (view.competencia.situacao === "cancelada" || view.competencia.situacao === "encerrada")
       stop("COMPETENCE_TERMINAL");
     return {
@@ -3281,31 +3328,43 @@ export async function prepareCompetencies(io, sourceList) {
   }
   async function approvedContractFile() {
     const ordinal = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => (link(contractBase + "/documentos")));
-    await tracedPreparation("COMPETENCY_UI", async () => (observed("documentos_contrato", { id_contrato: FIXTURE.contract }, ordinal)));
-    const docs = await tracedPreparation("COMPETENCY_UI", async () => (rows("documentos_contrato", {
-      id_contrato: FIXTURE.contract,
-      id: FIXTURE.contractualDocument,
-    })));
+    await tracedPreparation("COMPETENCY_UI", async () => link(contractBase + "/documentos"));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed("documentos_contrato", { id_contrato: FIXTURE.contract }, ordinal),
+    );
+    const docs = await tracedPreparation("COMPETENCY_UI", async () =>
+      rows("documentos_contrato", {
+        id_contrato: FIXTURE.contract,
+        id: FIXTURE.contractualDocument,
+      }),
+    );
     if (
       docs.length !== 1 ||
       docs[0].id_contrato !== FIXTURE.contract ||
       docs[0].situacao !== "ativo"
     )
       stop("COMPETENCE_APPROVED_FILE_RELATION");
-    await tracedPreparation("COMPETENCY_UI", async () => (observed(
-      "versoes_documento",
-      { id_documento_contrato: FIXTURE.contractualDocument },
-      ordinal,
-    )));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed(
+        "versoes_documento",
+        { id_documento_contrato: FIXTURE.contractualDocument },
+        ordinal,
+      ),
+    );
     const versions = (
-      await tracedPreparation("COMPETENCY_UI", async () => (rows("versoes_documento", {
-        id_documento_contrato: FIXTURE.contractualDocument,
-      })))
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        rows("versoes_documento", {
+          id_documento_contrato: FIXTURE.contractualDocument,
+        }),
+      )
     ).filter((v) => v.id_arquivo === FIXTURE.file && v.numero_versao === docs[0].versao_atual);
     if (versions.length !== 1 || !uuid(versions[0].id)) stop("COMPETENCE_APPROVED_FILE_VERSION");
-    await tracedPreparation("COMPETENCY_UI", async () => (observed("arquivos", { id: FIXTURE.file }, ordinal)));
-    const files = await tracedPreparation("COMPETENCY_UI", async () => (rows("arquivos", { id: FIXTURE.file })));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed("arquivos", { id: FIXTURE.file }, ordinal),
+    );
+    const files = await tracedPreparation("COMPETENCY_UI", async () =>
+      rows("arquivos", { id: FIXTURE.file }),
+    );
     if (files.length !== 1) stop("COMPETENCE_APPROVED_FILE");
     const f = files[0];
     // Official projection validates the joined contract/document/version/file chain.
@@ -3329,9 +3388,11 @@ export async function prepareCompetencies(io, sourceList) {
     return checked;
   }
   async function readDocuments(c) {
-    const value = await tracedPreparation("COMPETENCY_GET", async () => (io.rpcRead("obter_documentos_competencia_v115", {
-      p_id_competencia: c.id,
-    })));
+    const value = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead("obter_documentos_competencia_v115", {
+        p_id_competencia: c.id,
+      }),
+    );
     inContext(value?.competencia, c.id);
     if (
       value.competencia.competencia_referencia !== c.month ||
@@ -3347,15 +3408,19 @@ export async function prepareCompetencies(io, sourceList) {
   }
   async function ensureDocument(c) {
     // Reconsult persisted approved asset immediately before linking, through contract UI.
-    const file = await tracedPreparation("COMPETENCY_UI", async () => (approvedContractFile()));
-    await tracedPreparation("COMPETENCY_UI", async () => (link(listPath)));
-    await tracedPreparation("COMPETENCY_UI", async () => (listMonth(c.month)));
-    await tracedPreparation("COMPETENCY_UI", async () => (refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115")));
-    const loaded = await tracedPreparation("COMPETENCY_RECONCILE", async () => (poll(
-      () => readDocuments(c),
-      (x) => !!x.requirement,
-      () => refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
-    )));
+    const file = await tracedPreparation("COMPETENCY_UI", async () => approvedContractFile());
+    await tracedPreparation("COMPETENCY_UI", async () => link(listPath));
+    await tracedPreparation("COMPETENCY_UI", async () => listMonth(c.month));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
+    );
+    const loaded = await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      poll(
+        () => readDocuments(c),
+        (x) => !!x.requirement,
+        () => refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
+      ),
+    );
     const q = loaded.requirement;
     if (
       !uuid(q.id) ||
@@ -3409,39 +3474,47 @@ export async function prepareCompetencies(io, sourceList) {
         p_id_arquivo: FIXTURE.file,
         p_chave_idempotencia: randomUUID(),
       };
-      await tracedPreparation("COMPETENCY_RECONCILE", async () => (io.runtime.reuseDocument({
-        broker: io.broker,
-        payload,
-        evidence,
-        settleVerifiedPage: async () => io.fresh(),
-        reconcile: async () => {
-          await tracedPreparation("COMPETENCY_UI", async () => (refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115")));
-          const d = await tracedPreparation("COMPETENCY_RECONCILE", async () => (readDocuments(c)));
-          return {
-            payload,
-            evidence,
-            verified: {
-              ...verified,
-              capability: d.value.capacidades?.pode_enviar === true,
-            },
-            confirmed: !!matchingDocument(d.value),
-          };
-        },
-      })));
+      await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+        io.runtime.reuseDocument({
+          broker: io.broker,
+          payload,
+          evidence,
+          settleVerifiedPage: async () => io.fresh(),
+          reconcile: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () =>
+              refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
+            );
+            const d = await tracedPreparation("COMPETENCY_RECONCILE", async () => readDocuments(c));
+            return {
+              payload,
+              evidence,
+              verified: {
+                ...verified,
+                capability: d.value.capacidades?.pode_enviar === true,
+              },
+              confirmed: !!matchingDocument(d.value),
+            };
+          },
+        }),
+      );
     }
-    const ready = await tracedPreparation("COMPETENCY_RECONCILE", async () => (poll(
-      () => readDocuments(c),
-      (x) => !!matchingDocument(x.value) && x.value.estado_documental === "complete",
-      () => refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
-    )));
+    const ready = await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      poll(
+        () => readDocuments(c),
+        (x) => !!matchingDocument(x.value) && x.value.estado_documental === "complete",
+        () => refreshArea(c.id, c.month, "documentos", "obter_documentos_competencia_v115"),
+      ),
+    );
     const d = matchingDocument(ready.value);
     c.documentId = d.id;
     c.evidence = evidence;
   }
   async function analysis(c) {
-    const a = await tracedPreparation("COMPETENCY_GET", async () => (io.rpcRead("obter_analise_competencia_v116", {
-      p_id_competencia: c.id,
-    })));
+    const a = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead("obter_analise_competencia_v116", {
+        p_id_competencia: c.id,
+      }),
+    );
     if (
       a?.schema_versao !== "v116-v1" ||
       a?.competencia?.id !== c.id ||
@@ -3458,45 +3531,55 @@ export async function prepareCompetencies(io, sourceList) {
     return a;
   }
   async function ensureAnalysis(c) {
-    await tracedPreparation("COMPETENCY_UI", async () => (refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116")));
-    let a = await tracedPreparation("COMPETENCY_RECONCILE", async () => (analysis(c)));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116"),
+    );
+    let a = await tracedPreparation("COMPETENCY_RECONCILE", async () => analysis(c));
     if (a.estado_analise === "not_analyzed") {
       if (a.allowed_actions?.executar_analise !== true) stop("COMPETENCE_ANALYSIS_DENIED");
-      await tracedPreparation("COMPETENCY_COMMAND", async () => (io.command({
-        rpc: "solicitar_analise_competencia",
-        payload: { p_id_competencia: c.id, p_tipo: "completa" },
-        evidence: c.evidence,
-        button: "Executar análise",
-        confirmAfter: async () => {
-          await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
-          a = await tracedPreparation("COMPETENCY_RECONCILE", async () => (analysis(c)));
-          return (
-            uuid(a.execucao_atual?.id) &&
-            ["queued", "processing", "complete"].includes(a.estado_analise)
-          );
-        },
-      })));
+      await tracedPreparation("COMPETENCY_COMMAND", async () =>
+        io.command({
+          rpc: "solicitar_analise_competencia",
+          payload: { p_id_competencia: c.id, p_tipo: "completa" },
+          evidence: c.evidence,
+          button: "Executar análise",
+          confirmAfter: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
+            a = await tracedPreparation("COMPETENCY_RECONCILE", async () => analysis(c));
+            return (
+              uuid(a.execucao_atual?.id) &&
+              ["queued", "processing", "complete"].includes(a.estado_analise)
+            );
+          },
+        }),
+      );
     }
-    a = await tracedPreparation("COMPETENCY_RECONCILE", async () => (poll(
-      () => analysis(c),
-      (v) => v.estado_analise === "complete" && uuid(v.execucao_atual?.id),
-      () => refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116"),
-    )));
+    a = await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      poll(
+        () => analysis(c),
+        (v) => v.estado_analise === "complete" && uuid(v.execucao_atual?.id),
+        () => refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116"),
+      ),
+    );
     c.executionId = a.execucao_atual.id;
     return a;
   }
   async function inspectRequirement(c) {
     const ordinal = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => (click("Abrir requisito " + code)));
-    await tracedPreparation("COMPETENCY_UI", async () => (observed(
-      "obter_detalhe_requisito_v117",
-      { p_id_competencia: c.id, p_id_requisito: c.requirementId },
-      ordinal,
-    )));
-    const detail = await tracedPreparation("COMPETENCY_GET", async () => (io.rpcRead("obter_detalhe_requisito_v117", {
-      p_id_competencia: c.id,
-      p_id_requisito: c.requirementId,
-    })));
+    await tracedPreparation("COMPETENCY_UI", async () => click("Abrir requisito " + code));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed(
+        "obter_detalhe_requisito_v117",
+        { p_id_competencia: c.id, p_id_requisito: c.requirementId },
+        ordinal,
+      ),
+    );
+    const detail = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead("obter_detalhe_requisito_v117", {
+        p_id_competencia: c.id,
+        p_id_requisito: c.requirementId,
+      }),
+    );
     if (
       detail?.schema_versao !== "v117-v1" ||
       detail?.competencia?.id !== c.id ||
@@ -3532,11 +3615,11 @@ export async function prepareCompetencies(io, sourceList) {
       (r) => r.id_requisito === c.requirementId && r.requisito?.codigo === code,
     );
     if (targets.length !== 1 || !uuid(targets[0].id_resultado)) stop("COMPETENCE_RESULT_UNPROVEN");
-    const detail = await tracedPreparation("COMPETENCY_UI", async () => (inspectRequirement(c)));
+    const detail = await tracedPreparation("COMPETENCY_UI", async () => inspectRequirement(c));
     // Do not review unrelated requirements or override an already conforming result.
     if (targets[0].resultado === "conforme") {
-      await tracedPreparation("COMPETENCY_UI", async () => (io.page.keyboard.press("Escape")));
-      await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
+      await tracedPreparation("COMPETENCY_UI", async () => io.page.keyboard.press("Escape"));
+      await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
       return a;
     }
     if (detail.execucao_atual?.id !== a.execucao_atual.id) stop("COMPETENCE_REVIEW_STALE");
@@ -3558,16 +3641,20 @@ export async function prepareCompetencies(io, sourceList) {
       exact: true,
     });
     const before = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => (click("Revisar resultado", region)));
-    await tracedPreparation("COMPETENCY_UI", async () => (observed(
-      "obter_contexto_revisao_v117",
-      { p_id_competencia: c.id, p_id_requisito: c.requirementId },
-      before,
-    )));
-    const ctx = await tracedPreparation("COMPETENCY_GET", async () => (io.rpcRead("obter_contexto_revisao_v117", {
-      p_id_competencia: c.id,
-      p_id_requisito: c.requirementId,
-    })));
+    await tracedPreparation("COMPETENCY_UI", async () => click("Revisar resultado", region));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed(
+        "obter_contexto_revisao_v117",
+        { p_id_competencia: c.id, p_id_requisito: c.requirementId },
+        before,
+      ),
+    );
+    const ctx = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead("obter_contexto_revisao_v117", {
+        p_id_competencia: c.id,
+        p_id_requisito: c.requirementId,
+      }),
+    );
     if (
       ctx?.schema_versao !== "revisao-v117" ||
       ctx.id_competencia !== c.id ||
@@ -3580,17 +3667,21 @@ export async function prepareCompetencies(io, sourceList) {
       !hash(ctx.hash_esperado)
     )
       stop("COMPETENCE_REVIEW_CONTEXT");
-    await tracedPreparation("COMPETENCY_RECONCILE", async () => (observed("versoes_documento", { "documentos_competencia.id_competencia": c.id }, before, {
-      select: REVIEW_SELECT,
-    })));
-    const versions = await tracedPreparation("COMPETENCY_RECONCILE", async () => (rows(
-      "versoes_documento",
-      {
-        "documentos_competencia.id_competencia": c.id,
-        id: documentVersion,
-      },
-      { select: REVIEW_SELECT },
-    )));
+    await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      observed("versoes_documento", { "documentos_competencia.id_competencia": c.id }, before, {
+        select: REVIEW_SELECT,
+      }),
+    );
+    const versions = await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      rows(
+        "versoes_documento",
+        {
+          "documentos_competencia.id_competencia": c.id,
+          id: documentVersion,
+        },
+        { select: REVIEW_SELECT },
+      ),
+    );
     if (
       versions.length !== 1 ||
       versions[0].documentos_competencia?.id_competencia !== c.id ||
@@ -3601,22 +3692,31 @@ export async function prepareCompetencies(io, sourceList) {
     )
       stop("COMPETENCE_REVIEW_DOCUMENT_VERSION");
     const v = versions[0];
-    await tracedPreparation("COMPETENCY_UI", async () => (region.getByLabel("Resultado da revisão", { exact: true }).selectOption("conforme")));
-    await tracedPreparation("COMPETENCY_RECONCILE", async () => (region
-      .getByLabel("Justificativa da revisão", { exact: true })
-      .fill(FIXTURE.reviewJustification)));
-    await tracedPreparation("COMPETENCY_RECONCILE", async () => (region
-      .getByLabel("Fundamento da revisão", { exact: true })
-      .fill(FIXTURE.reviewFoundation)));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      region.getByLabel("Resultado da revisão", { exact: true }).selectOption("conforme"),
+    );
+    await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      region
+        .getByLabel("Justificativa da revisão", { exact: true })
+        .fill(FIXTURE.reviewJustification),
+    );
+    await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      region.getByLabel("Fundamento da revisão", { exact: true }).fill(FIXTURE.reviewFoundation),
+    );
     const checkbox = region.getByRole("checkbox", {
       name: `Selecionar ${v.arquivos.nome_original} versão ${v.numero_versao}`,
       exact: true,
     });
-    if ((await tracedPreparation("COMPETENCY_UI", async () => (checkbox.count()))) !== 1) stop("COMPETENCE_REVIEW_EVIDENCE_AMBIGUOUS");
-    await tracedPreparation("COMPETENCY_UI", async () => (checkbox.check()));
-    await tracedPreparation("COMPETENCY_UI", async () => (region.getByLabel("Página da evidência 1", { exact: true }).fill("1")));
-    await tracedPreparation("COMPETENCY_UI", async () => (region.getByLabel("Trecho da evidência 1", { exact: true }).fill(FIXTURE.excerpt)));
-    await tracedPreparation("COMPETENCY_UI", async () => (click("Revisar e confirmar", region)));
+    if ((await tracedPreparation("COMPETENCY_UI", async () => checkbox.count())) !== 1)
+      stop("COMPETENCE_REVIEW_EVIDENCE_AMBIGUOUS");
+    await tracedPreparation("COMPETENCY_UI", async () => checkbox.check());
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      region.getByLabel("Página da evidência 1", { exact: true }).fill("1"),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      region.getByLabel("Trecho da evidência 1", { exact: true }).fill(FIXTURE.excerpt),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () => click("Revisar e confirmar", region));
     const evidence = {
       ...c.evidence,
       review: io.official({
@@ -3635,62 +3735,70 @@ export async function prepareCompetencies(io, sourceList) {
         documentVersion,
       }),
     };
-    await tracedPreparation("COMPETENCY_COMMAND", async () => (io.command({
-      rpc: "registrar_revisao_requisito_v117",
-      payload: {
-        p_id_competencia: c.id,
-        p_id_requisito: c.requirementId,
-        p_id_execucao_esperada: ctx.id_execucao_esperada,
-        p_id_resultado_esperado: ctx.id_resultado_esperado,
-        p_hash_esperado: ctx.hash_esperado,
-        p_resultado: "conforme",
-        p_justificativa: FIXTURE.reviewJustification,
-        p_fundamento: FIXTURE.reviewFoundation,
-        p_evidencias: [
-          {
-            id_versao_documento: documentVersion,
-            pagina: 1,
-            trecho: FIXTURE.excerpt,
-          },
-        ],
-      },
-      evidence,
-      button: "Confirmar revisão",
-      scope: region,
-      confirmAfter: async () => {
-        await tracedPreparation("COMPETENCY_UI", async () => (io.page.keyboard.press("Escape")));
-        await tracedPreparation("COMPETENCY_UI", async () => (refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116")));
-        a = await tracedPreparation("COMPETENCY_RECONCILE", async () => (analysis(c)));
-        const result = a.resultados.find((r) => r.id_requisito === c.requirementId);
-        return (
-          a.estado_analise === "complete" &&
-          uuid(a.execucao_atual?.id) &&
-          a.execucao_atual.id !== ctx.id_execucao_esperada &&
-          result?.resultado === "conforme" &&
-          uuid(result.id_resultado) &&
-          result.id_resultado !== ctx.id_resultado_esperado
-        );
-      },
-    })));
+    await tracedPreparation("COMPETENCY_COMMAND", async () =>
+      io.command({
+        rpc: "registrar_revisao_requisito_v117",
+        payload: {
+          p_id_competencia: c.id,
+          p_id_requisito: c.requirementId,
+          p_id_execucao_esperada: ctx.id_execucao_esperada,
+          p_id_resultado_esperado: ctx.id_resultado_esperado,
+          p_hash_esperado: ctx.hash_esperado,
+          p_resultado: "conforme",
+          p_justificativa: FIXTURE.reviewJustification,
+          p_fundamento: FIXTURE.reviewFoundation,
+          p_evidencias: [
+            {
+              id_versao_documento: documentVersion,
+              pagina: 1,
+              trecho: FIXTURE.excerpt,
+            },
+          ],
+        },
+        evidence,
+        button: "Confirmar revisão",
+        scope: region,
+        confirmAfter: async () => {
+          await tracedPreparation("COMPETENCY_UI", async () => io.page.keyboard.press("Escape"));
+          await tracedPreparation("COMPETENCY_UI", async () =>
+            refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116"),
+          );
+          a = await tracedPreparation("COMPETENCY_RECONCILE", async () => analysis(c));
+          const result = a.resultados.find((r) => r.id_requisito === c.requirementId);
+          return (
+            a.estado_analise === "complete" &&
+            uuid(a.execucao_atual?.id) &&
+            a.execucao_atual.id !== ctx.id_execucao_esperada &&
+            result?.resultado === "conforme" &&
+            uuid(result.id_resultado) &&
+            result.id_resultado !== ctx.id_resultado_esperado
+          );
+        },
+      }),
+    );
     c.executionId = a.execucao_atual.id;
     return a;
   }
   async function opinion(c) {
-    let view = await tracedPreparation("COMPETENCY_RECONCILE", async () => (overview(c.id, c.month)));
+    let view = await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(c.id, c.month));
     if (
       view.blocking_summary?.analise_concluida_atual !== true ||
       view.allowed_actions?.abrir_parecer !== true
     )
       stop("COMPETENCE_OPINION_GATE");
     let ordinal = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => (link(`/competencias/${c.id}/parecer`)));
-    await tracedPreparation("COMPETENCY_UI", async () => (observed("pareceres_internos", { id_competencia: c.id }, ordinal)));
+    await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${c.id}/parecer`));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed("pareceres_internos", { id_competencia: c.id }, ordinal),
+    );
     const readOpinion = async () => {
-      const list = await tracedPreparation("COMPETENCY_UI", async () => (rows("pareceres_internos", {
-        id_competencia: c.id,
-        id_contrato: FIXTURE.contract,
-        id_organizacao: FIXTURE.organization,
-      })));
+      const list = await tracedPreparation("COMPETENCY_UI", async () =>
+        rows("pareceres_internos", {
+          id_competencia: c.id,
+          id_contrato: FIXTURE.contract,
+          id_organizacao: FIXTURE.organization,
+        }),
+      );
       for (const row of list) {
         inContext(row, row.id);
         if (
@@ -3708,10 +3816,12 @@ export async function prepareCompetencies(io, sourceList) {
     };
     const refresh = async () => {
       const n = io.generation();
-      await tracedPreparation("COMPETENCY_UI", async () => (click("Atualizar")));
-      await tracedPreparation("COMPETENCY_UI", async () => (observed("pareceres_internos", { id_competencia: c.id }, n)));
+      await tracedPreparation("COMPETENCY_UI", async () => click("Atualizar"));
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        observed("pareceres_internos", { id_competencia: c.id }, n),
+      );
     };
-    let p = await tracedPreparation("COMPETENCY_RECONCILE", async () => (readOpinion()));
+    let p = await tracedPreparation("COMPETENCY_RECONCILE", async () => readOpinion());
     if (!p) {
       const evidence = {
         ...c.evidence,
@@ -3719,66 +3829,74 @@ export async function prepareCompetencies(io, sourceList) {
         analysisComplete: true,
         opinionGate: true,
       };
-      await tracedPreparation("COMPETENCY_COMMAND", async () => (io.command({
-        rpc: "solicitar_parecer_interno",
-        payload: { p_id_competencia: c.id },
-        evidence,
-        button: "Solicitar parecer",
-        confirmAfter: async () => {
-          await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
-          p = await tracedPreparation("COMPETENCY_RECONCILE", async () => (readOpinion()));
-          return !!p && uuid(p.id);
-        },
-      })));
+      await tracedPreparation("COMPETENCY_COMMAND", async () =>
+        io.command({
+          rpc: "solicitar_parecer_interno",
+          payload: { p_id_competencia: c.id },
+          evidence,
+          button: "Solicitar parecer",
+          confirmAfter: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
+            p = await tracedPreparation("COMPETENCY_RECONCILE", async () => readOpinion());
+            return !!p && uuid(p.id);
+          },
+        }),
+      );
     }
-    p = await tracedPreparation("COMPETENCY_RECONCILE", async () => (poll(
-      readOpinion,
-      (x) =>
-        !!x &&
-        uuid(x.id) &&
-        hash(x.hash) &&
-        !["queued", "processing", "pendente", "processando"].includes(x.status),
-      refresh,
-    )));
+    p = await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+      poll(
+        readOpinion,
+        (x) =>
+          !!x &&
+          uuid(x.id) &&
+          hash(x.hash) &&
+          !["queued", "processing", "pendente", "processando"].includes(x.status),
+        refresh,
+      ),
+    );
     if (
       ["failed", "error", "cancelado", "reprovado"].includes(p.status) ||
       p.id_competencia !== c.id
     )
       stop("COMPETENCE_OPINION_FAILED");
     if (p.status !== "aprovado" || !p.aprovado_em) {
-      await tracedPreparation("COMPETENCY_UI", async () => (click("Aprovar parecer")));
+      await tracedPreparation("COMPETENCY_UI", async () => click("Aprovar parecer"));
       const dialog = io.page.getByRole("dialog", {
         name: "Confirmar aprovação",
         exact: true,
       });
-      await tracedPreparation("COMPETENCY_UI", async () => (dialog.getByLabel("Fundamento (opcional)", { exact: true }).fill(FIXTURE.foundation)));
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        dialog.getByLabel("Fundamento (opcional)", { exact: true }).fill(FIXTURE.foundation),
+      );
       const evidence = {
         ...c.evidence,
         opinions: [{ ...io.official(p), competency: c.id }],
       };
       const id = p.id;
-      await tracedPreparation("COMPETENCY_COMMAND", async () => (io.command({
-        rpc: "aprovar_parecer_interno",
-        payload: {
-          p_id_parecer: id,
-          p_aprovar: true,
-          p_fundamento: FIXTURE.foundation,
-        },
-        evidence,
-        button: "Confirmar decisão",
-        scope: dialog,
-        confirmAfter: async () => {
-          await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
-          p = await tracedPreparation("COMPETENCY_RECONCILE", async () => (readOpinion()));
-          return p?.id === id && p.status === "aprovado" && !!p.aprovado_em;
-        },
-      })));
+      await tracedPreparation("COMPETENCY_COMMAND", async () =>
+        io.command({
+          rpc: "aprovar_parecer_interno",
+          payload: {
+            p_id_parecer: id,
+            p_aprovar: true,
+            p_fundamento: FIXTURE.foundation,
+          },
+          evidence,
+          button: "Confirmar decisão",
+          scope: dialog,
+          confirmAfter: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
+            p = await tracedPreparation("COMPETENCY_RECONCILE", async () => readOpinion());
+            return p?.id === id && p.status === "aprovado" && !!p.aprovado_em;
+          },
+        }),
+      );
     }
     c.opinionId = p.id;
     return p;
   }
   async function present(c, register) {
-    let view = await tracedPreparation("COMPETENCY_RECONCILE", async () => (overview(c.id, c.month)));
+    let view = await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(c.id, c.month));
     if (
       ["apresentado", "aguardando_contratante", "validada", "reapresentado"].includes(
         view.competencia.situacao,
@@ -3793,8 +3911,8 @@ export async function prepareCompetencies(io, sourceList) {
       v.competencia.percentual_conformidade === 100;
     if (!ready(view) || view.allowed_actions?.apresentar !== true)
       stop("COMPETENCE_PRESENTATION_GATE");
-    await tracedPreparation("COMPETENCY_UI", async () => (link(`/competencias/${c.id}/apresentar`)));
-    await tracedPreparation("COMPETENCY_UI", async () => (io.fresh()));
+    await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${c.id}/apresentar`));
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     const evidence = {
       ...c.evidence,
       analysisCurrent: true,
@@ -3805,38 +3923,46 @@ export async function prepareCompetencies(io, sourceList) {
     if (view.competencia.situacao !== "pode_apresentar_contratante") {
       if (view.blocking_summary.aprovacao_apresentacao_atual === true)
         stop("COMPETENCE_PRESENTATION_STATE");
-      await tracedPreparation("COMPETENCY_UI", async () => (io.page
-        .getByLabel("Fundamento da aprovação (opcional)", { exact: true })
-        .fill(FIXTURE.foundation)));
-      await tracedPreparation("COMPETENCY_UI", async () => (click("Aprovar apresentação")));
+      await tracedPreparation("COMPETENCY_UI", async () =>
+        io.page
+          .getByLabel("Fundamento da aprovação (opcional)", { exact: true })
+          .fill(FIXTURE.foundation),
+      );
+      await tracedPreparation("COMPETENCY_UI", async () => click("Aprovar apresentação"));
       const dialog = io.page.getByRole("dialog", {
         name: "Confirmar aprovação institucional",
         exact: true,
       });
       const approvalOrdinal = io.generation();
-      await tracedPreparation("COMPETENCY_COMMAND", async () => (io.command({
-        rpc: "aprovar_apresentacao",
-        payload: { p_id_competencia: c.id, p_fundamento: FIXTURE.foundation },
-        evidence,
-        button: "Confirmar aprovação",
-        scope: dialog,
-        confirmAfter: async () => {
-          await tracedPreparation("COMPETENCY_UI", async () => (observed(
-            "obter_visao_geral_competencia",
-            { p_id_competencia: c.id },
-            approvalOrdinal,
-          )));
-          view = await tracedPreparation("COMPETENCY_GET", async () => (io.rpcRead("obter_visao_geral_competencia", {
-            p_id_competencia: c.id,
-          })));
-          return (
-            view?.competencia?.id === c.id &&
-            view.competencia.situacao === "pode_apresentar_contratante" &&
-            view.blocking_summary?.aprovacao_apresentacao_atual === true &&
-            ready(view)
-          );
-        },
-      })));
+      await tracedPreparation("COMPETENCY_COMMAND", async () =>
+        io.command({
+          rpc: "aprovar_apresentacao",
+          payload: { p_id_competencia: c.id, p_fundamento: FIXTURE.foundation },
+          evidence,
+          button: "Confirmar aprovação",
+          scope: dialog,
+          confirmAfter: async () => {
+            await tracedPreparation("COMPETENCY_UI", async () =>
+              observed(
+                "obter_visao_geral_competencia",
+                { p_id_competencia: c.id },
+                approvalOrdinal,
+              ),
+            );
+            view = await tracedPreparation("COMPETENCY_GET", async () =>
+              io.rpcRead("obter_visao_geral_competencia", {
+                p_id_competencia: c.id,
+              }),
+            );
+            return (
+              view?.competencia?.id === c.id &&
+              view.competencia.situacao === "pode_apresentar_contratante" &&
+              view.blocking_summary?.aprovacao_apresentacao_atual === true &&
+              ready(view)
+            );
+          },
+        }),
+      );
     }
     c.state = view.competencia.situacao;
     if (!register) return;
@@ -3846,70 +3972,85 @@ export async function prepareCompetencies(io, sourceList) {
       view.blocking_summary?.aprovacao_apresentacao_atual !== true
     )
       stop("COMPETENCE_REGISTER_GATE");
-    await tracedPreparation("COMPETENCY_UI", async () => (io.page
-      .getByLabel("Protocolo (se disponível)", { exact: true })
-      .fill("HML-TRILHA-A-20261108")));
-    await tracedPreparation("COMPETENCY_UI", async () => (io.page
-      .getByLabel("Forma da apresentação (se disponível)", { exact: true })
-      .fill("Ensaio sintético em homologação.")));
-    await tracedPreparation("COMPETENCY_UI", async () => (click("Registrar apresentação")));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      io.page
+        .getByLabel("Protocolo (se disponível)", { exact: true })
+        .fill("HML-TRILHA-A-20261108"),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      io.page
+        .getByLabel("Forma da apresentação (se disponível)", { exact: true })
+        .fill("Ensaio sintético em homologação."),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () => click("Registrar apresentação"));
     const dialog = io.page.getByRole("dialog", {
       name: "Confirmar envio ao contratante",
       exact: true,
     });
     let presentationId = null;
-    await tracedPreparation("COMPETENCY_COMMAND", async () => (io.command({
-      rpc: "registrar_apresentacao",
-      payload: {
-        p_id_competencia: c.id,
-        p_protocolo: "HML-TRILHA-A-20261108",
-        p_forma_apresentacao: "Ensaio sintético em homologação.",
-      },
-      evidence: {
-        ...evidence,
-        presentationApproved: true,
-        allowedRegister: true,
-      },
-      button: "Confirmar registro",
-      scope: dialog,
-      confirmAfter: async () => {
-        const result = io.page.getByRole("link", {
-          name: "Abrir registro da apresentação",
-          exact: true,
-        });
-        if ((await tracedPreparation("COMPETENCY_UI", async () => (result.count()))) !== 1) return false;
-        const href = await tracedPreparation("COMPETENCY_UI", async () => (result.getAttribute("href")));
-        const match = new RegExp("^/competencias/" + c.id + "/apresentacoes/([0-9a-f-]{36})$").exec(
-          href || "",
-        );
-        if (!match || !uuid(match[1])) return false;
-        presentationId = match[1];
-        const n = io.generation();
-        await tracedPreparation("COMPETENCY_UI", async () => (link(href)));
-        await tracedPreparation("COMPETENCY_UI", async () => (observed(
-          "apresentacoes_contratante",
-          { id: presentationId, id_competencia: c.id },
-          n,
-        )));
-        await tracedPreparation("COMPETENCY_UI", async () => (observed("pacotes_competencia", { id_competencia: c.id }, n)));
-        await tracedPreparation("COMPETENCY_UI", async () => (observed("itens_pacote_competencia", { id_competencia: c.id }, n)));
-        return await tracedPreparation("COMPETENCY_RECONCILE", async () => (readPackage(c, presentationId)));
-      },
-    })));
+    await tracedPreparation("COMPETENCY_COMMAND", async () =>
+      io.command({
+        rpc: "registrar_apresentacao",
+        payload: {
+          p_id_competencia: c.id,
+          p_protocolo: "HML-TRILHA-A-20261108",
+          p_forma_apresentacao: "Ensaio sintético em homologação.",
+        },
+        evidence: {
+          ...evidence,
+          presentationApproved: true,
+          allowedRegister: true,
+        },
+        button: "Confirmar registro",
+        scope: dialog,
+        confirmAfter: async () => {
+          const result = io.page.getByRole("link", {
+            name: "Abrir registro da apresentação",
+            exact: true,
+          });
+          if ((await tracedPreparation("COMPETENCY_UI", async () => result.count())) !== 1)
+            return false;
+          const href = await tracedPreparation("COMPETENCY_UI", async () =>
+            result.getAttribute("href"),
+          );
+          const match = new RegExp(
+            "^/competencias/" + c.id + "/apresentacoes/([0-9a-f-]{36})$",
+          ).exec(href || "");
+          if (!match || !uuid(match[1])) return false;
+          presentationId = match[1];
+          const n = io.generation();
+          await tracedPreparation("COMPETENCY_UI", async () => link(href));
+          await tracedPreparation("COMPETENCY_UI", async () =>
+            observed("apresentacoes_contratante", { id: presentationId, id_competencia: c.id }, n),
+          );
+          await tracedPreparation("COMPETENCY_UI", async () =>
+            observed("pacotes_competencia", { id_competencia: c.id }, n),
+          );
+          await tracedPreparation("COMPETENCY_UI", async () =>
+            observed("itens_pacote_competencia", { id_competencia: c.id }, n),
+          );
+          return await tracedPreparation("COMPETENCY_RECONCILE", async () =>
+            readPackage(c, presentationId),
+          );
+        },
+      }),
+    );
     if (!presentationId) stop("COMPETENCE_REGISTER_UNCERTAIN");
     c.presentationId = presentationId;
-    view = await tracedPreparation("COMPETENCY_RECONCILE", async () => (overview(c.id, c.month)));
+    view = await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(c.id, c.month));
     if (view.competencia.situacao !== "aguardando_contratante")
       stop("COMPETENCE_REGISTER_STATE_UNPROVEN");
     c.state = view.competencia.situacao;
   }
   async function readPackage(c, id) {
-    const list = await tracedPreparation("COMPETENCY_UI", async () => (rows("apresentacoes_contratante", {
-      id,
-      id_competencia: c.id,
-      id_contrato: FIXTURE.contract,
-      id_organizacao: FIXTURE.organization,
-    })));
+    const list = await tracedPreparation("COMPETENCY_UI", async () =>
+      rows("apresentacoes_contratante", {
+        id,
+        id_competencia: c.id,
+        id_contrato: FIXTURE.contract,
+        id_organizacao: FIXTURE.organization,
+      }),
+    );
     if (list.length !== 1) return false;
     const a = list[0];
     inContext(a, id);
@@ -3921,23 +4062,27 @@ export async function prepareCompetencies(io, sourceList) {
       !a.apresentado_em
     )
       stop("COMPETENCE_PACKAGE_RELATION");
-    const listPk = await tracedPreparation("COMPETENCY_UI", async () => (rows("pacotes_competencia", {
-      id: a.id_pacote,
-      id_competencia: c.id,
-      id_contrato: FIXTURE.contract,
-      id_organizacao: FIXTURE.organization,
-    })));
+    const listPk = await tracedPreparation("COMPETENCY_UI", async () =>
+      rows("pacotes_competencia", {
+        id: a.id_pacote,
+        id_competencia: c.id,
+        id_contrato: FIXTURE.contract,
+        id_organizacao: FIXTURE.organization,
+      }),
+    );
     if (listPk.length !== 1) return false;
     const p = listPk[0];
     inContext(p, a.id_pacote);
     if (p.id_competencia !== c.id || !hash(p.hash_pacote) || !p.congelado_em)
       stop("COMPETENCE_PACKAGE_UNPROVEN");
-    const items = await tracedPreparation("COMPETENCY_UI", async () => (rows("itens_pacote_competencia", {
-      id_pacote: p.id,
-      id_competencia: c.id,
-      id_contrato: FIXTURE.contract,
-      id_organizacao: FIXTURE.organization,
-    })));
+    const items = await tracedPreparation("COMPETENCY_UI", async () =>
+      rows("itens_pacote_competencia", {
+        id_pacote: p.id,
+        id_competencia: c.id,
+        id_contrato: FIXTURE.contract,
+        id_organizacao: FIXTURE.organization,
+      }),
+    );
     if (!items.length) stop("COMPETENCE_PACKAGE_EMPTY");
     for (const item of items) {
       if (
