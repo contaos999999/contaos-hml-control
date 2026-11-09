@@ -126,6 +126,142 @@ const listKeys = [
   "p_motivo",
   "p_request_id",
 ];
+
+export const R1_RECOVERY_DOCUMENT = freeze({
+  "schema": "contaos.fixture.receipts.v1",
+  "receipts": [
+    {
+      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",
+      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      "workflowRun": "42540864527",
+      "schema": "contaos.fixture.intent.v1",
+      "rpc": "registrar_versao_fonte_v107",
+      "requestId": "08141ffd-56c1-4c50-b58f-32912d1006b2",
+      "state": "sealed",
+      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      "payloadSha256": "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467"
+    },
+    {
+      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",
+      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      "workflowRun": "42540864527",
+      "schema": "contaos.fixture.intent.v1",
+      "rpc": "registrar_versao_fonte_v107",
+      "requestId": "08141ffd-56c1-4c50-b58f-32912d1006b2",
+      "state": "confirmed",
+      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      "payloadSha256": "b27048ba9358c4dea53acf3dc7bc8ee855cc75d6795f7ea7fa2b67681c7c7467"
+    },
+    {
+      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",
+      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      "workflowRun": "42540864527",
+      "schema": "contaos.fixture.intent.v1",
+      "rpc": "aprovar_versao_fonte_v107",
+      "requestId": "437a3c66-4bed-45e3-b73e-8696bdf4a791",
+      "state": "sealed",
+      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      "payloadSha256": "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769"
+    },
+    {
+      "frontendSha": "866608620909bf313a6c2192736330222f9219ad",
+      "harnessSha": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
+      "deploymentId": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY",
+      "workflowRun": "42540864527",
+      "schema": "contaos.fixture.intent.v1",
+      "rpc": "aprovar_versao_fonte_v107",
+      "requestId": "437a3c66-4bed-45e3-b73e-8696bdf4a791",
+      "state": "confirmed",
+      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      "payloadSha256": "e02b9e79eac299f949cfd95f2da29b415efad1249c8c5447b49f59110a197769"
+    }
+  ]
+});
+const R1_RECEIPTS_SHA256 = "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9";
+const recoveryProofs = new WeakSet();
+export function validateR1RecoveryDocument(input = R1_RECOVERY_DOCUMENT) {
+  const bytes = JSON.stringify(input, null, 2) + "\n";
+  if (hash(bytes) !== R1_RECEIPTS_SHA256) err("RECOVERY_LEDGER");
+  if (!keys(input, ["schema","receipts"]) || input.schema !== "contaos.fixture.receipts.v1" ||
+      !Array.isArray(input.receipts) || input.receipts.length !== 4) err("RECOVERY_LEDGER");
+  for (const receipt of input.receipts) safeReceipt(receipt);
+  return freeze(structuredClone(input));
+}
+export function reconcileR1Recovery(input) {
+  validateR1RecoveryDocument(input?.ledger);
+  const s=input.source,v=input.version;
+  if(input.sourceCount!==1 || !official(s) || s.id!==FIXTURE.source || !sourceFieldsExact(s) ||
+     !official(v) || !uuid(v.id) || v.source!==FIXTURE.source || !HASH.test(v.hash||"") ||
+     v.approved!==true || v.textVerified!==true || v.effective!==true || v.file!==null ||
+     input.listObserved!==true || ![0,1].includes(input.listCount)) err("RECOVERY_STATE");
+  if(input.listCount===0 ? input.canCreateList!==true :
+    !(input.listState?.verified===true && input.listState.active===true &&
+      input.listState.published===true && input.listState.ruleVerified===true &&
+      input.listState.sourceVersion===v.id))err("RECOVERY_LIST");
+  const proof=freeze({schema:"contaos.fixture.recovery.v1",sourceVersion:v.id,sourceHash:v.hash,ledgerSha256:R1_RECEIPTS_SHA256});
+  recoveryProofs.add(proof);
+  return proof;
+}
+export const DIAGNOSTIC_SUBPHASES = Object.freeze([
+ "PREFLIGHT","LOGIN","SOURCE_AND_LIST","COMPETENCIES","FINAL_READBACK",
+ "SOURCE_NAVIGATE","SOURCE_GET","SOURCE_VERSION_GET","SOURCE_TEXT_PROOF","SOURCE_RECONCILE",
+ "SOURCE_VERSION_READ","SOURCE_UI_CONTROL","SOURCE_FORM_FIELD","SOURCE_REGISTER_COMMAND",
+ "SOURCE_APPROVE_COMMAND","SOURCE_ACTIVATE_COMMAND","SOURCE_SHEET_CLOSE","SOURCE_REFRESH",
+ "RECOVERY_READ","RECOVERY_RETURN","V109_NAVIGATE","LIST_PANEL_OPEN","LIST_GET","LIST_MODEL_READ",
+ "LIST_UI_CONTROL","LIST_FORM_FIELD","LIST_COMMAND","LIST_REFRESH",
+ "COMPETENCY_UI","COMPETENCY_GET","COMPETENCY_COMMAND","COMPETENCY_RECONCILE",
+ "UI_CONFIRM_FENCE","UI_CONFIRM_CONTROL","UI_CONFIRM_CLICK","UI_CONFIRM_BEFORE","UI_CONFIRM_AFTER",
+ "RUNTIME_FRESH","RUNTIME_NAVIGATE","RUNTIME_CONTEXT","RUNTIME_COMMAND","LOGOUT","CLEANUP"
+]);
+function classifyPreparationFailure(error) {
+  const name=["Error","TypeError","ReferenceError","SyntaxError","TimeoutError"].includes(error?.name)?error.name:"UNKNOWN";
+  const code=PREPARER_FAILURE_CODES.has(error?.code)?error.code:
+    PREPARER_FAILURE_CODES.has(error?.message)?error.message:
+    name==="TimeoutError"?"PREPARER_TIMEOUT":"PREPARER_UNCLASSIFIED";
+  return {code,errorName:name,failureClass:name==="TimeoutError"?"TIMEOUT":code==="PREPARER_UNCLASSIFIED"?"UNKNOWN":"PROTOCOL"};
+}
+export function createPreparationDiagnostics() {
+  const stack=[];let primary=null,lastCompleted=null,cleaning=false,logoutAttempted=false,logoutVerified=false,cleanupFailure=null;
+  const capture=(error)=>{
+    if(!primary)primary={...classifyPreparationFailure(error),subphase:stack.at(-1)||"PREFLIGHT",subphasePath:stack.slice(-12)};
+    return primary.code;
+  };
+  return Object.freeze({
+    capture,
+    async step(subphase,execute){
+      if(!DIAGNOSTIC_SUBPHASES.includes(subphase)||typeof execute!=="function")err("DIAGNOSTIC_SUBPHASE");
+      stack.push(subphase);
+      try{const value=await execute();if(!cleaning)lastCompleted=subphase;return value;}
+      catch(error){if(!cleaning)capture(error);throw error;}
+      finally{stack.pop();}
+    },
+    async cleanup(execute){
+      logoutAttempted=true;cleaning=true;
+      try{logoutVerified=(await execute())===true;cleanupFailure=logoutVerified?null:"LOGOUT_NOT_VERIFIED";}
+      catch{logoutVerified=false;cleanupFailure="LOGOUT_FAILED";}
+      finally{cleaning=false;}
+      return logoutVerified;
+    },
+    snapshot(){return freeze({primaryFailure:primary?.code||null,failureClass:primary?.failureClass||null,errorName:primary?.errorName||null,subphase:primary?.subphase||stack.at(-1)||lastCompleted||"PREFLIGHT",subphasePath:primary?.subphasePath||stack.slice(-12),lastCompletedSubphase:lastCompleted,logoutAttempted,logoutVerified,cleanupFailure});}
+  });
+}
+let activePreparationDiagnostics=null;
+async function tracedPreparation(subphase,execute){
+  return activePreparationDiagnostics?activePreparationDiagnostics.step(subphase,execute):execute();
+}
+export async function withPreparationDiagnostics(diagnostics,execute){
+  if(activePreparationDiagnostics)err("DIAGNOSTIC_REENTRANT");
+  activePreparationDiagnostics=diagnostics;
+  try{return await execute();}finally{activePreparationDiagnostics=null;}
+}
+
 export const BUSINESS_RPCS = Object.freeze([
   "registrar_versao_fonte_v107",
   "aprovar_versao_fonte_v107",
@@ -571,9 +707,12 @@ export function createIntentBroker({
   persist,
   now = () => performance.now(),
   competenceGateAmended = false,
+  recoveryLedger,
 } = {}) {
+  const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
+  let recoveryAuthorized = !recovery;
   let active = null,
-    count = 0,
+    count = recovery ? 2 : 0,
     frozen = false;
   const accepted = new Map(),
     usedIds = new Set();
@@ -659,7 +798,14 @@ export function createIntentBroker({
   }
   return Object.freeze({
     policy,
+    authorizeRecovery(proof) {
+      if (!recovery || !recoveryProofs.has(proof)) err("RECOVERY_PROOF");
+      recoveryAuthorized = true;
+      return true;
+    },
     arm({ rpc, payload, requestId, uiGeneratedKey, verified, evidence = {} } = {}) {
+      if (recovery && ["registrar_versao_fonte_v107","aprovar_versao_fonte_v107"].includes(rpc)) err("RECOVERY_CONFIRMED_OPERATION");
+      if (!recoveryAuthorized) err("RECOVERY_READ_ONLY");
       if (frozen) err("INTENT_FROZEN");
       if (active) err("INTENT_PENDING");
       if (count >= 24) err("INTENT_BUDGET");
@@ -1810,6 +1956,7 @@ export function createOfficialObserver(page) {
  */
 export async function prepareSourceAndList(io) {
   const { page } = io;
+  const recovery = io.recoveryLedger === undefined ? null : validateR1RecoveryDocument(io.recoveryLedger);
   const fail = (code) => {
     throw new Error(code);
   };
@@ -2040,6 +2187,7 @@ export async function prepareSourceAndList(io) {
     if (await proveText(v)) equivalents.push(v);
   }
   assert(equivalents.length <= 1, "FLOW_DUPLICATE_EQUIVALENT_VERSION");
+  if (recovery && equivalents.length !== 1) fail("RECOVERY_STATE");
   if (equivalents.length === 0) {
     while (
       (await btn(sheet, "Versões anteriores").count()) === 1 &&
@@ -2100,6 +2248,7 @@ export async function prepareSourceAndList(io) {
   }
   // Locate matching version's button even when pagination starts on last page.
   let caps = await sourceProof();
+  if (recovery && !version.aprovado_em) fail("RECOVERY_STATE");
   if (!version.aprovado_em) {
     for (let n = 0; (await btn(sheet, `Aprovar versão ${version.versao}`).count()) === 0; n++) {
       assert(n < 100, "FLOW_VERSION_UI_MISSING");
@@ -2134,6 +2283,37 @@ export async function prepareSourceAndList(io) {
     assert(!!version.aprovado_em, "FLOW_APPROVAL_NOT_READBACK");
   }
   await click(sheet, "Close");
+  if (recovery) {
+    await tracedPreparation("RECOVERY_READ", async () => {
+      await io.link(`/contratos/${FIXTURE.contract}/regras`);
+      await click(page, "Gerenciar listas");
+      const region=page.getByRole("region",{name:"Gestão de listas",exact:true});
+      const rows=await allPages(region,"Próxima página de listas",()=>io.read("listas_verificacao",{}));
+      const matching=rows.filter(r=>r.nome===FIXTURE.listName);
+      assert(matching.length<=1,"RECOVERY_LIST");
+      let state=null;
+      if(matching.length===1){
+        for(let n=0;(await field(region,"Lista selecionada").locator(`option[value="${matching[0].id}"]`).count())===0;n++){
+          assert(n<100,"FLOW_LIST_UI_MISSING");await click(region,"Página anterior de listas");
+        }
+        await field(region,"Lista selecionada").selectOption(matching[0].id);
+        await io.fresh();
+      }
+      const model=await io.rpcRead("obter_lista_operacional_v1");
+      assert(model?.schema_versao==="crud-lista-v1"&&model.id_organizacao===FIXTURE.organization&&model.id_contrato===FIXTURE.contract&&checkedOfficial(model),"FLOW_MODEL_CONTEXT");
+      if(matching.length===1){
+        const l=model.lista,v=model.versao,items=model.itens;
+        assert(l&&v&&l.id===matching[0].id&&l.nome===FIXTURE.listName&&l.descricao===FIXTURE.listDescription&&checkedOfficial(l)&&checkedOfficial(v)&&v.id_lista===l.id&&v.vigencia_inicio==="2026-01-01"&&v.vigencia_fim===null&&model.total_itens===1&&Array.isArray(items)&&items.length===1,"RECOVERY_LIST");
+        const item=items[0],expected={codigo:"AUD-A-TXT-001",descricao:"Presença do documento TXT sintético de auditoria.",categoria:"documental",obrigatorio:true,aplicavel:true,impeditivo:true,criticidade:"alta",ordem:1,id_fonte_versao:version.id,regra_validacao:{documento:{obrigatorio:true,tipos:["outro"]},condicao:{tipo:"sempre"}}};
+        assert(uuid(item.id)&&checkedOfficial(item)&&item.id_versao_lista===v.id&&Object.entries(expected).every(([k,x])=>same(item[k],x)),"RECOVERY_LIST");
+        state={verified:true,active:l.situacao==="ativa",published:v.situacao==="publicada",ruleVerified:true,sourceVersion:version.id};
+      }
+      const proof=reconcileR1Recovery({ledger:recovery,source:{...source,...context,version:source.versao_registro},version:{...context,id:version.id,source:source.id,hash:version.hash,approved:!!version.aprovado_em,textVerified:verifiedTextVersions.has(version.id),effective:version.inicio_vigencia==="2026-01-01"&&version.fim_vigencia===null,file:version.id_arquivo},sourceCount:1,listCount:matching.length,listObserved:true,listState:state,canCreateList:model.acoes?.criar_lista===true});
+      assert(typeof io.recoveryReady==="function","RECOVERY_PROOF");
+      io.recoveryReady(proof);
+    });
+    await tracedPreparation("RECOVERY_RETURN",()=>io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`));
+  }
   if (source.situacao !== "ativa") {
     caps = await sourceProof();
     assert(caps.canActivate === true, "FLOW_ACTIVATE_DENIED");
@@ -3399,6 +3579,7 @@ export function validatePreparerIdentity(env, proof, native, identity, head) {
   );
 }
 const PREPARER_FAILURE_CODES = new Set([
+  "RECOVERY_LEDGER","RECOVERY_STATE","RECOVERY_LIST","RECOVERY_READ_ONLY","RECOVERY_PROOF","RECOVERY_CONFIRMED_OPERATION","DIAGNOSTIC_SUBPHASE","DIAGNOSTIC_REENTRANT","PREPARER_TIMEOUT",
   "BINDING_CODE",
   "BINDING_HASH",
   "BINDING_ID",
@@ -3552,6 +3733,10 @@ const PREPARER_FAILURE_CODES = new Set([
   "UI_UNCERTAIN",
 ]);
 async function runFixturePreparation() {
+  validateR1RecoveryDocument();
+  const diagnostics=createPreparationDiagnostics();
+  if(activePreparationDiagnostics)err("DIAGNOSTIC_REENTRANT");
+  activePreparationDiagnostics=diagnostics;
   let browser,
     proxy,
     fence,
@@ -3598,7 +3783,7 @@ async function runFixturePreparation() {
     }
     await checkFreshDeployment(proof, true);
     const persist = createReceiptWriter(receiptPath, identity);
-    const broker = createIntentBroker({ persist, competenceGateAmended: true });
+    const broker = createIntentBroker({ persist, competenceGateAmended: true, recoveryLedger:R1_RECOVERY_DOCUMENT });
     const debug = createServer();
     await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
     const debugPort = debug.address().port;
@@ -3785,6 +3970,8 @@ async function runFixturePreparation() {
       return value;
     };
     const io = {
+      recoveryLedger:R1_RECOVERY_DOCUMENT,
+      recoveryReady:(proof)=>broker.authorizeRecovery(proof),
       page,
       fence,
       runtime,
@@ -3821,14 +4008,12 @@ async function runFixturePreparation() {
     if (result?.state !== "confirmed") err("PREPARER_INCOMPLETE");
     completed = true;
   } catch (error) {
-    blockedCode = PREPARER_FAILURE_CODES.has(error?.message)
-      ? error.message
-      : "PREPARER_UNCLASSIFIED";
+    blockedCode = diagnostics.capture(error);
     throw error;
   } finally {
     if (runtime) {
       try {
-        logoutVerified = (await runtime.logout()) === true;
+        logoutVerified = await diagnostics.cleanup(()=>runtime.logout());
       } catch {
         logoutVerified = false;
       } finally {
@@ -3850,12 +4035,13 @@ async function runFixturePreparation() {
       bindings = fixtureBindingReceipt(sourceList, result);
     } catch (error) {
       completed = false;
-      blockedCode = PREPARER_FAILURE_CODES.has(error?.message) ? error.message : "BINDING_SCHEMA";
+      blockedCode ||= diagnostics.capture(error);
     }
     collect(bindings);
     const report = {
       schema: "contaos.fixture.preparation.v1",
       failure: blockedCode,
+      diagnostics:diagnostics.snapshot(),
       bindings,
       ...identity,
       phase,
@@ -3877,6 +4063,7 @@ async function runFixturePreparation() {
         name +
         "\n";
     writeFileSync(join(output, "SHA256SUMS"), sums, { mode: 0o600 });
+    activePreparationDiagnostics=null;
   }
   if (!completed || !logoutVerified) err("PREPARER_INCOMPLETE");
 }
