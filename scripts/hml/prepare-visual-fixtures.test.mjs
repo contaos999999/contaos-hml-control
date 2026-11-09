@@ -6896,3 +6896,63 @@ test("R10 scoped rows wait for newer admitted reads even before their headers", 
     }
   }
 });
+
+test("R10 initial body cannot authorize fill while another admitted request has no headers", async () => {
+  const f = await r10QueryFixture();
+  let pending,
+    fill = 0,
+    initialResolve;
+  const initial = new Promise((resolve) => {
+    initialResolve = resolve;
+  });
+  const io = {
+    page: {
+      getByLabel: () => ({
+        fill: async () => {
+          fill++;
+          throw Error("TEST_STOP_AT_FILL");
+        },
+      }),
+    },
+    readBarrier: f.observer.readBarrier,
+    assertReadBarrier: f.observer.assertReadBarrier,
+    readBarrierRemaining: f.observer.readBarrierRemaining,
+    drainReads: f.observer.drainReads,
+    generation: f.observer.generation,
+    observedAfter: f.observer.waitObservedAfter,
+    read: f.observer.read,
+    fresh: () => f.observer.flush(),
+  };
+  const task = sut
+    .readCompetenceMonth(io, "2026-10-01", async () => {
+      const q = { ...f.full };
+      delete q.competencia_referencia;
+      f.response(f.request(q), [f.row]);
+      await f.observer.flush();
+      pending = f.request(q);
+      initialResolve();
+    })
+    .catch((error) => error);
+  await initial;
+  await new Promise(setImmediate);
+  try {
+    assert.equal(fill, 0, "pre-fill must drain every admitted request under the shared budget");
+  } finally {
+    f.response(pending, [f.row]);
+    await task;
+    f.observer.close();
+  }
+});
+test("R10 seal records fatal unavailable for an admitted read that never reached headers", async () => {
+  const f = await r10QueryFixture();
+  f.request();
+  await f.observer.seal();
+  assert.deepEqual(f.observer.observationFailure(), {
+    contractKind: "UNKNOWN",
+    stage: "UNAVAILABLE",
+    statusHTTP: "NONE",
+    requestFailure: "UNAVAILABLE",
+  });
+  f.observer.close();
+  await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+});
