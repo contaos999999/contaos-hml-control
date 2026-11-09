@@ -491,6 +491,8 @@ export async function installPinnedBun() {
     if (!sameIdentity(before, env.pathStat) || before.nlink !== 1) fail("BUN_ENV");
     check();
     try {
+      await revalidateOwned();
+      check();
       publication = {
         file: env.pathFile,
         stat: before,
@@ -525,8 +527,11 @@ export async function installPinnedBun() {
     if (binaryHandle) await binaryHandle.close().catch(() => {});
     if (pathHandle) await pathHandle.close().catch(() => {});
     if (!success) {
-      if (publication) await rollback();
-      await cleanupOwned();
+      try {
+        if (publication) await rollback();
+      } finally {
+        await cleanupOwned();
+      }
     }
   }
 }

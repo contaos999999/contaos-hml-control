@@ -397,7 +397,7 @@ async function officialArchiveFixture() {
     })();
   return officialFixture;
 }
-for (const mode of ["deadline", "swap", "wrong-version"])
+for (const mode of ["deadline", "swap", "wrong-version", "swap-before-path"])
   test(
     "verified installer rejects " + mode + " and rolls back only its own publication",
     async (t) => {
@@ -408,6 +408,8 @@ for (const mode of ["deadline", "swap", "wrong-version"])
       const victim = path.join(f.dir, "victim");
       await fs.mkdir(victim);
       await fs.writeFile(path.join(victim, "bun"), "UNVERIFIED_CANARY");
+      let ownedDirectory = null,
+        pathWrites = 0;
       let clock = 0,
         executions = 0;
       t.mock.method(performance, "now", () => clock);
@@ -415,6 +417,15 @@ for (const mode of ["deadline", "swap", "wrong-version"])
       const originalOpen = fs.open.bind(fs);
       t.mock.method(fs, "open", async (name, ...args) => {
         const h = await originalOpen(name, ...args);
+        if (mode === "swap-before-path" && name === f.target && args[0] & 1024) {
+          await fs.rename(ownedDirectory, ownedDirectory + "-original");
+          await fs.symlink(victim, ownedDirectory);
+          const write = h.writeFile.bind(h);
+          h.writeFile = async (...data) => {
+            pathWrites++;
+            return write(...data);
+          };
+        }
         if (mode === "deadline" && name === f.target && args[0] & 1024) {
           const close = h.close.bind(h);
           h.close = async () => {
@@ -426,6 +437,7 @@ for (const mode of ["deadline", "swap", "wrong-version"])
       });
       t.mock.method(childProcess, "execFile", (file, args, options, callback) => {
         executions++;
+        ownedDirectory = options.cwd;
         assert.equal(path.isAbsolute(file), true);
         assert.deepEqual(args, ["--version"]);
         assert.deepEqual(options.env, {});
@@ -442,6 +454,7 @@ for (const mode of ["deadline", "swap", "wrong-version"])
       try {
         await assert.rejects(sut().installPinnedBun());
         assert.equal(executions, 1);
+        if (mode === "swap-before-path") assert.equal(pathWrites, 0);
         assert.equal(await fs.readFile(f.target, "utf8"), "");
         assert.equal(await fs.readFile(path.join(victim, "bun"), "utf8"), "UNVERIFIED_CANARY");
         await assert.rejects(fs.lstat(path.join(victim, "bunx")), { code: "ENOENT" });
