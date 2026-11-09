@@ -3629,9 +3629,13 @@ test("R4 approved minimal projections RPC5 causal observer cases", async () => {
       c.payload.p_id_execucao_esperada = c.old.execucao_atual.id;
     if (c.mutation === "aprovar_apresentacao") {
       c.fresh.competencia.situacao = "pode_apresentar_contratante";
+      c.fresh.competencia.percentual_conformidade = 100;
+      c.fresh.portao = { liberado: true, percentual: 100 };
       c.fresh.blocking_summary = {
         ...c.fresh.blocking_summary,
         aprovacao_apresentacao_atual: true,
+        analise_concluida_atual: true,
+        parecer_aprovado: true,
       };
     }
     let tick = 0,
@@ -3657,7 +3661,9 @@ test("R4 approved minimal projections RPC5 causal observer cases", async () => {
       c.payload,
       c.mutation === "solicitar_analise_competencia"
         ? c.fresh.execucao_atual.id
-        : { lista: { id: c.fresh.lista?.id } },
+        : c.mutation === "aprovar_apresentacao"
+          ? { id_aprovacao: V, situacao: "pode_apresentar_contratante", percentual_conformidade: 100 }
+          : { lista: { id: c.fresh.lista?.id } },
     );
     const read = await observer.rpcRead(c.rpc, c.args);
     assert.equal(c.check(read), true, c.name);
@@ -4405,8 +4411,8 @@ test("R5 explicit R4 proof is required before recovery broker and preserves thre
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
   });
-  assert.equal(b.snapshot().confirmedBefore, 10);
-  assert.equal(b.snapshot().maxNewIntentions, 12);
+  assert.equal(b.snapshot().confirmedBefore, 14);
+  assert.equal(b.snapshot().maxNewIntentions, 8);
   for (const rpc of [
     "registrar_versao_fonte_v107",
     "aprovar_versao_fonte_v107",
@@ -4968,8 +4974,8 @@ test("R9 recovery broker preserves R5 originals and debits two R8 confirmations 
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 16);
-  assert.equal(b.snapshot().confirmedBefore, 10);
-  assert.equal(b.snapshot().maxNewIntentions, 12);
+  assert.equal(b.snapshot().confirmedBefore, 14);
+  assert.equal(b.snapshot().maxNewIntentions, 8);
   assert.equal(
     JSON.parse(R6_R5_DOCUMENT.reportRaw).intentLedger.maxNewIntentions,
     21,
@@ -5553,7 +5559,7 @@ test("R7 original R6 zero-intent document is exact and rejects getters proxies a
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
   });
   assert.equal(instance.snapshot().count, 16);
-  assert.equal(instance.snapshot().maxNewIntentions, 12);
+  assert.equal(instance.snapshot().maxNewIntentions, 8);
   assert.throws(
     () =>
       broker({
@@ -5608,6 +5614,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       "r11Recovery",
       "r13Recovery",
       "r15Recovery",
+      "r16Recovery",
       "observationDiagnostic",
       "createHash",
       "readFile",
@@ -5642,7 +5649,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       async (_, run) => run(),
     );
     const names = (await fs.readdir(output)).sort();
-    assert.equal(names.length, 25);
+    assert.equal(names.length, 27);
     const manifest = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
     assert.equal(manifest.length, 24);
     const { HISTORY } = await import("./inspect-fixture-artifact.mjs");
@@ -5800,7 +5807,7 @@ test("R9 R7 ledger validation blocks forged proof alongside ten historical confi
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 16);
-  assert.equal(b.snapshot().maxNewIntentions, 12);
+  assert.equal(b.snapshot().maxNewIntentions, 8);
   assert.throws(() => b.arm(), /RECOVERY_READ_ONLY/);
 });
 
@@ -5869,9 +5876,9 @@ test("R9 real broker charges the two original R8 confirmations and leaves fourte
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
   });
-  assert.equal(b.snapshot().confirmedBefore, 10);
+  assert.equal(b.snapshot().confirmedBefore, 14);
   assert.equal(b.snapshot().count, 16);
-  assert.equal(b.snapshot().maxNewIntentions, 12);
+  assert.equal(b.snapshot().maxNewIntentions, 8);
   assert.equal(JSON.parse(R9_R8_DOCUMENT.reportRaw).intentLedger.priorConfirmed, 8);
   assert.equal(JSON.parse(R9_R8_DOCUMENT.reportRaw).intentLedger.maxNewIntentions, 16);
 });
@@ -5935,7 +5942,8 @@ test("R9 real October consumers refuse missing confirmed document or a new analy
     };
     const env = {
       io,
-      R8_BINDINGS: r8Bindings,
+      R16_RECOVERY_DOCUMENT: sut.R16_RECOVERY_DOCUMENT,
+    R8_BINDINGS: r8Bindings,
       R8_RECOVERY_DOCUMENT: R9_R8_DOCUMENT,
       tracedPreparation: trace,
       approvedContractFile: async () => ({}),
@@ -6070,9 +6078,9 @@ test("R9 actual artifact writer appends R8 originals and the separate observatio
     )(...Object.values(env));
     const names = (await fs.readdir(output)).sort(),
       lines = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(names.length, 25);
-    assert.equal(lines.length, 24);
-    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 24);
+    assert.equal(names.length, 27);
+    assert.equal(lines.length, 26);
+    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 26);
     for (const line of lines)
       assert.equal(
         createHash("sha256")
@@ -6178,7 +6186,7 @@ test("R9 exact R8 ledger rejects mutations and hostile objects without reading t
     /RECOVERY_R8_LEDGER/,
   );
 });
-test("R9 semantic replay denies complete October intents with fresh UUIDs but permits September", async () => {
+test("R17 semantic replay denies both historical analyses and admits only a new presentation approval", async () => {
   const bindings = JSON.parse(R9_R8_DOCUMENT.reportRaw).bindings,
     c = bindings.competencies[0],
     context = {
@@ -6246,13 +6254,11 @@ test("R9 semantic replay denies complete October intents with fresh UUIDs but pe
     sut.validateBusinessPayload("solicitar_analise_competencia", payload, sepEvidence),
     true,
   );
-  b.arm({
-    rpc: "solicitar_analise_competencia",
-    payload,
-    requestId: randomUUID(),
-    verified: { context: true, capability: true, reconciled: true },
-    evidence: sepEvidence,
-  });
+  assert.throws(() => b.arm({
+    rpc: "solicitar_analise_competencia", payload, requestId: randomUUID(),
+    verified: { context: true, capability: true, reconciled: true }, evidence: sepEvidence,
+  }), /RECOVERY_CONFIRMED_OPERATION/);
+  r6AnalysisArm(b);
   assert.equal(arms, 1);
   assert.equal(b.snapshot().count, 17);
   assert.deepEqual(sut.preparationIntentSummary(b), {
@@ -6855,6 +6861,7 @@ async function r9ExistingConsumer(
   };
   const env = {
     io,
+    R16_RECOVERY_DOCUMENT: sut.R16_RECOVERY_DOCUMENT,
     R8_BINDINGS: r8.bindings,
     FIXTURE,
     code: "AUD-A-TXT-001",
@@ -7060,7 +7067,7 @@ test("R10 recovery requires the exact zero-intent R9 document before constructin
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
   });
   assert.equal(b.snapshot().count, 16);
-  assert.equal(b.snapshot().maxNewIntentions, 12);
+  assert.equal(b.snapshot().maxNewIntentions, 8);
 });
 test("R10 actual recovery consumer waits for the new monthly request instead of the initial unfiltered row", async () => {
   const { EventEmitter } = await import("node:events"),
@@ -8255,7 +8262,7 @@ test("R11 recovery requires the original zero-intent R10 proof before constructi
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
   });
   assert.equal(broker.snapshot().count, 16);
-  assert.equal(broker.snapshot().maxNewIntentions, 12);
+  assert.equal(broker.snapshot().maxNewIntentions, 8);
 });
 
 test("R11 actual runtime budget initializer receives its mandatory R10 proof", async () => {
@@ -9245,7 +9252,7 @@ test("R12 a historical reconciliation without a current October opinion proof ca
       b.authorizeRecovery(
         sut.reconcileR1Recovery(r2Reconciliation({ ledgerR11: R12_R11_DOCUMENT })),
       ),
-    /RECOVERY_R11_OPINION/,
+    /RECOVERY_R(?:11|16)_OPINION/,
   );
 });
 
@@ -9361,7 +9368,7 @@ test("R12 a new partial October request without headers cannot reuse a previousl
     failure: () => null,
   });
   try {
-    assert.throws(() => r6AnalysisArm(b), /RECOVERY_R11_OPINION/);
+    assert.throws(() => r6AnalysisArm(b), /RECOVERY_R(?:11|16)_OPINION/);
     assert.equal(b.snapshot().count, 16);
   } finally {
     f.observer.close();
@@ -9477,7 +9484,7 @@ test("R12 the real recovery callsite captures October opinion while its real sou
     sut.reconcileRecoveryCompetencies,
     sut.reconcileRecoveryOpinion,
   );
-  assert.deepEqual(visited, ["/competencias/" + binding[0].id + "/parecer"]);
+  assert.deepEqual(visited, binding.flatMap((c) => ["documentos", "analise", "parecer"].map((area) => "/competencias/" + c.id + "/" + area)));
   assert.equal(actual.opinionProof, token);
   assert.equal(actual.competencies.length, 2);
 });
@@ -9917,7 +9924,7 @@ test("R12 unrelated September observations preserve the October seal before anot
   const f = r12AuthorizedContexts.get(b),
     sep = JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id;
   try {
-    f.emit([{ ...f.row, id_competencia: sep }], { ...f.query, id_competencia: "eq." + sep });
+    f.emit([{ ...f.row, id: JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].opinionId, id_competencia: sep }], { ...f.query, id_competencia: "eq." + sep });
     await f.observer.flush();
     r6AnalysisArm(b);
     assert.equal(b.snapshot().count, 17);
@@ -9941,7 +9948,7 @@ test("R16 historical October approval cannot be repeated and contradictory times
     );
     f.emit([{ ...f.row, aprovado_em: "2026-11-09T12:00:00.123456+00:00" }]);
     await f.observer.flush();
-    assert.throws(() => r6AnalysisArm(b), /RECOVERY_R11_OPINION/);
+    assert.throws(() => r6AnalysisArm(b), /RECOVERY_R(?:11|16)_OPINION/);
     assert.equal(b.snapshot().count, 16);
   } finally {
     f.observer.close();
@@ -9960,7 +9967,7 @@ test("R12 changed or ambiguous current October opinions cannot authorize a later
     try {
       f.emit([{ ...f.row, ...delta }]);
       await f.observer.flush();
-      assert.throws(() => r6AnalysisArm(b), /RECOVERY_R11_OPINION/);
+      assert.throws(() => r6AnalysisArm(b), /RECOVERY_R(?:11|16)_OPINION/);
       assert.equal(b.snapshot().count, 16);
     } finally {
       f.observer.close();
@@ -9985,7 +9992,7 @@ test("R12 empty or pending newer October reads block all subsequent arms without
         f.emit([]);
         await f.observer.flush();
       }
-      assert.throws(() => r6AnalysisArm(b), /RECOVERY_R11_OPINION/);
+      assert.throws(() => r6AnalysisArm(b), /RECOVERY_R(?:11|16)_OPINION/);
       assert.equal(sut.preparationIntentSummary(b).priorReserved, 2);
       assert.equal(b.snapshot().count, 16);
     } finally {
@@ -10227,11 +10234,11 @@ test("R12 cloned foreign and already consumed October seals cannot authorize ano
     for (const token of [{ ...f.token }, f.token, null, undefined])
       assert.throws(
         () => other.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()), token),
-        /RECOVERY_R11_OPINION/,
+        /RECOVERY_R(?:11|16)_OPINION/,
       );
     assert.throws(
       () => b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()), f.token),
-      /RECOVERY_R11_OPINION/,
+      /RECOVERY_R(?:11|16)_OPINION/,
     );
     assert.equal(other.snapshot().count, 16);
   } finally {
@@ -10630,7 +10637,7 @@ test("R16 recovery draft October opinion cannot authorize any later business arm
           }),
           "rascunho",
         ),
-      /RECOVERY_R15_OPINION/,
+      /RECOVERY_R16_OPINION/,
     );
   } finally {
     r12AuthorizedContexts.get(b)?.observer.close();
@@ -10790,8 +10797,8 @@ test("R16 replay denial trusts official opinion scope rather than caller evidenc
       q,
     );
     await f.observer.flush();
-    b.arm(make(opinion));
-    assert.equal(b.snapshot().count, 17);
+    assert.throws(() => b.arm(make(opinion)), /RECOVERY_R(?:11|16)_OPINION/);
+    assert.equal(b.snapshot().count, 16);
   } finally {
     f.observer.close();
   }
@@ -10854,11 +10861,12 @@ test("R16 original uncertain UUID remains consumed even for an unrelated allowed
     assert.throws(
       () =>
         b.arm({
-          rpc: "solicitar_analise_competencia",
-          payload: r6AnalysisPayload,
+          rpc: "aprovar_apresentacao",
+          payload: r17LegalPayload,
           requestId: "6e6b6afb-2216-42ef-bd89-571301e97e1f",
           verified: { context: true, capability: true, reconciled: true },
           evidence: {
+            analysisCurrent: true, analysisComplete: true, opinionApproved: true, compliance: 100,
             competencies: [
               {
                 official: true,
@@ -11100,7 +11108,7 @@ test("R17 confirmed September analysis is not armed again under a new UUID", asy
   await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
   const f = r12AuthorizedContexts.get(b);
   try {
-    assert.throws(() => r6AnalysisArm(b), /RECOVERY_CONFIRMED_OPERATION/);
+    assert.throws(() => r17RecoveredAnalysisArm(b), /RECOVERY_CONFIRMED_OPERATION/);
     assert.equal(b.snapshot().count, 16);
   } finally {
     f.observer.close();
@@ -11116,28 +11124,28 @@ for (const snapshot of [null, 0]) {
     assert.equal(result.c.state, undefined);
   });
 }
-test("R17 canonical gate failures still deny before any presentation command", async () => {
-  for (const mutate of [
-    (v) => { v.portao.percentual = 99.99; },
-    (v) => { v.portao.liberado = false; },
-    (v) => { v.allowed_actions.apresentar = false; },
-    (v) => { v.blocking_summary.analise_concluida_atual = false; },
-    (v) => { v.blocking_summary.parecer_aprovado = false; },
+test("R17 canonical gate failures keep their exact closed reason before any presentation command", async () => {
+  for (const [mutate, expected] of [
+    [(v) => { v.portao.percentual = 99.99; }, "PERCENT"],
+    [(v) => { v.portao.percentual = "100"; }, "PERCENT"],
+    [(v) => { v.portao.liberado = false; }, "PORTAO"],
+    [(v) => { v.allowed_actions.apresentar = false; }, "ACTION"],
+    [(v) => { v.blocking_summary.analise_concluida_atual = false; }, "ANALYSIS"],
+    [(v) => { v.blocking_summary.parecer_aprovado = false; }, "OPINION"],
   ]) {
     const view = r17View(100);
     mutate(view);
     const result = await r17PresentBoundary(view);
     assert.equal(result.commands, 0);
-    assert.ok(new Set([
-      "COMPETENCE_PRESENTATION_GATE",
-      "COMPETENCE_PRESENTATION_GATE_ANALYSIS",
-      "COMPETENCE_PRESENTATION_GATE_OPINION",
-      "COMPETENCE_PRESENTATION_GATE_PORTAO",
-      "COMPETENCE_PRESENTATION_GATE_PERCENT",
-      "COMPETENCE_PRESENTATION_GATE_ACTION",
-    ]).has(result.error?.message));
+    assert.equal(result.error?.message, "COMPETENCE_PRESENTATION_GATE_" + expected);
+  }
+  for (const snapshot of ["100", NaN, Infinity, -1, 101, undefined]) {
+    const result = await r17PresentBoundary(r17View(snapshot));
+    assert.equal(result.commands, 0);
+    assert.equal(result.error?.message, "COMPETENCE_PRESENTATION_GATE_PERCENT");
   }
 });
+
 test("R17 already-approved state with snapshot zero does not release a binding or registration", async () => {
   const view = r17View(0);
   view.competencia.situacao = "pode_apresentar_contratante";
@@ -11217,3 +11225,73 @@ test("R17 valid approval ACK and subsequent official view preserve business read
     f.observer.close();
   }
 });
+
+
+test("R17 permission revoked after a confirmed approval blocks binding and registration without undoing its receipt", async () => {
+  for (const register of [false, true]) {
+    const source = await r6SourceNodes();
+    const view = r17View(100);
+    view.competencia.id = JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[
+      register ? 1 : 0
+    ].id;
+    view.competencia.competencia_referencia = register ? "2026-09-01" : "2026-10-01";
+    const c = {
+      id: view.competencia.id,
+      month: view.competencia.competencia_referencia,
+      evidence: {},
+    };
+    let approvalConfirmed = false;
+    const commands = [];
+    const approved = () => {
+      const result = structuredClone(view);
+      result.competencia.situacao = "pode_apresentar_contratante";
+      result.competencia.percentual_conformidade = 100;
+      result.blocking_summary.aprovacao_apresentacao_atual = true;
+      return result;
+    };
+    const io = {
+      fresh: async () => {},
+      generation: () => 10,
+      page: { getByLabel: () => ({ fill: async () => {} }), getByRole: () => ({}) },
+      rpcRead: async () => {
+        const result = approved();
+        if (approvalConfirmed) result.allowed_actions.apresentar = false;
+        return result;
+      },
+      command: async (intent) => {
+        commands.push(intent.rpc);
+        assert.equal(intent.rpc, "aprovar_apresentacao");
+        assert.equal(await intent.confirmAfter(), true);
+        approvalConfirmed = true;
+      },
+    };
+    const env = {
+      overview: async () => {
+        if (!approvalConfirmed) return structuredClone(view);
+        const result = approved();
+        result.allowed_actions.apresentar = false;
+        return result;
+      },
+      tracedPreparation: async (_, fn) => fn(),
+      stop: (code) => {
+        throw new Error(code);
+      },
+      link: async () => {},
+      click: async () => {},
+      observed: async () => true,
+      io,
+      FIXTURE,
+    };
+    const present = new Function(
+      ...Object.keys(env),
+      "return (" + source.named("present").getText(source.ast) + ");",
+    )(...Object.values(env));
+    await assert.rejects(present(c, register), /COMPETENCE_(PRESENTATION_STATE|REGISTER_GATE)/);
+    assert.equal(approvalConfirmed, true);
+    assert.deepEqual(commands, ["aprovar_apresentacao"]);
+    assert.equal(c.state, undefined);
+    assert.equal(c.presentationId, undefined);
+  }
+});
+
+

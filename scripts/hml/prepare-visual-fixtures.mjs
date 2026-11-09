@@ -363,6 +363,10 @@ export async function reconcileRecoveryOpinion(io) {
   if (["generation", "link", "fresh", "observedAfter", "sealRecoveryOpinion", "rpcRead"].some((name) => typeof io[name] !== "function")) err("RECOVERY_R16_OPINION");
   const after = io.generation();
   for (const c of JSON.parse(R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
+    const found = await readCompetenceMonth(io, c.month, (budget) => io.goKnown("/contratos/" + FIXTURE.contract + "/competencias", budget));
+    if (!Array.isArray(found) || found.length !== 1 || found[0].id !== c.id) err("RECOVERY_R16_OPINION");
+    await tracedPreparation("RECOVERY_READ", () => io.link("/competencias/" + c.id));
+    await tracedPreparation("RECOVERY_READ", () => io.fresh());
     for (const [area, rpc] of [["documentos", "obter_documentos_competencia_v115"], ["analise", "obter_analise_competencia_v116"]]) {
       const ordinal = io.generation();
       await tracedPreparation("RECOVERY_READ", () => io.link("/competencias/" + c.id + "/" + area));
@@ -2425,8 +2429,8 @@ export function preparationIntentSummary(broker) {
   if (!broker) return null;
   const state = broker.snapshot();
   if (
-    state.confirmedBefore !== 10 ||
-    state.maxNewIntentions !== 12 ||
+    state.confirmedBefore !== 14 ||
+    state.maxNewIntentions !== 8 ||
     state.priorReserved !== 2 ||
     !Number.isInteger(state.count) ||
     state.count < state.confirmedBefore + state.priorReserved ||
@@ -6525,8 +6529,12 @@ validateR16RecoveryDocument(io.recoveryLedgerR16);
       v.blocking_summary?.parecer_aprovado === true &&
       v.portao?.liberado === true &&
       v.portao?.percentual === 100;
-    if (!ready(view) || view.allowed_actions?.apresentar !== true)
-      stop("COMPETENCE_PRESENTATION_GATE");
+    if (view.blocking_summary?.analise_concluida_atual !== true) stop("COMPETENCE_PRESENTATION_GATE_ANALYSIS");
+    if (view.blocking_summary?.parecer_aprovado !== true) stop("COMPETENCE_PRESENTATION_GATE_OPINION");
+    if (view.portao?.liberado !== true) stop("COMPETENCE_PRESENTATION_GATE_PORTAO");
+    const snapshot = view.competencia.percentual_conformidade;
+    if (view.portao?.percentual !== 100 || !(snapshot === null || (typeof snapshot === "number" && Number.isFinite(snapshot) && snapshot >= 0 && snapshot <= 100))) stop("COMPETENCE_PRESENTATION_GATE_PERCENT");
+    if (view.allowed_actions?.apresentar !== true) stop("COMPETENCE_PRESENTATION_GATE_ACTION");
     const approved = (v) =>
       v?.competencia?.id === c.id &&
       v.competencia.id_organizacao === FIXTURE.organization &&
@@ -6586,8 +6594,18 @@ validateR16RecoveryDocument(io.recoveryLedgerR16);
         }),
       );
     }
+    // A confirmed receipt remains confirmed even if authorization changes afterwards.
+    // Re-read before admitting a binding or opening the independent register command.
+    view = await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(c.id, c.month));
+    if (!approved(view) || view.allowed_actions?.apresentar !== true)
+      stop("COMPETENCE_PRESENTATION_STATE");
+    const bindingOrdinal = io.generation();
+    await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${c.id}/apresentar`));
+    await tracedPreparation("COMPETENCY_UI", async () => observed("obter_visao_geral_competencia", { p_id_competencia: c.id }, bindingOrdinal));
+    view = await tracedPreparation("COMPETENCY_GET", async () => io.rpcRead("obter_visao_geral_competencia", { p_id_competencia: c.id }, { after: bindingOrdinal }));
     await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
-    if (!approved(view)) stop("COMPETENCE_PRESENTATION_STATE");
+    if (!approved(view) || view.allowed_actions?.apresentar !== true)
+      stop("COMPETENCE_PRESENTATION_STATE");
     c.state = view.competencia.situacao;
     if (!register) return;
     if (
@@ -6880,6 +6898,11 @@ const PREPARER_FAILURE_CODES = new Set([
   "COMPETENCE_PHASE_ABORTED",
   "COMPETENCE_PHASE_TIMEOUT",
   "COMPETENCE_PRESENTATION_GATE",
+  "COMPETENCE_PRESENTATION_GATE_ANALYSIS",
+  "COMPETENCE_PRESENTATION_GATE_OPINION",
+  "COMPETENCE_PRESENTATION_GATE_PORTAO",
+  "COMPETENCE_PRESENTATION_GATE_PERCENT",
+  "COMPETENCE_PRESENTATION_GATE_ACTION",
   "COMPETENCE_PRESENTATION_STATE",
   "COMPETENCE_READ_SHAPE",
   "COMPETENCE_REGISTER_GATE",

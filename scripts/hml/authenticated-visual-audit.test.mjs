@@ -10464,16 +10464,16 @@ test("R12 auth protocol executes the real preparer runtime budget with every ori
     R1_RECOVERY_DOCUMENT: prep.R1_RECOVERY_DOCUMENT,
     R3_RECOVERY_DOCUMENT: prep.R3_RECOVERY_DOCUMENT,
   };
-  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15])
+  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16])
     env["validateR" + n + "RecoveryDocument"] = prep["validateR" + n + "RecoveryDocument"];
-  for (const n of [4, 5, 6, 7, 8, 9, 10, 11, 13, 15])
+  for (const n of [4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16])
     env["r" + n + "Recovery"] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   assert.deepEqual(
     new Function(
       ...Object.keys(env),
       named("recoveryBudget").getText(ast) + ";return " + init + ";",
     )(...Object.values(env)),
-    { confirmedBefore: 10, priorReserved: 2, maxNewIntentions: 12 },
+    { confirmedBefore: 14, priorReserved: 2, maxNewIntentions: 8 },
   );
 });
 
@@ -10515,7 +10515,7 @@ test("R12 auth protocol rejects a partial pending October GET before any further
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
@@ -10566,7 +10566,11 @@ test("R12 auth protocol rejects a partial pending October GET before any further
   };
   try {
     const after = observer.generation();
-    emit(query, [row]);
+    const emitRecoveryData = new Function("FIXTURE", "R6_R5_DOCUMENT", named("r11SqlV116") + ";" + named("r17RecoveryData") + ";" + named("r17EmitRecoveryData") + ";return r17EmitRecoveryData;")(fixture, prep.R5_RECOVERY_DOCUMENT);
+    for (const c of JSON.parse(prep.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
+      emit({ ...query, id_competencia: "eq." + c.id }, [{ ...row, id: c.opinionId, id_competencia: c.id }]);
+      emitRecoveryData(page, c);
+    }
     await observer.flush();
     broker.authorizeRecovery(
       prep.reconcileR1Recovery(reconciliation),
@@ -10579,8 +10583,8 @@ test("R12 auth protocol rejects a partial pending October GET before any further
     assert.throws(
       () =>
         broker.arm({
-          rpc: "solicitar_analise_competencia",
-          payload: { p_id_competencia: sep, p_tipo: "completa" },
+          rpc: "aprovar_apresentacao",
+          payload: { p_id_competencia: sep, p_fundamento: fixture.foundation },
           requestId: randomUUID(),
           verified: { context: true, capability: true, reconciled: true },
           evidence: {
@@ -10598,7 +10602,7 @@ test("R12 auth protocol rejects a partial pending October GET before any further
         }),
       { message: "RECOVERY_R11_OPINION" },
     );
-    assert.equal(broker.snapshot().count, 12);
+    assert.equal(broker.snapshot().count, 16);
   } finally {
     observer.close();
   }
@@ -10642,7 +10646,7 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
@@ -10693,7 +10697,11 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
   };
   try {
     const after = observer.generation();
-    emit(query, [row]);
+    const emitRecoveryData = new Function("FIXTURE", "R6_R5_DOCUMENT", named("r11SqlV116") + ";" + named("r17RecoveryData") + ";" + named("r17EmitRecoveryData") + ";return r17EmitRecoveryData;")(fixture, prep.R5_RECOVERY_DOCUMENT);
+    for (const c of JSON.parse(prep.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
+      emit({ ...query, id_competencia: "eq." + c.id }, [{ ...row, id: c.opinionId, id_competencia: c.id }]);
+      emitRecoveryData(page, c);
+    }
     await observer.flush();
     broker.authorizeRecovery(
       prep.reconcileR1Recovery(reconciliation),
@@ -10706,8 +10714,8 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
     assert.throws(
       () =>
         broker.arm({
-          rpc: "solicitar_analise_competencia",
-          payload: { p_id_competencia: sep, p_tipo: "completa" },
+          rpc: "aprovar_apresentacao",
+          payload: { p_id_competencia: sep, p_fundamento: fixture.foundation },
           requestId: randomUUID(),
           verified: { context: true, capability: true, reconciled: true },
           evidence: {
@@ -10725,7 +10733,7 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
         }),
       { message: "RECOVERY_R11_OPINION" },
     );
-    assert.equal(broker.snapshot().count, 12);
+    assert.equal(broker.snapshot().count, 16);
   } finally {
     observer.close();
   }
@@ -10769,7 +10777,7 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
@@ -10820,7 +10828,11 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
   };
   try {
     const after = observer.generation();
-    emit(query, [row]);
+    const emitRecoveryData = new Function("FIXTURE", "R6_R5_DOCUMENT", named("r11SqlV116") + ";" + named("r17RecoveryData") + ";" + named("r17EmitRecoveryData") + ";return r17EmitRecoveryData;")(fixture, prep.R5_RECOVERY_DOCUMENT);
+    for (const c of JSON.parse(prep.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
+      emit({ ...query, id_competencia: "eq." + c.id }, [{ ...row, id: c.opinionId, id_competencia: c.id }]);
+      emitRecoveryData(page, c);
+    }
     await observer.flush();
     broker.authorizeRecovery(
       prep.reconcileR1Recovery(reconciliation),
@@ -10838,8 +10850,8 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
     assert.throws(
       () =>
         broker.arm({
-          rpc: "solicitar_analise_competencia",
-          payload: { p_id_competencia: sep, p_tipo: "completa" },
+          rpc: "aprovar_apresentacao",
+          payload: { p_id_competencia: sep, p_fundamento: fixture.foundation },
           requestId: randomUUID(),
           verified: { context: true, capability: true, reconciled: true },
           evidence: {
@@ -10857,7 +10869,7 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
         }),
       { message: "RECOVERY_R11_OPINION" },
     );
-    assert.equal(broker.snapshot().count, 12);
+    assert.equal(broker.snapshot().count, 16);
   } finally {
     observer.close();
   }
