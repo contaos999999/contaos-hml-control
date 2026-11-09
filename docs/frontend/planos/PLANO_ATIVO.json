@@ -3626,5 +3626,14 @@
     "sourceforms_preserved": 5,
     "auth_authorized": false,
     "deploy_authorized": false
+  },
+  "trilha_a_r16_void_recovery": {
+    "status": "VALIDADO",
+    "plano": "docs/frontend/planos/TRILHA_A_R16_VOID_RECOVERY_PLAN_2026-11-09.md",
+    "autorizacao": "Titular: resolver integralmente, plano único, sem confirmações repetidas",
+    "original_r15": 42703523206,
+    "inspecao": 42705850329,
+    "confirmacao_aprovacao": "UNKNOWN",
+    "proibido_replay": true
   }
 }
