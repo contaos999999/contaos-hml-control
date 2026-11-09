@@ -1,0 +1,51 @@
+{
+  "schema": "contaos.popup.browser-policy.experiments.v1",
+  "baseline": "2486d8c57847804ef198babd4c9acb07f75f0462",
+  "noAuth": true,
+  "noHml": true,
+  "contextRouteCandidate": {
+    "state": "REJECTED_CORS_SYNTHETIC_PREFLIGHT",
+    "unitPass": 326,
+    "unitSkip": 9,
+    "nativePass": 7,
+    "nativeFail": 1,
+    "nativeCommand": "cmd_a8b133b1cd3a47ba9307d20eb018",
+    "failure": "FENCE_SOURCE_AFTER_CANCELLATION_BEFORE_REAL_PREFLIGHT",
+    "playwright": "1.58.2",
+    "sdkFile": "playwright-core/lib/server/chromium/crNetworkManager.js",
+    "sdkSha256": "ad55830a87387450440a4b372ae6a93a6c91c089ccc1e72ffeb298662dddb744",
+    "automaticOptionsFulfill204": true,
+    "publishedProductionCode": false
+  },
+  "globalPause": {
+    "state": "INSUFFICIENT",
+    "command": "cmd_657bb3d01af349629b34953a8080",
+    "trials": 3,
+    "httpLeaks": 3,
+    "proofSha256": "ee36446898bf255c89b4a5055b82f2b55ee2e2c8041d8f1c5a24f45d4bc4ed04"
+  },
+  "browserPolicy": {
+    "state": "TEMP_EXPERIMENT_ONLY",
+    "command": "cmd_489f3c1de2fd4e7ca37e7c1895e9",
+    "requiredFlag": "--block-new-web-contents",
+    "actualBinary": "chrome-headless-shell",
+    "revision": 1208,
+    "product": "HeadlessChrome/145.0.7632.6",
+    "forbiddenSwitches": 0,
+    "modes": [
+      "window-open",
+      "window-open-noopener",
+      "anchor-noopener",
+      "form-post"
+    ],
+    "trials": 4,
+    "allZeroTcpBytesHttp": true,
+    "allCdpPopupFailurePreserved": true,
+    "closureDelayMs": 100,
+    "proofSha256": "d050de605a11c7762c8a96f7fd5badde26673d08defd6e597c6a84210987507d",
+    "nativeEightFinalStatus": "NOT_RUN_FOR_NEW_MECHANISM",
+    "productionCodePublished": false
+  },
+  "unknownDataSaved": false,
+  "v1Certified": false
+}

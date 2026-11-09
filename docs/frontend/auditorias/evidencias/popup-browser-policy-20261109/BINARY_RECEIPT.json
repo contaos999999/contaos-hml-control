@@ -1,0 +1,23 @@
+{
+  "schema": "contaos.native.headless.binary.v1",
+  "platform": "linux",
+  "architecture": "x64",
+  "playwright": "1.58.2",
+  "registryName": "chromium-headless-shell",
+  "revision": "1208",
+  "browserVersion": "145.0.7632.6",
+  "executableBasename": "chrome-headless-shell",
+  "regularFile": true,
+  "finalComponentSymlink": false,
+  "derivedFromPinnedSdkPath": true,
+  "actualLaunchPathMatchedExperiment": true,
+  "size": 183557344,
+  "sha256": "27e55cc30e487493b89b663085d6deeb0707be201a568657c922fac9076c317c",
+  "source": "INSTALLED_OFFICIAL_PLAYWRIGHT_1_58_2_BROWSER_REGISTRY_1208_LINUX_X64_CACHE",
+  "privatePathPublished": false,
+  "actualBinarySha256": "27e55cc30e487493b89b663085d6deeb0707be201a568657c922fac9076c317c",
+  "actualBinaryHashMatched": true,
+  "actualProduct": "HeadlessChrome/145.0.7632.6",
+  "actualRequiredFlag": true,
+  "actualForbiddenSwitchCount": 0
+}
