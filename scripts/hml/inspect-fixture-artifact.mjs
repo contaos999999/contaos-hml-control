@@ -1,6 +1,6 @@
 /**
- * Read-only R8 artifact inspection. No application imports, browser, Auth or SQL.
- * Contracts snapshot producer c32f51c9 and GATE467; GATE458 reader policy is preserved.
+ * Read-only R9 artifact inspection. No application imports, browser, Auth or SQL.
+ * Contracts snapshot producer 30b96597 and GATE472; GATE458 reader policy is preserved.
  */
 import { createHash } from "node:crypto";
 import {
@@ -22,14 +22,14 @@ import { pathToFileURL } from "node:url";
 export const PIN = Object.freeze({
   repository: "contaos999999/contaos-hml-control",
   repositoryId: 1442722734,
-  run: 42611391440,
+  run: 42621964900,
   workflow: 411426169,
-  head: "dea3ab73c9b47de1126054380b002c37b060ff84",
-  upstream: 42611241610,
-  artifact: 13670961904,
-  size: 11240,
-  name: "trilha-a-fixtures-42611391440-1",
-  digest: "698e58fe9184b194cc1866b4c119d4df45ba23ccc5704665469a99793cce2fa9",
+  head: "2ed3097691f39025b49a015d86223da61a2b45e5",
+  upstream: 42621756761,
+  artifact: 13676832673,
+  size: 13476,
+  name: "trilha-a-fixtures-42621964900-1",
+  digest: "89a35fb6de1e437a93c8074cb563745108d5e968878d929c8663dcaff700f500",
   tool: "d3f86a106a0bac45b974a628896c90dbdf5c8093",
   bundle: "374211f852b2a8155a0211c72e85dacc81bb69f3",
   frontend: "437c788e32f0325dd15c9d2e7277c10129bcb462",
@@ -50,6 +50,9 @@ export const FILES = Object.freeze([
   "receipts-r6.json",
   "recovery-r6.json",
   "recovery-r7.json",
+  "receipts-r8.json",
+  "recovery-r8.json",
+  "observation-diagnostic.json",
 ]);
 export const HISTORY = Object.freeze({
   "receipts-r1.json": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
@@ -61,6 +64,8 @@ export const HISTORY = Object.freeze({
   "receipts-r6.json": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
   "recovery-r6.json": "98136adfe0c84c274ca31534b847b640a35f2577d2ad6197e451324a51ac7e03",
   "recovery-r7.json": "687712aa5ab15072afc65aceacdff52ce5d94c6ba9f2ceccf6867e4636bd1c4e",
+  "receipts-r8.json": "20af329dd9c441e4ede575fa6cb94a65c3d136ad777613170045c696328fad25",
+  "recovery-r8.json": "b22c0e464915cd58f8d9918a2c4751078dbf73578528e833afd92fa646502884",
 });
 const HISTORICAL_IDS = new Set([
   "08141ffd-56c1-4c50-b58f-32912d1006b2",
@@ -71,6 +76,8 @@ const HISTORICAL_IDS = new Set([
   "cf429997-d0b6-45bd-880a-be4b103f79bb",
   "499dc2a2-c0a2-4a19-9ccb-11c534096f7e",
   "655ae00f-ed36-4a13-a637-bc8b77375783",
+  "6d730eb7-8c38-4474-813d-d39672454444",
+  "a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4",
 ]);
 const SUBPHASES = new Set([
   "PREFLIGHT",
@@ -141,11 +148,11 @@ const RPCS = new Set([
   "registrar_apresentacao",
 ]);
 const FAILURES = new Set([
+  "RECOVERY_R5_LEDGER",
+  "RECOVERY_R6_LEDGER",
+  "RECOVERY_R7_LEDGER",
   "RECOVERY_R7_PROOF",
   "PREPARE_SECRET_ENV",
-  "RECOVERY_R7_LEDGER",
-  "RECOVERY_R6_LEDGER",
-  "RECOVERY_R5_LEDGER",
   "RECOVERY_R4_PROOF",
   "RECOVERY_R3_LEDGER",
   "RECOVERY_SOURCE_INACTIVE",
@@ -156,6 +163,9 @@ const FAILURES = new Set([
   "RECOVERY_STATE",
   "RECOVERY_LIST",
   "RECOVERY_READ_ONLY",
+  "RECOVERY_R8_LEDGER",
+  "RECOVERY_R8_DOCUMENT",
+  "RECOVERY_R8_ANALYSIS",
   "RECOVERY_PROOF",
   "RECOVERY_CONFIRMED_OPERATION",
   "DIAGNOSTIC_SUBPHASE",
@@ -280,6 +290,7 @@ const FAILURES = new Set([
   "LOGIN_MASTER",
   "LOGOUT_FAILED",
   "OBSERVATION_ENDPOINT",
+  "OBSERVATION_DIAGNOSTIC",
   "OBSERVATION_FAILED",
   "OBSERVATION_LIMIT",
   "OBSERVATION_METADATA",
@@ -567,11 +578,11 @@ export function validateRecords(reportInput, receiptsInput) {
       ]),
     );
     check(
-      integer(ledger.count, 8, 24) &&
-        ledger.priorConfirmed === 8 &&
-        ledger.newArmedCount === ledger.count - 8 &&
+      integer(ledger.count, 10, 24) &&
+        ledger.priorConfirmed === 10 &&
+        ledger.newArmedCount === ledger.count - 10 &&
         ledger.maxIntentions === 24 &&
-        ledger.maxNewIntentions === 16,
+        ledger.maxNewIntentions === 14,
     );
     check(
       bool(ledger.frozen) &&
@@ -598,8 +609,8 @@ export function validateRecords(reportInput, receiptsInput) {
   check(
     q.ledgerSha256 === HISTORY["receipts-r1.json"] &&
       q.priorWorkflowRun === "42540864527" &&
-      q.confirmedBefore === 8 &&
-      q.maxNewIntentions === 16 &&
+      q.confirmedBefore === 10 &&
+      q.maxNewIntentions === 14 &&
       q.r3ReceiptsSha256 === HISTORY["receipts-r3.json"] &&
       q.r3WorkflowRun === "42559214436",
   );
@@ -719,6 +730,12 @@ export function validateRecords(reportInput, receiptsInput) {
                 ? "79bdc139-ed10-4c91-905e-b32b9a824d27"
                 : "50c26274-a36f-48e0-b2fe-5a1caf5d6a49"),
           );
+        if (c.month === "2026-10-01") {
+          if (Object.hasOwn(c, "requirementId"))
+            check(c.requirementId === "75938450-a972-410c-8612-da3ef7dc0e00");
+          if (Object.hasOwn(c, "documentId"))
+            check(c.documentId === "c7f56ac9-81d6-45a4-81f8-db1383006c41");
+        }
         if (c.state !== "partial") check(uuid(c.id));
         if (c.month === "2026-09-01" && c.state === "aguardando_contratante")
           check(uuid(c.presentationId) && uuid(c.packageId) && hash(c.packageHash));
@@ -737,7 +754,7 @@ export function validateRecords(reportInput, receiptsInput) {
     keys(e, ["schema", "receipts"]) &&
       e.schema === "contaos.fixture.receipts.v1" &&
       Array.isArray(e.receipts) &&
-      e.receipts.length <= 32,
+      e.receipts.length <= 28,
   );
   const seen = new Map();
   for (const row of e.receipts) {
@@ -777,12 +794,12 @@ export function validateRecords(reportInput, receiptsInput) {
     else check(row.state === "sealed");
     seen.set(row.requestId, row);
   }
-  check(seen.size <= 16 && (ledger !== null ? seen.size <= ledger.newArmedCount : seen.size === 0));
+  check(seen.size <= 14 && (ledger !== null ? seen.size <= ledger.newArmedCount : seen.size === 0));
   return {
     report: r,
     receipts: e,
     observations: {
-      priorConfirmed: 8,
+      priorConfirmed: 10,
       newArmedCount: ledger?.newArmedCount ?? "UNKNOWN",
       newConfirmed:
         ledger === null ||
@@ -798,6 +815,121 @@ export function validateRecords(reportInput, receiptsInput) {
     },
   };
 }
+const OBSERVATION_CONTRACTS = new Set([
+  "TABLE:contratos",
+  "TABLE:fontes_normativas",
+  "TABLE:versoes_fontes_normativas",
+  "TABLE:listas_verificacao",
+  "TABLE:versoes_lista",
+  "TABLE:itens_lista",
+  "TABLE:competencias",
+  "TABLE:requisitos_competencia",
+  "TABLE:arquivos",
+  "TABLE:documentos_contrato",
+  "TABLE:documentos_competencia",
+  "TABLE:versoes_documento",
+  "TABLE:processamentos_documento",
+  "TABLE:pareceres_internos",
+  "TABLE:apresentacoes_contratante",
+  "TABLE:pacotes_competencia",
+  "TABLE:itens_pacote_competencia",
+  "TABLE:aprovacoes_apresentacao",
+  "RPC:registrar_versao_fonte_v107",
+  "RPC:aprovar_versao_fonte_v107",
+  "RPC:salvar_fonte_normativa_v107",
+  "RPC:executar_comando_lista_v1",
+  "RPC:criar_competencia",
+  "RPC:criar_documento_competencia_v115",
+  "RPC:solicitar_analise_competencia",
+  "RPC:registrar_revisao_requisito_v117",
+  "RPC:solicitar_parecer_interno",
+  "RPC:aprovar_parecer_interno",
+  "RPC:aprovar_apresentacao",
+  "RPC:registrar_apresentacao",
+  "RPC:consultar_permissoes_efetivas",
+  "RPC:obter_matriz_rbac_master",
+  "RPC:obter_lista_operacional_v1",
+  "RPC:obter_visao_geral_competencia",
+  "RPC:obter_documentos_competencia_v115",
+  "RPC:obter_analise_competencia_v116",
+  "RPC:obter_detalhe_requisito_v117",
+  "RPC:obter_contexto_revisao_v117",
+]);
+function orderedKeys(value, names) {
+  return keys(value, names) && Object.keys(value).every((name, index) => name === names[index]);
+}
+export function validateObservationDiagnostic(input, reportInput) {
+  const value = plain(input),
+    report = plain(reportInput);
+  check(
+    orderedKeys(value, [
+      "schema",
+      "frontendSha",
+      "harnessSha",
+      "deploymentId",
+      "workflowRun",
+      "firstFailure",
+    ]),
+    "INSPECTION_OBSERVATION",
+  );
+  check(
+    value.schema === "contaos.fixture.observation.v1" && identity(value) && identity(report),
+    "INSPECTION_OBSERVATION",
+  );
+  for (const key of ["frontendSha", "harnessSha", "deploymentId", "workflowRun"])
+    check(value[key] === report[key], "INSPECTION_OBSERVATION");
+  const first = value.firstFailure;
+  if (first === null) return value;
+  check(
+    report.completed === false &&
+      FAILURES.has(report.failure) &&
+      object(report.diagnostics) &&
+      FAILURES.has(report.diagnostics.primaryFailure) &&
+      report.failure === report.diagnostics.primaryFailure,
+    "INSPECTION_OBSERVATION",
+  );
+  check(
+    orderedKeys(first, ["contractKind", "stage", "statusHTTP", "requestFailure"]),
+    "INSPECTION_OBSERVATION",
+  );
+  const { contractKind: kind, stage, statusHTTP: status, requestFailure: failure } = first;
+  if (stage === "UNAVAILABLE") {
+    check(
+      kind === "UNKNOWN" && status === "NONE" && failure === "UNAVAILABLE",
+      "INSPECTION_OBSERVATION",
+    );
+    return value;
+  }
+  check(
+    OBSERVATION_CONTRACTS.has(kind) &&
+      ["NONE", "ABORTED", "OTHER", "UNAVAILABLE"].includes(failure),
+    "INSPECTION_OBSERVATION",
+  );
+  if (stage === "HTTP_STATUS") {
+    check(
+      integer(status, 100, 599) && !(status >= 200 && status <= 299) && failure === "NONE",
+      "INSPECTION_OBSERVATION",
+    );
+  } else if (stage === "BODY_READ") {
+    check(integer(status, 200, 299), "INSPECTION_OBSERVATION");
+  } else {
+    check(
+      [
+        "REQUEST_BINDING",
+        "REQUEST_ARGS",
+        "RESPONSE_PROJECTION",
+        "RESPONSE_CONTEXT",
+        "OBSERVATION_LIMIT",
+      ].includes(stage) &&
+        status === "NONE" &&
+        failure === "NONE" &&
+        (!["REQUEST_BINDING", "REQUEST_ARGS"].includes(stage) || kind.startsWith("RPC:")),
+      "INSPECTION_OBSERVATION",
+    );
+  }
+  return value;
+}
+
 export function validateDownloadOutput(input) {
   const r = plain(input);
   check(
@@ -886,9 +1018,9 @@ export function validateMetadata(input) {
     "INSPECTION_METADATA",
   );
   const specs = [
-    [129140419219, "Trilha A solicitacao unica sem credenciais", "success"],
-    [129140421628, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-    [129140789918, "Trilha A preparacao sintetica HML", "failure"],
+    [129176113828, "Trilha A solicitacao unica sem credenciais", "success"],
+    [129176115848, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+    [129176493930, "Trilha A preparacao sintetica HML", "failure"],
   ];
   check(
     jobs.total_count === 3 && Array.isArray(jobs.jobs) && jobs.jobs.length === 3,
@@ -937,7 +1069,7 @@ export function readManifest(root, deadline = () => {}) {
     const anchored = "/proc/self/fd/" + dirfd;
     const names = readdirSync(anchored);
     check(
-      names.length === 12 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
+      names.length === 15 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
       "INSPECTION_FILES",
     );
     const buffers = {};
@@ -1013,6 +1145,10 @@ export function buildProof(root, inspection, deadline = () => {}) {
   const { raw: reportRaw, value: report } = canonicalJson(buffers["report.json"]);
   const { raw: receiptsRaw, value: receipts } = canonicalJson(buffers["receipts.json"], "receipts");
   const { observations } = validateRecords(report, receipts);
+  const { raw: observationRaw, value: observation } = canonicalJson(
+    buffers["observation-diagnostic.json"],
+  );
+  validateObservationDiagnostic(observation, report);
   const result =
     JSON.stringify({
       type: "FIXTURE_INSPECTION_PROOF",
@@ -1022,6 +1158,7 @@ export function buildProof(root, inspection, deadline = () => {}) {
       observations,
       reportRaw,
       receiptsRaw,
+      observationRaw,
     }) + "\n";
   check(Buffer.byteLength(result) <= 65536, "INSPECTION_OUTPUT");
   deadline();
