@@ -56,3 +56,14 @@ RED→GREEN causal: novo nonce e gastoR12; metadados originais positivos e negat
 7. Somente após terminal e artefato real, preparar leitor estático em PR separado sob o GATE que o autorizar, pins reais e políticas de captura/FD/digest/CAU2/bounds intactas. Nunca leitorR12 sem artefato.
 
 Este PLAN não fecha184/208/232/72/V1. Preservar18públicos/Run124204PNG102DOM307hashes, auditoria AUDIT_BINDING_PENDING, C13/source_proof/25normativas/catalog100/97/types8ea e toda a história de recuperação.
+
+
+## Emenda pós-terminal R13: prontidão do seletor de listas, sem nova operação HML
+
+R13 original42685547737/headf39e32ca1009b23aaae19dcbd01e282df2bf0847 terminouFAILURE. Inspeção protegida42687417968/inspect129397852446/mainfc090e98349b771ef7a39fc21c37a45484802267 validou artefato13704636643/SHA7d097d83d5b622d4277be39d2155800223e18fccfe9258ba1adabf337c1e5307: FLOW_LIST_UI_MISSING emLIST_UI_CONTROL, lastCompletedLIST_GET;0novasarmadas/confirmadas,logouttrue,cleanupnull,bindingsnull. Não repetir o original. A/B, API42596392357 e segurança permanecem preservados.
+
+Hipótese a reproduzir, não causa já demonstrada: listSelectionControl usa count/isEnabled imediatamente, mas o componente real GerenciarListas monta Lista selecionada somente após d e habilita select após carregamento. A execução passou LIST_GET; isso não prova pintura/habilitação DOM. Reproduzir offline no Chromium nativo já pinado, consumindo label/select do JSX real existente, com montagem tardia e habilitação tardia. RED obrigatório antes de alterar o helper. Não presumir que atraso resolve indisponibilidade permanente ou falha de permissão.
+
+Recorte proposto: somente prepare-visual-fixtures.mjs e seu teste. Ajustar apenas listSelectionControl e ampliar o caso sourceforms existente para esperar prontidão por no máximo3000ms por etapa, sem alterar timeout global. Manter região Gestão de listas, texto exato, ancestral label, filho select, unicidade, visibilidade, enabled e ID de lista já aprovado. Duplicado, outro contexto/tag, ausência permanente, disabled permanente e opção ausente continuam FAIL. Espera DOM somente, sem clicar, navegar, fetch/RPC, mutação ou retry de negócio. Mesmos cinco sourceforms e18nativas, sem nova contagem.
+
+GREEN focal Node/Chromium sourceforms+helper, ESLint/Prettier e CI/Zero/LOCK no HEAD final; revisão independente e merge protegido. Nenhum produto/deploy/backend/YAML/dep/lock/controller/request/nonce novo é autorizado. AUDIT_BINDING_PENDING continua ativo. Nova execução fixtures exige gate separado com recuperação R13 comprovada e nonce distinto; esta emenda resolve apenas a hipótese local e não declara fixtures ou telas certificadas.

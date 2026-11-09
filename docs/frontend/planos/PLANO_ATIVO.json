@@ -148,13 +148,7 @@
   ],
   "prompt_crosswalk": {
     "regular_prompt_id": "75",
-    "direct_atomic_ids": [
-      "000",
-      "020",
-      "021",
-      "022",
-      "023"
-    ],
+    "direct_atomic_ids": ["000", "020", "021", "022", "023"],
     "additional_transversal_atomic_ids": [
       "085",
       "086",
@@ -695,10 +689,7 @@
       "src/components/administracao/usuarios/MatrizPermissoes.tsx",
       "src/test/rbacMatriz.test.tsx"
     ],
-    "contratos": [
-      "obter_matriz_rbac_master",
-      "atualizar_matriz_rbac_master"
-    ],
+    "contratos": ["obter_matriz_rbac_master", "atualizar_matriz_rbac_master"],
     "backend_head_na_conferencia": "1edb2c40595e01f7e1e8c5f80160b7b3a4113c12",
     "zero_drift_no_code": true,
     "brand_assets_intact": true,
@@ -1039,12 +1030,7 @@
     "backend_current_head": "c993e38c1f9b9f6a6d45a754945b5b0542fb3ccc",
     "backend_build_pr": 122,
     "backend_build_merge": "c5b0a31793ead6bace7a28246bcb848c26b0d107",
-    "backend_fix_prs": [
-      123,
-      124,
-      127,
-      129
-    ],
+    "backend_fix_prs": [123, 124, 127, 129],
     "backend_latest_fix_merge": "a0337932872402b12a5378040f18feb2161bc723",
     "backend_protocol_tests": 17,
     "backend_regression": 47,
@@ -1074,12 +1060,7 @@
         "http_sql_assertions": 37,
         "browser_assertions": 76,
         "failures": 0,
-        "completed_domains": [
-          "organizacoes",
-          "contratantes",
-          "contratos",
-          "listas"
-        ],
+        "completed_domains": ["organizacoes", "contratantes", "contratos", "listas"],
         "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
         "global_complete": false,
         "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
@@ -1096,9 +1077,7 @@
         "http_sql_assertions": 52,
         "browser_assertions": 132,
         "failures": 0,
-        "completed_domains": [
-          "auditoria"
-        ],
+        "completed_domains": ["auditoria"],
         "cleanup": "QUARENTENA_VERIFICADA_6_USERS_2_ORGS",
         "global_complete": false,
         "limits": [
@@ -1125,12 +1104,7 @@
       "http_sql_assertions": 37,
       "browser_assertions": 76,
       "failures": 0,
-      "completed_domains": [
-        "organizacoes",
-        "contratantes",
-        "contratos",
-        "listas"
-      ],
+      "completed_domains": ["organizacoes", "contratantes", "contratos", "listas"],
       "cleanup": "QUARENTENA_VERIFICADA_4_USERS_3_ORGS",
       "global_complete": false,
       "visual_scope": "Gestão de listas: oito capturas 1440/1280/768/390 em light/dark inspecionadas; sem corte horizontal da página. Não comprova teclado, contraste integral ou 28 rotas."
@@ -1195,9 +1169,7 @@
       "http_sql_assertions": 52,
       "browser_assertions": 132,
       "failures": 0,
-      "completed_domains": [
-        "auditoria"
-      ],
+      "completed_domains": ["auditoria"],
       "cleanup": "QUARENTENA_VERIFICADA_6_USERS_2_ORGS",
       "global_complete": false,
       "limits": [
@@ -1242,18 +1214,11 @@
   "certificacao_tres_frentes_p0": {
     "plano_pr": 299,
     "plano_merge": "9458262bd228fac3d6a6217869b207f8f739beb5",
-    "ordem": [
-      "IDENTIDADE_VISUAL",
-      "CRUD_GLOBAL_V1",
-      "INTEGRACAO_RASTREABILIDADE_AUDITORIA_V1"
-    ],
+    "ordem": ["IDENTIDADE_VISUAL", "CRUD_GLOBAL_V1", "INTEGRACAO_RASTREABILIDADE_AUDITORIA_V1"],
     "fase": "IDENTIDADE_VISUAL_PROVA_AUTENTICADA_PENDENTE",
     "status": "PENDENTE",
     "certificacao_global_v1_v5": "BLOQUEADA_PELA_ORDEM_POR_VERSAO",
-    "gate_escopo": [
-      "scripts/testc/visual-audit.mjs",
-      "scripts/testc/visual-audit.test.mjs"
-    ],
+    "gate_escopo": ["scripts/testc/visual-audit.mjs", "scripts/testc/visual-audit.test.mjs"],
     "criterio": "28 rotas unicas + drawer V117 = 29 superficies / 232 casos; nenhuma homologacao privada sem sessao.",
     "gate_pr": 300,
     "gate_merge": "5f3b2bf80d003241b02e55d4a81917b76ea33154",
@@ -1312,10 +1277,7 @@
     "public_keyboard_proof": {
       "phase": "CHECKPOINT",
       "state": "PASS_PERCURSO_PUBLICO_WCAG_INTEGRAL_PENDENTE",
-      "routes": [
-        "/login",
-        "/esqueci-senha"
-      ],
+      "routes": ["/login", "/esqueci-senha"],
       "cases": 16,
       "allowed_build_paths": [
         "scripts/testc/visual-audit.mjs",
@@ -1403,11 +1365,7 @@
       "Independent final review and all required SUCCESS checks on same final HEAD",
       "Integrate BUILD, deploy only two authorized HML Edges with JWT true, then governed five-file proof and cleanup"
     ],
-    "evidence_comments": [
-      6714867574,
-      6715002135,
-      6715023887
-    ],
+    "evidence_comments": [6714867574, 6715002135, 6715023887],
     "limits": [
       "No HML deployment or new material Auth/document fixture in this execution",
       "Public probe failures occur before credentials; no runtime GREEN claimed",
@@ -1449,10 +1407,7 @@
     "plan_pr": 318,
     "plan_head": "99248f40a65753c86512f3fe657e4b896036ff35",
     "plan_merge": "4818e68c17799102e7ef50a8e26659e6ab07aaf2",
-    "plan_ci": [
-      42432453545,
-      42432453567
-    ],
+    "plan_ci": [42432453545, 42432453567],
     "gate_document": "docs/frontend/planos/P0_TRILHA_A_SIDEBAR_ROUTER_GATE_2026-11-08.md",
     "allowed_build_paths": [
       "src/components/layout/ContaOSSidebar.tsx",
@@ -1466,10 +1421,7 @@
     "gate_pr": 319,
     "gate_head": "c4f72e97e27ed0d09fc8c7b02638ab46042bb91e",
     "gate_merge": "9e4990908f127ad32c883822a20f8caf47b59f2b",
-    "gate_ci": [
-      42433375944,
-      42433375807
-    ],
+    "gate_ci": [42433375944, 42433375807],
     "red_local_commit": "f9ff06792fa3b417880f2c4dd33f95401e0836c4",
     "red_result": "4 FAIL esperados / 7 PASS; interceptacao router false antes do fix",
     "green_local": {
@@ -1516,25 +1468,13 @@
     "plan_pr": 322,
     "plan_head": "6500f7e7d36678606a5c5bbde9e47be2e36f2530",
     "plan_merge": "238335973e0a596e42f0a4b248f742c2504676f2",
-    "plan_ci": [
-      42435786033,
-      42435786037
-    ],
+    "plan_ci": [42435786033, 42435786037],
     "independent_plan_review": "APROVADO_SEM_CRITICAL_IMPORTANT; precisão de alvos no GATE",
     "gate_pr": 323,
     "gate_head": "b073caf3b6a559f5a7035e6b52651ab0eb3b6d88",
     "gate_merge": "8d96478905e82d5535094df9a7565f440485d656",
-    "gate_check_jobs": [
-      128595125444,
-      128595125810,
-      128595124767
-    ],
-    "red_local_commits": [
-      "57c331e",
-      "03921ce",
-      "9b51610",
-      "e35f3d4"
-    ],
+    "gate_check_jobs": [128595125444, 128595125810, 128595124767],
+    "red_local_commits": ["57c331e", "03921ce", "9b51610", "e35f3d4"],
     "red_primary_result": "29 PASS / 4 expected FAIL; helpers missing",
     "green_local": {
       "protocol_and_order": 53,
@@ -1552,10 +1492,7 @@
     "review_fixes": {
       "state": "CORRECTED_PENDING_RECHECK",
       "red_reproduction": "f6b6acd:36 PASS/2 FAIL for clipped empty input and added text",
-      "green_commits": [
-        "19da4a3",
-        "55ca13a"
-      ],
+      "green_commits": ["19da4a3", "55ca13a"],
       "geometry_fixture": "JSDOM synthetic layout; not real browser proof",
       "red_control_text": "680a0c5:38 PASS/1 FAIL, button text clipping",
       "green_control_text": "492852d"
@@ -1582,10 +1519,7 @@
     "plan_pr": 332,
     "plan_head": "fc4b86e70f143f3b827827094ac9a6ee5e4afe74",
     "plan_merge": "52f6fa95e0f9399f44471296d878aee3492de377",
-    "plan_ci": [
-      42474481317,
-      42474481247
-    ],
+    "plan_ci": [42474481317, 42474481247],
     "gate_document": "docs/frontend/planos/P0_TRILHA_A_AUTENTICADA_GATE_2026-11-08.md",
     "available_fixture_combinations": null,
     "blocked_fixture_combinations": 24,
@@ -1595,10 +1529,7 @@
     "gate_pr": 333,
     "gate_head": "e7ef8ad0fcd48e357f6ad83e62b58467d92ff9e4",
     "gate_merge": "9fb3852cbacfebaa5011ff0b6a8d1d9f0250a068",
-    "gate_ci": [
-      42476137269,
-      42476137241
-    ],
+    "gate_ci": [42476137269, 42476137241],
     "red_remote": "3fd4cfad059d433710eb5a6e0fa054c327c5d891",
     "partial_green_remote": "5f46c82282f6c03ed5962ac26f1d907b2a065b84",
     "partial_policy_tests": 52,
@@ -1608,10 +1539,7 @@
     "build_pr": 335,
     "path_amendment_pr": 334,
     "path_amendment_merge": "4f4379ae3f27ccfe52de4c8b47013a3aaa0ed854",
-    "path_amendment_ci": [
-      42478008487,
-      42478008467
-    ],
+    "path_amendment_ci": [42478008487, 42478008467],
     "native_ci": 42481468660,
     "native_ci_head": "f3e6a8962c979c8b9944f08a07b034bcac9b4ded",
     "build_merge": "49cd3025445d28e6ac23f32f6d58b96ae10152a9",
@@ -1663,30 +1591,14 @@
     "global_complete": false,
     "plan_pr": 342,
     "plan_merge": "824f49436dccc5feb15dc61adc42aaa7a3ca10e5",
-    "plan_ci": [
-      42491108002,
-      42491108049
-    ],
+    "plan_ci": [42491108002, 42491108049],
     "gate_document": "docs/frontend/planos/P0_TRILHA_A_REANCORAGEM_EXECUTOR_GATE_2026-11-08.md",
     "gate_pr": 343,
     "gate_merge": "9d6b0131f2afb013d6fc9a732edde5a5f7b39823",
-    "gate_ci": [
-      42491330304,
-      42491330207
-    ],
-    "build_prs": [
-      344,
-      345,
-      346,
-      347,
-      349
-    ],
+    "gate_ci": [42491330304, 42491330207],
+    "build_prs": [344, 345, 346, 347, 349],
     "latest_build_merge": "9b18e4857b03daa6ee09ad3382184480e2014728",
-    "latest_build_ci": [
-      42495809798,
-      42495809633,
-      42495809621
-    ],
+    "latest_build_ci": [42495809798, 42495809633, 42495809621],
     "test_c_run": 42496235106,
     "test_c_artifact": 13623288351,
     "test_c_zip_sha256": "bc2a8b74e1ba9ff008ed67ce0f398c47ce120924cf69b5210d62f8165291d2c6",
@@ -1715,10 +1627,7 @@
   "trilha_a_184_pendentes": {
     "plan_pr": 352,
     "plan_merge": "a782e91cc952a2c524b4a3c2c535447c53571c69",
-    "plan_ci": [
-      42498347082,
-      42498346825
-    ],
+    "plan_ci": [42498347082, 42498346825],
     "phase": "TESTEC42540293545_AUDIT_INCOMPLETE_VISUAL_REVIEW_PENDING",
     "preserved_pass": 18,
     "pending": 184,
@@ -1827,11 +1736,7 @@
         "state": "BUILD359_INTEGRADO_TESTEC70_INTERROMPIDO_OPEN_LOGIN",
         "merge": "351fe855ceee021984db6c27621f47146aec3c1f",
         "final_head": "9b58aa89351804911c8230d73b839cd8d884cdac",
-        "final_ci": [
-          42507081232,
-          42507081207,
-          42507081244
-        ]
+        "final_ci": [42507081232, 42507081207, 42507081244]
       }
     },
     "native_causal_diagnostic": {
@@ -1849,20 +1754,13 @@
         "state": "GATE365_INTEGRADO",
         "pr": 365,
         "merge": "dd62c60e3a928578995400a3ba0e07ecf7e2485e",
-        "ci": [
-          42508424425,
-          42508424370
-        ]
+        "ci": [42508424425, 42508424370]
       },
       "event_order_build": {
         "pr": 363,
         "merge": "241dd775d14a0d2a1ec24c93ae3f655c79d3efd2",
         "head": "44fcf172d1edbf12dc4763744edada0bab368787",
-        "ci": [
-          42509479800,
-          42509479775,
-          42509479759
-        ],
+        "ci": [42509479800, 42509479775, 42509479759],
         "native_causal": 8,
         "unit": 183
       }
@@ -1881,11 +1779,7 @@
       "state": "INTEGRADO_TESTEC78_SEM_ABORTO",
       "merge": "2a5ef8043ff26fbe9b4c68b828099f0c7dd70e33",
       "final_head": "d2881eaf90ce48300cbbbdba76ad78fde61d32d0",
-      "ci": [
-        42511359882,
-        42511360108,
-        42511359927
-      ]
+      "ci": [42511359882, 42511360108, 42511359927]
     },
     "privacy_blocked_baseline": 160,
     "pending_scope_original": 184,
@@ -1914,11 +1808,7 @@
   "trilha_a_24_fixture_plan": {
     "document": "docs/frontend/planos/P0_TRILHA_A_24_FIXTURES_PLAN_2026-11-08.md",
     "phase": "RUNTIME_FIXTURES_FAILED_SOURCE_AND_LIST_AFTER_TWO_CONFIRMED_OPERATIONS",
-    "surfaces": [
-      "V117",
-      "V119",
-      "V120"
-    ],
+    "surfaces": ["V117", "V119", "V120"],
     "cases": 24,
     "preparer_separate_from_readonly_auditor": true,
     "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
@@ -1930,10 +1820,7 @@
     "backend_prod_auth_rls_changes": false,
     "pr": 362,
     "merge": "7bcb9618ef66fe2c03b4e804dbae42d44caba4cb",
-    "ci": [
-      42506842396,
-      42506842344
-    ],
+    "ci": [42506842396, 42506842344],
     "gate_document": "docs/frontend/planos/P0_TRILHA_A_24_FIXTURES_GATE_2026-11-08.md",
     "future_build_paths": [
       "scripts/hml/prepare-visual-fixtures.mjs",
@@ -1951,10 +1838,7 @@
     "source_readonly_receipt": "docs/frontend/auditorias/evidencias/fixtures-24-20261108/FONTE_REAL_READONLY_20261108.json",
     "gate_pr": 367,
     "gate_merge": "7038fb10633e738b35a4104aefbb2a3f856843b8",
-    "gate_ci": [
-      42511864981,
-      42511864976
-    ],
+    "gate_ci": [42511864981, 42511864976],
     "retification_pr": 368,
     "retification_merge": "6e66efaa2069e8ba44e8d713f8e2967d220126ca",
     "build_pr": 373,
@@ -2011,10 +1895,7 @@
       "artifact": 13641024365,
       "zip_sha256": "a7ebb6d3f23ebe61668bc03ab4e20e78556e0bcaf05a7c212dd63703b662c8c8",
       "receipt_entries": 4,
-      "confirmed_operations": [
-        "registrar_versao_fonte_v107",
-        "aprovar_versao_fonte_v107"
-      ],
+      "confirmed_operations": ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"],
       "confirmed_operations_count": 2,
       "final_readback_verified": false,
       "zero_mutations": false,
@@ -2032,39 +1913,23 @@
     "document": "docs/frontend/planos/TRILHA_A_VISUAL_RUN78_PLAN_2026-11-08.md",
     "gate_required_separately": true,
     "baseline_run": 42511641527,
-    "findings": [
-      "C01",
-      "R01",
-      "M01",
-      "D01",
-      "B01"
-    ],
+    "findings": ["C01", "R01", "M01", "D01", "B01"],
     "source_changes_before_gate": false,
     "v1_certified": false,
     "plan_pr": 369,
     "plan_merge": "87a99daaf3746baed09c5ae41ef116c591d54506",
-    "plan_ci": [
-      42515269407,
-      42515269339
-    ],
+    "plan_ci": [42515269407, 42515269339],
     "gate_document": "docs/frontend/planos/TRILHA_A_VISUAL_RUN78_GATE_2026-11-08.md",
     "historical_png_independently_reviewed": 208,
     "baseline_mobile_retest_justified": 6,
     "baseline_other_preserved": 18,
     "gate_pr": 371,
     "gate_merge": "4190a0a4b7acd34a393ae62ea8010cec1dfdce7a",
-    "gate_ci": [
-      42516867690,
-      42516867667
-    ],
+    "gate_ci": [42516867690, 42516867667],
     "build_pr": 374,
     "build_head": "ce9cf2343eb2b39525e8daa2b5574329913f9d5f",
     "build_merge": "ec59265dc375554828656b24ad82293f411cd464",
-    "build_ci": [
-      42519336546,
-      42519336566,
-      42519336552
-    ],
+    "build_ci": [42519336546, 42519336566, 42519336552],
     "independent_code_review": "VR01_SYS04_E_VR02_DISABLED_RESOLVIDOS_SEM_CRITICAL_IMPORTANT",
     "native_causal_pass": 8,
     "isolated_visual_browser_pass": 1,
@@ -2075,18 +1940,9 @@
     "gate_document": "docs/frontend/planos/TRILHA_A_PRIVACIDADE_RUN78_GATE_2026-11-08.md",
     "proof": "docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_TECNICA_READONLY.json",
     "proof_sha256": "5aa39ef35e4a432f4f4f5f29d72ee5773a56e62102948f0e3a31a0529c2d8f18",
-    "surfaces": [
-      "V111",
-      "V112",
-      "V115",
-      "V122"
-    ],
+    "surfaces": ["V111", "V112", "V115", "V122"],
     "unresolved_snapshot_V112": 2,
-    "remaining_fail_closed": [
-      "SYS04",
-      "V109",
-      "V123"
-    ],
+    "remaining_fail_closed": ["SYS04", "V109", "V123"],
     "global_complete": false,
     "gate_pr": 372,
     "gate_merge": "42abfa51f57c19c09f9a1c487652905f9ec37758",
@@ -2118,12 +1974,7 @@
         "src/lib/copiloto/copilotoApi.ts",
         "src/test/copilotoApi.test.ts"
       ],
-      "actions": [
-        "listar_sessoes",
-        "historico",
-        "encerrar_sessao",
-        "perguntar"
-      ],
+      "actions": ["listar_sessoes", "historico", "encerrar_sessao", "perguntar"],
       "required_before_build": [
         "CI/revisão/integração desta emenda",
         "API_PASS_UI_PENDING, limpeza independente e recibo POST fresco",
@@ -2132,12 +1983,7 @@
       "audit_inventory": {
         "routes": 28,
         "drawer": 1,
-        "widths": [
-          1440,
-          1280,
-          768,
-          390
-        ],
+        "widths": [1440, 1280, 768, 390],
         "themes": 2,
         "combinations": 232,
         "not_all_authenticated": true
@@ -2223,10 +2069,7 @@
     "protected_single_request_plan": {
       "pr": 380,
       "merge": "c3f07bf64af728cfeac48bfb0dffae5d90a7c8b6",
-      "ci": [
-        42534367851,
-        42534367836
-      ],
+      "ci": [42534367851, 42534367836],
       "review_comment": 6728553281,
       "state": "PLAN_ONLY_GATE_BUILD_REQUIRED_NO_DISPATCH"
     }
@@ -2238,11 +2081,7 @@
     "pr": 373,
     "head": "889f7cab17524ac939a47987c5e5ac416fd9f96b",
     "merge": "5dc57275d6e95f066ec751fad7a0af50005ab17f",
-    "ci_success": [
-      42535547130,
-      42535547174,
-      42535547141
-    ],
+    "ci_success": [42535547130, 42535547174, 42535547141],
     "native_causal_pass": 8,
     "separate_browser_visual_pass": 1,
     "independent_static_review": 5820191442,
@@ -2281,12 +2120,7 @@
       "merge": "5f3bc0837a49c716a3041846c7a4cc3d1a939496",
       "head": "e9bd82bdd4c05f814f2ccc44a229517add4549ef",
       "code_head_prefix": "3b140",
-      "ci_success": [
-        42536287873,
-        42536287792,
-        42536287799,
-        42536287715
-      ],
+      "ci_success": [42536287873, 42536287792, 42536287799, 42536287715],
       "review": 5820207268,
       "coordinator_review_comment": 6728823611,
       "approved_get_contracts": 7,
@@ -2313,12 +2147,8 @@
       "state": "OPEN_BLOCKED_FIX_IN_PROGRESS",
       "reviewed_head": "2683d2d128d072278a3ae763d3c08bbec176296d",
       "independent_review": 5820251906,
-      "critical": [
-        "RQ02_UNTRUSTED_CHECKOUT_BEFORE_NATIVE_EVENT_AUTHORIZATION"
-      ],
-      "important": [
-        "RQ01_REQUEST_PR_PROOF_MISSING"
-      ],
+      "critical": ["RQ02_UNTRUSTED_CHECKOUT_BEFORE_NATIVE_EVENT_AUTHORIZATION"],
+      "important": ["RQ01_REQUEST_PR_PROOF_MISSING"],
       "request_json_created": false,
       "fixtures_executed": false,
       "requires_final_head_review_and_ci": true
@@ -2445,10 +2275,7 @@
       "consumed": true,
       "replay_allowed": false,
       "confirmed_operations": 2,
-      "operations": [
-        "registrar_versao_fonte_v107",
-        "aprovar_versao_fonte_v107"
-      ],
+      "operations": ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"],
       "completed": false,
       "final_bindings": null,
       "logout_verified": false,
@@ -2524,12 +2351,7 @@
         "pr": 409,
         "head": "7fdc3182cbd225483c647c91c898781e483fe644",
         "state": "REANCHORED_DOCUMENTARY_CI_PENDING_REVIEW_NOT_MERGED",
-        "ci": [
-          42545103705,
-          42545103675,
-          42545103711,
-          42545103722
-        ],
+        "ci": [42545103705, 42545103675, 42545103711, 42545103722],
         "native_causal_ci_pass": 8,
         "visual_supplement": 1,
         "sys04_browser_supplement": 2,
@@ -2646,12 +2468,7 @@
     "head": "a8cbaf3870dbd54c55ff52309b261081ab0354a2",
     "merge": "1cd6572e4f52337249c495f5d482b8140013abcb",
     "state": "CORRIGIDO_CODIGO_NATIVE72AAA_PASS_INTEGRACAO_FINAL_PENDENTE",
-    "ci": [
-      42548376460,
-      42548376356,
-      42548376508,
-      42548376384
-    ],
+    "ci": [42548376460, 42548376356, 42548376508, 42548376384],
     "native_cases": 8,
     "visual_cases": 1,
     "v112_browser_cases": 1,
@@ -2676,19 +2493,13 @@
     },
     "final_review": 5821014588,
     "final_native_head": "72aaa90367148b7cc8e5205545a86b1ecfa2fe94",
-    "final_native_ci": [
-      42550770728,
-      42550770708
-    ],
+    "final_native_ci": [42550770728, 42550770708],
     "remaining": "CI do HEAD documental reancorado; HML/R2/V1 não certificados."
   },
   "trilha_a_r3_controles_logout_gate": {
     "state": "GATE_ONLY_BUILD_AFTER_CI_REVIEW_MERGE",
     "gate_path": "docs/frontend/planos/TRILHA_A_FIXTURES_R3_CONTROLES_LOGOUT_GATE_2026-11-09.md",
-    "spent_nonces": [
-      "trilha-a-fixtures-20261108-r1",
-      "trilha-a-fixtures-20261109-r2"
-    ],
+    "spent_nonces": ["trilha-a-fixtures-20261108-r1", "trilha-a-fixtures-20261109-r2"],
     "future_nonce": "trilha-a-fixtures-20261109-r3",
     "r2_run": 42553093050,
     "r2_artifact": 13645999071,
@@ -2729,19 +2540,13 @@
     "gate434": {
       "merge": "d492b99fb1f71c71167528147e064924945f6d42",
       "head": "bfe1b71d8fa57d24f34823b91bb0e24b9a607150",
-      "ci": [
-        42554046981,
-        42554046960
-      ],
+      "ci": [42554046981, 42554046960],
       "review": 5821203381,
       "readback": true
     },
     "review430": {
       "merge": "c6bf35472a4cfafe82ca59092150585a518d9928",
-      "ci": [
-        42554296553,
-        42554296518
-      ],
+      "ci": [42554296553, 42554296518],
       "review": 5821222206,
       "cases": 102,
       "original_png_reviewed": 204,
@@ -2759,12 +2564,7 @@
       "merge": "1b6f120f5346a65f9578c07c07a9498772783fb1",
       "review": 5821232888,
       "code_review": 5821138610,
-      "ci": [
-        42554347188,
-        42554347139,
-        42554347213,
-        42554347146
-      ],
+      "ci": [42554347188, 42554347139, 42554347213, 42554347146],
       "native": {
         "causal": 8,
         "visual": 1,
@@ -2793,10 +2593,7 @@
       "zip_sha256": "c6b33596bd1454388d0989506c74ccbaece749d0c4bcf0b45fbdb0f692927475",
       "report_sha256": "d986f375e1cba68be5f78b61544d241ef5f4c71f126611112c960226a939e805",
       "receipts_sha256": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
-      "receipts_comments": [
-        6731148616,
-        6731207484
-      ],
+      "receipts_comments": [6731148616, 6731207484],
       "nonce_consumed": true,
       "rerun_allowed": false,
       "native8_pass": true
@@ -2968,11 +2765,7 @@
     "nonce_future": "trilha-a-fixtures-20261109-r8",
     "spent_r7": true,
     "metadata_token_scope": "STEP_ONLY_NO_MASTER_BUILD_BROWSER",
-    "read_permissions": [
-      "contents:read",
-      "actions:read",
-      "pull-requests:read"
-    ],
+    "read_permissions": ["contents:read", "actions:read", "pull-requests:read"],
     "new_secret_required": false,
     "github_token_in_master_allowed": false,
     "workflow_run_master_load": "LOCAL_FRESH_30S_NO_GET",
@@ -3131,10 +2924,7 @@
     "plan_merge": "8cb3861350c41dbc1fd0e4f7b5e721a2ccda2c8d",
     "plan_document": "docs/frontend/planos/TRILHA_C_C13_REVISAO_CORRECOES_2026-11-09.md",
     "independent_review": "PR480 comentário6743810852",
-    "plan_ci": [
-      42640120009,
-      42640119933
-    ],
+    "plan_ci": [42640120009, 42640119933],
     "backend_sha": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
     "build_paths": [
       "src/components/copiloto/CopilotoContrato.tsx",
@@ -3269,11 +3059,7 @@
     "public_graph_max_bytes": 8388608,
     "public_graph_deadline_ms_existing": 180000,
     "r12_zero_auth_original_head": "3d6bea3e938459f348130bf1d04431a072dba081",
-    "r12_zero_auth_runs": [
-      42666600147,
-      42666864017,
-      42666864220
-    ],
+    "r12_zero_auth_runs": [42666600147, 42666864017, 42666864220],
     "r12_zero_auth_private_job": 129333370334,
     "r12_zero_auth_metadata_gets": 10,
     "r12_zero_auth_git_blobs": 4,
@@ -3310,10 +3096,7 @@
     "status": "EMENDA_CI_EXPERIMENTO_CONTROLADO_DUAS_RUNS_ON_SEM_WAIVER",
     "gate": "docs/frontend/planos/TRILHA_A_R13_PERFIL_CANONICO_HML_GATE_2026-11-09.md",
     "incident_head": "6605fbfc40359a1565abbffc8b8358ff4cf44b83",
-    "incident_runs": [
-      42671473829,
-      42671473179
-    ],
+    "incident_runs": [42671473829, 42671473179],
     "initial_attempt": 1,
     "initial_jobs_count": 0,
     "initial_check_runs_count": 0,
@@ -3326,18 +3109,12 @@
     "subsequent_test_c_success_job": 129351763045,
     "subsequent_lock_jobs_count": 0,
     "pr497_original_head": "df30de6d793ac146c70865c080bdf665bf3be873",
-    "pr497_initial_runs": [
-      42672899874,
-      42672899369
-    ],
+    "pr497_initial_runs": [42672899874, 42672899369],
     "pr497_initial_jobs_count": 0,
     "runner_root_cause_proven": false,
     "test_c_runner_unchanged": "ubuntu-latest",
     "experimental_runner": "ubuntu-22.04",
-    "experimental_job_ids": [
-      "frontend-quality",
-      "protect-types"
-    ],
+    "experimental_job_ids": ["frontend-quality", "protect-types"],
     "experimental_yaml_paths": [
       ".github/workflows/contaos-frontend-zero-drift.yml",
       ".github/workflows/lock-types-double-barrier.yml"
@@ -3376,9 +3153,7 @@
     "project_summary_exposes_guard": false,
     "additional_corrective_create_calls_maximum": 1,
     "total_create_calls_maximum": 2,
-    "persistent_project_settings_allowed_fields": [
-      "commandForIgnoringBuildStep"
-    ],
+    "persistent_project_settings_allowed_fields": ["commandForIgnoringBuildStep"],
     "persistent_setting_may_remain_after_failure": true,
     "new_guard_environment": "production",
     "new_guard_sha_must_equal_new_approved_main": true,
@@ -3404,5 +3179,29 @@
     "max_new_intentions": 13,
     "auth_authorized_by_document": false,
     "prod_changes_allowed": false
+  },
+  "trilha_a_r13_list_selection_readiness": {
+    "status": "EMENDA_DOCUMENTAL_BUILD_OFFLINE_APOS_CI_REVISAO_MERGE",
+    "r13_run": 42685547737,
+    "r13_artifact": 13704636643,
+    "inspection_run": 42687417968,
+    "failure": "FLOW_LIST_UI_MISSING",
+    "cause_async_readiness_proven": false,
+    "new_armed": 0,
+    "new_confirmed": 0,
+    "prior_reserved": 1,
+    "logout_verified": true,
+    "build_paths": [
+      "scripts/hml/prepare-visual-fixtures.mjs",
+      "scripts/hml/prepare-visual-fixtures.test.mjs"
+    ],
+    "helper": "listSelectionControl",
+    "readiness_wait_ms_max": 3000,
+    "native_total_preserved": 18,
+    "sourceforms_count_preserved": 5,
+    "auth_authorized": false,
+    "new_request_authorized": false,
+    "deploy_authorized": false,
+    "certified": false
   }
 }
