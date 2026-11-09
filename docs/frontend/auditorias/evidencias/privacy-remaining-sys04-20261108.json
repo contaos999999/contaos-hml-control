@@ -633,19 +633,410 @@
     "db_count_not_rpc_count": true
   },
   "pending": {
-    "hml_context_organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
-    "hml_fantasy_known": "ContaOS HML Teste",
-    "hml_cnpj_null": true,
-    "hml_situacao": "ativa",
-    "hml_legal_name_not_catalogued": true,
-    "other_nonfactory_labels_not_read": true,
-    "rpc_runtime_set_not_observed": true
+    "runtime_rpc_set_not_observed": true,
+    "capture_sys04_pending": true
   },
   "limits": {
-    "catalog_count": 72,
+    "catalog_count": 109,
     "no_global_regex_runtime": true,
     "no_synthetic_claim_from_name": true,
     "no_auth_reads": true,
-    "no_capture_pass_claim": true
+    "no_capture_pass_claim": true,
+    "unknown_catalogued_fields": 0
+  },
+  "discovered_closed": [
+    {
+      "id": "0402a160-7ee8-4cb5-9264-25a8b195f795",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 15:46:18.220877+00"
+    },
+    {
+      "id": "06d7fac1-a472-4a10-8010-611e1094b281",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 11:57:38.027018+00"
+    },
+    {
+      "id": "084ee80e-84d6-4ee2-b7a1-52802d7a759d",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 12:56:22.152324+00"
+    },
+    {
+      "id": "0ab58145-6d10-449f-ad17-c1b93d9eb83e",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 12:22:35.499557+00"
+    },
+    {
+      "id": "0f8c3e73-ceed-47c4-8086-37175d60dde7",
+      "razao_social": "p0postrls-org_a-0f8c3e73-ceed-47c4-8086-37175d60dde7",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-05 23:03:35.030108+00"
+    },
+    {
+      "id": "296f78f0-ec39-491d-b455-8b1c9b0dfe11",
+      "razao_social": "p0postrls-org_b-296f78f0-ec39-491d-b455-8b1c9b0dfe11",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-05 23:03:35.030108+00"
+    },
+    {
+      "id": "2b9d5ac5-8ed0-4f0c-a4fb-d025f595532c",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 16:24:23.272694+00"
+    },
+    {
+      "id": "32e9f527-0825-4a8e-bbaa-dcca7d91fd96",
+      "razao_social": "p0rbac-org_a-32e9f527-0825-4a8e-bbaa-dcca7d91fd96",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-05 21:27:32.866476+00"
+    },
+    {
+      "id": "39a06545-1640-404f-8676-05eccc42e658",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 11:57:38.027018+00"
+    },
+    {
+      "id": "3a8f467d-067d-4b7e-8677-1a98f95af682",
+      "razao_social": "p0retry68-org_b-3a8f467d-067d-4b7e-8677-1a98f95af682",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-06 01:28:13.791987+00"
+    },
+    {
+      "id": "40ae15b0-2eae-41a7-b137-abc29d1af642",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 11:46:00.319963+00"
+    },
+    {
+      "id": "418cc4d7-89e5-45ae-881e-417fd298eb65",
+      "razao_social": "p0rbacbuild-org_b-418cc4d7-89e5-45ae-881e-417fd298eb65",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-06 02:59:42.896437+00"
+    },
+    {
+      "id": "4943c3e7-99bd-41b3-a86c-745d7e125d73",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 16:32:32.848003+00"
+    },
+    {
+      "id": "4a07e16b-3024-4ec0-aeb8-1acca5e64db1",
+      "razao_social": "p0rbacnine-org_b-4a07e16b-3024-4ec0-aeb8-1acca5e64db1",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-06 03:22:55.17505+00"
+    },
+    {
+      "id": "4a50bace-e3de-4cac-bd30-307808994357",
+      "razao_social": "P0 checklist synthetic 4a50bace-e3de-4cac-bd30-307808994357",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 03:00:29.578036+00"
+    },
+    {
+      "id": "530b410e-9a19-4216-ab88-ead54190670f",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 16:16:07.158096+00"
+    },
+    {
+      "id": "5f959a97-f554-4f0c-8f45-bddee4231cad",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 15:46:18.220877+00"
+    },
+    {
+      "id": "688e0cce-46c0-4867-bfde-a0ba0d4dee50",
+      "razao_social": "p0retry68-org_a-688e0cce-46c0-4867-bfde-a0ba0d4dee50",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-06 01:28:13.791987+00"
+    },
+    {
+      "id": "68da07dc-ea18-4aff-a97e-03eff970b9e6",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 16:00:49.231467+00"
+    },
+    {
+      "id": "7d92f935-1de0-484e-88b1-dd35ddb79b8b",
+      "razao_social": "p0rbacbuild-org_a-7d92f935-1de0-484e-88b1-dd35ddb79b8b",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-06 02:59:42.896437+00"
+    },
+    {
+      "id": "80d50a63-787b-4acc-b36c-bf9110c58bf5",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 15:29:14.612342+00"
+    },
+    {
+      "id": "94fd6663-c422-46a6-8c29-e8fd6a1c7a24",
+      "razao_social": "P0 CRUD synthetic 94fd6663-c422-46a6-8c29-e8fd6a1c7a24",
+      "nome_fantasia": "Synthetic edited",
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-06 23:53:33.554899+00"
+    },
+    {
+      "id": "99dc426d-4f38-45ad-ae45-9d2e6269eafc",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 15:29:14.612342+00"
+    },
+    {
+      "id": "9c9ac066-bba8-4ba2-b20f-4b5723fec873",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 12:56:22.152324+00"
+    },
+    {
+      "id": "a8bf7c55-9076-4839-a1dd-aa3b818bd0a0",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 16:32:32.848003+00"
+    },
+    {
+      "id": "afabdc79-a013-4136-9367-d2813cddd6eb",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 11:05:53.803629+00"
+    },
+    {
+      "id": "b9528b4d-26c3-434d-acdb-b66041b47699",
+      "razao_social": "P0 CRUD synthetic b9528b4d-26c3-434d-acdb-b66041b47699",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-06 23:53:33.554899+00"
+    },
+    {
+      "id": "bae485da-81ff-4e36-8e56-ae2d880cc470",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 16:24:23.272694+00"
+    },
+    {
+      "id": "bd7aa217-6aba-408a-ba88-9447773d02f1",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 11:05:53.803629+00"
+    },
+    {
+      "id": "c2ae8a91-9674-49c0-a63e-5e7c7e9fab93",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 12:22:35.499557+00"
+    },
+    {
+      "id": "c3834523-b352-41d4-b77f-6ae12abfd7e4",
+      "razao_social": "p0rbac-org_b-c3834523-b352-41d4-b77f-6ae12abfd7e4",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-05 21:27:32.866476+00"
+    },
+    {
+      "id": "da0ad9dc-1ada-4a40-995b-a391b41c06c5",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 16:00:49.231467+00"
+    },
+    {
+      "id": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      "razao_social": "ContaOS HML - Testes Funcionais",
+      "nome_fantasia": "ContaOS HML Teste",
+      "situacao": "ativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-02 09:20:30.867191+00"
+    },
+    {
+      "id": "f30df5c9-8cdb-48ef-81c3-390799b022fa",
+      "razao_social": "P0 checklist synthetic f30df5c9-8cdb-48ef-81c3-390799b022fa",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 03:00:29.578036+00"
+    },
+    {
+      "id": "f5883e3b-59d2-440f-8561-efe761584551",
+      "razao_social": "V117 synthetic review",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 11:46:00.319963+00"
+    },
+    {
+      "id": "fb384c63-f292-45e1-b527-3b80d927081e",
+      "razao_social": "p0rbacnine-org_a-fb384c63-f292-45e1-b527-3b80d927081e",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-06 03:22:55.17505+00"
+    },
+    {
+      "id": "fe212f1e-02d1-4684-a311-317734d9588b",
+      "razao_social": "V117 synthetic tenant B",
+      "nome_fantasia": null,
+      "situacao": "inativa",
+      "cnpj": null,
+      "category": "ROTULO_TECNICO_OBSERVADO",
+      "semantic_classification": "CAMPO_TECNICO_SEM_PII",
+      "atualizado_em": "2026-11-07 16:16:07.158096+00"
+    }
+  ],
+  "discovery": {
+    "gate": 393,
+    "review": 5820348372,
+    "public_enum_receipt": 6729144915,
+    "executions": 1,
+    "rows": 37,
+    "fields": 38,
+    "codepoints": 1277,
+    "patterns_blocked": 0,
+    "semantic_approved": 38,
+    "semantic_inconclusive": 0,
+    "no_reread": true
+  },
+  "runtime_mapping": {
+    "response_order_preserved": "buscarVinculos linhas.map; OrganizationList filter(non-null).map",
+    "id_dom": false,
+    "unique_name_required": false,
+    "exact_tuples": true,
+    "full_card_multiset": true,
+    "ordered_full_subtree_bijection": true,
+    "all_rendered_snapshot_sensitive_first": true,
+    "unknown_extra_blocks": true
   }
 }
