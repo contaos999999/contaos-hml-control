@@ -7065,3 +7065,13 @@ test("R10 browser fixture compiles the real competence component and readonly SD
     await fs.rm(dir, { recursive: true, force: true });
   }
 });
+
+test("R10 seal completes a response for an already admitted request within its deadline", async () => {
+  const f = await r10QueryFixture(),
+    request = f.request();
+  const sealing = f.observer.seal();
+  f.response(request, [f.row]);
+  await sealing;
+  assert.equal(f.observer.observationFailure(), null);
+  f.observer.close();
+});
