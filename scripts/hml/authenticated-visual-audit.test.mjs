@@ -4053,6 +4053,123 @@ test(
           .passed,
         true,
       );
+
+      // Four source-shaped fields under real Chromium ARIA, without HML/Auth.
+      const privacyProof = await fn("loadPrivacy78Proof")();
+      const rbacProof = await fn("loadPrivacy78RbacProof")();
+      const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+      for (const [surface, html] of Object.entries(privacy78Fixtures())) {
+        await page.setContent(html);
+        const anchor = await page.evaluate(fn("privacy78FieldAnchor"), {
+          surface,
+          proof: privacyProof,
+        });
+        assert.ok(anchor, surface);
+        const field = page.locator(anchor.selector).nth(anchor.index);
+        const rendered = await field.innerText(),
+          snapshot = (await field.ariaSnapshot()).trim();
+        const receipt = Object.freeze({
+          route: fn("privateCases")().find((i) => i.surface === surface).path,
+          observed: Object.freeze(
+            surface === "V115"
+              ? ["competence_rbac_gate", "upload"]
+              : privacyProof.get_contracts.map((c) => c.name),
+          ),
+          age: 1,
+        });
+        const input = {
+          surface,
+          proof: privacyProof,
+          rbacProof,
+          rendered,
+          snapshot,
+          fieldSnapshot: snapshot,
+          anchored: true,
+          receipt,
+        };
+        const fieldContext = fn("privacy78FieldContext")(input);
+        assert.ok(fieldContext, surface);
+        assert.equal(
+          fn("classifyArtifactText")(rendered, words, { fieldContext }).reason,
+          "ALLOWED",
+          surface,
+        );
+        assert.equal(
+          fn("classifyArtifactText")(snapshot, words, { snapshot: true, fieldContext }).reason,
+          "ALLOWED",
+          surface,
+        );
+        assert.equal(
+          fn("privacy78FieldContext")({
+            ...input,
+            rendered: rendered + privacyProof.generated_exact_values[surface][0],
+          }),
+          null,
+        );
+        await field.evaluate((e) => e.setAttribute("aria-label", "pessoa@example.com"));
+        assert.equal(
+          await page.evaluate(fn("privacy78FieldAnchor"), { surface, proof: privacyProof }),
+          null,
+        );
+        assert.equal(
+          fn("classifyArtifactText")(
+            rendered + " " + (await field.getAttribute("aria-label")),
+            words,
+          ).reason,
+          "SENSITIVE_PATTERN",
+        );
+      }
+
+      const v109Proof = await fn("loadPrivacy109Proof")();
+      await page.setContent(
+        "<style>.flex{display:flex}.flex-wrap{flex-wrap:wrap}.inline-flex{display:inline-flex}.gap-2{gap:.5rem}</style>" +
+          privacy109Fixture(v109Proof),
+      );
+      const v109Anchor = await page.evaluate(fn("privacy109FieldAnchor"), { proof: v109Proof });
+      assert.ok(v109Anchor);
+      const v109Rendered = await page.locator("body").innerText();
+      const v109Snapshot = await page.locator("body").ariaSnapshot();
+      const v109FieldSnapshots = await fn("privacy109FieldSnapshots")(page, v109Anchor);
+      assert.equal(v109FieldSnapshots.length, 2);
+      const v109Input = {
+        proof: privacyProof,
+        v109Proof,
+        rendered: v109Rendered,
+        snapshot: v109Snapshot,
+        fieldSnapshots: v109FieldSnapshots,
+        anchored: true,
+        receipt: Object.freeze({
+          route: v109Proof.context.route,
+          age: 1,
+          observed: Object.freeze(["contract_gate", "v109_lists_page0"]),
+        }),
+      };
+      const v109Context = fn("privacy109FieldContext")(v109Input);
+      assert.ok(v109Context, "V109 real full ARIA mapping");
+      assert.equal(
+        fn("classifyArtifactText")(v109Rendered, words, { fieldContext: v109Context }).reason,
+        "ALLOWED",
+      );
+      assert.equal(
+        fn("classifyArtifactText")(v109Snapshot, words, {
+          snapshot: true,
+          fieldContext: v109Context,
+        }).reason,
+        "ALLOWED",
+      );
+      for (const value of [
+        v109Proof.approved_values.description,
+        v109Proof.approved_values.formatted_updated,
+      ]) {
+        assert.equal(
+          fn("privacy109FieldContext")({ ...v109Input, rendered: v109Rendered + value }),
+          null,
+        );
+        assert.equal(
+          fn("privacy109FieldContext")({ ...v109Input, snapshot: v109Snapshot + value }),
+          null,
+        );
+      }
     } finally {
       release?.();
       await browser?.close();
@@ -4147,4 +4264,1568 @@ test("Run78 disabled legítimo dispensa só hit-test, mantendo geometria e clipp
     }),
     false,
   );
+});
+
+// GATE372 recovery: these are fresh tests, not receipts from the lost worktree.
+const privacy78ProofPath = new URL(
+  "../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_TECNICA_READONLY.json",
+  import.meta.url,
+);
+const privacy78Proof = JSON.parse(
+  await (await import("node:fs/promises")).readFile(privacy78ProofPath, "utf8"),
+);
+test("privacy78 fonte real e recibo preservam quatro rejeicoes sem contexto", async () => {
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  for (const [surface, count] of [
+    ["V111", 1],
+    ["V112", 1],
+    ["V115", 2],
+    ["V122", 3],
+  ])
+    assert.deepEqual(
+      fn("classifyArtifactText")(privacy78Proof.generated_exact_values[surface][0], words),
+      { reason: "UNKNOWN_WORDS", unknownCount: count },
+    );
+});
+test("privacy78 GET exato rejeita filtro select origem metodo duplicata e ausencia", () => {
+  const runtime = fn("privacy78Runtime")({ proof: privacy78Proof });
+  for (const c of privacy78Proof.get_contracts) {
+    const url = API + c.path + "?" + new URLSearchParams(c.query);
+    assert.equal(runtime.match(url, "GET")?.name, c.name);
+    assert.equal(
+      runtime.match(
+        API + c.path + "?" + new URLSearchParams(Object.entries(c.query).reverse()),
+        "GET",
+      )?.name,
+      c.name,
+    );
+    for (const bad of [url + "&extra=1", url + "&select=x", url + "#x", url.replace(API, HML)])
+      assert.equal(runtime.match(bad, "GET"), null);
+    assert.equal(runtime.match(url, "POST"), null);
+    for (const key of Object.keys(c.query)) {
+      const bad = new URL(url);
+      bad.searchParams.delete(key);
+      assert.equal(runtime.match(bad.href, "GET"), null);
+      bad.searchParams.set(key, "foreign");
+      assert.equal(runtime.match(bad.href, "GET"), null);
+    }
+  }
+});
+test("privacy78 projecao fecha config pipeline FK shapes e nao le campos proibidos", () => {
+  const runtime = fn("privacy78Runtime")({ proof: privacy78Proof });
+  const upload = privacy78Proof.get_contracts.find((c) => c.name === "upload");
+  const row = {
+    extensoes_permitidas: privacy78Proof.observed.upload.extensions,
+    tamanho_maximo_bytes: 524288000,
+  };
+  for (const key of ["user", "headers", "mimes_permitidos"])
+    Object.defineProperty(row, key, {
+      get() {
+        throw new Error("unselected field read");
+      },
+    });
+  assert.deepEqual(runtime.project(upload, row), { name: "upload", exact: true });
+  assert.equal(runtime.project(upload, [row]), null);
+  assert.equal(runtime.project(upload, { ...row, tamanho_maximo_bytes: 524288001 }), null);
+  assert.equal(
+    runtime.project(upload, {
+      ...row,
+      extensoes_permitidas: [...privacy78Proof.observed.upload.extensions].reverse(),
+    }),
+    null,
+  );
+  const c = privacy78Proof.context,
+    p = privacy78Proof.observed.pipeline[0];
+  const process = privacy78Proof.get_contracts.find((r) => r.name === "processing_page0");
+  const v = {
+    id: c.processing,
+    id_versao_documento: c.document_version,
+    etapa: p.stage,
+    iniciado_em: p.started,
+    concluido_em: p.completed,
+    criado_em: p.created,
+  };
+  assert.deepEqual(runtime.project(process, [v]), { name: "processing_page0", exact: true });
+  for (const bad of [
+    null,
+    [],
+    {},
+    v,
+    [v, v],
+    [{ ...v, id_versao_documento: c.document }],
+    [{ ...v, iniciado_em: p.completed }],
+    [{ ...v, etapa: "pages" }],
+  ])
+    assert.equal(runtime.project(process, bad), null);
+  const version = privacy78Proof.get_contracts.find((r) => r.name === "document_versions_page0");
+  const vr = {
+    id: c.document_version,
+    id_documento_contrato: c.document,
+    id_arquivo: c.file,
+    criado_em: p.created,
+  };
+  for (const key of ["enviado_por", "motivo_substituicao", "metadados_extraidos"])
+    Object.defineProperty(vr, key, {
+      get() {
+        throw new Error("unselected version field read");
+      },
+    });
+  assert.deepEqual(runtime.project(version, [vr]), {
+    name: "document_versions_page0",
+    exact: true,
+  });
+});
+test("privacy78 recibo selado intervalo unico contexto e desconhecidos remanescentes", async () => {
+  const proof = await fn("loadPrivacy78Proof")();
+  const rbacProof = await fn("loadPrivacy78RbacProof")();
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  assert.ok(Object.isFrozen(proof.context));
+  for (const surface of ["V111", "V112", "V115", "V122"]) {
+    const value = proof.generated_exact_values[surface][0];
+    const receipt = Object.freeze({
+      route: fn("privateCases")().find((r) => r.surface === surface).path,
+      observed: Object.freeze(
+        surface === "V115"
+          ? ["competence_rbac_gate", "upload"]
+          : proof.get_contracts.map((c) => c.name),
+      ),
+      age: 1,
+    });
+    const input = {
+      surface,
+      proof,
+      rbacProof,
+      rendered: value,
+      snapshot: value,
+      fieldSnapshot: value,
+      anchored: true,
+      receipt,
+    };
+    const fieldContext = fn("privacy78FieldContext")(input);
+    assert.ok(fieldContext, surface);
+    assert.equal(fn("classifyArtifactText")(value, words, { fieldContext }).reason, "ALLOWED");
+    assert.equal(
+      fn("classifyArtifactText")(value, words, { fieldContext: {} }).reason,
+      "UNKNOWN_WORDS",
+    );
+    for (const bad of [
+      { anchored: false },
+      { surface: "SYS04" },
+      { proof: privacy78Proof },
+      { rendered: value + value },
+      { receipt: { ...receipt } },
+      { receipt: Object.freeze({ ...receipt, observed: Object.freeze([]) }) },
+      { receipt: Object.freeze({ ...receipt, age: 120000 }) },
+      { receipt: Object.freeze({ ...receipt, route: "/" }) },
+    ])
+      assert.equal(fn("privacy78FieldContext")({ ...input, ...bad }), null);
+    for (const extra of [
+      " CANARIO_PRIVADO",
+      " pessoa@example.com",
+      " Bearer secret",
+      " 123.456.789-00",
+    ]) {
+      const text = value + extra,
+        ctx = fn("privacy78FieldContext")({ ...input, rendered: text, snapshot: text });
+      assert.notEqual(
+        fn("classifyArtifactText")(text, words, { fieldContext: ctx }).reason,
+        "ALLOWED",
+      );
+    }
+    const snapshot = value + " EXTRA_PRIVADO_A EXTRA_PRIVADO_B";
+    const ctx = fn("privacy78FieldContext")({ ...input, snapshot });
+    assert.deepEqual(
+      fn("classifyArtifactText")(snapshot, words, { snapshot: true, fieldContext: ctx }),
+      { reason: "UNKNOWN_WORDS", unknownCount: 2 },
+    );
+  }
+});
+function privacy78Fixtures() {
+  const c = privacy78Proof.context;
+  return {
+    V111: '<section aria-label="Processamento"><h2>Processamento</h2><ul><li><div><span>Etapa: documents</span></div><p>Registrado em 08/11/2026 02:41 · Iniciado em 08/11/2026 08:21 · Concluído em 08/11/2026 08:21</p></li></ul></section>',
+    V112:
+      '<table><caption>Competências do contrato</caption><thead><tr><th scope="col">Competência</th><th scope="col">Período</th><th scope="col">Ações</th></tr></thead><tbody><tr><th scope="row">11/2026</th><td>01/11/2026 a 30/11/2026</td><td><a href="/competencias/' +
+      c.competence +
+      '" aria-label="Abrir competência 11/2026">Abrir</a></td></tr></tbody></table>',
+    V115: '<section aria-labelledby="v115-envio"><h2 id="v115-envio">Enviar documento</h2><div><label for="v115-arquivo">Arquivo</label><input id="v115-arquivo" type="file"><p>Limite: 500 MB</p></div></section>',
+    V122: '<section><h2>1. Selecionar relatórios anteriores</h2><p>Formatos aceitos: PDF, XLSX, CSV, DOCX, PNG, JPG, JPEG, WEBP, TXT, JSON, XML. O limite de tamanho e o tipo real são conferidos pelo backend.</p><label for="historico-arquivos">Arquivos históricos (seleção múltipla)</label><input id="historico-arquivos" type="file" multiple></section>',
+  };
+}
+function privacy78Browser(html = "") {
+  const { JSDOM } = require("jsdom");
+  const dom = new JSDOM(html, {
+    url: HML + "/contratos/" + privacy78Proof.context.contract + "/historico/importar",
+    runScripts: "outside-only",
+  });
+  const w = dom.window;
+  for (const key of ["Request", "Response", "TextDecoder", "TextEncoder"]) w[key] = globalThis[key];
+  w.navigation = new w.EventTarget();
+  w.HTMLElement.prototype.getClientRects = function () {
+    return this.closest("[hidden]") ? [] : [{}];
+  };
+  return { dom, w, run: (name, args) => w.eval("(" + fn(name).toString() + ")")(args) };
+}
+test("privacy78 DOM source-shaped associa campo e rejeita label copia atributos e cards", () => {
+  for (const [surface, html] of Object.entries(privacy78Fixtures())) {
+    const { dom, w, run } = privacy78Browser(html);
+    try {
+      const args = { surface, proof: privacy78Proof };
+      const anchor = run("privacy78FieldAnchor", args);
+      assert.ok(anchor, surface);
+      const heading = w.document.querySelector("h2,caption"),
+        old = heading.textContent;
+      heading.textContent = "Outro";
+      assert.equal(run("privacy78FieldAnchor", args), null);
+      heading.textContent = old;
+      const node = w.document.querySelectorAll(anchor.selector)[anchor.index];
+      node.setAttribute("aria-label", "CANARIO_PRIVADO");
+      assert.equal(run("privacy78FieldAnchor", args), null);
+      node.removeAttribute("aria-label");
+      if (surface === "V122") {
+        const label = w.document.querySelector("label");
+        label.textContent = "Arquivo";
+        assert.equal(run("privacy78FieldAnchor", args), null);
+        label.textContent = "Arquivos históricos (seleção múltipla)";
+      }
+      w.document.body.innerHTML += html;
+      assert.equal(run("privacy78FieldAnchor", args), null);
+      if (surface === "V112") {
+        w.document.body.innerHTML = "<div><h3>11/2026</h3><p>01/11/2026 a 30/11/2026</p></div>";
+        assert.equal(run("privacy78FieldAnchor", args), null);
+      }
+    } finally {
+      dom.window.close();
+    }
+  }
+});
+test("privacy78 observer preserva fetch args promise response rejeicao e ignora Auth", async () => {
+  const { dom, w, run } = privacy78Browser();
+  try {
+    const c = privacy78Proof.get_contracts.find((r) => r.name === "upload");
+    const url = API + c.path + "?" + new URLSearchParams(c.query);
+    const response = new Response(
+      JSON.stringify({
+        extensoes_permitidas: privacy78Proof.observed.upload.extensions,
+        tamanho_maximo_bytes: 524288000,
+        user: "CANARIO pessoa@example.com",
+      }),
+    );
+    Object.defineProperty(response, "url", { value: url });
+    Object.defineProperty(response, "headers", {
+      get() {
+        throw new Error("headers read");
+      },
+    });
+    let next = Promise.resolve(response);
+    const original = next,
+      calls = [];
+    w.fetch = function (...args) {
+      calls.push({ receiver: this, args });
+      return next;
+    };
+    run("privacy78Runtime", { proof: privacy78Proof, install: true });
+    const init = { method: "GET" };
+    Object.defineProperty(init, "headers", {
+      get() {
+        throw new Error("Auth read");
+      },
+    });
+    assert.equal(w.fetch.call(w, url, init), original);
+    assert.equal(calls[0].receiver, w);
+    assert.equal(calls[0].args[1], init);
+    assert.equal(await original, response);
+    assert.equal(w.__contaosPrivacy78.read(), null);
+    await new Promise((r) => setTimeout(r, 50));
+    assert.deepEqual([...w.__contaosPrivacy78.read().observed], ["upload"]);
+    assert.equal(JSON.stringify(w.__contaosPrivacy78.read()).includes("CANARIO"), false);
+    const auth = {
+      get status() {
+        throw new Error("Auth status read");
+      },
+      clone() {
+        throw new Error("Auth clone");
+      },
+    };
+    next = Promise.resolve(auth);
+    assert.equal(w.fetch(API + "/auth/v1/user"), next);
+    await next;
+    await new Promise((r) => setTimeout(r, 0));
+    assert.deepEqual([...w.__contaosPrivacy78.read().observed], ["upload"]);
+    assert.equal(w.fetch(url + "&extra=1"), next);
+    assert.equal(w.__contaosPrivacy78.read(), null);
+    const rejected = Object.freeze({ code: "closed" });
+    next = Promise.reject(rejected);
+    assert.equal(w.fetch(url), next);
+    await assert.rejects(next, (e) => e === rejected);
+  } finally {
+    dom.window.close();
+  }
+});
+for (const event of [
+  "pagehide",
+  "popstate",
+  "contaos:organizacao-alterada",
+  "visibilitychange",
+  "navigate",
+]) {
+  test("privacy78 geracao nao herda apos " + event, () => {
+    const { dom, w, run } = privacy78Browser();
+    try {
+      w.fetch = () => Promise.resolve(new Response("{}"));
+      run("privacy78Runtime", { proof: privacy78Proof, install: true });
+      assert.ok(w.__contaosPrivacy78.read());
+      (event === "visibilitychange"
+        ? w.document
+        : event === "navigate"
+          ? w.navigation
+          : w
+      ).dispatchEvent(new w.Event(event));
+      assert.equal(w.__contaosPrivacy78.read(), null);
+      w.history.replaceState(null, "", w.location.href);
+      assert.equal(w.__contaosPrivacy78.read(), null);
+    } finally {
+      dom.window.close();
+    }
+  });
+}
+test("privacy78 header sessao e deadline invalidam sem Auth", async () => {
+  const { dom, w, run } = privacy78Browser(
+    '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header>',
+  );
+  try {
+    w.fetch = () => Promise.resolve(new Response("{}"));
+    run("privacy78Runtime", { proof: privacy78Proof, install: true });
+    assert.ok(w.__contaosPrivacy78.read());
+    w.document.querySelector("header").textContent = "Confirmando organização…";
+    assert.equal(w.__contaosPrivacy78.read(), null);
+    w.document.querySelector("header").textContent = "ContaOS HML Teste Situação: ativa";
+    assert.equal(w.__contaosPrivacy78.read(), null);
+  } finally {
+    dom.window.close();
+  }
+  const b = privacy78Browser();
+  try {
+    const deadlines = [];
+    b.w.setTimeout = (cb) => {
+      deadlines.push(cb);
+      return deadlines.length;
+    };
+    b.w.clearTimeout = () => {};
+    let finish;
+    const native = new Promise((r) => {
+      finish = r;
+    });
+    b.w.fetch = () => native;
+    b.run("privacy78Runtime", { proof: privacy78Proof, install: true });
+    const c = privacy78Proof.get_contracts.find((r) => r.name === "upload");
+    assert.equal(b.w.fetch(API + c.path + "?" + new URLSearchParams(c.query)), native);
+    deadlines[0]();
+    assert.equal(b.w.__contaosPrivacy78.read(), null);
+    finish({
+      get status() {
+        throw new Error("expired response read");
+      },
+    });
+    await native;
+    await new Promise((r) => setTimeout(r, 0));
+    assert.equal(b.w.__contaosPrivacy78.read(), null);
+  } finally {
+    b.dom.window.close();
+  }
+});
+test("privacy78 quatro hashes fonte correspondem ao recibo", async () => {
+  const { readFile } = await import("node:fs/promises"),
+    { createHash } = await import("node:crypto");
+  for (const path of [
+    "src/components/contratos/DocumentoDetalhe.tsx",
+    "src/components/contratos/CompetenciasContrato.tsx",
+    "src/components/competencias/CompetenciaDocumentos.tsx",
+    "src/components/contratos/ImportarHistorico.tsx",
+  ])
+    assert.equal(
+      createHash("sha256")
+        .update(await readFile(new URL("../../" + path, import.meta.url)))
+        .digest("hex"),
+      privacy78Proof.source_sha256[path].sha256,
+    );
+});
+
+test("privacy78 queued mutation destruction is failclosed without background errors", async () => {
+  const { JSDOM, VirtualConsole } = require("jsdom"),
+    errors = [];
+  const virtualConsole = new VirtualConsole();
+  virtualConsole.on("jsdomError", () => errors.push("BACKGROUND_ERROR"));
+  const dom = new JSDOM("<main></main>", {
+    url: HML + "/contratos/" + privacy78Proof.context.contract + "/historico/importar",
+    runScripts: "outside-only",
+    virtualConsole,
+  });
+  const w = dom.window;
+  for (const k of ["Request", "Response", "TextDecoder"]) w[k] = globalThis[k];
+  w.navigation = new w.EventTarget();
+  w.fetch = () => Promise.resolve(new Response("{}"));
+  w.eval("(" + fn("privacy78Runtime").toString() + ")")({ proof: privacy78Proof, install: true });
+  w.document.body.append(w.document.createElement("p"));
+  dom.window.close();
+  await new Promise((r) => setTimeout(r, 10));
+  assert.deepEqual(errors, []);
+});
+
+test("privacy78 GET7 RED real DTO sem id org e query estrita", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const raw = JSON.parse(
+    await readFile(
+      new URL(
+        "../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  const r = fn("privacy78Runtime")({ proof: privacy78Proof, rbacProof: raw });
+  const c = raw.get_contract,
+    url = API + c.path + "?" + new URLSearchParams(c.query);
+  assert.equal(r.match(url, "GET")?.name, "competence_rbac_gate");
+  assert.deepEqual(r.project(c, { id_contrato: raw.context.contract }), {
+    name: "competence_rbac_gate",
+    exact: true,
+  });
+  for (const key of Object.keys(c.query)) {
+    const bad = new URL(url);
+    bad.searchParams.delete(key);
+    assert.equal(r.match(bad.href, "GET"), null);
+    bad.searchParams.set(key, "foreign");
+    assert.equal(r.match(bad.href, "GET"), null);
+  }
+  for (const bad of [
+    url + "&id=x",
+    url + "&extra=1",
+    url + "&select=id,id_contrato",
+    url + "#x",
+    url.replace(API, HML),
+  ])
+    assert.equal(r.match(bad, "GET"), null);
+  for (const body of [
+    null,
+    [],
+    [{ id_contrato: raw.context.contract }],
+    { id_contrato: null },
+    { id_contrato: "foreign" },
+    {},
+  ])
+    assert.equal(r.project(c, body), null);
+  const row = { id_contrato: raw.context.contract };
+  for (const key of ["id", "id_organizacao", "user", "headers", "metadata"])
+    Object.defineProperty(row, key, {
+      get() {
+        throw new Error("unprojected GET7 field read");
+      },
+    });
+  assert.deepEqual(r.project(c, row), { name: "competence_rbac_gate", exact: true });
+});
+test("privacy78 GET7 exige recibo separado selado mais upload atual para V115", async () => {
+  const proof = await fn("loadPrivacy78Proof")(),
+    rbacProof = await fn("loadPrivacy78RbacProof")();
+  const value = proof.generated_exact_values.V115[0],
+    route = fn("privateCases")().find((r) => r.surface === "V115").path;
+  const input = {
+    surface: "V115",
+    proof,
+    rbacProof,
+    rendered: value,
+    snapshot: value,
+    fieldSnapshot: value,
+    anchored: true,
+    receipt: Object.freeze({
+      route,
+      age: 1,
+      observed: Object.freeze(["competence_rbac_gate", "upload"]),
+    }),
+  };
+  assert.ok(fn("privacy78FieldContext")(input));
+  for (const delta of [
+    { rbacProof: null },
+    { rbacProof: { ...rbacProof } },
+    { surface: "V122" },
+    { rendered: value + value },
+    {
+      receipt: Object.freeze({
+        ...input.receipt,
+        observed: Object.freeze(["competence_rbac_gate"]),
+      }),
+    },
+    { receipt: Object.freeze({ ...input.receipt, observed: Object.freeze(["upload"]) }) },
+    { receipt: Object.freeze({ ...input.receipt, route: "/" }) },
+    { receipt: Object.freeze({ ...input.receipt, age: 120000 }) },
+  ])
+    assert.equal(fn("privacy78FieldContext")({ ...input, ...delta }), null);
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  for (const suffix of [" pessoa@example.com", " CANARIO_PRIVADO"]) {
+    const text = value + suffix,
+      ctx = fn("privacy78FieldContext")({ ...input, rendered: text, snapshot: text });
+    assert.notEqual(
+      fn("classifyArtifactText")(text, words, { fieldContext: ctx }).reason,
+      "ALLOWED",
+    );
+  }
+  const { readFile } = await import("node:fs/promises"),
+    { createHash } = await import("node:crypto");
+  assert.equal(
+    createHash("sha256")
+      .update(await readFile(new URL("../../" + rbacProof.source.path, import.meta.url)))
+      .digest("hex"),
+    rbacProof.source.sha256,
+  );
+});
+test("privacy78 GET7 browser scope exige rota V115 e nao herda apos navegacao", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const rbacProof = JSON.parse(
+    await readFile(
+      new URL(
+        "../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  for (const surface of ["V115", "V122"]) {
+    const { dom, w, run } = privacy78Browser();
+    try {
+      dom.reconfigure({ url: HML + fn("privateCases")().find((r) => r.surface === surface).path });
+      const contract = rbacProof.get_contract,
+        url = API + contract.path + "?" + new URLSearchParams(contract.query);
+      const response = new Response(
+        JSON.stringify({ id_contrato: rbacProof.context.contract, user: "CANARIO_PRIVADO" }),
+      );
+      Object.defineProperty(response, "url", { value: url });
+      w.fetch = () => Promise.resolve(response);
+      run("privacy78Runtime", { proof: privacy78Proof, rbacProof, install: true });
+      await w.fetch(url);
+      await new Promise((r) => setTimeout(r, 50));
+      if (surface === "V115") {
+        assert.deepEqual([...w.__contaosPrivacy78.read().observed], ["competence_rbac_gate"]);
+        assert.equal(JSON.stringify(w.__contaosPrivacy78.read()).includes("CANARIO"), false);
+        w.navigation.dispatchEvent(new w.Event("navigate"));
+        assert.equal(w.__contaosPrivacy78.read(), null);
+      } else assert.equal(w.__contaosPrivacy78.read(), null);
+    } finally {
+      w.__contaosPrivacy78?.invalidate();
+      dom.window.close();
+    }
+  }
+});
+
+// GATE389: two separate V109 intervals, not global vocabulary.
+const privacy109Raw = JSON.parse(
+  await (
+    await import("node:fs/promises")
+  ).readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-remaining-v109-20261108.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+function privacy109Fixture(p = privacy109Raw) {
+  const v = p.approved_values,
+    id = "v109-lista-" + p.context.list;
+  return (
+    '<main><h1>Regras</h1><section aria-labelledby="v109-listas" class="space-y-3"><h2 id="v109-listas">Listas de verificação</h2><ul class="space-y-3"><li class="rounded-lg"><div class="flex"><div class="min-w-0"><p class="break-words font-medium">' +
+    v.name +
+    '</p><p class="break-words text-sm text-muted-foreground">' +
+    v.description +
+    '</p><p class="mt-1 flex flex-wrap gap-2 text-xs"><span class="inline-flex">Rascunho</span><span class="inline-flex">Versão atual: 1</span><span class="text-muted-foreground">' +
+    v.formatted_updated +
+    '</span></p></div><button type="button" aria-expanded="false" aria-controls="' +
+    id +
+    '" aria-label="Ver versões e itens de ' +
+    v.name +
+    '">Ver versões e itens</button></div></li></ul></section></main>'
+  );
+}
+function privacy109Texts(p = privacy109Raw) {
+  const v = p.approved_values,
+    description = "- paragraph: " + v.description,
+    metadata =
+      '- paragraph:\n  - text: Rascunho\n  - text: "Versão atual: 1"\n  - text: ' +
+      v.formatted_updated;
+  return {
+    rendered:
+      "Regras\nListas de verificação\n" +
+      v.name +
+      "\n" +
+      v.description +
+      "\nRascunho\nVersão atual: 1\n" +
+      v.formatted_updated +
+      "\nVer versões e itens",
+    snapshot:
+      '- main:\n  - heading "Regras" [level=1]\n  - region "Listas de verificação":\n    - heading "Listas de verificação" [level=2]\n    - list:\n      - listitem:\n        - paragraph: ' +
+      v.name +
+      "\n        " +
+      description +
+      "\n        " +
+      metadata.replaceAll("\n", "\n        ") +
+      '\n        - button "Ver versões e itens de ' +
+      v.name +
+      '"\n',
+    fieldSnapshots: [description, metadata],
+  };
+}
+test("privacy109 RED classifier real rejeita os dois intervalos sem contexto", async () => {
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  assert.equal(Array.from(privacy109Raw.approved_values.description).length, 79);
+  for (const text of [
+    privacy109Raw.approved_values.description,
+    privacy109Raw.approved_values.formatted_updated,
+  ])
+    assert.equal(fn("classifyArtifactText")(text, words).reason, "UNKNOWN_WORDS");
+  const t = privacy109Texts();
+  assert.equal(fn("classifyArtifactText")(t.rendered, words).reason, "UNKNOWN_WORDS");
+  assert.equal(
+    fn("classifyArtifactText")(t.snapshot, words, { snapshot: true }).reason,
+    "UNKNOWN_WORDS",
+  );
+});
+test("privacy109 GET exato projeta so alvo, preserva microssegundos e ignora getters", () => {
+  const run = fn("privacy78Runtime")({ proof: privacy78Proof, v109Proof: privacy109Raw });
+  const c = { ...privacy109Raw.get_contract, name: "v109_lists_page0" },
+    url = API + c.path + "?" + new URLSearchParams(c.query);
+  assert.equal(run.match(url, "GET")?.name, c.name);
+  const v = privacy109Raw.approved_values,
+    row = {
+      id: privacy109Raw.context.list,
+      nome: v.name,
+      descricao: v.description,
+      atualizado_em: v.updated,
+    };
+  for (const key of [
+    "situacao",
+    "versao_atual",
+    "versao_registro",
+    "user",
+    "headers",
+    "id_contrato",
+    "id_organizacao",
+  ])
+    Object.defineProperty(row, key, {
+      get() {
+        throw new Error("unapproved V109 field read");
+      },
+    });
+  assert.deepEqual(run.project(c, [row]), { name: c.name, exact: true });
+  for (const date of ["2026-11-08T04:50:40.455572Z", "2026-11-08T01:50:40.455572-03:00"])
+    assert.deepEqual(run.project(c, [{ ...row, atualizado_em: date }]), {
+      name: c.name,
+      exact: true,
+    });
+  for (const date of [
+    "2026-11-08T04:50:40.455573+00:00",
+    "2026-11-08T04:50:40.455000Z",
+    "2026-11-08T04:50:40.4555721Z",
+    "2026-02-30T04:50:40.455572Z",
+  ])
+    assert.equal(run.project(c, [{ ...row, atualizado_em: date }]), null);
+  for (const body of [
+    [],
+    [row, row],
+    row,
+    null,
+    [{ ...row, id: "foreign" }],
+    [{ ...row, nome: "foreign" }],
+    [{ ...row, descricao: v.description + " extra" }],
+  ])
+    assert.equal(run.project(c, body), null);
+  for (const key of Object.keys(c.query)) {
+    const bad = new URL(url);
+    bad.searchParams.delete(key);
+    assert.equal(run.match(bad.href, "GET"), null);
+    bad.searchParams.set(key, "foreign");
+    assert.equal(run.match(bad.href, "GET"), null);
+  }
+  for (const bad of [url + "&offset=0", url + "&extra=1", url + "#x", url.replace(API, HML)])
+    assert.equal(run.match(bad, "GET"), null);
+});
+test("privacy109 selo e dois intervalos preservam full DOM ARIA e vizinhos", async () => {
+  const proof = await fn("loadPrivacy78Proof")(),
+    v109Proof = await fn("loadPrivacy109Proof")(),
+    texts = privacy109Texts(v109Proof);
+  const input = {
+    proof,
+    v109Proof,
+    ...texts,
+    anchored: true,
+    receipt: Object.freeze({
+      route: v109Proof.context.route,
+      observed: Object.freeze(["contract_gate", "v109_lists_page0"]),
+      age: 1,
+    }),
+  };
+  const context = fn("privacy109FieldContext")(input);
+  assert.ok(context);
+  const words = await fn("literalWords")(new URL("../../", import.meta.url).pathname);
+  assert.equal(
+    fn("classifyArtifactText")(texts.rendered, words, { fieldContext: context }).reason,
+    "ALLOWED",
+  );
+  assert.equal(
+    fn("classifyArtifactText")(texts.snapshot, words, { snapshot: true, fieldContext: context })
+      .reason,
+    "ALLOWED",
+  );
+  for (const delta of [
+    { anchored: false },
+    { v109Proof: privacy109Raw },
+    { fieldSnapshots: [texts.fieldSnapshots[1], texts.fieldSnapshots[0]] },
+    { rendered: texts.rendered + v109Proof.approved_values.description },
+    { snapshot: texts.snapshot + v109Proof.approved_values.formatted_updated },
+    { receipt: Object.freeze({ ...input.receipt, route: "/" }) },
+    { receipt: Object.freeze({ ...input.receipt, age: 120000 }) },
+    { receipt: Object.freeze({ ...input.receipt, observed: Object.freeze(["v109_lists_page0"]) }) },
+  ])
+    assert.equal(fn("privacy109FieldContext")({ ...input, ...delta }), null);
+  for (const suffix of [
+    " CANARIO_PRIVADO",
+    " pessoa@example.com",
+    " Bearer x",
+    " 123.456.789-00",
+  ]) {
+    const rendered = texts.rendered + suffix,
+      snapshot = texts.snapshot + suffix,
+      fieldContext = fn("privacy109FieldContext")({ ...input, rendered, snapshot });
+    assert.notEqual(
+      fn("classifyArtifactText")(rendered, words, { fieldContext }).reason,
+      "ALLOWED",
+    );
+    assert.notEqual(
+      fn("classifyArtifactText")(snapshot, words, { snapshot: true, fieldContext }).reason,
+      "ALLOWED",
+    );
+  }
+});
+test("privacy109 DOM source button aria-controls fecha regiao label copia e no", () => {
+  const { dom, w, run } = privacy78Browser(privacy109Fixture());
+  try {
+    const args = { proof: privacy109Raw };
+    assert.ok(run("privacy109FieldAnchor", args));
+    const control = w.document.querySelector("button");
+    control.setAttribute("aria-controls", "v109-lista-foreign");
+    assert.equal(run("privacy109FieldAnchor", args), null);
+    control.setAttribute("aria-controls", "v109-lista-" + privacy109Raw.context.list);
+    const p = w.document.querySelectorAll(".min-w-0 > p")[1];
+    p.setAttribute("aria-label", "CANARIO_PRIVADO");
+    assert.equal(run("privacy109FieldAnchor", args), null);
+    p.removeAttribute("aria-label");
+    p.textContent += " extra";
+    assert.equal(run("privacy109FieldAnchor", args), null);
+    p.textContent = privacy109Raw.approved_values.description;
+    w.document.querySelector("h2").textContent = "Outro";
+    assert.equal(run("privacy109FieldAnchor", args), null);
+    w.document.body.innerHTML = privacy109Fixture() + privacy109Fixture();
+    assert.equal(run("privacy109FieldAnchor", args), null);
+  } finally {
+    dom.window.close();
+  }
+});
+test("privacy109 fontes e formatter permanecem byte exact", async () => {
+  const { readFile } = await import("node:fs/promises"),
+    { createHash } = await import("node:crypto");
+  for (const source of privacy109Raw.sources) {
+    const bytes = await readFile(new URL("../../" + source.path, import.meta.url));
+    assert.equal(
+      createHash("sha1")
+        .update("blob " + bytes.length + "\0")
+        .update(bytes)
+        .digest("hex"),
+      source.blob,
+    );
+  }
+  const f = privacy109Raw.formatter,
+    actual = new Intl.DateTimeFormat(f.locale, { timeZone: f.timeZone, ...f.options })
+      .format(new Date(privacy109Raw.approved_values.updated))
+      .replace(",", "");
+  assert.equal("Atualizada em " + actual, privacy109Raw.approved_values.formatted_updated);
+});
+
+test("privacy109 observer so V109 e falha contexto atual sem heranca", async () => {
+  for (const surface of ["V109", "V122"]) {
+    const { dom, w, run } = privacy78Browser();
+    try {
+      dom.reconfigure({ url: HML + fn("privateCases")().find((i) => i.surface === surface).path });
+      const v = privacy109Raw.approved_values,
+        c = privacy109Raw.get_contract,
+        url = API + c.path + "?" + new URLSearchParams(c.query);
+      const body = [
+        {
+          id: privacy109Raw.context.list,
+          nome: v.name,
+          descricao: v.description,
+          atualizado_em: v.updated,
+          enviado_por: "CANARIO_PRIVADO",
+        },
+      ];
+      const response = new Response(JSON.stringify(body));
+      Object.defineProperty(response, "url", { value: url });
+      w.fetch = () => Promise.resolve(response);
+      run("privacy78Runtime", { proof: privacy78Proof, v109Proof: privacy109Raw, install: true });
+      await w.fetch(url);
+      await new Promise((r) => setTimeout(r, 50));
+      if (surface === "V109") {
+        assert.deepEqual([...w.__contaosPrivacy78.read().observed], ["v109_lists_page0"]);
+        assert.equal(JSON.stringify(w.__contaosPrivacy78.read()).includes("CANARIO"), false);
+        w.navigation.dispatchEvent(new w.Event("navigate"));
+        assert.equal(w.__contaosPrivacy78.read(), null);
+      } else assert.ok(!w.__contaosPrivacy78.read()?.observed.includes("v109_lists_page0"));
+    } finally {
+      w.__contaosPrivacy78?.invalidate();
+      dom.window.close();
+    }
+  }
+});
+
+test("solicitacao unica: esquema fechado, duplicatas e operacao", () => {
+  const parse = fn("parseSingleRequest");
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261108-r1",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "b".repeat(40),
+    deployment_id: "dpl_12345678",
+  };
+  assert.deepEqual(parse(JSON.stringify(row), "fixtures"), row);
+  for (const change of [
+    { extra: 1 },
+    { schema_version: "1" },
+    { issue: 1 },
+    { operation: "audit" },
+    { request_id: "unknown" },
+    { frontend_sha: "x" },
+  ])
+    assert.throws(() => parse(JSON.stringify({ ...row, ...change }), "fixtures"));
+  assert.throws(() =>
+    parse(JSON.stringify(row).replace('"issue":317', '"issue":317,"issue":317'), "fixtures"),
+  );
+  assert.throws(() =>
+    parse(JSON.stringify(row).replace('"issue":317', '"issue":317,"\\u0069ssue":317'), "fixtures"),
+  );
+  assert.throws(() => parse(" ".repeat(4097), "fixtures"));
+});
+test("solicitacao unica: origem upstream e identidade corrente exatas", () => {
+  const validate = fn("validateSingleRequestEvent");
+  const sha = "a".repeat(40),
+    repo = { full_name: "contaos999999/contaos-hml-control" };
+  const upstream = {
+    id: 91,
+    workflow_id: 406076025,
+    path: ".github/workflows/contaos-frontend-zero-drift.yml",
+    name: "ContaOS Frontend Zero-Drift",
+    event: "push",
+    head_branch: "main",
+    head_sha: sha,
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    repository: repo,
+    head_repository: repo,
+  };
+  const current = {
+    id: 92,
+    workflow_id: 411426169,
+    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+    name: "ContaOS Trilha A Fixtures",
+    event: "workflow_run",
+    head_branch: "main",
+    head_sha: sha,
+    run_attempt: 1,
+    repository: repo,
+    head_repository: repo,
+  };
+  const env = {
+    GITHUB_EVENT_NAME: "workflow_run",
+    GITHUB_REF: "refs/heads/main",
+    GITHUB_REPOSITORY: repo.full_name,
+    GITHUB_RUN_ID: "92",
+    GITHUB_RUN_ATTEMPT: "1",
+    CONTAOS_HARNESS_SHA: sha,
+  };
+  const event = { action: "completed", repository: repo, workflow_run: upstream };
+  assert.equal(
+    validate({ event, env, upstream, current, operation: "fixtures", mainSha: sha }),
+    sha,
+  );
+  for (const change of [
+    { event: "pull_request" },
+    { workflow_id: 4 },
+    { path: "bad" },
+    { name: "bad" },
+    { run_attempt: 2 },
+    { conclusion: "failure" },
+    { head_branch: "fork" },
+    { head_sha: "b".repeat(40) },
+    { repository: { full_name: "fork/repo" } },
+  ])
+    assert.throws(() =>
+      validate({
+        event,
+        env,
+        upstream: { ...upstream, ...change },
+        current,
+        operation: "fixtures",
+        mainSha: sha,
+      }),
+    );
+  assert.throws(() =>
+    validate({
+      event,
+      env: { ...env, GITHUB_RUN_ATTEMPT: "2" },
+      upstream,
+      current,
+      operation: "fixtures",
+      mainSha: sha,
+    }),
+  );
+  assert.throws(() =>
+    validate({
+      event,
+      env,
+      upstream,
+      current: { ...current, id: 93 },
+      operation: "fixtures",
+      mainSha: sha,
+    }),
+  );
+});
+test("solicitacao unica: paginacao completa e limites fail closed", async () => {
+  const list = fn("listSingleRequestRuns");
+  let calls = 0;
+  const rows = Array.from({ length: 101 }, (_, i) => ({ id: i + 1 }));
+  assert.equal(
+    (
+      await list(async (page) => {
+        calls++;
+        return { total_count: 101, workflow_runs: rows.slice((page - 1) * 100, page * 100) };
+      })
+    ).length,
+    101,
+  );
+  assert.equal(calls, 2);
+  for (const body of [
+    { total_count: 1001, workflow_runs: [] },
+    { total_count: 101, workflow_runs: [] },
+    { total_count: 1, workflow_runs: [{ id: 1 }, { id: 1 }] },
+  ])
+    await assert.rejects(() => list(async () => body));
+  await assert.rejects(() =>
+    list(async () => {
+      throw new Error("offline");
+    }),
+  );
+});
+test("solicitacao unica: duplicatas em qualquer resultado e replay em outro SHA", () => {
+  const validate = fn("validateSingleRequestRuns"),
+    sha = "a".repeat(40),
+    old = "b".repeat(40);
+  const run = {
+    id: 92,
+    event: "workflow_run",
+    head_sha: sha,
+    run_attempt: 1,
+    workflow_id: 411426169,
+  };
+  assert.equal(
+    validate({ current: run, runs: [run], requestShas: [sha], workflowId: 411426169 }),
+    true,
+  );
+  for (const status of ["queued", "in_progress", "completed"])
+    assert.throws(() =>
+      validate({
+        current: run,
+        runs: [run, { ...run, id: 93, status }],
+        requestShas: [sha],
+        workflowId: 411426169,
+      }),
+    );
+  assert.throws(() =>
+    validate({
+      current: run,
+      runs: [run, { ...run, id: 93, head_sha: old, conclusion: "cancelled" }],
+      requestShas: [sha, old],
+      workflowId: 411426169,
+    }),
+  );
+  assert.throws(() =>
+    validate({
+      current: { ...run, run_attempt: 2 },
+      runs: [run],
+      requestShas: [sha],
+      workflowId: 411426169,
+    }),
+  );
+});
+
+test("solicitacao unica: auditoria bloqueada ate binding real", () => {
+  assert.throws(() => fn("requireSingleRequestOperation")("audit"), {
+    code: "AUDIT_BINDING_PENDING",
+  });
+  assert.doesNotThrow(() => fn("requireSingleRequestOperation")("fixtures"));
+});
+test("solicitacao unica: GET publico nunca envia Authorization", async () => {
+  let options;
+  const get = fn("singleRequestGet")({
+    publicOnly: true,
+    token: "DO_NOT_SEND",
+    fetchImpl: async (url, o) => {
+      options = o;
+      return { status: 200, text: async () => JSON.stringify({ ok: true }) };
+    },
+  });
+  assert.deepEqual(await get(""), { ok: true });
+  assert.equal(Object.hasOwn(options.headers, "Authorization"), false);
+  assert.equal(options.redirect, "error");
+  await assert.rejects(() => get("/unexpected"), { code: "REQUEST_API_PATH" });
+  const fail = fn("singleRequestGet")({
+    publicOnly: true,
+    fetchImpl: async () => ({ status: 403 }),
+  });
+  await assert.rejects(() => fail(""), { code: "REQUEST_API_UNAVAILABLE" });
+});
+test("solicitacao unica: Git verifica pais, diff exclusivo, modo e bytes", async () => {
+  const verify = fn("verifySingleRequestGit"),
+    sha = "a".repeat(40),
+    parent = "b".repeat(40);
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261108-r1",
+    approved_parent_sha: parent,
+    frontend_sha: "c".repeat(40),
+    deployment_id: "dpl_12345678",
+  };
+  const raw = JSON.stringify(request),
+    path = fn("parseSingleRequest") && sut.SINGLE_REQUEST.path;
+  const git = async (args) => {
+    if (args[0] === "show") return raw;
+    if (args[0] === "rev-parse") return sha + "\n";
+    if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ") + "\n";
+    if (args[0] === "merge-base") return "";
+    if (args[0] === "diff-tree") return "A\t" + path + "\n";
+    if (args[0] === "ls-tree") return "100644 blob " + "e".repeat(40) + "\t" + path + "\n";
+    if (args[0] === "log") return sha + "\n";
+    throw new Error("unexpected git");
+  };
+  assert.deepEqual(await verify(request, sha, git, raw), [sha]);
+  const cases = [
+    ["rev-parse", "f".repeat(40)],
+    ["rev-list", [sha, "f".repeat(40), "d".repeat(40)].join(" ")],
+    ["rev-list", [sha, parent].join(" ")],
+    ["diff-tree", "M\tsrc/evil.ts\nA\t" + path],
+    ["diff-tree", "R100\tx\t" + path],
+    ["ls-tree", "120000 blob " + "e".repeat(40) + "\t" + path],
+    ["log", Array(1001).fill(sha).join("\n")],
+  ];
+  for (const [command, value] of cases)
+    await assert.rejects(() =>
+      verify(request, sha, async (args) => (args[0] === command ? value : git(args)), raw),
+    );
+  await assert.rejects(() => verify(request, sha, git, raw + " "), { code: "REQUEST_DIRTY" });
+});
+test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", async () => {
+  const verify = fn("verifySingleRequest"),
+    sha = "a".repeat(40),
+    parent = "b".repeat(40);
+  const repo = { full_name: "contaos999999/contaos-hml-control" };
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261108-r1",
+    approved_parent_sha: parent,
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  const raw = JSON.stringify(request),
+    spec = sut.SINGLE_REQUEST;
+  const upstream = {
+    id: 91,
+    workflow_id: 406076025,
+    path: spec.upstreamPath,
+    name: spec.upstreamName,
+    event: "push",
+    head_branch: "main",
+    head_sha: sha,
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    repository: repo,
+    head_repository: repo,
+  };
+  const current = {
+    id: 92,
+    workflow_id: spec.fixtures.id,
+    path: spec.fixtures.path,
+    name: spec.fixtures.name,
+    event: "workflow_run",
+    head_branch: "main",
+    head_sha: sha,
+    run_attempt: 1,
+    repository: repo,
+    head_repository: repo,
+  };
+  const pull = {
+    id: 300,
+    number: 90,
+    merged: true,
+    state: "closed",
+    merged_at: "2026-11-08T00:00:00Z",
+    merge_commit_sha: sha,
+    changed_files: 1,
+    base: { ref: "main", sha: parent, repo },
+    head: { sha: "d".repeat(40), ref: "request/fixtures", repo },
+  };
+  const review = {
+    id: 301,
+    state: "COMMENTED",
+    user: { login: "contaos9999" },
+    commit_id: pull.head.sha,
+    submitted_at: "2026-11-08T00:00:00Z",
+    body: JSON.stringify({
+      schema: "contaos.single-request.review.v1",
+      request_id: request.request_id,
+      head_sha: pull.head.sha,
+      critical: 0,
+      important: 0,
+      decision: "APROVAVEL",
+    }),
+  };
+  const requiredCi = [
+    { id: 501, workflow_id: 406076025, name: spec.upstreamName, path: spec.upstreamPath },
+    {
+      id: 502,
+      workflow_id: 410005553,
+      name: "ContaOS LOCK-TYPES-01 Double Barrier",
+      path: ".github/workflows/lock-types-double-barrier.yml",
+    },
+  ].map((r) => ({
+    ...r,
+    head_sha: pull.head.sha,
+    event: "pull_request",
+    head_branch: pull.head.ref,
+    repository: repo,
+    head_repository: repo,
+    status: "completed",
+    conclusion: "success",
+  }));
+  const env = {
+    GITHUB_EVENT_NAME: "workflow_run",
+    GITHUB_REF: "refs/heads/main",
+    GITHUB_REPOSITORY: repo.full_name,
+    GITHUB_RUN_ID: "92",
+    GITHUB_RUN_ATTEMPT: "1",
+    CONTAOS_HARNESS_SHA: sha,
+    GITHUB_EVENT_PATH: "event.json",
+  };
+  const event = { action: "completed", repository: repo, workflow_run: upstream };
+  const read = async (path) => (path === "event.json" ? JSON.stringify(event) : raw);
+  const stat = async () => ({ isFile: () => true, isSymbolicLink: () => false, size: raw.length });
+  const git = async (args) => {
+    assert.equal(args.includes(""), false, "Git nunca recebe SHA vazio");
+    if (args[0] === "show") return raw;
+    if (args[0] === "rev-parse") return sha;
+    if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ");
+    if (args[0] === "merge-base") return "";
+    if (args[0] === "diff-tree") return "A\t" + spec.path;
+    if (args[0] === "ls-tree") return "100644 blob " + "e".repeat(40) + "\t" + spec.path;
+    if (args[0] === "log") return sha;
+    throw new Error("unexpected git");
+  };
+  const get = async (path) => {
+    if (path === "") return { ...repo, private: false };
+    if (path.startsWith("/commits/")) return [pull];
+    if (path === "/pulls/90") return pull;
+    if (path.startsWith("/pulls/90/reviews?")) return [review];
+    if (path.startsWith("/actions/runs?head_sha="))
+      return { total_count: requiredCi.length, workflow_runs: requiredCi };
+    if (path === "/git/ref/heads/main") return { object: { sha } };
+    if (path === "/actions/workflows/" + spec.fixtures.id)
+      return { ...spec.fixtures, state: "active" };
+    if (path === "/actions/workflows/" + spec.audit.id) return { ...spec.audit, state: "active" };
+    if (path === "/actions/runs/91") return upstream;
+    if (path === "/actions/runs/92") return current;
+    if (path.startsWith("/actions/workflows/" + spec.fixtures.id + "/runs?"))
+      return { total_count: 1, workflow_runs: [current] };
+    if (path.startsWith("/actions/workflows/" + spec.audit.id + "/runs?"))
+      return {
+        total_count: 1,
+        workflow_runs: [{ ...current, id: 93, workflow_id: spec.audit.id }],
+      };
+    if (path.startsWith("/actions/runs/93/jobs?"))
+      return { total_count: 1, jobs: [{ name: spec.audit.privateName, conclusion: "skipped" }] };
+    throw new Error("unexpected API " + path);
+  };
+  const options = { operation: "fixtures", env, read, stat, git, get, wait: async () => {} };
+  const result = await verify(options);
+  assert.equal(result.selected, true);
+  assert.equal(result.frontendSha, "");
+  assert.equal(result.deploymentId, "");
+  const identity = { harnessSha: sha, moduleHash: "e".repeat(64), testHash: "f".repeat(64) };
+  const runtime = {
+    schema: "contaos.single-request.runtime.v1",
+    createdAt: 100000,
+    ...result,
+    identity,
+  };
+  const load = fn("loadSingleRequestProof");
+  const local = {
+    operation: "fixtures",
+    env,
+    stat,
+    git,
+    identity: async () => identity,
+    now: () => 100000,
+    fresh: true,
+    read: async (path) =>
+      path.includes(".audit-work/single-request.json") ? JSON.stringify(runtime) : read(path),
+  };
+  assert.equal(await load(local), true);
+  for (const delta of [
+    { sha: "f".repeat(40) },
+    { currentRunId: 93 },
+    { requestId: "other" },
+    { requestSha256: "0".repeat(64) },
+    { createdAt: 100001 },
+    { createdAt: 69999 },
+    { identity: { ...identity, testHash: "0".repeat(64) } },
+  ])
+    await assert.rejects(
+      () =>
+        load({
+          ...local,
+          read: async (path) =>
+            path.includes(".audit-work/single-request.json")
+              ? JSON.stringify({ ...runtime, ...delta })
+              : read(path),
+        }),
+      { code: "REQUEST_RUNTIME" },
+    );
+  await load(local);
+  assert.equal(sut.singleRequestEventAllowed(env, "fixtures"), true);
+  let apiCalls = 0;
+  assert.equal(
+    (
+      await verify({
+        ...options,
+        operation: "audit",
+        get: async () => {
+          apiCalls++;
+          throw new Error("API forbidden");
+        },
+      })
+    ).selected,
+    false,
+  );
+  assert.equal(apiCalls, 0);
+  assert.equal(sut.singleRequestEventAllowed(env, "fixtures"), false);
+  let mainCalls = 0;
+  await assert.rejects(
+    () =>
+      verify({
+        ...options,
+        get: async (path) =>
+          path === "/git/ref/heads/main" && ++mainCalls === 2
+            ? { object: { sha: "f".repeat(40) } }
+            : get(path),
+      }),
+    { code: "REQUEST_STALE" },
+  );
+  for (const conclusion of ["success", "failure", null])
+    await assert.rejects(
+      () =>
+        verify({
+          ...options,
+          get: async (path) =>
+            path.startsWith("/actions/runs/93/jobs?")
+              ? { total_count: 1, jobs: [{ name: spec.audit.privateName, conclusion }] }
+              : get(path),
+        }),
+      { code: "REQUEST_OPPOSITE" },
+    );
+  await assert.rejects(
+    () =>
+      verify({
+        ...options,
+        stat: async () => ({ isFile: () => true, isSymbolicLink: () => true, size: 1 }),
+      }),
+    { code: "REQUEST_EVENT_FILE" },
+  );
+});
+
+test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () => {
+  const validate = fn("validateSingleRequestPull"),
+    repo = { full_name: "contaos999999/contaos-hml-control" },
+    sha = "a".repeat(40),
+    parent = "b".repeat(40),
+    head = "d".repeat(40);
+  const request = { request_id: "trilha-a-fixtures-20261108-r1", approved_parent_sha: parent };
+  const pull = {
+    id: 300,
+    number: 90,
+    merged: true,
+    state: "closed",
+    merged_at: "2026-11-08T00:00:00Z",
+    merge_commit_sha: sha,
+    changed_files: 1,
+    base: { ref: "main", sha: parent, repo },
+    head: { sha: head, ref: "request/fixtures", repo },
+  };
+  const review = {
+    id: 301,
+    state: "COMMENTED",
+    user: { login: "contaos9999" },
+    commit_id: head,
+    submitted_at: "2026-11-08T00:00:00Z",
+    body: JSON.stringify({
+      schema: "contaos.single-request.review.v1",
+      request_id: request.request_id,
+      head_sha: head,
+      critical: 0,
+      important: 0,
+      decision: "APROVAVEL",
+    }),
+  };
+  const ci = [
+    {
+      id: 501,
+      workflow_id: 406076025,
+      name: sut.SINGLE_REQUEST.upstreamName,
+      path: sut.SINGLE_REQUEST.upstreamPath,
+    },
+    {
+      id: 502,
+      workflow_id: 410005553,
+      name: "ContaOS LOCK-TYPES-01 Double Barrier",
+      path: ".github/workflows/lock-types-double-barrier.yml",
+    },
+  ].map((r) => ({
+    ...r,
+    head_sha: head,
+    event: "pull_request",
+    head_branch: pull.head.ref,
+    repository: repo,
+    head_repository: repo,
+    status: "completed",
+    conclusion: "success",
+  }));
+  const args = {
+    pull,
+    associated: [pull],
+    reviews: [review],
+    ci,
+    request,
+    sha,
+    secondParent: head,
+  };
+  assert.equal(validate(args).pullNumber, 90);
+  for (const delta of [
+    { associated: [] },
+    { associated: [pull, pull] },
+    { pull: { ...pull, merged: false } },
+    { pull: { ...pull, merge_commit_sha: parent } },
+    { pull: { ...pull, base: { ...pull.base, ref: "fork" } } },
+    { pull: { ...pull, head: { ...pull.head, repo: { full_name: "fork/repo" } } } },
+    { pull: { ...pull, changed_files: 2 } },
+    { secondParent: parent },
+    { reviews: [] },
+    { reviews: [{ ...review, state: "DISMISSED" }] },
+    { reviews: [{ ...review, user: { login: "foreign" } }] },
+    { reviews: [{ ...review, commit_id: parent }] },
+    { reviews: [{ ...review, body: "APROVAVEL" }] },
+    { reviews: [{ ...review, body: review.body.replace('"important":0', '"important":1') }] },
+    { ci: [ci[0]] },
+    { ci: [ci[0], { ...ci[1], conclusion: "failure" }] },
+    { ci: [...ci, { ...ci[1], id: 600, status: "in_progress", conclusion: null }] },
+  ])
+    assert.throws(() => validate({ ...args, ...delta }));
+});
+test("solicitacao unica: barreira nativa de fork PR antecede checkout e token", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const clauses = [
+    "github.event_name == 'workflow_run'",
+    "github.repository == 'contaos999999/contaos-hml-control'",
+    "github.event.action == 'completed'",
+    "github.event.workflow_run.event == 'push'",
+    "github.event.workflow_run.repository.full_name == 'contaos999999/contaos-hml-control'",
+    "github.event.workflow_run.head_repository.full_name == 'contaos999999/contaos-hml-control'",
+    "github.event.workflow_run.head_branch == 'main'",
+    "github.event.workflow_run.workflow_id == 406076025",
+    "github.event.workflow_run.path == '.github/workflows/contaos-frontend-zero-drift.yml'",
+    "github.event.workflow_run.name == 'ContaOS Frontend Zero-Drift'",
+    "github.event.workflow_run.conclusion == 'success'",
+    "github.event.workflow_run.run_attempt == 1",
+    "github.run_attempt == '1'",
+    "github.event.workflow_run.head_sha == github.sha",
+  ];
+  for (const file of ["contaos-trilha-a-authenticated.yml", "contaos-trilha-a-fixtures.yml"]) {
+    const source = await readFile(
+      new URL("../../.github/workflows/" + file, import.meta.url),
+      "utf8",
+    );
+    const request = source.slice(source.indexOf("  request:"), source.indexOf("  protocol:"));
+    const nativeIf = request.split("\n").find((l) => l.trimStart().startsWith("if:"));
+    const privateIf = source
+      .slice(source.indexOf("  private:"))
+      .split("\n")
+      .find((l) => l.trimStart().startsWith("if:"));
+    for (const clause of clauses) {
+      assert.ok(nativeIf.includes(clause), file + clause);
+      assert.ok(privateIf.includes(clause), file + clause);
+    }
+    const bootstrap = request.indexOf("Bootstrap publico confiavel");
+    assert.ok(bootstrap >= 0 && bootstrap < request.indexOf("uses: actions/checkout"));
+    assert.ok(
+      request.indexOf("body.object?.sha!==sha") < request.indexOf("uses: actions/checkout"),
+    );
+    assert.ok(
+      request.indexOf("CONTAOS_ACTIONS_READ_TOKEN:") > request.indexOf("uses: actions/checkout"),
+    );
+    const body = request.slice(bootstrap, request.indexOf("uses: actions/checkout"));
+    assert.equal(body.includes("Authorization"), false);
+  }
+});
+
+test("solicitacao unica: protocolos independentes mantem HML serializado", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const groups = [];
+  for (const file of ["contaos-trilha-a-authenticated.yml", "contaos-trilha-a-fixtures.yml"]) {
+    const source = await readFile(
+      new URL("../../.github/workflows/" + file, import.meta.url),
+      "utf8",
+    );
+    const protocol = source.slice(source.indexOf("  protocol:"), source.indexOf("  private:"));
+    const privateJob = source.slice(source.indexOf("  private:"));
+    groups.push(protocol.match(/group: ([^\n]+)/)[1]);
+    assert.equal(privateJob.match(/group: ([^\n]+)/)[1], "trilha-a-authenticated-hml");
+    assert.match(privateJob, /cancel-in-progress: false/);
+  }
+  assert.notEqual(groups[0], groups[1]);
+});
+
+test("solicitacao unica: somente par exatamente vazio ativa descoberta", () => {
+  const parse = fn("parseSingleRequest");
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261108-r1",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.deepEqual(parse(JSON.stringify(row), "fixtures"), row);
+  for (const pair of [
+    { frontend_sha: "", deployment_id: "dpl_12345678" },
+    { frontend_sha: "b".repeat(40), deployment_id: "" },
+    { frontend_sha: " ", deployment_id: "" },
+    { frontend_sha: "", deployment_id: " " },
+    { frontend_sha: null, deployment_id: "" },
+    { frontend_sha: "", deployment_id: null },
+    { frontend_sha: undefined, deployment_id: "" },
+    { frontend_sha: "", deployment_id: undefined },
+    { frontend_sha: " ", deployment_id: " " },
+    { frontend_sha: "bad", deployment_id: "dpl_12345678" },
+  ])
+    assert.throws(() => parse(JSON.stringify({ ...row, ...pair }), "fixtures"));
+  for (const delta of [
+    { mode: "AUTO_DISCOVER" },
+    { request_id: "unknown" },
+    { operation: "audit" },
+  ])
+    assert.throws(() => parse(JSON.stringify({ ...row, ...delta }), "fixtures"));
+  assert.throws(() =>
+    parse(
+      JSON.stringify(row).replace('"frontend_sha":""', '"frontend_sha":"","frontend_sha":""'),
+      "fixtures",
+    ),
+  );
+  const explicit = { ...row, frontend_sha: "b".repeat(40), deployment_id: "dpl_12345678" };
+  assert.deepEqual(parse(JSON.stringify(explicit), "fixtures"), explicit);
+  assert.throws(() => fn("requireSingleRequestOperation")("audit"), {
+    code: "AUDIT_BINDING_PENDING",
+  });
+});
+
+test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarada", async () => {
+  const verify = fn("verifySingleRequestGit"),
+    sha = "a".repeat(40),
+    parent = "b".repeat(40);
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261108-r1",
+    approved_parent_sha: parent,
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  const raw = JSON.stringify(row),
+    path = sut.SINGLE_REQUEST.path,
+    ancestors = [];
+  const git = async (args) => {
+    assert.equal(args.includes(""), false, "Git nunca recebe SHA vazio");
+    if (args[0] === "show") return raw;
+    if (args[0] === "rev-parse") return sha;
+    if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ");
+    if (args[0] === "merge-base") {
+      ancestors.push(args[2]);
+      return "";
+    }
+    if (args[0] === "diff-tree") return "A\t" + path;
+    if (args[0] === "ls-tree") return "100644 blob " + "e".repeat(40) + "\t" + path;
+    if (args[0] === "log") return sha;
+    throw new Error("unexpected Git command");
+  };
+  assert.deepEqual(await verify(row, sha, git, raw), [sha]);
+  assert.deepEqual(ancestors, [
+    sut.SINGLE_REQUEST.gateSha,
+    sut.SINGLE_REQUEST.fixturesSha,
+    sut.SINGLE_REQUEST.autoGateSha,
+  ]);
+  let calls = 0;
+  await assert.rejects(() =>
+    verify(
+      { ...row, deployment_id: "dpl_12345678" },
+      sha,
+      async () => {
+        calls++;
+        return raw;
+      },
+      raw,
+    ),
+  );
+  assert.equal(calls, 0, "par parcial rejeitado antes de Git");
+});
+
+test("solicitacao unica: identidade descoberta continua obrigatoria antes do checkout", async () => {
+  const { readFile } = await import("node:fs/promises");
+  for (const file of ["contaos-trilha-a-authenticated.yml", "contaos-trilha-a-fixtures.yml"]) {
+    const source = await readFile(
+      new URL("../../.github/workflows/" + file, import.meta.url),
+      "utf8",
+    );
+    const resolve = source.indexOf(
+      "run: node scripts/hml/authenticated-visual-audit.mjs --resolve-deployment",
+      source.indexOf("  private:"),
+    );
+    const ancestry = source.indexOf("'merge-base','--is-ancestor',sha,'origin/main'", resolve);
+    const checkout = source.indexOf("ref: ${{ steps.deployment.outputs.frontend_sha }}", resolve);
+    assert.ok(resolve >= 0 && ancestry > resolve && checkout > ancestry);
+    assert.match(source.slice(resolve, ancestry), /CONTAOS_FRONTEND_SHA/);
+    assert.match(source.slice(resolve, ancestry), /CONTAOS_DEPLOYMENT_ID/);
+  }
+  assert.throws(() => fn("deploymentWorkflowOutputs")({ frontendSha: "", deploymentId: "" }), {
+    code: "DEPLOYMENT_INPUT",
+  });
 });

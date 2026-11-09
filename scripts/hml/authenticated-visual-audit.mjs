@@ -482,7 +482,797 @@ const SYNTHETIC_EXCERPT_PATTERN = new RegExp(
     String.raw`)(?![\p{L}\p{N}_-])`,
   "gu",
 );
-export function classifyArtifactText(text, allowedWords, { snapshot = false } = {}) {
+
+// GATE372: closed technical catalog; never a global word allowlist.
+const privacy78Contexts = new WeakMap();
+const privacy78Pages = new WeakMap();
+const privacy78Proofs = new WeakSet();
+const privacy78RbacProofs = new WeakSet();
+export async function loadPrivacy78Proof() {
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_TECNICA_READONLY.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "5aa39ef35e4a432f4f4f5f29d72ee5773a56e62102948f0e3a31a0529c2d8f18")
+    fail("PRIVACY_PROOF");
+  const freeze = (value) => {
+    if (value && typeof value === "object") {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
+    return value;
+  };
+  const proof = freeze(JSON.parse(bytes));
+  privacy78Proofs.add(proof);
+  return proof;
+}
+
+export async function loadPrivacy78RbacProof() {
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "d70d36f3977f7649dffb2ca0271bb43e181a0244c8e0089e471a86299bcaa897")
+    fail("PRIVACY_PROOF");
+  const freeze = (value) => {
+    if (value && typeof value === "object") {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
+    return value;
+  };
+  const proof = freeze(JSON.parse(bytes));
+  privacy78RbacProofs.add(proof);
+  return proof;
+}
+
+const privacy109Proofs = new WeakSet();
+export async function loadPrivacy109Proof() {
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-remaining-v109-20261108.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "506b940f76402f89f173c63553084452ea4ebc25da3bcf4ef29d3dd9dbb0f577")
+    fail("PRIVACY_PROOF");
+  const freeze = (v) => {
+    if (v && typeof v === "object") {
+      Object.values(v).forEach(freeze);
+      Object.freeze(v);
+    }
+    return v;
+  };
+  const proof = freeze(JSON.parse(bytes));
+  privacy109Proofs.add(proof);
+  return proof;
+}
+
+export function privacy109FieldContext({
+  proof,
+  v109Proof,
+  rendered,
+  snapshot,
+  fieldSnapshots,
+  anchored,
+  receipt,
+}) {
+  if (
+    !privacy78Proofs.has(proof) ||
+    !privacy109Proofs.has(v109Proof) ||
+    anchored !== true ||
+    !receipt ||
+    !Object.isFrozen(receipt) ||
+    !Array.isArray(receipt.observed) ||
+    !Object.isFrozen(receipt.observed) ||
+    receipt.route !== v109Proof.context.route ||
+    receipt.route !== privateCases().find((i) => i.surface === "V109").path ||
+    !Number.isFinite(receipt.age) ||
+    receipt.age < 0 ||
+    receipt.age >= 120000 ||
+    !["contract_gate", "v109_lists_page0"].every((n) => receipt.observed.includes(n)) ||
+    new Set(receipt.observed).size !== receipt.observed.length ||
+    receipt.observed.some(
+      (n) => n !== "v109_lists_page0" && !proof.get_contracts.some((c) => c.name === n),
+    ) ||
+    !Array.isArray(fieldSnapshots) ||
+    fieldSnapshots.length !== 2 ||
+    ![rendered, snapshot, ...fieldSnapshots].every(
+      (t) => typeof t === "string" && t.length <= 1000000,
+    )
+  )
+    return null;
+  const values = [
+    v109Proof.approved_values.description,
+    v109Proof.approved_values.formatted_updated,
+  ];
+  if (
+    !values.every(
+      (v, i) =>
+        rendered.split(v).length === 2 &&
+        snapshot.split(v).length === 2 &&
+        fieldSnapshots[i].split(v).length === 2 &&
+        !fieldSnapshots[1 - i].includes(v),
+    )
+  )
+    return null;
+  // Only indentation of the exact same ARIA subtree may differ. No token,
+  // role, name or unknown neighbour is normalized or removed.
+  const locate = (whole, fragment) => {
+    const lines = whole.split("\n"),
+      wanted = fragment.trim().split("\n"),
+      matches = [];
+    let offset = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const indent = lines[i].match(/^ */)[0];
+      if (wanted.every((line, j) => lines[i + j] === indent + line)) {
+        const end = offset + lines.slice(i, i + wanted.length).join("\n").length;
+        matches.push({ start: offset, end });
+      }
+      offset += lines[i].length + 1;
+    }
+    return matches.length === 1 ? matches[0] : null;
+  };
+  const snapshotRanges = fieldSnapshots.map((f) => locate(snapshot, f));
+  if (snapshotRanges.some((x) => !x) || snapshotRanges[0].end > snapshotRanges[1].start)
+    return null;
+  const intervals = (text) =>
+    values.map((v) => ({ start: text.indexOf(v), end: text.indexOf(v) + v.length }));
+  const sr = intervals(snapshot);
+  if (sr.some((x, i) => x.start < snapshotRanges[i].start || x.end > snapshotRanges[i].end))
+    return null;
+  const erase = (text, ranges) =>
+    [...ranges]
+      .sort((a, b) => b.start - a.start)
+      .reduce((s, r) => s.slice(0, r.start) + " " + s.slice(r.end), text);
+  const context = Object.freeze({});
+  privacy78Contexts.set(context, {
+    rendered: { original: rendered, remainder: erase(rendered, intervals(rendered)) },
+    snapshot: { original: snapshot, remainder: erase(snapshot, sr) },
+  });
+  return context;
+}
+
+export function privacy109FieldAnchor({ proof }) {
+  if (proof?.context?.surface !== "V109" || !/^[0-9a-f-]{36}$/.test(proof.context.list))
+    return null;
+  const visible = (e) =>
+    e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+  const plain = (e) =>
+    e &&
+    [...e.attributes].every((a) => a.name === "class") &&
+    [...e.childNodes].every((n) => n.nodeType === Node.TEXT_NODE);
+  const sections = document.querySelectorAll('section[aria-labelledby="v109-listas"]');
+  if (
+    sections.length !== 1 ||
+    !visible(sections[0]) ||
+    document.querySelectorAll("#v109-listas").length !== 1
+  )
+    return null;
+  const section = sections[0],
+    heading = section.querySelectorAll(":scope > h2#v109-listas"),
+    uls = section.querySelectorAll(":scope > ul");
+  if (
+    heading.length !== 1 ||
+    heading[0].textContent !== "Listas de verificação" ||
+    uls.length !== 1
+  )
+    return null;
+  const v = proof.approved_values,
+    controls = "v109-lista-" + proof.context.list;
+  const buttons = [...document.querySelectorAll("button")].filter(
+    (b) => b.getAttribute("aria-controls") === controls,
+  );
+  if (buttons.length !== 1) return null;
+  const button = buttons[0],
+    leading = button.parentElement,
+    li = leading?.parentElement;
+  if (
+    !visible(button) ||
+    button.getAttribute("aria-expanded") !== "false" ||
+    button.getAttribute("aria-label") !== "Ver versões e itens de " + v.name ||
+    button.textContent !== "Ver versões e itens" ||
+    li?.tagName !== "LI" ||
+    li.parentElement !== uls[0] ||
+    leading.tagName !== "DIV" ||
+    li.children.length !== 1 ||
+    document.getElementById(controls)
+  )
+    return null;
+  const containers = leading.querySelectorAll(":scope > div.min-w-0");
+  if (containers.length !== 1) return null;
+  const ps = containers[0].querySelectorAll(":scope > p");
+  if (
+    ps.length !== 3 ||
+    containers[0].children.length !== 3 ||
+    !plain(ps[0]) ||
+    ps[0].textContent !== v.name ||
+    !plain(ps[1]) ||
+    ps[1].textContent !== v.description ||
+    !visible(ps[1]) ||
+    [...ps[2].attributes].some((a) => a.name !== "class")
+  )
+    return null;
+  const spans = ps[2].querySelectorAll(":scope > span");
+  if (
+    spans.length !== 3 ||
+    ps[2].children.length !== 3 ||
+    !plain(spans[2]) ||
+    !spans[2].classList.contains("text-muted-foreground") ||
+    !visible(spans[2]) ||
+    spans[2].textContent !== v.formatted_updated ||
+    [...ps[2].childNodes].some(
+      (n) =>
+        n.nodeType !== Node.ELEMENT_NODE && (n.nodeType !== Node.TEXT_NODE || n.textContent.trim()),
+    )
+  )
+    return null;
+  return {
+    row: 'section[aria-labelledby="v109-listas"] > ul > li',
+    control: 'button[aria-controls="' + controls + '"]',
+    paragraphs: ":scope > div > div.min-w-0 > p",
+    descriptionIndex: 1,
+    metadataIndex: 2,
+    paragraphCount: 3,
+  };
+}
+
+export async function privacy109FieldSnapshots(page, anchor) {
+  if (!anchor) return null;
+  const row = page.locator(anchor.row).filter({ has: page.locator(anchor.control) });
+  if ((await row.count()) !== 1) return null;
+  const paragraphs = row.locator(anchor.paragraphs);
+  if ((await paragraphs.count()) !== anchor.paragraphCount) return null;
+  return [
+    (await paragraphs.nth(anchor.descriptionIndex).ariaSnapshot()).trim(),
+    (await paragraphs.nth(anchor.metadataIndex).ariaSnapshot()).trim(),
+  ];
+}
+
+export function privacy78Runtime({ proof, rbacProof = null, v109Proof = null, install = false }) {
+  const origin = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const rq = rbacProof?.get_contract;
+  const rbacValid =
+    rbacProof?.schema === "contaos.hml.privacy78-rbac-context.v1" &&
+    ["organization", "contract", "competence"].every(
+      (k) => rbacProof.context?.[k] === proof.context[k],
+    ) &&
+    rq?.name === "competence_rbac_gate" &&
+    rq.method === "GET" &&
+    rq.origin === origin &&
+    rq.path === "/rest/v1/competencias" &&
+    rq.shape === "object; maybeSingle" &&
+    JSON.stringify(rq.extract_only) === JSON.stringify(["id_contrato"]) &&
+    Object.keys(rq.query ?? {}).length === 3 &&
+    rq.query.select === "id_contrato" &&
+    rq.query.id === "eq." + proof.context.competence &&
+    rq.query.id_organizacao === "eq." + proof.context.organization &&
+    rq.expected?.id_contrato === proof.context.contract;
+  const rbacEnabled =
+    rbacValid &&
+    (!install ||
+      (location.origin === "https://contaos-41-hml.vercel.app" &&
+        location.pathname === "/competencias/" + proof.context.competence + "/documentos" &&
+        !location.search &&
+        !location.hash));
+
+  const vq = v109Proof?.get_contract;
+  const v109Valid =
+    v109Proof?.schema === "contaos.hml.privacy-remaining-v109.v1" &&
+    v109Proof.classification === "CAMPO_TECNICO_SEM_PII" &&
+    v109Proof.context?.organization === proof.context.organization &&
+    v109Proof.context.contract === proof.context.contract &&
+    v109Proof.context.surface === "V109" &&
+    v109Proof.context.route === "/contratos/" + proof.context.contract + "/regras" &&
+    vq?.method === "GET" &&
+    vq.origin === origin &&
+    vq.path === "/rest/v1/listas_verificacao" &&
+    vq.shape === "array" &&
+    Object.keys(vq.query ?? {}).length === 5 &&
+    vq.query.select === "id,nome,descricao,situacao,versao_atual,versao_registro,atualizado_em" &&
+    vq.query.id_contrato === "eq." + proof.context.contract &&
+    vq.query.order === "atualizado_em.desc,id.desc" &&
+    vq.query.offset === "0" &&
+    vq.query.limit === "25";
+  const v109Enabled =
+    v109Valid &&
+    (!install ||
+      (location.origin === "https://contaos-41-hml.vercel.app" &&
+        location.pathname === v109Proof.context.route &&
+        !location.search &&
+        !location.hash));
+  const contracts = [
+    ...proof.get_contracts,
+    ...(rbacEnabled ? [rq] : []),
+    ...(v109Enabled ? [{ ...vq, name: "v109_lists_page0" }] : []),
+  ];
+
+  const match = (raw, method) => {
+    if (method !== "GET" || typeof raw !== "string") return null;
+    let url;
+    try {
+      url = new URL(raw);
+    } catch {
+      return null;
+    }
+    if (url.origin !== origin || url.username || url.password || url.hash) return null;
+    return (
+      contracts.find((c) => {
+        const keys = Object.keys(c.query);
+        return (
+          url.pathname === c.path &&
+          [...url.searchParams].length === keys.length &&
+          keys.every(
+            (k) =>
+              url.searchParams.getAll(k).length === 1 && url.searchParams.get(k) === c.query[k],
+          )
+        );
+      }) ?? null
+    );
+  };
+  const c = proof.context,
+    p = proof.observed.pipeline[0],
+    dates = proof.observed.competencias[0];
+  const expected = {
+    contract_gate: { id: c.contract, id_organizacao: c.organization },
+    upload: {
+      extensoes_permitidas: proof.observed.upload.extensions,
+      tamanho_maximo_bytes: proof.observed.upload.max_bytes,
+    },
+    competencias_page0_no_filters: {
+      id: c.competence,
+      competencia_referencia: dates.reference,
+      periodo_inicio: dates.start,
+      periodo_fim: dates.end,
+    },
+    document_gate: { id: c.document, id_contrato: c.contract },
+    document_versions_page0: {
+      id: c.document_version,
+      id_documento_contrato: c.document,
+      id_arquivo: c.file,
+    },
+    processing_page0: {
+      id: c.processing,
+      id_versao_documento: c.document_version,
+      etapa: p.stage,
+      iniciado_em: p.started,
+      concluido_em: p.completed,
+      criado_em: p.created,
+    },
+  };
+  if (rbacEnabled) expected.competence_rbac_gate = { id_contrato: proof.context.contract };
+
+  const micros = (value) => {
+    if (typeof value !== "string") return null;
+    const m =
+      /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,6}))?(Z|([+-])(\d{2}):(\d{2}))$/.exec(
+        value,
+      );
+    if (!m) return null;
+    const y = +m[1],
+      mo = +m[2],
+      d = +m[3],
+      h = +m[4],
+      mi = +m[5],
+      se = +m[6],
+      oh = +(m[10] ?? 0),
+      om = +(m[11] ?? 0);
+    const leap = y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0),
+      days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if (
+      y < 1 ||
+      mo < 1 ||
+      mo > 12 ||
+      d < 1 ||
+      d > days[mo - 1] ||
+      h > 23 ||
+      mi > 59 ||
+      se > 59 ||
+      oh > 14 ||
+      om > 59 ||
+      (oh === 14 && om !== 0)
+    )
+      return null;
+    const yy = y - (mo <= 2 ? 1 : 0),
+      era = Math.floor(yy / 400),
+      yoe = yy - era * 400;
+    const doy = Math.floor((153 * (mo + (mo > 2 ? -3 : 9)) + 2) / 5) + d - 1;
+    const date =
+      era * 146097 + yoe * 365 + Math.floor(yoe / 4) - Math.floor(yoe / 100) + doy - 719468;
+    const offset = (m[9] === "-" ? -1 : 1) * (oh * 3600 + om * 60);
+    return (
+      BigInt(date * 86400 + h * 3600 + mi * 60 + se - offset) * 1000000n +
+      BigInt((m[7] ?? "").padEnd(6, "0"))
+    );
+  };
+  if (v109Enabled)
+    expected.v109_lists_page0 = {
+      id: v109Proof.context.list,
+      nome: v109Proof.approved_values.name,
+      descricao: v109Proof.approved_values.description,
+    };
+
+  const project = (contract, body) => {
+    const want = expected[contract?.name];
+    if (!want || !body || typeof body !== "object") return null;
+    const array = !contract.shape || contract.shape === "array";
+    if (Array.isArray(body) !== array || (array && body.length > 25)) return null;
+    const rows = array
+      ? body.filter((r) => r && typeof r === "object" && r.id === want.id)
+      : [body];
+    if (rows.length !== 1) return null;
+    if (
+      ["document_versions_page0", "processing_page0"].includes(contract.name) &&
+      body.length !== 1
+    )
+      return null;
+    const row = rows[0];
+    if (
+      contract.name === "v109_lists_page0" &&
+      (micros(row.atualizado_em) === null ||
+        micros(row.atualizado_em) !== micros(v109Proof.approved_values.updated))
+    )
+      return null;
+    if (
+      !Object.entries(want).every(([k, value]) => JSON.stringify(row[k]) === JSON.stringify(value))
+    )
+      return null;
+    if (contract.name === "document_versions_page0" && typeof row.criado_em !== "string")
+      return null;
+    // No raw row, unselected field or unexpected value crosses the browser boundary.
+    return { name: contract.name, exact: true };
+  };
+  if (!install) return { match, project };
+  const route = location.href,
+    started = performance.now(),
+    seen = new Set();
+  let invalid = false,
+    pending = 0,
+    revision = 0,
+    mutations = null;
+  const invalidate = () => {
+    invalid = true;
+    seen.clear();
+    mutations?.disconnect();
+  };
+  const current = () =>
+    !invalid &&
+    typeof document !== "undefined" &&
+    !!document &&
+    typeof location !== "undefined" &&
+    location?.href === route &&
+    performance.now() - started < 120000;
+  for (const event of ["pagehide", "beforeunload", "popstate", "hashchange"])
+    window.addEventListener(event, invalidate, { once: true });
+  window.addEventListener("contaos:organizacao-alterada", invalidate, { once: true });
+  document.addEventListener("visibilitychange", invalidate, { once: true });
+  if (!window.navigation?.addEventListener) invalidate();
+  else window.navigation.addEventListener("navigate", invalidate, { once: true });
+  const headerCurrent = () => {
+    if (typeof document === "undefined" || !document) return false;
+    const header = document.querySelector('header[aria-label="Organização atual"]');
+    return (
+      !!header?.textContent.includes("ContaOS HML Teste") &&
+      /Situação:\s*ativa/i.test(header.textContent)
+    );
+  };
+  let headerSeen = headerCurrent();
+  // Existing source resets this header on session/auth-generation changes.
+  // No Auth objects, responses, events or headers are intercepted.
+  mutations = new MutationObserver(() => {
+    if (invalid) return;
+    if (typeof document === "undefined" || !document) {
+      invalidate();
+      return;
+    }
+    revision++;
+    const ready = headerCurrent();
+    if (headerSeen && !ready) invalidate();
+    headerSeen ||= ready;
+  });
+  mutations.observe(document, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: true,
+  });
+  const original = window.fetch;
+  window.fetch = function (...args) {
+    // Preserve exact native receiver, arguments, promise, response and rejection.
+    const result = Reflect.apply(original, this, args);
+    let raw,
+      method = "GET";
+    try {
+      const input = args[0],
+        init = args[1];
+      if (typeof input === "string") raw = input;
+      else if (input instanceof URL) raw = input.href;
+      else if (input instanceof Request) {
+        raw = input.url;
+        method = input.method;
+      }
+      if (init != null) {
+        const descriptor = Object.getOwnPropertyDescriptor(init, "method");
+        if (descriptor && !("value" in descriptor)) return result;
+        if (descriptor?.value !== undefined) method = descriptor.value;
+      }
+    } catch {
+      return result;
+    }
+    const contract = match(raw, method);
+    if (!contract) {
+      // Different filtering/pagination/projection cannot inherit a page-zero receipt.
+      // Ignore Auth and all unrelated request/response content completely.
+      try {
+        const url = new URL(raw);
+        if (
+          method === "GET" &&
+          url.origin === origin &&
+          contracts.some((c) => c.path === url.pathname)
+        )
+          invalidate();
+      } catch {}
+      return result;
+    }
+    if (!current()) return result;
+    pending++;
+    const deadline = setTimeout(invalidate, 10000);
+    void result
+      .then(
+        async (response) => {
+          if (
+            !current() ||
+            response.status !== 200 ||
+            response.redirected ||
+            match(response.url, "GET")?.name !== contract.name
+          ) {
+            invalidate();
+            return;
+          }
+          const reader = response.clone().body?.getReader();
+          if (!reader) {
+            invalidate();
+            return;
+          }
+          const chunks = [];
+          let bytes = 0;
+          try {
+            for (;;) {
+              const next = await reader.read();
+              if (next.done) break;
+              bytes += next.value.byteLength;
+              if (bytes > 262144 || !current()) {
+                invalidate();
+                await reader.cancel();
+                return;
+              }
+              chunks.push(next.value);
+            }
+            const buffer = new Uint8Array(bytes);
+            let offset = 0;
+            for (const chunk of chunks) {
+              buffer.set(chunk, offset);
+              offset += chunk.byteLength;
+            }
+            const body = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer));
+            const receipt = project(contract, body);
+            if (!receipt || !current()) invalidate();
+            else seen.add(receipt.name);
+          } finally {
+            reader.releaseLock();
+          }
+        },
+        () => invalidate(),
+      )
+      .catch(() => invalidate())
+      .finally(() => {
+        clearTimeout(deadline);
+        pending--;
+      });
+    return result;
+  };
+  Object.defineProperty(window, "__contaosPrivacy78", {
+    configurable: false,
+    writable: false,
+    value: Object.freeze({
+      invalidate,
+      read: () => {
+        if (headerSeen && !headerCurrent()) invalidate();
+        return current() && pending === 0
+          ? {
+              route,
+              observed: [...seen].sort(),
+              age: Math.floor(performance.now() - started),
+              revision,
+            }
+          : null;
+      },
+    }),
+  });
+}
+
+export function privacy78FieldContext({
+  surface,
+  proof,
+  rbacProof = null,
+  rendered,
+  snapshot,
+  fieldSnapshot,
+  anchored,
+  receipt,
+}) {
+  if (
+    !privacy78Proofs.has(proof) ||
+    !receipt ||
+    typeof receipt !== "object" ||
+    !Array.isArray(receipt.observed)
+  )
+    return null;
+  const rbacTrusted = privacy78RbacProofs.has(rbacProof);
+  if (surface === "V115" && !rbacTrusted) return null;
+  const contracts = rbacTrusted
+    ? [...proof.get_contracts, rbacProof.get_contract]
+    : proof.get_contracts;
+  const path = privateCases().find((i) => i.surface === surface)?.path;
+  const required = {
+    V111: ["contract_gate", "document_gate", "document_versions_page0", "processing_page0"],
+    V112: ["contract_gate", "competencias_page0_no_filters"],
+    V115: ["competence_rbac_gate", "upload"],
+    V122: ["contract_gate", "upload"],
+  }[surface];
+  if (
+    !required ||
+    anchored !== true ||
+    !Object.isFrozen(receipt) ||
+    !Object.isFrozen(receipt.observed) ||
+    receipt.route !== path ||
+    !Number.isFinite(receipt.age) ||
+    receipt.age < 0 ||
+    receipt.age >= 120000 ||
+    new Set(receipt.observed).size !== receipt.observed.length ||
+    receipt.observed.some((name) => !contracts.some((c) => c.name === name)) ||
+    !required.every((name) => receipt.observed.includes(name))
+  )
+    return null;
+  const value = proof.generated_exact_values[surface]?.[0];
+  if (
+    typeof value !== "string" ||
+    ![rendered, snapshot, fieldSnapshot].every(
+      (text) => typeof text === "string" && text.split(value).length === 2,
+    )
+  )
+    return null;
+  if (snapshot.split(fieldSnapshot).length !== 2) return null;
+  const context = Object.freeze({});
+  privacy78Contexts.set(context, {
+    rendered: { original: rendered, remainder: rendered.replace(value, " ") },
+    snapshot: { original: snapshot, remainder: snapshot.replace(value, " ") },
+  });
+  return context;
+}
+
+export function privacy78FieldAnchor({ surface, proof }) {
+  const value = proof.generated_exact_values[surface]?.[0];
+  if (!value) return null;
+  const visible = (e) =>
+    e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+  let nodes = [],
+    selector;
+  if (surface === "V111") {
+    selector = 'section[aria-label="Processamento"] li p';
+    const regions = document.querySelectorAll('section[aria-label="Processamento"]');
+    if (
+      regions.length !== 1 ||
+      regions[0].querySelectorAll("h2").length !== 1 ||
+      regions[0].querySelector("h2").textContent !== "Processamento"
+    )
+      return null;
+    const date = (v) =>
+      new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        dateStyle: "short",
+        timeStyle: "short",
+      })
+        .format(new Date(v))
+        .replace(",", "");
+    const p = proof.observed.pipeline[0],
+      expected =
+        "Registrado em " + date(p.created) + " · " + value + " · Concluído em " + date(p.completed);
+    nodes = [...document.querySelectorAll(selector)].filter(
+      (n) =>
+        visible(n) &&
+        n.textContent === expected &&
+        [...(n.closest("li")?.querySelectorAll("span") ?? [])].filter(
+          (s) => s.textContent === "Etapa: documents",
+        ).length === 1,
+    );
+  } else if (surface === "V112") {
+    selector = "table tbody tr td";
+    for (const table of document.querySelectorAll("table")) {
+      if (
+        !visible(table) ||
+        table.querySelector("caption")?.textContent !== "Competências do contrato"
+      )
+        continue;
+      const columns = [...table.querySelectorAll('thead th[scope="col"]')],
+        period = columns.findIndex((n) => n.textContent === "Período");
+      if (period < 0 || columns.filter((n) => n.textContent === "Período").length !== 1) continue;
+      for (const row of table.querySelectorAll("tbody tr")) {
+        const header = row.querySelector('th[scope="row"]'),
+          target = row.children[period];
+        const links = [...row.querySelectorAll("a")].filter(
+          (a) =>
+            a.getAttribute("href") === "/competencias/" + proof.context.competence &&
+            a.getAttribute("aria-label") === "Abrir competência 11/2026",
+        );
+        if (
+          header?.textContent === "11/2026" &&
+          links.length === 1 &&
+          target?.tagName === "TD" &&
+          visible(target) &&
+          target.textContent === value
+        )
+          nodes.push(target);
+      }
+    }
+  } else if (surface === "V115") {
+    selector = 'section[aria-labelledby="v115-envio"] #v115-arquivo';
+    const inputs = document.querySelectorAll(selector);
+    if (inputs.length !== 1 || !visible(inputs[0]) || inputs[0].type !== "file") return null;
+    const heading = inputs[0].closest("section").querySelectorAll("#v115-envio");
+    if (
+      heading.length !== 1 ||
+      heading[0].tagName !== "H2" ||
+      heading[0].textContent !== "Enviar documento"
+    )
+      return null;
+    const parent = inputs[0].parentElement,
+      labels = parent.querySelectorAll('label[for="v115-arquivo"]');
+    if (labels.length !== 1 || labels[0].textContent.trim() !== "Arquivo") return null;
+    nodes = [...parent.querySelectorAll(":scope > p")].filter(
+      (n) => visible(n) && n.textContent === "Limite: " + value,
+    );
+    selector = 'section[aria-labelledby="v115-envio"] #v115-arquivo ~ p';
+  } else if (surface === "V122") {
+    const inputs = document.querySelectorAll("#historico-arquivos");
+    if (inputs.length !== 1 || !visible(inputs[0]) || inputs[0].type !== "file") return null;
+    const section = inputs[0].closest("section");
+    if (
+      section?.querySelectorAll("h2").length !== 1 ||
+      section.querySelector("h2").textContent !== "1. Selecionar relatórios anteriores"
+    )
+      return null;
+    const labels = section.querySelectorAll('label[for="historico-arquivos"]');
+    if (labels.length !== 1 || labels[0].textContent !== "Arquivos históricos (seleção múltipla)")
+      return null;
+    const expected =
+      "Formatos aceitos: " +
+      value +
+      ". O limite de tamanho e o tipo real são conferidos pelo backend.";
+    nodes = [...section.querySelectorAll(":scope > p")].filter(
+      (n) =>
+        visible(n) &&
+        n.textContent === expected &&
+        !!(n.compareDocumentPosition(inputs[0]) & Node.DOCUMENT_POSITION_FOLLOWING),
+    );
+    selector = "section:has(#historico-arquivos) > p";
+  }
+  if (
+    nodes.length !== 1 ||
+    !selector ||
+    [...nodes[0].attributes].some((a) => a.name !== "class") ||
+    [...nodes[0].childNodes].some((n) => n.nodeType !== Node.TEXT_NODE)
+  )
+    return null;
+  const all = [...document.querySelectorAll(selector)];
+  return { selector, index: all.indexOf(nodes[0]), count: all.length };
+}
+
+export function classifyArtifactText(text, allowedWords, { snapshot = false, fieldContext } = {}) {
   if (typeof text !== "string" || text.length > 1000000 || !(allowedWords instanceof Set))
     return { reason: "INVALID_CONTENT", unknownCount: 0 };
   if (
@@ -491,6 +1281,12 @@ export function classifyArtifactText(text, allowedWords, { snapshot = false } = 
     )
   )
     return { reason: "SENSITIVE_PATTERN", unknownCount: 0 };
+  const scoped = privacy78Contexts.get(fieldContext);
+  if (scoped) {
+    const channel = snapshot ? "snapshot" : "rendered";
+    if (text !== scoped[channel].original) return { reason: "INVALID_CONTENT", unknownCount: 0 };
+    text = scoped[channel].remainder;
+  }
   let invalidDate = false;
   let remainder = text
     .normalize("NFC")
@@ -2189,7 +2985,14 @@ export async function preparePublicProvenance({
 export async function runCli(args = process.argv.slice(2)) {
   if (
     args.length !== 1 ||
-    !["--resolve-deployment", "--prepare", "--native-guard", "--audit"].includes(args[0])
+    ![
+      "--resolve-deployment",
+      "--prepare",
+      "--native-guard",
+      "--audit",
+      "--request-preflight",
+      "--request-revalidate",
+    ].includes(args[0])
   )
     fail("CLI_MODE");
   const harnessRoot = fileURLToPath(new URL("../../", import.meta.url));
@@ -2211,12 +3014,16 @@ export async function runCli(args = process.argv.slice(2)) {
     fail("HARNESS_SOURCE");
   }
 
+  if (["--request-preflight", "--request-revalidate"].includes(args[0]))
+    return singleRequestCli(args[0]);
+  if (process.env.GITHUB_EVENT_NAME === "workflow_run" && args[0] !== "--native-guard") {
+    await loadSingleRequestProof({ operation: process.env.CONTAOS_REQUEST_OPERATION });
+  }
   if (args[0] === "--native-guard") return nativeGuard();
   if (args[0] === "--audit") return runAuthenticatedAudit();
   if (args[0] === "--resolve-deployment") {
     if (
-      process.env.GITHUB_EVENT_NAME !== "workflow_dispatch" ||
-      process.env.GITHUB_REF !== "refs/heads/main" ||
+      !singleRequestEventAllowed(process.env, process.env.CONTAOS_REQUEST_OPERATION || "audit") ||
       !process.env.GITHUB_ENV ||
       !process.env.GITHUB_OUTPUT
     )
@@ -2276,8 +3083,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     );
     process.exitCode = 1;
     if (
-      process.env.GITHUB_EVENT_NAME === "workflow_dispatch" &&
-      process.env.GITHUB_REF === "refs/heads/main" &&
+      singleRequestEventAllowed(process.env, process.env.CONTAOS_REQUEST_OPERATION || "audit") &&
       ["--resolve-deployment", "--prepare", "--native-guard"].includes(process.argv[2])
     ) {
       try {
@@ -2674,6 +3480,10 @@ export async function literalWords(root) {
   return words;
 }
 async function inspectPrivacy(page, words, diagnostics) {
+  const state = privacy78Pages.get(page),
+    generation = state?.generation;
+  const initialReceipt =
+    state?.verified && (await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null));
   const snapshot = await page.locator("body").ariaSnapshot();
   const rendered = await page.evaluate(() => {
     const visible = (e) =>
@@ -2697,12 +3507,89 @@ async function inspectPrivacy(page, words, diagnostics) {
         }
     return values.join("\n");
   });
+
+  let fieldContext;
+  if (rendered !== null && state?.verified && !state.closed) {
+    const item = privateCases().find((i) => HML_ORIGIN + i.path === page.url());
+    if (item && ["V109", "V111", "V112", "V115", "V122"].includes(item.surface)) {
+      const receipt = await page.evaluate(() => {
+        const header = document.querySelector('header[aria-label="Organização atual"]');
+        if (
+          !header?.textContent.includes("ContaOS HML Teste") ||
+          !/Situação:\s*ativa/i.test(header.textContent)
+        )
+          return null;
+        return window.__contaosPrivacy78?.read() ?? null;
+      });
+      const is109 = item.surface === "V109";
+      const anchor =
+        receipt &&
+        initialReceipt &&
+        initialReceipt.revision === receipt.revision &&
+        (await page.evaluate(
+          is109 ? privacy109FieldAnchor : privacy78FieldAnchor,
+          is109 ? { proof: state.v109Proof } : { surface: item.surface, proof: state.proof },
+        ));
+      if (
+        anchor &&
+        receipt.route === page.url() &&
+        generation === state.generation &&
+        !state.closed
+      ) {
+        let fieldSnapshot = null,
+          fieldSnapshots = null;
+        if (is109) fieldSnapshots = await privacy109FieldSnapshots(page, anchor);
+        else {
+          const locator = page.locator(anchor.selector);
+          if ((await locator.count()) === anchor.count)
+            fieldSnapshot = (await locator.nth(anchor.index).ariaSnapshot()).trim();
+        }
+        if (fieldSnapshot !== null || fieldSnapshots !== null) {
+          const after = await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null);
+          if (
+            after &&
+            after.route === receipt.route &&
+            after.revision === receipt.revision &&
+            JSON.stringify(after.observed) === JSON.stringify(receipt.observed) &&
+            generation === state.generation &&
+            !state.closed
+          ) {
+            const currentReceipt = Object.freeze({
+              ...after,
+              route: item.path,
+              observed: Object.freeze(after.observed),
+            });
+            fieldContext = is109
+              ? privacy109FieldContext({
+                  proof: state.proof,
+                  v109Proof: state.v109Proof,
+                  rendered,
+                  snapshot,
+                  fieldSnapshots,
+                  anchored: true,
+                  receipt: currentReceipt,
+                })
+              : privacy78FieldContext({
+                  surface: item.surface,
+                  proof: state.proof,
+                  rbacProof: state.rbacProof,
+                  rendered,
+                  snapshot,
+                  fieldSnapshot,
+                  anchored: true,
+                  receipt: currentReceipt,
+                });
+          }
+        }
+      }
+    }
+  }
   const privacy =
     rendered === null
       ? { rendered: { reason: "OPAQUE_MEDIA", unknownCount: 0 } }
       : {
-          rendered: classifyArtifactText(rendered, words),
-          snapshot: classifyArtifactText(snapshot, words, { snapshot: true }),
+          rendered: classifyArtifactText(rendered, words, { fieldContext }),
+          snapshot: classifyArtifactText(snapshot, words, { snapshot: true, fieldContext }),
         };
   if (diagnostics) Object.assign(diagnostics, privacy);
   if (Object.values(privacy).some((result) => result.reason !== "ALLOWED")) return null;
@@ -2769,11 +3656,7 @@ async function runAuthenticatedAudit() {
     passwordPresent: !!process.env.CONTAOS_HML_SYNTHETIC_PASSWORD,
   });
   if (!ready.ready) fail(ready.code);
-  if (
-    process.env.GITHUB_EVENT_NAME !== "workflow_dispatch" ||
-    process.env.GITHUB_REF !== "refs/heads/main"
-  )
-    fail("AUDIT_MAIN_ONLY");
+  if (!singleRequestEventAllowed(process.env, "audit")) fail("AUDIT_MAIN_ONLY");
   const native = JSON.parse(await readFile(".audit-work/native-proof.json", "utf8"));
   if (!nativeProofValid(native, await harnessIdentity())) fail("NATIVE_PROOF");
   const proof = JSON.parse(await readFile(".audit-work/provenance.json", "utf8"));
@@ -2878,7 +3761,32 @@ async function runAuthenticatedAudit() {
       viewport: { width: 1440, height: 1000 },
       serviceWorkers: "block",
     });
+    const privacyProof = await loadPrivacy78Proof();
+    const rbacProof = await loadPrivacy78RbacProof();
+    const v109Proof = await loadPrivacy109Proof();
+    await context.addInitScript(privacy78Runtime, {
+      proof: privacyProof,
+      rbacProof,
+      v109Proof,
+      install: true,
+    });
     page = await context.newPage();
+    const privacyState = {
+      proof: privacyProof,
+      rbacProof,
+      v109Proof,
+      generation: 0,
+      verified: false,
+      closed: false,
+    };
+    privacy78Pages.set(page, privacyState);
+    page.on("framenavigated", (frame) => {
+      if (frame === page.mainFrame()) privacyState.generation++;
+    });
+    page.on("close", () => {
+      privacyState.closed = true;
+      privacyState.verified = false;
+    });
     page.setDefaultTimeout(15000);
     page.on("pageerror", () => errors++);
     const session = await context.newCDPSession(page),
@@ -2928,6 +3836,7 @@ async function runAuthenticatedAudit() {
     await page.waitForURL(HML_ORIGIN + "/");
     await waitOrganization(page);
     flags.organizationConfirmed = true;
+    privacyState.verified = true;
     phase = "CAPTURE_PRIVATE";
     let surface = null;
     for (const item of privateCases()) {
@@ -3146,6 +4055,8 @@ async function runAuthenticatedAudit() {
           : "RUNTIME_ABORT";
     if (records.at(-1)?.status === "PENDENTE") records.at(-1).status = "BLOQUEADO_" + aborted;
   } finally {
+    const privacyState = page && privacy78Pages.get(page);
+    if (privacyState) privacyState.verified = false;
     if (loggedIn && page && !page.isClosed())
       try {
         await settleVerifiedPage(page, fence);
@@ -3975,4 +4886,716 @@ function runtimeRouteClass(page) {
   } catch {
     return "UNAVAILABLE";
   }
+}
+
+// A request authorizes one selected operation, never a general workflow_run login.
+export const SINGLE_REQUEST = Object.freeze({
+  repository: "contaos999999/contaos-hml-control",
+  path: "docs/frontend/auditorias/TRILHA_A_SOLICITACAO_UNICA.json",
+  upstreamId: 406076025,
+  upstreamPath: ".github/workflows/contaos-frontend-zero-drift.yml",
+  upstreamName: "ContaOS Frontend Zero-Drift",
+  gateSha: "31b68f3cadbdc13a82bae23a43c35616f873d70b",
+  autoGateSha: "122242fd421b348aef229683c0d3969611bce1db",
+  fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
+  fixtures: Object.freeze({
+    id: 411426169,
+    name: "ContaOS Trilha A Fixtures",
+    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+    nonce: "trilha-a-fixtures-20261108-r1",
+    privateName: "Trilha A preparacao sintetica HML",
+  }),
+  audit: Object.freeze({
+    id: 411115674,
+    name: "ContaOS Trilha A Autenticada",
+    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+    nonce: "trilha-a-audit-20261108-r1",
+    privateName: "Trilha A auditoria privada HML",
+  }),
+});
+let singleRequestContext = null;
+
+function singleRequestIdentityMode(request) {
+  if (request.frontend_sha === "" && request.deployment_id === "") return "AUTO_DISCOVER";
+  if (
+    hash40(request.frontend_sha) &&
+    typeof request.deployment_id === "string" &&
+    /^dpl_[A-Za-z0-9]{8,80}$/.test(request.deployment_id)
+  )
+    return "EXPLICIT";
+  fail("REQUEST_SCHEMA");
+}
+
+export function parseSingleRequest(raw, operation) {
+  if (typeof raw !== "string" || Buffer.byteLength(raw) > 4096) fail("REQUEST_JSON");
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    fail("REQUEST_JSON");
+  }
+  if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") fail("REQUEST_SCHEMA");
+  // This schema contains scalar values only. Scan its keys separately so JSON.parse
+  // cannot silently replace a duplicate, including an escaped spelling of a key.
+  const stringToken = /"(?:[^"\\\u0000-\u001f]|\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4}))*"/y;
+  let pos = 0;
+  const seen = new Set();
+  const ws = () => {
+    while (/\s/.test(raw[pos] || "") && pos < raw.length) pos++;
+  };
+  const str = () => {
+    stringToken.lastIndex = pos;
+    const m = stringToken.exec(raw);
+    if (!m) fail("REQUEST_SCHEMA");
+    pos = stringToken.lastIndex;
+    return JSON.parse(m[0]);
+  };
+  ws();
+  if (raw[pos++] !== "{") fail("REQUEST_SCHEMA");
+  ws();
+  while (raw[pos] !== "}") {
+    const key = str();
+    if (seen.has(key)) fail("REQUEST_DUPLICATE_KEY");
+    seen.add(key);
+    ws();
+    if (raw[pos++] !== ":") fail("REQUEST_SCHEMA");
+    ws();
+    if (raw[pos] === '"') str();
+    else {
+      const m = /^(?:0|[1-9][0-9]*)/.exec(raw.slice(pos));
+      if (!m) fail("REQUEST_SCHEMA");
+      pos += m[0].length;
+    }
+    ws();
+    if (raw[pos] === ",") {
+      pos++;
+      ws();
+      if (raw[pos] === "}") fail("REQUEST_SCHEMA");
+      continue;
+    }
+    if (raw[pos] !== "}") fail("REQUEST_SCHEMA");
+  }
+  pos++;
+  ws();
+  if (pos !== raw.length) fail("REQUEST_SCHEMA");
+  const keys = [
+    "schema_version",
+    "issue",
+    "operation",
+    "request_id",
+    "approved_parent_sha",
+    "frontend_sha",
+    "deployment_id",
+  ];
+  if (
+    seen.size !== keys.length ||
+    keys.some((k) => !seen.has(k)) ||
+    parsed.schema_version !== 1 ||
+    parsed.issue !== 317 ||
+    !["fixtures", "audit"].includes(parsed.operation) ||
+    (operation && parsed.operation !== operation) ||
+    parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce ||
+    !hash40(parsed.approved_parent_sha)
+  )
+    fail("REQUEST_SCHEMA");
+  singleRequestIdentityMode(parsed);
+  return Object.freeze({ ...parsed });
+}
+
+export function validateSingleRequestEvent({ event, env, upstream, current, operation, mainSha }) {
+  const expected = SINGLE_REQUEST[operation],
+    repo = SINGLE_REQUEST.repository;
+  if (
+    !expected ||
+    env.GITHUB_EVENT_NAME !== "workflow_run" ||
+    env.GITHUB_REF !== "refs/heads/main" ||
+    env.GITHUB_REPOSITORY !== repo ||
+    env.GITHUB_RUN_ATTEMPT !== "1" ||
+    event?.action !== "completed" ||
+    event.repository?.full_name !== repo ||
+    !hash40(mainSha) ||
+    env.CONTAOS_HARNESS_SHA !== mainSha
+  )
+    fail("REQUEST_EVENT");
+  const check = (r) =>
+    r &&
+    r.workflow_id === SINGLE_REQUEST.upstreamId &&
+    r.path === SINGLE_REQUEST.upstreamPath &&
+    r.name === SINGLE_REQUEST.upstreamName &&
+    r.event === "push" &&
+    r.head_branch === "main" &&
+    r.head_sha === mainSha &&
+    r.run_attempt === 1 &&
+    r.status === "completed" &&
+    r.conclusion === "success" &&
+    r.repository?.full_name === repo &&
+    r.head_repository?.full_name === repo &&
+    Number.isSafeInteger(r.id) &&
+    r.id > 0;
+  if (!check(event.workflow_run) || !check(upstream) || upstream.id !== event.workflow_run.id)
+    fail("REQUEST_UPSTREAM");
+  if (
+    !current ||
+    current.id !== Number(env.GITHUB_RUN_ID) ||
+    !/^\d+$/.test(env.GITHUB_RUN_ID || "") ||
+    current.workflow_id !== expected.id ||
+    current.path !== expected.path ||
+    current.name !== expected.name ||
+    current.event !== "workflow_run" ||
+    current.head_branch !== "main" ||
+    current.head_sha !== mainSha ||
+    current.run_attempt !== 1 ||
+    current.repository?.full_name !== repo ||
+    current.head_repository?.full_name !== repo
+  )
+    fail("REQUEST_CURRENT");
+  return mainSha;
+}
+
+export async function listSingleRequestRuns(getPage) {
+  const result = [],
+    ids = new Set();
+  let total = null;
+  for (let page = 1; page <= 10; page++) {
+    const body = await getPage(page);
+    if (
+      !Number.isInteger(body?.total_count) ||
+      body.total_count < 0 ||
+      body.total_count > 1000 ||
+      !Array.isArray(body.workflow_runs) ||
+      body.workflow_runs.length > 100 ||
+      (total !== null && total !== body.total_count)
+    )
+      fail("REQUEST_PAGINATION");
+    total = body.total_count;
+    const expected = Math.min(100, total - (page - 1) * 100);
+    if (expected < 0 || body.workflow_runs.length !== expected) fail("REQUEST_PAGINATION");
+    for (const run of body.workflow_runs) {
+      if (!Number.isSafeInteger(run?.id) || run.id <= 0 || ids.has(run.id))
+        fail("REQUEST_PAGINATION");
+      ids.add(run.id);
+      result.push(run);
+    }
+    if (result.length === total) return result;
+  }
+  fail("REQUEST_PAGINATION");
+}
+export function validateSingleRequestRuns({ current, runs, requestShas, workflowId }) {
+  if (
+    !current ||
+    current.run_attempt !== 1 ||
+    !Array.isArray(requestShas) ||
+    !requestShas.includes(current.head_sha) ||
+    !Array.isArray(runs)
+  )
+    fail("REQUEST_UNIQUENESS");
+  const matches = runs.filter(
+    (r) => requestShas.includes(r.head_sha) && r.event === "workflow_run",
+  );
+  if (
+    matches.length !== 1 ||
+    matches[0].id !== current.id ||
+    matches[0].workflow_id !== workflowId ||
+    matches[0].run_attempt !== 1 ||
+    current.workflow_id !== workflowId
+  )
+    fail("REQUEST_UNIQUENESS");
+  return true;
+}
+export function singleRequestEventAllowed(env, operation) {
+  if (env.GITHUB_EVENT_NAME === "workflow_dispatch") return env.GITHUB_REF === "refs/heads/main";
+  return (
+    env.GITHUB_EVENT_NAME === "workflow_run" &&
+    env.GITHUB_REF === "refs/heads/main" &&
+    singleRequestContext?.operation === operation &&
+    singleRequestContext.sha === env.CONTAOS_HARNESS_SHA &&
+    singleRequestContext.runId === env.GITHUB_RUN_ID &&
+    env.GITHUB_RUN_ATTEMPT === "1"
+  );
+}
+export function requireSingleRequestOperation(operation) {
+  if (operation === "audit") fail("AUDIT_BINDING_PENDING");
+  if (operation !== "fixtures") fail("REQUEST_OPERATION");
+}
+
+export async function verifySingleRequestGit(request, sha, git, raw) {
+  const mode = singleRequestIdentityMode(request);
+  if (typeof raw !== "string" || (await git(["show", sha + ":" + SINGLE_REQUEST.path])) !== raw)
+    fail("REQUEST_DIRTY");
+  if (!hash40(sha) || (await git(["rev-parse", "HEAD"])).trim() !== sha) fail("REQUEST_CHECKOUT");
+  const parents = (await git(["rev-list", "--parents", "-n", "1", sha])).trim().split(" ");
+  if (parents.length !== 3 || parents[0] !== sha || parents[1] !== request.approved_parent_sha)
+    fail("REQUEST_PARENT");
+  const ancestors = [SINGLE_REQUEST.gateSha, SINGLE_REQUEST.fixturesSha];
+  // Automatic discovery proves the real source later, before its separate checkout.
+  // The request itself still needs the integrated amendment and all original gates.
+  ancestors.push(mode === "AUTO_DISCOVER" ? SINGLE_REQUEST.autoGateSha : request.frontend_sha);
+  for (const ancestor of ancestors)
+    await git(["merge-base", "--is-ancestor", ancestor, parents[1]]);
+  const diff = (
+    await git([
+      "diff-tree",
+      "--no-commit-id",
+      "--name-status",
+      "-r",
+      "--no-renames",
+      parents[1],
+      sha,
+    ])
+  ).trim();
+  if (!["A\t", "M\t"].some((prefix) => diff === prefix + SINGLE_REQUEST.path)) fail("REQUEST_DIFF");
+  const entry = (await git(["ls-tree", sha, "--", SINGLE_REQUEST.path])).trim();
+  if (!entry.startsWith("100644 blob ") || !entry.endsWith("\t" + SINGLE_REQUEST.path))
+    fail("REQUEST_FILE_MODE");
+  const commits = (
+    await git([
+      "log",
+      "--first-parent",
+      "--format=%H",
+      "--max-count=1001",
+      sha,
+      "--",
+      SINGLE_REQUEST.path,
+    ])
+  )
+    .trim()
+    .split("\n")
+    .filter(Boolean);
+  if (commits.length > 1000 || !commits.includes(sha)) fail("REQUEST_HISTORY");
+  const requestShas = [];
+  for (const commit of commits) {
+    if (!hash40(commit)) fail("REQUEST_HISTORY");
+    const raw = await git(["show", commit + ":" + SINGLE_REQUEST.path]);
+    const historic = parseSingleRequest(raw);
+    if (historic.request_id === request.request_id) requestShas.push(commit);
+  }
+  return requestShas;
+}
+
+export function singleRequestGet({ token, publicOnly, fetchImpl = fetch, now = Date.now }) {
+  const deadline = now() + 60000;
+  return async (path) => {
+    if (
+      path !== "" &&
+      !/^\/(?:actions\/|git\/ref\/heads\/main$|commits\/[a-f0-9]{40}\/pulls\?|pulls\/\d+(?:\/reviews\?|$))/.test(
+        path,
+      )
+    )
+      fail("REQUEST_API_PATH");
+    const remaining = deadline - now();
+    if (remaining <= 0) fail("REQUEST_API_TIMEOUT");
+    const headers = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+    if (!publicOnly) {
+      if (typeof token !== "string" || !token) fail("REQUEST_API_TOKEN");
+      headers.Authorization = "Bearer " + token;
+    }
+    let response;
+    try {
+      response = await fetchImpl(
+        "https://api.github.com/repos/" + SINGLE_REQUEST.repository + path,
+        { headers, redirect: "error", signal: AbortSignal.timeout(Math.min(5000, remaining)) },
+      );
+    } catch {
+      fail("REQUEST_API_UNAVAILABLE");
+    }
+    if (response.status !== 200) fail("REQUEST_API_UNAVAILABLE");
+    const text = await response.text();
+    if (Buffer.byteLength(text) > 4194304) fail("REQUEST_API_LIMIT");
+    try {
+      return JSON.parse(text);
+    } catch {
+      fail("REQUEST_API_SCHEMA");
+    }
+  };
+}
+export async function verifySingleRequest({
+  operation,
+  env = process.env,
+  publicOnly = true,
+  get,
+  git,
+  read = readFile,
+  stat = lstat,
+  wait = (ms) => new Promise((r) => setTimeout(r, ms)),
+}) {
+  singleRequestContext = null;
+  if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
+    if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
+    return { selected: true, operation, sha: env.CONTAOS_HARNESS_SHA, manual: true };
+  }
+  if (
+    env.GITHUB_EVENT_NAME !== "workflow_run" ||
+    !hash40(env.CONTAOS_HARNESS_SHA) ||
+    !env.GITHUB_EVENT_PATH
+  )
+    fail("REQUEST_EVENT");
+  const root = fileURLToPath(new URL("../../", import.meta.url));
+  git ||= async (args) =>
+    (
+      await execFile("git", args, {
+        cwd: root,
+        env: browserEnvironment(env),
+        maxBuffer: 4194304,
+        timeout: 10000,
+      })
+    ).stdout;
+  let raw, event;
+  try {
+    const path = join(root, SINGLE_REQUEST.path),
+      info = await stat(path);
+    if (!info.isFile() || info.isSymbolicLink() || info.size > 4096) fail("REQUEST_FILE_MODE");
+    raw = await read(path, "utf8");
+    const eventRaw = await read(env.GITHUB_EVENT_PATH, "utf8");
+    if (Buffer.byteLength(eventRaw) > 1048576) fail("REQUEST_EVENT");
+    event = JSON.parse(eventRaw);
+  } catch {
+    fail("REQUEST_EVENT_FILE");
+  }
+  const request = parseSingleRequest(raw);
+  // Both workflow_run subscribers start. The other operation exits before API,
+  // environment approval or private work, so the selected subscriber never waits on itself.
+  if (request.operation !== operation)
+    return { selected: false, operation, sha: env.CONTAOS_HARNESS_SHA };
+  requireSingleRequestOperation(operation);
+  const sha = env.CONTAOS_HARNESS_SHA;
+  const requestShas = await verifySingleRequestGit(request, sha, git, raw);
+  get ||= singleRequestGet({ token: env.CONTAOS_ACTIONS_READ_TOKEN, publicOnly });
+  const repo = await get("");
+  if (repo.full_name !== SINGLE_REQUEST.repository || repo.private !== false)
+    fail("REQUEST_REPOSITORY");
+  const expected = SINGLE_REQUEST[operation],
+    opposite = SINGLE_REQUEST[operation === "fixtures" ? "audit" : "fixtures"];
+  for (const spec of [expected, opposite]) {
+    const workflow = await get("/actions/workflows/" + spec.id);
+    if (
+      workflow.id !== spec.id ||
+      workflow.path !== spec.path ||
+      workflow.name !== spec.name ||
+      workflow.state !== "active"
+    )
+      fail("REQUEST_WORKFLOW");
+  }
+  const upstreamId = event.workflow_run?.id;
+  if (
+    !Number.isSafeInteger(upstreamId) ||
+    upstreamId <= 0 ||
+    !/^\d+$/.test(env.GITHUB_RUN_ID || "")
+  )
+    fail("REQUEST_EVENT");
+  const upstream = await get("/actions/runs/" + upstreamId),
+    current = await get("/actions/runs/" + env.GITHUB_RUN_ID);
+  const main = await get("/git/ref/heads/main");
+  validateSingleRequestEvent({
+    event,
+    env,
+    upstream,
+    current,
+    operation,
+    mainSha: main.object?.sha,
+  });
+  const associated = await listSingleRequestRows((page) =>
+    get("/commits/" + sha + "/pulls?per_page=100&page=" + page),
+  );
+  if (associated.length !== 1 || !Number.isSafeInteger(associated[0].number)) fail("REQUEST_PULL");
+  const pull = await get("/pulls/" + associated[0].number);
+  const reviews = await listSingleRequestRows((page) =>
+    get("/pulls/" + pull.number + "/reviews?per_page=100&page=" + page),
+  );
+  const ci = await listSingleRequestRuns((page) =>
+    get(
+      "/actions/runs?head_sha=" + pull.head.sha + "&event=pull_request&per_page=100&page=" + page,
+    ),
+  );
+  const secondParent = (await git(["rev-list", "--parents", "-n", "1", sha])).trim().split(" ")[2];
+  const pullProof = validateSingleRequestPull({
+    pull,
+    associated,
+    reviews,
+    ci,
+    request,
+    sha,
+    secondParent,
+  });
+  const runs = await listSingleRequestRuns((page) =>
+    get("/actions/workflows/" + expected.id + "/runs?per_page=100&page=" + page),
+  );
+  validateSingleRequestRuns({ current, runs, requestShas, workflowId: expected.id });
+  let oppositeProven = false;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const others = await listSingleRequestRuns((page) =>
+      get("/actions/workflows/" + opposite.id + "/runs?per_page=100&page=" + page),
+    );
+    const matching = others.filter(
+      (r) => requestShas.includes(r.head_sha) && r.event === "workflow_run",
+    );
+    if (
+      matching.some(
+        (r) => r.head_sha !== sha || r.workflow_id !== opposite.id || r.run_attempt !== 1,
+      ) ||
+      matching.length > 1
+    )
+      fail("REQUEST_OPPOSITE");
+    if (matching.length === 1) {
+      const jobs = await get("/actions/runs/" + matching[0].id + "/jobs?filter=all&per_page=100");
+      if (
+        !Number.isInteger(jobs.total_count) ||
+        jobs.total_count > 100 ||
+        !Array.isArray(jobs.jobs) ||
+        jobs.jobs.length !== jobs.total_count
+      )
+        fail("REQUEST_OPPOSITE");
+      const privateJobs = jobs.jobs.filter((j) => j.name === opposite.privateName);
+      if (privateJobs.length === 1 && privateJobs[0].conclusion === "skipped") {
+        oppositeProven = true;
+        break;
+      }
+      if (privateJobs.some((j) => j.conclusion && j.conclusion !== "skipped"))
+        fail("REQUEST_OPPOSITE");
+    }
+    if (attempt < 2) await wait(10000);
+  }
+  if (!oppositeProven) fail("REQUEST_OPPOSITE");
+  // Close queue and metadata races immediately before returning authorization.
+  const finalMain = await get("/git/ref/heads/main");
+  if (finalMain.object?.sha !== sha) fail("REQUEST_STALE");
+  const finalRuns = await listSingleRequestRuns((page) =>
+    get("/actions/workflows/" + expected.id + "/runs?per_page=100&page=" + page),
+  );
+  validateSingleRequestRuns({ current, runs: finalRuns, requestShas, workflowId: expected.id });
+  singleRequestContext = { operation, sha, runId: env.GITHUB_RUN_ID };
+  return {
+    selected: true,
+    operation,
+    sha,
+    requestId: request.request_id,
+    frontendSha: request.frontend_sha,
+    deploymentId: request.deployment_id,
+    upstreamId,
+    currentRunId: current.id,
+    parentSha: request.approved_parent_sha,
+    requestSha256: digest(raw),
+    ...pullProof,
+  };
+}
+async function singleRequestCli(mode) {
+  const operation = process.env.CONTAOS_REQUEST_OPERATION;
+  if (!["fixtures", "audit"].includes(operation)) fail("REQUEST_OPERATION");
+  const result = await verifySingleRequest({
+    operation,
+    publicOnly: mode === "--request-revalidate",
+  });
+  if (mode === "--request-preflight") {
+    if (!process.env.GITHUB_OUTPUT) fail("REQUEST_OUTPUT");
+    const values = {
+      selected: String(result.selected),
+      sha: result.sha,
+      frontend_sha: result.frontendSha || "",
+      deployment_id: result.deploymentId || "",
+    };
+    await appendFile(
+      process.env.GITHUB_OUTPUT,
+      Object.entries(values)
+        .map(([k, v]) => k + "=" + v + "\n")
+        .join(""),
+    );
+  }
+  if (mode === "--request-revalidate" && result.selected && !result.manual) {
+    await mkdir(".audit-work", { recursive: true, mode: 0o700 });
+    const proof = {
+      schema: "contaos.single-request.runtime.v1",
+      createdAt: Date.now(),
+      ...result,
+      identity: await harnessIdentity(),
+    };
+    await writeFile(".audit-work/single-request.json", JSON.stringify(proof), { mode: 0o600 });
+  }
+  console.log(JSON.stringify({ phase: "SINGLE_REQUEST", ...result }));
+}
+
+export async function listSingleRequestRows(getPage) {
+  const rows = [],
+    ids = new Set();
+  for (let page = 1; page <= 10; page++) {
+    const part = await getPage(page);
+    if (!Array.isArray(part) || part.length > 100) fail("REQUEST_PAGINATION");
+    for (const row of part) {
+      if (!Number.isSafeInteger(row?.id) || ids.has(row.id)) fail("REQUEST_PAGINATION");
+      ids.add(row.id);
+      rows.push(row);
+    }
+    if (part.length < 100) return rows;
+  }
+  fail("REQUEST_PAGINATION");
+}
+export function validateSingleRequestPull({
+  pull,
+  associated,
+  reviews,
+  ci,
+  request,
+  sha,
+  secondParent,
+}) {
+  const repo = SINGLE_REQUEST.repository;
+  if (
+    !Array.isArray(associated) ||
+    associated.length !== 1 ||
+    associated[0].number !== pull?.number ||
+    !Number.isSafeInteger(pull.number) ||
+    pull.number <= 0 ||
+    pull.merged !== true ||
+    pull.state !== "closed" ||
+    !pull.merged_at ||
+    pull.merge_commit_sha !== sha ||
+    pull.base?.ref !== "main" ||
+    pull.base.repo?.full_name !== repo ||
+    pull.base.sha !== request.approved_parent_sha ||
+    pull.head?.repo?.full_name !== repo ||
+    pull.head.sha !== secondParent ||
+    !hash40(pull.head.sha) ||
+    pull.changed_files !== 1
+  )
+    fail("REQUEST_PULL");
+  const expected = JSON.stringify({
+    schema: "contaos.single-request.review.v1",
+    request_id: request.request_id,
+    head_sha: pull.head.sha,
+    critical: 0,
+    important: 0,
+    decision: "APROVAVEL",
+  });
+  const latest = reviews
+    .filter((r) => r.user?.login === "contaos9999" && r.commit_id === pull.head.sha)
+    .sort((a, b) => b.id - a.id)[0];
+  if (
+    !latest ||
+    latest.state !== "COMMENTED" ||
+    latest.body?.trim() !== expected ||
+    !latest.submitted_at
+  )
+    fail("REQUEST_REVIEW");
+  for (const spec of [
+    {
+      id: SINGLE_REQUEST.upstreamId,
+      name: SINGLE_REQUEST.upstreamName,
+      path: SINGLE_REQUEST.upstreamPath,
+    },
+    {
+      id: 410005553,
+      name: "ContaOS LOCK-TYPES-01 Double Barrier",
+      path: ".github/workflows/lock-types-double-barrier.yml",
+    },
+  ]) {
+    const latestRun = ci.filter((r) => r.workflow_id === spec.id).sort((a, b) => b.id - a.id)[0];
+    if (
+      !latestRun ||
+      latestRun.name !== spec.name ||
+      latestRun.path !== spec.path ||
+      latestRun.head_sha !== pull.head.sha ||
+      latestRun.event !== "pull_request" ||
+      latestRun.head_branch !== pull.head.ref ||
+      latestRun.repository?.full_name !== repo ||
+      latestRun.head_repository?.full_name !== repo ||
+      latestRun.status !== "completed" ||
+      latestRun.conclusion !== "success"
+    )
+      fail("REQUEST_REQUIRED_CI");
+  }
+  return { pullNumber: pull.number, headSha: pull.head.sha, reviewId: latest.id };
+}
+
+export async function loadSingleRequestProof({
+  operation,
+  env = process.env,
+  read = readFile,
+  stat = lstat,
+  git,
+  identity = harnessIdentity,
+  now = Date.now,
+  fresh = false,
+}) {
+  singleRequestContext = null;
+  if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
+    if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
+    return true;
+  }
+  requireSingleRequestOperation(operation);
+  if (
+    env.GITHUB_EVENT_NAME !== "workflow_run" ||
+    env.GITHUB_REF !== "refs/heads/main" ||
+    env.GITHUB_REPOSITORY !== SINGLE_REQUEST.repository ||
+    env.GITHUB_RUN_ATTEMPT !== "1"
+  )
+    fail("REQUEST_EVENT");
+  const root = fileURLToPath(new URL("../../", import.meta.url));
+  const proofPath = join(root, ".audit-work/single-request.json"),
+    info = await stat(proofPath);
+  if (!info.isFile() || info.isSymbolicLink() || info.size > 8192) fail("REQUEST_RUNTIME");
+  let proof;
+  try {
+    proof = JSON.parse(await read(proofPath, "utf8"));
+  } catch {
+    fail("REQUEST_RUNTIME");
+  }
+  const actual = await identity();
+  if (
+    proof.schema !== "contaos.single-request.runtime.v1" ||
+    proof.selected !== true ||
+    proof.operation !== operation ||
+    proof.sha !== env.CONTAOS_HARNESS_SHA ||
+    proof.currentRunId !== Number(env.GITHUB_RUN_ID) ||
+    !Number.isSafeInteger(proof.createdAt) ||
+    proof.createdAt > now() ||
+    now() - proof.createdAt > (fresh ? 30000 : 4800000) ||
+    proof.identity?.harnessSha !== actual.harnessSha ||
+    proof.identity?.moduleHash !== actual.moduleHash ||
+    proof.identity?.testHash !== actual.testHash ||
+    actual.harnessSha !== proof.sha
+  )
+    fail("REQUEST_RUNTIME");
+  const raw = await read(join(root, SINGLE_REQUEST.path), "utf8"),
+    request = parseSingleRequest(raw, operation);
+  if (
+    digest(raw) !== proof.requestSha256 ||
+    request.request_id !== proof.requestId ||
+    request.frontend_sha !== proof.frontendSha ||
+    request.deployment_id !== proof.deploymentId ||
+    request.approved_parent_sha !== proof.parentSha
+  )
+    fail("REQUEST_RUNTIME");
+  git ||= async (args) =>
+    (
+      await execFile("git", args, {
+        cwd: root,
+        env: browserEnvironment(env),
+        maxBuffer: 4194304,
+        timeout: 10000,
+      })
+    ).stdout;
+  await verifySingleRequestGit(request, proof.sha, git, raw);
+  const event = JSON.parse(await read(env.GITHUB_EVENT_PATH, "utf8")),
+    spec = SINGLE_REQUEST[operation];
+  const current = {
+    id: proof.currentRunId,
+    workflow_id: spec.id,
+    path: spec.path,
+    name: spec.name,
+    event: "workflow_run",
+    head_branch: "main",
+    head_sha: proof.sha,
+    run_attempt: 1,
+    repository: { full_name: SINGLE_REQUEST.repository },
+    head_repository: { full_name: SINGLE_REQUEST.repository },
+  };
+  if (event.workflow_run?.id !== proof.upstreamId) fail("REQUEST_RUNTIME");
+  validateSingleRequestEvent({
+    event,
+    env,
+    upstream: event.workflow_run,
+    current,
+    operation,
+    mainSha: proof.sha,
+  });
+  singleRequestContext = { operation, sha: proof.sha, runId: env.GITHUB_RUN_ID };
+  return true;
 }
