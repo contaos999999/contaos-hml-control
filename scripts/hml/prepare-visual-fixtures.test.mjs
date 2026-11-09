@@ -9561,3 +9561,242 @@ test("R12 empty or pending newer October reads block all subsequent arms without
     }
   }
 });
+
+test("R12 every recovery entry rejects missing hostile or cross-proof R11 before effects", async () => {
+  let reads = 0,
+    traps = 0,
+    effects = 0;
+  const proxy = new Proxy(
+    {},
+    {
+      get() {
+        traps++;
+        throw Error("CANARY");
+      },
+      ownKeys() {
+        traps++;
+        throw Error("CANARY");
+      },
+      getPrototypeOf() {
+        traps++;
+        throw Error("CANARY");
+      },
+    },
+  );
+  const revoked = Proxy.revocable({}, {});
+  revoked.revoke();
+  const accessor = { ...R12_R11_DOCUMENT };
+  Object.defineProperty(accessor, "reportRaw", {
+    enumerable: true,
+    get() {
+      reads++;
+      throw Error("CANARY");
+    },
+  });
+  const symbol = { ...R12_R11_DOCUMENT };
+  symbol[Symbol("CANARY")] = true;
+  const values = [
+    undefined,
+    null,
+    {},
+    sut.R10_RECOVERY_DOCUMENT,
+    { ...R12_R11_DOCUMENT, reportSha256: "0".repeat(64) },
+    { ...R12_R11_DOCUMENT, reportRaw: R12_R11_DOCUMENT.reportRaw + " " },
+    { ...R12_R11_DOCUMENT, workflowRun: "1" },
+    { ...R12_R11_DOCUMENT, extra: true },
+    Object.fromEntries(Object.entries(R12_R11_DOCUMENT).reverse()),
+    accessor,
+    symbol,
+    proxy,
+    revoked.proxy,
+  ];
+  const source = await r6SourceNodes(),
+    entry = source.named("runFixturePreparation");
+  const statements = entry.body.statements,
+    stop = statements.findIndex((n) => n.getText(source.ast).startsWith("const diagnostics"));
+  assert.ok(stop > 0);
+  const prefix = statements
+    .slice(0, stop)
+    .map((n) => n.getText(source.ast))
+    .join("\n");
+  assert.ok(prefix.includes("validateR11RecoveryDocument(R11_RECOVERY_DOCUMENT)"));
+  const env = {
+    err: (code) => {
+      throw Error(code);
+    },
+    getValidatedR4ZeroAuth: () => sut.R4_RECOVERY_DOCUMENT,
+    getValidatedR7ZeroAuth: () => sut.R7_RECOVERY_DOCUMENT,
+  };
+  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]) {
+    env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
+    env["R" + n + "_RECOVERY_DOCUMENT"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
+  }
+  const runtime = new Function(
+    ...Object.keys(env),
+    source.named("recoveryBudget").getText(source.ast) + ";" + prefix,
+  );
+  const proof = r2Reconciliation(),
+    binding = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings;
+  for (const value of values) {
+    const io = {
+      page: {},
+      runtime: {},
+      broker: {},
+      recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+      recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
+      recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
+      recoveryLedgerR5: R6_R5_DOCUMENT,
+      recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
+      recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+      recoveryLedgerR8: R9_R8_DOCUMENT,
+      recoveryLedgerR9: R10_R9_DOCUMENT,
+      recoveryLedgerR10: sut.R10_RECOVERY_DOCUMENT,
+      recoveryLedgerR11: value,
+    };
+    for (const name of [
+      "read",
+      "rpcRead",
+      "fresh",
+      "link",
+      "command",
+      "official",
+      "verifyContext",
+      "generation",
+      "observedAfter",
+    ])
+      io[name] = () => {
+        effects++;
+        throw Error("CANARY_EFFECT");
+      };
+    assert.throws(
+      () =>
+        sut.createIntentBroker({
+          ...io,
+          persist: () => {
+            effects++;
+            return true;
+          },
+          beforeArm: () => {
+            effects++;
+          },
+        }),
+      /RECOVERY_R11_LEDGER/,
+    );
+    assert.throws(
+      () => sut.reconcileR1Recovery({ ...proof, ledgerR11: value }),
+      /RECOVERY_R11_LEDGER/,
+    );
+    await assert.rejects(() => sut.reconcileRecoveryCompetencies(io), /RECOVERY_R11_LEDGER/);
+    await assert.rejects(() => sut.prepareSourceAndList(io), /RECOVERY_R11_LEDGER/);
+    await assert.rejects(() => sut.prepareCompetencies(io, binding), /RECOVERY_R11_LEDGER/);
+    assert.throws(
+      () =>
+        runtime(...Object.keys(env).map((k) => (k === "R11_RECOVERY_DOCUMENT" ? value : env[k]))),
+      /RECOVERY_R11_LEDGER/,
+    );
+  }
+  assert.equal(reads, 0);
+  assert.equal(traps, 0);
+  assert.equal(effects, 0);
+});
+
+test("R12 the inherited uncertain request is permanently spent even with a new semantic UUID", async () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions());
+  await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(b);
+  try {
+    for (const requestId of ["af968191-7d60-4adb-9c60-ebd5f0741e8e", randomUUID()]) {
+      assert.throws(
+        () =>
+          b.arm({
+            rpc: "solicitar_parecer_interno",
+            payload: { p_id_competencia: f.row.id_competencia },
+            requestId,
+            verified: { context: true, capability: true, reconciled: true },
+            evidence: {
+              competencies: [
+                {
+                  official: true,
+                  current: true,
+                  organization: FIXTURE.organization,
+                  contract: FIXTURE.contract,
+                  id: f.row.id_competencia,
+                  month: "2026-10-01",
+                },
+              ],
+              analysisCurrent: true,
+              analysisComplete: true,
+              opinionGate: true,
+            },
+          }),
+        /RECOVERY_CONFIRMED_OPERATION|INTENT_ID/,
+      );
+    }
+    assert.equal(b.snapshot().count, 11);
+    assert.equal(sut.preparationIntentSummary(b).priorConfirmed, 10);
+    assert.equal(sut.preparationIntentSummary(b).priorReserved, 1);
+  } finally {
+    f.observer.close();
+  }
+});
+test("R12 thirteen new confirmations retain one reserved slot and never emit a current fake historical receipt", async () => {
+  const receipts = [],
+    b = sut.createIntentBroker(
+      r12RecoveryOptions({
+        persist: (r) => {
+          receipts.push(r);
+          return true;
+        },
+      }),
+    );
+  await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(b);
+  try {
+    for (let n = 0; n < 13; n++) {
+      r6AnalysisArm(b);
+      assert.equal(b.policy(r6AnalysisRequest()), true);
+      assert.equal(b.policy(r6AnalysisRequest({ stage: "RESPONSE" })), true);
+      b.resolve("confirmed");
+    }
+    assert.equal(receipts.length, 26);
+    assert.equal(
+      receipts.some((r) => r.requestId === "af968191-7d60-4adb-9c60-ebd5f0741e8e"),
+      false,
+    );
+    assert.equal(receipts.filter((r) => r.state === "confirmed").length, 13);
+    assert.deepEqual(sut.preparationIntentSummary(b), {
+      count: 24,
+      frozen: false,
+      pending: false,
+      sent: false,
+      priorConfirmed: 10,
+      priorReserved: 1,
+      newArmedCount: 13,
+      maxIntentions: 24,
+      maxNewIntentions: 13,
+    });
+    assert.throws(() => r6AnalysisArm(b), /INTENT_BUDGET/);
+  } finally {
+    f.observer.close();
+  }
+});
+test("R12 cloned foreign and already consumed October seals cannot authorize another recovery owner", async () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions());
+  await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(b);
+  try {
+    const other = sut.createIntentBroker(r12RecoveryOptions());
+    for (const token of [{ ...f.token }, f.token, null, undefined])
+      assert.throws(
+        () => other.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()), token),
+        /RECOVERY_R11_OPINION/,
+      );
+    assert.throws(
+      () => b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()), f.token),
+      /RECOVERY_R11_OPINION/,
+    );
+    assert.equal(other.snapshot().count, 11);
+  } finally {
+    f.observer.close();
+  }
+});

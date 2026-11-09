@@ -3654,7 +3654,7 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
     failed = false,
     closed = false,
     sealing = false;
-  let invalidRecoveryOpinionOrdinal = 0;
+  const rejectedOpinionOrdinals = new Map();
   let firstFailure = null;
   const recordFailure = (contractKind, stage, statusHTTP = "NONE", requestFailure = "NONE") => {
     failed = true;
@@ -3855,15 +3855,21 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
       try {
         query = parseObservedQuery(table, url);
       } catch {
-        // A rejected query is never admitted. Its known October scope still
-        // invalidates an earlier recovery seal before any further intention.
-        if (
-          table === "pareceres_internos" &&
-          url.searchParams
-            .getAll("id_competencia")
-            .some((value) => value === "eq." + R5_BINDINGS.competencies[0].id)
-        )
-          invalidRecoveryOpinionOrdinal = ordinal;
+        // Rejected queries remain unadmitted. Only a single exact competence
+        // filter proves an unrelated scope; missing or compound filters cannot
+        // preserve an earlier October seal or September post-ACK observation.
+        if (table === "pareceres_internos") {
+          const values = url.searchParams.getAll("id_competencia");
+          const exact =
+            values.length === 1
+              ? /^eq\.([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/.exec(
+                  values[0],
+                )
+              : null;
+          for (const competency of R5_BINDINGS.competencies)
+            if (!exact || exact[1] === competency.id)
+              rejectedOpinionOrdinals.set(competency.id, ordinal);
+        }
         return;
       }
       record = { table, query, ordinal, done: false };
@@ -4322,7 +4328,7 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
     );
   }
   function opinionObservation(competency, after) {
-    if (closed || sealing || failed || invalidRecoveryOpinionOrdinal > after)
+    if (closed || sealing || failed || (rejectedOpinionOrdinals.get(competency) || 0) > after)
       err("RECOVERY_R11_OPINION");
     const relevant = (record) =>
       record.table === "pareceres_internos" &&

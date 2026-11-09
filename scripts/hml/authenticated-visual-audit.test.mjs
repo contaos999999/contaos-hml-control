@@ -10805,7 +10805,12 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
       observer.sealRecoveryOpinion(broker, after),
     );
     const partial = { ...query };
-    partial.id_competencia = "in.(" + comp + "," + JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id + ")";
+    partial.id_competencia =
+      "in.(" +
+      comp +
+      "," +
+      JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id +
+      ")";
     emit(partial);
     const sep = JSON.parse(prep.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id;
     assert.throws(
