@@ -881,6 +881,14 @@ export function validateObservationDiagnostic(input, reportInput) {
   const first = value.firstFailure;
   if (first === null) return value;
   check(
+    report.completed === false &&
+      FAILURES.has(report.failure) &&
+      object(report.diagnostics) &&
+      FAILURES.has(report.diagnostics.primaryFailure) &&
+      report.failure === report.diagnostics.primaryFailure,
+    "INSPECTION_OBSERVATION",
+  );
+  check(
     orderedKeys(first, ["contractKind", "stage", "statusHTTP", "requestFailure"]),
     "INSPECTION_OBSERVATION",
   );
