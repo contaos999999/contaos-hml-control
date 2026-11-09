@@ -5546,6 +5546,8 @@ test("solicitacao unica: AUTO_DISCOVER preserva recibo vazio e prova completa", 
   const stat = async () => ({ isFile: () => true, isSymbolicLink: () => false, size: raw.length });
   const git = async (args) => {
     assert.equal(args.includes(""), false, "Git nunca recebe SHA vazio");
+    if (args[0] === "show" && args[1].startsWith("bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215:"))
+      return (await r8R7Fixture()).git(args);
     if (args[0] === "show" && args[1].startsWith(R5_R4_HEAD + ":"))
       return (await r5R4Fixture()).git(args);
     if (args[0] === "show") return raw;
@@ -5895,6 +5897,8 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     ancestors = [];
   const git = async (args) => {
     assert.equal(args.includes(""), false, "Git nunca recebe SHA vazio");
+    if (args[0] === "show" && args[1].startsWith("bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215:"))
+      return (await r8R7Fixture()).git(args);
     if (args[0] === "show" && args[1].startsWith(R5_R4_HEAD + ":"))
       return (await r5R4Fixture()).git(args);
     if (args[0] === "show") return raw;
@@ -10091,6 +10095,7 @@ test("R8 actual audit CLI rejects private manual before runtime but preserves pu
     "sourceModuleUrl",
     "fileURLToPath",
     "resolve",
+    "join",
     "fail",
     "browserEnvironment",
     "execFile",
@@ -10105,6 +10110,7 @@ test("R8 actual audit CLI rejects private manual before runtime but preserves pu
     new URL("./authenticated-visual-audit.mjs", import.meta.url).href,
     fileURLToPath,
     (await import("node:path")).resolve,
+    (await import("node:path")).join,
     (code) => {
       throw Object.assign(new Error(code), { code });
     },
