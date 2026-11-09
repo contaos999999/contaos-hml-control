@@ -321,7 +321,7 @@
         "supabase/tests/p0_crud_global_remaining.test.mjs",
         "supabase/tests/remaining_domains/ai_envelope.test.mjs"
       ],
-      "semantic_delta": "Delta4bda→9b55 contém migration aditiva de nove funções Copilot (três privadas sem EXECUTE externo e seis worker com EXECUTE somente service_role), elegibilidade documental/precedentes, sessão/RBAC canônicos, reserva/quota/lease e conclusão transacional. Restore compara assinatura, owner, ACL e corpo exatos e inclui testes SQL/concorrência; ajustes de fixtures de governança não alteram os consumidores A. Nenhuma Edge Function, guard existente, tabela, RLS ou assinatura/grant de API anterior foi modificada nesse delta. Não comprova aplicação da migration, deployment ou certificação HML da Trilha C.",
+      "semantic_delta": "Delta4bda→9b55 contém migration aditiva de nove funções Copilot (três privadas sem EXECUTE externo e seis worker com EXECUTE somente service_role), elegibilidade documental/precedentes, sessão/RBAC canônicos, reserva/quota/lease e conclusão transacional. O guard de catálogo histórico supabase/tests/history_catalog_compare.py foi ampliado aditivamente para nove identidades exatas, com prova nativa de assinatura, owner, ACL e corpo, preservando as comparações anteriores. Restore inclui testes SQL/concorrência; ajustes de fixtures de governança não alteram os consumidores A. Nenhum guard frontend, contrato anterior da Trilha A, Edge Function, tabela, RLS ou assinatura/grant de API anterior foi alterado nesse delta. Não comprova aplicação da migration, deployment ou certificação HML da Trilha C.",
       "failed_freshness_run": 42539653568,
       "failed_freshness_job": 128911511483,
       "source_gate_preserved": true,
