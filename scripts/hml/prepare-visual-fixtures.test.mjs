@@ -2048,3 +2048,36 @@ test("R2 consumidor real verifyContext recupera GET ausente sem envenenar primar
   assert.equal(d.snapshot().primaryFailure, "PREPARER_TIMEOUT");
   assert.equal(d.snapshot().subphase, "SOURCE_VERSION_READ");
 });
+
+test("R2 causa tecnica sobrevive ao wrapper real UI_UNCERTAIN sem alterar broker", async () => {
+  const d = sut.createPreparationDiagnostics();
+  const b = sut.createIntentBroker({ persist: () => true, competenceGateAmended: true });
+  const verified = { context: true, capability: true, reconciled: true };
+  const scope = { getByRole: () => ({
+    count: async () => 1,
+    isEnabled: async () => true,
+    click: async () => { throw Object.assign(new Error("PRIVATE_CANARY"), { name: "TimeoutError" }); },
+  }) };
+  await assert.rejects(() => sut.withPreparationDiagnostics(d, () =>
+    d.step("SOURCE_AND_LIST", () => sut.confirmUiIntent({
+      page: {}, scope, fence: { drain: async () => {}, assertSafe: () => {} },
+      broker: b, rpc: "criar_competencia", payload, evidence: {}, verified,
+      button: "offline", settleVerifiedPage: async () => {},
+      reconcile: async () => ({ payload, evidence: {}, verified }),
+    })),
+  ), { message: "UI_UNCERTAIN" });
+  assert.equal(d.snapshot().primaryFailure, "PREPARER_TIMEOUT");
+  assert.equal(d.snapshot().subphase, "UI_CONFIRM_CLICK");
+  assert.equal(JSON.stringify(d.snapshot()).includes("PRIVATE_CANARY"), false);
+  assert.equal(b.snapshot().sent, false);
+});
+test("R2 candidato recuperado nao reaparece quando o mesmo erro e reutilizado", async () => {
+  const d = sut.createPreparationDiagnostics(), error = new Error("OBSERVATION_TABLE");
+  await d.step("LOGIN", async () => {
+    try { await d.step("RUNTIME_CONTEXT", async () => { throw error; }); } catch {}
+  });
+  assert.equal(d.snapshot().primaryFailure, null);
+  await assert.rejects(() => d.step("SOURCE_VERSION_READ", async () => { throw error; }));
+  assert.equal(d.snapshot().primaryFailure, "OBSERVATION_TABLE");
+  assert.equal(d.snapshot().subphase, "SOURCE_VERSION_READ");
+});
