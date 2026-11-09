@@ -2919,3 +2919,69 @@ test("R4 report derives real arm sent and terminal scalars without request ident
   assert.equal(Object.hasOwn(sut.preparationIntentSummary(b), "requestId"), false);
   assert.equal(sut.preparationIntentSummary(null), null);
 });
+
+test("R4 actual recovery model initializer uses the already observed matching list", async () => {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+      new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile("preparer.mjs", source, 99, true, 1);
+  let statement;
+  function visit(n) {
+    if (
+      ts.isVariableStatement(n) &&
+      n.getText(ast).startsWith("const model =") &&
+      n.getText(ast).includes('io.rpcRead("obter_lista_operacional_v1"')
+    )
+      statement = n.getText(ast);
+    ts.forEachChild(n, visit);
+  }
+  visit(ast);
+  assert.ok(statement);
+  const result = await new (Object.getPrototypeOf(async () => {}).constructor)(
+    "io",
+    "matching",
+    "FIXTURE",
+    "tracedPreparation",
+    statement + ";return model;",
+  )(
+    {
+      rpcRead: async (name, args) => {
+        assert.equal(name, "obter_lista_operacional_v1");
+        assert.equal(args.p_id_lista, id);
+        return { verified: true };
+      },
+    },
+    [{ id }],
+    FIXTURE,
+    async (_, fn) => fn(),
+  );
+  assert.equal(result.verified, true);
+});
+
+test("R4 closed recovery and observation codes survive cleanup without private diagnostics", async () => {
+  for (const code of [
+    "RECOVERY_R3_LEDGER",
+    "RECOVERY_SOURCE_INACTIVE",
+    "FLOW_LIST_READBACK_VERSION",
+    "OBSERVATION_MUTATION",
+    "OBSERVATION_ORDINAL",
+  ]) {
+    const d = sut.createPreparationDiagnostics();
+    try {
+      await d.step("RECOVERY_READ", () => {
+        throw Error(code);
+      });
+    } catch (error) {
+      d.capture(error);
+    }
+    await d.cleanup(() => {
+      throw Error("PRIVATE_TOKEN_URL");
+    });
+    assert.equal(d.snapshot().primaryFailure, code);
+    assert.equal(d.snapshot().cleanupFailure, "LOGOUT_FAILED");
+    assert.equal(JSON.stringify(d.snapshot()).includes("PRIVATE_TOKEN"), false);
+  }
+});

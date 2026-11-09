@@ -3030,7 +3030,7 @@ export async function prepareSourceAndList(io) {
         io.rpcRead("obter_lista_operacional_v1", {
           p_id_organizacao: FIXTURE.organization,
           p_id_contrato: FIXTURE.contract,
-          ...(model?.lista?.id ? { p_id_lista: model.lista.id } : {}),
+          ...(matching[0]?.id ? { p_id_lista: matching[0].id } : {}),
         }),
       );
       assert(
@@ -4571,6 +4571,11 @@ export function validatePreparerIdentity(env, proof, native, identity, head) {
   );
 }
 const PREPARER_FAILURE_CODES = new Set([
+  "RECOVERY_R3_LEDGER",
+  "RECOVERY_SOURCE_INACTIVE",
+  "FLOW_LIST_READBACK_VERSION",
+  "OBSERVATION_MUTATION",
+  "OBSERVATION_ORDINAL",
   "RECOVERY_LEDGER",
   "RECOVERY_STATE",
   "RECOVERY_LIST",
