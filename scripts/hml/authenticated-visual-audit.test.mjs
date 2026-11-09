@@ -5899,3 +5899,103 @@ test("Run114 diagnóstico limita contadores e ignora getters de campos não auto
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: 40000 }).overflowX, 30000);
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: -40000 }).overflowX, -30000);
 });
+
+const diagnosticMetrics = (delta = {}) => ({
+  viewport: { width: 390, height: 1000 },
+  theme: "light",
+  passed: false,
+  identityPassed: true, geometryPassed: false, tablePassed: true, datesPassed: true, contrastPassed: true,
+  overflowX: 0, table: null, dates: [], contrast: [], pairs: [],
+  targets: [{ ordinal: 0, kind: "INPUT", rect: { x: 16, y: 100, width: 200, height: 44 }, connected: true, visible: true, disabled: false, hit: false }],
+  ...delta,
+});
+test("FAIL_UI diagnóstico: guard real retém causa fechada no report sem PNG", async () => {
+  let saves = 0, privacy = 0;
+  const record = {};
+  try {
+    await fn("captureVisualEvidence")({
+      brand: async () => ({ decoded: true }), drain: async () => {}, stabilize: async () => {},
+      measure: async () => diagnosticMetrics(),
+      privacy: async () => { privacy++; return true; }, save: async () => { saves++; },
+    });
+    assert.fail("guard deve falhar");
+  } catch (error) {
+    fn("recordCaseFailure")(record, error, "CAPTURE_PRIMARY");
+  }
+  assert.equal(saves, 0); assert.equal(privacy, 0);
+  assert.equal(record.status, "FAIL_UI"); assert.equal(record.visualFailure, "VISUAL_MEASUREMENT");
+  assert.equal(record.diagnostic.stage, "CAPTURE_PRIMARY");
+  assert.equal(record.diagnostic.errorKind, "KNOWN_VISUAL");
+  assert.equal(record.diagnostic.visual.flags.geometryPassed, false);
+  assert.equal(record.diagnostic.visual.counts.notHit, 1);
+  assert.deepEqual(record.diagnostic.visual.failedTargets[0], {
+    ordinal: 0, kind: "INPUT", rect: { x: 16, y: 100, width: 200, height: 44 },
+    connected: true, visible: true, disabled: false, hit: false,
+  });
+});
+test("FAIL_UI diagnóstico: exceção antes de privacy não exporta objeto lançado", () => {
+  const canary = "private.person@example.invalid Bearer NEVER_EXPORT";
+  const record = {};
+  fn("recordCaseFailure")(record, Object.assign(new Error(canary), {
+    name: canary, code: canary, cause: canary, visualDiagnostic: { raw: canary }, stack: canary,
+  }), "PRIVACY_PRIMARY");
+  assert.equal(record.status, "FAIL_UI");
+  assert.equal(record.diagnostic.stage, "PRIVACY_PRIMARY");
+  assert.equal(record.diagnostic.errorKind, "OTHER");
+  assert.deepEqual(record.diagnostic.visual, { observed: false, state: "UNOBSERVED" });
+  assert.equal(JSON.stringify(record).includes(canary), false);
+  const invalid = {};
+  fn("recordCaseFailure")(invalid, { get code() { throw Error(canary); } }, canary);
+  assert.equal(invalid.diagnostic.stage, null);
+  assert.equal(JSON.stringify(invalid).includes(canary), false);
+});
+test("FAIL_UI diagnóstico: métricas malformadas não viram zeros ou strings públicas", () => {
+  const summary = fn("summarizeVisualFailure");
+  for (const delta of [
+    { viewport: { width: "390", height: 1000 } }, { overflowX: Infinity },
+    { geometryPassed: "false" }, { targets: Array(257).fill(diagnosticMetrics().targets[0]) },
+    { targets: [{ ...diagnosticMetrics().targets[0], kind: "private.person@example.invalid" }] },
+    { targets: [{ ...diagnosticMetrics().targets[0], ordinal: 256 }] },
+    { targets: [{ ...diagnosticMetrics().targets[0], rect: { x: NaN, y: 0, width: 1, height: 1 } }] },
+  ]) assert.deepEqual(summary(diagnosticMetrics(delta)), { observed: false, state: "INVALID" });
+  const valid = summary(diagnosticMetrics({ privatePayload: "NEVER_EXPORT" }));
+  assert.equal(valid.observed, true);
+  assert.equal(JSON.stringify(valid).includes("NEVER_EXPORT"), false);
+});
+test("FAIL_UI diagnóstico: disabled dispensa apenas hit e limites continuam causais", () => {
+  const summary = fn("summarizeVisualFailure"), geometry = fn("visualGeometryValid");
+  const target = diagnosticMetrics().targets[0];
+  for (const [disabled, x, expected, notHit, boundsX] of [
+    [false, 16, false, 1, 0], [true, 16, true, 0, 0],
+    [false, 16, false, 1, 0], [true, 380, false, 0, 1],
+  ]) {
+    const metrics = diagnosticMetrics({ targets: [{ ...target, disabled, rect: { ...target.rect, x } }] });
+    assert.equal(geometry(metrics), expected);
+    const result = summary(metrics);
+    assert.equal(result.counts.notHit, notHit); assert.equal(result.counts.boundsX, boundsX);
+  }
+});
+test("FAIL_UI diagnóstico: no máximo oito alvos sem texto com contagem integral", () => {
+  const result = fn("summarizeVisualFailure")(diagnosticMetrics({
+    targets: Array.from({ length: 9 }, (_, ordinal) => ({ ...diagnosticMetrics().targets[0], ordinal })),
+    table: { clipping: 2, helpTargets: [{ x: 0, y: 0, width: 20, height: 44 }] },
+    dates: [{ present: false, scheme: "light" }, { present: true, scheme: "dark" }],
+    contrast: [{ ratio: 3.5, threshold: 4.5 }],
+  }));
+  assert.equal(result.counts.targetsExamined, 9); assert.equal(result.counts.notHit, 9);
+  assert.equal(result.failedTargets.length, 8);
+  assert.deepEqual(result.table, { clipping: 2, helpBelow44: 1 });
+  assert.deepEqual(result.dates, { absent: 1, schemeMismatch: 1 });
+  assert.deepEqual(result.contrast, { count: 1, minimum: 3.5, threshold: 4.5 });
+});
+test("FAIL_UI diagnóstico: PII conserva bloqueio e código desconhecido não é publicado", () => {
+  for (const code of ["PII_SUPPLEMENT", "PII_VISUAL_CAPTURE"]) {
+    const record = {};
+    fn("recordCaseFailure")(record, { code, message: "NEVER_EXPORT" }, "CAPTURE_SUPPLEMENT");
+    assert.equal(record.status, "BLOQUEADO_PII"); assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
+  }
+  const record = {};
+  fn("recordCaseFailure")(record, { name: "TimeoutError", code: "NEVER_EXPORT" }, "WAIT_SURFACE");
+  assert.equal(record.diagnostic.errorKind, "TIMEOUT");
+  assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
+});
