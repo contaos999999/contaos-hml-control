@@ -10375,8 +10375,12 @@ for (const mode of ["stale", "inflight", "tenant", "competency", "id", "status",
         if (mode === "timestamp") row.aprovado_em = null;
         f.endRead(f.beginRead(), [row]);
       }
-      await f.observer.flush();
-      await assert.rejects(() => f.observer.read("pareceres_internos", f.where), /PHASE_TIMEOUT/);
+      if (["tenant", "competency"].includes(mode)) {
+        await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+      } else {
+        await f.observer.flush();
+        await assert.rejects(() => f.observer.read("pareceres_internos", f.where), /PHASE_TIMEOUT/);
+      }
     } finally {
       f.observer.close();
     }
