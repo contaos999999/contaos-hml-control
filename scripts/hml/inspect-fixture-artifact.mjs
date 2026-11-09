@@ -775,7 +775,12 @@ export function validateRecords(reportInput, receiptsInput) {
       priorConfirmed: 8,
       newArmedCount: ledger?.newArmedCount ?? "UNKNOWN",
       newConfirmed:
-        ledger === null || ledger.pending || [...seen.values()].some((x) => x.state !== "confirmed")
+        ledger === null ||
+        ledger.frozen ||
+        ledger.pending ||
+        ledger.sent ||
+        seen.size !== ledger.newArmedCount ||
+        [...seen.values()].some((x) => x.state !== "confirmed")
           ? "UNKNOWN"
           : [...seen.values()].filter((x) => x.state === "confirmed").length,
       logoutVerified: r.logoutVerified,
