@@ -8,6 +8,9 @@ import {
   linkSync,
   mkdirSync,
   readFileSync,
+  renameSync,
+  lstatSync,
+  utimesSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -634,4 +637,27 @@ test("R6 armed intentions without a complete confirmed receipt ledger remain UNK
   const frozen = report();
   frozen.intentLedger.frozen = true;
   assert.equal(validateRecords(frozen, empty()).observations.newConfirmed, "UNKNOWN");
+});
+
+test("R6 directory FD prevents parent replacement from redirecting any artifact read", (t) => {
+  const root = fixture(t),
+    victim = fixture(t),
+    original = root + "-original";
+  t.after(() => rmSync(original, { recursive: true, force: true }));
+  const watched = join(victim, "receipts.json");
+  utimesSync(watched, new Date(1000), new Date(1000));
+  const before = lstatSync(watched).atimeMs;
+  let changed = false,
+    output = "";
+  assert.throws(() => {
+    output = buildProof(root, inspection, () => {
+      if (!changed) {
+        changed = true;
+        renameSync(root, original);
+        symlinkSync(victim, root);
+      }
+    });
+  });
+  assert.equal(output, "");
+  assert.equal(lstatSync(watched).atimeMs, before);
 });
