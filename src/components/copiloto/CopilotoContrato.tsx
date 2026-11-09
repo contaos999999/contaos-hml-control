@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { acaoCopiloto, type PaginaSessoes, type PaginaHistorico, type SessaoCopiloto } from "@/lib/copiloto/copilotoApi";
 import { EVENTO_ORGANIZACAO_ALTERADA } from "@/lib/organizacao/preferenciaOrganizacao";
 
 type Mensagem = {
@@ -33,6 +34,12 @@ export function CopilotoContrato({
   const [pergunta, setPergunta] = useState("");
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [sessao, setSessao] = useState<string | null>(null);
+  const [sessoes, setSessoes] = useState<SessaoCopiloto[]>([]);
+  const [cursorSessoes, setCursorSessoes] = useState<string | null>(null);
+  const [cursorHistorico, setCursorHistorico] = useState<string | null>(null);
+  const [encerrada, setEncerrada] = useState(false);
+  const [incerto, setIncerto] = useState(false);
+  const [carregandoHistorico, setCarregandoHistorico] = useState(false);
   const [erro, setErro] = useState("");
   const [enviando, setEnviando] = useState(false);
   const geracao = useRef(0);
@@ -56,6 +63,11 @@ export function CopilotoContrato({
       setReferencia(null);
       setContratos([]);
       setSessao(null);
+      setSessoes([]);
+      setCursorSessoes(null);
+      setCursorHistorico(null);
+      setEncerrada(false);
+      setIncerto(false);
       setMensagens([]);
       setPergunta("");
       setErro("");
@@ -157,11 +169,117 @@ export function CopilotoContrato({
     ocupado.current = false;
     setSelecionado(contratos.some((c) => c.id === id) ? id : "");
     setSessao(null);
+    setSessoes([]);
+    setCursorSessoes(null);
+    setCursorHistorico(null);
+    setEncerrada(false);
+    setIncerto(false);
     setMensagens([]);
     setPergunta("");
     setErro("");
     setEnviando(false);
   }
+
+  async function listarSessoes(mais = false) {
+    if (!contratoAtual || !contextoTemporalPronto || ocupado.current) return;
+    const epoca = geracao.current;
+    const controlador = new AbortController();
+    requisicao.current?.abort();
+    requisicao.current = controlador;
+    setCarregandoHistorico(true);
+    setErro("");
+    try {
+      const pagina = await acaoCopiloto<PaginaSessoes>("listar_sessoes", contratoAtual, {
+        referencia, cursor: mais ? cursorSessoes : null, signal: controlador.signal,
+      });
+      if (epoca !== geracao.current || controlador.signal.aborted) return;
+      setSessoes((anteriores) => mais
+        ? [...anteriores, ...pagina.sessoes.filter((nova) => !anteriores.some((antiga) => antiga.id === nova.id))]
+        : pagina.sessoes);
+      setCursorSessoes(pagina.proximo_cursor);
+      setIncerto(false);
+    } catch {
+      if (epoca === geracao.current && !controlador.signal.aborted) {
+        setMensagens([]);
+        setErro("Não foi possível atualizar as sessões autorizadas.");
+      }
+    } finally {
+      if (epoca === geracao.current) setCarregandoHistorico(false);
+    }
+  }
+
+  async function carregarHistorico(id: string, mais = false) {
+    if (!contratoAtual || !contextoTemporalPronto || ocupado.current) return;
+    const epoca = ++geracao.current;
+    requisicao.current?.abort();
+    const controlador = new AbortController();
+    requisicao.current = controlador;
+    setCarregandoHistorico(true);
+    setErro("");
+    if (!mais) {
+      setSessao(id);
+      setMensagens([]);
+      setCursorHistorico(null);
+    }
+    try {
+      const pagina = await acaoCopiloto<PaginaHistorico>("historico", contratoAtual, {
+        sessaoId: id, referencia, cursor: mais ? cursorHistorico : null, signal: controlador.signal,
+      });
+      if (epoca !== geracao.current || controlador.signal.aborted) return;
+      const convertidas: Mensagem[] = pagina.mensagens.map((m) => ({
+        papel: m.papel,
+        conteudo: m.conteudo_disponivel && m.conteudo !== null ? m.conteudo : "[Conteúdo indisponível ou revogado]",
+        fontes: m.conteudo_disponivel ? (m.fontes ?? []) : [],
+      }));
+      setMensagens((anteriores) => mais ? [...convertidas, ...anteriores] : convertidas);
+      setCursorHistorico(pagina.proximo_cursor);
+      setEncerrada(pagina.sessao.status === "encerrada");
+      setIncerto(false);
+    } catch {
+      if (epoca === geracao.current && !controlador.signal.aborted) {
+        setMensagens([]);
+        setErro("Histórico indisponível ou acesso revogado. Atualize as sessões.");
+      }
+    } finally {
+      if (epoca === geracao.current) setCarregandoHistorico(false);
+    }
+  }
+
+  async function encerrarSessao() {
+    if (!sessao || !contratoAtual || ocupado.current) return;
+    const epoca = geracao.current;
+    setCarregandoHistorico(true);
+    try {
+      await acaoCopiloto("encerrar_sessao", contratoAtual, { sessaoId: sessao, referencia });
+      if (epoca !== geracao.current) return;
+      setEncerrada(true);
+      setSessoes((anteriores) => anteriores.map((s) => s.id === sessao ? {...s, status:"encerrada"} : s));
+    } catch {
+      if (epoca === geracao.current) setErro("Encerramento não confirmado. Consulte novamente antes de repetir.");
+    } finally {
+      if (epoca === geracao.current) setCarregandoHistorico(false);
+    }
+  }
+
+  function novaConversa() {
+    geracao.current++;
+    requisicao.current?.abort();
+    ocupado.current = false;
+    setSessao(null);
+    setMensagens([]);
+    setCursorHistorico(null);
+    setEncerrada(false);
+    setIncerto(false);
+    setErro("");
+    setEnviando(false);
+  }
+
+  useEffect(() => {
+    if (!aberto || !contratoAtual || !contextoTemporalPronto) return;
+    void listarSessoes();
+    // Revalidar sessões a cada abertura/contexto; não reusar cache sensível.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aberto, contratoAtual, referencia, contextoTemporalPronto]);
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -171,6 +289,7 @@ export function CopilotoContrato({
       ocupado.current ||
       texto.length > 12000 ||
       !contratoAtual ||
+      encerrada || incerto ||
       !contextoTemporalPronto
     )
       return;
@@ -183,7 +302,7 @@ export function CopilotoContrato({
     setMensagens((prev) => [...prev, { papel: "usuario", conteudo: texto }]);
     const controlador = new AbortController();
     requisicao.current = controlador;
-    const temporizador = window.setTimeout(() => controlador.abort(), 20000);
+    const temporizador = window.setTimeout(() => controlador.abort(), 50000);
     let aoAbortar: () => void = () => {};
     const cancelamento = new Promise<never>((_, reject) => {
       aoAbortar = () => reject(new Error("consulta interrompida"));
@@ -218,8 +337,10 @@ export function CopilotoContrato({
         },
       ]);
     } catch {
-      if (atual === geracao.current)
-        setErro("A consulta não foi concluída. Tente novamente.");
+      if (atual === geracao.current) {
+        setIncerto(true);
+        setErro("Resultado incerto: atualize as sessões e confira o histórico antes de reenviar. Não houve reenvio automático.");
+      }
     } finally {
       window.clearTimeout(temporizador);
       controlador.signal.removeEventListener("abort", aoAbortar);
@@ -253,6 +374,14 @@ export function CopilotoContrato({
             Respostas informativas com fontes, sujeitas a incerteza e revisão
             humana. Aprovações e alterações exigem os fluxos oficiais.
           </p>
+          <div className="mb-2 flex flex-wrap gap-2 text-xs">
+            <button type="button" onClick={() => void listarSessoes()} disabled={carregandoHistorico || enviando || !contratoAtual}>Atualizar sessões</button>
+            <button type="button" onClick={novaConversa} disabled={enviando}>Nova conversa</button>
+            {sessao && !encerrada && <button type="button" onClick={() => void encerrarSessao()} disabled={carregandoHistorico || enviando}>Encerrar conversa</button>}
+          </div>
+          {sessoes.length > 0 && <div className="mb-2 max-h-24 overflow-y-auto" aria-label="Conversas anteriores">{sessoes.map((s) => <button className="block w-full text-left text-xs underline" type="button" key={s.id} disabled={carregandoHistorico || enviando} onClick={() => void carregarHistorico(s.id)}>{s.titulo || "Conversa"} ({s.status})</button>)}{cursorSessoes && <button type="button" onClick={() => void listarSessoes(true)}>Mais conversas</button>}</div>}
+          {sessao && cursorHistorico && <button type="button" disabled={carregandoHistorico || enviando} onClick={() => void carregarHistorico(sessao, true)}>Carregar mensagens anteriores</button>}
+          {encerrada && <p role="status">Conversa encerrada, somente leitura.</p>}
           <div
             role="log"
             aria-live="polite"
@@ -336,7 +465,7 @@ export function CopilotoContrato({
             <button
               type="submit"
               disabled={
-                enviando ||
+                enviando || encerrada || incerto || carregandoHistorico ||
                 !pergunta.trim() ||
                 !contratoAtual ||
                 carregandoContratos ||
