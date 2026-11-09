@@ -303,8 +303,8 @@ export function CopilotoContrato({
     if (!aberto || !contratoAtual || !contextoTemporalPronto) return;
     const atualizar = () => {
       if (document.visibilityState === "visible" && !ocupado.current) {
-        void listarSessoes();
         if (sessao) void carregarHistorico(sessao);
+        else void listarSessoes();
       }
     };
     window.addEventListener("focus", atualizar);
@@ -362,6 +362,7 @@ export function CopilotoContrato({
           data?.mensagem || "Não foi possível concluir a consulta.",
         );
       }
+      ultimaSessao.current = data.id_sessao;
       setSessao(data.id_sessao);
       setIncerto(false);
       setMensagens((prev) => [
