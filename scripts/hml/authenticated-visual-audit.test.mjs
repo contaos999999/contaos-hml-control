@@ -6554,3 +6554,33 @@ test("privacy112 link requires source attributes and exact plain span subtree", 
     }
   }
 });
+
+test("popup policy: launch args are closed and require the restrictive switch", () => {
+  const args = fn("nativeBrowserArgs")(9222);
+  assert.deepEqual(args, ["--remote-debugging-port=9222", "--block-new-web-contents"]);
+  assert.deepEqual(fn("nativeBrowserArgs")(9222, true), [...args, "--proxy-bypass-list=<-loopback>"]);
+  for (const port of [undefined, 0, -1, 1.5, 65536, "9222"])
+    assert.throws(() => fn("nativeBrowserArgs")(port), { code: "BROWSER_POLICY" });
+});
+test("popup policy: actual command line and version reject missing overrides and unsafe switches", () => {
+  const check = fn("verifyNativeBrowserPolicy");
+  const args = ["/trusted/chrome-headless-shell", "--headless", "--block-new-web-contents"];
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  assert.equal(check(args, version), true);
+  for (const bad of [null, {}, [], args.slice(0, 2), [...args, "--block-new-web-contents"],
+    [...args, "--block-new-web-contents=false"], [...args, "--no-sandbox=false"],
+    [...args, "--disable-web-security=false"], [...args, "--disable-setuid-sandbox"],
+    [...args, "--ignore-certificate-errors=true"], [...args, "--allow-running-insecure-content"],
+    [...args, null], [...args, "SYNTHETIC_SECRET_CANARY\n"]])
+    assert.throws(() => check(bad, version), { code: "BROWSER_POLICY" });
+  for (const product of ["Chrome/145.0.7632.6", "HeadlessChrome/146.0.0.0", undefined])
+    assert.throws(() => check(args, { product }), { code: "BROWSER_POLICY" });
+});
+test("popup policy: both authenticated consumers and native tests use the proved launcher", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const audit = await readFile(new URL("./authenticated-visual-audit.mjs", import.meta.url), "utf8");
+  const preparer = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8");
+  assert.match(audit, /browser = await launchNativeBrowser\(/);
+  assert.match(preparer, /browser = await launchNativeBrowser\(/);
+  assert.doesNotMatch(preparer, /chromium\.launch\(/);
+});
