@@ -3414,6 +3414,7 @@ test("R4 approved minimal projections RPC5 causal observer cases", async () => {
       rpc: "obter_analise_competencia_v116",
       args: { p_id_competencia: C },
       old: {
+        mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
         schema_versao: "v116-v1",
         competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
         estado_analise: "not_analyzed",
@@ -3421,6 +3422,7 @@ test("R4 approved minimal projections RPC5 causal observer cases", async () => {
         resultados: [],
       },
       fresh: {
+        mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
         schema_versao: "v116-v1",
         competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
         estado_analise: "queued",
@@ -3436,6 +3438,7 @@ test("R4 approved minimal projections RPC5 causal observer cases", async () => {
       rpc: "obter_analise_competencia_v116",
       args: { p_id_competencia: C },
       old: {
+        mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
         schema_versao: "v116-v1",
         competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
         estado_analise: "complete",
@@ -3443,6 +3446,7 @@ test("R4 approved minimal projections RPC5 causal observer cases", async () => {
         resultados: [],
       },
       fresh: {
+        mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
         schema_versao: "v116-v1",
         competencia: { id: C, id_contrato: F.contract, id_organizacao: F.organization },
         estado_analise: "complete",
@@ -3963,6 +3967,7 @@ test("R4 readback returns the validated ACK identity without a later reselect", 
     });
   }
   const dto = (id) => ({
+    mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
     schema_versao: "v116-v1",
     competencia: { id: C, id_organizacao: F.organization, id_contrato: F.contract },
     execucao_atual: { id },
@@ -4023,6 +4028,7 @@ test("R4 postACK analysis refuses old execution identity in otherwise valid comp
   a(q("solicitar_analise_competencia", { p_id_competencia: C }), NEW);
   await o.flush();
   a(q("obter_analise_competencia_v116", { p_id_competencia: C }), {
+    mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
     schema_versao: "v116-v1",
     competencia: { id: C, id_organizacao: F.organization, id_contrato: F.contract },
     execucao_atual: { id: OLD },
@@ -4126,6 +4132,7 @@ test("R4 causal RPC read validates options before returning an admitted snapshot
   a(q("solicitar_analise_competencia", { p_id_competencia: C }), NEW);
   await o.flush();
   a(q("obter_analise_competencia_v116", { p_id_competencia: C }), {
+    mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
     schema_versao: "v116-v1",
     competencia: { id: C, id_organizacao: F.organization, id_contrato: F.contract },
     execucao_atual: { id: NEW },
@@ -5349,6 +5356,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       "r7Recovery",
       "r8Recovery",
       "r9Recovery",
+      "r10Recovery",
       "observationDiagnostic",
       "createHash",
       "readFile",
@@ -5365,6 +5373,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       sut.R7_RECOVERY_DOCUMENT,
       sut.R8_RECOVERY_DOCUMENT,
       sut.R9_RECOVERY_DOCUMENT,
+      sut.R10_RECOVERY_DOCUMENT,
       sut.createObservationDiagnostic(
         (({ frontendSha, harnessSha, deploymentId, workflowRun }) => ({
           frontendSha,
@@ -5378,10 +5387,10 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       async (_, run) => run(),
     );
     const names = (await fs.readdir(output)).sort();
-    assert.equal(names.length, 17);
+    assert.equal(names.length, 19);
     const manifest = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(manifest.length, 16);
-    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 16);
+    assert.equal(manifest.length, 18);
+    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 18);
     for (const line of manifest) {
       assert.match(line, /^[0-9a-f]{64}  [a-z0-9.-]+$/);
       const bytes = await fs.readFile(join(output, line.slice(66)));
@@ -5761,9 +5770,9 @@ test("R9 actual artifact writer appends R8 originals and the separate observatio
     )(...Object.values(env));
     const names = (await fs.readdir(output)).sort(),
       lines = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(names.length, 17);
-    assert.equal(lines.length, 16);
-    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 16);
+    assert.equal(names.length, 19);
+    assert.equal(lines.length, 18);
+    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 18);
     for (const line of lines)
       assert.equal(
         createHash("sha256")
@@ -6503,6 +6512,7 @@ async function r9ExistingConsumer(
       assert.equal(rpc, "obter_analise_competencia_v116");
       const estado_analise = analysisStates[Math.min(reads - 1, analysisStates.length - 1)];
       return {
+        mecanismos: { deterministico: 0, semantico: 0, humano: 0, nao_identificado: 0 },
         schema_versao: "v116-v1",
         competencia,
         estado_analise,

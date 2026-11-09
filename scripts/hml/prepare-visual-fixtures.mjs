@@ -911,7 +911,7 @@ export function validateR10RecoveryDocument(input) {
   const names = Object.keys(R10_RECOVERY_DOCUMENT),
     ds = Object.getOwnPropertyDescriptors(input),
     clean = {};
-  if (Reflect.ownKeys(ds).length !== names.length) err("RECOVERY_R10_LEDGER");
+  if (!same(Reflect.ownKeys(ds), names)) err("RECOVERY_R10_LEDGER");
   for (const key of names) {
     const d = ds[key];
     if (!d || !Object.hasOwn(d, "value") || d.enumerable !== true || typeof d.value !== "string")
@@ -2865,6 +2865,28 @@ const SCOPED_RPC_FIELDS = Object.freeze({
 export function projectScopedRpcResponse(rpc, value) {
   const contract = SCOPED_RPC_FIELDS[rpc];
   if (!contract) err("OBSERVATION_ENDPOINT");
+  const common = {
+    allowed_actions: "executar_analise reanalisar abrir_requisito",
+    resultados_paginacao: "offset limite total",
+    execucoes_paginacao: "offset limite total",
+    apontamentos_paginacao: "offset limite total",
+    evidencias_paginacao: "offset limite total",
+    historico_paginacao: "offset limite total",
+    ...(rpc === "obter_analise_competencia_v116"
+      ? {
+          blocking_summary:
+            "total conformes_ou_na_validos pendentes nao_conformes inconclusivos em_analise nao_conformidades_bloqueantes percentual liberado",
+        }
+      : {}),
+  };
+  const nullableObjects = new Set([
+    "execucao_atual",
+    "resultado_atual",
+    "resultado_referencia",
+    "na_validade",
+    "apontamentos.*.requisito",
+    "evidencias.*.documento",
+  ]);
   const omit = new Set(
     rpc === "obter_analise_competencia_v116"
       ? [
@@ -2898,6 +2920,14 @@ export function projectScopedRpcResponse(rpc, value) {
   function walk(input, path = "", depth = 0, strict = false) {
     if (depth > 24) err("OBSERVATION_LIMIT");
     if (isProxy(input)) err("OBSERVATION_SCHEMA");
+    const fieldList = contract[path] || common[path];
+    if (fieldList && (Array.isArray(input) || (input === null && !nullableObjects.has(path))))
+      err("OBSERVATION_SCHEMA");
+    if (
+      path === "mecanismos" &&
+      (input === null || typeof input !== "object" || Array.isArray(input))
+    )
+      err("OBSERVATION_SCHEMA");
     if (arrays.has(path) && !Array.isArray(input)) err("OBSERVATION_SCHEMA");
     if (Array.isArray(input)) {
       if (Object.getPrototypeOf(input) !== Array.prototype || input.length > 1000)
@@ -2927,7 +2957,18 @@ export function projectScopedRpcResponse(rpc, value) {
         }
         return result;
       }
-      const fields = contract[path] ? new Set(contract[path].split(" ")) : null;
+      const fields = fieldList ? new Set(fieldList.split(" ")) : null;
+      if (
+        path === "allowed_actions" &&
+        (keys.length !== 3 ||
+          ["executar_analise", "reanalisar", "abrir_requisito"].some((k) => !ds[k]))
+      )
+        err("OBSERVATION_SCHEMA");
+      if (
+        path.endsWith("_paginacao") &&
+        (keys.length !== 3 || ["offset", "limite", "total"].some((k) => !ds[k]))
+      )
+        err("OBSERVATION_SCHEMA");
       for (const key of keys) {
         if (typeof key !== "string" || ["__proto__", "prototype", "constructor"].includes(key))
           err("OBSERVATION_SCHEMA");
@@ -2948,6 +2989,35 @@ export function projectScopedRpcResponse(rpc, value) {
         }
         const d = ds[key];
         if (!Object.hasOwn(d, "value") || !d.enumerable) err("OBSERVATION_SCHEMA");
+        if (path === "allowed_actions" && typeof d.value !== "boolean") err("OBSERVATION_SCHEMA");
+        if (
+          path.endsWith("_paginacao") &&
+          (!Number.isSafeInteger(d.value) ||
+            d.value < 0 ||
+            (key === "limite" &&
+              d.value !==
+                (rpc === "obter_analise_competencia_v116" && path === "execucoes_paginacao"
+                  ? 10
+                  : 25)))
+        )
+          err("OBSERVATION_SCHEMA");
+        if (
+          path === "blocking_summary" &&
+          (key === "liberado"
+            ? typeof d.value !== "boolean"
+            : key === "percentual"
+              ? typeof d.value !== "number" ||
+                !Number.isFinite(d.value) ||
+                d.value < 0 ||
+                d.value > 100
+              : !Number.isSafeInteger(d.value) || d.value < 0)
+        )
+          err("OBSERVATION_SCHEMA");
+        if (
+          child === "schema_versao" &&
+          d.value !== (rpc === "obter_analise_competencia_v116" ? "v116-v1" : "v117-v1")
+        )
+          err("OBSERVATION_SCHEMA");
         if (
           child === "apontamentos.*.acao_sugerida" &&
           d.value !== null &&
@@ -6430,6 +6500,7 @@ async function runFixturePreparation() {
     r7Recovery,
     r8Recovery,
     r9Recovery,
+    r10Recovery,
   );
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
