@@ -1664,6 +1664,29 @@ function r2Reconciliation(delta = {}) {
     ...delta,
   };
 }
+test("R2 ledger omitido undefined ou null não emite prova de reconciliação", () => {
+  const omitted = r2Reconciliation();
+  delete omitted.ledger;
+  const broker = sut.createIntentBroker({
+    persist: () => true,
+    recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
+  });
+  for (const input of [
+    omitted,
+    r2Reconciliation({ ledger: undefined }),
+    r2Reconciliation({ ledger: null }),
+  ]) {
+    assert.throws(() => broker.authorizeRecovery(sut.reconcileR1Recovery(input)), {
+      message: "RECOVERY_LEDGER",
+    });
+    assert.equal(broker.snapshot().count, 2);
+    assert.throws(() => arm(broker), { message: "RECOVERY_READ_ONLY" });
+  }
+  assert.throws(() => sut.validateR1RecoveryDocument(), { message: "RECOVERY_LEDGER" });
+  assert.throws(() => sut.validateR1RecoveryDocument(undefined), { message: "RECOVERY_LEDGER" });
+  assert.throws(() => sut.validateR1RecoveryDocument(null), { message: "RECOVERY_LEDGER" });
+});
+
 test("R2 reconcilia somente estado oficial unico aprovado antes de armar", () => {
   assert.equal(typeof sut.reconcileR1Recovery, "function");
   const proof = sut.reconcileR1Recovery(r2Reconciliation());
