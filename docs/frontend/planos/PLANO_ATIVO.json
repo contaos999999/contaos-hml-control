@@ -3482,5 +3482,35 @@
     "deploy_authorized_by_document": false,
     "src_or_yaml_changes_allowed": false,
     "prod_changes_allowed": false
+  },
+  "trilha_a_r14_zero_new_intent_recovery": {
+    "status": "GATE_R14_BUILD_APOS_CI_REVISAO_MERGE",
+    "source_r13_head": "f39e32ca1009b23aaae19dcbd01e282df2bf0847",
+    "source_r13_run": 42685547737,
+    "source_artifact": 13704636643,
+    "inspection_run": 42687417968,
+    "doc_inline_required": true,
+    "r13_zero_auth": false,
+    "r13_new_intents": 0,
+    "metadata_gets": 13,
+    "git_blobs": 6,
+    "runtime_cache_fields": 9,
+    "nonce_future": "trilha-a-fixtures-20261109-r14",
+    "spent_r13": true,
+    "confirmed_before": 10,
+    "prior_reserved": 1,
+    "max_new_intentions": 13,
+    "max_total_intentions": 24,
+    "build_paths": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "scripts/hml/prepare-visual-fixtures.mjs",
+      "scripts/hml/prepare-visual-fixtures.test.mjs"
+    ],
+    "audit_state": "AUDIT_BINDING_PENDING",
+    "request_separate_pr": true,
+    "auth_authorized_by_document": false,
+    "deploy_authorized": false,
+    "certified": false
   }
 }
