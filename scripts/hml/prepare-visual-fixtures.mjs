@@ -560,27 +560,35 @@ export function validateR5RecoveryDocument(input) {
   return freeze(clean);
 }
 const R5_BINDINGS = freeze(JSON.parse(R5_RECOVERY_DOCUMENT.reportRaw).bindings);
-function confirmedR5Replay(rpc, p) {
-  if (isProxy(p) || !obj(p)) return false;
+function confirmedR5Replay(rpc, payload) {
+  const ownData = (value) => {
+    if (isProxy(value) || !obj(value)) err("INTENT_PAYLOAD");
+    const descriptors = Object.getOwnPropertyDescriptors(value);
+    if (Reflect.ownKeys(descriptors).some((key) => !Object.hasOwn(descriptors[key], "value")))
+      err("INTENT_PAYLOAD");
+    return Object.fromEntries(Object.entries(descriptors).map(([key, d]) => [key, d.value]));
+  };
+  const p = ownData(payload);
   if (rpc === "criar_competencia")
     return (
       p.p_id_contrato === FIXTURE.contract &&
       R5_BINDINGS.competencies.some((c) => c.month === p.p_competencia_referencia)
     );
   if (rpc !== "executar_comando_lista_v1") return false;
+  const q = ownData(p.p_payload);
   if (p.p_acao === "criar_lista")
     return (
       p.p_id_organizacao === FIXTURE.organization &&
       p.p_id_contrato === FIXTURE.contract &&
-      p.p_payload?.nome === FIXTURE.listName
+      q.nome === FIXTURE.listName
     );
   if (p.p_id_lista !== R5_BINDINGS.listId) return false;
   return (
     (p.p_acao === "salvar_item" &&
-      p.p_payload?.id_versao === R5_BINDINGS.listVersionId &&
-      p.p_payload?.codigo === "AUD-A-TXT-001" &&
-      p.p_payload?.id_fonte_versao === R5_BINDINGS.sourceVersionId) ||
-    (p.p_acao === "publicar_versao" && p.p_payload?.id_versao === R5_BINDINGS.listVersionId)
+      q.id_versao === R5_BINDINGS.listVersionId &&
+      q.codigo === "AUD-A-TXT-001" &&
+      q.id_fonte_versao === R5_BINDINGS.sourceVersionId) ||
+    (p.p_acao === "publicar_versao" && q.id_versao === R5_BINDINGS.listVersionId)
   );
 }
 
@@ -772,8 +780,11 @@ function preparationErrorData(error, key) {
     if (!error || !["object", "function"].includes(typeof error) || isProxy(error))
       return undefined;
     let descriptor = Object.getOwnPropertyDescriptor(error, key);
-    if (!descriptor && key === "name")
-      descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(error) || {}, key);
+    if (!descriptor && key === "name") {
+      const prototype = Object.getPrototypeOf(error);
+      if (isProxy(prototype)) return undefined;
+      descriptor = Object.getOwnPropertyDescriptor(prototype || {}, key);
+    }
     return descriptor && "value" in descriptor && typeof descriptor.value === "string"
       ? descriptor.value
       : undefined;
@@ -1511,16 +1522,16 @@ export function createIntentBroker({
     },
     arm({ rpc, payload, requestId, uiGeneratedKey, verified, evidence = {} } = {}) {
       if (
-        (recovery &&
-          [
-            "registrar_versao_fonte_v107",
-            "aprovar_versao_fonte_v107",
-            "salvar_fonte_normativa_v107",
-          ].includes(rpc)) ||
-        (recovery && confirmedR5Replay(rpc, payload))
+        recovery &&
+        [
+          "registrar_versao_fonte_v107",
+          "aprovar_versao_fonte_v107",
+          "salvar_fonte_normativa_v107",
+        ].includes(rpc)
       )
         err("RECOVERY_CONFIRMED_OPERATION");
       if (!recoveryAuthorized) err("RECOVERY_READ_ONLY");
+      if (recovery && confirmedR5Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
       if (frozen) err("INTENT_FROZEN");
       if (active) err("INTENT_PENDING");
       if (count >= 24) err("INTENT_BUDGET");
@@ -3885,7 +3896,7 @@ export async function prepareCompetencies(io, sourceList) {
   if (io.recoveryLedgerR5) {
     validateR5RecoveryDocument(io.recoveryLedgerR5);
     for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
-      if (sourceList[key] !== R5_BINDINGS[key]) stop("RECOVERY_LIST_RECONCILE");
+      if (sourceList[key] !== R5_BINDINGS[key]) stop("RECOVERY_LIST");
   }
   await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
   if ((await tracedPreparation("COMPETENCY_UI", async () => io.verifyContext())) !== true)
@@ -4112,7 +4123,7 @@ export async function prepareCompetencies(io, sourceList) {
       validateR5RecoveryDocument(io.recoveryLedgerR5);
       const expected = R5_BINDINGS.competencies.find((c) => c.month === month);
       if (!expected || existing.length !== 1 || existing[0].id !== expected.id)
-        stop("RECOVERY_COMPETENCY");
+        stop("RECOVERY_STATE");
     }
     if (!existing.length) {
       await tracedPreparation("COMPETENCY_UI", async () => link(listPath + "/nova"));
