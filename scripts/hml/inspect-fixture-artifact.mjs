@@ -1,6 +1,6 @@
 /**
- * Read-only R11 artifact inspection. No application imports, browser, Auth or SQL.
- * Contracts snapshot producer a1afb231 and GATE483; GATE458 reader policy is preserved.
+ * Read-only R13 artifact inspection. No application imports, browser, Auth or SQL.
+ * Contracts snapshot preparer c4979dc7 and R13 GATE495/498; GATE458 reader policy is preserved.
  */
 import { createHash } from "node:crypto";
 import {
@@ -22,18 +22,18 @@ import { pathToFileURL } from "node:url";
 export const PIN = Object.freeze({
   repository: "contaos999999/contaos-hml-control",
   repositoryId: 1442722734,
-  run: 42650825191,
+  run: 42685547737,
   workflow: 411426169,
-  head: "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",
-  upstream: 42650515376,
-  artifact: 13690462160,
-  size: 18064,
-  name: "trilha-a-fixtures-42650825191-1",
-  digest: "eb445aadc6876e116040946157c2c4a1bd6bfd79f494945649dbd63e6d74eb50",
+  head: "f39e32ca1009b23aaae19dcbd01e282df2bf0847",
+  upstream: 42685263821,
+  artifact: 13704636643,
+  size: 19861,
+  name: "trilha-a-fixtures-42685547737-1",
+  digest: "7d097d83d5b622d4277be39d2155800223e18fccfe9258ba1adabf337c1e5307",
   tool: "d3f86a106a0bac45b974a628896c90dbdf5c8093",
   bundle: "374211f852b2a8155a0211c72e85dacc81bb69f3",
-  frontend: "437c788e32f0325dd15c9d2e7277c10129bcb462",
-  deployment: "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",
+  frontend: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
+  deployment: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
   organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
   contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
   source: "8b942e46-a29b-40d9-8ad4-04aaf9124a34",
@@ -57,6 +57,8 @@ export const FILES = Object.freeze([
   "recovery-r9.json",
   "receipts-r10.json",
   "recovery-r10.json",
+  "receipts-r11.json",
+  "recovery-r11.json",
 ]);
 export const HISTORY = Object.freeze({
   "receipts-r1.json": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
@@ -74,6 +76,8 @@ export const HISTORY = Object.freeze({
   "recovery-r9.json": "71e20cc2dfd5888ab22228efe2b253eea316194ce0503e262ad58aef516078b8",
   "receipts-r10.json": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
   "recovery-r10.json": "5c1490e7d2e810bc4711ad2f8f6a7b11dd36e313b96940c196ecda6b0dd17ece",
+  "receipts-r11.json": "603a302a92902da2978ddabb20d7972dd9713d39d8838024bfaa89cfb1af33e8",
+  "recovery-r11.json": "29f674764a2c8f953f764fcb6a40d8c330e441b488dfcab56a6ee4f9f389c423",
 });
 const HISTORICAL_IDS = new Set([
   "08141ffd-56c1-4c50-b58f-32912d1006b2",
@@ -86,6 +90,7 @@ const HISTORICAL_IDS = new Set([
   "655ae00f-ed36-4a13-a637-bc8b77375783",
   "6d730eb7-8c38-4474-813d-d39672454444",
   "a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4",
+  "af968191-7d60-4adb-9c60-ebd5f0741e8e",
 ]);
 const SUBPHASES = new Set([
   "PREFLIGHT",
@@ -173,6 +178,8 @@ const FAILURES = new Set([
   "RECOVERY_READ_ONLY",
   "RECOVERY_R9_LEDGER",
   "RECOVERY_R10_LEDGER",
+  "RECOVERY_R11_LEDGER",
+  "RECOVERY_R11_OPINION",
   "RECOVERY_R8_LEDGER",
   "RECOVERY_R8_DOCUMENT",
   "RECOVERY_R8_ANALYSIS",
@@ -576,23 +583,25 @@ export function validateRecords(reportInput, receiptsInput) {
   const ledger = r.intentLedger;
   if (ledger !== null) {
     check(
-      keys(ledger, [
+      orderedKeys(ledger, [
         "count",
         "frozen",
         "pending",
         "sent",
         "priorConfirmed",
+        "priorReserved",
         "newArmedCount",
         "maxIntentions",
         "maxNewIntentions",
       ]),
     );
     check(
-      integer(ledger.count, 10, 24) &&
+      integer(ledger.count, 11, 24) &&
         ledger.priorConfirmed === 10 &&
-        ledger.newArmedCount === ledger.count - 10 &&
+        ledger.priorReserved === 1 &&
+        ledger.newArmedCount === ledger.count - 11 &&
         ledger.maxIntentions === 24 &&
-        ledger.maxNewIntentions === 14,
+        ledger.maxNewIntentions === 13,
     );
     check(
       bool(ledger.frozen) &&
@@ -620,7 +629,7 @@ export function validateRecords(reportInput, receiptsInput) {
     q.ledgerSha256 === HISTORY["receipts-r1.json"] &&
       q.priorWorkflowRun === "42540864527" &&
       q.confirmedBefore === 10 &&
-      q.maxNewIntentions === 14 &&
+      q.maxNewIntentions === 13 &&
       q.r3ReceiptsSha256 === HISTORY["receipts-r3.json"] &&
       q.r3WorkflowRun === "42559214436",
   );
@@ -764,7 +773,7 @@ export function validateRecords(reportInput, receiptsInput) {
     keys(e, ["schema", "receipts"]) &&
       e.schema === "contaos.fixture.receipts.v1" &&
       Array.isArray(e.receipts) &&
-      e.receipts.length <= 28,
+      e.receipts.length <= 26,
   );
   const seen = new Map();
   for (const row of e.receipts) {
@@ -804,7 +813,7 @@ export function validateRecords(reportInput, receiptsInput) {
     else check(row.state === "sealed");
     seen.set(row.requestId, row);
   }
-  check(seen.size <= 14 && (ledger !== null ? seen.size <= ledger.newArmedCount : seen.size === 0));
+  check(seen.size <= 13 && (ledger !== null ? seen.size <= ledger.newArmedCount : seen.size === 0));
   return {
     report: r,
     receipts: e,
@@ -1028,9 +1037,9 @@ export function validateMetadata(input) {
     "INSPECTION_METADATA",
   );
   const specs = [
-    [129276381161, "Trilha A solicitacao unica sem credenciais", "success"],
-    [129276383882, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-    [129276956385, "Trilha A preparacao sintetica HML", "failure"],
+    [129391263915, "Trilha A solicitacao unica sem credenciais", "success"],
+    [129391266154, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+    [129391860451, "Trilha A preparacao sintetica HML", "failure"],
   ];
   check(
     jobs.total_count === 3 && Array.isArray(jobs.jobs) && jobs.jobs.length === 3,
@@ -1079,7 +1088,7 @@ export function readManifest(root, deadline = () => {}) {
     const anchored = "/proc/self/fd/" + dirfd;
     const names = readdirSync(anchored);
     check(
-      names.length === 19 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
+      names.length === 21 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
       "INSPECTION_FILES",
     );
     const buffers = {};
