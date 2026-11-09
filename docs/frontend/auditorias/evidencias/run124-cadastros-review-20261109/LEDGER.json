@@ -1,37 +1,39 @@
 {
-  "schema": "contaos.visual.independent-review.public.v1",
-  "run_id": "42542802124",
-  "artifact_id": "13642651045",
+  "schema": "contaos.independent-original-visual-review.consolidated.v1",
+  "run_id": 42542802124,
+  "artifact_id": 13642651045,
   "review_method": "ORIGINAL_PNG_BYTES_VIEWED",
   "review_claim": "AUDITED_STATE_ONLY",
-  "scope": [
-    "SYS05",
-    "ADM01",
-    "V101",
-    "V103",
-    "V104",
-    "V105"
-  ],
+  "audited_source": {
+    "frontend_sha": "866608620909bf313a6c2192736330222f9219ad",
+    "harness_sha": "a688ba030955229426ff8cd2584af3ffc86921bd",
+    "deployment_id": "dpl_EcPdYyFYTAVTGEYpr1go2QrTfakY"
+  },
   "counts": {
-    "cases_reviewed": 48,
-    "png_reviewed": 96,
-    "dom_hashed": 48,
+    "cases": 102,
+    "png": 204,
+    "dom": 102,
     "hash_mismatches": 0,
     "critical": 0,
     "important": 0,
     "minor": 2
   },
-  "private_review_hashes": {
-    "json": "75c9c77d9af437807c8695f6b1f16bbaf0114f2af1e768c06b69add8337752f1",
-    "markdown": "eab25bd5f1887a96ee1cd7927f8ac0c3cab1f584af0eb32632298c96240b7cb9"
-  },
-  "limitations": [
-    "CAPTURED_STATE_ONLY",
-    "NO_CURRENT_VERSION_CERTIFICATION",
-    "NO_WCAG_72_CERTIFICATION",
-    "KEYBOARD_SAMPLED_ONLY",
-    "NO_FUNCTIONAL_MUTATION_TEST",
-    "ORIGINALS_PRIVATE_ARTIFACT_ONLY"
+  "input_ledgers": [
+    {
+      "scope": "48cases96PNG",
+      "json_sha256": "75c9c77d9af437807c8695f6b1f16bbaf0114f2af1e768c06b69add8337752f1",
+      "md_sha256": "eab25bd5f1887a96ee1cd7927f8ac0c3cab1f584af0eb32632298c96240b7cb9"
+    },
+    {
+      "scope": "38cases76PNG",
+      "json_sha256": "87b01824e9ada2ad253735bd898b79a00cc055522ba47e6ce92a2695fca58ff6",
+      "md_sha256": "d5066a6ae04c8ea2683b63d41baac7802f1131c6635615a7d7373fc6b92e5cfd"
+    },
+    {
+      "scope": "16cases32PNG",
+      "json_sha256": "d9eab460700ab035af6c74f53e7c8bfd3aaabeb727812af08346b490cc711276",
+      "md_sha256": "3690659436f320ceebe10f8a582eaeb88d5b9be7a104fedd170310029c3c12eb"
+    }
   ],
   "findings": [
     {
@@ -78,34 +80,50 @@
       ]
     }
   ],
+  "limitations": [
+    "CAPTURED_STATE_ONLY",
+    "NO_CURRENT_VERSION_CERTIFICATION",
+    "NO_WCAG_72_CERTIFICATION",
+    "KEYBOARD_SAMPLED_ONLY",
+    "NO_FUNCTIONAL_MUTATION_TEST",
+    "ORIGINALS_PRIVATE_ARTIFACT_ONLY",
+    "Menu móvel: alcance dos itens junto à borda inferior por rolagem não foi provado em PNG.",
+    "Realce cinza de Painel/Contratos pode representar hover; não classificado como defeito sem prova semântica.",
+    "DOM foi contextualizado por extração de títulos, regiões, controles e estados; não revisão HTML integral.",
+    "As três revisões não acionaram novas sessões, mutações, importação, criação ou navegação em HML."
+  ],
+  "supersession": {
+    "main_commit": "437c788e32f0325dd15c9d2e7277c10129bcb462",
+    "pr409_closed_unmerged": true,
+    "pr413_closed_unmerged": true,
+    "proof_comments": [
+      6731004196,
+      6731004622
+    ],
+    "note": "Implementações preservadas por consolidação externa; fechamento das PRs não representa execução HML ou aprovação global."
+  },
   "cases": [
     {
       "surface": "SYS05",
       "width": 1440,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/SYS05_1440_light.png",
-        "sha256": "619a951306016d518e5d1feee2eb7fbb566fb48f41d85f8a1b3cc93b9fae2db7",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca oficial branca e shell coerentes; organização/status, ações e item Painel ativo legíveis.",
-          "Grade3×2 e quadros de situação/empty states alinhados, sem colisão visível."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/SYS05_1440_light_sidebar-recolhida.png",
-        "sha256": "5639257aa6824c79f43c54d6b2bc7e2cb64b7473785c6f28f0d49db49e209e66",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta mantém símbolo branco, navegação por ícones e foco visível no expansor.",
-          "Painel mantém cartões e quadros alinhados; sem corte ou sobreposição visível."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/SYS05_1440_light.png",
+          "sha256": "619a951306016d518e5d1feee2eb7fbb566fb48f41d85f8a1b3cc93b9fae2db7",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/SYS05_1440_light_sidebar-recolhida.png",
+          "sha256": "5639257aa6824c79f43c54d6b2bc7e2cb64b7473785c6f28f0d49db49e209e66",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/SYS05_1440_light.json",
         "sha256": "216a7eeee6cd8a4b6b35640faa9b8194b68f4fcc9a51241a5e207cd1eb9df9f5"
@@ -121,35 +139,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Marca oficial branca e shell coerentes; organização/status, ações e item Painel ativo legíveis.",
+        "Grade3×2 e quadros de situação/empty states alinhados, sem colisão visível.",
+        "Sidebar compacta mantém símbolo branco, navegação por ícones e foco visível no expansor.",
+        "Painel mantém cartões e quadros alinhados; sem corte ou sobreposição visível."
+      ]
     },
     {
       "surface": "SYS05",
       "width": 1440,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/SYS05_1440_dark.png",
-        "sha256": "3eff648d90c17c23bd3a4420610e896b043ebd3449dd56f5d167da69c32ab060",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca oficial branca e shell coerentes; organização/status, ações e item Painel ativo legíveis.",
-          "Grade3×2 e quadros de situação/empty states alinhados, sem colisão visível."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/SYS05_1440_dark_sidebar-recolhida.png",
-        "sha256": "887282a3668935ab3e2c24c186d34db1657ef862c59f469835cbca2356f829ce",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta mantém símbolo branco, navegação por ícones e foco visível no expansor.",
-          "Painel mantém cartões e quadros alinhados; sem corte ou sobreposição visível."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/SYS05_1440_dark.png",
+          "sha256": "3eff648d90c17c23bd3a4420610e896b043ebd3449dd56f5d167da69c32ab060",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/SYS05_1440_dark_sidebar-recolhida.png",
+          "sha256": "887282a3668935ab3e2c24c186d34db1657ef862c59f469835cbca2356f829ce",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/SYS05_1440_dark.json",
         "sha256": "323f878d606b6fa1e5e6d5f216fece34f058e5dadb50f4939bf4248d7015af33"
@@ -165,35 +183,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Marca oficial branca e shell coerentes; organização/status, ações e item Painel ativo legíveis.",
+        "Grade3×2 e quadros de situação/empty states alinhados, sem colisão visível.",
+        "Sidebar compacta mantém símbolo branco, navegação por ícones e foco visível no expansor.",
+        "Painel mantém cartões e quadros alinhados; sem corte ou sobreposição visível."
+      ]
     },
     {
       "surface": "SYS05",
       "width": 1280,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/SYS05_1280_light.png",
-        "sha256": "1cbf9a9f678b6fc39e05bda5abdee465895047a14052998a67a1f974449ce31d",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca oficial branca e shell coerentes; organização/status, ações e item Painel ativo legíveis.",
-          "Grade3×2 e quadros de situação/empty states alinhados, sem colisão visível."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/SYS05_1280_light_sidebar-recolhida.png",
-        "sha256": "2623b144271553db6caedbdca684fd3da9c1fa0d69000c60d4fbe9de28aaeb58",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta mantém símbolo branco, navegação por ícones e foco visível no expansor.",
-          "Painel mantém cartões e quadros alinhados; sem corte ou sobreposição visível."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/SYS05_1280_light.png",
+          "sha256": "1cbf9a9f678b6fc39e05bda5abdee465895047a14052998a67a1f974449ce31d",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/SYS05_1280_light_sidebar-recolhida.png",
+          "sha256": "2623b144271553db6caedbdca684fd3da9c1fa0d69000c60d4fbe9de28aaeb58",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/SYS05_1280_light.json",
         "sha256": "d92e946e7c415ff2c2fe458d6834878cdf481b6125219335d01915e0e0c0a7a4"
@@ -209,35 +227,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Marca oficial branca e shell coerentes; organização/status, ações e item Painel ativo legíveis.",
+        "Grade3×2 e quadros de situação/empty states alinhados, sem colisão visível.",
+        "Sidebar compacta mantém símbolo branco, navegação por ícones e foco visível no expansor.",
+        "Painel mantém cartões e quadros alinhados; sem corte ou sobreposição visível."
+      ]
     },
     {
       "surface": "SYS05",
       "width": 1280,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/SYS05_1280_dark.png",
-        "sha256": "d37f6c915bcc48cfb84b426fb3a162afe74bf340474dab49da00f0bcda8b7f25",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca oficial branca e shell coerentes; organização/status, ações e item Painel ativo legíveis.",
-          "Grade3×2 e quadros de situação/empty states alinhados, sem colisão visível."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/SYS05_1280_dark_sidebar-recolhida.png",
-        "sha256": "3243297a1bcc58b0a5ce80949b1489582f1d2f89f4698bc0f897241b162ecbbe",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta mantém símbolo branco, navegação por ícones e foco visível no expansor.",
-          "Painel mantém cartões e quadros alinhados; sem corte ou sobreposição visível."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/SYS05_1280_dark.png",
+          "sha256": "d37f6c915bcc48cfb84b426fb3a162afe74bf340474dab49da00f0bcda8b7f25",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/SYS05_1280_dark_sidebar-recolhida.png",
+          "sha256": "3243297a1bcc58b0a5ce80949b1489582f1d2f89f4698bc0f897241b162ecbbe",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/SYS05_1280_dark.json",
         "sha256": "a893a528b46c5ea84bca180598326e9792aa86031fd3b34d2b884285ecbf5721"
@@ -253,35 +271,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Marca oficial branca e shell coerentes; organização/status, ações e item Painel ativo legíveis.",
+        "Grade3×2 e quadros de situação/empty states alinhados, sem colisão visível.",
+        "Sidebar compacta mantém símbolo branco, navegação por ícones e foco visível no expansor.",
+        "Painel mantém cartões e quadros alinhados; sem corte ou sobreposição visível."
+      ]
     },
     {
       "surface": "SYS05",
       "width": 768,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/SYS05_768_light.png",
-        "sha256": "467b9b099d310095540ab9f8c7b678ee7d808bffb02e30756098f8f02983d193",
-        "pixel_width": 768,
-        "pixel_height": 1191,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Em768px o rótulo longo quebra em duas linhas, sem sobreposição com ícone ou número.",
-          "Shell mantém cabeçalho e ações; quadros empilhados/empty states completos."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/SYS05_768_light_sidebar-recolhida.png",
-        "sha256": "25ef7512be0d1536484f084b3d403aa52ffc5346da115fce52f2b3a9f0b07052",
-        "pixel_width": 768,
-        "pixel_height": 1151,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Foco claro no expansor da sidebar compacta; marca/símbolo e itens preservados.",
-          "Em768px cards2×3 e quadros empilhados cabem sem colisão visível."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/SYS05_768_light.png",
+          "sha256": "467b9b099d310095540ab9f8c7b678ee7d808bffb02e30756098f8f02983d193",
+          "width": 768,
+          "height": 1191,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/SYS05_768_light_sidebar-recolhida.png",
+          "sha256": "25ef7512be0d1536484f084b3d403aa52ffc5346da115fce52f2b3a9f0b07052",
+          "width": 768,
+          "height": 1151,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/SYS05_768_light.json",
         "sha256": "40c346ff3cf381faa67f238ed1c5477d8aa6ba2dca3b46260fde276b2a91211d"
@@ -297,35 +315,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Em768px o rótulo longo quebra em duas linhas, sem sobreposição com ícone ou número.",
+        "Shell mantém cabeçalho e ações; quadros empilhados/empty states completos.",
+        "Foco claro no expansor da sidebar compacta; marca/símbolo e itens preservados.",
+        "Em768px cards2×3 e quadros empilhados cabem sem colisão visível."
+      ]
     },
     {
       "surface": "SYS05",
       "width": 768,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/SYS05_768_dark.png",
-        "sha256": "c11d3ea15654b97a07c7e449dbb3ce9c24659369c93f885cc742b418d100df2d",
-        "pixel_width": 768,
-        "pixel_height": 1191,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Em768px o rótulo longo quebra em duas linhas, sem sobreposição com ícone ou número.",
-          "Shell mantém cabeçalho e ações; quadros empilhados/empty states completos."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/SYS05_768_dark_sidebar-recolhida.png",
-        "sha256": "82a731ae88e087cf2c25c3522b63ea85281335fe580b4ffdf0cb7ca5436de360",
-        "pixel_width": 768,
-        "pixel_height": 1151,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Foco claro no expansor da sidebar compacta; marca/símbolo e itens preservados.",
-          "Em768px cards2×3 e quadros empilhados cabem sem colisão visível."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/SYS05_768_dark.png",
+          "sha256": "c11d3ea15654b97a07c7e449dbb3ce9c24659369c93f885cc742b418d100df2d",
+          "width": 768,
+          "height": 1191,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/SYS05_768_dark_sidebar-recolhida.png",
+          "sha256": "82a731ae88e087cf2c25c3522b63ea85281335fe580b4ffdf0cb7ca5436de360",
+          "width": 768,
+          "height": 1151,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/SYS05_768_dark.json",
         "sha256": "8d0d5ca705ad90280f62f66e738a2afa49b9cc6a1a21a73a8e376e4a7b9881fd"
@@ -341,36 +359,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Em768px o rótulo longo quebra em duas linhas, sem sobreposição com ícone ou número.",
+        "Shell mantém cabeçalho e ações; quadros empilhados/empty states completos.",
+        "Foco claro no expansor da sidebar compacta; marca/símbolo e itens preservados.",
+        "Em768px cards2×3 e quadros empilhados cabem sem colisão visível."
+      ]
     },
     {
       "surface": "SYS05",
       "width": 390,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/SYS05_390_light.png",
-        "sha256": "1d8ce54d5986ba77e6f2edd9ef2065f31289420341fe369c8f97e59f9e1e57e0",
-        "pixel_width": 390,
-        "pixel_height": 1599,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Cabeçalho organização/status e ações cabem em390px; Menu separado; hierarquia clara.",
-          "Cartões e tabelas de estado empilham sem corte visível; empty states explícitos."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/SYS05_390_light_menu.png",
-        "sha256": "1daac70513e927561ff3d888619396f91ddf0eb6c1054dff66f8144fbd7f4673",
-        "pixel_width": 390,
-        "pixel_height": 1599,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca branca e navegação legíveis; item Painel ativo; botão Fechar menu visível.",
-          "Overlay cobre a viewport de1000px; conteúdo abaixo aparece na captura full-page. Não comprova cobertura fora da viewport.",
-          "Foco não permite aferir contraste ou distinguir todo o percurso por imagem."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/SYS05_390_light.png",
+          "sha256": "1d8ce54d5986ba77e6f2edd9ef2065f31289420341fe369c8f97e59f9e1e57e0",
+          "width": 390,
+          "height": 1599,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/SYS05_390_light_menu.png",
+          "sha256": "1daac70513e927561ff3d888619396f91ddf0eb6c1054dff66f8144fbd7f4673",
+          "width": 390,
+          "height": 1599,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/SYS05_390_light.json",
         "sha256": "32e1bdaaf853baf5a96af57e58f6a66e9b956c398e542cf94a23bdd4eafb3a94"
@@ -386,36 +403,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Cabeçalho organização/status e ações cabem em390px; Menu separado; hierarquia clara.",
+        "Cartões e tabelas de estado empilham sem corte visível; empty states explícitos.",
+        "Marca branca e navegação legíveis; item Painel ativo; botão Fechar menu visível.",
+        "Overlay cobre a viewport de1000px; conteúdo abaixo aparece na captura full-page. Não comprova cobertura fora da viewport.",
+        "Foco não permite aferir contraste ou distinguir todo o percurso por imagem."
+      ]
     },
     {
       "surface": "SYS05",
       "width": 390,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/SYS05_390_dark.png",
-        "sha256": "9f10ac1885c3a0ec2255fe34af3dd7f37c28699044d96d641b205d1bc1f3cdee",
-        "pixel_width": 390,
-        "pixel_height": 1599,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Cabeçalho organização/status e ações cabem em390px; Menu separado; hierarquia clara.",
-          "Cartões e tabelas de estado empilham sem corte visível; empty states explícitos."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/SYS05_390_dark_menu.png",
-        "sha256": "70b75fb5fd69c2fe79dcdaef588062b19361f4dfac7f85e98d34addf2941a0f4",
-        "pixel_width": 390,
-        "pixel_height": 1599,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca branca e navegação legíveis; item Painel ativo; botão Fechar menu visível.",
-          "Overlay cobre a viewport de1000px; conteúdo abaixo aparece na captura full-page. Não comprova cobertura fora da viewport.",
-          "Foco não permite aferir contraste ou distinguir todo o percurso por imagem."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/SYS05_390_dark.png",
+          "sha256": "9f10ac1885c3a0ec2255fe34af3dd7f37c28699044d96d641b205d1bc1f3cdee",
+          "width": 390,
+          "height": 1599,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/SYS05_390_dark_menu.png",
+          "sha256": "70b75fb5fd69c2fe79dcdaef588062b19361f4dfac7f85e98d34addf2941a0f4",
+          "width": 390,
+          "height": 1599,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/SYS05_390_dark.json",
         "sha256": "59a6c8d0c07f7d3abcc7e8fc8188b39c809a8ee64e0f5c56c10ae3e3cd74e7cc"
@@ -431,35 +448,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Cabeçalho organização/status e ações cabem em390px; Menu separado; hierarquia clara.",
+        "Cartões e tabelas de estado empilham sem corte visível; empty states explícitos.",
+        "Marca branca e navegação legíveis; item Painel ativo; botão Fechar menu visível.",
+        "Overlay cobre a viewport de1000px; conteúdo abaixo aparece na captura full-page. Não comprova cobertura fora da viewport.",
+        "Foco não permite aferir contraste ou distinguir todo o percurso por imagem."
+      ]
     },
     {
       "surface": "ADM01",
       "width": 1440,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/ADM01_1440_light.png",
-        "sha256": "3f52c7a5a6dc47d13ce4590966ac84f938364530fa1b5a23884f1130d95b1e6c",
-        "pixel_width": 1440,
-        "pixel_height": 2018,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca e cabeçalho coerentes; título, CTA, filtros e empty state bem separados.",
-          "Aviso MASTER, seletores e matrizduas colunas legíveis; sem corte ou colisão aparente."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/ADM01_1440_light_sidebar-recolhida.png",
-        "sha256": "51d4b7c93e7d8b0301808635a34402d212db5ea84e3ba0be7c786662064ca42f",
-        "pixel_width": 1440,
-        "pixel_height": 2018,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta mantém item Usuários e foco visível no expansor, sem sobreposição do conteúdo.",
-          "Matriz emduas colunas e footer com0 alterações/botões desabilitados completos."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/ADM01_1440_light.png",
+          "sha256": "3f52c7a5a6dc47d13ce4590966ac84f938364530fa1b5a23884f1130d95b1e6c",
+          "width": 1440,
+          "height": 2018,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/ADM01_1440_light_sidebar-recolhida.png",
+          "sha256": "51d4b7c93e7d8b0301808635a34402d212db5ea84e3ba0be7c786662064ca42f",
+          "width": 1440,
+          "height": 2018,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/ADM01_1440_light.json",
         "sha256": "29266eb9c5d142bfec01a7007cb9002a1b9d855bc8cd5ea9b61a4e11bae369fd"
@@ -475,35 +493,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Marca e cabeçalho coerentes; título, CTA, filtros e empty state bem separados.",
+        "Aviso MASTER, seletores e matrizduas colunas legíveis; sem corte ou colisão aparente.",
+        "Sidebar compacta mantém item Usuários e foco visível no expansor, sem sobreposição do conteúdo.",
+        "Matriz emduas colunas e footer com0 alterações/botões desabilitados completos."
+      ]
     },
     {
       "surface": "ADM01",
       "width": 1440,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/ADM01_1440_dark.png",
-        "sha256": "dee8899ec9643af337221929e37e460c34788070e3f5ba4160bb83bcc4c9f4d8",
-        "pixel_width": 1440,
-        "pixel_height": 2018,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca e cabeçalho coerentes; título, CTA, filtros e empty state bem separados.",
-          "Aviso MASTER, seletores e matrizduas colunas legíveis; sem corte ou colisão aparente."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/ADM01_1440_dark_sidebar-recolhida.png",
-        "sha256": "0e37983ec57bda5a2639f79157c931107359824502c5faace64fd0a201ee586d",
-        "pixel_width": 1440,
-        "pixel_height": 2018,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta mantém item Usuários e foco visível no expansor, sem sobreposição do conteúdo.",
-          "Matriz emduas colunas e footer com0 alterações/botões desabilitados completos."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/ADM01_1440_dark.png",
+          "sha256": "dee8899ec9643af337221929e37e460c34788070e3f5ba4160bb83bcc4c9f4d8",
+          "width": 1440,
+          "height": 2018,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/ADM01_1440_dark_sidebar-recolhida.png",
+          "sha256": "0e37983ec57bda5a2639f79157c931107359824502c5faace64fd0a201ee586d",
+          "width": 1440,
+          "height": 2018,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/ADM01_1440_dark.json",
         "sha256": "ae08c0a29f4f6ff2ebe3e3014ba4733562caa7fd2e322eb97d427a5009f3ae7d"
@@ -519,35 +537,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Marca e cabeçalho coerentes; título, CTA, filtros e empty state bem separados.",
+        "Aviso MASTER, seletores e matrizduas colunas legíveis; sem corte ou colisão aparente.",
+        "Sidebar compacta mantém item Usuários e foco visível no expansor, sem sobreposição do conteúdo.",
+        "Matriz emduas colunas e footer com0 alterações/botões desabilitados completos."
+      ]
     },
     {
       "surface": "ADM01",
       "width": 1280,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/ADM01_1280_light.png",
-        "sha256": "e1b129f91903765fed897c661c0c9f8f692b7673940ad8965e9596c3ca4b2f36",
-        "pixel_width": 1280,
-        "pixel_height": 2038,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca e cabeçalho coerentes; título, CTA, filtros e empty state bem separados.",
-          "Aviso MASTER, seletores e matrizduas colunas legíveis; sem corte ou colisão aparente."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/ADM01_1280_light_sidebar-recolhida.png",
-        "sha256": "ce5572a05000ca630dcad514487632d20447b178a9c37d35554a4afdaee29880",
-        "pixel_width": 1280,
-        "pixel_height": 2018,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta mantém item Usuários e foco visível no expansor, sem sobreposição do conteúdo.",
-          "Matriz emduas colunas e footer com0 alterações/botões desabilitados completos."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/ADM01_1280_light.png",
+          "sha256": "e1b129f91903765fed897c661c0c9f8f692b7673940ad8965e9596c3ca4b2f36",
+          "width": 1280,
+          "height": 2038,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/ADM01_1280_light_sidebar-recolhida.png",
+          "sha256": "ce5572a05000ca630dcad514487632d20447b178a9c37d35554a4afdaee29880",
+          "width": 1280,
+          "height": 2018,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/ADM01_1280_light.json",
         "sha256": "40f57f6358f8cf9abc28c21576a6814d3c6ed8dc8726abeff6e5bc939eae4b49"
@@ -563,35 +581,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Marca e cabeçalho coerentes; título, CTA, filtros e empty state bem separados.",
+        "Aviso MASTER, seletores e matrizduas colunas legíveis; sem corte ou colisão aparente.",
+        "Sidebar compacta mantém item Usuários e foco visível no expansor, sem sobreposição do conteúdo.",
+        "Matriz emduas colunas e footer com0 alterações/botões desabilitados completos."
+      ]
     },
     {
       "surface": "ADM01",
       "width": 1280,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/ADM01_1280_dark.png",
-        "sha256": "61843518c16a2469cda15dfa984db9a7453e3cb3f64c6f5e63d274609232ee77",
-        "pixel_width": 1280,
-        "pixel_height": 2038,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca e cabeçalho coerentes; título, CTA, filtros e empty state bem separados.",
-          "Aviso MASTER, seletores e matrizduas colunas legíveis; sem corte ou colisão aparente."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/ADM01_1280_dark_sidebar-recolhida.png",
-        "sha256": "4658957fa67feb540bb5f0ee54d990fc7744bf3bc7070369518425aa666e91f8",
-        "pixel_width": 1280,
-        "pixel_height": 2018,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta mantém item Usuários e foco visível no expansor, sem sobreposição do conteúdo.",
-          "Matriz emduas colunas e footer com0 alterações/botões desabilitados completos."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/ADM01_1280_dark.png",
+          "sha256": "61843518c16a2469cda15dfa984db9a7453e3cb3f64c6f5e63d274609232ee77",
+          "width": 1280,
+          "height": 2038,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/ADM01_1280_dark_sidebar-recolhida.png",
+          "sha256": "4658957fa67feb540bb5f0ee54d990fc7744bf3bc7070369518425aa666e91f8",
+          "width": 1280,
+          "height": 2018,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/ADM01_1280_dark.json",
         "sha256": "e2210ab1ad9585b0a8531f4711f056c58f22452c415b28df4bdc7fad4b928a40"
@@ -607,36 +625,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Marca e cabeçalho coerentes; título, CTA, filtros e empty state bem separados.",
+        "Aviso MASTER, seletores e matrizduas colunas legíveis; sem corte ou colisão aparente.",
+        "Sidebar compacta mantém item Usuários e foco visível no expansor, sem sobreposição do conteúdo.",
+        "Matriz emduas colunas e footer com0 alterações/botões desabilitados completos."
+      ]
     },
     {
       "surface": "ADM01",
       "width": 768,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/ADM01_768_light.png",
-        "sha256": "0c1040688f8bce0f1faf209df51a7c52159e6b41fbb344f662cdd85b8222ce5e",
-        "pixel_width": 768,
-        "pixel_height": 2184,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Hierarquia Administração/Usuários e vínculos, CTA, filtros e empty state claros; aviso MASTER explícito.",
-          "390px usa coluna única e768px duas colunas; rótulos longos quebram, controles permanecem legíveis.",
-          "Estado de0 alterações e botões desabilitados visíveis; não comprova fluxo de edição."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/ADM01_768_light_sidebar-recolhida.png",
-        "sha256": "842e75404931298553eb3952c23de8cffb2b1cc9aafbbe02699c066eb24c1b7c",
-        "pixel_width": 768,
-        "pixel_height": 2038,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Símbolo oficial, item Usuários ativo e foco no expansor preservados.",
-          "Matriz de permissões emduas colunas; filtros e rodapé cabem sem sobreposição visível."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/ADM01_768_light.png",
+          "sha256": "0c1040688f8bce0f1faf209df51a7c52159e6b41fbb344f662cdd85b8222ce5e",
+          "width": 768,
+          "height": 2184,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/ADM01_768_light_sidebar-recolhida.png",
+          "sha256": "842e75404931298553eb3952c23de8cffb2b1cc9aafbbe02699c066eb24c1b7c",
+          "width": 768,
+          "height": 2038,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/ADM01_768_light.json",
         "sha256": "541851a1bcf93c643901ddbf5a47d2f29e59b3b55b000c288cff1743b3212c66"
@@ -652,36 +669,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Hierarquia Administração/Usuários e vínculos, CTA, filtros e empty state claros; aviso MASTER explícito.",
+        "390px usa coluna única e768px duas colunas; rótulos longos quebram, controles permanecem legíveis.",
+        "Estado de0 alterações e botões desabilitados visíveis; não comprova fluxo de edição.",
+        "Símbolo oficial, item Usuários ativo e foco no expansor preservados.",
+        "Matriz de permissões emduas colunas; filtros e rodapé cabem sem sobreposição visível."
+      ]
     },
     {
       "surface": "ADM01",
       "width": 768,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/ADM01_768_dark.png",
-        "sha256": "2d3fd72539e6526cd539f4bf4c433587e740fa4b8250332c01825d53e1f25b88",
-        "pixel_width": 768,
-        "pixel_height": 2184,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Hierarquia Administração/Usuários e vínculos, CTA, filtros e empty state claros; aviso MASTER explícito.",
-          "390px usa coluna única e768px duas colunas; rótulos longos quebram, controles permanecem legíveis.",
-          "Estado de0 alterações e botões desabilitados visíveis; não comprova fluxo de edição."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/ADM01_768_dark_sidebar-recolhida.png",
-        "sha256": "74e0f1a3d2a463e1fd5e4fa84d1b1650e9e78f0142cedf0d937b70424494c1d5",
-        "pixel_width": 768,
-        "pixel_height": 2038,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Símbolo oficial, item Usuários ativo e foco no expansor preservados.",
-          "Matriz de permissões emduas colunas; filtros e rodapé cabem sem sobreposição visível."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/ADM01_768_dark.png",
+          "sha256": "2d3fd72539e6526cd539f4bf4c433587e740fa4b8250332c01825d53e1f25b88",
+          "width": 768,
+          "height": 2184,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/ADM01_768_dark_sidebar-recolhida.png",
+          "sha256": "74e0f1a3d2a463e1fd5e4fa84d1b1650e9e78f0142cedf0d937b70424494c1d5",
+          "width": 768,
+          "height": 2038,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/ADM01_768_dark.json",
         "sha256": "3dc2ef0f88e4f651ee1a9a69875fc2f93a6054b074180f5f161c0f0059524163"
@@ -697,36 +714,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Hierarquia Administração/Usuários e vínculos, CTA, filtros e empty state claros; aviso MASTER explícito.",
+        "390px usa coluna única e768px duas colunas; rótulos longos quebram, controles permanecem legíveis.",
+        "Estado de0 alterações e botões desabilitados visíveis; não comprova fluxo de edição.",
+        "Símbolo oficial, item Usuários ativo e foco no expansor preservados.",
+        "Matriz de permissões emduas colunas; filtros e rodapé cabem sem sobreposição visível."
+      ]
     },
     {
       "surface": "ADM01",
       "width": 390,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/ADM01_390_light.png",
-        "sha256": "73dcc437a289f12a27d71b91f4b836a34fb635bffed2b5e677bc555553c6a0d3",
-        "pixel_width": 390,
-        "pixel_height": 3643,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Hierarquia Administração/Usuários e vínculos, CTA, filtros e empty state claros; aviso MASTER explícito.",
-          "390px usa coluna única e768px duas colunas; rótulos longos quebram, controles permanecem legíveis.",
-          "Estado de0 alterações e botões desabilitados visíveis; não comprova fluxo de edição."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/ADM01_390_light_menu.png",
-        "sha256": "fe1751527da7ea7529ad5034dd0cfc5440d0786236bea3c450cba75a86e92f56",
-        "pixel_width": 390,
-        "pixel_height": 3643,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Menu móvel mostra marca e item Usuários ativo; opções sem corte no trecho da viewport.",
-          "Imagem é estado menu/suplemento, não comprova foco completo nem revalidação de permissões."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/ADM01_390_light.png",
+          "sha256": "73dcc437a289f12a27d71b91f4b836a34fb635bffed2b5e677bc555553c6a0d3",
+          "width": 390,
+          "height": 3643,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/ADM01_390_light_menu.png",
+          "sha256": "fe1751527da7ea7529ad5034dd0cfc5440d0786236bea3c450cba75a86e92f56",
+          "width": 390,
+          "height": 3643,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/ADM01_390_light.json",
         "sha256": "5188a8ee4058a427d6d471d6f56fc7ca77a6cd9e6b4b99d1bb8264994e869c7f"
@@ -742,36 +759,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Hierarquia Administração/Usuários e vínculos, CTA, filtros e empty state claros; aviso MASTER explícito.",
+        "390px usa coluna única e768px duas colunas; rótulos longos quebram, controles permanecem legíveis.",
+        "Estado de0 alterações e botões desabilitados visíveis; não comprova fluxo de edição.",
+        "Menu móvel mostra marca e item Usuários ativo; opções sem corte no trecho da viewport.",
+        "Imagem é estado menu/suplemento, não comprova foco completo nem revalidação de permissões."
+      ]
     },
     {
       "surface": "ADM01",
       "width": 390,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/ADM01_390_dark.png",
-        "sha256": "33d1df067dd26849016e0100bd5d0603aca3dd0c6f759e89031b5fe7c72ca1b8",
-        "pixel_width": 390,
-        "pixel_height": 3643,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Hierarquia Administração/Usuários e vínculos, CTA, filtros e empty state claros; aviso MASTER explícito.",
-          "390px usa coluna única e768px duas colunas; rótulos longos quebram, controles permanecem legíveis.",
-          "Estado de0 alterações e botões desabilitados visíveis; não comprova fluxo de edição."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/ADM01_390_dark_menu.png",
-        "sha256": "5f576bb868ec0b77efdd9cf7a5d3542c4ca49520e1e10d5d78de1eb812f82e16",
-        "pixel_width": 390,
-        "pixel_height": 3643,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Menu móvel mostra marca e item Usuários ativo; opções sem corte no trecho da viewport.",
-          "Imagem é estado menu/suplemento, não comprova foco completo nem revalidação de permissões."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/ADM01_390_dark.png",
+          "sha256": "33d1df067dd26849016e0100bd5d0603aca3dd0c6f759e89031b5fe7c72ca1b8",
+          "width": 390,
+          "height": 3643,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/ADM01_390_dark_menu.png",
+          "sha256": "5f576bb868ec0b77efdd9cf7a5d3542c4ca49520e1e10d5d78de1eb812f82e16",
+          "width": 390,
+          "height": 3643,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/ADM01_390_dark.json",
         "sha256": "5236e47f1601ebb19c5d5b4ac2eebe75acbe5a44c6d3180be042d76bad3d4198"
@@ -787,35 +804,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Hierarquia Administração/Usuários e vínculos, CTA, filtros e empty state claros; aviso MASTER explícito.",
+        "390px usa coluna única e768px duas colunas; rótulos longos quebram, controles permanecem legíveis.",
+        "Estado de0 alterações e botões desabilitados visíveis; não comprova fluxo de edição.",
+        "Menu móvel mostra marca e item Usuários ativo; opções sem corte no trecho da viewport.",
+        "Imagem é estado menu/suplemento, não comprova foco completo nem revalidação de permissões."
+      ]
     },
     {
       "surface": "V101",
       "width": 1440,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V101_1440_light.png",
-        "sha256": "dc169fab0387ef94c22d9be7610401cc8bf592a9ddb8a0bca0a409eb2ba75455",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Tabela desktop e filtros emlinha cabem nas larguras1440/1280, sem corte lateral aparente.",
-          "Em1280 a razão social e a fantasia quebram; alturas da linha se ajustam sem sobrepor campos."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V101_1440_light_sidebar-recolhida.png",
-        "sha256": "255f3d8cfbe987116e904f87d55a62c19b96c02b80e20bd31290bc63fef96247",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Símbolo oficial, item ativo e foco do expansor preservados.",
-          "Tabela desktop mantém seis colunas e paginação completas; texto da fantasia quebra sem colisão."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V101_1440_light.png",
+          "sha256": "dc169fab0387ef94c22d9be7610401cc8bf592a9ddb8a0bca0a409eb2ba75455",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V101_1440_light_sidebar-recolhida.png",
+          "sha256": "255f3d8cfbe987116e904f87d55a62c19b96c02b80e20bd31290bc63fef96247",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V101_1440_light.json",
         "sha256": "78797f3ee62b3a9be5608a8c322cb8dba4535c70bed2c3aca1d554a3291bf6d9"
@@ -831,35 +849,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Tabela desktop e filtros emlinha cabem nas larguras1440/1280, sem corte lateral aparente.",
+        "Em1280 a razão social e a fantasia quebram; alturas da linha se ajustam sem sobrepor campos.",
+        "Símbolo oficial, item ativo e foco do expansor preservados.",
+        "Tabela desktop mantém seis colunas e paginação completas; texto da fantasia quebra sem colisão."
+      ]
     },
     {
       "surface": "V101",
       "width": 1440,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V101_1440_dark.png",
-        "sha256": "473a6fcaa556b449063623c4dab0b3b70cabbcba66e06c40ce1764ef7af355a3",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Tabela desktop e filtros emlinha cabem nas larguras1440/1280, sem corte lateral aparente.",
-          "Em1280 a razão social e a fantasia quebram; alturas da linha se ajustam sem sobrepor campos."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V101_1440_dark_sidebar-recolhida.png",
-        "sha256": "9d8f7c37ee874e32fe9d0790bfd4463035ace6652a4046a425dd80e99ced81c9",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Símbolo oficial, item ativo e foco do expansor preservados.",
-          "Tabela desktop mantém seis colunas e paginação completas; texto da fantasia quebra sem colisão."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V101_1440_dark.png",
+          "sha256": "473a6fcaa556b449063623c4dab0b3b70cabbcba66e06c40ce1764ef7af355a3",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V101_1440_dark_sidebar-recolhida.png",
+          "sha256": "9d8f7c37ee874e32fe9d0790bfd4463035ace6652a4046a425dd80e99ced81c9",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V101_1440_dark.json",
         "sha256": "8f8d15d5135c84dc1fe65c6a12222ae4e08b7e80ca7ce732d68a67931f3edf7d"
@@ -875,35 +893,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Tabela desktop e filtros emlinha cabem nas larguras1440/1280, sem corte lateral aparente.",
+        "Em1280 a razão social e a fantasia quebram; alturas da linha se ajustam sem sobrepor campos.",
+        "Símbolo oficial, item ativo e foco do expansor preservados.",
+        "Tabela desktop mantém seis colunas e paginação completas; texto da fantasia quebra sem colisão."
+      ]
     },
     {
       "surface": "V101",
       "width": 1280,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V101_1280_light.png",
-        "sha256": "90b4195216c7724e43d8c3a3d3d23eda4f39b7efe58c7bf482980c5276fb84c0",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Tabela desktop e filtros emlinha cabem nas larguras1440/1280, sem corte lateral aparente.",
-          "Em1280 a razão social e a fantasia quebram; alturas da linha se ajustam sem sobrepor campos."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V101_1280_light_sidebar-recolhida.png",
-        "sha256": "6197a27848a849295d935da6320c271be2fdd12c8145bdedb0e368927dce3095",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Símbolo oficial, item ativo e foco do expansor preservados.",
-          "Tabela desktop mantém seis colunas e paginação completas; texto da fantasia quebra sem colisão."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V101_1280_light.png",
+          "sha256": "90b4195216c7724e43d8c3a3d3d23eda4f39b7efe58c7bf482980c5276fb84c0",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V101_1280_light_sidebar-recolhida.png",
+          "sha256": "6197a27848a849295d935da6320c271be2fdd12c8145bdedb0e368927dce3095",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V101_1280_light.json",
         "sha256": "7883b886333ff302991f8cbb4efd076401d5d8fcd3f6707a7254aad4f690c6e7"
@@ -919,35 +937,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Tabela desktop e filtros emlinha cabem nas larguras1440/1280, sem corte lateral aparente.",
+        "Em1280 a razão social e a fantasia quebram; alturas da linha se ajustam sem sobrepor campos.",
+        "Símbolo oficial, item ativo e foco do expansor preservados.",
+        "Tabela desktop mantém seis colunas e paginação completas; texto da fantasia quebra sem colisão."
+      ]
     },
     {
       "surface": "V101",
       "width": 1280,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V101_1280_dark.png",
-        "sha256": "08f2570e6a8daccd13dcbeb1034228057648bd39ee357d1ac3d62077aa1c2721",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Tabela desktop e filtros emlinha cabem nas larguras1440/1280, sem corte lateral aparente.",
-          "Em1280 a razão social e a fantasia quebram; alturas da linha se ajustam sem sobrepor campos."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V101_1280_dark_sidebar-recolhida.png",
-        "sha256": "79f3ea3c20b3bf6fc1dc9b8ab8fb7314963f10d579dc7166501dc81124878909",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Símbolo oficial, item ativo e foco do expansor preservados.",
-          "Tabela desktop mantém seis colunas e paginação completas; texto da fantasia quebra sem colisão."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V101_1280_dark.png",
+          "sha256": "08f2570e6a8daccd13dcbeb1034228057648bd39ee357d1ac3d62077aa1c2721",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V101_1280_dark_sidebar-recolhida.png",
+          "sha256": "79f3ea3c20b3bf6fc1dc9b8ab8fb7314963f10d579dc7166501dc81124878909",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V101_1280_dark.json",
         "sha256": "f9c04b63dd9349129bc41f7aa8ed892527e957c37548eb9937ee503696e7e844"
@@ -963,36 +981,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Tabela desktop e filtros emlinha cabem nas larguras1440/1280, sem corte lateral aparente.",
+        "Em1280 a razão social e a fantasia quebram; alturas da linha se ajustam sem sobrepor campos.",
+        "Símbolo oficial, item ativo e foco do expansor preservados.",
+        "Tabela desktop mantém seis colunas e paginação completas; texto da fantasia quebra sem colisão."
+      ]
     },
     {
       "surface": "V101",
       "width": 768,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V101_768_light.png",
-        "sha256": "df2de7ac423ed23f6722df7148e9d320bbefa3e72eb18c54b87a6bdeba9d4c98",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Lista compacta usa card em390/768px com campos identificados, status e paginação; sem tabela cortada.",
-          "Título/descrição do registro quebram no mobile; sem sobreposição visível.",
-          "Não comprova funcionamento dos filtros nem navegação de todos os registros."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V101_768_light_sidebar-recolhida.png",
-        "sha256": "98ac2f4525809342ffdbb7170cc618f7eabf49cdec8fab98ef30a5eee4c7122c",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta com foco no expansor e símbolo oficial; card responsivo completo em768px.",
-          "Filtros, status Ativo e paginação visíveis; original light reaberto individualmente para confirmar borda direita completa."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V101_768_light.png",
+          "sha256": "df2de7ac423ed23f6722df7148e9d320bbefa3e72eb18c54b87a6bdeba9d4c98",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V101_768_light_sidebar-recolhida.png",
+          "sha256": "98ac2f4525809342ffdbb7170cc618f7eabf49cdec8fab98ef30a5eee4c7122c",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V101_768_light.json",
         "sha256": "dfc42295ab0d619ac444b1ed9bddc5dd36065956976a761cd406b2e9ae9d04f5"
@@ -1008,36 +1025,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Lista compacta usa card em390/768px com campos identificados, status e paginação; sem tabela cortada.",
+        "Título/descrição do registro quebram no mobile; sem sobreposição visível.",
+        "Não comprova funcionamento dos filtros nem navegação de todos os registros.",
+        "Sidebar compacta com foco no expansor e símbolo oficial; card responsivo completo em768px.",
+        "Filtros, status Ativo e paginação visíveis; original light reaberto individualmente para confirmar borda direita completa."
+      ]
     },
     {
       "surface": "V101",
       "width": 768,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V101_768_dark.png",
-        "sha256": "0217645d3023bb08488b008d4cfe78fdd3c1a6176bb4907ff2d26b1790b36a9f",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Lista compacta usa card em390/768px com campos identificados, status e paginação; sem tabela cortada.",
-          "Título/descrição do registro quebram no mobile; sem sobreposição visível.",
-          "Não comprova funcionamento dos filtros nem navegação de todos os registros."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V101_768_dark_sidebar-recolhida.png",
-        "sha256": "5ec15e06145974f5961c1fb93363d32392d093fede5082eba27615d263b741e7",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta com foco no expansor e símbolo oficial; card responsivo completo em768px.",
-          "Filtros, status Ativo e paginação visíveis; original light reaberto individualmente para confirmar borda direita completa."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V101_768_dark.png",
+          "sha256": "0217645d3023bb08488b008d4cfe78fdd3c1a6176bb4907ff2d26b1790b36a9f",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V101_768_dark_sidebar-recolhida.png",
+          "sha256": "5ec15e06145974f5961c1fb93363d32392d093fede5082eba27615d263b741e7",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V101_768_dark.json",
         "sha256": "729ed9ef356224447cc25a7a09ade1d3714f17718d5e5dd1e9ce9a67183d1221"
@@ -1053,35 +1070,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Lista compacta usa card em390/768px com campos identificados, status e paginação; sem tabela cortada.",
+        "Título/descrição do registro quebram no mobile; sem sobreposição visível.",
+        "Não comprova funcionamento dos filtros nem navegação de todos os registros.",
+        "Sidebar compacta com foco no expansor e símbolo oficial; card responsivo completo em768px.",
+        "Filtros, status Ativo e paginação visíveis; original light reaberto individualmente para confirmar borda direita completa."
+      ]
     },
     {
       "surface": "V101",
       "width": 390,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V101_390_light.png",
-        "sha256": "fcbd07f94cda1dba916fe41fa234e682885242b7057ceefa5afdeadbf2bfe892",
-        "pixel_width": 390,
-        "pixel_height": 1214,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Lista compacta usa card em390/768px com campos identificados, status e paginação; sem tabela cortada.",
-          "Título/descrição do registro quebram no mobile; sem sobreposição visível.",
-          "Não comprova funcionamento dos filtros nem navegação de todos os registros."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V101_390_light_menu.png",
-        "sha256": "dce12315d45c9317d2ac83e7e1303ba07092b840e39d177278789be1abf7d237",
-        "pixel_width": 390,
-        "pixel_height": 1214,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Menu móvel preserva marca, navegação e Contratantes ativo; limitações de viewport/fullpage mantidas."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V101_390_light.png",
+          "sha256": "fcbd07f94cda1dba916fe41fa234e682885242b7057ceefa5afdeadbf2bfe892",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V101_390_light_menu.png",
+          "sha256": "dce12315d45c9317d2ac83e7e1303ba07092b840e39d177278789be1abf7d237",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V101_390_light.json",
         "sha256": "00d3c5304179cd6c0bf7d49800ad634d66b318086f3fcd2bd0509136d31b634a"
@@ -1097,35 +1115,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Lista compacta usa card em390/768px com campos identificados, status e paginação; sem tabela cortada.",
+        "Título/descrição do registro quebram no mobile; sem sobreposição visível.",
+        "Não comprova funcionamento dos filtros nem navegação de todos os registros.",
+        "Menu móvel preserva marca, navegação e Contratantes ativo; limitações de viewport/fullpage mantidas."
+      ]
     },
     {
       "surface": "V101",
       "width": 390,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V101_390_dark.png",
-        "sha256": "a5409aa9de63a59a1d8fbdcd7557f51879dd55eb8a2cb2e66890cc08d3cfa5f2",
-        "pixel_width": 390,
-        "pixel_height": 1214,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Lista compacta usa card em390/768px com campos identificados, status e paginação; sem tabela cortada.",
-          "Título/descrição do registro quebram no mobile; sem sobreposição visível.",
-          "Não comprova funcionamento dos filtros nem navegação de todos os registros."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V101_390_dark_menu.png",
-        "sha256": "e5a2e8aa5cc6db8190a28df3a1d0babff86054739cc5ed23f08f4737b493ea4d",
-        "pixel_width": 390,
-        "pixel_height": 1214,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Menu móvel preserva marca, navegação e Contratantes ativo; limitações de viewport/fullpage mantidas."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V101_390_dark.png",
+          "sha256": "a5409aa9de63a59a1d8fbdcd7557f51879dd55eb8a2cb2e66890cc08d3cfa5f2",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V101_390_dark_menu.png",
+          "sha256": "e5a2e8aa5cc6db8190a28df3a1d0babff86054739cc5ed23f08f4737b493ea4d",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V101_390_dark.json",
         "sha256": "0db70501af98055d233c552363d5e7115a5ff57ec2f16f5b91aa86ce90e72d41"
@@ -1141,35 +1159,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Lista compacta usa card em390/768px com campos identificados, status e paginação; sem tabela cortada.",
+        "Título/descrição do registro quebram no mobile; sem sobreposição visível.",
+        "Não comprova funcionamento dos filtros nem navegação de todos os registros.",
+        "Menu móvel preserva marca, navegação e Contratantes ativo; limitações de viewport/fullpage mantidas."
+      ]
     },
     {
       "surface": "V103",
       "width": 1440,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V103_1440_light.png",
-        "sha256": "62258ed5648123a62e9e386dc1a10abfb6e187f37104a25afb4669604d43073f",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Formulário centrado com largura contida, pares de campos e ações Cancelar/Salvar íntegros.",
-          "Cabeçalho/voltar/contexto atual coerentes nos temas; sem teste de mutação."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V103_1440_light_sidebar-recolhida.png",
-        "sha256": "844e4386d6d7a21f195d8b9181f62da1eb7e7984a6ccc24b8ba8a217e18dad34",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta e foco do expansor visíveis; formulário centralizado mantém alinhamentos e ações.",
-          "Sem corte ou colisão aparente; valores e versão do estado auditado preservados."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V103_1440_light.png",
+          "sha256": "62258ed5648123a62e9e386dc1a10abfb6e187f37104a25afb4669604d43073f",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V103_1440_light_sidebar-recolhida.png",
+          "sha256": "844e4386d6d7a21f195d8b9181f62da1eb7e7984a6ccc24b8ba8a217e18dad34",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V103_1440_light.json",
         "sha256": "2cf64bc8ab3796619f80e2a01d7ff3f1d6d54b1a41dfe48a403c8c40c3cfbb6f"
@@ -1185,35 +1203,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Formulário centrado com largura contida, pares de campos e ações Cancelar/Salvar íntegros.",
+        "Cabeçalho/voltar/contexto atual coerentes nos temas; sem teste de mutação.",
+        "Sidebar compacta e foco do expansor visíveis; formulário centralizado mantém alinhamentos e ações.",
+        "Sem corte ou colisão aparente; valores e versão do estado auditado preservados."
+      ]
     },
     {
       "surface": "V103",
       "width": 1440,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V103_1440_dark.png",
-        "sha256": "33b6368621eaad6aac0cd308aa79a65b25f39f28c53ec15615b6b0ee1374d9ea",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Formulário centrado com largura contida, pares de campos e ações Cancelar/Salvar íntegros.",
-          "Cabeçalho/voltar/contexto atual coerentes nos temas; sem teste de mutação."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V103_1440_dark_sidebar-recolhida.png",
-        "sha256": "ec83375a261cb942c75656a66ea5e4c2ec230b07a5a5fd54eb631d74c2e01177",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta e foco do expansor visíveis; formulário centralizado mantém alinhamentos e ações.",
-          "Sem corte ou colisão aparente; valores e versão do estado auditado preservados."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V103_1440_dark.png",
+          "sha256": "33b6368621eaad6aac0cd308aa79a65b25f39f28c53ec15615b6b0ee1374d9ea",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V103_1440_dark_sidebar-recolhida.png",
+          "sha256": "ec83375a261cb942c75656a66ea5e4c2ec230b07a5a5fd54eb631d74c2e01177",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V103_1440_dark.json",
         "sha256": "85d6f4a766ab3213567f05c6cb126a82ed3b234ee29adb6f2d312bb40f69cbce"
@@ -1229,35 +1247,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Formulário centrado com largura contida, pares de campos e ações Cancelar/Salvar íntegros.",
+        "Cabeçalho/voltar/contexto atual coerentes nos temas; sem teste de mutação.",
+        "Sidebar compacta e foco do expansor visíveis; formulário centralizado mantém alinhamentos e ações.",
+        "Sem corte ou colisão aparente; valores e versão do estado auditado preservados."
+      ]
     },
     {
       "surface": "V103",
       "width": 1280,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V103_1280_light.png",
-        "sha256": "7e3d20cbf483c937e2789f88c0fe3354b1594151901882c2d00b1b846a15637f",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Formulário centrado com largura contida, pares de campos e ações Cancelar/Salvar íntegros.",
-          "Cabeçalho/voltar/contexto atual coerentes nos temas; sem teste de mutação."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V103_1280_light_sidebar-recolhida.png",
-        "sha256": "0a8896aeeaace1cc74983bcc5970a3a667b523cd20253797a6d42e832e5e2eed",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta e foco do expansor visíveis; formulário centralizado mantém alinhamentos e ações.",
-          "Sem corte ou colisão aparente; valores e versão do estado auditado preservados."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V103_1280_light.png",
+          "sha256": "7e3d20cbf483c937e2789f88c0fe3354b1594151901882c2d00b1b846a15637f",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V103_1280_light_sidebar-recolhida.png",
+          "sha256": "0a8896aeeaace1cc74983bcc5970a3a667b523cd20253797a6d42e832e5e2eed",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V103_1280_light.json",
         "sha256": "9d1fafee3ad60100d857374d9d443f1c06e3b937b51f725f739c53435210dad3"
@@ -1273,35 +1291,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Formulário centrado com largura contida, pares de campos e ações Cancelar/Salvar íntegros.",
+        "Cabeçalho/voltar/contexto atual coerentes nos temas; sem teste de mutação.",
+        "Sidebar compacta e foco do expansor visíveis; formulário centralizado mantém alinhamentos e ações.",
+        "Sem corte ou colisão aparente; valores e versão do estado auditado preservados."
+      ]
     },
     {
       "surface": "V103",
       "width": 1280,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V103_1280_dark.png",
-        "sha256": "9e8baf47851f749d62c577f3c4e30c4792558f100583a58b8457dae8412aaa5a",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Formulário centrado com largura contida, pares de campos e ações Cancelar/Salvar íntegros.",
-          "Cabeçalho/voltar/contexto atual coerentes nos temas; sem teste de mutação."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V103_1280_dark_sidebar-recolhida.png",
-        "sha256": "49338088182972f1826ead89030baf291b664db4a4f712201dec7134c321b9bb",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta e foco do expansor visíveis; formulário centralizado mantém alinhamentos e ações.",
-          "Sem corte ou colisão aparente; valores e versão do estado auditado preservados."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V103_1280_dark.png",
+          "sha256": "9e8baf47851f749d62c577f3c4e30c4792558f100583a58b8457dae8412aaa5a",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V103_1280_dark_sidebar-recolhida.png",
+          "sha256": "49338088182972f1826ead89030baf291b664db4a4f712201dec7134c321b9bb",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V103_1280_dark.json",
         "sha256": "eb480a2cb51c621c4640a34dc0be32a7ac4505b793c0bcd5be385fbcfcc88b97"
@@ -1317,36 +1335,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Formulário centrado com largura contida, pares de campos e ações Cancelar/Salvar íntegros.",
+        "Cabeçalho/voltar/contexto atual coerentes nos temas; sem teste de mutação.",
+        "Sidebar compacta e foco do expansor visíveis; formulário centralizado mantém alinhamentos e ações.",
+        "Sem corte ou colisão aparente; valores e versão do estado auditado preservados."
+      ]
     },
     {
       "surface": "V103",
       "width": 768,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V103_768_light.png",
-        "sha256": "3616c6146b4b4384b3e7d73256976ff9b98cd684390e4c976b25790e10b8858c",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Voltar/Editar contratante/formulário têm hierarquia clara e campos identificados.",
-          "Mobile empilha campos e ações;768px usa duas colunas sem corte aparente.",
-          "Dados preenchidos/versão e situação visíveis; salvamento/cancelamento não testados."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V103_768_light_sidebar-recolhida.png",
-        "sha256": "2195f1546773dff7b28e4925c4baae405746d28419f5ee8a9b5b8b75324eb514",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta com foco no expansor e ícone de contexto ativo; formulário mantém campos alinhados.",
-          "Controles e ações visíveis sem sobreposição; não houve submit ou edição."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V103_768_light.png",
+          "sha256": "3616c6146b4b4384b3e7d73256976ff9b98cd684390e4c976b25790e10b8858c",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V103_768_light_sidebar-recolhida.png",
+          "sha256": "2195f1546773dff7b28e4925c4baae405746d28419f5ee8a9b5b8b75324eb514",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V103_768_light.json",
         "sha256": "2860db44799b35e813d33c01be4c5ee0a90c951c4d38b4609243a270ba399091"
@@ -1362,36 +1379,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Voltar/Editar contratante/formulário têm hierarquia clara e campos identificados.",
+        "Mobile empilha campos e ações;768px usa duas colunas sem corte aparente.",
+        "Dados preenchidos/versão e situação visíveis; salvamento/cancelamento não testados.",
+        "Sidebar compacta com foco no expansor e ícone de contexto ativo; formulário mantém campos alinhados.",
+        "Controles e ações visíveis sem sobreposição; não houve submit ou edição."
+      ]
     },
     {
       "surface": "V103",
       "width": 768,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V103_768_dark.png",
-        "sha256": "fea009e449f6e1074bf0fcaeb0cc6ea3728ff5f539d667b737b401370c252cde",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Voltar/Editar contratante/formulário têm hierarquia clara e campos identificados.",
-          "Mobile empilha campos e ações;768px usa duas colunas sem corte aparente.",
-          "Dados preenchidos/versão e situação visíveis; salvamento/cancelamento não testados."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V103_768_dark_sidebar-recolhida.png",
-        "sha256": "dbbec2a8286838d820446775776c0f3ba6739858d8d1ab4529add106eaadd515",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta com foco no expansor e ícone de contexto ativo; formulário mantém campos alinhados.",
-          "Controles e ações visíveis sem sobreposição; não houve submit ou edição."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V103_768_dark.png",
+          "sha256": "fea009e449f6e1074bf0fcaeb0cc6ea3728ff5f539d667b737b401370c252cde",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V103_768_dark_sidebar-recolhida.png",
+          "sha256": "dbbec2a8286838d820446775776c0f3ba6739858d8d1ab4529add106eaadd515",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V103_768_dark.json",
         "sha256": "7d9cfcd155828fcfd394bb87ba2c5c99fc954f625c093721069783ccc56023db"
@@ -1407,35 +1424,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Voltar/Editar contratante/formulário têm hierarquia clara e campos identificados.",
+        "Mobile empilha campos e ações;768px usa duas colunas sem corte aparente.",
+        "Dados preenchidos/versão e situação visíveis; salvamento/cancelamento não testados.",
+        "Sidebar compacta com foco no expansor e ícone de contexto ativo; formulário mantém campos alinhados.",
+        "Controles e ações visíveis sem sobreposição; não houve submit ou edição."
+      ]
     },
     {
       "surface": "V103",
       "width": 390,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V103_390_light.png",
-        "sha256": "5a90fcf22e5272cf306612770a97aefd4d6b443faf8ac824cee75cb98afec197",
-        "pixel_width": 390,
-        "pixel_height": 1281,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Voltar/Editar contratante/formulário têm hierarquia clara e campos identificados.",
-          "Mobile empilha campos e ações;768px usa duas colunas sem corte aparente.",
-          "Dados preenchidos/versão e situação visíveis; salvamento/cancelamento não testados."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V103_390_light_menu.png",
-        "sha256": "61dbd41fd1edc5884fb64753239bcbfdd798d73fdfc8c808ec61f4bb627ffeaa",
-        "pixel_width": 390,
-        "pixel_height": 1281,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Menu apresenta Contexto atual/Editar contratante ativo, marca e navegação legíveis."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V103_390_light.png",
+          "sha256": "5a90fcf22e5272cf306612770a97aefd4d6b443faf8ac824cee75cb98afec197",
+          "width": 390,
+          "height": 1281,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V103_390_light_menu.png",
+          "sha256": "61dbd41fd1edc5884fb64753239bcbfdd798d73fdfc8c808ec61f4bb627ffeaa",
+          "width": 390,
+          "height": 1281,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V103_390_light.json",
         "sha256": "8dca9817abfebedfe4c5e58b3a1d40afac98923f417b1be1810164c0919163be"
@@ -1451,35 +1469,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Voltar/Editar contratante/formulário têm hierarquia clara e campos identificados.",
+        "Mobile empilha campos e ações;768px usa duas colunas sem corte aparente.",
+        "Dados preenchidos/versão e situação visíveis; salvamento/cancelamento não testados.",
+        "Menu apresenta Contexto atual/Editar contratante ativo, marca e navegação legíveis."
+      ]
     },
     {
       "surface": "V103",
       "width": 390,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V103_390_dark.png",
-        "sha256": "3cd8d3cc147b5521ac5f02e874e647ad0587acb963046b0a01d22d88c7971baa",
-        "pixel_width": 390,
-        "pixel_height": 1281,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Voltar/Editar contratante/formulário têm hierarquia clara e campos identificados.",
-          "Mobile empilha campos e ações;768px usa duas colunas sem corte aparente.",
-          "Dados preenchidos/versão e situação visíveis; salvamento/cancelamento não testados."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V103_390_dark_menu.png",
-        "sha256": "6c931c6985075d9f11caece1c77aef7377c6d843cffaca5e08f0e50f844b7b92",
-        "pixel_width": 390,
-        "pixel_height": 1281,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Menu apresenta Contexto atual/Editar contratante ativo, marca e navegação legíveis."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V103_390_dark.png",
+          "sha256": "3cd8d3cc147b5521ac5f02e874e647ad0587acb963046b0a01d22d88c7971baa",
+          "width": 390,
+          "height": 1281,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V103_390_dark_menu.png",
+          "sha256": "6c931c6985075d9f11caece1c77aef7377c6d843cffaca5e08f0e50f844b7b92",
+          "width": 390,
+          "height": 1281,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V103_390_dark.json",
         "sha256": "934fe605d7d9103f1f3b12f8c2fb8f01e3b77db90d2e12c2c84a8b07cdec92b8"
@@ -1495,34 +1513,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Voltar/Editar contratante/formulário têm hierarquia clara e campos identificados.",
+        "Mobile empilha campos e ações;768px usa duas colunas sem corte aparente.",
+        "Dados preenchidos/versão e situação visíveis; salvamento/cancelamento não testados.",
+        "Menu apresenta Contexto atual/Editar contratante ativo, marca e navegação legíveis."
+      ]
     },
     {
       "surface": "V104",
       "width": 1440,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V104_1440_light.png",
-        "sha256": "b72cd03aa4e5f8eb72788250e18b1ba4df80a0d6a1eaa1ab6cb8abae30fd4f4a",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Tabela desktop com número/objeto/situação/criticidade/vigência/valor alinhados, sem corte aparente.",
-          "Número e objeto quebram em1280, mantendo conteúdo e altura suficiente; ausência devalor indicada."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V104_1440_light_sidebar-recolhida.png",
-        "sha256": "96dc6074f155afb4e56a39afb5cf93d5641eb4fee6d7001da5556a3092f9ce47",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta e foco do expansor preservados; tabela/paginação completas."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V104_1440_light.png",
+          "sha256": "b72cd03aa4e5f8eb72788250e18b1ba4df80a0d6a1eaa1ab6cb8abae30fd4f4a",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V104_1440_light_sidebar-recolhida.png",
+          "sha256": "96dc6074f155afb4e56a39afb5cf93d5641eb4fee6d7001da5556a3092f9ce47",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V104_1440_light.json",
         "sha256": "47d0588355f7a9db3b1b012aebac866a9dd1fdc82da8a9f4fb4b45858e809368"
@@ -1538,34 +1557,34 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Tabela desktop com número/objeto/situação/criticidade/vigência/valor alinhados, sem corte aparente.",
+        "Número e objeto quebram em1280, mantendo conteúdo e altura suficiente; ausência devalor indicada.",
+        "Sidebar compacta e foco do expansor preservados; tabela/paginação completas."
+      ]
     },
     {
       "surface": "V104",
       "width": 1440,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V104_1440_dark.png",
-        "sha256": "5f6808e810073a3dabc1377dcd8cbf885cdaeb31e7c1fc99de7e6829856ea342",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Tabela desktop com número/objeto/situação/criticidade/vigência/valor alinhados, sem corte aparente.",
-          "Número e objeto quebram em1280, mantendo conteúdo e altura suficiente; ausência devalor indicada."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V104_1440_dark_sidebar-recolhida.png",
-        "sha256": "46e061291476fc8ca2a66dcfdec69a8812146352916b92b7d67b0ef43f29b30f",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta e foco do expansor preservados; tabela/paginação completas."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V104_1440_dark.png",
+          "sha256": "5f6808e810073a3dabc1377dcd8cbf885cdaeb31e7c1fc99de7e6829856ea342",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V104_1440_dark_sidebar-recolhida.png",
+          "sha256": "46e061291476fc8ca2a66dcfdec69a8812146352916b92b7d67b0ef43f29b30f",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V104_1440_dark.json",
         "sha256": "32c8adb4ca7f04512f34343e65d90493133fbe01c7386ff00578ed78b357ff11"
@@ -1581,34 +1600,34 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Tabela desktop com número/objeto/situação/criticidade/vigência/valor alinhados, sem corte aparente.",
+        "Número e objeto quebram em1280, mantendo conteúdo e altura suficiente; ausência devalor indicada.",
+        "Sidebar compacta e foco do expansor preservados; tabela/paginação completas."
+      ]
     },
     {
       "surface": "V104",
       "width": 1280,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V104_1280_light.png",
-        "sha256": "76ef9dbd7b18a75d5e6bff32295e0ecda6801dd6d018dbd23445b11c99b94a9d",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Tabela desktop com número/objeto/situação/criticidade/vigência/valor alinhados, sem corte aparente.",
-          "Número e objeto quebram em1280, mantendo conteúdo e altura suficiente; ausência devalor indicada."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V104_1280_light_sidebar-recolhida.png",
-        "sha256": "2bfd4b67f59e7d147a012cf71659c3826291f674c28ec746955ac987f910b20a",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta e foco do expansor preservados; tabela/paginação completas."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V104_1280_light.png",
+          "sha256": "76ef9dbd7b18a75d5e6bff32295e0ecda6801dd6d018dbd23445b11c99b94a9d",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V104_1280_light_sidebar-recolhida.png",
+          "sha256": "2bfd4b67f59e7d147a012cf71659c3826291f674c28ec746955ac987f910b20a",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V104_1280_light.json",
         "sha256": "60a4926fbd9bae427c510cc5411baf80dbfcf1c677c19d5a8f2df67f63e1f613"
@@ -1624,34 +1643,34 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Tabela desktop com número/objeto/situação/criticidade/vigência/valor alinhados, sem corte aparente.",
+        "Número e objeto quebram em1280, mantendo conteúdo e altura suficiente; ausência devalor indicada.",
+        "Sidebar compacta e foco do expansor preservados; tabela/paginação completas."
+      ]
     },
     {
       "surface": "V104",
       "width": 1280,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V104_1280_dark.png",
-        "sha256": "b3c2c07700a798b66c5081914c688db779c64b7b23ccc084f286c49525f4d08d",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Tabela desktop com número/objeto/situação/criticidade/vigência/valor alinhados, sem corte aparente.",
-          "Número e objeto quebram em1280, mantendo conteúdo e altura suficiente; ausência devalor indicada."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V104_1280_dark_sidebar-recolhida.png",
-        "sha256": "8a9d7067a79f808416960c67540654a151072cf93c2e8751cc9c6bd91047a760",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta e foco do expansor preservados; tabela/paginação completas."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V104_1280_dark.png",
+          "sha256": "b3c2c07700a798b66c5081914c688db779c64b7b23ccc084f286c49525f4d08d",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V104_1280_dark_sidebar-recolhida.png",
+          "sha256": "8a9d7067a79f808416960c67540654a151072cf93c2e8751cc9c6bd91047a760",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V104_1280_dark.json",
         "sha256": "1d4fd98010716a720fed8d6dcf014829249161195f87200d1455fa2630319d89"
@@ -1667,34 +1686,34 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Tabela desktop com número/objeto/situação/criticidade/vigência/valor alinhados, sem corte aparente.",
+        "Número e objeto quebram em1280, mantendo conteúdo e altura suficiente; ausência devalor indicada.",
+        "Sidebar compacta e foco do expansor preservados; tabela/paginação completas."
+      ]
     },
     {
       "surface": "V104",
       "width": 768,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V104_768_light.png",
-        "sha256": "02e2b62b3650922ce07ca4b20df6f277dc268823c03eda51b92fbf0c3a143cc2",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Minor visual: card ocupa aproximadamente metade do painel em768px com sidebar aberta, causando mais quebras no título/descrição/vigência que em390px; sobra área à direita.",
-          "Sem perda de campo ou colisão aparente. Não atribuído a código/breakpoint sem investigação."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V104_768_light_sidebar-recolhida.png",
-        "sha256": "7231150a24687b0968b00b5d8a098971ca96935571d3e1d7feab7f870b56bbdb",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta mantém foco do expansor e item Contratos; card/paginação completos."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V104_768_light.png",
+          "sha256": "02e2b62b3650922ce07ca4b20df6f277dc268823c03eda51b92fbf0c3a143cc2",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V104_768_light_sidebar-recolhida.png",
+          "sha256": "7231150a24687b0968b00b5d8a098971ca96935571d3e1d7feab7f870b56bbdb",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V104_768_light.json",
         "sha256": "e298a3c2366d4709782b4e8b88825187744ca1ac25aedaf953a68b78f684e44d"
@@ -1710,34 +1729,34 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Minor visual: card ocupa aproximadamente metade do painel em768px com sidebar aberta, causando mais quebras no título/descrição/vigência que em390px; sobra área à direita.",
+        "Sem perda de campo ou colisão aparente. Não atribuído a código/breakpoint sem investigação.",
+        "Sidebar compacta mantém foco do expansor e item Contratos; card/paginação completos."
+      ]
     },
     {
       "surface": "V104",
       "width": 768,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V104_768_dark.png",
-        "sha256": "e281672258d0cd1f31a6e2643bcaea83c9ae6d4be77f9f4795af69f09179d5bd",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Minor visual: card ocupa aproximadamente metade do painel em768px com sidebar aberta, causando mais quebras no título/descrição/vigência que em390px; sobra área à direita.",
-          "Sem perda de campo ou colisão aparente. Não atribuído a código/breakpoint sem investigação."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V104_768_dark_sidebar-recolhida.png",
-        "sha256": "a39bb5a4545da938722a90d757db640b129a0b22e823529f3f32e5a4f0328ca1",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta mantém foco do expansor e item Contratos; card/paginação completos."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V104_768_dark.png",
+          "sha256": "e281672258d0cd1f31a6e2643bcaea83c9ae6d4be77f9f4795af69f09179d5bd",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V104_768_dark_sidebar-recolhida.png",
+          "sha256": "a39bb5a4545da938722a90d757db640b129a0b22e823529f3f32e5a4f0328ca1",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V104_768_dark.json",
         "sha256": "36bc2870ad77b6f629c97578a39dfc9b1e9c9754c3a26909af168cc9904afe80"
@@ -1753,34 +1772,34 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Minor visual: card ocupa aproximadamente metade do painel em768px com sidebar aberta, causando mais quebras no título/descrição/vigência que em390px; sobra área à direita.",
+        "Sem perda de campo ou colisão aparente. Não atribuído a código/breakpoint sem investigação.",
+        "Sidebar compacta mantém foco do expansor e item Contratos; card/paginação completos."
+      ]
     },
     {
       "surface": "V104",
       "width": 390,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V104_390_light.png",
-        "sha256": "dd0caf5412507b6ac9c4859c8944c02ae5eac57e1d28fffb24d50fbc54abcfaa",
-        "pixel_width": 390,
-        "pixel_height": 1214,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Card mobile apresenta título/descrição, situação/criticidade, vigência/valor e paginação legíveis.",
-          "Datas/ausência devalor visíveis; não comprova regras de vigência ou fluxo contratual."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V104_390_light_menu.png",
-        "sha256": "1a779afd9781dab1103b2021d3ab0e9e88e4919874b273ffed9370dc7c53bfb5",
-        "pixel_width": 390,
-        "pixel_height": 1214,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Menu móvel mantém marca e Contratos ativo; opções legíveis no estado capturado."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V104_390_light.png",
+          "sha256": "dd0caf5412507b6ac9c4859c8944c02ae5eac57e1d28fffb24d50fbc54abcfaa",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V104_390_light_menu.png",
+          "sha256": "1a779afd9781dab1103b2021d3ab0e9e88e4919874b273ffed9370dc7c53bfb5",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V104_390_light.json",
         "sha256": "95e7ac973466ff3f986c8f73f54c9f5832b43e8cc65a7f9ec74eaab75d7ff422"
@@ -1796,34 +1815,34 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Card mobile apresenta título/descrição, situação/criticidade, vigência/valor e paginação legíveis.",
+        "Datas/ausência devalor visíveis; não comprova regras de vigência ou fluxo contratual.",
+        "Menu móvel mantém marca e Contratos ativo; opções legíveis no estado capturado."
+      ]
     },
     {
       "surface": "V104",
       "width": 390,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V104_390_dark.png",
-        "sha256": "90a19c70a06399f1f0a43fb2e933f46e98abde5478d77e2e2237ee0a6c2f0afe",
-        "pixel_width": 390,
-        "pixel_height": 1214,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Card mobile apresenta título/descrição, situação/criticidade, vigência/valor e paginação legíveis.",
-          "Datas/ausência devalor visíveis; não comprova regras de vigência ou fluxo contratual."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V104_390_dark_menu.png",
-        "sha256": "86d29db75bc62ca42298fa41acd0d6793113a7362c833821713b1859307db217",
-        "pixel_width": 390,
-        "pixel_height": 1214,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Menu móvel mantém marca e Contratos ativo; opções legíveis no estado capturado."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V104_390_dark.png",
+          "sha256": "90a19c70a06399f1f0a43fb2e933f46e98abde5478d77e2e2237ee0a6c2f0afe",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V104_390_dark_menu.png",
+          "sha256": "86d29db75bc62ca42298fa41acd0d6793113a7362c833821713b1859307db217",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V104_390_dark.json",
         "sha256": "725f71cea22d294cf042587b447cefe388ab9bd2694da067627a0ad518a0997e"
@@ -1839,36 +1858,34 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 0
-      }
+      },
+      "notes": [
+        "Card mobile apresenta título/descrição, situação/criticidade, vigência/valor e paginação legíveis.",
+        "Datas/ausência devalor visíveis; não comprova regras de vigência ou fluxo contratual.",
+        "Menu móvel mantém marca e Contratos ativo; opções legíveis no estado capturado."
+      ]
     },
     {
       "surface": "V105",
       "width": 1440,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V105_1440_light.png",
-        "sha256": "0c8ca105a586effa3494b075632e62c0a2885006777757dc1c07ab0f654385e7",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Formulário desktop centrado, campos e ações completos sem colisão aparente.",
-          "Ícones de calendário visíveis em ambos os temas; Minor de localização mm/dd/yyyy observado.",
-          "Sem preenchimento, seleção real do calendário ou submit."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V105_1440_light_sidebar-recolhida.png",
-        "sha256": "bbffa63dc5ae269b77922624d09448e74698aaf21fc79a1840250f631fdbb60a",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta/foco, marca e formulário preservados; ações e campos completos.",
-          "Calendários visíveis no claro/escuro; hints nativos mm/dd/yyyy permanecem."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V105_1440_light.png",
+          "sha256": "0c8ca105a586effa3494b075632e62c0a2885006777757dc1c07ab0f654385e7",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V105_1440_light_sidebar-recolhida.png",
+          "sha256": "bbffa63dc5ae269b77922624d09448e74698aaf21fc79a1840250f631fdbb60a",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V105_1440_light.json",
         "sha256": "67206131ba5b16831a7a367188724656b6caa3c17d52fcc2cb96186420d30534"
@@ -1884,36 +1901,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 2
-      }
+      },
+      "notes": [
+        "Formulário desktop centrado, campos e ações completos sem colisão aparente.",
+        "Ícones de calendário visíveis em ambos os temas; Minor de localização mm/dd/yyyy observado.",
+        "Sem preenchimento, seleção real do calendário ou submit.",
+        "Sidebar compacta/foco, marca e formulário preservados; ações e campos completos.",
+        "Calendários visíveis no claro/escuro; hints nativos mm/dd/yyyy permanecem."
+      ]
     },
     {
       "surface": "V105",
       "width": 1440,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V105_1440_dark.png",
-        "sha256": "0db670bf4dcc14e0c1fec2180de77f1df86a627cde0445430a1ab831e61c0218",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Formulário desktop centrado, campos e ações completos sem colisão aparente.",
-          "Ícones de calendário visíveis em ambos os temas; Minor de localização mm/dd/yyyy observado.",
-          "Sem preenchimento, seleção real do calendário ou submit."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V105_1440_dark_sidebar-recolhida.png",
-        "sha256": "85b942604ffdccd9da4ade613426b676fb1f50c0fa9e5bf30ebceb61be41e6d5",
-        "pixel_width": 1440,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta/foco, marca e formulário preservados; ações e campos completos.",
-          "Calendários visíveis no claro/escuro; hints nativos mm/dd/yyyy permanecem."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V105_1440_dark.png",
+          "sha256": "0db670bf4dcc14e0c1fec2180de77f1df86a627cde0445430a1ab831e61c0218",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V105_1440_dark_sidebar-recolhida.png",
+          "sha256": "85b942604ffdccd9da4ade613426b676fb1f50c0fa9e5bf30ebceb61be41e6d5",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V105_1440_dark.json",
         "sha256": "959ac299a504ba8ea889c6b5c346daf8b4987d6cbac6af7a338aa915533c865a"
@@ -1929,36 +1946,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 2
-      }
+      },
+      "notes": [
+        "Formulário desktop centrado, campos e ações completos sem colisão aparente.",
+        "Ícones de calendário visíveis em ambos os temas; Minor de localização mm/dd/yyyy observado.",
+        "Sem preenchimento, seleção real do calendário ou submit.",
+        "Sidebar compacta/foco, marca e formulário preservados; ações e campos completos.",
+        "Calendários visíveis no claro/escuro; hints nativos mm/dd/yyyy permanecem."
+      ]
     },
     {
       "surface": "V105",
       "width": 1280,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V105_1280_light.png",
-        "sha256": "48c9a8161101e6c0deafee452230cda2cbe7190060f3d4c8521e619b02191d23",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Formulário desktop centrado, campos e ações completos sem colisão aparente.",
-          "Ícones de calendário visíveis em ambos os temas; Minor de localização mm/dd/yyyy observado.",
-          "Sem preenchimento, seleção real do calendário ou submit."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V105_1280_light_sidebar-recolhida.png",
-        "sha256": "9e2e230c73419ff13d3631f866bc90c7cce782e92dd81b6d5114331a31604107",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta/foco, marca e formulário preservados; ações e campos completos.",
-          "Calendários visíveis no claro/escuro; hints nativos mm/dd/yyyy permanecem."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V105_1280_light.png",
+          "sha256": "48c9a8161101e6c0deafee452230cda2cbe7190060f3d4c8521e619b02191d23",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V105_1280_light_sidebar-recolhida.png",
+          "sha256": "9e2e230c73419ff13d3631f866bc90c7cce782e92dd81b6d5114331a31604107",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V105_1280_light.json",
         "sha256": "66b2c6cf7e7ab8f13799d87ab44826eb921df1321cf6560aa16fe1d9bb34aacb"
@@ -1974,36 +1991,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 2
-      }
+      },
+      "notes": [
+        "Formulário desktop centrado, campos e ações completos sem colisão aparente.",
+        "Ícones de calendário visíveis em ambos os temas; Minor de localização mm/dd/yyyy observado.",
+        "Sem preenchimento, seleção real do calendário ou submit.",
+        "Sidebar compacta/foco, marca e formulário preservados; ações e campos completos.",
+        "Calendários visíveis no claro/escuro; hints nativos mm/dd/yyyy permanecem."
+      ]
     },
     {
       "surface": "V105",
       "width": 1280,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V105_1280_dark.png",
-        "sha256": "06deb58fada32c376c45cfd654cf01107610bbc30afce4373722510f2131b3d6",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Formulário desktop centrado, campos e ações completos sem colisão aparente.",
-          "Ícones de calendário visíveis em ambos os temas; Minor de localização mm/dd/yyyy observado.",
-          "Sem preenchimento, seleção real do calendário ou submit."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V105_1280_dark_sidebar-recolhida.png",
-        "sha256": "757a359483f7d0a3ef49f9f6e5b2572645d4cf799e869f06ab924ec79c898810",
-        "pixel_width": 1280,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Sidebar compacta/foco, marca e formulário preservados; ações e campos completos.",
-          "Calendários visíveis no claro/escuro; hints nativos mm/dd/yyyy permanecem."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V105_1280_dark.png",
+          "sha256": "06deb58fada32c376c45cfd654cf01107610bbc30afce4373722510f2131b3d6",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V105_1280_dark_sidebar-recolhida.png",
+          "sha256": "757a359483f7d0a3ef49f9f6e5b2572645d4cf799e869f06ab924ec79c898810",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V105_1280_dark.json",
         "sha256": "983afa859ac6ec4d22bb1f677861f4007603182979bf39ba36b1a9139e9bc1a5"
@@ -2019,36 +2036,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 2
-      }
+      },
+      "notes": [
+        "Formulário desktop centrado, campos e ações completos sem colisão aparente.",
+        "Ícones de calendário visíveis em ambos os temas; Minor de localização mm/dd/yyyy observado.",
+        "Sem preenchimento, seleção real do calendário ou submit.",
+        "Sidebar compacta/foco, marca e formulário preservados; ações e campos completos.",
+        "Calendários visíveis no claro/escuro; hints nativos mm/dd/yyyy permanecem."
+      ]
     },
     {
       "surface": "V105",
       "width": 768,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V105_768_light.png",
-        "sha256": "081edf465032881648c441a0d6fdc56ce643150b714c8ccb640f5bd23af644d9",
-        "pixel_width": 768,
-        "pixel_height": 1121,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Novo contrato com campos/ajuda e ações legíveis;390px empilha e768px usa duas colunas.",
-          "Ícones dos calendários são escuros no claro e brancos no escuro, sem invisibilidade aparente.",
-          "Minor de localização: hints nativos mm/dd/yyyy em página portuguesa. Sem dado preenchido ou teste de interpretação de datas."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V105_768_light_sidebar-recolhida.png",
-        "sha256": "6382c4cebf73c3c38efca9736c418e569a3bfa59576480a213ebd10a55d6ed96",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Símbolo/foco no expansor e formulário preservados; calendários visíveis em ambos os temas.",
-          "Placeholders nativos das datas exibem mm/dd/yyyy; observação de locale do estado capturado, sem diagnóstico de causa."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V105_768_light.png",
+          "sha256": "081edf465032881648c441a0d6fdc56ce643150b714c8ccb640f5bd23af644d9",
+          "width": 768,
+          "height": 1121,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V105_768_light_sidebar-recolhida.png",
+          "sha256": "6382c4cebf73c3c38efca9736c418e569a3bfa59576480a213ebd10a55d6ed96",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V105_768_light.json",
         "sha256": "e1da025ddd1cac8e6e45379d1dd08c711c51464f8560c283571aee2dc3d6ae58"
@@ -2064,36 +2081,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 2
-      }
+      },
+      "notes": [
+        "Novo contrato com campos/ajuda e ações legíveis;390px empilha e768px usa duas colunas.",
+        "Ícones dos calendários são escuros no claro e brancos no escuro, sem invisibilidade aparente.",
+        "Minor de localização: hints nativos mm/dd/yyyy em página portuguesa. Sem dado preenchido ou teste de interpretação de datas.",
+        "Símbolo/foco no expansor e formulário preservados; calendários visíveis em ambos os temas.",
+        "Placeholders nativos das datas exibem mm/dd/yyyy; observação de locale do estado capturado, sem diagnóstico de causa."
+      ]
     },
     {
       "surface": "V105",
       "width": 768,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V105_768_dark.png",
-        "sha256": "ad97c1954d6d524de1e035e171aefd999071271c2b116a08fafce6423e2171d5",
-        "pixel_width": 768,
-        "pixel_height": 1121,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Novo contrato com campos/ajuda e ações legíveis;390px empilha e768px usa duas colunas.",
-          "Ícones dos calendários são escuros no claro e brancos no escuro, sem invisibilidade aparente.",
-          "Minor de localização: hints nativos mm/dd/yyyy em página portuguesa. Sem dado preenchido ou teste de interpretação de datas."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V105_768_dark_sidebar-recolhida.png",
-        "sha256": "d63f1d1ae6dd0e3cc7cbd3e2d6578e6fba73e4468baed5732f4322671d93a7c0",
-        "pixel_width": 768,
-        "pixel_height": 1097,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Símbolo/foco no expansor e formulário preservados; calendários visíveis em ambos os temas.",
-          "Placeholders nativos das datas exibem mm/dd/yyyy; observação de locale do estado capturado, sem diagnóstico de causa."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V105_768_dark.png",
+          "sha256": "ad97c1954d6d524de1e035e171aefd999071271c2b116a08fafce6423e2171d5",
+          "width": 768,
+          "height": 1121,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V105_768_dark_sidebar-recolhida.png",
+          "sha256": "d63f1d1ae6dd0e3cc7cbd3e2d6578e6fba73e4468baed5732f4322671d93a7c0",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V105_768_dark.json",
         "sha256": "506f234e4957f8941c6e4b03c4147dce65631150044f8bd05fd95bbe3114b9ad"
@@ -2109,35 +2126,36 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 2
-      }
+      },
+      "notes": [
+        "Novo contrato com campos/ajuda e ações legíveis;390px empilha e768px usa duas colunas.",
+        "Ícones dos calendários são escuros no claro e brancos no escuro, sem invisibilidade aparente.",
+        "Minor de localização: hints nativos mm/dd/yyyy em página portuguesa. Sem dado preenchido ou teste de interpretação de datas.",
+        "Símbolo/foco no expansor e formulário preservados; calendários visíveis em ambos os temas.",
+        "Placeholders nativos das datas exibem mm/dd/yyyy; observação de locale do estado capturado, sem diagnóstico de causa."
+      ]
     },
     {
       "surface": "V105",
       "width": 390,
       "theme": "light",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V105_390_light.png",
-        "sha256": "0d27fa5d0245a8cd612ded6f0626c8354bd1c6c9cd9ddf8bcaf2807e4c900c9c",
-        "pixel_width": 390,
-        "pixel_height": 1602,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Novo contrato com campos/ajuda e ações legíveis;390px empilha e768px usa duas colunas.",
-          "Ícones dos calendários são escuros no claro e brancos no escuro, sem invisibilidade aparente.",
-          "Minor de localização: hints nativos mm/dd/yyyy em página portuguesa. Sem dado preenchido ou teste de interpretação de datas."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V105_390_light_menu.png",
-        "sha256": "13828d471056972aeec22cece100e17b9db3f369a119b5c9b2f8b79ca6c9308f",
-        "pixel_width": 390,
-        "pixel_height": 1602,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca e Novo contrato ativo no menu; overlay/viewport não equivale a prova do formulário inteiro."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V105_390_light.png",
+          "sha256": "0d27fa5d0245a8cd612ded6f0626c8354bd1c6c9cd9ddf8bcaf2807e4c900c9c",
+          "width": 390,
+          "height": 1602,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V105_390_light_menu.png",
+          "sha256": "13828d471056972aeec22cece100e17b9db3f369a119b5c9b2f8b79ca6c9308f",
+          "width": 390,
+          "height": 1602,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V105_390_light.json",
         "sha256": "ac1fe40e9564fbc0b97fb9163c2af92337175655d0977e3dbb17d8489334b12b"
@@ -2153,35 +2171,35 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 2
-      }
+      },
+      "notes": [
+        "Novo contrato com campos/ajuda e ações legíveis;390px empilha e768px usa duas colunas.",
+        "Ícones dos calendários são escuros no claro e brancos no escuro, sem invisibilidade aparente.",
+        "Minor de localização: hints nativos mm/dd/yyyy em página portuguesa. Sem dado preenchido ou teste de interpretação de datas.",
+        "Marca e Novo contrato ativo no menu; overlay/viewport não equivale a prova do formulário inteiro."
+      ]
     },
     {
       "surface": "V105",
       "width": 390,
       "theme": "dark",
       "review_status": "PRESERVABLE_WITH_CAVEATS",
-      "primary": {
-        "file": "screenshots/V105_390_dark.png",
-        "sha256": "cc6aa25c43f4c4b13097e2b7b4374d368651832086baaaf5f987025f8ecab38f",
-        "pixel_width": 390,
-        "pixel_height": 1602,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Novo contrato com campos/ajuda e ações legíveis;390px empilha e768px usa duas colunas.",
-          "Ícones dos calendários são escuros no claro e brancos no escuro, sem invisibilidade aparente.",
-          "Minor de localização: hints nativos mm/dd/yyyy em página portuguesa. Sem dado preenchido ou teste de interpretação de datas."
-        ]
-      },
-      "supplement": {
-        "file": "screenshots/V105_390_dark_menu.png",
-        "sha256": "1164f4c5fee7c5ed58e0eb99090c49e943bc527c5927316be56809e774bfb2e2",
-        "pixel_width": 390,
-        "pixel_height": 1602,
-        "review_status": "PRESERVABLE_WITH_CAVEATS",
-        "observations": [
-          "Marca e Novo contrato ativo no menu; overlay/viewport não equivale a prova do formulário inteiro."
-        ]
-      },
+      "files": [
+        {
+          "file": "screenshots/V105_390_dark.png",
+          "sha256": "cc6aa25c43f4c4b13097e2b7b4374d368651832086baaaf5f987025f8ecab38f",
+          "width": 390,
+          "height": 1602,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V105_390_dark_menu.png",
+          "sha256": "1164f4c5fee7c5ed58e0eb99090c49e943bc527c5927316be56809e774bfb2e2",
+          "width": 390,
+          "height": 1602,
+          "seenOriginal": true
+        }
+      ],
       "dom": {
         "file": "dom/V105_390_dark.json",
         "sha256": "f547ad0c8e5cff849b266b9edb1b7a3ac6165744a3234bd33eb6f2b541ceedb9"
@@ -2197,7 +2215,2065 @@
         "dom_identity_verified": true,
         "dom_h1_count": 1,
         "date_field_count": 2
-      }
+      },
+      "notes": [
+        "Novo contrato com campos/ajuda e ações legíveis;390px empilha e768px usa duas colunas.",
+        "Ícones dos calendários são escuros no claro e brancos no escuro, sem invisibilidade aparente.",
+        "Minor de localização: hints nativos mm/dd/yyyy em página portuguesa. Sem dado preenchido ou teste de interpretação de datas.",
+        "Marca e Novo contrato ativo no menu; overlay/viewport não equivale a prova do formulário inteiro."
+      ]
+    },
+    {
+      "surface": "V106",
+      "width": 1440,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V106_1440_light.png",
+          "sha256": "ff458f9c90b9d4c9e2a6b51914965e1f5e6fc6a8a78b9162fb6e480f1abfc7ef",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V106_1440_light_sidebar-recolhida.png",
+          "sha256": "881f92046b7ec50b5bb185fa197ba3d02641a2f8e2a3cc594de8d944a19e85e6",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V106_1440_light.json",
+        "sha256": "ccc840c58b58a2036ce4e1311cb31184c4f9407c4129830f4d5eba38e9548fb0"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Resumo contratual completo; quatro cartões e navegação sem sobreposição. Marca branca e organização/status legíveis. Suplemento recolhido exibe símbolo e foco visível no expansor."
+      ]
+    },
+    {
+      "surface": "V106",
+      "width": 1440,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V106_1440_dark.png",
+          "sha256": "89abd652cfbf3770f435888f7291c5e9ee88a9d4c9d9c7e75ff71f046f0b2518",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V106_1440_dark_sidebar-recolhida.png",
+          "sha256": "e97cd36b8044d4820e588e6d92b65d979d4174b183239786de2e17877dc7784c",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V106_1440_dark.json",
+        "sha256": "fb590a4e441dae023ec65bec0c1bf940da4df3d577b308df6527a47c842cd189"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Cartões de identificação/contratante/prazos/valores preservados, título e badges íntegros. 1280 reacomoda textos sem corte. Dark mantém marca branca. Recolhida mostra foco no expansor. Destaque cinza global Painel pode ser hover; contexto contratual Resumo correto, conferir aria-current no DOM."
+      ]
+    },
+    {
+      "surface": "V106",
+      "width": 1280,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V106_1280_light.png",
+          "sha256": "d1e9a68b1b236c45ad6e76a80a12af8c27cbc4f89319d82306c7cbc0b319680e",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V106_1280_light_sidebar-recolhida.png",
+          "sha256": "df63e096cdfa277ffefa2b6eb3cd05e72252505d8cb70eaea04a693c6801a66b",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V106_1280_light.json",
+        "sha256": "6d7758eb6f9a864c63b9ffedf7e44d8ee08c23f7ad9a5f31658280def7743e1f"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Cartões de identificação/contratante/prazos/valores preservados, título e badges íntegros. 1280 reacomoda textos sem corte. Dark mantém marca branca. Recolhida mostra foco no expansor. Destaque cinza global Painel pode ser hover; contexto contratual Resumo correto, conferir aria-current no DOM."
+      ]
+    },
+    {
+      "surface": "V106",
+      "width": 1280,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V106_1280_dark.png",
+          "sha256": "3c33ed7c1e667d9bd94899cb1239dac6aabc93be979441dd8142475a401048b1",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V106_1280_dark_sidebar-recolhida.png",
+          "sha256": "a0da05cf77c4c785480c9d1ac0cc4df13c66b42a5d18c93fcdf06d7d2faad32a",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V106_1280_dark.json",
+        "sha256": "601442d414cad6c2916fa3b4dc3322e634fa63baf9a043973490f44fb6f7ccab"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "1280 dark: cartões em duas colunas, conteúdos/badges/edição íntegros, símbolo recolhido e foco visível."
+      ]
+    },
+    {
+      "surface": "V106",
+      "width": 768,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V106_768_light.png",
+          "sha256": "43b59668921c4571b908adf67b35324f6de7b4d17c0275ec3bc984db86494ae2",
+          "width": 768,
+          "height": 1264,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V106_768_light_sidebar-recolhida.png",
+          "sha256": "f3fe690f570e38a9b9020a586414cdad6cc94a616e8f46316b610a80863341df",
+          "width": 768,
+          "height": 1244,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V106_768_light.json",
+        "sha256": "d279df5a15021e4ad7990dfff7cef351886881f71341ed8c80149d9932e95c5e"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "768 empilha quatro cartões; título e navegação quebram linhas sem colisão, badges deslocados à direita e inferiores preservados. Sidebar símbolo/marca e foco do expansor íntegros."
+      ]
+    },
+    {
+      "surface": "V106",
+      "width": 768,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V106_768_dark.png",
+          "sha256": "504d83b424a0935334078764e0546a68788d9461bc6994d000186cd32b30de09",
+          "width": 768,
+          "height": 1264,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V106_768_dark_sidebar-recolhida.png",
+          "sha256": "02bb0fb8c52dc8ee29c9d3fc5cba080d81faa1d36fa6850924336f5a994c7291",
+          "width": 768,
+          "height": 1244,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V106_768_dark.json",
+        "sha256": "fbe6beacfbe48c3509e7c2b12b372c1f465d4c8d6de9122e49887a2d5bfa539d"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "768 empilha quatro cartões; título e navegação quebram linhas sem colisão, badges deslocados à direita e inferiores preservados. Sidebar símbolo/marca e foco do expansor íntegros."
+      ]
+    },
+    {
+      "surface": "V106",
+      "width": 390,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V106_390_light.png",
+          "sha256": "74dc37a7bfd34d8fcf1929a54ca0aaf3901ae53a3aa0c07cfd855efa021c511a",
+          "width": 390,
+          "height": 1703,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V106_390_light_menu.png",
+          "sha256": "0a2576344893b96f87aa0c16b28986c28a32d9b010da194046ce37f9bf07c040",
+          "width": 390,
+          "height": 1703,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V106_390_light.json",
+        "sha256": "dd69e7112934741c893b6d4c9e7abff8bd9d7abeb5c88d6d28028e9a618d7ff2"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "390: cabeçalho empilha ações, Menu tem faixa reservada, título quebra e quatro cartões empilhados sem corte; ação editar visível ao final."
+      ]
+    },
+    {
+      "surface": "V106",
+      "width": 390,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V106_390_dark.png",
+          "sha256": "d4da268b1f5ed40628e1cb4a7fc1a15b035ce3c141d3773a082b8687f8fc6454",
+          "width": 390,
+          "height": 1703,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V106_390_dark_menu.png",
+          "sha256": "cb4e602f21347cc9c143f6bd732b6609848c9a06067d19a2b70bb0b08c71d0b7",
+          "width": 390,
+          "height": 1703,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V106_390_dark.json",
+        "sha256": "eea6526b5c061816a71d84989f74c62308b9e0b518a675f69d490e080e0f68c0"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "390: cabeçalho empilha ações, Menu tem faixa reservada, título quebra e quatro cartões empilhados sem corte; ação editar visível ao final."
+      ]
+    },
+    {
+      "surface": "V107",
+      "width": 1440,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V107_1440_light.png",
+          "sha256": "2291baa69d91d99d35109ee43d3b83824488ab2ea34be051a047480c35f2bddc",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V107_1440_light_sidebar-recolhida.png",
+          "sha256": "1abfecd1b7cb70b4b76905606dcf447f3222214e8c15e579f39a6c2dc1fd2ede",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V107_1440_light.json",
+        "sha256": "5010d893acfbfdf5c7f1d25b27ca02416d118f5143e6317c0ea7c1a3ca67e47a"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "1440: Base normativa ativa no contexto e tabs; filtros Escopo/Situação, Nova fonte e card com Detalhes/Editar separados. Referência técnica/hash e orientação inferior quebram sem corte. Marca/símbolo e foco recolhido íntegros."
+      ]
+    },
+    {
+      "surface": "V107",
+      "width": 1440,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V107_1440_dark.png",
+          "sha256": "074ae48d0999068db9cea3449b566ef9bd896220bdb14f3af79702e2f4aec041",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V107_1440_dark_sidebar-recolhida.png",
+          "sha256": "b782e46bc105153747a28601c39a80acfd5cfafb86c538ee86927cca8825c143",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V107_1440_dark.json",
+        "sha256": "8e55cecd7ec4966be37b4deaf419016159373275a67bd13e0b23dd658564966c"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "1440: Base normativa ativa no contexto e tabs; filtros Escopo/Situação, Nova fonte e card com Detalhes/Editar separados. Referência técnica/hash e orientação inferior quebram sem corte. Marca/símbolo e foco recolhido íntegros."
+      ]
+    },
+    {
+      "surface": "V107",
+      "width": 1280,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V107_1280_light.png",
+          "sha256": "e3c8ac0e3ea2d4317ece327457af2aa40fc56f0c80d029cc24df21845e8b77e0",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V107_1280_light_sidebar-recolhida.png",
+          "sha256": "b00588df17368f5d60e8d75f2b311fbfce5fb1516cef85811e9bc8478ba8c3b2",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V107_1280_light.json",
+        "sha256": "26044ce800191f855dfe4e8ca20a55f81db72dda2e13ee51e7dd5f5c5a7c2c52"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "1280: filtros e card íntegros, referência/hash quebram linhas sem colisão, ações Detalhes/Editar separadas. Header organização/status e contexto Base normativa preservados."
+      ]
+    },
+    {
+      "surface": "V107",
+      "width": 1280,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V107_1280_dark.png",
+          "sha256": "0a575516a2f897f53099d64ebd02ebe0642a47bafecd3839300e029ffdd9a472",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V107_1280_dark_sidebar-recolhida.png",
+          "sha256": "92d70a8b4e49da761be38946e37f1d9c69b76f7f9268834f2552081ac9a622ad",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V107_1280_dark.json",
+        "sha256": "d3a8bdf5f02fa956e5e4156395f294bee0fb90c5601181b6ecf29cf4f511b7f9"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "1280: filtros e card íntegros, referência/hash quebram linhas sem colisão, ações Detalhes/Editar separadas. Header organização/status e contexto Base normativa preservados."
+      ]
+    },
+    {
+      "surface": "V107",
+      "width": 768,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V107_768_light.png",
+          "sha256": "eb92f29e55c9645236e5496c0da9d268f726178640962aa3bf25ea5dca7ae9b3",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V107_768_light_sidebar-recolhida.png",
+          "sha256": "a16f76b978e581c43639d141fa25f07a866a0084b7a24ff9494772173035a865",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V107_768_light.json",
+        "sha256": "23b8fdafaf63753067b5722fd7f59eb1d03878bdea247ebfa3d23bcb08594298"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "768: tabs em duas linhas; filtros paralelos, Nova fonte à direita sem sobreposição. Card técnico/hash quebra em múltiplas linhas; Detalhes/Editar migram para baixo. Orientação inferior íntegra. Marca/símbolo/foco recolhido presentes."
+      ]
+    },
+    {
+      "surface": "V107",
+      "width": 768,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V107_768_dark.png",
+          "sha256": "050daca08a67e4192106f6a44116f71620738ed12790ff398d19ec13ad16594c",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V107_768_dark_sidebar-recolhida.png",
+          "sha256": "daa9fc3ac8dbd6fed80237af07b3edea8de8a6405d51a5e3396078e052426145",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V107_768_dark.json",
+        "sha256": "03d459af08bd52e2f2fbaa10751d6011101a94b794864b48850b5cd2eddd5a44"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "768: tabs em duas linhas; filtros paralelos, Nova fonte à direita sem sobreposição. Card técnico/hash quebra em múltiplas linhas; Detalhes/Editar migram para baixo. Orientação inferior íntegra. Marca/símbolo/foco recolhido presentes."
+      ]
+    },
+    {
+      "surface": "V107",
+      "width": 390,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V107_390_light.png",
+          "sha256": "900885e45ff04be492efb8c50d25e99c81649b4fce89c2e5531eaeaf0ea7491b",
+          "width": 390,
+          "height": 1283,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V107_390_light_menu.png",
+          "sha256": "49fbbf7033182fa266fdc4bcf4d325bd9f99cca58386bfd8df3bf2823042117a",
+          "width": 390,
+          "height": 1283,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V107_390_light.json",
+        "sha256": "3667529715207fc6f19c0ff39100423d2b42c32d1fb70ac1f057486db3dbf1eb"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "390: Base normativa e dois filtros empilhados, Nova fonte em largura total. Card de fonte com referência/hash em várias linhas e ações distintas, sem clipping visível. Menu possui marca branca e contexto correto; limite de viewport/rolagem do último item permanece não demonstrado por imagem estática."
+      ]
+    },
+    {
+      "surface": "V107",
+      "width": 390,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V107_390_dark.png",
+          "sha256": "7f36b5821214d2a38443b2d1cfb3c8d99a3104f65f981ce38ad06074138acb5c",
+          "width": 390,
+          "height": 1283,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V107_390_dark_menu.png",
+          "sha256": "092fb75156274fb09ac750306f3433c09011d133fc535ebddc5793631f79973f",
+          "width": 390,
+          "height": 1283,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V107_390_dark.json",
+        "sha256": "8fd6cfd4ffeb6083b2ddd7e3cdd3db72304c156c90e13fff7aeb6e305790eda7"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "390: Base normativa e dois filtros empilhados, Nova fonte em largura total. Card de fonte com referência/hash em várias linhas e ações distintas, sem clipping visível. Menu possui marca branca e contexto correto; limite de viewport/rolagem do último item permanece não demonstrado por imagem estática."
+      ]
+    },
+    {
+      "surface": "V108",
+      "width": 1440,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V108_1440_light.png",
+          "sha256": "29040bcb04af4b68542b8ffa0886ee41e15624dd544c972ab7daba7b294f8eb1",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V108_1440_light_sidebar-recolhida.png",
+          "sha256": "2651c29305ebeb17b569d70ddb1854c53275e5dc5f41d237949d710fa180be49",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V108_1440_light.json",
+        "sha256": "1ccf22bae9f1cbb611549a59e42666a7eea06575466f504eeaae95ff789195f0"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "1440: Orçamento vazio real com título Proposta orçamentária, explicação de ausência e Criar proposta claramente separados. Tabs/contexto Orçamento ativos, cabeçalho organização/status/marca íntegros e foco do expansor no suplemento."
+      ]
+    },
+    {
+      "surface": "V108",
+      "width": 1440,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V108_1440_dark.png",
+          "sha256": "9814f5d95d18a2bc3fd7a05b1e401d9ff9ba79e7b3c56cd89493798bd9e73c27",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V108_1440_dark_sidebar-recolhida.png",
+          "sha256": "ea60db06198343fda24868467ec4bf80146a96c73c4b73c06fcfb8cae306a505",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V108_1440_dark.json",
+        "sha256": "9a786086261ee6b1e6d2f3fd3fe4a13c99f995d59065e419914bdd6481d16b14"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "1440: Orçamento vazio real com título Proposta orçamentária, explicação de ausência e Criar proposta claramente separados. Tabs/contexto Orçamento ativos, cabeçalho organização/status/marca íntegros e foco do expansor no suplemento."
+      ]
+    },
+    {
+      "surface": "V108",
+      "width": 1280,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V108_1280_light.png",
+          "sha256": "bcfe6ec525474a26b4411c6c6eac25ae96eae8ddc9a913741a5d9908ec503ef2",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V108_1280_light_sidebar-recolhida.png",
+          "sha256": "a003904d1875221c17d53102ae6a35d54bbe66c8f0a3dd746507ddda729f5bbc",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V108_1280_light.json",
+        "sha256": "4f9a21bf467841b745d0848d4499f7e502f80809311c44a758c0d1ca61501f00"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Orçamento: estado vazio real, título/contexto/aba e CTA Criar proposta íntegros. Em768 abas quebram em duas linhas com reserva; sidebar expandida/recolhida e foco suplementar visíveis. Sem clipping/overlap observado; contraste não certificado."
+      ]
+    },
+    {
+      "surface": "V108",
+      "width": 1280,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V108_1280_dark.png",
+          "sha256": "67e64d82a98c3f788b3efb3e52bba52b568e551ba5370905363c0614557b5fd1",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V108_1280_dark_sidebar-recolhida.png",
+          "sha256": "fcaa004dc137a2ead56c326e22d30e05c1ecff518851919a9f7a3170dd47a00f",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V108_1280_dark.json",
+        "sha256": "fcc90a350941ec5b3df6cff8307a12ee1b741cbfec414a513f7a1cc1fdc72c16"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Orçamento: estado vazio real, título/contexto/aba e CTA Criar proposta íntegros. Em768 abas quebram em duas linhas com reserva; sidebar expandida/recolhida e foco suplementar visíveis. Sem clipping/overlap observado; contraste não certificado."
+      ]
+    },
+    {
+      "surface": "V108",
+      "width": 768,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V108_768_light.png",
+          "sha256": "154ae8654b1f8540b5b4120c08d098f69b633b72d48b44d3ce99a88167d0cf93",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V108_768_light_sidebar-recolhida.png",
+          "sha256": "3447e90962b6a8ed7e471a4995b5fe294dba9b478c3eaf36c7c2440377cf38a9",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V108_768_light.json",
+        "sha256": "79876298d4afb833a3702c10cb7ec2f9f1290ec7b5236bfd9c93ef2fc97924ce"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Orçamento: estado vazio real, título/contexto/aba e CTA Criar proposta íntegros. Em768 abas quebram em duas linhas com reserva; sidebar expandida/recolhida e foco suplementar visíveis. Sem clipping/overlap observado; contraste não certificado."
+      ]
+    },
+    {
+      "surface": "V108",
+      "width": 768,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V108_768_dark.png",
+          "sha256": "db688a6312eed634b0579c033276fd759c2ecdc53e10409e50b9f5a593765179",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V108_768_dark_sidebar-recolhida.png",
+          "sha256": "8e2d8606381683da91fdbe2b0517fb401af61699bb0109a8a727d4e5fa3d6631",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V108_768_dark.json",
+        "sha256": "4ad0f00e519ced51e58e41241672eefd04b71e1c22d18dd09370e872ec08d814"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Orçamento: estado vazio real, título/contexto/aba e CTA Criar proposta íntegros. Em768 abas quebram em duas linhas com reserva; sidebar expandida/recolhida e foco suplementar visíveis. Sem clipping/overlap observado; contraste não certificado."
+      ]
+    },
+    {
+      "surface": "V108",
+      "width": 390,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V108_390_light.png",
+          "sha256": "e278991fbd323ef2a18d8094687978f0b049733fbc173af3da07a7e040d56d8c",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V108_390_light_menu.png",
+          "sha256": "8f60ec89304bb29ce6e534425145f05995727b3940be876562a7b9b11ee7838b",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V108_390_light.json",
+        "sha256": "c11f8e0f77ea9eae4a08171e1c84a23e3bea7244281e692fc5f4fe3d2f6bbe2f"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Orçamento390: Menu tem faixa reservada, cabeçalho/ações e abas refluem sem sobreposição; estado vazio e Criar proposta íntegros. Menu aberto com marca branca e contexto Orçamento; Auditoria no limite inferior1000 exige verificar rolagem, não demonstrável nesta imagem."
+      ]
+    },
+    {
+      "surface": "V108",
+      "width": 390,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V108_390_dark.png",
+          "sha256": "d9d2267e8a960d59a1b605734455d45faf4b839852d0e0863d69ff66f3e63446",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V108_390_dark_menu.png",
+          "sha256": "7ca3acd52b2ed9c06709cf9a0eef862063cab3cd111d9baaaf77d04cb980f5c7",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V108_390_dark.json",
+        "sha256": "c96b056c8c7f8696f67fcfece25b741f08a86d453736429aa3214bcbaed30af8"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Orçamento390: Menu tem faixa reservada, cabeçalho/ações e abas refluem sem sobreposição; estado vazio e Criar proposta íntegros. Menu aberto com marca branca e contexto Orçamento; Auditoria no limite inferior1000 exige verificar rolagem, não demonstrável nesta imagem."
+      ]
+    },
+    {
+      "surface": "V110",
+      "width": 1440,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V110_1440_light.png",
+          "sha256": "8588d8847a0f62c2c4831d1b87f1aa31dfad1ccc58c5af505d36cc094b3bc08b",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V110_1440_light_sidebar-recolhida.png",
+          "sha256": "0676f8cf59e32e84e070c51ac177ba378b2d9ae91080645e7ec758e5542090c8",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V110_1440_light.json",
+        "sha256": "d35cfef49fb3281fbcd0f981df9d93dbab94510275ffcb746f50defbb53e173e"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Documentos1440: filtros rotulados, ações atualizar/enviar, cartão sintético com estados aprovado/concluído e paginação desabilitada íntegros. Nome de arquivo quebra no limite sem sobreposição; sidebar recolhida mostra foco. Sem defeito visual comprovado."
+      ]
+    },
+    {
+      "surface": "V110",
+      "width": 1440,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V110_1440_dark.png",
+          "sha256": "b4c8561f1cb47a8a4999bd5dff37532cc4305b25848feca13ee41f1ec7eeb5c1",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V110_1440_dark_sidebar-recolhida.png",
+          "sha256": "61639eea25a05ede8d323a647493e31a0acee94496919b9b69a3d5ff4ca6c88f",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V110_1440_dark.json",
+        "sha256": "7bd93570e443008617db3a5acad15068d8bc237c8ef30f90c9ed695a8ba3017e"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Documentos1440: filtros rotulados, ações atualizar/enviar, cartão sintético com estados aprovado/concluído e paginação desabilitada íntegros. Nome de arquivo quebra no limite sem sobreposição; sidebar recolhida mostra foco. Sem defeito visual comprovado."
+      ]
+    },
+    {
+      "surface": "V110",
+      "width": 1280,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V110_1280_light.png",
+          "sha256": "b2369b4858036f5424ff975173dbad017ce78b62ebda2016858089e6a83a0d7d",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V110_1280_light_sidebar-recolhida.png",
+          "sha256": "855c2d03fdefa401d3d0746310fff7aef4bbc377d96af1b044b389c696dfea7a",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V110_1280_light.json",
+        "sha256": "dfc531e02d2059d06e6a8b71b54f4b1e063722a3a9d907fc68791d02e88c0186"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Documentos1280: filtros, três ações do documento, estados e paginação íntegros; texto e arquivo longo quebram dentro do cartão, sem colisão aparente. Layout expandido/recolhido e ambos temas vistos."
+      ]
+    },
+    {
+      "surface": "V110",
+      "width": 1280,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V110_1280_dark.png",
+          "sha256": "03b4e338fea372ffa64956e967443a62badb40af313afc04e7d46235cbbd5dce",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V110_1280_dark_sidebar-recolhida.png",
+          "sha256": "34647987aabb53cbbe9d673048e0d70cc984d6883ccc16e72a47c2b402c105eb",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V110_1280_dark.json",
+        "sha256": "6e1ce80838e6b2546e502d469c5f16a1bbc7d5711d8cad85e8ea9341996d5ed8"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Documentos1280: filtros, três ações do documento, estados e paginação íntegros; texto e arquivo longo quebram dentro do cartão, sem colisão aparente. Layout expandido/recolhido e ambos temas vistos."
+      ]
+    },
+    {
+      "surface": "V110",
+      "width": 768,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V110_768_light.png",
+          "sha256": "ba8b8cb6587cbd976761f5733037c7d1918118be0cf1a7a8b200df9a69e8b541",
+          "width": 768,
+          "height": 1409,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V110_768_light_sidebar-recolhida.png",
+          "sha256": "27804e82d9c55475f1148996d859c0e4704d3cc68c47013675e50e293acd4a8f",
+          "width": 768,
+          "height": 1279,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V110_768_light.json",
+        "sha256": "493b8cb8ea3c9e4eb7053b3a2452e21cdd532341d919a3d9c43d5ab0b0d1e8f7"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Documentos768: filtros em duas colunas, ações de envio empilhadas com sidebar expandida, metadados em duas colunas e etiquetasIA quebram linhas. Estados, ações e paginação preservados sem sobreposição; alturas1409/1279 refletem reflow real."
+      ]
+    },
+    {
+      "surface": "V110",
+      "width": 768,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V110_768_dark.png",
+          "sha256": "b69ca7990709b134304df64a06752b3e8c41b6a09da2b0c65582a0ba4a2e7904",
+          "width": 768,
+          "height": 1409,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V110_768_dark_sidebar-recolhida.png",
+          "sha256": "0f4b6d5da70934433b0486087a71b9ef57c2b7a5d2c052c9d9a9b8f7a69b60c8",
+          "width": 768,
+          "height": 1279,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V110_768_dark.json",
+        "sha256": "1338c7632c667f71916302f7c013d9bad58ff5560fe9756cad05d2e3341f78e3"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Documentos768: filtros em duas colunas, ações de envio empilhadas com sidebar expandida, metadados em duas colunas e etiquetasIA quebram linhas. Estados, ações e paginação preservados sem sobreposição; alturas1409/1279 refletem reflow real."
+      ]
+    },
+    {
+      "surface": "V110",
+      "width": 390,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V110_390_light.png",
+          "sha256": "3ebf361f2d4707687a6bae949b8de34464a15c735ba2844dfac60bdda19e3635",
+          "width": 390,
+          "height": 2003,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V110_390_light_menu.png",
+          "sha256": "bc2f8f08ad2c0283df7e4b85caad7e280230df69e1f9053df4325bb492682176",
+          "width": 390,
+          "height": 2003,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V110_390_light.json",
+        "sha256": "586b3786ae424c047f3aea7fa0f8d0f1718f4a987d5b829516166332e3b004fb"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Documentos390: Menu ocupa faixa própria acima do retorno, sem cobrir filtro. Quatro filtros empilhados, ações e estados do documento e sugestõesIA refluem; paginação e limites do cartão íntegros. Menu aberto marca/contexto presentes; rolagem interna não comprovada por PNG estático."
+      ]
+    },
+    {
+      "surface": "V110",
+      "width": 390,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V110_390_dark.png",
+          "sha256": "ba805d17a4e2601fcf7cdb71ba3945ad9b2bcff8835d226438f40d034880361b",
+          "width": 390,
+          "height": 2003,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V110_390_dark_menu.png",
+          "sha256": "3bd1e06766f0c0ddcdd24d8068ec71043d4a1a92f1adc303ceffdd6c9159eb5a",
+          "width": 390,
+          "height": 2003,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V110_390_dark.json",
+        "sha256": "cfdb09d4f9245315b5b3d7804293fbf338e10877f0806aca9ec6f65e6102e579"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "Documentos390: Menu ocupa faixa própria acima do retorno, sem cobrir filtro. Quatro filtros empilhados, ações e estados do documento e sugestõesIA refluem; paginação e limites do cartão íntegros. Menu aberto marca/contexto presentes; rolagem interna não comprovada por PNG estático."
+      ]
+    },
+    {
+      "surface": "V114",
+      "width": 390,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V114_390_light.png",
+          "sha256": "459946048354b1a87068c93622c4b3e492164941d9915a7bc66e06a448ecf475",
+          "width": 390,
+          "height": 1743,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V114_390_light_menu.png",
+          "sha256": "618ecbbd313266c532985363678bf7a03685e619a01923b0e16da129a6dd6dd4",
+          "width": 390,
+          "height": 1743,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V114_390_light.json",
+        "sha256": "704a86e6e29d9c6edf0f24a5af8dc0df7ed191b1bb0894702fd4e6c5fa4016fa"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "V114390: resumo11/2026 rascunho, preparação/conformidade0/bloqueios e ações permitidas/bloqueada distintos. Cartões e abas empilhados sem clipping; menu contexto da competência e marca íntegros. Não valida liberação backend ou interação."
+      ]
+    },
+    {
+      "surface": "V114",
+      "width": 390,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V114_390_dark.png",
+          "sha256": "94ab0a0eed8cd9b6cc901cd38a52735394217baffff186b387b4c5f7e9ff04e2",
+          "width": 390,
+          "height": 1743,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V114_390_dark_menu.png",
+          "sha256": "e221231e415ea232bda10bf0ea6a91d7f3cae7f7e9a2b6a1c14dd9d006ad08dd",
+          "width": 390,
+          "height": 1743,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V114_390_dark.json",
+        "sha256": "30e8d5a9828e267fa2f5423d264a6e61cb26df94587f4cc2ff1afb54c7a2942b"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "V114390: resumo11/2026 rascunho, preparação/conformidade0/bloqueios e ações permitidas/bloqueada distintos. Cartões e abas empilhados sem clipping; menu contexto da competência e marca íntegros. Não valida liberação backend ou interação."
+      ]
+    },
+    {
+      "surface": "V116",
+      "width": 390,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V116_390_light.png",
+          "sha256": "e66dccec65b9ce6723a8d65569ef6fc8a63d05188c05a1b925d8998c6c43d025",
+          "width": 390,
+          "height": 1598,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V116_390_light_menu.png",
+          "sha256": "c04287975cadc9a37d22d45c1387714aac67535040dd892b2cc07453e6c6fb97",
+          "width": 390,
+          "height": 1598,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V116_390_light.json",
+        "sha256": "5cd9eeaaef776fe1103a4857ed7c470da6331839ac83d17965bf8f9df961ce93"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "V116390: análise não analisada/rascunho e CTA Executar análise distintos de reanálise indisponível. Portão com contagens alinhadas, mecanismos/requisitos/apontamentos/histórico vazios explícitos; sem clipping ou colisão. Menu destaca Análise e conserva marca."
+      ]
+    },
+    {
+      "surface": "V116",
+      "width": 390,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V116_390_dark.png",
+          "sha256": "fea8fa628d2a23e605066dcf99820b3a64bddbd3acf5572a826b1ff88d8e644c",
+          "width": 390,
+          "height": 1598,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V116_390_dark_menu.png",
+          "sha256": "5a7b2c0fafced78db189b334da9ff9d9f5c61e3df582ac74914f28f299fdf01f",
+          "width": 390,
+          "height": 1598,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V116_390_dark.json",
+        "sha256": "570f4b51a041f28b0c876c52c60900d11f10d58761663b7c4b55df8daa6f6c1e"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "V116390: análise não analisada/rascunho e CTA Executar análise distintos de reanálise indisponível. Portão com contagens alinhadas, mecanismos/requisitos/apontamentos/histórico vazios explícitos; sem clipping ou colisão. Menu destaca Análise e conserva marca."
+      ]
+    },
+    {
+      "surface": "V118",
+      "width": 390,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V118_390_light.png",
+          "sha256": "cb83122d12180d2d8850b23562039bc6f91a59e0c2087d8fffb5c8f5ab499b9d",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V118_390_light_menu.png",
+          "sha256": "ce1240774cd203746d2df40aae0ec73808f9d1b4adf1464128939e1f5422a92b",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V118_390_light.json",
+        "sha256": "02181e1c6725f2d1fc9df15839605700bf8f04730a2b219312921da94ea0ee4c"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "V118390: parecer interno com Atualizar, Solicitar parecer, aviso de limites backend e versões vazias/paginação desabilitada íntegros. Título/ações cabem sem colisão, menu marca/contexto corretos. Fluxos de solicitação/decisão não exercitados."
+      ]
+    },
+    {
+      "surface": "V118",
+      "width": 390,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V118_390_dark.png",
+          "sha256": "b73c60ffb3a6dc3cd1ac79a0e4d8ebd1efc7eedb267899c5d6a3cc36892fcd0f",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V118_390_dark_menu.png",
+          "sha256": "da77b7f76eee464ad5f4dd0c1076ce671d5d64535c11228ba1c8bf21b7c6d5d5",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V118_390_dark.json",
+        "sha256": "d609f2f5763ffddad5acebd105935e68e7b506748840a0f08bae33b053c591a8"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "main_measurement_passed": true,
+        "supplement_measurement_passed": true
+      },
+      "notes": [
+        "V118390: parecer interno com Atualizar, Solicitar parecer, aviso de limites backend e versões vazias/paginação desabilitada íntegros. Título/ações cabem sem colisão, menu marca/contexto corretos. Fluxos de solicitação/decisão não exercitados."
+      ]
+    },
+    {
+      "surface": "V113",
+      "width": 1440,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V113_1440_light.png",
+          "sha256": "66b7c65eb15acb4756a3c69dddedac69bc2a9de608b037119a3b11486d215566",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V113_1440_light_sidebar-recolhida.png",
+          "sha256": "b586c2381ac358dc775cf81189fe783993f2df2144f32b48c47d383ea73442d2",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V113_1440_light.json",
+        "sha256": "63b7baf70d985a0bd9ccec4242e8d1435f40ac24f4132fda618346811d008ca6"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Hierarquia e formulário íntegros; campo mês/ano e ações sem sobreposição. Marca e navegação preservadas; foco do expansor visível no suplemento."
+      ]
+    },
+    {
+      "surface": "V113",
+      "width": 1440,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V113_1440_dark.png",
+          "sha256": "1e580e543cbae59bb218c3f4ffa92c58543cffcf34f69cc351a2d74a7af5dfc1",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V113_1440_dark_sidebar-recolhida.png",
+          "sha256": "439c112d6761d755fad76ace1fed0e757771410ca936837e88ed5923e2511657",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V113_1440_dark.json",
+        "sha256": "cedf58764a9b67cb8b14d0510fa092530614650f21ea7bef4fdf35c1c4937c0a"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Hierarquia e formulário íntegros; campo mês/ano e ações sem sobreposição. Marca e navegação preservadas; foco do expansor visível no suplemento."
+      ]
+    },
+    {
+      "surface": "V113",
+      "width": 1280,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V113_1280_light.png",
+          "sha256": "66a87404ccfaa914b19a1cd3412f246afeadadf88bde042d63ae14bb47673ff0",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V113_1280_light_sidebar-recolhida.png",
+          "sha256": "1bc59bde616ec87f99f3c4bf5004edb9dd576cf1ceaddbeb625e07546ef15267",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V113_1280_light.json",
+        "sha256": "72016ca76b5fee0403702eb8e26eaed49cea5f209d2a952133ca371f4bb53254"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Hierarquia e formulário íntegros; campo mês/ano e ações sem sobreposição. Marca e navegação preservadas; foco do expansor visível no suplemento."
+      ]
+    },
+    {
+      "surface": "V113",
+      "width": 1280,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V113_1280_dark.png",
+          "sha256": "48f7060e85d59171e0d459bb4a7ac1c586e38db87c0f5f097b932560cd77645b",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V113_1280_dark_sidebar-recolhida.png",
+          "sha256": "12096b92067a94d0d3d3dbf065eca827f80dac8440b609b8fa5fa9709a0e0ab7",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V113_1280_dark.json",
+        "sha256": "06761fee760941d80bb997237638314ff51d51d0d513a0821558d93af96fb391"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Hierarquia e formulário íntegros; campo mês/ano e ações sem sobreposição. Marca e navegação preservadas; foco do expansor visível no suplemento."
+      ]
+    },
+    {
+      "surface": "V113",
+      "width": 768,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V113_768_light.png",
+          "sha256": "baf6eaf116d33eb17517f3c04a1d332f3d6fd74ad5bd02c8da9f68f8916df2ed",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V113_768_light_sidebar-recolhida.png",
+          "sha256": "082bebb5f30120d9b10180eaf78d26b27394168602fe51df204b94274122d780",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V113_768_light.json",
+        "sha256": "8b3fb999ad0c8b79e2d9bdc1eda99240c65aedf6bf7bc82087e2d5ac2a08e48a"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Formulário e ícone de mês visíveis; sidebar aberta ou recolhida íntegra, foco do expansor visível no suplemento."
+      ]
+    },
+    {
+      "surface": "V113",
+      "width": 768,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V113_768_dark.png",
+          "sha256": "a0f41531ffaf6423846a32e9d8cd35e0b69e95f59d2a1f940a6570d018fefb9a",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V113_768_dark_sidebar-recolhida.png",
+          "sha256": "f22014c26c2105712ab57c228f6d2b8b77092261e47ff93fa394885bb847f28d",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V113_768_dark.json",
+        "sha256": "28bfa317a5781c69bdb6b01da53ed843e9d549b3154eabc1541e4ba66853248e"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Formulário e ícone de mês visíveis; sidebar aberta ou recolhida íntegra, foco do expansor visível no suplemento."
+      ]
+    },
+    {
+      "surface": "V113",
+      "width": 390,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V113_390_light.png",
+          "sha256": "da3a426cb933116aa449134e568c1e711faac90fd0427b894c4a81d4007df2e5",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V113_390_light_menu.png",
+          "sha256": "418d95981cd123c71d1c23a0ec26dba9d2214966e98d485e58347cbef948d612",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V113_390_light.json",
+        "sha256": "2b510ff39ca12eb5f4c0f019768e3f6d39f127262eb2df6932170e6216bc5cd7"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Formulário e ações íntegros. Menu móvel mostra marca e item ativo; captura de página completa prolonga fundo após viewport."
+      ]
+    },
+    {
+      "surface": "V113",
+      "width": 390,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V113_390_dark.png",
+          "sha256": "1e43a4002db1f6bb7c64e99dd9b92b929e06eb785ff9cf9d06c7a2dc89092aee",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V113_390_dark_menu.png",
+          "sha256": "a5b36a4ee411690304030a9065398970824b0ec7316959145f779d09ba97a83e",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V113_390_dark.json",
+        "sha256": "53918482bec7b6722efc68bde001c9a71956951dbb9f0907a32246e2942084bc"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Formulário e ações íntegros. Menu móvel mostra marca e item ativo; captura de página completa prolonga fundo após viewport."
+      ]
+    },
+    {
+      "surface": "V121",
+      "width": 1440,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V121_1440_light.png",
+          "sha256": "2e595625740d41d4eb55cdf8d74f9055021a96a6d9e821b127196e19a0375539",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V121_1440_light_sidebar-recolhida.png",
+          "sha256": "c5fd0defbf000a451a85799fa21cbfe39013ad79b876264cfa106d8b7745772c",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V121_1440_light.json",
+        "sha256": "5eee3a0527c1a5cecac20290ba69fcf2272d05de054f01572ed58bc0ef0c6d33"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Histórico em estado vazio explícito; abas, aviso de importação e ações visíveis. Reflow móvel sem sobreposição; marca/item ativo e foco do expansor preservados."
+      ]
+    },
+    {
+      "surface": "V121",
+      "width": 1440,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V121_1440_dark.png",
+          "sha256": "07ef996f32dfa6c8b7788fad0a74e1933f174ebc733bfbc371ccb731259d4c5e",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V121_1440_dark_sidebar-recolhida.png",
+          "sha256": "355359a0a56d80009edad4479ed252cc831aaac36a68b3f5bd1c5279fd7a6adc",
+          "width": 1440,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V121_1440_dark.json",
+        "sha256": "97e219f29770bde4155ac0fbbd6e11d5a396bec6917daa26eac958fd687c97fb"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Histórico em estado vazio explícito; abas, aviso de importação e ações visíveis. Reflow móvel sem sobreposição; marca/item ativo e foco do expansor preservados."
+      ]
+    },
+    {
+      "surface": "V121",
+      "width": 1280,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V121_1280_light.png",
+          "sha256": "07a6a5b4e2c635d61ae2501957e6a64d52f1b86dee5ca4d653de9651f0b909f9",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V121_1280_light_sidebar-recolhida.png",
+          "sha256": "53957370f22c1d1d88d56a31dbe4b1dd2a33753b9d12e4c6d27637b5cea9f415",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V121_1280_light.json",
+        "sha256": "b637f3e9d02c990728d7bf59d4c45666634a76747aed13d4dc1468e10d4490cf"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Histórico em estado vazio explícito; abas, aviso de importação e ações visíveis. Reflow móvel sem sobreposição; marca/item ativo e foco do expansor preservados."
+      ]
+    },
+    {
+      "surface": "V121",
+      "width": 1280,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V121_1280_dark.png",
+          "sha256": "010b2b5b4f9ea9397b1500be8e38cb36d6550d8d4caf5ecb5a12dbac9aa635db",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V121_1280_dark_sidebar-recolhida.png",
+          "sha256": "fee380d4014143ec658781bcd5a7efca4dd7942ce64be868692ec63eb4d824da",
+          "width": 1280,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V121_1280_dark.json",
+        "sha256": "bd6b501594560c28b8429f7ae44067ef77b26b9fa8505b5793ff6007dd02dbf4"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Histórico em estado vazio explícito; abas, aviso de importação e ações visíveis. Reflow móvel sem sobreposição; marca/item ativo e foco do expansor preservados."
+      ]
+    },
+    {
+      "surface": "V121",
+      "width": 768,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V121_768_light.png",
+          "sha256": "dd81a6ceefed185bf10d7fab25b99e014741cdf4692684128bd00e9bc0bb6bbf",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V121_768_light_sidebar-recolhida.png",
+          "sha256": "51ffda956df9e0549a74f6a6d8833a8e7e2dbe756a2ad6e9ce1cd5d2d0ae9f76",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V121_768_light.json",
+        "sha256": "712c5f127776b713fa3629c92f85336e2d5bf72047031a708fe25d9ee640c355"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Histórico em estado vazio explícito; abas, aviso de importação e ações visíveis. Reflow móvel sem sobreposição; marca/item ativo e foco do expansor preservados."
+      ]
+    },
+    {
+      "surface": "V121",
+      "width": 768,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V121_768_dark.png",
+          "sha256": "bf1be1c10ff24112bda885f5b07f8a85c90e8aeb1a7812b05bdfe3d6c90227b4",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V121_768_dark_sidebar-recolhida.png",
+          "sha256": "79677818587b40c54bbc318c00efc2d8067666cddef28fec7356751af12e3bb7",
+          "width": 768,
+          "height": 1097,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V121_768_dark.json",
+        "sha256": "3a0d61401d3fffe60c07ea5b9e94078967bb451c6c8abd7c2ca19e106549f3f2"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 1,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Histórico em estado vazio explícito; abas, aviso de importação e ações visíveis. Reflow móvel sem sobreposição; marca/item ativo e foco do expansor preservados."
+      ]
+    },
+    {
+      "surface": "V121",
+      "width": 390,
+      "theme": "light",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V121_390_light.png",
+          "sha256": "216e3ba6e8b81c18201dcb94377e68b38f778c941c21dc5d0b31d502705939a5",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V121_390_light_menu.png",
+          "sha256": "dbc4b3ba9f4c5a0f64e4f9cbae99cafa2c4ecc756112dc16a4ba180a4015a6e6",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V121_390_light.json",
+        "sha256": "219f4702aa64d1e7a171600ac00237335202f24284d1bccf426ed0f2006a9397"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Histórico em estado vazio explícito; abas, aviso de importação e ações visíveis. Reflow móvel sem sobreposição; marca/item ativo e foco do expansor preservados."
+      ]
+    },
+    {
+      "surface": "V121",
+      "width": 390,
+      "theme": "dark",
+      "review_status": "PRESERVABLE_WITH_CAVEATS",
+      "files": [
+        {
+          "file": "screenshots/V121_390_dark.png",
+          "sha256": "58cc5e8e7401685aa6394b0547143dd92383af1b6fcca889d06b02bb8c08081c",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        },
+        {
+          "file": "screenshots/V121_390_dark_menu.png",
+          "sha256": "428437fd765f8f30fc6957f0071dabf797bda7609f81349f88921587faa8b2a0",
+          "width": 390,
+          "height": 1214,
+          "seenOriginal": true
+        }
+      ],
+      "dom": {
+        "file": "dom/V121_390_dark.json",
+        "sha256": "7cea853d2b9b3a80b3f4b5f86a6837d7a446ce9d855331b4345d3eb53c02d418"
+      },
+      "metrics": {
+        "main_overflow_x": 0,
+        "axe_violation_count": 0,
+        "axe_incomplete_count": 0,
+        "keyboard_sample_passed": true,
+        "navigation_sample_passed": true,
+        "supplement_measurement_passed": true,
+        "dom_identity_verified": true
+      },
+      "notes": [
+        "Histórico em estado vazio explícito; abas, aviso de importação e ações visíveis. Reflow móvel sem sobreposição; marca/item ativo e foco do expansor preservados."
+      ]
     }
   ]
 }

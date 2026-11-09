@@ -1442,7 +1442,7 @@ test(
     await new Promise((resolve) => debug.close(resolve));
     const finished = Promise.withResolvers();
     try {
-      browser = await fn("launchNativeBrowser")({ chromium, debugPort: port });
+      browser = await fn("launchNativeBrowser")({ debugPort: port });
       context = await browser.newContext();
       const page = await context.newPage();
       const session = await context.newCDPSession(page);
@@ -1603,7 +1603,6 @@ for (const mode of ["worker", "popup", "websocket", "proxy"])
       try {
         if (mode === "proxy") proxy = await fn("startDestinationProxy")();
         browser = await fn("launchNativeBrowser")({
-          chromium,
           debugPort: port,
           ...(proxy ? { proxy: proxy.url } : {}),
         });
@@ -1779,7 +1778,7 @@ for (const scheme of ["ws", "wss"])
       const port = debug.address().port;
       await new Promise((resolve) => debug.close(resolve));
       try {
-        browser = await fn("launchNativeBrowser")({ chromium, debugPort: port });
+        browser = await fn("launchNativeBrowser")({ debugPort: port });
         const attempt = async (page) =>
           page.evaluate(
             (url) =>
@@ -2508,7 +2507,7 @@ test(
         }),
       ]);
     try {
-      browser = await fn("launchNativeBrowser")({ chromium, debugPort: realPort });
+      browser = await fn("launchNativeBrowser")({ debugPort: realPort });
       const origin = `http://127.0.0.1:${source.address().port}`,
         canceledUrl = `http://127.0.0.1:${canary.address().port}/canceled`;
       const positive = await browser.newContext();
@@ -4038,6 +4037,120 @@ test(
           .passed,
         true,
       );
+
+      // Source-backed V102 layout fragment, compiled with the installed Tailwind.
+      // This is an isolated geometry regression, never a claim of real HML UI.
+      const v102Native = (record) =>
+        console.log("V102_NATIVE_DIAGNOSTIC " + JSON.stringify(record));
+      v102Native({
+        lastStage: "SOURCE_EXTRACT",
+        width: null,
+        theme: null,
+        targetCount: null,
+        notHit: null,
+        geometry: null,
+      });
+      const v102Source = await readFile(
+        new URL("../../src/components/contratantes/NovoContratante.tsx", import.meta.url),
+        "utf8",
+      );
+      const v102Focus = v102Source.match(/const foco = "([^"]+)";/)?.[1];
+      const v102Dica = v102Source.slice(
+        v102Source.indexOf("function Dica("),
+        v102Source.indexOf("function Aviso("),
+      );
+      const v102Button = v102Dica
+        .match(/className=\{`([^`]+)`\}/)?.[1]
+        ?.replace("${foco}", v102Focus);
+      const v102Input = v102Source
+        .match(/const campo = `([^`]+)`;/)?.[1]
+        ?.replace("${foco}", v102Focus);
+      const v102Label = v102Source.match(/const label = "([^"]+)";/)?.[1];
+      const v102Rows = [
+        ...v102Source.matchAll(
+          /<div className="([^"]+)">\s*<div className="([^"]+)">\s*<label htmlFor=\{IDS\.(documento|email)\}/g,
+        ),
+      ];
+      assert.ok(v102Focus && v102Button && v102Input && v102Label);
+      assert.deepEqual(
+        v102Rows.map((r) => r[3]),
+        ["documento", "email"],
+      );
+      const v102Grid = v102Source.match(/<div className="(grid grid-cols-1[^"]+)"/)[1];
+      const v102Main = v102Source.match(/<main className="([^"]+)"/)[1];
+      const v102Classes = [
+        v102Button,
+        v102Input,
+        v102Label,
+        v102Grid,
+        v102Main,
+        ...v102Rows.flatMap((r) => [r[1], r[2]]),
+      ];
+      assert.ok(v102Classes.every((s) => typeof s === "string" && !/["<>${}]/.test(s)));
+      const { compile } = await import("@tailwindcss/node");
+      v102Native({
+        lastStage: "CSS_COMPILE",
+        width: null,
+        theme: null,
+        targetCount: null,
+        notHit: null,
+        geometry: null,
+      });
+      const v102Css = await compile(
+        await readFile(new URL("../../src/styles.css", import.meta.url), "utf8"),
+        { base: new URL("../../src/", import.meta.url).pathname, onDependency: () => {} },
+      );
+      const v102Compiled = v102Css.build(v102Classes.flatMap((s) => s.split(/\s+/)));
+      for (const width of [1440, 1280, 768, 390]) {
+        await page.setViewportSize({ width, height: 1000 });
+        for (const theme of ["light", "dark"]) {
+          await page.setContent(
+            `<!doctype html><html class="${theme === "dark" ? "dark" : ""}"><head><style>${v102Compiled}</style></head><body><main class="${v102Main}"><div class="${v102Grid}">${v102Rows.map((r) => `<div class="${r[1]}"><div class="${r[2]}"><label class="${v102Label}" for="isolated-${r[3]}">${r[3]}</label><button type="button" class="${v102Button}" aria-label="Ajuda isolada ${r[3]}">i</button></div><input id="isolated-${r[3]}" class="${v102Input}"></div>`).join("")}</div></main></body></html>`,
+          );
+          let geometry;
+          try {
+            geometry = await fn("collectVisualMetrics")(page, { surface: "V102", width, theme });
+          } catch (error) {
+            v102Native({
+              lastStage: "MEASURE",
+              width,
+              theme: theme.toUpperCase(),
+              targetCount: null,
+              notHit: null,
+              geometry: null,
+            });
+            throw error;
+          }
+          v102Native({
+            lastStage: "MEASURE",
+            width,
+            theme: theme.toUpperCase(),
+            targetCount: geometry.targets.length,
+            notHit: geometry.targets.filter((t) => !t.hit).length,
+            geometry: geometry.passed === true,
+          });
+          assert.equal(geometry.targets.length, 4);
+          assert.equal(
+            geometry.passed,
+            true,
+            JSON.stringify({
+              isolatedV102: true,
+              width,
+              theme,
+              notHit: geometry.targets.filter((t) => !t.hit).length,
+            }),
+          );
+          const helps = await page.getByRole("button").all();
+          for (const help of helps) {
+            const box = await help.evaluate((e) => ({
+              width: e.getBoundingClientRect().width,
+              height: e.getBoundingClientRect().height,
+            }));
+            assert.ok(box.width >= 44 && box.height >= 44);
+          }
+        }
+      }
+      await page.setViewportSize({ width: 390, height: 640 });
 
       // Four source-shaped fields under real Chromium ARIA, without HML/Auth.
       const privacyProof = await fn("loadPrivacy78Proof")();
@@ -5826,6 +5939,433 @@ test("solicitacao unica: identidade descoberta continua obrigatoria antes do che
   });
 });
 
+test("SYS04 closed RPC rejects unknown rows without exporting them", async () => {
+  const proof = await fn("loadPrivacySys04Proof")();
+  const runtime = fn("privacySys04Runtime")({ proof });
+  const rows = [...proof.legacy, ...proof.constructor_closed, ...proof.discovered_closed];
+  const dto = rows.map(({ id, razao_social, nome_fantasia, cnpj, situacao }) => ({
+    id,
+    razao_social,
+    nome_fantasia,
+    cnpj,
+    situacao,
+    perfil: "administrador_master",
+  }));
+  const url = API + "/rest/v1/rpc/listar_organizacoes_disponiveis";
+  assert.equal(runtime.match(url, "POST", "{}"), true);
+  for (const body of ["null", "[]", '{"x":1}'])
+    assert.equal(runtime.match(url, "POST", body), false);
+  assert.equal(runtime.match(url + "?x=1", "POST", "{}"), false);
+  assert.equal(runtime.match(url, "GET", "{}"), false);
+  const projected = runtime.project(dto);
+  assert.deepEqual(projected, { ids: dto.map((r) => r.id) });
+  for (const change of [
+    (r) => r.push({ ...r[0] }),
+    (r) => (r[0].cnpj = "123"),
+    (r) => (r[0].razao_social = "unknown-canary"),
+    (r) => (r[0].perfil = "administrador"),
+    (r) => (r[0].extra = "canary"),
+    (r) => (r[0].id = "00000000-0000-4000-8000-000000000001"),
+  ]) {
+    const altered = structuredClone(dto);
+    change(altered);
+    assert.equal(runtime.project(altered), null);
+  }
+  assert.equal(JSON.stringify(projected).includes("razao_social"), false);
+});
+
+test(
+  "SYS04 source component full subtree binds duplicate labels in eight Chromium cases",
+  { skip: process.env.CONTAOS_SYS04_BROWSER !== "1" && process.env.CONTAOS_NATIVE_GUARD !== "1" },
+  async () => {
+    const { readFile } = await import("node:fs/promises");
+    const ts = (await import("typescript")).default;
+    const React = await import("react");
+    const { renderToStaticMarkup } = await import("react-dom/server");
+    const { chromium } = await import("playwright");
+    const source = await readFile(
+      new URL("../../src/components/organizacao/OrganizationSelector.tsx", import.meta.url),
+      "utf8",
+    );
+    const ast = ts.createSourceFile(
+      "selector.tsx",
+      source,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    const wanted = new Set(["formatarCnpj", "OrganizationCard", "OrganizationList"]);
+    const statements = ast.statements
+      .filter((s) => ts.isFunctionDeclaration(s) && wanted.has(s.name?.text))
+      .map((s) => s.getText(ast).replace(/^export /, ""))
+      .join("\n");
+    const js = ts.transpileModule(statements, {
+      compilerOptions: {
+        jsx: ts.JsxEmit.React,
+        target: ts.ScriptTarget.ES2022,
+        module: ts.ModuleKind.CommonJS,
+      },
+    }).outputText;
+    const Component = new Function(
+      "React",
+      "useRef",
+      "cn",
+      "Check",
+      "rotuloPerfil",
+      js + ";return OrganizationList",
+    )(
+      React,
+      React.useRef,
+      (...v) => v.filter(Boolean).join(" "),
+      () => React.createElement("svg", { "aria-hidden": true }),
+      (p) => (p === "administrador_master" ? "Administrador Master" : p),
+    );
+    const proof = await fn("loadPrivacySys04Proof")();
+    const all = [...proof.legacy, ...proof.constructor_closed, ...proof.discovered_closed];
+    const duplicate = proof.discovered_closed
+      .filter((r) => r.razao_social === "V117 synthetic review")
+      .slice(0, 2);
+    assert.equal(duplicate.length, 2);
+    const chosen = all;
+    const dto = chosen.map(({ id, razao_social, nome_fantasia, cnpj, situacao }) => ({
+      id,
+      razao_social,
+      nome_fantasia,
+      cnpj,
+      situacao,
+      perfil: "administrador_master",
+    }));
+    const html = renderToStaticMarkup(
+      React.createElement(Component, {
+        vinculos: dto.map((r) => ({ id: r.id, perfil: r.perfil, organizacao: r })),
+        selecionada: dto[0].id,
+        onSelecionar: () => {},
+      }),
+    );
+    const browser = await launchIsolatedProvedBrowser(chromium);
+    try {
+      for (const width of [1440, 1280, 768, 390])
+        for (const theme of ["light", "dark"]) {
+          const page = await browser.newPage({
+            viewport: { width, height: 1000 },
+            colorScheme: theme,
+          });
+          await page.route("**/*", (route) => route.abort());
+          await page.setContent('<main class="' + theme + '">' + html + "</main>");
+          const receipt = {
+            route: "/selecionar-organizacao",
+            ids: dto.map((r) => r.id),
+            revision: 1,
+            age: 1,
+          };
+          const anchor = await page.evaluate(fn("privacySys04Anchor"), { proof, receipt });
+          assert.ok(anchor, JSON.stringify({ width, theme }));
+          const rendered = await page.locator("body").innerText(),
+            snapshot = await page.locator("body").ariaSnapshot();
+          const cards = await page.getByRole("radio").all();
+          const snapshots = await Promise.all(cards.map((c) => c.ariaSnapshot()));
+          const context = fn("privacySys04FieldContext")({
+            proof,
+            receipt,
+            anchor,
+            rendered,
+            snapshot,
+            cardSnapshots: snapshots,
+            anchored: true,
+          });
+          assert.ok(context);
+          for (const delta of [
+            { proof: structuredClone(proof) },
+            { anchored: false },
+            { receipt: { ...receipt, age: 120000 } },
+            { receipt: { ...receipt, age: -1 } },
+            { receipt: { ...receipt, age: undefined } },
+            { receipt: { ...receipt, age: NaN } },
+            { anchor: { ...anchor, ids: [...anchor.ids].reverse() } },
+          ])
+            assert.equal(
+              sut.privacySys04FieldContext({
+                proof,
+                receipt,
+                anchor,
+                rendered,
+                snapshot,
+                cardSnapshots: snapshots,
+                anchored: true,
+                ...delta,
+              }),
+              null,
+            );
+          assert.notEqual(sut.classifyArtifactText(rendered, new Set()).reason, "ALLOWED");
+          const words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+          assert.equal(
+            sut.classifyArtifactText(rendered, words, { fieldContext: context }).reason,
+            "ALLOWED",
+          );
+          assert.equal(
+            sut.classifyArtifactText(snapshot, words, { snapshot: true, fieldContext: context })
+              .reason,
+            "ALLOWED",
+          );
+          assert.equal(
+            sut.classifyArtifactText(rendered + " outsideunknown", words, { fieldContext: context })
+              .reason,
+            "INVALID_CONTENT",
+          );
+          assert.equal(
+            sut.classifyArtifactText(rendered + " x@example.com", words, { fieldContext: context })
+              .reason,
+            "SENSITIVE_PATTERN",
+          );
+          await page
+            .getByRole("radio")
+            .first()
+            .locator("p")
+            .first()
+            .evaluate((n) => (n.textContent = "unknown-canary"));
+          assert.equal(await page.evaluate(sut.privacySys04Anchor, { proof, receipt }), null);
+          await page.setContent("<main>" + html + "</main>");
+          await page
+            .getByRole("radio")
+            .first()
+            .evaluate((n) => n.setAttribute("title", "x@example.com"));
+          assert.equal(await page.evaluate(sut.privacySys04Anchor, { proof, receipt }), null);
+
+          if (width === 1440 && theme === "light") {
+            for (const mutation of [
+              "invalid",
+              "missing",
+              "false-selected",
+              "tab-missing",
+              "tab-extra",
+              "selected-missing",
+            ]) {
+              await page.setContent("<main>" + html + "</main>");
+              await page
+                .getByRole("radio")
+                .first()
+                .evaluate((n, m) => {
+                  if (m === "invalid") n.setAttribute("aria-checked", "unknown");
+                  if (m === "missing") n.removeAttribute("aria-checked");
+                  if (m === "false-selected") n.setAttribute("aria-checked", "false");
+                  if (m === "tab-missing") n.removeAttribute("tabindex");
+                  if (m === "tab-extra") n.parentElement.children[1].setAttribute("tabindex", "0");
+                  if (m === "selected-missing") n.querySelector(".sr-only").remove();
+                }, mutation);
+              assert.equal(
+                await page.evaluate(sut.privacySys04Anchor, { proof, receipt }),
+                null,
+                mutation,
+              );
+            }
+          }
+          await page.close();
+        }
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+test("SYS04 source SDK emits readonly POST with empty object and never calls Auth", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const ts = (await import("typescript")).default;
+  const { createClient } = await import("@supabase/supabase-js");
+  const source = await readFile(
+    new URL("../../src/lib/auth/resolverDestinoPosLogin.ts", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile(
+    "resolver.ts",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const statement = ast.statements
+    .find((s) => ts.isFunctionDeclaration(s) && s.name?.text === "listarOrganizacoesDisponiveis")
+    .getText(ast)
+    .replace(/^export /, "");
+  const js = ts.transpileModule(statement, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+  }).outputText;
+  const seen = [];
+  const client = createClient(API, "public-fixture-key", {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: {
+      fetch: async (input, init) => {
+        seen.push({ url: String(input), method: init.method, body: init.body });
+        return new Response("[]", { status: 200, headers: { "Content-Type": "application/json" } });
+      },
+    },
+  });
+  const call = new Function(
+    "supabase",
+    "ErroOrganizacoes",
+    "classificarErroOrganizacoes",
+    js + ";return listarOrganizacoesDisponiveis",
+  )(client, Error, () => "erro");
+  assert.deepEqual(await call(), []);
+  assert.deepEqual(seen, [
+    { url: API + "/rest/v1/rpc/listar_organizacoes_disponiveis", method: "POST", body: "{}" },
+  ]);
+});
+
+test(
+  "SYS04 browser observer seals native response and invalidates mismatched body and route",
+  { skip: process.env.CONTAOS_SYS04_BROWSER !== "1" && process.env.CONTAOS_NATIVE_GUARD !== "1" },
+  async () => {
+    const { chromium } = await import("playwright");
+    const proof = await fn("loadPrivacySys04Proof")();
+    const row = proof.legacy[0],
+      dto = [
+        {
+          id: row.id,
+          razao_social: row.razao_social,
+          nome_fantasia: row.nome_fantasia,
+          cnpj: null,
+          situacao: row.situacao,
+          perfil: "administrador_master",
+        },
+      ];
+    const browser = await launchIsolatedProvedBrowser(chromium);
+    try {
+      for (const wrong of [false, true]) {
+        const context = await browser.newContext();
+        await context.route("**/*", (route) =>
+          route.fulfill({
+            status: 200,
+            contentType:
+              route.request().resourceType() === "document" ? "text/html" : "application/json",
+            body:
+              route.request().resourceType() === "document" ? "<main></main>" : JSON.stringify(dto),
+          }),
+        );
+        await context.addInitScript(sut.privacySys04Runtime, { proof, install: true });
+        const page = await context.newPage();
+        await page.goto(HML + "/selecionar-organizacao");
+        const response = await page.evaluate(
+          async ({ API, wrong }) => {
+            const r = await fetch(API + "/rest/v1/rpc/listar_organizacoes_disponiveis", {
+              method: "POST",
+              body: wrong ? '{"extra":1}' : "{}",
+            });
+            return await r.json();
+          },
+          { API, wrong },
+        );
+        assert.deepEqual(response, dto);
+        await page.waitForTimeout(30);
+        const receipt = await page.evaluate(() => window.__contaosPrivacySys04.read());
+        if (wrong) assert.equal(receipt, null);
+        else {
+          assert.deepEqual(receipt.ids, [row.id]);
+          assert.equal(JSON.stringify(receipt).includes("razao_social"), false);
+          await page.evaluate(() => history.pushState({}, "", "/selecionar-organizacao?unknown=1"));
+          assert.equal(await page.evaluate(() => window.__contaosPrivacySys04.read()), null);
+        }
+        await context.close();
+      }
+    } finally {
+      await browser.close();
+    }
+  },
+);
+
+test("diagnóstico legado não compartilha alias mutável do erro com o relatório", async () => {
+  const canary = "CANARY_PRIVATE_NEVER_EXPORT";
+  let captured;
+  await assert.rejects(
+    () =>
+      fn("captureVisualEvidence")({
+        brand: async () => ({}),
+        drain: async () => {},
+        stabilize: async () => {},
+        measure: async () => ({
+          passed: false,
+          identityPassed: true,
+          geometryPassed: false,
+          tablePassed: true,
+          datesPassed: true,
+          contrastPassed: true,
+          targets: [],
+          overflowX: 0,
+        }),
+        privacy: async () => true,
+        save: async () => assert.fail("falha não pode salvar imagem"),
+      }),
+    (error) => {
+      captured = error;
+      return error.code === "VISUAL_MEASUREMENT";
+    },
+  );
+  captured.visualDiagnostic.secret = canary;
+  captured.visualDiagnostic.identity = false;
+  const record = {};
+  fn("recordCaseFailure")(record, captured, "CAPTURE_PRIMARY");
+  assert.equal(JSON.stringify(record).includes(canary), false);
+  assert.equal(record.visualDiagnostic.identity, true);
+  assert.equal(record.status, "FAIL_UI");
+});
+
+test("V102 diagnóstico nativo projeta somente checkpoint e números fechados", () => {
+  const row = {
+    lastStage: "MEASURE",
+    width: 1440,
+    theme: "LIGHT",
+    targetCount: 4,
+    notHit: 2,
+    geometry: false,
+  };
+  const text = "# V102_NATIVE_DIAGNOSTIC " + JSON.stringify(row);
+  assert.deepEqual(fn("nativeVisualDiagnostic")(text), { state: "OBSERVED", ...row });
+  const enter = {
+    lastStage: "CSS_COMPILE",
+    width: null,
+    theme: null,
+    targetCount: null,
+    notHit: null,
+    geometry: null,
+  };
+  assert.deepEqual(
+    fn("nativeVisualDiagnostic")("# V102_NATIVE_DIAGNOSTIC " + JSON.stringify(enter)),
+    { state: "OBSERVED", ...enter },
+  );
+});
+test("V102 diagnóstico nativo rejeita dados ambíguos inválidos e canários sem eco", () => {
+  const check = fn("nativeVisualDiagnostic");
+  const row = {
+    lastStage: "MEASURE",
+    width: 390,
+    theme: "DARK",
+    targetCount: 4,
+    notHit: 2,
+    geometry: false,
+  };
+  const marker = (r) => "# V102_NATIVE_DIAGNOSTIC " + JSON.stringify(r);
+  assert.deepEqual(check("CANARY_PRIVATE_URL_TOKEN_STACK"), { state: "MISSING" });
+  for (const raw of [
+    marker({ ...row, width: "390" }),
+    marker({ ...row, width: 391 }),
+    marker({ ...row, notHit: 5 }),
+    marker({ ...row, targetCount: 65 }),
+    marker({ ...row, geometry: "false" }),
+    marker({ ...row, geometry: null }),
+    marker({ ...row, theme: "CANARY_PRIVATE" }),
+    marker({ ...row, extra: "CANARY_PRIVATE" }),
+    marker({ ...row, lastStage: "CANARY_PRIVATE" }),
+    marker(row) + "\n" + marker({ ...row, notHit: 0, geometry: true }),
+    Array(17).fill(marker(row)).join("\n"),
+    marker(row).replace('"width":390', '"width":NaN'),
+    marker(row).replace('"width":390', '"width":Infinity'),
+    marker(row).replace('"width":390', '"width":390,"width":390'),
+  ]) {
+    const result = check(raw);
+    assert.deepEqual(result, { state: "INVALID" });
+    assert.equal(JSON.stringify(result).includes("CANARY"), false);
+  }
+});
+
 test("Run114 medição falha preserva diagnóstico fechado sem screenshot ou texto privado", async () => {
   let saved = false;
   const metrics = {
@@ -5894,6 +6434,27 @@ test("Run114 diagnóstico limita contadores e ignora getters de campos não auto
   });
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: 40000 }).overflowX, 30000);
   assert.equal(fn("visualMeasurementDiagnostic")({ overflowX: -40000 }).overflowX, -30000);
+});
+
+test("SYS04 literal interval pattern treats metacharacters as data", () => {
+  const literal = fn("privacySys04Literal");
+  for (const value of ["a.b", "a[b]", "a(b)", "a+b", "a?b", "a$b", "a^b", "a|b", "a\\b"]) {
+    const pattern = new RegExp("^" + literal(value) + "$", "u");
+    assert.equal(pattern.test(value), true);
+    assert.equal(pattern.test("other"), false);
+  }
+  assert.equal(new RegExp("^" + literal("a.b") + "$").test("axb"), false);
+});
+test("SYS04 supplement accepts only factual complete two-test TAP", () => {
+  const parse = fn("privacySys04Supplement");
+  assert.equal(parse("# tests 2\n# pass 2\n# fail 0\n# skipped 0\n# cancelled 0\n"), 2);
+  for (const tap of [
+    "",
+    "# pass 2\n",
+    "# tests 2\n# pass 1\n# fail 1\n# skipped 0\n# cancelled 0\n",
+    "# tests 2\n# pass 2\n# fail 0\n# skipped 1\n# cancelled 0\n",
+  ])
+    assert.equal(parse(tap), null);
 });
 
 function privacy112Fixture() {
@@ -6189,6 +6750,178 @@ test("privacy112 rejects copies cards structural injection foreign records and s
     }
   }
 });
+
+const diagnosticMetrics = (delta = {}) => ({
+  viewport: { width: 390, height: 1000 },
+  theme: "light",
+  passed: false,
+  identityPassed: true,
+  geometryPassed: false,
+  tablePassed: true,
+  datesPassed: true,
+  contrastPassed: true,
+  overflowX: 0,
+  table: null,
+  dates: [],
+  contrast: [],
+  pairs: [],
+  targets: [
+    {
+      ordinal: 0,
+      kind: "INPUT",
+      rect: { x: 16, y: 100, width: 200, height: 44 },
+      connected: true,
+      visible: true,
+      disabled: false,
+      hit: false,
+    },
+  ],
+  ...delta,
+});
+test("FAIL_UI diagnóstico: guard real retém causa fechada no report sem PNG", async () => {
+  let saves = 0,
+    privacy = 0;
+  const record = {};
+  try {
+    await fn("captureVisualEvidence")({
+      brand: async () => ({ decoded: true }),
+      drain: async () => {},
+      stabilize: async () => {},
+      measure: async () => diagnosticMetrics(),
+      privacy: async () => {
+        privacy++;
+        return true;
+      },
+      save: async () => {
+        saves++;
+      },
+    });
+    assert.fail("guard deve falhar");
+  } catch (error) {
+    fn("recordCaseFailure")(record, error, "CAPTURE_PRIMARY");
+  }
+  assert.equal(saves, 0);
+  assert.equal(privacy, 0);
+  assert.equal(record.status, "FAIL_UI");
+  assert.equal(record.visualFailure, "VISUAL_MEASUREMENT");
+  assert.equal(record.diagnostic.stage, "CAPTURE_PRIMARY");
+  assert.equal(record.diagnostic.errorKind, "KNOWN_VISUAL");
+  assert.equal(record.diagnostic.visual.flags.geometryPassed, false);
+  assert.equal(record.diagnostic.visual.counts.notHit, 1);
+  assert.deepEqual(record.diagnostic.visual.failedTargets[0], {
+    ordinal: 0,
+    kind: "INPUT",
+    rect: { x: 16, y: 100, width: 200, height: 44 },
+    connected: true,
+    visible: true,
+    disabled: false,
+    hit: false,
+  });
+});
+test("FAIL_UI diagnóstico: exceção antes de privacy não exporta objeto lançado", () => {
+  const canary = "private.person@example.invalid Bearer NEVER_EXPORT";
+  const record = {};
+  fn("recordCaseFailure")(
+    record,
+    Object.assign(new Error(canary), {
+      name: canary,
+      code: canary,
+      cause: canary,
+      visualDiagnostic: { raw: canary },
+      stack: canary,
+    }),
+    "PRIVACY_PRIMARY",
+  );
+  assert.equal(record.status, "FAIL_UI");
+  assert.equal(record.diagnostic.stage, "PRIVACY_PRIMARY");
+  assert.equal(record.diagnostic.errorKind, "OTHER");
+  assert.deepEqual(record.diagnostic.visual, { observed: false, state: "UNOBSERVED" });
+  assert.equal(JSON.stringify(record).includes(canary), false);
+  const invalid = {};
+  fn("recordCaseFailure")(
+    invalid,
+    {
+      get code() {
+        throw Error(canary);
+      },
+    },
+    canary,
+  );
+  assert.equal(invalid.diagnostic.stage, null);
+  assert.equal(JSON.stringify(invalid).includes(canary), false);
+});
+test("FAIL_UI diagnóstico: métricas malformadas não viram zeros ou strings públicas", () => {
+  const summary = fn("summarizeVisualFailure");
+  for (const delta of [
+    { viewport: { width: "390", height: 1000 } },
+    { overflowX: Infinity },
+    { geometryPassed: "false" },
+    { targets: Array(257).fill(diagnosticMetrics().targets[0]) },
+    { targets: [{ ...diagnosticMetrics().targets[0], kind: "private.person@example.invalid" }] },
+    { targets: [{ ...diagnosticMetrics().targets[0], ordinal: 256 }] },
+    {
+      targets: [{ ...diagnosticMetrics().targets[0], rect: { x: NaN, y: 0, width: 1, height: 1 } }],
+    },
+  ])
+    assert.deepEqual(summary(diagnosticMetrics(delta)), { observed: false, state: "INVALID" });
+  const valid = summary(diagnosticMetrics({ privatePayload: "NEVER_EXPORT" }));
+  assert.equal(valid.observed, true);
+  assert.equal(JSON.stringify(valid).includes("NEVER_EXPORT"), false);
+});
+test("FAIL_UI diagnóstico: disabled dispensa apenas hit e limites continuam causais", () => {
+  const summary = fn("summarizeVisualFailure"),
+    geometry = fn("visualGeometryValid");
+  const target = diagnosticMetrics().targets[0];
+  for (const [disabled, x, expected, notHit, boundsX] of [
+    [false, 16, false, 1, 0],
+    [true, 16, true, 0, 0],
+    [false, 16, false, 1, 0],
+    [true, 380, false, 0, 1],
+  ]) {
+    const metrics = diagnosticMetrics({
+      targets: [{ ...target, disabled, rect: { ...target.rect, x } }],
+    });
+    assert.equal(geometry(metrics), expected);
+    const result = summary(metrics);
+    assert.equal(result.counts.notHit, notHit);
+    assert.equal(result.counts.boundsX, boundsX);
+  }
+});
+test("FAIL_UI diagnóstico: no máximo oito alvos sem texto com contagem integral", () => {
+  const result = fn("summarizeVisualFailure")(
+    diagnosticMetrics({
+      targets: Array.from({ length: 9 }, (_, ordinal) => ({
+        ...diagnosticMetrics().targets[0],
+        ordinal,
+      })),
+      table: { clipping: 2, helpTargets: [{ x: 0, y: 0, width: 20, height: 44 }] },
+      dates: [
+        { present: false, scheme: "light" },
+        { present: true, scheme: "dark" },
+      ],
+      contrast: [{ ratio: 3.5, threshold: 4.5 }],
+    }),
+  );
+  assert.equal(result.counts.targetsExamined, 9);
+  assert.equal(result.counts.notHit, 9);
+  assert.equal(result.failedTargets.length, 8);
+  assert.deepEqual(result.table, { clipping: 2, helpBelow44: 1 });
+  assert.deepEqual(result.dates, { absent: 1, schemeMismatch: 1 });
+  assert.deepEqual(result.contrast, { count: 1, minimum: 3.5, threshold: 4.5 });
+});
+test("FAIL_UI diagnóstico: PII conserva bloqueio e código desconhecido não é publicado", () => {
+  for (const code of ["PII_SUPPLEMENT", "PII_VISUAL_CAPTURE"]) {
+    const record = {};
+    fn("recordCaseFailure")(record, { code, message: "NEVER_EXPORT" }, "CAPTURE_SUPPLEMENT");
+    assert.equal(record.status, "BLOQUEADO_PII");
+    assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
+  }
+  const record = {};
+  fn("recordCaseFailure")(record, { name: "TimeoutError", code: "NEVER_EXPORT" }, "WAIT_SURFACE");
+  assert.equal(record.diagnostic.errorKind, "TIMEOUT");
+  assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
+});
+
 const privacyWireRaw = JSON.parse(
   await (
     await import("node:fs/promises")
@@ -6541,6 +7274,40 @@ test("privacy112 link requires source attributes and exact plain span subtree", 
   }
 });
 
+test("FAIL_UI diagnóstico: consumidor real decide aborto sem ler getters ou erro nulo", () => {
+  const consume = fn("recordCaseFailure");
+  let reads = 0;
+  const poison = {};
+  for (const key of ["name", "code", "message", "stack", "cause"])
+    Object.defineProperty(poison, key, {
+      get() {
+        reads++;
+        throw Error("NEVER_EXPORT");
+      },
+    });
+  for (const error of [poison, null, undefined, "NEVER_EXPORT"]) {
+    const record = {};
+    assert.doesNotThrow(() => consume(record, error, "PRIVACY_PRIMARY", null, false));
+    assert.equal(record.status, "FAIL_UI");
+    assert.equal(record.diagnostic.errorKind, "OTHER");
+    assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
+  }
+  assert.equal(reads, 0);
+  const deployment = Object.assign(new Error("NEVER_EXPORT"), { code: "DEPLOYMENT_CHANGED" });
+  for (const [error, fenceFailed] of [
+    [deployment, false],
+    [poison, true],
+  ]) {
+    const record = {};
+    assert.throws(
+      () => consume(record, error, "CASE_NAVIGATION", null, fenceFailed),
+      (caught) => caught === error,
+    );
+    assert.deepEqual(record, {});
+  }
+  assert.equal(reads, 0);
+});
+
 test("R2 nonce corrente rejeita R1 e historico reconhece apenas R1 consumido", () => {
   const row = {
     schema_version: 1,
@@ -6573,11 +7340,40 @@ test("popup policy: launch args are closed and require the restrictive switch", 
   for (const port of [undefined, 0, -1, 1.5, 65536, "9222"])
     assert.throws(() => fn("nativeBrowserArgs")(port), { code: "BROWSER_POLICY" });
 });
+function popupPolicyFixture({
+  executablePath = "/trusted/chrome-headless-shell",
+  debugPort = 9222,
+  proxy,
+} = {}) {
+  const path = require("node:path");
+  const root = path.dirname(require.resolve("playwright-core/package.json"));
+  const { chromiumSwitches } = require(path.join(root, "lib/server/chromium/chromiumSwitches.js"));
+  const args = [
+    executablePath,
+    ...chromiumSwitches(false),
+    "--enable-unsafe-swiftshader",
+    "--headless",
+    "--hide-scrollbars",
+    "--mute-audio",
+    "--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4",
+    ...(proxy === undefined ? [] : ["--proxy-server=" + proxy, "--proxy-bypass-list=<-loopback>"]),
+    ...fn("nativeBrowserArgs")(debugPort, proxy !== undefined),
+    "--user-data-dir=" +
+      path.join(require("node:os").tmpdir(), "playwright_chromiumdev_profile-Test123"),
+    "--remote-debugging-pipe",
+    "--no-startup-window",
+    "--use-gl=angle",
+    "--use-angle=swiftshader-webgl",
+    "--ozone-platform=headless",
+    "--allow-pre-commit-input",
+  ];
+  return { args, expected: { executablePath, debugPort, proxy } };
+}
 test("popup policy: actual command line and version reject missing overrides and unsafe switches", () => {
   const check = fn("verifyNativeBrowserPolicy");
-  const args = ["/trusted/chrome-headless-shell", "--headless", "--block-new-web-contents"];
+  const { args, expected } = popupPolicyFixture();
   const version = { product: "HeadlessChrome/145.0.7632.6" };
-  assert.equal(check(args, version), true);
+  assert.equal(check(args, version, expected), true);
   for (const bad of [
     null,
     {},
@@ -6593,9 +7389,9 @@ test("popup policy: actual command line and version reject missing overrides and
     [...args, null],
     [...args, "SYNTHETIC_SECRET_CANARY\n"],
   ])
-    assert.throws(() => check(bad, version), { code: "BROWSER_POLICY" });
+    assert.throws(() => check(bad, version, expected), { code: "BROWSER_POLICY" });
   for (const product of ["Chrome/145.0.7632.6", "HeadlessChrome/146.0.0.0", undefined])
-    assert.throws(() => check(args, { product }), { code: "BROWSER_POLICY" });
+    assert.throws(() => check(args, { product }, expected), { code: "BROWSER_POLICY" });
 });
 test("popup policy: both authenticated consumers and native tests use the proved launcher", async () => {
   const { readFile } = await import("node:fs/promises");
@@ -6615,16 +7411,49 @@ test("popup policy: both authenticated consumers and native tests use the proved
   assert.equal(/chromium\.launch\(/.test(preparer), false);
 });
 
-test("popup policy: unknown binary blocks before launch and never returns a browser", async () => {
-  let launches = 0;
-  await assert.rejects(
-    fn("launchNativeBrowser")({
-      chromium: { executablePath: () => "/untrusted/chrome", launch: () => launches++ },
-      debugPort: 9222,
-    }),
-    { code: "BROWSER_POLICY" },
+test("popup policy: unknown binary blocks before filesystem access or browser launch", async () => {
+  const ts = await import("typescript");
+  const { readFile } = await import("node:fs/promises");
+  const text = await readFile(new URL("./authenticated-visual-audit.mjs", import.meta.url), "utf8");
+  const file = ts.createSourceFile(
+    "audit.mjs",
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
   );
-  assert.equal(launches, 0);
+  const identity = file.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "nativeBinaryIdentity",
+  );
+  const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+  const check = new AsyncFunction(
+    "path",
+    "isAbsolute",
+    "lstat",
+    "fail",
+    identity.body.getText(file).slice(1, -1),
+  );
+  let accesses = 0;
+  const fail = (code) => {
+    throw Object.assign(Error(code), { code });
+  };
+  for (const path of [
+    "relative/chrome",
+    "/untrusted/chrome",
+    "/cache/chromium_headless_shell-1209/chrome-headless-shell-linux64/chrome-headless-shell",
+  ])
+    await assert.rejects(
+      check(
+        path,
+        require("node:path").isAbsolute,
+        () => {
+          accesses++;
+        },
+        fail,
+      ),
+      { code: "BROWSER_BINARY" },
+    );
+  assert.equal(accesses, 0);
 });
 
 async function popupPolicyVariants() {
@@ -6660,7 +7489,7 @@ async function popupPolicyVariants() {
       await new Promise((r) => debug.listen(0, "127.0.0.1", r));
       const port = debug.address().port;
       await new Promise((r) => debug.close(r));
-      browser = await fn("launchNativeBrowser")({ chromium, debugPort: port });
+      browser = await fn("launchNativeBrowser")({ debugPort: port });
       context = await browser.newContext({ serviceWorkers: "block" });
       const page = await context.newPage();
       const session = await context.newCDPSession(page);
@@ -6735,7 +7564,7 @@ async function launchIsolatedProvedBrowser(chromium) {
   await new Promise((r) => debug.listen(0, "127.0.0.1", r));
   const port = debug.address().port;
   await new Promise((r) => debug.close(r));
-  return fn("launchNativeBrowser")({ chromium, debugPort: port });
+  return fn("launchNativeBrowser")({ debugPort: port });
 }
 
 test("popup policy: actual launcher closes on post-launch command or identity failure", async () => {
@@ -6763,6 +7592,7 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
     "debugPort",
     "proxy",
     "require",
+    "readFile",
     "process",
     "isAbsolute",
     "dirname",
@@ -6772,11 +7602,24 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
     "browserEnvironment",
     "verifyNativeBrowserPolicy",
     "fail",
-    "let browser;" + launch.body.getText(file).slice(1, -1).replace("let browser;", ""),
+    "let browser;" +
+      launch.body
+        .getText(file)
+        .slice(1, -1)
+        .replace("let browser;", "")
+        .replace('const { chromium } = await import("playwright");', ""),
   );
   const expected =
     "/cache/chromium_headless_shell-1208/chrome-headless-shell-linux64/chrome-headless-shell";
-  for (const scenario of ["command", "version", "identity", "detach"]) {
+  for (const scenario of [
+    "command",
+    "version",
+    "identity",
+    "detach",
+    "unknown",
+    "bare-port",
+    "proxy-override",
+  ]) {
     let closed = false,
       contexts = 0;
     const browser = {
@@ -6796,10 +7639,14 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
               }
             : {
                 arguments: [
-                  scenario === "identity" ? "/foreign" : expected,
-                  "--headless",
-                  "--block-new-web-contents",
-                  "--remote-debugging-port=9222",
+                  ...popupPolicyFixture({
+                    executablePath: scenario === "identity" ? "/foreign" : expected,
+                  }).args,
+                  ...(scenario === "unknown" ? ["--unknown-switch=false"] : []),
+                  ...(scenario === "bare-port" ? ["--remote-debugging-port", "0"] : []),
+                  ...(scenario === "proxy-override"
+                    ? ["--proxy-server=http://foreign.invalid:8181"]
+                    : []),
                 ],
               };
         },
@@ -6826,7 +7673,8 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
         chromium,
         9222,
         undefined,
-        () => ({ version: "1.58.2" }),
+        require,
+        readFile,
         { platform: "linux", arch: "x64", env: {} },
         isAbsolute,
         dirname,
@@ -6845,15 +7693,133 @@ test("popup policy: actual launcher closes on post-launch command or identity fa
   }
 });
 
+test("popup policy: unknown argv and bare overrides never authorize the real launcher", () => {
+  const check = fn("verifyNativeBrowserPolicy");
+  const { args, expected } = popupPolicyFixture();
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  for (const extra of [
+    ["--proxy-server=http://foreign.invalid:8181"],
+    ["--remote-debugging-address=0.0.0.0"],
+    ["--disable-blink-features=BlockCredentialedSubresources"],
+    ["--remote-debugging-port", "0"],
+    ["--unknown-switch=false"],
+  ])
+    assert.throws(() => check([...args, ...extra], version, expected), { code: "BROWSER_POLICY" });
+});
+
+test("popup policy: exact proxy context rejects replacement omission duplication and positional overrides", () => {
+  const { args, expected } = popupPolicyFixture({ proxy: "http://127.0.0.1:8181" });
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  const check = fn("verifyNativeBrowserPolicy");
+  assert.equal(check(args, version, expected), true);
+  for (const bad of [
+    args.filter((a) => !a.startsWith("--proxy-server=")),
+    args.map((a) => (a.startsWith("--proxy-server=") ? "--proxy-server=http://127.0.0.1:8182" : a)),
+    [...args, "--proxy-bypass-list=*"],
+    [...args, "--headless"],
+    [...args, "--headless=false"],
+    [...args, "--remote-debugging-port=0"],
+    [...args, "--disable-features=WebSecurity"],
+    [...args, "--disable-web-security=false"],
+    [...args, "about:blank"],
+    args.map((a) => (a.startsWith("--user-data-dir=") ? "--user-data-dir=/foreign/profile" : a)),
+  ])
+    assert.throws(() => check(bad, version, expected), { code: "BROWSER_POLICY" });
+  assert.throws(() => check(args, version), { code: "BROWSER_POLICY" });
+  assert.throws(() => check(args, version, { ...expected, debugPort: 9223 }), {
+    code: "BROWSER_POLICY",
+  });
+  assert.throws(() => check(args, version, { ...expected, proxy: undefined }), {
+    code: "BROWSER_POLICY",
+  });
+});
+
+test("popup policy: production launcher resolves pinned SDK internally without injected chromium", async () => {
+  const ts = await import("typescript");
+  const { readFile } = await import("node:fs/promises");
+  const text = await readFile(new URL("./authenticated-visual-audit.mjs", import.meta.url), "utf8");
+  const file = ts.createSourceFile(
+    "audit.mjs",
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
+  const launch = file.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "launchNativeBrowser",
+  );
+  assert.ok(launch);
+  assert.equal(
+    launch.parameters[0].name.elements.some((node) => node.name?.text === "chromium"),
+    false,
+  );
+  const body = launch.body.getText(file);
+  assert.ok(body.indexOf('await import("playwright")') < body.indexOf("chromium.launch"));
+  assert.ok(body.includes('require("playwright/package.json").version'));
+  assert.ok(body.includes('"browsers.json"'));
+  assert.ok(body.indexOf('shells[0].revision !== "1208"') < body.indexOf("chromium.launch"));
+});
+
+const OBSERVED_GRAPHICS = [
+  "--use-gl=angle",
+  "--use-angle=swiftshader-webgl",
+  "--ozone-platform=headless",
+];
+test("popup policy: pinned Shell internal graphics tokens must match observed argv exactly", () => {
+  const { args, expected } = popupPolicyFixture();
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  const observed = [...args.filter((a) => !OBSERVED_GRAPHICS.includes(a)), ...OBSERVED_GRAPHICS];
+  assert.equal(fn("verifyNativeBrowserPolicy")(observed, version, expected), true);
+  for (const token of OBSERVED_GRAPHICS) {
+    const name = token.split("=")[0];
+    for (const bad of [
+      observed.filter((a) => a !== token),
+      [...observed, token],
+      observed.map((a) => (a === token ? name + "=unknown" : a)),
+      observed.map((a) => (a === token ? token.slice(1) : a)),
+    ])
+      assert.throws(() => fn("verifyNativeBrowserPolicy")(bad, version, expected), {
+        code: "BROWSER_POLICY",
+      });
+  }
+});
+test("popup policy: single-prefix bypasses and switch terminator never pass", () => {
+  const { args, expected } = popupPolicyFixture();
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  for (const extra of [
+    ["-no-sandbox"],
+    ["-disable-web-security=false"],
+    ["-remote-debugging-port=0"],
+    ["--"],
+  ])
+    assert.throws(() => fn("verifyNativeBrowserPolicy")([...args, ...extra], version, expected), {
+      code: "BROWSER_POLICY",
+    });
+});
+
+test("popup policy: attested pre-commit flag multiplicity is exactly two", () => {
+  const { args, expected } = popupPolicyFixture();
+  const version = { product: "HeadlessChrome/145.0.7632.6" };
+  assert.equal(args.filter((a) => a === "--allow-pre-commit-input").length, 2);
+  assert.equal(fn("verifyNativeBrowserPolicy")(args, version, expected), true);
+  const stripped = args.filter((a) => a !== "--allow-pre-commit-input");
+  for (const count of [0, 1, 3])
+    assert.throws(
+      () =>
+        fn("verifyNativeBrowserPolicy")(
+          [...stripped, ...Array(count).fill("--allow-pre-commit-input")],
+          version,
+          expected,
+        ),
+      { code: "BROWSER_POLICY" },
+    );
+});
+
 test("popup policy: POSIX aliases terminator and duplicate debugging switches fail closed", () => {
   const check = fn("verifyNativeBrowserPolicy"),
     version = { product: "HeadlessChrome/145.0.7632.6" };
-  const args = [
-    "/trusted/chrome-headless-shell",
-    "--headless",
-    "--block-new-web-contents",
-    "--remote-debugging-port=9222",
-  ];
+  const { args, expected } = popupPolicyFixture();
+  assert.equal(check(args, version, expected), true);
   for (const value of [
     "-no-sandbox",
     "-disable-web-security=true",
@@ -6863,8 +7829,8 @@ test("popup policy: POSIX aliases terminator and duplicate debugging switches fa
     "-headless",
     "--unsafely-treat-insecure-origin-as-secure=http://127.0.0.1",
   ])
-    assert.throws(() => check([...args, value], version), { code: "BROWSER_POLICY" });
-  assert.throws(() => check([args[0], "--", ...args.slice(1)], version), {
+    assert.throws(() => check([...args, value], version, expected), { code: "BROWSER_POLICY" });
+  assert.throws(() => check([args[0], "--", ...args.slice(1)], version, expected), {
     code: "BROWSER_POLICY",
   });
 });
