@@ -371,7 +371,7 @@ const CLEANUP = new Set([
   "PROXY_CLOSE_FAILED",
 ]);
 const PHASES = new Set(["PREFLIGHT", "LOGIN", "SOURCE_AND_LIST", "COMPETENCIES", "FINAL_READBACK"]);
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const HASH = /^[0-9a-f]{64}$/;
 const bool = (v) => typeof v === "boolean";
 const uuid = (v) => typeof v === "string" && UUID.test(v);
