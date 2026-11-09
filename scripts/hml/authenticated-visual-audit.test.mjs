@@ -4170,6 +4170,7 @@ test(
           null,
         );
       }
+      await privacyWireChromium(browser, words);
     } finally {
       release?.();
       await browser?.close();
@@ -4288,7 +4289,7 @@ test("privacy78 fonte real e recibo preservam quatro rejeicoes sem contexto", as
     );
 });
 test("privacy78 GET exato rejeita filtro select origem metodo duplicata e ausencia", () => {
-  const runtime = fn("privacy78Runtime")({ proof: privacy78Proof });
+  const runtime = fn("privacy78Runtime")({ proof: privacy78Proof, wireProof: privacyWireRaw });
   for (const c of privacy78Proof.get_contracts) {
     const url = API + c.path + "?" + new URLSearchParams(c.query);
     assert.equal(runtime.match(url, "GET")?.name, c.name);
@@ -4312,7 +4313,7 @@ test("privacy78 GET exato rejeita filtro select origem metodo duplicata e ausenc
   }
 });
 test("privacy78 projecao fecha config pipeline FK shapes e nao le campos proibidos", () => {
-  const runtime = fn("privacy78Runtime")({ proof: privacy78Proof });
+  const runtime = fn("privacy78Runtime")({ proof: privacy78Proof, wireProof: privacyWireRaw });
   const upload = privacy78Proof.get_contracts.find((c) => c.name === "upload");
   const row = {
     extensoes_permitidas: privacy78Proof.observed.upload.extensions,
@@ -4324,14 +4325,16 @@ test("privacy78 projecao fecha config pipeline FK shapes e nao le campos proibid
         throw new Error("unselected field read");
       },
     });
-  assert.deepEqual(runtime.project(upload, row), { name: "upload", exact: true });
-  assert.equal(runtime.project(upload, [row]), null);
-  assert.equal(runtime.project(upload, { ...row, tamanho_maximo_bytes: 524288001 }), null);
+  assert.deepEqual(runtime.project(upload, [row]), { name: "upload", exact: true });
+  assert.equal(runtime.project(upload, row), null);
+  assert.equal(runtime.project(upload, [{ ...row, tamanho_maximo_bytes: 524288001 }]), null);
   assert.equal(
-    runtime.project(upload, {
-      ...row,
-      extensoes_permitidas: [...privacy78Proof.observed.upload.extensions].reverse(),
-    }),
+    runtime.project(upload, [
+      {
+        ...row,
+        extensoes_permitidas: [...privacy78Proof.observed.upload.extensions].reverse(),
+      },
+    ]),
     null,
   );
   const c = privacy78Proof.context,
@@ -4505,11 +4508,13 @@ test("privacy78 observer preserva fetch args promise response rejeicao e ignora 
     const c = privacy78Proof.get_contracts.find((r) => r.name === "upload");
     const url = API + c.path + "?" + new URLSearchParams(c.query);
     const response = new Response(
-      JSON.stringify({
-        extensoes_permitidas: privacy78Proof.observed.upload.extensions,
-        tamanho_maximo_bytes: 524288000,
-        user: "CANARIO pessoa@example.com",
-      }),
+      JSON.stringify([
+        {
+          extensoes_permitidas: privacy78Proof.observed.upload.extensions,
+          tamanho_maximo_bytes: 524288000,
+          user: "CANARIO pessoa@example.com",
+        },
+      ]),
     );
     Object.defineProperty(response, "url", { value: url });
     Object.defineProperty(response, "headers", {
@@ -4524,7 +4529,7 @@ test("privacy78 observer preserva fetch args promise response rejeicao e ignora 
       calls.push({ receiver: this, args });
       return next;
     };
-    run("privacy78Runtime", { proof: privacy78Proof, install: true });
+    run("privacy78Runtime", { proof: privacy78Proof, wireProof: privacyWireRaw, install: true });
     const init = { method: "GET" };
     Object.defineProperty(init, "headers", {
       get() {
@@ -4573,7 +4578,7 @@ for (const event of [
     const { dom, w, run } = privacy78Browser();
     try {
       w.fetch = () => Promise.resolve(new Response("{}"));
-      run("privacy78Runtime", { proof: privacy78Proof, install: true });
+      run("privacy78Runtime", { proof: privacy78Proof, wireProof: privacyWireRaw, install: true });
       assert.ok(w.__contaosPrivacy78.read());
       (event === "visibilitychange"
         ? w.document
@@ -4595,7 +4600,7 @@ test("privacy78 header sessao e deadline invalidam sem Auth", async () => {
   );
   try {
     w.fetch = () => Promise.resolve(new Response("{}"));
-    run("privacy78Runtime", { proof: privacy78Proof, install: true });
+    run("privacy78Runtime", { proof: privacy78Proof, wireProof: privacyWireRaw, install: true });
     assert.ok(w.__contaosPrivacy78.read());
     w.document.querySelector("header").textContent = "Confirmando organização…";
     assert.equal(w.__contaosPrivacy78.read(), null);
@@ -4617,7 +4622,7 @@ test("privacy78 header sessao e deadline invalidam sem Auth", async () => {
       finish = r;
     });
     b.w.fetch = () => native;
-    b.run("privacy78Runtime", { proof: privacy78Proof, install: true });
+    b.run("privacy78Runtime", { proof: privacy78Proof, wireProof: privacyWireRaw, install: true });
     const c = privacy78Proof.get_contracts.find((r) => r.name === "upload");
     assert.equal(b.w.fetch(API + c.path + "?" + new URLSearchParams(c.query)), native);
     deadlines[0]();
@@ -4683,11 +4688,15 @@ test("privacy78 GET7 RED real DTO sem id org e query estrita", async () => {
       "utf8",
     ),
   );
-  const r = fn("privacy78Runtime")({ proof: privacy78Proof, rbacProof: raw });
+  const r = fn("privacy78Runtime")({
+    proof: privacy78Proof,
+    rbacProof: raw,
+    wireProof: privacyWireRaw,
+  });
   const c = raw.get_contract,
     url = API + c.path + "?" + new URLSearchParams(c.query);
   assert.equal(r.match(url, "GET")?.name, "competence_rbac_gate");
-  assert.deepEqual(r.project(c, { id_contrato: raw.context.contract }), {
+  assert.deepEqual(r.project(c, [{ id_contrato: raw.context.contract }]), {
     name: "competence_rbac_gate",
     exact: true,
   });
@@ -4709,7 +4718,7 @@ test("privacy78 GET7 RED real DTO sem id org e query estrita", async () => {
   for (const body of [
     null,
     [],
-    [{ id_contrato: raw.context.contract }],
+    [{ id_contrato: raw.context.contract }, { id_contrato: raw.context.contract }],
     { id_contrato: null },
     { id_contrato: "foreign" },
     {},
@@ -4722,7 +4731,7 @@ test("privacy78 GET7 RED real DTO sem id org e query estrita", async () => {
         throw new Error("unprojected GET7 field read");
       },
     });
-  assert.deepEqual(r.project(c, row), { name: "competence_rbac_gate", exact: true });
+  assert.deepEqual(r.project(c, [row]), { name: "competence_rbac_gate", exact: true });
 });
 test("privacy78 GET7 exige recibo separado selado mais upload atual para V115", async () => {
   const proof = await fn("loadPrivacy78Proof")(),
@@ -4796,11 +4805,16 @@ test("privacy78 GET7 browser scope exige rota V115 e nao herda apos navegacao", 
       const contract = rbacProof.get_contract,
         url = API + contract.path + "?" + new URLSearchParams(contract.query);
       const response = new Response(
-        JSON.stringify({ id_contrato: rbacProof.context.contract, user: "CANARIO_PRIVADO" }),
+        JSON.stringify([{ id_contrato: rbacProof.context.contract, user: "CANARIO_PRIVADO" }]),
       );
       Object.defineProperty(response, "url", { value: url });
       w.fetch = () => Promise.resolve(response);
-      run("privacy78Runtime", { proof: privacy78Proof, rbacProof, install: true });
+      run("privacy78Runtime", {
+        proof: privacy78Proof,
+        rbacProof,
+        wireProof: privacyWireRaw,
+        install: true,
+      });
       await w.fetch(url);
       await new Promise((r) => setTimeout(r, 50));
       if (surface === "V115") {
@@ -6071,12 +6085,280 @@ test("FAIL_UI diagnóstico: PII conserva bloqueio e código desconhecido não é
   assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
 });
 
+const privacyWireRaw = JSON.parse(
+  await (
+    await import("node:fs/promises")
+  ).readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-wire-cardinality-20261109.json",
+      import.meta.url,
+    ),
+    "utf8",
+  ),
+);
+function privacyWireCases() {
+  const c = privacy78Proof.context;
+  return [
+    ["contract_gate", { id: c.contract, id_organizacao: c.organization }],
+    ["document_gate", { id: c.document, id_contrato: c.contract }],
+    [
+      "upload",
+      {
+        extensoes_permitidas: privacy78Proof.observed.upload.extensions,
+        tamanho_maximo_bytes: privacy78Proof.observed.upload.max_bytes,
+      },
+    ],
+    ["competence_rbac_gate", { id_contrato: c.contract }],
+  ];
+}
+async function privacyWireRbac() {
+  return JSON.parse(
+    await (
+      await import("node:fs/promises")
+    ).readFile(
+      new URL(
+        "../../docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+}
+test("privacy wire SDK real 2.118 entrega objeto mas observador exige array unitario", async () => {
+  const { PostgrestClient } = require("@supabase/postgrest-js");
+  const rbacProof = await privacyWireRbac();
+  const runtime = fn("privacy78Runtime")({
+    proof: privacy78Proof,
+    rbacProof,
+    wireProof: privacyWireRaw,
+  });
+  for (const [name, row] of privacyWireCases()) {
+    const c = [...privacy78Proof.get_contracts, rbacProof.get_contract].find(
+      (x) => x.name === name,
+    );
+    let receipt = null,
+      calls = 0;
+    const client = new PostgrestClient(API + "/rest/v1", {
+      fetch: async () => {
+        calls++;
+        const response = new Response(JSON.stringify([row]), { status: 200 });
+        receipt = runtime.project(c, await response.clone().json());
+        return response;
+      },
+    });
+    let query = client.from(c.path.split("/").at(-1)).select(c.query.select);
+    for (const [key, value] of Object.entries(c.query))
+      if (key !== "select") query = query.eq(key, value.slice(3));
+    const result = await query.maybeSingle();
+    assert.equal(calls, 1);
+    assert.equal(result.error, null);
+    assert.deepEqual(result.data, row);
+    assert.deepEqual(receipt, { name, exact: true }, name);
+    assert.equal(runtime.project(c, result.data), null, "DTO nao e corpo wire");
+  }
+});
+test("privacy wire selo separado e lista fechada de quatro contratos", async () => {
+  const proof = await fn("loadPrivacyWireProof")();
+  assert.ok(Object.isFrozen(proof));
+  assert.ok(Object.isFrozen(proof.approved_wire.contract_names));
+  assert.deepEqual(
+    proof.approved_wire.contract_names,
+    privacyWireCases().map(([name]) => name),
+  );
+});
+test("privacy wire rejeita cardinalidade shape contexto e valores sem ler campos extras", async () => {
+  const rbacProof = await privacyWireRbac();
+  const runtime = fn("privacy78Runtime")({
+    proof: privacy78Proof,
+    rbacProof,
+    wireProof: privacyWireRaw,
+  });
+  for (const [name, row] of privacyWireCases()) {
+    const c = [...privacy78Proof.get_contracts, rbacProof.get_contract].find(
+      (x) => x.name === name,
+    );
+    for (const key of ["user", "headers", "metadata"])
+      Object.defineProperty(row, key, {
+        get() {
+          throw new Error("wire unprojected field read");
+        },
+      });
+    assert.deepEqual(runtime.project(c, [row]), { name, exact: true });
+    for (const body of [row, [], [row, row], [[row]], [null], [1], ["x"], [{}]])
+      assert.equal(runtime.project(c, body), null, name);
+    const missing = { ...row };
+    delete missing[Object.keys(missing)[0]];
+    assert.equal(runtime.project(c, [missing]), null);
+    const absent = fn("privacy78Runtime")({ proof: privacy78Proof, rbacProof });
+    assert.equal(absent.project(c, [row]), null);
+    const tampered = fn("privacy78Runtime")({
+      proof: privacy78Proof,
+      rbacProof,
+      wireProof: {
+        ...privacyWireRaw,
+        approved_wire: {
+          ...privacyWireRaw.approved_wire,
+          contract_names: [...privacyWireRaw.approved_wire.contract_names, "foreign"],
+        },
+      },
+    });
+    assert.equal(tampered.project(c, [row]), null);
+    const url = API + c.path + "?" + new URLSearchParams(c.query);
+    assert.equal(runtime.match(url + "&extra=1", "GET"), null);
+    assert.equal(runtime.match(url + "&select=x", "GET"), null);
+  }
+});
+
+async function privacyWireChromium(browser, words) {
+  const { readFile } = await import("node:fs/promises");
+  const sdkFile = require.resolve("@supabase/postgrest-js").replace(/index\.cjs$/, "index.mjs");
+  const sdkModule = "data:text/javascript;base64," + (await readFile(sdkFile)).toString("base64");
+  const proof = await fn("loadPrivacy78Proof")(),
+    rbacProof = await fn("loadPrivacy78RbacProof")();
+  const wireProof = await fn("loadPrivacyWireProof")();
+  const c = proof.context,
+    p = proof.observed.pipeline[0];
+  const data = Object.fromEntries(privacyWireCases());
+  data.document_versions_page0 = [
+    {
+      id: c.document_version,
+      id_documento_contrato: c.document,
+      id_arquivo: c.file,
+      criado_em: p.created,
+    },
+  ];
+  data.processing_page0 = [
+    {
+      id: c.processing,
+      id_versao_documento: c.document_version,
+      etapa: p.stage,
+      iniciado_em: p.started,
+      concluido_em: p.completed,
+      criado_em: p.created,
+    },
+  ];
+  const required = {
+    V111: ["contract_gate", "document_gate", "document_versions_page0", "processing_page0"],
+    V115: ["competence_rbac_gate", "upload"],
+    V122: ["contract_gate", "upload"],
+  };
+  for (const [surface, names] of Object.entries(required)) {
+    const page = await browser.newPage({ serviceWorkers: "block" });
+    try {
+      const html =
+        '<meta charset="utf-8"><header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header>' +
+        privacy78Fixtures()[surface];
+      // Every browser URL is fulfilled locally; no HML or external request can leave.
+      await page.route("**/*", (route) => route.fulfill({ contentType: "text/html", body: html }));
+      const path = fn("privateCases")().find((item) => item.surface === surface).path;
+      await page.goto(HML + path);
+      const contracts = [...proof.get_contracts, rbacProof.get_contract].filter((item) =>
+        names.includes(item.name),
+      );
+      await page.evaluate(
+        ({ contracts, data, origin }) => {
+          window.fetch = function (url) {
+            const matched = contracts.find((item) => {
+              const u = new URL(url);
+              return (
+                u.origin === origin &&
+                u.pathname === item.path &&
+                [...u.searchParams].length === Object.keys(item.query).length &&
+                Object.entries(item.query).every(
+                  ([k, v]) => u.searchParams.getAll(k).length === 1 && u.searchParams.get(k) === v,
+                )
+              );
+            });
+            if (!matched) throw new Error("LOCAL_WIRE_QUERY");
+            const row = data[matched.name];
+            const response = new Response(JSON.stringify(Array.isArray(row) ? row : [row]), {
+              status: 200,
+            });
+            Object.defineProperty(response, "url", { value: String(url) });
+            return Promise.resolve(response);
+          };
+        },
+        { contracts, data, origin: API },
+      );
+      await page.evaluate(fn("privacy78Runtime"), { proof, rbacProof, wireProof, install: true });
+      await page.evaluate(
+        async ({ sdkModule, contracts, origin }) => {
+          const { PostgrestClient } = await import(sdkModule);
+          const sdk = new PostgrestClient(origin + "/rest/v1", { fetch: window.fetch });
+          for (const contract of contracts) {
+            let q = sdk.from(contract.path.split("/").at(-1)).select(contract.query.select);
+            for (const [key, value] of Object.entries(contract.query)) {
+              if (key === "order")
+                for (const part of value.split(","))
+                  q = q.order(part.split(".")[0], { ascending: false });
+              else if (!["select", "offset", "limit"].includes(key)) q = q.eq(key, value.slice(3));
+            }
+            if (contract.query.limit) q = q.range(0, Number(contract.query.limit) - 1);
+            const result = await (contract.shape ? q.maybeSingle() : q);
+            if (result.error) throw new Error("LOCAL_SDK_REJECTION");
+            if (contract.shape && (Array.isArray(result.data) || !result.data))
+              throw new Error("LOCAL_SDK_DTO");
+          }
+        },
+        { sdkModule, contracts, origin: API },
+      );
+      await page.waitForFunction(
+        (count) => window.__contaosPrivacy78?.read()?.observed.length === count,
+        names.length,
+      );
+      const receipt = await page.evaluate(() => window.__contaosPrivacy78.read());
+      const anchor = await page.evaluate(fn("privacy78FieldAnchor"), { surface, proof });
+      assert.ok(anchor, surface);
+      const rendered = await page.locator("body").innerText();
+      const snapshot = await page.locator("body").ariaSnapshot();
+      const fieldSnapshot = (
+        await page.locator(anchor.selector).nth(anchor.index).ariaSnapshot()
+      ).trim();
+      const context = fn("privacy78FieldContext")({
+        surface,
+        proof,
+        rbacProof,
+        rendered,
+        snapshot,
+        fieldSnapshot,
+        anchored: true,
+        receipt: Object.freeze({
+          ...receipt,
+          route: path,
+          observed: Object.freeze(receipt.observed),
+        }),
+      });
+      assert.ok(context, surface + " full ARIA and real SDK wire");
+      assert.equal(
+        fn("classifyArtifactText")(rendered, words, { fieldContext: context }).reason,
+        "ALLOWED",
+        surface,
+      );
+      assert.equal(
+        fn("classifyArtifactText")(snapshot, words, { snapshot: true, fieldContext: context })
+          .reason,
+        "ALLOWED",
+        surface,
+      );
+      await page.evaluate(() => window.__contaosPrivacy78.invalidate());
+      assert.equal(await page.evaluate(() => window.__contaosPrivacy78.read()), null);
+    } finally {
+      await page.close();
+    }
+  }
+}
+
 test("FAIL_UI diagnóstico: consumidor real decide aborto sem ler getters ou erro nulo", () => {
   const consume = fn("recordCaseFailure");
   let reads = 0;
   const poison = {};
   for (const key of ["name", "code", "message", "stack", "cause"])
-    Object.defineProperty(poison, key, { get() { reads++; throw Error("NEVER_EXPORT"); } });
+    Object.defineProperty(poison, key, {
+      get() {
+        reads++;
+        throw Error("NEVER_EXPORT");
+      },
+    });
   for (const error of [poison, null, undefined, "NEVER_EXPORT"]) {
     const record = {};
     assert.doesNotThrow(() => consume(record, error, "PRIVACY_PRIMARY", null, false));
@@ -6086,9 +6368,15 @@ test("FAIL_UI diagnóstico: consumidor real decide aborto sem ler getters ou err
   }
   assert.equal(reads, 0);
   const deployment = Object.assign(new Error("NEVER_EXPORT"), { code: "DEPLOYMENT_CHANGED" });
-  for (const [error, fenceFailed] of [[deployment, false], [poison, true]]) {
+  for (const [error, fenceFailed] of [
+    [deployment, false],
+    [poison, true],
+  ]) {
     const record = {};
-    assert.throws(() => consume(record, error, "CASE_NAVIGATION", null, fenceFailed), (caught) => caught === error);
+    assert.throws(
+      () => consume(record, error, "CASE_NAVIGATION", null, fenceFailed),
+      (caught) => caught === error,
+    );
     assert.deepEqual(record, {});
   }
   assert.equal(reads, 0);
