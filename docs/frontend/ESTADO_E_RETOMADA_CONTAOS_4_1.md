@@ -1,3 +1,21 @@
+# Reancoragem adicional do GATE R8
+
+Reancoragem0e855783→367fc8c5:4commits/3paths lidos (docs/tasks/active-task.json, plans/c13-hml-cors-origin-20261109.md, supabase/functions/copilot-query/index.ts). CódigoalteraumaúnicalinhaORIGENS_CORS, acrescentandoorigemexata https://contaos-41-nygkrrbkq-contaos9999.vercel.app; preservaorigensanteriores,semwildcard/headers/JWT/RLS/quota/payload/LLM/RPC/migration ouAPIdopreparadorAalterados. DocsautorizamhotfixHML/readscopepróprio; não éprovadedeploy/execução/C13.25/25normativasiguais emárvorecompleta600/truncatedfalse,catálogoe54e49e626e65a9c94c81709180fd192a1f0c079/10097 etypes8ea7750b75fd9d76b29c36ce7613392e3ab65e19preservados. A segueindependente,semaguardarCdeploy/139,guardHEADvivoinalterado.
+
+FalhaCI42604889311foiapenasfreshness; atualizar4docssemrelaxarguard. GATEaindaaguardaCI/revisãointegração. FonteR7originalSbc7continuahistórica0e;C13frozenhistórico545preservado. NenhumaAuth/SQL/códigoporestaâncora.
+
+# Checkpoint P0 R8, 09/11/2026: GATE documental, BUILD pendente
+
+PLAN466 integradoe61bea0548d20a48c4e927cb97eef0a62a6b3e33/HEAD80fbf1749304a415592bdec03304801b8b0102a5/review5824813022/CI42604054248 e42604054088SUCCESS. Base50c7930d755acb9f3f0eef3385b51ee665a2665f inclui C13PR464; seus5paths e todo histórico preservados. Backend0e85578323ae272ba79915f9b872386d437cbc83/25fontes/cat10097/types8ea estáveis. HML437/F3READYúltimoGET, sem atribuirnovoC13ao produto437.
+
+BUILD462dc0/e37 aprovado4CIs/revisões5824520557/5824527608/5824535180/nativos15/417+296PASS e produto1169/42 na sua origem. HelperLista4sites/R6DocSHA98136/8+16 preservados. R7REQUEST465Sbc7c1625f0a7851fe7b8f0500f3bf51daf1e1215 acabouANTESsecrets: upstream42601246471SUCCESS,Fixtures42601383933FAIL/private12910671598313nativePASS14provenancePASS15REQUEST_API_UNAVAILABLE16MasterSKIP,artifacts[];oposto42601384052private129106589401SKIP. ZeroAuth/novasoperaçõesDERIVADOSdeAPIsteps+fontesS, nãoinventarreport/receipts/logoutR7. NonceR7spent; max16novas/oitohistóricaspermanece.
+
+CausaHTTPstatuspassadoNÃOconhecida; fixa-se dependênciaGitHubGETpúblicanãotransitória. DuasrevalidaçõesreaisporNOME(R7steps6/15), loadlocalworkflow_runresolver7/preparação14/privado16, native13excluído. GATEdocs/frontend/planos/TRILHA_A_R8_REVALIDACAO_GITHUB_TOKEN_ISOLADO_GATE_2026-11-09.md delimita6paths, tokenActionsread-onlySÓduasetapasmetadata/semMaster/build/browser/Step16, guardsanyMasterantesGETinclusivelegacydispatch, provascompletasfresh30s/5s60s/semretry/fallback mantidas. R7ZeroProof9campos316bytes/SHA687712aa5ab15072afc65aceacdff52ce5d94c6ba9f2ceccf6867e4636bd1c4e obrigatórioanteslogin/arm, writerappendonlyrecovery-r7json=>12membros,semrecibosfalsos. SemnovoAuth/SQL/secrets/PROD.
+
+Últimaetapacomprovada:462integrado+R7terminalpresecrets+PLAN466integrado. Próxima:CI/revisão/integraçãoGATE, RED6paths→BUILD/GREEN/revisão/merge, sóentãorequestR8JSONúnico/mainfreezedoriginalattempt1. AUDIT_BINDING_PENDING;leitorR8sóretargetestáticoapósterminalrealcomartifactePRdistinto. ReaderR7nãoexecutarporartefatoinexistente. 184originais/24fixtures/208privados/232/72/V1NÃOencerrados.18públicos/Run124/C13preservadosnasorigens. Conteúdoanteriorintegralabaixopreservadocomo histórico.
+
+---
+
 # Checkpoint P0 R7, 09/11/2026: GATE documental, BUILD pendente
 
 PLAN460 integrado 572e81c72158435c5408b0e3a4db5f5a6aca8bdd, HEAD3df1eddec83d98fed1777b49644670418b89a51c, CI42597082461/42597082407SUCCESS, review5824224111zeroC/I. Backend corrente0e85578323ae272ba79915f9b872386d437cbc83 reancorado em snapshot/ack,25fontes/cat10097/types8ea iguais; C13 e histórico preservados.
