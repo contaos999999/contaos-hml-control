@@ -1182,3 +1182,11 @@ test("R10 preserves original R9 report receipts and observation inside the pinne
   current.diagnostics.primaryFailure = "RECOVERY_R9_LEDGER";
   assert.equal(validateRecords(current, empty()).report.failure, "RECOVERY_R9_LEDGER");
 });
+
+test("R11 terminal target requires the two R10 originals appended after all sixteen existing data files", () => {
+  assert.equal(FILES.length, 18, "R11_MANIFEST_APPEND_ABSENT");
+  assert.equal(Object.keys(HISTORY).length, 15);
+  assert.deepEqual(FILES.slice(-4), ["receipts-r9.json", "recovery-r9.json", "receipts-r10.json", "recovery-r10.json"]);
+  assert.equal(PIN.run, 42650825191);
+  assert.equal(PIN.artifact, 13690462160);
+});
