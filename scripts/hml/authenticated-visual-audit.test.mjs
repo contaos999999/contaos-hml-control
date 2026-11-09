@@ -5844,6 +5844,42 @@ test("solicitacao unica: identidade descoberta continua obrigatoria antes do che
   });
 });
 
+test("diagnóstico legado não compartilha alias mutável do erro com o relatório", async () => {
+  const canary = "CANARY_PRIVATE_NEVER_EXPORT";
+  let captured;
+  await assert.rejects(
+    () =>
+      fn("captureVisualEvidence")({
+        brand: async () => ({}),
+        drain: async () => {},
+        stabilize: async () => {},
+        measure: async () => ({
+          passed: false,
+          identityPassed: true,
+          geometryPassed: false,
+          tablePassed: true,
+          datesPassed: true,
+          contrastPassed: true,
+          targets: [],
+          overflowX: 0,
+        }),
+        privacy: async () => true,
+        save: async () => assert.fail("falha não pode salvar imagem"),
+      }),
+    (error) => {
+      captured = error;
+      return error.code === "VISUAL_MEASUREMENT";
+    },
+  );
+  captured.visualDiagnostic.secret = canary;
+  captured.visualDiagnostic.identity = false;
+  const record = {};
+  fn("recordCaseFailure")(record, captured, "CAPTURE_PRIMARY");
+  assert.equal(JSON.stringify(record).includes(canary), false);
+  assert.equal(record.visualDiagnostic.identity, true);
+  assert.equal(record.status, "FAIL_UI");
+});
+
 test("Run114 medição falha preserva diagnóstico fechado sem screenshot ou texto privado", async () => {
   let saved = false;
   const metrics = {
