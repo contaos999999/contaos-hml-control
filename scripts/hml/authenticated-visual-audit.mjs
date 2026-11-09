@@ -6846,6 +6846,8 @@ export const SINGLE_REQUEST = Object.freeze({
   asynchronousOpinionGateSha: "c9dc5e062885793d3ad69430b822c14f3c6f2dc8",
   uiSecurityRecoveryGateSha: "83792d243982bda854d81d518dc41dbc5e54b90d",
   listReadinessSecuritySha: "8d43ae8f94b39d81b8125d087a1c9a968e2d8ad7",
+  metadataTimeoutGateSha: "326a960cec756d08681b00da99a5332f0a3c6fac",
+  metadataTimeoutPlanSha: "1282198bfc72ac4a119856139e6b95d9e14177dc",
   r13RecoveryGateSha: "d29b9dacc14da0921584e7fc9d47ad8e39e2f88e",
   listReadinessBuildSha: "c5a96ad40c7e4bec08738b5a7cfceaf3ddd0b399",
   r14PlanSha: "396857e5684e2dd00b697718d46b5710eefc72fc",
@@ -6869,13 +6871,14 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-a-fixtures-20261109-r11",
     "trilha-a-fixtures-20261109-r12",
     "trilha-a-fixtures-20261109-r13",
+    "trilha-a-fixtures-20261109-r14",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261109-r14",
+    nonce: "trilha-a-fixtures-20261109-r15",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -7119,6 +7122,8 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.asynchronousOpinionGateSha,
       SINGLE_REQUEST.canonicalProfileGateSha,
       SINGLE_REQUEST.r13RecoveryGateSha,
+      SINGLE_REQUEST.metadataTimeoutGateSha,
+      SINGLE_REQUEST.metadataTimeoutPlanSha,
       SINGLE_REQUEST.uiSecurityRecoveryGateSha,
       SINGLE_REQUEST.listReadinessSecuritySha,
       SINGLE_REQUEST.listReadinessBuildSha,
@@ -8622,6 +8627,607 @@ export async function verifyR12ZeroAuth({ get, git, parentSha } = {}) {
   }
 }
 
+export const R14_ZERO_AUTH_PROOF = Object.freeze({
+  schema: "contaos.single-request.r14-zero-auth.v1",
+  headSha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+  upstreamRun: 42694401246,
+  fixturesRun: 42694609672,
+  auditRun: 42694609740,
+  privateJob: 129423314958,
+  attempt: 1,
+  derivedNewBusinessIntents: 0,
+  proof: "GITHUB_ACTIONS_LIVE_METADATA",
+});
+let validatedR14ZeroAuth = null;
+export function validateR14ZeroAuthProof(value) {
+  if (isProxy(value) || !value || typeof value !== "object" || Array.isArray(value))
+    fail("RECOVERY_R14_PROOF");
+  const prototype = Object.getPrototypeOf(value);
+  if (isProxy(prototype) || (prototype !== Object.prototype && prototype !== null))
+    fail("RECOVERY_R14_PROOF");
+  const descriptors = Object.getOwnPropertyDescriptors(value),
+    names = Object.keys(R14_ZERO_AUTH_PROOF),
+    keys = Reflect.ownKeys(descriptors);
+  if (keys.length !== names.length || keys.some((key, i) => key !== names[i]))
+    fail("RECOVERY_R14_PROOF");
+  const clean = {};
+  for (const key of names) {
+    const d = descriptors[key];
+    if (
+      !d ||
+      !Object.hasOwn(d, "value") ||
+      d.enumerable !== true ||
+      d.value !== R14_ZERO_AUTH_PROOF[key]
+    )
+      fail("RECOVERY_R14_PROOF");
+    clean[key] = d.value;
+  }
+  return Object.freeze(clean);
+}
+export function getValidatedR14ZeroAuth() {
+  return validateR14ZeroAuthProof(validatedR14ZeroAuth);
+}
+export async function verifyR14ZeroAuth({ get, git, parentSha } = {}) {
+  try {
+    if (typeof get !== "function" || typeof git !== "function" || !hash40(parentSha))
+      fail("RECOVERY_R14_PROOF");
+    const head = R14_ZERO_AUTH_PROOF.headSha,
+      repo = SINGLE_REQUEST.repository,
+      specs = [
+        {
+          id: 42694401246,
+          workflow: 406076025,
+          path: ".github/workflows/contaos-frontend-zero-drift.yml",
+          name: "ContaOS Frontend Zero-Drift",
+          event: "push",
+          conclusion: "success",
+          jobs: [
+            {
+              id: 129422257245,
+              name: "ContaOS Frontend Zero-Drift",
+              conclusion: "success",
+              steps: [
+                {
+                  number: 1,
+                  name: "Set up job",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 2,
+                  name: "Checkout immutable commit",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 3,
+                  name: "P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 4,
+                  name: "P0 V1 — autotestes do inventario e dispensas",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 5,
+                  name: "P0 V1 — integridade dos 416 critérios, 45 prompts e 37 atomicos",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 6,
+                  name: "P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 7,
+                  name: "Autoteste do guard (casos permitidos e proibidos)",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 8,
+                  name: "Verificar contrato de seguranca do Auto-Lock por PR",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 9,
+                  name: "Verificar fronteira frontend/backend e PLAN validado prévio",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 10,
+                  name: "Autotestes do snapshot canônico e matriz de telas",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 11,
+                  name: "Verificar HEAD vivo do repositório normativo antes de BUILD",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 12,
+                  name: "GOV-003 — exigir token valido e fonte viva antes do merge",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 13,
+                  name: "Run actions/setup-node@v4",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 14,
+                  name: "Setup Bun",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 15,
+                  name: "Install frozen dependencies",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 16,
+                  name: "GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 17,
+                  name: "Lint e formatacao do saneamento transversal",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 18,
+                  name: "Production build — geração canônica TanStack antes dos testes longos",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 19,
+                  name: "GOV-020 — bloquear divergência entre routeTree gerado e commit",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 20,
+                  name: "Full regression — Vitest 2 workers",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 21,
+                  name: "TypeScript typecheck",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 22,
+                  name: "Brand-01, PT-BR, secrets and types integrity",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 43,
+                  name: "Post Run actions/setup-node@v4",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 44,
+                  name: "Post Checkout immutable commit",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 45,
+                  name: "Complete job",
+                  status: "completed",
+                  conclusion: "success",
+                },
+              ],
+            },
+            {
+              id: 129422258076,
+              name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+              conclusion: "success",
+              steps: [
+                {
+                  number: 1,
+                  name: "Set up job",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 2,
+                  name: "Checkout SHA imutavel, apenas leitura",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 3,
+                  name: "Detectar escopo de auditoria visual",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 4,
+                  name: "Setup Bun",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 5,
+                  name: "Instalar dependencias congeladas",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 6,
+                  name: "Cache do Chromium Playwright 1.64.1",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 7,
+                  name: "Instalar Playwright isolado, sem atualizar package/lock",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 8,
+                  name: "Executar servidor de desenvolvimento isolado do mesmo SHA",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 9,
+                  name: "GOV-020 — verificar routeTree após Vite dev e antes do Playwright",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 10,
+                  name: "Teste C Playwright — 24 telas, 4 larguras, 2 temas",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 11,
+                  name: "Evidencia permanente de screenshots e SHA256SUMS",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 12,
+                  name: "Confirmar que nenhuma fonte versionada foi editada",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 24,
+                  name: "Post Checkout SHA imutavel, apenas leitura",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 25,
+                  name: "Complete job",
+                  status: "completed",
+                  conclusion: "success",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: 42694609672,
+          workflow: 411426169,
+          path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+          name: "ContaOS Trilha A Fixtures",
+          event: "workflow_run",
+          conclusion: "failure",
+          jobs: [
+            {
+              id: 129422980268,
+              name: "Trilha A solicitacao unica sem credenciais",
+              conclusion: "failure",
+              steps: [
+                {
+                  number: 1,
+                  name: "Set up job",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 2,
+                  name: "Bootstrap publico confiavel antes de checkout ou token",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 3,
+                  name: "Run actions/checkout@v4",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 4,
+                  name: "Run actions/setup-node@v4",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 5,
+                  name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 6,
+                  name: "Run bun install --frozen-lockfile",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 7,
+                  name: "Provar evento e unicidade somente em metadados Actions",
+                  status: "completed",
+                  conclusion: "failure",
+                },
+                {
+                  number: 13,
+                  name: "Post Run actions/setup-node@v4",
+                  status: "completed",
+                  conclusion: "skipped",
+                },
+                {
+                  number: 14,
+                  name: "Post Run actions/checkout@v4",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 15,
+                  name: "Complete job",
+                  status: "completed",
+                  conclusion: "success",
+                },
+              ],
+            },
+            {
+              id: 129422982805,
+              name: "Trilha A protocolo e Chromium sem credenciais",
+              conclusion: "skipped",
+              steps: [],
+            },
+            {
+              id: 129423314958,
+              name: "Trilha A preparacao sintetica HML",
+              conclusion: "skipped",
+              steps: [],
+            },
+          ],
+        },
+        {
+          id: 42694609740,
+          workflow: 411115674,
+          path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+          name: "ContaOS Trilha A Autenticada",
+          event: "workflow_run",
+          conclusion: "success",
+          jobs: [
+            {
+              id: 129422980473,
+              name: "Trilha A solicitacao unica sem credenciais",
+              conclusion: "success",
+              steps: [
+                {
+                  number: 1,
+                  name: "Set up job",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 2,
+                  name: "Bootstrap publico confiavel antes de checkout ou token",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 3,
+                  name: "Run actions/checkout@v4",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 4,
+                  name: "Run actions/setup-node@v4",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 5,
+                  name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 6,
+                  name: "Run bun install --frozen-lockfile",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 7,
+                  name: "Provar evento e unicidade somente em metadados Actions",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 13,
+                  name: "Post Run actions/setup-node@v4",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 14,
+                  name: "Post Run actions/checkout@v4",
+                  status: "completed",
+                  conclusion: "success",
+                },
+                {
+                  number: 15,
+                  name: "Complete job",
+                  status: "completed",
+                  conclusion: "success",
+                },
+              ],
+            },
+            {
+              id: 129422983606,
+              name: "Trilha A protocolo e Chromium sem credenciais",
+              conclusion: "skipped",
+              steps: [],
+            },
+            {
+              id: 129423257559,
+              name: "Trilha A auditoria privada HML",
+              conclusion: "skipped",
+              steps: [],
+            },
+          ],
+        },
+      ];
+    await git(["merge-base", "--is-ancestor", head, parentSha]);
+    const sources = [
+      [
+        ".github/workflows/contaos-trilha-a-fixtures.yml",
+        "9af69f3ae0797cd4f0e9713950e473bc1b4a8f17",
+      ],
+      [
+        ".github/workflows/contaos-trilha-a-authenticated.yml",
+        "848acf35a51bb5b420d5cf9047972da4a75a98eb",
+      ],
+      ["scripts/hml/authenticated-visual-audit.mjs", "cbfb86149e89fb48a39d6c6b769167720b4004d0"],
+      ["scripts/hml/prepare-visual-fixtures.mjs", "79a7384eba8acd22a460c4bde11acb14100d2e07"],
+    ];
+    for (const [path, sha] of sources) {
+      const raw = await git(["show", head + ":" + path]);
+      if (
+        typeof raw !== "string" ||
+        Buffer.byteLength(raw) > 1048576 ||
+        createHash("sha1")
+          .update("blob " + Buffer.byteLength(raw) + "\0")
+          .update(raw)
+          .digest("hex") !== sha
+      )
+        fail("RECOVERY_R14_PROOF");
+    }
+    const validTime = (value) => typeof value === "string" && Number.isFinite(Date.parse(value));
+    const checkRun = (row, spec) => {
+      if (
+        !row ||
+        row.id !== spec.id ||
+        row.workflow_id !== spec.workflow ||
+        row.path !== spec.path ||
+        row.name !== spec.name ||
+        row.head_sha !== head ||
+        row.head_branch !== "main" ||
+        row.event !== spec.event ||
+        row.run_attempt !== 1 ||
+        row.status !== "completed" ||
+        row.conclusion !== spec.conclusion ||
+        row.repository?.full_name !== repo ||
+        row.repository?.id !== 1442722734 ||
+        row.repository?.private !== false ||
+        row.repository?.owner?.id !== 352205055 ||
+        row.repository?.owner?.login !== "contaos999999" ||
+        row.head_repository?.full_name !== repo ||
+        row.head_repository?.id !== 1442722734 ||
+        row.head_repository?.private !== false ||
+        row.head_repository?.owner?.id !== 352205055 ||
+        row.head_repository?.owner?.login !== "contaos999999" ||
+        !validTime(row.created_at) ||
+        !validTime(row.updated_at) ||
+        Date.parse(row.updated_at) < Date.parse(row.created_at)
+      )
+        fail("RECOVERY_R14_PROOF");
+    };
+    await Promise.all(
+      specs.map(async (spec) => {
+        const [run, attempt, jobs] = await Promise.all([
+          get("/actions/runs/" + spec.id),
+          get("/actions/runs/" + spec.id + "/attempts/1"),
+          get("/actions/runs/" + spec.id + "/attempts/1/jobs?per_page=100&page=1"),
+        ]);
+        checkRun(run, spec);
+        checkRun(attempt, spec);
+        if (
+          jobs?.total_count !== spec.jobs.length ||
+          !Array.isArray(jobs.jobs) ||
+          jobs.jobs.length !== spec.jobs.length ||
+          new Set(jobs.jobs.map((j) => j.id)).size !== spec.jobs.length
+        )
+          fail("RECOVERY_R14_PROOF");
+        for (const expected of spec.jobs) {
+          const rows = jobs.jobs.filter((j) => j.id === expected.id && j.name === expected.name);
+          if (rows.length !== 1) fail("RECOVERY_R14_PROOF");
+          const job = rows[0];
+          if (
+            job.run_id !== spec.id ||
+            job.run_attempt !== 1 ||
+            job.head_sha !== head ||
+            job.head_branch !== "main" ||
+            job.status !== "completed" ||
+            job.conclusion !== expected.conclusion ||
+            !Array.isArray(job.steps) ||
+            job.steps.length !== expected.steps.length ||
+            new Set(job.steps.map((s) => s.number)).size !== expected.steps.length
+          )
+            fail("RECOVERY_R14_PROOF");
+          for (const step of expected.steps) {
+            const matching = job.steps.filter((s) => s.number === step.number);
+            if (
+              matching.length !== 1 ||
+              ["name", "status", "conclusion"].some((key) => matching[0][key] !== step[key]) ||
+              !validTime(matching[0].started_at) ||
+              !validTime(matching[0].completed_at) ||
+              Date.parse(matching[0].completed_at) < Date.parse(matching[0].started_at)
+            )
+              fail("RECOVERY_R14_PROOF");
+          }
+        }
+        return run;
+      }),
+    );
+    const artifacts = await get(
+      "/actions/runs/" + R14_ZERO_AUTH_PROOF.fixturesRun + "/artifacts?per_page=100&page=1",
+    );
+    if (
+      artifacts?.total_count !== 0 ||
+      !Array.isArray(artifacts.artifacts) ||
+      artifacts.artifacts.length !== 0
+    )
+      fail("RECOVERY_R14_PROOF");
+    return validateR14ZeroAuthProof(R14_ZERO_AUTH_PROOF);
+  } catch (error) {
+    failRequestProof("RECOVERY_R14_PROOF", error);
+  }
+}
+
 export const R4_ZERO_AUTH_PROOF = Object.freeze({
   schema: "contaos.fixture.recovery-r4.v1",
   headSha: "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",
@@ -8981,8 +9587,6 @@ export function singleRequestGet({
   if (!publicOnly && token !== environmentToken) fail("REQUEST_API_TOKEN");
   const deadline = now() + 60000;
   return async (path) => {
-    const currentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
-    if (!publicOnly && token !== currentToken) fail("REQUEST_API_TOKEN");
     if (
       path !== "" &&
       !/^\/(?:actions\/|git\/ref\/heads\/main$|commits\/[a-f0-9]{40}\/pulls\?|pulls\/\d+(?:\/reviews\?|$))/.test(
@@ -8990,59 +9594,74 @@ export function singleRequestGet({
       )
     )
       fail("REQUEST_API_PATH");
-    const remaining = deadline - now();
-    if (remaining <= 0) fail("REQUEST_API_TIMEOUT");
-    const headers = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
-    if (!publicOnly) {
-      if (typeof token !== "string" || !token) fail("REQUEST_API_TOKEN");
-      headers.Authorization = "Bearer " + token;
-    }
-    let response;
     const endpointKind = requestEndpointKind(path);
-    let lastTransportCategory = "TRANSPORT";
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const budget = deadline - now();
-      if (budget <= 0) break;
-      const signal = AbortSignal.timeout(Math.min(12000, budget));
-      try {
-        response = await fetchImpl(
-          "https://api.github.com/repos/" + SINGLE_REQUEST.repository + path,
-          { headers, redirect: "error", signal },
-        );
-        break;
-      } catch {
-        lastTransportCategory = signal.aborted ? "TIMEOUT" : "TRANSPORT";
+    const url = "https://api.github.com/repos/" + SINGLE_REQUEST.repository + path;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const currentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
+      if (!publicOnly && token !== currentToken) fail("REQUEST_API_TOKEN");
+      const remaining = deadline - now();
+      if (remaining <= 0) fail("REQUEST_API_TIMEOUT");
+      const headers = {
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      };
+      if (!publicOnly) {
+        if (typeof token !== "string" || !token) fail("REQUEST_API_TOKEN");
+        headers.Authorization = "Bearer " + token;
       }
+      const signal = AbortSignal.timeout(Math.min(5000, remaining));
+      let response;
+      try {
+        response = await fetchImpl(url, { headers, redirect: "error", signal });
+        if (signal.aborted) throw new Error("REQUEST_API_TIMEOUT");
+      } catch {
+        if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+        if (signal.aborted && attempt === 0) continue;
+        failRequestApi(
+          "REQUEST_API_UNAVAILABLE",
+          endpointKind,
+          "NONE",
+          signal.aborted ? "TIMEOUT" : "TRANSPORT",
+          diagnostic,
+        );
+      }
+      if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+      if (response.status !== 200)
+        failRequestApi(
+          "REQUEST_API_UNAVAILABLE",
+          endpointKind,
+          response.status,
+          "HTTP",
+          diagnostic,
+        );
+      let body;
+      try {
+        body = await response.text();
+        if (signal.aborted) throw new Error("REQUEST_API_TIMEOUT");
+      } catch {
+        if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+        if (signal.aborted && attempt === 0) continue;
+        failRequestApi(
+          "REQUEST_API_UNAVAILABLE",
+          endpointKind,
+          200,
+          signal.aborted ? "TIMEOUT" : "TRANSPORT",
+          diagnostic,
+        );
+      }
+      if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+      if (typeof body !== "string") fail("REQUEST_API_SCHEMA");
+      if (Buffer.byteLength(body) > 4194304) fail("REQUEST_API_LIMIT");
+      let parsed;
+      try {
+        parsed = JSON.parse(body);
+      } catch {
+        fail("REQUEST_API_SCHEMA");
+      }
+      if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+      return parsed;
     }
-    if (!response)
-      failRequestApi(
-        "REQUEST_API_UNAVAILABLE",
-        endpointKind,
-        "NONE",
-        lastTransportCategory,
-        diagnostic,
-      );
-    if (response.status !== 200)
-      failRequestApi("REQUEST_API_UNAVAILABLE", endpointKind, response.status, "HTTP", diagnostic);
-    let text;
-    try {
-      text = await response.text();
-    } catch {
-      failRequestApi(
-        "REQUEST_API_UNAVAILABLE",
-        endpointKind,
-        200,
-        signal.aborted ? "TIMEOUT" : "TRANSPORT",
-        diagnostic,
-      );
-    }
-    if (typeof text !== "string") fail("REQUEST_API_SCHEMA");
-    if (Buffer.byteLength(text) > 4194304) fail("REQUEST_API_LIMIT");
-    try {
-      return JSON.parse(text);
-    } catch {
-      fail("REQUEST_API_SCHEMA");
-    }
+    fail("REQUEST_API_TIMEOUT");
   };
 }
 export async function verifySingleRequest({
@@ -9057,8 +9676,10 @@ export async function verifySingleRequest({
   wait = (ms) => new Promise((r) => setTimeout(r, ms)),
 }) {
   singleRequestContext = null;
+  validatedR4ZeroAuth = null;
   validatedR7ZeroAuth = null;
   validatedR12ZeroAuth = null;
+  validatedR14ZeroAuth = null;
   const metadataToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
     if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
@@ -9107,6 +9728,10 @@ export async function verifySingleRequest({
   const r12ZeroAuth =
     operation === "fixtures"
       ? await verifyR12ZeroAuth({ get, git, parentSha: request.approved_parent_sha })
+      : null;
+  const r14ZeroAuth =
+    operation === "fixtures"
+      ? await verifyR14ZeroAuth({ get, git, parentSha: request.approved_parent_sha })
       : null;
   const repo = await get("");
   if (repo.full_name !== SINGLE_REQUEST.repository || repo.private !== false)
@@ -9226,6 +9851,7 @@ export async function verifySingleRequest({
     ...(r4ZeroAuth ? { r4ZeroAuth } : {}),
     ...(r7ZeroAuth ? { r7ZeroAuth } : {}),
     ...(r12ZeroAuth ? { r12ZeroAuth } : {}),
+    ...(r14ZeroAuth ? { r14ZeroAuth } : {}),
   };
 }
 async function singleRequestCli(mode) {
@@ -9371,6 +9997,7 @@ export async function loadSingleRequestProof({
   validatedR4ZeroAuth = null;
   validatedR7ZeroAuth = null;
   validatedR12ZeroAuth = null;
+  validatedR14ZeroAuth = null;
   requestEnvironmentChain(env);
   if (operation === "fixtures") validateR13RecoveryDocument(R13_RECOVERY_DOCUMENT);
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
@@ -9472,12 +10099,18 @@ export async function loadSingleRequestProof({
     operation,
     mainSha: proof.sha,
   });
+  let restoredR4 = null;
   if (operation === "fixtures") {
     validateR4ZeroAuthProof(proof.r4ZeroAuth);
-    validatedR4ZeroAuth = Object.freeze({ ...proof.r4ZeroAuth });
+    restoredR4 = Object.freeze({ ...proof.r4ZeroAuth });
   }
-  validatedR7ZeroAuth = validateR7ZeroAuthProof(proof.r7ZeroAuth);
-  if (operation === "fixtures") validatedR12ZeroAuth = validateR12ZeroAuthProof(proof.r12ZeroAuth);
+  const restoredR7 = validateR7ZeroAuthProof(proof.r7ZeroAuth);
+  const restoredR12 = operation === "fixtures" ? validateR12ZeroAuthProof(proof.r12ZeroAuth) : null;
+  const restoredR14 = operation === "fixtures" ? validateR14ZeroAuthProof(proof.r14ZeroAuth) : null;
+  if (restoredR4) validatedR4ZeroAuth = restoredR4;
+  validatedR7ZeroAuth = restoredR7;
+  if (restoredR12) validatedR12ZeroAuth = restoredR12;
+  if (restoredR14) validatedR14ZeroAuth = restoredR14;
   singleRequestContext = { operation, sha: proof.sha, runId: env.GITHUB_RUN_ID };
   return true;
 }
