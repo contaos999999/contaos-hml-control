@@ -12134,7 +12134,7 @@ function r13IgnoredBuildCommand(approvedSha) {
   return (
     'if [ "$VERCEL_ENV" = "production" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "' +
     approvedSha +
-    '" ]; then exit 1; else exit 0; fi'
+    '" ]; then echo CONTAOS_HML_PINNED_BUILD_ALLOW_EXIT_1; exit 1; else exit 0; fi'
   );
 }
 async function r13PosixExit(command, variables) {
@@ -12154,11 +12154,15 @@ async function r13PosixExit(command, variables) {
       ["-c", command],
       { env, timeout: 3000, maxBuffer: 4096 },
       (error, stdout, stderr) => {
-        if (stdout !== "" || stderr !== "" || (error && error.code !== 1)) {
+        if (
+          !["", "CONTAOS_HML_PINNED_BUILD_ALLOW_EXIT_1\n"].includes(stdout) ||
+          stderr !== "" ||
+          (error && error.code !== 1)
+        ) {
           reject(Error("R13_POSIX_EXECUTION"));
           return;
         }
-        resolve(error ? 1 : 0);
+        resolve({ exit: error ? 1 : 0, stdout });
       },
     ),
   );
@@ -12168,7 +12172,7 @@ test("R13 POSIX ignored-build template admits only the approved production SHA",
     command = r13IgnoredBuildCommand(approved);
   assert.equal(
     command,
-    'if [ "$VERCEL_ENV" = "production" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "631090724d6b85483737c60a44d322f268fc1c8c" ]; then exit 1; else exit 0; fi',
+    'if [ "$VERCEL_ENV" = "production" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "631090724d6b85483737c60a44d322f268fc1c8c" ]; then echo CONTAOS_HML_PINNED_BUILD_ALLOW_EXIT_1; exit 1; else exit 0; fi',
   );
   for (const bad of [
     undefined,
@@ -12199,18 +12203,21 @@ test("R13 POSIX ignored-build template admits only the approved production SHA",
     [{ VERCEL_ENV: "production", VERCEL_GIT_COMMIT_SHA: approved + '"; exit 1; #' }, 0],
     [{ VERCEL_ENV: "production", VERCEL_GIT_COMMIT_SHA: "$(exit 1)" }, 0],
   ])
-    assert.equal(await r13PosixExit(command, env), expected);
+    assert.deepEqual(await r13PosixExit(command, env), {
+      exit: expected,
+      stdout: expected === 1 ? "CONTAOS_HML_PINNED_BUILD_ALLOW_EXIT_1\n" : "",
+    });
   const observedOld =
     'if [ "$VERCEL_ENV" = "preview" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "348649f6a0af5d468ad2ac401b2fd96afa125cc1" ]; then exit 1; else exit 0; fi';
-  assert.equal(
+  assert.deepEqual(
     await r13PosixExit(observedOld, {
       VERCEL_ENV: "preview",
       VERCEL_GIT_COMMIT_SHA: "348649f6a0af5d468ad2ac401b2fd96afa125cc1",
     }),
-    1,
+    { exit: 1, stdout: "" },
   );
-  assert.equal(
+  assert.deepEqual(
     await r13PosixExit(observedOld, { VERCEL_ENV: "production", VERCEL_GIT_COMMIT_SHA: approved }),
-    0,
+    { exit: 0, stdout: "" },
   );
 });
