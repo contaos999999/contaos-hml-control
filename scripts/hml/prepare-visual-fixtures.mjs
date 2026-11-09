@@ -4093,7 +4093,14 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
             : RPC_RESPONSE_FIELDS[rpc] ||
               (BUSINESS_RPCS.includes(rpc) ? BUSINESS_RESPONSE_FIELDS : null);
           if (!fields) err("OBSERVATION_ENDPOINT");
-          const decoded = JSON.parse(bytes.toString("utf8"));
+          // This RPC returns SQL void. Its empty HTTP acknowledgement is not
+          // business confirmation: the contextual, causal readback still applies.
+          if (status === 204 && (rpc !== "aprovar_parecer_interno" || bytes.length !== 0))
+            err("OBSERVATION_RESPONSE");
+          const decoded =
+            rpc === "aprovar_parecer_interno" && status === 204 && bytes.length === 0
+              ? null
+              : JSON.parse(bytes.toString("utf8"));
           value = Object.hasOwn(SCOPED_RPC_FIELDS, rpc)
             ? projectScopedRpcResponse(rpc, decoded)
             : projectOfficialResponse(decoded, 0, false, new Set(fields.split(" ")));
