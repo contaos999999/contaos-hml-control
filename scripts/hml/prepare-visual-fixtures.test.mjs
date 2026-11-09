@@ -10828,3 +10828,306 @@ test("R16 original uncertain UUID remains consumed even for an unrelated allowed
     f.observer.close();
   }
 });
+
+const R17_R16_DOCUMENT = Object.freeze({
+  schema: "contaos.fixture.recovery-r16.v1",
+  workflowRun: "42713640896",
+  artifactId: "13717457216",
+  requestId: "trilha-a-fixtures-20261109-r16",
+  harnessSha: "10cac45b655d5eece9881fdf83545887c371d548",
+  zipSha256: "39eb9b34bd2c3b58df9b28cb666e0911538b24763eeb744f75fd5675a91a7305",
+  reportSha256: "f93d7b7a5dd9ffc7a65a13a52b399be61830113528af1bc081ed5a83f37938b2",
+  receiptsSha256: "3700fce7ae66a58fa7f3c9d1a30d11f10eda794d41c0a1ff2e4302ca9645e4b6",
+  observationSha256: "3a270be6970c5e46168c33d53b2ea245ab722cd954713e1f9dd9d312c796fcb8",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "COMPETENCE_PRESENTATION_GATE",\n  "diagnostics": {\n    "primaryFailure": "COMPETENCE_PRESENTATION_GATE",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "COMPETENCY_UI",\n    "subphasePath": [\n      "COMPETENCIES",\n      "COMPETENCY_UI"\n    ],\n    "lastCompletedSubphase": "COMPETENCY_RECONCILE",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 16,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 10,\n    "priorReserved": 2,\n    "newArmedCount": 4,\n    "maxIntentions": 24,\n    "maxNewIntentions": 12\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 12,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "partial",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "executionId": "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n        "opinionId": "9ec80151-bbf6-4469-9cd8-7d96d1bb02cd",\n        "code": "COMPETENCE_PRESENTATION_GATE"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "id": "79bdc139-ed10-4c91-905e-b32b9a824d27",\n        "requirementId": "c824a6f9-e519-44cc-8911-87d1009e2eaf",\n        "documentId": "cd1624d3-73f7-4ea1-b317-c52627df6824",\n        "executionId": "00da4236-810f-4a89-8be5-b2ffcd50a480",\n        "opinionId": "7bbbe81e-e34c-44dc-a76f-ed85fd56d87f",\n        "code": "COMPETENCE_PRESENTATION_GATE"\n      }\n    ]\n  },\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42713640896",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n    "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n    "9ec80151-bbf6-4469-9cd8-7d96d1bb02cd",\n    "79bdc139-ed10-4c91-905e-b32b9a824d27",\n    "c824a6f9-e519-44cc-8911-87d1009e2eaf",\n    "cd1624d3-73f7-4ea1-b317-c52627df6824",\n    "00da4236-810f-4a89-8be5-b2ffcd50a480",\n    "7bbbe81e-e34c-44dc-a76f-ed85fd56d87f"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_documento_competencia_v115",\n      "requestId": "d69325a4-78c8-4bf3-8831-cbef2fb38d95",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "bc014b4bd5693718652f9bbf7a6fadb520b290bfcf1ebd74de89e34f4b2d6f7d"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_documento_competencia_v115",\n      "requestId": "d69325a4-78c8-4bf3-8831-cbef2fb38d95",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "bc014b4bd5693718652f9bbf7a6fadb520b290bfcf1ebd74de89e34f4b2d6f7d"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_analise_competencia",\n      "requestId": "368de7ea-0056-451a-b0da-30ee0e10ee62",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "0b6cb627d1480ae9c05ecc5cc0012b2ee3f9acd69ff35ae6b6f0650aa31a0765"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_analise_competencia",\n      "requestId": "368de7ea-0056-451a-b0da-30ee0e10ee62",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "0b6cb627d1480ae9c05ecc5cc0012b2ee3f9acd69ff35ae6b6f0650aa31a0765"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_parecer_interno",\n      "requestId": "57cde7b2-3ae8-4642-81fe-d45f4971a524",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "4dd745f43f7171efcea9b9ca3b4d291c3a6a43d6ce8946f37e4de8d03ba9df0f"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_parecer_interno",\n      "requestId": "57cde7b2-3ae8-4642-81fe-d45f4971a524",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "4dd745f43f7171efcea9b9ca3b4d291c3a6a43d6ce8946f37e4de8d03ba9df0f"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_parecer_interno",\n      "requestId": "fb2af693-ede5-4d1a-99d3-408a2f7cb79e",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "0d4db222d459ac1a6956c650b19179dab57fcbd0dca043f42aee646077cfe395"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_parecer_interno",\n      "requestId": "fb2af693-ede5-4d1a-99d3-408a2f7cb79e",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "0d4db222d459ac1a6956c650b19179dab57fcbd0dca043f42aee646077cfe395"\n    }\n  ]\n}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42713640896",\n  "firstFailure": null\n}\n',
+});
+
+async function r17OverviewParser() {
+  const { readFile } = await import("node:fs/promises");
+  const ts = (await import("typescript")).default;
+  const code = await readFile(
+    new URL("../../src/lib/competencias/competenciaVisaoGeralDados.ts", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("overview.ts", code, 99, true, ts.ScriptKind.TS);
+  const names = new Set(["ehObj", "str", "strN", "num", "numN", "bool", "todos"]);
+  const chosen = ast.statements.filter((node) =>
+    (ts.isVariableStatement(node) &&
+      node.declarationList.declarations.some((d) => names.has(d.name.getText(ast)))) ||
+    (ts.isFunctionDeclaration(node) && node.name?.text === "parseVisaoGeral"),
+  );
+  const source = chosen.map((node) => node.getText(ast).replace(/^export\s+/, "")).join("\n");
+  const js = ts.transpileModule(source, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+  }).outputText;
+  return new Function(js + "\nreturn parseVisaoGeral;")();
+}
+function r17View(snapshot = 0) {
+  return {
+    competencia: {
+      id: "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",
+      id_contrato: FIXTURE.contract,
+      id_organizacao: FIXTURE.organization,
+      competencia_referencia: "2026-10-01",
+      periodo_inicio: "2026-10-01",
+      periodo_fim: null,
+      data_limite: null,
+      atualizado_em: null,
+      situacao: "preparando",
+      percentual_conformidade: snapshot,
+      versao_pacote_atual: null,
+      versao_registro: 1,
+    },
+    portao: {
+      liberado: true,
+      total: 1,
+      conformes_ou_na_validos: 1,
+      pendentes: 0,
+      nao_conformes: 0,
+      inconclusivos: 0,
+      em_analise: 0,
+      nao_conformidades_bloqueantes: 0,
+      percentual: 100,
+    },
+    blocking_summary: {
+      pendentes: 0,
+      nao_conformes: 0,
+      inconclusivos: 0,
+      em_analise: 0,
+      nao_conformidades_bloqueantes: 0,
+      parecer_aprovado: true,
+      analise_concluida_atual: true,
+      aprovacao_apresentacao_atual: false,
+    },
+    allowed_actions: {
+      abrir_documentos: true,
+      analisar: true,
+      abrir_parecer: true,
+      apresentar: true,
+    },
+  };
+}
+async function r17PresentBoundary(view, register = false) {
+  const source = await r6SourceNodes();
+  const sentinel = new Error("R17_APPROVAL_COMMAND_BOUNDARY");
+  let commands = 0;
+  const c = {
+    id: view.competencia.id,
+    month: "2026-10-01",
+    evidence: {},
+  };
+  const io = {
+    fresh: async () => {},
+    generation: () => 10,
+    page: {
+      getByLabel: () => ({ fill: async () => {} }),
+      getByRole: () => ({}),
+    },
+    command: async (intent) => {
+      commands++;
+      assert.equal(intent.rpc, "aprovar_apresentacao");
+      assert.equal(intent.payload.p_id_competencia, c.id);
+      throw sentinel;
+    },
+  };
+  const env = {
+    overview: async () => structuredClone(view),
+    tracedPreparation: async (_, fn) => fn(),
+    stop: (code) => { throw new Error(code); },
+    link: async () => {},
+    click: async () => {},
+    observed: async () => true,
+    io,
+    FIXTURE,
+  };
+  const present = new Function(
+    ...Object.keys(env),
+    "return (" + source.named("present").getText(source.ast) + ");",
+  )(...Object.values(env));
+  let error = null;
+  try {
+    await present(c, register);
+  } catch (value) {
+    error = value;
+  }
+  return { error, sentinel, commands, c };
+}
+test("R17 original R16 recovery document has the exact Nodecrypto signature", () => {
+  const raw = JSON.stringify(R17_R16_DOCUMENT, null, 2) + "\n";
+  assert.equal(Object.keys(R17_R16_DOCUMENT).length, 12);
+  assert.equal(Buffer.byteLength(raw), 10749);
+  assert.equal(
+    createHash("sha256").update(raw).digest("hex"),
+    "f5427aa65d4ab75637df290b72b6a8c07a5a7ce30f1b2dc5a4328720133bdd86",
+  );
+  for (const [rawKey, hashKey, bytes] of [
+    ["reportRaw", "reportSha256", 3922],
+    ["receiptsRaw", "receiptsSha256", 5032],
+    ["observationRaw", "observationSha256", 280],
+  ]) {
+    assert.equal(Buffer.byteLength(R17_R16_DOCUMENT[rawKey]), bytes);
+    assert.equal(
+      createHash("sha256").update(R17_R16_DOCUMENT[rawKey]).digest("hex"),
+      R17_R16_DOCUMENT[hashKey],
+    );
+  }
+});
+test("R17 broker rejects missing or adulterated R16 recovery before any effect", () => {
+  for (const value of [undefined, {}, { ...R17_R16_DOCUMENT, reportSha256: "0".repeat(64) }]) {
+    assert.throws(
+      () => sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR16: value })),
+      /RECOVERY_R16_LEDGER/,
+    );
+  }
+});
+test("R17 runtime wrapper rejects missing R16 before login callback or cleanup effects", async () => {
+  let effects = 0;
+  const runtime = {
+    login: async () => { effects++; },
+    logout: async () => { effects++; return true; },
+    clear: () => { effects++; },
+  };
+  await assert.rejects(
+    () => sut.withRuntimeLogin(
+      runtime, {}, async () => { effects++; },
+      sut.R13_RECOVERY_DOCUMENT, sut.R15_RECOVERY_DOCUMENT,
+    ),
+    /RECOVERY_R16_LEDGER/,
+  );
+  assert.equal(effects, 0);
+});
+test("R17 recovered budget preserves fourteen confirmations and both reservations", () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR16: R17_R16_DOCUMENT }));
+  const state = b.snapshot();
+  assert.equal(state.count, 16);
+  assert.equal(state.confirmedBefore, 14);
+  assert.equal(state.priorReserved, 2);
+  assert.equal(state.maxNewIntentions, 8);
+});
+test("R17 confirmed September analysis is not armed again under a new UUID", async () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR16: R17_R16_DOCUMENT }));
+  await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(b);
+  try {
+    assert.throws(() => r6AnalysisArm(b), /RECOVERY_CONFIRMED_OPERATION/);
+    assert.equal(b.snapshot().count, 16);
+  } finally {
+    f.observer.close();
+  }
+});
+for (const snapshot of [null, 0]) {
+  test("R17 SDK-valid preapproval snapshot " + snapshot + " reaches only the official command boundary", async () => {
+    const view = r17View(snapshot);
+    assert.notEqual((await r17OverviewParser())(view), null);
+    const result = await r17PresentBoundary(view);
+    assert.equal(result.error, result.sentinel);
+    assert.equal(result.commands, 1);
+    assert.equal(result.c.state, undefined);
+  });
+}
+test("R17 canonical gate failures still deny before any presentation command", async () => {
+  for (const mutate of [
+    (v) => { v.portao.percentual = 99.99; },
+    (v) => { v.portao.liberado = false; },
+    (v) => { v.allowed_actions.apresentar = false; },
+    (v) => { v.blocking_summary.analise_concluida_atual = false; },
+    (v) => { v.blocking_summary.parecer_aprovado = false; },
+  ]) {
+    const view = r17View(100);
+    mutate(view);
+    const result = await r17PresentBoundary(view);
+    assert.equal(result.commands, 0);
+    assert.ok(new Set([
+      "COMPETENCE_PRESENTATION_GATE",
+      "COMPETENCE_PRESENTATION_GATE_ANALYSIS",
+      "COMPETENCE_PRESENTATION_GATE_OPINION",
+      "COMPETENCE_PRESENTATION_GATE_PORTAO",
+      "COMPETENCE_PRESENTATION_GATE_PERCENT",
+      "COMPETENCE_PRESENTATION_GATE_ACTION",
+    ]).has(result.error?.message));
+  }
+});
+test("R17 already-approved state with snapshot zero does not release a binding or registration", async () => {
+  const view = r17View(0);
+  view.competencia.situacao = "pode_apresentar_contratante";
+  view.blocking_summary.aprovacao_apresentacao_atual = true;
+  const result = await r17PresentBoundary(view, true);
+  assert.equal(result.commands, 0);
+  assert.ok(["COMPETENCE_PRESENTATION_GATE", "COMPETENCE_PRESENTATION_STATE"].includes(result.error?.message));
+  assert.equal(result.c.state, undefined);
+});
+async function r17ApprovalObserver(ack) {
+  let clock = 0;
+  const f = await r4ObserverFixture({
+    now: () => clock,
+    wait: async () => { clock += 300001; },
+  });
+  const view = r17View(100);
+  view.competencia.situacao = "pode_apresentar_contratante";
+  view.blocking_summary.aprovacao_apresentacao_atual = true;
+  const payload = {
+    p_id_competencia: view.competencia.id,
+    p_fundamento: FIXTURE.foundation,
+  };
+  f.observer.markMutation("aprovar_apresentacao", payload, {});
+  r4EmitMutation(f.page, "aprovar_apresentacao", payload, ack);
+  await f.observer.flush();
+  const url = FIXTURE.api + "/rest/v1/rpc/obter_visao_geral_competencia";
+  const request = {
+    method: () => "POST",
+    postData: () => JSON.stringify({ p_id_competencia: view.competencia.id }),
+    url: () => url,
+    failure: () => null,
+  };
+  f.page.emit("request", request);
+  f.page.emit("response", {
+    request: () => request,
+    url: () => url,
+    status: () => 200,
+    body: async () => Buffer.from(JSON.stringify(view)),
+  });
+  await f.observer.flush();
+  return { ...f, view };
+}
+const R17_VALID_APPROVAL_ACK = {
+  id_aprovacao: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  situacao: "pode_apresentar_contratante",
+  percentual_conformidade: 100,
+};
+for (const [name, ack] of [
+  ["absent", null],
+  ["invalid approval id", { ...R17_VALID_APPROVAL_ACK, id_aprovacao: "invalid" }],
+  ["wrong state", { ...R17_VALID_APPROVAL_ACK, situacao: "preparando" }],
+  ["nonhundred percent", { ...R17_VALID_APPROVAL_ACK, percentual_conformidade: 99.99 }],
+]) {
+  test("R17 " + name + " approval ACK cannot confirm business through a later view", async () => {
+    const f = await r17ApprovalObserver(ack);
+    try {
+      await assert.rejects(
+        () => f.observer.rpcRead("obter_visao_geral_competencia", {
+          p_id_competencia: f.view.competencia.id,
+        }),
+        /PHASE_TIMEOUT/,
+      );
+    } finally {
+      f.observer.close();
+    }
+  });
+}
+test("R17 valid approval ACK and subsequent official view preserve business readback", async () => {
+  const f = await r17ApprovalObserver(R17_VALID_APPROVAL_ACK);
+  try {
+    const value = await f.observer.rpcRead("obter_visao_geral_competencia", {
+      p_id_competencia: f.view.competencia.id,
+    });
+    assert.equal(value.competencia.id, f.view.competencia.id);
+    assert.equal(value.competencia.percentual_conformidade, 100);
+  } finally {
+    f.observer.close();
+  }
+});
