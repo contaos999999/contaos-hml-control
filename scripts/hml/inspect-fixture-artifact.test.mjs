@@ -1218,3 +1218,17 @@ test("R11 preserves the twelve-field R10 document and all three original raw has
   current.diagnostics.primaryFailure = "RECOVERY_R10_LEDGER";
   assert.equal(validateRecords(current, empty()).report.failure, "RECOVERY_R10_LEDGER");
 });
+
+test("R13 exact artifact requires reserved ledger and the two R11 originals after all eighteen data files", () => {
+  assert.equal(FILES.length, 20, "R13_MANIFEST_APPEND_ABSENT");
+  assert.equal(Object.keys(HISTORY).length, 17);
+  assert.deepEqual(FILES.slice(-2), ["receipts-r11.json", "recovery-r11.json"]);
+  assert.equal(PIN.run, 42685547737);
+  assert.equal(PIN.artifact, 13704636643);
+  const current = report();
+  current.intentLedger = { count: 11, frozen: false, pending: false, sent: false,
+    priorConfirmed: 10, priorReserved: 1, newArmedCount: 0, maxIntentions: 24,
+    maxNewIntentions: 13 };
+  current.recovery.maxNewIntentions = 13;
+  assert.equal(validateRecords(current, empty()).observations.newConfirmed, 0);
+});
