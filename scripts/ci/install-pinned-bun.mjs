@@ -429,8 +429,24 @@ export async function installPinnedBun() {
         !stat.isSymbolicLink() &&
         sameIdentity(stat, ownStat) &&
         (await fs.realpath(candidate)) === candidate
-      )
+      ) {
+        const cleanupHandle = await fs.open(
+          candidate,
+          constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW,
+        );
+        try {
+          if (!sameIdentity(await cleanupHandle.stat(), ownStat)) fail("BUN_WRITE");
+          for (const file of ["bunx", "bun"])
+            await fs.unlink(path.join("/proc/self/fd/" + cleanupHandle.fd, file)).catch((error) => {
+              if (error.code !== "ENOENT") throw error;
+            });
+        } finally {
+          await cleanupHandle.close();
+        }
+        const finalStat = await fs.lstat(candidate);
+        if (!sameIdentity(finalStat, ownStat) || finalStat.isSymbolicLink()) fail("BUN_WRITE");
         await fs.rmdir(candidate);
+      }
     }
   };
 

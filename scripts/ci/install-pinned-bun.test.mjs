@@ -515,3 +515,66 @@ test("verified installer rejects a substituted mkdtemp name without chmod or vic
     await fs.rm(f.dir, { recursive: true, force: true });
   }
 });
+
+for (const mode of ["last-directory-close", "during-bun-open", "during-bunx-create"])
+  test(
+    "owned descriptor boundary " + mode + " refuses unowned writes and cleans verified inode",
+    async (t) => {
+      const bytes = await officialArchiveFixture(),
+        f = await envFixture(),
+        victim = path.join(f.dir, "victim");
+      await fs.mkdir(victim);
+      await fs.writeFile(path.join(victim, "marker"), "UNCHANGED");
+      const old = { RUNNER_TEMP: process.env.RUNNER_TEMP, GITHUB_PATH: process.env.GITHUB_PATH };
+      Object.assign(process.env, f.env);
+      let clock = 0,
+        exec = 0;
+      t.mock.method(performance, "now", () => clock);
+      t.mock.method(globalThis, "fetch", async () => response(bytes));
+      const open = fs.open.bind(fs),
+        symlink = fs.symlink.bind(fs);
+      t.mock.method(fs, "open", async (name, ...args) => {
+        if (mode === "during-bun-open" && path.basename(name) === "bun" && args[0] & 64) {
+          const own = await fs.realpath(path.dirname(name));
+          await fs.rename(own, own + "-original");
+          await symlink(victim, own);
+        }
+        const handle = await open(name, ...args);
+        if (mode === "last-directory-close" && args[0] & 65536) {
+          const close = handle.close.bind(handle);
+          handle.close = async () => {
+            await close();
+            clock = 30001;
+          };
+        }
+        return handle;
+      });
+      t.mock.method(fs, "symlink", async (target, name) => {
+        if (mode === "during-bunx-create" && path.basename(name) === "bunx") {
+          const own = await fs.realpath(path.dirname(name));
+          await fs.rename(own, own + "-original");
+          await symlink(victim, own);
+        }
+        return symlink(target, name);
+      });
+      t.mock.method(childProcess, "execFile", (_file, _args, options, cb) => {
+        exec++;
+        assert.deepEqual(options.env, {});
+        queueMicrotask(() => cb(null, "1.4.4\n", ""));
+      });
+      try {
+        await assert.rejects(sut().installPinnedBun());
+        assert.equal(exec, mode === "during-bun-open" ? 0 : 1);
+        assert.equal(await fs.readFile(f.target, "utf8"), "");
+        assert.deepEqual(await fs.readdir(victim), ["marker"]);
+        assert.equal(await fs.readFile(path.join(victim, "marker"), "utf8"), "UNCHANGED");
+        assert.deepEqual((await fs.readdir(f.dir)).sort(), ["_runner_file_commands", "victim"]);
+      } finally {
+        for (const k of Object.keys(old)) {
+          if (old[k] === undefined) delete process.env[k];
+          else process.env[k] = old[k];
+        }
+        await fs.rm(f.dir, { recursive: true, force: true });
+      }
+    },
+  );
