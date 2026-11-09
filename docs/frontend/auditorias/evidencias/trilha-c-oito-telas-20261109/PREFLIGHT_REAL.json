@@ -1,0 +1,957 @@
+{
+  "schema": "contaos.trilha-c.eight-preflight.v1",
+  "date": "2026-11-09T19:26:00.317Z",
+  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
+  "backendSha": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+  "priorInventoryRun": "f4888338-4b2e-4dc7-a7d2-2a6f3c137767",
+  "priorNineteen": "PRELIMINARY_INVENTORY_NOT_CERTIFIED_NO_RETEST",
+  "requiredSurfaces": [
+    "V111",
+    "V114",
+    "V115",
+    "V116",
+    "V117",
+    "V118",
+    "V119",
+    "V120"
+  ],
+  "caseCount": 64,
+  "publicPreflight": {
+    "status": "PASS_PUBLIC_PREFLIGHT_ONLY",
+    "identity": {
+      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
+      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh"
+    },
+    "moduleCount": 110,
+    "moduleBytes": 1476785
+  },
+  "auditGate": "AUDIT_BINDING_PENDING",
+  "credentialsPresent": {
+    "email": false,
+    "password": false
+  },
+  "authenticatedCalls": 0,
+  "productionChanges": 0,
+  "cases": [
+    {
+      "surface": "V111",
+      "width": 1440,
+      "theme": "light",
+      "path": "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos/525e54fc-feec-4dc0-b540-1510a3c52485",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V111",
+      "width": 1440,
+      "theme": "dark",
+      "path": "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos/525e54fc-feec-4dc0-b540-1510a3c52485",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V111",
+      "width": 1280,
+      "theme": "light",
+      "path": "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos/525e54fc-feec-4dc0-b540-1510a3c52485",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V111",
+      "width": 1280,
+      "theme": "dark",
+      "path": "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos/525e54fc-feec-4dc0-b540-1510a3c52485",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V111",
+      "width": 768,
+      "theme": "light",
+      "path": "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos/525e54fc-feec-4dc0-b540-1510a3c52485",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V111",
+      "width": 768,
+      "theme": "dark",
+      "path": "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos/525e54fc-feec-4dc0-b540-1510a3c52485",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V111",
+      "width": 390,
+      "theme": "light",
+      "path": "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos/525e54fc-feec-4dc0-b540-1510a3c52485",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V111",
+      "width": 390,
+      "theme": "dark",
+      "path": "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/documentos/525e54fc-feec-4dc0-b540-1510a3c52485",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V114",
+      "width": 1440,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V114",
+      "width": 1440,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V114",
+      "width": 1280,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V114",
+      "width": 1280,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V114",
+      "width": 768,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V114",
+      "width": 768,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V114",
+      "width": 390,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V114",
+      "width": 390,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V115",
+      "width": 1440,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/documentos",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V115",
+      "width": 1440,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/documentos",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V115",
+      "width": 1280,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/documentos",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V115",
+      "width": 1280,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/documentos",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V115",
+      "width": 768,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/documentos",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V115",
+      "width": 768,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/documentos",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V115",
+      "width": 390,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/documentos",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V115",
+      "width": 390,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/documentos",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V116",
+      "width": 1440,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/analise",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V116",
+      "width": 1440,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/analise",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V116",
+      "width": 1280,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/analise",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V116",
+      "width": 1280,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/analise",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V116",
+      "width": 768,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/analise",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V116",
+      "width": 768,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/analise",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V116",
+      "width": 390,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/analise",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V116",
+      "width": 390,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/analise",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V117",
+      "width": 1440,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V117",
+      "width": 1440,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V117",
+      "width": 1280,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V117",
+      "width": 1280,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V117",
+      "width": 768,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V117",
+      "width": 768,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V117",
+      "width": 390,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V117",
+      "width": 390,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V118",
+      "width": 1440,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/parecer",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V118",
+      "width": 1440,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/parecer",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V118",
+      "width": 1280,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/parecer",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V118",
+      "width": 1280,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/parecer",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V118",
+      "width": 768,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/parecer",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V118",
+      "width": 768,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/parecer",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V118",
+      "width": 390,
+      "theme": "light",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/parecer",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V118",
+      "width": 390,
+      "theme": "dark",
+      "path": "/competencias/59072760-4420-4598-82dd-367f41a79e89/parecer",
+      "fixtureBlocked": false,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V119",
+      "width": 1440,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V119",
+      "width": 1440,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V119",
+      "width": 1280,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V119",
+      "width": 1280,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V119",
+      "width": 768,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V119",
+      "width": 768,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V119",
+      "width": 390,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V119",
+      "width": 390,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V120",
+      "width": 1440,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V120",
+      "width": 1440,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V120",
+      "width": 1280,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V120",
+      "width": 1280,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V120",
+      "width": 768,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V120",
+      "width": 768,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V120",
+      "width": 390,
+      "theme": "light",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    },
+    {
+      "surface": "V120",
+      "width": 390,
+      "theme": "dark",
+      "path": null,
+      "fixtureBlocked": true,
+      "status": "NOT_EXECUTED",
+      "blockers": [
+        "AUDIT_BINDING_PENDING",
+        "FIXTURE_BINDING_PENDING",
+        "LOCAL_SYNTHETIC_CREDENTIALS_UNAVAILABLE"
+      ],
+      "screenshot": null,
+      "sha256": null
+    }
+  ]
+}

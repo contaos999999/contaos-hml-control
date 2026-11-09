@@ -1,0 +1,47 @@
+{
+  "schema": "contaos.trilha-c.inventory-reconciliation.v1",
+  "prior_run": "f4888338-4b2e-4dc7-a7d2-2a6f3c137767",
+  "prior_origin": "https://contaos-41-nygkrrbkq-contaos9999.vercel.app",
+  "prior_deployment_source": "50c7930d755acb9f3f0eef3385b51ee665a2665f",
+  "prior_evidence_scope": "Inventário autenticado preliminar; URLs com placeholders e links inferidos; sem PNG original/SHA; MASTER não confirmado",
+  "preserve_without_retest": [
+    "SYS05",
+    "V101",
+    "V102",
+    "V104",
+    "V105",
+    "V106",
+    "V107",
+    "V108",
+    "V109",
+    "V110",
+    "V112",
+    "V113",
+    "V121",
+    "V122",
+    "V103",
+    "SYS04",
+    "ADM01",
+    "V123",
+    "SYS01"
+  ],
+  "previous_count": 19,
+  "new_private_surfaces": [
+    "V111",
+    "V114",
+    "V115",
+    "V116",
+    "V117",
+    "V118",
+    "V119",
+    "V120"
+  ],
+  "new_count": 8,
+  "additional_public_surfaces_excluded": [
+    "SYS02",
+    "SYS03"
+  ],
+  "canonical_surfaces": 29,
+  "previous_results_reclassified_as_certified": false,
+  "current_eight_authenticated_pass": 0
+}
