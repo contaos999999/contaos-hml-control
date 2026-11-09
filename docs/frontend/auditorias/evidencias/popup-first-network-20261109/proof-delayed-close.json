@@ -1,0 +1,237 @@
+{
+  "schema": "contaos.popup.close-delay-experiment.v1",
+  "closureDelayMs": 100,
+  "noAuth": true,
+  "noHml": true,
+  "sourceUnmodified": true,
+  "trials": [
+    {
+      "trial": 0,
+      "baseHead": "2486d8c57847804ef198babd4c9acb07f75f0462",
+      "connections": 1,
+      "bytes": 644,
+      "requests": 1,
+      "timeline": [
+        {
+          "ms": 201.074,
+          "event": "CDP_SEND",
+          "method": "Target.autoAttachRelated"
+        },
+        {
+          "ms": 202.099,
+          "event": "CDP_ATTACHED",
+          "type": "page",
+          "waiting": false,
+          "own": true
+        },
+        {
+          "ms": 207.455,
+          "event": "CDP_SEND",
+          "method": "Target.setAutoAttach"
+        },
+        {
+          "ms": 208.135,
+          "event": "CDP_SEND",
+          "method": "Runtime.runIfWaitingForDebugger"
+        },
+        {
+          "ms": 208.597,
+          "event": "FENCE_INSTALLED"
+        },
+        {
+          "ms": 232.854,
+          "event": "CDP_WINDOW_OPEN"
+        },
+        {
+          "ms": 233.425,
+          "event": "CLOSE_CONTEXT_START"
+        },
+        {
+          "ms": 242.603,
+          "event": "TCP_CONNECTION"
+        },
+        {
+          "ms": 250.135,
+          "event": "HTTP_REQUEST",
+          "method": "GET",
+          "pathExact": true
+        },
+        {
+          "ms": 251.386,
+          "event": "TCP_DATA",
+          "length": 644
+        },
+        {
+          "ms": 263.36,
+          "event": "PW_REQUEST"
+        },
+        {
+          "ms": 269.191,
+          "event": "PW_POPUP_PAGE"
+        },
+        {
+          "ms": 347.331,
+          "event": "CLOSE_CONTEXT_END"
+        },
+        {
+          "ms": 347.62,
+          "event": "SNAPSHOT",
+          "failure": "FENCE_POPUP",
+          "popups": 1
+        }
+      ]
+    },
+    {
+      "trial": 1,
+      "baseHead": "2486d8c57847804ef198babd4c9acb07f75f0462",
+      "connections": 1,
+      "bytes": 644,
+      "requests": 1,
+      "timeline": [
+        {
+          "ms": 138.405,
+          "event": "CDP_SEND",
+          "method": "Target.autoAttachRelated"
+        },
+        {
+          "ms": 139.07,
+          "event": "CDP_ATTACHED",
+          "type": "page",
+          "waiting": false,
+          "own": true
+        },
+        {
+          "ms": 143.889,
+          "event": "CDP_SEND",
+          "method": "Target.setAutoAttach"
+        },
+        {
+          "ms": 144.872,
+          "event": "CDP_SEND",
+          "method": "Runtime.runIfWaitingForDebugger"
+        },
+        {
+          "ms": 145.232,
+          "event": "FENCE_INSTALLED"
+        },
+        {
+          "ms": 172.533,
+          "event": "TCP_CONNECTION"
+        },
+        {
+          "ms": 178.29,
+          "event": "CDP_WINDOW_OPEN"
+        },
+        {
+          "ms": 178.395,
+          "event": "CLOSE_CONTEXT_START"
+        },
+        {
+          "ms": 178.564,
+          "event": "HTTP_REQUEST",
+          "method": "GET",
+          "pathExact": true
+        },
+        {
+          "ms": 178.686,
+          "event": "TCP_DATA",
+          "length": 644
+        },
+        {
+          "ms": 178.986,
+          "event": "PW_REQUEST"
+        },
+        {
+          "ms": 197.753,
+          "event": "PW_POPUP_PAGE"
+        },
+        {
+          "ms": 291.191,
+          "event": "CLOSE_CONTEXT_END"
+        },
+        {
+          "ms": 291.25,
+          "event": "SNAPSHOT",
+          "failure": "FENCE_POPUP",
+          "popups": 1
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "baseHead": "2486d8c57847804ef198babd4c9acb07f75f0462",
+      "connections": 1,
+      "bytes": 644,
+      "requests": 1,
+      "timeline": [
+        {
+          "ms": 136.224,
+          "event": "CDP_SEND",
+          "method": "Target.autoAttachRelated"
+        },
+        {
+          "ms": 136.942,
+          "event": "CDP_ATTACHED",
+          "type": "page",
+          "waiting": false,
+          "own": true
+        },
+        {
+          "ms": 140.95,
+          "event": "CDP_SEND",
+          "method": "Target.setAutoAttach"
+        },
+        {
+          "ms": 141.383,
+          "event": "CDP_SEND",
+          "method": "Runtime.runIfWaitingForDebugger"
+        },
+        {
+          "ms": 142.912,
+          "event": "FENCE_INSTALLED"
+        },
+        {
+          "ms": 160.436,
+          "event": "CDP_WINDOW_OPEN"
+        },
+        {
+          "ms": 160.501,
+          "event": "CLOSE_CONTEXT_START"
+        },
+        {
+          "ms": 164.29,
+          "event": "TCP_CONNECTION"
+        },
+        {
+          "ms": 164.478,
+          "event": "PW_REQUEST"
+        },
+        {
+          "ms": 169.427,
+          "event": "HTTP_REQUEST",
+          "method": "GET",
+          "pathExact": true
+        },
+        {
+          "ms": 169.835,
+          "event": "TCP_DATA",
+          "length": 644
+        },
+        {
+          "ms": 181.937,
+          "event": "PW_POPUP_PAGE"
+        },
+        {
+          "ms": 271.997,
+          "event": "CLOSE_CONTEXT_END"
+        },
+        {
+          "ms": 272.05,
+          "event": "SNAPSHOT",
+          "failure": "FENCE_POPUP",
+          "popups": 1
+        }
+      ]
+    }
+  ]
+}
