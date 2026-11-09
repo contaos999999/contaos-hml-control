@@ -1696,3 +1696,52 @@ test("Run27 diagnóstico desconhecido permanece fechado e não serializa canári
     errorKind: "OTHER",
   });
 });
+
+test("R2 duas confirmacoes reais de protocolo e proximo await conserva causa tecnica",async()=>{
+ const {readFileSync}=await import("node:fs");
+ const {createIntentBroker,confirmUiIntent,FIXTURE,SOURCE_FIELDS}=sut;
+ const diagnostics=sut.createPreparationDiagnostics();
+ await assert.rejects(()=>sut.withPreparationDiagnostics(diagnostics,async()=>{
+ const id="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const official={official:true,current:true,organization:FIXTURE.organization,contract:FIXTURE.contract};
+const evidence={source:{...official,id:FIXTURE.source,...SOURCE_FIELDS,version:1},sourceVersions:[{...official,id,source:FIXTURE.source,hash:FIXTURE.fileHash,canApprove:true,state:"rascunho"}]};
+const text=readFileSync(new URL("../../docs/frontend/auditorias/evidencias/continuacao-auth-20261108/FONTE_SINTETICA_AUDITORIA_HML.txt",import.meta.url),"utf8");
+const commands=[
+ ["registrar_versao_fonte_v107",{p_id_organizacao:FIXTURE.organization,p_id_fonte:FIXTURE.source,p_inicio_vigencia:"2026-01-01",p_fim_vigencia:null,p_id_arquivo:null,p_conteudo_texto:text,p_metadados:{}}],
+ ["aprovar_versao_fonte_v107",{p_id_organizacao:FIXTURE.organization,p_id_versao:id,p_hash_esperado:FIXTURE.fileHash,p_fundamento:FIXTURE.foundation}]
+];
+const receipts=[];
+const broker=createIntentBroker({persist:r=>{receipts.push(r);return true;},competenceGateAmended:true});
+const verified={context:true,capability:true,reconciled:true};
+for(let index=0;index<commands.length;index++){
+ const [rpc,payload]=commands[index];
+ const control={count:async()=>1,isEnabled:async()=>true,click:async()=>{
+  const body={...payload,p_chave_idempotencia:index===0?"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb":"cccccccc-cccc-4ccc-8ccc-cccccccccccc"};
+  const request={url:FIXTURE.api+"/rest/v1/rpc/"+rpc,method:"POST",postData:JSON.stringify(body),stage:"REQUEST",sessionId:"offline",interceptionId:"offline-"+index};
+  assert.equal(broker.policy(request),true);
+  assert.equal(broker.policy({...request,stage:"RESPONSE"}),true);
+ }};
+ assert.equal(await confirmUiIntent({page:{},scope:{getByRole:()=>control},fence:{drain:async()=>{},assertSafe:()=>{}},broker,rpc,payload,evidence,verified,button:"offline",settleVerifiedPage:async()=>{},reconcile:async phase=>phase==="before"?{payload,evidence,verified}:{confirmed:true}}),true);
+}
+assert.equal(receipts.filter(r=>r.state==="confirmed").length,2);
+
+ await diagnostics.step("SOURCE_VERSION_READ",async()=>{throw Object.assign(new Error("CANARY_SECRET https://private.invalid"),{name:"TimeoutError"});});
+ }));
+ const report=diagnostics.snapshot();
+ assert.equal(report.primaryFailure,"PREPARER_TIMEOUT");
+ assert.equal(report.subphase,"SOURCE_VERSION_READ");
+ assert.equal(JSON.stringify(report).includes("CANARY"),false);
+});
+test("R2 cada subfase fechada preserva falha primaria quando logout falha",async()=>{
+ for(const subphase of sut.DIAGNOSTIC_SUBPHASES){
+   const d=sut.createPreparationDiagnostics();
+   await assert.rejects(()=>d.step(subphase,async()=>{throw new TypeError("PRIVATE_URL token");}));
+   const before=d.snapshot();
+   await d.cleanup(async()=>false);
+   const after=d.snapshot();
+   assert.equal(after.subphase,subphase);
+   assert.equal(after.primaryFailure,before.primaryFailure);
+   assert.equal(after.cleanupFailure,"LOGOUT_NOT_VERIFIED");
+   assert.equal(/PRIVATE_URL|token/.test(JSON.stringify(after)),false);
+ }
+});
