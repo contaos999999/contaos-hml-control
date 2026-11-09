@@ -10295,7 +10295,7 @@ test("R10 request accepts its new nonce and keeps R9 spent", () => {
     frontend_sha: "",
     deployment_id: "",
   };
-  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(row), "fixtures"), row);
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify(row), "fixtures"), /REQUEST_/);
   assert.throws(
     () =>
       sut.parseSingleRequest(

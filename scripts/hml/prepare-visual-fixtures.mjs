@@ -255,6 +255,7 @@ export async function reconcileRecoveryCompetencies(io) {
   validateR7RecoveryDocument(io.recoveryLedgerR7);
   validateR8RecoveryDocument(io.recoveryLedgerR8);
   validateR9RecoveryDocument(io.recoveryLedgerR9);
+  validateR10RecoveryDocument(io.recoveryLedgerR10);
   const result = [];
   for (const month of months) {
     const rows = await readCompetenceMonth(io, month, (budget) =>
@@ -307,6 +308,7 @@ export function reconcileR1Recovery(input) {
   validateR7RecoveryDocument(input?.ledgerR7);
   validateR8RecoveryDocument(input?.ledgerR8);
   validateR9RecoveryDocument(input?.ledgerR9);
+  validateR10RecoveryDocument(input?.ledgerR10);
   const expected = R5_BINDINGS;
   if (
     input.listCount !== 1 ||
@@ -888,6 +890,102 @@ export function validateR9RecoveryDocument(input) {
   return freeze(clean);
 }
 
+export const R10_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r10.v1",
+  workflowRun: "42638883189",
+  artifactId: "13683268867",
+  requestId: "trilha-a-fixtures-20261109-r10",
+  harnessSha: "a3a5df2b4e99705d214a509ba035f155c7ae8de9",
+  zipSha256: "b306e1a4b89e839da5244e2b0ddc589f502618a2253dbcbb61415f68cc448a43",
+  reportSha256: "858c21b7eb05e379f6c92dd84cc5f7afe0d75406ab105d3b279b2f0d53703ef2",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  observationSha256: "0b11018aae5529f19ccb6476bf8b1202f3a7e9ba8fab8811252a48b2904ddecf",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "OBSERVATION_FAILED",\n  "diagnostics": {\n    "primaryFailure": "OBSERVATION_FAILED",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "RUNTIME_FRESH",\n    "subphasePath": [\n      "COMPETENCIES",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "RUNTIME_FRESH",\n      "RUNTIME_FRESH"\n    ],\n    "lastCompletedSubphase": "RUNTIME_FRESH",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 10,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 10,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 14\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 14,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "partial",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "a3a5df2b4e99705d214a509ba035f155c7ae8de9",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42638883189",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "a3a5df2b4e99705d214a509ba035f155c7ae8de9",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42638883189",\n  "firstFailure": {\n    "contractKind": "RPC:obter_analise_competencia_v116",\n    "stage": "RESPONSE_PROJECTION",\n    "statusHTTP": "NONE",\n    "requestFailure": "NONE"\n  }\n}\n',
+});
+export function validateR10RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R10_LEDGER");
+  const names = Object.keys(R10_RECOVERY_DOCUMENT),
+    ds = Object.getOwnPropertyDescriptors(input),
+    clean = {};
+  if (Reflect.ownKeys(ds).length !== names.length) err("RECOVERY_R10_LEDGER");
+  for (const key of names) {
+    const d = ds[key];
+    if (!d || !Object.hasOwn(d, "value") || d.enumerable !== true || typeof d.value !== "string")
+      err("RECOVERY_R10_LEDGER");
+    clean[key] = d.value;
+  }
+  if (
+    !same(clean, R10_RECOVERY_DOCUMENT) ||
+    hash(JSON.stringify(clean, null, 2) + "\n") !==
+      "5c1490e7d2e810bc4711ad2f8f6a7b11dd36e313b96940c196ecda6b0dd17ece" ||
+    hash(clean.reportRaw) !== clean.reportSha256 ||
+    hash(clean.receiptsRaw) !== clean.receiptsSha256 ||
+    hash(clean.observationRaw) !== clean.observationSha256
+  )
+    err("RECOVERY_R10_LEDGER");
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw),
+    observation = JSON.parse(clean.observationRaw);
+  if (
+    JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
+    JSON.stringify(receipts) + "\n" !== clean.receiptsRaw ||
+    JSON.stringify(observation, null, 2) + "\n" !== clean.observationRaw ||
+    report.schema !== "contaos.fixture.preparation.v1" ||
+    report.workflowRun !== clean.workflowRun ||
+    report.harnessSha !== clean.harnessSha ||
+    report.frontendSha !== "437c788e32f0325dd15c9d2e7277c10129bcb462" ||
+    report.deploymentId !== "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp" ||
+    report.failure !== "OBSERVATION_FAILED" ||
+    report.phase !== "FINAL_READBACK" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.logoutAttempted !== true ||
+    report.diagnostics.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    !same(report.bindings, JSON.parse(R10_RECOVERY_DOCUMENT.reportRaw).bindings) ||
+    !same(report.ids, JSON.parse(R10_RECOVERY_DOCUMENT.reportRaw).ids) ||
+    !same(report.intentLedger, {
+      count: 10,
+      frozen: false,
+      pending: false,
+      sent: false,
+      priorConfirmed: 10,
+      newArmedCount: 0,
+      maxIntentions: 24,
+      maxNewIntentions: 14,
+    }) ||
+    !same(receipts, { schema: "contaos.fixture.receipts.v1", receipts: [] }) ||
+    report.recovery.confirmedBefore !== 10 ||
+    report.recovery.maxNewIntentions !== 14 ||
+    report.recovery.reconciled !== true ||
+    report.recovery.sourceVersion !== "1ebbfd0b-c50c-405d-8806-321f18e179e0" ||
+    report.recovery.sourceHash !==
+      "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"
+  )
+    err("RECOVERY_R10_LEDGER");
+  validateR4RecoveryDocument(report.recovery.r4ZeroAuth);
+  validateObservationDiagnostic(observation, {
+    frontendSha: report.frontendSha,
+    harnessSha: report.harnessSha,
+    deploymentId: report.deploymentId,
+    workflowRun: report.workflowRun,
+  });
+  if (
+    !same(observation.firstFailure, {
+      contractKind: "RPC:obter_analise_competencia_v116",
+      stage: "RESPONSE_PROJECTION",
+      statusHTTP: "NONE",
+      requestFailure: "NONE",
+    })
+  )
+    err("RECOVERY_R10_LEDGER");
+  return freeze(clean);
+}
+
 function confirmedR8Replay(rpc, payload) {
   if (!["criar_documento_competencia_v115", "solicitar_analise_competencia"].includes(rpc))
     return false;
@@ -973,6 +1071,7 @@ function recoveryBudget(
   ledgerR7,
   ledgerR8,
   ledgerR9,
+  ledgerR10,
 ) {
   const prior = validateR1RecoveryDocument(ledger),
     r3 = validateR3RecoveryDocument(ledgerR3);
@@ -986,6 +1085,7 @@ function recoveryBudget(
   if (confirmedBefore !== 8) err("RECOVERY_R5_LEDGER");
   const r8 = JSON.parse(validateR8RecoveryDocument(ledgerR8).receiptsRaw);
   validateR9RecoveryDocument(ledgerR9);
+  validateR10RecoveryDocument(ledgerR10);
   const total = confirmedBefore + r8.receipts.filter((row) => row.state === "confirmed").length;
   if (total !== 10) err("RECOVERY_R8_LEDGER");
   return Object.freeze({ confirmedBefore: total, maxNewIntentions: 24 - total });
@@ -1818,6 +1918,7 @@ export function createIntentBroker({
   recoveryLedgerR7,
   recoveryLedgerR8,
   recoveryLedgerR9,
+  recoveryLedgerR10,
   beforeArm,
 } = {}) {
   const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
@@ -1829,7 +1930,8 @@ export function createIntentBroker({
       recoveryLedgerR6 !== undefined ||
       recoveryLedgerR7 !== undefined ||
       recoveryLedgerR8 !== undefined ||
-      recoveryLedgerR9 !== undefined)
+      recoveryLedgerR9 !== undefined ||
+      recoveryLedgerR10 !== undefined)
   )
     err("RECOVERY_R3_LEDGER");
   const budget = recovery
@@ -1842,6 +1944,7 @@ export function createIntentBroker({
         recoveryLedgerR7,
         recoveryLedgerR8,
         recoveryLedgerR9,
+        recoveryLedgerR10,
       )
     : null;
   let recoveryAuthorized = !recovery;
@@ -2719,6 +2822,157 @@ export function projectOfficialResponse(value, depth = 0, strict = false, rootFi
   err("OBSERVATION_SCHEMA");
 }
 
+const SCOPED_RPC_FIELDS = Object.freeze({
+  obter_analise_competencia_v116: {
+    "": "schema_versao competencia estado_analise stale execucao_atual percentual blocking_summary allowed_actions mecanismos resultados resultados_paginacao execucoes execucoes_paginacao apontamentos apontamentos_paginacao hash_contexto_atual",
+    competencia:
+      "id id_organizacao id_contrato competencia_referencia periodo_inicio periodo_fim situacao",
+    execucao_atual:
+      "id tipo status hash_entrada motor versao_motor provedor modelo prompt_versao iniciada_por iniciada_em concluida_em erro_codigo requisitos_afetados metadados criado_em",
+    "execucoes.*":
+      "id tipo status hash_entrada contexto_atual motor versao_motor provedor modelo prompt_versao iniciada_por iniciada_em concluida_em erro_codigo requisitos_afetados metadados criado_em",
+    "resultados.*":
+      "id_resultado id_requisito requisito resultado mecanismo confianca justificativa fundamento hash_evidencias metadados evidencias criado_em",
+    "resultados.*.requisito":
+      "codigo descricao categoria criticidade obrigatorio aplicavel impeditivo efeito_portao fonte_tipo fonte_referencia fonte_detalhe",
+    "resultados.*.evidencias.*":
+      "id id_versao_documento pagina trecho tipo_evidencia referencia_externa hash criado_em",
+    "apontamentos.*":
+      "id id_requisito requisito descricao severidade status origem regra_violada acao_sugerida fonte criado_em atualizado_em",
+    "apontamentos.*.requisito": "codigo descricao categoria criticidade",
+  },
+  obter_detalhe_requisito_v117: {
+    "": "schema_versao competencia requisito execucao_atual resultado_atual resultado_referencia na_validade allowed_actions evidencias evidencias_paginacao historico historico_paginacao apontamentos apontamentos_paginacao",
+    competencia: "id id_organizacao id_contrato competencia_referencia situacao",
+    requisito:
+      "id codigo descricao categoria origem_tipo origem_id origem_versao obrigatorio aplicavel impeditivo criticidade fonte_tipo fonte_referencia fonte_detalhe efeito_portao hash_snapshot regra_validacao condicao_aplicabilidade",
+    execucao_atual:
+      "id tipo status hash_entrada motor versao_motor provedor modelo prompt_versao iniciada_em concluida_em criado_em",
+    resultado_atual:
+      "id id_execucao resultado confianca justificativa fundamento hash_evidencias criado_em",
+    resultado_referencia:
+      "id id_execucao resultado mecanismo confianca justificativa fundamento hash_evidencias criado_em",
+    na_validade: "valido id_resultado_referencia possui_fundamento possui_evidencia",
+    "evidencias.*": "id pagina trecho tipo_evidencia referencia_externa hash criado_em documento",
+    "evidencias.*.documento":
+      "id_versao_documento numero_versao hash_versao id_arquivo nome_original mime status_seguranca",
+    "historico.*":
+      "id_resultado id_execucao resultado confianca fundamento justificativa hash_evidencias criado_em tipo_execucao status_execucao motor versao_motor provedor modelo prompt_versao hash_entrada iniciada_em concluida_em mecanismo",
+    "apontamentos.*":
+      "id descricao severidade status origem regra_violada acao_sugerida fonte criado_em atualizado_em",
+  },
+});
+export function projectScopedRpcResponse(rpc, value) {
+  const contract = SCOPED_RPC_FIELDS[rpc];
+  if (!contract) err("OBSERVATION_ENDPOINT");
+  const omit = new Set(
+    rpc === "obter_analise_competencia_v116"
+      ? [
+          "hash_contexto_atual",
+          "execucao_atual.iniciada_por",
+          "execucao_atual.requisitos_afetados",
+          "execucao_atual.metadados",
+          "execucoes.*.contexto_atual",
+          "execucoes.*.iniciada_por",
+          "execucoes.*.requisitos_afetados",
+          "execucoes.*.metadados",
+          "resultados.*.metadados",
+        ]
+      : ["requisito.condicao_aplicabilidade", "na_validade.id_resultado_referencia"],
+  );
+  const arrays = new Set(
+    rpc === "obter_analise_competencia_v116"
+      ? ["resultados", "execucoes", "apontamentos", "resultados.*.evidencias"]
+      : ["evidencias", "historico", "apontamentos"],
+  );
+  function descriptors(input) {
+    if (isProxy(input) || !obj(input)) err("OBSERVATION_SCHEMA");
+    return Object.getOwnPropertyDescriptors(input);
+  }
+  const root = descriptors(value);
+  let executionPresent = false;
+  if (root.execucao_atual) {
+    if (!Object.hasOwn(root.execucao_atual, "value")) err("OBSERVATION_SCHEMA");
+    executionPresent = root.execucao_atual.value !== null;
+  }
+  function walk(input, path = "", depth = 0, strict = false) {
+    if (depth > 24) err("OBSERVATION_LIMIT");
+    if (isProxy(input)) err("OBSERVATION_SCHEMA");
+    if (arrays.has(path) && !Array.isArray(input)) err("OBSERVATION_SCHEMA");
+    if (Array.isArray(input)) {
+      if (Object.getPrototypeOf(input) !== Array.prototype || input.length > 1000)
+        err("OBSERVATION_LIMIT");
+      const ds = Object.getOwnPropertyDescriptors(input);
+      if (Reflect.ownKeys(ds).length !== input.length + 1) err("OBSERVATION_SCHEMA");
+      return Array.from({ length: input.length }, (_, i) => {
+        const d = ds[i];
+        if (!d || !Object.hasOwn(d, "value")) err("OBSERVATION_SCHEMA");
+        return walk(d.value, path + ".*", depth + 1, strict);
+      });
+    }
+    if (input !== null && typeof input === "object") {
+      const ds = descriptors(input),
+        result = {};
+      const keys = Reflect.ownKeys(ds);
+      if (path === "mecanismos" && rpc === "obter_analise_competencia_v116") {
+        const names = ["deterministico", "semantico", "humano", "nao_identificado"];
+        if (!executionPresent && keys.length === 0) return {};
+        if (keys.length !== 4 || keys.some((k) => typeof k !== "string" || !names.includes(k)))
+          err("OBSERVATION_SCHEMA");
+        for (const key of names) {
+          const d = ds[key];
+          if (!d || !Object.hasOwn(d, "value") || !Number.isInteger(d.value) || d.value < 0)
+            err("OBSERVATION_SCHEMA");
+          result[key] = d.value;
+        }
+        return result;
+      }
+      const fields = contract[path] ? new Set(contract[path].split(" ")) : null;
+      for (const key of keys) {
+        if (typeof key !== "string" || ["__proto__", "prototype", "constructor"].includes(key))
+          err("OBSERVATION_SCHEMA");
+        const child = path ? path + "." + key : key;
+        if (fields && !fields.has(key)) err("OBSERVATION_SCHEMA");
+        if (omit.has(child)) continue;
+        if (key === "metadados") err("OBSERVATION_METADATA");
+        if (
+          PRIVATE_RESPONSE_KEYS.has(key) ||
+          /(?:email|password|secret|token|cookie|authorization)/i.test(key)
+        ) {
+          if (fields) err("OBSERVATION_SCHEMA");
+          continue;
+        }
+        if (!fields && !OBSERVED_KEYS.has(key)) {
+          if (strict) result.__unapproved_fields = true;
+          continue;
+        }
+        const d = ds[key];
+        if (!Object.hasOwn(d, "value") || !d.enumerable) err("OBSERVATION_SCHEMA");
+        if (
+          child === "apontamentos.*.acao_sugerida" &&
+          d.value !== null &&
+          (typeof d.value !== "string" || d.value.length > 65536)
+        )
+          err("OBSERVATION_SCHEMA");
+        result[key] = walk(d.value, child, depth + 1, strict || key === "regra_validacao");
+      }
+      return result;
+    }
+    if (contract[path] && input !== null) err("OBSERVATION_SCHEMA");
+    if (path === "mecanismos") err("OBSERVATION_SCHEMA");
+    if (typeof input === "string" && input.length > 65536) err("OBSERVATION_LIMIT");
+    if (
+      input === null ||
+      ["string", "boolean"].includes(typeof input) ||
+      (typeof input === "number" && Number.isFinite(input))
+    )
+      return input;
+    err("OBSERVATION_SCHEMA");
+  }
+  if (!root.mecanismos && rpc === "obter_analise_competencia_v116") err("OBSERVATION_SCHEMA");
+  return walk(value);
+}
+
 const EXACT_SELECTS = Object.freeze({
   contratos: [
     "id,id_organizacao,id_contratante,numero,objeto,situacao,criticidade,inicio,fim,tipo_contrato,unidade_vinculada,fonte_recurso,valor_global,valor_mensal_referencia,periodicidade,prazo_prestacao_dias,dia_limite_apresentacao,contratante:contratantes!contratos_contratante_org_fk(razao_social,nome_fantasia,documento)",
@@ -3508,12 +3762,10 @@ export function createOfficialObserver(page, { wait, now } = {}) {
             : RPC_RESPONSE_FIELDS[rpc] ||
               (BUSINESS_RPCS.includes(rpc) ? BUSINESS_RESPONSE_FIELDS : null);
           if (!fields) err("OBSERVATION_ENDPOINT");
-          value = projectOfficialResponse(
-            JSON.parse(bytes.toString("utf8")),
-            0,
-            false,
-            new Set(fields.split(" ")),
-          );
+          const decoded = JSON.parse(bytes.toString("utf8"));
+          value = Object.hasOwn(SCOPED_RPC_FIELDS, rpc)
+            ? projectScopedRpcResponse(rpc, decoded)
+            : projectOfficialResponse(decoded, 0, false, new Set(fields.split(" ")));
         } finally {
           bytes.fill(0);
         }
@@ -3965,6 +4217,7 @@ export async function prepareSourceAndList(io) {
     validateR7RecoveryDocument(io.recoveryLedgerR7);
     validateR8RecoveryDocument(io.recoveryLedgerR8);
     validateR9RecoveryDocument(io.recoveryLedgerR9);
+    validateR10RecoveryDocument(io.recoveryLedgerR10);
   }
   const fail = (code) => {
     throw new Error(code);
@@ -4487,6 +4740,7 @@ export async function prepareSourceAndList(io) {
         ledgerR7: io.recoveryLedgerR7,
         ledgerR8: io.recoveryLedgerR8,
         ledgerR9: io.recoveryLedgerR9,
+        ledgerR10: io.recoveryLedgerR10,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -4858,6 +5112,7 @@ export async function prepareCompetencies(io, sourceList) {
     validateR7RecoveryDocument(io.recoveryLedgerR7);
     validateR8RecoveryDocument(io.recoveryLedgerR8);
     validateR9RecoveryDocument(io.recoveryLedgerR9);
+    validateR10RecoveryDocument(io.recoveryLedgerR10);
     for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
       if (sourceList[key] !== R5_BINDINGS[key]) stop("RECOVERY_LIST");
   }
@@ -5060,6 +5315,7 @@ export async function prepareCompetencies(io, sourceList) {
       validateR7RecoveryDocument(io.recoveryLedgerR7);
       validateR8RecoveryDocument(io.recoveryLedgerR8);
       validateR9RecoveryDocument(io.recoveryLedgerR9);
+      validateR10RecoveryDocument(io.recoveryLedgerR10);
       const expected = R5_BINDINGS.competencies.find((c) => c.month === month);
       if (!expected || existing.length !== 1 || existing[0].id !== expected.id)
         stop("RECOVERY_STATE");
@@ -5993,6 +6249,7 @@ const PREPARER_FAILURE_CODES = new Set([
   "RECOVERY_READ_ONLY",
   "RECOVERY_R8_LEDGER",
   "RECOVERY_R9_LEDGER",
+  "RECOVERY_R10_LEDGER",
   "RECOVERY_R8_DOCUMENT",
   "RECOVERY_R8_ANALYSIS",
   "RECOVERY_PROOF",
@@ -6163,6 +6420,7 @@ async function runFixturePreparation() {
   const r7Recovery = validateR7RecoveryDocument(getValidatedR7ZeroAuth());
   const r8Recovery = validateR8RecoveryDocument(R8_RECOVERY_DOCUMENT);
   const r9Recovery = validateR9RecoveryDocument(R9_RECOVERY_DOCUMENT);
+  const r10Recovery = validateR10RecoveryDocument(R10_RECOVERY_DOCUMENT);
   const validatedBudget = recoveryBudget(
     R1_RECOVERY_DOCUMENT,
     R3_RECOVERY_DOCUMENT,
@@ -6256,6 +6514,7 @@ async function runFixturePreparation() {
       recoveryLedgerR7: r7Recovery,
       recoveryLedgerR8: r8Recovery,
       recoveryLedgerR9: r9Recovery,
+      recoveryLedgerR10: r10Recovery,
       beforeArm: (rpc, payload, evidence, binding) =>
         observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
@@ -6548,6 +6807,7 @@ async function runFixturePreparation() {
       recoveryLedgerR7: r7Recovery,
       recoveryLedgerR8: r8Recovery,
       recoveryLedgerR9: r9Recovery,
+      recoveryLedgerR10: r10Recovery,
       recoveryReady: (proof) => {
         broker.authorizeRecovery(proof);
         recoveryState = proof;
@@ -6718,6 +6978,10 @@ async function runFixturePreparation() {
     writeFileSync(join(output, "recovery-r9.json"), JSON.stringify(r9Recovery, null, 2) + "\n", {
       mode: 0o600,
     });
+    writeFileSync(join(output, "receipts-r10.json"), r10Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r10.json"), JSON.stringify(r10Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
     let sums = "";
     writeFileSync(
       join(output, "recovery-r2.json"),
@@ -6741,6 +7005,8 @@ async function runFixturePreparation() {
       "observation-diagnostic.json",
       "receipts-r9.json",
       "recovery-r9.json",
+      "receipts-r10.json",
+      "recovery-r10.json",
     ])
       sums +=
         createHash("sha256")
