@@ -10973,3 +10973,1157 @@ test("R12 actual report recovery retains its ten fields while reservation stays 
   ]);
   assert.equal(Object.hasOwn(value, "priorReserved"), false);
 });
+
+const R13_R12_RESPONSES = {
+  "/actions/runs/42666600147": {
+    id: 42666600147,
+    name: "ContaOS Frontend Zero-Drift",
+    workflow_id: 406076025,
+    path: ".github/workflows/contaos-frontend-zero-drift.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "push",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T17:38:29Z",
+    updated_at: "2026-11-09T17:40:06Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42666600147/attempts/1": {
+    id: 42666600147,
+    name: "ContaOS Frontend Zero-Drift",
+    workflow_id: 406076025,
+    path: ".github/workflows/contaos-frontend-zero-drift.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "push",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T17:38:29Z",
+    updated_at: "2026-11-09T17:40:06Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42666600147/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 2,
+    jobs: [
+      {
+        id: 129331797954,
+        run_id: 42666600147,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "ContaOS Frontend Zero-Drift",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:32Z",
+            completed_at: "2026-11-09T17:38:33Z",
+          },
+          {
+            number: 2,
+            name: "Checkout immutable commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:33Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 3,
+            name: "P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 4,
+            name: "P0 V1 — autotestes do inventario e dispensas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 5,
+            name: "P0 V1 — integridade dos 416 critérios, 45 prompts e 37 atomicos",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 6,
+            name: "P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 7,
+            name: "Autoteste do guard (casos permitidos e proibidos)",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:37Z",
+          },
+          {
+            number: 8,
+            name: "Verificar contrato de seguranca do Auto-Lock por PR",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:37Z",
+            completed_at: "2026-11-09T17:38:37Z",
+          },
+          {
+            number: 9,
+            name: "Verificar fronteira frontend/backend e PLAN validado prévio",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:37Z",
+            completed_at: "2026-11-09T17:38:37Z",
+          },
+          {
+            number: 10,
+            name: "Autotestes do snapshot canônico e matriz de telas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:37Z",
+            completed_at: "2026-11-09T17:38:37Z",
+          },
+          {
+            number: 11,
+            name: "Verificar HEAD vivo do repositório normativo antes de BUILD",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:37Z",
+            completed_at: "2026-11-09T17:38:38Z",
+          },
+          {
+            number: 12,
+            name: "GOV-003 — exigir token valido e fonte viva antes do merge",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:38Z",
+            completed_at: "2026-11-09T17:38:38Z",
+          },
+          {
+            number: 13,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:38Z",
+            completed_at: "2026-11-09T17:38:38Z",
+          },
+          {
+            number: 14,
+            name: "Setup Bun",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:38Z",
+            completed_at: "2026-11-09T17:38:48Z",
+          },
+          {
+            number: 15,
+            name: "Install frozen dependencies",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:48Z",
+            completed_at: "2026-11-09T17:38:50Z",
+          },
+          {
+            number: 16,
+            name: "GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:50Z",
+            completed_at: "2026-11-09T17:38:50Z",
+          },
+          {
+            number: 17,
+            name: "Lint e formatacao do saneamento transversal",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:50Z",
+            completed_at: "2026-11-09T17:38:52Z",
+          },
+          {
+            number: 18,
+            name: "Production build — geração canônica TanStack antes dos testes longos",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:52Z",
+            completed_at: "2026-11-09T17:38:57Z",
+          },
+          {
+            number: 19,
+            name: "GOV-020 — bloquear divergência entre routeTree gerado e commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:57Z",
+            completed_at: "2026-11-09T17:38:57Z",
+          },
+          {
+            number: 20,
+            name: "Full regression — Vitest 2 workers",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:57Z",
+            completed_at: "2026-11-09T17:39:48Z",
+          },
+          {
+            number: 21,
+            name: "TypeScript typecheck",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:39:48Z",
+            completed_at: "2026-11-09T17:40:03Z",
+          },
+          {
+            number: 22,
+            name: "Brand-01, PT-BR, secrets and types integrity",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:03Z",
+            completed_at: "2026-11-09T17:40:03Z",
+          },
+          {
+            number: 43,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:03Z",
+            completed_at: "2026-11-09T17:40:03Z",
+          },
+          {
+            number: 44,
+            name: "Post Checkout immutable commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:03Z",
+            completed_at: "2026-11-09T17:40:03Z",
+          },
+          {
+            number: 45,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:03Z",
+            completed_at: "2026-11-09T17:40:03Z",
+          },
+        ],
+      },
+      {
+        id: 129331798384,
+        run_id: 42666600147,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:32Z",
+            completed_at: "2026-11-09T17:38:33Z",
+          },
+          {
+            number: 2,
+            name: "Checkout SHA imutavel, apenas leitura",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:33Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 3,
+            name: "Detectar escopo de auditoria visual",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 4,
+            name: "Setup Bun",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 5,
+            name: "Instalar dependencias congeladas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 6,
+            name: "Cache do Chromium Playwright 1.64.1",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 7,
+            name: "Instalar Playwright isolado, sem atualizar package/lock",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 8,
+            name: "Executar servidor de desenvolvimento isolado do mesmo SHA",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 9,
+            name: "GOV-020 — verificar routeTree após Vite dev e antes do Playwright",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 10,
+            name: "Teste C Playwright — 24 telas, 4 larguras, 2 temas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 11,
+            name: "Evidencia permanente de screenshots e SHA256SUMS",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 12,
+            name: "Confirmar que nenhuma fonte versionada foi editada",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 24,
+            name: "Post Checkout SHA imutavel, apenas leitura",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 25,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:36Z",
+          },
+        ],
+      },
+    ],
+  },
+  "/actions/runs/42666864017": {
+    id: 42666864017,
+    name: "ContaOS Trilha A Fixtures",
+    workflow_id: 411426169,
+    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "failure",
+    created_at: "2026-11-09T17:40:10Z",
+    updated_at: "2026-11-09T17:42:21Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42666864017/attempts/1": {
+    id: 42666864017,
+    name: "ContaOS Trilha A Fixtures",
+    workflow_id: 411426169,
+    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "failure",
+    created_at: "2026-11-09T17:40:10Z",
+    updated_at: "2026-11-09T17:42:22Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42666864017/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 3,
+    jobs: [
+      {
+        id: 129332744911,
+        run_id: 42666864017,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A solicitacao unica sem credenciais",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:14Z",
+            completed_at: "2026-11-09T17:40:15Z",
+          },
+          {
+            number: 2,
+            name: "Bootstrap publico confiavel antes de checkout ou token",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:15Z",
+            completed_at: "2026-11-09T17:40:18Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:18Z",
+            completed_at: "2026-11-09T17:40:21Z",
+          },
+          {
+            number: 4,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:21Z",
+            completed_at: "2026-11-09T17:40:26Z",
+          },
+          {
+            number: 5,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:26Z",
+            completed_at: "2026-11-09T17:40:37Z",
+          },
+          {
+            number: 6,
+            name: "Run bun install --frozen-lockfile",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:37Z",
+            completed_at: "2026-11-09T17:40:39Z",
+          },
+          {
+            number: 7,
+            name: "Provar evento e unicidade somente em metadados Actions",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:39Z",
+            completed_at: "2026-11-09T17:41:12Z",
+          },
+          {
+            number: 13,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:12Z",
+            completed_at: "2026-11-09T17:41:13Z",
+          },
+          {
+            number: 14,
+            name: "Post Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:13Z",
+            completed_at: "2026-11-09T17:41:13Z",
+          },
+          {
+            number: 15,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:13Z",
+            completed_at: "2026-11-09T17:41:13Z",
+          },
+        ],
+      },
+      {
+        id: 129332747763,
+        run_id: 42666864017,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A protocolo e Chromium sem credenciais",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+      {
+        id: 129333370334,
+        run_id: 42666864017,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A preparacao sintetica HML",
+        status: "completed",
+        conclusion: "failure",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:20Z",
+            completed_at: "2026-11-09T17:41:22Z",
+          },
+          {
+            number: 2,
+            name: "Checkout imutavel do executor main",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:22Z",
+            completed_at: "2026-11-09T17:41:24Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:24Z",
+            completed_at: "2026-11-09T17:41:25Z",
+          },
+          {
+            number: 4,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:25Z",
+            completed_at: "2026-11-09T17:41:36Z",
+          },
+          {
+            number: 5,
+            name: "Dependencias congeladas do executor",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:36Z",
+            completed_at: "2026-11-09T17:41:38Z",
+          },
+          {
+            number: 6,
+            name: "Recibo inicial publico para as fases sem credenciais",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:38Z",
+            completed_at: "2026-11-09T17:42:11Z",
+          },
+          {
+            number: 7,
+            name: "Reancorar deployment HML sem credenciais, antes do checkout da fonte",
+            status: "completed",
+            conclusion: "failure",
+            started_at: "2026-11-09T17:42:11Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 8,
+            name: "Validar SHA ancestral antes de baixar ou executar a fonte",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 9,
+            name: "Fonte aprovada em checkout separado, sem credenciais persistidas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 10,
+            name: "Dependencias congeladas da fonte aprovada",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 11,
+            name: "Run actions/cache@v4",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 12,
+            name: "Run ./node_modules/.bin/playwright install --with-deps chromium",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 13,
+            name: "Barreira nativa no mesmo HEAD antes de secrets",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 14,
+            name: "Preparacao e SSR sem credenciais privadas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 15,
+            name: "Revalidar main e unicidade dentro da concorrencia antes de secrets",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 16,
+            name: "Somente agora fornecer o par sintetico ao preparador separado",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 17,
+            name: "Verificar hashes gerados, inclusive em resultado parcial",
+            status: "completed",
+            conclusion: "failure",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 18,
+            name: "Evidencia privada imutavel por 90 dias",
+            status: "completed",
+            conclusion: "failure",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 35,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 36,
+            name: "Post Checkout imutavel do executor main",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:18Z",
+          },
+          {
+            number: 37,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:42:18Z",
+            completed_at: "2026-11-09T17:42:18Z",
+          },
+        ],
+      },
+    ],
+  },
+  "/actions/runs/42666864220": {
+    id: 42666864220,
+    name: "ContaOS Trilha A Autenticada",
+    workflow_id: 411115674,
+    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T17:40:10Z",
+    updated_at: "2026-11-09T17:40:35Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42666864220/attempts/1": {
+    id: 42666864220,
+    name: "ContaOS Trilha A Autenticada",
+    workflow_id: 411115674,
+    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T17:40:10Z",
+    updated_at: "2026-11-09T17:40:36Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42666864220/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 3,
+    jobs: [
+      {
+        id: 129332746954,
+        run_id: 42666864220,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A solicitacao unica sem credenciais",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:13Z",
+            completed_at: "2026-11-09T17:40:14Z",
+          },
+          {
+            number: 2,
+            name: "Bootstrap publico confiavel antes de checkout ou token",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:14Z",
+            completed_at: "2026-11-09T17:40:15Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:15Z",
+            completed_at: "2026-11-09T17:40:17Z",
+          },
+          {
+            number: 4,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:17Z",
+            completed_at: "2026-11-09T17:40:17Z",
+          },
+          {
+            number: 5,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:17Z",
+            completed_at: "2026-11-09T17:40:29Z",
+          },
+          {
+            number: 6,
+            name: "Run bun install --frozen-lockfile",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:29Z",
+            completed_at: "2026-11-09T17:40:31Z",
+          },
+          {
+            number: 7,
+            name: "Provar evento e unicidade somente em metadados Actions",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:31Z",
+            completed_at: "2026-11-09T17:40:31Z",
+          },
+          {
+            number: 13,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:31Z",
+            completed_at: "2026-11-09T17:40:31Z",
+          },
+          {
+            number: 14,
+            name: "Post Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:31Z",
+            completed_at: "2026-11-09T17:40:31Z",
+          },
+          {
+            number: 15,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:31Z",
+            completed_at: "2026-11-09T17:40:31Z",
+          },
+        ],
+      },
+      {
+        id: 129332749745,
+        run_id: 42666864220,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A protocolo e Chromium sem credenciais",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+      {
+        id: 129332966127,
+        run_id: 42666864220,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A auditoria privada HML",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+    ],
+  },
+  "/actions/runs/42666864017/artifacts?per_page=100&page=1": {
+    total_count: 0,
+    artifacts: [],
+  },
+};
+
+const R13_R12_PROOF = Object.freeze({
+  schema: "contaos.single-request.r12-zero-auth.v1",
+  headSha: "3d6bea3e938459f348130bf1d04431a072dba081",
+  upstreamRun: 42666600147,
+  fixturesRun: 42666864017,
+  auditRun: 42666864220,
+  privateJob: 129333370334,
+  attempt: 1,
+  derivedNewBusinessIntents: 0,
+  proof: "GITHUB_ACTIONS_LIVE_METADATA",
+});
+async function r13R12Fixture() {
+  const { execFileSync } = await import("node:child_process"),
+    responses = structuredClone(R13_R12_RESPONSES),
+    requests = [];
+  return {
+    responses,
+    requests,
+    get: async (path) => {
+      requests.push(path);
+      assert.ok(Object.hasOwn(responses, path), "only ten fixed R12 metadata endpoints");
+      return structuredClone(responses[path]);
+    },
+    git: async (args) => execFileSync("git", args, { encoding: "utf8", maxBuffer: 4194304 }),
+  };
+}
+async function r13ControllerFixture() {
+  const verify = fn("verifySingleRequest"),
+    sha = "a".repeat(40),
+    parent = "b".repeat(40);
+  const repo = { full_name: "contaos999999/contaos-hml-control" };
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: sut.SINGLE_REQUEST.fixtures.nonce,
+    approved_parent_sha: parent,
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  const raw = JSON.stringify(request),
+    spec = sut.SINGLE_REQUEST;
+  const upstream = {
+    id: 91,
+    workflow_id: 406076025,
+    path: spec.upstreamPath,
+    name: spec.upstreamName,
+    event: "push",
+    head_branch: "main",
+    head_sha: sha,
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    repository: repo,
+    head_repository: repo,
+  };
+  const current = {
+    id: 92,
+    workflow_id: spec.fixtures.id,
+    path: spec.fixtures.path,
+    name: spec.fixtures.name,
+    event: "workflow_run",
+    head_branch: "main",
+    head_sha: sha,
+    run_attempt: 1,
+    repository: repo,
+    head_repository: repo,
+  };
+  const pull = {
+    id: 300,
+    number: 90,
+    merged: true,
+    state: "closed",
+    merged_at: "2026-11-08T00:00:00Z",
+    merge_commit_sha: sha,
+    changed_files: 1,
+    base: { ref: "main", sha: parent, repo },
+    head: { sha: "d".repeat(40), ref: "request/fixtures", repo },
+  };
+  const review = {
+    id: 301,
+    state: "COMMENTED",
+    user: { login: "contaos9999" },
+    commit_id: pull.head.sha,
+    submitted_at: "2026-11-08T00:00:00Z",
+    body: JSON.stringify({
+      schema: "contaos.single-request.review.v1",
+      request_id: request.request_id,
+      head_sha: pull.head.sha,
+      critical: 0,
+      important: 0,
+      decision: "APROVAVEL",
+    }),
+  };
+  const requiredCi = [
+    { id: 501, workflow_id: 406076025, name: spec.upstreamName, path: spec.upstreamPath },
+    {
+      id: 502,
+      workflow_id: 410005553,
+      name: "ContaOS LOCK-TYPES-01 Double Barrier",
+      path: ".github/workflows/lock-types-double-barrier.yml",
+    },
+  ].map((r) => ({
+    ...r,
+    head_sha: pull.head.sha,
+    event: "pull_request",
+    head_branch: pull.head.ref,
+    repository: repo,
+    head_repository: repo,
+    status: "completed",
+    conclusion: "success",
+  }));
+  const env = {
+    GITHUB_EVENT_NAME: "workflow_run",
+    GITHUB_REF: "refs/heads/main",
+    GITHUB_REPOSITORY: repo.full_name,
+    GITHUB_RUN_ID: "92",
+    GITHUB_RUN_ATTEMPT: "1",
+    CONTAOS_HARNESS_SHA: sha,
+    GITHUB_EVENT_PATH: "event.json",
+  };
+  const event = { action: "completed", repository: repo, workflow_run: upstream };
+  const read = async (path) => (path === "event.json" ? JSON.stringify(event) : raw);
+  const stat = async () => ({ isFile: () => true, isSymbolicLink: () => false, size: raw.length });
+  const gitCalls = [];
+  const git = async (args) => {
+    gitCalls.push([...args]);
+    if (args[0] === "show" && args[1].startsWith("3d6bea3e938459f348130bf1d04431a072dba081:"))
+      return r12Fixture.git(args);
+    assert.equal(args.includes(""), false, "Git nunca recebe SHA vazio");
+    if (args[0] === "show" && args[1].startsWith("bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215:"))
+      return (await r8R7Fixture()).git(args);
+    if (args[0] === "show" && args[1].startsWith(R5_R4_HEAD + ":"))
+      return (await r5R4Fixture()).git(args);
+    if (args[0] === "show") return raw;
+    if (args[0] === "rev-parse") return sha;
+    if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ");
+    if (args[0] === "merge-base") return "";
+    if (args[0] === "diff-tree") return "A\t" + spec.path;
+    if (args[0] === "ls-tree") return "100644 blob " + "e".repeat(40) + "\t" + spec.path;
+    if (args[0] === "log") return sha;
+    throw new Error("unexpected git");
+  };
+  const r12Fixture = await r13R12Fixture();
+  const r4Fixture = await r5R4Fixture();
+  const r7Fixture = await r8R7Fixture();
+  const get = async (path) => {
+    if (/42666600147|42666864017|42666864220/.test(path)) return r12Fixture.get(path);
+    if (/42601246471|42601383933|42601384052/.test(path)) return r7Fixture.get(path);
+    if (path.includes(R5_R4_HEAD) || /42568309807|42568382053|42568382029/.test(path))
+      return r4Fixture.get(path);
+    if (path === "") return { ...repo, private: false };
+    if (path.startsWith("/commits/")) return [pull];
+    if (path === "/pulls/90") return pull;
+    if (path.startsWith("/pulls/90/reviews?")) return [review];
+    if (path.startsWith("/actions/runs?head_sha="))
+      return { total_count: requiredCi.length, workflow_runs: requiredCi };
+    if (path === "/git/ref/heads/main") return { object: { sha } };
+    if (path === "/actions/workflows/" + spec.fixtures.id)
+      return { ...spec.fixtures, state: "active" };
+    if (path === "/actions/workflows/" + spec.audit.id) return { ...spec.audit, state: "active" };
+    if (path === "/actions/runs/91") return upstream;
+    if (path === "/actions/runs/92") return current;
+    if (path.startsWith("/actions/workflows/" + spec.fixtures.id + "/runs?"))
+      return { total_count: 1, workflow_runs: [current] };
+    if (path.startsWith("/actions/workflows/" + spec.audit.id + "/runs?"))
+      return {
+        total_count: 1,
+        workflow_runs: [{ ...current, id: 93, workflow_id: spec.audit.id }],
+      };
+    if (path.startsWith("/actions/runs/93/jobs?"))
+      return { total_count: 1, jobs: [{ name: spec.audit.privateName, conclusion: "skipped" }] };
+    throw new Error("unexpected API " + path);
+  };
+  const options = { operation: "fixtures", env, read, stat, git, get, wait: async () => {} };
+
+  return { options, sha, parent, raw, env, read, stat, git, get, gitCalls, r12Fixture };
+}
+
+test("R13 request nonce is accepted and the preAuth R12 nonce stays spent", () => {
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r13",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.deepEqual(sut.parseSingleRequest(JSON.stringify(request), "fixtures"), request);
+  assert.throws(
+    () =>
+      sut.parseSingleRequest(
+        JSON.stringify({ ...request, request_id: "trilha-a-fixtures-20261109-r12" }),
+        "fixtures",
+      ),
+    /REQUEST_/,
+  );
+});
+test("R13 actual selected controller requires the live closed R12 proof before authorizing context", async () => {
+  const f = await r13ControllerFixture(),
+    result = await sut.verifySingleRequest(f.options);
+  assert.deepEqual(result.r12ZeroAuth, R13_R12_PROOF);
+  assert.equal(f.r12Fixture.requests.length, 10);
+});
+test("R13 actual request Git contract requires its integrated gate in the approved parent", async () => {
+  const f = await r13ControllerFixture();
+  await sut.verifySingleRequest(f.options);
+  assert.ok(
+    f.gitCalls.some(
+      (args) =>
+        args.join(" ") ===
+        "merge-base --is-ancestor 6605fbfc40359a1565abbffc8b8358ff4cf44b83 " + f.parent,
+    ),
+  );
+});
+test("R13 actual controller refuses an R12 private Master step that executed", async () => {
+  const f = await r13ControllerFixture(),
+    jobs = f.r12Fixture.responses["/actions/runs/42666864017/attempts/1/jobs?per_page=100&page=1"];
+  const privateJob = jobs.jobs.find((j) => j.id === 129333370334);
+  privateJob.steps.find((s) => s.number === 16).conclusion = "success";
+  await assert.rejects(() => sut.verifySingleRequest(f.options), { code: "RECOVERY_R12_PROOF" });
+});
+test("R13 actual controller refuses changed original R12 executable source", async () => {
+  const f = await r13ControllerFixture();
+  await assert.rejects(
+    () =>
+      sut.verifySingleRequest({
+        ...f.options,
+        git: async (args) =>
+          args[0] === "show" &&
+          args[1] ===
+            "3d6bea3e938459f348130bf1d04431a072dba081:scripts/hml/prepare-visual-fixtures.mjs"
+            ? "changed"
+            : f.git(args),
+      }),
+    { code: "RECOVERY_R12_PROOF" },
+  );
+});
+test("R13 actual local Master loader rejects missing R12 proof without a network call", async () => {
+  const f = await r13ControllerFixture(),
+    result = await sut.verifySingleRequest(f.options),
+    identity = { harnessSha: f.sha, moduleHash: "e".repeat(64), testHash: "f".repeat(64) },
+    runtime = {
+      schema: "contaos.single-request.runtime.v1",
+      createdAt: 100000,
+      ...result,
+      r12ZeroAuth: R13_R12_PROOF,
+      identity,
+    };
+  const local = {
+    operation: "fixtures",
+    env: f.env,
+    stat: f.stat,
+    git: f.git,
+    identity: async () => identity,
+    now: () => 100000,
+    fresh: true,
+    read: async (path) =>
+      path.includes(".audit-work/single-request.json") ? JSON.stringify(runtime) : f.read(path),
+  };
+  assert.equal(await sut.loadSingleRequestProof(local), true);
+  delete runtime.r12ZeroAuth;
+  await assert.rejects(() => sut.loadSingleRequestProof(local), { code: "RECOVERY_R12_PROOF" });
+  assert.equal(sut.singleRequestEventAllowed(f.env, "fixtures"), false);
+});
