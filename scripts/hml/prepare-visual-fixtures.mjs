@@ -208,6 +208,8 @@ export function reconcileR1Recovery(input) {
     !official(s) ||
     s.id !== FIXTURE.source ||
     !sourceFieldsExact(s) ||
+    !Number.isInteger(s.version) ||
+    s.version < 1 ||
     !official(v) ||
     !uuid(v.id) ||
     v.source !== FIXTURE.source ||
@@ -2609,6 +2611,13 @@ export async function prepareSourceAndList(io) {
           l &&
             v &&
             l.id === matching[0].id &&
+            uuid(l.id) &&
+            uuid(v.id) &&
+            Number.isInteger(l.versao_registro) &&
+            l.versao_registro > 0 &&
+            Number.isInteger(v.numero_versao) &&
+            v.numero_versao > 0 &&
+            l.versao_atual === v.numero_versao &&
             l.nome === FIXTURE.listName &&
             l.descricao === FIXTURE.listDescription &&
             checkedOfficial(l) &&

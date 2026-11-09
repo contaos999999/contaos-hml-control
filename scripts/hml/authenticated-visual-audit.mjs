@@ -530,6 +530,25 @@ export async function loadPrivacy78RbacProof() {
   return proof;
 }
 
+export async function loadPrivacyWireProof() {
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-wire-cardinality-20261109.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "60e0ac641d0ddfa273b3dde46d1aad14c53ed5742932f84dcc207f14d68c42e7")
+    fail("PRIVACY_PROOF");
+  const freeze = (value) => {
+    if (value && typeof value === "object") {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
+    return value;
+  };
+  return freeze(JSON.parse(bytes));
+}
+
 const privacy109Proofs = new WeakSet();
 export async function loadPrivacy109Proof() {
   const bytes = await readFile(
@@ -733,8 +752,24 @@ export async function privacy109FieldSnapshots(page, anchor) {
   ];
 }
 
-export function privacy78Runtime({ proof, rbacProof = null, v109Proof = null, install = false }) {
+export function privacy78Runtime({
+  proof,
+  rbacProof = null,
+  v109Proof = null,
+  wireProof = null,
+  install = false,
+}) {
   const origin = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  // Only the four approved maybeSingle transports use singleton HTTP arrays.
+  // Their DTO normalization occurs later inside postgrest-js, after this observer.
+  const wireNames = ["contract_gate", "document_gate", "upload", "competence_rbac_gate"];
+  const wireValid =
+    wireProof?.schema === "contaos.hml.privacy-wire-cardinality.v1" &&
+    wireProof.dependency?.package === "@supabase/postgrest-js" &&
+    wireProof.dependency.version === "2.118.0" &&
+    wireProof.approved_wire?.wire_shape === "array" &&
+    wireProof.approved_wire.exact_length === 1 &&
+    JSON.stringify(wireProof.approved_wire.contract_names) === JSON.stringify(wireNames);
   const rq = rbacProof?.get_contract;
   const rbacValid =
     rbacProof?.schema === "contaos.hml.privacy78-rbac-context.v1" &&
@@ -899,6 +934,18 @@ export function privacy78Runtime({ proof, rbacProof = null, v109Proof = null, in
   const project = (contract, body) => {
     const want = expected[contract?.name];
     if (!want || !body || typeof body !== "object") return null;
+    if (wireNames.includes(contract.name)) {
+      if (
+        !wireValid ||
+        !Array.isArray(body) ||
+        body.length !== 1 ||
+        !body[0] ||
+        typeof body[0] !== "object" ||
+        Array.isArray(body[0])
+      )
+        return null;
+      body = body[0];
+    }
     const array = !contract.shape || contract.shape === "array";
     if (Array.isArray(body) !== array || (array && body.length > 25)) return null;
     const rows = array
@@ -3764,10 +3811,12 @@ async function runAuthenticatedAudit() {
     const privacyProof = await loadPrivacy78Proof();
     const rbacProof = await loadPrivacy78RbacProof();
     const v109Proof = await loadPrivacy109Proof();
+    const wireProof = await loadPrivacyWireProof();
     await context.addInitScript(privacy78Runtime, {
       proof: privacyProof,
       rbacProof,
       v109Proof,
+      wireProof,
       install: true,
     });
     page = await context.newPage();
