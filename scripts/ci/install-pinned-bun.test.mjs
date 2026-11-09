@@ -473,3 +473,45 @@ test("gzip output limit refuses a decompression bomb before tar publication", ()
   const gz = gzipSync(Buffer.alloc(128 * 1024 * 1024 + 1));
   assert.throws(() => sut().decodeGzip(gz), { message: "BUN_GZIP" });
 });
+
+test("verified installer rejects a substituted mkdtemp name without chmod or victim mutation", async (t) => {
+  const bytes = await officialArchiveFixture(),
+    f = await envFixture(),
+    victim = path.join(f.dir, "victim");
+  await fs.mkdir(victim, { mode: 0o755 });
+  await fs.chmod(victim, 0o755);
+  const old = { RUNNER_TEMP: process.env.RUNNER_TEMP, GITHUB_PATH: process.env.GITHUB_PATH };
+  Object.assign(process.env, f.env);
+  const make = fs.mkdtemp.bind(fs);
+  let exec = 0,
+    chmod = 0;
+  t.mock.method(globalThis, "fetch", async () => response(bytes));
+  t.mock.method(fs, "mkdtemp", async (prefix) => {
+    const own = await make(prefix);
+    await fs.rename(own, own + "-unobserved");
+    await fs.symlink(victim, own);
+    return own;
+  });
+  t.mock.method(fs, "chmod", async () => {
+    chmod++;
+    throw new Error("MUST_NOT_CHMOD_UNVERIFIED_NAME");
+  });
+  t.mock.method(childProcess, "execFile", () => {
+    exec++;
+    throw new Error("MUST_NOT_EXEC");
+  });
+  try {
+    await assert.rejects(sut().installPinnedBun());
+    assert.equal(chmod, 0);
+    assert.equal(exec, 0);
+    assert.equal((await fs.lstat(victim)).mode & 511, 0o755);
+    assert.deepEqual(await fs.readdir(victim), []);
+    assert.equal(await fs.readFile(f.target, "utf8"), "");
+  } finally {
+    for (const k of Object.keys(old)) {
+      if (old[k] === undefined) delete process.env[k];
+      else process.env[k] = old[k];
+    }
+    await fs.rm(f.dir, { recursive: true, force: true });
+  }
+});

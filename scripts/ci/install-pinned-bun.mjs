@@ -340,6 +340,9 @@ export async function installPinnedBun() {
     ownStat = null,
     executableStat = null,
     publication = null;
+  let directoryHandle = null,
+    anchoredDirectory = null,
+    bunxReady = false;
   let own = null,
     binaryHandle = null,
     pathHandle = null,
@@ -372,6 +375,16 @@ export async function installPinnedBun() {
       )
         fail("BUN_WRITE");
     }
+    if (bunxReady) {
+      const alias = path.join(own, "bunx"),
+        stat = await fs.lstat(alias);
+      if (
+        !stat.isSymbolicLink() ||
+        (await fs.readlink(alias)) !== "bun" ||
+        (await fs.realpath(alias)) !== path.join(own, "bun")
+      )
+        fail("BUN_WRITE");
+    }
     check();
   };
   const rollback = async () => {
@@ -393,10 +406,21 @@ export async function installPinnedBun() {
   };
   const cleanupOwned = async () => {
     if (!own) return;
-    // Never recurse through a name whose directory identity changed.
+    if (directoryHandle) {
+      try {
+        if (!sameIdentity(await directoryHandle.stat(), ownStat)) fail("BUN_WRITE");
+        for (const name of ["bunx", "bun"])
+          await fs.unlink(path.join(anchoredDirectory, name)).catch((error) => {
+            if (error.code !== "ENOENT") throw error;
+          });
+      } finally {
+        await directoryHandle.close();
+        directoryHandle = null;
+      }
+    }
     const named = await fs.lstat(own).catch(() => null);
     if (named?.isSymbolicLink()) await fs.unlink(own);
-    if (!ownStat || !env) return;
+    if (!ownStat?.isDirectory() || !env) return;
     for (const name of await fs.readdir(env.runnerTemp)) {
       const candidate = path.join(env.runnerTemp, name),
         stat = await fs.lstat(candidate).catch(() => null);
@@ -406,9 +430,10 @@ export async function installPinnedBun() {
         sameIdentity(stat, ownStat) &&
         (await fs.realpath(candidate)) === candidate
       )
-        await fs.rm(candidate, { recursive: true, force: true });
+        await fs.rmdir(candidate);
     }
   };
+
   try {
     env = await validateEnvironment(process.env);
     check();
@@ -419,12 +444,20 @@ export async function installPinnedBun() {
     // A private directory is not created until the complete archive is verified.
     own = await fs.mkdtemp(path.join(env.runnerTemp, "contaos-bun-"));
     ownStat = await fs.lstat(own);
-    await fs.chmod(own, 0o700);
+    if (!ownStat.isDirectory() || ownStat.isSymbolicLink() || (ownStat.mode & 0o777) !== 0o700)
+      fail("BUN_WRITE");
+    directoryHandle = await fs.open(
+      own,
+      constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW,
+    );
+    if (!sameIdentity(await directoryHandle.stat(), ownStat)) fail("BUN_WRITE");
+    anchoredDirectory = "/proc/self/fd/" + directoryHandle.fd;
     if ((await fs.realpath(own)) !== own || (await fs.lstat(own)).mode % 512 !== 0o700)
       fail("BUN_WRITE");
     const executable = path.join(own, "bun");
+    await revalidateOwned();
     binaryHandle = await fs.open(
-      executable,
+      path.join(anchoredDirectory, "bun"),
       constants.O_CREAT | constants.O_EXCL | constants.O_RDWR | constants.O_NOFOLLOW,
       0o600,
     );
@@ -474,7 +507,8 @@ export async function installPinnedBun() {
     check();
     verifyVersion(stdout);
     await revalidateOwned();
-    await fs.symlink("bun", path.join(own, "bunx"));
+    await fs.symlink("bun", path.join(anchoredDirectory, "bunx"));
+    bunxReady = true;
     await revalidateOwned();
     const current = await validateEnvironment(process.env);
     if (
@@ -510,6 +544,16 @@ export async function installPinnedBun() {
     await pathHandle.close();
     pathHandle = null;
     await revalidateOwned();
+    check();
+    const finalEnvironment = await validateEnvironment(process.env);
+    if (
+      finalEnvironment.runnerTemp !== env.runnerTemp ||
+      !sameIdentity(finalEnvironment.pathStat, env.pathStat)
+    )
+      fail("BUN_ENV");
+    await revalidateOwned();
+    await directoryHandle.close();
+    directoryHandle = null;
     check();
     success = true;
     return Object.freeze({
