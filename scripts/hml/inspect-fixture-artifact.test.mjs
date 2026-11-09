@@ -611,3 +611,27 @@ test("R6 downstream role UUID syntax matches producer versions one through eight
     r.bindings.competencies[0].executionId,
   );
 });
+
+test("R6 armed intentions without a complete confirmed receipt ledger remain UNKNOWN", () => {
+  const r = report();
+  r.intentLedger.count = 9;
+  r.intentLedger.newArmedCount = 1;
+  assert.equal(validateRecords(r, empty()).observations.newConfirmed, "UNKNOWN");
+  r.intentLedger.count = 10;
+  r.intentLedger.newArmedCount = 2;
+  assert.equal(
+    validateRecords(r, { ...empty(), receipts: [row(), row("confirmed")] }).observations
+      .newConfirmed,
+    "UNKNOWN",
+  );
+  r.intentLedger.count = 9;
+  r.intentLedger.newArmedCount = 1;
+  assert.equal(
+    validateRecords(r, { ...empty(), receipts: [row(), row("uncertain")] }).observations
+      .newConfirmed,
+    "UNKNOWN",
+  );
+  const frozen = report();
+  frozen.intentLedger.frozen = true;
+  assert.equal(validateRecords(frozen, empty()).observations.newConfirmed, "UNKNOWN");
+});
