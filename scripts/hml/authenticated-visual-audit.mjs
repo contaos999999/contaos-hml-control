@@ -549,62 +549,115 @@ export async function loadPrivacyWireProof() {
   return freeze(JSON.parse(bytes));
 }
 
-
 const privacy123Proofs = new WeakSet();
 export async function loadPrivacy123Proof() {
-  const bytes = await readFile(new URL("../../docs/frontend/auditorias/evidencias/privacy-v123-20261109/PROVENIENCIA_V123_READONLY.json", import.meta.url));
-  if (digest(bytes) !== "c9eec464456e21dd598e6094d271be64e10c477583b174e122fb3317e493df80") fail("PRIVACY_PROOF");
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-v123-20261109/PROVENIENCIA_V123_READONLY.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "c9eec464456e21dd598e6094d271be64e10c477583b174e122fb3317e493df80")
+    fail("PRIVACY_PROOF");
   const freeze = (value) => {
-    if (value && typeof value === "object") { Object.values(value).forEach(freeze); Object.freeze(value); }
+    if (value && typeof value === "object") {
+      Object.values(value).forEach(freeze);
+      Object.freeze(value);
+    }
     return value;
   };
   const proof = freeze(JSON.parse(bytes));
   privacy123Proofs.add(proof);
   return proof;
 }
-export function privacy123FieldContext({ proof, v123Proof, rendered, snapshot, fieldSnapshots, anchored, receipt }) {
+export function privacy123FieldContext({
+  proof,
+  v123Proof,
+  rendered,
+  snapshot,
+  fieldSnapshots,
+  anchored,
+  receipt,
+}) {
   if (
-    !privacy78Proofs.has(proof) || !privacy123Proofs.has(v123Proof) ||
-    proof.context.organization !== v123Proof.context.organization || anchored !== true ||
-    !receipt || !Object.isFrozen(receipt) || !Array.isArray(receipt.observed) ||
-    !Object.isFrozen(receipt.observed) || receipt.observed.length !== 1 ||
-    receipt.observed[0] !== "v123_events_page0" || receipt.route !== v123Proof.context.route ||
-    !Number.isFinite(receipt.age) || receipt.age < 0 || receipt.age >= 120000 ||
-    !Array.isArray(fieldSnapshots) || fieldSnapshots.length !== 10 ||
+    !privacy78Proofs.has(proof) ||
+    !privacy123Proofs.has(v123Proof) ||
+    proof.context.organization !== v123Proof.context.organization ||
+    anchored !== true ||
+    !receipt ||
+    !Object.isFrozen(receipt) ||
+    !Array.isArray(receipt.observed) ||
+    !Object.isFrozen(receipt.observed) ||
+    receipt.observed.length !== 1 ||
+    receipt.observed[0] !== "v123_events_page0" ||
+    receipt.route !== v123Proof.context.route ||
+    !Number.isFinite(receipt.age) ||
+    receipt.age < 0 ||
+    receipt.age >= 120000 ||
+    !Array.isArray(fieldSnapshots) ||
+    fieldSnapshots.length !== 10 ||
     ![rendered, snapshot].every((s) => typeof s === "string" && s.length <= 1000000)
-  ) return null;
-  const ranges = { rendered: [], snapshot: [] }, values = new Set();
+  )
+    return null;
+  const ranges = { rendered: [], snapshot: [] },
+    values = new Set();
   const locateText = (whole, value) => {
     const at = whole.indexOf(value);
     return at >= 0 && whole.indexOf(value, at + 1) < 0 ? at : null;
   };
   const locateRow = (whole, row) => {
-    const lines = whole.split("\n"), wanted = row.split("\n"), found = [];
+    const lines = whole.split("\n"),
+      wanted = row.split("\n"),
+      found = [];
     let offset = 0;
     for (let i = 0; i < lines.length; i++) {
       const indent = lines[i].match(/^ */)[0];
-      if (wanted.every((line, j) => lines[i + j] === indent + line)) found.push({ offset, indent: indent.length });
+      if (wanted.every((line, j) => lines[i + j] === indent + line))
+        found.push({ offset, indent: indent.length });
       offset += lines[i].length + 1;
     }
     return found.length === 1 ? found[0] : null;
   };
   for (let i = 0; i < 10; i++) {
-    const fields = fieldSnapshots[i], event = v123Proof.events[i];
+    const fields = fieldSnapshots[i],
+      event = v123Proof.events[i];
     const rowValues = v123Proof.visible_columns.map(({ catalog_field }) => event[catalog_field]);
-    if (!fields || fields.catalogIndex !== i || !Array.isArray(fields.cells) || fields.cells.length !== 5 ||
-        ![fields.rendered, fields.row, ...fields.cells].every((s) => typeof s === "string" && s.length <= 1000000) ||
-        rowValues.some((v) => typeof v !== "string" || !v.length)) return null;
+    if (
+      !fields ||
+      fields.catalogIndex !== i ||
+      !Array.isArray(fields.cells) ||
+      fields.cells.length !== 5 ||
+      ![fields.rendered, fields.row, ...fields.cells].every(
+        (s) => typeof s === "string" && s.length <= 1000000,
+      ) ||
+      rowValues.some((v) => typeof v !== "string" || !v.length)
+    )
+      return null;
     rowValues.forEach((v) => values.add(v));
     const cells = rowValues.map((v) => "- cell " + JSON.stringify(v));
-    const lines = ["- row " + JSON.stringify(rowValues.join(" ")) + ":", ...cells.map((s) => "  " + s)];
-    if (fields.rendered !== rowValues.join("\t") || fields.row !== lines.join("\n") ||
-        fields.cells.some((s, j) => s !== cells[j])) return null;
-    const at = locateText(rendered, fields.rendered), row = locateRow(snapshot, fields.row);
+    const lines = [
+      "- row " + JSON.stringify(rowValues.join(" ")) + ":",
+      ...cells.map((s) => "  " + s),
+    ];
+    if (
+      fields.rendered !== rowValues.join("\t") ||
+      fields.row !== lines.join("\n") ||
+      fields.cells.some((s, j) => s !== cells[j])
+    )
+      return null;
+    const at = locateText(rendered, fields.rendered),
+      row = locateRow(snapshot, fields.row);
     if (at === null || row === null) return null;
     let cursor = at;
-    for (const v of rowValues) { ranges.rendered.push({ start: cursor, end: cursor + v.length }); cursor += v.length + 1; }
+    for (const v of rowValues) {
+      ranges.rendered.push({ start: cursor, end: cursor + v.length });
+      cursor += v.length + 1;
+    }
     cursor = row.offset + row.indent + '- row "'.length;
-    for (const v of rowValues) { ranges.snapshot.push({ start: cursor, end: cursor + v.length }); cursor += v.length + 1; }
+    for (const v of rowValues) {
+      ranges.snapshot.push({ start: cursor, end: cursor + v.length });
+      cursor += v.length + 1;
+    }
     cursor = row.offset + row.indent + lines[0].length + 1 + row.indent;
     for (let j = 0; j < 5; j++) {
       const start = cursor + '  - cell "'.length;
@@ -612,9 +665,22 @@ export function privacy123FieldContext({ proof, v123Proof, rendered, snapshot, f
       cursor += lines[j + 1].length + 1 + row.indent;
     }
   }
+  // Non-visible API fields receive no intervals; copies outside owned cells reject.
+  for (const event of v123Proof.events)
+    for (const field of ["id", "criado_em", "origem", "id_entidade"])
+      if (typeof event[field] === "string" && event[field].length) values.add(event[field]);
   const erase = (text, owned) => {
     const ordered = [...owned].sort((a, b) => a.start - b.start);
-    if (ordered.some((r, i) => r.start < 0 || r.end <= r.start || r.end > text.length || (i && r.start < ordered[i - 1].end))) return null;
+    if (
+      ordered.some(
+        (r, i) =>
+          r.start < 0 ||
+          r.end <= r.start ||
+          r.end > text.length ||
+          (i && r.start < ordered[i - 1].end),
+      )
+    )
+      return null;
     for (const value of values) {
       let offset = 0;
       for (;;) {
@@ -627,86 +693,195 @@ export function privacy123FieldContext({ proof, v123Proof, rendered, snapshot, f
     return ordered.reverse().reduce((s, r) => s.slice(0, r.start) + " " + s.slice(r.end), text);
   };
   if (ranges.rendered.length !== 50 || ranges.snapshot.length !== 100) return null;
-  const r = erase(rendered, ranges.rendered), s = erase(snapshot, ranges.snapshot);
+  const r = erase(rendered, ranges.rendered),
+    s = erase(snapshot, ranges.snapshot);
   if (r === null || s === null) return null;
   const context = Object.freeze({});
-  privacy78Contexts.set(context, { rendered: { original: rendered, remainder: r }, snapshot: { original: snapshot, remainder: s } });
+  privacy78Contexts.set(context, {
+    rendered: { original: rendered, remainder: r },
+    snapshot: { original: snapshot, remainder: s },
+  });
   return context;
 }
 export function privacy123FieldAnchor({ proof }) {
-  if (proof?.schema !== "contaos.hml.privacy-v123-exact-catalog.v1" || proof.context?.surface !== "V123" ||
-      !Array.isArray(proof.events) || proof.events.length !== 10) return null;
-  const visible = (e) => e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
+  if (
+    proof?.schema !== "contaos.hml.privacy-v123-exact-catalog.v1" ||
+    proof.context?.surface !== "V123" ||
+    !Array.isArray(proof.events) ||
+    proof.events.length !== 10
+  )
+    return null;
+  const visible = (e) =>
+    e && e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
   const attrs = (e, allowed) => e && [...e.attributes].every((a) => allowed.includes(a.name));
-  const plain = (e, allowed = ["class"]) => attrs(e, allowed) && [...e.childNodes].every((n) => n.nodeType === Node.TEXT_NODE);
+  const plain = (e, allowed = ["class"]) =>
+    attrs(e, allowed) && [...e.childNodes].every((n) => n.nodeType === Node.TEXT_NODE);
   const selector = 'div[role="region"][aria-label="Eventos de auditoria"]';
   const regions = document.querySelectorAll(selector);
-  if (regions.length !== 1 || !visible(regions[0]) || !attrs(regions[0], ["role", "aria-label", "tabindex", "class"]) ||
-      regions[0].getAttribute("tabindex") !== "0") return null;
-  const main = regions[0].closest("main"), headings = main?.querySelectorAll("h1");
-  if (!main || headings.length !== 1 || headings[0].textContent !== "Trilha de auditoria" || !plain(headings[0])) return null;
+  if (
+    regions.length !== 1 ||
+    !visible(regions[0]) ||
+    !attrs(regions[0], ["role", "aria-label", "tabindex", "class"]) ||
+    regions[0].getAttribute("tabindex") !== "0"
+  )
+    return null;
+  const main = regions[0].closest("main"),
+    headings = main?.querySelectorAll("h1");
+  if (
+    !main ||
+    headings.length !== 1 ||
+    headings[0].textContent !== "Trilha de auditoria" ||
+    !plain(headings[0])
+  )
+    return null;
   const tables = regions[0].querySelectorAll("table");
   if (tables.length !== 1 || !visible(tables[0]) || !attrs(tables[0], ["class"])) return null;
-  const table = tables[0], captions = table.querySelectorAll(":scope > caption");
-  if (captions.length !== 1 || captions[0].textContent !== "Eventos de auditoria da organização" || !plain(captions[0])) return null;
-  const headers = table.querySelectorAll(":scope > thead > tr > th");
+  const table = tables[0],
+    captions = table.querySelectorAll(":scope > caption");
+  if (
+    captions.length !== 1 ||
+    captions[0].textContent !== "Eventos de auditoria da organização" ||
+    !plain(captions[0])
+  )
+    return null;
+  const heads = table.querySelectorAll(":scope > thead");
+  if (
+    heads.length !== 1 ||
+    !attrs(heads[0], ["class"]) ||
+    heads[0].children.length !== 1 ||
+    heads[0].firstElementChild.tagName !== "TR" ||
+    !attrs(heads[0].firstElementChild, ["class"])
+  )
+    return null;
+  const headers = heads[0].firstElementChild.children;
   const labels = ["Data e hora", "Evento", "Entidade", "Usuário", "Correlação"];
-  if (headers.length !== 5 || [...headers].some((e, i) => e.textContent !== labels[i] || e.getAttribute("scope") !== "col" || !plain(e, ["class", "scope"]))) return null;
+  if (
+    headers.length !== 5 ||
+    [...headers].some(
+      (e, i) =>
+        e.tagName !== "TH" ||
+        e.textContent !== labels[i] ||
+        e.getAttribute("scope") !== "col" ||
+        !plain(e, ["class", "scope"]),
+    )
+  )
+    return null;
   const bodies = table.querySelectorAll(":scope > tbody");
-  if (bodies.length !== 1 || bodies[0].children.length !== 10 || !attrs(bodies[0], ["class"])) return null;
-  const rows = [...bodies[0].children], order = [], seen = new Set();
+  if (bodies.length !== 1 || bodies[0].children.length !== 10 || !attrs(bodies[0], ["class"]))
+    return null;
+  const rows = [...bodies[0].children],
+    order = [],
+    seen = new Set();
   const columns = ["formatted_created", "evento", "entidade", "id_usuario", "correlation_id"];
   for (const row of rows) {
     const cells = [...row.children];
-    if (row.tagName !== "TR" || !attrs(row, ["class"]) || cells.length !== 5 ||
-        cells.some((e) => e.tagName !== "TD" || !plain(e) || !visible(e))) return null;
+    if (
+      row.tagName !== "TR" ||
+      !attrs(row, ["class"]) ||
+      cells.length !== 5 ||
+      cells.some((e) => e.tagName !== "TD" || !plain(e) || !visible(e))
+    )
+      return null;
     const matches = [];
     for (let i = 0; i < proof.events.length; i++)
-      if (columns.every((field, j) => cells[j].textContent === proof.events[i][field])) matches.push(i);
+      if (columns.every((field, j) => cells[j].textContent === proof.events[i][field]))
+        matches.push(i);
     if (matches.length !== 1 || seen.has(matches[0]) || matches[0] !== order.length) return null;
-    order.push(matches[0]); seen.add(matches[0]);
+    order.push(matches[0]);
+    seen.add(matches[0]);
   }
   const filters = main.querySelectorAll('section[aria-label="Filtros de auditoria"]');
   if (filters.length !== 1 || !attrs(filters[0], ["aria-label", "class"])) return null;
   const filterLabels = filters[0].querySelectorAll(":scope > label");
-  const filterNames = ["Evento", "Entidade", "ID do usuário", "Correlation ID", "Data inicial", "Data final"];
-  if (filterLabels.length !== 6 || filters[0].querySelectorAll("input").length !== 6) return null;
+  const filterNames = [
+    "Evento",
+    "Entidade",
+    "ID do usuário",
+    "Correlation ID",
+    "Data inicial",
+    "Data final",
+  ];
+  if (
+    filters[0].children.length !== 6 ||
+    filterLabels.length !== 6 ||
+    filters[0].querySelectorAll("input").length !== 6
+  )
+    return null;
   for (let i = 0; i < 6; i++) {
-    const label = filterLabels[i], inputs = label.querySelectorAll(":scope > input"), input = inputs[0];
-    if (!attrs(label, ["class"]) || label.textContent.trim() !== filterNames[i] || inputs.length !== 1 ||
-        !attrs(input, ["class", "type", "value"]) || input.value !== "" || input.disabled ||
-        input.type !== (i < 4 ? "text" : "date") ||
-        [...label.childNodes].some((n) => n.nodeType !== Node.TEXT_NODE && n !== input)) return null;
+    const label = filterLabels[i],
+      inputs = label.querySelectorAll(":scope > input"),
+      input = inputs[0];
+    if (
+      !attrs(label, ["class"]) ||
+      label.textContent.trim() !== filterNames[i] ||
+      inputs.length !== 1 ||
+      !attrs(input, ["class", "type", "value"]) ||
+      input.value !== "" ||
+      input.disabled ||
+      input.type !== (i < 4 ? "text" : "date") ||
+      [...label.childNodes].some((n) => n.nodeType !== Node.TEXT_NODE && n !== input)
+    )
+      return null;
   }
   const navs = main.querySelectorAll('nav[aria-label="Paginação da auditoria"]');
-  if (navs.length !== 1 || !attrs(navs[0], ["aria-label", "class"]) || navs[0].children.length !== 3) return null;
+  if (
+    navs.length !== 1 ||
+    !attrs(navs[0], ["aria-label", "class"]) ||
+    navs[0].children.length !== 3
+  )
+    return null;
   const [previous, page, next] = navs[0].children;
-  if (previous.tagName !== "BUTTON" || next.tagName !== "BUTTON" || !previous.disabled || !next.disabled ||
-      previous.textContent.trim() !== "Anterior" || next.textContent.trim() !== "Próxima" ||
-      !plain(previous, ["class", "disabled"]) || !plain(next, ["class", "disabled"]) ||
-      page.tagName !== "SPAN" || page.textContent !== "Página 1" || page.getAttribute("aria-live") !== "polite" || !plain(page, ["aria-live"])) return null;
+  if (
+    previous.tagName !== "BUTTON" ||
+    next.tagName !== "BUTTON" ||
+    !previous.disabled ||
+    !next.disabled ||
+    previous.textContent.trim() !== "Anterior" ||
+    next.textContent.trim() !== "Próxima" ||
+    !plain(previous, ["class", "disabled"]) ||
+    !plain(next, ["class", "disabled"]) ||
+    page.tagName !== "SPAN" ||
+    page.textContent !== "Página 1" ||
+    page.getAttribute("aria-live") !== "polite" ||
+    !plain(page, ["aria-live"])
+  )
+    return null;
   return { selector: selector + " > table > tbody > tr", count: 10, order };
 }
 export async function privacy123FieldSnapshots(page, anchor) {
-  if (!anchor || anchor.count !== 10 || !Array.isArray(anchor.order) || anchor.order.length !== 10) return null;
+  if (!anchor || anchor.count !== 10 || !Array.isArray(anchor.order) || anchor.order.length !== 10)
+    return null;
   const rows = page.locator(anchor.selector);
-  if (await rows.count() !== 10) return null;
+  if ((await rows.count()) !== 10) return null;
   const result = [];
   for (let i = 0; i < 10; i++) {
-    const row = rows.nth(i), cells = row.locator(":scope > td");
-    if (await cells.count() !== 5) return null;
-    result.push({ catalogIndex: anchor.order[i], rendered: await row.innerText(), row: (await row.ariaSnapshot()).trim(),
-      cells: await Promise.all(Array.from({ length: 5 }, async (_, j) => (await cells.nth(j).ariaSnapshot()).trim())) });
+    const row = rows.nth(i),
+      cells = row.locator(":scope > td");
+    if ((await cells.count()) !== 5) return null;
+    result.push({
+      catalogIndex: anchor.order[i],
+      rendered: await row.innerText(),
+      row: (await row.ariaSnapshot()).trim(),
+      cells: await Promise.all(
+        Array.from({ length: 5 }, async (_, j) => (await cells.nth(j).ariaSnapshot()).trim()),
+      ),
+    });
   }
   return result;
 }
 export function privacy123Supplement(tap) {
-  if (typeof tap !== "string" || !/^ok 1 - privacy123 Chromium full DOM ARIA matrix binds approved ordered page$/m.test(tap)) return null;
+  if (
+    typeof tap !== "string" ||
+    !/^ok 1 - privacy123 Chromium full DOM ARIA matrix binds approved ordered page$/m.test(tap)
+  )
+    return null;
   const expected = { tests: 1, pass: 1, fail: 0, skipped: 0, cancelled: 0 };
   return Object.entries(expected).every(([key, value]) => {
     const matches = [...tap.matchAll(new RegExp("^# " + key + " ([0-9]+)$", "gm"))];
     return matches.length === 1 && Number(matches[0][1]) === value;
-  }) ? 1 : null;
+  })
+    ? 1
+    : null;
 }
 
 const privacy109Proofs = new WeakSet();
@@ -981,7 +1156,16 @@ export function privacy78Runtime({
         location.pathname === v109Proof.context.route &&
         !location.search &&
         !location.hash));
-  const v123Keys = ["id", "criado_em", "evento", "entidade", "origem", "id_usuario", "id_entidade", "correlation_id"];
+  const v123Keys = [
+    "id",
+    "criado_em",
+    "evento",
+    "entidade",
+    "origem",
+    "id_usuario",
+    "id_entidade",
+    "correlation_id",
+  ];
   const v123Contract = v123Proof?.get_contract;
   const v123Valid =
     v123Proof?.schema === "contaos.hml.privacy-v123-exact-catalog.v1" &&
@@ -990,21 +1174,29 @@ export function privacy78Runtime({
     v123Proof.context.route === "/administracao/auditoria" &&
     v123Proof.context.origin === "https://contaos-41-hml.vercel.app" &&
     v123Contract?.name === "v123_events_page0" &&
-    v123Contract.method === "GET" && v123Contract.origin === origin &&
+    v123Contract.method === "GET" &&
+    v123Contract.origin === origin &&
     v123Contract.path === "/rest/v1/eventos_auditoria" &&
-    v123Contract.shape === "array" && v123Contract.exact_rows === 10 &&
+    v123Contract.shape === "array" &&
+    v123Contract.exact_rows === 10 &&
     v123Contract.sql_catalog_total === 10 &&
     JSON.stringify(v123Contract.row_keys) === JSON.stringify(v123Keys) &&
     Object.keys(v123Contract.query ?? {}).length === 5 &&
     v123Contract.query.select === v123Keys.join(",") &&
     v123Contract.query.id_organizacao === "eq." + proof.context.organization &&
     v123Contract.query.order === "criado_em.desc,id.desc" &&
-    v123Contract.query.offset === "0" && v123Contract.query.limit === "25" &&
-    Array.isArray(v123Proof.events) && v123Proof.events.length === 10 &&
+    v123Contract.query.offset === "0" &&
+    v123Contract.query.limit === "25" &&
+    Array.isArray(v123Proof.events) &&
+    v123Proof.events.length === 10 &&
     new Set(v123Proof.events.map((e) => e?.id)).size === 10;
-  const v123Enabled = v123Valid && (!install ||
-    (location.origin === "https://contaos-41-hml.vercel.app" &&
-     location.pathname === "/administracao/auditoria" && !location.search && !location.hash));
+  const v123Enabled =
+    v123Valid &&
+    (!install ||
+      (location.origin === "https://contaos-41-hml.vercel.app" &&
+        location.pathname === "/administracao/auditoria" &&
+        !location.search &&
+        !location.hash));
   const contracts = [
     ...proof.get_contracts,
     ...(rbacEnabled ? [rq] : []),
@@ -1122,10 +1314,21 @@ export function privacy78Runtime({
       if (!v123Enabled || !Array.isArray(body) || body.length !== 10) return null;
       const keys = [...v123Keys].sort().join(",");
       for (let i = 0; i < 10; i++) {
-        const row = body[i], want = v123Proof.events[i];
-        if (!row || typeof row !== "object" || Array.isArray(row) || Object.keys(row).sort().join(",") !== keys ||
-            micros(row.criado_em) === null || micros(row.criado_em) !== micros(want.criado_em) ||
-            v123Keys.some((key) => key !== "criado_em" && (typeof row[key] !== "string" || row[key] !== want[key]))) return null;
+        const row = body[i],
+          want = v123Proof.events[i];
+        if (
+          !row ||
+          typeof row !== "object" ||
+          Array.isArray(row) ||
+          Object.keys(row).sort().join(",") !== keys ||
+          micros(row.criado_em) === null ||
+          micros(row.criado_em) !== micros(want.criado_em) ||
+          v123Keys.some(
+            (key) =>
+              key !== "criado_em" && (typeof row[key] !== "string" || row[key] !== want[key]),
+          )
+        )
+          return null;
       }
       return { name: contract.name, exact: true };
     }
@@ -3781,6 +3984,28 @@ async function nativeGuard() {
     fail("V112_NATIVE");
   }
 
+  let v123BrowserCases;
+  try {
+    const supplement = await execFile(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=^privacy123 Chromium full DOM ARIA matrix",
+        "scripts/hml/authenticated-visual-audit.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 60000,
+        maxBuffer: 1048576,
+      },
+    );
+    v123BrowserCases = privacy123Supplement(supplement.stdout);
+    if (v123BrowserCases !== 1) fail("V123_NATIVE");
+  } catch {
+    fail("V123_NATIVE");
+  }
+
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/native-proof.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -3792,6 +4017,7 @@ async function nativeGuard() {
       cases: 8,
       visualCases: 1,
       v112BrowserCases,
+      v123BrowserCases,
       harnessSha: proof.harnessSha,
     }),
   );
@@ -3976,8 +4202,18 @@ async function inspectPrivacy(page, words, diagnostics) {
         initialReceipt &&
         initialReceipt.revision === receipt.revision &&
         (await page.evaluate(
-          is109 ? privacy109FieldAnchor : is112 ? privacy112FieldAnchor : is123 ? privacy123FieldAnchor : privacy78FieldAnchor,
-          is109 ? { proof: state.v109Proof } : is123 ? { proof: state.v123Proof } : { surface: item.surface, proof: state.proof },
+          is109
+            ? privacy109FieldAnchor
+            : is112
+              ? privacy112FieldAnchor
+              : is123
+                ? privacy123FieldAnchor
+                : privacy78FieldAnchor,
+          is109
+            ? { proof: state.v109Proof }
+            : is123
+              ? { proof: state.v123Proof }
+              : { surface: item.surface, proof: state.proof },
         ));
       if (
         anchor &&
@@ -4030,17 +4266,25 @@ async function inspectPrivacy(page, words, diagnostics) {
                     receipt: currentReceipt,
                   })
                 : is123
-                  ? privacy123FieldContext({ proof: state.proof, v123Proof: state.v123Proof, rendered, snapshot, fieldSnapshots, anchored: true, receipt: currentReceipt })
+                  ? privacy123FieldContext({
+                      proof: state.proof,
+                      v123Proof: state.v123Proof,
+                      rendered,
+                      snapshot,
+                      fieldSnapshots,
+                      anchored: true,
+                      receipt: currentReceipt,
+                    })
                   : privacy78FieldContext({
-                    surface: item.surface,
-                    proof: state.proof,
-                    rbacProof: state.rbacProof,
-                    rendered,
-                    snapshot,
-                    fieldSnapshot,
-                    anchored: true,
-                    receipt: currentReceipt,
-                  });
+                      surface: item.surface,
+                      proof: state.proof,
+                      rbacProof: state.rbacProof,
+                      rendered,
+                      snapshot,
+                      fieldSnapshot,
+                      anchored: true,
+                      receipt: currentReceipt,
+                    });
           }
         }
       }
