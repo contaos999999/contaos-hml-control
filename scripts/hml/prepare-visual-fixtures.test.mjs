@@ -9598,7 +9598,11 @@ async function r12NativeOpinionProbe(browser) {
                     ...row,
                     id_competencia: requested.slice(3),
                     ...(requested === "eq." + oct
-                      ? { id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd" }
+                      ? {
+                          id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+                          status: "aprovado",
+                          aprovado_em: "2026-11-09T00:01:00Z",
+                        }
                       : {}),
                     ...(foreignBody
                       ? { id_organizacao: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee" }
