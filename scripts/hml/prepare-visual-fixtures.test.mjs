@@ -6266,3 +6266,40 @@ test("R9 missing R8 ledger cannot construct a recovery broker even with a valid 
       b.authorizeRecovery(proof);
     }, /RECOVERY_R8_LEDGER/);
 });
+
+test("R9 synchronous observed HTTP failure wins before later classification and microtasks", async () => {
+  const { EventEmitter } = await import("node:events"),
+    page = new EventEmitter(),
+    observer = sut.createOfficialObserver(page);
+  const request = {
+    url: () => FIXTURE.api + "/rest/v1/rpc/obter_analise_competencia_v116",
+    method: () => "POST",
+    postData: () => null,
+  };
+  page.emit("request", request);
+  page.emit("response", {
+    request: () => request,
+    url: request.url,
+    status: () => 503,
+    body: async () => {
+      assert.fail("HTTP must not read body");
+    },
+  });
+  const immediate = observer.observationFailure();
+  page.emit("response", {
+    request: () => {
+      throw Object.create(null);
+    },
+  });
+  await assert.rejects(() => observer.flush(), /OBSERVATION_FAILED/);
+  const after = observer.observationFailure();
+  observer.close();
+  const expected = {
+    contractKind: "RPC:obter_analise_competencia_v116",
+    stage: "HTTP_STATUS",
+    statusHTTP: 503,
+    requestFailure: "NONE",
+  };
+  assert.deepEqual(immediate, expected);
+  assert.deepEqual(after, expected);
+});
