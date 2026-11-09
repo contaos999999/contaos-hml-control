@@ -14,6 +14,7 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { execFile as execFileCallback } from "node:child_process";
 import { promisify } from "node:util";
 import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
 import { connect } from "node:net";
@@ -492,6 +493,459 @@ const SYNTHETIC_EXCERPT_PATTERN = new RegExp(
     String.raw`)(?![\p{L}\p{N}_-])`,
   "gu",
 );
+
+export function privacySys04Literal(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+export function privacySys04Supplement(tap) {
+  if (typeof tap !== "string") return null;
+  const expected = { tests: 2, pass: 2, fail: 0, skipped: 0, cancelled: 0 };
+  return Object.entries(expected).every(([k, v]) => {
+    const matches = [...tap.matchAll(new RegExp("^# " + k + " ([0-9]+)$", "gm"))];
+    return matches.length === 1 && Number(matches[0][1]) === v;
+  })
+    ? 2
+    : null;
+}
+
+const privacySys04Proofs = new WeakSet();
+export async function loadPrivacySys04Proof() {
+  const bytes = await readFile(
+    new URL(
+      "../../docs/frontend/auditorias/evidencias/privacy-remaining-sys04-20261108.json",
+      import.meta.url,
+    ),
+  );
+  if (digest(bytes) !== "a4a6f3f9f3c23a248effcf7471cad6e7a89b58b89c0345315b750c74a3e105df")
+    fail("PRIVACY_PROOF");
+  const freeze = (v) => {
+    if (v && typeof v === "object") {
+      Object.values(v).forEach(freeze);
+      Object.freeze(v);
+    }
+    return v;
+  };
+  const proof = freeze(JSON.parse(bytes));
+  privacySys04Proofs.add(proof);
+  return proof;
+}
+export function privacySys04Runtime({ proof, install = false }) {
+  const target =
+    "https://gklhhhyosgasnyoxlrui.supabase.co/rest/v1/rpc/listar_organizacoes_disponiveis";
+  const catalog = [
+    ...(proof?.legacy ?? []),
+    ...(proof?.constructor_closed ?? []),
+    ...(proof?.discovered_closed ?? []),
+  ];
+  const valid =
+    proof?.schema === "contaos.hml.privacy-remaining-sys04.v1" &&
+    catalog.length === 109 &&
+    new Set(catalog.map((r) => r.id)).size === 109;
+  const match = (raw, method, body) =>
+    valid &&
+    raw === target &&
+    method === "POST" &&
+    typeof body === "string" &&
+    body.trim() === "{}";
+  const project = (body) => {
+    if (!valid || !Array.isArray(body) || body.length < 1 || body.length > 109) return null;
+    const ids = [];
+    for (const r of body) {
+      if (
+        !r ||
+        typeof r !== "object" ||
+        Array.isArray(r) ||
+        Object.keys(r).sort().join() !== "cnpj,id,nome_fantasia,perfil,razao_social,situacao" ||
+        ids.includes(r.id)
+      )
+        return null;
+      const expected = catalog.find((v) => v.id === r.id);
+      if (
+        !expected ||
+        r.perfil !== "administrador_master" ||
+        r.cnpj !== null ||
+        !["razao_social", "nome_fantasia", "situacao"].every((k) => r[k] === expected[k])
+      )
+        return null;
+      ids.push(r.id);
+    }
+    return { ids };
+  };
+  if (!install) return { match, project };
+  if (
+    location.origin !== "https://contaos-41-hml.vercel.app" ||
+    location.pathname !== "/selecionar-organizacao" ||
+    location.search ||
+    location.hash
+  )
+    return;
+  const route = location.href,
+    started = performance.now();
+  let invalid = false,
+    pending = 0,
+    revision = 0,
+    ids = null,
+    seenGroup = false;
+  const invalidate = () => {
+    invalid = true;
+    ids = null;
+  };
+  const current = () => !invalid && location.href === route && performance.now() - started < 120000;
+  for (const event of [
+    "pagehide",
+    "beforeunload",
+    "popstate",
+    "hashchange",
+    "contaos:organizacao-alterada",
+  ])
+    window.addEventListener(event, invalidate, { once: true });
+  document.addEventListener("visibilitychange", invalidate, { once: true });
+  if (!window.navigation?.addEventListener) invalidate();
+  else window.navigation.addEventListener("navigate", invalidate, { once: true });
+  new MutationObserver(() => {
+    revision++;
+    const group = document.querySelectorAll(
+      '[role="radiogroup"][aria-labelledby="sys04-titulo-lista"]',
+    );
+    if (seenGroup && group.length !== 1) invalidate();
+    seenGroup ||= group.length === 1;
+  }).observe(document, { subtree: true, childList: true, characterData: true, attributes: true });
+  const original = window.fetch;
+  window.fetch = function (...args) {
+    const result = Reflect.apply(original, this, args);
+    let raw,
+      method = "GET",
+      body;
+    try {
+      const [input, init] = args;
+      if (typeof input === "string") raw = input;
+      else if (input instanceof URL) raw = input.href;
+      else if (input instanceof Request) {
+        raw = input.url;
+        method = input.method;
+      }
+      for (const k of ["method", "body"]) {
+        const d = init == null ? null : Object.getOwnPropertyDescriptor(init, k);
+        if (d && !("value" in d)) {
+          if (raw === target) invalidate();
+          return result;
+        }
+        if (k === "method" && d?.value !== undefined) method = d.value;
+        if (k === "body") body = d?.value;
+      }
+    } catch {
+      return result;
+    }
+    if (raw !== target) {
+      try {
+        const u = new URL(raw);
+        if (u.origin + u.pathname === target) invalidate();
+      } catch {}
+      return result;
+    }
+    if (!match(raw, method, body) || !current()) {
+      invalidate();
+      return result;
+    }
+    pending++;
+    const timer = setTimeout(invalidate, 10000);
+    void result
+      .then(async (response) => {
+        if (
+          !current() ||
+          response.status !== 200 ||
+          response.redirected ||
+          response.url !== target
+        ) {
+          invalidate();
+          return;
+        }
+        const reader = response.clone().body?.getReader();
+        if (!reader) {
+          invalidate();
+          return;
+        }
+        const chunks = [];
+        let size = 0;
+        try {
+          for (;;) {
+            const item = await reader.read();
+            if (item.done) break;
+            size += item.value.byteLength;
+            if (size > 262144 || !current()) {
+              invalidate();
+              await reader.cancel();
+              return;
+            }
+            chunks.push(item.value);
+          }
+          const bytes = new Uint8Array(size);
+          let offset = 0;
+          for (const c of chunks) {
+            bytes.set(c, offset);
+            offset += c.byteLength;
+          }
+          const receipt = project(
+            JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)),
+          );
+          if (!receipt || !current()) invalidate();
+          else ids = receipt.ids;
+        } finally {
+          reader.releaseLock();
+        }
+      }, invalidate)
+      .catch(invalidate)
+      .finally(() => {
+        clearTimeout(timer);
+        pending--;
+      });
+    return result;
+  };
+  Object.defineProperty(window, "__contaosPrivacySys04", {
+    configurable: false,
+    writable: false,
+    value: Object.freeze({
+      invalidate,
+      read: () =>
+        current() && pending === 0 && ids
+          ? {
+              route: "/selecionar-organizacao",
+              ids: [...ids],
+              revision,
+              age: Math.floor(performance.now() - started),
+            }
+          : null,
+    }),
+  });
+}
+export function privacySys04Anchor({ proof, receipt }) {
+  if (
+    !receipt ||
+    receipt.route !== "/selecionar-organizacao" ||
+    !Array.isArray(receipt.ids) ||
+    new Set(receipt.ids).size !== receipt.ids.length
+  )
+    return null;
+  const catalog = [...proof.legacy, ...proof.constructor_closed, ...proof.discovered_closed];
+  const groups = document.querySelectorAll(
+    '[role="radiogroup"][aria-labelledby="sys04-titulo-lista"]',
+  );
+  if (
+    groups.length !== 1 ||
+    document.querySelectorAll("#sys04-titulo-lista").length !== 1 ||
+    document.querySelector("#sys04-titulo-lista").textContent !== "Organizações disponíveis"
+  )
+    return null;
+  const group = groups[0],
+    cards = [...group.children];
+  const checked = cards.filter((c) => c.getAttribute("aria-checked") === "true");
+  if (
+    checked.length > 1 ||
+    cards.some(
+      (c) =>
+        !["true", "false"].includes(c.getAttribute("aria-checked")) ||
+        !["0", "-1"].includes(c.getAttribute("tabindex")),
+    )
+  )
+    return null;
+  const focused = checked[0] ?? cards[0];
+  if (cards.some((c) => c.getAttribute("tabindex") !== (c === focused ? "0" : "-1"))) return null;
+  if (
+    cards.length !== receipt.ids.length ||
+    group.querySelectorAll('[role="radio"]').length !== cards.length
+  )
+    return null;
+  const result = [];
+  for (let i = 0; i < cards.length; i++) {
+    const card = cards[i],
+      row = catalog.find((r) => r.id === receipt.ids[i]);
+    if (
+      !row ||
+      card.getAttribute("role") !== "radio" ||
+      card.querySelectorAll('[role="radio"]').length ||
+      !card.getClientRects().length
+    )
+      return null;
+    const children = [...card.children];
+    const selected = card.getAttribute("aria-checked") === "true";
+    if ((children.length === 3) !== selected || children[0]?.children.length !== (selected ? 1 : 0))
+      return null;
+    if (
+      children.length < 2 ||
+      children.length > 3 ||
+      children[0].tagName !== "SPAN" ||
+      children[0].getAttribute("aria-hidden") !== "true" ||
+      children[0].textContent !== "" ||
+      children[1].tagName !== "DIV" ||
+      !children[1].classList.contains("min-w-0")
+    )
+      return null;
+    if (
+      children[2] &&
+      (children[2].tagName !== "SPAN" ||
+        !children[2].classList.contains("sr-only") ||
+        children[2].textContent !== "Selecionada")
+    )
+      return null;
+    const content = [...children[1].children],
+      second = !!row.nome_fantasia && row.nome_fantasia !== row.razao_social;
+    const labels = [row.nome_fantasia || row.razao_social, ...(second ? [row.razao_social] : [])];
+    if (content.length !== labels.length + 1) return null;
+    for (let j = 0; j < labels.length; j++)
+      if (
+        content[j].tagName !== "P" ||
+        content[j].childNodes.length !== 1 ||
+        content[j].firstChild.nodeType !== Node.TEXT_NODE ||
+        content[j].textContent !== labels[j]
+      )
+        return null;
+    const dl = content.at(-1);
+    if (dl.tagName !== "DL" || dl.children.length !== 3) return null;
+    const terms = ["CNPJ:", "Perfil:", "Situação:"],
+      values = ["—", "Administrador Master", row.situacao];
+    for (let j = 0; j < 3; j++) {
+      const pair = dl.children[j],
+        nodes = [...pair.children];
+      if (
+        pair.tagName !== "DIV" ||
+        nodes.length !== 2 ||
+        nodes[0].tagName !== "DT" ||
+        nodes[1].tagName !== "DD" ||
+        nodes[0].textContent !== terms[j] ||
+        nodes[1].textContent !== values[j] ||
+        nodes.some((n) => n.childNodes.length !== 1 || n.firstChild.nodeType !== Node.TEXT_NODE)
+      )
+        return null;
+    }
+    // No unknown descendant text or attributes can be consumed as approved fields.
+    const allowedAttrs = new Set([
+      "class",
+      "role",
+      "aria-checked",
+      "tabindex",
+      "aria-hidden",
+      "viewBox",
+      "fill",
+      "stroke",
+      "stroke-width",
+      "stroke-linecap",
+      "stroke-linejoin",
+      "d",
+      "width",
+      "height",
+      "xmlns",
+    ]);
+    if (
+      [card, ...card.querySelectorAll("*")].some((n) =>
+        [...n.attributes].some((a) => !allowedAttrs.has(a.name)),
+      )
+    )
+      return null;
+    const expectedText =
+      labels.join("") +
+      terms.map((t, j) => t + values[j]).join("") +
+      (children[2] ? "Selecionada" : "");
+    if (card.textContent !== expectedText) return null;
+    result.push({ id: row.id, text: card.innerText, values: labels });
+  }
+  return { ids: [...receipt.ids], cards: result };
+}
+export function privacySys04FieldContext({
+  proof,
+  receipt,
+  anchor,
+  rendered,
+  snapshot,
+  cardSnapshots,
+  anchored,
+}) {
+  if (
+    !privacySys04Proofs.has(proof) ||
+    anchored !== true ||
+    receipt?.route !== "/selecionar-organizacao" ||
+    !Number.isInteger(receipt.revision) ||
+    !Number.isInteger(receipt.age) ||
+    receipt.age < 0 ||
+    receipt.age >= 120000 ||
+    !anchor ||
+    JSON.stringify(anchor.ids) !== JSON.stringify(receipt.ids) ||
+    anchor.cards.length !== receipt.ids.length ||
+    !Array.isArray(cardSnapshots) ||
+    cardSnapshots.length !== receipt.ids.length ||
+    typeof rendered !== "string" ||
+    typeof snapshot !== "string"
+  )
+    return null;
+  const strip = (text, values) => {
+    let out = text;
+    for (const value of [...new Set(values)].sort((a, b) => b.length - a.length)) {
+      const escaped = privacySys04Literal(value);
+      out = out.replace(
+        new RegExp("(?<![\\p{L}\\p{N}_-])" + escaped + "(?![\\p{L}\\p{N}_-])", "gu"),
+        " ",
+      );
+    }
+    return out;
+  };
+  const replaceBlocks = (full, blocks, snap) => {
+    let result = full;
+    const expected = new Map();
+    for (const block of blocks) {
+      const key = block.text;
+      const entry = expected.get(key) || { count: 0, values: block.values };
+      if (JSON.stringify(entry.values) !== JSON.stringify(block.values)) return null;
+      entry.count++;
+      expected.set(key, entry);
+    }
+    for (const [key, { count, values }] of expected) {
+      if (!key) return null;
+      if (!snap) {
+        const parts = result.split(key);
+        if (parts.length - 1 !== count) return null;
+        result = parts.join(strip(key, values));
+      } else {
+        const lines = result.split("\n"),
+          wanted = key.trim().split("\n"),
+          matches = [];
+        for (let i = 0; i < lines.length; i++) {
+          const indent = lines[i].match(/^ */)[0];
+          if (wanted.every((l, j) => lines[i + j] === indent + l)) matches.push({ i, indent });
+        }
+        if (matches.length !== count) return null;
+        for (const { i, indent } of matches.reverse())
+          lines.splice(
+            i,
+            wanted.length,
+            ...strip(wanted.join("\n"), values)
+              .split("\n")
+              .map((l) => indent + l),
+          );
+        result = lines.join("\n");
+      }
+    }
+    return result;
+  };
+  const cards = anchor.cards;
+  if (
+    cards.some(
+      (c, i) => c.id !== receipt.ids[i] || typeof c.text !== "string" || !Array.isArray(c.values),
+    )
+  )
+    return null;
+  const rr = replaceBlocks(rendered, cards, false);
+  const ss = replaceBlocks(
+    snapshot,
+    cards.map((c, i) => ({ text: cardSnapshots[i], values: c.values })),
+    true,
+  );
+  if (rr === null || ss === null) return null;
+  const context = Object.freeze({});
+  privacy78Contexts.set(context, {
+    rendered: { original: rendered, remainder: rr },
+    snapshot: { original: snapshot, remainder: ss },
+  });
+  return context;
+}
 
 // GATE372: closed technical catalog; never a global word allowlist.
 const privacy78Contexts = new WeakMap();
@@ -2843,18 +3297,58 @@ export function nativeBrowserArgs(debugPort, useProxy = false) {
   ];
 }
 
-export function verifyNativeBrowserPolicy(args, version) {
-  const forbidden = new Set([
-    "no-sandbox",
-    "disable-setuid-sandbox",
-    "disable-web-security",
-    "allow-running-insecure-content",
-    "ignore-certificate-errors",
-    "ignore-certificate-errors-spki-list",
-    "disable-site-isolation-trials",
-    "allow-insecure-localhost",
-    "unsafely-treat-insecure-origin-as-secure",
-  ]);
+// Exact Linux x64 switches from Playwright 1.58.2 and the pinned Shell startup.
+// Preserve SDK duplicates and reject every unrecognized switch or positional argument.
+const NATIVE_SDK_ARGUMENTS = Object.freeze([
+  "--disable-field-trial-config",
+  "--disable-background-networking",
+  "--disable-background-timer-throttling",
+  "--disable-backgrounding-occluded-windows",
+  "--disable-back-forward-cache",
+  "--disable-breakpad",
+  "--disable-client-side-phishing-detection",
+  "--disable-component-extensions-with-background-pages",
+  "--disable-component-update",
+  "--no-default-browser-check",
+  "--disable-default-apps",
+  "--disable-dev-shm-usage",
+  "--disable-extensions",
+  "--disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints",
+  "--enable-features=CDPScreenshotNewSurface",
+  "--allow-pre-commit-input",
+  "--disable-hang-monitor",
+  "--disable-ipc-flooding-protection",
+  "--disable-popup-blocking",
+  "--disable-prompt-on-repost",
+  "--disable-renderer-backgrounding",
+  "--force-color-profile=srgb",
+  "--metrics-recording-only",
+  "--no-first-run",
+  "--password-store=basic",
+  "--use-mock-keychain",
+  "--no-service-autorun",
+  "--export-tagged-pdf",
+  "--disable-search-engine-choice-screen",
+  "--unsafely-disable-devtools-self-xss-warnings",
+  "--edge-skip-compat-layer-relaunch",
+  "--enable-automation",
+  "--disable-infobars",
+  "--disable-search-engine-choice-screen",
+  "--disable-sync",
+  "--enable-unsafe-swiftshader",
+  "--headless",
+  "--hide-scrollbars",
+  "--mute-audio",
+  "--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4",
+  "--remote-debugging-pipe",
+  "--no-startup-window",
+  "--use-gl=angle",
+  "--use-angle=swiftshader-webgl",
+  "--ozone-platform=headless",
+  "--allow-pre-commit-input",
+]);
+
+export function verifyNativeBrowserPolicy(args, version, expected) {
   if (
     !Array.isArray(args) ||
     args.length < 3 ||
@@ -2865,21 +3359,42 @@ export function verifyNativeBrowserPolicy(args, version) {
     ) ||
     args.reduce((n, a) => n + a.length, 0) > 65536 ||
     version?.product !== "HeadlessChrome/145.0.7632.6" ||
-    args.includes("--")
+    !expected ||
+    typeof expected.executablePath !== "string" ||
+    !isAbsolute(expected.executablePath) ||
+    args[0] !== expected.executablePath ||
+    !Number.isInteger(expected.debugPort) ||
+    expected.debugPort < 1 ||
+    expected.debugPort > 65535
   )
     fail("BROWSER_POLICY");
-  const key = (a) =>
-    /^--?[^-]/.test(a) ? a.replace(/^--?/, "").split("=")[0].toLowerCase() : null;
-  for (const name of ["headless", "block-new-web-contents"]) {
-    if (args.filter((a) => key(a) === name).length !== 1 || !args.includes("--" + name))
-      fail("BROWSER_POLICY");
-  }
-  const debugging = args.filter((a) => key(a) === "remote-debugging-port");
+  const proxy = expected.proxy;
   if (
-    debugging.length > 1 ||
-    (debugging.length === 1 && !/^--remote-debugging-port=[1-9][0-9]{0,4}$/.test(debugging[0])) ||
-    args.some((a) => forbidden.has(key(a)))
+    proxy !== undefined &&
+    (typeof proxy !== "string" ||
+      !/^http:\/\/127\.0\.0\.1:[1-9][0-9]{0,4}$/.test(proxy) ||
+      Number(new URL(proxy).port) > 65535)
   )
+    fail("BROWSER_POLICY");
+  const profiles = args.filter((a) => a.split("=")[0] === "--user-data-dir");
+  if (profiles.length !== 1 || !profiles[0].startsWith("--user-data-dir=")) fail("BROWSER_POLICY");
+  const profile = profiles[0].slice("--user-data-dir=".length);
+  if (
+    !isAbsolute(profile) ||
+    dirname(profile) !== tmpdir() ||
+    !/^playwright_chromiumdev_profile-[a-zA-Z0-9]+$/.test(basename(profile))
+  )
+    fail("BROWSER_POLICY");
+  const exact = [
+    expected.executablePath,
+    ...NATIVE_SDK_ARGUMENTS,
+    ...nativeBrowserArgs(expected.debugPort, proxy !== undefined),
+    profiles[0],
+    ...(proxy === undefined ? [] : ["--proxy-server=" + proxy, "--proxy-bypass-list=<-loopback>"]),
+  ];
+  const actual = [...args].sort();
+  exact.sort();
+  if (actual.length !== exact.length || actual.some((value, i) => value !== exact[i]))
     fail("BROWSER_POLICY");
   return true;
 }
@@ -2905,10 +3420,19 @@ async function nativeBinaryIdentity(path) {
 
 // Return no browser until the exact pinned binary and its actual launch policy agree.
 // No custom executable, caller-supplied args or policy bypass is accepted.
-export async function launchNativeBrowser({ chromium, debugPort, proxy } = {}) {
+export async function launchNativeBrowser({ debugPort, proxy } = {}) {
   let browser;
   try {
+    const { chromium } = await import("playwright");
+    const sdkVersion = require("playwright/package.json").version;
+    const coreRoot = dirname(require.resolve("playwright-core/package.json"));
+    const registry = JSON.parse(await readFile(join(coreRoot, "browsers.json"), "utf8"));
+    const shells = registry.browsers.filter((entry) => entry.name === "chromium-headless-shell");
     if (
+      sdkVersion !== "1.58.2" ||
+      shells.length !== 1 ||
+      shells[0].revision !== "1208" ||
+      shells[0].browserVersion !== "145.0.7632.6" ||
       process.platform !== "linux" ||
       process.arch !== "x64" ||
       require("playwright-core/package.json").version !== "1.58.2" ||
@@ -2945,7 +3469,7 @@ export async function launchNativeBrowser({ chromium, debugPort, proxy } = {}) {
     try {
       const command = await session.send("Browser.getBrowserCommandLine");
       const version = await session.send("Browser.getVersion");
-      verifyNativeBrowserPolicy(command.arguments, version);
+      verifyNativeBrowserPolicy(command.arguments, version, { executablePath, debugPort, proxy });
       if (
         (await nativeBinaryIdentity(command.arguments[0])) !== executablePath ||
         command.arguments.filter((a) => a.startsWith("--remote-debugging-port=")).length !== 1 ||
@@ -3832,6 +4356,7 @@ export async function runCli(args = process.argv.slice(2)) {
     deploymentId: process.env.CONTAOS_DEPLOYMENT_ID,
     bun: process.env.CONTAOS_BUN_BINARY || "bun",
   });
+
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/provenance.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -4035,6 +4560,81 @@ export function nativeLifecycleMetadata(tap) {
   }
   return result;
 }
+export function nativeVisualDiagnostic(stdout) {
+  const invalid = () => ({ state: "INVALID" });
+  if (typeof stdout !== "string" || Buffer.byteLength(stdout) > 1048576) return invalid();
+  const lines = stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(
+      (line) =>
+        line.startsWith("# V102_NATIVE_DIAGNOSTIC") || line.startsWith("V102_NATIVE_DIAGNOSTIC"),
+    );
+  if (lines.length === 0) return { state: "MISSING" };
+  if (lines.length > 16) return invalid();
+  const stages = ["SOURCE_EXTRACT", "CSS_COMPILE", "MEASURE"],
+    seen = new Set();
+  const fields = ["lastStage", "width", "theme", "targetCount", "notHit", "geometry"];
+  let last = null,
+    previous = -1;
+  for (const line of lines) {
+    const match = /^(?:# )?V102_NATIVE_DIAGNOSTIC (.{1,512})$/.exec(line);
+    if (!match) return invalid();
+    let row;
+    try {
+      row = JSON.parse(match[1]);
+    } catch {
+      return invalid();
+    }
+    if (
+      !row ||
+      Array.isArray(row) ||
+      typeof row !== "object" ||
+      Object.keys(row).length !== fields.length ||
+      fields.some((key) => !Object.hasOwn(row, key)) ||
+      JSON.stringify(row) !== match[1]
+    )
+      return invalid();
+    const ordinal = stages.indexOf(row.lastStage);
+    if (ordinal < previous || ordinal < 0) return invalid();
+    previous = ordinal;
+    if (row.lastStage !== "MEASURE") {
+      if (fields.slice(1).some((key) => row[key] !== null)) return invalid();
+    } else {
+      if (![1440, 1280, 768, 390].includes(row.width) || !["LIGHT", "DARK"].includes(row.theme))
+        return invalid();
+      const unobserved = row.targetCount === null && row.notHit === null && row.geometry === null;
+      if (
+        !unobserved &&
+        (!Number.isInteger(row.targetCount) ||
+          row.targetCount < 0 ||
+          row.targetCount > 64 ||
+          !Number.isInteger(row.notHit) ||
+          row.notHit < 0 ||
+          row.notHit > row.targetCount ||
+          typeof row.geometry !== "boolean")
+      )
+        return invalid();
+    }
+    const identity =
+      row.lastStage === "MEASURE"
+        ? row.lastStage + ":" + row.width + ":" + row.theme
+        : row.lastStage;
+    if (seen.has(identity)) return invalid();
+    seen.add(identity);
+    last = {
+      state: "OBSERVED",
+      lastStage: row.lastStage,
+      width: row.width,
+      theme: row.theme,
+      targetCount: row.targetCount,
+      notHit: row.notHit,
+      geometry: row.geometry,
+    };
+  }
+  return last;
+}
+
 async function nativeGuard() {
   let output;
   try {
@@ -4106,8 +4706,37 @@ async function nativeGuard() {
       !/^# skipped 0$/m.test(visual.stdout)
     )
       fail("VISUAL_NATIVE");
-  } catch {
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        phase: "VISUAL_NATIVE",
+        v102: nativeVisualDiagnostic(typeof error?.stdout === "string" ? error.stdout : ""),
+      }),
+    );
     fail("VISUAL_NATIVE");
+  }
+
+  // SYS04 DOM/ARIA proof is a separate supplement; native causal8 and Run78 visual1 retain identity.
+  let sys04BrowserCases = null;
+  try {
+    const sys04 = await execFile(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=^SYS04 (source component|browser observer)",
+        "scripts/hml/authenticated-visual-audit.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 120000,
+        maxBuffer: 1048576,
+      },
+    );
+    sys04BrowserCases = privacySys04Supplement(sys04.stdout);
+    if (sys04BrowserCases !== 2) fail("SYS04_NATIVE");
+  } catch {
+    fail("SYS04_NATIVE");
   }
 
   let v112BrowserCases;
@@ -4164,6 +4793,7 @@ async function nativeGuard() {
       preflightDrain: nativePreflightDrain(output),
       cases: 8,
       visualCases: 1,
+      sys04BrowserCases,
       v112BrowserCases,
       v123BrowserCases,
       harnessSha: proof.harnessSha,
@@ -4303,6 +4933,8 @@ export async function literalWords(root) {
 async function inspectPrivacy(page, words, diagnostics) {
   const state = privacy78Pages.get(page),
     generation = state?.generation;
+  const sys04Initial =
+    state?.verified && (await page.evaluate(() => window.__contaosPrivacySys04?.read() ?? null));
   const initialReceipt =
     state?.verified && (await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null));
   const snapshot = await page.locator("body").ariaSnapshot();
@@ -4438,6 +5070,41 @@ async function inspectPrivacy(page, words, diagnostics) {
       }
     }
   }
+  if (
+    rendered !== null &&
+    state?.verified &&
+    !state.closed &&
+    sys04Initial &&
+    page.url() === HML_ORIGIN + "/selecionar-organizacao"
+  ) {
+    const anchor = await page.evaluate(privacySys04Anchor, {
+      proof: state.sys04Proof,
+      receipt: sys04Initial,
+    });
+    if (anchor) {
+      const radios = page.locator(
+        '[role="radiogroup"][aria-labelledby="sys04-titulo-lista"] > [role="radio"]',
+      );
+      const cardSnapshots = await Promise.all((await radios.all()).map((n) => n.ariaSnapshot()));
+      const after = await page.evaluate(() => window.__contaosPrivacySys04?.read() ?? null);
+      if (
+        after &&
+        JSON.stringify(after.ids) === JSON.stringify(sys04Initial.ids) &&
+        after.revision === sys04Initial.revision &&
+        state.generation === generation &&
+        !state.closed
+      )
+        fieldContext = privacySys04FieldContext({
+          proof: state.sys04Proof,
+          receipt: after,
+          anchor,
+          rendered,
+          snapshot,
+          cardSnapshots,
+          anchored: true,
+        });
+    }
+  }
   const privacy =
     rendered === null
       ? { rendered: { reason: "OPAQUE_MEDIA", unknownCount: 0 } }
@@ -4550,12 +5217,12 @@ async function runAuthenticatedAudit() {
     masterLocated: false,
     organizationConfirmed: false,
   };
-  const { chromium } = await import("playwright");
   const debug = createServer();
   await new Promise((resolve) => debug.listen(0, "127.0.0.1", resolve));
   const debugPort = debug.address().port;
   await new Promise((resolve) => debug.close(resolve));
-  let captureItem = null;
+  let captureItem = null,
+    captureMode = null;
   async function saveRawScreenshot(key, suffix = "") {
     const file = `screenshots/${key}${suffix}.png`;
     const data = await page.screenshot({ fullPage: true, animations: "disabled" });
@@ -4566,6 +5233,12 @@ async function runAuthenticatedAudit() {
     return { file, sha };
   }
   async function saveScreenshot(key, suffix = "") {
+    captureMode =
+      suffix === "_menu"
+        ? "MOBILE_MENU"
+        : suffix === "_sidebar-recolhida"
+          ? "SIDEBAR_COLLAPSED"
+          : "PRIMARY";
     if (!captureItem) fail("VISUAL_CASE_IDENTITY");
     const result = await captureVisualEvidence({
       brand: () =>
@@ -4605,7 +5278,7 @@ async function runAuthenticatedAudit() {
   try {
     phase = "BROWSER_START";
     proxy = await startDestinationProxy();
-    browser = await launchNativeBrowser({ chromium, debugPort, proxy: proxy.url });
+    browser = await launchNativeBrowser({ debugPort, proxy: proxy.url });
     context = await browser.newContext({
       viewport: { width: 1440, height: 1000 },
       serviceWorkers: "block",
@@ -4613,6 +5286,8 @@ async function runAuthenticatedAudit() {
     const privacyProof = await loadPrivacy78Proof();
     const rbacProof = await loadPrivacy78RbacProof();
     const v109Proof = await loadPrivacy109Proof();
+    const sys04Proof = await loadPrivacySys04Proof();
+    await context.addInitScript(privacySys04Runtime, { proof: sys04Proof, install: true });
     const wireProof = await loadPrivacyWireProof();
     const v123Proof = await loadPrivacy123Proof();
     await context.addInitScript(privacy78Runtime, {
@@ -4629,6 +5304,7 @@ async function runAuthenticatedAudit() {
       rbacProof,
       v109Proof,
       v123Proof,
+      sys04Proof,
       generation: 0,
       verified: false,
       closed: false,
@@ -4709,6 +5385,8 @@ async function runAuthenticatedAudit() {
       }
       await checkFreshDeployment(proof, item.surface !== surface);
       surface = item.surface;
+      let diagnosticStage = "CASE_NAVIGATION";
+      captureMode = null;
       try {
         const beforeErrors = errors;
         await resizeVerifiedPage(page, fence, item.width);
@@ -4723,6 +5401,7 @@ async function runAuthenticatedAudit() {
             requestAnimationFrame(() => requestAnimationFrame(resolve)),
           );
         });
+        diagnosticStage = "WAIT_SURFACE";
         if (item.surface !== "SYS04") await waitOrganization(page);
         await page.waitForFunction(
           () =>
@@ -4733,6 +5412,7 @@ async function runAuthenticatedAudit() {
         );
         await fence.drain();
         fence.assertSafe();
+        diagnosticStage = "PRIVACY_PRIMARY";
         const privacy = {};
         const snapshot = await inspectPrivacy(page, words, privacy);
         record.privacy = privacy;
@@ -4740,6 +5420,7 @@ async function runAuthenticatedAudit() {
           record.status = "BLOQUEADO_PII";
           continue;
         }
+        diagnosticStage = "READ_UI_METRICS";
         const metrics = await page.evaluate(() => {
           const visible = (e) =>
             e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden";
@@ -4793,6 +5474,7 @@ async function runAuthenticatedAudit() {
           record.status = "BLOQUEADO_PAGE_LIMIT";
           continue;
         }
+        diagnosticStage = "AXE";
         await page.addScriptTag({ content: axe });
         const accessibility = await page.evaluate(async () => {
           const result = await window.axe.run(document, {
@@ -4806,7 +5488,9 @@ async function runAuthenticatedAudit() {
             incomplete: result.incomplete.length,
           };
         });
+        diagnosticStage = "CAPTURE_PRIMARY";
         const shot = await saveScreenshot(key);
+        diagnosticStage = "SAVE_DOM";
         const domFile = `dom/${key}.json`,
           dom = JSON.stringify({
             surface: item.surface,
@@ -4833,9 +5517,14 @@ async function runAuthenticatedAudit() {
           domSha256: digest(dom),
           accessibility,
         });
+        diagnosticStage = "KEYBOARD";
         record.keyboard = await keyboardProbe(page);
+        diagnosticStage = "CAPTURE_SUPPLEMENT";
+        captureMode = item.width >= 768 ? "SIDEBAR_COLLAPSED" : "MOBILE_MENU";
         record.sidebarSupplement = await sidebarProbe(page, item, key, words, saveScreenshot);
+        diagnosticStage = "NAVIGATION_PROBE";
         record.navigationVerified = await navigationProbe(page, item, fence);
+        diagnosticStage = "FINAL_CASE_CHECK";
         record.status =
           validateCase(record) &&
           run78VisualEvidenceValid(record) &&
@@ -4850,23 +5539,7 @@ async function runAuthenticatedAudit() {
             : "FAIL";
         console.log(JSON.stringify({ case: key, status: record.status }));
       } catch (error) {
-        if (fence.snapshot().failed || error.code === "DEPLOYMENT_CHANGED") throw error;
-        record.status = ["PII_SUPPLEMENT", "PII_VISUAL_CAPTURE"].includes(error.code)
-          ? "BLOQUEADO_PII"
-          : "FAIL_UI";
-        if (
-          [
-            "VISUAL_BRAND_INVALID",
-            "VISUAL_BRAND_DECODE",
-            "VISUAL_BRAND_TIMEOUT",
-            "VISUAL_BRAND_COUNT",
-            "VISUAL_MEASUREMENT",
-            "VISUAL_CASE_IDENTITY",
-          ].includes(error.code)
-        )
-          record.visualFailure = error.code;
-        if (error.code === "VISUAL_MEASUREMENT" && error.visualDiagnostic)
-          record.visualDiagnostic = error.visualDiagnostic;
+        recordCaseFailure(record, error, diagnosticStage, captureMode, fence.snapshot().failed);
         if (record.status === "BLOQUEADO_PII") {
           for (let i = hashes.length - 1; i >= 0; i--)
             if (
@@ -5060,6 +5733,208 @@ export function visualMeasurementDiagnostic(metrics) {
   };
 }
 
+const visualFailureSummaries = new WeakMap();
+const visualLegacyFailureSummaries = new WeakMap();
+const CASE_DIAGNOSTIC_STAGES = new Set([
+  "CASE_NAVIGATION",
+  "WAIT_SURFACE",
+  "PRIVACY_PRIMARY",
+  "READ_UI_METRICS",
+  "AXE",
+  "CAPTURE_PRIMARY",
+  "CAPTURE_SUPPLEMENT",
+  "KEYBOARD",
+  "NAVIGATION_PROBE",
+  "SAVE_DOM",
+  "FINAL_CASE_CHECK",
+]);
+const VISUAL_FAILURE_CODES = new Set([
+  "VISUAL_BRAND_INVALID",
+  "VISUAL_BRAND_DECODE",
+  "VISUAL_BRAND_TIMEOUT",
+  "VISUAL_BRAND_COUNT",
+  "VISUAL_MEASUREMENT",
+  "VISUAL_CASE_IDENTITY",
+]);
+/** No text/selector/exception object is a diagnostic field. */
+export function summarizeVisualFailure(metrics) {
+  const invalid = () => ({ observed: false, state: "INVALID" });
+  const finite = (n, low = -100000, high = 100000) =>
+    typeof n === "number" && Number.isFinite(n) && n >= low && n <= high;
+  const count = (n) => Number.isInteger(n) && n >= 0 && n <= 100000;
+  const rectValid = (r) =>
+    r &&
+    finite(r.x) &&
+    finite(r.y) &&
+    finite(r.width, Number.MIN_VALUE) &&
+    finite(r.height, Number.MIN_VALUE);
+  try {
+    const flags = {};
+    for (const k of [
+      "identityPassed",
+      "geometryPassed",
+      "tablePassed",
+      "datesPassed",
+      "contrastPassed",
+    ]) {
+      if (typeof metrics?.[k] !== "boolean") return invalid();
+      flags[k] = metrics[k];
+    }
+    const v = metrics.viewport;
+    if (
+      !WIDTHS.includes(v?.width) ||
+      !Number.isInteger(v.height) ||
+      !finite(v.height, 1, 30000) ||
+      !finite(metrics.overflowX) ||
+      !["light", "dark"].includes(metrics.theme) ||
+      !Array.isArray(metrics.targets) ||
+      metrics.targets.length > 256 ||
+      !Array.isArray(metrics.dates) ||
+      metrics.dates.length > 3 ||
+      !Array.isArray(metrics.contrast) ||
+      metrics.contrast.length > 100
+    )
+      return invalid();
+    const counts = {
+      targetsExamined: metrics.targets.length,
+      invalidRect: 0,
+      disconnected: 0,
+      invisible: 0,
+      notHit: 0,
+      boundsX: 0,
+      boundsY: 0,
+    };
+    const failedTargets = [];
+    for (const t of metrics.targets) {
+      if (
+        !t ||
+        !Number.isInteger(t.ordinal) ||
+        t.ordinal < 0 ||
+        t.ordinal > 255 ||
+        !["INPUT", "SELECT", "TEXTAREA", "BUTTON", "LINK"].includes(t.kind) ||
+        !rectValid(t.rect) ||
+        ["connected", "visible", "disabled", "hit"].some((k) => typeof t[k] !== "boolean")
+      )
+        return invalid();
+      const r = t.rect,
+        disconnected = !t.connected,
+        invisible = !t.visible;
+      const notHit = !t.hit && !t.disabled,
+        boundsX = r.x < 0 || r.x + r.width > v.width + 0.5;
+      const boundsY = r.y < 0 || r.y + r.height > v.height + 0.5;
+      counts.disconnected += +disconnected;
+      counts.invisible += +invisible;
+      counts.notHit += +notHit;
+      counts.boundsX += +boundsX;
+      counts.boundsY += +boundsY;
+      if ((disconnected || invisible || notHit || boundsX || boundsY) && failedTargets.length < 8)
+        failedTargets.push({
+          ordinal: t.ordinal,
+          kind: t.kind,
+          rect: {
+            x: Math.round(r.x * 100) / 100,
+            y: Math.round(r.y * 100) / 100,
+            width: Math.round(r.width * 100) / 100,
+            height: Math.round(r.height * 100) / 100,
+          },
+          connected: t.connected,
+          visible: t.visible,
+          disabled: t.disabled,
+          hit: t.hit,
+        });
+    }
+    let table = null;
+    if (metrics.table !== null) {
+      if (
+        !metrics.table ||
+        !count(metrics.table.clipping) ||
+        !Array.isArray(metrics.table.helpTargets) ||
+        metrics.table.helpTargets.length > 256 ||
+        !metrics.table.helpTargets.every(rectValid)
+      )
+        return invalid();
+      table = {
+        clipping: metrics.table.clipping,
+        helpBelow44: metrics.table.helpTargets.filter((r) => r.width < 44 || r.height < 44).length,
+      };
+    }
+    let absent = 0,
+      schemeMismatch = 0;
+    for (const d of metrics.dates) {
+      if (
+        !d ||
+        typeof d.present !== "boolean" ||
+        !["", "normal", "light", "dark", "light dark", "dark light"].includes(d.scheme)
+      )
+        return invalid();
+      absent += +!d.present;
+      schemeMismatch += +(d.present && d.scheme !== metrics.theme);
+    }
+    for (const c of metrics.contrast)
+      if (!c || !finite(c.ratio, 0, 100) || c.threshold !== 4.5) return invalid();
+    return {
+      observed: true,
+      state: "VALID",
+      viewport: { width: v.width, height: v.height },
+      flags,
+      overflowX: Math.round(metrics.overflowX * 100) / 100,
+      counts,
+      failedTargets,
+      table,
+      dates: { absent, schemeMismatch },
+      contrast: {
+        count: metrics.contrast.length,
+        minimum: metrics.contrast.length
+          ? Math.round(Math.min(...metrics.contrast.map((c) => c.ratio)) * 10000) / 10000
+          : null,
+        threshold: 4.5,
+      },
+    };
+  } catch {
+    return invalid();
+  }
+}
+/** The actual per-case report consumer; never spread/read an arbitrary exception. */
+export function recordCaseFailure(record, error, stage, mode = null, fenceFailed = false) {
+  const field = (key) => {
+    try {
+      const d = error && Object.getOwnPropertyDescriptor(error, key);
+      return d && "value" in d ? d.value : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const code = field("code"),
+    name = field("name");
+  if (fenceFailed || code === "DEPLOYMENT_CHANGED") throw error;
+  record.status = ["PII_SUPPLEMENT", "PII_VISUAL_CAPTURE"].includes(code)
+    ? "BLOQUEADO_PII"
+    : "FAIL_UI";
+  if (VISUAL_FAILURE_CODES.has(code)) record.visualFailure = code;
+  if (error && typeof error === "object" && visualLegacyFailureSummaries.has(error))
+    record.visualDiagnostic = visualLegacyFailureSummaries.get(error);
+  const capture = stage === "CAPTURE_PRIMARY" || stage === "CAPTURE_SUPPLEMENT";
+  record.diagnostic = {
+    schema: "contaos.case.failure.v1",
+    stage: CASE_DIAGNOSTIC_STAGES.has(stage) ? stage : null,
+    errorKind: VISUAL_FAILURE_CODES.has(code)
+      ? "KNOWN_VISUAL"
+      : name === "TimeoutError"
+        ? "TIMEOUT"
+        : name === "TargetClosedError"
+          ? "TARGET_CLOSED"
+          : name === "EvaluationError"
+            ? "EVALUATION"
+            : "OTHER",
+    mode: capture && ["PRIMARY", "SIDEBAR_COLLAPSED", "MOBILE_MENU"].includes(mode) ? mode : null,
+    visual:
+      error && typeof error === "object" && visualFailureSummaries.has(error)
+        ? visualFailureSummaries.get(error)
+        : { observed: false, state: "UNOBSERVED" },
+  };
+  return record;
+}
+
 /** Shared causal boundary: no screenshot is emitted after a failed/incomplete step. */
 export async function captureVisualEvidence({ brand, drain, stabilize, measure, privacy, save }) {
   const image = await brand();
@@ -5071,6 +5946,8 @@ export async function captureVisualEvidence({ brand, drain, stabilize, measure, 
       code: "VISUAL_MEASUREMENT",
       visualDiagnostic: visualMeasurementDiagnostic(metrics),
     });
+    visualFailureSummaries.set(error, summarizeVisualFailure(metrics));
+    visualLegacyFailureSummaries.set(error, Object.freeze({ ...error.visualDiagnostic }));
     throw error;
   }
   if ((await privacy()) !== true) fail("PII_VISUAL_CAPTURE");
@@ -5137,7 +6014,7 @@ export async function collectVisualMetrics(page, item) {
       const r = rect(e);
       return r.width > 0 && r.height > 0 && r.y >= 0 && r.y + r.height <= innerHeight;
     });
-    const targets = controls.map((e) => {
+    const targets = controls.map((e, ordinal) => {
       const r = rect(e),
         inset = Math.min(3, r.width / 4, r.height / 4);
       const points = [
@@ -5148,6 +6025,16 @@ export async function collectVisualMetrics(page, item) {
         [r.x + r.width / 2, r.y + r.height - inset],
       ];
       return {
+        ordinal,
+        kind: e.matches("input")
+          ? "INPUT"
+          : e.matches("select")
+            ? "SELECT"
+            : e.matches("textarea")
+              ? "TEXTAREA"
+              : e.matches("button")
+                ? "BUTTON"
+                : "LINK",
         rect: r,
         connected: e.isConnected,
         visible: visible(e),
