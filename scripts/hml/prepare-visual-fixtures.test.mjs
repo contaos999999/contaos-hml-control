@@ -1612,3 +1612,56 @@ test("solicitacao unica: preparador nao aceita marcador workflow_run sem prova",
     false,
   );
 });
+
+test("R2 ledger recupera exatamente quatro recibos R1 e rejeita adulteracao",()=>{
+ assert.equal(typeof sut.validateR1RecoveryDocument,"function");
+ const doc=sut.R1_RECOVERY_DOCUMENT;
+ assert.equal(sut.validateR1RecoveryDocument(doc).receipts.length,4);
+ assert.ok(Object.isFrozen(doc)&&Object.isFrozen(doc.receipts)&&doc.receipts.every(Object.isFrozen));
+ for(const mutate of [
+  d=>d.receipts.pop(),d=>d.receipts.reverse(),d=>d.receipts[0].state="uncertain",
+  d=>d.receipts[0].payloadSha256="0".repeat(64),d=>d.receipts[0].contract=id,
+  d=>d.receipts[0].requestId=id,d=>d.receipts[0].extra="CANARIO",
+  d=>d.receipts[0].workflowRun="1",d=>d.receipts[0].harnessSha="0".repeat(40)
+ ]){const bad=structuredClone(doc);mutate(bad);assert.throws(()=>sut.validateR1RecoveryDocument(bad));}
+});
+function r2Reconciliation(delta={}) {
+ const context={official:true,current:true,organization:FIXTURE.organization,contract:FIXTURE.contract};
+ return {ledger:sut.R1_RECOVERY_DOCUMENT,source:{...context,id:FIXTURE.source,...sut.SOURCE_FIELDS,version:1,situacao:"ativa"},version:{...context,id,source:FIXTURE.source,hash:"a".repeat(64),approved:true,textVerified:true,effective:true,file:null},sourceCount:1,listCount:0,listObserved:true,listState:null,canCreateList:true,...delta};
+}
+test("R2 reconcilia somente estado oficial unico aprovado antes de armar",()=>{
+ assert.equal(typeof sut.reconcileR1Recovery,"function");
+ const proof=sut.reconcileR1Recovery(r2Reconciliation());
+ assert.ok(Object.isFrozen(proof));
+ const b=sut.createIntentBroker({persist:()=>true,competenceGateAmended:true,recoveryLedger:sut.R1_RECOVERY_DOCUMENT});
+ assert.throws(()=>arm(b),{message:"RECOVERY_READ_ONLY"});
+ assert.throws(()=>b.authorizeRecovery({...proof}),{message:"RECOVERY_PROOF"});
+ assert.equal(b.authorizeRecovery(proof),true);
+ assert.equal(b.snapshot().count,2);
+ for(const rpc of ["registrar_versao_fonte_v107","aprovar_versao_fonte_v107"])
+  assert.throws(()=>b.arm({rpc,payload:{},requestId:randomUUID(),verified:{context:true,capability:true,reconciled:true}}),{message:"RECOVERY_CONFIRMED_OPERATION"});
+ for(const delta of [{sourceCount:0},{sourceCount:2},{listObserved:false},{listCount:2},{canCreateList:false},{version:{...r2Reconciliation().version,approved:false}},{version:{...r2Reconciliation().version,textVerified:false}},{version:{...r2Reconciliation().version,source:id}},{source:{...r2Reconciliation().source,current:false}},{listCount:1,listState:{active:false}}])
+  assert.throws(()=>sut.reconcileR1Recovery(r2Reconciliation(delta)));
+});
+test("R2 contabiliza duas anteriores e limita novas intencoes a22",()=>{
+ const b=sut.createIntentBroker({persist:()=>true,competenceGateAmended:true,recoveryLedger:sut.R1_RECOVERY_DOCUMENT});
+ b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()));
+ for(let n=0;n<22;n++){arm(b);assert.equal(b.policy(request()),true);assert.equal(b.policy({...request(),stage:"RESPONSE"}),true);b.resolve("confirmed");}
+ assert.equal(b.snapshot().count,24);
+ assert.throws(()=>arm(b),{message:"INTENT_BUDGET"});
+});
+test("R2 diagnostico conserva subfase primaria e cleanup separado sem canarios",async()=>{
+ assert.equal(typeof sut.createPreparationDiagnostics,"function");
+ const d=sut.createPreparationDiagnostics();
+ const error=Object.assign(new Error("CANARIO https://secret.invalid Bearer SECRET pessoa@example.com"),{name:"TimeoutError"});
+ await assert.rejects(()=>d.step("SOURCE_VERSION_READ",async()=>{await d.step("RUNTIME_FRESH",async()=>{throw error;});}),e=>e===error);
+ await d.cleanup(async()=>{throw new Error("SECOND_CANARIO");});
+ const r=d.snapshot();
+ assert.equal(r.primaryFailure,"PREPARER_TIMEOUT");
+ assert.equal(r.subphase,"RUNTIME_FRESH");
+ assert.deepEqual(r.subphasePath,["SOURCE_VERSION_READ","RUNTIME_FRESH"]);
+ assert.equal(r.logoutVerified,false);
+ assert.ok(r.cleanupFailure);
+ assert.equal(/CANARIO|secret|Bearer|@|stack|https/.test(JSON.stringify(r)),false);
+ await assert.rejects(()=>d.step("UNKNOWN_CANARIO",async()=>{}),{message:"DIAGNOSTIC_SUBPHASE"});
+});
