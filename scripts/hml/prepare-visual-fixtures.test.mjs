@@ -1703,6 +1703,7 @@ function r2Reconciliation(delta = {}) {
     ledgerR5: R6_R5_DOCUMENT,
     ledgerR6: sut.R6_RECOVERY_DOCUMENT,
     ledgerR7: sut.R7_RECOVERY_DOCUMENT,
+    ledgerR8: sut.R8_RECOVERY_DOCUMENT,
     source: { ...context, id: FIXTURE.source, ...sut.SOURCE_FIELDS, version: 1, situacao: "ativa" },
     version: {
       ...context,
@@ -3779,6 +3780,7 @@ test("R6 recovery requires fresh ordinary reads and exact original month identit
       recoveryLedgerR5: R6_R5_DOCUMENT,
       recoveryLedgerR6: sut.R6_RECOVERY_DOCUMENT,
       recoveryLedgerR7: sut.R7_RECOVERY_DOCUMENT,
+      recoveryLedgerR8: sut.R8_RECOVERY_DOCUMENT,
       generation: () => generation,
       goKnown: async () => {
         generation++;
@@ -5269,7 +5271,7 @@ test("R7 original R6 zero-intent document is exact and rejects getters proxies a
   );
 });
 
-test("R8 actual artifact writer appends only R7 proof and preserves eleven hashed data members", async () => {
+test("R8 actual artifact writer appends R7 and R8 proofs and preserves fourteen hashed data members", async () => {
   const fs = await import("node:fs/promises");
   const sync = await import("node:fs");
   const { join } = await import("node:path");
@@ -5302,6 +5304,8 @@ test("R8 actual artifact writer appends only R7 proof and preserves eleven hashe
       "R5_RECOVERY_DOCUMENT",
       "R6_RECOVERY_DOCUMENT",
       "r7Recovery",
+      "r8Recovery",
+      "observationDiagnostic",
       "createHash",
       "readFile",
       "tracedPreparation",
@@ -5315,15 +5319,24 @@ test("R8 actual artifact writer appends only R7 proof and preserves eleven hashe
       sut.R5_RECOVERY_DOCUMENT,
       sut.R6_RECOVERY_DOCUMENT,
       sut.R7_RECOVERY_DOCUMENT,
+      sut.R8_RECOVERY_DOCUMENT,
+      sut.createObservationDiagnostic(
+        (({ frontendSha, harnessSha, deploymentId, workflowRun }) => ({
+          frontendSha,
+          harnessSha,
+          deploymentId,
+          workflowRun,
+        }))(JSON.parse(sut.R8_RECOVERY_DOCUMENT.reportRaw)),
+      ),
       createHash,
       fs.readFile,
       async (_, run) => run(),
     );
     const names = (await fs.readdir(output)).sort();
-    assert.equal(names.length, 12);
+    assert.equal(names.length, 15);
     const manifest = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(manifest.length, 11);
-    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 11);
+    assert.equal(manifest.length, 14);
+    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 14);
     for (const line of manifest) {
       assert.match(line, /^[0-9a-f]{64}  [a-z0-9.-]+$/);
       const bytes = await fs.readFile(join(output, line.slice(66)));
