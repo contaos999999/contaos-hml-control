@@ -1297,3 +1297,118 @@ test("R13 appends the exact R11 uncertain originals without promoting or refundi
   });
   assert.throws(() => buildProof(root, inspection));
 });
+
+const R15_FILES = [
+  "receipts.json",
+  "report.json",
+  "receipts-r1.json",
+  "recovery-r2.json",
+  "receipts-r3.json",
+  "recovery-r3.json",
+  "receipts-r5.json",
+  "recovery-r5.json",
+  "receipts-r6.json",
+  "recovery-r6.json",
+  "recovery-r7.json",
+  "receipts-r8.json",
+  "recovery-r8.json",
+  "observation-diagnostic.json",
+  "receipts-r9.json",
+  "recovery-r9.json",
+  "receipts-r10.json",
+  "recovery-r10.json",
+  "receipts-r11.json",
+  "recovery-r11.json",
+  "receipts-r13.json",
+  "recovery-r13.json",
+];
+const R15_HISTORY = {
+  "receipts-r13.json": "{\"schema\":\"contaos.fixture.receipts.v1\",\"receipts\":[]}\n",
+  "recovery-r13.json": "{\n  \"schema\": \"contaos.fixture.recovery-r13.v1\",\n  \"workflowRun\": \"42685547737\",\n  \"artifactId\": \"13704636643\",\n  \"requestId\": \"trilha-a-fixtures-20261109-r13\",\n  \"harnessSha\": \"f39e32ca1009b23aaae19dcbd01e282df2bf0847\",\n  \"zipSha256\": \"7d097d83d5b622d4277be39d2155800223e18fccfe9258ba1adabf337c1e5307\",\n  \"reportSha256\": \"877dca165c4d46a61b8f5ea1946a6a223ceb17e9b64b9ef4067d8e24d5b7aa81\",\n  \"receiptsSha256\": \"fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf\",\n  \"observationSha256\": \"f6f4ea8b51e4ec9ab3e8aca8e4fb6c3367d808174e884ca4c6119d6a06c33aeb\",\n  \"reportRaw\": \"{\\n  \\\"schema\\\": \\\"contaos.fixture.preparation.v1\\\",\\n  \\\"failure\\\": \\\"FLOW_LIST_UI_MISSING\\\",\\n  \\\"diagnostics\\\": {\\n    \\\"primaryFailure\\\": \\\"FLOW_LIST_UI_MISSING\\\",\\n    \\\"failureClass\\\": \\\"PROTOCOL\\\",\\n    \\\"errorName\\\": \\\"Error\\\",\\n    \\\"subphase\\\": \\\"LIST_UI_CONTROL\\\",\\n    \\\"subphasePath\\\": [\\n      \\\"SOURCE_AND_LIST\\\",\\n      \\\"LIST_UI_CONTROL\\\",\\n      \\\"LIST_UI_CONTROL\\\"\\n    ],\\n    \\\"lastCompletedSubphase\\\": \\\"LIST_GET\\\",\\n    \\\"logoutAttempted\\\": true,\\n    \\\"logoutVerified\\\": true,\\n    \\\"cleanupFailure\\\": null\\n  },\\n  \\\"intentLedger\\\": {\\n    \\\"count\\\": 11,\\n    \\\"frozen\\\": false,\\n    \\\"pending\\\": false,\\n    \\\"sent\\\": false,\\n    \\\"priorConfirmed\\\": 10,\\n    \\\"priorReserved\\\": 1,\\n    \\\"newArmedCount\\\": 0,\\n    \\\"maxIntentions\\\": 24,\\n    \\\"maxNewIntentions\\\": 13\\n  },\\n  \\\"recovery\\\": {\\n    \\\"ledgerSha256\\\": \\\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\\",\\n    \\\"priorWorkflowRun\\\": \\\"42540864527\\\",\\n    \\\"confirmedBefore\\\": 10,\\n    \\\"maxNewIntentions\\\": 13,\\n    \\\"r3ReceiptsSha256\\\": \\\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\\",\\n    \\\"r3WorkflowRun\\\": \\\"42559214436\\\",\\n    \\\"r4ZeroAuth\\\": {\\n      \\\"schema\\\": \\\"contaos.fixture.recovery-r4.v1\\\",\\n      \\\"headSha\\\": \\\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\\",\\n      \\\"upstreamRun\\\": 42568309807,\\n      \\\"fixturesRun\\\": 42568382053,\\n      \\\"auditRun\\\": 42568382029,\\n      \\\"attempt\\\": 1,\\n      \\\"derivedNewBusinessIntents\\\": 0,\\n      \\\"proof\\\": \\\"GITHUB_ACTIONS_LIVE_METADATA\\\"\\n    },\\n    \\\"reconciled\\\": true,\\n    \\\"sourceVersion\\\": \\\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\\",\\n    \\\"sourceHash\\\": \\\"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\\\"\\n  },\\n  \\\"bindings\\\": null,\\n  \\\"frontendSha\\\": \\\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\\",\\n  \\\"harnessSha\\\": \\\"f39e32ca1009b23aaae19dcbd01e282df2bf0847\\\",\\n  \\\"deploymentId\\\": \\\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\\",\\n  \\\"workflowRun\\\": \\\"42685547737\\\",\\n  \\\"phase\\\": \\\"SOURCE_AND_LIST\\\",\\n  \\\"completed\\\": false,\\n  \\\"logoutVerified\\\": true,\\n  \\\"ids\\\": [],\\n  \\\"v1Certified\\\": false\\n}\\n\",\n  \"receiptsRaw\": \"{\\\"schema\\\":\\\"contaos.fixture.receipts.v1\\\",\\\"receipts\\\":[]}\\n\",\n  \"observationRaw\": \"{\\n  \\\"schema\\\": \\\"contaos.fixture.observation.v1\\\",\\n  \\\"frontendSha\\\": \\\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\\",\\n  \\\"harnessSha\\\": \\\"f39e32ca1009b23aaae19dcbd01e282df2bf0847\\\",\\n  \\\"deploymentId\\\": \\\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\\",\\n  \\\"workflowRun\\\": \\\"42685547737\\\",\\n  \\\"firstFailure\\\": null\\n}\\n\"\n}\n",
+};
+function r15Metadata() {
+  const m = metadataFixture();
+  for (const run of [m.run, m.upstream]) {
+    run.head_sha = "dd895a5c30acbb39c821153d86477985ae94b939";
+  }
+  m.run.id = 42703523206;
+  m.upstream.id = 42703248266;
+  Object.assign(m.artifact, {
+    id: 13713326447,
+    name: "trilha-a-fixtures-42703523206-1",
+    size_in_bytes: 22442,
+    digest: "sha256:49a1075f93ac229929399b940f8a7792bd6aa7d70ead4beb7449006d7ae68262",
+    workflow_run: {
+      id: 42703523206,
+      repository_id: 1442722734,
+      head_repository_id: 1442722734,
+      head_sha: "dd895a5c30acbb39c821153d86477985ae94b939",
+      head_branch: "main",
+    },
+  });
+  m.jobs.jobs = [
+    [129454201287, "Trilha A solicitacao unica sem credenciais", "success"],
+    [129454203909, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+    [129454678528, "Trilha A preparacao sintetica HML", "failure"],
+  ].map(([id, name, conclusion]) => ({
+    id,
+    name,
+    conclusion,
+    status: "completed",
+    run_id: 42703523206,
+    run_attempt: 1,
+    head_sha: "dd895a5c30acbb39c821153d86477985ae94b939",
+  }));
+  return m;
+}
+function r15Directory(t) {
+  const root = fixture(t);
+  for (const [name, raw] of Object.entries(R15_HISTORY)) writeFileSync(join(root, name), raw);
+  writeFileSync(
+    join(root, "SHA256SUMS"),
+    R15_FILES.map((name) => sha256(readFileSync(join(root, name))) + "  " + name + "\n").join(""),
+  );
+  return root;
+}
+test("R15 live original metadata admits only the terminal artifact and three exact jobs", () => {
+  assert.equal(validateMetadata(r15Metadata()), true);
+  for (const mutate of [
+    (m) => (m.jobs.jobs[2].id = 129391860451),
+    (m) => (m.run.id = 42685547737),
+    (m) => (m.artifact.id = 13704636643),
+    (m) => (m.artifact.size_in_bytes = 19861),
+    (m) => (m.jobs.jobs[2].run_attempt = 2),
+  ]) {
+    const bad = r15Metadata();
+    mutate(bad);
+    assert.throws(() => validateMetadata(bad), /INSPECTION_METADATA/);
+  }
+});
+test("R15 complete directory proves all twenty-two files before releasing original bytes", (t) => {
+  const proof = JSON.parse(buildProof(r15Directory(t), inspection));
+  assert.deepEqual(proof.manifest.map((entry) => entry.name), R15_FILES);
+  assert.equal(proof.source.run, 42703523206);
+  assert.equal(proof.source.artifact, 13713326447);
+  assert.equal(proof.manifest[20].sha256, "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf");
+  assert.equal(proof.manifest[21].sha256, "92bf8114d857b2061b0a2ce67cfb908f2dd1c71e1800b567bfecf52c17e12da9");
+});
+test("R15 rejects the old twenty-file layout instead of publishing a partial proof", (t) => {
+  const root = fixture(t);
+  for (const name of ["receipts-r13.json", "recovery-r13.json"]) rmSync(join(root, name), { force: true });
+  writeFileSync(
+    join(root, "SHA256SUMS"),
+    R15_FILES.slice(0, 20).map((name) => sha256(readFileSync(join(root, name))) + "  " + name + "\n").join(""),
+  );
+  assert.throws(() => buildProof(root, inspection), /INSPECTION_FILES/);
+});
+test("R15 refuses rewritten R13 history even with a recomputed manifest", (t) => {
+  for (const name of ["receipts-r13.json", "recovery-r13.json"]) {
+    const root = r15Directory(t);
+    writeFileSync(join(root, name), "{}\n");
+    writeFileSync(
+      join(root, "SHA256SUMS"),
+      R15_FILES.map((entry) => sha256(readFileSync(join(root, entry))) + "  " + entry + "\n").join(""),
+    );
+    assert.throws(() => buildProof(root, inspection));
+  }
+});
