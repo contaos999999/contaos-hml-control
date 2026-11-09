@@ -10,7 +10,7 @@ Escopo de código posterior: somente scripts/hml/prepare-visual-fixtures.mjs, sc
 
 R15 original run42703523206/head dd895a5c30acbb39c821153d86477985ae94b939, artefato13713326447, ZIP22442bytes/SHA25649a1075f93ac229929399b940f8a7792bd6aa7d70ead4beb7449006d7ae68262. Inspeção42705850329/job129462302474 validou22 arquivos de dados mais SHA256SUMS. Usar exclusivamente reportRaw/receiptsRaw/observationRaw publicados por FIXTURE_INSPECTION_PROOF, sem reformatar esses três textos.
 
-Documento canônico R15: schema contaos.fixture.recovery-r15.v1, workflowRun "42703523206", artifactId "13713326447", requestId "trilha-a-fixtures-20261109-r15", harnessSha do produtor original, zipSha256 acima, reportSha256, receiptsSha256, observationSha256, reportRaw, receiptsRaw, observationRaw. Esses12 campos nessa ordem, serialização JSON.stringify(doc,null,2)+"\\n", total6244bytes, SHA256a70f25891bde925bacc89504926bf6dd2234077bdd958df4ee9555d66dec3b10.
+Documento canônico R15: schema contaos.fixture.recovery-r15.v1, workflowRun "42703523206", artifactId "13713326447", requestId "trilha-a-fixtures-20261109-r15", harnessSha do produtor original, zipSha256 acima, reportSha256, receiptsSha256, observationSha256, reportRaw, receiptsRaw, observationRaw. Esses12 campos nessa ordem, serialização JSON.stringify(doc,null,2)+"\n", total6244bytes, SHA256a70f25891bde925bacc89504926bf6dd2234077bdd958df4ee9555d66dec3b10.
 
 | Texto original | Bytes | SHA256 |
 | --- | ---: | --- |
