@@ -8833,7 +8833,7 @@ test("R12 the original uncertain R11 document is mandatory before constructing a
 });
 test("R12 a recovery broker reserves the uncertain slot without promoting it to confirmed", () => {
   const b = sut.createIntentBroker(r12RecoveryOptions()),
-    snapshot = b.snapshot();
+    snapshot = sut.preparationIntentSummary(b);
   assert.deepEqual(Object.keys(snapshot), [
     "count",
     "frozen",
