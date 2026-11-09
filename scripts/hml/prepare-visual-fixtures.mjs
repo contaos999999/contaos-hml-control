@@ -4093,7 +4093,19 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
             : RPC_RESPONSE_FIELDS[rpc] ||
               (BUSINESS_RPCS.includes(rpc) ? BUSINESS_RESPONSE_FIELDS : null);
           if (!fields) err("OBSERVATION_ENDPOINT");
-          const decoded = JSON.parse(bytes.toString("utf8"));
+          let decoded;
+          if (status === 204) {
+            if (
+              rpc !== "aprovar_parecer_interno" ||
+              request.method() !== "POST" ||
+              !mutation ||
+              mutation.request !== request ||
+              mutation.rpc !== rpc ||
+              bytes.length !== 0
+            )
+              err("OBSERVATION_RESPONSE");
+            decoded = null;
+          } else decoded = JSON.parse(bytes.toString("utf8"));
           value = Object.hasOwn(SCOPED_RPC_FIELDS, rpc)
             ? projectScopedRpcResponse(rpc, decoded)
             : projectOfficialResponse(decoded, 0, false, new Set(fields.split(" ")));

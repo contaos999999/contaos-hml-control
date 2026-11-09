@@ -3840,7 +3840,59 @@ test("R4 approved minimal projections TABLE5 causal observer cases", async () =>
   }
 });
 
-function r4EmitMutation(page, rpc, payload, ack = {}, bodyWait) {
+test("R16 exact void approval accepts 204 empty body without confirming business", async () => {
+  const f = await r4ObserverFixture();
+  const payload = {
+    p_id_parecer: FIXTURE.source,
+    p_aprovar: true,
+    p_fundamento: FIXTURE.foundation,
+  };
+  try {
+    f.observer.markMutation("aprovar_parecer_interno", payload, {
+      opinions: [{ id: FIXTURE.source, competency: FIXTURE.contract }],
+    });
+    r4EmitMutation(f.page, "aprovar_parecer_interno", payload, null, undefined, 204, "");
+    await f.observer.flush();
+    assert.equal(f.observer.observationFailure(), null);
+  } finally {
+    f.observer.close();
+  }
+});
+
+test("R16 empty responses remain closed for other RPCs and malformed void responses", async () => {
+  for (const [rpc, status, raw] of [
+    ["solicitar_parecer_interno", 204, ""],
+    ["aprovar_parecer_interno", 200, ""],
+    ["aprovar_parecer_interno", 204, "{}"],
+    ["aprovar_parecer_interno", 403, ""],
+  ]) {
+    const f = await r4ObserverFixture();
+    try {
+      r4EmitMutation(f.page, rpc, {}, null, undefined, status, raw);
+      await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+    } finally {
+      f.observer.close();
+    }
+  }
+});
+
+test("R16 empty GET is never treated as void mutation acknowledgement", async () => {
+  const f = await r4ObserverFixture();
+  try {
+    const request = f.request();
+    f.page.emit("response", {
+      request: () => request,
+      url: request.url,
+      status: () => 204,
+      body: async () => Buffer.alloc(0),
+    });
+    await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+  } finally {
+    f.observer.close();
+  }
+});
+
+function r4EmitMutation(page, rpc, payload, ack = {}, bodyWait, status = 200, rawBody) {
   const request = {
     method: () => "POST",
     postData: () => JSON.stringify(payload),
@@ -3850,10 +3902,10 @@ function r4EmitMutation(page, rpc, payload, ack = {}, bodyWait) {
   page.emit("response", {
     request: () => request,
     url: request.url,
-    status: () => 200,
+    status: () => status,
     body: async () => {
       if (bodyWait) await bodyWait;
-      return Buffer.from(JSON.stringify(ack));
+      return Buffer.from(rawBody === undefined ? JSON.stringify(ack) : rawBody);
     },
   });
   return request;
@@ -10177,4 +10229,201 @@ test("R14 real bootstrap validates DocR13 before browser, login or budget side e
         runtime(...Object.keys(env).map((k) => (k === "R13_RECOVERY_DOCUMENT" ? value : env[k]))),
       /RECOVERY_R13_LEDGER/,
     );
+});
+
+async function r16VoidObserverFixture() {
+  let clock = 0;
+  const f = await r4ObserverFixture({
+    now: () => clock,
+    wait: async () => {
+      clock += 300001;
+    },
+  });
+  const { readFile } = await import("node:fs/promises");
+  const sdk = await readFile(
+    new URL("../../src/lib/competencias/parecerInternoDados.ts", import.meta.url),
+    "utf8",
+  );
+  const select = sdk.match(/export const COLUNAS_PARECERES\s*=\s*"([^"]+)"/)[1];
+  const competency = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies[0].id;
+  const opinion = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const where = {
+    id_competencia: competency,
+    id_organizacao: FIXTURE.organization,
+    id_contrato: FIXTURE.contract,
+  };
+  const payload = {
+    p_id_parecer: opinion,
+    p_aprovar: true,
+    p_fundamento: FIXTURE.foundation,
+  };
+  const row = {
+    id: opinion,
+    ...where,
+    autor: null,
+    texto: "Fixture local",
+    status: "aprovado",
+    versao: 1,
+    hash: "c".repeat(64),
+    criado_em: "2026-11-09T00:00:00Z",
+    aprovado_por: null,
+    aprovado_em: "2026-11-09T00:01:00Z",
+  };
+  function beginRead(scope = where) {
+    const q = {
+      select,
+      ...Object.fromEntries(Object.entries(scope).map(([k, v]) => [k, "eq." + v])),
+      order: "versao.desc,id.desc",
+      offset: "0",
+      limit: "25",
+    };
+    const url = FIXTURE.api + "/rest/v1/pareceres_internos?" + new URLSearchParams(q);
+    const request = {
+      method: () => "GET",
+      postData: () => null,
+      url: () => url,
+      failure: () => null,
+    };
+    f.page.emit("request", request);
+    return request;
+  }
+  function endRead(request, rows = [row]) {
+    f.page.emit("response", {
+      request: () => request,
+      url: request.url,
+      status: () => 200,
+      body: async () => Buffer.from(JSON.stringify(rows)),
+    });
+  }
+  function ack({ bound = true, status = 204, raw = "", rejectBody = false } = {}) {
+    if (bound) {
+      f.observer.markMutation("aprovar_parecer_interno", payload, {
+        opinions: [{ id: opinion, competency }],
+      });
+    }
+    const url = FIXTURE.api + "/rest/v1/rpc/aprovar_parecer_interno";
+    const request = {
+      method: () => "POST",
+      postData: () => JSON.stringify(payload),
+      url: () => url,
+      failure: () => null,
+    };
+    const bytes = Buffer.from(raw);
+    let reads = 0;
+    f.page.emit("request", request);
+    f.page.emit("response", {
+      request: () => request,
+      url: () => url,
+      status: () => status,
+      body: async () => {
+        reads++;
+        if (rejectBody) throw new Error("R16_PRIVATE_BODY_CANARY");
+        return bytes;
+      },
+    });
+    return { bytes, reads: () => reads };
+  }
+  return { ...f, where, row, opinion, beginRead, endRead, ack };
+}
+test("R16 real void ACK releases only the later contextual approved opinion readback", async () => {
+  const f = await r16VoidObserverFixture();
+  try {
+    f.ack();
+    await f.observer.flush();
+    assert.equal(f.observer.observationFailure(), null);
+    f.endRead(f.beginRead());
+    const rows = await f.observer.read("pareceres_internos", f.where);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].id, f.opinion);
+    assert.equal(rows[0].status, "aprovado");
+    assert.equal(rows[0].aprovado_em, "2026-11-09T00:01:00Z");
+  } finally {
+    f.observer.close();
+  }
+});
+test("R16 real void ACK alone never completes the required business readback", async () => {
+  const f = await r16VoidObserverFixture();
+  try {
+    f.ack();
+    await f.observer.flush();
+    await assert.rejects(() => f.observer.read("pareceres_internos", f.where), /PHASE_TIMEOUT/);
+  } finally {
+    f.observer.close();
+  }
+});
+for (const mode of ["stale", "inflight", "tenant", "competency", "id", "status", "timestamp"]) {
+  test("R16 real void ACK rejects " + mode + " approval evidence", async () => {
+    const f = await r16VoidObserverFixture();
+    try {
+      let before;
+      if (mode === "stale" || mode === "inflight") {
+        before = f.beginRead();
+        if (mode === "stale") {
+          f.endRead(before);
+          await f.observer.flush();
+        }
+      }
+      f.ack();
+      await f.observer.flush();
+      if (mode === "inflight") f.endRead(before);
+      if (!["stale", "inflight"].includes(mode)) {
+        const row = { ...f.row };
+        if (mode === "tenant") row.id_organizacao = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+        if (mode === "competency") row.id_competencia = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+        if (mode === "id") row.id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+        if (mode === "status") row.status = "rascunho";
+        if (mode === "timestamp") row.aprovado_em = null;
+        f.endRead(f.beginRead(), [row]);
+      }
+      if (["tenant", "competency"].includes(mode)) {
+        await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+      } else {
+        await f.observer.flush();
+        await assert.rejects(() => f.observer.read("pareceres_internos", f.where), /PHASE_TIMEOUT/);
+      }
+    } finally {
+      f.observer.close();
+    }
+  });
+}
+test("R16 void projection requires the original associated mutation request", async () => {
+  const f = await r16VoidObserverFixture();
+  try {
+    f.ack({ bound: false });
+    await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+  } finally {
+    f.observer.close();
+  }
+});
+test("R16 nonempty associated 204 and malformed JSON fail and zero their buffers", async () => {
+  for (const [status, raw] of [
+    [204, '{"private":"R16_PRIVATE_CANARY"}'],
+    [200, "{"],
+  ]) {
+    const f = await r16VoidObserverFixture();
+    try {
+      const body = f.ack({ status, raw });
+      await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+      assert.equal(
+        body.bytes.every((byte) => byte === 0),
+        true,
+      );
+      assert.equal(JSON.stringify(f.observer.observationFailure()).includes("CANARY"), false);
+    } finally {
+      f.observer.close();
+    }
+  }
+});
+test("R16 void projection preserves failed body and HTTP response barriers", async () => {
+  for (const status of [403, 500, 204]) {
+    const f = await r16VoidObserverFixture();
+    try {
+      const body = f.ack({ status, rejectBody: true });
+      await assert.rejects(() => f.observer.flush(), /OBSERVATION_FAILED/);
+      assert.equal(body.reads(), status === 204 ? 1 : 0);
+      assert.equal(JSON.stringify(f.observer.observationFailure()).includes("CANARY"), false);
+    } finally {
+      f.observer.close();
+    }
+  }
 });
