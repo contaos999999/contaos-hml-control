@@ -2942,6 +2942,10 @@ const NATIVE_SDK_ARGUMENTS = Object.freeze([
   "--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4",
   "--remote-debugging-pipe",
   "--no-startup-window",
+  "--use-gl=angle",
+  "--use-angle=swiftshader-webgl",
+  "--ozone-platform=headless",
+  "--allow-pre-commit-input",
 ]);
 
 export function verifyNativeBrowserPolicy(args, version, expected) {

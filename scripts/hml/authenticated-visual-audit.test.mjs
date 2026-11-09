@@ -7347,6 +7347,10 @@ function popupPolicyFixture({
       path.join(require("node:os").tmpdir(), "playwright_chromiumdev_profile-Test123"),
     "--remote-debugging-pipe",
     "--no-startup-window",
+    "--use-gl=angle",
+    "--use-angle=swiftshader-webgl",
+    "--ozone-platform=headless",
+    "--allow-pre-commit-input",
   ];
   return { args, expected: { executablePath, debugPort, proxy } };
 }
