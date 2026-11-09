@@ -5401,22 +5401,22 @@ test("solicitacao unica: GET publico nunca envia Authorization", async () => {
   });
   await assert.rejects(() => fail(""), { code: "REQUEST_API_UNAVAILABLE" });
 });
-test("R15: timeout tipado repete uma vez e sucesso; transporte nao repete", async () => {
+test("R15: timeout tipado repete uma vez e transporte nao repete", async () => {
   const getFactory = fn("singleRequestGet");
   let attempts = 0;
-  const success = getFactory({
+  const get = getFactory({
     publicOnly: true,
     fetchImpl: async (_url, options) => {
       attempts++;
       if (attempts === 1) {
-        options.signal.dispatchEvent(new Event("abort"));
+        await new Promise((resolve) => options.signal.addEventListener("abort", resolve, { once: true }));
         throw new Error("timeout");
       }
       return { status: 200, text: async () => '{"ok":true}' };
     },
   });
-  // Native AbortSignal cannot be manually aborted; use a timed-out signal
-  // in the causal test below and ensure transport errors do not retry.
+  assert.deepEqual(await get(""), { ok: true });
+  assert.equal(attempts, 2);
   let transportCalls = 0;
   const transport = getFactory({
     publicOnly: true,
@@ -5427,7 +5427,6 @@ test("R15: timeout tipado repete uma vez e sucesso; transporte nao repete", asyn
   });
   await assert.rejects(() => transport(""), { code: "REQUEST_API_UNAVAILABLE" });
   assert.equal(transportCalls, 1);
-  assert.equal(typeof success, "function");
 });
 
 test("R15: HTTP e body invalidos nao geram retry", async () => {
