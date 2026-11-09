@@ -2411,6 +2411,212 @@ function r3SourceListMarkup() {
   }));
 }
 
+function r7PanelMarkup({ total = 1, pagina = 0, disabled = false, mode = "normal" } = {}) {
+  const require = createRequire(import.meta.url);
+  const fs = require("fs"),
+    ts = require("typescript"),
+    React = require("react");
+  const { renderToStaticMarkup } = require("react-dom/server");
+  const path = "src/components/contratos/GerenciarListas.tsx";
+  const source = fs.readFileSync(path, "utf8");
+  const ast = ts.createSourceFile(path, source, 99, true, ts.ScriptKind.TSX);
+  const nodes = [];
+  const visit = (node) => {
+    nodes.push(node);
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  const label = nodes.find(
+    (node) =>
+      ts.isJsxElement(node) &&
+      node.openingElement.tagName.getText(ast) === "label" &&
+      node.getText(ast).includes("<span>Lista selecionada</span>"),
+  );
+  const pagination = ast.statements.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "Paginacao",
+  );
+  assert.ok(label);
+  assert.ok(pagination);
+  const section = nodes.find(
+    (node) =>
+      ts.isJsxElement(node) &&
+      node.openingElement.tagName.getText(ast) === "section" &&
+      node.openingElement.attributes.properties.some(
+        (a) =>
+          ts.isJsxAttribute(a) &&
+          a.name.getText(ast) === "aria-label" &&
+          a.initializer?.getText(ast) === '"Gestão de listas"',
+      ),
+  );
+  assert.ok(section);
+  const code =
+    pagination.getText(ast) +
+    "\nfunction Probe({listas,id,bloquearEdicao,pagina,total,mode}) {" +
+    "const setSelecionada=()=>{},setVersao=()=>{},setPv=()=>{},setPi=()=>{},setForm=()=>{};" +
+    "return (" +
+    section.openingElement.getText(ast) +
+    label.getText(ast) +
+    '{mode==="duplicateLabel" && (' +
+    label.getText(ast) +
+    ")}" +
+    '<Paginacao nome="listas" pagina={pagina} total={total} disabled={bloquearEdicao} onMudar={()=>{}} />' +
+    section.closingElement.getText(ast) +
+    ");}";
+  const js = ts.transpileModule(code, {
+    compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+  const Probe = new Function("React", "Button", "CAMPO", js + ";return Probe;")(
+    React,
+    ({ children, ...props }) => React.createElement("button", props, children),
+    "",
+  );
+  const target = JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.listId;
+  const other = "11111111-1111-4111-8111-111111111111";
+  const rows = Array.from({ length: Math.min(total, 25) }, (_, i) => ({
+    id: i === 0 ? target : other.slice(0, -2) + String(i).padStart(2, "0"),
+    nome: i === 0 ? FIXTURE.listName : "Lista controle " + i,
+  }));
+  if (mode === "duplicateOption") rows.push({ ...rows[0] });
+  if (mode === "missingOption") rows.splice(0, 1);
+  let html = renderToStaticMarkup(
+    React.createElement(Probe, {
+      listas: { data: { itens: rows, total } },
+      id: rows.at(-1)?.id ?? "",
+      bloquearEdicao: disabled,
+      pagina,
+      total,
+      mode,
+    }),
+  );
+  if (mode === "foreign")
+    html = html.replace('aria-label="Gestão de listas"', 'aria-label="Outro contexto"');
+  if (mode === "wrongTag") html = html.replace(/<label/g, "<div").replace(/<\/label>/g, "</div>");
+  if (mode === "missingTitle")
+    html = html.replace("<span>Lista selecionada</span>", "<span>Outro campo</span>");
+  if (mode === "duplicateSelect") html = html.replace(/(<select[\s\S]*?<\/select>)/, "$1$1");
+  return { html, target, rows };
+}
+async function r7ProbeListConsumers(page, ast) {
+  const require = createRequire(import.meta.url),
+    ts = require("typescript");
+  const calls = [],
+    selections = [];
+  const visit = (node) => {
+    if (ts.isCallExpression(node)) {
+      const text = node.expression.getText(ast);
+      if (
+        (text === "field" && node.arguments[1]?.getText(ast) === '"Lista selecionada"') ||
+        text === "listSelectionControl"
+      )
+        calls.push(node);
+    }
+    if (
+      ts.isExpressionStatement(node) &&
+      node.getText(ast).includes(".selectOption(") &&
+      (node.getText(ast).includes('field(region, "Lista selecionada")') ||
+        node.getText(ast).includes('field(panel, "Lista selecionada")') ||
+        node.getText(ast).includes("listSelectionControl(region") ||
+        node.getText(ast).includes("listSelectionControl(panel"))
+    )
+      selections.push(node);
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  assert.equal(calls.length, 4, "all four production list control uses are exercised");
+  assert.equal(selections.length, 2, "both production selection consumers are exercised");
+  let fieldInitializer;
+  const findField = (node) => {
+    if (ts.isVariableDeclaration(node) && node.name.getText(ast) === "field")
+      fieldInitializer ??= node.initializer.getText(ast);
+    ts.forEachChild(node, findField);
+  };
+  findField(ast);
+  assert.ok(fieldInitializer);
+  const field = new Function("return (" + fieldInitializer + ");")();
+  const trace = async (_, run) => run();
+  const fixture = r7PanelMarkup();
+  for (const call of calls) {
+    await page.setContent(fixture.html);
+    const scope = page.getByRole("region", { name: "Gestão de listas", exact: true });
+    const control = await new (Object.getPrototypeOf(async () => {}).constructor)(
+      "field",
+      "listSelectionControl",
+      "region",
+      "panel",
+      "matching",
+      "matches",
+      "return await (" + call.getText(ast) + ");",
+    )(
+      field,
+      sut.listSelectionControl,
+      scope,
+      scope,
+      [{ id: fixture.target }],
+      [{ id: fixture.target }],
+    );
+    assert.equal(await scope.locator("option[value='" + fixture.target + "']").count(), 1);
+    assert.equal(
+      await scope.getByLabel("Lista selecionada", { exact: true }).count(),
+      0,
+      "real Playwright label text includes options",
+    );
+    assert.equal(
+      await control.count(),
+      1,
+      "production lookup must find the real select even when its wrapped exact label does not",
+    );
+  }
+  for (const statement of selections) {
+    await page.setContent(fixture.html);
+    const scope = page.getByRole("region", { name: "Gestão de listas", exact: true });
+    await new (Object.getPrototypeOf(async () => {}).constructor)(
+      "field",
+      "listSelectionControl",
+      "region",
+      "panel",
+      "matching",
+      "matches",
+      "tracedPreparation",
+      statement.getText(ast),
+    )(
+      field,
+      sut.listSelectionControl,
+      scope,
+      scope,
+      [{ id: fixture.target }],
+      [{ id: fixture.target }],
+      trace,
+    );
+    assert.equal(await scope.locator("select").inputValue(), fixture.target);
+  }
+  for (const total of [1, 25, 26, 51]) {
+    for (const pagina of new Set([0, Math.ceil(total / 25) - 1])) {
+      const f = r7PanelMarkup({ total, pagina });
+      await page.setContent(f.html);
+      const scope = page.getByRole("region", { name: "Gestão de listas", exact: true });
+      assert.equal(await (await sut.listSelectionControl(scope, f.target)).count(), 1);
+      const prev = scope.getByRole("button", { name: "Página anterior de listas", exact: true });
+      assert.equal(await prev.count(), total > 25 ? 1 : 0);
+      if (total > 25) assert.equal(await prev.isEnabled(), pagina > 0);
+    }
+  }
+  for (const mode of [
+    "duplicateLabel",
+    "duplicateOption",
+    "missingOption",
+    "foreign",
+    "wrongTag",
+    "missingTitle",
+    "duplicateSelect",
+    "disabled",
+  ]) {
+    const f = r7PanelMarkup({ mode, disabled: mode === "disabled" });
+    await page.setContent(f.html);
+    const scope = page.locator("section");
+    await assert.rejects(sut.listSelectionControl(scope, f.target), /FLOW_LIST_UI_MISSING/);
+  }
+}
+
 test(
   "R3 Chromium sourceforms exact controls and actual source consumer",
   { skip: process.env.CONTAOS_NATIVE_GUARD !== "1" },
@@ -2556,6 +2762,7 @@ test(
         }
       }
       assert.equal(additional, 17);
+      await r7ProbeListConsumers(page, ast);
     } finally {
       await browser.close();
     }
