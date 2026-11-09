@@ -6798,3 +6798,101 @@ function r10BudgetApi() {
     readBarrierRemaining: observer.readBarrierRemaining,
   };
 }
+
+async function r10QueryFixture(options = {}) {
+  const { EventEmitter } = await import("node:events"),
+    { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+      new URL("../../src/lib/contratos/competenciasDados.ts", import.meta.url),
+      "utf8",
+    ),
+    select = source.match(/export const COLUNAS_COMPETENCIA\s*=\s*"([^"]+)"/)[1];
+  const page = new EventEmitter(),
+    observer = sut.createOfficialObserver(page, {
+      wait: () => new Promise(setImmediate),
+      ...options,
+    });
+  const c = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies[0],
+    row = {
+      id: c.id,
+      competencia_referencia: c.month,
+      periodo_inicio: c.month,
+      periodo_fim: null,
+      data_limite: null,
+      situacao: "preparando",
+      percentual_conformidade: 0,
+      versao_pacote_atual: null,
+      atualizado_em: null,
+    };
+  const where = { id_contrato: FIXTURE.contract, competencia_referencia: c.month };
+  const full = {
+    select,
+    id_contrato: "eq." + FIXTURE.contract,
+    competencia_referencia: "eq." + c.month,
+    order: "competencia_referencia.desc,id.desc",
+    offset: "0",
+    limit: "25",
+  };
+  const request = (q = full, endpoint = "competencias", args) => {
+    const url =
+        FIXTURE.api +
+        "/rest/v1/" +
+        endpoint +
+        (args === undefined ? "?" + new URLSearchParams(q) : ""),
+      r = {
+        url: () => url,
+        method: () => (args === undefined ? "GET" : "POST"),
+        postData: () => (args === undefined ? null : JSON.stringify(args)),
+        failure: () => null,
+      };
+    page.emit("request", r);
+    return r;
+  };
+  const response = (r, value, status = 200) =>
+    page.emit("response", {
+      request: () => r,
+      url: r.url,
+      status: () => status,
+      body: async () => Buffer.from(JSON.stringify(value)),
+    });
+  const mode = { select, after: 0, queryScope: "RECOVERY_COMPETENCE_MONTH" };
+  return { page, observer, select, row, where, full, request, response, mode };
+}
+test("R10 scoped rows wait for newer admitted reads even before their headers", async () => {
+  for (const kind of ["idLookup", "readRpc"]) {
+    const f = await r10QueryFixture();
+    f.response(f.request(), [f.row]);
+    await f.observer.flush();
+    await new Promise(setImmediate);
+    const newer =
+      kind === "idLookup"
+        ? f.request({
+            select: "id_contrato",
+            id: "eq." + f.row.id,
+            id_organizacao: "eq." + FIXTURE.organization,
+          })
+        : f.request(null, "rpc/consultar_permissoes_efetivas", {
+            p_id_organizacao: FIXTURE.organization,
+            p_id_contrato: FIXTURE.contract,
+          });
+    let settled = false;
+    const reading = f.observer.read("competencias", f.where, f.mode).then((value) => {
+      settled = true;
+      return value;
+    });
+    await new Promise(setImmediate);
+    try {
+      assert.equal(settled, false, kind + " pending headers must block a scoped row result");
+    } finally {
+      f.response(
+        newer,
+        kind === "idLookup"
+          ? { id_contrato: FIXTURE.contract }
+          : { schema_versao: "rbac-v1", master: true, permissoes: [] },
+      );
+      f.response(f.request(), [f.row]);
+      await reading;
+      f.observer.close();
+    }
+  }
+});
