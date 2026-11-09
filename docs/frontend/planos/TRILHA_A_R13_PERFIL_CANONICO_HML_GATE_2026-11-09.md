@@ -106,3 +106,14 @@ GREEN: Node/helper30/protocolos/ESLint/Prettier/produto/TS/build/Zero/LOCK/Teste
 Somente após R13terminal e artefato real, leitor estático2mjs em PR separado sob este GATE: pins reais20dados+SHA21/HISTORY17, ledger9/recovery10, reserva excluída de currentconfirmed/CAU2, UNKNOWNpreservado. PolíticasFD/digest/toolpin/warnings/30s/envmínimo/bounds/diagnóstico6/4/fatal consistency intactas; CI/review/merge antes originalpushmainreadonly. Não leitorR12/ZIPmanual.
 
 Atualizar checkpoint apenas com fatos integrados. Este GATE não certifica184/208/232/72/V1 nem sessãoMaster. Preservar18públicos/Run124204PNG102DOM307hashes/AUDIT_BINDING_PENDING e histórico integral.
+
+
+## Emenda pós-terminal: BUILD offline do seletor de listas
+
+Depois de CI, revisão independente e integração protegida desta emenda PLAN/GATE/PLANO, autorizar PR BUILD separado restrito a scripts/hml/prepare-visual-fixtures.mjs e scripts/hml/prepare-visual-fixtures.test.mjs. Somente listSelectionControl e regressões do sourceforms já existente. Exigir RED causal de montagem/habilitação assíncrona com JSX real no Chromium pinado; hipótese não equivale à causa HML provada. Se o RED não reproduzir, investigar sem alteração especulativa.
+
+Esperar texto/control exatos visíveis e select habilitado, com teto3000ms por espera e sem aumentar deadline global. Preservar rejeição de duplicidade antes/depois da espera, região/label/select estritos, R5_BINDINGS.listId literal e opção única. Não substituir selectOption por DOM injection nem criar opção sintética. Nenhum retry de mutação, requisição, navegação ou clique pelo helper. Negativos permanentes devem falhar dentro do limite.
+
+Fonte src/components/contratos/GerenciarListas.tsx permanece byte-exata. Ampliar teste nativo r7ProbeListConsumers dentro do mesmo caso sourceforms; preservar cinco títulos e18barreiras totais. Manter getters/Proxy/PII/fence/transportes, R11reserva/denyOct, ledger9/recovery10,20dados+SHA21/HISTORY17. Runtime controller e request JSON inalterados. Node focal+Chromium real, ESLint/Prettier e CI/Zero/LOCK final/revisão independente obrigatórios antes do merge.
+
+R13 original foi consumido e não pode ser reexecutado. Esta emenda NÃO autoriza Auth, SQL, novo nonce/request, deploy ou auditoria privada. Para prosseguir fixtures, gate separado deve fixar evidência R13/0novas/recuperação/ancestralidade e um único nonce novo, sem elevar orçamento. Não retirar AUDIT_BINDING_PENDING nem preencher UUIDs sem prova.

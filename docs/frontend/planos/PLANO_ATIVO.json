@@ -3404,5 +3404,29 @@
     "max_new_intentions": 13,
     "auth_authorized_by_document": false,
     "prod_changes_allowed": false
+  },
+  "trilha_a_r13_list_selection_readiness": {
+    "status": "EMENDA_DOCUMENTAL_BUILD_OFFLINE_APOS_CI_REVISAO_MERGE",
+    "r13_run": 42685547737,
+    "r13_artifact": 13704636643,
+    "inspection_run": 42687417968,
+    "failure": "FLOW_LIST_UI_MISSING",
+    "cause_async_readiness_proven": false,
+    "new_armed": 0,
+    "new_confirmed": 0,
+    "prior_reserved": 1,
+    "logout_verified": true,
+    "build_paths": [
+      "scripts/hml/prepare-visual-fixtures.mjs",
+      "scripts/hml/prepare-visual-fixtures.test.mjs"
+    ],
+    "helper": "listSelectionControl",
+    "readiness_wait_ms_max": 3000,
+    "native_total_preserved": 18,
+    "sourceforms_count_preserved": 5,
+    "auth_authorized": false,
+    "new_request_authorized": false,
+    "deploy_authorized": false,
+    "certified": false
   }
 }
