@@ -205,7 +205,7 @@ export function CopilotoContrato({
         ? [...anteriores, ...pagina.sessoes.filter((nova) => !anteriores.some((antiga) => antiga.id === nova.id))]
         : pagina.sessoes);
       setCursorSessoes(pagina.proximo_cursor);
-      setIncerto(false);
+      // A listagem isolada não comprova se uma mensagem incerta foi persistida.
     } catch {
       if (epoca === geracao.current && !controlador.signal.aborted) {
         setMensagens([]);
@@ -279,6 +279,10 @@ export function CopilotoContrato({
   }
 
   function novaConversa() {
+    if (incerto) {
+      setErro("Confirme o histórico da sessão anterior antes de iniciar outra conversa.");
+      return;
+    }
     ultimaSessao.current = null;
     geracao.current++;
     requisicao.current?.abort();
