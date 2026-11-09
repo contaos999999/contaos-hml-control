@@ -1,3 +1,15 @@
+# Continuidade comprovada: PR416 integrado e política popup exata GREEN no Chromium
+
+PR416 integrado em78b25c301b0aff1d24212bcfb5c115592fad2d09, HEAD851f0e66307be01c8dfeb40aa6a9624b5baebd04; Zero42549341410/Auth42549341446/Fixtures42549341369/LOCK42549341550 SUCCESS, review5820893686. Preserva ledger explícito, R1 consumido, duas RPC históricas proibidas, teto22novas e diagnóstico/cleanup. NenhumaR2/Auth executada.
+
+PR414 HEAD72aaa90367148b7cc8e5205545a86b1ecfa2fe94: Auth42550770728 eFixtures42550770708 SUCCESS. Job128945618000 confirmou native8+visual1+SYS04browser2+V112browser1, ordem real da fonte e OPTIONS original sem retorno antecipado. Revisão final5821014588 semCritical/Important. Validador agora compara todos argumentos exatos e multiplicidade, inclui3defaults gráficos do Shell e allow-pre-commit-input exatamente2; recusaunknown/overrides/aliases/terminador. SDK/binário resolvidos internamente;semcallback de bypass.13focais de política aprovados; probenativo dafactory sourceblob4afa0032 emSandbox6cmd_0f3fbfd3de3a4f4b906f51a6ec44 verificou com/semproxy,contexts0. Corrige o Important adicional posterior ao425/426, sem tomar CI antiga como aceite do helper antigo.
+
+Zero42550770729 bloqueou especificamente HEADnormativo antesBUILD, pois fontebackend avançou para9878b7a5. Reancoragem conjunta snapshot/ack após árvore595/25fontes/catálogo100/97 iguais e revisão semântica independente do delta4paths C13. Não háSQL nesse delta nemmudança decontratos consumidosA; não é HML/Edge/C13 certificado. Código e provas do72aaa permanecem byte a byte iguais nesta atualização; CI do novoHEAD continua obrigatória.
+
+Última etapa comprovada: revisão dosBUILDs414/416 e segurança popup nativa GREEN. Próxima: concluir checksfinais doHEADreancorado e integrar414 protegido. Nenhum novo deploy/HML/Auth/R2 ou repetição manual de públicos. Run124,102PASSauto/8FAIL_UI/56PII/24fixtures/18baseline e72critérios continuam semcertificação integral; V1NO-GO. As ressalvas históricas de popup abaixo são superadas apenas pelo código/provas aqui especificados, sem liberar execuçãoHML porpresunção.
+
+---
+
 # Checkpoint de integração: conferência fechada de argumentos ainda exige GREEN final
 
 09/11/2026. NO-GO para nova Auth no auditor e preparador permanece. A revisão adicional da425 integrada identificou Important: argv pós-launch aceitava switches desconhecidos e override bare de porta. Reprodução independente contra9b1de606 e RED0f10ef8 preservados. A correção da414 remove injeção de chromium, confere SDK/core/registry1208 internos e compara multiset completo de argv, porta/proxy/executável esperados e perfil temporário único; hashes, sandbox, CDP, Fetch e CORS reais preservados. Revisão adicional0Critical/0Important nofix0fa15b, mas CI nativo bloqueou corretamente0/8 porque o HeadlessShell adiciona quatro argumentos internos além do SDK. Não foi tratado como PASS nem repetido até sorte.
