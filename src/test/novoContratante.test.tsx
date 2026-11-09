@@ -395,7 +395,7 @@ it.each([
 ])("V102 ajuda %s abre por foco e clique sem enviar formulário", async (nome, texto) => {
   montar();
   await screen.findByLabelText(/Razão social/);
-  const ajuda = screen.getByRole("button", { name: nome, exact: true });
+  const ajuda = screen.getByRole("button", { name: nome });
   expect(ajuda).toHaveAttribute("type", "button");
   act(() => ajuda.focus());
   expect(await screen.findByRole("tooltip")).toHaveTextContent(texto);
