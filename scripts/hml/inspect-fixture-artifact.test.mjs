@@ -29,7 +29,7 @@ import {
   sha256,
 } from "./inspect-fixture-artifact.mjs";
 
-// Technical projections only. These are not the unread R9 report or a business replay.
+// Technical projections only. These are not the unread R10 report or a business replay.
 const BASE = {
   schema: "contaos.fixture.preparation.v1",
   failure: "OBSERVATION_FAILED",
@@ -106,9 +106,9 @@ const BASE = {
     ],
   },
   frontendSha: "437c788e32f0325dd15c9d2e7277c10129bcb462",
-  harnessSha: "2ed3097691f39025b49a015d86223da61a2b45e5",
+  harnessSha: "a3a5df2b4e99705d214a509ba035f155c7ae8de9",
   deploymentId: "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",
-  workflowRun: "42621964900",
+  workflowRun: "42638883189",
   phase: "FINAL_READBACK",
   completed: false,
   logoutVerified: true,
@@ -149,6 +149,9 @@ const HISTORICAL = {
     '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_documento_competencia_v115",\n      "requestId": "6d730eb7-8c38-4474-813d-d39672454444",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "c9418ddaaa3e21de73da0a62acc2a945b3c9bf8c12107cadf4f4bfc518cf4154"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_documento_competencia_v115",\n      "requestId": "6d730eb7-8c38-4474-813d-d39672454444",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "c9418ddaaa3e21de73da0a62acc2a945b3c9bf8c12107cadf4f4bfc518cf4154"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_analise_competencia",\n      "requestId": "a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "f26357fe955a3312c19cf8a1a678c545da95c8f330a272bc08f8aec964c7ffb1"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_analise_competencia",\n      "requestId": "a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "f26357fe955a3312c19cf8a1a678c545da95c8f330a272bc08f8aec964c7ffb1"\n    }\n  ]\n}\n',
   "recovery-r8.json":
     '{\n  "schema": "contaos.fixture.recovery-r8.v1",\n  "workflowRun": "42611391440",\n  "artifactId": "13670961904",\n  "requestId": "trilha-a-fixtures-20261109-r8",\n  "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n  "zipSha256": "698e58fe9184b194cc1866b4c119d4df45ba23ccc5704665469a99793cce2fa9",\n  "reportSha256": "e913478993f895726f9e207c975533ee4a6fd3d9dac8dd0a319919fcf06c67cb",\n  "receiptsSha256": "20af329dd9c441e4ede575fa6cb94a65c3d136ad777613170045c696328fad25",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"OBSERVATION_FAILED\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"OBSERVATION_FAILED\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"RUNTIME_FRESH\\",\\n    \\"subphasePath\\": [\\n      \\"COMPETENCIES\\",\\n      \\"COMPETENCY_UI\\",\\n      \\"COMPETENCY_RECONCILE\\",\\n      \\"COMPETENCY_RECONCILE\\",\\n      \\"COMPETENCY_UI\\",\\n      \\"COMPETENCY_UI\\",\\n      \\"COMPETENCY_UI\\",\\n      \\"RUNTIME_FRESH\\",\\n      \\"RUNTIME_FRESH\\"\\n    ],\\n    \\"lastCompletedSubphase\\": \\"RUNTIME_FRESH\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 10,\\n    \\"frozen\\": false,\\n    \\"pending\\": false,\\n    \\"sent\\": false,\\n    \\"priorConfirmed\\": 8,\\n    \\"newArmedCount\\": 2,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 16\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 8,\\n    \\"maxNewIntentions\\": 16,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": true,\\n    \\"sourceVersion\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"sourceHash\\": \\"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\\"\\n  },\\n  \\"bindings\\": {\\n    \\"sourceVersionId\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"listId\\": \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"listVersionId\\": \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"itemId\\": \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"source\\": \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"competencies\\": [\\n      {\\n        \\"month\\": \\"2026-10-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"id\\": \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n        \\"requirementId\\": \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n        \\"documentId\\": \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n        \\"code\\": \\"COMPETENCE_DEPENDENCY_BLOCKED\\"\\n      },\\n      {\\n        \\"month\\": \\"2026-09-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"code\\": \\"COMPETENCE_DEPENDENCY_BLOCKED\\"\\n      }\\n    ]\\n  },\\n  \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n  \\"harnessSha\\": \\"dea3ab73c9b47de1126054380b002c37b060ff84\\",\\n  \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n  \\"workflowRun\\": \\"42611391440\\",\\n  \\"phase\\": \\"FINAL_READBACK\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [\\n    \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n    \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n    \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\"\\n  ],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\n  \\"schema\\": \\"contaos.fixture.receipts.v1\\",\\n  \\"receipts\\": [\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"dea3ab73c9b47de1126054380b002c37b060ff84\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42611391440\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"criar_documento_competencia_v115\\",\\n      \\"requestId\\": \\"6d730eb7-8c38-4474-813d-d39672454444\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"c9418ddaaa3e21de73da0a62acc2a945b3c9bf8c12107cadf4f4bfc518cf4154\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"dea3ab73c9b47de1126054380b002c37b060ff84\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42611391440\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"criar_documento_competencia_v115\\",\\n      \\"requestId\\": \\"6d730eb7-8c38-4474-813d-d39672454444\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"c9418ddaaa3e21de73da0a62acc2a945b3c9bf8c12107cadf4f4bfc518cf4154\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"dea3ab73c9b47de1126054380b002c37b060ff84\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42611391440\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"solicitar_analise_competencia\\",\\n      \\"requestId\\": \\"a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"f26357fe955a3312c19cf8a1a678c545da95c8f330a272bc08f8aec964c7ffb1\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n      \\"harnessSha\\": \\"dea3ab73c9b47de1126054380b002c37b060ff84\\",\\n      \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n      \\"workflowRun\\": \\"42611391440\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"solicitar_analise_competencia\\",\\n      \\"requestId\\": \\"a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"f26357fe955a3312c19cf8a1a678c545da95c8f330a272bc08f8aec964c7ffb1\\"\\n    }\\n  ]\\n}\\n"\n}\n',
+  "receipts-r9.json": '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  "recovery-r9.json":
+    '{\n  "schema": "contaos.fixture.recovery-r9.v1",\n  "workflowRun": "42621964900",\n  "artifactId": "13676832673",\n  "requestId": "trilha-a-fixtures-20261109-r9",\n  "harnessSha": "2ed3097691f39025b49a015d86223da61a2b45e5",\n  "zipSha256": "89a35fb6de1e437a93c8074cb563745108d5e968878d929c8663dcaff700f500",\n  "reportSha256": "4163c5266ed9715ceafa3650af55a42348636cfbccceb9c8f124b55ab1eac31e",\n  "receiptsSha256": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",\n  "observationSha256": "6beb2ab824c183a65b1bd7334a4a6ab7ca878a0c6cab999a32dfd39a4ec5cad6",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"OBSERVATION_FAILED\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"OBSERVATION_FAILED\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"RUNTIME_FRESH\\",\\n    \\"subphasePath\\": [\\n      \\"SOURCE_AND_LIST\\",\\n      \\"RECOVERY_READ\\",\\n      \\"RECOVERY_READ\\",\\n      \\"RUNTIME_FRESH\\",\\n      \\"RUNTIME_FRESH\\"\\n    ],\\n    \\"lastCompletedSubphase\\": \\"RUNTIME_FRESH\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 10,\\n    \\"frozen\\": false,\\n    \\"pending\\": false,\\n    \\"sent\\": false,\\n    \\"priorConfirmed\\": 10,\\n    \\"newArmedCount\\": 0,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 14\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 10,\\n    \\"maxNewIntentions\\": 14,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": false,\\n    \\"sourceVersion\\": null,\\n    \\"sourceHash\\": null\\n  },\\n  \\"bindings\\": null,\\n  \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n  \\"harnessSha\\": \\"2ed3097691f39025b49a015d86223da61a2b45e5\\",\\n  \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n  \\"workflowRun\\": \\"42621964900\\",\\n  \\"phase\\": \\"SOURCE_AND_LIST\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\"schema\\":\\"contaos.fixture.receipts.v1\\",\\"receipts\\":[]}\\n",\n  "observationRaw": "{\\n  \\"schema\\": \\"contaos.fixture.observation.v1\\",\\n  \\"frontendSha\\": \\"437c788e32f0325dd15c9d2e7277c10129bcb462\\",\\n  \\"harnessSha\\": \\"2ed3097691f39025b49a015d86223da61a2b45e5\\",\\n  \\"deploymentId\\": \\"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\\",\\n  \\"workflowRun\\": \\"42621964900\\",\\n  \\"firstFailure\\": {\\n    \\"contractKind\\": \\"TABLE:competencias\\",\\n    \\"stage\\": \\"BODY_READ\\",\\n    \\"statusHTTP\\": 200,\\n    \\"requestFailure\\": \\"ABORTED\\"\\n  }\\n}\\n"\n}\n',
 };
 
 const empty = () => ({ schema: "contaos.fixture.receipts.v1", receipts: [] });
@@ -253,9 +256,9 @@ function metadataFixture() {
   const jobs = {
     total_count: 3,
     jobs: [
-      [129176113828, "Trilha A solicitacao unica sem credenciais", "success"],
-      [129176115848, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-      [129176493930, "Trilha A preparacao sintetica HML", "failure"],
+      [129234316092, "Trilha A solicitacao unica sem credenciais", "success"],
+      [129234318125, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+      [129234842279, "Trilha A preparacao sintetica HML", "failure"],
     ].map(([id, name, conclusion]) => ({
       id,
       name,
@@ -268,7 +271,7 @@ function metadataFixture() {
   };
   return { run, upstream, artifact, artifacts: { total_count: 1, artifacts: [artifact] }, jobs };
 }
-test("R9 official digest is mandatory independently of successful child exit", () => {
+test("R10 official digest is mandatory independently of successful child exit", () => {
   assert.equal(validateDownloadOutput(downloaded()), true);
   for (const change of [
     { stdout: "" },
@@ -281,7 +284,7 @@ test("R9 official digest is mandatory independently of successful child exit", (
   ])
     assert.throws(() => validateDownloadOutput({ ...downloaded(), ...change }));
 });
-test("R9 never reemits private child output and rejects getter/Proxy inputs", () => {
+test("R10 never reemits private child output and rejects getter/Proxy inputs", () => {
   let calls = 0;
   const getter = {
     status: 0,
@@ -312,7 +315,7 @@ test("R9 never reemits private child output and rejects getter/Proxy inputs", ()
     true,
   );
 });
-test("R9 metadata target, owner, uniqueness and attempt are fixed", () => {
+test("R10 metadata target, owner, uniqueness and attempt are fixed", () => {
   assert.equal(validateMetadata(metadataFixture()), true);
   for (const mutate of [
     (v) => (v.run.run_attempt = 2),
@@ -331,7 +334,7 @@ test("R9 metadata target, owner, uniqueness and attempt are fixed", () => {
     assert.throws(() => validateMetadata(v));
   }
 });
-test("R9 canonical UTF8 original has no hidden duplicate fields or trailer", () => {
+test("R10 canonical UTF8 original has no hidden duplicate fields or trailer", () => {
   const r = report(),
     raw = text(r);
   assert.equal(canonicalJson(Buffer.from(raw)).raw, raw);
@@ -347,7 +350,7 @@ test("R9 canonical UTF8 original has no hidden duplicate fields or trailer", () 
   );
   assert.throws(() => canonicalJson(Buffer.from(text(empty())), "receipts"));
 });
-test("R9 synthetic report projection validates closed fifteen-key schema", () => {
+test("R10 synthetic report projection validates closed fifteen-key schema", () => {
   assert.equal(validateRecords(report(), empty()).observations.newArmedCount, 0);
   for (const mutate of [
     (r) => (r.secret = "TOKEN_CANARY"),
@@ -365,7 +368,7 @@ test("R9 synthetic report projection validates closed fifteen-key schema", () =>
     assert.throws(() => validateRecords(r, empty()));
   }
 });
-test("R9 missing ledger/bindings retains UNKNOWN without inventing zero operations", () => {
+test("R10 missing ledger/bindings retains UNKNOWN without inventing zero operations", () => {
   const r = report();
   r.intentLedger = null;
   r.bindings = null;
@@ -375,7 +378,7 @@ test("R9 missing ledger/bindings retains UNKNOWN without inventing zero operatio
   assert.equal(v.newConfirmed, "UNKNOWN");
   assert.equal(v.bindings, "UNKNOWN");
 });
-test("R9 rows have eleven required keys and receipt state is not confirmed by inference", () => {
+test("R10 rows have eleven required keys and receipt state is not confirmed by inference", () => {
   const r = report();
   r.intentLedger.count = 11;
   r.intentLedger.newArmedCount = 1;
@@ -404,20 +407,20 @@ test("R9 rows have eleven required keys and receipt state is not confirmed by in
     assert.throws(() => validateRecords(r, { ...empty(), receipts: [v] }));
   }
 });
-test("R9 original eleven historical byte hashes match protected PLAN", () => {
+test("R10 original thirteen historical byte hashes match protected PLAN", () => {
   for (const [name, raw] of Object.entries(HISTORICAL))
     assert.equal(sha256(Buffer.from(raw)), HISTORY[name]);
 });
-test("R9 entire directory validates before one bounded proof is produced", (t) => {
+test("R10 entire directory validates before one bounded proof is produced", (t) => {
   const root = fixture(t),
     proof = JSON.parse(buildProof(root, inspection));
   assert.equal(proof.type, "FIXTURE_INSPECTION_PROOF");
-  assert.equal(proof.manifest.length, 14);
+  assert.equal(proof.manifest.length, 16);
   assert.equal(proof.reportRaw, readFileSync(join(root, "report.json"), "utf8"));
   assert.equal(proof.receiptsRaw, readFileSync(join(root, "receipts.json"), "utf8"));
   assert.ok(Buffer.byteLength(JSON.stringify(proof)) <= 65536);
 });
-test("R9 unknown member/nested directory and symlinks/hardlinks fail closed", (t) => {
+test("R10 unknown member/nested directory and symlinks/hardlinks fail closed", (t) => {
   for (const kind of ["extra", "directory", "symlink", "hardlink"]) {
     const root = fixture(t);
     if (kind === "extra") writeFileSync(join(root, "unknown.png"), "TOKEN_CANARY");
@@ -433,7 +436,7 @@ test("R9 unknown member/nested directory and symlinks/hardlinks fail closed", (t
     assert.throws(() => buildProof(root, inspection));
   }
 });
-test("R9 manifest order/hash/history and late schema errors never produce partial proof", (t) => {
+test("R10 manifest order/hash/history and late schema errors never produce partial proof", (t) => {
   for (const kind of ["order", "hash", "historical", "schema", "oversize"]) {
     const root = fixture(t, (content) => {
       if (kind === "historical") content["recovery-r5.json"] += " ";
@@ -456,18 +459,18 @@ test("R9 manifest order/hash/history and late schema errors never produce partia
     assert.equal(output, "");
   }
 });
-test("R9 shared deadline remains enforced before final proof publication", (t) => {
+test("R10 shared deadline remains enforced before final proof publication", (t) => {
   const root = fixture(t);
   let calls = 0,
     output = "";
   assert.throws(() => {
     output = buildProof(root, inspection, () => {
-      if (++calls === 17) throw Error("INSPECTION_DEADLINE");
+      if (++calls === 19) throw Error("INSPECTION_DEADLINE");
     });
   });
   assert.equal(output, "");
 });
-test("R9 CLI rejects arbitrary arguments before metadata or downloader and emits only generic enum", () => {
+test("R10 CLI rejects arbitrary arguments before metadata or downloader and emits only generic enum", () => {
   const child = spawnSync(
     process.execPath,
     ["scripts/hml/inspect-fixture-artifact.mjs", "--url=TOKEN_CANARY"],
@@ -477,7 +480,7 @@ test("R9 CLI rejects arbitrary arguments before metadata or downloader and emits
   assert.equal(child.stdout, "");
   assert.equal(child.stderr, "FIXTURE_INSPECTION_FAILED\n");
 });
-test("R9 workflow grants actions read only to protected main inspector and has no authorization runtime", () => {
+test("R10 workflow grants actions read only to protected main inspector and has no authorization runtime", () => {
   const yaml = readFileSync(".github/workflows/contaos-trilha-a-fixture-inspection.yml", "utf8");
   assert.ok(yaml.includes("github.event_name == 'push' && github.ref == 'refs/heads/main'"));
   assert.equal((yaml.match(/actions: read/g) || []).length, 1);
@@ -489,7 +492,7 @@ test("R9 workflow grants actions read only to protected main inspector and has n
   assert.ok(yaml.includes(PIN.tool));
 });
 
-test("R9 official pinned bundle parses and fails closed without token or environment", () => {
+test("R10 official pinned bundle parses and fails closed without token or environment", () => {
   const path = ".fixture-inspection-tool/dist/index.js";
   const bytes = readFileSync(path);
   assert.ok(bytes.length > 0);
@@ -516,7 +519,7 @@ test("R9 official pinned bundle parses and fails closed without token or environ
   assert.equal(smoke.signal, null);
   assert.ok(!smoke.error);
 });
-test("R9 known binding roles and collected ids cannot smuggle unrelated UUIDs", () => {
+test("R10 known binding roles and collected ids cannot smuggle unrelated UUIDs", () => {
   for (const change of [
     (r) => (r.bindings.listId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
     (r) => (r.bindings.competencies[0].id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
@@ -529,7 +532,7 @@ test("R9 known binding roles and collected ids cannot smuggle unrelated UUIDs", 
   }
 });
 
-test("R9 proof inspection origin is closed before serializing any caller object", (t) => {
+test("R10 proof inspection origin is closed before serializing any caller object", (t) => {
   const root = fixture(t);
   let calls = 0,
     output = "";
@@ -560,7 +563,7 @@ test("R9 proof inspection origin is closed before serializing any caller object"
   assert.equal(calls, 0);
 });
 
-test("R9 real downloader consumer fixes child inputs and keeps errors and private logs captured", () => {
+test("R10 real downloader consumer fixes child inputs and keeps errors and private logs captured", () => {
   let observed;
   const run = (result) =>
     executeOfficialTool(
@@ -624,7 +627,7 @@ test("R9 real downloader consumer fixes child inputs and keeps errors and privat
   );
 });
 
-test("R9 downstream role UUID syntax matches producer versions one through eight", () => {
+test("R10 downstream role UUID syntax matches producer versions one through eight", () => {
   const r = report();
   r.bindings.competencies[0].executionId = "aaaaaaaa-aaaa-7aaa-8aaa-aaaaaaaaaaaa";
   r.ids.push(r.bindings.competencies[0].executionId);
@@ -647,7 +650,7 @@ test("R9 downstream role UUID syntax matches producer versions one through eight
   );
 });
 
-test("R9 armed intentions without a complete confirmed receipt ledger remain UNKNOWN", () => {
+test("R10 armed intentions without a complete confirmed receipt ledger remain UNKNOWN", () => {
   const r = report();
   r.intentLedger.count = 11;
   r.intentLedger.newArmedCount = 1;
@@ -671,7 +674,7 @@ test("R9 armed intentions without a complete confirmed receipt ledger remain UNK
   assert.equal(validateRecords(frozen, empty()).observations.newConfirmed, "UNKNOWN");
 });
 
-test("R9 directory FD prevents parent replacement from redirecting any artifact read", (t) => {
+test("R10 directory FD prevents parent replacement from redirecting any artifact read", (t) => {
   const root = fixture(t),
     victim = fixture(t),
     original = root + "-original";
@@ -700,8 +703,8 @@ test("appended R6 history is immutable, ordered, and canonically empty where pro
     "recovery-r6.json",
     "recovery-r7.json",
   ]);
-  assert.equal(FILES.length, 14);
-  assert.equal(Object.keys(HISTORY).length, 11);
+  assert.equal(FILES.length, 16);
+  assert.equal(Object.keys(HISTORY).length, 13);
   assert.equal(
     HISTORY["receipts-r6.json"],
     "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
@@ -739,17 +742,17 @@ test("R7 zero-auth history contains only its nine-field metadata proof", () => {
   assert.equal(validateRecords(r, empty()).report.failure, "RECOVERY_R7_LEDGER");
 });
 
-test("R9 literal target is terminal attempt one and cannot be selected through caller inputs", () => {
-  assert.equal(PIN.run, 42621964900);
-  assert.equal(PIN.head, "2ed3097691f39025b49a015d86223da61a2b45e5");
-  assert.equal(PIN.upstream, 42621756761);
-  assert.equal(PIN.artifact, 13676832673);
-  assert.equal(PIN.size, 13476);
-  assert.equal(PIN.name, "trilha-a-fixtures-42621964900-1");
-  assert.equal(PIN.digest, "89a35fb6de1e437a93c8074cb563745108d5e968878d929c8663dcaff700f500");
+test("R10 literal target is terminal attempt one and cannot be selected through caller inputs", () => {
+  assert.equal(PIN.run, 42638883189);
+  assert.equal(PIN.head, "a3a5df2b4e99705d214a509ba035f155c7ae8de9");
+  assert.equal(PIN.upstream, 42638600034);
+  assert.equal(PIN.artifact, 13683268867);
+  assert.equal(PIN.size, 15559);
+  assert.equal(PIN.name, "trilha-a-fixtures-42638883189-1");
+  assert.equal(PIN.digest, "b306e1a4b89e839da5244e2b0ddc589f502618a2253dbcbb61415f68cc448a43");
 });
 
-test("R9 observation diagnostic validator is required before any technical proof", async () => {
+test("R10 observation diagnostic validator is required before any technical proof", async () => {
   const reader = await import("./inspect-fixture-artifact.mjs");
   assert.equal(
     typeof reader.validateObservationDiagnostic,
@@ -807,7 +810,7 @@ const OBSERVATION_KINDS = [
   "RPC:obter_detalhe_requisito_v117",
   "RPC:obter_contexto_revisao_v117",
 ];
-test("R9 observation matrix accepts only the exact producer table/RPC contracts", () => {
+test("R10 observation matrix accepts only the exact producer table/RPC contracts", () => {
   assert.equal(OBSERVATION_KINDS.length, 38);
   assert.equal(validateObservationDiagnostic(observation(), report()).firstFailure, null);
   for (const kind of OBSERVATION_KINDS) {
@@ -868,7 +871,7 @@ test("R9 observation matrix accepts only the exact producer table/RPC contracts"
     "UNKNOWN",
   );
 });
-test("R9 observation CAU2 unavailable row and every stage/status/failure mismatch fail closed", () => {
+test("R10 observation CAU2 unavailable row and every stage/status/failure mismatch fail closed", () => {
   const table = "TABLE:contratos",
     rpc = "RPC:obter_analise_competencia_v116";
   const invalid = [
@@ -926,7 +929,7 @@ test("R9 observation CAU2 unavailable row and every stage/status/failure mismatc
   for (const first of invalid)
     assert.throws(() => validateObservationDiagnostic(observation(first), report()));
 });
-test("R9 observation has six ordered own fields and four ordered failure primitives with zero getter/Proxy execution", () => {
+test("R10 observation has six ordered own fields and four ordered failure primitives with zero getter/Proxy execution", () => {
   let calls = 0;
   const valid = observation({
     contractKind: "TABLE:contratos",
@@ -997,10 +1000,10 @@ test("R9 observation has six ordered own fields and four ordered failure primiti
   }
   assert.equal(calls, 0);
 });
-test("R9 one proof publishes exact observationRaw only after the complete fourteen-file validation", (t) => {
+test("R10 one proof publishes exact observationRaw only after the complete fourteen-file validation", (t) => {
   const root = fixture(t),
     output = JSON.parse(buildProof(root, inspection));
-  assert.equal(output.manifest.length, 14);
+  assert.equal(output.manifest.length, 16);
   assert.equal(
     output.observationRaw,
     readFileSync(join(root, "observation-diagnostic.json"), "utf8"),
@@ -1008,15 +1011,15 @@ test("R9 one proof publishes exact observationRaw only after the complete fourte
   assert.equal(JSON.parse(output.observationRaw).firstFailure, null);
   assert.equal(JSON.parse(output.reportRaw).completed, false);
   assert.equal(output.observations.priorConfirmed, 10);
-  assert.equal(FILES.length, 14);
-  assert.equal(Object.keys(HISTORY).length, 11);
-  assert.deepEqual(FILES.slice(-3), [
+  assert.equal(FILES.length, 16);
+  assert.equal(Object.keys(HISTORY).length, 13);
+  assert.deepEqual(FILES.slice(11, 14), [
     "receipts-r8.json",
     "recovery-r8.json",
     "observation-diagnostic.json",
   ]);
 });
-test("R9 invalid or duplicate hidden observation fields block all proof output even with a correct manifest", (t) => {
+test("R10 invalid or duplicate hidden observation fields block all proof output even with a correct manifest", (t) => {
   for (const kind of ["identity", "unknown", "matrix", "canonical", "duplicate", "missing"]) {
     const root = fixture(t, (content) => {
       const value = observation();
@@ -1045,7 +1048,7 @@ test("R9 invalid or duplicate hidden observation fields block all proof output e
     assert.equal(output, "");
   }
 });
-test("R9 historical R8 evidence remains byte-exact while current budget is ten plus fourteen", () => {
+test("R10 historical R8 evidence remains byte-exact while current budget is ten plus fourteen", () => {
   assert.equal(
     HISTORY["receipts-r8.json"],
     "20af329dd9c441e4ede575fa6cb94a65c3d136ad777613170045c696328fad25",
@@ -1091,7 +1094,7 @@ test("R9 historical R8 evidence remains byte-exact while current budget is ten p
   }
 });
 
-test("R9 observation failure cannot accompany a successful report or erase an earlier primary", () => {
+test("R10 observation failure cannot accompany a successful report or erase an earlier primary", () => {
   const first = {
     contractKind: "TABLE:contratos",
     stage: "HTTP_STATUS",
@@ -1117,7 +1120,7 @@ test("R9 observation failure cannot accompany a successful report or erase an ea
   mismatch.failure = "FLOW_BUTTON_UNAVAILABLE";
   assert.throws(() => validateObservationDiagnostic(observation(first), mismatch));
 });
-test("R9 complete manifest still produces zero proof for observation failure with successful report", (t) => {
+test("R10 complete manifest still produces zero proof for observation failure with successful report", (t) => {
   const root = fixture(t, (content) => {
     const r = report();
     r.completed = true;
@@ -1152,4 +1155,30 @@ test("R10 immutable artifact layout appends R9 originals after the existing obse
   ]);
   assert.equal(PIN.run, 42638883189);
   assert.equal(PIN.artifact, 13683268867);
+});
+
+test("R10 preserves original R9 report receipts and observation inside the pinned twelve-field recovery document", () => {
+  const raw = HISTORICAL["recovery-r9.json"];
+  assert.equal(Buffer.byteLength(raw), 3170);
+  assert.equal(
+    sha256(Buffer.from(raw)),
+    "71e20cc2dfd5888ab22228efe2b253eea316194ce0503e262ad58aef516078b8",
+  );
+  const document = canonicalJson(Buffer.from(raw)).value;
+  assert.equal(Object.keys(document).length, 12);
+  assert.equal(document.schema, "contaos.fixture.recovery-r9.v1");
+  assert.equal(document.receiptsRaw, HISTORICAL["receipts-r9.json"]);
+  assert.equal(
+    sha256(Buffer.from(document.reportRaw)),
+    "4163c5266ed9715ceafa3650af55a42348636cfbccceb9c8f124b55ab1eac31e",
+  );
+  assert.equal(
+    sha256(Buffer.from(document.observationRaw)),
+    "6beb2ab824c183a65b1bd7334a4a6ab7ca878a0c6cab999a32dfd39a4ec5cad6",
+  );
+  assert.equal(JSON.parse(document.reportRaw).intentLedger.newArmedCount, 0);
+  const current = report();
+  current.failure = "RECOVERY_R9_LEDGER";
+  current.diagnostics.primaryFailure = "RECOVERY_R9_LEDGER";
+  assert.equal(validateRecords(current, empty()).report.failure, "RECOVERY_R9_LEDGER");
 });
