@@ -1090,3 +1090,54 @@ test("R9 historical R8 evidence remains byte-exact while current budget is ten p
     assert.equal(validateRecords(r, empty()).report.failure, code);
   }
 });
+
+test("R9 observation failure cannot accompany a successful report or erase an earlier primary", () => {
+  const first = {
+    contractKind: "TABLE:contratos",
+    stage: "HTTP_STATUS",
+    statusHTTP: 503,
+    requestFailure: "NONE",
+  };
+  const successful = report();
+  successful.completed = true;
+  successful.failure = null;
+  successful.diagnostics.primaryFailure = null;
+  successful.diagnostics.failureClass = null;
+  successful.diagnostics.errorName = null;
+  assert.throws(() => validateObservationDiagnostic(observation(first), successful));
+  assert.equal(validateObservationDiagnostic(observation(), successful).firstFailure, null);
+  const earlier = report();
+  earlier.failure = "FLOW_BUTTON_UNAVAILABLE";
+  earlier.diagnostics.primaryFailure = "FLOW_BUTTON_UNAVAILABLE";
+  assert.equal(
+    validateObservationDiagnostic(observation(first), earlier).firstFailure.stage,
+    "HTTP_STATUS",
+  );
+  const mismatch = report();
+  mismatch.failure = "FLOW_BUTTON_UNAVAILABLE";
+  assert.throws(() => validateObservationDiagnostic(observation(first), mismatch));
+});
+test("R9 complete manifest still produces zero proof for observation failure with successful report", (t) => {
+  const root = fixture(t, (content) => {
+    const r = report();
+    r.completed = true;
+    r.failure = null;
+    r.diagnostics.primaryFailure = null;
+    r.diagnostics.failureClass = null;
+    r.diagnostics.errorName = null;
+    content["report.json"] = text(r);
+    content["observation-diagnostic.json"] = text(
+      observation({
+        contractKind: "TABLE:contratos",
+        stage: "HTTP_STATUS",
+        statusHTTP: 503,
+        requestFailure: "NONE",
+      }),
+    );
+  });
+  let output = "";
+  assert.throws(() => {
+    output = buildProof(root, inspection);
+  });
+  assert.equal(output, "");
+});
