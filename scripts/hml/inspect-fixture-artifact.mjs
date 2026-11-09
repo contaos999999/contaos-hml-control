@@ -1,6 +1,6 @@
 /**
- * Read-only R9 artifact inspection. No application imports, browser, Auth or SQL.
- * Contracts snapshot producer 30b96597 and GATE472; GATE458 reader policy is preserved.
+ * Read-only R10 artifact inspection. No application imports, browser, Auth or SQL.
+ * Contracts snapshot producer 63dbb8e0 and GATE477; GATE458 reader policy is preserved.
  */
 import { createHash } from "node:crypto";
 import {
@@ -22,14 +22,14 @@ import { pathToFileURL } from "node:url";
 export const PIN = Object.freeze({
   repository: "contaos999999/contaos-hml-control",
   repositoryId: 1442722734,
-  run: 42621964900,
+  run: 42638883189,
   workflow: 411426169,
-  head: "2ed3097691f39025b49a015d86223da61a2b45e5",
-  upstream: 42621756761,
-  artifact: 13676832673,
-  size: 13476,
-  name: "trilha-a-fixtures-42621964900-1",
-  digest: "89a35fb6de1e437a93c8074cb563745108d5e968878d929c8663dcaff700f500",
+  head: "a3a5df2b4e99705d214a509ba035f155c7ae8de9",
+  upstream: 42638600034,
+  artifact: 13683268867,
+  size: 15559,
+  name: "trilha-a-fixtures-42638883189-1",
+  digest: "b306e1a4b89e839da5244e2b0ddc589f502618a2253dbcbb61415f68cc448a43",
   tool: "d3f86a106a0bac45b974a628896c90dbdf5c8093",
   bundle: "374211f852b2a8155a0211c72e85dacc81bb69f3",
   frontend: "437c788e32f0325dd15c9d2e7277c10129bcb462",
@@ -53,6 +53,8 @@ export const FILES = Object.freeze([
   "receipts-r8.json",
   "recovery-r8.json",
   "observation-diagnostic.json",
+  "receipts-r9.json",
+  "recovery-r9.json",
 ]);
 export const HISTORY = Object.freeze({
   "receipts-r1.json": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
@@ -66,6 +68,8 @@ export const HISTORY = Object.freeze({
   "recovery-r7.json": "687712aa5ab15072afc65aceacdff52ce5d94c6ba9f2ceccf6867e4636bd1c4e",
   "receipts-r8.json": "20af329dd9c441e4ede575fa6cb94a65c3d136ad777613170045c696328fad25",
   "recovery-r8.json": "b22c0e464915cd58f8d9918a2c4751078dbf73578528e833afd92fa646502884",
+  "receipts-r9.json": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  "recovery-r9.json": "71e20cc2dfd5888ab22228efe2b253eea316194ce0503e262ad58aef516078b8",
 });
 const HISTORICAL_IDS = new Set([
   "08141ffd-56c1-4c50-b58f-32912d1006b2",
@@ -163,6 +167,7 @@ const FAILURES = new Set([
   "RECOVERY_STATE",
   "RECOVERY_LIST",
   "RECOVERY_READ_ONLY",
+  "RECOVERY_R9_LEDGER",
   "RECOVERY_R8_LEDGER",
   "RECOVERY_R8_DOCUMENT",
   "RECOVERY_R8_ANALYSIS",
@@ -1018,9 +1023,9 @@ export function validateMetadata(input) {
     "INSPECTION_METADATA",
   );
   const specs = [
-    [129176113828, "Trilha A solicitacao unica sem credenciais", "success"],
-    [129176115848, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-    [129176493930, "Trilha A preparacao sintetica HML", "failure"],
+    [129234316092, "Trilha A solicitacao unica sem credenciais", "success"],
+    [129234318125, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+    [129234842279, "Trilha A preparacao sintetica HML", "failure"],
   ];
   check(
     jobs.total_count === 3 && Array.isArray(jobs.jobs) && jobs.jobs.length === 3,
@@ -1069,7 +1074,7 @@ export function readManifest(root, deadline = () => {}) {
     const anchored = "/proc/self/fd/" + dirfd;
     const names = readdirSync(anchored);
     check(
-      names.length === 15 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
+      names.length === 17 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
       "INSPECTION_FILES",
     );
     const buffers = {};
