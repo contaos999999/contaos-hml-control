@@ -1,3 +1,39 @@
+# Checkpoint operacional: Run124, V102 e retomada R2 em revisão
+
+Registro de09/11/2026. Refs observados por GitHub GET: frontend main f4ac3c135acd0906b4b1749bad0301e40d04411a; backend main 39e7baeeec3990b664ca54c6f3ae09e9f7ea3e63. O avanço backend deve ser comparado e reancorado antes dos checks aplicáveis; não relaxar freshness. HML efetivamente auditada permanece fonte866608620909bf313a6c2192736330222f9219ad/deploymentdpl_EcPdYyFYTAVTGEYpr1go2QrTfakY. Nenhum novo deploy intencional foi realizado por esta execução.
+
+## Última prova autenticada concluída
+
+Run42542802124, job128921250869, harnessa688ba030955229426ff8cd2584af3ffc86921bd. aborted=null, logoutVerified=true, matrixComplete=true, globalComplete=false e v1Certified=false.208casos únicos:102PASS_AUTOMATIZADO,8FAIL_UI,56BLOQUEADO_PII,24BLOQUEADO_FIXTURE e18PRESERVADO_BASELINE. V108768dark/390light/390dark passaram automaticamente nesta rodada; V109cincoFAIL anteriores passaram a bloqueioPII, nunca aPASS. Não atribuir causa anterior por essa mudança.
+
+Artefato13642651045, ZIP SHA25610e02841060b4b949e3aab80ec0d823350c43836146dbf00e3c57445bd33731e. Report SHA2560775768b2acda7874ceda36507499a79c5926cb7f3e3846d2eff1ff3d91582d5.307/307membros verificados,204PNG e102DOM. A contagem de hashes não certifica imagens ou72critérios. No Run114, revisão independente nomeada cobriu somente9/198PNG; triagem em mosaicos e amostras adicionais não equivalem a revisão integral. Originais/manifestos preservados nos artefatos.
+
+## V102 e cadeia atual
+
+Os oito V102 falham VISUAL_MEASUREMENT: geometry=false, failedHitCount=2, overflowX=0 eidentity/table/dates/contrast=true; targets22desktop/12mobile. As duas Dicas com margem-my-3 são hipótese específica, não causa comprovada apenas por agregados. Produto permanece no blobaa0cdc00b5eed06142a097877082f70fe8cc1de3 até RED causal.
+
+PR399 integrou diagnóstico mínimo em a688ba03 após quatro workflowsSUCCESS e revisão. PLAN410 integradof4093c58, GATE412 integrado2617204a. PR414 HEAD48c930d1c3bef98e3d2200a0ac518a507145a670 contém teste source-backed e diagnóstico nativo; ainda DRAFT. CI inicial42544255970 falhouVISUAL_NATIVE sem causa retida. Extração/CSS offline confirmou2campos/15407bytesCSS, mas não mediu layout. Chromium156 local com sandboxtrue falhou socketEPERM antes da geometria; não foi RED geométrico e sandbox não foi desabilitado.
+
+GATE418 integradof4ac3c13 após Zero42545000640/LOCK42545000556SUCCESS e revisão independente. Autoriza só projeção fechada do marcador da fixture e mantém o throw/8provas/suplemento1/sandbox/1208/critério. Parser: RED local2falhas por função ausente; GREEN2/2 com canários/ambiguidade/tipos/limites. Novo CI414 deve identificar se há dois alvos realmente cobertos. Não corrigir produto antes disso. Branch414 incorporou BUILD411 por merge3way sem conflito, preservando a correção de cardinalidade.
+
+## Retomada de fixtures e revisões independentes
+
+R1/run42540864527 permanece consumido, com dois comandos confirmados conforme o ledger histórico abaixo. Nenhum novo nonce/Auth/R2 executado por este checkpoint. PR406 foi FECHADA sem merge, supersedida pelo BUILD416 integral que reutiliza helper/testes iniciais; não integrar406 em paralelo.
+
+PR416 HEADb31595fdc32fd36ba3ab9d7f8ab468dc86fd0437: revisão independente do HEAD anterior298d3ea achou Important de ledger omitido aceito por default; repro com módulos reais confirmou proof emitido sem ledger informado, embora runtime passe constante explicitamente. Correção/revisão e CI do HEAD novo ainda necessários. Não confundir ausência de exploit HML demonstrado com cumprimento do GATE404.
+
+PR413 HEAD2b8ec1a562c136199be26b3b789bca051e49fb8b: revisão independente achou Important no alias mutável do diagnóstico legado. Mutar error.visualDiagnostic.secret depois do throw fez canário aparecer no JSON do recordCaseFailure real. Corrigir cópia/projeção privada e testar causalmente antes do merge, ainda que quatro workflows daquele HEAD tenham passado.
+
+PR409 HEAD95351a63c8eedaedcd13620430c35195ec0ac27f ePR417 HEAD576c62426163237ecb49a7c1500d22d16c2f388e seguem suas revisões/CI próprios. Não sobrescrever mudanças em auditor/testes ao integrar branches; fazer merge normal/3way, revisar resultado e testar HEAD final. Este registro não os aprova.
+
+## Próxima tarefa exata
+
+Concluir CI/parser414 e obter RED nativo geométrico visível; aplicar somente reparo visual autorizado deV102 se reproduzido, executar GREEN/revisão e integrar protegido. Fechar revisões de privacidade/retomada e integrar mudanças independentes sem perder testes. Somente então criar solicitaçãoR2 protegida se o contrato404 completo estiver integrado, preservando os dois comandos já confirmados e teto global24.
+
+Consolidar todas as alterações frontend antes do ÚNICO deploy intencional HML final, conforme o titular. Revalidar ignore exit0/previews suspensos/segurança, READY/alias/SHA e não tocar PROD de negócio. TesteC real posterior e revisão individual das72condições ainda obrigatórios.18públicos aprovados/Run78/114/124 ebaseline preservados;56PII,24fixtures,WCAG/V1 continuam pendentes. Não declarar TrilhaA encerrada ou V1 certificada por este checkpoint.
+
+---
+
 # Continuidade P0: auditoria incompleta e preparador com duas operações confirmadas
 
 Checkpoint de09/11/2026. PR394 integrada em `fca0798d3eba81e8daa3a876a255f34b66ff39f9`, request_id/nonce `trilha-a-fixtures-20261108-r1` agora CONSUMIDO pela execução42540864527. A informação anterior de nonce não consumido permanece apenas histórica. Nenhum replay autorizado; esta atualização documental não executa Auth nem escrita HML. CI/revisão/merge deste novo HEAD documental ainda pendentes.
