@@ -3119,5 +3119,34 @@
       ".github/workflows/contaos-trilha-a-fixture-inspection.yml"
     ],
     "post_terminal_reader_separate_pr_ci_review_required": true
+  },
+  "trilha_c_c13_review_correction": {
+    "status": "VALIDADO_ESCOPO_FOCAL_TDD_NAO_CERTIFICADO",
+    "plan_pr": 480,
+    "plan_merge": "8cb3861350c41dbc1fd0e4f7b5e721a2ccda2c8d",
+    "plan_document": "docs/frontend/planos/TRILHA_C_C13_REVISAO_CORRECOES_2026-11-09.md",
+    "independent_review": "PR480 comentário6743810852",
+    "plan_ci": [
+      42640120009,
+      42640119933
+    ],
+    "backend_sha": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_paths": [
+      "src/components/copiloto/CopilotoContrato.tsx",
+      "src/lib/copiloto/copilotoApi.ts",
+      "src/test/copilotoContrato.test.tsx",
+      "src/test/copilotoApi.test.ts"
+    ],
+    "build_authorized": true,
+    "auth_authorized": false,
+    "deploy_authorized_by_this_gate": false,
+    "certified": false,
+    "authorization": "Titular priorizou corrigir os quatro problemas importantes e duas lacunas antes de tudo; não repedir autorização; preservar A/B e confirmação/JWT/RLS/types/PROD.",
+    "required": [
+      "RED causal antes de implementação",
+      "GREEN regressão CI Zero-Drift LOCK no HEAD final",
+      "revisão independente do BUILD",
+      "sem nova prova HML ou certificação presumida"
+    ]
   }
 }
