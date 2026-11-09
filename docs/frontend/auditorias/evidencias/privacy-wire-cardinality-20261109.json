@@ -1,0 +1,88 @@
+{
+  "schema": "contaos.hml.privacy-wire-cardinality.v1",
+  "status": "REQUIRES_CI_REVIEW_AND_MERGE_BEFORE_BUILD",
+  "verified_date_utc": "2026-11-09",
+  "frontend_commit": "866608620909bf313a6c2192736330222f9219ad",
+  "document_base": "c2cfbe3f2e3a4c18886f18f42246998e357c9737",
+  "incident_run": 42540293545,
+  "scope": "WIRE_REPRESENTATION_ONLY_NO_NEW_FIELDS_OR_REQUESTS",
+  "dependency": {
+    "package": "@supabase/postgrest-js",
+    "version": "2.118.0",
+    "lock_path": "bun.lock",
+    "lock_blob": "c51e7e6a8426f9a9447784c0a1277f30e55b08e3",
+    "source_repository": "supabase/supabase-js",
+    "source_ref": "v2.118.0",
+    "sources": [
+      {
+        "path": "packages/core/postgrest-js/src/PostgrestTransformBuilder.ts",
+        "blob": "394448dc5c767a3066bd291ba55704dfe7e1acad",
+        "sha256": "01a57078ecf2c9d63d138d3b19c24753b608960b1d0bde75f942e74cee5350ec",
+        "behavior": "maybeSingle sets isMaybeSingle; no object Accept override; fetches list"
+      },
+      {
+        "path": "packages/core/postgrest-js/src/PostgrestBuilder.ts",
+        "blob": "bd279a0cd4ac1fbbbccc81897f84b1b42292e435",
+        "sha256": "12a13c40d213a6ee9691b8441404193ecbb7628597c6c6159c46cb86fe787c4e",
+        "behavior": "Array length 1 becomes data[0]; length 0 becomes null; length >1 becomes cardinality error"
+      }
+    ]
+  },
+  "approved_wire": {
+    "contract_names": [
+      "contract_gate",
+      "document_gate",
+      "upload",
+      "competence_rbac_gate"
+    ],
+    "wire_shape": "array",
+    "exact_length": 1,
+    "element_shape": "non-null plain JSON object; not array",
+    "projection": "unchanged per original catalog; inside browser; return only validation enum",
+    "reject": [
+      "object wire body",
+      "empty array",
+      "array length above one",
+      "nested array",
+      "null element",
+      "scalar element",
+      "missing or divergent selected values",
+      "query extra or duplicate keys",
+      "unobserved or stale generation"
+    ]
+  },
+  "original_receipts_unchanged": [
+    {
+      "path": "docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_TECNICA_READONLY.json",
+      "sha256": "5aa39ef35e4a432f4f4f5f29d72ee5773a56e62102948f0e3a31a0529c2d8f18"
+    },
+    {
+      "path": "docs/frontend/auditorias/evidencias/privacy-78-20261108/PROVENIENCIA_RBAC_V115_READONLY.json",
+      "sha256": "d70d36f3977f7649dffb2ca0271bb43e181a0244c8e0089e471a86299bcaa897"
+    }
+  ],
+  "reproduction": {
+    "method": "offline original runtime project; technical approved literals only; no network",
+    "cases": [
+      "contract_gate",
+      "upload",
+      "competence_rbac_gate"
+    ],
+    "object_sdk_dto": "ACCEPTED_BY_BASELINE",
+    "singleton_http_array": "REJECTED_BY_BASELINE",
+    "runtime_hml_raw_response_collected": false,
+    "all_incident_failures_explained": false
+  },
+  "limits": {
+    "read_headers": false,
+    "read_auth": false,
+    "new_requests": false,
+    "new_fields": false,
+    "new_global_words": false,
+    "change_sensitive_patterns": false,
+    "change_fence": false,
+    "change_product_or_dependency": false,
+    "hml_executed": false,
+    "pass_promotion": false
+  }
+}
