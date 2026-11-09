@@ -2,8 +2,8 @@
   "schema_version": 1,
   "issue": 317,
   "operation": "fixtures",
-  "request_id": "trilha-a-fixtures-20261109-r12",
-  "approved_parent_sha": "244b7fe8ab659800b5db1e32d4a36db528470cc5",
+  "request_id": "trilha-a-fixtures-20261109-r13",
+  "approved_parent_sha": "9a572e89bc20f340b7a00929f60f5831b6e867fd",
   "frontend_sha": "",
   "deployment_id": ""
 }
