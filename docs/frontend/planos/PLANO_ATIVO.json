@@ -90,7 +90,7 @@
   "context_read_acknowledged": true,
   "context_read_by": "Codex: GitHub GET25/25blobs, catálogo100/97 e types8ea preservados; leitura semântica delta4bda→9b55 SQL/Restore e9b55→65767bfe Edge/Restore/testesCopilot. ConsumidoresA não alterados; sem execuçãoAuth adicional ou certificação/deploymentC.",
   "context_read_acknowledged_at": "2026-11-09",
-  "context_source_commit": "65767bfe58c5c9818824ab0ada38d9f412c19054",
+  "context_source_commit": "8dc073d7ad4344231f99169a2180465a3354fe4c",
   "context_catalog_blob": "e54e49e626e65a9c94c81709180fd192a1f0c079",
   "context_documents_read": [
     "00_AI_LEIA_ANTES_DE_ALTERAR.md",
@@ -332,7 +332,7 @@
     "reanchor_after_backend_edge_20261109": {
       "frontend_base": "fca0798d3eba81e8daa3a876a255f34b66ff39f9",
       "backend_previous": "9b55a308c04fe914c9ff3f96b92151c7a41dff98",
-      "backend_current": "65767bfe58c5c9818824ab0ada38d9f412c19054",
+      "backend_current": "8dc073d7ad4344231f99169a2180465a3354fe4c",
       "method": "GITHUB_GET_PINNED_REFS",
       "normative_blobs_compared": 25,
       "normative_blobs_equal": 25,
