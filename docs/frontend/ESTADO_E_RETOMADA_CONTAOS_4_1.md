@@ -1,3 +1,15 @@
+# Checkpoint P0 R7, 09/11/2026: GATE documental, BUILD pendente
+
+PLAN460 integrado 572e81c72158435c5408b0e3a4db5f5a6aca8bdd, HEAD3df1eddec83d98fed1777b49644670418b89a51c, CI42597082461/42597082407SUCCESS, review5824224111zeroC/I. Backend corrente0e85578323ae272ba79915f9b872386d437cbc83 reancorado em snapshot/ack,25fontes/cat10097/types8ea iguais; C13 e histórico preservados.
+
+BUILD459 integrado2b5ac396d12ea4c71fd1b46f8fcb2f1d3f5992d1; inspeção original42593378561/job129080113108SUCCESS confirmou R6run42585173702/art13658434738,ZIP10e55ed5856aac2879188ab5f2df3b1f4a98b180de21dd7abcb470c162f9d68c, report8fd354bf2177f47a7b124a9d53e606de91880a45b2d94daebe46185403ebbeff, receiptsfc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf. Zero novas armadas/confirmadas,8históricas/saldo16/teto24; logouttrue/cleanupnull/bindingsnull. Causa fonte/repro: labelLista selecionada incluioptions, getByLabel exact falha; página/totalHML não capturados.
+
+GATE docs/frontend/planos/TRILHA_A_R7_SELECAO_LISTA_RECUPERACAO_GATE_2026-11-09.md fecha4mjs/helperliteral4sites/source-realRED/recuperaçãoR6SHA98136adfe0c84c274ca31534b847b640a35f2577d2ad6197e451324a51ac7e03/nonceR7 e posteriorPRretargetestáticoReaderapósterminalreal, semnovoAuth. NenhumBUILD/Auth executado por este GATE. Próximo: CI/revisão/integraçãoGATE, RED→BUILD→GREEN/review/merge, requestR7distinto/singleattempt. Auditoria208 continua AUDIT_BINDING_PENDING até bindings/GATE próprio.
+
+HML437c788e32f0325dd15c9d2e7277c10129bcb462/dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp revalidado READY. Não redeploy por harness. Preservar18públicosPR324,Run124204PNG/102DOM/revisão306hashes e C13. 184originais/24fixtures/72/V1 ainda não encerrados. Última etapa comprovada: inspeçãoR6real+PLAN460integrado; GATE atual ainda exigeCI/review/merge. Conteúdo anterior integral abaixo é histórico preservado, não sobrescreve este checkpoint.
+
+---
+
 # P0 Trilha A: R6 terminou; inspeção técnica independente em GATE
 
 R6original42585173702/attempt1/head9cd01a472146c67c4a3cae5f3d9a6b5d7448716a terminouFAIL/FIXTURE_PREPARATION_INCOMPLETE. Artifact13658434738/ZIP8366B/digest10e55ed5856aac2879188ab5f2df3b1f4a98b180de21dd7abcb470c162f9d68c/9membros preservado90dias. Report/receiptsR6 aindaNÃOconferidos: causa, novasoperações, logout, bindings e saldo DESCONHECIDOS; últimas8confirmaçõesR1/R3/R5 nãoautorizam presumirzeroR6/saldo16. Semrerun/R7/compensação/SQL/audit. BUILD455 integroubd4a7eb comCI4GREEN/native15/Node415+296PASS0FAIL/reviews5823196572/5823202079; request456reviewcanônica5823221766/CI2GREEN. PLAN457inspeçãoCI integrado3ea5614ad4482781c1365a785b0aabdfdadbe079; GATEpróprio fecha3novospaths, tokenGitHubreadOnly, downloaderoficialpinado/saídacapturada/digestfailclosed/manifest8/8/schemaantesoutputtécnico. NenhumaAuthHML ou divulgaçãoPNGDOM autorizada pela inspeção. Próximo: CI/revisão/mergeGATE, RED→BUILD→GREEN/revisão e leituraCIautomáticaapro­vada, depoisreconciliarR6realantesprogredir184. Executorfailed/402Vercelnãoalterados; alternativaGitHubCIsemcobrança/segurançafrouxa. Fonte5459536mantida,18públicos/Run124/C13preservados. Histórico integral abaixo.
