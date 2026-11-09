@@ -26,10 +26,35 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
+      - uses: actions/checkout@v4
+        with:
+          repository: actions/download-artifact
+          ref: d3f86a106a0bac45b974a628896c90dbdf5c8093
+          path: .fixture-inspection-tool
+          persist-credentials: false
+      - name: Frozen quality tooling
+        run: |
+          test "$(git hash-object scripts/ci/install-pinned-bun.mjs)" = "3491e78880b5d239b853aebc2e812f4bd3d6f492"
+          node scripts/ci/install-pinned-bun.mjs
+      - run: bun install --frozen-lockfile
       - run: node --test scripts/hml/inspect-fixture-artifact.test.mjs
+      - name: ESLint of inspection modules
+        run: |
+          node --input-type=module <<'JS'
+          import { ESLint } from "eslint";
+          import js from "@eslint/js";
+          import globals from "globals";
+          const paths = ["scripts/hml/inspect-fixture-artifact.mjs", "scripts/hml/inspect-fixture-artifact.test.mjs"];
+          const lint = new ESLint({ overrideConfig: [{ files: paths, languageOptions: { globals: globals.node }, rules: js.configs.recommended.rules }] });
+          const results = await lint.lintFiles(paths);
+          process.stdout.write((await lint.loadFormatter("stylish")).format(results));
+          if (results.some(r => r.errorCount || r.warningCount)) process.exitCode = 1;
+          JS
+      - run: ./node_modules/.bin/prettier --check .github/workflows/contaos-trilha-a-fixture-inspection.yml scripts/hml/inspect-fixture-artifact.mjs scripts/hml/inspect-fixture-artifact.test.mjs
   inspect:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'contaos999999/contaos-hml-control'
     runs-on: ubuntu-latest
@@ -41,6 +66,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -50,6 +76,7 @@ jobs:
           ref: d3f86a106a0bac45b974a628896c90dbdf5c8093
           path: .fixture-inspection-tool
           persist-credentials: false
+          fetch-depth: 0
       - run: node scripts/hml/inspect-fixture-artifact.mjs
         env:
           GITHUB_TOKEN: ${{ github.token }}
