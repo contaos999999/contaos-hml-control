@@ -9483,3 +9483,81 @@ test(
     }
   },
 );
+
+test("R12 unrelated September observations preserve the October seal before another legal arm", async () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions());
+  await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(b),
+    sep = JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id;
+  try {
+    f.emit([{ ...f.row, id_competencia: sep }], { ...f.query, id_competencia: "eq." + sep });
+    await f.observer.flush();
+    r6AnalysisArm(b);
+    assert.equal(b.snapshot().count, 12);
+  } finally {
+    f.observer.close();
+  }
+});
+test("R12 an admitted current approval advances the same October identity without expiring its seal", async () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions());
+  await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(b),
+    payload = { p_id_parecer: f.row.id, p_aprovar: true, p_fundamento: FIXTURE.foundation };
+  try {
+    f.observer.markMutation("aprovar_parecer_interno", payload, {});
+    r4EmitMutation(f.page, "aprovar_parecer_interno", payload, {});
+    await f.observer.flush();
+    f.emit([{ ...f.row, status: "aprovado", aprovado_em: "2026-11-09T12:00:00.123456+00:00" }]);
+    await f.observer.flush();
+    r6AnalysisArm(b);
+    assert.equal(b.snapshot().count, 12);
+  } finally {
+    f.observer.close();
+  }
+});
+test("R12 changed or ambiguous current October opinions cannot authorize a later arm", async () => {
+  for (const delta of [
+    { id: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee" },
+    { versao: 2 },
+    { hash: "d".repeat(64) },
+    { status: "rejeitado" },
+  ]) {
+    const b = sut.createIntentBroker(r12RecoveryOptions());
+    await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+    const f = r12AuthorizedContexts.get(b);
+    try {
+      f.emit([{ ...f.row, ...delta }]);
+      await f.observer.flush();
+      assert.throws(() => r6AnalysisArm(b), /RECOVERY_R11_OPINION/);
+      assert.equal(b.snapshot().count, 11);
+    } finally {
+      f.observer.close();
+    }
+  }
+});
+test("R12 empty or pending newer October reads block all subsequent arms without refunding the reserved slot", async () => {
+  for (const pending of [false, true]) {
+    const b = sut.createIntentBroker(r12RecoveryOptions());
+    await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+    const f = r12AuthorizedContexts.get(b);
+    try {
+      if (pending) {
+        const url = FIXTURE.api + "/rest/v1/pareceres_internos?" + new URLSearchParams(f.query);
+        f.page.emit("request", {
+          url: () => url,
+          method: () => "GET",
+          postData: () => null,
+          failure: () => null,
+        });
+      } else {
+        f.emit([]);
+        await f.observer.flush();
+      }
+      assert.throws(() => r6AnalysisArm(b), /RECOVERY_R11_OPINION/);
+      assert.equal(sut.preparationIntentSummary(b).priorReserved, 1);
+      assert.equal(b.snapshot().count, 11);
+    } finally {
+      f.observer.close();
+    }
+  }
+});
