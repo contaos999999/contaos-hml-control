@@ -6070,3 +6070,26 @@ test("FAIL_UI diagnóstico: PII conserva bloqueio e código desconhecido não é
   assert.equal(record.diagnostic.errorKind, "TIMEOUT");
   assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
 });
+
+test("FAIL_UI diagnóstico: consumidor real decide aborto sem ler getters ou erro nulo", () => {
+  const consume = fn("recordCaseFailure");
+  let reads = 0;
+  const poison = {};
+  for (const key of ["name", "code", "message", "stack", "cause"])
+    Object.defineProperty(poison, key, { get() { reads++; throw Error("NEVER_EXPORT"); } });
+  for (const error of [poison, null, undefined, "NEVER_EXPORT"]) {
+    const record = {};
+    assert.doesNotThrow(() => consume(record, error, "PRIVACY_PRIMARY", null, false));
+    assert.equal(record.status, "FAIL_UI");
+    assert.equal(record.diagnostic.errorKind, "OTHER");
+    assert.equal(JSON.stringify(record).includes("NEVER_EXPORT"), false);
+  }
+  assert.equal(reads, 0);
+  const deployment = Object.assign(new Error("NEVER_EXPORT"), { code: "DEPLOYMENT_CHANGED" });
+  for (const [error, fenceFailed] of [[deployment, false], [poison, true]]) {
+    const record = {};
+    assert.throws(() => consume(record, error, "CASE_NAVIGATION", null, fenceFailed), (caught) => caught === error);
+    assert.deepEqual(record, {});
+  }
+  assert.equal(reads, 0);
+});
