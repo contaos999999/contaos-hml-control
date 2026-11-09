@@ -9926,3 +9926,19 @@ test("R12 cloned foreign and already consumed October seals cannot authorize ano
     f.observer.close();
   }
 });
+
+test("R14 broker refuses a missing recovery document before any side effect", () => {
+  let effects = 0;
+  assert.throws(
+    () =>
+      sut.createIntentBroker({
+        persist: () => {
+          effects++;
+          return true;
+        },
+        recoveryLedgerR13: undefined,
+      }),
+    /RECOVERY_R13_LEDGER/,
+  );
+  assert.equal(effects, 0);
+});

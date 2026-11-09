@@ -12633,3 +12633,56 @@ test("R13 local cache rejects cross proof and stale refresh before private conte
     globalThis.fetch = originalFetch;
   }
 });
+
+test("R14 recovery document is mandatory, byte exact, and rejects hostile authority", () => {
+  const validate = fn("validateR13RecoveryDocument");
+  const doc = sut.R13_RECOVERY_DOCUMENT;
+  assert.equal(validate(doc).schema, "contaos.fixture.recovery-r13.v1");
+  for (const bad of [
+    undefined,
+    null,
+    {},
+    { ...doc, reportRaw: doc.reportRaw + " " },
+    { ...doc, receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}' },
+  ])
+    assert.throws(() => validate(bad), /RECOVERY_R13_LEDGER/);
+  let calls = 0;
+  const getter = { ...doc };
+  Object.defineProperty(getter, "reportRaw", {
+    enumerable: true,
+    get() {
+      calls++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  assert.throws(() => validate(getter), /RECOVERY_R13_LEDGER/);
+  assert.throws(
+    () =>
+      validate(
+        new Proxy(doc, {
+          get() {
+            calls++;
+            throw Error("PRIVATE_CANARY");
+          },
+        }),
+      ),
+    /RECOVERY_R13_LEDGER/,
+  );
+  assert.equal(calls, 0);
+  const reordered = Object.fromEntries(Object.entries(doc).reverse());
+  assert.throws(() => validate(reordered), /RECOVERY_R13_LEDGER/);
+});
+test("R14 spends R13 and admits only the governed next fixture nonce", () => {
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261109-r13",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify(request)), /REQUEST_SPENT/);
+  request.request_id = "trilha-a-fixtures-20261109-r14";
+  assert.equal(sut.parseSingleRequest(JSON.stringify(request)).request_id, request.request_id);
+});
