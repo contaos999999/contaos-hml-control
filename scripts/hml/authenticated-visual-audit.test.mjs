@@ -8562,3 +8562,17 @@ test("R5 runtime refuses missing or forged R4 proof before exposing broker evide
   ])
     assert.throws(() => sut.validateR4ZeroAuthProof(value), { code: "RECOVERY_R4_PROOF" });
 });
+
+
+test("R6 is sole executable fixture nonce and all five original requests remain spent",async()=>{
+  const request={schema_version:1,issue:317,operation:"fixtures",request_id:"trilha-a-fixtures-20261109-r6",approved_parent_sha:"a".repeat(40),frontend_sha:"",deployment_id:""};
+  assert.equal(sut.parseSingleRequest(JSON.stringify(request)).request_id,request.request_id);
+  for(const nonce of ["trilha-a-fixtures-20261108-r1","trilha-a-fixtures-20261109-r2","trilha-a-fixtures-20261109-r3","trilha-a-fixtures-20261109-r4","trilha-a-fixtures-20261109-r5"]){
+    assert.throws(()=>sut.parseSingleRequest(JSON.stringify({...request,request_id:nonce})),{code:"REQUEST_SCHEMA"});
+    assert.equal(sut.parseSingleRequest(JSON.stringify({...request,request_id:nonce}),undefined,{historical:true}).request_id,nonce);
+  }
+  const source=await (await import("node:fs/promises")).readFile(new URL("./authenticated-visual-audit.mjs",import.meta.url),"utf8");
+  const guardSource=source.slice(source.indexOf("function requireSingleRequestOperation("),source.indexOf("export async function verifySingleRequestGit("));
+  const guard=new Function("fail",guardSource+";return requireSingleRequestOperation;")(code=>{throw Object.assign(new Error(code),{code});});
+  assert.throws(()=>guard("audit"),{code:"AUDIT_BINDING_PENDING"});
+});

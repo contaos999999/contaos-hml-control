@@ -3956,3 +3956,182 @@ test("R5 actual CLI loads recovery before runtime for both authorized events and
   await assert.rejects(() => run(["--prepare-fixtures"]));
   assert.equal(runtime, 0);
 });
+
+
+async function r6SourceNodes() {
+  const {readFile}=await import("node:fs/promises");
+  const ts=(await import("typescript")).default;
+  const code=await readFile(new URL("./prepare-visual-fixtures.mjs",import.meta.url),"utf8");
+  const ast=ts.createSourceFile("preparer.mjs",code,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
+  const nodes=[];function visit(node){nodes.push(node);ts.forEachChild(node,visit);}visit(ast);
+  const named=name=>nodes.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text===name);
+  const link=nodes.find(n=>ts.isVariableDeclaration(n)&&n.name.getText(ast)==="link"&&n.initializer?.getText(ast).includes("PREPARER_SPA_PATH"));
+  return {ts,code,ast,nodes,named,link:link.initializer.getText(ast)};
+}
+async function r6ApprovedFileHarness(mode="ok") {
+  const {readFile}=await import("node:fs/promises");
+  const source=await r6SourceNodes();
+  const menuText=await readFile(new URL("../../src/lib/navegacao/menuV1.ts",import.meta.url),"utf8");
+  const menuAst=source.ts.createSourceFile("menu.ts",menuText,99,true,source.ts.ScriptKind.TS);
+  const menuNode=menuAst.statements.find(n=>source.ts.isFunctionDeclaration(n)&&n.name?.text==="menuContextualV1");
+  const js=source.ts.transpileModule(menuNode.getText(menuAst).replace("export ",""),{compilerOptions:{target:source.ts.ScriptTarget.ES2022}}).outputText;
+  const menu=new Function("permitido",js+";return menuContextualV1;")(()=>true);
+  const C="50c26274-a36f-48e0-b2fe-5a1caf5d6a49",V="2ea42a44-db27-4c4e-801f-9fc5227c2458";
+  let current="/competencias/"+C,sequence=10,documentOrdinal=null;
+  const clicks=[];
+  const items=()=>{
+    const rows=menu({competencia:current.startsWith("/competencias/")?C:null,contrato:FIXTURE.contract},[]);
+    let paths=rows.map(x=>x.destino);
+    if(mode==="missing")paths=paths.filter(x=>x!=="/contratos/"+FIXTURE.contract);
+    if(mode==="duplicate"&&current.startsWith("/competencias/"))paths.push("/contratos/"+FIXTURE.contract);
+    return paths;
+  };
+  const page={
+    url:()=>FIXTURE.origin+current,
+    locator:selector=>{
+      const path=/^a\[href="([^"]+)"\]:visible$/.exec(selector)?.[1];assert.ok(path);
+      return{count:async()=>items().filter(x=>x===path).length,nth:()=>({
+        isEnabled:async()=>true,getAttribute:async()=>null,click:async()=>{
+          assert.ok(items().includes(path),"only source-real anchors can be clicked");
+          if(path.endsWith("/documentos"))documentOrdinal=sequence;
+          current=path;clicks.push(path);sequence++;
+        }
+      })};
+    },
+    waitForURL:async url=>assert.equal(FIXTURE.origin+current,url),
+  };
+  const trace=async(_phase,execute)=>execute();
+  const error=code=>{throw new Error(code);};
+  const link=new Function("page","FIXTURE","proof","fresh","goKnown","err","tracedPreparation","return ("+source.link+");")(
+    page,FIXTURE,{documents:{}},async()=>{},async()=>assert.fail("SSR bypass"),error,trace
+  );
+  const parent={official:true,current:true,organization:FIXTURE.organization,contract:FIXTURE.contract};
+  const io={generation:()=>sequence,official:()=>mode==="foreign"?{...parent,contract:C}:parent};
+  const observed=async(_name,_where,ordinal)=>assert.equal(ordinal,documentOrdinal,"capture after contract hop and before document request");
+  const rows=async table=>table==="documentos_contrato"?[{id:FIXTURE.contractualDocument,id_contrato:FIXTURE.contract,situacao:"ativo",versao_atual:1}]:
+    table==="versoes_documento"?[{id:V,id_documento_contrato:FIXTURE.contractualDocument,id_arquivo:FIXTURE.file,numero_versao:1}]:
+    [{id:FIXTURE.file,status_seguranca:"aprovado",mime:"text/plain",tamanho:285,sha256:mode==="sha"?"b".repeat(64):FIXTURE.fileHash}];
+  const helpers=[source.named("official"),source.named("approvedFile"),source.named("approvedContractFile")].map(n=>n.getText(source.ast)).join("\n");
+  const run=new Function("io","FIXTURE","link","tracedPreparation","observed","rows","uuid","stop","obj","contractBase","context",helpers+";return approvedContractFile;")(
+    io,FIXTURE,link,trace,observed,rows,v=>/^[0-9a-f-]{36}$/.test(v),error,v=>v!==null&&typeof v==="object","/contratos/"+FIXTURE.contract,
+    async()=>{if(mode==="foreign")error("COMPETENCE_CONTEXT");}
+  );
+  return{run,clicks,current:()=>current};
+}
+test("R6 source-real approved file follows contract then documents through unique contextual anchors",async()=>{
+  const f=await r6ApprovedFileHarness();
+  await f.run();
+  assert.deepEqual(f.clicks,["/contratos/"+FIXTURE.contract,"/contratos/"+FIXTURE.contract+"/documentos"]);
+  for(const mode of ["missing","duplicate","foreign","sha"]){
+    const bad=await r6ApprovedFileHarness(mode);
+    await assert.rejects(()=>bad.run(),/PREPARER_SPA_LINK|COMPETENCE_CONTEXT|COMPETENCE_APPROVED_FILE/);
+  }
+});
+async function r6RunMonthCatch(failure,diagnostics) {
+  const s=await r6SourceNodes();
+  const clause=s.nodes.find(n=>s.ts.isCatchClause(n)&&n.getText(s.ast).includes("receipt.code ="));
+  assert.ok(clause);
+  const body="return (async()=>{const output=[];let temporalAborted=false;for(const month of ['2026-10-01','2026-09-01']){const receipt={month,state:'partial'};output.push(receipt);try{await tracedPreparation('COMPETENCY_UI',async()=>{throw failure;});}"+clause.getText(s.ast)+"}return output;})();";
+  const env={failure,activePreparationDiagnostics:diagnostics,tracedPreparation:(p,f)=>diagnostics.step(p,f),io:{page:{keyboard:{press:async()=>{}}},fresh:async()=>{}},preparationErrorData:undefined};
+  const helper=s.named("preparationErrorData").getText(s.ast);
+  const nativeTypes=await import("node:util/types");
+  return new Function(...Object.keys(env),"isProxy",helper+";"+body)(...Object.values(env),nativeTypes.isProxy);
+}
+test("R6 actual month catch preserves first nested failure through partial and cleanup",async()=>{
+  const d=sut.createPreparationDiagnostics();
+  const result=await d.step("COMPETENCIES",()=>r6RunMonthCatch(new Error("PREPARER_SPA_LINK"),d));
+  assert.equal(result.length,2);
+  assert.ok(result.every(x=>x.code==="COMPETENCE_DEPENDENCY_BLOCKED"));
+  d.capture(new Error("PREPARER_INCOMPLETE"));await d.cleanup(async()=>true);
+  const state=d.snapshot();
+  assert.equal(state.primaryFailure,"PREPARER_SPA_LINK");
+  assert.ok(state.subphasePath.includes("COMPETENCY_UI"));
+  assert.equal(state.logoutVerified,true);assert.equal(state.cleanupFailure,null);
+});
+test("R6 diagnostics and partial summary do not invoke getters or proxy traps",async()=>{
+  let reads=0;
+  const getter={name:"Error",get message(){reads++;throw Error("CANARY_TOKEN_URL");},get cause(){reads++;throw Error("CANARY");},get stack(){reads++;throw Error("CANARY");}};
+  const proxy=new Proxy({}, {get(){reads++;throw Error("CANARY");},getOwnPropertyDescriptor(){reads++;throw Error("CANARY");},getPrototypeOf(){reads++;throw Error("CANARY");}});
+  for(const failure of [getter,proxy]){
+    const d=sut.createPreparationDiagnostics();
+    await d.step("COMPETENCIES",()=>r6RunMonthCatch(failure,d));
+    d.capture(new Error("PREPARER_INCOMPLETE"));await d.cleanup(async()=>true);
+    assert.equal(d.snapshot().primaryFailure,"PREPARER_UNCLASSIFIED");
+    assert.equal(/CANARY|TOKEN|https|stack|payload/.test(JSON.stringify(d.snapshot())),false);
+  }
+  assert.equal(reads,0);
+});
+
+const R6_R5_DOCUMENT = {
+  "schema": "contaos.fixture.recovery-r5.v1",
+  "workflowRun": "42578223154",
+  "artifactId": "13656530451",
+  "requestId": "trilha-a-fixtures-20261109-r5",
+  "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",
+  "zipSha256": "5380c9c1a5b18e75e7a0e09e41902c826eae0a9cb1f9589f7f34a819f463985b",
+  "reportSha256": "c631d266351fa609600dbcdbe60f1d1a54d8fac76e740c10d80017277a6f55ba",
+  "receiptsSha256": "fd97a387cae0e16af65c6923f453ac83262e58447176c3c558b1c10bc15c5eeb",
+  "reportRaw": "{\n  \"schema\": \"contaos.fixture.preparation.v1\",\n  \"failure\": \"PREPARER_INCOMPLETE\",\n  \"diagnostics\": {\n    \"primaryFailure\": \"PREPARER_INCOMPLETE\",\n    \"failureClass\": \"PROTOCOL\",\n    \"errorName\": \"Error\",\n    \"subphase\": \"PREFLIGHT\",\n    \"subphasePath\": [],\n    \"lastCompletedSubphase\": \"PREFLIGHT\",\n    \"logoutAttempted\": true,\n    \"logoutVerified\": true,\n    \"cleanupFailure\": null\n  },\n  \"intentLedger\": {\n    \"count\": 8,\n    \"frozen\": false,\n    \"pending\": false,\n    \"sent\": false,\n    \"priorConfirmed\": 3,\n    \"newArmedCount\": 5,\n    \"maxIntentions\": 24,\n    \"maxNewIntentions\": 21\n  },\n  \"recovery\": {\n    \"ledgerSha256\": \"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\",\n    \"priorWorkflowRun\": \"42540864527\",\n    \"confirmedBefore\": 3,\n    \"maxNewIntentions\": 21,\n    \"r3ReceiptsSha256\": \"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\",\n    \"r3WorkflowRun\": \"42559214436\",\n    \"r4ZeroAuth\": {\n      \"schema\": \"contaos.fixture.recovery-r4.v1\",\n      \"headSha\": \"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\",\n      \"upstreamRun\": 42568309807,\n      \"fixturesRun\": 42568382053,\n      \"auditRun\": 42568382029,\n      \"attempt\": 1,\n      \"derivedNewBusinessIntents\": 0,\n      \"proof\": \"GITHUB_ACTIONS_LIVE_METADATA\"\n    },\n    \"reconciled\": true,\n    \"sourceVersion\": \"1ebbfd0b-c50c-405d-8806-321f18e179e0\",\n    \"sourceHash\": \"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\"\n  },\n  \"bindings\": {\n    \"sourceVersionId\": \"1ebbfd0b-c50c-405d-8806-321f18e179e0\",\n    \"listId\": \"bf71906b-87a4-42f5-8371-5f597ef2ad9b\",\n    \"listVersionId\": \"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\",\n    \"itemId\": \"e7065876-a620-4dbb-9b4e-992fa4fead83\",\n    \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n    \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n    \"source\": \"8b942e46-a29b-40d9-8ad4-04aaf9124a34\",\n    \"competencies\": [\n      {\n        \"month\": \"2026-10-01\",\n        \"state\": \"partial\",\n        \"id\": \"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\",\n        \"code\": \"COMPETENCE_DEPENDENCY_BLOCKED\"\n      },\n      {\n        \"month\": \"2026-09-01\",\n        \"state\": \"partial\",\n        \"id\": \"79bdc139-ed10-4c91-905e-b32b9a824d27\",\n        \"code\": \"COMPETENCE_DEPENDENCY_BLOCKED\"\n      }\n    ]\n  },\n  \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n  \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n  \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n  \"workflowRun\": \"42578223154\",\n  \"phase\": \"FINAL_READBACK\",\n  \"completed\": false,\n  \"logoutVerified\": true,\n  \"ids\": [\n    \"1ebbfd0b-c50c-405d-8806-321f18e179e0\",\n    \"bf71906b-87a4-42f5-8371-5f597ef2ad9b\",\n    \"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\",\n    \"e7065876-a620-4dbb-9b4e-992fa4fead83\",\n    \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n    \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n    \"8b942e46-a29b-40d9-8ad4-04aaf9124a34\",\n    \"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\",\n    \"79bdc139-ed10-4c91-905e-b32b9a824d27\"\n  ],\n  \"v1Certified\": false\n}\n",
+  "receiptsRaw": "{\n  \"schema\": \"contaos.fixture.receipts.v1\",\n  \"receipts\": [\n    {\n      \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n      \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n      \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n      \"workflowRun\": \"42578223154\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"executar_comando_lista_v1\",\n      \"requestId\": \"da4e924e-2ed1-4ccd-b847-fc95a44cc383\",\n      \"state\": \"sealed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"54e6e65b94eb4874e50fe5764348e1a67804aa4df82547033dd9ccff7690f340\"\n    },\n    {\n      \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n      \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n      \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n      \"workflowRun\": \"42578223154\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"executar_comando_lista_v1\",\n      \"requestId\": \"da4e924e-2ed1-4ccd-b847-fc95a44cc383\",\n      \"state\": \"confirmed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"54e6e65b94eb4874e50fe5764348e1a67804aa4df82547033dd9ccff7690f340\"\n    },\n    {\n      \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n      \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n      \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n      \"workflowRun\": \"42578223154\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"executar_comando_lista_v1\",\n      \"requestId\": \"31ddaf25-fb66-4cdc-be84-8612e77b17dc\",\n      \"state\": \"sealed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"3cbe64f69528818238bf16a0dcf02d739bab03f7eea62aff5a7f4f58e52b6a73\"\n    },\n    {\n      \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n      \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n      \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n      \"workflowRun\": \"42578223154\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"executar_comando_lista_v1\",\n      \"requestId\": \"31ddaf25-fb66-4cdc-be84-8612e77b17dc\",\n      \"state\": \"confirmed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"3cbe64f69528818238bf16a0dcf02d739bab03f7eea62aff5a7f4f58e52b6a73\"\n    },\n    {\n      \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n      \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n      \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n      \"workflowRun\": \"42578223154\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"executar_comando_lista_v1\",\n      \"requestId\": \"cf429997-d0b6-45bd-880a-be4b103f79bb\",\n      \"state\": \"sealed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"7c3f9c79fb8b58ff93186827b68ca6dbbe147787d21f8b15c1eb555977bc0b3f\"\n    },\n    {\n      \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n      \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n      \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n      \"workflowRun\": \"42578223154\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"executar_comando_lista_v1\",\n      \"requestId\": \"cf429997-d0b6-45bd-880a-be4b103f79bb\",\n      \"state\": \"confirmed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"7c3f9c79fb8b58ff93186827b68ca6dbbe147787d21f8b15c1eb555977bc0b3f\"\n    },\n    {\n      \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n      \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n      \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n      \"workflowRun\": \"42578223154\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"criar_competencia\",\n      \"requestId\": \"499dc2a2-c0a2-4a19-9ccb-11c534096f7e\",\n      \"state\": \"sealed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"1c8f192c563e7dc74b6889b916fdf33eb563ca05dbb10d638c51b351dc7f8083\"\n    },\n    {\n      \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n      \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n      \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n      \"workflowRun\": \"42578223154\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"criar_competencia\",\n      \"requestId\": \"499dc2a2-c0a2-4a19-9ccb-11c534096f7e\",\n      \"state\": \"confirmed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"1c8f192c563e7dc74b6889b916fdf33eb563ca05dbb10d638c51b351dc7f8083\"\n    },\n    {\n      \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n      \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n      \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n      \"workflowRun\": \"42578223154\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"criar_competencia\",\n      \"requestId\": \"655ae00f-ed36-4a13-a637-bc8b77375783\",\n      \"state\": \"sealed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"1a90a321fa24f8af03c9dc9997b18d21981353cd86ce7e06ba2c51af698e0415\"\n    },\n    {\n      \"frontendSha\": \"437c788e32f0325dd15c9d2e7277c10129bcb462\",\n      \"harnessSha\": \"3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d\",\n      \"deploymentId\": \"dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp\",\n      \"workflowRun\": \"42578223154\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"criar_competencia\",\n      \"requestId\": \"655ae00f-ed36-4a13-a637-bc8b77375783\",\n      \"state\": \"confirmed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"1a90a321fa24f8af03c9dc9997b18d21981353cd86ce7e06ba2c51af698e0415\"\n    }\n  ]\n}\n"
+};
+
+function r6RecoveryState() {
+  const d=JSON.parse(R6_R5_DOCUMENT.reportRaw),b=d.bindings;
+  const context={official:true,current:true,organization:FIXTURE.organization,contract:FIXTURE.contract};
+  return r2Reconciliation({
+    ledgerR5:R6_R5_DOCUMENT,
+    source:{...context,id:FIXTURE.source,...sut.SOURCE_FIELDS,version:1,situacao:"ativa"},
+    version:{...context,id:b.sourceVersionId,source:FIXTURE.source,hash:d.recovery.sourceHash,approved:true,textVerified:true,effective:true,file:null},
+    competencies:b.competencies.map(c=>({month:c.month,id:c.id,observed:true,count:1})),
+    listCount:1,listState:{verified:true,active:true,published:true,ruleVerified:true,sourceVersion:b.sourceVersionId,id:b.listId,versionId:b.listVersionId,itemId:b.itemId}
+  });
+}
+test("R6 recovery broker debits original five R5 confirmations before any new arm",()=>{
+  const b=broker({recoveryLedger:sut.R1_RECOVERY_DOCUMENT,recoveryLedgerR3:sut.R3_RECOVERY_DOCUMENT,recoveryLedgerR4:sut.R4_RECOVERY_DOCUMENT,recoveryLedgerR5:R6_R5_DOCUMENT});
+  assert.equal(b.snapshot().count,8);assert.equal(b.snapshot().confirmedBefore,8);assert.equal(b.snapshot().maxNewIntentions,16);
+  assert.equal(JSON.parse(R6_R5_DOCUMENT.reportRaw).intentLedger.maxNewIntentions,21,"historical R5 is never rewritten");
+});
+test("R6 original R5 hashes identity exact pairs and bindings reject mutation without invoking getters",()=>{
+  assert.equal(typeof sut.validateR5RecoveryDocument,"function");
+  assert.equal(sut.validateR5RecoveryDocument(R6_R5_DOCUMENT).workflowRun,"42578223154");
+  const clone=()=>JSON.parse(JSON.stringify(R6_R5_DOCUMENT));
+  for(const mutate of [
+    d=>{d.workflowRun="42578223155";},
+    d=>{d.extra=true;},
+    d=>{d.reportRaw=d.reportRaw.replace('"completed": false','"completed": true');},
+    d=>{d.receiptsRaw=d.receiptsRaw.replace('"state": "confirmed"','"state": "uncertain"');},
+    d=>{const v=JSON.parse(d.receiptsRaw);v.receipts.push(v.receipts[0]);d.receiptsRaw=JSON.stringify(v,null,2)+"\n";},
+    d=>{d.reportRaw=d.reportRaw.replace("50c26274-a36f-48e0-b2fe-5a1caf5d6a49","79bdc139-ed10-4c91-905e-b32b9a824d27");},
+  ]){const d=clone();mutate(d);assert.throws(()=>sut.validateR5RecoveryDocument(d),/RECOVERY_R5_LEDGER/);}
+  let reads=0;
+  const getter=clone();Object.defineProperty(getter,"reportRaw",{enumerable:true,get(){reads++;throw Error("CANARY");}});
+  const proxy=new Proxy(clone(),{ownKeys(){reads++;throw Error("CANARY");},get(){reads++;throw Error("CANARY");}});
+  assert.throws(()=>sut.validateR5RecoveryDocument(getter),/RECOVERY_R5_LEDGER/);
+  assert.throws(()=>sut.validateR5RecoveryDocument(proxy),/RECOVERY_R5_LEDGER/);
+  assert.equal(reads,0);
+});
+test("R6 semantic replay stays denied with a new UUID while different future analysis remains allowed",()=>{
+  const b=broker({recoveryLedger:sut.R1_RECOVERY_DOCUMENT,recoveryLedgerR3:sut.R3_RECOVERY_DOCUMENT,recoveryLedgerR4:sut.R4_RECOVERY_DOCUMENT,recoveryLedgerR5:R6_R5_DOCUMENT});
+  b.authorizeRecovery(sut.reconcileR1Recovery(r6RecoveryState()));
+  const bindings=JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings;
+  const attempts=[
+    ["executar_comando_lista_v1",{p_id_organizacao:FIXTURE.organization,p_id_contrato:FIXTURE.contract,p_acao:"criar_lista",p_id_lista:null,p_payload:{nome:FIXTURE.listName}}],
+    ["executar_comando_lista_v1",{p_id_lista:bindings.listId,p_acao:"salvar_item",p_payload:{id_versao:bindings.listVersionId,codigo:"AUD-A-TXT-001",id_fonte_versao:bindings.sourceVersionId}}],
+    ["executar_comando_lista_v1",{p_id_lista:bindings.listId,p_acao:"publicar_versao",p_payload:{id_versao:bindings.listVersionId}}],
+    ...bindings.competencies.map(c=>["criar_competencia",{p_id_contrato:FIXTURE.contract,p_competencia_referencia:c.month}]),
+  ];
+  for(const [rpc,payload]of attempts)assert.throws(()=>b.arm({rpc,payload,requestId:randomUUID()}),/RECOVERY_CONFIRMED_OPERATION/);
+  for(const rpc of ["registrar_versao_fonte_v107","aprovar_versao_fonte_v107","salvar_fonte_normativa_v107"])
+    assert.throws(()=>b.arm({rpc,payload:{},requestId:randomUUID()}),/RECOVERY_CONFIRMED_OPERATION/);
+  const c=bindings.competencies[0];
+  b.arm({rpc:"solicitar_analise_competencia",payload:{p_id_competencia:c.id,p_tipo:"completa"},requestId:randomUUID(),verified:{context:true,capability:true,reconciled:true},evidence:{competencies:[{official:true,current:true,organization:FIXTURE.organization,contract:FIXTURE.contract,id:c.id,month:c.month}]}});
+  assert.equal(b.snapshot().count,9);
+});
+
+test("R6 unknown COMPETENCE prefix remains generic rather than becoming a receipt code",async()=>{
+  const d=sut.createPreparationDiagnostics();
+  const result=await d.step("COMPETENCIES",()=>r6RunMonthCatch(new Error("COMPETENCE_PII_SEMANTICAMENTE_DESCONHECIDO"),d));
+  assert.ok(result.every(x=>x.code==="COMPETENCE_DEPENDENCY_BLOCKED"));
+  assert.equal(d.snapshot().primaryFailure,"PREPARER_UNCLASSIFIED");
+  assert.equal(JSON.stringify({result,diagnostics:d.snapshot()}).includes("SEMANTICAMENTE"),false);
+});
