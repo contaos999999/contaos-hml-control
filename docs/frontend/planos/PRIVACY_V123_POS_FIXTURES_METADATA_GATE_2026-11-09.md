@@ -1,12 +1,16 @@
-# Trilha A: DRAFT GATE de descoberta V123 após fixtures R2, página inicial de 25
+# Trilha A: DRAFT GATE de descoberta V123 após fixtures finais, página inicial de 25
 
 Estado: PREPARATÓRIO, SEM EXECUÇÃO. Base frontend0f53c8892108cdc6168212cb870d0b3ed604d0f7, contexto canônico herdado da431 sujeito à freshness viva. Deriva PLAN385, dos controles de descoberta401/408 e do catálogo421, sem reutilizar a autorização de SQL1/SQL2, seu limite10 ou seus IDs. V1 permanece NO-GO. Esta PR altera somente este documento e a seção documental própria no PLANO_ATIVO.json. Não altera424, código, catálogo, recibos históricos, requestR2, nonce, deployment ou dados.
 
+## Estado real R2 e condição futura
+
+R2 run42553093050 terminou FAIL: receipts[] vazio,0novos intents/operações business comprovados; recovery deR1 reconhecido, sem ser nova operação. Falha primária TIMEOUT_SOURCE_FORM_FIELD e logoutfalse/LOGOUT_FAILED, conforme diagnóstico do coordenador, ainda sujeito ao checkpoint dos artefatos. Isso NÃO comprova que o catálogo10 expirou por novas operaçõesR2, nem prova ausência global de qualquer evento externo. Não inferir validade atual ou expiração automática apenas pelo nomeR2. Nenhuma consulta é autorizada para resolver essa incerteza. A preparação433 fica reservada para depois das fixtures finais, futuramenteR3 sob seu próprio GATE, correção de contexto e recibos reais.
+
 ## Objetivo e limites desta etapa
 
-Preparar a descoberta exata da página que a UI V123 consulta depois de R2. O objetivo é identificar os 25 eventos da página0 sob o contrato legítimo, sem selecionar conteúdo dos seis campos nesta etapa. Não executar SQL, Auth, SDK contra HML, nova captura ou lookup durante a preparação. CI deste documento é validação documental, não prova da página nem autorização antecipada.
+Preparar a descoberta exata da página que a UI V123 consulta depois das fixtures finais e somente quando houver novas operações produtoras de eventos efetivamente comprovadas nos recibos aprovados. O objetivo é identificar os 25 eventos da página0 sob o contrato legítimo, sem selecionar conteúdo dos seis campos nesta etapa. Não executar SQL, Auth, SDK contra HML, nova captura ou lookup durante a preparação. CI deste documento é validação documental, não prova da página nem autorização antecipada.
 
-Mesmo após CI/revisão, nenhuma consulta pode ocorrer antes de: R2 encerrada ou interrompida com estado terminal reconciliado; recibos e ledger reais validados pelo coordenador; congelamento de novas operações produtoras de eventos; integração deste GATE por merge normal; e revisão independente do wrapper exato de metadados. Se o estadoR2 estiver incerto, continuar bloqueado sem tentar descobrir por consulta exploratória. Uma operaçãoR2 confirmada expira o catálogo10 da421 para execuções seguintes, mesmo se outras operações falharem.
+Mesmo após CI/revisão, nenhuma consulta pode ocorrer antes de: fixtures finais, futuramenteR3, encerradas ou interrompidas com estado terminal reconciliado; recibos e ledger reais validados pelo coordenador e existência de novas operações efetivamente comprovada; congelamento de novas operações produtoras de eventos; integração deste GATE por merge normal; e revisão independente do wrapper exato de metadados. Se o estado das fixtures ou a produção de novos eventos estiver incerto, continuar bloqueado sem tentar descobrir por consulta exploratória. Uma nova operação produtora de eventos efetivamente confirmada expira o catálogo10 da421 para execuções seguintes, mesmo se outras operações falharem. Recovery somente de operação históricaR1 e tentativa sem intent/business comprovado não são esse gatilho.
 
 A preparação não autoriza leitura dos seis conteúdos, atualização do catálogo, BUILD adicional, execução424 ou TesteC. A fase de conteúdo exige outro GATE após os metadados terem sido aprovados. Não executar a antiga SQL1/SQL2, ampliar sua lista de IDs, selecionar os dez antigos como amostra ou usar recibo histórico como prova da página nova.
 
@@ -42,11 +46,13 @@ O wrapper deve validar o bloco original integral antes de apresentar qualquer pa
 
 A literalSQL e o wrapper finais não estão aprovados por esta preparação. Devem ser apresentados concretamente, testados localmente com mocks e revisados por duas pessoas/agentes antes da execução única. Revisar projeçãoAST/texto original, ausência dos seis valores no retorno e ausência de qualquer chamada real nos testes. Testar0/24/25/26rows, total divergente, duplicata, empate de timestamp,1µs, timestamp inválido, ordinal fora de ordem, objeto/string/nested/extra key, chaveJSON duplicada, Unicode/codepoints e erro com getter que nunca é lido. Não repetir a consulta em timeout ou parsefailed sem novo rito documental.
 
-## Vinculação aos recibos R2 e eventos de outras frentes
+## Vinculação aos recibos das fixtures finais e eventos de outras frentes
 
-O coordenador pode usar somente recibosR2 e ledger já capturados legitimamente e classificados. Registrar run, source/harness/requestnonce aprovados, estado terminal, operações confirmadas e se o recibo contém binding explícito de event_id. Não abrir nem pedir novo raw, SQL ou Auth para preencher lacunas. Ausência de event_id no recibo significa BINDING_EVENTO_R2_NAO_COMPROVADO; não fabricar a ligação por label, horário aproximado, ator ou ordem.
+O coordenador pode usar somente recibos das fixtures finais e ledger já capturados legitimamente e classificados. Registrar run, source/harness/requestnonce aprovados, estado terminal, operações confirmadas e se o recibo contém binding explícito de event_id. Não abrir nem pedir novo raw, SQL ou Auth para preencher lacunas. Ausência de event_id no recibo significa BINDING_EVENTO_R2_NAO_COMPROVADO; não fabricar a ligação por label, horário aproximado, ator ou ordem.
 
-A metadata não contém evento, origem, entidade ou ator. Portanto, ela não demonstra que uma linha veio deR2 ou da TrilhaC. Pode reconhecer somente IDs que um recibo aprovado vincule expressamente. Mesmo nessa hipótese, o vínculo não aprova os seis conteúdos. Anotar separadamente: total da página; IDs com vínculo explícitoR2; IDs sem vínculo; eventosC comprovados apenas por recibo existente. Zero evidência deve permanecer NAO_COMPROVADO.
+A metadata não contém evento, origem, entidade ou ator. Portanto, ela não demonstra que uma linha veio deR2 ou da TrilhaC. Pode reconhecer somente IDs que um recibo aprovado vincule expressamente. Mesmo nessa hipótese, o vínculo não aprova os seis conteúdos. Anotar separadamente: total da página; IDs com vínculo explícito da execução final; IDs sem vínculo; eventosC comprovados apenas por recibo existente. Zero evidência deve permanecer NAO_COMPROVADO.
+
+ReferênciasR2 nesta seção descrevem o método de vínculo, não atribuição da execução falha atual. A execução finalR3, seu nonce e recibos precisam ser fixados após autorização e prova próprias. R2vazia não fornece binding novo.
 
 A UI inclui a página organizacional inteira. Evento deC, processo externo ou outro ator não pode ser filtrado/removido para preservar catálogo de fixtures. Qualquer associação desconhecida seguirá para proposta do GATE de conteúdo ou ficará bloqueada. Não inferir conteúdo, aprovação de versão, identidade humana ou dado sintético a partir de nome de operação, sucessoR2 ou UUID conhecido.
 
@@ -62,13 +68,13 @@ Somente depois da concordância integral poderão existir novo recibo de proveni
 
 ## Preservação do BUILD424 e critérios de fechamento
 
-424 permanece pronta para revisão em c51802ecd692928f236b59ed7557357d0f885e9c, com catálogo10 histórico intacto. QuatroCI SUCCESS: Zero42553068288, LOCK42553068231, Auth42553068266 e Fixtures42553068273. Job128952705137 comprovou native8/visual1/SYS04browser2/V112browser1/V123browser1;302unitários,289PASS13SKIP0FAIL. Isso não torna o catálogo10 válido apósR2 nem certifica HML/184/WCAG/V1. Não fazer merge main durante o freezeR2.
+424 permanece pronta para revisão em c51802ecd692928f236b59ed7557357d0f885e9c, com catálogo10 histórico intacto. QuatroCI SUCCESS: Zero42553068288, LOCK42553068231, Auth42553068266 e Fixtures42553068273. Job128952705137 comprovou native8/visual1/SYS04browser2/V112browser1/V123browser1;302unitários,289PASS13SKIP0FAIL. Isso não prova validade atual nem expiração automática do catálogo10 após aR2falha, e não certifica HML/184/WCAG/V1. Não fazer merge main durante o freezeR2.
 
-- [ ] R2 possui estado terminal, recibos/ledger conferidos e ausência de nova operação pendente; não declarar completo pelo disparo do workflow.
-- [ ] Fonte/organização/contrato25 e freshness confirmados; este GATE passa CI/revisão independente e é integrado apósR2.
+- [ ] Fixtures finaisR3 possuem estado terminal, novas operações comprovadas, recibos/ledger conferidos e ausência de operação pendente; não declarar completo pelo disparo do workflow.
+- [ ] Fonte/organização/contrato25 e freshness confirmados; este GATE passa CI/revisão independente e é integrado somente após fixtures finais e prova de novas operações.
 - [ ] MetadataSQL/wrapper concretos revistos com testes negativos,0callsreais nos mocks, limites e cleanup verificados.
 - [ ] Uma execução somente metadata, sem retry automático; resultado classificado inteiro e recibo somente metadata/enums/counts.
 - [ ] GATE de conteúdo novo, com IDs/instantes/ordem reais, CI/revisão/merge antes de selecionar seis campos.
 - [ ] Concordância semântica completa antes de persistir conteúdo ou preparar catálogo novo e BUILD separado.
 
-Até essas provas, estado de descoberta pósR2 é NAO_EXECUTADA, conteúdos NAO_LIDOS, catálogo novo AUSENTE e autorização operacional BLOQUEADA. Não alterar seisGET, V115, wire411, V109, V112, SYS04, factory, diagnóstico, preparador, workflow, sourceproduto, backend, tipos ouPROD. Rollback desta preparação: revert exclusivamente documental, preservando recibos, dados e bloqueios.
+Até essas provas, estado de descoberta pósfixtures é NAO_EXECUTADA, conteúdos NAO_LIDOS, catálogo novo AUSENTE e autorização operacional BLOQUEADA. Não alterar seisGET, V115, wire411, V109, V112, SYS04, factory, diagnóstico, preparador, workflow, sourceproduto, backend, tipos ouPROD. Rollback desta preparação: revert exclusivamente documental, preservando recibos, dados e bloqueios.

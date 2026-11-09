@@ -2456,9 +2456,9 @@
     ],
     "remaining": "CI do HEAD documental reancorado; HML/R2/V1 não certificados."
   },
-  "trilha_a_v123_pos_r2_discovery": {
-    "state": "DRAFT_PREPARATORY_NO_EXECUTION",
-    "gate_document": "docs/frontend/planos/PRIVACY_V123_POS_R2_METADATA_GATE_2026-11-09.md",
+  "trilha_a_v123_pos_fixtures_discovery": {
+    "state": "DRAFT_FUTURE_AFTER_FINAL_FIXTURES_NO_EXECUTION",
+    "gate_document": "docs/frontend/planos/PRIVACY_V123_POS_FIXTURES_METADATA_GATE_2026-11-09.md",
     "metadata_query_executed": false,
     "content_fields_read": false,
     "auth_executed": false,
@@ -2477,8 +2477,8 @@
       "six_field_json_types_and_codepoint_lengths"
     ],
     "requires": [
-      "R2 terminal reconciled and receipts verified",
-      "this Gate CI independent review and integration after R2",
+      "Final fixtures R3 terminal reconciled, new operations proven and receipts verified",
+      "This Gate CI independent review and integration only after final fixtures",
       "concrete metadata wrapper independent review before one execution",
       "separate content Gate CI review merge before six fields",
       "independent semantic concordance before persistence"
@@ -2490,6 +2490,18 @@
     "new_catalog": null,
     "build424_preserved_head": "c51802ecd692928f236b59ed7557357d0f885e9c",
     "main_merge_during_r2_allowed": false,
-    "new_hml_pass": false
+    "new_hml_pass": false,
+    "r2_terminal": {
+      "run": 42553093050,
+      "state": "FAIL",
+      "new_receipts": 0,
+      "new_intents": 0,
+      "new_business_operations_proven": 0,
+      "recovery_historical_r1": true,
+      "primary": "TIMEOUT_SOURCE_FORM_FIELD",
+      "logout_verified": false,
+      "logout_failure": "LOGOUT_FAILED",
+      "does_not_prove_automatic_catalog_expiry": true
+    }
   }
 }
