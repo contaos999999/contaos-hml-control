@@ -12350,6 +12350,7 @@ async function r19TransitionFixture({
   pendingTable = null,
   lateTable = null,
   missingItemPackage = false,
+  rowDelta = null,
 } = {}) {
   let clock = 0;
   const f = await r4ObserverFixture({
@@ -12457,6 +12458,7 @@ async function r19TransitionFixture({
   let lateResponse = null;
   for (const [table, q, row, filter] of cases) {
     if (missing === table) continue;
+    if (rowDelta?.table === table) Object.assign(row, rowDelta.values);
     const request = {
       method: () => "GET",
       postData: () => null,
@@ -12496,7 +12498,7 @@ async function r19TransitionFixture({
     f.page.emit("response", lateResponse);
     await f.observer.flush();
   }
-  return { ...f, where };
+  return { ...f, where, cases };
 }
 test("R19 real observer advances from approved to registered only after three causal readbacks", async () => {
   const f = await r19TransitionFixture();
@@ -12813,7 +12815,12 @@ test("R19 existing present consumer recovers a registered competence without com
   assert.equal(c.presentationId, sut.R18_REGISTRATION_CANDIDATE.presentationId);
 });
 
-async function r19ReadonlyFixture({ mode = "ok", owner = null, identityDelta = {} } = {}) {
+async function r19ReadonlyFixture({
+  mode = "ok",
+  owner = null,
+  identityDelta = {},
+  rowDelta = null,
+} = {}) {
   const receipts = [];
   const identity = {
     ...R12_TEST_IDENTITY,
@@ -12895,6 +12902,7 @@ async function r19ReadonlyFixture({ mode = "ok", owner = null, identityDelta = {
       },
     ],
   ];
+  if (rowDelta) Object.assign(rows.find(([table]) => table === rowDelta.table)[2], rowDelta.values);
   if (mode === "hash") rows[1][2].hash_pacote = "b".repeat(64);
   if (mode === "unfrozen") rows[1][2].congelado_em = null;
   if (mode === "number") rows[1][2].numero = 2;
@@ -13213,7 +13221,8 @@ async function r19NativeReadonlyProbe(browser) {
     fence,
     business = 0,
     mode = "ok",
-    pendingResponse = null;
+    pendingResponse = null,
+    pendingReady = null;
   try {
     process.stdout.write("R19_READONLY_PHASE BUNDLES\n");
     const bundle = await r19BuildProtocolUI(dir);
@@ -13342,6 +13351,7 @@ async function r19NativeReadonlyProbe(browser) {
           row.id_organizacao = randomUUID();
         if (mode === "pending" && item[0] === "itens_pacote_competencia") {
           pendingResponse = { res, row };
+          pendingReady?.();
           return;
         }
         res.writeHead(200, {
@@ -13376,149 +13386,232 @@ async function r19NativeReadonlyProbe(browser) {
       );
     await fs.writeFile(join(dir, "observer.mjs"), source);
     const local = await import(pathToFileURL(join(dir, "observer.mjs")).href);
-    process.stdout.write("R19_READONLY_PHASE PAGE_READY\n");
-    page = await browser.newPage();
-    await page.goto(origin);
-    await page.waitForFunction(() => window.__ready === true);
-    const identity = {
-      ...R12_TEST_IDENTITY,
-      frontendSha: candidate.frontendSha,
-      deploymentId: candidate.deploymentId,
-    };
-    const owner = await r19DriverBroker(
-      local,
-      identity,
-      () => {
-        throw Error("READONLY_PERSIST");
-      },
-      observer,
+    // Only the disposable local HTTP fixture needs a different CSP destination.
+    // The broker still imports the canonical requestAllowed from the original auditor.
+    const audit = await import("./authenticated-visual-audit.mjs");
+    const auditorSource = await fs.readFile(
+      new URL("./authenticated-visual-audit.mjs", import.meta.url),
+      "utf8",
     );
-    observer = local.createOfficialObserver(page, { identity });
-    const floor = observer.generation();
-    process.stdout.write("R19_READONLY_PHASE CURRENT_READS\n");
-    for (const c of bindings) {
-      for (const [name] of Object.entries(r17RecoveryData(c)))
-        await page.evaluate(
-          async ([name, id]) => {
-            await (
-              await fetch("/rest/v1/rpc/" + name, {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify({ p_id_competencia: id }),
-              })
-            ).json();
-          },
-          [name, c.id],
-        );
-      await page.evaluate((id) => window.__opinions(id), c.id);
-    }
-    await observer.flush();
-    process.stdout.write("R19_READONLY_PHASE OPINION_SEALED\n");
-    owner.authorizeRecovery(
-      local.reconcileR1Recovery(r2Reconciliation()),
-      observer.sealRecoveryOpinion(owner, floor),
+    const connectSource = "connect-src ${HML_ORIGIN} ${API_ORIGIN};";
+    assert.equal(auditorSource.split(connectSource).length, 2);
+    await fs.writeFile(
+      join(dir, "fence.mjs"),
+      auditorSource.replace(connectSource, "connect-src " + origin + ";"),
     );
-    const io = {
-      verifyContext: async () => true,
-      recoveryLedgerR18: local.R18_RECOVERY_DOCUMENT,
-      registrationCandidateR18: local.R18_REGISTRATION_CANDIDATE,
-      broker: owner,
-      generation: observer.generation,
-      rpcRead: observer.rpcRead,
-      fresh: observer.flush,
-      observedAfter: observer.waitObservedAfter,
-      sealRecoveryRegistration: (after) => observer.sealRecoveryRegistration(owner, after),
-      page,
-      read: observer.read,
-      readBarrier: observer.readBarrier,
-      assertReadBarrier: observer.assertReadBarrier,
-      readBarrierRemaining: observer.readBarrierRemaining,
-      drainReads: observer.drainReads,
-      goKnown: async (path, readBudget) =>
-        observer.readBarrier(async (budget) => {
-          assert.ok([listPath, candidatePath].includes(path));
-          const guard = () => observer.assertReadBarrier(budget);
-          guard();
-          await observer.drainReads(budget);
-          guard();
-          const after = observer.generation();
-          await page.goto(origin + path, { timeout: observer.readBarrierRemaining(budget) });
-          guard();
-          await page.waitForFunction(() => typeof window.__mount === "function");
-          guard();
-          if (path === listPath) {
-            await page.evaluate(() => window.__mount());
-          } else {
-            await page.evaluate(
-              ([c, a]) => window.__mount(c, a),
-              [candidate.competencyId, candidate.presentationId],
-            );
-            for (const [name, where] of [
-              ["obter_visao_geral_competencia", { p_id_competencia: candidate.competencyId }],
-              [
-                "apresentacoes_contratante",
-                { id: candidate.presentationId, id_competencia: candidate.competencyId },
-              ],
-              [
-                "pacotes_competencia",
-                { id: candidate.packageId, id_competencia: candidate.competencyId },
-              ],
-              [
-                "itens_pacote_competencia",
-                { id_pacote: candidate.packageId, id_competencia: candidate.competencyId },
-              ],
-            ])
-              await observer.waitObservedAfter(name, where, after, { readBudget: budget });
-            await page
-              .getByRole("heading", { name: "Dados da apresentação", exact: true })
-              .waitFor({ timeout: observer.readBarrierRemaining(budget) });
-          }
-          guard();
-          await observer.flush();
-          guard();
-        }, readBudget),
-    };
-    const navigationSource = await r6SourceNodes();
-    const navigationEnv = {
-      FIXTURE: { ...local.FIXTURE, origin },
-      observer,
-      page,
-      fresh: observer.flush,
-      goKnown: io.goKnown,
-      proof: { documents: {} },
-      tracedPreparation: async (_, run) => run(),
-      err: (code) => {
-        throw Error(code);
-      },
-      keys: () => false,
-    };
-    io.link = new Function(...Object.keys(navigationEnv), "return " + navigationSource.link)(
-      ...Object.values(navigationEnv),
-    );
-    await page.goto(origin + `/contratos/${FIXTURE.contract}/regras`);
-    await page.waitForFunction(() => window.__ready === true);
-    process.stdout.write("R19_READONLY_PHASE RESUME\n");
-    const output = await local.resumeR18Bindings(io, fixture.sourceList);
-    process.stdout.write("R19_READONLY_PHASE OCT_SEPT_BOUND\n");
-    assert.equal(output.state, "confirmed");
-    assert.equal(output.competencies[1].packageId, candidate.packageId);
+    const native = await import(pathToFileURL(join(dir, "fence.mjs")).href);
+    const localCsp = native.guardedResponseHeaders([])[0].value;
     assert.equal(
-      await page.getByText("1 registro(s) na versão congelada.", { exact: true }).count(),
-      1,
+      localCsp,
+      `connect-src ${origin}; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'`,
     );
-    assert.equal(owner.snapshot().count, 19);
-    assert.equal(owner.snapshot().pending, false);
+    process.stdout.write("R19_READONLY_PHASE PAGE_READY\n");
+    async function fresh(complete = false) {
+      fence?.close();
+      observer?.close();
+      await page
+        ?.context()
+        .close()
+        .catch(() => {});
+      mode = "ok";
+      page = await browser.newPage();
+      await page.goto(origin + (complete ? "/" : candidatePath));
+      await page.waitForFunction(() => window.__ready === true);
+      const identity = {
+        ...R12_TEST_IDENTITY,
+        frontendSha: candidate.frontendSha,
+        deploymentId: candidate.deploymentId,
+      };
+      const owner = await r19DriverBroker(
+        local,
+        identity,
+        () => {
+          throw Error("READONLY_PERSIST");
+        },
+        observer,
+      );
+      observer = local.createOfficialObserver(page, { identity });
+      const session = await page.context().newCDPSession(page),
+        { targetInfo } = await session.send("Target.getTargetInfo");
+      await session.detach();
+      const browserSession = await browser.newBrowserCDPSession(),
+        command = await browserSession.send("Browser.getBrowserCommandLine");
+      await browserSession.detach();
+      const port = Number(
+        command.arguments.find((x) => x.startsWith("--remote-debugging-port=")).split("=")[1],
+      );
+      fence = await native.installNativeFence({
+        debugPort: port,
+        identity: targetInfo,
+        policy: (event) => {
+          const u = new URL(event.url);
+          if (u.origin === origin && u.pathname.startsWith("/rest/"))
+            return owner.policy({ ...event, url: audit.API_ORIGIN + u.pathname + u.search });
+          return u.origin === origin;
+        },
+        verifyResponse: () => true,
+        closeContext: () => page.context().close(),
+      });
+
+      const floor = observer.generation();
+      process.stdout.write("R19_READONLY_PHASE CURRENT_READS\n");
+      // Independent readonly projections share a fresh owner/floor; collect them
+      // concurrently so isolation never requires extending the native deadline.
+      await page.evaluate(
+        async (reads) => {
+          await Promise.all(
+            reads.map(async ([id, names]) => {
+              await Promise.all([
+                ...names.map(async (name) => {
+                  const response = await fetch("/rest/v1/rpc/" + name, {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ p_id_competencia: id }),
+                  });
+                  await response.json();
+                }),
+                window.__opinions(id),
+              ]);
+            }),
+          );
+        },
+        bindings.map((c) => [c.id, Object.keys(r17RecoveryData(c))]),
+      );
+      await observer.flush();
+      process.stdout.write("R19_READONLY_PHASE OPINION_SEALED\n");
+      owner.authorizeRecovery(
+        local.reconcileR1Recovery(r2Reconciliation()),
+        observer.sealRecoveryOpinion(owner, floor),
+      );
+      const io = {
+        verifyContext: async () => true,
+        recoveryLedgerR18: local.R18_RECOVERY_DOCUMENT,
+        registrationCandidateR18: local.R18_REGISTRATION_CANDIDATE,
+        broker: owner,
+        generation: observer.generation,
+        rpcRead: observer.rpcRead,
+        fresh: observer.flush,
+        observedAfter: observer.waitObservedAfter,
+        sealRecoveryRegistration: (after) => observer.sealRecoveryRegistration(owner, after),
+        page,
+        read: observer.read,
+        readBarrier: observer.readBarrier,
+        assertReadBarrier: observer.assertReadBarrier,
+        readBarrierRemaining: observer.readBarrierRemaining,
+        drainReads: observer.drainReads,
+        goKnown: async (path, readBudget) =>
+          observer.readBarrier(async (budget) => {
+            assert.ok([listPath, candidatePath].includes(path));
+            const guard = () => observer.assertReadBarrier(budget);
+            guard();
+            await observer.drainReads(budget);
+            guard();
+            const after = observer.generation();
+            await page.goto(origin + path, { timeout: observer.readBarrierRemaining(budget) });
+            guard();
+            await page.waitForFunction(() => typeof window.__mount === "function");
+            guard();
+            if (path === listPath) {
+              await page.evaluate(() => window.__mount());
+            } else {
+              await page.evaluate(
+                ([c, a]) => window.__mount(c, a),
+                [candidate.competencyId, candidate.presentationId],
+              );
+              for (const [name, where] of [
+                ["obter_visao_geral_competencia", { p_id_competencia: candidate.competencyId }],
+                [
+                  "apresentacoes_contratante",
+                  { id: candidate.presentationId, id_competencia: candidate.competencyId },
+                ],
+                [
+                  "pacotes_competencia",
+                  { id: candidate.packageId, id_competencia: candidate.competencyId },
+                ],
+                [
+                  "itens_pacote_competencia",
+                  { id_pacote: candidate.packageId, id_competencia: candidate.competencyId },
+                ],
+              ])
+                await observer.waitObservedAfter(name, where, after, { readBudget: budget });
+              await page
+                .getByRole("heading", { name: "Dados da apresentação", exact: true })
+                .waitFor({ timeout: observer.readBarrierRemaining(budget) });
+            }
+            guard();
+            await observer.flush();
+            guard();
+          }, readBudget),
+      };
+      const navigationSource = await r6SourceNodes();
+      const navigationEnv = {
+        FIXTURE: { ...local.FIXTURE, origin },
+        observer,
+        page,
+        fresh: observer.flush,
+        goKnown: io.goKnown,
+        proof: { documents: {} },
+        tracedPreparation: async (_, run) => run(),
+        err: (code) => {
+          throw Error(code);
+        },
+        keys: () => false,
+      };
+      io.link = new Function(...Object.keys(navigationEnv), "return " + navigationSource.link)(
+        ...Object.values(navigationEnv),
+      );
+      let output;
+      if (complete) {
+        await page.goto(origin + `/contratos/${FIXTURE.contract}/regras`);
+        await page.waitForFunction(() => window.__ready === true);
+        process.stdout.write("R19_READONLY_PHASE RESUME\n");
+        output = await local.resumeR18Bindings(io, fixture.sourceList);
+        process.stdout.write("R19_READONLY_PHASE OCT_SEPT_BOUND\n");
+        assert.equal(output.state, "confirmed");
+        assert.equal(output.competencies[1].packageId, candidate.packageId);
+      } else {
+        await page.evaluate(
+          ([c, a]) => window.__mount(c, a),
+          [candidate.competencyId, candidate.presentationId],
+        );
+        await page.getByRole("heading", { name: "Dados da apresentação", exact: true }).waitFor();
+        await observer.flush();
+        assert.ok(observer.sealRecoveryRegistration(owner, floor));
+      }
+      assert.equal(
+        await page.getByText("1 registro(s) na versão congelada.", { exact: true }).count(),
+        1,
+      );
+      assert.equal(owner.snapshot().count, 19);
+      assert.equal(owner.snapshot().pending, false);
+      await fence.drain();
+      assert.equal(fence.snapshot().failed, false);
+      assert.equal(fence.snapshot().blockedRequests, 0);
+      return { owner, io, floor, output };
+    }
+    let { owner, io, floor } = await fresh(true);
+    // Stale generation is terminal in this otherwise proven owner, never in a
+    // context already invalidated by an unrelated pending/foreign response.
+    assert.throws(
+      () => observer.sealRecoveryRegistration(owner, Number.MAX_SAFE_INTEGER),
+      /RECOVERY_R18_BINDING/,
+    );
     for (const variant of ["hash", "total"]) {
       if (variant === "hash") process.stdout.write("R19_READONLY_PHASE HASH_NEGATIVE\n");
       else process.stdout.write("R19_READONLY_PHASE TOTAL_NEGATIVE\n");
+      ({ owner, io, floor } = await fresh());
       mode = variant;
-      await io.goKnown(
-        `/competencias/${candidate.competencyId}/apresentacoes/${candidate.presentationId}`,
+      await page.evaluate(
+        ([c, a]) => window.__mount(c, a),
+        [candidate.competencyId, candidate.presentationId],
       );
+      await page.getByRole("heading", { name: "Dados da apresentação", exact: true }).waitFor();
+      await observer.flush();
       assert.throws(() => observer.sealRecoveryRegistration(owner, floor), /RECOVERY_R18_BINDING/);
     }
     process.stdout.write("R19_READONLY_PHASE MISSING_NEGATIVE\n");
     for (const variant of ["missing"]) {
+      ({ owner, io, floor } = await fresh());
       mode = variant;
       const after = observer.generation();
       await page.evaluate(
@@ -13544,22 +13637,23 @@ async function r19NativeReadonlyProbe(browser) {
       );
     }
     process.stdout.write("R19_READONLY_PHASE PENDING_NEGATIVE\n");
+    ({ owner, io, floor } = await fresh());
     mode = "pending";
+    const stored = new Promise((resolve) => {
+      pendingReady = resolve;
+    });
     const pendingAfter = observer.generation();
-    const requested = page.waitForRequest((request) =>
-      request.url().includes("/rest/v1/itens_pacote_competencia"),
-    );
     await page.evaluate(
       ([c, a]) => window.__mount(c, a),
       [candidate.competencyId, candidate.presentationId],
     );
-    await requested;
+    await stored;
+    assert.ok(pendingResponse);
     assert.throws(
       () => observer.sealRecoveryRegistration(owner, pendingAfter),
       /RECOVERY_R(?:11_OPINION|18_BINDING)/,
     );
     mode = "ok";
-    for (let n = 0; !pendingResponse && n < 100; n++) await new Promise(setImmediate);
     assert.ok(pendingResponse);
     pendingResponse.res.writeHead(200, {
       "content-type": "application/json",
@@ -13568,17 +13662,10 @@ async function r19NativeReadonlyProbe(browser) {
     pendingResponse.res.end(JSON.stringify([pendingResponse.row]));
     await page.getByRole("heading", { name: "Dados da apresentação", exact: true }).waitFor();
     await observer.flush();
-    assert.throws(
-      () => observer.sealRecoveryRegistration(owner, Number.MAX_SAFE_INTEGER),
-      /RECOVERY_R18_BINDING/,
-    );
     for (const variant of ["multiple", "foreign"]) {
       if (variant === "multiple") process.stdout.write("R19_READONLY_PHASE MULTIPLE_NEGATIVE\n");
       else process.stdout.write("R19_READONLY_PHASE FOREIGN_NEGATIVE\n");
-      if (variant === "foreign") {
-        observer.close();
-        observer = local.createOfficialObserver(page, { identity });
-      }
+      ({ owner, io, floor } = await fresh());
       mode = variant;
       await page.evaluate(
         ([c, a]) => window.__mount(c, a),
@@ -13591,34 +13678,12 @@ async function r19NativeReadonlyProbe(browser) {
         /RECOVERY_R(?:11_OPINION|18_BINDING)/,
       );
     }
-    mode = "ok";
+    ({ owner, io, floor } = await fresh());
     // Same legitimate owner and authorizeRecovery cannot open any business RPC.
     for (const rpc of local.BUSINESS_RPCS)
       assert.throws(() => owner.arm({ rpc, payload: {} }), /RECOVERY_READ_ONLY/);
     assert.throws(() => r6AnalysisArm(owner), /RECOVERY_READ_ONLY/);
     process.stdout.write("R19_READONLY_PHASE FENCE\n");
-    const audit = await import("./authenticated-visual-audit.mjs");
-    const session = await page.context().newCDPSession(page),
-      { targetInfo } = await session.send("Target.getTargetInfo");
-    await session.detach();
-    const browserSession = await browser.newBrowserCDPSession(),
-      command = await browserSession.send("Browser.getBrowserCommandLine");
-    await browserSession.detach();
-    const port = Number(
-      command.arguments.find((x) => x.startsWith("--remote-debugging-port=")).split("=")[1],
-    );
-    fence = await audit.installNativeFence({
-      debugPort: port,
-      identity: targetInfo,
-      policy: (event) => {
-        const u = new URL(event.url);
-        if (u.origin === origin && u.pathname.startsWith("/rest/"))
-          return owner.policy({ ...event, url: local.FIXTURE.api + u.pathname + u.search });
-        return u.origin === origin;
-      },
-      verifyResponse: () => true,
-      closeContext: () => page.context().close(),
-    });
     await page
       .evaluate(() =>
         fetch("/rest/v1/rpc/registrar_apresentacao", {
@@ -14084,4 +14149,130 @@ test("R19 compiled native detail entry activates the original lazy overview SDK 
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
+});
+
+test("R19 independent original SDK parsers and both observer consumers reject malformed protocol DTO fields", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const ts = (await import("typescript")).default;
+  const sdk = await readFile(
+    new URL("../../src/lib/competencias/protocoloDados.ts", import.meta.url),
+    "utf8",
+  );
+  const uuidSource = await readFile(
+    new URL("../../src/lib/contratos/contratoDetalheDados.ts", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("uuid.ts", uuidSource, ts.ScriptTarget.Latest, true);
+  const declarations = ast.statements.filter(
+    (n) =>
+      ts.isVariableStatement(n) &&
+      n.declarationList.declarations.some((d) =>
+        ["UUID", "uuidValido", "uuidCanonico"].includes(d.name.getText(ast)),
+      ),
+  );
+  assert.equal(declarations.length, 3);
+  const code =
+    declarations.map((n) => n.getText(ast)).join("\n") + "\n" + sdk.replace(/^import .*;$/gm, "");
+  const js = ts.transpileModule(code.replace(/\bexport /g, ""), {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
+  }).outputText;
+  const parsers = new Function(
+    js +
+      ";return {apresentacoes_contratante:parseAp,pacotes_competencia:parsePk,itens_pacote_competencia:parseItem}",
+  )();
+  const source = await r6SourceNodes();
+  const preparation = source.named("prepareCompetencies");
+  const localValue = (name) =>
+    source.nodes
+      .find(
+        (n) =>
+          source.ts.isVariableDeclaration(n) &&
+          n.pos > preparation.pos &&
+          n.end < preparation.end &&
+          n.name.getText(source.ast) === name,
+      )
+      .initializer.getText(source.ast);
+  let packageRows;
+  const readPackage = new Function(
+    "FIXTURE",
+    "rows",
+    "tracedPreparation",
+    "stop",
+    `const uuid=${localValue("uuid")};const hash=${localValue("hash")};${source.named("inContext").getText(source.ast)};return (${source.named("readPackage").getText(source.ast)});`,
+  )(
+    FIXTURE,
+    async (table) => [packageRows.find(([name]) => name === table)[2]],
+    async (_, run) => run(),
+    (code) => {
+      throw Error(code);
+    },
+  );
+  const positive = await r19TransitionFixture();
+  try {
+    packageRows = positive.cases;
+    const row = packageRows[0][2];
+    assert.equal(await readPackage({ id: row.id_competencia }, row.id), true);
+  } finally {
+    positive.observer.close();
+  }
+  for (const [table, field, values] of [
+    ["apresentacoes_contratante", "apresentado_em", [true, 1, "invalid"]],
+    ["apresentacoes_contratante", "tipo", [null, true, "", " "]],
+    ["apresentacoes_contratante", "numero_rodada", [null, true, 0, -1, 1.5]],
+    ["pacotes_competencia", "congelado_em", [true, 1, "invalid"]],
+    ["pacotes_competencia", "tipo", [null, true]],
+    ["pacotes_competencia", "numero", [null, true, 0, -1, 1.5]],
+    ["itens_pacote_competencia", "entidade_tipo", [null, true, "", " "]],
+    ["itens_pacote_competencia", "versao_id", [true, "invalid"]],
+    ["itens_pacote_competencia", "ordem", [null, true, -1, 1.5]],
+  ])
+    for (const value of values) {
+      const rowDelta = { table, values: { [field]: value } };
+      const transition = await r19TransitionFixture({ rowDelta });
+      try {
+        const row = transition.cases.find(([name]) => name === table)[2];
+        const related =
+          table === "apresentacoes_contratante" || table === "pacotes_competencia"
+            ? row.id
+            : row.id_pacote;
+        assert.throws(
+          () =>
+            parsers[table](
+              row,
+              row.id_competencia,
+              related,
+              FIXTURE.organization,
+              FIXTURE.contract,
+            ),
+          /erro/,
+          table + "." + field,
+        );
+        packageRows = transition.cases;
+        const presentation = packageRows[0][2];
+        await assert.rejects(
+          () => readPackage({ id: presentation.id_competencia }, presentation.id),
+          /COMPETENCE_PACKAGE_/,
+          "readPackage " + table + "." + field,
+        );
+        await assert.rejects(
+          () => transition.observer.rpcRead("obter_visao_geral_competencia", transition.where),
+          /PHASE_TIMEOUT/,
+          "successor " + table + "." + field,
+        );
+      } finally {
+        transition.observer.close();
+      }
+      const recovery = await r19ReadonlyFixture({ rowDelta });
+      try {
+        await assert.rejects(
+          () => sut.resumeR18Bindings(recovery.io, recovery.sourceList),
+          /RECOVERY_R18_BINDING|OBSERVATION_FAILED/,
+          "readonly " + table + "." + field,
+        );
+        assert.equal(recovery.receipts.length, 0);
+        assert.equal(recovery.b.snapshot().count, 19);
+      } finally {
+        recovery.f.observer.close();
+      }
+    }
 });

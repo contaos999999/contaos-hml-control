@@ -4570,7 +4570,14 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
       const presentations = proofRows("apresentacoes_contratante", { ...context, id: ack });
       if (
         presentations?.length !== 1 ||
-        !presentations[0].apresentado_em ||
+        !(
+          typeof presentations[0].apresentado_em === "string" &&
+          Number.isFinite(Date.parse(presentations[0].apresentado_em))
+        ) ||
+        typeof presentations[0].tipo !== "string" ||
+        !presentations[0].tipo.trim() ||
+        !Number.isSafeInteger(presentations[0].numero_rodada) ||
+        presentations[0].numero_rodada < 1 ||
         presentations[0].protocolo !== p.p_protocolo ||
         presentations[0].forma_apresentacao !== p.p_forma_apresentacao ||
         !uuid(presentations[0].id_pacote)
@@ -4583,7 +4590,13 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
       if (
         packages?.length !== 1 ||
         packages[0].status !== "apresentado" ||
-        !packages[0].congelado_em ||
+        !(
+          typeof packages[0].congelado_em === "string" &&
+          Number.isFinite(Date.parse(packages[0].congelado_em))
+        ) ||
+        typeof packages[0].tipo !== "string" ||
+        !Number.isSafeInteger(packages[0].numero) ||
+        packages[0].numero < 1 ||
         !/^[a-f0-9]{64}$/.test(packages[0].hash_pacote)
       )
         return false;
@@ -4597,6 +4610,13 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
           (row) =>
             uuid(row.id) &&
             row.id_pacote === packages[0].id &&
+            uuid(row.entidade_id) &&
+            typeof row.entidade_tipo === "string" &&
+            !!row.entidade_tipo.trim() &&
+            (row.versao_id === null ||
+              (typeof row.versao_id === "string" && uuid(row.versao_id))) &&
+            Number.isSafeInteger(row.ordem) &&
+            row.ordem >= 0 &&
             typeof row.hash === "string" &&
             /^[0-9a-f]{64}$/.test(row.hash),
         )
@@ -4969,11 +4989,16 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
         a.id_pacote !== c.packageId ||
         a.protocolo !== c.protocol ||
         a.forma_apresentacao !== c.presentationMethod ||
+        typeof a.tipo !== "string" ||
+        !a.tipo.trim() ||
+        !Number.isSafeInteger(a.numero_rodada) ||
+        a.numero_rodada < 1 ||
         !(typeof a.apresentado_em === "string" && Number.isFinite(Date.parse(a.apresentado_em))) ||
         p.id !== c.packageId ||
         p.hash_pacote !== c.packageHash ||
         p.numero !== c.packageNumber ||
         p.status !== c.packageStatus ||
+        typeof p.tipo !== "string" ||
         !(typeof p.congelado_em === "string" && Number.isFinite(Date.parse(p.congelado_em))) ||
         items.some(
           (item) =>
@@ -7351,7 +7376,11 @@ export async function prepareCompetencies(io, sourceList) {
       !uuid(a.id_pacote) ||
       a.protocolo !== "HML-TRILHA-A-20261108" ||
       a.forma_apresentacao !== "Ensaio sintético em homologação." ||
-      !a.apresentado_em
+      !(typeof a.apresentado_em === "string" && Number.isFinite(Date.parse(a.apresentado_em))) ||
+      typeof a.tipo !== "string" ||
+      !a.tipo.trim() ||
+      !Number.isSafeInteger(a.numero_rodada) ||
+      a.numero_rodada < 1
     )
       stop("COMPETENCE_PACKAGE_RELATION");
     const listPk = await tracedPreparation("COMPETENCY_UI", async () =>
@@ -7365,7 +7394,16 @@ export async function prepareCompetencies(io, sourceList) {
     if (listPk.length !== 1) return false;
     const p = listPk[0];
     inContext(p, a.id_pacote);
-    if (p.id_competencia !== c.id || !hash(p.hash_pacote) || !p.congelado_em)
+    if (
+      p.id_competencia !== c.id ||
+      !hash(p.hash_pacote) ||
+      !(typeof p.congelado_em === "string" && Number.isFinite(Date.parse(p.congelado_em))) ||
+      typeof p.tipo !== "string" ||
+      !Number.isSafeInteger(p.numero) ||
+      p.numero < 1 ||
+      typeof p.status !== "string" ||
+      !p.status.trim()
+    )
       stop("COMPETENCE_PACKAGE_UNPROVEN");
     const items = await tracedPreparation("COMPETENCY_UI", async () =>
       rows("itens_pacote_competencia", {
@@ -7383,6 +7421,15 @@ export async function prepareCompetencies(io, sourceList) {
         item.id_organizacao !== FIXTURE.organization ||
         item.id_contrato !== FIXTURE.contract ||
         !uuid(item.id) ||
+        !uuid(item.entidade_id) ||
+        typeof item.entidade_tipo !== "string" ||
+        !item.entidade_tipo.trim() ||
+        !(
+          item.versao_id === null ||
+          (typeof item.versao_id === "string" && uuid(item.versao_id))
+        ) ||
+        !Number.isSafeInteger(item.ordem) ||
+        item.ordem < 0 ||
         !hash(item.hash)
       )
         stop("COMPETENCE_PACKAGE_ITEM_RELATION");
