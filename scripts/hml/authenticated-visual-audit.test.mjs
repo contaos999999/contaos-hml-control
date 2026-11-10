@@ -15159,7 +15159,12 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
       const response = await route.fetch({ url: origin + u.pathname + u.search });
       await route.fulfill({
         response,
-        headers: { ...response.headers(), "access-control-allow-origin": "*" },
+        // Native fetch must see the same exposed count header as the original Supabase API.
+        headers: {
+          ...response.headers(),
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "content-range",
+        },
       });
     });
     for (surface of ["V117", "V119", "V120"])
