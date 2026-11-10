@@ -3739,7 +3739,7 @@
     "positive_test_vector": "V117_ORIGINAL_BROKER_VALIDATED_6756371318"
   },
   "trilha_a_184_conclusao_preservacao24": {
-    "status": "PLAN_DOCUMENTAL_AGUARDANDO_CI_REVISAO_GATE_DISTINTO",
+    "status": "PLAN_INTEGRADO_R19_TASKA_COMPROVADA_TASKB_E_GATE_A184_PENDENTES",
     "plan": "docs/frontend/planos/TRILHA_A_184_CONCLUSAO_PRESERVACAO_24_PLAN_2026-11-10.md",
     "new_cases": 184,
     "preserved_cases": 24,
@@ -3752,7 +3752,23 @@
     "auth_authorized": false,
     "build_authorized": false,
     "deploy_authorized": false,
-    "v1_certified": false
+    "v1_certified": false,
+    "plan_merge": "36213b80aa016c44f229051517b65d0ff03608a0",
+    "metadata_gate_merge": "55d845543cf32cc2631d75958143f8b603d18449",
+    "metadata_wrapper_proposal_pr": 556,
+    "metadata_wrapper_proposal_head": "6183d3959dfae9ecb23f55d8401a57acb79612dc",
+    "r19_task_a_head": "08fb06a1ef114536e01af19a31427e010707ff72",
+    "r19_task_a_ci": [
+      42745150242,
+      42745150155,
+      42745150395,
+      42745150482
+    ],
+    "r19_task_b": "PENDENTE_RESUME_READONLY_SSR_DRIVER_LITERAL_SDK_IMPORTANT",
+    "r19_actual_auth_executed": false,
+    "new_expected_png_if_contract_unchanged": 360,
+    "new_expected_dom": 184,
+    "checkpoint_base": "4217252f73ea8e7b0e49d1c4a2a9276490dfb413"
   },
   "trilha_c_c8_certificacao": {
     "status": "PLAN_DOCUMENTAL_GATE_APOS_R19_REAL",
