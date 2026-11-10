@@ -15455,7 +15455,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
         );
         await assert.rejects(
           () => privacyHarness.collect(localPage, item, state),
-          /(C8_CURRENT_BINDING|OBSERVATION_FAILED)/,
+          /(C8_CURRENT_BINDING|OBSERVATION_FAILED|OBSERVATION_TABLE)/,
         );
         assert.equal(state.c8Current, undefined);
         currentObserver.close();
@@ -15519,7 +15519,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
       } else
         await assert.rejects(
           () => privacyHarness.collect(localPage, item, state),
-          /(C8_CURRENT_BINDING|OBSERVATION_FAILED)/,
+          /(C8_CURRENT_BINDING|OBSERVATION_FAILED|OBSERVATION_TABLE)/,
         );
       currentObserver.close();
       currentObserver = null;
@@ -15777,6 +15777,11 @@ test("C8 native observer uses the checked-out Git identity without inheriting pr
   );
   const observer = createOfficialObserver(page, { identity });
   assert.equal(observer.generation(), 0);
+  await assert.rejects(
+    () =>
+      observer.read("apresentacoes_contratante", { id: "eb6d5b1c-8b64-418b-aa82-bf1f29d41768" }),
+    { message: "OBSERVATION_TABLE" },
+  );
   observer.close();
 });
 
