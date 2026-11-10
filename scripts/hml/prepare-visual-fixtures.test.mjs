@@ -13196,6 +13196,7 @@ async function r19BuildProtocolUI(directory) {
 }
 
 async function r19NativeReadonlyProbe(browser) {
+  process.stdout.write("R19_READONLY_PHASE START\n");
   const fs = await import("node:fs/promises"),
     { join } = await import("node:path"),
     { tmpdir } = await import("node:os"),
@@ -13214,6 +13215,7 @@ async function r19NativeReadonlyProbe(browser) {
     mode = "ok",
     pendingResponse = null;
   try {
+    process.stdout.write("R19_READONLY_PHASE BUNDLES\n");
     const bundle = await r19BuildProtocolUI(dir);
     const listDirectory = join(dir, "competencies-ui");
     await fs.mkdir(listDirectory);
@@ -13374,6 +13376,7 @@ async function r19NativeReadonlyProbe(browser) {
       );
     await fs.writeFile(join(dir, "observer.mjs"), source);
     const local = await import(pathToFileURL(join(dir, "observer.mjs")).href);
+    process.stdout.write("R19_READONLY_PHASE PAGE_READY\n");
     page = await browser.newPage();
     await page.goto(origin);
     await page.waitForFunction(() => window.__ready === true);
@@ -13392,6 +13395,7 @@ async function r19NativeReadonlyProbe(browser) {
     );
     observer = local.createOfficialObserver(page, { identity });
     const floor = observer.generation();
+    process.stdout.write("R19_READONLY_PHASE CURRENT_READS\n");
     for (const c of bindings) {
       for (const [name] of Object.entries(r17RecoveryData(c)))
         await page.evaluate(
@@ -13409,6 +13413,7 @@ async function r19NativeReadonlyProbe(browser) {
       await page.evaluate((id) => window.__opinions(id), c.id);
     }
     await observer.flush();
+    process.stdout.write("R19_READONLY_PHASE OPINION_SEALED\n");
     owner.authorizeRecovery(
       local.reconcileR1Recovery(r2Reconciliation()),
       observer.sealRecoveryOpinion(owner, floor),
@@ -13492,7 +13497,9 @@ async function r19NativeReadonlyProbe(browser) {
     );
     await page.goto(origin + `/contratos/${FIXTURE.contract}/regras`);
     await page.waitForFunction(() => window.__ready === true);
+    process.stdout.write("R19_READONLY_PHASE RESUME\n");
     const output = await local.resumeR18Bindings(io, fixture.sourceList);
+    process.stdout.write("R19_READONLY_PHASE OCT_SEPT_BOUND\n");
     assert.equal(output.state, "confirmed");
     assert.equal(output.competencies[1].packageId, candidate.packageId);
     assert.equal(
@@ -13502,12 +13509,15 @@ async function r19NativeReadonlyProbe(browser) {
     assert.equal(owner.snapshot().count, 19);
     assert.equal(owner.snapshot().pending, false);
     for (const variant of ["hash", "total"]) {
+      if (variant === "hash") process.stdout.write("R19_READONLY_PHASE HASH_NEGATIVE\n");
+      else process.stdout.write("R19_READONLY_PHASE TOTAL_NEGATIVE\n");
       mode = variant;
       await io.goKnown(
         `/competencias/${candidate.competencyId}/apresentacoes/${candidate.presentationId}`,
       );
       assert.throws(() => observer.sealRecoveryRegistration(owner, floor), /RECOVERY_R18_BINDING/);
     }
+    process.stdout.write("R19_READONLY_PHASE MISSING_NEGATIVE\n");
     for (const variant of ["missing"]) {
       mode = variant;
       const after = observer.generation();
@@ -13533,6 +13543,7 @@ async function r19NativeReadonlyProbe(browser) {
         /RECOVERY_R18_BINDING|OBSERVATION_TABLE/,
       );
     }
+    process.stdout.write("R19_READONLY_PHASE PENDING_NEGATIVE\n");
     mode = "pending";
     const pendingAfter = observer.generation();
     const requested = page.waitForRequest((request) =>
@@ -13562,6 +13573,8 @@ async function r19NativeReadonlyProbe(browser) {
       /RECOVERY_R18_BINDING/,
     );
     for (const variant of ["multiple", "foreign"]) {
+      if (variant === "multiple") process.stdout.write("R19_READONLY_PHASE MULTIPLE_NEGATIVE\n");
+      else process.stdout.write("R19_READONLY_PHASE FOREIGN_NEGATIVE\n");
       if (variant === "foreign") {
         observer.close();
         observer = local.createOfficialObserver(page, { identity });
@@ -13583,6 +13596,7 @@ async function r19NativeReadonlyProbe(browser) {
     for (const rpc of local.BUSINESS_RPCS)
       assert.throws(() => owner.arm({ rpc, payload: {} }), /RECOVERY_READ_ONLY/);
     assert.throws(() => r6AnalysisArm(owner), /RECOVERY_READ_ONLY/);
+    process.stdout.write("R19_READONLY_PHASE FENCE\n");
     const audit = await import("./authenticated-visual-audit.mjs");
     const session = await page.context().newCDPSession(page),
       { targetInfo } = await session.send("Target.getTargetInfo");
@@ -13617,6 +13631,7 @@ async function r19NativeReadonlyProbe(browser) {
     await assert.rejects(() => fence.drain());
     assert.equal(fence.snapshot().failed, true);
     assert.ok(fence.snapshot().blockedRequests >= 1);
+    process.stdout.write("R19_READONLY_PHASE ZERO_BUSINESS\n");
     assert.equal(business, 0);
     assert.equal(owner.snapshot().count, 19);
   } finally {
@@ -13955,4 +13970,62 @@ test("R19 review M1 current successful serializer excludes historical failure co
   } finally {
     f.f.observer.close();
   }
+});
+
+test("R19 native readonly phase diagnostics contain only the closed literal stage markers", async () => {
+  const ts = (await import("typescript")).default,
+    { readFile } = await import("node:fs/promises");
+  const code = await readFile(
+      new URL("./prepare-visual-fixtures.test.mjs", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile(
+      "preparer.test.mjs",
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.JS,
+    ),
+    nodes = [];
+  function visit(node) {
+    nodes.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(ast);
+  const probe = nodes.find(
+    (node) => ts.isFunctionDeclaration(node) && node.name?.text === "r19NativeReadonlyProbe",
+  );
+  const calls = nodes.filter(
+    (node) =>
+      node.pos >= probe.pos &&
+      node.end <= probe.end &&
+      ts.isCallExpression(node) &&
+      node.expression.getText(ast) === "process.stdout.write",
+  );
+  const expected = [
+    "START",
+    "BUNDLES",
+    "PAGE_READY",
+    "CURRENT_READS",
+    "OPINION_SEALED",
+    "RESUME",
+    "OCT_SEPT_BOUND",
+    "HASH_NEGATIVE",
+    "TOTAL_NEGATIVE",
+    "MISSING_NEGATIVE",
+    "PENDING_NEGATIVE",
+    "MULTIPLE_NEGATIVE",
+    "FOREIGN_NEGATIVE",
+    "FENCE",
+    "ZERO_BUSINESS",
+  ];
+  assert.equal(calls.length, expected.length);
+  assert.deepEqual(
+    calls.map((call) => {
+      assert.equal(call.arguments.length, 1);
+      assert.ok(ts.isStringLiteral(call.arguments[0]));
+      return call.arguments[0].text;
+    }),
+    expected.map((stage) => "R19_READONLY_PHASE " + stage + "\n"),
+  );
 });

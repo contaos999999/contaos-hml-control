@@ -4704,6 +4704,60 @@ export function preparerSourceFormsSupplement(tap) {
     : null;
 }
 
+// Console-only diagnosis from the no-credentials synthetic child. Never return raw TAP.
+export function preparerSourceFormsFailure(input) {
+  const empty = () => ({ failedCases: [], lastPhase: "UNKNOWN" });
+  let tap = input;
+  if (typeof tap !== "string") {
+    if (!tap || typeof tap !== "object" || isProxy(tap)) return empty();
+    const descriptor = Object.getOwnPropertyDescriptor(tap, "stdout");
+    if (!descriptor || !("value" in descriptor)) return empty();
+    tap = descriptor.value;
+  }
+  if (typeof tap !== "string" || tap.length > 1048576) return empty();
+  const titles = new Map([
+    ["R3 Chromium sourceforms exact controls and actual source consumer", "SOURCE"],
+    ["R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay", "LOGOUT"],
+    ["R3 Chromium sourceforms competence read barriers and actual recovery consumer", "COMPETENCE"],
+    ["R3 Chromium sourceforms scoped V116 V117 projection and actual SDK parsers", "PROJECTION"],
+    [
+      "R3 Chromium sourceforms asynchronous opinion queue acceptance and actual opinion consumer",
+      "OPINION",
+    ],
+  ]);
+  const phases = [
+    "START",
+    "BUNDLES",
+    "PAGE_READY",
+    "CURRENT_READS",
+    "OPINION_SEALED",
+    "RESUME",
+    "OCT_SEPT_BOUND",
+    "HASH_NEGATIVE",
+    "TOTAL_NEGATIVE",
+    "MISSING_NEGATIVE",
+    "PENDING_NEGATIVE",
+    "MULTIPLE_NEGATIVE",
+    "FOREIGN_NEGATIVE",
+    "FENCE",
+    "ZERO_BUSINESS",
+  ];
+  const failedCases = [];
+  let previous = -1,
+    invalidPhase = false;
+  for (const line of tap.split("\n")) {
+    const title = /^not ok [0-9]+ - (.+)$/.exec(line)?.[1];
+    const code = titles.get(title);
+    if (code && !failedCases.includes(code)) failedCases.push(code);
+    if (!line.startsWith("# R19_READONLY_PHASE ")) continue;
+    const phase = /^# R19_READONLY_PHASE ([A-Z_]+)$/.exec(line)?.[1];
+    const index = phases.indexOf(phase);
+    if (index <= previous || index < 0) invalidPhase = true;
+    previous = index;
+  }
+  return { failedCases, lastPhase: !invalidPhase && previous >= 0 ? phases[previous] : "UNKNOWN" };
+}
+
 async function nativeGuard() {
   let output;
   try {
@@ -4854,6 +4908,7 @@ async function nativeGuard() {
   }
 
   let preparerSourceFormsCases;
+  let sourceFormsOutput;
   try {
     const result = await execFile(
       process.execPath,
@@ -4869,9 +4924,14 @@ async function nativeGuard() {
         maxBuffer: 1048576,
       },
     );
-    preparerSourceFormsCases = preparerSourceFormsSupplement(result.stdout);
+    sourceFormsOutput = result.stdout;
+    preparerSourceFormsCases = preparerSourceFormsSupplement(sourceFormsOutput);
     if (preparerSourceFormsCases !== 5) fail("PREPARER_SOURCEFORMS_NATIVE");
-  } catch {
+  } catch (error) {
+    const summary = preparerSourceFormsFailure(sourceFormsOutput ?? error);
+    for (const code of summary.failedCases)
+      console.error("PREPARER_SOURCEFORMS_NATIVE_CASE " + code);
+    console.error("PREPARER_SOURCEFORMS_NATIVE_PHASE " + summary.lastPhase);
     fail("PREPARER_SOURCEFORMS_NATIVE");
   }
 

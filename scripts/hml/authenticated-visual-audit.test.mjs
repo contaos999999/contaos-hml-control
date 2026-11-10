@@ -14231,3 +14231,72 @@ test("R19 request verification and proof loading reject hostile recovery inputs 
   }
   assert.equal(effects, 0);
 });
+
+test("R19 sourceforms failure console diagnostic is closed and cannot release the native gate", () => {
+  const title =
+    "R3 Chromium sourceforms asynchronous opinion queue acceptance and actual opinion consumer";
+  const tap =
+    "TAP version 13\n# R19_READONLY_PHASE START\n# R19_READONLY_PHASE RESUME\nnot ok 5 - " +
+    title +
+    "\nPRIVATE_CANARY";
+  assert.deepEqual(sut.preparerSourceFormsFailure(tap), {
+    failedCases: ["OPINION"],
+    lastPhase: "RESUME",
+  });
+  assert.equal(sut.preparerSourceFormsSupplement(tap), null);
+  for (const input of [
+    null,
+    undefined,
+    {},
+    "PRIVATE_CANARY",
+    "x".repeat(1048577),
+    "# R19_READONLY_PHASE PRIVATE_CANARY",
+    "not ok 5 - " + title + " PRIVATE_CANARY",
+  ])
+    assert.deepEqual(sut.preparerSourceFormsFailure(input), {
+      failedCases: [],
+      lastPhase: "UNKNOWN",
+    });
+  for (const suffix of [
+    "\n# R19_READONLY_PHASE RESUME",
+    "\n# R19_READONLY_PHASE START",
+    "\n# R19_READONLY_PHASE PRIVATE_CANARY",
+  ])
+    assert.equal(sut.preparerSourceFormsFailure(tap + suffix).lastPhase, "UNKNOWN");
+  assert.deepEqual(
+    sut.preparerSourceFormsFailure(Object.assign(Error(), { stdout: tap })),
+    sut.preparerSourceFormsFailure(tap),
+  );
+  let effects = 0;
+  const hostile = Object.defineProperty({}, "stdout", {
+    get() {
+      effects++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  const revoked = Proxy.revocable({}, {});
+  revoked.revoke();
+  for (const value of [
+    hostile,
+    Object.create({ stdout: tap }),
+    new Proxy(
+      {},
+      {
+        getOwnPropertyDescriptor() {
+          effects++;
+          throw Error("PRIVATE_CANARY");
+        },
+      },
+    ),
+    revoked.proxy,
+  ])
+    assert.deepEqual(sut.preparerSourceFormsFailure(value), {
+      failedCases: [],
+      lastPhase: "UNKNOWN",
+    });
+  assert.equal(effects, 0);
+  assert.equal(
+    JSON.stringify(sut.preparerSourceFormsFailure(tap)).includes("PRIVATE_CANARY"),
+    false,
+  );
+});
