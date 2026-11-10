@@ -1,6 +1,6 @@
 /**
- * Read-only R17 artifact inspection. No application imports, browser, Auth or SQL.
- * Contracts snapshot producer 4b03524 and R17 GATE; GATE458 reader policy is preserved.
+ * Read-only R18 artifact inspection. No application imports, browser, Auth or SQL.
+ * Contracts snapshot producer 30f2c79 and R18 GATE; GATE458 reader policy is preserved.
  */
 import { createHash } from "node:crypto";
 import {
@@ -22,14 +22,14 @@ import { pathToFileURL } from "node:url";
 export const PIN = Object.freeze({
   repository: "contaos999999/contaos-hml-control",
   repositoryId: 1442722734,
-  run: 42724239916,
+  run: 42731273678,
   workflow: 411426169,
-  head: "adaeb72504cadf6dd83b8938abba9c067acba525",
-  upstream: 42723995970,
-  artifact: 13722355410,
-  size: 28441,
-  name: "trilha-a-fixtures-42724239916-1",
-  digest: "438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff",
+  head: "8d055951838fee29664563bed5ee26bac4f55bd8",
+  upstream: 42731084944,
+  artifact: 13725830880,
+  size: 31346,
+  name: "trilha-a-fixtures-42731273678-1",
+  digest: "b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb",
   tool: "d3f86a106a0bac45b974a628896c90dbdf5c8093",
   bundle: "374211f852b2a8155a0211c72e85dacc81bb69f3",
   frontend: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
@@ -65,6 +65,8 @@ export const FILES = Object.freeze([
   "recovery-r15.json",
   "receipts-r16.json",
   "recovery-r16.json",
+  "receipts-r17.json",
+  "recovery-r17.json",
 ]);
 export const HISTORY = Object.freeze({
   "receipts-r1.json": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
@@ -90,6 +92,8 @@ export const HISTORY = Object.freeze({
   "recovery-r15.json": "de792c8803bbe232871c9eac468ad8baede31a88b1ec5aa238647a15267b645a",
   "receipts-r16.json": "3700fce7ae66a58fa7f3c9d1a30d11f10eda794d41c0a1ff2e4302ca9645e4b6",
   "recovery-r16.json": "f5427aa65d4ab75637df290b72b6a8c07a5a7ce30f1b2dc5a4328720133bdd86",
+  "receipts-r17.json": "bed517a5a27f72f23dc07f869a1d4de21f1f24582fc4c725e9f747d8e603d82a",
+  "recovery-r17.json": "f3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95",
 });
 const R16_CONFIRMED_PAYLOADS = Object.freeze({
   criar_documento_competencia_v115:
@@ -99,6 +103,7 @@ const R16_CONFIRMED_PAYLOADS = Object.freeze({
   aprovar_parecer_interno: "0d4db222d459ac1a6956c650b19179dab57fcbd0dca043f42aee646077cfe395",
 });
 const HISTORICAL_IDS = new Set([
+  "5d657667-4c3b-4b4f-a953-d7e778bfb2c1",
   "d69325a4-78c8-4bf3-8831-cbef2fb38d95",
   "368de7ea-0056-451a-b0da-30ee0e10ee62",
   "57cde7b2-3ae8-4642-81fe-d45f4971a524",
@@ -185,6 +190,8 @@ const RPCS = new Set([
   "registrar_apresentacao",
 ]);
 const FAILURES = new Set([
+  "RECOVERY_R17_LEDGER",
+  "RECOVERY_R17_PRESENTATION",
   "RECOVERY_R16_LEDGER",
   "RECOVERY_R16_OPINION",
   "COMPETENCE_PRESENTATION_GATE_ANALYSIS",
@@ -630,12 +637,12 @@ export function validateRecords(reportInput, receiptsInput) {
       ]),
     );
     check(
-      integer(ledger.count, 16, 24) &&
-        ledger.priorConfirmed === 14 &&
+      integer(ledger.count, 17, 24) &&
+        ledger.priorConfirmed === 15 &&
         ledger.priorReserved === 2 &&
-        ledger.newArmedCount === ledger.count - 16 &&
+        ledger.newArmedCount === ledger.count - 17 &&
         ledger.maxIntentions === 24 &&
-        ledger.maxNewIntentions === 8,
+        ledger.maxNewIntentions === 7,
     );
     check(
       bool(ledger.frozen) &&
@@ -662,8 +669,8 @@ export function validateRecords(reportInput, receiptsInput) {
   check(
     q.ledgerSha256 === HISTORY["receipts-r1.json"] &&
       q.priorWorkflowRun === "42540864527" &&
-      q.confirmedBefore === 14 &&
-      q.maxNewIntentions === 8 &&
+      q.confirmedBefore === 15 &&
+      q.maxNewIntentions === 7 &&
       q.r3ReceiptsSha256 === HISTORY["receipts-r3.json"] &&
       q.r3WorkflowRun === "42559214436",
   );
@@ -807,7 +814,7 @@ export function validateRecords(reportInput, receiptsInput) {
     keys(e, ["schema", "receipts"]) &&
       e.schema === "contaos.fixture.receipts.v1" &&
       Array.isArray(e.receipts) &&
-      e.receipts.length <= 16,
+      e.receipts.length <= 14,
   );
   const seen = new Map();
   for (const row of e.receipts) {
@@ -834,6 +841,10 @@ export function validateRecords(reportInput, receiptsInput) {
         !HISTORICAL_IDS.has(row.requestId) &&
         R16_CONFIRMED_PAYLOADS[row.rpc] !== row.payloadSha256 &&
         !(
+          row.rpc === "aprovar_apresentacao" &&
+          row.payloadSha256 === "1e2bc45826f48745d7800fa108c8be6331d33737e2317c710638e1c568b99cc2"
+        ) &&
+        !(
           row.rpc === "solicitar_parecer_interno" &&
           row.payloadSha256 === "b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d"
         ) &&
@@ -856,12 +867,12 @@ export function validateRecords(reportInput, receiptsInput) {
     else check(row.state === "sealed");
     seen.set(row.requestId, row);
   }
-  check(seen.size <= 8 && (ledger !== null ? seen.size <= ledger.newArmedCount : seen.size === 0));
+  check(seen.size <= 7 && (ledger !== null ? seen.size <= ledger.newArmedCount : seen.size === 0));
   return {
     report: r,
     receipts: e,
     observations: {
-      priorConfirmed: 14,
+      priorConfirmed: 15,
       priorReserved: 2,
       newArmedCount: ledger?.newArmedCount ?? "UNKNOWN",
       newConfirmed:
@@ -1081,9 +1092,9 @@ export function validateMetadata(input) {
     "INSPECTION_METADATA",
   );
   const specs = [
-    [129525642439, "Trilha A solicitacao unica sem credenciais", "success"],
-    [129525644743, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-    [129526039470, "Trilha A preparacao sintetica HML", "failure"],
+    [129549638781, "Trilha A solicitacao unica sem credenciais", "success"],
+    [129549640168, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+    [129550112703, "Trilha A preparacao sintetica HML", "failure"],
   ];
   check(
     jobs.total_count === 3 && Array.isArray(jobs.jobs) && jobs.jobs.length === 3,
@@ -1132,7 +1143,7 @@ export function readManifest(root, deadline = () => {}) {
     const anchored = "/proc/self/fd/" + dirfd;
     const names = readdirSync(anchored);
     check(
-      names.length === 27 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
+      names.length === 29 && names.every((n) => FILES.includes(n) || n === "SHA256SUMS"),
       "INSPECTION_FILES",
     );
     const buffers = {};
