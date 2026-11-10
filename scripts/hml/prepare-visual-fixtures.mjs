@@ -221,7 +221,8 @@ export const R1_RECOVERY_DOCUMENT = freeze({
 const R1_RECEIPTS_SHA256 = "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9";
 const recoveryProofs = new WeakSet();
 const recoveryBrokerOwners = new WeakMap(),
-  recoveryOpinionProofs = new WeakMap();
+  recoveryOpinionProofs = new WeakMap(),
+  recoveryRegistrationProofs = new WeakMap();
 function claimRecoveryOpinion(owner, token) {
   const broker = recoveryBrokerOwners.get(owner),
     record = recoveryOpinionProofs.get(token);
@@ -4331,6 +4332,10 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
               ...query,
               ordinal,
               rows,
+              contentRange:
+                table === "itens_pacote_competencia" && typeof response.headers === "function"
+                  ? response.headers()["content-range"]
+                  : null,
               validatedOrdinal: [
                 "apresentacoes_contratante",
                 "pacotes_competencia",
@@ -4868,8 +4873,131 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
     return token;
   }
 
+  function sealRecoveryRegistration(owner, after) {
+    const candidate = validateR18RegistrationCandidate(R18_REGISTRATION_CANDIDATE);
+    validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT);
+    const check = () => {
+      const identity = recoveryBrokerOwners.get(owner)?.identity;
+      if (
+        identity?.frontendSha !== candidate.frontendSha ||
+        identity?.deploymentId !== candidate.deploymentId
+      )
+        err("RECOVERY_R18_BINDING");
+      assertRecoveryOpinion(owner);
+      if (
+        closed ||
+        sealing ||
+        failed ||
+        pending.size ||
+        pendingReads.size ||
+        !Number.isSafeInteger(after) ||
+        after < 0
+      )
+        err("RECOVERY_R18_BINDING");
+      const c = candidate;
+      const view = rpcItem(
+        "obter_visao_geral_competencia",
+        { p_id_competencia: c.competencyId },
+        { after },
+      )?.value;
+      const competency = view?.competencia;
+      if (
+        competency?.id !== c.competencyId ||
+        competency.id_organizacao !== FIXTURE.organization ||
+        competency.id_contrato !== FIXTURE.contract ||
+        competency.competencia_referencia !== c.month ||
+        competency.situacao !== "aguardando_contratante" ||
+        competency.percentual_conformidade !== 100 ||
+        view.portao?.percentual !== 100 ||
+        view.blocking_summary?.analise_concluida_atual !== true ||
+        view.blocking_summary?.parecer_aprovado !== true
+      )
+        err("RECOVERY_R18_BINDING");
+      const contextual = (row) =>
+        row.id_organizacao === FIXTURE.organization &&
+        row.id_contrato === FIXTURE.contract &&
+        row.id_competencia === c.competencyId;
+      const where = {
+        id_competencia: c.competencyId,
+        id_contrato: FIXTURE.contract,
+        id_organizacao: FIXTURE.organization,
+      };
+      const presentations = tableRows(
+        "apresentacoes_contratante",
+        { ...where, id: c.presentationId },
+        { after },
+      );
+      const packages = tableRows("pacotes_competencia", { ...where, id: c.packageId }, { after });
+      const items = tableRows(
+        "itens_pacote_competencia",
+        { ...where, id_pacote: c.packageId },
+        { after },
+      );
+      const a = presentations[0],
+        p = packages[0];
+      const itemObservation = selectLatest("itens_pacote_competencia", { after }).ledger.find(
+        (entry) => entry.rows.some((row) => row.id_pacote === c.packageId),
+      );
+      if (
+        itemObservation?.contentRange !== "0-0/1" ||
+        itemObservation.q.offset !== "0" ||
+        itemObservation.q.limit !== "25"
+      )
+        err("RECOVERY_R18_BINDING");
+      if (
+        presentations.length !== 1 ||
+        packages.length !== 1 ||
+        items.length !== c.packageItems ||
+        !contextual(a) ||
+        !contextual(p) ||
+        a.id !== c.presentationId ||
+        a.id_pacote !== c.packageId ||
+        a.protocolo !== c.protocol ||
+        a.forma_apresentacao !== c.presentationMethod ||
+        !(typeof a.apresentado_em === "string" && Number.isFinite(Date.parse(a.apresentado_em))) ||
+        p.id !== c.packageId ||
+        p.hash_pacote !== c.packageHash ||
+        p.numero !== c.packageNumber ||
+        p.status !== c.packageStatus ||
+        !(typeof p.congelado_em === "string" && Number.isFinite(Date.parse(p.congelado_em))) ||
+        items.some(
+          (item) =>
+            !contextual(item) ||
+            item.id_pacote !== c.packageId ||
+            !uuid(item.id) ||
+            !uuid(item.entidade_id) ||
+            typeof item.entidade_tipo !== "string" ||
+            !item.entidade_tipo.trim() ||
+            !(item.versao_id === null || uuid(item.versao_id)) ||
+            !Number.isSafeInteger(item.ordem) ||
+            item.ordem < 0 ||
+            !/^[0-9a-f]{64}$/.test(item.hash),
+        )
+      )
+        err("RECOVERY_R18_BINDING");
+      return hash({ view, presentations, packages, items });
+    };
+    const snapshot = check();
+    const token = Object.freeze({});
+    recoveryRegistrationProofs.set(token, {
+      owner,
+      binding: {
+        state: "aguardando_contratante",
+        presentationId: candidate.presentationId,
+        packageId: candidate.packageId,
+        packageHash: candidate.packageHash,
+        packageState: candidate.packageStatus,
+      },
+      check() {
+        if (check() !== snapshot) err("RECOVERY_R18_BINDING");
+      },
+    });
+    return token;
+  }
+
   const api = {
     sealRecoveryOpinion,
+    sealRecoveryRegistration,
     markMutation(rpc, payload, evidence, binding = null) {
       if (closed || failed) err("OBSERVATION_FAILED");
       const ordinal = sequence;
@@ -5963,6 +6091,112 @@ export async function prepareSourceAndList(io) {
  * io.command MUST arm immediately before clicking, seal UI UUID at native Request,
  * persist synchronously, await matching Response, then run confirmAfter once.
  */
+async function recoverR18Registration(io, c) {
+  validateR18RecoveryDocument(io.recoveryLedgerR18);
+  const candidate = validateR18RegistrationCandidate(io.registrationCandidateR18);
+  if (c.id !== candidate.competencyId || c.month !== candidate.month) err("RECOVERY_R18_BINDING");
+  assertRecoveryOpinion(io.broker);
+  const after = io.generation();
+  await tracedPreparation("RECOVERY_READ", () =>
+    io.goKnown(`/competencias/${candidate.competencyId}/apresentacoes/${candidate.presentationId}`),
+  );
+  await tracedPreparation("RECOVERY_READ", () => io.fresh());
+  for (const [name, where] of [
+    ["obter_visao_geral_competencia", { p_id_competencia: c.id }],
+    ["apresentacoes_contratante", { id: candidate.presentationId, id_competencia: c.id }],
+    ["pacotes_competencia", { id: candidate.packageId, id_competencia: c.id }],
+    ["itens_pacote_competencia", { id_pacote: candidate.packageId, id_competencia: c.id }],
+  ]) {
+    if (
+      (await tracedPreparation("RECOVERY_READ", () => io.observedAfter(name, where, after))) !==
+      true
+    )
+      err("RECOVERY_R18_BINDING");
+  }
+  await tracedPreparation("RECOVERY_READ", () => io.fresh());
+  const token = io.sealRecoveryRegistration(after);
+  const record = recoveryRegistrationProofs.get(token);
+  if (!record || record.owner !== io.broker) err("RECOVERY_R18_BINDING");
+  record.check();
+  const historical = JSON.parse(R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies.find(
+    (binding) => binding.id === c.id,
+  );
+  Object.assign(c, historical, record.binding);
+}
+
+export async function resumeR18Bindings(io, sourceList) {
+  validateR18RecoveryDocument(io.recoveryLedgerR18);
+  validateR18RegistrationCandidate(io.registrationCandidateR18);
+  if (
+    !obj(sourceList) ||
+    isProxy(sourceList) ||
+    ![Object.prototype, null].includes(Object.getPrototypeOf(sourceList))
+  )
+    err("RECOVERY_R18_BINDING");
+  const sourceDescriptors = Object.getOwnPropertyDescriptors(sourceList);
+  for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
+    if (
+      !sourceDescriptors[key] ||
+      !Object.hasOwn(sourceDescriptors[key], "value") ||
+      sourceDescriptors[key].value !== R5_BINDINGS[key]
+    )
+      err("RECOVERY_R18_BINDING");
+  assertRecoveryOpinion(io.broker);
+  if (
+    typeof io.verifyContext !== "function" ||
+    (await tracedPreparation("RECOVERY_READ", () => io.verifyContext())) !== true
+  )
+    err("RECOVERY_R18_BINDING");
+  const proof = recoveryOpinionProofs.get(recoveryBrokerOwners.get(io.broker)?.opinion);
+  if (!proof || proof.owner !== io.broker) err("RECOVERY_R18_BINDING");
+  proof.check();
+  const competencies = [];
+  for (const historical of JSON.parse(R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
+    const after = io.generation();
+    await tracedPreparation("RECOVERY_READ", () => io.link(`/competencias/${historical.id}`));
+    await tracedPreparation("RECOVERY_READ", () => io.fresh());
+    if (
+      (await tracedPreparation("RECOVERY_READ", () =>
+        io.observedAfter(
+          "obter_visao_geral_competencia",
+          { p_id_competencia: historical.id },
+          after,
+        ),
+      )) !== true
+    )
+      err("RECOVERY_R18_BINDING");
+    const view = await tracedPreparation("RECOVERY_READ", () =>
+      io.rpcRead("obter_visao_geral_competencia", { p_id_competencia: historical.id }, { after }),
+    );
+    const c = view?.competencia;
+    const state =
+      historical.month === "2026-10-01" ? "pode_apresentar_contratante" : "aguardando_contratante";
+    if (
+      c?.id !== historical.id ||
+      c.id_organizacao !== FIXTURE.organization ||
+      c.id_contrato !== FIXTURE.contract ||
+      c.competencia_referencia !== historical.month ||
+      c.situacao !== state ||
+      c.percentual_conformidade !== 100 ||
+      view.portao?.percentual !== 100 ||
+      view.blocking_summary?.analise_concluida_atual !== true ||
+      view.blocking_summary?.parecer_aprovado !== true
+    )
+      err("RECOVERY_R18_BINDING");
+    const binding = {
+      ...historical,
+      state,
+      capabilities: { analysisCurrent: true, opinionApproved: true, presentationApproved: true },
+    };
+    if (historical.month === "2026-09-01")
+      await tracedPreparation("RECOVERY_READ", () => recoverR18Registration(io, binding));
+    proof.check();
+    competencies.push(binding);
+  }
+  assertRecoveryOpinion(io.broker);
+  return { state: "confirmed", competencies };
+}
+
 export async function prepareCompetencies(io, sourceList) {
   validateR18RecoveryDocument(io.recoveryLedgerR18);
   validateR18RegistrationCandidate(io.registrationCandidateR18);
@@ -6871,8 +7105,10 @@ export async function prepareCompetencies(io, sourceList) {
       ["apresentado", "aguardando_contratante", "validada", "reapresentado"].includes(
         view.competencia.situacao,
       )
-    )
-      stop("COMPETENCE_EXISTING_REGISTRATION_LINK_UNAVAILABLE");
+    ) {
+      await tracedPreparation("RECOVERY_READ", () => recoverR18Registration(io, c));
+      return;
+    }
     const ready = (v) =>
       v.blocking_summary?.analise_concluida_atual === true &&
       v.blocking_summary?.parecer_aprovado === true &&
@@ -7129,7 +7365,16 @@ export async function prepareCompetencies(io, sourceList) {
         )
       ) {
         receipt.state = c.view.competencia.situacao;
-        stop("COMPETENCE_EXISTING_REGISTRATION_LINK_UNAVAILABLE");
+        await tracedPreparation("RECOVERY_READ", () => recoverR18Registration(io, c));
+        Object.assign(receipt, c);
+        delete receipt.view;
+        delete receipt.evidence;
+        receipt.capabilities = {
+          analysisCurrent: true,
+          opinionApproved: true,
+          presentationApproved: true,
+        };
+        continue;
       }
       await tracedPreparation("COMPETENCY_UI", async () => ensureDocument(c));
       receipt.requirementId = c.requirementId;
@@ -7505,6 +7750,7 @@ async function runFixturePreparation() {
       identity,
       persist,
       competenceGateAmended: true,
+      readOnlyRecovery: true,
       recoveryLedger: R1_RECOVERY_DOCUMENT,
       recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
       recoveryLedgerR4: r4Recovery,
@@ -7828,6 +8074,7 @@ async function runFixturePreparation() {
       recoveryLedgerR18: r18Recovery,
       registrationCandidateR18: r18Candidate,
       sealRecoveryOpinion: (after) => observer.sealRecoveryOpinion(broker, after),
+      sealRecoveryRegistration: (after) => observer.sealRecoveryRegistration(broker, after),
       recoveryReady: (proof, opinionProof) => {
         broker.authorizeRecovery(proof, opinionProof);
         recoveryState = proof;
@@ -7867,9 +8114,7 @@ async function runFixturePreparation() {
     phase = "SOURCE_AND_LIST";
     sourceList = await tracedPreparation("SOURCE_AND_LIST", async () => prepareSourceAndList(io));
     phase = "COMPETENCIES";
-    result = await tracedPreparation("COMPETENCIES", async () =>
-      prepareCompetencies(io, sourceList),
-    );
+    result = await tracedPreparation("COMPETENCIES", async () => resumeR18Bindings(io, sourceList));
     phase = "FINAL_READBACK";
     await tracedPreparation("PREFLIGHT", async () => runtime.context());
     await tracedPreparation("RUNTIME_FRESH", async () => fresh());

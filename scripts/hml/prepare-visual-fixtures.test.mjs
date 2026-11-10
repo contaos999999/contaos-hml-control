@@ -2251,6 +2251,8 @@ test("R2 cada await relevante do codigo real passa pela barreira diagnostica", a
     "confirmUiIntent",
     "prepareSourceAndList",
     "prepareCompetencies",
+    "resumeR18Bindings",
+    "recoverR18Registration",
     "runFixturePreparation",
   ]);
   let owner = null,
@@ -9540,7 +9542,13 @@ test("R12 the actual runtime budget call accepts all original proofs including r
 });
 
 const r12AuthorizedContexts = new WeakMap();
-async function r12Authorize(broker, proof, status = "aprovado", includePresentation = true) {
+async function r12Authorize(
+  broker,
+  proof,
+  status = "aprovado",
+  includePresentation = true,
+  identity = R12_TEST_IDENTITY,
+) {
   const { EventEmitter } = await import("node:events"),
     { readFile } = await import("node:fs/promises");
   const sdk = await readFile(
@@ -9550,7 +9558,7 @@ async function r12Authorize(broker, proof, status = "aprovado", includePresentat
   const select = sdk.match(/export const COLUNAS_PARECERES\s*=\s*"([^"]+)"/)[1];
   const page = new EventEmitter(),
     observer = sut.createOfficialObserver(page, {
-      identity: R12_TEST_IDENTITY,
+      identity,
       wait: () => new Promise(setImmediate),
     });
   const competency = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies[0].id;
@@ -10250,6 +10258,7 @@ test(
     const browser = await r3AttestedBrowser();
     try {
       await r12NativeOpinionProbe(browser);
+      await r19NativeReadonlyProbe(browser);
     } finally {
       await browser.close();
     }
@@ -12775,5 +12784,873 @@ test("R19 consumed R18 UUIDs and both monthly presentation replays fail before p
     assert.equal(b.snapshot().count, 19);
   } finally {
     f.observer.close();
+  }
+});
+
+test("R19 existing present consumer recovers a registered competence without command or ACK", async () => {
+  const source = await r6SourceNodes();
+  const c = { id: sut.R18_REGISTRATION_CANDIDATE.competencyId, month: "2026-09-01" };
+  let recovered = 0;
+  const env = {
+    tracedPreparation: async (_, run) => run(),
+    overview: async () => ({ competencia: { situacao: "aguardando_contratante" } }),
+    stop: (code) => {
+      throw Error(code);
+    },
+    io: {},
+    recoverR18Registration: async (_, value) => {
+      recovered++;
+      value.presentationId = sut.R18_REGISTRATION_CANDIDATE.presentationId;
+      value.state = "aguardando_contratante";
+    },
+  };
+  const present = new Function(
+    ...Object.keys(env),
+    source.named("present").getText(source.ast) + ";return present",
+  )(...Object.values(env));
+  await present(c, true);
+  assert.equal(recovered, 1);
+  assert.equal(c.presentationId, sut.R18_REGISTRATION_CANDIDATE.presentationId);
+});
+
+async function r19ReadonlyFixture({ mode = "ok", owner = null, identityDelta = {} } = {}) {
+  const receipts = [];
+  const identity = {
+    ...R12_TEST_IDENTITY,
+    frontendSha: sut.R18_REGISTRATION_CANDIDATE.frontendSha,
+    deploymentId: sut.R18_REGISTRATION_CANDIDATE.deploymentId,
+    ...identityDelta,
+  };
+  const b = sut.createIntentBroker({
+    ...r12RecoveryOptions(),
+    identity,
+    readOnlyRecovery: true,
+    persist: (receipt) => {
+      receipts.push(receipt);
+      return true;
+    },
+  });
+  await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()), "aprovado", true, identity);
+  const f = r12AuthorizedContexts.get(b),
+    c = sut.R18_REGISTRATION_CANDIDATE;
+  const { readFile } = await import("node:fs/promises");
+  const sdk = await readFile(
+    new URL("../../src/lib/competencias/protocoloDados.ts", import.meta.url),
+    "utf8",
+  );
+  const col = (key) => sdk.match(new RegExp("const " + key + '\\s*=\\s*"([^\"]+)"'))[1];
+  const context = {
+    id_competencia: c.competencyId,
+    id_organizacao: FIXTURE.organization,
+    id_contrato: FIXTURE.contract,
+  };
+  const query = Object.fromEntries(Object.entries(context).map(([k, v]) => [k, "eq." + v]));
+  const rows = [
+    [
+      "apresentacoes_contratante",
+      { select: col("COL_AP"), ...query, id: "eq." + c.presentationId },
+      {
+        ...context,
+        id: c.presentationId,
+        id_pacote: c.packageId,
+        protocolo: c.protocol,
+        forma_apresentacao: c.presentationMethod,
+        apresentado_em: "2026-11-10T00:00:00Z",
+        tipo: "inicial",
+        numero_rodada: 1,
+      },
+    ],
+    [
+      "pacotes_competencia",
+      { select: col("COL_PK"), ...query, id: "eq." + c.packageId },
+      {
+        ...context,
+        id: c.packageId,
+        hash_pacote: c.packageHash,
+        numero: c.packageNumber,
+        tipo: "inicial",
+        status: c.packageStatus,
+        congelado_em: "2026-11-10T00:00:00Z",
+      },
+    ],
+    [
+      "itens_pacote_competencia",
+      {
+        select: col("COL_ITENS"),
+        ...query,
+        id_pacote: "eq." + c.packageId,
+        order: "ordem.asc,id.asc",
+        offset: "0",
+        limit: "25",
+      },
+      {
+        ...context,
+        id: "dddddddd-4444-4444-8444-dddddddddddd",
+        id_pacote: c.packageId,
+        entidade_tipo: "documento",
+        entidade_id: c.presentationId,
+        versao_id: c.packageId,
+        hash: "a".repeat(64),
+        ordem: 1,
+      },
+    ],
+  ];
+  if (mode === "hash") rows[1][2].hash_pacote = "b".repeat(64);
+  if (mode === "unfrozen") rows[1][2].congelado_em = null;
+  if (mode === "number") rows[1][2].numero = 2;
+  if (mode === "status") rows[1][2].status = "rascunho";
+  if (mode === "protocol") rows[0][2].protocolo = "foreign";
+  if (mode === "method") rows[0][2].forma_apresentacao = "foreign";
+  if (mode === "itemHash") rows[2][2].hash = "";
+  if (mode === "itemEntity") rows[2][2].entidade_id = null;
+  if (mode === "foreign") rows[2][2].id_organizacao = randomUUID();
+  const view = (id) => {
+    const oct = JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0];
+    const value = structuredClone(r17RecoveryData(oct).obter_visao_geral_competencia);
+    if (id === c.competencyId)
+      Object.assign(value.competencia, {
+        id,
+        competencia_referencia: c.month,
+        periodo_inicio: c.month,
+        situacao: mode === "state" ? "pode_apresentar_contratante" : "aguardando_contratante",
+      });
+    if (id === c.competencyId) {
+      value.allowed_actions.apresentar = false;
+      value.blocking_summary.aprovacao_apresentacao_atual = false;
+    }
+    return value;
+  };
+  const emitView = (id) =>
+    r4EmitMutation(f.page, "obter_visao_geral_competencia", { p_id_competencia: id }, view(id));
+  const emitTables = () => {
+    for (const [table, q, row] of rows) {
+      if (mode === "stale") continue;
+      const request = {
+        url: () => FIXTURE.api + "/rest/v1/" + table + "?" + new URLSearchParams(q),
+        method: () => "GET",
+        postData: () => null,
+        failure: () => null,
+      };
+      f.page.emit("request", request);
+      if (mode === "pending" && table === "itens_pacote_competencia") continue;
+      f.page.emit("response", {
+        request: () => request,
+        url: request.url,
+        status: () => 200,
+        headers: () => ({ "content-range": mode === "total" ? "0-0/2" : "0-0/1" }),
+        body: async () =>
+          Buffer.from(
+            JSON.stringify(
+              mode === "missing"
+                ? []
+                : mode === "multiple"
+                  ? [row, { ...row, id: randomUUID() }]
+                  : [row],
+            ),
+          ),
+      });
+    }
+  };
+  const io = {
+    recoveryLedgerR18: sut.R18_RECOVERY_DOCUMENT,
+    registrationCandidateR18: c,
+    verifyContext: async () => true,
+    broker: owner || b,
+    generation: f.observer.generation,
+    link: async (path) => {
+      emitView(path.split("/")[2]);
+      await f.observer.flush();
+    },
+    goKnown: async (path) => {
+      assert.equal(path, `/competencias/${c.competencyId}/apresentacoes/${c.presentationId}`);
+      emitView(c.competencyId);
+      emitTables();
+      await f.observer.flush();
+    },
+    fresh: f.observer.flush,
+    observedAfter: async (name, where, after) => {
+      if (mode === "stale" || mode === "missing" || mode === "pending") return false;
+      return f.observer.observedAfter(name, where, after);
+    },
+    rpcRead: f.observer.rpcRead,
+    sealRecoveryRegistration: (after) => f.observer.sealRecoveryRegistration(b, after),
+  };
+  return {
+    io,
+    b,
+    f,
+    rows,
+    emitTables,
+    emitView,
+    receipts,
+    sourceList: JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings,
+  };
+}
+
+test("R19 readonly resume uses native owner seals and current contextual V120 reads without historic ACK synthesis", async () => {
+  const f = await r19ReadonlyFixture();
+  try {
+    const output = await sut.resumeR18Bindings(f.io, f.sourceList);
+    assert.equal(output.state, "confirmed");
+    assert.equal(output.competencies.length, 2);
+    assert.equal(output.competencies[0].state, "pode_apresentar_contratante");
+    assert.equal(output.competencies[1].state, "aguardando_contratante");
+    assert.equal(
+      output.competencies[1].presentationId,
+      sut.R18_REGISTRATION_CANDIDATE.presentationId,
+    );
+    assert.equal(output.competencies[1].packageHash, sut.R18_REGISTRATION_CANDIDATE.packageHash);
+    assert.equal(f.receipts.length, 0);
+    assert.equal(f.b.snapshot().count, 19);
+    assert.equal(f.b.snapshot().sent, false);
+  } finally {
+    f.f.observer.close();
+  }
+});
+
+test("R19 readonly resume denies missing foreign stale pending partial hash number status item and owner contradictions", async () => {
+  for (const mode of [
+    "missing",
+    "multiple",
+    "foreign",
+    "stale",
+    "pending",
+    "hash",
+    "itemHash",
+    "itemEntity",
+    "unfrozen",
+    "number",
+    "status",
+    "protocol",
+    "method",
+    "state",
+    "total",
+  ]) {
+    const f = await r19ReadonlyFixture({ mode });
+    try {
+      await assert.rejects(
+        () => sut.resumeR18Bindings(f.io, f.sourceList),
+        /RECOVERY_R18_BINDING|OBSERVATION_FAILED/,
+        mode,
+      );
+      assert.equal(f.receipts.length, 0);
+      assert.equal(f.b.snapshot().count, 19);
+    } finally {
+      f.f.observer.close();
+    }
+  }
+  for (const mode of ["owner", "source", "generation"]) {
+    const f = await r19ReadonlyFixture();
+    try {
+      if (mode === "owner") f.io.broker = {};
+      if (mode === "source") f.sourceList.listId = randomUUID();
+      if (mode === "generation") f.io.generation = () => Number.MAX_SAFE_INTEGER;
+      await assert.rejects(
+        () => sut.resumeR18Bindings(f.io, f.sourceList),
+        /RECOVERY_R(?:11_OPINION|18_BINDING)|OBSERVATION_ORDINAL/,
+      );
+    } finally {
+      f.f.observer.close();
+    }
+  }
+});
+
+test("R19 resume validates mandatory R18 documents and candidate before every effect", async () => {
+  let effects = 0;
+  const hostile = new Proxy(
+    {},
+    {
+      get() {
+        effects++;
+        throw Error("CANARY");
+      },
+      ownKeys() {
+        effects++;
+        throw Error("CANARY");
+      },
+    },
+  );
+  for (const bad of [undefined, null, hostile, { ...sut.R18_RECOVERY_DOCUMENT, extra: true }]) {
+    await assert.rejects(
+      () =>
+        sut.resumeR18Bindings(
+          {
+            recoveryLedgerR18: bad,
+            registrationCandidateR18: sut.R18_REGISTRATION_CANDIDATE,
+            get broker() {
+              effects++;
+            },
+          },
+          {},
+        ),
+      /RECOVERY_R18_LEDGER/,
+    );
+    await assert.rejects(
+      () =>
+        sut.resumeR18Bindings(
+          {
+            recoveryLedgerR18: sut.R18_RECOVERY_DOCUMENT,
+            registrationCandidateR18: bad,
+            get broker() {
+              effects++;
+            },
+          },
+          {},
+        ),
+      /RECOVERY_R18_BINDING/,
+    );
+  }
+  assert.equal(effects, 0);
+});
+
+async function r19DriverBroker(module, identity, persist, observer) {
+  const source = await r6SourceNodes();
+  const driver = source.named("runFixturePreparation");
+  const call = source.nodes.find(
+    (node) =>
+      node.pos >= driver.pos &&
+      node.end <= driver.end &&
+      source.ts.isCallExpression(node) &&
+      node.expression.getText(source.ast) === "createIntentBroker",
+  );
+  const options = r12RecoveryOptions();
+  const env = {
+    createIntentBroker: module.createIntentBroker,
+    identity,
+    persist,
+    observer,
+    R1_RECOVERY_DOCUMENT: module.R1_RECOVERY_DOCUMENT,
+    R3_RECOVERY_DOCUMENT: module.R3_RECOVERY_DOCUMENT,
+    r18Candidate: module.R18_REGISTRATION_CANDIDATE,
+  };
+  for (const n of [4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17, 18])
+    env[`r${n}Recovery`] = options[`recoveryLedgerR${n}`];
+  return new Function(...Object.keys(env), "return " + call.getText(source.ast))(
+    ...Object.values(env),
+  );
+}
+
+async function r19BuildProtocolUI(directory) {
+  await r12BuildOpinionSDKBundle(directory);
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { execFile } = await import("node:child_process"),
+    { promisify } = await import("node:util");
+  const require = createRequire(import.meta.url),
+    pg = createRequire(require.resolve("@supabase/supabase-js")).resolve("@supabase/postgrest-js");
+  await fs.writeFile(
+    join(directory, "client.ts"),
+    `import {PostgrestClient} from ${JSON.stringify(pg)};export const supabase=Object.assign(new PostgrestClient(location.origin+'/rest/v1'),{auth:{getUser:async()=>({data:{user:{id:'local-readonly'}},error:null})}});`,
+  );
+  for (const [name, output] of [
+    ["protocoloDados.ts", "protocol.ts"],
+    ["competenciaVisaoGeralDados.ts", "overview.ts"],
+  ]) {
+    let source = await fs.readFile(
+      new URL("../../src/lib/competencias/" + name, import.meta.url),
+      "utf8",
+    );
+    source = source
+      .replace('"@/integrations/supabase/client"', '"./client"')
+      .replace('"@/lib/contratos/contratoDetalheDados"', '"./uuid"');
+    await fs.writeFile(join(directory, output), source);
+  }
+  let component = await fs.readFile(
+    new URL("../../src/components/competencias/CompetenciaProtocolo.tsx", import.meta.url),
+    "utf8",
+  );
+  for (const [from, to] of [
+    ["@tanstack/react-router", "./adapters"],
+    ["@/components/ui/button", "./adapters"],
+    ["@/integrations/supabase/client", "./client"],
+    ["@/lib/organizacao/preferenciaOrganizacao", "./adapters"],
+    ["@/lib/contratos/contratoDetalheDados", "./uuid"],
+    ["@/lib/contratos/baseNormativaDados", "./adapters"],
+    ["@/lib/competencias/competenciaVisaoGeralDados", "./overview"],
+    ["@/lib/competencias/protocoloDados", "./protocol"],
+  ])
+    component = component.replace(JSON.stringify(from), JSON.stringify(to));
+  await fs.writeFile(join(directory, "component.tsx"), 'import React from "react";\n' + component);
+  await fs.writeFile(
+    join(directory, "adapters.tsx"),
+    `import React from 'react';const navigate=()=>{};export const useNavigate=()=>navigate;export const Link=({children})=><a>{children}</a>;export const Button=({asChild,variant,children,...p})=>asChild?<span>{children}</span>:<button {...p}>{children}</button>;export const obterPreferenciaOrganizacao=()=>${JSON.stringify(FIXTURE.organization)};export const formatarDataHoraBr=x=>x;`,
+  );
+  await fs.writeFile(
+    join(directory, "entry.tsx"),
+    `import React from 'react';import {createRoot} from 'react-dom/client';import {CompetenciaProtocolo} from './component';import {obterVisaoGeral} from './overview';import * as p from './opinion';const root=createRoot(document.getElementById('root'));window.__mount=(id,ap)=>root.render(<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>);window.__overview=(id)=>obterVisaoGeral(id,new AbortController().signal);window.__opinions=(id)=>p.listarPareceres(id,${JSON.stringify(FIXTURE.organization)},${JSON.stringify(FIXTURE.contract)},0,new AbortController().signal);window.__ready=true;`,
+  );
+  await promisify(execFile)(
+    "bun",
+    [
+      "build",
+      join(directory, "entry.tsx"),
+      "--target=browser",
+      "--format=esm",
+      "--outfile=" + join(directory, "ui.js"),
+    ],
+    { env: { PATH: process.env.PATH }, timeout: 30000, maxBuffer: 1048576 },
+  );
+  return fs.readFile(join(directory, "ui.js"));
+}
+
+async function r19NativeReadonlyProbe(browser) {
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { tmpdir } = await import("node:os"),
+    { pathToFileURL } = await import("node:url"),
+    { createServer } = await import("node:http");
+  const dir = await fs.mkdtemp(join(tmpdir(), "r19-readonly-"));
+  const fixture = await r19ReadonlyFixture();
+  fixture.f.observer.close();
+  const candidate = sut.R18_REGISTRATION_CANDIDATE,
+    bindings = JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies;
+  let server,
+    page,
+    observer,
+    fence,
+    business = 0,
+    mode = "ok",
+    pendingResponse = null;
+  try {
+    const bundle = await r19BuildProtocolUI(dir);
+    server = createServer((req, res) => {
+      const u = new URL(req.url, "http://127.0.0.1");
+      if (u.pathname === "/" || u.pathname.startsWith("/competencias/")) {
+        res.writeHead(200, { "content-type": "text/html" });
+        res.end('<!doctype html><div id="root"></div><script type="module" src="/ui.js"></script>');
+        return;
+      }
+      if (u.pathname === "/ui.js") {
+        res.writeHead(200, { "content-type": "text/javascript" });
+        res.end(bundle);
+        return;
+      }
+      if (u.pathname === "/favicon.ico") {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+      if (u.pathname.startsWith("/rest/v1/rpc/")) {
+        let raw = "";
+        req.on("data", (x) => (raw += x));
+        req.on("end", () => {
+          const name = u.pathname.split("/").at(-1),
+            args = JSON.parse(raw || "{}");
+          if (
+            ![
+              "obter_visao_geral_competencia",
+              "obter_documentos_competencia_v115",
+              "obter_analise_competencia_v116",
+            ].includes(name)
+          ) {
+            business++;
+            res.writeHead(500);
+            res.end();
+            return;
+          }
+          const c = bindings.find((x) => x.id === args.p_id_competencia);
+          assert.ok(c);
+          let value = r17RecoveryData(c)[name];
+          if (name === "obter_visao_geral_competencia" && c.month === "2026-09-01") {
+            value = structuredClone(r17RecoveryData(bindings[0])[name]);
+            Object.assign(value.competencia, {
+              id: c.id,
+              competencia_referencia: c.month,
+              periodo_inicio: c.month,
+              situacao: "aguardando_contratante",
+            });
+            value.allowed_actions.apresentar = false;
+            value.blocking_summary.aprovacao_apresentacao_atual = false;
+          }
+          res.writeHead(200, { "content-type": "application/json" });
+          res.end(JSON.stringify(value));
+        });
+        return;
+      }
+      if (u.pathname === "/rest/v1/pareceres_internos") {
+        const c = bindings.find((x) => "eq." + x.id === u.searchParams.get("id_competencia"));
+        assert.ok(c);
+        res.writeHead(200, { "content-type": "application/json", "content-range": "0-0/1" });
+        res.end(
+          JSON.stringify([
+            {
+              ...fixture.f.row,
+              id: c.opinionId,
+              id_competencia: c.id,
+              status: "aprovado",
+              aprovado_em: "2026-11-09T00:01:00Z",
+            },
+          ]),
+        );
+        return;
+      }
+      const item = fixture.rows.find(([table]) => u.pathname === "/rest/v1/" + table);
+      if (item) {
+        assert.deepEqual(Object.fromEntries(u.searchParams), item[1]);
+        let row = structuredClone(item[2]);
+        if (mode === "hash" && item[0] === "pacotes_competencia") row.hash_pacote = "b".repeat(64);
+        if (mode === "foreign" && item[0] === "itens_pacote_competencia")
+          row.id_organizacao = randomUUID();
+        if (mode === "pending" && item[0] === "itens_pacote_competencia") {
+          pendingResponse = { res, row };
+          return;
+        }
+        res.writeHead(200, {
+          "content-type": "application/json",
+          "content-range": mode === "total" ? "0-0/2" : "0-0/1",
+        });
+        res.end(
+          JSON.stringify(
+            mode === "missing"
+              ? []
+              : mode === "multiple"
+                ? [row, { ...row, id: randomUUID() }]
+                : [row],
+          ),
+        );
+        return;
+      }
+      res.writeHead(404);
+      res.end();
+    });
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const origin = "http://127.0.0.1:" + server.address().port;
+    let source = await fs.readFile(
+      new URL("./prepare-visual-fixtures.mjs", import.meta.url),
+      "utf8",
+    );
+    source = source
+      .replace("api: API_ORIGIN,", "api: " + JSON.stringify(origin) + ",")
+      .replace(
+        '"./authenticated-visual-audit.mjs"',
+        JSON.stringify(new URL("./authenticated-visual-audit.mjs", import.meta.url).href),
+      );
+    await fs.writeFile(join(dir, "observer.mjs"), source);
+    const local = await import(pathToFileURL(join(dir, "observer.mjs")).href);
+    page = await browser.newPage();
+    await page.goto(origin);
+    await page.waitForFunction(() => window.__ready === true);
+    const identity = {
+      ...R12_TEST_IDENTITY,
+      frontendSha: candidate.frontendSha,
+      deploymentId: candidate.deploymentId,
+    };
+    const owner = await r19DriverBroker(
+      local,
+      identity,
+      () => {
+        throw Error("READONLY_PERSIST");
+      },
+      observer,
+    );
+    observer = local.createOfficialObserver(page, { identity });
+    const floor = observer.generation();
+    for (const c of bindings) {
+      for (const [name] of Object.entries(r17RecoveryData(c)))
+        await page.evaluate(
+          async ([name, id]) => {
+            await (
+              await fetch("/rest/v1/rpc/" + name, {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ p_id_competencia: id }),
+              })
+            ).json();
+          },
+          [name, c.id],
+        );
+      await page.evaluate((id) => window.__opinions(id), c.id);
+    }
+    await observer.flush();
+    owner.authorizeRecovery(
+      local.reconcileR1Recovery(r2Reconciliation()),
+      observer.sealRecoveryOpinion(owner, floor),
+    );
+    const io = {
+      verifyContext: async () => true,
+      recoveryLedgerR18: local.R18_RECOVERY_DOCUMENT,
+      registrationCandidateR18: local.R18_REGISTRATION_CANDIDATE,
+      broker: owner,
+      generation: observer.generation,
+      rpcRead: observer.rpcRead,
+      fresh: observer.flush,
+      observedAfter: observer.waitObservedAfter,
+      sealRecoveryRegistration: (after) => observer.sealRecoveryRegistration(owner, after),
+      link: async (path) => {
+        await page.evaluate((id) => window.__overview(id), path.split("/")[2]);
+        await observer.flush();
+      },
+      goKnown: async (path) => {
+        assert.equal(
+          path,
+          `/competencias/${candidate.competencyId}/apresentacoes/${candidate.presentationId}`,
+        );
+        const after = observer.generation();
+        await page.evaluate(
+          ([c, a]) => window.__mount(c, a),
+          [candidate.competencyId, candidate.presentationId],
+        );
+        for (const [name, where] of [
+          ["obter_visao_geral_competencia", { p_id_competencia: candidate.competencyId }],
+          [
+            "apresentacoes_contratante",
+            { id: candidate.presentationId, id_competencia: candidate.competencyId },
+          ],
+          [
+            "pacotes_competencia",
+            { id: candidate.packageId, id_competencia: candidate.competencyId },
+          ],
+          [
+            "itens_pacote_competencia",
+            { id_pacote: candidate.packageId, id_competencia: candidate.competencyId },
+          ],
+        ])
+          await observer.waitObservedAfter(name, where, after);
+        await page.getByRole("heading", { name: "Dados da apresentação", exact: true }).waitFor();
+        await observer.flush();
+      },
+    };
+    const output = await local.resumeR18Bindings(io, fixture.sourceList);
+    assert.equal(output.state, "confirmed");
+    assert.equal(output.competencies[1].packageId, candidate.packageId);
+    assert.equal(
+      await page.getByText("1 registro(s) na versão congelada.", { exact: true }).count(),
+      1,
+    );
+    assert.equal(owner.snapshot().count, 19);
+    assert.equal(owner.snapshot().pending, false);
+    for (const variant of ["hash", "total"]) {
+      mode = variant;
+      await io.goKnown(
+        `/competencias/${candidate.competencyId}/apresentacoes/${candidate.presentationId}`,
+      );
+      assert.throws(() => observer.sealRecoveryRegistration(owner, floor), /RECOVERY_R18_BINDING/);
+    }
+    for (const variant of ["missing"]) {
+      mode = variant;
+      const after = observer.generation();
+      await page.evaluate(
+        ([c, a]) => window.__mount(c, a),
+        [candidate.competencyId, candidate.presentationId],
+      );
+      await observer.waitObservedAfter(
+        "apresentacoes_contratante",
+        { id: candidate.presentationId, id_competencia: candidate.competencyId },
+        after,
+      );
+      if (variant === "missing")
+        await page
+          .getByText("Nenhuma apresentação disponível para esta competência e identificador.", {
+            exact: true,
+          })
+          .waitFor();
+      else await page.getByRole("alert").waitFor();
+      await observer.flush();
+      assert.throws(
+        () => observer.sealRecoveryRegistration(owner, after),
+        /RECOVERY_R18_BINDING|OBSERVATION_TABLE/,
+      );
+    }
+    mode = "pending";
+    const pendingAfter = observer.generation();
+    const requested = page.waitForRequest((request) =>
+      request.url().includes("/rest/v1/itens_pacote_competencia"),
+    );
+    await page.evaluate(
+      ([c, a]) => window.__mount(c, a),
+      [candidate.competencyId, candidate.presentationId],
+    );
+    await requested;
+    assert.throws(
+      () => observer.sealRecoveryRegistration(owner, pendingAfter),
+      /RECOVERY_R(?:11_OPINION|18_BINDING)/,
+    );
+    mode = "ok";
+    for (let n = 0; !pendingResponse && n < 100; n++) await new Promise(setImmediate);
+    assert.ok(pendingResponse);
+    pendingResponse.res.writeHead(200, {
+      "content-type": "application/json",
+      "content-range": "0-0/1",
+    });
+    pendingResponse.res.end(JSON.stringify([pendingResponse.row]));
+    await page.getByRole("heading", { name: "Dados da apresentação", exact: true }).waitFor();
+    await observer.flush();
+    assert.throws(
+      () => observer.sealRecoveryRegistration(owner, Number.MAX_SAFE_INTEGER),
+      /RECOVERY_R18_BINDING/,
+    );
+    for (const variant of ["multiple", "foreign"]) {
+      if (variant === "foreign") {
+        observer.close();
+        observer = local.createOfficialObserver(page, { identity });
+      }
+      mode = variant;
+      await page.evaluate(
+        ([c, a]) => window.__mount(c, a),
+        [candidate.competencyId, candidate.presentationId],
+      );
+      await page.getByRole("alert").waitFor();
+      await assert.rejects(() => observer.flush(), /OBSERVATION_FAILED/);
+      assert.throws(
+        () => observer.sealRecoveryRegistration(owner, floor),
+        /RECOVERY_R(?:11_OPINION|18_BINDING)/,
+      );
+    }
+    mode = "ok";
+    // Same legitimate owner and authorizeRecovery cannot open any business RPC.
+    for (const rpc of local.BUSINESS_RPCS)
+      assert.throws(() => owner.arm({ rpc, payload: {} }), /RECOVERY_READ_ONLY/);
+    assert.throws(() => r6AnalysisArm(owner), /RECOVERY_READ_ONLY/);
+    const audit = await import("./authenticated-visual-audit.mjs");
+    const session = await page.context().newCDPSession(page),
+      { targetInfo } = await session.send("Target.getTargetInfo");
+    await session.detach();
+    const browserSession = await browser.newBrowserCDPSession(),
+      command = await browserSession.send("Browser.getBrowserCommandLine");
+    await browserSession.detach();
+    const port = Number(
+      command.arguments.find((x) => x.startsWith("--remote-debugging-port=")).split("=")[1],
+    );
+    fence = await audit.installNativeFence({
+      debugPort: port,
+      identity: targetInfo,
+      policy: (event) => {
+        const u = new URL(event.url);
+        if (u.origin === origin && u.pathname.startsWith("/rest/"))
+          return owner.policy({ ...event, url: local.FIXTURE.api + u.pathname + u.search });
+        return u.origin === origin;
+      },
+      verifyResponse: () => true,
+      closeContext: () => page.context().close(),
+    });
+    await page
+      .evaluate(() =>
+        fetch("/rest/v1/rpc/registrar_apresentacao", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: "{}",
+        }).catch(() => {}),
+      )
+      .catch(() => {});
+    await assert.rejects(() => fence.drain());
+    assert.equal(fence.snapshot().failed, true);
+    assert.ok(fence.snapshot().blockedRequests >= 1);
+    assert.equal(business, 0);
+    assert.equal(owner.snapshot().count, 19);
+  } finally {
+    fence?.close();
+    observer?.close();
+    await page
+      ?.context()
+      .close()
+      .catch(() => {});
+    if (server)
+      await new Promise((resolve) => {
+        server.close(resolve);
+        server.closeAllConnections();
+      });
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+}
+
+test("R19 compiles the original V120 SDK and UI and fixes readonly driver bootstrap", async () => {
+  const fs = await import("node:fs/promises"),
+    { tmpdir } = await import("node:os"),
+    { join } = await import("node:path");
+  const dir = await fs.mkdtemp(join(tmpdir(), "r19-ui-compile-"));
+  try {
+    const bundle = await r19BuildProtocolUI(dir);
+    assert.ok(bundle.length > 100000);
+    assert.ok(bundle.includes(Buffer.from("Dados da apresentação")));
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+  const source = await r6SourceNodes(),
+    driver = source.named("runFixturePreparation").getText(source.ast);
+  assert.match(driver, /readOnlyRecovery: true/);
+  assert.match(driver, /resumeR18Bindings\(io, sourceList\)/);
+  assert.doesNotMatch(driver, /prepareCompetencies\(io, sourceList\)/);
+  const owner = await r19DriverBroker(
+    sut,
+    R12_TEST_IDENTITY,
+    () => {
+      throw Error("READONLY_PERSIST");
+    },
+    null,
+  );
+  assert.throws(() => owner.arm({}), /RECOVERY_READ_ONLY/);
+  assert.equal(owner.snapshot().count, 19);
+});
+
+test("R19 readonly owner refuses all original business RPC stages before persistence", async () => {
+  const f = await r19ReadonlyFixture();
+  try {
+    for (const rpc of sut.BUSINESS_RPCS) {
+      assert.throws(() => f.b.arm({ rpc, payload: {} }), /RECOVERY_READ_ONLY/);
+      for (const method of ["OPTIONS", "POST"])
+        for (const stage of ["REQUEST", "RESPONSE"])
+          assert.equal(
+            f.b.policy({
+              url: FIXTURE.api + "/rest/v1/rpc/" + rpc,
+              method,
+              stage,
+              sessionId: "native",
+              interceptionId: rpc + stage,
+              postData: "{}",
+            }),
+            false,
+          );
+    }
+    assert.equal(f.receipts.length, 0);
+    assert.equal(f.b.snapshot().count, 19);
+    assert.equal(f.b.snapshot().pending, false);
+  } finally {
+    f.f.observer.close();
+  }
+  for (const identityDelta of [
+    { frontendSha: "a".repeat(40) },
+    { deploymentId: "dpl_wrongcurrentproof" },
+  ]) {
+    const bad = await r19ReadonlyFixture({ identityDelta });
+    try {
+      await assert.rejects(
+        () => sut.resumeR18Bindings(bad.io, bad.sourceList),
+        /RECOVERY_R18_BINDING/,
+      );
+    } finally {
+      bad.f.observer.close();
+    }
+  }
+});
+
+test("R19 readonly source descriptors reject hostile source and forged registration seal", async () => {
+  const f = await r19ReadonlyFixture();
+  let effects = 0;
+  try {
+    const source = { ...f.sourceList };
+    Object.defineProperty(source, "listId", {
+      get() {
+        effects++;
+        throw Error("CANARY");
+      },
+    });
+    for (const value of [
+      source,
+      new Proxy(
+        {},
+        {
+          get() {
+            effects++;
+            throw Error("CANARY");
+          },
+        },
+      ),
+    ])
+      await assert.rejects(() => sut.resumeR18Bindings(f.io, value), /RECOVERY_R18_BINDING/);
+    assert.equal(effects, 0);
+    f.io.sealRecoveryRegistration = () => Object.freeze({});
+    await assert.rejects(() => sut.resumeR18Bindings(f.io, f.sourceList), /RECOVERY_R18_BINDING/);
+  } finally {
+    f.f.observer.close();
   }
 });
