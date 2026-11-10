@@ -6905,6 +6905,11 @@ async function collectC8CurrentWire(page, item, state) {
   return wire;
 }
 
+export function c8DrawerFocusValid() {
+  const openers = document.querySelectorAll('button[aria-label="Abrir requisito AUD-A-TXT-001"]');
+  return openers.length === 1 && document.activeElement === openers[0];
+}
+
 export async function openC8RequirementDrawer(page, item, scope) {
   if (
     auditScope(scope) !== C8_AUDIT_SCOPE ||
@@ -6922,6 +6927,7 @@ export async function openC8RequirementDrawer(page, item, scope) {
     if (page.url() !== HML_ORIGIN + item.path) fail("C8_DRAWER_BINDING");
     await dialog.getByRole("button", { name: "Fechar", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
+    await page.waitForFunction(c8DrawerFocusValid, null, { timeout: 15000 });
     if (!(await opener.evaluate((node) => document.activeElement === node)))
       fail("C8_DRAWER_FOCUS");
     return true;

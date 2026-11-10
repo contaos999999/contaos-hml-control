@@ -14701,13 +14701,20 @@ test("C8 V117 drawer uses the original opener and close with restored focus, rej
         click: async () => {
           calls.push("close");
           opened = false;
-          focused = true;
+          focused = false;
         },
       };
     },
   };
   const page = {
     url: () => sut.HML_ORIGIN + item.path,
+    waitForFunction: async (check, arg, options) => {
+      assert.equal(check, sut.c8DrawerFocusValid);
+      assert.equal(arg, null);
+      assert.deepEqual(options, { timeout: 15000 });
+      calls.push("focus");
+      focused = true;
+    },
     getByRole: (role, options) => {
       if (role === "button") {
         assert.deepEqual(options, { name: "Abrir requisito AUD-A-TXT-001", exact: true });
@@ -14721,7 +14728,7 @@ test("C8 V117 drawer uses the original opener and close with restored focus, rej
   const close = await sut.openC8RequirementDrawer(page, item, sut.C8_AUDIT_SCOPE);
   assert.deepEqual(calls, ["open", "visible"]);
   assert.equal(await close(), true);
-  assert.deepEqual(calls, ["open", "visible", "close", "hidden"]);
+  assert.deepEqual(calls, ["open", "visible", "close", "hidden", "focus"]);
   let reads = 0;
   await assert.rejects(
     () =>
@@ -15190,6 +15197,7 @@ async function c8NativeSourceProbe(browser) {
               .getByRole("button", { name: "Fechar", exact: true })
               .click();
             await page.getByRole("dialog").waitFor({ state: "hidden" });
+            await page.waitForFunction(sut.c8DrawerFocusValid, null, { timeout: 15000 });
             assert.equal(await opener.evaluate((n) => document.activeElement === n), true);
             assert.equal(
               sut.surfaceStateValid(surface, { ...observation, dialogVisible: false }),
@@ -15331,4 +15339,36 @@ test("C8 native diagnostic exports only a closed source-real phase and never raw
     stage: "UNKNOWN",
   });
   assert.deepEqual(sut.nativeC8VisualDiagnostic(null), { stage: "UNKNOWN" });
+});
+
+test("C8 frozen protocol requires the original package binding and exactly one valid scoped item", async () => {
+  const { data, bindings: b } = await c8SourceFixture(),
+    c = b.competencies[1];
+  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V120");
+  const wire = structuredClone(data);
+  Object.assign(wire.overview.competencia, {
+    id: c.id,
+    competencia_referencia: c.month,
+    situacao: c.state,
+  });
+  assert.equal(sut.validateC8CurrentWire(item, wire), true);
+  for (const mutate of [
+    (w) => (w.packages[0].hash_pacote = "0".repeat(64)),
+    (w) => (w.packages[0].congelado_em = null),
+    (w) => (w.packages[0].numero = 2),
+    (w) => (w.packages[0].status = "rascunho"),
+    (w) => (w.presentations[0].protocolo = "foreign"),
+    (w) => (w.presentations[0].id_organizacao = "foreign"),
+    (w) => (w.items = []),
+    (w) => w.items.push({ ...w.items[0] }),
+    (w) => (w.items[0].hash = ""),
+    (w) => (w.items[0].entidade_id = null),
+    (w) => (w.items[0].versao_id = "foreign"),
+    (w) => (w.items[0].id_pacote = "foreign"),
+    (w) => (w.items[0].id_competencia = b.competencies[0].id),
+  ]) {
+    const invalid = structuredClone(wire);
+    mutate(invalid);
+    assert.equal(sut.validateC8CurrentWire(item, invalid), false);
+  }
 });
