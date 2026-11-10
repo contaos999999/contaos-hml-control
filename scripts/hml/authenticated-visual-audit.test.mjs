@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createHash } from "node:crypto";
 import { createServer, connect } from "node:net";
 import { createServer as createHttpServer } from "node:http";
 import { createRequire } from "node:module";
@@ -21,6 +22,26 @@ function fn(name) {
 const R5_R4_HEAD = "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72";
 const HML = "https://contaos-41-hml.vercel.app";
 const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
+test("R19 accepts only the new readonly recovery nonce", () => {
+  const raw =
+    JSON.stringify(
+      {
+        schema_version: 1,
+        issue: 317,
+        operation: "fixtures",
+        request_id: "trilha-a-fixtures-20261110-r19",
+        approved_parent_sha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
+        frontend_sha: "",
+        deployment_id: "",
+      },
+      null,
+      2,
+    ) + "\n";
+  assert.equal(
+    sut.parseSingleRequest(raw, "fixtures").request_id,
+    "trilha-a-fixtures-20261110-r19",
+  );
+});
 const config = {
   origin: HML,
   frontendSha: "1".repeat(40),
@@ -5937,6 +5958,9 @@ test("solicitacao unica: descoberta adia apenas ancestralidade da fonte declarad
     sut.SINGLE_REQUEST.asynchronousOpinionGateSha,
     sut.SINGLE_REQUEST.canonicalProfileGateSha,
     sut.SINGLE_REQUEST.r13RecoveryGateSha,
+    sut.SINGLE_REQUEST.r19RecoveryGateSha,
+    sut.SINGLE_REQUEST.r19RecoveryPlanSha,
+    sut.SINGLE_REQUEST.r18ReaderBuildSha,
     sut.SINGLE_REQUEST.r18RecoveryGateSha,
     sut.SINGLE_REQUEST.r18RecoveryPlanSha,
     sut.SINGLE_REQUEST.r17ReaderBuildSha,
@@ -10233,7 +10257,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
   assert.ok(environmentSource.includes("function requestEnvironmentChain(env)"));
   const factory = new Function(
     "deps",
-    `const {isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,singleRequestGet}=deps;
+    `const {isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,singleRequestGet,validateR18RecoveryDocument,validateR18RegistrationCandidate,R18_RECOVERY_DOCUMENT,R18_REGISTRATION_CANDIDATE}=deps;
     ${environmentSource}
     let singleRequestContext=null,validatedR4ZeroAuth=null,validatedR7ZeroAuth=null,validatedR12ZeroAuth=null;
     ${sut.loadSingleRequestProof.toString().replaceAll("import.meta.url", "sourceModuleUrl")}
@@ -10241,6 +10265,10 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
   );
   const { isProxy } = await import("node:util/types");
   const loader = factory({
+    validateR18RecoveryDocument: sut.validateR18RecoveryDocument,
+    validateR18RegistrationCandidate: sut.validateR18RegistrationCandidate,
+    R18_RECOVERY_DOCUMENT: sut.R18_RECOVERY_DOCUMENT,
+    R18_REGISTRATION_CANDIDATE: sut.R18_REGISTRATION_CANDIDATE,
     isProxy,
     assertPrivateRequestEnvironment: sut.assertPrivateRequestEnvironment,
     assertRequestMetadataEnvironment: sut.assertRequestMetadataEnvironment,
@@ -10467,16 +10495,18 @@ test("R12 auth protocol executes the real preparer runtime budget with every ori
     R1_RECOVERY_DOCUMENT: prep.R1_RECOVERY_DOCUMENT,
     R3_RECOVERY_DOCUMENT: prep.R3_RECOVERY_DOCUMENT,
   };
-  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17])
+  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17, 18])
     env["validateR" + n + "RecoveryDocument"] = prep["validateR" + n + "RecoveryDocument"];
-  for (const n of [4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17])
+  for (const n of [4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17, 18])
     env["r" + n + "Recovery"] = prep["R" + n + "_RECOVERY_DOCUMENT"];
+  env.validateR18RegistrationCandidate = prep.validateR18RegistrationCandidate;
+  env.r18Candidate = prep.R18_REGISTRATION_CANDIDATE;
   assert.deepEqual(
     new Function(
       ...Object.keys(env),
       named("recoveryBudget").getText(ast) + ";return " + init + ";",
     )(...Object.values(env)),
-    { confirmedBefore: 15, priorReserved: 2, maxNewIntentions: 7 },
+    { confirmedBefore: 17, priorReserved: 2, maxNewIntentions: 5 },
   );
 });
 
@@ -10518,8 +10548,9 @@ test("R12 auth protocol rejects a partial pending October GET before any further
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17, 18])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
+  options.registrationCandidateR18 = prep.R18_REGISTRATION_CANDIDATE;
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
     observer = prep.createOfficialObserver(page, {
@@ -10599,7 +10630,7 @@ test("R12 auth protocol rejects a partial pending October GET before any further
     assert.throws(
       () =>
         broker.arm({
-          rpc: "aprovar_apresentacao",
+          rpc: "registrar_revisao_requisito_v117",
           payload: { p_id_competencia: sep, p_fundamento: fixture.foundation },
           requestId: randomUUID(),
           verified: { context: true, capability: true, reconciled: true },
@@ -10618,7 +10649,7 @@ test("R12 auth protocol rejects a partial pending October GET before any further
         }),
       { message: "RECOVERY_R11_OPINION" },
     );
-    assert.equal(broker.snapshot().count, 17);
+    assert.equal(broker.snapshot().count, 19);
   } finally {
     observer.close();
   }
@@ -10662,8 +10693,9 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17, 18])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
+  options.registrationCandidateR18 = prep.R18_REGISTRATION_CANDIDATE;
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
     observer = prep.createOfficialObserver(page, {
@@ -10743,7 +10775,7 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
     assert.throws(
       () =>
         broker.arm({
-          rpc: "aprovar_apresentacao",
+          rpc: "registrar_revisao_requisito_v117",
           payload: { p_id_competencia: sep, p_fundamento: fixture.foundation },
           requestId: randomUUID(),
           verified: { context: true, capability: true, reconciled: true },
@@ -10762,7 +10794,7 @@ test("R12 auth protocol rejects a unscoped pending opinion GET before any furthe
         }),
       { message: "RECOVERY_R11_OPINION" },
     );
-    assert.equal(broker.snapshot().count, 17);
+    assert.equal(broker.snapshot().count, 19);
   } finally {
     observer.close();
   }
@@ -10806,8 +10838,9 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
     named("r2Reconciliation") + ";return r2Reconciliation();",
   )(...Object.values(env));
   const options = { identity, persist: () => true, recoveryLedger: prep.R1_RECOVERY_DOCUMENT };
-  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17])
+  for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17, 18])
     options["recoveryLedgerR" + n] = prep["R" + n + "_RECOVERY_DOCUMENT"];
+  options.registrationCandidateR18 = prep.R18_REGISTRATION_CANDIDATE;
   const broker = prep.createIntentBroker(options),
     page = new EventEmitter(),
     observer = prep.createOfficialObserver(page, {
@@ -10892,7 +10925,7 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
     assert.throws(
       () =>
         broker.arm({
-          rpc: "aprovar_apresentacao",
+          rpc: "registrar_revisao_requisito_v117",
           payload: { p_id_competencia: sep, p_fundamento: fixture.foundation },
           requestId: randomUUID(),
           verified: { context: true, capability: true, reconciled: true },
@@ -10911,7 +10944,7 @@ test("R12 auth protocol rejects a non-equality pending October GET before any fu
         }),
       { message: "RECOVERY_R11_OPINION" },
     );
-    assert.equal(broker.snapshot().count, 17);
+    assert.equal(broker.snapshot().count, 19);
   } finally {
     observer.close();
   }
@@ -13976,7 +14009,7 @@ test("R16 current nonce spends R15 and requires both recovery and void ancestors
   const f = await r13ControllerFixture();
   const old = { ...JSON.parse(f.raw), request_id: "trilha-a-fixtures-20261109-r15" };
   assert.throws(() => sut.parseSingleRequest(JSON.stringify(old)), /REQUEST_SCHEMA/);
-  assert.equal(sut.parseSingleRequest(f.raw).request_id, "trilha-a-fixtures-20261110-r18");
+  assert.equal(sut.parseSingleRequest(f.raw).request_id, "trilha-a-fixtures-20261110-r19");
   for (const ancestor of [
     sut.SINGLE_REQUEST.r15RecoveryGateSha,
     sut.SINGLE_REQUEST.void204GateSha,
@@ -14061,16 +14094,16 @@ test("R17 original R16 validator is shared, immutable and rejects hostile docume
     assert.throws(() => sut.validateR16RecoveryDocument(value), /RECOVERY_R16_LEDGER/);
   }
   assert.equal(effects, 0);
-  assert.equal(sut.SINGLE_REQUEST.fixtures.nonce, "trilha-a-fixtures-20261110-r18");
+  assert.equal(sut.SINGLE_REQUEST.fixtures.nonce, "trilha-a-fixtures-20261110-r19");
   assert.ok(sut.SINGLE_REQUEST.spentFixtureNonces.includes("trilha-a-fixtures-20261109-r16"));
 });
 
-test("R18 request accepts its sole nonce and keeps R17 spent", () => {
+test("R19 request accepts its sole nonce and keeps R18 and R17 spent", () => {
   const request = {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261110-r18",
+    request_id: "trilha-a-fixtures-20261110-r19",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -14081,8 +14114,189 @@ test("R18 request accepts its sole nonce and keeps R17 spent", () => {
   );
   assert.throws(() =>
     sut.parseSingleRequest(
+      JSON.stringify({ ...request, request_id: "trilha-a-fixtures-20261110-r18" }),
+      "fixtures",
+    ),
+  );
+  assert.throws(() =>
+    sut.parseSingleRequest(
       JSON.stringify({ ...request, request_id: "trilha-a-fixtures-20261109-r17" }),
       "fixtures",
     ),
+  );
+});
+
+test("R19 original recovery bytes and candidate order are exact and frozen", () => {
+  const raw =
+    JSON.stringify(sut.validateR18RecoveryDocument(sut.R18_RECOVERY_DOCUMENT), null, 2) + "\n";
+  assert.equal(Buffer.byteLength(raw), 8003);
+  assert.equal(
+    createHash("sha256").update(raw).digest("hex"),
+    "de5e5bd71a3e33960ce39510a86cdfddc8fb702fc41d9788df248a209c4df5ac",
+  );
+  assert.equal(Object.keys(sut.R18_RECOVERY_DOCUMENT).length, 12);
+  assert.equal(Object.keys(sut.R18_REGISTRATION_CANDIDATE).length, 19);
+  assert.equal(
+    Object.isFrozen(sut.validateR18RegistrationCandidate(sut.R18_REGISTRATION_CANDIDATE)),
+    true,
+  );
+  const report = JSON.parse(sut.R18_RECOVERY_DOCUMENT.reportRaw);
+  assert.deepEqual(
+    [
+      report.intentLedger.priorConfirmed,
+      report.intentLedger.priorReserved,
+      report.intentLedger.newArmedCount,
+      report.intentLedger.maxNewIntentions,
+    ],
+    [15, 2, 2, 7],
+  );
+});
+
+test("R19 request verification and proof loading reject hostile recovery inputs before environment or IO", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const ts = (await import("typescript")).default;
+  const text = await readFile(new URL("./authenticated-visual-audit.mjs", import.meta.url), "utf8");
+  const ast = ts.createSourceFile(
+    "audit.mjs",
+    text,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
+  const functions = ast.statements.filter((n) => ts.isFunctionDeclaration(n));
+  let effects = 0;
+  for (const name of ["verifySingleRequest", "loadSingleRequestProof"]) {
+    const entry = functions.find((n) => n.name?.text === name);
+    const first = entry.body.statements
+      .slice(0, 2)
+      .map((n) => n.getText(ast))
+      .join("\n");
+    assert.ok(first.startsWith("validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT)"));
+    assert.ok(first.includes("validateR18RegistrationCandidate(R18_REGISTRATION_CANDIDATE)"));
+    const check = new Function(
+      "validateR18RecoveryDocument",
+      "validateR18RegistrationCandidate",
+      "R18_RECOVERY_DOCUMENT",
+      "R18_REGISTRATION_CANDIDATE",
+      "effect",
+      first + ";effect();",
+    );
+    for (const [literal, validator, index, code] of [
+      [sut.R18_RECOVERY_DOCUMENT, sut.validateR18RecoveryDocument, 0, /RECOVERY_R18_LEDGER/],
+      [
+        sut.R18_REGISTRATION_CANDIDATE,
+        sut.validateR18RegistrationCandidate,
+        1,
+        /RECOVERY_R18_BINDING/,
+      ],
+    ]) {
+      const accessor = { ...literal };
+      Object.defineProperty(accessor, Object.keys(literal)[0], {
+        enumerable: true,
+        get() {
+          effects++;
+          throw Error("GETTER");
+        },
+      });
+      const revoked = Proxy.revocable({}, {});
+      revoked.revoke();
+      for (const bad of [
+        undefined,
+        null,
+        {},
+        accessor,
+        new Proxy({}, {}),
+        revoked.proxy,
+        { ...literal, extra: true },
+        { ...literal, [Symbol("extra")]: true },
+        Object.fromEntries(Object.entries(literal).reverse()),
+      ]) {
+        assert.throws(() => validator(bad), code);
+        const documents = [sut.R18_RECOVERY_DOCUMENT, sut.R18_REGISTRATION_CANDIDATE];
+        documents[index] = bad;
+        assert.throws(
+          () =>
+            check(
+              sut.validateR18RecoveryDocument,
+              sut.validateR18RegistrationCandidate,
+              ...documents,
+              () => {
+                effects++;
+              },
+            ),
+          code,
+        );
+      }
+    }
+  }
+  assert.equal(effects, 0);
+});
+
+test("R19 sourceforms failure console diagnostic is closed and cannot release the native gate", () => {
+  const title =
+    "R3 Chromium sourceforms asynchronous opinion queue acceptance and actual opinion consumer";
+  const tap =
+    "TAP version 13\n# R19_READONLY_PHASE START\n# R19_READONLY_PHASE RESUME\nnot ok 5 - " +
+    title +
+    "\nPRIVATE_CANARY";
+  assert.deepEqual(sut.preparerSourceFormsFailure(tap), {
+    failedCases: ["OPINION"],
+    lastPhase: "RESUME",
+  });
+  assert.equal(sut.preparerSourceFormsSupplement(tap), null);
+  for (const input of [
+    null,
+    undefined,
+    {},
+    "PRIVATE_CANARY",
+    "x".repeat(1048577),
+    "# R19_READONLY_PHASE PRIVATE_CANARY",
+    "not ok 5 - " + title + " PRIVATE_CANARY",
+  ])
+    assert.deepEqual(sut.preparerSourceFormsFailure(input), {
+      failedCases: [],
+      lastPhase: "UNKNOWN",
+    });
+  for (const suffix of [
+    "\n# R19_READONLY_PHASE RESUME",
+    "\n# R19_READONLY_PHASE START",
+    "\n# R19_READONLY_PHASE PRIVATE_CANARY",
+  ])
+    assert.equal(sut.preparerSourceFormsFailure(tap + suffix).lastPhase, "UNKNOWN");
+  assert.deepEqual(
+    sut.preparerSourceFormsFailure(Object.assign(Error(), { stdout: tap })),
+    sut.preparerSourceFormsFailure(tap),
+  );
+  let effects = 0;
+  const hostile = Object.defineProperty({}, "stdout", {
+    get() {
+      effects++;
+      throw Error("PRIVATE_CANARY");
+    },
+  });
+  const revoked = Proxy.revocable({}, {});
+  revoked.revoke();
+  for (const value of [
+    hostile,
+    Object.create({ stdout: tap }),
+    new Proxy(
+      {},
+      {
+        getOwnPropertyDescriptor() {
+          effects++;
+          throw Error("PRIVATE_CANARY");
+        },
+      },
+    ),
+    revoked.proxy,
+  ])
+    assert.deepEqual(sut.preparerSourceFormsFailure(value), {
+      failedCases: [],
+      lastPhase: "UNKNOWN",
+    });
+  assert.equal(effects, 0);
+  assert.equal(
+    JSON.stringify(sut.preparerSourceFormsFailure(tap)).includes("PRIVATE_CANARY"),
+    false,
   );
 });

@@ -4248,6 +4248,10 @@ export async function preparePublicProvenance({
   const documents = {};
   for (const path of new Set([
     "/login",
+    "/competencias/" +
+      R18_REGISTRATION_CANDIDATE.competencyId +
+      "/apresentacoes/" +
+      R18_REGISTRATION_CANDIDATE.presentationId,
     ...privateCases()
       .filter((r) => r.path)
       .map((r) => r.path),
@@ -4700,6 +4704,60 @@ export function preparerSourceFormsSupplement(tap) {
     : null;
 }
 
+// Console-only diagnosis from the no-credentials synthetic child. Never return raw TAP.
+export function preparerSourceFormsFailure(input) {
+  const empty = () => ({ failedCases: [], lastPhase: "UNKNOWN" });
+  let tap = input;
+  if (typeof tap !== "string") {
+    if (!tap || typeof tap !== "object" || isProxy(tap)) return empty();
+    const descriptor = Object.getOwnPropertyDescriptor(tap, "stdout");
+    if (!descriptor || !("value" in descriptor)) return empty();
+    tap = descriptor.value;
+  }
+  if (typeof tap !== "string" || tap.length > 1048576) return empty();
+  const titles = new Map([
+    ["R3 Chromium sourceforms exact controls and actual source consumer", "SOURCE"],
+    ["R3 Chromium sourceforms nested Radix logout actual runtime and unknown overlay", "LOGOUT"],
+    ["R3 Chromium sourceforms competence read barriers and actual recovery consumer", "COMPETENCE"],
+    ["R3 Chromium sourceforms scoped V116 V117 projection and actual SDK parsers", "PROJECTION"],
+    [
+      "R3 Chromium sourceforms asynchronous opinion queue acceptance and actual opinion consumer",
+      "OPINION",
+    ],
+  ]);
+  const phases = [
+    "START",
+    "BUNDLES",
+    "PAGE_READY",
+    "CURRENT_READS",
+    "OPINION_SEALED",
+    "RESUME",
+    "OCT_SEPT_BOUND",
+    "HASH_NEGATIVE",
+    "TOTAL_NEGATIVE",
+    "MISSING_NEGATIVE",
+    "PENDING_NEGATIVE",
+    "MULTIPLE_NEGATIVE",
+    "FOREIGN_NEGATIVE",
+    "FENCE",
+    "ZERO_BUSINESS",
+  ];
+  const failedCases = [];
+  let previous = -1,
+    invalidPhase = false;
+  for (const line of tap.split("\n")) {
+    const title = /^not ok [0-9]+ - (.+)$/.exec(line)?.[1];
+    const code = titles.get(title);
+    if (code && !failedCases.includes(code)) failedCases.push(code);
+    if (!line.startsWith("# R19_READONLY_PHASE ")) continue;
+    const phase = /^# R19_READONLY_PHASE ([A-Z_]+)$/.exec(line)?.[1];
+    const index = phases.indexOf(phase);
+    if (index <= previous || index < 0) invalidPhase = true;
+    previous = index;
+  }
+  return { failedCases, lastPhase: !invalidPhase && previous >= 0 ? phases[previous] : "UNKNOWN" };
+}
+
 async function nativeGuard() {
   let output;
   try {
@@ -4850,6 +4908,7 @@ async function nativeGuard() {
   }
 
   let preparerSourceFormsCases;
+  let sourceFormsOutput;
   try {
     const result = await execFile(
       process.execPath,
@@ -4865,9 +4924,14 @@ async function nativeGuard() {
         maxBuffer: 1048576,
       },
     );
-    preparerSourceFormsCases = preparerSourceFormsSupplement(result.stdout);
+    sourceFormsOutput = result.stdout;
+    preparerSourceFormsCases = preparerSourceFormsSupplement(sourceFormsOutput);
     if (preparerSourceFormsCases !== 5) fail("PREPARER_SOURCEFORMS_NATIVE");
-  } catch {
+  } catch (error) {
+    const summary = preparerSourceFormsFailure(sourceFormsOutput ?? error);
+    for (const code of summary.failedCases)
+      console.error("PREPARER_SOURCEFORMS_NATIVE_CASE " + code);
+    console.error("PREPARER_SOURCEFORMS_NATIVE_PHASE " + summary.lastPhase);
     fail("PREPARER_SOURCEFORMS_NATIVE");
   }
 
@@ -6954,6 +7018,160 @@ export function validateR17RecoveryDocument(input) {
   return Object.freeze(clean);
 }
 
+export const R18_RECOVERY_DOCUMENT = Object.freeze({
+  schema: "contaos.fixture.recovery-r18.v1",
+  workflowRun: "42731273678",
+  artifactId: "13725830880",
+  requestId: "trilha-a-fixtures-20261110-r18",
+  harnessSha: "8d055951838fee29664563bed5ee26bac4f55bd8",
+  zipSha256: "b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb",
+  reportSha256: "c3ef3286f2e49d17226f4b747188a6959b9dcc11997a3cae251cbd0d7dac4590",
+  receiptsSha256: "1db601b5a947072bcc1a05437a5fae053bd98f1527d4f958e730079f7678cd77",
+  observationSha256: "f03ea467e40803a792ac4606e35e8f15de5d2fd5746d72428eb732509c57662f",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "PHASE_TIMEOUT",\n  "diagnostics": {\n    "primaryFailure": "PHASE_TIMEOUT",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "COMPETENCY_GET",\n    "subphasePath": [\n      "COMPETENCIES",\n      "COMPETENCY_UI",\n      "COMPETENCY_RECONCILE",\n      "COMPETENCY_GET"\n    ],\n    "lastCompletedSubphase": "COMPETENCY_UI",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 19,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 15,\n    "priorReserved": 2,\n    "newArmedCount": 2,\n    "maxIntentions": 24,\n    "maxNewIntentions": 7\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 15,\n    "maxNewIntentions": 7,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "pode_apresentar_contratante",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "executionId": "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n        "opinionId": "9ec80151-bbf6-4469-9cd8-7d96d1bb02cd"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "id": "79bdc139-ed10-4c91-905e-b32b9a824d27",\n        "requirementId": "c824a6f9-e519-44cc-8911-87d1009e2eaf",\n        "documentId": "cd1624d3-73f7-4ea1-b317-c52627df6824",\n        "executionId": "00da4236-810f-4a89-8be5-b2ffcd50a480",\n        "opinionId": "7bbbe81e-e34c-44dc-a76f-ed85fd56d87f",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42731273678",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n    "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n    "9ec80151-bbf6-4469-9cd8-7d96d1bb02cd",\n    "79bdc139-ed10-4c91-905e-b32b9a824d27",\n    "c824a6f9-e519-44cc-8911-87d1009e2eaf",\n    "cd1624d3-73f7-4ea1-b317-c52627df6824",\n    "00da4236-810f-4a89-8be5-b2ffcd50a480",\n    "7bbbe81e-e34c-44dc-a76f-ed85fd56d87f"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42731273678",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_apresentacao",\n      "requestId": "dd8e544b-af5b-4e23-bef2-b7c9ae2d0096",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1f2c3e05a38e9ff781a623f86be7d1dd4999f8a9174b59119a9c9b2f21558976"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42731273678",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_apresentacao",\n      "requestId": "dd8e544b-af5b-4e23-bef2-b7c9ae2d0096",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1f2c3e05a38e9ff781a623f86be7d1dd4999f8a9174b59119a9c9b2f21558976"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42731273678",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "registrar_apresentacao",\n      "requestId": "40546f93-f8f4-4686-a78a-11aa3069eda7",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1b7017e2fd916ba61c64d7da6f227f67ef7d2b8c9941f814c0176cda435a590a"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42731273678",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "registrar_apresentacao",\n      "requestId": "40546f93-f8f4-4686-a78a-11aa3069eda7",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1b7017e2fd916ba61c64d7da6f227f67ef7d2b8c9941f814c0176cda435a590a"\n    }\n  ]\n}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42731273678",\n  "firstFailure": null\n}\n',
+});
+
+export function validateR18RecoveryDocument(input) {
+  if (isProxy(input) || !input || typeof input !== "object" || Array.isArray(input))
+    fail("RECOVERY_R18_LEDGER");
+  const proto = Object.getPrototypeOf(input);
+  if (isProxy(proto) || (proto !== Object.prototype && proto !== null)) fail("RECOVERY_R18_LEDGER");
+  const names = Object.keys(R18_RECOVERY_DOCUMENT),
+    ds = Object.getOwnPropertyDescriptors(input),
+    own = Reflect.ownKeys(ds),
+    clean = {};
+  if (own.length !== names.length || own.some((k, i) => k !== names[i]))
+    fail("RECOVERY_R18_LEDGER");
+  for (const k of names) {
+    const d = ds[k];
+    if (!d || !Object.hasOwn(d, "value") || !d.enumerable || d.value !== R18_RECOVERY_DOCUMENT[k])
+      fail("RECOVERY_R18_LEDGER");
+    clean[k] = d.value;
+  }
+  const raw = JSON.stringify(clean, null, 2) + "\n";
+  if (
+    Buffer.byteLength(raw) !== 8003 ||
+    digest(raw) !== "de5e5bd71a3e33960ce39510a86cdfddc8fb702fc41d9788df248a209c4df5ac"
+  )
+    fail("RECOVERY_R18_LEDGER");
+  for (const [r, h, n] of [
+    ["reportRaw", "reportSha256", 3911],
+    ["receiptsRaw", "receiptsSha256", 2524],
+    ["observationRaw", "observationSha256", 280],
+  ])
+    if (Buffer.byteLength(clean[r]) !== n || digest(clean[r]) !== clean[h])
+      fail("RECOVERY_R18_LEDGER");
+
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw),
+    observation = JSON.parse(clean.observationRaw),
+    ledger = report.intentLedger,
+    rows = receipts.receipts;
+  if (
+    Object.keys(report).length !== 15 ||
+    Object.keys(report.diagnostics).length !== 9 ||
+    Object.keys(ledger).length !== 9 ||
+    Object.keys(report.recovery).length !== 10 ||
+    Object.keys(observation).length !== 6 ||
+    report.failure !== "PHASE_TIMEOUT" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    ledger.count !== 19 ||
+    ledger.priorConfirmed !== 15 ||
+    ledger.priorReserved !== 2 ||
+    ledger.newArmedCount !== 2 ||
+    ledger.maxIntentions !== 24 ||
+    ledger.maxNewIntentions !== 7 ||
+    ledger.frozen !== false ||
+    ledger.pending !== false ||
+    ledger.sent !== false ||
+    report.recovery.confirmedBefore !== 15 ||
+    report.recovery.maxNewIntentions !== 7 ||
+    report.harnessSha !== clean.harnessSha ||
+    report.workflowRun !== clean.workflowRun ||
+    observation.firstFailure !== null ||
+    !Array.isArray(rows) ||
+    rows.length !== 4 ||
+    rows.some((row, i) => {
+      const expected = [
+        [
+          "aprovar_apresentacao",
+          "dd8e544b-af5b-4e23-bef2-b7c9ae2d0096",
+          "1f2c3e05a38e9ff781a623f86be7d1dd4999f8a9174b59119a9c9b2f21558976",
+        ],
+        [
+          "registrar_apresentacao",
+          "40546f93-f8f4-4686-a78a-11aa3069eda7",
+          "1b7017e2fd916ba61c64d7da6f227f67ef7d2b8c9941f814c0176cda435a590a",
+        ],
+      ][Math.floor(i / 2)];
+      return (
+        row.rpc !== expected[0] ||
+        row.requestId !== expected[1] ||
+        row.payloadSha256 !== expected[2] ||
+        row.state !== ["sealed", "confirmed"][i % 2]
+      );
+    }) ||
+    report.bindings.competencies[0].id !== "50c26274-a36f-48e0-b2fe-5a1caf5d6a49" ||
+    report.bindings.competencies[0].state !== "pode_apresentar_contratante"
+  )
+    fail("RECOVERY_R18_LEDGER");
+  return Object.freeze(clean);
+}
+
+export const R18_REGISTRATION_CANDIDATE = Object.freeze({
+  schema: "contaos.fixture.registration-candidate-r18.v1",
+  provenance: "ADMIN_LOOKUP_NOT_JWT_UI_PROOF",
+  projectId: "gklhhhyosgasnyoxlrui",
+  frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
+  deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
+  organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+  contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+  month: "2026-09-01",
+  competencyId: "79bdc139-ed10-4c91-905e-b32b9a824d27",
+  presentationId: "eb6d5b1c-8b64-418b-aa82-bf1f29d41768",
+  packageId: "f29715a6-0664-415a-8903-68be9d7c5d66",
+  packageHash: "82e0dc9adfbbce6956f87dfe8b78230f71eb9d7e4399571f86210c0f1c6e5c81",
+  packageNumber: 1,
+  packageStatus: "apresentado",
+  packageFrozen: true,
+  packageItems: 1,
+  protocol: "HML-TRILHA-A-20261108",
+  presentationMethod: "Ensaio sintético em homologação.",
+  sourceCheckpoint: "contaos999999/develop#138:6756125670",
+});
+export function validateR18RegistrationCandidate(input) {
+  if (isProxy(input) || !input || typeof input !== "object" || Array.isArray(input))
+    fail("RECOVERY_R18_BINDING");
+  const proto = Object.getPrototypeOf(input);
+  if (isProxy(proto) || (proto !== Object.prototype && proto !== null))
+    fail("RECOVERY_R18_BINDING");
+  const names = Object.keys(R18_REGISTRATION_CANDIDATE),
+    ds = Object.getOwnPropertyDescriptors(input),
+    own = Reflect.ownKeys(ds),
+    clean = {};
+  if (own.length !== names.length || own.some((key, i) => key !== names[i]))
+    fail("RECOVERY_R18_BINDING");
+  for (const key of names) {
+    const d = ds[key];
+    if (
+      !d ||
+      !Object.hasOwn(d, "value") ||
+      !d.enumerable ||
+      d.value !== R18_REGISTRATION_CANDIDATE[key]
+    )
+      fail("RECOVERY_R18_BINDING");
+    clean[key] = d.value;
+  }
+  return Object.freeze(clean);
+}
+
 export const R13_RECOVERY_DOCUMENT = Object.freeze({
   schema: "contaos.fixture.recovery-r13.v1",
   workflowRun: "42685547737",
@@ -7044,6 +7262,9 @@ export const SINGLE_REQUEST = Object.freeze({
   listReadinessSecuritySha: "8d43ae8f94b39d81b8125d087a1c9a968e2d8ad7",
   metadataTimeoutGateSha: "326a960cec756d08681b00da99a5332f0a3c6fac",
   metadataTimeoutPlanSha: "1282198bfc72ac4a119856139e6b95d9e14177dc",
+  r19RecoveryGateSha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
+  r19RecoveryPlanSha: "2b6ab4f542c66309fb16d12f9998136641591f25",
+  r18ReaderBuildSha: "815dce2a4015e2bb1b5ec23e70633537ab008e62",
   r18RecoveryGateSha: "d27616f35bba7f6c2d56db8e010d5a9a41f17f3b",
   r18RecoveryPlanSha: "9f8b1bbe48fb10867294bee3b456d922065c7fa0",
   r17ReaderBuildSha: "e464837f11458766ec87770ec967e81b34222962",
@@ -7080,13 +7301,14 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-a-fixtures-20261109-r15",
     "trilha-a-fixtures-20261109-r16",
     "trilha-a-fixtures-20261109-r17",
+    "trilha-a-fixtures-20261110-r18",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261110-r18",
+    nonce: "trilha-a-fixtures-20261110-r19",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({
@@ -7330,6 +7552,9 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.asynchronousOpinionGateSha,
       SINGLE_REQUEST.canonicalProfileGateSha,
       SINGLE_REQUEST.r13RecoveryGateSha,
+      SINGLE_REQUEST.r19RecoveryGateSha,
+      SINGLE_REQUEST.r19RecoveryPlanSha,
+      SINGLE_REQUEST.r18ReaderBuildSha,
       SINGLE_REQUEST.r18RecoveryGateSha,
       SINGLE_REQUEST.r18RecoveryPlanSha,
       SINGLE_REQUEST.r17ReaderBuildSha,
@@ -9892,6 +10117,8 @@ export async function verifySingleRequest({
   stat = lstat,
   wait = (ms) => new Promise((r) => setTimeout(r, ms)),
 }) {
+  validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT);
+  validateR18RegistrationCandidate(R18_REGISTRATION_CANDIDATE);
   singleRequestContext = null;
   validatedR4ZeroAuth = null;
   validatedR7ZeroAuth = null;
@@ -9940,6 +10167,8 @@ export async function verifySingleRequest({
   validateR15RecoveryDocument(R15_RECOVERY_DOCUMENT);
   validateR16RecoveryDocument(R16_RECOVERY_DOCUMENT);
   validateR17RecoveryDocument(R17_RECOVERY_DOCUMENT);
+  validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT);
+  validateR18RegistrationCandidate(R18_REGISTRATION_CANDIDATE);
   const sha = env.CONTAOS_HARNESS_SHA;
   const requestShas = await verifySingleRequestGit(request, sha, git, raw);
   get ||= singleRequestGet({ token: metadataToken, publicOnly, env, diagnostic });
@@ -10213,6 +10442,8 @@ export async function loadSingleRequestProof({
   now = Date.now,
   fresh = false,
 }) {
+  validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT);
+  validateR18RegistrationCandidate(R18_REGISTRATION_CANDIDATE);
   singleRequestContext = null;
   validatedR4ZeroAuth = null;
   validatedR7ZeroAuth = null;
@@ -10224,6 +10455,8 @@ export async function loadSingleRequestProof({
     validateR15RecoveryDocument(R15_RECOVERY_DOCUMENT);
     validateR16RecoveryDocument(R16_RECOVERY_DOCUMENT);
     validateR17RecoveryDocument(R17_RECOVERY_DOCUMENT);
+    validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT);
+    validateR18RegistrationCandidate(R18_REGISTRATION_CANDIDATE);
   }
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
     assertRequestMetadataEnvironment(env, { requireToken: false });
