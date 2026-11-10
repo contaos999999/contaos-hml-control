@@ -7302,13 +7302,14 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-a-fixtures-20261109-r16",
     "trilha-a-fixtures-20261109-r17",
     "trilha-a-fixtures-20261110-r18",
+    "trilha-a-fixtures-20261110-r19",
   ]),
   fixturesSha: "5dc57275d6e95f066ec751fad7a0af50005ab17f",
   fixtures: Object.freeze({
     id: 411426169,
     name: "ContaOS Trilha A Fixtures",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    nonce: "trilha-a-fixtures-20261110-r19",
+    nonce: "trilha-a-fixtures-20261110-r20",
     privateName: "Trilha A preparacao sintetica HML",
   }),
   audit: Object.freeze({

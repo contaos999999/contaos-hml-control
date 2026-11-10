@@ -22,14 +22,14 @@ function fn(name) {
 const R5_R4_HEAD = "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72";
 const HML = "https://contaos-41-hml.vercel.app";
 const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
-test("R19 accepts only the new readonly recovery nonce", () => {
+test("R20 accepts only the new readonly recovery nonce", () => {
   const raw =
     JSON.stringify(
       {
         schema_version: 1,
         issue: 317,
         operation: "fixtures",
-        request_id: "trilha-a-fixtures-20261110-r19",
+        request_id: "trilha-a-fixtures-20261110-r20",
         approved_parent_sha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
         frontend_sha: "",
         deployment_id: "",
@@ -39,7 +39,7 @@ test("R19 accepts only the new readonly recovery nonce", () => {
     ) + "\n";
   assert.equal(
     sut.parseSingleRequest(raw, "fixtures").request_id,
-    "trilha-a-fixtures-20261110-r19",
+    "trilha-a-fixtures-20261110-r20",
   );
 });
 const config = {
@@ -14009,7 +14009,7 @@ test("R16 current nonce spends R15 and requires both recovery and void ancestors
   const f = await r13ControllerFixture();
   const old = { ...JSON.parse(f.raw), request_id: "trilha-a-fixtures-20261109-r15" };
   assert.throws(() => sut.parseSingleRequest(JSON.stringify(old)), /REQUEST_SCHEMA/);
-  assert.equal(sut.parseSingleRequest(f.raw).request_id, "trilha-a-fixtures-20261110-r19");
+  assert.equal(sut.parseSingleRequest(f.raw).request_id, "trilha-a-fixtures-20261110-r20");
   for (const ancestor of [
     sut.SINGLE_REQUEST.r15RecoveryGateSha,
     sut.SINGLE_REQUEST.void204GateSha,
@@ -14094,16 +14094,16 @@ test("R17 original R16 validator is shared, immutable and rejects hostile docume
     assert.throws(() => sut.validateR16RecoveryDocument(value), /RECOVERY_R16_LEDGER/);
   }
   assert.equal(effects, 0);
-  assert.equal(sut.SINGLE_REQUEST.fixtures.nonce, "trilha-a-fixtures-20261110-r19");
+  assert.equal(sut.SINGLE_REQUEST.fixtures.nonce, "trilha-a-fixtures-20261110-r20");
   assert.ok(sut.SINGLE_REQUEST.spentFixtureNonces.includes("trilha-a-fixtures-20261109-r16"));
 });
 
-test("R19 request accepts its sole nonce and keeps R18 and R17 spent", () => {
+test("R20 request accepts its sole nonce and keeps R19, R18 and R17 spent", () => {
   const request = {
     schema_version: 1,
     issue: 317,
     operation: "fixtures",
-    request_id: "trilha-a-fixtures-20261110-r19",
+    request_id: "trilha-a-fixtures-20261110-r20",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -14124,6 +14124,24 @@ test("R19 request accepts its sole nonce and keeps R18 and R17 spent", () => {
       "fixtures",
     ),
   );
+});
+
+test("R20 keeps preflight-failed R19 historical without authorizing replay", () => {
+  const raw = JSON.stringify({
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261110-r19",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  });
+  assert.throws(() => sut.parseSingleRequest(raw, "fixtures"), /REQUEST_SCHEMA/);
+  assert.equal(
+    sut.parseSingleRequest(raw, "fixtures", { historical: true }).request_id,
+    "trilha-a-fixtures-20261110-r19",
+  );
+  assert.ok(sut.SINGLE_REQUEST.spentFixtureNonces.includes("trilha-a-fixtures-20261110-r19"));
 });
 
 test("R19 original recovery bytes and candidate order are exact and frozen", () => {
