@@ -6866,6 +6866,23 @@ export function validateC8CurrentWire(item, wire) {
       );
     if (["V116", "V117"].includes(item.surface)) {
       const a = wire.analysis;
+      // V116 keeps the original November draft, proved empty in the preserved
+      // authenticated baseline. Only the October V117 requires completed execution.
+      if (item.surface === "V116" && !recovered)
+        return (
+          a?.schema_versao === "v116-v1" &&
+          owned(a.competencia) &&
+          a.competencia.situacao === "rascunho" &&
+          a.stale === false &&
+          a.estado_analise === "not_analyzed" &&
+          a.execucao_atual === null &&
+          a.percentual === 0 &&
+          a.blocking_summary?.total === 0 &&
+          a.blocking_summary.liberado === false &&
+          ["resultados", "execucoes", "apontamentos"].every(
+            (k) => Array.isArray(a[k]) && a[k].length === 0,
+          )
+        );
       if (
         a?.schema_versao !== "v116-v1" ||
         !owned(a.competencia) ||

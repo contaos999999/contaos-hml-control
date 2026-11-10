@@ -15818,3 +15818,35 @@ test("C8 V117 reported primary proof requires the actual modal measurement", () 
   rows[i].visualCapture.metrics.modalPassed = false;
   assert.equal(sut.summarizeCases(rows, sut.C8_AUDIT_SCOPE).matrixComplete, false);
 });
+
+test("C8 V116 preserves the proven historical empty state without inventing a completed October analysis", async () => {
+  const { data, bindings: b } = await c8SourceFixture(),
+    item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V116");
+  const analysis = {
+    ...data.analysis,
+    competencia: {
+      ...data.analysis.competencia,
+      id: sut.SYNTHETIC_FIXTURE.competence,
+      competencia_referencia: "2026-11-01",
+      situacao: "rascunho",
+    },
+    estado_analise: "not_analyzed",
+    stale: false,
+    execucao_atual: null,
+    resultados: [],
+    execucoes: [],
+    apontamentos: [],
+    percentual: 0,
+    blocking_summary: { ...data.analysis.blocking_summary, total: 0, liberado: false },
+  };
+  assert.equal(sut.validateC8CurrentWire(item, { analysis }), true);
+  for (const delta of [
+    { estado_analise: "queued" },
+    { stale: true },
+    { resultados: [{}] },
+    { execucoes: [{}] },
+    { competencia: { ...analysis.competencia, id: b.competencies[0].id } },
+    { percentual: 100 },
+  ])
+    assert.equal(sut.validateC8CurrentWire(item, { analysis: { ...analysis, ...delta } }), false);
+});
