@@ -2582,3 +2582,18 @@ Causa confirmada offline e por revisão independente: invocação CLI precede RE
 Emenda documental571 fecha nonce sucessor r2 e regressões, preservando GATE566/PLAN554/docR20/64casos/default208/native18/prazos/privacidade/owner/rotas/aquisição oficial/128PNG. Próxima tarefa: concluir CI/review/merge/readback da emenda; implementar RED→GREEN2mjs, CI4/native18/review/merge/push; requestJSON7 separado paiBUILD corretivo exato, review canônico antesmerge; capturar64, adquirir artefato oficial somente após metadata real registrada no develop#138 e revisar pixels por caso. Não repetir r1 ou API51/OpenAI. C13 UI restante exige gate próprio. V1/globalCompletefalse, HML exclusivo, sem SQL/Admin/backend/negócio/PROD.
 
 Este append é checkpoint de andamento, só integrado após CI/revisão/merge/readback desta PR; não certifica auditoria concluída.
+
+
+## C8 r2: correção causal pronta para validação final, 10/11/2026
+
+Emenda571 integrada25b6113dfcb7394696e6ed3513a5c7235753a6da: CI2 final Zero42853416054/LOCK42853415945SUCCESS, review5845278895/0C/I; GATE+checkpoint relidos literalmente após merge. Push Zero42853762316/LOCK42853762355SUCCESS. Evento da PR chegou atrasado; primeiro Zero42853207380 foi substituído automaticamente pela concorrência, sem cancelamento manual. Via Auth do push documental42854080415 falhou em preflight/request129962232290, private129962509596SKIPPED; não é nova sessão nem substitui r1. Nenhum nonce reenviado.
+
+BUILD corretivo572 DRAFT HEAD0ecae9897cbd09376e673530c4f1b0c688d64e08, branchbuild/c8-r2-entrypoint-20261110, somente2mjs. Bloco CLI original1419B/SHAe9fef37b719b7baa1fac64f60471aa9f7bcd4c8757e62b2beb04de29a29f95c4 movido literalmente para EOF; validação de ambiente inalterada. Nonce ativa r2/c8GateSha25b; r1 explicitamente consumida, negada ativa e aceita exclusivamente histórica, preservando scanner/anticlonagem/unicidade.
+
+RED real subprocesso: dois guard/pin deram HARNESS_FAILURE no original; GREEN após correção PREPARE_SECRET_ENV e HARNESS_SHA. Revisão encontrou1Important de histórico r1, corrigido com RED REQUEST_SCHEMA→GREEN. Revisor confirmou bloco byteexato e26C8PASS/0FAIL/0SKIP. Revisão final publicada no HEAD exato5845481140,0C/I, condicionadaCI4/native18. Lint/Prettier/diffcheckPASS. Suíte auditor completa local400testes/387PASS/0FAIL/13SKIP nativos esperados, exit0,116978ms; probe público canônico PASS110módulos/1476785B/fonte0024/deploy8FQ. Executada sobre os mesmos arquivos ainda com envharnessSha25b antes da publicação; não substituir por isso o atestado nativo doHEAD0ec.
+
+CI4 doHEAD0ec em andamento neste append: Auth42854812902/privateSKIPPED e Fixtures42854814374/privateSKIPPED conformePR; protocolos em execução. Zero42854813416 em execução, LOCK42854812796SUCCESS. Não declarar resultados terminais nem native18 antes ler os logs. Nenhum requestr2 ou captura C8 executado.
+
+Última etapa comprovadamente concluída: correção causal/revisão local/focais/suíte completa, BUILD publicado em rascunho. Próxima: ler CI4/native18 doHEAD0ec; corrigir somente causas comprovadas, integrar este checkpoint antes do BUILD; então Ready/mergeBUILD/pushCI e requestJSON7 r2 separado com pai BUILD exato e COMMENTcanônico publicado/relidoANTESmerge. Freeze até ambos originaisattempt1terminais; registrar metadata real no develop#138 antes aquisição oficial; ZIP/hashes/DOM/dimensões e128PNG originais revisados por caso. C8/TrilhaC/V1 ainda não certificados; API51/OpenAI e multiturnUI preservados, sem repetição; UI C13 restante temgatepróprio. HMLexclusivo, semAdmin/SQL/negócio/deploy/PROD.
+
+Este checkpoint só estará integrado apósCI/revisão/merge/readback da PR documental. Não é conclusão da missão ou autorização para pular validações.
