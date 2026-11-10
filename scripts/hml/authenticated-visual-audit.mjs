@@ -4893,7 +4893,7 @@ export function nativeC8VisualDiagnostic(tap) {
       continue;
     }
     const match =
-      /^# C8_NATIVE_PHASE (READY|MOUNT|DRAWER|STATE|PRIVACY|CLOSE) (V117|V119|V120) (1440|1280|768|390) (light|dark)$/.exec(
+      /^# C8_NATIVE_PHASE (READY|MOUNT|DRAWER|STATE|COLLECT|PRIVACY|CLOSE|NEGATIVE) (V117|V119|V120) (1440|1280|768|390) (light|dark)$/.exec(
         line,
       );
     if (!match) return unknown();
@@ -6570,6 +6570,175 @@ const C8_SYNTHETIC_FIELDS = Object.freeze([
   "Ensaio sintético em homologação.",
 ]);
 
+export function c8TechnicalFieldContracts(item, wire) {
+  const out = [];
+  const date = (value) =>
+    new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+      .format(new Date(value))
+      .replace(",", "");
+  const add = (field, raw, selector, label, kind = "text", prefix = "") => {
+    if (typeof raw !== "string" || !raw) return;
+    let value = raw;
+    if (kind === "date") {
+      if (!/^\d{4}-\d{2}-\d{2}T/.test(raw) || !Number.isFinite(Date.parse(raw))) return;
+      value = date(raw);
+    } else if (kind === "hash" && !/^[a-f0-9]{64}$/.test(raw)) return;
+    else if (kind === "uuid" && !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(raw)) return;
+    else if (kind === "synthetic" && !C8_SYNTHETIC_FIELDS.includes(raw)) return;
+    out.push({ field, value, selector, label, expected: prefix + value });
+  };
+  const dd = (root) => root + " > dl > div > dd";
+  const result = (path, r, root) => {
+    if (!r) return;
+    add(path + ".criado_em", r.criado_em, dd(root), "Registrado em", "date");
+    add(path + ".hash_evidencias", r.hash_evidencias, dd(root), "Hash das evidências", "hash");
+    add(
+      path + ".justificativa",
+      r.justificativa,
+      root + " > p:nth-of-type(1)",
+      null,
+      "synthetic",
+      "Justificativa: ",
+    );
+    add(
+      path + ".fundamento",
+      r.fundamento,
+      root + ` > p:nth-of-type(${r.justificativa ? 2 : 1})`,
+      null,
+      "synthetic",
+      "Fundamento: ",
+    );
+  };
+  if (item.surface === "V117") {
+    const d = wire.detail,
+      source = 'section[aria-labelledby="v117-fonte"]';
+    add(
+      "detail.requisito.origem_id",
+      d.requisito.origem_id,
+      dd(source),
+      "Identificador da origem",
+      "uuid",
+    );
+    add(
+      "detail.requisito.hash_snapshot",
+      d.requisito.hash_snapshot,
+      dd(source),
+      "Hash do snapshot",
+      "hash",
+    );
+    add(
+      "detail.requisito.descricao",
+      d.requisito.descricao,
+      'section[aria-labelledby="v117-req"] > p:nth-of-type(2)',
+      null,
+      "synthetic",
+    );
+    add(
+      "detail.requisito.fonte_detalhe",
+      d.requisito.fonte_detalhe,
+      dd(source),
+      "Detalhe",
+      "synthetic",
+    );
+    const exec = 'section[aria-labelledby="v117-exec"]';
+    for (const [field, label, kind] of [
+      ["hash_entrada", "Hash de entrada", "hash"],
+      ["iniciada_em", "Iniciada em", "date"],
+      ["concluida_em", "Concluída em", "date"],
+    ])
+      add("detail.execucao_atual." + field, d.execucao_atual?.[field], dd(exec), label, kind);
+    result(
+      "detail.resultado_referencia",
+      d.resultado_referencia,
+      'section[aria-labelledby="v117-ref"] > div',
+    );
+    result("detail.resultado_atual", d.resultado_atual, exec + " > div");
+    for (const [i, e] of (d.evidencias ?? []).entries()) {
+      const root = `section[aria-labelledby="v117-ev"] ul > li:nth-child(${i + 1})`;
+      add(`detail.evidencias.${i}.hash`, e.hash, dd(root), "Hash", "hash");
+      add(`detail.evidencias.${i}.criado_em`, e.criado_em, dd(root), "Registrada em", "date");
+    }
+    for (const [i, h] of (d.historico ?? []).entries()) {
+      const root = `section[aria-labelledby="v117-hist"] ol > li:nth-child(${i + 1})`;
+      add(
+        `detail.historico.${i}.hash_entrada`,
+        h.hash_entrada,
+        dd(root),
+        "Hash de entrada",
+        "hash",
+      );
+      add(`detail.historico.${i}.criado_em`, h.criado_em, dd(root), "Registrado em", "date");
+      add(
+        `detail.historico.${i}.justificativa`,
+        h.justificativa,
+        root + " > p",
+        null,
+        "synthetic",
+        "Justificativa: ",
+      );
+    }
+  }
+  if (["V116", "V117"].includes(item.surface)) {
+    for (const [i, e] of (wire.analysis.execucoes ?? []).entries()) {
+      const root = `section[aria-labelledby="v116-hist"] ul > li:nth-child(${i + 1})`;
+      for (const [field, label, kind] of [
+        ["hash_entrada", "Hash de entrada", "hash"],
+        ["iniciada_em", "Iniciada em", "date"],
+        ["concluida_em", "Concluída em", "date"],
+      ])
+        add(`analysis.execucoes.${i}.` + field, e[field], dd(root), label, kind);
+    }
+  }
+  if (item.surface === "V118")
+    for (const [i, p] of (wire.opinions ?? []).entries()) {
+      const root = `section[aria-labelledby="v118-historico"] ol > li:nth-child(${i + 1})`;
+      for (const [field, label, kind] of [
+        ["hash", "Integridade (SHA-256)", "hash"],
+        ["criado_em", "Criado em", "date"],
+        ["aprovado_em", "Aprovado em", "date"],
+      ])
+        add(`opinions.${i}.` + field, p[field], dd(root), label, kind);
+    }
+  if (item.surface === "V120") {
+    const ap = wire.presentations[0],
+      pkg = wire.packages[0],
+      a = 'section[aria-labelledby="v120-apresentacao"]',
+      p = 'section[aria-labelledby="v120-pacote"]';
+    add("presentations.0.id", ap.id, dd(a), "Identificador oficial", "uuid");
+    add("presentations.0.apresentado_em", ap.apresentado_em, dd(a), "Apresentado em", "date");
+    add("presentations.0.protocolo", ap.protocolo, dd(a), "Protocolo externo", "synthetic");
+    add(
+      "presentations.0.forma_apresentacao",
+      ap.forma_apresentacao,
+      dd(a),
+      "Forma de apresentação",
+      "synthetic",
+    );
+    add("packages.0.hash_pacote", pkg.hash_pacote, dd(p), "Hash criptográfico do pacote", "hash");
+    add("packages.0.congelado_em", pkg.congelado_em, dd(p), "Congelado em", "date");
+    for (const [i, e] of wire.items.entries()) {
+      const root = `section[aria-labelledby="v120-itens"] ul > li:nth-child(${i + 1})`;
+      add(`items.${i}.hash`, e.hash, root + " > p:nth-of-type(2)", null, "hash", "Hash: ");
+      add(
+        `items.${i}.versao_id`,
+        e.versao_id,
+        root + " > p:nth-of-type(3)",
+        null,
+        "uuid",
+        "Versão: ",
+      );
+    }
+  }
+  return out;
+}
+
 // Values never join the global dictionary. The live owner and each original UI field
 // must still agree immediately before each PNG, including its complement.
 async function c8PrivacyContext(page, state, rendered, snapshot, previous) {
@@ -6587,143 +6756,31 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous) {
     !validateC8CurrentWire(current.item, current.wire)
   )
     fail("C8_CURRENT_OWNER");
-  const descriptors = [];
-  const date = (value) =>
-    new Intl.DateTimeFormat("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-      .format(new Date(value))
-      .replace(",", "");
-  const dates = {
-    atualizado_em: ["Atualizado em"],
-    criado_em: ["Registrado em", "Registrada em", "criada em", "Criado em"],
-    iniciada_em: ["Iniciada em"],
-    concluida_em: ["Concluída em"],
-    aprovado_em: ["Aprovado em"],
-    apresentado_em: ["Apresentado em"],
-    congelado_em: ["Congelado em"],
-  };
-  const hashes = {
-    hash: ["Hash", "Integridade (SHA-256)"],
-    hash_entrada: ["Hash de entrada"],
-    hash_evidencias: ["Hash das evidências"],
-    hash_snapshot: ["Hash do snapshot"],
-    hash_pacote: ["Hash criptográfico do pacote"],
-  };
-  const ids = {
-    origem_id: ["Identificador da origem"],
-    versao_id: ["Versão"],
-    id: ["Identificador oficial"],
-  };
-  const walk = (value, path = "") => {
-    if (Array.isArray(value)) return value.forEach((v, i) => walk(v, path + "." + i));
-    if (!value || typeof value !== "object") return;
-    for (const [field, scalar] of Object.entries(value)) {
-      if (scalar && typeof scalar === "object") {
-        walk(scalar, path + "." + field);
-        continue;
-      }
-      if (typeof scalar !== "string") continue;
-      if (dates[field] && /^\d{4}-\d{2}-\d{2}T/.test(scalar) && Number.isFinite(Date.parse(scalar)))
-        descriptors.push({
-          field: path + "." + field,
-          value: date(scalar),
-          labels: dates[field],
-          kind: "date",
-        });
-      if (hashes[field] && /^[a-f0-9]{64}$/.test(scalar))
-        descriptors.push({
-          field: path + "." + field,
-          value: scalar,
-          labels: hashes[field],
-          kind: "hash",
-        });
-      if (ids[field] && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(scalar))
-        descriptors.push({
-          field: path + "." + field,
-          value: scalar,
-          labels: ids[field],
-          kind: "id",
-        });
-      if (
-        [
-          "descricao",
-          "justificativa",
-          "fundamento",
-          "fonte_detalhe",
-          "trecho",
-          "protocolo",
-          "forma_apresentacao",
-        ].includes(field) &&
-        C8_SYNTHETIC_FIELDS.includes(scalar)
-      )
-        descriptors.push({
-          field: path + "." + field,
-          value: scalar,
-          labels: [],
-          kind: "synthetic",
-        });
+  const descriptors = c8TechnicalFieldContracts(current.item, current.wire);
+  const anchored = await page.evaluate((descriptors) => {
+    const visible = (node) =>
+      node.getClientRects().length > 0 && getComputedStyle(node).visibility !== "hidden";
+    const groups = new Map(),
+      fields = new Set();
+    for (const d of descriptors) {
+      if (fields.has(d.field)) return [];
+      fields.add(d.field);
+      const nodes = [...document.querySelectorAll(d.selector)].filter((node) => {
+        if (!visible(node) || node.textContent.trim() !== d.expected) return false;
+        if (d.label === null) return true;
+        const label = node.parentElement.querySelector(":scope > dt")?.textContent;
+        return label === d.label || label?.startsWith(d.label + ": ");
+      });
+      if (nodes.length !== 1) continue;
+      const group = groups.get(d.value) ?? new Set();
+      group.add(nodes[0]);
+      groups.set(d.value, group);
     }
-  };
-  walk(current.wire);
-  const roots = {
-    V111: 'section[aria-label="Resumo do documento"],section[aria-label="Processamento"]',
-    V114: "main",
-    V115: 'section[aria-labelledby^="v115-"]',
-    V116: 'section[aria-labelledby^="v116-"]',
-    V117: 'section[aria-labelledby^="v116-"],[role="dialog"] section[aria-labelledby^="v117-"]',
-    V118: 'section[aria-labelledby="v118-historico"]',
-    V119: 'section[aria-labelledby^="v119-"]',
-    V120: 'section[aria-labelledby="v120-apresentacao"],section[aria-labelledby="v120-pacote"],section[aria-labelledby="v120-itens"]',
-  };
-  const anchored = await page.evaluate(
-    ({ descriptors, root }) => {
-      const visible = (node) =>
-        node.getClientRects().length > 0 && getComputedStyle(node).visibility !== "hidden";
-      const nodes = [...document.querySelectorAll(root)]
-        .flatMap((root) => [...root.querySelectorAll("dd,p,td,span")])
-        .filter((n, i, a) => a.indexOf(n) === i && visible(n));
-      const groups = new Map();
-      for (const d of descriptors) {
-        const matches = nodes.filter((node) => {
-          const text = node.textContent.trim();
-          if (
-            !text.includes(d.value) ||
-            [...node.children].some((c) => c.textContent.includes(d.value))
-          )
-            return false;
-          if (d.kind === "synthetic")
-            return (
-              text === d.value ||
-              ["Justificativa: ", "Fundamento: "].some((prefix) => text === prefix + d.value)
-            );
-          const label =
-            node.tagName === "DD" ? node.parentElement.querySelector("dt")?.textContent : text;
-          return (
-            d.labels.some((name) => label?.includes(name)) &&
-            (text === d.value ||
-              d.labels.some((name) => text === name + ": " + d.value) ||
-              (d.kind === "date" &&
-                text.startsWith("Execução atual: ") &&
-                text.endsWith("criada em " + d.value)))
-          );
-        });
-        const group = groups.get(d.value) ?? new Set();
-        for (const node of matches) group.add(node);
-        groups.set(d.value, group);
-      }
-      return [...groups].map(([value, nodes]) => ({
-        value,
-        count: [...nodes].reduce((n, node) => n + node.textContent.split(value).length - 1, 0),
-      }));
-    },
-    { descriptors, root: roots[current.item.surface] },
-  );
+    return [...groups].map(([value, nodes]) => ({
+      value,
+      count: [...nodes].reduce((n, node) => n + node.textContent.split(value).length - 1, 0),
+    }));
+  }, descriptors);
   if (
     state.generation !== current.generation ||
     privacy78Pages.get(page) !== state ||
@@ -6839,7 +6896,18 @@ export function validateC8CurrentWire(item, wire) {
         /^[a-f0-9]{64}$/.test(entry.hash)
       );
     }
-    return ["V114", "V115", "V118"].includes(item.surface);
+    if (item.surface === "V118")
+      return (
+        Array.isArray(wire.opinions) &&
+        wire.opinions.length <= 25 &&
+        wire.opinions.every(
+          (p) =>
+            p.id_competencia === id &&
+            p.id_organizacao === b.organization &&
+            p.id_contrato === b.contract,
+        )
+      );
+    return ["V114", "V115"].includes(item.surface);
   } catch {
     return false;
   }

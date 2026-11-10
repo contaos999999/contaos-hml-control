@@ -14903,7 +14903,7 @@ async function c8BuildSourceUI(directory) {
   const b = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
   await fs.writeFile(
     join(directory, "client.ts"),
-    `import {PostgrestClient} from ${JSON.stringify(pg)};export const supabase=Object.assign(new PostgrestClient(location.origin+'/rest/v1'),{auth:{getUser:async()=>({data:{user:{id:'native-c8-owner'}},error:null})}});`,
+    `import {PostgrestClient} from ${JSON.stringify(pg)};export const supabase=Object.assign(new PostgrestClient(${JSON.stringify(API)}+'/rest/v1'),{auth:{getUser:async()=>({data:{user:{id:'native-c8-owner'}},error:null})}});`,
   );
   await fs.writeFile(
     join(directory, "router.tsx"),
@@ -14949,7 +14949,8 @@ async function c8NativeSourceProbe(browser) {
   phase("START");
   let server,
     page,
-    business = 0;
+    business = 0,
+    currentObserver = null;
   try {
     phase("BUNDLE");
     const bundle = await c8BuildSourceUI(dir),
@@ -14979,7 +14980,11 @@ async function c8NativeSourceProbe(browser) {
     server = createHttpServer((req, res) => {
       const url = new URL(req.url, "http://127.0.0.1");
       const json = (value) => {
-        res.writeHead(200, { "content-type": "application/json", "content-range": "0-0/1" });
+        res.writeHead(200, {
+          "content-type": "application/json",
+          "content-range": "0-0/1",
+          "access-control-allow-origin": "*",
+        });
         res.end(JSON.stringify(value));
       };
       if (url.pathname === "/ui.js") {
@@ -14994,6 +14999,36 @@ async function c8NativeSourceProbe(browser) {
           const name = url.pathname.split("/").at(-1),
             args = JSON.parse(raw);
           readNames.add(name);
+          const competency = b.competencies[surface === "V120" ? 1 : 0];
+          assert.equal(args.p_id_competencia, competency.id);
+          if (name === "obter_visao_geral_competencia")
+            assert.deepEqual(args, { p_id_competencia: competency.id });
+          if (name === "obter_detalhe_requisito_v117")
+            assert.deepEqual(args, {
+              p_id_competencia: competency.id,
+              p_id_requisito: competency.requirementId,
+              p_evidencias_offset: 0,
+              p_evidencias_limite: 25,
+              p_historico_offset: 0,
+              p_historico_limite: 25,
+              p_apontamentos_offset: 0,
+              p_apontamentos_limite: 25,
+            });
+          if (name === "obter_analise_competencia_v116")
+            assert.deepEqual(args, {
+              p_id_competencia: competency.id,
+              p_resultados_offset: 0,
+              p_resultados_limite: 25,
+              p_execucoes_offset: 0,
+              p_execucoes_limite: 10,
+              p_apontamentos_offset: 0,
+              p_apontamentos_limite: 25,
+              p_filtro_resultado: null,
+              p_filtro_criticidade: null,
+              p_filtro_mecanismo: null,
+              p_filtro_apontamento_status: null,
+              p_busca: null,
+            });
           const rpc = {
             obter_analise_competencia_v116: data.analysis,
             obter_detalhe_requisito_v117: data.detail,
@@ -15047,12 +15082,57 @@ async function c8NativeSourceProbe(browser) {
     page = await browser.newPage();
     const origin = `http://127.0.0.1:${server.address().port}`;
     const privacyHarness = await c8PrivacyHarness();
+    const preparer = await import("./prepare-visual-fixtures.mjs");
+    await page.route(API + "/rest/v1/**", async (route) => {
+      const request = route.request();
+      if (request.method() === "OPTIONS") {
+        await route.fulfill({
+          status: 204,
+          headers: {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "GET,POST,OPTIONS",
+            "access-control-allow-headers": "*",
+          },
+        });
+        return;
+      }
+      const u = new URL(request.url());
+      const response = await route.fetch({ url: origin + u.pathname + u.search });
+      await route.fulfill({
+        response,
+        headers: { ...response.headers(), "access-control-allow-origin": "*" },
+      });
+    });
     for (surface of ["V117", "V119", "V120"])
       for (const width of [1440, 1280, 768, 390])
         for (const theme of ["light", "dark"]) {
           const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find(
             (r) => r.surface === surface && r.width === width && r.theme === theme,
           );
+          const localPage = {
+            url: () => sut.HML_ORIGIN + item.path,
+            evaluate: page.evaluate.bind(page),
+          };
+          currentObserver = preparer.createOfficialObserver(page, {
+            identity: {
+              frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
+              harnessSha: process.env.CONTAOS_HARNESS_SHA,
+              deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
+              workflowRun: "1",
+            },
+          });
+          const state = {
+            scope: sut.C8_AUDIT_SCOPE,
+            verified: true,
+            closed: false,
+            generation: 0,
+            c8Observer: currentObserver,
+          };
+          privacyHarness.pages.set(localPage, state);
+          const navigated = (frame) => {
+            if (frame === page.mainFrame()) state.generation++;
+          };
+          page.on("framenavigated", navigated);
           phase("MOUNT", item);
           await page.setViewportSize({ width, height: 1000 });
           await page.goto(origin + item.path);
@@ -15130,30 +15210,13 @@ async function c8NativeSourceProbe(browser) {
             true,
             `${surface}/${width}/${theme}`,
           );
-          // The isolated owner adapter exercises the production contextual consumer
-          // against DOM rendered by original source; it is never an HML session proof.
+          // Actual original SDK reads feed the official observer. The local server
+          // substitutes transport only; no current evidence is injected into the collector.
+          phase("COLLECT", item);
+          await privacyHarness.collect(localPage, item, state);
+          assert.equal(state.c8Current.observer, currentObserver);
+          assert.equal(state.c8Current.generation, state.generation);
           phase("PRIVACY", item);
-          const wire = structuredClone(data);
-          if (surface === "V120")
-            Object.assign(wire.overview.competencia, {
-              id: b.competencies[1].id,
-              competencia_referencia: b.competencies[1].month,
-              situacao: b.competencies[1].state,
-            });
-          const localPage = {
-            url: () => sut.HML_ORIGIN + item.path,
-            evaluate: page.evaluate.bind(page),
-          };
-          const observer = {},
-            state = {
-              scope: sut.C8_AUDIT_SCOPE,
-              verified: true,
-              closed: false,
-              generation: 1,
-              c8Observer: observer,
-            };
-          state.c8Current = { owner: state, generation: 1, observer, item, wire };
-          privacyHarness.pages.set(localPage, state);
           const rendered = await page.locator("body").innerText(),
             snapshot = await page.locator("body").ariaSnapshot();
           const token = await privacyHarness.context(localPage, state, rendered, snapshot, null);
@@ -15189,6 +15252,55 @@ async function c8NativeSourceProbe(browser) {
               true,
             );
             await page.locator("#outside-field").evaluate((n) => n.remove());
+            if (surface === "V117" && width === 390 && theme === "dark") {
+              await page.evaluate(() => {
+                const root = document.querySelector('section[aria-labelledby="v117-fonte"]');
+                const field = [...root.querySelectorAll("dl > div")].find(
+                  (n) => n.querySelector("dt")?.textContent === "Identificador da origem",
+                );
+                const clone = field.cloneNode(true);
+                clone.id = "duplicate-origin-field";
+                field.after(clone);
+              });
+              const duplicateContext = await privacyHarness.context(
+                localPage,
+                state,
+                await page.locator("body").innerText(),
+                await page.locator("body").ariaSnapshot(),
+                null,
+              );
+              assert.equal(
+                privacyHarness.contexts
+                  .get(duplicateContext)
+                  .rendered.remainder.includes(technical),
+                true,
+              );
+              await page.locator("#duplicate-origin-field").evaluate((n) => n.remove());
+              const swap = () => {
+                const root = document.querySelector('section[aria-labelledby="v117-fonte"]');
+                const fields = [...root.querySelectorAll("dl > div")];
+                const origin = fields
+                  .find((n) => n.querySelector("dt")?.textContent === "Identificador da origem")
+                  .querySelector("dd");
+                const hash = fields
+                  .find((n) => n.querySelector("dt")?.textContent.startsWith("Hash do snapshot"))
+                  .querySelector("dd");
+                [origin.textContent, hash.textContent] = [hash.textContent, origin.textContent];
+              };
+              await page.evaluate(swap);
+              const exchanged = await privacyHarness.context(
+                localPage,
+                state,
+                await page.locator("body").innerText(),
+                await page.locator("body").ariaSnapshot(),
+                null,
+              );
+              assert.equal(
+                privacyHarness.contexts.get(exchanged).rendered.remainder.includes(technical),
+                true,
+              );
+              await page.evaluate(swap);
+            }
           }
           if (surface === "V117") {
             phase("CLOSE", item);
@@ -15212,13 +15324,59 @@ async function c8NativeSourceProbe(browser) {
               ),
             );
           }
+          currentObserver.close();
+          currentObserver = null;
+          page.off("framenavigated", navigated);
         }
+    for (surface of ["V117", "V119", "V120"])
+      for (mode of ["missing", "foreign"]) {
+        const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find(
+          (r) => r.surface === surface && r.width === 390 && r.theme === "dark",
+        );
+        const localPage = {
+          url: () => sut.HML_ORIGIN + item.path,
+          evaluate: page.evaluate.bind(page),
+        };
+        currentObserver = preparer.createOfficialObserver(page);
+        const state = {
+          scope: sut.C8_AUDIT_SCOPE,
+          verified: true,
+          closed: false,
+          generation: 1,
+          c8Observer: currentObserver,
+        };
+        privacyHarness.pages.set(localPage, state);
+        phase("NEGATIVE", item);
+        await page.goto(origin + item.path);
+        await page.waitForFunction(() => window.__ready);
+        await page.evaluate(({ surface, id, ap }) => window.__mount(surface, id, ap), {
+          surface,
+          id: b.competencies[surface === "V120" ? 1 : 0].id,
+          ap: b.competencies[1].presentationId,
+        });
+        await page.waitForFunction(
+          () =>
+            [...document.querySelectorAll('[role="status"],[role="alert"]')].some(
+              (n) => n.textContent.trim() && !/Carregando/.test(n.textContent),
+            ),
+          null,
+          { timeout: 5000 },
+        );
+        await assert.rejects(
+          () => privacyHarness.collect(localPage, item, state),
+          /(C8_CURRENT_BINDING|OBSERVATION_FAILED)/,
+        );
+        assert.equal(state.c8Current, undefined);
+        currentObserver.close();
+        currentObserver = null;
+      }
     assert.equal(readNames.has("obter_contexto_revisao_v117"), false);
     assert.equal(readNames.has("obter_detalhe_requisito_v117"), true);
     assert.equal(business, 0);
     phase("DONE");
     console.log("C8_SOURCE_REAL_24 PASS");
   } finally {
+    currentObserver?.close();
     await page?.close();
     server?.closeAllConnections();
     if (server) await new Promise((resolve) => server.close(resolve));
@@ -15253,6 +15411,9 @@ async function c8PrivacyHarness() {
   const declaration = ast.statements.find(
     (n) => ts.isFunctionDeclaration(n) && n.name?.text === "c8PrivacyContext",
   );
+  const collector = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "collectC8CurrentWire",
+  );
   const fields = ast.statements.find(
     (n) =>
       ts.isVariableStatement(n) &&
@@ -15261,17 +15422,35 @@ async function c8PrivacyHarness() {
   const pages = new WeakMap(),
     contexts = new WeakMap();
   const context = new Function(
+    "C8_RECOVERY_DOCUMENT",
+    "SYNTHETIC_FIXTURE",
+    "c8TechnicalFieldContracts",
     "C8_AUDIT_SCOPE",
     "privacy78Pages",
     "privacy78Contexts",
     "validateC8CurrentWire",
     "HML_ORIGIN",
     "fail",
-    fields.getText(ast) + "\n" + declaration.getText(ast) + ";return c8PrivacyContext;",
-  )(sut.C8_AUDIT_SCOPE, pages, contexts, sut.validateC8CurrentWire, sut.HML_ORIGIN, (code) => {
-    throw Object.assign(new Error(code), { code });
-  });
-  return { pages, contexts, context };
+    fields.getText(ast) +
+      "\n" +
+      declaration.getText(ast) +
+      "\n" +
+      collector.getText(ast) +
+      ";return {context:c8PrivacyContext,collect:collectC8CurrentWire};",
+  )(
+    sut.C8_RECOVERY_DOCUMENT,
+    sut.SYNTHETIC_FIXTURE,
+    sut.c8TechnicalFieldContracts,
+    sut.C8_AUDIT_SCOPE,
+    pages,
+    contexts,
+    sut.validateC8CurrentWire,
+    sut.HML_ORIGIN,
+    (code) => {
+      throw Object.assign(new Error(code), { code });
+    },
+  );
+  return { pages, contexts, ...context };
 }
 
 test("C8 contextual privacy refuses missing stale closed or foreign page owners before DOM evaluation", async () => {
@@ -15371,4 +15550,59 @@ test("C8 frozen protocol requires the original package binding and exactly one v
     mutate(invalid);
     assert.equal(sut.validateC8CurrentWire(item, invalid), false);
   }
+});
+
+test("C8 technical contracts bind each wire field to its own original UI selector and label", async () => {
+  assert.equal(typeof sut.c8TechnicalFieldContracts, "function");
+  const { data } = await c8SourceFixture(),
+    item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  const fields = sut.c8TechnicalFieldContracts(item, data);
+  const origin = fields.find((f) => f.field === "detail.requisito.origem_id");
+  assert.equal(origin.value, data.detail.requisito.origem_id);
+  assert.equal(origin.label, "Identificador da origem");
+  assert.equal(origin.selector, 'section[aria-labelledby="v117-fonte"] > dl > div > dd');
+  assert.equal(
+    fields.some((f) => f.field === "context.id_organizacao"),
+    false,
+  );
+  const hash = fields.find((f) => f.field === "detail.requisito.hash_snapshot");
+  assert.equal(hash.label, "Hash do snapshot");
+  assert.notEqual(origin.field, hash.field);
+  const hostile = structuredClone(data);
+  hostile.detail.requisito.descricao = "Pessoa fora do catálogo";
+  assert.equal(
+    sut.c8TechnicalFieldContracts(item, hostile).some((f) => f.value === "Pessoa fora do catálogo"),
+    false,
+  );
+});
+
+test("C8 opinion technical fields require each observed row to retain the current tenant and competence", async () => {
+  const { data, bindings: b } = await c8SourceFixture(),
+    item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V118");
+  const wire = {
+    overview: structuredClone(data.overview),
+    opinions: [
+      {
+        id_competencia: sut.SYNTHETIC_FIXTURE.competence,
+        id_organizacao: b.organization,
+        id_contrato: b.contract,
+        hash: "a".repeat(64),
+      },
+    ],
+  };
+  Object.assign(wire.overview.competencia, {
+    id: sut.SYNTHETIC_FIXTURE.competence,
+    competencia_referencia: "2026-11-01",
+  });
+  assert.equal(sut.validateC8CurrentWire(item, wire), true);
+  for (const delta of [
+    { id_organizacao: "foreign" },
+    { id_contrato: "foreign" },
+    { id_competencia: b.competencies[0].id },
+  ])
+    assert.equal(
+      sut.validateC8CurrentWire(item, { ...wire, opinions: [{ ...wire.opinions[0], ...delta }] }),
+      false,
+    );
+  assert.equal(sut.validateC8CurrentWire(item, { ...wire, opinions: null }), false);
 });
