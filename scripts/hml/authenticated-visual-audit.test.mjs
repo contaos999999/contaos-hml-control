@@ -6917,7 +6917,7 @@ test(
         );
       }
       await privacyWireChromium(browser, words);
-      await c8NativeSourceProbe(browser);
+      await c8NativeSourceProbe(browser, v102Css);
     } finally {
       release?.();
       await browser?.close();
@@ -14421,7 +14421,21 @@ function c8TechnicalRows() {
         contrastPassed: true,
         viewport: { width: item.width, height: 1000 },
         theme: item.theme,
-        targets: [],
+        ...(item.surface === "V117" && mode === "PRIMARY" ? { modalPassed: true } : {}),
+        targets:
+          item.surface === "V117" && mode === "PRIMARY"
+            ? [
+                {
+                  ordinal: 0,
+                  kind: "BUTTON",
+                  rect: { x: 0, y: 0, width: 44, height: 44 },
+                  connected: true,
+                  visible: true,
+                  hit: true,
+                  disabled: false,
+                },
+              ]
+            : [],
         pairs: [],
       },
       image: {
@@ -14690,6 +14704,9 @@ test("C8 V117 drawer uses the original opener and close with restored focus, rej
     evaluate: async () => focused,
   };
   const dialog = {
+    evaluate: async () => {
+      calls.push("settled");
+    },
     waitFor: async ({ state }) => {
       assert.equal(opened, state === "visible");
       calls.push(state);
@@ -14726,9 +14743,9 @@ test("C8 V117 drawer uses the original opener and close with restored focus, rej
     },
   };
   const close = await sut.openC8RequirementDrawer(page, item, sut.C8_AUDIT_SCOPE);
-  assert.deepEqual(calls, ["open", "visible"]);
+  assert.deepEqual(calls, ["open", "visible", "settled"]);
   assert.equal(await close(), true);
-  assert.deepEqual(calls, ["open", "visible", "close", "hidden", "focus"]);
+  assert.deepEqual(calls, ["open", "visible", "settled", "close", "hidden", "focus"]);
   let reads = 0;
   await assert.rejects(
     () =>
@@ -14954,7 +14971,7 @@ async function nativeC8ObservationIdentity() {
   };
 }
 
-async function c8NativeSourceProbe(browser) {
+async function c8NativeSourceProbe(browser, cssCompiler) {
   const fs = await import("node:fs/promises"),
     { join } = await import("node:path"),
     { tmpdir } = await import("node:os");
@@ -14991,6 +15008,21 @@ async function c8NativeSourceProbe(browser) {
       .getText(ast)
       .replace(/^export /, "");
     const before = new Function(oldDeclaration + ";return surfaceStateValid;")();
+    const cssAst = ts.createSourceFile(
+        "native-ui.js",
+        bundle.toString("utf8"),
+        99,
+        true,
+        ts.ScriptKind.JS,
+      ),
+      candidates = new Set();
+    const cssVisit = (node) => {
+      if (ts.isStringLiteralLike(node))
+        for (const token of node.text.split(/\s+/)) candidates.add(token);
+      ts.forEachChild(node, cssVisit);
+    };
+    cssVisit(cssAst);
+    const sourceCss = cssCompiler.build([...candidates]);
     const readNames = new Set();
     let surface = "V117",
       mode = "ok";
@@ -15100,7 +15132,9 @@ async function c8NativeSourceProbe(browser) {
       }
       res.writeHead(200, { "content-type": "text/html" });
       res.end(
-        '<!doctype html><html lang="pt-BR"><body><div id="root"></div><script type="module" src="/ui.js"></script></body></html>',
+        '<!doctype html><html lang="pt-BR"><head><style>' +
+          sourceCss +
+          '</style></head><body><div id="root"></div><script type="module" src="/ui.js"></script></body></html>',
       );
     });
     await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -15202,6 +15236,27 @@ async function c8NativeSourceProbe(browser) {
                 exact: true,
               })
               .waitFor();
+          if (surface === "V117") {
+            await page.getByRole("dialog").evaluate(async (node) =>
+              Promise.all(
+                node
+                  .getAnimations()
+                  .filter((a) => Number.isFinite(a.effect?.getTiming().iterations))
+                  .map((a) => a.finished.catch(() => {})),
+              ),
+            );
+            const modalGeometry = await sut.collectVisualMetrics(
+              page,
+              item,
+              sut.C8_AUDIT_SCOPE,
+              "PRIMARY",
+            );
+            assert.equal(modalGeometry.passed, true);
+            assert.ok(modalGeometry.targets.length > 0);
+            assert.ok(
+              await page.locator('main button[aria-label="Abrir requisito AUD-A-TXT-001"]').count(),
+            );
+          }
           phase("STATE", item);
           const observation = await page.evaluate(() => {
             const visible = (e) => e.getClientRects().length > 0;
@@ -15276,7 +15331,7 @@ async function c8NativeSourceProbe(browser) {
               await page.evaluate(() => {
                 const root = document.querySelector('section[aria-labelledby="v117-fonte"]');
                 const field = [...root.querySelectorAll("dl > div")].find(
-                  (n) => n.querySelector("dt")?.textContent === "Identificador da origem",
+                  (n) => n.querySelector("dt")?.textContent === "Identificador da origem: ",
                 );
                 const clone = field.cloneNode(true);
                 clone.id = "duplicate-origin-field";
@@ -15300,7 +15355,7 @@ async function c8NativeSourceProbe(browser) {
                 const root = document.querySelector('section[aria-labelledby="v117-fonte"]');
                 const fields = [...root.querySelectorAll("dl > div")];
                 const origin = fields
-                  .find((n) => n.querySelector("dt")?.textContent === "Identificador da origem")
+                  .find((n) => n.querySelector("dt")?.textContent === "Identificador da origem: ")
                   .querySelector("dd");
                 const hash = fields
                   .find((n) => n.querySelector("dt")?.textContent.startsWith("Hash do snapshot"))
@@ -15331,6 +15386,17 @@ async function c8NativeSourceProbe(browser) {
             await page.getByRole("dialog").waitFor({ state: "hidden" });
             await page.waitForFunction(sut.c8DrawerFocusValid, null, { timeout: 15000 });
             assert.equal(await opener.evaluate((n) => document.activeElement === n), true);
+            assert.equal(
+              (await sut.collectVisualMetrics(page, item, sut.C8_AUDIT_SCOPE, "PRIMARY")).passed,
+              false,
+            );
+            const normal = await sut.collectVisualMetrics(
+              page,
+              item,
+              sut.C8_AUDIT_SCOPE,
+              width < 768 ? "MOBILE_MENU" : "SIDEBAR_COLLAPSED",
+            );
+            assert.ok(normal.targets.length > 0);
             assert.equal(
               sut.surfaceStateValid(surface, { ...observation, dialogVisible: false }),
               false,
@@ -15707,4 +15773,38 @@ test("C8 native observer uses the checked-out Git identity without inheriting pr
   const observer = createOfficialObserver(page, { identity });
   assert.equal(observer.generation(), 0);
   observer.close();
+});
+
+test("C8 primary V117 measurement refuses a missing modal while complements retain the normal page", async () => {
+  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  const measurement = {
+    viewport: { width: item.width, height: 1000 },
+    theme: item.theme,
+    targets: [],
+    pairs: [],
+    dates: [],
+    table: null,
+    contrast: [],
+    overflowX: 0,
+    modalPassed: false,
+  };
+  const page = { evaluate: async () => measurement };
+  assert.equal(
+    (await sut.collectVisualMetrics(page, item, sut.C8_AUDIT_SCOPE, "PRIMARY")).passed,
+    false,
+  );
+  assert.equal(
+    (await sut.collectVisualMetrics(page, item, sut.C8_AUDIT_SCOPE, "SIDEBAR_COLLAPSED")).passed,
+    true,
+  );
+  assert.equal((await sut.collectVisualMetrics(page, item)).passed, true);
+});
+
+test("C8 V117 reported primary proof requires the actual modal measurement", () => {
+  const rows = c8TechnicalRows(),
+    i = rows.findIndex((r) => r.surface === "V117");
+  rows[i].visualCapture.metrics.modalPassed = true;
+  assert.equal(sut.summarizeCases(rows, sut.C8_AUDIT_SCOPE).matrixComplete, true);
+  rows[i].visualCapture.metrics.modalPassed = false;
+  assert.equal(sut.summarizeCases(rows, sut.C8_AUDIT_SCOPE).matrixComplete, false);
 });

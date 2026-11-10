@@ -2505,6 +2505,13 @@ export function run78VisualEvidenceValid(row, scope = null) {
       context.mode !== mode
     )
       return false;
+    if (
+      scope === C8_AUDIT_SCOPE &&
+      row.surface === "V117" &&
+      mode === "PRIMARY" &&
+      (proof?.metrics?.modalPassed !== true || !proof.metrics.targets?.length)
+    )
+      return false;
     const expectedSrc =
       mode === "SIDEBAR_COLLAPSED"
         ? "/brand/ContaOS_Simbolo_Branco.svg"
@@ -5579,7 +5586,7 @@ async function runAuthenticatedAudit() {
         ),
       measure: () => {
         if (page.url() !== HML_ORIGIN + captureItem.path) fail("VISUAL_CASE_IDENTITY");
-        return collectVisualMetrics(page, captureItem);
+        return collectVisualMetrics(page, captureItem, scope, captureMode);
       },
       privacy: async () => (await inspectPrivacy(page, words)) !== null,
       save: () => {
@@ -6353,152 +6360,180 @@ export function visualGeometryValid(value) {
 }
 
 /** Real geometry only; labels, values, arbitrary selectors and user text never leave the page. */
-export async function collectVisualMetrics(page, item) {
-  const measured = await page.evaluate(({ surface, theme }) => {
-    const visible = (e) =>
-      e.isConnected &&
-      e.getClientRects().length > 0 &&
-      getComputedStyle(e).visibility !== "hidden" &&
-      getComputedStyle(e).display !== "none";
-    const rect = (e) => {
-      const b = e.getBoundingClientRect();
-      return { x: b.x, y: b.y, width: b.width, height: b.height };
-    };
-    const viewport = { width: innerWidth, height: innerHeight };
-    const controls = [
-      ...document.querySelectorAll('input:not([type="hidden"]),select,textarea,button,a[href]'),
-    ].filter((e) => {
-      if (!visible(e) || e.closest("[inert]")) return false;
-      const r = rect(e);
-      return r.width > 0 && r.height > 0 && r.y >= 0 && r.y + r.height <= innerHeight;
-    });
-    const targets = controls.map((e, ordinal) => {
-      const r = rect(e),
-        inset = Math.min(3, r.width / 4, r.height / 4);
-      const points = [
-        [r.x + r.width / 2, r.y + r.height / 2],
-        [r.x + inset, r.y + r.height / 2],
-        [r.x + r.width - inset, r.y + r.height / 2],
-        [r.x + r.width / 2, r.y + inset],
-        [r.x + r.width / 2, r.y + r.height - inset],
-      ];
-      return {
-        ordinal,
-        kind: e.matches("input")
-          ? "INPUT"
-          : e.matches("select")
-            ? "SELECT"
-            : e.matches("textarea")
-              ? "TEXTAREA"
-              : e.matches("button")
-                ? "BUTTON"
-                : "LINK",
-        rect: r,
-        connected: e.isConnected,
-        visible: visible(e),
-        disabled:
-          e.matches(":disabled") ||
-          (e.getAttribute("aria-disabled") === "true" &&
-            e.matches('button,input,select,textarea,a[href],[role="button"]')),
-        hit: points.every(([x, y]) => {
-          const hit = document.elementFromPoint(x, y);
-          return hit === e || e.contains(hit);
-        }),
+export async function collectVisualMetrics(page, item, scope = null, mode = "PRIMARY") {
+  scope = auditScope(scope);
+  if (
+    scope &&
+    (!privateCases(scope).some((c) => caseKey(c) === caseKey(item) && c.path === item.path) ||
+      !["PRIMARY", "SIDEBAR_COLLAPSED", "MOBILE_MENU"].includes(mode))
+  )
+    fail("VISUAL_CASE_IDENTITY");
+  const modalRequired = scope === C8_AUDIT_SCOPE && item.surface === "V117" && mode === "PRIMARY";
+  const measured = await page.evaluate(
+    ({ surface, theme, modalRequired }) => {
+      const visible = (e) =>
+        e.isConnected &&
+        e.getClientRects().length > 0 &&
+        getComputedStyle(e).visibility !== "hidden" &&
+        getComputedStyle(e).display !== "none";
+      const rect = (e) => {
+        const b = e.getBoundingClientRect();
+        return { x: b.x, y: b.y, width: b.width, height: b.height };
       };
-    });
-    let table = null;
-    if (surface === "V101") {
-      const section = document.querySelector('section[aria-labelledby="v101-lista"]');
-      const t = section?.querySelector("table"),
-        cards = section?.querySelector('ul[aria-label="Contratantes (lista compacta)"]');
-      let clipping = 0;
-      if (t && visible(t))
-        for (const cell of t.querySelectorAll("th,td")) {
-          const c = cell.getBoundingClientRect();
-          const range = document.createRange();
-          range.selectNodeContents(cell);
-          for (const r of range.getClientRects())
-            if (r.width > 0 && (r.left < c.left - 0.5 || r.right > c.right + 0.5)) clipping++;
-        }
-      table = {
-        containerWidth: section
-          ? section.clientWidth -
-            parseFloat(getComputedStyle(section).paddingLeft) -
-            parseFloat(getComputedStyle(section).paddingRight)
-          : 0,
-        tableVisible: !!t && visible(t),
-        cardsVisible: !!cards && visible(cards),
-        clipping,
-        helpTargets: t && visible(t) ? [...t.querySelectorAll("button")].map((e) => rect(e)) : [],
-      };
-    }
-    const dates = (
-      surface === "V105" ? ["v105-inicio", "v105-fim"] : surface === "V113" ? ["v113-mes"] : []
-    ).map((id) => {
-      const e = document.getElementById(id);
-      return {
-        id,
-        present: !!e && visible(e),
-        scheme: e ? getComputedStyle(e).colorScheme : "",
-        type: e?.getAttribute("type") ?? "",
-      };
-    });
-    const contrast = [];
-    if (["V106", "V107"].includes(surface)) {
-      const pixel = (color) => {
-        const canvas = document.createElement("canvas");
-        canvas.width = canvas.height = 1;
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, 1, 1);
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, 1, 1);
-        return [...ctx.getImageData(0, 0, 1, 1).data];
-      };
-      const lum = (rgb) =>
-        rgb
-          .slice(0, 3)
-          .map((v) => {
-            const s = v / 255;
-            return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-          })
-          .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
-      for (const e of document.querySelectorAll("main span")) {
-        const name = e.textContent?.trim();
-        if (!["Situação:", "Criticidade:"].includes(name) || !visible(e)) continue;
-        let ancestor = e,
-          bg = null;
-        while (ancestor) {
-          const c = pixel(getComputedStyle(ancestor).backgroundColor);
-          if (c[3] === 255) {
-            bg = c;
-            break;
+      const viewport = { width: innerWidth, height: innerHeight };
+      const dialogs = modalRequired
+        ? [...document.querySelectorAll('[role="dialog"]')].filter(visible)
+        : [];
+      const modal =
+        dialogs.length === 1 &&
+        (dialogs[0].getAttribute("aria-labelledby") || "")
+          .split(/\s+/)
+          .map((id) => document.getElementById(id)?.textContent || "")
+          .join(" ")
+          .trim() === "Detalhe do requisito"
+          ? dialogs[0]
+          : null;
+      const controls = [
+        ...document.querySelectorAll('input:not([type="hidden"]),select,textarea,button,a[href]'),
+      ].filter((e) => {
+        if (!visible(e) || e.closest("[inert]") || (modalRequired && !modal?.contains(e)))
+          return false;
+        const r = rect(e);
+        return r.width > 0 && r.height > 0 && r.y >= 0 && r.y + r.height <= innerHeight;
+      });
+      const targets = controls.map((e, ordinal) => {
+        const r = rect(e),
+          inset = Math.min(3, r.width / 4, r.height / 4);
+        const points = [
+          [r.x + r.width / 2, r.y + r.height / 2],
+          [r.x + inset, r.y + r.height / 2],
+          [r.x + r.width - inset, r.y + r.height / 2],
+          [r.x + r.width / 2, r.y + inset],
+          [r.x + r.width / 2, r.y + r.height - inset],
+        ];
+        return {
+          ordinal,
+          kind: e.matches("input")
+            ? "INPUT"
+            : e.matches("select")
+              ? "SELECT"
+              : e.matches("textarea")
+                ? "TEXTAREA"
+                : e.matches("button")
+                  ? "BUTTON"
+                  : "LINK",
+          rect: r,
+          connected: e.isConnected,
+          visible: visible(e),
+          disabled:
+            e.matches(":disabled") ||
+            (e.getAttribute("aria-disabled") === "true" &&
+              e.matches('button,input,select,textarea,a[href],[role="button"]')),
+          hit: points.every(([x, y]) => {
+            const hit = document.elementFromPoint(x, y);
+            return hit === e || e.contains(hit);
+          }),
+        };
+      });
+      let table = null;
+      if (surface === "V101") {
+        const section = document.querySelector('section[aria-labelledby="v101-lista"]');
+        const t = section?.querySelector("table"),
+          cards = section?.querySelector('ul[aria-label="Contratantes (lista compacta)"]');
+        let clipping = 0;
+        if (t && visible(t))
+          for (const cell of t.querySelectorAll("th,td")) {
+            const c = cell.getBoundingClientRect();
+            const range = document.createRange();
+            range.selectNodeContents(cell);
+            for (const r of range.getClientRects())
+              if (r.width > 0 && (r.left < c.left - 0.5 || r.right > c.right + 0.5)) clipping++;
           }
-          ancestor = ancestor.parentElement;
-        }
-        const fg = pixel(getComputedStyle(e).color);
-        const ratio =
-          bg && fg[3] === 255
-            ? (Math.max(lum(bg), lum(fg)) + 0.05) / (Math.min(lum(bg), lum(fg)) + 0.05)
-            : 0;
-        contrast.push({
-          node: name === "Situação:" ? "STATUS_LABEL" : "CRITICALITY_LABEL",
-          ratio,
-          threshold: 4.5,
-        });
+        table = {
+          containerWidth: section
+            ? section.clientWidth -
+              parseFloat(getComputedStyle(section).paddingLeft) -
+              parseFloat(getComputedStyle(section).paddingRight)
+            : 0,
+          tableVisible: !!t && visible(t),
+          cardsVisible: !!cards && visible(cards),
+          clipping,
+          helpTargets: t && visible(t) ? [...t.querySelectorAll("button")].map((e) => rect(e)) : [],
+        };
       }
-    }
-    return {
-      viewport,
-      targets,
-      pairs: [],
-      table,
-      dates,
-      contrast,
-      theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
-      overflowX: document.documentElement.scrollWidth - innerWidth,
-    };
-  }, item);
-  const identityPassed = measured.viewport.width === item.width && measured.theme === item.theme;
+      const dates = (
+        surface === "V105" ? ["v105-inicio", "v105-fim"] : surface === "V113" ? ["v113-mes"] : []
+      ).map((id) => {
+        const e = document.getElementById(id);
+        return {
+          id,
+          present: !!e && visible(e),
+          scheme: e ? getComputedStyle(e).colorScheme : "",
+          type: e?.getAttribute("type") ?? "",
+        };
+      });
+      const contrast = [];
+      if (["V106", "V107"].includes(surface)) {
+        const pixel = (color) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = 1;
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, 1, 1);
+          ctx.fillStyle = color;
+          ctx.fillRect(0, 0, 1, 1);
+          return [...ctx.getImageData(0, 0, 1, 1).data];
+        };
+        const lum = (rgb) =>
+          rgb
+            .slice(0, 3)
+            .map((v) => {
+              const s = v / 255;
+              return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+            })
+            .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+        for (const e of document.querySelectorAll("main span")) {
+          const name = e.textContent?.trim();
+          if (!["Situação:", "Criticidade:"].includes(name) || !visible(e)) continue;
+          let ancestor = e,
+            bg = null;
+          while (ancestor) {
+            const c = pixel(getComputedStyle(ancestor).backgroundColor);
+            if (c[3] === 255) {
+              bg = c;
+              break;
+            }
+            ancestor = ancestor.parentElement;
+          }
+          const fg = pixel(getComputedStyle(e).color);
+          const ratio =
+            bg && fg[3] === 255
+              ? (Math.max(lum(bg), lum(fg)) + 0.05) / (Math.min(lum(bg), lum(fg)) + 0.05)
+              : 0;
+          contrast.push({
+            node: name === "Situação:" ? "STATUS_LABEL" : "CRITICALITY_LABEL",
+            ratio,
+            threshold: 4.5,
+          });
+        }
+      }
+      return {
+        ...(modalRequired ? { modalPassed: !!modal && targets.length > 0 } : {}),
+        viewport,
+        targets,
+        pairs: [],
+        table,
+        dates,
+        contrast,
+        theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
+        overflowX: document.documentElement.scrollWidth - innerWidth,
+      };
+    },
+    { ...item, modalRequired },
+  );
+  const identityPassed =
+    measured.viewport.width === item.width &&
+    measured.theme === item.theme &&
+    (!modalRequired || measured.modalPassed === true);
   const geometryPassed = visualGeometryValid(measured);
   const tablePassed =
     !measured.table ||
@@ -6991,6 +7026,14 @@ export async function openC8RequirementDrawer(page, item, scope) {
   await opener.click();
   const dialog = page.getByRole("dialog", { name: "Detalhe do requisito", exact: true });
   await dialog.waitFor({ state: "visible" });
+  await dialog.evaluate(async (node) =>
+    Promise.all(
+      node
+        .getAnimations()
+        .filter((a) => Number.isFinite(a.effect?.getTiming().iterations))
+        .map((a) => a.finished.catch(() => {})),
+    ),
+  );
   return async () => {
     if (page.url() !== HML_ORIGIN + item.path) fail("C8_DRAWER_BINDING");
     await dialog.getByRole("button", { name: "Fechar", exact: true }).click();
