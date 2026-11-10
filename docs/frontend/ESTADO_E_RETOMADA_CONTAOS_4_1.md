@@ -1,3 +1,21 @@
+## Checkpoint Trilha C, 09/11/2026 Bahia: API51 preservada e R19 em implementação
+
+Este registro complementa o histórico integral abaixo; não certifica UI, C8 ou V1. GATEbackend138/6757356422 contém a leitura original independente.
+
+API C13: inspeção oficial do artefato13663262831/run42596392357 conferiu ZIP7682bytes/SHA2565e2177afc72b78e0a8e6109bb8795633886c8052c37a756832f616a8c5066795 e três membros. report.json SHA3cc9bc62fd1a9233d00dc699a2d9a4e49de46cb6da741f2050e9cbf19d473185 tem51checks/51true/0false. final.json SHAb217fab42e61e2fe7648a1e935bb016a34aa663e236cc3ec0fbb3ac96aee71aa confirmaAPI_PASS_UI_PENDING; cleanup.json SHAa6e5f4fa67f115e6e6e376a89aa4188457d26d51429954a36fc1f9a1469571d3 confirmaQUARENTENA_VERIFICADA. JWTausente/malformado/assinaturaforjada/expiraçãonatural, cross-tenant/contrato/sessão/cursor, RLSchat/MASTER, revogaçãomesmotoken, concorrência429/limite6+1 e OpenAI3turnos/histórico/encerramento/fonterevogada estão true no report. Não repetir a prova. Releitura não atribui certificado ao deployment/interface atual.
+
+IntegraçãoC13: PR463 superada pela464/merge50c7930d, já ancestral de source0024b3c. Blobs C13 foram corrigidos depois em e185199/d8b4754: componente119f3960 e clienteac57042b em0024. EquivalênciaUI ainda exige prova atual; não pedir deploy apenas por diferença contra464. Nenhum novo deploy/PROD realizado.
+
+PLAN C8/64 PR554 integradoafe42819e62bbe8e3c25b4a5869f8ba59db124f5, HEAD189816d9d7167bc79ce6be4234dc4bde568df63d, Zero42741155984/LOCK42741155967SUCCESS, reviews5835874381/5835877603 semCritical/Important. Seleção futura exata V111,V114,V115,V116,V117,V118,V119,V120 ×1440/1280/768/390 ×light/dark. Preservar19anteriores/default208/A18424/API. GATE próprio posterior depende de R19 original íntegro, bindings/catálogo e seleção requestbound, sem remoção isolada de AUDIT_BINDING_PENDING. Minor documental registrado: GATE deve fechar composição de casos preservados e reteste focal com proveniência, sem recaptura ou PASS parcial.
+
+BUILD552 continua DRAFT. Último HEAD publicado eeaf05b8cad12a602f8bcdb8b7cdbdec01ec0fe0, pai2733efc5e596bade6f77fc02d7e4383d3459e936: sucessorVG causal/pending/latest/ordem de validação/AP→pacote→itens e readonlyarm/policy/getterantesefeitos.17focaisPASS, lint/formato/diffPASS; reviews5835912836/5835938492 aprovam apenas incrementos. Zero42743082851/LOCK42743082856SUCCESS; protocolosFixtures42743082896/Auth42743083002FAILURE esperados no incremento incompleto, não provasAuthHML. Ainda faltamDoc18/candidato/plumbing/budget/writer/resume/SSR/replay/native18/CI4/revisãofinal. Autoraoriginal1a6 com ambienteFAILED adotou continuidade1e7 em6757119321; sem edição concorrente. Implementação local adicional8c82abb está sob testes, NÃO publicada nem certificada, e não deve ser confundida com HEAD remoto.
+
+R18 original já inspecionado42734294198, ledger17confirmadas+2reservas=19/saldo5teórico. RecuperaçãoR19ZEROARMS; não repetir R18/Sept/Oct/R16/R17 nem promover/reembolsar reservasR11/R15. Última etapa comprovada é integraçãoPLAN554+incrementos parciais552+API51inspecionada. Próxima: concluir implementaçãoR19 com testes/nativos/CI4/revisão/merge; request único readonly e inspeção original30dados/SHA31/HISTORY27, depoisGATE/C8/64 e provaUI13.
+
+Capacidade de aquisição oficial de artefato privado confirmada por GitHub.download_workflow_artifact e verificação local de digest/membros no artefatoAPI original; não foi baixado PNG/DOMprivado. FuturoGATE de revisão visual deve fechar IDs/limites/privacidade/pixels. Nenhuma novaAuth/SQL/OpenAI/runtime/deploy executada por este checkpoint. CertificaçãoTrilhaC/C8/A184/27/72/DoD/V1 permanece pendente das próprias evidências.
+
+---
+
 ## 2026-11-09 | GATE R15: correção estrita do transporte externo512 e prova R14
 
 PLAN513merge1282198/review5832530162/CI42696531055+42696530807SUCCESS. GATE separado2auditmjs define2tentativas≤5s/sóTIMEOUTfetchoubody/sinalporattempt/deadline60s/ENVtokenporattempt/Master0GET; corrige signalforaescopo512 semReferenceError/errobruto. ProvaR14originalS6a62:10GETlógicos≤20físicos,4Gitblobsoriginais,matriz3runs/attempt1/jobs/artifacts0/cache9fresh30/resetantesENV. R14spent/nonce15futura; DocR13/UI507/10+1+13/R12cache/writer22+SHA23/HISTORY19/native18preservados. Nenhum Auth/SQL/deploy/rerun/request autorizado por este documento. Histórico integral abaixo.
