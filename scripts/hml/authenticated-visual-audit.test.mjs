@@ -3021,9 +3021,9 @@ test("diagnóstico de privacidade contém apenas razões e contadores limitados"
 test("retomada preserva18 casos desktop e exige recaptura dos6 móveis", () => {
   const preserved = fn("preservedPrivateCase");
   const rows = fn("privateCases")();
-  assert.equal(rows.filter(item => preserved(item)).length, 18);
+  assert.equal(rows.filter((item) => preserved(item)).length, 18);
   assert.equal(rows.filter((r) => !preserved(r)).length, 190);
-  for (const row of rows.filter(item => preserved(item))) {
+  for (const row of rows.filter((item) => preserved(item))) {
     const result = preserved(row);
     assert.equal(result.status, "PRESERVADO_BASELINE");
     assert.equal(result.baselineRun, 42496235106);
@@ -11294,12 +11294,13 @@ test("R8 is sole executable fixture nonce and all seven original requests remain
     source.indexOf("function requireSingleRequestOperation("),
     source.indexOf("export async function verifySingleRequestGit("),
   );
-  const guard = new Function("fail", "resolveC8AuditScope", guardSource + ";return requireSingleRequestOperation;")(
-    (code) => {
-      throw Object.assign(new Error(code), { code });
-    },
-    sut.resolveC8AuditScope,
-  );
+  const guard = new Function(
+    "fail",
+    "resolveC8AuditScope",
+    guardSource + ";return requireSingleRequestOperation;",
+  )((code) => {
+    throw Object.assign(new Error(code), { code });
+  }, sut.resolveC8AuditScope);
   assert.throws(() => guard("audit"), { code: "AUDIT_BINDING_PENDING" });
 });
 
@@ -11455,7 +11456,6 @@ test("R8 parsed workflows isolate ephemeral read token and exact read scopes wit
     }
   }
 });
-
 
 async function r8R7Fixture() {
   const { execFileSync } = await import("node:child_process");
@@ -11935,7 +11935,9 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     now = 1000;
   const identity = { harnessSha: sha, moduleHash: "module", testHash: "test" };
   const request = {
-    schema_version:1, issue:317, operation:"audit",
+    schema_version: 1,
+    issue: 317,
+    operation: "audit",
     request_id: sut.SINGLE_REQUEST.audit.nonce,
     frontend_sha: "",
     deployment_id: "",
@@ -11958,8 +11960,9 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     deploymentId: "",
     parentSha: parent,
     upstreamId: 11,
-    r7ZeroAuth: canonical, auditScope:"C8",
-    c8RecoverySha256:"3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee",
+    r7ZeroAuth: canonical,
+    auditScope: "C8",
+    c8RecoverySha256: "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee",
   };
   const env = {
     GITHUB_EVENT_NAME: "workflow_run",
@@ -11998,9 +12001,9 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
   );
   const { isProxy } = await import("node:util/types");
   const loader = factory({
-    C8_RECOVERY_DOCUMENT:sut.C8_RECOVERY_DOCUMENT,
-    validateC8RecoveryDocument:sut.validateC8RecoveryDocument,
-    resolveC8AuditScope:sut.resolveC8AuditScope,
+    C8_RECOVERY_DOCUMENT: sut.C8_RECOVERY_DOCUMENT,
+    validateC8RecoveryDocument: sut.validateC8RecoveryDocument,
+    resolveC8AuditScope: sut.resolveC8AuditScope,
     validateR18RecoveryDocument: sut.validateR18RecoveryDocument,
     validateR18RegistrationCandidate: sut.validateR18RegistrationCandidate,
     R18_RECOVERY_DOCUMENT: sut.R18_RECOVERY_DOCUMENT,
@@ -12008,7 +12011,10 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     isProxy,
     assertPrivateRequestEnvironment: sut.assertPrivateRequestEnvironment,
     assertRequestMetadataEnvironment: sut.assertRequestMetadataEnvironment,
-    requireSingleRequestOperation: (operation,request) => {assert.equal(operation,"audit");return sut.resolveC8AuditScope(request);},
+    requireSingleRequestOperation: (operation, request) => {
+      assert.equal(operation, "audit");
+      return sut.resolveC8AuditScope(request);
+    },
     fileURLToPath,
     join,
     sourceModuleUrl: import.meta.url,
@@ -12818,7 +12824,6 @@ test("R12 actual report recovery retains its ten fields while reservation stays 
   ]);
   assert.equal(Object.hasOwn(value, "priorReserved"), false);
 });
-
 
 const R13_R12_PROOF = Object.freeze({
   schema: "contaos.single-request.r12-zero-auth.v1",
@@ -14340,28 +14345,56 @@ test("C8 exact inventory selects sixty-four cases without changing the default t
   assert.ok(scope && Object.isFrozen(scope));
   const selected = fn("privateCases")(scope);
   assert.equal(selected.length, 64);
-  assert.deepEqual([...new Set(selected.map((r) => r.surface))],
-    ["V111", "V114", "V115", "V116", "V117", "V118", "V119", "V120"]);
+  assert.deepEqual(
+    [...new Set(selected.map((r) => r.surface))],
+    ["V111", "V114", "V115", "V116", "V117", "V118", "V119", "V120"],
+  );
   assert.equal(selected.filter((r) => r.fixtureBlocked || !r.path).length, 0);
   assert.equal(fn("privateCases")().length, 208);
   for (const item of selected) {
     assert.equal(fn("preservedPrivateCase")(item, scope), null);
     assert.equal(fn("run78VisualSelection")(item, scope).required, true);
   }
-  assert.equal(selected.find((r) => r.surface === "V117").path,
-    "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/analise");
-  assert.equal(selected.find((r) => r.surface === "V119").path,
-    "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar");
-  assert.equal(selected.find((r) => r.surface === "V120").path,
-    "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27/apresentacoes/eb6d5b1c-8b64-418b-aa82-bf1f29d41768");
-  assert.ok(selected.filter((r) => ["V114", "V115", "V116", "V118"].includes(r.surface))
-    .every((r) => r.path.includes("59072760-4420-4598-82dd-367f41a79e89")));
+  assert.equal(
+    selected.find((r) => r.surface === "V117").path,
+    "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/analise",
+  );
+  assert.equal(
+    selected.find((r) => r.surface === "V119").path,
+    "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar",
+  );
+  assert.equal(
+    selected.find((r) => r.surface === "V120").path,
+    "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27/apresentacoes/eb6d5b1c-8b64-418b-aa82-bf1f29d41768",
+  );
+  assert.ok(
+    selected
+      .filter((r) => ["V114", "V115", "V116", "V118"].includes(r.surface))
+      .every((r) => r.path.includes("59072760-4420-4598-82dd-367f41a79e89")),
+  );
 });
 
 test("C8 injected scopes fail without reading getters or proxy traps", () => {
   let reads = 0;
-  const bad = { get surfaces() { reads++; return ["SYS04"]; } };
-  const proxy = new Proxy({}, { get() { reads++; throw Error("SECRET"); }, ownKeys() { reads++; throw Error("SECRET"); } });
+  const bad = {
+    get surfaces() {
+      reads++;
+      return ["SYS04"];
+    },
+  };
+  const proxy = new Proxy(
+    {},
+    {
+      get() {
+        reads++;
+        throw Error("SECRET");
+      },
+      ownKeys() {
+        reads++;
+        throw Error("SECRET");
+      },
+    },
+  );
   for (const value of ["C8", {}, [], bad, proxy]) {
     assert.throws(() => fn("privateCases")(value), /AUDIT_SCOPE/);
     assert.throws(() => fn("completePrivateRecords")([], value), /AUDIT_SCOPE/);
@@ -14374,46 +14407,117 @@ function c8TechnicalRows() {
   const scope = sut.C8_AUDIT_SCOPE;
   assert.ok(scope);
   return fn("privateCases")(scope).map((item) => {
-    const key = fn("caseKey")(item), mobile = item.width < 768;
-    const proof = (mode, count) => ({phase:"BEFORE_PNG",measuredAt:1,capturedAt:2,
-      metrics:{passed:true,geometryPassed:true,tablePassed:true,datesPassed:true,
-        contrastPassed:true,viewport:{width:item.width,height:1000},theme:item.theme,targets:[],pairs:[]},
-      image:{count,context:{surface:item.surface,width:item.width,theme:item.theme,mode},
-        images:Array.from({length:count},()=>({decoded:true,complete:true,width:131,height:32,
-          naturalWidth:900,naturalHeight:220,src:mode === "SIDEBAR_COLLAPSED"
-            ? "/brand/ContaOS_Simbolo_Branco.svg" : "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg"}))}});
-    return { ...good, ...item, observedWidth: item.width, observedTheme: item.theme,
-      brandCount:mobile ? 0 : 1, status:"PASS_AUTOMATIZADO", screenshot:`screenshots/${key}.png`,dom:`dom/${key}.json`,
-      visualCapture:proof("PRIMARY",mobile ? 0 : 1), keyboard:{passed:true},navigationVerified:true,
-      drawerCloseVerified:true,langPtBr:true,badState:false,fontFamily:"Inter, Arial, sans-serif",accessibility:{violations:[]},
-      sidebarSupplement:{passed:true,mode:mobile ? "MOBILE" : "DESKTOP",brandCount:1,
-        screenshot:`screenshots/${key}${mobile ? "_menu" : "_sidebar-recolhida"}.png`,sha256:"a".repeat(64),
-        visualCapture:proof(mobile ? "MOBILE_MENU" : "SIDEBAR_COLLAPSED",1)}};
+    const key = fn("caseKey")(item),
+      mobile = item.width < 768;
+    const proof = (mode, count) => ({
+      phase: "BEFORE_PNG",
+      measuredAt: 1,
+      capturedAt: 2,
+      metrics: {
+        passed: true,
+        geometryPassed: true,
+        tablePassed: true,
+        datesPassed: true,
+        contrastPassed: true,
+        viewport: { width: item.width, height: 1000 },
+        theme: item.theme,
+        targets: [],
+        pairs: [],
+      },
+      image: {
+        count,
+        context: { surface: item.surface, width: item.width, theme: item.theme, mode },
+        images: Array.from({ length: count }, () => ({
+          decoded: true,
+          complete: true,
+          width: 131,
+          height: 32,
+          naturalWidth: 900,
+          naturalHeight: 220,
+          src:
+            mode === "SIDEBAR_COLLAPSED"
+              ? "/brand/ContaOS_Simbolo_Branco.svg"
+              : "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+        })),
+      },
+    });
+    return {
+      ...good,
+      ...item,
+      observedWidth: item.width,
+      observedTheme: item.theme,
+      brandCount: mobile ? 0 : 1,
+      status: "PASS_AUTOMATIZADO",
+      screenshot: `screenshots/${key}.png`,
+      dom: `dom/${key}.json`,
+      visualCapture: proof("PRIMARY", mobile ? 0 : 1),
+      keyboard: { passed: true },
+      navigationVerified: true,
+      drawerCloseVerified: true,
+      langPtBr: true,
+      badState: false,
+      fontFamily: "Inter, Arial, sans-serif",
+      accessibility: { violations: [] },
+      sidebarSupplement: {
+        passed: true,
+        mode: mobile ? "MOBILE" : "DESKTOP",
+        brandCount: 1,
+        screenshot: `screenshots/${key}${mobile ? "_menu" : "_sidebar-recolhida"}.png`,
+        sha256: "a".repeat(64),
+        visualCapture: proof(mobile ? "MOBILE_MENU" : "SIDEBAR_COLLAPSED", 1),
+      },
+    };
   });
 }
 
 test("C8 summary rejects a PASS label without the complete visual and interaction proof", () => {
-  const rows = c8TechnicalRows(), scope = sut.C8_AUDIT_SCOPE;
-  for (const delta of [{visualCapture:null},{keyboard:{passed:false}},{navigationVerified:false},
-    {sidebarSupplement:{...rows[0].sidebarSupplement,passed:false}},
-    {accessibility:{violations:[{id:"color-contrast",count:1}]}},{langPtBr:false},{badState:true},
-    {fontFamily:"serif"}]) {
-    assert.equal(fn("summarizeCases")(rows.map((r,i)=>i ? r : {...r,...delta}),scope).matrixComplete,false);
+  const rows = c8TechnicalRows(),
+    scope = sut.C8_AUDIT_SCOPE;
+  for (const delta of [
+    { visualCapture: null },
+    { keyboard: { passed: false } },
+    { navigationVerified: false },
+    { sidebarSupplement: { ...rows[0].sidebarSupplement, passed: false } },
+    { accessibility: { violations: [{ id: "color-contrast", count: 1 }] } },
+    { langPtBr: false },
+    { badState: true },
+    { fontFamily: "serif" },
+  ]) {
+    assert.equal(
+      fn("summarizeCases")(
+        rows.map((r, i) => (i ? r : { ...r, ...delta })),
+        scope,
+      ).matrixComplete,
+      false,
+    );
   }
 });
 
 test("C8 summary requires sixty-four distinct valid keys with exact routes and no failed or extra cases", () => {
-  const scope = sut.C8_AUDIT_SCOPE, rows = c8TechnicalRows();
+  const scope = sut.C8_AUDIT_SCOPE,
+    rows = c8TechnicalRows();
   assert.equal(fn("summarizeCases")(rows, scope).matrixComplete, true);
   assert.equal(fn("summarizeCases")(rows, scope).passed, 64);
   assert.equal(fn("summarizeCases")(rows, scope).globalComplete, false);
-  for (const changed of [rows.slice(1), [...rows, rows[0]], [...rows.slice(1), rows[1]],
-    rows.map((r,i) => i ? r : {...r,path:"/administracao/usuarios"}),
-    rows.map((r,i) => i ? r : {...r,status:"FAIL"}),
-    rows.map((r,i) => i ? r : {...r,surface:"SYS04"}),
-    rows.map((r,i) => i ? r : {...r,surface:"SYS04",path:undefined,
-      screenshot:`screenshots/${fn("caseKey")({...r,surface:"SYS04"})}.png`,
-      dom:`dom/${fn("caseKey")({...r,surface:"SYS04"})}.json`})])
+  for (const changed of [
+    rows.slice(1),
+    [...rows, rows[0]],
+    [...rows.slice(1), rows[1]],
+    rows.map((r, i) => (i ? r : { ...r, path: "/administracao/usuarios" })),
+    rows.map((r, i) => (i ? r : { ...r, status: "FAIL" })),
+    rows.map((r, i) => (i ? r : { ...r, surface: "SYS04" })),
+    rows.map((r, i) =>
+      i
+        ? r
+        : {
+            ...r,
+            surface: "SYS04",
+            path: undefined,
+            screenshot: `screenshots/${fn("caseKey")({ ...r, surface: "SYS04" })}.png`,
+            dom: `dom/${fn("caseKey")({ ...r, surface: "SYS04" })}.json`,
+          },
+    ),
+  ])
     assert.equal(fn("summarizeCases")(changed, scope).matrixComplete, false);
   const completed = fn("completePrivateRecords")([], scope);
   assert.equal(completed.length, 64);
@@ -14421,11 +14525,12 @@ test("C8 summary requires sixty-four distinct valid keys with exact routes and n
 });
 
 test("C8 interrupted completion rejects injected or duplicate rows before adding any records", () => {
-  const scope = sut.C8_AUDIT_SCOPE, one = c8TechnicalRows()[0];
-  for (const rows of [[{...one,surface:"SYS04"}],[one,one],[{...one,path:"/login"}]]) {
+  const scope = sut.C8_AUDIT_SCOPE,
+    one = c8TechnicalRows()[0];
+  for (const rows of [[{ ...one, surface: "SYS04" }], [one, one], [{ ...one, path: "/login" }]]) {
     const before = rows.length;
-    assert.throws(() => fn("completePrivateRecords")(rows,scope), /AUDIT_CASES/);
-    assert.equal(rows.length,before);
+    assert.throws(() => fn("completePrivateRecords")(rows, scope), /AUDIT_CASES/);
+    assert.equal(rows.length, before);
   }
 });
 
@@ -14435,227 +14540,706 @@ test("C8 sealed recovery document exactly preserves the inspected original witho
   const raw = JSON.stringify(doc, null, 2) + "\n";
   assert.equal(Object.keys(doc).length, 12);
   assert.equal(Buffer.byteLength(raw), 5430);
-  assert.equal(createHash("sha256").update(raw).digest("hex"), "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee");
+  assert.equal(
+    createHash("sha256").update(raw).digest("hex"),
+    "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee",
+  );
   assert.ok(Object.isFrozen(validate(doc)));
   const r = JSON.parse(doc.reportRaw);
-  assert.equal(r.completed, true); assert.equal(r.logoutVerified, true);
+  assert.equal(r.completed, true);
+  assert.equal(r.logoutVerified, true);
   assert.equal(r.intentLedger.newArmedCount, 0);
   assert.equal(JSON.parse(doc.receiptsRaw).receipts.length, 0);
   let effects = 0;
-  const getter = {...doc}; Object.defineProperty(getter,"reportRaw",{enumerable:true,get(){effects++;throw Error("SECRET");}});
-  const proxy = new Proxy(doc,{get(){effects++;throw Error("SECRET");},ownKeys(){effects++;throw Error("SECRET");}});
-  for (const changed of [undefined,null,{}, {...doc,extra:true}, {...doc,reportRaw:"{}\n"},
-    {...doc,harnessSha:"a".repeat(40)}, getter, proxy])
+  const getter = { ...doc };
+  Object.defineProperty(getter, "reportRaw", {
+    enumerable: true,
+    get() {
+      effects++;
+      throw Error("SECRET");
+    },
+  });
+  const proxy = new Proxy(doc, {
+    get() {
+      effects++;
+      throw Error("SECRET");
+    },
+    ownKeys() {
+      effects++;
+      throw Error("SECRET");
+    },
+  });
+  for (const changed of [
+    undefined,
+    null,
+    {},
+    { ...doc, extra: true },
+    { ...doc, reportRaw: "{}\n" },
+    { ...doc, harnessSha: "a".repeat(40) },
+    getter,
+    proxy,
+  ])
     assert.throws(() => validate(changed), /C8_RECOVERY/);
   assert.equal(effects, 0);
 });
 
 test("C8 surface states require the real open drawer, registration stage and complete protocol regions", () => {
-  const base = {mainText:"",statusTexts:[],regionNames:[]};
-  const drawer = {...base,headingText:"Análise da competência",dialogNames:["Detalhe do requisito"],dialogVisible:true,
-    regionNames:["Requisito","Fonte e versionamento","Resultado de referência","Evidências"]};
-  assert.equal(fn("surfaceStateValid")("V117",drawer),true);
-  assert.equal(fn("surfaceStateValid")("V117",{...drawer,dialogVisible:false}),false);
-  const wizard = {...base,headingText:"Wizard de apresentação",regionNames:["Revisão de prontidão","Etapa 2 de 2 — Registrar apresentação"]};
-  assert.equal(fn("surfaceStateValid")("V119",wizard),true);
-  assert.equal(fn("surfaceStateValid")("V119",{...wizard,regionNames:["Etapa 1 de 2 — Aprovação"]}),false);
-  const protocol = {...base,headingText:"Apresentação e protocolo",regionNames:["Dados da apresentação","Pacote imutável","Itens preservados no pacote"]};
-  assert.equal(fn("surfaceStateValid")("V120",protocol),true);
-  assert.equal(fn("surfaceStateValid")("V120",{...protocol,regionNames:protocol.regionNames.slice(1)}),false);
+  const base = { mainText: "", statusTexts: [], regionNames: [] };
+  const drawer = {
+    ...base,
+    headingText: "Análise da competência",
+    dialogNames: ["Detalhe do requisito"],
+    dialogVisible: true,
+    regionNames: ["Requisito", "Fonte e versionamento", "Resultado de referência", "Evidências"],
+  };
+  assert.equal(fn("surfaceStateValid")("V117", drawer), true);
+  assert.equal(fn("surfaceStateValid")("V117", { ...drawer, dialogVisible: false }), false);
+  const wizard = {
+    ...base,
+    headingText: "Wizard de apresentação",
+    regionNames: ["Revisão de prontidão", "Etapa 2 de 2 — Registrar apresentação"],
+  };
+  assert.equal(fn("surfaceStateValid")("V119", wizard), true);
+  assert.equal(
+    fn("surfaceStateValid")("V119", { ...wizard, regionNames: ["Etapa 1 de 2 — Aprovação"] }),
+    false,
+  );
+  const protocol = {
+    ...base,
+    headingText: "Apresentação e protocolo",
+    regionNames: ["Dados da apresentação", "Pacote imutável", "Itens preservados no pacote"],
+  };
+  assert.equal(fn("surfaceStateValid")("V120", protocol), true);
+  assert.equal(
+    fn("surfaceStateValid")("V120", { ...protocol, regionNames: protocol.regionNames.slice(1) }),
+    false,
+  );
 });
 
 test("C8 admission is bound to the exact seven-field audit request and rejects legacy or injected scopes", () => {
   const resolve = fn("resolveC8AuditScope");
-  const request = {schema_version:1,issue:317,operation:"audit",request_id:"trilha-c-audit-20261110-c8-r1",
-    approved_parent_sha:"a".repeat(40),frontend_sha:"",deployment_id:""};
-  assert.equal(resolve(request),sut.C8_AUDIT_SCOPE);
-  assert.equal(sut.parseSingleRequest(JSON.stringify(request),"audit").request_id,request.request_id);
-  for (const changed of [undefined, {...request,scope:"C8"}, {...request,operation:"fixtures"},
-    {...request,request_id:"trilha-a-audit-20261108-r1"}, {...request,approved_parent_sha:"main"}])
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "audit",
+    request_id: "trilha-c-audit-20261110-c8-r1",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.equal(resolve(request), sut.C8_AUDIT_SCOPE);
+  assert.equal(
+    sut.parseSingleRequest(JSON.stringify(request), "audit").request_id,
+    request.request_id,
+  );
+  for (const changed of [
+    undefined,
+    { ...request, scope: "C8" },
+    { ...request, operation: "fixtures" },
+    { ...request, request_id: "trilha-a-audit-20261108-r1" },
+    { ...request, approved_parent_sha: "main" },
+  ])
     assert.throws(() => resolve(changed), /AUDIT_BINDING_PENDING|REQUEST_SCHEMA/);
   assert.throws(() => sut.requireSingleRequestOperation("audit"), /AUDIT_BINDING_PENDING/);
-  assert.equal(sut.requireSingleRequestOperation("audit",request),undefined);
-  const old=JSON.stringify({...request,request_id:"trilha-a-audit-20261108-r1"});
-  assert.throws(() => sut.parseSingleRequest(old),/REQUEST_SCHEMA/);
-  assert.equal(sut.parseSingleRequest(old,undefined,{historical:true}).request_id,"trilha-a-audit-20261108-r1");
+  assert.equal(sut.requireSingleRequestOperation("audit", request), undefined);
+  const old = JSON.stringify({ ...request, request_id: "trilha-a-audit-20261108-r1" });
+  assert.throws(() => sut.parseSingleRequest(old), /REQUEST_SCHEMA/);
+  assert.equal(
+    sut.parseSingleRequest(old, undefined, { historical: true }).request_id,
+    "trilha-a-audit-20261108-r1",
+  );
 });
 
 test("C8 recovery validation precedes metadata environment, Git, filesystem and API in both admission paths", async () => {
-  for (const call of [sut.verifySingleRequest,sut.loadSingleRequestProof]) {
-    let effects=0;
-    const blocked=async()=>{effects++;throw Error("IO_BEFORE_RECOVERY");};
-    await assert.rejects(() => call({operation:"audit",env:{},recoveryDocumentC8:{},
-      get:blocked,git:blocked,read:blocked,stat:blocked,identity:blocked}),/C8_RECOVERY/);
-    assert.equal(effects,0);
+  for (const call of [sut.verifySingleRequest, sut.loadSingleRequestProof]) {
+    let effects = 0;
+    const blocked = async () => {
+      effects++;
+      throw Error("IO_BEFORE_RECOVERY");
+    };
+    await assert.rejects(
+      () =>
+        call({
+          operation: "audit",
+          env: {},
+          recoveryDocumentC8: {},
+          get: blocked,
+          git: blocked,
+          read: blocked,
+          stat: blocked,
+          identity: blocked,
+        }),
+      /C8_RECOVERY/,
+    );
+    assert.equal(effects, 0);
   }
 });
 
 test("C8 V117 drawer uses the original opener and close with restored focus, rejecting wrong routes", async () => {
-  assert.equal(typeof sut.openC8RequirementDrawer,"function");
-  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find(r=>r.surface === "V117"), calls=[];
-  let opened=false, focused=false;
-  const opener={count:async()=>1,click:async()=>{calls.push("open");opened=true;},
-    evaluate:async()=>focused};
-  const dialog={waitFor:async({state})=>{assert.equal(opened,state === "visible");calls.push(state);},
-    getByRole:(role,options)=>{assert.equal(role,"button");assert.deepEqual(options,{name:"Fechar",exact:true});
-      return {click:async()=>{calls.push("close");opened=false;focused=true;}};}};
-  const page={url:()=>sut.HML_ORIGIN+item.path,getByRole:(role,options)=>{
-    if(role === "button") {assert.deepEqual(options,{name:"Abrir requisito AUD-A-TXT-001",exact:true});return opener;}
-    assert.equal(role,"dialog");assert.deepEqual(options,{name:"Detalhe do requisito",exact:true});return dialog;
-  }};
-  const close=await sut.openC8RequirementDrawer(page,item,sut.C8_AUDIT_SCOPE);
-  assert.deepEqual(calls,["open","visible"]);
-  assert.equal(await close(),true);
-  assert.deepEqual(calls,["open","visible","close","hidden"]);
-  let reads=0;
-  await assert.rejects(()=>sut.openC8RequirementDrawer({getByRole(){reads++;}}, {...item,path:"/"},sut.C8_AUDIT_SCOPE),/C8_DRAWER_BINDING/);
-  assert.equal(reads,0);
+  assert.equal(typeof sut.openC8RequirementDrawer, "function");
+  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117"),
+    calls = [];
+  let opened = false,
+    focused = false;
+  const opener = {
+    count: async () => 1,
+    click: async () => {
+      calls.push("open");
+      opened = true;
+    },
+    evaluate: async () => focused,
+  };
+  const dialog = {
+    waitFor: async ({ state }) => {
+      assert.equal(opened, state === "visible");
+      calls.push(state);
+    },
+    getByRole: (role, options) => {
+      assert.equal(role, "button");
+      assert.deepEqual(options, { name: "Fechar", exact: true });
+      return {
+        click: async () => {
+          calls.push("close");
+          opened = false;
+          focused = true;
+        },
+      };
+    },
+  };
+  const page = {
+    url: () => sut.HML_ORIGIN + item.path,
+    getByRole: (role, options) => {
+      if (role === "button") {
+        assert.deepEqual(options, { name: "Abrir requisito AUD-A-TXT-001", exact: true });
+        return opener;
+      }
+      assert.equal(role, "dialog");
+      assert.deepEqual(options, { name: "Detalhe do requisito", exact: true });
+      return dialog;
+    },
+  };
+  const close = await sut.openC8RequirementDrawer(page, item, sut.C8_AUDIT_SCOPE);
+  assert.deepEqual(calls, ["open", "visible"]);
+  assert.equal(await close(), true);
+  assert.deepEqual(calls, ["open", "visible", "close", "hidden"]);
+  let reads = 0;
+  await assert.rejects(
+    () =>
+      sut.openC8RequirementDrawer(
+        {
+          getByRole() {
+            reads++;
+          },
+        },
+        { ...item, path: "/" },
+        sut.C8_AUDIT_SCOPE,
+      ),
+    /C8_DRAWER_BINDING/,
+  );
+  assert.equal(reads, 0);
 });
 
 test("C8 current wire rejects foreign stale pending and inconsistent recovery bindings", () => {
-  assert.equal(typeof sut.validateC8CurrentWire,"function");
-  const bindings=JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
-  const c=bindings.competencies[0], item=fn("privateCases")(sut.C8_AUDIT_SCOPE).find(r=>r.surface === "V117");
-  const analysis={schema_versao:"v116-v1",competencia:{id:c.id,id_organizacao:bindings.organization,
-    id_contrato:bindings.contract,competencia_referencia:c.month},estado_analise:"complete",stale:false,
-    execucao_atual:{id:c.executionId,status:"concluida"}};
-  const detail={schema_versao:"v117-v1",competencia:analysis.competencia,
-    requisito:{id:c.requirementId,codigo:"AUD-A-TXT-001",origem_tipo:"item_lista",origem_id:bindings.itemId},
-    execucao_atual:analysis.execucao_atual};
-  const wire={analysis,detail,context:{id_competencia:c.id,id_requisito:c.requirementId,
-    id_organizacao:bindings.organization,id_contrato:bindings.contract,id_execucao_esperada:c.executionId}};
-  assert.equal(sut.validateC8CurrentWire(item,wire),true);
-  for(const delta of [{analysis:{...analysis,stale:true}},
-    {analysis:{...analysis,estado_analise:"queued"}},
-    {analysis:{...analysis,competencia:{...analysis.competencia,id_organizacao:"foreign"}}},
-    {detail:{...detail,requisito:{...detail.requisito,id:"foreign"}}},
-    {context:{...wire.context,id_execucao_esperada:"stale"}},{context:null}])
-    assert.equal(sut.validateC8CurrentWire(item,{...wire,...delta}),false);
+  assert.equal(typeof sut.validateC8CurrentWire, "function");
+  const bindings = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+  const c = bindings.competencies[0],
+    item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  const analysis = {
+    schema_versao: "v116-v1",
+    competencia: {
+      id: c.id,
+      id_organizacao: bindings.organization,
+      id_contrato: bindings.contract,
+      competencia_referencia: c.month,
+    },
+    estado_analise: "complete",
+    stale: false,
+    execucao_atual: { id: c.executionId, status: "concluida" },
+  };
+  const detail = {
+    schema_versao: "v117-v1",
+    competencia: analysis.competencia,
+    requisito: {
+      id: c.requirementId,
+      codigo: "AUD-A-TXT-001",
+      origem_tipo: "item_lista",
+      origem_id: bindings.itemId,
+    },
+    execucao_atual: analysis.execucao_atual,
+  };
+  const wire = {
+    analysis,
+    detail,
+    context: {
+      id_competencia: c.id,
+      id_requisito: c.requirementId,
+      id_organizacao: bindings.organization,
+      id_contrato: bindings.contract,
+      id_execucao_esperada: c.executionId,
+    },
+  };
+  assert.equal(sut.validateC8CurrentWire(item, wire), true);
+  assert.equal(sut.validateC8CurrentWire(item, { ...wire, context: undefined }), true);
+  for (const delta of [
+    { analysis: { ...analysis, stale: true } },
+    { analysis: { ...analysis, estado_analise: "queued" } },
+    {
+      analysis: {
+        ...analysis,
+        competencia: { ...analysis.competencia, id_organizacao: "foreign" },
+      },
+    },
+    { detail: { ...detail, requisito: { ...detail.requisito, id: "foreign" } } },
+    { detail: { ...detail, execucao_atual: { ...detail.execucao_atual, id: "stale" } } },
+    { detail: null },
+  ])
+    assert.equal(sut.validateC8CurrentWire(item, { ...wire, ...delta }), false);
 });
 
 async function c8SourceFixture() {
-  const fs=await import("node:fs/promises"), ts=(await import("typescript")).default;
-  const preparer=await import("./prepare-visual-fixtures.mjs");
-  const source=await fs.readFile(new URL("./prepare-visual-fixtures.test.mjs",import.meta.url),"utf8");
-  const ast=ts.createSourceFile("fixture.mjs",source,99,true,ts.ScriptKind.JS);
-  const names=["r11SqlV116","r11SqlV117","r17View"];
-  const declarations=names.map(name=>ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text===name).getText(ast));
-  const data=new Function("FIXTURE","R6_R5_DOCUMENT",declarations.join("\n")+";return {analysis:r11SqlV116(),detail:r11SqlV117(),overview:r17View(100)};")(
-    preparer.FIXTURE,sut.C8_RECOVERY_DOCUMENT);
-  const b=JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings,c=b.competencies[0],s=b.competencies[1];
-  Object.assign(data.analysis.competencia,{id:c.id,competencia_referencia:c.month});
-  data.analysis.execucao_atual.id=c.executionId;
-  data.analysis.execucoes[0].id=c.executionId;
-  Object.assign(data.analysis.resultados[0],{id_requisito:c.requirementId});
-  data.analysis.resultados[0].requisito.codigo="AUD-A-TXT-001";
-  Object.assign(data.detail.competencia,{id:c.id});
-  Object.assign(data.detail.requisito,{id:c.requirementId,codigo:"AUD-A-TXT-001",origem_id:b.itemId,
-    hash_snapshot:"b".repeat(64)});
-  data.detail.execucao_atual.id=c.executionId;
-  data.detail.execucao_atual.iniciada_em="2026-11-10T00:00:00Z";
-  data.detail.execucao_atual.concluida_em="2026-11-10T00:01:00Z";
-  data.overview.competencia.situacao=c.state;
-  data.overview.blocking_summary.aprovacao_apresentacao_atual=true;
-  data.context={schema_versao:"v117-v1",id_competencia:c.id,id_requisito:c.requirementId,
-    id_organizacao:b.organization,id_contrato:b.contract,id_execucao_esperada:c.executionId,
-    id_resultado_esperado:null,hash_esperado:"a".repeat(64),pode_revisar:false};
-  const owner={id_competencia:s.id,id_organizacao:b.organization,id_contrato:b.contract};
-  data.presentations=[{...owner,id:s.presentationId,id_pacote:s.packageId,protocolo:"HML-TRILHA-A-20261108",
-    forma_apresentacao:"Ensaio sintético em homologação.",apresentado_em:"2026-11-10T00:00:00Z",tipo:"inicial",numero_rodada:1}];
-  data.packages=[{...owner,id:s.packageId,hash_pacote:s.packageHash,numero:1,tipo:"inicial",
-    status:preparer.R18_REGISTRATION_CANDIDATE.packageStatus,congelado_em:"2026-11-10T00:00:00Z"}];
-  data.items=[{...owner,id:"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",id_pacote:s.packageId,
-    entidade_tipo:"documento_competencia",entidade_id:s.documentId,versao_id:"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-    hash:"c".repeat(64),ordem:1}];
-  return {data,bindings:b};
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const preparer = await import("./prepare-visual-fixtures.mjs");
+  const source = await fs.readFile(
+    new URL("./prepare-visual-fixtures.test.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("fixture.mjs", source, 99, true, ts.ScriptKind.JS);
+  const names = ["r11SqlV116", "r11SqlV117", "r17View"];
+  const declarations = names.map((name) =>
+    ast.statements.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === name).getText(ast),
+  );
+  const data = new Function(
+    "FIXTURE",
+    "R6_R5_DOCUMENT",
+    declarations.join("\n") +
+      ";return {analysis:r11SqlV116(),detail:r11SqlV117(),overview:r17View(100)};",
+  )(preparer.FIXTURE, sut.C8_RECOVERY_DOCUMENT);
+  const b = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings,
+    c = b.competencies[0],
+    s = b.competencies[1];
+  Object.assign(data.analysis.competencia, { id: c.id, competencia_referencia: c.month });
+  data.analysis.execucao_atual.id = c.executionId;
+  data.analysis.execucoes[0].id = c.executionId;
+  Object.assign(data.analysis.resultados[0], { id_requisito: c.requirementId });
+  data.analysis.resultados[0].requisito.codigo = "AUD-A-TXT-001";
+  Object.assign(data.detail.competencia, { id: c.id });
+  Object.assign(data.detail.requisito, {
+    id: c.requirementId,
+    codigo: "AUD-A-TXT-001",
+    origem_id: b.itemId,
+    hash_snapshot: "b".repeat(64),
+  });
+  data.detail.execucao_atual.id = c.executionId;
+  data.detail.execucao_atual.iniciada_em = "2026-11-10T00:00:00Z";
+  data.detail.execucao_atual.concluida_em = "2026-11-10T00:01:00Z";
+  data.overview.competencia.situacao = c.state;
+  data.overview.blocking_summary.aprovacao_apresentacao_atual = true;
+  data.context = {
+    schema_versao: "v117-v1",
+    id_competencia: c.id,
+    id_requisito: c.requirementId,
+    id_organizacao: b.organization,
+    id_contrato: b.contract,
+    id_execucao_esperada: c.executionId,
+    id_resultado_esperado: null,
+    hash_esperado: "a".repeat(64),
+    pode_revisar: false,
+  };
+  const owner = { id_competencia: s.id, id_organizacao: b.organization, id_contrato: b.contract };
+  data.presentations = [
+    {
+      ...owner,
+      id: s.presentationId,
+      id_pacote: s.packageId,
+      protocolo: "HML-TRILHA-A-20261108",
+      forma_apresentacao: "Ensaio sintético em homologação.",
+      apresentado_em: "2026-11-10T00:00:00Z",
+      tipo: "inicial",
+      numero_rodada: 1,
+    },
+  ];
+  data.packages = [
+    {
+      ...owner,
+      id: s.packageId,
+      hash_pacote: s.packageHash,
+      numero: 1,
+      tipo: "inicial",
+      status: preparer.R18_REGISTRATION_CANDIDATE.packageStatus,
+      congelado_em: "2026-11-10T00:00:00Z",
+    },
+  ];
+  data.items = [
+    {
+      ...owner,
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      id_pacote: s.packageId,
+      entidade_tipo: "documento_competencia",
+      entidade_id: s.documentId,
+      versao_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      hash: "c".repeat(64),
+      ordem: 1,
+    },
+  ];
+  return { data, bindings: b };
 }
 
 async function c8BuildSourceUI(directory) {
-  const fs=await import("node:fs/promises"),{join,resolve}=await import("node:path"),{fileURLToPath}=await import("node:url");
-  const root=fileURLToPath(new URL("../../",import.meta.url));
-  const pg=createRequire(require.resolve("@supabase/supabase-js")).resolve("@supabase/postgrest-js");
-  const b=JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
-  await fs.writeFile(join(directory,"client.ts"),`import {PostgrestClient} from ${JSON.stringify(pg)};export const supabase=Object.assign(new PostgrestClient(location.origin+'/rest/v1'),{auth:{getUser:async()=>({data:{user:{id:'native-c8-owner'}},error:null})}});`);
-  await fs.writeFile(join(directory,"router.tsx"),`import React from 'react';const navigate=()=>{};export const useNavigate=()=>navigate;export const Link=({children,to,...p})=><a href={typeof to==='string'?to:'#'} {...p}>{children}</a>;`);
-  await fs.writeFile(join(directory,"org.ts"),`export const EVENTO_ORGANIZACAO_ALTERADA="contaos:organizacao-alterada";export const obterPreferenciaOrganizacao=()=>${JSON.stringify(b.organization)};`);
-  await fs.writeFile(join(directory,"entry.tsx"),`import React from 'react';import {createRoot} from 'react-dom/client';import {CompetenciaAnalise} from ${JSON.stringify(resolve(root,"src/components/competencias/CompetenciaAnalise.tsx"))};import {CompetenciaApresentar} from ${JSON.stringify(resolve(root,"src/components/competencias/CompetenciaApresentar.tsx"))};import {CompetenciaProtocolo} from ${JSON.stringify(resolve(root,"src/components/competencias/CompetenciaProtocolo.tsx"))};const root=createRoot(document.getElementById('root'));window.__mount=(surface,id,ap)=>root.render(surface==='V117'?<CompetenciaAnalise key={crypto.randomUUID()} id={id}/>:surface==='V119'?<CompetenciaApresentar key={crypto.randomUUID()} id={id}/>:<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>);window.__ready=true;`);
-  const aliases={"react":require.resolve("react"),"react-dom/client":require.resolve("react-dom/client"),"react/jsx-runtime":require.resolve("react/jsx-runtime"),"@/integrations/supabase/client":join(directory,"client.ts"),"@tanstack/react-router":join(directory,"router.tsx"),"@/lib/organizacao/preferenciaOrganizacao":join(directory,"org.ts")};
-  const bunScript=`const result=await Bun.build({entrypoints:[${JSON.stringify(join(directory,"entry.tsx"))}],outdir:${JSON.stringify(directory)},target:'browser',naming:'ui.js',minify:true,define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'closed-infrastructure',setup(build){const aliases=${JSON.stringify(aliases)};build.onResolve({filter:/^(@\\/|@tanstack\\/react-router$|react$|react-dom\\/client$|react\\/jsx-runtime$)/},args=>({path:Bun.resolveSync(aliases[args.path]??${JSON.stringify(resolve(root,"src"))}+'/'+args.path.slice(2),${JSON.stringify(root)})}));}}]});if(!result.success){for(const log of result.logs)console.error(log);process.exit(1);}`;
-  await fs.writeFile(join(directory,"build.mjs"),bunScript);
-  const {execFile}=await import("node:child_process"),{promisify}=await import("node:util");
-  await promisify(execFile)(process.env.CONTAOS_BUN_BINARY||"bun",[join(directory,"build.mjs")],{cwd:root,timeout:15000,maxBuffer:1048576});
-  return fs.readFile(join(directory,"ui.js"));
+  const fs = await import("node:fs/promises"),
+    { join, resolve } = await import("node:path"),
+    { fileURLToPath } = await import("node:url");
+  const root = fileURLToPath(new URL("../../", import.meta.url));
+  const pg = createRequire(require.resolve("@supabase/supabase-js")).resolve(
+    "@supabase/postgrest-js",
+  );
+  const b = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+  await fs.writeFile(
+    join(directory, "client.ts"),
+    `import {PostgrestClient} from ${JSON.stringify(pg)};export const supabase=Object.assign(new PostgrestClient(location.origin+'/rest/v1'),{auth:{getUser:async()=>({data:{user:{id:'native-c8-owner'}},error:null})}});`,
+  );
+  await fs.writeFile(
+    join(directory, "router.tsx"),
+    `import React from 'react';const navigate=()=>{};export const useNavigate=()=>navigate;export const Link=({children,to,...p})=><a href={typeof to==='string'?to:'#'} {...p}>{children}</a>;`,
+  );
+  await fs.writeFile(
+    join(directory, "org.ts"),
+    `export const EVENTO_ORGANIZACAO_ALTERADA="contaos:organizacao-alterada";export const obterPreferenciaOrganizacao=()=>${JSON.stringify(b.organization)};`,
+  );
+  await fs.writeFile(
+    join(directory, "entry.tsx"),
+    `import React from 'react';import {createRoot} from 'react-dom/client';import {CompetenciaAnalise} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaAnalise.tsx"))};import {CompetenciaApresentar} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaApresentar.tsx"))};import {CompetenciaProtocolo} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaProtocolo.tsx"))};const root=createRoot(document.getElementById('root'));window.__mount=(surface,id,ap)=>root.render(surface==='V117'?<CompetenciaAnalise key={crypto.randomUUID()} id={id}/>:surface==='V119'?<CompetenciaApresentar key={crypto.randomUUID()} id={id}/>:<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>);window.__ready=true;`,
+  );
+  const aliases = {
+    react: require.resolve("react"),
+    "react-dom/client": require.resolve("react-dom/client"),
+    "react/jsx-runtime": require.resolve("react/jsx-runtime"),
+    "@/integrations/supabase/client": join(directory, "client.ts"),
+    "@tanstack/react-router": join(directory, "router.tsx"),
+    "@/lib/organizacao/preferenciaOrganizacao": join(directory, "org.ts"),
+  };
+  const bunScript = `const result=await Bun.build({entrypoints:[${JSON.stringify(join(directory, "entry.tsx"))}],outdir:${JSON.stringify(directory)},target:'browser',naming:'ui.js',minify:true,define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'closed-infrastructure',setup(build){const aliases=${JSON.stringify(aliases)};build.onResolve({filter:/^(@\\/|@tanstack\\/react-router$|react$|react-dom\\/client$|react\\/jsx-runtime$)/},args=>({path:Bun.resolveSync(aliases[args.path]??${JSON.stringify(resolve(root, "src"))}+'/'+args.path.slice(2),${JSON.stringify(root)})}));}}]});if(!result.success){for(const log of result.logs)console.error(log);process.exit(1);}`;
+  await fs.writeFile(join(directory, "build.mjs"), bunScript);
+  const { execFile } = await import("node:child_process"),
+    { promisify } = await import("node:util");
+  await promisify(execFile)(
+    process.env.CONTAOS_BUN_BINARY || "bun",
+    [join(directory, "build.mjs")],
+    { cwd: root, timeout: 15000, maxBuffer: 1048576 },
+  );
+  return fs.readFile(join(directory, "ui.js"));
 }
 
 async function c8NativeSourceProbe(browser) {
-  const fs=await import("node:fs/promises"),{join}=await import("node:path"),{tmpdir}=await import("node:os");
-  const dir=await fs.mkdtemp(join(tmpdir(),"c8-source-real-"));
-  let server,page,business=0;
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { tmpdir } = await import("node:os");
+  const dir = await fs.mkdtemp(join(tmpdir(), "c8-source-real-"));
+  let server,
+    page,
+    business = 0;
   try {
-    const bundle=await c8BuildSourceUI(dir),{data,bindings:b}=await c8SourceFixture();
-    const {execFile}=await import("node:child_process"),{promisify}=await import("node:util"),ts=(await import("typescript")).default;
-    const oldSource=(await promisify(execFile)("git",["show","34674fab697cbdecd4dd1d5f5f918df64ce1b286:scripts/hml/authenticated-visual-audit.mjs"],{maxBuffer:1048576})).stdout;
-    const ast=ts.createSourceFile("old.mjs",oldSource,99,true,ts.ScriptKind.JS);
-    const oldDeclaration=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text === "surfaceStateValid").getText(ast).replace(/^export /,"");
-    const before=new Function(oldDeclaration+";return surfaceStateValid;")();
-    let surface="V117", mode="ok";
-    server=createHttpServer((req,res)=>{
-      const url=new URL(req.url,"http://127.0.0.1");
-      const json=value=>{res.writeHead(200,{"content-type":"application/json","content-range":"0-0/1"});res.end(JSON.stringify(value));};
-      if(url.pathname==="/ui.js"){res.writeHead(200,{"content-type":"text/javascript"});res.end(bundle);return;}
-      if(url.pathname.startsWith("/rest/v1/rpc/")) {
-        let raw="";req.on("data",chunk=>raw+=chunk);req.on("end",()=>{
-          const name=url.pathname.split("/").at(-1),args=JSON.parse(raw);
-          const rpc={obter_analise_competencia_v116:data.analysis,obter_detalhe_requisito_v117:data.detail,
-            obter_contexto_revisao_v117:data.context,obter_visao_geral_competencia:data.overview};
-          if(!Object.hasOwn(rpc,name)){business++;res.writeHead(403);res.end();return;}
-          let value=structuredClone(rpc[name]);
-          if(surface === "V120" && name === "obter_visao_geral_competencia")
-            Object.assign(value.competencia,{id:b.competencies[1].id,competencia_referencia:b.competencies[1].month,situacao:b.competencies[1].state});
-          if(mode === "foreign") {if(value.competencia)value.competencia.id_organizacao="foreign";else value.id_organizacao="foreign";}
-          if(mode === "missing") value=null;
-          if(mode === "stale" && name === "obter_analise_competencia_v116") value.stale=true;
-          json(value);
-        });return;
+    const bundle = await c8BuildSourceUI(dir),
+      { data, bindings: b } = await c8SourceFixture();
+    const { execFile } = await import("node:child_process"),
+      { promisify } = await import("node:util"),
+      ts = (await import("typescript")).default;
+    const oldSource = (
+      await promisify(execFile)(
+        "git",
+        [
+          "show",
+          "34674fab697cbdecd4dd1d5f5f918df64ce1b286:scripts/hml/authenticated-visual-audit.mjs",
+        ],
+        { maxBuffer: 1048576 },
+      )
+    ).stdout;
+    const ast = ts.createSourceFile("old.mjs", oldSource, 99, true, ts.ScriptKind.JS);
+    const oldDeclaration = ast.statements
+      .find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "surfaceStateValid")
+      .getText(ast)
+      .replace(/^export /, "");
+    const before = new Function(oldDeclaration + ";return surfaceStateValid;")();
+    const readNames = new Set();
+    let surface = "V117",
+      mode = "ok";
+    server = createHttpServer((req, res) => {
+      const url = new URL(req.url, "http://127.0.0.1");
+      const json = (value) => {
+        res.writeHead(200, { "content-type": "application/json", "content-range": "0-0/1" });
+        res.end(JSON.stringify(value));
+      };
+      if (url.pathname === "/ui.js") {
+        res.writeHead(200, { "content-type": "text/javascript" });
+        res.end(bundle);
+        return;
       }
-      const tables={apresentacoes_contratante:data.presentations,pacotes_competencia:data.packages,itens_pacote_competencia:data.items};
-      const table=url.pathname.split("/").at(-1);
-      if(Object.hasOwn(tables,table)) {json(table === "itens_pacote_competencia" ? tables[table] : tables[table][0]);return;}
-      if(url.pathname==="/favicon.ico"){res.writeHead(204);res.end();return;}
-      res.writeHead(200,{"content-type":"text/html"});res.end('<!doctype html><html lang="pt-BR"><body><div id="root"></div><script type="module" src="/ui.js"></script></body></html>');
+      if (url.pathname.startsWith("/rest/v1/rpc/")) {
+        let raw = "";
+        req.on("data", (chunk) => (raw += chunk));
+        req.on("end", () => {
+          const name = url.pathname.split("/").at(-1),
+            args = JSON.parse(raw);
+          readNames.add(name);
+          const rpc = {
+            obter_analise_competencia_v116: data.analysis,
+            obter_detalhe_requisito_v117: data.detail,
+
+            obter_visao_geral_competencia: data.overview,
+          };
+          if (!Object.hasOwn(rpc, name)) {
+            business++;
+            res.writeHead(403);
+            res.end();
+            return;
+          }
+          let value = structuredClone(rpc[name]);
+          if (surface === "V120" && name === "obter_visao_geral_competencia")
+            Object.assign(value.competencia, {
+              id: b.competencies[1].id,
+              competencia_referencia: b.competencies[1].month,
+              situacao: b.competencies[1].state,
+            });
+          if (mode === "foreign") {
+            if (value.competencia) value.competencia.id_organizacao = "foreign";
+            else value.id_organizacao = "foreign";
+          }
+          if (mode === "missing") value = null;
+          if (mode === "stale" && name === "obter_analise_competencia_v116") value.stale = true;
+          json(value);
+        });
+        return;
+      }
+      const tables = {
+        apresentacoes_contratante: data.presentations,
+        pacotes_competencia: data.packages,
+        itens_pacote_competencia: data.items,
+      };
+      const table = url.pathname.split("/").at(-1);
+      if (Object.hasOwn(tables, table)) {
+        json(table === "itens_pacote_competencia" ? tables[table] : tables[table][0]);
+        return;
+      }
+      if (url.pathname === "/favicon.ico") {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+      res.writeHead(200, { "content-type": "text/html" });
+      res.end(
+        '<!doctype html><html lang="pt-BR"><body><div id="root"></div><script type="module" src="/ui.js"></script></body></html>',
+      );
     });
-    await new Promise(resolve=>server.listen(0,"127.0.0.1",resolve));
-    page=await browser.newPage();
-    const origin=`http://127.0.0.1:${server.address().port}`;
-    for(surface of ["V117","V119","V120"]) for(const width of [1440,1280,768,390]) for(const theme of ["light","dark"]) {
-      const item=fn("privateCases")(sut.C8_AUDIT_SCOPE).find(r=>r.surface===surface&&r.width===width&&r.theme===theme);
-      await page.setViewportSize({width,height:1000});
-      await page.goto(origin+item.path);
-      await page.waitForFunction(()=>window.__ready);
-      await page.evaluate(({surface,id,ap,theme})=>{document.documentElement.classList.toggle("dark",theme === "dark");window.__mount(surface,id,ap);},
-        {surface,id:b.competencies[surface === "V120" ? 1 : 0].id,ap:b.competencies[1].presentationId,theme});
-      const heading=page.getByRole("heading",{level:1,name:surface === "V117"?"Análise da competência":surface === "V119"?"Wizard de apresentação":"Apresentação e protocolo",exact:true});
-      await heading.waitFor();
-      let opener;
-      if(surface === "V117") {opener=page.getByRole("button",{name:"Abrir requisito AUD-A-TXT-001",exact:true});await opener.click();await page.getByRole("dialog",{name:"Detalhe do requisito",exact:true}).waitFor();await page.getByRole("region",{name:"Fonte e versionamento",exact:true}).waitFor();}
-      else await page.getByRole("region",{name:surface === "V119"?"Etapa 2 de 2 — Registrar apresentação":"Itens preservados no pacote",exact:true}).waitFor();
-      const observation=await page.evaluate(()=>{const visible=e=>e.getClientRects().length>0;return {headingText:document.querySelector("h1")?.textContent,mainText:document.body.innerText,statusTexts:[],regionNames:[...document.querySelectorAll("section[aria-labelledby]")].map(e=>document.getElementById(e.getAttribute("aria-labelledby"))?.textContent),dialogVisible:[...document.querySelectorAll('[role="dialog"]')].some(visible),dialogNames:[...document.querySelectorAll('[role="dialog"]')].filter(visible).map(e=>document.getElementById(e.getAttribute("aria-labelledby"))?.textContent)};});
-      assert.equal(before(surface,observation),false,`causal RED ${surface}/${width}/${theme}`);
-      assert.equal(sut.surfaceStateValid(surface,observation),true,`${surface}/${width}/${theme}`);
-      if(surface === "V117") {await page.getByRole("dialog").getByRole("button",{name:"Fechar",exact:true}).click();await page.getByRole("dialog").waitFor({state:"hidden"});assert.equal(await opener.evaluate(n=>document.activeElement===n),true);assert.equal(sut.surfaceStateValid(surface,{...observation,dialogVisible:false}),false);}
-      if(surface === "V120") {assert.equal(await page.locator('section[aria-labelledby="v120-itens"] li').count(),1);assert.ok((await page.locator('section[aria-labelledby="v120-pacote"]').innerText()).includes(b.competencies[1].packageHash));}
-    }
-    assert.equal(business,0);
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    page = await browser.newPage();
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    for (surface of ["V117", "V119", "V120"])
+      for (const width of [1440, 1280, 768, 390])
+        for (const theme of ["light", "dark"]) {
+          const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find(
+            (r) => r.surface === surface && r.width === width && r.theme === theme,
+          );
+          await page.setViewportSize({ width, height: 1000 });
+          await page.goto(origin + item.path);
+          await page.waitForFunction(() => window.__ready);
+          await page.evaluate(
+            ({ surface, id, ap, theme }) => {
+              document.documentElement.classList.toggle("dark", theme === "dark");
+              window.__mount(surface, id, ap);
+            },
+            {
+              surface,
+              id: b.competencies[surface === "V120" ? 1 : 0].id,
+              ap: b.competencies[1].presentationId,
+              theme,
+            },
+          );
+          const heading = page.getByRole("heading", {
+            level: 1,
+            name:
+              surface === "V117"
+                ? "Análise da competência"
+                : surface === "V119"
+                  ? "Wizard de apresentação"
+                  : "Apresentação e protocolo",
+            exact: true,
+          });
+          await heading.waitFor();
+          let opener;
+          if (surface === "V117") {
+            opener = page.getByRole("button", {
+              name: "Abrir requisito AUD-A-TXT-001",
+              exact: true,
+            });
+            await opener.click();
+            await page.getByRole("dialog", { name: "Detalhe do requisito", exact: true }).waitFor();
+            await page
+              .getByRole("region", { name: "Fonte e versionamento", exact: true })
+              .waitFor();
+          } else
+            await page
+              .getByRole("region", {
+                name:
+                  surface === "V119"
+                    ? "Etapa 2 de 2 — Registrar apresentação"
+                    : "Itens preservados no pacote",
+                exact: true,
+              })
+              .waitFor();
+          const observation = await page.evaluate(() => {
+            const visible = (e) => e.getClientRects().length > 0;
+            return {
+              headingText: document.querySelector("h1")?.textContent,
+              mainText: document.body.innerText,
+              statusTexts: [],
+              regionNames: [...document.querySelectorAll("section[aria-labelledby]")].map(
+                (e) => document.getElementById(e.getAttribute("aria-labelledby"))?.textContent,
+              ),
+              dialogVisible: [...document.querySelectorAll('[role="dialog"]')].some(visible),
+              dialogNames: [...document.querySelectorAll('[role="dialog"]')]
+                .filter(visible)
+                .map(
+                  (e) => document.getElementById(e.getAttribute("aria-labelledby"))?.textContent,
+                ),
+            };
+          });
+          assert.equal(
+            before(surface, observation),
+            false,
+            `causal RED ${surface}/${width}/${theme}`,
+          );
+          assert.equal(
+            sut.surfaceStateValid(surface, observation),
+            true,
+            `${surface}/${width}/${theme}`,
+          );
+          if (surface === "V117") {
+            await page
+              .getByRole("dialog")
+              .getByRole("button", { name: "Fechar", exact: true })
+              .click();
+            await page.getByRole("dialog").waitFor({ state: "hidden" });
+            assert.equal(await opener.evaluate((n) => document.activeElement === n), true);
+            assert.equal(
+              sut.surfaceStateValid(surface, { ...observation, dialogVisible: false }),
+              false,
+            );
+          }
+          if (surface === "V120") {
+            assert.equal(await page.locator('section[aria-labelledby="v120-itens"] li').count(), 1);
+            assert.ok(
+              (await page.locator('section[aria-labelledby="v120-pacote"]').innerText()).includes(
+                b.competencies[1].packageHash,
+              ),
+            );
+          }
+        }
+    assert.equal(readNames.has("obter_contexto_revisao_v117"), false);
+    assert.equal(readNames.has("obter_detalhe_requisito_v117"), true);
+    assert.equal(business, 0);
     console.log("C8_SOURCE_REAL_24 PASS");
-  } finally {await page?.close();server?.closeAllConnections();if(server)await new Promise(resolve=>server.close(resolve));await fs.rm(dir,{recursive:true,force:true});}
+  } finally {
+    await page?.close();
+    server?.closeAllConnections();
+    if (server) await new Promise((resolve) => server.close(resolve));
+    await fs.rm(dir, { recursive: true, force: true });
+  }
 }
 
 test("C8 source fixture preserves complete actual SDK shapes and build uses original components", async () => {
-  const {data}=await c8SourceFixture();
-  const item=fn("privateCases")(sut.C8_AUDIT_SCOPE).find(r=>r.surface === "V117");
-  assert.equal(sut.validateC8CurrentWire(item,data),true);
-  const fs=await import("node:fs/promises"),{join}=await import("node:path"),{tmpdir}=await import("node:os");
-  const dir=await fs.mkdtemp(join(tmpdir(),"c8-build-check-"));
-  try {const bundle=await c8BuildSourceUI(dir);assert.ok(bundle.length>10000);}
-  finally {await fs.rm(dir,{recursive:true,force:true});}
+  const { data } = await c8SourceFixture();
+  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  assert.equal(sut.validateC8CurrentWire(item, data), true);
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { tmpdir } = await import("node:os");
+  const dir = await fs.mkdtemp(join(tmpdir(), "c8-build-check-"));
+  try {
+    const bundle = await c8BuildSourceUI(dir);
+    assert.ok(bundle.length > 10000);
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
+async function c8PrivacyHarness() {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
+  const declaration = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "c8PrivacyContext",
+  );
+  const fields = ast.statements.find(
+    (n) =>
+      ts.isVariableStatement(n) &&
+      n.declarationList.declarations.some((d) => d.name.getText(ast) === "C8_SYNTHETIC_FIELDS"),
+  );
+  const pages = new WeakMap(),
+    contexts = new WeakMap();
+  const context = new Function(
+    "C8_AUDIT_SCOPE",
+    "privacy78Pages",
+    "privacy78Contexts",
+    "validateC8CurrentWire",
+    "HML_ORIGIN",
+    "fail",
+    fields.getText(ast) + "\n" + declaration.getText(ast) + ";return c8PrivacyContext;",
+  )(sut.C8_AUDIT_SCOPE, pages, contexts, sut.validateC8CurrentWire, sut.HML_ORIGIN, (code) => {
+    throw Object.assign(new Error(code), { code });
+  });
+  return { pages, contexts, context };
+}
+
+test("C8 contextual privacy refuses missing stale closed or foreign page owners before DOM evaluation", async () => {
+  const h = await c8PrivacyHarness(),
+    { data } = await c8SourceFixture();
+  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  let evaluations = 0;
+  const page = {
+    url: () => sut.HML_ORIGIN + item.path,
+    evaluate: async () => {
+      evaluations++;
+      return [];
+    },
+  };
+  const observer = {},
+    state = {
+      scope: sut.C8_AUDIT_SCOPE,
+      verified: true,
+      closed: false,
+      generation: 1,
+      c8Observer: observer,
+    };
+  state.c8Current = { owner: state, generation: 1, observer, item, wire: data };
+  h.pages.set(page, state);
+  const valid = await h.context(page, state, "Texto", "Texto", null);
+  assert.equal(h.contexts.get(valid).rendered.remainder, "Texto");
+  assert.equal(evaluations, 1);
+  for (const delta of [
+    { scope: null },
+    { c8Current: null },
+    { generation: 2 },
+    { closed: true },
+    { verified: false },
+    { c8Observer: {} },
+  ]) {
+    Object.assign(state, delta);
+    await assert.rejects(() => h.context(page, state, "Texto", "Texto", null), /C8_CURRENT_OWNER/);
+    assert.equal(evaluations, 1);
+    Object.assign(state, {
+      scope: sut.C8_AUDIT_SCOPE,
+      verified: true,
+      closed: false,
+      generation: 1,
+      c8Observer: observer,
+      c8Current: { owner: state, generation: 1, observer, item, wire: data },
+    });
+  }
+  h.pages.set(page, {});
+  await assert.rejects(() => h.context(page, state, "Texto", "Texto", null), /C8_CURRENT_OWNER/);
+  assert.equal(evaluations, 1);
 });

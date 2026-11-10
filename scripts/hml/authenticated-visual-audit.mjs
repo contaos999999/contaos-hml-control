@@ -436,7 +436,9 @@ export function validateCase(row = {}) {
 }
 export function summarizeCases(rows, scope = null) {
   scope = auditScope(scope);
-  const expected = scope ? new Map(privateCases(scope).map(item => [caseKey(item),item.path])) : null;
+  const expected = scope
+    ? new Map(privateCases(scope).map((item) => [caseKey(item), item.path]))
+    : null;
   const keys = new Set();
   let duplicate = false,
     invalid = false,
@@ -450,20 +452,32 @@ export function summarizeCases(rows, scope = null) {
       keys.add(key);
       const routeValid = !expected || (expected.has(key) && expected.get(key) === row.path);
       if (!routeValid) invalid = true;
-      const completeEvidence = !scope || (run78VisualEvidenceValid(row, scope) &&
-        row.keyboard?.passed === true && row.sidebarSupplement?.passed === true &&
-        (row.surface !== "V117" || row.drawerCloseVerified === true) &&
-        row.navigationVerified === true && row.langPtBr === true && row.badState === false &&
-        Array.isArray(row.accessibility?.violations) && row.accessibility.violations.length === 0 &&
-        /^['"]?Inter['"]?,\s*Arial,\s*sans-serif$/i.test(row.fontFamily));
-      if (row.status === "PASS_AUTOMATIZADO" && validateCase(row) && routeValid && completeEvidence) passed++;
+      const completeEvidence =
+        !scope ||
+        (run78VisualEvidenceValid(row, scope) &&
+          row.keyboard?.passed === true &&
+          row.sidebarSupplement?.passed === true &&
+          (row.surface !== "V117" || row.drawerCloseVerified === true) &&
+          row.navigationVerified === true &&
+          row.langPtBr === true &&
+          row.badState === false &&
+          Array.isArray(row.accessibility?.violations) &&
+          row.accessibility.violations.length === 0 &&
+          /^['"]?Inter['"]?,\s*Arial,\s*sans-serif$/i.test(row.fontFamily));
+      if (row.status === "PASS_AUTOMATIZADO" && validateCase(row) && routeValid && completeEvidence)
+        passed++;
     } catch {
       invalid = true;
     }
   }
   return {
     recorded: keys.size,
-    matrixComplete: !invalid && !duplicate && keys.size === (scope ? 64 : 208) && rows.length === (scope ? 64 : 208) && (!scope || passed === 64),
+    matrixComplete:
+      !invalid &&
+      !duplicate &&
+      keys.size === (scope ? 64 : 208) &&
+      rows.length === (scope ? 64 : 208) &&
+      (!scope || passed === 64),
     globalComplete: false,
     passed,
   };
@@ -2416,7 +2430,13 @@ export function safeArtifactText(text, allowedWords, options) {
 export function run78VisualSelection(item, scope = null) {
   scope = auditScope(scope);
   if (scope) {
-    if (!item || !scope.surfaces.includes(item.surface) || !WIDTHS.includes(item.width) || !THEMES.includes(item.theme)) return null;
+    if (
+      !item ||
+      !scope.surfaces.includes(item.surface) ||
+      !WIDTHS.includes(item.width) ||
+      !THEMES.includes(item.theme)
+    )
+      return null;
     return { required: true };
   }
   if (
@@ -2554,11 +2574,12 @@ export function completePrivateRecords(records, scope = null) {
   scope = auditScope(scope);
   if (scope) {
     if (!Array.isArray(records) || records.length > 64) fail("AUDIT_CASES");
-    const expected = new Map(privateCases(scope).map(item => [caseKey(item),item.path]));
+    const expected = new Map(privateCases(scope).map((item) => [caseKey(item), item.path]));
     const seen = new Set();
     for (const row of records) {
       const key = caseKey(row);
-      if (!expected.has(key) || expected.get(key) !== row.path || seen.has(key)) fail("AUDIT_CASES");
+      if (!expected.has(key) || expected.get(key) !== row.path || seen.has(key))
+        fail("AUDIT_CASES");
       seen.add(key);
     }
   }
@@ -4144,18 +4165,20 @@ export const C8_AUDIT_SCOPE = Object.freeze({
   surfaces: Object.freeze(["V111", "V114", "V115", "V116", "V117", "V118", "V119", "V120"]),
 });
 export const C8_RECOVERY_DOCUMENT = Object.freeze({
-  "schema": "contaos.fixture.readonly-recovery-r20.v1",
-  "workflowRun": "42788354465",
-  "artifactId": "13751191411",
-  "requestId": "trilha-a-fixtures-20261110-r20",
-  "harnessSha": "79b728cb12e7b1df037c5816c27842c0ef042d2b",
-  "zipSha256": "142d095971e8b206030451d2de6236351a9db59b21e45a10b1c32b06cda73536",
-  "reportSha256": "daab1954472928a254fbb725476f6688415d2c7752c195b711a511be31a2b9fe",
-  "receiptsSha256": "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
-  "observationSha256": "9d4b0e45715e2589c0857f6e6357fb3b72035c30cb9e2c6d2d7be116a6325bc3",
-  "reportRaw": "{\n  \"schema\": \"contaos.fixture.preparation.v1\",\n  \"failure\": null,\n  \"diagnostics\": {\n    \"primaryFailure\": null,\n    \"failureClass\": null,\n    \"errorName\": null,\n    \"subphase\": \"CLEANUP\",\n    \"subphasePath\": [],\n    \"lastCompletedSubphase\": \"CLEANUP\",\n    \"logoutAttempted\": true,\n    \"logoutVerified\": true,\n    \"cleanupFailure\": null\n  },\n  \"intentLedger\": {\n    \"count\": 19,\n    \"frozen\": false,\n    \"pending\": false,\n    \"sent\": false,\n    \"priorConfirmed\": 17,\n    \"priorReserved\": 2,\n    \"newArmedCount\": 0,\n    \"maxIntentions\": 24,\n    \"maxNewIntentions\": 5\n  },\n  \"recovery\": {\n    \"ledgerSha256\": \"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\",\n    \"priorWorkflowRun\": \"42540864527\",\n    \"confirmedBefore\": 17,\n    \"maxNewIntentions\": 5,\n    \"r3ReceiptsSha256\": \"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\",\n    \"r3WorkflowRun\": \"42559214436\",\n    \"r4ZeroAuth\": {\n      \"schema\": \"contaos.fixture.recovery-r4.v1\",\n      \"headSha\": \"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\",\n      \"upstreamRun\": 42568309807,\n      \"fixturesRun\": 42568382053,\n      \"auditRun\": 42568382029,\n      \"attempt\": 1,\n      \"derivedNewBusinessIntents\": 0,\n      \"proof\": \"GITHUB_ACTIONS_LIVE_METADATA\"\n    },\n    \"reconciled\": true,\n    \"sourceVersion\": \"1ebbfd0b-c50c-405d-8806-321f18e179e0\",\n    \"sourceHash\": \"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\"\n  },\n  \"bindings\": {\n    \"sourceVersionId\": \"1ebbfd0b-c50c-405d-8806-321f18e179e0\",\n    \"listId\": \"bf71906b-87a4-42f5-8371-5f597ef2ad9b\",\n    \"listVersionId\": \"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\",\n    \"itemId\": \"e7065876-a620-4dbb-9b4e-992fa4fead83\",\n    \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n    \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n    \"source\": \"8b942e46-a29b-40d9-8ad4-04aaf9124a34\",\n    \"competencies\": [\n      {\n        \"month\": \"2026-10-01\",\n        \"state\": \"pode_apresentar_contratante\",\n        \"id\": \"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\",\n        \"requirementId\": \"75938450-a972-410c-8612-da3ef7dc0e00\",\n        \"documentId\": \"c7f56ac9-81d6-45a4-81f8-db1383006c41\",\n        \"executionId\": \"3c174678-a6ec-4415-9d25-6e8a859de2cb\",\n        \"opinionId\": \"9ec80151-bbf6-4469-9cd8-7d96d1bb02cd\"\n      },\n      {\n        \"month\": \"2026-09-01\",\n        \"state\": \"aguardando_contratante\",\n        \"id\": \"79bdc139-ed10-4c91-905e-b32b9a824d27\",\n        \"requirementId\": \"c824a6f9-e519-44cc-8911-87d1009e2eaf\",\n        \"documentId\": \"cd1624d3-73f7-4ea1-b317-c52627df6824\",\n        \"executionId\": \"00da4236-810f-4a89-8be5-b2ffcd50a480\",\n        \"opinionId\": \"7bbbe81e-e34c-44dc-a76f-ed85fd56d87f\",\n        \"presentationId\": \"eb6d5b1c-8b64-418b-aa82-bf1f29d41768\",\n        \"packageId\": \"f29715a6-0664-415a-8903-68be9d7c5d66\",\n        \"packageHash\": \"82e0dc9adfbbce6956f87dfe8b78230f71eb9d7e4399571f86210c0f1c6e5c81\"\n      }\n    ]\n  },\n  \"frontendSha\": \"0024b3c6739ab6296ec12338f11cf792d3a5f84b\",\n  \"harnessSha\": \"79b728cb12e7b1df037c5816c27842c0ef042d2b\",\n  \"deploymentId\": \"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\",\n  \"workflowRun\": \"42788354465\",\n  \"phase\": \"FINAL_READBACK\",\n  \"completed\": true,\n  \"logoutVerified\": true,\n  \"ids\": [\n    \"1ebbfd0b-c50c-405d-8806-321f18e179e0\",\n    \"bf71906b-87a4-42f5-8371-5f597ef2ad9b\",\n    \"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\",\n    \"e7065876-a620-4dbb-9b4e-992fa4fead83\",\n    \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n    \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n    \"8b942e46-a29b-40d9-8ad4-04aaf9124a34\",\n    \"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\",\n    \"75938450-a972-410c-8612-da3ef7dc0e00\",\n    \"c7f56ac9-81d6-45a4-81f8-db1383006c41\",\n    \"3c174678-a6ec-4415-9d25-6e8a859de2cb\",\n    \"9ec80151-bbf6-4469-9cd8-7d96d1bb02cd\",\n    \"79bdc139-ed10-4c91-905e-b32b9a824d27\",\n    \"c824a6f9-e519-44cc-8911-87d1009e2eaf\",\n    \"cd1624d3-73f7-4ea1-b317-c52627df6824\",\n    \"00da4236-810f-4a89-8be5-b2ffcd50a480\",\n    \"7bbbe81e-e34c-44dc-a76f-ed85fd56d87f\",\n    \"eb6d5b1c-8b64-418b-aa82-bf1f29d41768\",\n    \"f29715a6-0664-415a-8903-68be9d7c5d66\"\n  ],\n  \"v1Certified\": false\n}\n",
-  "receiptsRaw": "{\"schema\":\"contaos.fixture.receipts.v1\",\"receipts\":[]}\n",
-  "observationRaw": "{\n  \"schema\": \"contaos.fixture.observation.v1\",\n  \"frontendSha\": \"0024b3c6739ab6296ec12338f11cf792d3a5f84b\",\n  \"harnessSha\": \"79b728cb12e7b1df037c5816c27842c0ef042d2b\",\n  \"deploymentId\": \"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\",\n  \"workflowRun\": \"42788354465\",\n  \"firstFailure\": null\n}\n"
+  schema: "contaos.fixture.readonly-recovery-r20.v1",
+  workflowRun: "42788354465",
+  artifactId: "13751191411",
+  requestId: "trilha-a-fixtures-20261110-r20",
+  harnessSha: "79b728cb12e7b1df037c5816c27842c0ef042d2b",
+  zipSha256: "142d095971e8b206030451d2de6236351a9db59b21e45a10b1c32b06cda73536",
+  reportSha256: "daab1954472928a254fbb725476f6688415d2c7752c195b711a511be31a2b9fe",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  observationSha256: "9d4b0e45715e2589c0857f6e6357fb3b72035c30cb9e2c6d2d7be116a6325bc3",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": null,\n  "diagnostics": {\n    "primaryFailure": null,\n    "failureClass": null,\n    "errorName": null,\n    "subphase": "CLEANUP",\n    "subphasePath": [],\n    "lastCompletedSubphase": "CLEANUP",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 19,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 17,\n    "priorReserved": 2,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 5\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 17,\n    "maxNewIntentions": 5,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "pode_apresentar_contratante",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "executionId": "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n        "opinionId": "9ec80151-bbf6-4469-9cd8-7d96d1bb02cd"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "aguardando_contratante",\n        "id": "79bdc139-ed10-4c91-905e-b32b9a824d27",\n        "requirementId": "c824a6f9-e519-44cc-8911-87d1009e2eaf",\n        "documentId": "cd1624d3-73f7-4ea1-b317-c52627df6824",\n        "executionId": "00da4236-810f-4a89-8be5-b2ffcd50a480",\n        "opinionId": "7bbbe81e-e34c-44dc-a76f-ed85fd56d87f",\n        "presentationId": "eb6d5b1c-8b64-418b-aa82-bf1f29d41768",\n        "packageId": "f29715a6-0664-415a-8903-68be9d7c5d66",\n        "packageHash": "82e0dc9adfbbce6956f87dfe8b78230f71eb9d7e4399571f86210c0f1c6e5c81"\n      }\n    ]\n  },\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "79b728cb12e7b1df037c5816c27842c0ef042d2b",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42788354465",\n  "phase": "FINAL_READBACK",\n  "completed": true,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n    "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n    "9ec80151-bbf6-4469-9cd8-7d96d1bb02cd",\n    "79bdc139-ed10-4c91-905e-b32b9a824d27",\n    "c824a6f9-e519-44cc-8911-87d1009e2eaf",\n    "cd1624d3-73f7-4ea1-b317-c52627df6824",\n    "00da4236-810f-4a89-8be5-b2ffcd50a480",\n    "7bbbe81e-e34c-44dc-a76f-ed85fd56d87f",\n    "eb6d5b1c-8b64-418b-aa82-bf1f29d41768",\n    "f29715a6-0664-415a-8903-68be9d7c5d66"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "79b728cb12e7b1df037c5816c27842c0ef042d2b",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42788354465",\n  "firstFailure": null\n}\n',
 });
 function auditScope(scope = null) {
   if (scope === null || scope === undefined) return null;
@@ -4170,14 +4193,26 @@ export function validateC8RecoveryDocument(input) {
   const names = Object.keys(C8_RECOVERY_DOCUMENT);
   const keys = Reflect.ownKeys(input);
   if (keys.length !== 12 || keys.some((key, index) => key !== names[index])) fail(code);
-  const descriptors = Object.getOwnPropertyDescriptors(input), out = {};
+  const descriptors = Object.getOwnPropertyDescriptors(input),
+    out = {};
   for (const key of names) {
     const d = descriptors[key];
-    if (!d || !Object.hasOwn(d,"value") || d.enumerable !== true || typeof d.value !== "string" || d.value !== C8_RECOVERY_DOCUMENT[key]) fail(code);
+    if (
+      !d ||
+      !Object.hasOwn(d, "value") ||
+      d.enumerable !== true ||
+      typeof d.value !== "string" ||
+      d.value !== C8_RECOVERY_DOCUMENT[key]
+    )
+      fail(code);
     out[key] = d.value;
   }
-  const raw = JSON.stringify(out,null,2)+"\n";
-  if (Buffer.byteLength(raw) !== 5430 || digest(raw) !== "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee") fail(code);
+  const raw = JSON.stringify(out, null, 2) + "\n";
+  if (
+    Buffer.byteLength(raw) !== 5430 ||
+    digest(raw) !== "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee"
+  )
+    fail(code);
   return Object.freeze(out);
 }
 
@@ -4217,7 +4252,8 @@ export function privateCases(scope = null) {
   if (scope) {
     routes.V117 = "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/analise";
     routes.V119 = "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar";
-    routes.V120 = "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27/apresentacoes/eb6d5b1c-8b64-418b-aa82-bf1f29d41768";
+    routes.V120 =
+      "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27/apresentacoes/eb6d5b1c-8b64-418b-aa82-bf1f29d41768";
   }
   return (scope ? scope.surfaces : PRIVATE_SURFACES).flatMap((surface) =>
     WIDTHS.flatMap((width) =>
@@ -4327,9 +4363,14 @@ export async function preparePublicProvenance({
   const documents = {};
   for (const path of new Set([
     "/login",
-    ...(scope ? ["/", "/selecionar-organizacao"] : ["/competencias/" +
-      R18_REGISTRATION_CANDIDATE.competencyId + "/apresentacoes/" +
-      R18_REGISTRATION_CANDIDATE.presentationId]),
+    ...(scope
+      ? ["/", "/selecionar-organizacao"]
+      : [
+          "/competencias/" +
+            R18_REGISTRATION_CANDIDATE.competencyId +
+            "/apresentacoes/" +
+            R18_REGISTRATION_CANDIDATE.presentationId,
+        ]),
     ...privateCases(scope)
       .filter((r) => r.path)
       .map((r) => r.path),
@@ -5339,7 +5380,7 @@ async function inspectPrivacy(page, words, diagnostics) {
     }
   }
   if (rendered !== null && state?.scope === C8_AUDIT_SCOPE)
-    fieldContext = await c8PrivacyContext(page,state,rendered,snapshot,fieldContext);
+    fieldContext = await c8PrivacyContext(page, state, rendered, snapshot, fieldContext);
   const privacy =
     rendered === null
       ? { rendered: { reason: "OPAQUE_MEDIA", unknownCount: 0 } }
@@ -5626,7 +5667,11 @@ async function runAuthenticatedAudit() {
     for (const item of privateCases(scope)) {
       captureItem = item;
       const key = caseKey(item),
-        record = { ...item, visualSelection: run78VisualSelection(item, scope), status: "PENDENTE" };
+        record = {
+          ...item,
+          visualSelection: run78VisualSelection(item, scope),
+          status: "PENDENTE",
+        };
       const preserved = preservedPrivateCase(item, scope);
       if (preserved) {
         records.push(preserved);
@@ -5646,9 +5691,15 @@ async function runAuthenticatedAudit() {
         if (scope) {
           privacyState.c8Observer?.close();
           privacyState.c8Current = null;
-          const {createOfficialObserver} = await import("./prepare-visual-fixtures.mjs");
-          privacyState.c8Observer = createOfficialObserver(page, {identity:{frontendSha:proof.frontendSha,
-            harnessSha:proof.harnessSha,deploymentId:proof.deploymentId,workflowRun:process.env.GITHUB_RUN_ID}});
+          const { createOfficialObserver } = await import("./prepare-visual-fixtures.mjs");
+          privacyState.c8Observer = createOfficialObserver(page, {
+            identity: {
+              frontendSha: proof.frontendSha,
+              harnessSha: proof.harnessSha,
+              deploymentId: proof.deploymentId,
+              workflowRun: process.env.GITHUB_RUN_ID,
+            },
+          });
         }
         await resizeVerifiedPage(page, fence, item.width);
         const response = await navigateVerifiedPage(page, fence, HML_ORIGIN + item.path);
@@ -5673,8 +5724,10 @@ async function runAuthenticatedAudit() {
         );
         await fence.drain();
         fence.assertSafe();
-        const closeDrawer = scope && item.surface === "V117"
-          ? await openC8RequirementDrawer(page, item, scope) : null;
+        const closeDrawer =
+          scope && item.surface === "V117"
+            ? await openC8RequirementDrawer(page, item, scope)
+            : null;
         await settleVerifiedPage(page, fence);
         if (scope) await collectC8CurrentWire(page, item, privacyState);
         diagnosticStage = "PRIVACY_PRIMARY";
@@ -5713,9 +5766,15 @@ async function runAuthenticatedAudit() {
                     .trim(),
               ),
             dialogVisible: [...document.querySelectorAll('[role="dialog"]')].some(visible),
-            dialogNames: [...document.querySelectorAll('[role="dialog"]')].filter(visible).map(e =>
-              e.getAttribute("aria-label") || (e.getAttribute("aria-labelledby") || "").split(/\s+/)
-                .map(id => document.getElementById(id)?.textContent || "").join(" ").trim()),
+            dialogNames: [...document.querySelectorAll('[role="dialog"]')].filter(visible).map(
+              (e) =>
+                e.getAttribute("aria-label") ||
+                (e.getAttribute("aria-labelledby") || "")
+                  .split(/\s+/)
+                  .map((id) => document.getElementById(id)?.textContent || "")
+                  .join(" ")
+                  .trim(),
+            ),
             observedWidth: innerWidth,
             observedTheme: document.documentElement.classList.contains("dark") ? "dark" : "light",
             h1: headings.length,
@@ -6483,184 +6542,364 @@ const C8_SYNTHETIC_FIELDS = Object.freeze([
   "Ensaio sintético HML da Trilha A. Sem efeito jurídico ou financeiro.",
   "O requisito sintético exige a presença do TXT aprovado, vinculado a esta competência. Arquivo e versão conferidos pelo SHA256 previsto.",
   "Ensaio sintético HML da Trilha A. A conferência limita-se à presença documental; sem efeito jurídico ou financeiro.",
-  "HML-TRILHA-A-20261108", "Ensaio sintético em homologação.",
+  "HML-TRILHA-A-20261108",
+  "Ensaio sintético em homologação.",
 ]);
 
 // Values never join the global dictionary. The live owner and each original UI field
 // must still agree immediately before each PNG, including its complement.
 async function c8PrivacyContext(page, state, rendered, snapshot, previous) {
   const current = state?.c8Current;
-  if (!current || current.owner !== state || current.observer !== state.c8Observer ||
-      current.generation !== state.generation || state.closed || !state.verified ||
-      page.url() !== HML_ORIGIN + current.item.path || !validateC8CurrentWire(current.item,current.wire))
+  if (
+    state?.scope !== C8_AUDIT_SCOPE ||
+    privacy78Pages.get(page) !== state ||
+    !current ||
+    current.owner !== state ||
+    current.observer !== state.c8Observer ||
+    current.generation !== state.generation ||
+    state.closed ||
+    !state.verified ||
+    page.url() !== HML_ORIGIN + current.item.path ||
+    !validateC8CurrentWire(current.item, current.wire)
+  )
     fail("C8_CURRENT_OWNER");
   const descriptors = [];
-  const date = value => new Intl.DateTimeFormat("pt-BR", {timeZone:"America/Sao_Paulo",
-    day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})
-    .format(new Date(value)).replace(",", "");
-  const dates = {atualizado_em:["Atualizado em"],criado_em:["Registrado em","Registrada em","criada em","Criado em"],
-    iniciada_em:["Iniciada em"],concluida_em:["Concluída em"],aprovado_em:["Aprovado em"],
-    apresentado_em:["Apresentado em"],congelado_em:["Congelado em"]};
-  const hashes = {hash:["Hash","Integridade (SHA-256)"],hash_entrada:["Hash de entrada"],hash_evidencias:["Hash das evidências"],
-    hash_snapshot:["Hash do snapshot"],hash_pacote:["Hash criptográfico do pacote"]};
-  const ids = {origem_id:["Identificador da origem"],versao_id:["Versão"],id:["Identificador oficial"]};
+  const date = (value) =>
+    new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+      .format(new Date(value))
+      .replace(",", "");
+  const dates = {
+    atualizado_em: ["Atualizado em"],
+    criado_em: ["Registrado em", "Registrada em", "criada em", "Criado em"],
+    iniciada_em: ["Iniciada em"],
+    concluida_em: ["Concluída em"],
+    aprovado_em: ["Aprovado em"],
+    apresentado_em: ["Apresentado em"],
+    congelado_em: ["Congelado em"],
+  };
+  const hashes = {
+    hash: ["Hash", "Integridade (SHA-256)"],
+    hash_entrada: ["Hash de entrada"],
+    hash_evidencias: ["Hash das evidências"],
+    hash_snapshot: ["Hash do snapshot"],
+    hash_pacote: ["Hash criptográfico do pacote"],
+  };
+  const ids = {
+    origem_id: ["Identificador da origem"],
+    versao_id: ["Versão"],
+    id: ["Identificador oficial"],
+  };
   const walk = (value, path = "") => {
-    if (Array.isArray(value)) return value.forEach((v,i)=>walk(v,path+"."+i));
+    if (Array.isArray(value)) return value.forEach((v, i) => walk(v, path + "." + i));
     if (!value || typeof value !== "object") return;
-    for (const [field,scalar] of Object.entries(value)) {
-      if (scalar && typeof scalar === "object") {walk(scalar,path+"."+field);continue;}
+    for (const [field, scalar] of Object.entries(value)) {
+      if (scalar && typeof scalar === "object") {
+        walk(scalar, path + "." + field);
+        continue;
+      }
       if (typeof scalar !== "string") continue;
       if (dates[field] && /^\d{4}-\d{2}-\d{2}T/.test(scalar) && Number.isFinite(Date.parse(scalar)))
-        descriptors.push({field:path+"."+field,value:date(scalar),labels:dates[field],kind:"date"});
+        descriptors.push({
+          field: path + "." + field,
+          value: date(scalar),
+          labels: dates[field],
+          kind: "date",
+        });
       if (hashes[field] && /^[a-f0-9]{64}$/.test(scalar))
-        descriptors.push({field:path+"."+field,value:scalar,labels:hashes[field],kind:"hash"});
+        descriptors.push({
+          field: path + "." + field,
+          value: scalar,
+          labels: hashes[field],
+          kind: "hash",
+        });
       if (ids[field] && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(scalar))
-        descriptors.push({field:path+"."+field,value:scalar,labels:ids[field],kind:"id"});
-      if (["descricao","justificativa","fundamento","fonte_detalhe","trecho","protocolo","forma_apresentacao"].includes(field) &&
-          C8_SYNTHETIC_FIELDS.includes(scalar))
-        descriptors.push({field:path+"."+field,value:scalar,labels:[],kind:"synthetic"});
+        descriptors.push({
+          field: path + "." + field,
+          value: scalar,
+          labels: ids[field],
+          kind: "id",
+        });
+      if (
+        [
+          "descricao",
+          "justificativa",
+          "fundamento",
+          "fonte_detalhe",
+          "trecho",
+          "protocolo",
+          "forma_apresentacao",
+        ].includes(field) &&
+        C8_SYNTHETIC_FIELDS.includes(scalar)
+      )
+        descriptors.push({
+          field: path + "." + field,
+          value: scalar,
+          labels: [],
+          kind: "synthetic",
+        });
     }
   };
   walk(current.wire);
   const roots = {
-    V111:'section[aria-label="Resumo do documento"],section[aria-label="Processamento"]',
-    V114:'main', V115:'section[aria-labelledby^="v115-"]',
-    V116:'section[aria-labelledby^="v116-"]',
-    V117:'section[aria-labelledby^="v116-"],[role="dialog"] section[aria-labelledby^="v117-"]',
-    V118:'section[aria-labelledby="v118-historico"]',
-    V119:'section[aria-labelledby^="v119-"]',
-    V120:'section[aria-labelledby="v120-apresentacao"],section[aria-labelledby="v120-pacote"],section[aria-labelledby="v120-itens"]',
+    V111: 'section[aria-label="Resumo do documento"],section[aria-label="Processamento"]',
+    V114: "main",
+    V115: 'section[aria-labelledby^="v115-"]',
+    V116: 'section[aria-labelledby^="v116-"]',
+    V117: 'section[aria-labelledby^="v116-"],[role="dialog"] section[aria-labelledby^="v117-"]',
+    V118: 'section[aria-labelledby="v118-historico"]',
+    V119: 'section[aria-labelledby^="v119-"]',
+    V120: 'section[aria-labelledby="v120-apresentacao"],section[aria-labelledby="v120-pacote"],section[aria-labelledby="v120-itens"]',
   };
-  const anchored = await page.evaluate(({descriptors,root}) => {
-    const visible = node => node.getClientRects().length > 0 && getComputedStyle(node).visibility !== "hidden";
-    const nodes = [...document.querySelectorAll(root)].flatMap(root=>[...root.querySelectorAll("dd,p,td,span")])
-      .filter((n,i,a)=>a.indexOf(n) === i && visible(n));
-    const groups = new Map();
-    for (const d of descriptors) {
-      const matches = nodes.filter(node => {
-      const text=node.textContent.trim();
-      if (!text.includes(d.value) || [...node.children].some(c=>c.textContent.includes(d.value))) return false;
-      if (d.kind === "synthetic") return text === d.value ||
-        ["Justificativa: ","Fundamento: "].some(prefix=>text === prefix+d.value);
-      const label=node.tagName === "DD" ? node.parentElement.querySelector("dt")?.textContent : text;
-      return d.labels.some(name => label?.includes(name)) &&
-        (text === d.value || d.labels.some(name=>text === name+": "+d.value) ||
-          (d.kind === "date" && text.startsWith("Execução atual: ") && text.endsWith("criada em "+d.value)));
-      });
-      const group=groups.get(d.value) ?? new Set();
-      for(const node of matches) group.add(node);
-      groups.set(d.value,group);
-    }
-    return [...groups].map(([value,nodes])=>({value,count:[...nodes].reduce((n,node)=>n+node.textContent.split(value).length-1,0)}));
-  }, {descriptors,root:roots[current.item.surface]});
-  if (state.generation !== current.generation || privacy78Pages.get(page) !== state || state.closed ||
-      page.url() !== HML_ORIGIN + current.item.path) fail("C8_CURRENT_OWNER");
+  const anchored = await page.evaluate(
+    ({ descriptors, root }) => {
+      const visible = (node) =>
+        node.getClientRects().length > 0 && getComputedStyle(node).visibility !== "hidden";
+      const nodes = [...document.querySelectorAll(root)]
+        .flatMap((root) => [...root.querySelectorAll("dd,p,td,span")])
+        .filter((n, i, a) => a.indexOf(n) === i && visible(n));
+      const groups = new Map();
+      for (const d of descriptors) {
+        const matches = nodes.filter((node) => {
+          const text = node.textContent.trim();
+          if (
+            !text.includes(d.value) ||
+            [...node.children].some((c) => c.textContent.includes(d.value))
+          )
+            return false;
+          if (d.kind === "synthetic")
+            return (
+              text === d.value ||
+              ["Justificativa: ", "Fundamento: "].some((prefix) => text === prefix + d.value)
+            );
+          const label =
+            node.tagName === "DD" ? node.parentElement.querySelector("dt")?.textContent : text;
+          return (
+            d.labels.some((name) => label?.includes(name)) &&
+            (text === d.value ||
+              d.labels.some((name) => text === name + ": " + d.value) ||
+              (d.kind === "date" &&
+                text.startsWith("Execução atual: ") &&
+                text.endsWith("criada em " + d.value)))
+          );
+        });
+        const group = groups.get(d.value) ?? new Set();
+        for (const node of matches) group.add(node);
+        groups.set(d.value, group);
+      }
+      return [...groups].map(([value, nodes]) => ({
+        value,
+        count: [...nodes].reduce((n, node) => n + node.textContent.split(value).length - 1, 0),
+      }));
+    },
+    { descriptors, root: roots[current.item.surface] },
+  );
+  if (
+    state.generation !== current.generation ||
+    privacy78Pages.get(page) !== state ||
+    state.closed ||
+    page.url() !== HML_ORIGIN + current.item.path
+  )
+    fail("C8_CURRENT_OWNER");
   const old = privacy78Contexts.get(previous);
-  const channels = {rendered:{original:rendered,remainder:old?.rendered.remainder ?? rendered},
-    snapshot:{original:snapshot,remainder:old?.snapshot.remainder ?? snapshot}};
-  for (const {value,count} of anchored) {
-    const occurrences = text => text.split(value).length-1;
+  const channels = {
+    rendered: { original: rendered, remainder: old?.rendered.remainder ?? rendered },
+    snapshot: { original: snapshot, remainder: old?.snapshot.remainder ?? snapshot },
+  };
+  for (const { value, count } of anchored) {
+    const occurrences = (text) => text.split(value).length - 1;
     if (!count || occurrences(rendered) !== count || occurrences(snapshot) > count) continue;
-    for (const channel of Object.values(channels)) channel.remainder=channel.remainder.split(value).join(" ");
+    for (const channel of Object.values(channels))
+      channel.remainder = channel.remainder.split(value).join(" ");
   }
-  const token=Object.freeze({});
-  privacy78Contexts.set(token,channels);
+  const token = Object.freeze({});
+  privacy78Contexts.set(token, channels);
   return token;
 }
 
 // Pure relation check. Only the private observer/page owner below can seal live evidence.
 export function validateC8CurrentWire(item, wire) {
   try {
-    if (!privateCases(C8_AUDIT_SCOPE).some(c => caseKey(c) === caseKey(item) && c.path === item.path)) return false;
+    if (
+      !privateCases(C8_AUDIT_SCOPE).some(
+        (c) => caseKey(c) === caseKey(item) && c.path === item.path,
+      )
+    )
+      return false;
     const b = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings;
-    const recovered = b.competencies.find(c => item.path.includes(c.id));
+    const recovered = b.competencies.find((c) => item.path.includes(c.id));
     const id = recovered?.id ?? SYNTHETIC_FIXTURE.competence;
     const month = recovered?.month ?? "2026-11-01";
-    const owned = c => c?.id === id && c.id_organizacao === b.organization &&
-      c.id_contrato === b.contract && c.competencia_referencia === month;
-    if (item.surface === "V111") return Array.isArray(wire.documents) && wire.documents.length === 1 &&
-      wire.documents[0].id === SYNTHETIC_FIXTURE.document && wire.documents[0].id_contrato === b.contract;
-    if (["V116","V117"].includes(item.surface)) {
+    const owned = (c) =>
+      c?.id === id &&
+      c.id_organizacao === b.organization &&
+      c.id_contrato === b.contract &&
+      c.competencia_referencia === month;
+    if (item.surface === "V111")
+      return (
+        Array.isArray(wire.documents) &&
+        wire.documents.length === 1 &&
+        wire.documents[0].id === SYNTHETIC_FIXTURE.document &&
+        wire.documents[0].id_contrato === b.contract
+      );
+    if (["V116", "V117"].includes(item.surface)) {
       const a = wire.analysis;
-      if (a?.schema_versao !== "v116-v1" || !owned(a.competencia) || a.stale !== false ||
-          a.estado_analise !== "complete" || a.execucao_atual?.status !== "concluida" ||
-          (recovered && a.execucao_atual.id !== recovered.executionId)) return false;
+      if (
+        a?.schema_versao !== "v116-v1" ||
+        !owned(a.competencia) ||
+        a.stale !== false ||
+        a.estado_analise !== "complete" ||
+        a.execucao_atual?.status !== "concluida" ||
+        (recovered && a.execucao_atual.id !== recovered.executionId)
+      )
+        return false;
       if (item.surface === "V117") {
-        const d = wire.detail, ctx = wire.context;
-        if (d?.schema_versao !== "v117-v1" || !owned(d.competencia) ||
-            d.requisito?.id !== recovered.requirementId || d.requisito.codigo !== "AUD-A-TXT-001" ||
-            d.requisito.origem_tipo !== "item_lista" || d.requisito.origem_id !== b.itemId ||
-            d.execucao_atual?.id !== recovered.executionId ||
-            ctx?.id_competencia !== id || ctx.id_requisito !== recovered.requirementId ||
-            ctx.id_organizacao !== b.organization || ctx.id_contrato !== b.contract ||
-            ctx.id_execucao_esperada !== recovered.executionId) return false;
+        const d = wire.detail;
+        if (
+          d?.schema_versao !== "v117-v1" ||
+          !owned(d.competencia) ||
+          d.requisito?.id !== recovered.requirementId ||
+          d.requisito.codigo !== "AUD-A-TXT-001" ||
+          d.requisito.origem_tipo !== "item_lista" ||
+          d.requisito.origem_id !== b.itemId ||
+          d.execucao_atual?.id !== recovered.executionId
+        )
+          return false;
       }
       return true;
     }
     const view = item.surface === "V115" ? wire.documents : wire.overview;
     if (!owned(view?.competencia)) return false;
-    if (item.surface === "V119") return view.competencia.situacao === recovered.state &&
-      view.allowed_actions?.apresentar === true && view.blocking_summary?.aprovacao_apresentacao_atual === true;
+    if (item.surface === "V119")
+      return (
+        view.competencia.situacao === recovered.state &&
+        view.allowed_actions?.apresentar === true &&
+        view.blocking_summary?.aprovacao_apresentacao_atual === true
+      );
     if (item.surface === "V120") {
-      const [ap] = wire.presentations ?? [], [pkg] = wire.packages ?? [], [entry] = wire.items ?? [];
-      const sameOwner = row => row?.id_organizacao === b.organization && row.id_contrato === b.contract && row.id_competencia === id;
-      return view.competencia.situacao === recovered.state && wire.presentations.length === 1 &&
-        wire.packages.length === 1 && wire.items.length === 1 && [ap,pkg,entry].every(sameOwner) &&
-        ap.id === recovered.presentationId && ap.id_pacote === recovered.packageId &&
-        pkg.id === recovered.packageId && pkg.hash_pacote === recovered.packageHash &&
-        pkg.status === R18_REGISTRATION_CANDIDATE.packageStatus && entry.id_pacote === pkg.id && /^[a-f0-9]{64}$/.test(entry.hash);
+      const [ap] = wire.presentations ?? [],
+        [pkg] = wire.packages ?? [],
+        [entry] = wire.items ?? [];
+      const sameOwner = (row) =>
+        row?.id_organizacao === b.organization &&
+        row.id_contrato === b.contract &&
+        row.id_competencia === id;
+      return (
+        view.competencia.situacao === recovered.state &&
+        wire.presentations.length === 1 &&
+        wire.packages.length === 1 &&
+        wire.items.length === 1 &&
+        [ap, pkg, entry].every(sameOwner) &&
+        ap.id === recovered.presentationId &&
+        ap.id_pacote === recovered.packageId &&
+        pkg.id === recovered.packageId &&
+        pkg.hash_pacote === recovered.packageHash &&
+        pkg.status === R18_REGISTRATION_CANDIDATE.packageStatus &&
+        pkg.numero === R18_REGISTRATION_CANDIDATE.packageNumber &&
+        Number.isFinite(Date.parse(pkg.congelado_em)) &&
+        ap.protocolo === R18_REGISTRATION_CANDIDATE.protocol &&
+        ap.forma_apresentacao === R18_REGISTRATION_CANDIDATE.presentationMethod &&
+        entry.ordem === 1 &&
+        typeof entry.entidade_tipo === "string" &&
+        entry.entidade_tipo.length > 0 &&
+        /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(entry.entidade_id) &&
+        (entry.versao_id === null ||
+          /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(entry.versao_id)) &&
+        entry.id_pacote === pkg.id &&
+        /^[a-f0-9]{64}$/.test(entry.hash)
+      );
     }
-    return ["V114","V115","V118"].includes(item.surface);
-  } catch { return false; }
+    return ["V114", "V115", "V118"].includes(item.surface);
+  } catch {
+    return false;
+  }
 }
 
 async function collectC8CurrentWire(page, item, state) {
-  if (state?.scope !== C8_AUDIT_SCOPE || !state.verified || state.closed ||
-      page.url() !== HML_ORIGIN + item.path || !state.c8Observer) fail("C8_CURRENT_OWNER");
-  const owner = state, generation = state.generation, observer = state.c8Observer;
+  if (
+    state?.scope !== C8_AUDIT_SCOPE ||
+    !state.verified ||
+    state.closed ||
+    page.url() !== HML_ORIGIN + item.path ||
+    !state.c8Observer
+  )
+    fail("C8_CURRENT_OWNER");
+  const owner = state,
+    generation = state.generation,
+    observer = state.c8Observer;
   const b = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings;
-  const c = b.competencies.find(c => item.path.includes(c.id));
+  const c = b.competencies.find((c) => item.path.includes(c.id));
   const id = c?.id ?? SYNTHETIC_FIXTURE.competence;
   const wire = {};
-  if (item.surface === "V111") wire.documents = await observer.read("documentos_contrato", {id:SYNTHETIC_FIXTURE.document});
-  else if (["V116","V117"].includes(item.surface)) {
-    wire.analysis = await observer.rpcRead("obter_analise_competencia_v116", {p_id_competencia:id});
+  if (item.surface === "V111")
+    wire.documents = await observer.read("documentos_contrato", { id: SYNTHETIC_FIXTURE.document });
+  else if (["V116", "V117"].includes(item.surface)) {
+    wire.analysis = await observer.rpcRead("obter_analise_competencia_v116", {
+      p_id_competencia: id,
+    });
     if (item.surface === "V117") {
-      wire.detail = await observer.rpcRead("obter_detalhe_requisito_v117", {p_id_competencia:id,p_id_requisito:c.requirementId});
-      wire.context = await observer.rpcRead("obter_contexto_revisao_v117", {p_id_competencia:id,p_id_requisito:c.requirementId});
+      wire.detail = await observer.rpcRead("obter_detalhe_requisito_v117", {
+        p_id_competencia: id,
+        p_id_requisito: c.requirementId,
+      });
     }
-  } else if (item.surface === "V115") wire.documents = await observer.rpcRead("obter_documentos_competencia_v115", {p_id_competencia:id});
+  } else if (item.surface === "V115")
+    wire.documents = await observer.rpcRead("obter_documentos_competencia_v115", {
+      p_id_competencia: id,
+    });
   else {
-    wire.overview = await observer.rpcRead("obter_visao_geral_competencia", {p_id_competencia:id});
-    if (item.surface === "V118") wire.opinions = await observer.read("pareceres_internos", {id_competencia:id});
+    wire.overview = await observer.rpcRead("obter_visao_geral_competencia", {
+      p_id_competencia: id,
+    });
+    if (item.surface === "V118")
+      wire.opinions = await observer.read("pareceres_internos", { id_competencia: id });
     if (item.surface === "V120") {
-      wire.presentations = await observer.read("apresentacoes_contratante", {id:c.presentationId});
-      wire.packages = await observer.read("pacotes_competencia", {id:c.packageId});
-      wire.items = await observer.read("itens_pacote_competencia", {id_pacote:c.packageId});
+      wire.presentations = await observer.read("apresentacoes_contratante", {
+        id: c.presentationId,
+      });
+      wire.packages = await observer.read("pacotes_competencia", { id: c.packageId });
+      wire.items = await observer.read("itens_pacote_competencia", { id_pacote: c.packageId });
     }
   }
   await observer.flush();
-  if (privacy78Pages.get(page) !== owner || state.generation !== generation || state.closed ||
-      page.url() !== HML_ORIGIN + item.path || observer.observationFailure() || !validateC8CurrentWire(item,wire))
+  if (
+    privacy78Pages.get(page) !== owner ||
+    state.generation !== generation ||
+    state.closed ||
+    page.url() !== HML_ORIGIN + item.path ||
+    observer.observationFailure() ||
+    !validateC8CurrentWire(item, wire)
+  )
     fail("C8_CURRENT_BINDING");
-  state.c8Current = {owner,generation,observer,item,wire};
+  state.c8Current = { owner, generation, observer, item, wire };
   return wire;
 }
 
 export async function openC8RequirementDrawer(page, item, scope) {
-  if (auditScope(scope) !== C8_AUDIT_SCOPE || item?.surface !== "V117" ||
-      !privateCases(scope).some(c => caseKey(c) === caseKey(item) && c.path === item.path) ||
-      page.url() !== HML_ORIGIN + item.path) fail("C8_DRAWER_BINDING");
-  const opener = page.getByRole("button", {name:"Abrir requisito AUD-A-TXT-001",exact:true});
-  if (await opener.count() !== 1) fail("C8_DRAWER_BINDING");
+  if (
+    auditScope(scope) !== C8_AUDIT_SCOPE ||
+    item?.surface !== "V117" ||
+    !privateCases(scope).some((c) => caseKey(c) === caseKey(item) && c.path === item.path) ||
+    page.url() !== HML_ORIGIN + item.path
+  )
+    fail("C8_DRAWER_BINDING");
+  const opener = page.getByRole("button", { name: "Abrir requisito AUD-A-TXT-001", exact: true });
+  if ((await opener.count()) !== 1) fail("C8_DRAWER_BINDING");
   await opener.click();
-  const dialog = page.getByRole("dialog", {name:"Detalhe do requisito",exact:true});
-  await dialog.waitFor({state:"visible"});
+  const dialog = page.getByRole("dialog", { name: "Detalhe do requisito", exact: true });
+  await dialog.waitFor({ state: "visible" });
   return async () => {
     if (page.url() !== HML_ORIGIN + item.path) fail("C8_DRAWER_BINDING");
-    await dialog.getByRole("button", {name:"Fechar",exact:true}).click();
-    await dialog.waitFor({state:"hidden"});
-    if (!(await opener.evaluate(node => document.activeElement === node))) fail("C8_DRAWER_FOCUS");
+    await dialog.getByRole("button", { name: "Fechar", exact: true }).click();
+    await dialog.waitFor({ state: "hidden" });
+    if (!(await opener.evaluate((node) => document.activeElement === node)))
+      fail("C8_DRAWER_FOCUS");
     return true;
   };
 }
@@ -6804,8 +7043,14 @@ export function surfaceStateValid(surface, observation) {
     V119: ["Revisão de prontidão", "Etapa 2 de 2 — Registrar apresentação"],
     V120: ["Dados da apresentação", "Pacote imutável", "Itens preservados no pacote"],
   };
-  if (regions[surface]?.some(name => !observation.regionNames?.includes(name))) return false;
-  if (surface === "V117" && (observation.dialogVisible !== true || observation.dialogNames?.length !== 1 || observation.dialogNames[0] !== "Detalhe do requisito")) return false;
+  if (regions[surface]?.some((name) => !observation.regionNames?.includes(name))) return false;
+  if (
+    surface === "V117" &&
+    (observation.dialogVisible !== true ||
+      observation.dialogNames?.length !== 1 ||
+      observation.dialogNames[0] !== "Detalhe do requisito")
+  )
+    return false;
   if (
     surface === "V111" &&
     !["Resumo do documento", "Processamento"].every((name) =>
@@ -7713,8 +7958,10 @@ export function parseSingleRequest(raw, operation, { historical = false } = {}) 
     (parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce &&
       !(
         historical &&
-        ((parsed.operation === "fixtures" && SINGLE_REQUEST.spentFixtureNonces.includes(parsed.request_id)) ||
-         (parsed.operation === "audit" && SINGLE_REQUEST.spentAuditNonces.includes(parsed.request_id)))
+        ((parsed.operation === "fixtures" &&
+          SINGLE_REQUEST.spentFixtureNonces.includes(parsed.request_id)) ||
+          (parsed.operation === "audit" &&
+            SINGLE_REQUEST.spentAuditNonces.includes(parsed.request_id)))
       )) ||
     !hash40(parsed.approved_parent_sha)
   )
@@ -7840,21 +8087,40 @@ export function resolveC8AuditScope(request) {
   if (!request || typeof request !== "object" || isProxy(request)) fail(code);
   const proto = Object.getPrototypeOf(request);
   if (proto !== Object.prototype && proto !== null) fail(code);
-  const names = ["schema_version","issue","operation","request_id","approved_parent_sha","frontend_sha","deployment_id"];
+  const names = [
+    "schema_version",
+    "issue",
+    "operation",
+    "request_id",
+    "approved_parent_sha",
+    "frontend_sha",
+    "deployment_id",
+  ];
   const keys = Reflect.ownKeys(request);
-  if (keys.length !== 7 || keys.some(key => typeof key !== "string" || !names.includes(key))) fail(code);
-  const descriptors = Object.getOwnPropertyDescriptors(request), copy = {};
+  if (keys.length !== 7 || keys.some((key) => typeof key !== "string" || !names.includes(key)))
+    fail(code);
+  const descriptors = Object.getOwnPropertyDescriptors(request),
+    copy = {};
   for (const name of names) {
     const d = descriptors[name];
-    if (!d || !Object.hasOwn(d,"value") || d.enumerable !== true || !["string","number"].includes(typeof d.value)) fail(code);
+    if (
+      !d ||
+      !Object.hasOwn(d, "value") ||
+      d.enumerable !== true ||
+      !["string", "number"].includes(typeof d.value)
+    )
+      fail(code);
     copy[name] = d.value;
   }
   if (copy.operation !== "audit" || copy.request_id !== C8_AUDIT_SCOPE.nonce) fail(code);
-  parseSingleRequest(JSON.stringify(copy),"audit");
+  parseSingleRequest(JSON.stringify(copy), "audit");
   return C8_AUDIT_SCOPE;
 }
 export function requireSingleRequestOperation(operation, request = null) {
-  if (operation === "audit") { resolveC8AuditScope(request); return; }
+  if (operation === "audit") {
+    resolveC8AuditScope(request);
+    return;
+  }
   if (operation !== "fixtures") fail("REQUEST_OPERATION");
 }
 
@@ -7902,7 +8168,11 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
     );
   if (request.operation === "audit") {
     resolveC8AuditScope(request);
-    ancestors.push(SINGLE_REQUEST.c8GateSha,SINGLE_REQUEST.c8PlanSha,SINGLE_REQUEST.c8ReaderBuildSha);
+    ancestors.push(
+      SINGLE_REQUEST.c8GateSha,
+      SINGLE_REQUEST.c8PlanSha,
+      SINGLE_REQUEST.c8ReaderBuildSha,
+    );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
@@ -10620,7 +10890,12 @@ export async function verifySingleRequest({
     get("/actions/workflows/" + expected.id + "/runs?per_page=100&page=" + page),
   );
   validateSingleRequestRuns({ current, runs: finalRuns, requestShas, workflowId: expected.id });
-  singleRequestContext = { operation, sha, runId: env.GITHUB_RUN_ID, scope: operation === "audit" ? resolveC8AuditScope(request) : null };
+  singleRequestContext = {
+    operation,
+    sha,
+    runId: env.GITHUB_RUN_ID,
+    scope: operation === "audit" ? resolveC8AuditScope(request) : null,
+  };
   return {
     selected: true,
     operation,
@@ -10633,7 +10908,12 @@ export async function verifySingleRequest({
     parentSha: request.approved_parent_sha,
     requestSha256: digest(raw),
     ...pullProof,
-    ...(operation === "audit" ? { auditScope:"C8", c8RecoverySha256:"3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee" } : {}),
+    ...(operation === "audit"
+      ? {
+          auditScope: "C8",
+          c8RecoverySha256: "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee",
+        }
+      : {}),
     ...(r4ZeroAuth ? { r4ZeroAuth } : {}),
     ...(r7ZeroAuth ? { r7ZeroAuth } : {}),
     ...(r12ZeroAuth ? { r12ZeroAuth } : {}),
@@ -10821,12 +11101,20 @@ export async function loadSingleRequestProof({
   }
   assertPrivateRequestEnvironment(env);
   if (operation === "audit") {
-    const requestPath = join(fileURLToPath(new URL("../../",import.meta.url)),SINGLE_REQUEST.path);
+    const requestPath = join(
+      fileURLToPath(new URL("../../", import.meta.url)),
+      SINGLE_REQUEST.path,
+    );
     const requestInfo = await stat(requestPath);
-    if (!requestInfo.isFile() || requestInfo.isSymbolicLink() || requestInfo.size > 4096) fail("REQUEST_FILE_MODE");
+    if (!requestInfo.isFile() || requestInfo.isSymbolicLink() || requestInfo.size > 4096)
+      fail("REQUEST_FILE_MODE");
     let candidate;
-    try { candidate = parseSingleRequest(await read(requestPath,"utf8")); } catch { fail("AUDIT_BINDING_PENDING"); }
-    requireSingleRequestOperation(operation,candidate);
+    try {
+      candidate = parseSingleRequest(await read(requestPath, "utf8"));
+    } catch {
+      fail("AUDIT_BINDING_PENDING");
+    }
+    requireSingleRequestOperation(operation, candidate);
   } else requireSingleRequestOperation(operation);
   if (
     env.GITHUB_EVENT_NAME !== "workflow_run" ||
@@ -10880,7 +11168,12 @@ export async function loadSingleRequestProof({
         timeout: 10000,
       })
     ).stdout;
-  if (operation === "audit" && (proof.auditScope !== "C8" || proof.c8RecoverySha256 !== "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee")) fail("REQUEST_RUNTIME");
+  if (
+    operation === "audit" &&
+    (proof.auditScope !== "C8" ||
+      proof.c8RecoverySha256 !== "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee")
+  )
+    fail("REQUEST_RUNTIME");
   await verifySingleRequestGit(request, proof.sha, git, raw);
   const event = JSON.parse(await read(env.GITHUB_EVENT_PATH, "utf8")),
     spec = SINGLE_REQUEST[operation];
@@ -10917,6 +11210,11 @@ export async function loadSingleRequestProof({
   validatedR7ZeroAuth = restoredR7;
   if (restoredR12) validatedR12ZeroAuth = restoredR12;
   if (restoredR14) validatedR14ZeroAuth = restoredR14;
-  singleRequestContext = { operation, sha: proof.sha, runId: env.GITHUB_RUN_ID, scope: operation === "audit" ? resolveC8AuditScope(request) : null };
+  singleRequestContext = {
+    operation,
+    sha: proof.sha,
+    runId: env.GITHUB_RUN_ID,
+    scope: operation === "audit" ? resolveC8AuditScope(request) : null,
+  };
   return true;
 }
