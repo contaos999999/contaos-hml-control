@@ -15531,6 +15531,10 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
     console.log("C8_SOURCE_REAL_24 PASS");
   } finally {
     currentObserver?.close();
+    if (page && !page.isClosed()) {
+      await page.goto("about:blank", { waitUntil: "load", timeout: 5000 });
+      await page.unrouteAll({ behavior: "wait" });
+    }
     await page?.close();
     server?.closeAllConnections();
     if (server) await new Promise((resolve) => server.close(resolve));
@@ -15868,4 +15872,69 @@ test("C8 native diagnostic distinguishes a TAP timeout from lifecycle failure wi
       targetClosed: false,
     },
   });
+});
+
+test("C8 native cleanup drains active route handlers before page and server shutdown", async () => {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+    new URL("./authenticated-visual-audit.test.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("audit.test.mjs", source, 99, true, ts.ScriptKind.JS);
+  const probe = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "c8NativeSourceProbe",
+  );
+  const cleanup = probe.body.statements.find((n) => ts.isTryStatement(n)).finallyBlock;
+  const run = new Function(
+    "env",
+    "const {currentObserver,page,server,fs,dir}=env;return(async()=>" +
+      cleanup.getText(ast) +
+      ")();",
+  );
+  const calls = [];
+  let drained = false,
+    closed = false;
+  await run({
+    currentObserver: {
+      close() {
+        calls.push("observer");
+      },
+    },
+    page: {
+      isClosed: () => false,
+      goto: async (url) => {
+        assert.equal(url, "about:blank");
+        calls.push("blank");
+      },
+      unrouteAll: async (options) => {
+        assert.deepEqual(options, { behavior: "wait" });
+        drained = true;
+        calls.push("drain");
+      },
+      close: async () => {
+        assert.equal(drained, true);
+        closed = true;
+        calls.push("page");
+      },
+    },
+    server: {
+      closeAllConnections() {
+        assert.equal(closed, true);
+        calls.push("connections");
+      },
+      close(done) {
+        calls.push("server");
+        done();
+      },
+    },
+    fs: {
+      rm: async () => {
+        assert.equal(closed, true);
+        calls.push("files");
+      },
+    },
+    dir: "native-fixture",
+  });
+  assert.deepEqual(calls, ["observer", "blank", "drain", "page", "connections", "server", "files"]);
 });
