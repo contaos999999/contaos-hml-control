@@ -2236,7 +2236,9 @@ export function createIntentBroker({
   recoveryLedgerR17,
   identity,
   beforeArm,
+  readOnlyRecovery = false,
 } = {}) {
+  if (typeof readOnlyRecovery !== "boolean") err("RECOVERY_READ_ONLY");
   validateR13RecoveryDocument(recoveryLedgerR13);
   validateR15RecoveryDocument(recoveryLedgerR15);
   validateR16RecoveryDocument(recoveryLedgerR16);
@@ -2312,6 +2314,7 @@ export function createIntentBroker({
       const business =
         typeof request.url === "string" &&
         BUSINESS_RPCS.some((r) => request.url.includes("/rpc/" + r));
+      if (readOnlyRecovery && business) return false;
       if (request.stage === "RESPONSE") {
         if (!business) return readPolicy(request) === true;
         const admitted = ticket && accepted.get(ticket);
@@ -2383,6 +2386,7 @@ export function createIntentBroker({
       return true;
     },
     arm({ rpc, payload, requestId, uiGeneratedKey, verified, evidence = {} } = {}) {
+      if (readOnlyRecovery) err("RECOVERY_READ_ONLY");
       if (
         recovery &&
         [
@@ -3791,6 +3795,7 @@ export function readbackTargets(rpc, payload = {}, evidence = {}) {
       ["apresentacoes_contratante", { id_competencia: comp }],
       ["pacotes_competencia", { id_competencia: comp }],
       ["itens_pacote_competencia", { id_competencia: comp }],
+      ["obter_visao_geral_competencia", c],
     ],
   };
   const targets = mapping[rpc];
@@ -4282,7 +4287,19 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
             readRecord.contractFromResponse = FIXTURE.contract;
           const ledger = tables.get(table) || new Map(),
             prior = ledger.get(query.key);
-          if (!prior || prior.ordinal < ordinal) ledger.set(query.key, { ...query, ordinal, rows });
+          if (!prior || prior.ordinal < ordinal)
+            ledger.set(query.key, {
+              ...query,
+              ordinal,
+              rows,
+              validatedOrdinal: [
+                "apresentacoes_contratante",
+                "pacotes_competencia",
+                "itens_pacote_competencia",
+              ].includes(table)
+                ? ++sequence
+                : responseOrdinal,
+            });
           if (ledger.size > 1024) {
             stage = "OBSERVATION_LIMIT";
             err("OBSERVATION_LIMIT");
@@ -4451,6 +4468,95 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
         data.portao?.liberado === true &&
         data.portao.percentual === 100
       );
+    if (rpc === "registrar_apresentacao" && target.name === "obter_visao_geral_competencia") {
+      const mutation = target.mutation;
+      const overview = (rpcs.get(target.name) || []).find((entry) => entry.value === data);
+      const competency = data?.competencia;
+      if (
+        !mutation.admitted ||
+        !uuid(ack) ||
+        mutation.responseOrdinal === null ||
+        !overview ||
+        competency?.id !== p.p_id_competencia ||
+        competency.id_organizacao !== FIXTURE.organization ||
+        competency.id_contrato !== FIXTURE.contract ||
+        competency.situacao !== "aguardando_contratante" ||
+        competency.percentual_conformidade !== 100
+      )
+        return false;
+      const context = {
+        id_competencia: p.p_id_competencia,
+        id_organizacao: FIXTURE.organization,
+        id_contrato: FIXTURE.contract,
+      };
+      const proofRows = (table, where) => {
+        if (!tables.has(table)) return null;
+        const relevant = (record) =>
+          record.table === table &&
+          Object.entries(where).every(([key, value]) => {
+            const predicate = record.query.predicates.get(key);
+            return !predicate || (predicate.kind === "eq" && predicate.value === value);
+          });
+        if ([...pendingReads].some(relevant)) return null;
+        const latestRead = [...latestReads.values()]
+          .filter(relevant)
+          .sort((a, b) => b.ordinal - a.ordinal)[0];
+        if (!latestRead?.done || latestRead.ordinal <= mutation.responseOrdinal) return null;
+        const options = { after: mutation.responseOrdinal };
+        const rows = tableRows(table, where, options);
+        const { latest } = selectLatest(table, options);
+        if (
+          !rows.length ||
+          rows.some((row) => {
+            const entry = latest.get(row.id)?.e;
+            return (
+              !entry ||
+              entry.ordinal >= overview.ordinal ||
+              !Number.isSafeInteger(entry.validatedOrdinal) ||
+              entry.validatedOrdinal >= overview.ordinal ||
+              latestRead.ordinal !== entry.ordinal ||
+              Object.entries(context).some(([key, value]) => row[key] !== value)
+            );
+          })
+        )
+          return null;
+        return rows;
+      };
+      const presentations = proofRows("apresentacoes_contratante", { ...context, id: ack });
+      if (
+        presentations?.length !== 1 ||
+        !presentations[0].apresentado_em ||
+        presentations[0].protocolo !== p.p_protocolo ||
+        presentations[0].forma_apresentacao !== p.p_forma_apresentacao ||
+        !uuid(presentations[0].id_pacote)
+      )
+        return false;
+      const packages = proofRows("pacotes_competencia", {
+        ...context,
+        id: presentations[0].id_pacote,
+      });
+      if (
+        packages?.length !== 1 ||
+        packages[0].status !== "apresentado" ||
+        !packages[0].congelado_em ||
+        !/^[a-f0-9]{64}$/.test(packages[0].hash_pacote)
+      )
+        return false;
+      const items = proofRows("itens_pacote_competencia", {
+        ...context,
+        id_pacote: packages[0].id,
+      });
+      return (
+        items !== null &&
+        items.every(
+          (row) =>
+            uuid(row.id) &&
+            row.id_pacote === packages[0].id &&
+            typeof row.hash === "string" &&
+            /^[0-9a-f]{64}$/.test(row.hash),
+        )
+      );
+    }
     if (rpc === "registrar_apresentacao")
       return target.name === "apresentacoes_contratante"
         ? uuid(ack) && data.length === 1 && data[0].id === ack

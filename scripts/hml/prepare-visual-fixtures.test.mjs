@@ -12149,6 +12149,10 @@ async function r19TransitionFixture({
   missing = null,
   laterOverview = true,
   foreign = false,
+  badItemHash = false,
+  pendingTable = null,
+  lateTable = null,
+  missingItemPackage = false,
 } = {}) {
   let clock = 0;
   const f = await r4ObserverFixture({
@@ -12247,12 +12251,13 @@ async function r19TransitionFixture({
         entidade_tipo: "documento",
         entidade_id: P,
         versao_id: K,
-        hash: "a".repeat(64),
+        hash: badItemHash ? "" : "a".repeat(64),
         ordem: 1,
       },
       { ...context, id_pacote: K },
     ],
   ];
+  let lateResponse = null;
   for (const [table, q, row, filter] of cases) {
     if (missing === table) continue;
     const request = {
@@ -12261,14 +12266,21 @@ async function r19TransitionFixture({
       url: () => FIXTURE.api + "/rest/v1/" + table + "?" + new URLSearchParams(q),
     };
     f.page.emit("request", request);
-    f.page.emit("response", {
+    if (missingItemPackage && table === "itens_pacote_competencia") delete row.id_pacote;
+    const response = {
       request: () => request,
       url: request.url,
       status: () => 200,
       body: async () => Buffer.from(JSON.stringify([row])),
-    });
+    };
+    if (lateTable === table) {
+      lateResponse = response;
+      continue;
+    }
+    f.page.emit("response", response);
     await f.observer.flush();
     assert.equal((await f.observer.read(table, filter)).length, 1);
+    if (pendingTable === table) f.page.emit("request", { ...request });
   }
   const ordinal = f.observer.generation();
   if (laterOverview) {
@@ -12282,6 +12294,10 @@ async function r19TransitionFixture({
       await f.observer.observedAfter("obter_visao_geral_competencia", where, ordinal),
       true,
     );
+  }
+  if (lateResponse) {
+    f.page.emit("response", lateResponse);
+    await f.observer.flush();
   }
   return { ...f, where };
 }
@@ -12298,6 +12314,47 @@ test("R19 real observer advances from approved to registered only after three ca
 });
 test("R19 registration successor never reuses the preceding approved overview", async () => {
   const f = await r19TransitionFixture({ laterOverview: false });
+  try {
+    await assert.rejects(
+      () => f.observer.rpcRead("obter_visao_geral_competencia", f.where),
+      /PHASE_TIMEOUT/,
+    );
+  } finally {
+    f.observer.close();
+  }
+});
+test("R19 successor cannot promote a package item without a valid content hash", async () => {
+  const f = await r19TransitionFixture({ badItemHash: true });
+  try {
+    await assert.rejects(
+      () => f.observer.rpcRead("obter_visao_geral_competencia", f.where),
+      /PHASE_TIMEOUT/,
+    );
+  } finally {
+    f.observer.close();
+  }
+});
+for (const table of [
+  "apresentacoes_contratante",
+  "pacotes_competencia",
+  "itens_pacote_competencia",
+]) {
+  for (const option of ["pendingTable", "lateTable"]) {
+    test("R19 successor rejects " + option + " for " + table, async () => {
+      const f = await r19TransitionFixture({ [option]: table });
+      try {
+        await assert.rejects(
+          () => f.observer.rpcRead("obter_visao_geral_competencia", f.where),
+          /PHASE_TIMEOUT/,
+        );
+      } finally {
+        f.observer.close();
+      }
+    });
+  }
+}
+test("R19 successor requires returned item package relationship", async () => {
+  const f = await r19TransitionFixture({ missingItemPackage: true });
   try {
     await assert.rejects(
       () => f.observer.rpcRead("obter_visao_geral_competencia", f.where),
