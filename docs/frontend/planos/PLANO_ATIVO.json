@@ -3775,5 +3775,46 @@
     "auth_authorized": false,
     "deploy_authorized": false,
     "certified": false
+  },
+  "trilha_a_v123_pos_fixtures_discovery": {
+    "state": "GATE_DOCUMENTAL_PREPARACAO_METADATA_SEM_EXECUCAO_R19_PENDENTE",
+    "gate_document": "docs/frontend/planos/PRIVACY_V123_POS_FIXTURES_METADATA_GATE_2026-11-09.md",
+    "base_main": "afe42819e62bbe8e3c25b4a5869f8ba59db124f5",
+    "frontend_sha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
+    "r18_run": 42731273678,
+    "r18_confirmed_new_business_operations": 2,
+    "r19_readonly_original": "PENDENTE_PROVA_REAL",
+    "metadata_query_executed": false,
+    "content_fields_read": false,
+    "auth_executed": false,
+    "page": {
+      "index": 0,
+      "limit": 25,
+      "order": "criado_em.desc,id.desc",
+      "filters": "ALL_SIX_EMPTY"
+    },
+    "metadata_only": [
+      "event_id",
+      "criado_em",
+      "ordinal",
+      "total_count",
+      "observed_rows",
+      "six_field_json_types_and_codepoint_lengths"
+    ],
+    "requires": [
+      "R19 original attempt1 terminal reconciled logout true cleanup null ledger19 zeroarms empty receipts and complete bindings",
+      "Gate CI independent review normal merge",
+      "Concrete SQL wrapper mocks two independent reviewers zero real calls in tests",
+      "Quiescent window and GitHub one-shot consumption recorded before query no retry",
+      "Separate content gate with exact returned IDs instants ordering and semantic review before persistence"
+    ],
+    "old_sql1_sql2_scope_reusable": false,
+    "old_ten_event_catalog_auto_update": false,
+    "actor_pseudonym_consent_reused_only_as_category": true,
+    "identity_lookup_allowed": false,
+    "new_catalog": null,
+    "auth_authorized": false,
+    "deploy_authorized": false,
+    "v1_certified": false
   }
 }
