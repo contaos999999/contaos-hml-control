@@ -29,7 +29,7 @@ import {
   sha256,
 } from "./inspect-fixture-artifact.mjs";
 
-// Technical projections only. These are not the unread R16 report or a business replay.
+// Technical projections only. These are not the unread R17 report or a business replay.
 const BASE = {
   schema: "contaos.fixture.preparation.v1",
   failure: "OBSERVATION_FAILED",
@@ -55,21 +55,21 @@ const BASE = {
     cleanupFailure: null,
   },
   intentLedger: {
-    count: 12,
+    count: 16,
     frozen: false,
     pending: false,
     sent: false,
-    priorConfirmed: 10,
+    priorConfirmed: 14,
     priorReserved: 2,
     newArmedCount: 0,
     maxIntentions: 24,
-    maxNewIntentions: 12,
+    maxNewIntentions: 8,
   },
   recovery: {
     ledgerSha256: "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
     priorWorkflowRun: "42540864527",
-    confirmedBefore: 10,
-    maxNewIntentions: 12,
+    confirmedBefore: 14,
+    maxNewIntentions: 8,
     r3ReceiptsSha256: "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",
     r3WorkflowRun: "42559214436",
     r4ZeroAuth: {
@@ -107,9 +107,9 @@ const BASE = {
     ],
   },
   frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
-  harnessSha: "10cac45b655d5eece9881fdf83545887c371d548",
+  harnessSha: "adaeb72504cadf6dd83b8938abba9c067acba525",
   deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
-  workflowRun: "42713640896",
+  workflowRun: "42724239916",
   phase: "FINAL_READBACK",
   completed: false,
   logoutVerified: true,
@@ -168,6 +168,11 @@ const HISTORICAL = {
   "recovery-r15.json":
     '{\n  "schema": "contaos.fixture.recovery-r15.v1",\n  "workflowRun": "42703523206",\n  "artifactId": "13713326447",\n  "requestId": "trilha-a-fixtures-20261109-r15",\n  "harnessSha": "dd895a5c30acbb39c821153d86477985ae94b939",\n  "zipSha256": "49a1075f93ac229929399b940f8a7792bd6aa7d70ead4beb7449006d7ae68262",\n  "reportSha256": "038d291631f6d0badc89c014cbfbb137557a780039fb16b8d5c1fc9e53dee3c6",\n  "receiptsSha256": "3652e7766ef218067642137effb805d448c72f86da3c402a583b5fcf7aa29007",\n  "observationSha256": "fc97c8e25c55840331737b307680f9846b11f0b2e455a04154230a99b455a614",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"OBSERVATION_FAILED\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"OBSERVATION_FAILED\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"RUNTIME_FRESH\\",\\n    \\"subphasePath\\": [\\n      \\"COMPETENCIES\\",\\n      \\"COMPETENCY_UI\\",\\n      \\"COMPETENCY_COMMAND\\",\\n      \\"RUNTIME_FRESH\\",\\n      \\"UI_CONFIRM_FENCE\\",\\n      \\"RUNTIME_FRESH\\"\\n    ],\\n    \\"lastCompletedSubphase\\": \\"RUNTIME_FRESH\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 12,\\n    \\"frozen\\": true,\\n    \\"pending\\": true,\\n    \\"sent\\": true,\\n    \\"priorConfirmed\\": 10,\\n    \\"priorReserved\\": 1,\\n    \\"newArmedCount\\": 1,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 13\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 10,\\n    \\"maxNewIntentions\\": 13,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": true,\\n    \\"sourceVersion\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"sourceHash\\": \\"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\\"\\n  },\\n  \\"bindings\\": {\\n    \\"sourceVersionId\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"listId\\": \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"listVersionId\\": \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"itemId\\": \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"source\\": \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"competencies\\": [\\n      {\\n        \\"month\\": \\"2026-10-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"id\\": \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n        \\"requirementId\\": \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n        \\"documentId\\": \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n        \\"executionId\\": \\"3c174678-a6ec-4415-9d25-6e8a859de2cb\\",\\n        \\"code\\": \\"COMPETENCE_DEPENDENCY_BLOCKED\\"\\n      },\\n      {\\n        \\"month\\": \\"2026-09-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"code\\": \\"COMPETENCE_DEPENDENCY_BLOCKED\\"\\n      }\\n    ]\\n  },\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"dd895a5c30acbb39c821153d86477985ae94b939\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42703523206\\",\\n  \\"phase\\": \\"FINAL_READBACK\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [\\n    \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n    \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n    \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n    \\"3c174678-a6ec-4415-9d25-6e8a859de2cb\\"\\n  ],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\n  \\"schema\\": \\"contaos.fixture.receipts.v1\\",\\n  \\"receipts\\": [\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"dd895a5c30acbb39c821153d86477985ae94b939\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42703523206\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"aprovar_parecer_interno\\",\\n      \\"requestId\\": \\"6e6b6afb-2216-42ef-bd89-571301e97e1f\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"bc724b1683269170b4b1d8ddd98f405bb1c07d5c1dde5709e63802099365e8b3\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"dd895a5c30acbb39c821153d86477985ae94b939\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42703523206\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"aprovar_parecer_interno\\",\\n      \\"requestId\\": \\"6e6b6afb-2216-42ef-bd89-571301e97e1f\\",\\n      \\"state\\": \\"uncertain\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"bc724b1683269170b4b1d8ddd98f405bb1c07d5c1dde5709e63802099365e8b3\\"\\n    }\\n  ]\\n}\\n",\n  "observationRaw": "{\\n  \\"schema\\": \\"contaos.fixture.observation.v1\\",\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"dd895a5c30acbb39c821153d86477985ae94b939\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42703523206\\",\\n  \\"firstFailure\\": {\\n    \\"contractKind\\": \\"RPC:aprovar_parecer_interno\\",\\n    \\"stage\\": \\"RESPONSE_PROJECTION\\",\\n    \\"statusHTTP\\": \\"NONE\\",\\n    \\"requestFailure\\": \\"NONE\\"\\n  }\\n}\\n"\n}\n',
 };
+
+HISTORICAL["receipts-r16.json"] =
+  '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_documento_competencia_v115",\n      "requestId": "d69325a4-78c8-4bf3-8831-cbef2fb38d95",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "bc014b4bd5693718652f9bbf7a6fadb520b290bfcf1ebd74de89e34f4b2d6f7d"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_documento_competencia_v115",\n      "requestId": "d69325a4-78c8-4bf3-8831-cbef2fb38d95",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "bc014b4bd5693718652f9bbf7a6fadb520b290bfcf1ebd74de89e34f4b2d6f7d"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_analise_competencia",\n      "requestId": "368de7ea-0056-451a-b0da-30ee0e10ee62",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "0b6cb627d1480ae9c05ecc5cc0012b2ee3f9acd69ff35ae6b6f0650aa31a0765"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_analise_competencia",\n      "requestId": "368de7ea-0056-451a-b0da-30ee0e10ee62",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "0b6cb627d1480ae9c05ecc5cc0012b2ee3f9acd69ff35ae6b6f0650aa31a0765"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_parecer_interno",\n      "requestId": "57cde7b2-3ae8-4642-81fe-d45f4971a524",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "4dd745f43f7171efcea9b9ca3b4d291c3a6a43d6ce8946f37e4de8d03ba9df0f"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_parecer_interno",\n      "requestId": "57cde7b2-3ae8-4642-81fe-d45f4971a524",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "4dd745f43f7171efcea9b9ca3b4d291c3a6a43d6ce8946f37e4de8d03ba9df0f"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_parecer_interno",\n      "requestId": "fb2af693-ede5-4d1a-99d3-408a2f7cb79e",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "0d4db222d459ac1a6956c650b19179dab57fcbd0dca043f42aee646077cfe395"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42713640896",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_parecer_interno",\n      "requestId": "fb2af693-ede5-4d1a-99d3-408a2f7cb79e",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "0d4db222d459ac1a6956c650b19179dab57fcbd0dca043f42aee646077cfe395"\n    }\n  ]\n}\n';
+HISTORICAL["recovery-r16.json"] =
+  '{\n  "schema": "contaos.fixture.recovery-r16.v1",\n  "workflowRun": "42713640896",\n  "artifactId": "13717457216",\n  "requestId": "trilha-a-fixtures-20261109-r16",\n  "harnessSha": "10cac45b655d5eece9881fdf83545887c371d548",\n  "zipSha256": "39eb9b34bd2c3b58df9b28cb666e0911538b24763eeb744f75fd5675a91a7305",\n  "reportSha256": "f93d7b7a5dd9ffc7a65a13a52b399be61830113528af1bc081ed5a83f37938b2",\n  "receiptsSha256": "3700fce7ae66a58fa7f3c9d1a30d11f10eda794d41c0a1ff2e4302ca9645e4b6",\n  "observationSha256": "3a270be6970c5e46168c33d53b2ea245ab722cd954713e1f9dd9d312c796fcb8",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"COMPETENCE_PRESENTATION_GATE\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"COMPETENCE_PRESENTATION_GATE\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"COMPETENCY_UI\\",\\n    \\"subphasePath\\": [\\n      \\"COMPETENCIES\\",\\n      \\"COMPETENCY_UI\\"\\n    ],\\n    \\"lastCompletedSubphase\\": \\"COMPETENCY_RECONCILE\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 16,\\n    \\"frozen\\": false,\\n    \\"pending\\": false,\\n    \\"sent\\": false,\\n    \\"priorConfirmed\\": 10,\\n    \\"priorReserved\\": 2,\\n    \\"newArmedCount\\": 4,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 12\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 10,\\n    \\"maxNewIntentions\\": 12,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": true,\\n    \\"sourceVersion\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"sourceHash\\": \\"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\\"\\n  },\\n  \\"bindings\\": {\\n    \\"sourceVersionId\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"listId\\": \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"listVersionId\\": \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"itemId\\": \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"source\\": \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"competencies\\": [\\n      {\\n        \\"month\\": \\"2026-10-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"id\\": \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n        \\"requirementId\\": \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n        \\"documentId\\": \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n        \\"executionId\\": \\"3c174678-a6ec-4415-9d25-6e8a859de2cb\\",\\n        \\"opinionId\\": \\"9ec80151-bbf6-4469-9cd8-7d96d1bb02cd\\",\\n        \\"code\\": \\"COMPETENCE_PRESENTATION_GATE\\"\\n      },\\n      {\\n        \\"month\\": \\"2026-09-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"id\\": \\"79bdc139-ed10-4c91-905e-b32b9a824d27\\",\\n        \\"requirementId\\": \\"c824a6f9-e519-44cc-8911-87d1009e2eaf\\",\\n        \\"documentId\\": \\"cd1624d3-73f7-4ea1-b317-c52627df6824\\",\\n        \\"executionId\\": \\"00da4236-810f-4a89-8be5-b2ffcd50a480\\",\\n        \\"opinionId\\": \\"7bbbe81e-e34c-44dc-a76f-ed85fd56d87f\\",\\n        \\"code\\": \\"COMPETENCE_PRESENTATION_GATE\\"\\n      }\\n    ]\\n  },\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"10cac45b655d5eece9881fdf83545887c371d548\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42713640896\\",\\n  \\"phase\\": \\"FINAL_READBACK\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [\\n    \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n    \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n    \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n    \\"3c174678-a6ec-4415-9d25-6e8a859de2cb\\",\\n    \\"9ec80151-bbf6-4469-9cd8-7d96d1bb02cd\\",\\n    \\"79bdc139-ed10-4c91-905e-b32b9a824d27\\",\\n    \\"c824a6f9-e519-44cc-8911-87d1009e2eaf\\",\\n    \\"cd1624d3-73f7-4ea1-b317-c52627df6824\\",\\n    \\"00da4236-810f-4a89-8be5-b2ffcd50a480\\",\\n    \\"7bbbe81e-e34c-44dc-a76f-ed85fd56d87f\\"\\n  ],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\n  \\"schema\\": \\"contaos.fixture.receipts.v1\\",\\n  \\"receipts\\": [\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"10cac45b655d5eece9881fdf83545887c371d548\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42713640896\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"criar_documento_competencia_v115\\",\\n      \\"requestId\\": \\"d69325a4-78c8-4bf3-8831-cbef2fb38d95\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"bc014b4bd5693718652f9bbf7a6fadb520b290bfcf1ebd74de89e34f4b2d6f7d\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"10cac45b655d5eece9881fdf83545887c371d548\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42713640896\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"criar_documento_competencia_v115\\",\\n      \\"requestId\\": \\"d69325a4-78c8-4bf3-8831-cbef2fb38d95\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"bc014b4bd5693718652f9bbf7a6fadb520b290bfcf1ebd74de89e34f4b2d6f7d\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"10cac45b655d5eece9881fdf83545887c371d548\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42713640896\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"solicitar_analise_competencia\\",\\n      \\"requestId\\": \\"368de7ea-0056-451a-b0da-30ee0e10ee62\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"0b6cb627d1480ae9c05ecc5cc0012b2ee3f9acd69ff35ae6b6f0650aa31a0765\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"10cac45b655d5eece9881fdf83545887c371d548\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42713640896\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"solicitar_analise_competencia\\",\\n      \\"requestId\\": \\"368de7ea-0056-451a-b0da-30ee0e10ee62\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"0b6cb627d1480ae9c05ecc5cc0012b2ee3f9acd69ff35ae6b6f0650aa31a0765\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"10cac45b655d5eece9881fdf83545887c371d548\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42713640896\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"solicitar_parecer_interno\\",\\n      \\"requestId\\": \\"57cde7b2-3ae8-4642-81fe-d45f4971a524\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"4dd745f43f7171efcea9b9ca3b4d291c3a6a43d6ce8946f37e4de8d03ba9df0f\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"10cac45b655d5eece9881fdf83545887c371d548\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42713640896\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"solicitar_parecer_interno\\",\\n      \\"requestId\\": \\"57cde7b2-3ae8-4642-81fe-d45f4971a524\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"4dd745f43f7171efcea9b9ca3b4d291c3a6a43d6ce8946f37e4de8d03ba9df0f\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"10cac45b655d5eece9881fdf83545887c371d548\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42713640896\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"aprovar_parecer_interno\\",\\n      \\"requestId\\": \\"fb2af693-ede5-4d1a-99d3-408a2f7cb79e\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"0d4db222d459ac1a6956c650b19179dab57fcbd0dca043f42aee646077cfe395\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"10cac45b655d5eece9881fdf83545887c371d548\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42713640896\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"aprovar_parecer_interno\\",\\n      \\"requestId\\": \\"fb2af693-ede5-4d1a-99d3-408a2f7cb79e\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"0d4db222d459ac1a6956c650b19179dab57fcbd0dca043f42aee646077cfe395\\"\\n    }\\n  ]\\n}\\n",\n  "observationRaw": "{\\n  \\"schema\\": \\"contaos.fixture.observation.v1\\",\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"10cac45b655d5eece9881fdf83545887c371d548\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42713640896\\",\\n  \\"firstFailure\\": null\\n}\\n"\n}\n';
 
 const empty = () => ({ schema: "contaos.fixture.receipts.v1", receipts: [] });
 const clone = (v) => structuredClone(v);
@@ -271,9 +276,9 @@ function metadataFixture() {
   const jobs = {
     total_count: 3,
     jobs: [
-      [129489390633, "Trilha A solicitacao unica sem credenciais", "success"],
-      [129489393425, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-      [129489866611, "Trilha A preparacao sintetica HML", "failure"],
+      [129525642439, "Trilha A solicitacao unica sem credenciais", "success"],
+      [129525644743, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+      [129526039470, "Trilha A preparacao sintetica HML", "failure"],
     ].map(([id, name, conclusion]) => ({
       id,
       name,
@@ -395,7 +400,7 @@ test("R10 missing ledger/bindings retains UNKNOWN without inventing zero operati
 });
 test("R10 rows have eleven required keys and receipt state is not confirmed by inference", () => {
   const r = report();
-  r.intentLedger.count = 13;
+  r.intentLedger.count = 17;
   r.intentLedger.newArmedCount = 1;
   const sealed = row(),
     confirmed = row("confirmed");
@@ -430,7 +435,7 @@ test("R10 entire directory validates before one bounded proof is produced", (t) 
   const root = fixture(t),
     proof = JSON.parse(buildProof(root, inspection));
   assert.equal(proof.type, "FIXTURE_INSPECTION_PROOF");
-  assert.equal(proof.manifest.length, 24);
+  assert.equal(proof.manifest.length, 26);
   assert.equal(proof.reportRaw, readFileSync(join(root, "report.json"), "utf8"));
   assert.equal(proof.receiptsRaw, readFileSync(join(root, "receipts.json"), "utf8"));
   assert.ok(Buffer.byteLength(JSON.stringify(proof)) <= 65536);
@@ -667,17 +672,17 @@ test("R10 downstream role UUID syntax matches producer versions one through eigh
 
 test("R10 armed intentions without a complete confirmed receipt ledger remain UNKNOWN", () => {
   const r = report();
-  r.intentLedger.count = 13;
+  r.intentLedger.count = 17;
   r.intentLedger.newArmedCount = 1;
   assert.equal(validateRecords(r, empty()).observations.newConfirmed, "UNKNOWN");
-  r.intentLedger.count = 14;
+  r.intentLedger.count = 18;
   r.intentLedger.newArmedCount = 2;
   assert.equal(
     validateRecords(r, { ...empty(), receipts: [row(), row("confirmed")] }).observations
       .newConfirmed,
     "UNKNOWN",
   );
-  r.intentLedger.count = 13;
+  r.intentLedger.count = 17;
   r.intentLedger.newArmedCount = 1;
   assert.equal(
     validateRecords(r, { ...empty(), receipts: [row(), row("uncertain")] }).observations
@@ -718,8 +723,8 @@ test("appended R6 history is immutable, ordered, and canonically empty where pro
     "recovery-r6.json",
     "recovery-r7.json",
   ]);
-  assert.equal(FILES.length, 24);
-  assert.equal(Object.keys(HISTORY).length, 21);
+  assert.equal(FILES.length, 26);
+  assert.equal(Object.keys(HISTORY).length, 23);
   assert.equal(
     HISTORY["receipts-r6.json"],
     "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
@@ -758,13 +763,13 @@ test("R7 zero-auth history contains only its nine-field metadata proof", () => {
 });
 
 test("R10 literal target is terminal attempt one and cannot be selected through caller inputs", () => {
-  assert.equal(PIN.run, 42713640896);
-  assert.equal(PIN.head, "10cac45b655d5eece9881fdf83545887c371d548");
-  assert.equal(PIN.upstream, 42713471816);
-  assert.equal(PIN.artifact, 13717457216);
-  assert.equal(PIN.size, 25487);
-  assert.equal(PIN.name, "trilha-a-fixtures-42713640896-1");
-  assert.equal(PIN.digest, "39eb9b34bd2c3b58df9b28cb666e0911538b24763eeb744f75fd5675a91a7305");
+  assert.equal(PIN.run, 42724239916);
+  assert.equal(PIN.head, "adaeb72504cadf6dd83b8938abba9c067acba525");
+  assert.equal(PIN.upstream, 42723995970);
+  assert.equal(PIN.artifact, 13722355410);
+  assert.equal(PIN.size, 28441);
+  assert.equal(PIN.name, "trilha-a-fixtures-42724239916-1");
+  assert.equal(PIN.digest, "438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff");
 });
 
 test("R10 observation diagnostic validator is required before any technical proof", async () => {
@@ -1018,16 +1023,16 @@ test("R10 observation has six ordered own fields and four ordered failure primit
 test("R10 one proof publishes exact observationRaw only after the complete fourteen-file validation", (t) => {
   const root = fixture(t),
     output = JSON.parse(buildProof(root, inspection));
-  assert.equal(output.manifest.length, 24);
+  assert.equal(output.manifest.length, 26);
   assert.equal(
     output.observationRaw,
     readFileSync(join(root, "observation-diagnostic.json"), "utf8"),
   );
   assert.equal(JSON.parse(output.observationRaw).firstFailure, null);
   assert.equal(JSON.parse(output.reportRaw).completed, false);
-  assert.equal(output.observations.priorConfirmed, 10);
-  assert.equal(FILES.length, 24);
-  assert.equal(Object.keys(HISTORY).length, 21);
+  assert.equal(output.observations.priorConfirmed, 14);
+  assert.equal(FILES.length, 26);
+  assert.equal(Object.keys(HISTORY).length, 23);
   assert.deepEqual(FILES.slice(11, 14), [
     "receipts-r8.json",
     "recovery-r8.json",
@@ -1079,9 +1084,9 @@ test("R10 historical R8 evidence remains byte-exact while current budget is ten 
   assert.equal(previous.intentLedger.maxNewIntentions, 16);
   assert.equal(previous.intentLedger.count, 10);
   const current = report();
-  assert.equal(current.intentLedger.priorConfirmed, 10);
-  assert.equal(current.intentLedger.maxNewIntentions, 12);
-  current.intentLedger.count = 12;
+  assert.equal(current.intentLedger.priorConfirmed, 14);
+  assert.equal(current.intentLedger.maxNewIntentions, 8);
+  current.intentLedger.count = 16;
   current.intentLedger.newArmedCount = 1;
   for (const requestId of [
     "6d730eb7-8c38-4474-813d-d39672454444",
@@ -1161,15 +1166,15 @@ test("R10 complete manifest still produces zero proof for observation failure wi
 });
 
 test("R10 immutable artifact layout appends R9 originals after the existing observation diagnostic", () => {
-  assert.equal(FILES.length, 24, "R10_MANIFEST_APPEND_ABSENT");
-  assert.equal(Object.keys(HISTORY).length, 21);
+  assert.equal(FILES.length, 26, "R10_MANIFEST_APPEND_ABSENT");
+  assert.equal(Object.keys(HISTORY).length, 23);
   assert.deepEqual(FILES.slice(13, 16), [
     "observation-diagnostic.json",
     "receipts-r9.json",
     "recovery-r9.json",
   ]);
-  assert.equal(PIN.run, 42713640896);
-  assert.equal(PIN.artifact, 13717457216);
+  assert.equal(PIN.run, 42724239916);
+  assert.equal(PIN.artifact, 13722355410);
 });
 
 test("R10 preserves original R9 report receipts and observation inside the pinned twelve-field recovery document", () => {
@@ -1199,16 +1204,16 @@ test("R10 preserves original R9 report receipts and observation inside the pinne
 });
 
 test("R11 terminal target requires the two R10 originals appended after all sixteen existing data files", () => {
-  assert.equal(FILES.length, 24, "R11_MANIFEST_APPEND_ABSENT");
-  assert.equal(Object.keys(HISTORY).length, 21);
+  assert.equal(FILES.length, 26, "R11_MANIFEST_APPEND_ABSENT");
+  assert.equal(Object.keys(HISTORY).length, 23);
   assert.deepEqual(FILES.slice(14, 18), [
     "receipts-r9.json",
     "recovery-r9.json",
     "receipts-r10.json",
     "recovery-r10.json",
   ]);
-  assert.equal(PIN.run, 42713640896);
-  assert.equal(PIN.artifact, 13717457216);
+  assert.equal(PIN.run, 42724239916);
+  assert.equal(PIN.artifact, 13722355410);
 });
 
 test("R11 preserves the twelve-field R10 document and all three original raw hashes", () => {
@@ -1232,25 +1237,25 @@ test("R11 preserves the twelve-field R10 document and all three original raw has
 });
 
 test("R13 pins the actual original artifact and preserves the reserved R11 intent", () => {
-  assert.equal(PIN.run, 42713640896);
-  assert.equal(PIN.head, "10cac45b655d5eece9881fdf83545887c371d548");
-  assert.equal(PIN.artifact, 13717457216);
-  assert.equal(PIN.digest, "39eb9b34bd2c3b58df9b28cb666e0911538b24763eeb744f75fd5675a91a7305");
-  assert.equal(FILES.length, 24);
-  assert.equal(Object.keys(HISTORY).length, 21);
+  assert.equal(PIN.run, 42724239916);
+  assert.equal(PIN.head, "adaeb72504cadf6dd83b8938abba9c067acba525");
+  assert.equal(PIN.artifact, 13722355410);
+  assert.equal(PIN.digest, "438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff");
+  assert.equal(FILES.length, 26);
+  assert.equal(Object.keys(HISTORY).length, 23);
   const r = report();
   r.intentLedger = {
-    count: 12,
+    count: 16,
     frozen: false,
     pending: false,
     sent: false,
-    priorConfirmed: 10,
+    priorConfirmed: 14,
     priorReserved: 2,
     newArmedCount: 0,
     maxIntentions: 24,
-    maxNewIntentions: 12,
+    maxNewIntentions: 8,
   };
-  r.recovery.maxNewIntentions = 12;
+  r.recovery.maxNewIntentions = 8;
   const result = validateRecords(r, empty());
   assert.equal(result.observations.priorReserved, 2);
   assert.equal(result.observations.newConfirmed, 0);
@@ -1274,7 +1279,7 @@ test("R13 pins the actual original artifact and preserves the reserved R11 inten
 
 test("R13 refuses the spent October opinion even under a new request UUID", () => {
   const r = report();
-  r.intentLedger.count = 13;
+  r.intentLedger.count = 17;
   r.intentLedger.newArmedCount = 1;
   const receipt = {
     ...row(),
@@ -1330,6 +1335,8 @@ const R15_FILES = [
   "recovery-r13.json",
   "receipts-r15.json",
   "recovery-r15.json",
+  "receipts-r16.json",
+  "recovery-r16.json",
 ];
 const R15_HISTORY = {
   "receipts-r13.json": '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
@@ -1339,35 +1346,35 @@ const R15_HISTORY = {
 function r15Metadata() {
   const m = metadataFixture();
   for (const run of [m.run, m.upstream]) {
-    run.head_sha = "10cac45b655d5eece9881fdf83545887c371d548";
+    run.head_sha = "adaeb72504cadf6dd83b8938abba9c067acba525";
   }
-  m.run.id = 42713640896;
-  m.upstream.id = 42713471816;
+  m.run.id = 42724239916;
+  m.upstream.id = 42723995970;
   Object.assign(m.artifact, {
-    id: 13717457216,
-    name: "trilha-a-fixtures-42713640896-1",
-    size_in_bytes: 25487,
-    digest: "sha256:39eb9b34bd2c3b58df9b28cb666e0911538b24763eeb744f75fd5675a91a7305",
+    id: 13722355410,
+    name: "trilha-a-fixtures-42724239916-1",
+    size_in_bytes: 28441,
+    digest: "sha256:438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff",
     workflow_run: {
-      id: 42713640896,
+      id: 42724239916,
       repository_id: 1442722734,
       head_repository_id: 1442722734,
-      head_sha: "10cac45b655d5eece9881fdf83545887c371d548",
+      head_sha: "adaeb72504cadf6dd83b8938abba9c067acba525",
       head_branch: "main",
     },
   });
   m.jobs.jobs = [
-    [129489390633, "Trilha A solicitacao unica sem credenciais", "success"],
-    [129489393425, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-    [129489866611, "Trilha A preparacao sintetica HML", "failure"],
+    [129525642439, "Trilha A solicitacao unica sem credenciais", "success"],
+    [129525644743, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+    [129526039470, "Trilha A preparacao sintetica HML", "failure"],
   ].map(([id, name, conclusion]) => ({
     id,
     name,
     conclusion,
     status: "completed",
-    run_id: 42713640896,
+    run_id: 42724239916,
     run_attempt: 1,
-    head_sha: "10cac45b655d5eece9881fdf83545887c371d548",
+    head_sha: "adaeb72504cadf6dd83b8938abba9c067acba525",
   }));
   return m;
 }
@@ -1400,8 +1407,8 @@ test("R15 complete directory proves all twenty-two files before releasing origin
     proof.manifest.map((entry) => entry.name),
     R15_FILES,
   );
-  assert.equal(proof.source.run, 42713640896);
-  assert.equal(proof.source.artifact, 13717457216);
+  assert.equal(proof.source.run, 42724239916);
+  assert.equal(proof.source.artifact, 13722355410);
   assert.equal(
     proof.manifest[20].sha256,
     "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
@@ -1457,14 +1464,14 @@ test("R15 rejects an unknown recovery enum without accepting its shared prefix",
 function r16TechnicalReport() {
   const r = report();
   Object.assign(r.intentLedger, {
-    count: 12,
-    priorConfirmed: 10,
+    count: 16,
+    priorConfirmed: 14,
     priorReserved: 2,
     newArmedCount: 0,
     maxIntentions: 24,
-    maxNewIntentions: 12,
+    maxNewIntentions: 8,
   });
-  r.recovery.maxNewIntentions = 12;
+  r.recovery.maxNewIntentions = 8;
   return r;
 }
 test("R16 producer budget admits two reserved intentions without refund or promotion", () => {
@@ -1484,31 +1491,31 @@ test("R16 producer recovery diagnostics admit only the two exact new enums", () 
 test("R16 original run metadata is accepted only at the new immutable artifact pin", () => {
   const m = metadataFixture();
   Object.assign(m.run, {
-    id: 42713640896,
-    head_sha: "10cac45b655d5eece9881fdf83545887c371d548",
+    id: 42724239916,
+    head_sha: "adaeb72504cadf6dd83b8938abba9c067acba525",
   });
   Object.assign(m.upstream, {
-    id: 42713471816,
-    head_sha: "10cac45b655d5eece9881fdf83545887c371d548",
+    id: 42723995970,
+    head_sha: "adaeb72504cadf6dd83b8938abba9c067acba525",
   });
   Object.assign(m.artifact, {
-    id: 13717457216,
-    name: "trilha-a-fixtures-42713640896-1",
-    size_in_bytes: 25487,
-    digest: "sha256:39eb9b34bd2c3b58df9b28cb666e0911538b24763eeb744f75fd5675a91a7305",
+    id: 13722355410,
+    name: "trilha-a-fixtures-42724239916-1",
+    size_in_bytes: 28441,
+    digest: "sha256:438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff",
     workflow_run: {
-      id: 42713640896,
+      id: 42724239916,
       repository_id: 1442722734,
       head_repository_id: 1442722734,
-      head_sha: "10cac45b655d5eece9881fdf83545887c371d548",
+      head_sha: "adaeb72504cadf6dd83b8938abba9c067acba525",
       head_branch: "main",
     },
   });
-  for (const [index, id] of [129489390633, 129489393425, 129489866611].entries())
+  for (const [index, id] of [129525642439, 129525644743, 129526039470].entries())
     Object.assign(m.jobs.jobs[index], {
       id,
-      run_id: 42713640896,
-      head_sha: "10cac45b655d5eece9881fdf83545887c371d548",
+      run_id: 42724239916,
+      head_sha: "adaeb72504cadf6dd83b8938abba9c067acba525",
     });
   assert.equal(validateMetadata(m), true);
 });
@@ -1535,7 +1542,7 @@ test("R16 historical approval UUID and payload remain permanently separate from 
     },
   ]) {
     const r = r16TechnicalReport();
-    r.intentLedger.count = 13;
+    r.intentLedger.count = 17;
     r.intentLedger.newArmedCount = 1;
     assert.throws(() => validateRecords(r, { ...empty(), receipts: [receipt] }));
   }
@@ -1543,9 +1550,9 @@ test("R16 historical approval UUID and payload remain permanently separate from 
 test("R16 directory preserves the original uncertain R15 bytes and all twenty-one histories", (t) => {
   const root = fixture(t);
   const proof = JSON.parse(buildProof(root, inspection));
-  assert.equal(proof.manifest.length, 24);
-  assert.equal(Object.keys(HISTORY).length, 21);
-  assert.deepEqual(FILES.slice(-2), ["receipts-r15.json", "recovery-r15.json"]);
+  assert.equal(proof.manifest.length, 26);
+  assert.equal(Object.keys(HISTORY).length, 23);
+  assert.deepEqual(FILES.slice(-4, -2), ["receipts-r15.json", "recovery-r15.json"]);
   const original = canonicalJson(Buffer.from(HISTORICAL["recovery-r15.json"])).value;
   assert.equal(Buffer.byteLength(HISTORICAL["recovery-r15.json"]), 6244);
   assert.equal(original.receiptsRaw, HISTORICAL["receipts-r15.json"]);
@@ -1557,7 +1564,7 @@ test("R16 directory preserves the original uncertain R15 bytes and all twenty-on
   assert.equal(previous.priorReserved, 1);
   assert.equal(previous.newArmedCount, 1);
   assert.equal(previous.maxNewIntentions, 13);
-  for (const name of FILES.slice(-2)) {
+  for (const name of FILES.slice(-4, -2)) {
     const bad = fixture(t, (files) => {
       files[name] += " ";
     });
@@ -1574,7 +1581,7 @@ test("R16 former one-reserve budget and unknown recovery enums fail closed", () 
   });
   old.recovery.maxNewIntentions = 13;
   assert.throws(() => validateRecords(old, empty()));
-  for (const code of ["RECOVERY_R15_PRIVATE_CANARY", "RECOVERY_R16_LEDGER"]) {
+  for (const code of ["RECOVERY_R15_PRIVATE_CANARY", "RECOVERY_R17_LEDGER"]) {
     const bad = r16TechnicalReport();
     bad.failure = code;
     bad.diagnostics.primaryFailure = code;
@@ -1585,8 +1592,12 @@ test("R16 former one-reserve budget and unknown recovery enums fail closed", () 
 function r17TechnicalReport() {
   const value = report();
   Object.assign(value.intentLedger, {
-    count: 16, priorConfirmed: 14, priorReserved: 2,
-    newArmedCount: 0, maxIntentions: 24, maxNewIntentions: 8,
+    count: 16,
+    priorConfirmed: 14,
+    priorReserved: 2,
+    newArmedCount: 0,
+    maxIntentions: 24,
+    maxNewIntentions: 8,
   });
   Object.assign(value.recovery, { confirmedBefore: 14, maxNewIntentions: 8 });
   return value;
@@ -1594,9 +1605,15 @@ function r17TechnicalReport() {
 test("R17 pins only the original terminal request artifact", () => {
   assert.deepEqual(
     [PIN.run, PIN.head, PIN.upstream, PIN.artifact, PIN.size, PIN.name, PIN.digest],
-    [42724239916, "adaeb72504cadf6dd83b8938abba9c067acba525", 42723995970,
-      13722355410, 28441, "trilha-a-fixtures-42724239916-1",
-      "438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff"],
+    [
+      42724239916,
+      "adaeb72504cadf6dd83b8938abba9c067acba525",
+      42723995970,
+      13722355410,
+      28441,
+      "trilha-a-fixtures-42724239916-1",
+      "438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff",
+    ],
   );
 });
 test("R17 complete manifest verifies twenty-six data files and twenty-three immutable histories", (t) => {
@@ -1614,9 +1631,12 @@ test("R17 ledger exposes fourteen confirmations and both reservations with eight
   assert.equal(value.observations.newConfirmed, 0);
 });
 for (const code of [
-  "RECOVERY_R16_LEDGER", "RECOVERY_R16_OPINION",
-  "COMPETENCE_PRESENTATION_GATE_ANALYSIS", "COMPETENCE_PRESENTATION_GATE_OPINION",
-  "COMPETENCE_PRESENTATION_GATE_PORTAO", "COMPETENCE_PRESENTATION_GATE_PERCENT",
+  "RECOVERY_R16_LEDGER",
+  "RECOVERY_R16_OPINION",
+  "COMPETENCE_PRESENTATION_GATE_ANALYSIS",
+  "COMPETENCE_PRESENTATION_GATE_OPINION",
+  "COMPETENCE_PRESENTATION_GATE_PORTAO",
+  "COMPETENCE_PRESENTATION_GATE_PERCENT",
   "COMPETENCE_PRESENTATION_GATE_ACTION",
 ]) {
   test("R17 exact producer diagnostic " + code + " is accepted without widening its prefix", () => {
@@ -1630,10 +1650,26 @@ for (const code of [
   });
 }
 const R17_PREVIOUS_EFFECTS = [
-  ["criar_documento_competencia_v115", "d69325a4-78c8-4bf3-8831-cbef2fb38d95", "bc014b4bd5693718652f9bbf7a6fadb520b290bfcf1ebd74de89e34f4b2d6f7d"],
-  ["solicitar_analise_competencia", "368de7ea-0056-451a-b0da-30ee0e10ee62", "0b6cb627d1480ae9c05ecc5cc0012b2ee3f9acd69ff35ae6b6f0650aa31a0765"],
-  ["solicitar_parecer_interno", "57cde7b2-3ae8-4642-81fe-d45f4971a524", "4dd745f43f7171efcea9b9ca3b4d291c3a6a43d6ce8946f37e4de8d03ba9df0f"],
-  ["aprovar_parecer_interno", "fb2af693-ede5-4d1a-99d3-408a2f7cb79e", "0d4db222d459ac1a6956c650b19179dab57fcbd0dca043f42aee646077cfe395"],
+  [
+    "criar_documento_competencia_v115",
+    "d69325a4-78c8-4bf3-8831-cbef2fb38d95",
+    "bc014b4bd5693718652f9bbf7a6fadb520b290bfcf1ebd74de89e34f4b2d6f7d",
+  ],
+  [
+    "solicitar_analise_competencia",
+    "368de7ea-0056-451a-b0da-30ee0e10ee62",
+    "0b6cb627d1480ae9c05ecc5cc0012b2ee3f9acd69ff35ae6b6f0650aa31a0765",
+  ],
+  [
+    "solicitar_parecer_interno",
+    "57cde7b2-3ae8-4642-81fe-d45f4971a524",
+    "4dd745f43f7171efcea9b9ca3b4d291c3a6a43d6ce8946f37e4de8d03ba9df0f",
+  ],
+  [
+    "aprovar_parecer_interno",
+    "fb2af693-ede5-4d1a-99d3-408a2f7cb79e",
+    "0d4db222d459ac1a6956c650b19179dab57fcbd0dca043f42aee646077cfe395",
+  ],
 ];
 for (const [rpc, requestId, payloadSha256] of R17_PREVIOUS_EFFECTS) {
   for (const mode of ["original UUID", "same payload under new UUID"]) {
@@ -1641,10 +1677,105 @@ for (const [rpc, requestId, payloadSha256] of R17_PREVIOUS_EFFECTS) {
       const value = report();
       value.intentLedger.count++;
       value.intentLedger.newArmedCount = 1;
-      const receipt = { ...row(), rpc,
+      const receipt = {
+        ...row(),
+        rpc,
         ...(mode === "original UUID" ? { requestId } : { payloadSha256 }),
       };
       assert.throws(() => validateRecords(value, { ...empty(), receipts: [receipt] }));
     });
   }
 }
+
+test("R17 receipt budget accepts exactly eight pairs and rejects a ninth or a refunded reservation", () => {
+  const value = r17TechnicalReport();
+  value.intentLedger.count = 24;
+  value.intentLedger.newArmedCount = 8;
+  const receipts = Array.from({ length: 8 }, (_, index) => {
+    const requestId = "0000000" + (index + 1) + "-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    return [row(), row("confirmed")].map((item) => ({
+      ...item,
+      requestId,
+      rpc: "aprovar_apresentacao",
+    }));
+  }).flat();
+  assert.equal(validateRecords(value, { ...empty(), receipts }).observations.newConfirmed, 8);
+  assert.throws(() =>
+    validateRecords(value, {
+      ...empty(),
+      receipts: [...receipts, { ...row(), requestId: "00000009-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }],
+    }),
+  );
+  for (const mutate of [
+    (r) => {
+      r.intentLedger.count = 25;
+      r.intentLedger.newArmedCount = 9;
+    },
+    (r) => {
+      r.intentLedger.priorReserved = 1;
+    },
+    (r) => {
+      r.intentLedger.priorConfirmed = 10;
+      r.recovery.confirmedBefore = 10;
+    },
+    (r) => {
+      r.intentLedger.maxNewIntentions = 12;
+      r.recovery.maxNewIntentions = 12;
+    },
+  ]) {
+    const bad = clone(value);
+    mutate(bad);
+    assert.throws(() => validateRecords(bad, { ...empty(), receipts }));
+  }
+});
+test("R17 previous payload denial is scoped to its exact RPC", () => {
+  const value = r17TechnicalReport();
+  value.intentLedger.count = 17;
+  value.intentLedger.newArmedCount = 1;
+  for (const [, , payloadSha256] of R17_PREVIOUS_EFFECTS) {
+    const receipts = [row(), row("confirmed")].map((item) => ({
+      ...item,
+      rpc: "aprovar_apresentacao",
+      payloadSha256,
+    }));
+    assert.equal(validateRecords(value, { ...empty(), receipts }).observations.newConfirmed, 1);
+  }
+});
+test("R17 preserves all four R16 confirmations and both historical uncertain reservations byte-exact", (t) => {
+  const original = canonicalJson(Buffer.from(HISTORICAL["recovery-r16.json"])).value;
+  assert.equal(Object.keys(original).length, 12);
+  assert.equal(Buffer.byteLength(HISTORICAL["recovery-r16.json"]), 10749);
+  assert.equal(Buffer.byteLength(HISTORICAL["receipts-r16.json"]), 5032);
+  assert.equal(original.receiptsRaw, HISTORICAL["receipts-r16.json"]);
+  const previous = JSON.parse(original.reportRaw).intentLedger;
+  assert.equal(previous.priorConfirmed, 10);
+  assert.equal(previous.priorReserved, 2);
+  assert.equal(previous.newArmedCount, 4);
+  assert.equal(previous.maxNewIntentions, 12);
+  const confirmed = JSON.parse(original.receiptsRaw).receipts.filter(
+    (item) => item.state === "confirmed",
+  );
+  assert.deepEqual(
+    confirmed.map((item) => item.requestId),
+    R17_PREVIOUS_EFFECTS.map(([, id]) => id),
+  );
+  for (const name of FILES.slice(-2)) {
+    assert.throws(() =>
+      buildProof(
+        fixture(t, (files) => {
+          files[name] += " ";
+        }),
+        inspection,
+      ),
+    );
+  }
+  const old = fixture(t);
+  for (const name of FILES.slice(-2)) rmSync(join(old, name));
+  writeFileSync(
+    join(old, "SHA256SUMS"),
+    FILES.slice(0, 24)
+      .map((name) => sha256(readFileSync(join(old, name))) + "  " + name + "\n")
+      .join(""),
+  );
+  assert.throws(() => buildProof(old, inspection));
+});
