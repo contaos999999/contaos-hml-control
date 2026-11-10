@@ -12418,3 +12418,15 @@ test("R19 readonly broker denies arm even after genuine owner recovery authoriza
     f.observer.close();
   }
 });
+test("R19 readonly broker rejects a hostile arm before reading any input getter", () => {
+  let effects = 0;
+  const b = sut.createIntentBroker(r12RecoveryOptions({ readOnlyRecovery: true }));
+  const input = Object.defineProperty({}, "rpc", {
+    get() {
+      effects++;
+      throw Error("HOSTILE");
+    },
+  });
+  assert.throws(() => b.arm(input), /RECOVERY_READ_ONLY/);
+  assert.equal(effects, 0);
+});

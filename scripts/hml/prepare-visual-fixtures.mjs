@@ -2385,8 +2385,9 @@ export function createIntentBroker({
       recoveryAuthorized = true;
       return true;
     },
-    arm({ rpc, payload, requestId, uiGeneratedKey, verified, evidence = {} } = {}) {
+    arm(input = {}) {
       if (readOnlyRecovery) err("RECOVERY_READ_ONLY");
+      const { rpc, payload, requestId, uiGeneratedKey, verified, evidence = {} } = input;
       if (
         recovery &&
         [
