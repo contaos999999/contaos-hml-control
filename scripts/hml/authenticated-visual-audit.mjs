@@ -4906,6 +4906,31 @@ export function nativeC8VisualDiagnostic(tap) {
     if (!match) return unknown();
     last = { stage: match[1], surface: match[2], width: Number(match[3]), theme: match[4] };
   }
+  const outcome = {};
+  for (const name of ["tests", "pass", "fail", "skipped", "cancelled"]) {
+    const values = [...tap.matchAll(new RegExp("^# " + name + " ([0-9]{1,3})$", "gm"))];
+    if (values.length > 1) return unknown();
+    if (values.length) outcome[name] = Number(values[0][1]);
+  }
+  if (Object.keys(outcome).length === 5) {
+    outcome.kinds = [
+      ...new Set(
+        [
+          ...tap.matchAll(
+            /^\s+failureType: '(testTimeoutFailure|testCodeFailure|uncaughtException|unhandledRejection|cancelledByParent|hookFailed|subtestsFailed)'$/gm,
+          ),
+        ].map((m) => m[1]),
+      ),
+    ];
+    outcome.lifecycleAfterEnd = tap.includes(
+      "generated asynchronous activity after the test ended",
+    );
+    outcome.abortedRequest = tap.includes("net::ERR_ABORTED");
+    outcome.targetClosed = /TargetClosedError|Target page, context or browser has been closed/.test(
+      tap,
+    );
+    last = { ...last, outcome };
+  }
   return last;
 }
 
@@ -4985,6 +5010,9 @@ async function nativeGuard() {
     console.error(
       JSON.stringify({
         phase: "VISUAL_NATIVE",
+        exitCode: Number.isInteger(error?.code) ? error.code : null,
+        signal: ["SIGTERM", "SIGKILL"].includes(error?.signal) ? error.signal : null,
+        timedOut: error?.killed === true,
         c8: nativeC8VisualDiagnostic(typeof error?.stdout === "string" ? error.stdout : ""),
         v102: nativeVisualDiagnostic(typeof error?.stdout === "string" ? error.stdout : ""),
       }),

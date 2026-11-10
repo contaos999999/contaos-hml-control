@@ -15850,3 +15850,22 @@ test("C8 V116 preserves the proven historical empty state without inventing a co
   ])
     assert.equal(sut.validateC8CurrentWire(item, { analysis: { ...analysis, ...delta } }), false);
 });
+
+test("C8 native diagnostic distinguishes a TAP timeout from lifecycle failure without exporting errors", () => {
+  const tap =
+    "# C8_NATIVE_PHASE DONE\n# tests 1\n# pass 0\n# fail 1\n# skipped 0\n# cancelled 0\n  failureType: 'unhandledRejection'\n  error: 'Bearer secret-canary'\n";
+  assert.deepEqual(sut.nativeC8VisualDiagnostic(tap), {
+    stage: "DONE",
+    outcome: {
+      tests: 1,
+      pass: 0,
+      fail: 1,
+      skipped: 0,
+      cancelled: 0,
+      kinds: ["unhandledRejection"],
+      lifecycleAfterEnd: false,
+      abortedRequest: false,
+      targetClosed: false,
+    },
+  });
+});
