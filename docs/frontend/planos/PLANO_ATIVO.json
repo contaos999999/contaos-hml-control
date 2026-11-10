@@ -3750,7 +3750,19 @@
     "build_review": 5838084813,
     "request_r19_executed": false,
     "sourceforms_cases": 5,
-    "native_cases": 18
+    "native_cases": 18,
+    "build_push_ci_success": [
+      42774372067,
+      42774371658
+    ],
+    "post_build_request_schema_blocks": [
+      42774567635,
+      42774567481
+    ],
+    "post_build_private_jobs_skipped": [
+      129690123572,
+      129690127909
+    ]
   },
   "trilha_a_184_conclusao_preservacao24": {
     "status": "PLAN_INTEGRADO_R19_TASKA_COMPROVADA_TASKB_E_GATE_A184_PENDENTES",
