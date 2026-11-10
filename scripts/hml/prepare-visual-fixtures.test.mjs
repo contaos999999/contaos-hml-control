@@ -11588,3 +11588,136 @@ test("R17 four confirmed effects stay denied with changed UUIDs and equivalent c
     f.observer.close();
   }
 });
+
+const R18_R17_DOCUMENT = Object.freeze({
+  "schema": "contaos.fixture.recovery-r17.v1",
+  "workflowRun": "42724239916",
+  "artifactId": "13722355410",
+  "requestId": "trilha-a-fixtures-20261109-r17",
+  "harnessSha": "adaeb72504cadf6dd83b8938abba9c067acba525",
+  "zipSha256": "438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff",
+  "reportSha256": "8565ec68be1b94344ecaaa3ac2688076587ba446d4c0f3acbdf5cf34aa73c594",
+  "receiptsSha256": "bed517a5a27f72f23dc07f869a1d4de21f1f24582fc4c725e9f747d8e603d82a",
+  "observationSha256": "9d6bb4c7de28c4f2dd8563d775d7618deb52e1b96b6fdbfea2b9f0f7defa5f6a",
+  "reportRaw": "{\n  \"schema\": \"contaos.fixture.preparation.v1\",\n  \"failure\": \"PREPARER_SPA_LINK\",\n  \"diagnostics\": {\n    \"primaryFailure\": \"PREPARER_SPA_LINK\",\n    \"failureClass\": \"PROTOCOL\",\n    \"errorName\": \"Error\",\n    \"subphase\": \"COMPETENCY_UI\",\n    \"subphasePath\": [\n      \"COMPETENCIES\",\n      \"COMPETENCY_UI\",\n      \"COMPETENCY_UI\",\n      \"COMPETENCY_UI\"\n    ],\n    \"lastCompletedSubphase\": \"PREFLIGHT\",\n    \"logoutAttempted\": true,\n    \"logoutVerified\": true,\n    \"cleanupFailure\": null\n  },\n  \"intentLedger\": {\n    \"count\": 17,\n    \"frozen\": false,\n    \"pending\": false,\n    \"sent\": false,\n    \"priorConfirmed\": 14,\n    \"priorReserved\": 2,\n    \"newArmedCount\": 1,\n    \"maxIntentions\": 24,\n    \"maxNewIntentions\": 8\n  },\n  \"recovery\": {\n    \"ledgerSha256\": \"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\",\n    \"priorWorkflowRun\": \"42540864527\",\n    \"confirmedBefore\": 14,\n    \"maxNewIntentions\": 8,\n    \"r3ReceiptsSha256\": \"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\",\n    \"r3WorkflowRun\": \"42559214436\",\n    \"r4ZeroAuth\": {\n      \"schema\": \"contaos.fixture.recovery-r4.v1\",\n      \"headSha\": \"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\",\n      \"upstreamRun\": 42568309807,\n      \"fixturesRun\": 42568382053,\n      \"auditRun\": 42568382029,\n      \"attempt\": 1,\n      \"derivedNewBusinessIntents\": 0,\n      \"proof\": \"GITHUB_ACTIONS_LIVE_METADATA\"\n    },\n    \"reconciled\": true,\n    \"sourceVersion\": \"1ebbfd0b-c50c-405d-8806-321f18e179e0\",\n    \"sourceHash\": \"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\"\n  },\n  \"bindings\": {\n    \"sourceVersionId\": \"1ebbfd0b-c50c-405d-8806-321f18e179e0\",\n    \"listId\": \"bf71906b-87a4-42f5-8371-5f597ef2ad9b\",\n    \"listVersionId\": \"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\",\n    \"itemId\": \"e7065876-a620-4dbb-9b4e-992fa4fead83\",\n    \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n    \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n    \"source\": \"8b942e46-a29b-40d9-8ad4-04aaf9124a34\",\n    \"competencies\": [\n      {\n        \"month\": \"2026-10-01\",\n        \"state\": \"pode_apresentar_contratante\",\n        \"id\": \"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\",\n        \"requirementId\": \"75938450-a972-410c-8612-da3ef7dc0e00\",\n        \"documentId\": \"c7f56ac9-81d6-45a4-81f8-db1383006c41\",\n        \"executionId\": \"3c174678-a6ec-4415-9d25-6e8a859de2cb\",\n        \"opinionId\": \"9ec80151-bbf6-4469-9cd8-7d96d1bb02cd\"\n      },\n      {\n        \"month\": \"2026-09-01\",\n        \"state\": \"partial\",\n        \"code\": \"COMPETENCE_DEPENDENCY_BLOCKED\"\n      }\n    ]\n  },\n  \"frontendSha\": \"0024b3c6739ab6296ec12338f11cf792d3a5f84b\",\n  \"harnessSha\": \"adaeb72504cadf6dd83b8938abba9c067acba525\",\n  \"deploymentId\": \"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\",\n  \"workflowRun\": \"42724239916\",\n  \"phase\": \"FINAL_READBACK\",\n  \"completed\": false,\n  \"logoutVerified\": true,\n  \"ids\": [\n    \"1ebbfd0b-c50c-405d-8806-321f18e179e0\",\n    \"bf71906b-87a4-42f5-8371-5f597ef2ad9b\",\n    \"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\",\n    \"e7065876-a620-4dbb-9b4e-992fa4fead83\",\n    \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n    \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n    \"8b942e46-a29b-40d9-8ad4-04aaf9124a34\",\n    \"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\",\n    \"75938450-a972-410c-8612-da3ef7dc0e00\",\n    \"c7f56ac9-81d6-45a4-81f8-db1383006c41\",\n    \"3c174678-a6ec-4415-9d25-6e8a859de2cb\",\n    \"9ec80151-bbf6-4469-9cd8-7d96d1bb02cd\"\n  ],\n  \"v1Certified\": false\n}\n",
+  "receiptsRaw": "{\n  \"schema\": \"contaos.fixture.receipts.v1\",\n  \"receipts\": [\n    {\n      \"frontendSha\": \"0024b3c6739ab6296ec12338f11cf792d3a5f84b\",\n      \"harnessSha\": \"adaeb72504cadf6dd83b8938abba9c067acba525\",\n      \"deploymentId\": \"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\",\n      \"workflowRun\": \"42724239916\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"aprovar_apresentacao\",\n      \"requestId\": \"5d657667-4c3b-4b4f-a953-d7e778bfb2c1\",\n      \"state\": \"sealed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"1e2bc45826f48745d7800fa108c8be6331d33737e2317c710638e1c568b99cc2\"\n    },\n    {\n      \"frontendSha\": \"0024b3c6739ab6296ec12338f11cf792d3a5f84b\",\n      \"harnessSha\": \"adaeb72504cadf6dd83b8938abba9c067acba525\",\n      \"deploymentId\": \"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\",\n      \"workflowRun\": \"42724239916\",\n      \"schema\": \"contaos.fixture.intent.v1\",\n      \"rpc\": \"aprovar_apresentacao\",\n      \"requestId\": \"5d657667-4c3b-4b4f-a953-d7e778bfb2c1\",\n      \"state\": \"confirmed\",\n      \"organization\": \"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\",\n      \"contract\": \"be89ef7e-d839-46c0-9cfb-4da81edf8b74\",\n      \"payloadSha256\": \"1e2bc45826f48745d7800fa108c8be6331d33737e2317c710638e1c568b99cc2\"\n    }\n  ]\n}\n",
+  "observationRaw": "{\n  \"schema\": \"contaos.fixture.observation.v1\",\n  \"frontendSha\": \"0024b3c6739ab6296ec12338f11cf792d3a5f84b\",\n  \"harnessSha\": \"adaeb72504cadf6dd83b8938abba9c067acba525\",\n  \"deploymentId\": \"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\",\n  \"workflowRun\": \"42724239916\",\n  \"firstFailure\": null\n}\n"
+});
+
+test("R18 original R17 recovery bytes retain the exact Nodecrypto signature", () => {
+  const raw = JSON.stringify(R18_R17_DOCUMENT, null, 2) + "\n";
+  assert.equal(Object.keys(R18_R17_DOCUMENT).length, 12);
+  assert.equal(Buffer.byteLength(raw), 6088);
+  assert.equal(createHash("sha256").update(raw).digest("hex"), "f3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95");
+});
+test("R18 recovery document is mandatory before broker persistence or side effects", () => {
+  let effects = 0;
+  for (const value of [undefined, {}, { ...R18_R17_DOCUMENT, reportRaw: R18_R17_DOCUMENT.reportRaw + " " }])
+    assert.throws(() => sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR17: value, persist: () => { effects++; return true; } })), /RECOVERY_R17_LEDGER/);
+  assert.equal(effects, 0);
+});
+test("R18 broker preserves fifteen confirmations and both uncertain reservations with seven new arms", () => {
+  const broker = sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR17: R18_R17_DOCUMENT }));
+  const state = broker.snapshot();
+  assert.equal(state.count, 17);
+  assert.equal(state.confirmedBefore, 15);
+  assert.equal(state.priorReserved, 2);
+  assert.equal(state.maxNewIntentions, 7);
+});
+test("R18 prior October approval is not repeated under a different UUID or foundation", async () => {
+  const broker = sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR17: R18_R17_DOCUMENT }));
+  await r12Authorize(broker, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(broker);
+  try {
+    for (const foundation of [FIXTURE.foundation, "Different synthetic foundation."]) {
+      assert.throws(() => broker.arm({
+        rpc: "aprovar_apresentacao",
+        payload: { p_id_competencia: "50c26274-a36f-48e0-b2fe-5a1caf5d6a49", p_fundamento: foundation },
+        requestId: randomUUID(), verified: { context: true, capability: true, reconciled: true },
+        evidence: { competencies: [{ official: true, current: true, organization: FIXTURE.organization, contract: FIXTURE.contract, id: "50c26274-a36f-48e0-b2fe-5a1caf5d6a49", month: "2026-10-01" }], analysisCurrent: true, analysisComplete: true, opinionApproved: true, compliance: 100 },
+      }), /RECOVERY_CONFIRMED_OPERATION/);
+    }
+  } finally { f.observer.close(); }
+});
+
+async function r18ListNavigationFixture({ proved = true, foreign = false } = {}) {
+  const source = await r6SourceNodes();
+  const ts = (await import("typescript")).default;
+  const { readFile } = await import("node:fs/promises");
+  const menuSource = await readFile(new URL("../../src/lib/navegacao/menuV1.ts", import.meta.url), "utf8");
+  const js = ts.transpileModule(menuSource, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
+  const menu = new Function("exports", js + ";return menuContextualV1;")({});
+  const october = "50c26274-a36f-48e0-b2fe-5a1caf5d6a49";
+  const parent = "/contratos/" + FIXTURE.contract;
+  const approved = parent + "/competencias";
+  const listPath = foreign ? "/contratos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/competencias" : approved;
+  const permissions = ["contratos", "competencias", "documentos_competencia", "analises", "pareceres", "apresentacoes"].map((recurso) => ({ recurso, acao: "consultar" }));
+  const items = menu({ competencia: october, contrato: FIXTURE.contract }, permissions);
+  assert.equal(items.some((item) => item.destino === approved), false);
+  assert.equal(items.some((item) => item.destino === parent), true);
+  assert.equal(menu({ competencia: null, contrato: FIXTURE.contract }, permissions).some((item) => item.destino === approved), true);
+  const budget = Object.freeze({ read: "owned budget" }), events = [];
+  let location = FIXTURE.origin + "/competencias/" + october + "/apresentar";
+  const guard = (value) => assert.equal(value, budget);
+  const observer = {
+    assertReadBarrier: guard,
+    readBarrier: async (fn, value = budget) => { guard(value); return fn(budget); },
+    readBarrierRemaining: (value) => { guard(value); return 15000; },
+    drainReads: async (value) => { guard(value); events.push("drain"); },
+  };
+  const page = {
+    url: () => location,
+    locator: (selector) => {
+      const path = /^a\[href="([^"]+)"\]:visible$/.exec(selector)?.[1];
+      return { count: async () => items.filter((item) => item.destino === path).length };
+    },
+    getByLabel: (label, options) => {
+      assert.equal(label, "Competência"); assert.equal(options.exact, true);
+      return { fill: async (month, options) => { assert.equal(month, "2026-09"); assert.equal(options.timeout, 15000); events.push("fill"); } };
+    },
+  };
+  const proof = { documents: proved ? { [approved]: {} } : {} }, fence = {};
+  const env = {
+    page, proof, fence, observer, FIXTURE,
+    fresh: async () => { events.push("fresh"); },
+    tracedPreparation: async (_, fn) => fn(),
+    err: (code) => { throw new Error(code); },
+    checkFreshDeployment: async (value, credentials) => { assert.equal(value, proof); assert.equal(credentials, false); events.push("deployment"); },
+    navigateVerifiedPage: async (p, f, url, remaining) => {
+      assert.equal(p, page); assert.equal(f, fence); assert.equal(url, FIXTURE.origin + approved);
+      assert.equal(remaining(), 15000); events.push("navigate"); location = url;
+    },
+  };
+  const declaration = (name) => source.nodes.find((node) => source.ts.isVariableDeclaration(node) && node.name.getText(source.ast) === name && node.initializer?.getText(source.ast).includes(name === "link" ? "PREPARER_SPA_LINK" : "PREPARER_SSR_PATH"));
+  const bind = (name) => new Function(...Object.keys(env), "return (" + declaration(name).initializer.getText(source.ast) + ");")(...Object.values(env));
+  const link = bind("link"), goKnown = bind("goKnown");
+  const row = { id: "79bdc139-ed10-4c91-905e-b32b9a824d27", competencia_referencia: "2026-09-01" };
+  const io = {
+    ...observer, page, generation: () => 3,
+    fresh: env.fresh,
+    link: async (...args) => { events.push("link"); return link(...args); },
+    goKnown: async (...args) => { events.push("goKnown"); return goKnown(...args); },
+    observedAfter: async (name, where, ordinal, options) => { assert.equal(name, "competencias"); assert.equal(where.id_contrato, FIXTURE.contract); assert.equal(ordinal, 3); guard(options.readBudget); events.push("observed"); return true; },
+    read: async (name, where, options) => { assert.equal(name, "competencias"); assert.equal(where.id_contrato, FIXTURE.contract); assert.equal(where.competencia_referencia, "2026-09-01"); guard(options.readBudget); assert.equal(options.after, 3); events.push("read"); return [row]; },
+  };
+  const scoped = { io, listPath, tracedPreparation: env.tracedPreparation, readCompetenceMonth: sut.readCompetenceMonth, uuid: (value) => /^[0-9a-f-]{36}$/.test(value), FIXTURE, stop: env.err };
+  const listMonth = new Function(...Object.keys(scoped), "return (" + source.named("listMonth").getText(source.ast) + ");")(...Object.values(scoped));
+  return { listMonth, row, events };
+}
+test("R18 actual list consumer returns from October V119 through the proved SSR document under one budget", async () => {
+  const f = await r18ListNavigationFixture();
+  assert.deepEqual(await f.listMonth("2026-09-01"), [f.row]);
+  assert.equal(f.events.includes("link"), false);
+  assert.equal(f.events.filter((item) => item === "goKnown").length, 1);
+  assert.ok(f.events.indexOf("drain") < f.events.indexOf("navigate"));
+  assert.ok(f.events.indexOf("navigate") < f.events.indexOf("observed"));
+  assert.ok(f.events.indexOf("fill") < f.events.indexOf("read"));
+});
+for (const options of [{ proved: false }, { foreign: true }]) {
+  test("R18 actual SSR consumer rejects a missing or foreign proved document " + JSON.stringify(options), async () => {
+    const f = await r18ListNavigationFixture(options);
+    await assert.rejects(() => f.listMonth("2026-09-01"), /PREPARER_SSR_PATH/);
+    assert.equal(f.events.includes("navigate"), false);
+    assert.equal(f.events.includes("read"), false);
+  });
+}

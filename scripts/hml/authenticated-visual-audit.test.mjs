@@ -14055,3 +14055,13 @@ test("R17 original R16 validator is shared, immutable and rejects hostile docume
   assert.equal(sut.SINGLE_REQUEST.fixtures.nonce, "trilha-a-fixtures-20261109-r17");
   assert.ok(sut.SINGLE_REQUEST.spentFixtureNonces.includes("trilha-a-fixtures-20261109-r16"));
 });
+
+test("R18 request accepts its sole nonce and keeps R17 spent", () => {
+  const request = {
+    schema_version: 1, issue: 317, operation: "fixtures",
+    request_id: "trilha-a-fixtures-20261110-r18",
+    approved_parent_sha: "a".repeat(40), frontend_sha: "", deployment_id: "",
+  };
+  assert.equal(sut.parseSingleRequest(JSON.stringify(request), "fixtures").request_id, request.request_id);
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify({ ...request, request_id: "trilha-a-fixtures-20261109-r17" }), "fixtures"));
+});
