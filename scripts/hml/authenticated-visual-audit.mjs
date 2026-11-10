@@ -434,26 +434,50 @@ export function validateCase(row = {}) {
     return false;
   }
 }
-export function summarizeCases(rows) {
+export function summarizeCases(rows, scope = null) {
+  scope = auditScope(scope);
+  const expected = scope
+    ? new Map(privateCases(scope).map((item) => [caseKey(item), item.path]))
+    : null;
   const keys = new Set();
   let duplicate = false,
     invalid = false,
     passed = 0;
-  if (!Array.isArray(rows) || rows.length > 208)
+  if (!Array.isArray(rows) || rows.length > (scope ? 64 : 208))
     return { recorded: 0, matrixComplete: false, globalComplete: false, passed: 0 };
   for (const row of rows) {
     try {
       const key = caseKey(row);
       if (keys.has(key)) duplicate = true;
       keys.add(key);
-      if (row.status === "PASS_AUTOMATIZADO" && validateCase(row)) passed++;
+      const routeValid = !expected || (expected.has(key) && expected.get(key) === row.path);
+      if (!routeValid) invalid = true;
+      const completeEvidence =
+        !scope ||
+        (run78VisualEvidenceValid(row, scope) &&
+          row.keyboard?.passed === true &&
+          row.sidebarSupplement?.passed === true &&
+          (row.surface !== "V117" || row.drawerCloseVerified === true) &&
+          row.navigationVerified === true &&
+          row.langPtBr === true &&
+          row.badState === false &&
+          Array.isArray(row.accessibility?.violations) &&
+          row.accessibility.violations.length === 0 &&
+          /^['"]?Inter['"]?,\s*Arial,\s*sans-serif$/i.test(row.fontFamily));
+      if (row.status === "PASS_AUTOMATIZADO" && validateCase(row) && routeValid && completeEvidence)
+        passed++;
     } catch {
       invalid = true;
     }
   }
   return {
     recorded: keys.size,
-    matrixComplete: !invalid && !duplicate && keys.size === 208 && rows.length === 208,
+    matrixComplete:
+      !invalid &&
+      !duplicate &&
+      keys.size === (scope ? 64 : 208) &&
+      rows.length === (scope ? 64 : 208) &&
+      (!scope || passed === 64),
     globalComplete: false,
     passed,
   };
@@ -2403,7 +2427,18 @@ export function classifyArtifactText(text, allowedWords, { snapshot = false, fie
 export function safeArtifactText(text, allowedWords, options) {
   return classifyArtifactText(text, allowedWords, options).reason === "ALLOWED";
 }
-export function run78VisualSelection(item) {
+export function run78VisualSelection(item, scope = null) {
+  scope = auditScope(scope);
+  if (scope) {
+    if (
+      !item ||
+      !scope.surfaces.includes(item.surface) ||
+      !WIDTHS.includes(item.width) ||
+      !THEMES.includes(item.theme)
+    )
+      return null;
+    return { required: true };
+  }
   if (
     !item ||
     !PRIVATE_SURFACES.includes(item.surface) ||
@@ -2436,12 +2471,13 @@ export function run78VisualSelection(item) {
   };
 }
 
-export function run78VisualEvidenceValid(row) {
-  const selection = run78VisualSelection(row);
+export function run78VisualEvidenceValid(row, scope = null) {
+  scope = auditScope(scope);
+  const selection = run78VisualSelection(row, scope);
   if (!selection) return false;
   if (!selection.required) return true;
   if (
-    !privateCases().some(
+    !privateCases(scope).some(
       (c) =>
         c.surface === row.surface &&
         c.width === row.width &&
@@ -2467,6 +2503,13 @@ export function run78VisualEvidenceValid(row) {
       context.width !== row.width ||
       context.theme !== row.theme ||
       context.mode !== mode
+    )
+      return false;
+    if (
+      scope === C8_AUDIT_SCOPE &&
+      row.surface === "V117" &&
+      mode === "PRIMARY" &&
+      (proof?.metrics?.modalPassed !== true || !proof.metrics.targets?.length)
     )
       return false;
     const expectedSrc =
@@ -2514,7 +2557,8 @@ export function run78VisualEvidenceValid(row) {
   );
 }
 
-export function preservedPrivateCase(item) {
+export function preservedPrivateCase(item, scope = null) {
+  if (auditScope(scope)) return null;
   if (
     !item ||
     !["V114", "V116", "V118"].includes(item.surface) ||
@@ -2533,12 +2577,24 @@ export function preservedPrivateCase(item) {
   };
 }
 
-export function completePrivateRecords(records) {
+export function completePrivateRecords(records, scope = null) {
+  scope = auditScope(scope);
+  if (scope) {
+    if (!Array.isArray(records) || records.length > 64) fail("AUDIT_CASES");
+    const expected = new Map(privateCases(scope).map((item) => [caseKey(item), item.path]));
+    const seen = new Set();
+    for (const row of records) {
+      const key = caseKey(row);
+      if (!expected.has(key) || expected.get(key) !== row.path || seen.has(key))
+        fail("AUDIT_CASES");
+      seen.add(key);
+    }
+  }
   const keys = new Set(records.map(caseKey));
-  for (const item of privateCases())
+  for (const item of privateCases(scope))
     if (!keys.has(caseKey(item)))
       records.push(
-        preservedPrivateCase(item) || {
+        preservedPrivateCase(item, scope) || {
           ...item,
           status: item.fixtureBlocked ? "BLOQUEADO_FIXTURE" : "BLOQUEADO_EXECUCAO_INTERROMPIDA",
         },
@@ -4110,7 +4166,65 @@ export const SYNTHETIC_FIXTURE = Object.freeze({
   competence: "59072760-4420-4598-82dd-367f41a79e89",
   document: "525e54fc-feec-4dc0-b540-1510a3c52485",
 });
-export function privateCases() {
+export const C8_AUDIT_SCOPE = Object.freeze({
+  id: "C8",
+  nonce: "trilha-c-audit-20261110-c8-r1",
+  surfaces: Object.freeze(["V111", "V114", "V115", "V116", "V117", "V118", "V119", "V120"]),
+});
+export const C8_RECOVERY_DOCUMENT = Object.freeze({
+  schema: "contaos.fixture.readonly-recovery-r20.v1",
+  workflowRun: "42788354465",
+  artifactId: "13751191411",
+  requestId: "trilha-a-fixtures-20261110-r20",
+  harnessSha: "79b728cb12e7b1df037c5816c27842c0ef042d2b",
+  zipSha256: "142d095971e8b206030451d2de6236351a9db59b21e45a10b1c32b06cda73536",
+  reportSha256: "daab1954472928a254fbb725476f6688415d2c7752c195b711a511be31a2b9fe",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  observationSha256: "9d4b0e45715e2589c0857f6e6357fb3b72035c30cb9e2c6d2d7be116a6325bc3",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": null,\n  "diagnostics": {\n    "primaryFailure": null,\n    "failureClass": null,\n    "errorName": null,\n    "subphase": "CLEANUP",\n    "subphasePath": [],\n    "lastCompletedSubphase": "CLEANUP",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 19,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 17,\n    "priorReserved": 2,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 5\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 17,\n    "maxNewIntentions": 5,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "pode_apresentar_contratante",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "executionId": "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n        "opinionId": "9ec80151-bbf6-4469-9cd8-7d96d1bb02cd"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "aguardando_contratante",\n        "id": "79bdc139-ed10-4c91-905e-b32b9a824d27",\n        "requirementId": "c824a6f9-e519-44cc-8911-87d1009e2eaf",\n        "documentId": "cd1624d3-73f7-4ea1-b317-c52627df6824",\n        "executionId": "00da4236-810f-4a89-8be5-b2ffcd50a480",\n        "opinionId": "7bbbe81e-e34c-44dc-a76f-ed85fd56d87f",\n        "presentationId": "eb6d5b1c-8b64-418b-aa82-bf1f29d41768",\n        "packageId": "f29715a6-0664-415a-8903-68be9d7c5d66",\n        "packageHash": "82e0dc9adfbbce6956f87dfe8b78230f71eb9d7e4399571f86210c0f1c6e5c81"\n      }\n    ]\n  },\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "79b728cb12e7b1df037c5816c27842c0ef042d2b",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42788354465",\n  "phase": "FINAL_READBACK",\n  "completed": true,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n    "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n    "9ec80151-bbf6-4469-9cd8-7d96d1bb02cd",\n    "79bdc139-ed10-4c91-905e-b32b9a824d27",\n    "c824a6f9-e519-44cc-8911-87d1009e2eaf",\n    "cd1624d3-73f7-4ea1-b317-c52627df6824",\n    "00da4236-810f-4a89-8be5-b2ffcd50a480",\n    "7bbbe81e-e34c-44dc-a76f-ed85fd56d87f",\n    "eb6d5b1c-8b64-418b-aa82-bf1f29d41768",\n    "f29715a6-0664-415a-8903-68be9d7c5d66"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "79b728cb12e7b1df037c5816c27842c0ef042d2b",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42788354465",\n  "firstFailure": null\n}\n',
+});
+function auditScope(scope = null) {
+  if (scope === null || scope === undefined) return null;
+  if (scope !== C8_AUDIT_SCOPE) fail("AUDIT_SCOPE");
+  return scope;
+}
+export function validateC8RecoveryDocument(input) {
+  const code = "C8_RECOVERY";
+  if (!input || typeof input !== "object" || isProxy(input)) fail(code);
+  const proto = Object.getPrototypeOf(input);
+  if (proto !== Object.prototype && proto !== null) fail(code);
+  const names = Object.keys(C8_RECOVERY_DOCUMENT);
+  const keys = Reflect.ownKeys(input);
+  if (keys.length !== 12 || keys.some((key, index) => key !== names[index])) fail(code);
+  const descriptors = Object.getOwnPropertyDescriptors(input),
+    out = {};
+  for (const key of names) {
+    const d = descriptors[key];
+    if (
+      !d ||
+      !Object.hasOwn(d, "value") ||
+      d.enumerable !== true ||
+      typeof d.value !== "string" ||
+      d.value !== C8_RECOVERY_DOCUMENT[key]
+    )
+      fail(code);
+    out[key] = d.value;
+  }
+  const raw = JSON.stringify(out, null, 2) + "\n";
+  if (
+    Buffer.byteLength(raw) !== 5430 ||
+    digest(raw) !== "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee"
+  )
+    fail(code);
+  return Object.freeze(out);
+}
+
+export function privateCases(scope = null) {
+  scope = auditScope(scope);
   const f = SYNTHETIC_FIXTURE,
     c = "/contratos/" + f.contract,
     m = "/competencias/" + f.competence;
@@ -4142,7 +4256,13 @@ export function privateCases() {
     V122: c + "/historico/importar",
     V123: "/administracao/auditoria",
   };
-  return PRIVATE_SURFACES.flatMap((surface) =>
+  if (scope) {
+    routes.V117 = "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/analise";
+    routes.V119 = "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar";
+    routes.V120 =
+      "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27/apresentacoes/eb6d5b1c-8b64-418b-aa82-bf1f29d41768";
+  }
+  return (scope ? scope.surfaces : PRIVATE_SURFACES).flatMap((surface) =>
     WIDTHS.flatMap((width) =>
       THEMES.map((theme) => ({
         surface,
@@ -4176,7 +4296,9 @@ export async function preparePublicProvenance({
   harnessSha,
   deploymentId,
   bun = "bun",
+  scope = null,
 }) {
+  scope = auditScope(scope);
   if (
     !hash40(frontendSha) ||
     !hash40(harnessSha) ||
@@ -4248,11 +4370,15 @@ export async function preparePublicProvenance({
   const documents = {};
   for (const path of new Set([
     "/login",
-    "/competencias/" +
-      R18_REGISTRATION_CANDIDATE.competencyId +
-      "/apresentacoes/" +
-      R18_REGISTRATION_CANDIDATE.presentationId,
-    ...privateCases()
+    ...(scope
+      ? ["/", "/selecionar-organizacao"]
+      : [
+          "/competencias/" +
+            R18_REGISTRATION_CANDIDATE.competencyId +
+            "/apresentacoes/" +
+            R18_REGISTRATION_CANDIDATE.presentationId,
+        ]),
+    ...privateCases(scope)
       .filter((r) => r.path)
       .map((r) => r.path),
   ])) {
@@ -4289,6 +4415,7 @@ export async function preparePublicProvenance({
   };
 }
 export async function runCli(args = process.argv.slice(2)) {
+  validateC8RecoveryDocument(C8_RECOVERY_DOCUMENT);
   if (
     args.length !== 1 ||
     ![
@@ -4371,6 +4498,7 @@ export async function runCli(args = process.argv.slice(2)) {
     harnessSha: process.env.CONTAOS_HARNESS_SHA,
     deploymentId: process.env.CONTAOS_DEPLOYMENT_ID,
     bun: process.env.CONTAOS_BUN_BINARY || "bun",
+    scope: singleRequestContext?.scope ?? null,
   });
 
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
@@ -4758,6 +4886,54 @@ export function preparerSourceFormsFailure(input) {
   return { failedCases, lastPhase: !invalidPhase && previous >= 0 ? phases[previous] : "UNKNOWN" };
 }
 
+export function nativeC8VisualDiagnostic(tap) {
+  const unknown = () => ({ stage: "UNKNOWN" });
+  if (typeof tap !== "string" || tap.length > 1048576) return unknown();
+  let last = unknown(),
+    count = 0;
+  for (const line of tap.split("\n")) {
+    if (!line.startsWith("# C8_NATIVE_PHASE ")) continue;
+    if (++count > 300) return unknown();
+    const plain = /^# C8_NATIVE_PHASE (START|BUNDLE|DONE)$/.exec(line);
+    if (plain) {
+      last = { stage: plain[1] };
+      continue;
+    }
+    const match =
+      /^# C8_NATIVE_PHASE (READY|MOUNT|DRAWER|STATE|COLLECT|PRIVACY|CLOSE|NEGATIVE) (V117|V119|V120) (1440|1280|768|390) (light|dark)$/.exec(
+        line,
+      );
+    if (!match) return unknown();
+    last = { stage: match[1], surface: match[2], width: Number(match[3]), theme: match[4] };
+  }
+  const outcome = {};
+  for (const name of ["tests", "pass", "fail", "skipped", "cancelled"]) {
+    const values = [...tap.matchAll(new RegExp("^# " + name + " ([0-9]{1,3})$", "gm"))];
+    if (values.length > 1) return unknown();
+    if (values.length) outcome[name] = Number(values[0][1]);
+  }
+  if (Object.keys(outcome).length === 5) {
+    outcome.kinds = [
+      ...new Set(
+        [
+          ...tap.matchAll(
+            /^\s+failureType: '(testTimeoutFailure|testCodeFailure|uncaughtException|unhandledRejection|cancelledByParent|hookFailed|subtestsFailed)'$/gm,
+          ),
+        ].map((m) => m[1]),
+      ),
+    ];
+    outcome.lifecycleAfterEnd = tap.includes(
+      "generated asynchronous activity after the test ended",
+    );
+    outcome.abortedRequest = tap.includes("net::ERR_ABORTED");
+    outcome.targetClosed = /TargetClosedError|Target page, context or browser has been closed/.test(
+      tap,
+    );
+    last = { ...last, outcome };
+  }
+  return last;
+}
+
 async function nativeGuard() {
   let output;
   try {
@@ -4834,6 +5010,10 @@ async function nativeGuard() {
     console.error(
       JSON.stringify({
         phase: "VISUAL_NATIVE",
+        exitCode: Number.isInteger(error?.code) ? error.code : null,
+        signal: ["SIGTERM", "SIGKILL"].includes(error?.signal) ? error.signal : null,
+        timedOut: error?.killed === true,
+        c8: nativeC8VisualDiagnostic(typeof error?.stdout === "string" ? error.stdout : ""),
         v102: nativeVisualDiagnostic(typeof error?.stdout === "string" ? error.stdout : ""),
       }),
     );
@@ -5116,7 +5296,7 @@ async function inspectPrivacy(page, words, diagnostics) {
 
   let fieldContext;
   if (rendered !== null && state?.verified && !state.closed) {
-    const item = privateCases().find((i) => HML_ORIGIN + i.path === page.url());
+    const item = privateCases(state?.scope).find((i) => HML_ORIGIN + i.path === page.url());
     if (item && ["V109", "V111", "V112", "V115", "V122", "V123"].includes(item.surface)) {
       const receipt = await page.evaluate(() => {
         const header = document.querySelector('header[aria-label="Organização atual"]');
@@ -5258,6 +5438,8 @@ async function inspectPrivacy(page, words, diagnostics) {
         });
     }
   }
+  if (rendered !== null && state?.scope === C8_AUDIT_SCOPE)
+    fieldContext = await c8PrivacyContext(page, state, rendered, snapshot, fieldContext);
   const privacy =
     rendered === null
       ? { rendered: { reason: "OPAQUE_MEDIA", unknownCount: 0 } }
@@ -5332,6 +5514,9 @@ export async function openVerifiedOrganizationSelector(page, fence) {
   await navigateVerifiedPage(page, fence, HML_ORIGIN + "/selecionar-organizacao");
 }
 async function runAuthenticatedAudit() {
+  validateC8RecoveryDocument(C8_RECOVERY_DOCUMENT);
+  const scope = auditScope(singleRequestContext?.scope);
+  if (scope !== C8_AUDIT_SCOPE) fail("AUDIT_BINDING_PENDING");
   if (process.env.GITHUB_EVENT_NAME !== "workflow_run") fail("REQUEST_EVENT");
   assertPrivateRequestEnvironment(process.env);
   getValidatedR7ZeroAuth();
@@ -5429,7 +5614,7 @@ async function runAuthenticatedAudit() {
         ),
       measure: () => {
         if (page.url() !== HML_ORIGIN + captureItem.path) fail("VISUAL_CASE_IDENTITY");
-        return collectVisualMetrics(page, captureItem);
+        return collectVisualMetrics(page, captureItem, scope, captureMode);
       },
       privacy: async () => (await inspectPrivacy(page, words)) !== null,
       save: () => {
@@ -5472,6 +5657,7 @@ async function runAuthenticatedAudit() {
       v109Proof,
       v123Proof,
       sys04Proof,
+      scope,
       generation: 0,
       verified: false,
       closed: false,
@@ -5537,11 +5723,15 @@ async function runAuthenticatedAudit() {
     privacyState.verified = true;
     phase = "CAPTURE_PRIVATE";
     let surface = null;
-    for (const item of privateCases()) {
+    for (const item of privateCases(scope)) {
       captureItem = item;
       const key = caseKey(item),
-        record = { ...item, visualSelection: run78VisualSelection(item), status: "PENDENTE" };
-      const preserved = preservedPrivateCase(item);
+        record = {
+          ...item,
+          visualSelection: run78VisualSelection(item, scope),
+          status: "PENDENTE",
+        };
+      const preserved = preservedPrivateCase(item, scope);
       if (preserved) {
         records.push(preserved);
         continue;
@@ -5557,6 +5747,19 @@ async function runAuthenticatedAudit() {
       captureMode = null;
       try {
         const beforeErrors = errors;
+        if (scope) {
+          privacyState.c8Observer?.close();
+          privacyState.c8Current = null;
+          const { createOfficialObserver } = await import("./prepare-visual-fixtures.mjs");
+          privacyState.c8Observer = createOfficialObserver(page, {
+            identity: {
+              frontendSha: proof.frontendSha,
+              harnessSha: proof.harnessSha,
+              deploymentId: proof.deploymentId,
+              workflowRun: process.env.GITHUB_RUN_ID,
+            },
+          });
+        }
         await resizeVerifiedPage(page, fence, item.width);
         const response = await navigateVerifiedPage(page, fence, HML_ORIGIN + item.path);
         await page.evaluate(
@@ -5580,6 +5783,12 @@ async function runAuthenticatedAudit() {
         );
         await fence.drain();
         fence.assertSafe();
+        const closeDrawer =
+          scope && item.surface === "V117"
+            ? await openC8RequirementDrawer(page, item, scope)
+            : null;
+        await settleVerifiedPage(page, fence);
+        if (scope) await collectC8CurrentWire(page, item, privacyState);
         diagnosticStage = "PRIVACY_PRIMARY";
         const privacy = {};
         const snapshot = await inspectPrivacy(page, words, privacy);
@@ -5615,6 +5824,16 @@ async function runAuthenticatedAudit() {
                     .join(" ")
                     .trim(),
               ),
+            dialogVisible: [...document.querySelectorAll('[role="dialog"]')].some(visible),
+            dialogNames: [...document.querySelectorAll('[role="dialog"]')].filter(visible).map(
+              (e) =>
+                e.getAttribute("aria-label") ||
+                (e.getAttribute("aria-labelledby") || "")
+                  .split(/\s+/)
+                  .map((id) => document.getElementById(id)?.textContent || "")
+                  .join(" ")
+                  .trim(),
+            ),
             observedWidth: innerWidth,
             observedTheme: document.documentElement.classList.contains("dark") ? "dark" : "light",
             h1: headings.length,
@@ -5687,6 +5906,7 @@ async function runAuthenticatedAudit() {
         });
         diagnosticStage = "KEYBOARD";
         record.keyboard = await keyboardProbe(page);
+        if (closeDrawer) record.drawerCloseVerified = await closeDrawer();
         diagnosticStage = "CAPTURE_SUPPLEMENT";
         captureMode = item.width >= 768 ? "SIDEBAR_COLLAPSED" : "MOBILE_MENU";
         record.sidebarSupplement = await sidebarProbe(page, item, key, words, saveScreenshot);
@@ -5695,7 +5915,7 @@ async function runAuthenticatedAudit() {
         diagnosticStage = "FINAL_CASE_CHECK";
         record.status =
           validateCase(record) &&
-          run78VisualEvidenceValid(record) &&
+          run78VisualEvidenceValid(record, scope) &&
           metrics.langPtBr &&
           !metrics.badState &&
           accessibility.violations.length === 0 &&
@@ -5753,6 +5973,7 @@ async function runAuthenticatedAudit() {
     if (records.at(-1)?.status === "PENDENTE") records.at(-1).status = "BLOQUEADO_" + aborted;
   } finally {
     const privacyState = page && privacy78Pages.get(page);
+    privacyState?.c8Observer?.close();
     if (privacyState) privacyState.verified = false;
     if (loggedIn && page && !page.isClosed())
       try {
@@ -5768,7 +5989,9 @@ async function runAuthenticatedAudit() {
     fence?.close();
     await browser?.close().catch(() => {});
     await proxy?.close().catch(() => {});
-    completePrivateRecords(records);
+    completePrivateRecords(records, scope);
+    const summary = summarizeCases(records, scope);
+    if (scope && (aborted || !logoutVerified)) summary.matrixComplete = false;
     const report = {
       schema: "contaos.private.audit.v1",
       frontendSha: proof.frontendSha,
@@ -5778,7 +6001,9 @@ async function runAuthenticatedAudit() {
       csp: "ADICIONAL_LOCAL_DO_AUDITOR",
       publicProofsRepeated: false,
       records,
-      summary: summarizeCases(records),
+      summary,
+      auditScope: scope.id,
+      recoveryDocumentSha256: digest(JSON.stringify(C8_RECOVERY_DOCUMENT, null, 2) + "\n"),
       logoutVerified,
       aborted,
       diagnostic,
@@ -6163,152 +6388,180 @@ export function visualGeometryValid(value) {
 }
 
 /** Real geometry only; labels, values, arbitrary selectors and user text never leave the page. */
-export async function collectVisualMetrics(page, item) {
-  const measured = await page.evaluate(({ surface, theme }) => {
-    const visible = (e) =>
-      e.isConnected &&
-      e.getClientRects().length > 0 &&
-      getComputedStyle(e).visibility !== "hidden" &&
-      getComputedStyle(e).display !== "none";
-    const rect = (e) => {
-      const b = e.getBoundingClientRect();
-      return { x: b.x, y: b.y, width: b.width, height: b.height };
-    };
-    const viewport = { width: innerWidth, height: innerHeight };
-    const controls = [
-      ...document.querySelectorAll('input:not([type="hidden"]),select,textarea,button,a[href]'),
-    ].filter((e) => {
-      if (!visible(e) || e.closest("[inert]")) return false;
-      const r = rect(e);
-      return r.width > 0 && r.height > 0 && r.y >= 0 && r.y + r.height <= innerHeight;
-    });
-    const targets = controls.map((e, ordinal) => {
-      const r = rect(e),
-        inset = Math.min(3, r.width / 4, r.height / 4);
-      const points = [
-        [r.x + r.width / 2, r.y + r.height / 2],
-        [r.x + inset, r.y + r.height / 2],
-        [r.x + r.width - inset, r.y + r.height / 2],
-        [r.x + r.width / 2, r.y + inset],
-        [r.x + r.width / 2, r.y + r.height - inset],
-      ];
-      return {
-        ordinal,
-        kind: e.matches("input")
-          ? "INPUT"
-          : e.matches("select")
-            ? "SELECT"
-            : e.matches("textarea")
-              ? "TEXTAREA"
-              : e.matches("button")
-                ? "BUTTON"
-                : "LINK",
-        rect: r,
-        connected: e.isConnected,
-        visible: visible(e),
-        disabled:
-          e.matches(":disabled") ||
-          (e.getAttribute("aria-disabled") === "true" &&
-            e.matches('button,input,select,textarea,a[href],[role="button"]')),
-        hit: points.every(([x, y]) => {
-          const hit = document.elementFromPoint(x, y);
-          return hit === e || e.contains(hit);
-        }),
+export async function collectVisualMetrics(page, item, scope = null, mode = "PRIMARY") {
+  scope = auditScope(scope);
+  if (
+    scope &&
+    (!privateCases(scope).some((c) => caseKey(c) === caseKey(item) && c.path === item.path) ||
+      !["PRIMARY", "SIDEBAR_COLLAPSED", "MOBILE_MENU"].includes(mode))
+  )
+    fail("VISUAL_CASE_IDENTITY");
+  const modalRequired = scope === C8_AUDIT_SCOPE && item.surface === "V117" && mode === "PRIMARY";
+  const measured = await page.evaluate(
+    ({ surface, theme, modalRequired }) => {
+      const visible = (e) =>
+        e.isConnected &&
+        e.getClientRects().length > 0 &&
+        getComputedStyle(e).visibility !== "hidden" &&
+        getComputedStyle(e).display !== "none";
+      const rect = (e) => {
+        const b = e.getBoundingClientRect();
+        return { x: b.x, y: b.y, width: b.width, height: b.height };
       };
-    });
-    let table = null;
-    if (surface === "V101") {
-      const section = document.querySelector('section[aria-labelledby="v101-lista"]');
-      const t = section?.querySelector("table"),
-        cards = section?.querySelector('ul[aria-label="Contratantes (lista compacta)"]');
-      let clipping = 0;
-      if (t && visible(t))
-        for (const cell of t.querySelectorAll("th,td")) {
-          const c = cell.getBoundingClientRect();
-          const range = document.createRange();
-          range.selectNodeContents(cell);
-          for (const r of range.getClientRects())
-            if (r.width > 0 && (r.left < c.left - 0.5 || r.right > c.right + 0.5)) clipping++;
-        }
-      table = {
-        containerWidth: section
-          ? section.clientWidth -
-            parseFloat(getComputedStyle(section).paddingLeft) -
-            parseFloat(getComputedStyle(section).paddingRight)
-          : 0,
-        tableVisible: !!t && visible(t),
-        cardsVisible: !!cards && visible(cards),
-        clipping,
-        helpTargets: t && visible(t) ? [...t.querySelectorAll("button")].map((e) => rect(e)) : [],
-      };
-    }
-    const dates = (
-      surface === "V105" ? ["v105-inicio", "v105-fim"] : surface === "V113" ? ["v113-mes"] : []
-    ).map((id) => {
-      const e = document.getElementById(id);
-      return {
-        id,
-        present: !!e && visible(e),
-        scheme: e ? getComputedStyle(e).colorScheme : "",
-        type: e?.getAttribute("type") ?? "",
-      };
-    });
-    const contrast = [];
-    if (["V106", "V107"].includes(surface)) {
-      const pixel = (color) => {
-        const canvas = document.createElement("canvas");
-        canvas.width = canvas.height = 1;
-        const ctx = canvas.getContext("2d");
-        ctx.clearRect(0, 0, 1, 1);
-        ctx.fillStyle = color;
-        ctx.fillRect(0, 0, 1, 1);
-        return [...ctx.getImageData(0, 0, 1, 1).data];
-      };
-      const lum = (rgb) =>
-        rgb
-          .slice(0, 3)
-          .map((v) => {
-            const s = v / 255;
-            return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-          })
-          .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
-      for (const e of document.querySelectorAll("main span")) {
-        const name = e.textContent?.trim();
-        if (!["Situação:", "Criticidade:"].includes(name) || !visible(e)) continue;
-        let ancestor = e,
-          bg = null;
-        while (ancestor) {
-          const c = pixel(getComputedStyle(ancestor).backgroundColor);
-          if (c[3] === 255) {
-            bg = c;
-            break;
+      const viewport = { width: innerWidth, height: innerHeight };
+      const dialogs = modalRequired
+        ? [...document.querySelectorAll('[role="dialog"]')].filter(visible)
+        : [];
+      const modal =
+        dialogs.length === 1 &&
+        (dialogs[0].getAttribute("aria-labelledby") || "")
+          .split(/\s+/)
+          .map((id) => document.getElementById(id)?.textContent || "")
+          .join(" ")
+          .trim() === "Detalhe do requisito"
+          ? dialogs[0]
+          : null;
+      const controls = [
+        ...document.querySelectorAll('input:not([type="hidden"]),select,textarea,button,a[href]'),
+      ].filter((e) => {
+        if (!visible(e) || e.closest("[inert]") || (modalRequired && !modal?.contains(e)))
+          return false;
+        const r = rect(e);
+        return r.width > 0 && r.height > 0 && r.y >= 0 && r.y + r.height <= innerHeight;
+      });
+      const targets = controls.map((e, ordinal) => {
+        const r = rect(e),
+          inset = Math.min(3, r.width / 4, r.height / 4);
+        const points = [
+          [r.x + r.width / 2, r.y + r.height / 2],
+          [r.x + inset, r.y + r.height / 2],
+          [r.x + r.width - inset, r.y + r.height / 2],
+          [r.x + r.width / 2, r.y + inset],
+          [r.x + r.width / 2, r.y + r.height - inset],
+        ];
+        return {
+          ordinal,
+          kind: e.matches("input")
+            ? "INPUT"
+            : e.matches("select")
+              ? "SELECT"
+              : e.matches("textarea")
+                ? "TEXTAREA"
+                : e.matches("button")
+                  ? "BUTTON"
+                  : "LINK",
+          rect: r,
+          connected: e.isConnected,
+          visible: visible(e),
+          disabled:
+            e.matches(":disabled") ||
+            (e.getAttribute("aria-disabled") === "true" &&
+              e.matches('button,input,select,textarea,a[href],[role="button"]')),
+          hit: points.every(([x, y]) => {
+            const hit = document.elementFromPoint(x, y);
+            return hit === e || e.contains(hit);
+          }),
+        };
+      });
+      let table = null;
+      if (surface === "V101") {
+        const section = document.querySelector('section[aria-labelledby="v101-lista"]');
+        const t = section?.querySelector("table"),
+          cards = section?.querySelector('ul[aria-label="Contratantes (lista compacta)"]');
+        let clipping = 0;
+        if (t && visible(t))
+          for (const cell of t.querySelectorAll("th,td")) {
+            const c = cell.getBoundingClientRect();
+            const range = document.createRange();
+            range.selectNodeContents(cell);
+            for (const r of range.getClientRects())
+              if (r.width > 0 && (r.left < c.left - 0.5 || r.right > c.right + 0.5)) clipping++;
           }
-          ancestor = ancestor.parentElement;
-        }
-        const fg = pixel(getComputedStyle(e).color);
-        const ratio =
-          bg && fg[3] === 255
-            ? (Math.max(lum(bg), lum(fg)) + 0.05) / (Math.min(lum(bg), lum(fg)) + 0.05)
-            : 0;
-        contrast.push({
-          node: name === "Situação:" ? "STATUS_LABEL" : "CRITICALITY_LABEL",
-          ratio,
-          threshold: 4.5,
-        });
+        table = {
+          containerWidth: section
+            ? section.clientWidth -
+              parseFloat(getComputedStyle(section).paddingLeft) -
+              parseFloat(getComputedStyle(section).paddingRight)
+            : 0,
+          tableVisible: !!t && visible(t),
+          cardsVisible: !!cards && visible(cards),
+          clipping,
+          helpTargets: t && visible(t) ? [...t.querySelectorAll("button")].map((e) => rect(e)) : [],
+        };
       }
-    }
-    return {
-      viewport,
-      targets,
-      pairs: [],
-      table,
-      dates,
-      contrast,
-      theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
-      overflowX: document.documentElement.scrollWidth - innerWidth,
-    };
-  }, item);
-  const identityPassed = measured.viewport.width === item.width && measured.theme === item.theme;
+      const dates = (
+        surface === "V105" ? ["v105-inicio", "v105-fim"] : surface === "V113" ? ["v113-mes"] : []
+      ).map((id) => {
+        const e = document.getElementById(id);
+        return {
+          id,
+          present: !!e && visible(e),
+          scheme: e ? getComputedStyle(e).colorScheme : "",
+          type: e?.getAttribute("type") ?? "",
+        };
+      });
+      const contrast = [];
+      if (["V106", "V107"].includes(surface)) {
+        const pixel = (color) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = canvas.height = 1;
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, 1, 1);
+          ctx.fillStyle = color;
+          ctx.fillRect(0, 0, 1, 1);
+          return [...ctx.getImageData(0, 0, 1, 1).data];
+        };
+        const lum = (rgb) =>
+          rgb
+            .slice(0, 3)
+            .map((v) => {
+              const s = v / 255;
+              return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+            })
+            .reduce((sum, v, i) => sum + v * [0.2126, 0.7152, 0.0722][i], 0);
+        for (const e of document.querySelectorAll("main span")) {
+          const name = e.textContent?.trim();
+          if (!["Situação:", "Criticidade:"].includes(name) || !visible(e)) continue;
+          let ancestor = e,
+            bg = null;
+          while (ancestor) {
+            const c = pixel(getComputedStyle(ancestor).backgroundColor);
+            if (c[3] === 255) {
+              bg = c;
+              break;
+            }
+            ancestor = ancestor.parentElement;
+          }
+          const fg = pixel(getComputedStyle(e).color);
+          const ratio =
+            bg && fg[3] === 255
+              ? (Math.max(lum(bg), lum(fg)) + 0.05) / (Math.min(lum(bg), lum(fg)) + 0.05)
+              : 0;
+          contrast.push({
+            node: name === "Situação:" ? "STATUS_LABEL" : "CRITICALITY_LABEL",
+            ratio,
+            threshold: 4.5,
+          });
+        }
+      }
+      return {
+        ...(modalRequired ? { modalPassed: !!modal && targets.length > 0 } : {}),
+        viewport,
+        targets,
+        pairs: [],
+        table,
+        dates,
+        contrast,
+        theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
+        overflowX: document.documentElement.scrollWidth - innerWidth,
+      };
+    },
+    { ...item, modalRequired },
+  );
+  const identityPassed =
+    measured.viewport.width === item.width &&
+    measured.theme === item.theme &&
+    (!modalRequired || measured.modalPassed === true);
   const geometryPassed = visualGeometryValid(measured);
   const tablePassed =
     !measured.table ||
@@ -6340,7 +6593,7 @@ export async function collectVisualMetrics(page, item) {
 
 export async function readyVisualBrand(page, item, mode) {
   if (
-    !run78VisualSelection(item) ||
+    !run78VisualSelection(item, privacy78Pages.get(page)?.scope) ||
     !["PRIMARY", "SIDEBAR_COLLAPSED", "MOBILE_MENU"].includes(mode) ||
     (item.surface === "SYS04" && mode !== "PRIMARY") ||
     (mode === "MOBILE_MENU" && item.width >= 768) ||
@@ -6368,6 +6621,532 @@ export async function readyVisualBrand(page, item, mode) {
     }
   }
   return { count, images: receipts, context };
+}
+
+const C8_SYNTHETIC_FIELDS = Object.freeze([
+  "Documento TXT sintético Trilha A.",
+  "Presença do documento TXT sintético de auditoria.",
+  "Ensaio sintético HML da Trilha A. Sem efeito jurídico ou financeiro.",
+  "O requisito sintético exige a presença do TXT aprovado, vinculado a esta competência. Arquivo e versão conferidos pelo SHA256 previsto.",
+  "Ensaio sintético HML da Trilha A. A conferência limita-se à presença documental; sem efeito jurídico ou financeiro.",
+  "HML-TRILHA-A-20261108",
+  "Ensaio sintético em homologação.",
+]);
+
+export function c8TechnicalFieldContracts(item, wire) {
+  const out = [];
+  const date = (value) =>
+    new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+      .format(new Date(value))
+      .replace(",", "");
+  const add = (field, raw, selector, label, kind = "text", prefix = "", attribute = null) => {
+    if (typeof raw !== "string" || !raw) return;
+    let value = raw;
+    if (kind === "date") {
+      if (!/^\d{4}-\d{2}-\d{2}T/.test(raw) || !Number.isFinite(Date.parse(raw))) return;
+      value = date(raw);
+    } else if (kind === "hash" && !/^[a-f0-9]{64}$/.test(raw)) return;
+    else if (kind === "uuid" && !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(raw)) return;
+    else if (kind === "synthetic" && !C8_SYNTHETIC_FIELDS.includes(raw)) return;
+    else if (kind === "code" && raw !== "AUD-A-TXT-001") return;
+    out.push({ field, value, selector, label, attribute, expected: prefix + value });
+  };
+  const dd = (root) => root + " > dl > div > dd";
+  const result = (path, r, root) => {
+    if (!r) return;
+    add(path + ".criado_em", r.criado_em, dd(root), "Registrado em", "date");
+    add(path + ".hash_evidencias", r.hash_evidencias, dd(root), "Hash das evidências", "hash");
+    add(
+      path + ".justificativa",
+      r.justificativa,
+      root + " > p:nth-of-type(1)",
+      null,
+      "synthetic",
+      "Justificativa: ",
+    );
+    add(
+      path + ".fundamento",
+      r.fundamento,
+      root + ` > p:nth-of-type(${r.justificativa ? 2 : 1})`,
+      null,
+      "synthetic",
+      "Fundamento: ",
+    );
+  };
+  if (item.surface === "V117") {
+    const d = wire.detail,
+      source = 'section[aria-labelledby="v117-fonte"]';
+    add(
+      "detail.requisito.origem_id",
+      d.requisito.origem_id,
+      dd(source),
+      "Identificador da origem",
+      "uuid",
+    );
+    add(
+      "detail.requisito.hash_snapshot",
+      d.requisito.hash_snapshot,
+      dd(source),
+      "Hash do snapshot",
+      "hash",
+    );
+    add(
+      "detail.requisito.descricao",
+      d.requisito.descricao,
+      'section[aria-labelledby="v117-req"] > p:nth-of-type(2)',
+      null,
+      "synthetic",
+    );
+    add(
+      "detail.requisito.fonte_detalhe",
+      d.requisito.fonte_detalhe,
+      dd(source),
+      "Detalhe",
+      "synthetic",
+    );
+    add(
+      "detail.requisito.codigo",
+      d.requisito.codigo,
+      'section[aria-labelledby="v117-req"] > p:nth-of-type(1)',
+      null,
+      "code",
+    );
+    const exec = 'section[aria-labelledby="v117-exec"]';
+    for (const [field, label, kind] of [
+      ["hash_entrada", "Hash de entrada", "hash"],
+      ["iniciada_em", "Iniciada em", "date"],
+      ["concluida_em", "Concluída em", "date"],
+    ])
+      add("detail.execucao_atual." + field, d.execucao_atual?.[field], dd(exec), label, kind);
+    result(
+      "detail.resultado_referencia",
+      d.resultado_referencia,
+      'section[aria-labelledby="v117-ref"] > div',
+    );
+    result("detail.resultado_atual", d.resultado_atual, exec + " > div");
+    for (const [i, e] of (d.evidencias ?? []).entries()) {
+      const root = `section[aria-labelledby="v117-ev"] ul > li:nth-child(${i + 1})`;
+      add(`detail.evidencias.${i}.hash`, e.hash, dd(root), "Hash", "hash");
+      add(`detail.evidencias.${i}.criado_em`, e.criado_em, dd(root), "Registrada em", "date");
+    }
+    for (const [i, h] of (d.historico ?? []).entries()) {
+      const root = `section[aria-labelledby="v117-hist"] ol > li:nth-child(${i + 1})`;
+      add(
+        `detail.historico.${i}.hash_entrada`,
+        h.hash_entrada,
+        dd(root),
+        "Hash de entrada",
+        "hash",
+      );
+      add(`detail.historico.${i}.criado_em`, h.criado_em, dd(root), "Registrado em", "date");
+      add(
+        `detail.historico.${i}.justificativa`,
+        h.justificativa,
+        root + " > p",
+        null,
+        "synthetic",
+        "Justificativa: ",
+      );
+    }
+  }
+  if (["V116", "V117"].includes(item.surface)) {
+    for (const [i, r] of (wire.analysis.resultados ?? []).entries()) {
+      const root = `section[aria-labelledby="v116-req"] tbody > tr:nth-child(${i + 1})`;
+      add(
+        `analysis.resultados.${i}.requisito.codigo`,
+        r.requisito?.codigo,
+        root + " > td:nth-child(1) > p:nth-of-type(1)",
+        null,
+        "code",
+      );
+      add(
+        `analysis.resultados.${i}.requisito.codigo`,
+        r.requisito?.codigo,
+        root + " > td:nth-child(7) button",
+        null,
+        "code",
+        "Abrir requisito ",
+        "aria-label",
+      );
+      add(
+        `analysis.resultados.${i}.requisito.descricao`,
+        r.requisito?.descricao,
+        root + " > td:nth-child(1) > p:nth-of-type(2)",
+        null,
+        "synthetic",
+      );
+      add(
+        `analysis.resultados.${i}.justificativa`,
+        r.justificativa,
+        root + " > td:nth-child(6) > p:nth-of-type(1)",
+        null,
+        "synthetic",
+      );
+      add(
+        `analysis.resultados.${i}.fundamento`,
+        r.fundamento,
+        root + ` > td:nth-child(6) > p:nth-of-type(${r.justificativa ? 2 : 1})`,
+        null,
+        "synthetic",
+        "Fundamento: ",
+      );
+    }
+    for (const [i, e] of (wire.analysis.execucoes ?? []).entries()) {
+      const root = `section[aria-labelledby="v116-hist"] ul > li:nth-child(${i + 1})`;
+      for (const [field, label, kind] of [
+        ["hash_entrada", "Hash de entrada", "hash"],
+        ["iniciada_em", "Iniciada em", "date"],
+        ["concluida_em", "Concluída em", "date"],
+      ])
+        add(`analysis.execucoes.${i}.` + field, e[field], dd(root), label, kind);
+    }
+  }
+  if (item.surface === "V118")
+    for (const [i, p] of (wire.opinions ?? []).entries()) {
+      const root = `section[aria-labelledby="v118-historico"] ol > li:nth-child(${i + 1})`;
+      for (const [field, label, kind] of [
+        ["hash", "Integridade (SHA-256)", "hash"],
+        ["criado_em", "Criado em", "date"],
+        ["aprovado_em", "Aprovado em", "date"],
+      ])
+        add(`opinions.${i}.` + field, p[field], dd(root), label, kind);
+    }
+  if (item.surface === "V120") {
+    const ap = wire.presentations[0],
+      pkg = wire.packages[0],
+      a = 'section[aria-labelledby="v120-apresentacao"]',
+      p = 'section[aria-labelledby="v120-pacote"]';
+    add("presentations.0.id", ap.id, dd(a), "Identificador oficial", "uuid");
+    add("presentations.0.apresentado_em", ap.apresentado_em, dd(a), "Apresentado em", "date");
+    add("presentations.0.protocolo", ap.protocolo, dd(a), "Protocolo externo", "synthetic");
+    add(
+      "presentations.0.forma_apresentacao",
+      ap.forma_apresentacao,
+      dd(a),
+      "Forma de apresentação",
+      "synthetic",
+    );
+    add("packages.0.hash_pacote", pkg.hash_pacote, dd(p), "Hash criptográfico do pacote", "hash");
+    add("packages.0.congelado_em", pkg.congelado_em, dd(p), "Congelado em", "date");
+    for (const [i, e] of wire.items.entries()) {
+      const root = `section[aria-labelledby="v120-itens"] ul > li:nth-child(${i + 1})`;
+      add(`items.${i}.hash`, e.hash, root + " > p:nth-of-type(2)", null, "hash", "Hash: ");
+      add(
+        `items.${i}.versao_id`,
+        e.versao_id,
+        root + " > p:nth-of-type(3)",
+        null,
+        "uuid",
+        "Versão: ",
+      );
+    }
+  }
+  return out;
+}
+
+// Values never join the global dictionary. The live owner and each original UI field
+// must still agree immediately before each PNG, including its complement.
+async function c8PrivacyContext(page, state, rendered, snapshot, previous) {
+  const current = state?.c8Current;
+  if (
+    state?.scope !== C8_AUDIT_SCOPE ||
+    privacy78Pages.get(page) !== state ||
+    !current ||
+    current.owner !== state ||
+    current.observer !== state.c8Observer ||
+    current.generation !== state.generation ||
+    state.closed ||
+    !state.verified ||
+    page.url() !== HML_ORIGIN + current.item.path ||
+    !validateC8CurrentWire(current.item, current.wire)
+  )
+    fail("C8_CURRENT_OWNER");
+  const descriptors = c8TechnicalFieldContracts(current.item, current.wire);
+  const anchored = await page.evaluate((descriptors) => {
+    const visible = (node) =>
+      node.getClientRects().length > 0 && getComputedStyle(node).visibility !== "hidden";
+    const groups = new Map(),
+      fields = new Set();
+    for (const d of descriptors) {
+      const slot = d.field + "|" + d.selector + "|" + (d.attribute ?? "text");
+      if (fields.has(slot)) return [];
+      fields.add(slot);
+      const nodes = [...document.querySelectorAll(d.selector)].filter((node) => {
+        if (
+          !visible(node) ||
+          (d.attribute ? node.getAttribute(d.attribute) : node.textContent.trim()) !== d.expected
+        )
+          return false;
+        if (d.label === null) return true;
+        const label = node.parentElement.querySelector(":scope > dt")?.textContent;
+        return label === d.label || label?.startsWith(d.label + ": ");
+      });
+      if (nodes.length !== 1) continue;
+      const group = groups.get(d.value) ?? [];
+      if (!group.some((s) => s.node === nodes[0] && s.attribute === d.attribute))
+        group.push({
+          node: nodes[0],
+          attribute: d.attribute,
+          text: d.attribute ? nodes[0].getAttribute(d.attribute) : nodes[0].textContent,
+        });
+      groups.set(d.value, group);
+    }
+    return [...groups].map(([value, nodes]) => ({
+      value,
+      count: nodes.reduce((n, slot) => n + slot.text.split(value).length - 1, 0),
+    }));
+  }, descriptors);
+  if (
+    state.generation !== current.generation ||
+    privacy78Pages.get(page) !== state ||
+    state.closed ||
+    page.url() !== HML_ORIGIN + current.item.path
+  )
+    fail("C8_CURRENT_OWNER");
+  const old = privacy78Contexts.get(previous);
+  const channels = {
+    rendered: { original: rendered, remainder: old?.rendered.remainder ?? rendered },
+    snapshot: { original: snapshot, remainder: old?.snapshot.remainder ?? snapshot },
+  };
+  for (const { value, count } of anchored) {
+    const occurrences = (text) => text.split(value).length - 1;
+    if (!count || occurrences(rendered) !== count || occurrences(snapshot) > count) continue;
+    for (const channel of Object.values(channels))
+      channel.remainder = channel.remainder.split(value).join(" ");
+  }
+  const token = Object.freeze({});
+  privacy78Contexts.set(token, channels);
+  return token;
+}
+
+// Pure relation check. Only the private observer/page owner below can seal live evidence.
+export function validateC8CurrentWire(item, wire) {
+  try {
+    if (
+      !privateCases(C8_AUDIT_SCOPE).some(
+        (c) => caseKey(c) === caseKey(item) && c.path === item.path,
+      )
+    )
+      return false;
+    const b = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+    const recovered = b.competencies.find((c) => item.path.includes(c.id));
+    const id = recovered?.id ?? SYNTHETIC_FIXTURE.competence;
+    const month = recovered?.month ?? "2026-11-01";
+    const owned = (c) =>
+      c?.id === id &&
+      c.id_organizacao === b.organization &&
+      c.id_contrato === b.contract &&
+      c.competencia_referencia === month;
+    if (item.surface === "V111")
+      return (
+        Array.isArray(wire.documents) &&
+        wire.documents.length === 1 &&
+        wire.documents[0].id === SYNTHETIC_FIXTURE.document &&
+        wire.documents[0].id_contrato === b.contract
+      );
+    if (["V116", "V117"].includes(item.surface)) {
+      const a = wire.analysis;
+      // V116 keeps the original November draft, proved empty in the preserved
+      // authenticated baseline. Only the October V117 requires completed execution.
+      if (item.surface === "V116" && !recovered)
+        return (
+          a?.schema_versao === "v116-v1" &&
+          owned(a.competencia) &&
+          a.competencia.situacao === "rascunho" &&
+          a.stale === false &&
+          a.estado_analise === "not_analyzed" &&
+          a.execucao_atual === null &&
+          a.percentual === 0 &&
+          a.blocking_summary?.total === 0 &&
+          a.blocking_summary.liberado === false &&
+          ["resultados", "execucoes", "apontamentos"].every(
+            (k) => Array.isArray(a[k]) && a[k].length === 0,
+          )
+        );
+      if (
+        a?.schema_versao !== "v116-v1" ||
+        !owned(a.competencia) ||
+        a.stale !== false ||
+        a.estado_analise !== "complete" ||
+        a.execucao_atual?.status !== "concluida" ||
+        (recovered && a.execucao_atual.id !== recovered.executionId)
+      )
+        return false;
+      if (item.surface === "V117") {
+        const d = wire.detail;
+        if (
+          d?.schema_versao !== "v117-v1" ||
+          !owned(d.competencia) ||
+          d.requisito?.id !== recovered.requirementId ||
+          d.requisito.codigo !== "AUD-A-TXT-001" ||
+          d.requisito.origem_tipo !== "item_lista" ||
+          d.requisito.origem_id !== b.itemId ||
+          d.execucao_atual?.id !== recovered.executionId
+        )
+          return false;
+      }
+      return true;
+    }
+    const view = item.surface === "V115" ? wire.documents : wire.overview;
+    if (!owned(view?.competencia)) return false;
+    if (item.surface === "V119")
+      return (
+        view.competencia.situacao === recovered.state &&
+        view.allowed_actions?.apresentar === true &&
+        view.blocking_summary?.aprovacao_apresentacao_atual === true
+      );
+    if (item.surface === "V120") {
+      const [ap] = wire.presentations ?? [],
+        [pkg] = wire.packages ?? [],
+        [entry] = wire.items ?? [];
+      const sameOwner = (row) =>
+        row?.id_organizacao === b.organization &&
+        row.id_contrato === b.contract &&
+        row.id_competencia === id;
+      return (
+        view.competencia.situacao === recovered.state &&
+        wire.presentations.length === 1 &&
+        wire.packages.length === 1 &&
+        wire.items.length === 1 &&
+        [ap, pkg, entry].every(sameOwner) &&
+        ap.id === recovered.presentationId &&
+        ap.id_pacote === recovered.packageId &&
+        pkg.id === recovered.packageId &&
+        pkg.hash_pacote === recovered.packageHash &&
+        pkg.status === R18_REGISTRATION_CANDIDATE.packageStatus &&
+        pkg.numero === R18_REGISTRATION_CANDIDATE.packageNumber &&
+        Number.isFinite(Date.parse(pkg.congelado_em)) &&
+        ap.protocolo === R18_REGISTRATION_CANDIDATE.protocol &&
+        ap.forma_apresentacao === R18_REGISTRATION_CANDIDATE.presentationMethod &&
+        entry.ordem === 1 &&
+        typeof entry.entidade_tipo === "string" &&
+        entry.entidade_tipo.length > 0 &&
+        /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(entry.entidade_id) &&
+        (entry.versao_id === null ||
+          /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(entry.versao_id)) &&
+        entry.id_pacote === pkg.id &&
+        /^[a-f0-9]{64}$/.test(entry.hash)
+      );
+    }
+    if (item.surface === "V118")
+      return (
+        Array.isArray(wire.opinions) &&
+        wire.opinions.length <= 25 &&
+        wire.opinions.every(
+          (p) =>
+            p.id_competencia === id &&
+            p.id_organizacao === b.organization &&
+            p.id_contrato === b.contract,
+        )
+      );
+    return ["V114", "V115"].includes(item.surface);
+  } catch {
+    return false;
+  }
+}
+
+async function collectC8CurrentWire(page, item, state) {
+  if (
+    state?.scope !== C8_AUDIT_SCOPE ||
+    !state.verified ||
+    state.closed ||
+    page.url() !== HML_ORIGIN + item.path ||
+    !state.c8Observer
+  )
+    fail("C8_CURRENT_OWNER");
+  const owner = state,
+    generation = state.generation,
+    observer = state.c8Observer;
+  const b = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+  const c = b.competencies.find((c) => item.path.includes(c.id));
+  const id = c?.id ?? SYNTHETIC_FIXTURE.competence;
+  const wire = {};
+  if (item.surface === "V111")
+    wire.documents = await observer.read("documentos_contrato", { id: SYNTHETIC_FIXTURE.document });
+  else if (["V116", "V117"].includes(item.surface)) {
+    wire.analysis = await observer.rpcRead("obter_analise_competencia_v116", {
+      p_id_competencia: id,
+    });
+    if (item.surface === "V117") {
+      wire.detail = await observer.rpcRead("obter_detalhe_requisito_v117", {
+        p_id_competencia: id,
+        p_id_requisito: c.requirementId,
+      });
+    }
+  } else if (item.surface === "V115")
+    wire.documents = await observer.rpcRead("obter_documentos_competencia_v115", {
+      p_id_competencia: id,
+    });
+  else {
+    wire.overview = await observer.rpcRead("obter_visao_geral_competencia", {
+      p_id_competencia: id,
+    });
+    if (item.surface === "V118")
+      wire.opinions = await observer.read("pareceres_internos", { id_competencia: id });
+    if (item.surface === "V120") {
+      wire.presentations = await observer.read("apresentacoes_contratante", {
+        id: c.presentationId,
+      });
+      wire.packages = await observer.read("pacotes_competencia", { id: c.packageId });
+      wire.items = await observer.read("itens_pacote_competencia", { id_pacote: c.packageId });
+    }
+  }
+  await observer.flush();
+  if (
+    privacy78Pages.get(page) !== owner ||
+    state.generation !== generation ||
+    state.closed ||
+    page.url() !== HML_ORIGIN + item.path ||
+    observer.observationFailure() ||
+    !validateC8CurrentWire(item, wire)
+  )
+    fail("C8_CURRENT_BINDING");
+  state.c8Current = { owner, generation, observer, item, wire };
+  return wire;
+}
+
+export function c8DrawerFocusValid() {
+  const openers = document.querySelectorAll('button[aria-label="Abrir requisito AUD-A-TXT-001"]');
+  return openers.length === 1 && document.activeElement === openers[0];
+}
+
+export async function openC8RequirementDrawer(page, item, scope) {
+  if (
+    auditScope(scope) !== C8_AUDIT_SCOPE ||
+    item?.surface !== "V117" ||
+    !privateCases(scope).some((c) => caseKey(c) === caseKey(item) && c.path === item.path) ||
+    page.url() !== HML_ORIGIN + item.path
+  )
+    fail("C8_DRAWER_BINDING");
+  const opener = page.getByRole("button", { name: "Abrir requisito AUD-A-TXT-001", exact: true });
+  if ((await opener.count()) !== 1) fail("C8_DRAWER_BINDING");
+  await opener.click();
+  const dialog = page.getByRole("dialog", { name: "Detalhe do requisito", exact: true });
+  await dialog.waitFor({ state: "visible" });
+  await dialog.evaluate(async (node) =>
+    Promise.all(
+      node
+        .getAnimations()
+        .filter((a) => Number.isFinite(a.effect?.getTiming().iterations))
+        .map((a) => a.finished.catch(() => {})),
+    ),
+  );
+  return async () => {
+    if (page.url() !== HML_ORIGIN + item.path) fail("C8_DRAWER_BINDING");
+    await dialog.getByRole("button", { name: "Fechar", exact: true }).click();
+    await dialog.waitFor({ state: "hidden" });
+    await page.waitForFunction(c8DrawerFocusValid, null, { timeout: 15000 });
+    if (!(await opener.evaluate((node) => document.activeElement === node)))
+      fail("C8_DRAWER_FOCUS");
+    return true;
+  };
 }
 
 async function keyboardProbe(page) {
@@ -6481,7 +7260,10 @@ export function surfaceStateValid(surface, observation) {
     V114: /^Competência\s+\S/,
     V115: /^Documentos da competência$/,
     V116: /^Análise da competência$/,
+    V117: /^Análise da competência$/,
     V118: /^Parecer interno$/,
+    V119: /^Wizard de apresentação$/,
+    V120: /^Apresentação e protocolo$/,
     V121: /^Histórico do contrato$/,
     V122: /^Importação de histórico$/,
     V123: /^Trilha de auditoria$/,
@@ -6499,6 +7281,19 @@ export function surfaceStateValid(surface, observation) {
   if (
     denied.test(observation.mainText ?? "") ||
     (observation.statusTexts ?? []).some((text) => denied.test(text))
+  )
+    return false;
+  const regions = {
+    V117: ["Requisito", "Fonte e versionamento", "Resultado de referência", "Evidências"],
+    V119: ["Revisão de prontidão", "Etapa 2 de 2 — Registrar apresentação"],
+    V120: ["Dados da apresentação", "Pacote imutável", "Itens preservados no pacote"],
+  };
+  if (regions[surface]?.some((name) => !observation.regionNames?.includes(name))) return false;
+  if (
+    surface === "V117" &&
+    (observation.dialogVisible !== true ||
+      observation.dialogNames?.length !== 1 ||
+      observation.dialogNames[0] !== "Detalhe do requisito")
   )
     return false;
   if (
@@ -7262,6 +8057,10 @@ export const SINGLE_REQUEST = Object.freeze({
   listReadinessSecuritySha: "8d43ae8f94b39d81b8125d087a1c9a968e2d8ad7",
   metadataTimeoutGateSha: "326a960cec756d08681b00da99a5332f0a3c6fac",
   metadataTimeoutPlanSha: "1282198bfc72ac4a119856139e6b95d9e14177dc",
+  c8GateSha: "34674fab697cbdecd4dd1d5f5f918df64ce1b286",
+  c8PlanSha: "afe42819e62bbe8e3c25b4a5869f8ba59db124f5",
+  c8ReaderBuildSha: "501237dd48a7159ccd4a7d7407334cdc2245aa24",
+  spentAuditNonces: Object.freeze(["trilha-a-audit-20261108-r1"]),
   r19RecoveryGateSha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
   r19RecoveryPlanSha: "2b6ab4f542c66309fb16d12f9998136641591f25",
   r18ReaderBuildSha: "815dce2a4015e2bb1b5ec23e70633537ab008e62",
@@ -7316,7 +8115,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "trilha-a-audit-20261108-r1",
+    nonce: "trilha-c-audit-20261110-c8-r1",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -7404,8 +8203,10 @@ export function parseSingleRequest(raw, operation, { historical = false } = {}) 
     (parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce &&
       !(
         historical &&
-        parsed.operation === "fixtures" &&
-        SINGLE_REQUEST.spentFixtureNonces.includes(parsed.request_id)
+        ((parsed.operation === "fixtures" &&
+          SINGLE_REQUEST.spentFixtureNonces.includes(parsed.request_id)) ||
+          (parsed.operation === "audit" &&
+            SINGLE_REQUEST.spentAuditNonces.includes(parsed.request_id)))
       )) ||
     !hash40(parsed.approved_parent_sha)
   )
@@ -7525,8 +8326,46 @@ export function singleRequestEventAllowed(env, operation) {
     env.GITHUB_RUN_ATTEMPT === "1"
   );
 }
-export function requireSingleRequestOperation(operation) {
-  if (operation === "audit") fail("AUDIT_BINDING_PENDING");
+export function resolveC8AuditScope(request) {
+  validateC8RecoveryDocument(C8_RECOVERY_DOCUMENT);
+  const code = "AUDIT_BINDING_PENDING";
+  if (!request || typeof request !== "object" || isProxy(request)) fail(code);
+  const proto = Object.getPrototypeOf(request);
+  if (proto !== Object.prototype && proto !== null) fail(code);
+  const names = [
+    "schema_version",
+    "issue",
+    "operation",
+    "request_id",
+    "approved_parent_sha",
+    "frontend_sha",
+    "deployment_id",
+  ];
+  const keys = Reflect.ownKeys(request);
+  if (keys.length !== 7 || keys.some((key) => typeof key !== "string" || !names.includes(key)))
+    fail(code);
+  const descriptors = Object.getOwnPropertyDescriptors(request),
+    copy = {};
+  for (const name of names) {
+    const d = descriptors[name];
+    if (
+      !d ||
+      !Object.hasOwn(d, "value") ||
+      d.enumerable !== true ||
+      !["string", "number"].includes(typeof d.value)
+    )
+      fail(code);
+    copy[name] = d.value;
+  }
+  if (copy.operation !== "audit" || copy.request_id !== C8_AUDIT_SCOPE.nonce) fail(code);
+  parseSingleRequest(JSON.stringify(copy), "audit");
+  return C8_AUDIT_SCOPE;
+}
+export function requireSingleRequestOperation(operation, request = null) {
+  if (operation === "audit") {
+    resolveC8AuditScope(request);
+    return;
+  }
   if (operation !== "fixtures") fail("REQUEST_OPERATION");
 }
 
@@ -7572,6 +8411,14 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.listReadinessBuildSha,
       SINGLE_REQUEST.r14PlanSha,
     );
+  if (request.operation === "audit") {
+    resolveC8AuditScope(request);
+    ancestors.push(
+      SINGLE_REQUEST.c8GateSha,
+      SINGLE_REQUEST.c8PlanSha,
+      SINGLE_REQUEST.c8ReaderBuildSha,
+    );
+  }
   // Automatic discovery proves the real source later, before its separate checkout.
   // The request itself still needs the integrated amendment and all original gates.
   ancestors.push(mode === "AUTO_DISCOVER" ? SINGLE_REQUEST.autoGateSha : request.frontend_sha);
@@ -10117,7 +10964,9 @@ export async function verifySingleRequest({
   read = readFile,
   stat = lstat,
   wait = (ms) => new Promise((r) => setTimeout(r, ms)),
+  recoveryDocumentC8 = C8_RECOVERY_DOCUMENT,
 }) {
+  validateC8RecoveryDocument(recoveryDocumentC8);
   validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT);
   validateR18RegistrationCandidate(R18_REGISTRATION_CANDIDATE);
   singleRequestContext = null;
@@ -10127,6 +10976,7 @@ export async function verifySingleRequest({
   validatedR14ZeroAuth = null;
   const metadataToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
+    if (operation === "audit") fail("AUDIT_BINDING_PENDING");
     if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
     return { selected: true, operation, sha: env.CONTAOS_HARNESS_SHA, manual: true };
   }
@@ -10163,7 +11013,7 @@ export async function verifySingleRequest({
   // environment approval or private work, so the selected subscriber never waits on itself.
   if (request.operation !== operation)
     return { selected: false, operation, sha: env.CONTAOS_HARNESS_SHA };
-  requireSingleRequestOperation(operation);
+  requireSingleRequestOperation(operation, request);
   validateR13RecoveryDocument(R13_RECOVERY_DOCUMENT);
   validateR15RecoveryDocument(R15_RECOVERY_DOCUMENT);
   validateR16RecoveryDocument(R16_RECOVERY_DOCUMENT);
@@ -10285,7 +11135,12 @@ export async function verifySingleRequest({
     get("/actions/workflows/" + expected.id + "/runs?per_page=100&page=" + page),
   );
   validateSingleRequestRuns({ current, runs: finalRuns, requestShas, workflowId: expected.id });
-  singleRequestContext = { operation, sha, runId: env.GITHUB_RUN_ID };
+  singleRequestContext = {
+    operation,
+    sha,
+    runId: env.GITHUB_RUN_ID,
+    scope: operation === "audit" ? resolveC8AuditScope(request) : null,
+  };
   return {
     selected: true,
     operation,
@@ -10298,6 +11153,12 @@ export async function verifySingleRequest({
     parentSha: request.approved_parent_sha,
     requestSha256: digest(raw),
     ...pullProof,
+    ...(operation === "audit"
+      ? {
+          auditScope: "C8",
+          c8RecoverySha256: "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee",
+        }
+      : {}),
     ...(r4ZeroAuth ? { r4ZeroAuth } : {}),
     ...(r7ZeroAuth ? { r7ZeroAuth } : {}),
     ...(r12ZeroAuth ? { r12ZeroAuth } : {}),
@@ -10442,7 +11303,9 @@ export async function loadSingleRequestProof({
   identity = harnessIdentity,
   now = Date.now,
   fresh = false,
+  recoveryDocumentC8 = C8_RECOVERY_DOCUMENT,
 }) {
+  validateC8RecoveryDocument(recoveryDocumentC8);
   validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT);
   validateR18RegistrationCandidate(R18_REGISTRATION_CANDIDATE);
   singleRequestContext = null;
@@ -10462,6 +11325,7 @@ export async function loadSingleRequestProof({
   if (env.GITHUB_EVENT_NAME === "workflow_dispatch") {
     assertRequestMetadataEnvironment(env, { requireToken: false });
     if (env.GITHUB_REF !== "refs/heads/main") fail("REQUEST_EVENT");
+    if (operation === "audit") fail("AUDIT_BINDING_PENDING");
     if (operation === "fixtures") {
       const root = fileURLToPath(new URL("../../", import.meta.url));
       git ||= async (args) =>
@@ -10481,7 +11345,22 @@ export async function loadSingleRequestProof({
     return true;
   }
   assertPrivateRequestEnvironment(env);
-  requireSingleRequestOperation(operation);
+  if (operation === "audit") {
+    const requestPath = join(
+      fileURLToPath(new URL("../../", import.meta.url)),
+      SINGLE_REQUEST.path,
+    );
+    const requestInfo = await stat(requestPath);
+    if (!requestInfo.isFile() || requestInfo.isSymbolicLink() || requestInfo.size > 4096)
+      fail("REQUEST_FILE_MODE");
+    let candidate;
+    try {
+      candidate = parseSingleRequest(await read(requestPath, "utf8"));
+    } catch {
+      fail("AUDIT_BINDING_PENDING");
+    }
+    requireSingleRequestOperation(operation, candidate);
+  } else requireSingleRequestOperation(operation);
   if (
     env.GITHUB_EVENT_NAME !== "workflow_run" ||
     env.GITHUB_REF !== "refs/heads/main" ||
@@ -10534,6 +11413,12 @@ export async function loadSingleRequestProof({
         timeout: 10000,
       })
     ).stdout;
+  if (
+    operation === "audit" &&
+    (proof.auditScope !== "C8" ||
+      proof.c8RecoverySha256 !== "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee")
+  )
+    fail("REQUEST_RUNTIME");
   await verifySingleRequestGit(request, proof.sha, git, raw);
   const event = JSON.parse(await read(env.GITHUB_EVENT_PATH, "utf8")),
     spec = SINGLE_REQUEST[operation];
@@ -10570,6 +11455,11 @@ export async function loadSingleRequestProof({
   validatedR7ZeroAuth = restoredR7;
   if (restoredR12) validatedR12ZeroAuth = restoredR12;
   if (restoredR14) validatedR14ZeroAuth = restoredR14;
-  singleRequestContext = { operation, sha: proof.sha, runId: env.GITHUB_RUN_ID };
+  singleRequestContext = {
+    operation,
+    sha: proof.sha,
+    runId: env.GITHUB_RUN_ID,
+    scope: operation === "audit" ? resolveC8AuditScope(request) : null,
+  };
   return true;
 }

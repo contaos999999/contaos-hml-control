@@ -22,6 +22,2632 @@ function fn(name) {
 const R5_R4_HEAD = "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72";
 const HML = "https://contaos-41-hml.vercel.app";
 const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
+// Historical metadata is initialized before tests can cross a top-level await.
+const R13_R12_RESPONSES = {
+  "/actions/runs/42666600147": {
+    id: 42666600147,
+    name: "ContaOS Frontend Zero-Drift",
+    workflow_id: 406076025,
+    path: ".github/workflows/contaos-frontend-zero-drift.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "push",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T17:38:29Z",
+    updated_at: "2026-11-09T17:40:06Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+  },
+  "/actions/runs/42666600147/attempts/1": {
+    id: 42666600147,
+    name: "ContaOS Frontend Zero-Drift",
+    workflow_id: 406076025,
+    path: ".github/workflows/contaos-frontend-zero-drift.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "push",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T17:38:29Z",
+    updated_at: "2026-11-09T17:40:06Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+  },
+  "/actions/runs/42666600147/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 2,
+    jobs: [
+      {
+        id: 129331797954,
+        run_id: 42666600147,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "ContaOS Frontend Zero-Drift",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:32Z",
+            completed_at: "2026-11-09T17:38:33Z",
+          },
+          {
+            number: 2,
+            name: "Checkout immutable commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:33Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 3,
+            name: "P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 4,
+            name: "P0 V1 — autotestes do inventario e dispensas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 5,
+            name: "P0 V1 — integridade dos 416 critérios, 45 prompts e 37 atomicos",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 6,
+            name: "P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 7,
+            name: "Autoteste do guard (casos permitidos e proibidos)",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:37Z",
+          },
+          {
+            number: 8,
+            name: "Verificar contrato de seguranca do Auto-Lock por PR",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:37Z",
+            completed_at: "2026-11-09T17:38:37Z",
+          },
+          {
+            number: 9,
+            name: "Verificar fronteira frontend/backend e PLAN validado prévio",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:37Z",
+            completed_at: "2026-11-09T17:38:37Z",
+          },
+          {
+            number: 10,
+            name: "Autotestes do snapshot canônico e matriz de telas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:37Z",
+            completed_at: "2026-11-09T17:38:37Z",
+          },
+          {
+            number: 11,
+            name: "Verificar HEAD vivo do repositório normativo antes de BUILD",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:37Z",
+            completed_at: "2026-11-09T17:38:38Z",
+          },
+          {
+            number: 12,
+            name: "GOV-003 — exigir token valido e fonte viva antes do merge",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:38Z",
+            completed_at: "2026-11-09T17:38:38Z",
+          },
+          {
+            number: 13,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:38Z",
+            completed_at: "2026-11-09T17:38:38Z",
+          },
+          {
+            number: 14,
+            name: "Setup Bun",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:38Z",
+            completed_at: "2026-11-09T17:38:48Z",
+          },
+          {
+            number: 15,
+            name: "Install frozen dependencies",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:48Z",
+            completed_at: "2026-11-09T17:38:50Z",
+          },
+          {
+            number: 16,
+            name: "GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:50Z",
+            completed_at: "2026-11-09T17:38:50Z",
+          },
+          {
+            number: 17,
+            name: "Lint e formatacao do saneamento transversal",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:50Z",
+            completed_at: "2026-11-09T17:38:52Z",
+          },
+          {
+            number: 18,
+            name: "Production build — geração canônica TanStack antes dos testes longos",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:52Z",
+            completed_at: "2026-11-09T17:38:57Z",
+          },
+          {
+            number: 19,
+            name: "GOV-020 — bloquear divergência entre routeTree gerado e commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:57Z",
+            completed_at: "2026-11-09T17:38:57Z",
+          },
+          {
+            number: 20,
+            name: "Full regression — Vitest 2 workers",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:57Z",
+            completed_at: "2026-11-09T17:39:48Z",
+          },
+          {
+            number: 21,
+            name: "TypeScript typecheck",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:39:48Z",
+            completed_at: "2026-11-09T17:40:03Z",
+          },
+          {
+            number: 22,
+            name: "Brand-01, PT-BR, secrets and types integrity",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:03Z",
+            completed_at: "2026-11-09T17:40:03Z",
+          },
+          {
+            number: 43,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:03Z",
+            completed_at: "2026-11-09T17:40:03Z",
+          },
+          {
+            number: 44,
+            name: "Post Checkout immutable commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:03Z",
+            completed_at: "2026-11-09T17:40:03Z",
+          },
+          {
+            number: 45,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:03Z",
+            completed_at: "2026-11-09T17:40:03Z",
+          },
+        ],
+      },
+      {
+        id: 129331798384,
+        run_id: 42666600147,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:32Z",
+            completed_at: "2026-11-09T17:38:33Z",
+          },
+          {
+            number: 2,
+            name: "Checkout SHA imutavel, apenas leitura",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:33Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 3,
+            name: "Detectar escopo de auditoria visual",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 4,
+            name: "Setup Bun",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 5,
+            name: "Instalar dependencias congeladas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 6,
+            name: "Cache do Chromium Playwright 1.64.1",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 7,
+            name: "Instalar Playwright isolado, sem atualizar package/lock",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 8,
+            name: "Executar servidor de desenvolvimento isolado do mesmo SHA",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 9,
+            name: "GOV-020 — verificar routeTree após Vite dev e antes do Playwright",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 10,
+            name: "Teste C Playwright — 24 telas, 4 larguras, 2 temas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 11,
+            name: "Evidencia permanente de screenshots e SHA256SUMS",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 12,
+            name: "Confirmar que nenhuma fonte versionada foi editada",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 24,
+            name: "Post Checkout SHA imutavel, apenas leitura",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:35Z",
+          },
+          {
+            number: 25,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:38:35Z",
+            completed_at: "2026-11-09T17:38:36Z",
+          },
+        ],
+      },
+    ],
+  },
+  "/actions/runs/42666864017": {
+    id: 42666864017,
+    name: "ContaOS Trilha A Fixtures",
+    workflow_id: 411426169,
+    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "failure",
+    created_at: "2026-11-09T17:40:10Z",
+    updated_at: "2026-11-09T17:42:21Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+  },
+  "/actions/runs/42666864017/attempts/1": {
+    id: 42666864017,
+    name: "ContaOS Trilha A Fixtures",
+    workflow_id: 411426169,
+    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "failure",
+    created_at: "2026-11-09T17:40:10Z",
+    updated_at: "2026-11-09T17:42:22Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+  },
+  "/actions/runs/42666864017/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 3,
+    jobs: [
+      {
+        id: 129332744911,
+        run_id: 42666864017,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A solicitacao unica sem credenciais",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:14Z",
+            completed_at: "2026-11-09T17:40:15Z",
+          },
+          {
+            number: 2,
+            name: "Bootstrap publico confiavel antes de checkout ou token",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:15Z",
+            completed_at: "2026-11-09T17:40:18Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:18Z",
+            completed_at: "2026-11-09T17:40:21Z",
+          },
+          {
+            number: 4,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:21Z",
+            completed_at: "2026-11-09T17:40:26Z",
+          },
+          {
+            number: 5,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:26Z",
+            completed_at: "2026-11-09T17:40:37Z",
+          },
+          {
+            number: 6,
+            name: "Run bun install --frozen-lockfile",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:37Z",
+            completed_at: "2026-11-09T17:40:39Z",
+          },
+          {
+            number: 7,
+            name: "Provar evento e unicidade somente em metadados Actions",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:39Z",
+            completed_at: "2026-11-09T17:41:12Z",
+          },
+          {
+            number: 13,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:12Z",
+            completed_at: "2026-11-09T17:41:13Z",
+          },
+          {
+            number: 14,
+            name: "Post Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:13Z",
+            completed_at: "2026-11-09T17:41:13Z",
+          },
+          {
+            number: 15,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:13Z",
+            completed_at: "2026-11-09T17:41:13Z",
+          },
+        ],
+      },
+      {
+        id: 129332747763,
+        run_id: 42666864017,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A protocolo e Chromium sem credenciais",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+      {
+        id: 129333370334,
+        run_id: 42666864017,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A preparacao sintetica HML",
+        status: "completed",
+        conclusion: "failure",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:20Z",
+            completed_at: "2026-11-09T17:41:22Z",
+          },
+          {
+            number: 2,
+            name: "Checkout imutavel do executor main",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:22Z",
+            completed_at: "2026-11-09T17:41:24Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:24Z",
+            completed_at: "2026-11-09T17:41:25Z",
+          },
+          {
+            number: 4,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:25Z",
+            completed_at: "2026-11-09T17:41:36Z",
+          },
+          {
+            number: 5,
+            name: "Dependencias congeladas do executor",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:36Z",
+            completed_at: "2026-11-09T17:41:38Z",
+          },
+          {
+            number: 6,
+            name: "Recibo inicial publico para as fases sem credenciais",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:41:38Z",
+            completed_at: "2026-11-09T17:42:11Z",
+          },
+          {
+            number: 7,
+            name: "Reancorar deployment HML sem credenciais, antes do checkout da fonte",
+            status: "completed",
+            conclusion: "failure",
+            started_at: "2026-11-09T17:42:11Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 8,
+            name: "Validar SHA ancestral antes de baixar ou executar a fonte",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 9,
+            name: "Fonte aprovada em checkout separado, sem credenciais persistidas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 10,
+            name: "Dependencias congeladas da fonte aprovada",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 11,
+            name: "Run actions/cache@v4",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 12,
+            name: "Run ./node_modules/.bin/playwright install --with-deps chromium",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 13,
+            name: "Barreira nativa no mesmo HEAD antes de secrets",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 14,
+            name: "Preparacao e SSR sem credenciais privadas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 15,
+            name: "Revalidar main e unicidade dentro da concorrencia antes de secrets",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 16,
+            name: "Somente agora fornecer o par sintetico ao preparador separado",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 17,
+            name: "Verificar hashes gerados, inclusive em resultado parcial",
+            status: "completed",
+            conclusion: "failure",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 18,
+            name: "Evidencia privada imutavel por 90 dias",
+            status: "completed",
+            conclusion: "failure",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 35,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:17Z",
+          },
+          {
+            number: 36,
+            name: "Post Checkout imutavel do executor main",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:42:17Z",
+            completed_at: "2026-11-09T17:42:18Z",
+          },
+          {
+            number: 37,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:42:18Z",
+            completed_at: "2026-11-09T17:42:18Z",
+          },
+        ],
+      },
+    ],
+  },
+  "/actions/runs/42666864220": {
+    id: 42666864220,
+    name: "ContaOS Trilha A Autenticada",
+    workflow_id: 411115674,
+    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T17:40:10Z",
+    updated_at: "2026-11-09T17:40:35Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+  },
+  "/actions/runs/42666864220/attempts/1": {
+    id: 42666864220,
+    name: "ContaOS Trilha A Autenticada",
+    workflow_id: 411115674,
+    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T17:40:10Z",
+    updated_at: "2026-11-09T17:40:36Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+  },
+  "/actions/runs/42666864220/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 3,
+    jobs: [
+      {
+        id: 129332746954,
+        run_id: 42666864220,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A solicitacao unica sem credenciais",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:13Z",
+            completed_at: "2026-11-09T17:40:14Z",
+          },
+          {
+            number: 2,
+            name: "Bootstrap publico confiavel antes de checkout ou token",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:14Z",
+            completed_at: "2026-11-09T17:40:15Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:15Z",
+            completed_at: "2026-11-09T17:40:17Z",
+          },
+          {
+            number: 4,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:17Z",
+            completed_at: "2026-11-09T17:40:17Z",
+          },
+          {
+            number: 5,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:17Z",
+            completed_at: "2026-11-09T17:40:29Z",
+          },
+          {
+            number: 6,
+            name: "Run bun install --frozen-lockfile",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:29Z",
+            completed_at: "2026-11-09T17:40:31Z",
+          },
+          {
+            number: 7,
+            name: "Provar evento e unicidade somente em metadados Actions",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:31Z",
+            completed_at: "2026-11-09T17:40:31Z",
+          },
+          {
+            number: 13,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:31Z",
+            completed_at: "2026-11-09T17:40:31Z",
+          },
+          {
+            number: 14,
+            name: "Post Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:31Z",
+            completed_at: "2026-11-09T17:40:31Z",
+          },
+          {
+            number: 15,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T17:40:31Z",
+            completed_at: "2026-11-09T17:40:31Z",
+          },
+        ],
+      },
+      {
+        id: 129332749745,
+        run_id: 42666864220,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A protocolo e Chromium sem credenciais",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+      {
+        id: 129332966127,
+        run_id: 42666864220,
+        run_attempt: 1,
+        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
+        head_branch: "main",
+        name: "Trilha A auditoria privada HML",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+    ],
+  },
+  "/actions/runs/42666864017/artifacts?per_page=100&page=1": {
+    total_count: 0,
+    artifacts: [],
+  },
+};
+const R15_R14_RESPONSES = {
+  "/actions/runs/42694401246": {
+    id: 42694401246,
+    workflow_id: 406076025,
+    path: ".github/workflows/contaos-frontend-zero-drift.yml",
+    name: "ContaOS Frontend Zero-Drift",
+    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+    head_branch: "main",
+    event: "push",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    created_at: "2026-11-09T20:35:22Z",
+    updated_at: "2026-11-09T20:36:36Z",
+  },
+  "/actions/runs/42694401246/attempts/1": {
+    id: 42694401246,
+    workflow_id: 406076025,
+    path: ".github/workflows/contaos-frontend-zero-drift.yml",
+    name: "ContaOS Frontend Zero-Drift",
+    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+    head_branch: "main",
+    event: "push",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    created_at: "2026-11-09T20:35:22Z",
+    updated_at: "2026-11-09T20:36:36Z",
+  },
+  "/actions/runs/42694401246/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 2,
+    jobs: [
+      {
+        id: 129422257245,
+        run_id: 42694401246,
+        run_attempt: 1,
+        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+        head_branch: "main",
+        name: "ContaOS Frontend Zero-Drift",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:26Z",
+            completed_at: "2026-11-09T20:35:26Z",
+          },
+          {
+            number: 2,
+            name: "Checkout immutable commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:26Z",
+            completed_at: "2026-11-09T20:35:28Z",
+          },
+          {
+            number: 3,
+            name: "P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:28Z",
+            completed_at: "2026-11-09T20:35:29Z",
+          },
+          {
+            number: 4,
+            name: "P0 V1 — autotestes do inventario e dispensas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:29Z",
+            completed_at: "2026-11-09T20:35:29Z",
+          },
+          {
+            number: 5,
+            name: "P0 V1 — integridade dos 416 critérios, 45 prompts e 37 atomicos",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:29Z",
+            completed_at: "2026-11-09T20:35:29Z",
+          },
+          {
+            number: 6,
+            name: "P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:29Z",
+            completed_at: "2026-11-09T20:35:29Z",
+          },
+          {
+            number: 7,
+            name: "Autoteste do guard (casos permitidos e proibidos)",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:29Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 8,
+            name: "Verificar contrato de seguranca do Auto-Lock por PR",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 9,
+            name: "Verificar fronteira frontend/backend e PLAN validado prévio",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 10,
+            name: "Autotestes do snapshot canônico e matriz de telas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 11,
+            name: "Verificar HEAD vivo do repositório normativo antes de BUILD",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:31Z",
+          },
+          {
+            number: 12,
+            name: "GOV-003 — exigir token valido e fonte viva antes do merge",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:35:31Z",
+            completed_at: "2026-11-09T20:35:31Z",
+          },
+          {
+            number: 13,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:31Z",
+            completed_at: "2026-11-09T20:35:34Z",
+          },
+          {
+            number: 14,
+            name: "Setup Bun",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:34Z",
+            completed_at: "2026-11-09T20:35:44Z",
+          },
+          {
+            number: 15,
+            name: "Install frozen dependencies",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:44Z",
+            completed_at: "2026-11-09T20:35:45Z",
+          },
+          {
+            number: 16,
+            name: "GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:45Z",
+            completed_at: "2026-11-09T20:35:46Z",
+          },
+          {
+            number: 17,
+            name: "Lint e formatacao do saneamento transversal",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:46Z",
+            completed_at: "2026-11-09T20:35:47Z",
+          },
+          {
+            number: 18,
+            name: "Production build — geração canônica TanStack antes dos testes longos",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:47Z",
+            completed_at: "2026-11-09T20:35:50Z",
+          },
+          {
+            number: 19,
+            name: "GOV-020 — bloquear divergência entre routeTree gerado e commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:50Z",
+            completed_at: "2026-11-09T20:35:50Z",
+          },
+          {
+            number: 20,
+            name: "Full regression — Vitest 2 workers",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:50Z",
+            completed_at: "2026-11-09T20:36:24Z",
+          },
+          {
+            number: 21,
+            name: "TypeScript typecheck",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:24Z",
+            completed_at: "2026-11-09T20:36:32Z",
+          },
+          {
+            number: 22,
+            name: "Brand-01, PT-BR, secrets and types integrity",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:32Z",
+            completed_at: "2026-11-09T20:36:33Z",
+          },
+          {
+            number: 43,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:33Z",
+            completed_at: "2026-11-09T20:36:33Z",
+          },
+          {
+            number: 44,
+            name: "Post Checkout immutable commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:33Z",
+            completed_at: "2026-11-09T20:36:33Z",
+          },
+          {
+            number: 45,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:33Z",
+            completed_at: "2026-11-09T20:36:33Z",
+          },
+        ],
+      },
+      {
+        id: 129422258076,
+        run_id: 42694401246,
+        run_attempt: 1,
+        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+        head_branch: "main",
+        name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:27Z",
+            completed_at: "2026-11-09T20:35:28Z",
+          },
+          {
+            number: 2,
+            name: "Checkout SHA imutavel, apenas leitura",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:28Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 3,
+            name: "Detectar escopo de auditoria visual",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 4,
+            name: "Setup Bun",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 5,
+            name: "Instalar dependencias congeladas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 6,
+            name: "Cache do Chromium Playwright 1.64.1",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 7,
+            name: "Instalar Playwright isolado, sem atualizar package/lock",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 8,
+            name: "Executar servidor de desenvolvimento isolado do mesmo SHA",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 9,
+            name: "GOV-020 — verificar routeTree após Vite dev e antes do Playwright",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 10,
+            name: "Teste C Playwright — 24 telas, 4 larguras, 2 temas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 11,
+            name: "Evidencia permanente de screenshots e SHA256SUMS",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 12,
+            name: "Confirmar que nenhuma fonte versionada foi editada",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 24,
+            name: "Post Checkout SHA imutavel, apenas leitura",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+          {
+            number: 25,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:35:30Z",
+            completed_at: "2026-11-09T20:35:30Z",
+          },
+        ],
+      },
+    ],
+  },
+  "/actions/runs/42694609672": {
+    id: 42694609672,
+    workflow_id: 411426169,
+    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+    name: "ContaOS Trilha A Fixtures",
+    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "failure",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    created_at: "2026-11-09T20:36:39Z",
+    updated_at: "2026-11-09T20:37:15Z",
+  },
+  "/actions/runs/42694609672/attempts/1": {
+    id: 42694609672,
+    workflow_id: 411426169,
+    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+    name: "ContaOS Trilha A Fixtures",
+    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "failure",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    created_at: "2026-11-09T20:36:39Z",
+    updated_at: "2026-11-09T20:37:15Z",
+  },
+  "/actions/runs/42694609672/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 3,
+    jobs: [
+      {
+        id: 129422980268,
+        run_id: 42694609672,
+        run_attempt: 1,
+        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+        head_branch: "main",
+        name: "Trilha A solicitacao unica sem credenciais",
+        status: "completed",
+        conclusion: "failure",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:42Z",
+            completed_at: "2026-11-09T20:36:43Z",
+          },
+          {
+            number: 2,
+            name: "Bootstrap publico confiavel antes de checkout ou token",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:43Z",
+            completed_at: "2026-11-09T20:36:45Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:45Z",
+            completed_at: "2026-11-09T20:36:46Z",
+          },
+          {
+            number: 4,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:46Z",
+            completed_at: "2026-11-09T20:36:49Z",
+          },
+          {
+            number: 5,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:49Z",
+            completed_at: "2026-11-09T20:37:00Z",
+          },
+          {
+            number: 6,
+            name: "Run bun install --frozen-lockfile",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:37:00Z",
+            completed_at: "2026-11-09T20:37:01Z",
+          },
+          {
+            number: 7,
+            name: "Provar evento e unicidade somente em metadados Actions",
+            status: "completed",
+            conclusion: "failure",
+            started_at: "2026-11-09T20:37:01Z",
+            completed_at: "2026-11-09T20:37:12Z",
+          },
+          {
+            number: 13,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T20:37:12Z",
+            completed_at: "2026-11-09T20:37:12Z",
+          },
+          {
+            number: 14,
+            name: "Post Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:37:12Z",
+            completed_at: "2026-11-09T20:37:13Z",
+          },
+          {
+            number: 15,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:37:13Z",
+            completed_at: "2026-11-09T20:37:13Z",
+          },
+        ],
+      },
+      {
+        id: 129422982805,
+        run_id: 42694609672,
+        run_attempt: 1,
+        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+        head_branch: "main",
+        name: "Trilha A protocolo e Chromium sem credenciais",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+      {
+        id: 129423314958,
+        run_id: 42694609672,
+        run_attempt: 1,
+        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+        head_branch: "main",
+        name: "Trilha A preparacao sintetica HML",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+    ],
+  },
+  "/actions/runs/42694609740": {
+    id: 42694609740,
+    workflow_id: 411115674,
+    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+    name: "ContaOS Trilha A Autenticada",
+    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    created_at: "2026-11-09T20:36:39Z",
+    updated_at: "2026-11-09T20:37:09Z",
+  },
+  "/actions/runs/42694609740/attempts/1": {
+    id: 42694609740,
+    workflow_id: 411115674,
+    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+    name: "ContaOS Trilha A Autenticada",
+    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+      private: false,
+      owner: {
+        id: 352205055,
+        login: "contaos999999",
+      },
+    },
+    created_at: "2026-11-09T20:36:39Z",
+    updated_at: "2026-11-09T20:37:09Z",
+  },
+  "/actions/runs/42694609740/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 3,
+    jobs: [
+      {
+        id: 129422980473,
+        run_id: 42694609740,
+        run_attempt: 1,
+        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+        head_branch: "main",
+        name: "Trilha A solicitacao unica sem credenciais",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:42Z",
+            completed_at: "2026-11-09T20:36:44Z",
+          },
+          {
+            number: 2,
+            name: "Bootstrap publico confiavel antes de checkout ou token",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:44Z",
+            completed_at: "2026-11-09T20:36:45Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:45Z",
+            completed_at: "2026-11-09T20:36:48Z",
+          },
+          {
+            number: 4,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:48Z",
+            completed_at: "2026-11-09T20:36:51Z",
+          },
+          {
+            number: 5,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:36:51Z",
+            completed_at: "2026-11-09T20:37:03Z",
+          },
+          {
+            number: 6,
+            name: "Run bun install --frozen-lockfile",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:37:03Z",
+            completed_at: "2026-11-09T20:37:05Z",
+          },
+          {
+            number: 7,
+            name: "Provar evento e unicidade somente em metadados Actions",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:37:05Z",
+            completed_at: "2026-11-09T20:37:05Z",
+          },
+          {
+            number: 13,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:37:05Z",
+            completed_at: "2026-11-09T20:37:05Z",
+          },
+          {
+            number: 14,
+            name: "Post Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:37:05Z",
+            completed_at: "2026-11-09T20:37:06Z",
+          },
+          {
+            number: 15,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T20:37:06Z",
+            completed_at: "2026-11-09T20:37:06Z",
+          },
+        ],
+      },
+      {
+        id: 129422983606,
+        run_id: 42694609740,
+        run_attempt: 1,
+        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+        head_branch: "main",
+        name: "Trilha A protocolo e Chromium sem credenciais",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+      {
+        id: 129423257559,
+        run_id: 42694609740,
+        run_attempt: 1,
+        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
+        head_branch: "main",
+        name: "Trilha A auditoria privada HML",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+    ],
+  },
+  "/actions/runs/42694609672/artifacts?per_page=100&page=1": {
+    total_count: 0,
+    artifacts: [],
+  },
+};
+const R8_R7_RESPONSES = {
+  "/actions/runs/42601246471": {
+    id: 42601246471,
+    name: "ContaOS Frontend Zero-Drift",
+    workflow_id: 406076025,
+    path: ".github/workflows/contaos-frontend-zero-drift.yml",
+    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+    head_branch: "main",
+    event: "push",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T10:29:34Z",
+    updated_at: "2026-11-09T10:30:39Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42601246471/attempts/1": {
+    id: 42601246471,
+    name: "ContaOS Frontend Zero-Drift",
+    workflow_id: 406076025,
+    path: ".github/workflows/contaos-frontend-zero-drift.yml",
+    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+    head_branch: "main",
+    event: "push",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T10:29:34Z",
+    updated_at: "2026-11-09T10:30:40Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42601246471/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 2,
+    jobs: [
+      {
+        id: 129105989688,
+        run_id: 42601246471,
+        run_attempt: 1,
+        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+        head_branch: "main",
+        name: "ContaOS Frontend Zero-Drift",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:36Z",
+            completed_at: "2026-11-09T10:29:37Z",
+          },
+          {
+            number: 2,
+            name: "Checkout immutable commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:37Z",
+            completed_at: "2026-11-09T10:29:38Z",
+          },
+          {
+            number: 3,
+            name: "P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:38Z",
+            completed_at: "2026-11-09T10:29:39Z",
+          },
+          {
+            number: 4,
+            name: "P0 V1 — autotestes do inventario e dispensas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:39Z",
+            completed_at: "2026-11-09T10:29:39Z",
+          },
+          {
+            number: 5,
+            name: "P0 V1 — integridade dos 416 critérios, 45 prompts e 37 atomicos",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:39Z",
+            completed_at: "2026-11-09T10:29:39Z",
+          },
+          {
+            number: 6,
+            name: "P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:39Z",
+            completed_at: "2026-11-09T10:29:39Z",
+          },
+          {
+            number: 7,
+            name: "Autoteste do guard (casos permitidos e proibidos)",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:39Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 8,
+            name: "Verificar contrato de seguranca do Auto-Lock por PR",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 9,
+            name: "Verificar fronteira frontend/backend e PLAN validado prévio",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 10,
+            name: "Autotestes do snapshot canônico e matriz de telas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 11,
+            name: "Verificar HEAD vivo do repositório normativo antes de BUILD",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:41Z",
+          },
+          {
+            number: 12,
+            name: "GOV-003 — exigir token valido e fonte viva antes do merge",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:29:41Z",
+            completed_at: "2026-11-09T10:29:41Z",
+          },
+          {
+            number: 13,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:41Z",
+            completed_at: "2026-11-09T10:29:42Z",
+          },
+          {
+            number: 14,
+            name: "Setup Bun",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:42Z",
+            completed_at: "2026-11-09T10:29:52Z",
+          },
+          {
+            number: 15,
+            name: "Install frozen dependencies",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:52Z",
+            completed_at: "2026-11-09T10:29:54Z",
+          },
+          {
+            number: 16,
+            name: "GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:54Z",
+            completed_at: "2026-11-09T10:29:54Z",
+          },
+          {
+            number: 17,
+            name: "Lint e formatacao do saneamento transversal",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:54Z",
+            completed_at: "2026-11-09T10:29:55Z",
+          },
+          {
+            number: 18,
+            name: "Production build — geração canônica TanStack antes dos testes longos",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:55Z",
+            completed_at: "2026-11-09T10:29:58Z",
+          },
+          {
+            number: 19,
+            name: "GOV-020 — bloquear divergência entre routeTree gerado e commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:58Z",
+            completed_at: "2026-11-09T10:29:58Z",
+          },
+          {
+            number: 20,
+            name: "Full regression — Vitest 2 workers",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:58Z",
+            completed_at: "2026-11-09T10:30:28Z",
+          },
+          {
+            number: 21,
+            name: "TypeScript typecheck",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:28Z",
+            completed_at: "2026-11-09T10:30:36Z",
+          },
+          {
+            number: 22,
+            name: "Brand-01, PT-BR, secrets and types integrity",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:36Z",
+            completed_at: "2026-11-09T10:30:36Z",
+          },
+          {
+            number: 43,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:36Z",
+            completed_at: "2026-11-09T10:30:36Z",
+          },
+          {
+            number: 44,
+            name: "Post Checkout immutable commit",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:36Z",
+            completed_at: "2026-11-09T10:30:36Z",
+          },
+          {
+            number: 45,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:36Z",
+            completed_at: "2026-11-09T10:30:36Z",
+          },
+        ],
+      },
+      {
+        id: 129105990079,
+        run_id: 42601246471,
+        run_attempt: 1,
+        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+        head_branch: "main",
+        name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:37Z",
+            completed_at: "2026-11-09T10:29:38Z",
+          },
+          {
+            number: 2,
+            name: "Checkout SHA imutavel, apenas leitura",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:38Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 3,
+            name: "Detectar escopo de auditoria visual",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 4,
+            name: "Setup Bun",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 5,
+            name: "Instalar dependencias congeladas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 6,
+            name: "Cache do Chromium Playwright 1.64.1",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 7,
+            name: "Instalar Playwright isolado, sem atualizar package/lock",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 8,
+            name: "Executar servidor de desenvolvimento isolado do mesmo SHA",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 9,
+            name: "GOV-020 — verificar routeTree após Vite dev e antes do Playwright",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 10,
+            name: "Teste C Playwright — 24 telas, 4 larguras, 2 temas",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 11,
+            name: "Evidencia permanente de screenshots e SHA256SUMS",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 12,
+            name: "Confirmar que nenhuma fonte versionada foi editada",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 24,
+            name: "Post Checkout SHA imutavel, apenas leitura",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+          {
+            number: 25,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:29:40Z",
+            completed_at: "2026-11-09T10:29:40Z",
+          },
+        ],
+      },
+    ],
+  },
+  "/actions/runs/42601383933": {
+    id: 42601383933,
+    name: "ContaOS Trilha A Fixtures",
+    workflow_id: 411426169,
+    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "failure",
+    created_at: "2026-11-09T10:30:41Z",
+    updated_at: "2026-11-09T10:33:58Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42601383933/attempts/1": {
+    id: 42601383933,
+    name: "ContaOS Trilha A Fixtures",
+    workflow_id: 411426169,
+    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
+    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "failure",
+    created_at: "2026-11-09T10:30:41Z",
+    updated_at: "2026-11-09T10:33:58Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42601383933/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 3,
+    jobs: [
+      {
+        id: 129106437562,
+        run_id: 42601383933,
+        run_attempt: 1,
+        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+        head_branch: "main",
+        name: "Trilha A solicitacao unica sem credenciais",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:44Z",
+            completed_at: "2026-11-09T10:30:45Z",
+          },
+          {
+            number: 2,
+            name: "Bootstrap publico confiavel antes de checkout ou token",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:45Z",
+            completed_at: "2026-11-09T10:30:46Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:46Z",
+            completed_at: "2026-11-09T10:30:48Z",
+          },
+          {
+            number: 4,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:48Z",
+            completed_at: "2026-11-09T10:30:51Z",
+          },
+          {
+            number: 5,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:51Z",
+            completed_at: "2026-11-09T10:31:01Z",
+          },
+          {
+            number: 6,
+            name: "Run bun install --frozen-lockfile",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:01Z",
+            completed_at: "2026-11-09T10:31:02Z",
+          },
+          {
+            number: 7,
+            name: "Provar evento e unicidade somente em metadados Actions",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:02Z",
+            completed_at: "2026-11-09T10:31:22Z",
+          },
+          {
+            number: 13,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:22Z",
+            completed_at: "2026-11-09T10:31:22Z",
+          },
+          {
+            number: 14,
+            name: "Post Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:22Z",
+            completed_at: "2026-11-09T10:31:22Z",
+          },
+          {
+            number: 15,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:22Z",
+            completed_at: "2026-11-09T10:31:22Z",
+          },
+        ],
+      },
+      {
+        id: 129106439491,
+        run_id: 42601383933,
+        run_attempt: 1,
+        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+        head_branch: "main",
+        name: "Trilha A protocolo e Chromium sem credenciais",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+      {
+        id: 129106715983,
+        run_id: 42601383933,
+        run_attempt: 1,
+        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+        head_branch: "main",
+        name: "Trilha A preparacao sintetica HML",
+        status: "completed",
+        conclusion: "failure",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:28Z",
+            completed_at: "2026-11-09T10:31:29Z",
+          },
+          {
+            number: 2,
+            name: "Checkout imutavel do executor main",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:29Z",
+            completed_at: "2026-11-09T10:31:31Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:31Z",
+            completed_at: "2026-11-09T10:31:34Z",
+          },
+          {
+            number: 4,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:34Z",
+            completed_at: "2026-11-09T10:31:46Z",
+          },
+          {
+            number: 5,
+            name: "Dependencias congeladas do executor",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:46Z",
+            completed_at: "2026-11-09T10:31:48Z",
+          },
+          {
+            number: 6,
+            name: "Recibo inicial publico para as fases sem credenciais",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:48Z",
+            completed_at: "2026-11-09T10:32:05Z",
+          },
+          {
+            number: 7,
+            name: "Reancorar deployment HML sem credenciais, antes do checkout da fonte",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:32:05Z",
+            completed_at: "2026-11-09T10:32:10Z",
+          },
+          {
+            number: 8,
+            name: "Validar SHA ancestral antes de baixar ou executar a fonte",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:32:10Z",
+            completed_at: "2026-11-09T10:32:10Z",
+          },
+          {
+            number: 9,
+            name: "Fonte aprovada em checkout separado, sem credenciais persistidas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:32:10Z",
+            completed_at: "2026-11-09T10:32:12Z",
+          },
+          {
+            number: 10,
+            name: "Dependencias congeladas da fonte aprovada",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:32:12Z",
+            completed_at: "2026-11-09T10:32:12Z",
+          },
+          {
+            number: 11,
+            name: "Run actions/cache@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:32:12Z",
+            completed_at: "2026-11-09T10:32:12Z",
+          },
+          {
+            number: 12,
+            name: "Run ./node_modules/.bin/playwright install --with-deps chromium",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:32:12Z",
+            completed_at: "2026-11-09T10:32:43Z",
+          },
+          {
+            number: 13,
+            name: "Barreira nativa no mesmo HEAD antes de secrets",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:32:43Z",
+            completed_at: "2026-11-09T10:33:27Z",
+          },
+          {
+            number: 14,
+            name: "Preparacao e SSR sem credenciais privadas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:33:27Z",
+            completed_at: "2026-11-09T10:33:36Z",
+          },
+          {
+            number: 15,
+            name: "Revalidar main e unicidade dentro da concorrencia antes de secrets",
+            status: "completed",
+            conclusion: "failure",
+            started_at: "2026-11-09T10:33:36Z",
+            completed_at: "2026-11-09T10:33:53Z",
+          },
+          {
+            number: 16,
+            name: "Somente agora fornecer o par sintetico ao preparador separado",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:33:53Z",
+            completed_at: "2026-11-09T10:33:53Z",
+          },
+          {
+            number: 17,
+            name: "Verificar hashes gerados, inclusive em resultado parcial",
+            status: "completed",
+            conclusion: "failure",
+            started_at: "2026-11-09T10:33:53Z",
+            completed_at: "2026-11-09T10:33:53Z",
+          },
+          {
+            number: 18,
+            name: "Evidencia privada imutavel por 90 dias",
+            status: "completed",
+            conclusion: "failure",
+            started_at: "2026-11-09T10:33:53Z",
+            completed_at: "2026-11-09T10:33:53Z",
+          },
+          {
+            number: 33,
+            name: "Post Run actions/cache@v4",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:33:53Z",
+            completed_at: "2026-11-09T10:33:53Z",
+          },
+          {
+            number: 34,
+            name: "Post Fonte aprovada em checkout separado, sem credenciais persistidas",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:33:53Z",
+            completed_at: "2026-11-09T10:33:54Z",
+          },
+          {
+            number: 35,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "skipped",
+            started_at: "2026-11-09T10:33:54Z",
+            completed_at: "2026-11-09T10:33:54Z",
+          },
+          {
+            number: 36,
+            name: "Post Checkout imutavel do executor main",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:33:54Z",
+            completed_at: "2026-11-09T10:33:54Z",
+          },
+          {
+            number: 37,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:33:54Z",
+            completed_at: "2026-11-09T10:33:54Z",
+          },
+        ],
+      },
+    ],
+  },
+  "/actions/runs/42601384052": {
+    id: 42601384052,
+    name: "ContaOS Trilha A Autenticada",
+    workflow_id: 411115674,
+    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T10:30:41Z",
+    updated_at: "2026-11-09T10:31:05Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42601384052/attempts/1": {
+    id: 42601384052,
+    name: "ContaOS Trilha A Autenticada",
+    workflow_id: 411115674,
+    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
+    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+    head_branch: "main",
+    event: "workflow_run",
+    run_attempt: 1,
+    status: "completed",
+    conclusion: "success",
+    created_at: "2026-11-09T10:30:42Z",
+    updated_at: "2026-11-09T10:31:05Z",
+    repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+    head_repository: {
+      id: 1442722734,
+      full_name: "contaos999999/contaos-hml-control",
+    },
+  },
+  "/actions/runs/42601384052/attempts/1/jobs?per_page=100&page=1": {
+    total_count: 3,
+    jobs: [
+      {
+        id: 129106437990,
+        run_id: 42601384052,
+        run_attempt: 1,
+        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+        head_branch: "main",
+        name: "Trilha A solicitacao unica sem credenciais",
+        status: "completed",
+        conclusion: "success",
+        steps: [
+          {
+            number: 1,
+            name: "Set up job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:44Z",
+            completed_at: "2026-11-09T10:30:45Z",
+          },
+          {
+            number: 2,
+            name: "Bootstrap publico confiavel antes de checkout ou token",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:45Z",
+            completed_at: "2026-11-09T10:30:47Z",
+          },
+          {
+            number: 3,
+            name: "Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:47Z",
+            completed_at: "2026-11-09T10:30:49Z",
+          },
+          {
+            number: 4,
+            name: "Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:49Z",
+            completed_at: "2026-11-09T10:30:50Z",
+          },
+          {
+            number: 5,
+            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:30:50Z",
+            completed_at: "2026-11-09T10:31:01Z",
+          },
+          {
+            number: 6,
+            name: "Run bun install --frozen-lockfile",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:01Z",
+            completed_at: "2026-11-09T10:31:02Z",
+          },
+          {
+            number: 7,
+            name: "Provar evento e unicidade somente em metadados Actions",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:02Z",
+            completed_at: "2026-11-09T10:31:03Z",
+          },
+          {
+            number: 13,
+            name: "Post Run actions/setup-node@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:03Z",
+            completed_at: "2026-11-09T10:31:03Z",
+          },
+          {
+            number: 14,
+            name: "Post Run actions/checkout@v4",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:03Z",
+            completed_at: "2026-11-09T10:31:03Z",
+          },
+          {
+            number: 15,
+            name: "Complete job",
+            status: "completed",
+            conclusion: "success",
+            started_at: "2026-11-09T10:31:03Z",
+            completed_at: "2026-11-09T10:31:03Z",
+          },
+        ],
+      },
+      {
+        id: 129106440087,
+        run_id: 42601384052,
+        run_attempt: 1,
+        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+        head_branch: "main",
+        name: "Trilha A protocolo e Chromium sem credenciais",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+      {
+        id: 129106589401,
+        run_id: 42601384052,
+        run_attempt: 1,
+        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
+        head_branch: "main",
+        name: "Trilha A auditoria privada HML",
+        status: "completed",
+        conclusion: "skipped",
+        steps: [],
+      },
+    ],
+  },
+  "/actions/runs/42601383933/artifacts?per_page=100&page=1": {
+    total_count: 0,
+    artifacts: [],
+  },
+};
 test("R20 accepts only the new readonly recovery nonce", () => {
   const raw =
     JSON.stringify(
@@ -395,9 +3021,9 @@ test("diagnóstico de privacidade contém apenas razões e contadores limitados"
 test("retomada preserva18 casos desktop e exige recaptura dos6 móveis", () => {
   const preserved = fn("preservedPrivateCase");
   const rows = fn("privateCases")();
-  assert.equal(rows.filter(preserved).length, 18);
+  assert.equal(rows.filter((item) => preserved(item)).length, 18);
   assert.equal(rows.filter((r) => !preserved(r)).length, 190);
-  for (const row of rows.filter(preserved)) {
+  for (const row of rows.filter((item) => preserved(item))) {
     const result = preserved(row);
     assert.equal(result.status, "PRESERVADO_BASELINE");
     assert.equal(result.baselineRun, 42496235106);
@@ -4291,6 +6917,7 @@ test(
         );
       }
       await privacyWireChromium(browser, words);
+      await c8NativeSourceProbe(browser, v102Css);
     } finally {
       release?.();
       await browser?.close();
@@ -8667,11 +11294,13 @@ test("R8 is sole executable fixture nonce and all seven original requests remain
     source.indexOf("function requireSingleRequestOperation("),
     source.indexOf("export async function verifySingleRequestGit("),
   );
-  const guard = new Function("fail", guardSource + ";return requireSingleRequestOperation;")(
-    (code) => {
-      throw Object.assign(new Error(code), { code });
-    },
-  );
+  const guard = new Function(
+    "fail",
+    "resolveC8AuditScope",
+    guardSource + ";return requireSingleRequestOperation;",
+  )((code) => {
+    throw Object.assign(new Error(code), { code });
+  }, sut.resolveC8AuditScope);
   assert.throws(() => guard("audit"), { code: "AUDIT_BINDING_PENDING" });
 });
 
@@ -8828,908 +11457,6 @@ test("R8 parsed workflows isolate ephemeral read token and exact read scopes wit
   }
 });
 
-const R8_R7_RESPONSES = {
-  "/actions/runs/42601246471": {
-    id: 42601246471,
-    name: "ContaOS Frontend Zero-Drift",
-    workflow_id: 406076025,
-    path: ".github/workflows/contaos-frontend-zero-drift.yml",
-    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-    head_branch: "main",
-    event: "push",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    created_at: "2026-11-09T10:29:34Z",
-    updated_at: "2026-11-09T10:30:39Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-  },
-  "/actions/runs/42601246471/attempts/1": {
-    id: 42601246471,
-    name: "ContaOS Frontend Zero-Drift",
-    workflow_id: 406076025,
-    path: ".github/workflows/contaos-frontend-zero-drift.yml",
-    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-    head_branch: "main",
-    event: "push",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    created_at: "2026-11-09T10:29:34Z",
-    updated_at: "2026-11-09T10:30:40Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-  },
-  "/actions/runs/42601246471/attempts/1/jobs?per_page=100&page=1": {
-    total_count: 2,
-    jobs: [
-      {
-        id: 129105989688,
-        run_id: 42601246471,
-        run_attempt: 1,
-        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-        head_branch: "main",
-        name: "ContaOS Frontend Zero-Drift",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:36Z",
-            completed_at: "2026-11-09T10:29:37Z",
-          },
-          {
-            number: 2,
-            name: "Checkout immutable commit",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:37Z",
-            completed_at: "2026-11-09T10:29:38Z",
-          },
-          {
-            number: 3,
-            name: "P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:38Z",
-            completed_at: "2026-11-09T10:29:39Z",
-          },
-          {
-            number: 4,
-            name: "P0 V1 — autotestes do inventario e dispensas",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:39Z",
-            completed_at: "2026-11-09T10:29:39Z",
-          },
-          {
-            number: 5,
-            name: "P0 V1 — integridade dos 416 critérios, 45 prompts e 37 atomicos",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:39Z",
-            completed_at: "2026-11-09T10:29:39Z",
-          },
-          {
-            number: 6,
-            name: "P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:39Z",
-            completed_at: "2026-11-09T10:29:39Z",
-          },
-          {
-            number: 7,
-            name: "Autoteste do guard (casos permitidos e proibidos)",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:39Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 8,
-            name: "Verificar contrato de seguranca do Auto-Lock por PR",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 9,
-            name: "Verificar fronteira frontend/backend e PLAN validado prévio",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 10,
-            name: "Autotestes do snapshot canônico e matriz de telas",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 11,
-            name: "Verificar HEAD vivo do repositório normativo antes de BUILD",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:41Z",
-          },
-          {
-            number: 12,
-            name: "GOV-003 — exigir token valido e fonte viva antes do merge",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:29:41Z",
-            completed_at: "2026-11-09T10:29:41Z",
-          },
-          {
-            number: 13,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:41Z",
-            completed_at: "2026-11-09T10:29:42Z",
-          },
-          {
-            number: 14,
-            name: "Setup Bun",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:42Z",
-            completed_at: "2026-11-09T10:29:52Z",
-          },
-          {
-            number: 15,
-            name: "Install frozen dependencies",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:52Z",
-            completed_at: "2026-11-09T10:29:54Z",
-          },
-          {
-            number: 16,
-            name: "GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:54Z",
-            completed_at: "2026-11-09T10:29:54Z",
-          },
-          {
-            number: 17,
-            name: "Lint e formatacao do saneamento transversal",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:54Z",
-            completed_at: "2026-11-09T10:29:55Z",
-          },
-          {
-            number: 18,
-            name: "Production build — geração canônica TanStack antes dos testes longos",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:55Z",
-            completed_at: "2026-11-09T10:29:58Z",
-          },
-          {
-            number: 19,
-            name: "GOV-020 — bloquear divergência entre routeTree gerado e commit",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:58Z",
-            completed_at: "2026-11-09T10:29:58Z",
-          },
-          {
-            number: 20,
-            name: "Full regression — Vitest 2 workers",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:58Z",
-            completed_at: "2026-11-09T10:30:28Z",
-          },
-          {
-            number: 21,
-            name: "TypeScript typecheck",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:28Z",
-            completed_at: "2026-11-09T10:30:36Z",
-          },
-          {
-            number: 22,
-            name: "Brand-01, PT-BR, secrets and types integrity",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:36Z",
-            completed_at: "2026-11-09T10:30:36Z",
-          },
-          {
-            number: 43,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:36Z",
-            completed_at: "2026-11-09T10:30:36Z",
-          },
-          {
-            number: 44,
-            name: "Post Checkout immutable commit",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:36Z",
-            completed_at: "2026-11-09T10:30:36Z",
-          },
-          {
-            number: 45,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:36Z",
-            completed_at: "2026-11-09T10:30:36Z",
-          },
-        ],
-      },
-      {
-        id: 129105990079,
-        run_id: 42601246471,
-        run_attempt: 1,
-        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-        head_branch: "main",
-        name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:37Z",
-            completed_at: "2026-11-09T10:29:38Z",
-          },
-          {
-            number: 2,
-            name: "Checkout SHA imutavel, apenas leitura",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:38Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 3,
-            name: "Detectar escopo de auditoria visual",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 4,
-            name: "Setup Bun",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 5,
-            name: "Instalar dependencias congeladas",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 6,
-            name: "Cache do Chromium Playwright 1.64.1",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 7,
-            name: "Instalar Playwright isolado, sem atualizar package/lock",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 8,
-            name: "Executar servidor de desenvolvimento isolado do mesmo SHA",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 9,
-            name: "GOV-020 — verificar routeTree após Vite dev e antes do Playwright",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 10,
-            name: "Teste C Playwright — 24 telas, 4 larguras, 2 temas",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 11,
-            name: "Evidencia permanente de screenshots e SHA256SUMS",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 12,
-            name: "Confirmar que nenhuma fonte versionada foi editada",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 24,
-            name: "Post Checkout SHA imutavel, apenas leitura",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-          {
-            number: 25,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:29:40Z",
-            completed_at: "2026-11-09T10:29:40Z",
-          },
-        ],
-      },
-    ],
-  },
-  "/actions/runs/42601383933": {
-    id: 42601383933,
-    name: "ContaOS Trilha A Fixtures",
-    workflow_id: 411426169,
-    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "failure",
-    created_at: "2026-11-09T10:30:41Z",
-    updated_at: "2026-11-09T10:33:58Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-  },
-  "/actions/runs/42601383933/attempts/1": {
-    id: 42601383933,
-    name: "ContaOS Trilha A Fixtures",
-    workflow_id: 411426169,
-    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "failure",
-    created_at: "2026-11-09T10:30:41Z",
-    updated_at: "2026-11-09T10:33:58Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-  },
-  "/actions/runs/42601383933/attempts/1/jobs?per_page=100&page=1": {
-    total_count: 3,
-    jobs: [
-      {
-        id: 129106437562,
-        run_id: 42601383933,
-        run_attempt: 1,
-        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-        head_branch: "main",
-        name: "Trilha A solicitacao unica sem credenciais",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:44Z",
-            completed_at: "2026-11-09T10:30:45Z",
-          },
-          {
-            number: 2,
-            name: "Bootstrap publico confiavel antes de checkout ou token",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:45Z",
-            completed_at: "2026-11-09T10:30:46Z",
-          },
-          {
-            number: 3,
-            name: "Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:46Z",
-            completed_at: "2026-11-09T10:30:48Z",
-          },
-          {
-            number: 4,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:48Z",
-            completed_at: "2026-11-09T10:30:51Z",
-          },
-          {
-            number: 5,
-            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:51Z",
-            completed_at: "2026-11-09T10:31:01Z",
-          },
-          {
-            number: 6,
-            name: "Run bun install --frozen-lockfile",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:01Z",
-            completed_at: "2026-11-09T10:31:02Z",
-          },
-          {
-            number: 7,
-            name: "Provar evento e unicidade somente em metadados Actions",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:02Z",
-            completed_at: "2026-11-09T10:31:22Z",
-          },
-          {
-            number: 13,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:22Z",
-            completed_at: "2026-11-09T10:31:22Z",
-          },
-          {
-            number: 14,
-            name: "Post Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:22Z",
-            completed_at: "2026-11-09T10:31:22Z",
-          },
-          {
-            number: 15,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:22Z",
-            completed_at: "2026-11-09T10:31:22Z",
-          },
-        ],
-      },
-      {
-        id: 129106439491,
-        run_id: 42601383933,
-        run_attempt: 1,
-        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-        head_branch: "main",
-        name: "Trilha A protocolo e Chromium sem credenciais",
-        status: "completed",
-        conclusion: "skipped",
-        steps: [],
-      },
-      {
-        id: 129106715983,
-        run_id: 42601383933,
-        run_attempt: 1,
-        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-        head_branch: "main",
-        name: "Trilha A preparacao sintetica HML",
-        status: "completed",
-        conclusion: "failure",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:28Z",
-            completed_at: "2026-11-09T10:31:29Z",
-          },
-          {
-            number: 2,
-            name: "Checkout imutavel do executor main",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:29Z",
-            completed_at: "2026-11-09T10:31:31Z",
-          },
-          {
-            number: 3,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:31Z",
-            completed_at: "2026-11-09T10:31:34Z",
-          },
-          {
-            number: 4,
-            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:34Z",
-            completed_at: "2026-11-09T10:31:46Z",
-          },
-          {
-            number: 5,
-            name: "Dependencias congeladas do executor",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:46Z",
-            completed_at: "2026-11-09T10:31:48Z",
-          },
-          {
-            number: 6,
-            name: "Recibo inicial publico para as fases sem credenciais",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:48Z",
-            completed_at: "2026-11-09T10:32:05Z",
-          },
-          {
-            number: 7,
-            name: "Reancorar deployment HML sem credenciais, antes do checkout da fonte",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:32:05Z",
-            completed_at: "2026-11-09T10:32:10Z",
-          },
-          {
-            number: 8,
-            name: "Validar SHA ancestral antes de baixar ou executar a fonte",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:32:10Z",
-            completed_at: "2026-11-09T10:32:10Z",
-          },
-          {
-            number: 9,
-            name: "Fonte aprovada em checkout separado, sem credenciais persistidas",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:32:10Z",
-            completed_at: "2026-11-09T10:32:12Z",
-          },
-          {
-            number: 10,
-            name: "Dependencias congeladas da fonte aprovada",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:32:12Z",
-            completed_at: "2026-11-09T10:32:12Z",
-          },
-          {
-            number: 11,
-            name: "Run actions/cache@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:32:12Z",
-            completed_at: "2026-11-09T10:32:12Z",
-          },
-          {
-            number: 12,
-            name: "Run ./node_modules/.bin/playwright install --with-deps chromium",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:32:12Z",
-            completed_at: "2026-11-09T10:32:43Z",
-          },
-          {
-            number: 13,
-            name: "Barreira nativa no mesmo HEAD antes de secrets",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:32:43Z",
-            completed_at: "2026-11-09T10:33:27Z",
-          },
-          {
-            number: 14,
-            name: "Preparacao e SSR sem credenciais privadas",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:33:27Z",
-            completed_at: "2026-11-09T10:33:36Z",
-          },
-          {
-            number: 15,
-            name: "Revalidar main e unicidade dentro da concorrencia antes de secrets",
-            status: "completed",
-            conclusion: "failure",
-            started_at: "2026-11-09T10:33:36Z",
-            completed_at: "2026-11-09T10:33:53Z",
-          },
-          {
-            number: 16,
-            name: "Somente agora fornecer o par sintetico ao preparador separado",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:33:53Z",
-            completed_at: "2026-11-09T10:33:53Z",
-          },
-          {
-            number: 17,
-            name: "Verificar hashes gerados, inclusive em resultado parcial",
-            status: "completed",
-            conclusion: "failure",
-            started_at: "2026-11-09T10:33:53Z",
-            completed_at: "2026-11-09T10:33:53Z",
-          },
-          {
-            number: 18,
-            name: "Evidencia privada imutavel por 90 dias",
-            status: "completed",
-            conclusion: "failure",
-            started_at: "2026-11-09T10:33:53Z",
-            completed_at: "2026-11-09T10:33:53Z",
-          },
-          {
-            number: 33,
-            name: "Post Run actions/cache@v4",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:33:53Z",
-            completed_at: "2026-11-09T10:33:53Z",
-          },
-          {
-            number: 34,
-            name: "Post Fonte aprovada em checkout separado, sem credenciais persistidas",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:33:53Z",
-            completed_at: "2026-11-09T10:33:54Z",
-          },
-          {
-            number: 35,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T10:33:54Z",
-            completed_at: "2026-11-09T10:33:54Z",
-          },
-          {
-            number: 36,
-            name: "Post Checkout imutavel do executor main",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:33:54Z",
-            completed_at: "2026-11-09T10:33:54Z",
-          },
-          {
-            number: 37,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:33:54Z",
-            completed_at: "2026-11-09T10:33:54Z",
-          },
-        ],
-      },
-    ],
-  },
-  "/actions/runs/42601384052": {
-    id: 42601384052,
-    name: "ContaOS Trilha A Autenticada",
-    workflow_id: 411115674,
-    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    created_at: "2026-11-09T10:30:41Z",
-    updated_at: "2026-11-09T10:31:05Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-  },
-  "/actions/runs/42601384052/attempts/1": {
-    id: 42601384052,
-    name: "ContaOS Trilha A Autenticada",
-    workflow_id: 411115674,
-    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    created_at: "2026-11-09T10:30:42Z",
-    updated_at: "2026-11-09T10:31:05Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-    },
-  },
-  "/actions/runs/42601384052/attempts/1/jobs?per_page=100&page=1": {
-    total_count: 3,
-    jobs: [
-      {
-        id: 129106437990,
-        run_id: 42601384052,
-        run_attempt: 1,
-        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-        head_branch: "main",
-        name: "Trilha A solicitacao unica sem credenciais",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:44Z",
-            completed_at: "2026-11-09T10:30:45Z",
-          },
-          {
-            number: 2,
-            name: "Bootstrap publico confiavel antes de checkout ou token",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:45Z",
-            completed_at: "2026-11-09T10:30:47Z",
-          },
-          {
-            number: 3,
-            name: "Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:47Z",
-            completed_at: "2026-11-09T10:30:49Z",
-          },
-          {
-            number: 4,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:49Z",
-            completed_at: "2026-11-09T10:30:50Z",
-          },
-          {
-            number: 5,
-            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:30:50Z",
-            completed_at: "2026-11-09T10:31:01Z",
-          },
-          {
-            number: 6,
-            name: "Run bun install --frozen-lockfile",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:01Z",
-            completed_at: "2026-11-09T10:31:02Z",
-          },
-          {
-            number: 7,
-            name: "Provar evento e unicidade somente em metadados Actions",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:02Z",
-            completed_at: "2026-11-09T10:31:03Z",
-          },
-          {
-            number: 13,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:03Z",
-            completed_at: "2026-11-09T10:31:03Z",
-          },
-          {
-            number: 14,
-            name: "Post Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:03Z",
-            completed_at: "2026-11-09T10:31:03Z",
-          },
-          {
-            number: 15,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T10:31:03Z",
-            completed_at: "2026-11-09T10:31:03Z",
-          },
-        ],
-      },
-      {
-        id: 129106440087,
-        run_id: 42601384052,
-        run_attempt: 1,
-        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-        head_branch: "main",
-        name: "Trilha A protocolo e Chromium sem credenciais",
-        status: "completed",
-        conclusion: "skipped",
-        steps: [],
-      },
-      {
-        id: 129106589401,
-        run_id: 42601384052,
-        run_attempt: 1,
-        head_sha: "bc7c1625f0a7851fe7b8f0500f3bf51daf1e1215",
-        head_branch: "main",
-        name: "Trilha A auditoria privada HML",
-        status: "completed",
-        conclusion: "skipped",
-        steps: [],
-      },
-    ],
-  },
-  "/actions/runs/42601383933/artifacts?per_page=100&page=1": {
-    total_count: 0,
-    artifacts: [],
-  },
-};
 async function r8R7Fixture() {
   const { execFileSync } = await import("node:child_process");
   const responses = structuredClone(R8_R7_RESPONSES),
@@ -10157,6 +11884,8 @@ test("R8 actual audit CLI rejects private manual before runtime but preserves pu
     "nativeGuard",
     "runAuthenticatedAudit",
     "assertPrivateRequestEnvironment",
+    "validateC8RecoveryDocument",
+    "C8_RECOVERY_DOCUMENT",
     body + ";return runCli;",
   )(
     { env, argv: [] },
@@ -10184,6 +11913,8 @@ test("R8 actual audit CLI rejects private manual before runtime but preserves pu
       privateCalls++;
     },
     sut.assertPrivateRequestEnvironment,
+    sut.validateC8RecoveryDocument,
+    sut.C8_RECOVERY_DOCUMENT,
   );
   await assert.rejects(run(["--audit"]), { code: "REQUEST_EVENT" });
   assert.equal(gitCalls, 0);
@@ -10204,7 +11935,10 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     now = 1000;
   const identity = { harnessSha: sha, moduleHash: "module", testHash: "test" };
   const request = {
-    request_id: "deferred-audit-test",
+    schema_version: 1,
+    issue: 317,
+    operation: "audit",
+    request_id: sut.SINGLE_REQUEST.audit.nonce,
     frontend_sha: "",
     deployment_id: "",
     approved_parent_sha: parent,
@@ -10227,6 +11961,8 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     parentSha: parent,
     upstreamId: 11,
     r7ZeroAuth: canonical,
+    auditScope: "C8",
+    c8RecoverySha256: "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee",
   };
   const env = {
     GITHUB_EVENT_NAME: "workflow_run",
@@ -10244,7 +11980,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
   const fail = (code) => {
     throw Object.assign(new Error(code), { code });
   };
-  // Only the future policy decision is deferred here. Production audit remains blocked.
+  // Keep the actual closed C8 admission; isolate Git metadata to exercise local R7 restoration.
   const { readFile: readSource } = await import("node:fs/promises");
   const productionSource = await readSource(
     new URL("./authenticated-visual-audit.mjs", import.meta.url),
@@ -10257,7 +11993,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
   assert.ok(environmentSource.includes("function requestEnvironmentChain(env)"));
   const factory = new Function(
     "deps",
-    `const {isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,singleRequestGet,validateR18RecoveryDocument,validateR18RegistrationCandidate,R18_RECOVERY_DOCUMENT,R18_REGISTRATION_CANDIDATE}=deps;
+    `const {C8_RECOVERY_DOCUMENT,validateC8RecoveryDocument,resolveC8AuditScope,isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,singleRequestGet,validateR18RecoveryDocument,validateR18RegistrationCandidate,R18_RECOVERY_DOCUMENT,R18_REGISTRATION_CANDIDATE}=deps;
     ${environmentSource}
     let singleRequestContext=null,validatedR4ZeroAuth=null,validatedR7ZeroAuth=null,validatedR12ZeroAuth=null;
     ${sut.loadSingleRequestProof.toString().replaceAll("import.meta.url", "sourceModuleUrl")}
@@ -10265,6 +12001,9 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
   );
   const { isProxy } = await import("node:util/types");
   const loader = factory({
+    C8_RECOVERY_DOCUMENT: sut.C8_RECOVERY_DOCUMENT,
+    validateC8RecoveryDocument: sut.validateC8RecoveryDocument,
+    resolveC8AuditScope: sut.resolveC8AuditScope,
     validateR18RecoveryDocument: sut.validateR18RecoveryDocument,
     validateR18RegistrationCandidate: sut.validateR18RegistrationCandidate,
     R18_RECOVERY_DOCUMENT: sut.R18_RECOVERY_DOCUMENT,
@@ -10272,12 +12011,15 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     isProxy,
     assertPrivateRequestEnvironment: sut.assertPrivateRequestEnvironment,
     assertRequestMetadataEnvironment: sut.assertRequestMetadataEnvironment,
-    requireSingleRequestOperation: (operation) => assert.equal(operation, "audit"),
+    requireSingleRequestOperation: (operation, request) => {
+      assert.equal(operation, "audit");
+      return sut.resolveC8AuditScope(request);
+    },
     fileURLToPath,
     join,
     sourceModuleUrl: import.meta.url,
     fail,
-    parseSingleRequest: (value) => JSON.parse(value),
+    parseSingleRequest: sut.parseSingleRequest,
     digest,
     verifySingleRequestGit: async () => {},
     validateSingleRequestEvent: () => {},
@@ -11083,952 +12825,6 @@ test("R12 actual report recovery retains its ten fields while reservation stays 
   assert.equal(Object.hasOwn(value, "priorReserved"), false);
 });
 
-const R13_R12_RESPONSES = {
-  "/actions/runs/42666600147": {
-    id: 42666600147,
-    name: "ContaOS Frontend Zero-Drift",
-    workflow_id: 406076025,
-    path: ".github/workflows/contaos-frontend-zero-drift.yml",
-    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-    head_branch: "main",
-    event: "push",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    created_at: "2026-11-09T17:38:29Z",
-    updated_at: "2026-11-09T17:40:06Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-  },
-  "/actions/runs/42666600147/attempts/1": {
-    id: 42666600147,
-    name: "ContaOS Frontend Zero-Drift",
-    workflow_id: 406076025,
-    path: ".github/workflows/contaos-frontend-zero-drift.yml",
-    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-    head_branch: "main",
-    event: "push",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    created_at: "2026-11-09T17:38:29Z",
-    updated_at: "2026-11-09T17:40:06Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-  },
-  "/actions/runs/42666600147/attempts/1/jobs?per_page=100&page=1": {
-    total_count: 2,
-    jobs: [
-      {
-        id: 129331797954,
-        run_id: 42666600147,
-        run_attempt: 1,
-        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-        head_branch: "main",
-        name: "ContaOS Frontend Zero-Drift",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:32Z",
-            completed_at: "2026-11-09T17:38:33Z",
-          },
-          {
-            number: 2,
-            name: "Checkout immutable commit",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:33Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 3,
-            name: "P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 4,
-            name: "P0 V1 — autotestes do inventario e dispensas",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 5,
-            name: "P0 V1 — integridade dos 416 critérios, 45 prompts e 37 atomicos",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 6,
-            name: "P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 7,
-            name: "Autoteste do guard (casos permitidos e proibidos)",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:37Z",
-          },
-          {
-            number: 8,
-            name: "Verificar contrato de seguranca do Auto-Lock por PR",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:37Z",
-            completed_at: "2026-11-09T17:38:37Z",
-          },
-          {
-            number: 9,
-            name: "Verificar fronteira frontend/backend e PLAN validado prévio",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:37Z",
-            completed_at: "2026-11-09T17:38:37Z",
-          },
-          {
-            number: 10,
-            name: "Autotestes do snapshot canônico e matriz de telas",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:37Z",
-            completed_at: "2026-11-09T17:38:37Z",
-          },
-          {
-            number: 11,
-            name: "Verificar HEAD vivo do repositório normativo antes de BUILD",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:37Z",
-            completed_at: "2026-11-09T17:38:38Z",
-          },
-          {
-            number: 12,
-            name: "GOV-003 — exigir token valido e fonte viva antes do merge",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:38:38Z",
-            completed_at: "2026-11-09T17:38:38Z",
-          },
-          {
-            number: 13,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:38Z",
-            completed_at: "2026-11-09T17:38:38Z",
-          },
-          {
-            number: 14,
-            name: "Setup Bun",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:38Z",
-            completed_at: "2026-11-09T17:38:48Z",
-          },
-          {
-            number: 15,
-            name: "Install frozen dependencies",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:48Z",
-            completed_at: "2026-11-09T17:38:50Z",
-          },
-          {
-            number: 16,
-            name: "GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:50Z",
-            completed_at: "2026-11-09T17:38:50Z",
-          },
-          {
-            number: 17,
-            name: "Lint e formatacao do saneamento transversal",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:50Z",
-            completed_at: "2026-11-09T17:38:52Z",
-          },
-          {
-            number: 18,
-            name: "Production build — geração canônica TanStack antes dos testes longos",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:52Z",
-            completed_at: "2026-11-09T17:38:57Z",
-          },
-          {
-            number: 19,
-            name: "GOV-020 — bloquear divergência entre routeTree gerado e commit",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:57Z",
-            completed_at: "2026-11-09T17:38:57Z",
-          },
-          {
-            number: 20,
-            name: "Full regression — Vitest 2 workers",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:57Z",
-            completed_at: "2026-11-09T17:39:48Z",
-          },
-          {
-            number: 21,
-            name: "TypeScript typecheck",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:39:48Z",
-            completed_at: "2026-11-09T17:40:03Z",
-          },
-          {
-            number: 22,
-            name: "Brand-01, PT-BR, secrets and types integrity",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:03Z",
-            completed_at: "2026-11-09T17:40:03Z",
-          },
-          {
-            number: 43,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:03Z",
-            completed_at: "2026-11-09T17:40:03Z",
-          },
-          {
-            number: 44,
-            name: "Post Checkout immutable commit",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:03Z",
-            completed_at: "2026-11-09T17:40:03Z",
-          },
-          {
-            number: 45,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:03Z",
-            completed_at: "2026-11-09T17:40:03Z",
-          },
-        ],
-      },
-      {
-        id: 129331798384,
-        run_id: 42666600147,
-        run_attempt: 1,
-        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-        head_branch: "main",
-        name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:32Z",
-            completed_at: "2026-11-09T17:38:33Z",
-          },
-          {
-            number: 2,
-            name: "Checkout SHA imutavel, apenas leitura",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:33Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 3,
-            name: "Detectar escopo de auditoria visual",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 4,
-            name: "Setup Bun",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 5,
-            name: "Instalar dependencias congeladas",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 6,
-            name: "Cache do Chromium Playwright 1.64.1",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 7,
-            name: "Instalar Playwright isolado, sem atualizar package/lock",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 8,
-            name: "Executar servidor de desenvolvimento isolado do mesmo SHA",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 9,
-            name: "GOV-020 — verificar routeTree após Vite dev e antes do Playwright",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 10,
-            name: "Teste C Playwright — 24 telas, 4 larguras, 2 temas",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 11,
-            name: "Evidencia permanente de screenshots e SHA256SUMS",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 12,
-            name: "Confirmar que nenhuma fonte versionada foi editada",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 24,
-            name: "Post Checkout SHA imutavel, apenas leitura",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:35Z",
-          },
-          {
-            number: 25,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:38:35Z",
-            completed_at: "2026-11-09T17:38:36Z",
-          },
-        ],
-      },
-    ],
-  },
-  "/actions/runs/42666864017": {
-    id: 42666864017,
-    name: "ContaOS Trilha A Fixtures",
-    workflow_id: 411426169,
-    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "failure",
-    created_at: "2026-11-09T17:40:10Z",
-    updated_at: "2026-11-09T17:42:21Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-  },
-  "/actions/runs/42666864017/attempts/1": {
-    id: 42666864017,
-    name: "ContaOS Trilha A Fixtures",
-    workflow_id: 411426169,
-    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "failure",
-    created_at: "2026-11-09T17:40:10Z",
-    updated_at: "2026-11-09T17:42:22Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-  },
-  "/actions/runs/42666864017/attempts/1/jobs?per_page=100&page=1": {
-    total_count: 3,
-    jobs: [
-      {
-        id: 129332744911,
-        run_id: 42666864017,
-        run_attempt: 1,
-        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-        head_branch: "main",
-        name: "Trilha A solicitacao unica sem credenciais",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:14Z",
-            completed_at: "2026-11-09T17:40:15Z",
-          },
-          {
-            number: 2,
-            name: "Bootstrap publico confiavel antes de checkout ou token",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:15Z",
-            completed_at: "2026-11-09T17:40:18Z",
-          },
-          {
-            number: 3,
-            name: "Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:18Z",
-            completed_at: "2026-11-09T17:40:21Z",
-          },
-          {
-            number: 4,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:21Z",
-            completed_at: "2026-11-09T17:40:26Z",
-          },
-          {
-            number: 5,
-            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:26Z",
-            completed_at: "2026-11-09T17:40:37Z",
-          },
-          {
-            number: 6,
-            name: "Run bun install --frozen-lockfile",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:37Z",
-            completed_at: "2026-11-09T17:40:39Z",
-          },
-          {
-            number: 7,
-            name: "Provar evento e unicidade somente em metadados Actions",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:39Z",
-            completed_at: "2026-11-09T17:41:12Z",
-          },
-          {
-            number: 13,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:41:12Z",
-            completed_at: "2026-11-09T17:41:13Z",
-          },
-          {
-            number: 14,
-            name: "Post Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:41:13Z",
-            completed_at: "2026-11-09T17:41:13Z",
-          },
-          {
-            number: 15,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:41:13Z",
-            completed_at: "2026-11-09T17:41:13Z",
-          },
-        ],
-      },
-      {
-        id: 129332747763,
-        run_id: 42666864017,
-        run_attempt: 1,
-        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-        head_branch: "main",
-        name: "Trilha A protocolo e Chromium sem credenciais",
-        status: "completed",
-        conclusion: "skipped",
-        steps: [],
-      },
-      {
-        id: 129333370334,
-        run_id: 42666864017,
-        run_attempt: 1,
-        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-        head_branch: "main",
-        name: "Trilha A preparacao sintetica HML",
-        status: "completed",
-        conclusion: "failure",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:41:20Z",
-            completed_at: "2026-11-09T17:41:22Z",
-          },
-          {
-            number: 2,
-            name: "Checkout imutavel do executor main",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:41:22Z",
-            completed_at: "2026-11-09T17:41:24Z",
-          },
-          {
-            number: 3,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:41:24Z",
-            completed_at: "2026-11-09T17:41:25Z",
-          },
-          {
-            number: 4,
-            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:41:25Z",
-            completed_at: "2026-11-09T17:41:36Z",
-          },
-          {
-            number: 5,
-            name: "Dependencias congeladas do executor",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:41:36Z",
-            completed_at: "2026-11-09T17:41:38Z",
-          },
-          {
-            number: 6,
-            name: "Recibo inicial publico para as fases sem credenciais",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:41:38Z",
-            completed_at: "2026-11-09T17:42:11Z",
-          },
-          {
-            number: 7,
-            name: "Reancorar deployment HML sem credenciais, antes do checkout da fonte",
-            status: "completed",
-            conclusion: "failure",
-            started_at: "2026-11-09T17:42:11Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 8,
-            name: "Validar SHA ancestral antes de baixar ou executar a fonte",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 9,
-            name: "Fonte aprovada em checkout separado, sem credenciais persistidas",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 10,
-            name: "Dependencias congeladas da fonte aprovada",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 11,
-            name: "Run actions/cache@v4",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 12,
-            name: "Run ./node_modules/.bin/playwright install --with-deps chromium",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 13,
-            name: "Barreira nativa no mesmo HEAD antes de secrets",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 14,
-            name: "Preparacao e SSR sem credenciais privadas",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 15,
-            name: "Revalidar main e unicidade dentro da concorrencia antes de secrets",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 16,
-            name: "Somente agora fornecer o par sintetico ao preparador separado",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 17,
-            name: "Verificar hashes gerados, inclusive em resultado parcial",
-            status: "completed",
-            conclusion: "failure",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 18,
-            name: "Evidencia privada imutavel por 90 dias",
-            status: "completed",
-            conclusion: "failure",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 35,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:17Z",
-          },
-          {
-            number: 36,
-            name: "Post Checkout imutavel do executor main",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:42:17Z",
-            completed_at: "2026-11-09T17:42:18Z",
-          },
-          {
-            number: 37,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:42:18Z",
-            completed_at: "2026-11-09T17:42:18Z",
-          },
-        ],
-      },
-    ],
-  },
-  "/actions/runs/42666864220": {
-    id: 42666864220,
-    name: "ContaOS Trilha A Autenticada",
-    workflow_id: 411115674,
-    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    created_at: "2026-11-09T17:40:10Z",
-    updated_at: "2026-11-09T17:40:35Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-  },
-  "/actions/runs/42666864220/attempts/1": {
-    id: 42666864220,
-    name: "ContaOS Trilha A Autenticada",
-    workflow_id: 411115674,
-    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    created_at: "2026-11-09T17:40:10Z",
-    updated_at: "2026-11-09T17:40:36Z",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-  },
-  "/actions/runs/42666864220/attempts/1/jobs?per_page=100&page=1": {
-    total_count: 3,
-    jobs: [
-      {
-        id: 129332746954,
-        run_id: 42666864220,
-        run_attempt: 1,
-        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-        head_branch: "main",
-        name: "Trilha A solicitacao unica sem credenciais",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:13Z",
-            completed_at: "2026-11-09T17:40:14Z",
-          },
-          {
-            number: 2,
-            name: "Bootstrap publico confiavel antes de checkout ou token",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:14Z",
-            completed_at: "2026-11-09T17:40:15Z",
-          },
-          {
-            number: 3,
-            name: "Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:15Z",
-            completed_at: "2026-11-09T17:40:17Z",
-          },
-          {
-            number: 4,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:17Z",
-            completed_at: "2026-11-09T17:40:17Z",
-          },
-          {
-            number: 5,
-            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:17Z",
-            completed_at: "2026-11-09T17:40:29Z",
-          },
-          {
-            number: 6,
-            name: "Run bun install --frozen-lockfile",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:29Z",
-            completed_at: "2026-11-09T17:40:31Z",
-          },
-          {
-            number: 7,
-            name: "Provar evento e unicidade somente em metadados Actions",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:31Z",
-            completed_at: "2026-11-09T17:40:31Z",
-          },
-          {
-            number: 13,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:31Z",
-            completed_at: "2026-11-09T17:40:31Z",
-          },
-          {
-            number: 14,
-            name: "Post Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:31Z",
-            completed_at: "2026-11-09T17:40:31Z",
-          },
-          {
-            number: 15,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T17:40:31Z",
-            completed_at: "2026-11-09T17:40:31Z",
-          },
-        ],
-      },
-      {
-        id: 129332749745,
-        run_id: 42666864220,
-        run_attempt: 1,
-        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-        head_branch: "main",
-        name: "Trilha A protocolo e Chromium sem credenciais",
-        status: "completed",
-        conclusion: "skipped",
-        steps: [],
-      },
-      {
-        id: 129332966127,
-        run_id: 42666864220,
-        run_attempt: 1,
-        head_sha: "3d6bea3e938459f348130bf1d04431a072dba081",
-        head_branch: "main",
-        name: "Trilha A auditoria privada HML",
-        status: "completed",
-        conclusion: "skipped",
-        steps: [],
-      },
-    ],
-  },
-  "/actions/runs/42666864017/artifacts?per_page=100&page=1": {
-    total_count: 0,
-    artifacts: [],
-  },
-};
 const R13_R12_PROOF = Object.freeze({
   schema: "contaos.single-request.r12-zero-auth.v1",
   headSha: "3d6bea3e938459f348130bf1d04431a072dba081",
@@ -12055,783 +12851,7 @@ async function r13R12Fixture() {
     git: async (args) => execFileSync("git", args, { encoding: "utf8", maxBuffer: 4194304 }),
   };
 }
-const R15_R14_RESPONSES = {
-  "/actions/runs/42694401246": {
-    id: 42694401246,
-    workflow_id: 406076025,
-    path: ".github/workflows/contaos-frontend-zero-drift.yml",
-    name: "ContaOS Frontend Zero-Drift",
-    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-    head_branch: "main",
-    event: "push",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    created_at: "2026-11-09T20:35:22Z",
-    updated_at: "2026-11-09T20:36:36Z",
-  },
-  "/actions/runs/42694401246/attempts/1": {
-    id: 42694401246,
-    workflow_id: 406076025,
-    path: ".github/workflows/contaos-frontend-zero-drift.yml",
-    name: "ContaOS Frontend Zero-Drift",
-    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-    head_branch: "main",
-    event: "push",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    created_at: "2026-11-09T20:35:22Z",
-    updated_at: "2026-11-09T20:36:36Z",
-  },
-  "/actions/runs/42694401246/attempts/1/jobs?per_page=100&page=1": {
-    total_count: 2,
-    jobs: [
-      {
-        id: 129422257245,
-        run_id: 42694401246,
-        run_attempt: 1,
-        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-        head_branch: "main",
-        name: "ContaOS Frontend Zero-Drift",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:26Z",
-            completed_at: "2026-11-09T20:35:26Z",
-          },
-          {
-            number: 2,
-            name: "Checkout immutable commit",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:26Z",
-            completed_at: "2026-11-09T20:35:28Z",
-          },
-          {
-            number: 3,
-            name: "P0 PRIORIDADE ZERO — 14 testes de sequência e certificação por versão",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:28Z",
-            completed_at: "2026-11-09T20:35:29Z",
-          },
-          {
-            number: 4,
-            name: "P0 V1 — autotestes do inventario e dispensas",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:29Z",
-            completed_at: "2026-11-09T20:35:29Z",
-          },
-          {
-            number: 5,
-            name: "P0 V1 — integridade dos 416 critérios, 45 prompts e 37 atomicos",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:29Z",
-            completed_at: "2026-11-09T20:35:29Z",
-          },
-          {
-            number: 6,
-            name: "P0 PRIORIDADE ZERO — proibir avançar V2 antes de certificar V1",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:29Z",
-            completed_at: "2026-11-09T20:35:29Z",
-          },
-          {
-            number: 7,
-            name: "Autoteste do guard (casos permitidos e proibidos)",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:29Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 8,
-            name: "Verificar contrato de seguranca do Auto-Lock por PR",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 9,
-            name: "Verificar fronteira frontend/backend e PLAN validado prévio",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 10,
-            name: "Autotestes do snapshot canônico e matriz de telas",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 11,
-            name: "Verificar HEAD vivo do repositório normativo antes de BUILD",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:31Z",
-          },
-          {
-            number: 12,
-            name: "GOV-003 — exigir token valido e fonte viva antes do merge",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:35:31Z",
-            completed_at: "2026-11-09T20:35:31Z",
-          },
-          {
-            number: 13,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:31Z",
-            completed_at: "2026-11-09T20:35:34Z",
-          },
-          {
-            number: 14,
-            name: "Setup Bun",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:34Z",
-            completed_at: "2026-11-09T20:35:44Z",
-          },
-          {
-            number: 15,
-            name: "Install frozen dependencies",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:44Z",
-            completed_at: "2026-11-09T20:35:45Z",
-          },
-          {
-            number: 16,
-            name: "GOV-020 — autotestes de rota limpa, alterada, excluída e não versionada",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:45Z",
-            completed_at: "2026-11-09T20:35:46Z",
-          },
-          {
-            number: 17,
-            name: "Lint e formatacao do saneamento transversal",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:46Z",
-            completed_at: "2026-11-09T20:35:47Z",
-          },
-          {
-            number: 18,
-            name: "Production build — geração canônica TanStack antes dos testes longos",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:47Z",
-            completed_at: "2026-11-09T20:35:50Z",
-          },
-          {
-            number: 19,
-            name: "GOV-020 — bloquear divergência entre routeTree gerado e commit",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:50Z",
-            completed_at: "2026-11-09T20:35:50Z",
-          },
-          {
-            number: 20,
-            name: "Full regression — Vitest 2 workers",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:50Z",
-            completed_at: "2026-11-09T20:36:24Z",
-          },
-          {
-            number: 21,
-            name: "TypeScript typecheck",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:24Z",
-            completed_at: "2026-11-09T20:36:32Z",
-          },
-          {
-            number: 22,
-            name: "Brand-01, PT-BR, secrets and types integrity",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:32Z",
-            completed_at: "2026-11-09T20:36:33Z",
-          },
-          {
-            number: 43,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:33Z",
-            completed_at: "2026-11-09T20:36:33Z",
-          },
-          {
-            number: 44,
-            name: "Post Checkout immutable commit",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:33Z",
-            completed_at: "2026-11-09T20:36:33Z",
-          },
-          {
-            number: 45,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:33Z",
-            completed_at: "2026-11-09T20:36:33Z",
-          },
-        ],
-      },
-      {
-        id: 129422258076,
-        run_id: 42694401246,
-        run_attempt: 1,
-        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-        head_branch: "main",
-        name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:27Z",
-            completed_at: "2026-11-09T20:35:28Z",
-          },
-          {
-            number: 2,
-            name: "Checkout SHA imutavel, apenas leitura",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:28Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 3,
-            name: "Detectar escopo de auditoria visual",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 4,
-            name: "Setup Bun",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 5,
-            name: "Instalar dependencias congeladas",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 6,
-            name: "Cache do Chromium Playwright 1.64.1",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 7,
-            name: "Instalar Playwright isolado, sem atualizar package/lock",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 8,
-            name: "Executar servidor de desenvolvimento isolado do mesmo SHA",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 9,
-            name: "GOV-020 — verificar routeTree após Vite dev e antes do Playwright",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 10,
-            name: "Teste C Playwright — 24 telas, 4 larguras, 2 temas",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 11,
-            name: "Evidencia permanente de screenshots e SHA256SUMS",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 12,
-            name: "Confirmar que nenhuma fonte versionada foi editada",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 24,
-            name: "Post Checkout SHA imutavel, apenas leitura",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-          {
-            number: 25,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:35:30Z",
-            completed_at: "2026-11-09T20:35:30Z",
-          },
-        ],
-      },
-    ],
-  },
-  "/actions/runs/42694609672": {
-    id: 42694609672,
-    workflow_id: 411426169,
-    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    name: "ContaOS Trilha A Fixtures",
-    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "failure",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    created_at: "2026-11-09T20:36:39Z",
-    updated_at: "2026-11-09T20:37:15Z",
-  },
-  "/actions/runs/42694609672/attempts/1": {
-    id: 42694609672,
-    workflow_id: 411426169,
-    path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    name: "ContaOS Trilha A Fixtures",
-    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "failure",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    created_at: "2026-11-09T20:36:39Z",
-    updated_at: "2026-11-09T20:37:15Z",
-  },
-  "/actions/runs/42694609672/attempts/1/jobs?per_page=100&page=1": {
-    total_count: 3,
-    jobs: [
-      {
-        id: 129422980268,
-        run_id: 42694609672,
-        run_attempt: 1,
-        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-        head_branch: "main",
-        name: "Trilha A solicitacao unica sem credenciais",
-        status: "completed",
-        conclusion: "failure",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:42Z",
-            completed_at: "2026-11-09T20:36:43Z",
-          },
-          {
-            number: 2,
-            name: "Bootstrap publico confiavel antes de checkout ou token",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:43Z",
-            completed_at: "2026-11-09T20:36:45Z",
-          },
-          {
-            number: 3,
-            name: "Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:45Z",
-            completed_at: "2026-11-09T20:36:46Z",
-          },
-          {
-            number: 4,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:46Z",
-            completed_at: "2026-11-09T20:36:49Z",
-          },
-          {
-            number: 5,
-            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:49Z",
-            completed_at: "2026-11-09T20:37:00Z",
-          },
-          {
-            number: 6,
-            name: "Run bun install --frozen-lockfile",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:37:00Z",
-            completed_at: "2026-11-09T20:37:01Z",
-          },
-          {
-            number: 7,
-            name: "Provar evento e unicidade somente em metadados Actions",
-            status: "completed",
-            conclusion: "failure",
-            started_at: "2026-11-09T20:37:01Z",
-            completed_at: "2026-11-09T20:37:12Z",
-          },
-          {
-            number: 13,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "skipped",
-            started_at: "2026-11-09T20:37:12Z",
-            completed_at: "2026-11-09T20:37:12Z",
-          },
-          {
-            number: 14,
-            name: "Post Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:37:12Z",
-            completed_at: "2026-11-09T20:37:13Z",
-          },
-          {
-            number: 15,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:37:13Z",
-            completed_at: "2026-11-09T20:37:13Z",
-          },
-        ],
-      },
-      {
-        id: 129422982805,
-        run_id: 42694609672,
-        run_attempt: 1,
-        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-        head_branch: "main",
-        name: "Trilha A protocolo e Chromium sem credenciais",
-        status: "completed",
-        conclusion: "skipped",
-        steps: [],
-      },
-      {
-        id: 129423314958,
-        run_id: 42694609672,
-        run_attempt: 1,
-        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-        head_branch: "main",
-        name: "Trilha A preparacao sintetica HML",
-        status: "completed",
-        conclusion: "skipped",
-        steps: [],
-      },
-    ],
-  },
-  "/actions/runs/42694609740": {
-    id: 42694609740,
-    workflow_id: 411115674,
-    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    name: "ContaOS Trilha A Autenticada",
-    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    created_at: "2026-11-09T20:36:39Z",
-    updated_at: "2026-11-09T20:37:09Z",
-  },
-  "/actions/runs/42694609740/attempts/1": {
-    id: 42694609740,
-    workflow_id: 411115674,
-    path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    name: "ContaOS Trilha A Autenticada",
-    head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-    head_branch: "main",
-    event: "workflow_run",
-    run_attempt: 1,
-    status: "completed",
-    conclusion: "success",
-    repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    head_repository: {
-      id: 1442722734,
-      full_name: "contaos999999/contaos-hml-control",
-      private: false,
-      owner: {
-        id: 352205055,
-        login: "contaos999999",
-      },
-    },
-    created_at: "2026-11-09T20:36:39Z",
-    updated_at: "2026-11-09T20:37:09Z",
-  },
-  "/actions/runs/42694609740/attempts/1/jobs?per_page=100&page=1": {
-    total_count: 3,
-    jobs: [
-      {
-        id: 129422980473,
-        run_id: 42694609740,
-        run_attempt: 1,
-        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-        head_branch: "main",
-        name: "Trilha A solicitacao unica sem credenciais",
-        status: "completed",
-        conclusion: "success",
-        steps: [
-          {
-            number: 1,
-            name: "Set up job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:42Z",
-            completed_at: "2026-11-09T20:36:44Z",
-          },
-          {
-            number: 2,
-            name: "Bootstrap publico confiavel antes de checkout ou token",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:44Z",
-            completed_at: "2026-11-09T20:36:45Z",
-          },
-          {
-            number: 3,
-            name: "Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:45Z",
-            completed_at: "2026-11-09T20:36:48Z",
-          },
-          {
-            number: 4,
-            name: "Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:48Z",
-            completed_at: "2026-11-09T20:36:51Z",
-          },
-          {
-            number: 5,
-            name: "Run node --test scripts/ci/install-pinned-bun.test.mjs",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:36:51Z",
-            completed_at: "2026-11-09T20:37:03Z",
-          },
-          {
-            number: 6,
-            name: "Run bun install --frozen-lockfile",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:37:03Z",
-            completed_at: "2026-11-09T20:37:05Z",
-          },
-          {
-            number: 7,
-            name: "Provar evento e unicidade somente em metadados Actions",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:37:05Z",
-            completed_at: "2026-11-09T20:37:05Z",
-          },
-          {
-            number: 13,
-            name: "Post Run actions/setup-node@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:37:05Z",
-            completed_at: "2026-11-09T20:37:05Z",
-          },
-          {
-            number: 14,
-            name: "Post Run actions/checkout@v4",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:37:05Z",
-            completed_at: "2026-11-09T20:37:06Z",
-          },
-          {
-            number: 15,
-            name: "Complete job",
-            status: "completed",
-            conclusion: "success",
-            started_at: "2026-11-09T20:37:06Z",
-            completed_at: "2026-11-09T20:37:06Z",
-          },
-        ],
-      },
-      {
-        id: 129422983606,
-        run_id: 42694609740,
-        run_attempt: 1,
-        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-        head_branch: "main",
-        name: "Trilha A protocolo e Chromium sem credenciais",
-        status: "completed",
-        conclusion: "skipped",
-        steps: [],
-      },
-      {
-        id: 129423257559,
-        run_id: 42694609740,
-        run_attempt: 1,
-        head_sha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
-        head_branch: "main",
-        name: "Trilha A auditoria privada HML",
-        status: "completed",
-        conclusion: "skipped",
-        steps: [],
-      },
-    ],
-  },
-  "/actions/runs/42694609672/artifacts?per_page=100&page=1": {
-    total_count: 0,
-    artifacts: [],
-  },
-};
+
 const R15_R14_PROOF = Object.freeze({
   schema: "contaos.single-request.r14-zero-auth.v1",
   headSha: "6a62d7d7123f1d9ff1fb09895349cd7f93b1cb36",
@@ -14186,7 +14206,7 @@ test("R19 request verification and proof loading reject hostile recovery inputs 
   for (const name of ["verifySingleRequest", "loadSingleRequestProof"]) {
     const entry = functions.find((n) => n.name?.text === name);
     const first = entry.body.statements
-      .slice(0, 2)
+      .slice(1, 3)
       .map((n) => n.getText(ast))
       .join("\n");
     assert.ok(first.startsWith("validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT)"));
@@ -14317,4 +14337,1659 @@ test("R19 sourceforms failure console diagnostic is closed and cannot release th
     JSON.stringify(sut.preparerSourceFormsFailure(tap)).includes("PRIVATE_CANARY"),
     false,
   );
+});
+
+// C8 is a closed request scope, never a caller-provided list of arbitrary routes.
+test("C8 exact inventory selects sixty-four cases without changing the default two hundred eight", () => {
+  const scope = sut.C8_AUDIT_SCOPE;
+  assert.ok(scope && Object.isFrozen(scope));
+  const selected = fn("privateCases")(scope);
+  assert.equal(selected.length, 64);
+  assert.deepEqual(
+    [...new Set(selected.map((r) => r.surface))],
+    ["V111", "V114", "V115", "V116", "V117", "V118", "V119", "V120"],
+  );
+  assert.equal(selected.filter((r) => r.fixtureBlocked || !r.path).length, 0);
+  assert.equal(fn("privateCases")().length, 208);
+  for (const item of selected) {
+    assert.equal(fn("preservedPrivateCase")(item, scope), null);
+    assert.equal(fn("run78VisualSelection")(item, scope).required, true);
+  }
+  assert.equal(
+    selected.find((r) => r.surface === "V117").path,
+    "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/analise",
+  );
+  assert.equal(
+    selected.find((r) => r.surface === "V119").path,
+    "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar",
+  );
+  assert.equal(
+    selected.find((r) => r.surface === "V120").path,
+    "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27/apresentacoes/eb6d5b1c-8b64-418b-aa82-bf1f29d41768",
+  );
+  assert.ok(
+    selected
+      .filter((r) => ["V114", "V115", "V116", "V118"].includes(r.surface))
+      .every((r) => r.path.includes("59072760-4420-4598-82dd-367f41a79e89")),
+  );
+});
+
+test("C8 injected scopes fail without reading getters or proxy traps", () => {
+  let reads = 0;
+  const bad = {
+    get surfaces() {
+      reads++;
+      return ["SYS04"];
+    },
+  };
+  const proxy = new Proxy(
+    {},
+    {
+      get() {
+        reads++;
+        throw Error("SECRET");
+      },
+      ownKeys() {
+        reads++;
+        throw Error("SECRET");
+      },
+    },
+  );
+  for (const value of ["C8", {}, [], bad, proxy]) {
+    assert.throws(() => fn("privateCases")(value), /AUDIT_SCOPE/);
+    assert.throws(() => fn("completePrivateRecords")([], value), /AUDIT_SCOPE/);
+    assert.throws(() => fn("summarizeCases")([], value), /AUDIT_SCOPE/);
+  }
+  assert.equal(reads, 0);
+});
+
+function c8TechnicalRows() {
+  const scope = sut.C8_AUDIT_SCOPE;
+  assert.ok(scope);
+  return fn("privateCases")(scope).map((item) => {
+    const key = fn("caseKey")(item),
+      mobile = item.width < 768;
+    const proof = (mode, count) => ({
+      phase: "BEFORE_PNG",
+      measuredAt: 1,
+      capturedAt: 2,
+      metrics: {
+        passed: true,
+        geometryPassed: true,
+        tablePassed: true,
+        datesPassed: true,
+        contrastPassed: true,
+        viewport: { width: item.width, height: 1000 },
+        theme: item.theme,
+        ...(item.surface === "V117" && mode === "PRIMARY" ? { modalPassed: true } : {}),
+        targets:
+          item.surface === "V117" && mode === "PRIMARY"
+            ? [
+                {
+                  ordinal: 0,
+                  kind: "BUTTON",
+                  rect: { x: 0, y: 0, width: 44, height: 44 },
+                  connected: true,
+                  visible: true,
+                  hit: true,
+                  disabled: false,
+                },
+              ]
+            : [],
+        pairs: [],
+      },
+      image: {
+        count,
+        context: { surface: item.surface, width: item.width, theme: item.theme, mode },
+        images: Array.from({ length: count }, () => ({
+          decoded: true,
+          complete: true,
+          width: 131,
+          height: 32,
+          naturalWidth: 900,
+          naturalHeight: 220,
+          src:
+            mode === "SIDEBAR_COLLAPSED"
+              ? "/brand/ContaOS_Simbolo_Branco.svg"
+              : "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+        })),
+      },
+    });
+    return {
+      ...good,
+      ...item,
+      observedWidth: item.width,
+      observedTheme: item.theme,
+      brandCount: mobile ? 0 : 1,
+      status: "PASS_AUTOMATIZADO",
+      screenshot: `screenshots/${key}.png`,
+      dom: `dom/${key}.json`,
+      visualCapture: proof("PRIMARY", mobile ? 0 : 1),
+      keyboard: { passed: true },
+      navigationVerified: true,
+      drawerCloseVerified: true,
+      langPtBr: true,
+      badState: false,
+      fontFamily: "Inter, Arial, sans-serif",
+      accessibility: { violations: [] },
+      sidebarSupplement: {
+        passed: true,
+        mode: mobile ? "MOBILE" : "DESKTOP",
+        brandCount: 1,
+        screenshot: `screenshots/${key}${mobile ? "_menu" : "_sidebar-recolhida"}.png`,
+        sha256: "a".repeat(64),
+        visualCapture: proof(mobile ? "MOBILE_MENU" : "SIDEBAR_COLLAPSED", 1),
+      },
+    };
+  });
+}
+
+test("C8 summary rejects a PASS label without the complete visual and interaction proof", () => {
+  const rows = c8TechnicalRows(),
+    scope = sut.C8_AUDIT_SCOPE;
+  for (const delta of [
+    { visualCapture: null },
+    { keyboard: { passed: false } },
+    { navigationVerified: false },
+    { sidebarSupplement: { ...rows[0].sidebarSupplement, passed: false } },
+    { accessibility: { violations: [{ id: "color-contrast", count: 1 }] } },
+    { langPtBr: false },
+    { badState: true },
+    { fontFamily: "serif" },
+  ]) {
+    assert.equal(
+      fn("summarizeCases")(
+        rows.map((r, i) => (i ? r : { ...r, ...delta })),
+        scope,
+      ).matrixComplete,
+      false,
+    );
+  }
+});
+
+test("C8 summary requires sixty-four distinct valid keys with exact routes and no failed or extra cases", () => {
+  const scope = sut.C8_AUDIT_SCOPE,
+    rows = c8TechnicalRows();
+  assert.equal(fn("summarizeCases")(rows, scope).matrixComplete, true);
+  assert.equal(fn("summarizeCases")(rows, scope).passed, 64);
+  assert.equal(fn("summarizeCases")(rows, scope).globalComplete, false);
+  for (const changed of [
+    rows.slice(1),
+    [...rows, rows[0]],
+    [...rows.slice(1), rows[1]],
+    rows.map((r, i) => (i ? r : { ...r, path: "/administracao/usuarios" })),
+    rows.map((r, i) => (i ? r : { ...r, status: "FAIL" })),
+    rows.map((r, i) => (i ? r : { ...r, surface: "SYS04" })),
+    rows.map((r, i) =>
+      i
+        ? r
+        : {
+            ...r,
+            surface: "SYS04",
+            path: undefined,
+            screenshot: `screenshots/${fn("caseKey")({ ...r, surface: "SYS04" })}.png`,
+            dom: `dom/${fn("caseKey")({ ...r, surface: "SYS04" })}.json`,
+          },
+    ),
+  ])
+    assert.equal(fn("summarizeCases")(changed, scope).matrixComplete, false);
+  const completed = fn("completePrivateRecords")([], scope);
+  assert.equal(completed.length, 64);
+  assert.ok(completed.every((r) => r.status !== "PASS_AUTOMATIZADO" && !r.screenshot && !r.sha256));
+});
+
+test("C8 interrupted completion rejects injected or duplicate rows before adding any records", () => {
+  const scope = sut.C8_AUDIT_SCOPE,
+    one = c8TechnicalRows()[0];
+  for (const rows of [[{ ...one, surface: "SYS04" }], [one, one], [{ ...one, path: "/login" }]]) {
+    const before = rows.length;
+    assert.throws(() => fn("completePrivateRecords")(rows, scope), /AUDIT_CASES/);
+    assert.equal(rows.length, before);
+  }
+});
+
+test("C8 sealed recovery document exactly preserves the inspected original without minting a current owner", () => {
+  const doc = sut.C8_RECOVERY_DOCUMENT;
+  const validate = fn("validateC8RecoveryDocument");
+  const raw = JSON.stringify(doc, null, 2) + "\n";
+  assert.equal(Object.keys(doc).length, 12);
+  assert.equal(Buffer.byteLength(raw), 5430);
+  assert.equal(
+    createHash("sha256").update(raw).digest("hex"),
+    "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee",
+  );
+  assert.ok(Object.isFrozen(validate(doc)));
+  const r = JSON.parse(doc.reportRaw);
+  assert.equal(r.completed, true);
+  assert.equal(r.logoutVerified, true);
+  assert.equal(r.intentLedger.newArmedCount, 0);
+  assert.equal(JSON.parse(doc.receiptsRaw).receipts.length, 0);
+  let effects = 0;
+  const getter = { ...doc };
+  Object.defineProperty(getter, "reportRaw", {
+    enumerable: true,
+    get() {
+      effects++;
+      throw Error("SECRET");
+    },
+  });
+  const proxy = new Proxy(doc, {
+    get() {
+      effects++;
+      throw Error("SECRET");
+    },
+    ownKeys() {
+      effects++;
+      throw Error("SECRET");
+    },
+  });
+  for (const changed of [
+    undefined,
+    null,
+    {},
+    { ...doc, extra: true },
+    { ...doc, reportRaw: "{}\n" },
+    { ...doc, harnessSha: "a".repeat(40) },
+    getter,
+    proxy,
+  ])
+    assert.throws(() => validate(changed), /C8_RECOVERY/);
+  assert.equal(effects, 0);
+});
+
+test("C8 surface states require the real open drawer, registration stage and complete protocol regions", () => {
+  const base = { mainText: "", statusTexts: [], regionNames: [] };
+  const drawer = {
+    ...base,
+    headingText: "Análise da competência",
+    dialogNames: ["Detalhe do requisito"],
+    dialogVisible: true,
+    regionNames: ["Requisito", "Fonte e versionamento", "Resultado de referência", "Evidências"],
+  };
+  assert.equal(fn("surfaceStateValid")("V117", drawer), true);
+  assert.equal(fn("surfaceStateValid")("V117", { ...drawer, dialogVisible: false }), false);
+  const wizard = {
+    ...base,
+    headingText: "Wizard de apresentação",
+    regionNames: ["Revisão de prontidão", "Etapa 2 de 2 — Registrar apresentação"],
+  };
+  assert.equal(fn("surfaceStateValid")("V119", wizard), true);
+  assert.equal(
+    fn("surfaceStateValid")("V119", { ...wizard, regionNames: ["Etapa 1 de 2 — Aprovação"] }),
+    false,
+  );
+  const protocol = {
+    ...base,
+    headingText: "Apresentação e protocolo",
+    regionNames: ["Dados da apresentação", "Pacote imutável", "Itens preservados no pacote"],
+  };
+  assert.equal(fn("surfaceStateValid")("V120", protocol), true);
+  assert.equal(
+    fn("surfaceStateValid")("V120", { ...protocol, regionNames: protocol.regionNames.slice(1) }),
+    false,
+  );
+});
+
+test("C8 admission is bound to the exact seven-field audit request and rejects legacy or injected scopes", () => {
+  const resolve = fn("resolveC8AuditScope");
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "audit",
+    request_id: "trilha-c-audit-20261110-c8-r1",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.equal(resolve(request), sut.C8_AUDIT_SCOPE);
+  assert.equal(
+    sut.parseSingleRequest(JSON.stringify(request), "audit").request_id,
+    request.request_id,
+  );
+  for (const changed of [
+    undefined,
+    { ...request, scope: "C8" },
+    { ...request, operation: "fixtures" },
+    { ...request, request_id: "trilha-a-audit-20261108-r1" },
+    { ...request, approved_parent_sha: "main" },
+  ])
+    assert.throws(() => resolve(changed), /AUDIT_BINDING_PENDING|REQUEST_SCHEMA/);
+  assert.throws(() => sut.requireSingleRequestOperation("audit"), /AUDIT_BINDING_PENDING/);
+  assert.equal(sut.requireSingleRequestOperation("audit", request), undefined);
+  const old = JSON.stringify({ ...request, request_id: "trilha-a-audit-20261108-r1" });
+  assert.throws(() => sut.parseSingleRequest(old), /REQUEST_SCHEMA/);
+  assert.equal(
+    sut.parseSingleRequest(old, undefined, { historical: true }).request_id,
+    "trilha-a-audit-20261108-r1",
+  );
+});
+
+test("C8 recovery validation precedes metadata environment, Git, filesystem and API in both admission paths", async () => {
+  for (const call of [sut.verifySingleRequest, sut.loadSingleRequestProof]) {
+    let effects = 0;
+    const blocked = async () => {
+      effects++;
+      throw Error("IO_BEFORE_RECOVERY");
+    };
+    await assert.rejects(
+      () =>
+        call({
+          operation: "audit",
+          env: {},
+          recoveryDocumentC8: {},
+          get: blocked,
+          git: blocked,
+          read: blocked,
+          stat: blocked,
+          identity: blocked,
+        }),
+      /C8_RECOVERY/,
+    );
+    assert.equal(effects, 0);
+  }
+});
+
+test("C8 V117 drawer uses the original opener and close with restored focus, rejecting wrong routes", async () => {
+  assert.equal(typeof sut.openC8RequirementDrawer, "function");
+  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117"),
+    calls = [];
+  let opened = false,
+    focused = false;
+  const opener = {
+    count: async () => 1,
+    click: async () => {
+      calls.push("open");
+      opened = true;
+    },
+    evaluate: async () => focused,
+  };
+  const dialog = {
+    evaluate: async () => {
+      calls.push("settled");
+    },
+    waitFor: async ({ state }) => {
+      assert.equal(opened, state === "visible");
+      calls.push(state);
+    },
+    getByRole: (role, options) => {
+      assert.equal(role, "button");
+      assert.deepEqual(options, { name: "Fechar", exact: true });
+      return {
+        click: async () => {
+          calls.push("close");
+          opened = false;
+          focused = false;
+        },
+      };
+    },
+  };
+  const page = {
+    url: () => sut.HML_ORIGIN + item.path,
+    waitForFunction: async (check, arg, options) => {
+      assert.equal(check, sut.c8DrawerFocusValid);
+      assert.equal(arg, null);
+      assert.deepEqual(options, { timeout: 15000 });
+      calls.push("focus");
+      focused = true;
+    },
+    getByRole: (role, options) => {
+      if (role === "button") {
+        assert.deepEqual(options, { name: "Abrir requisito AUD-A-TXT-001", exact: true });
+        return opener;
+      }
+      assert.equal(role, "dialog");
+      assert.deepEqual(options, { name: "Detalhe do requisito", exact: true });
+      return dialog;
+    },
+  };
+  const close = await sut.openC8RequirementDrawer(page, item, sut.C8_AUDIT_SCOPE);
+  assert.deepEqual(calls, ["open", "visible", "settled"]);
+  assert.equal(await close(), true);
+  assert.deepEqual(calls, ["open", "visible", "settled", "close", "hidden", "focus"]);
+  let reads = 0;
+  await assert.rejects(
+    () =>
+      sut.openC8RequirementDrawer(
+        {
+          getByRole() {
+            reads++;
+          },
+        },
+        { ...item, path: "/" },
+        sut.C8_AUDIT_SCOPE,
+      ),
+    /C8_DRAWER_BINDING/,
+  );
+  assert.equal(reads, 0);
+});
+
+test("C8 current wire rejects foreign stale pending and inconsistent recovery bindings", () => {
+  assert.equal(typeof sut.validateC8CurrentWire, "function");
+  const bindings = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+  const c = bindings.competencies[0],
+    item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  const analysis = {
+    schema_versao: "v116-v1",
+    competencia: {
+      id: c.id,
+      id_organizacao: bindings.organization,
+      id_contrato: bindings.contract,
+      competencia_referencia: c.month,
+    },
+    estado_analise: "complete",
+    stale: false,
+    execucao_atual: { id: c.executionId, status: "concluida" },
+  };
+  const detail = {
+    schema_versao: "v117-v1",
+    competencia: analysis.competencia,
+    requisito: {
+      id: c.requirementId,
+      codigo: "AUD-A-TXT-001",
+      origem_tipo: "item_lista",
+      origem_id: bindings.itemId,
+    },
+    execucao_atual: analysis.execucao_atual,
+  };
+  const wire = {
+    analysis,
+    detail,
+    context: {
+      id_competencia: c.id,
+      id_requisito: c.requirementId,
+      id_organizacao: bindings.organization,
+      id_contrato: bindings.contract,
+      id_execucao_esperada: c.executionId,
+    },
+  };
+  assert.equal(sut.validateC8CurrentWire(item, wire), true);
+  assert.equal(sut.validateC8CurrentWire(item, { ...wire, context: undefined }), true);
+  for (const delta of [
+    { analysis: { ...analysis, stale: true } },
+    { analysis: { ...analysis, estado_analise: "queued" } },
+    {
+      analysis: {
+        ...analysis,
+        competencia: { ...analysis.competencia, id_organizacao: "foreign" },
+      },
+    },
+    { detail: { ...detail, requisito: { ...detail.requisito, id: "foreign" } } },
+    { detail: { ...detail, execucao_atual: { ...detail.execucao_atual, id: "stale" } } },
+    { detail: null },
+  ])
+    assert.equal(sut.validateC8CurrentWire(item, { ...wire, ...delta }), false);
+});
+
+async function c8SourceFixture() {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const preparer = await import("./prepare-visual-fixtures.mjs");
+  const source = await fs.readFile(
+    new URL("./prepare-visual-fixtures.test.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("fixture.mjs", source, 99, true, ts.ScriptKind.JS);
+  const names = ["r11SqlV116", "r11SqlV117", "r17View"];
+  const declarations = names.map((name) =>
+    ast.statements.find((n) => ts.isFunctionDeclaration(n) && n.name?.text === name).getText(ast),
+  );
+  const data = new Function(
+    "FIXTURE",
+    "R6_R5_DOCUMENT",
+    declarations.join("\n") +
+      ";return {analysis:r11SqlV116(),detail:r11SqlV117(),overview:r17View(100)};",
+  )(preparer.FIXTURE, sut.C8_RECOVERY_DOCUMENT);
+  const b = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings,
+    c = b.competencies[0],
+    s = b.competencies[1];
+  Object.assign(data.analysis.competencia, { id: c.id, competencia_referencia: c.month });
+  data.analysis.execucao_atual.id = c.executionId;
+  data.analysis.execucoes[0].id = c.executionId;
+  Object.assign(data.analysis.resultados[0], { id_requisito: c.requirementId });
+  data.analysis.resultados[0].requisito.codigo = "AUD-A-TXT-001";
+  data.analysis.resultados[0].requisito.descricao =
+    "Presença do documento TXT sintético de auditoria.";
+  data.analysis.resultados[0].justificativa = preparer.FIXTURE.reviewJustification;
+  data.analysis.resultados[0].fundamento = preparer.FIXTURE.reviewFoundation;
+  Object.assign(data.detail.competencia, { id: c.id });
+  Object.assign(data.detail.requisito, {
+    id: c.requirementId,
+    codigo: "AUD-A-TXT-001",
+    origem_id: b.itemId,
+    hash_snapshot: "b".repeat(64),
+  });
+  data.detail.requisito.descricao = data.analysis.resultados[0].requisito.descricao;
+  data.detail.execucao_atual.id = c.executionId;
+  data.detail.execucao_atual.iniciada_em = "2026-11-10T00:00:00Z";
+  data.detail.execucao_atual.concluida_em = "2026-11-10T00:01:00Z";
+  data.overview.competencia.situacao = c.state;
+  data.overview.blocking_summary.aprovacao_apresentacao_atual = true;
+  data.context = {
+    schema_versao: "v117-v1",
+    id_competencia: c.id,
+    id_requisito: c.requirementId,
+    id_organizacao: b.organization,
+    id_contrato: b.contract,
+    id_execucao_esperada: c.executionId,
+    id_resultado_esperado: null,
+    hash_esperado: "a".repeat(64),
+    pode_revisar: false,
+  };
+  const owner = { id_competencia: s.id, id_organizacao: b.organization, id_contrato: b.contract };
+  data.presentations = [
+    {
+      ...owner,
+      id: s.presentationId,
+      id_pacote: s.packageId,
+      protocolo: "HML-TRILHA-A-20261108",
+      forma_apresentacao: "Ensaio sintético em homologação.",
+      apresentado_em: "2026-11-10T00:00:00Z",
+      tipo: "inicial",
+      numero_rodada: 1,
+    },
+  ];
+  data.packages = [
+    {
+      ...owner,
+      id: s.packageId,
+      hash_pacote: s.packageHash,
+      numero: 1,
+      tipo: "inicial",
+      status: preparer.R18_REGISTRATION_CANDIDATE.packageStatus,
+      congelado_em: "2026-11-10T00:00:00Z",
+    },
+  ];
+  data.items = [
+    {
+      ...owner,
+      id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      id_pacote: s.packageId,
+      entidade_tipo: "documento_competencia",
+      entidade_id: s.documentId,
+      versao_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+      hash: "c".repeat(64),
+      ordem: 1,
+    },
+  ];
+  return { data, bindings: b };
+}
+
+async function c8BuildSourceUI(directory) {
+  const fs = await import("node:fs/promises"),
+    { join, resolve } = await import("node:path"),
+    { fileURLToPath } = await import("node:url");
+  const root = fileURLToPath(new URL("../../", import.meta.url));
+  const pg = createRequire(require.resolve("@supabase/supabase-js")).resolve(
+    "@supabase/postgrest-js",
+  );
+  const b = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+  await fs.writeFile(
+    join(directory, "client.ts"),
+    `import {PostgrestClient} from ${JSON.stringify(pg)};export const supabase=Object.assign(new PostgrestClient(${JSON.stringify(API)}+'/rest/v1'),{auth:{getUser:async()=>({data:{user:{id:'native-c8-owner'}},error:null})}});`,
+  );
+  await fs.writeFile(
+    join(directory, "router.tsx"),
+    `import React from 'react';const navigate=()=>{};export const useNavigate=()=>navigate;export const Link=({children,to,...p})=><a href={typeof to==='string'?to:'#'} {...p}>{children}</a>;`,
+  );
+  await fs.writeFile(
+    join(directory, "org.ts"),
+    `export const EVENTO_ORGANIZACAO_ALTERADA="contaos:organizacao-alterada";export const obterPreferenciaOrganizacao=()=>${JSON.stringify(b.organization)};`,
+  );
+  await fs.writeFile(
+    join(directory, "entry.tsx"),
+    `import React from 'react';import {createRoot} from 'react-dom/client';import {CompetenciaAnalise} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaAnalise.tsx"))};import {CompetenciaApresentar} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaApresentar.tsx"))};import {CompetenciaProtocolo} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaProtocolo.tsx"))};const root=createRoot(document.getElementById('root'));window.__mount=(surface,id,ap)=>root.render(surface==='V117'?<CompetenciaAnalise key={crypto.randomUUID()} id={id}/>:surface==='V119'?<CompetenciaApresentar key={crypto.randomUUID()} id={id}/>:<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>);window.__ready=true;`,
+  );
+  const aliases = {
+    react: require.resolve("react"),
+    "react-dom/client": require.resolve("react-dom/client"),
+    "react/jsx-runtime": require.resolve("react/jsx-runtime"),
+    "@/integrations/supabase/client": join(directory, "client.ts"),
+    "@tanstack/react-router": join(directory, "router.tsx"),
+    "@/lib/organizacao/preferenciaOrganizacao": join(directory, "org.ts"),
+  };
+  const bunScript = `const result=await Bun.build({entrypoints:[${JSON.stringify(join(directory, "entry.tsx"))}],outdir:${JSON.stringify(directory)},target:'browser',naming:'ui.js',minify:true,define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'closed-infrastructure',setup(build){const aliases=${JSON.stringify(aliases)};build.onResolve({filter:/^(@\\/|@tanstack\\/react-router$|react$|react-dom\\/client$|react\\/jsx-runtime$)/},args=>({path:Bun.resolveSync(aliases[args.path]??${JSON.stringify(resolve(root, "src"))}+'/'+args.path.slice(2),${JSON.stringify(root)})}));}}]});if(!result.success){for(const log of result.logs)console.error(log);process.exit(1);}`;
+  await fs.writeFile(join(directory, "build.mjs"), bunScript);
+  const { execFile } = await import("node:child_process"),
+    { promisify } = await import("node:util");
+  await promisify(execFile)(
+    process.env.CONTAOS_BUN_BINARY || "bun",
+    [join(directory, "build.mjs")],
+    { cwd: root, timeout: 15000, maxBuffer: 1048576 },
+  );
+  return fs.readFile(join(directory, "ui.js"));
+}
+
+async function nativeC8ObservationIdentity() {
+  const { execFile } = await import("node:child_process"),
+    { promisify } = await import("node:util");
+  const { stdout } = await promisify(execFile)("git", ["rev-parse", "HEAD"], {
+    timeout: 10000,
+    maxBuffer: 1024,
+  });
+  const harnessSha = stdout.trim();
+  assert.match(harnessSha, /^[a-f0-9]{40}$/);
+  return {
+    frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
+    harnessSha,
+    deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
+    workflowRun: "1",
+  };
+}
+
+async function c8NativeSourceProbe(browser, cssCompiler) {
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { tmpdir } = await import("node:os");
+  const dir = await fs.mkdtemp(join(tmpdir(), "c8-source-real-"));
+  const phase = (stage, item = null) =>
+    console.log(
+      "C8_NATIVE_PHASE " + stage + (item ? ` ${item.surface} ${item.width} ${item.theme}` : ""),
+    );
+  phase("START");
+  let server,
+    page,
+    business = 0,
+    currentObserver = null;
+  try {
+    phase("BUNDLE");
+    const bundle = await c8BuildSourceUI(dir),
+      { data, bindings: b } = await c8SourceFixture();
+    const { execFile } = await import("node:child_process"),
+      { promisify } = await import("node:util"),
+      ts = (await import("typescript")).default;
+    const oldSource = (
+      await promisify(execFile)(
+        "git",
+        [
+          "show",
+          "34674fab697cbdecd4dd1d5f5f918df64ce1b286:scripts/hml/authenticated-visual-audit.mjs",
+        ],
+        { maxBuffer: 1048576 },
+      )
+    ).stdout;
+    const ast = ts.createSourceFile("old.mjs", oldSource, 99, true, ts.ScriptKind.JS);
+    const oldDeclaration = ast.statements
+      .find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "surfaceStateValid")
+      .getText(ast)
+      .replace(/^export /, "");
+    const before = new Function(oldDeclaration + ";return surfaceStateValid;")();
+    const cssAst = ts.createSourceFile(
+        "native-ui.js",
+        bundle.toString("utf8"),
+        99,
+        true,
+        ts.ScriptKind.JS,
+      ),
+      candidates = new Set();
+    const cssVisit = (node) => {
+      if (ts.isStringLiteralLike(node))
+        for (const token of node.text.split(/\s+/)) candidates.add(token);
+      ts.forEachChild(node, cssVisit);
+    };
+    cssVisit(cssAst);
+    const sourceCss = cssCompiler.build([...candidates]);
+    const readNames = new Set();
+    let surface = "V117",
+      mode = "ok";
+    // Fulfill native browser requests directly: SDK and observer stay original,
+    // while the fixture avoids a detached APIRequestContext crossing page lifetime.
+    const fixtureReply = (url, raw, requestSurface, requestMode, method) => {
+      const surface = requestSurface,
+        mode = requestMode;
+      if (url.pathname.startsWith("/rest/v1/rpc/")) {
+        assert.equal(method, "POST");
+        const name = url.pathname.split("/").at(-1),
+          args = JSON.parse(raw);
+        readNames.add(name);
+        const competency = b.competencies[surface === "V120" ? 1 : 0];
+        assert.equal(args.p_id_competencia, competency.id);
+        if (name === "obter_visao_geral_competencia")
+          assert.deepEqual(args, { p_id_competencia: competency.id });
+        if (name === "obter_detalhe_requisito_v117")
+          assert.deepEqual(args, {
+            p_id_competencia: competency.id,
+            p_id_requisito: competency.requirementId,
+            p_evidencias_offset: 0,
+            p_evidencias_limite: 25,
+            p_historico_offset: 0,
+            p_historico_limite: 25,
+            p_apontamentos_offset: 0,
+            p_apontamentos_limite: 25,
+          });
+        if (name === "obter_analise_competencia_v116")
+          assert.deepEqual(args, {
+            p_id_competencia: competency.id,
+            p_resultados_offset: 0,
+            p_resultados_limite: 25,
+            p_execucoes_offset: 0,
+            p_execucoes_limite: 10,
+            p_apontamentos_offset: 0,
+            p_apontamentos_limite: 25,
+            p_filtro_resultado: null,
+            p_filtro_criticidade: null,
+            p_filtro_mecanismo: null,
+            p_filtro_apontamento_status: null,
+            p_busca: null,
+          });
+        const rpc = {
+          obter_analise_competencia_v116: data.analysis,
+          obter_detalhe_requisito_v117: data.detail,
+
+          obter_visao_geral_competencia: data.overview,
+        };
+        if (!Object.hasOwn(rpc, name)) {
+          business++;
+          return { status: 403, data: null };
+        }
+        let value = structuredClone(rpc[name]);
+        if (surface === "V120" && name === "obter_visao_geral_competencia")
+          Object.assign(value.competencia, {
+            id: b.competencies[1].id,
+            competencia_referencia: b.competencies[1].month,
+            situacao: b.competencies[1].state,
+          });
+        if (mode === "foreign") {
+          if (value.competencia) value.competencia.id_organizacao = "foreign";
+          else value.id_organizacao = "foreign";
+        }
+        if (mode === "missing") value = null;
+        if (mode === "stale" && name === "obter_analise_competencia_v116") value.stale = true;
+        if (mode === "pending" && name === "obter_analise_competencia_v116")
+          value.estado_analise = "queued";
+        if (mode === "hostile" && name === "obter_detalhe_requisito_v117")
+          value.requisito.descricao = "NATIVEC8_UNLISTED_SENTINEL_84f7";
+        return { data: value, count: 1 };
+      }
+      assert.equal(method, "GET");
+      const tables = {
+        apresentacoes_contratante: data.presentations,
+        pacotes_competencia: data.packages,
+        itens_pacote_competencia: data.items,
+      };
+      const table = url.pathname.split("/").at(-1);
+      if (Object.hasOwn(tables, table)) {
+        const rows = structuredClone(tables[table]);
+        if (mode === "hash" && table === "pacotes_competencia")
+          rows[0].hash_pacote = "0".repeat(64);
+        if (mode === "item" && table === "itens_pacote_competencia") rows.length = 0;
+        return { data: table === "itens_pacote_competencia" ? rows : rows[0], count: rows.length };
+      }
+      business++;
+      return { status: 403, data: null };
+    };
+    server = createHttpServer((req, res) => {
+      const url = new URL(req.url, "http://127.0.0.1");
+      if (url.pathname === "/ui.js") {
+        res.writeHead(200, { "content-type": "text/javascript" });
+        res.end(bundle);
+        return;
+      }
+      if (url.pathname === "/favicon.ico") {
+        res.writeHead(204);
+        res.end();
+        return;
+      }
+      res.writeHead(200, { "content-type": "text/html" });
+      res.end(
+        '<!doctype html><html lang="pt-BR"><head><style>' +
+          sourceCss +
+          '</style></head><body><div id="root"></div><script type="module" src="/ui.js"></script></body></html>',
+      );
+    });
+    await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+    page = await browser.newPage();
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    const privacyHarness = await c8PrivacyHarness();
+    const preparer = await import("./prepare-visual-fixtures.mjs");
+    await page.route(API + "/rest/v1/**", async (route) => {
+      const request = route.request();
+      if (request.method() === "OPTIONS") {
+        await route.fulfill({
+          status: 204,
+          headers: {
+            "access-control-allow-origin": "*",
+            "access-control-allow-methods": "GET,POST,OPTIONS",
+            "access-control-allow-headers": "*",
+          },
+        });
+        return;
+      }
+      const reply = fixtureReply(
+        new URL(request.url()),
+        request.postData() || "",
+        surface,
+        mode,
+        request.method(),
+      );
+      const count = reply.count ?? 1;
+      await route.fulfill({
+        status: reply.status ?? 200,
+        headers: {
+          "content-type": "application/json",
+          "content-range": count ? `0-${count - 1}/${count}` : "*/0",
+          "access-control-allow-origin": "*",
+          "access-control-expose-headers": "content-range",
+        },
+        body: JSON.stringify(reply.data),
+      });
+    });
+    for (surface of ["V117", "V119", "V120"])
+      for (const width of [1440, 1280, 768, 390])
+        for (const theme of ["light", "dark"]) {
+          const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find(
+            (r) => r.surface === surface && r.width === width && r.theme === theme,
+          );
+          const localPage = {
+            url: () => sut.HML_ORIGIN + item.path,
+            evaluate: page.evaluate.bind(page),
+          };
+          currentObserver = preparer.createOfficialObserver(page, {
+            identity: await nativeC8ObservationIdentity(),
+          });
+          const state = {
+            scope: sut.C8_AUDIT_SCOPE,
+            verified: true,
+            closed: false,
+            generation: 0,
+            c8Observer: currentObserver,
+          };
+          privacyHarness.pages.set(localPage, state);
+          const navigated = (frame) => {
+            if (frame === page.mainFrame()) state.generation++;
+          };
+          page.on("framenavigated", navigated);
+          phase("MOUNT", item);
+          await page.setViewportSize({ width, height: 1000 });
+          await page.goto(origin + item.path);
+          await page.waitForFunction(() => window.__ready);
+          await page.evaluate(
+            ({ surface, id, ap, theme }) => {
+              document.documentElement.classList.toggle("dark", theme === "dark");
+              window.__mount(surface, id, ap);
+            },
+            {
+              surface,
+              id: b.competencies[surface === "V120" ? 1 : 0].id,
+              ap: b.competencies[1].presentationId,
+              theme,
+            },
+          );
+          const heading = page.getByRole("heading", {
+            level: 1,
+            name:
+              surface === "V117"
+                ? "Análise da competência"
+                : surface === "V119"
+                  ? "Wizard de apresentação"
+                  : "Apresentação e protocolo",
+            exact: true,
+          });
+          await heading.waitFor();
+          let opener;
+          if (surface === "V117") {
+            phase("DRAWER", item);
+            opener = page.getByRole("button", {
+              name: "Abrir requisito AUD-A-TXT-001",
+              exact: true,
+            });
+            await opener.click();
+            await page.getByRole("dialog", { name: "Detalhe do requisito", exact: true }).waitFor();
+            await page
+              .getByRole("region", { name: "Fonte e versionamento", exact: true })
+              .waitFor();
+          } else
+            await page
+              .getByRole("region", {
+                name:
+                  surface === "V119"
+                    ? "Etapa 2 de 2 — Registrar apresentação"
+                    : "Itens preservados no pacote",
+                exact: true,
+              })
+              .waitFor();
+          if (surface === "V117") {
+            await page.getByRole("dialog").evaluate(async (node) =>
+              Promise.all(
+                node
+                  .getAnimations()
+                  .filter((a) => Number.isFinite(a.effect?.getTiming().iterations))
+                  .map((a) => a.finished.catch(() => {})),
+              ),
+            );
+            const modalGeometry = await sut.collectVisualMetrics(
+              page,
+              item,
+              sut.C8_AUDIT_SCOPE,
+              "PRIMARY",
+            );
+            assert.equal(modalGeometry.passed, true);
+            assert.ok(modalGeometry.targets.length > 0);
+            assert.ok(
+              await page.locator('main button[aria-label="Abrir requisito AUD-A-TXT-001"]').count(),
+            );
+          }
+          phase("STATE", item);
+          const observation = await page.evaluate(() => {
+            const visible = (e) => e.getClientRects().length > 0;
+            return {
+              headingText: document.querySelector("h1")?.textContent,
+              mainText: document.body.innerText,
+              statusTexts: [],
+              regionNames: [...document.querySelectorAll("section[aria-labelledby]")].map(
+                (e) => document.getElementById(e.getAttribute("aria-labelledby"))?.textContent,
+              ),
+              dialogVisible: [...document.querySelectorAll('[role="dialog"]')].some(visible),
+              dialogNames: [...document.querySelectorAll('[role="dialog"]')]
+                .filter(visible)
+                .map(
+                  (e) => document.getElementById(e.getAttribute("aria-labelledby"))?.textContent,
+                ),
+            };
+          });
+          assert.equal(
+            before(surface, observation),
+            false,
+            `causal RED ${surface}/${width}/${theme}`,
+          );
+          assert.equal(
+            sut.surfaceStateValid(surface, observation),
+            true,
+            `${surface}/${width}/${theme}`,
+          );
+          // Actual original SDK reads feed the official observer. The local server
+          // substitutes transport only; no current evidence is injected into the collector.
+          phase("COLLECT", item);
+          await privacyHarness.collect(localPage, item, state);
+          assert.equal(state.c8Current.observer, currentObserver);
+          assert.equal(state.c8Current.generation, state.generation);
+          phase("PRIVACY", item);
+          const rendered = await privacyHarness.render(page),
+            snapshot = await page.locator("body").ariaSnapshot();
+          const token = await privacyHarness.context(localPage, state, rendered, snapshot, null);
+          if (surface === "V117")
+            for (const field of [
+              "AUD-A-TXT-001",
+              data.detail.requisito.descricao,
+              data.analysis.resultados[0].justificativa,
+              data.analysis.resultados[0].fundamento,
+            ])
+              assert.equal(
+                privacyHarness.contexts.get(token).rendered.remainder.includes(field),
+                false,
+              );
+          const technical =
+            surface === "V117"
+              ? b.itemId
+              : surface === "V120"
+                ? b.competencies[1].packageHash
+                : null;
+          if (technical) {
+            assert.ok(rendered.includes(technical));
+            assert.equal(
+              privacyHarness.contexts.get(token).rendered.remainder.includes(technical),
+              false,
+            );
+            await page.evaluate((value) => {
+              const p = document.createElement("p");
+              p.id = "outside-field";
+              p.textContent = value;
+              document.body.append(p);
+            }, technical);
+            const duplicated = await privacyHarness.render(page),
+              duplicatedSnapshot = await page.locator("body").ariaSnapshot();
+            const rejected = await privacyHarness.context(
+              localPage,
+              state,
+              duplicated,
+              duplicatedSnapshot,
+              null,
+            );
+            assert.equal(
+              privacyHarness.contexts.get(rejected).rendered.remainder.includes(technical),
+              true,
+            );
+            await page.locator("#outside-field").evaluate((n) => n.remove());
+            if (surface === "V117" && width === 390 && theme === "dark") {
+              await page.evaluate(() => {
+                const root = document.querySelector('section[aria-labelledby="v117-fonte"]');
+                const field = [...root.querySelectorAll("dl > div")].find(
+                  (n) => n.querySelector("dt")?.textContent === "Identificador da origem: ",
+                );
+                const clone = field.cloneNode(true);
+                clone.id = "duplicate-origin-field";
+                field.after(clone);
+              });
+              const duplicateContext = await privacyHarness.context(
+                localPage,
+                state,
+                await privacyHarness.render(page),
+                await page.locator("body").ariaSnapshot(),
+                null,
+              );
+              assert.equal(
+                privacyHarness.contexts
+                  .get(duplicateContext)
+                  .rendered.remainder.includes(technical),
+                true,
+              );
+              await page.locator("#duplicate-origin-field").evaluate((n) => n.remove());
+              const swap = () => {
+                const root = document.querySelector('section[aria-labelledby="v117-fonte"]');
+                const fields = [...root.querySelectorAll("dl > div")];
+                const origin = fields
+                  .find((n) => n.querySelector("dt")?.textContent === "Identificador da origem: ")
+                  .querySelector("dd");
+                const hash = fields
+                  .find((n) => n.querySelector("dt")?.textContent.startsWith("Hash do snapshot"))
+                  .querySelector("dd");
+                [origin.textContent, hash.textContent] = [hash.textContent, origin.textContent];
+              };
+              await page.evaluate(swap);
+              const exchanged = await privacyHarness.context(
+                localPage,
+                state,
+                await privacyHarness.render(page),
+                await page.locator("body").ariaSnapshot(),
+                null,
+              );
+              assert.equal(
+                privacyHarness.contexts.get(exchanged).rendered.remainder.includes(technical),
+                true,
+              );
+              await page.evaluate(swap);
+            }
+          }
+          if (surface === "V117") {
+            phase("CLOSE", item);
+            await page
+              .getByRole("dialog")
+              .getByRole("button", { name: "Fechar", exact: true })
+              .click();
+            await page.getByRole("dialog").waitFor({ state: "hidden" });
+            await page.waitForFunction(sut.c8DrawerFocusValid, null, { timeout: 15000 });
+            assert.equal(await opener.evaluate((n) => document.activeElement === n), true);
+            assert.equal(
+              (await sut.collectVisualMetrics(page, item, sut.C8_AUDIT_SCOPE, "PRIMARY")).passed,
+              false,
+            );
+            const normal = await sut.collectVisualMetrics(
+              page,
+              item,
+              sut.C8_AUDIT_SCOPE,
+              width < 768 ? "MOBILE_MENU" : "SIDEBAR_COLLAPSED",
+            );
+            assert.ok(normal.targets.length > 0);
+            assert.equal(normal.passed, true);
+            assert.equal(
+              sut.surfaceStateValid(surface, { ...observation, dialogVisible: false }),
+              false,
+            );
+          }
+          if (surface === "V120") {
+            assert.equal(await page.locator('section[aria-labelledby="v120-itens"] li').count(), 1);
+            assert.ok(
+              (await page.locator('section[aria-labelledby="v120-pacote"]').innerText()).includes(
+                b.competencies[1].packageHash,
+              ),
+            );
+          }
+          currentObserver.close();
+          currentObserver = null;
+          page.off("framenavigated", navigated);
+          await page.goto("about:blank");
+        }
+    for (surface of ["V117", "V119", "V120"])
+      for (mode of ["missing", "foreign"]) {
+        const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find(
+          (r) => r.surface === surface && r.width === 390 && r.theme === "dark",
+        );
+        const localPage = {
+          url: () => sut.HML_ORIGIN + item.path,
+          evaluate: page.evaluate.bind(page),
+        };
+        currentObserver = preparer.createOfficialObserver(page);
+        const state = {
+          scope: sut.C8_AUDIT_SCOPE,
+          verified: true,
+          closed: false,
+          generation: 1,
+          c8Observer: currentObserver,
+        };
+        privacyHarness.pages.set(localPage, state);
+        phase("NEGATIVE", item);
+        await page.goto(origin + item.path);
+        await page.waitForFunction(() => window.__ready);
+        await page.evaluate(({ surface, id, ap }) => window.__mount(surface, id, ap), {
+          surface,
+          id: b.competencies[surface === "V120" ? 1 : 0].id,
+          ap: b.competencies[1].presentationId,
+        });
+        await page.waitForFunction(
+          () =>
+            [...document.querySelectorAll('[role="status"],[role="alert"]')].some(
+              (n) => n.textContent.trim() && !/Carregando/.test(n.textContent),
+            ),
+          null,
+          { timeout: 5000 },
+        );
+        await assert.rejects(
+          () => privacyHarness.collect(localPage, item, state),
+          /(C8_CURRENT_BINDING|OBSERVATION_FAILED|OBSERVATION_TABLE)/,
+        );
+        assert.equal(state.c8Current, undefined);
+        currentObserver.close();
+        currentObserver = null;
+        await page.goto("about:blank");
+      }
+    for (const vector of [
+      { surface: "V117", mode: "stale" },
+      { surface: "V117", mode: "pending" },
+      { surface: "V117", mode: "hostile" },
+      { surface: "V120", mode: "hash" },
+      { surface: "V120", mode: "item" },
+    ]) {
+      surface = vector.surface;
+      mode = vector.mode;
+      const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find(
+        (r) => r.surface === surface && r.width === 390 && r.theme === "dark",
+      );
+      const localPage = {
+        url: () => sut.HML_ORIGIN + item.path,
+        evaluate: page.evaluate.bind(page),
+      };
+      currentObserver = preparer.createOfficialObserver(page);
+      const state = {
+        scope: sut.C8_AUDIT_SCOPE,
+        verified: true,
+        closed: false,
+        generation: 1,
+        c8Observer: currentObserver,
+      };
+      privacyHarness.pages.set(localPage, state);
+      phase("NEGATIVE", item);
+      await page.goto(origin + item.path);
+      await page.waitForFunction(() => window.__ready);
+      await page.evaluate(({ surface, id, ap }) => window.__mount(surface, id, ap), {
+        surface,
+        id: b.competencies[surface === "V120" ? 1 : 0].id,
+        ap: b.competencies[1].presentationId,
+      });
+      if (surface === "V117") {
+        await page
+          .getByRole("button", { name: "Abrir requisito AUD-A-TXT-001", exact: true })
+          .click();
+        await page.getByRole("region", { name: "Fonte e versionamento", exact: true }).waitFor();
+      } else
+        await page.waitForFunction(
+          () =>
+            [...document.querySelectorAll('[role="status"],[role="alert"]')].some(
+              (n) => n.textContent.trim() && !/Carregando/.test(n.textContent),
+            ),
+          null,
+          { timeout: 5000 },
+        );
+      if (mode === "hostile") {
+        await privacyHarness.collect(localPage, item, state);
+        const text = await privacyHarness.render(page),
+          snapshot = await page.locator("body").ariaSnapshot();
+        const context = await privacyHarness.context(localPage, state, text, snapshot, null);
+        const remainder = privacyHarness.contexts.get(context).rendered.remainder;
+        assert.ok(remainder.includes("NATIVEC8_UNLISTED_SENTINEL_84f7"));
+        assert.equal(sut.classifyArtifactText(remainder, new Set()).reason, "UNKNOWN_WORDS");
+      } else
+        await assert.rejects(
+          () => privacyHarness.collect(localPage, item, state),
+          /(C8_CURRENT_BINDING|OBSERVATION_FAILED|OBSERVATION_TABLE)/,
+        );
+      currentObserver.close();
+      currentObserver = null;
+      await page.goto("about:blank");
+    }
+    assert.equal(readNames.has("obter_contexto_revisao_v117"), false);
+    assert.equal(readNames.has("obter_detalhe_requisito_v117"), true);
+    assert.equal(business, 0);
+    phase("DONE");
+    console.log("C8_SOURCE_REAL_24 PASS");
+  } finally {
+    currentObserver?.close();
+    if (page && !page.isClosed()) {
+      await page.goto("about:blank", { waitUntil: "load", timeout: 5000 });
+      await page.unrouteAll({ behavior: "wait" });
+    }
+    await page?.close();
+    server?.closeAllConnections();
+    if (server) await new Promise((resolve) => server.close(resolve));
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+}
+
+test("C8 source fixture preserves complete actual SDK shapes and build uses original components", async () => {
+  const { data } = await c8SourceFixture();
+  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  assert.equal(sut.validateC8CurrentWire(item, data), true);
+  const fs = await import("node:fs/promises"),
+    { join } = await import("node:path"),
+    { tmpdir } = await import("node:os");
+  const dir = await fs.mkdtemp(join(tmpdir(), "c8-build-check-"));
+  try {
+    const bundle = await c8BuildSourceUI(dir);
+    assert.ok(bundle.length > 10000);
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
+
+async function c8PrivacyHarness() {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
+  const declaration = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "c8PrivacyContext",
+  );
+  const collector = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "collectC8CurrentWire",
+  );
+  const fields = ast.statements.find(
+    (n) =>
+      ts.isVariableStatement(n) &&
+      n.declarationList.declarations.some((d) => d.name.getText(ast) === "C8_SYNTHETIC_FIELDS"),
+  );
+  const inspect = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "inspectPrivacy",
+  );
+  let renderedDeclaration;
+  const findRendered = (n) => {
+    if (ts.isVariableDeclaration(n) && n.name.getText(ast) === "rendered") renderedDeclaration = n;
+    ts.forEachChild(n, findRendered);
+  };
+  findRendered(inspect);
+  const renderedFunction = renderedDeclaration.initializer.expression.arguments[0];
+  const renderedReader = new Function("return (" + renderedFunction.getText(ast) + ");")();
+  const pages = new WeakMap(),
+    contexts = new WeakMap();
+  const context = new Function(
+    "C8_RECOVERY_DOCUMENT",
+    "SYNTHETIC_FIXTURE",
+    "c8TechnicalFieldContracts",
+    "C8_AUDIT_SCOPE",
+    "privacy78Pages",
+    "privacy78Contexts",
+    "validateC8CurrentWire",
+    "HML_ORIGIN",
+    "fail",
+    fields.getText(ast) +
+      "\n" +
+      declaration.getText(ast) +
+      "\n" +
+      collector.getText(ast) +
+      ";return {context:c8PrivacyContext,collect:collectC8CurrentWire};",
+  )(
+    sut.C8_RECOVERY_DOCUMENT,
+    sut.SYNTHETIC_FIXTURE,
+    sut.c8TechnicalFieldContracts,
+    sut.C8_AUDIT_SCOPE,
+    pages,
+    contexts,
+    sut.validateC8CurrentWire,
+    sut.HML_ORIGIN,
+    (code) => {
+      throw Object.assign(new Error(code), { code });
+    },
+  );
+  return { pages, contexts, ...context, render: (page) => page.evaluate(renderedReader) };
+}
+
+test("C8 contextual privacy refuses missing stale closed or foreign page owners before DOM evaluation", async () => {
+  const h = await c8PrivacyHarness(),
+    { data } = await c8SourceFixture();
+  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  let evaluations = 0;
+  const page = {
+    url: () => sut.HML_ORIGIN + item.path,
+    evaluate: async () => {
+      evaluations++;
+      return [];
+    },
+  };
+  const observer = {},
+    state = {
+      scope: sut.C8_AUDIT_SCOPE,
+      verified: true,
+      closed: false,
+      generation: 1,
+      c8Observer: observer,
+    };
+  state.c8Current = { owner: state, generation: 1, observer, item, wire: data };
+  h.pages.set(page, state);
+  const valid = await h.context(page, state, "Texto", "Texto", null);
+  assert.equal(h.contexts.get(valid).rendered.remainder, "Texto");
+  assert.equal(evaluations, 1);
+  for (const delta of [
+    { scope: null },
+    { c8Current: null },
+    { generation: 2 },
+    { closed: true },
+    { verified: false },
+    { c8Observer: {} },
+  ]) {
+    Object.assign(state, delta);
+    await assert.rejects(() => h.context(page, state, "Texto", "Texto", null), /C8_CURRENT_OWNER/);
+    assert.equal(evaluations, 1);
+    Object.assign(state, {
+      scope: sut.C8_AUDIT_SCOPE,
+      verified: true,
+      closed: false,
+      generation: 1,
+      c8Observer: observer,
+      c8Current: { owner: state, generation: 1, observer, item, wire: data },
+    });
+  }
+  h.pages.set(page, {});
+  await assert.rejects(() => h.context(page, state, "Texto", "Texto", null), /C8_CURRENT_OWNER/);
+  assert.equal(evaluations, 1);
+});
+
+test("C8 native diagnostic exports only a closed source-real phase and never raw TAP errors", () => {
+  assert.equal(typeof sut.nativeC8VisualDiagnostic, "function");
+  assert.deepEqual(
+    sut.nativeC8VisualDiagnostic(
+      "# C8_NATIVE_PHASE START\n# C8_NATIVE_PHASE STATE V117 390 dark\nsecret Bearer canary\n",
+    ),
+    { stage: "STATE", surface: "V117", width: 390, theme: "dark" },
+  );
+  assert.deepEqual(sut.nativeC8VisualDiagnostic("# C8_NATIVE_PHASE SECRET canary\n"), {
+    stage: "UNKNOWN",
+  });
+  assert.deepEqual(sut.nativeC8VisualDiagnostic("# C8_NATIVE_PHASE STATE V117 391 dark\n"), {
+    stage: "UNKNOWN",
+  });
+  assert.deepEqual(sut.nativeC8VisualDiagnostic(null), { stage: "UNKNOWN" });
+});
+
+test("C8 frozen protocol requires the original package binding and exactly one valid scoped item", async () => {
+  const { data, bindings: b } = await c8SourceFixture(),
+    c = b.competencies[1];
+  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V120");
+  const wire = structuredClone(data);
+  Object.assign(wire.overview.competencia, {
+    id: c.id,
+    competencia_referencia: c.month,
+    situacao: c.state,
+  });
+  assert.equal(sut.validateC8CurrentWire(item, wire), true);
+  for (const mutate of [
+    (w) => (w.packages[0].hash_pacote = "0".repeat(64)),
+    (w) => (w.packages[0].congelado_em = null),
+    (w) => (w.packages[0].numero = 2),
+    (w) => (w.packages[0].status = "rascunho"),
+    (w) => (w.presentations[0].protocolo = "foreign"),
+    (w) => (w.presentations[0].id_organizacao = "foreign"),
+    (w) => (w.items = []),
+    (w) => w.items.push({ ...w.items[0] }),
+    (w) => (w.items[0].hash = ""),
+    (w) => (w.items[0].entidade_id = null),
+    (w) => (w.items[0].versao_id = "foreign"),
+    (w) => (w.items[0].id_pacote = "foreign"),
+    (w) => (w.items[0].id_competencia = b.competencies[0].id),
+  ]) {
+    const invalid = structuredClone(wire);
+    mutate(invalid);
+    assert.equal(sut.validateC8CurrentWire(item, invalid), false);
+  }
+});
+
+test("C8 technical contracts bind each wire field to its own original UI selector and label", async () => {
+  assert.equal(typeof sut.c8TechnicalFieldContracts, "function");
+  const { data } = await c8SourceFixture(),
+    item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  const fields = sut.c8TechnicalFieldContracts(item, data);
+  const origin = fields.find((f) => f.field === "detail.requisito.origem_id");
+  assert.equal(origin.value, data.detail.requisito.origem_id);
+  assert.equal(origin.label, "Identificador da origem");
+  assert.equal(origin.selector, 'section[aria-labelledby="v117-fonte"] > dl > div > dd');
+  assert.equal(
+    fields.some((f) => f.field === "context.id_organizacao"),
+    false,
+  );
+  const hash = fields.find((f) => f.field === "detail.requisito.hash_snapshot");
+  assert.equal(hash.label, "Hash do snapshot");
+  assert.notEqual(origin.field, hash.field);
+  const hostile = structuredClone(data);
+  hostile.detail.requisito.descricao = "Pessoa fora do catálogo";
+  assert.equal(
+    sut.c8TechnicalFieldContracts(item, hostile).some((f) => f.value === "Pessoa fora do catálogo"),
+    false,
+  );
+});
+
+test("C8 opinion technical fields require each observed row to retain the current tenant and competence", async () => {
+  const { data, bindings: b } = await c8SourceFixture(),
+    item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V118");
+  const wire = {
+    overview: structuredClone(data.overview),
+    opinions: [
+      {
+        id_competencia: sut.SYNTHETIC_FIXTURE.competence,
+        id_organizacao: b.organization,
+        id_contrato: b.contract,
+        hash: "a".repeat(64),
+      },
+    ],
+  };
+  Object.assign(wire.overview.competencia, {
+    id: sut.SYNTHETIC_FIXTURE.competence,
+    competencia_referencia: "2026-11-01",
+  });
+  assert.equal(sut.validateC8CurrentWire(item, wire), true);
+  for (const delta of [
+    { id_organizacao: "foreign" },
+    { id_contrato: "foreign" },
+    { id_competencia: b.competencies[0].id },
+  ])
+    assert.equal(
+      sut.validateC8CurrentWire(item, { ...wire, opinions: [{ ...wire.opinions[0], ...delta }] }),
+      false,
+    );
+  assert.equal(sut.validateC8CurrentWire(item, { ...wire, opinions: null }), false);
+});
+
+test("C8 native observer uses the checked-out Git identity without inheriting private harness ENV", async () => {
+  assert.equal(
+    sut.browserEnvironment({ CONTAOS_HARNESS_SHA: "a".repeat(40) }).CONTAOS_HARNESS_SHA,
+    undefined,
+  );
+  assert.equal(typeof nativeC8ObservationIdentity, "function");
+  const identity = await nativeC8ObservationIdentity();
+  assert.match(identity.harnessSha, /^[a-f0-9]{40}$/);
+  const { createOfficialObserver } = await import("./prepare-visual-fixtures.mjs");
+  const page = { on() {}, off() {} };
+  assert.throws(
+    () => createOfficialObserver(page, { identity: { ...identity, harnessSha: undefined } }),
+    /OBSERVATION_DIAGNOSTIC/,
+  );
+  const observer = createOfficialObserver(page, { identity });
+  assert.equal(observer.generation(), 0);
+  await assert.rejects(
+    () =>
+      observer.read("apresentacoes_contratante", { id: "eb6d5b1c-8b64-418b-aa82-bf1f29d41768" }),
+    { message: "OBSERVATION_TABLE" },
+  );
+  observer.close();
+});
+
+test("C8 primary V117 measurement refuses a missing modal while complements retain the normal page", async () => {
+  const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  const measurement = {
+    viewport: { width: item.width, height: 1000 },
+    theme: item.theme,
+    targets: [],
+    pairs: [],
+    dates: [],
+    table: null,
+    contrast: [],
+    overflowX: 0,
+    modalPassed: false,
+  };
+  const page = { evaluate: async () => measurement };
+  assert.equal(
+    (await sut.collectVisualMetrics(page, item, sut.C8_AUDIT_SCOPE, "PRIMARY")).passed,
+    false,
+  );
+  assert.equal(
+    (await sut.collectVisualMetrics(page, item, sut.C8_AUDIT_SCOPE, "SIDEBAR_COLLAPSED")).passed,
+    true,
+  );
+  assert.equal((await sut.collectVisualMetrics(page, item)).passed, true);
+});
+
+test("C8 V117 reported primary proof requires the actual modal measurement", () => {
+  const rows = c8TechnicalRows(),
+    i = rows.findIndex((r) => r.surface === "V117");
+  rows[i].visualCapture.metrics.modalPassed = true;
+  assert.equal(sut.summarizeCases(rows, sut.C8_AUDIT_SCOPE).matrixComplete, true);
+  rows[i].visualCapture.metrics.modalPassed = false;
+  assert.equal(sut.summarizeCases(rows, sut.C8_AUDIT_SCOPE).matrixComplete, false);
+});
+
+test("C8 V116 preserves the proven historical empty state without inventing a completed October analysis", async () => {
+  const { data, bindings: b } = await c8SourceFixture(),
+    item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V116");
+  const analysis = {
+    ...data.analysis,
+    competencia: {
+      ...data.analysis.competencia,
+      id: sut.SYNTHETIC_FIXTURE.competence,
+      competencia_referencia: "2026-11-01",
+      situacao: "rascunho",
+    },
+    estado_analise: "not_analyzed",
+    stale: false,
+    execucao_atual: null,
+    resultados: [],
+    execucoes: [],
+    apontamentos: [],
+    percentual: 0,
+    blocking_summary: { ...data.analysis.blocking_summary, total: 0, liberado: false },
+  };
+  assert.equal(sut.validateC8CurrentWire(item, { analysis }), true);
+  for (const delta of [
+    { estado_analise: "queued" },
+    { stale: true },
+    { resultados: [{}] },
+    { execucoes: [{}] },
+    { competencia: { ...analysis.competencia, id: b.competencies[0].id } },
+    { percentual: 100 },
+  ])
+    assert.equal(sut.validateC8CurrentWire(item, { analysis: { ...analysis, ...delta } }), false);
+});
+
+test("C8 native diagnostic distinguishes a TAP timeout from lifecycle failure without exporting errors", () => {
+  const tap =
+    "# C8_NATIVE_PHASE DONE\n# tests 1\n# pass 0\n# fail 1\n# skipped 0\n# cancelled 0\n  failureType: 'unhandledRejection'\n  error: 'Bearer secret-canary'\n";
+  assert.deepEqual(sut.nativeC8VisualDiagnostic(tap), {
+    stage: "DONE",
+    outcome: {
+      tests: 1,
+      pass: 0,
+      fail: 1,
+      skipped: 0,
+      cancelled: 0,
+      kinds: ["unhandledRejection"],
+      lifecycleAfterEnd: false,
+      abortedRequest: false,
+      targetClosed: false,
+    },
+  });
+});
+
+test("C8 native cleanup drains active route handlers before page and server shutdown", async () => {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+    new URL("./authenticated-visual-audit.test.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("audit.test.mjs", source, 99, true, ts.ScriptKind.JS);
+  const probe = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "c8NativeSourceProbe",
+  );
+  const cleanup = probe.body.statements.find((n) => ts.isTryStatement(n)).finallyBlock;
+  const run = new Function(
+    "env",
+    "const {currentObserver,page,server,fs,dir}=env;return(async()=>" +
+      cleanup.getText(ast) +
+      ")();",
+  );
+  const calls = [];
+  let drained = false,
+    closed = false;
+  await run({
+    currentObserver: {
+      close() {
+        calls.push("observer");
+      },
+    },
+    page: {
+      isClosed: () => false,
+      goto: async (url) => {
+        assert.equal(url, "about:blank");
+        calls.push("blank");
+      },
+      unrouteAll: async (options) => {
+        assert.deepEqual(options, { behavior: "wait" });
+        drained = true;
+        calls.push("drain");
+      },
+      close: async () => {
+        assert.equal(drained, true);
+        closed = true;
+        calls.push("page");
+      },
+    },
+    server: {
+      closeAllConnections() {
+        assert.equal(closed, true);
+        calls.push("connections");
+      },
+      close(done) {
+        calls.push("server");
+        done();
+      },
+    },
+    fs: {
+      rm: async () => {
+        assert.equal(closed, true);
+        calls.push("files");
+      },
+    },
+    dir: "native-fixture",
+  });
+  assert.deepEqual(calls, ["observer", "blank", "drain", "page", "connections", "server", "files"]);
+});
+
+test("C8 V117 binds synthetic text in the background and the original opener aria label", async () => {
+  const { data } = await c8SourceFixture(),
+    item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  data.analysis.resultados[0].requisito.descricao =
+    "Presença do documento TXT sintético de auditoria.";
+  data.analysis.resultados[0].justificativa =
+    "O requisito sintético exige a presença do TXT aprovado, vinculado a esta competência. Arquivo e versão conferidos pelo SHA256 previsto.";
+  data.analysis.resultados[0].fundamento =
+    "Ensaio sintético HML da Trilha A. A conferência limita-se à presença documental; sem efeito jurídico ou financeiro.";
+  const contracts = sut.c8TechnicalFieldContracts(item, data);
+  for (const field of [
+    "analysis.resultados.0.requisito.descricao",
+    "analysis.resultados.0.justificativa",
+    "analysis.resultados.0.fundamento",
+    "detail.requisito.codigo",
+  ])
+    assert.ok(contracts.some((c) => c.field === field));
+  const label = contracts.find(
+    (c) => c.field === "analysis.resultados.0.requisito.codigo" && c.attribute === "aria-label",
+  );
+  assert.equal(label.expected, "Abrir requisito AUD-A-TXT-001");
 });
