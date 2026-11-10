@@ -3736,5 +3736,21 @@
     ],
     "candidate_fields": 19,
     "positive_test_vector": "V117_ORIGINAL_BROKER_VALIDATED_6756371318"
+  },
+  "trilha_a_184_conclusao_preservacao24": {
+    "status": "PLAN_DOCUMENTAL_AGUARDANDO_CI_REVISAO_GATE_DISTINTO",
+    "plan": "docs/frontend/planos/TRILHA_A_184_CONCLUSAO_PRESERVACAO_24_PLAN_2026-11-10.md",
+    "new_cases": 184,
+    "preserved_cases": 24,
+    "private_inventory": 208,
+    "fixture_dependent_within_new": 24,
+    "public_proofs_repeated": false,
+    "r19_gate_merge": "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
+    "r19_original_readonly_completion": "PENDENTE_PROVA_REAL",
+    "catalog_after_fixtures": "PENDENTE_GATE_FECHADO",
+    "auth_authorized": false,
+    "build_authorized": false,
+    "deploy_authorized": false,
+    "v1_certified": false
   }
 }
