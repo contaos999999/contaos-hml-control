@@ -13179,7 +13179,7 @@ async function r19BuildProtocolUI(directory) {
   );
   await fs.writeFile(
     join(directory, "entry.tsx"),
-    `import React from 'react';import {createRoot} from 'react-dom/client';import {CompetenciaProtocolo} from './component';import {obterVisaoGeral} from './overview';import * as p from './opinion';const root=createRoot(document.getElementById('root'));window.__mount=(id,ap)=>root.render(<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>);window.__overview=(id)=>obterVisaoGeral(id,new AbortController().signal);window.__opinions=(id)=>p.listarPareceres(id,${JSON.stringify(FIXTURE.organization)},${JSON.stringify(FIXTURE.contract)},0,new AbortController().signal);window.__ready=true;const detail=/^\\/competencias\\/([a-f0-9-]{36})$/.exec(location.pathname);if(detail)window.__overview(detail[1]);`,
+    `import React from 'react';import {createRoot} from 'react-dom/client';import {CompetenciaProtocolo} from './component';import {obterVisaoGeral} from './overview';import * as p from './opinion';const root=createRoot(document.getElementById('root'));window.__mount=(id,ap)=>root.render(<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>);window.__overview=async(id)=>await obterVisaoGeral(id,new AbortController().signal);window.__opinions=(id)=>p.listarPareceres(id,${JSON.stringify(FIXTURE.organization)},${JSON.stringify(FIXTURE.contract)},0,new AbortController().signal);window.__ready=true;const detail=/^\\/competencias\\/([a-f0-9-]{36})$/.exec(location.pathname);if(detail)window.__overview(detail[1]);`,
   );
   await promisify(execFile)(
     "bun",
@@ -14028,4 +14028,60 @@ test("R19 native readonly phase diagnostics contain only the closed literal stag
     }),
     expected.map((stage) => "R19_READONLY_PHASE " + stage + "\n"),
   );
+});
+
+test("R19 compiled native detail entry activates the original lazy overview SDK for both months", async () => {
+  const fs = await import("node:fs/promises"),
+    { tmpdir } = await import("node:os"),
+    { join } = await import("node:path"),
+    { JSDOM } = await import("jsdom");
+  const dir = await fs.mkdtemp(join(tmpdir(), "r19-detail-bootstrap-"));
+  try {
+    const bundle = await r19BuildProtocolUI(dir);
+    for (const c of JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
+      const requests = [];
+      const origin = "http://127.0.0.1:43431";
+      const dom = new JSDOM('<div id="root"></div>', {
+        url: origin + "/competencias/" + c.id,
+        runScripts: "outside-only",
+        pretendToBeVisual: true,
+        beforeParse(window) {
+          Object.assign(window, {
+            Headers,
+            Request,
+            Response,
+            AbortController,
+            TextEncoder,
+            TextDecoder,
+          });
+          window.fetch = async (url, options) => {
+            const target = new URL(url);
+            assert.equal(target.origin, origin);
+            assert.equal(target.pathname, "/rest/v1/rpc/obter_visao_geral_competencia");
+            assert.equal(options.method, "POST");
+            assert.deepEqual(JSON.parse(options.body), { p_id_competencia: c.id });
+            requests.push(c.id);
+            return new Response(JSON.stringify(r17View(100)), {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            });
+          };
+        },
+      });
+      try {
+        dom.window.eval(bundle.toString("utf8"));
+        assert.equal(dom.window.__ready, true);
+        for (let n = 0; n < 10 && requests.length === 0; n++) await new Promise(setImmediate);
+        assert.deepEqual(
+          requests,
+          [c.id],
+          "detail navigation must start the SDK request without page.evaluate or a manual mount",
+        );
+      } finally {
+        dom.window.close();
+      }
+    }
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
 });
