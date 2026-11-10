@@ -29,24 +29,24 @@ import {
   sha256,
 } from "./inspect-fixture-artifact.mjs";
 
-test("R18 original artifact pin is closed to the single terminal attempt", () => {
+test("R20 original artifact pin is closed to the single terminal attempt", () => {
   assert.deepEqual(
     [PIN.run, PIN.head, PIN.upstream, PIN.artifact, PIN.size, PIN.name, PIN.digest],
     [
-      42731273678,
-      "8d055951838fee29664563bed5ee26bac4f55bd8",
-      42731084944,
-      13725830880,
-      31346,
-      "trilha-a-fixtures-42731273678-1",
-      "b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb",
+      42788354465,
+      "79b728cb12e7b1df037c5816c27842c0ef042d2b",
+      42788083679,
+      13751191411,
+      33862,
+      "trilha-a-fixtures-42788354465-1",
+      "142d095971e8b206030451d2de6236351a9db59b21e45a10b1c32b06cda73536",
     ],
   );
 });
-test("R18 manifest appends the exact R17 receipt and canonical recovery history", () => {
-  assert.equal(FILES.length, 28);
-  assert.equal(Object.keys(HISTORY).length, 25);
-  assert.deepEqual(FILES.slice(-2), ["receipts-r17.json", "recovery-r17.json"]);
+test("R20 manifest appends exact R18 bytes while preserving all prior history", () => {
+  assert.equal(FILES.length, 30);
+  assert.equal(Object.keys(HISTORY).length, 27);
+  assert.deepEqual(FILES.slice(-2), ["receipts-r18.json", "recovery-r18.json"]);
   assert.equal(
     HISTORY["receipts-r17.json"],
     "bed517a5a27f72f23dc07f869a1d4de21f1f24582fc4c725e9f747d8e603d82a",
@@ -59,19 +59,19 @@ test("R18 manifest appends the exact R17 receipt and canonical recovery history"
 function r18TechnicalReport() {
   const value = report();
   Object.assign(value.intentLedger, {
-    count: 17,
-    priorConfirmed: 15,
+    count: 19,
+    priorConfirmed: 17,
     priorReserved: 2,
     newArmedCount: 0,
     maxIntentions: 24,
-    maxNewIntentions: 7,
+    maxNewIntentions: 5,
   });
-  Object.assign(value.recovery, { confirmedBefore: 15, maxNewIntentions: 7 });
+  Object.assign(value.recovery, { confirmedBefore: 17, maxNewIntentions: 5 });
   return value;
 }
-test("R18 budget separates fifteen confirmations and two reservations with seven available arms", () => {
+test("R20 budget preserves seventeen confirmations and two reservations with zero new arms", () => {
   const proof = validateRecords(r18TechnicalReport(), empty());
-  assert.equal(proof.observations.priorConfirmed, 15);
+  assert.equal(proof.observations.priorConfirmed, 17);
   assert.equal(proof.observations.priorReserved, 2);
   assert.equal(proof.observations.newArmedCount, 0);
 });
@@ -99,11 +99,11 @@ test("R18 immutable R17 history retains original budget and confirmed October re
       ],
     ],
   );
-  assert.equal(JSON.parse(buildProof(fixture(t), inspection)).manifest.length, 28);
+  assert.equal(JSON.parse(buildProof(fixture(t), inspection)).manifest.length, 30);
 });
-test("R18 rejects the former twenty-six data layout before publishing any proof", (t) => {
+test("R20 rejects the former twenty-eight data layout before publishing any proof", (t) => {
   const root = fixture(t);
-  for (const name of ["receipts-r17.json", "recovery-r17.json"]) rmSync(join(root, name));
+  for (const name of ["receipts-r18.json", "recovery-r18.json"]) rmSync(join(root, name));
   writeFileSync(
     join(root, "SHA256SUMS"),
     FILES.slice(0, -2)
@@ -165,21 +165,21 @@ const BASE = {
     cleanupFailure: null,
   },
   intentLedger: {
-    count: 17,
+    count: 19,
     frozen: false,
     pending: false,
     sent: false,
-    priorConfirmed: 15,
+    priorConfirmed: 17,
     priorReserved: 2,
     newArmedCount: 0,
     maxIntentions: 24,
-    maxNewIntentions: 7,
+    maxNewIntentions: 5,
   },
   recovery: {
     ledgerSha256: "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",
     priorWorkflowRun: "42540864527",
-    confirmedBefore: 15,
-    maxNewIntentions: 7,
+    confirmedBefore: 17,
+    maxNewIntentions: 5,
     r3ReceiptsSha256: "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",
     r3WorkflowRun: "42559214436",
     r4ZeroAuth: {
@@ -217,9 +217,9 @@ const BASE = {
     ],
   },
   frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
-  harnessSha: "8d055951838fee29664563bed5ee26bac4f55bd8",
+  harnessSha: "79b728cb12e7b1df037c5816c27842c0ef042d2b",
   deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
-  workflowRun: "42731273678",
+  workflowRun: "42788354465",
   phase: "FINAL_READBACK",
   completed: false,
   logoutVerified: true,
@@ -289,6 +289,10 @@ HISTORICAL["receipts-r17.json"] =
 HISTORICAL["recovery-r17.json"] =
   '{\n  "schema": "contaos.fixture.recovery-r17.v1",\n  "workflowRun": "42724239916",\n  "artifactId": "13722355410",\n  "requestId": "trilha-a-fixtures-20261109-r17",\n  "harnessSha": "adaeb72504cadf6dd83b8938abba9c067acba525",\n  "zipSha256": "438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff",\n  "reportSha256": "8565ec68be1b94344ecaaa3ac2688076587ba446d4c0f3acbdf5cf34aa73c594",\n  "receiptsSha256": "bed517a5a27f72f23dc07f869a1d4de21f1f24582fc4c725e9f747d8e603d82a",\n  "observationSha256": "9d6bb4c7de28c4f2dd8563d775d7618deb52e1b96b6fdbfea2b9f0f7defa5f6a",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"PREPARER_SPA_LINK\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"PREPARER_SPA_LINK\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"COMPETENCY_UI\\",\\n    \\"subphasePath\\": [\\n      \\"COMPETENCIES\\",\\n      \\"COMPETENCY_UI\\",\\n      \\"COMPETENCY_UI\\",\\n      \\"COMPETENCY_UI\\"\\n    ],\\n    \\"lastCompletedSubphase\\": \\"PREFLIGHT\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 17,\\n    \\"frozen\\": false,\\n    \\"pending\\": false,\\n    \\"sent\\": false,\\n    \\"priorConfirmed\\": 14,\\n    \\"priorReserved\\": 2,\\n    \\"newArmedCount\\": 1,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 8\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 14,\\n    \\"maxNewIntentions\\": 8,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": true,\\n    \\"sourceVersion\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"sourceHash\\": \\"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\\"\\n  },\\n  \\"bindings\\": {\\n    \\"sourceVersionId\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"listId\\": \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"listVersionId\\": \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"itemId\\": \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"source\\": \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"competencies\\": [\\n      {\\n        \\"month\\": \\"2026-10-01\\",\\n        \\"state\\": \\"pode_apresentar_contratante\\",\\n        \\"id\\": \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n        \\"requirementId\\": \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n        \\"documentId\\": \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n        \\"executionId\\": \\"3c174678-a6ec-4415-9d25-6e8a859de2cb\\",\\n        \\"opinionId\\": \\"9ec80151-bbf6-4469-9cd8-7d96d1bb02cd\\"\\n      },\\n      {\\n        \\"month\\": \\"2026-09-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"code\\": \\"COMPETENCE_DEPENDENCY_BLOCKED\\"\\n      }\\n    ]\\n  },\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"adaeb72504cadf6dd83b8938abba9c067acba525\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42724239916\\",\\n  \\"phase\\": \\"FINAL_READBACK\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [\\n    \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n    \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n    \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n    \\"3c174678-a6ec-4415-9d25-6e8a859de2cb\\",\\n    \\"9ec80151-bbf6-4469-9cd8-7d96d1bb02cd\\"\\n  ],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\n  \\"schema\\": \\"contaos.fixture.receipts.v1\\",\\n  \\"receipts\\": [\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"adaeb72504cadf6dd83b8938abba9c067acba525\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42724239916\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"aprovar_apresentacao\\",\\n      \\"requestId\\": \\"5d657667-4c3b-4b4f-a953-d7e778bfb2c1\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"1e2bc45826f48745d7800fa108c8be6331d33737e2317c710638e1c568b99cc2\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"adaeb72504cadf6dd83b8938abba9c067acba525\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42724239916\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"aprovar_apresentacao\\",\\n      \\"requestId\\": \\"5d657667-4c3b-4b4f-a953-d7e778bfb2c1\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"1e2bc45826f48745d7800fa108c8be6331d33737e2317c710638e1c568b99cc2\\"\\n    }\\n  ]\\n}\\n",\n  "observationRaw": "{\\n  \\"schema\\": \\"contaos.fixture.observation.v1\\",\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"adaeb72504cadf6dd83b8938abba9c067acba525\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42724239916\\",\\n  \\"firstFailure\\": null\\n}\\n"\n}\n';
 
+HISTORICAL["receipts-r18.json"] =
+  '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42731273678",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_apresentacao",\n      "requestId": "dd8e544b-af5b-4e23-bef2-b7c9ae2d0096",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1f2c3e05a38e9ff781a623f86be7d1dd4999f8a9174b59119a9c9b2f21558976"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42731273678",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_apresentacao",\n      "requestId": "dd8e544b-af5b-4e23-bef2-b7c9ae2d0096",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1f2c3e05a38e9ff781a623f86be7d1dd4999f8a9174b59119a9c9b2f21558976"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42731273678",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "registrar_apresentacao",\n      "requestId": "40546f93-f8f4-4686-a78a-11aa3069eda7",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1b7017e2fd916ba61c64d7da6f227f67ef7d2b8c9941f814c0176cda435a590a"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42731273678",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "registrar_apresentacao",\n      "requestId": "40546f93-f8f4-4686-a78a-11aa3069eda7",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1b7017e2fd916ba61c64d7da6f227f67ef7d2b8c9941f814c0176cda435a590a"\n    }\n  ]\n}\n';
+HISTORICAL["recovery-r18.json"] =
+  '{\n  "schema": "contaos.fixture.recovery-r18.v1",\n  "workflowRun": "42731273678",\n  "artifactId": "13725830880",\n  "requestId": "trilha-a-fixtures-20261110-r18",\n  "harnessSha": "8d055951838fee29664563bed5ee26bac4f55bd8",\n  "zipSha256": "b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb",\n  "reportSha256": "c3ef3286f2e49d17226f4b747188a6959b9dcc11997a3cae251cbd0d7dac4590",\n  "receiptsSha256": "1db601b5a947072bcc1a05437a5fae053bd98f1527d4f958e730079f7678cd77",\n  "observationSha256": "f03ea467e40803a792ac4606e35e8f15de5d2fd5746d72428eb732509c57662f",\n  "reportRaw": "{\\n  \\"schema\\": \\"contaos.fixture.preparation.v1\\",\\n  \\"failure\\": \\"PHASE_TIMEOUT\\",\\n  \\"diagnostics\\": {\\n    \\"primaryFailure\\": \\"PHASE_TIMEOUT\\",\\n    \\"failureClass\\": \\"PROTOCOL\\",\\n    \\"errorName\\": \\"Error\\",\\n    \\"subphase\\": \\"COMPETENCY_GET\\",\\n    \\"subphasePath\\": [\\n      \\"COMPETENCIES\\",\\n      \\"COMPETENCY_UI\\",\\n      \\"COMPETENCY_RECONCILE\\",\\n      \\"COMPETENCY_GET\\"\\n    ],\\n    \\"lastCompletedSubphase\\": \\"COMPETENCY_UI\\",\\n    \\"logoutAttempted\\": true,\\n    \\"logoutVerified\\": true,\\n    \\"cleanupFailure\\": null\\n  },\\n  \\"intentLedger\\": {\\n    \\"count\\": 19,\\n    \\"frozen\\": false,\\n    \\"pending\\": false,\\n    \\"sent\\": false,\\n    \\"priorConfirmed\\": 15,\\n    \\"priorReserved\\": 2,\\n    \\"newArmedCount\\": 2,\\n    \\"maxIntentions\\": 24,\\n    \\"maxNewIntentions\\": 7\\n  },\\n  \\"recovery\\": {\\n    \\"ledgerSha256\\": \\"381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9\\",\\n    \\"priorWorkflowRun\\": \\"42540864527\\",\\n    \\"confirmedBefore\\": 15,\\n    \\"maxNewIntentions\\": 7,\\n    \\"r3ReceiptsSha256\\": \\"28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364\\",\\n    \\"r3WorkflowRun\\": \\"42559214436\\",\\n    \\"r4ZeroAuth\\": {\\n      \\"schema\\": \\"contaos.fixture.recovery-r4.v1\\",\\n      \\"headSha\\": \\"4c3a92b3fbf3160b3c67751355a4ef8f91c70d72\\",\\n      \\"upstreamRun\\": 42568309807,\\n      \\"fixturesRun\\": 42568382053,\\n      \\"auditRun\\": 42568382029,\\n      \\"attempt\\": 1,\\n      \\"derivedNewBusinessIntents\\": 0,\\n      \\"proof\\": \\"GITHUB_ACTIONS_LIVE_METADATA\\"\\n    },\\n    \\"reconciled\\": true,\\n    \\"sourceVersion\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"sourceHash\\": \\"d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1\\"\\n  },\\n  \\"bindings\\": {\\n    \\"sourceVersionId\\": \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"listId\\": \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"listVersionId\\": \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"itemId\\": \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"source\\": \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"competencies\\": [\\n      {\\n        \\"month\\": \\"2026-10-01\\",\\n        \\"state\\": \\"pode_apresentar_contratante\\",\\n        \\"id\\": \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n        \\"requirementId\\": \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n        \\"documentId\\": \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n        \\"executionId\\": \\"3c174678-a6ec-4415-9d25-6e8a859de2cb\\",\\n        \\"opinionId\\": \\"9ec80151-bbf6-4469-9cd8-7d96d1bb02cd\\"\\n      },\\n      {\\n        \\"month\\": \\"2026-09-01\\",\\n        \\"state\\": \\"partial\\",\\n        \\"id\\": \\"79bdc139-ed10-4c91-905e-b32b9a824d27\\",\\n        \\"requirementId\\": \\"c824a6f9-e519-44cc-8911-87d1009e2eaf\\",\\n        \\"documentId\\": \\"cd1624d3-73f7-4ea1-b317-c52627df6824\\",\\n        \\"executionId\\": \\"00da4236-810f-4a89-8be5-b2ffcd50a480\\",\\n        \\"opinionId\\": \\"7bbbe81e-e34c-44dc-a76f-ed85fd56d87f\\",\\n        \\"code\\": \\"COMPETENCE_DEPENDENCY_BLOCKED\\"\\n      }\\n    ]\\n  },\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"8d055951838fee29664563bed5ee26bac4f55bd8\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42731273678\\",\\n  \\"phase\\": \\"FINAL_READBACK\\",\\n  \\"completed\\": false,\\n  \\"logoutVerified\\": true,\\n  \\"ids\\": [\\n    \\"1ebbfd0b-c50c-405d-8806-321f18e179e0\\",\\n    \\"bf71906b-87a4-42f5-8371-5f597ef2ad9b\\",\\n    \\"e49ef6dd-13b0-491d-8646-5a7bcd5298cf\\",\\n    \\"e7065876-a620-4dbb-9b4e-992fa4fead83\\",\\n    \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n    \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n    \\"8b942e46-a29b-40d9-8ad4-04aaf9124a34\\",\\n    \\"50c26274-a36f-48e0-b2fe-5a1caf5d6a49\\",\\n    \\"75938450-a972-410c-8612-da3ef7dc0e00\\",\\n    \\"c7f56ac9-81d6-45a4-81f8-db1383006c41\\",\\n    \\"3c174678-a6ec-4415-9d25-6e8a859de2cb\\",\\n    \\"9ec80151-bbf6-4469-9cd8-7d96d1bb02cd\\",\\n    \\"79bdc139-ed10-4c91-905e-b32b9a824d27\\",\\n    \\"c824a6f9-e519-44cc-8911-87d1009e2eaf\\",\\n    \\"cd1624d3-73f7-4ea1-b317-c52627df6824\\",\\n    \\"00da4236-810f-4a89-8be5-b2ffcd50a480\\",\\n    \\"7bbbe81e-e34c-44dc-a76f-ed85fd56d87f\\"\\n  ],\\n  \\"v1Certified\\": false\\n}\\n",\n  "receiptsRaw": "{\\n  \\"schema\\": \\"contaos.fixture.receipts.v1\\",\\n  \\"receipts\\": [\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"8d055951838fee29664563bed5ee26bac4f55bd8\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42731273678\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"aprovar_apresentacao\\",\\n      \\"requestId\\": \\"dd8e544b-af5b-4e23-bef2-b7c9ae2d0096\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"1f2c3e05a38e9ff781a623f86be7d1dd4999f8a9174b59119a9c9b2f21558976\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"8d055951838fee29664563bed5ee26bac4f55bd8\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42731273678\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"aprovar_apresentacao\\",\\n      \\"requestId\\": \\"dd8e544b-af5b-4e23-bef2-b7c9ae2d0096\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"1f2c3e05a38e9ff781a623f86be7d1dd4999f8a9174b59119a9c9b2f21558976\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"8d055951838fee29664563bed5ee26bac4f55bd8\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42731273678\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"registrar_apresentacao\\",\\n      \\"requestId\\": \\"40546f93-f8f4-4686-a78a-11aa3069eda7\\",\\n      \\"state\\": \\"sealed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"1b7017e2fd916ba61c64d7da6f227f67ef7d2b8c9941f814c0176cda435a590a\\"\\n    },\\n    {\\n      \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n      \\"harnessSha\\": \\"8d055951838fee29664563bed5ee26bac4f55bd8\\",\\n      \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n      \\"workflowRun\\": \\"42731273678\\",\\n      \\"schema\\": \\"contaos.fixture.intent.v1\\",\\n      \\"rpc\\": \\"registrar_apresentacao\\",\\n      \\"requestId\\": \\"40546f93-f8f4-4686-a78a-11aa3069eda7\\",\\n      \\"state\\": \\"confirmed\\",\\n      \\"organization\\": \\"e87f7e68-c5ae-4077-943b-02a4afd8b6ee\\",\\n      \\"contract\\": \\"be89ef7e-d839-46c0-9cfb-4da81edf8b74\\",\\n      \\"payloadSha256\\": \\"1b7017e2fd916ba61c64d7da6f227f67ef7d2b8c9941f814c0176cda435a590a\\"\\n    }\\n  ]\\n}\\n",\n  "observationRaw": "{\\n  \\"schema\\": \\"contaos.fixture.observation.v1\\",\\n  \\"frontendSha\\": \\"0024b3c6739ab6296ec12338f11cf792d3a5f84b\\",\\n  \\"harnessSha\\": \\"8d055951838fee29664563bed5ee26bac4f55bd8\\",\\n  \\"deploymentId\\": \\"dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh\\",\\n  \\"workflowRun\\": \\"42731273678\\",\\n  \\"firstFailure\\": null\\n}\\n"\n}\n';
 const empty = () => ({ schema: "contaos.fixture.receipts.v1", receipts: [] });
 const clone = (v) => structuredClone(v);
 const report = () => clone(BASE);
@@ -364,7 +368,7 @@ function metadataFixture() {
     workflow_id: PIN.workflow,
     event: "workflow_run",
     path: ".github/workflows/contaos-trilha-a-fixtures.yml",
-    conclusion: "failure",
+    conclusion: "success",
   };
   const upstream = {
     ...common,
@@ -391,9 +395,9 @@ function metadataFixture() {
   const jobs = {
     total_count: 3,
     jobs: [
-      [129549638781, "Trilha A solicitacao unica sem credenciais", "success"],
-      [129549640168, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-      [129550112703, "Trilha A preparacao sintetica HML", "failure"],
+      [129735171394, "Trilha A solicitacao unica sem credenciais", "success"],
+      [129735173939, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+      [129735702128, "Trilha A preparacao sintetica HML", "success"],
     ].map(([id, name, conclusion]) => ({
       id,
       name,
@@ -513,21 +517,16 @@ test("R10 missing ledger/bindings retains UNKNOWN without inventing zero operati
   assert.equal(v.newConfirmed, "UNKNOWN");
   assert.equal(v.bindings, "UNKNOWN");
 });
-test("R10 rows have eleven required keys and receipt state is not confirmed by inference", () => {
+test("R20 retains eleven-key historical receipts but rejects new sealed or confirmed rows", () => {
   const r = report();
   r.intentLedger.count = 18;
   r.intentLedger.newArmedCount = 1;
   const sealed = row(),
     confirmed = row("confirmed");
   assert.equal(Object.keys(sealed).length, 11);
-  assert.equal(
-    validateRecords(r, { ...empty(), receipts: [sealed] }).observations.newConfirmed,
-    "UNKNOWN",
-  );
-  assert.equal(
-    validateRecords(r, { ...empty(), receipts: [sealed, confirmed] }).observations.newConfirmed,
-    1,
-  );
+  // Current R20 is readonly: neither an unconfirmed nor confirmed new receipt is admissible.
+  assert.throws(() => validateRecords(r, { ...empty(), receipts: [sealed] }));
+  assert.throws(() => validateRecords(r, { ...empty(), receipts: [sealed, confirmed] }));
   for (const rows of [
     [confirmed],
     [{ ...sealed, ids: [] }],
@@ -550,7 +549,7 @@ test("R10 entire directory validates before one bounded proof is produced", (t) 
   const root = fixture(t),
     proof = JSON.parse(buildProof(root, inspection));
   assert.equal(proof.type, "FIXTURE_INSPECTION_PROOF");
-  assert.equal(proof.manifest.length, 28);
+  assert.equal(proof.manifest.length, 30);
   assert.equal(proof.reportRaw, readFileSync(join(root, "report.json"), "utf8"));
   assert.equal(proof.receiptsRaw, readFileSync(join(root, "receipts.json"), "utf8"));
   assert.ok(Buffer.byteLength(JSON.stringify(proof)) <= 65536);
@@ -785,28 +784,20 @@ test("R10 downstream role UUID syntax matches producer versions one through eigh
   );
 });
 
-test("R10 armed intentions without a complete confirmed receipt ledger remain UNKNOWN", () => {
+test("R20 rejects armed intentions and frozen ledgers instead of inferring confirmation", () => {
   const r = report();
   r.intentLedger.count = 18;
   r.intentLedger.newArmedCount = 1;
-  assert.equal(validateRecords(r, empty()).observations.newConfirmed, "UNKNOWN");
+  assert.throws(() => validateRecords(r, empty()));
   r.intentLedger.count = 19;
   r.intentLedger.newArmedCount = 2;
-  assert.equal(
-    validateRecords(r, { ...empty(), receipts: [row(), row("confirmed")] }).observations
-      .newConfirmed,
-    "UNKNOWN",
-  );
+  assert.throws(() => validateRecords(r, { ...empty(), receipts: [row(), row("confirmed")] }));
   r.intentLedger.count = 18;
   r.intentLedger.newArmedCount = 1;
-  assert.equal(
-    validateRecords(r, { ...empty(), receipts: [row(), row("uncertain")] }).observations
-      .newConfirmed,
-    "UNKNOWN",
-  );
+  assert.throws(() => validateRecords(r, { ...empty(), receipts: [row(), row("uncertain")] }));
   const frozen = report();
   frozen.intentLedger.frozen = true;
-  assert.equal(validateRecords(frozen, empty()).observations.newConfirmed, "UNKNOWN");
+  assert.throws(() => validateRecords(frozen, empty()));
 });
 
 test("R10 directory FD prevents parent replacement from redirecting any artifact read", (t) => {
@@ -838,8 +829,8 @@ test("appended R6 history is immutable, ordered, and canonically empty where pro
     "recovery-r6.json",
     "recovery-r7.json",
   ]);
-  assert.equal(FILES.length, 28);
-  assert.equal(Object.keys(HISTORY).length, 25);
+  assert.equal(FILES.length, 30);
+  assert.equal(Object.keys(HISTORY).length, 27);
   assert.equal(
     HISTORY["receipts-r6.json"],
     "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
@@ -878,13 +869,13 @@ test("R7 zero-auth history contains only its nine-field metadata proof", () => {
 });
 
 test("R10 literal target is terminal attempt one and cannot be selected through caller inputs", () => {
-  assert.equal(PIN.run, 42731273678);
-  assert.equal(PIN.head, "8d055951838fee29664563bed5ee26bac4f55bd8");
-  assert.equal(PIN.upstream, 42731084944);
-  assert.equal(PIN.artifact, 13725830880);
-  assert.equal(PIN.size, 31346);
-  assert.equal(PIN.name, "trilha-a-fixtures-42731273678-1");
-  assert.equal(PIN.digest, "b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb");
+  assert.equal(PIN.run, 42788354465);
+  assert.equal(PIN.head, "79b728cb12e7b1df037c5816c27842c0ef042d2b");
+  assert.equal(PIN.upstream, 42788083679);
+  assert.equal(PIN.artifact, 13751191411);
+  assert.equal(PIN.size, 33862);
+  assert.equal(PIN.name, "trilha-a-fixtures-42788354465-1");
+  assert.equal(PIN.digest, "142d095971e8b206030451d2de6236351a9db59b21e45a10b1c32b06cda73536");
 });
 
 test("R10 observation diagnostic validator is required before any technical proof", async () => {
@@ -1138,16 +1129,16 @@ test("R10 observation has six ordered own fields and four ordered failure primit
 test("R10 one proof publishes exact observationRaw only after the complete fourteen-file validation", (t) => {
   const root = fixture(t),
     output = JSON.parse(buildProof(root, inspection));
-  assert.equal(output.manifest.length, 28);
+  assert.equal(output.manifest.length, 30);
   assert.equal(
     output.observationRaw,
     readFileSync(join(root, "observation-diagnostic.json"), "utf8"),
   );
   assert.equal(JSON.parse(output.observationRaw).firstFailure, null);
   assert.equal(JSON.parse(output.reportRaw).completed, false);
-  assert.equal(output.observations.priorConfirmed, 15);
-  assert.equal(FILES.length, 28);
-  assert.equal(Object.keys(HISTORY).length, 25);
+  assert.equal(output.observations.priorConfirmed, 17);
+  assert.equal(FILES.length, 30);
+  assert.equal(Object.keys(HISTORY).length, 27);
   assert.deepEqual(FILES.slice(11, 14), [
     "receipts-r8.json",
     "recovery-r8.json",
@@ -1199,8 +1190,8 @@ test("R10 historical R8 evidence remains byte-exact while current budget is ten 
   assert.equal(previous.intentLedger.maxNewIntentions, 16);
   assert.equal(previous.intentLedger.count, 10);
   const current = report();
-  assert.equal(current.intentLedger.priorConfirmed, 15);
-  assert.equal(current.intentLedger.maxNewIntentions, 7);
+  assert.equal(current.intentLedger.priorConfirmed, 17);
+  assert.equal(current.intentLedger.maxNewIntentions, 5);
   current.intentLedger.count = 16;
   current.intentLedger.newArmedCount = 1;
   for (const requestId of [
@@ -1281,15 +1272,15 @@ test("R10 complete manifest still produces zero proof for observation failure wi
 });
 
 test("R10 immutable artifact layout appends R9 originals after the existing observation diagnostic", () => {
-  assert.equal(FILES.length, 28, "R10_MANIFEST_APPEND_ABSENT");
-  assert.equal(Object.keys(HISTORY).length, 25);
+  assert.equal(FILES.length, 30, "R10_MANIFEST_APPEND_ABSENT");
+  assert.equal(Object.keys(HISTORY).length, 27);
   assert.deepEqual(FILES.slice(13, 16), [
     "observation-diagnostic.json",
     "receipts-r9.json",
     "recovery-r9.json",
   ]);
-  assert.equal(PIN.run, 42731273678);
-  assert.equal(PIN.artifact, 13725830880);
+  assert.equal(PIN.run, 42788354465);
+  assert.equal(PIN.artifact, 13751191411);
 });
 
 test("R10 preserves original R9 report receipts and observation inside the pinned twelve-field recovery document", () => {
@@ -1319,16 +1310,16 @@ test("R10 preserves original R9 report receipts and observation inside the pinne
 });
 
 test("R11 terminal target requires the two R10 originals appended after all sixteen existing data files", () => {
-  assert.equal(FILES.length, 28, "R11_MANIFEST_APPEND_ABSENT");
-  assert.equal(Object.keys(HISTORY).length, 25);
+  assert.equal(FILES.length, 30, "R11_MANIFEST_APPEND_ABSENT");
+  assert.equal(Object.keys(HISTORY).length, 27);
   assert.deepEqual(FILES.slice(14, 18), [
     "receipts-r9.json",
     "recovery-r9.json",
     "receipts-r10.json",
     "recovery-r10.json",
   ]);
-  assert.equal(PIN.run, 42731273678);
-  assert.equal(PIN.artifact, 13725830880);
+  assert.equal(PIN.run, 42788354465);
+  assert.equal(PIN.artifact, 13751191411);
 });
 
 test("R11 preserves the twelve-field R10 document and all three original raw hashes", () => {
@@ -1352,25 +1343,25 @@ test("R11 preserves the twelve-field R10 document and all three original raw has
 });
 
 test("R13 pins the actual original artifact and preserves the reserved R11 intent", () => {
-  assert.equal(PIN.run, 42731273678);
-  assert.equal(PIN.head, "8d055951838fee29664563bed5ee26bac4f55bd8");
-  assert.equal(PIN.artifact, 13725830880);
-  assert.equal(PIN.digest, "b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb");
-  assert.equal(FILES.length, 28);
-  assert.equal(Object.keys(HISTORY).length, 25);
+  assert.equal(PIN.run, 42788354465);
+  assert.equal(PIN.head, "79b728cb12e7b1df037c5816c27842c0ef042d2b");
+  assert.equal(PIN.artifact, 13751191411);
+  assert.equal(PIN.digest, "142d095971e8b206030451d2de6236351a9db59b21e45a10b1c32b06cda73536");
+  assert.equal(FILES.length, 30);
+  assert.equal(Object.keys(HISTORY).length, 27);
   const r = report();
   r.intentLedger = {
-    count: 17,
+    count: 19,
     frozen: false,
     pending: false,
     sent: false,
-    priorConfirmed: 15,
+    priorConfirmed: 17,
     priorReserved: 2,
     newArmedCount: 0,
     maxIntentions: 24,
-    maxNewIntentions: 7,
+    maxNewIntentions: 5,
   };
-  r.recovery.maxNewIntentions = 7;
+  r.recovery.maxNewIntentions = 5;
   const result = validateRecords(r, empty());
   assert.equal(result.observations.priorReserved, 2);
   assert.equal(result.observations.newConfirmed, 0);
@@ -1454,6 +1445,8 @@ const R15_FILES = [
   "recovery-r16.json",
   "receipts-r17.json",
   "recovery-r17.json",
+  "receipts-r18.json",
+  "recovery-r18.json",
 ];
 const R15_HISTORY = {
   "receipts-r13.json": '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
@@ -1463,35 +1456,35 @@ const R15_HISTORY = {
 function r15Metadata() {
   const m = metadataFixture();
   for (const run of [m.run, m.upstream]) {
-    run.head_sha = "8d055951838fee29664563bed5ee26bac4f55bd8";
+    run.head_sha = "79b728cb12e7b1df037c5816c27842c0ef042d2b";
   }
-  m.run.id = 42731273678;
-  m.upstream.id = 42731084944;
+  m.run.id = 42788354465;
+  m.upstream.id = 42788083679;
   Object.assign(m.artifact, {
-    id: 13725830880,
-    name: "trilha-a-fixtures-42731273678-1",
-    size_in_bytes: 31346,
-    digest: "sha256:b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb",
+    id: 13751191411,
+    name: "trilha-a-fixtures-42788354465-1",
+    size_in_bytes: 33862,
+    digest: "sha256:142d095971e8b206030451d2de6236351a9db59b21e45a10b1c32b06cda73536",
     workflow_run: {
-      id: 42731273678,
+      id: 42788354465,
       repository_id: 1442722734,
       head_repository_id: 1442722734,
-      head_sha: "8d055951838fee29664563bed5ee26bac4f55bd8",
+      head_sha: "79b728cb12e7b1df037c5816c27842c0ef042d2b",
       head_branch: "main",
     },
   });
   m.jobs.jobs = [
-    [129549638781, "Trilha A solicitacao unica sem credenciais", "success"],
-    [129549640168, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
-    [129550112703, "Trilha A preparacao sintetica HML", "failure"],
+    [129735171394, "Trilha A solicitacao unica sem credenciais", "success"],
+    [129735173939, "Trilha A protocolo e Chromium sem credenciais", "skipped"],
+    [129735702128, "Trilha A preparacao sintetica HML", "success"],
   ].map(([id, name, conclusion]) => ({
     id,
     name,
     conclusion,
     status: "completed",
-    run_id: 42731273678,
+    run_id: 42788354465,
     run_attempt: 1,
-    head_sha: "8d055951838fee29664563bed5ee26bac4f55bd8",
+    head_sha: "79b728cb12e7b1df037c5816c27842c0ef042d2b",
   }));
   return m;
 }
@@ -1524,8 +1517,8 @@ test("R15 complete directory proves all twenty-two files before releasing origin
     proof.manifest.map((entry) => entry.name),
     R15_FILES,
   );
-  assert.equal(proof.source.run, 42731273678);
-  assert.equal(proof.source.artifact, 13725830880);
+  assert.equal(proof.source.run, 42788354465);
+  assert.equal(proof.source.artifact, 13751191411);
   assert.equal(
     proof.manifest[20].sha256,
     "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
@@ -1581,14 +1574,14 @@ test("R15 rejects an unknown recovery enum without accepting its shared prefix",
 function r16TechnicalReport() {
   const r = report();
   Object.assign(r.intentLedger, {
-    count: 17,
-    priorConfirmed: 15,
+    count: 19,
+    priorConfirmed: 17,
     priorReserved: 2,
     newArmedCount: 0,
     maxIntentions: 24,
-    maxNewIntentions: 7,
+    maxNewIntentions: 5,
   });
-  r.recovery.maxNewIntentions = 7;
+  r.recovery.maxNewIntentions = 5;
   return r;
 }
 test("R16 producer budget admits two reserved intentions without refund or promotion", () => {
@@ -1608,31 +1601,31 @@ test("R16 producer recovery diagnostics admit only the two exact new enums", () 
 test("R16 original run metadata is accepted only at the new immutable artifact pin", () => {
   const m = metadataFixture();
   Object.assign(m.run, {
-    id: 42731273678,
-    head_sha: "8d055951838fee29664563bed5ee26bac4f55bd8",
+    id: 42788354465,
+    head_sha: "79b728cb12e7b1df037c5816c27842c0ef042d2b",
   });
   Object.assign(m.upstream, {
-    id: 42731084944,
-    head_sha: "8d055951838fee29664563bed5ee26bac4f55bd8",
+    id: 42788083679,
+    head_sha: "79b728cb12e7b1df037c5816c27842c0ef042d2b",
   });
   Object.assign(m.artifact, {
-    id: 13725830880,
-    name: "trilha-a-fixtures-42731273678-1",
-    size_in_bytes: 31346,
-    digest: "sha256:b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb",
+    id: 13751191411,
+    name: "trilha-a-fixtures-42788354465-1",
+    size_in_bytes: 33862,
+    digest: "sha256:142d095971e8b206030451d2de6236351a9db59b21e45a10b1c32b06cda73536",
     workflow_run: {
-      id: 42731273678,
+      id: 42788354465,
       repository_id: 1442722734,
       head_repository_id: 1442722734,
-      head_sha: "8d055951838fee29664563bed5ee26bac4f55bd8",
+      head_sha: "79b728cb12e7b1df037c5816c27842c0ef042d2b",
       head_branch: "main",
     },
   });
-  for (const [index, id] of [129549638781, 129549640168, 129550112703].entries())
+  for (const [index, id] of [129735171394, 129735173939, 129735702128].entries())
     Object.assign(m.jobs.jobs[index], {
       id,
-      run_id: 42731273678,
-      head_sha: "8d055951838fee29664563bed5ee26bac4f55bd8",
+      run_id: 42788354465,
+      head_sha: "79b728cb12e7b1df037c5816c27842c0ef042d2b",
     });
   assert.equal(validateMetadata(m), true);
 });
@@ -1667,9 +1660,9 @@ test("R16 historical approval UUID and payload remain permanently separate from 
 test("R16 directory preserves the original uncertain R15 bytes and all twenty-one histories", (t) => {
   const root = fixture(t);
   const proof = JSON.parse(buildProof(root, inspection));
-  assert.equal(proof.manifest.length, 28);
-  assert.equal(Object.keys(HISTORY).length, 25);
-  assert.deepEqual(FILES.slice(-6, -4), ["receipts-r15.json", "recovery-r15.json"]);
+  assert.equal(proof.manifest.length, 30);
+  assert.equal(Object.keys(HISTORY).length, 27);
+  assert.deepEqual(FILES.slice(-8, -6), ["receipts-r15.json", "recovery-r15.json"]);
   const original = canonicalJson(Buffer.from(HISTORICAL["recovery-r15.json"])).value;
   assert.equal(Buffer.byteLength(HISTORICAL["recovery-r15.json"]), 6244);
   assert.equal(original.receiptsRaw, HISTORICAL["receipts-r15.json"]);
@@ -1709,40 +1702,40 @@ test("R16 former one-reserve budget and unknown recovery enums fail closed", () 
 function r17TechnicalReport() {
   const value = report();
   Object.assign(value.intentLedger, {
-    count: 17,
-    priorConfirmed: 15,
+    count: 19,
+    priorConfirmed: 17,
     priorReserved: 2,
     newArmedCount: 0,
     maxIntentions: 24,
-    maxNewIntentions: 7,
+    maxNewIntentions: 5,
   });
-  Object.assign(value.recovery, { confirmedBefore: 15, maxNewIntentions: 7 });
+  Object.assign(value.recovery, { confirmedBefore: 17, maxNewIntentions: 5 });
   return value;
 }
 test("R17 pins only the original terminal request artifact", () => {
   assert.deepEqual(
     [PIN.run, PIN.head, PIN.upstream, PIN.artifact, PIN.size, PIN.name, PIN.digest],
     [
-      42731273678,
-      "8d055951838fee29664563bed5ee26bac4f55bd8",
-      42731084944,
-      13725830880,
-      31346,
-      "trilha-a-fixtures-42731273678-1",
-      "b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb",
+      42788354465,
+      "79b728cb12e7b1df037c5816c27842c0ef042d2b",
+      42788083679,
+      13751191411,
+      33862,
+      "trilha-a-fixtures-42788354465-1",
+      "142d095971e8b206030451d2de6236351a9db59b21e45a10b1c32b06cda73536",
     ],
   );
 });
-test("R18 complete manifest verifies twenty-eight data files and twenty-five immutable histories", (t) => {
-  assert.equal(FILES.length, 28);
-  assert.equal(Object.keys(HISTORY).length, 25);
-  assert.deepEqual(FILES.slice(-2), ["receipts-r17.json", "recovery-r17.json"]);
+test("R20 complete manifest verifies thirty data files and twenty-seven immutable histories", (t) => {
+  assert.equal(FILES.length, 30);
+  assert.equal(Object.keys(HISTORY).length, 27);
+  assert.deepEqual(FILES.slice(-2), ["receipts-r18.json", "recovery-r18.json"]);
   const proof = JSON.parse(buildProof(fixture(t), inspection));
-  assert.equal(proof.manifest.length, 28);
+  assert.equal(proof.manifest.length, 30);
 });
-test("R18 ledger exposes fifteen confirmations and both reservations with seven remaining arms", () => {
+test("R20 ledger exposes seventeen confirmations and both reservations without new business", () => {
   const value = validateRecords(r17TechnicalReport(), empty());
-  assert.equal(value.observations.priorConfirmed, 15);
+  assert.equal(value.observations.priorConfirmed, 17);
   assert.equal(value.observations.priorReserved, 2);
   assert.equal(value.observations.newArmedCount, 0);
   assert.equal(value.observations.newConfirmed, 0);
@@ -1804,7 +1797,7 @@ for (const [rpc, requestId, payloadSha256] of R17_PREVIOUS_EFFECTS) {
   }
 }
 
-test("R18 receipt budget accepts exactly seven pairs and rejects an eighth or a refunded reservation", () => {
+test("R20 readonly budget rejects seven historical-style pairs, extras and refunded reservations", () => {
   const value = r17TechnicalReport();
   value.intentLedger.count = 24;
   value.intentLedger.newArmedCount = 7;
@@ -1816,7 +1809,7 @@ test("R18 receipt budget accepts exactly seven pairs and rejects an eighth or a 
       rpc: "aprovar_apresentacao",
     }));
   }).flat();
-  assert.equal(validateRecords(value, { ...empty(), receipts }).observations.newConfirmed, 7);
+  assert.throws(() => validateRecords(value, { ...empty(), receipts }));
   assert.throws(() =>
     validateRecords(value, {
       ...empty(),
@@ -1845,7 +1838,7 @@ test("R18 receipt budget accepts exactly seven pairs and rejects an eighth or a 
     assert.throws(() => validateRecords(bad, { ...empty(), receipts }));
   }
 });
-test("R17 previous payload denial is scoped to its exact RPC", () => {
+test("R20 readonly rejects new receipts even with a different RPC and historical payload", () => {
   const value = r17TechnicalReport();
   value.intentLedger.count = 18;
   value.intentLedger.newArmedCount = 1;
@@ -1855,7 +1848,7 @@ test("R17 previous payload denial is scoped to its exact RPC", () => {
       rpc: "aprovar_apresentacao",
       payloadSha256,
     }));
-    assert.equal(validateRecords(value, { ...empty(), receipts }).observations.newConfirmed, 1);
+    assert.throws(() => validateRecords(value, { ...empty(), receipts }));
   }
 });
 test("R17 preserves all four R16 confirmations and both historical uncertain reservations byte-exact", (t) => {
@@ -1895,4 +1888,31 @@ test("R17 preserves all four R16 confirmations and both historical uncertain res
       .join(""),
   );
   assert.throws(() => buildProof(old, inspection));
+});
+
+test("R20 readonly inspector accepts only zero new business arms and empty receipts", () => {
+  const r = report();
+  assert.equal(validateRecords(r, empty()).observations.priorConfirmed, 17);
+  for (const delta of [
+    { count: 20, newArmedCount: 1 },
+    { priorConfirmed: 15 },
+    { priorReserved: 1 },
+    { maxNewIntentions: 7 },
+    { frozen: true },
+    { pending: true },
+    { sent: true },
+  ]) {
+    const bad = report();
+    Object.assign(bad.intentLedger, delta);
+    assert.throws(() => validateRecords(bad, empty()));
+  }
+  assert.throws(() => validateRecords(r, { ...empty(), receipts: [row()] }));
+  assert.equal(
+    HISTORY["receipts-r18.json"],
+    "1db601b5a947072bcc1a05437a5fae053bd98f1527d4f958e730079f7678cd77",
+  );
+  assert.equal(
+    HISTORY["recovery-r18.json"],
+    "de5e5bd71a3e33960ce39510a86cdfddc8fb702fc41d9788df248a209c4df5ac",
+  );
 });
