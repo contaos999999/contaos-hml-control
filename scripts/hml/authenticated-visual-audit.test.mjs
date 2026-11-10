@@ -15026,91 +15026,76 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
     const readNames = new Set();
     let surface = "V117",
       mode = "ok";
-    server = createHttpServer((req, res) => {
-      const url = new URL(req.url, "http://127.0.0.1");
-      const json = (value) => {
-        res.writeHead(200, {
-          "content-type": "application/json",
-          "content-range": "0-0/1",
-          "access-control-allow-origin": "*",
-        });
-        res.end(JSON.stringify(value));
-      };
-      if (url.pathname === "/ui.js") {
-        res.writeHead(200, { "content-type": "text/javascript" });
-        res.end(bundle);
-        return;
-      }
+    // Fulfill native browser requests directly: SDK and observer stay original,
+    // while the fixture avoids a detached APIRequestContext crossing page lifetime.
+    const fixtureReply = (url, raw, requestSurface, requestMode, method) => {
+      const surface = requestSurface,
+        mode = requestMode;
       if (url.pathname.startsWith("/rest/v1/rpc/")) {
-        let raw = "";
-        req.on("data", (chunk) => (raw += chunk));
-        req.on("end", () => {
-          const name = url.pathname.split("/").at(-1),
-            args = JSON.parse(raw);
-          readNames.add(name);
-          const competency = b.competencies[surface === "V120" ? 1 : 0];
-          assert.equal(args.p_id_competencia, competency.id);
-          if (name === "obter_visao_geral_competencia")
-            assert.deepEqual(args, { p_id_competencia: competency.id });
-          if (name === "obter_detalhe_requisito_v117")
-            assert.deepEqual(args, {
-              p_id_competencia: competency.id,
-              p_id_requisito: competency.requirementId,
-              p_evidencias_offset: 0,
-              p_evidencias_limite: 25,
-              p_historico_offset: 0,
-              p_historico_limite: 25,
-              p_apontamentos_offset: 0,
-              p_apontamentos_limite: 25,
-            });
-          if (name === "obter_analise_competencia_v116")
-            assert.deepEqual(args, {
-              p_id_competencia: competency.id,
-              p_resultados_offset: 0,
-              p_resultados_limite: 25,
-              p_execucoes_offset: 0,
-              p_execucoes_limite: 10,
-              p_apontamentos_offset: 0,
-              p_apontamentos_limite: 25,
-              p_filtro_resultado: null,
-              p_filtro_criticidade: null,
-              p_filtro_mecanismo: null,
-              p_filtro_apontamento_status: null,
-              p_busca: null,
-            });
-          const rpc = {
-            obter_analise_competencia_v116: data.analysis,
-            obter_detalhe_requisito_v117: data.detail,
+        assert.equal(method, "POST");
+        const name = url.pathname.split("/").at(-1),
+          args = JSON.parse(raw);
+        readNames.add(name);
+        const competency = b.competencies[surface === "V120" ? 1 : 0];
+        assert.equal(args.p_id_competencia, competency.id);
+        if (name === "obter_visao_geral_competencia")
+          assert.deepEqual(args, { p_id_competencia: competency.id });
+        if (name === "obter_detalhe_requisito_v117")
+          assert.deepEqual(args, {
+            p_id_competencia: competency.id,
+            p_id_requisito: competency.requirementId,
+            p_evidencias_offset: 0,
+            p_evidencias_limite: 25,
+            p_historico_offset: 0,
+            p_historico_limite: 25,
+            p_apontamentos_offset: 0,
+            p_apontamentos_limite: 25,
+          });
+        if (name === "obter_analise_competencia_v116")
+          assert.deepEqual(args, {
+            p_id_competencia: competency.id,
+            p_resultados_offset: 0,
+            p_resultados_limite: 25,
+            p_execucoes_offset: 0,
+            p_execucoes_limite: 10,
+            p_apontamentos_offset: 0,
+            p_apontamentos_limite: 25,
+            p_filtro_resultado: null,
+            p_filtro_criticidade: null,
+            p_filtro_mecanismo: null,
+            p_filtro_apontamento_status: null,
+            p_busca: null,
+          });
+        const rpc = {
+          obter_analise_competencia_v116: data.analysis,
+          obter_detalhe_requisito_v117: data.detail,
 
-            obter_visao_geral_competencia: data.overview,
-          };
-          if (!Object.hasOwn(rpc, name)) {
-            business++;
-            res.writeHead(403);
-            res.end();
-            return;
-          }
-          let value = structuredClone(rpc[name]);
-          if (surface === "V120" && name === "obter_visao_geral_competencia")
-            Object.assign(value.competencia, {
-              id: b.competencies[1].id,
-              competencia_referencia: b.competencies[1].month,
-              situacao: b.competencies[1].state,
-            });
-          if (mode === "foreign") {
-            if (value.competencia) value.competencia.id_organizacao = "foreign";
-            else value.id_organizacao = "foreign";
-          }
-          if (mode === "missing") value = null;
-          if (mode === "stale" && name === "obter_analise_competencia_v116") value.stale = true;
-          if (mode === "pending" && name === "obter_analise_competencia_v116")
-            value.estado_analise = "queued";
-          if (mode === "hostile" && name === "obter_detalhe_requisito_v117")
-            value.requisito.descricao = "NATIVEC8_UNLISTED_SENTINEL_84f7";
-          json(value);
-        });
-        return;
+          obter_visao_geral_competencia: data.overview,
+        };
+        if (!Object.hasOwn(rpc, name)) {
+          business++;
+          return { status: 403, data: null };
+        }
+        let value = structuredClone(rpc[name]);
+        if (surface === "V120" && name === "obter_visao_geral_competencia")
+          Object.assign(value.competencia, {
+            id: b.competencies[1].id,
+            competencia_referencia: b.competencies[1].month,
+            situacao: b.competencies[1].state,
+          });
+        if (mode === "foreign") {
+          if (value.competencia) value.competencia.id_organizacao = "foreign";
+          else value.id_organizacao = "foreign";
+        }
+        if (mode === "missing") value = null;
+        if (mode === "stale" && name === "obter_analise_competencia_v116") value.stale = true;
+        if (mode === "pending" && name === "obter_analise_competencia_v116")
+          value.estado_analise = "queued";
+        if (mode === "hostile" && name === "obter_detalhe_requisito_v117")
+          value.requisito.descricao = "NATIVEC8_UNLISTED_SENTINEL_84f7";
+        return { data: value, count: 1 };
       }
+      assert.equal(method, "GET");
       const tables = {
         apresentacoes_contratante: data.presentations,
         pacotes_competencia: data.packages,
@@ -15122,7 +15107,16 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
         if (mode === "hash" && table === "pacotes_competencia")
           rows[0].hash_pacote = "0".repeat(64);
         if (mode === "item" && table === "itens_pacote_competencia") rows.length = 0;
-        json(table === "itens_pacote_competencia" ? rows : rows[0]);
+        return { data: table === "itens_pacote_competencia" ? rows : rows[0], count: rows.length };
+      }
+      business++;
+      return { status: 403, data: null };
+    };
+    server = createHttpServer((req, res) => {
+      const url = new URL(req.url, "http://127.0.0.1");
+      if (url.pathname === "/ui.js") {
+        res.writeHead(200, { "content-type": "text/javascript" });
+        res.end(bundle);
         return;
       }
       if (url.pathname === "/favicon.ico") {
@@ -15155,16 +15149,23 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
         });
         return;
       }
-      const u = new URL(request.url());
-      const response = await route.fetch({ url: origin + u.pathname + u.search });
+      const reply = fixtureReply(
+        new URL(request.url()),
+        request.postData() || "",
+        surface,
+        mode,
+        request.method(),
+      );
+      const count = reply.count ?? 1;
       await route.fulfill({
-        response,
-        // Native fetch must see the same exposed count header as the original Supabase API.
+        status: reply.status ?? 200,
         headers: {
-          ...response.headers(),
+          "content-type": "application/json",
+          "content-range": count ? `0-${count - 1}/${count}` : "*/0",
           "access-control-allow-origin": "*",
           "access-control-expose-headers": "content-range",
         },
+        body: JSON.stringify(reply.data),
       });
     });
     for (surface of ["V117", "V119", "V120"])
@@ -15418,6 +15419,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           currentObserver.close();
           currentObserver = null;
           page.off("framenavigated", navigated);
+          await page.goto("about:blank");
         }
     for (surface of ["V117", "V119", "V120"])
       for (mode of ["missing", "foreign"]) {
@@ -15460,6 +15462,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
         assert.equal(state.c8Current, undefined);
         currentObserver.close();
         currentObserver = null;
+        await page.goto("about:blank");
       }
     for (const vector of [
       { surface: "V117", mode: "stale" },
@@ -15523,6 +15526,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
         );
       currentObserver.close();
       currentObserver = null;
+      await page.goto("about:blank");
     }
     assert.equal(readNames.has("obter_contexto_revisao_v117"), false);
     assert.equal(readNames.has("obter_detalhe_requisito_v117"), true);
