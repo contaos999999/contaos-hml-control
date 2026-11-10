@@ -31,6 +31,7 @@ function broker(options = {}) {
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     readPolicy: () => false,
     persist: () => true,
     competenceGateAmended: true,
@@ -44,6 +45,7 @@ function broker(options = {}) {
           recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
           recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
           recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+          recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
         }
       : {}),
     ...options,
@@ -389,6 +391,7 @@ test("cleanup runs even if login or execution fails; failed logout prevents succ
           sut.R13_RECOVERY_DOCUMENT,
           sut.R15_RECOVERY_DOCUMENT,
           sut.R16_RECOVERY_DOCUMENT,
+          sut.R17_RECOVERY_DOCUMENT,
         ),
       /FAILED/,
     );
@@ -403,6 +406,7 @@ test("runtime is closed without normal auth and reconciled context", async () =>
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     page,
     fence: {},
     waitOrganization: async () => {},
@@ -527,6 +531,7 @@ test("normal login collects only own access token in closure, confirms MASTER/co
       recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
       recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
       recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+      recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     });
   assert.equal(await runtime.login({ email: "synthetic", password: "test-only" }), true);
   assert.equal(runtime.access_token, undefined);
@@ -545,6 +550,7 @@ test("context mismatch yields closed code and cleanup still logs out", async () 
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
   await assert.rejects(
     () =>
@@ -555,6 +561,7 @@ test("context mismatch yields closed code and cleanup still logs out", async () 
         sut.R13_RECOVERY_DOCUMENT,
         sut.R15_RECOVERY_DOCUMENT,
         sut.R16_RECOVERY_DOCUMENT,
+        sut.R17_RECOVERY_DOCUMENT,
       ),
     /^Error: LOGIN_FAILED$/,
   );
@@ -1784,6 +1791,7 @@ function r2Reconciliation(delta = {}) {
     ledgerR13: sut.R13_RECOVERY_DOCUMENT,
     ledgerR15: sut.R15_RECOVERY_DOCUMENT,
     ledgerR16: sut.R16_RECOVERY_DOCUMENT,
+    ledgerR17: sut.R17_RECOVERY_DOCUMENT,
     source: { ...context, id: FIXTURE.source, ...sut.SOURCE_FIELDS, version: 1, situacao: "ativa" },
     version: {
       ...context,
@@ -1831,6 +1839,7 @@ test("R2 ledger omitido undefined ou null não emite prova de reconciliação", 
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
   for (const input of [
     omitted,
@@ -1840,7 +1849,7 @@ test("R2 ledger omitido undefined ou null não emite prova de reconciliação", 
     assert.throws(() => broker.authorizeRecovery(sut.reconcileR1Recovery(input)), {
       message: "RECOVERY_LEDGER",
     });
-    assert.equal(broker.snapshot().count, 16);
+    assert.equal(broker.snapshot().count, 17);
     assert.throws(() => r6AnalysisArm(broker), { message: "RECOVERY_READ_ONLY" });
   }
   assert.throws(() => sut.validateR1RecoveryDocument(), { message: "RECOVERY_LEDGER" });
@@ -1869,11 +1878,12 @@ test("R2 reconcilia somente estado oficial unico aprovado antes de armar", async
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
   assert.throws(() => r6AnalysisArm(b), { message: "RECOVERY_READ_ONLY" });
   assert.throws(() => b.authorizeRecovery({ ...proof }), { message: "RECOVERY_PROOF" });
   assert.equal(await r12Authorize(b, proof), true);
-  assert.equal(b.snapshot().count, 16);
+  assert.equal(b.snapshot().count, 17);
   for (const rpc of ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"])
     assert.throws(
       () =>
@@ -1917,9 +1927,10 @@ test("R9 contabiliza dez anteriores e limita novas intencoes a14", async () => {
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
   await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
-  for (let n = 0; n < 8; n++) {
+  for (let n = 0; n < 7; n++) {
     r6AnalysisArm(b);
     assert.equal(b.policy(r6AnalysisRequest()), true);
     assert.equal(b.policy(r6AnalysisRequest({ stage: "RESPONSE" })), true);
@@ -2051,6 +2062,7 @@ test("R2 duas confirmacoes reais de protocolo e proximo await conserva causa tec
         recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
         recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
         recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+        recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
         persist: (r) => {
           receipts.push(r);
           return true;
@@ -2295,6 +2307,7 @@ test("R2 causa tecnica sobrevive ao wrapper real UI_UNCERTAIN sem alterar broker
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     persist: () => true,
     competenceGateAmended: true,
   });
@@ -2986,6 +2999,7 @@ test(
           recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
           recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
           recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+          recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
           page,
           fence: { drain: async () => {}, assertSafe() {} },
           waitOrganization: async () => {},
@@ -3011,6 +3025,7 @@ test(
           recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
           recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
           recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+          recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
           page,
           fence: { drain: async () => {}, assertSafe() {} },
           waitOrganization: async () => {},
@@ -3219,8 +3234,9 @@ test("R4 validates explicit original R3 ledger and debits exactly one prior acti
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
-  assert.equal(b.snapshot().count, 16);
+  assert.equal(b.snapshot().count, 17);
   for (const rpc of [
     "registrar_versao_fonte_v107",
     "aprovar_versao_fonte_v107",
@@ -3236,6 +3252,7 @@ test("R4 validates explicit original R3 ledger and debits exactly one prior acti
         recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
         recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
         recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+        recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
         recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
       }),
     /RECOVERY_R3_LEDGER/,
@@ -3403,22 +3420,23 @@ test("R4 report derives real arm sent and terminal scalars without request ident
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
   await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
   assert.deepEqual(sut.preparationIntentSummary(b), {
-    count: 16,
+    count: 17,
     frozen: false,
     pending: false,
     sent: false,
-    priorConfirmed: 14,
+    priorConfirmed: 15,
     priorReserved: 2,
     newArmedCount: 0,
     maxIntentions: 24,
-    maxNewIntentions: 8,
+    maxNewIntentions: 7,
   });
   r6AnalysisArm(b);
   let state = sut.preparationIntentSummary(b);
-  assert.equal(state.count, 17);
+  assert.equal(state.count, 18);
   assert.equal(state.newArmedCount, 1);
   assert.equal(state.pending, true);
   assert.equal(state.sent, false);
@@ -4070,6 +4088,7 @@ test("R6 recovery requires fresh ordinary reads and exact original month identit
       recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
       recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
       recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+      recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
       ...r10BudgetApi(),
       fresh: async () => {},
       generation: () => generation,
@@ -4424,6 +4443,7 @@ test("R5 explicit R4 proof is required before recovery broker and preserves thre
         recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
         recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
         recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+        recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
         identity: R12_TEST_IDENTITY,
         recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
         recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
@@ -4446,9 +4466,10 @@ test("R5 explicit R4 proof is required before recovery broker and preserves thre
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
-  assert.equal(b.snapshot().confirmedBefore, 14);
-  assert.equal(b.snapshot().maxNewIntentions, 8);
+  assert.equal(b.snapshot().confirmedBefore, 15);
+  assert.equal(b.snapshot().maxNewIntentions, 7);
   for (const rpc of [
     "registrar_versao_fonte_v107",
     "aprovar_versao_fonte_v107",
@@ -4747,6 +4768,7 @@ async function r6ApprovedFileHarness(mode = "ok") {
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     generation: () => sequence,
     official: () => (mode === "foreign" ? { ...parent, contract: C } : parent),
   };
@@ -5008,10 +5030,11 @@ test("R9 recovery broker preserves R5 originals and debits two R8 confirmations 
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
-  assert.equal(b.snapshot().count, 16);
-  assert.equal(b.snapshot().confirmedBefore, 14);
-  assert.equal(b.snapshot().maxNewIntentions, 8);
+  assert.equal(b.snapshot().count, 17);
+  assert.equal(b.snapshot().confirmedBefore, 15);
+  assert.equal(b.snapshot().maxNewIntentions, 7);
   assert.equal(
     JSON.parse(R6_R5_DOCUMENT.reportRaw).intentLedger.maxNewIntentions,
     21,
@@ -5181,6 +5204,7 @@ test("R6 semantic replay rejects complete new UUID intents but permits another v
       recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
       recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
       recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+      recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     });
   for (const [rpc, p] of attempts) {
     const requestId = randomUUID(),
@@ -5221,7 +5245,7 @@ test("R6 semantic replay rejects complete new UUID intents but permits another v
     verified: { context: true, capability: true, reconciled: true },
     evidence,
   });
-  assert.equal(b.snapshot().count, 17);
+  assert.equal(b.snapshot().count, 18);
 });
 
 test("R6 unknown COMPETENCE prefix remains generic rather than becoming a receipt code", async () => {
@@ -5487,6 +5511,7 @@ test("R6 locked and authorized replay boundaries reject nested accessors and pro
         recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
         recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
         recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+        recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
         beforeArm: () => {
           beforeArm++;
           return true;
@@ -5503,7 +5528,7 @@ test("R6 locked and authorized replay boundaries reject nested accessors and pro
           }),
         { message: authorized ? "INTENT_PAYLOAD" : "RECOVERY_READ_ONLY" },
       );
-      assert.equal(instance.snapshot().count, 16);
+      assert.equal(instance.snapshot().count, 17);
       assert.equal(beforeArm, 0);
     }
   }
@@ -5593,15 +5618,17 @@ test("R7 original R6 zero-intent document is exact and rejects getters proxies a
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
-  assert.equal(instance.snapshot().count, 16);
-  assert.equal(instance.snapshot().maxNewIntentions, 8);
+  assert.equal(instance.snapshot().count, 17);
+  assert.equal(instance.snapshot().maxNewIntentions, 7);
   assert.throws(
     () =>
       broker({
         recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
         recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
         recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+        recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
         recoveryLedger: sut.R1_RECOVERY_DOCUMENT,
         recoveryLedgerR3: sut.R3_RECOVERY_DOCUMENT,
         recoveryLedgerR4: sut.R4_RECOVERY_DOCUMENT,
@@ -5651,6 +5678,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       "r13Recovery",
       "r15Recovery",
       "r16Recovery",
+      "r17Recovery",
       "observationDiagnostic",
       "createHash",
       "readFile",
@@ -5672,6 +5700,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       sut.R13_RECOVERY_DOCUMENT,
       sut.R15_RECOVERY_DOCUMENT,
       sut.R16_RECOVERY_DOCUMENT,
+      sut.R17_RECOVERY_DOCUMENT,
       sut.createObservationDiagnostic(
         (({ frontendSha, harnessSha, deploymentId, workflowRun }) => ({
           frontendSha,
@@ -5685,9 +5714,9 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       async (_, run) => run(),
     );
     const names = (await fs.readdir(output)).sort();
-    assert.equal(names.length, 27);
+    assert.equal(names.length, 29);
     const manifest = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(manifest.length, 26);
+    assert.equal(manifest.length, 28);
     const { HISTORY } = await import("./inspect-fixture-artifact.mjs");
     const history = {
       ...HISTORY,
@@ -5695,8 +5724,10 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       "recovery-r15.json": "de792c8803bbe232871c9eac468ad8baede31a88b1ec5aa238647a15267b645a",
       "receipts-r16.json": sut.R16_RECOVERY_DOCUMENT.receiptsSha256,
       "recovery-r16.json": "f5427aa65d4ab75637df290b72b6a8c07a5a7ce30f1b2dc5a4328720133bdd86",
+      "receipts-r17.json": sut.R17_RECOVERY_DOCUMENT.receiptsSha256,
+      "recovery-r17.json": "f3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95",
     };
-    assert.equal(Object.keys(history).length, 23);
+    assert.equal(Object.keys(history).length, 25);
     for (const [name, expected] of Object.entries(history))
       assert.equal(
         createHash("sha256")
@@ -5719,7 +5750,7 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       "92bf8114d857b2061b0a2ce67cfb908f2dd1c71e1800b567bfecf52c17e12da9",
     );
 
-    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 26);
+    assert.equal(new Set(manifest.map((line) => line.slice(66))).size, 28);
     for (const line of manifest) {
       assert.match(line, /^[0-9a-f]{64}  [a-z0-9.-]+$/);
       const bytes = await fs.readFile(join(output, line.slice(66)));
@@ -5843,9 +5874,10 @@ test("R9 R7 ledger validation blocks forged proof alongside ten historical confi
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
-  assert.equal(b.snapshot().count, 16);
-  assert.equal(b.snapshot().maxNewIntentions, 8);
+  assert.equal(b.snapshot().count, 17);
+  assert.equal(b.snapshot().maxNewIntentions, 7);
   assert.throws(() => b.arm(), /RECOVERY_READ_ONLY/);
 });
 
@@ -5913,10 +5945,11 @@ test("R9 real broker charges the two original R8 confirmations and leaves fourte
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
-  assert.equal(b.snapshot().confirmedBefore, 14);
-  assert.equal(b.snapshot().count, 16);
-  assert.equal(b.snapshot().maxNewIntentions, 8);
+  assert.equal(b.snapshot().confirmedBefore, 15);
+  assert.equal(b.snapshot().count, 17);
+  assert.equal(b.snapshot().maxNewIntentions, 7);
   assert.equal(JSON.parse(R9_R8_DOCUMENT.reportRaw).intentLedger.priorConfirmed, 8);
   assert.equal(JSON.parse(R9_R8_DOCUMENT.reportRaw).intentLedger.maxNewIntentions, 16);
 });
@@ -5965,6 +5998,7 @@ test("R9 real October consumers refuse missing confirmed document or a new analy
       recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
       recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
       recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+      recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
       official: (v) => v,
       fresh: async () => {},
       command: async () => {
@@ -5981,6 +6015,7 @@ test("R9 real October consumers refuse missing confirmed document or a new analy
     const env = {
       io,
       R16_RECOVERY_DOCUMENT: sut.R16_RECOVERY_DOCUMENT,
+      R17_RECOVERY_DOCUMENT: sut.R17_RECOVERY_DOCUMENT,
       R8_BINDINGS: r8Bindings,
       R8_RECOVERY_DOCUMENT: R9_R8_DOCUMENT,
       tracedPreparation: trace,
@@ -6105,6 +6140,7 @@ test("R9 actual artifact writer appends R8 originals and the separate observatio
       r13Recovery: sut.R13_RECOVERY_DOCUMENT,
       r15Recovery: sut.R15_RECOVERY_DOCUMENT,
       r16Recovery: sut.R16_RECOVERY_DOCUMENT,
+      r17Recovery: sut.validateR17RecoveryDocument(sut.R17_RECOVERY_DOCUMENT),
       observationDiagnostic,
       createHash,
       readFile: fs.readFile,
@@ -6116,9 +6152,9 @@ test("R9 actual artifact writer appends R8 originals and the separate observatio
     )(...Object.values(env));
     const names = (await fs.readdir(output)).sort(),
       lines = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(names.length, 27);
-    assert.equal(lines.length, 26);
-    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 26);
+    assert.equal(names.length, 29);
+    assert.equal(lines.length, 28);
+    assert.equal(new Set(lines.map((line) => line.slice(66))).size, 28);
     for (const line of lines)
       assert.equal(
         createHash("sha256")
@@ -6170,6 +6206,7 @@ function r9Broker(options = {}) {
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     ...options,
   });
 }
@@ -6283,7 +6320,7 @@ test("R17 semantic replay denies both historical analyses and admits only a new 
       /RECOVERY_CONFIRMED_OPERATION/,
     );
   }
-  assert.equal(b.snapshot().count, 16);
+  assert.equal(b.snapshot().count, 17);
   assert.equal(arms, 0);
   const sep = JSON.parse(R6_R5_DOCUMENT.reportRaw).bindings.competencies[1];
   const payload = { p_id_competencia: sep.id, p_tipo: "completa" },
@@ -6305,17 +6342,17 @@ test("R17 semantic replay denies both historical analyses and admits only a new 
   );
   r6AnalysisArm(b);
   assert.equal(arms, 1);
-  assert.equal(b.snapshot().count, 17);
+  assert.equal(b.snapshot().count, 18);
   assert.deepEqual(sut.preparationIntentSummary(b), {
-    count: 17,
+    count: 18,
     frozen: false,
     pending: true,
     sent: false,
-    priorConfirmed: 14,
+    priorConfirmed: 15,
     priorReserved: 2,
     newArmedCount: 1,
     maxIntentions: 24,
-    maxNewIntentions: 8,
+    maxNewIntentions: 7,
   });
 });
 test("R9 replay guard rejects proxies and accessors before callbacks without reading them", async () => {
@@ -6366,7 +6403,7 @@ test("R9 replay guard rejects proxies and accessors before callbacks without rea
           }),
         authorized ? /INTENT_PAYLOAD/ : /RECOVERY_READ_ONLY/,
       );
-      assert.equal(b.snapshot().count, 16);
+      assert.equal(b.snapshot().count, 17);
     }
   assert.equal(reads, 0);
   assert.equal(arms, 0);
@@ -6687,6 +6724,7 @@ test("R9 missing R8 ledger cannot construct a recovery broker even with a valid 
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   };
   for (const value of [undefined, null])
     assert.throws(() => {
@@ -6694,6 +6732,7 @@ test("R9 missing R8 ledger cannot construct a recovery broker even with a valid 
         recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
         recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
         recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+        recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
         ...options,
         recoveryLedgerR8: value,
       });
@@ -6784,7 +6823,7 @@ test("R9 actual final report refuses success when the observer failed after fina
       sourceList: null,
       result: null,
       recoveryState: null,
-      validatedBudget: { confirmedBefore: 14, priorReserved: 2, maxNewIntentions: 8 },
+      validatedBudget: { confirmedBefore: 15, priorReserved: 2, maxNewIntentions: 7 },
       r4Recovery: sut.R4_RECOVERY_DOCUMENT,
       R1_RECEIPTS_SHA256: JSON.parse(R9_R8_DOCUMENT.reportRaw).recovery.ledgerSha256,
       R3_RECOVERY_DOCUMENT: sut.R3_RECOVERY_DOCUMENT,
@@ -6854,6 +6893,7 @@ async function r9ExistingConsumer(
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     official: (v) => v,
     fresh: async () => {
       events.push("fresh");
@@ -6910,6 +6950,7 @@ async function r9ExistingConsumer(
   const env = {
     io,
     R16_RECOVERY_DOCUMENT: sut.R16_RECOVERY_DOCUMENT,
+    R17_RECOVERY_DOCUMENT: sut.R17_RECOVERY_DOCUMENT,
     R8_BINDINGS: r8.bindings,
     FIXTURE,
     code: "AUD-A-TXT-001",
@@ -7097,6 +7138,7 @@ test("R10 recovery requires the exact zero-intent R9 document before constructin
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   };
   for (const recoveryLedgerR9 of [undefined, null])
     assert.throws(
@@ -7105,6 +7147,7 @@ test("R10 recovery requires the exact zero-intent R9 document before constructin
           recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
           recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
           recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+          recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
           ...options,
           recoveryLedgerR9,
         }),
@@ -7118,9 +7161,10 @@ test("R10 recovery requires the exact zero-intent R9 document before constructin
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
-  assert.equal(b.snapshot().count, 16);
-  assert.equal(b.snapshot().maxNewIntentions, 8);
+  assert.equal(b.snapshot().count, 17);
+  assert.equal(b.snapshot().maxNewIntentions, 7);
 });
 test("R10 actual recovery consumer waits for the new monthly request instead of the initial unfiltered row", async () => {
   const { EventEmitter } = await import("node:events"),
@@ -7180,6 +7224,7 @@ test("R10 actual recovery consumer waits for the new monthly request instead of 
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     readBarrier: observer.readBarrier,
     assertReadBarrier: observer.assertReadBarrier,
     readBarrierRemaining: observer.readBarrierRemaining,
@@ -7349,6 +7394,7 @@ test("R10 initial body cannot authorize fill while another admitted request has 
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     page: {
       getByLabel: () => ({
         fill: async () => {
@@ -7745,6 +7791,7 @@ async function r10NativeCompetenceProbe(browser) {
       recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
       recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
       recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+      recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
       readBarrier: orderedObserver.readBarrier,
       assertReadBarrier: orderedObserver.assertReadBarrier,
       readBarrierRemaining: orderedObserver.readBarrierRemaining,
@@ -8293,6 +8340,7 @@ test("R11 recovery requires the original zero-intent R10 proof before constructi
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   };
   for (const recoveryLedgerR10 of [undefined, null])
     assert.throws(
@@ -8301,6 +8349,7 @@ test("R11 recovery requires the original zero-intent R10 proof before constructi
           recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
           recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
           recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+          recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
           ...options,
           recoveryLedgerR10,
         }),
@@ -8313,9 +8362,10 @@ test("R11 recovery requires the original zero-intent R10 proof before constructi
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
   });
-  assert.equal(broker.snapshot().count, 16);
-  assert.equal(broker.snapshot().maxNewIntentions, 8);
+  assert.equal(broker.snapshot().count, 17);
+  assert.equal(broker.snapshot().maxNewIntentions, 7);
 });
 
 test("R11 actual runtime budget initializer receives its mandatory R10 proof", async () => {
@@ -8327,19 +8377,19 @@ test("R11 actual runtime budget initializer receives its mandatory R10 proof", a
     .initializer.getText(s.ast);
   const budgetSource = s.named("recoveryBudget").getText(s.ast);
   const env = {};
-  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16])
+  for (const n of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17])
     env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
   env.err = (code) => {
     throw Error(code);
   };
   env.R1_RECOVERY_DOCUMENT = sut.R1_RECOVERY_DOCUMENT;
   env.R3_RECOVERY_DOCUMENT = sut.R3_RECOVERY_DOCUMENT;
-  for (const n of [4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16])
+  for (const n of [4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17])
     env["r" + n + "Recovery"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
   const result = new Function(...Object.keys(env), budgetSource + ";return " + initializer + ";")(
     ...Object.values(env),
   );
-  assert.deepEqual(result, { confirmedBefore: 14, priorReserved: 2, maxNewIntentions: 8 });
+  assert.deepEqual(result, { confirmedBefore: 15, priorReserved: 2, maxNewIntentions: 7 });
 });
 test("R11 scoped DTO objects and mechanism counts never accept arrays", () => {
   for (const [path, value] of [
@@ -9014,7 +9064,7 @@ test("R11 every recovery entry rejects missing hostile or cross-proof R10 before
     getValidatedR4ZeroAuth: () => sut.R4_RECOVERY_DOCUMENT,
     getValidatedR7ZeroAuth: () => sut.R7_RECOVERY_DOCUMENT,
   };
-  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16]) {
+  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17]) {
     env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
     env["R" + n + "_RECOVERY_DOCUMENT"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
   }
@@ -9029,6 +9079,7 @@ test("R11 every recovery entry rejects missing hostile or cross-proof R10 before
       recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
       recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
       recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+      recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
       page: {},
       runtime: {},
       broker: {},
@@ -9047,6 +9098,7 @@ test("R11 every recovery entry rejects missing hostile or cross-proof R10 before
       "rpcRead",
       "fresh",
       "link",
+      "goKnown",
       "command",
       "official",
       "verifyContext",
@@ -9063,6 +9115,7 @@ test("R11 every recovery entry rejects missing hostile or cross-proof R10 before
           recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
           recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
           recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+          recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
           ...io,
           persist: () => {
             effects++;
@@ -9127,6 +9180,7 @@ function r12RecoveryOptions(delta = {}) {
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     ...delta,
   };
 }
@@ -9267,6 +9321,7 @@ test("R12 the original uncertain R11 document is mandatory before constructing a
             recoveryLedgerR11,
             recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
             recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+            recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
           }),
         ),
       /RECOVERY_R11_LEDGER/,
@@ -9287,15 +9342,15 @@ test("R12 a recovery broker reserves the uncertain slot without promoting it to 
     "maxNewIntentions",
   ]);
   assert.deepEqual(snapshot, {
-    count: 16,
+    count: 17,
     frozen: false,
     pending: false,
     sent: false,
-    priorConfirmed: 14,
+    priorConfirmed: 15,
     priorReserved: 2,
     newArmedCount: 0,
     maxIntentions: 24,
-    maxNewIntentions: 8,
+    maxNewIntentions: 7,
   });
 });
 test("R12 a historical reconciliation without a current October opinion proof cannot authorize recovery", () => {
@@ -9332,19 +9387,19 @@ test("R12 the actual runtime budget call accepts all original proofs including r
     R1_RECOVERY_DOCUMENT: sut.R1_RECOVERY_DOCUMENT,
     R3_RECOVERY_DOCUMENT: sut.R3_RECOVERY_DOCUMENT,
   };
-  for (const i of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16])
+  for (const i of [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17])
     env["validateR" + i + "RecoveryDocument"] = sut["validateR" + i + "RecoveryDocument"];
-  for (const i of [4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16])
+  for (const i of [4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17])
     env["r" + i + "Recovery"] = sut["R" + i + "_RECOVERY_DOCUMENT"];
   const actual = new Function(
     ...Object.keys(env),
     s.named("recoveryBudget").getText(s.ast) + ";return " + n.initializer.getText(s.ast) + ";",
   )(...Object.values(env));
-  assert.deepEqual(actual, { confirmedBefore: 14, priorReserved: 2, maxNewIntentions: 8 });
+  assert.deepEqual(actual, { confirmedBefore: 15, priorReserved: 2, maxNewIntentions: 7 });
 });
 
 const r12AuthorizedContexts = new WeakMap();
-async function r12Authorize(broker, proof, status = "aprovado") {
+async function r12Authorize(broker, proof, status = "aprovado", includePresentation = true) {
   const { EventEmitter } = await import("node:events"),
     { readFile } = await import("node:fs/promises");
   const sdk = await readFile(
@@ -9401,7 +9456,7 @@ async function r12Authorize(broker, proof, status = "aprovado") {
       ...query,
       id_competencia: "eq." + c.id,
     });
-    r17EmitRecoveryData(page, c);
+    r17EmitRecoveryData(page, c, includePresentation);
   }
   await observer.flush();
   const token = observer.sealRecoveryOpinion(broker, after);
@@ -9425,7 +9480,7 @@ test("R12 a new partial October request without headers cannot reuse a previousl
   });
   try {
     assert.throws(() => r6AnalysisArm(b), /RECOVERY_R(?:11|16)_OPINION/);
-    assert.equal(b.snapshot().count, 16);
+    assert.equal(b.snapshot().count, 17);
   } finally {
     f.observer.close();
   }
@@ -9456,6 +9511,7 @@ test("R12 the real recovery callsite captures October opinion while its real sou
     recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
     recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
     recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+    recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     ...r12RecoveryOptions(),
     page: {
       getByLabel: () => ({
@@ -9767,6 +9823,7 @@ async function r12NativeOpinionProbe(browser) {
         [
           "/rest/v1/rpc/obter_documentos_competencia_v115",
           "/rest/v1/rpc/obter_analise_competencia_v116",
+          "/rest/v1/rpc/obter_visao_geral_competencia",
         ].includes(u.pathname)
       ) {
         assert.equal(recoveryPhase, true);
@@ -9939,7 +9996,7 @@ async function r12NativeOpinionProbe(browser) {
       owner = local.createIntentBroker(r12RecoveryOptions()),
       floor = observer.generation();
     for (const binding of recoveredBindings) {
-      for (const rpc of ["obter_documentos_competencia_v115", "obter_analise_competencia_v116"]) {
+      for (const rpc of Object.keys(r17RecoveryData(binding))) {
         await page.evaluate(
           async ([name, args]) => {
             const response = await fetch("/rest/v1/rpc/" + name, {
@@ -9959,7 +10016,7 @@ async function r12NativeOpinionProbe(browser) {
       );
     }
     await observer.flush();
-    assert.equal(recoveryReads, 4);
+    assert.equal(recoveryReads, 5);
     owner.authorizeRecovery(
       local.reconcileR1Recovery(r2Reconciliation()),
       observer.sealRecoveryOpinion(owner, floor),
@@ -9990,10 +10047,10 @@ async function r12NativeOpinionProbe(browser) {
       /RECOVERY_CONFIRMED_OPERATION/,
     );
     assert.equal(local.preparationIntentSummary(owner).priorReserved, 2);
-    assert.equal(owner.snapshot().count, 16);
+    assert.equal(owner.snapshot().count, 17);
     await list();
     r6AnalysisArm(owner);
-    assert.equal(owner.snapshot().count, 17);
+    assert.equal(owner.snapshot().count, 18);
     observer.close();
     recoveryPhase = false;
     let clock = 0;
@@ -10072,7 +10129,7 @@ test("R12 unrelated September observations preserve the October seal before anot
     );
     await f.observer.flush();
     r6AnalysisArm(b);
-    assert.equal(b.snapshot().count, 17);
+    assert.equal(b.snapshot().count, 18);
   } finally {
     f.observer.close();
   }
@@ -10094,7 +10151,7 @@ test("R16 historical October approval cannot be repeated and contradictory times
     f.emit([{ ...f.row, aprovado_em: "2026-11-09T12:00:00.123456+00:00" }]);
     await f.observer.flush();
     assert.throws(() => r6AnalysisArm(b), /RECOVERY_R(?:11|16)_OPINION/);
-    assert.equal(b.snapshot().count, 16);
+    assert.equal(b.snapshot().count, 17);
   } finally {
     f.observer.close();
   }
@@ -10113,7 +10170,7 @@ test("R12 changed or ambiguous current October opinions cannot authorize a later
       f.emit([{ ...f.row, ...delta }]);
       await f.observer.flush();
       assert.throws(() => r6AnalysisArm(b), /RECOVERY_R(?:11|16)_OPINION/);
-      assert.equal(b.snapshot().count, 16);
+      assert.equal(b.snapshot().count, 17);
     } finally {
       f.observer.close();
     }
@@ -10139,7 +10196,7 @@ test("R12 empty or pending newer October reads block all subsequent arms without
       }
       assert.throws(() => r6AnalysisArm(b), /RECOVERY_R(?:11|16)_OPINION/);
       assert.equal(sut.preparationIntentSummary(b).priorReserved, 2);
-      assert.equal(b.snapshot().count, 16);
+      assert.equal(b.snapshot().count, 17);
     } finally {
       f.observer.close();
     }
@@ -10211,7 +10268,7 @@ test("R12 every recovery entry rejects missing hostile or cross-proof R11 before
     getValidatedR4ZeroAuth: () => sut.R4_RECOVERY_DOCUMENT,
     getValidatedR7ZeroAuth: () => sut.R7_RECOVERY_DOCUMENT,
   };
-  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16]) {
+  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17]) {
     env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
     env["R" + n + "_RECOVERY_DOCUMENT"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
   }
@@ -10239,12 +10296,14 @@ test("R12 every recovery entry rejects missing hostile or cross-proof R11 before
       recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
       recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
       recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+      recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
     };
     for (const name of [
       "read",
       "rpcRead",
       "fresh",
       "link",
+      "goKnown",
       "command",
       "official",
       "verifyContext",
@@ -10261,6 +10320,7 @@ test("R12 every recovery entry rejects missing hostile or cross-proof R11 before
           recoveryLedgerR13: sut.R13_RECOVERY_DOCUMENT,
           recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
           recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+          recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
           ...io,
           persist: () => {
             effects++;
@@ -10322,8 +10382,8 @@ test("R12 the inherited uncertain request is permanently spent even with a new s
         /RECOVERY_CONFIRMED_OPERATION|INTENT_ID/,
       );
     }
-    assert.equal(b.snapshot().count, 16);
-    assert.equal(sut.preparationIntentSummary(b).priorConfirmed, 14);
+    assert.equal(b.snapshot().count, 17);
+    assert.equal(sut.preparationIntentSummary(b).priorConfirmed, 15);
     assert.equal(sut.preparationIntentSummary(b).priorReserved, 2);
   } finally {
     f.observer.close();
@@ -10342,28 +10402,28 @@ test("R17 eight new confirmations retain both reserved slots and never emit a cu
   await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
   const f = r12AuthorizedContexts.get(b);
   try {
-    for (let n = 0; n < 8; n++) {
+    for (let n = 0; n < 7; n++) {
       r6AnalysisArm(b);
       assert.equal(b.policy(r6AnalysisRequest()), true);
       assert.equal(b.policy(r6AnalysisRequest({ stage: "RESPONSE" })), true);
       b.resolve("confirmed");
     }
-    assert.equal(receipts.length, 16);
+    assert.equal(receipts.length, 14);
     assert.equal(
       receipts.some((r) => r.requestId === "af968191-7d60-4adb-9c60-ebd5f0741e8e"),
       false,
     );
-    assert.equal(receipts.filter((r) => r.state === "confirmed").length, 8);
+    assert.equal(receipts.filter((r) => r.state === "confirmed").length, 7);
     assert.deepEqual(sut.preparationIntentSummary(b), {
       count: 24,
       frozen: false,
       pending: false,
       sent: false,
-      priorConfirmed: 14,
+      priorConfirmed: 15,
       priorReserved: 2,
-      newArmedCount: 8,
+      newArmedCount: 7,
       maxIntentions: 24,
-      maxNewIntentions: 8,
+      maxNewIntentions: 7,
     });
     assert.throws(() => r6AnalysisArm(b), /INTENT_BUDGET/);
   } finally {
@@ -10385,7 +10445,7 @@ test("R12 cloned foreign and already consumed October seals cannot authorize ano
       () => b.authorizeRecovery(sut.reconcileR1Recovery(r2Reconciliation()), f.token),
       /RECOVERY_R(?:11|16)_OPINION/,
     );
-    assert.equal(other.snapshot().count, 16);
+    assert.equal(other.snapshot().count, 17);
   } finally {
     f.observer.close();
   }
@@ -10403,6 +10463,7 @@ test("R14 broker refuses a missing recovery document before any side effect", ()
         recoveryLedgerR13: undefined,
         recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
         recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+        recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
       }),
     /RECOVERY_R13_LEDGER/,
   );
@@ -10445,6 +10506,7 @@ test("R14 every recovery and login entry rejects a missing or hostile Doc before
       recoveryLedgerR13: value,
       recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
       recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+      recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
       persist: side,
       beforeArm: side,
     };
@@ -10461,6 +10523,7 @@ test("R14 every recovery and login entry rejects a missing or hostile Doc before
       read: side,
       rpcRead: side,
       link: side,
+      goKnown: side,
       fresh: side,
       command: side,
     };
@@ -10475,6 +10538,7 @@ test("R14 every recovery and login entry rejects a missing or hostile Doc before
           page: { on: side },
           recoveryLedgerR15: sut.R15_RECOVERY_DOCUMENT,
           recoveryLedgerR16: sut.R16_RECOVERY_DOCUMENT,
+          recoveryLedgerR17: sut.R17_RECOVERY_DOCUMENT,
         }),
       /RECOVERY_R13_LEDGER/,
     );
@@ -10505,7 +10569,7 @@ test("R14 real bootstrap validates DocR13 before browser, login or budget side e
     getValidatedR4ZeroAuth: () => sut.R4_RECOVERY_DOCUMENT,
     getValidatedR7ZeroAuth: () => sut.R7_RECOVERY_DOCUMENT,
   };
-  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16]) {
+  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17]) {
     env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
     env["R" + n + "_RECOVERY_DOCUMENT"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
   }
@@ -10514,9 +10578,9 @@ test("R14 real bootstrap validates DocR13 before browser, login or budget side e
     source.named("recoveryBudget").getText(source.ast) + ";" + prefix + ";return validatedBudget;",
   );
   assert.deepEqual(runtime(...Object.values(env)), {
-    confirmedBefore: 14,
+    confirmedBefore: 15,
     priorReserved: 2,
-    maxNewIntentions: 8,
+    maxNewIntentions: 7,
   });
   for (const value of [
     undefined,
@@ -10763,10 +10827,10 @@ test("R16 recovery missing DocR15 blocks the actual broker before effects", () =
 test("R16 recovery counts both historical uncertain intentions without reimbursement", () => {
   const b = sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR15: R16_R15_DOCUMENT }));
   const s = b.snapshot();
-  assert.equal(s.count, 16);
-  assert.equal(s.confirmedBefore, 14);
+  assert.equal(s.count, 17);
+  assert.equal(s.confirmedBefore, 15);
   assert.equal(s.priorReserved, 2);
-  assert.equal(s.maxNewIntentions, 8);
+  assert.equal(s.maxNewIntentions, 7);
   assert.equal(sut.preparationIntentSummary(b).newArmedCount, 0);
 });
 test("R16 recovery draft October opinion cannot authorize any later business arm", async () => {
@@ -10854,6 +10918,7 @@ test("R16 recovery rejects hostile documents at every entry without effects or g
       read: effect,
       rpcRead: effect,
       link: effect,
+      goKnown: effect,
       fresh: effect,
       command: effect,
     };
@@ -10943,7 +11008,7 @@ test("R16 replay denial trusts official opinion scope rather than caller evidenc
     );
     await f.observer.flush();
     assert.throws(() => b.arm(make(opinion)), /RECOVERY_R(?:11|16)_OPINION/);
-    assert.equal(b.snapshot().count, 16);
+    assert.equal(b.snapshot().count, 17);
   } finally {
     f.observer.close();
   }
@@ -10966,7 +11031,7 @@ test("R16 actual bootstrap rejects missing or changed R15 before creating diagno
       throw Error(code);
     },
   };
-  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16]) {
+  for (const n of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 16, 17]) {
     env["validateR" + n + "RecoveryDocument"] = sut["validateR" + n + "RecoveryDocument"];
     env["R" + n + "_RECOVERY_DOCUMENT"] = sut["R" + n + "_RECOVERY_DOCUMENT"];
   }
@@ -10975,9 +11040,9 @@ test("R16 actual bootstrap rejects missing or changed R15 before creating diagno
     source.named("recoveryBudget").getText(source.ast) + ";" + prefix + ";return validatedBudget;",
   );
   assert.deepEqual(run(...Object.values(env)), {
-    confirmedBefore: 14,
+    confirmedBefore: 15,
     priorReserved: 2,
-    maxNewIntentions: 8,
+    maxNewIntentions: 7,
   });
   for (const bad of [
     undefined,
@@ -11030,10 +11095,10 @@ test("R16 original uncertain UUID remains consumed even for an unrelated allowed
       /INTENT_PAYLOAD/,
     );
     assert.equal(receipts.length, 0);
-    assert.equal(b.snapshot().count, 16);
+    assert.equal(b.snapshot().count, 17);
     assert.equal(b.snapshot().pending, false);
     r6AnalysisArm(b);
-    assert.equal(b.snapshot().count, 17);
+    assert.equal(b.snapshot().count, 18);
     assert.equal(b.snapshot().pending, true);
     assert.equal(receipts.length, 0);
   } finally {
@@ -11061,10 +11126,22 @@ function r17RecoveryData(c) {
       },
     ],
   };
-  return { obter_documentos_competencia_v115: document, obter_analise_competencia_v116: analysis };
+  const result = {
+    obter_documentos_competencia_v115: document,
+    obter_analise_competencia_v116: analysis,
+  };
+  if (c.month === "2026-10-01") {
+    const view = r17View(100);
+    view.competencia.id = c.id;
+    view.competencia.situacao = "pode_apresentar_contratante";
+    view.blocking_summary.aprovacao_apresentacao_atual = true;
+    result.obter_visao_geral_competencia = view;
+  }
+  return result;
 }
-function r17EmitRecoveryData(page, c) {
+function r17EmitRecoveryData(page, c, includePresentation = true) {
   for (const [rpc, value] of Object.entries(r17RecoveryData(c))) {
+    if (rpc === "obter_visao_geral_competencia" && !includePresentation) continue;
     const args =
       rpc === "obter_analise_competencia_v116"
         ? {
@@ -11290,10 +11367,10 @@ test("R17 runtime wrapper rejects missing R16 before login callback or cleanup e
 test("R17 recovered budget preserves fourteen confirmations and both reservations", () => {
   const b = sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR16: R17_R16_DOCUMENT }));
   const state = b.snapshot();
-  assert.equal(state.count, 16);
-  assert.equal(state.confirmedBefore, 14);
+  assert.equal(state.count, 17);
+  assert.equal(state.confirmedBefore, 15);
   assert.equal(state.priorReserved, 2);
-  assert.equal(state.maxNewIntentions, 8);
+  assert.equal(state.maxNewIntentions, 7);
 });
 test("R17 confirmed September analysis is not armed again under a new UUID", async () => {
   const b = sut.createIntentBroker(r12RecoveryOptions({ recoveryLedgerR16: R17_R16_DOCUMENT }));
@@ -11301,7 +11378,7 @@ test("R17 confirmed September analysis is not armed again under a new UUID", asy
   const f = r12AuthorizedContexts.get(b);
   try {
     assert.throws(() => r17RecoveredAnalysisArm(b), /RECOVERY_CONFIRMED_OPERATION/);
-    assert.equal(b.snapshot().count, 16);
+    assert.equal(b.snapshot().count, 17);
   } finally {
     f.observer.close();
   }
@@ -11542,7 +11619,7 @@ test("R17 both approved opinion histories are owner-bound and cannot drift befor
       });
       await f.observer.flush();
       assert.throws(() => r6AnalysisArm(b), /RECOVERY_R(?:11|16)_OPINION/);
-      assert.equal(b.snapshot().count, 16);
+      assert.equal(b.snapshot().count, 17);
       assert.equal(b.snapshot().pending, false);
     } finally {
       f.observer.close();
@@ -11582,7 +11659,486 @@ test("R17 four confirmed effects stay denied with changed UUIDs and equivalent c
           }),
         /RECOVERY_CONFIRMED_OPERATION/,
       );
-    assert.equal(b.snapshot().count, 16);
+    assert.equal(b.snapshot().count, 17);
+    assert.equal(b.snapshot().pending, false);
+  } finally {
+    f.observer.close();
+  }
+});
+
+const R18_R17_DOCUMENT = Object.freeze({
+  schema: "contaos.fixture.recovery-r17.v1",
+  workflowRun: "42724239916",
+  artifactId: "13722355410",
+  requestId: "trilha-a-fixtures-20261109-r17",
+  harnessSha: "adaeb72504cadf6dd83b8938abba9c067acba525",
+  zipSha256: "438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff",
+  reportSha256: "8565ec68be1b94344ecaaa3ac2688076587ba446d4c0f3acbdf5cf34aa73c594",
+  receiptsSha256: "bed517a5a27f72f23dc07f869a1d4de21f1f24582fc4c725e9f747d8e603d82a",
+  observationSha256: "9d6bb4c7de28c4f2dd8563d775d7618deb52e1b96b6fdbfea2b9f0f7defa5f6a",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "PREPARER_SPA_LINK",\n  "diagnostics": {\n    "primaryFailure": "PREPARER_SPA_LINK",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "COMPETENCY_UI",\n    "subphasePath": [\n      "COMPETENCIES",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI"\n    ],\n    "lastCompletedSubphase": "PREFLIGHT",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 17,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 14,\n    "priorReserved": 2,\n    "newArmedCount": 1,\n    "maxIntentions": 24,\n    "maxNewIntentions": 8\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 14,\n    "maxNewIntentions": 8,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "pode_apresentar_contratante",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "executionId": "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n        "opinionId": "9ec80151-bbf6-4469-9cd8-7d96d1bb02cd"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "adaeb72504cadf6dd83b8938abba9c067acba525",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42724239916",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n    "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n    "9ec80151-bbf6-4469-9cd8-7d96d1bb02cd"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "adaeb72504cadf6dd83b8938abba9c067acba525",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42724239916",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_apresentacao",\n      "requestId": "5d657667-4c3b-4b4f-a953-d7e778bfb2c1",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1e2bc45826f48745d7800fa108c8be6331d33737e2317c710638e1c568b99cc2"\n    },\n    {\n      "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n      "harnessSha": "adaeb72504cadf6dd83b8938abba9c067acba525",\n      "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n      "workflowRun": "42724239916",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "aprovar_apresentacao",\n      "requestId": "5d657667-4c3b-4b4f-a953-d7e778bfb2c1",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1e2bc45826f48745d7800fa108c8be6331d33737e2317c710638e1c568b99cc2"\n    }\n  ]\n}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "0024b3c6739ab6296ec12338f11cf792d3a5f84b",\n  "harnessSha": "adaeb72504cadf6dd83b8938abba9c067acba525",\n  "deploymentId": "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",\n  "workflowRun": "42724239916",\n  "firstFailure": null\n}\n',
+});
+
+test("R18 original R17 recovery bytes retain the exact Nodecrypto signature", () => {
+  const raw = JSON.stringify(R18_R17_DOCUMENT, null, 2) + "\n";
+  assert.equal(Object.keys(R18_R17_DOCUMENT).length, 12);
+  assert.equal(Buffer.byteLength(raw), 6088);
+  assert.equal(
+    createHash("sha256").update(raw).digest("hex"),
+    "f3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95",
+  );
+});
+test("R18 recovery document is mandatory before broker persistence or side effects", () => {
+  let effects = 0;
+  for (const value of [
+    undefined,
+    {},
+    { ...R18_R17_DOCUMENT, reportRaw: R18_R17_DOCUMENT.reportRaw + " " },
+  ])
+    assert.throws(
+      () =>
+        sut.createIntentBroker(
+          r12RecoveryOptions({
+            recoveryLedgerR17: value,
+            persist: () => {
+              effects++;
+              return true;
+            },
+          }),
+        ),
+      /RECOVERY_R17_LEDGER/,
+    );
+  assert.equal(effects, 0);
+});
+test("R18 broker preserves fifteen confirmations and both uncertain reservations with seven new arms", () => {
+  const broker = sut.createIntentBroker(
+    r12RecoveryOptions({ recoveryLedgerR17: R18_R17_DOCUMENT }),
+  );
+  const state = broker.snapshot();
+  assert.equal(state.count, 17);
+  assert.equal(state.confirmedBefore, 15);
+  assert.equal(state.priorReserved, 2);
+  assert.equal(state.maxNewIntentions, 7);
+});
+test("R18 prior October approval is not repeated under a different UUID or foundation", async () => {
+  const broker = sut.createIntentBroker(
+    r12RecoveryOptions({ recoveryLedgerR17: R18_R17_DOCUMENT }),
+  );
+  await r12Authorize(broker, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(broker);
+  try {
+    for (const foundation of [FIXTURE.foundation, "Different synthetic foundation."]) {
+      assert.throws(
+        () =>
+          broker.arm({
+            rpc: "aprovar_apresentacao",
+            payload: {
+              p_id_competencia: "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",
+              p_fundamento: foundation,
+            },
+            requestId: randomUUID(),
+            verified: { context: true, capability: true, reconciled: true },
+            evidence: {
+              competencies: [
+                {
+                  official: true,
+                  current: true,
+                  organization: FIXTURE.organization,
+                  contract: FIXTURE.contract,
+                  id: "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",
+                  month: "2026-10-01",
+                },
+              ],
+              analysisCurrent: true,
+              analysisComplete: true,
+              opinionApproved: true,
+              compliance: 100,
+            },
+          }),
+        /RECOVERY_CONFIRMED_OPERATION/,
+      );
+    }
+  } finally {
+    f.observer.close();
+  }
+});
+
+async function r18ListNavigationFixture({ proved = true, foreign = false } = {}) {
+  const source = await r6SourceNodes();
+  const ts = (await import("typescript")).default;
+  const { readFile } = await import("node:fs/promises");
+  const menuSource = await readFile(
+    new URL("../../src/lib/navegacao/menuV1.ts", import.meta.url),
+    "utf8",
+  );
+  const js = ts.transpileModule(menuSource, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+  }).outputText;
+  const menu = new Function("exports", js + ";return menuContextualV1;")({});
+  const october = "50c26274-a36f-48e0-b2fe-5a1caf5d6a49";
+  const parent = "/contratos/" + FIXTURE.contract;
+  const approved = parent + "/competencias";
+  const listPath = foreign
+    ? "/contratos/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/competencias"
+    : approved;
+  const permissions = [
+    "contratos",
+    "competencias",
+    "documentos_competencia",
+    "analises",
+    "pareceres",
+    "apresentacoes",
+  ].map((recurso) => ({ recurso, acao: "consultar" }));
+  const items = menu({ competencia: october, contrato: FIXTURE.contract }, permissions);
+  assert.equal(
+    items.some((item) => item.destino === approved),
+    false,
+  );
+  assert.equal(
+    items.some((item) => item.destino === parent),
+    true,
+  );
+  assert.equal(
+    menu({ competencia: null, contrato: FIXTURE.contract }, permissions).some(
+      (item) => item.destino === approved,
+    ),
+    true,
+  );
+  const budget = Object.freeze({ read: "owned budget" }),
+    events = [];
+  let location = FIXTURE.origin + "/competencias/" + october + "/apresentar";
+  const guard = (value) => assert.equal(value, budget);
+  const observer = {
+    assertReadBarrier: guard,
+    readBarrier: async (fn, value = budget) => {
+      guard(value);
+      return fn(budget);
+    },
+    readBarrierRemaining: (value) => {
+      guard(value);
+      return 15000;
+    },
+    drainReads: async (value) => {
+      guard(value);
+      events.push("drain");
+    },
+  };
+  const page = {
+    url: () => location,
+    locator: (selector) => {
+      const path = /^a\[href="([^"]+)"\]:visible$/.exec(selector)?.[1];
+      return { count: async () => items.filter((item) => item.destino === path).length };
+    },
+    getByLabel: (label, options) => {
+      assert.equal(label, "Competência");
+      assert.equal(options.exact, true);
+      return {
+        fill: async (month, options) => {
+          assert.equal(month, "2026-09");
+          assert.equal(options.timeout, 15000);
+          events.push("fill");
+        },
+      };
+    },
+  };
+  const proof = { documents: proved ? { [approved]: {} } : {} },
+    fence = {};
+  const env = {
+    page,
+    proof,
+    fence,
+    observer,
+    FIXTURE,
+    fresh: async () => {
+      events.push("fresh");
+    },
+    tracedPreparation: async (_, fn) => fn(),
+    err: (code) => {
+      throw new Error(code);
+    },
+    checkFreshDeployment: async (value, credentials) => {
+      assert.equal(value, proof);
+      assert.equal(credentials, false);
+      events.push("deployment");
+    },
+    navigateVerifiedPage: async (p, f, url, remaining) => {
+      assert.equal(p, page);
+      assert.equal(f, fence);
+      assert.equal(url, FIXTURE.origin + approved);
+      assert.equal(remaining(), 15000);
+      events.push("navigate");
+      location = url;
+    },
+  };
+  const declaration = (name) =>
+    source.nodes.find(
+      (node) =>
+        source.ts.isVariableDeclaration(node) &&
+        node.name.getText(source.ast) === name &&
+        node.initializer
+          ?.getText(source.ast)
+          .includes(name === "link" ? "PREPARER_SPA_LINK" : "PREPARER_SSR_PATH"),
+    );
+  const bind = (name) =>
+    new Function(
+      ...Object.keys(env),
+      "return (" + declaration(name).initializer.getText(source.ast) + ");",
+    )(...Object.values(env));
+  const link = bind("link"),
+    goKnown = bind("goKnown");
+  const row = { id: "79bdc139-ed10-4c91-905e-b32b9a824d27", competencia_referencia: "2026-09-01" };
+  const io = {
+    ...observer,
+    page,
+    generation: () => 3,
+    fresh: env.fresh,
+    link: async (...args) => {
+      events.push("link");
+      return link(...args);
+    },
+    goKnown: async (...args) => {
+      events.push("goKnown");
+      return goKnown(...args);
+    },
+    observedAfter: async (name, where, ordinal, options) => {
+      assert.equal(name, "competencias");
+      assert.equal(where.id_contrato, FIXTURE.contract);
+      assert.equal(ordinal, 3);
+      guard(options.readBudget);
+      events.push("observed");
+      return true;
+    },
+    read: async (name, where, options) => {
+      assert.equal(name, "competencias");
+      assert.equal(where.id_contrato, FIXTURE.contract);
+      assert.equal(where.competencia_referencia, "2026-09-01");
+      guard(options.readBudget);
+      assert.equal(options.after, 3);
+      events.push("read");
+      return [row];
+    },
+  };
+  const scoped = {
+    io,
+    listPath,
+    tracedPreparation: env.tracedPreparation,
+    readCompetenceMonth: sut.readCompetenceMonth,
+    uuid: (value) => /^[0-9a-f-]{36}$/.test(value),
+    FIXTURE,
+    stop: env.err,
+  };
+  const listMonth = new Function(
+    ...Object.keys(scoped),
+    "return (" + source.named("listMonth").getText(source.ast) + ");",
+  )(...Object.values(scoped));
+  return { listMonth, row, events };
+}
+test("R18 actual list consumer returns from October V119 through the proved SSR document under one budget", async () => {
+  const f = await r18ListNavigationFixture();
+  assert.deepEqual(await f.listMonth("2026-09-01"), [f.row]);
+  assert.equal(f.events.includes("link"), false);
+  assert.equal(f.events.filter((item) => item === "goKnown").length, 1);
+  assert.ok(f.events.indexOf("drain") < f.events.indexOf("navigate"));
+  assert.ok(f.events.indexOf("navigate") < f.events.indexOf("observed"));
+  assert.ok(f.events.indexOf("fill") < f.events.indexOf("read"));
+});
+for (const options of [{ proved: false }, { foreign: true }]) {
+  test(
+    "R18 actual SSR consumer rejects a missing or foreign proved document " +
+      JSON.stringify(options),
+    async () => {
+      const f = await r18ListNavigationFixture(options);
+      await assert.rejects(() => f.listMonth("2026-09-01"), /PREPARER_SSR_PATH/);
+      assert.equal(f.events.includes("navigate"), false);
+      assert.equal(f.events.includes("read"), false);
+    },
+  );
+}
+
+test("R18 every actual recovery and runtime entry rejects hostile DocR17 before effects or getters", async () => {
+  let effects = 0,
+    getters = 0;
+  const effect = () => {
+    effects++;
+    throw Error("R18_PRIVATE_EFFECT");
+  };
+  const getter = { ...R18_R17_DOCUMENT };
+  Object.defineProperty(getter, "reportRaw", {
+    enumerable: true,
+    get() {
+      getters++;
+      throw Error("R18_PRIVATE_GETTER");
+    },
+  });
+  const hidden = { ...R18_R17_DOCUMENT };
+  Object.defineProperty(hidden, "reportRaw", { value: hidden.reportRaw, enumerable: false });
+  const revoked = Proxy.revocable({}, {});
+  revoked.revoke();
+  for (const value of [
+    undefined,
+    null,
+    {},
+    sut.R16_RECOVERY_DOCUMENT,
+    { ...R18_R17_DOCUMENT, receiptsRaw: R18_R17_DOCUMENT.receiptsRaw + " " },
+    getter,
+    hidden,
+    { ...R18_R17_DOCUMENT, [Symbol("extra")]: true },
+    Object.fromEntries(Object.entries(R18_R17_DOCUMENT).reverse()),
+    new Proxy({}, {}),
+    revoked.proxy,
+  ]) {
+    const options = r12RecoveryOptions({
+      recoveryLedgerR17: value,
+      persist: effect,
+      beforeArm: effect,
+    });
+    assert.throws(() => sut.createIntentBroker(options), /RECOVERY_R17_LEDGER/);
+    assert.throws(
+      () => sut.reconcileR1Recovery({ ...r2Reconciliation(), ledgerR17: value }),
+      /RECOVERY_R17_LEDGER/,
+    );
+    const io = {
+      ...options,
+      page: {},
+      runtime: {},
+      broker: {},
+      read: effect,
+      rpcRead: effect,
+      link: effect,
+      goKnown: effect,
+      fresh: effect,
+      command: effect,
+    };
+    for (const run of [
+      () => sut.reconcileRecoveryCompetencies(io),
+      () => sut.reconcileRecoveryOpinion(io),
+      () => sut.prepareSourceAndList(io),
+      () => sut.prepareCompetencies(io, {}),
+    ])
+      await assert.rejects(run, /RECOVERY_R17_LEDGER/);
+    assert.throws(() => sut.createRuntimeLogin({ ...options, page: {} }), /RECOVERY_R17_LEDGER/);
+    await assert.rejects(
+      () =>
+        sut.withRuntimeLogin(
+          { login: effect, logout: effect, clear: effect },
+          {},
+          effect,
+          sut.R13_RECOVERY_DOCUMENT,
+          sut.R15_RECOVERY_DOCUMENT,
+          sut.R16_RECOVERY_DOCUMENT,
+          value,
+        ),
+      /RECOVERY_R17_LEDGER/,
+    );
+  }
+  assert.equal(effects, 0);
+  assert.equal(getters, 0);
+});
+test("R18 October presentation owner seal rejects changed or missing approved state before any new arm", async () => {
+  const c = JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0];
+  for (const mutate of [
+    (v) => {
+      v.competencia.percentual_conformidade = 0;
+    },
+    (v) => {
+      v.competencia.situacao = "em_analise";
+    },
+    (v) => {
+      v.blocking_summary.aprovacao_apresentacao_atual = false;
+    },
+    (v) => {
+      v.allowed_actions.apresentar = false;
+    },
+    (v) => {
+      v.portao.percentual = 99.99;
+    },
+    (v) => {
+      v.competencia.versao_registro++;
+    },
+    (v) => {
+      v.competencia.id_contrato = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    },
+  ]) {
+    const b = sut.createIntentBroker(r12RecoveryOptions());
+    await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+    const f = r12AuthorizedContexts.get(b);
+    try {
+      const view = r17RecoveryData(c).obter_visao_geral_competencia;
+      mutate(view);
+      const url = FIXTURE.api + "/rest/v1/rpc/obter_visao_geral_competencia";
+      const req = {
+        method: () => "POST",
+        postData: () => JSON.stringify({ p_id_competencia: c.id }),
+        url: () => url,
+        failure: () => null,
+      };
+      f.page.emit("request", req);
+      f.page.emit("response", {
+        request: () => req,
+        url: () => url,
+        status: () => 200,
+        body: async () => Buffer.from(JSON.stringify(view)),
+      });
+      await f.observer.flush().catch(() => {});
+      assert.throws(
+        () => r6AnalysisArm(b),
+        /RECOVERY_R17_PRESENTATION|OBSERVATION_FAILED|RECOVERY_R11_OPINION/,
+      );
+      assert.equal(b.snapshot().count, 17);
+      assert.equal(b.snapshot().pending, false);
+    } finally {
+      f.observer.close();
+    }
+  }
+});
+
+test("R18 an absent current October presentation cannot authorize the recovery owner", async () => {
+  const broker = sut.createIntentBroker(r12RecoveryOptions());
+  await assert.rejects(
+    () => r12Authorize(broker, sut.reconcileR1Recovery(r2Reconciliation()), "aprovado", false),
+    /RECOVERY_R17_PRESENTATION/,
+  );
+  assert.equal(broker.snapshot().count, 17);
+  assert.equal(broker.snapshot().pending, false);
+});
+
+test("R18 original confirmed October UUID stays consumed for a different allowed September approval", async () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions());
+  await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(b);
+  try {
+    assert.throws(
+      () =>
+        b.arm({
+          rpc: "aprovar_apresentacao",
+          payload: r17LegalPayload,
+          requestId: "5d657667-4c3b-4b4f-a953-d7e778bfb2c1",
+          verified: { context: true, capability: true, reconciled: true },
+          evidence: {
+            competencies: [
+              {
+                official: true,
+                current: true,
+                organization: FIXTURE.organization,
+                contract: FIXTURE.contract,
+                id: r17LegalPayload.p_id_competencia,
+                month: "2026-09-01",
+              },
+            ],
+            analysisCurrent: true,
+            analysisComplete: true,
+            opinionApproved: true,
+            compliance: 100,
+          },
+        }),
+      /INTENT_PAYLOAD/,
+    );
+    assert.equal(b.snapshot().count, 17);
     assert.equal(b.snapshot().pending, false);
   } finally {
     f.observer.close();

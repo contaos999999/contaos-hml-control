@@ -15,6 +15,8 @@ import {
   validateR15RecoveryDocument,
   R16_RECOVERY_DOCUMENT,
   validateR16RecoveryDocument,
+  R17_RECOVERY_DOCUMENT,
+  validateR17RecoveryDocument,
   R13_RECOVERY_DOCUMENT,
   validateR13RecoveryDocument,
   R4_ZERO_AUTH_PROOF,
@@ -45,6 +47,8 @@ export {
   validateR15RecoveryDocument,
   R16_RECOVERY_DOCUMENT,
   validateR16RecoveryDocument,
+  R17_RECOVERY_DOCUMENT,
+  validateR17RecoveryDocument,
 };
 
 export const FIXTURE = Object.freeze({
@@ -220,7 +224,7 @@ function claimRecoveryOpinion(owner, token) {
     record.consumed ||
     !broker.identity ||
     !same(record.identity, broker.identity) ||
-    record.documentHash !== "f5427aa65d4ab75637df290b72b6a8c07a5a7ce30f1b2dc5a4328720133bdd86"
+    record.documentHash !== "f3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95"
   )
     err("RECOVERY_R11_OPINION");
   record.check();
@@ -300,6 +304,7 @@ export async function reconcileRecoveryCompetencies(io, captureOpinion) {
   validateR13RecoveryDocument(io.recoveryLedgerR13);
   validateR15RecoveryDocument(io.recoveryLedgerR15);
   validateR16RecoveryDocument(io.recoveryLedgerR16);
+  validateR17RecoveryDocument(io.recoveryLedgerR17);
   validateR11RecoveryDocument(io.recoveryLedgerR11);
   if (
     captureOpinion !== undefined &&
@@ -359,6 +364,7 @@ export async function reconcileRecoveryOpinion(io) {
   validateR13RecoveryDocument(io.recoveryLedgerR13);
   validateR15RecoveryDocument(io.recoveryLedgerR15);
   validateR16RecoveryDocument(io.recoveryLedgerR16);
+  validateR17RecoveryDocument(io.recoveryLedgerR17);
   validateR11RecoveryDocument(io.recoveryLedgerR11);
   if (
     ["generation", "link", "fresh", "observedAfter", "sealRecoveryOpinion", "rpcRead"].some(
@@ -373,8 +379,25 @@ export async function reconcileRecoveryOpinion(io) {
     );
     if (!Array.isArray(found) || found.length !== 1 || found[0].id !== c.id)
       err("RECOVERY_R16_OPINION");
+    const overviewOrdinal = io.generation();
     await tracedPreparation("RECOVERY_READ", () => io.link("/competencias/" + c.id));
     await tracedPreparation("RECOVERY_READ", () => io.fresh());
+    if (c.month === "2026-10-01") {
+      await tracedPreparation("RECOVERY_READ", () =>
+        io.observedAfter(
+          "obter_visao_geral_competencia",
+          { p_id_competencia: c.id },
+          overviewOrdinal,
+        ),
+      );
+      await tracedPreparation("RECOVERY_READ", () =>
+        io.rpcRead(
+          "obter_visao_geral_competencia",
+          { p_id_competencia: c.id },
+          { after: overviewOrdinal },
+        ),
+      );
+    }
     for (const [area, rpc] of [
       ["documentos", "obter_documentos_competencia_v115"],
       ["analise", "obter_analise_competencia_v116"],
@@ -421,6 +444,7 @@ export function reconcileR1Recovery(input) {
   validateR13RecoveryDocument(input?.ledgerR13);
   validateR15RecoveryDocument(input?.ledgerR15);
   validateR16RecoveryDocument(input?.ledgerR16);
+  validateR17RecoveryDocument(input?.ledgerR17);
   validateR11RecoveryDocument(input?.ledgerR11);
   const expected = R5_BINDINGS;
   if (
@@ -1325,6 +1349,7 @@ function recoveryBudget(
   ledgerR13,
   ledgerR15,
   ledgerR16,
+  ledgerR17,
 ) {
   const prior = validateR1RecoveryDocument(ledger),
     r3 = validateR3RecoveryDocument(ledgerR3);
@@ -1342,13 +1367,14 @@ function recoveryBudget(
   validateR13RecoveryDocument(ledgerR13);
   validateR15RecoveryDocument(ledgerR15);
   validateR16RecoveryDocument(ledgerR16);
+  validateR17RecoveryDocument(ledgerR17);
   validateR11RecoveryDocument(ledgerR11);
   const total = confirmedBefore + r8.receipts.filter((row) => row.state === "confirmed").length;
   if (total !== 10) err("RECOVERY_R8_LEDGER");
   return Object.freeze({
-    confirmedBefore: total + 4,
+    confirmedBefore: total + 5,
     priorReserved: 2,
-    maxNewIntentions: 24 - total - 4 - 2,
+    maxNewIntentions: 24 - total - 5 - 2,
   });
 }
 
@@ -2207,12 +2233,14 @@ export function createIntentBroker({
   recoveryLedgerR13,
   recoveryLedgerR15,
   recoveryLedgerR16,
+  recoveryLedgerR17,
   identity,
   beforeArm,
 } = {}) {
   validateR13RecoveryDocument(recoveryLedgerR13);
   validateR15RecoveryDocument(recoveryLedgerR15);
   validateR16RecoveryDocument(recoveryLedgerR16);
+  validateR17RecoveryDocument(recoveryLedgerR17);
   const recoveryIdentity = identity === undefined ? null : observationIdentity(identity);
   const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
   if (
@@ -2243,6 +2271,7 @@ export function createIntentBroker({
         recoveryLedgerR13,
         recoveryLedgerR15,
         recoveryLedgerR16,
+        recoveryLedgerR17,
       )
     : null;
   let recoveryAuthorized = !recovery;
@@ -2260,6 +2289,7 @@ export function createIntentBroker({
             ...JSON.parse(validateR11RecoveryDocument(recoveryLedgerR11).receiptsRaw).receipts,
             ...JSON.parse(validateR15RecoveryDocument(recoveryLedgerR15).receiptsRaw).receipts,
             ...JSON.parse(validateR16RecoveryDocument(recoveryLedgerR16).receiptsRaw).receipts,
+            ...JSON.parse(validateR17RecoveryDocument(recoveryLedgerR17).receiptsRaw).receipts,
           ].map((r) => r.requestId)
         : [],
     );
@@ -2365,6 +2395,13 @@ export function createIntentBroker({
       if (!recoveryAuthorized) err("RECOVERY_READ_ONLY");
       if (recovery && confirmedR5Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
       if (recovery && confirmedR16Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
+      if (recovery && rpc === "aprovar_apresentacao") {
+        if (isProxy(payload) || !obj(payload)) err("INTENT_PAYLOAD");
+        const descriptor = Object.getOwnPropertyDescriptor(payload, "p_id_competencia");
+        if (!descriptor || !Object.hasOwn(descriptor, "value")) err("INTENT_PAYLOAD");
+        if (descriptor.value === R5_BINDINGS.competencies[0].id)
+          err("RECOVERY_CONFIRMED_OPERATION");
+      }
       if (recovery && confirmedR8Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
       if (recovery && reservedR11Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
       if (recovery) {
@@ -2463,8 +2500,8 @@ export function preparationIntentSummary(broker) {
   if (!broker) return null;
   const state = broker.snapshot();
   if (
-    state.confirmedBefore !== 14 ||
-    state.maxNewIntentions !== 8 ||
+    state.confirmedBefore !== 15 ||
+    state.maxNewIntentions !== 7 ||
     state.priorReserved !== 2 ||
     !Number.isInteger(state.count) ||
     state.count < state.confirmedBefore + state.priorReserved ||
@@ -2571,10 +2608,12 @@ export function createRuntimeLogin({
   recoveryLedgerR13,
   recoveryLedgerR15,
   recoveryLedgerR16,
+  recoveryLedgerR17,
 } = {}) {
   validateR13RecoveryDocument(recoveryLedgerR13);
   validateR15RecoveryDocument(recoveryLedgerR15);
   validateR16RecoveryDocument(recoveryLedgerR16);
+  validateR17RecoveryDocument(recoveryLedgerR17);
   if (
     !page ||
     !fence ||
@@ -2873,10 +2912,12 @@ export async function withRuntimeLogin(
   recoveryLedgerR13,
   recoveryLedgerR15,
   recoveryLedgerR16,
+  recoveryLedgerR17,
 ) {
   validateR13RecoveryDocument(recoveryLedgerR13);
   validateR15RecoveryDocument(recoveryLedgerR15);
   validateR16RecoveryDocument(recoveryLedgerR16);
+  validateR17RecoveryDocument(recoveryLedgerR17);
   if (!runtime || typeof execute !== "function") err("LOGIN_CONFIGURATION");
   try {
     await runtime.login(credentials);
@@ -4531,6 +4572,7 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
     validateR13RecoveryDocument(R13_RECOVERY_DOCUMENT);
     validateR15RecoveryDocument(R15_RECOVERY_DOCUMENT);
     validateR16RecoveryDocument(R16_RECOVERY_DOCUMENT);
+    validateR17RecoveryDocument(R17_RECOVERY_DOCUMENT);
     validateR11RecoveryDocument(R11_RECOVERY_DOCUMENT);
     const broker = recoveryBrokerOwners.get(owner);
     if (
@@ -4596,8 +4638,43 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
         analysis.execucao_atual.status !== "concluida"
       )
         err("RECOVERY_R16_OPINION");
+      let presentation = null;
+      if (c.month === "2026-10-01") {
+        const view = rpcItem(
+          "obter_visao_geral_competencia",
+          { p_id_competencia: c.id },
+          { after },
+        )?.value;
+        const context = view?.competencia;
+        if (
+          context?.id !== c.id ||
+          context.id_organizacao !== FIXTURE.organization ||
+          context.id_contrato !== FIXTURE.contract ||
+          context.competencia_referencia !== c.month ||
+          context.situacao !== "pode_apresentar_contratante" ||
+          context.percentual_conformidade !== 100 ||
+          view.portao?.percentual !== 100 ||
+          view.portao.liberado !== true ||
+          view.blocking_summary?.analise_concluida_atual !== true ||
+          view.blocking_summary.parecer_aprovado !== true ||
+          view.blocking_summary.aprovacao_apresentacao_atual !== true ||
+          view.allowed_actions?.apresentar !== true
+        )
+          err("RECOVERY_R17_PRESENTATION");
+        presentation = {
+          id: context.id,
+          state: context.situacao,
+          stored: context.percentual_conformidade,
+          canonical: view.portao.percentual,
+          approved: view.blocking_summary.aprovacao_apresentacao_atual,
+          allowed: view.allowed_actions.apresentar,
+          version: context.versao_registro,
+          updated: context.atualizado_em,
+        };
+      }
       return hash(
         JSON.stringify({
+          presentation,
           opinion: {
             id: row.id,
             competency: row.id_competencia,
@@ -4626,7 +4703,7 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
     const record = {
       owner,
       identity: observerIdentity,
-      documentHash: "f5427aa65d4ab75637df290b72b6a8c07a5a7ce30f1b2dc5a4328720133bdd86",
+      documentHash: "f3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95",
       consumed: false,
       permitsApproval() {
         return false;
@@ -4861,6 +4938,7 @@ export async function prepareSourceAndList(io) {
   validateR13RecoveryDocument(io?.recoveryLedgerR13);
   validateR15RecoveryDocument(io?.recoveryLedgerR15);
   validateR16RecoveryDocument(io?.recoveryLedgerR16);
+  validateR17RecoveryDocument(io?.recoveryLedgerR17);
   const { page } = io;
   const recovery =
     io.recoveryLedger === undefined ? null : validateR1RecoveryDocument(io.recoveryLedger);
@@ -4876,6 +4954,7 @@ export async function prepareSourceAndList(io) {
     validateR13RecoveryDocument(io.recoveryLedgerR13);
     validateR15RecoveryDocument(io.recoveryLedgerR15);
     validateR16RecoveryDocument(io.recoveryLedgerR16);
+    validateR17RecoveryDocument(io.recoveryLedgerR17);
     validateR11RecoveryDocument(io.recoveryLedgerR11);
   }
   const fail = (code) => {
@@ -5408,6 +5487,7 @@ export async function prepareSourceAndList(io) {
         ledgerR13: io.recoveryLedgerR13,
         ledgerR15: io.recoveryLedgerR15,
         ledgerR16: io.recoveryLedgerR16,
+        ledgerR17: io.recoveryLedgerR17,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -5738,6 +5818,7 @@ export async function prepareCompetencies(io, sourceList) {
   validateR13RecoveryDocument(io?.recoveryLedgerR13);
   validateR15RecoveryDocument(io?.recoveryLedgerR15);
   validateR16RecoveryDocument(io?.recoveryLedgerR16);
+  validateR17RecoveryDocument(io?.recoveryLedgerR17);
   const stop = (code) => {
     throw new Error(code);
   };
@@ -5760,6 +5841,7 @@ export async function prepareCompetencies(io, sourceList) {
     "rpcRead",
     "fresh",
     "link",
+    "goKnown",
     "command",
     "official",
     "verifyContext",
@@ -5786,6 +5868,7 @@ export async function prepareCompetencies(io, sourceList) {
     validateR13RecoveryDocument(io.recoveryLedgerR13);
     validateR15RecoveryDocument(io.recoveryLedgerR15);
     validateR16RecoveryDocument(io.recoveryLedgerR16);
+    validateR17RecoveryDocument(io.recoveryLedgerR17);
     validateR11RecoveryDocument(io.recoveryLedgerR11);
     for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
       if (sourceList[key] !== R5_BINDINGS[key]) stop("RECOVERY_LIST");
@@ -5972,7 +6055,7 @@ export async function prepareCompetencies(io, sourceList) {
   async function listMonth(month) {
     const found = (
       await tracedPreparation("COMPETENCY_UI", () =>
-        readCompetenceMonth(io, month, (budget) => io.link(listPath, undefined, budget)),
+        readCompetenceMonth(io, month, (budget) => io.goKnown(listPath, budget)),
       )
     ).filter((r) => r.competencia_referencia === month);
     if (found.length > 1 || found.some((r) => !uuid(r.id) || r.id === FIXTURE.historical))
@@ -5993,6 +6076,7 @@ export async function prepareCompetencies(io, sourceList) {
       validateR13RecoveryDocument(io.recoveryLedgerR13);
       validateR15RecoveryDocument(io.recoveryLedgerR15);
       validateR16RecoveryDocument(io.recoveryLedgerR16);
+      validateR17RecoveryDocument(io.recoveryLedgerR17);
       validateR11RecoveryDocument(io.recoveryLedgerR11);
       const expected = R5_BINDINGS.competencies.find((c) => c.month === month);
       if (!expected || existing.length !== 1 || existing[0].id !== expected.id)
@@ -6984,6 +7068,8 @@ const PREPARER_FAILURE_CODES = new Set([
   "RECOVERY_R10_LEDGER",
   "RECOVERY_R11_LEDGER",
   "RECOVERY_R13_LEDGER",
+  "RECOVERY_R17_LEDGER",
+  "RECOVERY_R17_PRESENTATION",
   "RECOVERY_R16_LEDGER",
   "RECOVERY_R16_OPINION",
   "RECOVERY_R15_LEDGER",
@@ -7168,6 +7254,7 @@ async function runFixturePreparation() {
   const r13Recovery = validateR13RecoveryDocument(R13_RECOVERY_DOCUMENT);
   const r15Recovery = validateR15RecoveryDocument(R15_RECOVERY_DOCUMENT);
   const r16Recovery = validateR16RecoveryDocument(R16_RECOVERY_DOCUMENT);
+  const r17Recovery = validateR17RecoveryDocument(R17_RECOVERY_DOCUMENT);
   const r11Recovery = validateR11RecoveryDocument(R11_RECOVERY_DOCUMENT);
   const validatedBudget = recoveryBudget(
     R1_RECOVERY_DOCUMENT,
@@ -7183,6 +7270,7 @@ async function runFixturePreparation() {
     r13Recovery,
     r15Recovery,
     r16Recovery,
+    r17Recovery,
   );
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
@@ -7273,6 +7361,7 @@ async function runFixturePreparation() {
       recoveryLedgerR13: r13Recovery,
       recoveryLedgerR15: r15Recovery,
       recoveryLedgerR16: r16Recovery,
+      recoveryLedgerR17: r17Recovery,
       beforeArm: (rpc, payload, evidence, binding) =>
         observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
@@ -7452,6 +7541,7 @@ async function runFixturePreparation() {
       recoveryLedgerR13: r13Recovery,
       recoveryLedgerR15: r15Recovery,
       recoveryLedgerR16: r16Recovery,
+      recoveryLedgerR17: r17Recovery,
       page,
       fence,
       waitOrganization,
@@ -7573,6 +7663,7 @@ async function runFixturePreparation() {
       recoveryLedgerR13: r13Recovery,
       recoveryLedgerR15: r15Recovery,
       recoveryLedgerR16: r16Recovery,
+      recoveryLedgerR17: r17Recovery,
       sealRecoveryOpinion: (after) => observer.sealRecoveryOpinion(broker, after),
       recoveryReady: (proof, opinionProof) => {
         broker.authorizeRecovery(proof, opinionProof);
@@ -7765,6 +7856,10 @@ async function runFixturePreparation() {
     writeFileSync(join(output, "recovery-r16.json"), JSON.stringify(r16Recovery, null, 2) + "\n", {
       mode: 0o600,
     });
+    writeFileSync(join(output, "receipts-r17.json"), r17Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r17.json"), JSON.stringify(r17Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
     let sums = "";
     writeFileSync(
       join(output, "recovery-r2.json"),
@@ -7798,6 +7893,8 @@ async function runFixturePreparation() {
       "recovery-r15.json",
       "receipts-r16.json",
       "recovery-r16.json",
+      "receipts-r17.json",
+      "recovery-r17.json",
     ])
       sums +=
         createHash("sha256")
