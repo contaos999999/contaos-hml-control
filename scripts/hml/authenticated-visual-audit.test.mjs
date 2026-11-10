@@ -14847,6 +14847,10 @@ async function c8SourceFixture() {
   data.analysis.execucoes[0].id = c.executionId;
   Object.assign(data.analysis.resultados[0], { id_requisito: c.requirementId });
   data.analysis.resultados[0].requisito.codigo = "AUD-A-TXT-001";
+  data.analysis.resultados[0].requisito.descricao =
+    "Presença do documento TXT sintético de auditoria.";
+  data.analysis.resultados[0].justificativa = preparer.FIXTURE.reviewJustification;
+  data.analysis.resultados[0].fundamento = preparer.FIXTURE.reviewFoundation;
   Object.assign(data.detail.competencia, { id: c.id });
   Object.assign(data.detail.requisito, {
     id: c.requirementId,
@@ -14854,6 +14858,7 @@ async function c8SourceFixture() {
     origem_id: b.itemId,
     hash_snapshot: "b".repeat(64),
   });
+  data.detail.requisito.descricao = data.analysis.resultados[0].requisito.descricao;
   data.detail.execucao_atual.id = c.executionId;
   data.detail.execucao_atual.iniciada_em = "2026-11-10T00:00:00Z";
   data.detail.execucao_atual.concluida_em = "2026-11-10T00:01:00Z";
@@ -15298,9 +15303,20 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           assert.equal(state.c8Current.observer, currentObserver);
           assert.equal(state.c8Current.generation, state.generation);
           phase("PRIVACY", item);
-          const rendered = await page.locator("body").innerText(),
+          const rendered = await privacyHarness.render(page),
             snapshot = await page.locator("body").ariaSnapshot();
           const token = await privacyHarness.context(localPage, state, rendered, snapshot, null);
+          if (surface === "V117")
+            for (const field of [
+              "AUD-A-TXT-001",
+              data.detail.requisito.descricao,
+              data.analysis.resultados[0].justificativa,
+              data.analysis.resultados[0].fundamento,
+            ])
+              assert.equal(
+                privacyHarness.contexts.get(token).rendered.remainder.includes(field),
+                false,
+              );
           const technical =
             surface === "V117"
               ? b.itemId
@@ -15319,7 +15335,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
               p.textContent = value;
               document.body.append(p);
             }, technical);
-            const duplicated = await page.locator("body").innerText(),
+            const duplicated = await privacyHarness.render(page),
               duplicatedSnapshot = await page.locator("body").ariaSnapshot();
             const rejected = await privacyHarness.context(
               localPage,
@@ -15346,7 +15362,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
               const duplicateContext = await privacyHarness.context(
                 localPage,
                 state,
-                await page.locator("body").innerText(),
+                await privacyHarness.render(page),
                 await page.locator("body").ariaSnapshot(),
                 null,
               );
@@ -15372,7 +15388,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
               const exchanged = await privacyHarness.context(
                 localPage,
                 state,
-                await page.locator("body").innerText(),
+                await privacyHarness.render(page),
                 await page.locator("body").ariaSnapshot(),
                 null,
               );
@@ -15403,6 +15419,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
               width < 768 ? "MOBILE_MENU" : "SIDEBAR_COLLAPSED",
             );
             assert.ok(normal.targets.length > 0);
+            assert.equal(normal.passed, true);
             assert.equal(
               sut.surfaceStateValid(surface, { ...observation, dialogVisible: false }),
               false,
@@ -15513,7 +15530,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
         );
       if (mode === "hostile") {
         await privacyHarness.collect(localPage, item, state);
-        const text = await page.locator("body").innerText(),
+        const text = await privacyHarness.render(page),
           snapshot = await page.locator("body").ariaSnapshot();
         const context = await privacyHarness.context(localPage, state, text, snapshot, null);
         const remainder = privacyHarness.contexts.get(context).rendered.remainder;
@@ -15581,6 +15598,17 @@ async function c8PrivacyHarness() {
       ts.isVariableStatement(n) &&
       n.declarationList.declarations.some((d) => d.name.getText(ast) === "C8_SYNTHETIC_FIELDS"),
   );
+  const inspect = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "inspectPrivacy",
+  );
+  let renderedDeclaration;
+  const findRendered = (n) => {
+    if (ts.isVariableDeclaration(n) && n.name.getText(ast) === "rendered") renderedDeclaration = n;
+    ts.forEachChild(n, findRendered);
+  };
+  findRendered(inspect);
+  const renderedFunction = renderedDeclaration.initializer.expression.arguments[0];
+  const renderedReader = new Function("return (" + renderedFunction.getText(ast) + ");")();
   const pages = new WeakMap(),
     contexts = new WeakMap();
   const context = new Function(
@@ -15612,7 +15640,7 @@ async function c8PrivacyHarness() {
       throw Object.assign(new Error(code), { code });
     },
   );
-  return { pages, contexts, ...context };
+  return { pages, contexts, ...context, render: (page) => page.evaluate(renderedReader) };
 }
 
 test("C8 contextual privacy refuses missing stale closed or foreign page owners before DOM evaluation", async () => {
@@ -15941,4 +15969,27 @@ test("C8 native cleanup drains active route handlers before page and server shut
     dir: "native-fixture",
   });
   assert.deepEqual(calls, ["observer", "blank", "drain", "page", "connections", "server", "files"]);
+});
+
+test("C8 V117 binds synthetic text in the background and the original opener aria label", async () => {
+  const { data } = await c8SourceFixture(),
+    item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  data.analysis.resultados[0].requisito.descricao =
+    "Presença do documento TXT sintético de auditoria.";
+  data.analysis.resultados[0].justificativa =
+    "O requisito sintético exige a presença do TXT aprovado, vinculado a esta competência. Arquivo e versão conferidos pelo SHA256 previsto.";
+  data.analysis.resultados[0].fundamento =
+    "Ensaio sintético HML da Trilha A. A conferência limita-se à presença documental; sem efeito jurídico ou financeiro.";
+  const contracts = sut.c8TechnicalFieldContracts(item, data);
+  for (const field of [
+    "analysis.resultados.0.requisito.descricao",
+    "analysis.resultados.0.justificativa",
+    "analysis.resultados.0.fundamento",
+    "detail.requisito.codigo",
+  ])
+    assert.ok(contracts.some((c) => c.field === field));
+  const label = contracts.find(
+    (c) => c.field === "analysis.resultados.0.requisito.codigo" && c.attribute === "aria-label",
+  );
+  assert.equal(label.expected, "Abrir requisito AUD-A-TXT-001");
 });

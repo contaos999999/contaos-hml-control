@@ -6646,7 +6646,7 @@ export function c8TechnicalFieldContracts(item, wire) {
     })
       .format(new Date(value))
       .replace(",", "");
-  const add = (field, raw, selector, label, kind = "text", prefix = "") => {
+  const add = (field, raw, selector, label, kind = "text", prefix = "", attribute = null) => {
     if (typeof raw !== "string" || !raw) return;
     let value = raw;
     if (kind === "date") {
@@ -6655,7 +6655,8 @@ export function c8TechnicalFieldContracts(item, wire) {
     } else if (kind === "hash" && !/^[a-f0-9]{64}$/.test(raw)) return;
     else if (kind === "uuid" && !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(raw)) return;
     else if (kind === "synthetic" && !C8_SYNTHETIC_FIELDS.includes(raw)) return;
-    out.push({ field, value, selector, label, expected: prefix + value });
+    else if (kind === "code" && raw !== "AUD-A-TXT-001") return;
+    out.push({ field, value, selector, label, attribute, expected: prefix + value });
   };
   const dd = (root) => root + " > dl > div > dd";
   const result = (path, r, root) => {
@@ -6710,6 +6711,13 @@ export function c8TechnicalFieldContracts(item, wire) {
       "Detalhe",
       "synthetic",
     );
+    add(
+      "detail.requisito.codigo",
+      d.requisito.codigo,
+      'section[aria-labelledby="v117-req"] > p:nth-of-type(1)',
+      null,
+      "code",
+    );
     const exec = 'section[aria-labelledby="v117-exec"]';
     for (const [field, label, kind] of [
       ["hash_entrada", "Hash de entrada", "hash"],
@@ -6749,6 +6757,47 @@ export function c8TechnicalFieldContracts(item, wire) {
     }
   }
   if (["V116", "V117"].includes(item.surface)) {
+    for (const [i, r] of (wire.analysis.resultados ?? []).entries()) {
+      const root = `section[aria-labelledby="v116-req"] tbody > tr:nth-child(${i + 1})`;
+      add(
+        `analysis.resultados.${i}.requisito.codigo`,
+        r.requisito?.codigo,
+        root + " > td:nth-child(1) > p:nth-of-type(1)",
+        null,
+        "code",
+      );
+      add(
+        `analysis.resultados.${i}.requisito.codigo`,
+        r.requisito?.codigo,
+        root + " > td:nth-child(7) button",
+        null,
+        "code",
+        "Abrir requisito ",
+        "aria-label",
+      );
+      add(
+        `analysis.resultados.${i}.requisito.descricao`,
+        r.requisito?.descricao,
+        root + " > td:nth-child(1) > p:nth-of-type(2)",
+        null,
+        "synthetic",
+      );
+      add(
+        `analysis.resultados.${i}.justificativa`,
+        r.justificativa,
+        root + " > td:nth-child(6) > p:nth-of-type(1)",
+        null,
+        "synthetic",
+      );
+      add(
+        `analysis.resultados.${i}.fundamento`,
+        r.fundamento,
+        root + ` > td:nth-child(6) > p:nth-of-type(${r.justificativa ? 2 : 1})`,
+        null,
+        "synthetic",
+        "Fundamento: ",
+      );
+    }
     for (const [i, e] of (wire.analysis.execucoes ?? []).entries()) {
       const root = `section[aria-labelledby="v116-hist"] ul > li:nth-child(${i + 1})`;
       for (const [field, label, kind] of [
@@ -6826,22 +6875,32 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous) {
     const groups = new Map(),
       fields = new Set();
     for (const d of descriptors) {
-      if (fields.has(d.field)) return [];
-      fields.add(d.field);
+      const slot = d.field + "|" + d.selector + "|" + (d.attribute ?? "text");
+      if (fields.has(slot)) return [];
+      fields.add(slot);
       const nodes = [...document.querySelectorAll(d.selector)].filter((node) => {
-        if (!visible(node) || node.textContent.trim() !== d.expected) return false;
+        if (
+          !visible(node) ||
+          (d.attribute ? node.getAttribute(d.attribute) : node.textContent.trim()) !== d.expected
+        )
+          return false;
         if (d.label === null) return true;
         const label = node.parentElement.querySelector(":scope > dt")?.textContent;
         return label === d.label || label?.startsWith(d.label + ": ");
       });
       if (nodes.length !== 1) continue;
-      const group = groups.get(d.value) ?? new Set();
-      group.add(nodes[0]);
+      const group = groups.get(d.value) ?? [];
+      if (!group.some((s) => s.node === nodes[0] && s.attribute === d.attribute))
+        group.push({
+          node: nodes[0],
+          attribute: d.attribute,
+          text: d.attribute ? nodes[0].getAttribute(d.attribute) : nodes[0].textContent,
+        });
       groups.set(d.value, group);
     }
     return [...groups].map(([value, nodes]) => ({
       value,
-      count: [...nodes].reduce((n, node) => n + node.textContent.split(value).length - 1, 0),
+      count: nodes.reduce((n, slot) => n + slot.text.split(value).length - 1, 0),
     }));
   }, descriptors);
   if (
