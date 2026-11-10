@@ -21,6 +21,26 @@ function fn(name) {
 const R5_R4_HEAD = "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72";
 const HML = "https://contaos-41-hml.vercel.app";
 const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
+test("R19 accepts only the new readonly recovery nonce", () => {
+  const raw =
+    JSON.stringify(
+      {
+        schema_version: 1,
+        issue: 317,
+        operation: "fixtures",
+        request_id: "trilha-a-fixtures-20261110-r19",
+        approved_parent_sha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
+        frontend_sha: "",
+        deployment_id: "",
+      },
+      null,
+      2,
+    ) + "\n";
+  assert.equal(
+    sut.parseSingleRequest(raw, "fixtures").request_id,
+    "trilha-a-fixtures-20261110-r19",
+  );
+});
 const config = {
   origin: HML,
   frontendSha: "1".repeat(40),

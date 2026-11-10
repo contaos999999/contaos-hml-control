@@ -5638,7 +5638,7 @@ test("R7 original R6 zero-intent document is exact and rejects getters proxies a
   );
 });
 
-test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen hashed data members", async () => {
+test("R19 actual artifact writer preserves the original chain and appends R18", async () => {
   const fs = await import("node:fs/promises");
   const sync = await import("node:fs");
   const { join } = await import("node:path");
@@ -5714,9 +5714,9 @@ test("R8 actual artifact writer appends R7 and R8 proofs and preserves sixteen h
       async (_, run) => run(),
     );
     const names = (await fs.readdir(output)).sort();
-    assert.equal(names.length, 29);
+    assert.equal(names.length, 31);
     const manifest = (await fs.readFile(join(output, "SHA256SUMS"), "utf8")).trimEnd().split("\n");
-    assert.equal(manifest.length, 28);
+    assert.equal(manifest.length, 30);
     const { HISTORY } = await import("./inspect-fixture-artifact.mjs");
     const history = {
       ...HISTORY,
@@ -12140,6 +12140,223 @@ test("R18 original confirmed October UUID stays consumed for a different allowed
     );
     assert.equal(b.snapshot().count, 17);
     assert.equal(b.snapshot().pending, false);
+  } finally {
+    f.observer.close();
+  }
+});
+
+async function r19TransitionFixture({
+  missing = null,
+  laterOverview = true,
+  foreign = false,
+} = {}) {
+  let clock = 0;
+  const f = await r4ObserverFixture({
+    now: () => clock,
+    wait: async () => {
+      clock += 300001;
+    },
+  });
+  const { readFile } = await import("node:fs/promises");
+  const protocol = await readFile(
+    new URL("../../src/lib/competencias/protocoloDados.ts", import.meta.url),
+    "utf8",
+  );
+  const col = (name) => protocol.match(new RegExp("const " + name + '\\s*=\\s*"([^\"]+)"'))[1];
+  const C = JSON.parse(sut.R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[1].id;
+  const P = "bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb",
+    K = "cccccccc-3333-4333-8333-cccccccccccc",
+    I = "dddddddd-4444-4444-8444-dddddddddddd";
+  const view = r17View(100);
+  Object.assign(view.competencia, {
+    id: C,
+    competencia_referencia: "2026-09-01",
+    periodo_inicio: "2026-09-01",
+    situacao: "pode_apresentar_contratante",
+  });
+  view.blocking_summary.aprovacao_apresentacao_atual = true;
+  const where = { p_id_competencia: C };
+  const approval = { ...where, p_fundamento: FIXTURE.foundation };
+  f.observer.markMutation("aprovar_apresentacao", approval, {});
+  r4EmitMutation(f.page, "aprovar_apresentacao", approval, R17_VALID_APPROVAL_ACK);
+  await f.observer.flush();
+  r4EmitMutation(f.page, "obter_visao_geral_competencia", where, view);
+  await f.observer.flush();
+  assert.equal(
+    (await f.observer.rpcRead("obter_visao_geral_competencia", where)).competencia.situacao,
+    "pode_apresentar_contratante",
+  );
+  const payload = {
+    ...where,
+    p_protocolo: "HML-TRILHA-A-20261108",
+    p_forma_apresentacao: "Ensaio sintético em homologação.",
+  };
+  f.observer.markMutation("registrar_apresentacao", payload, {});
+  r4EmitMutation(f.page, "registrar_apresentacao", payload, P);
+  await f.observer.flush();
+  const context = {
+    id_competencia: C,
+    id_organizacao: FIXTURE.organization,
+    id_contrato: FIXTURE.contract,
+  };
+  const query = Object.fromEntries(Object.entries(context).map(([k, v]) => [k, "eq." + v]));
+  const cases = [
+    [
+      "apresentacoes_contratante",
+      { select: col("COL_AP"), ...query, id: "eq." + P },
+      {
+        ...context,
+        id: P,
+        id_pacote: K,
+        protocolo: payload.p_protocolo,
+        forma_apresentacao: payload.p_forma_apresentacao,
+        apresentado_em: "2026-11-10T00:00:00Z",
+        tipo: "inicial",
+        numero_rodada: 1,
+      },
+      { ...context, id: P },
+    ],
+    [
+      "pacotes_competencia",
+      { select: col("COL_PK"), ...query, id: "eq." + K },
+      {
+        ...context,
+        id: K,
+        hash_pacote: "a".repeat(64),
+        numero: 1,
+        tipo: "inicial",
+        status: "apresentado",
+        congelado_em: "2026-11-10T00:00:00Z",
+      },
+      { ...context, id: K },
+    ],
+    [
+      "itens_pacote_competencia",
+      {
+        select: col("COL_ITENS"),
+        ...query,
+        id_pacote: "eq." + K,
+        order: "ordem.asc,id.asc",
+        offset: "0",
+        limit: "25",
+      },
+      {
+        ...context,
+        id: I,
+        id_pacote: K,
+        entidade_tipo: "documento",
+        entidade_id: P,
+        versao_id: K,
+        hash: "a".repeat(64),
+        ordem: 1,
+      },
+      { ...context, id_pacote: K },
+    ],
+  ];
+  for (const [table, q, row, filter] of cases) {
+    if (missing === table) continue;
+    const request = {
+      method: () => "GET",
+      postData: () => null,
+      url: () => FIXTURE.api + "/rest/v1/" + table + "?" + new URLSearchParams(q),
+    };
+    f.page.emit("request", request);
+    f.page.emit("response", {
+      request: () => request,
+      url: request.url,
+      status: () => 200,
+      body: async () => Buffer.from(JSON.stringify([row])),
+    });
+    await f.observer.flush();
+    assert.equal((await f.observer.read(table, filter)).length, 1);
+  }
+  const ordinal = f.observer.generation();
+  if (laterOverview) {
+    const later = structuredClone(view);
+    later.competencia.situacao = "aguardando_contratante";
+    later.competencia.versao_registro = 2;
+    if (foreign) later.competencia.id_contrato = C;
+    r4EmitMutation(f.page, "obter_visao_geral_competencia", where, later);
+    await f.observer.flush();
+    assert.equal(
+      await f.observer.observedAfter("obter_visao_geral_competencia", where, ordinal),
+      true,
+    );
+  }
+  return { ...f, where };
+}
+test("R19 real observer advances from approved to registered only after three causal readbacks", async () => {
+  const f = await r19TransitionFixture();
+  try {
+    assert.equal(
+      (await f.observer.rpcRead("obter_visao_geral_competencia", f.where)).competencia.situacao,
+      "aguardando_contratante",
+    );
+  } finally {
+    f.observer.close();
+  }
+});
+test("R19 registration successor never reuses the preceding approved overview", async () => {
+  const f = await r19TransitionFixture({ laterOverview: false });
+  try {
+    await assert.rejects(
+      () => f.observer.rpcRead("obter_visao_geral_competencia", f.where),
+      /PHASE_TIMEOUT/,
+    );
+  } finally {
+    f.observer.close();
+  }
+});
+for (const missing of [
+  "apresentacoes_contratante",
+  "pacotes_competencia",
+  "itens_pacote_competencia",
+]) {
+  test("R19 registered overview cannot replace missing causal " + missing, async () => {
+    const f = await r19TransitionFixture({ missing });
+    try {
+      await assert.rejects(
+        () => f.observer.rpcRead("obter_visao_geral_competencia", f.where),
+        /PHASE_TIMEOUT/,
+      );
+    } finally {
+      f.observer.close();
+    }
+  });
+}
+test("R19 successor rejects a foreign registered overview after all three table proofs", async () => {
+  const f = await r19TransitionFixture({ foreign: true });
+  try {
+    await assert.rejects(
+      () => f.observer.rpcRead("obter_visao_geral_competencia", f.where),
+      /PHASE_TIMEOUT/,
+    );
+  } finally {
+    f.observer.close();
+  }
+});
+test("R19 broker requires DocR18 before accepting even a readonly configuration", () => {
+  assert.throws(
+    () => sut.createIntentBroker({ ...r12RecoveryOptions(), readOnlyRecovery: true }),
+    /RECOVERY_R18_LEDGER/,
+  );
+});
+test("R19 broker starts with seventeen confirmations two reservations and five theoretical arms", () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions());
+  const summary = b.snapshot();
+  assert.deepEqual(
+    [summary.count, summary.confirmedBefore, summary.priorReserved, summary.maxNewIntentions],
+    [19, 17, 2, 5],
+  );
+});
+test("R19 readonly broker denies arm even after genuine owner recovery authorization", async () => {
+  const b = sut.createIntentBroker(r12RecoveryOptions({ readOnlyRecovery: true }));
+  await r12Authorize(b, sut.reconcileR1Recovery(r2Reconciliation()));
+  const f = r12AuthorizedContexts.get(b);
+  try {
+    const before = b.snapshot();
+    assert.throws(() => r6AnalysisArm(b), /RECOVERY_READ_ONLY/);
+    assert.deepEqual(b.snapshot(), before);
   } finally {
     f.observer.close();
   }
