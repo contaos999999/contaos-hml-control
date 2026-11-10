@@ -29,6 +29,79 @@ import {
   sha256,
 } from "./inspect-fixture-artifact.mjs";
 
+test("R18 original artifact pin is closed to the single terminal attempt", () => {
+  assert.deepEqual(
+    [PIN.run, PIN.head, PIN.upstream, PIN.artifact, PIN.size, PIN.name, PIN.digest],
+    [
+      42731273678,
+      "8d055951838fee29664563bed5ee26bac4f55bd8",
+      42731084944,
+      13725830880,
+      31346,
+      "trilha-a-fixtures-42731273678-1",
+      "b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb",
+    ],
+  );
+});
+test("R18 manifest appends the exact R17 receipt and canonical recovery history", () => {
+  assert.equal(FILES.length, 28);
+  assert.equal(Object.keys(HISTORY).length, 25);
+  assert.deepEqual(FILES.slice(-2), ["receipts-r17.json", "recovery-r17.json"]);
+  assert.equal(
+    HISTORY["receipts-r17.json"],
+    "bed517a5a27f72f23dc07f869a1d4de21f1f24582fc4c725e9f747d8e603d82a",
+  );
+  assert.equal(
+    HISTORY["recovery-r17.json"],
+    "f3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95",
+  );
+});
+function r18TechnicalReport() {
+  const value = report();
+  Object.assign(value.intentLedger, {
+    count: 17,
+    priorConfirmed: 15,
+    priorReserved: 2,
+    newArmedCount: 0,
+    maxIntentions: 24,
+    maxNewIntentions: 7,
+  });
+  Object.assign(value.recovery, { confirmedBefore: 15, maxNewIntentions: 7 });
+  return value;
+}
+test("R18 budget separates fifteen confirmations and two reservations with seven available arms", () => {
+  const proof = validateRecords(r18TechnicalReport(), empty());
+  assert.equal(proof.observations.priorConfirmed, 15);
+  assert.equal(proof.observations.priorReserved, 2);
+  assert.equal(proof.observations.newArmedCount, 0);
+});
+for (const code of ["RECOVERY_R17_LEDGER", "RECOVERY_R17_PRESENTATION"]) {
+  test("R18 admits only the exact producer diagnostic " + code, () => {
+    const value = report();
+    value.failure = code;
+    value.diagnostics.primaryFailure = code;
+    assert.doesNotThrow(() => validateRecords(value, empty()));
+    value.failure = code + "_PRIVATE_CANARY";
+    value.diagnostics.primaryFailure = value.failure;
+    assert.throws(() => validateRecords(value, empty()));
+  });
+}
+for (const mode of ["original UUID", "same payload under new UUID"]) {
+  test("R18 permanently denies confirmed October approval: " + mode, () => {
+    const value = report();
+    value.intentLedger.count++;
+    value.intentLedger.newArmedCount = 1;
+    const receipt = {
+      ...row(),
+      rpc: "aprovar_apresentacao",
+      ...(mode === "original UUID"
+        ? { requestId: "5d657667-4c3b-4b4f-a953-d7e778bfb2c1" }
+        : { payloadSha256: "1e2bc45826f48745d7800fa108c8be6331d33737e2317c710638e1c568b99cc2" }),
+    };
+    assert.throws(() => validateRecords(value, { ...empty(), receipts: [receipt] }));
+  });
+}
+
 // Technical projections only. These are not the unread R17 report or a business replay.
 const BASE = {
   schema: "contaos.fixture.preparation.v1",
