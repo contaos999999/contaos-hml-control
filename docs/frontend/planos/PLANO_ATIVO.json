@@ -3711,7 +3711,7 @@
     "deploy_authorized": false
   },
   "trilha_a_r19_retomada_final_readonly": {
-    "status": "GATE_DOCUMENTAL_BUILD_APOS_CI_REVISAO_MERGE",
+    "status": "BUILD_INTEGRADO_REQUEST_R19_SEPARADO_PENDENTE",
     "plan": "docs/frontend/planos/TRILHA_A_R19_RETOMADA_FINAL_READONLY_PLAN_2026-11-10.md",
     "r18_run": 42731273678,
     "r18_inspection_run": 42734294198,
@@ -3736,7 +3736,33 @@
       "scripts/hml/prepare-visual-fixtures.test.mjs"
     ],
     "candidate_fields": 19,
-    "positive_test_vector": "V117_ORIGINAL_BROKER_VALIDATED_6756371318"
+    "positive_test_vector": "V117_ORIGINAL_BROKER_VALIDATED_6756371318",
+    "build_pr": 552,
+    "build_head": "e16d243b79bfa3e3d31249fd06a6ac05a3fa532e",
+    "build_merge": "8cb806bcb160b19d0ee6a050ea551cab72e5ccd6",
+    "build_tree": "462fd917574e22d2e2c7eebd774a398d049c1fa5",
+    "build_ci_success": [
+      42774006421,
+      42774006132,
+      42774006113,
+      42774006130
+    ],
+    "build_review": 5838084813,
+    "request_r19_executed": false,
+    "sourceforms_cases": 5,
+    "native_cases": 18,
+    "build_push_ci_success": [
+      42774372067,
+      42774371658
+    ],
+    "post_build_request_schema_blocks": [
+      42774567635,
+      42774567481
+    ],
+    "post_build_private_jobs_skipped": [
+      129690123572,
+      129690127909
+    ]
   },
   "trilha_a_184_conclusao_preservacao24": {
     "status": "PLAN_INTEGRADO_R19_TASKA_COMPROVADA_TASKB_E_GATE_A184_PENDENTES",
@@ -3831,6 +3857,10 @@
     "new_catalog": null,
     "auth_authorized": false,
     "deploy_authorized": false,
-    "v1_certified": false
+    "v1_certified": false,
+    "proposal_pr": 556,
+    "proposal_head": "6183d3959dfae9ecb23f55d8401a57acb79612dc",
+    "proposal_draft_preserved": true,
+    "pure_node_checks_passed": 45
   }
 }
