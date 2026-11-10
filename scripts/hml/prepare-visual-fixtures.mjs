@@ -17,6 +17,10 @@ import {
   validateR16RecoveryDocument,
   R17_RECOVERY_DOCUMENT,
   validateR17RecoveryDocument,
+  R18_RECOVERY_DOCUMENT,
+  validateR18RecoveryDocument,
+  R18_REGISTRATION_CANDIDATE,
+  validateR18RegistrationCandidate,
   R13_RECOVERY_DOCUMENT,
   validateR13RecoveryDocument,
   R4_ZERO_AUTH_PROOF,
@@ -49,6 +53,10 @@ export {
   validateR16RecoveryDocument,
   R17_RECOVERY_DOCUMENT,
   validateR17RecoveryDocument,
+  R18_RECOVERY_DOCUMENT,
+  validateR18RecoveryDocument,
+  R18_REGISTRATION_CANDIDATE,
+  validateR18RegistrationCandidate,
 };
 
 export const FIXTURE = Object.freeze({
@@ -295,6 +303,8 @@ export async function readCompetenceMonth(io, month, navigate) {
 }
 
 export async function reconcileRecoveryCompetencies(io, captureOpinion) {
+  validateR18RecoveryDocument(io.recoveryLedgerR18);
+  validateR18RegistrationCandidate(io.registrationCandidateR18);
   validateR5RecoveryDocument(io.recoveryLedgerR5);
   validateR6RecoveryDocument(io.recoveryLedgerR6);
   validateR7RecoveryDocument(io.recoveryLedgerR7);
@@ -361,6 +371,8 @@ export async function reconcileRecoveryCompetencies(io, captureOpinion) {
 }
 
 export async function reconcileRecoveryOpinion(io) {
+  validateR18RecoveryDocument(io.recoveryLedgerR18);
+  validateR18RegistrationCandidate(io.registrationCandidateR18);
   validateR13RecoveryDocument(io.recoveryLedgerR13);
   validateR15RecoveryDocument(io.recoveryLedgerR15);
   validateR16RecoveryDocument(io.recoveryLedgerR16);
@@ -432,6 +444,8 @@ export async function reconcileRecoveryOpinion(io) {
 }
 
 export function reconcileR1Recovery(input) {
+  validateR18RecoveryDocument(input?.ledgerR18);
+  validateR18RegistrationCandidate(input?.registrationCandidateR18);
   validateR1RecoveryDocument(input?.ledger);
   validateR3RecoveryDocument(input?.ledgerR3);
   validateR4RecoveryDocument(input?.ledgerR4);
@@ -1350,7 +1364,11 @@ function recoveryBudget(
   ledgerR15,
   ledgerR16,
   ledgerR17,
+  ledgerR18,
+  registrationCandidateR18,
 ) {
+  validateR18RecoveryDocument(ledgerR18);
+  validateR18RegistrationCandidate(registrationCandidateR18);
   const prior = validateR1RecoveryDocument(ledger),
     r3 = validateR3RecoveryDocument(ledgerR3);
   validateR4RecoveryDocument(ledgerR4);
@@ -1372,9 +1390,9 @@ function recoveryBudget(
   const total = confirmedBefore + r8.receipts.filter((row) => row.state === "confirmed").length;
   if (total !== 10) err("RECOVERY_R8_LEDGER");
   return Object.freeze({
-    confirmedBefore: total + 5,
+    confirmedBefore: total + 7,
     priorReserved: 2,
-    maxNewIntentions: 24 - total - 5 - 2,
+    maxNewIntentions: 24 - total - 7 - 2,
   });
 }
 
@@ -2234,10 +2252,14 @@ export function createIntentBroker({
   recoveryLedgerR15,
   recoveryLedgerR16,
   recoveryLedgerR17,
+  recoveryLedgerR18,
+  registrationCandidateR18,
   identity,
   beforeArm,
   readOnlyRecovery = false,
 } = {}) {
+  validateR18RecoveryDocument(recoveryLedgerR18);
+  validateR18RegistrationCandidate(registrationCandidateR18);
   if (typeof readOnlyRecovery !== "boolean") err("RECOVERY_READ_ONLY");
   validateR13RecoveryDocument(recoveryLedgerR13);
   validateR15RecoveryDocument(recoveryLedgerR15);
@@ -2274,6 +2296,8 @@ export function createIntentBroker({
         recoveryLedgerR15,
         recoveryLedgerR16,
         recoveryLedgerR17,
+        recoveryLedgerR18,
+        registrationCandidateR18,
       )
     : null;
   let recoveryAuthorized = !recovery;
@@ -2292,6 +2316,7 @@ export function createIntentBroker({
             ...JSON.parse(validateR15RecoveryDocument(recoveryLedgerR15).receiptsRaw).receipts,
             ...JSON.parse(validateR16RecoveryDocument(recoveryLedgerR16).receiptsRaw).receipts,
             ...JSON.parse(validateR17RecoveryDocument(recoveryLedgerR17).receiptsRaw).receipts,
+            ...JSON.parse(validateR18RecoveryDocument(recoveryLedgerR18).receiptsRaw).receipts,
           ].map((r) => r.requestId)
         : [],
     );
@@ -2398,13 +2423,18 @@ export function createIntentBroker({
       )
         err("RECOVERY_CONFIRMED_OPERATION");
       if (!recoveryAuthorized) err("RECOVERY_READ_ONLY");
+      if (recovery && reservedR11Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
+      if (recovery && usedIds.has(requestId)) err("INTENT_PAYLOAD");
       if (recovery && confirmedR5Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
       if (recovery && confirmedR16Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
-      if (recovery && rpc === "aprovar_apresentacao") {
+      if (recovery && ["aprovar_apresentacao", "registrar_apresentacao"].includes(rpc)) {
         if (isProxy(payload) || !obj(payload)) err("INTENT_PAYLOAD");
         const descriptor = Object.getOwnPropertyDescriptor(payload, "p_id_competencia");
         if (!descriptor || !Object.hasOwn(descriptor, "value")) err("INTENT_PAYLOAD");
-        if (descriptor.value === R5_BINDINGS.competencies[0].id)
+        if (
+          descriptor.value === R5_BINDINGS.competencies[0].id ||
+          descriptor.value === R18_REGISTRATION_CANDIDATE.competencyId
+        )
           err("RECOVERY_CONFIRMED_OPERATION");
       }
       if (recovery && confirmedR8Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
@@ -2505,8 +2535,8 @@ export function preparationIntentSummary(broker) {
   if (!broker) return null;
   const state = broker.snapshot();
   if (
-    state.confirmedBefore !== 15 ||
-    state.maxNewIntentions !== 7 ||
+    state.confirmedBefore !== 17 ||
+    state.maxNewIntentions !== 5 ||
     state.priorReserved !== 2 ||
     !Number.isInteger(state.count) ||
     state.count < state.confirmedBefore + state.priorReserved ||
@@ -2614,7 +2644,11 @@ export function createRuntimeLogin({
   recoveryLedgerR15,
   recoveryLedgerR16,
   recoveryLedgerR17,
+  recoveryLedgerR18,
+  registrationCandidateR18,
 } = {}) {
+  validateR18RecoveryDocument(recoveryLedgerR18);
+  validateR18RegistrationCandidate(registrationCandidateR18);
   validateR13RecoveryDocument(recoveryLedgerR13);
   validateR15RecoveryDocument(recoveryLedgerR15);
   validateR16RecoveryDocument(recoveryLedgerR16);
@@ -2918,7 +2952,11 @@ export async function withRuntimeLogin(
   recoveryLedgerR15,
   recoveryLedgerR16,
   recoveryLedgerR17,
+  recoveryLedgerR18,
+  registrationCandidateR18,
 ) {
+  validateR18RecoveryDocument(recoveryLedgerR18);
+  validateR18RegistrationCandidate(registrationCandidateR18);
   validateR13RecoveryDocument(recoveryLedgerR13);
   validateR15RecoveryDocument(recoveryLedgerR15);
   validateR16RecoveryDocument(recoveryLedgerR16);
@@ -5042,6 +5080,8 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
  * Do not implement these flags as role-name/button-presence guesses.
  */
 export async function prepareSourceAndList(io) {
+  validateR18RecoveryDocument(io.recoveryLedgerR18);
+  validateR18RegistrationCandidate(io.registrationCandidateR18);
   validateR13RecoveryDocument(io?.recoveryLedgerR13);
   validateR15RecoveryDocument(io?.recoveryLedgerR15);
   validateR16RecoveryDocument(io?.recoveryLedgerR16);
@@ -5595,6 +5635,8 @@ export async function prepareSourceAndList(io) {
         ledgerR15: io.recoveryLedgerR15,
         ledgerR16: io.recoveryLedgerR16,
         ledgerR17: io.recoveryLedgerR17,
+        ledgerR18: io.recoveryLedgerR18,
+        registrationCandidateR18: io.registrationCandidateR18,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -5922,6 +5964,8 @@ export async function prepareSourceAndList(io) {
  * persist synchronously, await matching Response, then run confirmAfter once.
  */
 export async function prepareCompetencies(io, sourceList) {
+  validateR18RecoveryDocument(io.recoveryLedgerR18);
+  validateR18RegistrationCandidate(io.registrationCandidateR18);
   validateR13RecoveryDocument(io?.recoveryLedgerR13);
   validateR15RecoveryDocument(io?.recoveryLedgerR15);
   validateR16RecoveryDocument(io?.recoveryLedgerR16);
@@ -7176,6 +7220,8 @@ const PREPARER_FAILURE_CODES = new Set([
   "RECOVERY_R11_LEDGER",
   "RECOVERY_R13_LEDGER",
   "RECOVERY_R17_LEDGER",
+  "RECOVERY_R18_LEDGER",
+  "RECOVERY_R18_BINDING",
   "RECOVERY_R17_PRESENTATION",
   "RECOVERY_R16_LEDGER",
   "RECOVERY_R16_OPINION",
@@ -7349,6 +7395,8 @@ const PREPARER_FAILURE_CODES = new Set([
   "UI_UNCERTAIN",
 ]);
 async function runFixturePreparation() {
+  const r18Recovery = validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT);
+  const r18Candidate = validateR18RegistrationCandidate(R18_REGISTRATION_CANDIDATE);
   validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);
   validateR2RecoveryDocument(R2_RECOVERY_DOCUMENT);
   const r4Recovery = validateR4RecoveryDocument(getValidatedR4ZeroAuth());
@@ -7378,6 +7426,8 @@ async function runFixturePreparation() {
     r15Recovery,
     r16Recovery,
     r17Recovery,
+    r18Recovery,
+    r18Candidate,
   );
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
@@ -7469,6 +7519,8 @@ async function runFixturePreparation() {
       recoveryLedgerR15: r15Recovery,
       recoveryLedgerR16: r16Recovery,
       recoveryLedgerR17: r17Recovery,
+      recoveryLedgerR18: r18Recovery,
+      registrationCandidateR18: r18Candidate,
       beforeArm: (rpc, payload, evidence, binding) =>
         observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
@@ -7649,6 +7701,8 @@ async function runFixturePreparation() {
       recoveryLedgerR15: r15Recovery,
       recoveryLedgerR16: r16Recovery,
       recoveryLedgerR17: r17Recovery,
+      recoveryLedgerR18: r18Recovery,
+      registrationCandidateR18: r18Candidate,
       page,
       fence,
       waitOrganization,
@@ -7771,6 +7825,8 @@ async function runFixturePreparation() {
       recoveryLedgerR15: r15Recovery,
       recoveryLedgerR16: r16Recovery,
       recoveryLedgerR17: r17Recovery,
+      recoveryLedgerR18: r18Recovery,
+      registrationCandidateR18: r18Candidate,
       sealRecoveryOpinion: (after) => observer.sealRecoveryOpinion(broker, after),
       recoveryReady: (proof, opinionProof) => {
         broker.authorizeRecovery(proof, opinionProof);
@@ -7967,6 +8023,10 @@ async function runFixturePreparation() {
     writeFileSync(join(output, "recovery-r17.json"), JSON.stringify(r17Recovery, null, 2) + "\n", {
       mode: 0o600,
     });
+    writeFileSync(join(output, "receipts-r18.json"), r18Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r18.json"), JSON.stringify(r18Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
     let sums = "";
     writeFileSync(
       join(output, "recovery-r2.json"),
@@ -8002,6 +8062,8 @@ async function runFixturePreparation() {
       "recovery-r16.json",
       "receipts-r17.json",
       "recovery-r17.json",
+      "receipts-r18.json",
+      "recovery-r18.json",
     ])
       sums +=
         createHash("sha256")
