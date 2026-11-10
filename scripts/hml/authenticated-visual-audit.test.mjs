@@ -14935,10 +14935,16 @@ async function c8NativeSourceProbe(browser) {
     { join } = await import("node:path"),
     { tmpdir } = await import("node:os");
   const dir = await fs.mkdtemp(join(tmpdir(), "c8-source-real-"));
+  const phase = (stage, item = null) =>
+    console.log(
+      "C8_NATIVE_PHASE " + stage + (item ? ` ${item.surface} ${item.width} ${item.theme}` : ""),
+    );
+  phase("START");
   let server,
     page,
     business = 0;
   try {
+    phase("BUNDLE");
     const bundle = await c8BuildSourceUI(dir),
       { data, bindings: b } = await c8SourceFixture();
     const { execFile } = await import("node:child_process"),
@@ -15033,12 +15039,14 @@ async function c8NativeSourceProbe(browser) {
     await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
     page = await browser.newPage();
     const origin = `http://127.0.0.1:${server.address().port}`;
+    const privacyHarness = await c8PrivacyHarness();
     for (surface of ["V117", "V119", "V120"])
       for (const width of [1440, 1280, 768, 390])
         for (const theme of ["light", "dark"]) {
           const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find(
             (r) => r.surface === surface && r.width === width && r.theme === theme,
           );
+          phase("MOUNT", item);
           await page.setViewportSize({ width, height: 1000 });
           await page.goto(origin + item.path);
           await page.waitForFunction(() => window.__ready);
@@ -15067,6 +15075,7 @@ async function c8NativeSourceProbe(browser) {
           await heading.waitFor();
           let opener;
           if (surface === "V117") {
+            phase("DRAWER", item);
             opener = page.getByRole("button", {
               name: "Abrir requisito AUD-A-TXT-001",
               exact: true,
@@ -15086,6 +15095,7 @@ async function c8NativeSourceProbe(browser) {
                 exact: true,
               })
               .waitFor();
+          phase("STATE", item);
           const observation = await page.evaluate(() => {
             const visible = (e) => e.getClientRects().length > 0;
             return {
@@ -15113,7 +15123,68 @@ async function c8NativeSourceProbe(browser) {
             true,
             `${surface}/${width}/${theme}`,
           );
+          // The isolated owner adapter exercises the production contextual consumer
+          // against DOM rendered by original source; it is never an HML session proof.
+          phase("PRIVACY", item);
+          const wire = structuredClone(data);
+          if (surface === "V120")
+            Object.assign(wire.overview.competencia, {
+              id: b.competencies[1].id,
+              competencia_referencia: b.competencies[1].month,
+              situacao: b.competencies[1].state,
+            });
+          const localPage = {
+            url: () => sut.HML_ORIGIN + item.path,
+            evaluate: page.evaluate.bind(page),
+          };
+          const observer = {},
+            state = {
+              scope: sut.C8_AUDIT_SCOPE,
+              verified: true,
+              closed: false,
+              generation: 1,
+              c8Observer: observer,
+            };
+          state.c8Current = { owner: state, generation: 1, observer, item, wire };
+          privacyHarness.pages.set(localPage, state);
+          const rendered = await page.locator("body").innerText(),
+            snapshot = await page.locator("body").ariaSnapshot();
+          const token = await privacyHarness.context(localPage, state, rendered, snapshot, null);
+          const technical =
+            surface === "V117"
+              ? b.itemId
+              : surface === "V120"
+                ? b.competencies[1].packageHash
+                : null;
+          if (technical) {
+            assert.ok(rendered.includes(technical));
+            assert.equal(
+              privacyHarness.contexts.get(token).rendered.remainder.includes(technical),
+              false,
+            );
+            await page.evaluate((value) => {
+              const p = document.createElement("p");
+              p.id = "outside-field";
+              p.textContent = value;
+              document.body.append(p);
+            }, technical);
+            const duplicated = await page.locator("body").innerText(),
+              duplicatedSnapshot = await page.locator("body").ariaSnapshot();
+            const rejected = await privacyHarness.context(
+              localPage,
+              state,
+              duplicated,
+              duplicatedSnapshot,
+              null,
+            );
+            assert.equal(
+              privacyHarness.contexts.get(rejected).rendered.remainder.includes(technical),
+              true,
+            );
+            await page.locator("#outside-field").evaluate((n) => n.remove());
+          }
           if (surface === "V117") {
+            phase("CLOSE", item);
             await page
               .getByRole("dialog")
               .getByRole("button", { name: "Fechar", exact: true })
@@ -15137,6 +15208,7 @@ async function c8NativeSourceProbe(browser) {
     assert.equal(readNames.has("obter_contexto_revisao_v117"), false);
     assert.equal(readNames.has("obter_detalhe_requisito_v117"), true);
     assert.equal(business, 0);
+    phase("DONE");
     console.log("C8_SOURCE_REAL_24 PASS");
   } finally {
     await page?.close();
@@ -15242,4 +15314,21 @@ test("C8 contextual privacy refuses missing stale closed or foreign page owners 
   h.pages.set(page, {});
   await assert.rejects(() => h.context(page, state, "Texto", "Texto", null), /C8_CURRENT_OWNER/);
   assert.equal(evaluations, 1);
+});
+
+test("C8 native diagnostic exports only a closed source-real phase and never raw TAP errors", () => {
+  assert.equal(typeof sut.nativeC8VisualDiagnostic, "function");
+  assert.deepEqual(
+    sut.nativeC8VisualDiagnostic(
+      "# C8_NATIVE_PHASE START\n# C8_NATIVE_PHASE STATE V117 390 dark\nsecret Bearer canary\n",
+    ),
+    { stage: "STATE", surface: "V117", width: 390, theme: "dark" },
+  );
+  assert.deepEqual(sut.nativeC8VisualDiagnostic("# C8_NATIVE_PHASE SECRET canary\n"), {
+    stage: "UNKNOWN",
+  });
+  assert.deepEqual(sut.nativeC8VisualDiagnostic("# C8_NATIVE_PHASE STATE V117 391 dark\n"), {
+    stage: "UNKNOWN",
+  });
+  assert.deepEqual(sut.nativeC8VisualDiagnostic(null), { stage: "UNKNOWN" });
 });

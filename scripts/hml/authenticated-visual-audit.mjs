@@ -4879,6 +4879,29 @@ export function preparerSourceFormsFailure(input) {
   return { failedCases, lastPhase: !invalidPhase && previous >= 0 ? phases[previous] : "UNKNOWN" };
 }
 
+export function nativeC8VisualDiagnostic(tap) {
+  const unknown = () => ({ stage: "UNKNOWN" });
+  if (typeof tap !== "string" || tap.length > 1048576) return unknown();
+  let last = unknown(),
+    count = 0;
+  for (const line of tap.split("\n")) {
+    if (!line.startsWith("# C8_NATIVE_PHASE ")) continue;
+    if (++count > 300) return unknown();
+    const plain = /^# C8_NATIVE_PHASE (START|BUNDLE|DONE)$/.exec(line);
+    if (plain) {
+      last = { stage: plain[1] };
+      continue;
+    }
+    const match =
+      /^# C8_NATIVE_PHASE (READY|MOUNT|DRAWER|STATE|PRIVACY|CLOSE) (V117|V119|V120) (1440|1280|768|390) (light|dark)$/.exec(
+        line,
+      );
+    if (!match) return unknown();
+    last = { stage: match[1], surface: match[2], width: Number(match[3]), theme: match[4] };
+  }
+  return last;
+}
+
 async function nativeGuard() {
   let output;
   try {
@@ -4955,6 +4978,7 @@ async function nativeGuard() {
     console.error(
       JSON.stringify({
         phase: "VISUAL_NATIVE",
+        c8: nativeC8VisualDiagnostic(typeof error?.stdout === "string" ? error.stdout : ""),
         v102: nativeVisualDiagnostic(typeof error?.stdout === "string" ? error.stdout : ""),
       }),
     );
