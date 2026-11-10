@@ -19,6 +19,7 @@ import { validarAdministrador, podeConsultarAuditoria } from "@/lib/administraca
 import { Link } from "@tanstack/react-router";
 import { MENU_ADMIN_V1 } from "@/lib/navegacao/menuV1";
 import { Users, ScrollText } from "lucide-react";
+import { CopilotoContrato } from "@/components/copiloto/CopilotoContrato";
 
 /** O shell é apenas apresentação; componentes e RLS preservam a autorização real. */
 export function ContaOSAppShell({ children }: { children: ReactNode }) {
@@ -26,6 +27,12 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
   const rotaAdministrativaAtiva = (destino: string) =>
     pathname === destino || pathname.startsWith(`${destino}/`);
   const [liberado, setLiberado] = useState(false);
+  const [contextoCopiloto, setContextoCopiloto] = useState<{
+    rota: string;
+    organizacao: string;
+    contrato: string | null;
+    competencia: string | null;
+  } | null>(null);
   const [revisaoSessao, setRevisaoSessao] = useState(0);
   const [chaveConteudo, setChaveConteudo] = useState(0);
   const [administrador, setAdministrador] = useState(false);
@@ -111,6 +118,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       setAuditoriaPermitida(false);
       setPermissoes([]);
       setContexto({ contrato: null, competencia: null, contratante: null });
+      setContextoCopiloto(null);
       setLiberado(false);
       setMovelAberto(false);
       setRevisaoSessao((atual) => atual + 1);
@@ -128,6 +136,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       setAuditoriaPermitida(false);
       setPermissoes([]);
       setContexto({ contrato: null, competencia: null, contratante: null });
+      setContextoCopiloto(null);
       setMovelAberto(false);
       setRevisaoSessao((atual) => atual + 1);
     };
@@ -144,6 +153,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       setAuditoriaPermitida(false);
       setPermissoes([]);
       setContexto({ contrato: null, competencia: null, contratante: null });
+      setContextoCopiloto(null);
       setMovelAberto(false);
       setRevisaoSessao((atual) => atual + 1);
     });
@@ -158,6 +168,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     setAuditoriaPermitida(false);
     setPermissoes([]);
     setContexto({ contrato: null, competencia: null, contratante: null });
+    setContextoCopiloto(null);
     fechamentoPorNavegacao.current = true;
     setMovelAberto(false);
     if (rotaSemSidebar(pathname)) return;
@@ -172,6 +183,12 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
         if (!sessaoAtual()) return;
         setPermissoes(efetivas.permissoes);
         setContexto(contextoAtual);
+        setContextoCopiloto({
+          rota: pathname,
+          organizacao,
+          contrato: contextoAtual.contrato,
+          competencia: contextoAtual.competencia,
+        });
         const autorizado = await validarAdministrador(organizacao).catch(() => false);
         if (sessaoAtual())
           setAdministrador(
@@ -325,6 +342,14 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
           </div>
         )}
         <div key={chaveConteudo}>{children}</div>
+        {liberado && !movelAberto && contextoCopiloto?.rota === pathname && (
+          <CopilotoContrato
+            key={`${chaveConteudo}:${revisaoSessao}:${pathname}:${contextoCopiloto.organizacao}`}
+            contratoId={contextoCopiloto.contrato}
+            organizacaoId={contextoCopiloto.organizacao}
+            competenciaId={contextoCopiloto.competencia}
+          />
+        )}
       </div>
     </div>
   );

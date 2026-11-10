@@ -3,6 +3,8 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - "scripts/ci/install-pinned-bun.mjs"
+      - "scripts/ci/install-pinned-bun.test.mjs"
       - scripts/hml/authenticated-visual-audit.mjs
       - scripts/hml/authenticated-visual-audit.test.mjs
       - .github/workflows/contaos-trilha-a-authenticated.yml
@@ -33,6 +35,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      pull-requests: read
     outputs:
       selected: ${{ steps.request.outputs.selected }}
       sha: ${{ steps.request.outputs.sha }}
@@ -62,9 +65,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.4.4"
+      - run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
       - run: bun install --frozen-lockfile
       - name: Provar evento e unicidade somente em metadados Actions
         id: request
@@ -86,12 +89,13 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.4.4"
+      - run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
       - run: bun install --frozen-lockfile
       - name: Protocolo sem environment ou secrets
         run: node --test scripts/hml/authenticated-visual-audit.test.mjs
@@ -109,6 +113,10 @@ jobs:
         run: node scripts/hml/authenticated-visual-audit.mjs --native-guard
   private:
     needs: request
+    permissions:
+      contents: read
+      actions: read
+      pull-requests: read
     if: always() && ((github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || ((github.event_name == 'workflow_run' && github.repository == 'contaos999999/contaos-hml-control' && github.event.action == 'completed' && github.event.workflow_run.event == 'push' && github.event.workflow_run.repository.full_name == 'contaos999999/contaos-hml-control' && github.event.workflow_run.head_repository.full_name == 'contaos999999/contaos-hml-control' && github.event.workflow_run.head_branch == 'main' && github.event.workflow_run.workflow_id == 406076025 && github.event.workflow_run.path == '.github/workflows/contaos-frontend-zero-drift.yml' && github.event.workflow_run.name == 'ContaOS Frontend Zero-Drift' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.run_attempt == 1 && github.run_attempt == '1' && github.event.workflow_run.head_sha == github.sha) && needs.request.outputs.selected == 'true'))
     name: Trilha A auditoria privada HML
     runs-on: ubuntu-22.04
@@ -131,13 +139,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.4.4"
+      - run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
       - name: Dependencias congeladas do executor
         run: bun install --frozen-lockfile
       - name: Recibo inicial publico para as fases sem credenciais
         if: github.event_name == 'workflow_run'
+        env:
+          CONTAOS_ACTIONS_READ_TOKEN: ${{ github.token }}
         run: node scripts/hml/authenticated-visual-audit.mjs --request-revalidate
       - name: Reancorar deployment HML sem credenciais, antes do checkout da fonte
         id: deployment
@@ -180,6 +190,8 @@ jobs:
           echo "CONTAOS_AXE_SOURCE_PATH=$RUNNER_TEMP/contaos-trilha-a-axe/node_modules/axe-core/axe.min.js" >> "$GITHUB_ENV"
       - name: Revalidar main e unicidade dentro da concorrencia antes de secrets
         if: github.event_name == 'workflow_run'
+        env:
+          CONTAOS_ACTIONS_READ_TOKEN: ${{ github.token }}
         run: node scripts/hml/authenticated-visual-audit.mjs --request-revalidate
       - name: Somente agora fornecer o par sintetico ao auditor
         env:

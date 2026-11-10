@@ -1,5 +1,6 @@
 /** Dedicated fixture preparer. Never imported by the read-only audit CLI. */
 import { createHash, randomUUID } from "node:crypto";
+import { isProxy } from "node:util/types";
 import { writeFileSync, renameSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { readFile, mkdir } from "node:fs/promises";
@@ -10,6 +11,20 @@ import {
   requestAllowed,
   singleRequestEventAllowed,
   loadSingleRequestProof,
+  R15_RECOVERY_DOCUMENT,
+  validateR15RecoveryDocument,
+  R16_RECOVERY_DOCUMENT,
+  validateR16RecoveryDocument,
+  R17_RECOVERY_DOCUMENT,
+  validateR17RecoveryDocument,
+  R13_RECOVERY_DOCUMENT,
+  validateR13RecoveryDocument,
+  R4_ZERO_AUTH_PROOF,
+  validateR4ZeroAuthProof,
+  getValidatedR4ZeroAuth,
+  R7_ZERO_AUTH_PROOF,
+  getValidatedR7ZeroAuth,
+  assertPrivateRequestEnvironment,
   HML_ORIGIN,
   API_ORIGIN,
   nativeProofValid,
@@ -24,6 +39,17 @@ import {
   waitOrganization,
   openVerifiedOrganizationSelector,
 } from "./authenticated-visual-audit.mjs";
+
+export {
+  R13_RECOVERY_DOCUMENT,
+  validateR13RecoveryDocument,
+  R15_RECOVERY_DOCUMENT,
+  validateR15RecoveryDocument,
+  R16_RECOVERY_DOCUMENT,
+  validateR16RecoveryDocument,
+  R17_RECOVERY_DOCUMENT,
+  validateR17RecoveryDocument,
+};
 
 export const FIXTURE = Object.freeze({
   origin: HML_ORIGIN,
@@ -186,6 +212,32 @@ export const R1_RECOVERY_DOCUMENT = freeze({
 });
 const R1_RECEIPTS_SHA256 = "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9";
 const recoveryProofs = new WeakSet();
+const recoveryBrokerOwners = new WeakMap(),
+  recoveryOpinionProofs = new WeakMap();
+function claimRecoveryOpinion(owner, token) {
+  const broker = recoveryBrokerOwners.get(owner),
+    record = recoveryOpinionProofs.get(token);
+  if (
+    !broker ||
+    !record ||
+    record.owner !== owner ||
+    record.consumed ||
+    !broker.identity ||
+    !same(record.identity, broker.identity) ||
+    record.documentHash !== "f3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95"
+  )
+    err("RECOVERY_R11_OPINION");
+  record.check();
+  record.consumed = true;
+  broker.opinion = token;
+}
+function assertRecoveryOpinion(owner) {
+  const broker = recoveryBrokerOwners.get(owner),
+    record = recoveryOpinionProofs.get(broker?.opinion);
+  if (!broker || !record || record.owner !== owner || !record.consumed) err("RECOVERY_R11_OPINION");
+  record.check();
+  return true;
+}
 export function validateR1RecoveryDocument(input) {
   const bytes = JSON.stringify(input, null, 2) + "\n";
   if (hash(bytes) !== R1_RECEIPTS_SHA256) err("RECOVERY_LEDGER");
@@ -199,14 +251,235 @@ export function validateR1RecoveryDocument(input) {
   for (const receipt of input.receipts) safeReceipt(receipt);
   return freeze(structuredClone(input));
 }
+
+export async function readCompetenceMonth(io, month, navigate) {
+  if (
+    !months.includes(month) ||
+    typeof navigate !== "function" ||
+    typeof io.readBarrier !== "function" ||
+    typeof io.assertReadBarrier !== "function" ||
+    typeof io.readBarrierRemaining !== "function" ||
+    typeof io.drainReads !== "function"
+  )
+    err("OBSERVATION_ORDINAL");
+  const select = EXACT_SELECTS.competencias.find((v) => v.includes("competencia_referencia,"));
+  return io.readBarrier(async (budget) => {
+    const guard = () => io.assertReadBarrier(budget);
+    guard();
+    const initial = io.generation();
+    await navigate(budget);
+    guard();
+    await io.observedAfter("competencias", { id_contrato: FIXTURE.contract }, initial, {
+      select,
+      readBudget: budget,
+    });
+    guard();
+    await io.fresh();
+    guard();
+    await io.drainReads(budget);
+    guard();
+    const after = io.generation();
+    guard();
+    await io.page
+      .getByLabel("Competência", { exact: true })
+      .fill(month.slice(0, 7), { timeout: io.readBarrierRemaining(budget) });
+    guard();
+    const rows = await io.read(
+      "competencias",
+      { id_contrato: FIXTURE.contract, competencia_referencia: month },
+      { select, after, queryScope: "RECOVERY_COMPETENCE_MONTH", readBudget: budget },
+    );
+    guard();
+    return rows;
+  });
+}
+
+export async function reconcileRecoveryCompetencies(io, captureOpinion) {
+  validateR5RecoveryDocument(io.recoveryLedgerR5);
+  validateR6RecoveryDocument(io.recoveryLedgerR6);
+  validateR7RecoveryDocument(io.recoveryLedgerR7);
+  validateR8RecoveryDocument(io.recoveryLedgerR8);
+  validateR9RecoveryDocument(io.recoveryLedgerR9);
+  validateR10RecoveryDocument(io.recoveryLedgerR10);
+  validateR13RecoveryDocument(io.recoveryLedgerR13);
+  validateR15RecoveryDocument(io.recoveryLedgerR15);
+  validateR16RecoveryDocument(io.recoveryLedgerR16);
+  validateR17RecoveryDocument(io.recoveryLedgerR17);
+  validateR11RecoveryDocument(io.recoveryLedgerR11);
+  if (
+    captureOpinion !== undefined &&
+    (typeof captureOpinion !== "function" || isProxy(captureOpinion))
+  )
+    err("RECOVERY_R11_OPINION");
+  const result = [];
+  for (const month of months) {
+    const rows = await readCompetenceMonth(io, month, (budget) =>
+      io.goKnown("/contratos/" + FIXTURE.contract + "/competencias", budget),
+    );
+    if (!(
+      Array.isArray(rows) &&
+      rows.length === 1 &&
+      rows[0].id === R5_BINDINGS.competencies.find((c) => c.month === month)?.id &&
+      rows.every(
+        (row) =>
+          uuid(row.id) && row.id !== FIXTURE.historical && row.competencia_referencia === month,
+      )
+    ))
+      err("RECOVERY_STATE");
+    if (rows.length) {
+      const detailAfter = io.generation();
+      await io.link("/competencias/" + rows[0].id);
+      await io.observedAfter(
+        "obter_visao_geral_competencia",
+        { p_id_competencia: rows[0].id },
+        detailAfter,
+      );
+      const value = await io.rpcRead(
+        "obter_visao_geral_competencia",
+        { p_id_competencia: rows[0].id },
+        { after: detailAfter },
+      );
+      const c = value?.competencia;
+      if (!(
+        c?.id === rows[0].id &&
+        c.id_organizacao === FIXTURE.organization &&
+        c.id_contrato === FIXTURE.contract &&
+        c.competencia_referencia === month &&
+        !["cancelada", "encerrada"].includes(c.situacao)
+      ))
+        err("RECOVERY_STATE");
+    }
+    if (month === R5_BINDINGS.competencies[0].month && captureOpinion) {
+      const opinionProof = await tracedPreparation("RECOVERY_READ", () =>
+        reconcileRecoveryOpinion(io),
+      );
+      captureOpinion(opinionProof);
+    }
+    result.push({ month, id: rows[0].id, observed: true, count: rows.length });
+  }
+  return result;
+}
+
+export async function reconcileRecoveryOpinion(io) {
+  validateR13RecoveryDocument(io.recoveryLedgerR13);
+  validateR15RecoveryDocument(io.recoveryLedgerR15);
+  validateR16RecoveryDocument(io.recoveryLedgerR16);
+  validateR17RecoveryDocument(io.recoveryLedgerR17);
+  validateR11RecoveryDocument(io.recoveryLedgerR11);
+  if (
+    ["generation", "link", "fresh", "observedAfter", "sealRecoveryOpinion", "rpcRead"].some(
+      (name) => typeof io[name] !== "function",
+    )
+  )
+    err("RECOVERY_R16_OPINION");
+  const after = io.generation();
+  for (const c of JSON.parse(R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
+    const found = await readCompetenceMonth(io, c.month, (budget) =>
+      io.goKnown("/contratos/" + FIXTURE.contract + "/competencias", budget),
+    );
+    if (!Array.isArray(found) || found.length !== 1 || found[0].id !== c.id)
+      err("RECOVERY_R16_OPINION");
+    const overviewOrdinal = io.generation();
+    await tracedPreparation("RECOVERY_READ", () => io.link("/competencias/" + c.id));
+    await tracedPreparation("RECOVERY_READ", () => io.fresh());
+    if (c.month === "2026-10-01") {
+      await tracedPreparation("RECOVERY_READ", () =>
+        io.observedAfter(
+          "obter_visao_geral_competencia",
+          { p_id_competencia: c.id },
+          overviewOrdinal,
+        ),
+      );
+      await tracedPreparation("RECOVERY_READ", () =>
+        io.rpcRead(
+          "obter_visao_geral_competencia",
+          { p_id_competencia: c.id },
+          { after: overviewOrdinal },
+        ),
+      );
+    }
+    for (const [area, rpc] of [
+      ["documentos", "obter_documentos_competencia_v115"],
+      ["analise", "obter_analise_competencia_v116"],
+    ]) {
+      const ordinal = io.generation();
+      await tracedPreparation("RECOVERY_READ", () => io.link("/competencias/" + c.id + "/" + area));
+      await tracedPreparation("RECOVERY_READ", () => io.fresh());
+      await tracedPreparation("RECOVERY_READ", () =>
+        io.observedAfter(rpc, { p_id_competencia: c.id }, ordinal),
+      );
+      await tracedPreparation("RECOVERY_READ", () =>
+        io.rpcRead(rpc, { p_id_competencia: c.id }, { after: ordinal }),
+      );
+    }
+    const ordinal = io.generation();
+    await tracedPreparation("RECOVERY_READ", () => io.link("/competencias/" + c.id + "/parecer"));
+    await tracedPreparation("RECOVERY_READ", () => io.fresh());
+    await tracedPreparation("RECOVERY_READ", () =>
+      io.observedAfter(
+        "pareceres_internos",
+        {
+          id_competencia: c.id,
+          id_organizacao: FIXTURE.organization,
+          id_contrato: FIXTURE.contract,
+        },
+        ordinal,
+        { select: EXACT_SELECTS.pareceres_internos[0] },
+      ),
+    );
+  }
+  return io.sealRecoveryOpinion(after);
+}
+
 export function reconcileR1Recovery(input) {
   validateR1RecoveryDocument(input?.ledger);
+  validateR3RecoveryDocument(input?.ledgerR3);
+  validateR4RecoveryDocument(input?.ledgerR4);
+  validateR5RecoveryDocument(input?.ledgerR5);
+  validateR6RecoveryDocument(input?.ledgerR6);
+  validateR7RecoveryDocument(input?.ledgerR7);
+  validateR8RecoveryDocument(input?.ledgerR8);
+  validateR9RecoveryDocument(input?.ledgerR9);
+  validateR10RecoveryDocument(input?.ledgerR10);
+  validateR13RecoveryDocument(input?.ledgerR13);
+  validateR15RecoveryDocument(input?.ledgerR15);
+  validateR16RecoveryDocument(input?.ledgerR16);
+  validateR17RecoveryDocument(input?.ledgerR17);
+  validateR11RecoveryDocument(input?.ledgerR11);
+  const expected = R5_BINDINGS;
+  if (
+    input.listCount !== 1 ||
+    input.listState?.id !== expected.listId ||
+    input.listState?.versionId !== expected.listVersionId ||
+    input.listState?.itemId !== expected.itemId ||
+    input.version?.id !== expected.sourceVersionId ||
+    input.version?.hash !== JSON.parse(R5_RECOVERY_DOCUMENT.reportRaw).recovery.sourceHash ||
+    !Array.isArray(input.competencies) ||
+    !expected.competencies.every((c) =>
+      input.competencies.some(
+        (r) => r.month === c.month && r.id === c.id && r.count === 1 && r.observed === true,
+      ),
+    )
+  )
+    err("RECOVERY_STATE");
+  if (
+    !Array.isArray(input.competencies) ||
+    input.competencies.length !== months.length ||
+    !months.every(
+      (month, i) =>
+        input.competencies[i]?.month === month &&
+        input.competencies[i].observed === true &&
+        [0, 1].includes(input.competencies[i].count),
+    )
+  )
+    err("RECOVERY_STATE");
   const s = input.source,
     v = input.version;
   if (
     input.sourceCount !== 1 ||
     !official(s) ||
     s.id !== FIXTURE.source ||
+    s.situacao !== "ativa" ||
     !sourceFieldsExact(s) ||
     !Number.isInteger(s.version) ||
     s.version < 1 ||
@@ -243,6 +516,983 @@ export function reconcileR1Recovery(input) {
   recoveryProofs.add(proof);
   return proof;
 }
+export const R2_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r2.v1",
+  workflowRun: "42553093050",
+  artifactId: "13645999071",
+  requestId: "trilha-a-fixtures-20261109-r2",
+  frontendSha: "437c788e32f0325dd15c9d2e7277c10129bcb462",
+  harnessSha: "bc14a9e232bf5abab07f71635866ea586e4ade37",
+  zipSha256: "c6b33596bd1454388d0989506c74ccbaece749d0c4bcf0b45fbdb0f692927475",
+  reportSha256: "d986f375e1cba68be5f78b61544d241ef5f4c71f126611112c960226a939e805",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  derivedIntentCount: 0,
+  proof: "receipts+brokerInvariant+sourcePath",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "PREPARER_TIMEOUT",\n  "diagnostics": {\n    "primaryFailure": "PREPARER_TIMEOUT",\n    "failureClass": "TIMEOUT",\n    "errorName": "TimeoutError",\n    "subphase": "SOURCE_FORM_FIELD",\n    "subphasePath": [\n      "SOURCE_AND_LIST",\n      "SOURCE_FORM_FIELD"\n    ],\n    "lastCompletedSubphase": "SOURCE_UI_CONTROL",\n    "logoutAttempted": true,\n    "logoutVerified": false,\n    "cleanupFailure": "LOGOUT_FAILED"\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 2,\n    "maxNewIntentions": 22,\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": null,\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "bc14a9e232bf5abab07f71635866ea586e4ade37",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42553093050",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": false,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+});
+export function validateR2RecoveryDocument(input) {
+  if (
+    !same(input, R2_RECOVERY_DOCUMENT) ||
+    hash(input?.reportRaw) !== R2_RECOVERY_DOCUMENT.reportSha256 ||
+    hash(input?.receiptsRaw) !== R2_RECOVERY_DOCUMENT.receiptsSha256
+  )
+    err("RECOVERY_R2_LEDGER");
+  const report = JSON.parse(input.reportRaw),
+    receipts = JSON.parse(input.receiptsRaw);
+  if (
+    !keys(receipts, ["schema", "receipts"]) ||
+    receipts.schema !== "contaos.fixture.receipts.v1" ||
+    !Array.isArray(receipts.receipts) ||
+    receipts.receipts.length !== 0 ||
+    report.completed !== false ||
+    report.recovery?.reconciled !== true ||
+    report.diagnostics?.subphase !== "SOURCE_FORM_FIELD" ||
+    report.diagnostics?.lastCompletedSubphase !== "SOURCE_UI_CONTROL" ||
+    Object.hasOwn(report, "intentCount")
+  )
+    err("RECOVERY_R2_LEDGER");
+  return freeze(structuredClone(input));
+}
+export const R3_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r3.v1",
+  workflowRun: "42559214436",
+  artifactId: "13648722477",
+  requestId: "trilha-a-fixtures-20261109-r3",
+  frontendSha: "437c788e32f0325dd15c9d2e7277c10129bcb462",
+  harnessSha: "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",
+  zipSha256: "44cd6eec0dcec9cf5ceaa2283d8a07b04cf64e8c1391ad2c6a5aaed32104c560",
+  reportSha256: "e1d0cabcd5aeec18a695627c5b06ef49e36dba262117390e1fddb8ec04555931",
+  receiptsSha256: "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "FLOW_ACTIVE_NOT_READBACK",\n  "diagnostics": {\n    "primaryFailure": "FLOW_ACTIVE_NOT_READBACK",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "SOURCE_AND_LIST",\n    "subphasePath": [\n      "SOURCE_AND_LIST"\n    ],\n    "lastCompletedSubphase": "SOURCE_RECONCILE",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 2,\n    "maxNewIntentions": 22,\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": null,\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42559214436",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42559214436",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "salvar_fonte_normativa_v107",\n      "requestId": "309caf6c-5551-4e2b-ae33-4607a95ea025",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42559214436",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "salvar_fonte_normativa_v107",\n      "requestId": "309caf6c-5551-4e2b-ae33-4607a95ea025",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34"\n    }\n  ]\n}\n',
+  receipts: [
+    {
+      frontendSha: "437c788e32f0325dd15c9d2e7277c10129bcb462",
+      harnessSha: "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",
+      deploymentId: "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",
+      workflowRun: "42559214436",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "salvar_fonte_normativa_v107",
+      requestId: "309caf6c-5551-4e2b-ae33-4607a95ea025",
+      state: "sealed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34",
+    },
+    {
+      frontendSha: "437c788e32f0325dd15c9d2e7277c10129bcb462",
+      harnessSha: "104f8e96e79c5c7b1b2307a57a5ec726fb3cc595",
+      deploymentId: "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",
+      workflowRun: "42559214436",
+      schema: "contaos.fixture.intent.v1",
+      rpc: "salvar_fonte_normativa_v107",
+      requestId: "309caf6c-5551-4e2b-ae33-4607a95ea025",
+      state: "confirmed",
+      organization: "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract: "be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+      payloadSha256: "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34",
+    },
+  ],
+});
+
+export function validateR3RecoveryDocument(input) {
+  if (
+    !same(input, R3_RECOVERY_DOCUMENT) ||
+    hash(input?.reportRaw) !== R3_RECOVERY_DOCUMENT.reportSha256 ||
+    hash(input?.receiptsRaw) !== R3_RECOVERY_DOCUMENT.receiptsSha256
+  )
+    err("RECOVERY_R3_LEDGER");
+  const report = JSON.parse(input.reportRaw),
+    original = JSON.parse(input.receiptsRaw);
+  if (
+    !keys(original, ["schema", "receipts"]) ||
+    original.schema !== "contaos.fixture.receipts.v1" ||
+    !same(original.receipts, input.receipts) ||
+    input.receipts.length !== 2 ||
+    report.workflowRun !== input.workflowRun ||
+    report.harnessSha !== input.harnessSha ||
+    report.frontendSha !== input.frontendSha ||
+    report.failure !== "FLOW_ACTIVE_NOT_READBACK" ||
+    report.logoutVerified !== true ||
+    report.completed !== false
+  )
+    err("RECOVERY_R3_LEDGER");
+  for (const [i, receipt] of input.receipts.entries()) {
+    safeReceipt(receipt);
+    if (
+      receipt.rpc !== "salvar_fonte_normativa_v107" ||
+      receipt.requestId !== "309caf6c-5551-4e2b-ae33-4607a95ea025" ||
+      receipt.state !== ["sealed", "confirmed"][i] ||
+      receipt.payloadSha256 !== "c477003da4693011c3822985da92a78bb495f31236f3d99e22593c81d5297d34"
+    )
+      err("RECOVERY_R3_LEDGER");
+  }
+  return freeze(structuredClone(input));
+}
+export const R4_RECOVERY_DOCUMENT = freeze({ ...R4_ZERO_AUTH_PROOF });
+export function validateR4RecoveryDocument(input) {
+  validateR4ZeroAuthProof(input);
+  if (!same(input, R4_RECOVERY_DOCUMENT)) err("RECOVERY_R4_PROOF");
+  return freeze(structuredClone(input));
+}
+
+export const R5_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r5.v1",
+  workflowRun: "42578223154",
+  artifactId: "13656530451",
+  requestId: "trilha-a-fixtures-20261109-r5",
+  harnessSha: "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",
+  zipSha256: "5380c9c1a5b18e75e7a0e09e41902c826eae0a9cb1f9589f7f34a819f463985b",
+  reportSha256: "c631d266351fa609600dbcdbe60f1d1a54d8fac76e740c10d80017277a6f55ba",
+  receiptsSha256: "fd97a387cae0e16af65c6923f453ac83262e58447176c3c558b1c10bc15c5eeb",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "PREPARER_INCOMPLETE",\n  "diagnostics": {\n    "primaryFailure": "PREPARER_INCOMPLETE",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "PREFLIGHT",\n    "subphasePath": [],\n    "lastCompletedSubphase": "PREFLIGHT",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 8,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 3,\n    "newArmedCount": 5,\n    "maxIntentions": 24,\n    "maxNewIntentions": 21\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 3,\n    "maxNewIntentions": 21,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "partial",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "id": "79bdc139-ed10-4c91-905e-b32b9a824d27",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42578223154",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "79bdc139-ed10-4c91-905e-b32b9a824d27"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "da4e924e-2ed1-4ccd-b847-fc95a44cc383",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "54e6e65b94eb4874e50fe5764348e1a67804aa4df82547033dd9ccff7690f340"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "da4e924e-2ed1-4ccd-b847-fc95a44cc383",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "54e6e65b94eb4874e50fe5764348e1a67804aa4df82547033dd9ccff7690f340"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "31ddaf25-fb66-4cdc-be84-8612e77b17dc",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "3cbe64f69528818238bf16a0dcf02d739bab03f7eea62aff5a7f4f58e52b6a73"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "31ddaf25-fb66-4cdc-be84-8612e77b17dc",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "3cbe64f69528818238bf16a0dcf02d739bab03f7eea62aff5a7f4f58e52b6a73"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "cf429997-d0b6-45bd-880a-be4b103f79bb",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "7c3f9c79fb8b58ff93186827b68ca6dbbe147787d21f8b15c1eb555977bc0b3f"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "executar_comando_lista_v1",\n      "requestId": "cf429997-d0b6-45bd-880a-be4b103f79bb",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "7c3f9c79fb8b58ff93186827b68ca6dbbe147787d21f8b15c1eb555977bc0b3f"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "499dc2a2-c0a2-4a19-9ccb-11c534096f7e",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1c8f192c563e7dc74b6889b916fdf33eb563ca05dbb10d638c51b351dc7f8083"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "499dc2a2-c0a2-4a19-9ccb-11c534096f7e",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1c8f192c563e7dc74b6889b916fdf33eb563ca05dbb10d638c51b351dc7f8083"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "655ae00f-ed36-4a13-a637-bc8b77375783",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1a90a321fa24f8af03c9dc9997b18d21981353cd86ce7e06ba2c51af698e0415"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "3fb48eff9f89a2c89e3c9f2cc6fed3e4d0ede99d",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42578223154",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_competencia",\n      "requestId": "655ae00f-ed36-4a13-a637-bc8b77375783",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "1a90a321fa24f8af03c9dc9997b18d21981353cd86ce7e06ba2c51af698e0415"\n    }\n  ]\n}\n',
+});
+export function validateR5RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R5_LEDGER");
+  let descriptors;
+  try {
+    descriptors = Object.getOwnPropertyDescriptors(input);
+  } catch {
+    err("RECOVERY_R5_LEDGER");
+  }
+  const names = Object.keys(R5_RECOVERY_DOCUMENT);
+  if (Reflect.ownKeys(descriptors).length !== names.length) err("RECOVERY_R5_LEDGER");
+  const clean = {};
+  for (const key of names) {
+    const d = descriptors[key];
+    if (!d || !Object.hasOwn(d, "value") || typeof d.value !== "string") err("RECOVERY_R5_LEDGER");
+    clean[key] = d.value;
+  }
+  if (
+    !same(clean, R5_RECOVERY_DOCUMENT) ||
+    hash(clean.reportRaw) !== R5_RECOVERY_DOCUMENT.reportSha256 ||
+    hash(clean.receiptsRaw) !== R5_RECOVERY_DOCUMENT.receiptsSha256
+  )
+    err("RECOVERY_R5_LEDGER");
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw);
+  if (
+    JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
+    JSON.stringify(receipts, null, 2) + "\n" !== clean.receiptsRaw ||
+    report.schema !== "contaos.fixture.preparation.v1" ||
+    report.workflowRun !== clean.workflowRun ||
+    report.harnessSha !== clean.harnessSha ||
+    report.frontendSha !== "437c788e32f0325dd15c9d2e7277c10129bcb462" ||
+    report.deploymentId !== "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    !same(report.intentLedger, {
+      count: 8,
+      frozen: false,
+      pending: false,
+      sent: false,
+      priorConfirmed: 3,
+      newArmedCount: 5,
+      maxIntentions: 24,
+      maxNewIntentions: 21,
+    }) ||
+    !keys(receipts, ["schema", "receipts"]) ||
+    receipts.schema !== "contaos.fixture.receipts.v1" ||
+    receipts.receipts.length !== 10
+  )
+    err("RECOVERY_R5_LEDGER");
+  const historical = new Set(
+    [...R1_RECOVERY_DOCUMENT.receipts, ...R3_RECOVERY_DOCUMENT.receipts].map((r) => r.requestId),
+  );
+  const ids = new Set();
+  for (let i = 0; i < 10; i += 2) {
+    const sealed = receipts.receipts[i],
+      confirmed = receipts.receipts[i + 1];
+    safeReceipt(sealed);
+    safeReceipt(confirmed);
+    if (
+      !keys(sealed, [
+        "frontendSha",
+        "harnessSha",
+        "deploymentId",
+        "workflowRun",
+        "schema",
+        "rpc",
+        "requestId",
+        "state",
+        "organization",
+        "contract",
+        "payloadSha256",
+      ]) ||
+      !same({ ...sealed, state: "confirmed" }, confirmed) ||
+      sealed.state !== "sealed" ||
+      confirmed.state !== "confirmed" ||
+      historical.has(sealed.requestId) ||
+      ids.has(sealed.requestId) ||
+      sealed.workflowRun !== clean.workflowRun ||
+      sealed.harnessSha !== report.harnessSha ||
+      sealed.frontendSha !== report.frontendSha ||
+      sealed.deploymentId !== report.deploymentId ||
+      sealed.organization !== FIXTURE.organization ||
+      sealed.contract !== FIXTURE.contract ||
+      sealed.rpc !== (i < 6 ? "executar_comando_lista_v1" : "criar_competencia")
+    )
+      err("RECOVERY_R5_LEDGER");
+    ids.add(sealed.requestId);
+  }
+  return freeze(clean);
+}
+const R5_BINDINGS = freeze(JSON.parse(R5_RECOVERY_DOCUMENT.reportRaw).bindings);
+export const R6_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r6.v1",
+  workflowRun: "42585173702",
+  artifactId: "13658434738",
+  requestId: "trilha-a-fixtures-20261109-r6",
+  harnessSha: "9cd01a472146c67c4a3cae5f3d9a6b5d7448716a",
+  zipSha256: "10e55ed5856aac2879188ab5f2df3b1f4a98b180de21dd7abcb470c162f9d68c",
+  reportSha256: "8fd354bf2177f47a7b124a9d53e606de91880a45b2d94daebe46185403ebbeff",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "FLOW_BUTTON_UNAVAILABLE",\n  "diagnostics": {\n    "primaryFailure": "FLOW_BUTTON_UNAVAILABLE",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "SOURCE_UI_CONTROL",\n    "subphasePath": [\n      "SOURCE_AND_LIST",\n      "RECOVERY_READ",\n      "SOURCE_UI_CONTROL",\n      "SOURCE_UI_CONTROL"\n    ],\n    "lastCompletedSubphase": "SOURCE_UI_CONTROL",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 8,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 8,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 16\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 8,\n    "maxNewIntentions": 16,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": false,\n    "sourceVersion": null,\n    "sourceHash": null\n  },\n  "bindings": null,\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "9cd01a472146c67c4a3cae5f3d9a6b5d7448716a",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42585173702",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+});
+export function validateR6RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R6_LEDGER");
+  let descriptors;
+  try {
+    descriptors = Object.getOwnPropertyDescriptors(input);
+  } catch {
+    err("RECOVERY_R6_LEDGER");
+  }
+  const names = Object.keys(R6_RECOVERY_DOCUMENT),
+    clean = {};
+  if (Reflect.ownKeys(descriptors).length !== names.length) err("RECOVERY_R6_LEDGER");
+  for (const key of names) {
+    const descriptor = descriptors[key];
+    if (!descriptor || !Object.hasOwn(descriptor, "value") || typeof descriptor.value !== "string")
+      err("RECOVERY_R6_LEDGER");
+    clean[key] = descriptor.value;
+  }
+  if (
+    !same(clean, R6_RECOVERY_DOCUMENT) ||
+    hash(JSON.stringify(clean, null, 2) + "\n") !==
+      "98136adfe0c84c274ca31534b847b640a35f2577d2ad6197e451324a51ac7e03" ||
+    hash(clean.reportRaw) !== R6_RECOVERY_DOCUMENT.reportSha256 ||
+    hash(clean.receiptsRaw) !== R6_RECOVERY_DOCUMENT.receiptsSha256
+  )
+    err("RECOVERY_R6_LEDGER");
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw);
+  if (
+    JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
+    JSON.stringify(receipts) + "\n" !== clean.receiptsRaw ||
+    !same(receipts, { schema: "contaos.fixture.receipts.v1", receipts: [] }) ||
+    report.schema !== "contaos.fixture.preparation.v1" ||
+    report.workflowRun !== clean.workflowRun ||
+    report.harnessSha !== clean.harnessSha ||
+    report.frontendSha !== "437c788e32f0325dd15c9d2e7277c10129bcb462" ||
+    report.deploymentId !== "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp" ||
+    report.failure !== "FLOW_BUTTON_UNAVAILABLE" ||
+    report.phase !== "SOURCE_AND_LIST" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.logoutAttempted !== true ||
+    report.diagnostics.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    report.bindings !== null ||
+    !same(report.ids, []) ||
+    !same(report.intentLedger, {
+      count: 8,
+      frozen: false,
+      pending: false,
+      sent: false,
+      priorConfirmed: 8,
+      newArmedCount: 0,
+      maxIntentions: 24,
+      maxNewIntentions: 16,
+    }) ||
+    report.recovery.reconciled !== false ||
+    report.recovery.sourceVersion !== null ||
+    report.recovery.sourceHash !== null ||
+    report.recovery.confirmedBefore !== 8 ||
+    report.recovery.maxNewIntentions !== 16
+  )
+    err("RECOVERY_R6_LEDGER");
+  validateR4RecoveryDocument(report.recovery.r4ZeroAuth);
+  return freeze(clean);
+}
+
+export const R8_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r8.v1",
+  workflowRun: "42611391440",
+  artifactId: "13670961904",
+  requestId: "trilha-a-fixtures-20261109-r8",
+  harnessSha: "dea3ab73c9b47de1126054380b002c37b060ff84",
+  zipSha256: "698e58fe9184b194cc1866b4c119d4df45ba23ccc5704665469a99793cce2fa9",
+  reportSha256: "e913478993f895726f9e207c975533ee4a6fd3d9dac8dd0a319919fcf06c67cb",
+  receiptsSha256: "20af329dd9c441e4ede575fa6cb94a65c3d136ad777613170045c696328fad25",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "OBSERVATION_FAILED",\n  "diagnostics": {\n    "primaryFailure": "OBSERVATION_FAILED",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "RUNTIME_FRESH",\n    "subphasePath": [\n      "COMPETENCIES",\n      "COMPETENCY_UI",\n      "COMPETENCY_RECONCILE",\n      "COMPETENCY_RECONCILE",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "RUNTIME_FRESH",\n      "RUNTIME_FRESH"\n    ],\n    "lastCompletedSubphase": "RUNTIME_FRESH",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 10,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 8,\n    "newArmedCount": 2,\n    "maxIntentions": 24,\n    "maxNewIntentions": 16\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 8,\n    "maxNewIntentions": 16,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "partial",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42611391440",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_documento_competencia_v115",\n      "requestId": "6d730eb7-8c38-4474-813d-d39672454444",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "c9418ddaaa3e21de73da0a62acc2a945b3c9bf8c12107cadf4f4bfc518cf4154"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "criar_documento_competencia_v115",\n      "requestId": "6d730eb7-8c38-4474-813d-d39672454444",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "c9418ddaaa3e21de73da0a62acc2a945b3c9bf8c12107cadf4f4bfc518cf4154"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_analise_competencia",\n      "requestId": "a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "f26357fe955a3312c19cf8a1a678c545da95c8f330a272bc08f8aec964c7ffb1"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "dea3ab73c9b47de1126054380b002c37b060ff84",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42611391440",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_analise_competencia",\n      "requestId": "a2791c81-99be-4bbb-9ad4-5ef3dbd2eff4",\n      "state": "confirmed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "f26357fe955a3312c19cf8a1a678c545da95c8f330a272bc08f8aec964c7ffb1"\n    }\n  ]\n}\n',
+});
+export function validateR8RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R8_LEDGER");
+  const descriptors = Object.getOwnPropertyDescriptors(input),
+    names = Object.keys(R8_RECOVERY_DOCUMENT),
+    clean = {};
+  if (Reflect.ownKeys(descriptors).length !== names.length) err("RECOVERY_R8_LEDGER");
+  for (const key of names) {
+    const d = descriptors[key];
+    if (!d || !Object.hasOwn(d, "value") || d.enumerable !== true || typeof d.value !== "string")
+      err("RECOVERY_R8_LEDGER");
+    clean[key] = d.value;
+  }
+  if (
+    !same(clean, R8_RECOVERY_DOCUMENT) ||
+    hash(JSON.stringify(clean, null, 2) + "\n") !==
+      "b22c0e464915cd58f8d9918a2c4751078dbf73578528e833afd92fa646502884" ||
+    hash(clean.reportRaw) !== clean.reportSha256 ||
+    hash(clean.receiptsRaw) !== clean.receiptsSha256
+  )
+    err("RECOVERY_R8_LEDGER");
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw);
+  if (
+    JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
+    JSON.stringify(receipts, null, 2) + "\n" !== clean.receiptsRaw ||
+    report.schema !== "contaos.fixture.preparation.v1" ||
+    report.workflowRun !== clean.workflowRun ||
+    report.harnessSha !== clean.harnessSha ||
+    report.frontendSha !== "437c788e32f0325dd15c9d2e7277c10129bcb462" ||
+    report.deploymentId !== "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    !same(report.intentLedger, {
+      count: 10,
+      frozen: false,
+      pending: false,
+      sent: false,
+      priorConfirmed: 8,
+      newArmedCount: 2,
+      maxIntentions: 24,
+      maxNewIntentions: 16,
+    }) ||
+    !keys(receipts, ["schema", "receipts"]) ||
+    receipts.schema !== "contaos.fixture.receipts.v1" ||
+    receipts.receipts.length !== 4
+  )
+    err("RECOVERY_R8_LEDGER");
+  const historical = new Set(
+      [
+        ...R1_RECOVERY_DOCUMENT.receipts,
+        ...R3_RECOVERY_DOCUMENT.receipts,
+        ...JSON.parse(R5_RECOVERY_DOCUMENT.receiptsRaw).receipts,
+      ].map((r) => r.requestId),
+    ),
+    ids = new Set();
+  for (let i = 0; i < 4; i += 2) {
+    const sealed = receipts.receipts[i],
+      confirmed = receipts.receipts[i + 1];
+    safeReceipt(sealed);
+    safeReceipt(confirmed);
+    if (
+      !same({ ...sealed, state: "confirmed" }, confirmed) ||
+      sealed.state !== "sealed" ||
+      confirmed.state !== "confirmed" ||
+      historical.has(sealed.requestId) ||
+      ids.has(sealed.requestId) ||
+      sealed.workflowRun !== clean.workflowRun ||
+      sealed.harnessSha !== report.harnessSha ||
+      sealed.frontendSha !== report.frontendSha ||
+      sealed.deploymentId !== report.deploymentId ||
+      sealed.organization !== FIXTURE.organization ||
+      sealed.contract !== FIXTURE.contract ||
+      sealed.rpc !==
+        (i === 0 ? "criar_documento_competencia_v115" : "solicitar_analise_competencia")
+    )
+      err("RECOVERY_R8_LEDGER");
+    ids.add(sealed.requestId);
+  }
+  if (
+    report.recovery.confirmedBefore !== 8 ||
+    report.recovery.maxNewIntentions !== 16 ||
+    report.recovery.reconciled !== true ||
+    report.recovery.sourceVersion !== R5_BINDINGS.sourceVersionId ||
+    report.recovery.sourceHash !== JSON.parse(R5_RECOVERY_DOCUMENT.reportRaw).recovery.sourceHash
+  )
+    err("RECOVERY_R8_LEDGER");
+  for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
+    if (report.bindings[key] !== R5_BINDINGS[key]) err("RECOVERY_R8_LEDGER");
+  return freeze(clean);
+}
+const R8_BINDINGS = freeze(JSON.parse(R8_RECOVERY_DOCUMENT.reportRaw).bindings);
+
+export const R9_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r9.v1",
+  workflowRun: "42621964900",
+  artifactId: "13676832673",
+  requestId: "trilha-a-fixtures-20261109-r9",
+  harnessSha: "2ed3097691f39025b49a015d86223da61a2b45e5",
+  zipSha256: "89a35fb6de1e437a93c8074cb563745108d5e968878d929c8663dcaff700f500",
+  reportSha256: "4163c5266ed9715ceafa3650af55a42348636cfbccceb9c8f124b55ab1eac31e",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  observationSha256: "6beb2ab824c183a65b1bd7334a4a6ab7ca878a0c6cab999a32dfd39a4ec5cad6",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "OBSERVATION_FAILED",\n  "diagnostics": {\n    "primaryFailure": "OBSERVATION_FAILED",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "RUNTIME_FRESH",\n    "subphasePath": [\n      "SOURCE_AND_LIST",\n      "RECOVERY_READ",\n      "RECOVERY_READ",\n      "RUNTIME_FRESH",\n      "RUNTIME_FRESH"\n    ],\n    "lastCompletedSubphase": "RUNTIME_FRESH",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 10,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 10,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 14\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 14,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": false,\n    "sourceVersion": null,\n    "sourceHash": null\n  },\n  "bindings": null,\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "2ed3097691f39025b49a015d86223da61a2b45e5",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42621964900",\n  "phase": "SOURCE_AND_LIST",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "2ed3097691f39025b49a015d86223da61a2b45e5",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42621964900",\n  "firstFailure": {\n    "contractKind": "TABLE:competencias",\n    "stage": "BODY_READ",\n    "statusHTTP": 200,\n    "requestFailure": "ABORTED"\n  }\n}\n',
+});
+export function validateR9RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R9_LEDGER");
+  const names = Object.keys(R9_RECOVERY_DOCUMENT),
+    ds = Object.getOwnPropertyDescriptors(input),
+    clean = {};
+  if (Reflect.ownKeys(ds).length !== names.length) err("RECOVERY_R9_LEDGER");
+  for (const key of names) {
+    const d = ds[key];
+    if (!d || !Object.hasOwn(d, "value") || d.enumerable !== true || typeof d.value !== "string")
+      err("RECOVERY_R9_LEDGER");
+    clean[key] = d.value;
+  }
+  if (
+    !same(clean, R9_RECOVERY_DOCUMENT) ||
+    hash(JSON.stringify(clean, null, 2) + "\n") !==
+      "71e20cc2dfd5888ab22228efe2b253eea316194ce0503e262ad58aef516078b8" ||
+    hash(clean.reportRaw) !== clean.reportSha256 ||
+    hash(clean.receiptsRaw) !== clean.receiptsSha256 ||
+    hash(clean.observationRaw) !== clean.observationSha256
+  )
+    err("RECOVERY_R9_LEDGER");
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw),
+    observation = JSON.parse(clean.observationRaw);
+  if (
+    JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
+    JSON.stringify(receipts) + "\n" !== clean.receiptsRaw ||
+    JSON.stringify(observation, null, 2) + "\n" !== clean.observationRaw ||
+    report.schema !== "contaos.fixture.preparation.v1" ||
+    report.workflowRun !== clean.workflowRun ||
+    report.harnessSha !== clean.harnessSha ||
+    report.frontendSha !== "437c788e32f0325dd15c9d2e7277c10129bcb462" ||
+    report.deploymentId !== "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp" ||
+    report.failure !== "OBSERVATION_FAILED" ||
+    report.phase !== "SOURCE_AND_LIST" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.logoutAttempted !== true ||
+    report.diagnostics.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    report.bindings !== null ||
+    !same(report.ids, []) ||
+    !same(report.intentLedger, {
+      count: 10,
+      frozen: false,
+      pending: false,
+      sent: false,
+      priorConfirmed: 10,
+      newArmedCount: 0,
+      maxIntentions: 24,
+      maxNewIntentions: 14,
+    }) ||
+    !same(receipts, { schema: "contaos.fixture.receipts.v1", receipts: [] }) ||
+    report.recovery.confirmedBefore !== 10 ||
+    report.recovery.maxNewIntentions !== 14 ||
+    report.recovery.reconciled !== false ||
+    report.recovery.sourceVersion !== null ||
+    report.recovery.sourceHash !== null
+  )
+    err("RECOVERY_R9_LEDGER");
+  validateR4RecoveryDocument(report.recovery.r4ZeroAuth);
+  validateObservationDiagnostic(observation, {
+    frontendSha: report.frontendSha,
+    harnessSha: report.harnessSha,
+    deploymentId: report.deploymentId,
+    workflowRun: report.workflowRun,
+  });
+  if (
+    !same(observation.firstFailure, {
+      contractKind: "TABLE:competencias",
+      stage: "BODY_READ",
+      statusHTTP: 200,
+      requestFailure: "ABORTED",
+    })
+  )
+    err("RECOVERY_R9_LEDGER");
+  return freeze(clean);
+}
+
+export const R10_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r10.v1",
+  workflowRun: "42638883189",
+  artifactId: "13683268867",
+  requestId: "trilha-a-fixtures-20261109-r10",
+  harnessSha: "a3a5df2b4e99705d214a509ba035f155c7ae8de9",
+  zipSha256: "b306e1a4b89e839da5244e2b0ddc589f502618a2253dbcbb61415f68cc448a43",
+  reportSha256: "858c21b7eb05e379f6c92dd84cc5f7afe0d75406ab105d3b279b2f0d53703ef2",
+  receiptsSha256: "fc28878b2cf8ba5df6acb7d838fa8a3b930544bb4e5af3288847db0fd24ddeaf",
+  observationSha256: "0b11018aae5529f19ccb6476bf8b1202f3a7e9ba8fab8811252a48b2904ddecf",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "OBSERVATION_FAILED",\n  "diagnostics": {\n    "primaryFailure": "OBSERVATION_FAILED",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "RUNTIME_FRESH",\n    "subphasePath": [\n      "COMPETENCIES",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "COMPETENCY_UI",\n      "RUNTIME_FRESH",\n      "RUNTIME_FRESH"\n    ],\n    "lastCompletedSubphase": "RUNTIME_FRESH",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 10,\n    "frozen": false,\n    "pending": false,\n    "sent": false,\n    "priorConfirmed": 10,\n    "newArmedCount": 0,\n    "maxIntentions": 24,\n    "maxNewIntentions": 14\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 14,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "partial",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "a3a5df2b4e99705d214a509ba035f155c7ae8de9",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42638883189",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw: '{"schema":"contaos.fixture.receipts.v1","receipts":[]}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "a3a5df2b4e99705d214a509ba035f155c7ae8de9",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42638883189",\n  "firstFailure": {\n    "contractKind": "RPC:obter_analise_competencia_v116",\n    "stage": "RESPONSE_PROJECTION",\n    "statusHTTP": "NONE",\n    "requestFailure": "NONE"\n  }\n}\n',
+});
+export function validateR10RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R10_LEDGER");
+  const names = Object.keys(R10_RECOVERY_DOCUMENT),
+    ds = Object.getOwnPropertyDescriptors(input),
+    clean = {};
+  if (!same(Reflect.ownKeys(ds), names)) err("RECOVERY_R10_LEDGER");
+  for (const key of names) {
+    const d = ds[key];
+    if (!d || !Object.hasOwn(d, "value") || d.enumerable !== true || typeof d.value !== "string")
+      err("RECOVERY_R10_LEDGER");
+    clean[key] = d.value;
+  }
+  if (
+    !same(clean, R10_RECOVERY_DOCUMENT) ||
+    hash(JSON.stringify(clean, null, 2) + "\n") !==
+      "5c1490e7d2e810bc4711ad2f8f6a7b11dd36e313b96940c196ecda6b0dd17ece" ||
+    hash(clean.reportRaw) !== clean.reportSha256 ||
+    hash(clean.receiptsRaw) !== clean.receiptsSha256 ||
+    hash(clean.observationRaw) !== clean.observationSha256
+  )
+    err("RECOVERY_R10_LEDGER");
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw),
+    observation = JSON.parse(clean.observationRaw);
+  if (
+    JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
+    JSON.stringify(receipts) + "\n" !== clean.receiptsRaw ||
+    JSON.stringify(observation, null, 2) + "\n" !== clean.observationRaw ||
+    report.schema !== "contaos.fixture.preparation.v1" ||
+    report.workflowRun !== clean.workflowRun ||
+    report.harnessSha !== clean.harnessSha ||
+    report.frontendSha !== "437c788e32f0325dd15c9d2e7277c10129bcb462" ||
+    report.deploymentId !== "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp" ||
+    report.failure !== "OBSERVATION_FAILED" ||
+    report.phase !== "FINAL_READBACK" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.logoutAttempted !== true ||
+    report.diagnostics.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    !same(report.bindings, JSON.parse(R10_RECOVERY_DOCUMENT.reportRaw).bindings) ||
+    !same(report.ids, JSON.parse(R10_RECOVERY_DOCUMENT.reportRaw).ids) ||
+    !same(report.intentLedger, {
+      count: 10,
+      frozen: false,
+      pending: false,
+      sent: false,
+      priorConfirmed: 10,
+      newArmedCount: 0,
+      maxIntentions: 24,
+      maxNewIntentions: 14,
+    }) ||
+    !same(receipts, { schema: "contaos.fixture.receipts.v1", receipts: [] }) ||
+    report.recovery.confirmedBefore !== 10 ||
+    report.recovery.maxNewIntentions !== 14 ||
+    report.recovery.reconciled !== true ||
+    report.recovery.sourceVersion !== "1ebbfd0b-c50c-405d-8806-321f18e179e0" ||
+    report.recovery.sourceHash !==
+      "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"
+  )
+    err("RECOVERY_R10_LEDGER");
+  validateR4RecoveryDocument(report.recovery.r4ZeroAuth);
+  validateObservationDiagnostic(observation, {
+    frontendSha: report.frontendSha,
+    harnessSha: report.harnessSha,
+    deploymentId: report.deploymentId,
+    workflowRun: report.workflowRun,
+  });
+  if (
+    !same(observation.firstFailure, {
+      contractKind: "RPC:obter_analise_competencia_v116",
+      stage: "RESPONSE_PROJECTION",
+      statusHTTP: "NONE",
+      requestFailure: "NONE",
+    })
+  )
+    err("RECOVERY_R10_LEDGER");
+  return freeze(clean);
+}
+
+export const R11_RECOVERY_DOCUMENT = freeze({
+  schema: "contaos.fixture.recovery-r11.v1",
+  workflowRun: "42650825191",
+  artifactId: "13690462160",
+  requestId: "trilha-a-fixtures-20261109-r11",
+  harnessSha: "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",
+  zipSha256: "eb445aadc6876e116040946157c2c4a1bd6bfd79f494945649dbd63e6d74eb50",
+  reportSha256: "fcee36850806601be988dedf4afe49fe10e6fccc6640f2b7e0a63a870541dc1a",
+  receiptsSha256: "603a302a92902da2978ddabb20d7972dd9713d39d8838024bfaa89cfb1af33e8",
+  observationSha256: "59eb0943c77cbcc75e0e022d3ebb75cc74384faf73c5f64e6b5dc2cb29059a47",
+  reportRaw:
+    '{\n  "schema": "contaos.fixture.preparation.v1",\n  "failure": "PHASE_TIMEOUT",\n  "diagnostics": {\n    "primaryFailure": "PHASE_TIMEOUT",\n    "failureClass": "PROTOCOL",\n    "errorName": "Error",\n    "subphase": "COMPETENCY_GET",\n    "subphasePath": [\n      "COMPETENCIES",\n      "COMPETENCY_UI",\n      "COMPETENCY_COMMAND",\n      "RUNTIME_FRESH",\n      "UI_CONFIRM_AFTER",\n      "PREFLIGHT",\n      "COMPETENCY_RECONCILE",\n      "COMPETENCY_UI",\n      "COMPETENCY_GET"\n    ],\n    "lastCompletedSubphase": "COMPETENCY_UI",\n    "logoutAttempted": true,\n    "logoutVerified": true,\n    "cleanupFailure": null\n  },\n  "intentLedger": {\n    "count": 11,\n    "frozen": true,\n    "pending": true,\n    "sent": true,\n    "priorConfirmed": 10,\n    "newArmedCount": 1,\n    "maxIntentions": 24,\n    "maxNewIntentions": 14\n  },\n  "recovery": {\n    "ledgerSha256": "381bb6f66d750a957c98727c3b1cda465dfbcbbbcbd946b5122b7b55f2a604f9",\n    "priorWorkflowRun": "42540864527",\n    "confirmedBefore": 10,\n    "maxNewIntentions": 14,\n    "r3ReceiptsSha256": "28c48b06d3ea9a57d7d631422d813b887c23b5c061fa127499bcf4ffef247364",\n    "r3WorkflowRun": "42559214436",\n    "r4ZeroAuth": {\n      "schema": "contaos.fixture.recovery-r4.v1",\n      "headSha": "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72",\n      "upstreamRun": 42568309807,\n      "fixturesRun": 42568382053,\n      "auditRun": 42568382029,\n      "attempt": 1,\n      "derivedNewBusinessIntents": 0,\n      "proof": "GITHUB_ACTIONS_LIVE_METADATA"\n    },\n    "reconciled": true,\n    "sourceVersion": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "sourceHash": "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"\n  },\n  "bindings": {\n    "sourceVersionId": "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "listId": "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "listVersionId": "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "itemId": "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "source": "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "competencies": [\n      {\n        "month": "2026-10-01",\n        "state": "partial",\n        "id": "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n        "requirementId": "75938450-a972-410c-8612-da3ef7dc0e00",\n        "documentId": "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n        "executionId": "3c174678-a6ec-4415-9d25-6e8a859de2cb",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      },\n      {\n        "month": "2026-09-01",\n        "state": "partial",\n        "code": "COMPETENCE_DEPENDENCY_BLOCKED"\n      }\n    ]\n  },\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42650825191",\n  "phase": "FINAL_READBACK",\n  "completed": false,\n  "logoutVerified": true,\n  "ids": [\n    "1ebbfd0b-c50c-405d-8806-321f18e179e0",\n    "bf71906b-87a4-42f5-8371-5f597ef2ad9b",\n    "e49ef6dd-13b0-491d-8646-5a7bcd5298cf",\n    "e7065876-a620-4dbb-9b4e-992fa4fead83",\n    "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n    "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n    "8b942e46-a29b-40d9-8ad4-04aaf9124a34",\n    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",\n    "75938450-a972-410c-8612-da3ef7dc0e00",\n    "c7f56ac9-81d6-45a4-81f8-db1383006c41",\n    "3c174678-a6ec-4415-9d25-6e8a859de2cb"\n  ],\n  "v1Certified": false\n}\n',
+  receiptsRaw:
+    '{\n  "schema": "contaos.fixture.receipts.v1",\n  "receipts": [\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42650825191",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_parecer_interno",\n      "requestId": "af968191-7d60-4adb-9c60-ebd5f0741e8e",\n      "state": "sealed",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d"\n    },\n    {\n      "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n      "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n      "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n      "workflowRun": "42650825191",\n      "schema": "contaos.fixture.intent.v1",\n      "rpc": "solicitar_parecer_interno",\n      "requestId": "af968191-7d60-4adb-9c60-ebd5f0741e8e",\n      "state": "uncertain",\n      "organization": "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",\n      "contract": "be89ef7e-d839-46c0-9cfb-4da81edf8b74",\n      "payloadSha256": "b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d"\n    }\n  ]\n}\n',
+  observationRaw:
+    '{\n  "schema": "contaos.fixture.observation.v1",\n  "frontendSha": "437c788e32f0325dd15c9d2e7277c10129bcb462",\n  "harnessSha": "7c6fd9fbbe488fd24f37681e8a8aaa8b3c20d53e",\n  "deploymentId": "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp",\n  "workflowRun": "42650825191",\n  "firstFailure": null\n}\n',
+});
+export function validateR11RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R11_LEDGER");
+  const names = Object.keys(R11_RECOVERY_DOCUMENT),
+    ds = Object.getOwnPropertyDescriptors(input),
+    clean = {};
+  if (!same(Reflect.ownKeys(ds), names)) err("RECOVERY_R11_LEDGER");
+  for (const key of names) {
+    const d = ds[key];
+    if (!d || !Object.hasOwn(d, "value") || d.enumerable !== true || typeof d.value !== "string")
+      err("RECOVERY_R11_LEDGER");
+    clean[key] = d.value;
+  }
+  if (
+    !same(clean, R11_RECOVERY_DOCUMENT) ||
+    hash(JSON.stringify(clean, null, 2) + "\n") !==
+      "29f674764a2c8f953f764fcb6a40d8c330e441b488dfcab56a6ee4f9f389c423" ||
+    hash(clean.reportRaw) !== clean.reportSha256 ||
+    hash(clean.receiptsRaw) !== clean.receiptsSha256 ||
+    hash(clean.observationRaw) !== clean.observationSha256
+  )
+    err("RECOVERY_R11_LEDGER");
+  const report = JSON.parse(clean.reportRaw),
+    receipts = JSON.parse(clean.receiptsRaw),
+    observation = JSON.parse(clean.observationRaw);
+  if (
+    JSON.stringify(report, null, 2) + "\n" !== clean.reportRaw ||
+    JSON.stringify(receipts, null, 2) + "\n" !== clean.receiptsRaw ||
+    JSON.stringify(observation, null, 2) + "\n" !== clean.observationRaw ||
+    report.schema !== "contaos.fixture.preparation.v1" ||
+    report.workflowRun !== clean.workflowRun ||
+    report.harnessSha !== clean.harnessSha ||
+    report.frontendSha !== "437c788e32f0325dd15c9d2e7277c10129bcb462" ||
+    report.deploymentId !== "dpl_F3CjrU8Q3iXrKz1YS7KfDs3VXAzp" ||
+    report.failure !== "PHASE_TIMEOUT" ||
+    report.phase !== "FINAL_READBACK" ||
+    report.completed !== false ||
+    report.logoutVerified !== true ||
+    report.diagnostics.logoutAttempted !== true ||
+    report.diagnostics.logoutVerified !== true ||
+    report.diagnostics.cleanupFailure !== null ||
+    !same(report.bindings, JSON.parse(R11_RECOVERY_DOCUMENT.reportRaw).bindings) ||
+    !same(report.ids, JSON.parse(R11_RECOVERY_DOCUMENT.reportRaw).ids) ||
+    !same(report.intentLedger, {
+      count: 11,
+      frozen: true,
+      pending: true,
+      sent: true,
+      priorConfirmed: 10,
+      newArmedCount: 1,
+      maxIntentions: 24,
+      maxNewIntentions: 14,
+    }) ||
+    !same(receipts, JSON.parse(R11_RECOVERY_DOCUMENT.receiptsRaw)) ||
+    report.recovery.confirmedBefore !== 10 ||
+    report.recovery.maxNewIntentions !== 14 ||
+    report.recovery.reconciled !== true ||
+    report.recovery.sourceVersion !== "1ebbfd0b-c50c-405d-8806-321f18e179e0" ||
+    report.recovery.sourceHash !==
+      "d8cce65f32958346c44456c4b4ab554d84368453051a5d1adc6e49b69e1870d1"
+  )
+    err("RECOVERY_R11_LEDGER");
+  validateR4RecoveryDocument(report.recovery.r4ZeroAuth);
+  validateObservationDiagnostic(observation, {
+    frontendSha: report.frontendSha,
+    harnessSha: report.harnessSha,
+    deploymentId: report.deploymentId,
+    workflowRun: report.workflowRun,
+  });
+  if (observation.firstFailure !== null || receipts.receipts.length !== 2)
+    err("RECOVERY_R11_LEDGER");
+  for (const [index, row] of receipts.receipts.entries()) {
+    safeReceipt(row);
+    if (
+      row.state !== (index === 0 ? "sealed" : "uncertain") ||
+      row.rpc !== "solicitar_parecer_interno" ||
+      row.requestId !== "af968191-7d60-4adb-9c60-ebd5f0741e8e" ||
+      row.payloadSha256 !== "b8e2197107c85e4d8b9b962e15ffe4f369669312513f1b26f1db2bbfb560579d" ||
+      row.workflowRun !== clean.workflowRun ||
+      row.harnessSha !== clean.harnessSha ||
+      row.frontendSha !== report.frontendSha ||
+      row.deploymentId !== report.deploymentId ||
+      row.organization !== FIXTURE.organization ||
+      row.contract !== FIXTURE.contract
+    )
+      err("RECOVERY_R11_LEDGER");
+  }
+  return freeze(clean);
+}
+
+function reservedR11Replay(rpc, payload) {
+  if (rpc !== "solicitar_parecer_interno") return false;
+  if (isProxy(payload) || !obj(payload)) err("INTENT_PAYLOAD");
+  const ds = Object.getOwnPropertyDescriptors(payload);
+  if (Reflect.ownKeys(ds).some((k) => typeof k !== "string" || !Object.hasOwn(ds[k], "value")))
+    err("INTENT_PAYLOAD");
+  return ds.p_id_competencia?.value === R5_BINDINGS.competencies[0].id;
+}
+function confirmedR16Replay(rpc, payload) {
+  if (
+    ![
+      "criar_documento_competencia_v115",
+      "solicitar_analise_competencia",
+      "solicitar_parecer_interno",
+      "aprovar_parecer_interno",
+    ].includes(rpc)
+  )
+    return false;
+  if (isProxy(payload) || !obj(payload)) err("INTENT_PAYLOAD");
+  const ds = Object.getOwnPropertyDescriptors(payload);
+  if (Reflect.ownKeys(ds).some((k) => !Object.hasOwn(ds[k], "value"))) err("INTENT_PAYLOAD");
+  const p = Object.fromEntries(Object.entries(ds).map(([k, d]) => [k, d.value]));
+  const c = JSON.parse(R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies.find(
+    (c) => c.month === "2026-09-01",
+  );
+  if (rpc === "aprovar_parecer_interno") return p.p_id_parecer === c.opinionId;
+  if (p.p_id_competencia !== c.id) return false;
+  return rpc !== "criar_documento_competencia_v115" || p.p_id_requisito === c.requirementId;
+}
+
+function confirmedR8Replay(rpc, payload) {
+  if (!["criar_documento_competencia_v115", "solicitar_analise_competencia"].includes(rpc))
+    return false;
+  if (isProxy(payload) || !obj(payload)) err("INTENT_PAYLOAD");
+  const ds = Object.getOwnPropertyDescriptors(payload);
+  if (Reflect.ownKeys(ds).some((k) => !Object.hasOwn(ds[k], "value"))) err("INTENT_PAYLOAD");
+  const p = Object.fromEntries(Object.entries(ds).map(([k, d]) => [k, d.value])),
+    c = R8_BINDINGS.competencies[0];
+  if (p.p_id_competencia !== c.id) return false;
+  if (rpc === "solicitar_analise_competencia") return true;
+  return p.p_id_requisito === c.requirementId;
+}
+
+function confirmedR5Replay(rpc, payload) {
+  const ownData = (value) => {
+    if (isProxy(value) || !obj(value)) err("INTENT_PAYLOAD");
+    const descriptors = Object.getOwnPropertyDescriptors(value);
+    if (Reflect.ownKeys(descriptors).some((key) => !Object.hasOwn(descriptors[key], "value")))
+      err("INTENT_PAYLOAD");
+    return Object.fromEntries(Object.entries(descriptors).map(([key, d]) => [key, d.value]));
+  };
+  const p = ownData(payload);
+  if (rpc === "criar_competencia")
+    return (
+      p.p_id_contrato === FIXTURE.contract &&
+      R5_BINDINGS.competencies.some((c) => c.month === p.p_competencia_referencia)
+    );
+  if (rpc !== "executar_comando_lista_v1") return false;
+  const q = ownData(p.p_payload);
+  if (p.p_acao === "criar_lista")
+    return (
+      p.p_id_organizacao === FIXTURE.organization &&
+      p.p_id_contrato === FIXTURE.contract &&
+      q.nome === FIXTURE.listName
+    );
+  if (p.p_id_lista !== R5_BINDINGS.listId) return false;
+  return (
+    (p.p_acao === "salvar_item" &&
+      q.id_versao === R5_BINDINGS.listVersionId &&
+      q.codigo === "AUD-A-TXT-001" &&
+      q.id_fonte_versao === R5_BINDINGS.sourceVersionId) ||
+    (p.p_acao === "publicar_versao" && q.id_versao === R5_BINDINGS.listVersionId)
+  );
+}
+
+export const R7_RECOVERY_DOCUMENT = freeze({ ...R7_ZERO_AUTH_PROOF });
+export function validateR7RecoveryDocument(input) {
+  if (isProxy(input) || !obj(input)) err("RECOVERY_R7_LEDGER");
+  let descriptors;
+  try {
+    descriptors = Object.getOwnPropertyDescriptors(input);
+  } catch {
+    err("RECOVERY_R7_LEDGER");
+  }
+  const keys = Object.keys(R7_ZERO_AUTH_PROOF),
+    clean = {};
+  if (Reflect.ownKeys(descriptors).length !== keys.length) err("RECOVERY_R7_LEDGER");
+  for (const key of keys) {
+    const descriptor = descriptors[key];
+    if (
+      !descriptor ||
+      !Object.hasOwn(descriptor, "value") ||
+      descriptor.enumerable !== true ||
+      descriptor.value !== R7_ZERO_AUTH_PROOF[key]
+    )
+      err("RECOVERY_R7_LEDGER");
+    clean[key] = descriptor.value;
+  }
+  if (
+    hash(JSON.stringify(clean, null, 2) + "\n") !==
+    "687712aa5ab15072afc65aceacdff52ce5d94c6ba9f2ceccf6867e4636bd1c4e"
+  )
+    err("RECOVERY_R7_LEDGER");
+  return freeze(clean);
+}
+
+function recoveryBudget(
+  ledger,
+  ledgerR3,
+  ledgerR4,
+  ledgerR5,
+  ledgerR6,
+  ledgerR7,
+  ledgerR8,
+  ledgerR9,
+  ledgerR10,
+  ledgerR11,
+  ledgerR13,
+  ledgerR15,
+  ledgerR16,
+  ledgerR17,
+) {
+  const prior = validateR1RecoveryDocument(ledger),
+    r3 = validateR3RecoveryDocument(ledgerR3);
+  validateR4RecoveryDocument(ledgerR4);
+  const r5 = JSON.parse(validateR5RecoveryDocument(ledgerR5).receiptsRaw);
+  validateR6RecoveryDocument(ledgerR6);
+  validateR7RecoveryDocument(ledgerR7);
+  const confirmedBefore = [...prior.receipts, ...r3.receipts, ...r5.receipts].filter(
+    (row) => row.state === "confirmed",
+  ).length;
+  if (confirmedBefore !== 8) err("RECOVERY_R5_LEDGER");
+  const r8 = JSON.parse(validateR8RecoveryDocument(ledgerR8).receiptsRaw);
+  validateR9RecoveryDocument(ledgerR9);
+  validateR10RecoveryDocument(ledgerR10);
+  validateR13RecoveryDocument(ledgerR13);
+  validateR15RecoveryDocument(ledgerR15);
+  validateR16RecoveryDocument(ledgerR16);
+  validateR17RecoveryDocument(ledgerR17);
+  validateR11RecoveryDocument(ledgerR11);
+  const total = confirmedBefore + r8.receipts.filter((row) => row.state === "confirmed").length;
+  if (total !== 10) err("RECOVERY_R8_LEDGER");
+  return Object.freeze({
+    confirmedBefore: total + 5,
+    priorReserved: 2,
+    maxNewIntentions: 24 - total - 5 - 2,
+  });
+}
+
+export async function dismissPreparationOverlays(page) {
+  // Visible dialogs are the active Radix modal stack. Hidden underlying dialogs
+  // are considered only after the upper layer has closed through ordinary UI.
+  const known = new Set([
+    "Editar fonte",
+    "Nova versão",
+    "FONTE SINTETICA TRILHA A 20261108",
+    "Confirmar aprovação",
+    "Confirmar aprovação institucional",
+    "Confirmar envio ao contratante",
+    "Detalhe do requisito",
+  ]);
+  for (let depth = 0; depth < 8; depth++) {
+    const dialogs = page.getByRole("dialog");
+    const count = await dialogs.count();
+    if (count === 0) return true;
+    if (count !== 1) err("LOGOUT_OVERLAY");
+    const overlay = dialogs;
+    const element = await overlay.elementHandle();
+    if (!element) err("LOGOUT_OVERLAY");
+    const title = await overlay.evaluate((el) => {
+      const ids = (el.getAttribute("aria-labelledby") || "").split(/\s+/).filter(Boolean);
+      return (
+        ids
+          .map((id) => document.getElementById(id)?.textContent || "")
+          .join(" ")
+          .trim() ||
+        el.getAttribute("aria-label") ||
+        ""
+      );
+    });
+    if (!known.has(title) && !/^Aprovar versão [1-9][0-9]*$/.test(title)) err("LOGOUT_OVERLAY");
+    const close = overlay.getByRole("button", { name: "Close", exact: true });
+    const cancel = overlay.getByRole("button", {
+      name: title === "Detalhe do requisito" ? "Fechar" : "Cancelar",
+      exact: true,
+    });
+    if ((await cancel.count()) === 1) {
+      if (!(await cancel.isEnabled())) err("LOGOUT_OVERLAY");
+      await cancel.click();
+    } else if (title !== "Detalhe do requisito" && (await close.count()) === 1) {
+      if (!(await close.isEnabled())) err("LOGOUT_OVERLAY");
+      await close.click();
+    } else err("LOGOUT_OVERLAY");
+    await element.waitForElementState("hidden", { timeout: 3000 });
+    await element.dispose();
+  }
+  err("LOGOUT_OVERLAY");
+}
+
+export const SOURCE_STATUS_NAME =
+  "Situação Mudança de situação exige administrador; ativação exige versão aprovada.";
+export async function sourceStatusControl(dialog) {
+  const control = dialog.getByRole("combobox", { name: SOURCE_STATUS_NAME, exact: true });
+  if ((await control.count()) > 1) err("FLOW_SOURCE_CONTROL");
+  try {
+    await control.waitFor({ state: "visible" });
+  } catch (error) {
+    if (preparationErrorData(error, "name") === "TimeoutError") throw error;
+    err("FLOW_SOURCE_CONTROL");
+  }
+  if (
+    (await control.count()) !== 1 ||
+    !(await control.isVisible()) ||
+    !(await control.isEnabled()) ||
+    (await control.evaluate((el) => el.tagName)) !== "SELECT"
+  )
+    err("FLOW_SOURCE_CONTROL");
+  return control;
+}
+
+export async function listSelectionControl(scope, expectedId) {
+  if (
+    (await scope.count()) !== 1 ||
+    (await scope.getAttribute("aria-label")) !== "Gestão de listas"
+  )
+    err("FLOW_LIST_UI_MISSING");
+  const title = scope.getByText("Lista selecionada", { exact: true });
+  if ((await title.count()) > 1) err("FLOW_LIST_UI_MISSING");
+  try {
+    await title.waitFor({ state: "visible", timeout: 3000 });
+  } catch {
+    err("FLOW_LIST_UI_MISSING");
+  }
+  if ((await title.count()) !== 1 || !(await title.isVisible())) err("FLOW_LIST_UI_MISSING");
+  const label = title.locator("xpath=parent::label");
+  if ((await label.count()) !== 1) err("FLOW_LIST_UI_MISSING");
+  const control = label.locator(":scope > select");
+  if ((await control.count()) > 1) err("FLOW_LIST_UI_MISSING");
+  try {
+    await control.waitFor({ state: "visible", timeout: 3000 });
+    await label.locator(":scope > select:enabled").waitFor({ state: "visible", timeout: 3000 });
+  } catch {
+    err("FLOW_LIST_UI_MISSING");
+  }
+  // Readiness can change the surrounding DOM. Revalidate the complete source
+  // anchor after the last wait, before accepting its unique control or option.
+  if (
+    (await scope.count()) !== 1 ||
+    (await scope.getAttribute("aria-label")) !== "Gestão de listas" ||
+    (await title.count()) !== 1 ||
+    !(await title.isVisible()) ||
+    (await label.count()) !== 1
+  )
+    err("FLOW_LIST_UI_MISSING");
+  if ((await control.count()) !== 1 || !(await control.isVisible()) || !(await control.isEnabled()))
+    err("FLOW_LIST_UI_MISSING");
+  if (expectedId !== undefined) {
+    if (!uuid(expectedId) || expectedId !== R5_BINDINGS.listId) err("FLOW_LIST_UI_MISSING");
+    if ((await control.locator(`option[value="${expectedId}"]`).count()) !== 1)
+      err("FLOW_LIST_UI_MISSING");
+  }
+  return control;
+}
+
 export const DIAGNOSTIC_SUBPHASES = Object.freeze([
   "PREFLIGHT",
   "LOGIN",
@@ -345,10 +1595,14 @@ const PREPARER_NATIVE_CODES = new Set([
 ]);
 function preparationErrorData(error, key) {
   try {
-    if (!error || !["object", "function"].includes(typeof error)) return undefined;
+    if (!error || !["object", "function"].includes(typeof error) || isProxy(error))
+      return undefined;
     let descriptor = Object.getOwnPropertyDescriptor(error, key);
-    if (!descriptor && key === "name")
-      descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(error) || {}, key);
+    if (!descriptor && key === "name") {
+      const prototype = Object.getPrototypeOf(error);
+      if (isProxy(prototype)) return undefined;
+      descriptor = Object.getOwnPropertyDescriptor(prototype || {}, key);
+    }
     return descriptor && "value" in descriptor && typeof descriptor.value === "string"
       ? descriptor.value
       : undefined;
@@ -404,6 +1658,7 @@ export function createPreparationDiagnostics() {
       found = null;
     for (let depth = 0; depth < 8 && object(value) && !seen.has(value); depth++) {
       seen.add(value);
+      if (isProxy(value)) break;
       const entry = observed.get(value);
       if (entry?.generation === generation) found = entry;
       try {
@@ -966,14 +2221,78 @@ export function createIntentBroker({
   now = () => performance.now(),
   competenceGateAmended = false,
   recoveryLedger,
+  recoveryLedgerR3,
+  recoveryLedgerR4,
+  recoveryLedgerR5,
+  recoveryLedgerR6,
+  recoveryLedgerR7,
+  recoveryLedgerR8,
+  recoveryLedgerR9,
+  recoveryLedgerR10,
+  recoveryLedgerR11,
+  recoveryLedgerR13,
+  recoveryLedgerR15,
+  recoveryLedgerR16,
+  recoveryLedgerR17,
+  identity,
+  beforeArm,
 } = {}) {
+  validateR13RecoveryDocument(recoveryLedgerR13);
+  validateR15RecoveryDocument(recoveryLedgerR15);
+  validateR16RecoveryDocument(recoveryLedgerR16);
+  validateR17RecoveryDocument(recoveryLedgerR17);
+  const recoveryIdentity = identity === undefined ? null : observationIdentity(identity);
   const recovery = recoveryLedger === undefined ? null : validateR1RecoveryDocument(recoveryLedger);
+  if (
+    !recovery &&
+    (recoveryLedgerR3 !== undefined ||
+      recoveryLedgerR4 !== undefined ||
+      recoveryLedgerR5 !== undefined ||
+      recoveryLedgerR6 !== undefined ||
+      recoveryLedgerR7 !== undefined ||
+      recoveryLedgerR8 !== undefined ||
+      recoveryLedgerR9 !== undefined ||
+      recoveryLedgerR10 !== undefined ||
+      recoveryLedgerR11 !== undefined)
+  )
+    err("RECOVERY_R3_LEDGER");
+  const budget = recovery
+    ? recoveryBudget(
+        recoveryLedger,
+        recoveryLedgerR3,
+        recoveryLedgerR4,
+        recoveryLedgerR5,
+        recoveryLedgerR6,
+        recoveryLedgerR7,
+        recoveryLedgerR8,
+        recoveryLedgerR9,
+        recoveryLedgerR10,
+        recoveryLedgerR11,
+        recoveryLedgerR13,
+        recoveryLedgerR15,
+        recoveryLedgerR16,
+        recoveryLedgerR17,
+      )
+    : null;
   let recoveryAuthorized = !recovery;
   let active = null,
-    count = recovery ? 2 : 0,
+    count = budget ? budget.confirmedBefore + budget.priorReserved : 0,
     frozen = false;
   const accepted = new Map(),
-    usedIds = new Set();
+    usedIds = new Set(
+      recovery
+        ? [
+            ...R1_RECOVERY_DOCUMENT.receipts,
+            ...R3_RECOVERY_DOCUMENT.receipts,
+            ...JSON.parse(R5_RECOVERY_DOCUMENT.receiptsRaw).receipts,
+            ...JSON.parse(validateR8RecoveryDocument(recoveryLedgerR8).receiptsRaw).receipts,
+            ...JSON.parse(validateR11RecoveryDocument(recoveryLedgerR11).receiptsRaw).receipts,
+            ...JSON.parse(validateR15RecoveryDocument(recoveryLedgerR15).receiptsRaw).receipts,
+            ...JSON.parse(validateR16RecoveryDocument(recoveryLedgerR16).receiptsRaw).receipts,
+            ...JSON.parse(validateR17RecoveryDocument(recoveryLedgerR17).receiptsRaw).receipts,
+          ].map((r) => r.requestId)
+        : [],
+    );
   function persistSafe(receipt) {
     try {
       const result = persist(receipt);
@@ -1054,17 +2373,44 @@ export function createIntentBroker({
       return false;
     }
   }
-  return Object.freeze({
+  const api = Object.freeze({
     policy,
-    authorizeRecovery(proof) {
+    authorizeRecovery(proof, opinionProof) {
       if (!recovery || !recoveryProofs.has(proof)) err("RECOVERY_PROOF");
+      if (recoveryAuthorized) err("RECOVERY_R11_OPINION");
+      claimRecoveryOpinion(api, opinionProof);
       recoveryAuthorized = true;
       return true;
     },
     arm({ rpc, payload, requestId, uiGeneratedKey, verified, evidence = {} } = {}) {
-      if (recovery && ["registrar_versao_fonte_v107", "aprovar_versao_fonte_v107"].includes(rpc))
+      if (
+        recovery &&
+        [
+          "registrar_versao_fonte_v107",
+          "aprovar_versao_fonte_v107",
+          "salvar_fonte_normativa_v107",
+        ].includes(rpc)
+      )
         err("RECOVERY_CONFIRMED_OPERATION");
       if (!recoveryAuthorized) err("RECOVERY_READ_ONLY");
+      if (recovery && confirmedR5Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
+      if (recovery && confirmedR16Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
+      if (recovery && rpc === "aprovar_apresentacao") {
+        if (isProxy(payload) || !obj(payload)) err("INTENT_PAYLOAD");
+        const descriptor = Object.getOwnPropertyDescriptor(payload, "p_id_competencia");
+        if (!descriptor || !Object.hasOwn(descriptor, "value")) err("INTENT_PAYLOAD");
+        if (descriptor.value === R5_BINDINGS.competencies[0].id)
+          err("RECOVERY_CONFIRMED_OPERATION");
+      }
+      if (recovery && confirmedR8Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
+      if (recovery && reservedR11Replay(rpc, payload)) err("RECOVERY_CONFIRMED_OPERATION");
+      if (recovery) {
+        assertRecoveryOpinion(api);
+        if (rpc === "aprovar_parecer_interno") {
+          const record = recoveryOpinionProofs.get(recoveryBrokerOwners.get(api)?.opinion);
+          if (!record?.permitsApproval(payload)) err("RECOVERY_CONFIRMED_OPERATION");
+        }
+      }
       if (frozen) err("INTENT_FROZEN");
       if (active) err("INTENT_PENDING");
       if (count >= 24) err("INTENT_BUDGET");
@@ -1091,6 +2437,12 @@ export function createIntentBroker({
         uiKeyByRpc[rpc] ||
         (rpc === "criar_documento_competencia_v115" ? "p_chave_idempotencia" : null);
       if (!uiGeneratedKey && bodyKey && payload[bodyKey] !== requestId) err("INTENT_KEY");
+      if (
+        beforeArm !== undefined &&
+        (typeof beforeArm !== "function" ||
+          beforeArm(rpc, payload, evidence, { requestId, uiGeneratedKey, bodyKey }) !== true)
+      )
+        err("OBSERVATION_MUTATION");
       active = {
         rpc,
         payload: freeze(structuredClone(payload)),
@@ -1132,10 +2484,43 @@ export function createIntentBroker({
         pending: !!active,
         sent: !!active?.sent,
         requestId: active?.requestId || null,
+        ...(budget || {}),
       });
     },
   });
+  recoveryBrokerOwners.set(api, {
+    identity: recoveryIdentity,
+    recovery: !!recovery,
+    opinion: null,
+  });
+  return api;
 }
+
+export function preparationIntentSummary(broker) {
+  if (!broker) return null;
+  const state = broker.snapshot();
+  if (
+    state.confirmedBefore !== 15 ||
+    state.maxNewIntentions !== 7 ||
+    state.priorReserved !== 2 ||
+    !Number.isInteger(state.count) ||
+    state.count < state.confirmedBefore + state.priorReserved ||
+    state.count > 24
+  )
+    err("RECOVERY_R3_LEDGER");
+  return Object.freeze({
+    count: state.count,
+    frozen: state.frozen,
+    pending: state.pending,
+    sent: state.sent,
+    priorConfirmed: state.confirmedBefore,
+    priorReserved: state.priorReserved,
+    newArmedCount: state.count - state.confirmedBefore - state.priorReserved,
+    maxIntentions: 24,
+    maxNewIntentions: state.maxNewIntentions,
+  });
+}
+
 export async function waitOfficialPhase({
   read,
   ready,
@@ -1220,7 +2605,15 @@ export function createRuntimeLogin({
   waitOrganization,
   openOrganizationSelector,
   verifyContext,
+  recoveryLedgerR13,
+  recoveryLedgerR15,
+  recoveryLedgerR16,
+  recoveryLedgerR17,
 } = {}) {
+  validateR13RecoveryDocument(recoveryLedgerR13);
+  validateR15RecoveryDocument(recoveryLedgerR15);
+  validateR16RecoveryDocument(recoveryLedgerR16);
+  validateR17RecoveryDocument(recoveryLedgerR17);
   if (
     !page ||
     !fence ||
@@ -1308,6 +2701,7 @@ export function createRuntimeLogin({
     page.off("response", onResponse);
     await Promise.allSettled([...pending]);
     try {
+      await dismissPreparationOverlays(page);
       await page.getByRole("button", { name: "Sair", exact: true }).click();
       await page.waitForURL((url) => url.origin === FIXTURE.origin && url.pathname === "/login");
       await fence.drain();
@@ -1511,7 +2905,19 @@ export async function confirmUiIntent({
   }
 }
 /** Caller supplies only execution code; cleanup runs after login and every failure. */
-export async function withRuntimeLogin(runtime, credentials, execute) {
+export async function withRuntimeLogin(
+  runtime,
+  credentials,
+  execute,
+  recoveryLedgerR13,
+  recoveryLedgerR15,
+  recoveryLedgerR16,
+  recoveryLedgerR17,
+) {
+  validateR13RecoveryDocument(recoveryLedgerR13);
+  validateR15RecoveryDocument(recoveryLedgerR15);
+  validateR16RecoveryDocument(recoveryLedgerR16);
+  validateR17RecoveryDocument(recoveryLedgerR17);
   if (!runtime || typeof execute !== "function") err("LOGIN_CONFIGURATION");
   try {
     await runtime.login(credentials);
@@ -1559,6 +2965,132 @@ const OBSERVED_RPCS = new Set([
   "obter_detalhe_requisito_v117",
   "obter_contexto_revisao_v117",
 ]);
+
+const OBSERVATION_CONTRACTS = new Set(
+  [...OBSERVED_TABLES]
+    .map((name) => "TABLE:" + name)
+    .concat([...OBSERVED_RPCS].map((name) => "RPC:" + name)),
+);
+function observationOwnData(value, names) {
+  if (isProxy(value) || !obj(value)) err("OBSERVATION_DIAGNOSTIC");
+  const ds = Object.getOwnPropertyDescriptors(value);
+  if (Reflect.ownKeys(ds).length !== names.length) err("OBSERVATION_DIAGNOSTIC");
+  const clean = {};
+  for (const key of names) {
+    const d = ds[key];
+    if (!d || !Object.hasOwn(d, "value") || d.enumerable !== true) err("OBSERVATION_DIAGNOSTIC");
+    clean[key] = d.value;
+  }
+  return clean;
+}
+function observationIdentity(value) {
+  const clean = observationOwnData(value, [
+    "frontendSha",
+    "harnessSha",
+    "deploymentId",
+    "workflowRun",
+  ]);
+  if (
+    typeof clean.frontendSha !== "string" ||
+    !/^[a-f0-9]{40}$/.test(clean.frontendSha) ||
+    typeof clean.harnessSha !== "string" ||
+    !/^[a-f0-9]{40}$/.test(clean.harnessSha) ||
+    typeof clean.deploymentId !== "string" ||
+    !/^dpl_[A-Za-z0-9]{8,80}$/.test(clean.deploymentId) ||
+    typeof clean.workflowRun !== "string" ||
+    !/^[1-9][0-9]{0,19}$/.test(clean.workflowRun)
+  )
+    err("OBSERVATION_DIAGNOSTIC");
+  return clean;
+}
+function observationFirstFailure(value) {
+  if (value === null) return null;
+  const clean = observationOwnData(value, [
+    "contractKind",
+    "stage",
+    "statusHTTP",
+    "requestFailure",
+  ]);
+  const { contractKind: kind, stage, statusHTTP: status, requestFailure: failure } = clean;
+  if (stage === "UNAVAILABLE") {
+    if (kind !== "UNKNOWN" || status !== "NONE" || failure !== "UNAVAILABLE")
+      err("OBSERVATION_DIAGNOSTIC");
+    return freeze(clean);
+  }
+  if (
+    !OBSERVATION_CONTRACTS.has(kind) ||
+    !["NONE", "ABORTED", "OTHER", "UNAVAILABLE"].includes(failure)
+  )
+    err("OBSERVATION_DIAGNOSTIC");
+  if (stage === "HTTP_STATUS") {
+    if (
+      !Number.isInteger(status) ||
+      status < 100 ||
+      status > 599 ||
+      (status >= 200 && status <= 299) ||
+      failure !== "NONE"
+    )
+      err("OBSERVATION_DIAGNOSTIC");
+  } else if (stage === "BODY_READ") {
+    if (!Number.isInteger(status) || status < 200 || status > 299) err("OBSERVATION_DIAGNOSTIC");
+  } else {
+    if (
+      ![
+        "REQUEST_BINDING",
+        "REQUEST_ARGS",
+        "RESPONSE_PROJECTION",
+        "RESPONSE_CONTEXT",
+        "OBSERVATION_LIMIT",
+      ].includes(stage) ||
+      status !== "NONE" ||
+      failure !== "NONE" ||
+      (["REQUEST_BINDING", "REQUEST_ARGS"].includes(stage) && !kind.startsWith("RPC:"))
+    )
+      err("OBSERVATION_DIAGNOSTIC");
+  }
+  return freeze(clean);
+}
+export function createObservationDiagnostic(identity, firstFailure = null) {
+  const cleanIdentity = observationIdentity(identity);
+  return freeze({
+    schema: "contaos.fixture.observation.v1",
+    ...cleanIdentity,
+    firstFailure: observationFirstFailure(firstFailure),
+  });
+}
+export function validateObservationDiagnostic(value, identity) {
+  const clean = observationOwnData(value, [
+      "schema",
+      "frontendSha",
+      "harnessSha",
+      "deploymentId",
+      "workflowRun",
+      "firstFailure",
+    ]),
+    expected = observationIdentity(identity);
+  if (clean.schema !== "contaos.fixture.observation.v1") err("OBSERVATION_DIAGNOSTIC");
+  const ownIdentity = observationIdentity({
+    frontendSha: clean.frontendSha,
+    harnessSha: clean.harnessSha,
+    deploymentId: clean.deploymentId,
+    workflowRun: clean.workflowRun,
+  });
+  if (!same(ownIdentity, expected)) err("OBSERVATION_DIAGNOSTIC");
+  return createObservationDiagnostic(ownIdentity, clean.firstFailure);
+}
+function observedRequestFailure(request) {
+  try {
+    const value = request.failure();
+    if (value === null) return "NONE";
+    if (isProxy(value) || !obj(value)) return "UNAVAILABLE";
+    const d = Object.getOwnPropertyDescriptor(value, "errorText");
+    if (!d || !Object.hasOwn(d, "value") || typeof d.value !== "string") return "UNAVAILABLE";
+    return d.value === "net::ERR_ABORTED" ? "ABORTED" : "OTHER";
+  } catch {
+    return "UNAVAILABLE";
+  }
+}
+
 const PRIVATE_RESPONSE_KEYS = new Set([
   "autor",
   "aprovado_por",
@@ -1665,6 +3197,227 @@ export function projectOfficialResponse(value, depth = 0, strict = false, rootFi
   if (typeof value === "string" && value.length > 65536) err("OBSERVATION_LIMIT");
   if (value === null || ["string", "boolean", "number"].includes(typeof value)) return value;
   err("OBSERVATION_SCHEMA");
+}
+
+const SCOPED_RPC_FIELDS = Object.freeze({
+  obter_analise_competencia_v116: {
+    "": "schema_versao competencia estado_analise stale execucao_atual percentual blocking_summary allowed_actions mecanismos resultados resultados_paginacao execucoes execucoes_paginacao apontamentos apontamentos_paginacao hash_contexto_atual",
+    competencia:
+      "id id_organizacao id_contrato competencia_referencia periodo_inicio periodo_fim situacao",
+    execucao_atual:
+      "id tipo status hash_entrada motor versao_motor provedor modelo prompt_versao iniciada_por iniciada_em concluida_em erro_codigo requisitos_afetados metadados criado_em",
+    "execucoes.*":
+      "id tipo status hash_entrada contexto_atual motor versao_motor provedor modelo prompt_versao iniciada_por iniciada_em concluida_em erro_codigo requisitos_afetados metadados criado_em",
+    "resultados.*":
+      "id_resultado id_requisito requisito resultado mecanismo confianca justificativa fundamento hash_evidencias metadados evidencias criado_em",
+    "resultados.*.requisito":
+      "codigo descricao categoria criticidade obrigatorio aplicavel impeditivo efeito_portao fonte_tipo fonte_referencia fonte_detalhe",
+    "resultados.*.evidencias.*":
+      "id id_versao_documento pagina trecho tipo_evidencia referencia_externa hash criado_em",
+    "apontamentos.*":
+      "id id_requisito requisito descricao severidade status origem regra_violada acao_sugerida fonte criado_em atualizado_em",
+    "apontamentos.*.requisito": "codigo descricao categoria criticidade",
+  },
+  obter_detalhe_requisito_v117: {
+    "": "schema_versao competencia requisito execucao_atual resultado_atual resultado_referencia na_validade allowed_actions evidencias evidencias_paginacao historico historico_paginacao apontamentos apontamentos_paginacao",
+    competencia: "id id_organizacao id_contrato competencia_referencia situacao",
+    requisito:
+      "id codigo descricao categoria origem_tipo origem_id origem_versao obrigatorio aplicavel impeditivo criticidade fonte_tipo fonte_referencia fonte_detalhe efeito_portao hash_snapshot regra_validacao condicao_aplicabilidade",
+    execucao_atual:
+      "id tipo status hash_entrada motor versao_motor provedor modelo prompt_versao iniciada_em concluida_em criado_em",
+    resultado_atual:
+      "id id_execucao resultado confianca justificativa fundamento hash_evidencias criado_em",
+    resultado_referencia:
+      "id id_execucao resultado mecanismo confianca justificativa fundamento hash_evidencias criado_em",
+    na_validade: "valido id_resultado_referencia possui_fundamento possui_evidencia",
+    "evidencias.*": "id pagina trecho tipo_evidencia referencia_externa hash criado_em documento",
+    "evidencias.*.documento":
+      "id_versao_documento numero_versao hash_versao id_arquivo nome_original mime status_seguranca",
+    "historico.*":
+      "id_resultado id_execucao resultado confianca fundamento justificativa hash_evidencias criado_em tipo_execucao status_execucao motor versao_motor provedor modelo prompt_versao hash_entrada iniciada_em concluida_em mecanismo",
+    "apontamentos.*":
+      "id descricao severidade status origem regra_violada acao_sugerida fonte criado_em atualizado_em",
+  },
+});
+export function projectScopedRpcResponse(rpc, value) {
+  const contract = SCOPED_RPC_FIELDS[rpc];
+  if (!contract) err("OBSERVATION_ENDPOINT");
+  const common = {
+    allowed_actions: "executar_analise reanalisar abrir_requisito",
+    resultados_paginacao: "offset limite total",
+    execucoes_paginacao: "offset limite total",
+    apontamentos_paginacao: "offset limite total",
+    evidencias_paginacao: "offset limite total",
+    historico_paginacao: "offset limite total",
+    ...(rpc === "obter_analise_competencia_v116"
+      ? {
+          blocking_summary:
+            "total conformes_ou_na_validos pendentes nao_conformes inconclusivos em_analise nao_conformidades_bloqueantes percentual liberado",
+        }
+      : {}),
+  };
+  const nullableObjects = new Set([
+    "execucao_atual",
+    "resultado_atual",
+    "resultado_referencia",
+    "na_validade",
+    "apontamentos.*.requisito",
+    "evidencias.*.documento",
+  ]);
+  const omit = new Set(
+    rpc === "obter_analise_competencia_v116"
+      ? [
+          "hash_contexto_atual",
+          "execucao_atual.iniciada_por",
+          "execucao_atual.requisitos_afetados",
+          "execucao_atual.metadados",
+          "execucoes.*.contexto_atual",
+          "execucoes.*.iniciada_por",
+          "execucoes.*.requisitos_afetados",
+          "execucoes.*.metadados",
+          "resultados.*.metadados",
+        ]
+      : ["requisito.condicao_aplicabilidade", "na_validade.id_resultado_referencia"],
+  );
+  const arrays = new Set(
+    rpc === "obter_analise_competencia_v116"
+      ? ["resultados", "execucoes", "apontamentos", "resultados.*.evidencias"]
+      : ["evidencias", "historico", "apontamentos"],
+  );
+  function descriptors(input) {
+    if (isProxy(input) || !obj(input)) err("OBSERVATION_SCHEMA");
+    return Object.getOwnPropertyDescriptors(input);
+  }
+  const root = descriptors(value);
+  let executionPresent = false;
+  if (root.execucao_atual) {
+    if (!Object.hasOwn(root.execucao_atual, "value")) err("OBSERVATION_SCHEMA");
+    executionPresent = root.execucao_atual.value !== null;
+  }
+  function walk(input, path = "", depth = 0, strict = false) {
+    if (depth > 24) err("OBSERVATION_LIMIT");
+    if (isProxy(input)) err("OBSERVATION_SCHEMA");
+    const fieldList = contract[path] || common[path];
+    if (fieldList && (Array.isArray(input) || (input === null && !nullableObjects.has(path))))
+      err("OBSERVATION_SCHEMA");
+    if (
+      path === "mecanismos" &&
+      (input === null || typeof input !== "object" || Array.isArray(input))
+    )
+      err("OBSERVATION_SCHEMA");
+    if (arrays.has(path) && !Array.isArray(input)) err("OBSERVATION_SCHEMA");
+    if (Array.isArray(input)) {
+      if (Object.getPrototypeOf(input) !== Array.prototype || input.length > 1000)
+        err("OBSERVATION_LIMIT");
+      const ds = Object.getOwnPropertyDescriptors(input);
+      if (Reflect.ownKeys(ds).length !== input.length + 1) err("OBSERVATION_SCHEMA");
+      return Array.from({ length: input.length }, (_, i) => {
+        const d = ds[i];
+        if (!d || !Object.hasOwn(d, "value")) err("OBSERVATION_SCHEMA");
+        return walk(d.value, path + ".*", depth + 1, strict);
+      });
+    }
+    if (input !== null && typeof input === "object") {
+      const ds = descriptors(input),
+        result = {};
+      const keys = Reflect.ownKeys(ds);
+      if (path === "mecanismos" && rpc === "obter_analise_competencia_v116") {
+        const names = ["deterministico", "semantico", "humano", "nao_identificado"];
+        if (!executionPresent && keys.length === 0) return {};
+        if (keys.length !== 4 || keys.some((k) => typeof k !== "string" || !names.includes(k)))
+          err("OBSERVATION_SCHEMA");
+        for (const key of names) {
+          const d = ds[key];
+          if (!d || !Object.hasOwn(d, "value") || !Number.isInteger(d.value) || d.value < 0)
+            err("OBSERVATION_SCHEMA");
+          result[key] = d.value;
+        }
+        return result;
+      }
+      const fields = fieldList ? new Set(fieldList.split(" ")) : null;
+      if (
+        path === "allowed_actions" &&
+        (keys.length !== 3 ||
+          ["executar_analise", "reanalisar", "abrir_requisito"].some((k) => !ds[k]))
+      )
+        err("OBSERVATION_SCHEMA");
+      if (
+        path.endsWith("_paginacao") &&
+        (keys.length !== 3 || ["offset", "limite", "total"].some((k) => !ds[k]))
+      )
+        err("OBSERVATION_SCHEMA");
+      for (const key of keys) {
+        if (typeof key !== "string" || ["__proto__", "prototype", "constructor"].includes(key))
+          err("OBSERVATION_SCHEMA");
+        const child = path ? path + "." + key : key;
+        if (fields && !fields.has(key)) err("OBSERVATION_SCHEMA");
+        if (omit.has(child)) continue;
+        if (key === "metadados") err("OBSERVATION_METADATA");
+        if (
+          PRIVATE_RESPONSE_KEYS.has(key) ||
+          /(?:email|password|secret|token|cookie|authorization)/i.test(key)
+        ) {
+          if (fields) err("OBSERVATION_SCHEMA");
+          continue;
+        }
+        if (!fields && !OBSERVED_KEYS.has(key)) {
+          if (strict) result.__unapproved_fields = true;
+          continue;
+        }
+        const d = ds[key];
+        if (!Object.hasOwn(d, "value") || !d.enumerable) err("OBSERVATION_SCHEMA");
+        if (path === "allowed_actions" && typeof d.value !== "boolean") err("OBSERVATION_SCHEMA");
+        if (
+          path.endsWith("_paginacao") &&
+          (!Number.isSafeInteger(d.value) ||
+            d.value < 0 ||
+            (key === "limite" &&
+              d.value !==
+                (rpc === "obter_analise_competencia_v116" && path === "execucoes_paginacao"
+                  ? 10
+                  : 25)))
+        )
+          err("OBSERVATION_SCHEMA");
+        if (
+          path === "blocking_summary" &&
+          (key === "liberado"
+            ? typeof d.value !== "boolean"
+            : key === "percentual"
+              ? typeof d.value !== "number" ||
+                !Number.isFinite(d.value) ||
+                d.value < 0 ||
+                d.value > 100
+              : !Number.isSafeInteger(d.value) || d.value < 0)
+        )
+          err("OBSERVATION_SCHEMA");
+        if (
+          child === "schema_versao" &&
+          d.value !== (rpc === "obter_analise_competencia_v116" ? "v116-v1" : "v117-v1")
+        )
+          err("OBSERVATION_SCHEMA");
+        if (
+          child === "apontamentos.*.acao_sugerida" &&
+          d.value !== null &&
+          (typeof d.value !== "string" || d.value.length > 65536)
+        )
+          err("OBSERVATION_SCHEMA");
+        result[key] = walk(d.value, child, depth + 1, strict || key === "regra_validacao");
+      }
+      return result;
+    }
+    if (fieldList && input !== null) err("OBSERVATION_SCHEMA");
+    if (path === "mecanismos") err("OBSERVATION_SCHEMA");
+    if (typeof input === "string" && input.length > 65536) err("OBSERVATION_LIMIT");
+    if (
+      input === null ||
+      ["string", "boolean"].includes(typeof input) ||
+      (typeof input === "number" && Number.isFinite(input))
+    )
+      return input;
+    err("OBSERVATION_SCHEMA");
+  }
+  if (!root.mecanismos && rpc === "obter_analise_competencia_v116") err("OBSERVATION_SCHEMA");
+  return walk(value);
 }
 
 const EXACT_SELECTS = Object.freeze({
@@ -1997,14 +3750,333 @@ function coversAbsence(entry, where) {
           p.value === FIXTURE[k === "id_contrato" ? "contract" : "organization"])),
   );
 }
-export function createOfficialObserver(page) {
+
+export function readbackTargets(rpc, payload = {}, evidence = {}) {
+  const comp =
+    payload.p_id_competencia ||
+    (rpc === "aprovar_parecer_interno"
+      ? evidence.opinions?.find((row) => row.id === payload.p_id_parecer)?.competency
+      : undefined);
+  const context = { id_organizacao: FIXTURE.organization, id_contrato: FIXTURE.contract };
+  const c = { p_id_competencia: comp };
+  const mapping = {
+    registrar_versao_fonte_v107: [["versoes_fontes_normativas", { id_fonte: FIXTURE.source }]],
+    aprovar_versao_fonte_v107: [["versoes_fontes_normativas", { id: payload.p_id_versao }]],
+    salvar_fonte_normativa_v107: [["fontes_normativas", { id: FIXTURE.source }]],
+    executar_comando_lista_v1: [
+      [
+        "obter_lista_operacional_v1",
+        {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_contrato: FIXTURE.contract,
+          ...(payload.p_id_lista ? { p_id_lista: payload.p_id_lista } : {}),
+        },
+      ],
+    ],
+    criar_competencia: [
+      [
+        "competencias",
+        { id_contrato: FIXTURE.contract, competencia_referencia: payload.p_competencia_referencia },
+      ],
+    ],
+    criar_documento_competencia_v115: [["obter_documentos_competencia_v115", c]],
+    solicitar_analise_competencia: [["obter_analise_competencia_v116", c]],
+    registrar_revisao_requisito_v117: [["obter_analise_competencia_v116", c]],
+    solicitar_parecer_interno: [["pareceres_internos", { ...context, id_competencia: comp }]],
+    aprovar_parecer_interno: [
+      ["pareceres_internos", { ...context, id_competencia: comp, id: payload.p_id_parecer }],
+    ],
+    aprovar_apresentacao: [["obter_visao_geral_competencia", c]],
+    registrar_apresentacao: [
+      ["apresentacoes_contratante", { id_competencia: comp }],
+      ["pacotes_competencia", { id_competencia: comp }],
+      ["itens_pacote_competencia", { id_competencia: comp }],
+    ],
+  };
+  const targets = mapping[rpc];
+  if (
+    !targets ||
+    targets.some(
+      ([name, where]) =>
+        Object.values(where).some((v) => v === undefined) ||
+        (!OBSERVED_TABLES.has(name) && !OBSERVED_RPCS.has(name)),
+    )
+  )
+    err("OBSERVATION_MUTATION");
+  return targets.map(([name, where]) => ({
+    name,
+    where,
+    ...(rpc === "executar_comando_lista_v1" && evidence.list?.versionId
+      ? { versionId: evidence.list.versionId }
+      : {}),
+  }));
+}
+
+export function createOfficialObserver(page, { wait, now, identity } = {}) {
+  const observerIdentity = identity === undefined ? null : observationIdentity(identity);
+  const floors = [];
+  const mutations = [],
+    mutationRequests = new WeakMap();
   const pending = new Set(),
     tables = new Map(),
     rpcs = new Map(),
     sequences = new WeakMap();
   let sequence = 0,
     failed = false,
-    closed = false;
+    closed = false,
+    sealing = false;
+  const rejectedOpinionOrdinals = new Map();
+  let firstFailure = null;
+  const recordFailure = (contractKind, stage, statusHTTP = "NONE", requestFailure = "NONE") => {
+    failed = true;
+    if (firstFailure !== null) return;
+    try {
+      firstFailure = observationFirstFailure({ contractKind, stage, statusHTTP, requestFailure });
+    } catch {
+      firstFailure = Object.freeze({
+        contractKind: "UNKNOWN",
+        stage: "UNAVAILABLE",
+        statusHTTP: "NONE",
+        requestFailure: "UNAVAILABLE",
+      });
+    }
+  };
+
+  const readBudgets = new WeakMap(),
+    pendingReads = new Set(),
+    latestReads = new Map(),
+    readAssociations = new WeakMap();
+  const readClock = typeof now === "function" ? now : () => performance.now();
+  function unavailableRead() {
+    recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
+    err("OBSERVATION_FAILED");
+  }
+  function budgetState(token) {
+    const state = readBudgets.get(token);
+    if (!state || state.released) err("OBSERVATION_ORDINAL");
+    const current = readClock();
+    if (
+      state.expired ||
+      !Number.isFinite(current) ||
+      current < state.last ||
+      current >= state.deadline
+    ) {
+      state.expired = true;
+      unavailableRead();
+    }
+    state.last = current;
+    if (failed || closed) err("OBSERVATION_FAILED");
+    return state;
+  }
+  function budgetRemaining(token) {
+    const state = budgetState(token),
+      remaining = state.deadline - state.last;
+    if (!Number.isFinite(remaining) || remaining <= 0) {
+      state.expired = true;
+      unavailableRead();
+    }
+    return Math.ceil(remaining);
+  }
+  async function withReadBudget(execute, token) {
+    if (typeof execute !== "function" || isProxy(execute)) err("OBSERVATION_ORDINAL");
+    const owns = token === undefined;
+    if (owns) {
+      const current = readClock();
+      if (!Number.isFinite(current)) unavailableRead();
+      token = Object.freeze({});
+      readBudgets.set(token, {
+        deadline: current + 15000,
+        last: current,
+        expired: false,
+        released: false,
+      });
+    }
+    budgetState(token);
+    let timer;
+    try {
+      const value = await Promise.race([
+        Promise.resolve().then(() => {
+          budgetState(token);
+          return execute(token);
+        }),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            const state = readBudgets.get(token);
+            if (state) state.expired = true;
+            recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
+            reject(new Error("OBSERVATION_FAILED"));
+          }, budgetRemaining(token));
+        }),
+      ]);
+      budgetState(token);
+      return value;
+    } catch (error) {
+      budgetState(token);
+      throw error;
+    } finally {
+      clearTimeout(timer);
+      if (owns) {
+        const state = readBudgets.get(token);
+        if (state) state.released = true;
+      }
+    }
+  }
+  function dataOptions(value) {
+    if (isProxy(value) || !obj(value)) err("OBSERVATION_PROJECTION");
+    const ds = Object.getOwnPropertyDescriptors(value),
+      clean = {};
+    for (const key of Reflect.ownKeys(ds)) {
+      if (
+        typeof key !== "string" ||
+        !["select", "after", "queryScope", "readBudget"].includes(key) ||
+        !Object.hasOwn(ds[key], "value")
+      )
+        err("OBSERVATION_PROJECTION");
+      clean[key] = ds[key].value;
+    }
+    if (Object.hasOwn(clean, "readBudget")) budgetState(clean.readBudget);
+    return clean;
+  }
+  function monthOptions(table, where, after, value) {
+    const options = dataOptions(value);
+    if (!Object.hasOwn(options, "queryScope")) return { options, scoped: false };
+    if (
+      options.queryScope !== "RECOVERY_COMPETENCE_MONTH" ||
+      table !== "competencias" ||
+      isProxy(where) ||
+      !obj(where)
+    )
+      err("OBSERVATION_PROJECTION");
+    const ds = Object.getOwnPropertyDescriptors(where);
+    if (
+      Reflect.ownKeys(ds).length !== 2 ||
+      ["id_contrato", "competencia_referencia"].some(
+        (k) => !ds[k] || !Object.hasOwn(ds[k], "value"),
+      )
+    )
+      err("OBSERVATION_PROJECTION");
+    if (
+      ds.id_contrato.value !== FIXTURE.contract ||
+      !months.includes(ds.competencia_referencia.value) ||
+      options.select !==
+        EXACT_SELECTS.competencias.find((v) => v.includes("competencia_referencia,"))
+    )
+      err("OBSERVATION_PROJECTION");
+    const ordinal = after === undefined ? options.after : after;
+    if (
+      !Number.isSafeInteger(ordinal) ||
+      ordinal < 0 ||
+      (options.after !== undefined && options.after !== ordinal)
+    )
+      err("OBSERVATION_ORDINAL");
+    if (causalFloor(table, where)) err("OBSERVATION_MUTATION");
+    return {
+      options: { ...options, after: ordinal },
+      scoped: true,
+      where: Object.freeze({
+        id_contrato: ds.id_contrato.value,
+        competencia_referencia: ds.competencia_referencia.value,
+      }),
+    };
+  }
+  function legacyReadOptions(options) {
+    const { readBudget, queryScope, ...legacy } = options;
+    return legacy;
+  }
+  function latestMonth(where, after, select) {
+    const relevant = [...latestReads.values()]
+      .filter(
+        (e) =>
+          e.table === "competencias" &&
+          (e.query.predicates.get("id_contrato")?.value === where.id_contrato ||
+            e.contractFromResponse === where.id_contrato) &&
+          (!e.query.predicates.has("competencia_referencia") ||
+            e.query.predicates.get("competencia_referencia").value ===
+              where.competencia_referencia),
+      )
+      .sort((a, b) => b.ordinal - a.ordinal);
+    const latest = relevant[0];
+    if (!latest || latest.ordinal <= after || !latest.done) return null;
+    const { q, predicates, key } = latest.query;
+    if (
+      q.select !== select ||
+      predicates.size !== 2 ||
+      predicates.get("id_contrato")?.kind !== "eq" ||
+      predicates.get("id_contrato")?.value !== where.id_contrato ||
+      predicates.get("competencia_referencia")?.kind !== "eq" ||
+      predicates.get("competencia_referencia").value !== where.competencia_referencia ||
+      q.offset !== "0" ||
+      q.limit !== "25" ||
+      q.order !== "competencia_referencia.desc,id.desc" ||
+      Object.hasOwn(q, "situacao")
+    )
+      return null;
+    const entry = tables.get("competencias")?.get(key);
+    if (!entry || entry.ordinal !== latest.ordinal) return null;
+    return entry.rows.filter((row) => matchesObservation(entry, row, where));
+  }
+  function observeReadRequest(request, url, ordinal) {
+    const method = request.method(),
+      table = /^\/rest\/v1\/([a-z_0-9]+)$/.exec(url.pathname)?.[1],
+      rpc = /^\/rest\/v1\/rpc\/([a-z_0-9]+)$/.exec(url.pathname)?.[1];
+    if (url.origin !== FIXTURE.api || url.username || url.password || url.hash) return;
+    let record, key;
+    if (method === "GET" && OBSERVED_TABLES.has(table)) {
+      let query;
+      try {
+        query = parseObservedQuery(table, url);
+      } catch {
+        // Rejected queries remain unadmitted. Only a single exact competence
+        // filter proves an unrelated scope; missing or compound filters cannot
+        // preserve an earlier October seal or September post-ACK observation.
+        if (table === "pareceres_internos") {
+          const values = url.searchParams.getAll("id_competencia");
+          const exact =
+            values.length === 1
+              ? /^eq\.([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/.exec(
+                  values[0],
+                )
+              : null;
+          for (const competency of R5_BINDINGS.competencies)
+            if (!exact || exact[1] === competency.id)
+              rejectedOpinionOrdinals.set(competency.id, ordinal);
+        }
+        return;
+      }
+      record = { table, query, ordinal, done: false };
+      key = "TABLE:" + table + ":" + query.key;
+    } else if (
+      method === "POST" &&
+      !url.search &&
+      OBSERVED_RPCS.has(rpc) &&
+      !BUSINESS_RPCS.includes(rpc)
+    ) {
+      let args;
+      try {
+        args = request.postData()
+          ? projectOfficialResponse(parseBusinessJson(request.postData()))
+          : {};
+      } catch {
+        return;
+      }
+      if (
+        (Object.hasOwn(args, "p_id_organizacao") &&
+          args.p_id_organizacao !== FIXTURE.organization) ||
+        (Object.hasOwn(args, "p_id_contrato") && args.p_id_contrato !== FIXTURE.contract)
+      )
+        return;
+      record = { rpc, ordinal, done: false };
+      key = "RPC:" + rpc + ":" + canonical(args);
+    } else return;
+    readAssociations.set(request, record);
+    pendingReads.add(record);
+    latestReads.set(key, record);
+    if (pendingReads.size > 1024 || latestReads.size > 1024) {
+      recordFailure(table ? "TABLE:" + table : "RPC:" + rpc, "OBSERVATION_LIMIT");
+      err("OBSERVATION_LIMIT");
+    }
+  }
+
   const checkBudget = () => {
     let bytes = 0,
       count = 0;
@@ -2021,13 +4093,68 @@ export function createOfficialObserver(page) {
     if (bytes > 8 * 1024 * 1024 || count > 1024) err("OBSERVATION_LIMIT");
   };
   const onRequest = (request) => {
-    if (!closed) sequences.set(request, ++sequence);
+    if (!closed && !sealing) {
+      sequences.set(request, ++sequence);
+      let requestContract = "UNKNOWN";
+      try {
+        const url = new URL(request.url());
+        observeReadRequest(request, url, sequence);
+        const rpc =
+          url.origin === FIXTURE.api &&
+          request.method() === "POST" &&
+          /^\/rest\/v1\/rpc\/([a-z_0-9]+)$/.exec(url.pathname)?.[1];
+        if (rpc && OBSERVED_RPCS.has(rpc)) requestContract = "RPC:" + rpc;
+        const candidates = mutations.filter((m) => m.rpc === rpc && !m.request);
+        if (candidates.length > 1) {
+          recordFailure(requestContract, "REQUEST_BINDING");
+          return;
+        }
+        const mutation = candidates[0];
+        if (mutation) {
+          if (url.search || url.username || url.password || url.hash) {
+            recordFailure(requestContract, "REQUEST_BINDING");
+            return;
+          }
+          const body = JSON.parse(request.postData());
+          if (!body || typeof body !== "object" || Array.isArray(body)) {
+            recordFailure(requestContract, "REQUEST_BINDING");
+            return;
+          }
+          const expected = structuredClone(mutation.payload),
+            binding = mutation.binding;
+          if (binding?.uiGeneratedKey) {
+            const key = binding.uiGeneratedKey;
+            if (!uuid(body[key])) {
+              recordFailure(requestContract, "REQUEST_BINDING");
+              return;
+            }
+            expected[key] = body[key];
+          } else if (
+            binding?.bodyKey &&
+            (!uuid(binding.requestId) || body[binding.bodyKey] !== binding.requestId)
+          ) {
+            recordFailure(requestContract, "REQUEST_BINDING");
+            return;
+          }
+          if (!same(body, expected)) {
+            recordFailure(requestContract, "REQUEST_BINDING");
+            return;
+          }
+          mutation.request = request;
+          mutation.requestOrdinal = sequence;
+          mutationRequests.set(request, mutation);
+        }
+      } catch {
+        recordFailure(requestContract, "REQUEST_BINDING");
+      }
+    }
   };
   const onResponse = (response) => {
     if (closed) return;
     let request, url, table, rpc;
     try {
       request = response.request();
+      if (sealing && !sequences.has(request)) return;
       url = new URL(response.url());
       if (url.origin !== FIXTURE.api || url.username || url.password || url.hash) return;
       const tm = /^\/rest\/v1\/([a-z_0-9]+)$/.exec(url.pathname),
@@ -2037,88 +4164,156 @@ export function createOfficialObserver(page) {
         rpc = rm[1];
       else return;
     } catch {
-      failed = true;
+      recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
       return;
     }
     const ordinal = sequences.get(request);
+    const readRecord = readAssociations.get(request);
+    const mutation = mutationRequests.get(request),
+      responseOrdinal = sequence;
+    const contractKind = table ? "TABLE:" + table : "RPC:" + rpc;
+    let stage = "REQUEST_ARGS",
+      statusHTTP = "NONE",
+      requestFailure = "NONE";
     const task = (async () => {
-      if (!ordinal) return;
-      let query = null;
-      if (table) {
-        try {
-          query = parseObservedQuery(table, url);
-        } catch {
-          return;
-        }
-      }
-      let args = {};
-      if (rpc && request.postData()) {
-        args = projectOfficialResponse(parseBusinessJson(request.postData()));
-        if (
-          (Object.hasOwn(args, "p_id_organizacao") &&
-            args.p_id_organizacao !== FIXTURE.organization) ||
-          (Object.hasOwn(args, "p_id_contrato") && args.p_id_contrato !== FIXTURE.contract)
-        )
-          return;
-      }
-      if (response.status() < 200 || response.status() >= 300) err("OBSERVATION_RESPONSE");
-      const bytes = await response.body();
-      let value;
       try {
-        if (bytes.length > 1048576) err("OBSERVATION_LIMIT");
-        const fields = table
-          ? TABLE_RESPONSE_FIELDS[table]
-          : RPC_RESPONSE_FIELDS[rpc] ||
-            (BUSINESS_RPCS.includes(rpc) ? BUSINESS_RESPONSE_FIELDS : null);
-        if (!fields) err("OBSERVATION_ENDPOINT");
-        value = projectOfficialResponse(
-          JSON.parse(bytes.toString("utf8")),
-          0,
-          false,
-          new Set(fields.split(" ")),
-        );
-      } finally {
-        bytes.fill(0);
-      }
-      if (closed) return;
-      if (table) {
-        const rows = value === null ? [] : Array.isArray(value) ? value : [value];
-        if (rows.length > 1000) err("OBSERVATION_LIMIT");
-        const ids = new Set();
-        for (const row of rows) {
-          if (!obj(row)) err("OBSERVATION_SCHEMA");
-          for (const [k, p] of query.predicates) {
-            const v = pathValue(row, k);
-            if (v !== undefined && (p.kind === "eq" ? v !== p.value : !p.values.includes(v)))
-              err("OBSERVATION_CONTEXT");
+        if (!ordinal) return;
+        let query = null;
+        if (table) {
+          try {
+            query = parseObservedQuery(table, url);
+          } catch {
+            return;
           }
-          const id =
-            row.id ??
-            (query.predicates.get("id")?.kind === "eq"
-              ? query.predicates.get("id").value
-              : undefined);
-          if (!uuid(id) || ids.has(id)) err("OBSERVATION_SCHEMA");
-          ids.add(id);
         }
-        const ledger = tables.get(table) || new Map(),
-          prior = ledger.get(query.key);
-        if (!prior || prior.ordinal < ordinal) ledger.set(query.key, { ...query, ordinal, rows });
-        if (ledger.size > 1024) err("OBSERVATION_LIMIT");
-        tables.set(table, ledger);
-      } else {
-        const cache = rpcs.get(rpc) || [];
-        cache.push({ ordinal, args, value });
-        cache.sort((a, b) => b.ordinal - a.ordinal);
-        rpcs.set(rpc, cache.slice(0, 64));
+        let args = {};
+        if (rpc && request.postData()) {
+          args = projectOfficialResponse(parseBusinessJson(request.postData()));
+          if (
+            (Object.hasOwn(args, "p_id_organizacao") &&
+              args.p_id_organizacao !== FIXTURE.organization) ||
+            (Object.hasOwn(args, "p_id_contrato") && args.p_id_contrato !== FIXTURE.contract)
+          )
+            return;
+        }
+        stage = "UNAVAILABLE";
+        const status = response.status();
+        if (!Number.isInteger(status) || status < 100 || status > 599) err("OBSERVATION_RESPONSE");
+        if (status < 200 || status > 299) {
+          stage = "HTTP_STATUS";
+          statusHTTP = status;
+          err("OBSERVATION_RESPONSE");
+        }
+        stage = "BODY_READ";
+        statusHTTP = status;
+        let bytes;
+        try {
+          bytes = await response.body();
+        } catch (error) {
+          requestFailure = observedRequestFailure(request);
+          throw error;
+        }
+        stage = "RESPONSE_PROJECTION";
+        statusHTTP = "NONE";
+        let value;
+        try {
+          if (bytes.length > 1048576) {
+            stage = "OBSERVATION_LIMIT";
+            err("OBSERVATION_LIMIT");
+          }
+          const fields = table
+            ? TABLE_RESPONSE_FIELDS[table]
+            : RPC_RESPONSE_FIELDS[rpc] ||
+              (BUSINESS_RPCS.includes(rpc) ? BUSINESS_RESPONSE_FIELDS : null);
+          if (!fields) err("OBSERVATION_ENDPOINT");
+          let decoded;
+          if (status === 204) {
+            if (
+              rpc !== "aprovar_parecer_interno" ||
+              request.method() !== "POST" ||
+              !mutation ||
+              mutation.request !== request ||
+              mutation.rpc !== rpc ||
+              bytes.length !== 0
+            )
+              err("OBSERVATION_RESPONSE");
+            decoded = null;
+          } else decoded = JSON.parse(bytes.toString("utf8"));
+          value = Object.hasOwn(SCOPED_RPC_FIELDS, rpc)
+            ? projectScopedRpcResponse(rpc, decoded)
+            : projectOfficialResponse(decoded, 0, false, new Set(fields.split(" ")));
+        } finally {
+          bytes.fill(0);
+        }
+        if (closed) return;
+        if (mutation) {
+          mutation.responseOrdinal = responseOrdinal;
+          mutation.ack = value;
+          mutation.admitted = true;
+        }
+        if (table) {
+          stage = "RESPONSE_CONTEXT";
+          const rows = value === null ? [] : Array.isArray(value) ? value : [value];
+          if (rows.length > 1000) {
+            stage = "OBSERVATION_LIMIT";
+            err("OBSERVATION_LIMIT");
+          }
+          const ids = new Set();
+          for (const row of rows) {
+            if (!obj(row)) err("OBSERVATION_SCHEMA");
+            for (const [k, p] of query.predicates) {
+              const v = pathValue(row, k);
+              if (v !== undefined && (p.kind === "eq" ? v !== p.value : !p.values.includes(v)))
+                err("OBSERVATION_CONTEXT");
+            }
+            const id =
+              row.id ??
+              (query.predicates.get("id")?.kind === "eq"
+                ? query.predicates.get("id").value
+                : undefined);
+            if (!uuid(id) || ids.has(id)) err("OBSERVATION_SCHEMA");
+            ids.add(id);
+          }
+          if (
+            readRecord &&
+            table === "competencias" &&
+            rows.some((row) => row.id_contrato === FIXTURE.contract)
+          )
+            readRecord.contractFromResponse = FIXTURE.contract;
+          const ledger = tables.get(table) || new Map(),
+            prior = ledger.get(query.key);
+          if (!prior || prior.ordinal < ordinal) ledger.set(query.key, { ...query, ordinal, rows });
+          if (ledger.size > 1024) {
+            stage = "OBSERVATION_LIMIT";
+            err("OBSERVATION_LIMIT");
+          }
+          tables.set(table, ledger);
+        } else {
+          const cache = rpcs.get(rpc) || [];
+          cache.push({ ordinal, args, value });
+          cache.sort((a, b) => b.ordinal - a.ordinal);
+          rpcs.set(rpc, cache.slice(0, 64));
+        }
+        stage = "OBSERVATION_LIMIT";
+        checkBudget();
+        if (readRecord) {
+          readRecord.responseOrdinal = responseOrdinal;
+          readRecord.done = true;
+          pendingReads.delete(readRecord);
+        }
+      } catch (error) {
+        if (readRecord) {
+          readRecord.responseOrdinal = responseOrdinal;
+          readRecord.done = true;
+          pendingReads.delete(readRecord);
+        }
+        if (stage === "UNAVAILABLE") recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
+        else recordFailure(contractKind, stage, statusHTTP, requestFailure);
+        throw error;
       }
-      checkBudget();
     })();
     pending.add(task);
-    task
-      .catch(() => {
-        failed = true;
-      })
-      .finally(() => pending.delete(task));
+    task.catch(() => {}).finally(() => pending.delete(task));
   };
   page.on("request", onRequest);
   page.on("response", onResponse);
@@ -2136,12 +4331,16 @@ export function createOfficialObserver(page) {
   function selectLatest(table, options) {
     if (
       !obj(options) ||
-      Object.keys(options).some((k) => k !== "select") ||
+      Object.keys(options).some((k) => !["select", "after"].includes(k)) ||
+      (options.after !== undefined &&
+        (!Number.isSafeInteger(options.after) || options.after < 0)) ||
       (options.select !== undefined && !EXACT_SELECTS[table]?.includes(options.select))
     )
       err("OBSERVATION_PROJECTION");
     const ledger = entries(table).filter(
-        (e) => options.select === undefined || e.q.select === options.select,
+        (e) =>
+          (options.select === undefined || e.q.select === options.select) &&
+          (options.after === undefined || e.ordinal > options.after),
       ),
       latest = new Map();
     // Deduplicate identity BEFORE filtering state or omitted values.
@@ -2152,59 +4351,577 @@ export function createOfficialObserver(page) {
       }
     return { ledger, latest };
   }
-  return Object.freeze({
+  function causalFloor(name, where) {
+    const bare = rpcName(name) || name;
+    return (
+      floors
+        .filter(
+          (f) =>
+            f.name === bare &&
+            !Object.entries(where).some(([k, v]) => Object.hasOwn(f.where, k) && f.where[k] !== v),
+        )
+        .sort((a, b) => b.ordinal - a.ordinal)[0] || null
+    );
+  }
+
+  function tableRows(table, where, options) {
+    if (!OBSERVED_TABLES.has(table) || !tables.has(table)) err("OBSERVATION_TABLE");
+    const { latest, ledger } = selectLatest(table, options),
+      empty = ledger.find((e) => e.rows.length === 0 && coversAbsence(e, where));
+    return [...latest.values()]
+      .filter(
+        ({ e, row }) => (!empty || e.ordinal >= empty.ordinal) && matchesObservation(e, row, where),
+      )
+      .map(({ row }) => row);
+  }
+  function rpcItem(rpc, where, options) {
+    return (rpcs.get(rpc) || []).find(
+      (e) =>
+        (options.after === undefined || e.ordinal > options.after) &&
+        Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
+    );
+  }
+
+  function expectedReadback(target, data) {
+    const { rpc, payload: p, ack } = target.mutation;
+    if (rpc === "salvar_fonte_normativa_v107")
+      return (
+        data.length === 1 &&
+        data[0].situacao === "ativa" &&
+        (!Number.isInteger(p.p_versao_esperada) ||
+          data[0].versao_registro === p.p_versao_esperada + 1)
+      );
+    if (rpc === "registrar_versao_fonte_v107") return data.length === 1 && uuid(data[0].id);
+    if (rpc === "aprovar_versao_fonte_v107") return data.length === 1 && !!data[0].aprovado_em;
+    if (rpc === "executar_comando_lista_v1")
+      return (
+        data?.lista?.versao_registro ===
+          (p.p_versao_esperada === null ? 1 : p.p_versao_esperada + 1) &&
+        data.lista.id === (p.p_id_lista || ack?.lista?.id) &&
+        (!target.versionId || data.versao?.id === target.versionId)
+      );
+    if (rpc === "criar_competencia")
+      return (
+        data.length === 1 &&
+        uuid(ack) &&
+        data[0].id === ack &&
+        data[0].competencia_referencia === p.p_competencia_referencia
+      );
+    if (rpc === "criar_documento_competencia_v115")
+      return (
+        data?.documentos?.some(
+          (d) =>
+            d.situacao === "ativo" &&
+            d.arquivo?.id === p.p_id_arquivo &&
+            d.requisito?.id === p.p_id_requisito,
+        ) === true
+      );
+    if (rpc === "solicitar_analise_competencia")
+      return (
+        uuid(ack) &&
+        data?.execucao_atual?.id === ack &&
+        ["queued", "processing", "complete"].includes(data.estado_analise)
+      );
+    if (rpc === "registrar_revisao_requisito_v117")
+      return uuid(data?.execucao_atual?.id) && data.execucao_atual.id !== p.p_id_execucao_esperada;
+    if (rpc === "solicitar_parecer_interno")
+      return (
+        p.p_id_competencia === R5_BINDINGS.competencies[1].id && uuid(ack) && Array.isArray(data)
+      );
+    if (rpc === "aprovar_parecer_interno")
+      return (
+        data.length === 1 &&
+        data[0].id === p.p_id_parecer &&
+        data[0].status === "aprovado" &&
+        !!data[0].aprovado_em
+      );
+    if (rpc === "aprovar_apresentacao")
+      return (
+        uuid(ack?.id_aprovacao) &&
+        ack.situacao === "pode_apresentar_contratante" &&
+        ack.percentual_conformidade === 100 &&
+        data?.competencia?.id === p.p_id_competencia &&
+        data.competencia.id_organizacao === FIXTURE.organization &&
+        data.competencia.id_contrato === FIXTURE.contract &&
+        data.competencia.situacao === "pode_apresentar_contratante" &&
+        data.competencia.percentual_conformidade === 100 &&
+        data?.blocking_summary?.aprovacao_apresentacao_atual === true &&
+        data.blocking_summary.analise_concluida_atual === true &&
+        data.blocking_summary.parecer_aprovado === true &&
+        data.portao?.liberado === true &&
+        data.portao.percentual === 100
+      );
+    if (rpc === "registrar_apresentacao")
+      return target.name === "apresentacoes_contratante"
+        ? uuid(ack) && data.length === 1 && data[0].id === ack
+        : data.length >= 1 && data.every((row) => uuid(row.id));
+    return false;
+  }
+
+  async function waitTarget(target, where, options) {
+    return waitOfficialPhase({
+      read: async () => {
+        await flush();
+        const m = target.mutation;
+        if (!m.admitted || m.responseOrdinal === null) return false;
+        const after = Math.max(options.after || 0, m.responseOrdinal),
+          filtered = { ...options, after };
+        if (!(await api.observedAfter(target.name, where, after, filtered))) return false;
+        const opinion =
+          target.mutation.rpc === "solicitar_parecer_interno"
+            ? opinionObservation(R5_BINDINGS.competencies[1].id, after)
+            : null;
+        if (target.mutation.rpc === "solicitar_parecer_interno" && !opinion) return false;
+        const rpc = rpcName(target.name),
+          item = rpc ? rpcItem(rpc, where, filtered) : null,
+          data = opinion
+            ? opinion.rows
+            : rpc
+              ? item?.value
+              : tableRows(target.name, where, filtered);
+        if (
+          target.versionId &&
+          (!item ||
+            item.value?.versao?.id !== target.versionId ||
+            (item.args.p_id_versao !== null && item.args.p_id_versao !== target.versionId))
+        )
+          return false;
+        return expectedReadback(target, data)
+          ? freeze({ value: structuredClone(data), minimumOrdinal: after })
+          : false;
+      },
+      ready: (value) => value !== false,
+      ...(wait ? { wait } : {}),
+      ...(now ? { now } : {}),
+    });
+  }
+
+  function exactOpinionQuery(query, competency) {
+    const { q, predicates } = query;
+    return (
+      Object.keys(q).length === 7 &&
+      q.select === EXACT_SELECTS.pareceres_internos[0] &&
+      q.order === "versao.desc,id.desc" &&
+      q.offset === "0" &&
+      q.limit === "25" &&
+      predicates.size === 3 &&
+      [
+        ["id_competencia", competency],
+        ["id_organizacao", FIXTURE.organization],
+        ["id_contrato", FIXTURE.contract],
+      ].every(
+        ([key, value]) => predicates.get(key)?.kind === "eq" && predicates.get(key).value === value,
+      )
+    );
+  }
+  function opinionIso(value) {
+    return (
+      typeof value === "string" &&
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value) &&
+      Number.isFinite(Date.parse(value))
+    );
+  }
+  function opinionObservation(competency, after) {
+    if (closed || sealing || failed || (rejectedOpinionOrdinals.get(competency) || 0) > after)
+      err("RECOVERY_R11_OPINION");
+    const relevant = (record) =>
+      record.table === "pareceres_internos" &&
+      record.query.predicates.get("id_competencia")?.value === competency;
+    if ([...pendingReads].some(relevant)) return null;
+    const latest = [...latestReads.values()]
+      .filter(relevant)
+      .sort((a, b) => b.ordinal - a.ordinal)[0];
+    if (!latest || latest.ordinal <= after || !latest.done) return null;
+    if (!exactOpinionQuery(latest.query, competency)) err("RECOVERY_R11_OPINION");
+    const entry = tables.get("pareceres_internos")?.get(latest.query.key);
+    if (!entry || entry.ordinal !== latest.ordinal || entry.rows.length > 25) return null;
+    const ids = new Set();
+    for (const row of entry.rows) {
+      if (
+        !obj(row) ||
+        !uuid(row.id) ||
+        ids.has(row.id) ||
+        row.id_competencia !== competency ||
+        row.id_organizacao !== FIXTURE.organization ||
+        row.id_contrato !== FIXTURE.contract ||
+        !Number.isSafeInteger(row.versao) ||
+        row.versao < 1 ||
+        typeof row.hash !== "string" ||
+        !/^[a-f0-9]{64}$/.test(row.hash) ||
+        !["rascunho", "aprovado", "rejeitado", "substituido"].includes(row.status) ||
+        !opinionIso(row.criado_em) ||
+        (row.aprovado_em !== null && !opinionIso(row.aprovado_em))
+      )
+        err("RECOVERY_R11_OPINION");
+      ids.add(row.id);
+    }
+    const rows = [...entry.rows].sort((a, b) => b.versao - a.versao);
+    if (rows.length > 1 && rows[0].versao === rows[1].versao) err("RECOVERY_R11_OPINION");
+    const row = rows[0] || null;
+    if (
+      row &&
+      !(
+        (row.status === "rascunho" && row.aprovado_em === null) ||
+        (row.status === "aprovado" && opinionIso(row.aprovado_em))
+      )
+    )
+      err("RECOVERY_R11_OPINION");
+    return { rows, row, ordinal: latest.ordinal, responseOrdinal: latest.responseOrdinal };
+  }
+  function sealRecoveryOpinion(owner, after) {
+    validateR13RecoveryDocument(R13_RECOVERY_DOCUMENT);
+    validateR15RecoveryDocument(R15_RECOVERY_DOCUMENT);
+    validateR16RecoveryDocument(R16_RECOVERY_DOCUMENT);
+    validateR17RecoveryDocument(R17_RECOVERY_DOCUMENT);
+    validateR11RecoveryDocument(R11_RECOVERY_DOCUMENT);
+    const broker = recoveryBrokerOwners.get(owner);
+    if (
+      !Number.isSafeInteger(after) ||
+      after < 0 ||
+      !observerIdentity ||
+      !broker?.recovery ||
+      !broker.identity ||
+      !same(observerIdentity, broker.identity)
+    )
+      err("RECOVERY_R11_OPINION");
+    const bindings = JSON.parse(R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies;
+    const read = (c) => {
+      if (closed || sealing || failed || pending.size || pendingReads.size)
+        err("RECOVERY_R11_OPINION");
+      const opinion = opinionObservation(c.id, after);
+      if (!opinion?.row || !Number.isSafeInteger(opinion.responseOrdinal))
+        err("RECOVERY_R11_OPINION");
+      const row = opinion.row;
+      if (row.id !== c.opinionId || row.status !== "aprovado" || !opinionIso(row.aprovado_em))
+        err("RECOVERY_R16_OPINION");
+      const document = rpcItem(
+        "obter_documentos_competencia_v115",
+        { p_id_competencia: c.id },
+        { after },
+      )?.value;
+      const analysis = rpcItem(
+        "obter_analise_competencia_v116",
+        { p_id_competencia: c.id },
+        { after },
+      )?.value;
+      for (const dto of [document, analysis]) {
+        const ctx = dto?.competencia;
+        if (
+          ctx?.id !== c.id ||
+          ctx.id_organizacao !== FIXTURE.organization ||
+          ctx.id_contrato !== FIXTURE.contract ||
+          ctx.competencia_referencia !== c.month
+        )
+          err("RECOVERY_R16_OPINION");
+      }
+      const docs = document.documentos?.filter((d) => d.requisito?.id === c.requirementId);
+      const d = docs?.[0];
+      if (
+        document.schema_versao !== "v115-v1" ||
+        document.estado_documental !== "complete" ||
+        document.requisitos_documentais?.filter((r) => r.id === c.requirementId).length !== 1 ||
+        docs?.length !== 1 ||
+        d?.id !== c.documentId ||
+        d.situacao !== "ativo" ||
+        d.arquivo?.id !== FIXTURE.file ||
+        d.arquivo.sha256 !== FIXTURE.fileHash ||
+        d.arquivo.status_seguranca !== "aprovado" ||
+        !uuid(d.versao?.id) ||
+        d.versao.id_arquivo !== FIXTURE.file
+      )
+        err("RECOVERY_R16_OPINION");
+      if (
+        analysis.schema_versao !== "v116-v1" ||
+        analysis.estado_analise !== "complete" ||
+        analysis.stale !== false ||
+        analysis.execucao_atual?.id !== c.executionId ||
+        analysis.execucao_atual.status !== "concluida"
+      )
+        err("RECOVERY_R16_OPINION");
+      let presentation = null;
+      if (c.month === "2026-10-01") {
+        const view = rpcItem(
+          "obter_visao_geral_competencia",
+          { p_id_competencia: c.id },
+          { after },
+        )?.value;
+        const context = view?.competencia;
+        if (
+          context?.id !== c.id ||
+          context.id_organizacao !== FIXTURE.organization ||
+          context.id_contrato !== FIXTURE.contract ||
+          context.competencia_referencia !== c.month ||
+          context.situacao !== "pode_apresentar_contratante" ||
+          context.percentual_conformidade !== 100 ||
+          view.portao?.percentual !== 100 ||
+          view.portao.liberado !== true ||
+          view.blocking_summary?.analise_concluida_atual !== true ||
+          view.blocking_summary.parecer_aprovado !== true ||
+          view.blocking_summary.aprovacao_apresentacao_atual !== true ||
+          view.allowed_actions?.apresentar !== true
+        )
+          err("RECOVERY_R17_PRESENTATION");
+        presentation = {
+          id: context.id,
+          state: context.situacao,
+          stored: context.percentual_conformidade,
+          canonical: view.portao.percentual,
+          approved: view.blocking_summary.aprovacao_apresentacao_atual,
+          allowed: view.allowed_actions.apresentar,
+          version: context.versao_registro,
+          updated: context.atualizado_em,
+        };
+      }
+      return hash(
+        JSON.stringify({
+          presentation,
+          opinion: {
+            id: row.id,
+            competency: row.id_competencia,
+            organization: row.id_organizacao,
+            contract: row.id_contrato,
+            version: row.versao,
+            hash: row.hash,
+            status: row.status,
+            created: row.criado_em,
+            approved: row.aprovado_em,
+          },
+          document: {
+            id: d.id,
+            requirement: d.requisito.id,
+            version: d.versao.id,
+            file: d.arquivo.id,
+            sha256: d.arquivo.sha256,
+          },
+          analysis: { id: analysis.execucao_atual.id, status: analysis.execucao_atual.status },
+        }),
+      );
+    };
+    const snapshots = bindings.map(read),
+      token = Object.freeze({});
+    let invalid = false;
+    const record = {
+      owner,
+      identity: observerIdentity,
+      documentHash: "f3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95",
+      consumed: false,
+      permitsApproval() {
+        return false;
+      },
+      check() {
+        if (invalid) err("RECOVERY_R11_OPINION");
+        try {
+          if (bindings.some((c, i) => read(c) !== snapshots[i])) err("RECOVERY_R11_OPINION");
+        } catch (error) {
+          invalid = true;
+          throw error;
+        }
+        return true;
+      },
+    };
+    recoveryOpinionProofs.set(token, record);
+    return token;
+  }
+
+  const api = {
+    sealRecoveryOpinion,
+    markMutation(rpc, payload, evidence, binding = null) {
+      if (closed || failed) err("OBSERVATION_FAILED");
+      const ordinal = sequence;
+      const mutation = {
+        rpc,
+        payload: freeze(structuredClone(payload)),
+        binding: binding === null ? null : freeze(structuredClone(binding)),
+        ordinal,
+        request: null,
+        requestOrdinal: null,
+        responseOrdinal: null,
+        admitted: false,
+        ack: null,
+      };
+      mutations.push(mutation);
+      for (const target of readbackTargets(rpc, payload, evidence))
+        floors.push({ ...target, ordinal, mutation });
+      if (floors.length > 1024) err("OBSERVATION_LIMIT");
+      return true;
+    },
+    async waitObservedAfter(name, where, after, options = {}) {
+      if (!Number.isSafeInteger(after) || after < 0) err("OBSERVATION_ORDINAL");
+      const state = monthOptions(name, where, after, options);
+      if (!state.scoped && state.options.readBudget === undefined)
+        return waitOfficialPhase({
+          read: () => api.observedAfter(name, where, after, state.options),
+          ready: (value) => value === true,
+          ...(wait ? { wait } : {}),
+          ...(now ? { now } : {}),
+        });
+      const execute = (budget) =>
+        waitOfficialPhase({
+          read: () =>
+            api.observedAfter(name, where, after, { ...state.options, readBudget: budget }),
+          ready: (value) => value === true,
+          timeout: budgetRemaining(budget),
+          ...(wait ? { wait } : {}),
+          now: readClock,
+        });
+      return withReadBudget(execute, state.options.readBudget);
+    },
     flush,
+    readBarrier: withReadBudget,
+    assertReadBarrier: (token) => {
+      budgetState(token);
+      return true;
+    },
+    readBarrierRemaining: budgetRemaining,
+    async drainReads(token) {
+      return withReadBudget(async (budget) => {
+        for (;;) {
+          budgetState(budget);
+          await withReadBudget(() => flush(), budget);
+          budgetState(budget);
+          if (pendingReads.size === 0 && pending.size === 0) return true;
+          await (wait ? wait(10) : new Promise((resolve) => setTimeout(resolve, 10)));
+          budgetState(budget);
+        }
+      }, token);
+    },
+    observationFailure: () => firstFailure,
+    async seal() {
+      sealing = true;
+      page.off("request", onRequest);
+      let timer;
+      try {
+        await Promise.race([
+          (async () => {
+            await Promise.allSettled([...pending]);
+            while (!closed && (pendingReads.size || pending.size))
+              await new Promise((resolve) => setTimeout(resolve, 10));
+          })(),
+          new Promise((resolve) => {
+            timer = setTimeout(() => {
+              recordFailure("UNKNOWN", "UNAVAILABLE", "NONE", "UNAVAILABLE");
+              resolve();
+            }, 3000);
+          }),
+        ]);
+      } finally {
+        clearTimeout(timer);
+        closed = true;
+        page.off("response", onResponse);
+      }
+      return firstFailure;
+    },
     generation: () => sequence,
     async observedAfter(name, where = {}, after, options = {}) {
-      await flush();
-      const rpc = rpcName(name);
-      if (rpc)
-        return (rpcs.get(rpc) || []).some(
-          (e) =>
+      const state = monthOptions(name, where, after, options);
+      const perform = async (budget) => {
+        await flush();
+        if (budget) budgetState(budget);
+        if (state.scoped)
+          return (
+            pendingReads.size === 0 &&
+            latestMonth(state.where, state.options.after, state.options.select) !== null
+          );
+        const rpc = rpcName(name);
+        if (rpc)
+          return (rpcs.get(rpc) || []).some(
+            (e) =>
+              e.ordinal > after &&
+              (state.options.after === undefined || e.ordinal > state.options.after) &&
+              Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
+          );
+        if (!OBSERVED_TABLES.has(name)) return false;
+        const { latest, ledger } = selectLatest(name, legacyReadOptions(state.options));
+        for (const e of ledger)
+          if (e.ordinal > after && e.rows.length === 0 && coversAbsence(e, where)) return true;
+        const empty = ledger.find((e) => e.rows.length === 0 && coversAbsence(e, where));
+        return [...latest.values()].some(
+          ({ e, row }) =>
             e.ordinal > after &&
-            Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
+            (!empty || e.ordinal >= empty.ordinal) &&
+            matchesObservation(e, row, where),
         );
-      if (!OBSERVED_TABLES.has(name)) return false;
-      const { latest, ledger } = selectLatest(name, options);
-      for (const e of ledger)
-        if (e.ordinal > after && e.rows.length === 0 && coversAbsence(e, where)) return true;
-      const empty = ledger.find((e) => e.rows.length === 0 && coversAbsence(e, where));
-      return [...latest.values()].some(
-        ({ e, row }) =>
-          e.ordinal > after &&
-          (!empty || e.ordinal >= empty.ordinal) &&
-          matchesObservation(e, row, where),
-      );
+      };
+      return state.scoped || state.options.readBudget !== undefined
+        ? withReadBudget(perform, state.options.readBudget)
+        : perform();
     },
     async read(table, where = {}, options = {}) {
-      await flush();
-      if (!OBSERVED_TABLES.has(table) || !tables.has(table)) err("OBSERVATION_TABLE");
-      const { latest, ledger } = selectLatest(table, options),
-        empty = ledger.find((e) => e.rows.length === 0 && coversAbsence(e, where));
-      return [...latest.values()]
-        .filter(
-          ({ e, row }) =>
-            (!empty || e.ordinal >= empty.ordinal) && matchesObservation(e, row, where),
-        )
-        .map(({ row }) => structuredClone(row));
+      const state = monthOptions(table, where, undefined, options);
+      if (state.scoped)
+        return withReadBudget(async (budget) => {
+          const value = await waitOfficialPhase({
+            read: async () => {
+              await flush();
+              budgetState(budget);
+              if (pendingReads.size) return null;
+              return latestMonth(state.where, state.options.after, state.options.select);
+            },
+            ready: (rows) => rows !== null,
+            timeout: budgetRemaining(budget),
+            ...(wait ? { wait } : {}),
+            now: readClock,
+          });
+          budgetState(budget);
+          return structuredClone(value);
+        }, state.options.readBudget);
+      const barrier = causalFloor(table, where);
+      const perform = async (budget) => {
+        if (barrier) {
+          const bound = { ...barrier.where, ...where };
+          const validated = await waitTarget(barrier, bound, legacyReadOptions(state.options));
+          if (budget) budgetState(budget);
+          return structuredClone(validated.value);
+        }
+        await flush();
+        if (budget) budgetState(budget);
+        return tableRows(table, where, legacyReadOptions(state.options)).map((row) =>
+          structuredClone(row),
+        );
+      };
+      return state.options.readBudget !== undefined
+        ? withReadBudget(perform, state.options.readBudget)
+        : perform();
     },
-    async rpcRead(name, where = {}) {
-      await flush();
+    async rpcRead(name, where = {}, options = {}) {
       const rpc = rpcName(name);
       if (!rpc) err("OBSERVATION_RPC");
-      const item = (rpcs.get(rpc) || []).find((e) =>
-        Object.entries(where).every(([k, v]) => pathValue(e.args, k) === v),
-      );
+      if (
+        !obj(options) ||
+        Object.keys(options).some((k) => k !== "after") ||
+        (options.after !== undefined && (!Number.isSafeInteger(options.after) || options.after < 0))
+      )
+        err("OBSERVATION_ORDINAL");
+      const barrier = causalFloor(name, where);
+      if (barrier) {
+        where = { ...barrier.where, ...where };
+        const validated = await waitTarget(barrier, where, options);
+        return structuredClone(validated.value);
+      }
+      await flush();
+      const item = rpcItem(rpc, where, options);
+      if (
+        barrier?.versionId &&
+        (!item ||
+          item.value?.versao?.id !== barrier.versionId ||
+          (item.args.p_id_versao !== null && item.args.p_id_versao !== barrier.versionId))
+      )
+        err("OBSERVATION_CONTEXT");
       return item ? structuredClone(item.value) : null;
     },
     close() {
       closed = true;
       tables.clear();
       rpcs.clear();
+      floors.length = 0;
+      mutations.length = 0;
+      pendingReads.clear();
+      latestReads.clear();
       page.off("request", onRequest);
       page.off("response", onResponse);
     },
-  });
+  };
+  return Object.freeze(api);
 }
 
 /* Integration snippet only. FIXTURE, hash, uuid, same are existing same-module helpers.
@@ -2218,9 +4935,28 @@ export function createOfficialObserver(page) {
  * Do not implement these flags as role-name/button-presence guesses.
  */
 export async function prepareSourceAndList(io) {
+  validateR13RecoveryDocument(io?.recoveryLedgerR13);
+  validateR15RecoveryDocument(io?.recoveryLedgerR15);
+  validateR16RecoveryDocument(io?.recoveryLedgerR16);
+  validateR17RecoveryDocument(io?.recoveryLedgerR17);
   const { page } = io;
   const recovery =
     io.recoveryLedger === undefined ? null : validateR1RecoveryDocument(io.recoveryLedger);
+  if (recovery) {
+    validateR3RecoveryDocument(io.recoveryLedgerR3);
+    validateR4RecoveryDocument(io.recoveryLedgerR4);
+    validateR5RecoveryDocument(io.recoveryLedgerR5);
+    validateR6RecoveryDocument(io.recoveryLedgerR6);
+    validateR7RecoveryDocument(io.recoveryLedgerR7);
+    validateR8RecoveryDocument(io.recoveryLedgerR8);
+    validateR9RecoveryDocument(io.recoveryLedgerR9);
+    validateR10RecoveryDocument(io.recoveryLedgerR10);
+    validateR13RecoveryDocument(io.recoveryLedgerR13);
+    validateR15RecoveryDocument(io.recoveryLedgerR15);
+    validateR16RecoveryDocument(io.recoveryLedgerR16);
+    validateR17RecoveryDocument(io.recoveryLedgerR17);
+    validateR11RecoveryDocument(io.recoveryLedgerR11);
+  }
   const fail = (code) => {
     throw new Error(code);
   };
@@ -2392,6 +5128,7 @@ export async function prepareSourceAndList(io) {
     "FLOW_SOURCE_NOT_IN_UI_GET",
   );
   await tracedPreparation("SOURCE_RECONCILE", async () => sourceRow());
+  if (recovery) assert(source.situacao === "ativa", "RECOVERY_SOURCE_INACTIVE");
   // Return through a KNOWN SSR path so its list starts at page zero, then find source button.
   await tracedPreparation("SOURCE_NAVIGATE", async () =>
     io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`),
@@ -2633,7 +5370,9 @@ export async function prepareSourceAndList(io) {
         for (
           let n = 0;
           (await tracedPreparation("SOURCE_UI_CONTROL", async () =>
-            field(region, "Lista selecionada").locator(`option[value="${matching[0].id}"]`).count(),
+            (await tracedPreparation("SOURCE_UI_CONTROL", async () => listSelectionControl(region)))
+              .locator(`option[value="${matching[0].id}"]`)
+              .count(),
           )) === 0;
           n++
         ) {
@@ -2643,12 +5382,20 @@ export async function prepareSourceAndList(io) {
           );
         }
         await tracedPreparation("SOURCE_FORM_FIELD", async () =>
-          field(region, "Lista selecionada").selectOption(matching[0].id),
+          (
+            await tracedPreparation("SOURCE_UI_CONTROL", async () =>
+              listSelectionControl(region, matching[0].id),
+            )
+          ).selectOption(matching[0].id),
         );
         await tracedPreparation("SOURCE_REFRESH", async () => io.fresh());
       }
       const model = await tracedPreparation("LIST_MODEL_READ", async () =>
-        io.rpcRead("obter_lista_operacional_v1"),
+        io.rpcRead("obter_lista_operacional_v1", {
+          p_id_organizacao: FIXTURE.organization,
+          p_id_contrato: FIXTURE.contract,
+          ...(matching[0]?.id ? { p_id_lista: matching[0].id } : {}),
+        }),
       );
       assert(
         model?.schema_versao === "crud-lista-v1" &&
@@ -2708,6 +5455,9 @@ export async function prepareSourceAndList(io) {
           "RECOVERY_LIST",
         );
         state = {
+          id: l.id,
+          versionId: v.id,
+          itemId: model.itens[0].id,
           verified: true,
           active: l.situacao === "ativa",
           published: v.situacao === "publicada",
@@ -2715,8 +5465,29 @@ export async function prepareSourceAndList(io) {
           sourceVersion: version.id,
         };
       }
+      let opinionProof;
+      const competencies = await tracedPreparation("RECOVERY_READ", () =>
+        reconcileRecoveryCompetencies(io, (captured) => {
+          opinionProof = captured;
+        }),
+      );
+      if (!opinionProof) throw new Error("RECOVERY_R11_OPINION");
       const proof = reconcileR1Recovery({
+        competencies,
         ledger: recovery,
+        ledgerR3: io.recoveryLedgerR3,
+        ledgerR4: io.recoveryLedgerR4,
+        ledgerR5: io.recoveryLedgerR5,
+        ledgerR6: io.recoveryLedgerR6,
+        ledgerR7: io.recoveryLedgerR7,
+        ledgerR8: io.recoveryLedgerR8,
+        ledgerR9: io.recoveryLedgerR9,
+        ledgerR10: io.recoveryLedgerR10,
+        ledgerR11: io.recoveryLedgerR11,
+        ledgerR13: io.recoveryLedgerR13,
+        ledgerR15: io.recoveryLedgerR15,
+        ledgerR16: io.recoveryLedgerR16,
+        ledgerR17: io.recoveryLedgerR17,
         source: { ...source, ...context, version: source.versao_registro },
         version: {
           ...context,
@@ -2735,7 +5506,7 @@ export async function prepareSourceAndList(io) {
         canCreateList: model.acoes?.criar_lista === true,
       });
       assert(typeof io.recoveryReady === "function", "RECOVERY_PROOF");
-      io.recoveryReady(proof);
+      io.recoveryReady(proof, opinionProof);
     });
     await tracedPreparation("RECOVERY_RETURN", () =>
       io.goKnown(`/contratos/${FIXTURE.contract}/base-normativa`),
@@ -2749,7 +5520,9 @@ export async function prepareSourceAndList(io) {
     );
     const d = dialog("Editar fonte");
     await tracedPreparation("SOURCE_FORM_FIELD", async () =>
-      field(d, "Situação").selectOption("ativa"),
+      (
+        await tracedPreparation("SOURCE_FORM_FIELD", async () => sourceStatusControl(d))
+      ).selectOption("ativa"),
     );
     const before = source.versao_registro;
     await tracedPreparation("SOURCE_ACTIVATE_COMMAND", async () =>
@@ -2909,6 +5682,10 @@ export async function prepareSourceAndList(io) {
     );
     await tracedPreparation("LIST_REFRESH", async () => io.fresh());
     await tracedPreparation("LIST_MODEL_READ", async () => listProof());
+    assert(
+      model.lista.versao_registro === (prev === null ? 1 : prev + 1),
+      "FLOW_LIST_READBACK_VERSION",
+    );
   };
   if (matches.length === 0) {
     await tracedPreparation("LIST_FORM_FIELD", async () =>
@@ -2942,7 +5719,9 @@ export async function prepareSourceAndList(io) {
     for (
       let n = 0;
       (await tracedPreparation("LIST_UI_CONTROL", async () =>
-        field(panel, "Lista selecionada").locator(`option[value="${matches[0].id}"]`).count(),
+        (await tracedPreparation("LIST_UI_CONTROL", async () => listSelectionControl(panel)))
+          .locator(`option[value="${matches[0].id}"]`)
+          .count(),
       )) === 0;
       n++
     ) {
@@ -2952,7 +5731,11 @@ export async function prepareSourceAndList(io) {
       );
     }
     await tracedPreparation("LIST_FORM_FIELD", async () =>
-      field(panel, "Lista selecionada").selectOption(matches[0].id),
+      (
+        await tracedPreparation("LIST_UI_CONTROL", async () =>
+          listSelectionControl(panel, matches[0].id),
+        )
+      ).selectOption(matches[0].id),
     );
     await tracedPreparation("LIST_REFRESH", async () => io.fresh());
     await tracedPreparation("LIST_MODEL_READ", async () => listProof());
@@ -2977,12 +5760,12 @@ export async function prepareSourceAndList(io) {
           for (const label of ["Obrigatório", "Aplicável", "Impeditivo"])
             await tracedPreparation("LIST_FORM_FIELD", async () => field(f, label).check());
           await tracedPreparation("LIST_FORM_FIELD", async () =>
-            field(f, "Criticidade").selectOption("alta"),
+            f.getByRole("combobox", { name: "Criticidade", exact: true }).selectOption("alta"),
           );
           await tracedPreparation("LIST_FORM_FIELD", async () =>
-            field(f, "Regra de validação e condição (JSON)").fill(
-              JSON.stringify(itemExpected().regra_validacao),
-            ),
+            f
+              .getByRole("textbox", { name: "Regra de validação e condição (JSON)", exact: true })
+              .fill(JSON.stringify(itemExpected().regra_validacao)),
           );
         },
       ),
@@ -2999,7 +5782,7 @@ export async function prepareSourceAndList(io) {
     await tracedPreparation("LIST_FORM_FIELD", async () =>
       listCommand("alterar_situacao", { situacao: "ativa" }, "Alterar situação", async (f) => {
         await tracedPreparation("LIST_FORM_FIELD", async () =>
-          field(f, "Situação").selectOption("ativa"),
+          f.getByRole("combobox", { name: "Situação", exact: true }).selectOption("ativa"),
         );
       }),
     );
@@ -3032,6 +5815,10 @@ export async function prepareSourceAndList(io) {
  * persist synchronously, await matching Response, then run confirmAfter once.
  */
 export async function prepareCompetencies(io, sourceList) {
+  validateR13RecoveryDocument(io?.recoveryLedgerR13);
+  validateR15RecoveryDocument(io?.recoveryLedgerR15);
+  validateR16RecoveryDocument(io?.recoveryLedgerR16);
+  validateR17RecoveryDocument(io?.recoveryLedgerR17);
   const stop = (code) => {
     throw new Error(code);
   };
@@ -3054,6 +5841,7 @@ export async function prepareCompetencies(io, sourceList) {
     "rpcRead",
     "fresh",
     "link",
+    "goKnown",
     "command",
     "official",
     "verifyContext",
@@ -3070,6 +5858,21 @@ export async function prepareCompetencies(io, sourceList) {
     ![sourceList.sourceVersionId, sourceList.listId, sourceList.listVersionId].every(uuid)
   )
     stop("COMPETENCE_SOURCE_LIST");
+  if (io.recoveryLedgerR5) {
+    validateR5RecoveryDocument(io.recoveryLedgerR5);
+    validateR6RecoveryDocument(io.recoveryLedgerR6);
+    validateR7RecoveryDocument(io.recoveryLedgerR7);
+    validateR8RecoveryDocument(io.recoveryLedgerR8);
+    validateR9RecoveryDocument(io.recoveryLedgerR9);
+    validateR10RecoveryDocument(io.recoveryLedgerR10);
+    validateR13RecoveryDocument(io.recoveryLedgerR13);
+    validateR15RecoveryDocument(io.recoveryLedgerR15);
+    validateR16RecoveryDocument(io.recoveryLedgerR16);
+    validateR17RecoveryDocument(io.recoveryLedgerR17);
+    validateR11RecoveryDocument(io.recoveryLedgerR11);
+    for (const key of ["sourceVersionId", "listId", "listVersionId", "itemId"])
+      if (sourceList[key] !== R5_BINDINGS[key]) stop("RECOVERY_LIST");
+  }
   await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
   if ((await tracedPreparation("COMPETENCY_UI", async () => io.verifyContext())) !== true)
     stop("COMPETENCE_CONTEXT");
@@ -3137,9 +5940,9 @@ export async function prepareCompetencies(io, sourceList) {
     )
       stop("COMPETENCE_STALE_OBSERVATION");
   };
-  const link = async (path) => {
+  const link = async (path, options) => {
     phaseActive();
-    await tracedPreparation("COMPETENCY_UI", async () => io.link(path));
+    await tracedPreparation("COMPETENCY_UI", async () => io.link(path, options));
     phaseActive();
     await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     phaseActive();
@@ -3250,47 +6053,35 @@ export async function prepareCompetencies(io, sourceList) {
     );
   }
   async function listMonth(month) {
-    // A real navigation remounts the list, so unchanged filters never fake freshness.
-    const ordinal = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => link(listPath));
-    await tracedPreparation("COMPETENCY_UI", async () =>
-      io.page.getByLabel("Competência", { exact: true }).fill(month.slice(0, 7)),
-    );
-    await tracedPreparation("COMPETENCY_UI", async () =>
-      observed(
-        "competencias",
-        { id_contrato: FIXTURE.contract, competencia_referencia: month },
-        ordinal,
-        {
-          select: EXACT_SELECTS.competencias.find((value) =>
-            value.includes("competencia_referencia,"),
-          ),
-        },
-      ),
-    );
     const found = (
-      await tracedPreparation("COMPETENCY_UI", async () =>
-        rows(
-          "competencias",
-          {
-            id_contrato: FIXTURE.contract,
-            competencia_referencia: month,
-          },
-          {
-            select: EXACT_SELECTS.competencias.find((value) =>
-              value.includes("competencia_referencia,"),
-            ),
-          },
-        ),
+      await tracedPreparation("COMPETENCY_UI", () =>
+        readCompetenceMonth(io, month, (budget) => io.goKnown(listPath, budget)),
       )
     ).filter((r) => r.competencia_referencia === month);
     if (found.length > 1 || found.some((r) => !uuid(r.id) || r.id === FIXTURE.historical))
       stop("COMPETENCE_AMBIGUOUS");
     return found;
   }
+
   async function createOrReuse(month) {
     await tracedPreparation("COMPETENCY_UI", async () => context());
     let existing = await tracedPreparation("COMPETENCY_UI", async () => listMonth(month));
+    if (io.recoveryLedgerR5) {
+      validateR5RecoveryDocument(io.recoveryLedgerR5);
+      validateR6RecoveryDocument(io.recoveryLedgerR6);
+      validateR7RecoveryDocument(io.recoveryLedgerR7);
+      validateR8RecoveryDocument(io.recoveryLedgerR8);
+      validateR9RecoveryDocument(io.recoveryLedgerR9);
+      validateR10RecoveryDocument(io.recoveryLedgerR10);
+      validateR13RecoveryDocument(io.recoveryLedgerR13);
+      validateR15RecoveryDocument(io.recoveryLedgerR15);
+      validateR16RecoveryDocument(io.recoveryLedgerR16);
+      validateR17RecoveryDocument(io.recoveryLedgerR17);
+      validateR11RecoveryDocument(io.recoveryLedgerR11);
+      const expected = R5_BINDINGS.competencies.find((c) => c.month === month);
+      if (!expected || existing.length !== 1 || existing[0].id !== expected.id)
+        stop("RECOVERY_STATE");
+    }
     if (!existing.length) {
       await tracedPreparation("COMPETENCY_UI", async () => link(listPath + "/nova"));
       await tracedPreparation("COMPETENCY_UI", async () =>
@@ -3327,8 +6118,14 @@ export async function prepareCompetencies(io, sourceList) {
     };
   }
   async function approvedContractFile() {
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      link(contractBase, { contextual: "contract_summary" }),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () => context());
     const ordinal = io.generation();
-    await tracedPreparation("COMPETENCY_UI", async () => link(contractBase + "/documentos"));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      link(contractBase + "/documentos", { contextual: "contract_documents" }),
+    );
     await tracedPreparation("COMPETENCY_UI", async () =>
       observed("documentos_contrato", { id_contrato: FIXTURE.contract }, ordinal),
     );
@@ -3432,7 +6229,13 @@ export async function prepareCompetencies(io, sourceList) {
     )
       stop("COMPETENCE_REQUIREMENT_RULE");
     c.requirementId = q.id;
+    const recovered = io.recoveryLedgerR16
+      ? JSON.parse(R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies.find((v) => v.id === c.id)
+      : null;
+    if (recovered && q.id !== recovered.requirementId) stop("RECOVERY_R8_DOCUMENT");
     const matching = loaded.value.documentos.filter((d) => d.requisito?.id === q.id);
+    if (recovered && (matching.length !== 1 || matching[0].id !== recovered.documentId))
+      stop("RECOVERY_R8_DOCUMENT");
     if (matching.length > 1) stop("COMPETENCE_DOCUMENT_AMBIGUOUS");
     function matchingDocument(value) {
       const found = value.documentos.filter((d) => d.requisito?.id === q.id);
@@ -3535,6 +6338,24 @@ export async function prepareCompetencies(io, sourceList) {
       refreshArea(c.id, c.month, "analise", "obter_analise_competencia_v116"),
     );
     let a = await tracedPreparation("COMPETENCY_RECONCILE", async () => analysis(c));
+    if (
+      io.recoveryLedgerR8 &&
+      c.id === R8_BINDINGS.competencies[0].id &&
+      (!uuid(a.execucao_atual?.id) ||
+        !["queued", "processing", "complete"].includes(a.estado_analise))
+    )
+      stop("RECOVERY_R8_ANALYSIS");
+    if (io.recoveryLedgerR16) {
+      const recovered = JSON.parse(R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies.find(
+        (v) => v.id === c.id,
+      );
+      if (
+        !recovered ||
+        a.estado_analise !== "complete" ||
+        a.execucao_atual?.id !== recovered.executionId
+      )
+        stop("RECOVERY_R16_OPINION");
+    }
     if (a.estado_analise === "not_analyzed") {
       if (a.allowed_actions?.executar_analise !== true) stop("COMPETENCE_ANALYSIS_DENIED");
       await tracedPreparation("COMPETENCY_COMMAND", async () =>
@@ -3823,6 +6644,8 @@ export async function prepareCompetencies(io, sourceList) {
     };
     let p = await tracedPreparation("COMPETENCY_RECONCILE", async () => readOpinion());
     if (!p) {
+      if (io.recoveryLedgerR11 && c.id === R5_BINDINGS.competencies[0].id)
+        stop("RECOVERY_R11_OPINION");
       const evidence = {
         ...c.evidence,
         analysisCurrent: true,
@@ -3835,11 +6658,7 @@ export async function prepareCompetencies(io, sourceList) {
           payload: { p_id_competencia: c.id },
           evidence,
           button: "Solicitar parecer",
-          confirmAfter: async () => {
-            await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
-            p = await tracedPreparation("COMPETENCY_RECONCILE", async () => readOpinion());
-            return !!p && uuid(p.id);
-          },
+          confirmAfter: async (jobUUID) => uuid(jobUUID),
         }),
       );
     }
@@ -3907,10 +6726,36 @@ export async function prepareCompetencies(io, sourceList) {
       v.blocking_summary?.analise_concluida_atual === true &&
       v.blocking_summary?.parecer_aprovado === true &&
       v.portao?.liberado === true &&
-      v.portao?.percentual === 100 &&
-      v.competencia.percentual_conformidade === 100;
-    if (!ready(view) || view.allowed_actions?.apresentar !== true)
-      stop("COMPETENCE_PRESENTATION_GATE");
+      v.portao?.percentual === 100;
+    if (view.blocking_summary?.analise_concluida_atual !== true)
+      stop("COMPETENCE_PRESENTATION_GATE_ANALYSIS");
+    if (view.blocking_summary?.parecer_aprovado !== true)
+      stop("COMPETENCE_PRESENTATION_GATE_OPINION");
+    if (view.portao?.liberado !== true) stop("COMPETENCE_PRESENTATION_GATE_PORTAO");
+    const snapshot = view.competencia.percentual_conformidade;
+    if (
+      view.portao?.percentual !== 100 ||
+      !(
+        snapshot === null ||
+        (typeof snapshot === "number" &&
+          Number.isFinite(snapshot) &&
+          snapshot >= 0 &&
+          snapshot <= 100)
+      )
+    )
+      stop("COMPETENCE_PRESENTATION_GATE_PERCENT");
+    if (view.allowed_actions?.apresentar !== true) stop("COMPETENCE_PRESENTATION_GATE_ACTION");
+    const approved = (v) =>
+      v?.competencia?.id === c.id &&
+      v.competencia.id_organizacao === FIXTURE.organization &&
+      v.competencia.id_contrato === FIXTURE.contract &&
+      v.competencia.competencia_referencia === c.month &&
+      v.competencia.situacao === "pode_apresentar_contratante" &&
+      v.competencia.percentual_conformidade === 100 &&
+      v.blocking_summary?.aprovacao_apresentacao_atual === true &&
+      ready(v);
+    if (view.competencia.situacao === "pode_apresentar_contratante" && !approved(view))
+      stop("COMPETENCE_PRESENTATION_STATE");
     await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${c.id}/apresentar`));
     await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
     const evidence = {
@@ -3921,7 +6766,12 @@ export async function prepareCompetencies(io, sourceList) {
       compliance: 100,
     };
     if (view.competencia.situacao !== "pode_apresentar_contratante") {
-      if (view.blocking_summary.aprovacao_apresentacao_atual === true)
+      if (
+        !["em_analise", "em_reanalise", "pendente_correcao", "rascunho"].includes(
+          view.competencia.situacao,
+        ) ||
+        view.blocking_summary.aprovacao_apresentacao_atual === true
+      )
         stop("COMPETENCE_PRESENTATION_STATE");
       await tracedPreparation("COMPETENCY_UI", async () =>
         io.page
@@ -3954,16 +6804,31 @@ export async function prepareCompetencies(io, sourceList) {
                 p_id_competencia: c.id,
               }),
             );
-            return (
-              view?.competencia?.id === c.id &&
-              view.competencia.situacao === "pode_apresentar_contratante" &&
-              view.blocking_summary?.aprovacao_apresentacao_atual === true &&
-              ready(view)
-            );
+            return approved(view);
           },
         }),
       );
     }
+    // A confirmed receipt remains confirmed even if authorization changes afterwards.
+    // Re-read before admitting a binding or opening the independent register command.
+    view = await tracedPreparation("COMPETENCY_RECONCILE", async () => overview(c.id, c.month));
+    if (!approved(view) || view.allowed_actions?.apresentar !== true)
+      stop("COMPETENCE_PRESENTATION_STATE");
+    const bindingOrdinal = io.generation();
+    await tracedPreparation("COMPETENCY_UI", async () => link(`/competencias/${c.id}/apresentar`));
+    await tracedPreparation("COMPETENCY_UI", async () =>
+      observed("obter_visao_geral_competencia", { p_id_competencia: c.id }, bindingOrdinal),
+    );
+    view = await tracedPreparation("COMPETENCY_GET", async () =>
+      io.rpcRead(
+        "obter_visao_geral_competencia",
+        { p_id_competencia: c.id },
+        { after: bindingOrdinal },
+      ),
+    );
+    await tracedPreparation("COMPETENCY_UI", async () => io.fresh());
+    if (!approved(view) || view.allowed_actions?.apresentar !== true)
+      stop("COMPETENCE_PRESENTATION_STATE");
     c.state = view.competencia.situacao;
     if (!register) return;
     if (
@@ -4138,8 +7003,10 @@ export async function prepareCompetencies(io, sourceList) {
         presentationApproved: true,
       };
     } catch (error) {
-      receipt.code = /^COMPETENCE_[A-Z_]+$/.test(error?.message || "")
-        ? error.message
+      activePreparationDiagnostics?.capture(error);
+      const safeCode = classifyPreparationFailure(error).code;
+      receipt.code = safeCode.startsWith("COMPETENCE_")
+        ? safeCode
         : "COMPETENCE_DEPENDENCY_BLOCKED";
       if (temporalAborted) break;
       try {
@@ -4181,10 +7048,35 @@ export function validatePreparerIdentity(env, proof, native, identity, head) {
   );
 }
 const PREPARER_FAILURE_CODES = new Set([
+  "RECOVERY_R5_LEDGER",
+  "RECOVERY_R6_LEDGER",
+  "RECOVERY_R7_LEDGER",
+  "RECOVERY_R7_PROOF",
+  "PREPARE_SECRET_ENV",
+  "RECOVERY_R4_PROOF",
+  "RECOVERY_R3_LEDGER",
+  "RECOVERY_SOURCE_INACTIVE",
+  "FLOW_LIST_READBACK_VERSION",
+  "OBSERVATION_MUTATION",
+  "OBSERVATION_ORDINAL",
   "RECOVERY_LEDGER",
   "RECOVERY_STATE",
   "RECOVERY_LIST",
   "RECOVERY_READ_ONLY",
+  "RECOVERY_R8_LEDGER",
+  "RECOVERY_R9_LEDGER",
+  "RECOVERY_R10_LEDGER",
+  "RECOVERY_R11_LEDGER",
+  "RECOVERY_R13_LEDGER",
+  "RECOVERY_R17_LEDGER",
+  "RECOVERY_R17_PRESENTATION",
+  "RECOVERY_R16_LEDGER",
+  "RECOVERY_R16_OPINION",
+  "RECOVERY_R15_LEDGER",
+  "RECOVERY_R15_OPINION",
+  "RECOVERY_R11_OPINION",
+  "RECOVERY_R8_DOCUMENT",
+  "RECOVERY_R8_ANALYSIS",
   "RECOVERY_PROOF",
   "RECOVERY_CONFIRMED_OPERATION",
   "DIAGNOSTIC_SUBPHASE",
@@ -4231,6 +7123,11 @@ const PREPARER_FAILURE_CODES = new Set([
   "COMPETENCE_PHASE_ABORTED",
   "COMPETENCE_PHASE_TIMEOUT",
   "COMPETENCE_PRESENTATION_GATE",
+  "COMPETENCE_PRESENTATION_GATE_ANALYSIS",
+  "COMPETENCE_PRESENTATION_GATE_OPINION",
+  "COMPETENCE_PRESENTATION_GATE_PORTAO",
+  "COMPETENCE_PRESENTATION_GATE_PERCENT",
+  "COMPETENCE_PRESENTATION_GATE_ACTION",
   "COMPETENCE_PRESENTATION_STATE",
   "COMPETENCE_READ_SHAPE",
   "COMPETENCE_REGISTER_GATE",
@@ -4309,6 +7206,7 @@ const PREPARER_FAILURE_CODES = new Set([
   "LOGIN_MASTER",
   "LOGOUT_FAILED",
   "OBSERVATION_ENDPOINT",
+  "OBSERVATION_DIAGNOSTIC",
   "OBSERVATION_FAILED",
   "OBSERVATION_LIMIT",
   "OBSERVATION_METADATA",
@@ -4345,6 +7243,35 @@ const PREPARER_FAILURE_CODES = new Set([
 ]);
 async function runFixturePreparation() {
   validateR1RecoveryDocument(R1_RECOVERY_DOCUMENT);
+  validateR2RecoveryDocument(R2_RECOVERY_DOCUMENT);
+  const r4Recovery = validateR4RecoveryDocument(getValidatedR4ZeroAuth());
+  const r5Recovery = validateR5RecoveryDocument(R5_RECOVERY_DOCUMENT);
+  const r6Recovery = validateR6RecoveryDocument(R6_RECOVERY_DOCUMENT);
+  const r7Recovery = validateR7RecoveryDocument(getValidatedR7ZeroAuth());
+  const r8Recovery = validateR8RecoveryDocument(R8_RECOVERY_DOCUMENT);
+  const r9Recovery = validateR9RecoveryDocument(R9_RECOVERY_DOCUMENT);
+  const r10Recovery = validateR10RecoveryDocument(R10_RECOVERY_DOCUMENT);
+  const r13Recovery = validateR13RecoveryDocument(R13_RECOVERY_DOCUMENT);
+  const r15Recovery = validateR15RecoveryDocument(R15_RECOVERY_DOCUMENT);
+  const r16Recovery = validateR16RecoveryDocument(R16_RECOVERY_DOCUMENT);
+  const r17Recovery = validateR17RecoveryDocument(R17_RECOVERY_DOCUMENT);
+  const r11Recovery = validateR11RecoveryDocument(R11_RECOVERY_DOCUMENT);
+  const validatedBudget = recoveryBudget(
+    R1_RECOVERY_DOCUMENT,
+    R3_RECOVERY_DOCUMENT,
+    r4Recovery,
+    r5Recovery,
+    r6Recovery,
+    r7Recovery,
+    r8Recovery,
+    r9Recovery,
+    r10Recovery,
+    r11Recovery,
+    r13Recovery,
+    r15Recovery,
+    r16Recovery,
+    r17Recovery,
+  );
   const diagnostics = createPreparationDiagnostics();
   if (activePreparationDiagnostics) err("DIAGNOSTIC_REENTRANT");
   activePreparationDiagnostics = diagnostics;
@@ -4353,6 +7280,7 @@ async function runFixturePreparation() {
     fence,
     observer,
     runtime,
+    broker,
     page,
     logoutVerified = false,
     completed = false;
@@ -4416,10 +7344,26 @@ async function runFixturePreparation() {
     }
     await tracedPreparation("PREFLIGHT", async () => checkFreshDeployment(proof, true));
     const persist = createReceiptWriter(receiptPath, identity);
-    const broker = createIntentBroker({
+    broker = createIntentBroker({
+      identity,
       persist,
       competenceGateAmended: true,
       recoveryLedger: R1_RECOVERY_DOCUMENT,
+      recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
+      recoveryLedgerR4: r4Recovery,
+      recoveryLedgerR5: r5Recovery,
+      recoveryLedgerR6: r6Recovery,
+      recoveryLedgerR7: r7Recovery,
+      recoveryLedgerR8: r8Recovery,
+      recoveryLedgerR9: r9Recovery,
+      recoveryLedgerR10: r10Recovery,
+      recoveryLedgerR11: r11Recovery,
+      recoveryLedgerR13: r13Recovery,
+      recoveryLedgerR15: r15Recovery,
+      recoveryLedgerR16: r16Recovery,
+      recoveryLedgerR17: r17Recovery,
+      beforeArm: (rpc, payload, evidence, binding) =>
+        observer?.markMutation(rpc, payload, evidence, binding) === true,
     });
     const debug = createServer();
     await tracedPreparation(
@@ -4461,38 +7405,83 @@ async function runFixturePreparation() {
         closeContext: () => context.close(),
       }),
     );
-    observer = createOfficialObserver(page);
+    observer = createOfficialObserver(page, { identity });
     const fresh = async () => {
       await tracedPreparation("RUNTIME_FRESH", async () => settleVerifiedPage(page, fence));
       await tracedPreparation("RUNTIME_FRESH", async () => observer.flush());
       if (scriptError) err("PREPARER_SCRIPT");
     };
-    const goKnown = async (path) => {
-      if (!Object.hasOwn(proof.documents, path)) err("PREPARER_SSR_PATH");
-      await tracedPreparation("PREFLIGHT", async () => checkFreshDeployment(proof, false));
-      await tracedPreparation("RUNTIME_NAVIGATE", async () =>
-        navigateVerifiedPage(page, fence, FIXTURE.origin + path),
-      );
-      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
-    };
-    const link = async (path) => {
+    const goKnown = async (path, readBudget) =>
+      observer.readBarrier(async (budget) => {
+        const guard = () => observer.assertReadBarrier(budget);
+        guard();
+        if (!Object.hasOwn(proof.documents, path)) err("PREPARER_SSR_PATH");
+        await tracedPreparation("PREFLIGHT", () => checkFreshDeployment(proof, false));
+        guard();
+        await tracedPreparation("RUNTIME_FRESH", () => observer.drainReads(budget));
+        guard();
+        await tracedPreparation("RUNTIME_NAVIGATE", () =>
+          navigateVerifiedPage(page, fence, FIXTURE.origin + path, () =>
+            observer.readBarrierRemaining(budget),
+          ),
+        );
+        guard();
+        await tracedPreparation("RUNTIME_FRESH", () => fresh());
+        guard();
+      }, readBudget);
+    const link = async (path, options, readBudget) => {
+      const guard = () =>
+        readBudget === undefined ? true : observer.assertReadBarrier(readBudget);
+      guard();
       if (!/^\/(?:contratos|competencias)\/[a-f0-9-]{36}(?:\/[a-z0-9-]+)*$/.test(path))
         err("PREPARER_SPA_PATH");
-      await tracedPreparation("RUNTIME_FRESH", async () => fresh());
+      await tracedPreparation("RUNTIME_FRESH", async () =>
+        readBudget === undefined ? fresh() : observer.readBarrier(() => fresh(), readBudget),
+      );
+      guard();
       if (page.url() === FIXTURE.origin + path) {
         if (Object.hasOwn(proof.documents, path)) {
-          await tracedPreparation("PREFLIGHT", async () => goKnown(path));
+          await tracedPreparation("PREFLIGHT", async () => goKnown(path, readBudget));
           return;
         }
         await tracedPreparation("PREFLIGHT", async () =>
-          goKnown(`/contratos/${FIXTURE.contract}/competencias`),
+          goKnown(`/contratos/${FIXTURE.contract}/competencias`, readBudget),
         );
       }
-      const candidates = page.locator(`a[href="${path}"]:visible`);
       let selected = null;
+      if (options !== undefined) {
+        const spec = {
+          contract_summary: ["/contratos/" + FIXTURE.contract, "Contrato da competência"],
+          contract_documents: [
+            "/contratos/" + FIXTURE.contract + "/documentos",
+            "Documentos do contrato",
+          ],
+        }[options?.contextual];
+        if (!keys(options, ["contextual"]) || !spec || path !== spec[0]) err("PREPARER_SPA_PATH");
+        const nav = page.getByRole("navigation", { name: "Navegação principal", exact: true });
+        if ((await tracedPreparation("PREFLIGHT", async () => nav.count())) !== 1)
+          err("PREPARER_SPA_LINK");
+        const group = nav.getByRole("group", { name: "Contexto atual", exact: true });
+        if ((await tracedPreparation("PREFLIGHT", async () => group.count())) !== 1)
+          err("PREPARER_SPA_LINK");
+        const target = group.getByRole("link", { name: spec[1], exact: true });
+        if (
+          (await tracedPreparation("PREFLIGHT", async () => target.count())) !== 1 ||
+          !(await tracedPreparation("PREFLIGHT", async () => target.isVisible())) ||
+          !(await tracedPreparation("PREFLIGHT", async () => target.isEnabled())) ||
+          (await tracedPreparation("PREFLIGHT", async () => target.getAttribute("href"))) !==
+            path ||
+          (await tracedPreparation("PREFLIGHT", async () =>
+            target.getAttribute("aria-disabled"),
+          )) === "true"
+        )
+          err("PREPARER_SPA_LINK");
+        selected = target;
+      }
+      const candidates = page.locator(`a[href="${path}"]:visible`);
       for (
         let n = 0;
-        n < (await tracedPreparation("PREFLIGHT", async () => candidates.count()));
+        !selected && n < (await tracedPreparation("PREFLIGHT", async () => candidates.count()));
         n++
       ) {
         const item = candidates.nth(n);
@@ -4506,7 +7495,17 @@ async function runFixturePreparation() {
         }
       }
       if (!selected) err("PREPARER_SPA_LINK");
-      await tracedPreparation("RUNTIME_NAVIGATE", async () => selected.click());
+      guard();
+      if (readBudget !== undefined) {
+        await tracedPreparation("RUNTIME_FRESH", () => observer.drainReads(readBudget));
+        guard();
+      }
+      await tracedPreparation("RUNTIME_NAVIGATE", async () =>
+        selected.click(
+          readBudget === undefined ? {} : { timeout: observer.readBarrierRemaining(readBudget) },
+        ),
+      );
+      guard();
       await tracedPreparation("RUNTIME_NAVIGATE", async () =>
         page.waitForURL(FIXTURE.origin + path),
       );
@@ -4539,12 +7538,17 @@ async function runFixturePreparation() {
       return true;
     };
     runtime = createRuntimeLogin({
+      recoveryLedgerR13: r13Recovery,
+      recoveryLedgerR15: r15Recovery,
+      recoveryLedgerR16: r16Recovery,
+      recoveryLedgerR17: r17Recovery,
       page,
       fence,
       waitOrganization,
       openOrganizationSelector: openVerifiedOrganizationSelector,
       verifyContext,
     });
+    assertPrivateRequestEnvironment(process.env);
     phase = "LOGIN";
     await tracedPreparation("LOGIN", async () =>
       runtime.login({
@@ -4647,8 +7651,22 @@ async function runFixturePreparation() {
     };
     const io = {
       recoveryLedger: R1_RECOVERY_DOCUMENT,
-      recoveryReady: (proof) => {
-        broker.authorizeRecovery(proof);
+      recoveryLedgerR3: R3_RECOVERY_DOCUMENT,
+      recoveryLedgerR4: r4Recovery,
+      recoveryLedgerR5: r5Recovery,
+      recoveryLedgerR6: r6Recovery,
+      recoveryLedgerR7: r7Recovery,
+      recoveryLedgerR8: r8Recovery,
+      recoveryLedgerR9: r9Recovery,
+      recoveryLedgerR10: r10Recovery,
+      recoveryLedgerR11: r11Recovery,
+      recoveryLedgerR13: r13Recovery,
+      recoveryLedgerR15: r15Recovery,
+      recoveryLedgerR16: r16Recovery,
+      recoveryLedgerR17: r17Recovery,
+      sealRecoveryOpinion: (after) => observer.sealRecoveryOpinion(broker, after),
+      recoveryReady: (proof, opinionProof) => {
+        broker.authorizeRecovery(proof, opinionProof);
         recoveryState = proof;
         return true;
       },
@@ -4664,9 +7682,13 @@ async function runFixturePreparation() {
       sourceCapabilities,
       command,
       read: observer.read,
+      readBarrier: observer.readBarrier,
+      assertReadBarrier: observer.assertReadBarrier,
+      readBarrierRemaining: observer.readBarrierRemaining,
+      drainReads: observer.drainReads,
       rpcRead: observer.rpcRead,
       generation: observer.generation,
-      observedAfter: observer.observedAfter,
+      observedAfter: observer.waitObservedAfter,
       wait: (ms) => new Promise((resolve) => setTimeout(resolve, Math.max(2000, ms))),
       abortPhase: async () => {
         fence.close();
@@ -4709,7 +7731,10 @@ async function runFixturePreparation() {
       }
     }
     await tracedPreparation("CLEANUP", async () =>
-      diagnostics.finishCleanup("OBSERVER_CLOSE_FAILED", () => observer?.close()),
+      diagnostics.finishCleanup("OBSERVER_CLOSE_FAILED", async () => {
+        await tracedPreparation("CLEANUP", async () => observer?.seal());
+        observer?.close();
+      }),
     );
     await tracedPreparation("CLEANUP", async () =>
       diagnostics.finishCleanup("FENCE_CLOSE_FAILED", () => fence?.close()),
@@ -4735,15 +7760,27 @@ async function runFixturePreparation() {
       blockedCode ||= diagnostics.capture(error);
     }
     collect(bindings);
+    const observationDiagnostic = createObservationDiagnostic(
+      identity,
+      observer?.observationFailure() ?? null,
+    );
+    if (observationDiagnostic.firstFailure !== null) {
+      completed = false;
+      blockedCode ||= diagnostics.capture(new Error("OBSERVATION_FAILED"));
+    }
     const report = {
       schema: "contaos.fixture.preparation.v1",
       failure: blockedCode || (cleanupOk ? null : "PREPARER_CLEANUP"),
       diagnostics: diagnostics.snapshot(),
+      intentLedger: preparationIntentSummary(broker),
       recovery: {
         ledgerSha256: R1_RECEIPTS_SHA256,
         priorWorkflowRun: "42540864527",
-        confirmedBefore: 2,
-        maxNewIntentions: 22,
+        confirmedBefore: validatedBudget.confirmedBefore,
+        maxNewIntentions: validatedBudget.maxNewIntentions,
+        r3ReceiptsSha256: R3_RECOVERY_DOCUMENT.receiptsSha256,
+        r3WorkflowRun: R3_RECOVERY_DOCUMENT.workflowRun,
+        r4ZeroAuth: r4Recovery,
         reconciled: !!recoveryState,
         sourceVersion: recoveryState?.sourceVersion || null,
         sourceHash: recoveryState?.sourceHash || null,
@@ -4759,8 +7796,106 @@ async function runFixturePreparation() {
     writeFileSync(join(output, "report.json"), JSON.stringify(report, null, 2) + "\n", {
       mode: 0o600,
     });
+    writeFileSync(join(output, "receipts-r3.json"), R3_RECOVERY_DOCUMENT.receiptsRaw, {
+      mode: 0o600,
+    });
+    writeFileSync(
+      join(output, "recovery-r3.json"),
+      JSON.stringify(R3_RECOVERY_DOCUMENT, null, 2) + "\n",
+      { mode: 0o600 },
+    );
+    writeFileSync(join(output, "receipts-r5.json"), R5_RECOVERY_DOCUMENT.receiptsRaw, {
+      mode: 0o600,
+    });
+    writeFileSync(
+      join(output, "recovery-r5.json"),
+      JSON.stringify(R5_RECOVERY_DOCUMENT, null, 2) + "\n",
+      { mode: 0o600 },
+    );
+    writeFileSync(join(output, "receipts-r6.json"), R6_RECOVERY_DOCUMENT.receiptsRaw, {
+      mode: 0o600,
+    });
+    writeFileSync(
+      join(output, "recovery-r6.json"),
+      JSON.stringify(R6_RECOVERY_DOCUMENT, null, 2) + "\n",
+      { mode: 0o600 },
+    );
+    writeFileSync(join(output, "recovery-r7.json"), JSON.stringify(r7Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
+    writeFileSync(join(output, "receipts-r8.json"), r8Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r8.json"), JSON.stringify(r8Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
+    writeFileSync(
+      join(output, "observation-diagnostic.json"),
+      JSON.stringify(observationDiagnostic, null, 2) + "\n",
+      { mode: 0o600 },
+    );
+    writeFileSync(join(output, "receipts-r9.json"), r9Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r9.json"), JSON.stringify(r9Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
+    writeFileSync(join(output, "receipts-r10.json"), r10Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r10.json"), JSON.stringify(r10Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
+    writeFileSync(join(output, "receipts-r11.json"), r11Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r11.json"), JSON.stringify(r11Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
+    writeFileSync(join(output, "receipts-r13.json"), r13Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r13.json"), JSON.stringify(r13Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
+    writeFileSync(join(output, "receipts-r15.json"), r15Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r15.json"), JSON.stringify(r15Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
+    writeFileSync(join(output, "receipts-r16.json"), r16Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r16.json"), JSON.stringify(r16Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
+    writeFileSync(join(output, "receipts-r17.json"), r17Recovery.receiptsRaw, { mode: 0o600 });
+    writeFileSync(join(output, "recovery-r17.json"), JSON.stringify(r17Recovery, null, 2) + "\n", {
+      mode: 0o600,
+    });
     let sums = "";
-    for (const name of ["receipts.json", "report.json", "receipts-r1.json"])
+    writeFileSync(
+      join(output, "recovery-r2.json"),
+      JSON.stringify(R2_RECOVERY_DOCUMENT, null, 2) + "\n",
+      { mode: 0o600 },
+    );
+    for (const name of [
+      "receipts.json",
+      "report.json",
+      "receipts-r1.json",
+      "recovery-r2.json",
+      "receipts-r3.json",
+      "recovery-r3.json",
+      "receipts-r5.json",
+      "recovery-r5.json",
+      "receipts-r6.json",
+      "recovery-r6.json",
+      "recovery-r7.json",
+      "receipts-r8.json",
+      "recovery-r8.json",
+      "observation-diagnostic.json",
+      "receipts-r9.json",
+      "recovery-r9.json",
+      "receipts-r10.json",
+      "recovery-r10.json",
+      "receipts-r11.json",
+      "recovery-r11.json",
+      "receipts-r13.json",
+      "recovery-r13.json",
+      "receipts-r15.json",
+      "recovery-r15.json",
+      "receipts-r16.json",
+      "recovery-r16.json",
+      "receipts-r17.json",
+      "recovery-r17.json",
+    ])
       sums +=
         createHash("sha256")
           .update(await tracedPreparation("PREFLIGHT", async () => readFile(join(output, name))))
@@ -4840,8 +7975,8 @@ export function fixtureBindingReceipt(sourceList, result) {
 export async function runCli(args = process.argv.slice(2)) {
   if (!Array.isArray(args) || args.length !== 1 || args[0] !== "--prepare-fixtures")
     err("PREPARER_CLI_USAGE");
-  if (process.env.GITHUB_EVENT_NAME === "workflow_run")
-    await loadSingleRequestProof({ operation: "fixtures", fresh: true });
+  if (process.env.GITHUB_EVENT_NAME !== "workflow_run") err("PREPARER_MAIN_ONLY");
+  await loadSingleRequestProof({ operation: "fixtures", fresh: true });
   if (!preparerEventAllowed(process.env)) err("PREPARER_MAIN_ONLY");
   return runFixturePreparation();
 }

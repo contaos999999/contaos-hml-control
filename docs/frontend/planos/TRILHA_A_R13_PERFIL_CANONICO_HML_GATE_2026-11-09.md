@@ -1,0 +1,119 @@
+# GATE R13: perfil canônico GITmain HML e prova de zeroAuth R12
+
+Issue #317, prioridade0. PLAN494 integrado7b2dd9161016981f8da7401ceba94305a691c19b, PLANblobf9bdccc70dad96f058fde1d3d415578fd5f43da4. Este GATE somente libera a operação HML e o BUILD abaixo depois de CI/revisão independente/merge protegido. Não libera Auth, SQL, request, rerun de negócio ou projetoPROD. C13/491/492/source_proof/types8ea/catalog100/97/25normativas e históricos permanecem intactos.
+
+## Recuperação CI limitada: incidente6605 e experimento controlado2runners
+
+O primeiro main que integrou este GATE, 6605fbfc40359a1565abbffc8b8358ff4cf44b83, teve Zero42671473829 eLOCK42671473179 FAILURE/attempt1 ANTES de criar jobs: jobs[]/total_count0/checkruns0. UI pública primária: Internal server error, correlaçõesZero8be6e456-3daf-4d03-909d-900a8e7a6915 eLOCK4bad98ff-996f-40a7-9426-d3f670126d0d. Nenhum teste de código nesses pushes; FAILURE não é SUCCESS. Checkpoint6747808208 registra causa/readback. Naquele checkpoint a primeira operaçãoVercel ainda não havia sido emitida; depois foi consumida em EVid/CANCELED conforme a correção limitada abaixo.
+
+Uma chamada oficial rerun-failed-jobs do Zero retornou HTTP403 "This workflow run cannot be retried", sem attempt2. Depois, uma única recuperação oficial por UI nos dois runs públicos D1 foi aceita como attempt2, sem debug/Auth/R12: ZeroFAIL sem jobfrontend-quality, mas TestC129351763045SUCCESS; LOCKFAIL/jobs0. A distinção de tempo é obrigatória: o403 inicial não gerou attempt2; a chamadaUI posterior gerou. PR497 originaldf30 também falhou antesjobs: Zero42672899874/LOCK42672899369, correlações61ac5b7a-9a24-4b38-a03e-78f6aeb11a55 e b496214f-7e37-4df3-b936-2bfd4f0f2313. Nenhum desses fatos aprova deploy.
+
+Não há raiz de runner demonstrada. TestC usa ubuntu-latest e log realUbuntu26.04.1/imageubuntu-26.04/version20261101.186.1; não é22.04. PR496Zero42672086203/LOCK42672086268 também passaram emlatest; Auth/Fixtures em22.04 funcionaram. Isso não prova que latest causa as falhas nem que22.04 as corrige.
+
+Esta MESMA PR497 recebe UM experimento reversível restrito de infraestrutura: apenas jobfrontend-quality de .github/workflows/contaos-frontend-zero-drift.yml e jobprotect-types de .github/workflows/lock-types-double-barrier.yml passam runs-on: ubuntu-latest para runs-on: ubuntu-22.04, UMA ocorrência por arquivo. BasesD1 respectivas9d9d6ef94775661c9de898a2c6540cc6a5b38c48 e f42c763367359ad9e19e94869502a0ee359d0d2d. Antes do push, assert estrutural: reverter somente os dois valores reproduz bytes originaisD1 integralmente. Nenhuma outra linhaYAML muda: events/if/actions/perms/secrets/timeout/hash/guard/cache/steps/names intactos. Auth/Fixtures/TestCYAML, auditor/preparer/testes, SRC/public/types/deps/lock permanecem byte-exatos.
+
+A proibiçãoYAML deste GATE é revogada SOMENTE para essas duas linhas deste experimento de CI. BUILD de negócio posterior permanece2auditmjs, sem YAML. PLANO preserva82paths em prefixo e acrescenta somente .github/workflows/lock-types-double-barrier.yml, total83; ZeroYAML já permitido. Três docs existentes explicitam o incidente e este recorte, sem novo PLAN/PR/código de negócio/controller ou aumento de orçamento.
+
+Exigir revisão independente geral/privacidade do PATCH concreto, Zeroquality+LOCK+TesteC reais e PRCI terminalSUCCESS no HEAD final; depois integração NORMAL protegida e PUSHZero/LOCK do novo main terminalSUCCESS antes de qualquer operação HML. Não forçar status/check, pular proteção, mudar semântica de checks, timeout/billing/env/security ou reinterpretar ausência de jobs como aprovação. Se22.04 também falhar antesjobs, parar e investigar; não terceiro runner, retryloop ou novo commit vazio para contornar gates. Se iniciar e passar, isso prova somente o HEAD validado em22.04, não a causa do incidente.
+
+O Dsha operacional será o NOVO main aprovado descendente do GATE6605 e desta emenda, com PRCI e pushCI próprios SUCCESS reais. Root registra SHA/pais/árvore/runIDs após integração e prova main==Dsha imediatamente antes da operação. Diff6605→Dsha permitido somente nos três paths documentais desta emenda e nessas duas runs-on; reversão das duas linhas deve recuperar todos os arquivos não documentaisD1. Auditor/preparerR12 permanecem12549d9cf6058ebb098832d71ca5b9ad9a0c2e0d/c4979dc74ecd033c2a38d479115e7d1302060d37 até BUILD2mjs autorizado.
+
+Exceção é limitada a este incidente e a esta PR497, sem rerun-all adicional/originaisR12 ou novo pedido de negócio. PerfilGITmainHML/forceNew1/aliasbinding/fixed11/publicliveprobe/R12zeroAuth/cache/R11reserva/18nativas/20+SHA21 permanecem integrais; o limite inicial deuma chamada só é acrescido da única corretiva expressamente definida abaixo. Nenhum Auth/SQL/deploy está autorizado antes das condições acima.
+
+## Correção limitada do Ignored Build Step: uma chamada adicional
+
+D2main631090724d6b85483737c60a44d322f268fc1c8c integrou PR497 após revisões; pushZero42676353061 eLOCK42676352564 SUCCESS/attempt1 reais. A primeira chamadaHML autorizada foi efetivamente consumida, checkpoint6748412332: dpl_EVidGdx215jyxxd2sZG8PvM2kfJJ/source631/refmain/targetproduction/mesmo projeto/time terminou CANCELED. Não repetir essa chamada.
+
+Build logs primários dessa tentativa mostram IgnoredBuildStep executando EXATAMENTE:
+`if [ "$VERCEL_ENV" = "preview" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "348649f6a0af5d468ad2ac401b2fd96afa125cc1" ]; then exit 1; else exit 0; fi`
+O targetproduction/source631 não passa nessa allowlist antiga; exit0 cancelou o build, com errorLink ignored-build-step. Esse é o fundamento primário observado, sem atribuir a falha de CI anterior ao runner. Não há vercel.json no repositório. get_project confirmou projeto/time/framework, mas seu summary NÃO expôs commandForIgnoringBuildStep; não declarar readbackAPI desse valor onde não foi retornado.
+
+Exceção explícita às proibições de projectSettings/ignoreCommand abaixo: UMA chamada CORRETIVA adicional create-deployment pode fornecer SOMENTE projectSettings.commandForIgnoringBuildStep. É configuração PERSISTENTE do projeto, não transação atômica nem override descartável; pode persistir mesmo se a criação/build falhar. Nenhum outro campo projectSettings/env/buildsettings/security/protection/billing/Turbo/customEnv/meta/gitMetadata pode ser alterado. Não usar update-project separado, rollback automático ou outra chamada de settings.
+
+Antes da chamada, integrar esta emenda3docs com revisão independente/PRCI SUCCESS e pushZero/LOCK do novo main tambémSUCCESS. Root fixa D3 como esse HEADreal aprovado descendente631 e prova main==D3/pais/árvore/CI; diff631→D3 apenas os três docs desta emenda. SRC/public/deps/lock/types, YAMLs/guards/políticas/auditor/preparer/testes R12 devem permanecer byte-exatos até BUILD2mjs já autorizado. Não inventar D3 futuro nem usar631 como se fosse o novo SHA.
+
+Materializar o seguinte guard CANÔNICO com D3 completo, literal40hex minúsculo validado; o placeholder não é comando executável:
+`if [ "$VERCEL_ENV" = "production" ] && [ "$VERCEL_GIT_COMMIT_SHA" = "<D3hex40literal>" ]; then echo CONTAOS_HML_PINNED_BUILD_ALLOW_EXIT_1; exit 1; else exit 0; fi`
+Substituir a antiga regra preview348, sem união, fallback, always-build ou ampliar ambiente/SHA. Apenas production+D3 retorna1 e emite a linha fixa CONTAOS_HML_PINNED_BUILD_ALLOW_EXIT_1. Todos os demais casos retornam0, stdoutvazio. Não imprimir variáveis, env ou token.
+
+Exigir antes da chamada ensaio POSIX REAL /bin/sh, envmínimo contendo somente VERCEL_ENV/VERCEL_GIT_COMMIT_SHA nos casos aplicáveis, timeout3s/maxBuffer4KiB, usando o literal materializado D3. Tabela: production+D3→exit1/markerLF; preview+D3→0/vazio; production+outroSHA→0/vazio; preview+outroSHA→0/vazio; ENVausente/SHAausente/ambosausentes/vazios→0/vazio. O antigo guard deve mostrar contraste preview348→1 e production631→0. Fixture631 real pode validar o template em TEST-only antes do D3 existir, mas não substitui a prova literalD3 antes da chamada. Ensaios test-only no audit.test existente não liberam produtor/runtime ou Auth antesREADY; registrar HEAD/log/casos reais, sem fabricar GREEN para os seis REDs de negócio ainda pendentes.
+
+A requisição corretiva permanece no mesmo prj_JtEWXg54EIYcQPwVzFiQyJcVIlFo/time team_yeAabFPw9FQ4nS68g7LASDEJ/repoGitHub1442722734/gitSourcetypegithub/refmain/targetproductionHML/forceNew1. deploymentId/withLatestCommit omitidos; não herdar CMf ou EVid. Só o campo persistente acima é a nova exceção. Contabilizar antes do envio: primeira chamadaEVid cancelada1 + corretiva no máximo1 = máximo2 chamadas create neste ciclo. Falha, resposta incerta, CANCELED ou perfil desconhecido consomem a corretiva; sem retry/build3/rollback/configcall automático.
+
+Verificar projeto/time/proteções inalterados e sourceSHAAPI==D3. Se API de criação/deployment expuser o guard, registrar igualdade literal; se omitir, declarar explicitamente SEMREADBACKAPI_DO_VALOR, sem fingir prova. Em todos os casos, exigir no NOVO buildlog o script canônico exato materializadoD3, marker estático e continuação do build, além de sourceD3/targetproduction/READY no mesmo projeto/time. Ausência/contradição não pode virar aprovação. O marker prova o ramoALLOW seguido deexit1; READY sozinho ou echoAPI sozinho não basta.
+
+Manter CMf348/artifacts históricos intactos até corretivaREADY e validação dos aliasesHML autorizados. Nenhum projetoPROD/secret/segurança muda. PublicliveprobeCI/fixed11/clientgkl/proveniência/nativas18/SSR/ancestralidade continuam exigidos antes de Auth/nonceR13. BUILD2auditmjs somente depoisREADY/pinsD3 reais; R11Doc10+1+13/denyOct/R12zeroAuth/20dados+SHA21/HISTORY17 permanecem intactos.
+
+## Operação única no mesmo projeto HML
+
+Depois do merge protegido desta emenda corretiva, Root fixa como Dsha/D3 o NOVO main aprovado descendente631, com PRCI e pushCI próprios terminalSUCCESS e readback de Git/parents/árvore, conforme as cláusulas limitadas acima. Antes da chamada, main deve continuar exatamente nesse SHA. Criar somente a única build CORRETIVA adicional pelo create-deployment oficial no projeto prj_JtEWXg54EIYcQPwVzFiQyJcVIlFo/namecontaos-41-hml/time team_yeAabFPw9FQ4nS68g7LASDEJ, repositórioGitHub1442722734/contaos999999/contaos-hml-control. gitSource.type=github,repoId=1442722734,ref=main; target=production é o rótulo técnico deste projeto HML. Query forceNew=1 permite build fresca/bypass de deduplicação, não prova bypass de ignore-build.
+
+Não herdar/redeploy CMf: deploymentId ewithLatestCommit omitidos. projectSettings/customEnv/skipAutoDetectionConfirmation e overrides de ignoreCommand/buildsettings omitidos, SALVO o único projectSettings.commandForIgnoringBuildStep da correçãoD3 acima; configurações podem persistir, portanto não tratá-las como descartáveis por build. Sem Turbo/env/secrets/billing/segurança/meta/gitMetadata spoof/sourceupload avulso/refSHA/projeto alternativo. Se CANCELED/ERROR, guardar API/logs permitidos e investigar antes de nova proposta; não retry cego, não inferir motivo pelo buildEvents vazio.
+
+Root verifica API atual projectId/team/repo/gitSHA=Dsha/branchmain/targetproduction/READY e domínio/aliases. Se main mudar durante a operação ou SHA divergir, bloquear. Somente aliases HML deste mesmo projeto, incluindo contaos-41-hml.vercel.app e o aliasgit-main já previsto, podem ser atribuídos ao D real validado quando necessário para binding. Nenhum alias/projetoPROD ou outro recurso. Registrar D/deploymentId reais após API, sem inventar pins futuros.
+
+Manter a política fixed11 e client config byte-idênticas: branchURLcontaos-41-hml-git-main-contaos9999.vercel.app; ENV/TARGET_ENVproduction; refmain/providergithub/PR_IDvazio; repoID1442722734/ownercontaos999999/slugcontaos-hml-control; projectId acima/productionURLcontaos-41-hml.vercel.app. Preservar clientSupabaseHMLgklhhhyosgasnyoxlrui e demais CLIENT_PUBLIC_CONFIG existentes. Os conteúdos SRC348649f6/C13 permanecem; D terá sua própria identidadeGitmain, nunca um frontendSHA348 atribuído a outro build.
+
+Depois de BUILD/merges e imediatamente antes de request, Root revalida aliasD/READY/Dsha/ancestralidade/backend/main e ausência de deployment concorrente que possa trocar o binding. Reatribuição HML, se necessária, só ao mesmo D validado e sem nova build. Se o binding ou perfil mudar, não gastar nonce: bloquear até nova evidência. Após request, main/deployment congelados até todos os originais terminais.
+
+## Probe público obrigatório em CI antes de consumir R13
+
+Dsha/deploymentId precisam existir e estar comprovados pela operação antes do BUILD final. Nos dois mjs permitidos, acrescentar teste Node de integração que chama discoverPublicGraph() REAL, sem fetcher fake, e resolveDeploymentIdentity(graph.modules,{frontendSha:Dsha,deploymentId:D}) com esses dois pins literais reais. Nenhum process.env/skip/fallback/placeholder pode fazer esse teste PASS sem executar a descoberta pública. Exigir igualdade e os validadores existentes fixed11/client/identidade intactos.
+
+Usar as funções já exportadas e boundedPublicFetch existentes: somente GET HML/login e assetsJS no destino permitido, credentials:omit,redirect:error,no-cache,status200/responseURLexata,HTML256KiB/JS4MiB/total8MiB/até128módulos/4paralelos. Deadlinegraph180000ms existente é checado entre batches; cada fetch tem15000ms. Não alegar um timeout global mais forte, aumentar/resetar limites ou criar transporte/CLI/env/YAMLnovo. Registrar cardinalidade/bytes reais, sem exigir110 históricos437. Logs somente marcador técnico fechado PASS/HEAD/Dsha/D/moduleCount/bytes, sem bundle/rawURLs/headers/env/keys. Probe não executa app, Auth, Supabase, screenshots ou os18casos públicos; não equivale à proveniência/SSR/sessãoMaster.
+
+CIAuth/Fixtures do HEADfinal precisa executar esse probe e passar antes de requestR13, além de18nativas reais e validações usuais. Step7 strict/proveniência/TLS/SSR/ancestralidade/nativas antessecret continuam protegendo mudanças posteriores do alias; a descoberta de identidade é candidata, não substitui essas barreiras.
+
+## R12 original e prova técnica fechada
+
+R12headS3d6bea3e938459f348130bf1d04431a072dba081, todos attempt1/main:
+- upstream42666600147/workflow406076025/push/ContaOS Frontend Zero-Drift SUCCESS: jobs129331797954 Zero-DriftSUCCESS e129331798384 TesteC independenteSUCCESS.
+- Fixtures42666864017/workflow411426169/workflow_run FAILURE: jobs129332744911 solicitaçãoSUCCESS,129332747763 protocoloSKIPPED,129333370334 preparaçãoHMLFAILURE.
+- Audit42666864220/workflow411115674/workflow_run SUCCESS: jobs129332746954 solicitaçãoSUCCESS,129332749745 protocoloSKIPPED,129332966127 auditoriaHMLSKIPPED.
+
+Exigir os paths/names/repos públicos/ownerIDs/workflowIDs/HEAD/head_repository/main/attempt/status/conclusão exatos; totaljobs2/3/3 e nenhum extra/ambíguo. Conferir run e endpoint attempt1 por seus campos, sem exigir igualdade integral de timestamps entre os dois objetos. Campos de tempo devem ser válidos/coerentes individualmente. Conferir a matriz completa do private129333370334, nomes/números fixados pelo workflow original:
+- 1Set up job,2Checkout imutavel do executor main,3Run actions/setup-node@v4,4Run node --test scripts/ci/install-pinned-bun.test.mjs,5Dependencias congeladas do executor,6Recibo inicial publico para as fases sem credenciais: SUCCESS.
+- 7Reancorar deployment HML sem credenciais, antes do checkout da fonte: FAILURE.
+- 8Validar SHA ancestral antes de baixar ou executar a fonte;9Fonte aprovada em checkout separado, sem credenciais persistidas;10Dependencias congeladas da fonte aprovada;11Run actions/cache@v4;12Run ./node_modules/.bin/playwright install --with-deps chromium;13Barreira nativa no mesmo HEAD antes de secrets;14Preparacao e SSR sem credenciais privadas;15Revalidar main e unicidade dentro da concorrencia antes de secrets;16Somente agora fornecer o par sintetico ao preparador separado: SKIPPED.
+- 17Verificar hashes gerados, inclusive em resultado parcial;18Evidencia privada imutavel por 90 dias: FAILURE.
+- 35Post Run actions/setup-node@v4 SKIPPED;36Post Checkout imutavel do executor main SUCCESS;37Complete job SUCCESS.
+Todos completed, sem steps extras/ausentes.
+
+Artifacts do runFixtures deve ter total_count0 e array vazio. Step16SKIP prova que o único fornecimento do par Master não executou; não inferir logout/recibos/bindings ou estado de negócio. Prova zeroAuth/zero novas intenções é derivada da matriz original e código pinado, não um report de execução. Não exportar erro bruto, payload, URL, token ou env.
+
+Origem Git obrigatória em S: fixturesYAML9af69f3ae0797cd4f0e9713950e473bc1b4a8f17; auditYAML848acf35a51bb5b420d5cf9047972da4a75a98eb; auditor12549d9cf6058ebb098832d71ca5b9ad9a0c2e0d; preparerc4979dc74ecd033c2a38d479115e7d1302060d37. Caminhos respectivos .github/workflows/contaos-trilha-a-fixtures.yml,.github/workflows/contaos-trilha-a-authenticated.yml,scripts/hml/authenticated-visual-audit.mjs,scripts/hml/prepare-visual-fixtures.mjs. Ler os quatro objetos, recomputar Gitblob SHA pelo conteúdo e comparar com os pins; provar S ancestral do pai aprovado R13. Não trocar Git real por texto mock no runtime.
+
+verifyR12ZeroAuth usa o transporte singleRequestGet existente e dez GETs fixos: run/attempt1/attempt1jobs de cada um dos três runs, mais artifactsFixtures. Listas fechadas2/3/3/0, sem paginação incompleta ou endpoint arbitrário. Preservar deadline60000ms da sessão/perGETmáximo5000ms/bytes4194304/redirecterror/status200/tokenENVrevalidado por chamada/semretry. Limites globais de paginação10×100 existentes continuam intactos. Falta, indisponibilidade, erro ou ambiguidade bloqueiam.
+
+## Cache existente e BUILD mínimo2mjs
+
+Somente scripts/hml/authenticated-visual-audit.mjs e scripts/hml/authenticated-visual-audit.test.mjs. Não editar preparer/teste/YAML/deps/lock/SRC/types/backend/transporte/fence/políticasfixed11 no BUILD2mjs; a única exceçãoYAML é o experimentoCI de duas runs-on fechado acima.
+
+Noncefixtures futuro trilha-a-fixtures-20261109-r13; R12 acrescentado aos gastos. Acrescentar ancestralidade deste GATE integrado ao contratoGit. verifyR12ZeroAuth é chamado no controller verifySingleRequest existente depois da seleção da operaçãofixtures/R13, antes de emitirselected/autorização. O subscriber oposto continua saindo antes de API/private. Executar nas chamadas preflight e Step15, com tokenread-only isolado existente; não passar token a browser/build/Master.
+
+Retorno técnico r12ZeroAuth no runtimecache SINGLE_REQUEST existente: nove campos próprios ORDENADOS schema,headSha,upstreamRun,fixturesRun,auditRun,privateJob,attempt,derivedNewBusinessIntents,proof. Valores fixos: schema "contaos.single-request.r12-zero-auth.v1",headShaS acima,upstreamRun42666600147,fixturesRun42666864017,auditRun42666864220,privateJob129333370334,attempt1,derivedNewBusinessIntents0,proof "GITHUB_ACTIONS_LIVE_METADATA". Validar valores/tipos/ordem/ownData semgetter/símbolo/Proxy/revoked/protótipo hostil. Não criar ENV, arquivoDocR12, reportfield, reciboR12 ou membro22.
+
+loadSingleRequestProof valida esse campo para nonceR13 antes de definir contexto privado, além de todos os guards existentes de identidade/hashGit/request/nonce/run/createdAt e freshness30s presecret. Zerar contexto/cache da prova no início, rejeitar ausente/crossproof/forjada; Master só consome cache local, zeroGET e semtoken. Provasmanuais não autorizam R13; nenhuma nova rota manual/dispatch/controlador. R4/R7 e todas as verificações atuais continuam.
+
+## Histórico, RED e conclusão
+
+RecoveryR11Doc12/blobaf4a3ca0b5017d4a422de41564063d4c82293f72/6130ASCII/SHA29f674764a2c8f953f764fcb6a40d8c330e441b488dfcab56a6ee4f9f389c423 mandatory intacto. Dez confirmadas+umareservada/base11/até13novas/teto24; ledgercorrente9/recovery10. HistóricoR11UNCERTAIN nunca promovido/reembolsado, usedIdaf968191-7d60-4adb-9c60-ebd5f0741e8e e solicitaçãoOct permanentemente gastos, mesmo UUIDnovo/linhaausente. Não repetir BUILD490 de negócio nem alterar17históricos/20dados+SHA21, relativos aos últimos raws reais R11. R12 não tem artefato/leitor.
+
+RED causal antes código: novo nonce/spentR12/GATEancestor; positivos e negativos da matriz/origem/head/attempt/jobs/Step7 e16/artifacts/sourceSHA; prova ausente/crossproof/hostile/cacheantigo não autoriza; token/ENVhostil/Masterherdado bloqueados antesGET, cacheMaster0GET. Teste real dos mesmos validators, não cópia/falsoGit no runtime. Preservar negativos fixed11/client/pins do probe; probe público real só é comprovado com D válido e logCIHEADliteral. Sempular/fingir a execução por indisponibilidade.
+
+GREEN: Node/helper30/protocolos/ESLint/Prettier/produto/TS/build/Zero/LOCK/TesteC aplicáveis, publicliveprobe e18nativas no HEADfinal: base8+visual1+sourceforms5+SYS042+V1121+V1231. Cinco títulos/TAP1..5/pass5/failcancelledskipped0/retorno5, sourceOrdering/preflightDrain/fábrica intactos; sem nova contagem. Revisão independente/merge protegido antes request separadoJSON7campos/nonceR13/approved_parent_sha real/blankpairAUTO_DISCOVER. Doischecks/canônica pinned/freshness antes merge normal; freeze até upstream+dois subscribers originais attempt1 terminais. Sem rerun/cancel/dispatch/Auth paralelo.
+
+Somente após R13terminal e artefato real, leitor estático2mjs em PR separado sob este GATE: pins reais20dados+SHA21/HISTORY17, ledger9/recovery10, reserva excluída de currentconfirmed/CAU2, UNKNOWNpreservado. PolíticasFD/digest/toolpin/warnings/30s/envmínimo/bounds/diagnóstico6/4/fatal consistency intactas; CI/review/merge antes originalpushmainreadonly. Não leitorR12/ZIPmanual.
+
+Atualizar checkpoint apenas com fatos integrados. Este GATE não certifica184/208/232/72/V1 nem sessãoMaster. Preservar18públicos/Run124204PNG102DOM307hashes/AUDIT_BINDING_PENDING e histórico integral.
+
+
+## Emenda pós-terminal: BUILD offline do seletor de listas
+
+Depois de CI, revisão independente e integração protegida desta emenda PLAN/GATE/PLANO, autorizar PR BUILD separado restrito a scripts/hml/prepare-visual-fixtures.mjs e scripts/hml/prepare-visual-fixtures.test.mjs. Somente listSelectionControl e regressões do sourceforms já existente. Exigir RED causal de montagem/habilitação assíncrona com JSX real no Chromium pinado; hipótese não equivale à causa HML provada. Se o RED não reproduzir, investigar sem alteração especulativa.
+
+Esperar texto/control exatos visíveis e select habilitado, com teto3000ms por espera e sem aumentar deadline global. Preservar rejeição de duplicidade antes/depois da espera, região/label/select estritos, R5_BINDINGS.listId literal e opção única. Não substituir selectOption por DOM injection nem criar opção sintética. Nenhum retry de mutação, requisição, navegação ou clique pelo helper. Negativos permanentes devem falhar dentro do limite.
+
+Fonte src/components/contratos/GerenciarListas.tsx permanece byte-exata. Ampliar teste nativo r7ProbeListConsumers dentro do mesmo caso sourceforms; preservar cinco títulos e18barreiras totais. Manter getters/Proxy/PII/fence/transportes, R11reserva/denyOct, ledger9/recovery10,20dados+SHA21/HISTORY17. Runtime controller e request JSON inalterados. Node focal+Chromium real, ESLint/Prettier e CI/Zero/LOCK final/revisão independente obrigatórios antes do merge.
+
+R13 original foi consumido e não pode ser reexecutado. Esta emenda NÃO autoriza Auth, SQL, novo nonce/request, deploy ou auditoria privada. Para prosseguir fixtures, gate separado deve fixar evidência R13/0novas/recuperação/ancestralidade e um único nonce novo, sem elevar orçamento. Não retirar AUDIT_BINDING_PENDING nem preencher UUIDs sem prova.
