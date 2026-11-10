@@ -3859,6 +3859,7 @@ export function readbackTargets(rpc, payload = {}, evidence = {}) {
 
 export function createOfficialObserver(page, { wait, now, identity } = {}) {
   const observerIdentity = identity === undefined ? null : observationIdentity(identity);
+  const observerInstance = Object.freeze({});
   const floors = [];
   const mutations = [],
     mutationRequests = new WeakMap();
@@ -4852,6 +4853,8 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
     let invalid = false;
     const record = {
       owner,
+      observer: observerInstance,
+      generation: api.generation,
       identity: observerIdentity,
       documentHash: "f3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95",
       consumed: false,
@@ -4876,8 +4879,20 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
   function sealRecoveryRegistration(owner, after) {
     const candidate = validateR18RegistrationCandidate(R18_REGISTRATION_CANDIDATE);
     validateR18RecoveryDocument(R18_RECOVERY_DOCUMENT);
+    const opinionToken = recoveryBrokerOwners.get(owner)?.opinion;
+    const opinion = recoveryOpinionProofs.get(opinionToken);
     const check = () => {
-      const identity = recoveryBrokerOwners.get(owner)?.identity;
+      const broker = recoveryBrokerOwners.get(owner);
+      const identity = broker?.identity;
+      if (
+        !observerIdentity ||
+        !opinion ||
+        opinion.observer !== observerInstance ||
+        opinion.generation !== api.generation ||
+        broker.opinion !== opinionToken ||
+        !same(observerIdentity, identity)
+      )
+        err("RECOVERY_R18_BINDING");
       if (
         identity?.frontendSha !== candidate.frontendSha ||
         identity?.deploymentId !== candidate.deploymentId
@@ -4981,6 +4996,7 @@ export function createOfficialObserver(page, { wait, now, identity } = {}) {
     const token = Object.freeze({});
     recoveryRegistrationProofs.set(token, {
       owner,
+      generation: api.generation,
       binding: {
         state: "aguardando_contratante",
         presentationId: candidate.presentationId,
@@ -6091,6 +6107,15 @@ export async function prepareSourceAndList(io) {
  * io.command MUST arm immediately before clicking, seal UI UUID at native Request,
  * persist synchronously, await matching Response, then run confirmAfter once.
  */
+function recoveredR18CompetencyIds(historical) {
+  return Object.fromEntries(
+    ["month", "id", "requirementId", "documentId", "executionId", "opinionId"].map((key) => [
+      key,
+      historical[key],
+    ]),
+  );
+}
+
 async function recoverR18Registration(io, c) {
   validateR18RecoveryDocument(io.recoveryLedgerR18);
   const candidate = validateR18RegistrationCandidate(io.registrationCandidateR18);
@@ -6116,12 +6141,14 @@ async function recoverR18Registration(io, c) {
   await tracedPreparation("RECOVERY_READ", () => io.fresh());
   const token = io.sealRecoveryRegistration(after);
   const record = recoveryRegistrationProofs.get(token);
-  if (!record || record.owner !== io.broker) err("RECOVERY_R18_BINDING");
+  if (!record || record.owner !== io.broker || record.generation !== io.generation)
+    err("RECOVERY_R18_BINDING");
   record.check();
   const historical = JSON.parse(R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies.find(
     (binding) => binding.id === c.id,
   );
-  Object.assign(c, historical, record.binding);
+  Object.assign(c, recoveredR18CompetencyIds(historical), record.binding);
+  delete c.code;
 }
 
 export async function resumeR18Bindings(io, sourceList) {
@@ -6148,10 +6175,23 @@ export async function resumeR18Bindings(io, sourceList) {
   )
     err("RECOVERY_R18_BINDING");
   const proof = recoveryOpinionProofs.get(recoveryBrokerOwners.get(io.broker)?.opinion);
-  if (!proof || proof.owner !== io.broker) err("RECOVERY_R18_BINDING");
+  if (!proof || proof.owner !== io.broker || proof.generation !== io.generation)
+    err("RECOVERY_R18_BINDING");
   proof.check();
   const competencies = [];
   for (const historical of JSON.parse(R16_RECOVERY_DOCUMENT.reportRaw).bindings.competencies) {
+    const found = await tracedPreparation("RECOVERY_READ", () =>
+      readCompetenceMonth(io, historical.month, (budget) =>
+        io.goKnown(`/contratos/${FIXTURE.contract}/competencias`, budget),
+      ),
+    );
+    if (
+      !Array.isArray(found) ||
+      found.length !== 1 ||
+      found[0].id !== historical.id ||
+      found[0].competencia_referencia !== historical.month
+    )
+      err("RECOVERY_R18_BINDING");
     const after = io.generation();
     await tracedPreparation("RECOVERY_READ", () => io.link(`/competencias/${historical.id}`));
     await tracedPreparation("RECOVERY_READ", () => io.fresh());
@@ -6184,7 +6224,7 @@ export async function resumeR18Bindings(io, sourceList) {
     )
       err("RECOVERY_R18_BINDING");
     const binding = {
-      ...historical,
+      ...recoveredR18CompetencyIds(historical),
       state,
       capabilities: { analysisCurrent: true, opinionApproved: true, presentationApproved: true },
     };

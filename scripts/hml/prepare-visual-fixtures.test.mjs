@@ -12975,7 +12975,7 @@ async function r19ReadonlyFixture({ mode = "ok", owner = null, identityDelta = {
     rpcRead: f.observer.rpcRead,
     sealRecoveryRegistration: (after) => f.observer.sealRecoveryRegistration(b, after),
   };
-  return {
+  const fixture = {
     io,
     b,
     f,
@@ -12985,6 +12985,8 @@ async function r19ReadonlyFixture({ mode = "ok", owner = null, identityDelta = {
     receipts,
     sourceList: JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings,
   };
+  await r19AttachMonthReads(fixture);
+  return fixture;
 }
 
 test("R19 readonly resume uses native owner seals and current contextual V120 reads without historic ACK synthesis", async () => {
@@ -13177,7 +13179,7 @@ async function r19BuildProtocolUI(directory) {
   );
   await fs.writeFile(
     join(directory, "entry.tsx"),
-    `import React from 'react';import {createRoot} from 'react-dom/client';import {CompetenciaProtocolo} from './component';import {obterVisaoGeral} from './overview';import * as p from './opinion';const root=createRoot(document.getElementById('root'));window.__mount=(id,ap)=>root.render(<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>);window.__overview=(id)=>obterVisaoGeral(id,new AbortController().signal);window.__opinions=(id)=>p.listarPareceres(id,${JSON.stringify(FIXTURE.organization)},${JSON.stringify(FIXTURE.contract)},0,new AbortController().signal);window.__ready=true;`,
+    `import React from 'react';import {createRoot} from 'react-dom/client';import {CompetenciaProtocolo} from './component';import {obterVisaoGeral} from './overview';import * as p from './opinion';const root=createRoot(document.getElementById('root'));window.__mount=(id,ap)=>root.render(<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>);window.__overview=(id)=>obterVisaoGeral(id,new AbortController().signal);window.__opinions=(id)=>p.listarPareceres(id,${JSON.stringify(FIXTURE.organization)},${JSON.stringify(FIXTURE.contract)},0,new AbortController().signal);window.__ready=true;const detail=/^\\/competencias\\/([a-f0-9-]{36})$/.exec(location.pathname);if(detail)window.__overview(detail[1]);`,
   );
   await promisify(execFile)(
     "bun",
@@ -13213,11 +13215,29 @@ async function r19NativeReadonlyProbe(browser) {
     pendingResponse = null;
   try {
     const bundle = await r19BuildProtocolUI(dir);
+    const listDirectory = join(dir, "competencies-ui");
+    await fs.mkdir(listDirectory);
+    const listBundle = await r10BuildCompetenceBundle(listDirectory);
+    const listPath = `/contratos/${FIXTURE.contract}/competencias`;
+    const candidatePath = `/competencias/${candidate.competencyId}/apresentacoes/${candidate.presentationId}`;
     server = createServer((req, res) => {
       const u = new URL(req.url, "http://127.0.0.1");
-      if (u.pathname === "/" || u.pathname.startsWith("/competencias/")) {
+      if (
+        u.pathname === "/" ||
+        u.pathname.startsWith("/competencias/") ||
+        u.pathname.startsWith("/contratos/")
+      ) {
         res.writeHead(200, { "content-type": "text/html" });
-        res.end('<!doctype html><div id="root"></div><script type="module" src="/ui.js"></script>');
+        res.end(
+          '<!doctype html><div id="root"></div><script type="module" src="' +
+            (u.pathname === listPath ? "/list.js" : "/ui.js") +
+            '"></script>',
+        );
+        return;
+      }
+      if (u.pathname === "/list.js") {
+        res.writeHead(200, { "content-type": "text/javascript" });
+        res.end(listBundle);
         return;
       }
       if (u.pathname === "/ui.js") {
@@ -13265,6 +13285,33 @@ async function r19NativeReadonlyProbe(browser) {
           res.writeHead(200, { "content-type": "application/json" });
           res.end(JSON.stringify(value));
         });
+        return;
+      }
+      if (u.pathname === "/rest/v1/competencias") {
+        assert.equal(u.searchParams.get("id_contrato"), "eq." + FIXTURE.contract);
+        assert.equal(u.searchParams.get("order"), "competencia_referencia.desc,id.desc");
+        assert.equal(u.searchParams.get("offset"), "0");
+        assert.equal(u.searchParams.get("limit"), "25");
+        const month = u.searchParams.get("competencia_referencia")?.slice(3);
+        const rows = bindings
+          .filter((c) => !month || c.month === month)
+          .map((c) => ({
+            id: c.id,
+            competencia_referencia: c.month,
+            periodo_inicio: c.month,
+            periodo_fim: null,
+            data_limite: null,
+            situacao:
+              c.month === "2026-10-01" ? "pode_apresentar_contratante" : "aguardando_contratante",
+            percentual_conformidade: 100,
+            versao_pacote_atual: null,
+            atualizado_em: null,
+          }));
+        res.writeHead(200, {
+          "content-type": "application/json",
+          "content-range": `0-${rows.length - 1}/${rows.length}`,
+        });
+        res.end(JSON.stringify(rows));
         return;
       }
       if (u.pathname === "/rest/v1/pareceres_internos") {
@@ -13376,40 +13423,75 @@ async function r19NativeReadonlyProbe(browser) {
       fresh: observer.flush,
       observedAfter: observer.waitObservedAfter,
       sealRecoveryRegistration: (after) => observer.sealRecoveryRegistration(owner, after),
-      link: async (path) => {
-        await page.evaluate((id) => window.__overview(id), path.split("/")[2]);
-        await observer.flush();
-      },
-      goKnown: async (path) => {
-        assert.equal(
-          path,
-          `/competencias/${candidate.competencyId}/apresentacoes/${candidate.presentationId}`,
-        );
-        const after = observer.generation();
-        await page.evaluate(
-          ([c, a]) => window.__mount(c, a),
-          [candidate.competencyId, candidate.presentationId],
-        );
-        for (const [name, where] of [
-          ["obter_visao_geral_competencia", { p_id_competencia: candidate.competencyId }],
-          [
-            "apresentacoes_contratante",
-            { id: candidate.presentationId, id_competencia: candidate.competencyId },
-          ],
-          [
-            "pacotes_competencia",
-            { id: candidate.packageId, id_competencia: candidate.competencyId },
-          ],
-          [
-            "itens_pacote_competencia",
-            { id_pacote: candidate.packageId, id_competencia: candidate.competencyId },
-          ],
-        ])
-          await observer.waitObservedAfter(name, where, after);
-        await page.getByRole("heading", { name: "Dados da apresentação", exact: true }).waitFor();
-        await observer.flush();
-      },
+      page,
+      read: observer.read,
+      readBarrier: observer.readBarrier,
+      assertReadBarrier: observer.assertReadBarrier,
+      readBarrierRemaining: observer.readBarrierRemaining,
+      drainReads: observer.drainReads,
+      goKnown: async (path, readBudget) =>
+        observer.readBarrier(async (budget) => {
+          assert.ok([listPath, candidatePath].includes(path));
+          const guard = () => observer.assertReadBarrier(budget);
+          guard();
+          await observer.drainReads(budget);
+          guard();
+          const after = observer.generation();
+          await page.goto(origin + path, { timeout: observer.readBarrierRemaining(budget) });
+          guard();
+          await page.waitForFunction(() => typeof window.__mount === "function");
+          guard();
+          if (path === listPath) {
+            await page.evaluate(() => window.__mount());
+          } else {
+            await page.evaluate(
+              ([c, a]) => window.__mount(c, a),
+              [candidate.competencyId, candidate.presentationId],
+            );
+            for (const [name, where] of [
+              ["obter_visao_geral_competencia", { p_id_competencia: candidate.competencyId }],
+              [
+                "apresentacoes_contratante",
+                { id: candidate.presentationId, id_competencia: candidate.competencyId },
+              ],
+              [
+                "pacotes_competencia",
+                { id: candidate.packageId, id_competencia: candidate.competencyId },
+              ],
+              [
+                "itens_pacote_competencia",
+                { id_pacote: candidate.packageId, id_competencia: candidate.competencyId },
+              ],
+            ])
+              await observer.waitObservedAfter(name, where, after, { readBudget: budget });
+            await page
+              .getByRole("heading", { name: "Dados da apresentação", exact: true })
+              .waitFor({ timeout: observer.readBarrierRemaining(budget) });
+          }
+          guard();
+          await observer.flush();
+          guard();
+        }, readBudget),
     };
+    const navigationSource = await r6SourceNodes();
+    const navigationEnv = {
+      FIXTURE: { ...local.FIXTURE, origin },
+      observer,
+      page,
+      fresh: observer.flush,
+      goKnown: io.goKnown,
+      proof: { documents: {} },
+      tracedPreparation: async (_, run) => run(),
+      err: (code) => {
+        throw Error(code);
+      },
+      keys: () => false,
+    };
+    io.link = new Function(...Object.keys(navigationEnv), "return " + navigationSource.link)(
+      ...Object.values(navigationEnv),
+    );
+    await page.goto(origin + `/contratos/${FIXTURE.contract}/regras`);
+    await page.waitForFunction(() => window.__ready === true);
     const output = await local.resumeR18Bindings(io, fixture.sourceList);
     assert.equal(output.state, "confirmed");
     assert.equal(output.competencies[1].packageId, candidate.packageId);
@@ -13650,6 +13732,226 @@ test("R19 readonly source descriptors reject hostile source and forged registrat
     assert.equal(effects, 0);
     f.io.sealRecoveryRegistration = () => Object.freeze({});
     await assert.rejects(() => sut.resumeR18Bindings(f.io, f.sourceList), /RECOVERY_R18_BINDING/);
+  } finally {
+    f.f.observer.close();
+  }
+});
+
+async function r19AttachMonthReads(fixture) {
+  const { readFile } = await import("node:fs/promises");
+  const sdk = await readFile(
+    new URL("../../src/lib/contratos/competenciasDados.ts", import.meta.url),
+    "utf8",
+  );
+  const select = sdk.match(/export const COLUNAS_COMPETENCIA\s*=\s*"([^"]+)"/)[1];
+  const rows = JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies.map((c) => ({
+    id: c.id,
+    competencia_referencia: c.month,
+    periodo_inicio: c.month,
+    periodo_fim: null,
+    data_limite: null,
+    situacao: c.month === "2026-10-01" ? "pode_apresentar_contratante" : "aguardando_contratante",
+    percentual_conformidade: 100,
+    versao_pacote_atual: null,
+    atualizado_em: null,
+  }));
+  const listPath = `/contratos/${FIXTURE.contract}/competencias`;
+  const navigation = { route: `/contratos/${FIXTURE.contract}/regras`, month: null, events: [] };
+  const emit = (month) => {
+    const query = {
+      select,
+      id_contrato: "eq." + FIXTURE.contract,
+      order: "competencia_referencia.desc,id.desc",
+      offset: "0",
+      limit: "25",
+      ...(month ? { competencia_referencia: "eq." + month } : {}),
+    };
+    const request = {
+      url: () => FIXTURE.api + "/rest/v1/competencias?" + new URLSearchParams(query),
+      method: () => "GET",
+      postData: () => null,
+      failure: () => null,
+    };
+    fixture.f.page.emit("request", request);
+    fixture.f.page.emit("response", {
+      request: () => request,
+      url: request.url,
+      status: () => 200,
+      body: async () =>
+        Buffer.from(
+          JSON.stringify(month ? rows.filter((r) => r.competencia_referencia === month) : rows),
+        ),
+    });
+  };
+  const original = fixture.io.goKnown;
+  fixture.io.goKnown = async (path, budget) => {
+    if (path !== listPath) return original(path, budget);
+    fixture.f.observer.assertReadBarrier(budget);
+    navigation.events.push(["list", path]);
+    navigation.route = path;
+    navigation.month = null;
+    emit(null);
+    await fixture.f.observer.flush();
+  };
+  Object.assign(fixture.io, {
+    read: fixture.f.observer.read,
+    readBarrier: fixture.f.observer.readBarrier,
+    assertReadBarrier: fixture.f.observer.assertReadBarrier,
+    readBarrierRemaining: fixture.f.observer.readBarrierRemaining,
+    drainReads: fixture.f.observer.drainReads,
+    page: {
+      getByLabel: (label, options) => {
+        assert.equal(label, "Competência");
+        assert.deepEqual(options, { exact: true });
+        return {
+          fill: async (value, settings) => {
+            assert.equal(navigation.route, listPath);
+            assert.ok(settings.timeout > 0 && settings.timeout <= 15000);
+            navigation.month = value + "-01";
+            navigation.events.push(["month", navigation.month]);
+            emit(navigation.month);
+            await fixture.f.observer.flush();
+          },
+        };
+      },
+    },
+  });
+  fixture.navigation = navigation;
+}
+
+test("R19 review I1 registration rejects borrowed opinion proof from another observer or generation", async () => {
+  const current = {
+    ...R12_TEST_IDENTITY,
+    frontendSha: sut.R18_REGISTRATION_CANDIDATE.frontendSha,
+    deploymentId: sut.R18_REGISTRATION_CANDIDATE.deploymentId,
+  };
+  for (const identity of [
+    { ...current, frontendSha: "f".repeat(40) },
+    { ...current, deploymentId: "dpl_AlienUntrusted" },
+    undefined,
+    current,
+    { ...current, harnessSha: "e".repeat(40) },
+    { ...current, workflowRun: "99" },
+  ]) {
+    const f = await r19ReadonlyFixture();
+    const alien = sut.createOfficialObserver(f.f.page, { identity });
+    try {
+      const after = alien.generation();
+      f.emitView(sut.R18_REGISTRATION_CANDIDATE.competencyId);
+      f.emitTables();
+      await alien.flush();
+      assert.throws(() => alien.sealRecoveryRegistration(f.b, after), /RECOVERY_R18_BINDING/);
+    } finally {
+      alien.close();
+      f.f.observer.close();
+    }
+  }
+});
+
+test("R19 review I1 registration token consumption rechecks the issuing observer generation", async () => {
+  const f = await r19ReadonlyFixture();
+  const identity = {
+    ...R12_TEST_IDENTITY,
+    frontendSha: sut.R18_REGISTRATION_CANDIDATE.frontendSha,
+    deploymentId: sut.R18_REGISTRATION_CANDIDATE.deploymentId,
+  };
+  const alien = sut.createOfficialObserver(f.f.page, { identity });
+  try {
+    f.io.sealRecoveryRegistration = (ordinal) => {
+      const token = f.f.observer.sealRecoveryRegistration(f.b, ordinal);
+      f.io.generation = alien.generation;
+      return token;
+    };
+    await assert.rejects(() => sut.resumeR18Bindings(f.io, f.sourceList), /RECOVERY_R18_BINDING/);
+  } finally {
+    alien.close();
+    f.f.observer.close();
+  }
+});
+
+test("R19 review I2 actual production links reach both monthly details from source list terminal through guarded month reads", async () => {
+  const fs = await import("node:fs/promises"),
+    source = await r6SourceNodes();
+  const rules = await fs.readFile(
+    new URL("../../src/components/contratos/RegrasContrato.tsx", import.meta.url),
+    "utf8",
+  );
+  const list = await fs.readFile(
+    new URL("../../src/components/contratos/CompetenciasContrato.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.ok(rules.includes('to="/contratos/$id/competencias"'));
+  assert.ok(!rules.includes('to="/competencias/$id"'));
+  assert.ok(list.includes('to="/competencias/$id"'));
+  assert.ok(list.includes("params={{ id: c.id }}"));
+  const f = await r19ReadonlyFixture(),
+    nav = f.navigation;
+  const page = {
+    url: () => FIXTURE.origin + nav.route,
+    waitForURL: async (url) => assert.equal(url, FIXTURE.origin + nav.route),
+    locator: (selector) => {
+      const match = /^a\[href="([^"]+)"\]:visible$/.exec(selector);
+      assert.ok(match);
+      const binding = JSON.parse(sut.R5_RECOVERY_DOCUMENT.reportRaw).bindings.competencies.find(
+        (c) => c.month === nav.month,
+      );
+      const present =
+        nav.route === `/contratos/${FIXTURE.contract}/competencias` &&
+        match[1] === `/competencias/${binding?.id}`;
+      const item = {
+        isEnabled: async () => true,
+        getAttribute: async () => null,
+        click: async () => {
+          assert.ok(present);
+          nav.events.push(["detail", binding.month]);
+          nav.route = match[1];
+          f.emitView(binding.id);
+          await f.f.observer.flush();
+        },
+      };
+      return { count: async () => (present ? 1 : 0), nth: () => item };
+    },
+  };
+  const env = {
+    FIXTURE,
+    observer: f.f.observer,
+    tracedPreparation: async (_, run) => run(),
+    fresh: f.io.fresh,
+    err: (code) => {
+      throw Error(code);
+    },
+    proof: { documents: {} },
+    page,
+    goKnown: f.io.goKnown,
+    keys: () => false,
+  };
+  f.io.link = new Function(...Object.keys(env), "return " + source.link)(...Object.values(env));
+  try {
+    const result = await sut.resumeR18Bindings(f.io, f.sourceList);
+    assert.equal(result.state, "confirmed");
+    assert.deepEqual(nav.events, [
+      ["list", `/contratos/${FIXTURE.contract}/competencias`],
+      ["month", "2026-10-01"],
+      ["detail", "2026-10-01"],
+      ["list", `/contratos/${FIXTURE.contract}/competencias`],
+      ["month", "2026-09-01"],
+      ["detail", "2026-09-01"],
+    ]);
+  } finally {
+    f.f.observer.close();
+  }
+});
+
+test("R19 review M1 current successful serializer excludes historical failure codes without changing history", async () => {
+  const f = await r19ReadonlyFixture(),
+    raw = sut.R16_RECOVERY_DOCUMENT.reportRaw;
+  try {
+    const historical = JSON.parse(raw).bindings.competencies;
+    assert.ok(historical.every((c) => c.code === "COMPETENCE_PRESENTATION_GATE"));
+    const result = await sut.resumeR18Bindings(f.io, f.sourceList),
+      receipt = sut.fixtureBindingReceipt(f.sourceList, result);
+    assert.ok(receipt.competencies.every((c) => !Object.hasOwn(c, "code")));
+    assert.equal(sut.R16_RECOVERY_DOCUMENT.reportRaw, raw);
   } finally {
     f.f.observer.close();
   }
