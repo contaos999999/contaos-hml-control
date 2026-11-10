@@ -14937,6 +14937,23 @@ async function c8BuildSourceUI(directory) {
   return fs.readFile(join(directory, "ui.js"));
 }
 
+async function nativeC8ObservationIdentity() {
+  const { execFile } = await import("node:child_process"),
+    { promisify } = await import("node:util");
+  const { stdout } = await promisify(execFile)("git", ["rev-parse", "HEAD"], {
+    timeout: 10000,
+    maxBuffer: 1024,
+  });
+  const harnessSha = stdout.trim();
+  assert.match(harnessSha, /^[a-f0-9]{40}$/);
+  return {
+    frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
+    harnessSha,
+    deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
+    workflowRun: "1",
+  };
+}
+
 async function c8NativeSourceProbe(browser) {
   const fs = await import("node:fs/promises"),
     { join } = await import("node:path"),
@@ -15054,6 +15071,10 @@ async function c8NativeSourceProbe(browser) {
           }
           if (mode === "missing") value = null;
           if (mode === "stale" && name === "obter_analise_competencia_v116") value.stale = true;
+          if (mode === "pending" && name === "obter_analise_competencia_v116")
+            value.estado_analise = "queued";
+          if (mode === "hostile" && name === "obter_detalhe_requisito_v117")
+            value.requisito.descricao = "NATIVEC8_UNLISTED_SENTINEL_84f7";
           json(value);
         });
         return;
@@ -15065,7 +15086,11 @@ async function c8NativeSourceProbe(browser) {
       };
       const table = url.pathname.split("/").at(-1);
       if (Object.hasOwn(tables, table)) {
-        json(table === "itens_pacote_competencia" ? tables[table] : tables[table][0]);
+        const rows = structuredClone(tables[table]);
+        if (mode === "hash" && table === "pacotes_competencia")
+          rows[0].hash_pacote = "0".repeat(64);
+        if (mode === "item" && table === "itens_pacote_competencia") rows.length = 0;
+        json(table === "itens_pacote_competencia" ? rows : rows[0]);
         return;
       }
       if (url.pathname === "/favicon.ico") {
@@ -15114,12 +15139,7 @@ async function c8NativeSourceProbe(browser) {
             evaluate: page.evaluate.bind(page),
           };
           currentObserver = preparer.createOfficialObserver(page, {
-            identity: {
-              frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
-              harnessSha: process.env.CONTAOS_HARNESS_SHA,
-              deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
-              workflowRun: "1",
-            },
+            identity: await nativeC8ObservationIdentity(),
           });
           const state = {
             scope: sut.C8_AUDIT_SCOPE,
@@ -15370,6 +15390,69 @@ async function c8NativeSourceProbe(browser) {
         currentObserver.close();
         currentObserver = null;
       }
+    for (const vector of [
+      { surface: "V117", mode: "stale" },
+      { surface: "V117", mode: "pending" },
+      { surface: "V117", mode: "hostile" },
+      { surface: "V120", mode: "hash" },
+      { surface: "V120", mode: "item" },
+    ]) {
+      surface = vector.surface;
+      mode = vector.mode;
+      const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find(
+        (r) => r.surface === surface && r.width === 390 && r.theme === "dark",
+      );
+      const localPage = {
+        url: () => sut.HML_ORIGIN + item.path,
+        evaluate: page.evaluate.bind(page),
+      };
+      currentObserver = preparer.createOfficialObserver(page);
+      const state = {
+        scope: sut.C8_AUDIT_SCOPE,
+        verified: true,
+        closed: false,
+        generation: 1,
+        c8Observer: currentObserver,
+      };
+      privacyHarness.pages.set(localPage, state);
+      phase("NEGATIVE", item);
+      await page.goto(origin + item.path);
+      await page.waitForFunction(() => window.__ready);
+      await page.evaluate(({ surface, id, ap }) => window.__mount(surface, id, ap), {
+        surface,
+        id: b.competencies[surface === "V120" ? 1 : 0].id,
+        ap: b.competencies[1].presentationId,
+      });
+      if (surface === "V117") {
+        await page
+          .getByRole("button", { name: "Abrir requisito AUD-A-TXT-001", exact: true })
+          .click();
+        await page.getByRole("region", { name: "Fonte e versionamento", exact: true }).waitFor();
+      } else
+        await page.waitForFunction(
+          () =>
+            [...document.querySelectorAll('[role="status"],[role="alert"]')].some(
+              (n) => n.textContent.trim() && !/Carregando/.test(n.textContent),
+            ),
+          null,
+          { timeout: 5000 },
+        );
+      if (mode === "hostile") {
+        await privacyHarness.collect(localPage, item, state);
+        const text = await page.locator("body").innerText(),
+          snapshot = await page.locator("body").ariaSnapshot();
+        const context = await privacyHarness.context(localPage, state, text, snapshot, null);
+        const remainder = privacyHarness.contexts.get(context).rendered.remainder;
+        assert.ok(remainder.includes("NATIVEC8_UNLISTED_SENTINEL_84f7"));
+        assert.equal(sut.classifyArtifactText(remainder, new Set()).reason, "UNKNOWN_WORDS");
+      } else
+        await assert.rejects(
+          () => privacyHarness.collect(localPage, item, state),
+          /(C8_CURRENT_BINDING|OBSERVATION_FAILED)/,
+        );
+      currentObserver.close();
+      currentObserver = null;
+    }
     assert.equal(readNames.has("obter_contexto_revisao_v117"), false);
     assert.equal(readNames.has("obter_detalhe_requisito_v117"), true);
     assert.equal(business, 0);
@@ -15605,4 +15688,23 @@ test("C8 opinion technical fields require each observed row to retain the curren
       false,
     );
   assert.equal(sut.validateC8CurrentWire(item, { ...wire, opinions: null }), false);
+});
+
+test("C8 native observer uses the checked-out Git identity without inheriting private harness ENV", async () => {
+  assert.equal(
+    sut.browserEnvironment({ CONTAOS_HARNESS_SHA: "a".repeat(40) }).CONTAOS_HARNESS_SHA,
+    undefined,
+  );
+  assert.equal(typeof nativeC8ObservationIdentity, "function");
+  const identity = await nativeC8ObservationIdentity();
+  assert.match(identity.harnessSha, /^[a-f0-9]{40}$/);
+  const { createOfficialObserver } = await import("./prepare-visual-fixtures.mjs");
+  const page = { on() {}, off() {} };
+  assert.throws(
+    () => createOfficialObserver(page, { identity: { ...identity, harnessSha: undefined } }),
+    /OBSERVATION_DIAGNOSTIC/,
+  );
+  const observer = createOfficialObserver(page, { identity });
+  assert.equal(observer.generation(), 0);
+  observer.close();
 });
