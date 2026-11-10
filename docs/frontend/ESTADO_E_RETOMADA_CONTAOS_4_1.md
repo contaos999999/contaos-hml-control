@@ -2329,3 +2329,38 @@ PLAN #471 integrado em 78409927e346c44b9760515e4e3fc2d0aeefbba2 (parents9e6/bbc6
 ## Checkpoint R10: GATE documental de leitura de competências, 09/11/2026
 
 PLAN476 integrado em52493ee72122a218c3da9cae8ad054da19ac5b3d, CI42627209588/42627209706SUCCESS e reviews5826638239/5826659115zeroC/I. R9real42621964900/artifact13676832673 inspecionado em42625143276/job129186862567: TABLEcompetencias/BODY_READ200ABORTED, zero novas intenções, ledger10+14, logouttrue/cleanupnull;14/14hashes verificados. Checkpoint detalhado6741228761. GATE docs/frontend/planos/TRILHA_A_R10_LEITURA_COMPETENCIAS_GATE_2026-11-09.md fecha initialread→novoordinal→fill→monthlyqueryeq/body antesavanço, modo localRECOVERY_COMPETENCE_MONTH semmatcher global/cache/ignoreabort, deadlineúnico15s e16nativos (basepassed8 preservada/sourceforms3). R9Doc12campos3170SHA71e20cc2dfd5888ab22228efe2b253eea316194ce0503e262ad58aef516078b8 obrigatório; futuro16dados+SHA17/HISTORY13. Próximo RED causal emCIinerte→BUILD4mjs→GREEN/TesteC/review/merge→requestR10separado. NenhumaAuthR10/SQL/PROD. Backend5eca/HML437F3 preservados;18públicas/204PNG mantidas,184/24fixtures/72/V1 não certificados.
+
+
+## Checkpoint Trilha C: integração reconciliada e R18 terminal — 10/11/2026 UTC (09/11 BRT)
+
+**Estado: trabalho em andamento, sem certificação das oito telas.** Este checkpoint registra evidência verificada e não autoriza repetir execuções consumidas.
+
+### Integração e escopo do titular
+
+A PR frontend #463 foi encerrada como superada pela #464, sem merge duplicado. A #464 já foi integrada em 50c7930d755acb9f3f0eef3385b51ee665a2665f; sua ancestralidade e a presença de CopilotoContrato/copilotoApi foram conferidas na main 50ba6b74fd4b652804636afb82bf204e2098a906. A #463 tinha PLAN posterior ao primeiro BUILD; a sucessora corrigiu a ordem sem enfraquecer o gate.
+
+Pedido atual: validar os controles de segurança e auditar SOMENTE as oito superfícies privadas V111, V114, V115, V116, V117, V118, V119 e V120, nas larguras 1440/1280/768/390 e temas claro/escuro: 64 combinações. Preservar os registros anteriores das 19 telas sem recaptura. O inventário histórico não deve ser promovido a certificado sem sua evidência própria. O recorte C8 não substitui nem reduz a prioridade A184/24, cujos resultados permanecem nas origens.
+
+### Correção de navegação R18 integrada e validada
+
+PLAN #542 merge9f8b1bbe48fb10867294bee3b456d922065c7fa0; GATE #543 merged27616f35bba7f6c2d56db8e010d5a9a41f17f3b; BUILD #544 HEAD79a05faaa5a0ad5f35c782e5cf796da6431e2da1, merge50ba6b74fd4b652804636afb82bf204e2098a906. Somente quatro mjs autorizados. O retorno à lista usa goKnown(listPath,budget), já provado, preservando documento SSR, fence, freshness, drain e a mesma barreira15s. DocR17 obrigatório6088bytes/SHAf3cf2c1eae15d5e7185ff665a8899f14898ed4b8b7188b5446646e7f2f0f1c95; aprovação de outubro negada contra replay semântico e UUID consumido, com selo contextual atual; writer28dados+SHA29/HISTORY25.
+
+RED9e48768 preservado e reproduzido:8testes/1PASS7FAIL/0SKIP, sem erro de setup. GREEN local/CI614testes/596PASS/0FAIL/18SKIP; reader75PASS. As18 provas nativas foram executadas separadamente e passaram no mesmoHEAD79a05f, com sourceOrdering e preflightDrain. Logs CI129545270924 e129545266264, runsFixtures42729986281/Auth42729985963; Zero42729986233/LOCK42729986028SUCCESS. Probe real frontend0024b3c6739ab6296ec12338f11cf792d3a5f84b/deploymentdpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh:110módulos/1476785bytes. Revisão independente5834953109,14testes focais própriosPASS/0SKIP/lint/formato/diffPASS; tipos8ea7750b75fd9d76b29c36ce7613392e3ab65e19 intactos. PushmergeZero42730418361/LOCK42730418113SUCCESS. Não equivale a preparação real completa.
+
+### R18 original consumido: preservar artefato e reconciliar antes de qualquer nova ação
+
+Solicitação única #545 HEAD80b387aa842c54f58e90f353c4b5f284689c5597, merge8d055951838fee29664563bed5ee26bac4f55bd8, pai aprovado50ba6b74fd4b652804636afb82bf204e2098a906, nonce trilha-a-fixtures-20261110-r18, operação fixtures/AUTO_DISCOVER. Sete campos, CI42730747742/42730747358SUCCESS e revisões canônicas commitbound. PushmergeZero42731084944/LOCK42731084860SUCCESS.
+
+Ambos subscribers originais attempt1 terminaram: Fixtures42731273678FAILURE, controller129549638781SUCCESS, protocoloSKIP, privado129550112703FAILURE somenteStep16; etapas1–15SUCCESS, hashesStep17SUCCESS e uploadStep18SUCCESS. Oposto Autenticada42731273705SUCCESS, controller129549639046SUCCESS, privado129549805009SKIPPED. O sucesso do oposto não certifica auditoria. Freeze original encerrado somente após ambos terminais.
+
+Artefato real13725830880, nome trilha-a-fixtures-42731273678-1,31346bytes, ZIP SHA256b68f2edd99a4ce6e4728b74a899cd39bb1ec96f0ecd42048cbbdbbc6d47fb7eb, fonte8d055951838fee29664563bed5ee26bac4f55bd8, não expirado na consulta. Conteúdo privado AINDA NÃO INSPECIONADO neste checkpoint: causa interna, logout, novos recibos e orçamento apósR18 DESCONHECIDOS. A última base pré-R18 era15confirmadas+2reservas/max7/teto24; isto NÃO prova ausência de novos efeitos noR18. R11/R15 e aprovaçãoOct/R17 permanecem protegidos; não repetir ou reembolsar por inferência.
+
+**Próxima tarefa exata:** GATE e BUILD único de leitor protegido R18, limitado aos dois mjs do leitor e ao artefato acima, layout28dados+SHA29/HISTORY25. Ler os originais por essa inspeção, reconciliar o ledger e diagnosticar o consumidor concreto antes de nova correção ou pedido. Não fazer download manual do ZIP, rerun, dispatch, segundaR18 ou Auth paralela. Só com fixtures/bindings reais completos poderá ser integrado o escopo C8/64 e executado Playwright protegido; AUDIT_BINDING_PENDING não deve ser removido isoladamente.
+
+### Segurança preservada e implantação conferida somente leitura
+
+Backend main5eca44aebead3183e81b5c1af0d1dffa5fb8feb6. Prova API final-readback42596392357/job129089962080 relida: API_PASS_UI_PENDING. Original42571726664 teve proof e cleanupSUCCESS; preservar artefato13663262831/SHA5e2177afc72b78e0a8e6109bb8795633886c8052c37a756832f616a8c5066795. Focal42607662941/job129127635330 relido:204origem permitida/403origem negada/401semAuth e C13_V8_CORS_AND_NOAUTH_PASS. Não repetir testes aprovados ou chamarOpenAI por este checkpoint.
+
+Readback atual SupabaseHMLgklhhhyosgasnyoxlrui: copilot-queryACTIVE/v8/verify_jwt=true/bundleSHA13aec0d58b6d6bc40bdcdc9e4079e4b03db8080b3680ed4fd35f3fa697fb8a13; únicoindex.ts remoto47767caracteres é exatamente igual ao canônico5eca44ae. Comparação com5459536e7f7121e2f26758841acd520f84e0ad9d da prova original:497linhas iguais exceto a linha15 que adiciona o alias HML à lista CORS; lógica de segurança inalterada, nenhuma migration/RLS adicionada nessa comparação. Esta validação não atesta C13UI nem64capturas. Nenhum SQL, AuthAdmin, alteração de conta, implantação, PROD ou sessão paralela foi executado por este readback.
+
+Última etapa comprovada: correção R18 integrada com CI/nativos e execução original R18 terminal, evidência íntegra em metadados. Pendente: inspeção protegida R18, reconciliação/correção causal se necessária, bindings e seleção C8/64, capturas PNG/DOM/SHA e revisão independente. Nenhuma certificação V1 ou global concedida. A autorização do titular continua válida; faltam provas técnicas, não nova permissão genérica.
