@@ -4567,6 +4567,40 @@ test("CLI sem modo explícito não pode encerrar com sucesso silencioso", async 
   assert.equal(code, 1);
 });
 
+for (const [label, extra, expected] of [
+  [
+    "rejects private metadata credentials",
+    { GITHUB_TOKEN: "synthetic-offline-forbidden" },
+    "PREPARE_SECRET_ENV",
+  ],
+  ["reaches harness validation with an allowed environment", {}, "HARNESS_SHA"],
+]) {
+  test(`C8 real CLI entrypoint ${label} before any private runtime`, async () => {
+    const { execFile } = await import("node:child_process");
+    const { fileURLToPath } = await import("node:url");
+    const result = await new Promise((resolve) =>
+      execFile(
+        process.execPath,
+        [fileURLToPath(new URL("./authenticated-visual-audit.mjs", import.meta.url)), "--audit"],
+        {
+          cwd: fileURLToPath(new URL("../../", import.meta.url)),
+          env: {
+            PATH: process.env.PATH,
+            GITHUB_EVENT_NAME: "workflow_run",
+            CONTAOS_HARNESS_SHA: "0".repeat(40),
+            ...extra,
+          },
+          timeout: 10000,
+        },
+        (error, stdout, stderr) => resolve({ code: error?.code, stdout, stderr }),
+      ),
+    );
+    assert.equal(result.code, 1);
+    assert.equal(result.stdout, "");
+    assert.deepEqual(JSON.parse(result.stderr), { state: "BLOCKED", code: expected });
+  });
+}
+
 test("prova nativa exige oito casos reais no mesmo SHA e mesmos arquivos", () => {
   const make = fn("nativeProofFromTap"),
     valid = fn("nativeProofValid"),
@@ -14636,7 +14670,7 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
     schema_version: 1,
     issue: 317,
     operation: "audit",
-    request_id: "trilha-c-audit-20261110-c8-r1",
+    request_id: "trilha-c-audit-20261110-c8-r2",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -14648,6 +14682,7 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
   );
   for (const changed of [
     undefined,
+    { ...request, request_id: "trilha-c-audit-20261110-c8-r1" },
     { ...request, scope: "C8" },
     { ...request, operation: "fixtures" },
     { ...request, request_id: "trilha-a-audit-20261108-r1" },
@@ -14661,6 +14696,12 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
   assert.equal(
     sut.parseSingleRequest(old, undefined, { historical: true }).request_id,
     "trilha-a-audit-20261108-r1",
+  );
+  const consumedC8 = JSON.stringify({ ...request, request_id: "trilha-c-audit-20261110-c8-r1" });
+  assert.throws(() => sut.parseSingleRequest(consumedC8), /REQUEST_SCHEMA/);
+  assert.equal(
+    sut.parseSingleRequest(consumedC8, undefined, { historical: true }).request_id,
+    "trilha-c-audit-20261110-c8-r1",
   );
 });
 

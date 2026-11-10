@@ -4168,7 +4168,7 @@ export const SYNTHETIC_FIXTURE = Object.freeze({
 });
 export const C8_AUDIT_SCOPE = Object.freeze({
   id: "C8",
-  nonce: "trilha-c-audit-20261110-c8-r1",
+  nonce: "trilha-c-audit-20261110-c8-r2",
   surfaces: Object.freeze(["V111", "V114", "V115", "V116", "V117", "V118", "V119", "V120"]),
 });
 export const C8_RECOVERY_DOCUMENT = Object.freeze({
@@ -4514,45 +4514,6 @@ export async function runCli(args = process.argv.slice(2)) {
     }),
   );
 }
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  runCli().catch(async (error) => {
-    const apiDiagnostic = requestApiDiagnostic(error);
-    console.error(
-      JSON.stringify({
-        state: "BLOCKED",
-        ...(apiDiagnostic ? { api: apiDiagnostic } : {}),
-        code: /^[A-Z_]{1,80}$/.test(error?.code || "") ? error.code : "HARNESS_FAILURE",
-        ...(error?.code === "BUILD_ENV_POLICY" && /^[A-Z_]{1,80}$/.test(error?.reason || "")
-          ? { reason: error.reason }
-          : {}),
-      }),
-    );
-    process.exitCode = 1;
-    if (
-      singleRequestEventAllowed(process.env, process.env.CONTAOS_REQUEST_OPERATION || "audit") &&
-      ["--resolve-deployment", "--prepare", "--native-guard"].includes(process.argv[2])
-    ) {
-      try {
-        const identity = await harnessIdentity();
-        let native = null;
-        try {
-          const raw = await readFile(".audit-work/native-proof.json", "utf8");
-          if (raw.length <= 16384) native = JSON.parse(raw);
-        } catch {}
-        await writeBlockedPreflight({
-          code: error.code,
-          identity,
-          frontendSha: process.env.CONTAOS_FRONTEND_SHA,
-          deploymentId: process.env.CONTAOS_DEPLOYMENT_ID,
-          native,
-        });
-      } catch {
-        console.error(JSON.stringify({ state: "BLOCKED", code: "PREFLIGHT_ARTIFACT_BLOCKED" }));
-      }
-    }
-  });
-}
-
 export function nativeProofFromTap(tap, identity) {
   if (
     typeof tap !== "string" ||
@@ -8057,10 +8018,10 @@ export const SINGLE_REQUEST = Object.freeze({
   listReadinessSecuritySha: "8d43ae8f94b39d81b8125d087a1c9a968e2d8ad7",
   metadataTimeoutGateSha: "326a960cec756d08681b00da99a5332f0a3c6fac",
   metadataTimeoutPlanSha: "1282198bfc72ac4a119856139e6b95d9e14177dc",
-  c8GateSha: "34674fab697cbdecd4dd1d5f5f918df64ce1b286",
+  c8GateSha: "25b6113dfcb7394696e6ed3513a5c7235753a6da",
   c8PlanSha: "afe42819e62bbe8e3c25b4a5869f8ba59db124f5",
   c8ReaderBuildSha: "501237dd48a7159ccd4a7d7407334cdc2245aa24",
-  spentAuditNonces: Object.freeze(["trilha-a-audit-20261108-r1"]),
+  spentAuditNonces: Object.freeze(["trilha-a-audit-20261108-r1", "trilha-c-audit-20261110-c8-r1"]),
   r19RecoveryGateSha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
   r19RecoveryPlanSha: "2b6ab4f542c66309fb16d12f9998136641591f25",
   r18ReaderBuildSha: "815dce2a4015e2bb1b5ec23e70633537ab008e62",
@@ -8115,7 +8076,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "trilha-c-audit-20261110-c8-r1",
+    nonce: "trilha-c-audit-20261110-c8-r2",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -11462,4 +11423,42 @@ export async function loadSingleRequestProof({
     scope: operation === "audit" ? resolveC8AuditScope(request) : null,
   };
   return true;
+}
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  runCli().catch(async (error) => {
+    const apiDiagnostic = requestApiDiagnostic(error);
+    console.error(
+      JSON.stringify({
+        state: "BLOCKED",
+        ...(apiDiagnostic ? { api: apiDiagnostic } : {}),
+        code: /^[A-Z_]{1,80}$/.test(error?.code || "") ? error.code : "HARNESS_FAILURE",
+        ...(error?.code === "BUILD_ENV_POLICY" && /^[A-Z_]{1,80}$/.test(error?.reason || "")
+          ? { reason: error.reason }
+          : {}),
+      }),
+    );
+    process.exitCode = 1;
+    if (
+      singleRequestEventAllowed(process.env, process.env.CONTAOS_REQUEST_OPERATION || "audit") &&
+      ["--resolve-deployment", "--prepare", "--native-guard"].includes(process.argv[2])
+    ) {
+      try {
+        const identity = await harnessIdentity();
+        let native = null;
+        try {
+          const raw = await readFile(".audit-work/native-proof.json", "utf8");
+          if (raw.length <= 16384) native = JSON.parse(raw);
+        } catch {}
+        await writeBlockedPreflight({
+          code: error.code,
+          identity,
+          frontendSha: process.env.CONTAOS_FRONTEND_SHA,
+          deploymentId: process.env.CONTAOS_DEPLOYMENT_ID,
+          native,
+        });
+      } catch {
+        console.error(JSON.stringify({ state: "BLOCKED", code: "PREFLIGHT_ARTIFACT_BLOCKED" }));
+      }
+    }
+  });
 }
