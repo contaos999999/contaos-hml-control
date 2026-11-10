@@ -1581,3 +1581,70 @@ test("R16 former one-reserve budget and unknown recovery enums fail closed", () 
     assert.throws(() => validateRecords(bad, empty()));
   }
 });
+
+function r17TechnicalReport() {
+  const value = report();
+  Object.assign(value.intentLedger, {
+    count: 16, priorConfirmed: 14, priorReserved: 2,
+    newArmedCount: 0, maxIntentions: 24, maxNewIntentions: 8,
+  });
+  Object.assign(value.recovery, { confirmedBefore: 14, maxNewIntentions: 8 });
+  return value;
+}
+test("R17 pins only the original terminal request artifact", () => {
+  assert.deepEqual(
+    [PIN.run, PIN.head, PIN.upstream, PIN.artifact, PIN.size, PIN.name, PIN.digest],
+    [42724239916, "adaeb72504cadf6dd83b8938abba9c067acba525", 42723995970,
+      13722355410, 28441, "trilha-a-fixtures-42724239916-1",
+      "438158228c2c8f3ad4893574cda06d62f9c47393202e200274a693ad420cc6ff"],
+  );
+});
+test("R17 complete manifest verifies twenty-six data files and twenty-three immutable histories", (t) => {
+  assert.equal(FILES.length, 26);
+  assert.equal(Object.keys(HISTORY).length, 23);
+  assert.deepEqual(FILES.slice(-2), ["receipts-r16.json", "recovery-r16.json"]);
+  const proof = JSON.parse(buildProof(fixture(t), inspection));
+  assert.equal(proof.manifest.length, 26);
+});
+test("R17 ledger exposes fourteen confirmations and both reservations with eight remaining arms", () => {
+  const value = validateRecords(r17TechnicalReport(), empty());
+  assert.equal(value.observations.priorConfirmed, 14);
+  assert.equal(value.observations.priorReserved, 2);
+  assert.equal(value.observations.newArmedCount, 0);
+  assert.equal(value.observations.newConfirmed, 0);
+});
+for (const code of [
+  "RECOVERY_R16_LEDGER", "RECOVERY_R16_OPINION",
+  "COMPETENCE_PRESENTATION_GATE_ANALYSIS", "COMPETENCE_PRESENTATION_GATE_OPINION",
+  "COMPETENCE_PRESENTATION_GATE_PORTAO", "COMPETENCE_PRESENTATION_GATE_PERCENT",
+  "COMPETENCE_PRESENTATION_GATE_ACTION",
+]) {
+  test("R17 exact producer diagnostic " + code + " is accepted without widening its prefix", () => {
+    const value = r17TechnicalReport();
+    value.failure = code;
+    value.diagnostics.primaryFailure = code;
+    assert.doesNotThrow(() => validateRecords(value, empty()));
+    value.failure = code + "_PRIVATE_CANARY";
+    value.diagnostics.primaryFailure = value.failure;
+    assert.throws(() => validateRecords(value, empty()));
+  });
+}
+const R17_PREVIOUS_EFFECTS = [
+  ["criar_documento_competencia_v115", "d69325a4-78c8-4bf3-8831-cbef2fb38d95", "bc014b4bd5693718652f9bbf7a6fadb520b290bfcf1ebd74de89e34f4b2d6f7d"],
+  ["solicitar_analise_competencia", "368de7ea-0056-451a-b0da-30ee0e10ee62", "0b6cb627d1480ae9c05ecc5cc0012b2ee3f9acd69ff35ae6b6f0650aa31a0765"],
+  ["solicitar_parecer_interno", "57cde7b2-3ae8-4642-81fe-d45f4971a524", "4dd745f43f7171efcea9b9ca3b4d291c3a6a43d6ce8946f37e4de8d03ba9df0f"],
+  ["aprovar_parecer_interno", "fb2af693-ede5-4d1a-99d3-408a2f7cb79e", "0d4db222d459ac1a6956c650b19179dab57fcbd0dca043f42aee646077cfe395"],
+];
+for (const [rpc, requestId, payloadSha256] of R17_PREVIOUS_EFFECTS) {
+  for (const mode of ["original UUID", "same payload under new UUID"]) {
+    test("R17 denies prior confirmed " + rpc + " receipt: " + mode, () => {
+      const value = report();
+      value.intentLedger.count++;
+      value.intentLedger.newArmedCount = 1;
+      const receipt = { ...row(), rpc,
+        ...(mode === "original UUID" ? { requestId } : { payloadSha256 }),
+      };
+      assert.throws(() => validateRecords(value, { ...empty(), receipts: [receipt] }));
+    });
+  }
+}
