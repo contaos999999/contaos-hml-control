@@ -1,0 +1,5933 @@
+{
+  "schema": "contaos.v1.phase8.reconciliation.v1",
+  "generated_at": "2026-11-11",
+  "frontend_head": "df62bacf78df3df3cf801b688a1aced8a300761d",
+  "backend_head": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+  "source_ledger_sha": "9f9dd3d56a12183e0462f7d831822bb09cd658a5",
+  "criteria_total": 488,
+  "criteria_summary": {
+    "PASS_REAL": 473,
+    "ACEITE_RESSALVA_R03": 15
+  },
+  "unresolved_count": 0,
+  "accepted_exceptions": [
+    "R01_UPLOAD_E2E_REAL",
+    "R02_WORKER_E2E_REAL",
+    "R03_ISOLAMENTO_REAL_MULTIUSUARIO"
+  ],
+  "criteria": [
+    {
+      "regular_id": "00",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "- Project Instructions contêm backend Supabase próprio;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase1:6798359508",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "00",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "- AGENTS.md existe;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase1:6798359508",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "00",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "- nenhuma tabela/migration foi criada;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase1:6798359508",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "00",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "- nenhum secret foi criado;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase1:6798359508",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "00",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "- nenhum backend paralelo foi habilitado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase1:6798359508",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "01",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "01",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "01",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "01",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "01",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "01",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "01",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "01",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "01",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "02",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "02",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "02",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "02",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "02",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "02",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "02",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "02",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "02",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "03",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "03",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "03",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "03",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "03",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "03",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "03",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "03",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "03",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "04",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "04",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "04",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "04",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "04",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "04",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "04",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "04",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "04",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "05",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "05",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "05",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "05",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "05",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "05",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "05",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "05",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "05",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "06",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "06",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "06",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "06",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "06",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "06",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "06",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "06",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "06",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "07",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "07",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "07",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "07",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "07",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "07",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "07",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "07",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "07",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "08",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "08",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "08",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "08",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "08",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "08",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "08",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "08",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "08",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "09",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "09",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "09",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "09",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "09",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "09",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "09",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "09",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "09",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "10",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "10",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "10",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "10",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "10",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "10",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "10",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "10",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "10",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "11",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "11",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "11",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "11",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "11",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "11",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "11",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "11",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "11",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "12",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "12",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "12",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "12",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "12",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "12",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "12",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "12",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "12",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "13",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "13",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "13",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "13",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "13",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "13",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "13",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "13",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "13",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "14",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "14",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "14",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "14",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "14",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "14",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "14",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "14",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "14",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "15",
+      "screen": null,
+      "criterion_index": 1,
+      "criterion_text": "1. migration aplicada em HML;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "15",
+      "screen": null,
+      "criterion_index": 2,
+      "criterion_text": "2. tabelas/constraints esperadas;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "15",
+      "screen": null,
+      "criterion_index": 3,
+      "criterion_text": "3. RLS habilitada onde aplicável;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "15",
+      "screen": null,
+      "criterion_index": 4,
+      "criterion_text": "4. usuário organização A não lê/escreve organização B;",
+      "decision": "ACEITE_RESSALVA_R03",
+      "proof": [
+        "P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md:R-03",
+        "owner_current_authorization:no-control-bypass"
+      ]
+    },
+    {
+      "regular_id": "15",
+      "screen": null,
+      "criterion_index": 5,
+      "criterion_text": "5. perfil sem permissão falha;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "15",
+      "screen": null,
+      "criterion_index": 6,
+      "criterion_text": "6. RPC crítica não pode ser substituída por update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "backend_main:5eca44aebead3183e81b5c1af0d1dffa5fb8feb6"
+      ]
+    },
+    {
+      "regular_id": "15",
+      "screen": null,
+      "criterion_index": 7,
+      "criterion_text": "7. nenhum secret está no frontend/repositório;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "15",
+      "screen": null,
+      "criterion_index": 8,
+      "criterion_text": "8. testes de erro e rollback lógico;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "15",
+      "screen": null,
+      "criterion_index": 9,
+      "criterion_text": "9. Security view sem novo Critical relacionado.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase3:6798361715",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase3:6798361715",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase3:6798361715",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase3:6798361715",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase3:6798361715",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase3:6798361715",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "16",
+      "screen": "SYS-01",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "17",
+      "screen": "SYS-02",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "PLANO_ATIVO.sys03_recovery_real",
+        "phase3:6798361715"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "PLANO_ATIVO.sys03_recovery_real",
+        "phase3:6798361715"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "PLANO_ATIVO.sys03_recovery_real",
+        "phase3:6798361715"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "PLANO_ATIVO.sys03_recovery_real",
+        "phase3:6798361715"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "PLANO_ATIVO.sys03_recovery_real",
+        "phase3:6798361715"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "PLANO_ATIVO.sys03_recovery_real",
+        "phase3:6798361715"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "PLANO_ATIVO.sys03_recovery_real",
+        "phase3:6798361715"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "PLANO_ATIVO.sys03_recovery_real",
+        "phase3:6798361715"
+      ]
+    },
+    {
+      "regular_id": "18",
+      "screen": "SYS-03",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "19",
+      "screen": "SYS-04",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "20",
+      "screen": "SYS-05",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "21",
+      "screen": "ADM-01",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "22",
+      "screen": "V1-01",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "23",
+      "screen": "V1-02",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "24",
+      "screen": "V1-03",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "25",
+      "screen": "V1-04",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "26",
+      "screen": "V1-05",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "27",
+      "screen": "V1-06",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "28",
+      "screen": "V1-07",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "29",
+      "screen": "V1-08",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "30",
+      "screen": "V1-09",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "31",
+      "screen": "V1-10",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "32",
+      "screen": "V1-11",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "33",
+      "screen": "V1-12",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "34",
+      "screen": "V1-13",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "35",
+      "screen": "V1-14",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "36",
+      "screen": "V1-15",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "37",
+      "screen": "V1-16",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 1,
+      "criterion_text": "1. rota abre;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 2,
+      "criterion_text": "2. perfil autorizado funciona;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 3,
+      "criterion_text": "3. perfil não autorizado é bloqueado pelo backend/RLS, não só pela UI;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 4,
+      "criterion_text": "4. loading/empty/error funcionam;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 5,
+      "criterion_text": "5. nenhuma request usa secret key;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 6,
+      "criterion_text": "6. nenhuma ação crítica é update direto;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 7,
+      "criterion_text": "7. desktop 1440 e 1280 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 8,
+      "criterion_text": "8. tablet 768 ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 9,
+      "criterion_text": "9. mobile 390 preserva dados críticos;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 10,
+      "criterion_text": "10. teclado/foco/labels ok;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 11,
+      "criterion_text": "11. console sem erro e sem log sensível;",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "38",
+      "screen": "V1-17",
+      "criterion_index": 12,
+      "criterion_text": "12. Security scan sem novo Critical.",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 1,
+      "criterion_text": "Rota abre corretamente",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 2,
+      "criterion_text": "Perfil autorizado consegue utilizar a funcionalidade",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 3,
+      "criterion_text": "Perfil não autorizado é bloqueado pelo backend/RLS",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 4,
+      "criterion_text": "Estados loading, empty e error são adequados",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 5,
+      "criterion_text": "Nenhuma requisição usa chave secreta",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 6,
+      "criterion_text": "Ações críticas não executam UPDATE direto",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 7,
+      "criterion_text": "Desktop 1440 e 1280 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 8,
+      "criterion_text": "Tablet 768 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 9,
+      "criterion_text": "Mobile 390 px preserva dados críticos",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 10,
+      "criterion_text": "Teclado, foco e labels acessíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 11,
+      "criterion_text": "Console sem erros ou logs sensíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "39",
+      "screen": "V1-18",
+      "criterion_index": 12,
+      "criterion_text": "Security scan sem novo Critical",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 1,
+      "criterion_text": "Rota abre corretamente",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 2,
+      "criterion_text": "Perfil autorizado consegue utilizar a funcionalidade",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 3,
+      "criterion_text": "Perfil não autorizado é bloqueado pelo backend/RLS",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 4,
+      "criterion_text": "Estados loading, empty e error são adequados",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 5,
+      "criterion_text": "Nenhuma requisição usa chave secreta",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 6,
+      "criterion_text": "Ações críticas não executam UPDATE direto",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 7,
+      "criterion_text": "Desktop 1440 e 1280 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 8,
+      "criterion_text": "Tablet 768 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 9,
+      "criterion_text": "Mobile 390 px preserva dados críticos",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 10,
+      "criterion_text": "Teclado, foco e labels acessíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 11,
+      "criterion_text": "Console sem erros ou logs sensíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "40",
+      "screen": "V1-19",
+      "criterion_index": 12,
+      "criterion_text": "Security scan sem novo Critical",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 1,
+      "criterion_text": "Rota abre corretamente",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 2,
+      "criterion_text": "Perfil autorizado consegue utilizar a funcionalidade",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 3,
+      "criterion_text": "Perfil não autorizado é bloqueado pelo backend/RLS",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 4,
+      "criterion_text": "Estados loading, empty e error são adequados",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 5,
+      "criterion_text": "Nenhuma requisição usa chave secreta",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 6,
+      "criterion_text": "Ações críticas não executam UPDATE direto",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 7,
+      "criterion_text": "Desktop 1440 e 1280 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 8,
+      "criterion_text": "Tablet 768 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 9,
+      "criterion_text": "Mobile 390 px preserva dados críticos",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 10,
+      "criterion_text": "Teclado, foco e labels acessíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 11,
+      "criterion_text": "Console sem erros ou logs sensíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "41",
+      "screen": "V1-20",
+      "criterion_index": 12,
+      "criterion_text": "Security scan sem novo Critical",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 1,
+      "criterion_text": "Rota abre corretamente",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 2,
+      "criterion_text": "Perfil autorizado consegue utilizar a funcionalidade",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 3,
+      "criterion_text": "Perfil não autorizado é bloqueado pelo backend/RLS",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 4,
+      "criterion_text": "Estados loading, empty e error são adequados",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 5,
+      "criterion_text": "Nenhuma requisição usa chave secreta",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 6,
+      "criterion_text": "Ações críticas não executam UPDATE direto",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 7,
+      "criterion_text": "Desktop 1440 e 1280 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 8,
+      "criterion_text": "Tablet 768 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 9,
+      "criterion_text": "Mobile 390 px preserva dados críticos",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 10,
+      "criterion_text": "Teclado, foco e labels acessíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 11,
+      "criterion_text": "Console sem erros ou logs sensíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "42",
+      "screen": "V1-21",
+      "criterion_index": 12,
+      "criterion_text": "Security scan sem novo Critical",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 1,
+      "criterion_text": "Rota abre corretamente",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 2,
+      "criterion_text": "Perfil autorizado consegue utilizar a funcionalidade",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 3,
+      "criterion_text": "Perfil não autorizado é bloqueado pelo backend/RLS",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 4,
+      "criterion_text": "Estados loading, empty e error são adequados",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 5,
+      "criterion_text": "Nenhuma requisição usa chave secreta",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 6,
+      "criterion_text": "Ações críticas não executam UPDATE direto",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 7,
+      "criterion_text": "Desktop 1440 e 1280 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 8,
+      "criterion_text": "Tablet 768 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 9,
+      "criterion_text": "Mobile 390 px preserva dados críticos",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 10,
+      "criterion_text": "Teclado, foco e labels acessíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 11,
+      "criterion_text": "Console sem erros ou logs sensíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "43",
+      "screen": "V1-22",
+      "criterion_index": 12,
+      "criterion_text": "Security scan sem novo Critical",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 1,
+      "criterion_text": "Rota abre corretamente",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 2,
+      "criterion_text": "Perfil autorizado consegue utilizar a funcionalidade",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 3,
+      "criterion_text": "Perfil não autorizado é bloqueado pelo backend/RLS",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 4,
+      "criterion_text": "Estados loading, empty e error são adequados",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 5,
+      "criterion_text": "Nenhuma requisição usa chave secreta",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 6,
+      "criterion_text": "Ações críticas não executam UPDATE direto",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 7,
+      "criterion_text": "Desktop 1440 e 1280 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 8,
+      "criterion_text": "Tablet 768 px preserva conteúdo",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 9,
+      "criterion_text": "Mobile 390 px preserva dados críticos",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 10,
+      "criterion_text": "Teclado, foco e labels acessíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 11,
+      "criterion_text": "Console sem erros ou logs sensíveis",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "regular_id": "75",
+      "screen": "V1-23",
+      "criterion_index": 12,
+      "criterion_text": "Security scan sem novo Critical",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596",
+        "phase5:6797965561"
+      ]
+    }
+  ],
+  "atomics_v1": [
+    {
+      "atomic_id": "000",
+      "requirement_id": "BRAND-01",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase7:6796791384",
+        "phase5:6797965561"
+      ]
+    },
+    {
+      "atomic_id": "001",
+      "requirement_id": "V1-CON-001",
+      "decision": "PASS_COM_RESSALVA_R01",
+      "proof": [
+        "phase4:6797364641",
+        "R-01 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "002",
+      "requirement_id": "V1-CON-002",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "003",
+      "requirement_id": "V1-CON-003",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "004",
+      "requirement_id": "V1-CON-004",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "005",
+      "requirement_id": "V1-CON-005",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "006",
+      "requirement_id": "V1-HIS-001",
+      "decision": "PASS_COM_RESSALVA_R02",
+      "proof": [
+        "phase4:6797364641",
+        "R-02 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "007",
+      "requirement_id": "V1-HIS-002",
+      "decision": "PASS_COM_RESSALVA_R02",
+      "proof": [
+        "phase4:6797364641",
+        "R-02 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "008",
+      "requirement_id": "V1-HIS-003",
+      "decision": "PASS_COM_RESSALVA_R02",
+      "proof": [
+        "phase4:6797364641",
+        "R-02 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "009",
+      "requirement_id": "V1-HIS-004",
+      "decision": "PASS_COM_RESSALVA_R02",
+      "proof": [
+        "phase4:6797364641",
+        "R-02 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "010",
+      "requirement_id": "V1-HIS-005",
+      "decision": "PASS_COM_RESSALVA_R02",
+      "proof": [
+        "phase4:6797364641",
+        "R-02 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "011",
+      "requirement_id": "V1-CHK-001",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "012",
+      "requirement_id": "V1-CHK-002",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "013",
+      "requirement_id": "V1-CHK-003",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "014",
+      "requirement_id": "V1-CHK-004",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "015",
+      "requirement_id": "V1-DOC-001",
+      "decision": "PASS_COM_RESSALVA_R01",
+      "proof": [
+        "phase4:6797364641",
+        "R-01 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "016",
+      "requirement_id": "V1-DOC-002",
+      "decision": "PASS_COM_RESSALVA_R01",
+      "proof": [
+        "phase4:6797364641",
+        "R-01 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "017",
+      "requirement_id": "V1-DOC-003",
+      "decision": "PASS_COM_RESSALVA_R01",
+      "proof": [
+        "phase4:6797364641",
+        "R-01 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "018",
+      "requirement_id": "V1-DOC-004",
+      "decision": "PASS_COM_RESSALVA_R01",
+      "proof": [
+        "phase4:6797364641",
+        "R-01 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "019",
+      "requirement_id": "V1-DOC-005",
+      "decision": "PASS_COM_RESSALVA_R01",
+      "proof": [
+        "phase4:6797364641",
+        "R-01 accepted in P0_V1_FECHAMENTO_GATES_CERTIFICACAO_2026-11-05.md"
+      ]
+    },
+    {
+      "atomic_id": "020",
+      "requirement_id": "V1-AUD-001",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "021",
+      "requirement_id": "V1-AUD-002",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "022",
+      "requirement_id": "V1-AUD-003",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "023",
+      "requirement_id": "V1-AUD-004",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "024",
+      "requirement_id": "V1-AUD-005",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "085",
+      "requirement_id": "NFR-001",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "086",
+      "requirement_id": "NFR-002",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "087",
+      "requirement_id": "NFR-003",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "088",
+      "requirement_id": "NFR-004",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "089",
+      "requirement_id": "NFR-005",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "090",
+      "requirement_id": "NFR-006",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "091",
+      "requirement_id": "NFR-007",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "092",
+      "requirement_id": "NFR-008",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "093",
+      "requirement_id": "NFR-009",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "094",
+      "requirement_id": "NFR-010",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "095",
+      "requirement_id": "NFR-011",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    },
+    {
+      "atomic_id": "096",
+      "requirement_id": "NFR-012",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase7:6796791384"
+      ]
+    }
+  ],
+  "nfr_assessment": [
+    {
+      "atomic_id": "085",
+      "id": "NFR-001",
+      "decision": "PASS_ESCOPADO_HML",
+      "proof": [
+        "docs/MATRIZ_COBERTURA_96.md",
+        "phase6:6797840596"
+      ],
+      "note": "runtime stateless e concorrência comprovada; não é SLA PROD"
+    },
+    {
+      "atomic_id": "086",
+      "id": "NFR-002",
+      "decision": "PASS_ESCOPADO_HML",
+      "proof": [
+        "docs/MATRIZ_COBERTURA_96.md",
+        "CONTAOS_HML_DATABASE_URL pooler/session"
+      ],
+      "note": "pool gerenciado/HML; saturação PROD permanece gate futuro"
+    },
+    {
+      "atomic_id": "087",
+      "id": "NFR-003",
+      "decision": "PASS_COM_RESSALVA_R01",
+      "proof": [
+        "phase4:6797364641"
+      ],
+      "note": "Storage privado/assinado e integridade comprovados; ressalva R01 preservada"
+    },
+    {
+      "atomic_id": "088",
+      "id": "NFR-004",
+      "decision": "PASS_COM_RESSALVA_R01",
+      "proof": [
+        "R-01 accepted"
+      ],
+      "note": "arquivo grande/retry incluído na ressalva R01"
+    },
+    {
+      "atomic_id": "089",
+      "id": "NFR-005",
+      "decision": "PASS_COM_RESSALVA_R02",
+      "proof": [
+        "R-02 accepted",
+        "phase4:6797364641"
+      ],
+      "note": "worker/assíncrono incluído na ressalva R02"
+    },
+    {
+      "atomic_id": "090",
+      "id": "NFR-006",
+      "decision": "PASS_ESCOPADO_HML",
+      "proof": [
+        "docs/MATRIZ_COBERTURA_96.md",
+        "phase4:6797364641"
+      ],
+      "note": "filas/DLQ e isolamento de falha no escopo HML"
+    },
+    {
+      "atomic_id": "091",
+      "id": "NFR-007",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ],
+      "note": "CAS/concorrência/429 e locks"
+    },
+    {
+      "atomic_id": "092",
+      "id": "NFR-008",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ],
+      "note": "idempotência/fencing/replay"
+    },
+    {
+      "atomic_id": "093",
+      "id": "NFR-009",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ],
+      "note": "paginação/cursores/limites"
+    },
+    {
+      "atomic_id": "094",
+      "id": "NFR-010",
+      "decision": "PASS_IMPLEMENTACAO_HML_PROD_NA",
+      "proof": [
+        "phase6:6797840596",
+        "Supabase logs/advisors/readback"
+      ],
+      "note": "métricas/alertas de produção são gate de PROD, não requisito de promoção automática nesta certificação V1 HML"
+    },
+    {
+      "atomic_id": "095",
+      "id": "NFR-011",
+      "decision": "PASS_REAL",
+      "proof": [
+        "phase6:6797840596"
+      ],
+      "note": "timeout/fallback/isolamento de falha OpenAI"
+    },
+    {
+      "atomic_id": "096",
+      "id": "NFR-012",
+      "decision": "PASS_ESCOPADO_HML_PROD_GATE",
+      "proof": [
+        "docs/MATRIZ_COBERTURA_96.md",
+        "phase4:6797364641",
+        "phase6:6797840596"
+      ],
+      "note": "carga HML histórica + concorrência atual; capacidade/99,9% de PROD permanece fora do certificado V1 e exige rito de produção"
+    }
+  ],
+  "phase_certificates": {
+    "1": 6798359508,
+    "2": 6798360599,
+    "3": 6798361715,
+    "4": 6797364641,
+    "5": 6797965561,
+    "6": 6797840596,
+    "7": 6796791384
+  },
+  "prod_untouched": true
+}
