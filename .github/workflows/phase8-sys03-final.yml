@@ -1,0 +1,177 @@
+name: Phase 8 SYS-03 final HML evidence
+on:
+  push:
+    branches: [cert/phase8-sys03-final-20261111]
+    paths: [.github/workflows/phase8-sys03-final.yml]
+permissions:
+  contents: read
+jobs:
+  final-evidence:
+    runs-on: ubuntu-22.04
+    environment: hml
+    timeout-minutes: 20
+    env:
+      HML_FRONTEND_URL: https://contaos-41-hml.vercel.app
+      SUPABASE_URL: https://gklhhhyosgasnyoxlrui.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_sHKZ-UiYCbkEFMqR1QbHMA_iCSLL8Am
+      SYNTHETIC_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_EMAIL }}
+      SYNTHETIC_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_PASSWORD }}
+      MAILBOX_TOKEN: ${{ secrets.CONTAOS_HML_MAILBOX_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Frozen dependencies
+        run: |
+          node --test scripts/ci/install-pinned-bun.test.mjs
+          node scripts/ci/install-pinned-bun.mjs
+          bun install --frozen-lockfile
+          ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Fail closed on fixture and target
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$SYNTHETIC_EMAIL"
+          test -n "$SYNTHETIC_PASSWORD"
+          test -n "$MAILBOX_TOKEN"
+          test "$SUPABASE_URL" = "https://gklhhhyosgasnyoxlrui.supabase.co"
+          test "$HML_FRONTEND_URL" = "https://contaos-41-hml.vercel.app"
+      - name: Real HML negatives and recovery-session controls
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import { chromium } from '@playwright/test';
+
+          const HML=process.env.HML_FRONTEND_URL;
+          const SB=process.env.SUPABASE_URL;
+          const KEY=process.env.SUPABASE_PUBLISHABLE_KEY;
+          const EMAIL=process.env.SYNTHETIC_EMAIL;
+          const PASSWORD=process.env.SYNTHETIC_PASSWORD;
+          const MT=process.env.MAILBOX_TOKEN;
+          const assert=(v,m)=>{if(!v)throw new Error(m)};
+          const headers={'content-type':'application/json',apikey:KEY};
+
+          async function auth(path,body,extra={}){
+            return fetch(SB+path,{method:'POST',headers:{...headers,...extra},body:body?JSON.stringify(body):undefined,redirect:'manual',signal:AbortSignal.timeout(15000)});
+          }
+          async function login(){
+            const r=await auth('/auth/v1/token?grant_type=password',{email:EMAIL,password:PASSWORD});
+            assert(r.status===200,'SYS03_LOGIN_EXPECTED_200_GOT_'+r.status);
+            const j=await r.json();
+            assert(j.access_token&&j.refresh_token,'SYS03_LOGIN_TOKEN_MISSING');
+            return j;
+          }
+
+          // N8/E2E session policy: two genuine sessions; the app uses signOut() with
+          // default global scope after successful recovery. Prove that the same real
+          // HML global sign-out invalidates the peer refresh token, then restore login.
+          const s1=await login(), s2=await login();
+          const lo=await fetch(SB+'/auth/v1/logout?scope=global',{
+            method:'POST',headers:{apikey:KEY,authorization:'Bearer '+s1.access_token},
+            redirect:'manual',signal:AbortSignal.timeout(15000)
+          });
+          assert(lo.status===204,'SYS03_GLOBAL_LOGOUT_EXPECTED_204_GOT_'+lo.status);
+          const refresh=await auth('/auth/v1/token?grant_type=refresh_token',{refresh_token:s2.refresh_token});
+          assert(refresh.status===400||refresh.status===401,'SYS03_PEER_REFRESH_SHOULD_BE_INVALIDATED_GOT_'+refresh.status);
+          await login();
+          console.log('SYS03_N8_REAL_GLOBAL_SESSION_INVALIDATION_PASS');
+
+          // E2E-07: a normal SIGNED_IN session is not a recovery session and must not
+          // expose the password reset form.
+          const browser=await chromium.launch({headless:true});
+          try{
+            const page=await browser.newPage();
+            await page.goto(HML+'/login',{waitUntil:'domcontentloaded',timeout:30000});
+            await page.locator('#login-email').fill(EMAIL);
+            await page.locator('#login-senha').fill(PASSWORD);
+            await page.getByRole('button',{name:'Entrar'}).click();
+            await page.waitForTimeout(1800);
+            assert(!page.url().includes('/login'),'SYS03_UI_LOGIN_DID_NOT_LEAVE_LOGIN');
+            await page.goto(HML+'/redefinir-senha',{waitUntil:'domcontentloaded',timeout:30000});
+            await page.waitForTimeout(3400);
+            assert(await page.locator('#nova-senha').count()===0,'SYS03_COMMON_SESSION_EXPOSED_RECOVERY_FORM');
+            const invalid=await page.getByText('Este link de redefinição é inválido ou expirou. Solicite um novo link.').count();
+            assert(invalid===1,'SYS03_COMMON_SESSION_INVALID_STATE_NOT_SHOWN');
+            console.log('SYS03_E2E07_COMMON_SIGNED_IN_BLOCKED_PASS');
+          } finally { await browser.close(); }
+
+          async function mt(path){
+            const r=await fetch('https://mailtrap.io'+path,{
+              headers:{Authorization:'Bearer '+MT,'Api-Token':MT,Accept:'application/json'},
+              signal:AbortSignal.timeout(15000)
+            });
+            assert(r.status===200,'MAILTRAP_HTTP_'+r.status);
+            return r;
+          }
+          const accounts=await (await mt('/api/accounts')).json();
+          assert(Array.isArray(accounts)&&accounts.length>0,'MAILTRAP_NO_ACCOUNTS');
+          let oldRecovery=null, inboxId=null, beforeCount=0;
+          for(const account of accounts){
+            const inboxes=await (await mt('/api/accounts/'+account.id+'/inboxes')).json();
+            if(!Array.isArray(inboxes))continue;
+            for(const inbox of inboxes){
+              const messages=await (await mt('/api/accounts/'+account.id+'/inboxes/'+inbox.id+'/messages')).json();
+              if(!Array.isArray(messages))continue;
+              beforeCount+=messages.length;
+              for(const m of messages){
+                const ts=Date.parse(m.sent_at||m.created_at||m.updated_at||'');
+                if(!Number.isFinite(ts)||Date.now()-ts<72*60*60*1000)continue;
+                for(const suffix of ['body.htmlsource','body.html','body.txt']){
+                  try{
+                    const br=await fetch('https://mailtrap.io/api/accounts/'+account.id+'/inboxes/'+inbox.id+'/messages/'+m.id+'/'+suffix,{
+                      headers:{Authorization:'Bearer '+MT,'Api-Token':MT,Accept:'text/plain'},
+                      signal:AbortSignal.timeout(10000)
+                    });
+                    if(br.status!==200)continue;
+                    const body=(await br.text()).replaceAll('&amp;','&');
+                    const links=body.match(/https?:\/\/[^"'<>\s]+/g)||[];
+                    const link=links.find(x=>x.includes('gklhhhyosgasnyoxlrui')&&x.includes('type=recovery'));
+                    if(link){oldRecovery={link,ageMs:Date.now()-ts};inboxId=inbox.id;break;}
+                  }catch{}
+                }
+                if(oldRecovery)break;
+              }
+              if(oldRecovery)break;
+            }
+            if(oldRecovery)break;
+          }
+          assert(oldRecovery&&oldRecovery.ageMs>72*60*60*1000,'SYS03_NO_RECOVERY_MESSAGE_OLDER_THAN_72H');
+          const expired=await fetch(oldRecovery.link,{redirect:'manual',signal:AbortSignal.timeout(15000)});
+          const loc=expired.headers.get('location')||'';
+          assert([301,302,303,307,308].includes(expired.status),'SYS03_OLD_RECOVERY_LINK_NOT_REJECTED_REDIRECT_'+expired.status);
+          assert(/error|expired|access_denied|otp_/i.test(loc),'SYS03_OLD_RECOVERY_LINK_REJECTION_NOT_EXPLICIT');
+          console.log('SYS03_N3_REAL_TEMPORAL_EXPIRY_PASS');
+
+          // N7/E2E-08: bounded recovery requests only on the synthetic account.
+          // Require server throttling and no more than one new captured message.
+          const statuses=[];
+          for(let i=0;i<4;i++){
+            const r=await auth('/auth/v1/recover',{email:EMAIL,gotrue_meta_security:{captcha_token:''}});
+            statuses.push(r.status);
+            await new Promise(r=>setTimeout(r,300));
+          }
+          assert(statuses.every(s=>s===200||s===429),'SYS03_RATE_UNEXPECTED_STATUS_'+statuses.join('_'));
+          assert(statuses.includes(429),'SYS03_RATE_LIMIT_NOT_OBSERVED_'+statuses.join('_'));
+          await new Promise(r=>setTimeout(r,2500));
+          let afterCount=0;
+          for(const account of accounts){
+            const inboxes=await (await mt('/api/accounts/'+account.id+'/inboxes')).json();
+            if(!Array.isArray(inboxes))continue;
+            for(const inbox of inboxes){
+              const messages=await (await mt('/api/accounts/'+account.id+'/inboxes/'+inbox.id+'/messages')).json();
+              if(Array.isArray(messages))afterCount+=messages.length;
+            }
+          }
+          assert(afterCount-beforeCount<=1,'SYS03_RATE_CREATED_DUPLICATE_MESSAGES_'+(afterCount-beforeCount));
+          console.log('SYS03_N7_REAL_RATE_LIMIT_AND_NO_DUPLICATE_PASS');
+
+          // Static-to-runtime binding: successful reset path calls default global signOut.
+          const fs=await import('node:fs');
+          const reset=fs.readFileSync('src/components/auth/ResetPasswordForm.tsx','utf8');
+          assert(/supabase\.auth\.signOut\(\)/.test(reset),'SYS03_APP_DOES_NOT_BIND_RESET_TO_GLOBAL_SIGNOUT');
+          console.log('SYS03_RESET_GLOBAL_SIGNOUT_BINDING_PASS');
+          console.log('PHASE8_SYS03_FINAL_PASS');
+          JS
