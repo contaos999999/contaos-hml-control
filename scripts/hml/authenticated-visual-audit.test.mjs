@@ -15031,7 +15031,7 @@ async function c8BuildSourceUI(directory) {
   );
   await fs.writeFile(
     join(directory, "header.tsx"),
-    `import React from 'react';export const ContaOSOrganizationHeader=()=> <header aria-label="Organização atual">ContaOS HML Teste Situação: ativa<button onClick={()=>window.__logoutRequested=true}>Sair</button></header>;`,
+    `import React from 'react';export const ContaOSOrganizationHeader=()=> <header aria-label="Organização atual"><div>ContaOS HML Teste</div><div>Situação: ativa</div><button onClick={()=>window.__logoutRequested=true}>Sair</button></header>;`,
   );
   await fs.writeFile(join(directory, "copilot.tsx"), "export const CopilotoContrato=()=>null;");
   await fs.writeFile(
