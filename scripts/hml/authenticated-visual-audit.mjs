@@ -7580,10 +7580,13 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
       const header = original.split("\n")[0].trim();
       if (!header.startsWith("- ") || !header.endsWith(":")) continue;
       // The DOM node has already been sealed against the exact typed row/cell
-      // contract above. Use Playwright's own serialized header instead of
-      // reconstructing its YAML quoting, which can vary with punctuation and
-      // Unicode while the accessible name itself remains unchanged.
-      if (!header.startsWith("- " + slot.role + " ") || !header.endsWith(":")) continue;
+      // contract above. Decode only Playwright's YAML key quoting and bind the
+      // serialized header to the expected role. The accessible-name content is
+      // already proven by the exact DOM contract and node identity checks.
+      let key = header.slice(2, -1);
+      if (key.startsWith("'") && key.endsWith("'") && /^(?:[^']|'')*$/.test(key.slice(1, -1)))
+        key = key.slice(1, -1).replace(/''/g, "'");
+      if (!key.startsWith(slot.role + " ")) continue;
       aggregateHeaders.set(header, (aggregateHeaders.get(header) ?? 0) + 1);
     }
     finalSeal = await page.evaluateHandle(collect, descriptors);
