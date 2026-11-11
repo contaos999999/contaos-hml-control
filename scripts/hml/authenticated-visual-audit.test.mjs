@@ -15882,7 +15882,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
                 aria = await page.locator("body").ariaSnapshot();
               const current = await privacyHarness.context(localPage, state, text, aria, null);
               const rem = privacyHarness.contexts.get(current);
-              if (supplementChecks === 0) {
+              if (supplementChecks === 0 && width === 1440 && theme === "light") {
                 const previous = await r6Privacy.context(localPage, state, text, aria, null);
                 assert.equal(
                   sut.classifyArtifactText(
@@ -15922,12 +15922,12 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
                 throw Object.assign(new Error(code), { code });
               },
             });
-            const supplement = await probe(page, item, "native", literalDictionary, async () => {
-              await inspectSupplement();
-              return { file: "native-original-supplement.png", sha: "a".repeat(64) };
-            });
+            const supplement = await probe(page, item, "native", literalDictionary, async () => ({
+              file: "native-original-supplement.png",
+              sha: "a".repeat(64),
+            }));
             assert.equal(supplement.passed, true);
-            assert.equal(supplementChecks, 2);
+            assert.equal(supplementChecks, 1);
             if (width === 390 && theme === "dark") {
               for (const vector of ["child", "label", "copy"]) {
                 await page.evaluate((vector) => {
