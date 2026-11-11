@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createBrowserHistory } from "@tanstack/history";
 import { createHash } from "node:crypto";
 import { createServer, connect } from "node:net";
 import { createServer as createHttpServer } from "node:http";
@@ -14670,12 +14671,12 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
     schema_version: 1,
     issue: 317,
     operation: "audit",
-    request_id: "trilha-c-audit-20261111-c8-r5",
+    request_id: "trilha-c-audit-20261111-c8-r6",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
   };
-  assert.equal(resolve(request), sut.C8_AUDIT_SCOPE);
+  assert.equal(resolve(request), sut.C8_REMAINING_SCOPE);
   assert.equal(
     sut.parseSingleRequest(JSON.stringify(request), "audit").request_id,
     request.request_id,
@@ -14861,7 +14862,7 @@ test("C8 current wire rejects foreign stale pending and inconsistent recovery bi
     assert.equal(sut.validateC8CurrentWire(item, { ...wire, ...delta }), false);
 });
 
-async function c8SourceFixture() {
+async function c8SourceFixture({ automatic = false } = {}) {
   const fs = await import("node:fs/promises"),
     ts = (await import("typescript")).default;
   const preparer = await import("./prepare-visual-fixtures.mjs");
@@ -14997,6 +14998,44 @@ async function c8SourceFixture() {
       ordem: 1,
     },
   ];
+  if (automatic) {
+    const output = {
+      justificativa:
+        "O documento fornecido identifica-se como fonte sintética de auditoria e informa que é um documento de teste relacionado à auditoria da Trilha A.",
+      fundamento:
+        "A evidência atende à exigência de presença de documento TXT sintético de auditoria; a avaliação automática não substitui aprovação humana.",
+      hash_evidencias: null,
+    };
+    const execution = {
+      motor: "contaos",
+      versao_motor: "4.1",
+      provedor: "openai",
+      modelo: "gpt-6-luna",
+      prompt_versao: "analise-pt-BR-v4.1",
+      hash_entrada: "a".repeat(64),
+      iniciada_em: "2026-11-10T00:00:00Z",
+      concluida_em: "2026-11-10T00:01:00Z",
+      criado_em: "2026-11-10T00:00:00Z",
+    };
+    Object.assign(data.analysis.execucao_atual, execution);
+    Object.assign(data.analysis.execucoes[0], execution);
+    Object.assign(data.detail.execucao_atual, execution);
+    for (const row of [
+      data.analysis.resultados[0],
+      data.detail.resultado_atual,
+      data.detail.resultado_referencia,
+      data.detail.historico[0],
+    ])
+      Object.assign(row, output);
+    Object.assign(data.detail.historico[0], execution, { criado_em: "2026-11-10T00:01:00Z" });
+    data.analysis.resultados[0].requisito.fonte_referencia = preparer.FIXTURE.listName;
+    // The scoped R20 read confirms zero findings. The generic SDK parser fixture
+    // carries a deliberately unapproved "Fixture" finding, not present in HML.
+    data.analysis.apontamentos = [];
+    data.analysis.apontamentos_paginacao.total = 0;
+    data.detail.apontamentos = [];
+    data.detail.apontamentos_paginacao.total = 0;
+  }
   return { data, bindings: b };
 }
 
@@ -15119,7 +15158,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
   try {
     phase("BUNDLE");
     const bundle = await c8BuildSourceUI(dir),
-      { data, bindings: b } = await c8SourceFixture();
+      { data, bindings: b } = await c8SourceFixture({ automatic: true });
     const { execFile } = await import("node:child_process"),
       { promisify } = await import("node:util"),
       ts = (await import("typescript")).default;
@@ -15444,7 +15483,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           r3Privacy.pages.set(localPage, state);
           const r3Token = await r3Privacy.context(localPage, state, rendered, snapshot, null);
           const r3Remainder = r3Privacy.contexts.get(r3Token);
-          if (["V119", "V120"].includes(surface)) {
+          if (["V117", "V119", "V120"].includes(surface)) {
             for (const [channel, text] of [
               ["RENDER", remainder.rendered.remainder],
               ["ARIA", remainder.snapshot.remainder],
@@ -15479,14 +15518,21 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
             ]) {
               assert.equal(
                 prior.rendered.remainder.includes(value),
-                remainder.rendered.remainder.includes(value),
-                "same complete V117 DOM, immediate predecessor comparison",
+                true,
+                "R5 causal RED: automatic original result is absent from the human fixture contract",
               );
               assert.equal(
                 prior.snapshot.remainder.includes(value),
-                remainder.snapshot.remainder.includes(value),
-                "same complete V117 ARIA, no invented causal RED",
+                true,
+                "R5 original automatic result remains blocked in ARIA",
               );
+            }
+            for (const value of [
+              data.detail.resultado_atual.justificativa,
+              data.detail.resultado_atual.fundamento,
+            ]) {
+              assert.equal(remainder.rendered.remainder.includes(value), false);
+              assert.equal(remainder.snapshot.remainder.includes(value), false);
             }
             const encoded = await originalAriaValue(
               JSON.stringify(data.detail.requisito.fonte_detalhe),
@@ -16062,6 +16108,7 @@ async function c8PrivacyHarness({
     "SYNTHETIC_FIXTURE",
     "c8TechnicalFieldContracts",
     "C8_AUDIT_SCOPE",
+    "isC8Scope",
     "privacy78Pages",
     "privacy78Contexts",
     "validateC8CurrentWire",
@@ -16078,6 +16125,7 @@ async function c8PrivacyHarness({
     sut.SYNTHETIC_FIXTURE,
     baselineTechnical,
     sut.C8_AUDIT_SCOPE,
+    sut.isC8Scope,
     pages,
     contexts,
     sut.validateC8CurrentWire,
@@ -16586,6 +16634,7 @@ async function c8MutationWindowProbe({
     "privateCases",
     "HML_ORIGIN",
     "C8_AUDIT_SCOPE",
+    "isC8Scope",
     "privacy78FieldAnchor",
     "privacy78FieldContext",
     "classifyArtifactText",
@@ -16596,6 +16645,7 @@ async function c8MutationWindowProbe({
     sut.privateCases,
     sut.HML_ORIGIN,
     sut.C8_AUDIT_SCOPE,
+    sut.isC8Scope,
     anchor,
     sut.privacy78FieldContext,
     sut.classifyArtifactText,
@@ -17117,7 +17167,7 @@ test("C8 r5 original observer diagnostics expose only closed state and cannot re
     const d = observer.diagnostics();
     assert.deepEqual(
       Object.keys(d).sort(),
-      ["invalid", "current", "route", "header", "pending", "seen", "age"].sort(),
+      ["invalid", "cause", "current", "route", "header", "pending", "seen", "age"].sort(),
     );
     for (const k of ["invalid", "current", "route", "header"]) assert.equal(typeof d[k], "boolean");
     for (const k of ["pending", "seen", "age"])
@@ -17246,5 +17296,247 @@ test("C8 r5 inert background remains governed by original Playwright field seria
       sut.classifyArtifactText(bad.remainder, words, { snapshot: true }).reason,
       "ALLOWED",
     );
+  }
+});
+
+test("C8 sixteen blockers: fresh V111 V115 entry accepts only original router initialization", async () => {
+  for (const surface of ["V111", "V115"]) {
+    const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === surface);
+    for (const variant of ["source", "foreign-state", "second-replace", "ready-header"]) {
+      const { dom, w, run } = privacy78Browser(
+        variant === "ready-header"
+          ? '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header>'
+          : "",
+      );
+      try {
+        w.history.replaceState(null, "", HML + item.path);
+        const nativeReplace = w.history.replaceState;
+        w.history.replaceState = function (state, title, url) {
+          const event = new w.Event("navigate");
+          Object.assign(event, {
+            navigationType: "replace",
+            destination: {
+              sameDocument: true,
+              url: url ? new URL(url, w.location.href).href : w.location.href,
+            },
+          });
+          w.navigation.dispatchEvent(event);
+          return nativeReplace.call(this, state, title, url);
+        };
+        w.fetch = () => Promise.resolve(new Response("{}"));
+        run("privacy78Runtime", {
+          proof: privacy78Proof,
+          wireProof: privacyWireRaw,
+          install: true,
+        });
+        const history = createBrowserHistory({ window: w });
+        if (variant === "foreign-state")
+          nativeReplace.call(w.history, { ...w.history.state, foreign: true }, "");
+        await new Promise((resolve) => setImmediate(resolve));
+        if (variant === "second-replace") w.history.replaceState(w.history.state, "");
+        assert.equal(w.__contaosPrivacy78.diagnostics().invalid, variant !== "source");
+        if (variant === "source") {
+          assert.equal(w.__contaosPrivacy78.diagnostics().current, true);
+          w.navigation.dispatchEvent(new w.Event("navigate"));
+          assert.equal(w.__contaosPrivacy78.read(), null);
+        }
+        history.destroy();
+      } finally {
+        dom.window.close();
+      }
+    }
+  }
+});
+
+test("C8 sixteen blockers: V117 binds original background source and header date without admitting foreign text", async () => {
+  const { data } = await c8SourceFixture();
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  data.analysis.execucao_atual.criado_em = "2026-11-10T00:00:00Z";
+  data.analysis.resultados[0].requisito.fonte_referencia =
+    "Lista sintética Trilha A 24 fixtures 20261108";
+  const fields = sut.c8TechnicalFieldContracts(item, data);
+  const source = fields.find((d) => d.field === "analysis.resultados.0.requisito.fonte_referencia");
+  const date = fields.find((d) => d.field === "analysis.execucao_atual.criado_em");
+  assert.equal(source.expected, "Fonte: Lista sintética Trilha A 24 fixtures 20261108");
+  assert.equal(
+    source.selector,
+    'section[aria-labelledby="v116-req"] tbody > tr:nth-child(1) > td:nth-child(1) > p:nth-of-type(3)',
+  );
+  assert.equal(date.expected, "Execução atual: completa · criada em 09/11/2026 21:00");
+  for (const foreign of [
+    "Pessoa estranha",
+    "Lista sintética Trilha A 24 fixtures 20261108 UNLISTED_CANARY",
+  ]) {
+    data.analysis.resultados[0].requisito.fonte_referencia = foreign;
+    assert.equal(
+      sut.c8TechnicalFieldContracts(item, data).some((d) => d.field === source.field),
+      false,
+    );
+  }
+});
+
+test("C8 sixteen blockers: additive inventory executes sixteen and preserves the exact forty-eight complement", () => {
+  const cases = sut.privateCases(sut.C8_REMAINING_SCOPE);
+  assert.equal(cases.length, 16);
+  assert.equal(cases.filter((r) => r.surface === "V111" && r.theme === "light").length, 4);
+  assert.equal(cases.filter((r) => r.surface === "V115" && r.theme === "light").length, 4);
+  assert.equal(cases.filter((r) => r.surface === "V117").length, 8);
+  const keys = new Set(cases.map(sut.caseKey));
+  const preserved = sut.privateCases(sut.C8_AUDIT_SCOPE).filter((r) => !keys.has(sut.caseKey(r)));
+  assert.equal(preserved.length, 48);
+  assert.ok(preserved.every((r) => !keys.has(sut.caseKey(r))));
+  assert.equal(sut.C8_R5_PRESERVED.preservedCases, 48);
+  assert.equal(sut.C8_R5_PRESERVED.artifactId, "13839474771");
+  const rows = c8TechnicalRows().filter((r) => keys.has(sut.caseKey(r)));
+  assert.equal(sut.summarizeCases(rows, sut.C8_REMAINING_SCOPE).matrixComplete, true);
+  assert.equal(sut.summarizeCases(rows.slice(1), sut.C8_REMAINING_SCOPE).matrixComplete, false);
+  assert.throws(
+    () => sut.completePrivateRecords([...rows, preserved[0]], sut.C8_REMAINING_SCOPE),
+    /AUDIT_CASES/,
+  );
+});
+
+test("C8 sixteen blockers: automatic V117 fields are closed to original result role owner execution and scalar", async () => {
+  const { data } = await c8SourceFixture({ automatic: true });
+  const item = sut.privateCases(sut.C8_REMAINING_SCOPE).find((r) => r.surface === "V117");
+  const expected = [
+    "detail.resultado_referencia.justificativa",
+    "detail.resultado_referencia.fundamento",
+    "detail.resultado_atual.justificativa",
+    "detail.resultado_atual.fundamento",
+    "detail.historico.0.justificativa",
+    "analysis.resultados.0.justificativa",
+    "analysis.resultados.0.fundamento",
+    "detail.execucao_atual.provedor_modelo",
+    "detail.execucao_atual.prompt_versao",
+    "detail.execucao_atual.status",
+    "detail.historico.0.provedor_modelo",
+    "detail.historico.0.prompt_versao",
+    "detail.historico.0.tipo_status",
+    "analysis.execucoes.0.provedor",
+    "analysis.execucoes.0.modelo",
+    "analysis.execucoes.0.prompt_versao",
+    "analysis.execucoes.0.status",
+  ];
+  const fields = sut.c8TechnicalFieldContracts(item, data);
+  for (const field of expected)
+    assert.ok(
+      fields.some((d) => d.field === field),
+      field,
+    );
+  const words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+  for (const field of ["justificativa", "fundamento"])
+    assert.equal(
+      sut.classifyArtifactText(data.detail.resultado_atual[field], words).reason,
+      "UNKNOWN_WORDS",
+    );
+  for (const mutate of [
+    (w) => {
+      w.detail.resultado_atual.justificativa += " UNLISTED_CANARY";
+    },
+    (w) => {
+      w.detail.resultado_atual.justificativa = w.detail.resultado_atual.fundamento;
+    },
+    (w) => {
+      w.detail.resultado_atual.id_execucao = "foreign";
+    },
+    (w) => {
+      w.detail.execucao_atual.id = "foreign";
+    },
+    (w) => {
+      w.analysis.competencia.id_organizacao = "foreign";
+    },
+  ]) {
+    const bad = structuredClone(data);
+    mutate(bad);
+    assert.equal(
+      sut
+        .c8TechnicalFieldContracts(item, bad)
+        .some((d) => d.field === "detail.resultado_atual.justificativa"),
+      false,
+    );
+  }
+  const foreign = structuredClone(data);
+  foreign.analysis.resultados[0].id_requisito = "foreign";
+  assert.equal(
+    sut
+      .c8TechnicalFieldContracts(item, foreign)
+      .some((d) => d.field === "analysis.resultados.0.justificativa"),
+    false,
+  );
+  assert.equal(
+    sut
+      .c8TechnicalFieldContracts({ ...item, surface: "V116" }, data)
+      .some((d) => d.field === "analysis.resultados.0.justificativa"),
+    false,
+  );
+  const parser = await import("./prepare-visual-fixtures.mjs");
+  assert.ok(parser.projectScopedRpcResponse("obter_analise_competencia_v116", data.analysis));
+  assert.ok(parser.projectScopedRpcResponse("obter_detalhe_requisito_v117", data.detail));
+});
+
+test("C8 sixteen blockers: composite provider and standalone history retain exact sealed cardinality", async () => {
+  const { JSDOM } = await import("jsdom");
+  const words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+  for (const copy of [false, true]) {
+    const { data } = await c8SourceFixture({ automatic: true });
+    const item = sut.privateCases(sut.C8_REMAINING_SCOPE).find((r) => r.surface === "V117");
+    const h = await c8PrivacyHarness();
+    const dom = new JSDOM(
+      '<section aria-labelledby="v117-exec"><dl><div><dt>Provedor/modelo: </dt><dd>openai / gpt-6-luna</dd></div></dl></section><section aria-labelledby="v116-hist"><ul><li><dl><div><dt>Provedor</dt><dd>openai</dd></div></dl></li></ul></section>',
+      { runScripts: "outside-only" },
+    );
+    const w = dom.window;
+    w.HTMLElement.prototype.getClientRects = function () {
+      return [{}];
+    };
+    const observer = {},
+      state = {
+        scope: sut.C8_REMAINING_SCOPE,
+        verified: true,
+        closed: false,
+        generation: 1,
+        c8Observer: observer,
+      };
+    state.c8Current = { owner: state, observer, generation: 1, item, wire: data };
+    const page = {
+      url: () => sut.HML_ORIGIN + item.path,
+      evaluateHandle: async (fn, arg) => {
+        const seal = w.eval("(" + fn.toString() + ")")(arg);
+        return {
+          _testSeal: seal,
+          evaluate: async (fn, arg) =>
+            w.eval("(" + fn.toString() + ")")(seal, arg?._testSeal ?? arg),
+          dispose: async () => {},
+        };
+      },
+      locator: (selector) => {
+        const nodes = [...w.document.querySelectorAll(selector)];
+        return {
+          count: async () => nodes.length,
+          nth: (i) => ({
+            ariaSnapshot: async () =>
+              "- definition: " + (await originalAriaValue(nodes[i].textContent)),
+          }),
+        };
+      },
+    };
+    h.pages.set(page, state);
+    try {
+      const rendered = "openai / gpt-6-luna\nopenai" + (copy ? "\nopenai" : "");
+      const snapshot = "- definition: openai / gpt-6-luna\n- definition: openai";
+      const token = await h.context(page, state, rendered, snapshot, null);
+      const remainder = h.contexts.get(token);
+      assert.equal(
+        sut.classifyArtifactText(remainder.rendered.remainder, words).reason,
+        copy ? "UNKNOWN_WORDS" : "ALLOWED",
+      );
+      assert.equal(
+        sut.classifyArtifactText(remainder.snapshot.remainder, words, { snapshot: true }).reason,
+        "ALLOWED",
+      );
+    } finally {
+      w.close();
+    }
   }
 });
