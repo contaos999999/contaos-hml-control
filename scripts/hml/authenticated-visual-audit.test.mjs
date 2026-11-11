@@ -14927,6 +14927,7 @@ async function c8SourceFixture() {
     criado_em: result.criado_em,
   });
   data.detail.resultado_atual = structuredClone(result);
+  delete data.detail.resultado_atual.mecanismo;
   data.detail.resultado_referencia = structuredClone(result);
   data.detail.historico = [
     {
@@ -14944,6 +14945,7 @@ async function c8SourceFixture() {
       concluida_em: data.detail.execucao_atual.concluida_em,
     },
   ];
+  delete data.detail.historico[0].id;
   data.detail.historico_paginacao.total = 1;
 
   data.overview.competencia.situacao = c.state;
@@ -15246,6 +15248,10 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
       baseline: true,
       baselineRef: "7f5eb2ada7d6fbc978f578cdc71bdd22df94632f",
     });
+    const r4Privacy = await c8PrivacyHarness({
+      baseline: true,
+      baselineRef: "2cafe0e9cdfd84a76c85cb45474ff718749ba0e8",
+    });
     const literalDictionary = await sut.literalWords(new URL("../../", import.meta.url).pathname);
     const preparer = await import("./prepare-visual-fixtures.mjs");
     await page.route(API + "/rest/v1/**", async (route) => {
@@ -15432,6 +15438,24 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
             );
           }
           if (surface === "V117") {
+            r4Privacy.pages.set(localPage, state);
+            const priorToken = await r4Privacy.context(localPage, state, rendered, snapshot, null);
+            const prior = r4Privacy.contexts.get(priorToken);
+            for (const value of [
+              data.detail.resultado_atual.justificativa,
+              data.detail.resultado_atual.fundamento,
+            ]) {
+              assert.equal(
+                prior.rendered.remainder.includes(value),
+                remainder.rendered.remainder.includes(value),
+                "same complete V117 DOM, immediate predecessor comparison",
+              );
+              assert.equal(
+                prior.snapshot.remainder.includes(value),
+                remainder.snapshot.remainder.includes(value),
+                "same complete V117 ARIA, no invented causal RED",
+              );
+            }
             const encoded = await originalAriaValue(
               JSON.stringify(data.detail.requisito.fonte_detalhe),
             );
@@ -15565,6 +15589,71 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
               )
                 await page.getByRole("button", { name: "Expandir menu", exact: true }).click();
             }
+          }
+
+          if (width === 390 && surface === "V119") {
+            phase("NEGATIVE", item);
+            let oldSnapshot, newSnapshot;
+            const failure = Object.assign(new Error("closed native privacy failure"), {
+              code: "PII_SUPPLEMENT",
+            });
+            const bindings = {
+              inspectPrivacy: async () => {
+                oldSnapshot = await page.locator("body").ariaSnapshot();
+                return null;
+              },
+              fail: () => {
+                throw failure;
+              },
+              closeAuditMobileMenu: sut.closeAuditMobileMenu,
+            };
+            const oldProbe = await c8OriginalFunction(
+              "sidebarProbe",
+              bindings,
+              "2cafe0e9cdfd84a76c85cb45474ff718749ba0e8",
+            );
+            const newProbe = await c8OriginalFunction("sidebarProbe", {
+              ...bindings,
+              inspectPrivacy: async () => {
+                newSnapshot = await page.locator("body").ariaSnapshot();
+                return null;
+              },
+            });
+            const neverSave = async () => {
+              throw new Error("must not capture blocked privacy");
+            };
+            await assert.rejects(
+              oldProbe(page, item, "native", literalDictionary, neverSave),
+              (e) => e === failure,
+            );
+            assert.equal(
+              await page.getByRole("dialog", { name: "Menu de navegação", exact: true }).count(),
+              1,
+              "R4 causal RED leaves original modal open",
+            );
+            const exit = page.locator('header[aria-label="Organização atual"] button');
+            assert.equal(
+              await exit.evaluate((n) => !!n.closest("[inert]")),
+              true,
+              "original Sair is inert",
+            );
+            await sut.closeAuditMobileMenu(page);
+            await assert.rejects(
+              newProbe(page, item, "native", literalDictionary, neverSave),
+              (e) => e === failure,
+            );
+            assert.equal(newSnapshot, oldSnapshot, "same original full DOM/ARIA failure window");
+            assert.equal(
+              await page.getByRole("dialog", { name: "Menu de navegação", exact: true }).count(),
+              0,
+            );
+            assert.equal(await exit.evaluate((n) => !!n.closest("[inert]")), false);
+            await exit.click();
+            assert.equal(
+              await page.evaluate(() => window.__logoutRequested),
+              true,
+              "original shell restores actionable exit after failed supplement",
+            );
           }
 
           if (surface === "V117")
@@ -15832,6 +15921,9 @@ test("C8 source fixture preserves complete actual SDK shapes and build uses orig
   const { data } = await c8SourceFixture();
   const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
   assert.equal(sut.validateC8CurrentWire(item, data), true);
+  const preparer = await import("./prepare-visual-fixtures.mjs");
+  assert.ok(preparer.projectScopedRpcResponse("obter_analise_competencia_v116", data.analysis));
+  assert.ok(preparer.projectScopedRpcResponse("obter_detalhe_requisito_v117", data.detail));
   const fs = await import("node:fs/promises"),
     { join } = await import("node:path"),
     { tmpdir } = await import("node:os");
@@ -15861,6 +15953,7 @@ async function c8PrivacyHarness({
       [
         "aaad7a97aa821642ff2a3cfefe1cdcbe7f758c10",
         "7f5eb2ada7d6fbc978f578cdc71bdd22df94632f",
+        "2cafe0e9cdfd84a76c85cb45474ff718749ba0e8",
       ].includes(baselineRef),
     );
     source = (
@@ -16866,13 +16959,25 @@ test("C8 r4 protocol package kind follows canonical creation and registration tr
   }
 });
 
-async function c8OriginalFunction(name, bindings) {
+async function c8OriginalFunction(name, bindings, baselineRef = null) {
   const fs = await import("node:fs/promises"),
     ts = (await import("typescript")).default;
-  const source = await fs.readFile(
+  let source = await fs.readFile(
     new URL("./authenticated-visual-audit.mjs", import.meta.url),
     "utf8",
   );
+  if (baselineRef) {
+    assert.equal(baselineRef, "2cafe0e9cdfd84a76c85cb45474ff718749ba0e8");
+    const { promisify } = await import("node:util"),
+      { execFile } = await import("node:child_process");
+    source = (
+      await promisify(execFile)(
+        "git",
+        ["show", baselineRef + ":scripts/hml/authenticated-visual-audit.mjs"],
+        { maxBuffer: 2097152 },
+      )
+    ).stdout;
+  }
   const ast = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
   const declaration = ast.statements.find(
     (n) => ts.isFunctionDeclaration(n) && n.name?.text === name,
@@ -16993,4 +17098,70 @@ test("C8 r5 spent r4 stays readable historically and cannot authorize a new exec
     r.request_id,
   );
   assert.throws(() => sut.resolveC8AuditScope(r), /AUDIT_BINDING_PENDING|REQUEST_SCHEMA/);
+});
+
+test("C8 r5 original observer waits for its actual Response clone stream and does not rehabilitate invalidation", async () => {
+  const rbacProof = await sut.loadPrivacy78RbacProof();
+  const { dom, w, run } = privacy78Browser(
+    '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header>',
+  );
+  try {
+    w.history.replaceState(
+      {},
+      "",
+      "/competencias/" + privacy78Proof.context.competence + "/documentos",
+    );
+    const upload = privacy78Proof.get_contracts.find((c) => c.name === "upload"),
+      gate = rbacProof.get_contract;
+    let held;
+    const stream = new ReadableStream({
+      start(c) {
+        held = c;
+        c.enqueue(
+          new TextEncoder().encode(
+            JSON.stringify([
+              {
+                extensoes_permitidas: privacy78Proof.observed.upload.extensions,
+                tamanho_maximo_bytes: 524288000,
+              },
+            ]),
+          ),
+        );
+      },
+    });
+    const uploadUrl = API + upload.path + "?" + new URLSearchParams(upload.query);
+    const gateUrl = API + gate.path + "?" + new URLSearchParams(gate.query);
+    const response = new Response(stream);
+    Object.defineProperty(response, "url", { value: uploadUrl });
+    const gateResponse = new Response(
+      JSON.stringify([{ id_contrato: privacy78Proof.context.contract }]),
+    );
+    Object.defineProperty(gateResponse, "url", { value: gateUrl });
+    w.fetch = (url) => Promise.resolve(url === uploadUrl ? response : gateResponse);
+    run("privacy78Runtime", {
+      proof: privacy78Proof,
+      rbacProof,
+      wireProof: privacyWireRaw,
+      install: true,
+    });
+    await w.fetch(uploadUrl);
+    await w.fetch(gateUrl);
+    for (let i = 0; i < 20 && w.__contaosPrivacy78.diagnostics().pending !== 1; i++)
+      await new Promise((r) => setTimeout(r, 0));
+    assert.equal(w.__contaosPrivacy78.read(), null);
+    assert.equal(w.__contaosPrivacy78.diagnostics().pending, 1);
+    assert.equal(w.__contaosPrivacy78.diagnostics().invalid, false);
+    held.close();
+    for (let i = 0; i < 50 && w.__contaosPrivacy78.diagnostics().pending; i++)
+      await new Promise((r) => setTimeout(r, 0));
+    const receipt = w.__contaosPrivacy78.read();
+    assert.ok(receipt);
+    assert.deepEqual([...receipt.observed], ["competence_rbac_gate", "upload"]);
+    assert.equal(w.__contaosPrivacy78.diagnostics().pending, 0);
+    w.__contaosPrivacy78.invalidate();
+    assert.equal(w.__contaosPrivacy78.read(), null);
+    assert.equal(w.__contaosPrivacy78.diagnostics().invalid, true);
+  } finally {
+    dom.window.close();
+  }
 });
