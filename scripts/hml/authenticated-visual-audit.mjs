@@ -4861,7 +4861,7 @@ export function nativeC8VisualDiagnostic(tap) {
       continue;
     }
     const match =
-      /^# C8_NATIVE_PHASE (READY|MOUNT|DRAWER|STATE|COLLECT|PRIVACY|CLOSE|NEGATIVE) (V117|V119|V120) (1440|1280|768|390) (light|dark)$/.exec(
+      /^# C8_NATIVE_PHASE (READY|MOUNT|DRAWER|STATE|COLLECT|PRIVACY|PRIVACY_BASELINE|PRIVACY_KIND|PRIVACY_RULE|PRIVACY_CONDITION|PRIVACY_SOURCE|PRIVACY_REFERENCE|PRIVACY_RETURN|CLOSE|NEGATIVE) (V117|V119|V120) (1440|1280|768|390) (light|dark)$/.exec(
         line,
       );
     if (!match) return unknown();

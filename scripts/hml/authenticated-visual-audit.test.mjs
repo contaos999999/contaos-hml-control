@@ -15356,6 +15356,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
             snapshot = await page.locator("body").ariaSnapshot();
           const token = await privacyHarness.context(localPage, state, rendered, snapshot, null);
           const remainder = privacyHarness.contexts.get(token);
+          phase("PRIVACY_BASELINE", item);
           baselinePrivacy.pages.set(localPage, state);
           const oldToken = await baselinePrivacy.context(
             localPage,
@@ -15382,13 +15383,14 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           );
 
           if (surface === "V117")
-            for (const value of [
-              "item_lista",
-              JSON.stringify(data.detail.requisito.regra_validacao),
-              JSON.stringify(data.detail.requisito.condicao_aplicabilidade),
-              JSON.stringify(data.detail.requisito.fonte_detalhe),
-              data.detail.requisito.fonte_referencia,
+            for (const [stage, value] of [
+              ["PRIVACY_KIND", "item_lista"],
+              ["PRIVACY_RULE", JSON.stringify(data.detail.requisito.regra_validacao)],
+              ["PRIVACY_CONDITION", JSON.stringify(data.detail.requisito.condicao_aplicabilidade)],
+              ["PRIVACY_SOURCE", JSON.stringify(data.detail.requisito.fonte_detalhe)],
+              ["PRIVACY_REFERENCE", data.detail.requisito.fonte_referencia],
             ]) {
+              phase(stage, item);
               assert.ok(rendered.includes(value));
               assert.equal(remainder.rendered.remainder.includes(value), false);
             }
@@ -15397,6 +15399,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
             assert.equal(remainder.rendered.remainder.includes("documento_competencia"), false);
           }
           if (["V119", "V120"].includes(surface)) {
+            phase("PRIVACY_RETURN", item);
             const route = "/competencias/" + b.competencies[surface === "V120" ? 1 : 0].id;
             assert.ok(snapshot.includes("- /url: " + route));
             assert.equal(remainder.snapshot.remainder.includes(route), false);
@@ -16358,5 +16361,16 @@ test("C8 r3 frozen source details bind only the previously inspected list and ve
       .c8TechnicalFieldContracts(item, data)
       .some((d) => d.field === "detail.requisito.fonte_detalhe"),
     false,
+  );
+});
+
+test("C8 r3 native diagnostics expose only closed privacy stages", () => {
+  assert.deepEqual(
+    sut.nativeC8VisualDiagnostic("# C8_NATIVE_PHASE PRIVACY_RULE V117 1440 light\n"),
+    { stage: "PRIVACY_RULE", surface: "V117", width: 1440, theme: "light" },
+  );
+  assert.deepEqual(
+    sut.nativeC8VisualDiagnostic("# C8_NATIVE_PHASE PRIVACY_SECRET V117 1440 light\n"),
+    { stage: "UNKNOWN" },
   );
 });
