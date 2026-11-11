@@ -15079,6 +15079,29 @@ async function nativeC8ObservationIdentity() {
   };
 }
 
+function c8OriginalCssCandidates(bundle, ts) {
+  const ast = ts.createSourceFile(
+      "native-ui.js",
+      bundle.toString("utf8"),
+      99,
+      true,
+      ts.ScriptKind.JS,
+    ),
+    candidates = new Set();
+  const visit = (node) => {
+    if (
+      ts.isStringLiteralLike(node) ||
+      ts.isTemplateHead(node) ||
+      ts.isTemplateMiddle(node) ||
+      ts.isTemplateTail(node)
+    )
+      for (const token of node.text.split(/\s+/)) candidates.add(token);
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  return candidates;
+}
+
 async function c8NativeSourceProbe(browser, cssCompiler) {
   const fs = await import("node:fs/promises"),
     { join } = await import("node:path"),
@@ -15116,20 +15139,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
       .getText(ast)
       .replace(/^export /, "");
     const before = new Function(oldDeclaration + ";return surfaceStateValid;")();
-    const cssAst = ts.createSourceFile(
-        "native-ui.js",
-        bundle.toString("utf8"),
-        99,
-        true,
-        ts.ScriptKind.JS,
-      ),
-      candidates = new Set();
-    const cssVisit = (node) => {
-      if (ts.isStringLiteralLike(node))
-        for (const token of node.text.split(/\s+/)) candidates.add(token);
-      ts.forEachChild(node, cssVisit);
-    };
-    cssVisit(cssAst);
+    const candidates = c8OriginalCssCandidates(bundle, ts);
     const sourceCss = cssCompiler.build([...candidates]);
     const readNames = new Set();
     let surface = "V117",
@@ -15418,6 +15428,10 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           await page
             .locator('aside nav[aria-label="Administração"] a[href="/administracao/auditoria"]')
             .waitFor({ state: "attached" });
+          if (width >= 768)
+            await page
+              .locator('aside a[aria-label="Resumo da competência"]')
+              .waitFor({ state: "visible" });
           phase("COLLECT", item);
           await privacyHarness.collect(localPage, item, state);
           assert.equal(state.c8Current.observer, currentObserver);
@@ -15951,6 +15965,16 @@ test("C8 source fixture preserves complete actual SDK shapes and build uses orig
   try {
     const bundle = await c8BuildSourceUI(dir);
     assert.ok(bundle.length > 10000);
+    const ts = (await import("typescript")).default;
+    assert.ok(
+      c8OriginalCssCandidates(bundle, ts).has("md:block"),
+      "original dynamic AppShell must retain its desktop breakpoint class",
+    );
+    assert.ok(
+      c8OriginalCssCandidates(bundle, ts).has("z-30"),
+      "original dynamic sidebar stacking class must be compiled",
+    );
+
     assert.ok(
       bundle.includes(Buffer.from("__logoutRequested")),
       "closed header adapter must be resolved, not the private production header",
