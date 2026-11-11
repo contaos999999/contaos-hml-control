@@ -443,7 +443,7 @@ export function summarizeCases(rows, scope = null) {
   let duplicate = false,
     invalid = false,
     passed = 0;
-  if (!Array.isArray(rows) || rows.length > (scope ? 64 : 208))
+  if (!Array.isArray(rows) || rows.length > (scope ? privateCases(scope).length : 208))
     return { recorded: 0, matrixComplete: false, globalComplete: false, passed: 0 };
   for (const row of rows) {
     try {
@@ -475,9 +475,9 @@ export function summarizeCases(rows, scope = null) {
     matrixComplete:
       !invalid &&
       !duplicate &&
-      keys.size === (scope ? 64 : 208) &&
-      rows.length === (scope ? 64 : 208) &&
-      (!scope || passed === 64),
+      keys.size === (scope ? privateCases(scope).length : 208) &&
+      rows.length === (scope ? privateCases(scope).length : 208) &&
+      (!scope || passed === privateCases(scope).length),
     globalComplete: false,
     passed,
   };
@@ -1866,11 +1866,26 @@ export function privacy78Runtime({
   const route = location.href,
     started = performance.now(),
     seen = new Set();
+  // createBrowserHistory initializes a fresh entry with replaceState before
+  // mounting the source consumers. Chrome emits navigate for that bookkeeping
+  // replacement too. It carries no earlier receipt and does not change the URL.
+  let bootstrapEntry =
+    location.origin === "https://contaos-41-hml.vercel.app" &&
+    !location.search &&
+    !location.hash &&
+    [
+      "/contratos/" + proof.context.contract + "/documentos/" + proof.context.document,
+      "/competencias/" + proof.context.competence + "/documentos",
+    ].includes(location.pathname) &&
+    !window.history.state?.key &&
+    !window.history.state?.__TSR_key;
   let invalid = false,
+    cause = 0,
     pending = 0,
     revision = 0,
     mutations = null;
-  const invalidate = () => {
+  const invalidate = (code = 1) => {
+    if (!invalid) cause = Number.isInteger(code) && code >= 1 && code <= 8 ? code : 1;
     invalid = true;
     seen.clear();
     mutations?.disconnect();
@@ -1885,9 +1900,41 @@ export function privacy78Runtime({
   for (const event of ["pagehide", "beforeunload", "popstate", "hashchange"])
     window.addEventListener(event, invalidate, { once: true });
   window.addEventListener("contaos:organizacao-alterada", invalidate, { once: true });
-  document.addEventListener("visibilitychange", invalidate, { once: true });
+  document.addEventListener("visibilitychange", () => invalidate(7), { once: true });
   if (!window.navigation?.addEventListener) invalidate();
-  else window.navigation.addEventListener("navigate", invalidate, { once: true });
+  else
+    window.navigation.addEventListener("navigate", (event) => {
+      if (
+        bootstrapEntry &&
+        !invalid &&
+        !headerSeen &&
+        pending === 0 &&
+        seen.size === 0 &&
+        event.navigationType === "replace" &&
+        event.destination?.sameDocument === true &&
+        event.destination.url === route &&
+        location.href === route
+      ) {
+        bootstrapEntry = false;
+        // The History API commits after navigate is dispatched. Admit only the
+        // exact three-key state written by the installed TanStack dependency.
+        queueMicrotask(() => {
+          const state = window.history.state;
+          if (
+            location.href !== route ||
+            !state ||
+            Object.keys(state).length !== 3 ||
+            state.__TSR_index !== 0 ||
+            typeof state.key !== "string" ||
+            !state.key ||
+            state.__TSR_key !== state.key
+          )
+            invalidate(2);
+        });
+        return;
+      }
+      invalidate(2);
+    });
   const headerCurrent = () => {
     if (typeof document === "undefined" || !document) return false;
     const header = document.querySelector('header[aria-label="Organização atual"]');
@@ -1907,7 +1954,7 @@ export function privacy78Runtime({
     }
     revision++;
     const ready = headerCurrent();
-    if (headerSeen && !ready) invalidate();
+    if (headerSeen && !ready) invalidate(3);
     headerSeen ||= ready;
   });
   mutations.observe(document, {
@@ -1950,13 +1997,13 @@ export function privacy78Runtime({
           url.origin === origin &&
           contracts.some((c) => c.path === url.pathname)
         )
-          invalidate();
+          invalidate(4);
       } catch {}
       return result;
     }
     if (!current()) return result;
     pending++;
-    const deadline = setTimeout(invalidate, 10000);
+    const deadline = setTimeout(() => invalidate(8), 10000);
     void result
       .then(
         async (response) => {
@@ -1996,7 +2043,7 @@ export function privacy78Runtime({
             }
             const body = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(buffer));
             const receipt = project(contract, body);
-            if (!receipt || !current()) invalidate();
+            if (!receipt || !current()) invalidate(5);
             else seen.add(receipt.name);
           } finally {
             reader.releaseLock();
@@ -2019,6 +2066,7 @@ export function privacy78Runtime({
       diagnostics: () =>
         Object.freeze({
           invalid,
+          cause,
           current: !!current(),
           route: location.href === route,
           header: headerCurrent(),
@@ -2027,7 +2075,7 @@ export function privacy78Runtime({
           age: Math.min(120000, Math.max(0, Math.floor(performance.now() - started))),
         }),
       read: () => {
-        if (headerSeen && !headerCurrent()) invalidate();
+        if (headerSeen && !headerCurrent()) invalidate(3);
         return current() && pending === 0
           ? {
               route,
@@ -2516,7 +2564,7 @@ export function run78VisualEvidenceValid(row, scope = null) {
     )
       return false;
     if (
-      scope === C8_AUDIT_SCOPE &&
+      isC8Scope(scope) &&
       row.surface === "V117" &&
       mode === "PRIMARY" &&
       (proof?.metrics?.modalPassed !== true || !proof.metrics.targets?.length)
@@ -2590,7 +2638,7 @@ export function preservedPrivateCase(item, scope = null) {
 export function completePrivateRecords(records, scope = null) {
   scope = auditScope(scope);
   if (scope) {
-    if (!Array.isArray(records) || records.length > 64) fail("AUDIT_CASES");
+    if (!Array.isArray(records) || records.length > privateCases(scope).length) fail("AUDIT_CASES");
     const expected = new Map(privateCases(scope).map((item) => [caseKey(item), item.path]));
     const seen = new Set();
     for (const row of records) {
@@ -4181,6 +4229,28 @@ export const C8_AUDIT_SCOPE = Object.freeze({
   nonce: "trilha-c-audit-20261111-c8-r5",
   surfaces: Object.freeze(["V111", "V114", "V115", "V116", "V117", "V118", "V119", "V120"]),
 });
+// The user preserved the R5 build, menu, logout, CI and integration, and
+// authorized execution of only the sixteen failed cases. This is an additive
+// scope; the historical C8/64 matrix and its existing evidence remain intact.
+export const C8_R5_PRESERVED = Object.freeze({
+  workflowRun: "42986341145",
+  artifactId: "13839474771",
+  harnessSha: "d4695699422e74e0f25cd990358225caed6c4819",
+  frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
+  deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
+  zipSha256: "65b050fd49a840cd202ba06167e19080235d90b0b17e3a7ea286735ce6e778b8",
+  passedRecordsSha256: "dd5e2eedde3a6888e3e677b28ca5d6644e4b4a83b780dc001ca3fb6c0000af95",
+  preservedCases: 48,
+  logoutVerified: true,
+});
+export const C8_REMAINING_SCOPE = Object.freeze({
+  id: "C8_REMAINING_16",
+  nonce: "trilha-c-audit-20261111-c8-r6",
+  surfaces: Object.freeze(["V111", "V115", "V117"]),
+});
+export function isC8Scope(scope) {
+  return scope === C8_AUDIT_SCOPE || scope === C8_REMAINING_SCOPE;
+}
 export const C8_RECOVERY_DOCUMENT = Object.freeze({
   schema: "contaos.fixture.readonly-recovery-r20.v1",
   workflowRun: "42788354465",
@@ -4199,7 +4269,7 @@ export const C8_RECOVERY_DOCUMENT = Object.freeze({
 });
 function auditScope(scope = null) {
   if (scope === null || scope === undefined) return null;
-  if (scope !== C8_AUDIT_SCOPE) fail("AUDIT_SCOPE");
+  if (!isC8Scope(scope)) fail("AUDIT_SCOPE");
   return scope;
 }
 export function validateC8RecoveryDocument(input) {
@@ -4272,7 +4342,7 @@ export function privateCases(scope = null) {
     routes.V120 =
       "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27/apresentacoes/eb6d5b1c-8b64-418b-aa82-bf1f29d41768";
   }
-  return (scope ? scope.surfaces : PRIVATE_SURFACES).flatMap((surface) =>
+  const cases = (scope ? scope.surfaces : PRIVATE_SURFACES).flatMap((surface) =>
     WIDTHS.flatMap((width) =>
       THEMES.map((theme) => ({
         surface,
@@ -4283,6 +4353,9 @@ export function privateCases(scope = null) {
       })),
     ),
   );
+  return scope === C8_REMAINING_SCOPE
+    ? cases.filter((item) => item.surface === "V117" || item.theme === "light")
+    : cases;
 }
 
 const execFile = promisify(execFileCallback);
@@ -5268,15 +5341,19 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
   const initialReceipt =
     state?.verified && (await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null));
   const receiptState =
-    !initialReceipt && state?.scope === C8_AUDIT_SCOPE && state?.verified
+    !initialReceipt && isC8Scope(state?.scope) && state?.verified
       ? await page.evaluate(() => {
           const d = window.__contaosPrivacy78?.diagnostics?.();
           if (!d) return null;
           const result = {};
           for (const k of ["invalid", "current", "route", "header"])
             if (typeof d[k] === "boolean") result[k] = d[k];
-          for (const k of ["pending", "seen", "age"])
-            if (Number.isInteger(d[k]) && d[k] >= 0 && d[k] <= (k === "age" ? 120000 : 512))
+          for (const k of ["pending", "seen", "age", "cause"])
+            if (
+              Number.isInteger(d[k]) &&
+              d[k] >= 0 &&
+              d[k] <= (k === "age" ? 120000 : k === "cause" ? 8 : 512)
+            )
               result[k] = d[k];
           return result;
         })
@@ -5481,10 +5558,9 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
     }
   }
   acquisition.context = !!fieldContext;
-  const acquisitionItem =
-    state?.scope === C8_AUDIT_SCOPE
-      ? privateCases(state.scope).find((i) => HML_ORIGIN + i.path === page.url())
-      : null;
+  const acquisitionItem = isC8Scope(state?.scope)
+    ? privateCases(state.scope).find((i) => HML_ORIGIN + i.path === page.url())
+    : null;
   if (acquisitionItem && ["V111", "V115"].includes(acquisitionItem.surface)) {
     const value = state.proof?.generated_exact_values?.[acquisitionItem.surface]?.[0];
     if (typeof value === "string" && value) {
@@ -5494,7 +5570,7 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
     }
     if (diagnostics) diagnostics.acquisition = acquisition;
   }
-  if (rendered !== null && state?.scope === C8_AUDIT_SCOPE) {
+  if (rendered !== null && isC8Scope(state?.scope)) {
     const technical = {};
     fieldContext = await c8PrivacyContext(page, state, rendered, snapshot, fieldContext, technical);
     if (diagnostics) diagnostics.technical = technical;
@@ -5513,7 +5589,7 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
     if (
       readAttempt === 0 &&
       (interruptedContext || waitingForReceipt) &&
-      state?.scope === C8_AUDIT_SCOPE &&
+      isC8Scope(state?.scope) &&
       state.verified &&
       !state.closed &&
       state.generation === generation &&
@@ -5599,7 +5675,7 @@ export async function openVerifiedOrganizationSelector(page, fence) {
 async function runAuthenticatedAudit() {
   validateC8RecoveryDocument(C8_RECOVERY_DOCUMENT);
   const scope = auditScope(singleRequestContext?.scope);
-  if (scope !== C8_AUDIT_SCOPE) fail("AUDIT_BINDING_PENDING");
+  if (scope !== C8_REMAINING_SCOPE) fail("AUDIT_BINDING_PENDING");
   if (process.env.GITHUB_EVENT_NAME !== "workflow_run") fail("REQUEST_EVENT");
   assertPrivateRequestEnvironment(process.env);
   getValidatedR7ZeroAuth();
@@ -5620,7 +5696,9 @@ async function runAuthenticatedAudit() {
     proof.schema !== "contaos.private.provenance.v1" ||
     proof.harnessSha !== process.env.CONTAOS_HARNESS_SHA ||
     proof.frontendSha !== process.env.CONTAOS_FRONTEND_SHA ||
-    proof.deploymentId !== process.env.CONTAOS_DEPLOYMENT_ID
+    proof.deploymentId !== process.env.CONTAOS_DEPLOYMENT_ID ||
+    proof.frontendSha !== C8_R5_PRESERVED.frontendSha ||
+    proof.deploymentId !== C8_R5_PRESERVED.deploymentId
   )
     fail("PROVENANCE_IDENTITY");
   const axePath = process.env.CONTAOS_AXE_SOURCE_PATH;
@@ -6087,6 +6165,7 @@ async function runAuthenticatedAudit() {
       records,
       summary,
       auditScope: scope.id,
+      ...(scope === C8_REMAINING_SCOPE ? { preservedEvidence: C8_R5_PRESERVED } : {}),
       recoveryDocumentSha256: digest(JSON.stringify(C8_RECOVERY_DOCUMENT, null, 2) + "\n"),
       logoutVerified,
       aborted,
@@ -6480,7 +6559,7 @@ export async function collectVisualMetrics(page, item, scope = null, mode = "PRI
       !["PRIMARY", "SIDEBAR_COLLAPSED", "MOBILE_MENU"].includes(mode))
   )
     fail("VISUAL_CASE_IDENTITY");
-  const modalRequired = scope === C8_AUDIT_SCOPE && item.surface === "V117" && mode === "PRIMARY";
+  const modalRequired = isC8Scope(scope) && item.surface === "V117" && mode === "PRIMARY";
   const measured = await page.evaluate(
     ({ surface, theme, modalRequired }) => {
       const visible = (e) =>
@@ -6717,8 +6796,55 @@ const C8_SYNTHETIC_FIELDS = Object.freeze([
   "Ensaio sintético em homologação.",
 ]);
 
+// Exact non-personal output of the existing R20 synthetic execution. These
+// scalars never enter literalWords or the seven reusable synthetic fragments.
+// Admission below requires the original result identity and its original field.
+const C8_R20_AUTOMATIC_RESULT = Object.freeze({
+  justificativa:
+    "O documento fornecido identifica-se como fonte sintética de auditoria e informa que é um documento de teste relacionado à auditoria da Trilha A.",
+  fundamento:
+    "A evidência atende à exigência de presença de documento TXT sintético de auditoria; a avaliação automática não substitui aprovação humana.",
+});
+const C8_R20_EXECUTION_FIELDS = Object.freeze({
+  motor: "contaos",
+  versao_motor: "4.1",
+  provedor: "openai",
+  modelo: "gpt-6-luna",
+  prompt_versao: "analise-pt-BR-v4.1",
+});
+
 export function c8TechnicalFieldContracts(item, wire) {
   const out = [];
+  const r20 = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings.competencies[0];
+  const automaticContext =
+    item.surface === "V117" &&
+    validateC8CurrentWire(item, wire) &&
+    wire.analysis.execucao_atual.id === r20.executionId &&
+    wire.detail.execucao_atual.id === r20.executionId;
+  const resultIds = new Set(
+    automaticContext
+      ? [wire.detail.resultado_referencia, wire.detail.resultado_atual]
+          .filter((r) => r?.id_execucao === r20.executionId && typeof r.id === "string")
+          .map((r) => r.id)
+      : [],
+  );
+  const automaticField = (field, raw) => {
+    if (!automaticContext) return false;
+    const match =
+      /^(detail\.resultado_(?:referencia|atual)|detail\.historico\.(\d+)|analysis\.resultados\.(\d+))\.(justificativa|fundamento)$/.exec(
+        field,
+      );
+    if (!match || raw !== C8_R20_AUTOMATIC_RESULT[match[4]]) return false;
+    if (match[3] !== undefined) {
+      const row = wire.analysis.resultados[Number(match[3])];
+      return row?.id_requisito === r20.requirementId && resultIds.has(row.id_resultado);
+    }
+    const row =
+      match[2] !== undefined
+        ? wire.detail.historico[Number(match[2])]
+        : wire.detail[match[1].slice("detail.".length)];
+    return row?.id_execucao === r20.executionId && resultIds.has(row.id ?? row.id_resultado);
+  };
   const date = (value) =>
     new Intl.DateTimeFormat("pt-BR", {
       timeZone: "America/Sao_Paulo",
@@ -6738,7 +6864,12 @@ export function c8TechnicalFieldContracts(item, wire) {
       value = date(raw);
     } else if (kind === "hash" && !/^[a-f0-9]{64}$/.test(raw)) return;
     else if (kind === "uuid" && !/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/.test(raw)) return;
-    else if (kind === "synthetic" && !C8_SYNTHETIC_FIELDS.includes(raw)) return;
+    else if (
+      kind === "synthetic" &&
+      !C8_SYNTHETIC_FIELDS.includes(raw) &&
+      !automaticField(field, raw)
+    )
+      return;
     else if (kind === "code" && raw !== "AUD-A-TXT-001") return;
     out.push({ field, value, selector, label, attribute, expected: prefix + value });
   };
@@ -6935,7 +7066,58 @@ export function c8TechnicalFieldContracts(item, wire) {
           field === "regra_validacao" ? "Regra de validação" : "Condição de aplicabilidade",
         );
     }
+    const executionFields = (path, e, root, combined) => {
+      if (!automaticContext || (e?.id ?? e?.id_execucao) !== r20.executionId) return;
+      if (combined) {
+        if (
+          e.motor === C8_R20_EXECUTION_FIELDS.motor &&
+          e.versao_motor === C8_R20_EXECUTION_FIELDS.versao_motor
+        )
+          closed(path + ".motor", e.motor + " " + e.versao_motor, dd(root), "Motor", "contaos 4.1");
+        if (
+          e.provedor === C8_R20_EXECUTION_FIELDS.provedor &&
+          e.modelo === C8_R20_EXECUTION_FIELDS.modelo
+        )
+          closed(
+            path + ".provedor_modelo",
+            e.provedor + " / " + e.modelo,
+            dd(root),
+            "Provedor/modelo",
+            "openai / gpt-6-luna",
+          );
+      } else {
+        for (const [field, label] of [
+          ["motor", "Motor"],
+          ["versao_motor", "Versão do motor"],
+          ["provedor", "Provedor"],
+          ["modelo", "Modelo"],
+        ])
+          closed(path + "." + field, e[field], dd(root), label, C8_R20_EXECUTION_FIELDS[field]);
+      }
+      closed(
+        path + ".prompt_versao",
+        e.prompt_versao,
+        dd(root),
+        "Versão do prompt",
+        C8_R20_EXECUTION_FIELDS.prompt_versao,
+      );
+    };
     const exec = 'section[aria-labelledby="v117-exec"]';
+    executionFields("detail.execucao_atual", d.execucao_atual, exec, true);
+    for (const [i, h] of (d.historico ?? []).entries())
+      executionFields(
+        `detail.historico.${i}`,
+        h,
+        `section[aria-labelledby="v117-hist"] ol > li:nth-child(${i + 1})`,
+        true,
+      );
+    for (const [i, e] of (wire.analysis.execucoes ?? []).entries())
+      executionFields(
+        `analysis.execucoes.${i}`,
+        e,
+        `section[aria-labelledby="v116-hist"] ul > li:nth-child(${i + 1})`,
+        false,
+      );
     for (const [field, label, kind] of [
       ["hash_entrada", "Hash de entrada", "hash"],
       ["iniciada_em", "Iniciada em", "date"],
@@ -6974,8 +7156,29 @@ export function c8TechnicalFieldContracts(item, wire) {
     }
   }
   if (["V116", "V117"].includes(item.surface)) {
+    // V117 leaves the original V116 page rendered behind its modal. These
+    // occurrences must participate in the same exact-value cardinality seal.
+    const execution = wire.analysis.execucao_atual;
+    if (item.surface === "V117" && execution?.tipo === "completa")
+      add(
+        "analysis.execucao_atual.criado_em",
+        execution.criado_em,
+        'section[aria-labelledby="v116-cab"] > p',
+        null,
+        "date",
+        "Execução atual: completa · criada em ",
+      );
     for (const [i, r] of (wire.analysis.resultados ?? []).entries()) {
       const root = `section[aria-labelledby="v116-req"] tbody > tr:nth-child(${i + 1})`;
+      if (item.surface === "V117")
+        closed(
+          `analysis.resultados.${i}.requisito.fonte_referencia`,
+          r.requisito?.fonte_referencia,
+          root + " > td:nth-child(1) > p:nth-of-type(3)",
+          null,
+          "Lista sintética Trilha A 24 fixtures 20261108",
+          "Fonte: ",
+        );
       add(
         `analysis.resultados.${i}.requisito.codigo`,
         r.requisito?.codigo,
@@ -7089,7 +7292,7 @@ export function c8TechnicalFieldContracts(item, wire) {
 async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagnostics = null) {
   const current = state?.c8Current;
   const ownerCurrent = () =>
-    state?.scope === C8_AUDIT_SCOPE &&
+    isC8Scope(state?.scope) &&
     privacy78Pages.get(page) === state &&
     current &&
     state.c8Current === current &&
@@ -7443,7 +7646,7 @@ export function validateC8CurrentWire(item, wire) {
 
 async function collectC8CurrentWire(page, item, state) {
   if (
-    state?.scope !== C8_AUDIT_SCOPE ||
+    !isC8Scope(state?.scope) ||
     !state.verified ||
     state.closed ||
     page.url() !== HML_ORIGIN + item.path ||
@@ -7508,7 +7711,7 @@ export function c8DrawerFocusValid() {
 
 export async function openC8RequirementDrawer(page, item, scope) {
   if (
-    auditScope(scope) !== C8_AUDIT_SCOPE ||
+    !isC8Scope(auditScope(scope)) ||
     item?.surface !== "V117" ||
     !privateCases(scope).some((c) => caseKey(c) === caseKey(item) && c.path === item.path) ||
     page.url() !== HML_ORIGIN + item.path
@@ -8474,6 +8677,7 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-c-audit-20261110-c8-r2",
     "trilha-c-audit-20261110-c8-r3",
     "trilha-c-audit-20261110-c8-r4",
+    "trilha-c-audit-20261111-c8-r5",
   ]),
   r19RecoveryGateSha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
   r19RecoveryPlanSha: "2b6ab4f542c66309fb16d12f9998136641591f25",
@@ -8529,7 +8733,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "trilha-c-audit-20261111-c8-r5",
+    nonce: "trilha-c-audit-20261111-c8-r6",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -8771,9 +8975,9 @@ export function resolveC8AuditScope(request) {
       fail(code);
     copy[name] = d.value;
   }
-  if (copy.operation !== "audit" || copy.request_id !== C8_AUDIT_SCOPE.nonce) fail(code);
+  if (copy.operation !== "audit" || copy.request_id !== C8_REMAINING_SCOPE.nonce) fail(code);
   parseSingleRequest(JSON.stringify(copy), "audit");
-  return C8_AUDIT_SCOPE;
+  return C8_REMAINING_SCOPE;
 }
 export function requireSingleRequestOperation(operation, request = null) {
   if (operation === "audit") {
