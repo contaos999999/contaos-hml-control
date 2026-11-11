@@ -15939,7 +15939,12 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
                     const hash = createHash("sha256").update(token).digest("hex");
                     const paths = tokenPaths(data, token);
                     for (const path of paths)
-                      console.log("C8_NATIVE_SOURCE " + hash + " WIRE_" + path.replace(/[^A-Za-z0-9_.-]/g, "_"));
+                      console.log(
+                        "C8_NATIVE_SOURCE " +
+                          hash +
+                          " WIRE_" +
+                          path.replace(/[^A-Za-z0-9_.-]/g, "_"),
+                      );
                     for (const line of value.split("\n")) {
                       if (!line.toLocaleLowerCase("pt-BR").includes(token)) continue;
                       const trimmed = line.trim();

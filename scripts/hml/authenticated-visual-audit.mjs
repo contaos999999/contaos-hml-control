@@ -5041,7 +5041,10 @@ export function nativeC8VisualDiagnostic(tap) {
   if (unknownHashes.length) last = { ...last, unknownHashes: unknownHashes.at(-1) };
   const sourceLabels = [];
   for (const line of tap.split("\n")) {
-    const match = /^# C8_NATIVE_SOURCE ([a-f0-9]{64}) ((?:WIRE_[A-Za-z0-9_.-]{1,160})|ARIA_(?:URL|ROW|CELL|LINK|BUTTON|OTHER))$/.exec(line);
+    const match =
+      /^# C8_NATIVE_SOURCE ([a-f0-9]{64}) ((?:WIRE_[A-Za-z0-9_.-]{1,160})|ARIA_(?:URL|ROW|CELL|LINK|BUTTON|OTHER))$/.exec(
+        line,
+      );
     if (match) sourceLabels.push({ hash: match[1], source: match[2] });
   }
   if (sourceLabels.length) last = { ...last, sourceLabels: sourceLabels.slice(-24) };
