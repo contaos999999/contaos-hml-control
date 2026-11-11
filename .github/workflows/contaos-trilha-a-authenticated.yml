@@ -62,14 +62,36 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Detectar nova solicitação única no merge atual
+        id: request_candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          path='docs/frontend/auditorias/TRILHA_A_SOLICITACAO_UNICA.json'
+          parent="$(git rev-parse HEAD^1)"
+          changed="$(git diff --name-only --no-renames "$parent" HEAD -- "$path")"
+          if [[ "$changed" == "$path" ]]; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+            echo 'Nova solicitação única detectada; preflight obrigatório.'
+          elif [[ -z "$changed" ]]; then
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+            echo 'Nenhuma nova solicitação única neste merge; auditoria privada permanece não selecionada.'
+          else
+            echo 'Detecção de solicitação retornou estado inesperado.' >&2
+            exit 1
+          fi
       - uses: actions/setup-node@v4
+        if: steps.request_candidate.outputs.run == 'true'
         with:
           node-version: "24"
-      - run: |
+      - if: steps.request_candidate.outputs.run == 'true'
+        run: |
           node --test scripts/ci/install-pinned-bun.test.mjs
           node scripts/ci/install-pinned-bun.mjs
-      - run: bun install --frozen-lockfile
+      - if: steps.request_candidate.outputs.run == 'true'
+        run: bun install --frozen-lockfile
       - name: Provar evento e unicidade somente em metadados Actions
+        if: steps.request_candidate.outputs.run == 'true'
         id: request
         env:
           CONTAOS_ACTIONS_READ_TOKEN: ${{ github.token }}
