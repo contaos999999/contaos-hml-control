@@ -15918,13 +15918,17 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
                       if (paths.length >= 8 || depth > 12 || node == null) return;
                       if (typeof node === "string") {
                         const tokens =
-                          node.normalize("NFC").toLocaleLowerCase("pt-BR").match(/[\p{L}\p{N}_-]+/gu) ??
-                          [];
+                          node
+                            .normalize("NFC")
+                            .toLocaleLowerCase("pt-BR")
+                            .match(/[\p{L}\p{N}_-]+/gu) ?? [];
                         if (tokens.includes(target)) paths.push(path || "ROOT");
                         return;
                       }
                       if (Array.isArray(node)) {
-                        node.slice(0, 64).forEach((child, index) => visit(child, path + "." + index, depth + 1));
+                        node
+                          .slice(0, 64)
+                          .forEach((child, index) => visit(child, path + "." + index, depth + 1));
                         return;
                       }
                       if (typeof node === "object") {
