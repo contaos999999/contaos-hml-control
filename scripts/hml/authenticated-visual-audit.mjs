@@ -4902,6 +4902,22 @@ export function nativeC8VisualDiagnostic(tap) {
     );
     last = { ...last, outcome };
   }
+  const closedFailure = [
+    ...tap.matchAll(
+      /^\s+error: '(C8_CURRENT_OWNER|C8_CURRENT_WIRE|OBSERVATION_SCHEMA|OBSERVATION_FAILED|PII_SUPPLEMENT)'$/gm,
+    ),
+  ];
+  if (closedFailure.length === 1) last = { ...last, failureCode: closedFailure[0][1] };
+  const classifications = [];
+  for (const line of tap.split("\n")) {
+    const m =
+      /^# C8_NATIVE_CLASSIFY (RENDER|ARIA) (ALLOWED|UNKNOWN_WORDS|INVALID_CONTENT|SENSITIVE_PATTERN) ([0-9]{1,3})$/.exec(
+        line,
+      );
+    if (m && Number(m[3]) <= 233)
+      classifications.push({ channel: m[1], reason: m[2], unknownCount: Number(m[3]) });
+  }
+  if (classifications.length) last = { ...last, classifications: classifications.slice(-2) };
   return last;
 }
 

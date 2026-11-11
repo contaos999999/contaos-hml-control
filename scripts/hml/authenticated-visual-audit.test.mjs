@@ -15413,6 +15413,11 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           );
           // Actual original SDK reads feed the official observer. The local server
           // substitutes transport only; no current evidence is injected into the collector.
+          // AppShell publishes contextual permissions and admin entries asynchronously.
+          // Wait for its final original control before collecting sealed node identities.
+          await page
+            .locator('aside nav[aria-label="Administração"] a[href="/administracao/auditoria"]')
+            .waitFor({ state: "attached" });
           phase("COLLECT", item);
           await privacyHarness.collect(localPage, item, state);
           assert.equal(state.c8Current.observer, currentObserver);
@@ -15426,6 +15431,17 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           const r3Token = await r3Privacy.context(localPage, state, rendered, snapshot, null);
           const r3Remainder = r3Privacy.contexts.get(r3Token);
           if (["V119", "V120"].includes(surface)) {
+            for (const [channel, text] of [
+              ["RENDER", remainder.rendered.remainder],
+              ["ARIA", remainder.snapshot.remainder],
+            ]) {
+              const result = sut.classifyArtifactText(text, literalDictionary, {
+                snapshot: channel === "ARIA",
+              });
+              console.log(
+                "C8_NATIVE_CLASSIFY " + channel + " " + result.reason + " " + result.unknownCount,
+              );
+            }
             assert.equal(
               sut.classifyArtifactText(remainder.rendered.remainder, literalDictionary).reason,
               "ALLOWED",
@@ -17164,4 +17180,21 @@ test("C8 r5 original observer waits for its actual Response clone stream and doe
   } finally {
     dom.window.close();
   }
+});
+
+test("C8 r5 native failure diagnostics admit only closed codes and bounded classification counters", () => {
+  const r = sut.nativeC8VisualDiagnostic(
+    "# C8_NATIVE_PHASE PRIVACY V119 1440 light\n  error: 'C8_CURRENT_OWNER'\n# C8_NATIVE_CLASSIFY RENDER UNKNOWN_WORDS 1\n# C8_NATIVE_CLASSIFY ARIA ALLOWED 0\n",
+  );
+  assert.equal(r.failureCode, "C8_CURRENT_OWNER");
+  assert.deepEqual(r.classifications, [
+    { channel: "RENDER", reason: "UNKNOWN_WORDS", unknownCount: 1 },
+    { channel: "ARIA", reason: "ALLOWED", unknownCount: 0 },
+  ]);
+  const bad = sut.nativeC8VisualDiagnostic(
+    "# C8_NATIVE_PHASE PRIVACY V119 1440 light\n  error: 'UNLISTED_SECRET'\n# C8_NATIVE_CLASSIFY RENDER UNLISTED_SECRET 999\n",
+  );
+  assert.equal(bad.failureCode, undefined);
+  assert.equal(bad.classifications, undefined);
+  assert.equal(JSON.stringify(bad).includes("UNLISTED_SECRET"), false);
 });
