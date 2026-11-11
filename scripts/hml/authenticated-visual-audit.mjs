@@ -7616,7 +7616,10 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
     let renderedBindings = 0,
       ariaBindings = 0,
       urlBindings = 0;
-    for (const { value, count, attribute, slots = [] } of anchored) {
+    // Consume complete scalars before their substrings. Cardinality still uses
+    // the original rendering and the same independently sealed nodes.
+    const longestFirst = [...anchored].sort((a, b) => b.value.length - a.value.length);
+    for (const { value, count, attribute, slots = [] } of longestFirst) {
       const occurrences = (text) => text.split(value).length - 1;
       if (attribute === "href") {
         const expectedCount = slots.length ? slots.filter((s) => s.accessible).length : count;
