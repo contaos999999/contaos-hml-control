@@ -4168,7 +4168,7 @@ export const SYNTHETIC_FIXTURE = Object.freeze({
 });
 export const C8_AUDIT_SCOPE = Object.freeze({
   id: "C8",
-  nonce: "trilha-c-audit-20261110-c8-r3",
+  nonce: "trilha-c-audit-20261110-c8-r4",
   surfaces: Object.freeze(["V111", "V114", "V115", "V116", "V117", "V118", "V119", "V120"]),
 });
 export const C8_RECOVERY_DOCUMENT = Object.freeze({
@@ -4861,7 +4861,7 @@ export function nativeC8VisualDiagnostic(tap) {
       continue;
     }
     const match =
-      /^# C8_NATIVE_PHASE (READY|MOUNT|DRAWER|STATE|COLLECT|PRIVACY|PRIVACY_BASELINE|PRIVACY_KIND|PRIVACY_RULE|PRIVACY_CONDITION|PRIVACY_SOURCE|PRIVACY_REFERENCE|PRIVACY_RETURN|CLOSE|NEGATIVE) (V117|V119|V120) (1440|1280|768|390) (light|dark)$/.exec(
+      /^# C8_NATIVE_PHASE (READY|MOUNT|DRAWER|STATE|COLLECT|PRIVACY|PRIVACY_BASELINE|PRIVACY_KIND|PRIVACY_RULE|PRIVACY_CONDITION|PRIVACY_SOURCE|PRIVACY_REFERENCE|PRIVACY_RETURN|PRIVACY_SIDEBAR|CLOSE|NEGATIVE) (V117|V119|V120) (1440|1280|768|390) (light|dark)$/.exec(
         line,
       );
     if (!match) return unknown();
@@ -5255,6 +5255,18 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
     return values.join("\n");
   });
 
+  const acquisition = {
+    initialReceipt: !!initialReceipt,
+    currentReceipt: false,
+    sameRevision: false,
+    anchor: false,
+    fieldSnapshot: false,
+    afterReceipt: false,
+    sameAfterRevision: false,
+    context: false,
+    knownRendered: 0,
+    knownSnapshot: 0,
+  };
   let fieldContext,
     interruptedContext = false;
   if (rendered !== null && state?.verified && !state.closed) {
@@ -5271,6 +5283,9 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
       });
       interruptedContext =
         !!initialReceipt && !!receipt && initialReceipt.revision !== receipt.revision;
+      acquisition.currentReceipt = !!receipt;
+      acquisition.sameRevision =
+        !!receipt && !!initialReceipt && initialReceipt.revision === receipt.revision;
       const is109 = item.surface === "V109";
       const is112 = item.surface === "V112";
       const is123 = item.surface === "V123";
@@ -5292,6 +5307,7 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
               ? { proof: state.v123Proof }
               : { surface: item.surface, proof: state.proof },
         ));
+      acquisition.anchor = !!anchor;
       if (
         anchor &&
         receipt.route === page.url() &&
@@ -5308,9 +5324,12 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
           if ((await locator.count()) === anchor.count)
             fieldSnapshot = (await locator.nth(anchor.index).ariaSnapshot()).trim();
         }
+        acquisition.fieldSnapshot = fieldSnapshot !== null || fieldSnapshots !== null;
         if (fieldSnapshot !== null || fieldSnapshots !== null) {
           const after = await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null);
           interruptedContext ||= !!after && after.revision !== receipt.revision;
+          acquisition.afterReceipt = !!after;
+          acquisition.sameAfterRevision = !!after && after.revision === receipt.revision;
           if (
             after &&
             after.route === receipt.route &&
@@ -5403,8 +5422,25 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
         });
     }
   }
-  if (rendered !== null && state?.scope === C8_AUDIT_SCOPE)
-    fieldContext = await c8PrivacyContext(page, state, rendered, snapshot, fieldContext);
+  acquisition.context = !!fieldContext;
+  const acquisitionItem =
+    state?.scope === C8_AUDIT_SCOPE
+      ? privateCases(state.scope).find((i) => HML_ORIGIN + i.path === page.url())
+      : null;
+  if (acquisitionItem && ["V111", "V115"].includes(acquisitionItem.surface)) {
+    const value = state.proof?.generated_exact_values?.[acquisitionItem.surface]?.[0];
+    if (typeof value === "string" && value) {
+      acquisition.knownRendered =
+        rendered === null ? 0 : Math.min(233, rendered.split(value).length - 1);
+      acquisition.knownSnapshot = Math.min(233, snapshot.split(value).length - 1);
+    }
+    if (diagnostics) diagnostics.acquisition = acquisition;
+  }
+  if (rendered !== null && state?.scope === C8_AUDIT_SCOPE) {
+    const technical = {};
+    fieldContext = await c8PrivacyContext(page, state, rendered, snapshot, fieldContext, technical);
+    if (diagnostics) diagnostics.technical = technical;
+  }
   const privacy =
     rendered === null
       ? { rendered: { reason: "OPAQUE_MEDIA", unknownCount: 0 } }
@@ -6692,6 +6728,35 @@ export function c8TechnicalFieldContracts(item, wire) {
       });
     }
   }
+  if (item.path.startsWith("/competencias/")) {
+    const b = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+    const id =
+      b.competencies.find((c) => item.path.includes(c.id))?.id ?? SYNTHETIC_FIXTURE.competence;
+    const base = "/competencias/" + id;
+    for (const [name, label, suffix] of [
+      ["summary", "Resumo da competência", ""],
+      ["documents", "Documentos da competência", "/documentos"],
+      ["analysis", "Análise da competência", "/analise"],
+      ["opinion", "Parecer da competência", "/parecer"],
+      ["presentation", "Apresentações", "/apresentar"],
+    ]) {
+      const href = base + suffix;
+      out.push({
+        field: "route.sidebar." + name,
+        value: href,
+        expected: href,
+        selector:
+          'nav[aria-label="Navegação principal"] [role="group"][aria-label="Contexto atual"] a[aria-label="' +
+          label +
+          '"][href="' +
+          href +
+          '"]',
+        label: null,
+        attribute: "href",
+        linkAriaLabel: label,
+      });
+    }
+  }
   const dd = (root) => root + " > dl > div > dd";
   const result = (path, r, root) => {
     if (!r) return;
@@ -6921,7 +6986,7 @@ export function c8TechnicalFieldContracts(item, wire) {
       "Situação oficial",
       R18_REGISTRATION_CANDIDATE.packageStatus,
     );
-    closed("packages.0.tipo", pkg.tipo, dd(p), "Tipo", "inicial");
+    closed("packages.0.tipo", pkg.tipo, dd(p), "Tipo", "apresentacao");
     add("packages.0.congelado_em", pkg.congelado_em, dd(p), "Congelado em", "date");
     for (const [i, e] of wire.items.entries()) {
       const root = `section[aria-labelledby="v120-itens"] ul > li:nth-child(${i + 1})`;
@@ -6949,23 +7014,23 @@ export function c8TechnicalFieldContracts(item, wire) {
 
 // Values never join the global dictionary. The live owner and each original UI field
 // must still agree immediately before each PNG, including its complement.
-async function c8PrivacyContext(page, state, rendered, snapshot, previous) {
+async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagnostics = null) {
   const current = state?.c8Current;
-  if (
-    state?.scope !== C8_AUDIT_SCOPE ||
-    privacy78Pages.get(page) !== state ||
-    !current ||
-    current.owner !== state ||
-    current.observer !== state.c8Observer ||
-    current.generation !== state.generation ||
-    state.closed ||
-    !state.verified ||
-    page.url() !== HML_ORIGIN + current.item.path ||
-    !validateC8CurrentWire(current.item, current.wire)
-  )
+  const ownerCurrent = () =>
+    state?.scope === C8_AUDIT_SCOPE &&
+    privacy78Pages.get(page) === state &&
+    current &&
+    state.c8Current === current &&
+    current.owner === state &&
+    current.observer === state.c8Observer &&
+    current.generation === state.generation &&
+    !state.closed &&
+    state.verified &&
+    page.url() === HML_ORIGIN + current.item.path;
+  if (!ownerCurrent() || !validateC8CurrentWire(current.item, current.wire))
     fail("C8_CURRENT_OWNER");
   const descriptors = c8TechnicalFieldContracts(current.item, current.wire);
-  const anchored = await page.evaluate((descriptors) => {
+  const collect = (descriptors) => {
     const visible = (node) =>
       node.getClientRects().length > 0 && getComputedStyle(node).visibility !== "hidden";
     const groups = new Map(),
@@ -6974,67 +7039,191 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous) {
       const slot = d.field + "|" + d.selector + "|" + (d.attribute ?? "text");
       if (fields.has(slot)) return [];
       fields.add(slot);
-      const nodes = [...document.querySelectorAll(d.selector)].filter((node) => {
+      const all = [...document.querySelectorAll(d.selector)];
+      const nodes = all.filter((node) => {
         if (
           !visible(node) ||
           (d.attribute ? node.getAttribute(d.attribute) : node.textContent.trim()) !== d.expected
         )
           return false;
-        if (d.attribute === "href" && node.textContent.trim() !== d.linkText) return false;
+        if (d.attribute === "href") {
+          if (d.linkAriaLabel) {
+            if (
+              node.getAttribute("aria-label") !== d.linkAriaLabel ||
+              !["", d.linkAriaLabel].includes(node.textContent.trim()) ||
+              ![null, d.linkAriaLabel].includes(node.getAttribute("title"))
+            )
+              return false;
+          } else if (node.textContent.trim() !== d.linkText) return false;
+        }
         if (d.label === null) return true;
         const label = node.parentElement.querySelector(":scope > dt")?.textContent;
         return label === d.label || label?.startsWith(d.label + ": ");
       });
       if (nodes.length !== 1) continue;
-      const group = groups.get(d.value) ?? [];
-      if (!group.some((s) => s.node === nodes[0] && s.attribute === d.attribute))
+      const node = nodes[0],
+        group = groups.get(d.value) ?? [];
+      if (!group.some((s) => s.node === node && s.attribute === d.attribute)) {
         group.push({
-          node: nodes[0],
+          node,
+          selector: d.selector,
+          index: all.indexOf(node),
+          nodeCount: all.length,
           attribute: d.attribute,
-          text: d.attribute ? nodes[0].getAttribute(d.attribute) : nodes[0].textContent,
+          expected: d.expected,
+          accessible: !node.closest('[aria-hidden="true"],[hidden],[inert]'),
+          role: node.tagName === "DD" ? "definition" : node.tagName === "P" ? "paragraph" : null,
+          snapshotSafe:
+            !d.attribute &&
+            ["DD", "P"].includes(node.tagName) &&
+            [...node.attributes].every((a) => a.name === "class") &&
+            [...node.childNodes].every((n) => n.nodeType === Node.TEXT_NODE),
+          text: d.attribute ? node.getAttribute(d.attribute) : node.textContent,
         });
+      }
       groups.set(d.value, group);
     }
-    return [...groups].map(([value, nodes]) => ({
-      value,
-      attribute: nodes[0]?.attribute ?? null,
-      count: nodes.reduce((n, slot) => n + slot.text.split(value).length - 1, 0),
-    }));
-  }, descriptors);
-  if (
-    state.generation !== current.generation ||
-    privacy78Pages.get(page) !== state ||
-    state.closed ||
-    page.url() !== HML_ORIGIN + current.item.path
-  )
-    fail("C8_CURRENT_OWNER");
-  const old = privacy78Contexts.get(previous);
-  const channels = {
-    rendered: { original: rendered, remainder: old?.rendered.remainder ?? rendered },
-    snapshot: { original: snapshot, remainder: old?.snapshot.remainder ?? snapshot },
+    return {
+      nodes: [...groups.values()]
+        .flat()
+        .map(({ node, selector, index }) => ({ node, selector, index })),
+      groups: [...groups].map(([value, slots]) => ({
+        value,
+        attribute: slots[0]?.attribute ?? null,
+        count: slots.reduce((n, s) => n + s.text.split(value).length - 1, 0),
+        slots: slots.map(({ node, ...metadata }) => metadata),
+      })),
+    };
   };
-  for (const { value, count, attribute } of anchored) {
-    const occurrences = (text) => text.split(value).length - 1;
-    if (attribute === "href") {
-      if (
-        count === 1 &&
-        occurrences(rendered) === 0 &&
-        occurrences(snapshot) === 1 &&
-        snapshot.split("\n").filter((line) => line.trim() === "- /url: " + value).length === 1
-      )
-        channels.snapshot.remainder = channels.snapshot.remainder.replace(
-          "- /url: " + value,
-          "- /url: ",
-        );
-      continue;
+  if (typeof page.evaluateHandle !== "function") fail("C8_CURRENT_OWNER");
+  const seal = await page.evaluateHandle(collect, descriptors);
+  let finalSeal;
+  try {
+    const anchored = await seal.evaluate((seal) => seal.groups);
+    if (!Array.isArray(anchored) || anchored.length > 512 || !ownerCurrent())
+      fail("C8_CURRENT_OWNER");
+    const serialized = new Map();
+    let safeSlots = 0;
+    for (const group of anchored)
+      for (const slot of group.slots ?? []) {
+        if (slot.attribute || !slot.accessible || !slot.snapshotSafe) continue;
+        const locator = page.locator(slot.selector);
+        if ((await locator.count()) !== slot.nodeCount) fail("C8_CURRENT_OWNER");
+        const fieldSnapshot = (await locator.nth(slot.index).ariaSnapshot()).trim();
+        if (!fieldSnapshot || fieldSnapshot.length > 1048576 || fieldSnapshot.includes("\n"))
+          continue;
+        const prefix = "- " + slot.role + ": ";
+        if (!slot.role || !fieldSnapshot.startsWith(prefix)) continue;
+        const scalar = fieldSnapshot.slice(prefix.length);
+        let decoded = scalar;
+        if (scalar.startsWith('"')) {
+          try {
+            decoded = JSON.parse(scalar);
+          } catch {
+            continue;
+          }
+        }
+        if (decoded !== slot.expected) continue;
+        serialized.set(fieldSnapshot, (serialized.get(fieldSnapshot) ?? 0) + 1);
+        safeSlots++;
+      }
+    finalSeal = await page.evaluateHandle(collect, descriptors);
+    const final = await finalSeal.evaluate((seal) => seal.groups);
+    const sameNodes = await seal.evaluate(
+      (original, final) =>
+        original.nodes.length === final.nodes.length &&
+        original.nodes.every(
+          (ref, index) =>
+            ref.node === final.nodes[index].node &&
+            ref.node.isConnected &&
+            document.querySelectorAll(ref.selector)[ref.index] === ref.node,
+        ),
+      finalSeal,
+    );
+    if (
+      !sameNodes ||
+      !ownerCurrent() ||
+      JSON.stringify(final) !== JSON.stringify(anchored) ||
+      !validateC8CurrentWire(current.item, current.wire) ||
+      JSON.stringify(c8TechnicalFieldContracts(current.item, current.wire)) !==
+        JSON.stringify(descriptors)
+    )
+      fail("C8_CURRENT_OWNER");
+    const old = privacy78Contexts.get(previous);
+    const channels = {
+      rendered: { original: rendered, remainder: old?.rendered.remainder ?? rendered },
+      snapshot: { original: snapshot, remainder: old?.snapshot.remainder ?? snapshot },
+    };
+    let renderedBindings = 0,
+      ariaBindings = 0,
+      urlBindings = 0;
+    for (const { value, count, attribute, slots = [] } of anchored) {
+      const occurrences = (text) => text.split(value).length - 1;
+      if (attribute === "href") {
+        const expectedCount = slots.length ? slots.filter((s) => s.accessible).length : count;
+        const line = "- /url: " + value;
+        if (
+          expectedCount &&
+          occurrences(rendered) === 0 &&
+          snapshot.split("\n").filter((s) => s.trim() === line).length === expectedCount
+        ) {
+          channels.snapshot.remainder = channels.snapshot.remainder
+            .split("\n")
+            .map((s) => (s.trim() === line ? "" : s))
+            .join("\n");
+          urlBindings += expectedCount;
+        }
+        continue;
+      }
+      if (count && occurrences(rendered) === count) {
+        channels.rendered.remainder = channels.rendered.remainder.split(value).join(" ");
+        renderedBindings++;
+      }
+      const labels = new Map();
+      for (const slot of slots)
+        if (slot.attribute === "aria-label" && slot.accessible)
+          labels.set(slot.expected, (labels.get(slot.expected) ?? 0) + 1);
+      for (const [name, expectedCount] of labels) {
+        const prefix = "- button " + JSON.stringify(name);
+        const matches = (line) =>
+          line.trim().startsWith(prefix) &&
+          /^(?: \[(?:disabled|expanded|pressed|selected|checked)(?:=(?:true|false|mixed))?\])*:?$/.test(
+            line.trim().slice(prefix.length),
+          );
+        if (snapshot.split("\n").filter(matches).length === expectedCount) {
+          channels.snapshot.remainder = channels.snapshot.remainder
+            .split("\n")
+            .map((line) => (matches(line) ? line.replace(prefix, "- button") : line))
+            .join("\n");
+          ariaBindings += expectedCount;
+        }
+      }
     }
-    if (!count || occurrences(rendered) !== count || occurrences(snapshot) > count) continue;
-    for (const channel of Object.values(channels))
-      channel.remainder = channel.remainder.split(value).join(" ");
+    for (const [fieldSnapshot, count] of serialized) {
+      if (snapshot.split("\n").filter((line) => line.trim() === fieldSnapshot).length !== count)
+        continue;
+      channels.snapshot.remainder = channels.snapshot.remainder
+        .split("\n")
+        .map((line) => (line.trim() === fieldSnapshot ? "" : line))
+        .join("\n");
+      ariaBindings += count;
+    }
+    if (diagnostics)
+      Object.assign(diagnostics, {
+        descriptors: Math.min(descriptors.length, 512),
+        anchors: anchored.length,
+        safeSlots: Math.min(safeSlots, 512),
+        renderedBindings: Math.min(renderedBindings, 512),
+        ariaBindings: Math.min(ariaBindings, 512),
+        urlBindings: Math.min(urlBindings, 512),
+      });
+    const token = Object.freeze({});
+    privacy78Contexts.set(token, channels);
+    return token;
+  } finally {
+    await finalSeal?.dispose().catch(() => {});
+    await seal.dispose().catch(() => {});
   }
-  const token = Object.freeze({});
-  privacy78Contexts.set(token, channels);
-  return token;
 }
 
 // Pure relation check. Only the private observer/page owner below can seal live evidence.
@@ -8168,13 +8357,14 @@ export const SINGLE_REQUEST = Object.freeze({
   listReadinessSecuritySha: "8d43ae8f94b39d81b8125d087a1c9a968e2d8ad7",
   metadataTimeoutGateSha: "326a960cec756d08681b00da99a5332f0a3c6fac",
   metadataTimeoutPlanSha: "1282198bfc72ac4a119856139e6b95d9e14177dc",
-  c8GateSha: "aaad7a97aa821642ff2a3cfefe1cdcbe7f758c10",
+  c8GateSha: "8b5f1b77ac4b4254703459107f2603be4ee9d23a",
   c8PlanSha: "afe42819e62bbe8e3c25b4a5869f8ba59db124f5",
   c8ReaderBuildSha: "501237dd48a7159ccd4a7d7407334cdc2245aa24",
   spentAuditNonces: Object.freeze([
     "trilha-a-audit-20261108-r1",
     "trilha-c-audit-20261110-c8-r1",
     "trilha-c-audit-20261110-c8-r2",
+    "trilha-c-audit-20261110-c8-r3",
   ]),
   r19RecoveryGateSha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
   r19RecoveryPlanSha: "2b6ab4f542c66309fb16d12f9998136641591f25",
@@ -8230,7 +8420,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "trilha-c-audit-20261110-c8-r3",
+    nonce: "trilha-c-audit-20261110-c8-r4",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
