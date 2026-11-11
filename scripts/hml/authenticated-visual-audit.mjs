@@ -5017,6 +5017,28 @@ export function nativeC8VisualDiagnostic(tap) {
       classifications.push({ channel: m[1], reason: m[2], unknownCount: Number(m[3]) });
   }
   if (classifications.length) last = { ...last, classifications: classifications.slice(-2) };
+  const unknownHashes = [];
+  for (const line of tap.split("\n")) {
+    const m = /^# C8_NATIVE_UNKNOWN (\[[^\r\n]{1,512}\])$/.exec(line);
+    if (!m) continue;
+    try {
+      const values = JSON.parse(m[1]);
+      if (
+        Array.isArray(values) &&
+        values.length > 0 &&
+        values.length <= 3 &&
+        values.every(
+          (value) =>
+            typeof value === "string" &&
+            value.length >= 1 &&
+            value.length <= 64 &&
+            /^[\\p{L}\\p{N}_-]+$/u.test(value),
+        )
+      )
+        unknownHashes.push(values.map((value) => digest(value)));
+    } catch {}
+  }
+  if (unknownHashes.length) last = { ...last, unknownHashes: unknownHashes.at(-1) };
   return last;
 }
 
