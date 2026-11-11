@@ -16538,8 +16538,8 @@ test("C8 r4 sidebar routes match the original contextual producer without collap
   const contracts = sut
     .c8TechnicalFieldContracts(item, data)
     .filter((d) => d.field.startsWith("route.sidebar."));
-  assert.equal(contracts.length, 5);
-  for (const route of original.filter((r) => r.destino.startsWith("/competencias/"))) {
+  assert.equal(contracts.length, 6);
+  for (const route of original) {
     const d = contracts.find((d) => d.expected === route.destino);
     assert.ok(d);
     assert.equal(d.linkAriaLabel, route.titulo);

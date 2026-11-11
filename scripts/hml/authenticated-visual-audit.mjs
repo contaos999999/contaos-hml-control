@@ -6733,6 +6733,19 @@ export function c8TechnicalFieldContracts(item, wire) {
     const id =
       b.competencies.find((c) => item.path.includes(c.id))?.id ?? SYNTHETIC_FIXTURE.competence;
     const base = "/competencias/" + id;
+    const contractHref = "/contratos/" + b.contract;
+    out.push({
+      field: "route.sidebar.contract",
+      value: contractHref,
+      expected: contractHref,
+      selector:
+        'nav[aria-label="Navegação principal"] [role="group"][aria-label="Contexto atual"] a[aria-label="Contrato da competência"][href="' +
+        contractHref +
+        '"]',
+      label: null,
+      attribute: "href",
+      linkAriaLabel: "Contrato da competência",
+    });
     for (const [name, label, suffix] of [
       ["summary", "Resumo da competência", ""],
       ["documents", "Documentos da competência", "/documentos"],
