@@ -4908,6 +4908,16 @@ export function nativeC8VisualDiagnostic(tap) {
     ),
   ];
   if (closedFailure.length === 1) last = { ...last, failureCode: closedFailure[0][1] };
+  for (const [message, assertion] of [
+    ["R3 original sidebar prefix RED", "HISTORICAL_R3_PREFIX"],
+    ["original sidebar GREEN", "CURRENT_SIDEBAR"],
+    ["full original UI render classifier", "CURRENT_RENDER_CLASSIFIER"],
+    ["full original UI ARIA classifier", "CURRENT_ARIA_CLASSIFIER"],
+    ["R3 serializer causal RED", "HISTORICAL_R3_SERIALIZER"],
+    ["original field serializer GREEN", "CURRENT_SERIALIZER"],
+  ])
+    if (tap.includes(message)) last = { ...last, assertion };
+
   const classifications = [];
   for (const line of tap.split("\n")) {
     const m =
