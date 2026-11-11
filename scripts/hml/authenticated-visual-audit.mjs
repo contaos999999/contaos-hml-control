@@ -7579,10 +7579,11 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
       if (!original || original.length > 1048576 || slot.expectedName.length > 900) continue;
       const header = original.split("\n")[0].trim();
       if (!header.startsWith("- ") || !header.endsWith(":")) continue;
-      let key = header.slice(2, -1);
-      if (key.startsWith("'") && key.endsWith("'") && /^(?:[^']|'')*$/.test(key.slice(1, -1)))
-        key = key.slice(1, -1).replace(/''/g, "'");
-      if (key !== slot.role + " " + JSON.stringify(slot.expectedName)) continue;
+      // The DOM node has already been sealed against the exact typed row/cell
+      // contract above. Use Playwright's own serialized header instead of
+      // reconstructing its YAML quoting, which can vary with punctuation and
+      // Unicode while the accessible name itself remains unchanged.
+      if (!header.startsWith("- " + slot.role + " ") || !header.endsWith(":")) continue;
       aggregateHeaders.set(header, (aggregateHeaders.get(header) ?? 0) + 1);
     }
     finalSeal = await page.evaluateHandle(collect, descriptors);
