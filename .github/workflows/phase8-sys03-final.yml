@@ -24,10 +24,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - name: Frozen dependencies
+      - name: Install pinned Bun
         run: |
           node --test scripts/ci/install-pinned-bun.test.mjs
           node scripts/ci/install-pinned-bun.mjs
+      - name: Frozen dependencies
+        run: |
           bun install --frozen-lockfile
           ./node_modules/.bin/playwright install --with-deps chromium
       - name: Fail closed on fixture and target
