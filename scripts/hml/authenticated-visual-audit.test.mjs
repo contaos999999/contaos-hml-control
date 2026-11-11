@@ -14671,7 +14671,7 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
     schema_version: 1,
     issue: 317,
     operation: "audit",
-    request_id: "trilha-c-audit-20261111-c8-r7",
+    request_id: "trilha-c-audit-20261111-c8-r8",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
