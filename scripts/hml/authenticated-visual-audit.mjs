@@ -6932,8 +6932,7 @@ export function c8TechnicalFieldContracts(item, wire) {
           '"]',
         label: null,
         attribute: "href",
-        linkText:
-          item.surface === "V117" ? "Voltar para a competência" : "Voltar à competência",
+        linkText: item.surface === "V117" ? "Voltar para a competência" : "Voltar à competência",
       });
     }
   }
