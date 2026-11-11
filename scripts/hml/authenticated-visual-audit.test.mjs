@@ -14670,7 +14670,7 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
     schema_version: 1,
     issue: 317,
     operation: "audit",
-    request_id: "trilha-c-audit-20261110-c8-r4",
+    request_id: "trilha-c-audit-20261111-c8-r5",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -14909,6 +14909,45 @@ async function c8SourceFixture() {
   data.detail.execucao_atual.id = c.executionId;
   data.detail.execucao_atual.iniciada_em = "2026-11-10T00:00:00Z";
   data.detail.execucao_atual.concluida_em = "2026-11-10T00:01:00Z";
+  const result = {
+    id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    id_execucao: c.executionId,
+    resultado: "conforme",
+    mecanismo: "humano",
+    confianca: 1,
+    justificativa: preparer.FIXTURE.reviewJustification,
+    fundamento: preparer.FIXTURE.reviewFoundation,
+    hash_evidencias: "e".repeat(64),
+    criado_em: "2026-11-10T00:01:00Z",
+  };
+  Object.assign(data.analysis.resultados[0], {
+    id_resultado: result.id,
+    mecanismo: result.mecanismo,
+    hash_evidencias: result.hash_evidencias,
+    criado_em: result.criado_em,
+  });
+  data.detail.resultado_atual = structuredClone(result);
+  delete data.detail.resultado_atual.mecanismo;
+  data.detail.resultado_referencia = structuredClone(result);
+  data.detail.historico = [
+    {
+      ...result,
+      id_resultado: result.id,
+      tipo_execucao: "completa",
+      status_execucao: "concluida",
+      motor: "contaos",
+      versao_motor: "2.0",
+      provedor: null,
+      modelo: null,
+      prompt_versao: null,
+      hash_entrada: "a".repeat(64),
+      iniciada_em: data.detail.execucao_atual.iniciada_em,
+      concluida_em: data.detail.execucao_atual.concluida_em,
+    },
+  ];
+  delete data.detail.historico[0].id;
+  data.detail.historico_paginacao.total = 1;
+
   data.overview.competencia.situacao = c.state;
   data.overview.blocking_summary.aprovacao_apresentacao_atual = true;
   data.context = {
@@ -14972,7 +15011,7 @@ async function c8BuildSourceUI(directory) {
   const b = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
   await fs.writeFile(
     join(directory, "client.ts"),
-    `import {PostgrestClient} from ${JSON.stringify(pg)};export const supabase=Object.assign(new PostgrestClient(${JSON.stringify(API)}+'/rest/v1'),{auth:{getUser:async()=>({data:{user:{id:'native-c8-owner'}},error:null})}});`,
+    `import {PostgrestClient} from ${JSON.stringify(pg)};export const supabase=Object.assign(new PostgrestClient(${JSON.stringify(API)}+'/rest/v1'),{auth:{getUser:async()=>({data:{user:{id:'native-c8-owner'}},error:null}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})}});`,
   );
   await fs.writeFile(
     join(directory, "router.tsx"),
@@ -14983,8 +15022,21 @@ async function c8BuildSourceUI(directory) {
     `export const EVENTO_ORGANIZACAO_ALTERADA="contaos:organizacao-alterada";export const obterPreferenciaOrganizacao=()=>${JSON.stringify(b.organization)};`,
   );
   await fs.writeFile(
+    join(directory, "rbac.ts"),
+    `export const consultarPermissoesEfetivas=async()=>({permissoes:['dashboard','competencias','documentos_competencia','analises','pareceres','apresentacoes','contratos','auditoria'].map(recurso=>({recurso,acao:'consultar'})).concat([{recurso:'usuarios',acao:'administrar'}])});export const resolverContextoRbac=async(path)=>({competencia:path.split('/')[2],contrato:${JSON.stringify(b.contract)},contratante:null});export const temPermissao=(p,r,a)=>p.some(x=>x.recurso===r&&x.acao===a);`,
+  );
+  await fs.writeFile(
+    join(directory, "admin.ts"),
+    "export const validarAdministrador=async()=>true;export const podeConsultarAuditoria=async()=>true;",
+  );
+  await fs.writeFile(
+    join(directory, "header.tsx"),
+    `import React from 'react';export const ContaOSOrganizationHeader=()=> <header aria-label="Organização atual"><div>ContaOS HML Teste</div><div>Situação: ativa</div><button onClick={()=>window.__logoutRequested=true}>Sair</button></header>;`,
+  );
+  await fs.writeFile(join(directory, "copilot.tsx"), "export const CopilotoContrato=()=>null;");
+  await fs.writeFile(
     join(directory, "entry.tsx"),
-    `import React from 'react';import {createRoot} from 'react-dom/client';import {ContaOSSidebar} from ${JSON.stringify(resolve(root, "src/components/layout/ContaOSSidebar.tsx"))};import {CompetenciaAnalise} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaAnalise.tsx"))};import {CompetenciaApresentar} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaApresentar.tsx"))};import {CompetenciaProtocolo} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaProtocolo.tsx"))};const root=createRoot(document.getElementById('root'));function Sidebar({id}){const [collapsed,setCollapsed]=React.useState(false);window.__collapseSidebar=setCollapsed;const permissions=['competencias','documentos_competencia','analises','pareceres','apresentacoes','contratos'].map(recurso=>({recurso,acao:'consultar'}));return <aside id='native-context-sidebar' className='hidden md:block'><ContaOSSidebar recolhida={collapsed} permissoes={permissions} contexto={{competencia:id,contrato:${JSON.stringify(b.contract)},contratante:null}}/></aside>};window.__mount=(surface,id,ap)=>root.render(<><Sidebar key={crypto.randomUUID()} id={id}/>{surface==='V117'?<CompetenciaAnalise key={crypto.randomUUID()} id={id}/>:surface==='V119'?<CompetenciaApresentar key={crypto.randomUUID()} id={id}/>:<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>}</>);window.__ready=true;`,
+    `import React from 'react';import {createRoot} from 'react-dom/client';import {ContaOSAppShell} from ${JSON.stringify(resolve(root, "src/components/layout/ContaOSAppShell.tsx"))};import {CompetenciaAnalise} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaAnalise.tsx"))};import {CompetenciaApresentar} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaApresentar.tsx"))};import {CompetenciaProtocolo} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaProtocolo.tsx"))};const root=createRoot(document.getElementById('root'));window.__mount=(surface,id,ap)=>root.render(<ContaOSAppShell key={crypto.randomUUID()}>{surface==='V117'?<CompetenciaAnalise id={id}/>:surface==='V119'?<CompetenciaApresentar id={id}/>:<CompetenciaProtocolo id={id} apresentacaoId={ap}/>}</ContaOSAppShell>);window.__ready=true;`,
   );
   const aliases = {
     react: require.resolve("react"),
@@ -14993,8 +15045,12 @@ async function c8BuildSourceUI(directory) {
     "@/integrations/supabase/client": join(directory, "client.ts"),
     "@tanstack/react-router": join(directory, "router.tsx"),
     "@/lib/organizacao/preferenciaOrganizacao": join(directory, "org.ts"),
+    "@/lib/administracao/rbacRpc": join(directory, "rbac.ts"),
+    "@/lib/administracao/admUsuariosRpc": join(directory, "admin.ts"),
+    "./ContaOSOrganizationHeader": join(directory, "header.tsx"),
+    "@/components/copiloto/CopilotoContrato": join(directory, "copilot.tsx"),
   };
-  const bunScript = `const result=await Bun.build({entrypoints:[${JSON.stringify(join(directory, "entry.tsx"))}],outdir:${JSON.stringify(directory)},target:'browser',naming:'ui.js',minify:true,define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'closed-infrastructure',setup(build){const aliases=${JSON.stringify(aliases)};build.onResolve({filter:/^(@\\/|@tanstack\\/react-router$|react$|react-dom\\/client$|react\\/jsx-runtime$)/},args=>({path:Bun.resolveSync(aliases[args.path]??${JSON.stringify(resolve(root, "src"))}+'/'+args.path.slice(2),${JSON.stringify(root)})}));}}]});if(!result.success){for(const log of result.logs)console.error(log);process.exit(1);}`;
+  const bunScript = `const result=await Bun.build({entrypoints:[${JSON.stringify(join(directory, "entry.tsx"))}],outdir:${JSON.stringify(directory)},target:'browser',naming:'ui.js',minify:true,define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'closed-infrastructure',setup(build){const aliases=${JSON.stringify(aliases)};build.onResolve({filter:/^(\\.\\/ContaOSOrganizationHeader$|@\\/|@tanstack\\/react-router$|react$|react-dom\\/client$|react\\/jsx-runtime$)/},args=>({path:Bun.resolveSync(aliases[args.path]??${JSON.stringify(resolve(root, "src"))}+'/'+args.path.slice(2),${JSON.stringify(root)})}));}}]});if(!result.success){for(const log of result.logs)console.error(log);process.exit(1);}`;
   await fs.writeFile(join(directory, "build.mjs"), bunScript);
   const { execFile } = await import("node:child_process"),
     { promisify } = await import("node:util");
@@ -15021,6 +15077,29 @@ async function nativeC8ObservationIdentity() {
     deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
     workflowRun: "1",
   };
+}
+
+function c8OriginalCssCandidates(bundle, ts) {
+  const ast = ts.createSourceFile(
+      "native-ui.js",
+      bundle.toString("utf8"),
+      99,
+      true,
+      ts.ScriptKind.JS,
+    ),
+    candidates = new Set();
+  const visit = (node) => {
+    if (
+      ts.isStringLiteralLike(node) ||
+      ts.isTemplateHead(node) ||
+      ts.isTemplateMiddle(node) ||
+      ts.isTemplateTail(node)
+    )
+      for (const token of node.text.split(/\s+/)) candidates.add(token);
+    ts.forEachChild(node, visit);
+  };
+  visit(ast);
+  return candidates;
 }
 
 async function c8NativeSourceProbe(browser, cssCompiler) {
@@ -15060,20 +15139,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
       .getText(ast)
       .replace(/^export /, "");
     const before = new Function(oldDeclaration + ";return surfaceStateValid;")();
-    const cssAst = ts.createSourceFile(
-        "native-ui.js",
-        bundle.toString("utf8"),
-        99,
-        true,
-        ts.ScriptKind.JS,
-      ),
-      candidates = new Set();
-    const cssVisit = (node) => {
-      if (ts.isStringLiteralLike(node))
-        for (const token of node.text.split(/\s+/)) candidates.add(token);
-      ts.forEachChild(node, cssVisit);
-    };
-    cssVisit(cssAst);
+    const candidates = c8OriginalCssCandidates(bundle, ts);
     const sourceCss = cssCompiler.build([...candidates]);
     const readNames = new Set();
     let surface = "V117",
@@ -15191,6 +15257,10 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
     const r3Privacy = await c8PrivacyHarness({
       baseline: true,
       baselineRef: "7f5eb2ada7d6fbc978f578cdc71bdd22df94632f",
+    });
+    const r4Privacy = await c8PrivacyHarness({
+      baseline: true,
+      baselineRef: "2cafe0e9cdfd84a76c85cb45474ff718749ba0e8",
     });
     const literalDictionary = await sut.literalWords(new URL("../../", import.meta.url).pathname);
     const preparer = await import("./prepare-visual-fixtures.mjs");
@@ -15353,6 +15423,15 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           );
           // Actual original SDK reads feed the official observer. The local server
           // substitutes transport only; no current evidence is injected into the collector.
+          // AppShell publishes contextual permissions and admin entries asynchronously.
+          // Wait for its final original control before collecting sealed node identities.
+          await page
+            .locator('aside nav[aria-label="Administração"] a[href="/administracao/auditoria"]')
+            .waitFor({ state: "attached" });
+          if (width >= 768)
+            await page
+              .locator('aside a[aria-label="Resumo da competência"]')
+              .waitFor({ state: "visible" });
           phase("COLLECT", item);
           await privacyHarness.collect(localPage, item, state);
           assert.equal(state.c8Current.observer, currentObserver);
@@ -15366,18 +15445,49 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           const r3Token = await r3Privacy.context(localPage, state, rendered, snapshot, null);
           const r3Remainder = r3Privacy.contexts.get(r3Token);
           if (["V119", "V120"].includes(surface)) {
+            for (const [channel, text] of [
+              ["RENDER", remainder.rendered.remainder],
+              ["ARIA", remainder.snapshot.remainder],
+            ]) {
+              const result = sut.classifyArtifactText(text, literalDictionary, {
+                snapshot: channel === "ARIA",
+              });
+              console.log(
+                "C8_NATIVE_CLASSIFY " + channel + " " + result.reason + " " + result.unknownCount,
+              );
+            }
             assert.equal(
               sut.classifyArtifactText(remainder.rendered.remainder, literalDictionary).reason,
               "ALLOWED",
               "full original UI render classifier",
             );
             assert.equal(
-              sut.classifyArtifactText(remainder.snapshot.remainder, literalDictionary).reason,
+              sut.classifyArtifactText(remainder.snapshot.remainder, literalDictionary, {
+                snapshot: true,
+              }).reason,
               "ALLOWED",
               "full original UI ARIA classifier",
             );
           }
           if (surface === "V117") {
+            r4Privacy.pages.set(localPage, state);
+            const priorToken = await r4Privacy.context(localPage, state, rendered, snapshot, null);
+            const prior = r4Privacy.contexts.get(priorToken);
+            for (const value of [
+              data.detail.resultado_atual.justificativa,
+              data.detail.resultado_atual.fundamento,
+            ]) {
+              assert.equal(
+                prior.rendered.remainder.includes(value),
+                remainder.rendered.remainder.includes(value),
+                "same complete V117 DOM, immediate predecessor comparison",
+              );
+              assert.equal(
+                prior.snapshot.remainder.includes(value),
+                remainder.snapshot.remainder.includes(value),
+                "same complete V117 ARIA, no invented causal RED",
+              );
+            }
             const encoded = await originalAriaValue(
               JSON.stringify(data.detail.requisito.fonte_detalhe),
             );
@@ -15463,15 +15573,18 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
             phase("PRIVACY_SIDEBAR", item);
             const route = "/competencias/" + b.competencies[surface === "V120" ? 1 : 0].id;
             try {
-              if (width === 390)
+              if (width === 390) {
+                await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
                 await page
-                  .locator("#native-context-sidebar")
-                  .evaluate((n) => (n.style.display = "block"));
-              for (const collapsed of [false, true]) {
-                await page.evaluate((c) => window.__collapseSidebar(c), collapsed);
+                  .getByRole("dialog", { name: "Menu de navegação", exact: true })
+                  .waitFor();
+              }
+              for (const collapsed of width === 390 ? [false] : [false, true]) {
+                if (collapsed)
+                  await page.getByRole("button", { name: "Recolher menu", exact: true }).click();
                 await page.waitForFunction((c) => {
                   const a = document.querySelector(
-                    '#native-context-sidebar a[aria-label="Resumo da competência"]',
+                    'nav[aria-label="Navegação principal"] a[aria-label="Resumo da competência"]',
                   );
                   return (
                     a &&
@@ -15487,16 +15600,94 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
                   privacyHarness.contexts.get(current).snapshot.remainder.includes(route),
                   false,
                 );
+                const rem = privacyHarness.contexts.get(current);
+                assert.equal(
+                  sut.classifyArtifactText(rem.rendered.remainder, literalDictionary).reason,
+                  "ALLOWED",
+                  "full original mobile shell render",
+                );
+                assert.equal(
+                  sut.classifyArtifactText(rem.snapshot.remainder, literalDictionary, {
+                    snapshot: true,
+                  }).reason,
+                  "ALLOWED",
+                  "full original mobile shell ARIA",
+                );
                 const old = await r3Privacy.context(localPage, state, text, aria, null);
                 assert.ok(r3Privacy.contexts.get(old).snapshot.remainder.includes(route));
               }
             } finally {
-              await page.evaluate(() => window.__collapseSidebar(false));
-              if (width === 390)
-                await page
-                  .locator("#native-context-sidebar")
-                  .evaluate((n) => n.style.removeProperty("display"));
+              if (width === 390) await sut.closeAuditMobileMenu(page);
+              else if (
+                await page.getByRole("button", { name: "Expandir menu", exact: true }).count()
+              )
+                await page.getByRole("button", { name: "Expandir menu", exact: true }).click();
             }
+          }
+
+          if (width === 390 && surface === "V119") {
+            phase("NEGATIVE", item);
+            let oldSnapshot, newSnapshot;
+            const failure = Object.assign(new Error("closed native privacy failure"), {
+              code: "PII_SUPPLEMENT",
+            });
+            const bindings = {
+              inspectPrivacy: async () => {
+                oldSnapshot = await page.locator("body").ariaSnapshot();
+                return null;
+              },
+              fail: () => {
+                throw failure;
+              },
+              closeAuditMobileMenu: sut.closeAuditMobileMenu,
+            };
+            const oldProbe = await c8OriginalFunction(
+              "sidebarProbe",
+              bindings,
+              "2cafe0e9cdfd84a76c85cb45474ff718749ba0e8",
+            );
+            const newProbe = await c8OriginalFunction("sidebarProbe", {
+              ...bindings,
+              inspectPrivacy: async () => {
+                newSnapshot = await page.locator("body").ariaSnapshot();
+                return null;
+              },
+            });
+            const neverSave = async () => {
+              throw new Error("must not capture blocked privacy");
+            };
+            await assert.rejects(
+              oldProbe(page, item, "native", literalDictionary, neverSave),
+              (e) => e === failure,
+            );
+            assert.equal(
+              await page.getByRole("dialog", { name: "Menu de navegação", exact: true }).count(),
+              1,
+              "R4 causal RED leaves original modal open",
+            );
+            const exit = page.locator('header[aria-label="Organização atual"] button');
+            assert.equal(
+              await exit.evaluate((n) => !!n.closest("[inert]")),
+              true,
+              "original Sair is inert",
+            );
+            await sut.closeAuditMobileMenu(page);
+            await assert.rejects(
+              newProbe(page, item, "native", literalDictionary, neverSave),
+              (e) => e === failure,
+            );
+            assert.equal(newSnapshot, oldSnapshot, "same original full DOM/ARIA failure window");
+            assert.equal(
+              await page.getByRole("dialog", { name: "Menu de navegação", exact: true }).count(),
+              0,
+            );
+            assert.equal(await exit.evaluate((n) => !!n.closest("[inert]")), false);
+            await exit.click();
+            assert.equal(
+              await page.evaluate(() => window.__logoutRequested),
+              true,
+              "original shell restores actionable exit after failed supplement",
+            );
           }
 
           if (surface === "V117")
@@ -15764,6 +15955,9 @@ test("C8 source fixture preserves complete actual SDK shapes and build uses orig
   const { data } = await c8SourceFixture();
   const item = fn("privateCases")(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
   assert.equal(sut.validateC8CurrentWire(item, data), true);
+  const preparer = await import("./prepare-visual-fixtures.mjs");
+  assert.ok(preparer.projectScopedRpcResponse("obter_analise_competencia_v116", data.analysis));
+  assert.ok(preparer.projectScopedRpcResponse("obter_detalhe_requisito_v117", data.detail));
   const fs = await import("node:fs/promises"),
     { join } = await import("node:path"),
     { tmpdir } = await import("node:os");
@@ -15771,6 +15965,20 @@ test("C8 source fixture preserves complete actual SDK shapes and build uses orig
   try {
     const bundle = await c8BuildSourceUI(dir);
     assert.ok(bundle.length > 10000);
+    const ts = (await import("typescript")).default;
+    assert.ok(
+      c8OriginalCssCandidates(bundle, ts).has("md:block"),
+      "original dynamic AppShell must retain its desktop breakpoint class",
+    );
+    assert.ok(
+      c8OriginalCssCandidates(bundle, ts).has("z-30"),
+      "original dynamic sidebar stacking class must be compiled",
+    );
+
+    assert.ok(
+      bundle.includes(Buffer.from("__logoutRequested")),
+      "closed header adapter must be resolved, not the private production header",
+    );
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
@@ -15793,6 +16001,7 @@ async function c8PrivacyHarness({
       [
         "aaad7a97aa821642ff2a3cfefe1cdcbe7f758c10",
         "7f5eb2ada7d6fbc978f578cdc71bdd22df94632f",
+        "2cafe0e9cdfd84a76c85cb45474ff718749ba0e8",
       ].includes(baselineRef),
     );
     source = (
@@ -16291,6 +16500,8 @@ async function c8MutationWindowProbe({
   mutation = "once",
   foreign = false,
   extra = "",
+  pending = false,
+  invalid = false,
 } = {}) {
   const fs = await import("node:fs/promises"),
     ts = (await import("typescript")).default;
@@ -16319,15 +16530,19 @@ async function c8MutationWindowProbe({
   let reads = 0,
     snapshots = 0,
     settles = 0;
-  const receipt = () => ({
-    route: sut.HML_ORIGIN + item.path,
-    age: 1,
-    revision: mutation === "always" ? ++reads : mutation === "once" ? (++reads === 1 ? 1 : 2) : 1,
-    observed:
-      surface === "V115"
-        ? ["competence_rbac_gate", "upload"]
-        : proof.get_contracts.map((c) => c.name),
-  });
+  const receipt = () =>
+    pending && (settles === 0 || mutation === "always")
+      ? null
+      : {
+          route: sut.HML_ORIGIN + item.path,
+          age: 1,
+          revision:
+            mutation === "always" ? ++reads : mutation === "once" ? (++reads === 1 ? 1 : 2) : 1,
+          observed:
+            surface === "V115"
+              ? ["competence_rbac_gate", "upload"]
+              : proof.get_contracts.map((c) => c.name),
+        };
   const anchor = () => ({ selector: "p", count: 1, index: 0 });
   const page = {
     url: () => sut.HML_ORIGIN + item.path,
@@ -16350,6 +16565,16 @@ async function c8MutationWindowProbe({
         return;
       }
       if (text.includes("__contaosPrivacySys04")) return null;
+      if (text.includes("diagnostics"))
+        return {
+          current: !invalid,
+          invalid,
+          pending: pending && settles === 0 ? 1 : 0,
+          header: true,
+          route: true,
+          age: 1,
+          seen: 0,
+        };
       if (text.includes("__contaosPrivacy78")) return receipt();
       if (text.includes("const values")) return value;
       throw Error("unexpected DOM reader");
@@ -16623,6 +16848,7 @@ test("C8 r4 snapshot binding uses original ARIA serialization of a frozen pure-t
 
 async function c8PureTextDomProbe({
   extraAttribute = false,
+  inert = false,
   copy = false,
   mutate = false,
   swap = false,
@@ -16646,6 +16872,7 @@ async function c8PureTextDomProbe({
   };
   const dd = w.document.querySelector("dd");
   dd.textContent = value;
+  if (inert) dd.closest("section").setAttribute("inert", "");
   if (extraAttribute) dd.setAttribute("aria-label", "UNLISTED_NAME");
   const serialized = ariaCanary ? "- definition: UNLISTED_ARIA_NAME" : "- definition: " + encoded,
     snapshot = copy ? serialized + "\n" + serialized : serialized;
@@ -16734,6 +16961,7 @@ test("C8 r4 acquisition diagnostics contain only closed booleans and bounded cou
     Object.keys(d).sort(),
     [
       "initialReceipt",
+      "observer",
       "currentReceipt",
       "sameRevision",
       "anchor",
@@ -16747,6 +16975,7 @@ test("C8 r4 acquisition diagnostics contain only closed booleans and bounded cou
   );
   for (const [key, value] of Object.entries(d))
     if (key.startsWith("known")) assert.ok(Number.isInteger(value) && value >= 0 && value <= 233);
+    else if (key === "observer") assert.equal(value, null);
     else assert.equal(typeof value, "boolean");
 });
 
@@ -16776,6 +17005,246 @@ test("C8 r4 protocol package kind follows canonical creation and registration tr
     assert.equal(
       sut.c8TechnicalFieldContracts(item, bad).some((d) => d.field === "packages.0.tipo"),
       false,
+    );
+  }
+});
+
+async function c8OriginalFunction(name, bindings, baselineRef = null) {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  let source = await fs.readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  if (baselineRef) {
+    assert.equal(baselineRef, "2cafe0e9cdfd84a76c85cb45474ff718749ba0e8");
+    const { promisify } = await import("node:util"),
+      { execFile } = await import("node:child_process");
+    source = (
+      await promisify(execFile)(
+        "git",
+        ["show", baselineRef + ":scripts/hml/authenticated-visual-audit.mjs"],
+        { maxBuffer: 2097152 },
+      )
+    ).stdout;
+  }
+  const ast = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
+  const declaration = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === name,
+  );
+  assert.ok(declaration);
+  return new Function(
+    ...Object.keys(bindings),
+    declaration.getText(ast).replace(/^export /, "") + ";return " + name,
+  )(...Object.values(bindings));
+}
+
+test("C8 r5 mobile supplement closes original menu after privacy or capture failure without hiding the failure", async () => {
+  for (const stage of ["privacy", "capture"]) {
+    let opened = false,
+      restored = false;
+    const expected = Object.assign(new Error("closed failure"), {
+      code: stage === "privacy" ? "PII_SUPPLEMENT" : "CAPTURE_FAILURE",
+    });
+    const probe = await c8OriginalFunction("sidebarProbe", {
+      inspectPrivacy: async () => (stage === "privacy" ? null : "safe"),
+      closeAuditMobileMenu: sut.closeAuditMobileMenu,
+      fail: () => {
+        throw expected;
+      },
+    });
+    const page = {
+      getByRole: (role, { name }) =>
+        name === "Abrir menu"
+          ? {
+              click: async () => {
+                opened = true;
+              },
+              evaluate: async () => restored,
+            }
+          : {
+              waitFor: async ({ state } = {}) => {
+                if (state === "hidden") assert.equal(opened, false);
+              },
+              count: async () => (opened ? 1 : 0),
+            },
+      keyboard: {
+        press: async (key) => {
+          assert.equal(key, "Escape");
+          opened = false;
+          restored = true;
+        },
+      },
+    };
+    await assert.rejects(
+      probe(page, { surface: "V120", width: 390 }, "V120_390_light", new Set(), async () => {
+        throw expected;
+      }),
+      (e) => e === expected,
+    );
+    assert.equal(opened, false, "menu must close on the original failing path");
+    assert.equal(restored, true);
+  }
+});
+
+test("C8 r5 missing receipt is recollected once only while original observer is valid and pending", async () => {
+  for (const surface of ["V111", "V115"]) {
+    const r = await c8MutationWindowProbe({ surface, mutation: "none", pending: true });
+    assert.equal(r.result, r.value);
+    assert.equal(r.snapshots, 2);
+    assert.equal(r.settles, 1);
+  }
+  for (const options of [
+    { invalid: true },
+    { foreign: true },
+    { mutation: "always" },
+    { extra: " UNLISTED_PENDING_CANARY" },
+  ]) {
+    const r = await c8MutationWindowProbe({ mutation: "none", pending: true, ...options });
+    assert.equal(r.result, null);
+    assert.ok(r.snapshots <= 2);
+  }
+});
+
+test("C8 r5 original observer diagnostics expose only closed state and cannot revive invalidation", async () => {
+  const { dom, w, run } = privacy78Browser(
+    '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header>',
+  );
+  try {
+    w.fetch = () => Promise.resolve(new Response("{}"));
+    run("privacy78Runtime", { proof: privacy78Proof, wireProof: privacyWireRaw, install: true });
+    const observer = w.__contaosPrivacy78;
+    const d = observer.diagnostics();
+    assert.deepEqual(
+      Object.keys(d).sort(),
+      ["invalid", "current", "route", "header", "pending", "seen", "age"].sort(),
+    );
+    for (const k of ["invalid", "current", "route", "header"]) assert.equal(typeof d[k], "boolean");
+    for (const k of ["pending", "seen", "age"])
+      assert.ok(Number.isInteger(d[k]) && d[k] >= 0 && d[k] <= (k === "age" ? 120000 : 512));
+    assert.equal(d.current, true);
+    observer.invalidate();
+    assert.equal(observer.read(), null);
+    assert.equal(observer.diagnostics().invalid, true);
+    assert.equal(observer.diagnostics().current, false);
+  } finally {
+    dom.window.close();
+  }
+});
+
+test("C8 r5 spent r4 stays readable historically and cannot authorize a new execution", () => {
+  const r = {
+    schema_version: 1,
+    issue: 317,
+    operation: "audit",
+    request_id: "trilha-c-audit-20261110-c8-r4",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify(r)), /REQUEST_SCHEMA/);
+  assert.equal(
+    sut.parseSingleRequest(JSON.stringify(r), undefined, { historical: true }).request_id,
+    r.request_id,
+  );
+  assert.throws(() => sut.resolveC8AuditScope(r), /AUDIT_BINDING_PENDING|REQUEST_SCHEMA/);
+});
+
+test("C8 r5 original observer waits for its actual Response clone stream and does not rehabilitate invalidation", async () => {
+  const rbacProof = await sut.loadPrivacy78RbacProof();
+  const { dom, w, run } = privacy78Browser(
+    '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header>',
+  );
+  try {
+    w.history.replaceState(
+      {},
+      "",
+      "/competencias/" + privacy78Proof.context.competence + "/documentos",
+    );
+    const upload = privacy78Proof.get_contracts.find((c) => c.name === "upload"),
+      gate = rbacProof.get_contract;
+    let held;
+    const stream = new ReadableStream({
+      start(c) {
+        held = c;
+        c.enqueue(
+          new TextEncoder().encode(
+            JSON.stringify([
+              {
+                extensoes_permitidas: privacy78Proof.observed.upload.extensions,
+                tamanho_maximo_bytes: 524288000,
+              },
+            ]),
+          ),
+        );
+      },
+    });
+    const uploadUrl = API + upload.path + "?" + new URLSearchParams(upload.query);
+    const gateUrl = API + gate.path + "?" + new URLSearchParams(gate.query);
+    const response = new Response(stream);
+    Object.defineProperty(response, "url", { value: uploadUrl });
+    const gateResponse = new Response(
+      JSON.stringify([{ id_contrato: privacy78Proof.context.contract }]),
+    );
+    Object.defineProperty(gateResponse, "url", { value: gateUrl });
+    w.fetch = (url) => Promise.resolve(url === uploadUrl ? response : gateResponse);
+    run("privacy78Runtime", {
+      proof: privacy78Proof,
+      rbacProof,
+      wireProof: privacyWireRaw,
+      install: true,
+    });
+    await w.fetch(uploadUrl);
+    await w.fetch(gateUrl);
+    for (let i = 0; i < 20 && w.__contaosPrivacy78.diagnostics().pending !== 1; i++)
+      await new Promise((r) => setTimeout(r, 0));
+    assert.equal(w.__contaosPrivacy78.read(), null);
+    assert.equal(w.__contaosPrivacy78.diagnostics().pending, 1);
+    assert.equal(w.__contaosPrivacy78.diagnostics().invalid, false);
+    held.close();
+    for (let i = 0; i < 50 && w.__contaosPrivacy78.diagnostics().pending; i++)
+      await new Promise((r) => setTimeout(r, 0));
+    const receipt = w.__contaosPrivacy78.read();
+    assert.ok(receipt);
+    assert.deepEqual([...receipt.observed], ["competence_rbac_gate", "upload"]);
+    assert.equal(w.__contaosPrivacy78.diagnostics().pending, 0);
+    w.__contaosPrivacy78.invalidate();
+    assert.equal(w.__contaosPrivacy78.read(), null);
+    assert.equal(w.__contaosPrivacy78.diagnostics().invalid, true);
+  } finally {
+    dom.window.close();
+  }
+});
+
+test("C8 r5 native failure diagnostics admit only closed codes and bounded classification counters", () => {
+  const r = sut.nativeC8VisualDiagnostic(
+    "# C8_NATIVE_PHASE PRIVACY V119 1440 light\n  error: 'C8_CURRENT_OWNER'\n# C8_NATIVE_CLASSIFY RENDER UNKNOWN_WORDS 1\n# C8_NATIVE_CLASSIFY ARIA ALLOWED 0\n",
+  );
+  assert.equal(r.failureCode, "C8_CURRENT_OWNER");
+  assert.deepEqual(r.classifications, [
+    { channel: "RENDER", reason: "UNKNOWN_WORDS", unknownCount: 1 },
+    { channel: "ARIA", reason: "ALLOWED", unknownCount: 0 },
+  ]);
+  const bad = sut.nativeC8VisualDiagnostic(
+    "# C8_NATIVE_PHASE PRIVACY V119 1440 light\n  error: 'UNLISTED_SECRET'\n# C8_NATIVE_CLASSIFY RENDER UNLISTED_SECRET 999\n",
+  );
+  assert.equal(bad.failureCode, undefined);
+  assert.equal(bad.classifications, undefined);
+  assert.equal(JSON.stringify(bad).includes("UNLISTED_SECRET"), false);
+});
+
+test("C8 r5 inert background remains governed by original Playwright field serialization", async () => {
+  const words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+  const good = await c8PureTextDomProbe({ inert: true });
+  assert.equal(
+    sut.classifyArtifactText(good.remainder, words, { snapshot: true }).reason,
+    "ALLOWED",
+  );
+  for (const opts of [{ copy: true }, { ariaCanary: true }, { extraAttribute: true }]) {
+    const bad = await c8PureTextDomProbe({ inert: true, ...opts });
+    assert.notEqual(
+      sut.classifyArtifactText(bad.remainder, words, { snapshot: true }).reason,
+      "ALLOWED",
     );
   }
 });
