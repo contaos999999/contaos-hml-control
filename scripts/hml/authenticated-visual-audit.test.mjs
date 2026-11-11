@@ -15448,7 +15448,9 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
               "full original UI render classifier",
             );
             assert.equal(
-              sut.classifyArtifactText(remainder.snapshot.remainder, literalDictionary).reason,
+              sut.classifyArtifactText(remainder.snapshot.remainder, literalDictionary, {
+                snapshot: true,
+              }).reason,
               "ALLOWED",
               "full original UI ARIA classifier",
             );
@@ -15591,7 +15593,9 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
                   "full original mobile shell render",
                 );
                 assert.equal(
-                  sut.classifyArtifactText(rem.snapshot.remainder, literalDictionary).reason,
+                  sut.classifyArtifactText(rem.snapshot.remainder, literalDictionary, {
+                    snapshot: true,
+                  }).reason,
                   "ALLOWED",
                   "full original mobile shell ARIA",
                 );
@@ -15947,6 +15951,10 @@ test("C8 source fixture preserves complete actual SDK shapes and build uses orig
   try {
     const bundle = await c8BuildSourceUI(dir);
     assert.ok(bundle.length > 10000);
+    assert.ok(
+      bundle.includes(Buffer.from("__logoutRequested")),
+      "closed header adapter must be resolved, not the private production header",
+    );
   } finally {
     await fs.rm(dir, { recursive: true, force: true });
   }
