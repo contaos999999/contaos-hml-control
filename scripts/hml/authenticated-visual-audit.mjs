@@ -2016,6 +2016,16 @@ export function privacy78Runtime({
     writable: false,
     value: Object.freeze({
       invalidate,
+      diagnostics: () =>
+        Object.freeze({
+          invalid,
+          current: !!current(),
+          route: location.href === route,
+          header: headerCurrent(),
+          pending: Math.min(512, pending),
+          seen: Math.min(512, seen.size),
+          age: Math.min(120000, Math.max(0, Math.floor(performance.now() - started))),
+        }),
       read: () => {
         if (headerSeen && !headerCurrent()) invalidate();
         return current() && pending === 0
@@ -4168,7 +4178,7 @@ export const SYNTHETIC_FIXTURE = Object.freeze({
 });
 export const C8_AUDIT_SCOPE = Object.freeze({
   id: "C8",
-  nonce: "trilha-c-audit-20261110-c8-r4",
+  nonce: "trilha-c-audit-20261111-c8-r5",
   surfaces: Object.freeze(["V111", "V114", "V115", "V116", "V117", "V118", "V119", "V120"]),
 });
 export const C8_RECOVERY_DOCUMENT = Object.freeze({
@@ -5231,6 +5241,27 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
     state?.verified && (await page.evaluate(() => window.__contaosPrivacySys04?.read() ?? null));
   const initialReceipt =
     state?.verified && (await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null));
+  const receiptState =
+    !initialReceipt && state?.scope === C8_AUDIT_SCOPE && state?.verified
+      ? await page.evaluate(() => {
+          const d = window.__contaosPrivacy78?.diagnostics?.();
+          if (!d) return null;
+          const result = {};
+          for (const k of ["invalid", "current", "route", "header"])
+            if (typeof d[k] === "boolean") result[k] = d[k];
+          for (const k of ["pending", "seen", "age"])
+            if (Number.isInteger(d[k]) && d[k] >= 0 && d[k] <= (k === "age" ? 120000 : 512))
+              result[k] = d[k];
+          return result;
+        })
+      : null;
+  const waitingForReceipt =
+    !initialReceipt &&
+    receiptState?.invalid === false &&
+    receiptState.current === true &&
+    receiptState.route === true &&
+    receiptState.header === true &&
+    receiptState.pending > 0;
   const snapshot = await page.locator("body").ariaSnapshot();
   const rendered = await page.evaluate(() => {
     const visible = (e) =>
@@ -5257,6 +5288,7 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
 
   const acquisition = {
     initialReceipt: !!initialReceipt,
+    observer: receiptState || null,
     currentReceipt: false,
     sameRevision: false,
     anchor: false,
@@ -5454,7 +5486,7 @@ async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
     // once; no text, receipt or context survives into the new collection.
     if (
       readAttempt === 0 &&
-      interruptedContext &&
+      (interruptedContext || waitingForReceipt) &&
       state?.scope === C8_AUDIT_SCOPE &&
       state.verified &&
       !state.closed &&
@@ -6003,6 +6035,7 @@ async function runAuthenticatedAudit() {
     if (loggedIn && page && !page.isClosed())
       try {
         await settleVerifiedPage(page, fence);
+        await closeAuditMobileMenu(page);
         const exit = page.getByRole("button", { name: "Sair", exact: true });
         if ((await exit.count()) === 1) {
           await exit.click();
@@ -7229,6 +7262,20 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
         renderedBindings: Math.min(renderedBindings, 512),
         ariaBindings: Math.min(ariaBindings, 512),
         urlBindings: Math.min(urlBindings, 512),
+        fields: descriptors.slice(0, 512).map((d, index) => {
+          const group = anchored.find((g) => g.value === d.value);
+          const slot = group?.slots.find(
+            (s) => s.selector === d.selector && s.attribute === d.attribute,
+          );
+          return {
+            index,
+            anchored: !!slot,
+            accessible: slot?.accessible === true,
+            snapshotSafe: slot?.snapshotSafe === true,
+            rendered: Math.min(512, rendered.split(d.value).length - 1),
+            snapshot: Math.min(512, snapshot.split(d.value).length - 1),
+          };
+        }),
       });
     const token = Object.freeze({});
     privacy78Contexts.set(token, channels);
@@ -7487,6 +7534,13 @@ async function keyboardProbe(page) {
   }
   return { passed: forward && backward, forward, backward, coverage: "AMOSTRA_NAO_WCAG_INTEGRAL" };
 }
+export async function closeAuditMobileMenu(page) {
+  const dialog = page.getByRole("dialog", { name: "Menu de navegação", exact: true });
+  if ((await dialog.count()) === 1) {
+    await page.keyboard.press("Escape");
+    await dialog.waitFor({ state: "hidden" });
+  }
+}
 async function sidebarProbe(page, item, key, words, save) {
   if (item.surface === "SYS04") return { passed: true, mode: "ESTRUTURA_SYS04" };
   if (item.width >= 768) {
@@ -7514,23 +7568,35 @@ async function sidebarProbe(page, item, key, words, save) {
   }
   const open = page.getByRole("button", { name: "Abrir menu", exact: true });
   await open.click();
-  const dialog = page.getByRole("dialog", { name: "Menu de navegação" });
-  await dialog.waitFor();
-  if ((await inspectPrivacy(page, words)) === null) fail("PII_SUPPLEMENT");
-  const image = await save(key, "_menu");
-  const brandCount = await page.locator('img[src^="/brand/"]:visible').count();
-  const admin = await dialog.getByRole("link", { name: "Usuários", exact: true }).count(),
-    audit = await dialog.getByRole("link", { name: "Auditoria", exact: true }).count();
-  await page.keyboard.press("Escape");
-  const focused = await open.evaluate((e) => e === document.activeElement);
-  return {
-    passed: admin === 1 && audit === 1 && focused && brandCount === 1,
-    mode: "MOBILE",
-    brandCount,
-    screenshot: image.file,
-    sha256: image.sha,
-    visualCapture: image.visualCapture,
-  };
+  let primaryError;
+  try {
+    const dialog = page.getByRole("dialog", { name: "Menu de navegação" });
+    await dialog.waitFor();
+    if ((await inspectPrivacy(page, words)) === null) fail("PII_SUPPLEMENT");
+    const image = await save(key, "_menu");
+    const brandCount = await page.locator('img[src^="/brand/"]:visible').count();
+    const admin = await dialog.getByRole("link", { name: "Usuários", exact: true }).count(),
+      audit = await dialog.getByRole("link", { name: "Auditoria", exact: true }).count();
+    await page.keyboard.press("Escape");
+    const focused = await open.evaluate((e) => e === document.activeElement);
+    return {
+      passed: admin === 1 && audit === 1 && focused && brandCount === 1,
+      mode: "MOBILE",
+      brandCount,
+      screenshot: image.file,
+      sha256: image.sha,
+      visualCapture: image.visualCapture,
+    };
+  } catch (error) {
+    primaryError = error;
+    throw error;
+  } finally {
+    try {
+      await closeAuditMobileMenu(page);
+    } catch (error) {
+      if (!primaryError) throw error;
+    }
+  }
 }
 export async function navigationProbe(page, item, fence) {
   if (item.surface === "SYS04") return true;
@@ -8370,7 +8436,7 @@ export const SINGLE_REQUEST = Object.freeze({
   listReadinessSecuritySha: "8d43ae8f94b39d81b8125d087a1c9a968e2d8ad7",
   metadataTimeoutGateSha: "326a960cec756d08681b00da99a5332f0a3c6fac",
   metadataTimeoutPlanSha: "1282198bfc72ac4a119856139e6b95d9e14177dc",
-  c8GateSha: "8b5f1b77ac4b4254703459107f2603be4ee9d23a",
+  c8GateSha: "67ca0f0e441902e732b4bee8e4d50f6415d5f929",
   c8PlanSha: "afe42819e62bbe8e3c25b4a5869f8ba59db124f5",
   c8ReaderBuildSha: "501237dd48a7159ccd4a7d7407334cdc2245aa24",
   spentAuditNonces: Object.freeze([
@@ -8378,6 +8444,7 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-c-audit-20261110-c8-r1",
     "trilha-c-audit-20261110-c8-r2",
     "trilha-c-audit-20261110-c8-r3",
+    "trilha-c-audit-20261110-c8-r4",
   ]),
   r19RecoveryGateSha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
   r19RecoveryPlanSha: "2b6ab4f542c66309fb16d12f9998136641591f25",
@@ -8433,7 +8500,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "trilha-c-audit-20261110-c8-r4",
+    nonce: "trilha-c-audit-20261111-c8-r5",
     privateName: "Trilha A auditoria privada HML",
   }),
 });

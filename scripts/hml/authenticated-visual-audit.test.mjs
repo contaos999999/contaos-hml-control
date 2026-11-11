@@ -14670,7 +14670,7 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
     schema_version: 1,
     issue: 317,
     operation: "audit",
-    request_id: "trilha-c-audit-20261110-c8-r4",
+    request_id: "trilha-c-audit-20261111-c8-r5",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -14909,6 +14909,43 @@ async function c8SourceFixture() {
   data.detail.execucao_atual.id = c.executionId;
   data.detail.execucao_atual.iniciada_em = "2026-11-10T00:00:00Z";
   data.detail.execucao_atual.concluida_em = "2026-11-10T00:01:00Z";
+  const result = {
+    id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+    id_execucao: c.executionId,
+    resultado: "conforme",
+    mecanismo: "humano",
+    confianca: 1,
+    justificativa: preparer.FIXTURE.reviewJustification,
+    fundamento: preparer.FIXTURE.reviewFoundation,
+    hash_evidencias: "e".repeat(64),
+    criado_em: "2026-11-10T00:01:00Z",
+  };
+  Object.assign(data.analysis.resultados[0], {
+    id_resultado: result.id,
+    mecanismo: result.mecanismo,
+    hash_evidencias: result.hash_evidencias,
+    criado_em: result.criado_em,
+  });
+  data.detail.resultado_atual = structuredClone(result);
+  data.detail.resultado_referencia = structuredClone(result);
+  data.detail.historico = [
+    {
+      ...result,
+      id_resultado: result.id,
+      tipo_execucao: "completa",
+      status_execucao: "concluida",
+      motor: "contaos",
+      versao_motor: "2.0",
+      provedor: null,
+      modelo: null,
+      prompt_versao: null,
+      hash_entrada: "a".repeat(64),
+      iniciada_em: data.detail.execucao_atual.iniciada_em,
+      concluida_em: data.detail.execucao_atual.concluida_em,
+    },
+  ];
+  data.detail.historico_paginacao.total = 1;
+
   data.overview.competencia.situacao = c.state;
   data.overview.blocking_summary.aprovacao_apresentacao_atual = true;
   data.context = {
@@ -14972,7 +15009,7 @@ async function c8BuildSourceUI(directory) {
   const b = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
   await fs.writeFile(
     join(directory, "client.ts"),
-    `import {PostgrestClient} from ${JSON.stringify(pg)};export const supabase=Object.assign(new PostgrestClient(${JSON.stringify(API)}+'/rest/v1'),{auth:{getUser:async()=>({data:{user:{id:'native-c8-owner'}},error:null})}});`,
+    `import {PostgrestClient} from ${JSON.stringify(pg)};export const supabase=Object.assign(new PostgrestClient(${JSON.stringify(API)}+'/rest/v1'),{auth:{getUser:async()=>({data:{user:{id:'native-c8-owner'}},error:null}),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})}});`,
   );
   await fs.writeFile(
     join(directory, "router.tsx"),
@@ -14983,8 +15020,21 @@ async function c8BuildSourceUI(directory) {
     `export const EVENTO_ORGANIZACAO_ALTERADA="contaos:organizacao-alterada";export const obterPreferenciaOrganizacao=()=>${JSON.stringify(b.organization)};`,
   );
   await fs.writeFile(
+    join(directory, "rbac.ts"),
+    `export const consultarPermissoesEfetivas=async()=>({permissoes:['dashboard','competencias','documentos_competencia','analises','pareceres','apresentacoes','contratos','auditoria'].map(recurso=>({recurso,acao:'consultar'})).concat([{recurso:'usuarios',acao:'administrar'}])});export const resolverContextoRbac=async(path)=>({competencia:path.split('/')[2],contrato:${JSON.stringify(b.contract)},contratante:null});export const temPermissao=(p,r,a)=>p.some(x=>x.recurso===r&&x.acao===a);`,
+  );
+  await fs.writeFile(
+    join(directory, "admin.ts"),
+    "export const validarAdministrador=async()=>true;export const podeConsultarAuditoria=async()=>true;",
+  );
+  await fs.writeFile(
+    join(directory, "header.tsx"),
+    `import React from 'react';export const ContaOSOrganizationHeader=()=> <header aria-label="Organização atual">ContaOS HML Teste Situação: ativa<button onClick={()=>window.__logoutRequested=true}>Sair</button></header>;`,
+  );
+  await fs.writeFile(join(directory, "copilot.tsx"), "export const CopilotoContrato=()=>null;");
+  await fs.writeFile(
     join(directory, "entry.tsx"),
-    `import React from 'react';import {createRoot} from 'react-dom/client';import {ContaOSSidebar} from ${JSON.stringify(resolve(root, "src/components/layout/ContaOSSidebar.tsx"))};import {CompetenciaAnalise} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaAnalise.tsx"))};import {CompetenciaApresentar} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaApresentar.tsx"))};import {CompetenciaProtocolo} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaProtocolo.tsx"))};const root=createRoot(document.getElementById('root'));function Sidebar({id}){const [collapsed,setCollapsed]=React.useState(false);window.__collapseSidebar=setCollapsed;const permissions=['competencias','documentos_competencia','analises','pareceres','apresentacoes','contratos'].map(recurso=>({recurso,acao:'consultar'}));return <aside id='native-context-sidebar' className='hidden md:block'><ContaOSSidebar recolhida={collapsed} permissoes={permissions} contexto={{competencia:id,contrato:${JSON.stringify(b.contract)},contratante:null}}/></aside>};window.__mount=(surface,id,ap)=>root.render(<><Sidebar key={crypto.randomUUID()} id={id}/>{surface==='V117'?<CompetenciaAnalise key={crypto.randomUUID()} id={id}/>:surface==='V119'?<CompetenciaApresentar key={crypto.randomUUID()} id={id}/>:<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>}</>);window.__ready=true;`,
+    `import React from 'react';import {createRoot} from 'react-dom/client';import {ContaOSAppShell} from ${JSON.stringify(resolve(root, "src/components/layout/ContaOSAppShell.tsx"))};import {CompetenciaAnalise} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaAnalise.tsx"))};import {CompetenciaApresentar} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaApresentar.tsx"))};import {CompetenciaProtocolo} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaProtocolo.tsx"))};const root=createRoot(document.getElementById('root'));window.__mount=(surface,id,ap)=>root.render(<ContaOSAppShell key={crypto.randomUUID()}>{surface==='V117'?<CompetenciaAnalise id={id}/>:surface==='V119'?<CompetenciaApresentar id={id}/>:<CompetenciaProtocolo id={id} apresentacaoId={ap}/>}</ContaOSAppShell>);window.__ready=true;`,
   );
   const aliases = {
     react: require.resolve("react"),
@@ -14993,8 +15043,12 @@ async function c8BuildSourceUI(directory) {
     "@/integrations/supabase/client": join(directory, "client.ts"),
     "@tanstack/react-router": join(directory, "router.tsx"),
     "@/lib/organizacao/preferenciaOrganizacao": join(directory, "org.ts"),
+    "@/lib/administracao/rbacRpc": join(directory, "rbac.ts"),
+    "@/lib/administracao/admUsuariosRpc": join(directory, "admin.ts"),
+    "./ContaOSOrganizationHeader": join(directory, "header.tsx"),
+    "@/components/copiloto/CopilotoContrato": join(directory, "copilot.tsx"),
   };
-  const bunScript = `const result=await Bun.build({entrypoints:[${JSON.stringify(join(directory, "entry.tsx"))}],outdir:${JSON.stringify(directory)},target:'browser',naming:'ui.js',minify:true,define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'closed-infrastructure',setup(build){const aliases=${JSON.stringify(aliases)};build.onResolve({filter:/^(@\\/|@tanstack\\/react-router$|react$|react-dom\\/client$|react\\/jsx-runtime$)/},args=>({path:Bun.resolveSync(aliases[args.path]??${JSON.stringify(resolve(root, "src"))}+'/'+args.path.slice(2),${JSON.stringify(root)})}));}}]});if(!result.success){for(const log of result.logs)console.error(log);process.exit(1);}`;
+  const bunScript = `const result=await Bun.build({entrypoints:[${JSON.stringify(join(directory, "entry.tsx"))}],outdir:${JSON.stringify(directory)},target:'browser',naming:'ui.js',minify:true,define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'closed-infrastructure',setup(build){const aliases=${JSON.stringify(aliases)};build.onResolve({filter:/^(\\.\\/ContaOSOrganizationHeader$|@\\/|@tanstack\\/react-router$|react$|react-dom\\/client$|react\\/jsx-runtime$)/},args=>({path:Bun.resolveSync(aliases[args.path]??${JSON.stringify(resolve(root, "src"))}+'/'+args.path.slice(2),${JSON.stringify(root)})}));}}]});if(!result.success){for(const log of result.logs)console.error(log);process.exit(1);}`;
   await fs.writeFile(join(directory, "build.mjs"), bunScript);
   const { execFile } = await import("node:child_process"),
     { promisify } = await import("node:util");
@@ -15463,15 +15517,18 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
             phase("PRIVACY_SIDEBAR", item);
             const route = "/competencias/" + b.competencies[surface === "V120" ? 1 : 0].id;
             try {
-              if (width === 390)
+              if (width === 390) {
+                await page.getByRole("button", { name: "Abrir menu", exact: true }).click();
                 await page
-                  .locator("#native-context-sidebar")
-                  .evaluate((n) => (n.style.display = "block"));
-              for (const collapsed of [false, true]) {
-                await page.evaluate((c) => window.__collapseSidebar(c), collapsed);
+                  .getByRole("dialog", { name: "Menu de navegação", exact: true })
+                  .waitFor();
+              }
+              for (const collapsed of width === 390 ? [false] : [false, true]) {
+                if (collapsed)
+                  await page.getByRole("button", { name: "Recolher menu", exact: true }).click();
                 await page.waitForFunction((c) => {
                   const a = document.querySelector(
-                    '#native-context-sidebar a[aria-label="Resumo da competência"]',
+                    'nav[aria-label="Navegação principal"] a[aria-label="Resumo da competência"]',
                   );
                   return (
                     a &&
@@ -15487,15 +15544,26 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
                   privacyHarness.contexts.get(current).snapshot.remainder.includes(route),
                   false,
                 );
+                const rem = privacyHarness.contexts.get(current);
+                assert.equal(
+                  sut.classifyArtifactText(rem.rendered.remainder, literalDictionary).reason,
+                  "ALLOWED",
+                  "full original mobile shell render",
+                );
+                assert.equal(
+                  sut.classifyArtifactText(rem.snapshot.remainder, literalDictionary).reason,
+                  "ALLOWED",
+                  "full original mobile shell ARIA",
+                );
                 const old = await r3Privacy.context(localPage, state, text, aria, null);
                 assert.ok(r3Privacy.contexts.get(old).snapshot.remainder.includes(route));
               }
             } finally {
-              await page.evaluate(() => window.__collapseSidebar(false));
-              if (width === 390)
-                await page
-                  .locator("#native-context-sidebar")
-                  .evaluate((n) => n.style.removeProperty("display"));
+              if (width === 390) await sut.closeAuditMobileMenu(page);
+              else if (
+                await page.getByRole("button", { name: "Expandir menu", exact: true }).count()
+              )
+                await page.getByRole("button", { name: "Expandir menu", exact: true }).click();
             }
           }
 
@@ -16291,6 +16359,8 @@ async function c8MutationWindowProbe({
   mutation = "once",
   foreign = false,
   extra = "",
+  pending = false,
+  invalid = false,
 } = {}) {
   const fs = await import("node:fs/promises"),
     ts = (await import("typescript")).default;
@@ -16319,15 +16389,19 @@ async function c8MutationWindowProbe({
   let reads = 0,
     snapshots = 0,
     settles = 0;
-  const receipt = () => ({
-    route: sut.HML_ORIGIN + item.path,
-    age: 1,
-    revision: mutation === "always" ? ++reads : mutation === "once" ? (++reads === 1 ? 1 : 2) : 1,
-    observed:
-      surface === "V115"
-        ? ["competence_rbac_gate", "upload"]
-        : proof.get_contracts.map((c) => c.name),
-  });
+  const receipt = () =>
+    pending && (settles === 0 || mutation === "always")
+      ? null
+      : {
+          route: sut.HML_ORIGIN + item.path,
+          age: 1,
+          revision:
+            mutation === "always" ? ++reads : mutation === "once" ? (++reads === 1 ? 1 : 2) : 1,
+          observed:
+            surface === "V115"
+              ? ["competence_rbac_gate", "upload"]
+              : proof.get_contracts.map((c) => c.name),
+        };
   const anchor = () => ({ selector: "p", count: 1, index: 0 });
   const page = {
     url: () => sut.HML_ORIGIN + item.path,
@@ -16350,6 +16424,16 @@ async function c8MutationWindowProbe({
         return;
       }
       if (text.includes("__contaosPrivacySys04")) return null;
+      if (text.includes("diagnostics"))
+        return {
+          current: !invalid,
+          invalid,
+          pending: pending && settles === 0 ? 1 : 0,
+          header: true,
+          route: true,
+          age: 1,
+          seen: 0,
+        };
       if (text.includes("__contaosPrivacy78")) return receipt();
       if (text.includes("const values")) return value;
       throw Error("unexpected DOM reader");
@@ -16734,6 +16818,7 @@ test("C8 r4 acquisition diagnostics contain only closed booleans and bounded cou
     Object.keys(d).sort(),
     [
       "initialReceipt",
+      "observer",
       "currentReceipt",
       "sameRevision",
       "anchor",
@@ -16747,6 +16832,7 @@ test("C8 r4 acquisition diagnostics contain only closed booleans and bounded cou
   );
   for (const [key, value] of Object.entries(d))
     if (key.startsWith("known")) assert.ok(Number.isInteger(value) && value >= 0 && value <= 233);
+    else if (key === "observer") assert.equal(value, null);
     else assert.equal(typeof value, "boolean");
 });
 
@@ -16778,4 +16864,133 @@ test("C8 r4 protocol package kind follows canonical creation and registration tr
       false,
     );
   }
+});
+
+async function c8OriginalFunction(name, bindings) {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
+  const declaration = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === name,
+  );
+  assert.ok(declaration);
+  return new Function(
+    ...Object.keys(bindings),
+    declaration.getText(ast).replace(/^export /, "") + ";return " + name,
+  )(...Object.values(bindings));
+}
+
+test("C8 r5 mobile supplement closes original menu after privacy or capture failure without hiding the failure", async () => {
+  for (const stage of ["privacy", "capture"]) {
+    let opened = false,
+      restored = false;
+    const expected = Object.assign(new Error("closed failure"), {
+      code: stage === "privacy" ? "PII_SUPPLEMENT" : "CAPTURE_FAILURE",
+    });
+    const probe = await c8OriginalFunction("sidebarProbe", {
+      inspectPrivacy: async () => (stage === "privacy" ? null : "safe"),
+      closeAuditMobileMenu: sut.closeAuditMobileMenu,
+      fail: () => {
+        throw expected;
+      },
+    });
+    const page = {
+      getByRole: (role, { name }) =>
+        name === "Abrir menu"
+          ? {
+              click: async () => {
+                opened = true;
+              },
+              evaluate: async () => restored,
+            }
+          : {
+              waitFor: async ({ state } = {}) => {
+                if (state === "hidden") assert.equal(opened, false);
+              },
+              count: async () => (opened ? 1 : 0),
+            },
+      keyboard: {
+        press: async (key) => {
+          assert.equal(key, "Escape");
+          opened = false;
+          restored = true;
+        },
+      },
+    };
+    await assert.rejects(
+      probe(page, { surface: "V120", width: 390 }, "V120_390_light", new Set(), async () => {
+        throw expected;
+      }),
+      (e) => e === expected,
+    );
+    assert.equal(opened, false, "menu must close on the original failing path");
+    assert.equal(restored, true);
+  }
+});
+
+test("C8 r5 missing receipt is recollected once only while original observer is valid and pending", async () => {
+  for (const surface of ["V111", "V115"]) {
+    const r = await c8MutationWindowProbe({ surface, mutation: "none", pending: true });
+    assert.equal(r.result, r.value);
+    assert.equal(r.snapshots, 2);
+    assert.equal(r.settles, 1);
+  }
+  for (const options of [
+    { invalid: true },
+    { foreign: true },
+    { mutation: "always" },
+    { extra: " UNLISTED_PENDING_CANARY" },
+  ]) {
+    const r = await c8MutationWindowProbe({ mutation: "none", pending: true, ...options });
+    assert.equal(r.result, null);
+    assert.ok(r.snapshots <= 2);
+  }
+});
+
+test("C8 r5 original observer diagnostics expose only closed state and cannot revive invalidation", async () => {
+  const { dom, w, run } = privacy78Browser(
+    '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header>',
+  );
+  try {
+    w.fetch = () => Promise.resolve(new Response("{}"));
+    run("privacy78Runtime", { proof: privacy78Proof, wireProof: privacyWireRaw, install: true });
+    const observer = w.__contaosPrivacy78;
+    const d = observer.diagnostics();
+    assert.deepEqual(
+      Object.keys(d).sort(),
+      ["invalid", "current", "route", "header", "pending", "seen", "age"].sort(),
+    );
+    for (const k of ["invalid", "current", "route", "header"]) assert.equal(typeof d[k], "boolean");
+    for (const k of ["pending", "seen", "age"])
+      assert.ok(Number.isInteger(d[k]) && d[k] >= 0 && d[k] <= (k === "age" ? 120000 : 512));
+    assert.equal(d.current, true);
+    observer.invalidate();
+    assert.equal(observer.read(), null);
+    assert.equal(observer.diagnostics().invalid, true);
+    assert.equal(observer.diagnostics().current, false);
+  } finally {
+    dom.window.close();
+  }
+});
+
+test("C8 r5 spent r4 stays readable historically and cannot authorize a new execution", () => {
+  const r = {
+    schema_version: 1,
+    issue: 317,
+    operation: "audit",
+    request_id: "trilha-c-audit-20261110-c8-r4",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.throws(() => sut.parseSingleRequest(JSON.stringify(r)), /REQUEST_SCHEMA/);
+  assert.equal(
+    sut.parseSingleRequest(JSON.stringify(r), undefined, { historical: true }).request_id,
+    r.request_id,
+  );
+  assert.throws(() => sut.resolveC8AuditScope(r), /AUDIT_BINDING_PENDING|REQUEST_SCHEMA/);
 });
