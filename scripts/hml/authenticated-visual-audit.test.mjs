@@ -15904,69 +15904,6 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
                 console.log(
                   "C8_NATIVE_CLASSIFY " + channel + " " + result.reason + " " + result.unknownCount,
                 );
-                if (channel === "ARIA" && result.reason === "UNKNOWN_WORDS") {
-                  const unknown = value
-                    .normalize("NFC")
-                    .toLocaleLowerCase("pt-BR")
-                    .match(/[\p{L}\p{N}_-]+/gu)
-                    ?.filter((word) => !literalDictionary.has(word));
-                  const unique = [...new Set(unknown ?? [])];
-                  console.log("C8_NATIVE_UNKNOWN " + JSON.stringify(unique));
-                  const tokenPaths = (root, target) => {
-                    const paths = [];
-                    const visit = (node, path, depth) => {
-                      if (paths.length >= 8 || depth > 12 || node == null) return;
-                      if (typeof node === "string") {
-                        const tokens =
-                          node
-                            .normalize("NFC")
-                            .toLocaleLowerCase("pt-BR")
-                            .match(/[\p{L}\p{N}_-]+/gu) ?? [];
-                        if (tokens.includes(target)) paths.push(path || "ROOT");
-                        return;
-                      }
-                      if (Array.isArray(node)) {
-                        node
-                          .slice(0, 64)
-                          .forEach((child, index) => visit(child, path + "." + index, depth + 1));
-                        return;
-                      }
-                      if (typeof node === "object") {
-                        for (const [key, child] of Object.entries(node).slice(0, 128))
-                          visit(child, path ? path + "." + key : key, depth + 1);
-                      }
-                    };
-                    visit(root, "", 0);
-                    return paths;
-                  };
-                  for (const token of unique) {
-                    const hash = createHash("sha256").update(token).digest("hex");
-                    const paths = tokenPaths(data, token);
-                    for (const path of paths)
-                      console.log(
-                        "C8_NATIVE_SOURCE " +
-                          hash +
-                          " WIRE_" +
-                          path.replace(/[^A-Za-z0-9_.-]/g, "_"),
-                      );
-                    for (const line of value.split("\n")) {
-                      if (!line.toLocaleLowerCase("pt-BR").includes(token)) continue;
-                      const trimmed = line.trim();
-                      const kind = trimmed.startsWith("- /url:")
-                        ? "ARIA_URL"
-                        : /^- row(?:\s|:)/.test(trimmed)
-                          ? "ARIA_ROW"
-                          : /^- cell(?:\s|:)/.test(trimmed)
-                            ? "ARIA_CELL"
-                            : /^- link(?:\s|:)/.test(trimmed)
-                              ? "ARIA_LINK"
-                              : /^- button(?:\s|:)/.test(trimmed)
-                                ? "ARIA_BUTTON"
-                                : "ARIA_OTHER";
-                      console.log("C8_NATIVE_SOURCE " + hash + " " + kind);
-                    }
-                  }
-                }
                 assert.equal(
                   result.reason,
                   "ALLOWED",
@@ -16443,6 +16380,22 @@ test("C8 technical contracts bind each wire field to its own original UI selecto
   assert.equal(origin.value, data.detail.requisito.origem_id);
   assert.equal(origin.label, "Identificador da origem");
   assert.equal(origin.selector, 'section[aria-labelledby="v117-fonte"] > dl > div > dd');
+  const currentHref = "/competencias/" + data.analysis.competencia.id;
+  assert.equal(
+    fields.filter((f) => f.attribute === "href" && f.value === currentHref).length,
+    2,
+    "V117 return link and sidebar summary must share the same sealed URL",
+  );
+  assert.equal(
+    fields.some(
+      (f) =>
+        f.attribute === "aria-label" &&
+        f.expected === "Abrir requisito AUD-A-TXT-001" &&
+        f.selector.endsWith("td:nth-child(7) button"),
+    ),
+    true,
+    "V117 result action aria-label remains tied to the exact synthetic requirement",
+  );
   assert.equal(
     fields.some((f) => f.field === "context.id_organizacao"),
     false,

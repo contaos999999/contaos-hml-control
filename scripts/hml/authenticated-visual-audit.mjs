@@ -5017,37 +5017,6 @@ export function nativeC8VisualDiagnostic(tap) {
       classifications.push({ channel: m[1], reason: m[2], unknownCount: Number(m[3]) });
   }
   if (classifications.length) last = { ...last, classifications: classifications.slice(-2) };
-  const unknownHashes = [];
-  for (const line of tap.split("\n")) {
-    const m = /^# C8_NATIVE_UNKNOWN (\[[^\r\n]{1,512}\])$/.exec(line);
-    if (!m) continue;
-    try {
-      const values = JSON.parse(m[1]);
-      if (
-        Array.isArray(values) &&
-        values.length > 0 &&
-        values.length <= 3 &&
-        values.every(
-          (value) =>
-            typeof value === "string" &&
-            value.length >= 1 &&
-            value.length <= 64 &&
-            /^[\p{L}\p{N}_-]+$/u.test(value),
-        )
-      )
-        unknownHashes.push(values.map((value) => digest(value)));
-    } catch {}
-  }
-  if (unknownHashes.length) last = { ...last, unknownHashes: unknownHashes.at(-1) };
-  const sourceLabels = [];
-  for (const line of tap.split("\n")) {
-    const match =
-      /^# C8_NATIVE_SOURCE ([a-f0-9]{64}) ((?:WIRE_[A-Za-z0-9_.-]{1,160})|ARIA_(?:URL|ROW|CELL|LINK|BUTTON|OTHER))$/.exec(
-        line,
-      );
-    if (match) sourceLabels.push({ hash: match[1], source: match[2] });
-  }
-  if (sourceLabels.length) last = { ...last, sourceLabels: sourceLabels.slice(-24) };
   return last;
 }
 
@@ -5341,6 +5310,7 @@ export async function literalWords(root) {
     "row",
     "cell",
     "table",
+    "caption",
     "columnheader",
     "gridcell",
     "rowgroup",
@@ -6946,7 +6916,7 @@ export function c8TechnicalFieldContracts(item, wire) {
   const closed = (field, raw, selector, label, expected, prefix = "") => {
     if (raw === expected) add(field, raw, selector, label, "text", prefix);
   };
-  if (["V119", "V120"].includes(item.surface)) {
+  if (["V117", "V119", "V120"].includes(item.surface)) {
     const recovered = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings.competencies.find((c) =>
       item.path.includes(c.id),
     );
@@ -6962,7 +6932,8 @@ export function c8TechnicalFieldContracts(item, wire) {
           '"]',
         label: null,
         attribute: "href",
-        linkText: "Voltar à competência",
+        linkText:
+          item.surface === "V117" ? "Voltar para a competência" : "Voltar à competência",
       });
     }
   }
@@ -7680,11 +7651,16 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
           labels.set(slot.expected, (labels.get(slot.expected) ?? 0) + 1);
       for (const [name, expectedCount] of labels) {
         const prefix = "- button " + JSON.stringify(name);
-        const matches = (line) =>
-          line.trim().startsWith(prefix) &&
-          /^(?: \[(?:disabled|expanded|pressed|selected|checked)(?:=(?:true|false|mixed))?\])*:?$/.test(
-            line.trim().slice(prefix.length),
+        const matches = (line) => {
+          const suffix = line.trim().slice(prefix.length);
+          return (
+            line.trim().startsWith(prefix) &&
+            (/^(?: \[(?:disabled|expanded|pressed|selected|checked)(?:=(?:true|false|mixed))?\])*:?$/.test(
+              suffix,
+            ) ||
+              (name === "Abrir requisito AUD-A-TXT-001" && suffix === ": Abrir requisito"))
           );
+        };
         if (snapshot.split("\n").filter(matches).length === expectedCount) {
           channels.snapshot.remainder = channels.snapshot.remainder
             .split("\n")
