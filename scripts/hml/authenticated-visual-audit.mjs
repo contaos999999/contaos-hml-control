@@ -7143,7 +7143,10 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
           nodeCount: all.length,
           attribute: d.attribute,
           expected: d.expected,
-          accessible: !node.closest('[aria-hidden="true"],[hidden],[inert]'),
+          // Pinned Playwright ariaSnapshot includes inert subtrees. This flag
+          // follows its serializer, not keyboard/AX interaction eligibility.
+          // Exact node identity, full scalar and snapshot cardinality still govern admission.
+          accessible: !node.closest('[aria-hidden="true"],[hidden]'),
           role: node.tagName === "DD" ? "definition" : node.tagName === "P" ? "paragraph" : null,
           snapshotSafe:
             !d.attribute &&

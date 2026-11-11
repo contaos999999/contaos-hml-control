@@ -16848,6 +16848,7 @@ test("C8 r4 snapshot binding uses original ARIA serialization of a frozen pure-t
 
 async function c8PureTextDomProbe({
   extraAttribute = false,
+  inert = false,
   copy = false,
   mutate = false,
   swap = false,
@@ -16871,6 +16872,7 @@ async function c8PureTextDomProbe({
   };
   const dd = w.document.querySelector("dd");
   dd.textContent = value;
+  if (inert) dd.closest("section").setAttribute("inert", "");
   if (extraAttribute) dd.setAttribute("aria-label", "UNLISTED_NAME");
   const serialized = ariaCanary ? "- definition: UNLISTED_ARIA_NAME" : "- definition: " + encoded,
     snapshot = copy ? serialized + "\n" + serialized : serialized;
@@ -17229,4 +17231,20 @@ test("C8 r5 native failure diagnostics admit only closed codes and bounded class
   assert.equal(bad.failureCode, undefined);
   assert.equal(bad.classifications, undefined);
   assert.equal(JSON.stringify(bad).includes("UNLISTED_SECRET"), false);
+});
+
+test("C8 r5 inert background remains governed by original Playwright field serialization", async () => {
+  const words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+  const good = await c8PureTextDomProbe({ inert: true });
+  assert.equal(
+    sut.classifyArtifactText(good.remainder, words, { snapshot: true }).reason,
+    "ALLOWED",
+  );
+  for (const opts of [{ copy: true }, { ariaCanary: true }, { extraAttribute: true }]) {
+    const bad = await c8PureTextDomProbe({ inert: true, ...opts });
+    assert.notEqual(
+      sut.classifyArtifactText(bad.remainder, words, { snapshot: true }).reason,
+      "ALLOWED",
+    );
+  }
 });
