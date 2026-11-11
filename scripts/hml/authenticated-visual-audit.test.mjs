@@ -15386,7 +15386,6 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
             for (const [stage, value] of [
               ["PRIVACY_KIND", "item_lista"],
               ["PRIVACY_RULE", JSON.stringify(data.detail.requisito.regra_validacao)],
-              ["PRIVACY_CONDITION", JSON.stringify(data.detail.requisito.condicao_aplicabilidade)],
               ["PRIVACY_SOURCE", JSON.stringify(data.detail.requisito.fonte_detalhe)],
               ["PRIVACY_REFERENCE", data.detail.requisito.fonte_referencia],
             ]) {
@@ -15394,6 +15393,16 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
               assert.ok(rendered.includes(value));
               assert.equal(remainder.rendered.remainder.includes(value), false);
             }
+          if (surface === "V117") {
+            phase("PRIVACY_CONDITION", item);
+            assert.equal(
+              sut.classifyArtifactText(
+                JSON.stringify(data.detail.requisito.condicao_aplicabilidade),
+                literalDictionary,
+              ).reason,
+              "ALLOWED",
+            );
+          }
           if (surface === "V120") {
             assert.ok(rendered.includes("Item 1: documento_competencia"));
             assert.equal(remainder.rendered.remainder.includes("documento_competencia"), false);
@@ -16147,12 +16156,12 @@ test("C8 r3 source reference and literal rule fields remain closed to their exac
   const { data } = await c8SourceFixture();
   const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
   const fields = sut.c8TechnicalFieldContracts(item, data);
-  for (const name of ["origem_tipo", "regra_validacao", "condicao_aplicabilidade"])
+  for (const name of ["origem_tipo", "regra_validacao"])
     assert.ok(
       fields.some((d) => d.field === "detail.requisito." + name),
       name,
     );
-  for (const name of ["origem_tipo", "regra_validacao", "condicao_aplicabilidade"]) {
+  for (const name of ["origem_tipo", "regra_validacao"]) {
     const bad = structuredClone(data);
     bad.detail.requisito[name] = "UNLISTED_PERSON_CANARY";
     assert.equal(
@@ -16372,5 +16381,20 @@ test("C8 r3 native diagnostics expose only closed privacy stages", () => {
   assert.deepEqual(
     sut.nativeC8VisualDiagnostic("# C8_NATIVE_PHASE PRIVACY_SECRET V117 1440 light\n"),
     { stage: "UNKNOWN" },
+  );
+});
+
+test("C8 r3 overlapping condition stays safe without weakening field cardinality", async () => {
+  const { data } = await c8SourceFixture(),
+    words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+  const condition = JSON.stringify(data.detail.requisito.condicao_aplicabilidade);
+  assert.ok(JSON.stringify(data.detail.requisito.regra_validacao).includes(condition));
+  assert.equal(sut.classifyArtifactText(condition, words).reason, "ALLOWED");
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  assert.equal(
+    sut
+      .c8TechnicalFieldContracts(item, data)
+      .some((d) => d.field === "detail.requisito.condicao_aplicabilidade"),
+    false,
   );
 });

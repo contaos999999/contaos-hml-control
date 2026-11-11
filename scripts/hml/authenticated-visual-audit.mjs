@@ -6787,7 +6787,6 @@ export function c8TechnicalFieldContracts(item, wire) {
         documento: { obrigatorio: true, tipos: ["outro"] },
         condicao: { tipo: "sempre" },
       },
-      condicao_aplicabilidade: { tipo: "sempre" },
     };
     for (const [field, expected] of Object.entries(rules)) {
       const raw = d.requisito[field];
