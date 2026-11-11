@@ -4168,7 +4168,7 @@ export const SYNTHETIC_FIXTURE = Object.freeze({
 });
 export const C8_AUDIT_SCOPE = Object.freeze({
   id: "C8",
-  nonce: "trilha-c-audit-20261110-c8-r2",
+  nonce: "trilha-c-audit-20261110-c8-r3",
   surfaces: Object.freeze(["V111", "V114", "V115", "V116", "V117", "V118", "V119", "V120"]),
 });
 export const C8_RECOVERY_DOCUMENT = Object.freeze({
@@ -5224,7 +5224,7 @@ export async function literalWords(root) {
   for (let n = 0; n <= 232; n++) words.add(String(n));
   return words;
 }
-async function inspectPrivacy(page, words, diagnostics) {
+async function inspectPrivacy(page, words, diagnostics, readAttempt = 0) {
   const state = privacy78Pages.get(page),
     generation = state?.generation;
   const sys04Initial =
@@ -5255,7 +5255,8 @@ async function inspectPrivacy(page, words, diagnostics) {
     return values.join("\n");
   });
 
-  let fieldContext;
+  let fieldContext,
+    interruptedContext = false;
   if (rendered !== null && state?.verified && !state.closed) {
     const item = privateCases(state?.scope).find((i) => HML_ORIGIN + i.path === page.url());
     if (item && ["V109", "V111", "V112", "V115", "V122", "V123"].includes(item.surface)) {
@@ -5268,6 +5269,8 @@ async function inspectPrivacy(page, words, diagnostics) {
           return null;
         return window.__contaosPrivacy78?.read() ?? null;
       });
+      interruptedContext =
+        !!initialReceipt && !!receipt && initialReceipt.revision !== receipt.revision;
       const is109 = item.surface === "V109";
       const is112 = item.surface === "V112";
       const is123 = item.surface === "V123";
@@ -5307,6 +5310,7 @@ async function inspectPrivacy(page, words, diagnostics) {
         }
         if (fieldSnapshot !== null || fieldSnapshots !== null) {
           const after = await page.evaluate(() => window.__contaosPrivacy78?.read() ?? null);
+          interruptedContext ||= !!after && after.revision !== receipt.revision;
           if (
             after &&
             after.route === receipt.route &&
@@ -5409,7 +5413,31 @@ async function inspectPrivacy(page, words, diagnostics) {
           snapshot: classifyArtifactText(snapshot, words, { snapshot: true, fieldContext }),
         };
   if (diagnostics) Object.assign(diagnostics, privacy);
-  if (Object.values(privacy).some((result) => result.reason !== "ALLOWED")) return null;
+  if (interruptedContext || Object.values(privacy).some((result) => result.reason !== "ALLOWED")) {
+    // A revision change invalidates the entire first window. Reacquire at most
+    // once; no text, receipt or context survives into the new collection.
+    if (
+      readAttempt === 0 &&
+      interruptedContext &&
+      state?.scope === C8_AUDIT_SCOPE &&
+      state.verified &&
+      !state.closed &&
+      state.generation === generation &&
+      privacy78Pages.get(page) === state
+    ) {
+      await page.evaluate(
+        () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+      );
+      if (
+        state.verified &&
+        !state.closed &&
+        state.generation === generation &&
+        privacy78Pages.get(page) === state
+      )
+        return inspectPrivacy(page, words, diagnostics, 1);
+    }
+    return null;
+  }
   return snapshot;
 }
 export async function checkFreshDeployment(proof, full) {
@@ -6619,6 +6647,51 @@ export function c8TechnicalFieldContracts(item, wire) {
     else if (kind === "code" && raw !== "AUD-A-TXT-001") return;
     out.push({ field, value, selector, label, attribute, expected: prefix + value });
   };
+  const closedShape = (raw, expected) => {
+    if (!expected || typeof expected !== "object") return raw === expected;
+    if (
+      !raw ||
+      typeof raw !== "object" ||
+      isProxy(raw) ||
+      Object.getPrototypeOf(raw) !== Object.getPrototypeOf(expected)
+    )
+      return false;
+    const wanted = Object.keys(expected),
+      descriptors = Object.getOwnPropertyDescriptors(raw);
+    const ownKeys = Reflect.ownKeys(raw).filter((key) => !(Array.isArray(raw) && key === "length"));
+    return (
+      ownKeys.length === wanted.length &&
+      wanted.every(
+        (key) =>
+          Object.hasOwn(descriptors, key) &&
+          Object.hasOwn(descriptors[key], "value") &&
+          closedShape(descriptors[key].value, expected[key]),
+      )
+    );
+  };
+  const closed = (field, raw, selector, label, expected, prefix = "") => {
+    if (raw === expected) add(field, raw, selector, label, "text", prefix);
+  };
+  if (["V119", "V120"].includes(item.surface)) {
+    const recovered = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings.competencies.find((c) =>
+      item.path.includes(c.id),
+    );
+    if (recovered) {
+      const href = "/competencias/" + recovered.id;
+      out.push({
+        field: "route.return",
+        value: href,
+        expected: href,
+        selector:
+          'nav[aria-label="Navegação da página"] nav[aria-label="Navegação"] a[href="' +
+          href +
+          '"]',
+        label: null,
+        attribute: "href",
+        linkText: "Voltar à competência",
+      });
+    }
+  }
   const dd = (root) => root + " > dl > div > dd";
   const result = (path, r, root) => {
     if (!r) return;
@@ -6679,6 +6752,53 @@ export function c8TechnicalFieldContracts(item, wire) {
       null,
       "code",
     );
+    closed(
+      "detail.requisito.origem_tipo",
+      d.requisito.origem_tipo,
+      dd(source),
+      "Origem",
+      "item_lista",
+    );
+    const bindings = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+    closed(
+      "detail.requisito.fonte_tipo",
+      d.requisito.fonte_tipo,
+      dd(source),
+      "Tipo de fonte",
+      "lista_verificacao",
+    );
+    closed(
+      "detail.requisito.fonte_referencia",
+      d.requisito.fonte_referencia,
+      dd(source),
+      "Referência",
+      "Lista sintética Trilha A 24 fixtures 20261108",
+    );
+    const sourceDetails = { id_lista: bindings.listId, id_versao_lista: bindings.listVersionId };
+    if (closedShape(d.requisito.fonte_detalhe, sourceDetails))
+      add(
+        "detail.requisito.fonte_detalhe",
+        JSON.stringify(d.requisito.fonte_detalhe),
+        dd(source),
+        "Detalhe",
+      );
+    const rules = {
+      regra_validacao: {
+        documento: { obrigatorio: true, tipos: ["outro"] },
+        condicao: { tipo: "sempre" },
+      },
+      condicao_aplicabilidade: { tipo: "sempre" },
+    };
+    for (const [field, expected] of Object.entries(rules)) {
+      const raw = d.requisito[field];
+      if (closedShape(raw, expected))
+        add(
+          "detail.requisito." + field,
+          JSON.stringify(raw),
+          'section[aria-labelledby="v117-req"] > dl > div > dd',
+          field === "regra_validacao" ? "Regra de validação" : "Condição de aplicabilidade",
+        );
+    }
     const exec = 'section[aria-labelledby="v117-exec"]';
     for (const [field, label, kind] of [
       ["hash_entrada", "Hash de entrada", "hash"],
@@ -6795,9 +6915,25 @@ export function c8TechnicalFieldContracts(item, wire) {
       "synthetic",
     );
     add("packages.0.hash_pacote", pkg.hash_pacote, dd(p), "Hash criptográfico do pacote", "hash");
+    closed(
+      "packages.0.status",
+      pkg.status,
+      dd(p),
+      "Situação oficial",
+      R18_REGISTRATION_CANDIDATE.packageStatus,
+    );
+    closed("packages.0.tipo", pkg.tipo, dd(p), "Tipo", "inicial");
     add("packages.0.congelado_em", pkg.congelado_em, dd(p), "Congelado em", "date");
     for (const [i, e] of wire.items.entries()) {
       const root = `section[aria-labelledby="v120-itens"] ul > li:nth-child(${i + 1})`;
+      closed(
+        `items.${i}.entidade_tipo`,
+        e.entidade_tipo,
+        root + " > p:nth-of-type(1)",
+        null,
+        "documento_competencia",
+        `Item ${e.ordem}: `,
+      );
       add(`items.${i}.hash`, e.hash, root + " > p:nth-of-type(2)", null, "hash", "Hash: ");
       add(
         `items.${i}.versao_id`,
@@ -6845,6 +6981,7 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous) {
           (d.attribute ? node.getAttribute(d.attribute) : node.textContent.trim()) !== d.expected
         )
           return false;
+        if (d.attribute === "href" && node.textContent.trim() !== d.linkText) return false;
         if (d.label === null) return true;
         const label = node.parentElement.querySelector(":scope > dt")?.textContent;
         return label === d.label || label?.startsWith(d.label + ": ");
@@ -6861,6 +6998,7 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous) {
     }
     return [...groups].map(([value, nodes]) => ({
       value,
+      attribute: nodes[0]?.attribute ?? null,
       count: nodes.reduce((n, slot) => n + slot.text.split(value).length - 1, 0),
     }));
   }, descriptors);
@@ -6876,8 +7014,21 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous) {
     rendered: { original: rendered, remainder: old?.rendered.remainder ?? rendered },
     snapshot: { original: snapshot, remainder: old?.snapshot.remainder ?? snapshot },
   };
-  for (const { value, count } of anchored) {
+  for (const { value, count, attribute } of anchored) {
     const occurrences = (text) => text.split(value).length - 1;
+    if (attribute === "href") {
+      if (
+        count === 1 &&
+        occurrences(rendered) === 0 &&
+        occurrences(snapshot) === 1 &&
+        snapshot.split("\n").filter((line) => line.trim() === "- /url: " + value).length === 1
+      )
+        channels.snapshot.remainder = channels.snapshot.remainder.replace(
+          "- /url: " + value,
+          "- /url: ",
+        );
+      continue;
+    }
     if (!count || occurrences(rendered) !== count || occurrences(snapshot) > count) continue;
     for (const channel of Object.values(channels))
       channel.remainder = channel.remainder.split(value).join(" ");
@@ -8018,10 +8169,14 @@ export const SINGLE_REQUEST = Object.freeze({
   listReadinessSecuritySha: "8d43ae8f94b39d81b8125d087a1c9a968e2d8ad7",
   metadataTimeoutGateSha: "326a960cec756d08681b00da99a5332f0a3c6fac",
   metadataTimeoutPlanSha: "1282198bfc72ac4a119856139e6b95d9e14177dc",
-  c8GateSha: "25b6113dfcb7394696e6ed3513a5c7235753a6da",
+  c8GateSha: "aaad7a97aa821642ff2a3cfefe1cdcbe7f758c10",
   c8PlanSha: "afe42819e62bbe8e3c25b4a5869f8ba59db124f5",
   c8ReaderBuildSha: "501237dd48a7159ccd4a7d7407334cdc2245aa24",
-  spentAuditNonces: Object.freeze(["trilha-a-audit-20261108-r1", "trilha-c-audit-20261110-c8-r1"]),
+  spentAuditNonces: Object.freeze([
+    "trilha-a-audit-20261108-r1",
+    "trilha-c-audit-20261110-c8-r1",
+    "trilha-c-audit-20261110-c8-r2",
+  ]),
   r19RecoveryGateSha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
   r19RecoveryPlanSha: "2b6ab4f542c66309fb16d12f9998136641591f25",
   r18ReaderBuildSha: "815dce2a4015e2bb1b5ec23e70633537ab008e62",
@@ -8076,7 +8231,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "trilha-c-audit-20261110-c8-r2",
+    nonce: "trilha-c-audit-20261110-c8-r3",
     privateName: "Trilha A auditoria privada HML",
   }),
 });

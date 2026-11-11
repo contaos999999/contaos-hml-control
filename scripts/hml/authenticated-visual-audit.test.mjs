@@ -14670,7 +14670,7 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
     schema_version: 1,
     issue: 317,
     operation: "audit",
-    request_id: "trilha-c-audit-20261110-c8-r2",
+    request_id: "trilha-c-audit-20261110-c8-r3",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -14900,6 +14900,12 @@ async function c8SourceFixture() {
     hash_snapshot: "b".repeat(64),
   });
   data.detail.requisito.descricao = data.analysis.resultados[0].requisito.descricao;
+  Object.assign(data.detail.requisito, {
+    fonte_tipo: "lista_verificacao",
+    fonte_referencia: preparer.FIXTURE.listName,
+    fonte_detalhe: { id_versao_lista: b.listVersionId, id_lista: b.listId },
+  });
+
   data.detail.execucao_atual.id = c.executionId;
   data.detail.execucao_atual.iniciada_em = "2026-11-10T00:00:00Z";
   data.detail.execucao_atual.concluida_em = "2026-11-10T00:01:00Z";
@@ -14970,7 +14976,7 @@ async function c8BuildSourceUI(directory) {
   );
   await fs.writeFile(
     join(directory, "router.tsx"),
-    `import React from 'react';const navigate=()=>{};export const useNavigate=()=>navigate;export const Link=({children,to,...p})=><a href={typeof to==='string'?to:'#'} {...p}>{children}</a>;`,
+    `import React from 'react';const navigate=()=>{};export const useNavigate=()=>navigate;export const Link=({children,to,params,...p})=><a href={typeof to==='string'?Object.entries(params??{}).reduce((path,[key,value])=>path.replace('$'+key,encodeURIComponent(value)),to):'#'} {...p}>{children}</a>;`,
   );
   await fs.writeFile(
     join(directory, "org.ts"),
@@ -15181,6 +15187,8 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
     page = await browser.newPage();
     const origin = `http://127.0.0.1:${server.address().port}`;
     const privacyHarness = await c8PrivacyHarness();
+    const baselinePrivacy = await c8PrivacyHarness({ baseline: true });
+    const literalDictionary = await sut.literalWords(new URL("../../", import.meta.url).pathname);
     const preparer = await import("./prepare-visual-fixtures.mjs");
     await page.route(API + "/rest/v1/**", async (route) => {
       const request = route.request();
@@ -15347,6 +15355,53 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           const rendered = await privacyHarness.render(page),
             snapshot = await page.locator("body").ariaSnapshot();
           const token = await privacyHarness.context(localPage, state, rendered, snapshot, null);
+          const remainder = privacyHarness.contexts.get(token);
+          baselinePrivacy.pages.set(localPage, state);
+          const oldToken = await baselinePrivacy.context(
+            localPage,
+            state,
+            rendered,
+            snapshot,
+            null,
+          );
+          const oldRemainder = baselinePrivacy.contexts.get(oldToken);
+          const oldValue =
+            surface === "V117"
+              ? JSON.stringify(data.detail.requisito.regra_validacao)
+              : surface === "V120"
+                ? "documento_competencia"
+                : "/competencias/" + b.competencies[0].id;
+          const oldChannel = surface === "V119" ? oldRemainder.snapshot : oldRemainder.rendered;
+          assert.ok(
+            oldChannel.remainder.includes(oldValue),
+            "causal baseline retains unbound field",
+          );
+          assert.equal(
+            sut.classifyArtifactText(oldValue, literalDictionary).reason,
+            "UNKNOWN_WORDS",
+          );
+
+          if (surface === "V117")
+            for (const value of [
+              "item_lista",
+              JSON.stringify(data.detail.requisito.regra_validacao),
+              JSON.stringify(data.detail.requisito.condicao_aplicabilidade),
+              JSON.stringify(data.detail.requisito.fonte_detalhe),
+              data.detail.requisito.fonte_referencia,
+            ]) {
+              assert.ok(rendered.includes(value));
+              assert.equal(remainder.rendered.remainder.includes(value), false);
+            }
+          if (surface === "V120") {
+            assert.ok(rendered.includes("Item 1: documento_competencia"));
+            assert.equal(remainder.rendered.remainder.includes("documento_competencia"), false);
+          }
+          if (["V119", "V120"].includes(surface)) {
+            const route = "/competencias/" + b.competencies[surface === "V120" ? 1 : 0].id;
+            assert.ok(snapshot.includes("- /url: " + route));
+            assert.equal(remainder.snapshot.remainder.includes(route), false);
+          }
+
           if (surface === "V117")
             for (const field of [
               "AUD-A-TXT-001",
@@ -15620,13 +15675,27 @@ test("C8 source fixture preserves complete actual SDK shapes and build uses orig
   }
 });
 
-async function c8PrivacyHarness() {
+async function c8PrivacyHarness({ baseline = false } = {}) {
   const fs = await import("node:fs/promises"),
     ts = (await import("typescript")).default;
-  const source = await fs.readFile(
+  let source = await fs.readFile(
     new URL("./authenticated-visual-audit.mjs", import.meta.url),
     "utf8",
   );
+  if (baseline) {
+    const { execFile } = await import("node:child_process"),
+      { promisify } = await import("node:util");
+    source = (
+      await promisify(execFile)(
+        "git",
+        [
+          "show",
+          "aaad7a97aa821642ff2a3cfefe1cdcbe7f758c10:scripts/hml/authenticated-visual-audit.mjs",
+        ],
+        { maxBuffer: 2097152 },
+      )
+    ).stdout;
+  }
   const ast = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
   const declaration = ast.statements.find(
     (n) => ts.isFunctionDeclaration(n) && n.name?.text === "c8PrivacyContext",
@@ -15650,6 +15719,20 @@ async function c8PrivacyHarness() {
   findRendered(inspect);
   const renderedFunction = renderedDeclaration.initializer.expression.arguments[0];
   const renderedReader = new Function("return (" + renderedFunction.getText(ast) + ");")();
+  const baselineTechnical = baseline
+    ? new Function(
+        "C8_RECOVERY_DOCUMENT",
+        fields.getText(ast) +
+          "\n" +
+          ast.statements
+            .find(
+              (n) => ts.isFunctionDeclaration(n) && n.name?.text === "c8TechnicalFieldContracts",
+            )
+            .getText(ast)
+            .replace(/^export /, "") +
+          ";return c8TechnicalFieldContracts;",
+      )(sut.C8_RECOVERY_DOCUMENT)
+    : sut.c8TechnicalFieldContracts;
   const pages = new WeakMap(),
     contexts = new WeakMap();
   const context = new Function(
@@ -15671,7 +15754,7 @@ async function c8PrivacyHarness() {
   )(
     sut.C8_RECOVERY_DOCUMENT,
     sut.SYNTHETIC_FIXTURE,
-    sut.c8TechnicalFieldContracts,
+    baselineTechnical,
     sut.C8_AUDIT_SCOPE,
     pages,
     contexts,
@@ -16033,4 +16116,247 @@ test("C8 V117 binds synthetic text in the background and the original opener ari
     (c) => c.field === "analysis.resultados.0.requisito.codigo" && c.attribute === "aria-label",
   );
   assert.equal(label.expected, "Abrir requisito AUD-A-TXT-001");
+});
+
+test("C8 r3 protocol technical type is closed and bound to the original item heading", async () => {
+  const { data } = await c8SourceFixture();
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V120");
+  const field = sut
+    .c8TechnicalFieldContracts(item, data)
+    .find((d) => d.field === "items.0.entidade_tipo");
+  assert.ok(field);
+  assert.equal(field.expected, "Item 1: documento_competencia");
+  assert.equal(
+    field.selector,
+    'section[aria-labelledby="v120-itens"] ul > li:nth-child(1) > p:nth-of-type(1)',
+  );
+  for (const value of ["Pessoa Estranha", "documento_competencia texto", "", "sb_secret_canary"]) {
+    const bad = structuredClone(data);
+    bad.items[0].entidade_tipo = value;
+    assert.equal(
+      sut.c8TechnicalFieldContracts(item, bad).some((d) => d.field === "items.0.entidade_tipo"),
+      false,
+    );
+  }
+});
+
+test("C8 r3 source reference and literal rule fields remain closed to their exact synthetic producer", async () => {
+  const { data } = await c8SourceFixture();
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  const fields = sut.c8TechnicalFieldContracts(item, data);
+  for (const name of ["origem_tipo", "regra_validacao", "condicao_aplicabilidade"])
+    assert.ok(
+      fields.some((d) => d.field === "detail.requisito." + name),
+      name,
+    );
+  for (const name of ["origem_tipo", "regra_validacao", "condicao_aplicabilidade"]) {
+    const bad = structuredClone(data);
+    bad.detail.requisito[name] = "UNLISTED_PERSON_CANARY";
+    assert.equal(
+      sut.c8TechnicalFieldContracts(item, bad).some((d) => d.field === "detail.requisito." + name),
+      false,
+      name,
+    );
+  }
+});
+
+test("C8 r3 accessible return link is bound to the exact recovered route and original attribute", async () => {
+  const { data, bindings: b } = await c8SourceFixture();
+  for (const surface of ["V119", "V120"]) {
+    const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === surface);
+    const d = sut.c8TechnicalFieldContracts(item, data).find((d) => d.field === "route.return");
+    assert.ok(d);
+    assert.equal(d.attribute, "href");
+    assert.equal(d.expected, "/competencias/" + b.competencies[surface === "V120" ? 1 : 0].id);
+  }
+});
+
+async function c8MutationWindowProbe({
+  surface = "V111",
+  mutation = "once",
+  foreign = false,
+  extra = "",
+} = {}) {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
+  const declaration = ast.statements
+    .find((n) => ts.isFunctionDeclaration(n) && n.name?.text === "inspectPrivacy")
+    .getText(ast);
+  const proof = await sut.loadPrivacy78Proof(),
+    rbacProof = await sut.loadPrivacy78RbacProof();
+  const value = proof.generated_exact_values[surface][0] + extra;
+  const words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === surface);
+  const state = {
+    scope: sut.C8_AUDIT_SCOPE,
+    verified: true,
+    closed: false,
+    generation: 1,
+    proof,
+    rbacProof,
+  };
+  const pages = new WeakMap();
+  let reads = 0,
+    snapshots = 0,
+    settles = 0;
+  const receipt = () => ({
+    route: sut.HML_ORIGIN + item.path,
+    age: 1,
+    revision: mutation === "always" ? ++reads : mutation === "once" ? (++reads === 1 ? 1 : 2) : 1,
+    observed:
+      surface === "V115"
+        ? ["competence_rbac_gate", "upload"]
+        : proof.get_contracts.map((c) => c.name),
+  });
+  const anchor = () => ({ selector: "p", count: 1, index: 0 });
+  const page = {
+    url: () => sut.HML_ORIGIN + item.path,
+    locator(selector) {
+      return selector === "body"
+        ? {
+            ariaSnapshot: async () => {
+              snapshots++;
+              return value;
+            },
+          }
+        : { count: async () => 1, nth: () => ({ ariaSnapshot: async () => value }) };
+    },
+    async evaluate(fn) {
+      if (fn === anchor) return anchor();
+      const text = fn.toString();
+      if (text.includes("requestAnimationFrame")) {
+        settles++;
+        if (foreign) state.generation++;
+        return;
+      }
+      if (text.includes("__contaosPrivacySys04")) return null;
+      if (text.includes("__contaosPrivacy78")) return receipt();
+      if (text.includes("const values")) return value;
+      throw Error("unexpected DOM reader");
+    },
+  };
+  pages.set(page, state);
+  const names = [
+    "privacy78Pages",
+    "privateCases",
+    "HML_ORIGIN",
+    "C8_AUDIT_SCOPE",
+    "privacy78FieldAnchor",
+    "privacy78FieldContext",
+    "classifyArtifactText",
+    "c8PrivacyContext",
+  ];
+  const inspect = new Function(...names, declaration + ";return inspectPrivacy;")(
+    pages,
+    sut.privateCases,
+    sut.HML_ORIGIN,
+    sut.C8_AUDIT_SCOPE,
+    anchor,
+    sut.privacy78FieldContext,
+    sut.classifyArtifactText,
+    async (page, state, rendered, snapshot, previous) => previous,
+  );
+  const result = await inspect(page, words, {});
+  return { result, snapshots, settles, value };
+}
+
+test("C8 r3 original privacy reader discards a mutation window and reacquires one complete stable window", async () => {
+  for (const surface of ["V111", "V115"]) {
+    const r = await c8MutationWindowProbe({ surface });
+    assert.equal(r.result, r.value);
+    assert.equal(r.snapshots, 2);
+    assert.equal(r.settles, 1);
+  }
+});
+test("C8 r3 original privacy reader never accepts continuous mutation foreign generation or unknown text", async () => {
+  for (const opts of [
+    { mutation: "always" },
+    { foreign: true },
+    { mutation: "none", extra: " UNLISTED_CANARY" },
+  ]) {
+    const r = await c8MutationWindowProbe(opts);
+    assert.equal(r.result, null);
+    assert.ok(r.snapshots <= 2);
+  }
+});
+
+test("C8 r3 rule structure accepts JSONB key order while preserving original serialization and rejecting extras", async () => {
+  const { data } = await c8SourceFixture(),
+    item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  data.detail.requisito.regra_validacao = {
+    condicao: { tipo: "sempre" },
+    documento: { tipos: ["outro"], obrigatorio: true },
+  };
+  const field = () =>
+    sut
+      .c8TechnicalFieldContracts(item, data)
+      .find((d) => d.field === "detail.requisito.regra_validacao");
+  assert.equal(field().expected, JSON.stringify(data.detail.requisito.regra_validacao));
+  data.detail.requisito.regra_validacao.extra = "UNLISTED";
+  assert.equal(field(), undefined);
+  delete data.detail.requisito.regra_validacao.extra;
+  Object.defineProperty(data.detail.requisito.regra_validacao, "documento", {
+    get() {
+      throw Error("getter invoked");
+    },
+  });
+  assert.equal(field(), undefined);
+});
+
+test("C8 r3 href removal requires a complete single ARIA url and never permits a suffix or divergent channel", async () => {
+  const h = await c8PrivacyHarness(),
+    { data, bindings: b } = await c8SourceFixture();
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V119"),
+    value = "/competencias/" + b.competencies[0].id;
+  let count = 1;
+  const page = {
+    url: () => sut.HML_ORIGIN + item.path,
+    evaluate: async () => [{ value, count, attribute: "href" }],
+  };
+  const observer = {},
+    state = {
+      scope: sut.C8_AUDIT_SCOPE,
+      verified: true,
+      closed: false,
+      generation: 1,
+      c8Observer: observer,
+    };
+  state.c8Current = { owner: state, observer, generation: 1, item, wire: data };
+  h.pages.set(page, state);
+  const read = async (snapshot, rendered = "Voltar à competência") =>
+    h.contexts.get(await h.context(page, state, rendered, snapshot, null)).snapshot.remainder;
+  assert.equal((await read("  - /url: " + value)).includes(value), false);
+  for (const suffix of ["/foreign", "?secret=CANARY", "#foreign", "-suffix"])
+    assert.ok((await read("  - /url: " + value + suffix)).includes(value));
+  assert.ok((await read("  - /url: " + value + "\n  - /url: " + value)).includes(value));
+  assert.ok((await read("  - /url: " + value, value)).includes(value));
+  count = 2;
+  assert.ok((await read("  - /url: " + value)).includes(value));
+});
+
+test("C8 r3 frozen source details bind only the previously inspected list and version", async () => {
+  const { data, bindings: b } = await c8SourceFixture();
+  Object.assign(data.detail.requisito, {
+    fonte_tipo: "lista_verificacao",
+    fonte_referencia: "Lista sintética Trilha A 24 fixtures 20261108",
+    fonte_detalhe: { id_versao_lista: b.listVersionId, id_lista: b.listId },
+  });
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  for (const key of ["fonte_tipo", "fonte_referencia", "fonte_detalhe"])
+    assert.ok(
+      sut.c8TechnicalFieldContracts(item, data).some((d) => d.field === "detail.requisito." + key),
+      key,
+    );
+  data.detail.requisito.fonte_detalhe.id_lista = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  assert.equal(
+    sut
+      .c8TechnicalFieldContracts(item, data)
+      .some((d) => d.field === "detail.requisito.fonte_detalhe"),
+    false,
+  );
 });
