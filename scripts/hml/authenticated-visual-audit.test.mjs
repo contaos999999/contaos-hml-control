@@ -15908,7 +15908,7 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
                   const unknown = value
                     .normalize("NFC")
                     .toLocaleLowerCase("pt-BR")
-                    .match(/[\\p{L}\\p{N}_-]+/gu)
+                    .match(/[\p{L}\p{N}_-]+/gu)
                     ?.filter((word) => !literalDictionary.has(word));
                   console.log("C8_NATIVE_UNKNOWN " + JSON.stringify([...new Set(unknown ?? [])]));
                 }

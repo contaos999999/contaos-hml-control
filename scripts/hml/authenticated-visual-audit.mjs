@@ -5032,7 +5032,7 @@ export function nativeC8VisualDiagnostic(tap) {
             typeof value === "string" &&
             value.length >= 1 &&
             value.length <= 64 &&
-            /^[\\p{L}\\p{N}_-]+$/u.test(value),
+            /^[\p{L}\p{N}_-]+$/u.test(value),
         )
       )
         unknownHashes.push(values.map((value) => digest(value)));
