@@ -7361,6 +7361,11 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
       }
       groups.set(d.value, group);
     }
+    const sealedSlots = [];
+    for (const slots of groups.values())
+      for (const slot of slots)
+        if (!sealedSlots.some((s) => s.node === slot.node && s.attribute === slot.attribute))
+          sealedSlots.push(slot);
     return {
       nodes: [...groups.values()]
         .flat()
@@ -7368,7 +7373,13 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
       groups: [...groups].map(([value, slots]) => ({
         value,
         attribute: slots[0]?.attribute ?? null,
-        count: slots.reduce((n, s) => n + s.text.split(value).length - 1, 0),
+        // The original UI shows provider/model both as a complete composite
+        // and as separate history fields. Count only complete, independently
+        // sealed scalars; an unanchored copy still exceeds this exact count.
+        count: (slots[0]?.attribute === "href"
+          ? slots
+          : sealedSlots.filter((s) => s.attribute !== "href")
+        ).reduce((n, s) => n + s.text.split(value).length - 1, 0),
         slots: slots.map(({ node, ...metadata }) => metadata),
       })),
     };

@@ -15029,6 +15029,12 @@ async function c8SourceFixture({ automatic = false } = {}) {
       Object.assign(row, output);
     Object.assign(data.detail.historico[0], execution, { criado_em: "2026-11-10T00:01:00Z" });
     data.analysis.resultados[0].requisito.fonte_referencia = preparer.FIXTURE.listName;
+    // The scoped R20 read confirms zero findings. The generic SDK parser fixture
+    // carries a deliberately unapproved "Fixture" finding, not present in HML.
+    data.analysis.apontamentos = [];
+    data.analysis.apontamentos_paginacao.total = 0;
+    data.detail.apontamentos = [];
+    data.detail.apontamentos_paginacao.total = 0;
   }
   return { data, bindings: b };
 }
@@ -17464,4 +17470,70 @@ test("C8 sixteen blockers: automatic V117 fields are closed to original result r
   const parser = await import("./prepare-visual-fixtures.mjs");
   assert.ok(parser.projectScopedRpcResponse("obter_analise_competencia_v116", data.analysis));
   assert.ok(parser.projectScopedRpcResponse("obter_detalhe_requisito_v117", data.detail));
+});
+
+test("C8 sixteen blockers: composite provider and standalone history retain exact sealed cardinality", async () => {
+  const { JSDOM } = await import("jsdom");
+  const words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+  for (const copy of [false, true]) {
+    const { data } = await c8SourceFixture({ automatic: true });
+    const item = sut.privateCases(sut.C8_REMAINING_SCOPE).find((r) => r.surface === "V117");
+    const h = await c8PrivacyHarness();
+    const dom = new JSDOM(
+      '<section aria-labelledby="v117-exec"><dl><div><dt>Provedor/modelo: </dt><dd>openai / gpt-6-luna</dd></div></dl></section><section aria-labelledby="v116-hist"><ul><li><dl><div><dt>Provedor</dt><dd>openai</dd></div></dl></li></ul></section>',
+      { runScripts: "outside-only" },
+    );
+    const w = dom.window;
+    w.HTMLElement.prototype.getClientRects = function () {
+      return [{}];
+    };
+    const observer = {},
+      state = {
+        scope: sut.C8_REMAINING_SCOPE,
+        verified: true,
+        closed: false,
+        generation: 1,
+        c8Observer: observer,
+      };
+    state.c8Current = { owner: state, observer, generation: 1, item, wire: data };
+    const page = {
+      url: () => sut.HML_ORIGIN + item.path,
+      evaluateHandle: async (fn, arg) => {
+        const seal = w.eval("(" + fn.toString() + ")")(arg);
+        return {
+          _testSeal: seal,
+          evaluate: async (fn, arg) =>
+            w.eval("(" + fn.toString() + ")")(seal, arg?._testSeal ?? arg),
+          dispose: async () => {},
+        };
+      },
+      locator: (selector) => {
+        const nodes = [...w.document.querySelectorAll(selector)];
+        return {
+          count: async () => nodes.length,
+          nth: (i) => ({
+            ariaSnapshot: async () =>
+              "- definition: " + (await originalAriaValue(nodes[i].textContent)),
+          }),
+        };
+      },
+    };
+    h.pages.set(page, state);
+    try {
+      const rendered = "openai / gpt-6-luna\nopenai" + (copy ? "\nopenai" : "");
+      const snapshot = "- definition: openai / gpt-6-luna\n- definition: openai";
+      const token = await h.context(page, state, rendered, snapshot, null);
+      const remainder = h.contexts.get(token);
+      assert.equal(
+        sut.classifyArtifactText(remainder.rendered.remainder, words).reason,
+        copy ? "UNKNOWN_WORDS" : "ALLOWED",
+      );
+      assert.equal(
+        sut.classifyArtifactText(remainder.snapshot.remainder, words, { snapshot: true }).reason,
+        "ALLOWED",
+      );
+    } finally {
+      w.close();
+    }
+  }
 });
