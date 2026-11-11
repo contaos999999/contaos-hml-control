@@ -5,6 +5,9 @@ on:
     paths: [.github/workflows/phase8-sys03-final.yml]
 permissions:
   contents: read
+concurrency:
+  group: phase8-sys03-final-hml
+  cancel-in-progress: true
 jobs:
   final-evidence:
     runs-on: ubuntu-22.04
@@ -29,9 +32,14 @@ jobs:
           node --test scripts/ci/install-pinned-bun.test.mjs
           node scripts/ci/install-pinned-bun.mjs
       - name: Frozen dependencies
-        run: |
-          bun install --frozen-lockfile
-          ./node_modules/.bin/playwright install --with-deps chromium
+        run: bun install --frozen-lockfile
+      - name: Cache frozen Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: trilha-a-ubuntu22-playwright-1.58.2-1208
+      - name: Chromium
+        run: ./node_modules/.bin/playwright install chromium
       - name: Fail closed on fixture and target
         shell: bash
         run: |
