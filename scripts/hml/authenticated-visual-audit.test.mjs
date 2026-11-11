@@ -14670,7 +14670,7 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
     schema_version: 1,
     issue: 317,
     operation: "audit",
-    request_id: "trilha-c-audit-20261110-c8-r3",
+    request_id: "trilha-c-audit-20261110-c8-r4",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
@@ -14931,7 +14931,7 @@ async function c8SourceFixture() {
       protocolo: "HML-TRILHA-A-20261108",
       forma_apresentacao: "Ensaio sintético em homologação.",
       apresentado_em: "2026-11-10T00:00:00Z",
-      tipo: "inicial",
+      tipo: "apresentacao",
       numero_rodada: 1,
     },
   ];
@@ -14941,7 +14941,7 @@ async function c8SourceFixture() {
       id: s.packageId,
       hash_pacote: s.packageHash,
       numero: 1,
-      tipo: "inicial",
+      tipo: "apresentacao",
       status: preparer.R18_REGISTRATION_CANDIDATE.packageStatus,
       congelado_em: "2026-11-10T00:00:00Z",
     },
@@ -14976,7 +14976,7 @@ async function c8BuildSourceUI(directory) {
   );
   await fs.writeFile(
     join(directory, "router.tsx"),
-    `import React from 'react';const navigate=()=>{};export const useNavigate=()=>navigate;export const Link=({children,to,params,...p})=><a href={typeof to==='string'?Object.entries(params??{}).reduce((path,[key,value])=>path.replace('$'+key,encodeURIComponent(value)),to):'#'} {...p}>{children}</a>;`,
+    `import React from 'react';const navigate=()=>{};export const useNavigate=()=>navigate;export const useRouterState=({select})=>select({location:{pathname:location.pathname}});export const Link=({children,to,params,...p})=><a href={typeof to==='string'?Object.entries(params??{}).reduce((path,[key,value])=>path.replace('$'+key,encodeURIComponent(value)),to):'#'} {...p}>{children}</a>;`,
   );
   await fs.writeFile(
     join(directory, "org.ts"),
@@ -14984,7 +14984,7 @@ async function c8BuildSourceUI(directory) {
   );
   await fs.writeFile(
     join(directory, "entry.tsx"),
-    `import React from 'react';import {createRoot} from 'react-dom/client';import {CompetenciaAnalise} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaAnalise.tsx"))};import {CompetenciaApresentar} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaApresentar.tsx"))};import {CompetenciaProtocolo} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaProtocolo.tsx"))};const root=createRoot(document.getElementById('root'));window.__mount=(surface,id,ap)=>root.render(surface==='V117'?<CompetenciaAnalise key={crypto.randomUUID()} id={id}/>:surface==='V119'?<CompetenciaApresentar key={crypto.randomUUID()} id={id}/>:<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>);window.__ready=true;`,
+    `import React from 'react';import {createRoot} from 'react-dom/client';import {ContaOSSidebar} from ${JSON.stringify(resolve(root, "src/components/layout/ContaOSSidebar.tsx"))};import {CompetenciaAnalise} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaAnalise.tsx"))};import {CompetenciaApresentar} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaApresentar.tsx"))};import {CompetenciaProtocolo} from ${JSON.stringify(resolve(root, "src/components/competencias/CompetenciaProtocolo.tsx"))};const root=createRoot(document.getElementById('root'));function Sidebar({id}){const [collapsed,setCollapsed]=React.useState(false);window.__collapseSidebar=setCollapsed;const permissions=['competencias','documentos_competencia','analises','pareceres','apresentacoes','contratos'].map(recurso=>({recurso,acao:'consultar'}));return <aside id='native-context-sidebar' className='hidden md:block'><ContaOSSidebar recolhida={collapsed} permissoes={permissions} contexto={{competencia:id,contrato:${JSON.stringify(b.contract)},contratante:null}}/></aside>};window.__mount=(surface,id,ap)=>root.render(<><Sidebar key={crypto.randomUUID()} id={id}/>{surface==='V117'?<CompetenciaAnalise key={crypto.randomUUID()} id={id}/>:surface==='V119'?<CompetenciaApresentar key={crypto.randomUUID()} id={id}/>:<CompetenciaProtocolo key={crypto.randomUUID()} id={id} apresentacaoId={ap}/>}</>);window.__ready=true;`,
   );
   const aliases = {
     react: require.resolve("react"),
@@ -15188,6 +15188,10 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
     const origin = `http://127.0.0.1:${server.address().port}`;
     const privacyHarness = await c8PrivacyHarness();
     const baselinePrivacy = await c8PrivacyHarness({ baseline: true });
+    const r3Privacy = await c8PrivacyHarness({
+      baseline: true,
+      baselineRef: "7f5eb2ada7d6fbc978f578cdc71bdd22df94632f",
+    });
     const literalDictionary = await sut.literalWords(new URL("../../", import.meta.url).pathname);
     const preparer = await import("./prepare-visual-fixtures.mjs");
     await page.route(API + "/rest/v1/**", async (route) => {
@@ -15231,6 +15235,8 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
           const localPage = {
             url: () => sut.HML_ORIGIN + item.path,
             evaluate: page.evaluate.bind(page),
+            locator: page.locator.bind(page),
+            evaluateHandle: page.evaluateHandle.bind(page),
           };
           currentObserver = preparer.createOfficialObserver(page, {
             identity: await nativeC8ObservationIdentity(),
@@ -15356,6 +15362,45 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
             snapshot = await page.locator("body").ariaSnapshot();
           const token = await privacyHarness.context(localPage, state, rendered, snapshot, null);
           const remainder = privacyHarness.contexts.get(token);
+          r3Privacy.pages.set(localPage, state);
+          const r3Token = await r3Privacy.context(localPage, state, rendered, snapshot, null);
+          const r3Remainder = r3Privacy.contexts.get(r3Token);
+          if (["V119", "V120"].includes(surface)) {
+            assert.equal(
+              sut.classifyArtifactText(remainder.rendered.remainder, literalDictionary).reason,
+              "ALLOWED",
+              "full original UI render classifier",
+            );
+            assert.equal(
+              sut.classifyArtifactText(remainder.snapshot.remainder, literalDictionary).reason,
+              "ALLOWED",
+              "full original UI ARIA classifier",
+            );
+          }
+          if (surface === "V117") {
+            const encoded = await originalAriaValue(
+              JSON.stringify(data.detail.requisito.fonte_detalhe),
+            );
+            assert.ok(r3Remainder.snapshot.remainder.includes(encoded), "R3 serializer causal RED");
+            assert.equal(
+              remainder.snapshot.remainder.includes(encoded),
+              false,
+              "original field serializer GREEN",
+            );
+          }
+          if (surface === "V119" && width >= 768) {
+            const route = "/competencias/" + b.competencies[0].id;
+            assert.ok(
+              r3Remainder.snapshot.remainder.includes(route),
+              "R3 original sidebar prefix RED",
+            );
+            assert.equal(
+              remainder.snapshot.remainder.includes(route),
+              false,
+              "original sidebar GREEN",
+            );
+          }
+
           phase("PRIVACY_BASELINE", item);
           baselinePrivacy.pages.set(localPage, state);
           const oldToken = await baselinePrivacy.context(
@@ -15412,6 +15457,46 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
             const route = "/competencias/" + b.competencies[surface === "V120" ? 1 : 0].id;
             assert.ok(snapshot.includes("- /url: " + route));
             assert.equal(remainder.snapshot.remainder.includes(route), false);
+          }
+
+          if (["V119", "V120"].includes(surface)) {
+            phase("PRIVACY_SIDEBAR", item);
+            const route = "/competencias/" + b.competencies[surface === "V120" ? 1 : 0].id;
+            try {
+              if (width === 390)
+                await page
+                  .locator("#native-context-sidebar")
+                  .evaluate((n) => (n.style.display = "block"));
+              for (const collapsed of [false, true]) {
+                await page.evaluate((c) => window.__collapseSidebar(c), collapsed);
+                await page.waitForFunction((c) => {
+                  const a = document.querySelector(
+                    '#native-context-sidebar a[aria-label="Resumo da competência"]',
+                  );
+                  return (
+                    a &&
+                    (c
+                      ? a.getAttribute("title") === "Resumo da competência"
+                      : !a.hasAttribute("title"))
+                  );
+                }, collapsed);
+                const text = await privacyHarness.render(page),
+                  aria = await page.locator("body").ariaSnapshot();
+                const current = await privacyHarness.context(localPage, state, text, aria, null);
+                assert.equal(
+                  privacyHarness.contexts.get(current).snapshot.remainder.includes(route),
+                  false,
+                );
+                const old = await r3Privacy.context(localPage, state, text, aria, null);
+                assert.ok(r3Privacy.contexts.get(old).snapshot.remainder.includes(route));
+              }
+            } finally {
+              await page.evaluate(() => window.__collapseSidebar(false));
+              if (width === 390)
+                await page
+                  .locator("#native-context-sidebar")
+                  .evaluate((n) => n.style.removeProperty("display"));
+            }
           }
 
           if (surface === "V117")
@@ -15554,6 +15639,8 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
         const localPage = {
           url: () => sut.HML_ORIGIN + item.path,
           evaluate: page.evaluate.bind(page),
+          locator: page.locator.bind(page),
+          evaluateHandle: page.evaluateHandle.bind(page),
         };
         currentObserver = preparer.createOfficialObserver(page);
         const state = {
@@ -15604,6 +15691,8 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
       const localPage = {
         url: () => sut.HML_ORIGIN + item.path,
         evaluate: page.evaluate.bind(page),
+        locator: page.locator.bind(page),
+        evaluateHandle: page.evaluateHandle.bind(page),
       };
       currentObserver = preparer.createOfficialObserver(page);
       const state = {
@@ -15687,7 +15776,10 @@ test("C8 source fixture preserves complete actual SDK shapes and build uses orig
   }
 });
 
-async function c8PrivacyHarness({ baseline = false } = {}) {
+async function c8PrivacyHarness({
+  baseline = false,
+  baselineRef = "aaad7a97aa821642ff2a3cfefe1cdcbe7f758c10",
+} = {}) {
   const fs = await import("node:fs/promises"),
     ts = (await import("typescript")).default;
   let source = await fs.readFile(
@@ -15697,13 +15789,16 @@ async function c8PrivacyHarness({ baseline = false } = {}) {
   if (baseline) {
     const { execFile } = await import("node:child_process"),
       { promisify } = await import("node:util");
+    assert.ok(
+      [
+        "aaad7a97aa821642ff2a3cfefe1cdcbe7f758c10",
+        "7f5eb2ada7d6fbc978f578cdc71bdd22df94632f",
+      ].includes(baselineRef),
+    );
     source = (
       await promisify(execFile)(
         "git",
-        [
-          "show",
-          "aaad7a97aa821642ff2a3cfefe1cdcbe7f758c10:scripts/hml/authenticated-visual-audit.mjs",
-        ],
+        ["show", baselineRef + ":scripts/hml/authenticated-visual-audit.mjs"],
         { maxBuffer: 2097152 },
       )
     ).stdout;
@@ -15734,6 +15829,8 @@ async function c8PrivacyHarness({ baseline = false } = {}) {
   const baselineTechnical = baseline
     ? new Function(
         "C8_RECOVERY_DOCUMENT",
+        "R18_REGISTRATION_CANDIDATE",
+        "isProxy",
         fields.getText(ast) +
           "\n" +
           ast.statements
@@ -15743,7 +15840,11 @@ async function c8PrivacyHarness({ baseline = false } = {}) {
             .getText(ast)
             .replace(/^export /, "") +
           ";return c8TechnicalFieldContracts;",
-      )(sut.C8_RECOVERY_DOCUMENT)
+      )(
+        sut.C8_RECOVERY_DOCUMENT,
+        sut.R18_REGISTRATION_CANDIDATE,
+        require("node:util/types").isProxy,
+      )
     : sut.c8TechnicalFieldContracts;
   const pages = new WeakMap(),
     contexts = new WeakMap();
@@ -15800,10 +15901,12 @@ test("C8 contextual privacy refuses missing stale closed or foreign page owners 
       c8Observer: observer,
     };
   state.c8Current = { owner: state, generation: 1, observer, item, wire: data };
+  if (!page.evaluateHandle)
+    page.evaluateHandle = async (fn, arg) => c8MockHandle(await page.evaluate(fn, arg));
   h.pages.set(page, state);
   const valid = await h.context(page, state, "Texto", "Texto", null);
   assert.equal(h.contexts.get(valid).rendered.remainder, "Texto");
-  assert.equal(evaluations, 1);
+  assert.equal(evaluations, 2);
   for (const delta of [
     { scope: null },
     { c8Current: null },
@@ -15814,7 +15917,7 @@ test("C8 contextual privacy refuses missing stale closed or foreign page owners 
   ]) {
     Object.assign(state, delta);
     await assert.rejects(() => h.context(page, state, "Texto", "Texto", null), /C8_CURRENT_OWNER/);
-    assert.equal(evaluations, 1);
+    assert.equal(evaluations, 2);
     Object.assign(state, {
       scope: sut.C8_AUDIT_SCOPE,
       verified: true,
@@ -15826,7 +15929,7 @@ test("C8 contextual privacy refuses missing stale closed or foreign page owners 
   }
   h.pages.set(page, {});
   await assert.rejects(() => h.context(page, state, "Texto", "Texto", null), /C8_CURRENT_OWNER/);
-  assert.equal(evaluations, 1);
+  assert.equal(evaluations, 2);
 });
 
 test("C8 native diagnostic exports only a closed source-real phase and never raw TAP errors", () => {
@@ -16273,8 +16376,9 @@ async function c8MutationWindowProbe({
     sut.classifyArtifactText,
     async (page, state, rendered, snapshot, previous) => previous,
   );
-  const result = await inspect(page, words, {});
-  return { result, snapshots, settles, value };
+  const diagnostics = {};
+  const result = await inspect(page, words, diagnostics);
+  return { result, snapshots, settles, value, diagnostics };
 }
 
 test("C8 r3 original privacy reader discards a mutation window and reacquires one complete stable window", async () => {
@@ -16339,6 +16443,8 @@ test("C8 r3 href removal requires a complete single ARIA url and never permits a
       c8Observer: observer,
     };
   state.c8Current = { owner: state, observer, generation: 1, item, wire: data };
+  if (!page.evaluateHandle)
+    page.evaluateHandle = async (fn, arg) => c8MockHandle(await page.evaluate(fn, arg));
   h.pages.set(page, state);
   const read = async (snapshot, rendered = "Voltar à competência") =>
     h.contexts.get(await h.context(page, state, rendered, snapshot, null)).snapshot.remainder;
@@ -16397,4 +16503,279 @@ test("C8 r3 overlapping condition stays safe without weakening field cardinality
       .some((d) => d.field === "detail.requisito.condicao_aplicabilidade"),
     false,
   );
+});
+
+async function originalContextMenu(context) {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+    new URL("../../src/lib/navegacao/menuV1.ts", import.meta.url),
+    "utf8",
+  );
+  const js = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.CommonJS },
+  }).outputText;
+  const api = new Function("exports", js + ";return exports;")({});
+  const permissions = [
+    "competencias",
+    "documentos_competencia",
+    "analises",
+    "pareceres",
+    "apresentacoes",
+    "contratos",
+  ].map((recurso) => ({ recurso, acao: "consultar" }));
+  return api.menuContextualV1(context, permissions);
+}
+
+test("C8 r4 sidebar routes match the original contextual producer without collapsing prefix-distinct URLs", async () => {
+  const { data, bindings: b } = await c8SourceFixture();
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V119");
+  const original = await originalContextMenu({
+    competencia: b.competencies[0].id,
+    contrato: b.contract,
+    contratante: null,
+  });
+  const contracts = sut
+    .c8TechnicalFieldContracts(item, data)
+    .filter((d) => d.field.startsWith("route.sidebar."));
+  assert.equal(contracts.length, 6);
+  for (const route of original) {
+    const d = contracts.find((d) => d.expected === route.destino);
+    assert.ok(d);
+    assert.equal(d.linkAriaLabel, route.titulo);
+  }
+});
+
+async function originalAriaValue(value) {
+  const ts = (await import("typescript")).default;
+  const source = require(
+    require("node:path").join(
+      require("node:path").dirname(require.resolve("playwright-core/package.json")),
+      "lib/generated/injectedScriptSource.js",
+    ),
+  ).source;
+  const ast = ts.createSourceFile("injected.js", source, 99, true, ts.ScriptKind.JS),
+    found = {};
+  function walk(n) {
+    if (
+      ts.isFunctionDeclaration(n) &&
+      ["yamlEscapeValueIfNeeded", "yamlStringNeedsQuotes"].includes(n.name?.text)
+    )
+      found[n.name.text] = n.getText(ast);
+    ts.forEachChild(n, walk);
+  }
+  walk(ast);
+  assert.equal(Object.keys(found).length, 2);
+  return new Function(Object.values(found).join("\n") + ";return yamlEscapeValueIfNeeded;")()(
+    value,
+  );
+}
+
+test("C8 r4 snapshot binding uses original ARIA serialization of a frozen pure-text field", async () => {
+  const h = await c8PrivacyHarness(),
+    { data, bindings: b } = await c8SourceFixture();
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  const value = JSON.stringify(data.detail.requisito.fonte_detalhe),
+    serialized = "- definition: " + (await originalAriaValue(value));
+  assert.equal(serialized.includes(value), false);
+  const slot = {
+    selector: 'section[aria-labelledby="v117-fonte"] > dl > div > dd',
+    index: 2,
+    nodeCount: 7,
+    attribute: null,
+    accessible: true,
+    snapshotSafe: true,
+    role: "definition",
+    expected: value,
+  };
+  const groups = [{ value, count: 1, attribute: null, slots: [slot] }];
+  const page = {
+    url: () => sut.HML_ORIGIN + item.path,
+    evaluate: async () => groups,
+    locator: () => ({
+      count: async () => 7,
+      nth: () => ({ ariaSnapshot: async () => serialized }),
+    }),
+  };
+  const observer = {},
+    state = {
+      scope: sut.C8_AUDIT_SCOPE,
+      verified: true,
+      closed: false,
+      generation: 1,
+      c8Observer: observer,
+    };
+  state.c8Current = { owner: state, observer, generation: 1, item, wire: data };
+  if (!page.evaluateHandle)
+    page.evaluateHandle = async (fn, arg) => c8MockHandle(await page.evaluate(fn, arg));
+  h.pages.set(page, state);
+  const token = await h.context(page, state, value, serialized, null);
+  assert.equal(
+    sut.classifyArtifactText(
+      h.contexts.get(token).snapshot.remainder,
+      await sut.literalWords(new URL("../../", import.meta.url).pathname),
+      { snapshot: true },
+    ).reason,
+    "ALLOWED",
+  );
+  assert.equal(b.listId.length, 36);
+});
+
+async function c8PureTextDomProbe({
+  extraAttribute = false,
+  copy = false,
+  mutate = false,
+  swap = false,
+  replace = false,
+  ariaCanary = false,
+  replaceFinal = false,
+} = {}) {
+  const { JSDOM } = await import("jsdom"),
+    { data } = await c8SourceFixture(),
+    h = await c8PrivacyHarness();
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V117");
+  const value = JSON.stringify(data.detail.requisito.fonte_detalhe),
+    encoded = await originalAriaValue(value);
+  const dom = new JSDOM(
+      '<section aria-labelledby="v117-fonte"><h3 id="v117-fonte">Fonte e versionamento</h3><dl><div><dt>Detalhe: </dt><dd></dd></div></dl></section>',
+      { runScripts: "outside-only" },
+    ),
+    w = dom.window;
+  w.HTMLElement.prototype.getClientRects = function () {
+    return [{}];
+  };
+  const dd = w.document.querySelector("dd");
+  dd.textContent = value;
+  if (extraAttribute) dd.setAttribute("aria-label", "UNLISTED_NAME");
+  const serialized = ariaCanary ? "- definition: UNLISTED_ARIA_NAME" : "- definition: " + encoded,
+    snapshot = copy ? serialized + "\n" + serialized : serialized;
+  const observer = {},
+    state = {
+      scope: sut.C8_AUDIT_SCOPE,
+      verified: true,
+      closed: false,
+      generation: 1,
+      c8Observer: observer,
+    };
+  state.c8Current = { owner: state, observer, generation: 1, item, wire: data };
+  let collections = 0;
+  const page = {
+    url: () => sut.HML_ORIGIN + item.path,
+    evaluate: async (fn, arg) => w.eval("(" + fn.toString() + ")")(arg),
+    evaluateHandle: async (fn, arg) => {
+      if (++collections === 2 && replaceFinal) {
+        const dd = w.document.querySelector("dd");
+        dd.replaceWith(dd.cloneNode(true));
+      }
+      const seal = w.eval("(" + fn.toString() + ")")(arg);
+      return {
+        _testSeal: seal,
+        evaluate: async (callback, arg) =>
+          w.eval("(" + callback.toString() + ")")(seal, arg?._testSeal ?? arg),
+        dispose: async () => {},
+      };
+    },
+    locator(selector) {
+      const nodes = [...w.document.querySelectorAll(selector)];
+      return {
+        count: async () => nodes.length,
+        nth: (i) => ({
+          ariaSnapshot: async () => {
+            if (mutate) nodes[i].textContent = "UNLISTED_VALUE";
+            if (swap) state.c8Current = { ...state.c8Current };
+            if (replace) nodes[i].replaceWith(nodes[i].cloneNode(true));
+            return serialized;
+          },
+        }),
+      };
+    },
+  };
+  if (!page.evaluateHandle)
+    page.evaluateHandle = async (fn, arg) => c8MockHandle(await page.evaluate(fn, arg));
+  h.pages.set(page, state);
+  try {
+    const token = await h.context(page, state, copy ? value + value : value, snapshot, null);
+    return { remainder: h.contexts.get(token).snapshot.remainder, value };
+  } finally {
+    w.close();
+  }
+}
+
+test("C8 r4 original pure-text anchor rejects extra accessible attributes and copied snapshot fields", async () => {
+  const words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+  for (const options of [{ extraAttribute: true }, { copy: true }, { ariaCanary: true }]) {
+    const r = await c8PureTextDomProbe(options);
+    assert.equal(
+      sut.classifyArtifactText(r.remainder, words, { snapshot: true }).reason,
+      "UNKNOWN_WORDS",
+    );
+  }
+  const good = await c8PureTextDomProbe();
+  assert.equal(
+    sut.classifyArtifactText(good.remainder, words, { snapshot: true }).reason,
+    "ALLOWED",
+  );
+});
+test("C8 r4 snapshot collection rejects a changed node or replaced current owner before admission", async () => {
+  for (const options of [
+    { mutate: true },
+    { swap: true },
+    { replace: true },
+    { replaceFinal: true },
+  ])
+    await assert.rejects(() => c8PureTextDomProbe(options), /C8_CURRENT_OWNER/);
+});
+test("C8 r4 acquisition diagnostics contain only closed booleans and bounded counters", async () => {
+  const r = await c8MutationWindowProbe({ mutation: "none", extra: " UNLISTED_VALUE" });
+  const d = r.diagnostics.acquisition;
+  assert.ok(d);
+  assert.equal(JSON.stringify(d).includes("UNLISTED_VALUE"), false);
+  assert.deepEqual(
+    Object.keys(d).sort(),
+    [
+      "initialReceipt",
+      "currentReceipt",
+      "sameRevision",
+      "anchor",
+      "fieldSnapshot",
+      "afterReceipt",
+      "sameAfterRevision",
+      "context",
+      "knownRendered",
+      "knownSnapshot",
+    ].sort(),
+  );
+  for (const [key, value] of Object.entries(d))
+    if (key.startsWith("known")) assert.ok(Number.isInteger(value) && value >= 0 && value <= 233);
+    else assert.equal(typeof value, "boolean");
+});
+
+function c8MockHandle(groups) {
+  const seal = { groups, nodes: [] };
+  return {
+    _testSeal: seal,
+    evaluate: async (fn, arg) => fn(seal, arg?._testSeal ?? arg),
+    dispose: async () => {},
+  };
+}
+
+// Normative producer: develop@5eca44a / 20261106014102_p0_v1_rbac_persistente.sql.
+// congelar_pacote creates tipo=apresentacao; registrar_apresentacao changes only status.
+test("C8 r4 protocol package kind follows canonical creation and registration transition", async () => {
+  const { data } = await c8SourceFixture();
+  const item = sut.privateCases(sut.C8_AUDIT_SCOPE).find((r) => r.surface === "V120");
+  assert.equal(data.packages[0].tipo, "apresentacao");
+  const field = sut
+    .c8TechnicalFieldContracts(item, data)
+    .find((d) => d.field === "packages.0.tipo");
+  assert.ok(field);
+  assert.equal(field.expected, "apresentacao");
+  for (const value of ["inicial", "apresentacao pessoa", "reapresentacao", "", "UNLISTED_KIND"]) {
+    const bad = structuredClone(data);
+    bad.packages[0].tipo = value;
+    assert.equal(
+      sut.c8TechnicalFieldContracts(item, bad).some((d) => d.field === "packages.0.tipo"),
+      false,
+    );
+  }
 });
