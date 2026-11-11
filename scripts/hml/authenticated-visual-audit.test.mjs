@@ -14671,12 +14671,12 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
     schema_version: 1,
     issue: 317,
     operation: "audit",
-    request_id: "trilha-c-audit-20261111-c8-r6",
+    request_id: "trilha-c-audit-20261111-c8-r7",
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
   };
-  assert.equal(resolve(request), sut.C8_REMAINING_SCOPE);
+  assert.equal(resolve(request), sut.C8_V117_SCOPE);
   assert.equal(
     sut.parseSingleRequest(JSON.stringify(request), "audit").request_id,
     request.request_id,
@@ -15029,6 +15029,22 @@ async function c8SourceFixture({ automatic = false } = {}) {
       Object.assign(row, output);
     Object.assign(data.detail.historico[0], execution, { criado_em: "2026-11-10T00:01:00Z" });
     data.analysis.resultados[0].requisito.fonte_referencia = preparer.FIXTURE.listName;
+    data.analysis.resultados[0].requisito.criticidade = "alta";
+    data.detail.requisito.criticidade = "alta";
+    for (const row of [
+      data.analysis.resultados[0],
+      data.detail.resultado_atual,
+      data.detail.resultado_referencia,
+      data.detail.historico[0],
+    ])
+      row.confianca = 0.96;
+    for (const row of [
+      data.analysis.resultados[0],
+      data.detail.resultado_referencia,
+      data.detail.historico[0],
+    ])
+      row.mecanismo = "semantico";
+    data.analysis.mecanismos = { deterministico: 0, semantico: 1, humano: 0, nao_identificado: 0 };
     // The scoped R20 read confirms zero findings. The generic SDK parser fixture
     // carries a deliberately unapproved "Fixture" finding, not present in HML.
     data.analysis.apontamentos = [];
@@ -15300,6 +15316,10 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
     const r4Privacy = await c8PrivacyHarness({
       baseline: true,
       baselineRef: "2cafe0e9cdfd84a76c85cb45474ff718749ba0e8",
+    });
+    const r6Privacy = await c8PrivacyHarness({
+      baseline: true,
+      baselineRef: "9807fe82aafb28951687ae41649ab34a6530e969",
     });
     const literalDictionary = await sut.literalWords(new URL("../../", import.meta.url).pathname);
     const preparer = await import("./prepare-visual-fixtures.mjs");
@@ -15854,6 +15874,103 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
               sut.surfaceStateValid(surface, { ...observation, dialogVisible: false }),
               false,
             );
+            phase("PRIVACY_SIDEBAR", item);
+            r6Privacy.pages.set(localPage, state);
+            let supplementChecks = 0;
+            const inspectSupplement = async () => {
+              const text = await privacyHarness.render(page),
+                aria = await page.locator("body").ariaSnapshot();
+              const current = await privacyHarness.context(localPage, state, text, aria, null);
+              const rem = privacyHarness.contexts.get(current);
+              if (supplementChecks === 0) {
+                const previous = await r6Privacy.context(localPage, state, text, aria, null);
+                assert.equal(
+                  sut.classifyArtifactText(
+                    r6Privacy.contexts.get(previous).snapshot.remainder,
+                    literalDictionary,
+                    { snapshot: true },
+                  ).reason,
+                  "UNKNOWN_WORDS",
+                  "r6 causal RED preserves original aggregate row/cell names",
+                );
+              }
+              for (const [channel, value] of [
+                ["RENDER", rem.rendered.remainder],
+                ["ARIA", rem.snapshot.remainder],
+              ]) {
+                const result = sut.classifyArtifactText(value, literalDictionary, {
+                  snapshot: channel === "ARIA",
+                });
+                console.log(
+                  "C8_NATIVE_CLASSIFY " + channel + " " + result.reason + " " + result.unknownCount,
+                );
+                assert.equal(
+                  result.reason,
+                  "ALLOWED",
+                  channel === "ARIA"
+                    ? "full original UI ARIA classifier"
+                    : "full original UI render classifier",
+                );
+              }
+              supplementChecks++;
+              return aria;
+            };
+            const probe = await c8OriginalFunction("sidebarProbe", {
+              inspectPrivacy: inspectSupplement,
+              closeAuditMobileMenu: sut.closeAuditMobileMenu,
+              fail: (code) => {
+                throw Object.assign(new Error(code), { code });
+              },
+            });
+            const supplement = await probe(page, item, "native", literalDictionary, async () => {
+              await inspectSupplement();
+              return { file: "native-original-supplement.png", sha: "a".repeat(64) };
+            });
+            assert.equal(supplement.passed, true);
+            assert.equal(supplementChecks, 2);
+            if (width === 390 && theme === "dark") {
+              for (const vector of ["child", "label", "copy"]) {
+                await page.evaluate((vector) => {
+                  const row = document.querySelector(
+                    'section[aria-labelledby="v116-req"] tbody > tr',
+                  );
+                  if (vector === "child") {
+                    const p = document.createElement("p");
+                    p.id = "aggregate-canary";
+                    p.textContent = "UNLISTED_AGGREGATE_CANARY";
+                    row.children[5].append(p);
+                  }
+                  if (vector === "label")
+                    row.setAttribute("aria-label", "UNLISTED_AGGREGATE_CANARY");
+                  if (vector === "copy") {
+                    const clone = row.cloneNode(true);
+                    clone.id = "aggregate-canary";
+                    row.after(clone);
+                  }
+                }, vector);
+                const token = await privacyHarness.context(
+                  localPage,
+                  state,
+                  await privacyHarness.render(page),
+                  await page.locator("body").ariaSnapshot(),
+                  null,
+                );
+                assert.equal(
+                  sut.classifyArtifactText(
+                    privacyHarness.contexts.get(token).snapshot.remainder,
+                    literalDictionary,
+                    { snapshot: true },
+                  ).reason,
+                  "UNKNOWN_WORDS",
+                );
+                await page.evaluate(() => {
+                  document.getElementById("aggregate-canary")?.remove();
+                  document
+                    .querySelector('section[aria-labelledby="v116-req"] tbody > tr')
+                    ?.removeAttribute("aria-label");
+                });
+              }
+            }
           }
           if (surface === "V120") {
             assert.equal(await page.locator('section[aria-labelledby="v120-itens"] li').count(), 1);
@@ -16048,6 +16165,7 @@ async function c8PrivacyHarness({
         "aaad7a97aa821642ff2a3cfefe1cdcbe7f758c10",
         "7f5eb2ada7d6fbc978f578cdc71bdd22df94632f",
         "2cafe0e9cdfd84a76c85cb45474ff718749ba0e8",
+        "9807fe82aafb28951687ae41649ab34a6530e969",
       ].includes(baselineRef),
     );
     source = (
@@ -16086,7 +16204,21 @@ async function c8PrivacyHarness({
         "C8_RECOVERY_DOCUMENT",
         "R18_REGISTRATION_CANDIDATE",
         "isProxy",
-        fields.getText(ast) +
+        "validateC8CurrentWire",
+        ast.statements
+          .filter(
+            (n) =>
+              ts.isVariableStatement(n) &&
+              n.declarationList.declarations.some((d) =>
+                ["C8_R20_AUTOMATIC_RESULT", "C8_R20_EXECUTION_FIELDS"].includes(
+                  d.name.getText(ast),
+                ),
+              ),
+          )
+          .map((n) => n.getText(ast))
+          .join("\n") +
+          "\n" +
+          fields.getText(ast) +
           "\n" +
           ast.statements
             .find(
@@ -16099,6 +16231,7 @@ async function c8PrivacyHarness({
         sut.C8_RECOVERY_DOCUMENT,
         sut.R18_REGISTRATION_CANDIDATE,
         require("node:util/types").isProxy,
+        sut.validateC8CurrentWire,
       )
     : sut.c8TechnicalFieldContracts;
   const pages = new WeakMap(),
@@ -16821,7 +16954,7 @@ test("C8 r4 sidebar routes match the original contextual producer without collap
   }
 });
 
-async function originalAriaValue(value) {
+async function originalAriaValue(value, key = false) {
   const ts = (await import("typescript")).default;
   const source = require(
     require("node:path").join(
@@ -16834,16 +16967,21 @@ async function originalAriaValue(value) {
   function walk(n) {
     if (
       ts.isFunctionDeclaration(n) &&
-      ["yamlEscapeValueIfNeeded", "yamlStringNeedsQuotes"].includes(n.name?.text)
+      ["yamlEscapeValueIfNeeded", "yamlEscapeKeyIfNeeded", "yamlStringNeedsQuotes"].includes(
+        n.name?.text,
+      )
     )
       found[n.name.text] = n.getText(ast);
     ts.forEachChild(n, walk);
   }
   walk(ast);
-  assert.equal(Object.keys(found).length, 2);
-  return new Function(Object.values(found).join("\n") + ";return yamlEscapeValueIfNeeded;")()(
-    value,
-  );
+  assert.equal(Object.keys(found).length, 3);
+  return new Function(
+    Object.values(found).join("\n") +
+      ";return " +
+      (key ? "yamlEscapeKeyIfNeeded" : "yamlEscapeValueIfNeeded") +
+      ";",
+  )()(value);
 }
 
 test("C8 r4 snapshot binding uses original ARIA serialization of a frozen pure-text field", async () => {
@@ -17535,6 +17673,171 @@ test("C8 sixteen blockers: composite provider and standalone history retain exac
         sut.classifyArtifactText(remainder.snapshot.remainder, words, { snapshot: true }).reason,
         "ALLOWED",
       );
+    } finally {
+      w.close();
+    }
+  }
+});
+
+test("C8 eight V117: only the remaining eight execute while fifty-six original passes remain referenced", () => {
+  const last = sut.privateCases(sut.C8_V117_SCOPE);
+  assert.equal(last.length, 8);
+  assert.ok(last.every((r) => r.surface === "V117"));
+  const previous = sut.privateCases(sut.C8_REMAINING_SCOPE).filter((r) => r.surface !== "V117");
+  assert.equal(previous.length, 8);
+  assert.equal(new Set([...last, ...previous].map(sut.caseKey)).size, 16);
+  assert.equal(sut.C8_R5_PRESERVED.preservedCases + sut.C8_R6_PRESERVED.preservedCases, 56);
+  assert.equal(sut.C8_R6_PRESERVED.artifactId, "13846890283");
+  const lastKeys = new Set(last.map(sut.caseKey));
+  const rows = c8TechnicalRows().filter((r) => lastKeys.has(sut.caseKey(r)));
+  assert.equal(sut.summarizeCases(rows, sut.C8_V117_SCOPE).matrixComplete, true);
+  assert.equal(sut.summarizeCases([...rows, rows[0]], sut.C8_V117_SCOPE).matrixComplete, false);
+});
+
+test("C8 eight V117: original YAML aggregate names admit only the complete typed row and retain unknown children copies labels and replacement", async () => {
+  const { JSDOM } = await import("jsdom");
+  const words = await sut.literalWords(new URL("../../", import.meta.url).pathname);
+  const cache = new Map();
+  const encode = async (value, key) => {
+    const id = key + "|" + value;
+    if (!cache.has(id)) cache.set(id, await originalAriaValue(value, key));
+    return cache.get(id);
+  };
+  for (const variant of ["original", "child", "copy", "label", "replacement"]) {
+    const { data } = await c8SourceFixture({ automatic: true });
+    const item = sut.privateCases(sut.C8_V117_SCOPE)[0];
+    const h = await c8PrivacyHarness();
+    const rowData = data.analysis.resultados[0];
+    const code = "AUD-A-TXT-001",
+      description = "Presença do documento TXT sintético de auditoria.",
+      source = "Fonte: Lista sintética Trilha A 24 fixtures 20261108";
+    const names = [
+      code + " " + description + " " + source,
+      "Conforme",
+      "Alta",
+      "Semântico",
+      "0,96",
+      rowData.justificativa + " Fundamento: " + rowData.fundamento,
+      "Abrir requisito " + code,
+    ];
+    const descriptor = sut.c8TechnicalFieldContracts(item, data).find((d) => d.aggregate);
+    assert.deepEqual(descriptor.aggregate.names, names);
+    assert.equal(descriptor.aggregate.rowName, names.join(" "));
+    const dom = new JSDOM(
+      '<section aria-labelledby="v116-req"><table><tbody><tr><td><p></p><p></p><p></p></td><td></td><td></td><td></td><td></td><td><p></p><p></p></td><td><button aria-label="Abrir requisito AUD-A-TXT-001">Abrir requisito</button></td></tr></tbody></table></section>',
+      { runScripts: "outside-only" },
+    );
+    const w = dom.window,
+      row = w.document.querySelector("tr"),
+      cells = [...row.children];
+    for (const [i, value] of [code, description, source].entries())
+      cells[0].children[i].textContent = value;
+    for (let i = 1; i <= 4; i++) cells[i].textContent = names[i];
+    cells[5].children[0].textContent = rowData.justificativa;
+    cells[5].children[1].textContent = "Fundamento: " + rowData.fundamento;
+    if (variant === "child") {
+      const p = w.document.createElement("p");
+      p.textContent = "UNLISTED_AGGREGATE_CANARY";
+      cells[5].append(p);
+    }
+    if (variant === "copy") row.after(row.cloneNode(true));
+    if (variant === "label") row.setAttribute("aria-label", "UNLISTED_AGGREGATE_CANARY");
+    w.HTMLElement.prototype.getClientRects = function () {
+      return [{}];
+    };
+    const cellName = (node) =>
+      node.querySelector("button")?.getAttribute("aria-label") ??
+      (node.children.length
+        ? [...node.children].map((n) => n.textContent).join(" ")
+        : node.textContent);
+    const nodeSnapshot = async (node) => {
+      if (node.tagName === "P") return "- paragraph: " + (await encode(node.textContent, false));
+      if (node.tagName === "BUTTON")
+        return "- button " + JSON.stringify(node.getAttribute("aria-label"));
+      const role = node.tagName === "TR" ? "row" : "cell";
+      const name =
+        node.getAttribute("aria-label") ??
+        (role === "row" ? [...node.children].map(cellName).join(" ") : cellName(node));
+      const children = [];
+      for (const child of node.children)
+        children.push(
+          (await nodeSnapshot(child))
+            .split("\n")
+            .map((line) => "  " + line)
+            .join("\n"),
+        );
+      return (
+        "- " +
+        (await encode(role + " " + JSON.stringify(name), true)) +
+        (children.length ? ":\n" + children.join("\n") : "")
+      );
+    };
+    const snapshot = (
+      await Promise.all([...w.document.querySelectorAll("tr")].map(nodeSnapshot))
+    ).join("\n");
+    const rendered =
+      [...w.document.querySelectorAll("td")].map((n) => n.textContent).join(" ") +
+      " " +
+      [...w.document.querySelectorAll("[aria-label]")]
+        .map((n) => n.getAttribute("aria-label"))
+        .join(" ");
+    const observer = {},
+      state = {
+        scope: sut.C8_V117_SCOPE,
+        verified: true,
+        closed: false,
+        generation: 1,
+        c8Observer: observer,
+      };
+    state.c8Current = { owner: state, observer, generation: 1, item, wire: data };
+    let collections = 0;
+    const page = {
+      url: () => sut.HML_ORIGIN + item.path,
+      evaluateHandle: async (fn, arg) => {
+        if (++collections === 2 && variant === "replacement") {
+          const old = w.document.querySelector("tr");
+          old.replaceWith(old.cloneNode(true));
+        }
+        const seal = w.eval("(" + fn.toString() + ")")(arg);
+        return {
+          _testSeal: seal,
+          evaluate: async (fn, arg) =>
+            w.eval("(" + fn.toString() + ")")(seal, arg?._testSeal ?? arg),
+          dispose: async () => {},
+        };
+      },
+      locator: (selector) => {
+        const nodes = [...w.document.querySelectorAll(selector)];
+        return {
+          count: async () => nodes.length,
+          nth: (i) => ({ ariaSnapshot: async () => nodeSnapshot(nodes[i]) }),
+        };
+      },
+    };
+    h.pages.set(page, state);
+    try {
+      if (variant === "replacement") {
+        await assert.rejects(
+          () => h.context(page, state, rendered, snapshot, null),
+          /C8_CURRENT_OWNER/,
+        );
+        continue;
+      }
+      assert.equal(
+        sut.classifyArtifactText(snapshot, words, { snapshot: true }).reason,
+        "UNKNOWN_WORDS",
+      );
+      const token = await h.context(page, state, rendered, snapshot, null),
+        remainder = h.contexts.get(token);
+      assert.equal(
+        sut.classifyArtifactText(remainder.snapshot.remainder, words, { snapshot: true }).reason,
+        variant === "original" ? "ALLOWED" : "UNKNOWN_WORDS",
+      );
+      if (variant === "original")
+        assert.equal(
+          sut.classifyArtifactText(remainder.rendered.remainder, words).reason,
+          "ALLOWED",
+        );
     } finally {
       w.close();
     }

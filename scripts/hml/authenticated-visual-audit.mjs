@@ -4248,8 +4248,24 @@ export const C8_REMAINING_SCOPE = Object.freeze({
   nonce: "trilha-c-audit-20261111-c8-r6",
   surfaces: Object.freeze(["V111", "V115", "V117"]),
 });
+export const C8_R6_PRESERVED = Object.freeze({
+  workflowRun: "43000318054",
+  artifactId: "13846890283",
+  harnessSha: "9807fe82aafb28951687ae41649ab34a6530e969",
+  frontendSha: C8_R5_PRESERVED.frontendSha,
+  deploymentId: C8_R5_PRESERVED.deploymentId,
+  zipSha256: "4ae91e19f11a813d22c0022e50a35148271d536fd83f68627147abce3da19304",
+  passedRecordsSha256: "cfc22412fb4e92bd6306038f59231cefc5f40c18aa9f99f34e7982065ec48713",
+  preservedCases: 8,
+  logoutVerified: true,
+});
+export const C8_V117_SCOPE = Object.freeze({
+  id: "C8_V117_8",
+  nonce: "trilha-c-audit-20261111-c8-r7",
+  surfaces: Object.freeze(["V117"]),
+});
 export function isC8Scope(scope) {
-  return scope === C8_AUDIT_SCOPE || scope === C8_REMAINING_SCOPE;
+  return scope === C8_AUDIT_SCOPE || scope === C8_REMAINING_SCOPE || scope === C8_V117_SCOPE;
 }
 export const C8_RECOVERY_DOCUMENT = Object.freeze({
   schema: "contaos.fixture.readonly-recovery-r20.v1",
@@ -5675,7 +5691,7 @@ export async function openVerifiedOrganizationSelector(page, fence) {
 async function runAuthenticatedAudit() {
   validateC8RecoveryDocument(C8_RECOVERY_DOCUMENT);
   const scope = auditScope(singleRequestContext?.scope);
-  if (scope !== C8_REMAINING_SCOPE) fail("AUDIT_BINDING_PENDING");
+  if (scope !== C8_V117_SCOPE) fail("AUDIT_BINDING_PENDING");
   if (process.env.GITHUB_EVENT_NAME !== "workflow_run") fail("REQUEST_EVENT");
   assertPrivateRequestEnvironment(process.env);
   getValidatedR7ZeroAuth();
@@ -6166,6 +6182,7 @@ async function runAuthenticatedAudit() {
       summary,
       auditScope: scope.id,
       ...(scope === C8_REMAINING_SCOPE ? { preservedEvidence: C8_R5_PRESERVED } : {}),
+      ...(scope === C8_V117_SCOPE ? { preservedEvidence: [C8_R5_PRESERVED, C8_R6_PRESERVED] } : {}),
       recoveryDocumentSha256: digest(JSON.stringify(C8_RECOVERY_DOCUMENT, null, 2) + "\n"),
       logoutVerified,
       aborted,
@@ -7182,6 +7199,70 @@ export function c8TechnicalFieldContracts(item, wire) {
       );
     for (const [i, r] of (wire.analysis.resultados ?? []).entries()) {
       const root = `section[aria-labelledby="v116-req"] tbody > tr:nth-child(${i + 1})`;
+      const criticalities = {
+        critica: "Crítica",
+        alta: "Alta",
+        media: "Média",
+        baixa: "Baixa",
+        informativo: "Informativo",
+      };
+      const mechanisms = {
+        deterministico: "Determinístico",
+        semantico: "Semântico",
+        humano: "Humano",
+        nao_identificado: "Não identificado",
+      };
+      const criticality =
+        r.requisito?.criticidade == null ? "—" : criticalities[r.requisito.criticidade];
+      const mechanism = mechanisms[r.mecanismo];
+      const confidence =
+        r.confianca === null
+          ? "—"
+          : typeof r.confianca === "number" &&
+              Number.isFinite(r.confianca) &&
+              r.confianca >= 0 &&
+              r.confianca <= 1
+            ? new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(r.confianca)
+            : null;
+      if (
+        automaticContext &&
+        r.id_requisito === r20.requirementId &&
+        resultIds.has(r.id_resultado) &&
+        r.requisito?.codigo === "AUD-A-TXT-001" &&
+        r.requisito.descricao === "Presença do documento TXT sintético de auditoria." &&
+        r.requisito.fonte_referencia === "Lista sintética Trilha A 24 fixtures 20261108" &&
+        r.resultado === "conforme" &&
+        typeof criticality === "string" &&
+        typeof mechanism === "string" &&
+        confidence !== null &&
+        r.justificativa === C8_R20_AUTOMATIC_RESULT.justificativa &&
+        r.fundamento === C8_R20_AUTOMATIC_RESULT.fundamento &&
+        Array.isArray(r.evidencias) &&
+        r.evidencias.length === 0 &&
+        wire.analysis.allowed_actions?.abrir_requisito === true
+      ) {
+        const cells = [
+          {
+            paragraphs: [
+              r.requisito.codigo,
+              r.requisito.descricao,
+              "Fonte: " + r.requisito.fonte_referencia,
+            ],
+          },
+          { text: "Conforme" },
+          { text: criticality },
+          { text: mechanism },
+          { text: confidence },
+          { paragraphs: [r.justificativa, "Fundamento: " + r.fundamento] },
+          { button: "Abrir requisito", name: "Abrir requisito AUD-A-TXT-001" },
+        ];
+        const names = cells.map((cell) => cell.paragraphs?.join(" ") ?? cell.name ?? cell.text);
+        out.push({
+          field: `analysis.resultados.${i}.aria_aggregates`,
+          selector: root,
+          aggregate: { cells, names, rowName: names.join(" ") },
+        });
+      }
       if (item.surface === "V117")
         closed(
           `analysis.resultados.${i}.requisito.fonte_referencia`,
@@ -7321,8 +7402,65 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
     const visible = (node) =>
       node.getClientRects().length > 0 && getComputedStyle(node).visibility !== "hidden";
     const groups = new Map(),
-      fields = new Set();
+      fields = new Set(),
+      aggregates = [];
     for (const d of descriptors) {
+      if (d.aggregate) {
+        const rows = [...document.querySelectorAll(d.selector)];
+        if (rows.length !== 1) continue;
+        const row = rows[0],
+          cells = [...row.children];
+        const plain = (node, allowed = ["class"]) =>
+          [...node.attributes].every((a) => allowed.includes(a.name));
+        const text = (node, value) =>
+          node.textContent.trim() === value &&
+          [...node.childNodes].every((n) => n.nodeType === Node.TEXT_NODE);
+        if (
+          row.tagName !== "TR" ||
+          !visible(row) ||
+          !plain(row) ||
+          row.childNodes.length !== 7 ||
+          cells.length !== 7 ||
+          cells.some((cell, index) => {
+            const spec = d.aggregate.cells[index];
+            if (cell.tagName !== "TD" || !plain(cell)) return true;
+            if (spec.paragraphs) {
+              const ps = [...cell.children];
+              return (
+                cell.childNodes.length !== spec.paragraphs.length ||
+                ps.length !== spec.paragraphs.length ||
+                ps.some((p, i) => p.tagName !== "P" || !plain(p) || !text(p, spec.paragraphs[i]))
+              );
+            }
+            if (spec.button) {
+              const button = cell.firstElementChild;
+              return (
+                cell.childNodes.length !== 1 ||
+                button?.tagName !== "BUTTON" ||
+                !plain(button, ["class", "aria-label"]) ||
+                button.getAttribute("aria-label") !== spec.name ||
+                !text(button, spec.button)
+              );
+            }
+            return !text(cell, spec.text);
+          })
+        )
+          continue;
+        for (const index of [-1, 0, 5, 6]) {
+          const node = index === -1 ? row : cells[index];
+          if (!visible(node) || node.closest('[aria-hidden="true"],[hidden]')) continue;
+          aggregates.push({
+            node,
+            field: d.field,
+            selector: d.selector + (index === -1 ? "" : ` > td:nth-child(${index + 1})`),
+            index: 0,
+            nodeCount: 1,
+            role: index === -1 ? "row" : "cell",
+            expectedName: index === -1 ? d.aggregate.rowName : d.aggregate.names[index],
+          });
+        }
+        continue;
+      }
       const slot = d.field + "|" + d.selector + "|" + (d.attribute ?? "text");
       if (fields.has(slot)) return [];
       fields.add(slot);
@@ -7381,7 +7519,9 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
     return {
       nodes: [...groups.values()]
         .flat()
-        .map(({ node, selector, index }) => ({ node, selector, index })),
+        .map(({ node, selector, index }) => ({ node, selector, index }))
+        .concat(aggregates.map(({ node, selector, index }) => ({ node, selector, index }))),
+      aggregates: aggregates.map(({ node, ...metadata }) => metadata),
       groups: [...groups].map(([value, slots]) => ({
         value,
         attribute: slots[0]?.attribute ?? null,
@@ -7401,6 +7541,8 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
   let finalSeal;
   try {
     const anchored = await seal.evaluate((seal) => seal.groups);
+    const aggregateSlots = await seal.evaluate((seal) => seal.aggregates);
+    if (!Array.isArray(aggregateSlots) || aggregateSlots.length > 512) fail("C8_CURRENT_OWNER");
     if (!Array.isArray(anchored) || anchored.length > 512 || !ownerCurrent())
       fail("C8_CURRENT_OWNER");
     const serialized = new Map();
@@ -7428,6 +7570,20 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
         serialized.set(fieldSnapshot, (serialized.get(fieldSnapshot) ?? 0) + 1);
         safeSlots++;
       }
+    const aggregateHeaders = new Map();
+    for (const slot of aggregateSlots) {
+      const locator = page.locator(slot.selector);
+      if ((await locator.count()) !== slot.nodeCount) fail("C8_CURRENT_OWNER");
+      const original = await locator.nth(slot.index).ariaSnapshot();
+      if (!original || original.length > 1048576 || slot.expectedName.length > 900) continue;
+      const header = original.split("\n")[0].trim();
+      if (!header.startsWith("- ") || !header.endsWith(":")) continue;
+      let key = header.slice(2, -1);
+      if (key.startsWith("'") && key.endsWith("'") && /^(?:[^']|'')*$/.test(key.slice(1, -1)))
+        key = key.slice(1, -1).replace(/''/g, "'");
+      if (key !== slot.role + " " + JSON.stringify(slot.expectedName)) continue;
+      aggregateHeaders.set(header, (aggregateHeaders.get(header) ?? 0) + 1);
+    }
     finalSeal = await page.evaluateHandle(collect, descriptors);
     const final = await finalSeal.evaluate((seal) => seal.groups);
     const sameNodes = await seal.evaluate(
@@ -7445,6 +7601,8 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
       !sameNodes ||
       !ownerCurrent() ||
       JSON.stringify(final) !== JSON.stringify(anchored) ||
+      JSON.stringify(await finalSeal.evaluate((seal) => seal.aggregates)) !==
+        JSON.stringify(aggregateSlots) ||
       !validateC8CurrentWire(current.item, current.wire) ||
       JSON.stringify(c8TechnicalFieldContracts(current.item, current.wire)) !==
         JSON.stringify(descriptors)
@@ -7509,8 +7667,18 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
         .join("\n");
       ariaBindings += count;
     }
+    let aggregateBindings = 0;
+    for (const [header, count] of aggregateHeaders) {
+      if (snapshot.split("\n").filter((line) => line.trim() === header).length !== count) continue;
+      channels.snapshot.remainder = channels.snapshot.remainder
+        .split("\n")
+        .map((line) => (line.trim() === header ? "" : line))
+        .join("\n");
+      aggregateBindings += count;
+    }
     if (diagnostics)
       Object.assign(diagnostics, {
+        aggregateBindings: Math.min(512, aggregateBindings),
         descriptors: Math.min(descriptors.length, 512),
         anchors: anchored.length,
         safeSlots: Math.min(safeSlots, 512),
@@ -7522,13 +7690,16 @@ async function c8PrivacyContext(page, state, rendered, snapshot, previous, diagn
           const slot = group?.slots.find(
             (s) => s.selector === d.selector && s.attribute === d.attribute,
           );
+          const aggregate = aggregateSlots.some((s) => s.field === d.field);
           return {
             index,
-            anchored: !!slot,
-            accessible: slot?.accessible === true,
+            anchored: !!slot || aggregate,
+            accessible: slot?.accessible === true || aggregate,
             snapshotSafe: slot?.snapshotSafe === true,
-            rendered: Math.min(512, rendered.split(d.value).length - 1),
-            snapshot: Math.min(512, snapshot.split(d.value).length - 1),
+            rendered:
+              typeof d.value === "string" ? Math.min(512, rendered.split(d.value).length - 1) : 0,
+            snapshot:
+              typeof d.value === "string" ? Math.min(512, snapshot.split(d.value).length - 1) : 0,
           };
         }),
       });
@@ -8701,6 +8872,7 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-c-audit-20261110-c8-r3",
     "trilha-c-audit-20261110-c8-r4",
     "trilha-c-audit-20261111-c8-r5",
+    "trilha-c-audit-20261111-c8-r6",
   ]),
   r19RecoveryGateSha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
   r19RecoveryPlanSha: "2b6ab4f542c66309fb16d12f9998136641591f25",
@@ -8756,7 +8928,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "trilha-c-audit-20261111-c8-r6",
+    nonce: "trilha-c-audit-20261111-c8-r7",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -8998,9 +9170,9 @@ export function resolveC8AuditScope(request) {
       fail(code);
     copy[name] = d.value;
   }
-  if (copy.operation !== "audit" || copy.request_id !== C8_REMAINING_SCOPE.nonce) fail(code);
+  if (copy.operation !== "audit" || copy.request_id !== C8_V117_SCOPE.nonce) fail(code);
   parseSingleRequest(JSON.stringify(copy), "audit");
-  return C8_REMAINING_SCOPE;
+  return C8_V117_SCOPE;
 }
 export function requireSingleRequestOperation(operation, request = null) {
   if (operation === "audit") {
