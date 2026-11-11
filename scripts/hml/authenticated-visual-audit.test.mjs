@@ -17168,7 +17168,7 @@ test("C8 r4 acquisition diagnostics contain only closed booleans and bounded cou
 });
 
 function c8MockHandle(groups) {
-  const seal = { groups, nodes: [] };
+  const seal = { groups, nodes: [], aggregates: [] };
   return {
     _testSeal: seal,
     evaluate: async (fn, arg) => fn(seal, arg?._testSeal ?? arg),
