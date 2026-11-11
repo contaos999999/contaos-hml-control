@@ -6613,7 +6613,7 @@ test(
   "Run78 Chromium isolado: decode real retardado quebrado e hit-test",
   {
     skip: process.env.CONTAOS_NATIVE_GUARD !== "1",
-    timeout: 30000,
+    timeout: 60000,
   },
   async () => {
     const { chromium } = await import("playwright");

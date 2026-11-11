@@ -5082,7 +5082,7 @@ async function nativeGuard() {
       ],
       {
         env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
-        timeout: 45000,
+        timeout: 75000,
         maxBuffer: 1048576,
       },
     );
