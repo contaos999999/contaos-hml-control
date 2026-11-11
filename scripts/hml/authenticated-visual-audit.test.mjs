@@ -15904,6 +15904,14 @@ async function c8NativeSourceProbe(browser, cssCompiler) {
                 console.log(
                   "C8_NATIVE_CLASSIFY " + channel + " " + result.reason + " " + result.unknownCount,
                 );
+                if (channel === "ARIA" && result.reason === "UNKNOWN_WORDS") {
+                  const unknown = value
+                    .normalize("NFC")
+                    .toLocaleLowerCase("pt-BR")
+                    .match(/[\\p{L}\\p{N}_-]+/gu)
+                    ?.filter((word) => !literalDictionary.has(word));
+                  console.log("C8_NATIVE_UNKNOWN " + JSON.stringify([...new Set(unknown ?? [])]));
+                }
                 assert.equal(
                   result.reason,
                   "ALLOWED",
