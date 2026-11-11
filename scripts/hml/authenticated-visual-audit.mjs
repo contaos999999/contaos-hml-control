@@ -4261,7 +4261,7 @@ export const C8_R6_PRESERVED = Object.freeze({
 });
 export const C8_V117_SCOPE = Object.freeze({
   id: "C8_V117_8",
-  nonce: "trilha-c-audit-20261111-c8-r7",
+  nonce: "trilha-c-audit-20261111-c8-r8",
   surfaces: Object.freeze(["V117"]),
 });
 export function isC8Scope(scope) {
@@ -8888,6 +8888,7 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-c-audit-20261110-c8-r4",
     "trilha-c-audit-20261111-c8-r5",
     "trilha-c-audit-20261111-c8-r6",
+    "trilha-c-audit-20261111-c8-r7",
   ]),
   r19RecoveryGateSha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
   r19RecoveryPlanSha: "2b6ab4f542c66309fb16d12f9998136641591f25",
@@ -8943,7 +8944,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "trilha-c-audit-20261111-c8-r7",
+    nonce: "trilha-c-audit-20261111-c8-r8",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
