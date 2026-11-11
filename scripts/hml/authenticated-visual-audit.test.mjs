@@ -17409,11 +17409,14 @@ test("C8 sixteen blockers: automatic V117 fields are closed to original result r
     "analysis.resultados.0.fundamento",
     "detail.execucao_atual.provedor_modelo",
     "detail.execucao_atual.prompt_versao",
+    "detail.execucao_atual.status",
     "detail.historico.0.provedor_modelo",
     "detail.historico.0.prompt_versao",
+    "detail.historico.0.tipo_status",
     "analysis.execucoes.0.provedor",
     "analysis.execucoes.0.modelo",
     "analysis.execucoes.0.prompt_versao",
+    "analysis.execucoes.0.status",
   ];
   const fields = sut.c8TechnicalFieldContracts(item, data);
   for (const field of expected)

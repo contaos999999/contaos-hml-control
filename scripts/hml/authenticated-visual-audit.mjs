@@ -7068,6 +7068,18 @@ export function c8TechnicalFieldContracts(item, wire) {
     }
     const executionFields = (path, e, root, combined) => {
       if (!automaticContext || (e?.id ?? e?.id_execucao) !== r20.executionId) return;
+      if (path.startsWith("detail.historico.")) {
+        if (e.tipo_execucao === "completa" && e.status_execucao === "concluida")
+          closed(
+            path + ".tipo_status",
+            "completa · concluida",
+            dd(root),
+            "Execução",
+            "completa · concluida",
+          );
+      } else {
+        closed(path + ".status", e.status, dd(root), "Status", "concluida");
+      }
       if (combined) {
         if (
           e.motor === C8_R20_EXECUTION_FIELDS.motor &&
