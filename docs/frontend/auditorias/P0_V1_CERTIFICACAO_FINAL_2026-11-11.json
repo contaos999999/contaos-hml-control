@@ -61,10 +61,19 @@
     },
     "SYS03_FINAL": {
       "kind": "WORKFLOW",
-      "run_id": 43037982384,
-      "head_sha": "955dbe65e280d6a60af66ba8e05471566bafe1a6",
-      "result": "PENDING",
-      "scope": "expiração temporal, sessão comum, rate limit, invalidação global"
+      "run_id": 43039850705,
+      "job_id": 130588405531,
+      "head_sha": "3231882fb50795d240e37cc117ac14d29901a8f0",
+      "result": "SUCCESS",
+      "markers": [
+        "SYS03_N8_REAL_GLOBAL_SESSION_INVALIDATION_PASS",
+        "SYS03_E2E07_COMMON_SIGNED_IN_BLOCKED_PASS",
+        "SYS03_N3_REAL_TEMPORAL_EXPIRY_PASS",
+        "SYS03_N7_REAL_RATE_LIMIT_AND_NO_DUPLICATE_PASS",
+        "SYS03_RESET_GLOBAL_SIGNOUT_BINDING_PASS",
+        "PHASE8_SYS03_FINAL_PASS"
+      ],
+      "scope": "HML real; fixture sintética; Mailtrap; sem PROD; sem mudança de produto"
     },
     "WCAG_APPLICABLE": {
       "kind": "CERTIFIED_EVIDENCE_CHAIN",
@@ -88,10 +97,10 @@
     "regular_prompts": 45,
     "criteria_total": 488,
     "atomic_total": 37,
-    "criteria_pass_reconciled": 476,
-    "criteria_pending": 12,
-    "atomic_pass_reconciled": 36,
-    "atomic_pending": 1,
+    "criteria_pass_reconciled": 488,
+    "criteria_pending": 0,
+    "atomic_pass_reconciled": 37,
+    "atomic_pending": 0,
     "fail": 0,
     "not_verified_non_sys03": 0
   },
@@ -116,7 +125,7 @@
       "owner_accepted_non_blocking": true
     }
   },
-  "decision": "PENDING_SYS03_FINAL_HML",
+  "decision": "CERTIFICADA_V1_COM_3_RESSALVAS",
   "criteria": [
     {
       "id": "00.01",
@@ -2909,7 +2918,7 @@
       "legacy_proofs": [
         "https://github.com/contaos9999/contaos-hml-control/blob/ad0b933943d4b69f7a9f23f203e4cff1211b4902/src/test/resetPassword.test.tsx"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -2930,7 +2939,7 @@
       "legacy_proofs": [
         "https://github.com/contaos9999/develop/issues/33"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -2953,7 +2962,7 @@
       "legacy_proofs": [
         "https://github.com/contaos9999/develop/issues/33"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -2978,7 +2987,7 @@
         "https://github.com/contaos9999/contaos-hml-control/actions/runs/41715123958",
         "https://github.com/contaos9999/develop/issues/33"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -3000,7 +3009,7 @@
         "https://github.com/contaos9999/contaos-hml-control/blob/ad0b933943d4b69f7a9f23f203e4cff1211b4902/src/test/resetPassword.test.tsx",
         "https://github.com/contaos9999/contaos-hml-control/actions/runs/41715123958"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -3022,7 +3031,7 @@
         "https://github.com/contaos9999/contaos-hml-control/blob/ad0b933943d4b69f7a9f23f203e4cff1211b4902/src/test/resetPassword.test.tsx",
         "https://github.com/contaos9999/contaos-hml-control/actions/runs/41715123958"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -3044,7 +3053,7 @@
         "https://github.com/contaos9999/develop/blob/main/docs/prompts/TESTE_C_VISUAL_LOTE_23_TELAS_2026-11-03.md",
         "https://github.com/contaos9999/contaos-hml-control/actions/runs/41720206213"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -3066,7 +3075,7 @@
         "https://github.com/contaos9999/develop/blob/main/docs/prompts/TESTE_C_VISUAL_LOTE_23_TELAS_2026-11-03.md",
         "https://github.com/contaos9999/contaos-hml-control/actions/runs/41720206213"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -3088,7 +3097,7 @@
         "https://github.com/contaos9999/develop/blob/main/docs/prompts/TESTE_C_VISUAL_LOTE_23_TELAS_2026-11-03.md",
         "https://github.com/contaos9999/contaos-hml-control/actions/runs/41720206213"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -3110,7 +3119,7 @@
         "https://github.com/contaos9999/contaos-hml-control/blob/ad0b933943d4b69f7a9f23f203e4cff1211b4902/src/test/resetPassword.test.tsx",
         "https://github.com/contaos9999/contaos-hml-control/actions/runs/41715123958"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -3132,7 +3141,7 @@
         "https://github.com/contaos9999/contaos-hml-control/blob/ad0b933943d4b69f7a9f23f203e4cff1211b4902/src/test/resetPassword.test.tsx",
         "https://github.com/contaos9999/contaos-hml-control/actions/runs/41715123958"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -3154,7 +3163,7 @@
         "https://github.com/contaos9999/contaos-hml-control/blob/ad0b933943d4b69f7a9f23f203e4cff1211b4902/src/test/resetPassword.test.tsx",
         "https://github.com/contaos9999/contaos-hml-control/actions/runs/41715123958"
       ],
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_mode": "prova histórica individual quando existente + bundle final certificado do domínio + ausência de drift material",
       "evidence_bundles": [
         "CANONICAL",
@@ -9409,7 +9418,7 @@
       "test_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
       "certified": false,
       "legacy_status": "PROVA_ESPECIFICA_A_RECONCILIAR",
-      "final_status": "PENDING_SYS03_FINAL_HML",
+      "final_status": "PASS_RECONCILIADO_POR_CADEIA_DE_EVIDENCIA",
       "evidence_bundles": [
         "CANONICAL",
         "PHASE5",
@@ -10088,5 +10097,13 @@
         "PHASE6"
       ]
     }
-  ]
+  ],
+  "sys03": {
+    "status": "PASS_RECONCILIADO",
+    "automated_run": 43039850705,
+    "manual_evidence_preserved": true,
+    "n1_n2_automation": "WAIVED_SKIPPED_BY_DIRECTOR_NOT_COUNTED_AS_AUTOMATED_PASS"
+  },
+  "certification_ready": true,
+  "v2_status": "ELIGIBLE_AFTER_PHASE8_OFFICIAL_GATE_RECORD"
 }
