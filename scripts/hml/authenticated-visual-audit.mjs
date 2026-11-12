@@ -4316,6 +4316,73 @@ function navigationKnownRoutes() {
       routes.set("/competencias/" + id + suffix, surface);
   return routes;
 }
+const NAVIGATION_EXCLUSIONS = Object.freeze({
+  V101: "OTHER_CONTRACTOR_ROW",
+  V104: "OTHER_CONTRACT_ROW",
+  V110: "OTHER_DOCUMENT_ROW",
+  V112: "OTHER_COMPETENCE_ROW",
+});
+export function navigationControlOperation(surface) {
+  if (!PRIVATE_SURFACES.includes(surface)) fail("NAVIGATION_CASE");
+  return (
+    {
+      SYS04: "ORGANIZATION_SELECT",
+      ADM01: "READ_SEARCH",
+      V101: "READ_SEARCH",
+      V102: "EMPTY_FORM",
+      V103: "INVALID_EDIT_FORM",
+      V105: "EMPTY_FORM",
+      V113: "EMPTY_FORM",
+      V117: "REQUIREMENT_DRAWER",
+      V119: "PRESENTATION_CONFIRM_CANCEL",
+      V120: "PROTOCOL_REFRESH",
+      V121: "HISTORY_TABS",
+      V122: "HISTORY_REFRESH",
+    }[surface] || "ROUTE_MENU_LINKS"
+  );
+}
+export function navigationLinkDecision(href, source) {
+  const destination = navigationDestination(href);
+  if (destination) return { kind: "TARGET", destination };
+  if (typeof href !== "string" || href.length > 512) return { kind: "BROKEN" };
+  let url;
+  try {
+    url = new URL(href, HML_ORIGIN);
+  } catch {
+    return { kind: "BROKEN" };
+  }
+  if (url.origin !== HML_ORIGIN || url.username || url.password || url.search || url.hash)
+    return { kind: "BROKEN" };
+  const uuid = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
+  const patterns = {
+    V101: new RegExp("^/contratantes/" + uuid + "/editar$"),
+    V104: new RegExp("^/contratos/" + uuid + "$"),
+    V110: new RegExp("^/contratos/" + SYNTHETIC_FIXTURE.contract + "/documentos/" + uuid + "$"),
+    V112: new RegExp("^/competencias/" + uuid + "$"),
+  };
+  return { kind: patterns[source]?.test(url.pathname) ? NAVIGATION_EXCLUSIONS[source] : "BROKEN" };
+}
+export function navigationUnavailableEvidence(path, value) {
+  const contexts = [
+    { id: SYNTHETIC_FIXTURE.competence, month: "2026-11-01", state: "preparando" },
+    {
+      id: "79bdc139-ed10-4c91-905e-b32b9a824d27",
+      month: "2026-09-01",
+      state: "aguardando_contratante",
+    },
+  ];
+  const expected = contexts.find((c) => path === "/competencias/" + c.id + "/apresentar");
+  if (!expected || !value || typeof value !== "object" || isProxy(value)) return false;
+  const b = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+  return (
+    value.competencia?.id === expected.id &&
+    value.competencia?.id_organizacao === b.organization &&
+    value.competencia?.id_contrato === b.contract &&
+    value.competencia?.competencia_referencia === expected.month &&
+    value.competencia?.situacao === expected.state &&
+    value.allowed_actions?.apresentar === false
+  );
+}
 function navigationPlain(value, keys) {
   if (!value || typeof value !== "object" || isProxy(value) || Array.isArray(value)) return false;
   const proto = Object.getPrototypeOf(value);
@@ -4341,7 +4408,10 @@ const NAVIGATION_ROW_KEYS = Object.freeze([
   "linksFound",
   "linksTested",
   "linksOutOfFixture",
+  "excludedLinkKinds",
+  "conditionalLinksTested",
   "controlsVerified",
+  "controlOperation",
   "destinations",
   "pageErrors",
   "httpErrors",
@@ -4396,6 +4466,7 @@ function navigationRowValid(row) {
     row.status === "PASS" &&
     row.stage === "FINISH" &&
     row.failureCode === null &&
+    row.controlOperation === navigationControlOperation(row.surface) &&
     row.drawerVerified === (row.surface === "V117" ? true : null) &&
     navigationArray(
       row.destinations,
@@ -4408,6 +4479,16 @@ function navigationRowValid(row) {
       (k) => Number.isInteger(row[k]) && row[k] >= 0 && row[k] <= 500,
     ) &&
     row.linksFound === row.linksTested &&
+    navigationArray(
+      row.excludedLinkKinds,
+      500,
+      (kind) => typeof kind === "string" && kind === NAVIGATION_EXCLUSIONS[row.surface],
+    ) &&
+    row.linksOutOfFixture === row.excludedLinkKinds.length &&
+    Number.isInteger(row.conditionalLinksTested) &&
+    row.conditionalLinksTested >= 0 &&
+    row.conditionalLinksTested <= 1 &&
+    (row.conditionalLinksTested === 0 || row.destinations.includes("V119")) &&
     (row.surface === "SYS04" || row.linksFound >= 4) &&
     row.pageErrors === 0 &&
     row.httpErrors === 0 &&
@@ -4530,7 +4611,7 @@ export function navigationParent(item) {
     V117: "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/analise",
     V118: m,
     V119: "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49",
-    V120: "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27/apresentar",
+    V120: "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27",
     V121: c,
     V122: c,
     V123: "/",
@@ -4552,12 +4633,48 @@ export async function runNavigationAudit(page, fence, proof) {
     fail("NAVIGATION_IDENTITY");
   const records = [];
   let errors = 0,
-    httpErrors = 0;
+    httpErrors = 0,
+    activeTheme = "light",
+    generation = 0;
+  const requestOwners = new WeakMap(),
+    unavailable = new Map(),
+    pendingResponses = new Set();
+  const onRequest = (request) => {
+    if (request.url() !== API_ORIGIN + "/rest/v1/rpc/obter_visao_geral_competencia") return;
+    try {
+      const body = request.postDataJSON();
+      if (navigationPlain(body, ["p_id_competencia"]) && typeof body.p_id_competencia === "string")
+        requestOwners.set(request, { generation, id: body.p_id_competencia });
+    } catch {
+      errors++;
+    }
+  };
   const onError = () => errors++;
+  const onConsole = (message) => {
+    if (message.type() === "error") errors++;
+  };
+  const onRequestFailed = () => httpErrors++;
   const onResponse = (response) => {
     if (response.status() >= 400) httpErrors++;
+    const owner = requestOwners.get(response.request());
+    if (!owner || response.status() !== 200) return;
+    const reading = (async () => {
+      const bytes = await response.body();
+      if (bytes.length > 262144) throw Error("NAVIGATION_STATE");
+      const value = JSON.parse(bytes.toString("utf8"));
+      if (navigationUnavailableEvidence("/competencias/" + owner.id + "/apresentar", value))
+        unavailable.set(owner.generation + ":" + owner.id, true);
+    })()
+      .catch(() => {
+        errors++;
+      })
+      .finally(() => pendingResponses.delete(reading));
+    pendingResponses.add(reading);
   };
+  page.on("request", onRequest);
   page.on("pageerror", onError);
+  page.on("console", onConsole);
+  page.on("requestfailed", onRequestFailed);
   page.on("response", onResponse);
   const need = (condition, code) => {
     if (!condition) fail(code);
@@ -4565,6 +4682,11 @@ export async function runNavigationAudit(page, fence, proof) {
   async function ready(surface, path) {
     await settleVerifiedPage(page, fence);
     need(new URL(page.url()).pathname === path, "NAVIGATION_ROUTE");
+    const themeVerified = await page.evaluate((theme) => {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      return document.documentElement.classList.contains("dark") === (theme === "dark");
+    }, activeTheme);
+    need(themeVerified, "NAVIGATION_STATE");
     if (surface === "SYS04") {
       const card = page
         .getByRole("radio")
@@ -4599,7 +4721,26 @@ export async function runNavigationAudit(page, fence, proof) {
           "",
       ),
     }));
-    need(surfaceStateValid(surface, observation), "NAVIGATION_STATE");
+    if (
+      surface === "V119" &&
+      path !== "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar"
+    ) {
+      await Promise.all([...pendingResponses]);
+      const id = path.split("/")[2];
+      need(
+        unavailable.get(generation + ":" + id) === true &&
+          observation.headingText.trim() === "Wizard de apresentação" &&
+          observation.mainText.includes(
+            "Ação não autorizada pelo backend ou competência indisponível para apresentação.",
+          ) &&
+          (await page
+            .getByRole("button", { name: /^(?:Aprovar|Registrar) apresentação$/ })
+            .count()) === 0,
+        "NAVIGATION_STATE",
+      );
+      return "CONDITIONAL_UNAVAILABLE";
+    }
+    need(surfaceStateValid(surface === "V117" ? "V116" : surface, observation), "NAVIGATION_STATE");
     need(
       !/Acesso negado|Não encontrado|Não foi possível carregar|Sessão expirada/.test(
         observation.mainText,
@@ -4618,6 +4759,7 @@ export async function runNavigationAudit(page, fence, proof) {
           ? "V119"
           : null);
     need(!!parentSurface, "NAVIGATION_ROUTE");
+    generation++;
     await navigateVerifiedPage(page, fence, HML_ORIGIN + path);
     await ready(parentSurface, path);
   }
@@ -4632,8 +4774,12 @@ export async function runNavigationAudit(page, fence, proof) {
     }
   }
   async function clickPath(path, width, menu) {
-    if (menu) await openMenu(width);
     let selected = page.locator(`a[href="${path}"]:visible`).first();
+    const opened = menu && width < 768 && (await selected.count()) === 0;
+    if (opened) {
+      await openMenu(width);
+      selected = page.locator(`a[href="${path}"]:visible`).first();
+    }
     if ((await selected.count()) === 0 && !menu) {
       for (let pageNumber = 0; pageNumber < 25 && (await selected.count()) === 0; pageNumber++) {
         const next = page.getByRole("button", { name: /Próxima página/ }).first();
@@ -4644,9 +4790,31 @@ export async function runNavigationAudit(page, fence, proof) {
       }
     }
     need((await selected.count()) === 1 && (await selected.isEnabled()), "NAVIGATION_LINK_MISSING");
+    generation++;
     await selected.click();
     await page.waitForURL(HML_ORIGIN + path);
     await settleVerifiedPage(page, fence);
+    if (opened)
+      await page
+        .getByRole("dialog", { name: "Menu de navegação", exact: true })
+        .waitFor({ state: "hidden" });
+  }
+  async function closeMenu() {
+    const dialog = page.getByRole("dialog", { name: "Menu de navegação", exact: true });
+    if ((await dialog.count()) !== 1) return;
+    await page.keyboard.press("Escape");
+    await dialog.waitFor({ state: "hidden" });
+    const opener = page.getByRole("button", { name: "Abrir menu", exact: true });
+    need(await opener.evaluate((node) => document.activeElement === node), "NAVIGATION_MENU");
+  }
+  async function visibleHrefs() {
+    return page
+      .locator("a[href]:visible")
+      .evaluateAll((nodes) =>
+        nodes
+          .filter((e) => !e.closest('[inert],[aria-hidden="true"]'))
+          .map((e) => e.getAttribute("href")),
+      );
   }
   try {
     for (const item of navigationCases()) {
@@ -4666,8 +4834,11 @@ export async function runNavigationAudit(page, fence, proof) {
         linksFound: 0,
         linksTested: 0,
         linksOutOfFixture: 0,
+        excludedLinkKinds: [],
+        conditionalLinksTested: 0,
         destinations: [],
         controlsVerified: false,
+        controlOperation: navigationControlOperation(item.surface),
         pageErrors: 0,
         httpErrors: 0,
         blockedRequests: 0,
@@ -4679,17 +4850,15 @@ export async function runNavigationAudit(page, fence, proof) {
       const beforeErrors = errors,
         beforeHttp = httpErrors;
       try {
+        activeTheme = item.theme;
         await checkFreshDeployment(proof, false);
         await resizeVerifiedPage(page, fence, item.width);
         await go(item.path);
-        await page.evaluate(
-          (theme) => document.documentElement.classList.toggle("dark", theme === "dark"),
-          item.theme,
-        );
         row.routeExact = true;
         row.stateVerified = true;
         row.organizationVerified = true;
         row.stage = "RELOAD";
+        generation++;
         await page.reload({ waitUntil: "networkidle" });
         await ready(item.surface, item.path);
         row.reloadVerified = true;
@@ -4708,6 +4877,11 @@ export async function runNavigationAudit(page, fence, proof) {
           await drawer
             .getByRole("heading", { name: "Requisito", exact: true })
             .waitFor({ state: "visible" });
+          for (const name of ["Fonte e versionamento", "Resultado de referência", "Evidências"])
+            need(
+              (await drawer.getByRole("region", { name, exact: true }).count()) === 1,
+              "NAVIGATION_STATE",
+            );
           if ((await drawer.getByRole("alert").count()) !== 0) fail("NAV_STATE");
           await drawer.getByRole("button", { name: "Fechar", exact: true }).click();
           await drawer.waitFor({ state: "hidden" });
@@ -4720,6 +4894,7 @@ export async function runNavigationAudit(page, fence, proof) {
           await clickPath(item.path, item.width, !mainLink);
           await ready(item.surface, item.path);
           row.enteredFromMenu = true;
+          generation++;
           await page.goBack({ waitUntil: "networkidle" });
           await ready(
             navigationDestination(HML_ORIGIN + parent) ||
@@ -4733,6 +4908,7 @@ export async function runNavigationAudit(page, fence, proof) {
         if (item.surface === "V117") {
           await clickPath("/", item.width, true);
           await ready("SYS05", "/");
+          generation++;
           await page.goBack({ waitUntil: "networkidle" });
           await ready("V117", item.path);
           row.backVerified = true;
@@ -4757,6 +4933,7 @@ export async function runNavigationAudit(page, fence, proof) {
             await expand.waitFor();
             await expand.click();
           }
+          const contentHrefs = await visibleHrefs();
           await openMenu(item.width);
           const required = [
             "/",
@@ -4773,26 +4950,23 @@ export async function runNavigationAudit(page, fence, proof) {
           row.menuVerified = true;
           row.shellVerified = true;
           row.stage = "LINKS";
-          const hrefs = await page
-            .locator("a[href]:visible")
-            .evaluateAll((nodes) =>
-              nodes
-                .filter((e) => !e.closest('[inert],[aria-hidden="true"]'))
-                .map((e) => e.getAttribute("href")),
-            );
+          const hrefs = [...contentHrefs, ...(await visibleHrefs())];
           const seen = new Set(),
             targets = [];
           for (const href of hrefs) {
-            const dest = navigationDestination(href);
-            if (!dest) {
+            const decision = navigationLinkDecision(href, item.surface);
+            need(decision.kind !== "BROKEN", "NAVIGATION_LINK_MISSING");
+            if (decision.kind !== "TARGET") {
               row.linksOutOfFixture++;
+              row.excludedLinkKinds.push(decision.kind);
               continue;
             }
+            const dest = decision.destination;
             if (dest === item.surface || seen.has(dest)) continue;
             seen.add(dest);
             targets.push({ dest, path: new URL(href, HML_ORIGIN).pathname });
           }
-          await closeAuditMobileMenu(page);
+          await closeMenu();
           row.linksFound = targets.length;
           for (const target of targets) {
             await go(item.path);
@@ -4801,15 +4975,25 @@ export async function runNavigationAudit(page, fence, proof) {
               menu = (await page.locator(`a[href="${target.path}"]:visible`).count()) === 0;
             }
             await clickPath(target.path, item.width, menu);
-            await ready(target.dest, target.path);
+            const state = await ready(target.dest, target.path);
+            if (state === "CONDITIONAL_UNAVAILABLE") row.conditionalLinksTested++;
             row.destinations.push(target.dest);
             row.linksTested++;
           }
           await go(item.path);
           row.stage = "CONTROLS";
-          if (["V102", "V105", "V113"].includes(item.surface)) {
+          if (["V102", "V103", "V105", "V113"].includes(item.surface)) {
             const form = page.locator("form");
             need((await form.count()) === 1, "NAVIGATION_FORM");
+            let restore = null,
+              original = null;
+            if (item.surface === "V103") {
+              restore = form.locator("input[required]").first();
+              need((await restore.count()) === 1, "NAVIGATION_FORM");
+              original = await restore.inputValue();
+              need(original.length > 0, "NAVIGATION_FORM");
+              await restore.fill("");
+            }
             const empty = await form.evaluate((f) =>
               [...f.querySelectorAll('input:not([type="hidden"]),textarea')].some((e) => !e.value),
             );
@@ -4824,6 +5008,49 @@ export async function runNavigationAudit(page, fence, proof) {
                 !!f.querySelector('[role="alert"]'),
             );
             need(invalid, "NAVIGATION_FORM");
+            if (restore) await restore.fill(original);
+          } else if (["V101", "ADM01"].includes(item.surface)) {
+            const search = page.locator('main input[type="search"]');
+            need((await search.count()) === 1, "NAVIGATION_FORM");
+            await search.fill("AUD");
+            await settleVerifiedPage(page, fence);
+            need((await search.inputValue()) === "AUD", "NAVIGATION_FORM");
+            await search.fill("");
+            await ready(item.surface, item.path);
+          } else if (item.surface === "V119") {
+            const opener = page.getByRole("button", {
+              name: "Registrar apresentação",
+              exact: true,
+            });
+            await opener.click();
+            const dialog = page.getByRole("dialog", {
+              name: "Confirmar envio ao contratante",
+              exact: true,
+            });
+            await dialog.waitFor({ state: "visible" });
+            await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+            await dialog.waitFor({ state: "hidden" });
+            need(
+              await opener.evaluate((node) => document.activeElement === node),
+              "NAVIGATION_STATE",
+            );
+          } else if (item.surface === "V120" || item.surface === "V122") {
+            await page
+              .getByRole("button", {
+                name: item.surface === "V120" ? "Atualizar consulta" : "Atualizar histórico",
+                exact: true,
+              })
+              .click();
+            await ready(item.surface, item.path);
+          } else if (item.surface === "V121") {
+            for (const name of ["Precedentes", "Regras preventivas", "Relatórios e apontamentos"]) {
+              await page.getByRole("button", { name, exact: true }).click();
+              await ready(item.surface, item.path);
+            }
+          } else if (item.surface === "V117") {
+            need(row.drawerVerified === true, "NAVIGATION_STATE");
+          } else {
+            need(row.linksTested > 0 && row.menuVerified && row.shellVerified, "NAVIGATION_CASE");
           }
           row.controlsVerified = true;
         }
@@ -4866,6 +5093,9 @@ export async function runNavigationAudit(page, fence, proof) {
     }
   } finally {
     page.off("pageerror", onError);
+    page.off("request", onRequest);
+    page.off("console", onConsole);
+    page.off("requestfailed", onRequestFailed);
     page.off("response", onResponse);
   }
   return { records, pageErrors: errors, httpErrors };

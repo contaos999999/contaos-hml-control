@@ -41,8 +41,11 @@ function navigationTechnicalRows() {
     linksFound: 7,
     linksTested: 7,
     linksOutOfFixture: 0,
+    excludedLinkKinds: [],
+    conditionalLinksTested: 0,
     destinations: sut.PRIVATE_SURFACES.filter((s) => s !== surface).slice(0, 7),
     controlsVerified: true,
+    controlOperation: fn("navigationControlOperation")(surface),
     pageErrors: 0,
     httpErrors: 0,
     blockedRequests: 0,
@@ -81,6 +84,52 @@ test("NAV F2: destination policy rejects foreign origins identifiers query secre
   ])
     assert.equal(f(url), null);
 });
+test("NAV F2: outside-list exclusions are closed by source route and identifier syntax", () => {
+  const f = fn("navigationLinkDecision"),
+    id = "00000000-0000-4000-8000-000000000001";
+  assert.equal(f("/contratantes/" + id + "/editar", "V101").kind, "OTHER_CONTRACTOR_ROW");
+  for (const [href, source] of [
+    ["/contratantes/" + id + "/editar", "V104"],
+    ["/unknown", "V101"],
+    ["https://example.com/", "V101"],
+    ["/contratos/" + id + "?token=x", "V104"],
+  ])
+    assert.equal(f(href, source).kind, "BROKEN");
+  assert.equal(f("/contratos/" + sut.SYNTHETIC_FIXTURE.contract, "V104").kind, "TARGET");
+});
+test("NAV F2: conditional wizard denial requires exact fresh backend ownership and state", () => {
+  const f = fn("navigationUnavailableEvidence"),
+    b = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+  const id = "79bdc139-ed10-4c91-905e-b32b9a824d27",
+    path = "/competencias/" + id + "/apresentar";
+  const data = {
+    competencia: {
+      id,
+      id_organizacao: b.organization,
+      id_contrato: b.contract,
+      competencia_referencia: "2026-09-01",
+      situacao: "aguardando_contratante",
+    },
+    allowed_actions: { apresentar: false },
+  };
+  assert.equal(f(path, data), true);
+  for (const patch of [
+    { allowed_actions: { apresentar: true } },
+    { competencia: { ...data.competencia, id_organizacao: "other" } },
+    { competencia: { ...data.competencia, situacao: "preparando" } },
+    { competencia: { ...data.competencia, id: "other" } },
+  ])
+    assert.equal(f(path, { ...data, ...patch }), false);
+  assert.equal(f("/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar", data), false);
+});
+test("NAV F2: essential local controls have explicit operations without valid business submission", () => {
+  const f = fn("navigationControlOperation");
+  assert.equal(f("V103"), "INVALID_EDIT_FORM");
+  assert.equal(f("V119"), "PRESENTATION_CONFIRM_CANCEL");
+  assert.equal(f("V117"), "REQUIREMENT_DRAWER");
+  assert.equal(f("V120"), "PROTOCOL_REFRESH");
+  assert.throws(() => f("UNKNOWN"), /NAVIGATION_CASE/);
+});
 test("NAV F2: full observed matrix passes and missing duplicate extra false or forged fields do not", () => {
   const summarize = fn("summarizeNavigation"),
     rows = navigationTechnicalRows();
@@ -93,6 +142,11 @@ test("NAV F2: full observed matrix passes and missing duplicate extra false or f
     rows.map((r, i) => (i ? r : { ...r, extra: "canary" })),
   ])
     assert.equal(summarize(bad).matrixComplete, false);
+});
+test("NAV F2: an unknown visible link cannot be certified as out of fixture", () => {
+  const rows = navigationTechnicalRows();
+  rows[0].linksOutOfFixture = 1;
+  assert.equal(fn("summarizeNavigation")(rows).matrixComplete, false);
 });
 test("NAV F2: report rejects secrets unknown fields missing cleanup and fabricated counts", () => {
   const validate = fn("validateNavigationReport"),
@@ -188,7 +242,7 @@ test("NAV F2: parent routes preserve the contractor document competence and pres
   );
   assert.equal(
     parent(cases.find((r) => r.surface === "V120")),
-    "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27/apresentar",
+    "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27",
   );
 });
 // Historical metadata is initialized before tests can cross a top-level await.
