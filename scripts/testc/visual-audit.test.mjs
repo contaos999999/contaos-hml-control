@@ -935,6 +935,10 @@ test("F2 delta: missing duplicate unknown false or forged evidence cannot pass",
   assert.equal(delta.phase2DeltaReportValid(valid), true);
   for (const change of [
     { complete: false },
+    { records: valid.records.map((r, i) => (i ? r : { ...r, width: "1440" })) },
+    { records: valid.records.map((r, i) => (i ? r : { ...r, surface: ["V114"] })) },
+    { records: valid.records.map((r, i) => (i ? r : { ...r, theme: ["light"] })) },
+    { headSha: ["b".repeat(40)] },
     { mode: "PASS_REAL" },
     { records: valid.records.slice(1) },
     { records: [...valid.records, valid.records[0]] },

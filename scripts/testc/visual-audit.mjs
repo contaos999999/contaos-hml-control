@@ -886,6 +886,9 @@ export function phase2DeltaReportValid(value) {
     value.schema !== "contaos.phase2.offline-visual-delta.v1" ||
     value.mode !== "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS" ||
     value.complete !== true ||
+    typeof value.headSha !== "string" ||
+    typeof value.sourceTree !== "string" ||
+    typeof value.styleSha256 !== "string" ||
     !/^([a-f0-9]{40})$/.test(value.headSha) ||
     !/^([a-f0-9]{40})$/.test(value.sourceTree) ||
     !/^([a-f0-9]{64})$/.test(value.styleSha256) ||
@@ -930,6 +933,8 @@ export function phase2DeltaReportValid(value) {
         "status",
       ])
     )
+      return false;
+    if (typeof r.surface !== "string" || typeof r.width !== "number" || typeof r.theme !== "string")
       return false;
     const key = `${r.surface}/${r.width}/${r.theme}`;
     if (
