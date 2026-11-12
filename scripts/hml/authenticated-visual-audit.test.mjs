@@ -18196,3 +18196,29 @@ test("NAV R2 logout diagnosis never upgrades cleanup or exposes a raw exception"
  assert.deepEqual(capture(Object.assign(Error("CANARY"),{name:"TimeoutError"}),"REDIRECT"),{stage:"REDIRECT",code:"NAVIGATION_TIMEOUT"});
  assert.deepEqual(capture(Error("CANARY_SECRET"),"SECRET"),{stage:"UNKNOWN",code:"UNCLASSIFIED"});
 });
+
+const navigationNativeTapFixture = () => [
+"TAP version 13",
+...["PERMISSIONS","ADMINISTRATION","SESSION","TRANSPORT"].flatMap(kind=>[1440,390].map(width=>"# NAV_R2_NATIVE_CASE "+kind+"_"+width+"_"+(width===1440?"LIGHT":"DARK")+" PASS")),
+"ok 1 - NAV R2 native readiness and transport",
+"1..1","# tests 1","# suites 0","# pass 1","# fail 0","# cancelled 0","# skipped 0",
+].join("\n");
+test("NAV R2 native receipt requires all eight distinct cases and the real source identity",()=>{
+ const identity={harnessSha:"a".repeat(40),moduleHash:"b".repeat(64),testHash:"c".repeat(64)};
+ const proof=fn("navigationNativeSupplement")(navigationNativeTapFixture(),identity);
+ assert.equal(fn("navigationNativeProofValid")(proof,identity),true);
+ assert.equal(proof.cases,8);assert.equal(proof.mode,"OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS");
+ assert.deepEqual(proof.views,[{width:1440,theme:"light"},{width:390,theme:"dark"}]);
+ for(const patch of [{cases:7},{harnessSha:"d".repeat(40)},{moduleHash:"d".repeat(64)},{testHash:"d".repeat(64)},{mode:"HML"},{views:[{width:1440,theme:"light"}]},{passed:false},{secret:"CANARY"}]) assert.equal(sut.navigationNativeProofValid({...proof,...patch},identity),false);
+});
+test("NAV R2 native receipt refuses missing duplicate unknown skipped or failing cases",()=>{
+ const parse=fn("navigationNativeSupplement"),id={harnessSha:"a".repeat(40),moduleHash:"b".repeat(64),testHash:"c".repeat(64)},good=navigationNativeTapFixture();
+ for(const text of [good.replace("# NAV_R2_NATIVE_CASE PERMISSIONS_1440_LIGHT PASS\n",""),good+"\n# NAV_R2_NATIVE_CASE PERMISSIONS_1440_LIGHT PASS",good+"\n# NAV_R2_NATIVE_CASE OTHER PASS",good.replace("# skipped 0","# skipped 1"),good.replace("# fail 0","# fail 1"),good.replace("ok 1 - NAV","not ok 1 - NAV")])assert.throws(()=>parse(text,id),/NAVIGATION_NATIVE/);
+});
+test("NAV R2 native receipt never reads getters or proxies as proof",()=>{
+ const identity={harnessSha:"a".repeat(40),moduleHash:"b".repeat(64),testHash:"c".repeat(64)},proof=fn("navigationNativeSupplement")(navigationNativeTapFixture(),identity);
+ let effects=0;const bad={...proof};Object.defineProperty(bad,"views",{enumerable:true,get(){effects++;return proof.views;}});
+ assert.equal(sut.navigationNativeProofValid(bad,identity),false);
+ assert.equal(sut.navigationNativeProofValid(new Proxy(proof,{get(){effects++;return true;}}),identity),false);
+ assert.equal(effects,0);
+});

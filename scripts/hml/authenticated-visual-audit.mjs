@@ -4557,6 +4557,25 @@ export function navigationLogoutFailure(error,stage) {
  return {stage:["DRAIN","MENU_CLOSE","CONTROL","CLICK","REDIRECT","POST_DRAIN","NOT_LOGGED_IN"].includes(stage)?stage:"UNKNOWN",code:NAVIGATION_NATIVE_CODES.has(code)?code:code==="NAVIGATION_LOGOUT_CONTROL"?code:name==="TimeoutError"?"NAVIGATION_TIMEOUT":"UNCLASSIFIED"};
 }
 
+
+const NAVIGATION_NATIVE_CASES=Object.freeze(["PERMISSIONS","ADMINISTRATION","SESSION","TRANSPORT"].flatMap(kind=>["1440_LIGHT","390_DARK"].map(view=>kind+"_"+view)));
+export function navigationNativeProofValid(value,identity) {
+ if(!navigationPlain(value,["schema","harnessSha","moduleHash","testHash","mode","cases","views","passed"]))return false;
+ return value.schema==="contaos.navigation.native.v1"&&value.harnessSha===identity?.harnessSha&&hash40(value.harnessSha)&&value.moduleHash===identity?.moduleHash&&hash64(value.moduleHash)&&value.testHash===identity?.testHash&&hash64(value.testHash)&&value.mode==="OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS"&&value.cases===8&&value.passed===true&&navigationArray(value.views,2,v=>navigationPlain(v,["width","theme"]))&&value.views.length===2&&value.views[0].width===1440&&value.views[0].theme==="light"&&value.views[1].width===390&&value.views[1].theme==="dark";
+}
+export function navigationNativeSupplement(output,identity) {
+ if(typeof output!=="string"||Buffer.byteLength(output)>1048576)fail("NAVIGATION_NATIVE_PROOF");
+ const lines=output.split("\n").map(line=>line.trim()),cases=[];
+ if(lines.some(line=>/^not ok\b/.test(line))||!["# tests 1","# pass 1","# fail 0","# cancelled 0","# skipped 0","ok 1 - NAV R2 native readiness and transport"].every(line=>lines.includes(line)))fail("NAVIGATION_NATIVE_PROOF");
+ for(const line of lines.filter(line=>line.startsWith("# NAV_R2_NATIVE_CASE"))) {
+  const match=/^# NAV_R2_NATIVE_CASE ([A-Z0-9_]+) PASS$/.exec(line);
+  if(!match||!NAVIGATION_NATIVE_CASES.includes(match[1])||cases.includes(match[1]))fail("NAVIGATION_NATIVE_PROOF");cases.push(match[1]);
+ }
+ if(cases.length!==8)fail("NAVIGATION_NATIVE_PROOF");
+ const proof={schema:"contaos.navigation.native.v1",harnessSha:identity?.harnessSha,moduleHash:identity?.moduleHash,testHash:identity?.testHash,mode:"OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",cases:8,views:[{width:1440,theme:"light"},{width:390,theme:"dark"}],passed:true};
+ if(!navigationNativeProofValid(proof,identity))fail("NAVIGATION_NATIVE_PROOF");return proof;
+}
+
 export function validateNavigationReport(value) {
   const keys = [
     "schema",
