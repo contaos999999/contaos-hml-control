@@ -886,3 +886,113 @@ test("refluxo/texto: caixa do botão não esconde clipping do texto interno", as
     f.close();
   }
 });
+
+const delta = await import("./visual-audit.mjs");
+function deltaTechnicalReport() {
+  const records = delta.phase2DeltaCases().map((item) => ({
+    ...item,
+    headingCount: 1,
+    themeVerified: true,
+    overflow: 0,
+    controls44: true,
+    keyboardVerified: true,
+    reloadVerified: true,
+    backVerified: true,
+    alerts: 0,
+    pageErrors: 0,
+    externalRequests: 0,
+    screenshot: `screenshots/${item.surface}_${item.width}_${item.theme}.png`,
+    sha256: "a".repeat(64),
+    status: "PASS",
+  }));
+  return {
+    schema: "contaos.phase2.offline-visual-delta.v1",
+    mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+    headSha: "b".repeat(40),
+    sourceTree: "c".repeat(40),
+    styleSha256: "d".repeat(64),
+    sourceHashes: {
+      V114: "e".repeat(64),
+      V120: "f".repeat(64),
+      LIST: "1".repeat(64),
+      ADAPTER: "2".repeat(64),
+    },
+    records,
+    complete: true,
+  };
+}
+test("F2 delta: exact sixteen-case visual catalogue preserves original route catalogue", () => {
+  assert.equal(typeof delta.phase2DeltaCases, "function");
+  const rows = delta.phase2DeltaCases();
+  assert.equal(rows.length, 16);
+  assert.equal(new Set(rows.map((r) => `${r.surface}/${r.width}/${r.theme}`)).size, 16);
+  assert.deepEqual([...new Set(rows.map((r) => r.surface))], ["V114", "V120"]);
+  assert.equal(cases().length, 232);
+});
+test("F2 delta: missing duplicate unknown false or forged evidence cannot pass", () => {
+  assert.equal(typeof delta.phase2DeltaReportValid, "function");
+  const valid = deltaTechnicalReport();
+  assert.equal(delta.phase2DeltaReportValid(valid), true);
+  for (const change of [
+    { complete: false },
+    { mode: "PASS_REAL" },
+    { records: valid.records.slice(1) },
+    { records: [...valid.records, valid.records[0]] },
+    { token: "canary" },
+    { records: valid.records.map((r, i) => (i ? r : { ...r, overflow: 12 })) },
+    { records: valid.records.map((r, i) => (i ? r : { ...r, externalRequests: 1 })) },
+    { records: valid.records.map((r, i) => (i ? r : { ...r, screenshot: "../../other.png" })) },
+    { sourceHashes: { ...valid.sourceHashes, SDK: "canary" } },
+  ])
+    assert.equal(delta.phase2DeltaReportValid({ ...valid, ...change }), false);
+});
+test("F2 delta: fixture substitutes only client and router while importing original components and read adapters", () => {
+  assert.equal(typeof delta.phase2DeltaFixtureFiles, "function");
+  const files = delta.phase2DeltaFixtureFiles("/approved/source");
+  assert.deepEqual(Object.keys(files).sort(), [
+    "build.mjs",
+    "client.ts",
+    "entry.tsx",
+    "router.tsx",
+  ]);
+  assert.match(
+    files["entry.tsx"],
+    /\/approved\/source\/src\/components\/competencias\/CompetenciaVisaoGeral.tsx/,
+  );
+  assert.match(
+    files["entry.tsx"],
+    /\/approved\/source\/src\/components\/competencias\/CompetenciaProtocolo.tsx/,
+  );
+  assert.match(files["build.mjs"], /integrations/);
+  assert.doesNotMatch(
+    files["build.mjs"],
+    /onResolve[^\n]*(?:protocoloDados|competenciaVisaoGeralDados|CompetenciaApresentacoesLista)/,
+  );
+  assert.doesNotMatch(
+    files["client.ts"],
+    /\.rpc\(['"](?:registrar|aprovar)|\.(?:insert|update|upsert|delete)\(/,
+  );
+});
+test("F2 delta: invalid identity or nonlocal CSS source rejects before any browser effect", async () => {
+  assert.equal(typeof delta.collectPhase2VisualDelta, "function");
+  let effects = 0;
+  const browser = new Proxy(
+    {},
+    {
+      get() {
+        effects++;
+        throw Error("BROWSER_EFFECT");
+      },
+    },
+  );
+  await assert.rejects(
+    () =>
+      delta.collectPhase2VisualDelta(browser, {
+        base: "https://contaos-41-hml.vercel.app",
+        output: "/tmp/never",
+        headSha: "a".repeat(40),
+      }),
+    /PHASE2_INPUT/,
+  );
+  assert.equal(effects, 0);
+});
