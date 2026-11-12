@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,8 @@ type Estado =
 /** Montada somente após a visão geral autorizada; cada consulta conserva seu contexto. */
 export function CompetenciaApresentacoesLista({ competencia, organizacao, contrato }: Props) {
   const heading = useId();
+  const titulo = useRef<HTMLHeadingElement>(null);
+  const focoPendente = useRef(false);
   const contexto = `${competencia}:${organizacao}:${contrato}`;
   const [pagina, setPagina] = useState({ contexto, offset: 0 });
   const offset = pagina.contexto === contexto ? pagina.offset : 0;
@@ -26,6 +28,16 @@ export function CompetenciaApresentacoesLista({ competencia, organizacao, contra
     estado: { tipo: "carregando" },
   });
   const estado: Estado = resposta.chave === chave ? resposta.estado : { tipo: "carregando" };
+
+  useEffect(() => {
+    focoPendente.current = false;
+  }, [contexto]);
+  useEffect(() => {
+    if (estado.tipo !== "carregando" && focoPendente.current) {
+      focoPendente.current = false;
+      titulo.current?.focus();
+    }
+  }, [estado.tipo, chave]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -48,7 +60,12 @@ export function CompetenciaApresentacoesLista({ competencia, organizacao, contra
 
   return (
     <section aria-labelledby={heading} className="rounded-lg border border-border bg-card p-5">
-      <h2 id={heading} className="text-lg font-semibold">
+      <h2
+        ref={titulo}
+        tabIndex={-1}
+        id={heading}
+        className="text-lg font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         Apresentações registradas
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -69,7 +86,10 @@ export function CompetenciaApresentacoesLista({ competencia, organizacao, contra
             type="button"
             variant="outline"
             className="min-h-11"
-            onClick={() => setTentativa((value) => value + 1)}
+            onClick={() => {
+              focoPendente.current = true;
+              setTentativa((value) => value + 1);
+            }}
           >
             Tentar novamente
           </Button>
@@ -107,9 +127,10 @@ export function CompetenciaApresentacoesLista({ competencia, organizacao, contra
               variant="outline"
               className="min-h-11"
               disabled={offset === 0}
-              onClick={() =>
-                setPagina({ contexto, offset: Math.max(0, offset - PAGINA_APRESENTACOES) })
-              }
+              onClick={() => {
+                focoPendente.current = true;
+                setPagina({ contexto, offset: Math.max(0, offset - PAGINA_APRESENTACOES) });
+              }}
             >
               Apresentações anteriores
             </Button>
@@ -121,7 +142,10 @@ export function CompetenciaApresentacoesLista({ competencia, organizacao, contra
               variant="outline"
               className="min-h-11"
               disabled={offset + PAGINA_APRESENTACOES >= estado.total}
-              onClick={() => setPagina({ contexto, offset: offset + PAGINA_APRESENTACOES })}
+              onClick={() => {
+                focoPendente.current = true;
+                setPagina({ contexto, offset: offset + PAGINA_APRESENTACOES });
+              }}
             >
               Próximas apresentações
             </Button>

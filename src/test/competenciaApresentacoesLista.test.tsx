@@ -51,6 +51,20 @@ beforeEach(() => {
   m.list.mockResolvedValue({ itens: [item], total: 1 });
 });
 describe("reentrada persistente na apresentação", () => {
+  it("restaura foco previsível depois de uma mudança de página por teclado", async () => {
+    m.list
+      .mockResolvedValueOnce({ itens: [item], total: 26 })
+      .mockResolvedValueOnce({ itens: [{ ...item, numero_rodada: 2 }], total: 26 });
+    render(<CompetenciaApresentacoesLista {...props} />);
+    await screen.findByRole("link", { name: "Abrir apresentação 1" });
+    const next = screen.getByRole("button", { name: "Próximas apresentações" });
+    next.focus();
+    fireEvent.click(next);
+    await screen.findByRole("link", { name: "Abrir apresentação 2" });
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "Apresentações registradas" })).toHaveFocus(),
+    );
+  });
   it("recria link real ao montar sem nova intenção de negócio", async () => {
     const v = render(<CompetenciaApresentacoesLista {...props} />);
     const link = await screen.findByRole("link", { name: "Abrir apresentação 1" });
