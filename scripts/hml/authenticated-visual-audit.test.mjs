@@ -24,6 +24,40 @@ const R5_R4_HEAD = "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72";
 const HML = "https://contaos-41-hml.vercel.app";
 const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
 
+test("NAV R2 session network observation includes errors before the matrix and during logout", async () => {
+  const { EventEmitter } = await import("node:events"),
+    page = new EventEmitter();
+  const observer = fn("observeNavigationSession")(page);
+  assert.deepEqual(observer.snapshot(), {
+    httpErrors: 0,
+    httpStatusErrors: 0,
+    transportErrors: 0,
+    consoleErrors: 0,
+  });
+  page.emit("response", { status: () => 200 });
+  page.emit("response", { status: () => 503 });
+  page.emit("requestfailed", {});
+  page.emit("console", {
+    type: () => "error",
+    text() {
+      throw Error("PRIVATE_SENTINEL");
+    },
+  });
+  assert.deepEqual(observer.snapshot(), {
+    httpErrors: 2,
+    httpStatusErrors: 1,
+    transportErrors: 1,
+    consoleErrors: 1,
+  });
+  const report = navigationReportV2Fixture();
+  Object.assign(report, observer.snapshot());
+  delete report.consoleErrors;
+  assert.equal(sut.validateNavigationReport(report), false);
+  observer.close();
+  for (const name of ["response", "requestfailed", "console"])
+    assert.equal(page.listenerCount(name), 0);
+});
+
 function navigationTechnicalRows() {
   return fn("navigationCases")().map(({ surface, width, theme }) => ({
     surface,
@@ -52,6 +86,10 @@ function navigationTechnicalRows() {
     status: "PASS",
     stage: "FINISH",
     failureCode: null,
+    operation: "FINISH",
+    target: surface,
+    httpStatusErrors: 0,
+    transportErrors: 0,
   }));
 }
 test("NAV F2: closed catalogue covers twenty-six private surfaces twice with current bindings", () => {
@@ -152,14 +190,19 @@ test("NAV F2: report rejects secrets unknown fields missing cleanup and fabricat
   const validate = fn("validateNavigationReport"),
     records = navigationTechnicalRows();
   const report = {
-    schema: "contaos.navigation.audit.v1",
-    frontendSha: "a".repeat(40),
+    schema: "contaos.navigation.audit.v2",
+    frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
     harnessSha: "b".repeat(40),
-    deploymentId: "dpl_123456789",
+    deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
     auditScope: "INTEGRACAO_V1_FASE2_NAV",
     records,
     summary: fn("summarizeNavigation")(records),
     nativeProofSha256: "c".repeat(64),
+    navigationNativeProofSha256: "d".repeat(64),
+    fenceDiagnostic: null,
+    logoutFailure: null,
+    httpStatusErrors: 0,
+    transportErrors: 0,
     sessionVerified: true,
     masterVerified: true,
     organizationVerified: true,
@@ -12218,6 +12261,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     parentSha: parent,
     upstreamId: 11,
     r7ZeroAuth: canonical,
+    navigationR1: await sut.verifyNavigationR1Evidence(await navigationR1EvidenceFixture()),
     auditScope: "C8",
     c8RecoverySha256: "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee",
   };
@@ -12250,7 +12294,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
   assert.ok(environmentSource.includes("function requestEnvironmentChain(env)"));
   const factory = new Function(
     "deps",
-    `const {C8_RECOVERY_DOCUMENT,validateC8RecoveryDocument,resolveC8AuditScope,isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,singleRequestGet,validateR18RecoveryDocument,validateR18RegistrationCandidate,R18_RECOVERY_DOCUMENT,R18_REGISTRATION_CANDIDATE}=deps;
+    `const {C8_RECOVERY_DOCUMENT,validateC8RecoveryDocument,resolveC8AuditScope,isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,validateNavigationR1Evidence,singleRequestGet,validateR18RecoveryDocument,validateR18RegistrationCandidate,R18_RECOVERY_DOCUMENT,R18_REGISTRATION_CANDIDATE}=deps;
     ${environmentSource}
     let singleRequestContext=null,validatedR4ZeroAuth=null,validatedR7ZeroAuth=null,validatedR12ZeroAuth=null;
     ${sut.loadSingleRequestProof.toString().replaceAll("import.meta.url", "sourceModuleUrl")}
@@ -12287,6 +12331,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     },
     validateR4ZeroAuthProof: () => assert.fail("R4 is fixtures only"),
     validateR7ZeroAuthProof: sut.validateR7ZeroAuthProof,
+    validateNavigationR1Evidence: sut.validateNavigationR1Evidence,
     singleRequestGet: () => {
       gets++;
       assert.fail("local Master loader must not fetch");
@@ -18151,5 +18196,2118 @@ test("C8 eight V117: original YAML aggregate names admit only the complete typed
     } finally {
       w.close();
     }
+  }
+});
+
+function navigationReportV2Fixture() {
+  const records = navigationTechnicalRows().map((r) => ({
+    ...r,
+    operation: "FINISH",
+    target: r.surface,
+    httpStatusErrors: 0,
+    transportErrors: 0,
+  }));
+  return {
+    schema: "contaos.navigation.audit.v2",
+    frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
+    harnessSha: "b".repeat(40),
+    deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
+    auditScope: "INTEGRACAO_V1_FASE2_NAV",
+    records,
+    summary: { expected: 52, observed: 52, passed: 52, failed: 0, matrixComplete: true },
+    nativeProofSha256: "c".repeat(64),
+    navigationNativeProofSha256: "d".repeat(64),
+    sessionVerified: true,
+    masterVerified: true,
+    organizationVerified: true,
+    logoutVerified: true,
+    logoutFailure: null,
+    fenceDiagnostic: null,
+    blockedMutations: 0,
+    pageErrors: 0,
+    httpErrors: 0,
+    httpStatusErrors: 0,
+    transportErrors: 0,
+    aborted: null,
+  };
+}
+test("NAV R2 v2 accepts only the complete zero-error matrix with separate native evidence", () => {
+  const validate = fn("validateNavigationReport"),
+    report = navigationReportV2Fixture();
+  assert.equal(validate(report), true);
+  for (const patch of [
+    { schema: "contaos.navigation.audit.v1" },
+    { frontendSha: "a".repeat(40) },
+    { deploymentId: "dpl_foreign123" },
+    { navigationNativeProofSha256: null },
+    { httpStatusErrors: 1, httpErrors: 1 },
+    { transportErrors: 1, httpErrors: 1 },
+    { httpStatusErrors: 1, httpErrors: 0 },
+    { logoutFailure: { stage: "DRAIN", code: "FENCE_TRANSPORT" } },
+    { fenceDiagnostic: { failed: true, code: "FENCE_ASYNC" } },
+    { logoutVerified: false },
+  ])
+    assert.equal(validate({ ...report, ...patch }), false);
+});
+test("NAV R2 v2 rejects unknown operations destinations and free diagnostics", () => {
+  const validate = fn("validateNavigationReport"),
+    report = navigationReportV2Fixture();
+  for (const change of [
+    { operation: "SECRET_FREE_TEXT" },
+    { target: "OTHER" },
+    { httpStatusErrors: 1 },
+    { transportErrors: 1 },
+  ]) {
+    const records = report.records.map((r, i) => (i === 0 ? { ...r, ...change } : r));
+    assert.equal(validate({ ...report, records }), false);
+  }
+  let effects = 0;
+  const bad = { ...report };
+  Object.defineProperty(bad, "fenceDiagnostic", {
+    enumerable: true,
+    get() {
+      effects++;
+      return null;
+    },
+  });
+  assert.equal(validate(bad), false);
+  assert.equal(effects, 0);
+  assert.equal(validate({ ...report, rawError: "Bearer CANARY" }), false);
+});
+test("NAV R2 diagnostic preserves closed native cause without transporting error payloads", () => {
+  const capture = fn("navigationFenceDiagnostic");
+  const lifecycle = {
+    network: "Fetch",
+    fetch: "Fetch",
+    method: "GET",
+    stage: "RESPONSE",
+    networkFramePresent: true,
+    sameFrame: true,
+    loaderPresent: true,
+    ownFetchFrame: true,
+    generationSame: true,
+    terminal: false,
+  };
+  assert.deepEqual(
+    capture({
+      failed: true,
+      failureCode: "CDP_COMMAND",
+      failureCommand: "Fetch.getResponseBody",
+      failureProtocolCode: -32000,
+      failureReason: "NO_RESOURCE",
+      lifecycleMetadata: lifecycle,
+      rawError: "CANARY_SECRET",
+    }),
+    {
+      failed: true,
+      code: "CDP_COMMAND",
+      command: "Fetch.getResponseBody",
+      protocolCode: -32000,
+      reason: "NO_RESOURCE",
+      lifecycle,
+    },
+  );
+  assert.equal(capture({ failed: false }), null);
+  const unknown = capture({
+    failed: true,
+    failureCode: "Bearer CANARY",
+    failureCommand: "raw payload",
+    failureProtocolCode: 999,
+    failureReason: "secret",
+    lifecycleMetadata: null,
+  });
+  assert.deepEqual(unknown, {
+    failed: true,
+    code: "FENCE_UNKNOWN",
+    command: null,
+    protocolCode: null,
+    reason: null,
+    lifecycle: null,
+  });
+  let effects = 0;
+  const hostile = { failed: true };
+  Object.defineProperty(hostile, "failureCode", {
+    get() {
+      effects++;
+      return "CDP_COMMAND";
+    },
+  });
+  assert.equal(capture(hostile).code, "FENCE_UNKNOWN");
+  assert.equal(effects, 0);
+});
+test("NAV R2 logout diagnosis never upgrades cleanup or exposes a raw exception", () => {
+  const capture = fn("navigationLogoutFailure");
+  assert.deepEqual(
+    capture(Object.assign(Error("CANARY"), { code: "FENCE_DRAIN_TIMEOUT" }), "DRAIN"),
+    { stage: "DRAIN", code: "FENCE_DRAIN_TIMEOUT" },
+  );
+  assert.deepEqual(capture(Object.assign(Error("CANARY"), { name: "TimeoutError" }), "REDIRECT"), {
+    stage: "REDIRECT",
+    code: "NAVIGATION_TIMEOUT",
+  });
+  assert.deepEqual(capture(Error("CANARY_SECRET"), "SECRET"), {
+    stage: "UNKNOWN",
+    code: "UNCLASSIFIED",
+  });
+});
+
+const navigationNativeTapFixture = () =>
+  [
+    "TAP version 13",
+    ...["PERMISSIONS", "ADMINISTRATION", "SESSION", "TRANSPORT"].flatMap((kind) =>
+      [1440, 390].map(
+        (width) =>
+          "# NAV_R2_NATIVE_CASE " +
+          kind +
+          "_" +
+          width +
+          "_" +
+          (width === 1440 ? "LIGHT" : "DARK") +
+          " PASS",
+      ),
+    ),
+    "ok 1 - NAV R2 native readiness and transport",
+    "1..1",
+    "# tests 1",
+    "# suites 0",
+    "# pass 1",
+    "# fail 0",
+    "# cancelled 0",
+    "# skipped 0",
+  ].join("\n");
+test("NAV R2 native receipt requires all eight distinct cases and the real source identity", () => {
+  const identity = {
+    harnessSha: "a".repeat(40),
+    moduleHash: "b".repeat(64),
+    testHash: "c".repeat(64),
+  };
+  const proof = fn("navigationNativeSupplement")(navigationNativeTapFixture(), identity);
+  assert.equal(fn("navigationNativeProofValid")(proof, identity), true);
+  assert.equal(proof.cases, 8);
+  assert.equal(proof.mode, "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS");
+  assert.deepEqual(proof.views, [
+    { width: 1440, theme: "light" },
+    { width: 390, theme: "dark" },
+  ]);
+  for (const patch of [
+    { cases: 7 },
+    { harnessSha: "d".repeat(40) },
+    { moduleHash: "d".repeat(64) },
+    { testHash: "d".repeat(64) },
+    { mode: "HML" },
+    { views: [{ width: 1440, theme: "light" }] },
+    { passed: false },
+    { secret: "CANARY" },
+  ])
+    assert.equal(sut.navigationNativeProofValid({ ...proof, ...patch }, identity), false);
+});
+test("NAV R2 native receipt refuses missing duplicate unknown skipped or failing cases", () => {
+  const parse = fn("navigationNativeSupplement"),
+    id = { harnessSha: "a".repeat(40), moduleHash: "b".repeat(64), testHash: "c".repeat(64) },
+    good = navigationNativeTapFixture();
+  for (const text of [
+    good.replace("# NAV_R2_NATIVE_CASE PERMISSIONS_1440_LIGHT PASS\n", ""),
+    good + "\n# NAV_R2_NATIVE_CASE PERMISSIONS_1440_LIGHT PASS",
+    good + "\n# NAV_R2_NATIVE_CASE OTHER PASS",
+    good.replace("# skipped 0", "# skipped 1"),
+    good.replace("# fail 0", "# fail 1"),
+    good.replace("ok 1 - NAV", "not ok 1 - NAV"),
+  ])
+    assert.throws(() => parse(text, id), /NAVIGATION_NATIVE/);
+});
+test("NAV R2 native receipt never reads getters or proxies as proof", () => {
+  const identity = {
+      harnessSha: "a".repeat(40),
+      moduleHash: "b".repeat(64),
+      testHash: "c".repeat(64),
+    },
+    proof = fn("navigationNativeSupplement")(navigationNativeTapFixture(), identity);
+  let effects = 0;
+  const bad = { ...proof };
+  Object.defineProperty(bad, "views", {
+    enumerable: true,
+    get() {
+      effects++;
+      return proof.views;
+    },
+  });
+  assert.equal(sut.navigationNativeProofValid(bad, identity), false);
+  assert.equal(
+    sut.navigationNativeProofValid(
+      new Proxy(proof, {
+        get() {
+          effects++;
+          return true;
+        },
+      }),
+      identity,
+    ),
+    false,
+  );
+  assert.equal(effects, 0);
+});
+
+async function actualNavigationReportInitializer() {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+      new URL("./authenticated-visual-audit.mjs", import.meta.url),
+      "utf8",
+    ),
+    file = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
+  const owner = file.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "runAuthenticatedAudit",
+  );
+  let initializer;
+  function visit(node) {
+    if (ts.isVariableDeclaration(node) && node.name.getText(file) === "report")
+      initializer = node.initializer;
+    ts.forEachChild(node, visit);
+  }
+  visit(owner.body);
+  assert.ok(initializer);
+  return new Function(
+    "deps",
+    "const {scope,NAVIGATION_SCOPE,proof,records,summary,native,navigationNativeProof,flags,logoutVerified,logoutFailure,fence,errors,navigationHttpErrors,navigationHttpStatusErrors,navigationTransportErrors,aborted,digest,navigationFenceDiagnostic}=deps;return (" +
+      initializer.getText(file) +
+      ");",
+  );
+}
+test("NAV R2 actual producer emits v2 with separate native hash and stopped cleanup intact", async () => {
+  const factory = await actualNavigationReportInitializer(),
+    fixture = navigationReportV2Fixture();
+  const input = {
+    scope: sut.NAVIGATION_SCOPE,
+    NAVIGATION_SCOPE: sut.NAVIGATION_SCOPE,
+    proof: {
+      frontendSha: fixture.frontendSha,
+      harnessSha: fixture.harnessSha,
+      deploymentId: fixture.deploymentId,
+    },
+    records: fixture.records,
+    summary: fixture.summary,
+    native: { original: 18 },
+    navigationNativeProof: { supplement: 8 },
+    flags: { postLoginNavigation: true, masterLocated: true, organizationConfirmed: true },
+    logoutVerified: true,
+    logoutFailure: null,
+    fence: { snapshot: () => ({ failed: false, blockedRequests: 0 }) },
+    errors: 0,
+    navigationHttpErrors: 0,
+    navigationHttpStatusErrors: 0,
+    navigationTransportErrors: 0,
+    aborted: null,
+    digest: (value) => createHash("sha256").update(value).digest("hex"),
+    navigationFenceDiagnostic: sut.navigationFenceDiagnostic,
+  };
+  const report = factory(input);
+  assert.equal(sut.validateNavigationReport(report), true);
+  assert.equal(
+    report.navigationNativeProofSha256,
+    createHash("sha256").update('{"supplement":8}').digest("hex"),
+  );
+  const failed = factory({
+    ...input,
+    logoutVerified: false,
+    logoutFailure: { stage: "DRAIN", code: "FENCE_TRANSPORT" },
+    navigationHttpErrors: 1,
+    navigationTransportErrors: 1,
+    fence: {
+      snapshot: () => ({
+        failed: true,
+        blockedRequests: 0,
+        failureCode: "FENCE_TRANSPORT",
+        failureCommand: null,
+        failureProtocolCode: null,
+        failureReason: null,
+        lifecycleMetadata: null,
+      }),
+    },
+  });
+  assert.equal(failed.logoutVerified, false);
+  assert.equal(failed.logoutFailure.code, "FENCE_TRANSPORT");
+  assert.equal(failed.transportErrors, 1);
+  assert.equal(failed.httpStatusErrors, 0);
+  assert.equal(failed.fenceDiagnostic.code, "FENCE_TRANSPORT");
+  assert.equal(sut.validateNavigationReport(failed), false);
+});
+
+test("NAV R2 readiness waits for final permission menu and final session content", () => {
+  const observe = {
+    headingText: "Contrato AUD-R2",
+    mainText: "Contrato AUD-R2",
+    statusTexts: [],
+    regionNames: [],
+    menuHrefs: [
+      "/",
+      "/contratantes",
+      "/contratantes/novo",
+      "/contratos",
+      "/contratos/novo",
+      "/selecionar-organizacao",
+      "/administracao/usuarios",
+      "/administracao/auditoria",
+    ],
+  };
+  const ready = fn("navigationObservationReady");
+  assert.equal(ready("V106", observe), true);
+  for (const text of [
+    "Verificando sessão…",
+    "Carregando…",
+    "Confirmando organização…",
+    "Consultando apresentações…",
+  ])
+    assert.equal(ready("V106", { ...observe, statusTexts: [text] }), false);
+  assert.equal(ready("V106", { ...observe, menuHrefs: observe.menuHrefs.slice(0, -1) }), false);
+  assert.equal(ready("V106", { ...observe, headingText: "Contrato" }), false);
+  assert.equal(ready("V106", { ...observe, mainText: "Acesso negado" }), false);
+  assert.equal(ready("V117", { ...observe, headingText: "Análise da competência" }), true);
+});
+test("NAV R2 readiness DOM observation rejects stale organization and waits for actual controls", async () => {
+  const { JSDOM } = await import("jsdom");
+  for (const width of [1440, 390]) {
+    const dom = new JSDOM(
+      '<html><body><header aria-label="Organização atual"></header><main><h1>Contrato AUD-R2</h1></main><aside></aside></body></html>',
+      { url: HML + "/contratos/" + sut.SYNTHETIC_FIXTURE.contract, runScripts: "outside-only" },
+    );
+    const w = dom.window;
+    Object.defineProperty(w.HTMLElement.prototype, "innerText", {
+      get() {
+        return this.textContent;
+      },
+    });
+    const evaluate = (cb, arg) => w.eval("(" + cb.toString() + ")")(arg);
+    let draining = 0,
+      pending = false;
+    const page = {
+      url: () => w.location.href,
+      evaluate: async (cb, arg) => evaluate(cb, arg),
+      waitForFunction: async (cb, arg, opt) => {
+        assert.ok(opt.timeout > 0 && opt.timeout <= 15000);
+        if (evaluate(cb, arg)) return;
+        pending = true;
+        await new Promise((resolve, reject) => {
+          const ob = new w.MutationObserver(() => {
+            if (evaluate(cb, arg)) {
+              ob.disconnect();
+              resolve();
+            }
+          });
+          ob.observe(w.document, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            characterData: true,
+          });
+          queueMicrotask(() => {
+            try {
+              const header = w.document.querySelector("header");
+              header.textContent = sut.SYNTHETIC_FIXTURE.organizationName + " Situação: ativa";
+              w.document.querySelector("aside").innerHTML = [
+                "/",
+                "/contratantes",
+                "/contratantes/novo",
+                "/contratos",
+                "/contratos/novo",
+                "/selecionar-organizacao",
+                "/administracao/usuarios",
+                "/administracao/auditoria",
+              ]
+                .map((p) => '<a href="' + p + '">Menu</a>')
+                .join("");
+            } catch (e) {
+              reject(e);
+            }
+          });
+        });
+      },
+    };
+    const fence = {
+      drain: async () => {
+        draining++;
+      },
+      assertSafe: () => {},
+    };
+    assert.equal(
+      (
+        await fn("waitNavigationReady")(
+          page,
+          fence,
+          "V106",
+          w.location.pathname,
+          width === 390 ? "dark" : "light",
+        )
+      ).headingText,
+      "Contrato AUD-R2",
+    );
+    assert.equal(pending, true);
+    assert.equal(draining, 1);
+    assert.equal(w.document.documentElement.classList.contains("dark"), width === 390);
+    dom.window.close();
+  }
+});
+
+async function buildNavigationSourceUI(directory) {
+  const fs = await import("node:fs/promises"),
+    { join, resolve } = await import("node:path"),
+    { fileURLToPath } = await import("node:url");
+  const root = fileURLToPath(new URL("../../", import.meta.url));
+  const org = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings.organization,
+    contract = sut.SYNTHETIC_FIXTURE.contract;
+  const permissions = ["dashboard", "contratantes", "contratos", "auditoria"]
+    .map((recurso) => ({ recurso, acao: "consultar" }))
+    .concat([
+      { recurso: "contratantes", acao: "criar" },
+      { recurso: "contratos", acao: "criar" },
+      { recurso: "usuarios", acao: "administrar" },
+    ]);
+  await fs.writeFile(
+    join(directory, "state.ts"),
+    "export const state=window.__nav={gates:{},calls:{},permissions:" +
+      JSON.stringify(permissions) +
+      ",hold(kind){let resolve;const promise=new Promise(r=>resolve=r);this.gates[kind]={promise,resolve};},async wait(kind){this.calls[kind]=(this.calls[kind]||0)+1;const gate=this.gates[kind];if(gate){await gate.promise;}},release(kind){const gate=this.gates[kind];delete this.gates[kind];gate?.resolve();}};",
+  );
+  const record = {
+    id: contract,
+    id_organizacao: org,
+    id_contratante: sut.SYNTHETIC_FIXTURE.contractor,
+    numero: "AUD-R2",
+    objeto: "Ensaio sintético offline",
+    situacao: "ativo",
+    criticidade: "baixa",
+    inicio: null,
+    fim: null,
+    tipo_contrato: null,
+    unidade_vinculada: null,
+    fonte_recurso: null,
+    valor_global: null,
+    valor_mensal_referencia: null,
+    periodicidade: null,
+    prazo_prestacao_dias: null,
+    dia_limite_apresentacao: null,
+    contratante: null,
+  };
+  await fs.writeFile(
+    join(directory, "client.ts"),
+    "import {state} from './state';export const supabase={auth:{getUser:async()=>{await state.wait('session');return {data:{user:{id:'offline-navigation-owner'}},error:null};},onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),signOut:async()=>({error:null})},rpc:async(name)=>name==='obter_resumo_dashboard'?{data:{schema_versao:'sys05-v1',organizacao:{id:" +
+      JSON.stringify(org) +
+      ",razao_social:" +
+      JSON.stringify(sut.SYNTHETIC_FIXTURE.organizationName) +
+      ",nome_fantasia:null,situacao:'ativa'}},error:null}:{data:null,error:{code:'42501'}},from(table){const query={select(){return query;},eq(){return query;},abortSignal(){return query;},maybeSingle:async()=>({data:table==='contratos'?" +
+      JSON.stringify(record) +
+      ":null,error:null})};return query;}};",
+  );
+  await fs.writeFile(
+    join(directory, "router.tsx"),
+    "import React,{useSyncExternalStore} from 'react';const subscribe=cb=>{addEventListener('popstate',cb);return()=>removeEventListener('popstate',cb);};const navigate=({to})=>{history.pushState({},'',to);dispatchEvent(new PopStateEvent('popstate'));};export const useNavigate=()=>navigate;export const useRouterState=({select})=>select({location:{pathname:useSyncExternalStore(subscribe,()=>location.pathname)}});export const Link=({children,to,params,onClick,...props})=><a {...props} href={Object.entries(params??{}).reduce((p,[k,v])=>p.replace('$'+k,encodeURIComponent(v)),to)} onClick={e=>{onClick?.(e);e.preventDefault();navigate({to:e.currentTarget.getAttribute('href')});}}>{children}</a>;",
+  );
+  await fs.writeFile(
+    join(directory, "org.ts"),
+    "export const EVENTO_ORGANIZACAO_ALTERADA='contaos:organizacao-alterada';export const obterPreferenciaOrganizacao=()=>" +
+      JSON.stringify(org) +
+      ";",
+  );
+  await fs.writeFile(
+    join(directory, "rbac.ts"),
+    "import {state} from './state';export const consultarPermissoesEfetivas=async()=>{const captured=state.permissions;await state.wait('permissions');return {permissoes:captured};};export const resolverContextoRbac=async()=>({contrato:" +
+      JSON.stringify(contract) +
+      ",competencia:null,contratante:null});export const temPermissao=(p,r,a)=>p.some(x=>x.recurso===r&&x.acao===a);",
+  );
+  await fs.writeFile(
+    join(directory, "admin.ts"),
+    "import {state} from './state';export const validarAdministrador=async()=>{await state.wait('administration');return true;};export const podeConsultarAuditoria=async()=>true;",
+  );
+  await fs.writeFile(join(directory, "copilot.tsx"), "export const CopilotoContrato=()=>null;");
+  await fs.writeFile(
+    join(directory, "entry.tsx"),
+    "import React from 'react';import {createRoot} from 'react-dom/client';import {QueryClient,QueryClientProvider} from '@tanstack/react-query';import {useRouterState} from '@tanstack/react-router';import {ContaOSAppShell} from " +
+      JSON.stringify(resolve(root, "src/components/layout/ContaOSAppShell.tsx")) +
+      ";import {VisaoGeralContrato} from " +
+      JSON.stringify(resolve(root, "src/components/contratos/VisaoGeralContrato.tsx")) +
+      ";import './state';const query=new QueryClient({defaultOptions:{queries:{retry:false}}});function App(){const path=useRouterState({select:s=>s.location.pathname});return <QueryClientProvider client={query}><ContaOSAppShell>{path==='/contratos/" +
+      contract +
+      "'?<VisaoGeralContrato id='" +
+      contract +
+      "'/>:<main><h1>Contratos</h1></main>}</ContaOSAppShell></QueryClientProvider>;}createRoot(document.getElementById('root')).render(<App/>);",
+  );
+  const aliases = {
+    react: require.resolve("react"),
+    "react-dom/client": require.resolve("react-dom/client"),
+    "react/jsx-runtime": require.resolve("react/jsx-runtime"),
+    "@tanstack/react-query": require.resolve("@tanstack/react-query"),
+    "@tanstack/react-router": join(directory, "router.tsx"),
+    "@/integrations/supabase/client": join(directory, "client.ts"),
+    "@/lib/organizacao/preferenciaOrganizacao": join(directory, "org.ts"),
+    "@/lib/administracao/rbacRpc": join(directory, "rbac.ts"),
+    "@/lib/administracao/admUsuariosRpc": join(directory, "admin.ts"),
+    "@/components/copiloto/CopilotoContrato": join(directory, "copilot.tsx"),
+  };
+  await fs.writeFile(
+    join(directory, "build.mjs"),
+    "const aliases=" +
+      JSON.stringify(aliases) +
+      ";const result=await Bun.build({entrypoints:[" +
+      JSON.stringify(join(directory, "entry.tsx")) +
+      "],outdir:" +
+      JSON.stringify(directory) +
+      ",target:'browser',format:'iife',naming:'navigation.js',minify:true,define:{'process.env.NODE_ENV':'\"production\"'},plugins:[{name:'closed-navigation-infrastructure',setup(build){build.onResolve({filter:/^(@\\/|@tanstack\\/react-(?:router|query)$|react$|react-dom\\/client$|react\\/jsx-runtime$)/},args=>({path:Bun.resolveSync(aliases[args.path]??" +
+      JSON.stringify(resolve(root, "src")) +
+      "+'/'+args.path.slice(2)," +
+      JSON.stringify(root) +
+      ")}));}}]});if(!result.success){for(const log of result.logs)console.error(log);process.exit(1);}",
+  );
+  const { execFile } = await import("node:child_process"),
+    { promisify } = await import("node:util");
+  await promisify(execFile)(
+    process.env.CONTAOS_BUN_BINARY || "bun",
+    [join(directory, "build.mjs")],
+    { cwd: root, timeout: 15000, maxBuffer: 1048576 },
+  );
+  return fs.readFile(join(directory, "navigation.js"), "utf8");
+}
+function navigationDomPage(window) {
+  const evaluate = (cb, arg) => window.eval("(" + cb.toString() + ")")(arg);
+  const wait = async (predicate, timeout = 15000) => {
+    if (predicate()) return;
+    await new Promise((resolve, reject) => {
+      let timer;
+      const observer = new window.MutationObserver(check);
+      function check() {
+        try {
+          if (predicate()) {
+            clearTimeout(timer);
+            observer.disconnect();
+            resolve();
+          }
+        } catch (e) {
+          clearTimeout(timer);
+          observer.disconnect();
+          reject(e);
+        }
+      }
+      timer = setTimeout(() => {
+        observer.disconnect();
+        const error = new Error("bounded navigation observation");
+        error.name = "TimeoutError";
+        reject(error);
+      }, timeout);
+      observer.observe(window.document, {
+        subtree: true,
+        attributes: true,
+        childList: true,
+        characterData: true,
+      });
+      check();
+    });
+  };
+  const visible = (node) =>
+    !!node &&
+    !node.closest('[hidden],[aria-hidden="true"]') &&
+    !node.closest("aside")?.className.includes("hidden");
+  const locator = (nodes) => ({
+    first: () => locator(() => nodes().slice(0, 1)),
+    count: async () => nodes().length,
+    isEnabled: async () => !!nodes()[0] && !nodes()[0].disabled,
+    isVisible: async () => visible(nodes()[0]),
+    waitFor: async ({ state = "visible", timeout = 15000 } = {}) =>
+      wait(() => (state === "hidden" ? !visible(nodes()[0]) : visible(nodes()[0])), timeout),
+    click: async () =>
+      nodes()[0].dispatchEvent(new window.MouseEvent("click", { bubbles: true, cancelable: true })),
+    evaluate: async (cb) => cb(nodes()[0]),
+  });
+  return {
+    url: () => window.location.href,
+    evaluate: async (cb, arg) => evaluate(cb, arg),
+    waitForFunction: async (cb, arg, options) => wait(() => evaluate(cb, arg), options.timeout),
+    locator: (selector) =>
+      locator(() =>
+        [...window.document.querySelectorAll(selector.replaceAll(":visible", ""))].filter(
+          (n) => !selector.includes(":visible") || visible(n),
+        ),
+      ),
+    getByRole: (role, { name, exact } = {}) =>
+      locator(() =>
+        [
+          ...window.document.querySelectorAll(
+            role === "button" ? "button" : '[role="' + role + '"]',
+          ),
+        ].filter((n) => {
+          const text = n.getAttribute("aria-label") || n.textContent.trim();
+          return name instanceof RegExp
+            ? name.test(text)
+            : !name || (exact ? text === name : text.includes(name));
+        }),
+      ),
+    wait,
+    visible,
+  };
+}
+test(
+  "NAV R2 actual shell sidebar header and V106 reproduce history permission administration and session windows",
+  { timeout: 90000 },
+  async () => {
+    const fs = await import("node:fs/promises"),
+      { join } = await import("node:path"),
+      { tmpdir } = await import("node:os"),
+      { JSDOM } = await import("jsdom");
+    const directory = await fs.mkdtemp(join(tmpdir(), "navigation-source-"));
+    try {
+      const bundle = await buildNavigationSourceUI(directory);
+      for (const width of [1440, 390])
+        for (const kind of ["permissions", "administration", "session"]) {
+          const dom = new JSDOM('<!doctype html><div id="root"></div>', {
+            url: HML + "/contratos/" + sut.SYNTHETIC_FIXTURE.contract,
+            runScripts: "outside-only",
+            pretendToBeVisual: true,
+          });
+          const w = dom.window;
+          Object.defineProperty(w, "innerWidth", { value: width, configurable: true });
+          Object.defineProperty(w.HTMLElement.prototype, "innerText", {
+            get() {
+              return this.textContent;
+            },
+          });
+          w.matchMedia = () => ({
+            matches: width >= 768,
+            addEventListener() {},
+            removeEventListener() {},
+          });
+          w.eval(bundle);
+          const page = navigationDomPage(w);
+          await page.wait(
+            () =>
+              w.document.querySelector("h1")?.textContent === "Contrato AUD-R2" &&
+              w.document.querySelector('aside a[href="/administracao/usuarios"]'),
+          );
+          const ready = await fn("waitNavigationReady")(
+            page,
+            { drain: async () => {}, assertSafe() {} },
+            "V106",
+            w.location.pathname,
+            "light",
+          );
+          assert.equal(ready.headingText, "Contrato AUD-R2");
+          w.history.pushState({}, "", "/contratos");
+          w.dispatchEvent(new w.PopStateEvent("popstate"));
+          await page.wait(
+            () =>
+              w.document.querySelector("h1")?.textContent === "Contratos" &&
+              w.document.querySelector('aside a[href="/administracao/usuarios"]'),
+          );
+          const state = w.__nav;
+          state.hold(kind);
+          const gate = state.gates[kind],
+            prior = state.calls[kind] || 0;
+          w.history.back();
+          await page.wait(
+            () =>
+              w.location.pathname.endsWith(sut.SYNTHETIC_FIXTURE.contract) &&
+              (state.calls[kind] || 0) > prior,
+          );
+          const h1 = w.document.querySelector("h1");
+          assert.ok(h1);
+          if (kind === "session")
+            assert.equal(
+              w.document
+                .querySelector('[role="status"]')
+                ?.textContent.includes("Verificando sessão"),
+              true,
+            );
+          if (kind === "permissions")
+            assert.equal(w.document.querySelector('aside a[href="/contratantes"]'), null);
+          if (kind === "administration") {
+            assert.ok(w.document.querySelector('aside a[href="/contratantes"]'));
+            assert.equal(w.document.querySelector('aside a[href="/administracao/usuarios"]'), null);
+          }
+          let finished = false,
+            drained = 0;
+          const pending = fn("waitNavigationReady")(
+            page,
+            {
+              drain: async () => {
+                drained++;
+              },
+              assertSafe() {},
+            },
+            "V106",
+            w.location.pathname,
+            width === 390 ? "dark" : "light",
+          ).then((x) => {
+            finished = true;
+            return x;
+          });
+          await Promise.resolve();
+          assert.equal(finished, false);
+          assert.equal(drained, 0);
+          gate.resolve();
+          delete state.gates[kind];
+          await pending;
+          assert.equal(finished, true);
+          assert.equal(drained, 1);
+          // Permanent denial remains non-ready and a foreign header never satisfies the observer.
+          if (kind === "permissions") {
+            const observed = {
+              ...ready,
+              menuHrefs: ready.menuHrefs.filter((x) => x !== "/contratantes"),
+            };
+            assert.equal(fn("navigationObservationReady")("V106", observed), false);
+          }
+          dom.window.close();
+        }
+    } finally {
+      await fs.rm(directory, { recursive: true, force: true });
+    }
+  },
+);
+
+async function navigationR1EvidenceFixture() {
+  const { execFileSync } = await import("node:child_process");
+  const plan = "83279bf28172e974778c3e788b8bf5718e23d9c1",
+    head = "1a7b55cdad67fc2f639fa2abfb5faff04062d08a";
+  const repository = {
+    id: 1442722734,
+    full_name: "contaos999999/contaos-hml-control",
+    private: false,
+    owner: { id: 352205055, login: "contaos999999" },
+  };
+  const responses = {};
+  for (const [id, workflow_id, name, file, conclusion, jobId, jobName, jobConclusion] of [
+    [
+      43157856422,
+      411115674,
+      "ContaOS Trilha A Autenticada",
+      "contaos-trilha-a-authenticated.yml",
+      "failure",
+      130982262200,
+      "Trilha A auditoria privada HML",
+      "failure",
+    ],
+    [
+      43157856534,
+      411426169,
+      "ContaOS Trilha A Fixtures",
+      "contaos-trilha-a-fixtures.yml",
+      "success",
+      130981976647,
+      "Trilha A preparacao sintetica HML",
+      "skipped",
+    ],
+  ]) {
+    responses["/actions/runs/" + id] = {
+      id,
+      workflow_id,
+      name,
+      path: ".github/workflows/" + file,
+      event: "workflow_run",
+      head_sha: head,
+      head_branch: "main",
+      run_attempt: 1,
+      status: "completed",
+      conclusion,
+      repository: structuredClone(repository),
+      head_repository: structuredClone(repository),
+    };
+    responses["/actions/runs/" + id + "/jobs?filter=all&per_page=100"] = {
+      total_count: 1,
+      jobs: [
+        {
+          id: jobId,
+          run_id: id,
+          run_attempt: 1,
+          head_sha: head,
+          name: jobName,
+          status: "completed",
+          conclusion: jobConclusion,
+        },
+      ],
+    };
+  }
+  responses["/actions/runs/43157856422/artifacts?per_page=100"] = {
+    total_count: 1,
+    artifacts: [
+      {
+        id: 13917231956,
+        name: "trilha-a-private-43157856422-1",
+        size_in_bytes: 1496,
+        digest: "sha256:f08392462141b97763d9c8c4cf6918dad91a4c7bbb617fe556c4397495ca79a0",
+        expired: false,
+        workflow_run: {
+          id: 43157856422,
+          repository_id: 1442722734,
+          head_repository_id: 1442722734,
+          head_branch: "main",
+          head_sha: head,
+        },
+      },
+    ],
+  };
+  const reads = [],
+    calls = [];
+  const git = async (args) => {
+    reads.push(args);
+    assert.equal(args[0], "show");
+    assert.ok(
+      args[1].startsWith(plan + ":docs/frontend/auditorias/integracao-funcional-v1/fase2/R1_"),
+    );
+    return execFileSync("git", args, { encoding: "utf8", maxBuffer: 1048576 });
+  };
+  const get = async (path) => {
+    calls.push(path);
+    assert.ok(Object.hasOwn(responses, path));
+    return structuredClone(responses[path]);
+  };
+  return { responses, reads, calls, git, get };
+}
+test("NAV R2 R1 evidence requires the original failed authenticated run and sealed report before any successor", async () => {
+  const f = await navigationR1EvidenceFixture();
+  const proof = await fn("verifyNavigationR1Evidence")(f);
+  assert.equal(proof.schema, "contaos.navigation.r1.proof.v1");
+  assert.equal(proof.authRun, 43157856422);
+  assert.equal(
+    proof.reportSha256,
+    "3d994303537f7e06d3c57b1dc1f1f69c763739edc6194909f331a69ac6cb348c",
+  );
+  assert.equal(f.calls.length, 5);
+  assert.equal(f.reads.length, 2);
+  assert.equal(fn("validateNavigationR1Evidence")(proof), proof);
+  for (const value of [
+    { ...proof, extra: true },
+    { ...proof, authRun: 1 },
+    Object.defineProperty({ ...proof }, "reportSha256", {
+      get() {
+        throw Error("private canary");
+      },
+    }),
+    new Proxy(proof, {
+      get() {
+        throw Error("private canary");
+      },
+    }),
+  ])
+    assert.throws(() => fn("validateNavigationR1Evidence")(value), { code: "NAVIGATION_R1_PROOF" });
+});
+test("NAV R2 R1 evidence refuses replay changed jobs artifacts repository and unsealed historical bytes", async () => {
+  const mutations = [
+    (f) => (f.responses["/actions/runs/43157856422"].run_attempt = 2),
+    (f) => (f.responses["/actions/runs/43157856422"].conclusion = "success"),
+    (f) => (f.responses["/actions/runs/43157856534"].head_sha = "f".repeat(40)),
+    (f) => (f.responses["/actions/runs/43157856422"].repository.owner.id = 1),
+    (f) =>
+      (f.responses["/actions/runs/43157856422/jobs?filter=all&per_page=100"].jobs[0].conclusion =
+        "skipped"),
+    (f) =>
+      (f.responses["/actions/runs/43157856534/jobs?filter=all&per_page=100"].jobs[0].conclusion =
+        "success"),
+    (f) =>
+      (f.responses["/actions/runs/43157856422/artifacts?per_page=100"].artifacts[0].digest =
+        "sha256:" + "f".repeat(64)),
+    (f) => (f.git = async () => "{}"),
+  ];
+  for (const mutate of mutations) {
+    const f = await navigationR1EvidenceFixture();
+    mutate(f);
+    await assert.rejects(() => fn("verifyNavigationR1Evidence")(f), {
+      code: "NAVIGATION_R1_PROOF",
+    });
+  }
+});
+test("NAV R2 successor consumes R1 and adds the integrated R2 plan ancestor", async () => {
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r2");
+  assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes("integracao-v1-fase2-nav-20261111-r1"));
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationR2PlanSha,
+    "83279bf28172e974778c3e788b8bf5718e23d9c1",
+  );
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "audit",
+    request_id: sut.SINGLE_REQUEST.audit.nonce,
+    approved_parent_sha: "b".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.throws(
+    () =>
+      sut.parseSingleRequest(
+        JSON.stringify({ ...request, request_id: "integracao-v1-fase2-nav-20261111-r1" }),
+        "audit",
+      ),
+    { code: "REQUEST_SCHEMA" },
+  );
+  const sha = "a".repeat(40),
+    raw = JSON.stringify(request),
+    calls = [];
+  await sut.verifySingleRequestGit(
+    request,
+    sha,
+    async (args) => {
+      calls.push(args);
+      if (args[0] === "show") return raw;
+      if (args[0] === "rev-parse") return sha;
+      if (args[0] === "rev-list")
+        return [sha, request.approved_parent_sha, "c".repeat(40)].join(" ");
+      if (args[0] === "diff-tree") return "M\t" + sut.SINGLE_REQUEST.path;
+      if (args[0] === "ls-tree")
+        return "100644 blob " + "d".repeat(40) + "\t" + sut.SINGLE_REQUEST.path;
+      if (args[0] === "log") return sha;
+      if (args[0] === "merge-base") return "";
+      throw Error("unexpected Git read");
+    },
+    raw,
+  );
+  assert.ok(
+    calls.some(
+      (args) =>
+        args[0] === "merge-base" && args[2] === sut.SINGLE_REQUEST.functionalNavigationR2PlanSha,
+    ),
+  );
+});
+
+test("NAV R2 native guard fails closed and writes a separate receipt only after the supplemental process", async () => {
+  const identity = {
+    harnessSha: "a".repeat(40),
+    moduleHash: "b".repeat(64),
+    testHash: "c".repeat(64),
+  };
+  const tap = [
+    "TAP version 13",
+    "ok 1 - NAV R2 native readiness and transport",
+    ...["PERMISSIONS", "ADMINISTRATION", "SESSION", "TRANSPORT"].flatMap((k) =>
+      ["1440_LIGHT", "390_DARK"].map((v) => "# NAV_R2_NATIVE_CASE " + k + "_" + v + " PASS"),
+    ),
+    "1..1",
+    "# tests 1",
+    "# pass 1",
+    "# fail 0",
+    "# cancelled 0",
+    "# skipped 0",
+  ].join("\n");
+  const events = [];
+  const options = {
+    execute: async (command, args, opts) => {
+      events.push("execute");
+      assert.equal(command, process.execPath);
+      assert.ok(args.includes("--test-name-pattern=^NAV R2 native readiness and transport$"));
+      assert.equal(opts.env.CONTAOS_NATIVE_GUARD, "1");
+      return { stdout: tap };
+    },
+    identity: async () => identity,
+    makeDirectory: async (path, opts) => {
+      assert.equal(path, ".audit-work");
+      assert.equal(opts.mode, 0o700);
+    },
+    write: async (path, raw, opts) => {
+      events.push("write");
+      assert.equal(path, ".audit-work/navigation-native-proof.json");
+      assert.equal(opts.mode, 0o600);
+      assert.equal(sut.navigationNativeProofValid(JSON.parse(raw), identity), true);
+    },
+  };
+  const proof = await fn("navigationNativeGuard")(options);
+  assert.equal(proof.cases, 8);
+  assert.deepEqual(events, ["execute", "write"]);
+  for (const execute of [
+    async () => ({ stdout: tap.replace("# pass 1", "# pass 0") }),
+    async () => {
+      throw Error("PRIVATE_SENTINEL");
+    },
+  ]) {
+    let writes = 0;
+    await assert.rejects(
+      () => fn("navigationNativeGuard")({ ...options, execute, write: async () => writes++ }),
+      { code: "NAVIGATION_NATIVE_PROOF" },
+    );
+    assert.equal(writes, 0);
+  }
+});
+
+async function navigationNativeFixture(bundle, view) {
+  const fs = await import("node:fs/promises"),
+    { resolve } = await import("node:path"),
+    { fileURLToPath } = await import("node:url");
+  const root = fileURLToPath(new URL("../../", import.meta.url)),
+    basePath = "/contratos/" + sut.SYNTHETIC_FIXTURE.contract;
+  const html = Buffer.from(
+    '<!doctype html><meta charset="utf-8"><link rel="icon" href="data:,"><style>aside{display:block}@media(max-width:767px){aside{display:none}}</style><div id="root"></div><script src="/navigation.js"></script>',
+  );
+  const script = Buffer.from(bundle),
+    late = Buffer.from("window.__navLateDone=true;");
+  const brand = "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
+    brandBytes = await fs.readFile(resolve(root, "public" + brand));
+  let pendingLate = null;
+  const lateSeen = Promise.withResolvers();
+  const server = createHttpServer((request, response) => {
+    const path = new URL(request.url, "http://127.0.0.1").pathname;
+    if (path === "/abort.js") {
+      request.socket.destroy();
+      return;
+    }
+    if (path === "/late.js") {
+      pendingLate = response;
+      lateSeen.resolve();
+      return;
+    }
+    if (path === "/http-fail.svg") {
+      response.writeHead(503, { "content-type": "image/svg+xml" });
+      response.end("synthetic unavailable");
+      return;
+    }
+    const bytes = path === "/navigation.js" ? script : path === brand ? brandBytes : html;
+    response.writeHead(200, {
+      "content-type":
+        path === "/navigation.js"
+          ? "application/javascript"
+          : path === brand
+            ? "image/svg+xml"
+            : "text/html",
+      "cache-control": "no-store",
+    });
+    response.end(bytes);
+  });
+  const debug = createHttpServer();
+  await Promise.all([server, debug].map((s) => new Promise((r) => s.listen(0, "127.0.0.1", r))));
+  const port = debug.address().port;
+  await new Promise((r) => debug.close(r));
+  const origin = "http://127.0.0.1:" + server.address().port;
+  let browser, context, fence, page;
+  try {
+    browser = await fn("launchNativeBrowser")({ debugPort: port });
+    context = await browser.newContext({ viewport: { width: view.width, height: 1000 } });
+    page = await context.newPage();
+    const session = await context.newCDPSession(page);
+    const { targetInfo } = await session.send("Target.getTargetInfo");
+    await session.detach();
+    const known = new Set([
+      basePath,
+      "/contratos",
+      "/contratantes",
+      "/navigation.js",
+      "/late.js",
+      "/abort.js",
+      "/http-fail.svg",
+      brand,
+    ]);
+    fence = await fn("installNativeFence")({
+      debugPort: port,
+      identity: targetInfo,
+      policy: (request) => {
+        const u = new URL(request.url);
+        return (
+          u.origin === origin &&
+          request.method === "GET" &&
+          known.has(u.pathname) &&
+          !u.search &&
+          !u.hash
+        );
+      },
+      verifyResponse: async ({ url, resourceType, status, body }) => {
+        const path = new URL(url).pathname;
+        if (path === "/http-fail.svg") return status === 503 && resourceType === "Image";
+        const expected =
+          path === "/navigation.js"
+            ? script
+            : path === "/late.js"
+              ? late
+              : path === brand
+                ? brandBytes
+                : html;
+        // The original fence fetches full bytes only for HML or Document. This
+        // loopback fixture owns Script/Image bytes; it does not alter HML verification.
+        if (resourceType !== "Document")
+          return (
+            status === 200 &&
+            body === undefined &&
+            ((resourceType === "Script" && ["/navigation.js", "/late.js"].includes(path)) ||
+              (resourceType === "Image" && path === brand))
+          );
+        return status === 200 && Buffer.isBuffer(body) && body.equals(expected);
+      },
+      closeContext: async () => {
+        await context.close();
+      },
+    });
+    await page.goto(origin + basePath, { waitUntil: "networkidle" });
+    await page.reload({ waitUntil: "networkidle" });
+    const projected = {
+      url: () => HML + new URL(page.url()).pathname,
+      evaluate: page.evaluate.bind(page),
+      waitForFunction: page.waitForFunction.bind(page),
+      getByRole: page.getByRole.bind(page),
+      locator: page.locator.bind(page),
+    };
+    await fn("waitNavigationReady")(projected, fence, "V106", basePath, view.theme);
+    return {
+      browser,
+      context,
+      fence,
+      page,
+      projected,
+      origin,
+      basePath,
+      lateSeen: lateSeen.promise,
+      releaseLate() {
+        assert.ok(pendingLate);
+        pendingLate.writeHead(200, { "content-type": "application/javascript" });
+        pendingLate.end(late);
+      },
+      async close() {
+        pendingLate?.destroy();
+        fence.close();
+        await browser.close();
+        server.closeAllConnections();
+        await new Promise((r) => server.close(r));
+      },
+    };
+  } catch (error) {
+    if (fence)
+      console.log(
+        "NAV_R2_NATIVE_DIAGNOSTIC " +
+          JSON.stringify(sut.navigationFenceDiagnostic(fence.snapshot())),
+      );
+    fence?.close();
+    await browser?.close();
+    server.closeAllConnections();
+    await new Promise((r) => server.close(r));
+    throw error;
+  }
+}
+async function navigationActualTransportCounters() {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const ast = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS),
+    run = ast.statements.find(
+      (n) => ts.isFunctionDeclaration(n) && n.name?.text === "runNavigationAudit",
+    );
+  const names = ["onRequestFailed", "onResponse"],
+    decls = [];
+  for (const statement of run.body.statements)
+    if (ts.isVariableStatement(statement))
+      for (const declaration of statement.declarationList.declarations)
+        if (names.includes(declaration.name.getText(ast)))
+          decls.push("const " + declaration.getText(ast) + ";");
+  assert.equal(decls.length, 2);
+  return new Function(
+    "navigationUnavailableEvidence",
+    "let errors=0,httpErrors=0,httpStatusErrors=0,transportErrors=0;const requestOwners=new WeakMap(),unavailable=new Map(),pendingResponses=new Set();" +
+      decls.join("\n") +
+      "return {onRequestFailed,onResponse,snapshot:()=>({httpErrors,httpStatusErrors,transportErrors})};",
+  )(sut.navigationUnavailableEvidence);
+}
+test(
+  "NAV R2 native readiness and transport",
+  { skip: process.env.CONTAOS_NATIVE_GUARD !== "1", timeout: 115000 },
+  async (t) => {
+    const fs = await import("node:fs/promises"),
+      { join } = await import("node:path"),
+      { tmpdir } = await import("node:os");
+    const directory = await fs.mkdtemp(join(tmpdir(), "navigation-native-"));
+    try {
+      const bundle = await buildNavigationSourceUI(directory);
+      for (const view of [
+        { width: 1440, theme: "light" },
+        { width: 390, theme: "dark" },
+      ]) {
+        for (const [kind, marker] of [
+          ["permissions", "PERMISSIONS"],
+          ["administration", "ADMINISTRATION"],
+          ["session", "SESSION"],
+        ]) {
+          const f = await navigationNativeFixture(bundle, view);
+          try {
+            await f.page.evaluate(() => {
+              history.pushState({}, "", "/contratos");
+              dispatchEvent(new PopStateEvent("popstate"));
+            });
+            await fn("waitNavigationReady")(f.projected, f.fence, "V104", "/contratos", view.theme);
+            const prior = await f.page.evaluate((k) => {
+              const state = window.__nav;
+              state.hold(k);
+              window.__navHeld = state.gates[k];
+              return state.calls[k] || 0;
+            }, kind);
+            await f.page.goBack({ waitUntil: "networkidle" });
+            await f.page.waitForFunction(
+              ({ kind, prior }) => (window.__nav.calls[kind] || 0) > prior,
+              { kind, prior },
+              { timeout: 15000 },
+            );
+            if (kind !== "session")
+              await f.page
+                .getByRole("heading", { name: "Contrato AUD-R2", exact: true })
+                .waitFor({ state: "visible", timeout: 15000 });
+            if (kind === "permissions")
+              assert.equal(await f.page.locator('aside a[href="/contratantes"]').count(), 0);
+            if (kind === "administration") {
+              assert.equal(await f.page.locator('aside a[href="/contratantes"]').count(), 1);
+              assert.equal(
+                await f.page.locator('aside a[href="/administracao/usuarios"]').count(),
+                0,
+              );
+            }
+            if (kind === "session")
+              assert.match(
+                await f.page
+                  .getByRole("status")
+                  .filter({ hasText: "Verificando sessão" })
+                  .first()
+                  .textContent(),
+                /Verificando sessão/,
+              );
+            let finished = false;
+            const pending = fn("waitNavigationReady")(
+              f.projected,
+              f.fence,
+              "V106",
+              f.basePath,
+              view.theme,
+            ).then(() => {
+              finished = true;
+            });
+            await f.page.evaluate(() => Promise.resolve());
+            assert.equal(finished, false);
+            await f.page.evaluate((k) => {
+              window.__navHeld.resolve();
+              delete window.__nav.gates[k];
+            }, kind);
+            await pending;
+            const control = await fn("waitNavigationControl")(
+              f.projected,
+              f.fence,
+              "/contratantes",
+              view.width,
+              true,
+            );
+            assert.equal(await control.link.isVisible(), true);
+            if (kind === "permissions") {
+              const prior = await f.page.evaluate(() => {
+                const state = window.__nav;
+                state.hold("permissions");
+                window.__navStale = state.gates.permissions;
+                const prior = state.calls.permissions;
+                history.pushState({}, "", "/contratos");
+                dispatchEvent(new PopStateEvent("popstate"));
+                return prior;
+              });
+              await f.page.waitForFunction(
+                (prior) => window.__nav.calls.permissions > prior,
+                prior,
+                { timeout: 15000 },
+              );
+              await f.page.evaluate((path) => {
+                const state = window.__nav;
+                delete state.gates.permissions;
+                state.permissions = [];
+                history.pushState({}, "", path);
+                dispatchEvent(new PopStateEvent("popstate"));
+              }, f.basePath);
+              await f.page.waitForFunction(
+                (prior) => window.__nav.calls.permissions > prior + 1,
+                prior,
+                { timeout: 15000 },
+              );
+              await f.page.evaluate(() => window.__navStale.resolve());
+              await assert.rejects(
+                () =>
+                  fn("waitNavigationReady")(f.projected, f.fence, "V106", f.basePath, view.theme),
+                (error) => error.name === "TimeoutError",
+              );
+              assert.equal(await f.page.locator('aside a[href="/contratantes"]').count(), 0);
+            }
+
+            f.fence.assertSafe();
+            t.diagnostic(
+              "NAV_R2_NATIVE_CASE " +
+                marker +
+                "_" +
+                view.width +
+                "_" +
+                view.theme.toUpperCase() +
+                " PASS",
+            );
+          } finally {
+            await f.close();
+          }
+        }
+        // The old document has already reached networkidle. A new real Script read
+        // must keep the actual pre-action drain pending until its bytes are verified.
+        const late = await navigationNativeFixture(bundle, view);
+        try {
+          await late.page.evaluate(() => {
+            const script = document.createElement("script");
+            script.src = "/late.js";
+            document.head.appendChild(script);
+          });
+          await late.lateSeen;
+          assert.ok(late.fence.snapshot().activeNetworkRequests > 0);
+          let done = false;
+          const pending = fn("waitNavigationControl")(
+            late.projected,
+            late.fence,
+            "/contratantes",
+            view.width,
+            true,
+          ).then(() => {
+            done = true;
+          });
+          await late.page.evaluate(() => Promise.resolve());
+          assert.equal(done, false);
+          late.releaseLate();
+          await pending;
+          await late.page.waitForFunction(() => window.__navLateDone === true, null, {
+            timeout: 15000,
+          });
+          late.fence.assertSafe();
+        } finally {
+          await late.close();
+        }
+        for (const mode of ["http", "abort"]) {
+          const f = await navigationNativeFixture(bundle, view),
+            counter = await navigationActualTransportCounters();
+          try {
+            f.page.on("response", counter.onResponse);
+            f.page.on("requestfailed", counter.onRequestFailed);
+            if (mode === "http") {
+              const response = f.page.waitForResponse(
+                (r) => r.url() === f.origin + "/http-fail.svg",
+                { timeout: 15000 },
+              );
+              await f.page.evaluate(() => {
+                const image = document.createElement("img");
+                image.src = "/http-fail.svg";
+                document.body.appendChild(image);
+              });
+              assert.equal((await response).status(), 503);
+              await f.fence.drain();
+              assert.equal(counter.snapshot().httpStatusErrors, 1);
+            } else {
+              const failed = f.page.waitForEvent("requestfailed", {
+                predicate: (r) => r.url() === f.origin + "/abort.js",
+                timeout: 15000,
+              });
+              await f.page
+                .evaluate(() => {
+                  const script = document.createElement("script");
+                  script.src = "/abort.js";
+                  document.head.appendChild(script);
+                })
+                .catch(() => {});
+              await failed;
+              assert.ok(counter.snapshot().transportErrors > 0);
+            }
+            const report = navigationReportV2Fixture(),
+              counts = counter.snapshot();
+            Object.assign(report, counts);
+            report.records[0].httpErrors = counts.httpErrors;
+            report.records[0].httpStatusErrors = counts.httpStatusErrors;
+            report.records[0].transportErrors = counts.transportErrors;
+            if (f.fence.snapshot().failed)
+              report.fenceDiagnostic = sut.navigationFenceDiagnostic(f.fence.snapshot());
+            assert.equal(sut.validateNavigationReport(report), false);
+          } finally {
+            await f.close();
+          }
+        }
+        t.diagnostic(
+          "NAV_R2_NATIVE_CASE TRANSPORT_" + view.width + "_" + view.theme.toUpperCase() + " PASS",
+        );
+      }
+    } finally {
+      await fs.rm(directory, { recursive: true, force: true });
+    }
+  },
+);
+
+const navigationReadyObservation = () => ({
+  headingText: "Contrato AUD-R2",
+  mainText: "Contrato AUD-R2 Dados do contrato",
+  statusTexts: [],
+  regionNames: [],
+  menuHrefs: [
+    "/",
+    "/contratantes",
+    "/contratantes/novo",
+    "/contratos",
+    "/contratos/novo",
+    "/selecionar-organizacao",
+    "/administracao/usuarios",
+    "/administracao/auditoria",
+  ],
+});
+
+test("NAV R2 readiness rejects the provisional contract screen before session revalidation finishes", () => {
+  const valid = fn("navigationObservationReady");
+  assert.equal(valid("V106", navigationReadyObservation()), true);
+  assert.equal(
+    valid("V106", {
+      ...navigationReadyObservation(),
+      headingText: "Contrato",
+      mainText: "Contrato Verificando sessão…",
+      statusTexts: ["Verificando sessão…"],
+    }),
+    false,
+  );
+});
+
+test("NAV R2 readiness waits for permissions and administration after browser return", () => {
+  const valid = fn("navigationObservationReady");
+  const initial = navigationReadyObservation();
+  assert.equal(valid("V106", { ...initial, menuHrefs: [] }), false);
+  assert.equal(valid("V106", { ...initial, menuHrefs: initial.menuHrefs.slice(0, 6) }), false);
+  assert.equal(valid("V106", initial), true);
+});
+
+test("NAV R2 readiness keeps delayed reads and permanent denial blocking", () => {
+  const valid = fn("navigationObservationReady");
+  for (const status of [
+    "Verificando sessão…",
+    "Carregando contrato…",
+    "Confirmando organização…",
+    "Consultando apresentações…",
+  ])
+    assert.equal(valid("V106", { ...navigationReadyObservation(), statusTexts: [status] }), false);
+  assert.equal(
+    valid("V106", { ...navigationReadyObservation(), mainText: "Acesso negado" }),
+    false,
+  );
+  assert.equal(
+    valid("V106", { ...navigationReadyObservation(), headingText: "Base normativa" }),
+    false,
+  );
+  assert.equal(valid("UNKNOWN", navigationReadyObservation()), false);
+});
+
+test("NAV R2 readiness preserves the eligible wizard and protocol final regions", () => {
+  const valid = fn("navigationObservationReady");
+  const wizard = {
+    ...navigationReadyObservation(),
+    headingText: "Wizard de apresentação",
+    mainText: "Revisão de prontidão",
+    regionNames: ["Revisão de prontidão", "Etapa 2 de 2 — Registrar apresentação"],
+  };
+  assert.equal(valid("V119", wizard), true);
+  assert.equal(valid("V119", { ...wizard, regionNames: ["Revisão de prontidão"] }), false);
+  const protocol = {
+    ...navigationReadyObservation(),
+    headingText: "Apresentação e protocolo",
+    mainText: "Pacote imutável",
+    regionNames: ["Dados da apresentação", "Pacote imutável", "Itens preservados no pacote"],
+  };
+  assert.equal(valid("V120", protocol), true);
+  assert.equal(valid("V120", { ...protocol, regionNames: [] }), false);
+});
+
+async function navigationLegacyDomPage(html) {
+  const { JSDOM } = await import("jsdom");
+  const dom = new JSDOM(html, {
+    url: HML + "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    runScripts: "outside-only",
+    pretendToBeVisual: true,
+  });
+  Object.defineProperty(dom.window.HTMLElement.prototype, "innerText", {
+    get() {
+      return this.textContent;
+    },
+  });
+  Object.defineProperty(dom.window.HTMLElement.prototype, "getClientRects", {
+    value() {
+      return this.isConnected ? [{ width: 100, height: 20 }] : [];
+    },
+  });
+  const call = (probe, arg) => dom.window.eval("(" + probe.toString() + ")")(arg);
+  const page = {
+    url: () => dom.window.location.href,
+    evaluate: async (probe, arg) => call(probe, arg),
+    waitForFunction: (probe, arg, options) =>
+      new Promise((resolve, reject) => {
+        const observer = new dom.window.MutationObserver(check);
+        const timer = setTimeout(() => {
+          observer.disconnect();
+          reject(Object.assign(Error("DOM readiness timeout"), { name: "TimeoutError" }));
+        }, options.timeout);
+        function check() {
+          if (call(probe, arg)) {
+            clearTimeout(timer);
+            observer.disconnect();
+            resolve();
+          }
+        }
+        observer.observe(dom.window.document.documentElement, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          characterData: true,
+        });
+        check();
+      }),
+  };
+  function locator(find) {
+    const first = {
+      first: () => first,
+      count: async () => Math.min(1, find().length),
+      isEnabled: async () => !!find()[0] && !find()[0].hasAttribute("disabled"),
+      isVisible: async () => !!find()[0],
+      getAttribute: async (key) => find()[0]?.getAttribute(key),
+      click: async () => find()[0].click(),
+      waitFor: ({ state = "visible", timeout = 15000 } = {}) =>
+        new Promise((resolve, reject) => {
+          const observer = new dom.window.MutationObserver(check),
+            timer = setTimeout(() => {
+              observer.disconnect();
+              reject(Object.assign(Error("Locator timeout"), { name: "TimeoutError" }));
+            }, timeout);
+          function check() {
+            if (find().length > 0 === (state === "visible")) {
+              clearTimeout(timer);
+              observer.disconnect();
+              resolve();
+            }
+          }
+          observer.observe(dom.window.document.documentElement, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            characterData: true,
+          });
+          check();
+        }),
+    };
+    return first;
+  }
+  page.locator = (selector) =>
+    locator(() =>
+      [...dom.window.document.querySelectorAll(selector.replaceAll(":visible", ""))].filter(
+        (e) =>
+          !e.closest('[inert],[hidden],[aria-hidden="true"]') &&
+          dom.window.getComputedStyle(e).display !== "none",
+      ),
+    );
+  page.getByRole = (role, { name } = {}) =>
+    locator(() =>
+      [
+        ...dom.window.document.querySelectorAll(role === "button" ? "button" : `[role="${role}"]`),
+      ].filter((e) =>
+        name instanceof RegExp
+          ? name.test(e.getAttribute("aria-label") || e.textContent)
+          : (e.getAttribute("aria-label") || e.textContent) === name,
+      ),
+    );
+  return { dom, page };
+}
+
+let navigationFixtureBundle;
+async function buildNavigationReadinessFixture() {
+  if (navigationFixtureBundle) return navigationFixtureBundle;
+  navigationFixtureBundle = (async () => {
+    const fs = await import("node:fs/promises"),
+      path = await import("node:path"),
+      os = await import("node:os");
+    const root = process.cwd(),
+      directory = await fs.mkdtemp(path.join(os.tmpdir(), "contaos-nav-r2-"));
+    const org = "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract = "be89ef7e-d839-46c0-9cfb-4da81edf8b74";
+    const write = (name, body) => fs.writeFile(path.join(directory, name), body);
+    await write(
+      "gates.ts",
+      `const held=new Set(),resolvers=new Map(),calls=new Map(),seen=new Map();export async function gate(name){calls.set(name,(calls.get(name)||0)+1);for(const r of seen.get(name)||[])r();seen.delete(name);if(held.has(name))await new Promise(r=>{const a=resolvers.get(name)||[];a.push(r);resolvers.set(name,a);});}window.__navFixture={hold(name){held.add(name);calls.set(name,0);},release(name){held.delete(name);for(const r of resolvers.get(name)||[])r();resolvers.delete(name);},entered(name){return calls.get(name)?Promise.resolve():new Promise(r=>{const a=seen.get(name)||[];a.push(r);seen.set(name,a);});},calls(name){return calls.get(name)||0;}};`,
+    );
+    await write(
+      "client.ts",
+      `import {gate} from './gates';const org=${JSON.stringify(org)},contract=${JSON.stringify(contract)};export const supabase={auth:{async getUser(){await gate('user');return {data:{user:{id:'11111111-1111-4111-8111-111111111111'}},error:null};},onAuthStateChange(){return {data:{subscription:{unsubscribe(){}}}};},async signOut(){return {error:null};}},async rpc(name,args){if(name!=='obter_resumo_dashboard'||args.p_id_organizacao!==org)throw Error('OFFLINE_RPC');return {data:{schema_versao:'sys05-v1',organizacao:{id:org,razao_social:'ContaOS HML Teste',nome_fantasia:null,situacao:'ativa'}},error:null};},from(table){if(table!=='contratos')throw Error('OFFLINE_TABLE');let id=null;const q={select(){return q;},eq(key,value){if(key==='id')id=value;return q;},abortSignal(){return q;},async maybeSingle(){await gate('contract');if(id!==contract)throw Error('OFFLINE_CONTRACT');return {data:{id:contract,id_organizacao:org,id_contratante:'041ebf9f-5e32-4744-80d6-d745fa5fc483',numero:'AUD-R2',objeto:'Contrato sintético de prontidão',situacao:'ativo',criticidade:'alta',inicio:'2026-01-01',fim:'2026-12-31',tipo_contrato:null,unidade_vinculada:null,fonte_recurso:null,valor_global:100,valor_mensal_referencia:null,periodicidade:'mensal',prazo_prestacao_dias:10,dia_limite_apresentacao:5,contratante:{razao_social:'Contratante sintético',nome_fantasia:null,documento:null}},error:null,status:200};}};return q;}};`,
+    );
+    await write(
+      "router.tsx",
+      `import React,{useSyncExternalStore} from 'react';const subscribe=fn=>{addEventListener('popstate',fn);return()=>removeEventListener('popstate',fn);};export const navigate=async({to,replace})=>{history[replace?'replaceState':'pushState'](null,'',to);dispatchEvent(new PopStateEvent('popstate'));};export const useNavigate=()=>navigate;export const useRouterState=({select})=>useSyncExternalStore(subscribe,()=>select({location:{pathname:location.pathname}}));export const Link=React.forwardRef(({to,params,onClick,children,...props},ref)=>{let href=to;for(const[k,v]of Object.entries(params||{}))href=href.replace('$'+k,v);return <a {...props} ref={ref} href={href} onClick={e=>{onClick?.(e);if(!e.defaultPrevented){e.preventDefault();void navigate({to:href});}}}>{children}</a>;});`,
+    );
+    await write(
+      "org.ts",
+      `export const EVENTO_ORGANIZACAO_ALTERADA='contaos:organizacao-alterada';export const obterPreferenciaOrganizacao=()=>${JSON.stringify(org)};`,
+    );
+    await write(
+      "rbac.ts",
+      `import {gate} from './gates';export const temPermissao=(p,r,a)=>p.some(x=>x.recurso===r&&x.acao===a);export async function resolverContextoRbac(path){await gate('context');return {contrato:path.startsWith('/contratos/')?${JSON.stringify(contract)}:null,competencia:null,contratante:null};}export async function consultarPermissoesEfetivas(){await gate('permissions');return {schema_versao:'rbac-v1',versao:5,master:true,permissoes:[{recurso:'dashboard',acao:'consultar'},{recurso:'contratantes',acao:'consultar'},{recurso:'contratantes',acao:'criar'},{recurso:'contratos',acao:'consultar'},{recurso:'contratos',acao:'criar'},{recurso:'usuarios',acao:'administrar'},{recurso:'auditoria',acao:'consultar'},{recurso:'normativos',acao:'consultar'},{recurso:'orcamentos',acao:'consultar'},{recurso:'listas',acao:'consultar'},{recurso:'documentos_contrato',acao:'consultar'},{recurso:'competencias',acao:'consultar'},{recurso:'historico',acao:'consultar'}]};}`,
+    );
+    await write(
+      "admin.ts",
+      `import {gate} from './gates';export async function validarAdministrador(){await gate('administration');return true;}export async function podeConsultarAuditoria(){await gate('auditor');return true;}`,
+    );
+    await write("copilot.tsx", "export const CopilotoContrato=()=>null;");
+    await write(
+      "entry.tsx",
+      `import React from 'react';import {createRoot}from'react-dom/client';import{QueryClient,QueryClientProvider}from'@tanstack/react-query';import{useRouterState,navigate}from'@tanstack/react-router';import{ContaOSAppShell}from${JSON.stringify(path.join(root, "src/components/layout/ContaOSAppShell.tsx"))};import{VisaoGeralContrato}from${JSON.stringify(path.join(root, "src/components/contratos/VisaoGeralContrato.tsx"))};function App(){const pathname=useRouterState({select:s=>s.location.pathname});return <ContaOSAppShell>{pathname===${JSON.stringify("/contratos/" + contract)}?<VisaoGeralContrato id=${JSON.stringify(contract)}/>:<main><h1>{pathname==='/'?'Painel da organização':pathname==='/contratos'?'Contratos':'Base normativa'}</h1><p>Conteúdo sintético de suporte à navegação do Shell</p></main>}</ContaOSAppShell>;}const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}});const root=createRoot(document.getElementById('root'));window.__navFixture.navigate=navigate;window.__navFixture.unmount=()=>{root.unmount();client.clear();};root.render(<QueryClientProvider client={client}><App/></QueryClientProvider>);`,
+    );
+    const aliases = {
+      "@tanstack/react-query": require.resolve("@tanstack/react-query"),
+      "@/integrations/supabase/client": path.join(directory, "client.ts"),
+      "@tanstack/react-router": path.join(directory, "router.tsx"),
+      "@/lib/organizacao/preferenciaOrganizacao": path.join(directory, "org.ts"),
+      "@/lib/administracao/rbacRpc": path.join(directory, "rbac.ts"),
+      "@/lib/administracao/admUsuariosRpc": path.join(directory, "admin.ts"),
+      "@/components/copiloto/CopilotoContrato": path.join(directory, "copilot.tsx"),
+      react: require.resolve("react"),
+      "react-dom/client": require.resolve("react-dom/client"),
+      "react/jsx-runtime": require.resolve("react/jsx-runtime"),
+    };
+    const build = `const r=await Bun.build({entrypoints:[${JSON.stringify(path.join(directory, "entry.tsx"))}],outdir:${JSON.stringify(directory)},target:'browser',format:'iife',naming:'ui.js',define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'closed-nav-infrastructure',setup(b){const aliases=${JSON.stringify(aliases)};b.onResolve({filter:/^(?:@\\/|@tanstack\\/react-(?:router|query)$|react$|react-dom\\/client$|react\\/jsx-runtime$)/},a=>({path:Bun.resolveSync(aliases[a.path]??${JSON.stringify(path.join(root, "src"))}+'/'+a.path.slice(2),${JSON.stringify(root)})}));}}]});if(!r.success){for(const x of r.logs)console.error(x);process.exit(1);}`;
+    await write("build.mjs", build);
+    const { promisify } = await import("node:util"),
+      { execFile } = await import("node:child_process");
+    await promisify(execFile)(
+      process.env.CONTAOS_BUN_BINARY || "bun",
+      [path.join(directory, "build.mjs")],
+      { cwd: root, timeout: 15000, maxBuffer: 1048576 },
+    );
+    const bundle = await fs.readFile(path.join(directory, "ui.js"), "utf8");
+    await fs.rm(directory, { recursive: true, force: true });
+    return bundle;
+  })();
+  return navigationFixtureBundle;
+}
+
+test("NAV R2 real components reproduce the post-return permission gap before any driver correction", async (t) => {
+  const bundle = await buildNavigationReadinessFixture();
+  const { dom, page } = await navigationLegacyDomPage('<div id="root"></div>');
+  dom.window.history.replaceState(null, "", "/");
+  dom.window.matchMedia = () => ({
+    matches: true,
+    addEventListener() {},
+    removeEventListener() {},
+  });
+  t.after(() => {
+    dom.window.__navFixture?.unmount();
+    dom.window.close();
+  });
+  dom.window.eval(bundle);
+  await page.waitForFunction(
+    () =>
+      document.querySelectorAll('aside a[href="/contratos"]').length === 1 &&
+      document.querySelectorAll('aside a[href="/administracao/auditoria"]').length === 1,
+    null,
+    { timeout: 15000 },
+  );
+  dom.window.document.querySelector('aside a[href="/contratos"]').click();
+  await page.waitForFunction(
+    () =>
+      location.pathname === "/contratos" &&
+      document.querySelector("h1")?.textContent === "Contratos" &&
+      document.querySelectorAll('aside a[href="/administracao/auditoria"]').length === 1,
+    null,
+    { timeout: 15000 },
+  );
+  dom.window.__navFixture.hold("permissions");
+  dom.window.history.back();
+  await dom.window.__navFixture.entered("permissions");
+  await page.waitForFunction(
+    () =>
+      location.pathname === "/" &&
+      document.querySelector("h1")?.textContent === "Painel da organização",
+    null,
+    { timeout: 15000 },
+  );
+  assert.equal(dom.window.document.querySelector("h1").textContent, "Painel da organização");
+  assert.equal(dom.window.document.querySelectorAll('aside a[href="/contratos"]').length, 0);
+  const oldObservation = await page.evaluate(sut.navigationDomObservation);
+  assert.equal(sut.surfaceStateValid("SYS05", oldObservation), true);
+  assert.equal(sut.navigationObservationReady("SYS05", oldObservation), false);
+  let finished = false;
+  const pending = sut
+    .waitNavigationReady(page, { drain: async () => {}, assertSafe() {} }, "SYS05", "/", "light")
+    .then((x) => {
+      finished = true;
+      return x;
+    });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(finished, false);
+  dom.window.__navFixture.release("permissions");
+  const ready = await pending;
+  assert.ok(ready.menuHrefs.includes("/contratos"));
+});
+
+test("NAV R2 real components retain the header while V106 session and final heading revalidate on return", async (t) => {
+  const bundle = await buildNavigationReadinessFixture(),
+    { dom, page } = await navigationLegacyDomPage('<div id="root"></div>');
+  dom.window.matchMedia = () => ({
+    matches: true,
+    addEventListener() {},
+    removeEventListener() {},
+  });
+  t.after(() => {
+    dom.window.__navFixture?.unmount();
+    dom.window.close();
+  });
+  dom.window.eval(bundle);
+  await sut.waitNavigationReady(
+    page,
+    { drain: async () => {}, assertSafe() {} },
+    "V106",
+    "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "light",
+  );
+  await dom.window.__navFixture.navigate({
+    to: "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa",
+  });
+  await page.waitForFunction(
+    () => document.querySelector("h1")?.textContent === "Base normativa",
+    null,
+    { timeout: 15000 },
+  );
+  dom.window.__navFixture.hold("user");
+  dom.window.history.back();
+  await page.waitForFunction(
+    () =>
+      location.pathname === "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74" &&
+      document.querySelector("h1")?.textContent === "Contrato" &&
+      document.querySelector('[role="status"]')?.textContent.includes("Verificando sessão"),
+    null,
+    { timeout: 15000 },
+  );
+  const header = dom.window.document.querySelector(
+    'header[aria-label="Organização atual"]',
+  ).textContent;
+  assert.ok(header.includes("ContaOS HML Teste"));
+  assert.match(header, /Situação:\s*ativa/);
+  const observation = await page.evaluate(sut.navigationDomObservation);
+  assert.equal(/Carregando|Confirmando organização/.test(observation.mainText), false);
+  assert.equal(sut.surfaceStateValid("V106", observation), false);
+  const pending = sut.waitNavigationReady(
+    page,
+    { drain: async () => {}, assertSafe() {} },
+    "V106",
+    "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "light",
+  );
+  dom.window.__navFixture.release("user");
+  const ready = await pending;
+  assert.equal(ready.headingText, "Contrato AUD-R2");
+});
+
+test("NAV R2 real components wait for administrative authorization separately from the common menu", async (t) => {
+  const bundle = await buildNavigationReadinessFixture(),
+    { dom, page } = await navigationLegacyDomPage('<div id="root"></div>');
+  dom.window.history.replaceState(null, "", "/");
+  dom.window.matchMedia = () => ({
+    matches: true,
+    addEventListener() {},
+    removeEventListener() {},
+  });
+  t.after(() => {
+    dom.window.__navFixture?.unmount();
+    dom.window.close();
+  });
+  dom.window.eval(bundle);
+  await sut.waitNavigationReady(
+    page,
+    { drain: async () => {}, assertSafe() {} },
+    "SYS05",
+    "/",
+    "light",
+  );
+  await dom.window.__navFixture.navigate({ to: "/contratos" });
+  await page.waitForFunction(
+    () => document.querySelector("h1")?.textContent === "Contratos",
+    null,
+    { timeout: 15000 },
+  );
+  dom.window.__navFixture.hold("administration");
+  dom.window.history.back();
+  await page.waitForFunction(
+    () =>
+      location.pathname === "/" &&
+      document.querySelector("h1")?.textContent === "Painel da organização" &&
+      document.querySelectorAll('aside a[href="/contratos"]').length === 1 &&
+      document.querySelectorAll('aside a[href="/administracao/usuarios"]').length === 0,
+    null,
+    { timeout: 15000 },
+  );
+  const observation = await page.evaluate(sut.navigationDomObservation);
+  assert.equal(sut.surfaceStateValid("SYS05", observation), true);
+  assert.equal(sut.navigationObservationReady("SYS05", observation), false);
+  const pending = sut.waitNavigationReady(
+    page,
+    { drain: async () => {}, assertSafe() {} },
+    "SYS05",
+    "/",
+    "light",
+  );
+  dom.window.__navFixture.release("administration");
+  const ready = await pending;
+  assert.ok(ready.menuHrefs.includes("/administracao/usuarios"));
+  assert.ok(ready.menuHrefs.includes("/administracao/auditoria"));
+});
+
+test("NAV R2 wait keeps a final heading blocked until the real DOM contains the authorized menu", async () => {
+  const wait = fn("waitNavigationReady");
+  const { dom, page } = await navigationLegacyDomPage(
+    '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header><aside><nav></nav></aside><main><h1>Contrato AUD-R2</h1>Dados do contrato</main>',
+  );
+  let drained = 0,
+    settled = false;
+  const pending = wait(
+    page,
+    {
+      drain: async () => {
+        drained++;
+      },
+      assertSafe: () => {},
+    },
+    "V106",
+    "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "light",
+  ).then((x) => {
+    settled = true;
+    return x;
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(settled, false);
+  assert.equal(drained, 0);
+  dom.window.document.querySelector("nav").innerHTML = navigationReadyObservation()
+    .menuHrefs.map((href) => `<a href="${href}">Destino</a>`)
+    .join("");
+  const actual = await pending;
+  assert.equal(actual.headingText, "Contrato AUD-R2");
+  assert.equal(actual.menuHrefs.length, 8);
+  assert.equal(drained, 1);
+  dom.window.close();
+});
+
+test("NAV R2 wait rejects a native drain failure after UI readiness without hiding it", async () => {
+  const wait = fn("waitNavigationReady");
+  const links = navigationReadyObservation()
+    .menuHrefs.map((href) => `<a href="${href}">Destino</a>`)
+    .join("");
+  const { dom, page } = await navigationLegacyDomPage(
+    `<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header><aside>${links}</aside><main><h1>Contrato AUD-R2</h1>Dados do contrato</main>`,
+  );
+  const failure = Object.assign(Error("FENCE_LIFECYCLE"), { code: "FENCE_LIFECYCLE" });
+  await assert.rejects(
+    () =>
+      wait(
+        page,
+        {
+          drain: async () => {
+            throw failure;
+          },
+          assertSafe: () => {},
+        },
+        "V106",
+        "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+        "light",
+      ),
+    (error) => error === failure,
+  );
+  dom.window.close();
+});
+
+test("NAV R2 wait rejects a foreign route before observing or draining", async () => {
+  const wait = fn("waitNavigationReady");
+  let effects = 0;
+  await assert.rejects(
+    () =>
+      wait(
+        { url: () => HML + "/contratos" },
+        {
+          drain: async () => {
+            effects++;
+          },
+        },
+        "V106",
+        "https://foreign.invalid/path",
+        "light",
+      ),
+    /NAVIGATION_/,
+  );
+  assert.equal(effects, 0);
+});
+
+test("NAV R2 control waits for a real late link before draining and returning it", async () => {
+  const wait = fn("waitNavigationControl"),
+    { dom, page } = await navigationLegacyDomPage(
+      navigationStableContextHtml().replace(/<a id="target"[\s\S]*?<\/a>/, ""),
+    );
+  let drained = 0,
+    done = false;
+  const pending = wait(
+    page,
+    {
+      drain: async () => {
+        drained++;
+      },
+      assertSafe() {},
+    },
+    "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa",
+    1440,
+    false,
+  ).then((x) => {
+    done = true;
+    return x;
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(done, false);
+  assert.equal(drained, 0);
+  dom.window.document
+    .querySelector("main")
+    .insertAdjacentHTML(
+      "beforeend",
+      '<a href="/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa">Base normativa</a>',
+    );
+  const result = await pending;
+  assert.equal(
+    await result.link.getAttribute("href"),
+    "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa",
+  );
+  assert.equal(drained, 1);
+  dom.window.close();
+});
+
+test("NAV R2 control never offers a foreign destination or hides a fence failure", async () => {
+  const wait = fn("waitNavigationControl"),
+    { dom, page } = await navigationLegacyDomPage(navigationStableContextHtml());
+  const failure = Object.assign(Error("FENCE_ASYNC"), { code: "FENCE_ASYNC" });
+  await assert.rejects(
+    () =>
+      wait(
+        page,
+        {
+          drain: async () => {
+            throw failure;
+          },
+          assertSafe() {},
+        },
+        "/contratos",
+        1440,
+        true,
+      ),
+    (error) => error === failure,
+  );
+  await assert.rejects(
+    () =>
+      wait(
+        page,
+        {
+          drain: async () => {
+            throw Error("UNEXPECTED_IO");
+          },
+        },
+        "https://foreign.invalid",
+        390,
+        true,
+      ),
+    /NAVIGATION_/,
+  );
+  dom.window.close();
+});
+
+function navigationStableContextHtml() {
+  return (
+    '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header><aside>' +
+    [
+      "/",
+      "/contratantes",
+      "/contratantes/novo",
+      "/contratos",
+      "/contratos/novo",
+      "/selecionar-organizacao",
+      "/administracao/usuarios",
+      "/administracao/auditoria",
+    ]
+      .map((path) => '<a href="' + path + '">Menu</a>')
+      .join("") +
+    '</aside><main><h1>Contrato AUD-R2</h1><a id="target" href="/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa">Base normativa</a></main>'
+  );
+}
+
+for (const kind of ["organization", "activity", "theme", "permissions", "removed", "disabled"]) {
+  test("NAV R2 review I1 refuses " + kind + " changed during native drain", async () => {
+    for (const control of kind === "removed" || kind === "disabled" ? [true] : [false, true]) {
+      const { dom, page } = await navigationLegacyDomPage(navigationStableContextHtml());
+      const waitBudgets = [];
+      page.waitForFunction = async (probe, arg, options) => {
+        waitBudgets.push(options.timeout);
+        assert.ok(options.timeout > 0 && options.timeout <= 15000);
+        if (await page.evaluate(probe, arg)) return;
+        throw Object.assign(Error("bounded observation"), { name: "TimeoutError" });
+      };
+      const fence = {
+        assertSafe() {},
+        drain: async () => {
+          const doc = dom.window.document;
+          if (kind === "organization")
+            doc.querySelector("header").textContent = "OUTRA ORGANIZACAO Situação: ativa";
+          if (kind === "activity")
+            doc.querySelector("header").textContent = "ContaOS HML Teste Situação: inativa";
+          if (kind === "theme") doc.documentElement.classList.add("dark");
+          if (kind === "permissions")
+            doc.querySelector('aside a[href="/administracao/usuarios"]').remove();
+          if (kind === "removed") doc.querySelector("#target").remove();
+          if (kind === "disabled")
+            doc.querySelector("#target").setAttribute("aria-disabled", "true");
+        },
+      };
+      await assert.rejects(
+        () =>
+          control
+            ? sut.waitNavigationControl(
+                page,
+                fence,
+                "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa",
+                1440,
+                false,
+              )
+            : sut.waitNavigationReady(page, fence, "V106", new URL(page.url()).pathname, "light"),
+        (error) => error.name === "TimeoutError",
+      );
+      assert.ok(waitBudgets.length >= 1);
+      dom.window.close();
+    }
+  });
+}
+
+test("NAV R2 review I1 waits for a transient post-drain change within the same budget", async () => {
+  for (const control of [false, true]) {
+    const { dom, page } = await navigationLegacyDomPage(navigationStableContextHtml());
+    const originalTarget = dom.window.document.querySelector("#target").outerHTML;
+    const budgets = [];
+    page.waitForFunction = async (probe, arg, options) => {
+      budgets.push(options.timeout);
+      assert.ok(options.timeout > 0 && options.timeout <= 15000);
+      if (!(await page.evaluate(probe, arg))) {
+        dom.window.document.querySelector("header").textContent =
+          "ContaOS HML Teste Situação: ativa";
+        dom.window.document.documentElement.classList.remove("dark");
+        if (!dom.window.document.querySelector("#target"))
+          dom.window.document.querySelector("main").insertAdjacentHTML("beforeend", originalTarget);
+      }
+      assert.ok(await page.evaluate(probe, arg));
+    };
+    let drains = 0;
+    const fence = {
+      assertSafe() {},
+      drain: async () => {
+        if (++drains === 1) {
+          dom.window.document.querySelector("header").textContent =
+            "OUTRA ORGANIZACAO Situação: inativa";
+          dom.window.document.documentElement.classList.add("dark");
+          if (control) dom.window.document.querySelector("#target").remove();
+        }
+      },
+    };
+    await (control
+      ? sut.waitNavigationControl(
+          page,
+          fence,
+          "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa",
+          1440,
+          false,
+        )
+      : sut.waitNavigationReady(page, fence, "V106", new URL(page.url()).pathname, "light"));
+    assert.equal(drains, 2);
+    assert.equal(budgets.length, 2);
+    assert.ok(budgets[1] <= budgets[0]);
+    assert.equal(dom.window.document.documentElement.classList.contains("dark"), false);
+    dom.window.close();
   }
 });
