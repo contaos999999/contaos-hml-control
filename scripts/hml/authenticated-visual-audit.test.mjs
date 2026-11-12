@@ -23,6 +23,228 @@ function fn(name) {
 const R5_R4_HEAD = "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72";
 const HML = "https://contaos-41-hml.vercel.app";
 const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
+
+function navigationTechnicalRows() {
+  return fn("navigationCases")().map(({ surface, width, theme }) => ({
+    surface,
+    width,
+    theme,
+    routeExact: true,
+    stateVerified: true,
+    organizationVerified: true,
+    enteredFromMenu: true,
+    reloadVerified: true,
+    backVerified: true,
+    shellVerified: true,
+    menuVerified: true,
+    drawerVerified: surface === "V117" ? true : null,
+    linksFound: 7,
+    linksTested: 7,
+    linksOutOfFixture: 0,
+    excludedLinkKinds: [],
+    conditionalLinksTested: 0,
+    destinations: sut.PRIVATE_SURFACES.filter((s) => s !== surface).slice(0, 7),
+    controlsVerified: true,
+    controlOperation: fn("navigationControlOperation")(surface),
+    pageErrors: 0,
+    httpErrors: 0,
+    blockedRequests: 0,
+    status: "PASS",
+    stage: "FINISH",
+    failureCode: null,
+  }));
+}
+test("NAV F2: closed catalogue covers twenty-six private surfaces twice with current bindings", () => {
+  const rows = fn("navigationCases")();
+  assert.equal(rows.length, 52);
+  assert.equal(new Set(rows.map((r) => r.surface)).size, 26);
+  assert.ok(
+    rows.every(
+      (r) => (r.width === 1440 && r.theme === "light") || (r.width === 390 && r.theme === "dark"),
+    ),
+  );
+  assert.equal(
+    rows.find((r) => r.surface === "V117").path,
+    "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/analise",
+  );
+  assert.match(
+    rows.find((r) => r.surface === "V120").path,
+    /79bdc139-ed10-4c91-905e-b32b9a824d27\/apresentacoes\/eb6d5b1c-8b64-418b-aa82-bf1f29d41768$/,
+  );
+});
+test("NAV F2: destination policy rejects foreign origins identifiers query secrets and javascript", () => {
+  const f = fn("navigationDestination");
+  assert.equal(f(HML + "/contratos/" + sut.SYNTHETIC_FIXTURE.contract), "V106");
+  for (const url of [
+    "https://example.com/",
+    "javascript:alert(1)",
+    HML + "/contratos/00000000-0000-4000-8000-000000000001",
+    HML + "/?token=canary",
+    HML + "/unknown",
+  ])
+    assert.equal(f(url), null);
+});
+test("NAV F2: outside-list exclusions are closed by source route and identifier syntax", () => {
+  const f = fn("navigationLinkDecision"),
+    id = "00000000-0000-4000-8000-000000000001";
+  assert.equal(f("/contratantes/" + id + "/editar", "V101").kind, "OTHER_CONTRACTOR_ROW");
+  for (const [href, source] of [
+    ["/contratantes/" + id + "/editar", "V104"],
+    ["/unknown", "V101"],
+    ["https://example.com/", "V101"],
+    ["/contratos/" + id + "?token=x", "V104"],
+  ])
+    assert.equal(f(href, source).kind, "BROKEN");
+  assert.equal(f("/contratos/" + sut.SYNTHETIC_FIXTURE.contract, "V104").kind, "TARGET");
+});
+test("NAV F2: conditional wizard denial requires exact fresh backend ownership and state", () => {
+  const f = fn("navigationUnavailableEvidence"),
+    b = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+  const id = "79bdc139-ed10-4c91-905e-b32b9a824d27",
+    path = "/competencias/" + id + "/apresentar";
+  const data = {
+    competencia: {
+      id,
+      id_organizacao: b.organization,
+      id_contrato: b.contract,
+      competencia_referencia: "2026-09-01",
+      situacao: "aguardando_contratante",
+    },
+    allowed_actions: { apresentar: false },
+  };
+  assert.equal(f(path, data), true);
+  for (const patch of [
+    { allowed_actions: { apresentar: true } },
+    { competencia: { ...data.competencia, id_organizacao: "other" } },
+    { competencia: { ...data.competencia, situacao: "preparando" } },
+    { competencia: { ...data.competencia, id: "other" } },
+  ])
+    assert.equal(f(path, { ...data, ...patch }), false);
+  assert.equal(f("/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar", data), false);
+});
+test("NAV F2: essential local controls have explicit operations without valid business submission", () => {
+  const f = fn("navigationControlOperation");
+  assert.equal(f("V103"), "INVALID_EDIT_FORM");
+  assert.equal(f("V119"), "PRESENTATION_CONFIRM_CANCEL");
+  assert.equal(f("V117"), "REQUIREMENT_DRAWER");
+  assert.equal(f("V120"), "PROTOCOL_REFRESH");
+  assert.throws(() => f("UNKNOWN"), /NAVIGATION_CASE/);
+});
+test("NAV F2: full observed matrix passes and missing duplicate extra false or forged fields do not", () => {
+  const summarize = fn("summarizeNavigation"),
+    rows = navigationTechnicalRows();
+  assert.equal(summarize(rows).matrixComplete, true);
+  for (const bad of [
+    rows.slice(1),
+    [...rows, rows[0]],
+    rows.map((r, i) => (i ? r : { ...r, status: "PASS_REAL" })),
+    rows.map((r, i) => (i ? r : { ...r, enteredFromMenu: false })),
+    rows.map((r, i) => (i ? r : { ...r, extra: "canary" })),
+  ])
+    assert.equal(summarize(bad).matrixComplete, false);
+});
+test("NAV F2: an unknown visible link cannot be certified as out of fixture", () => {
+  const rows = navigationTechnicalRows();
+  rows[0].linksOutOfFixture = 1;
+  assert.equal(fn("summarizeNavigation")(rows).matrixComplete, false);
+});
+test("NAV F2: report rejects secrets unknown fields missing cleanup and fabricated counts", () => {
+  const validate = fn("validateNavigationReport"),
+    records = navigationTechnicalRows();
+  const report = {
+    schema: "contaos.navigation.audit.v1",
+    frontendSha: "a".repeat(40),
+    harnessSha: "b".repeat(40),
+    deploymentId: "dpl_123456789",
+    auditScope: "INTEGRACAO_V1_FASE2_NAV",
+    records,
+    summary: fn("summarizeNavigation")(records),
+    nativeProofSha256: "c".repeat(64),
+    sessionVerified: true,
+    masterVerified: true,
+    organizationVerified: true,
+    logoutVerified: true,
+    blockedMutations: 0,
+    pageErrors: 0,
+    httpErrors: 0,
+    aborted: null,
+  };
+  assert.equal(validate(report), true);
+  for (const patch of [
+    { token: "canary" },
+    { logoutVerified: false },
+    { masterVerified: false },
+    { blockedMutations: 1 },
+    { pageErrors: 1 },
+    { frontendSha: "unverified" },
+    { summary: { ...report.summary, passed: 999 } },
+  ])
+    assert.equal(validate({ ...report, ...patch }), false);
+  let effects = 0;
+  const bad = { ...report };
+  Object.defineProperty(bad, "records", {
+    enumerable: true,
+    get() {
+      effects++;
+      return records;
+    },
+  });
+  assert.equal(validate(bad), false);
+  assert.equal(effects, 0);
+});
+test("NAV F2: active navigation request never reactivates the consumed V117 request", () => {
+  assert.ok(sut.NAVIGATION_SCOPE, "navigation scope not implemented");
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "audit",
+    request_id: sut.NAVIGATION_SCOPE.nonce,
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.equal(sut.resolveC8AuditScope(row), sut.NAVIGATION_SCOPE);
+  assert.throws(() =>
+    sut.resolveC8AuditScope({ ...row, request_id: "trilha-c-audit-20261111-c8-r8" }),
+  );
+  assert.equal(
+    sut.parseSingleRequest(
+      JSON.stringify({ ...row, request_id: "trilha-c-audit-20261111-c8-r8" }),
+      "audit",
+      { historical: true },
+    ).operation,
+    "audit",
+  );
+  assert.equal(sut.privateCases(sut.C8_V117_SCOPE).length, 8);
+  assert.equal(sut.privateCases().length, 208);
+});
+test("NAV F2: driver rejects callers without the governed scope before any browser effect", async () => {
+  let effects = 0;
+  const page = new Proxy(
+    {},
+    {
+      get() {
+        effects++;
+        throw new Error("canary");
+      },
+    },
+  );
+  await assert.rejects(() => fn("runNavigationAudit")(page, {}, {}), /NAVIGATION_CONTEXT/);
+  assert.equal(effects, 0);
+});
+test("NAV F2: parent routes preserve the contractor document competence and presentation chains", () => {
+  const parent = fn("navigationParent"),
+    cases = fn("navigationCases")();
+  assert.equal(parent(cases.find((r) => r.surface === "V103")), "/contratantes");
+  assert.equal(
+    parent(cases.find((r) => r.surface === "V111")),
+    "/contratos/" + sut.SYNTHETIC_FIXTURE.contract + "/documentos",
+  );
+  assert.equal(
+    parent(cases.find((r) => r.surface === "V120")),
+    "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27",
+  );
+});
 // Historical metadata is initialized before tests can cross a top-level await.
 const R13_R12_RESPONSES = {
   "/actions/runs/42666600147": {
@@ -13273,14 +13495,11 @@ test("R13 POSIX ignored-build template admits only the approved production SHA",
 });
 
 test(
-  "R13 canonical restored public deployment is discovered live before any new nonce",
+  "Current phase 2 HML public deployment is discovered live before any new nonce",
   { timeout: 210000 },
   async () => {
     const graph = await sut.discoverPublicGraph();
-    const expected = {
-      frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
-      deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
-    };
+    const expected = sut.NAVIGATION_DEPLOYMENT;
     assert.deepEqual(sut.resolveDeploymentIdentity(graph.modules, expected), expected);
     assert.ok(graph.modules.size > 0 && graph.modules.size <= 128);
     assert.ok(Number.isSafeInteger(graph.bytes) && graph.bytes > 0 && graph.bytes <= 8388608);
@@ -14665,18 +14884,92 @@ test("C8 surface states require the real open drawer, registration stage and com
   );
 });
 
-test("C8 admission is bound to the exact seven-field audit request and rejects legacy or injected scopes", () => {
+test("Navigation admission requires each integrated repair, visual and focus gate before the one-shot request", async () => {
+  const sha = "a".repeat(40),
+    parent = "b".repeat(40);
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "audit",
+    request_id: sut.NAVIGATION_SCOPE.nonce,
+    approved_parent_sha: parent,
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  const raw = JSON.stringify(request),
+    seen = [];
+  const git = async (args) => {
+    if (args[0] === "show") return raw;
+    if (args[0] === "rev-parse") return sha;
+    if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ");
+    if (args[0] === "merge-base") {
+      seen.push(args[2]);
+      return "";
+    }
+    if (args[0] === "diff-tree") return "M\t" + sut.SINGLE_REQUEST.path;
+    if (args[0] === "ls-tree")
+      return "100644 blob " + "e".repeat(40) + "\t" + sut.SINGLE_REQUEST.path;
+    if (args[0] === "log") return sha;
+    throw new Error("Unexpected Git command");
+  };
+  await sut.verifySingleRequestGit(request, sha, git, raw);
+  for (const gate of [
+    "079747a75e224996082e14c671864f68bb5e36ba",
+    "0f1b6bfe2757478b18855143f378bd364e80f136",
+    "3b33fd69dd005814a8c615a0af6bd0fea758ac6b",
+  ]) {
+    assert.ok(seen.includes(gate), "missing required integrated gate");
+    await assert.rejects(
+      () =>
+        sut.verifySingleRequestGit(
+          request,
+          sha,
+          async (args) => {
+            if (args[0] === "merge-base" && args[2] === gate)
+              throw new Error("Required gate absent");
+            return git(args);
+          },
+          raw,
+        ),
+      /Required gate absent/,
+    );
+  }
+});
+
+test("Navigation deployment is separately pinned to the reviewed phase 2 product without rewriting C8 history", () => {
+  assert.deepEqual(sut.NAVIGATION_DEPLOYMENT, {
+    frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
+    deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
+  });
+  assert.equal(Object.isFrozen(sut.NAVIGATION_DEPLOYMENT), true);
+  assert.equal(sut.C8_R5_PRESERVED.frontendSha, "0024b3c6739ab6296ec12338f11cf792d3a5f84b");
+  assert.equal(sut.C8_R5_PRESERVED.deploymentId, "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh");
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationRepairGateSha,
+    "079747a75e224996082e14c671864f68bb5e36ba",
+  );
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationVisualGateSha,
+    "0f1b6bfe2757478b18855143f378bd364e80f136",
+  );
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationFocusGateSha,
+    "3b33fd69dd005814a8c615a0af6bd0fea758ac6b",
+  );
+});
+
+test("Audit admission is bound to the exact seven-field navigation request and rejects legacy or injected scopes", () => {
   const resolve = fn("resolveC8AuditScope");
   const request = {
     schema_version: 1,
     issue: 317,
     operation: "audit",
-    request_id: "trilha-c-audit-20261111-c8-r8",
+    request_id: sut.NAVIGATION_SCOPE.nonce,
     approved_parent_sha: "a".repeat(40),
     frontend_sha: "",
     deployment_id: "",
   };
-  assert.equal(resolve(request), sut.C8_V117_SCOPE);
+  assert.equal(resolve(request), sut.NAVIGATION_SCOPE);
   assert.equal(
     sut.parseSingleRequest(JSON.stringify(request), "audit").request_id,
     request.request_id,
@@ -14684,6 +14977,7 @@ test("C8 admission is bound to the exact seven-field audit request and rejects l
   for (const changed of [
     undefined,
     { ...request, request_id: "trilha-c-audit-20261110-c8-r1" },
+    { ...request, request_id: "trilha-c-audit-20261111-c8-r8" },
     { ...request, scope: "C8" },
     { ...request, operation: "fixtures" },
     { ...request, request_id: "trilha-a-audit-20261108-r1" },
