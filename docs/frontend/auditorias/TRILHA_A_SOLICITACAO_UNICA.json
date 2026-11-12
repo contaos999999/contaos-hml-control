@@ -2,8 +2,8 @@
   "schema_version": 1,
   "issue": 317,
   "operation": "audit",
-  "request_id": "integracao-v1-fase2-nav-20261112-r2",
-  "approved_parent_sha": "6521b1a136ac4e543532e169b484f317494d65c6",
+  "request_id": "integracao-v1-fase2-nav-20261112-r3",
+  "approved_parent_sha": "491aaac1f12b84aff9734e6415d7328881a74809",
   "frontend_sha": "",
   "deployment_id": ""
 }
