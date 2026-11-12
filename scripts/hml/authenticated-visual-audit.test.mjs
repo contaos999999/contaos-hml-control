@@ -12264,6 +12264,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     r7ZeroAuth: canonical,
     navigationR1: await sut.verifyNavigationR1Evidence(await navigationR1EvidenceFixture()),
     navigationR2: await sut.verifyNavigationR2Evidence(await navigationR2EvidenceFixture()),
+    navigationR3: await sut.verifyNavigationR3Evidence(await navigationR3EvidenceFixture()),
     auditScope: "C8",
     c8RecoverySha256: "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee",
   };
@@ -12296,7 +12297,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
   assert.ok(environmentSource.includes("function requestEnvironmentChain(env)"));
   const factory = new Function(
     "deps",
-    `const {C8_RECOVERY_DOCUMENT,validateC8RecoveryDocument,resolveC8AuditScope,isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,validateNavigationR1Evidence,validateNavigationR2Evidence,singleRequestGet,validateR18RecoveryDocument,validateR18RegistrationCandidate,R18_RECOVERY_DOCUMENT,R18_REGISTRATION_CANDIDATE}=deps;
+    `const {C8_RECOVERY_DOCUMENT,validateC8RecoveryDocument,resolveC8AuditScope,isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,validateNavigationR1Evidence,validateNavigationR2Evidence,validateNavigationR3Evidence,singleRequestGet,validateR18RecoveryDocument,validateR18RegistrationCandidate,R18_RECOVERY_DOCUMENT,R18_REGISTRATION_CANDIDATE}=deps;
     ${environmentSource}
     let singleRequestContext=null,validatedR4ZeroAuth=null,validatedR7ZeroAuth=null,validatedR12ZeroAuth=null;
     ${sut.loadSingleRequestProof.toString().replaceAll("import.meta.url", "sourceModuleUrl")}
@@ -12335,6 +12336,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     validateR7ZeroAuthProof: sut.validateR7ZeroAuthProof,
     validateNavigationR1Evidence: sut.validateNavigationR1Evidence,
     validateNavigationR2Evidence: sut.validateNavigationR2Evidence,
+    validateNavigationR3Evidence: sut.validateNavigationR3Evidence,
     singleRequestGet: () => {
       gets++;
       assert.fail("local Master loader must not fetch");
@@ -18651,7 +18653,7 @@ test("NAV R2 readiness DOM observation rejects stale organization and waits for 
   }
 });
 
-async function buildNavigationSourceUI(directory) {
+async function buildNavigationSourceUI(directory, { actualRouter = false } = {}) {
   const fs = await import("node:fs/promises"),
     { join, resolve } = await import("node:path"),
     { fileURLToPath } = await import("node:url");
@@ -18734,12 +18736,23 @@ async function buildNavigationSourceUI(directory) {
       contract +
       "'/>:<main><h1>Contratos</h1></main>}</ContaOSAppShell></QueryClientProvider>;}createRoot(document.getElementById('root')).render(<App/>);",
   );
+  if (actualRouter)
+    await fs.writeFile(
+      join(directory, "entry.tsx"),
+      "import React from 'react';import{createRoot}from'react-dom/client';import{QueryClient,QueryClientProvider}from'@tanstack/react-query';import{createRouter,createRootRoute,createRoute,RouterProvider,Outlet}from'@tanstack/react-router';import{ContaOSAppShell}from" +
+        JSON.stringify(resolve(root, "src/components/layout/ContaOSAppShell.tsx")) +
+        ";import{VisaoGeralContrato}from" +
+        JSON.stringify(resolve(root, "src/components/contratos/VisaoGeralContrato.tsx")) +
+        ";import'./state';const queryClient=new QueryClient({defaultOptions:{queries:{retry:false}}});const rootRoute=createRootRoute({component:()=> <ContaOSAppShell><Outlet/></ContaOSAppShell>});const contractRoute=createRoute({getParentRoute:()=>rootRoute,path:'/contratos/$id',component:()=>{const{id}=contractRoute.useParams();return <VisaoGeralContrato id={id}/>;}});const support=['/','/contratos','/contratantes','/contratantes/novo','/contratos/novo','/selecionar-organizacao','/administracao/usuarios','/administracao/auditoria','/login'].map(path=>createRoute({getParentRoute:()=>rootRoute,path,component:()=> <main><h1>Contratos</h1></main>}));const router=createRouter({routeTree:rootRoute.addChildren([contractRoute,...support]),context:{queryClient},scrollRestoration:true,defaultPreloadStaleTime:0});createRoot(document.getElementById('root')).render(<QueryClientProvider client={queryClient}><RouterProvider router={router}/></QueryClientProvider>);",
+    );
   const aliases = {
     react: require.resolve("react"),
     "react-dom/client": require.resolve("react-dom/client"),
     "react/jsx-runtime": require.resolve("react/jsx-runtime"),
     "@tanstack/react-query": require.resolve("@tanstack/react-query"),
-    "@tanstack/react-router": join(directory, "router.tsx"),
+    "@tanstack/react-router": actualRouter
+      ? require.resolve("@tanstack/react-router")
+      : join(directory, "router.tsx"),
     "@/integrations/supabase/client": join(directory, "client.ts"),
     "@/lib/organizacao/preferenciaOrganizacao": join(directory, "org.ts"),
     "@/lib/administracao/rbacRpc": join(directory, "rbac.ts"),
@@ -19116,7 +19129,7 @@ test("NAV R2 R1 evidence refuses replay changed jobs artifacts repository and un
   }
 });
 test("NAV R2 successor consumes R1 and adds the integrated R2 plan ancestor", async () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r3");
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r4");
   assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes("integracao-v1-fase2-nav-20261111-r1"));
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR2PlanSha,
@@ -19226,7 +19239,7 @@ test("NAV R2 native guard fails closed and writes a separate receipt only after 
   }
 });
 
-async function navigationNativeFixture(bundle, view) {
+async function navigationNativeFixture(bundle, view, { holdSymbol = false } = {}) {
   const fs = await import("node:fs/promises"),
     { resolve } = await import("node:path"),
     { fileURLToPath } = await import("node:url");
@@ -19239,10 +19252,19 @@ async function navigationNativeFixture(bundle, view) {
     late = Buffer.from("window.__navLateDone=true;");
   const brand = "/brand/ContaOS_Logo_Horizontal_Mono_Branco_Transparente.svg",
     brandBytes = await fs.readFile(resolve(root, "public" + brand));
-  let pendingLate = null;
+  const symbol = "/brand/ContaOS_Simbolo_Branco.svg",
+    symbolBytes = await fs.readFile(resolve(root, "public" + symbol));
+  let pendingLate = null,
+    pendingSymbol = null;
+  const symbolSeen = Promise.withResolvers();
   const lateSeen = Promise.withResolvers();
   const server = createHttpServer((request, response) => {
     const path = new URL(request.url, "http://127.0.0.1").pathname;
+    if (path === symbol && holdSymbol) {
+      pendingSymbol = response;
+      symbolSeen.resolve();
+      return;
+    }
     if (path === "/abort.js") {
       request.socket.destroy();
       return;
@@ -19257,12 +19279,19 @@ async function navigationNativeFixture(bundle, view) {
       response.end("synthetic unavailable");
       return;
     }
-    const bytes = path === "/navigation.js" ? script : path === brand ? brandBytes : html;
+    const bytes =
+      path === "/navigation.js"
+        ? script
+        : path === brand
+          ? brandBytes
+          : path === symbol
+            ? symbolBytes
+            : html;
     response.writeHead(200, {
       "content-type":
         path === "/navigation.js"
           ? "application/javascript"
-          : path === brand
+          : [brand, symbol].includes(path)
             ? "image/svg+xml"
             : "text/html",
       "cache-control": "no-store",
@@ -19291,6 +19320,7 @@ async function navigationNativeFixture(bundle, view) {
       "/abort.js",
       "/http-fail.svg",
       brand,
+      symbol,
     ]);
     fence = await fn("installNativeFence")({
       debugPort: port,
@@ -19323,7 +19353,7 @@ async function navigationNativeFixture(bundle, view) {
             status === 200 &&
             body === undefined &&
             ((resourceType === "Script" && ["/navigation.js", "/late.js"].includes(path)) ||
-              (resourceType === "Image" && path === brand))
+              (resourceType === "Image" && [brand, symbol].includes(path)))
           );
         return status === 200 && Buffer.isBuffer(body) && body.equals(expected);
       },
@@ -19349,6 +19379,12 @@ async function navigationNativeFixture(bundle, view) {
       projected,
       origin,
       basePath,
+      symbolSeen: symbolSeen.promise,
+      releaseSymbol() {
+        assert.ok(pendingSymbol);
+        pendingSymbol.writeHead(200, { "content-type": "image/svg+xml" });
+        pendingSymbol.end(symbolBytes);
+      },
       lateSeen: lateSeen.promise,
       releaseLate() {
         assert.ok(pendingLate);
@@ -19356,6 +19392,7 @@ async function navigationNativeFixture(bundle, view) {
         pendingLate.end(late);
       },
       async close() {
+        pendingSymbol?.destroy();
         pendingLate?.destroy();
         fence.close();
         await browser.close();
@@ -19412,6 +19449,7 @@ test(
     const directory = await fs.mkdtemp(join(tmpdir(), "navigation-native-"));
     try {
       const bundle = await buildNavigationSourceUI(directory);
+      const actualRouterBundle = await buildNavigationSourceUI(directory, { actualRouter: true });
       for (const view of [
         { width: 1440, theme: "light" },
         { width: 390, theme: "dark" },
@@ -19570,6 +19608,7 @@ test(
           await late.close();
         }
         await navigationNativeQuietRead(bundle, view);
+        await navigationNativeR4BrandAndHistory(actualRouterBundle, view);
         for (const mode of ["http", "abort"]) {
           const f = await navigationNativeFixture(bundle, view),
             counter = await navigationActualTransportCounters();
@@ -20663,7 +20702,7 @@ test("NAV R3 original drain cannot extend the shared operation deadline", async 
 });
 
 test("NAV R3 exclusive successor refuses both consumed NAV nonces and requires its integrated plan", async () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r3");
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r4");
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR3PlanSha,
     "9030de4115041598bdc530e03c3c8a5c18d3a5ae",
@@ -20805,3 +20844,576 @@ for (const stage of ["count", "isVisible", "isEnabled", "evaluate"])
       await pending?.catch(() => {});
     }
   });
+
+test("NAV R4 November denial uses the exact canonical historical draft state", () => {
+  const b = JSON.parse(sut.C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+  const path = "/competencias/" + sut.SYNTHETIC_FIXTURE.competence + "/apresentar";
+  const data = {
+    competencia: {
+      id: sut.SYNTHETIC_FIXTURE.competence,
+      id_organizacao: b.organization,
+      id_contrato: b.contract,
+      competencia_referencia: "2026-11-01",
+      situacao: "rascunho",
+    },
+    allowed_actions: { apresentar: false },
+  };
+  assert.equal(fn("navigationUnavailableEvidence")(path, data), true);
+  for (const patch of [
+    { situacao: "preparando" },
+    { situacao: "aguardando_contratante" },
+    { id: "other" },
+    { id_organizacao: "other" },
+    { id_contrato: "other" },
+    { competencia_referencia: "2026-10-01" },
+  ])
+    assert.equal(
+      sut.navigationUnavailableEvidence(path, {
+        ...data,
+        competencia: { ...data.competencia, ...patch },
+      }),
+      false,
+    );
+  assert.equal(
+    sut.navigationUnavailableEvidence(path, { ...data, allowed_actions: { apresentar: true } }),
+    false,
+  );
+});
+
+test("NAV R4 sidebar waits for the changed asset before expanding and retains the deadline", async () => {
+  const { EventEmitter } = await import("node:events"),
+    page = new EventEmitter();
+  const observer = fn("observeNavigationSession")(page),
+    request = {};
+  let finished = false,
+    expanded = false,
+    finishedAt = 0;
+  page.getByRole = (_, { name }) => ({
+    count: async () => 1,
+    waitFor: async () => {},
+    click: async () => {
+      if (name === "Recolher menu") {
+        page.emit("request", request);
+        setTimeout(() => {
+          finished = true;
+          finishedAt = performance.now();
+          page.emit("requestfinished", request);
+        }, 40);
+      } else {
+        assert.equal(finished, true);
+        assert.ok(performance.now() - finishedAt >= 500);
+        expanded = true;
+      }
+    },
+  });
+  try {
+    await fn("toggleNavigationSidebar")(page, { drain: async () => {}, assertSafe() {} });
+    assert.equal(expanded, true);
+    await assert.rejects(
+      () =>
+        sut.toggleNavigationSidebar(
+          page,
+          { drain: async () => {}, assertSafe() {} },
+          performance.now() + 20,
+        ),
+      (error) => error.name === "TimeoutError",
+    );
+  } finally {
+    observer.close();
+  }
+});
+
+test("NAV R4 each link returns through browser history and rejects a wrong source without recovery", async () => {
+  const { EventEmitter } = await import("node:events"),
+    page = new EventEmitter();
+  const observer = fn("observeNavigationSession")(page),
+    path = "/contratos/" + sut.SYNTHETIC_FIXTURE.contract;
+  let url = HML + "/contratantes",
+    backs = 0,
+    wrong = false;
+  page.url = () => url;
+  page.waitForFunction = async () => {};
+  page.evaluate = async () => navigationReadyObservation();
+  page.goBack = async (opts) => {
+    assert.equal(opts.waitUntil, "networkidle");
+    assert.ok(opts.timeout <= 15000);
+    backs++;
+    url = HML + (wrong ? "/contratantes" : path);
+  };
+  const fence = { drain: async () => {}, assertSafe() {} };
+  try {
+    await fn("returnNavigationSource")(page, fence, "V106", path, "light");
+    assert.equal(backs, 1);
+    assert.equal(url, HML + path);
+    wrong = true;
+    await assert.rejects(() => sut.returnNavigationSource(page, fence, "V106", path, "light"), {
+      code: "NAVIGATION_ROUTE",
+    });
+    assert.equal(backs, 2);
+  } finally {
+    observer.close();
+  }
+});
+
+test("NAV R4 transport stdout marker contains only closed enums and matrix context", () => {
+  const marker = fn("navigationTransportMarker"),
+    context = {
+      surface: "V109",
+      width: 390,
+      stage: "LINKS",
+      operation: "LINK_CLICK",
+      target: "V106",
+    };
+  const request = {
+    failure: () => ({ errorText: "net::ERR_ABORTED" }),
+    url: () => HML + "/brand/ContaOS_Simbolo_Branco.svg?private=PRIVATE_SENTINEL",
+    method: () => "GET",
+    resourceType: () => "image",
+  };
+  const result = marker(request, context);
+  assert.deepEqual(result, {
+    phase: "NAVIGATION_TRANSPORT",
+    ...context,
+    reason: "ABORTED",
+    destination: "UI",
+    method: "GET",
+    resourceType: "image",
+    category: "BRAND",
+  });
+  assert.ok(marker(request, { ...context, operation: "MENU_OPEN" }));
+  assert.equal(JSON.stringify(result).includes("PRIVATE_SENTINEL"), false);
+  assert.equal(marker(request, { ...context, surface: "PRIVATE_SENTINEL" }), null);
+  let reads = 0;
+  assert.equal(
+    marker(
+      Object.defineProperty({}, "url", {
+        get() {
+          reads++;
+          throw Error("PRIVATE_SENTINEL");
+        },
+      }),
+      context,
+    ),
+    null,
+  );
+  assert.equal(
+    marker(
+      new Proxy(request, {
+        get() {
+          reads++;
+          throw Error("PRIVATE_SENTINEL");
+        },
+      }),
+      context,
+    ),
+    null,
+  );
+  assert.equal(
+    marker(
+      request,
+      Object.defineProperty({ ...context }, "surface", {
+        get() {
+          reads++;
+          throw Error("PRIVATE_SENTINEL");
+        },
+      }),
+    ),
+    null,
+  );
+  assert.equal(reads, 0);
+});
+
+async function navigationR3EvidenceFixture() {
+  const { execFileSync } = await import("node:child_process");
+  const plan = "e01a208940d68a504d1c206e1b255eabe4938bb3",
+    head = "bb245f124aad6eb33c133100bde5c742978ef01c";
+  const repository = {
+    id: 1442722734,
+    full_name: "contaos999999/contaos-hml-control",
+    private: false,
+    owner: { id: 352205055, login: "contaos999999" },
+  };
+  const responses = {};
+  for (const [id, workflow_id, name, file, conclusion, jobId, jobName, jobConclusion] of [
+    [
+      43252858747,
+      411115674,
+      "ContaOS Trilha A Autenticada",
+      "contaos-trilha-a-authenticated.yml",
+      "failure",
+      131303938869,
+      "Trilha A auditoria privada HML",
+      "failure",
+    ],
+    [
+      43252858795,
+      411426169,
+      "ContaOS Trilha A Fixtures",
+      "contaos-trilha-a-fixtures.yml",
+      "success",
+      131303374970,
+      "Trilha A preparacao sintetica HML",
+      "skipped",
+    ],
+  ]) {
+    responses["/actions/runs/" + id] = {
+      id,
+      workflow_id,
+      name,
+      path: ".github/workflows/" + file,
+      event: "workflow_run",
+      head_sha: head,
+      head_branch: "main",
+      run_attempt: 1,
+      status: "completed",
+      conclusion,
+      repository: structuredClone(repository),
+      head_repository: structuredClone(repository),
+    };
+    responses["/actions/runs/" + id + "/jobs?filter=all&per_page=100"] = {
+      total_count: 1,
+      jobs: [
+        {
+          id: jobId,
+          run_id: id,
+          run_attempt: 1,
+          head_sha: head,
+          name: jobName,
+          status: "completed",
+          conclusion: jobConclusion,
+        },
+      ],
+    };
+  }
+  responses["/actions/runs/43252858747/artifacts?per_page=100"] = {
+    total_count: 1,
+    artifacts: [
+      {
+        id: 13963014490,
+        name: "trilha-a-private-43252858747-1",
+        size_in_bytes: 2568,
+        digest: "sha256:94d55175c6354b27858503eea25349a27b6f732089c9126945f14993f6271311",
+        expired: false,
+        workflow_run: {
+          id: 43252858747,
+          repository_id: 1442722734,
+          head_repository_id: 1442722734,
+          head_branch: "main",
+          head_sha: head,
+        },
+      },
+    ],
+  };
+  const reads = [],
+    calls = [];
+  const git = async (args) => {
+    reads.push(args);
+    assert.equal(args[0], "show");
+    assert.ok(
+      args[1].startsWith(plan + ":docs/frontend/auditorias/integracao-funcional-v1/fase2/R3_"),
+    );
+    return execFileSync("git", args, { encoding: "utf8", maxBuffer: 1048576 });
+  };
+  const get = async (path) => {
+    calls.push(path);
+    assert.ok(Object.hasOwn(responses, path));
+    return structuredClone(responses[path]);
+  };
+  return { responses, reads, calls, git, get };
+}
+test("NAV R4 R3 evidence requires the original failed authenticated run and sealed report before any successor", async () => {
+  const f = await navigationR3EvidenceFixture();
+  const proof = await fn("verifyNavigationR3Evidence")(f);
+  assert.equal(proof.schema, "contaos.navigation.r3.proof.v1");
+  assert.equal(proof.authRun, 43252858747);
+  assert.equal(
+    proof.reportSha256,
+    "688a75cce68f3d76d4346e5b1affd4ff952817c5849fa03dc5818105d470e4d1",
+  );
+  assert.equal(f.calls.length, 5);
+  assert.equal(f.reads.length, 2);
+  assert.equal(fn("validateNavigationR3Evidence")(proof), proof);
+  for (const value of [
+    { ...proof, extra: true },
+    { ...proof, authRun: 1 },
+    Object.defineProperty({ ...proof }, "reportSha256", {
+      get() {
+        throw Error("private canary");
+      },
+    }),
+    new Proxy(proof, {
+      get() {
+        throw Error("private canary");
+      },
+    }),
+  ])
+    assert.throws(() => fn("validateNavigationR3Evidence")(value), { code: "NAVIGATION_R3_PROOF" });
+});
+test("NAV R4 R3 evidence refuses replay changed jobs artifacts repository and unsealed historical bytes", async () => {
+  const mutations = [
+    (f) => (f.responses["/actions/runs/43252858747"].run_attempt = 2),
+    (f) => (f.responses["/actions/runs/43252858747"].conclusion = "success"),
+    (f) => (f.responses["/actions/runs/43252858795"].head_sha = "f".repeat(40)),
+    (f) => (f.responses["/actions/runs/43252858747"].repository.owner.id = 1),
+    (f) =>
+      (f.responses["/actions/runs/43252858747/jobs?filter=all&per_page=100"].jobs[0].conclusion =
+        "skipped"),
+    (f) =>
+      (f.responses["/actions/runs/43252858795/jobs?filter=all&per_page=100"].jobs[0].conclusion =
+        "success"),
+    (f) =>
+      (f.responses["/actions/runs/43252858747/artifacts?per_page=100"].artifacts[0].digest =
+        "sha256:" + "f".repeat(64)),
+    (f) => (f.git = async () => "{}"),
+  ];
+  for (const mutate of mutations) {
+    const f = await navigationR3EvidenceFixture();
+    mutate(f);
+    await assert.rejects(() => fn("verifyNavigationR3Evidence")(f), {
+      code: "NAVIGATION_R3_PROOF",
+    });
+  }
+});
+
+test("NAV R4 successor is exclusive and all three original nonces remain spent", () => {
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r4");
+  assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationR4PlanSha,
+    "e01a208940d68a504d1c206e1b255eabe4938bb3",
+  );
+  for (const nonce of [
+    "integracao-v1-fase2-nav-20261111-r1",
+    "integracao-v1-fase2-nav-20261112-r2",
+    "integracao-v1-fase2-nav-20261112-r3",
+  ])
+    assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
+});
+
+async function navigationNativeR4BrandAndHistory(bundle, view) {
+  if (view.width === 1440) {
+    const red = await navigationNativeFixture(bundle, view, { holdSymbol: true });
+    try {
+      const failed = red.page.waitForEvent("requestfailed", {
+        predicate: (r) => r.url().endsWith("/brand/ContaOS_Simbolo_Branco.svg"),
+        timeout: 15000,
+      });
+      await red.page.getByRole("button", { name: "Recolher menu", exact: true }).click();
+      await red.symbolSeen;
+      await red.page.getByRole("button", { name: "Expandir menu", exact: true }).waitFor();
+      await red.page.getByRole("button", { name: "Expandir menu", exact: true }).click();
+      const request = await failed;
+      assert.equal(request.resourceType(), "image");
+      assert.equal(request.failure().errorText, "net::ERR_ABORTED");
+      red.fence.assertSafe();
+    } finally {
+      await red.close();
+    }
+  }
+  const f = await navigationNativeFixture(bundle, view, { holdSymbol: view.width === 1440 });
+  f.projected.on = f.page.on.bind(f.page);
+  f.projected.off = f.page.off.bind(f.page);
+  f.projected.goBack = f.page.goBack.bind(f.page);
+  const observer = fn("observeNavigationSession")(f.projected);
+  let count = 0,
+    active = 0,
+    peak = 0,
+    documents = 0;
+  const pending = new Set();
+  f.page.on("request", (r) => {
+    count++;
+    if (r.resourceType() === "document") documents++;
+    pending.add(r);
+    active = pending.size;
+    peak = Math.max(peak, active);
+  });
+  const finish = (r) => {
+    pending.delete(r);
+    active = pending.size;
+  };
+  f.page.on("requestfinished", finish);
+  f.page.on("requestfailed", finish);
+  try {
+    if (view.width === 1440) {
+      let expanded = false;
+      const change = fn("toggleNavigationSidebar")(f.projected, f.fence).then(
+        () => (expanded = true),
+      );
+      await f.symbolSeen;
+      assert.equal(expanded, false);
+      assert.equal(
+        await f.page.getByRole("button", { name: "Expandir menu", exact: true }).isVisible(),
+        true,
+      );
+      f.releaseSymbol();
+      await change;
+    }
+    // Actual browser pushState/back using original AppShell/Sidebar/V106.
+    // Twenty-six turns per view exercise the matrix size; support routes are synthetic.
+    for (let i = 0; i < 26; i++) {
+      const { link } = await fn("waitNavigationControl")(
+        f.projected,
+        f.fence,
+        "/contratantes",
+        view.width,
+        true,
+      );
+      await link.click();
+      await f.page.waitForURL(f.origin + "/contratantes");
+      await fn("returnNavigationSource")(f.projected, f.fence, "V106", f.basePath, view.theme);
+      assert.equal(f.page.url(), f.origin + f.basePath);
+    }
+    await fn("waitNavigationNetwork")(f.projected, f.fence);
+    assert.equal(
+      documents,
+      0,
+      "returning each actual SPA link must not reload every public module",
+    );
+    assert.ok(count < 65536);
+    assert.ok(peak < 1024);
+    assert.equal(active, 0);
+    assert.deepEqual(observer.snapshot(), {
+      httpErrors: 0,
+      httpStatusErrors: 0,
+      transportErrors: 0,
+      consoleErrors: 0,
+    });
+    f.fence.assertSafe();
+    console.log(
+      "NAV_R4_CAPACITY " +
+        JSON.stringify({
+          mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+          width: view.width,
+          turns: 26,
+          requests: count,
+          peak,
+          documents,
+        }),
+    );
+  } finally {
+    observer.close();
+    await f.close();
+  }
+}
+
+test("NAV R4 synthetic capacity envelope preserves the original lifecycle limits", () => {
+  const identity = { targetId: "synthetic-target", browserContextId: "synthetic-context" },
+    session = {
+      id: "synthetic-session",
+      targetId: identity.targetId,
+      contextId: identity.browserContextId,
+    };
+  const tracker = fn("createRequestLifecycle")(identity);
+  tracker.frame(session, { id: "synthetic-frame", loaderId: "initial-loader" });
+  let sequence = 0,
+    peak = 0,
+    loaderId = "initial-loader";
+  const batch = (count, documentBatch, newLoader) => {
+    if (newLoader) loaderId = newLoader;
+    const entries = [];
+    for (let n = 0; n < count; n++) {
+      const requestId = "network-" + ++sequence,
+        fetchId = "fetch-" + sequence,
+        type = documentBatch ? (n === 0 ? "Document" : "Script") : "Fetch",
+        request = { url: "https://synthetic.invalid/resource/" + sequence, method: "GET" };
+      tracker.observe(session, "Network.requestWillBeSent", {
+        requestId,
+        frameId: "synthetic-frame",
+        loaderId,
+        type,
+        timestamp: sequence,
+        request,
+      });
+      const pause = {
+          requestId: fetchId,
+          networkId: requestId,
+          frameId: "synthetic-frame",
+          resourceType: type,
+          request,
+        },
+        ticket = tracker.pause(session, pause);
+      tracker.sent(ticket);
+      tracker.acknowledge(ticket);
+      tracker.finish(ticket);
+      entries.push({ requestId, pause });
+      peak = Math.max(peak, tracker.snapshot().active);
+    }
+    for (const { requestId, pause } of entries) {
+      tracker.observe(session, "Network.responseReceived", { requestId });
+      tracker.finish(tracker.pause(session, { ...pause, responseStatusCode: 200 }));
+      tracker.observe(session, "Network.loadingFinished", { requestId });
+    }
+    assert.equal(tracker.snapshot().active, 0);
+    assert.equal(tracker.snapshot().pendingNetwork, 0);
+  };
+  try {
+    // Conservative synthetic inputs, not an asserted bound for the real HML.
+    for (let c = 0; c < 52; c++) {
+      for (let d = 0; d < 4; d++) batch(128, true, `loader-${c}-${d}`);
+      for (let link = 0; link < 26; link++) batch(20, false);
+    }
+    assert.equal(sequence, 53664);
+    assert.equal(peak, 128);
+    assert.equal(tracker.snapshot().networkTombstones, sequence);
+    assert.equal(tracker.snapshot().fetchTombstones, sequence);
+    assert.ok(sequence < 65536);
+  } finally {
+    tracker.close();
+  }
+});
+
+test("NAV R4 stdout cap never caps error accounting", async () => {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+      new URL("./authenticated-visual-audit.mjs", import.meta.url),
+      "utf8",
+    ),
+    ast = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
+  const run = ast.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "runNavigationAudit",
+  );
+  let declaration;
+  for (const statement of run.body.statements)
+    if (ts.isVariableStatement(statement))
+      for (const d of statement.declarationList.declarations)
+        if (d.name.getText(ast) === "onTransportDiagnostic")
+          declaration = "const " + d.getText(ast) + ";";
+  assert.ok(declaration);
+  const messages = [],
+    context = {
+      surface: "V109",
+      width: 390,
+      stage: "LINKS",
+      operation: "LINK_CLICK",
+      target: "V106",
+    };
+  const reporter = new Function(
+    "navigationTransportMarker",
+    "diagnosticRow",
+    "messages",
+    "let diagnosticCount=0;const console={log:raw=>messages.push(JSON.parse(raw))};" +
+      declaration +
+      "return onTransportDiagnostic;",
+  )(sut.navigationTransportMarker, context, messages);
+  const { EventEmitter } = await import("node:events"),
+    page = new EventEmitter(),
+    observer = fn("observeNavigationSession")(page);
+  const request = {
+    url: () => API + "/rest/v1/contratos?token=PRIVATE_SENTINEL",
+    method: () => "GET",
+    resourceType: () => "fetch",
+    failure: () => ({ errorText: "net::ERR_ABORTED" }),
+  };
+  try {
+    page.on("requestfailed", reporter);
+    for (let n = 0; n < 100; n++) page.emit("requestfailed", request);
+    assert.equal(messages.length, 64);
+    assert.equal(observer.snapshot().transportErrors, 100);
+    assert.equal(observer.snapshot().httpErrors, 100);
+    assert.equal(JSON.stringify(messages).includes("PRIVATE_SENTINEL"), false);
+  } finally {
+    observer.close();
+    page.off("requestfailed", reporter);
+  }
+});
