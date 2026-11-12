@@ -4826,6 +4826,81 @@ export function navigationParent(item) {
   return parents[item.surface];
 }
 
+
+const NAVIGATION_MENU_PATHS = Object.freeze(["/","/contratantes","/contratantes/novo","/contratos","/contratos/novo","/selecionar-organizacao","/administracao/usuarios","/administracao/auditoria"]);
+export function navigationObservationReady(surface, observation) {
+ if(!surfaceStateValid(surface==="V117"?"V116":surface,observation)) return false;
+ const pending=/Carregando|Confirmando organização|Verificando sessão|Consultando apresentações/i;
+ return !pending.test(observation.mainText??"") &&
+ !(observation.statusTexts??[]).some(x=>pending.test(x)) &&
+ NAVIGATION_MENU_PATHS.every(path=>observation.menuHrefs?.includes(path));
+}
+function navigationDomObservation(){
+ return {
+ headingText:document.querySelector("h1")?.textContent||"",
+ mainText:document.querySelector("main")?.innerText||document.body.innerText,
+ statusTexts:[...document.querySelectorAll('[role="status"],[role="alert"]')].map(e=>e.textContent),
+ regionNames:[...document.querySelectorAll('[role="region"],section[aria-label],section[aria-labelledby]')].map(e=>e.getAttribute("aria-label")||document.getElementById(e.getAttribute("aria-labelledby"))?.textContent||""),
+ menuHrefs:[...document.querySelectorAll('aside a[href],[role="dialog"][aria-label="Menu de navegação"] a[href]')].map(e=>e.getAttribute("href"))
+ };
+}
+function navigationDomReady(spec){
+ if(location.pathname!==spec.path || document.documentElement.classList.contains("dark")!==(spec.theme==="dark"))return false;
+ const header=document.querySelector('header[aria-label="Organização atual"]');
+ if(!header?.textContent.includes(spec.organization)||!/Situação:\s*ativa/i.test(header.textContent))return false;
+ const headings=document.querySelectorAll("h1"),main=document.querySelector("main")?.innerText||document.body.innerText;
+ if(headings.length!==1 || !new RegExp(spec.title).test(headings[0].textContent.trim().replace(/\s+/g," ")))return false;
+ if(/Carregando|Confirmando organização|Verificando sessão|Consultando apresentações/i.test(main))return false;
+ const statuses=[...document.querySelectorAll('[role="status"],[role="alert"]')].map(e=>e.textContent);
+ if(statuses.some(x=>/Carregando|Confirmando organização|Verificando sessão|Consultando apresentações/i.test(x)))return false;
+ if(/não encontrad[oa] ou indisponível|você não tem (?:acesso|permissão|autorização)|acesso negado|não foi possível|sessão expirada/i.test(main))return false;
+ if(!spec.conditional && /Ação não autorizada pelo backend ou competência indisponível/.test(main))return false;
+ const regions=[...document.querySelectorAll('[role="region"],section[aria-label],section[aria-labelledby]')].map(e=>e.getAttribute("aria-label")||document.getElementById(e.getAttribute("aria-labelledby"))?.textContent||"");
+ if(!spec.conditional && spec.regions.some(x=>!regions.includes(x)))return false;
+ const hrefs=[...document.querySelectorAll('aside a[href],[role="dialog"][aria-label="Menu de navegação"] a[href]')].map(e=>e.getAttribute("href"));
+ return spec.menu.every(x=>hrefs.includes(x));
+}
+export async function waitNavigationReady(page,fence,surface,path,theme){
+ if(!["light","dark"].includes(theme)||navigationDestination(HML_ORIGIN+path)!==(surface==="V117"?"V116":surface)) fail("NAVIGATION_ROUTE");
+ if(page.url()!==HML_ORIGIN+path)fail("NAVIGATION_ROUTE");
+ const titles={SYS05:"^Painel da organização$",ADM01:"^Usuários e vínculos$",V101:"^Contratantes$",V102:"^Novo contratante$",V103:"^Editar contratante$",V104:"^Contratos$",V105:"^Novo contrato$",V106:"^Contrato\\s+\\S",V107:"^Base normativa$",V108:"^Orçamento$",V109:"^Listas e regras$",V110:"^Central de documentos$",V111:"^FONTE_SINTETICA_AUDITORIA_HML$",V112:"^Competências$",V113:"^Nova competência$",V114:"^Competência\\s+\\S",V115:"^Documentos da competência$",V116:"^Análise da competência$",V117:"^Análise da competência$",V118:"^Parecer interno$",V119:"^Wizard de apresentação$",V120:"^Apresentação e protocolo$",V121:"^Histórico do contrato$",V122:"^Importação de histórico$",V123:"^Trilha de auditoria$"};
+ const regions={V111:["Resumo do documento","Processamento"],V119:["Revisão de prontidão","Etapa 2 de 2 — Registrar apresentação"],V120:["Dados da apresentação","Pacote imutável","Itens preservados no pacote"]};
+ if(!titles[surface])fail("NAVIGATION_STATE");
+ const conditional=surface==="V119"&&path!=="/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar";
+ await page.evaluate(t=>document.documentElement.classList.toggle("dark",t==="dark"),theme);
+ await page.waitForFunction(navigationDomReady,{path,theme,title:titles[surface],regions:regions[surface]??[],menu:NAVIGATION_MENU_PATHS,organization:SYNTHETIC_FIXTURE.organizationName,conditional},{timeout:15000});
+ await fence.drain();fence.assertSafe();
+ if(page.url()!==HML_ORIGIN+path)fail("NAVIGATION_ROUTE");
+ const observation=await page.evaluate(navigationDomObservation);
+ if(!conditional&&!navigationObservationReady(surface,observation))fail("NAVIGATION_STATE");
+ return observation;
+}
+export async function waitNavigationControl(page,fence,path,width,menu){
+ if(!navigationDestination(HML_ORIGIN+path)||![1440,390].includes(width)||typeof menu!=="boolean")fail("NAVIGATION_ROUTE");
+ const source=page.url();if(!navigationDestination(source))fail("NAVIGATION_ROUTE");
+ let menuOpened=false;
+ const dialog=page.getByRole("dialog",{name:"Menu de navegação",exact:true});
+ let link=page.locator('a[href="'+path+'"]:visible').first();
+ if(menu&&width===390&&(await link.count())===0){
+  if(!(await dialog.isVisible())){const opener=page.getByRole("button",{name:"Abrir menu",exact:true});await opener.waitFor({state:"visible",timeout:15000});await opener.click();await dialog.waitFor({state:"visible",timeout:15000});}
+  menuOpened=true;
+ }
+ if(!menu&&(await link.count())===0){
+  for(let n=0;n<25&&(await link.count())===0;n++){
+   const next=page.getByRole("button",{name:/Próxima página/}).first();
+   if((await next.count())!==1||!(await next.isEnabled()))break;
+   await next.click();await settleVerifiedPage(page,fence);
+   await waitNavigationReady(page,fence,navigationDestination(source),new URL(source).pathname,await page.evaluate(()=>document.documentElement.classList.contains("dark")?"dark":"light"));
+   link=page.locator('a[href="'+path+'"]:visible').first();
+  }
+ }
+ await link.waitFor({state:"visible",timeout:15000});
+ if((await link.count())!==1||!(await link.isEnabled()))fail("NAVIGATION_LINK_MISSING");
+ await fence.drain();fence.assertSafe();
+ if(page.url()!==source)fail("NAVIGATION_ROUTE");
+ return {link,menuOpened};
+}
+
 export async function runNavigationAudit(page, fence, proof) {
   if (
     singleRequestContext?.scope !== NAVIGATION_SCOPE ||
@@ -4911,31 +4986,7 @@ export async function runNavigationAudit(page, fence, proof) {
       need((await card.count()) === 1, "NAVIGATION_STATE");
       return;
     }
-    await waitOrganization(page);
-    await page.waitForFunction(
-      () =>
-        document.querySelectorAll("h1").length === 1 &&
-        !/Carregando|Confirmando organização/.test(document.body.innerText),
-      null,
-      { timeout: 15000 },
-    );
-    const observation = await page.evaluate(() => ({
-      headingText: document.querySelector("h1")?.textContent || "",
-      mainText: document.querySelector("main")?.innerText || document.body.innerText,
-      statusTexts: [...document.querySelectorAll('[role="status"],[role="alert"]')].map(
-        (e) => e.textContent,
-      ),
-      regionNames: [
-        ...document.querySelectorAll(
-          '[role="region"],section[aria-label],section[aria-labelledby]',
-        ),
-      ].map(
-        (e) =>
-          e.getAttribute("aria-label") ||
-          document.getElementById(e.getAttribute("aria-labelledby"))?.textContent ||
-          "",
-      ),
-    }));
+    const observation = await waitNavigationReady(page, fence, surface, path, activeTheme);
     if (
       surface === "V119" &&
       path !== "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar"
@@ -4981,6 +5032,9 @@ export async function runNavigationAudit(page, fence, proof) {
   async function openMenu(width) {
     if (width < 768) {
       const open = page.getByRole("button", { name: "Abrir menu", exact: true });
+      const dialog=page.getByRole("dialog",{name:"Menu de navegação",exact:true});
+      if(await dialog.isVisible())return;
+      await open.waitFor({state:"visible",timeout:15000});
       need((await open.count()) === 1, "NAVIGATION_MENU");
       await open.click();
       await page
@@ -4989,22 +5043,8 @@ export async function runNavigationAudit(page, fence, proof) {
     }
   }
   async function clickPath(path, width, menu) {
-    let selected = page.locator(`a[href="${path}"]:visible`).first();
-    const opened = menu && width < 768 && (await selected.count()) === 0;
-    if (opened) {
-      await openMenu(width);
-      selected = page.locator(`a[href="${path}"]:visible`).first();
-    }
-    if ((await selected.count()) === 0 && !menu) {
-      for (let pageNumber = 0; pageNumber < 25 && (await selected.count()) === 0; pageNumber++) {
-        const next = page.getByRole("button", { name: /Próxima página/ }).first();
-        if ((await next.count()) !== 1 || !(await next.isEnabled())) break;
-        await next.click();
-        await settleVerifiedPage(page, fence);
-        selected = page.locator(`a[href="${path}"]:visible`).first();
-      }
-    }
-    need((await selected.count()) === 1 && (await selected.isEnabled()), "NAVIGATION_LINK_MISSING");
+    if (!menu) await closeMenu();
+    const {link:selected, menuOpened:opened} = await waitNavigationControl(page,fence,path,width,menu);
     generation++;
     await selected.click();
     await page.waitForURL(HML_ORIGIN + path);

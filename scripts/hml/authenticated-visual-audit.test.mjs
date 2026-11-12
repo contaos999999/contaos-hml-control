@@ -18495,3 +18495,36 @@ test("NAV R2 actual producer emits v2 with separate native hash and stopped clea
   assert.equal(failed.fenceDiagnostic.code, "FENCE_TRANSPORT");
   assert.equal(sut.validateNavigationReport(failed), false);
 });
+
+test("NAV R2 readiness waits for final permission menu and final session content", () => {
+ const observe={headingText:"Contrato AUD-R2",mainText:"Contrato AUD-R2",statusTexts:[],regionNames:[],menuHrefs:["/","/contratantes","/contratantes/novo","/contratos","/contratos/novo","/selecionar-organizacao","/administracao/usuarios","/administracao/auditoria"]};
+ const ready=fn("navigationObservationReady");
+ assert.equal(ready("V106",observe),true);
+ for(const text of ["Verificando sessão…","Carregando…","Confirmando organização…","Consultando apresentações…"]) assert.equal(ready("V106",{...observe,statusTexts:[text]}),false);
+ assert.equal(ready("V106",{...observe,menuHrefs:observe.menuHrefs.slice(0,-1)}),false);
+ assert.equal(ready("V106",{...observe,headingText:"Contrato"}),false);
+ assert.equal(ready("V106",{...observe,mainText:"Acesso negado"}),false);
+ assert.equal(ready("V117",{...observe,headingText:"Análise da competência"}),true);
+});
+test("NAV R2 readiness DOM observation rejects stale organization and waits for actual controls", async () => {
+ const {JSDOM}=await import("jsdom");
+ for(const width of [1440,390]){
+ const dom=new JSDOM('<html><body><header aria-label="Organização atual"></header><main><h1>Contrato AUD-R2</h1></main><aside></aside></body></html>',{url:HML+"/contratos/"+sut.SYNTHETIC_FIXTURE.contract,runScripts:"outside-only"});
+ const w=dom.window;Object.defineProperty(w.HTMLElement.prototype,"innerText",{get(){return this.textContent;}});
+ const evaluate=(cb,arg)=>w.eval("("+cb.toString()+")")(arg);
+ let draining=0,pending=false;
+ const page={url:()=>w.location.href,evaluate:async(cb,arg)=>evaluate(cb,arg),waitForFunction:async(cb,arg,opt)=>{
+ assert.equal(opt.timeout,15000); if(evaluate(cb,arg))return;
+ pending=true;
+ await new Promise((resolve,reject)=>{const ob=new w.MutationObserver(()=>{if(evaluate(cb,arg)){ob.disconnect();resolve();}});ob.observe(w.document,{subtree:true,childList:true,attributes:true,characterData:true});queueMicrotask(()=>{try{
+ const header=w.document.querySelector("header");header.textContent=sut.SYNTHETIC_FIXTURE.organizationName+" Situação: ativa";
+ w.document.querySelector("aside").innerHTML=["/","/contratantes","/contratantes/novo","/contratos","/contratos/novo","/selecionar-organizacao","/administracao/usuarios","/administracao/auditoria"].map(p=>'<a href="'+p+'">Menu</a>').join("");
+ }catch(e){reject(e);}});});
+ }};
+ const fence={drain:async()=>{draining++;},assertSafe:()=>{}};
+ assert.equal((await fn("waitNavigationReady")(page,fence,"V106",w.location.pathname,width===390?"dark":"light")).headingText,"Contrato AUD-R2");
+ assert.equal(pending,true);assert.equal(draining,1);
+ assert.equal(w.document.documentElement.classList.contains("dark"),width===390);
+ dom.window.close();
+ }
+});
