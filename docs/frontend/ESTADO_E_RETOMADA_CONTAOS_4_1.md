@@ -1,3 +1,13 @@
+## Fase 2 R2: retomada governada após R1, 12/11/2026 Bahia
+
+**Fase 2 permanece NÃO CERTIFICADA.** Checkpoint #605 integrado em `36a73d483bad43c53823f5bbfa35aa071afdb134`, após revisão independente 5869624609, três checks SUCCESS e readback exato. Backend reconfirmado em `5eca44aebead3183e81b5c1af0d1dffa5fb8feb6`; tipos imutáveis preservados. Fase 1 e as oito certificações/ressalvas anteriores não são reabertas.
+
+R1 foi executada uma vez no merge REQUEST #603 `1a7b55cdad67fc2f639fa2abfb5faff04062d08a`. AUTH `43157856422` FAILURE e FIXTURES `43157856534` SUCCESS/preparador SKIPPED, ambos attempt1 terminais. Artefato `13917231956`, ZIP `f08392462141b97763d9c8c4cf6918dad91a4c7bbb617fe556c4397495ca79a0`, report `3d994303537f7e06d3c57b1dc1f1f69c763739edc6194909f331a69ac6cb348c`: 33 observados, 2 PASS, 31 FAIL, 19 não executados, logout false/HTTP1. Report original e ledger técnico preservados no diretório Fase2; não são certificado. Nonce R1 consumida, sem replay.
+
+Issue #604: 18 falhas do segundo clique após voltar e 12 estados transitórios do pai demonstram contrato de prontidão insuficiente no harness. O motivo concreto da cerca/HTTP final V114 ainda não foi comprovado; nenhum defeito de produto foi estabelecido. Novo PLAN R2 fecha reprodução, espera condicional sem aumento de prazos, diagnóstico finito, testes/nativas originais e suplemento offline. Nenhuma fonte de app/backend/YAML/dep/publicação está autorizada por ele.
+
+HML continua produto `024a232c5bdb717e556d9ff16ca000e1ae65b0cb`/`dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW`; BUILD #602/CI4/nativas18 anteriores não substituem R1 real. Próxima tarefa: integrar este PLAN antes de editar os dois mjs, reproduzir/corrigir prontidão, validar/revisar/CI4/merge/push e só então novo request com nonce `integracao-v1-fase2-nav-20261112-r2`. Exigir 52/52 PASS, logout, zero erros e certificado integrado antes de encerrar. V2 continua aguardando as sete fases de integração aprovadas. Nenhum novo login, request, replay ou efeito de negócio executado nesta retomada documental.
+
 ## Fase 2: checkpoint de continuidade, 12/11/2026 Bahia, após PR #598
 
 **Fase 2 continua NÃO CERTIFICADA.** O executor retomou e os arquivos foram preservados. Nenhum login NAV, nonce consumida, mutação de negócio ou publicação nova HML ocorreu. Próxima tarefa concreta: integrar o PLAN/GATE V119 desta branch, executar RED com Radix real, corrigir retorno de foco e concluir CI antes de publicar o SHA final.
