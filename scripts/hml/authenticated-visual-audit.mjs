@@ -4423,6 +4423,10 @@ const NAVIGATION_ROW_KEYS = Object.freeze([
   "status",
   "stage",
   "failureCode",
+  "operation",
+  "target",
+  "httpStatusErrors",
+  "transportErrors",
 ]);
 function navigationArray(value, max, predicate) {
   if (
@@ -4470,6 +4474,10 @@ function navigationRowValid(row) {
     row.status === "PASS" &&
     row.stage === "FINISH" &&
     row.failureCode === null &&
+    row.operation === "FINISH" &&
+    row.target === row.surface &&
+    row.httpStatusErrors === 0 &&
+    row.transportErrors === 0 &&
     row.controlOperation === navigationControlOperation(row.surface) &&
     row.drawerVerified === (row.surface === "V117" ? true : null) &&
     navigationArray(
@@ -4532,6 +4540,23 @@ export function summarizeNavigation(records) {
     matrixComplete: records.length === expected.length && passed === expected.length,
   };
 }
+
+const NAVIGATION_NATIVE_CODES = new Set(["CDP_CLOSED","CDP_COMMAND","CDP_CONNECT","CDP_ENDPOINT","CDP_EVENT","CDP_FRAME","CDP_IDENTITY","CDP_METADATA","CDP_TIMEOUT","FENCE_ASYNC","FENCE_BODY_LIMIT","FENCE_CDP_CLOSED","FENCE_CONFIGURATION","FENCE_CONTEXT_FOREIGN","FENCE_CONTEXT_UNKNOWN","FENCE_DOCUMENT_BODY","FENCE_DRAIN_TIMEOUT","FENCE_HEADERS","FENCE_INITIALIZATION","FENCE_LIFECYCLE_FRAME","FENCE_LIFECYCLE_NO_NETWORK","FENCE_LIFECYCLE_TERMINAL","FENCE_LIFECYCLE_TYPE","FENCE_NOT_PROVEN","FENCE_POPUP","FENCE_READY","FENCE_REDIRECT","FENCE_REQUEST","FENCE_REQUEST_LIFECYCLE","FENCE_SOURCE","FENCE_TARGET_DETACHED","FENCE_TARGET_FAILED","FENCE_TARGET_TIMEOUT","FENCE_TRANSPORT","FENCE_WORKER_PAUSED","FENCE_WORKER_RUNNING"]);
+function navigationOwnValue(value,key) {
+ if (!value || typeof value!=="object" || isProxy(value)) return undefined;
+ return Object.getOwnPropertyDescriptor(value,key)?.value;
+}
+export function navigationFenceDiagnostic(snapshot) {
+ if (navigationOwnValue(snapshot,"failed")===false) return null;
+ const code=navigationOwnValue(snapshot,"failureCode"),command=navigationOwnValue(snapshot,"failureCommand"),protocolCode=navigationOwnValue(snapshot,"failureProtocolCode"),reason=navigationOwnValue(snapshot,"failureReason"),metadata=navigationOwnValue(snapshot,"lifecycleMetadata");
+ const lifecycleKeys=["network","fetch","method","stage","networkFramePresent","sameFrame","loaderPresent","ownFetchFrame","generationSame","terminal"];
+ return {failed:true,code:NAVIGATION_NATIVE_CODES.has(code)?code:snapshot?"FENCE_UNKNOWN":"FENCE_NOT_PROVEN",command:FENCE_COMMANDS.has(command)?command:null,protocolCode:[-32000,-32600,-32601,-32602,-32700].includes(protocolCode)?protocolCode:null,reason:["NO_RESOURCE","INVALID_INTERCEPTION","BODY_STAGE","OTHER"].includes(reason)?reason:null,lifecycle:navigationPlain(metadata,lifecycleKeys)?safeLifecycleMetadata(metadata):null};
+}
+export function navigationLogoutFailure(error,stage) {
+ const code=navigationOwnValue(error,"code"),name=navigationOwnValue(error,"name");
+ return {stage:["DRAIN","MENU_CLOSE","CONTROL","CLICK","REDIRECT","POST_DRAIN","NOT_LOGGED_IN"].includes(stage)?stage:"UNKNOWN",code:NAVIGATION_NATIVE_CODES.has(code)?code:code==="NAVIGATION_LOGOUT_CONTROL"?code:name==="TimeoutError"?"NAVIGATION_TIMEOUT":"UNCLASSIFIED"};
+}
+
 export function validateNavigationReport(value) {
   const keys = [
     "schema",
@@ -4542,6 +4567,11 @@ export function validateNavigationReport(value) {
     "records",
     "summary",
     "nativeProofSha256",
+    "navigationNativeProofSha256",
+    "fenceDiagnostic",
+    "logoutFailure",
+    "httpStatusErrors",
+    "transportErrors",
     "sessionVerified",
     "masterVerified",
     "organizationVerified",
@@ -4554,12 +4584,19 @@ export function validateNavigationReport(value) {
   if (!navigationPlain(value, keys)) return false;
   const summary = summarizeNavigation(value.records);
   return (
-    value.schema === "contaos.navigation.audit.v1" &&
+    value.schema === "contaos.navigation.audit.v2" &&
     value.auditScope === NAVIGATION_SCOPE.id &&
-    hash40(value.frontendSha) &&
+    value.frontendSha === NAVIGATION_DEPLOYMENT.frontendSha &&
+    value.deploymentId === NAVIGATION_DEPLOYMENT.deploymentId &&
     hash40(value.harnessSha) &&
     /^dpl_[A-Za-z0-9]{8,80}$/.test(value.deploymentId || "") &&
     hash64(value.nativeProofSha256) &&
+    hash64(value.navigationNativeProofSha256) &&
+    value.fenceDiagnostic === null &&
+    value.logoutFailure === null &&
+    value.httpStatusErrors === 0 &&
+    value.transportErrors === 0 &&
+    value.httpErrors === value.httpStatusErrors + value.transportErrors &&
     ["sessionVerified", "masterVerified", "organizationVerified", "logoutVerified"].every(
       (k) => value[k] === true,
     ) &&

@@ -52,6 +52,10 @@ function navigationTechnicalRows() {
     status: "PASS",
     stage: "FINISH",
     failureCode: null,
+    operation: "FINISH",
+    target: surface,
+    httpStatusErrors: 0,
+    transportErrors: 0,
   }));
 }
 test("NAV F2: closed catalogue covers twenty-six private surfaces twice with current bindings", () => {
@@ -152,14 +156,19 @@ test("NAV F2: report rejects secrets unknown fields missing cleanup and fabricat
   const validate = fn("validateNavigationReport"),
     records = navigationTechnicalRows();
   const report = {
-    schema: "contaos.navigation.audit.v1",
-    frontendSha: "a".repeat(40),
+    schema: "contaos.navigation.audit.v2",
+    frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
     harnessSha: "b".repeat(40),
-    deploymentId: "dpl_123456789",
+    deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
     auditScope: "INTEGRACAO_V1_FASE2_NAV",
     records,
     summary: fn("summarizeNavigation")(records),
     nativeProofSha256: "c".repeat(64),
+    navigationNativeProofSha256: "d".repeat(64),
+    fenceDiagnostic: null,
+    logoutFailure: null,
+    httpStatusErrors: 0,
+    transportErrors: 0,
     sessionVerified: true,
     masterVerified: true,
     organizationVerified: true,
@@ -18152,4 +18161,38 @@ test("C8 eight V117: original YAML aggregate names admit only the complete typed
       w.close();
     }
   }
+});
+
+function navigationReportV2Fixture() {
+ const records=navigationTechnicalRows().map(r=>({...r,operation:"FINISH",target:r.surface,httpStatusErrors:0,transportErrors:0}));
+ return {schema:"contaos.navigation.audit.v2",frontendSha:"024a232c5bdb717e556d9ff16ca000e1ae65b0cb",harnessSha:"b".repeat(40),deploymentId:"dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",auditScope:"INTEGRACAO_V1_FASE2_NAV",records,summary:{expected:52,observed:52,passed:52,failed:0,matrixComplete:true},nativeProofSha256:"c".repeat(64),navigationNativeProofSha256:"d".repeat(64),sessionVerified:true,masterVerified:true,organizationVerified:true,logoutVerified:true,logoutFailure:null,fenceDiagnostic:null,blockedMutations:0,pageErrors:0,httpErrors:0,httpStatusErrors:0,transportErrors:0,aborted:null};
+}
+test("NAV R2 v2 accepts only the complete zero-error matrix with separate native evidence",()=>{
+ const validate=fn("validateNavigationReport"),report=navigationReportV2Fixture();
+ assert.equal(validate(report),true);
+ for(const patch of [{schema:"contaos.navigation.audit.v1"},{frontendSha:"a".repeat(40)},{deploymentId:"dpl_foreign123"},{navigationNativeProofSha256:null},{httpStatusErrors:1,httpErrors:1},{transportErrors:1,httpErrors:1},{httpStatusErrors:1,httpErrors:0},{logoutFailure:{stage:"DRAIN",code:"FENCE_TRANSPORT"}},{fenceDiagnostic:{failed:true,code:"FENCE_ASYNC"}},{logoutVerified:false}])assert.equal(validate({...report,...patch}),false);
+});
+test("NAV R2 v2 rejects unknown operations destinations and free diagnostics",()=>{
+ const validate=fn("validateNavigationReport"),report=navigationReportV2Fixture();
+ for(const change of [{operation:"SECRET_FREE_TEXT"},{target:"OTHER"},{httpStatusErrors:1},{transportErrors:1}]) {
+  const records=report.records.map((r,i)=>i===0?{...r,...change}:r);assert.equal(validate({...report,records}),false);
+ }
+ let effects=0;const bad={...report};Object.defineProperty(bad,"fenceDiagnostic",{enumerable:true,get(){effects++;return null;}});assert.equal(validate(bad),false);assert.equal(effects,0);
+ assert.equal(validate({...report,rawError:"Bearer CANARY"}),false);
+});
+test("NAV R2 diagnostic preserves closed native cause without transporting error payloads",()=>{
+ const capture=fn("navigationFenceDiagnostic");
+ const lifecycle={network:"Fetch",fetch:"Fetch",method:"GET",stage:"RESPONSE",networkFramePresent:true,sameFrame:true,loaderPresent:true,ownFetchFrame:true,generationSame:true,terminal:false};
+ assert.deepEqual(capture({failed:true,failureCode:"CDP_COMMAND",failureCommand:"Fetch.getResponseBody",failureProtocolCode:-32000,failureReason:"NO_RESOURCE",lifecycleMetadata:lifecycle,rawError:"CANARY_SECRET"}),{failed:true,code:"CDP_COMMAND",command:"Fetch.getResponseBody",protocolCode:-32000,reason:"NO_RESOURCE",lifecycle});
+ assert.equal(capture({failed:false}),null);
+ const unknown=capture({failed:true,failureCode:"Bearer CANARY",failureCommand:"raw payload",failureProtocolCode:999,failureReason:"secret",lifecycleMetadata:null});
+ assert.deepEqual(unknown,{failed:true,code:"FENCE_UNKNOWN",command:null,protocolCode:null,reason:null,lifecycle:null});
+ let effects=0;const hostile={failed:true};Object.defineProperty(hostile,"failureCode",{get(){effects++;return "CDP_COMMAND";}});
+ assert.equal(capture(hostile).code,"FENCE_UNKNOWN");assert.equal(effects,0);
+});
+test("NAV R2 logout diagnosis never upgrades cleanup or exposes a raw exception",()=>{
+ const capture=fn("navigationLogoutFailure");
+ assert.deepEqual(capture(Object.assign(Error("CANARY"),{code:"FENCE_DRAIN_TIMEOUT"}),"DRAIN"),{stage:"DRAIN",code:"FENCE_DRAIN_TIMEOUT"});
+ assert.deepEqual(capture(Object.assign(Error("CANARY"),{name:"TimeoutError"}),"REDIRECT"),{stage:"REDIRECT",code:"NAVIGATION_TIMEOUT"});
+ assert.deepEqual(capture(Error("CANARY_SECRET"),"SECRET"),{stage:"UNKNOWN",code:"UNCLASSIFIED"});
 });
