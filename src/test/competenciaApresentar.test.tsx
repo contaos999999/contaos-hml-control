@@ -24,17 +24,21 @@ vi.mock("@/integrations/supabase/client", () => ({
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => m.navigate,
   createFileRoute: (path: string) => (options: unknown) => ({
-    path, options, useParams: () => ({ id: "44444444-4444-4444-8444-444444444444" }),
+    path,
+    options,
+    useParams: () => ({ id: "44444444-4444-4444-8444-444444444444" }),
   }),
-  Link: ({ children, to, params, ...rest }: {
+  Link: ({
+    children,
+    to,
+    params,
+    ...rest
+  }: {
     children: ReactNode;
     to: string;
     params?: Record<string, string>;
   }) => (
-    <a
-      href={to.replace(/\$([A-Za-z]+)/g, (_, key: string) => params?.[key] ?? `${key}`)}
-      {...rest}
-    >
+    <a href={to.replace(/\$([A-Za-z]+)/g, (_, key: string) => params?.[key] ?? `${key}`)} {...rest}>
       {children}
     </a>
   ),
@@ -61,33 +65,56 @@ const ok = (data: unknown) => ({ data, error: null, status: 200 });
 function visao(situacao = "em_analise", apresentar = true) {
   return {
     competencia: {
-      id: ID, id_contrato: CONTRATO, id_organizacao: ORG,
-      competencia_referencia: "2026-03-01", periodo_inicio: "2026-03-01",
-      periodo_fim: "2026-03-31", data_limite: null, situacao,
-      percentual_conformidade: 100, versao_pacote_atual: 1,
-      versao_registro: 2, atualizado_em: "2026-03-10T12:00:00Z",
+      id: ID,
+      id_contrato: CONTRATO,
+      id_organizacao: ORG,
+      competencia_referencia: "2026-03-01",
+      periodo_inicio: "2026-03-01",
+      periodo_fim: "2026-03-31",
+      data_limite: null,
+      situacao,
+      percentual_conformidade: 100,
+      versao_pacote_atual: 1,
+      versao_registro: 2,
+      atualizado_em: "2026-03-10T12:00:00Z",
     },
     portao: {
-      liberado: true, total: 10, conformes_ou_na_validos: 10, pendentes: 0,
-      nao_conformes: 0, inconclusivos: 0, em_analise: 0,
-      nao_conformidades_bloqueantes: 0, percentual: 100,
+      liberado: true,
+      total: 10,
+      conformes_ou_na_validos: 10,
+      pendentes: 0,
+      nao_conformes: 0,
+      inconclusivos: 0,
+      em_analise: 0,
+      nao_conformidades_bloqueantes: 0,
+      percentual: 100,
     },
     blocking_summary: {
-      pendentes: 0, nao_conformes: 0, inconclusivos: 0, em_analise: 0,
-      nao_conformidades_bloqueantes: 0, parecer_aprovado: true,
-      analise_concluida_atual: true, aprovacao_apresentacao_atual: situacao === "pode_apresentar_contratante",
+      pendentes: 0,
+      nao_conformes: 0,
+      inconclusivos: 0,
+      em_analise: 0,
+      nao_conformidades_bloqueantes: 0,
+      parecer_aprovado: true,
+      analise_concluida_atual: true,
+      aprovacao_apresentacao_atual: situacao === "pode_apresentar_contratante",
     },
     allowed_actions: {
-      abrir_documentos: true, analisar: true, abrir_parecer: true, apresentar,
+      abrir_documentos: true,
+      analisar: true,
+      abrir_parecer: true,
+      apresentar,
     },
   };
 }
 beforeEach(() => {
   m.getUser.mockReset().mockResolvedValue({ data: { user: { id: U } }, error: null });
   m.navigate.mockReset();
-  m.rpc.mockReset().mockImplementation((nome: string) =>
-    Promise.resolve(ok(nome === "obter_visao_geral_competencia" ? visao() : null)),
-  );
+  m.rpc
+    .mockReset()
+    .mockImplementation((nome: string) =>
+      Promise.resolve(ok(nome === "obter_visao_geral_competencia" ? visao() : null)),
+    );
   m.chamadas.length = 0;
   window.localStorage.clear();
   window.sessionStorage.clear();
@@ -97,17 +124,26 @@ beforeEach(() => {
 describe("V1-19 — adapter Supabase oficial", () => {
   it("exige UUID correto antes de qualquer mutação", async () => {
     await expect(aprovarApresentacao("invalido", "")).rejects.toBeInstanceOf(ErroApresentacao);
-    await expect(registrarApresentacao("invalido", "chave", "", "")).rejects.toBeInstanceOf(ErroApresentacao);
+    await expect(registrarApresentacao("invalido", "chave", "", "")).rejects.toBeInstanceOf(
+      ErroApresentacao,
+    );
     expect(m.chamadas).toHaveLength(0);
   });
   it("aprova somente por RPC e valida retorno autoritativo", async () => {
-    m.rpc.mockResolvedValue(ok({
-      id_aprovacao: APROV, situacao: "pode_apresentar_contratante", percentual_conformidade: 100,
-    }));
+    m.rpc.mockResolvedValue(
+      ok({
+        id_aprovacao: APROV,
+        situacao: "pode_apresentar_contratante",
+        percentual_conformidade: 100,
+      }),
+    );
     await expect(aprovarApresentacao(ID, "Fundamento")).resolves.toEqual({ id_aprovacao: APROV });
-    expect(m.chamadas).toEqual([{
-      nome: "aprovar_apresentacao", args: { p_id_competencia: ID, p_fundamento: "Fundamento" },
-    }]);
+    expect(m.chamadas).toEqual([
+      {
+        nome: "aprovar_apresentacao",
+        args: { p_id_competencia: ID, p_fundamento: "Fundamento" },
+      },
+    ]);
   });
   it("rejeita resultado de aprovação com formato inesperado", async () => {
     m.rpc.mockResolvedValue(ok({ situacao: "pode_apresentar_contratante" }));
@@ -116,13 +152,20 @@ describe("V1-19 — adapter Supabase oficial", () => {
   it("registra somente por RPC e chave estável fornecida", async () => {
     m.rpc.mockResolvedValue(ok(REG));
     const key = "c0d570a1-bbbb-4ccc-8ddd-777777777777";
-    await expect(registrarApresentacao(ID, key, "PROTO-01", "Sistema eletrônico")).resolves.toBe(REG);
-    expect(m.chamadas).toEqual([{
-      nome: "registrar_apresentacao", args: {
-        p_id_competencia: ID, p_idempotency_key: key, p_protocolo: "PROTO-01",
-        p_forma_apresentacao: "Sistema eletrônico",
+    await expect(registrarApresentacao(ID, key, "PROTO-01", "Sistema eletrônico")).resolves.toBe(
+      REG,
+    );
+    expect(m.chamadas).toEqual([
+      {
+        nome: "registrar_apresentacao",
+        args: {
+          p_id_competencia: ID,
+          p_idempotency_key: key,
+          p_protocolo: "PROTO-01",
+          p_forma_apresentacao: "Sistema eletrônico",
+        },
       },
-    }]);
+    ]);
   });
   it("classifica 401/403/42501, conflito 409 e mensagem técnica sem vazar detalhes", () => {
     expect(classificarErroApresentacao({ code: "42501" }, 400)).toBe("sem_permissao");
@@ -138,6 +181,69 @@ describe("V1-19 — adapter Supabase oficial", () => {
 });
 
 describe("V1-19 — wizard de apresentação", () => {
+  it.each([
+    ["em_analise", "Aprovar apresentação", "Cancelar"],
+    ["em_analise", "Aprovar apresentação", "Escape"],
+    ["pode_apresentar_contratante", "Registrar apresentação", "Cancelar"],
+    ["pode_apresentar_contratante", "Registrar apresentação", "Escape"],
+  ])("restaura foco após %s / %s / %s sem mutação", async (situacao, nome, fechar) => {
+    m.rpc.mockResolvedValue(ok(visao(situacao, true)));
+    render(<CompetenciaApresentar id={ID} />);
+    const opener = await screen.findByRole("button", { name: nome });
+    opener.focus();
+    fireEvent.click(opener);
+    const dialog = await screen.findByRole("dialog");
+    if (fechar === "Escape") fireEvent.keyDown(dialog, { key: "Escape", code: "Escape" });
+    else fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() => expect(opener).toHaveFocus());
+    expect(m.chamadas.map((call) => call.nome)).toEqual(["obter_visao_geral_competencia"]);
+  });
+  it("após sucesso simulado, direciona foco ao título se o botão deixou a página", async () => {
+    m.rpc.mockImplementation((nome: string) =>
+      Promise.resolve(
+        ok(
+          nome === "obter_visao_geral_competencia"
+            ? visao("pode_apresentar_contratante", true)
+            : REG,
+        ),
+      ),
+    );
+    render(<CompetenciaApresentar id={ID} />);
+    const opener = await screen.findByRole("button", {
+      name: "Registrar apresentação",
+    });
+    opener.focus();
+    fireEvent.click(opener);
+    fireEvent.click(await screen.findByRole("button", { name: "Confirmar registro" }));
+    await screen.findByRole("heading", { name: "Apresentação registrada" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "Wizard de apresentação" })).toHaveFocus(),
+    );
+    expect(m.chamadas.filter((call) => call.nome === "registrar_apresentacao")).toHaveLength(1);
+  });
+  it("troca de competência fecha confirmação anterior sem executar comando", async () => {
+    const next = "55555555-5555-4555-8555-555555555555";
+    m.rpc.mockImplementation((_nome: string, args: { p_id_competencia: string }) => {
+      const value = visao("pode_apresentar_contratante", true);
+      value.competencia.id = args.p_id_competencia;
+      return Promise.resolve(ok(value));
+    });
+    const view = render(<CompetenciaApresentar id={ID} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Registrar apresentação" }));
+    await screen.findByRole("dialog");
+    view.rerender(<CompetenciaApresentar id={next} />);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    await screen.findByRole("button", { name: "Registrar apresentação" });
+    expect(m.chamadas.every((call) => call.nome === "obter_visao_geral_competencia")).toBe(true);
+    expect(
+      m.chamadas.some(
+        (call) => (call.args as { p_id_competencia: string }).p_id_competencia === next,
+      ),
+    ).toBe(true);
+  });
+
   it("rota privada com metadados e marca institucional", () => {
     const route = Route as unknown as {
       path: string;
@@ -145,7 +251,7 @@ describe("V1-19 — wizard de apresentação", () => {
     };
     expect(route.path).toBe("/competencias_/$id_/apresentar");
     expect(route.options.ssr).toBe(false);
-    expect(route.options.head().meta.some(x => x["title"]?.includes("Apresentação"))).toBe(true);
+    expect(route.options.head().meta.some((x) => x["title"]?.includes("Apresentação"))).toBe(true);
   });
   it("UUID inválido não dispara Auth nem RPC", async () => {
     render(<CompetenciaApresentar id="inválido" />);
@@ -163,16 +269,18 @@ describe("V1-19 — wizard de apresentação", () => {
     m.rpc.mockResolvedValue(ok(visao("pode_apresentar_contratante", false)));
     render(<CompetenciaApresentar id={ID} />);
     expect(await screen.findByText(/Ação não autorizada pelo backend/)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Registrar apresentação|Aprovar apresentação/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Registrar apresentação|Aprovar apresentação/ }),
+    ).toBeNull();
   });
   it("apresentação liberada pelo backend exibe confirmação, não registro automático", async () => {
     m.rpc.mockResolvedValue(ok(visao("pode_apresentar_contratante", true)));
     render(<CompetenciaApresentar id={ID} />);
     const registrar = await screen.findByRole("button", { name: "Registrar apresentação" });
-    expect(m.chamadas.map(x => x.nome)).toEqual(["obter_visao_geral_competencia"]);
+    expect(m.chamadas.map((x) => x.nome)).toEqual(["obter_visao_geral_competencia"]);
     fireEvent.click(registrar);
     expect(await screen.findByText(/Confirmar envio ao contratante/)).toBeInTheDocument();
-    expect(m.chamadas.map(x => x.nome)).toEqual(["obter_visao_geral_competencia"]);
+    expect(m.chamadas.map((x) => x.nome)).toEqual(["obter_visao_geral_competencia"]);
   });
   it("após registrar, oferece navegação para o protocolo oficial pelo UUID retornado", async () => {
     m.rpc.mockImplementation((nome: string) => {
