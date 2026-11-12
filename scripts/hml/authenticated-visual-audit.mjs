@@ -4273,7 +4273,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261112-r4",
+  nonce: "integracao-v1-fase2-nav-20261112-r5",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 export function navigationCases() {
@@ -10671,7 +10671,9 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR2PlanSha: "83279bf28172e974778c3e788b8bf5718e23d9c1",
   functionalNavigationR3PlanSha: "9030de4115041598bdc530e03c3c8a5c18d3a5ae",
   functionalNavigationR4PlanSha: "e01a208940d68a504d1c206e1b255eabe4938bb3",
+  functionalNavigationR5PlanSha: "a377bb65db407252a32a0dad4f371e65a03b22c2",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261112-r4",
     "integracao-v1-fase2-nav-20261112-r3",
     "integracao-v1-fase2-nav-20261112-r2",
     "integracao-v1-fase2-nav-20261111-r1",
@@ -10739,7 +10741,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261112-r4",
+    nonce: "integracao-v1-fase2-nav-20261112-r5",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -11048,6 +11050,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationR2PlanSha,
       SINGLE_REQUEST.functionalNavigationR3PlanSha,
       SINGLE_REQUEST.functionalNavigationR4PlanSha,
+      SINGLE_REQUEST.functionalNavigationR5PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
