@@ -4273,7 +4273,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261112-r3",
+  nonce: "integracao-v1-fase2-nav-20261112-r4",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 export function navigationCases() {
@@ -4368,7 +4368,7 @@ export function navigationLinkDecision(href, source) {
 }
 export function navigationUnavailableEvidence(path, value) {
   const contexts = [
-    { id: SYNTHETIC_FIXTURE.competence, month: "2026-11-01", state: "preparando" },
+    { id: SYNTHETIC_FIXTURE.competence, month: "2026-11-01", state: "rascunho" },
     {
       id: "79bdc139-ed10-4c91-905e-b32b9a824d27",
       month: "2026-09-01",
@@ -5026,7 +5026,14 @@ async function waitNavigationStable(page, fence, spec, deadline) {
       return observation;
   }
 }
-export async function waitNavigationReady(page, fence, surface, path, theme) {
+export async function waitNavigationReady(
+  page,
+  fence,
+  surface,
+  path,
+  theme,
+  deadline = performance.now() + 15000,
+) {
   if (
     typeof path !== "string" ||
     !path.startsWith("/") ||
@@ -5035,8 +5042,7 @@ export async function waitNavigationReady(page, fence, surface, path, theme) {
   )
     fail("NAVIGATION_ROUTE");
   if (page.url() !== HML_ORIGIN + path) fail("NAVIGATION_ROUTE");
-  const deadline = performance.now() + 15000,
-    spec = navigationReadinessSpec(surface, path, theme);
+  const spec = navigationReadinessSpec(surface, path, theme);
   await page.evaluate(
     (t) => document.documentElement.classList.toggle("dark", t === "dark"),
     theme,
@@ -5108,6 +5114,108 @@ export async function waitNavigationControl(page, fence, path, width, menu) {
 }
 
 const navigationSessions = new WeakMap();
+export async function toggleNavigationSidebar(page, fence, deadline = performance.now() + 15000) {
+  await waitNavigationNetwork(page, fence, deadline);
+  const collapse = page.getByRole("button", { name: "Recolher menu", exact: true });
+  const expand = page.getByRole("button", { name: "Expandir menu", exact: true });
+  if ((await collapse.count()) !== 1) fail("NAVIGATION_MENU");
+  await collapse.click({ timeout: navigationRemaining(deadline) });
+  await expand.waitFor({ state: "visible", timeout: navigationRemaining(deadline) });
+  // Changing the original AppShell image src before its GET finishes aborts it.
+  await waitNavigationNetwork(page, fence, deadline);
+  await expand.click({ timeout: navigationRemaining(deadline) });
+  await waitNavigationNetwork(page, fence, deadline);
+}
+export async function returnNavigationSource(page, fence, surface, path, theme) {
+  if (navigationDestination(HML_ORIGIN + path) !== (surface === "V117" ? "V116" : surface))
+    fail("NAVIGATION_ROUTE");
+  const deadline = performance.now() + 15000;
+  await waitNavigationNetwork(page, fence, deadline);
+  await page.goBack({ waitUntil: "networkidle", timeout: navigationRemaining(deadline) });
+  if (page.url() !== HML_ORIGIN + path) fail("NAVIGATION_ROUTE");
+  return waitNavigationReady(page, fence, surface, path, theme, deadline);
+}
+export function navigationTransportMarker(request, context) {
+  if (
+    !navigationPlain(context, ["surface", "width", "stage", "operation", "target"]) ||
+    !PRIVATE_SURFACES.includes(context.surface) ||
+    !PRIVATE_SURFACES.includes(context.target) ||
+    ![1440, 390].includes(context.width) ||
+    !["DIRECT", "RELOAD", "ENTER_MENU", "MENU", "LINKS", "CONTROLS", "FINISH"].includes(
+      context.stage,
+    ) ||
+    ![
+      "DIRECT",
+      "ENTER_PARENT",
+      "ENTER_FIRST",
+      "RETURN_PARENT",
+      "ENTER_SECOND",
+      "MENU_OPEN",
+      "MENU_REQUIRED",
+      "LINK_RETURN_SOURCE",
+      "LINK_CLICK",
+      "LINK_READY",
+      "LOCAL_CONTROL",
+      "FINISH",
+    ].includes(context.operation) ||
+    !request ||
+    isProxy(request)
+  )
+    return null;
+  const values = {};
+  try {
+    for (const name of ["failure", "url", "method", "resourceType"]) {
+      let object = request,
+        descriptor;
+      for (let depth = 0; object && depth < 10; depth++) {
+        if (isProxy(object)) return null;
+        descriptor = Object.getOwnPropertyDescriptor(object, name);
+        if (descriptor) break;
+        object = Object.getPrototypeOf(object);
+      }
+      if (
+        !descriptor ||
+        !Object.hasOwn(descriptor, "value") ||
+        typeof descriptor.value !== "function" ||
+        isProxy(descriptor.value)
+      )
+        return null;
+      values[name] = descriptor.value.call(request);
+    }
+    const error = values.failure;
+    if (error && (typeof error !== "object" || isProxy(error))) return null;
+    const descriptor = error ? Object.getOwnPropertyDescriptor(error, "errorText") : null;
+    if (descriptor && !Object.hasOwn(descriptor, "value")) return null;
+    const safe = {
+      failure: () => ({ errorText: descriptor?.value }),
+      url: () => values.url,
+      method: () => values.method,
+      resourceType: () => values.resourceType,
+    };
+    let category = "OTHER";
+    if (typeof values.url === "string") {
+      const url = new URL(values.url);
+      if (url.origin === HML_ORIGIN) {
+        if (url.pathname.startsWith("/brand/")) category = "BRAND";
+        else if (url.pathname.startsWith("/assets/") && url.pathname.endsWith(".js"))
+          category = "SCRIPT";
+        else if (values.resourceType === "document") category = "DOCUMENT";
+      } else if (url.origin === API_ORIGIN) {
+        if (url.pathname.startsWith("/rest/v1/rpc/")) category = "API_RPC";
+        else if (url.pathname.startsWith("/rest/v1/")) category = "API_REST";
+        else if (url.pathname.startsWith("/auth/v1/")) category = "AUTH";
+      }
+    }
+    return {
+      phase: "NAVIGATION_TRANSPORT",
+      ...context,
+      ...navigationTransportDiagnostic(safe),
+      category,
+    };
+  } catch {
+    return null;
+  }
+}
 export function navigationTransportDiagnostic(request) {
   const diagnostic = {
     reason: "OTHER",
@@ -5362,6 +5470,18 @@ export async function runNavigationAudit(page, fence, proof) {
     pendingResponses.add(reading);
   };
   page.on("request", onRequest);
+  let diagnosticRow = null,
+    diagnosticCount = 0;
+  const onTransportDiagnostic = (request) => {
+    if (!diagnosticRow || diagnosticCount >= 64) return;
+    const { surface, width, stage, operation, target } = diagnosticRow;
+    const marker = navigationTransportMarker(request, { surface, width, stage, operation, target });
+    if (marker) {
+      diagnosticCount++;
+      console.log(JSON.stringify(marker));
+    }
+  };
+  page.on("requestfailed", onTransportDiagnostic);
   page.on("pageerror", onError);
   page.on("console", onConsole);
   page.on("requestfailed", onRequestFailed);
@@ -5442,6 +5562,7 @@ export async function runNavigationAudit(page, fence, proof) {
       await page
         .getByRole("dialog", { name: "Menu de navegação", exact: true })
         .waitFor({ state: "visible" });
+      await waitNavigationNetwork(page, fence);
     }
   }
   async function clickPath(path, width, menu) {
@@ -5465,10 +5586,12 @@ export async function runNavigationAudit(page, fence, proof) {
   async function closeMenu() {
     const dialog = page.getByRole("dialog", { name: "Menu de navegação", exact: true });
     if ((await dialog.count()) !== 1) return;
+    await waitNavigationNetwork(page, fence);
     await page.keyboard.press("Escape");
     await dialog.waitFor({ state: "hidden" });
     const opener = page.getByRole("button", { name: "Abrir menu", exact: true });
     need(await opener.evaluate((node) => document.activeElement === node), "NAVIGATION_MENU");
+    await waitNavigationNetwork(page, fence);
   }
   async function visibleHrefs() {
     return page
@@ -5514,6 +5637,7 @@ export async function runNavigationAudit(page, fence, proof) {
         failureCode: null,
       };
       records.push(row);
+      diagnosticRow = row;
       const beforeErrors = errors,
         beforeHttp = httpErrors,
         beforeStatus = httpStatusErrors,
@@ -5612,10 +5736,7 @@ export async function runNavigationAudit(page, fence, proof) {
           row.controlsVerified = true;
         } else {
           if (item.width >= 768) {
-            await page.getByRole("button", { name: "Recolher menu", exact: true }).click();
-            const expand = page.getByRole("button", { name: "Expandir menu", exact: true });
-            await expand.waitFor();
-            await expand.click();
+            await toggleNavigationSidebar(page, fence);
           }
           const contentHrefs = await visibleHrefs();
           await openMenu(item.width);
@@ -5656,7 +5777,7 @@ export async function runNavigationAudit(page, fence, proof) {
           for (const target of targets) {
             row.operation = "LINK_RETURN_SOURCE";
             row.target = item.surface;
-            await go(item.path);
+            await ready(item.surface, item.path);
             let menu = false;
             if (item.width < 768) {
               menu = (await page.locator(`a[href="${target.path}"]:visible`).count()) === 0;
@@ -5669,8 +5790,12 @@ export async function runNavigationAudit(page, fence, proof) {
             if (state === "CONDITIONAL_UNAVAILABLE") row.conditionalLinksTested++;
             row.destinations.push(target.dest);
             row.linksTested++;
+            row.operation = "LINK_RETURN_SOURCE";
+            row.target = item.surface;
+            generation++;
+            await returnNavigationSource(page, fence, item.surface, item.path, item.theme);
+            await ready(item.surface, item.path);
           }
-          await go(item.path);
           row.stage = "CONTROLS";
           row.operation = "LOCAL_CONTROL";
           row.target = item.surface;
@@ -5795,6 +5920,7 @@ export async function runNavigationAudit(page, fence, proof) {
       if (stopAfterRecord) break;
     }
   } finally {
+    page.off("requestfailed", onTransportDiagnostic);
     page.off("pageerror", onError);
     page.off("request", onRequest);
     page.off("console", onConsole);
@@ -10544,7 +10670,9 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationFocusGateSha: "3b33fd69dd005814a8c615a0af6bd0fea758ac6b",
   functionalNavigationR2PlanSha: "83279bf28172e974778c3e788b8bf5718e23d9c1",
   functionalNavigationR3PlanSha: "9030de4115041598bdc530e03c3c8a5c18d3a5ae",
+  functionalNavigationR4PlanSha: "e01a208940d68a504d1c206e1b255eabe4938bb3",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261112-r3",
     "integracao-v1-fase2-nav-20261112-r2",
     "integracao-v1-fase2-nav-20261111-r1",
     "trilha-a-audit-20261108-r1",
@@ -10611,7 +10739,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261112-r3",
+    nonce: "integracao-v1-fase2-nav-20261112-r4",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -10919,6 +11047,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationFocusGateSha,
       SINGLE_REQUEST.functionalNavigationR2PlanSha,
       SINGLE_REQUEST.functionalNavigationR3PlanSha,
+      SINGLE_REQUEST.functionalNavigationR4PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
@@ -13701,6 +13830,128 @@ export async function verifyNavigationR2Evidence({ get, git } = {}) {
   }
 }
 
+const NAVIGATION_R3_PROOF = Object.freeze({
+  schema: "contaos.navigation.r3.proof.v1",
+  planSha: "e01a208940d68a504d1c206e1b255eabe4938bb3",
+  r3HarnessSha: "bb245f124aad6eb33c133100bde5c742978ef01c",
+  authRun: 43252858747,
+  fixturesRun: 43252858795,
+  reportSha256: "688a75cce68f3d76d4346e5b1affd4ff952817c5849fa03dc5818105d470e4d1",
+  ledgerSha256: "eea2fc6eb38d7ec6e9bec9fc1e5e2c2b0cba294232d70c361e346e70999d007a",
+  artifactDigest: "sha256:94d55175c6354b27858503eea25349a27b6f732089c9126945f14993f6271311",
+});
+export function validateNavigationR3Evidence(value) {
+  if (
+    !navigationPlain(value, Object.keys(NAVIGATION_R3_PROOF)) ||
+    Object.entries(NAVIGATION_R3_PROOF).some(([key, expected]) => value[key] !== expected)
+  )
+    fail("NAVIGATION_R3_PROOF");
+  return value;
+}
+export async function verifyNavigationR3Evidence({ get, git } = {}) {
+  try {
+    if (typeof get !== "function" || typeof git !== "function" || isProxy(get) || isProxy(git))
+      fail("NAVIGATION_R3_PROOF");
+    const directory = "docs/frontend/auditorias/integracao-funcional-v1/fase2/";
+    for (const [file, hash] of [
+      ["R3_REPORT_ORIGINAL_2026-11-12.json", NAVIGATION_R3_PROOF.reportSha256],
+      ["R3_LEDGER_2026-11-12.json", NAVIGATION_R3_PROOF.ledgerSha256],
+    ]) {
+      const raw = await git(["show", NAVIGATION_R3_PROOF.planSha + ":" + directory + file]);
+      if (typeof raw !== "string" || Buffer.byteLength(raw) > 65536 || digest(raw) !== hash)
+        fail("NAVIGATION_R3_PROOF");
+    }
+    const repository = (value) =>
+      value?.id === 1442722734 &&
+      value.full_name === SINGLE_REQUEST.repository &&
+      value.private === false &&
+      value.owner?.id === 352205055 &&
+      value.owner.login === "contaos999999";
+    for (const [id, workflow, name, file, conclusion, jobId, jobName, jobConclusion] of [
+      [
+        43252858747,
+        411115674,
+        "ContaOS Trilha A Autenticada",
+        "contaos-trilha-a-authenticated.yml",
+        "failure",
+        131303938869,
+        "Trilha A auditoria privada HML",
+        "failure",
+      ],
+      [
+        43252858795,
+        411426169,
+        "ContaOS Trilha A Fixtures",
+        "contaos-trilha-a-fixtures.yml",
+        "success",
+        131303374970,
+        "Trilha A preparacao sintetica HML",
+        "skipped",
+      ],
+    ]) {
+      const run = await get("/actions/runs/" + id);
+      if (
+        run?.id !== id ||
+        run.workflow_id !== workflow ||
+        run.name !== name ||
+        run.path !== ".github/workflows/" + file ||
+        run.event !== "workflow_run" ||
+        run.head_sha !== NAVIGATION_R3_PROOF.r3HarnessSha ||
+        run.head_branch !== "main" ||
+        run.run_attempt !== 1 ||
+        run.status !== "completed" ||
+        run.conclusion !== conclusion ||
+        !repository(run.repository) ||
+        !repository(run.head_repository)
+      )
+        fail("NAVIGATION_R3_PROOF");
+      const page = await get("/actions/runs/" + id + "/jobs?filter=all&per_page=100");
+      if (
+        !Number.isSafeInteger(page?.total_count) ||
+        page.total_count < 1 ||
+        page.total_count > 100 ||
+        !Array.isArray(page.jobs) ||
+        page.jobs.length !== page.total_count
+      )
+        fail("NAVIGATION_R3_PROOF");
+      if (
+        page.jobs.some(
+          (job) =>
+            job?.run_id !== id ||
+            job.run_attempt !== 1 ||
+            job.head_sha !== NAVIGATION_R3_PROOF.r3HarnessSha ||
+            job.status !== "completed",
+        )
+      )
+        fail("NAVIGATION_R3_PROOF");
+      const jobs = page.jobs.filter((job) => job.id === jobId);
+      if (jobs.length !== 1 || jobs[0].name !== jobName || jobs[0].conclusion !== jobConclusion)
+        fail("NAVIGATION_R3_PROOF");
+    }
+    const page = await get("/actions/runs/43252858747/artifacts?per_page=100");
+    if (page?.total_count !== 1 || !Array.isArray(page.artifacts) || page.artifacts.length !== 1)
+      fail("NAVIGATION_R3_PROOF");
+    const artifact = page.artifacts[0],
+      run = artifact?.workflow_run;
+    if (
+      artifact?.id !== 13963014490 ||
+      artifact.name !== "trilha-a-private-43252858747-1" ||
+      artifact.size_in_bytes !== 2568 ||
+      artifact.digest !== NAVIGATION_R3_PROOF.artifactDigest ||
+      artifact.expired !== false ||
+      run?.id !== 43252858747 ||
+      run.repository_id !== 1442722734 ||
+      run.head_repository_id !== 1442722734 ||
+      run.head_branch !== "main" ||
+      run.head_sha !== NAVIGATION_R3_PROOF.r3HarnessSha
+    )
+      fail("NAVIGATION_R3_PROOF");
+    return Object.freeze({ ...NAVIGATION_R3_PROOF });
+  } catch {
+    fail("NAVIGATION_R3_PROOF");
+  }
+}
+
 export async function verifySingleRequest({
   operation,
   env = process.env,
@@ -13774,6 +14025,8 @@ export async function verifySingleRequest({
     operation === "audit" ? await verifyNavigationR1Evidence({ get, git }) : null;
   const navigationR2 =
     operation === "audit" ? await verifyNavigationR2Evidence({ get, git }) : null;
+  const navigationR3 =
+    operation === "audit" ? await verifyNavigationR3Evidence({ get, git }) : null;
   const r4ZeroAuth = operation === "fixtures" ? await verifyR4ZeroAuth({ get, git }) : null;
   const r7ZeroAuth = await verifyR7ZeroAuth({ get, git });
   const r12ZeroAuth =
@@ -13912,6 +14165,7 @@ export async function verifySingleRequest({
       : {}),
     ...(navigationR1 ? { navigationR1 } : {}),
     ...(navigationR2 ? { navigationR2 } : {}),
+    ...(navigationR3 ? { navigationR3 } : {}),
     ...(r4ZeroAuth ? { r4ZeroAuth } : {}),
     ...(r7ZeroAuth ? { r7ZeroAuth } : {}),
     ...(r12ZeroAuth ? { r12ZeroAuth } : {}),
@@ -14176,6 +14430,7 @@ export async function loadSingleRequestProof({
   if (operation === "audit") {
     validateNavigationR1Evidence(proof.navigationR1);
     validateNavigationR2Evidence(proof.navigationR2);
+    validateNavigationR3Evidence(proof.navigationR3);
   }
   const event = JSON.parse(await read(env.GITHUB_EVENT_PATH, "utf8")),
     spec = SINGLE_REQUEST[operation];
