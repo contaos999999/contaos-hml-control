@@ -4267,6 +4267,10 @@ export const C8_V117_SCOPE = Object.freeze({
 export function isC8Scope(scope) {
   return scope === C8_AUDIT_SCOPE || scope === C8_REMAINING_SCOPE || scope === C8_V117_SCOPE;
 }
+export const NAVIGATION_DEPLOYMENT = Object.freeze({
+  frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
+  deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
+});
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
   nonce: "integracao-v1-fase2-nav-20261111-r1",
@@ -4626,8 +4630,8 @@ export async function runNavigationAudit(page, fence, proof) {
   )
     fail("NAVIGATION_CONTEXT");
   if (
-    proof.frontendSha !== C8_R5_PRESERVED.frontendSha ||
-    proof.deploymentId !== C8_R5_PRESERVED.deploymentId ||
+    proof.frontendSha !== NAVIGATION_DEPLOYMENT.frontendSha ||
+    proof.deploymentId !== NAVIGATION_DEPLOYMENT.deploymentId ||
     proof.harnessSha !== singleRequestContext.sha
   )
     fail("NAVIGATION_IDENTITY");
@@ -6548,8 +6552,10 @@ async function runAuthenticatedAudit() {
     proof.harnessSha !== process.env.CONTAOS_HARNESS_SHA ||
     proof.frontendSha !== process.env.CONTAOS_FRONTEND_SHA ||
     proof.deploymentId !== process.env.CONTAOS_DEPLOYMENT_ID ||
-    proof.frontendSha !== C8_R5_PRESERVED.frontendSha ||
-    proof.deploymentId !== C8_R5_PRESERVED.deploymentId
+    proof.frontendSha !==
+      (scope === NAVIGATION_SCOPE ? NAVIGATION_DEPLOYMENT : C8_R5_PRESERVED).frontendSha ||
+    proof.deploymentId !==
+      (scope === NAVIGATION_SCOPE ? NAVIGATION_DEPLOYMENT : C8_R5_PRESERVED).deploymentId
   )
     fail("PROVENANCE_IDENTITY");
   const axePath = process.env.CONTAOS_AXE_SOURCE_PATH;
@@ -9749,6 +9755,9 @@ export const SINGLE_REQUEST = Object.freeze({
   c8PlanSha: "afe42819e62bbe8e3c25b4a5869f8ba59db124f5",
   c8ReaderBuildSha: "501237dd48a7159ccd4a7d7407334cdc2245aa24",
   functionalNavigationGateSha: "c1b003bd9fd1e8909a2d1950e43984023206f1d3",
+  functionalNavigationRepairGateSha: "079747a75e224996082e14c671864f68bb5e36ba",
+  functionalNavigationVisualGateSha: "0f1b6bfe2757478b18855143f378bd364e80f136",
+  functionalNavigationFocusGateSha: "3b33fd69dd005814a8c615a0af6bd0fea758ac6b",
   spentAuditNonces: Object.freeze([
     "trilha-a-audit-20261108-r1",
     "trilha-c-audit-20261110-c8-r1",
@@ -10117,6 +10126,9 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.c8PlanSha,
       SINGLE_REQUEST.c8ReaderBuildSha,
       SINGLE_REQUEST.functionalNavigationGateSha,
+      SINGLE_REQUEST.functionalNavigationRepairGateSha,
+      SINGLE_REQUEST.functionalNavigationVisualGateSha,
+      SINGLE_REQUEST.functionalNavigationFocusGateSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.

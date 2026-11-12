@@ -13495,14 +13495,11 @@ test("R13 POSIX ignored-build template admits only the approved production SHA",
 });
 
 test(
-  "R13 canonical restored public deployment is discovered live before any new nonce",
+  "Current phase 2 HML public deployment is discovered live before any new nonce",
   { timeout: 210000 },
   async () => {
     const graph = await sut.discoverPublicGraph();
-    const expected = {
-      frontendSha: "0024b3c6739ab6296ec12338f11cf792d3a5f84b",
-      deploymentId: "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh",
-    };
+    const expected = sut.NAVIGATION_DEPLOYMENT;
     assert.deepEqual(sut.resolveDeploymentIdentity(graph.modules, expected), expected);
     assert.ok(graph.modules.size > 0 && graph.modules.size <= 128);
     assert.ok(Number.isSafeInteger(graph.bytes) && graph.bytes > 0 && graph.bytes <= 8388608);
@@ -14884,6 +14881,80 @@ test("C8 surface states require the real open drawer, registration stage and com
   assert.equal(
     fn("surfaceStateValid")("V120", { ...protocol, regionNames: protocol.regionNames.slice(1) }),
     false,
+  );
+});
+
+test("Navigation admission requires each integrated repair, visual and focus gate before the one-shot request", async () => {
+  const sha = "a".repeat(40),
+    parent = "b".repeat(40);
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "audit",
+    request_id: sut.NAVIGATION_SCOPE.nonce,
+    approved_parent_sha: parent,
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  const raw = JSON.stringify(request),
+    seen = [];
+  const git = async (args) => {
+    if (args[0] === "show") return raw;
+    if (args[0] === "rev-parse") return sha;
+    if (args[0] === "rev-list") return [sha, parent, "d".repeat(40)].join(" ");
+    if (args[0] === "merge-base") {
+      seen.push(args[2]);
+      return "";
+    }
+    if (args[0] === "diff-tree") return "M\t" + sut.SINGLE_REQUEST.path;
+    if (args[0] === "ls-tree")
+      return "100644 blob " + "e".repeat(40) + "\t" + sut.SINGLE_REQUEST.path;
+    if (args[0] === "log") return sha;
+    throw new Error("Unexpected Git command");
+  };
+  await sut.verifySingleRequestGit(request, sha, git, raw);
+  for (const gate of [
+    "079747a75e224996082e14c671864f68bb5e36ba",
+    "0f1b6bfe2757478b18855143f378bd364e80f136",
+    "3b33fd69dd005814a8c615a0af6bd0fea758ac6b",
+  ]) {
+    assert.ok(seen.includes(gate), "missing required integrated gate");
+    await assert.rejects(
+      () =>
+        sut.verifySingleRequestGit(
+          request,
+          sha,
+          async (args) => {
+            if (args[0] === "merge-base" && args[2] === gate)
+              throw new Error("Required gate absent");
+            return git(args);
+          },
+          raw,
+        ),
+      /Required gate absent/,
+    );
+  }
+});
+
+test("Navigation deployment is separately pinned to the reviewed phase 2 product without rewriting C8 history", () => {
+  assert.deepEqual(sut.NAVIGATION_DEPLOYMENT, {
+    frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
+    deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
+  });
+  assert.equal(Object.isFrozen(sut.NAVIGATION_DEPLOYMENT), true);
+  assert.equal(sut.C8_R5_PRESERVED.frontendSha, "0024b3c6739ab6296ec12338f11cf792d3a5f84b");
+  assert.equal(sut.C8_R5_PRESERVED.deploymentId, "dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh");
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationRepairGateSha,
+    "079747a75e224996082e14c671864f68bb5e36ba",
+  );
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationVisualGateSha,
+    "0f1b6bfe2757478b18855143f378bd364e80f136",
+  );
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationFocusGateSha,
+    "3b33fd69dd005814a8c615a0af6bd0fea758ac6b",
   );
 });
 
