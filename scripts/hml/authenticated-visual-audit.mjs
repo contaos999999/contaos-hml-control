@@ -4273,7 +4273,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261112-r2",
+  nonce: "integracao-v1-fase2-nav-20261112-r3",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 export function navigationCases() {
@@ -4734,6 +4734,7 @@ export function validateNavigationReport(value) {
     "summary",
     "nativeProofSha256",
     "navigationNativeProofSha256",
+    "networkFailure",
     "fenceDiagnostic",
     "logoutFailure",
     "httpStatusErrors",
@@ -4750,7 +4751,8 @@ export function validateNavigationReport(value) {
   if (!navigationPlain(value, keys)) return false;
   const summary = summarizeNavigation(value.records);
   return (
-    value.schema === "contaos.navigation.audit.v2" &&
+    value.schema === "contaos.navigation.audit.v3" &&
+    value.networkFailure === null &&
     value.auditScope === NAVIGATION_SCOPE.id &&
     value.frontendSha === NAVIGATION_DEPLOYMENT.frontendSha &&
     value.deploymentId === NAVIGATION_DEPLOYMENT.deploymentId &&
@@ -5007,12 +5009,20 @@ async function waitNavigationStable(page, fence, spec, deadline) {
     await page.waitForFunction(navigationDomReady, spec, {
       timeout: navigationRemaining(deadline),
     });
-    await fence.drain();
-    fence.assertSafe();
+    const network = navigationSessions.get(page);
+    const revision = network ? await waitNavigationNetwork(page, fence, deadline) : null;
+    if (!network) {
+      await fence.drain();
+      fence.assertSafe();
+    }
     if (page.url() !== HML_ORIGIN + spec.path) fail("NAVIGATION_ROUTE");
     navigationRemaining(deadline);
     const observation = await page.evaluate(navigationDomReady, spec);
-    if (observation && (spec.conditional || navigationObservationReady(spec.surface, observation)))
+    if (
+      observation &&
+      (spec.conditional || navigationObservationReady(spec.surface, observation)) &&
+      (!network || network.isQuiet(revision))
+    )
       return observation;
   }
 }
@@ -5091,38 +5101,203 @@ export async function waitNavigationControl(page, fence, path, width, menu) {
     !(await link.isVisible())
   )
     fail("NAVIGATION_LINK_MISSING");
+  // These locator checks cross browser tasks. Revalidate the entire DOM/control
+  // and the network revision after them, with the original shared deadline.
+  if (navigationSessions.has(page)) await waitNavigationStable(page, fence, spec, deadline);
   return { link, menuOpened };
 }
 
+const navigationSessions = new WeakMap();
+export function navigationTransportDiagnostic(request) {
+  const diagnostic = {
+    reason: "OTHER",
+    destination: "OTHER",
+    method: "OTHER",
+    resourceType: "other",
+  };
+  if (!request || isProxy(request)) return diagnostic;
+  try {
+    const text = request.failure()?.errorText;
+    diagnostic.reason =
+      text === "net::ERR_ABORTED"
+        ? "ABORTED"
+        : text === "net::ERR_TIMED_OUT"
+          ? "TIMED_OUT"
+          : [
+                "net::ERR_CONNECTION_CLOSED",
+                "net::ERR_CONNECTION_RESET",
+                "net::ERR_CONNECTION_REFUSED",
+                "net::ERR_NAME_NOT_RESOLVED",
+              ].includes(text)
+            ? "CONNECTION"
+            : "OTHER";
+    const origin = new URL(request.url()).origin;
+    diagnostic.destination = origin === API_ORIGIN ? "API" : origin === HML_ORIGIN ? "UI" : "OTHER";
+    const method = request.method();
+    diagnostic.method = ["GET", "POST", "OPTIONS"].includes(method) ? method : "OTHER";
+    const type = request.resourceType();
+    diagnostic.resourceType = [
+      "document",
+      "fetch",
+      "xhr",
+      "script",
+      "stylesheet",
+      "image",
+      "font",
+      "manifest",
+      "other",
+    ].includes(type)
+      ? type
+      : "other";
+  } catch {
+    /* Only closed enums leave this observer. */
+  }
+  return diagnostic;
+}
+export async function waitNavigationNetwork(page, fence, deadline = performance.now() + 15000) {
+  const observer = navigationSessions.get(page);
+  if (!observer) fail("NAVIGATION_STATE");
+  for (;;) {
+    const revision = await observer.waitQuiet(deadline);
+    let timer;
+    try {
+      await Promise.race([
+        fence.drain(),
+        new Promise((_, reject) => {
+          timer = setTimeout(
+            () =>
+              reject(
+                Object.assign(Error("NAVIGATION_TIMEOUT"), {
+                  name: "TimeoutError",
+                  code: "NAVIGATION_TIMEOUT",
+                }),
+              ),
+            navigationRemaining(deadline),
+          );
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+    fence.assertSafe();
+    navigationRemaining(deadline);
+    if (observer.isQuiet(revision)) return revision;
+  }
+}
+export async function clickNavigationLogout(page, fence, deadline = performance.now() + 15000) {
+  const observer = navigationSessions.get(page);
+  if (!observer) fail("NAVIGATION_LOGOUT_CONTROL");
+  const exit = page.getByRole("button", { name: "Sair", exact: true });
+  for (;;) {
+    navigationRemaining(deadline);
+    if ((await exit.count()) !== 1 || !(await exit.isVisible()) || !(await exit.isEnabled()))
+      fail("NAVIGATION_LOGOUT_CONTROL");
+    const revision = await waitNavigationNetwork(page, fence, deadline);
+    const ready = await page.evaluate(() => {
+      const buttons = [...document.querySelectorAll('button,[role="button"]')].filter(
+        (node) =>
+          (node.getAttribute("aria-label") || node.textContent.trim()) === "Sair" &&
+          node.getClientRects().length > 0 &&
+          !node.closest('[inert],[aria-hidden="true"]'),
+      );
+      return (
+        buttons.length === 1 &&
+        !buttons[0].disabled &&
+        buttons[0].getAttribute("aria-disabled") !== "true"
+      );
+    });
+    navigationRemaining(deadline);
+    if (!ready) fail("NAVIGATION_LOGOUT_CONTROL");
+    if (!observer.isQuiet(revision)) continue;
+    await exit.click({ timeout: navigationRemaining(deadline) });
+    return;
+  }
+}
 export function observeNavigationSession(page) {
+  if (navigationSessions.has(page)) fail("NAVIGATION_STATE");
   let httpStatusErrors = 0,
     transportErrors = 0,
-    consoleErrors = 0;
+    consoleErrors = 0,
+    revision = 0,
+    changedAt = performance.now(),
+    closed = false,
+    firstFailure = null;
+  const active = new Set(),
+    waiters = new Set();
+  const changed = () => {
+    revision++;
+    changedAt = performance.now();
+    for (const done of [...waiters]) done();
+  };
+  const request = (value) => {
+    active.add(value);
+    changed();
+  };
+  const finished = (value) => {
+    active.delete(value);
+    changed();
+  };
   const response = (value) => {
     if (value.status() >= 400) httpStatusErrors++;
   };
-  const failed = () => {
+  const failed = (value) => {
     transportErrors++;
+    firstFailure ??= navigationTransportDiagnostic(value);
+    finished(value);
   };
   const consoleMessage = (value) => {
     if (value.type() === "error") consoleErrors++;
   };
-  page.on("response", response);
-  page.on("requestfailed", failed);
-  page.on("console", consoleMessage);
-  return {
+  const observer = {
     snapshot: () => ({
       httpErrors: httpStatusErrors + transportErrors,
       httpStatusErrors,
       transportErrors,
       consoleErrors,
     }),
+    networkFailure: () => (firstFailure ? { ...firstFailure } : null),
+    isQuiet: (expected) =>
+      !closed && revision === expected && active.size === 0 && performance.now() - changedAt >= 500,
+    async waitQuiet(deadline) {
+      for (;;) {
+        if (closed) fail("NAVIGATION_STATE");
+        const remaining = navigationRemaining(deadline);
+        const quietRemaining = 500 - (performance.now() - changedAt);
+        if (active.size === 0 && quietRemaining <= 0) return revision;
+        await new Promise((resolve) => {
+          let timer;
+          const done = () => {
+            clearTimeout(timer);
+            waiters.delete(done);
+            resolve();
+          };
+          waiters.add(done);
+          timer = setTimeout(
+            done,
+            Math.min(remaining, active.size ? remaining : Math.max(1, quietRemaining)),
+          );
+        });
+      }
+    },
     close() {
+      closed = true;
+      for (const done of [...waiters]) done();
+      page.off("request", request);
+      page.off("requestfinished", finished);
       page.off("response", response);
       page.off("requestfailed", failed);
       page.off("console", consoleMessage);
+      active.clear();
+      navigationSessions.delete(page);
     },
   };
+  page.on("request", request);
+  page.on("requestfinished", finished);
+  page.on("response", response);
+  page.on("requestfailed", failed);
+  page.on("console", consoleMessage);
+  navigationSessions.set(page, observer);
+  return observer;
 }
 
 export async function runNavigationAudit(page, fence, proof) {
@@ -5137,6 +5312,7 @@ export async function runNavigationAudit(page, fence, proof) {
     proof.harnessSha !== singleRequestContext.sha
   )
     fail("NAVIGATION_IDENTITY");
+  if (!navigationSessions.has(page)) fail("NAVIGATION_STATE");
   const records = [];
   let errors = 0,
     httpErrors = 0,
@@ -5208,6 +5384,7 @@ export async function runNavigationAudit(page, fence, proof) {
         .filter({ hasText: "Administrador Master" });
       await card.waitFor({ state: "visible" });
       need((await card.count()) === 1, "NAVIGATION_STATE");
+      await waitNavigationNetwork(page, fence);
       return;
     }
     const observation = await waitNavigationReady(page, fence, surface, path, activeTheme);
@@ -5249,6 +5426,7 @@ export async function runNavigationAudit(page, fence, proof) {
           ? "V119"
           : null);
     need(!!parentSurface, "NAVIGATION_ROUTE");
+    await waitNavigationNetwork(page, fence);
     generation++;
     await navigateVerifiedPage(page, fence, HML_ORIGIN + path);
     await ready(parentSurface, path);
@@ -5344,12 +5522,14 @@ export async function runNavigationAudit(page, fence, proof) {
       try {
         activeTheme = item.theme;
         await checkFreshDeployment(proof, false);
+        await waitNavigationNetwork(page, fence);
         await resizeVerifiedPage(page, fence, item.width);
         await go(item.path);
         row.routeExact = true;
         row.stateVerified = true;
         row.organizationVerified = true;
         row.stage = "RELOAD";
+        await waitNavigationNetwork(page, fence);
         generation++;
         await page.reload({ waitUntil: "networkidle" });
         await ready(item.surface, item.path);
@@ -5392,6 +5572,7 @@ export async function runNavigationAudit(page, fence, proof) {
           row.enteredFromMenu = true;
           row.operation = "RETURN_PARENT";
           row.target = navigationDestination(HML_ORIGIN + parent);
+          await waitNavigationNetwork(page, fence);
           generation++;
           await page.goBack({ waitUntil: "networkidle" });
           await ready(
@@ -5408,6 +5589,7 @@ export async function runNavigationAudit(page, fence, proof) {
         if (item.surface === "V117") {
           await clickPath("/", item.width, true);
           await ready("SYS05", "/");
+          await waitNavigationNetwork(page, fence);
           generation++;
           await page.goBack({ waitUntil: "networkidle" });
           await ready("V117", item.path);
@@ -5564,6 +5746,7 @@ export async function runNavigationAudit(page, fence, proof) {
           }
           row.controlsVerified = true;
         }
+        await waitNavigationNetwork(page, fence);
         row.pageErrors = errors - beforeErrors;
         row.httpErrors = httpErrors - beforeHttp;
         row.httpStatusErrors = httpStatusErrors - beforeStatus;
@@ -7573,6 +7756,7 @@ async function runAuthenticatedAudit() {
     let logoutStage = "DRAIN";
     if (loggedIn && page && !page.isClosed())
       try {
+        if (scope === NAVIGATION_SCOPE) await waitNavigationNetwork(page, fence);
         await settleVerifiedPage(page, fence);
         logoutStage = "MENU_CLOSE";
         await closeAuditMobileMenu(page);
@@ -7580,11 +7764,13 @@ async function runAuthenticatedAudit() {
         const exit = page.getByRole("button", { name: "Sair", exact: true });
         if ((await exit.count()) === 1) {
           logoutStage = "CLICK";
-          await exit.click();
+          if (scope === NAVIGATION_SCOPE) await clickNavigationLogout(page, fence);
+          else await exit.click();
           logoutStage = "REDIRECT";
           await page.waitForURL(HML_ORIGIN + "/login");
           logoutStage = "POST_DRAIN";
           await settleVerifiedPage(page, fence);
+          if (scope === NAVIGATION_SCOPE) await waitNavigationNetwork(page, fence);
           logoutVerified = true;
           logoutFailure = null;
         } else if (scope === NAVIGATION_SCOPE)
@@ -7615,7 +7801,8 @@ async function runAuthenticatedAudit() {
     const report =
       scope === NAVIGATION_SCOPE
         ? {
-            schema: "contaos.navigation.audit.v2",
+            schema: "contaos.navigation.audit.v3",
+            networkFailure: navigationSession?.networkFailure() ?? null,
             frontendSha: proof.frontendSha,
             harnessSha: proof.harnessSha,
             deploymentId: proof.deploymentId,
@@ -10356,7 +10543,9 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationVisualGateSha: "0f1b6bfe2757478b18855143f378bd364e80f136",
   functionalNavigationFocusGateSha: "3b33fd69dd005814a8c615a0af6bd0fea758ac6b",
   functionalNavigationR2PlanSha: "83279bf28172e974778c3e788b8bf5718e23d9c1",
+  functionalNavigationR3PlanSha: "9030de4115041598bdc530e03c3c8a5c18d3a5ae",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261112-r2",
     "integracao-v1-fase2-nav-20261111-r1",
     "trilha-a-audit-20261108-r1",
     "trilha-c-audit-20261110-c8-r1",
@@ -10422,7 +10611,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261112-r2",
+    nonce: "integracao-v1-fase2-nav-20261112-r3",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -10729,6 +10918,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationVisualGateSha,
       SINGLE_REQUEST.functionalNavigationFocusGateSha,
       SINGLE_REQUEST.functionalNavigationR2PlanSha,
+      SINGLE_REQUEST.functionalNavigationR3PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
@@ -13389,6 +13579,128 @@ export async function verifyNavigationR1Evidence({ get, git } = {}) {
   }
 }
 
+const NAVIGATION_R2_PROOF = Object.freeze({
+  schema: "contaos.navigation.r2.proof.v1",
+  planSha: "9030de4115041598bdc530e03c3c8a5c18d3a5ae",
+  r2HarnessSha: "22b1a0f7b432d72c1456d5061dd2cafb529f62f2",
+  authRun: 43208835561,
+  fixturesRun: 43208835680,
+  reportSha256: "b039701278b0e2b187421586df2c0385d0f8c3345ba4515ac8ca49021f222a42",
+  ledgerSha256: "cfe17bea2c46dbfeea9ab7b1f5dba896a870d8e5e706664753a85f97b37e40bc",
+  artifactDigest: "sha256:497d6e63d41b82b8d3ca394c19f07ecd9efac73d583ef154c9b87de1c87463d7",
+});
+export function validateNavigationR2Evidence(value) {
+  if (
+    !navigationPlain(value, Object.keys(NAVIGATION_R2_PROOF)) ||
+    Object.entries(NAVIGATION_R2_PROOF).some(([key, expected]) => value[key] !== expected)
+  )
+    fail("NAVIGATION_R2_PROOF");
+  return value;
+}
+export async function verifyNavigationR2Evidence({ get, git } = {}) {
+  try {
+    if (typeof get !== "function" || typeof git !== "function" || isProxy(get) || isProxy(git))
+      fail("NAVIGATION_R2_PROOF");
+    const directory = "docs/frontend/auditorias/integracao-funcional-v1/fase2/";
+    for (const [file, hash] of [
+      ["R2_REPORT_ORIGINAL_2026-11-12.json", NAVIGATION_R2_PROOF.reportSha256],
+      ["R2_LEDGER_2026-11-12.json", NAVIGATION_R2_PROOF.ledgerSha256],
+    ]) {
+      const raw = await git(["show", NAVIGATION_R2_PROOF.planSha + ":" + directory + file]);
+      if (typeof raw !== "string" || Buffer.byteLength(raw) > 65536 || digest(raw) !== hash)
+        fail("NAVIGATION_R2_PROOF");
+    }
+    const repository = (value) =>
+      value?.id === 1442722734 &&
+      value.full_name === SINGLE_REQUEST.repository &&
+      value.private === false &&
+      value.owner?.id === 352205055 &&
+      value.owner.login === "contaos999999";
+    for (const [id, workflow, name, file, conclusion, jobId, jobName, jobConclusion] of [
+      [
+        43208835561,
+        411115674,
+        "ContaOS Trilha A Autenticada",
+        "contaos-trilha-a-authenticated.yml",
+        "failure",
+        131151386992,
+        "Trilha A auditoria privada HML",
+        "failure",
+      ],
+      [
+        43208835680,
+        411426169,
+        "ContaOS Trilha A Fixtures",
+        "contaos-trilha-a-fixtures.yml",
+        "success",
+        131151044364,
+        "Trilha A preparacao sintetica HML",
+        "skipped",
+      ],
+    ]) {
+      const run = await get("/actions/runs/" + id);
+      if (
+        run?.id !== id ||
+        run.workflow_id !== workflow ||
+        run.name !== name ||
+        run.path !== ".github/workflows/" + file ||
+        run.event !== "workflow_run" ||
+        run.head_sha !== NAVIGATION_R2_PROOF.r2HarnessSha ||
+        run.head_branch !== "main" ||
+        run.run_attempt !== 1 ||
+        run.status !== "completed" ||
+        run.conclusion !== conclusion ||
+        !repository(run.repository) ||
+        !repository(run.head_repository)
+      )
+        fail("NAVIGATION_R2_PROOF");
+      const page = await get("/actions/runs/" + id + "/jobs?filter=all&per_page=100");
+      if (
+        !Number.isSafeInteger(page?.total_count) ||
+        page.total_count < 1 ||
+        page.total_count > 100 ||
+        !Array.isArray(page.jobs) ||
+        page.jobs.length !== page.total_count
+      )
+        fail("NAVIGATION_R2_PROOF");
+      if (
+        page.jobs.some(
+          (job) =>
+            job?.run_id !== id ||
+            job.run_attempt !== 1 ||
+            job.head_sha !== NAVIGATION_R2_PROOF.r2HarnessSha ||
+            job.status !== "completed",
+        )
+      )
+        fail("NAVIGATION_R2_PROOF");
+      const jobs = page.jobs.filter((job) => job.id === jobId);
+      if (jobs.length !== 1 || jobs[0].name !== jobName || jobs[0].conclusion !== jobConclusion)
+        fail("NAVIGATION_R2_PROOF");
+    }
+    const page = await get("/actions/runs/43208835561/artifacts?per_page=100");
+    if (page?.total_count !== 1 || !Array.isArray(page.artifacts) || page.artifacts.length !== 1)
+      fail("NAVIGATION_R2_PROOF");
+    const artifact = page.artifacts[0],
+      run = artifact?.workflow_run;
+    if (
+      artifact?.id !== 13940103116 ||
+      artifact.name !== "trilha-a-private-43208835561-1" ||
+      artifact.size_in_bytes !== 1572 ||
+      artifact.digest !== NAVIGATION_R2_PROOF.artifactDigest ||
+      artifact.expired !== false ||
+      run?.id !== 43208835561 ||
+      run.repository_id !== 1442722734 ||
+      run.head_repository_id !== 1442722734 ||
+      run.head_branch !== "main" ||
+      run.head_sha !== NAVIGATION_R2_PROOF.r2HarnessSha
+    )
+      fail("NAVIGATION_R2_PROOF");
+    return Object.freeze({ ...NAVIGATION_R2_PROOF });
+  } catch {
+    fail("NAVIGATION_R2_PROOF");
+  }
+}
+
 export async function verifySingleRequest({
   operation,
   env = process.env,
@@ -13460,6 +13772,8 @@ export async function verifySingleRequest({
   get ||= singleRequestGet({ token: metadataToken, publicOnly, env, diagnostic });
   const navigationR1 =
     operation === "audit" ? await verifyNavigationR1Evidence({ get, git }) : null;
+  const navigationR2 =
+    operation === "audit" ? await verifyNavigationR2Evidence({ get, git }) : null;
   const r4ZeroAuth = operation === "fixtures" ? await verifyR4ZeroAuth({ get, git }) : null;
   const r7ZeroAuth = await verifyR7ZeroAuth({ get, git });
   const r12ZeroAuth =
@@ -13597,6 +13911,7 @@ export async function verifySingleRequest({
         }
       : {}),
     ...(navigationR1 ? { navigationR1 } : {}),
+    ...(navigationR2 ? { navigationR2 } : {}),
     ...(r4ZeroAuth ? { r4ZeroAuth } : {}),
     ...(r7ZeroAuth ? { r7ZeroAuth } : {}),
     ...(r12ZeroAuth ? { r12ZeroAuth } : {}),
@@ -13858,7 +14173,10 @@ export async function loadSingleRequestProof({
   )
     fail("REQUEST_RUNTIME");
   await verifySingleRequestGit(request, proof.sha, git, raw);
-  if (operation === "audit") validateNavigationR1Evidence(proof.navigationR1);
+  if (operation === "audit") {
+    validateNavigationR1Evidence(proof.navigationR1);
+    validateNavigationR2Evidence(proof.navigationR2);
+  }
   const event = JSON.parse(await read(env.GITHUB_EVENT_PATH, "utf8")),
     spec = SINGLE_REQUEST[operation];
   const current = {
