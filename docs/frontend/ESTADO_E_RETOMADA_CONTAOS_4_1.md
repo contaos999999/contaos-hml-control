@@ -1,3 +1,9 @@
+## Fase 2 R5: sucessor após bloqueio zero-Auth de revisão, 12/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. BUILD R4 `e9074971fe6fdffa31157babaf44cbc6adf86ac9` preservado. REQUEST R4 PR#614 integrou `f5533cd11c4cefe9577857e419d8ea57a099712d` com pais corretos e diff exclusivo; push Zero `43289333902` e LOCK `43289333935` SUCCESS. Fixtures `43289702393` attempt1 SUCCESS/preparador SKIPPED. Auth `43289702129` attempt1 FAILURE `REQUEST_REVIEW` no preflight `131432360921`; privado `131432715186` SKIPPED. Zero credencial, sessão, browser privado e artefato.
+
+Causa exata: review `5880632205` ancorada ao HEAD correto usou prosa, enquanto o produtor exige corpo JSON canônico byte-exato. R4 consumida, sem rerun/replay. Próxima: integrar PLAN R5; BUILD mínimo troca nonce ativa para R5 e marca R4 histórica; REQUEST R5 isolada com review JSON exata e readback antes do merge. Depois exigir 52/52 PASS, logout e zero erros antes do certificado. Produto/backend/deployment/PROD intocados; Fase1/certificações/ressalvas anteriores preservadas; V2 e Fases3–7 aguardam.
+
 ## Fase 2 R4: R3 preservada e correções do auditor, 12/11/2026 Bahia
 
 Fase2 NÃO CERTIFICADA. HEADfrontendbb245f124aad6eb33c133100bde5c742978ef01c/backend5eca44aebead3183e81b5c1af0d1dffa5fb8feb6 reconfirmados. PLAN#6099030de4/BUILD#610491aaa/REQUEST#611bb245f1 integrados e CI/revisões rastreados no PLANR4. R3AUTH43252858747 FAILURE/FIXTURES43252858795 SUCCESS/preparadorSKIPPED attempt1 terminais, freeze respeitado. Artifact13963014490 ZIPsha94d55175c6354b27858503eea25349a27b6f732089c9126945f14993f6271311/report688a75cce68f3d76d4346e5b1affd4ff952817c5849fa03dc5818105d470e4d1, metadata pré-download6829829671, integridade conferida. 47observados33PASS14FAIL5não executados/logoutfalse/transport27/page17. Primeira falhaimagemABORTED/UI/GET; finalFENCE_REQUEST_LIFECYCLE/PAGE_CLOSED. Sem certificado.
