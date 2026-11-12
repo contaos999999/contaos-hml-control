@@ -4923,15 +4923,29 @@ function navigationDomReady(spec) {
       'aside a[href],[role="dialog"][aria-label="Menu de navegação"] a[href]',
     ),
   ].map((e) => e.getAttribute("href"));
-  return spec.menu.every((x) => hrefs.includes(x));
+  if (!spec.menu.every((x) => hrefs.includes(x))) return false;
+  if (spec.control) {
+    const root = spec.control.menuOpened
+      ? document.querySelector('[role="dialog"][aria-label="Menu de navegação"]')
+      : document;
+    const enabled = [...(root?.querySelectorAll("a[href]") ?? [])].some(
+      (node) =>
+        node.getAttribute("href") === spec.control.path &&
+        node.getClientRects().length > 0 &&
+        !node.closest('[inert],[aria-hidden="true"],[aria-disabled="true"],[disabled]') &&
+        getComputedStyle(node).visibility !== "hidden",
+    );
+    if (!enabled) return false;
+  }
+  return {
+    headingText: headings[0].textContent,
+    mainText: main,
+    statusTexts: statuses,
+    regionNames: regions,
+    menuHrefs: hrefs,
+  };
 }
-export async function waitNavigationReady(page, fence, surface, path, theme) {
-  if (
-    !["light", "dark"].includes(theme) ||
-    navigationDestination(HML_ORIGIN + path) !== (surface === "V117" ? "V116" : surface)
-  )
-    fail("NAVIGATION_ROUTE");
-  if (page.url() !== HML_ORIGIN + path) fail("NAVIGATION_ROUTE");
+function navigationReadinessSpec(surface, path, theme) {
   const titles = {
     SYS05: "^Painel da organização$",
     ADM01: "^Usuários e vínculos$",
@@ -4967,52 +4981,86 @@ export async function waitNavigationReady(page, fence, surface, path, theme) {
   if (!titles[surface]) fail("NAVIGATION_STATE");
   const conditional =
     surface === "V119" && path !== "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar";
+  return {
+    surface,
+    path,
+    theme,
+    title: titles[surface],
+    regions: regions[surface] ?? [],
+    menu: NAVIGATION_MENU_PATHS,
+    organization: SYNTHETIC_FIXTURE.organizationName,
+    conditional,
+  };
+}
+function navigationRemaining(deadline) {
+  const remaining = Math.floor(deadline - performance.now());
+  if (remaining <= 0)
+    throw Object.assign(Error("NAVIGATION_TIMEOUT"), {
+      name: "TimeoutError",
+      code: "NAVIGATION_TIMEOUT",
+    });
+  return remaining;
+}
+async function waitNavigationStable(page, fence, spec, deadline) {
+  for (;;) {
+    if (page.url() !== HML_ORIGIN + spec.path) fail("NAVIGATION_ROUTE");
+    await page.waitForFunction(navigationDomReady, spec, {
+      timeout: navigationRemaining(deadline),
+    });
+    await fence.drain();
+    fence.assertSafe();
+    if (page.url() !== HML_ORIGIN + spec.path) fail("NAVIGATION_ROUTE");
+    navigationRemaining(deadline);
+    const observation = await page.evaluate(navigationDomReady, spec);
+    if (observation && (spec.conditional || navigationObservationReady(spec.surface, observation)))
+      return observation;
+  }
+}
+export async function waitNavigationReady(page, fence, surface, path, theme) {
+  if (
+    typeof path !== "string" ||
+    !path.startsWith("/") ||
+    !["light", "dark"].includes(theme) ||
+    navigationDestination(HML_ORIGIN + path) !== (surface === "V117" ? "V116" : surface)
+  )
+    fail("NAVIGATION_ROUTE");
+  if (page.url() !== HML_ORIGIN + path) fail("NAVIGATION_ROUTE");
+  const deadline = performance.now() + 15000,
+    spec = navigationReadinessSpec(surface, path, theme);
   await page.evaluate(
     (t) => document.documentElement.classList.toggle("dark", t === "dark"),
     theme,
   );
-  await page.waitForFunction(
-    navigationDomReady,
-    {
-      path,
-      theme,
-      title: titles[surface],
-      regions: regions[surface] ?? [],
-      menu: NAVIGATION_MENU_PATHS,
-      organization: SYNTHETIC_FIXTURE.organizationName,
-      conditional,
-    },
-    { timeout: 15000 },
-  );
-  await fence.drain();
-  fence.assertSafe();
-  if (page.url() !== HML_ORIGIN + path) fail("NAVIGATION_ROUTE");
-  const observation = await page.evaluate(navigationDomObservation);
-  if (!conditional && !navigationObservationReady(surface, observation)) fail("NAVIGATION_STATE");
-  return observation;
+  return waitNavigationStable(page, fence, spec, deadline);
 }
 export async function waitNavigationControl(page, fence, path, width, menu) {
   if (
+    typeof path !== "string" ||
+    !path.startsWith("/") ||
     !navigationDestination(HML_ORIGIN + path) ||
     ![1440, 390].includes(width) ||
     typeof menu !== "boolean"
   )
     fail("NAVIGATION_ROUTE");
-  const source = page.url();
-  if (!navigationDestination(source)) fail("NAVIGATION_ROUTE");
-  let menuOpened = false;
+  const source = page.url(),
+    surface = navigationDestination(source);
+  if (!surface) fail("NAVIGATION_ROUTE");
   const dialog = page.getByRole("dialog", { name: "Menu de navegação", exact: true });
-  let link = page.locator('a[href="' + path + '"]:visible').first();
-  if (menu && width === 390 && (await link.count()) === 0) {
-    if (!(await dialog.isVisible())) {
-      const opener = page.getByRole("button", { name: "Abrir menu", exact: true });
-      await opener.waitFor({ state: "visible", timeout: 15000 });
-      await opener.click();
-      await dialog.waitFor({ state: "visible", timeout: 15000 });
-    }
+  let menuOpened = width === 390 && (await dialog.isVisible());
+  const select = () =>
+    menuOpened
+      ? dialog.locator('a[href="' + path + '"]:visible').first()
+      : page.locator('a[href="' + path + '"]:visible').first();
+  let link = select();
+  if (menu && width === 390 && (await link.count()) === 0 && !menuOpened) {
+    const opener = page.getByRole("button", { name: "Abrir menu", exact: true });
+    await opener.waitFor({ state: "visible", timeout: 15000 });
+    await opener.click();
+    await dialog.waitFor({ state: "visible", timeout: 15000 });
     menuOpened = true;
+    link = select();
   }
-  if (!menu && (await link.count()) === 0) {
+  if (!menu)
     for (let n = 0; n < 25 && (await link.count()) === 0; n++) {
       const next = page.getByRole("button", { name: /Próxima página/ }).first();
       if ((await next.count()) !== 1 || !(await next.isEnabled())) break;
@@ -5021,20 +5069,28 @@ export async function waitNavigationControl(page, fence, path, width, menu) {
       await waitNavigationReady(
         page,
         fence,
-        navigationDestination(source),
+        surface,
         new URL(source).pathname,
-        await page.evaluate(() =>
-          document.documentElement.classList.contains("dark") ? "dark" : "light",
-        ),
+        width === 390 ? "dark" : "light",
       );
-      link = page.locator('a[href="' + path + '"]:visible').first();
+      link = select();
     }
-  }
-  await link.waitFor({ state: "visible", timeout: 15000 });
-  if ((await link.count()) !== 1 || !(await link.isEnabled())) fail("NAVIGATION_LINK_MISSING");
-  await fence.drain();
-  fence.assertSafe();
-  if (page.url() !== source) fail("NAVIGATION_ROUTE");
+  const deadline = performance.now() + 15000;
+  await link.waitFor({ state: "visible", timeout: navigationRemaining(deadline) });
+  const spec = navigationReadinessSpec(
+    surface,
+    new URL(source).pathname,
+    width === 390 ? "dark" : "light",
+  );
+  spec.control = { path, menuOpened };
+  await waitNavigationStable(page, fence, spec, deadline);
+  if (
+    page.url() !== source ||
+    (await link.count()) !== 1 ||
+    !(await link.isEnabled()) ||
+    !(await link.isVisible())
+  )
+    fail("NAVIGATION_LINK_MISSING");
   return { link, menuOpened };
 }
 

@@ -18583,7 +18583,7 @@ test("NAV R2 readiness DOM observation rejects stale organization and waits for 
       url: () => w.location.href,
       evaluate: async (cb, arg) => evaluate(cb, arg),
       waitForFunction: async (cb, arg, opt) => {
-        assert.equal(opt.timeout, 15000);
+        assert.ok(opt.timeout > 0 && opt.timeout <= 15000);
         if (evaluate(cb, arg)) return;
         pending = true;
         await new Promise((resolve, reject) => {
@@ -19713,6 +19713,11 @@ async function navigationLegacyDomPage(html) {
       return this.textContent;
     },
   });
+  Object.defineProperty(dom.window.HTMLElement.prototype, "getClientRects", {
+    value() {
+      return this.isConnected ? [{ width: 100, height: 20 }] : [];
+    },
+  });
   const call = (probe, arg) => dom.window.eval("(" + probe.toString() + ")")(arg);
   const page = {
     url: () => dom.window.location.href,
@@ -20120,7 +20125,9 @@ test("NAV R2 wait rejects a foreign route before observing or draining", async (
 
 test("NAV R2 control waits for a real late link before draining and returning it", async () => {
   const wait = fn("waitNavigationControl"),
-    { dom, page } = await navigationLegacyDomPage("<main></main>");
+    { dom, page } = await navigationLegacyDomPage(
+      navigationStableContextHtml().replace(/<a id="target"[\s\S]*?<\/a>/, ""),
+    );
   let drained = 0,
     done = false;
   const pending = wait(
@@ -20131,9 +20138,9 @@ test("NAV R2 control waits for a real late link before draining and returning it
       },
       assertSafe() {},
     },
-    "/contratos",
+    "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa",
     1440,
-    true,
+    false,
   ).then((x) => {
     done = true;
     return x;
@@ -20141,18 +20148,24 @@ test("NAV R2 control waits for a real late link before draining and returning it
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(done, false);
   assert.equal(drained, 0);
-  dom.window.document.querySelector("main").innerHTML = '<a href="/contratos">Contratos</a>';
+  dom.window.document
+    .querySelector("main")
+    .insertAdjacentHTML(
+      "beforeend",
+      '<a href="/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa">Base normativa</a>',
+    );
   const result = await pending;
-  assert.equal(await result.link.getAttribute("href"), "/contratos");
+  assert.equal(
+    await result.link.getAttribute("href"),
+    "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa",
+  );
   assert.equal(drained, 1);
   dom.window.close();
 });
 
 test("NAV R2 control never offers a foreign destination or hides a fence failure", async () => {
   const wait = fn("waitNavigationControl"),
-    { dom, page } = await navigationLegacyDomPage(
-      '<main><a href="/contratos">Contratos</a></main>',
-    );
+    { dom, page } = await navigationLegacyDomPage(navigationStableContextHtml());
   const failure = Object.assign(Error("FENCE_ASYNC"), { code: "FENCE_ASYNC" });
   await assert.rejects(
     () =>
@@ -20186,4 +20199,115 @@ test("NAV R2 control never offers a foreign destination or hides a fence failure
     /NAVIGATION_/,
   );
   dom.window.close();
+});
+
+function navigationStableContextHtml() {
+  return (
+    '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header><aside>' +
+    [
+      "/",
+      "/contratantes",
+      "/contratantes/novo",
+      "/contratos",
+      "/contratos/novo",
+      "/selecionar-organizacao",
+      "/administracao/usuarios",
+      "/administracao/auditoria",
+    ]
+      .map((path) => '<a href="' + path + '">Menu</a>')
+      .join("") +
+    '</aside><main><h1>Contrato AUD-R2</h1><a id="target" href="/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa">Base normativa</a></main>'
+  );
+}
+
+for (const kind of ["organization", "activity", "theme", "permissions", "removed", "disabled"]) {
+  test("NAV R2 review I1 refuses " + kind + " changed during native drain", async () => {
+    for (const control of kind === "removed" || kind === "disabled" ? [true] : [false, true]) {
+      const { dom, page } = await navigationLegacyDomPage(navigationStableContextHtml());
+      const waitBudgets = [];
+      page.waitForFunction = async (probe, arg, options) => {
+        waitBudgets.push(options.timeout);
+        assert.ok(options.timeout > 0 && options.timeout <= 15000);
+        if (await page.evaluate(probe, arg)) return;
+        throw Object.assign(Error("bounded observation"), { name: "TimeoutError" });
+      };
+      const fence = {
+        assertSafe() {},
+        drain: async () => {
+          const doc = dom.window.document;
+          if (kind === "organization")
+            doc.querySelector("header").textContent = "OUTRA ORGANIZACAO Situação: ativa";
+          if (kind === "activity")
+            doc.querySelector("header").textContent = "ContaOS HML Teste Situação: inativa";
+          if (kind === "theme") doc.documentElement.classList.add("dark");
+          if (kind === "permissions")
+            doc.querySelector('aside a[href="/administracao/usuarios"]').remove();
+          if (kind === "removed") doc.querySelector("#target").remove();
+          if (kind === "disabled")
+            doc.querySelector("#target").setAttribute("aria-disabled", "true");
+        },
+      };
+      await assert.rejects(
+        () =>
+          control
+            ? sut.waitNavigationControl(
+                page,
+                fence,
+                "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa",
+                1440,
+                false,
+              )
+            : sut.waitNavigationReady(page, fence, "V106", new URL(page.url()).pathname, "light"),
+        (error) => error.name === "TimeoutError",
+      );
+      assert.ok(waitBudgets.length >= 1);
+      dom.window.close();
+    }
+  });
+}
+
+test("NAV R2 review I1 waits for a transient post-drain change within the same budget", async () => {
+  for (const control of [false, true]) {
+    const { dom, page } = await navigationLegacyDomPage(navigationStableContextHtml());
+    const originalTarget = dom.window.document.querySelector("#target").outerHTML;
+    const budgets = [];
+    page.waitForFunction = async (probe, arg, options) => {
+      budgets.push(options.timeout);
+      assert.ok(options.timeout > 0 && options.timeout <= 15000);
+      if (!(await page.evaluate(probe, arg))) {
+        dom.window.document.querySelector("header").textContent =
+          "ContaOS HML Teste Situação: ativa";
+        dom.window.document.documentElement.classList.remove("dark");
+        if (!dom.window.document.querySelector("#target"))
+          dom.window.document.querySelector("main").insertAdjacentHTML("beforeend", originalTarget);
+      }
+      assert.ok(await page.evaluate(probe, arg));
+    };
+    let drains = 0;
+    const fence = {
+      assertSafe() {},
+      drain: async () => {
+        if (++drains === 1) {
+          dom.window.document.querySelector("header").textContent =
+            "OUTRA ORGANIZACAO Situação: inativa";
+          dom.window.document.documentElement.classList.add("dark");
+          if (control) dom.window.document.querySelector("#target").remove();
+        }
+      },
+    };
+    await (control
+      ? sut.waitNavigationControl(
+          page,
+          fence,
+          "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa",
+          1440,
+          false,
+        )
+      : sut.waitNavigationReady(page, fence, "V106", new URL(page.url()).pathname, "light"));
+    assert.equal(drains, 2);
+    assert.equal(budgets.length, 2);
+    assert.ok(budgets[1] <= budgets[0]);
+    assert.equal(dom.window.document.documentElement.classList.contains("dark"), false);
+    dom.window.close();
+  }
 });
