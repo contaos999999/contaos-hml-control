@@ -24,6 +24,40 @@ const R5_R4_HEAD = "4c3a92b3fbf3160b3c67751355a4ef8f91c70d72";
 const HML = "https://contaos-41-hml.vercel.app";
 const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
 
+test("NAV R2 session network observation includes errors before the matrix and during logout", async () => {
+  const { EventEmitter } = await import("node:events"),
+    page = new EventEmitter();
+  const observer = fn("observeNavigationSession")(page);
+  assert.deepEqual(observer.snapshot(), {
+    httpErrors: 0,
+    httpStatusErrors: 0,
+    transportErrors: 0,
+    consoleErrors: 0,
+  });
+  page.emit("response", { status: () => 200 });
+  page.emit("response", { status: () => 503 });
+  page.emit("requestfailed", {});
+  page.emit("console", {
+    type: () => "error",
+    text() {
+      throw Error("PRIVATE_SENTINEL");
+    },
+  });
+  assert.deepEqual(observer.snapshot(), {
+    httpErrors: 2,
+    httpStatusErrors: 1,
+    transportErrors: 1,
+    consoleErrors: 1,
+  });
+  const report = navigationReportV2Fixture();
+  Object.assign(report, observer.snapshot());
+  delete report.consoleErrors;
+  assert.equal(sut.validateNavigationReport(report), false);
+  observer.close();
+  for (const name of ["response", "requestfailed", "console"])
+    assert.equal(page.listenerCount(name), 0);
+});
+
 function navigationTechnicalRows() {
   return fn("navigationCases")().map(({ surface, width, theme }) => ({
     surface,
@@ -18631,7 +18665,7 @@ async function buildNavigationSourceUI(directory) {
     join(directory, "state.ts"),
     "export const state=window.__nav={gates:{},calls:{},permissions:" +
       JSON.stringify(permissions) +
-      ",hold(kind){let resolve;const promise=new Promise(r=>resolve=r);this.gates[kind]={promise,resolve};},async wait(kind){this.calls[kind]=(this.calls[kind]||0)+1;const gate=this.gates[kind];if(gate){if(kind==='session')delete this.gates[kind];await gate.promise;}},release(kind){const gate=this.gates[kind];delete this.gates[kind];gate?.resolve();}};",
+      ",hold(kind){let resolve;const promise=new Promise(r=>resolve=r);this.gates[kind]={promise,resolve};},async wait(kind){this.calls[kind]=(this.calls[kind]||0)+1;const gate=this.gates[kind];if(gate){await gate.promise;}},release(kind){const gate=this.gates[kind];delete this.gates[kind];gate?.resolve();}};",
   );
   const record = {
     id: contract,
@@ -18675,7 +18709,7 @@ async function buildNavigationSourceUI(directory) {
   );
   await fs.writeFile(
     join(directory, "rbac.ts"),
-    "import {state} from './state';export const consultarPermissoesEfetivas=async()=>{await state.wait('permissions');return {permissoes:state.permissions};};export const resolverContextoRbac=async()=>({contrato:" +
+    "import {state} from './state';export const consultarPermissoesEfetivas=async()=>{const captured=state.permissions;await state.wait('permissions');return {permissoes:captured};};export const resolverContextoRbac=async()=>({contrato:" +
       JSON.stringify(contract) +
       ",competencia:null,contratante:null});export const temPermissao=(p,r,a)=>p.some(x=>x.recurso===r&&x.acao===a);",
   );
@@ -19294,6 +19328,7 @@ async function navigationNativeFixture(bundle, view) {
       },
     });
     await page.goto(origin + basePath, { waitUntil: "networkidle" });
+    await page.reload({ waitUntil: "networkidle" });
     const projected = {
       url: () => HML + new URL(page.url()).pathname,
       evaluate: page.evaluate.bind(page),
@@ -19415,7 +19450,14 @@ test(
               );
             }
             if (kind === "session")
-              assert.match(await f.page.getByRole("status").textContent(), /Verificando sessão/);
+              assert.match(
+                await f.page
+                  .getByRole("status")
+                  .filter({ hasText: "Verificando sessão" })
+                  .first()
+                  .textContent(),
+                /Verificando sessão/,
+              );
             let finished = false;
             const pending = fn("waitNavigationReady")(
               f.projected,
@@ -19441,6 +19483,42 @@ test(
               true,
             );
             assert.equal(await control.link.isVisible(), true);
+            if (kind === "permissions") {
+              const prior = await f.page.evaluate(() => {
+                const state = window.__nav;
+                state.hold("permissions");
+                window.__navStale = state.gates.permissions;
+                const prior = state.calls.permissions;
+                history.pushState({}, "", "/contratos");
+                dispatchEvent(new PopStateEvent("popstate"));
+                return prior;
+              });
+              await f.page.waitForFunction(
+                (prior) => window.__nav.calls.permissions > prior,
+                prior,
+                { timeout: 15000 },
+              );
+              await f.page.evaluate((path) => {
+                const state = window.__nav;
+                delete state.gates.permissions;
+                state.permissions = [];
+                history.pushState({}, "", path);
+                dispatchEvent(new PopStateEvent("popstate"));
+              }, f.basePath);
+              await f.page.waitForFunction(
+                (prior) => window.__nav.calls.permissions > prior + 1,
+                prior,
+                { timeout: 15000 },
+              );
+              await f.page.evaluate(() => window.__navStale.resolve());
+              await assert.rejects(
+                () =>
+                  fn("waitNavigationReady")(f.projected, f.fence, "V106", f.basePath, view.theme),
+                (error) => error.name === "TimeoutError",
+              );
+              assert.equal(await f.page.locator('aside a[href="/contratantes"]').count(), 0);
+            }
+
             f.fence.assertSafe();
             t.diagnostic(
               "NAV_R2_NATIVE_CASE " +
@@ -19543,3 +19621,569 @@ test(
     }
   },
 );
+
+const navigationReadyObservation = () => ({
+  headingText: "Contrato AUD-R2",
+  mainText: "Contrato AUD-R2 Dados do contrato",
+  statusTexts: [],
+  regionNames: [],
+  menuHrefs: [
+    "/",
+    "/contratantes",
+    "/contratantes/novo",
+    "/contratos",
+    "/contratos/novo",
+    "/selecionar-organizacao",
+    "/administracao/usuarios",
+    "/administracao/auditoria",
+  ],
+});
+
+test("NAV R2 readiness rejects the provisional contract screen before session revalidation finishes", () => {
+  const valid = fn("navigationObservationReady");
+  assert.equal(valid("V106", navigationReadyObservation()), true);
+  assert.equal(
+    valid("V106", {
+      ...navigationReadyObservation(),
+      headingText: "Contrato",
+      mainText: "Contrato Verificando sessão…",
+      statusTexts: ["Verificando sessão…"],
+    }),
+    false,
+  );
+});
+
+test("NAV R2 readiness waits for permissions and administration after browser return", () => {
+  const valid = fn("navigationObservationReady");
+  const initial = navigationReadyObservation();
+  assert.equal(valid("V106", { ...initial, menuHrefs: [] }), false);
+  assert.equal(valid("V106", { ...initial, menuHrefs: initial.menuHrefs.slice(0, 6) }), false);
+  assert.equal(valid("V106", initial), true);
+});
+
+test("NAV R2 readiness keeps delayed reads and permanent denial blocking", () => {
+  const valid = fn("navigationObservationReady");
+  for (const status of [
+    "Verificando sessão…",
+    "Carregando contrato…",
+    "Confirmando organização…",
+    "Consultando apresentações…",
+  ])
+    assert.equal(valid("V106", { ...navigationReadyObservation(), statusTexts: [status] }), false);
+  assert.equal(
+    valid("V106", { ...navigationReadyObservation(), mainText: "Acesso negado" }),
+    false,
+  );
+  assert.equal(
+    valid("V106", { ...navigationReadyObservation(), headingText: "Base normativa" }),
+    false,
+  );
+  assert.equal(valid("UNKNOWN", navigationReadyObservation()), false);
+});
+
+test("NAV R2 readiness preserves the eligible wizard and protocol final regions", () => {
+  const valid = fn("navigationObservationReady");
+  const wizard = {
+    ...navigationReadyObservation(),
+    headingText: "Wizard de apresentação",
+    mainText: "Revisão de prontidão",
+    regionNames: ["Revisão de prontidão", "Etapa 2 de 2 — Registrar apresentação"],
+  };
+  assert.equal(valid("V119", wizard), true);
+  assert.equal(valid("V119", { ...wizard, regionNames: ["Revisão de prontidão"] }), false);
+  const protocol = {
+    ...navigationReadyObservation(),
+    headingText: "Apresentação e protocolo",
+    mainText: "Pacote imutável",
+    regionNames: ["Dados da apresentação", "Pacote imutável", "Itens preservados no pacote"],
+  };
+  assert.equal(valid("V120", protocol), true);
+  assert.equal(valid("V120", { ...protocol, regionNames: [] }), false);
+});
+
+async function navigationLegacyDomPage(html) {
+  const { JSDOM } = await import("jsdom");
+  const dom = new JSDOM(html, {
+    url: HML + "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    runScripts: "outside-only",
+    pretendToBeVisual: true,
+  });
+  Object.defineProperty(dom.window.HTMLElement.prototype, "innerText", {
+    get() {
+      return this.textContent;
+    },
+  });
+  const call = (probe, arg) => dom.window.eval("(" + probe.toString() + ")")(arg);
+  const page = {
+    url: () => dom.window.location.href,
+    evaluate: async (probe, arg) => call(probe, arg),
+    waitForFunction: (probe, arg, options) =>
+      new Promise((resolve, reject) => {
+        const observer = new dom.window.MutationObserver(check);
+        const timer = setTimeout(() => {
+          observer.disconnect();
+          reject(Object.assign(Error("DOM readiness timeout"), { name: "TimeoutError" }));
+        }, options.timeout);
+        function check() {
+          if (call(probe, arg)) {
+            clearTimeout(timer);
+            observer.disconnect();
+            resolve();
+          }
+        }
+        observer.observe(dom.window.document.documentElement, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          characterData: true,
+        });
+        check();
+      }),
+  };
+  function locator(find) {
+    const first = {
+      first: () => first,
+      count: async () => Math.min(1, find().length),
+      isEnabled: async () => !!find()[0] && !find()[0].hasAttribute("disabled"),
+      isVisible: async () => !!find()[0],
+      getAttribute: async (key) => find()[0]?.getAttribute(key),
+      click: async () => find()[0].click(),
+      waitFor: ({ state = "visible", timeout = 15000 } = {}) =>
+        new Promise((resolve, reject) => {
+          const observer = new dom.window.MutationObserver(check),
+            timer = setTimeout(() => {
+              observer.disconnect();
+              reject(Object.assign(Error("Locator timeout"), { name: "TimeoutError" }));
+            }, timeout);
+          function check() {
+            if (find().length > 0 === (state === "visible")) {
+              clearTimeout(timer);
+              observer.disconnect();
+              resolve();
+            }
+          }
+          observer.observe(dom.window.document.documentElement, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            characterData: true,
+          });
+          check();
+        }),
+    };
+    return first;
+  }
+  page.locator = (selector) =>
+    locator(() =>
+      [...dom.window.document.querySelectorAll(selector.replaceAll(":visible", ""))].filter(
+        (e) =>
+          !e.closest('[inert],[hidden],[aria-hidden="true"]') &&
+          dom.window.getComputedStyle(e).display !== "none",
+      ),
+    );
+  page.getByRole = (role, { name } = {}) =>
+    locator(() =>
+      [
+        ...dom.window.document.querySelectorAll(role === "button" ? "button" : `[role="${role}"]`),
+      ].filter((e) =>
+        name instanceof RegExp
+          ? name.test(e.getAttribute("aria-label") || e.textContent)
+          : (e.getAttribute("aria-label") || e.textContent) === name,
+      ),
+    );
+  return { dom, page };
+}
+
+let navigationFixtureBundle;
+async function buildNavigationReadinessFixture() {
+  if (navigationFixtureBundle) return navigationFixtureBundle;
+  navigationFixtureBundle = (async () => {
+    const fs = await import("node:fs/promises"),
+      path = await import("node:path"),
+      os = await import("node:os");
+    const root = process.cwd(),
+      directory = await fs.mkdtemp(path.join(os.tmpdir(), "contaos-nav-r2-"));
+    const org = "e87f7e68-c5ae-4077-943b-02a4afd8b6ee",
+      contract = "be89ef7e-d839-46c0-9cfb-4da81edf8b74";
+    const write = (name, body) => fs.writeFile(path.join(directory, name), body);
+    await write(
+      "gates.ts",
+      `const held=new Set(),resolvers=new Map(),calls=new Map(),seen=new Map();export async function gate(name){calls.set(name,(calls.get(name)||0)+1);for(const r of seen.get(name)||[])r();seen.delete(name);if(held.has(name))await new Promise(r=>{const a=resolvers.get(name)||[];a.push(r);resolvers.set(name,a);});}window.__navFixture={hold(name){held.add(name);calls.set(name,0);},release(name){held.delete(name);for(const r of resolvers.get(name)||[])r();resolvers.delete(name);},entered(name){return calls.get(name)?Promise.resolve():new Promise(r=>{const a=seen.get(name)||[];a.push(r);seen.set(name,a);});},calls(name){return calls.get(name)||0;}};`,
+    );
+    await write(
+      "client.ts",
+      `import {gate} from './gates';const org=${JSON.stringify(org)},contract=${JSON.stringify(contract)};export const supabase={auth:{async getUser(){await gate('user');return {data:{user:{id:'11111111-1111-4111-8111-111111111111'}},error:null};},onAuthStateChange(){return {data:{subscription:{unsubscribe(){}}}};},async signOut(){return {error:null};}},async rpc(name,args){if(name!=='obter_resumo_dashboard'||args.p_id_organizacao!==org)throw Error('OFFLINE_RPC');return {data:{schema_versao:'sys05-v1',organizacao:{id:org,razao_social:'ContaOS HML Teste',nome_fantasia:null,situacao:'ativa'}},error:null};},from(table){if(table!=='contratos')throw Error('OFFLINE_TABLE');let id=null;const q={select(){return q;},eq(key,value){if(key==='id')id=value;return q;},abortSignal(){return q;},async maybeSingle(){await gate('contract');if(id!==contract)throw Error('OFFLINE_CONTRACT');return {data:{id:contract,id_organizacao:org,id_contratante:'041ebf9f-5e32-4744-80d6-d745fa5fc483',numero:'AUD-R2',objeto:'Contrato sintético de prontidão',situacao:'ativo',criticidade:'alta',inicio:'2026-01-01',fim:'2026-12-31',tipo_contrato:null,unidade_vinculada:null,fonte_recurso:null,valor_global:100,valor_mensal_referencia:null,periodicidade:'mensal',prazo_prestacao_dias:10,dia_limite_apresentacao:5,contratante:{razao_social:'Contratante sintético',nome_fantasia:null,documento:null}},error:null,status:200};}};return q;}};`,
+    );
+    await write(
+      "router.tsx",
+      `import React,{useSyncExternalStore} from 'react';const subscribe=fn=>{addEventListener('popstate',fn);return()=>removeEventListener('popstate',fn);};export const navigate=async({to,replace})=>{history[replace?'replaceState':'pushState'](null,'',to);dispatchEvent(new PopStateEvent('popstate'));};export const useNavigate=()=>navigate;export const useRouterState=({select})=>useSyncExternalStore(subscribe,()=>select({location:{pathname:location.pathname}}));export const Link=React.forwardRef(({to,params,onClick,children,...props},ref)=>{let href=to;for(const[k,v]of Object.entries(params||{}))href=href.replace('$'+k,v);return <a {...props} ref={ref} href={href} onClick={e=>{onClick?.(e);if(!e.defaultPrevented){e.preventDefault();void navigate({to:href});}}}>{children}</a>;});`,
+    );
+    await write(
+      "org.ts",
+      `export const EVENTO_ORGANIZACAO_ALTERADA='contaos:organizacao-alterada';export const obterPreferenciaOrganizacao=()=>${JSON.stringify(org)};`,
+    );
+    await write(
+      "rbac.ts",
+      `import {gate} from './gates';export const temPermissao=(p,r,a)=>p.some(x=>x.recurso===r&&x.acao===a);export async function resolverContextoRbac(path){await gate('context');return {contrato:path.startsWith('/contratos/')?${JSON.stringify(contract)}:null,competencia:null,contratante:null};}export async function consultarPermissoesEfetivas(){await gate('permissions');return {schema_versao:'rbac-v1',versao:5,master:true,permissoes:[{recurso:'dashboard',acao:'consultar'},{recurso:'contratantes',acao:'consultar'},{recurso:'contratantes',acao:'criar'},{recurso:'contratos',acao:'consultar'},{recurso:'contratos',acao:'criar'},{recurso:'usuarios',acao:'administrar'},{recurso:'auditoria',acao:'consultar'},{recurso:'normativos',acao:'consultar'},{recurso:'orcamentos',acao:'consultar'},{recurso:'listas',acao:'consultar'},{recurso:'documentos_contrato',acao:'consultar'},{recurso:'competencias',acao:'consultar'},{recurso:'historico',acao:'consultar'}]};}`,
+    );
+    await write(
+      "admin.ts",
+      `import {gate} from './gates';export async function validarAdministrador(){await gate('administration');return true;}export async function podeConsultarAuditoria(){await gate('auditor');return true;}`,
+    );
+    await write("copilot.tsx", "export const CopilotoContrato=()=>null;");
+    await write(
+      "entry.tsx",
+      `import React from 'react';import {createRoot}from'react-dom/client';import{QueryClient,QueryClientProvider}from'@tanstack/react-query';import{useRouterState,navigate}from'@tanstack/react-router';import{ContaOSAppShell}from${JSON.stringify(path.join(root, "src/components/layout/ContaOSAppShell.tsx"))};import{VisaoGeralContrato}from${JSON.stringify(path.join(root, "src/components/contratos/VisaoGeralContrato.tsx"))};function App(){const pathname=useRouterState({select:s=>s.location.pathname});return <ContaOSAppShell>{pathname===${JSON.stringify("/contratos/" + contract)}?<VisaoGeralContrato id=${JSON.stringify(contract)}/>:<main><h1>{pathname==='/'?'Painel da organização':pathname==='/contratos'?'Contratos':'Base normativa'}</h1><p>Conteúdo sintético de suporte à navegação do Shell</p></main>}</ContaOSAppShell>;}const client=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}});const root=createRoot(document.getElementById('root'));window.__navFixture.navigate=navigate;window.__navFixture.unmount=()=>{root.unmount();client.clear();};root.render(<QueryClientProvider client={client}><App/></QueryClientProvider>);`,
+    );
+    const aliases = {
+      "@tanstack/react-query": require.resolve("@tanstack/react-query"),
+      "@/integrations/supabase/client": path.join(directory, "client.ts"),
+      "@tanstack/react-router": path.join(directory, "router.tsx"),
+      "@/lib/organizacao/preferenciaOrganizacao": path.join(directory, "org.ts"),
+      "@/lib/administracao/rbacRpc": path.join(directory, "rbac.ts"),
+      "@/lib/administracao/admUsuariosRpc": path.join(directory, "admin.ts"),
+      "@/components/copiloto/CopilotoContrato": path.join(directory, "copilot.tsx"),
+      react: require.resolve("react"),
+      "react-dom/client": require.resolve("react-dom/client"),
+      "react/jsx-runtime": require.resolve("react/jsx-runtime"),
+    };
+    const build = `const r=await Bun.build({entrypoints:[${JSON.stringify(path.join(directory, "entry.tsx"))}],outdir:${JSON.stringify(directory)},target:'browser',format:'iife',naming:'ui.js',define:{'process.env.NODE_ENV':'"production"'},plugins:[{name:'closed-nav-infrastructure',setup(b){const aliases=${JSON.stringify(aliases)};b.onResolve({filter:/^(?:@\\/|@tanstack\\/react-(?:router|query)$|react$|react-dom\\/client$|react\\/jsx-runtime$)/},a=>({path:Bun.resolveSync(aliases[a.path]??${JSON.stringify(path.join(root, "src"))}+'/'+a.path.slice(2),${JSON.stringify(root)})}));}}]});if(!r.success){for(const x of r.logs)console.error(x);process.exit(1);}`;
+    await write("build.mjs", build);
+    const { promisify } = await import("node:util"),
+      { execFile } = await import("node:child_process");
+    await promisify(execFile)(
+      process.env.CONTAOS_BUN_BINARY || "bun",
+      [path.join(directory, "build.mjs")],
+      { cwd: root, timeout: 15000, maxBuffer: 1048576 },
+    );
+    const bundle = await fs.readFile(path.join(directory, "ui.js"), "utf8");
+    await fs.rm(directory, { recursive: true, force: true });
+    return bundle;
+  })();
+  return navigationFixtureBundle;
+}
+
+test("NAV R2 real components reproduce the post-return permission gap before any driver correction", async (t) => {
+  const bundle = await buildNavigationReadinessFixture();
+  const { dom, page } = await navigationLegacyDomPage('<div id="root"></div>');
+  dom.window.history.replaceState(null, "", "/");
+  dom.window.matchMedia = () => ({
+    matches: true,
+    addEventListener() {},
+    removeEventListener() {},
+  });
+  t.after(() => {
+    dom.window.__navFixture?.unmount();
+    dom.window.close();
+  });
+  dom.window.eval(bundle);
+  await page.waitForFunction(
+    () =>
+      document.querySelectorAll('aside a[href="/contratos"]').length === 1 &&
+      document.querySelectorAll('aside a[href="/administracao/auditoria"]').length === 1,
+    null,
+    { timeout: 15000 },
+  );
+  dom.window.document.querySelector('aside a[href="/contratos"]').click();
+  await page.waitForFunction(
+    () =>
+      location.pathname === "/contratos" &&
+      document.querySelector("h1")?.textContent === "Contratos" &&
+      document.querySelectorAll('aside a[href="/administracao/auditoria"]').length === 1,
+    null,
+    { timeout: 15000 },
+  );
+  dom.window.__navFixture.hold("permissions");
+  dom.window.history.back();
+  await dom.window.__navFixture.entered("permissions");
+  await page.waitForFunction(
+    () =>
+      location.pathname === "/" &&
+      document.querySelector("h1")?.textContent === "Painel da organização",
+    null,
+    { timeout: 15000 },
+  );
+  assert.equal(dom.window.document.querySelector("h1").textContent, "Painel da organização");
+  assert.equal(dom.window.document.querySelectorAll('aside a[href="/contratos"]').length, 0);
+  const oldObservation = await page.evaluate(sut.navigationDomObservation);
+  assert.equal(sut.surfaceStateValid("SYS05", oldObservation), true);
+  assert.equal(sut.navigationObservationReady("SYS05", oldObservation), false);
+  let finished = false;
+  const pending = sut
+    .waitNavigationReady(page, { drain: async () => {}, assertSafe() {} }, "SYS05", "/", "light")
+    .then((x) => {
+      finished = true;
+      return x;
+    });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(finished, false);
+  dom.window.__navFixture.release("permissions");
+  const ready = await pending;
+  assert.ok(ready.menuHrefs.includes("/contratos"));
+});
+
+test("NAV R2 real components retain the header while V106 session and final heading revalidate on return", async (t) => {
+  const bundle = await buildNavigationReadinessFixture(),
+    { dom, page } = await navigationLegacyDomPage('<div id="root"></div>');
+  dom.window.matchMedia = () => ({
+    matches: true,
+    addEventListener() {},
+    removeEventListener() {},
+  });
+  t.after(() => {
+    dom.window.__navFixture?.unmount();
+    dom.window.close();
+  });
+  dom.window.eval(bundle);
+  await sut.waitNavigationReady(
+    page,
+    { drain: async () => {}, assertSafe() {} },
+    "V106",
+    "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "light",
+  );
+  await dom.window.__navFixture.navigate({
+    to: "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74/base-normativa",
+  });
+  await page.waitForFunction(
+    () => document.querySelector("h1")?.textContent === "Base normativa",
+    null,
+    { timeout: 15000 },
+  );
+  dom.window.__navFixture.hold("user");
+  dom.window.history.back();
+  await page.waitForFunction(
+    () =>
+      location.pathname === "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74" &&
+      document.querySelector("h1")?.textContent === "Contrato" &&
+      document.querySelector('[role="status"]')?.textContent.includes("Verificando sessão"),
+    null,
+    { timeout: 15000 },
+  );
+  const header = dom.window.document.querySelector(
+    'header[aria-label="Organização atual"]',
+  ).textContent;
+  assert.ok(header.includes("ContaOS HML Teste"));
+  assert.match(header, /Situação:\s*ativa/);
+  const observation = await page.evaluate(sut.navigationDomObservation);
+  assert.equal(/Carregando|Confirmando organização/.test(observation.mainText), false);
+  assert.equal(sut.surfaceStateValid("V106", observation), false);
+  const pending = sut.waitNavigationReady(
+    page,
+    { drain: async () => {}, assertSafe() {} },
+    "V106",
+    "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "light",
+  );
+  dom.window.__navFixture.release("user");
+  const ready = await pending;
+  assert.equal(ready.headingText, "Contrato AUD-R2");
+});
+
+test("NAV R2 real components wait for administrative authorization separately from the common menu", async (t) => {
+  const bundle = await buildNavigationReadinessFixture(),
+    { dom, page } = await navigationLegacyDomPage('<div id="root"></div>');
+  dom.window.history.replaceState(null, "", "/");
+  dom.window.matchMedia = () => ({
+    matches: true,
+    addEventListener() {},
+    removeEventListener() {},
+  });
+  t.after(() => {
+    dom.window.__navFixture?.unmount();
+    dom.window.close();
+  });
+  dom.window.eval(bundle);
+  await sut.waitNavigationReady(
+    page,
+    { drain: async () => {}, assertSafe() {} },
+    "SYS05",
+    "/",
+    "light",
+  );
+  await dom.window.__navFixture.navigate({ to: "/contratos" });
+  await page.waitForFunction(
+    () => document.querySelector("h1")?.textContent === "Contratos",
+    null,
+    { timeout: 15000 },
+  );
+  dom.window.__navFixture.hold("administration");
+  dom.window.history.back();
+  await page.waitForFunction(
+    () =>
+      location.pathname === "/" &&
+      document.querySelector("h1")?.textContent === "Painel da organização" &&
+      document.querySelectorAll('aside a[href="/contratos"]').length === 1 &&
+      document.querySelectorAll('aside a[href="/administracao/usuarios"]').length === 0,
+    null,
+    { timeout: 15000 },
+  );
+  const observation = await page.evaluate(sut.navigationDomObservation);
+  assert.equal(sut.surfaceStateValid("SYS05", observation), true);
+  assert.equal(sut.navigationObservationReady("SYS05", observation), false);
+  const pending = sut.waitNavigationReady(
+    page,
+    { drain: async () => {}, assertSafe() {} },
+    "SYS05",
+    "/",
+    "light",
+  );
+  dom.window.__navFixture.release("administration");
+  const ready = await pending;
+  assert.ok(ready.menuHrefs.includes("/administracao/usuarios"));
+  assert.ok(ready.menuHrefs.includes("/administracao/auditoria"));
+});
+
+test("NAV R2 wait keeps a final heading blocked until the real DOM contains the authorized menu", async () => {
+  const wait = fn("waitNavigationReady");
+  const { dom, page } = await navigationLegacyDomPage(
+    '<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header><aside><nav></nav></aside><main><h1>Contrato AUD-R2</h1>Dados do contrato</main>',
+  );
+  let drained = 0,
+    settled = false;
+  const pending = wait(
+    page,
+    {
+      drain: async () => {
+        drained++;
+      },
+      assertSafe: () => {},
+    },
+    "V106",
+    "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+    "light",
+  ).then((x) => {
+    settled = true;
+    return x;
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(settled, false);
+  assert.equal(drained, 0);
+  dom.window.document.querySelector("nav").innerHTML = navigationReadyObservation()
+    .menuHrefs.map((href) => `<a href="${href}">Destino</a>`)
+    .join("");
+  const actual = await pending;
+  assert.equal(actual.headingText, "Contrato AUD-R2");
+  assert.equal(actual.menuHrefs.length, 8);
+  assert.equal(drained, 1);
+  dom.window.close();
+});
+
+test("NAV R2 wait rejects a native drain failure after UI readiness without hiding it", async () => {
+  const wait = fn("waitNavigationReady");
+  const links = navigationReadyObservation()
+    .menuHrefs.map((href) => `<a href="${href}">Destino</a>`)
+    .join("");
+  const { dom, page } = await navigationLegacyDomPage(
+    `<header aria-label="Organização atual">ContaOS HML Teste Situação: ativa</header><aside>${links}</aside><main><h1>Contrato AUD-R2</h1>Dados do contrato</main>`,
+  );
+  const failure = Object.assign(Error("FENCE_LIFECYCLE"), { code: "FENCE_LIFECYCLE" });
+  await assert.rejects(
+    () =>
+      wait(
+        page,
+        {
+          drain: async () => {
+            throw failure;
+          },
+          assertSafe: () => {},
+        },
+        "V106",
+        "/contratos/be89ef7e-d839-46c0-9cfb-4da81edf8b74",
+        "light",
+      ),
+    (error) => error === failure,
+  );
+  dom.window.close();
+});
+
+test("NAV R2 wait rejects a foreign route before observing or draining", async () => {
+  const wait = fn("waitNavigationReady");
+  let effects = 0;
+  await assert.rejects(
+    () =>
+      wait(
+        { url: () => HML + "/contratos" },
+        {
+          drain: async () => {
+            effects++;
+          },
+        },
+        "V106",
+        "https://foreign.invalid/path",
+        "light",
+      ),
+    /NAVIGATION_/,
+  );
+  assert.equal(effects, 0);
+});
+
+test("NAV R2 control waits for a real late link before draining and returning it", async () => {
+  const wait = fn("waitNavigationControl"),
+    { dom, page } = await navigationLegacyDomPage("<main></main>");
+  let drained = 0,
+    done = false;
+  const pending = wait(
+    page,
+    {
+      drain: async () => {
+        drained++;
+      },
+      assertSafe() {},
+    },
+    "/contratos",
+    1440,
+    true,
+  ).then((x) => {
+    done = true;
+    return x;
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(done, false);
+  assert.equal(drained, 0);
+  dom.window.document.querySelector("main").innerHTML = '<a href="/contratos">Contratos</a>';
+  const result = await pending;
+  assert.equal(await result.link.getAttribute("href"), "/contratos");
+  assert.equal(drained, 1);
+  dom.window.close();
+});
+
+test("NAV R2 control never offers a foreign destination or hides a fence failure", async () => {
+  const wait = fn("waitNavigationControl"),
+    { dom, page } = await navigationLegacyDomPage(
+      '<main><a href="/contratos">Contratos</a></main>',
+    );
+  const failure = Object.assign(Error("FENCE_ASYNC"), { code: "FENCE_ASYNC" });
+  await assert.rejects(
+    () =>
+      wait(
+        page,
+        {
+          drain: async () => {
+            throw failure;
+          },
+          assertSafe() {},
+        },
+        "/contratos",
+        1440,
+        true,
+      ),
+    (error) => error === failure,
+  );
+  await assert.rejects(
+    () =>
+      wait(
+        page,
+        {
+          drain: async () => {
+            throw Error("UNEXPECTED_IO");
+          },
+        },
+        "https://foreign.invalid",
+        390,
+        true,
+      ),
+    /NAVIGATION_/,
+  );
+  dom.window.close();
+});

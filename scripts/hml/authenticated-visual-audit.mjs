@@ -4846,7 +4846,7 @@ export function navigationObservationReady(surface, observation) {
     NAVIGATION_MENU_PATHS.every((path) => observation.menuHrefs?.includes(path))
   );
 }
-function navigationDomObservation() {
+export function navigationDomObservation() {
   return {
     headingText: document.querySelector("h1")?.textContent || "",
     mainText: document.querySelector("main")?.innerText || document.body.innerText,
@@ -5036,6 +5036,37 @@ export async function waitNavigationControl(page, fence, path, width, menu) {
   fence.assertSafe();
   if (page.url() !== source) fail("NAVIGATION_ROUTE");
   return { link, menuOpened };
+}
+
+export function observeNavigationSession(page) {
+  let httpStatusErrors = 0,
+    transportErrors = 0,
+    consoleErrors = 0;
+  const response = (value) => {
+    if (value.status() >= 400) httpStatusErrors++;
+  };
+  const failed = () => {
+    transportErrors++;
+  };
+  const consoleMessage = (value) => {
+    if (value.type() === "error") consoleErrors++;
+  };
+  page.on("response", response);
+  page.on("requestfailed", failed);
+  page.on("console", consoleMessage);
+  return {
+    snapshot: () => ({
+      httpErrors: httpStatusErrors + transportErrors,
+      httpStatusErrors,
+      transportErrors,
+      consoleErrors,
+    }),
+    close() {
+      page.off("response", response);
+      page.off("requestfailed", failed);
+      page.off("console", consoleMessage);
+    },
+  };
 }
 
 export async function runNavigationAudit(page, fence, proof) {
@@ -7059,6 +7090,7 @@ async function runAuthenticatedAudit() {
   let navigationHttpErrors = 0,
     navigationHttpStatusErrors = 0,
     navigationTransportErrors = 0,
+    navigationSession = null,
     logoutFailure = null,
     navigationComplete = false;
   let phase = "AUDIT_PREFLIGHT",
@@ -7152,6 +7184,7 @@ async function runAuthenticatedAudit() {
       install: true,
     });
     page = await context.newPage();
+    if (scope === NAVIGATION_SCOPE) navigationSession = observeNavigationSession(page);
     const privacyState = {
       proof: privacyProof,
       rbacProof,
@@ -7227,9 +7260,6 @@ async function runAuthenticatedAudit() {
       phase = "NAVIGATION";
       const result = await runNavigationAudit(page, fence, proof);
       records.push(...result.records);
-      navigationHttpErrors = result.httpErrors;
-      navigationHttpStatusErrors = result.httpStatusErrors;
-      navigationTransportErrors = result.transportErrors;
     }
     let surface = null;
     for (const item of scope === NAVIGATION_SCOPE ? [] : privateCases(scope)) {
@@ -7514,6 +7544,14 @@ async function runAuthenticatedAudit() {
     fence?.close();
     await browser?.close().catch(() => {});
     await proxy?.close().catch(() => {});
+    if (navigationSession) {
+      const sessionErrors = navigationSession.snapshot();
+      navigationHttpErrors = sessionErrors.httpErrors;
+      navigationHttpStatusErrors = sessionErrors.httpStatusErrors;
+      navigationTransportErrors = sessionErrors.transportErrors;
+      errors += sessionErrors.consoleErrors;
+      navigationSession.close();
+    }
     if (scope !== NAVIGATION_SCOPE) completePrivateRecords(records, scope);
     const summary =
       scope === NAVIGATION_SCOPE ? summarizeNavigation(records) : summarizeCases(records, scope);
