@@ -18164,61 +18164,334 @@ test("C8 eight V117: original YAML aggregate names admit only the complete typed
 });
 
 function navigationReportV2Fixture() {
- const records=navigationTechnicalRows().map(r=>({...r,operation:"FINISH",target:r.surface,httpStatusErrors:0,transportErrors:0}));
- return {schema:"contaos.navigation.audit.v2",frontendSha:"024a232c5bdb717e556d9ff16ca000e1ae65b0cb",harnessSha:"b".repeat(40),deploymentId:"dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",auditScope:"INTEGRACAO_V1_FASE2_NAV",records,summary:{expected:52,observed:52,passed:52,failed:0,matrixComplete:true},nativeProofSha256:"c".repeat(64),navigationNativeProofSha256:"d".repeat(64),sessionVerified:true,masterVerified:true,organizationVerified:true,logoutVerified:true,logoutFailure:null,fenceDiagnostic:null,blockedMutations:0,pageErrors:0,httpErrors:0,httpStatusErrors:0,transportErrors:0,aborted:null};
+  const records = navigationTechnicalRows().map((r) => ({
+    ...r,
+    operation: "FINISH",
+    target: r.surface,
+    httpStatusErrors: 0,
+    transportErrors: 0,
+  }));
+  return {
+    schema: "contaos.navigation.audit.v2",
+    frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
+    harnessSha: "b".repeat(40),
+    deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
+    auditScope: "INTEGRACAO_V1_FASE2_NAV",
+    records,
+    summary: { expected: 52, observed: 52, passed: 52, failed: 0, matrixComplete: true },
+    nativeProofSha256: "c".repeat(64),
+    navigationNativeProofSha256: "d".repeat(64),
+    sessionVerified: true,
+    masterVerified: true,
+    organizationVerified: true,
+    logoutVerified: true,
+    logoutFailure: null,
+    fenceDiagnostic: null,
+    blockedMutations: 0,
+    pageErrors: 0,
+    httpErrors: 0,
+    httpStatusErrors: 0,
+    transportErrors: 0,
+    aborted: null,
+  };
 }
-test("NAV R2 v2 accepts only the complete zero-error matrix with separate native evidence",()=>{
- const validate=fn("validateNavigationReport"),report=navigationReportV2Fixture();
- assert.equal(validate(report),true);
- for(const patch of [{schema:"contaos.navigation.audit.v1"},{frontendSha:"a".repeat(40)},{deploymentId:"dpl_foreign123"},{navigationNativeProofSha256:null},{httpStatusErrors:1,httpErrors:1},{transportErrors:1,httpErrors:1},{httpStatusErrors:1,httpErrors:0},{logoutFailure:{stage:"DRAIN",code:"FENCE_TRANSPORT"}},{fenceDiagnostic:{failed:true,code:"FENCE_ASYNC"}},{logoutVerified:false}])assert.equal(validate({...report,...patch}),false);
+test("NAV R2 v2 accepts only the complete zero-error matrix with separate native evidence", () => {
+  const validate = fn("validateNavigationReport"),
+    report = navigationReportV2Fixture();
+  assert.equal(validate(report), true);
+  for (const patch of [
+    { schema: "contaos.navigation.audit.v1" },
+    { frontendSha: "a".repeat(40) },
+    { deploymentId: "dpl_foreign123" },
+    { navigationNativeProofSha256: null },
+    { httpStatusErrors: 1, httpErrors: 1 },
+    { transportErrors: 1, httpErrors: 1 },
+    { httpStatusErrors: 1, httpErrors: 0 },
+    { logoutFailure: { stage: "DRAIN", code: "FENCE_TRANSPORT" } },
+    { fenceDiagnostic: { failed: true, code: "FENCE_ASYNC" } },
+    { logoutVerified: false },
+  ])
+    assert.equal(validate({ ...report, ...patch }), false);
 });
-test("NAV R2 v2 rejects unknown operations destinations and free diagnostics",()=>{
- const validate=fn("validateNavigationReport"),report=navigationReportV2Fixture();
- for(const change of [{operation:"SECRET_FREE_TEXT"},{target:"OTHER"},{httpStatusErrors:1},{transportErrors:1}]) {
-  const records=report.records.map((r,i)=>i===0?{...r,...change}:r);assert.equal(validate({...report,records}),false);
- }
- let effects=0;const bad={...report};Object.defineProperty(bad,"fenceDiagnostic",{enumerable:true,get(){effects++;return null;}});assert.equal(validate(bad),false);assert.equal(effects,0);
- assert.equal(validate({...report,rawError:"Bearer CANARY"}),false);
+test("NAV R2 v2 rejects unknown operations destinations and free diagnostics", () => {
+  const validate = fn("validateNavigationReport"),
+    report = navigationReportV2Fixture();
+  for (const change of [
+    { operation: "SECRET_FREE_TEXT" },
+    { target: "OTHER" },
+    { httpStatusErrors: 1 },
+    { transportErrors: 1 },
+  ]) {
+    const records = report.records.map((r, i) => (i === 0 ? { ...r, ...change } : r));
+    assert.equal(validate({ ...report, records }), false);
+  }
+  let effects = 0;
+  const bad = { ...report };
+  Object.defineProperty(bad, "fenceDiagnostic", {
+    enumerable: true,
+    get() {
+      effects++;
+      return null;
+    },
+  });
+  assert.equal(validate(bad), false);
+  assert.equal(effects, 0);
+  assert.equal(validate({ ...report, rawError: "Bearer CANARY" }), false);
 });
-test("NAV R2 diagnostic preserves closed native cause without transporting error payloads",()=>{
- const capture=fn("navigationFenceDiagnostic");
- const lifecycle={network:"Fetch",fetch:"Fetch",method:"GET",stage:"RESPONSE",networkFramePresent:true,sameFrame:true,loaderPresent:true,ownFetchFrame:true,generationSame:true,terminal:false};
- assert.deepEqual(capture({failed:true,failureCode:"CDP_COMMAND",failureCommand:"Fetch.getResponseBody",failureProtocolCode:-32000,failureReason:"NO_RESOURCE",lifecycleMetadata:lifecycle,rawError:"CANARY_SECRET"}),{failed:true,code:"CDP_COMMAND",command:"Fetch.getResponseBody",protocolCode:-32000,reason:"NO_RESOURCE",lifecycle});
- assert.equal(capture({failed:false}),null);
- const unknown=capture({failed:true,failureCode:"Bearer CANARY",failureCommand:"raw payload",failureProtocolCode:999,failureReason:"secret",lifecycleMetadata:null});
- assert.deepEqual(unknown,{failed:true,code:"FENCE_UNKNOWN",command:null,protocolCode:null,reason:null,lifecycle:null});
- let effects=0;const hostile={failed:true};Object.defineProperty(hostile,"failureCode",{get(){effects++;return "CDP_COMMAND";}});
- assert.equal(capture(hostile).code,"FENCE_UNKNOWN");assert.equal(effects,0);
+test("NAV R2 diagnostic preserves closed native cause without transporting error payloads", () => {
+  const capture = fn("navigationFenceDiagnostic");
+  const lifecycle = {
+    network: "Fetch",
+    fetch: "Fetch",
+    method: "GET",
+    stage: "RESPONSE",
+    networkFramePresent: true,
+    sameFrame: true,
+    loaderPresent: true,
+    ownFetchFrame: true,
+    generationSame: true,
+    terminal: false,
+  };
+  assert.deepEqual(
+    capture({
+      failed: true,
+      failureCode: "CDP_COMMAND",
+      failureCommand: "Fetch.getResponseBody",
+      failureProtocolCode: -32000,
+      failureReason: "NO_RESOURCE",
+      lifecycleMetadata: lifecycle,
+      rawError: "CANARY_SECRET",
+    }),
+    {
+      failed: true,
+      code: "CDP_COMMAND",
+      command: "Fetch.getResponseBody",
+      protocolCode: -32000,
+      reason: "NO_RESOURCE",
+      lifecycle,
+    },
+  );
+  assert.equal(capture({ failed: false }), null);
+  const unknown = capture({
+    failed: true,
+    failureCode: "Bearer CANARY",
+    failureCommand: "raw payload",
+    failureProtocolCode: 999,
+    failureReason: "secret",
+    lifecycleMetadata: null,
+  });
+  assert.deepEqual(unknown, {
+    failed: true,
+    code: "FENCE_UNKNOWN",
+    command: null,
+    protocolCode: null,
+    reason: null,
+    lifecycle: null,
+  });
+  let effects = 0;
+  const hostile = { failed: true };
+  Object.defineProperty(hostile, "failureCode", {
+    get() {
+      effects++;
+      return "CDP_COMMAND";
+    },
+  });
+  assert.equal(capture(hostile).code, "FENCE_UNKNOWN");
+  assert.equal(effects, 0);
 });
-test("NAV R2 logout diagnosis never upgrades cleanup or exposes a raw exception",()=>{
- const capture=fn("navigationLogoutFailure");
- assert.deepEqual(capture(Object.assign(Error("CANARY"),{code:"FENCE_DRAIN_TIMEOUT"}),"DRAIN"),{stage:"DRAIN",code:"FENCE_DRAIN_TIMEOUT"});
- assert.deepEqual(capture(Object.assign(Error("CANARY"),{name:"TimeoutError"}),"REDIRECT"),{stage:"REDIRECT",code:"NAVIGATION_TIMEOUT"});
- assert.deepEqual(capture(Error("CANARY_SECRET"),"SECRET"),{stage:"UNKNOWN",code:"UNCLASSIFIED"});
+test("NAV R2 logout diagnosis never upgrades cleanup or exposes a raw exception", () => {
+  const capture = fn("navigationLogoutFailure");
+  assert.deepEqual(
+    capture(Object.assign(Error("CANARY"), { code: "FENCE_DRAIN_TIMEOUT" }), "DRAIN"),
+    { stage: "DRAIN", code: "FENCE_DRAIN_TIMEOUT" },
+  );
+  assert.deepEqual(capture(Object.assign(Error("CANARY"), { name: "TimeoutError" }), "REDIRECT"), {
+    stage: "REDIRECT",
+    code: "NAVIGATION_TIMEOUT",
+  });
+  assert.deepEqual(capture(Error("CANARY_SECRET"), "SECRET"), {
+    stage: "UNKNOWN",
+    code: "UNCLASSIFIED",
+  });
 });
 
-const navigationNativeTapFixture = () => [
-"TAP version 13",
-...["PERMISSIONS","ADMINISTRATION","SESSION","TRANSPORT"].flatMap(kind=>[1440,390].map(width=>"# NAV_R2_NATIVE_CASE "+kind+"_"+width+"_"+(width===1440?"LIGHT":"DARK")+" PASS")),
-"ok 1 - NAV R2 native readiness and transport",
-"1..1","# tests 1","# suites 0","# pass 1","# fail 0","# cancelled 0","# skipped 0",
-].join("\n");
-test("NAV R2 native receipt requires all eight distinct cases and the real source identity",()=>{
- const identity={harnessSha:"a".repeat(40),moduleHash:"b".repeat(64),testHash:"c".repeat(64)};
- const proof=fn("navigationNativeSupplement")(navigationNativeTapFixture(),identity);
- assert.equal(fn("navigationNativeProofValid")(proof,identity),true);
- assert.equal(proof.cases,8);assert.equal(proof.mode,"OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS");
- assert.deepEqual(proof.views,[{width:1440,theme:"light"},{width:390,theme:"dark"}]);
- for(const patch of [{cases:7},{harnessSha:"d".repeat(40)},{moduleHash:"d".repeat(64)},{testHash:"d".repeat(64)},{mode:"HML"},{views:[{width:1440,theme:"light"}]},{passed:false},{secret:"CANARY"}]) assert.equal(sut.navigationNativeProofValid({...proof,...patch},identity),false);
+const navigationNativeTapFixture = () =>
+  [
+    "TAP version 13",
+    ...["PERMISSIONS", "ADMINISTRATION", "SESSION", "TRANSPORT"].flatMap((kind) =>
+      [1440, 390].map(
+        (width) =>
+          "# NAV_R2_NATIVE_CASE " +
+          kind +
+          "_" +
+          width +
+          "_" +
+          (width === 1440 ? "LIGHT" : "DARK") +
+          " PASS",
+      ),
+    ),
+    "ok 1 - NAV R2 native readiness and transport",
+    "1..1",
+    "# tests 1",
+    "# suites 0",
+    "# pass 1",
+    "# fail 0",
+    "# cancelled 0",
+    "# skipped 0",
+  ].join("\n");
+test("NAV R2 native receipt requires all eight distinct cases and the real source identity", () => {
+  const identity = {
+    harnessSha: "a".repeat(40),
+    moduleHash: "b".repeat(64),
+    testHash: "c".repeat(64),
+  };
+  const proof = fn("navigationNativeSupplement")(navigationNativeTapFixture(), identity);
+  assert.equal(fn("navigationNativeProofValid")(proof, identity), true);
+  assert.equal(proof.cases, 8);
+  assert.equal(proof.mode, "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS");
+  assert.deepEqual(proof.views, [
+    { width: 1440, theme: "light" },
+    { width: 390, theme: "dark" },
+  ]);
+  for (const patch of [
+    { cases: 7 },
+    { harnessSha: "d".repeat(40) },
+    { moduleHash: "d".repeat(64) },
+    { testHash: "d".repeat(64) },
+    { mode: "HML" },
+    { views: [{ width: 1440, theme: "light" }] },
+    { passed: false },
+    { secret: "CANARY" },
+  ])
+    assert.equal(sut.navigationNativeProofValid({ ...proof, ...patch }, identity), false);
 });
-test("NAV R2 native receipt refuses missing duplicate unknown skipped or failing cases",()=>{
- const parse=fn("navigationNativeSupplement"),id={harnessSha:"a".repeat(40),moduleHash:"b".repeat(64),testHash:"c".repeat(64)},good=navigationNativeTapFixture();
- for(const text of [good.replace("# NAV_R2_NATIVE_CASE PERMISSIONS_1440_LIGHT PASS\n",""),good+"\n# NAV_R2_NATIVE_CASE PERMISSIONS_1440_LIGHT PASS",good+"\n# NAV_R2_NATIVE_CASE OTHER PASS",good.replace("# skipped 0","# skipped 1"),good.replace("# fail 0","# fail 1"),good.replace("ok 1 - NAV","not ok 1 - NAV")])assert.throws(()=>parse(text,id),/NAVIGATION_NATIVE/);
+test("NAV R2 native receipt refuses missing duplicate unknown skipped or failing cases", () => {
+  const parse = fn("navigationNativeSupplement"),
+    id = { harnessSha: "a".repeat(40), moduleHash: "b".repeat(64), testHash: "c".repeat(64) },
+    good = navigationNativeTapFixture();
+  for (const text of [
+    good.replace("# NAV_R2_NATIVE_CASE PERMISSIONS_1440_LIGHT PASS\n", ""),
+    good + "\n# NAV_R2_NATIVE_CASE PERMISSIONS_1440_LIGHT PASS",
+    good + "\n# NAV_R2_NATIVE_CASE OTHER PASS",
+    good.replace("# skipped 0", "# skipped 1"),
+    good.replace("# fail 0", "# fail 1"),
+    good.replace("ok 1 - NAV", "not ok 1 - NAV"),
+  ])
+    assert.throws(() => parse(text, id), /NAVIGATION_NATIVE/);
 });
-test("NAV R2 native receipt never reads getters or proxies as proof",()=>{
- const identity={harnessSha:"a".repeat(40),moduleHash:"b".repeat(64),testHash:"c".repeat(64)},proof=fn("navigationNativeSupplement")(navigationNativeTapFixture(),identity);
- let effects=0;const bad={...proof};Object.defineProperty(bad,"views",{enumerable:true,get(){effects++;return proof.views;}});
- assert.equal(sut.navigationNativeProofValid(bad,identity),false);
- assert.equal(sut.navigationNativeProofValid(new Proxy(proof,{get(){effects++;return true;}}),identity),false);
- assert.equal(effects,0);
+test("NAV R2 native receipt never reads getters or proxies as proof", () => {
+  const identity = {
+      harnessSha: "a".repeat(40),
+      moduleHash: "b".repeat(64),
+      testHash: "c".repeat(64),
+    },
+    proof = fn("navigationNativeSupplement")(navigationNativeTapFixture(), identity);
+  let effects = 0;
+  const bad = { ...proof };
+  Object.defineProperty(bad, "views", {
+    enumerable: true,
+    get() {
+      effects++;
+      return proof.views;
+    },
+  });
+  assert.equal(sut.navigationNativeProofValid(bad, identity), false);
+  assert.equal(
+    sut.navigationNativeProofValid(
+      new Proxy(proof, {
+        get() {
+          effects++;
+          return true;
+        },
+      }),
+      identity,
+    ),
+    false,
+  );
+  assert.equal(effects, 0);
+});
+
+async function actualNavigationReportInitializer() {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+      new URL("./authenticated-visual-audit.mjs", import.meta.url),
+      "utf8",
+    ),
+    file = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
+  const owner = file.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "runAuthenticatedAudit",
+  );
+  let initializer;
+  function visit(node) {
+    if (ts.isVariableDeclaration(node) && node.name.getText(file) === "report")
+      initializer = node.initializer;
+    ts.forEachChild(node, visit);
+  }
+  visit(owner.body);
+  assert.ok(initializer);
+  return new Function(
+    "deps",
+    "const {scope,NAVIGATION_SCOPE,proof,records,summary,native,navigationNativeProof,flags,logoutVerified,logoutFailure,fence,errors,navigationHttpErrors,navigationHttpStatusErrors,navigationTransportErrors,aborted,digest,navigationFenceDiagnostic}=deps;return (" +
+      initializer.getText(file) +
+      ");",
+  );
+}
+test("NAV R2 actual producer emits v2 with separate native hash and stopped cleanup intact", async () => {
+  const factory = await actualNavigationReportInitializer(),
+    fixture = navigationReportV2Fixture();
+  const input = {
+    scope: sut.NAVIGATION_SCOPE,
+    NAVIGATION_SCOPE: sut.NAVIGATION_SCOPE,
+    proof: {
+      frontendSha: fixture.frontendSha,
+      harnessSha: fixture.harnessSha,
+      deploymentId: fixture.deploymentId,
+    },
+    records: fixture.records,
+    summary: fixture.summary,
+    native: { original: 18 },
+    navigationNativeProof: { supplement: 8 },
+    flags: { postLoginNavigation: true, masterLocated: true, organizationConfirmed: true },
+    logoutVerified: true,
+    logoutFailure: null,
+    fence: { snapshot: () => ({ failed: false, blockedRequests: 0 }) },
+    errors: 0,
+    navigationHttpErrors: 0,
+    navigationHttpStatusErrors: 0,
+    navigationTransportErrors: 0,
+    aborted: null,
+    digest: (value) => createHash("sha256").update(value).digest("hex"),
+    navigationFenceDiagnostic: sut.navigationFenceDiagnostic,
+  };
+  const report = factory(input);
+  assert.equal(sut.validateNavigationReport(report), true);
+  assert.equal(
+    report.navigationNativeProofSha256,
+    createHash("sha256").update('{"supplement":8}').digest("hex"),
+  );
+  const failed = factory({
+    ...input,
+    logoutVerified: false,
+    logoutFailure: { stage: "DRAIN", code: "FENCE_TRANSPORT" },
+    navigationHttpErrors: 1,
+    navigationTransportErrors: 1,
+    fence: {
+      snapshot: () => ({
+        failed: true,
+        blockedRequests: 0,
+        failureCode: "FENCE_TRANSPORT",
+        failureCommand: null,
+        failureProtocolCode: null,
+        failureReason: null,
+        lifecycleMetadata: null,
+      }),
+    },
+  });
+  assert.equal(failed.logoutVerified, false);
+  assert.equal(failed.logoutFailure.code, "FENCE_TRANSPORT");
+  assert.equal(failed.transportErrors, 1);
+  assert.equal(failed.httpStatusErrors, 0);
+  assert.equal(failed.fenceDiagnostic.code, "FENCE_TRANSPORT");
+  assert.equal(sut.validateNavigationReport(failed), false);
 });

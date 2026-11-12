@@ -4541,39 +4541,186 @@ export function summarizeNavigation(records) {
   };
 }
 
-const NAVIGATION_NATIVE_CODES = new Set(["CDP_CLOSED","CDP_COMMAND","CDP_CONNECT","CDP_ENDPOINT","CDP_EVENT","CDP_FRAME","CDP_IDENTITY","CDP_METADATA","CDP_TIMEOUT","FENCE_ASYNC","FENCE_BODY_LIMIT","FENCE_CDP_CLOSED","FENCE_CONFIGURATION","FENCE_CONTEXT_FOREIGN","FENCE_CONTEXT_UNKNOWN","FENCE_DOCUMENT_BODY","FENCE_DRAIN_TIMEOUT","FENCE_HEADERS","FENCE_INITIALIZATION","FENCE_LIFECYCLE_FRAME","FENCE_LIFECYCLE_NO_NETWORK","FENCE_LIFECYCLE_TERMINAL","FENCE_LIFECYCLE_TYPE","FENCE_NOT_PROVEN","FENCE_POPUP","FENCE_READY","FENCE_REDIRECT","FENCE_REQUEST","FENCE_REQUEST_LIFECYCLE","FENCE_SOURCE","FENCE_TARGET_DETACHED","FENCE_TARGET_FAILED","FENCE_TARGET_TIMEOUT","FENCE_TRANSPORT","FENCE_WORKER_PAUSED","FENCE_WORKER_RUNNING"]);
-function navigationOwnValue(value,key) {
- if (!value || typeof value!=="object" || isProxy(value)) return undefined;
- return Object.getOwnPropertyDescriptor(value,key)?.value;
+const NAVIGATION_NATIVE_CODES = new Set([
+  "CDP_CLOSED",
+  "CDP_COMMAND",
+  "CDP_CONNECT",
+  "CDP_ENDPOINT",
+  "CDP_EVENT",
+  "CDP_FRAME",
+  "CDP_IDENTITY",
+  "CDP_METADATA",
+  "CDP_TIMEOUT",
+  "FENCE_ASYNC",
+  "FENCE_BODY_LIMIT",
+  "FENCE_CDP_CLOSED",
+  "FENCE_CONFIGURATION",
+  "FENCE_CONTEXT_FOREIGN",
+  "FENCE_CONTEXT_UNKNOWN",
+  "FENCE_DOCUMENT_BODY",
+  "FENCE_DRAIN_TIMEOUT",
+  "FENCE_HEADERS",
+  "FENCE_INITIALIZATION",
+  "FENCE_LIFECYCLE_FRAME",
+  "FENCE_LIFECYCLE_NO_NETWORK",
+  "FENCE_LIFECYCLE_TERMINAL",
+  "FENCE_LIFECYCLE_TYPE",
+  "FENCE_NOT_PROVEN",
+  "FENCE_POPUP",
+  "FENCE_READY",
+  "FENCE_REDIRECT",
+  "FENCE_REQUEST",
+  "FENCE_REQUEST_LIFECYCLE",
+  "FENCE_SOURCE",
+  "FENCE_TARGET_DETACHED",
+  "FENCE_TARGET_FAILED",
+  "FENCE_TARGET_TIMEOUT",
+  "FENCE_TRANSPORT",
+  "FENCE_WORKER_PAUSED",
+  "FENCE_WORKER_RUNNING",
+]);
+function navigationOwnValue(value, key) {
+  if (!value || typeof value !== "object" || isProxy(value)) return undefined;
+  return Object.getOwnPropertyDescriptor(value, key)?.value;
 }
 export function navigationFenceDiagnostic(snapshot) {
- if (navigationOwnValue(snapshot,"failed")===false) return null;
- const code=navigationOwnValue(snapshot,"failureCode"),command=navigationOwnValue(snapshot,"failureCommand"),protocolCode=navigationOwnValue(snapshot,"failureProtocolCode"),reason=navigationOwnValue(snapshot,"failureReason"),metadata=navigationOwnValue(snapshot,"lifecycleMetadata");
- const lifecycleKeys=["network","fetch","method","stage","networkFramePresent","sameFrame","loaderPresent","ownFetchFrame","generationSame","terminal"];
- return {failed:true,code:NAVIGATION_NATIVE_CODES.has(code)?code:snapshot?"FENCE_UNKNOWN":"FENCE_NOT_PROVEN",command:FENCE_COMMANDS.has(command)?command:null,protocolCode:[-32000,-32600,-32601,-32602,-32700].includes(protocolCode)?protocolCode:null,reason:["NO_RESOURCE","INVALID_INTERCEPTION","BODY_STAGE","OTHER"].includes(reason)?reason:null,lifecycle:navigationPlain(metadata,lifecycleKeys)?safeLifecycleMetadata(metadata):null};
+  if (navigationOwnValue(snapshot, "failed") === false) return null;
+  const code = navigationOwnValue(snapshot, "failureCode"),
+    command = navigationOwnValue(snapshot, "failureCommand"),
+    protocolCode = navigationOwnValue(snapshot, "failureProtocolCode"),
+    reason = navigationOwnValue(snapshot, "failureReason"),
+    metadata = navigationOwnValue(snapshot, "lifecycleMetadata");
+  const lifecycleKeys = [
+    "network",
+    "fetch",
+    "method",
+    "stage",
+    "networkFramePresent",
+    "sameFrame",
+    "loaderPresent",
+    "ownFetchFrame",
+    "generationSame",
+    "terminal",
+  ];
+  return {
+    failed: true,
+    code: NAVIGATION_NATIVE_CODES.has(code)
+      ? code
+      : snapshot
+        ? "FENCE_UNKNOWN"
+        : "FENCE_NOT_PROVEN",
+    command: FENCE_COMMANDS.has(command) ? command : null,
+    protocolCode: [-32000, -32600, -32601, -32602, -32700].includes(protocolCode)
+      ? protocolCode
+      : null,
+    reason: ["NO_RESOURCE", "INVALID_INTERCEPTION", "BODY_STAGE", "OTHER"].includes(reason)
+      ? reason
+      : null,
+    lifecycle: navigationPlain(metadata, lifecycleKeys) ? safeLifecycleMetadata(metadata) : null,
+  };
 }
-export function navigationLogoutFailure(error,stage) {
- const code=navigationOwnValue(error,"code"),name=navigationOwnValue(error,"name");
- return {stage:["DRAIN","MENU_CLOSE","CONTROL","CLICK","REDIRECT","POST_DRAIN","NOT_LOGGED_IN"].includes(stage)?stage:"UNKNOWN",code:NAVIGATION_NATIVE_CODES.has(code)?code:code==="NAVIGATION_LOGOUT_CONTROL"?code:name==="TimeoutError"?"NAVIGATION_TIMEOUT":"UNCLASSIFIED"};
+export function navigationLogoutFailure(error, stage) {
+  const code = navigationOwnValue(error, "code"),
+    name = navigationOwnValue(error, "name");
+  return {
+    stage: [
+      "DRAIN",
+      "MENU_CLOSE",
+      "CONTROL",
+      "CLICK",
+      "REDIRECT",
+      "POST_DRAIN",
+      "NOT_LOGGED_IN",
+    ].includes(stage)
+      ? stage
+      : "UNKNOWN",
+    code: NAVIGATION_NATIVE_CODES.has(code)
+      ? code
+      : code === "NAVIGATION_LOGOUT_CONTROL"
+        ? code
+        : name === "TimeoutError"
+          ? "NAVIGATION_TIMEOUT"
+          : "UNCLASSIFIED",
+  };
 }
 
-
-const NAVIGATION_NATIVE_CASES=Object.freeze(["PERMISSIONS","ADMINISTRATION","SESSION","TRANSPORT"].flatMap(kind=>["1440_LIGHT","390_DARK"].map(view=>kind+"_"+view)));
-export function navigationNativeProofValid(value,identity) {
- if(!navigationPlain(value,["schema","harnessSha","moduleHash","testHash","mode","cases","views","passed"]))return false;
- return value.schema==="contaos.navigation.native.v1"&&value.harnessSha===identity?.harnessSha&&hash40(value.harnessSha)&&value.moduleHash===identity?.moduleHash&&hash64(value.moduleHash)&&value.testHash===identity?.testHash&&hash64(value.testHash)&&value.mode==="OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS"&&value.cases===8&&value.passed===true&&navigationArray(value.views,2,v=>navigationPlain(v,["width","theme"]))&&value.views.length===2&&value.views[0].width===1440&&value.views[0].theme==="light"&&value.views[1].width===390&&value.views[1].theme==="dark";
+const NAVIGATION_NATIVE_CASES = Object.freeze(
+  ["PERMISSIONS", "ADMINISTRATION", "SESSION", "TRANSPORT"].flatMap((kind) =>
+    ["1440_LIGHT", "390_DARK"].map((view) => kind + "_" + view),
+  ),
+);
+export function navigationNativeProofValid(value, identity) {
+  if (
+    !navigationPlain(value, [
+      "schema",
+      "harnessSha",
+      "moduleHash",
+      "testHash",
+      "mode",
+      "cases",
+      "views",
+      "passed",
+    ])
+  )
+    return false;
+  return (
+    value.schema === "contaos.navigation.native.v1" &&
+    value.harnessSha === identity?.harnessSha &&
+    hash40(value.harnessSha) &&
+    value.moduleHash === identity?.moduleHash &&
+    hash64(value.moduleHash) &&
+    value.testHash === identity?.testHash &&
+    hash64(value.testHash) &&
+    value.mode === "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS" &&
+    value.cases === 8 &&
+    value.passed === true &&
+    navigationArray(value.views, 2, (v) => navigationPlain(v, ["width", "theme"])) &&
+    value.views.length === 2 &&
+    value.views[0].width === 1440 &&
+    value.views[0].theme === "light" &&
+    value.views[1].width === 390 &&
+    value.views[1].theme === "dark"
+  );
 }
-export function navigationNativeSupplement(output,identity) {
- if(typeof output!=="string"||Buffer.byteLength(output)>1048576)fail("NAVIGATION_NATIVE_PROOF");
- const lines=output.split("\n").map(line=>line.trim()),cases=[];
- if(lines.some(line=>/^not ok\b/.test(line))||!["# tests 1","# pass 1","# fail 0","# cancelled 0","# skipped 0","ok 1 - NAV R2 native readiness and transport"].every(line=>lines.includes(line)))fail("NAVIGATION_NATIVE_PROOF");
- for(const line of lines.filter(line=>line.startsWith("# NAV_R2_NATIVE_CASE"))) {
-  const match=/^# NAV_R2_NATIVE_CASE ([A-Z0-9_]+) PASS$/.exec(line);
-  if(!match||!NAVIGATION_NATIVE_CASES.includes(match[1])||cases.includes(match[1]))fail("NAVIGATION_NATIVE_PROOF");cases.push(match[1]);
- }
- if(cases.length!==8)fail("NAVIGATION_NATIVE_PROOF");
- const proof={schema:"contaos.navigation.native.v1",harnessSha:identity?.harnessSha,moduleHash:identity?.moduleHash,testHash:identity?.testHash,mode:"OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",cases:8,views:[{width:1440,theme:"light"},{width:390,theme:"dark"}],passed:true};
- if(!navigationNativeProofValid(proof,identity))fail("NAVIGATION_NATIVE_PROOF");return proof;
+export function navigationNativeSupplement(output, identity) {
+  if (typeof output !== "string" || Buffer.byteLength(output) > 1048576)
+    fail("NAVIGATION_NATIVE_PROOF");
+  const lines = output.split("\n").map((line) => line.trim()),
+    cases = [];
+  if (
+    lines.some((line) => /^not ok\b/.test(line)) ||
+    ![
+      "# tests 1",
+      "# pass 1",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "ok 1 - NAV R2 native readiness and transport",
+    ].every((line) => lines.includes(line))
+  )
+    fail("NAVIGATION_NATIVE_PROOF");
+  for (const line of lines.filter((line) => line.startsWith("# NAV_R2_NATIVE_CASE"))) {
+    const match = /^# NAV_R2_NATIVE_CASE ([A-Z0-9_]+) PASS$/.exec(line);
+    if (!match || !NAVIGATION_NATIVE_CASES.includes(match[1]) || cases.includes(match[1]))
+      fail("NAVIGATION_NATIVE_PROOF");
+    cases.push(match[1]);
+  }
+  if (cases.length !== 8) fail("NAVIGATION_NATIVE_PROOF");
+  const proof = {
+    schema: "contaos.navigation.native.v1",
+    harnessSha: identity?.harnessSha,
+    moduleHash: identity?.moduleHash,
+    testHash: identity?.testHash,
+    mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+    cases: 8,
+    views: [
+      { width: 1440, theme: "light" },
+      { width: 390, theme: "dark" },
+    ],
+    passed: true,
+  };
+  if (!navigationNativeProofValid(proof, identity)) fail("NAVIGATION_NATIVE_PROOF");
+  return proof;
 }
 
 export function validateNavigationReport(value) {
@@ -4694,6 +4841,8 @@ export async function runNavigationAudit(page, fence, proof) {
   const records = [];
   let errors = 0,
     httpErrors = 0,
+    httpStatusErrors = 0,
+    transportErrors = 0,
     activeTheme = "light",
     generation = 0;
   const requestOwners = new WeakMap(),
@@ -4713,9 +4862,15 @@ export async function runNavigationAudit(page, fence, proof) {
   const onConsole = (message) => {
     if (message.type() === "error") errors++;
   };
-  const onRequestFailed = () => httpErrors++;
+  const onRequestFailed = () => {
+    httpErrors++;
+    transportErrors++;
+  };
   const onResponse = (response) => {
-    if (response.status() >= 400) httpErrors++;
+    if (response.status() >= 400) {
+      httpErrors++;
+      httpStatusErrors++;
+    }
     const owner = requestOwners.get(response.request());
     if (!owner || response.status() !== 200) return;
     const reading = (async () => {
@@ -4899,6 +5054,10 @@ export async function runNavigationAudit(page, fence, proof) {
         destinations: [],
         controlsVerified: false,
         controlOperation: navigationControlOperation(item.surface),
+        operation: "DIRECT",
+        target: item.surface,
+        httpStatusErrors: 0,
+        transportErrors: 0,
         pageErrors: 0,
         httpErrors: 0,
         blockedRequests: 0,
@@ -4908,7 +5067,10 @@ export async function runNavigationAudit(page, fence, proof) {
       };
       records.push(row);
       const beforeErrors = errors,
-        beforeHttp = httpErrors;
+        beforeHttp = httpErrors,
+        beforeStatus = httpStatusErrors,
+        beforeTransport = transportErrors;
+      let stopAfterRecord = false;
       try {
         activeTheme = item.theme;
         await checkFreshDeployment(proof, false);
@@ -4924,6 +5086,8 @@ export async function runNavigationAudit(page, fence, proof) {
         row.reloadVerified = true;
         row.stage = "ENTER_MENU";
         const parent = navigationParent(item);
+        row.operation = "ENTER_PARENT";
+        row.target = navigationDestination(HML_ORIGIN + parent);
         await go(parent);
         if (item.surface === "V117") {
           const opener = page.getByRole("button", {
@@ -4951,9 +5115,13 @@ export async function runNavigationAudit(page, fence, proof) {
           row.enteredFromMenu = true;
         } else {
           const mainLink = ["V103", "V106", "V111", "V114", "V120"].includes(item.surface);
+          row.operation = "ENTER_FIRST";
+          row.target = item.surface;
           await clickPath(item.path, item.width, !mainLink);
           await ready(item.surface, item.path);
           row.enteredFromMenu = true;
+          row.operation = "RETURN_PARENT";
+          row.target = navigationDestination(HML_ORIGIN + parent);
           generation++;
           await page.goBack({ waitUntil: "networkidle" });
           await ready(
@@ -4962,6 +5130,8 @@ export async function runNavigationAudit(page, fence, proof) {
             parent,
           );
           row.backVerified = true;
+          row.operation = "ENTER_SECOND";
+          row.target = item.surface;
           await clickPath(item.path, item.width, !mainLink);
           await ready(item.surface, item.path);
         }
@@ -4974,6 +5144,8 @@ export async function runNavigationAudit(page, fence, proof) {
           row.backVerified = true;
         }
         row.stage = "MENU";
+        row.operation = "MENU_OPEN";
+        row.target = item.surface;
         if (item.surface === "SYS04") {
           const card = page
             .getByRole("radio")
@@ -5005,6 +5177,7 @@ export async function runNavigationAudit(page, fence, proof) {
             "/administracao/usuarios",
             "/administracao/auditoria",
           ];
+          row.operation = "MENU_REQUIRED";
           for (const path of required)
             need((await page.locator(`a[href="${path}"]:visible`).count()) > 0, "NAVIGATION_MENU");
           row.menuVerified = true;
@@ -5029,12 +5202,17 @@ export async function runNavigationAudit(page, fence, proof) {
           await closeMenu();
           row.linksFound = targets.length;
           for (const target of targets) {
+            row.operation = "LINK_RETURN_SOURCE";
+            row.target = item.surface;
             await go(item.path);
             let menu = false;
             if (item.width < 768) {
               menu = (await page.locator(`a[href="${target.path}"]:visible`).count()) === 0;
             }
+            row.operation = "LINK_CLICK";
+            row.target = target.dest;
             await clickPath(target.path, item.width, menu);
+            row.operation = "LINK_READY";
             const state = await ready(target.dest, target.path);
             if (state === "CONDITIONAL_UNAVAILABLE") row.conditionalLinksTested++;
             row.destinations.push(target.dest);
@@ -5042,6 +5220,8 @@ export async function runNavigationAudit(page, fence, proof) {
           }
           await go(item.path);
           row.stage = "CONTROLS";
+          row.operation = "LOCAL_CONTROL";
+          row.target = item.surface;
           if (["V102", "V103", "V105", "V113"].includes(item.surface)) {
             const form = page.locator("form");
             need((await form.count()) === 1, "NAVIGATION_FORM");
@@ -5116,8 +5296,12 @@ export async function runNavigationAudit(page, fence, proof) {
         }
         row.pageErrors = errors - beforeErrors;
         row.httpErrors = httpErrors - beforeHttp;
+        row.httpStatusErrors = httpStatusErrors - beforeStatus;
+        row.transportErrors = transportErrors - beforeTransport;
         row.blockedRequests = fence.snapshot().blockedRequests;
         row.stage = "FINISH";
+        row.operation = "FINISH";
+        row.target = item.surface;
         row.status = "PASS";
         need(navigationRowValid(row), "NAVIGATION_CASE");
       } catch (error) {
@@ -5130,15 +5314,18 @@ export async function runNavigationAudit(page, fence, proof) {
           "NAVIGATION_FORM",
           "NAVIGATION_CASE",
         ];
-        row.failureCode = allowed.includes(error?.code)
-          ? error.code
-          : error?.name === "TimeoutError"
-            ? "NAVIGATION_TIMEOUT"
-            : "NAVIGATION_RUNTIME";
+        row.failureCode =
+          allowed.includes(error?.code) || NAVIGATION_NATIVE_CODES.has(error?.code)
+            ? error.code
+            : error?.name === "TimeoutError"
+              ? "NAVIGATION_TIMEOUT"
+              : "NAVIGATION_RUNTIME";
         row.pageErrors = errors - beforeErrors;
         row.httpErrors = httpErrors - beforeHttp;
+        row.httpStatusErrors = httpStatusErrors - beforeStatus;
+        row.transportErrors = transportErrors - beforeTransport;
         row.blockedRequests = fence.snapshot().blockedRequests;
-        if (fence.snapshot().failed) break;
+        if (fence.snapshot().failed) stopAfterRecord = true;
       }
       console.log(
         JSON.stringify({
@@ -5148,8 +5335,11 @@ export async function runNavigationAudit(page, fence, proof) {
           status: row.status,
           stage: row.stage,
           code: row.failureCode,
+          operation: row.operation,
+          target: row.target,
         }),
       );
+      if (stopAfterRecord) break;
     }
   } finally {
     page.off("pageerror", onError);
@@ -5158,7 +5348,7 @@ export async function runNavigationAudit(page, fence, proof) {
     page.off("requestfailed", onRequestFailed);
     page.off("response", onResponse);
   }
-  return { records, pageErrors: errors, httpErrors };
+  return { records, pageErrors: errors, httpErrors, httpStatusErrors, transportErrors };
 }
 export const C8_RECOVERY_DOCUMENT = Object.freeze({
   schema: "contaos.fixture.readonly-recovery-r20.v1",
@@ -6602,6 +6792,15 @@ async function runAuthenticatedAudit() {
   if (!singleRequestEventAllowed(process.env, "audit")) fail("AUDIT_MAIN_ONLY");
   const native = JSON.parse(await readFile(".audit-work/native-proof.json", "utf8"));
   if (!nativeProofValid(native, await harnessIdentity())) fail("NATIVE_PROOF");
+  const navigationNativeProof =
+    scope === NAVIGATION_SCOPE
+      ? JSON.parse(await readFile(".audit-work/navigation-native-proof.json", "utf8"))
+      : null;
+  if (
+    scope === NAVIGATION_SCOPE &&
+    !navigationNativeProofValid(navigationNativeProof, await harnessIdentity())
+  )
+    fail("NAVIGATION_NATIVE_PROOF");
   const proof = JSON.parse(await readFile(".audit-work/provenance.json", "utf8"));
   if (
     proof.schema !== "contaos.private.provenance.v1" ||
@@ -6635,6 +6834,9 @@ async function runAuthenticatedAudit() {
     aborted = null,
     errors = 0;
   let navigationHttpErrors = 0,
+    navigationHttpStatusErrors = 0,
+    navigationTransportErrors = 0,
+    logoutFailure = null,
     navigationComplete = false;
   let phase = "AUDIT_PREFLIGHT",
     diagnostic = null;
@@ -6803,6 +7005,8 @@ async function runAuthenticatedAudit() {
       const result = await runNavigationAudit(page, fence, proof);
       records.push(...result.records);
       navigationHttpErrors = result.httpErrors;
+      navigationHttpStatusErrors = result.httpStatusErrors;
+      navigationTransportErrors = result.transportErrors;
     }
     let surface = null;
     for (const item of scope === NAVIGATION_SCOPE ? [] : privateCases(scope)) {
@@ -7057,18 +7261,33 @@ async function runAuthenticatedAudit() {
     const privacyState = page && privacy78Pages.get(page);
     privacyState?.c8Observer?.close();
     if (privacyState) privacyState.verified = false;
+    let logoutStage = "DRAIN";
     if (loggedIn && page && !page.isClosed())
       try {
         await settleVerifiedPage(page, fence);
+        logoutStage = "MENU_CLOSE";
         await closeAuditMobileMenu(page);
+        logoutStage = "CONTROL";
         const exit = page.getByRole("button", { name: "Sair", exact: true });
         if ((await exit.count()) === 1) {
+          logoutStage = "CLICK";
           await exit.click();
+          logoutStage = "REDIRECT";
           await page.waitForURL(HML_ORIGIN + "/login");
+          logoutStage = "POST_DRAIN";
           await settleVerifiedPage(page, fence);
           logoutVerified = true;
-        }
-      } catch {}
+          logoutFailure = null;
+        } else if (scope === NAVIGATION_SCOPE)
+          logoutFailure = { stage: "CONTROL", code: "NAVIGATION_LOGOUT_CONTROL" };
+      } catch (error) {
+        if (scope === NAVIGATION_SCOPE) logoutFailure = navigationLogoutFailure(error, logoutStage);
+      }
+    if (scope === NAVIGATION_SCOPE && !logoutVerified && !logoutFailure)
+      logoutFailure = {
+        stage: loggedIn ? "CONTROL" : "NOT_LOGGED_IN",
+        code: loggedIn ? "PAGE_CLOSED" : "NO_SESSION",
+      };
     fence?.close();
     await browser?.close().catch(() => {});
     await proxy?.close().catch(() => {});
@@ -7079,7 +7298,7 @@ async function runAuthenticatedAudit() {
     const report =
       scope === NAVIGATION_SCOPE
         ? {
-            schema: "contaos.navigation.audit.v1",
+            schema: "contaos.navigation.audit.v2",
             frontendSha: proof.frontendSha,
             harnessSha: proof.harnessSha,
             deploymentId: proof.deploymentId,
@@ -7087,6 +7306,11 @@ async function runAuthenticatedAudit() {
             records,
             summary,
             nativeProofSha256: digest(JSON.stringify(native)),
+            navigationNativeProofSha256: digest(JSON.stringify(navigationNativeProof)),
+            fenceDiagnostic: navigationFenceDiagnostic(fence?.snapshot()),
+            logoutFailure,
+            httpStatusErrors: navigationHttpStatusErrors,
+            transportErrors: navigationTransportErrors,
             sessionVerified: flags.postLoginNavigation === true,
             masterVerified: flags.masterLocated === true,
             organizationVerified: flags.organizationConfirmed === true,
