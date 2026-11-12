@@ -1,0 +1,46 @@
+{
+  "schema": "contaos.navigation.r1.evidence.v1",
+  "state": "FAIL_BLOCKING",
+  "auth": {
+    "run": 43157856422,
+    "workflowId": 411115674,
+    "job": 130982262200,
+    "event": "workflow_run",
+    "headSha": "1a7b55cdad67fc2f639fa2abfb5faff04062d08a",
+    "attempt": 1,
+    "conclusion": "failure"
+  },
+  "fixtures": {
+    "run": 43157856534,
+    "workflowId": 411426169,
+    "attempt": 1,
+    "conclusion": "success",
+    "preparerJob": 130981976647,
+    "preparerConclusion": "skipped"
+  },
+  "artifact": {
+    "id": 13917231956,
+    "name": "trilha-a-private-43157856422-1",
+    "size": 1496,
+    "digest": "sha256:f08392462141b97763d9c8c4cf6918dad91a4c7bbb617fe556c4397495ca79a0"
+  },
+  "reportFile": "R1_REPORT_ORIGINAL_2026-11-12.json",
+  "reportSha256": "3d994303537f7e06d3c57b1dc1f1f69c763739edc6194909f331a69ac6cb348c",
+  "metadataRegisteredBeforeOfficialDownload": true,
+  "zipCrcMembersManifestIdentityVerified": true,
+  "independentReviewPr": 605,
+  "independentReview": 5869624609,
+  "summary": {
+    "expected": 52,
+    "observed": 33,
+    "passed": 2,
+    "failed": 31,
+    "matrixComplete": false
+  },
+  "logoutVerified": false,
+  "httpErrors": 1,
+  "businessMutationsBlocked": 0,
+  "certified": false,
+  "nonceSpent": "integracao-v1-fase2-nav-20261111-r1",
+  "issue": 604
+}
