@@ -8722,7 +8722,11 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     { reviews: [{ ...review, user: { login: "foreign" } }] },
     { reviews: [{ ...review, commit_id: parent }] },
     { reviews: [{ ...review, body: "APROVAVEL" }] },
+    { reviews: [{ ...review, body: review.body.replace(',"request_id"', ', "request_id"') }] },
+    { reviews: [{ ...review, body: review.body.replace(head, parent) }] },
+    { reviews: [{ ...review, body: review.body.replace('"critical":0', '"critical":1') }] },
     { reviews: [{ ...review, body: review.body.replace('"important":0', '"important":1') }] },
+    { reviews: [{ ...review, body: review.body.replace('"APROVAVEL"', '"REPROVADO"') }] },
     { ci: [ci[0]] },
     { ci: [ci[0], { ...ci[1], conclusion: "failure" }] },
     { ci: [...ci, { ...ci[1], id: 600, status: "in_progress", conclusion: null }] },
@@ -19128,8 +19132,7 @@ test("NAV R2 R1 evidence refuses replay changed jobs artifacts repository and un
     });
   }
 });
-test("NAV R2 successor consumes R1 and adds the integrated R2 plan ancestor", async () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r4");
+test("NAV R2 historical plan stays sealed and R1 remains consumed", async () => {
   assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes("integracao-v1-fase2-nav-20261111-r1"));
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR2PlanSha,
@@ -20701,8 +20704,7 @@ test("NAV R3 original drain cannot extend the shared operation deadline", async 
   }
 });
 
-test("NAV R3 exclusive successor refuses both consumed NAV nonces and requires its integrated plan", async () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r4");
+test("NAV R3 historical plan stays sealed and both predecessors remain consumed", async () => {
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR3PlanSha,
     "9030de4115041598bdc530e03c3c8a5c18d3a5ae",
@@ -21175,9 +21177,7 @@ test("NAV R4 R3 evidence refuses replay changed jobs artifacts repository and un
   }
 });
 
-test("NAV R4 successor is exclusive and all three original nonces remain spent", () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r4");
-  assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
+test("NAV R4 historical plan remains sealed with its three predecessor nonces", () => {
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR4PlanSha,
     "e01a208940d68a504d1c206e1b255eabe4938bb3",
@@ -21188,6 +21188,39 @@ test("NAV R4 successor is exclusive and all three original nonces remain spent",
     "integracao-v1-fase2-nav-20261112-r3",
   ])
     assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
+});
+
+test("NAV R5 successor consumes R4 and requires the integrated canonical-review plan", () => {
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r5");
+  assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationR5PlanSha,
+    "a377bb65db407252a32a0dad4f371e65a03b22c2",
+  );
+  for (const nonce of [
+    "integracao-v1-fase2-nav-20261111-r1",
+    "integracao-v1-fase2-nav-20261112-r2",
+    "integracao-v1-fase2-nav-20261112-r3",
+    "integracao-v1-fase2-nav-20261112-r4",
+  ]) {
+    assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
+    const request = {
+      schema_version: 1,
+      issue: 317,
+      operation: "audit",
+      request_id: nonce,
+      approved_parent_sha: "a".repeat(40),
+      frontend_sha: "",
+      deployment_id: "",
+    };
+    assert.throws(() => sut.parseSingleRequest(JSON.stringify(request), "audit"), {
+      code: "REQUEST_SCHEMA",
+    });
+    assert.equal(
+      sut.parseSingleRequest(JSON.stringify(request), undefined, { historical: true }).request_id,
+      nonce,
+    );
+  }
 });
 
 async function navigationNativeR4BrandAndHistory(bundle, view) {
