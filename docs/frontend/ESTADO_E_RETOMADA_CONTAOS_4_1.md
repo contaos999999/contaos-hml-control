@@ -1,3 +1,15 @@
+## Auditoria complementar de integração funcional V1: Fase 1, 11/11/2026 Bahia
+
+Missão aprovada pelo titular: inventariar e certificar o mapa funcional das telas da V1 em sete fases sequenciais, preservando as oito certificações anteriores. Esta entrega cobre somente a Fase 1. Baseline frontend `90ae86432e617b880d603cff379878e623612a73`, backend normativo `5eca44aebead3183e81b5c1af0d1dffa5fb8feb6`; 25 blobs normativos idênticos ao snapshot. V1 já consta PASS no manifesto integrado; textos históricos abaixo não revogam esse estado.
+
+Entregáveis: `docs/frontend/auditorias/integracao-funcional-v1/fase1/`. Inventário de 27 telas do núcleo e duas auxiliares de recuperação: 29 superfícies/28 rotas/26 privadas, V117 drawer. 171 fontes seladas, 204 referências de dados, 54 nomes RPC versionados e superfícies compartilhadas (AppShell, cabeçalho, cadastros, listas e copiloto). Matriz de 577 relações e 812 pares, CSVs, grafo, relatório, verificador offline e 19 testes. Referências transitivas de módulos são conservadoras; nenhuma execução HML presumida. R-01/R-02/R-03 preservadas.
+
+Decisão técnica PASS estática, eficácia condicionada a revisão independente, checks obrigatórios no mesmo SHA, merge protegido e recibo final no PR com SHA/runs/readback. Não declarar integração antes desse recibo. Nenhum código de produto, backend, tipo congelado, workflow, dependência, implantação ou PROD alterado; nenhum login/SQL/OpenAI/upload. Última etapa técnica concluída: inventário e mapa reproduzíveis. Próxima: concluir os controles de integração da Fase 1 e então Fase 2 de navegação autenticada. Fases 2–7 da auditoria complementar não executadas; V2 aguarda decisão final dessas fases pela instrução mais recente do titular.
+
+Histórico integral preservado abaixo.
+
+---
+
 ## 10/11/2026 UTC | Correção da PR #552 integrada, #159 reconciliada e #556 preservada
 
 A PR frontend #552 foi integrada em `8cb806bcb160b19d0ee6a050ea551cab72e5ccd6`, a partir do HEAD `e16d243b79bfa3e3d31249fd06a6ac05a3fa532e`, árvore `462fd917574e22d2e2c7eebd774a398d049c1fa5`. Não repetir sua implementação. PLAN #550 e GATE #551 permanecem os autorizadores do BUILD; o escopo continua nos quatro mjs aprovados, sem alteração de produto, tipos, dependências, Auth, SQL ou deploy.
