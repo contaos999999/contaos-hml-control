@@ -2,8 +2,8 @@
   "schema_version": 1,
   "issue": 317,
   "operation": "audit",
-  "request_id": "trilha-c-audit-20261111-c8-r8",
-  "approved_parent_sha": "a61bbf677478ba664c508ae12eb6db60b21473cd",
+  "request_id": "integracao-v1-fase2-nav-20261111-r1",
+  "approved_parent_sha": "0966ac05a52a78e6d07e533b78d0220a08023079",
   "frontend_sha": "",
   "deployment_id": ""
 }
