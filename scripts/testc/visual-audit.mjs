@@ -1,3 +1,8 @@
+import { isProxy } from "node:util/types";
+import { execFileSync } from "node:child_process";
+import { createServer } from "node:http";
+import { tmpdir } from "node:os";
+import { mkdtempSync, symlinkSync, rmSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
@@ -837,6 +842,363 @@ export async function collectPublicScale(browser, { output, base, images }) {
   images.push({ filename: "public-scale.json", sha256: hash(readFileSync(file)) });
   return rows;
 }
+export function phase2DeltaCases() {
+  return ["V114", "V120"].flatMap((surface) =>
+    WIDTHS.flatMap((width) => THEMES.map((theme) => ({ surface, width, theme }))),
+  );
+}
+function deltaObject(value, keys) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    isProxy(value) ||
+    ![Object.prototype, null].includes(Object.getPrototypeOf(value))
+  )
+    return false;
+  const own = Reflect.ownKeys(value),
+    ds = Object.getOwnPropertyDescriptors(value);
+  return (
+    own.length === keys.length &&
+    own.every(
+      (k) =>
+        typeof k === "string" &&
+        keys.includes(k) &&
+        Object.hasOwn(ds[k], "value") &&
+        ds[k].enumerable,
+    )
+  );
+}
+export function phase2DeltaReportValid(value) {
+  if (
+    !deltaObject(value, [
+      "schema",
+      "mode",
+      "headSha",
+      "sourceTree",
+      "styleSha256",
+      "sourceHashes",
+      "records",
+      "complete",
+    ])
+  )
+    return false;
+  if (
+    value.schema !== "contaos.phase2.offline-visual-delta.v1" ||
+    value.mode !== "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS" ||
+    value.complete !== true ||
+    typeof value.headSha !== "string" ||
+    typeof value.sourceTree !== "string" ||
+    typeof value.styleSha256 !== "string" ||
+    !/^([a-f0-9]{40})$/.test(value.headSha) ||
+    !/^([a-f0-9]{40})$/.test(value.sourceTree) ||
+    !/^([a-f0-9]{64})$/.test(value.styleSha256) ||
+    !deltaObject(value.sourceHashes, ["V114", "V120", "LIST", "ADAPTER"]) ||
+    !Object.values(value.sourceHashes).every(
+      (h) => typeof h === "string" && /^[a-f0-9]{64}$/.test(h),
+    )
+  )
+    return false;
+  const records = value.records;
+  if (
+    isProxy(records) ||
+    !Array.isArray(records) ||
+    Object.getPrototypeOf(records) !== Array.prototype ||
+    records.length !== 16 ||
+    Reflect.ownKeys(records).length !== 17
+  )
+    return false;
+  const expected = new Set(phase2DeltaCases().map((r) => `${r.surface}/${r.width}/${r.theme}`)),
+    seen = new Set(),
+    ds = Object.getOwnPropertyDescriptors(records);
+  for (let i = 0; i < 16; i++) {
+    if (!Object.hasOwn(ds[i] || {}, "value")) return false;
+    const r = ds[i].value;
+    if (
+      !deltaObject(r, [
+        "surface",
+        "width",
+        "theme",
+        "headingCount",
+        "themeVerified",
+        "overflow",
+        "controls44",
+        "keyboardVerified",
+        "reloadVerified",
+        "backVerified",
+        "alerts",
+        "pageErrors",
+        "externalRequests",
+        "screenshot",
+        "sha256",
+        "status",
+      ])
+    )
+      return false;
+    if (typeof r.surface !== "string" || typeof r.width !== "number" || typeof r.theme !== "string")
+      return false;
+    const key = `${r.surface}/${r.width}/${r.theme}`;
+    if (
+      !expected.has(key) ||
+      seen.has(key) ||
+      r.headingCount !== 1 ||
+      r.themeVerified !== true ||
+      !Number.isFinite(r.overflow) ||
+      r.overflow < 0 ||
+      r.overflow > 1 ||
+      ["controls44", "keyboardVerified", "reloadVerified", "backVerified"].some(
+        (k) => r[k] !== true,
+      ) ||
+      ["alerts", "pageErrors", "externalRequests"].some((k) => r[k] !== 0) ||
+      r.status !== "PASS" ||
+      r.screenshot !== `screenshots/${r.surface}_${r.width}_${r.theme}.png` ||
+      typeof r.sha256 !== "string" ||
+      !/^[a-f0-9]{64}$/.test(r.sha256)
+    )
+      return false;
+    seen.add(key);
+  }
+  return seen.size === 16;
+}
+
+export function phase2DeltaFixtureFiles(root) {
+  return {
+    "client.ts":
+      "export const C='44444444-4444-4444-8444-444444444444',O='11111111-1111-4111-8111-111111111111',K='22222222-2222-4222-8222-222222222222',A='33333333-3333-4333-8333-333333333333',P='55555555-5555-4555-8555-555555555555';\nconst vg={competencia:{id:C,id_contrato:K,id_organizacao:O,competencia_referencia:'2026-09-01',situacao:'aguardando_contratante',periodo_inicio:'2026-09-01',periodo_fim:'2026-09-30',data_limite:null,atualizado_em:'2026-11-11T12:00:00Z',percentual_conformidade:100,versao_pacote_atual:1,versao_registro:1},portao:{liberado:true,total:1,conformes_ou_na_validos:1,pendentes:0,nao_conformes:0,inconclusivos:0,em_analise:0,nao_conformidades_bloqueantes:0,percentual:100},blocking_summary:{pendentes:0,nao_conformes:0,inconclusivos:0,em_analise:0,nao_conformidades_bloqueantes:0,parecer_aprovado:true,analise_concluida_atual:true,aprovacao_apresentacao_atual:true},allowed_actions:{abrir_documentos:true,analisar:true,abrir_parecer:true,apresentar:false}};\nconst ap={id:A,id_competencia:C,id_contrato:K,id_organizacao:O,id_pacote:P,protocolo:'PROTOCOLO-SINTETICO-2026-09',forma_apresentacao:'Portal',apresentado_em:'2026-11-11T12:00:00Z',tipo:'apresentacao',numero_rodada:1};\nconst pk={id:P,id_competencia:C,id_contrato:K,id_organizacao:O,hash_pacote:'a'.repeat(64),numero:1,tipo:'apresentacao',status:'congelado',congelado_em:'2026-11-11T12:00:00Z'};\nconst item={id:'66666666-6666-4666-8666-666666666666',id_pacote:P,id_competencia:C,id_contrato:K,id_organizacao:O,entidade_tipo:'documento',entidade_id:A,versao_id:null,hash:'b'.repeat(64),ordem:1};\nexport const supabase={auth:{getUser:async()=>({data:{user:{id:'fixture-user'}},error:null})},rpc:(name:string)=>{if(name!=='obter_visao_geral_competencia')throw Error('UNEXPECTED_RPC');return{abortSignal:async()=>({data:vg,error:null,status:200})};},from:(table:string)=>{const values=table==='apresentacoes_contratante'?[ap]:table==='pacotes_competencia'?[pk]:table==='itens_pacote_competencia'?[item]:null;if(!values)throw Error('UNEXPECTED_TABLE');const result={data:values,count:values.length,error:null,status:200};const q:any={},filters:Record<string,unknown>={};for(const n of ['select','order','range','abortSignal'])q[n]=()=>q;q.eq=(key:string,value:unknown)=>{filters[key]=value;return q;};const check=()=>{if(filters.id_competencia!==C||filters.id_contrato!==K||filters.id_organizacao!==O)throw Error('FIXTURE_OWNERSHIP');return result;};q.maybeSingle=async()=>({...check(),data:values[0]});q.then=(resolve:any,reject:any)=>Promise.resolve().then(check).then(resolve,reject);return q;}};\n",
+    "router.tsx":
+      "import React from 'react';const navigate=({to}:any)=>{history.pushState({},'',to);dispatchEvent(new PopStateEvent('popstate'));};export const useNavigate=()=>navigate;export function Link({to,params,children,activeOptions,...props}:any){const href=Object.entries(params||{}).reduce((s,[k,v])=>s.replace('$'+k,String(v)),to);return <a href={href} {...props} onClick={e=>{e.preventDefault();navigate({to:href});}}>{children}</a>;}",
+    "entry.tsx":
+      "import React,{useState,useEffect}from'react';import{createRoot}from'react-dom/client';import{CompetenciaVisaoGeral}from'ROOT/src/components/competencias/CompetenciaVisaoGeral.tsx';import{CompetenciaProtocolo}from'ROOT/src/components/competencias/CompetenciaProtocolo.tsx';import{definirPreferenciaOrganizacao}from'ROOT/src/lib/organizacao/preferenciaOrganizacao.ts';import{C,O,A}from'./client';definirPreferenciaOrganizacao('fixture-user',O);function App(){const[path,setPath]=useState(location.pathname);useEffect(()=>{const cb=()=>setPath(location.pathname);addEventListener('popstate',cb);return()=>removeEventListener('popstate',cb);},[]);return path.includes('/apresentacoes/')?<CompetenciaProtocolo id={C} apresentacaoId={A}/>:<CompetenciaVisaoGeral id={C}/>;}createRoot(document.getElementById('root')!).render(<App/>);".replaceAll(
+        "ROOT",
+        root,
+      ),
+    "build.mjs":
+      "import{existsSync}from'node:fs';import{resolve}from'node:path';const root=ROOT,dir=import.meta.dir;const r=await Bun.build({entrypoints:[dir+'/entry.tsx'],target:'browser',format:'esm',outdir:dir,plugins:[{name:'phase2-offline-transport',setup(b){b.onResolve({filter:/^@\\/integrations\\/supabase\\/client$/},()=>({path:dir+'/client.ts'}));b.onResolve({filter:/^@tanstack\\/react-router$/},()=>({path:dir+'/router.tsx'}));b.onResolve({filter:/^@\\//},args=>{const p=resolve(root,'src',args.path.slice(2));const found=[p+'.ts',p+'.tsx',p+'/index.ts',p+'/index.tsx'].find(existsSync);if(!found)throw Error('ALIAS_MISSING');return{path:found};});}}]});if(!r.success)throw Error('PHASE2_BUILD');".replace(
+        "ROOT",
+        JSON.stringify(root),
+      ),
+  };
+}
+
+export async function collectPhase2VisualDelta(browser, { base, output, headSha }) {
+  let source;
+  try {
+    source = new URL(base);
+  } catch {
+    throw Error("PHASE2_INPUT");
+  }
+  if (
+    source.protocol !== "http:" ||
+    source.hostname !== "127.0.0.1" ||
+    source.username ||
+    source.password ||
+    source.pathname !== "/" ||
+    source.search ||
+    source.hash ||
+    typeof headSha !== "string" ||
+    !/^[a-f0-9]{40}$/.test(headSha) ||
+    typeof output !== "string"
+  )
+    throw Error("PHASE2_INPUT");
+  const root = process.cwd();
+  if (
+    execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim() !== headSha
+  )
+    throw Error("PHASE2_SOURCE");
+  const dir = mkdtempSync(join(tmpdir(), "contaos-phase2-delta-")),
+    target = join(output, "phase2-delta");
+  mkdirSync(join(target, "screenshots"), { recursive: true });
+  const record = {
+    schema: "contaos.phase2.offline-visual-delta.v1",
+    mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+    headSha,
+    sourceTree: execFileSync("git", ["rev-parse", "HEAD^{tree}"], {
+      cwd: root,
+      encoding: "utf8",
+    }).trim(),
+    styleSha256: "",
+    sourceHashes: {
+      V114: hash(readFileSync(join(root, "src/components/competencias/CompetenciaVisaoGeral.tsx"))),
+      V120: hash(readFileSync(join(root, "src/components/competencias/CompetenciaProtocolo.tsx"))),
+      LIST: hash(
+        readFileSync(join(root, "src/components/competencias/CompetenciaApresentacoesLista.tsx")),
+      ),
+      ADAPTER: hash(readFileSync(join(root, "src/lib/competencias/protocoloDados.ts"))),
+    },
+    records: [],
+    complete: false,
+  };
+  let server;
+  try {
+    symlinkSync(join(root, "node_modules"), join(dir, "node_modules"), "dir");
+    for (const [name, content] of Object.entries(phase2DeltaFixtureFiles(root)))
+      writeFileSync(join(dir, name), content);
+    execFileSync("bun", [join(dir, "build.mjs")], {
+      cwd: root,
+      timeout: 30000,
+      maxBuffer: 262144,
+      env: { PATH: process.env.PATH },
+    });
+    const js = readFileSync(join(dir, "entry.js"));
+    const cssResponse = await fetch(base + "/src/styles.css?direct");
+    if (!cssResponse.ok) throw Error("PHASE2_CSS");
+    const css = Buffer.from(await cssResponse.arrayBuffer());
+    if (css.length === 0 || css.length > 4194304) throw Error("PHASE2_CSS");
+    record.styleSha256 = hash(css);
+    const C = "44444444-4444-4444-8444-444444444444",
+      A = "33333333-3333-4333-8333-333333333333",
+      overview = "/competencias/" + C,
+      detail = overview + "/apresentacoes/" + A;
+    const html =
+      '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body><div id="root"></div><script type="module" src="/entry.js"></script></body></html>';
+    server = createServer((req, res) => {
+      if (req.url === "/entry.js") {
+        res.setHeader("content-type", "text/javascript");
+        res.end(js);
+      } else if (req.url === "/style.css") {
+        res.setHeader("content-type", "text/css");
+        res.end(css);
+      } else if ([overview, detail].includes(req.url)) {
+        res.setHeader("content-type", "text/html");
+        res.end(html);
+      } else if (req.url === "/favicon.ico") {
+        res.statusCode = 204;
+        res.end();
+      } else {
+        res.statusCode = 404;
+        res.end();
+      }
+    });
+    await new Promise((resolve, reject) => {
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", resolve);
+    });
+    const origin = "http://127.0.0.1:" + server.address().port;
+    for (const width of WIDTHS)
+      for (const theme of THEMES) {
+        const context = await browser.newContext({
+          viewport: { width, height: 900 },
+          locale: "pt-BR",
+          reducedMotion: "reduce",
+          permissions: [],
+        });
+        let errors = 0,
+          external = 0;
+        try {
+          await context.route("**/*", (route) => {
+            if (new URL(route.request().url()).origin !== origin) {
+              external++;
+              return route.abort();
+            }
+            return route.continue();
+          });
+          await context.addInitScript((theme) => {
+            const apply = () => document.documentElement.classList.toggle("dark", theme === "dark");
+            if (document.documentElement) apply();
+            else addEventListener("DOMContentLoaded", apply, { once: true });
+          }, theme);
+          const page = await context.newPage();
+          page.on("pageerror", () => errors++);
+          page.on("console", (m) => {
+            if (m.type() === "error") errors++;
+          });
+          page.on("requestfailed", () => errors++);
+          await page.goto(origin + overview, { waitUntil: "networkidle" });
+          const link = page.getByRole("link", { name: "Abrir apresentação 1", exact: true });
+          await link.waitFor();
+          await link.focus();
+          if (!(await link.evaluate((node) => document.activeElement === node)))
+            throw Error("PHASE2_KEYBOARD");
+          await link.press("Enter");
+          await page.waitForURL(origin + detail);
+          await page.reload({ waitUntil: "networkidle" });
+          await page
+            .getByRole("heading", { name: "Apresentação e protocolo", exact: true })
+            .waitFor();
+          await page
+            .getByRole("heading", { name: "Itens preservados no pacote", exact: true })
+            .waitFor();
+          const back = page.getByRole("link", { name: "Voltar à competência", exact: true });
+          await back.focus();
+          if (!(await back.evaluate((node) => document.activeElement === node)))
+            throw Error("PHASE2_KEYBOARD");
+          const capture = async (surface) => {
+            const metrics = await page.evaluate(
+              ({ surface, theme }) => {
+                const scope =
+                  surface === "V114"
+                    ? document.querySelector('section:has(a[href*="/apresentacoes/"])')
+                    : document.querySelector("main");
+                if (!scope) return null;
+                const controls = [...scope.querySelectorAll("button,a")].filter(
+                  (node) => node.getClientRects().length,
+                );
+                return {
+                  headingCount: document.querySelectorAll("h1").length,
+                  themeVerified:
+                    document.documentElement.classList.contains("dark") === (theme === "dark"),
+                  overflow: Math.max(0, document.documentElement.scrollWidth - innerWidth),
+                  controls44:
+                    controls.length > 0 &&
+                    controls.every((node) => node.getBoundingClientRect().height >= 43.9),
+                  alerts: document.querySelectorAll('[role="alert"]').length,
+                };
+              },
+              { surface, theme },
+            );
+            if (
+              !metrics ||
+              metrics.headingCount !== 1 ||
+              !metrics.themeVerified ||
+              metrics.overflow > 1 ||
+              !metrics.controls44 ||
+              metrics.alerts !== 0 ||
+              errors !== 0 ||
+              external !== 0
+            )
+              throw Error("PHASE2_RENDER");
+            const screenshot = `screenshots/${surface}_${width}_${theme}.png`,
+              bytes = await page.screenshot({ fullPage: true, animations: "disabled" });
+            writeFileSync(join(target, screenshot), bytes);
+            return {
+              surface,
+              width,
+              theme,
+              ...metrics,
+              keyboardVerified: true,
+              reloadVerified: true,
+              backVerified: true,
+              pageErrors: errors,
+              externalRequests: external,
+              screenshot,
+              sha256: hash(bytes),
+              status: "PASS",
+            };
+          };
+          const protocol = await capture("V120");
+          await page.goBack({ waitUntil: "networkidle" });
+          await page.waitForURL(origin + overview);
+          await page.reload({ waitUntil: "networkidle" });
+          await page.getByRole("link", { name: "Abrir apresentação 1", exact: true }).waitFor();
+          record.records.push(protocol, await capture("V114"));
+        } finally {
+          await context.close();
+        }
+      }
+    record.complete = true;
+    if (!phase2DeltaReportValid(record)) throw Error("PHASE2_MATRIX");
+    console.log("PHASE2_DELTA_OFFLINE_PASS_16");
+    return record;
+  } finally {
+    if (server) await new Promise((resolve) => server.close(resolve));
+    const reportFile = join(target, "report.json");
+    writeFileSync(reportFile, JSON.stringify(record, null, 2) + "\n");
+    const sums = record.records.map((r) => r.sha256 + "  " + r.screenshot);
+    sums.push(hash(readFileSync(reportFile)) + "  report.json");
+    writeFileSync(join(target, "SHA256SUMS"), sums.join("\n") + "\n");
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 async function run() {
   const modulePath = process.env.CONTAOS_PLAYWRIGHT_MODULE;
   if (!modulePath) throw new Error("Playwright não instalado no executor independente.");
@@ -1163,12 +1525,22 @@ async function run() {
       }
     }
     scaleRows = await collectPublicScale(browser, { output, base, images });
+    await collectPhase2VisualDelta(browser, { base, output, headSha: sha });
+    images.push({
+      filename: "phase2-delta/SHA256SUMS",
+      sha256: hash(readFileSync(join(output, "phase2-delta/SHA256SUMS"))),
+    });
   } finally {
     await browser.close();
   }
   const result = {
     schema: "contaos.teste-c.independente.v1",
     tested_sha: sha,
+    offline_delta: {
+      mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+      cases: 16,
+      report: "phase2-delta/report.json",
+    },
     started_utc: started,
     finished_utc: new Date().toISOString(),
     browser_profile: "SEM CREDENCIAIS E SEM MOCK DE TENANT",

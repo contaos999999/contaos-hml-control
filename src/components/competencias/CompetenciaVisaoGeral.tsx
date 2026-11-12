@@ -3,7 +3,8 @@
  * Gate: UUID → getUser → preferência de organização (contexto) → RPC `obter_visao_geral_competencia` (1x).
  * O backend é a autoridade de acesso, portão e ações. Nenhuma ação crítica é executada aqui.
  */
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { CompetenciaApresentacoesLista } from "@/components/competencias/CompetenciaApresentacoesLista";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   AlertCircle,
@@ -60,7 +61,15 @@ export function CompetenciaVisaoGeral({ id }: { id: string }) {
   const navigate = useNavigate();
   const idOk = uuidValido(id);
   const idC = idOk ? uuidCanonico(id) : id;
-  const [estado, setEstado] = useState<Estado>({ tipo: "carregando" });
+  const [resposta, setResposta] = useState<{ id: string; estado: Estado }>({
+    id: idC,
+    estado: { tipo: "carregando" },
+  });
+  const estado: Estado = resposta.id === idC ? resposta.estado : { tipo: "carregando" };
+  const setEstado = useCallback(
+    (proximo: Estado) => setResposta({ id: idC, estado: proximo }),
+    [idC],
+  );
   const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
@@ -85,8 +94,8 @@ export function CompetenciaVisaoGeral({ id }: { id: string }) {
         if (!signal.aborted) setEstado({ tipo: "erro_sessao" });
         return;
       }
-      if (!obterPreferenciaOrganizacao(user.id))
-        return void navigate({ to: "/selecionar-organizacao", replace: true });
+      const organizacao = obterPreferenciaOrganizacao(user.id);
+      if (!organizacao) return void navigate({ to: "/selecionar-organizacao", replace: true });
       try {
         const { data, error, status } = await obterVisaoGeral(idC, signal);
         if (signal.aborted) return;
@@ -96,14 +105,19 @@ export function CompetenciaVisaoGeral({ id }: { id: string }) {
         }
         if (data === null || data === undefined) return void setEstado({ tipo: "nao_encontrada" });
         const vg = parseVisaoGeral(data);
-        setEstado(vg ? { tipo: "ok", vg } : { tipo: "erro" });
+        const pertence =
+          vg &&
+          uuidCanonico(vg.competencia.id) === idC &&
+          vg.competencia.id_organizacao === organizacao &&
+          uuidValido(vg.competencia.id_contrato);
+        setEstado(pertence ? { tipo: "ok", vg } : { tipo: "erro" });
       } catch (e) {
         if (signal.aborted || ehAbort(e)) return;
         setEstado({ tipo: "erro" });
       }
     })();
     return () => ctrl.abort();
-  }, [idOk, idC, navigate, tentativa]);
+  }, [idOk, idC, navigate, tentativa, setEstado]);
 
   const tentar = () => {
     if (estado.tipo === "carregando") return;
@@ -112,9 +126,11 @@ export function CompetenciaVisaoGeral({ id }: { id: string }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav aria-label="Navegação da página" className="border-b border-border bg-card text-card-foreground">
+      <nav
+        aria-label="Navegação da página"
+        className="border-b border-border bg-card text-card-foreground"
+      >
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-          
           <nav aria-label="Navegação" className="flex flex-wrap gap-2">
             <Button asChild variant="secondary" className="h-11">
               <Link to="/contratos" activeOptions={{ exact: true }}>
@@ -197,14 +213,23 @@ function Conteudo({ vg }: { vg: VisaoGeral }) {
         idContrato={c.id_contrato}
         situacao={c.situacao}
       />
-      <Tabs id={c.id} permitirParecer={vg.allowed_actions.abrir_parecer}
-        permitirApresentar={vg.allowed_actions.apresentar} />
+      <Tabs
+        id={c.id}
+        permitirParecer={vg.allowed_actions.abrir_parecer}
+        permitirApresentar={vg.allowed_actions.apresentar}
+      />
       <div className="grid gap-4 lg:grid-cols-3">
         <EstadoCompetencia estado={derivarEstadoVisual(vg)} />
         <PercentGauge valor={c.percentual_conformidade} portao={vg.portao} />
         <BlockingSummary b={vg.blocking_summary} liberado={vg.portao.liberado} />
       </div>
       <AllowedActions acoes={vg.allowed_actions} vgId={c.id} />
+      <CompetenciaApresentacoesLista
+        key={`${c.id}:${c.id_organizacao}:${c.id_contrato}`}
+        competencia={c.id}
+        organizacao={c.id_organizacao}
+        contrato={c.id_contrato}
+      />
     </>
   );
 }
@@ -432,8 +457,14 @@ function AllowedActions({ acoes, vgId }: { acoes: AllowedActionsVG; vgId: string
 }
 
 function Tabs({
-  id, permitirParecer, permitirApresentar,
-}: { id: string; permitirParecer: boolean; permitirApresentar: boolean }) {
+  id,
+  permitirParecer,
+  permitirApresentar,
+}: {
+  id: string;
+  permitirParecer: boolean;
+  permitirApresentar: boolean;
+}) {
   return (
     <div
       role="tablist"
@@ -476,8 +507,12 @@ function Tabs({
           Parecer
         </Link>
       ) : (
-        <span role="tab" aria-selected="false" aria-disabled="true"
-          className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-muted-foreground">
+        <span
+          role="tab"
+          aria-selected="false"
+          aria-disabled="true"
+          className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-muted-foreground"
+        >
           Parecer <Lock className="ml-2 h-4 w-4" aria-hidden />
         </span>
       )}
@@ -492,8 +527,12 @@ function Tabs({
           Apresentação
         </Link>
       ) : (
-        <span role="tab" aria-selected="false" aria-disabled="true"
-          className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-muted-foreground">
+        <span
+          role="tab"
+          aria-selected="false"
+          aria-disabled="true"
+          className="inline-flex min-h-11 items-center rounded-md px-3 py-2 text-sm text-muted-foreground"
+        >
           Apresentação <Lock className="ml-2 h-4 w-4" aria-hidden />
         </span>
       )}
