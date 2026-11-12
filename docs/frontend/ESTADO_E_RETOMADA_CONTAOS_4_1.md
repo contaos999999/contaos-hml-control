@@ -1,3 +1,7 @@
+## Fase 2 R3: retomada após R2 bloqueada, 12/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. HEADfrontend22b1a0f7b432d72c1456d5061dd2cafb529f62f2/backend5eca44aebead3183e81b5c1af0d1dffa5fb8feb6 conferidos. R2AUTH43208835561 FAILURE/FIXTURES43208835680 SUCCESS attempt1 terminais; artefato13940103116 verificado oficialmente:13observados/11PASS/2FAIL/39não executados/logoutfalse/transport2. Report original e ledger R2 preservados na pasta Fase2. Causa específica ainda desconhecida. Nonces R1/R2 consumidas. Próxima etapa: revisar/integrar PLAN R3 antes de reproduzir/corrigir auditor, sem mudar cerca/produto/backend. Exigir52/52PASS/logout/zero erros antes de certificado. HML024a/FZ preservada. Não reabrir certificações anteriores, não avançar V2.
+
 ## Fase 2 R2: retomada governada após R1, 12/11/2026 Bahia
 
 **Fase 2 permanece NÃO CERTIFICADA.** Checkpoint #605 integrado em `36a73d483bad43c53823f5bbfa35aa071afdb134`, após revisão independente 5869624609, três checks SUCCESS e readback exato. Backend reconfirmado em `5eca44aebead3183e81b5c1af0d1dffa5fb8feb6`; tipos imutáveis preservados. Fase 1 e as oito certificações/ressalvas anteriores não são reabertas.

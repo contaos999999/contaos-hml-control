@@ -4058,5 +4058,25 @@
     "original_native_cases_preserved": 18,
     "navigation_native_supplement": "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
     "report_schema": "contaos.navigation.audit.v2"
+  },
+  "integracao_funcional_fase2_r3": {
+    "status": "VALIDADO_TECNICAMENTE_AGUARDA_CI_MERGE_PREVIO",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R3_REDE_PLAN_GATE_2026-11-12.md",
+    "baseline_frontend": "22b1a0f7b432d72c1456d5061dd2cafb529f62f2",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261112-r3",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2"
+    ],
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "deploy_autorizado": false,
+    "prod_autorizado": false
   }
 }
