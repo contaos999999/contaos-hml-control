@@ -1,3 +1,9 @@
+## Fase 2 R11: R10 com 52/52 casos PASS e 1 erro global no logout, 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. Integrados PLAN R10 #636, BUILD R10 #637 (AppShell escolhe o layout pela rota renderizada; harness sem autoligação V117), pins R10 #638 (produto `e6c8cb0`, `dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz`, ledger v3 com SUPERSEDED dos 33 PASS) e REQUEST R10 #639 (merge `050beb1`). Auth R10 `43459877744` attempt 1: artefato `14059408905` (ZIP `5a1b08e2…`, report `a7097620…`, v3): 52/52 linhas PASS, logout `true`, mas `transportErrors`/`httpErrors` globais 1 (`POST` `ABORTED`) fora de qualquer caso, provavelmente no logout; mesma assinatura na R9.
+
+Decisão do titular: ledger v4 com 51 PASS (1-51) da R10 e o índice 52 (V123/390) pendente; BUILD R11 só instrumenta o logout; REQUEST R11 executa 1 caso e o logout. Se sair limpo, fecha a matriz com controles globais e permite a certificação.
+
 ## Fase 2 R10: R9 terminal (15 PASS; V117 e V120 falham), 13/11/2026 Bahia
 
 Fase 2 NÃO CERTIFICADA. Integrados PLAN R9 #633, BUILD R9 #634 (preflight POST, instrumentação, revisão B, ledger v2 `35297ac5…`) e REQUEST R9 #635 (merge `ccd14b1`). Auth R9 `43401890915` attempt 1: preflight SUCCESS, privado `131807145427` FAILURE; artefato `14027480344` (ZIP `f3e5f1aa…`, report `fd96cd97…`, v4, 19/19 observados, 15 PASS, logout `true`).

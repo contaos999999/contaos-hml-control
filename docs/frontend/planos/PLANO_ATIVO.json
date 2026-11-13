@@ -4339,5 +4339,42 @@
     "prod_autorizado": false,
     "merge_metodo": "merge commit",
     "revisao_canonica_ultima": true
+  },
+  "integracao_funcional_fase2_r11": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R11_LOGOUT_FECHAMENTO_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "050beb1bbc3ce886227865178b7bdbecef964033",
+    "produto": "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+    "deployment": "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/R11_LEDGER_COMPATIBILIDADE_2026-11-13.md"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r11",
+    "spent_nonces_adicionais": [
+      "integracao-v1-fase2-nav-20261113-r10"
+    ],
+    "r10_run": 43459877744,
+    "r10_private_job": 132004527239,
+    "r10_artifact": 14059408905,
+    "r10_artifact_digest": "sha256:5a1b08e2eaa519d3e350488994c8625cd0bc4a60fe9d73e1c19432e717971236",
+    "r10_report_sha256": "a70976206a97571b9613ffb55dfb18491a5a76e4e337afd7c8f7b378d50eb2fc",
+    "r10_pass": "1-52 (linhas)",
+    "r10_global": {
+      "transportErrors": 1,
+      "httpErrors": 1,
+      "networkFailure": "ABORTED API POST fetch",
+      "logoutVerified": true
+    },
+    "ledger_v4": "51 PASS (1-51) da R10; pendente 52 (V123/390)",
+    "decisao_titular": "51 no ledger + 1 pendente (13/11/2026)",
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
   }
 }
