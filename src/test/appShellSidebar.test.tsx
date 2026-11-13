@@ -768,3 +768,28 @@ vi.mock("@tanstack/react-query", () => ({
     clear: vi.fn(),
   }),
 }));
+
+
+describe("Fase 2 R7 — navegação móvel somente após commit da rota", () => {
+  it("mantém diálogo e fundo inerte até o pathname mudar, então fecha sem restaurar foco antigo", async () => {
+    mocks.pathname = "/contratos";
+    mocks.efetivas.mockResolvedValue({
+      schema_versao: "rbac-v1",
+      versao: 5,
+      master: false,
+      permissoes: [{ recurso: "contratantes", acao: "consultar" }],
+    });
+    const view = render(<ContaOSAppShell><p>Conteúdo</p></ContaOSAppShell>);
+    await screen.findByRole("button", { name: "Abrir menu" });
+    fireEvent.click(screen.getByRole("button", { name: "Abrir menu" }));
+    const dialogo = screen.getByRole("dialog", { name: "Menu de navegação" });
+    const link = within(dialogo).getByRole("link", { name: "Contratantes" });
+    fireEvent.click(link);
+    expect(screen.getByRole("dialog", { name: "Menu de navegação" })).toBeInTheDocument();
+    expect(screen.getByText("Conteúdo").closest("[inert]")).not.toBeNull();
+    mocks.pathname = "/contratantes";
+    view.rerender(<ContaOSAppShell><p>Conteúdo</p></ContaOSAppShell>);
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Menu de navegação" })).not.toBeInTheDocument());
+    expect(screen.getByText("Conteúdo").closest("[inert]")).toBeNull();
+  });
+});
