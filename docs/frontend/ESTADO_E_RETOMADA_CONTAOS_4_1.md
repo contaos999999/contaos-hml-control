@@ -1,3 +1,7 @@
+## Integração funcional V1: plano mestre das 7 fases aceito pelo titular, 13/11/2026 Bahia
+
+Plano mestre `docs/frontend/planos/PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md` e matriz `INTEGRACAO_V1_7_FASES_MATRIZ_EXECUCAO_PROPOSTA.csv` (138 conexões, 552 posições F3–F6) integrados pela PR #653, merge `fe94015`, APPROVE `Edivan5002` no HEAD `7696a13`. Aceite integral do titular para os critérios das Fases 3–7 registrado na seção 18 do plano, com blobs e SHA-256 conferidos. Painel: Fase 1 CERTIFICADA; Fase 2 CERTIFICADA (PR #652, `b2feca7`); Fases 3–7 NÃO INICIADAS. Última etapa comprovada: certificado da Fase 2 integrado. Próxima: após merge protegido desta emenda, PLAN/GATE documental da Fase 3 (cadastros e relacionamentos), 138 casos `IFV1-F3-*`, com fixtures, cleanup, jobs e schema de relatório definidos e revisados antes do BUILD.
+
 ## Fase 2 CERTIFICADA: navegação autenticada 52/52, 13/11/2026 Bahia
 
 PLAN R14 #649 e BUILD R14 #650 (logout 204 não lido classificado com prova; nonce r14) e REQUEST R14 #651 (merge `ccf5343`) integrados. Auth R14 `43509322900` attempt 1 SUCCESS: artefato `14076439209` (ZIP `596629b9…`, report `0d1e580b…`, v4 válido), índice 52 PASS, sessão/MASTER/organização/logout `true`, zero erros globais, logout 204 observado. Ledger v5 `6eeef70b…`: 52/52 PASS (1-51 da R10, 52 da R14) no produto `e6c8cb0` / `dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz`. Certificado: `docs/frontend/auditorias/integracao-funcional-v1/fase2/CERTIFICADO_FASE2_NAVEGACAO_2026-11-13.md`.
