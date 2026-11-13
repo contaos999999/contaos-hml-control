@@ -4,29 +4,52 @@ Fase 2 continua NÃO CERTIFICADA. Este documento acompanha o BUILD do executor i
 
 ## Mecanismo
 
-- **Ledger:** `docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json`, schema `contaos.navigation.incremental.v1`, append-only. Ele é fixado no auditor por SHA-256 (`NAVIGATION_LEDGER.sha256`) junto com o índice de retomada esperado (`resumeFrom`).
-- **Índice canônico:** a ordem de `navigationCases()` (26 superfícies × 1440/light, 390/dark). O ledger traz `catalogueSha256` dessa ordem e cada entrada confere `index`, `surface`, `width` e `theme`.
-- **Entrada:** `status` PASS, `compatibility` (`valid` ou `superseded`), `runId`, `attempt` 1, `frontendSha`, `harnessSha`, `deploymentId`, `artifactId`, `artifactSha256`, `reportSha256` e `justification`. Campos extras ou ausentes são recusados.
-- **Regras fail-closed:**
-  - `valid` exige o mesmo produto e deployment de `NAVIGATION_DEPLOYMENT` e um harness listado em `compatibleHarnessShas`;
-  - `superseded` exige um PASS anterior e justificativa, e nunca apaga o histórico;
-  - não pode haver dois PASS válidos para o mesmo índice, nem evidência repetida;
-  - não pode haver lacuna: nenhum PASS válido depois do primeiro índice pendente;
-  - o índice de retomada calculado tem de ser igual ao fixado.
-- **Execução:** `runNavigationAudit` executa somente `navigationRunCases(resumeFrom)`. Casos anteriores não são executados, não geram registro e não contam como testados nesta execução. Login, MASTER, organização, sessão e logout continuam sendo executados e exigidos em toda execução.
-- **Relatório:** com `resumeFrom > 1`, o relatório passa a `contaos.navigation.audit.v4`, com `ledgerSha256` e `resumeFrom`. O resumo traz `expected` (casos do recorte), `observed`, `passed`, `failed`, `resumeFrom`, `runComplete` e `cumulativeMatrixComplete`, e **não** tem `matrixComplete`: uma execução parcial nunca afirma 52/52. O validador v4 reaproveita sem mudança todos os controles globais do v3.
-- Com `resumeFrom = 1`, o fluxo v3 original permanece idêntico.
+- **Ledger:** `docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json`, schema `contaos.navigation.incremental.v1`, em forma canônica exata (`JSON.stringify(…, null, 2)` + LF). Texto fora da forma canônica, com chaves duplicadas ou acima de 256 KiB é recusado.
+- **Pin no auditor** (`NAVIGATION_LEDGER`): `sha256` do arquivo, `previousSha256` (cadeia append-only; nulo no primeiro ledger), `resumeFrom` esperado e `compatibleHarnessShas`.
+- **Índice canônico:** a ordem de `navigationCases()` (26 superfícies × 1440/light, 390/dark), amarrada por `catalogueSha256`. Cada entrada confere `index`, `surface`, `width` e `theme`.
+- **Entrada `PASS`:** `runId`, `attempt` 1, `frontendSha`, `harnessSha`, `deploymentId`, `artifactId`, `artifactSha256` e `reportSha256`, sem campos extras ou ausentes. Regras:
+  - execuções em ordem crescente e índices crescentes dentro de cada execução;
+  - evidência idêntica entre todas as entradas da mesma execução;
+  - nunca dois PASS válidos para o mesmo índice.
+- **Entrada `SUPERSEDED`:** invalida um PASS sem apagá-lo. Aponta a execução exata (`supersedesRunId`, `supersedesAttempt`) do PASS válido no mesmo índice e o commit da mudança (`changeSha`), com justificativa de 16 a 512 caracteres. Não carrega evidência de PASS. O índice pode então ser reexecutado e receber um novo PASS.
+- **Compatibilidade:** exigida dos PASS que permanecem válidos: mesmo produto e deployment de `NAVIGATION_DEPLOYMENT` e harness em `compatibleHarnessShas`.
+- **Sem lacuna:** nenhum PASS válido depois do primeiro índice pendente, e a retomada calculada tem de ser igual à fixada.
+- **Extensão:** `validateNavigationLedgerExtension(anterior, novo)` exige que a nova versão encadeie o hash da anterior e só acrescente entradas ao fim. Todo PR que refixar o ledger deve incluir esse teste com a versão anterior.
+- **Validação antes de qualquer credencial:**
+  1. no preflight sem credenciais (`--request-preflight`);
+  2. no `--request-revalidate` do job privado, antes dos secrets;
+  3. na entrada do `--audit`;
+  4. em `runNavigationAudit`, logo após as verificações de escopo e antes de qualquer ação no navegador.
 
-## Prova de não impacto: harness R7 `a3b6c34` → harness R8
+  Com `sha256` nulo ou ledger inválido, a execução falha nesses pontos, antes do login no HML.
+- **Execução:** só `navigationRunCases(resumeFrom)`. Casos anteriores não são executados, não geram registro e não contam como testados. Sessão, MASTER, organização e logout continuam obrigatórios em toda execução.
+- **Relatório:** com `resumeFrom > 1`, schema `contaos.navigation.audit.v4`, com `ledgerSha256`, `resumeFrom` e resumo `expected`, `observed`, `passed`, `failed`, `resumeFrom`, `runComplete`, `cumulativeMatrixComplete`, **sem** `matrixComplete`. O validador v4 reaproveita sem mudança todos os controles globais do v3. A montagem final (`navigationFinalSummary`/`navigationReportLedger`) nunca lança: se o ledger faltar, a execução abortar ou o logout falhar, o relatório é gravado e lacrado com `runComplete=false` e `cumulativeMatrixComplete=false`.
+- Com `resumeFrom = 1`, o fluxo v3 permanece o mesmo, apenas passando a exigir um ledger válido.
+- A matriz consolidada 52/52 corresponde a `resumeFrom = 53`. Ela é validada pelo `validateNavigationLedger` e não abre execução (`navigationRunCases(53)` é recusado).
 
-O produto é o mesmo: fonte `3638cdd381cb911f6bdc115169891a25479b7a25`, deployment `dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh`, pins inalterados. As diferenças do auditor entre `a3b6c34` e este BUILD estão em quatro áreas:
+## Prova de não impacto: execução R7 → execução R8
 
-1. **`createRequestLifecycle` e `installNativeFence`:** aposentadoria do preflight CORS de GET cancelado, com três provas (PR #629). A mudança só remove uma condição pendente que nunca terminaria. Todo caso que passou no R7 drenou sob a regra antiga, mais estrita, então o veredito desses casos não pode piorar nem melhorar por causa dela.
-2. **Nonce e ancestralidade R8** (`SINGLE_REQUEST`): afeta só a admissão da execução.
-3. **Ledger e recorte** (`NAVIGATION_LEDGER`, `navigationRunCases`, `runNavigationAudit`): define quais casos rodam, não como cada caso é verificado.
-4. **Relatório v4 e assinatura de `summarizeNavigation`:** os validadores de linha (`navigationRowValid`), os specs de prontidão, os probes de links e controles e a política de rede de cada caso estão inalterados.
+**Produto.** É o mesmo: fonte `3638cdd381cb911f6bdc115169891a25479b7a25`, deployment HML `dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh`, `NAVIGATION_DEPLOYMENT` inalterado.
 
-Conclusão: os PASS da R7 nos índices 1 a 25 permanecem compatíveis, e `a3b6c34` é o único harness declarado em `compatibleHarnessShas`. Qualquer alteração futura de produto, deployment, shell ou navegação compartilhada exige marcar como `superseded` os índices afetados, presumindo impacto amplo até prova em contrário.
+**Backend e RBAC/RLS.** O `contaos999999/develop` continua em `5eca44aebead3183e81b5c1af0d1dffa5fb8feb6` (09/11/2026), igual ao `baseline_backend` registrado para a R7 em `PLANO_ATIVO.json`. A última migration aplicada ao Supabase HML `gklhhhyosgasnyoxlrui` é `20261109014019 c_chat_raw_read_hardening`, de 09/11/2026, anterior à execução R7 de 13/11/2026 03:18Z (consulta só leitura).
+
+**Fixtures e dados HML.** Desde a R7 (Fixtures `43358055500`), todas as execuções `workflow_run` de Fixtures (`43364499714`, `43374016811`) e Auth (`43364499709`, `43374016775`) tiveram os jobs privados `skipped`. Não houve preparação sintética nem sessão privada, e o estado sintético é o mesmo da R7.
+
+**Dependências do harness.** Nenhuma mudança em `package.json`, lockfiles, `.github/` ou `scripts/ci/` entre `a3b6c34` e este BUILD.
+
+**Código do harness.** As diferenças entre `a3b6c34` e este BUILD estão em quatro áreas:
+1. **Ciclo de vida do fence (PR #629).**
+   - A aposentadoria do preflight torna o drain mais permissivo apenas quando as três provas existem. Isso não pode transformar em FAIL um caso que passou sob a regra mais estrita da R7.
+   - `responded()` acrescenta um caminho de falha `FENCE_REQUEST_LIFECYCLE`, alcançável só por uso fora de ordem do ciclo de vida. Essa falha só pode reprovar casos futuros, nunca aprovar um caso antigo.
+
+   Nenhuma das duas mudanças altera o veredito já registrado dos índices 1-25.
+2. **Nonce e ancestralidade R8:** afetam só a admissão.
+3. **Ledger e recorte:** definem quais casos executar, não como cada caso é verificado.
+4. **Relatório v4, resumo final e assinatura de `summarizeNavigation`:** os validadores de linha (`navigationRowValid`), os specs de prontidão, os probes de links e controles e a política de rede de cada caso estão inalterados.
+
+**Controles globais.** Sessão, MASTER, organização, logout e zero erros são executados e exigidos de novo na R8, como pede o item 5 da emenda. Eles não são herdados da R7, cujo `logoutVerified` é `false`.
+
+Conclusão: os índices 1-25 da R7 permanecem compatíveis, e `a3b6c34` é o único harness declarado em `compatibleHarnessShas`. Qualquer alteração futura de produto, deployment, backend/RLS, fixtures, dependências, shell ou navegação compartilhada exige `SUPERSEDED` nos índices afetados, presumindo impacto amplo até prova em contrário.
 
 ## Pendências antes da REQUEST R8 (PR separada)
 

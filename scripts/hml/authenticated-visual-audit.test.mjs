@@ -18461,39 +18461,61 @@ function navigationReportV3Fixture() {
   };
 }
 // Emenda R8: ledger incremental fixado por SHA-256 e retomada pelo primeiro índice pendente.
-function ledgerFixture(count = 25, patch = () => {}) {
-  const entries = fn("navigationCases")()
-    .slice(0, count)
-    .map(({ surface, width, theme }, position) => ({
-      index: position + 1,
-      surface,
-      width,
-      theme,
-      status: "PASS",
-      compatibility: "valid",
-      runId: 43358055422,
-      attempt: 1,
-      frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
-      harnessSha: "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
-      deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
-      artifactId: 14008077669,
-      artifactSha256: "c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3",
-      reportSha256: "e".repeat(64),
-      justification: "",
-    }));
+const LEDGER_R7 = {
+  runId: 43358055422,
+  attempt: 1,
+  frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
+  harnessSha: "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
+  deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
+  artifactId: 14008077669,
+  artifactSha256: "c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3",
+  reportSha256: "e".repeat(64),
+};
+const LEDGER_R8 = {
+  ...LEDGER_R7,
+  runId: 43399999999,
+  artifactId: 14099999999,
+  reportSha256: "f".repeat(64),
+  artifactSha256: "a".repeat(64),
+};
+function ledgerPass(position, evidence = LEDGER_R7) {
+  const { surface, width, theme } = fn("navigationCases")()[position - 1];
+  return { index: position, surface, width, theme, status: "PASS", ...evidence };
+}
+function ledgerRaw(ledger) {
+  return JSON.stringify(ledger, null, 2) + "\n";
+}
+function ledgerFixture(count = 25, patch = () => {}, pinPatch = {}) {
   const ledger = {
     schema: "contaos.navigation.incremental.v1",
     catalogueSha256: fn("navigationCatalogueSha256")(),
-    entries,
+    previousLedgerSha256: null,
+    entries: Array.from({ length: count }, (_, i) => ledgerPass(i + 1)),
   };
   patch(ledger);
-  const raw = JSON.stringify(ledger, null, 2) + "\n";
+  const raw = ledgerRaw(ledger);
   const pin = {
     ...sut.NAVIGATION_LEDGER,
     sha256: createHash("sha256").update(raw).digest("hex"),
     resumeFrom: 26,
+    ...pinPatch,
   };
   return { raw, pin, ledger };
+}
+const LEDGER_SUPERSEDED = "alteração de shell compartilhado com impacto presumido";
+function ledgerSupersede(position, target = LEDGER_R7) {
+  const { surface, width, theme } = fn("navigationCases")()[position - 1];
+  return {
+    index: position,
+    surface,
+    width,
+    theme,
+    status: "SUPERSEDED",
+    supersedesRunId: target.runId,
+    supersedesAttempt: target.attempt,
+    changeSha: "9".repeat(40),
+    justification: LEDGER_SUPERSEDED,
+  };
 }
 test("NAV ledger R8: 25 PASS compatíveis retomam exatamente no índice 26 (V110/390)", async () => {
   const { raw, pin } = ledgerFixture();
@@ -18515,87 +18537,260 @@ test("NAV ledger R8: 25 PASS compatíveis retomam exatamente no índice 26 (V110
     (e) => e.code === "NAVIGATION_LEDGER",
   );
 });
-test("NAV ledger R8: hash do ledger integrado ainda não fixado falha fechado", () => {
+test("NAV ledger R8: hash ainda não fixado falha fechado", async () => {
   const { raw } = ledgerFixture();
   assert.equal(sut.NAVIGATION_LEDGER.sha256, null);
   assert.throws(
     () => fn("validateNavigationLedger")(raw, sut.NAVIGATION_LEDGER),
     (e) => e.code === "NAVIGATION_LEDGER",
   );
+  assert.equal(await fn("navigationReportLedger")(), null, "relatório final nunca lança");
 });
-const LEDGER_SUPERSEDED = "alteração de shell compartilhado com impacto presumido";
-for (const [name, patch, tamper] of [
+test("NAV ledger R8: a matriz executada é exatamente o recorte do ledger", async () => {
+  const fs = await import("node:fs/promises"),
+    ts = (await import("typescript")).default;
+  const source = await fs.readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const file = ts.createSourceFile("audit.mjs", source, 99, true, ts.ScriptKind.JS);
+  const owner = file.statements.find(
+    (n) => ts.isFunctionDeclaration(n) && n.name?.text === "runNavigationAudit",
+  );
+  const top = owner.body.statements.map((n) => n.getText(file));
+  const load = top.indexOf("const ledger = await loadNavigationLedger();");
+  const state = top.findIndex((t) => t.includes('fail("NAVIGATION_STATE")'));
+  const firstTry = owner.body.statements.findIndex((n) => ts.isTryStatement(n));
+  assert.ok(state >= 0 && load === state + 1, "ledger logo após as verificações de escopo");
+  assert.ok(firstTry > load, "ledger antes de qualquer ação no navegador");
+  const loops = [];
+  (function visit(node) {
+    if (ts.isForOfStatement(node)) loops.push(node.expression.getText(file));
+    ts.forEachChild(node, visit);
+  })(owner.body);
+  assert.ok(loops.includes("navigationRunCases(ledger.resumeFrom)"));
+  assert.equal(loops.includes("navigationCases()"), false);
+  const cli = source.slice(source.indexOf("async function singleRequestCli(mode)"));
+  assert.ok(
+    cli
+      .slice(0, 900)
+      .includes('if (operation === "audit" && result.selected) await loadNavigationLedger();'),
+  );
+  assert.ok(
+    source.includes(
+      "if (singleRequestContext?.scope === NAVIGATION_SCOPE) await loadNavigationLedger();\n    return runAuthenticatedAudit();",
+    ),
+  );
+});
+for (const [name, patch, tamper, pinPatch] of [
   ["hash adulterado", () => {}, (raw) => raw.replace('"PASS"', '"PASS" ')],
   ["catálogo divergente", (l) => (l.catalogueSha256 = "0".repeat(64))],
   ["superfície trocada", (l) => (l.entries[3].surface = "V123")],
   ["largura trocada", (l) => (l.entries[3].width = 1440)],
-  ["status não PASS", (l) => (l.entries[0].status = "FAIL")],
-  ["PASS duplicado válido", (l) => l.entries.push({ ...l.entries[0], runId: 1 })],
-  ["mesma evidência repetida", (l) => l.entries.push({ ...l.entries[0] })],
+  ["status desconhecido", (l) => (l.entries[0].status = "FAIL")],
+  ["PASS duplicado válido", (l) => l.entries.push(ledgerPass(1, LEDGER_R8))],
   ["lacuna antes do índice 26", (l) => l.entries.splice(10, 1)],
+  ["PASS além da retomada", (l) => l.entries.push(ledgerPass(27))],
+  ["retomada diferente da fixada", () => {}, undefined, { resumeFrom: 25 }],
+  ["produto diferente", (l) => l.entries.forEach((e) => (e.frontendSha = "f".repeat(40)))],
+  ["deployment diferente", (l) => l.entries.forEach((e) => (e.deploymentId = "dpl_otherDeploy1"))],
   [
-    "PASS além da retomada",
-    (l) =>
-      l.entries.push({ ...l.entries[24], index: 27, surface: "V111", width: 1440, theme: "light" }),
+    "harness não declarado compatível",
+    (l) => l.entries.forEach((e) => (e.harnessSha = "f".repeat(40))),
   ],
-  ["produto diferente", (l) => (l.entries[0].frontendSha = "f".repeat(40))],
-  ["deployment diferente", (l) => (l.entries[0].deploymentId = "dpl_otherDeploy1")],
-  ["harness não declarado compatível", (l) => (l.entries[0].harnessSha = "f".repeat(40))],
-  ["attempt diferente de 1", (l) => (l.entries[0].attempt = 2)],
+  ["attempt diferente de 1", (l) => l.entries.forEach((e) => (e.attempt = 2))],
   ["campo extra", (l) => (l.entries[0].extra = true)],
-  ["campo ausente", (l) => delete l.entries[0].reportSha256],
+  ...[
+    "frontendSha",
+    "harnessSha",
+    "deploymentId",
+    "artifactId",
+    "artifactSha256",
+    "reportSha256",
+    "runId",
+  ].map((k) => ["evidência ausente " + k, (l) => delete l.entries[0][k]]),
   ["hash de relatório inválido", (l) => (l.entries[0].reportSha256 = "x")],
-  ["schema desconhecido", (l) => (l.schema = "contaos.navigation.incremental.v0")],
+  ["evidência divergente na mesma execução", (l) => (l.entries[7].artifactSha256 = "b".repeat(64))],
   [
-    "superseded sem justificativa",
-    (l) => l.entries.push({ ...l.entries[0], runId: 2, compatibility: "superseded" }),
-  ],
-  [
-    "superseded sem PASS anterior",
+    "execuções fora de ordem",
     (l) =>
-      l.entries.unshift({
-        ...l.entries[0],
-        runId: 3,
-        compatibility: "superseded",
-        justification: LEDGER_SUPERSEDED,
-      }),
+      (l.entries = [...l.entries.slice(0, 24).map((e) => ({ ...e, ...LEDGER_R8 })), l.entries[24]]),
   ],
-  ["válido com justificativa", (l) => (l.entries[0].justification = "x")],
+  ["índices fora de ordem na execução", (l) => l.entries.reverse()],
+  ["schema desconhecido", (l) => (l.schema = "contaos.navigation.incremental.v0")],
+  ["cadeia anterior divergente", (l) => (l.previousLedgerSha256 = "1".repeat(64))],
+  [
+    "supersede sem justificativa",
+    (l) => l.entries.push({ ...ledgerSupersede(25), justification: "" }),
+  ],
+  [
+    "supersede com justificativa curta",
+    (l) => l.entries.push({ ...ledgerSupersede(25), justification: "curta" }),
+  ],
+  ["supersede de execução errada", (l) => l.entries.push(ledgerSupersede(25, LEDGER_R8))],
+  ["supersede sem PASS anterior", (l) => l.entries.unshift(ledgerSupersede(1))],
+  [
+    "supersede sem commit da mudança",
+    (l) => l.entries.push({ ...ledgerSupersede(25), changeSha: "x" }),
+  ],
+  [
+    "supersede com evidência de PASS inventada",
+    (l) => l.entries.push({ ...ledgerSupersede(25), artifactId: 1 }),
+  ],
 ])
   test("NAV ledger R8 recusa: " + name, () => {
-    const built = ledgerFixture(25, patch);
+    const built = ledgerFixture(25, patch, pinPatch);
     const raw = tamper ? tamper(built.raw) : built.raw;
     assert.throws(
-      () => fn("validateNavigationLedger")(raw, built.pin),
+      () =>
+        fn("validateNavigationLedger")(raw, {
+          ...built.pin,
+          sha256: createHash("sha256").update(raw).digest("hex"),
+        }),
       (e) => e.code === "NAVIGATION_LEDGER",
     );
   });
-test("NAV ledger R8: superseded justificado invalida o PASS e recua a retomada", () => {
-  const built = ledgerFixture(25, (l) =>
-    l.entries.push({
-      ...l.entries[4],
-      runId: 99,
-      compatibility: "superseded",
-      justification: LEDGER_SUPERSEDED,
-    }),
-  );
-  assert.throws(
-    () => fn("validateNavigationLedger")(built.raw, built.pin),
-    (e) => e.code === "NAVIGATION_LEDGER",
-    "índice 5 invalidado deixa PASS posteriores como lacuna",
-  );
-  const last = ledgerFixture(25, (l) =>
-    l.entries.push({
-      ...l.entries[24],
-      runId: 99,
-      compatibility: "superseded",
-      justification: LEDGER_SUPERSEDED,
-    }),
-  );
-  assert.equal(
-    fn("validateNavigationLedger")(last.raw, { ...last.pin, resumeFrom: 25 }).resumeFrom,
+test("NAV ledger R8 recusa texto não canônico, chave duplicada e limites", () => {
+  const { raw } = ledgerFixture();
+  const duplicated = raw.replace('"index": 7,', '"index": 7,\n      "index": 1,');
+  const compact = JSON.stringify(JSON.parse(raw)) + "\n";
+  const huge = ledgerRaw({
+    ...JSON.parse(raw),
+    entries: Array.from({ length: 209 }, () => ledgerPass(1)),
+  });
+  const big = raw.replace('"schema"', '"schema"' + " ".repeat(262145));
+  for (const text of [duplicated, compact, huge, big])
+    assert.throws(
+      () =>
+        fn("validateNavigationLedger")(text, {
+          ...sut.NAVIGATION_LEDGER,
+          sha256: createHash("sha256").update(text).digest("hex"),
+        }),
+      (e) => e.code === "NAVIGATION_LEDGER",
+    );
+});
+test("NAV ledger R8: FAIL no índice 30 retoma em 30 e preserva 26-29", () => {
+  const { raw, pin } = ledgerFixture(
     25,
+    (l) => {
+      for (let i = 26; i <= 29; i++) l.entries.push(ledgerPass(i, LEDGER_R8));
+    },
+    { resumeFrom: 30 },
   );
+  const state = fn("validateNavigationLedger")(raw, pin);
+  assert.equal(state.resumeFrom, 30);
+  assert.equal(fn("navigationRunCases")(30).length, 23);
+  const records = navigationReportV3Fixture().records.slice(29);
+  const summary = fn("summarizeNavigationIncremental")(records, state);
+  assert.equal(summary.expected, 23);
+  assert.equal(summary.runComplete, true);
+  assert.equal(summary.cumulativeMatrixComplete, true);
+});
+test("NAV ledger R8: supersede aponta a entrada exata e permite reexecução", () => {
+  const { raw, pin } = ledgerFixture(
+    25,
+    (l) => {
+      l.entries.push(ledgerSupersede(25));
+    },
+    { resumeFrom: 25 },
+  );
+  assert.equal(fn("validateNavigationLedger")(raw, pin).resumeFrom, 25);
+  const again = ledgerFixture(25, (l) => {
+    l.entries.push(ledgerSupersede(25), ledgerPass(25, LEDGER_R8));
+  });
+  assert.equal(fn("validateNavigationLedger")(again.raw, again.pin).resumeFrom, 26);
+  // PASS antigo de outro produto permanece no histórico apenas se estiver superseded.
+  const OLD = { ...LEDGER_R7, runId: 43300000000, frontendSha: "7".repeat(40), artifactId: 1300 };
+  const legacy = ledgerFixture(25, (l) => {
+    l.entries.unshift(ledgerPass(26, OLD));
+    l.entries.push(ledgerSupersede(26, OLD));
+  });
+  assert.equal(fn("validateNavigationLedger")(legacy.raw, legacy.pin).resumeFrom, 26);
+  const stillValid = ledgerFixture(25, (l) => l.entries.unshift(ledgerPass(26, OLD)));
+  assert.throws(
+    () => fn("validateNavigationLedger")(stillValid.raw, stillValid.pin),
+    (e) => e.code === "NAVIGATION_LEDGER",
+  );
+});
+test("NAV ledger R8: matriz consolidada 52/52 valida com retomada 53 e não abre execução", () => {
+  const { raw, pin } = ledgerFixture(
+    25,
+    (l) => {
+      for (let i = 26; i <= 52; i++) l.entries.push(ledgerPass(i, LEDGER_R8));
+    },
+    { resumeFrom: 53 },
+  );
+  const state = fn("validateNavigationLedger")(raw, pin);
+  assert.equal(state.resumeFrom, 53);
+  assert.equal(state.validIndices.length, 52);
+  assert.throws(
+    () => fn("navigationRunCases")(53),
+    (e) => e.code === "NAVIGATION_LEDGER",
+  );
+});
+test("NAV ledger R8: nova versão só acrescenta ao fim e encadeia o hash anterior", () => {
+  const base = ledgerFixture();
+  const next = ledgerFixture(25, (l) => {
+    l.previousLedgerSha256 = base.pin.sha256;
+    l.entries.push(ledgerPass(26, LEDGER_R8));
+  });
+  assert.equal(fn("validateNavigationLedgerExtension")(base.raw, next.raw), true);
+  for (const patch of [
+    (l) => (l.entries[3] = { ...l.entries[3], reportSha256: "d".repeat(64) }),
+    (l) => l.entries.splice(3, 1),
+    (l) => (l.previousLedgerSha256 = "1".repeat(64)),
+    (l) => l.entries.pop(),
+  ]) {
+    const changed = ledgerFixture(25, (l) => {
+      l.previousLedgerSha256 = base.pin.sha256;
+      l.entries.push(ledgerPass(26, LEDGER_R8));
+      patch(l);
+    });
+    assert.throws(
+      () => fn("validateNavigationLedgerExtension")(base.raw, changed.raw),
+      (e) => e.code === "NAVIGATION_LEDGER",
+    );
+  }
+  assert.equal(
+    fn("validateNavigationLedger")(next.raw, {
+      ...next.pin,
+      previousSha256: base.pin.sha256,
+      resumeFrom: 27,
+    }).resumeFrom,
+    27,
+  );
+});
+test("NAV resumo final: modo incremental, abortos, logout e ledger ausente nunca concluem", () => {
+  const summaryFor = fn("navigationFinalSummary");
+  const { report, ledger } = incrementalReport();
+  const pin = { ...sut.NAVIGATION_LEDGER, resumeFrom: 26 };
+  const ok = summaryFor(report.records, ledger, pin, { aborted: null, logoutVerified: true });
+  assert.equal(ok.incremental, true);
+  assert.equal(ok.summary.runComplete, true);
+  assert.equal(ok.summary.cumulativeMatrixComplete, true);
+  for (const state of [
+    { aborted: "NAVIGATION_INCOMPLETE", logoutVerified: true },
+    { aborted: null, logoutVerified: false },
+  ]) {
+    const r = summaryFor(report.records, ledger, pin, state);
+    assert.equal(r.summary.runComplete, false);
+    assert.equal(r.summary.cumulativeMatrixComplete, false);
+  }
+  const missing = summaryFor(report.records, null, pin, { aborted: null, logoutVerified: true });
+  assert.equal(missing.incremental, true);
+  assert.equal(missing.summary.runComplete, false);
+  assert.equal(missing.summary.expected, 27);
+  const legacy = summaryFor(
+    navigationReportV3Fixture().records,
+    ledger,
+    { ...pin, resumeFrom: 1 },
+    {
+      aborted: null,
+      logoutVerified: false,
+    },
+  );
+  assert.equal(legacy.incremental, false);
+  assert.equal(legacy.summary.matrixComplete, false);
 });
 function incrementalReport(patch = {}) {
   const { pin, raw } = ledgerFixture();
@@ -18649,6 +18844,14 @@ test("NAV v4 aceita só a execução 26-52 completa, sem erros e com controles g
   assert.equal(partial.summary.runComplete, false);
   assert.equal(partial.summary.cumulativeMatrixComplete, false);
   assert.equal(validate(partial, ledger), false);
+  const replaced = {
+    ...report,
+    records: [...report.records.slice(0, 26), navigationReportV3Fixture().records[0]],
+  };
+  replaced.summary = fn("summarizeNavigationIncremental")(replaced.records, ledger);
+  assert.equal(replaced.summary.runComplete, false, "caso pulado nunca conta no recorte");
+  assert.equal(validate(replaced, ledger), false);
+  assert.equal(validate(report, { ...ledger, resumeFrom: 1 }), false);
   const failedRow = {
     ...report,
     records: report.records.map((r, i) => (i === 3 ? { ...r, backVerified: false } : r)),
@@ -18912,7 +19115,7 @@ async function actualNavigationReportInitializer() {
   assert.ok(initializer);
   return new Function(
     "deps",
-    "const {scope,NAVIGATION_SCOPE,proof,records,summary,native,navigationNativeProof,navigationSession,flags,logoutVerified,logoutFailure,fence,errors,navigationHttpErrors,navigationHttpStatusErrors,navigationTransportErrors,aborted,digest,navigationFenceDiagnostic,incremental,ledger}=deps;return (" +
+    "const {scope,NAVIGATION_SCOPE,proof,records,summary,native,navigationNativeProof,navigationSession,flags,logoutVerified,logoutFailure,fence,errors,navigationHttpErrors,navigationHttpStatusErrors,navigationTransportErrors,aborted,digest,navigationFenceDiagnostic,incremental,ledger,NAVIGATION_LEDGER}=deps;return (" +
       initializer.getText(file) +
       ");",
   );
@@ -18945,6 +19148,7 @@ test("NAV R3 actual producer emits v3 with separate native hash and stopped clea
     navigationFenceDiagnostic: sut.navigationFenceDiagnostic,
     incremental: false,
     ledger: null,
+    NAVIGATION_LEDGER: sut.NAVIGATION_LEDGER,
   };
   const report = factory(input);
   assert.equal(sut.validateNavigationReport(report), true);
