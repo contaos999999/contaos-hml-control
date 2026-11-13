@@ -22518,8 +22518,8 @@ test("NAV R5 historical plan remains sealed with its four predecessor nonces", (
   }
 });
 
-test("NAV R12 successor consumes R11 and requires the R12 PLAN commit", () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r12");
+test("NAV R13 successor consumes R12 and requires the R13 PLAN commit", () => {
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r13");
   assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR6PlanSha,
@@ -22549,6 +22549,10 @@ test("NAV R12 successor consumes R11 and requires the R12 PLAN commit", () => {
     sut.SINGLE_REQUEST.functionalNavigationR12PlanSha,
     "a8b5a4dee1e40559b094efccecc4cfad0e9f39db",
   );
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationR13PlanSha,
+    "d01da7fd9a998ccac88f6966fac4aeeeda6dfa5d",
+  );
   for (const nonce of [
     "integracao-v1-fase2-nav-20261111-r1",
     "integracao-v1-fase2-nav-20261112-r2",
@@ -22561,6 +22565,7 @@ test("NAV R12 successor consumes R11 and requires the R12 PLAN commit", () => {
     "integracao-v1-fase2-nav-20261113-r9",
     "integracao-v1-fase2-nav-20261113-r10",
     "integracao-v1-fase2-nav-20261113-r11",
+    "integracao-v1-fase2-nav-20261113-r12",
   ]) {
     assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
     const request = {
