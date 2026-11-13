@@ -11457,7 +11457,7 @@ export const SINGLE_REQUEST = Object.freeze({
   // Emenda R9 (A): commit do PLAN R9, ancestral obrigatório mesmo antes do merge.
   functionalNavigationR9PlanSha: "771a3e0aeeb6b957c8cd2429184d8cf8fc279af8",
   // PLAN R10 (commit), ancestral obrigatório: correção do AppShell e autoligação de V117.
-  functionalNavigationR10PlanSha: "2c3733e89e0698dde41ad29cb598d93a573beca0",
+  functionalNavigationR10PlanSha: "157b39794b4b631443a664e0a746ed3880bfecea",
   spentAuditNonces: Object.freeze([
     "integracao-v1-fase2-nav-20261113-r9",
     "integracao-v1-fase2-nav-20261113-r8",

@@ -22489,7 +22489,7 @@ test("NAV R10 successor consumes R9 and requires the R10 PLAN commit", () => {
   );
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR10PlanSha,
-    "2c3733e89e0698dde41ad29cb598d93a573beca0",
+    "157b39794b4b631443a664e0a746ed3880bfecea",
   );
   for (const nonce of [
     "integracao-v1-fase2-nav-20261111-r1",
