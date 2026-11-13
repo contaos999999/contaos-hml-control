@@ -769,7 +769,6 @@ vi.mock("@tanstack/react-query", () => ({
   }),
 }));
 
-
 describe("Fase 2 R7 — navegação móvel somente após commit da rota", () => {
   const permissoes = {
     schema_versao: "rbac-v1",
