@@ -1,6 +1,7 @@
 // Incremental NAV ledger primitives. This module does NOT authorize skipping cases
 // until an authenticated runner verifies artifact bytes, ancestry and change impact.
 import { createHash } from "node:crypto";
+import { navigationCases } from "./authenticated-visual-audit.mjs";
 
 export const NAV_LEDGER_SCHEMA = "contaos.navigation.incremental.v1";
 const SHA = /^[a-f0-9]{40}$/;
@@ -42,4 +43,30 @@ export function validateNavigationLedger(ledger, cases, verifyEvidence) {
 export function assertNavigationResumeAuthorized(state, expectedStart) {
   if (!isObject(state) || !Number.isInteger(expectedStart) || expectedStart < 1 || expectedStart > 53 || state.resumeFrom !== expectedStart || (expectedStart === 53 && !state.cumulativeMatrixComplete)) throw Error("LEDGER_RESUME_UNAUTHORIZED");
   return true;
+}
+
+// Inspect a retained R7 report WITHOUT promoting any historical PASS to a certificate.
+// Artifact ZIP integrity and GitHub origin must be established independently.
+export function inspectNavigationPartialReport(raw, identity) {
+  if (!Buffer.isBuffer(raw) || raw.length < 100 || raw.length > 262144 || !exact(identity, ["frontendSha","harnessSha","deploymentId","reportSha256"]) || !validSha(identity.frontendSha) || !validSha(identity.harnessSha) || !DEPLOY.test(identity.deploymentId) || !validDigest(identity.reportSha256)) throw Error("REPORT_INPUT");
+  const reportSha256 = createHash("sha256").update(raw).digest("hex");
+  if (reportSha256 !== identity.reportSha256) throw Error("REPORT_HASH");
+  const report = JSON.parse(raw.toString("utf8"));
+  const expected = navigationCases();
+  if (!isObject(report) || report.schema !== "contaos.navigation.audit.v3" || report.auditScope !== "INTEGRACAO_V1_FASE2_NAV" || report.frontendSha !== identity.frontendSha || report.harnessSha !== identity.harnessSha || report.deploymentId !== identity.deploymentId || !Array.isArray(report.records) || report.records.length > expected.length || !isObject(report.summary) || report.summary.expected !== 52 || report.summary.observed !== report.records.length || report.summary.matrixComplete !== false || report.summary.passed !== report.records.filter(x=>x?.status==="PASS").length || report.summary.failed !== report.records.filter(x=>x?.status!=="PASS").length) throw Error("REPORT_SCHEMA");
+  const pass = [];
+  let failedAt = null;
+  for (let i=0; i<report.records.length; i++) {
+    const row=report.records[i], expectedRow=expected[i];
+    if (!isObject(row) || row.surface !== expectedRow.surface || row.width !== expectedRow.width || row.theme !== expectedRow.theme) throw Error("REPORT_CASE_ORDER");
+    if (row.status==="PASS") {
+      if (failedAt!==null || row.stage!=="FINISH" || row.operation!=="FINISH" || row.target!==row.surface || row.failureCode!==null || row.httpErrors!==0 || row.transportErrors!==0 || row.pageErrors!==0 || row.blockedRequests!==0 || row.routeExact!==true || row.stateVerified!==true || row.organizationVerified!==true || row.enteredFromMenu!==true || row.reloadVerified!==true || row.backVerified!==true || row.shellVerified!==true || row.menuVerified!==true || row.controlsVerified!==true) throw Error("REPORT_PASS_INVALID");
+      pass.push(i+1);
+    } else {
+      if (failedAt!==null || row.status!=="FAIL") throw Error("REPORT_FAIL_INVALID");
+      failedAt=i+1;
+    }
+  }
+  if (failedAt!==null && failedAt!==report.records.length) throw Error("REPORT_FAIL_ORDER");
+  return Object.freeze({reportSha256, candidateIndices:Object.freeze(pass), failedAt, globalControlsPassed:report.sessionVerified===true && report.masterVerified===true && report.organizationVerified===true && report.logoutVerified===true && report.networkFailure===null && report.httpErrors===0 && report.transportErrors===0 && report.pageErrors===0 && report.blockedMutations===0});
 }
