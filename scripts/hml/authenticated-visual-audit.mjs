@@ -4273,7 +4273,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261112-r5",
+  nonce: "integracao-v1-fase2-nav-20261112-r6",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 export function navigationCases() {
@@ -5003,14 +5003,14 @@ function navigationRemaining(deadline) {
     });
   return remaining;
 }
-async function waitNavigationStable(page, fence, spec, deadline) {
+async function waitNavigationStable(page, fence, spec, deadline, quietMs = 500) {
   for (;;) {
     if (page.url() !== HML_ORIGIN + spec.path) fail("NAVIGATION_ROUTE");
     await page.waitForFunction(navigationDomReady, spec, {
       timeout: navigationRemaining(deadline),
     });
     const network = navigationSessions.get(page);
-    const revision = network ? await waitNavigationNetwork(page, fence, deadline) : null;
+    const revision = network ? await waitNavigationNetwork(page, fence, deadline, quietMs) : null;
     if (!network) {
       await fence.drain();
       fence.assertSafe();
@@ -5021,7 +5021,7 @@ async function waitNavigationStable(page, fence, spec, deadline) {
     if (
       observation &&
       (spec.conditional || navigationObservationReady(spec.surface, observation)) &&
-      (!network || network.isQuiet(revision))
+      (!network || network.isQuiet(revision, quietMs))
     )
       return observation;
   }
@@ -5109,7 +5109,8 @@ export async function waitNavigationControl(page, fence, path, width, menu) {
     fail("NAVIGATION_LINK_MISSING");
   // These locator checks cross browser tasks. Revalidate the entire DOM/control
   // and the network revision after them, with the original shared deadline.
-  if (navigationSessions.has(page)) await waitNavigationStable(page, fence, spec, deadline);
+  if (navigationSessions.has(page))
+    await waitNavigationStable(page, fence, spec, deadline, menuOpened ? 1500 : 500);
   return { link, menuOpened };
 }
 
@@ -5262,11 +5263,17 @@ export function navigationTransportDiagnostic(request) {
   }
   return diagnostic;
 }
-export async function waitNavigationNetwork(page, fence, deadline = performance.now() + 15000) {
+export async function waitNavigationNetwork(
+  page,
+  fence,
+  deadline = performance.now() + 15000,
+  quietMs = 500,
+) {
   const observer = navigationSessions.get(page);
-  if (!observer) fail("NAVIGATION_STATE");
+  if (!observer || !Number.isInteger(quietMs) || quietMs < 500 || quietMs > 1500)
+    fail("NAVIGATION_STATE");
   for (;;) {
-    const revision = await observer.waitQuiet(deadline);
+    const revision = await observer.waitQuiet(deadline, quietMs);
     let timer;
     try {
       await Promise.race([
@@ -5289,7 +5296,7 @@ export async function waitNavigationNetwork(page, fence, deadline = performance.
     }
     fence.assertSafe();
     navigationRemaining(deadline);
-    if (observer.isQuiet(revision)) return revision;
+    if (observer.isQuiet(revision, quietMs)) return revision;
   }
 }
 export async function clickNavigationLogout(page, fence, deadline = performance.now() + 15000) {
@@ -5364,13 +5371,16 @@ export function observeNavigationSession(page) {
       consoleErrors,
     }),
     networkFailure: () => (firstFailure ? { ...firstFailure } : null),
-    isQuiet: (expected) =>
-      !closed && revision === expected && active.size === 0 && performance.now() - changedAt >= 500,
-    async waitQuiet(deadline) {
+    isQuiet: (expected, quietMs = 500) =>
+      !closed &&
+      revision === expected &&
+      active.size === 0 &&
+      performance.now() - changedAt >= quietMs,
+    async waitQuiet(deadline, quietMs = 500) {
       for (;;) {
         if (closed) fail("NAVIGATION_STATE");
         const remaining = navigationRemaining(deadline);
-        const quietRemaining = 500 - (performance.now() - changedAt);
+        const quietRemaining = quietMs - (performance.now() - changedAt);
         if (active.size === 0 && quietRemaining <= 0) return revision;
         await new Promise((resolve) => {
           let timer;
@@ -10672,7 +10682,9 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR3PlanSha: "9030de4115041598bdc530e03c3c8a5c18d3a5ae",
   functionalNavigationR4PlanSha: "e01a208940d68a504d1c206e1b255eabe4938bb3",
   functionalNavigationR5PlanSha: "a377bb65db407252a32a0dad4f371e65a03b22c2",
+  functionalNavigationR6PlanSha: "37369db9066e80f33280922c8c78b460208097ca",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261112-r5",
     "integracao-v1-fase2-nav-20261112-r4",
     "integracao-v1-fase2-nav-20261112-r3",
     "integracao-v1-fase2-nav-20261112-r2",
@@ -10741,7 +10753,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261112-r5",
+    nonce: "integracao-v1-fase2-nav-20261112-r6",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -11051,6 +11063,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationR3PlanSha,
       SINGLE_REQUEST.functionalNavigationR4PlanSha,
       SINGLE_REQUEST.functionalNavigationR5PlanSha,
+      SINGLE_REQUEST.functionalNavigationR6PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.

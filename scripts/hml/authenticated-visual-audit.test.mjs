@@ -20390,6 +20390,100 @@ test("NAV R3 observes a read started after an old networkidle and restarts conti
     assert.equal(page.listenerCount(event), 0);
 });
 
+test("NAV R6 mobile pre-click quietude restarts for a late REST read", async () => {
+  const { EventEmitter } = await import("node:events"),
+    page = new EventEmitter(),
+    observer = fn("observeNavigationSession")(page),
+    request = {};
+  const timers = [],
+    started = performance.now();
+  try {
+    assert.match(String(fn("waitNavigationControl")), /menuOpened\s*\?\s*1500\s*:\s*500/);
+    await assert.rejects(
+      () =>
+        fn("waitNavigationNetwork")(
+          page,
+          { drain: async () => {}, assertSafe() {} },
+          started + 3000,
+          499,
+        ),
+      { code: "NAVIGATION_STATE" },
+    );
+    timers.push(
+      setTimeout(() => page.emit("request", request), 600),
+      setTimeout(() => page.emit("requestfinished", request), 700),
+    );
+    const revision = await fn("waitNavigationNetwork")(
+      page,
+      { drain: async () => {}, assertSafe() {} },
+      started + 3000,
+      1000,
+    );
+    assert.ok(performance.now() - started >= 1650, "late read must restart the reinforced window");
+    assert.equal(observer.isQuiet(revision, 1000), true);
+    assert.equal(observer.snapshot().transportErrors, 0);
+  } finally {
+    for (const timer of timers) clearTimeout(timer);
+    observer.close();
+  }
+});
+
+test("NAV R6 mobile menu control applies the reinforced window before release", async () => {
+  const { EventEmitter } = await import("node:events"),
+    page = new EventEmitter(),
+    request = {},
+    link = {
+      first() {
+        return this;
+      },
+      async count() {
+        return 1;
+      },
+      async waitFor() {},
+      async isEnabled() {
+        return true;
+      },
+      async isVisible() {
+        return true;
+      },
+    },
+    dialog = {
+      async isVisible() {
+        return true;
+      },
+      locator() {
+        return link;
+      },
+    };
+  page.url = () => HML + "/contratos/" + sut.SYNTHETIC_FIXTURE.contract;
+  page.getByRole = () => dialog;
+  page.locator = () => link;
+  page.waitForFunction = async () => {};
+  page.evaluate = async () => navigationReadyObservation();
+  const observer = fn("observeNavigationSession")(page),
+    timers = [],
+    started = performance.now();
+  try {
+    timers.push(
+      setTimeout(() => page.emit("request", request), 600),
+      setTimeout(() => page.emit("requestfinished", request), 700),
+    );
+    const result = await fn("waitNavigationControl")(
+      page,
+      { drain: async () => {}, assertSafe() {} },
+      "/contratantes",
+      390,
+      true,
+    );
+    assert.equal(result.menuOpened, true);
+    assert.ok(performance.now() - started >= 1650);
+    assert.equal(observer.snapshot().transportErrors, 0);
+  } finally {
+    for (const timer of timers) clearTimeout(timer);
+    observer.close();
+  }
+});
+
 test("NAV R3 active reads and expired deadline remain blocking", async () => {
   const { EventEmitter } = await import("node:events"),
     page = new EventEmitter();
@@ -21190,9 +21284,7 @@ test("NAV R4 historical plan remains sealed with its three predecessor nonces", 
     assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
 });
 
-test("NAV R5 successor consumes R4 and requires the integrated canonical-review plan", () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r5");
-  assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
+test("NAV R5 historical plan remains sealed with its four predecessor nonces", () => {
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR5PlanSha,
     "a377bb65db407252a32a0dad4f371e65a03b22c2",
@@ -21202,6 +21294,40 @@ test("NAV R5 successor consumes R4 and requires the integrated canonical-review 
     "integracao-v1-fase2-nav-20261112-r2",
     "integracao-v1-fase2-nav-20261112-r3",
     "integracao-v1-fase2-nav-20261112-r4",
+  ]) {
+    assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
+    const request = {
+      schema_version: 1,
+      issue: 317,
+      operation: "audit",
+      request_id: nonce,
+      approved_parent_sha: "a".repeat(40),
+      frontend_sha: "",
+      deployment_id: "",
+    };
+    assert.throws(() => sut.parseSingleRequest(JSON.stringify(request), "audit"), {
+      code: "REQUEST_SCHEMA",
+    });
+    assert.equal(
+      sut.parseSingleRequest(JSON.stringify(request), undefined, { historical: true }).request_id,
+      nonce,
+    );
+  }
+});
+
+test("NAV R6 successor consumes R5 and requires the integrated quiescence plan", () => {
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r6");
+  assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationR6PlanSha,
+    "37369db9066e80f33280922c8c78b460208097ca",
+  );
+  for (const nonce of [
+    "integracao-v1-fase2-nav-20261111-r1",
+    "integracao-v1-fase2-nav-20261112-r2",
+    "integracao-v1-fase2-nav-20261112-r3",
+    "integracao-v1-fase2-nav-20261112-r4",
+    "integracao-v1-fase2-nav-20261112-r5",
   ]) {
     assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
     const request = {
