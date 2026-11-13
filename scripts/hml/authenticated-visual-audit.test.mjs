@@ -22518,8 +22518,8 @@ test("NAV R5 historical plan remains sealed with its four predecessor nonces", (
   }
 });
 
-test("NAV R13 successor consumes R12 and requires the R13 PLAN commit", () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r13");
+test("NAV R14 successor consumes R13 and requires the R14 PLAN commit", () => {
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r14");
   assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR6PlanSha,
@@ -22550,6 +22550,10 @@ test("NAV R13 successor consumes R12 and requires the R13 PLAN commit", () => {
     "a8b5a4dee1e40559b094efccecc4cfad0e9f39db",
   );
   assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationR14PlanSha,
+    "ec1cd534cee2f5685eafe543e15a4d86e52d137f",
+  );
+  assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR13PlanSha,
     "d01da7fd9a998ccac88f6966fac4aeeeda6dfa5d",
   );
@@ -22566,6 +22570,7 @@ test("NAV R13 successor consumes R12 and requires the R13 PLAN commit", () => {
     "integracao-v1-fase2-nav-20261113-r10",
     "integracao-v1-fase2-nav-20261113-r11",
     "integracao-v1-fase2-nav-20261113-r12",
+    "integracao-v1-fase2-nav-20261113-r13",
   ]) {
     assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
     const request = {
@@ -23060,4 +23065,82 @@ test("R12 preflight: prazo da API inalterado com diagnóstico fechado", async ()
   );
   assert.match(source, /const deadline = now\(\) \+ 60000,/);
   assert.match(source, /AbortSignal\.timeout\(Math\.min\(5000, remaining\)\)/);
+});
+
+test("R14 logout: só o POST /auth/v1/logout com 204 observado deixa de ser erro de transporte", () => {
+  const API = "https://gklhhhyosgasnyoxlrui.supabase.co";
+  const listeners = {};
+  const page = {
+    on: (name, fn) => (listeners[name] = fn),
+    off: () => {},
+  };
+  const req = (method, url, errorText = "net::ERR_ABORTED") => ({
+    method: () => method,
+    url: () => url,
+    failure: () => ({ errorText }),
+    resourceType: () => "fetch",
+  });
+  const respond = (request, status) =>
+    listeners.response({ status: () => status, request: () => request });
+  const logs = [];
+  const original = console.log;
+  console.log = (line) => logs.push(line);
+  let observer;
+  try {
+    observer = sut.observeNavigationSession(page);
+    // Caso provado: 204 antes da falha.
+    const ok = req("POST", API + "/auth/v1/logout?scope=global");
+    listeners.request(ok);
+    respond(ok, 204);
+    listeners.requestfailed(ok);
+    assert.deepEqual(observer.snapshot(), {
+      httpErrors: 0,
+      httpStatusErrors: 0,
+      transportErrors: 0,
+      consoleErrors: 0,
+    });
+    assert.equal(observer.completedEmptyLogout(), 1);
+    assert.equal(observer.networkFailure(), null);
+    // Sem 204, outro status, outro método, outro caminho, outra origem ou outra falha: erro.
+    const cases = [
+      [req("POST", API + "/auth/v1/logout"), null],
+      [req("POST", API + "/auth/v1/logout"), 200],
+      [req("GET", API + "/auth/v1/logout"), 204],
+      [req("POST", API + "/auth/v1/token"), 204],
+      [req("POST", API + "/rest/v1/rpc/x"), 204],
+      [req("POST", "https://contaos-41-hml.vercel.app/auth/v1/logout"), 204],
+      [req("POST", API + "/auth/v1/logout", "net::ERR_CONNECTION_RESET"), 204],
+    ];
+    for (const [r, status] of cases) {
+      listeners.request(r);
+      if (status !== null) respond(r, status);
+      listeners.requestfailed(r);
+    }
+    assert.equal(observer.snapshot().transportErrors, cases.length);
+    assert.equal(observer.completedEmptyLogout(), 1);
+  } finally {
+    console.log = original;
+    observer?.close();
+  }
+  assert.deepEqual(JSON.parse(logs[0]), {
+    phase: "NAVIGATION_LOGOUT_COMPLETED_EMPTY",
+    endpoint: "auth:logout",
+    status: 204,
+    count: 1,
+  });
+  assert.equal(logs.length, 1);
+  const f = sut.navigationCompletedEmptyLogout;
+  assert.equal(f(null, 204), false);
+  assert.equal(f(new Proxy({}, {}), 204), false);
+  assert.equal(
+    f(
+      {
+        method: () => {
+          throw new Error("x");
+        },
+      },
+      204,
+    ),
+    false,
+  );
 });
