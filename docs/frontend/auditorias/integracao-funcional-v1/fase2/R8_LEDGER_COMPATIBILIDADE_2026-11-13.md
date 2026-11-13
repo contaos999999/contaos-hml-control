@@ -21,6 +21,7 @@ Fase 2 continua NÃO CERTIFICADA. Este documento acompanha o BUILD do executor i
   - execuções em ordem crescente e índices crescentes dentro de cada execução;
   - evidência idêntica entre todas as entradas da mesma execução;
   - nunca dois PASS válidos para o mesmo índice.
+  - `artifactId`, `artifactSha256` e `reportSha256` pertencem a uma única execução (`runId`/`attempt`): evidência de uma execução nunca é reaproveitada por outra, nem depois de `SUPERSEDED` (PR #631).
 - **Entrada `SUPERSEDED`:** invalida um PASS sem apagá-lo. Aponta a execução exata (`supersedesRunId`, `supersedesAttempt`) do PASS válido no mesmo índice e o commit da mudança (`changeSha`), com justificativa de 16 a 512 caracteres. Não carrega evidência de PASS. O índice pode então ser reexecutado e receber um novo PASS.
 - **Compatibilidade:** exigida dos PASS que permanecem válidos: mesmo produto e deployment de `NAVIGATION_DEPLOYMENT` e harness em `compatibleHarnessShas`.
 - **Sem lacuna:** nenhum PASS válido depois do primeiro índice pendente, e a retomada calculada tem de ser igual à fixada.
@@ -47,15 +48,15 @@ Fase 2 continua NÃO CERTIFICADA. Este documento acompanha o BUILD do executor i
 
 **Dependências do harness.** Nenhuma mudança em `package.json`, lockfiles, `.github/` ou `scripts/ci/` entre `a3b6c34` e este BUILD.
 
-**Código do harness.** As diferenças entre `a3b6c34` e este BUILD estão em quatro áreas:
+**Código do harness.** As diferenças entre `a3b6c34` e a `main` depois da PR #631 (commit `41bdb90` e seguintes) estão em quatro áreas:
 1. **Ciclo de vida do fence (PR #629).**
    - A aposentadoria do preflight torna o drain mais permissivo apenas quando as três provas existem. Isso não pode transformar em FAIL um caso que passou sob a regra mais estrita da R7.
    - `responded()` acrescenta um caminho de falha `FENCE_REQUEST_LIFECYCLE`, alcançável só por uso fora de ordem do ciclo de vida. Essa falha só pode reprovar casos futuros, nunca aprovar um caso antigo.
 
    Nenhuma das duas mudanças altera o veredito já registrado dos índices 1-25.
 2. **Nonce e ancestralidade R8:** afetam só a admissão.
-3. **Ledger e recorte:** definem quais casos executar, não como cada caso é verificado.
-4. **Relatório v4, resumo final e assinatura de `summarizeNavigation`:** os validadores de linha (`navigationRowValid`), os specs de prontidão, os probes de links e controles e a política de rede de cada caso estão inalterados.
+3. **Ledger e recorte, inclusive a regra de evidência única por execução (PR #631):** definem quais casos executar e quais evidências são aceitas, não como cada caso é verificado.
+4. **Relatório v4, resumo final (com a proteção externa da PR #631) e assinatura de `summarizeNavigation`:** os validadores de linha (`navigationRowValid`), os specs de prontidão, os probes de links e controles e a política de rede de cada caso estão inalterados.
 
 **Controles globais.** Sessão, MASTER, organização, logout e zero erros são executados e exigidos de novo na R8, como pede o item 5 da emenda. Eles não são herdados da R7, cujo `logoutVerified` é `false`.
 

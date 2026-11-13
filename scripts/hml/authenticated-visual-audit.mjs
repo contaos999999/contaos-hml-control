@@ -4422,6 +4422,7 @@ export function validateNavigationLedger(raw, pin = NAVIGATION_LEDGER) {
   const cases = navigationCases(),
     valid = new Map(),
     runs = new Map(),
+    owners = new Map(),
     lastIndex = new Map();
   let lastRun = 0;
   for (const entry of ledger.entries) {
@@ -4457,6 +4458,12 @@ export function validateNavigationLedger(raw, pin = NAVIGATION_LEDGER) {
       if (entry.runId < lastRun || (lastIndex.get(runKey) ?? 0) >= entry.index) fail(code);
       const evidence = runs.get(runKey);
       if (evidence && NAVIGATION_LEDGER_EVIDENCE.some((k) => evidence[k] !== entry[k])) fail(code);
+      // Artefato e relatório pertencem a uma única execução: nunca reaproveitar evidência.
+      for (const k of ["artifactId", "artifactSha256", "reportSha256"]) {
+        const owner = owners.get(k + ":" + entry[k]);
+        if (owner !== undefined && owner !== runKey) fail(code);
+        owners.set(k + ":" + entry[k], runKey);
+      }
       runs.set(runKey, evidence ?? entry);
       lastRun = entry.runId;
       lastIndex.set(runKey, entry.index);
@@ -4573,7 +4580,15 @@ export async function navigationReportLedger(load = loadNavigationLedger) {
     return null;
   }
 }
-export function navigationFinalSummary(records, ledger, pin, { aborted, logoutVerified }) {
+export function navigationFinalSummary(records, ledger, pin, flags) {
+  try {
+    return navigationFinalSummaryUnsafe(records, ledger, pin, flags);
+  } catch {
+    // Nunca lança: o relatório é gravado e lacrado como incompleto.
+    return navigationFinalSummaryUnsafe(records, null, pin, flags);
+  }
+}
+function navigationFinalSummaryUnsafe(records, ledger, pin, { aborted, logoutVerified }) {
   const incremental = pin.resumeFrom > 1;
   if (!incremental) {
     const summary = summarizeNavigation(records);
