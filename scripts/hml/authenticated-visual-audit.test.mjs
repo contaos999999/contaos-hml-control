@@ -18772,7 +18772,7 @@ test("NAV ledger R8: 25 PASS compatíveis retomam exatamente no índice 26 (V110
     (e) => e.code === "NAVIGATION_LEDGER",
   );
 });
-test("NAV ledger R10: ledger integrado v3 encadeia a v2 e invalida os 33 PASS do produto anterior", async () => {
+test("NAV ledger R11: ledger integrado v4 encadeia a v3 e fixa 51 PASS da R10 com o índice 52 pendente", async () => {
   const fs = await import("node:fs/promises");
   const raw = await fs.readFile(
     new URL("../../" + sut.NAVIGATION_LEDGER.path, import.meta.url),
@@ -18780,13 +18780,13 @@ test("NAV ledger R10: ledger integrado v3 encadeia a v2 e invalida os 33 PASS do
   );
   assert.equal(createHash("sha256").update(raw).digest("hex"), sut.NAVIGATION_LEDGER.sha256);
   const ledger = JSON.parse(raw);
-  // v2 reconstruída deterministicamente: as 33 primeiras entradas, encadeadas à v1.
+  // v3 reconstruída deterministicamente: as 66 primeiras entradas, encadeadas à v2.
   const v2 =
     JSON.stringify(
       {
         ...ledger,
-        previousLedgerSha256: "0a8f71f2c5bc8a845d62a4cfca39511dfdcab601c860f8da2894b66a47846408",
-        entries: ledger.entries.slice(0, 33),
+        previousLedgerSha256: "35297ac588a9b8c57f1f3de2cee2369f111f2596e90891d364d8a20cdbd0305d",
+        entries: ledger.entries.slice(0, 66),
       },
       null,
       2,
@@ -18799,15 +18799,12 @@ test("NAV ledger R10: ledger integrado v3 encadeia a v2 e invalida os 33 PASS do
     throw new Error("unexpected");
   };
   const state = await fn("loadNavigationLedger")(undefined, sut.NAVIGATION_LEDGER, history);
-  assert.equal(state.resumeFrom, 1);
-  assert.deepEqual(
-    state.pendingIndices,
-    Array.from({ length: 52 }, (_, i) => i + 1),
-  );
-  assert.equal(state.validIndices.length, 0);
+  assert.equal(state.resumeFrom, 52);
+  assert.deepEqual(state.pendingIndices, [52]);
+  assert.equal(state.validIndices.length, 51);
   const run = fn("navigationRunCases")(state);
-  assert.equal(run.length, 52);
-  assert.deepEqual([run[0].surface, run[0].width, run[0].theme], ["SYS04", 1440, "light"]);
+  assert.equal(run.length, 1);
+  assert.deepEqual([run[0].surface, run[0].width, run[0].theme], ["V123", 390, "dark"]);
   const R7 = [
     43358055422,
     "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
@@ -18823,7 +18820,7 @@ test("NAV ledger R10: ledger integrado v3 encadeia a v2 e invalida os 33 PASS do
     "3025371b6c575cac164f5c5e9068104ee9a1a98d60926499a5230c97f71ac4d7",
   ];
   const passIndices = [...Array.from({ length: 29 }, (_, i) => i + 1), 31, 32, 33, 34];
-  assert.equal(ledger.entries.length, 66);
+  assert.equal(ledger.entries.length, 117);
   assert.deepEqual(
     ledger.entries.slice(0, 33).map((e) => e.index),
     passIndices,
@@ -18838,7 +18835,7 @@ test("NAV ledger R10: ledger integrado v3 encadeia a v2 e invalida os 33 PASS do
       entry.index <= 25 ? R7 : R8,
     );
   }
-  const superseded = ledger.entries.slice(33);
+  const superseded = ledger.entries.slice(33, 66);
   assert.deepEqual(
     superseded.map((e) => e.index),
     [...passIndices].sort((a, b) => a - b),
@@ -18850,6 +18847,39 @@ test("NAV ledger R10: ledger integrado v3 encadeia a v2 e invalida os 33 PASS do
     assert.equal(entry.changeSha, "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97");
     assert.match(entry.justification, /BUILD R10/);
   }
+  const cases = fn("navigationCases")();
+  const r10 = ledger.entries.slice(66);
+  assert.deepEqual(
+    r10.map((e) => e.index),
+    Array.from({ length: 51 }, (_, i) => i + 1),
+  );
+  for (const entry of r10) {
+    const item = cases[entry.index - 1];
+    assert.deepEqual(
+      [entry.surface, entry.width, entry.theme, entry.status, entry.attempt],
+      [item.surface, item.width, item.theme, "PASS", 1],
+    );
+    assert.deepEqual(
+      [
+        entry.runId,
+        entry.frontendSha,
+        entry.harnessSha,
+        entry.deploymentId,
+        entry.artifactId,
+        entry.artifactSha256,
+        entry.reportSha256,
+      ],
+      [
+        43459877744,
+        "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+        "050beb1bbc3ce886227865178b7bdbecef964033",
+        "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
+        14059408905,
+        "5a1b08e2eaa519d3e350488994c8625cd0bc4a60fe9d73e1c19432e717971236",
+        "a70976206a97571b9613ffb55dfb18491a5a76e4e337afd7c8f7b378d50eb2fc",
+      ],
+    );
+  }
   assert.deepEqual(sut.NAVIGATION_DEPLOYMENT, {
     frontendSha: "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
     deploymentId: "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
@@ -18857,7 +18887,7 @@ test("NAV ledger R10: ledger integrado v3 encadeia a v2 e invalida os 33 PASS do
   assert.equal(
     fn("validateNavigationLedgerExtension")(v2, raw),
     true,
-    "v3 só acrescenta à v2 integrada",
+    "v4 só acrescenta à v3 integrada",
   );
   const { raw: other } = ledgerFixture();
   assert.throws(
@@ -22488,8 +22518,8 @@ test("NAV R5 historical plan remains sealed with its four predecessor nonces", (
   }
 });
 
-test("NAV R10 successor consumes R9 and requires the R10 PLAN commit", () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r10");
+test("NAV R11 successor consumes R10 and requires the R11 PLAN commit", () => {
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r11");
   assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR6PlanSha,
@@ -22511,6 +22541,10 @@ test("NAV R10 successor consumes R9 and requires the R10 PLAN commit", () => {
     sut.SINGLE_REQUEST.functionalNavigationR10PlanSha,
     "157b39794b4b631443a664e0a746ed3880bfecea",
   );
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationR11PlanSha,
+    "4710f5d1fcaf8968980336d7bdd79d242d8bb00f",
+  );
   for (const nonce of [
     "integracao-v1-fase2-nav-20261111-r1",
     "integracao-v1-fase2-nav-20261112-r2",
@@ -22521,6 +22555,7 @@ test("NAV R10 successor consumes R9 and requires the R10 PLAN commit", () => {
     "integracao-v1-fase2-nav-20261113-r7",
     "integracao-v1-fase2-nav-20261113-r8",
     "integracao-v1-fase2-nav-20261113-r9",
+    "integracao-v1-fase2-nav-20261113-r10",
   ]) {
     assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
     const request = {
@@ -22836,4 +22871,52 @@ test("R10 diagnóstico do guard nativo de navegação: só valores fechados", ()
   assert.equal(blocked.tests, null);
   assert.deepEqual(sut.navigationNativeGuardDiagnostic(undefined).passedCases, []);
   assert.equal(sut.navigationNativeGuardDiagnostic({ stdout: "x".repeat(1048577) }).tests, null);
+});
+
+test("R11 logout: diagnóstico fechado de transporte durante o logout", async () => {
+  const detail = sut.navigationLogoutTransportDetail;
+  const request = {
+    failure: () => ({ errorText: "net::ERR_ABORTED" }),
+    url: () =>
+      "https://gklhhhyosgasnyoxlrui.supabase.co/rest/v1/rpc/obter_resumo_dashboard?PRIVATE_SENTINEL=1",
+    method: () => "POST",
+    resourceType: () => "fetch",
+    isNavigationRequest: () => false,
+    frame: () => ({ parentFrame: () => null }),
+  };
+  const d = detail(request, "CLICK", { clickAt: 1000, now: 1120.4, started: 1050 });
+  assert.deepEqual(d, {
+    phase: "NAVIGATION_LOGOUT_TRANSPORT",
+    stage: "CLICK",
+    reason: "ABORTED",
+    destination: "API",
+    method: "POST",
+    resourceType: "fetch",
+    endpoint: "rpc:obter_resumo_dashboard",
+    navigationRequest: "NO",
+    frame: "MAIN",
+    msSinceClick: 120,
+    startKnown: true,
+    startedMsSinceClick: 50,
+  });
+  assert.equal(JSON.stringify(d).includes("PRIVATE_SENTINEL"), false);
+  assert.equal(detail(request, "OTHER", {}), null);
+  assert.equal(detail(null, "CLICK", {}), null);
+  assert.equal(detail(request, "DRAIN", {}).msSinceClick, -1);
+  assert.equal(detail(request, "DRAIN", {}).startKnown, false);
+  const throwing = new Proxy({}, {});
+  assert.equal(detail(throwing, "CLICK", {}), null);
+  assert.deepEqual(
+    [...sut.NAVIGATION_LOGOUT_STAGES],
+    ["DRAIN", "MENU_CLOSE", "CONTROL", "CLICK", "REDIRECT", "POST_DRAIN"],
+  );
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /page\.on\("requestfailed", onLogoutFailed\);/);
+  assert.match(source, /page\.off\("requestfailed", onLogoutFailed\);/);
+  assert.match(source, /logoutStage = "CLICK";\n\s+logoutTiming\.clickAt = performance\.now\(\);/);
+  assert.match(source, /if \(logoutDetails >= 16\) return;/);
 });

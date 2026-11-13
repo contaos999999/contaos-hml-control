@@ -4357,7 +4357,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261113-r10",
+  nonce: "integracao-v1-fase2-nav-20261113-r11",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 // Emenda R8 (certificação incremental, PR #626): ledger acumulativo, append-only,
@@ -4365,18 +4365,21 @@ export const NAVIGATION_SCOPE = Object.freeze({
 export const NAVIGATION_LEDGER_SCHEMA = "contaos.navigation.incremental.v1";
 export const NAVIGATION_LEDGER = Object.freeze({
   path: "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
-  // v3 (R10): v2 (1-25 da R7, 26-29 e 31-34 da R8) + SUPERSEDED dos 33 PASS, porque o
-  // produto mudou no BUILD R10 (changeSha e6c8cb0). Nenhum PASS válido; 52 pendentes.
-  sha256: "b38edb0591f37bb4237d15044508429a03e318c9191c7e3165a3ebe998bdd1f6",
-  // Cadeia append-only: hash do ledger fixado anteriormente (v2).
-  previousSha256: "35297ac588a9b8c57f1f3de2cee2369f111f2596e90891d364d8a20cdbd0305d",
-  resumeFrom: 1,
-  pendingCount: 52,
+  // v4 (R11): v3 + 51 PASS (índices 1-51) da R10 (run 43459877744, artefato 14059408905,
+  // ZIP 5a1b08e2…, report a7097620…), cada linha aceita individualmente; pendente: 52.
+  sha256: "2245b4fe3dead145d1b595932df648f3163f810e5b6ddbe57120c84add9a4318",
+  // Cadeia append-only: hash do ledger fixado anteriormente (v3).
+  previousSha256: "b38edb0591f37bb4237d15044508429a03e318c9191c7e3165a3ebe998bdd1f6",
+  resumeFrom: 52,
+  pendingCount: 1,
   // Harness cujos PASS permanecem compatíveis com o harness atual. Cada inclusão
-  // exige prova de não impacto revisada (docs/.../fase2/R8_LEDGER_COMPATIBILIDADE).
+  // exige prova de não impacto revisada (docs/.../fase2/R11_LEDGER_COMPATIBILIDADE).
+  // a3b6c34 e 9a4d0ad só cobriam PASS já invalidados (SUPERSEDED na v3); 050beb1 cobre os
+  // PASS 1-51 da R10.
   compatibleHarnessShas: Object.freeze([
     "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
     "9a4d0ad16a8a64fa04a30208c8c36e7020ec9b01",
+    "050beb1bbc3ce886227865178b7bdbecef964033",
   ]),
 });
 const NAVIGATION_LEDGER_CASE_KEYS = ["index", "surface", "width", "theme", "status"];
@@ -5847,6 +5850,62 @@ export function navigationTransportMarker(request, context) {
       ...context,
       ...navigationTransportDiagnostic(safe),
       category,
+    };
+  } catch {
+    return null;
+  }
+}
+// R11: diagnóstico fechado dos pedidos que falham durante o logout (fora da matriz), só
+// enums e números. Não lança e não altera contagem nem veredito.
+export const NAVIGATION_LOGOUT_STAGES = Object.freeze([
+  "DRAIN",
+  "MENU_CLOSE",
+  "CONTROL",
+  "CLICK",
+  "REDIRECT",
+  "POST_DRAIN",
+]);
+export function navigationLogoutTransportDetail(request, stage, timing) {
+  try {
+    if (!NAVIGATION_LOGOUT_STAGES.includes(stage) || !request || isProxy(request)) return null;
+    const diagnostic = navigationTransportDiagnostic(request);
+    let endpoint = "INVALID",
+      navigationRequest = "UNKNOWN",
+      frame = "UNKNOWN";
+    try {
+      endpoint = navigationEndpointClass(request.url());
+    } catch {
+      endpoint = "INVALID";
+    }
+    try {
+      navigationRequest = request.isNavigationRequest() === true ? "YES" : "NO";
+    } catch {
+      navigationRequest = "UNKNOWN";
+    }
+    try {
+      const owner = request.frame();
+      frame = owner ? (owner.parentFrame() ? "CHILD" : "MAIN") : "NONE";
+    } catch {
+      frame = "UNKNOWN";
+    }
+    const clicked = Number.isFinite(timing?.clickAt) && timing.clickAt > 0;
+    const msSinceClick =
+      clicked && Number.isFinite(timing?.now)
+        ? Math.max(0, Math.min(600000, Math.round(timing.now - timing.clickAt)))
+        : -1;
+    const startKnown = clicked && Number.isFinite(timing?.started);
+    return {
+      phase: "NAVIGATION_LOGOUT_TRANSPORT",
+      stage,
+      ...diagnostic,
+      endpoint,
+      navigationRequest,
+      frame,
+      msSinceClick,
+      startKnown,
+      startedMsSinceClick: startKnown
+        ? Math.max(-600000, Math.min(600000, Math.round(timing.started - timing.clickAt)))
+        : 0,
     };
   } catch {
     return null;
@@ -8641,6 +8700,37 @@ async function runAuthenticatedAudit() {
     privacyState?.c8Observer?.close();
     if (privacyState) privacyState.verified = false;
     let logoutStage = "DRAIN";
+    const logoutTiming = { clickAt: 0 },
+      logoutStarts = new WeakMap();
+    let logoutDetails = 0;
+    const onLogoutRequest = (request) => {
+      try {
+        logoutStarts.set(request, performance.now());
+      } catch {
+        // Somente diagnóstico.
+      }
+    };
+    const onLogoutFailed = (request) => {
+      try {
+        if (logoutDetails >= 16) return;
+        const detail = navigationLogoutTransportDetail(request, logoutStage, {
+          ...logoutTiming,
+          now: performance.now(),
+          started: logoutStarts.get(request),
+        });
+        if (detail) {
+          logoutDetails++;
+          console.log(JSON.stringify(detail));
+        }
+      } catch {
+        // Somente diagnóstico: nunca interfere na contagem de transportErrors.
+      }
+    };
+    const logoutDiagnostics = scope === NAVIGATION_SCOPE && !!page && !page.isClosed();
+    if (logoutDiagnostics) {
+      page.on("request", onLogoutRequest);
+      page.on("requestfailed", onLogoutFailed);
+    }
     if (loggedIn && page && !page.isClosed())
       try {
         if (scope === NAVIGATION_SCOPE) await waitNavigationNetwork(page, fence);
@@ -8651,6 +8741,7 @@ async function runAuthenticatedAudit() {
         const exit = page.getByRole("button", { name: "Sair", exact: true });
         if ((await exit.count()) === 1) {
           logoutStage = "CLICK";
+          logoutTiming.clickAt = performance.now();
           if (scope === NAVIGATION_SCOPE) await clickNavigationLogout(page, fence);
           else await exit.click();
           logoutStage = "REDIRECT";
@@ -8664,6 +8755,13 @@ async function runAuthenticatedAudit() {
           logoutFailure = { stage: "CONTROL", code: "NAVIGATION_LOGOUT_CONTROL" };
       } catch (error) {
         if (scope === NAVIGATION_SCOPE) logoutFailure = navigationLogoutFailure(error, logoutStage);
+      }
+    if (logoutDiagnostics)
+      try {
+        page.off("request", onLogoutRequest);
+        page.off("requestfailed", onLogoutFailed);
+      } catch {
+        // Somente diagnóstico.
       }
     if (scope === NAVIGATION_SCOPE && !logoutVerified && !logoutFailure)
       logoutFailure = {
@@ -11460,7 +11558,10 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR9PlanSha: "771a3e0aeeb6b957c8cd2429184d8cf8fc279af8",
   // PLAN R10 (commit), ancestral obrigatório: correção do AppShell e autoligação de V117.
   functionalNavigationR10PlanSha: "157b39794b4b631443a664e0a746ed3880bfecea",
+  // PLAN R11 (commit), ancestral obrigatório: logout instrumentado e execução de fechamento.
+  functionalNavigationR11PlanSha: "4710f5d1fcaf8968980336d7bdd79d242d8bb00f",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261113-r10",
     "integracao-v1-fase2-nav-20261113-r9",
     "integracao-v1-fase2-nav-20261113-r8",
     "integracao-v1-fase2-nav-20261113-r7",
@@ -11534,7 +11635,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261113-r10",
+    nonce: "integracao-v1-fase2-nav-20261113-r11",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -11852,6 +11953,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationR8PlanSha,
       SINGLE_REQUEST.functionalNavigationR9PlanSha,
       SINGLE_REQUEST.functionalNavigationR10PlanSha,
+      SINGLE_REQUEST.functionalNavigationR11PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
