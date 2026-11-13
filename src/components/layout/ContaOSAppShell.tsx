@@ -23,10 +23,12 @@ import { CopilotoContrato } from "@/components/copiloto/CopilotoContrato";
 
 /** O shell é apenas apresentação; componentes e RLS preservam a autorização real. */
 export function ContaOSAppShell({ children }: { children: ReactNode }) {
-  // Caminho da rota RENDERIZADA (último match confirmado). Durante uma navegação pendente,
-  // `location` já aponta para o destino enquanto `children` ainda é a rota anterior; decidir o
-  // layout por ele remontaria a página anterior (pedidos repetidos e abortados) ao sair do shell.
-  const pathname = useRouterState({
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Caminho da rota RENDERIZADA (último match confirmado), usado só para escolher o layout.
+  // Durante uma navegação pendente, `location` já aponta para o destino enquanto `children`
+  // ainda é a rota anterior; trocar o layout por ele remontaria a página anterior (pedidos
+  // repetidos e abortados) ao sair do shell.
+  const pathnameRenderizado = useRouterState({
     select: (s) => s.matches?.[s.matches.length - 1]?.pathname ?? s.location.pathname,
   });
   const rotaAdministrativaAtiva = (destino: string) =>
@@ -214,7 +216,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
       ativo = false;
     };
   }, [pathname, revisaoSessao]);
-  if (rotaSemSidebar(pathname)) return <>{children}</>;
+  if (rotaSemSidebar(pathnameRenderizado)) return <>{children}</>;
   return (
     <div className="min-h-screen bg-background text-foreground">
       {liberado && (
