@@ -18460,6 +18460,221 @@ function navigationReportV3Fixture() {
     aborted: null,
   };
 }
+// Emenda R8: ledger incremental fixado por SHA-256 e retomada pelo primeiro índice pendente.
+function ledgerFixture(count = 25, patch = () => {}) {
+  const entries = fn("navigationCases")()
+    .slice(0, count)
+    .map(({ surface, width, theme }, position) => ({
+      index: position + 1,
+      surface,
+      width,
+      theme,
+      status: "PASS",
+      compatibility: "valid",
+      runId: 43358055422,
+      attempt: 1,
+      frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
+      harnessSha: "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
+      deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
+      artifactId: 14008077669,
+      artifactSha256: "c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3",
+      reportSha256: "e".repeat(64),
+      justification: "",
+    }));
+  const ledger = {
+    schema: "contaos.navigation.incremental.v1",
+    catalogueSha256: fn("navigationCatalogueSha256")(),
+    entries,
+  };
+  patch(ledger);
+  const raw = JSON.stringify(ledger, null, 2) + "\n";
+  const pin = {
+    ...sut.NAVIGATION_LEDGER,
+    sha256: createHash("sha256").update(raw).digest("hex"),
+    resumeFrom: 26,
+  };
+  return { raw, pin, ledger };
+}
+test("NAV ledger R8: 25 PASS compatíveis retomam exatamente no índice 26 (V110/390)", async () => {
+  const { raw, pin } = ledgerFixture();
+  const state = fn("validateNavigationLedger")(raw, pin);
+  assert.equal(state.resumeFrom, 26);
+  assert.deepEqual(
+    state.validIndices,
+    Array.from({ length: 25 }, (_, i) => i + 1),
+  );
+  const run = fn("navigationRunCases")(26);
+  assert.equal(run.length, 27);
+  assert.deepEqual([run[0].surface, run[0].width, run[0].theme], ["V110", 390, "dark"]);
+  const loaded = await fn("loadNavigationLedger")(async () => raw, pin);
+  assert.equal(loaded.resumeFrom, 26);
+  await assert.rejects(
+    fn("loadNavigationLedger")(async () => {
+      throw new Error("ENOENT");
+    }, pin),
+    (e) => e.code === "NAVIGATION_LEDGER",
+  );
+});
+test("NAV ledger R8: hash do ledger integrado ainda não fixado falha fechado", () => {
+  const { raw } = ledgerFixture();
+  assert.equal(sut.NAVIGATION_LEDGER.sha256, null);
+  assert.throws(
+    () => fn("validateNavigationLedger")(raw, sut.NAVIGATION_LEDGER),
+    (e) => e.code === "NAVIGATION_LEDGER",
+  );
+});
+const LEDGER_SUPERSEDED = "alteração de shell compartilhado com impacto presumido";
+for (const [name, patch, tamper] of [
+  ["hash adulterado", () => {}, (raw) => raw.replace('"PASS"', '"PASS" ')],
+  ["catálogo divergente", (l) => (l.catalogueSha256 = "0".repeat(64))],
+  ["superfície trocada", (l) => (l.entries[3].surface = "V123")],
+  ["largura trocada", (l) => (l.entries[3].width = 1440)],
+  ["status não PASS", (l) => (l.entries[0].status = "FAIL")],
+  ["PASS duplicado válido", (l) => l.entries.push({ ...l.entries[0], runId: 1 })],
+  ["mesma evidência repetida", (l) => l.entries.push({ ...l.entries[0] })],
+  ["lacuna antes do índice 26", (l) => l.entries.splice(10, 1)],
+  [
+    "PASS além da retomada",
+    (l) =>
+      l.entries.push({ ...l.entries[24], index: 27, surface: "V111", width: 1440, theme: "light" }),
+  ],
+  ["produto diferente", (l) => (l.entries[0].frontendSha = "f".repeat(40))],
+  ["deployment diferente", (l) => (l.entries[0].deploymentId = "dpl_otherDeploy1")],
+  ["harness não declarado compatível", (l) => (l.entries[0].harnessSha = "f".repeat(40))],
+  ["attempt diferente de 1", (l) => (l.entries[0].attempt = 2)],
+  ["campo extra", (l) => (l.entries[0].extra = true)],
+  ["campo ausente", (l) => delete l.entries[0].reportSha256],
+  ["hash de relatório inválido", (l) => (l.entries[0].reportSha256 = "x")],
+  ["schema desconhecido", (l) => (l.schema = "contaos.navigation.incremental.v0")],
+  [
+    "superseded sem justificativa",
+    (l) => l.entries.push({ ...l.entries[0], runId: 2, compatibility: "superseded" }),
+  ],
+  [
+    "superseded sem PASS anterior",
+    (l) =>
+      l.entries.unshift({
+        ...l.entries[0],
+        runId: 3,
+        compatibility: "superseded",
+        justification: LEDGER_SUPERSEDED,
+      }),
+  ],
+  ["válido com justificativa", (l) => (l.entries[0].justification = "x")],
+])
+  test("NAV ledger R8 recusa: " + name, () => {
+    const built = ledgerFixture(25, patch);
+    const raw = tamper ? tamper(built.raw) : built.raw;
+    assert.throws(
+      () => fn("validateNavigationLedger")(raw, built.pin),
+      (e) => e.code === "NAVIGATION_LEDGER",
+    );
+  });
+test("NAV ledger R8: superseded justificado invalida o PASS e recua a retomada", () => {
+  const built = ledgerFixture(25, (l) =>
+    l.entries.push({
+      ...l.entries[4],
+      runId: 99,
+      compatibility: "superseded",
+      justification: LEDGER_SUPERSEDED,
+    }),
+  );
+  assert.throws(
+    () => fn("validateNavigationLedger")(built.raw, built.pin),
+    (e) => e.code === "NAVIGATION_LEDGER",
+    "índice 5 invalidado deixa PASS posteriores como lacuna",
+  );
+  const last = ledgerFixture(25, (l) =>
+    l.entries.push({
+      ...l.entries[24],
+      runId: 99,
+      compatibility: "superseded",
+      justification: LEDGER_SUPERSEDED,
+    }),
+  );
+  assert.equal(
+    fn("validateNavigationLedger")(last.raw, { ...last.pin, resumeFrom: 25 }).resumeFrom,
+    25,
+  );
+});
+function incrementalReport(patch = {}) {
+  const { pin, raw } = ledgerFixture();
+  const ledger = fn("validateNavigationLedger")(raw, pin);
+  const base = navigationReportV3Fixture();
+  const records = base.records.slice(25);
+  const report = {
+    ...base,
+    schema: "contaos.navigation.audit.v4",
+    ledgerSha256: ledger.sha256,
+    resumeFrom: 26,
+    records,
+    summary: {
+      expected: 27,
+      observed: 27,
+      passed: 27,
+      failed: 0,
+      resumeFrom: 26,
+      runComplete: true,
+      cumulativeMatrixComplete: true,
+    },
+    ...patch,
+  };
+  return { report, ledger };
+}
+test("NAV v4 aceita só a execução 26-52 completa, sem erros e com controles globais", () => {
+  const validate = fn("validateNavigationReportIncremental");
+  const { report, ledger } = incrementalReport();
+  assert.deepEqual(fn("summarizeNavigationIncremental")(report.records, ledger), report.summary);
+  assert.equal(validate(report, ledger), true);
+  for (const patch of [
+    { schema: "contaos.navigation.audit.v3" },
+    { ledgerSha256: "0".repeat(64) },
+    { resumeFrom: 1 },
+    { logoutVerified: false },
+    { sessionVerified: false },
+    { masterVerified: false },
+    { organizationVerified: false },
+    { transportErrors: 1, httpErrors: 1 },
+    { pageErrors: 1 },
+    { blockedMutations: 1 },
+    { fenceDiagnostic: { failed: true, code: "FENCE_DRAIN_TIMEOUT" } },
+    { aborted: "NAVIGATION_INCOMPLETE" },
+    { frontendSha: "a".repeat(40) },
+    { summary: { ...report.summary, matrixComplete: true } },
+    { summary: { ...report.summary, cumulativeMatrixComplete: false } },
+  ])
+    assert.equal(validate({ ...report, ...patch }, ledger), false, JSON.stringify(patch));
+  const partial = { ...report, records: report.records.slice(0, 26) };
+  partial.summary = fn("summarizeNavigationIncremental")(partial.records, ledger);
+  assert.equal(partial.summary.runComplete, false);
+  assert.equal(partial.summary.cumulativeMatrixComplete, false);
+  assert.equal(validate(partial, ledger), false);
+  const failedRow = {
+    ...report,
+    records: report.records.map((r, i) => (i === 3 ? { ...r, backVerified: false } : r)),
+  };
+  failedRow.summary = fn("summarizeNavigationIncremental")(failedRow.records, ledger);
+  assert.equal(validate(failedRow, ledger), false);
+});
+test("NAV v4 nunca conta casos pulados nem afirma 52/52 de uma execução parcial", () => {
+  const { report, ledger } = incrementalReport();
+  const withSkipped = navigationReportV3Fixture().records;
+  const summary = fn("summarizeNavigationIncremental")(withSkipped, ledger);
+  assert.equal(summary.runComplete, false);
+  assert.equal(summary.cumulativeMatrixComplete, false);
+  assert.equal(summary.expected, 27);
+  assert.equal("matrixComplete" in summary, false);
+  assert.equal(
+    fn("validateNavigationReportIncremental")({ ...report, records: withSkipped, summary }, ledger),
+    false,
+  );
+  const moved = { ...report, records: [...report.records.slice(1), report.records[0]] };
+  assert.equal(
+    fn("summarizeNavigationIncremental")(moved.records, ledger).runComplete,
+    true,
+    "ordem diferente não muda a cobertura, que é por chave única",
+  );
+});
 test("NAV R3 v3 accepts only the complete zero-error matrix with separate native evidence", () => {
   const validate = fn("validateNavigationReport"),
     report = navigationReportV3Fixture();
@@ -18697,7 +18912,7 @@ async function actualNavigationReportInitializer() {
   assert.ok(initializer);
   return new Function(
     "deps",
-    "const {scope,NAVIGATION_SCOPE,proof,records,summary,native,navigationNativeProof,navigationSession,flags,logoutVerified,logoutFailure,fence,errors,navigationHttpErrors,navigationHttpStatusErrors,navigationTransportErrors,aborted,digest,navigationFenceDiagnostic}=deps;return (" +
+    "const {scope,NAVIGATION_SCOPE,proof,records,summary,native,navigationNativeProof,navigationSession,flags,logoutVerified,logoutFailure,fence,errors,navigationHttpErrors,navigationHttpStatusErrors,navigationTransportErrors,aborted,digest,navigationFenceDiagnostic,incremental,ledger}=deps;return (" +
       initializer.getText(file) +
       ");",
   );
@@ -18728,9 +18943,25 @@ test("NAV R3 actual producer emits v3 with separate native hash and stopped clea
     aborted: null,
     digest: (value) => createHash("sha256").update(value).digest("hex"),
     navigationFenceDiagnostic: sut.navigationFenceDiagnostic,
+    incremental: false,
+    ledger: null,
   };
   const report = factory(input);
   assert.equal(sut.validateNavigationReport(report), true);
+  // Emenda R8: com ledger e retomada, o mesmo produtor emite v4 amarrado ao ledger.
+  const resumed = incrementalReport();
+  const v4 = factory({
+    ...input,
+    incremental: true,
+    ledger: resumed.ledger,
+    records: resumed.report.records,
+    summary: resumed.report.summary,
+  });
+  assert.equal(v4.schema, "contaos.navigation.audit.v4");
+  assert.equal(v4.ledgerSha256, resumed.ledger.sha256);
+  assert.equal(v4.resumeFrom, 26);
+  assert.equal(sut.validateNavigationReportIncremental(v4, resumed.ledger), true);
+  assert.equal(sut.validateNavigationReport(v4), false);
   assert.equal(
     report.navigationNativeProofSha256,
     createHash("sha256").update('{"supplement":8}').digest("hex"),
