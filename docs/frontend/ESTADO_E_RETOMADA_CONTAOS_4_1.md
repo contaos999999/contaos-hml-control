@@ -1,3 +1,9 @@
+## Fase 2 R9: R8 terminal (26-29 PASS, falhas 30 e 35 em LINK_CLICK→SYS04), 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. Integrados: #629 (correção do preflight CORS de GET; V110/390 passou na R8), #630 (executor incremental e ledger R7 `0a8f71f2…` com os índices 1-25), #631 (evidência única) e REQUEST R8 #632 (merge `9a4d0ad`, revisão canônica `5887757273`). Auth R8 `43388821235` attempt 1: preflight SUCCESS e privado `131764048105` FAILURE; artefato `14020676685` (ZIP `ab15acd3…`, report `3025371b…`, v4, resumo 10/27).
+
+Resultado: índices 26-29 PASS (candidatos), índice 30 V112/390 FAIL `NAVIGATION_CASE` por dois GET `ABORTED` em LINK_CLICK→SYS04 (`transportErrors` 2), índices 31-34 PASS não candidatos, índice 35 V115/1440 FAIL `FENCE_DRAIN_TIMEOUT` após POST RPC `ABORTED`, índices 36-52 não executados; `logoutVerified=false`. R8 consumida. Padrão: todas as falhas desse tipo desde o R6 vão para SYS04; causa dos abortos NÃO COMPROVADA. Próxima tarefa: integrar o PLAN R9; BUILD R9 só no harness (instrumentação segura de transporte e drain, RED/GREEN do preflight órfão de POST, ledger v2 com 26-29 encadeado e retomada 30, nonce R9); REQUEST R9. Correção de produto só com causa demonstrada, com novo deployment e `SUPERSEDED` de todos os PASS. Backend/PROD/RBAC/RLS/isolamento/Zero-Drift/LOCK preservados.
+
 ## Fase 2 R8: R7 terminal e certificação incremental, 13/11/2026 Bahia
 
 Fase 2 NÃO CERTIFICADA. BUILD R7 PR#622 integrou `3638cdd381cb911f6bdc115169891a25479b7a25` (revisão independente 5885268684); pins PR#624 integraram `e1dee125da4fd1b1d75759fc1ed682937edc6a46` (5885390560); REQUEST R7 PR#625 integrou `a3b6c34936a095fdca98bb79c3f21d28ed0e3979`, revisão canônica `5885461254`. HML `dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh`. Fixtures `43358055500` SUCCESS; Auth `43358055422` attempt 1 preflight SUCCESS e privado `131665158901` FAILURE, sem rerun/replay.
