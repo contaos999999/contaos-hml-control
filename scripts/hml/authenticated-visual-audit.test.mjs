@@ -22923,7 +22923,15 @@ test("R11 logout: diagnóstico fechado de transporte durante o logout", async ()
   assert.match(source, /sessionPhases\.beforeLogout = sessionCount\(\);/);
   assert.match(source, /sessionPhases\.afterLogout = sessionCount\(\);/);
   assert.match(source, /sessionPhases\.afterTeardown = sessionCount\(\);/);
-  assert.match(source, /phase: "NAVIGATION_SESSION_TRANSPORT_PHASES", \.\.\.sessionPhases/);
+  assert.match(
+    source,
+    /JSON\.stringify\(\{ phase: "NAVIGATION_SESSION_TRANSPORT_PHASES", \.\.\.sessionPhases \}\)/,
+  );
+  assert.match(
+    source,
+    /const sessionPhases = \{ beforeLogout: -1, afterLogout: -1, afterTeardown: -1 \};/,
+  );
+  assert.equal(source.match(/sessionPhases\.[A-Za-z]+ = /g).length, 3);
   const before = source.indexOf("sessionPhases.beforeLogout = sessionCount();");
   const off = source.indexOf('page.off("requestfailed", onLogoutFailed);');
   const after = source.indexOf("sessionPhases.afterLogout = sessionCount();");

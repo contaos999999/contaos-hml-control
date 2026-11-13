@@ -19,7 +19,8 @@ A Fase 2 continua NÃO CERTIFICADA. Este registro sustenta a inclusão de `050be
 O BUILD R11 muda apenas:
 
 1. **Instrumentação do logout.** São ouvintes `request`/`requestfailed` registrados no bloco de logout, depois que a matriz terminou, e removidos ao fim dele. Emitem só o marcador fechado `NAVIGATION_LOGOUT_TRANSPORT`, protegidos por `try/catch`, e não tocam contadores, fence, relatório nem veredito.
-2. **Nonce e ancestral do PLAN.** `integracao-v1-fase2-nav-20261113-r11`, R10 consumida, PLAN R11 exigido como ancestral.
-3. **Pin do ledger.** v4 encadeada à v3 (`b38edb05…`), retomada 52, `pendingCount` 1.
+2. **Contadores da sessão por fase.** Três leituras do contador de transporte da sessão (antes do logout, depois do logout e depois do encerramento do navegador), emitidas no marcador fechado `NAVIGATION_SESSION_TRANSPORT_PHASES`, só com inteiros, depois da matriz e sem alterar contadores nem veredito.
+3. **Nonce e ancestral do PLAN.** `integracao-v1-fase2-nav-20261113-r11`, R10 consumida, PLAN R11 exigido como ancestral.
+4. **Pin do ledger.** v4 encadeada à v3 (`b38edb05…`), retomada 52, `pendingCount` 1.
 
 Nada disso participa da verificação de um caso (navegação direta, recarga, menu, links, controles, contadores por linha e prazos). O produto e o deployment continuam `e6c8cb0` e `dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz`.
