@@ -3802,6 +3802,7 @@ export async function installNativeFence({
     failureCommand: null,
     failureProtocolCode: null,
     failureReason: null,
+    drainTimeout: null,
     verifiedDocuments: 0,
     verifiedScripts: 0,
     verifiedAssets: 0,
@@ -4066,6 +4067,7 @@ export async function installNativeFence({
       canceledInitialRequests: lifecycle.snapshot().canceled,
       activeNetworkRequests: lifecycle.snapshot().active,
       pendingNetworkAssociations: lifecycle.snapshot().pendingNetwork,
+      drainTimeout: state.drainTimeout,
     }),
     assertSafe() {
       if (state.failed || closed || state.verifiedDocuments === 0 || state.verifiedScripts === 0)
@@ -4077,6 +4079,11 @@ export async function installNativeFence({
         if (state.failed || closed) fail(state.failureCode || "FENCE_CDP_CLOSED");
         const remaining = deadline - performance.now();
         if (remaining <= 0) {
+          state.drainTimeout = {
+            handlers: active.size,
+            requests: lifecycle.snapshot().active,
+            associations: lifecycle.snapshot().pendingNetwork,
+          };
           invalidate({ code: "FENCE_DRAIN_TIMEOUT" });
           fail("FENCE_DRAIN_TIMEOUT");
         }
@@ -4617,6 +4624,12 @@ export function navigationFenceDiagnostic(snapshot) {
       ? reason
       : null,
     lifecycle: navigationPlain(metadata, lifecycleKeys) ? safeLifecycleMetadata(metadata) : null,
+    drainTimeout: (() => {
+      const d = navigationOwnValue(snapshot, "drainTimeout");
+      return d && ["handlers", "requests", "associations"].every(
+        (k) => Number.isInteger(d[k]) && d[k] >= 0 && d[k] <= 65536,
+      ) ? { handlers: d.handlers, requests: d.requests, associations: d.associations } : null;
+    })(),
   };
 }
 export function navigationLogoutFailure(error, stage) {
@@ -5792,11 +5805,6 @@ export async function runNavigationAudit(page, fence, proof) {
             if (item.width < 768) {
               menu = (await page.locator(`a[href="${target.path}"]:visible`).count()) === 0;
             }
-            // Establish source-route network quiescence BEFORE navigating away.
-            // Otherwise in-flight API fetches can be aborted by route unmount,
-            // leaving an ambiguous CDP lifecycle and failing the strict fence.
-            // Do not ignore aborted requests or relax the fence deadline.
-            await waitNavigationNetwork(page, fence);
             row.operation = "LINK_CLICK";
             row.target = target.dest;
             await clickPath(target.path, item.width, menu);
