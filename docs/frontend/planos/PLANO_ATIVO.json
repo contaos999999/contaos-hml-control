@@ -4173,5 +4173,48 @@
     "backend_autorizado": false,
     "workflow_autorizado": false,
     "prod_autorizado": false
+  },
+  "integracao_funcional_fase2_r8": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R8_FENCE_DRAIN_V110_PLAN_GATE_2026-11-13.md",
+    "emenda_certificacao_incremental": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R8_EMENDA_CERTIFICACAO_INCREMENTAL_2026-11-13.md",
+    "baseline_frontend": "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist_candidata": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "src/components/layout/ContaOSAppShell.tsx",
+      "src/test/appShellSidebar.test.tsx"
+    ],
+    "produto_condicionado_a_prova_causal": true,
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r8",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2",
+      "integracao-v1-fase2-nav-20261112-r3",
+      "integracao-v1-fase2-nav-20261112-r4",
+      "integracao-v1-fase2-nav-20261112-r5",
+      "integracao-v1-fase2-nav-20261112-r6",
+      "integracao-v1-fase2-nav-20261113-r7"
+    ],
+    "r7_run": 43358055422,
+    "r7_private_job": 131665158901,
+    "r7_artifact": 14008077669,
+    "r7_artifact_digest": "sha256:c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3",
+    "r7_observados": 26,
+    "r7_pass_indices": "1-25",
+    "r7_fail": {
+      "indice": 26,
+      "surface": "V110",
+      "width": 390,
+      "code": "FENCE_DRAIN_TIMEOUT"
+    },
+    "r7_nao_executados": "27-52",
+    "resume_from_inicial_candidato": 26,
+    "request_chaves": 7,
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false
   }
 }

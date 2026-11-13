@@ -1,3 +1,11 @@
+## Fase 2 R8: R7 terminal e certificação incremental, 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. BUILD R7 PR#622 integrou `3638cdd381cb911f6bdc115169891a25479b7a25` (revisão independente 5885268684); pins PR#624 integraram `e1dee125da4fd1b1d75759fc1ed682937edc6a46` (5885390560); REQUEST R7 PR#625 integrou `a3b6c34936a095fdca98bb79c3f21d28ed0e3979`, revisão canônica `5885461254`. HML `dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh`. Fixtures `43358055500` SUCCESS; Auth `43358055422` attempt 1 preflight SUCCESS e privado `131665158901` FAILURE, sem rerun/replay.
+
+Artefato `14008077669`, 1900 bytes, ZIP digest `c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3`. Resultado: 26/52 observados, 25 PASS (índices 1–25, inclui V107/390 corrigido), FAIL no índice 26 V110/390 LINK_CLICK→SYS04, três GET REST abortadas, `FENCE_DRAIN_TIMEOUT`, `NAVIGATION_INCOMPLETE`; índices 27–52 não executados. R7 consumida e não certifica.
+
+Direção aprovou certificação incremental por ledger acumulativo (emenda R8): PASS históricos só com evidência original e compatibilidade comprovadas; REQUEST mantém sete chaves e o recorte vem do ledger integrado; retomada candidata pelo índice 26. Próxima tarefa: integrar PLAN R8 + emenda; investigação causal e RED do V110/390; BUILD separado do mecanismo incremental com RED/GREEN adversariais; nonce R8; REQUEST R8 única. Certificado somente com 52/52 consolidados, logout e controles globais verificados, zero erros e PR final integrada. Backend/PROD/RBAC/RLS/isolamento/Zero-Drift/LOCK preservados.
+
 ## Fase 2 R7: R6 terminal e correção do commit móvel, 13/11/2026 Bahia
 
 Fase 2 NÃO CERTIFICADA. BUILD R6 PR#619 integrou `70179cf4b8cb36a0a2d9a19134cf0b13a59deeaf`; REQUEST R6 PR#620 integrou `7c3a8fda149d705adb906b1f10a53e20869018cc`, revisão canônica `5884323862`, CI e pais corretos. Fixtures `43339435100` SUCCESS; Auth `43339435026` preflight PASS e privado `131604313438` FAILURE, sem rerun/replay.
