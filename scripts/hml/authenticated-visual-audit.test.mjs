@@ -21315,12 +21315,16 @@ test("NAV R5 historical plan remains sealed with its four predecessor nonces", (
   }
 });
 
-test("NAV R6 successor consumes R5 and requires the integrated quiescence plan", () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261112-r6");
+test("NAV R7 successor consumes R6 and requires the integrated R7 PLAN", () => {
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r7");
   assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR6PlanSha,
     "37369db9066e80f33280922c8c78b460208097ca",
+  );
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationR7PlanSha,
+    "dbcec252851cd867655aaaabc8f2160993f8f46b",
   );
   for (const nonce of [
     "integracao-v1-fase2-nav-20261111-r1",
@@ -21328,6 +21332,7 @@ test("NAV R6 successor consumes R5 and requires the integrated quiescence plan",
     "integracao-v1-fase2-nav-20261112-r3",
     "integracao-v1-fase2-nav-20261112-r4",
     "integracao-v1-fase2-nav-20261112-r5",
+    "integracao-v1-fase2-nav-20261112-r6",
   ]) {
     assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
     const request = {
