@@ -4624,12 +4624,14 @@ export function navigationFenceDiagnostic(snapshot) {
       ? reason
       : null,
     lifecycle: navigationPlain(metadata, lifecycleKeys) ? safeLifecycleMetadata(metadata) : null,
-    drainTimeout: (() => {
-      const d = navigationOwnValue(snapshot, "drainTimeout");
-      return d && ["handlers", "requests", "associations"].every(
-        (k) => Number.isInteger(d[k]) && d[k] >= 0 && d[k] <= 65536,
-      ) ? { handlers: d.handlers, requests: d.requests, associations: d.associations } : null;
-    })(),
+    ...(code === "FENCE_DRAIN_TIMEOUT" ? {
+      drainTimeout: (() => {
+        const d = navigationOwnValue(snapshot, "drainTimeout");
+        return d && ["handlers", "requests", "associations"].every(
+          (k) => Number.isInteger(d[k]) && d[k] >= 0 && d[k] <= 65536,
+        ) ? { handlers: d.handlers, requests: d.requests, associations: d.associations } : null;
+      })(),
+    } : {}),
   };
 }
 export function navigationLogoutFailure(error, stage) {
