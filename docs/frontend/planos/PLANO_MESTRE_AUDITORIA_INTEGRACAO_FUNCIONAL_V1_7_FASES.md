@@ -279,7 +279,7 @@ Este anexo foi derivado de `docs/frontend/auditorias/integracao-funcional-v1/fas
 
 **Os nomes dos jobs e artefatos nesta tabela são DESIGN PROPOSTO: ainda não existem necessariamente no GitHub.** A criação de workflow precisa de PLAN, revisão e CI. Não iniciar HML pela mera existência deste quadro.
 
-**Critério quantitativo PROPOSTO, sujeito ao titular:** inventariar **138/138** posições por fase (com `PASS`, `FAIL`, `BLOCKED` ou `N_A_JUSTIFICADO`), exigir `FAIL=0`, `BLOCKED=0`, e para todos os casos classificados aplicáveis, `PASS=100%`; para cada `N_A_JUSTIFICADO`, documento de justificativa, fonte e aprovação. A Fase 7 só fecha com **7/7 certificados** válidos, inclusive o seu próprio, após todas as dependências. Definir orçamento de tempo, identidade de HML, limites de fixture, limpeza, contratos de relatório e SLA em PLAN específico, com aprovação expressa antes de rodar, evitando números arbitrários.
+**Critério quantitativo PROPOSTO, sujeito ao titular:** inventariar **138/138** posições por fase (com `PASS`, `FAIL`, `BLOCKED` ou `N_A_JUSTIFICADO`), exigir `FAIL=0`, `BLOCKED=0`, e para todos os casos classificados aplicáveis, `PASS=100%`; para cada `N_A_JUSTIFICADO`, documento de justificativa, fonte e aprovação. A Fase 7 só fecha com **6/6 certificados prévios** válidos, emitindo o sétimo certificado global somente após reconciliação e revisão independente. Definir orçamento de tempo, identidade de HML, limites de fixture, limpeza, contratos de relatório e SLA em PLAN específico, com aprovação expressa antes de rodar, evitando números arbitrários.
 
 **Forma do recibo por caso, proposta:** `caseId`, `sourceConnectionId`, `phase`, `origin`, `destination`, `classification`, `applicability`, `operation`, `expected`, `observed`, `status`, `frontendSha`, `backendSha`, `harnessSha`, `deploymentId`, `workflowRunId`, `artifactId`, `sha256`, `reviewId`, `cleanupStatus`. Payloads e segredos não são exportados. Schema e negativas deverão ser implementados, testados e revisados em BUILD posterior.
 
@@ -311,7 +311,7 @@ Toda decisão sobre preservação ou reteste precisa registrar `baseline → HEA
 1. **HISTÓRICO CONSOLIDADO:** fatos conferidos em documentos, certificados, PRs e reports já integrados; o merge deste arquivo não certifica os novos gates.
 2. **PROPOSTA DE DETALHAMENTO:** novos critérios, jobs, matrizes, fixtures e thresholds das Fases 3–7 descritos nesta PR; não executáveis como obrigação normativa até aceite.
 3. **PLANO APROVADO PELO TITULAR:** decisão expressa e rastreável do titular identificando **versão, SHA e escopo de aprovação**, inclusive divergências e N/A; aprovação de review técnico não substitui aceite do titular.
-4. **GATE OPERACIONAL INTEGRADO:** plano aprovado, review independente APPPROVE no HEAD, checks obrigatórios SUCCESS, merge protegido e readback em `main`; somente então abrir PLAN/BUILD da fase autorizada.
+4. **GATE OPERACIONAL INTEGRADO:** plano aprovado, review independente APPROVE no HEAD, checks obrigatórios SUCCESS, merge protegido e readback em `main`; somente então abrir PLAN/BUILD da fase autorizada.
 
 **Registro de aceite pendente (não preencher antes da manifestação):**
 
