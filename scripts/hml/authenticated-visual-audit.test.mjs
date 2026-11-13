@@ -18945,6 +18945,26 @@ test("NAV resumo final nunca lança, mesmo com estado de ledger inconsistente", 
     assert.equal(final.summary.cumulativeMatrixComplete, false);
   }
 });
+test("NAV resumo final: a proteção externa lacra como incompleto quando o próprio cálculo lança", () => {
+  const { report, ledger } = incrementalReport();
+  let reads = 0;
+  // Falha na primeira leitura do pin, fora de qualquer try interno.
+  const pin = {
+    get resumeFrom() {
+      reads++;
+      if (reads === 1) throw new Error("falha transitória");
+      return 26;
+    },
+  };
+  const r = fn("navigationFinalSummary")(report.records, ledger, pin, {
+    aborted: null,
+    logoutVerified: true,
+  });
+  assert.equal(reads >= 2, true);
+  assert.equal(r.incremental, true);
+  assert.equal(r.summary.runComplete, false);
+  assert.equal(r.summary.cumulativeMatrixComplete, false);
+});
 test("NAV resumo final: modo incremental, abortos, logout e ledger ausente nunca concluem", () => {
   const summaryFor = fn("navigationFinalSummary");
   const { report, ledger } = incrementalReport();
