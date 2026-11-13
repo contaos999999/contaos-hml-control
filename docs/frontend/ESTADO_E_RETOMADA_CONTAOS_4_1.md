@@ -1,3 +1,7 @@
+## Fase 2 R12: R11 bloqueada no preflight por prazo da API, 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. Integrados PLAN R11 #640, BUILD R11 #641 (ledger v4 `2245b4fe…` com 51 PASS da R10, pendente 52; diagnóstico do logout) e REQUEST R11 #642 (merge `de2c28d`). Auth R11 `43482958336` attempt 1: o job de solicitação `132083907871` falhou com `REQUEST_API_TIMEOUT` aos 60 s do preflight; nenhum login nem caso. Causa: o preflight lista todo o histórico dos dois workflows (611 execuções, 7 páginas cada) só para filtrar os SHAs da REQUEST; levou 52 s na R9 e 55 s na R10. Próximo: BUILD R12 lista por `head_sha` com a mesma semântica e o mesmo prazo, nonce r12, e REQUEST R12 para o índice 52 e o logout.
+
 ## Fase 2 R11: R10 com 52/52 casos PASS e 1 erro global no logout, 13/11/2026 Bahia
 
 Fase 2 NÃO CERTIFICADA. Integrados PLAN R10 #636, BUILD R10 #637 (AppShell escolhe o layout pela rota renderizada; harness sem autoligação V117), pins R10 #638 (produto `e6c8cb0`, `dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz`, ledger v3 com SUPERSEDED dos 33 PASS) e REQUEST R10 #639 (merge `050beb1`). Auth R10 `43459877744` attempt 1: artefato `14059408905` (ZIP `5a1b08e2…`, report `a7097620…`, v3): 52/52 linhas PASS, logout `true`, mas `transportErrors`/`httpErrors` globais 1 (`POST` `ABORTED`) fora de qualquer caso, provavelmente no logout; mesma assinatura na R9.
