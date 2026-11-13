@@ -34,3 +34,10 @@ A R11 não executou caso algum: o preflight parou em `REQUEST_API_TIMEOUT` antes
 3. **Nonce** `integracao-v1-fase2-nav-20261113-r12`, R11 consumida, PLAN R12 como ancestral.
 
 Tudo isso acontece antes do login e não participa da verificação de um caso. Os PASS 1-51 da R10 (`050beb1`) continuam compatíveis; o ledger v4 não muda.
+
+## R13, R14 e consolidação
+
+- **R13** (#647): só o nonce mudou.
+- **R14** (#650): o observador da sessão deixa de contar como erro só o `POST /auth/v1/logout` `ERR_ABORTED` com 204 observado antes. O logout acontece fora de todos os casos, e a mudança só pode tornar a contagem global menos sujeita a falso erro; nenhuma linha da matriz é afetada. Os PASS 1-51 da R10 (`050beb1`) continuam compatíveis.
+- **Consolidação:** `ccf5343` (harness da R14, que produziu o índice 52) entra em `compatibleHarnessShas`. Do `ccf5343` até a PR de consolidação, só mudam o pin do ledger, um teste e comentários.
+

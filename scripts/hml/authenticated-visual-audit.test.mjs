@@ -18772,7 +18772,7 @@ test("NAV ledger R8: 25 PASS compatíveis retomam exatamente no índice 26 (V110
     (e) => e.code === "NAVIGATION_LEDGER",
   );
 });
-test("NAV ledger R11: ledger integrado v4 encadeia a v3 e fixa 51 PASS da R10 com o índice 52 pendente", async () => {
+test("NAV ledger consolidado v5: 52/52 válidos, encadeado à v4 e sem abrir execução", async () => {
   const fs = await import("node:fs/promises");
   const raw = await fs.readFile(
     new URL("../../" + sut.NAVIGATION_LEDGER.path, import.meta.url),
@@ -18780,75 +18780,40 @@ test("NAV ledger R11: ledger integrado v4 encadeia a v3 e fixa 51 PASS da R10 co
   );
   assert.equal(createHash("sha256").update(raw).digest("hex"), sut.NAVIGATION_LEDGER.sha256);
   const ledger = JSON.parse(raw);
-  // v3 reconstruída deterministicamente: as 66 primeiras entradas, encadeadas à v2.
-  const v2 =
+  assert.equal(ledger.entries.length, 118);
+  // v4 reconstruída deterministicamente: as 117 primeiras entradas, encadeadas à v3.
+  const v4 =
     JSON.stringify(
       {
         ...ledger,
-        previousLedgerSha256: "35297ac588a9b8c57f1f3de2cee2369f111f2596e90891d364d8a20cdbd0305d",
-        entries: ledger.entries.slice(0, 66),
+        previousLedgerSha256: "b38edb0591f37bb4237d15044508429a03e318c9191c7e3165a3ebe998bdd1f6",
+        entries: ledger.entries.slice(0, 117),
       },
       null,
       2,
     ) + "\n";
-  assert.equal(createHash("sha256").update(v2).digest("hex"), sut.NAVIGATION_LEDGER.previousSha256);
+  assert.equal(createHash("sha256").update(v4).digest("hex"), sut.NAVIGATION_LEDGER.previousSha256);
+  assert.equal(fn("validateNavigationLedgerExtension")(v4, raw), true);
+  const state = fn("validateNavigationLedger")(raw, sut.NAVIGATION_LEDGER);
+  assert.equal(state.resumeFrom, 53);
+  assert.deepEqual(state.pendingIndices, []);
+  assert.deepEqual(
+    state.validIndices,
+    Array.from({ length: 52 }, (_, i) => i + 1),
+  );
+  assert.equal(sut.NAVIGATION_LEDGER.pendingCount, 0);
+  // Ledger completo nunca abre execução.
   const history = async (args) => {
     if (args[0] === "log") return "1".repeat(40) + "\n";
-    if (args[0] === "show" && args[1] === "1".repeat(40) + ":" + sut.NAVIGATION_LEDGER.path)
-      return v2;
+    if (args[0] === "show") return v4;
     throw new Error("unexpected");
   };
-  const state = await fn("loadNavigationLedger")(undefined, sut.NAVIGATION_LEDGER, history);
-  assert.equal(state.resumeFrom, 52);
-  assert.deepEqual(state.pendingIndices, [52]);
-  assert.equal(state.validIndices.length, 51);
-  const run = fn("navigationRunCases")(state);
-  assert.equal(run.length, 1);
-  assert.deepEqual([run[0].surface, run[0].width, run[0].theme], ["V123", 390, "dark"]);
-  const R7 = [
-    43358055422,
-    "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
-    14008077669,
-    "c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3",
-    "4ecc2279d8de134aaf10813d4c6330eb75d27eef7b11e69e61b9ea184c612d0d",
-  ];
-  const R8 = [
-    43388821235,
-    "9a4d0ad16a8a64fa04a30208c8c36e7020ec9b01",
-    14020676685,
-    "ab15acd3b6a136139e620c5f734783b054157fd98ecbadcdec4e9026fde97e06",
-    "3025371b6c575cac164f5c5e9068104ee9a1a98d60926499a5230c97f71ac4d7",
-  ];
-  const passIndices = [...Array.from({ length: 29 }, (_, i) => i + 1), 31, 32, 33, 34];
-  assert.equal(ledger.entries.length, 117);
-  assert.deepEqual(
-    ledger.entries.slice(0, 33).map((e) => e.index),
-    passIndices,
+  await assert.rejects(
+    () => fn("loadNavigationLedger")(undefined, sut.NAVIGATION_LEDGER, history),
+    (e) => e.code === "NAVIGATION_LEDGER",
   );
-  for (const entry of ledger.entries.slice(0, 33)) {
-    assert.equal(entry.status, "PASS");
-    assert.equal(entry.attempt, 1);
-    assert.equal(entry.frontendSha, "3638cdd381cb911f6bdc115169891a25479b7a25");
-    assert.equal(entry.deploymentId, "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh");
-    assert.deepEqual(
-      [entry.runId, entry.harnessSha, entry.artifactId, entry.artifactSha256, entry.reportSha256],
-      entry.index <= 25 ? R7 : R8,
-    );
-  }
-  const superseded = ledger.entries.slice(33, 66);
-  assert.deepEqual(
-    superseded.map((e) => e.index),
-    [...passIndices].sort((a, b) => a - b),
-  );
-  for (const entry of superseded) {
-    assert.equal(entry.status, "SUPERSEDED");
-    assert.equal(entry.supersedesRunId, entry.index <= 25 ? 43358055422 : 43388821235);
-    assert.equal(entry.supersedesAttempt, 1);
-    assert.equal(entry.changeSha, "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97");
-    assert.match(entry.justification, /BUILD R10/);
-  }
   const cases = fn("navigationCases")();
-  const r10 = ledger.entries.slice(66);
+  const r10 = ledger.entries.slice(66, 117);
   assert.deepEqual(
     r10.map((e) => e.index),
     Array.from({ length: 51 }, (_, i) => i + 1),
@@ -18856,50 +18821,41 @@ test("NAV ledger R11: ledger integrado v4 encadeia a v3 e fixa 51 PASS da R10 co
   for (const entry of r10) {
     const item = cases[entry.index - 1];
     assert.deepEqual(
-      [entry.surface, entry.width, entry.theme, entry.status, entry.attempt],
-      [item.surface, item.width, item.theme, "PASS", 1],
-    );
-    assert.deepEqual(
+      [entry.surface, entry.width, entry.theme, entry.status, entry.runId, entry.harnessSha],
       [
-        entry.runId,
-        entry.frontendSha,
-        entry.harnessSha,
-        entry.deploymentId,
-        entry.artifactId,
-        entry.artifactSha256,
-        entry.reportSha256,
-      ],
-      [
+        item.surface,
+        item.width,
+        item.theme,
+        "PASS",
         43459877744,
-        "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
         "050beb1bbc3ce886227865178b7bdbecef964033",
-        "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
-        14059408905,
-        "5a1b08e2eaa519d3e350488994c8625cd0bc4a60fe9d73e1c19432e717971236",
-        "a70976206a97571b9613ffb55dfb18491a5a76e4e337afd7c8f7b378d50eb2fc",
       ],
     );
   }
+  assert.deepEqual(ledger.entries[117], {
+    index: 52,
+    surface: "V123",
+    width: 390,
+    theme: "dark",
+    status: "PASS",
+    runId: 43509322900,
+    attempt: 1,
+    frontendSha: "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+    harnessSha: "ccf534371cb06f9f1c6fef425345d0e012ac4bb8",
+    deploymentId: "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
+    artifactId: 14076439209,
+    artifactSha256: "596629b98ee9a580e4664e97f0b0062fa2361a6e33d6816c61e2ab4aa8a63cf0",
+    reportSha256: "0d1e580b7af1646e6c2884683b609c399c278bcb1e77a981b4a6271896b00184",
+  });
+  for (const entry of ledger.entries.slice(66))
+    assert.deepEqual(
+      [entry.frontendSha, entry.deploymentId],
+      ["e6c8cb06dac2a6cdc225b0705ef984ed3e398d97", "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz"],
+    );
   assert.deepEqual(sut.NAVIGATION_DEPLOYMENT, {
     frontendSha: "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
     deploymentId: "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
   });
-  assert.equal(
-    fn("validateNavigationLedgerExtension")(v2, raw),
-    true,
-    "v4 só acrescenta à v3 integrada",
-  );
-  const { raw: other } = ledgerFixture();
-  assert.throws(
-    () => fn("validateNavigationLedger")(other, sut.NAVIGATION_LEDGER),
-    (e) => e.code === "NAVIGATION_LEDGER",
-  );
-  assert.equal(
-    await fn("navigationReportLedger")(async () => {
-      throw Object.assign(new Error("NAVIGATION_LEDGER"), { code: "NAVIGATION_LEDGER" });
-    }),
-    null,
-  );
 });
 test("NAV ledger R9: lacunas permitidas, execução só dos pendentes e retomada pelo menor", () => {
   const holes = ledgerFixture(

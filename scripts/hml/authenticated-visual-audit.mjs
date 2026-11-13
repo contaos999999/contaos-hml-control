@@ -4365,21 +4365,25 @@ export const NAVIGATION_SCOPE = Object.freeze({
 export const NAVIGATION_LEDGER_SCHEMA = "contaos.navigation.incremental.v1";
 export const NAVIGATION_LEDGER = Object.freeze({
   path: "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
-  // v4 (R11): v3 + 51 PASS (índices 1-51) da R10 (run 43459877744, artefato 14059408905,
-  // ZIP 5a1b08e2…, report a7097620…), cada linha aceita individualmente; pendente: 52.
-  sha256: "2245b4fe3dead145d1b595932df648f3163f810e5b6ddbe57120c84add9a4318",
-  // Cadeia append-only: hash do ledger fixado anteriormente (v3).
-  previousSha256: "b38edb0591f37bb4237d15044508429a03e318c9191c7e3165a3ebe998bdd1f6",
-  resumeFrom: 52,
-  pendingCount: 1,
+  // v5 (consolidação): v4 + índice 52 (V123/390) da R14 (run 43509322900, artefato
+  // 14076439209, ZIP 596629b9…, report 0d1e580b…), relatório v4 válido com sessão, MASTER,
+  // organização, logout e zero erros globais. Matriz 52/52; nenhuma execução nova.
+  sha256: "6eeef70b5d194cfe388666096dd3a4b493e89c7b9259248a98b4ef212745afd4",
+  // Cadeia append-only: hash do ledger fixado anteriormente (v4).
+  previousSha256: "2245b4fe3dead145d1b595932df648f3163f810e5b6ddbe57120c84add9a4318",
+  resumeFrom: 53,
+  pendingCount: 0,
   // Harness cujos PASS permanecem compatíveis com o harness atual. Cada inclusão
   // exige prova de não impacto revisada (docs/.../fase2/R11_LEDGER_COMPATIBILIDADE).
   // a3b6c34 e 9a4d0ad só cobriam PASS já invalidados (SUPERSEDED na v3); 050beb1 cobre os
-  // PASS 1-51 da R10.
+  // PASS 1-51 da R10; ccf5343 é o harness da R14 (índice 52). De ccf5343 até a consolidação
+  // só mudam este pin e comentários; R12-R14 só alteraram preflight, nonce e a contagem do
+  // logout 204, fora dos casos (PLANs R12, R13 e R14).
   compatibleHarnessShas: Object.freeze([
     "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
     "9a4d0ad16a8a64fa04a30208c8c36e7020ec9b01",
     "050beb1bbc3ce886227865178b7bdbecef964033",
+    "ccf534371cb06f9f1c6fef425345d0e012ac4bb8",
   ]),
 });
 const NAVIGATION_LEDGER_CASE_KEYS = ["index", "surface", "width", "theme", "status"];
