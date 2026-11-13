@@ -4403,5 +4403,28 @@
     "prod_autorizado": false,
     "merge_metodo": "merge commit",
     "revisao_canonica_ultima": true
+  },
+  "integracao_funcional_fase2_r13": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R13_GUARD_NATIVO_NONCE_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "bb05f3bf13b40811b6c9a9ab511691d7c421de91",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r13",
+    "spent_nonces_adicionais": [
+      "integracao-v1-fase2-nav-20261113-r12"
+    ],
+    "r12_run": 43494812615,
+    "r12_private_job": 132125342973,
+    "r12_bloqueio": "NATIVE_GUARD (WORKER/FENCE_SOURCE) antes do login, sem casos",
+    "ledger": "v4 2245b4fe inalterado; pendente 52",
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
   }
 }
