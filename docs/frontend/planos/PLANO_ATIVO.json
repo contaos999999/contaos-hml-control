@@ -4426,5 +4426,31 @@
     "prod_autorizado": false,
     "merge_metodo": "merge commit",
     "revisao_canonica_ultima": true
+  },
+  "integracao_funcional_fase2_r14": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R14_LOGOUT_204_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "49d23573db33009abbcb47dd33617dee988b2327",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r14",
+    "spent_nonces_adicionais": [
+      "integracao-v1-fase2-nav-20261113-r13"
+    ],
+    "r13_run": 43502004875,
+    "r13_private_job": 132150246933,
+    "r13_artifact": 14074148065,
+    "r13_artifact_digest": "sha256:4063b36ddf96972e9a0ce0a131fb127cdffd2c08a76ffa9da9fa6deedc2c9621",
+    "r13_report_sha256": "289f48eec465a4901b867a4eada7a906071fe050353b2b4e1f5be0ec800f2758",
+    "causa": "POST /auth/v1/logout com resposta 204 não lida: Chromium emite ERR_ABORTED após o response",
+    "ledger": "v4 2245b4fe inalterado; pendente 52",
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
   }
 }
