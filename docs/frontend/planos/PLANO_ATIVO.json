@@ -4122,5 +4122,29 @@
     "workflow_autorizado": false,
     "deploy_autorizado": false,
     "prod_autorizado": false
+  },
+  "integracao_funcional_fase2_r6": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R6_QUIESCENCIA_MOVEL_PLAN_GATE_2026-11-12.md",
+    "baseline_frontend": "52598a8e0b6b43b51fdee6ffc3b274a13adb6fea",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261112-r6",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2",
+      "integracao-v1-fase2-nav-20261112-r3",
+      "integracao-v1-fase2-nav-20261112-r4",
+      "integracao-v1-fase2-nav-20261112-r5"
+    ],
+    "r5_artifact_digest": "sha256:bf2ae1e54f7ba034ec9d2232ba2b6abceb63d2c4afda927d65f423ed6daf0bf1",
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "deploy_autorizado": false,
+    "prod_autorizado": false
   }
 }

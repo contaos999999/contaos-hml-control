@@ -1,3 +1,11 @@
+## Fase 2 R6: sucessor após falha móvel autenticada R5, 12/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. BUILD R5 PR#616 integrou `d268bc1b1620d667e9885337d33eefdc5b8cf8ff`; REQUEST R5 PR#617 integrou `52598a8e0b6b43b51fdee6ffc3b274a13adb6fea` com revisão canônica `5881037572`, CI e pais corretos. Fixtures `43294734335` attempt1 SUCCESS/preparador SKIPPED. Auth `43294734581` preflight SUCCESS e privado `131450554732` FAILURE; sem rerun/replay.
+
+Artefato oficial `13980362527`, 2079 bytes, ZIP digest `bf2ae1e54f7ba034ec9d2232ba2b6abceb63d2c4afda927d65f423ed6daf0bf1`, CRC e membros válidos; report `aac9f7de346d1f297501802e23815e129b8283f06f7fd54b913c12984a583afa`. Resultado: 32/52 observados, 30 PASS, 2 FAIL, logout false; três GET REST abortados, zero status HTTP/page error/mutação. V107/390 teve dois abortos no LINK_CLICK→SYS04; V113/390 teve um e `FENCE_DRAIN_TIMEOUT`. R5 consumida e não certifica.
+
+Próxima tarefa: integrar PLAN R6, reproduzir em RED a corrida entre quietude móvel e desmontagem, corrigir somente os dois mjs com janela contínua reforçada dentro da mesma deadline, sem ignorar aborto; CI4/native18+NAV8/revisão/merge/push; REQUEST R6 isolada e canônica; nova tentativa original. Exigir 52/52, logout true, zero erros e certificado integrado. Produto/backend/deployment/PROD intocados; RBAC/RLS/isolamento/Zero-Drift/LOCK preservados.
+
 ## Fase 2 R5: sucessor após bloqueio zero-Auth de revisão, 12/11/2026 Bahia
 
 Fase 2 NÃO CERTIFICADA. BUILD R4 `e9074971fe6fdffa31157babaf44cbc6adf86ac9` preservado. REQUEST R4 PR#614 integrou `f5533cd11c4cefe9577857e419d8ea57a099712d` com pais corretos e diff exclusivo; push Zero `43289333902` e LOCK `43289333935` SUCCESS. Fixtures `43289702393` attempt1 SUCCESS/preparador SKIPPED. Auth `43289702129` attempt1 FAILURE `REQUEST_REVIEW` no preflight `131432360921`; privado `131432715186` SKIPPED. Zero credencial, sessão, browser privado e artefato.
