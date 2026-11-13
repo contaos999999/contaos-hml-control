@@ -5,7 +5,7 @@ import {
   type AcaoRbac,
   type ContextoRbac,
 } from "@/lib/administracao/rbacRpc";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -67,6 +67,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
     const controlarTeclado = (evento: KeyboardEvent) => {
       if (evento.key === "Escape") {
         evento.preventDefault();
+        fechamentoPorNavegacao.current = false;
         setMovelAberto(false);
       }
       if (evento.key !== "Tab") return;
@@ -226,7 +227,10 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 className="m-3 min-h-11 rounded border border-sidebar-border px-3 py-2 focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-                onClick={() => setMovelAberto(false)}
+                onClick={() => {
+                  fechamentoPorNavegacao.current = false;
+                  setMovelAberto(false);
+                }}
               >
                 Fechar menu
               </button>
@@ -242,7 +246,15 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
               <ContaOSSidebar
                 permissoes={permissoes}
                 contexto={contexto}
-                aoNavegar={() => { fechamentoPorNavegacao.current = true; }}
+                aoNavegar={(evento?: MouseEvent<HTMLAnchorElement>) => {
+                  const destino = evento?.currentTarget.getAttribute("href");
+                  if (destino && new URL(destino, window.location.origin).pathname === pathname) {
+                    fechamentoPorNavegacao.current = false;
+                    setMovelAberto(false);
+                  } else {
+                    fechamentoPorNavegacao.current = true;
+                  }
+                }}
               />
               {(administrador || auditoriaPermitida) && (
                 <nav aria-label="Administração" className="flex flex-col gap-1 p-3">
@@ -252,7 +264,14 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
                     <Link
                       key={item.destino}
                       to={item.destino}
-                      onClick={() => { fechamentoPorNavegacao.current = true; }}
+                      onClick={() => {
+                        if (item.destino === pathname) {
+                          fechamentoPorNavegacao.current = false;
+                          setMovelAberto(false);
+                        } else {
+                          fechamentoPorNavegacao.current = true;
+                        }
+                      }}
                       aria-current={rotaAdministrativaAtiva(item.destino) ? "page" : undefined}
                       className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-sidebar-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                     >
