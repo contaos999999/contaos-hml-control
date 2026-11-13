@@ -1,3 +1,7 @@
+## Fase 2 R13: R12 bloqueada pelo guard nativo antes do login, 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. Integrados PLAN R12 #643, BUILD R12 #644 (preflight por `head_sha`) e REQUEST R12 #645 (merge `bb05f3b`). Auth R12 `43494812615`: solicitação SUCCESS em 34 s; privado `132125342973` bloqueado por `NATIVE_GUARD` (`WORKER`, `FENCE_SOURCE`) antes do login, sem casos. O mesmo guard passou no CI da #644 e na R10. Próximo: BUILD R13 só com nonce r13 e REQUEST R13 para o índice 52 e o logout; segunda falha do guard abre PLAN de diagnóstico.
+
 ## Fase 2 R12: R11 bloqueada no preflight por prazo da API, 13/11/2026 Bahia
 
 Fase 2 NÃO CERTIFICADA. Integrados PLAN R11 #640, BUILD R11 #641 (ledger v4 `2245b4fe…` com 51 PASS da R10, pendente 52; diagnóstico do logout) e REQUEST R11 #642 (merge `de2c28d`). Auth R11 `43482958336` attempt 1: o job de solicitação `132083907871` falhou com `REQUEST_API_TIMEOUT` aos 60 s do preflight; nenhum login nem caso. Causa: o preflight lista todo o histórico dos dois workflows (611 execuções, 7 páginas cada) só para filtrar os SHAs da REQUEST; levou 52 s na R9 e 55 s na R10. Próximo: BUILD R12 lista por `head_sha` com a mesma semântica e o mesmo prazo, nonce r12, e REQUEST R12 para o índice 52 e o logout.
