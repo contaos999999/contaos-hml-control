@@ -9009,8 +9009,12 @@ test("R9 instrumentação: endpoint e detalhe de transporte só com valores fech
   assert.equal(cls(API + "/rest/v1/rpc/obter_resumo_dashboard"), "rpc:obter_resumo_dashboard");
   assert.equal(cls(API + "/rest/v1/rpc/Bad-Name"), "rpc:OTHER");
   assert.equal(cls(API + "/rest/v1/rpc/funcao_nao_listada"), "rpc:OTHER");
-  assert.equal(sut.NAVIGATION_RPC_NAMES.length, 19);
+  assert.equal(sut.NAVIGATION_RPC_NAMES.length, 44);
   assert.equal(Object.isFrozen(sut.NAVIGATION_RPC_NAMES), true);
+  assert.equal(
+    cls(API + "/rest/v1/rpc/consultar_permissoes_efetivas"),
+    "rpc:consultar_permissoes_efetivas",
+  );
   assert.equal(cls(API + "/auth/v1/user"), "auth:user");
   assert.equal(cls(API + "/auth/v1/PRIVATE"), "auth:OTHER");
   assert.equal(cls(HML + "/x"), "NON_API");
@@ -9096,6 +9100,16 @@ test("R9 instrumentação: endpoint e detalhe de transporte só com valores fech
   assert.equal(sut.NAVIGATION_DETAIL_LIMIT, 64);
   assert.match(source, /detailCount >= NAVIGATION_DETAIL_LIMIT\) return;/);
   assert.match(source, /clickTiming\.documents < NAVIGATION_DOCUMENT_COUNT_LIMIT/);
+  // Toda função do conjunto RPCS de navegação está na lista fechada do diagnóstico.
+  const rpcs = source.match(/const RPCS = new Set\(\[([\s\S]*?)\]\);/)[1].match(/"[a-z0-9_]+"/g);
+  assert.ok(rpcs.length >= 17);
+  for (const name of rpcs) assert.ok(sut.NAVIGATION_RPC_NAMES.includes(JSON.parse(name)), name);
+  assert.deepEqual([...sut.NAVIGATION_RPC_NAMES].sort(), [...sut.NAVIGATION_RPC_NAMES]);
+  // O ouvinte de detalhe é integralmente protegido e não pode impedir a contagem de erros.
+  assert.match(
+    source,
+    /const onTransportDetail = \(request\) => \{\n    try \{[\s\S]*?\n    \} catch \{\n      \/\/ Somente diagnóstico/,
+  );
 });
 test("R9 instrumentação: diagnóstico do drain nunca lança nem expõe dados", () => {
   const logs = [];

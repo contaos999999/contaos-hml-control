@@ -5638,28 +5638,54 @@ export function navigationDrainDiagnostic(handlers, lifecycle, log = console.log
     // O diagnóstico nunca altera o resultado fail-closed.
   }
 }
-// Lista fechada das funções RPC chamadas pelo frontend (src/**/*.rpc("...")); qualquer
-// outro nome é registrado apenas como rpc:OTHER.
+// Lista fechada das funções RPC do frontend: o conjunto RPCS de navegação mais os nomes
+// chamados em src/ por .rpc("...") e pelos invólucros (chamar, rpc, rpcHistorico, escrever,
+// chamarV107). Qualquer outro nome é registrado apenas como rpc:OTHER.
 export const NAVIGATION_RPC_NAMES = Object.freeze([
+  "adicionar_versao_documento_competencia_v115",
+  "adicionar_versao_documento_contrato",
   "aprovar_apresentacao",
   "aprovar_parecer_interno",
   "aprovar_regra_preventiva",
+  "aprovar_versao_fonte_v107",
   "atualizar_contratante",
+  "atualizar_matriz_rbac_master",
   "classificar_acesso_contrato_v106",
+  "confirmar_upload_arquivo",
+  "consultar_permissoes_efetivas",
   "criar_competencia",
+  "criar_documento_competencia_v115",
+  "criar_documento_contrato_completo",
   "criar_organizacao",
+  "definir_aplicabilidade_fonte_v107",
+  "definir_vigencia_sugestao_extracao",
+  "enfileirar_ingestao_historica_hml",
+  "executar_comando_lista_v1",
+  "listar_auditoria_vinculo_usuario_adm",
+  "listar_escopo_contratos_usuario_adm",
   "listar_organizacoes_disponiveis",
+  "listar_usuarios_vinculos_adm",
   "obter_analise_competencia_v116",
+  "obter_cadastro_operacional_v1",
   "obter_contexto_revisao_v117",
   "obter_detalhe_requisito_v117",
   "obter_documentos_competencia_v115",
+  "obter_lista_operacional_v1",
+  "obter_matriz_rbac_master",
   "obter_resumo_dashboard",
   "obter_visao_geral_competencia",
+  "pode_consultar_auditoria_organizacao",
   "registrar_apresentacao",
+  "registrar_relatorio_historico_hml",
   "registrar_revisao_requisito_v117",
+  "registrar_versao_fonte_v107",
+  "revisar_sugestao_extracao",
+  "salvar_fonte_normativa_v107",
   "solicitar_analise_competencia",
   "solicitar_parecer_interno",
   "solicitar_reanalise_requisitos",
+  "validar_administrador_organizacao",
+  "vincular_tratamento_historico_hml",
 ]);
 export const NAVIGATION_DETAIL_LIMIT = 64;
 export const NAVIGATION_DOCUMENT_COUNT_LIMIT = 1000;
@@ -6092,16 +6118,20 @@ export async function runNavigationAudit(page, fence, proof) {
   const clickTiming = { clickAt: 0, documents: 0 };
   let detailCount = 0;
   const onTransportDetail = (request) => {
-    if (!diagnosticRow || detailCount >= NAVIGATION_DETAIL_LIMIT) return;
-    const { surface, width, stage, operation, target } = diagnosticRow;
-    const detail = navigationTransportDetail(
-      request,
-      { surface, width, stage, operation, target },
-      { ...clickTiming, now: performance.now() },
-    );
-    if (detail) {
-      detailCount++;
-      console.log(JSON.stringify(detail));
+    try {
+      if (!diagnosticRow || detailCount >= NAVIGATION_DETAIL_LIMIT) return;
+      const { surface, width, stage, operation, target } = diagnosticRow;
+      const detail = navigationTransportDetail(
+        request,
+        { surface, width, stage, operation, target },
+        { ...clickTiming, now: performance.now() },
+      );
+      if (detail) {
+        detailCount++;
+        console.log(JSON.stringify(detail));
+      }
+    } catch {
+      // Somente diagnóstico: nunca interfere na contagem de transportErrors.
     }
   };
   const onDocumentRequest = (request) => {
