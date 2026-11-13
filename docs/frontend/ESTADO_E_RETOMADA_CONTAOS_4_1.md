@@ -1,3 +1,9 @@
+## Fase 2 R10: R9 terminal (15 PASS; V117 e V120 falham), 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. Integrados PLAN R9 #633, BUILD R9 #634 (preflight POST, instrumentação, revisão B, ledger v2 `35297ac5…`) e REQUEST R9 #635 (merge `ccd14b1`). Auth R9 `43401890915` attempt 1: preflight SUCCESS, privado `131807145427` FAILURE; artefato `14027480344` (ZIP `f3e5f1aa…`, report `fd96cd97…`, v4, 19/19 observados, 15 PASS, logout `true`).
+
+Resultado: PASS em 30, 35-38, 41-44 e 47-52; V117 (39-40) FAIL `NAVIGATION_ROUTE` por autoligação à própria rota de análise (defeito do harness); V120 (45-46) FAIL `NAVIGATION_CASE` por `POST` `rpc:obter_visao_geral_competencia` abortado 87/132 ms após o clique para SYS04, sem navegação de documento. Causa provável de produto: o AppShell troca a árvore por `location.pathname` no início da navegação para a rota pública e remonta a página antiga. Próxima tarefa: PLAN R10, BUILD R10 (RED/GREEN com TanStack real no AppShell e correção do harness), publicação HML, pins com `SUPERSEDED` de todos os PASS e REQUEST R10 com a matriz completa.
+
 ## Fase 2 R9: R8 terminal (26-29 PASS, falhas 30 e 35 em LINK_CLICK→SYS04), 13/11/2026 Bahia
 
 Fase 2 NÃO CERTIFICADA. Integrados: #629 (correção do preflight CORS de GET; V110/390 passou na R8), #630 (executor incremental e ledger R7 `0a8f71f2…` com os índices 1-25), #631 (evidência única) e REQUEST R8 #632 (merge `9a4d0ad`, revisão canônica `5887757273`). Auth R8 `43388821235` attempt 1: preflight SUCCESS e privado `131764048105` FAILURE; artefato `14020676685` (ZIP `ab15acd3…`, report `3025371b…`, v4, resumo 10/27).
