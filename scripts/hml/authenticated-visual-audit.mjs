@@ -4268,8 +4268,8 @@ export function isC8Scope(scope) {
   return scope === C8_AUDIT_SCOPE || scope === C8_REMAINING_SCOPE || scope === C8_V117_SCOPE;
 }
 export const NAVIGATION_DEPLOYMENT = Object.freeze({
-  frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
-  deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
+  frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
+  deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
