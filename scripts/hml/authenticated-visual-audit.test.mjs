@@ -6079,31 +6079,28 @@ test("R8 cancelamento anterior ao requestWillBeSent do OPTIONS também é provad
   assert.equal(tracker.snapshot().retiredPreflights, 1);
   tracker.close();
 });
+test("R8 OPTIONS que aponta para si mesmo nunca é aposentado", () => {
+  const f = canceledPreflightFlow({
+    preflight: { initiator: { type: "preflight", requestId: "preflight-1" } },
+  });
+  f.tracker.observe(f.session, "Network.loadingFailed", f.mainTerminal);
+  f.respond();
+  assert.equal(f.tracker.snapshot().retiredPreflights, 0);
+  assert.equal(f.tracker.snapshot().active, 1);
+  f.tracker.close();
+});
 for (const [name, preflight] of [
-  [
-    "iniciador aponta o próprio OPTIONS",
-    { initiator: { type: "preflight", requestId: "preflight-1" } },
-  ],
   [
     "registro não é OPTIONS",
     { request: { url: API + "/rest/v1/documentos?select=*", method: "GET" } },
   ],
   ["registro não é do tipo Other", { type: "Preflight" }],
 ])
-  test("R8 nunca trata como preflight: " + name, () => {
-    let f;
-    try {
-      f = canceledPreflightFlow({ preflight });
-    } catch (error) {
-      // Um par Network/Fetch não comprovado já é recusado antes do ciclo R8.
-      assert.match(String(error?.code), /^FENCE_/);
-      return;
-    }
-    f.tracker.observe(f.session, "Network.loadingFailed", f.mainTerminal);
-    f.respond();
-    assert.equal(f.tracker.snapshot().retiredPreflights, 0);
-    assert.ok(f.tracker.snapshot().active >= 1);
-    f.tracker.close();
+  test("R8 par não-preflight é recusado antes de qualquer aposentadoria: " + name, () => {
+    assert.throws(
+      () => canceledPreflightFlow({ preflight }),
+      (e) => e.code === "FENCE_LIFECYCLE_FRAME",
+    );
   });
 test("R8 resposta do OPTIONS não pode ser liberada duas vezes", () => {
   const f = canceledPreflightFlow();

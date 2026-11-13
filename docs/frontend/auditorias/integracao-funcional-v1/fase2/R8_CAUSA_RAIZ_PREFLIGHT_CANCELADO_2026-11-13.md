@@ -64,9 +64,10 @@ Não foi alterado: prazo do drain, tratamento de `ABORTED`, `requestfailed`, con
 `scripts/hml/authenticated-visual-audit.test.mjs`, 20 testes `R8 ...` determinísticos com eventos CDP sintéticos na ordem observada:
 - 2 de aposentadoria (cancelamento antes e depois da resposta do OPTIONS): **falham na `main`** e passam com a correção;
 - 1 de cancelamento anterior ao `requestWillBeSent` do OPTIONS, com retenção enquanto o ticket de resposta estiver ativo;
-- 17 negativos (o preflight permanece pendente): GET sem cancelamento, erro de rede real, bloqueio, erro CORS, tipo divergente, principal não-GET, iniciador ausente, diferente ou de outro pedido, servidor sem resposta, resposta não liberada, principal concluído normalmente `responded()` fora do estágio RESPONSE ou duas vezes, OPTIONS apontando para si mesmo, registro não-OPTIONS e tipo diferente de `Other`.
+- 15 negativos (o preflight permanece pendente): GET sem cancelamento, erro de rede real, bloqueio, erro CORS, tipo divergente, principal não-GET, iniciador ausente, diferente ou de outro pedido, servidor sem resposta, resposta não liberada, principal concluído normalmente `responded()` fora do estágio RESPONSE ou duas vezes e OPTIONS apontando para si mesmo;
+- 2 de recusa prévia: registro não-OPTIONS ou de tipo diferente de `Other` é rejeitado pelo `pause()` com `FENCE_LIFECYCLE_FRAME`, antes de qualquer aposentadoria.
 
-O contador `retiredCanceledPreflights` passa a constar do snapshot do fence.
+O contador `retiredCanceledPreflights` passa a constar do snapshot do fence. Ele ainda não é copiado para o relatório privado v3, cujo schema é fechado; a inclusão fica para o BUILD do relatório incremental (PR #627), que já altera esse schema.
 
 O RED decisivo é o experimento em Chromium real. Na `main`, a maior parte dos testes unitários falha por ausência de `responded()`; os dois testes de aposentadoria e o de cancelamento anterior ao OPTIONS são os que demonstram o comportamento.
 
