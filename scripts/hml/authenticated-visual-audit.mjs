@@ -4357,7 +4357,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261113-r11",
+  nonce: "integracao-v1-fase2-nav-20261113-r12",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 // Emenda R8 (certificação incremental, PR #626): ledger acumulativo, append-only,
@@ -11581,7 +11581,10 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR10PlanSha: "157b39794b4b631443a664e0a746ed3880bfecea",
   // PLAN R11 (commit), ancestral obrigatório: logout instrumentado e execução de fechamento.
   functionalNavigationR11PlanSha: "0922b2ef7ed461d686c21a3392bbd6ade0774b0d",
+  // PLAN R12 (commit), ancestral obrigatório: preflight lista execuções por SHA.
+  functionalNavigationR12PlanSha: "a8b5a4dee1e40559b094efccecc4cfad0e9f39db",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261113-r11",
     "integracao-v1-fase2-nav-20261113-r10",
     "integracao-v1-fase2-nav-20261113-r9",
     "integracao-v1-fase2-nav-20261113-r8",
@@ -11656,7 +11659,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261113-r11",
+    nonce: "integracao-v1-fase2-nav-20261113-r12",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -11837,6 +11840,35 @@ export async function listSingleRequestRuns(getPage) {
   }
   fail("REQUEST_PAGINATION");
 }
+// R12: lista só as execuções dos SHAs da REQUEST, com a mesma paginação e os mesmos limites
+// de listSingleRequestRuns, e mantém só as de head_sha em requestShas, sem duplicatas. O
+// conjunto validado é o mesmo de antes (as execuções desses SHAs), sem percorrer o histórico.
+export async function listSingleRequestRunsForShas(get, workflowId, requestShas) {
+  if (
+    !Number.isSafeInteger(workflowId) ||
+    workflowId <= 0 ||
+    !Array.isArray(requestShas) ||
+    requestShas.length === 0 ||
+    requestShas.length > 1000 ||
+    requestShas.some((sha) => !hash40(sha))
+  )
+    fail("REQUEST_PAGINATION");
+  const result = [],
+    ids = new Set();
+  for (const sha of new Set(requestShas)) {
+    const runs = await listSingleRequestRuns((page) =>
+      get(
+        "/actions/workflows/" + workflowId + "/runs?head_sha=" + sha + "&per_page=100&page=" + page,
+      ),
+    );
+    for (const run of runs) {
+      if (run.head_sha !== sha || ids.has(run.id)) continue;
+      ids.add(run.id);
+      result.push(run);
+    }
+  }
+  return result;
+}
 export function validateSingleRequestRuns({ current, runs, requestShas, workflowId }) {
   if (
     !current ||
@@ -11975,6 +12007,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationR9PlanSha,
       SINGLE_REQUEST.functionalNavigationR10PlanSha,
       SINGLE_REQUEST.functionalNavigationR11PlanSha,
+      SINGLE_REQUEST.functionalNavigationR12PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
@@ -14433,7 +14466,26 @@ export function singleRequestGet({
 }) {
   const environmentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
   if (!publicOnly && token !== environmentToken) fail("REQUEST_API_TOKEN");
-  const deadline = now() + 60000;
+  const deadline = now() + 60000,
+    started = now();
+  let calls = 0;
+  const timeout = (endpointKind) => {
+    // R12: diagnóstico fechado do prazo (sem caminho, token ou corpo); o prazo não muda.
+    if (diagnostic)
+      try {
+        console.error(
+          JSON.stringify({
+            phase: "REQUEST_API_TIMEOUT_DIAGNOSTIC",
+            calls: Math.min(calls, 100000),
+            endpointKind: REQUEST_ENDPOINT_KINDS.includes(endpointKind) ? endpointKind : "OTHER",
+            elapsedMs: Math.max(0, Math.min(600000, Math.round(now() - started))),
+          }),
+        );
+      } catch {
+        // Somente diagnóstico.
+      }
+    fail("REQUEST_API_TIMEOUT");
+  };
   return async (path) => {
     if (
       path !== "" &&
@@ -14447,8 +14499,9 @@ export function singleRequestGet({
     for (let attempt = 0; attempt < 2; attempt++) {
       const currentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
       if (!publicOnly && token !== currentToken) fail("REQUEST_API_TOKEN");
+      calls++;
       const remaining = deadline - now();
-      if (remaining <= 0) fail("REQUEST_API_TIMEOUT");
+      if (remaining <= 0) timeout(endpointKind);
       const headers = {
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
@@ -14463,7 +14516,7 @@ export function singleRequestGet({
         response = await fetchImpl(url, { headers, redirect: "error", signal });
         if (signal.aborted) throw new Error("REQUEST_API_TIMEOUT");
       } catch {
-        if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+        if (deadline - now() <= 0) timeout(endpointKind);
         if (signal.aborted && attempt === 0) continue;
         failRequestApi(
           "REQUEST_API_UNAVAILABLE",
@@ -14473,7 +14526,7 @@ export function singleRequestGet({
           diagnostic,
         );
       }
-      if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+      if (deadline - now() <= 0) timeout(endpointKind);
       if (response.status !== 200)
         failRequestApi(
           "REQUEST_API_UNAVAILABLE",
@@ -14487,7 +14540,7 @@ export function singleRequestGet({
         body = await response.text();
         if (signal.aborted) throw new Error("REQUEST_API_TIMEOUT");
       } catch {
-        if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+        if (deadline - now() <= 0) timeout(endpointKind);
         if (signal.aborted && attempt === 0) continue;
         failRequestApi(
           "REQUEST_API_UNAVAILABLE",
@@ -14497,7 +14550,7 @@ export function singleRequestGet({
           diagnostic,
         );
       }
-      if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+      if (deadline - now() <= 0) timeout(endpointKind);
       if (typeof body !== "string") fail("REQUEST_API_SCHEMA");
       if (Buffer.byteLength(body) > 4194304) fail("REQUEST_API_LIMIT");
       let parsed;
@@ -14506,10 +14559,10 @@ export function singleRequestGet({
       } catch {
         fail("REQUEST_API_SCHEMA");
       }
-      if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+      if (deadline - now() <= 0) timeout(endpointKind);
       return parsed;
     }
-    fail("REQUEST_API_TIMEOUT");
+    timeout(endpointKind);
   };
 }
 
@@ -15020,15 +15073,11 @@ export async function verifySingleRequest({
     sha,
     secondParent,
   });
-  const runs = await listSingleRequestRuns((page) =>
-    get("/actions/workflows/" + expected.id + "/runs?per_page=100&page=" + page),
-  );
+  const runs = await listSingleRequestRunsForShas(get, expected.id, requestShas);
   validateSingleRequestRuns({ current, runs, requestShas, workflowId: expected.id });
   let oppositeProven = false;
   for (let attempt = 0; attempt < 3; attempt++) {
-    const others = await listSingleRequestRuns((page) =>
-      get("/actions/workflows/" + opposite.id + "/runs?per_page=100&page=" + page),
-    );
+    const others = await listSingleRequestRunsForShas(get, opposite.id, requestShas);
     const matching = others.filter(
       (r) => requestShas.includes(r.head_sha) && r.event === "workflow_run",
     );
@@ -15062,9 +15111,7 @@ export async function verifySingleRequest({
   // Close queue and metadata races immediately before returning authorization.
   const finalMain = await get("/git/ref/heads/main");
   if (finalMain.object?.sha !== sha) fail("REQUEST_STALE");
-  const finalRuns = await listSingleRequestRuns((page) =>
-    get("/actions/workflows/" + expected.id + "/runs?per_page=100&page=" + page),
-  );
+  const finalRuns = await listSingleRequestRunsForShas(get, expected.id, requestShas);
   validateSingleRequestRuns({ current, runs: finalRuns, requestShas, workflowId: expected.id });
   singleRequestContext = {
     operation,

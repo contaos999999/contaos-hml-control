@@ -22518,8 +22518,8 @@ test("NAV R5 historical plan remains sealed with its four predecessor nonces", (
   }
 });
 
-test("NAV R11 successor consumes R10 and requires the R11 PLAN commit", () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r11");
+test("NAV R12 successor consumes R11 and requires the R12 PLAN commit", () => {
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r12");
   assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR6PlanSha,
@@ -22545,6 +22545,10 @@ test("NAV R11 successor consumes R10 and requires the R11 PLAN commit", () => {
     sut.SINGLE_REQUEST.functionalNavigationR11PlanSha,
     "0922b2ef7ed461d686c21a3392bbd6ade0774b0d",
   );
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationR12PlanSha,
+    "a8b5a4dee1e40559b094efccecc4cfad0e9f39db",
+  );
   for (const nonce of [
     "integracao-v1-fase2-nav-20261111-r1",
     "integracao-v1-fase2-nav-20261112-r2",
@@ -22556,6 +22560,7 @@ test("NAV R11 successor consumes R10 and requires the R11 PLAN commit", () => {
     "integracao-v1-fase2-nav-20261113-r8",
     "integracao-v1-fase2-nav-20261113-r9",
     "integracao-v1-fase2-nav-20261113-r10",
+    "integracao-v1-fase2-nav-20261113-r11",
   ]) {
     assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
     const request = {
@@ -22938,4 +22943,116 @@ test("R11 logout: diagnóstico fechado de transporte durante o logout", async ()
   const close = source.indexOf("await browser?.close().catch(() => {});", after);
   const teardown = source.indexOf("sessionPhases.afterTeardown = sessionCount();");
   assert.ok(before > 0 && before < off && off < after && after < close && close < teardown);
+});
+
+test("R12 preflight: execuções listadas por SHA da REQUEST, com o mesmo conjunto e paginação", async () => {
+  const A = "a".repeat(40),
+    B = "b".repeat(40),
+    C = "c".repeat(40);
+  const run = (id, head_sha) => ({ id, head_sha, event: "workflow_run", workflow_id: 7 });
+  const paths = [];
+  const byShaPages = {
+    [A]: [[run(1, A), run(2, A), run(9, C)]],
+    [B]: [[run(3, B), run(1, A)]],
+  };
+  const get = async (path) => {
+    paths.push(path);
+    const m =
+      /^\/actions\/workflows\/7\/runs\?head_sha=([a-f0-9]{40})&per_page=100&page=(\d+)$/.exec(path);
+    assert.ok(m, path);
+    const pages = byShaPages[m[1]];
+    const total = pages.flat().length;
+    return { total_count: total, workflow_runs: pages[Number(m[2]) - 1] ?? [] };
+  };
+  const runs = await sut.listSingleRequestRunsForShas(get, 7, [A, B, A]);
+  assert.deepEqual(
+    runs.map((r) => r.id),
+    [1, 2, 3],
+  );
+  assert.equal(paths.length, 2);
+  for (const bad of [
+    [0, [A]],
+    [7, []],
+    [7, ["x"]],
+    [7, "a"],
+  ])
+    await assert.rejects(
+      () => sut.listSingleRequestRunsForShas(get, ...bad),
+      (e) => e.code === "REQUEST_PAGINATION",
+    );
+  // Paginação inconsistente continua falhando fechado.
+  await assert.rejects(
+    () =>
+      sut.listSingleRequestRunsForShas(
+        async () => ({ total_count: 5, workflow_runs: [run(1, A)] }),
+        7,
+        [A],
+      ),
+    (e) => e.code === "REQUEST_PAGINATION",
+  );
+  // Preflight não lista mais o histórico inteiro dos workflows.
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  for (const id of ["expected.id", "opposite.id"])
+    assert.equal(
+      source.includes(
+        'get("/actions/workflows/" + ' + id + ' + "/runs?per_page=100&page=" + page)',
+      ),
+      false,
+    );
+  assert.match(
+    source,
+    /const runs = await listSingleRequestRunsForShas\(get, expected\.id, requestShas\);/,
+  );
+  assert.match(
+    source,
+    /const others = await listSingleRequestRunsForShas\(get, opposite\.id, requestShas\);/,
+  );
+  assert.match(
+    source,
+    /const finalRuns = await listSingleRequestRunsForShas\(get, expected\.id, requestShas\);/,
+  );
+});
+
+test("R12 preflight: prazo da API inalterado com diagnóstico fechado", async () => {
+  const errors = [];
+  const original = console.error;
+  console.error = (line) => errors.push(line);
+  try {
+    let t = 0;
+    const get = sut.singleRequestGet({
+      token: "tok",
+      publicOnly: false,
+      env: { CONTAOS_ACTIONS_READ_TOKEN: "tok" },
+      diagnostic: true,
+      now: () => t,
+      fetchImpl: async () => {
+        t += 61000;
+        return { status: 200, text: async () => "{}" };
+      },
+    });
+    await assert.rejects(
+      () => get("/actions/workflows/7/runs?head_sha=" + "a".repeat(40) + "&per_page=100&page=1"),
+      (e) => e.code === "REQUEST_API_TIMEOUT",
+    );
+  } finally {
+    console.error = original;
+  }
+  assert.equal(errors.length, 1);
+  assert.deepEqual(JSON.parse(errors[0]), {
+    phase: "REQUEST_API_TIMEOUT_DIAGNOSTIC",
+    calls: 1,
+    endpointKind: "WORKFLOW_RUNS",
+    elapsedMs: 61000,
+  });
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /const deadline = now\(\) \+ 60000,/);
+  assert.match(source, /AbortSignal\.timeout\(Math\.min\(5000, remaining\)\)/);
 });
