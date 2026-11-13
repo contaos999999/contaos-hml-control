@@ -771,25 +771,129 @@ vi.mock("@tanstack/react-query", () => ({
 
 
 describe("Fase 2 R7 — navegação móvel somente após commit da rota", () => {
+  const permissoes = {
+    schema_versao: "rbac-v1",
+    versao: 5,
+    master: false,
+    permissoes: [{ recurso: "contratantes", acao: "consultar" }],
+  };
+
   it("mantém diálogo e fundo inerte até o pathname mudar, então fecha sem restaurar foco antigo", async () => {
     mocks.pathname = "/contratos";
+    mocks.efetivas.mockResolvedValue(permissoes);
+    const view = render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    const abrir = await screen.findByRole("button", { name: "Abrir menu" });
+    fireEvent.click(abrir);
+    const dialogo = screen.getByRole("dialog", { name: "Menu de navegação" });
+    fireEvent.click(within(dialogo).getByRole("link", { name: "Contratantes" }));
+    expect(screen.getByRole("dialog", { name: "Menu de navegação" })).toBeInTheDocument();
+    expect(screen.getByText("Conteúdo").closest("[inert]")).not.toBeNull();
+    mocks.pathname = "/contratantes";
+    view.rerender(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { name: "Menu de navegação" })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("Conteúdo").closest("[inert]")).toBeNull();
+    expect(document.activeElement).not.toBe(abrir);
+  });
+
+  it("fecha imediatamente ao clicar na rota atual e devolve o foco ao botão", async () => {
+    mocks.pathname = "/contratantes";
+    mocks.efetivas.mockResolvedValue(permissoes);
+    render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    const abrir = await screen.findByRole("button", { name: "Abrir menu" });
+    abrir.focus();
+    fireEvent.click(abrir);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Menu de navegação" })).getByRole("link", {
+        name: "Contratantes",
+      }),
+    );
+    expect(screen.queryByRole("dialog", { name: "Menu de navegação" })).not.toBeInTheDocument();
+    expect(abrir).toHaveFocus();
+  });
+
+  it("restaura o foco com Escape após clique sem commit de rota", async () => {
+    mocks.pathname = "/contratos";
+    mocks.efetivas.mockResolvedValue(permissoes);
+    render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    const abrir = await screen.findByRole("button", { name: "Abrir menu" });
+    abrir.focus();
+    fireEvent.click(abrir);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Menu de navegação" })).getByRole("link", {
+        name: "Contratantes",
+      }),
+    );
+    expect(screen.getByRole("dialog", { name: "Menu de navegação" })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Menu de navegação" })).not.toBeInTheDocument();
+    expect(abrir).toHaveFocus();
+  });
+
+  it("restaura o foco com Fechar menu após clique sem commit de rota", async () => {
+    mocks.pathname = "/contratos";
+    mocks.efetivas.mockResolvedValue(permissoes);
+    render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    const abrir = await screen.findByRole("button", { name: "Abrir menu" });
+    abrir.focus();
+    fireEvent.click(abrir);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Menu de navegação" })).getByRole("link", {
+        name: "Contratantes",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Fechar menu" }));
+    expect(screen.queryByRole("dialog", { name: "Menu de navegação" })).not.toBeInTheDocument();
+    expect(abrir).toHaveFocus();
+  });
+
+  it("fecha o item administrativo da rota atual e devolve o foco", async () => {
+    mocks.pathname = "/administracao/usuarios";
+    mocks.validarAdministrador.mockResolvedValue(true);
     mocks.efetivas.mockResolvedValue({
       schema_versao: "rbac-v1",
       versao: 5,
       master: false,
-      permissoes: [{ recurso: "contratantes", acao: "consultar" }],
+      permissoes: [{ recurso: "usuarios", acao: "administrar" }],
     });
-    const view = render(<ContaOSAppShell><p>Conteúdo</p></ContaOSAppShell>);
-    await screen.findByRole("button", { name: "Abrir menu" });
-    fireEvent.click(screen.getByRole("button", { name: "Abrir menu" }));
-    const dialogo = screen.getByRole("dialog", { name: "Menu de navegação" });
-    const link = within(dialogo).getByRole("link", { name: "Contratantes" });
-    fireEvent.click(link);
-    expect(screen.getByRole("dialog", { name: "Menu de navegação" })).toBeInTheDocument();
-    expect(screen.getByText("Conteúdo").closest("[inert]")).not.toBeNull();
-    mocks.pathname = "/contratantes";
-    view.rerender(<ContaOSAppShell><p>Conteúdo</p></ContaOSAppShell>);
-    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Menu de navegação" })).not.toBeInTheDocument());
-    expect(screen.getByText("Conteúdo").closest("[inert]")).toBeNull();
+    render(
+      <ContaOSAppShell>
+        <p>Conteúdo</p>
+      </ContaOSAppShell>,
+    );
+    const abrir = await screen.findByRole("button", { name: "Abrir menu" });
+    await waitFor(() =>
+      expect(screen.getAllByRole("link", { name: "Usuários" }).length).toBeGreaterThan(0),
+    );
+    abrir.focus();
+    fireEvent.click(abrir);
+    fireEvent.click(
+      within(screen.getByRole("dialog", { name: "Menu de navegação" })).getByRole("link", {
+        name: "Usuários",
+      }),
+    );
+    expect(screen.queryByRole("dialog", { name: "Menu de navegação" })).not.toBeInTheDocument();
+    expect(abrir).toHaveFocus();
   });
 });
