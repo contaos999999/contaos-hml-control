@@ -789,7 +789,9 @@ describe("Fase 2 R7 — navegação móvel somente após commit da rota", () => 
     const abrir = await screen.findByRole("button", { name: "Abrir menu" });
     fireEvent.click(abrir);
     const dialogo = screen.getByRole("dialog", { name: "Menu de navegação" });
-    fireEvent.click(within(dialogo).getByRole("link", { name: "Contratantes" }));
+    const destino = within(dialogo).getByRole("link", { name: "Contratantes" });
+    destino.focus();
+    fireEvent.click(destino);
     expect(screen.getByRole("dialog", { name: "Menu de navegação" })).toBeInTheDocument();
     expect(screen.getByText("Conteúdo").closest("[inert]")).not.toBeNull();
     mocks.pathname = "/contratantes";
