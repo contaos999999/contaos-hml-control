@@ -18664,6 +18664,25 @@ for (const [name, patch, tamper, pinPatch] of [
   ["hash de relatório inválido", (l) => (l.entries[0].reportSha256 = "x")],
   ["evidência divergente na mesma execução", (l) => (l.entries[7].artifactSha256 = "b".repeat(64))],
   [
+    "artefato reaproveitado de outra execução",
+    (l) => l.entries.push({ ...ledgerPass(26, LEDGER_R8), artifactId: LEDGER_R7.artifactId }),
+    undefined,
+    { resumeFrom: 27 },
+  ],
+  [
+    "hash de artefato reaproveitado de outra execução",
+    (l) =>
+      l.entries.push({ ...ledgerPass(26, LEDGER_R8), artifactSha256: LEDGER_R7.artifactSha256 }),
+    undefined,
+    { resumeFrom: 27 },
+  ],
+  [
+    "relatório reaproveitado de outra execução",
+    (l) => l.entries.push({ ...ledgerPass(26, LEDGER_R8), reportSha256: LEDGER_R7.reportSha256 }),
+    undefined,
+    { resumeFrom: 27 },
+  ],
+  [
     "execuções fora de ordem",
     (l) =>
       (l.entries = [...l.entries.slice(0, 24).map((e) => ({ ...e, ...LEDGER_R8 })), l.entries[24]]),
@@ -18841,7 +18860,14 @@ test("NAV ledger R8: supersede aponta a entrada exata e permite reexecução", (
   });
   assert.equal(fn("validateNavigationLedger")(again.raw, again.pin).resumeFrom, 26);
   // PASS antigo de outro produto permanece no histórico apenas se estiver superseded.
-  const OLD = { ...LEDGER_R7, runId: 43300000000, frontendSha: "7".repeat(40), artifactId: 1300 };
+  const OLD = {
+    ...LEDGER_R7,
+    runId: 43300000000,
+    frontendSha: "7".repeat(40),
+    artifactId: 1300,
+    artifactSha256: "3".repeat(64),
+    reportSha256: "4".repeat(64),
+  };
   const legacy = ledgerFixture(25, (l) => {
     l.entries.unshift(ledgerPass(26, OLD));
     l.entries.push(ledgerSupersede(26, OLD));
@@ -18900,6 +18926,24 @@ test("NAV ledger R8: nova versão só acrescenta ao fim e encadeia o hash anteri
     }).resumeFrom,
     27,
   );
+});
+test("NAV ledger R8: controle positivo de nova execução com evidência própria", () => {
+  const next = ledgerFixture(25, (l) => l.entries.push(ledgerPass(26, LEDGER_R8)), {
+    resumeFrom: 27,
+  });
+  assert.equal(fn("validateNavigationLedger")(next.raw, next.pin).resumeFrom, 27);
+});
+test("NAV resumo final nunca lança, mesmo com estado de ledger inconsistente", () => {
+  const pin = { ...sut.NAVIGATION_LEDGER, resumeFrom: 26 };
+  for (const ledger of [{ resumeFrom: 53, validIndices: [] }, { resumeFrom: "x" }]) {
+    const final = fn("navigationFinalSummary")([], ledger, pin, {
+      aborted: null,
+      logoutVerified: true,
+    });
+    assert.equal(final.incremental, true);
+    assert.equal(final.summary.runComplete, false);
+    assert.equal(final.summary.cumulativeMatrixComplete, false);
+  }
 });
 test("NAV resumo final: modo incremental, abortos, logout e ledger ausente nunca concluem", () => {
   const summaryFor = fn("navigationFinalSummary");
