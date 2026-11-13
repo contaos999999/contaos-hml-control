@@ -1,0 +1,58 @@
+{
+  "schema": "contaos.navigation.r5.terminal.v1",
+  "state": "NAVIGATION_INCOMPLETE",
+  "requestPr": 617,
+  "requestHead": "31311af72a1a41a135f02bbb1d19a977e6482c42",
+  "requestMerge": "52598a8e0b6b43b51fdee6ffc3b274a13adb6fea",
+  "approvedParent": "d268bc1b1620d667e9885337d33eefdc5b8cf8ff",
+  "requestReview": 5881037572,
+  "authRun": 43294734581,
+  "authPreflightJob": 131449896759,
+  "authPrivateJob": 131450554732,
+  "fixturesRun": 43294734335,
+  "attempt": 1,
+  "artifactId": 13980362527,
+  "artifactName": "trilha-a-private-43294734581-1",
+  "artifactSize": 2079,
+  "artifactDigest": "sha256:bf2ae1e54f7ba034ec9d2232ba2b6abceb63d2c4afda927d65f423ed6daf0bf1",
+  "reportSha256": "aac9f7de346d1f297501802e23815e129b8283f06f7fd54b913c12984a583afa",
+  "expected": 52,
+  "observed": 32,
+  "passed": 30,
+  "failed": 2,
+  "matrixComplete": false,
+  "logoutVerified": false,
+  "logoutFailure": "FENCE_DRAIN_TIMEOUT",
+  "httpErrors": 3,
+  "httpStatusErrors": 0,
+  "transportErrors": 3,
+  "pageErrors": 0,
+  "blockedMutations": 0,
+  "failures": [
+    {
+      "surface": "V107",
+      "width": 390,
+      "stage": "FINISH",
+      "code": "NAVIGATION_CASE",
+      "transportErrors": 2
+    },
+    {
+      "surface": "V113",
+      "width": 390,
+      "stage": "LINKS",
+      "operation": "LINK_CLICK",
+      "target": "SYS04",
+      "code": "FENCE_DRAIN_TIMEOUT",
+      "transportErrors": 1
+    }
+  ],
+  "transportFailure": {
+    "reason": "ABORTED",
+    "destination": "API",
+    "method": "GET",
+    "resourceType": "fetch",
+    "category": "API_REST"
+  },
+  "nonceSpent": "integracao-v1-fase2-nav-20261112-r5",
+  "certified": false
+}
