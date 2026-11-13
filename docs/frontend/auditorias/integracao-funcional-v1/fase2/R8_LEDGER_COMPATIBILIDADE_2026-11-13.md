@@ -83,8 +83,8 @@ Os oito registros da R8 estão na ordem canônica e são aceitos um a um pelo va
 Pela emenda R9 (C), os PASS 31-34, posteriores ao FAIL não fatal do índice 30, são candidatos. Ficam 19 pendentes (30 e 35-52), e o primeiro é o 30.
 
 **Compatibilidade de `9a4d0ad` com o harness do BUILD R9.** As mudanças do BUILD R9 não alteram a verificação de cada caso:
-1. **Instrumentação.** São ouvintes adicionais que só emitem marcadores fechados (`NAVIGATION_TRANSPORT_DETAIL`, `FENCE_DRAIN_DIAGNOSTIC`) e um registro do instante do clique. Os contadores e os validadores existentes estão inalterados.
-2. **Aposentadoria do preflight estendida a `POST`, com as mesmas três provas.** Só torna o drain menos sujeito a travar quando há prova. Não pode transformar em FAIL um caso que passou.
+1. **Instrumentação.** São ouvintes adicionais que só emitem marcadores fechados (`NAVIGATION_TRANSPORT_DETAIL`, com classe de endpoint por lista fechada, pedido de navegação, frame, ms e documentos desde o clique; `FENCE_DRAIN_DIAGNOSTIC`) e um registro do instante do clique, com volume limitado (64 marcadores, contador de documentos até 1000). Os contadores e os validadores existentes estão inalterados.
+2. **Aposentadoria do preflight estendida a `POST`, com as mesmas três provas.** Só torna o drain menos sujeito a travar quando há prova. Não pode transformar em FAIL um caso que passou. O RED/GREEN em Chromium real está em `R9_EXPERIMENTO_PREFLIGHT_POST_2026-11-13.md`.
 3. **Revisão canônica aceita também `Edivan5002` e o rodapé fixo.** Afeta só a admissão.
 4. **Ledger com lacunas e execução só dos pendentes.** Define quais casos executar, não como verificar cada um.
 

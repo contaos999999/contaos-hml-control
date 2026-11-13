@@ -5638,6 +5638,31 @@ export function navigationDrainDiagnostic(handlers, lifecycle, log = console.log
     // O diagnóstico nunca altera o resultado fail-closed.
   }
 }
+// Lista fechada das funções RPC chamadas pelo frontend (src/**/*.rpc("...")); qualquer
+// outro nome é registrado apenas como rpc:OTHER.
+export const NAVIGATION_RPC_NAMES = Object.freeze([
+  "aprovar_apresentacao",
+  "aprovar_parecer_interno",
+  "aprovar_regra_preventiva",
+  "atualizar_contratante",
+  "classificar_acesso_contrato_v106",
+  "criar_competencia",
+  "criar_organizacao",
+  "listar_organizacoes_disponiveis",
+  "obter_analise_competencia_v116",
+  "obter_contexto_revisao_v117",
+  "obter_detalhe_requisito_v117",
+  "obter_documentos_competencia_v115",
+  "obter_resumo_dashboard",
+  "obter_visao_geral_competencia",
+  "registrar_apresentacao",
+  "registrar_revisao_requisito_v117",
+  "solicitar_analise_competencia",
+  "solicitar_parecer_interno",
+  "solicitar_reanalise_requisitos",
+]);
+export const NAVIGATION_DETAIL_LIMIT = 64;
+export const NAVIGATION_DOCUMENT_COUNT_LIMIT = 1000;
 export function navigationEndpointClass(rawUrl) {
   try {
     const url = new URL(rawUrl);
@@ -5646,7 +5671,7 @@ export function navigationEndpointClass(rawUrl) {
     if (rest) {
       if (rest[1] === "rpc") {
         const fn = url.pathname.slice("/rest/v1/rpc/".length);
-        return /^[a-z][a-z0-9_]{0,62}$/.test(fn) ? "rpc:" + fn : "rpc:OTHER";
+        return NAVIGATION_RPC_NAMES.includes(fn) ? "rpc:" + fn : "rpc:OTHER";
       }
       return TABLES.has(rest[1]) ? "rest:" + rest[1] : "rest:OTHER";
     }
@@ -5669,6 +5694,19 @@ export function navigationTransportDetail(request, context, timing) {
   } catch {
     endpoint = "INVALID";
   }
+  let navigationRequest = "UNKNOWN",
+    frame = "UNKNOWN";
+  try {
+    navigationRequest = request.isNavigationRequest() === true ? "YES" : "NO";
+  } catch {
+    navigationRequest = "UNKNOWN";
+  }
+  try {
+    const owner = request.frame();
+    frame = owner ? (owner.parentFrame() ? "CHILD" : "MAIN") : "NONE";
+  } catch {
+    frame = "UNKNOWN";
+  }
   const since =
     Number.isFinite(timing?.clickAt) && timing.clickAt > 0
       ? Math.max(0, Math.min(600000, Math.round(timing.now - timing.clickAt)))
@@ -5684,10 +5722,13 @@ export function navigationTransportDetail(request, context, timing) {
     method: base.method,
     category: base.category,
     endpoint,
+    navigationRequest,
+    frame,
     msSinceClick: since,
-    documentRequestsSinceClick: Number.isSafeInteger(timing?.documents)
-      ? Math.min(timing.documents, 1000)
-      : -1,
+    documentRequestsSinceClick:
+      Number.isSafeInteger(timing?.documents) && timing.documents >= 0
+        ? Math.min(timing.documents, NAVIGATION_DOCUMENT_COUNT_LIMIT)
+        : -1,
   };
 }
 export function navigationTransportMarker(request, context) {
@@ -6051,7 +6092,7 @@ export async function runNavigationAudit(page, fence, proof) {
   const clickTiming = { clickAt: 0, documents: 0 };
   let detailCount = 0;
   const onTransportDetail = (request) => {
-    if (!diagnosticRow || detailCount >= 64) return;
+    if (!diagnosticRow || detailCount >= NAVIGATION_DETAIL_LIMIT) return;
     const { surface, width, stage, operation, target } = diagnosticRow;
     const detail = navigationTransportDetail(
       request,
@@ -6065,7 +6106,11 @@ export async function runNavigationAudit(page, fence, proof) {
   };
   const onDocumentRequest = (request) => {
     try {
-      if (request.resourceType() === "document") clickTiming.documents++;
+      if (
+        request.resourceType() === "document" &&
+        clickTiming.documents < NAVIGATION_DOCUMENT_COUNT_LIMIT
+      )
+        clickTiming.documents++;
     } catch {
       // somente diagnóstico
     }
@@ -11293,7 +11338,7 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR7PlanSha: "dbcec252851cd867655aaaabc8f2160993f8f46b",
   functionalNavigationR8PlanSha: "78a5f4b96fe756f96a43e53ab877d17145d986f2",
   // Emenda R9 (A): commit do PLAN R9, ancestral obrigatório mesmo antes do merge.
-  functionalNavigationR9PlanSha: "17d304de0fb6ce1ed8ebeff134bfb6cff192b881",
+  functionalNavigationR9PlanSha: "771a3e0aeeb6b957c8cd2429184d8cf8fc279af8",
   spentAuditNonces: Object.freeze([
     "integracao-v1-fase2-nav-20261113-r8",
     "integracao-v1-fase2-nav-20261113-r7",

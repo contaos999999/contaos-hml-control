@@ -8992,6 +8992,7 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
     [{ ...review, user: { login: "Edivan5002" } }],
     [{ ...review, body: review.body + footer }],
     [{ ...review, user: { login: "Edivan5002" }, body: review.body + footer + "\n" }],
+    [{ ...review, body: "\n  " + review.body + "\n" }],
     [
       { ...review, id: 1, body: "APROVAVEL" },
       { ...review, id: 2, user: { login: "Edivan5002" } },
@@ -9001,12 +9002,15 @@ test("solicitacao unica: PR integrado revisao selada e checks obrigatorios", () 
   assert.equal(sut.SINGLE_REQUEST_REVIEW_FOOTER, footer);
   assert.deepEqual(sut.SINGLE_REQUEST_REVIEWERS, ["contaos9999", "Edivan5002"]);
 });
-test("R9 instrumentação: endpoint e detalhe de transporte só com valores fechados", () => {
+test("R9 instrumentação: endpoint e detalhe de transporte só com valores fechados", async () => {
   const cls = fn("navigationEndpointClass");
   assert.equal(cls(API + "/rest/v1/contratos?id=eq.PRIVATE_SENTINEL"), "rest:contratos");
   assert.equal(cls(API + "/rest/v1/PRIVATE_SENTINEL?x=1"), "rest:OTHER");
   assert.equal(cls(API + "/rest/v1/rpc/obter_resumo_dashboard"), "rpc:obter_resumo_dashboard");
   assert.equal(cls(API + "/rest/v1/rpc/Bad-Name"), "rpc:OTHER");
+  assert.equal(cls(API + "/rest/v1/rpc/funcao_nao_listada"), "rpc:OTHER");
+  assert.equal(sut.NAVIGATION_RPC_NAMES.length, 19);
+  assert.equal(Object.isFrozen(sut.NAVIGATION_RPC_NAMES), true);
   assert.equal(cls(API + "/auth/v1/user"), "auth:user");
   assert.equal(cls(API + "/auth/v1/PRIVATE"), "auth:OTHER");
   assert.equal(cls(HML + "/x"), "NON_API");
@@ -9023,6 +9027,8 @@ test("R9 instrumentação: endpoint e detalhe de transporte só com valores fech
     url: () => API + "/rest/v1/rpc/obter_resumo_dashboard?token=PRIVATE_SENTINEL",
     method: () => "POST",
     resourceType: () => "fetch",
+    isNavigationRequest: () => false,
+    frame: () => ({ parentFrame: () => null }),
   };
   const detail = fn("navigationTransportDetail")(request, context, {
     clickAt: 1000,
@@ -9036,12 +9042,60 @@ test("R9 instrumentação: endpoint e detalhe de transporte só com valores fech
     method: "POST",
     category: "API_RPC",
     endpoint: "rpc:obter_resumo_dashboard",
+    navigationRequest: "NO",
+    frame: "MAIN",
     msSinceClick: 250,
     documentRequestsSinceClick: 0,
   });
   assert.equal(JSON.stringify(detail).includes("PRIVATE_SENTINEL"), false);
   assert.equal(fn("navigationTransportDetail")(request, { ...context, surface: "X" }, {}), null);
   assert.equal(fn("navigationTransportDetail")(request, context, {}).msSinceClick, -1);
+  const capped = fn("navigationTransportDetail")(request, context, { documents: 5000 });
+  assert.equal(capped.documentRequestsSinceClick, sut.NAVIGATION_DOCUMENT_COUNT_LIMIT);
+  assert.equal(sut.NAVIGATION_DOCUMENT_COUNT_LIMIT, 1000);
+  assert.equal(
+    fn("navigationTransportDetail")(request, context, { documents: -3 }).documentRequestsSinceClick,
+    -1,
+  );
+  const odd = fn("navigationTransportDetail")(
+    {
+      ...request,
+      isNavigationRequest: () => true,
+      frame: () => ({ parentFrame: () => ({}) }),
+    },
+    context,
+    {},
+  );
+  assert.equal(odd.navigationRequest, "YES");
+  assert.equal(odd.frame, "CHILD");
+  const throwing = fn("navigationTransportDetail")(
+    {
+      ...request,
+      isNavigationRequest: () => {
+        throw new Error("PRIVATE_SENTINEL");
+      },
+      frame: () => {
+        throw new Error("PRIVATE_SENTINEL");
+      },
+    },
+    context,
+    {},
+  );
+  assert.equal(throwing.navigationRequest, "UNKNOWN");
+  assert.equal(throwing.frame, "UNKNOWN");
+  assert.equal(
+    fn("navigationTransportDetail")({ ...request, frame: () => null }, context, {}).frame,
+    "NONE",
+  );
+  // Os limites de volume no executor usam as constantes exportadas.
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  assert.equal(sut.NAVIGATION_DETAIL_LIMIT, 64);
+  assert.match(source, /detailCount >= NAVIGATION_DETAIL_LIMIT\) return;/);
+  assert.match(source, /clickTiming\.documents < NAVIGATION_DOCUMENT_COUNT_LIMIT/);
 });
 test("R9 instrumentação: diagnóstico do drain nunca lança nem expõe dados", () => {
   const logs = [];
@@ -22389,7 +22443,7 @@ test("NAV R9 successor consumes R8 and requires the R9 PLAN commit", () => {
   );
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR9PlanSha,
-    "17d304de0fb6ce1ed8ebeff134bfb6cff192b881",
+    "771a3e0aeeb6b957c8cd2429184d8cf8fc279af8",
   );
   for (const nonce of [
     "integracao-v1-fase2-nav-20261111-r1",
