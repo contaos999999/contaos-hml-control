@@ -4216,5 +4216,64 @@
     "backend_autorizado": false,
     "workflow_autorizado": false,
     "prod_autorizado": false
+  },
+  "integracao_funcional_fase2_r9": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R9_ABORTOS_DESTINO_SYS04_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "9a4d0ad16a8a64fa04a30208c8c36e7020ec9b01",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/R8_LEDGER_COMPATIBILIDADE_2026-11-13.md",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/R9_EXPERIMENTO_PREFLIGHT_POST_2026-11-13.md"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r9",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2",
+      "integracao-v1-fase2-nav-20261112-r3",
+      "integracao-v1-fase2-nav-20261112-r4",
+      "integracao-v1-fase2-nav-20261112-r5",
+      "integracao-v1-fase2-nav-20261112-r6",
+      "integracao-v1-fase2-nav-20261113-r7",
+      "integracao-v1-fase2-nav-20261113-r8"
+    ],
+    "r8_run": 43388821235,
+    "r8_private_job": 131764048105,
+    "r8_artifact": 14020676685,
+    "r8_artifact_digest": "sha256:ab15acd3b6a136139e620c5f734783b054157fd98ecbadcdec4e9026fde97e06",
+    "r8_report_sha256": "3025371b6c575cac164f5c5e9068104ee9a1a98d60926499a5230c97f71ac4d7",
+    "r8_pass_candidatos": "26-29,31-34",
+    "r8_fail": [
+      {
+        "indice": 30,
+        "surface": "V112",
+        "width": 390,
+        "code": "NAVIGATION_CASE"
+      },
+      {
+        "indice": 35,
+        "surface": "V115",
+        "width": 1440,
+        "code": "FENCE_DRAIN_TIMEOUT"
+      }
+    ],
+    "resume_from_candidato": 30,
+    "request_chaves": 7,
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "emenda_r9": {
+      "A": "agrupamento por identidade; BUILD amarrado ao commit do PLAN",
+      "B": "revisão canônica contaos9999 ou Edivan5002; JSON exato ou com rodapé fixo",
+      "C": "PASS após FAIL não fatal; ledger com lacunas; executa só pendentes",
+      "D": "pré-revisão por mutação",
+      "aprovacao": "titular, chat 13/11/2026 05:20 Bahia"
+    },
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
   }
 }
