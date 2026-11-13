@@ -192,9 +192,9 @@ test("NAV F2: report rejects secrets unknown fields missing cleanup and fabricat
   const report = {
     schema: "contaos.navigation.audit.v3",
     networkFailure: null,
-    frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
+    frontendSha: "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
     harnessSha: "b".repeat(40),
-    deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
+    deploymentId: "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
     auditScope: "INTEGRACAO_V1_FASE2_NAV",
     records,
     summary: fn("summarizeNavigation")(records),
@@ -15436,8 +15436,8 @@ test("Navigation admission requires each integrated repair, visual and focus gat
 
 test("Navigation deployment is separately pinned to the reviewed phase 2 product without rewriting C8 history", () => {
   assert.deepEqual(sut.NAVIGATION_DEPLOYMENT, {
-    frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
-    deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
+    frontendSha: "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+    deploymentId: "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
   });
   assert.equal(Object.isFrozen(sut.NAVIGATION_DEPLOYMENT), true);
   assert.equal(sut.C8_R5_PRESERVED.frontendSha, "0024b3c6739ab6296ec12338f11cf792d3a5f84b");
@@ -18663,9 +18663,9 @@ function navigationReportV3Fixture() {
   return {
     schema: "contaos.navigation.audit.v3",
     networkFailure: null,
-    frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
+    frontendSha: "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
     harnessSha: "b".repeat(40),
-    deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
+    deploymentId: "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
     auditScope: "INTEGRACAO_V1_FASE2_NAV",
     records,
     summary: { expected: 52, observed: 52, passed: 52, failed: 0, matrixComplete: true },
@@ -18689,9 +18689,9 @@ function navigationReportV3Fixture() {
 const LEDGER_R7 = {
   runId: 43358055422,
   attempt: 1,
-  frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
+  frontendSha: "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
   harnessSha: "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
-  deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
+  deploymentId: "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
   artifactId: 14008077669,
   artifactSha256: "c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3",
   reportSha256: "e".repeat(64),
@@ -18772,7 +18772,7 @@ test("NAV ledger R8: 25 PASS compatíveis retomam exatamente no índice 26 (V110
     (e) => e.code === "NAVIGATION_LEDGER",
   );
 });
-test("NAV ledger R9: ledger integrado v2 fixa 1-25 (R7) e 26-29, 31-34 (R8) com lacunas", async () => {
+test("NAV ledger R10: ledger integrado v3 encadeia a v2 e invalida os 33 PASS do produto anterior", async () => {
   const fs = await import("node:fs/promises");
   const raw = await fs.readFile(
     new URL("../../" + sut.NAVIGATION_LEDGER.path, import.meta.url),
@@ -18780,32 +18780,34 @@ test("NAV ledger R9: ledger integrado v2 fixa 1-25 (R7) e 26-29, 31-34 (R8) com 
   );
   assert.equal(createHash("sha256").update(raw).digest("hex"), sut.NAVIGATION_LEDGER.sha256);
   const ledger = JSON.parse(raw);
-  // v1 reconstruída deterministicamente: as 25 primeiras entradas, sem cadeia anterior.
-  const v1 =
+  // v2 reconstruída deterministicamente: as 33 primeiras entradas, encadeadas à v1.
+  const v2 =
     JSON.stringify(
-      { ...ledger, previousLedgerSha256: null, entries: ledger.entries.slice(0, 25) },
+      {
+        ...ledger,
+        previousLedgerSha256: "0a8f71f2c5bc8a845d62a4cfca39511dfdcab601c860f8da2894b66a47846408",
+        entries: ledger.entries.slice(0, 33),
+      },
       null,
       2,
     ) + "\n";
-  assert.equal(createHash("sha256").update(v1).digest("hex"), sut.NAVIGATION_LEDGER.previousSha256);
+  assert.equal(createHash("sha256").update(v2).digest("hex"), sut.NAVIGATION_LEDGER.previousSha256);
   const history = async (args) => {
     if (args[0] === "log") return "1".repeat(40) + "\n";
     if (args[0] === "show" && args[1] === "1".repeat(40) + ":" + sut.NAVIGATION_LEDGER.path)
-      return v1;
+      return v2;
     throw new Error("unexpected");
   };
   const state = await fn("loadNavigationLedger")(undefined, sut.NAVIGATION_LEDGER, history);
-  assert.equal(state.resumeFrom, 30);
-  assert.deepEqual(state.pendingIndices, [30, ...Array.from({ length: 18 }, (_, i) => i + 35)]);
-  assert.equal(state.validIndices.length, 33);
-  const run = fn("navigationRunCases")(state);
+  assert.equal(state.resumeFrom, 1);
   assert.deepEqual(
-    run.slice(0, 2).map((c) => [c.surface, c.width, c.theme]),
-    [
-      ["V112", 390, "dark"],
-      ["V115", 1440, "light"],
-    ],
+    state.pendingIndices,
+    Array.from({ length: 52 }, (_, i) => i + 1),
   );
+  assert.equal(state.validIndices.length, 0);
+  const run = fn("navigationRunCases")(state);
+  assert.equal(run.length, 52);
+  assert.deepEqual([run[0].surface, run[0].width, run[0].theme], ["SYS04", 1440, "light"]);
   const R7 = [
     43358055422,
     "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
@@ -18820,11 +18822,13 @@ test("NAV ledger R9: ledger integrado v2 fixa 1-25 (R7) e 26-29, 31-34 (R8) com 
     "ab15acd3b6a136139e620c5f734783b054157fd98ecbadcdec4e9026fde97e06",
     "3025371b6c575cac164f5c5e9068104ee9a1a98d60926499a5230c97f71ac4d7",
   ];
+  const passIndices = [...Array.from({ length: 29 }, (_, i) => i + 1), 31, 32, 33, 34];
+  assert.equal(ledger.entries.length, 66);
   assert.deepEqual(
-    ledger.entries.map((e) => e.index),
-    [...Array.from({ length: 29 }, (_, i) => i + 1).filter((i) => i <= 29), 31, 32, 33, 34],
+    ledger.entries.slice(0, 33).map((e) => e.index),
+    passIndices,
   );
-  for (const entry of ledger.entries) {
+  for (const entry of ledger.entries.slice(0, 33)) {
     assert.equal(entry.status, "PASS");
     assert.equal(entry.attempt, 1);
     assert.equal(entry.frontendSha, "3638cdd381cb911f6bdc115169891a25479b7a25");
@@ -18834,10 +18838,26 @@ test("NAV ledger R9: ledger integrado v2 fixa 1-25 (R7) e 26-29, 31-34 (R8) com 
       entry.index <= 25 ? R7 : R8,
     );
   }
+  const superseded = ledger.entries.slice(33);
+  assert.deepEqual(
+    superseded.map((e) => e.index),
+    [...passIndices].sort((a, b) => a - b),
+  );
+  for (const entry of superseded) {
+    assert.equal(entry.status, "SUPERSEDED");
+    assert.equal(entry.supersedesRunId, entry.index <= 25 ? 43358055422 : 43388821235);
+    assert.equal(entry.supersedesAttempt, 1);
+    assert.equal(entry.changeSha, "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97");
+    assert.match(entry.justification, /BUILD R10/);
+  }
+  assert.deepEqual(sut.NAVIGATION_DEPLOYMENT, {
+    frontendSha: "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+    deploymentId: "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
+  });
   assert.equal(
-    fn("validateNavigationLedgerExtension")(v1, raw),
+    fn("validateNavigationLedgerExtension")(v2, raw),
     true,
-    "v2 só acrescenta à v1 integrada",
+    "v3 só acrescenta à v2 integrada",
   );
   const { raw: other } = ledgerFixture();
   assert.throws(

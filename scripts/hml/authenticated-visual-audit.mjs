@@ -4349,9 +4349,11 @@ export const C8_V117_SCOPE = Object.freeze({
 export function isC8Scope(scope) {
   return scope === C8_AUDIT_SCOPE || scope === C8_REMAINING_SCOPE || scope === C8_V117_SCOPE;
 }
+// R10: produto do BUILD R10 (#637, merge e6c8cb0) publicado no HML; READY, SHA de origem
+// conferido pela API do Vercel. O produto anterior era 3638cdd / dpl_CRTez9i1…
 export const NAVIGATION_DEPLOYMENT = Object.freeze({
-  frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
-  deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
+  frontendSha: "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+  deploymentId: "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
@@ -4363,13 +4365,13 @@ export const NAVIGATION_SCOPE = Object.freeze({
 export const NAVIGATION_LEDGER_SCHEMA = "contaos.navigation.incremental.v1";
 export const NAVIGATION_LEDGER = Object.freeze({
   path: "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
-  // v2 (emenda R9): índices 1-25 da R7 (artefato 14008077669, report 4ecc2279…) e
-  // 26-29 e 31-34 da R8 (artefato 14020676685, report 3025371b…), verificados.
-  sha256: "35297ac588a9b8c57f1f3de2cee2369f111f2596e90891d364d8a20cdbd0305d",
-  // Cadeia append-only: hash do ledger fixado anteriormente (v1).
-  previousSha256: "0a8f71f2c5bc8a845d62a4cfca39511dfdcab601c860f8da2894b66a47846408",
-  resumeFrom: 30,
-  pendingCount: 19,
+  // v3 (R10): v2 (1-25 da R7, 26-29 e 31-34 da R8) + SUPERSEDED dos 33 PASS, porque o
+  // produto mudou no BUILD R10 (changeSha e6c8cb0). Nenhum PASS válido; 52 pendentes.
+  sha256: "b38edb0591f37bb4237d15044508429a03e318c9191c7e3165a3ebe998bdd1f6",
+  // Cadeia append-only: hash do ledger fixado anteriormente (v2).
+  previousSha256: "35297ac588a9b8c57f1f3de2cee2369f111f2596e90891d364d8a20cdbd0305d",
+  resumeFrom: 1,
+  pendingCount: 52,
   // Harness cujos PASS permanecem compatíveis com o harness atual. Cada inclusão
   // exige prova de não impacto revisada (docs/.../fase2/R8_LEDGER_COMPATIBILIDADE).
   compatibleHarnessShas: Object.freeze([
