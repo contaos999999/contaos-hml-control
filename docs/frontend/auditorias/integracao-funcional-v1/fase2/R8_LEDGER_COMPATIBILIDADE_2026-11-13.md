@@ -1,6 +1,16 @@
 # Fase 2 R8: ledger incremental e prova de compatibilidade dos PASS R7
 
-Fase 2 continua NÃO CERTIFICADA. Este documento acompanha o BUILD do executor incremental exigido pela emenda de certificação incremental (PR #626, merge `78a5f4b`). O ledger ainda **não** está fixado: `NAVIGATION_LEDGER.sha256 = null`, e enquanto for nulo toda auditoria NAV falha fechada com `NAVIGATION_LEDGER`.
+Fase 2 continua NÃO CERTIFICADA. Este documento acompanha o BUILD do executor incremental exigido pela emenda de certificação incremental (PR #626, merge `78a5f4b`) e o primeiro ledger, com os 25 PASS verificados da R7. O ledger está fixado em `NAVIGATION_LEDGER.sha256 = 0a8f71f2c5bc8a845d62a4cfca39511dfdcab601c860f8da2894b66a47846408`, com `previousSha256 = null` e `resumeFrom = 26`.
+
+## Verificação do artefato R7 (feita em 13/11/2026)
+
+- Artefato `14008077669` (`trilha-a-private-43358055422-1`, Auth `43358055422`, attempt 1, `head_sha` `a3b6c34936a095fdca98bb79c3f21d28ed0e3979`), 1900 bytes, não expirado.
+- SHA-256 do ZIP: `c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3`, igual ao digest registrado pelo GitHub.
+- CRC válido. Exatamente dois membros: `report.json` (27656 bytes) e `SHA256SUMS` (78 bytes). `sha256sum --check` deu OK, com `report.json` = `4ecc2279d8de134aaf10813d4c6330eb75d27eef7b11e69e61b9ea184c612d0d`.
+- `report.json`: `contaos.navigation.audit.v3`, escopo `INTEGRACAO_V1_FASE2_NAV`, `frontendSha` `3638cdd…`, `harnessSha` `a3b6c34…`, `deploymentId` `dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh`. Resumo: 26 observados, 25 PASS, 1 FAIL, `matrixComplete=false`.
+- Os 26 registros estão exatamente na ordem canônica de `navigationCases()`. Os índices 1-25 são PASS com `stage`/`operation` `FINISH`, e cada linha é aceita pelo validador canônico do auditor (`summarizeNavigation` linha a linha: 25/25). O índice 26 (V110/390) é `FAIL` `LINKS`/`LINK_CLICK` `FENCE_DRAIN_TIMEOUT` e é recusado pelo validador, como esperado.
+- Controles globais R7: sessão, MASTER e organização `true`, `logoutVerified=false`, `fenceDiagnostic` `FENCE_DRAIN_TIMEOUT`. Por isso nenhum controle global é herdado: todos são exigidos de novo na R8.
+- Nenhum conteúdo do artefato foi inserido no repositório, apenas hashes e identificadores.
 
 ## Mecanismo
 
@@ -55,10 +65,8 @@ Conclusão: os índices 1-25 da R7 permanecem compatíveis, e `a3b6c34` é o ún
 
 As mutações que ainda sobrevivem só removem guardas sem efeito observável distinto: limite de 256 KiB e de 208 entradas (o texto acaba recusado por outra regra), `validBefore` e a exigência de `cumulativeMatrixComplete` no v4 (redundantes depois da validação do ledger) e `resumeFrom <= 1` no v4 (já coberto pela comparação com o ledger). Ficam como defesa em profundidade.
 
-## Pendências antes da REQUEST R8 (PR separada)
+## Próximos passos
 
-1. Baixar o artefato R7 `14008077669` e conferir o ZIP digest `c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3`, CRC, membros e `sha256sum --check SHA256SUMS`. Validar o `report.json` (schema v3, ordem canônica, índices 1-25 PASS com o validador de linha do auditor, índice 26 FAIL) e registrar apenas os hashes.
-2. Criar o `NAV_LEDGER.json` com as 25 entradas, fixar `NAVIGATION_LEDGER.sha256` e passar por revisão independente, CI e merge protegido.
-3. Só então criar a REQUEST R8 de sete chaves, com a revisão canônica JSON pela identidade exigida no auditor.
-
-Certificação final: 52 entradas PASS válidas e compatíveis (1-25 da R7, 26-52 da R8), artefatos originais verificáveis, controles globais verificados na R8, revisão independente do ledger consolidado e PR final integrada.
+1. Revisão independente desta PR (mecanismo e ledger), Zero-Drift, LOCK, os dois workflows Trilha A e merge protegido.
+2. REQUEST R8 de sete chaves, com `approved_parent_sha` igual ao merge desta PR e revisão canônica JSON pela identidade exigida no auditor. Auth attempt 1 automática, executando os índices 26 a 52.
+3. Se a R8 passar com `runComplete=true` e `cumulativeMatrixComplete=true`: nova versão do ledger com os índices 26-52 da R8, encadeada a `0a8f71f2…` e com `resumeFrom = 53`; revisão independente do ledger consolidado (52/52) e PR final de certificado integrada à `main`.

@@ -18545,14 +18545,58 @@ test("NAV ledger R8: 25 PASS compatíveis retomam exatamente no índice 26 (V110
     (e) => e.code === "NAVIGATION_LEDGER",
   );
 });
-test("NAV ledger R8: hash ainda não fixado falha fechado", async () => {
-  const { raw } = ledgerFixture();
-  assert.equal(sut.NAVIGATION_LEDGER.sha256, null);
-  assert.throws(
-    () => fn("validateNavigationLedger")(raw, sut.NAVIGATION_LEDGER),
-    (e) => e.code === "NAVIGATION_LEDGER",
+test("NAV ledger R8: ledger integrado fixa os 25 PASS verificados da R7 e retoma em 26", async () => {
+  const fs = await import("node:fs/promises");
+  const raw = await fs.readFile(
+    new URL("../../" + sut.NAVIGATION_LEDGER.path, import.meta.url),
+    "utf8",
   );
-  assert.equal(await fn("navigationReportLedger")(), null, "relatório final nunca lança");
+  assert.equal(createHash("sha256").update(raw).digest("hex"), sut.NAVIGATION_LEDGER.sha256);
+  const state = await fn("loadNavigationLedger")(undefined, sut.NAVIGATION_LEDGER, async () => {
+    throw new Error("sem ledger anterior: git não deve ser consultado");
+  });
+  assert.equal(state.resumeFrom, 26);
+  assert.equal(sut.NAVIGATION_LEDGER.previousSha256, null);
+  const ledger = JSON.parse(raw);
+  assert.equal(ledger.entries.length, 25);
+  for (const entry of ledger.entries)
+    assert.deepEqual(
+      [
+        entry.status,
+        entry.runId,
+        entry.attempt,
+        entry.frontendSha,
+        entry.harnessSha,
+        entry.deploymentId,
+        entry.artifactId,
+        entry.artifactSha256,
+        entry.reportSha256,
+      ],
+      [
+        "PASS",
+        43358055422,
+        1,
+        "3638cdd381cb911f6bdc115169891a25479b7a25",
+        "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
+        "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
+        14008077669,
+        "c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3",
+        "4ecc2279d8de134aaf10813d4c6330eb75d27eef7b11e69e61b9ea184c612d0d",
+      ],
+    );
+  const { raw: other } = ledgerFixture();
+  assert.throws(
+    () => fn("validateNavigationLedger")(other, sut.NAVIGATION_LEDGER),
+    (e) => e.code === "NAVIGATION_LEDGER",
+    "qualquer outro texto diverge do hash fixado",
+  );
+  assert.equal(
+    await fn("navigationReportLedger")(async () => {
+      throw Object.assign(new Error("NAVIGATION_LEDGER"), { code: "NAVIGATION_LEDGER" });
+    }),
+    null,
+    "relatório final nunca lança",
+  );
 });
 test("NAV ledger R8: a matriz executada é exatamente o recorte do ledger", async () => {
   const fs = await import("node:fs/promises"),

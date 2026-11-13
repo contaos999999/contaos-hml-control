@@ -4342,7 +4342,9 @@ export const NAVIGATION_SCOPE = Object.freeze({
 export const NAVIGATION_LEDGER_SCHEMA = "contaos.navigation.incremental.v1";
 export const NAVIGATION_LEDGER = Object.freeze({
   path: "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
-  sha256: null,
+  // R7 (Auth 43358055422, artefato 14008077669) verificado: ZIP, CRC, SHA256SUMS e
+  // report.json 4ecc2279…; índices 1-25 PASS pelo validador de linha canônico.
+  sha256: "0a8f71f2c5bc8a845d62a4cfca39511dfdcab601c860f8da2894b66a47846408",
   // Cadeia append-only: hash do ledger fixado anteriormente (null no primeiro).
   previousSha256: null,
   resumeFrom: 26,
