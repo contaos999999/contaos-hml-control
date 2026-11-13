@@ -2898,7 +2898,7 @@ export function createRequestLifecycle(identity) {
         const proof = record.terminal;
         if (
           record.preflightOf === null &&
-          record.method === "GET" &&
+          (record.method === "GET" || record.method === "POST") &&
           proof.canceled &&
           proof.aborted &&
           !proof.blocked &&
@@ -3152,6 +3152,26 @@ export function createRequestLifecycle(identity) {
       ticket.finished = true;
       ticket.record.active--;
       cleanup(ticket.record);
+    },
+    diagnostic(now = performance.now()) {
+      const records = [];
+      for (const record of requests.values()) {
+        if (records.length >= 16) break;
+        records.push({
+          type: CDP_RESOURCE_TYPES.has(record.type) ? record.type : "OTHER",
+          method: ["GET", "POST", "OPTIONS", "HEAD"].includes(record.method)
+            ? record.method
+            : "OTHER",
+          preflight: record.preflightOf !== null,
+          preflightOrphaned: record.preflightOrphaned === true,
+          preflightResponded: record.preflightResponded === true,
+          eligible: record.eligible === true,
+          responseSeen: record.responseSeen === true,
+          terminal: !!record.terminal,
+          active: Number.isSafeInteger(record.active) ? record.active : -1,
+        });
+      }
+      return { records, pendingNetwork: pendingNetwork.size, total: requests.size };
     },
     snapshot() {
       return {
@@ -4138,6 +4158,7 @@ export async function installNativeFence({
         if (state.failed || closed) fail(state.failureCode || "FENCE_CDP_CLOSED");
         const remaining = deadline - performance.now();
         if (remaining <= 0) {
+          navigationDrainDiagnostic(active.size, lifecycle);
           invalidate({ code: "FENCE_DRAIN_TIMEOUT" });
           fail("FENCE_DRAIN_TIMEOUT");
         }
@@ -4334,7 +4355,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261113-r8",
+  nonce: "integracao-v1-fase2-nav-20261113-r9",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 // Emenda R8 (certificação incremental, PR #626): ledger acumulativo, append-only,
@@ -4342,15 +4363,19 @@ export const NAVIGATION_SCOPE = Object.freeze({
 export const NAVIGATION_LEDGER_SCHEMA = "contaos.navigation.incremental.v1";
 export const NAVIGATION_LEDGER = Object.freeze({
   path: "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
-  // R7 (Auth 43358055422, artefato 14008077669) verificado: ZIP, CRC, SHA256SUMS e
-  // report.json 4ecc2279…; índices 1-25 PASS pelo validador de linha canônico.
-  sha256: "0a8f71f2c5bc8a845d62a4cfca39511dfdcab601c860f8da2894b66a47846408",
-  // Cadeia append-only: hash do ledger fixado anteriormente (null no primeiro).
-  previousSha256: null,
-  resumeFrom: 26,
+  // v2 (emenda R9): índices 1-25 da R7 (artefato 14008077669, report 4ecc2279…) e
+  // 26-29 e 31-34 da R8 (artefato 14020676685, report 3025371b…), verificados.
+  sha256: "35297ac588a9b8c57f1f3de2cee2369f111f2596e90891d364d8a20cdbd0305d",
+  // Cadeia append-only: hash do ledger fixado anteriormente (v1).
+  previousSha256: "0a8f71f2c5bc8a845d62a4cfca39511dfdcab601c860f8da2894b66a47846408",
+  resumeFrom: 30,
+  pendingCount: 19,
   // Harness cujos PASS permanecem compatíveis com o harness atual. Cada inclusão
   // exige prova de não impacto revisada (docs/.../fase2/R8_LEDGER_COMPATIBILIDADE).
-  compatibleHarnessShas: Object.freeze(["a3b6c34936a095fdca98bb79c3f21d28ed0e3979"]),
+  compatibleHarnessShas: Object.freeze([
+    "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
+    "9a4d0ad16a8a64fa04a30208c8c36e7020ec9b01",
+  ]),
 });
 const NAVIGATION_LEDGER_CASE_KEYS = ["index", "surface", "width", "theme", "status"];
 const NAVIGATION_LEDGER_PASS_KEYS = Object.freeze([
@@ -4493,15 +4518,21 @@ export function validateNavigationLedger(raw, pin = NAVIGATION_LEDGER) {
       !pin.compatibleHarnessShas.includes(entry.harnessSha)
     )
       fail(code);
-  let resumeFrom = 1;
-  while (valid.has(resumeFrom)) resumeFrom++;
-  // Sem lacunas: nenhum PASS válido depois do primeiro índice pendente.
-  if ([...valid.keys()].some((index) => index >= resumeFrom) || resumeFrom !== pin.resumeFrom)
+  // Emenda R9 (C): lacunas permitidas. Pendentes são exatamente os índices sem PASS válido.
+  const pendingIndices = [];
+  for (let index = 1; index <= cases.length; index++)
+    if (!valid.has(index)) pendingIndices.push(index);
+  const resumeFrom = pendingIndices.length ? pendingIndices[0] : cases.length + 1;
+  if (
+    resumeFrom !== pin.resumeFrom ||
+    (pin.pendingCount !== undefined && pin.pendingCount !== pendingIndices.length)
+  )
     fail(code);
   return Object.freeze({
     sha256: pin.sha256,
     resumeFrom,
     validIndices: Object.freeze([...valid.keys()].sort((a, b) => a - b)),
+    pendingIndices: Object.freeze(pendingIndices),
   });
 }
 // Uma nova versão do ledger só pode acrescentar entradas ao fim da anterior.
@@ -4605,7 +4636,7 @@ function navigationFinalSummaryUnsafe(records, ledger, pin, { aborted, logoutVer
   const summary = computed
     ? computed
     : {
-        expected: 53 - pin.resumeFrom,
+        expected: -1,
         observed: Array.isArray(records) ? records.length : 0,
         passed: 0,
         failed: Array.isArray(records) ? records.length : 0,
@@ -4619,12 +4650,27 @@ function navigationFinalSummaryUnsafe(records, ledger, pin, { aborted, logoutVer
   }
   return { incremental, summary };
 }
-export function navigationRunCases(resumeFrom) {
-  if (!Number.isInteger(resumeFrom) || resumeFrom < 1 || resumeFrom > 52) fail("NAVIGATION_LEDGER");
-  return navigationCases().slice(resumeFrom - 1);
+// Casos da execução: exatamente os índices pendentes do ledger, em ordem canônica.
+export function navigationRunCases(ledger) {
+  const cases = navigationCases();
+  const pending = ledger?.pendingIndices;
+  if (
+    !Array.isArray(pending) ||
+    pending.length === 0 ||
+    pending.some(
+      (index, position) =>
+        !Number.isInteger(index) ||
+        index < 1 ||
+        index > cases.length ||
+        (position > 0 && index <= pending[position - 1]),
+    ) ||
+    pending[0] !== ledger.resumeFrom
+  )
+    fail("NAVIGATION_LEDGER");
+  return pending.map((index) => cases[index - 1]);
 }
 export function summarizeNavigationIncremental(records, ledger) {
-  const expected = navigationRunCases(ledger?.resumeFrom ?? 0);
+  const expected = navigationRunCases(ledger);
   const keys = new Set(expected.map((c) => `${c.surface}/${c.width}/${c.theme}`));
   const base = summarizeNavigation(records, expected.length);
   let passed = 0;
@@ -4638,10 +4684,11 @@ export function summarizeNavigationIncremental(records, ledger) {
       }
     }
   const runComplete = base.observed === expected.length && passed === expected.length;
-  const validBefore =
+  const total = navigationCases().length;
+  const validOthers =
     Array.isArray(ledger?.validIndices) &&
-    ledger.validIndices.length === ledger.resumeFrom - 1 &&
-    ledger.validIndices.every((index, position) => index === position + 1);
+    ledger.validIndices.length + ledger.pendingIndices.length === total &&
+    ledger.validIndices.every((index) => !ledger.pendingIndices.includes(index));
   return {
     expected: expected.length,
     observed: base.observed,
@@ -4649,7 +4696,7 @@ export function summarizeNavigationIncremental(records, ledger) {
     failed: base.observed - passed,
     resumeFrom: ledger.resumeFrom,
     runComplete,
-    cumulativeMatrixComplete: runComplete && validBefore,
+    cumulativeMatrixComplete: runComplete && validOthers,
   };
 }
 export function navigationCases() {
@@ -5573,6 +5620,76 @@ export async function returnNavigationSource(page, fence, surface, path, theme) 
   if (page.url() !== HML_ORIGIN + path) fail("NAVIGATION_ROUTE");
   return waitNavigationReady(page, fence, surface, path, theme, deadline);
 }
+// R9: diagnóstico fechado do drain e do pedido abortado. Somente enumerados e
+// números; nunca URL, query, cabeçalho, corpo ou identificador.
+export function navigationDrainDiagnostic(handlers, lifecycle, log = console.log) {
+  try {
+    const d = lifecycle?.diagnostic?.();
+    log(
+      JSON.stringify({
+        phase: "FENCE_DRAIN_DIAGNOSTIC",
+        handlers: Number.isSafeInteger(handlers) ? handlers : -1,
+        requests: Number.isSafeInteger(d?.total) ? d.total : -1,
+        pendingNetwork: Number.isSafeInteger(d?.pendingNetwork) ? d.pendingNetwork : -1,
+        records: Array.isArray(d?.records) ? d.records.slice(0, 16) : [],
+      }),
+    );
+  } catch {
+    // O diagnóstico nunca altera o resultado fail-closed.
+  }
+}
+export function navigationEndpointClass(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    if (url.origin !== API_ORIGIN) return "NON_API";
+    const rest = url.pathname.match(/^\/rest\/v1\/([^/]+)/);
+    if (rest) {
+      if (rest[1] === "rpc") {
+        const fn = url.pathname.slice("/rest/v1/rpc/".length);
+        return /^[a-z][a-z0-9_]{0,62}$/.test(fn) ? "rpc:" + fn : "rpc:OTHER";
+      }
+      return TABLES.has(rest[1]) ? "rest:" + rest[1] : "rest:OTHER";
+    }
+    const auth = url.pathname.match(/^\/auth\/v1\/([^/]+)$/);
+    if (auth)
+      return ["user", "token", "logout", "session"].includes(auth[1])
+        ? "auth:" + auth[1]
+        : "auth:OTHER";
+    return "api:OTHER";
+  } catch {
+    return "INVALID";
+  }
+}
+export function navigationTransportDetail(request, context, timing) {
+  const base = navigationTransportMarker(request, context);
+  if (!base) return null;
+  let endpoint = "INVALID";
+  try {
+    endpoint = navigationEndpointClass(request.url());
+  } catch {
+    endpoint = "INVALID";
+  }
+  const since =
+    Number.isFinite(timing?.clickAt) && timing.clickAt > 0
+      ? Math.max(0, Math.min(600000, Math.round(timing.now - timing.clickAt)))
+      : -1;
+  return {
+    phase: "NAVIGATION_TRANSPORT_DETAIL",
+    surface: base.surface,
+    width: base.width,
+    stage: base.stage,
+    operation: base.operation,
+    target: base.target,
+    reason: base.reason,
+    method: base.method,
+    category: base.category,
+    endpoint,
+    msSinceClick: since,
+    documentRequestsSinceClick: Number.isSafeInteger(timing?.documents)
+      ? Math.min(timing.documents, 1000)
+      : -1,
+  };
+}
 export function navigationTransportMarker(request, context) {
   if (
     !navigationPlain(context, ["surface", "width", "stage", "operation", "target"]) ||
@@ -5931,6 +6048,30 @@ export async function runNavigationAudit(page, fence, proof) {
     }
   };
   page.on("requestfailed", onTransportDiagnostic);
+  const clickTiming = { clickAt: 0, documents: 0 };
+  let detailCount = 0;
+  const onTransportDetail = (request) => {
+    if (!diagnosticRow || detailCount >= 64) return;
+    const { surface, width, stage, operation, target } = diagnosticRow;
+    const detail = navigationTransportDetail(
+      request,
+      { surface, width, stage, operation, target },
+      { ...clickTiming, now: performance.now() },
+    );
+    if (detail) {
+      detailCount++;
+      console.log(JSON.stringify(detail));
+    }
+  };
+  const onDocumentRequest = (request) => {
+    try {
+      if (request.resourceType() === "document") clickTiming.documents++;
+    } catch {
+      // somente diagnóstico
+    }
+  };
+  page.on("requestfailed", onTransportDetail);
+  page.on("request", onDocumentRequest);
   page.on("pageerror", onError);
   page.on("console", onConsole);
   page.on("requestfailed", onRequestFailed);
@@ -6024,6 +6165,8 @@ export async function runNavigationAudit(page, fence, proof) {
       menu,
     );
     generation++;
+    clickTiming.clickAt = performance.now();
+    clickTiming.documents = 0;
     await selected.click();
     await page.waitForURL(HML_ORIGIN + path);
     await settleVerifiedPage(page, fence);
@@ -6052,7 +6195,7 @@ export async function runNavigationAudit(page, fence, proof) {
       );
   }
   try {
-    for (const item of navigationRunCases(ledger.resumeFrom)) {
+    for (const item of navigationRunCases(ledger)) {
       const row = {
         surface: item.surface,
         width: item.width,
@@ -6370,6 +6513,8 @@ export async function runNavigationAudit(page, fence, proof) {
     }
   } finally {
     page.off("requestfailed", onTransportDiagnostic);
+    page.off("requestfailed", onTransportDetail);
+    page.off("request", onDocumentRequest);
     page.off("pageerror", onError);
     page.off("request", onRequest);
     page.off("console", onConsole);
@@ -8390,7 +8535,10 @@ async function runAuthenticatedAudit() {
         ? {
             schema: incremental ? "contaos.navigation.audit.v4" : "contaos.navigation.audit.v3",
             ...(incremental
-              ? { ledgerSha256: ledger?.sha256 ?? null, resumeFrom: NAVIGATION_LEDGER.resumeFrom }
+              ? {
+                  ledgerSha256: ledger?.sha256 ?? null,
+                  resumeFrom: ledger?.resumeFrom ?? NAVIGATION_LEDGER.resumeFrom,
+                }
               : {}),
             networkFailure: navigationSession?.networkFailure() ?? null,
             frontendSha: proof.frontendSha,
@@ -11144,7 +11292,10 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR6PlanSha: "37369db9066e80f33280922c8c78b460208097ca",
   functionalNavigationR7PlanSha: "dbcec252851cd867655aaaabc8f2160993f8f46b",
   functionalNavigationR8PlanSha: "78a5f4b96fe756f96a43e53ab877d17145d986f2",
+  // Emenda R9 (A): commit do PLAN R9, ancestral obrigatório mesmo antes do merge.
+  functionalNavigationR9PlanSha: "17d304de0fb6ce1ed8ebeff134bfb6cff192b881",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261113-r8",
     "integracao-v1-fase2-nav-20261113-r7",
     "integracao-v1-fase2-nav-20261112-r6",
     "integracao-v1-fase2-nav-20261112-r5",
@@ -11216,7 +11367,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261113-r8",
+    nonce: "integracao-v1-fase2-nav-20261113-r9",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -11316,6 +11467,9 @@ export function parseSingleRequest(raw, operation, { historical = false } = {}) 
   return Object.freeze({ ...parsed });
 }
 
+export const SINGLE_REQUEST_REVIEWERS = Object.freeze(["contaos9999", "Edivan5002"]);
+export const SINGLE_REQUEST_REVIEW_FOOTER =
+  "\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_";
 export function validateSingleRequestEvent({ event, env, upstream, current, operation, mainSha }) {
   const expected = SINGLE_REQUEST[operation],
     repo = SINGLE_REQUEST.repository;
@@ -11529,6 +11683,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationR6PlanSha,
       SINGLE_REQUEST.functionalNavigationR7PlanSha,
       SINGLE_REQUEST.functionalNavigationR8PlanSha,
+      SINGLE_REQUEST.functionalNavigationR9PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
@@ -14744,13 +14899,18 @@ export function validateSingleRequestPull({
     important: 0,
     decision: "APROVAVEL",
   });
+  // Emenda R9 (B): conta autora ou revisor independente com escrita; JSON exato ou
+  // seguido exatamente do rodapé fixo do ambiente de execução, e nada mais.
   const latest = reviews
-    .filter((r) => r.user?.login === "contaos9999" && r.commit_id === pull.head.sha)
+    .filter(
+      (r) => SINGLE_REQUEST_REVIEWERS.includes(r.user?.login) && r.commit_id === pull.head.sha,
+    )
     .sort((a, b) => b.id - a.id)[0];
+  const body = typeof latest?.body === "string" ? latest.body.trim() : null;
   if (
     !latest ||
     latest.state !== "COMMENTED" ||
-    latest.body?.trim() !== expected ||
+    (body !== expected && body !== expected + SINGLE_REQUEST_REVIEW_FOOTER) ||
     !latest.submitted_at
   )
     fail("REQUEST_REVIEW");

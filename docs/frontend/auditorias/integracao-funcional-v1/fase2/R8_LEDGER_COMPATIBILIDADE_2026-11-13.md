@@ -71,3 +71,23 @@ As mutações que ainda sobrevivem só removem guardas sem efeito observável di
 1. Revisão independente desta PR (mecanismo e ledger), Zero-Drift, LOCK, os dois workflows Trilha A e merge protegido.
 2. REQUEST R8 de sete chaves, com `approved_parent_sha` igual ao merge desta PR e revisão canônica JSON pela identidade exigida no auditor. Auth attempt 1 automática, executando os índices 26 a 52.
 3. Se a R8 passar com `runComplete=true` e `cumulativeMatrixComplete=true`: nova versão do ledger com os índices 26-52 da R8, encadeada a `0a8f71f2…` e com `resumeFrom = 53`; revisão independente do ledger consolidado (52/52) e PR final de certificado integrada à `main`.
+
+## Ledger v2 e BUILD R9 (emenda R9)
+
+**Ledger v2** (`35297ac588a9b8c57f1f3de2cee2369f111f2596e90891d364d8a20cdbd0305d`), encadeado ao v1 (`0a8f71f2…`):
+- índices 1-25 da R7, sem mudança;
+- índices 26-29 e 31-34 da R8: Auth `43388821235` attempt 1, harness `9a4d0ad16a8a64fa04a30208c8c36e7020ec9b01`, artefato `14020676685`, ZIP `ab15acd3…`, `report.json` `3025371b…` (v4).
+
+Os oito registros da R8 estão na ordem canônica e são aceitos um a um pelo validador de linha. Os índices 30 e 35 (FAIL) são recusados por ele.
+
+Pela emenda R9 (C), os PASS 31-34, posteriores ao FAIL não fatal do índice 30, são candidatos. Ficam 19 pendentes (30 e 35-52), e o primeiro é o 30.
+
+**Compatibilidade de `9a4d0ad` com o harness do BUILD R9.** As mudanças do BUILD R9 não alteram a verificação de cada caso:
+1. **Instrumentação.** São ouvintes adicionais que só emitem marcadores fechados (`NAVIGATION_TRANSPORT_DETAIL`, `FENCE_DRAIN_DIAGNOSTIC`) e um registro do instante do clique. Os contadores e os validadores existentes estão inalterados.
+2. **Aposentadoria do preflight estendida a `POST`, com as mesmas três provas.** Só torna o drain menos sujeito a travar quando há prova. Não pode transformar em FAIL um caso que passou.
+3. **Revisão canônica aceita também `Edivan5002` e o rodapé fixo.** Afeta só a admissão.
+4. **Ledger com lacunas e execução só dos pendentes.** Define quais casos executar, não como verificar cada um.
+
+Assim `9a4d0ad` entra em `compatibleHarnessShas`. Produto, deployment, backend `5eca44a`, migrations HML (última de 09/11) e fixtures (nenhuma execução privada desde a R7, além das próprias R7 e R8) estão inalterados.
+
+A pré-revisão por mutação (D) do BUILD R9 detectou 11 de 11 mutações das regras novas: POST, revisores, rodapé, ordem da mais recente, pendentes, contagem, recorte, tabela, RPC, diagnóstico e ordem estrita.
