@@ -4146,5 +4146,32 @@
     "workflow_autorizado": false,
     "deploy_autorizado": false,
     "prod_autorizado": false
+  ,
+  "integracao_funcional_fase2_r7": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R7_COMMIT_ROTA_MOVEL_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "7c3a8fda149d705adb906b1f10a53e20869018cc",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "src/components/layout/ContaOSAppShell.tsx",
+      "src/test/appShellSidebar.test.tsx",
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r7",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2",
+      "integracao-v1-fase2-nav-20261112-r3",
+      "integracao-v1-fase2-nav-20261112-r4",
+      "integracao-v1-fase2-nav-20261112-r5",
+      "integracao-v1-fase2-nav-20261112-r6"
+    ],
+    "r6_artifact_digest": "sha256:ee9bd6b955b11b88a9fbd84e5d2b89d0fdaaaea95be74d43519d9c658335f566",
+    "produto_autorizado": true,
+    "produto_allowlist_fechada": true,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false
   }
 }
