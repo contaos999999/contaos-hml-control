@@ -242,7 +242,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
               <ContaOSSidebar
                 permissoes={permissoes}
                 contexto={contexto}
-                aoNavegar={() => setMovelAberto(false)}
+                aoNavegar={() => { fechamentoPorNavegacao.current = true; }}
               />
               {(administrador || auditoriaPermitida) && (
                 <nav aria-label="Administração" className="flex flex-col gap-1 p-3">
@@ -252,7 +252,7 @@ export function ContaOSAppShell({ children }: { children: ReactNode }) {
                     <Link
                       key={item.destino}
                       to={item.destino}
-                      onClick={() => setMovelAberto(false)}
+                      onClick={() => { fechamentoPorNavegacao.current = true; }}
                       aria-current={rotaAdministrativaAtiva(item.destino) ? "page" : undefined}
                       className={`rounded px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-sidebar-ring ${rotaAdministrativaAtiva(item.destino) ? "bg-sidebar-primary text-sidebar-primary-foreground" : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                     >
