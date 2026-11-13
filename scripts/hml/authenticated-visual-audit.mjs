@@ -5792,6 +5792,11 @@ export async function runNavigationAudit(page, fence, proof) {
             if (item.width < 768) {
               menu = (await page.locator(`a[href="${target.path}"]:visible`).count()) === 0;
             }
+            // Establish source-route network quiescence BEFORE navigating away.
+            // Otherwise in-flight API fetches can be aborted by route unmount,
+            // leaving an ambiguous CDP lifecycle and failing the strict fence.
+            // Do not ignore aborted requests or relax the fence deadline.
+            await waitNavigationNetwork(page, fence);
             row.operation = "LINK_CLICK";
             row.target = target.dest;
             await clickPath(target.path, item.width, menu);
