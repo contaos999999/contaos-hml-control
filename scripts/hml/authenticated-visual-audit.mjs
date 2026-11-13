@@ -4357,7 +4357,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261113-r12",
+  nonce: "integracao-v1-fase2-nav-20261113-r13",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 // Emenda R8 (certificação incremental, PR #626): ledger acumulativo, append-only,
@@ -11583,7 +11583,10 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR11PlanSha: "0922b2ef7ed461d686c21a3392bbd6ade0774b0d",
   // PLAN R12 (commit), ancestral obrigatório: preflight lista execuções por SHA.
   functionalNavigationR12PlanSha: "a8b5a4dee1e40559b094efccecc4cfad0e9f39db",
+  // PLAN R13 (commit), ancestral obrigatório: novo nonce após o bloqueio do guard nativo na R12.
+  functionalNavigationR13PlanSha: "d01da7fd9a998ccac88f6966fac4aeeeda6dfa5d",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261113-r12",
     "integracao-v1-fase2-nav-20261113-r11",
     "integracao-v1-fase2-nav-20261113-r10",
     "integracao-v1-fase2-nav-20261113-r9",
@@ -11659,7 +11662,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261113-r12",
+    nonce: "integracao-v1-fase2-nav-20261113-r13",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -12008,6 +12011,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationR10PlanSha,
       SINGLE_REQUEST.functionalNavigationR11PlanSha,
       SINGLE_REQUEST.functionalNavigationR12PlanSha,
+      SINGLE_REQUEST.functionalNavigationR13PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
