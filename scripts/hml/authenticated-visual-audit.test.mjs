@@ -192,9 +192,9 @@ test("NAV F2: report rejects secrets unknown fields missing cleanup and fabricat
   const report = {
     schema: "contaos.navigation.audit.v3",
     networkFailure: null,
-    frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
+    frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
     harnessSha: "b".repeat(40),
-    deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
+    deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
     auditScope: "INTEGRACAO_V1_FASE2_NAV",
     records,
     summary: fn("summarizeNavigation")(records),
@@ -14992,8 +14992,8 @@ test("Navigation admission requires each integrated repair, visual and focus gat
 
 test("Navigation deployment is separately pinned to the reviewed phase 2 product without rewriting C8 history", () => {
   assert.deepEqual(sut.NAVIGATION_DEPLOYMENT, {
-    frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
-    deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
+    frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
+    deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
   });
   assert.equal(Object.isFrozen(sut.NAVIGATION_DEPLOYMENT), true);
   assert.equal(sut.C8_R5_PRESERVED.frontendSha, "0024b3c6739ab6296ec12338f11cf792d3a5f84b");
@@ -18219,9 +18219,9 @@ function navigationReportV3Fixture() {
   return {
     schema: "contaos.navigation.audit.v3",
     networkFailure: null,
-    frontendSha: "024a232c5bdb717e556d9ff16ca000e1ae65b0cb",
+    frontendSha: "3638cdd381cb911f6bdc115169891a25479b7a25",
     harnessSha: "b".repeat(40),
-    deploymentId: "dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW",
+    deploymentId: "dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh",
     auditScope: "INTEGRACAO_V1_FASE2_NAV",
     records,
     summary: { expected: 52, observed: 52, passed: 52, failed: 0, matrixComplete: true },
