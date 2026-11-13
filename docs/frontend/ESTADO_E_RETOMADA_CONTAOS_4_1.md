@@ -1,3 +1,13 @@
+## Fase 2 R7: R6 terminal e correção do commit móvel, 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. BUILD R6 PR#619 integrou `70179cf4b8cb36a0a2d9a19134cf0b13a59deeaf`; REQUEST R6 PR#620 integrou `7c3a8fda149d705adb906b1f10a53e20869018cc`, revisão canônica `5884323862`, CI e pais corretos. Fixtures `43339435100` SUCCESS; Auth `43339435026` preflight PASS e privado `131604313438` FAILURE, sem rerun/replay.
+
+Artefato `14000041669`, 1770 bytes, ZIP digest `ee9bd6b955b11b88a9fbd84e5d2b89d0fdaaaea95be74d43519d9c658335f566`, CRC/membros válidos; report `7b2ad73ade4d61441a9033e2faf897fe7e59ca0376eda2cdad559f7157eeafaa`. Resultado: 20/52 observados, 19 PASS, um FAIL V107/390 no LINK_CLICK→SYS04, duas leituras GET REST abortadas, `FENCE_DRAIN_TIMEOUT`, logout false; zero status HTTP/page error/mutação. Sessão/MASTER/organização true. R6 consumida e não certifica.
+
+Causa localizada no fechamento antecipado do menu móvel antes do commit do novo pathname, criando render intermediário da rota antiga após quietude comprovada. Próxima tarefa: integrar PLAN R7; RED DOM real comprovando fechamento pré-commit; correção mínima AppShell para fechamento pelo efeito de pathname; auditor avança nonce/ancestral; suíte produto/auditor/TesteC/nativas/revisão/CI/merge; publicação HML do SHA aprovado e reancoragem governada; REQUEST R7 única. Certificado somente com 52/52, logout true, zero erros e PR final integrada. Backend/PROD/RBAC/RLS/isolamento/Zero-Drift/LOCK preservados.
+
+---
+
 ## Fase 2 R6: sucessor após falha móvel autenticada R5, 12/11/2026 Bahia
 
 Fase 2 NÃO CERTIFICADA. BUILD R5 PR#616 integrou `d268bc1b1620d667e9885337d33eefdc5b8cf8ff`; REQUEST R5 PR#617 integrou `52598a8e0b6b43b51fdee6ffc3b274a13adb6fea` com revisão canônica `5881037572`, CI e pais corretos. Fixtures `43294734335` attempt1 SUCCESS/preparador SKIPPED. Auth `43294734581` preflight SUCCESS e privado `131450554732` FAILURE; sem rerun/replay.
