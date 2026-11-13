@@ -2731,8 +2731,15 @@ export function createRequestLifecycle(identity) {
   const pendingFetch = new Set();
   const seenNetwork = new Set(),
     seenFetch = new Set();
+  // GET principais encerrados por cancelamento comprovado (ERR_ABORTED, sem bloqueio).
+  // O Chromium conclui o preflight CORS desses pedidos na rede, mas não emite
+  // Network.loadingFinished/Failed para o OPTIONS. Somente com essa prova, e depois
+  // de a resposta do próprio preflight ter sido pausada e liberada pelo fence, o
+  // registro do preflight é aposentado; caso contrário permanece pendente.
+  const canceledMains = new Set();
   let closed = false,
-    canceled = 0;
+    canceled = 0,
+    retiredPreflights = 0;
   const id = (value) => typeof value === "string" && value.length > 0 && value.length <= 512;
   const key = (session, value) => session.id + "|" + value;
   function own(session, requireFrame = true) {
@@ -2753,6 +2760,17 @@ export function createRequestLifecycle(identity) {
     cleanup(record);
   }
   function cleanup(record) {
+    if (
+      !record.terminal &&
+      record.preflightOf !== null &&
+      record.preflightOrphaned === true &&
+      record.preflightResponded === true &&
+      record.active === 0
+    ) {
+      retiredPreflights++;
+      terminal(record, { kind: "PREFLIGHT_RETIRED" });
+      return;
+    }
     if (!record.terminal || record.active > 0) return;
     requests.delete(record.key);
     for (const fetchKey of record.fetchKeys) fetches.delete(fetchKey);
@@ -2846,7 +2864,19 @@ export function createRequestLifecycle(identity) {
           active: 0,
           fetchKeys: new Set(),
           waiters: new Set(),
+          preflightOf:
+            event.type === "Other" &&
+            event.request?.method === "OPTIONS" &&
+            event.initiator?.type === "preflight" &&
+            id(event.initiator.requestId) &&
+            event.initiator.requestId !== event.requestId
+              ? key(session, event.initiator.requestId)
+              : null,
+          preflightOrphaned: false,
+          preflightResponded: false,
         };
+        if (record.preflightOf !== null && canceledMains.has(record.preflightOf))
+          record.preflightOrphaned = true;
         requests.set(requestKey, record);
         pendingNetwork.get(requestKey)?.done(true);
         return;
@@ -2865,6 +2895,26 @@ export function createRequestLifecycle(identity) {
           timestamp: event.timestamp,
           blocked: event.blockedReason !== undefined || event.corsErrorStatus !== undefined,
         });
+        const proof = record.terminal;
+        if (
+          record.preflightOf === null &&
+          record.method === "GET" &&
+          proof.canceled &&
+          proof.aborted &&
+          !proof.blocked &&
+          proof.type === record.type
+        ) {
+          if (canceledMains.size >= 65536) {
+            tracker.close();
+            fail("FENCE_REQUEST_LIFECYCLE");
+          }
+          canceledMains.add(requestKey);
+          for (const other of [...requests.values()])
+            if (other.preflightOf === requestKey && !other.terminal) {
+              other.preflightOrphaned = true;
+              cleanup(other);
+            }
+        }
       } else if (method === "Network.loadingFinished") terminal(record, { kind: "FINISHED" });
     },
     async pauseWhenObserved(session, event, receivedAt = performance.now()) {
@@ -3090,6 +3140,13 @@ export function createRequestLifecycle(identity) {
       canceled++;
       return true;
     },
+    responded(ticket) {
+      if (!ticket) return;
+      if (closed || ticket.finished || ticket.stage !== "RESPONSE" || ticket.responded)
+        fail("FENCE_REQUEST_LIFECYCLE");
+      ticket.responded = true;
+      if (ticket.record.preflightOf !== null) ticket.record.preflightResponded = true;
+    },
     finish(ticket) {
       if (!ticket || ticket.finished) return;
       ticket.finished = true;
@@ -3103,6 +3160,7 @@ export function createRequestLifecycle(identity) {
         networkTombstones: seenNetwork.size,
         fetchTombstones: seenFetch.size,
         canceled,
+        retiredPreflights,
       };
     },
     close() {
@@ -3116,6 +3174,7 @@ export function createRequestLifecycle(identity) {
       fetches.clear();
       seenNetwork.clear();
       seenFetch.clear();
+      canceledMains.clear();
     },
   };
   return tracker;
@@ -3928,6 +3987,7 @@ export async function installNativeFence({
           body: body.toString("base64"),
         });
       } else await send(session, "Fetch.continueResponse", { requestId });
+      lifecycle.responded(ticket);
     } catch (error) {
       if (!state.failed && !closed && (await lifecycle.handleCanceled(ticket, error))) return;
       await send(session, "Fetch.failRequest", { requestId, errorReason: "BlockedByClient" }).catch(
@@ -4064,6 +4124,7 @@ export async function installNativeFence({
     snapshot: () => ({
       ...state,
       canceledInitialRequests: lifecycle.snapshot().canceled,
+      retiredCanceledPreflights: lifecycle.snapshot().retiredPreflights,
       activeNetworkRequests: lifecycle.snapshot().active,
       pendingNetworkAssociations: lifecycle.snapshot().pendingNetwork,
     }),
@@ -4273,7 +4334,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261113-r7",
+  nonce: "integracao-v1-fase2-nav-20261113-r8",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 export function navigationCases() {
@@ -10684,7 +10745,9 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR5PlanSha: "a377bb65db407252a32a0dad4f371e65a03b22c2",
   functionalNavigationR6PlanSha: "37369db9066e80f33280922c8c78b460208097ca",
   functionalNavigationR7PlanSha: "dbcec252851cd867655aaaabc8f2160993f8f46b",
+  functionalNavigationR8PlanSha: "78a5f4b96fe756f96a43e53ab877d17145d986f2",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261113-r7",
     "integracao-v1-fase2-nav-20261112-r6",
     "integracao-v1-fase2-nav-20261112-r5",
     "integracao-v1-fase2-nav-20261112-r4",
@@ -10755,7 +10818,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261113-r7",
+    nonce: "integracao-v1-fase2-nav-20261113-r8",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -11067,6 +11130,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationR5PlanSha,
       SINGLE_REQUEST.functionalNavigationR6PlanSha,
       SINGLE_REQUEST.functionalNavigationR7PlanSha,
+      SINGLE_REQUEST.functionalNavigationR8PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
