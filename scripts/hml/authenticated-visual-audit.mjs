@@ -4355,7 +4355,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261113-r9",
+  nonce: "integracao-v1-fase2-nav-20261113-r10",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 // Emenda R8 (certificação incremental, PR #626): ledger acumulativo, append-only,
@@ -5611,8 +5611,12 @@ export async function toggleNavigationSidebar(page, fence, deadline = performanc
   await expand.click({ timeout: navigationRemaining(deadline) });
   await waitNavigationNetwork(page, fence, deadline);
 }
+// V117 é o drawer sobre a rota de análise, que o catálogo identifica como V116.
+export function navigationOwnDestination(surface) {
+  return surface === "V117" ? "V116" : surface;
+}
 export async function returnNavigationSource(page, fence, surface, path, theme) {
-  if (navigationDestination(HML_ORIGIN + path) !== (surface === "V117" ? "V116" : surface))
+  if (navigationDestination(HML_ORIGIN + path) !== navigationOwnDestination(surface))
     fail("NAVIGATION_ROUTE");
   const deadline = performance.now() + 15000;
   await waitNavigationNetwork(page, fence, deadline);
@@ -5737,6 +5741,12 @@ export function navigationTransportDetail(request, context, timing) {
     Number.isFinite(timing?.clickAt) && timing.clickAt > 0
       ? Math.max(0, Math.min(600000, Math.round(timing.now - timing.clickAt)))
       : -1;
+  // R10: início do pedido relativo ao último clique (negativo quando anterior ao clique).
+  const startKnown =
+    Number.isFinite(timing?.clickAt) && timing.clickAt > 0 && Number.isFinite(timing?.started);
+  const startedMsSinceClick = startKnown
+    ? Math.max(-600000, Math.min(600000, Math.round(timing.started - timing.clickAt)))
+    : 0;
   return {
     phase: "NAVIGATION_TRANSPORT_DETAIL",
     surface: base.surface,
@@ -5751,6 +5761,8 @@ export function navigationTransportDetail(request, context, timing) {
     navigationRequest,
     frame,
     msSinceClick: since,
+    startKnown,
+    startedMsSinceClick,
     documentRequestsSinceClick:
       Number.isSafeInteger(timing?.documents) && timing.documents >= 0
         ? Math.min(timing.documents, NAVIGATION_DOCUMENT_COUNT_LIMIT)
@@ -6116,6 +6128,7 @@ export async function runNavigationAudit(page, fence, proof) {
   };
   page.on("requestfailed", onTransportDiagnostic);
   const clickTiming = { clickAt: 0, documents: 0 };
+  const requestStarts = new WeakMap();
   let detailCount = 0;
   const onTransportDetail = (request) => {
     try {
@@ -6124,7 +6137,7 @@ export async function runNavigationAudit(page, fence, proof) {
       const detail = navigationTransportDetail(
         request,
         { surface, width, stage, operation, target },
-        { ...clickTiming, now: performance.now() },
+        { ...clickTiming, now: performance.now(), started: requestStarts.get(request) },
       );
       if (detail) {
         detailCount++;
@@ -6136,6 +6149,7 @@ export async function runNavigationAudit(page, fence, proof) {
   };
   const onDocumentRequest = (request) => {
     try {
+      requestStarts.set(request, performance.now());
       if (
         request.resourceType() === "document" &&
         clickTiming.documents < NAVIGATION_DOCUMENT_COUNT_LIMIT
@@ -6435,7 +6449,13 @@ export async function runNavigationAudit(page, fence, proof) {
               continue;
             }
             const dest = decision.destination;
-            if (dest === item.surface || seen.has(dest)) continue;
+            // Autoligação (inclusive V117→V116, a mesma rota) não cria entrada no histórico.
+            if (
+              dest === item.surface ||
+              dest === navigationOwnDestination(item.surface) ||
+              seen.has(dest)
+            )
+              continue;
             seen.add(dest);
             targets.push({ dest, path: new URL(href, HML_ORIGIN).pathname });
           }
@@ -7380,9 +7400,76 @@ export async function navigationNativeGuard({
     await makeDirectory(".audit-work", { recursive: true, mode: 0o700 });
     await write(".audit-work/navigation-native-proof.json", JSON.stringify(proof), { mode: 0o600 });
     return proof;
-  } catch {
+  } catch (error) {
+    try {
+      console.error(JSON.stringify(navigationNativeGuardDiagnostic(error)));
+    } catch {
+      // Somente diagnóstico.
+    }
     fail("NAVIGATION_NATIVE_PROOF");
   }
+}
+
+// R10: resumo limitado e por lista fechada da falha do guard nativo de navegação (teste
+// sintético offline). Nunca imprime a saída bruta: só contagens, casos conhecidos, a linha
+// do arquivo de teste onde a asserção falhou e enums de erro.
+export function navigationNativeGuardDiagnostic(error) {
+  const stdout =
+    typeof error?.stdout === "string" && Buffer.byteLength(error.stdout) <= 1048576
+      ? error.stdout
+      : "";
+  const lines = stdout.split("\n").map((line) => line.trim());
+  const count = (name) => {
+    const match = lines
+      .map((line) => new RegExp("^# " + name + " (\\d{1,6})$").exec(line))
+      .find(Boolean);
+    return match ? Number(match[1]) : null;
+  };
+  const passedCases = [];
+  for (const line of lines) {
+    const match = /^# NAV_R2_NATIVE_CASE ([A-Z0-9_]+) PASS$/.exec(line);
+    if (match && NAVIGATION_NATIVE_CASES.includes(match[1]) && !passedCases.includes(match[1]))
+      passedCases.push(match[1]);
+  }
+  const testLines = [];
+  for (const line of lines) {
+    const match =
+      /^location: '[^']*authenticated-visual-audit\.test\.mjs:(\d{1,6}):(\d{1,4})'$/.exec(line);
+    if (match && testLines.length < 8) testLines.push(Number(match[1]));
+  }
+  const codes = [];
+  for (const line of lines) {
+    const match = /^code: '?(ERR_[A-Z_]{1,40}|NAVIGATION_[A-Z_]{1,40}|FENCE_[A-Z_]{1,40})'?$/.exec(
+      line,
+    );
+    if (match && codes.length < 8 && !codes.includes(match[1])) codes.push(match[1]);
+  }
+  const failureTypes = [];
+  for (const line of lines) {
+    const match =
+      /^failureType: '(testCodeFailure|testTimeoutFailure|hookFailure|cancelledByParent|subtestsFailed)'$/.exec(
+        line,
+      );
+    if (match && !failureTypes.includes(match[1])) failureTypes.push(match[1]);
+  }
+  return {
+    phase: "NAVIGATION_NATIVE_GUARD",
+    exitCode: Number.isInteger(error?.code) ? error.code : null,
+    signal: ["SIGTERM", "SIGKILL"].includes(error?.signal) ? error.signal : null,
+    timedOut: error?.killed === true,
+    blocked:
+      typeof error?.code === "string" && /^NAVIGATION_[A-Z_]{1,40}$/.test(error.code)
+        ? error.code
+        : null,
+    tests: count("tests"),
+    pass: count("pass"),
+    fail: count("fail"),
+    cancelled: count("cancelled"),
+    passedCases,
+    testLines,
+    codes,
+    failureTypes,
+  };
 }
 
 async function nativeGuard() {
@@ -11369,7 +11456,10 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR8PlanSha: "78a5f4b96fe756f96a43e53ab877d17145d986f2",
   // Emenda R9 (A): commit do PLAN R9, ancestral obrigatório mesmo antes do merge.
   functionalNavigationR9PlanSha: "771a3e0aeeb6b957c8cd2429184d8cf8fc279af8",
+  // PLAN R10 (commit), ancestral obrigatório: correção do AppShell e autoligação de V117.
+  functionalNavigationR10PlanSha: "157b39794b4b631443a664e0a746ed3880bfecea",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261113-r9",
     "integracao-v1-fase2-nav-20261113-r8",
     "integracao-v1-fase2-nav-20261113-r7",
     "integracao-v1-fase2-nav-20261112-r6",
@@ -11442,7 +11532,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261113-r9",
+    nonce: "integracao-v1-fase2-nav-20261113-r10",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -11759,6 +11849,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationR7PlanSha,
       SINGLE_REQUEST.functionalNavigationR8PlanSha,
       SINGLE_REQUEST.functionalNavigationR9PlanSha,
+      SINGLE_REQUEST.functionalNavigationR10PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
