@@ -220,3 +220,115 @@ Este arquivo consolida o que está documentado e discutido nesta conversa, mas *
 5. Registrar no checkpoint a versão aprovada e a próxima fase autorizada.
 
 Até lá, o documento é uma **proposta consolidada em PR**, não um plano mestre aprovado e integrado.
+
+## 16. Resposta verificável à revisão independente da PR #653 (review `5899000831`)
+
+Esta seção atende especificamente aos bloqueios B1–B4 da revisão `CHANGES_REQUESTED`. O revisor continua independente: estas emendas são do **implementador documental** `contaos9999`; a validação pertence a `Edivan5002`. Uma correção documental não revoga automaticamente o review, não libera merge e não autoriza execução de fases ainda sem aceite do titular.
+
+### 16.1 B1 — Matriz de proveniência e distinção entre original e proposta
+
+| Fase | Requisito, atividade ou gate | Fonte verificável | Prova de aprovação | Natureza | Consequência |
+|---|---|---|---|---|---|
+| Todas | Estrutura sequencial de sete fases | `fase1/PLANO.md` e `fase2/CHECKPOINT_CONTINUIDADE_2026-11-12.md` | Registros declaram aprovação anterior pelo titular; documento integral original não anexado | **Estrutura aprovada, texto original incompleto** | Preservar ordem, não imputar aceite de novos detalhes |
+| Todas | Não reabrir oito certificações anteriores | `fase1/PLANO.md` e `fase1/RELATORIO.md` | Declaração expressa nos registros integrados | **Original documentado** | Certificações anteriores não equivalem aos sete gates |
+| 1 | Inventariar telas, RPCs, produtores e consumidores | `fase1/PLANO.md` | `fase1/CERTIFICADO.md` | **Original e certificado** | Nenhum replanejamento |
+| 1 | Cobertura de 27 núcleo / 29 superfícies / 812 pares | `fase1/CERTIFICADO.md`; `TELAS.csv`; `CONEXOES.csv` | Certificado integrado | **Prova estática certificada** | Sem inferir runtime |
+| 2 | Navegação autenticada, 26 superfícies × 2 resoluções | `fase2/CERTIFICADO_FASE2_NAVEGACAO_2026-11-13.md` | Certificado integrado, ledger v5 | **Original e certificado** | Preservar 52/52 |
+| 2 | Nonce, ledger, proveniência e controles globais | PLAN R8 #626, PLAN R14 #649, BUILD #650, REQUEST #651 e certificado | PRs/artefatos do histórico de Fase 2 | **Controles documentados nesse escopo** | Não transplantar formatos técnicos sem PLAN futuro |
+| 3 | Cadastros e relacionamentos | Estrutura aprovada da conversa, correspondência `CONEXOES.csv` com `fases_validacao=3` | Não foi localizado aceite integral dos casos | **Tema original; casos e gates propostos** | Exige validação do titular antes do PLAN executável |
+| 4 | CRUD e sincronização | Estrutura aprovada da conversa, `fases_validacao=4` | Não foi localizado aceite integral dos casos | **Tema original; casos e gates propostos** | Não confundir com Trilha B |
+| 5 | RBAC/RLS e isolamento | Estrutura aprovada da conversa, `fases_validacao=5`, riscos R-03 | Não foi localizado aceite integral dos casos | **Tema original; casos e gates propostos** | Requer cobertura multi-organização real em HML |
+| 6 | Fluxos funcionais integrados | Estrutura aprovada da conversa, `fases_validacao=6`, riscos R-01/R-02 | Não foi localizado aceite integral dos casos | **Tema original; casos e gates propostos** | Seleção de jornadas deve vir do mapa real |
+| 7 | Consolidação e certificação global | Estrutura aprovada da conversa, certificados F1/F2 | Não foi localizado aceite integral dos casos | **Tema original; critérios e gate propostos** | Sem certificado global antecipado |
+| 3–6 | Matriz de 138 conexões, IDs de casos estáveis e 552 posições previstas | `fase1/CONEXOES.csv`, derivação explicitada na seção 16.2 | Inventário de origem estático certificado; execução dos casos **não aprovada** | **Fonte original + nova proposta rastreada** | Não atribuir PASS ou exigir execução sem PLAN aprovado |
+| 3–7 | Fixtures, limpeza, evidências, limites e formatos sugeridos abaixo | Esta PR #653 | **Ainda não aprovados pelo titular** | **Proposta** | Submeter aceite expresso |
+| 5–6 | R-01, R-02, R-03 | `fase1/CERTIFICADO.md` | Reconhecimento documental de limitações | **Riscos originais preservados** | Não converter em PASS por referência |
+
+**Lacuna documental L-01:** não foi recuperado na `main` um arquivo contendo a redação integral original das Fases 3–7. Esta revisão não a fabrica. O autor do plano deve anexar fonte adicional existente, ou o titular aprovar expressamente as novas propostas para o documento se tornar normativo. Nenhum review técnico substitui essa manifestação do titular.
+
+### 16.2 B2 — Catálogo executável derivado das conexões reais
+
+**Anexo rastreável:** [`INTEGRACAO_V1_7_FASES_MATRIZ_EXECUCAO_PROPOSTA.csv`](INTEGRACAO_V1_7_FASES_MATRIZ_EXECUCAO_PROPOSTA.csv).
+
+Este anexo foi derivado de `docs/frontend/auditorias/integracao-funcional-v1/fase1/CONEXOES.csv` usando **somente linhas cujos tokens de `fases_validacao` incluem 3, 4, 5 ou 6**. O arquivo-fonte contém 577 relações; foram selecionadas **138 relações distintas**, das quais **120 OBRIGATORIA** e **18 CONDICIONAL**; todas as 138 estão indicadas para **cada uma das quatro fases** (3–6), gerando **552 posições de caso propostas**, não 552 testes já executados. As demais 439 relações do inventário não foram inventadas nem descartadas: seus tokens de fase não as incluem neste subconjunto. Cada linha do anexo preserva origem, destino, classe, tipo, invariantes, produtor/consumidor, caminhos de evidência e o ID `Cxxxx` original. Exemplo: `IFV1-F3-C0002` corresponde à conexão `C0002`, `ADM01 → SYS04`. As provas de Fase 2 permanecem no ledger original.
+
+**Semântica proposta de cada posição de caso:**
+
+| Prefixo | Preparação | Ação positiva | Assert principal | Negativo e cleanup |
+|---|---|---|---|---|
+| `IFV1-F3-Cxxxx` | Resolver produtor, consumidor, contrato e pré-condições do ID `Cxxxx` | Criar/associar cadastro sintético autorizado na origem; observar no destino | Integridade do vínculo e chave/organização corretas | Referência inválida/não autorizada; remover fixture ou documentar rollback |
+| `IFV1-F4-Cxxxx` | Validar quais operações CRUD são legalmente oferecidas pela entidade | Exercitar CRUD permitido e observar sincronização no consumidor | Persistência, estado pós-recarga, cache consistente | Requisição inválida, concorrência e proibição; cleanup idempotente |
+| `IFV1-F5-Cxxxx` | Dois usuários/perfis e duas organizações sintéticas, conforme RBAC/RLS real | Verificar operação permitida no vínculo de origem/destino | Mesmo-tenant permitido; cross-tenant negado | Rota direta/API/cache cruzado; revogar sessões e fixtures |
+| `IFV1-F6-Cxxxx` | Encadear o vínculo na jornada real a que pertence | Percorrer origem → destino e eventual sequência de consumidores | Estado final de negócio persistente e consistente | Quebra intermediária, repetição/retomada; cleanup |
+
+**Atenção a classificações:** CONDICIONAL não é PASS automático. Cada caso deverá registrar condição objetiva, prova de aplicabilidade e decisão `APLICAVEL` / `N_A_JUSTIFICADO` aprovada; `N_A_JUSTIFICADO` não conta como execução PASS. Quando `produtor_referencia` ou `consumidor_referencia` nomear infraestrutura compartilhada ou não houver operação mutável, o PLAN deve escolher uma prova representativa com rastreabilidade e não executar mutação artificial. Fase 6 poderá agrupar arestas em jornadas, mas somente depois de publicar o mapeamento `caso → jornada → evidência`; não é permitido reduzir cobertura sem justificativa/aceite.
+
+**Plano operacional mínimo proposto para cada fase:**
+
+| Campo | F3 | F4 | F5 | F6 | F7 |
+|---|---|---|---|---|---|
+| Entrada | Certs F1/F2, 138 conexões | Cert F3 + matriz CRUD | Cert F4 + matriz RBAC/RLS | Cert F5 + mapa de jornadas | Certs F1–F6 |
+| Casos base | 138 posições `IFV1-F3-*` | 138 `IFV1-F4-*` | 138 `IFV1-F5-*` | 138 `IFV1-F6-*` agrupáveis | Um recibo global + matriz de rastreio |
+| Responsável BUILD | Agente implementador designado | Mesmo papel, sessão separada | Mesmo | Mesmo | Consolidador documental |
+| Revisor | Identidade independente | Identidade independente | Identidade independente | Identidade independente | Identidade independente |
+| Fixtures | Cadastro e vínculo sintéticos | Dados CRUD sintéticos | 2 usuários/perfis e 2 organizações | Jornadas sintéticas | Somente evidências, sem mutação |
+| Cleanup | Remoção/reversão testada | Reversão e estado final | Sessões e dados isolados removidos | Reversão por jornada | N/A |
+| Jobs a configurar/aprovar | `IFV1_F3_PROTOCOL`, `IFV1_F3_HML` | `IFV1_F4_PROTOCOL`, `IFV1_F4_HML` | `IFV1_F5_PROTOCOL`, `IFV1_F5_HML` | `IFV1_F6_PROTOCOL`, `IFV1_F6_HML` | `IFV1_F7_RECONCILIATION` |
+| Artefatos propostos | `F3_CASES.json`, `F3_REPORT.json`, hashes | `F4_CASES.json`, `F4_REPORT.json`, hashes | `F5_CASES.json`, `F5_REPORT.json`, hashes | `F6_JOURNEYS.json`, `F6_REPORT.json`, hashes | `MATRIZ_GLOBAL.csv`, `CERTIFICADO_GLOBAL.md` |
+| Saída | Integridade e vínculos atestados | CRUD/cache real atestado | Isolamento e acesso real atestados | Jornadas reais atestadas | Conciliação + certificado global |
+
+**Os nomes dos jobs e artefatos nesta tabela são DESIGN PROPOSTO: ainda não existem necessariamente no GitHub.** A criação de workflow precisa de PLAN, revisão e CI. Não iniciar HML pela mera existência deste quadro.
+
+**Critério quantitativo PROPOSTO, sujeito ao titular:** inventariar **138/138** posições por fase (com `PASS`, `FAIL`, `BLOCKED` ou `N_A_JUSTIFICADO`), exigir `FAIL=0`, `BLOCKED=0`, e para todos os casos classificados aplicáveis, `PASS=100%`; para cada `N_A_JUSTIFICADO`, documento de justificativa, fonte e aprovação. A Fase 7 só fecha com **7/7 certificados** válidos, inclusive o seu próprio, após todas as dependências. Definir orçamento de tempo, identidade de HML, limites de fixture, limpeza, contratos de relatório e SLA em PLAN específico, com aprovação expressa antes de rodar, evitando números arbitrários.
+
+**Forma do recibo por caso, proposta:** `caseId`, `sourceConnectionId`, `phase`, `origin`, `destination`, `classification`, `applicability`, `operation`, `expected`, `observed`, `status`, `frontendSha`, `backendSha`, `harnessSha`, `deploymentId`, `workflowRunId`, `artifactId`, `sha256`, `reviewId`, `cleanupStatus`. Payloads e segredos não são exportados. Schema e negativas deverão ser implementados, testados e revisados em BUILD posterior.
+
+### 16.3 B3 — Limitações certificadas e matriz de impacto
+
+| Risco histórico | Fonte | Fase de prova futura proposta | Tratamento e condição de fechamento |
+|---|---|---|---|
+| **R-01** upload físico de arquivo grande e retomada | `fase1/CERTIFICADO.md` | F6, e F4 se a operação CRUD/Storage aplicável | Construir jornada real upload → assinatura/Storage → retomada → leitura, incluindo negativas; se fora do escopo, N/A com base normativa e aceite. Sem PASS por inferência |
+| **R-02** worker/filas ponta a ponta | `fase1/CERTIFICADO.md` | F6 | Executar fluxo enfileiramento → worker → estado final → auditoria, com erro/retomada; se dependência externa indisponível, BLOCKED |
+| **R-03** isolamento multiusuário/multiorganização real em todos os domínios | `fase1/CERTIFICADO.md` | F5 e regressão F6 | Dois tenants e perfis reais sintéticos, positivos e ataques negativos; nenhum vazamento admitido |
+
+Nenhuma dessas limitações altera retroativamente o escopo dos certificados F1/F2; permanecem **pendentes de prova real no respectivo gate**.
+
+**Matriz de mudança e reteste proposta:**
+
+| Alteração desde baseline certificada | Evidência anterior pode ser preservada quando | Reteste exigido quando |
+|---|---|---|
+| Só documentação, sem mudança de código/harness/deploy/backend | Hash/proveniência e cadeia verificadas; invariantes iguais | Documentação alterar critério ou conteúdo de certificado |
+| UI/layout/rota/navegação | Análise de impacto provar que nenhum caso/caminho relevante mudou | Alterar rota, componente compartilhado, menu, redirecionamento ou seletor coberto |
+| CRUD, RPC, schema, cache ou backend | Contrato e runtime relevantes demonstravelmente idênticos | Mudar entidade, operação, permissão, sincronização, filtro ou relação afetada |
+| Auth, RBAC/RLS, organizações, secrets ou sessão | Não assumir preservação; revisão de segurança independente | Qualquer mudança que alcance cenários F5 ou controle global, incluindo backend |
+| Harness, fixture, guard, schema de relatório ou workflow | Equivalência semântica e provenance testadas e revistas | Afetar observabilidade, escopo, isolamento, critérios, contagem de erros ou verificador |
+| Deployment HML ou versão de produto | Identidade fixada e compatibilidade demonstrada caso a caso | SHA/deployment divergente sem prova de equivalência e impacto |
+
+Toda decisão sobre preservação ou reteste precisa registrar `baseline → HEAD candidato → diff/impacto → casos afetados → justificativa → revisão independente`. Evidências antigas devem permanecer imutáveis; novas evidências são encadeadas por ledger append-only quando aprovado.
+
+### 16.4 B4 — Quatro estados formais e autorização
+
+1. **HISTÓRICO CONSOLIDADO:** fatos conferidos em documentos, certificados, PRs e reports já integrados; o merge deste arquivo não certifica os novos gates.
+2. **PROPOSTA DE DETALHAMENTO:** novos critérios, jobs, matrizes, fixtures e thresholds das Fases 3–7 descritos nesta PR; não executáveis como obrigação normativa até aceite.
+3. **PLANO APROVADO PELO TITULAR:** decisão expressa e rastreável do titular identificando **versão, SHA e escopo de aprovação**, inclusive divergências e N/A; aprovação de review técnico não substitui aceite do titular.
+4. **GATE OPERACIONAL INTEGRADO:** plano aprovado, review independente APPPROVE no HEAD, checks obrigatórios SUCCESS, merge protegido e readback em `main`; somente então abrir PLAN/BUILD da fase autorizada.
+
+**Registro de aceite pendente (não preencher antes da manifestação):**
+
+- Documento: `PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md`
+- Versão proposta: **v1.1, revisão corretiva da PR #653**
+- SHA da `main` utilizada como base da PR: `b2feca7f5d8976709ba95a2ce44407f910eabe19`
+- SHA final da PR: **a registrar após o último commit**
+- Identidade do titular e declaração expressa de aceite dos critérios F3–F7: **PENDENTE**
+- Revisor independente, review e SHA aprovado: **PENDENTE**
+- Checks obrigatórios no SHA aprovado: **PENDENTE**
+- Merge SHA, readback do arquivo e anexo, checkpoint: **PENDENTE**
+- Status vigente: **PROPOSTA DOCUMENTAL EM REVISÃO**.
+
+**Checklist de readback obrigatório após merge:** consultar PR #653 e reviews; conferir `main` HEAD e ancestry do merge, recuperar pelo SHA integrado este plano e a matriz CSV; comparar conteúdo e contagem (138 relações, 552 posições propostas), consultar checks associados ao SHA, verificar registro de aceite; atualizar o painel F1/F2 certificados e F3–F7 conforme evidência. Se qualquer etapa falhar, não declarar plano canônico completo.
+
+## 17. Próxima ação com limites claros
+
+**Já executável:** revisão documental desta PR, testes estáticos e correção de rastreabilidade. **Ainda não autorizado pelo documento:** mutações em HML ou execução/certificação das Fases 3–7. Próxima ação: revisor independente avaliar esta emenda, apontar inconsistências ou solicitar correções; titular validar expressamente os critérios operacionais novos; somente após aceite, checks, merge e readback, iniciar PLAN específico da Fase 3 com matriz de casos derivada do inventário.
+
+Nenhum termo acima deve ser interpretado como criação silenciosa de workflows, fixtures, evidências de runtime ou certificados.
