@@ -8727,6 +8727,18 @@ async function runAuthenticatedAudit() {
       }
     };
     const logoutDiagnostics = scope === NAVIGATION_SCOPE && !!page && !page.isClosed();
+    // R11: contadores da sessão por fase (antes do logout, depois do logout, depois do
+    // encerramento), para localizar erros globais fora da matriz. Só inteiros.
+    const sessionPhases = { beforeLogout: -1, afterLogout: -1, afterTeardown: -1 };
+    const sessionCount = () => {
+      try {
+        const value = navigationSession?.snapshot()?.transportErrors;
+        return Number.isSafeInteger(value) && value >= 0 ? Math.min(value, 100000) : -1;
+      } catch {
+        return -1;
+      }
+    };
+    sessionPhases.beforeLogout = sessionCount();
     if (logoutDiagnostics) {
       page.on("request", onLogoutRequest);
       page.on("requestfailed", onLogoutFailed);
@@ -8763,6 +8775,7 @@ async function runAuthenticatedAudit() {
       } catch {
         // Somente diagnóstico.
       }
+    sessionPhases.afterLogout = sessionCount();
     if (scope === NAVIGATION_SCOPE && !logoutVerified && !logoutFailure)
       logoutFailure = {
         stage: loggedIn ? "CONTROL" : "NOT_LOGGED_IN",
@@ -8772,6 +8785,14 @@ async function runAuthenticatedAudit() {
     await browser?.close().catch(() => {});
     await proxy?.close().catch(() => {});
     if (navigationSession) {
+      sessionPhases.afterTeardown = sessionCount();
+      try {
+        console.log(
+          JSON.stringify({ phase: "NAVIGATION_SESSION_TRANSPORT_PHASES", ...sessionPhases }),
+        );
+      } catch {
+        // Somente diagnóstico.
+      }
       const sessionErrors = navigationSession.snapshot();
       navigationHttpErrors = sessionErrors.httpErrors;
       navigationHttpStatusErrors = sessionErrors.httpStatusErrors;
@@ -11559,7 +11580,7 @@ export const SINGLE_REQUEST = Object.freeze({
   // PLAN R10 (commit), ancestral obrigatório: correção do AppShell e autoligação de V117.
   functionalNavigationR10PlanSha: "157b39794b4b631443a664e0a746ed3880bfecea",
   // PLAN R11 (commit), ancestral obrigatório: logout instrumentado e execução de fechamento.
-  functionalNavigationR11PlanSha: "4710f5d1fcaf8968980336d7bdd79d242d8bb00f",
+  functionalNavigationR11PlanSha: "0922b2ef7ed461d686c21a3392bbd6ade0774b0d",
   spentAuditNonces: Object.freeze([
     "integracao-v1-fase2-nav-20261113-r10",
     "integracao-v1-fase2-nav-20261113-r9",

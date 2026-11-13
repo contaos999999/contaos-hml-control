@@ -22543,7 +22543,7 @@ test("NAV R11 successor consumes R10 and requires the R11 PLAN commit", () => {
   );
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR11PlanSha,
-    "4710f5d1fcaf8968980336d7bdd79d242d8bb00f",
+    "0922b2ef7ed461d686c21a3392bbd6ade0774b0d",
   );
   for (const nonce of [
     "integracao-v1-fase2-nav-20261111-r1",
@@ -22919,4 +22919,15 @@ test("R11 logout: diagnóstico fechado de transporte durante o logout", async ()
   assert.match(source, /page\.off\("requestfailed", onLogoutFailed\);/);
   assert.match(source, /logoutStage = "CLICK";\n\s+logoutTiming\.clickAt = performance\.now\(\);/);
   assert.match(source, /if \(logoutDetails >= 16\) return;/);
+  // Contadores da sessão por fase: antes e depois do logout e depois do encerramento.
+  assert.match(source, /sessionPhases\.beforeLogout = sessionCount\(\);/);
+  assert.match(source, /sessionPhases\.afterLogout = sessionCount\(\);/);
+  assert.match(source, /sessionPhases\.afterTeardown = sessionCount\(\);/);
+  assert.match(source, /phase: "NAVIGATION_SESSION_TRANSPORT_PHASES", \.\.\.sessionPhases/);
+  const before = source.indexOf("sessionPhases.beforeLogout = sessionCount();");
+  const off = source.indexOf('page.off("requestfailed", onLogoutFailed);');
+  const after = source.indexOf("sessionPhases.afterLogout = sessionCount();");
+  const close = source.indexOf("await browser?.close().catch(() => {});", after);
+  const teardown = source.indexOf("sessionPhases.afterTeardown = sessionCount();");
+  assert.ok(before > 0 && before < off && off < after && after < close && close < teardown);
 });
