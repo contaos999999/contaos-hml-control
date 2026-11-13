@@ -4225,7 +4225,9 @@
     "build_allowlist": [
       "scripts/hml/authenticated-visual-audit.mjs",
       "scripts/hml/authenticated-visual-audit.test.mjs",
-      "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json"
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/R8_LEDGER_COMPATIBILIDADE_2026-11-13.md",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/R9_EXPERIMENTO_PREFLIGHT_POST_2026-11-13.md"
     ],
     "request_nonce": "integracao-v1-fase2-nav-20261113-r9",
     "spent_nonces": [
@@ -4270,6 +4272,8 @@
       "C": "PASS após FAIL não fatal; ledger com lacunas; executa só pendentes",
       "D": "pré-revisão por mutação",
       "aprovacao": "titular, chat 13/11/2026 05:20 Bahia"
-    }
+    },
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
   }
 }

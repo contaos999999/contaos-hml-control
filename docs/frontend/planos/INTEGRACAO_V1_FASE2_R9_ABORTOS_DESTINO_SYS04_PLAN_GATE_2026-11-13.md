@@ -29,11 +29,11 @@ Resultado por índice canônico:
 | 26 | V110/390 | PASS. O defeito do R7 foi corrigido pelo #629 |
 | 27-29 | V111/1440, V111/390, V112/1440 | PASS |
 | **30** | **V112/390** | **FAIL `NAVIGATION_CASE`**: dois `GET` `API_REST` `ABORTED` em `LINK_CLICK` para `SYS04` (08:04:27Z), `transportErrors` 2; o caso seguiu até `FINISH` (08:05:22Z) e foi reprovado pelos erros de transporte |
-| 31-34 | V113 e V114 nas duas larguras | PASS, mas **não são candidatos** ao ledger por serem posteriores ao primeiro FAIL (emenda, item 3) |
+| 31-34 | V113 e V114 nas duas larguras | PASS. Pela emenda R9 (C), também são candidatos ao ledger, embora posteriores ao FAIL não fatal do índice 30 |
 | **35** | **V115/1440** | **FAIL `FENCE_DRAIN_TIMEOUT`**: um `POST` `API_RPC` `ABORTED` em `LINK_CLICK` para `SYS04` (08:09:38Z), drain esgotado 10 s depois (08:09:48Z); execução interrompida |
 | 36-52 | demais | não executados |
 
-R8 está consumida, sem rerun, replay nem reuso de nonce. Candidatos ao ledger: os índices 26-29 desta execução.
+R8 está consumida, sem rerun, replay nem reuso de nonce. Candidatos ao ledger: os índices 26-29 e 31-34 desta execução (emenda R9, C).
 
 ## Padrão observado (correlação, não causa)
 
@@ -48,14 +48,12 @@ A falha do índice 35 tem mecanismo provável já conhecido: é o preflight CORS
 
 ## Investigação e BUILD R9 (somente harness)
 
-1. **Instrumentação segura de transporte** (`authenticated-visual-audit.mjs`). Cada `NAVIGATION_TRANSPORT` e o diagnóstico do drain passam a registrar apenas valores enumerados ou numéricos:
-   - classe do endpoint por lista fechada: tabela REST, função RPC ou endpoint Auth, sem query, IDs, cabeçalhos ou corpo;
-   - tempo desde o clique, em ms;
-   - se houve navegação de documento (`Page.frameNavigated` ou `requestWillBeSent` `Document`) durante `clickPath`;
-   - tipo de `initiator`;
-   - se o pedido tinha preflight;
-   - `pathname` de origem e de destino, como superfície canônica;
-   - fase do drain (antes ou depois do clique) e contadores do drain no timeout.
+1. **Instrumentação segura de transporte** (`authenticated-visual-audit.mjs`). Só valores enumerados ou numéricos, sem URL, query, IDs, cabeçalhos ou corpo:
+   - em cada `requestfailed` (`NAVIGATION_TRANSPORT_DETAIL`): classe do endpoint por lista fechada (tabela REST, função RPC do frontend ou endpoint Auth; fora da lista, `OTHER`), se o pedido é de navegação, se veio do frame principal ou de um filho, tempo desde o último clique em ms e pedidos de documento desde esse clique;
+   - superfície de origem e de destino, etapa e operação, como superfícies canônicas e enums;
+   - no timeout do drain (`FENCE_DRAIN_DIAGNOSTIC`): contadores do drain e, por registro pendente, tipo CDP, método, se é preflight, se foi órfão ou respondido, elegibilidade, resposta vista e estado terminal.
+
+   O tipo de `initiator` CDP de cada pedido falho não é exposto pelo evento `requestfailed`; a correlação com preflight fica no diagnóstico do drain.
 2. **RED/GREEN do preflight órfão de POST**, em Chromium real e com testes sintéticos, no mesmo formato do #629. Se comprovado, estender a aposentadoria a `POST` com as mesmas três provas. Nada muda para pedidos sem prova.
 3. **Ledger v2:** acrescentar os índices 26-29 e 31-34 da R8 (run `43388821235`, artefato `14020676685`, report `3025371b…`), encadeado a `0a8f71f2…`, com lacunas 30 e 35-52 e primeira pendência 30, conforme a emenda R9 (C). Também implementar no executor a execução exata dos índices pendentes e, no auditor, a regra de revisão canônica (B). Incluir `9a4d0ad…` em `compatibleHarnessShas`, com prova de não impacto da instrumentação e da extensão a POST: nenhuma das duas altera a verificação de cada caso.
 4. **Nonce** `integracao-v1-fase2-nav-20261113-r9`, com R8 consumida e este PLAN como ancestral.
@@ -77,6 +75,13 @@ O titular, como direção, aprovou no chat de execução de 13/11/2026 (05:20, B
 
   Aplicado à R8, ficam candidatos os índices 26-29 e 31-34.
 - **D. Pré-revisão por mutação.** Antes de cada revisão independente, o autor executa testes de mutação e a suíte completa e anexa o resultado. Isso não substitui a revisão independente.
+
+### Esclarecimentos procedimentais (revisão independente do PLAN R9)
+
+Estes pontos só tornam o procedimento mais estrito e não alteram nenhum controle:
+- **Ordem das revisões na REQUEST.** A revisão canônica JSON precisa ser a **última** revisão de `contaos9999` ou `Edivan5002` no HEAD da REQUEST. A revisão independente em texto é registrada **antes** dela, e nenhuma outra revisão dessas contas é registrada depois. Antes do merge da REQUEST, a lista de revisões é conferida por leitura da API com a mesma regra do auditor. Uma revisão posterior inválida revoga a canônica, e a REQUEST falharia de forma fechada.
+- **Merge commit obrigatório.** PLAN, BUILD e REQUEST são integrados por merge commit, nunca por squash ou rebase, para que o commit deste PLAN seja ancestral da `main`.
+- **Allowlist do BUILD** inclui também o relatório de compatibilidade `R8_LEDGER_COMPATIBILIDADE_2026-11-13.md` e o registro do experimento em Chromium real do preflight de `POST`.
 
 ## Correção de produto (condicionada)
 
