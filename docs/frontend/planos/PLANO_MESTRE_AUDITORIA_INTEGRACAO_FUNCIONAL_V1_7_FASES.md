@@ -313,7 +313,7 @@ Toda decisão sobre preservação ou reteste precisa registrar `baseline → HEA
 3. **PLANO APROVADO PELO TITULAR:** decisão expressa e rastreável do titular identificando **versão, SHA e escopo de aprovação**, inclusive divergências e N/A; aprovação de review técnico não substitui aceite do titular.
 4. **GATE OPERACIONAL INTEGRADO:** plano aprovado, review independente APPROVE no HEAD, checks obrigatórios SUCCESS, merge protegido e readback em `main`; somente então abrir PLAN/BUILD da fase autorizada.
 
-**Registro de aceite pendente (não preencher antes da manifestação):**
+**Registro de aceite (preenchido após a manifestação do titular, ver seção 18):**
 
 - Documento: `PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md`
 - Versão proposta: **v1.1, revisão corretiva da PR #653**
@@ -321,7 +321,7 @@ Toda decisão sobre preservação ou reteste precisa registrar `baseline → HEA
 - SHA final da PR: `7696a13501bcbecf30e517167eee5c4bee30b797`
 - Identidade do titular e declaração expressa de aceite dos critérios F3–F7: **REGISTRADO na seção 18** (Edivan Santos Celestino, 13/11/2026)
 - Revisor independente, review e SHA aprovado: `Edivan5002`, APPROVE no HEAD `7696a13` (R2 da PR #653)
-- Checks obrigatórios no SHA aprovado: Zero-Drift e Teste C Independente SUCCESS no merge `fe940156ea836efa070b478f3522f352549fb04f`
+- Checks obrigatórios no SHA aprovado: Zero-Drift e Teste C Independente SUCCESS em `7696a13`; também SUCCESS no merge `fe940156ea836efa070b478f3522f352549fb04f`
 - Merge SHA, readback do arquivo e anexo, checkpoint: merge `fe94015`; readback na seção 18; checkpoint em `docs/frontend/ESTADO_E_RETOMADA_CONTAOS_4_1.md`
 - Status vigente: **PLANO APROVADO PELO TITULAR** (estado 3 da seção 16.4); passa a **GATE OPERACIONAL INTEGRADO** (estado 4) com o merge protegido da PR que registra este aceite.
 
@@ -344,7 +344,7 @@ Nenhum termo acima deve ser interpretado como criação silenciosa de workflows,
 | `docs/frontend/planos/PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md` | `70c97b4cd0925bddecf54e3f3d01fc0025714866` | `08d2f0988e5025b5f1a40d9d61db88e6922ee46298a490acd878117bf6d28218` | Seções 1–17, versão v1.1 |
 | `docs/frontend/planos/INTEGRACAO_V1_7_FASES_MATRIZ_EXECUCAO_PROPOSTA.csv` | `bb7ce43f9c334f2f03e9aafab405addadfe5e19a` | `b8b4980bab5f841adc1db9c642e960f45a6874baad660bd18cd6a60ce87e32d9` | 138 relações, 4 colunas de caso (F3–F6), 552 posições |
 
-Condição satisfeita: os dois arquivos existem e estão íntegros na `main`. **Escopo do aceite:** integral, sem ajustes, para as seções 13.4 a 13.9 e 16 (critérios, matriz de 138 conexões, semântica dos casos `IFV1-F3..F6-Cxxxx`, critério quantitativo 138/138 com `FAIL=0`, `BLOCKED=0`, `PASS=100%` dos aplicáveis e `N_A_JUSTIFICADO` só com justificativa aprovada, forma do recibo, tratamento R-01/R-02/R-03, matriz de reteste e quatro estados formais). O aceite se refere ao conteúdo nos blobs acima; a única alteração desta emenda é preencher o registro da seção 16.4 e acrescentar esta seção. O arquivo CSV não muda.
+Condição satisfeita: os dois arquivos existem e estão íntegros na `main`. **Escopo do aceite:** integral e sem ajustes, abrangendo todo o conteúdo dos dois blobs acima, com destaque para as seções 13.4 a 13.9 e 16 (critérios, matriz de 138 conexões, semântica dos casos `IFV1-F3..F6-Cxxxx`, critério quantitativo 138/138 com `FAIL=0`, `BLOCKED=0`, `PASS=100%` dos aplicáveis e `N_A_JUSTIFICADO` só com justificativa aprovada, forma do recibo, tratamento R-01/R-02/R-03, matriz de reteste e quatro estados formais). O aceite se refere ao conteúdo nos blobs acima; a única alteração desta emenda é preencher o registro da seção 16.4 e acrescentar esta seção. O arquivo CSV não muda.
 
 **O que o aceite NÃO faz:** não certifica nenhuma das Fases 3–7, não cria workflows, fixtures nem evidências, não autoriza PROD e não dispensa PLAN, BUILD, revisão independente, CI, HML com nonce única, certificado e checkpoint de cada fase. Orçamento de tempo, fixtures, limpeza, schema de relatório e jobs `IFV1_F3_*` continuam a ser definidos e aprovados no PLAN específico da Fase 3.
 
