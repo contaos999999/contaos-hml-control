@@ -27,13 +27,13 @@ A classificação, nos termos do item 3 do PLAN R8, é **(a)**: requisição abo
 
 ## Experimento em Chromium real (reproduzível)
 
-O experimento usa Chrome `/usr/bin/google-chrome` via `playwright-core` 1.63. Há duas origens locais: a página, e uma "API" com CORS e `apikey` que atrasa o OPTIONS em 2 s. Uma sessão CDP com `Network.enable` e `Fetch.enable` em todos os pedidos, no estágio Request com `interceptResponse: true`, como o fence, alimenta o **`createRequestLifecycle` real** do auditor e aplica o mesmo critério de drain (10 s). O script tem SHA-256 `ce487a551da644224744d3e6a5a7a35bb3df80cb15172c29f725122bbbe1a218`.
+O experimento usa Chrome `/usr/bin/google-chrome` via `playwright-core` 1.63. Há duas origens locais: a página, e uma "API" com CORS e `apikey` que atrasa o OPTIONS em 2 s. Uma sessão CDP com `Network.enable` e `Fetch.enable` em todos os pedidos (estágio Request com `interceptResponse: true`) alimenta o **`createRequestLifecycle` real** do auditor e aplica o mesmo critério de drain (10 s). O script tem SHA-256 `ce487a551da644224744d3e6a5a7a35bb3df80cb15172c29f725122bbbe1a218`. A revisão independente repetiu o experimento com os padrões Request **e** Response e `Network.setCacheDisabled`, exatamente como o fence (`createNavigationFence`), com resultado idêntico, e também validou o controle de aborto simples com o GET atrasado em 2 s. O resultado foi obtido no Chrome for Testing 153.
 
 | Cenário | `main` `78a5f4b` | Esta correção |
 |---|---|---|
 | GET com preflight, abortado em 300 ms (caso R7) | **drain trava em 5/5 execuções**; `active: 1`; sem terminal do OPTIONS mesmo após 20 s | drain esvazia; `retiredPreflights: 1` |
 | GET com preflight, sem aborto (controle) | drain esvazia; o OPTIONS recebe `responseReceived` (`Preflight`) e `loadingFinished` | igual, `retiredPreflights: 0` |
-| GET simples (controle) | drain esvazia | igual |
+| GET simples sem preflight, abortado em voo (controle; GET com atraso de 2 s) | drain esvazia | igual |
 | GET abortado e servidor **sem resposta** ao OPTIONS | trava | **continua travando** (fail-closed preservado) |
 
 Sequência observada no caso R7 (o tempo varia em milissegundos):
@@ -61,9 +61,14 @@ Não foi alterado: prazo do drain, tratamento de `ABORTED`, `requestfailed`, con
 
 ## Testes RED/GREEN
 
-`scripts/hml/authenticated-visual-audit.test.mjs`, 15 testes `R8 ...` determinísticos com eventos CDP sintéticos na ordem observada:
+`scripts/hml/authenticated-visual-audit.test.mjs`, 20 testes `R8 ...` determinísticos com eventos CDP sintéticos na ordem observada:
 - 2 de aposentadoria (cancelamento antes e depois da resposta do OPTIONS): **falham na `main`** e passam com a correção;
-- 13 negativos (o preflight permanece pendente): GET sem cancelamento, erro de rede real, bloqueio, erro CORS, tipo divergente, principal não-GET, iniciador ausente, diferente ou de outro pedido, servidor sem resposta, resposta não liberada, principal concluído normalmente e `responded()` fora do estágio RESPONSE.
+- 1 de cancelamento anterior ao `requestWillBeSent` do OPTIONS, com retenção enquanto o ticket de resposta estiver ativo;
+- 17 negativos (o preflight permanece pendente): GET sem cancelamento, erro de rede real, bloqueio, erro CORS, tipo divergente, principal não-GET, iniciador ausente, diferente ou de outro pedido, servidor sem resposta, resposta não liberada, principal concluído normalmente `responded()` fora do estágio RESPONSE ou duas vezes, OPTIONS apontando para si mesmo, registro não-OPTIONS e tipo diferente de `Other`.
+
+O contador `retiredCanceledPreflights` passa a constar do snapshot do fence.
+
+O RED decisivo é o experimento em Chromium real. Na `main`, a maior parte dos testes unitários falha por ausência de `responded()`; os dois testes de aposentadoria e o de cancelamento anterior ao OPTIONS são os que demonstram o comportamento.
 
 Regressão local (stubs só para `@tanstack/history`/`jsdom` ausentes no ambiente): `main` 508 testes, correção 523. O conjunto de falhas é idêntico nas duas versões (86, todas de ambiente/stub), e a única outra diferença é o teste de sucessão de nonce R7 → R8, que passa. A suíte completa é executada pela CI.
 

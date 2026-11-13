@@ -6029,6 +6029,100 @@ test("R8 resposta liberada só uma vez e só no estágio RESPONSE", () => {
   f.tracker.close();
 });
 
+test("R8 cancelamento anterior ao requestWillBeSent do OPTIONS também é provado", () => {
+  const identity = { targetId: "own-target", browserContextId: "own-context" },
+    session = { id: "own-session", targetId: "own-target", contextId: "own-context" },
+    url = API + "/rest/v1/documentos?select=*",
+    tracker = fn("createRequestLifecycle")(identity);
+  tracker.frame(session, { id: "main-frame", loaderId: "loader-1" });
+  tracker.observe(session, "Network.requestWillBeSent", {
+    requestId: "main-1",
+    frameId: "main-frame",
+    loaderId: "loader-1",
+    type: "Fetch",
+    timestamp: 1,
+    request: { url, method: "GET" },
+  });
+  tracker.observe(session, "Network.loadingFailed", {
+    requestId: "main-1",
+    type: "Fetch",
+    timestamp: 2,
+    canceled: true,
+    errorText: "net::ERR_ABORTED",
+  });
+  assert.equal(tracker.snapshot().active, 0);
+  tracker.observe(session, "Network.requestWillBeSent", {
+    requestId: "preflight-1",
+    type: "Other",
+    loaderId: "",
+    timestamp: 3,
+    request: { url, method: "OPTIONS" },
+    initiator: { type: "preflight", requestId: "main-1" },
+  });
+  const pause = {
+    requestId: "fetch-preflight-1",
+    networkId: "preflight-1",
+    frameId: "main-frame",
+    resourceType: "XHR",
+    request: { url, method: "OPTIONS" },
+  };
+  const request = tracker.pause(session, pause);
+  tracker.sent(request);
+  tracker.acknowledge(request);
+  tracker.finish(request);
+  assert.equal(tracker.snapshot().active, 1, "sem resposta do OPTIONS o registro permanece");
+  const response = tracker.pause(session, { ...pause, responseStatusCode: 204 });
+  tracker.responded(response);
+  assert.equal(tracker.snapshot().active, 1, "ticket de resposta ativo segura o registro");
+  tracker.finish(response);
+  assert.equal(tracker.snapshot().active, 0);
+  assert.equal(tracker.snapshot().retiredPreflights, 1);
+  tracker.close();
+});
+for (const [name, preflight] of [
+  [
+    "iniciador aponta o próprio OPTIONS",
+    { initiator: { type: "preflight", requestId: "preflight-1" } },
+  ],
+  [
+    "registro não é OPTIONS",
+    { request: { url: API + "/rest/v1/documentos?select=*", method: "GET" } },
+  ],
+  ["registro não é do tipo Other", { type: "Preflight" }],
+])
+  test("R8 nunca trata como preflight: " + name, () => {
+    let f;
+    try {
+      f = canceledPreflightFlow({ preflight });
+    } catch (error) {
+      // Um par Network/Fetch não comprovado já é recusado antes do ciclo R8.
+      assert.match(String(error?.code), /^FENCE_/);
+      return;
+    }
+    f.tracker.observe(f.session, "Network.loadingFailed", f.mainTerminal);
+    f.respond();
+    assert.equal(f.tracker.snapshot().retiredPreflights, 0);
+    assert.ok(f.tracker.snapshot().active >= 1);
+    f.tracker.close();
+  });
+test("R8 resposta do OPTIONS não pode ser liberada duas vezes", () => {
+  const f = canceledPreflightFlow();
+  f.tracker.observe(f.session, "Network.loadingFailed", f.mainTerminal);
+  const ticket = f.tracker.pause(f.session, {
+    requestId: "fetch-preflight-1",
+    networkId: "preflight-1",
+    frameId: "main-frame",
+    resourceType: "XHR",
+    request: { url: API + "/rest/v1/documentos?select=*", method: "OPTIONS" },
+    responseStatusCode: 204,
+  });
+  f.tracker.responded(ticket);
+  assert.throws(
+    () => f.tracker.responded(ticket),
+    (e) => e.code === "FENCE_REQUEST_LIFECYCLE",
+  );
+  f.tracker.close();
+});
 function ordinaryPreflight(delta = {}) {
   const request = { url: HML + "/", method: "OPTIONS" };
   return lifecycleInput({

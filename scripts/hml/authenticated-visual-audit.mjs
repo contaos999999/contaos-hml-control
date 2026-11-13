@@ -4124,6 +4124,7 @@ export async function installNativeFence({
     snapshot: () => ({
       ...state,
       canceledInitialRequests: lifecycle.snapshot().canceled,
+      retiredCanceledPreflights: lifecycle.snapshot().retiredPreflights,
       activeNetworkRequests: lifecycle.snapshot().active,
       pendingNetworkAssociations: lifecycle.snapshot().pendingNetwork,
     }),
