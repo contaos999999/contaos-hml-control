@@ -135,6 +135,9 @@ describe("Fase 2 R10 — AppShell não remonta a rota de origem durante a navega
   it("aplica o layout da rota renderizada: rota pública sem o menu do shell", async () => {
     const f = await montar();
     act(() => f.historico.push("/selecionar-organizacao"));
+    await waitFor(() => expect(f.router.state.location.pathname).toBe("/selecionar-organizacao"));
+    // O loader do destino precisa ter começado antes de ser liberado.
+    await new Promise((resolve) => setTimeout(resolve, 30));
     await act(async () => {
       f.liberar();
     });
