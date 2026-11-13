@@ -4331,7 +4331,7 @@
       }
     ],
     "produto_autorizado": true,
-    "produto_escopo": "ContaOSAppShell: layout e RBAC pelo caminho da rota renderizada; sem mudança visual",
+    "produto_escopo": "ContaOSAppShell: só a escolha do layout pela rota renderizada; RBAC, menu e copiloto inalterados; sem mudança visual",
     "deploy_hml": "somente o merge do BUILD R10, mecanismo canônico",
     "ledger_v3": "SUPERSEDED de todos os 33 PASS; retomada no índice 1; 52 pendentes",
     "backend_autorizado": false,
