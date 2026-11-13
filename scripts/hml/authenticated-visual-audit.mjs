@@ -4507,8 +4507,35 @@ export function validateNavigationLedgerExtension(previousRaw, raw) {
     fail("NAVIGATION_LEDGER");
   return true;
 }
+// Cadeia append-only em tempo de execução: a versão anterior fixada tem de existir no
+// histórico git do próprio harness e ser prefixo exato da versão atual.
+export async function verifyNavigationLedgerChain(raw, pin, git) {
+  if (pin.previousSha256 === null) return true;
+  if (!hash64(pin.previousSha256) || typeof git !== "function") fail("NAVIGATION_LEDGER");
+  let commits;
+  try {
+    commits = (await git(["log", "--format=%H", "-n", "200", "--", pin.path]))
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+  } catch {
+    fail("NAVIGATION_LEDGER");
+  }
+  for (const commit of commits) {
+    if (!hash40(commit)) fail("NAVIGATION_LEDGER");
+    let previous;
+    try {
+      previous = await git(["show", commit + ":" + pin.path]);
+    } catch {
+      continue;
+    }
+    if (digest(previous) === pin.previousSha256)
+      return validateNavigationLedgerExtension(previous, raw);
+  }
+  fail("NAVIGATION_LEDGER");
+}
 let navigationLedgerState = null;
-export async function loadNavigationLedger(read = readFile, pin = NAVIGATION_LEDGER) {
+export async function loadNavigationLedger(read = readFile, pin = NAVIGATION_LEDGER, git) {
   if (pin === NAVIGATION_LEDGER && navigationLedgerState) return navigationLedgerState;
   let raw;
   try {
@@ -4517,6 +4544,22 @@ export async function loadNavigationLedger(read = readFile, pin = NAVIGATION_LED
     fail("NAVIGATION_LEDGER");
   }
   const state = validateNavigationLedger(raw, pin);
+  // Ledger completo (52/52) não abre execução: a consolidação é validada fora do --audit.
+  if (state.resumeFrom > 52) fail("NAVIGATION_LEDGER");
+  await verifyNavigationLedgerChain(
+    raw,
+    pin,
+    git ??
+      (async (args) =>
+        (
+          await execFile("git", args, {
+            cwd: fileURLToPath(new URL("../../", import.meta.url)),
+            env: browserEnvironment(process.env),
+            maxBuffer: 4194304,
+            timeout: 10000,
+          })
+        ).stdout),
+  );
   if (pin === NAVIGATION_LEDGER) navigationLedgerState = state;
   return state;
 }
@@ -4535,8 +4578,15 @@ export function navigationFinalSummary(records, ledger, pin, { aborted, logoutVe
     if (aborted || !logoutVerified || !ledger) summary.matrixComplete = false;
     return { incremental, summary };
   }
-  const summary = ledger
-    ? summarizeNavigationIncremental(records, ledger)
+  let computed = null;
+  if (ledger)
+    try {
+      computed = summarizeNavigationIncremental(records, ledger);
+    } catch {
+      computed = null;
+    }
+  const summary = computed
+    ? computed
     : {
         expected: 53 - pin.resumeFrom,
         observed: Array.isArray(records) ? records.length : 0,
@@ -4546,7 +4596,7 @@ export function navigationFinalSummary(records, ledger, pin, { aborted, logoutVe
         runComplete: false,
         cumulativeMatrixComplete: false,
       };
-  if (aborted || !logoutVerified || !ledger) {
+  if (aborted || !logoutVerified || !ledger || !computed) {
     summary.runComplete = false;
     summary.cumulativeMatrixComplete = false;
   }

@@ -14,7 +14,7 @@ Fase 2 continua NÃO CERTIFICADA. Este documento acompanha o BUILD do executor i
 - **Entrada `SUPERSEDED`:** invalida um PASS sem apagá-lo. Aponta a execução exata (`supersedesRunId`, `supersedesAttempt`) do PASS válido no mesmo índice e o commit da mudança (`changeSha`), com justificativa de 16 a 512 caracteres. Não carrega evidência de PASS. O índice pode então ser reexecutado e receber um novo PASS.
 - **Compatibilidade:** exigida dos PASS que permanecem válidos: mesmo produto e deployment de `NAVIGATION_DEPLOYMENT` e harness em `compatibleHarnessShas`.
 - **Sem lacuna:** nenhum PASS válido depois do primeiro índice pendente, e a retomada calculada tem de ser igual à fixada.
-- **Extensão:** `validateNavigationLedgerExtension(anterior, novo)` exige que a nova versão encadeie o hash da anterior e só acrescente entradas ao fim. Todo PR que refixar o ledger deve incluir esse teste com a versão anterior.
+- **Extensão:** `validateNavigationLedgerExtension(anterior, novo)` exige que a nova versão encadeie o hash da anterior e só acrescente entradas ao fim. Em execução, `verifyNavigationLedgerChain` procura no histórico git do harness a versão cujo SHA-256 é `previousSha256` e aplica essa verificação. Se a versão anterior não estiver no histórico ou não for prefixo exato, a execução falha fechada.
 - **Validação antes de qualquer credencial:**
   1. no preflight sem credenciais (`--request-preflight`);
   2. no `--request-revalidate` do job privado, antes dos secrets;
@@ -25,7 +25,7 @@ Fase 2 continua NÃO CERTIFICADA. Este documento acompanha o BUILD do executor i
 - **Execução:** só `navigationRunCases(resumeFrom)`. Casos anteriores não são executados, não geram registro e não contam como testados. Sessão, MASTER, organização e logout continuam obrigatórios em toda execução.
 - **Relatório:** com `resumeFrom > 1`, schema `contaos.navigation.audit.v4`, com `ledgerSha256`, `resumeFrom` e resumo `expected`, `observed`, `passed`, `failed`, `resumeFrom`, `runComplete`, `cumulativeMatrixComplete`, **sem** `matrixComplete`. O validador v4 reaproveita sem mudança todos os controles globais do v3. A montagem final (`navigationFinalSummary`/`navigationReportLedger`) nunca lança: se o ledger faltar, a execução abortar ou o logout falhar, o relatório é gravado e lacrado com `runComplete=false` e `cumulativeMatrixComplete=false`.
 - Com `resumeFrom = 1`, o fluxo v3 permanece o mesmo, apenas passando a exigir um ledger válido.
-- A matriz consolidada 52/52 corresponde a `resumeFrom = 53`. Ela é validada pelo `validateNavigationLedger` e não abre execução (`navigationRunCases(53)` é recusado).
+- A matriz consolidada 52/52 corresponde a `resumeFrom = 53`. Ela é validada pelo `validateNavigationLedger` na PR de certificação. O carregador de execução (`loadNavigationLedger`) recusa `resumeFrom = 53` antes de qualquer credencial, e o resumo final continua sem lançar também nesse caso.
 
 ## Prova de não impacto: execução R7 → execução R8
 
@@ -50,6 +50,10 @@ Fase 2 continua NÃO CERTIFICADA. Este documento acompanha o BUILD do executor i
 **Controles globais.** Sessão, MASTER, organização, logout e zero erros são executados e exigidos de novo na R8, como pede o item 5 da emenda. Eles não são herdados da R7, cujo `logoutVerified` é `false`.
 
 Conclusão: os índices 1-25 da R7 permanecem compatíveis, e `a3b6c34` é o único harness declarado em `compatibleHarnessShas`. Qualquer alteração futura de produto, deployment, backend/RLS, fixtures, dependências, shell ou navegação compartilhada exige `SUPERSEDED` nos índices afetados, presumindo impacto amplo até prova em contrário.
+
+## Mutações residuais (equivalentes)
+
+As mutações que ainda sobrevivem só removem guardas sem efeito observável distinto: limite de 256 KiB e de 208 entradas (o texto acaba recusado por outra regra), `validBefore` e a exigência de `cumulativeMatrixComplete` no v4 (redundantes depois da validação do ledger) e `resumeFrom <= 1` no v4 (já coberto pela comparação com o ledger). Ficam como defesa em profundidade.
 
 ## Pendências antes da REQUEST R8 (PR separada)
 
