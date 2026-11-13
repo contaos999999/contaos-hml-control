@@ -4146,7 +4146,7 @@
     "workflow_autorizado": false,
     "deploy_autorizado": false,
     "prod_autorizado": false
-  ,
+  },
   "integracao_funcional_fase2_r7": {
     "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
     "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R7_COMMIT_ROTA_MOVEL_PLAN_GATE_2026-11-13.md",
