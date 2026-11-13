@@ -4376,7 +4376,9 @@ export const NAVIGATION_LEDGER = Object.freeze({
   // Harness cujos PASS permanecem compatíveis com o harness atual. Cada inclusão
   // exige prova de não impacto revisada (docs/.../fase2/R11_LEDGER_COMPATIBILIDADE).
   // a3b6c34 e 9a4d0ad só cobriam PASS já invalidados (SUPERSEDED na v3); 050beb1 cobre os
-  // PASS 1-51 da R10.
+  // PASS 1-51 da R10; ccf5343 é o harness da R14 (índice 52). De ccf5343 até a consolidação
+  // só mudam este pin e comentários; R12-R14 só alteraram preflight, nonce e a contagem do
+  // logout 204, fora dos casos (PLANs R12, R13 e R14).
   compatibleHarnessShas: Object.freeze([
     "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
     "9a4d0ad16a8a64fa04a30208c8c36e7020ec9b01",

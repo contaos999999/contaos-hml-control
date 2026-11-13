@@ -30,12 +30,13 @@ Relatório `contaos.navigation.audit.v4` da R14, **válido por `validateNavigati
 
 ## Ocorrências registradas (R9-R13)
 
-- **R9 e R10:** um erro global de transporte fora das linhas, sem caso afetado. A instrumentação da R11 o localizou no logout (R13: `afterLogout` 1, `POST /auth/v1/logout` `ABORTED`).
+- **R9 e R10:** um erro global fora das linhas (`transportErrors` 1 e `httpErrors` 1 a mais que a soma das linhas, `networkFailure` `POST` `ABORTED` na API), sem caso afetado.
+- **R13:** guard nativo PASS, índice 52 PASS; a instrumentação da R11 localizou o erro no logout (fases 0/1/1, `POST /auth/v1/logout` `ABORTED`).
 - **Causa, provada em Chrome real e reproduzida por revisão independente:** o GoTrue responde 204 ao logout e o cliente não lê o corpo; o Chromium emite `requestfailed` `net::ERR_ABORTED` depois do `response` 204. O logout é concluído no servidor; não há defeito de produto. Desde o BUILD R14, só esse pedido exato, com o 204 observado antes, deixa de contar como erro; na R14 ele foi observado (`NAVIGATION_LOGOUT_COMPLETED_EMPTY`, status 204) e todo o resto continua erro.
 - **R11:** bloqueada no preflight (`REQUEST_API_TIMEOUT`) por listar todo o histórico de execuções; corrigido no BUILD R12 com a mesma semântica e o mesmo prazo. Sem login nem caso.
 - **R12:** bloqueada pelo guard nativo (`WORKER`, `FENCE_SOURCE`) antes do login, sem casos. O mesmo guard passou na R10, na R13, na R14 e no CI; a falha não se repetiu e segue sem explicação. Referência: job `132125342973`.
 
-Nenhuma execução foi reexecutada, nenhum nonce foi reutilizado e nenhuma regra de fail-closed, prazo, fence ou guard foi relaxada. Todas as PRs de PLAN, BUILD, pins e REQUEST foram integradas por merge commit, com revisão independente registrada e CI verde.
+Nenhuma execução foi reexecutada, nenhum nonce foi reutilizado e nenhum prazo, fence ou guard foi relaxado. A única exceção na contagem de `ABORTED` é a do logout 204, autorizada pelo PLAN R14 com prova em Chrome real e revisão independente, e exigindo o 204 observado em tempo de execução. Todas as PRs de PLAN, BUILD, pins e REQUEST foram integradas por merge commit, com revisão independente registrada e CI verde.
 
 ## Conclusão
 
