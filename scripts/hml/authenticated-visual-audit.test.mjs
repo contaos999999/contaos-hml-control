@@ -18731,7 +18731,8 @@ test("NAV ledger R8: cadeia append-only verificada no histórico git em execuç�
     25,
     (l) => {
       l.previousLedgerSha256 = base.pin.sha256;
-      l.entries[0].reportSha256 = "d".repeat(64);
+      // Reescrita coerente de toda a execução R7: só a cadeia pode detectá-la.
+      l.entries.forEach((e) => (e.reportSha256 = "d".repeat(64)));
       l.entries.push(ledgerPass(26, LEDGER_R8));
     },
     { resumeFrom: 27, previousSha256: base.pin.sha256 },
