@@ -7400,9 +7400,76 @@ export async function navigationNativeGuard({
     await makeDirectory(".audit-work", { recursive: true, mode: 0o700 });
     await write(".audit-work/navigation-native-proof.json", JSON.stringify(proof), { mode: 0o600 });
     return proof;
-  } catch {
+  } catch (error) {
+    try {
+      console.error(JSON.stringify(navigationNativeGuardDiagnostic(error)));
+    } catch {
+      // Somente diagnóstico.
+    }
     fail("NAVIGATION_NATIVE_PROOF");
   }
+}
+
+// R10: resumo limitado e por lista fechada da falha do guard nativo de navegação (teste
+// sintético offline). Nunca imprime a saída bruta: só contagens, casos conhecidos, a linha
+// do arquivo de teste onde a asserção falhou e enums de erro.
+export function navigationNativeGuardDiagnostic(error) {
+  const stdout =
+    typeof error?.stdout === "string" && Buffer.byteLength(error.stdout) <= 1048576
+      ? error.stdout
+      : "";
+  const lines = stdout.split("\n").map((line) => line.trim());
+  const count = (name) => {
+    const match = lines
+      .map((line) => new RegExp("^# " + name + " (\\d{1,6})$").exec(line))
+      .find(Boolean);
+    return match ? Number(match[1]) : null;
+  };
+  const passedCases = [];
+  for (const line of lines) {
+    const match = /^# NAV_R2_NATIVE_CASE ([A-Z0-9_]+) PASS$/.exec(line);
+    if (match && NAVIGATION_NATIVE_CASES.includes(match[1]) && !passedCases.includes(match[1]))
+      passedCases.push(match[1]);
+  }
+  const testLines = [];
+  for (const line of lines) {
+    const match =
+      /^location: '[^']*authenticated-visual-audit\.test\.mjs:(\d{1,6}):(\d{1,4})'$/.exec(line);
+    if (match && testLines.length < 8) testLines.push(Number(match[1]));
+  }
+  const codes = [];
+  for (const line of lines) {
+    const match = /^code: '?(ERR_[A-Z_]{1,40}|NAVIGATION_[A-Z_]{1,40}|FENCE_[A-Z_]{1,40})'?$/.exec(
+      line,
+    );
+    if (match && codes.length < 8 && !codes.includes(match[1])) codes.push(match[1]);
+  }
+  const failureTypes = [];
+  for (const line of lines) {
+    const match =
+      /^failureType: '(testCodeFailure|testTimeoutFailure|hookFailure|cancelledByParent|subtestsFailed)'$/.exec(
+        line,
+      );
+    if (match && !failureTypes.includes(match[1])) failureTypes.push(match[1]);
+  }
+  return {
+    phase: "NAVIGATION_NATIVE_GUARD",
+    exitCode: Number.isInteger(error?.code) ? error.code : null,
+    signal: ["SIGTERM", "SIGKILL"].includes(error?.signal) ? error.signal : null,
+    timedOut: error?.killed === true,
+    blocked:
+      typeof error?.code === "string" && /^NAVIGATION_[A-Z_]{1,40}$/.test(error.code)
+        ? error.code
+        : null,
+    tests: count("tests"),
+    pass: count("pass"),
+    fail: count("fail"),
+    cancelled: count("cancelled"),
+    passedCases,
+    testLines,
+    codes,
+    failureTypes,
+  };
 }
 
 async function nativeGuard() {

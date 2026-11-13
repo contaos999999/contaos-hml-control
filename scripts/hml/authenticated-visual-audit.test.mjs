@@ -22774,3 +22774,46 @@ test("R10 harness: autoligação de V117 à rota de análise (V116) é descartad
     "V116",
   );
 });
+
+test("R10 diagnóstico do guard nativo de navegação: só valores fechados", () => {
+  const stdout = [
+    "TAP version 13",
+    "# NAV_R2_NATIVE_CASE PERMISSIONS_1440_LIGHT PASS",
+    "# NAV_R2_NATIVE_CASE UNKNOWN_CASE PASS",
+    "not ok 1 - NAV R2 native readiness and transport",
+    "  ---",
+    "  location: '/work/scripts/hml/authenticated-visual-audit.test.mjs:20660:13'",
+    "  failureType: 'testCodeFailure'",
+    "  error: 'PRIVATE_SENTINEL https://private.example/?token=PRIVATE_SENTINEL'",
+    "  code: 'ERR_ASSERTION'",
+    "  stack: |-",
+    "    at PRIVATE_SENTINEL (file:///work/x.mjs:1:1)",
+    "  ...",
+    "# tests 1",
+    "# pass 0",
+    "# fail 1",
+    "# cancelled 0",
+  ].join("\n");
+  const d = sut.navigationNativeGuardDiagnostic({ stdout, code: 1, killed: false });
+  assert.deepEqual(d, {
+    phase: "NAVIGATION_NATIVE_GUARD",
+    exitCode: 1,
+    signal: null,
+    timedOut: false,
+    blocked: null,
+    tests: 1,
+    pass: 0,
+    fail: 1,
+    cancelled: 0,
+    passedCases: ["PERMISSIONS_1440_LIGHT"],
+    testLines: [20660],
+    codes: ["ERR_ASSERTION"],
+    failureTypes: ["testCodeFailure"],
+  });
+  assert.equal(JSON.stringify(d).includes("PRIVATE_SENTINEL"), false);
+  const blocked = sut.navigationNativeGuardDiagnostic({ code: "NAVIGATION_NATIVE_PROOF" });
+  assert.equal(blocked.blocked, "NAVIGATION_NATIVE_PROOF");
+  assert.equal(blocked.tests, null);
+  assert.deepEqual(sut.navigationNativeGuardDiagnostic(undefined).passedCases, []);
+  assert.equal(sut.navigationNativeGuardDiagnostic({ stdout: "x".repeat(1048577) }).tests, null);
+});
