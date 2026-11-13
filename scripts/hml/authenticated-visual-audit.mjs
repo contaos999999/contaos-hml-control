@@ -4357,7 +4357,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261113-r13",
+  nonce: "integracao-v1-fase2-nav-20261113-r14",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 // Emenda R8 (certificação incremental, PR #626): ledger acumulativo, append-only,
@@ -6022,6 +6022,20 @@ export async function clickNavigationLogout(page, fence, deadline = performance.
     return;
   }
 }
+// R14: o GoTrue responde 204 ao logout e o cliente não lê o corpo; o Chromium então emite
+// requestfailed net::ERR_ABORTED depois do response (provado em Chrome real no PLAN R14).
+// Só esse pedido exato, com o 204 observado antes, deixa de ser erro de transporte.
+export function navigationCompletedEmptyLogout(request, responseStatus) {
+  try {
+    if (!request || isProxy(request) || responseStatus !== 204) return false;
+    if (request.method() !== "POST") return false;
+    if (request.failure()?.errorText !== "net::ERR_ABORTED") return false;
+    const url = new URL(request.url());
+    return url.origin === API_ORIGIN && url.pathname === "/auth/v1/logout";
+  } catch {
+    return false;
+  }
+}
 export function observeNavigationSession(page) {
   if (navigationSessions.has(page)) fail("NAVIGATION_STATE");
   let httpStatusErrors = 0,
@@ -6030,9 +6044,11 @@ export function observeNavigationSession(page) {
     revision = 0,
     changedAt = performance.now(),
     closed = false,
-    firstFailure = null;
+    firstFailure = null,
+    completedEmptyLogout = 0;
   const active = new Set(),
-    waiters = new Set();
+    waiters = new Set(),
+    responseStatuses = new WeakMap();
   const changed = () => {
     revision++;
     changedAt = performance.now();
@@ -6048,8 +6064,30 @@ export function observeNavigationSession(page) {
   };
   const response = (value) => {
     if (value.status() >= 400) httpStatusErrors++;
+    try {
+      responseStatuses.set(value.request(), value.status());
+    } catch {
+      // Sem status registrado, o pedido continua contando como falha se falhar.
+    }
   };
   const failed = (value) => {
+    if (navigationCompletedEmptyLogout(value, responseStatuses.get(value))) {
+      completedEmptyLogout++;
+      try {
+        console.log(
+          JSON.stringify({
+            phase: "NAVIGATION_LOGOUT_COMPLETED_EMPTY",
+            endpoint: "auth:logout",
+            status: 204,
+            count: Math.min(completedEmptyLogout, 1000),
+          }),
+        );
+      } catch {
+        // Somente diagnóstico.
+      }
+      finished(value);
+      return;
+    }
     transportErrors++;
     firstFailure ??= navigationTransportDiagnostic(value);
     finished(value);
@@ -6064,6 +6102,7 @@ export function observeNavigationSession(page) {
       transportErrors,
       consoleErrors,
     }),
+    completedEmptyLogout: () => completedEmptyLogout,
     networkFailure: () => (firstFailure ? { ...firstFailure } : null),
     isQuiet: (expected, quietMs = 500) =>
       !closed &&
@@ -11585,7 +11624,10 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR12PlanSha: "a8b5a4dee1e40559b094efccecc4cfad0e9f39db",
   // PLAN R13 (commit), ancestral obrigatório: novo nonce após o bloqueio do guard nativo na R12.
   functionalNavigationR13PlanSha: "d01da7fd9a998ccac88f6966fac4aeeeda6dfa5d",
+  // PLAN R14 (commit), ancestral obrigatório: logout 204 não lido classificado com prova.
+  functionalNavigationR14PlanSha: "ec1cd534cee2f5685eafe543e15a4d86e52d137f",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261113-r13",
     "integracao-v1-fase2-nav-20261113-r12",
     "integracao-v1-fase2-nav-20261113-r11",
     "integracao-v1-fase2-nav-20261113-r10",
@@ -11662,7 +11704,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261113-r13",
+    nonce: "integracao-v1-fase2-nav-20261113-r14",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -12012,6 +12054,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationR11PlanSha,
       SINGLE_REQUEST.functionalNavigationR12PlanSha,
       SINGLE_REQUEST.functionalNavigationR13PlanSha,
+      SINGLE_REQUEST.functionalNavigationR14PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
