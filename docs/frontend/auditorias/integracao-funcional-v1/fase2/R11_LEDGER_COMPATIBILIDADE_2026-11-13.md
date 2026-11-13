@@ -24,3 +24,13 @@ O BUILD R11 muda apenas:
 4. **Pin do ledger.** v4 encadeada à v3 (`b38edb05…`), retomada 52, `pendingCount` 1.
 
 Nada disso participa da verificação de um caso (navegação direta, recarga, menu, links, controles, contadores por linha e prazos). O produto e o deployment continuam `e6c8cb0` e `dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz`.
+
+## R12: harness do preflight
+
+A R11 não executou caso algum: o preflight parou em `REQUEST_API_TIMEOUT` antes de credenciais. O BUILD R12 muda apenas:
+
+1. **Leituras do preflight.** As três listagens de execuções (workflow selecionado, workflow oposto e releitura final) passam a consultar só os SHAs da REQUEST (`head_sha`), com a mesma paginação, os mesmos limites e a mesma filtragem por `requestShas`. O prazo de 60 s e os 5 s por chamada não mudam.
+2. **Diagnóstico fechado** quando o prazo estoura: quantidade de chamadas, tipo de endpoint e tempo decorrido.
+3. **Nonce** `integracao-v1-fase2-nav-20261113-r12`, R11 consumida, PLAN R12 como ancestral.
+
+Tudo isso acontece antes do login e não participa da verificação de um caso. Os PASS 1-51 da R10 (`050beb1`) continuam compatíveis; o ledger v4 não muda.
