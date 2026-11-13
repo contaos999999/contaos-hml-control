@@ -1,3 +1,7 @@
+## Fase 2 CERTIFICADA: navegação autenticada 52/52, 13/11/2026 Bahia
+
+PLAN R14 #649 e BUILD R14 #650 (logout 204 não lido classificado com prova; nonce r14) e REQUEST R14 #651 (merge `ccf5343`) integrados. Auth R14 `43509322900` attempt 1 SUCCESS: artefato `14076439209` (ZIP `596629b9…`, report `0d1e580b…`, v4 válido), índice 52 PASS, sessão/MASTER/organização/logout `true`, zero erros globais, logout 204 observado. Ledger v5 `6eeef70b…`: 52/52 PASS (1-51 da R10, 52 da R14) no produto `e6c8cb0` / `dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz`. Certificado: `docs/frontend/auditorias/integracao-funcional-v1/fase2/CERTIFICADO_FASE2_NAVEGACAO_2026-11-13.md`.
+
 ## Fase 2 R14: causa do erro global provada (logout 204 não lido), 13/11/2026 Bahia
 
 Fase 2 NÃO CERTIFICADA. REQUEST R13 #648 (merge `49d2357`); Auth R13 `43502004875`: guard nativo PASS, índice 52 PASS, logout `true`, mas 1 erro global no logout (`afterLogout` 1): `POST /auth/v1/logout` `ABORTED`. Experimento em Chrome real: a resposta 204 não lida pelo cliente gera `requestfailed` `ERR_ABORTED` depois do `response`; o logout foi concluído. Próximo: BUILD R14 classifica só esse caso com prova (POST, `/auth/v1/logout`, `ERR_ABORTED`, response 204 antes), nonce r14, e REQUEST R14 para o índice 52 e o logout.

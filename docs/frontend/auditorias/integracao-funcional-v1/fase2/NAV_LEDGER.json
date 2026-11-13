@@ -1,7 +1,7 @@
 {
   "schema": "contaos.navigation.incremental.v1",
   "catalogueSha256": "c14ea06f31fb1542f7643b0bb730bea23fe44210c889449704de0da219c42861",
-  "previousLedgerSha256": "b38edb0591f37bb4237d15044508429a03e318c9191c7e3165a3ebe998bdd1f6",
+  "previousLedgerSha256": "2245b4fe3dead145d1b595932df648f3163f810e5b6ddbe57120c84add9a4318",
   "entries": [
     {
       "index": 1,
@@ -1625,6 +1625,21 @@
       "artifactId": 14059408905,
       "artifactSha256": "5a1b08e2eaa519d3e350488994c8625cd0bc4a60fe9d73e1c19432e717971236",
       "reportSha256": "a70976206a97571b9613ffb55dfb18491a5a76e4e337afd7c8f7b378d50eb2fc"
+    },
+    {
+      "index": 52,
+      "surface": "V123",
+      "width": 390,
+      "theme": "dark",
+      "status": "PASS",
+      "runId": 43509322900,
+      "attempt": 1,
+      "frontendSha": "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+      "harnessSha": "ccf534371cb06f9f1c6fef425345d0e012ac4bb8",
+      "deploymentId": "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
+      "artifactId": 14076439209,
+      "artifactSha256": "596629b98ee9a580e4664e97f0b0062fa2361a6e33d6816c61e2ab4aa8a63cf0",
+      "reportSha256": "0d1e580b7af1646e6c2884683b609c399c278bcb1e77a981b4a6271896b00184"
     }
   ]
 }
