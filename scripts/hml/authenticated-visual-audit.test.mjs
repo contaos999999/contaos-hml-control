@@ -18726,6 +18726,24 @@ test("NAV ledger R8: cadeia append-only verificada no histórico git em execuç�
       fn("loadNavigationLedger")(async () => next.raw, next.pin, history(versions)),
       (e) => e.code === "NAVIGATION_LEDGER",
     );
+  // Versão anterior encontrada pelo hash, mas a atual reescreve uma entrada antiga.
+  const forged = ledgerFixture(
+    25,
+    (l) => {
+      l.previousLedgerSha256 = base.pin.sha256;
+      l.entries[0].reportSha256 = "d".repeat(64);
+      l.entries.push(ledgerPass(26, LEDGER_R8));
+    },
+    { resumeFrom: 27, previousSha256: base.pin.sha256 },
+  );
+  await assert.rejects(
+    fn("loadNavigationLedger")(
+      async () => forged.raw,
+      forged.pin,
+      history({ ["1".repeat(40)]: base.raw }),
+    ),
+    (e) => e.code === "NAVIGATION_LEDGER",
+  );
   assert.equal(await fn("verifyNavigationLedgerChain")(base.raw, base.pin), true);
 });
 test("NAV ledger R8 recusa texto não canônico, chave duplicada e limites", () => {
