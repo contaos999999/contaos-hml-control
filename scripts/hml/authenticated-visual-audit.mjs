@@ -4355,7 +4355,7 @@ export const NAVIGATION_DEPLOYMENT = Object.freeze({
 });
 export const NAVIGATION_SCOPE = Object.freeze({
   id: "INTEGRACAO_V1_FASE2_NAV",
-  nonce: "integracao-v1-fase2-nav-20261113-r9",
+  nonce: "integracao-v1-fase2-nav-20261113-r10",
   surfaces: Object.freeze([...PRIVATE_SURFACES]),
 });
 // Emenda R8 (certificação incremental, PR #626): ledger acumulativo, append-only,
@@ -5611,8 +5611,12 @@ export async function toggleNavigationSidebar(page, fence, deadline = performanc
   await expand.click({ timeout: navigationRemaining(deadline) });
   await waitNavigationNetwork(page, fence, deadline);
 }
+// V117 é o drawer sobre a rota de análise, que o catálogo identifica como V116.
+export function navigationOwnDestination(surface) {
+  return surface === "V117" ? "V116" : surface;
+}
 export async function returnNavigationSource(page, fence, surface, path, theme) {
-  if (navigationDestination(HML_ORIGIN + path) !== (surface === "V117" ? "V116" : surface))
+  if (navigationDestination(HML_ORIGIN + path) !== navigationOwnDestination(surface))
     fail("NAVIGATION_ROUTE");
   const deadline = performance.now() + 15000;
   await waitNavigationNetwork(page, fence, deadline);
@@ -5737,6 +5741,12 @@ export function navigationTransportDetail(request, context, timing) {
     Number.isFinite(timing?.clickAt) && timing.clickAt > 0
       ? Math.max(0, Math.min(600000, Math.round(timing.now - timing.clickAt)))
       : -1;
+  // R10: início do pedido relativo ao último clique (negativo quando anterior ao clique).
+  const startKnown =
+    Number.isFinite(timing?.clickAt) && timing.clickAt > 0 && Number.isFinite(timing?.started);
+  const startedMsSinceClick = startKnown
+    ? Math.max(-600000, Math.min(600000, Math.round(timing.started - timing.clickAt)))
+    : 0;
   return {
     phase: "NAVIGATION_TRANSPORT_DETAIL",
     surface: base.surface,
@@ -5751,6 +5761,8 @@ export function navigationTransportDetail(request, context, timing) {
     navigationRequest,
     frame,
     msSinceClick: since,
+    startKnown,
+    startedMsSinceClick,
     documentRequestsSinceClick:
       Number.isSafeInteger(timing?.documents) && timing.documents >= 0
         ? Math.min(timing.documents, NAVIGATION_DOCUMENT_COUNT_LIMIT)
@@ -6116,6 +6128,7 @@ export async function runNavigationAudit(page, fence, proof) {
   };
   page.on("requestfailed", onTransportDiagnostic);
   const clickTiming = { clickAt: 0, documents: 0 };
+  const requestStarts = new WeakMap();
   let detailCount = 0;
   const onTransportDetail = (request) => {
     try {
@@ -6124,7 +6137,7 @@ export async function runNavigationAudit(page, fence, proof) {
       const detail = navigationTransportDetail(
         request,
         { surface, width, stage, operation, target },
-        { ...clickTiming, now: performance.now() },
+        { ...clickTiming, now: performance.now(), started: requestStarts.get(request) },
       );
       if (detail) {
         detailCount++;
@@ -6136,6 +6149,7 @@ export async function runNavigationAudit(page, fence, proof) {
   };
   const onDocumentRequest = (request) => {
     try {
+      requestStarts.set(request, performance.now());
       if (
         request.resourceType() === "document" &&
         clickTiming.documents < NAVIGATION_DOCUMENT_COUNT_LIMIT
@@ -6435,7 +6449,13 @@ export async function runNavigationAudit(page, fence, proof) {
               continue;
             }
             const dest = decision.destination;
-            if (dest === item.surface || seen.has(dest)) continue;
+            // Autoligação (inclusive V117→V116, a mesma rota) não cria entrada no histórico.
+            if (
+              dest === item.surface ||
+              dest === navigationOwnDestination(item.surface) ||
+              seen.has(dest)
+            )
+              continue;
             seen.add(dest);
             targets.push({ dest, path: new URL(href, HML_ORIGIN).pathname });
           }
@@ -11369,7 +11389,10 @@ export const SINGLE_REQUEST = Object.freeze({
   functionalNavigationR8PlanSha: "78a5f4b96fe756f96a43e53ab877d17145d986f2",
   // Emenda R9 (A): commit do PLAN R9, ancestral obrigatório mesmo antes do merge.
   functionalNavigationR9PlanSha: "771a3e0aeeb6b957c8cd2429184d8cf8fc279af8",
+  // PLAN R10 (commit), ancestral obrigatório: correção do AppShell e autoligação de V117.
+  functionalNavigationR10PlanSha: "2c3733e89e0698dde41ad29cb598d93a573beca0",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261113-r9",
     "integracao-v1-fase2-nav-20261113-r8",
     "integracao-v1-fase2-nav-20261113-r7",
     "integracao-v1-fase2-nav-20261112-r6",
@@ -11442,7 +11465,7 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "integracao-v1-fase2-nav-20261113-r9",
+    nonce: "integracao-v1-fase2-nav-20261113-r10",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
@@ -11759,6 +11782,7 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.functionalNavigationR7PlanSha,
       SINGLE_REQUEST.functionalNavigationR8PlanSha,
       SINGLE_REQUEST.functionalNavigationR9PlanSha,
+      SINGLE_REQUEST.functionalNavigationR10PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.

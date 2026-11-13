@@ -9049,8 +9049,34 @@ test("R9 instrumentação: endpoint e detalhe de transporte só com valores fech
     navigationRequest: "NO",
     frame: "MAIN",
     msSinceClick: 250,
+    startKnown: false,
+    startedMsSinceClick: 0,
     documentRequestsSinceClick: 0,
   });
+  const before = fn("navigationTransportDetail")(request, context, {
+    clickAt: 1000,
+    now: 1250,
+    started: 940.4,
+    documents: 0,
+  });
+  assert.equal(before.startKnown, true);
+  assert.equal(before.startedMsSinceClick, -60);
+  const after = fn("navigationTransportDetail")(request, context, {
+    clickAt: 1000,
+    now: 1250,
+    started: 1010,
+    documents: 0,
+  });
+  assert.equal(after.startedMsSinceClick, 10);
+  assert.equal(
+    fn("navigationTransportDetail")(request, context, { clickAt: 1, now: 2, started: 9e9 })
+      .startedMsSinceClick,
+    600000,
+  );
+  assert.equal(
+    fn("navigationTransportDetail")(request, context, { now: 2, started: 5 }).startKnown,
+    false,
+  );
   assert.equal(JSON.stringify(detail).includes("PRIVATE_SENTINEL"), false);
   assert.equal(fn("navigationTransportDetail")(request, { ...context, surface: "X" }, {}), null);
   assert.equal(fn("navigationTransportDetail")(request, context, {}).msSinceClick, -1);
@@ -9100,6 +9126,8 @@ test("R9 instrumentação: endpoint e detalhe de transporte só com valores fech
   assert.equal(sut.NAVIGATION_DETAIL_LIMIT, 64);
   assert.match(source, /detailCount >= NAVIGATION_DETAIL_LIMIT\) return;/);
   assert.match(source, /clickTiming\.documents < NAVIGATION_DOCUMENT_COUNT_LIMIT/);
+  assert.match(source, /started: requestStarts\.get\(request\)/);
+  assert.match(source, /requestStarts\.set\(request, performance\.now\(\)\);/);
   // Toda função do conjunto RPCS de navegação está na lista fechada do diagnóstico.
   const rpcs = source.match(/const RPCS = new Set\(\[([\s\S]*?)\]\);/)[1].match(/"[a-z0-9_]+"/g);
   assert.ok(rpcs.length >= 17);
@@ -22440,8 +22468,8 @@ test("NAV R5 historical plan remains sealed with its four predecessor nonces", (
   }
 });
 
-test("NAV R9 successor consumes R8 and requires the R9 PLAN commit", () => {
-  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r9");
+test("NAV R10 successor consumes R9 and requires the R10 PLAN commit", () => {
+  assert.equal(sut.SINGLE_REQUEST.audit.nonce, "integracao-v1-fase2-nav-20261113-r10");
   assert.equal(sut.NAVIGATION_SCOPE.nonce, sut.SINGLE_REQUEST.audit.nonce);
   assert.equal(
     sut.SINGLE_REQUEST.functionalNavigationR6PlanSha,
@@ -22459,6 +22487,10 @@ test("NAV R9 successor consumes R8 and requires the R9 PLAN commit", () => {
     sut.SINGLE_REQUEST.functionalNavigationR9PlanSha,
     "771a3e0aeeb6b957c8cd2429184d8cf8fc279af8",
   );
+  assert.equal(
+    sut.SINGLE_REQUEST.functionalNavigationR10PlanSha,
+    "2c3733e89e0698dde41ad29cb598d93a573beca0",
+  );
   for (const nonce of [
     "integracao-v1-fase2-nav-20261111-r1",
     "integracao-v1-fase2-nav-20261112-r2",
@@ -22468,6 +22500,7 @@ test("NAV R9 successor consumes R8 and requires the R9 PLAN commit", () => {
     "integracao-v1-fase2-nav-20261112-r6",
     "integracao-v1-fase2-nav-20261113-r7",
     "integracao-v1-fase2-nav-20261113-r8",
+    "integracao-v1-fase2-nav-20261113-r9",
   ]) {
     assert.ok(sut.SINGLE_REQUEST.spentAuditNonces.includes(nonce));
     const request = {
@@ -22715,4 +22748,29 @@ test("NAV R4 stdout cap never caps error accounting", async () => {
     observer.close();
     page.off("requestfailed", reporter);
   }
+});
+
+test("R10 harness: autoligação de V117 à rota de análise (V116) é descartada como as demais", async () => {
+  const own = fn("navigationOwnDestination");
+  assert.equal(own("V117"), "V116");
+  for (const surface of ["V116", "V120", "SYS04", "V101"]) assert.equal(own(surface), surface);
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  assert.match(
+    source,
+    /dest === item\.surface \|\|\s+dest === navigationOwnDestination\(item\.surface\) \|\|\s+seen\.has\(dest\)/,
+  );
+  assert.match(
+    source,
+    /navigationDestination\(HML_ORIGIN \+ path\) !== navigationOwnDestination\(surface\)/,
+  );
+  // O catálogo continua mapeando a rota de V117 para V116.
+  const v117 = fn("navigationCases")().find((item) => item.surface === "V117");
+  assert.equal(
+    fn("navigationDestination")("https://contaos-41-hml.vercel.app" + v117.path),
+    "V116",
+  );
 });
