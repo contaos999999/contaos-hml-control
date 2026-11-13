@@ -1,7 +1,7 @@
 // Incremental NAV ledger primitives. This module does NOT authorize skipping cases
 // until an authenticated runner verifies artifact bytes, ancestry and change impact.
 import { createHash } from "node:crypto";
-import { navigationCases } from "./authenticated-visual-audit.mjs";
+import { navigationCases, summarizeNavigation } from "./authenticated-visual-audit.mjs";
 
 export const NAV_LEDGER_SCHEMA = "contaos.navigation.incremental.v1";
 const SHA = /^[a-f0-9]{40}$/;
@@ -68,5 +68,9 @@ export function inspectNavigationPartialReport(raw, identity) {
     }
   }
   if (failedAt!==null && failedAt!==report.records.length) throw Error("REPORT_FAIL_ORDER");
+  // Reuse the exact canonical validator for each historical PASS row, not a
+  // weaker partial mirror. A malformed link/control invalidates the candidate.
+  const canonical = summarizeNavigation(report.records.slice(0,pass.length));
+  if (canonical.passed !== pass.length || canonical.failed !== 0 || canonical.observed !== pass.length) throw Error("REPORT_CANONICAL_ROW");
   return Object.freeze({reportSha256, candidateIndices:Object.freeze(pass), failedAt, globalControlsPassed:report.sessionVerified===true && report.masterVerified===true && report.organizationVerified===true && report.logoutVerified===true && report.networkFailure===null && report.httpErrors===0 && report.transportErrors===0 && report.pageErrors===0 && report.blockedMutations===0});
 }
