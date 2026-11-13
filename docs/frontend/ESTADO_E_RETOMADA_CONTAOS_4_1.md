@@ -1,3 +1,7 @@
+## Fase 2 R14: causa do erro global provada (logout 204 não lido), 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. REQUEST R13 #648 (merge `49d2357`); Auth R13 `43502004875`: guard nativo PASS, índice 52 PASS, logout `true`, mas 1 erro global no logout (`afterLogout` 1): `POST /auth/v1/logout` `ABORTED`. Experimento em Chrome real: a resposta 204 não lida pelo cliente gera `requestfailed` `ERR_ABORTED` depois do `response`; o logout foi concluído. Próximo: BUILD R14 classifica só esse caso com prova (POST, `/auth/v1/logout`, `ERR_ABORTED`, response 204 antes), nonce r14, e REQUEST R14 para o índice 52 e o logout.
+
 ## Fase 2 R13: R12 bloqueada pelo guard nativo antes do login, 13/11/2026 Bahia
 
 Fase 2 NÃO CERTIFICADA. Integrados PLAN R12 #643, BUILD R12 #644 (preflight por `head_sha`) e REQUEST R12 #645 (merge `bb05f3b`). Auth R12 `43494812615`: solicitação SUCCESS em 34 s; privado `132125342973` bloqueado por `NATIVE_GUARD` (`WORKER`, `FENCE_SOURCE`) antes do login, sem casos. O mesmo guard passou no CI da #644 e na R10. Próximo: BUILD R13 só com nonce r13 e REQUEST R13 para o índice 52 e o logout; segunda falha do guard abre PLAN de diagnóstico.
