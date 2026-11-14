@@ -59,9 +59,10 @@
       "causa": "node --test pode terminar exit 0 e pass 1 com zero subtestes nomeados realmente executados ao filtrar pelo caso.",
       "sintoma": "GREEN inexistente aceito apenas pelo código de saída e resumo agregado.",
       "barreira": "Exigir nome do subteste e linha ok correspondente ao caso exato, além do status agregado, em runner Node isolado.",
-      "estado": "PENDENTE_PR",
+      "estado": "EM_MONITORAMENTO",
       "origem": [
-        "https://github.com/contaos999999/contaos-hml-control/pull/661"
+        "https://github.com/contaos999999/contaos-hml-control/pull/661",
+        "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156"
       ],
       "tentativas_ciclo": 0,
       "revisao_causal_ampliada": false,
@@ -69,10 +70,24 @@
         "tipo": "TESTE",
         "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
         "procedimento": null,
-        "teste": "Exigir nome do subteste e linha ok correspondente ao caso exato, além do status agregado, em runner Node isolado."
+        "teste": "P0 RCA runner executa caso exato no Node sem vazar tokens"
       },
       "recibo": null,
-      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo."
+      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo. Sujeito a novos casos de regressão, desvio semântico e avaliação operacional em futuras PRs; dedicated HML suite ainda não implementada.",
+      "implementacao": {
+        "pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/661",
+        "head_sha": "ea6778cc958ee676fea9b8a908d5cc7f80157c8c",
+        "merge_sha": "3e8f76c7cbe5741d8de024ea6e9921fab37db02f",
+        "ci_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588067962",
+        "nr_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588067975",
+        "review_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#pullrequestreview-5903985490",
+        "push_zero_drift_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310817",
+        "push_lock_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310812",
+        "push_nr_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310801",
+        "checkpoint_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
+        "readback_url": "https://github.com/contaos999999/contaos-hml-control/blob/main/scripts/p0-rca-impact-gate.test.mjs",
+        "monitoramento": "Barreira técnica integrada, testes negativos aprovados no CI. Não é prova de impossibilidade de reincidência nem de E2E HML real."
+      }
     },
     {
       "id": "NR-004",
@@ -82,9 +97,10 @@
       "causa": "Job Teste C SUCCESS com steps Playwright e evidência SKIPPED não comprova integração funcional.",
       "sintoma": "Job administrativo aprovado era confundido com teste visual/E2E executado.",
       "barreira": "Para certificado final, testar execução real Playwright SUCCESS, artifact, hashes, SHA e relatório HML autenticado; SKIPPED não é PASS funcional.",
-      "estado": "PENDENTE_PR",
+      "estado": "EM_MONITORAMENTO",
       "origem": [
-        "https://github.com/contaos999999/contaos-hml-control/pull/661"
+        "https://github.com/contaos999999/contaos-hml-control/pull/661",
+        "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156"
       ],
       "tentativas_ciclo": 0,
       "revisao_causal_ampliada": false,
@@ -92,10 +108,24 @@
         "tipo": "TESTE",
         "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
         "procedimento": null,
-        "teste": "Para certificado final, testar execução real Playwright SUCCESS, artifact, hashes, SHA e relatório HML autenticado; SKIPPED não é PASS funcional."
+        "teste": "P0 LIVE — job Teste C SUCCESS com Playwright SKIPPED não certifica"
       },
       "recibo": null,
-      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo."
+      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo. Sujeito a novos casos de regressão, desvio semântico e avaliação operacional em futuras PRs; dedicated HML suite ainda não implementada.",
+      "implementacao": {
+        "pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/661",
+        "head_sha": "ea6778cc958ee676fea9b8a908d5cc7f80157c8c",
+        "merge_sha": "3e8f76c7cbe5741d8de024ea6e9921fab37db02f",
+        "ci_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588067962",
+        "nr_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588067975",
+        "review_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#pullrequestreview-5903985490",
+        "push_zero_drift_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310817",
+        "push_lock_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310812",
+        "push_nr_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310801",
+        "checkpoint_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
+        "readback_url": "https://github.com/contaos999999/contaos-hml-control/blob/main/scripts/p0-evidence-live-gate.test.mjs",
+        "monitoramento": "Barreira técnica integrada, testes negativos aprovados no CI. Não é prova de impossibilidade de reincidência nem de E2E HML real."
+      }
     },
     {
       "id": "NR-005",
@@ -105,9 +135,10 @@
       "causa": "Classificação por PLANO_ATIVO.prompt_id sem verificação de paths/contrato poderia isentar código V2 sob V1; scripts também escapavam.",
       "sintoma": "BUILD V2 e scripts de governança passavam sem ficha de impacto por estarem sob PLAN 75.",
       "barreira": "Validar escopo real do diff, cobertura de arquivos de V1, PLAN de governança específico da PR, RCA e negativos para V2 sob V1.",
-      "estado": "PENDENTE_PR",
+      "estado": "EM_MONITORAMENTO",
       "origem": [
-        "https://github.com/contaos999999/contaos-hml-control/pull/661"
+        "https://github.com/contaos999999/contaos-hml-control/pull/661",
+        "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156"
       ],
       "tentativas_ciclo": 0,
       "revisao_causal_ampliada": false,
@@ -115,10 +146,24 @@
         "tipo": "TESTE",
         "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
         "procedimento": null,
-        "teste": "Validar escopo real do diff, cobertura de arquivos de V1, PLAN de governança específico da PR, RCA e negativos para V2 sob V1."
+        "teste": "P0 RCA — arquivo V1 na allowlist sem RCA causal NÃO é liberado"
       },
       "recibo": null,
-      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo."
+      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo. Sujeito a novos casos de regressão, desvio semântico e avaliação operacional em futuras PRs; dedicated HML suite ainda não implementada.",
+      "implementacao": {
+        "pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/661",
+        "head_sha": "ea6778cc958ee676fea9b8a908d5cc7f80157c8c",
+        "merge_sha": "3e8f76c7cbe5741d8de024ea6e9921fab37db02f",
+        "ci_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588067962",
+        "nr_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588067975",
+        "review_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#pullrequestreview-5903985490",
+        "push_zero_drift_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310817",
+        "push_lock_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310812",
+        "push_nr_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310801",
+        "checkpoint_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
+        "readback_url": "https://github.com/contaos999999/contaos-hml-control/blob/main/scripts/p0-rca-impact-gate.test.mjs",
+        "monitoramento": "Barreira técnica integrada, testes negativos aprovados no CI. Não é prova de impossibilidade de reincidência nem de E2E HML real."
+      }
     },
     {
       "id": "NR-006",
@@ -128,9 +173,10 @@
       "causa": "SHA/URL com formato válido eram tratados como prova sem verificação efetiva de PR merged, review independente, CI e arquivos.",
       "sintoma": "Certificado falso passaria com hashes e links sintáticos.",
       "barreira": "Autenticar via GitHub REST PR↔review APPROVED↔SHA↔CI SUCCESS↔artefatos↔fases anteriores e rejeitar ausência de token.",
-      "estado": "PENDENTE_PR",
+      "estado": "EM_MONITORAMENTO",
       "origem": [
-        "https://github.com/contaos999999/contaos-hml-control/pull/661"
+        "https://github.com/contaos999999/contaos-hml-control/pull/661",
+        "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156"
       ],
       "tentativas_ciclo": 0,
       "revisao_causal_ampliada": false,
@@ -138,10 +184,24 @@
         "tipo": "TESTE",
         "arquivo": "scripts/p0-evidence-live-gate.test.mjs",
         "procedimento": null,
-        "teste": "Autenticar via GitHub REST PR↔review APPROVED↔SHA↔CI SUCCESS↔artefatos↔fases anteriores e rejeitar ausência de token."
+        "teste": "P0 LIVE — PR aberta não comprova merge: FAIL"
       },
       "recibo": null,
-      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo."
+      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo. Sujeito a novos casos de regressão, desvio semântico e avaliação operacional em futuras PRs; dedicated HML suite ainda não implementada.",
+      "implementacao": {
+        "pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/661",
+        "head_sha": "ea6778cc958ee676fea9b8a908d5cc7f80157c8c",
+        "merge_sha": "3e8f76c7cbe5741d8de024ea6e9921fab37db02f",
+        "ci_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588067962",
+        "nr_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588067975",
+        "review_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#pullrequestreview-5903985490",
+        "push_zero_drift_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310817",
+        "push_lock_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310812",
+        "push_nr_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310801",
+        "checkpoint_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
+        "readback_url": "https://github.com/contaos999999/contaos-hml-control/blob/main/scripts/p0-evidence-live-gate.test.mjs",
+        "monitoramento": "Barreira técnica integrada, testes negativos aprovados no CI. Não é prova de impossibilidade de reincidência nem de E2E HML real."
+      }
     },
     {
       "id": "NR-007",
@@ -151,9 +211,10 @@
       "causa": "Preflight NOVA_FUNCIONALIDADE aceito por frase status PASS sem teste executável nem evidência versionada.",
       "sintoma": "Descrição textual conferido substituía contrato, RBAC/RLS, dados e dependências testados.",
       "barreira": "Exigir preflight VERIFICADO com SHA256 e casos reais de contrato, RBAC/RLS, dados e dependências executados no HEAD.",
-      "estado": "PENDENTE_PR",
+      "estado": "EM_MONITORAMENTO",
       "origem": [
-        "https://github.com/contaos999999/contaos-hml-control/pull/661"
+        "https://github.com/contaos999999/contaos-hml-control/pull/661",
+        "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156"
       ],
       "tentativas_ciclo": 0,
       "revisao_causal_ampliada": false,
@@ -161,10 +222,24 @@
         "tipo": "TESTE",
         "arquivo": "scripts/p0-rca-impact-gate.test.mjs",
         "procedimento": null,
-        "teste": "Exigir preflight VERIFICADO com SHA256 e casos reais de contrato, RBAC/RLS, dados e dependências executados no HEAD."
+        "teste": "P0 RCA — frase genérica de preflight não comprova funcionalidade"
       },
       "recibo": null,
-      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo."
+      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo. Sujeito a novos casos de regressão, desvio semântico e avaliação operacional em futuras PRs; dedicated HML suite ainda não implementada.",
+      "implementacao": {
+        "pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/661",
+        "head_sha": "ea6778cc958ee676fea9b8a908d5cc7f80157c8c",
+        "merge_sha": "3e8f76c7cbe5741d8de024ea6e9921fab37db02f",
+        "ci_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588067962",
+        "nr_run_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588067975",
+        "review_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#pullrequestreview-5903985490",
+        "push_zero_drift_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310817",
+        "push_lock_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310812",
+        "push_nr_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43588310801",
+        "checkpoint_url": "https://github.com/contaos999999/contaos-hml-control/pull/661#issuecomment-6876362156",
+        "readback_url": "https://github.com/contaos999999/contaos-hml-control/blob/main/scripts/p0-rca-impact-gate.test.mjs",
+        "monitoramento": "Barreira técnica integrada, testes negativos aprovados no CI. Não é prova de impossibilidade de reincidência nem de E2E HML real."
+      }
     },
     {
       "id": "NR-008",

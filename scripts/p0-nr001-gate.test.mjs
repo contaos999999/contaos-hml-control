@@ -67,10 +67,22 @@ test("P0 NR — titulo de caso nao consta do teste versionado e NO-GO",()=>{
   const x=clone();
   fail(x,/caso de teste preventivo nao encontrado/,{exists:()=>true,read:()=>""});
 });
-test("P0 NR — PR pendente pode propor novo teste, jamais implica certificado",()=>{
+test("P0 NR — PR pendente pode propor teste, sem implicar certificado",()=>{
   const x=clone();const i=x.cases.find(x=>x.id==="NR-003");
-  assert.equal(i.estado,"PENDENTE_PR");
+  // Fixture do estado, nunca assertion sobre estado mutável da main.
+  i.estado="PENDENTE_PR";i.recibo=null;
   assert.equal(check(x),"");
+});
+test("P0 NR — PENDENTE_PR com recibo prematuro e NO-GO",()=>{
+  const x=clone();const i=x.cases.find(x=>x.id==="NR-003");
+  i.estado="PENDENTE_PR";i.recibo=receipt();
+  fail(x,/recibo de resolvido apresentado sem status/);
+});
+test("P0 NR — EM_MONITORAMENTO e estado válido, não certificado",()=>{
+  const x=clone();const i=x.cases.find(x=>x.id==="NR-003");
+  i.estado="EM_MONITORAMENTO";i.recibo=null;
+  assert.equal(check(x),"");
+  assert.equal(i.recibo,null);
 });
 const mockGet=(bad={})=>async(path)=>{
   if(path.endsWith("/pulls/"+prNo))return {
