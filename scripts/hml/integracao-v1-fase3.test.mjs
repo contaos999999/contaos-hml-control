@@ -216,7 +216,9 @@ const ledgerOf = (runs, entries = []) =>
   sut.validateF3Ledger(ledgerWith({ runs, entries }), catalogue);
 const run = (k, book, harnessSha = PROV.harnessSha) => ({
   workflowRunId: String(k),
+  frontendSha: PROV.frontendSha,
   harnessSha,
+  deploymentId: PROV.deploymentId,
   events: book.summary().events,
 });
 const seal = (book, n, producerOrder, extra = {}) =>
@@ -416,15 +418,17 @@ test("F3 B2b1: a organização F3 nasce na execução; rejeitada ou abandonada l
   assert.throws(() => seal(book, 5, 5), { code: "F3_FOREIGN_ORG" });
   assert.throws(() => seal(book, 5, 5, { kind: "prerequisito" }), { code: "F3_INTENT_PRODUCER" });
   seal(book, 2, 2);
-  assert.throws(
-    () => book.confirm(uuid(2), { entityId: sut.F3_E87_ORG, organizationId: sut.F3_E87_ORG }),
-    {
-      code: "F3_FOREIGN_ORG",
-    },
-  );
+  // Violação de protocolo do driver é recusada sem mudar o estado.
   assert.throws(() => book.confirm(uuid(2), { entityId: F3, organizationId: uuid(9) }), {
     code: "F3_INTENT_ENTITY",
   });
+  assert.equal(book.state(uuid(2)), "sealed");
+  // A e87f7e68 devolvida como organização criada é fato observado: inventariada fora da F3.
+  const wrong = sut.createF3IntentBook({ ledger: EMPTY });
+  seal(wrong, 2, 2);
+  wrong.confirm(uuid(2), { entityId: sut.F3_E87_ORG, organizationId: sut.F3_E87_ORG });
+  assert.equal(wrong.organizationF3(), null);
+  assert.equal(wrong.created()[0].kind, "fora_da_f3");
   book.confirm(uuid(2), { entityId: F3, organizationId: F3 });
   assert.equal(book.organizationF3(), F3);
   assert.throws(() => seal(book, 3, 2, { organizationId: F3 }), { code: "F3_INTENT_PRODUCER" });
@@ -714,18 +718,15 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
   assert.equal(book.summary().requests.find((q) => q.requestId === uuid(8)).sends, 2);
   seal(book, 9, 9);
   book.uncertain(uuid(9));
-  assert.throws(
-    () =>
-      book.reconcile(uuid(9), { found: true, entityId: uuid(90), organizationId: sut.F3_E87_ORG }),
-    { code: "F3_FOREIGN_ORG" },
-  );
+  // Entidade achada na e87f7e68 é fato observado, registrado fora da F3.
+  book.reconcile(uuid(9), { found: true, entityId: uuid(90), organizationId: sut.F3_E87_ORG });
+  assert.equal(book.created().find((c) => c.id === uuid(90)).kind, "fora_da_f3");
   assert.throws(() => book.confirm(uuid(99999), { entityId: uuid(1), organizationId: F3 }), {
     code: "F3_INTENT_UNKNOWN",
   });
   seal(book, 10, 10);
-  assert.throws(() => book.confirm(uuid(10), { entityId: uuid(70), organizationId: F3 }), {
-    code: "F3_INTENT_ENTITY",
-  });
+  book.confirm(uuid(10), { entityId: uuid(70), organizationId: F3 });
+  assert.equal(book.created().filter((c) => c.id === uuid(70))[1].kind, "entidade_repetida");
   const toStringActor = { toString: () => "master" };
   for (const actor of ["leitor", "segundo", null, "MASTER", toStringActor])
     assert.throws(() => seal(book, 11, 11, { actor }), { code: "F3_SECOND_USER_MUTATION" });
@@ -778,8 +779,7 @@ test("F3 B2b1 RED: orçamento de 30 por execução e 60 no total, acumulado pelo
   assert.throws(() => seal(c, 3000, 5), { code: "F3_BUDGET" });
   // Ledger com mais de 30 envios numa execução é recusado no replay.
   const over = {
-    workflowRunId: "1",
-    harnessSha: PROV.harnessSha,
+    ...run(1, first),
     events: [
       ...run(1, first).events,
       {
@@ -1067,14 +1067,6 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
   let next = 1;
   const id = () => uuid(900000 + next++);
   const ORDERS = MUT.filter((o) => o !== 2);
-  const ALLOWED = [
-    "F3_BUDGET",
-    "F3_UNCERTAIN_RESEND",
-    "F3_INTENT_PRODUCER",
-    "F3_INTENT_PREREQUISITES",
-    "F3_INTENT_DUPLICATE_OF",
-    "F3_INTENT_STATE",
-  ];
   let scenarios = 0,
     tampers = 0,
     refused = 0;
@@ -1136,8 +1128,15 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
             );
             if (!q) continue;
             const st = book.state(q.requestId);
-            const ent = { entityId: id(), organizationId: q.producerOrder === 2 ? null : F3 };
-            if (q.producerOrder === 2) ent.organizationId = ent.entityId;
+            // Fatos observados sorteados: entidade nova na F3, fora da F3, na e87f7e68 ou
+            // repetida; e, às vezes, violação de protocolo do driver na organização.
+            const made = book.created();
+            const fact = rnd(10);
+            const ent = { entityId: id(), organizationId: F3 };
+            if (fact === 0) ent.organizationId = id();
+            else if (fact === 1) ent.organizationId = sut.F3_E87_ORG;
+            else if (fact === 2 && made.length) ent.entityId = made[rnd(made.length)].id;
+            if (q.producerOrder === 2) ent.organizationId = fact === 3 ? id() : ent.entityId;
             if (st === "sealed") {
               if (action <= 4) book.confirm(q.requestId, ent);
               else if (action <= 6) book.rejected(q.requestId);
@@ -1153,13 +1152,23 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
               action <= 6 ? book.resend(q.requestId) : book.abandon(q.requestId);
           }
         } catch (error) {
-          assert.ok(ALLOWED.includes(error.code), error.code);
-          // Ação recusada não altera nada.
+          // Qualquer recusa, de qualquer código, não altera nada (transação).
+          assert.equal(typeof error.code, "string", String(error));
           assert.equal(JSON.stringify([book.summary(), book.created()]), before);
           refused += 1;
         }
       }
       const summary = book.summary();
+      assert.ok(summary.events.length <= sut.F3_MAX_EVENTS_PER_RUN);
+      // O relatório parcial montado com o livro carrega exatamente a execução.
+      const partial = sut.blockedF3Report({
+        code: "F3_DRIVER_PENDING",
+        catalogue,
+        provenance: PROV,
+        book,
+      });
+      assert.equal(JSON.stringify(partial.intents), JSON.stringify(summary));
+      assert.equal(sut.validateF3Report(partial, catalogue, { ledger }), true);
       const report = sut.blockedF3Report({
         code: "F3_DRIVER_PENDING",
         catalogue,
@@ -1198,7 +1207,13 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
         );
         tampers += 1;
       }
-      runs.push({ workflowRunId: String(r), harnessSha: PROV.harnessSha, events: summary.events });
+      runs.push({
+        workflowRunId: String(r),
+        frontendSha: PROV.frontendSha,
+        harnessSha: PROV.harnessSha,
+        deploymentId: PROV.deploymentId,
+        events: summary.events,
+      });
       const priorBefore = sut.f3LedgerState(ledger).priorSent;
       ledger = ledgerOf(runs);
       assert.equal(sut.f3LedgerState(ledger).priorSent, priorBefore + summary.sent);
@@ -1481,4 +1496,146 @@ test("F3 B2b1 RED (M4): imports só de node:* e do auditor, sem require nem impo
     assert.equal(forbidden.test(source), false, String(forbidden));
   // Nenhum acesso direto ao ambiente além do parâmetro padrão de runCli.
   assert.equal(source.split("process.env").length - 1, 1);
+});
+
+test("F3 B2b1 RED: fato observado é registrado, transição é atômica e o isolamento reprova", () => {
+  const book = sut.createF3IntentBook({ ledger: EMPTY });
+  createOrg(book);
+  seal(book, 5, 5);
+  book.uncertain(uuid(5));
+  // Violação de protocolo recusada sem efeito colateral (antes marcava rechecked).
+  const before = JSON.stringify([book.summary(), book.created()]);
+  seal(book, 6, 6);
+  const afterSeal = JSON.stringify([book.summary(), book.created()]);
+  assert.notEqual(before, afterSeal);
+  assert.throws(() => book.reconcile(uuid(5), { found: true, entityId: "x", organizationId: F3 }), {
+    code: "F3_INTENT_EVENT",
+  });
+  assert.equal(JSON.stringify([book.summary(), book.created()]), afterSeal);
+  // Entidade achada fora da F3 entra no inventário; recibo PASS sobre ela é recusado.
+  book.reconcile(uuid(5), { found: true, entityId: uuid(105), organizationId: uuid(999) });
+  book.confirm(uuid(6), { entityId: uuid(105), organizationId: F3 });
+  assert.deepEqual(
+    book
+      .created()
+      .slice(1)
+      .map((c) => c.kind),
+    ["fora_da_f3", "entidade_repetida"],
+  );
+  const full = referenceBook(EMPTY, () => {}, [5]);
+  full.uncertain(uuid(5));
+  full.reconcile(uuid(5), { found: true, entityId: entity(5), organizationId: uuid(999) });
+  const r = completeReport(() => {}, { book: full });
+  assert.throws(() => valid(r), { code: "F3_ISOLATION" });
+  const blocked5 = completeReport(
+    (x) =>
+      forProducer(x, 5, (c) => {
+        c.positive = "FAIL";
+        c.duplicate = "NOT_RUN";
+        c.status = "FAIL";
+      }),
+    { book: full },
+  );
+  assert.equal(valid(blocked5), true);
+  assert.ok(criteria(blocked5).includes("ISOLATION"));
+});
+
+test("F3 B2b1 RED: relatório parcial com o livro preserva envios, eventos e inventário", () => {
+  const book = referenceBook(EMPTY, (b) => {
+    seal(b, 500, 18, { kind: "prerequisito" });
+    b.uncertain(uuid(500));
+    b.reconcile(uuid(500), { found: true, entityId: uuid(5000), organizationId: uuid(999) });
+  });
+  const partial = sut.blockedF3Report({
+    code: "F3_DRIVER_FAILED",
+    catalogue,
+    provenance: PROV,
+    book,
+  });
+  assert.deepEqual([partial.intents.sent, partial.intents.events.length > 0], [29, true]);
+  assert.equal(partial.isolation.created.at(-1).kind, "fora_da_f3");
+  assert.equal(sut.validateF3Report(partial, catalogue, NP), true);
+  // O ledger montado com os eventos desse artefato conta os 29 envios reais.
+  const l1 = ledgerOf([{ ...run(PROV.workflowRunId, book) }]);
+  assert.equal(sut.f3LedgerState(l1).priorSent, 29);
+  // Livro estranho ou ledger diferente do livro são recusados.
+  assert.throws(
+    () =>
+      sut.blockedF3Report({
+        code: "X",
+        catalogue,
+        provenance: PROV,
+        book: { summary: () => ({}) },
+      }),
+    { code: "F3_REPORT" },
+  );
+  assert.throws(
+    () => sut.blockedF3Report({ code: "X", catalogue, provenance: PROV, book, ledger: l1 }),
+    { code: "F3_REPORT" },
+  );
+  // Log acima do teto da máquina de estados é recusado no replay.
+  const big = JSON.parse(JSON.stringify(partial));
+  big.intents.events = Array.from(
+    { length: sut.F3_MAX_EVENTS_PER_RUN + 1 },
+    () => big.intents.events[0],
+  );
+  assert.throws(() => sut.validateF3Report(big, catalogue, NP), { code: "F3_REPORT" });
+  assert.equal(sut.F3_MAX_EVENTS_PER_RUN, 480);
+});
+
+test("F3 B2b1 RED: gravador só com a política de produção; entrada do ledger pela execução citada", async () => {
+  const { mkdtemp, readFile: rf } = await import("node:fs/promises");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const casesRaw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
+  const dir = await mkdtemp(join(tmpdir(), "f3-w-"));
+  // 138 PASS sob política de teste: válido no diagnóstico, nunca gravado.
+  const report = completeReport();
+  assert.deepEqual(criteria(report), []);
+  await assert.rejects(sut.writeF3Artifacts(dir, report, catalogue, casesRaw, OPT), {
+    code: "F3_REPORT",
+  });
+  await assert.rejects(sut.writeF3Artifacts(dir, report, catalogue, casesRaw, NP), {
+    code: "F3_REPORT",
+  });
+  await assert.rejects(rf(join(dir, "F3_REPORT.json")));
+  // Entrada PASS citando a execução 1 para entidade confirmada só na execução 2.
+  const b1 = sut.createF3IntentBook({ ledger: EMPTY });
+  createOrg(b1);
+  seal(b1, 5, 5);
+  b1.uncertain(uuid(5));
+  const r1 = run(1, b1);
+  const b2 = sut.createF3IntentBook({ ledger: ledgerOf([r1]) });
+  b2.reconcile(uuid(5), { found: true, entityId: entity(5), organizationId: F3 });
+  const r2 = run(2, b2, "c".repeat(40));
+  const c5 = catalogue.cases.find((c) => c.producerOrder === 5);
+  const entry = (extra) => ({
+    caseId: c5.caseId,
+    status: "PASS",
+    ...PROV,
+    requestId: uuid(5),
+    entityIds: [entity(5)],
+    artifactId: "1",
+    sha256: "d".repeat(64),
+    reviewId: "1",
+    ...extra,
+  });
+  assert.ok(ledgerOf([r1, r2], [entry({ workflowRunId: "2", harnessSha: "c".repeat(40) })]));
+  for (const bad of [
+    entry({ workflowRunId: "1" }),
+    entry({ workflowRunId: "2", harnessSha: "c".repeat(40), frontendSha: "f".repeat(40) }),
+    entry({ workflowRunId: "2", harnessSha: "c".repeat(40), deploymentId: "dpl_OUTRODEPLOY1" }),
+  ])
+    assert.throws(() => ledgerOf([r1, r2], [bad]), { code: "F3_LEDGER" });
+  // Entrada sobre entidade fora da F3 é recusada.
+  const b3 = sut.createF3IntentBook({ ledger: EMPTY });
+  createOrg(b3);
+  seal(b3, 5, 5);
+  b3.confirm(uuid(5), { entityId: entity(5), organizationId: uuid(999) });
+  assert.throws(() => ledgerOf([run(1, b3)], [entry({ workflowRunId: "1" })]), {
+    code: "F3_LEDGER",
+  });
+  // Execução do ledger sem proveniência completa é recusada.
+  const { frontendSha: _f, ...noFront } = r1;
+  assert.throws(() => ledgerOf([noFront]), { code: "F3_LEDGER" });
 });

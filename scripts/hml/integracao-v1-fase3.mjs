@@ -613,6 +613,7 @@ function validateProvenance(p, blocked, code) {
 // ---------------------------------------------------------------------------------------------
 const CATALOGUES = new WeakSet();
 const LEDGERS = new WeakMap();
+const BOOKS = new WeakMap();
 const deepFreeze = (v) => {
   if (v && typeof v === "object" && !Object.isFrozen(v)) {
     Object.freeze(v);
@@ -666,7 +667,9 @@ export function assertJsonTree(value, code, depth = 0) {
 // ---------------------------------------------------------------------------------------------
 export const F3_INTENT_KINDS = Object.freeze(["principal", "prerequisito", "duplicidade"]);
 export const F3_MAX_PREREQUISITES = 5;
-export const F3_MAX_EVENTS_PER_RUN = 200;
+// Teto provado: no máximo 8 eventos por intenção por execução (selar, incerto, ausente, reenviar,
+// incerto, ausente, abandonar, encontrada) e no máximo 60 intenções na fase.
+export const F3_MAX_EVENTS_PER_RUN = 8 * 60;
 const EVENT_KEYS = Object.freeze([
   "op",
   "requestId",
@@ -770,18 +773,33 @@ function sealIntent(st, e) {
   if (e.producerOrder !== 2 && st.organizationF3 === null) fail("F3_FOREIGN_ORG");
 }
 
+// Tipos de entidade do inventário. Só organizacao e registro são isolados na F3; os demais são
+// fatos observados que o livro registra (nunca descarta) e que reprovam o critério ISOLATION.
+export const F3_ENTITY_KINDS = Object.freeze([
+  "organizacao",
+  "registro",
+  "organizacao_duplicada",
+  "fora_da_f3",
+  "entidade_repetida",
+]);
+const ISOLATED_KINDS = Object.freeze(["organizacao", "registro"]);
+
+/**
+ * Registra a entidade devolvida pelo produto. O que o produto devolve é fato observado e sempre
+ * entra no inventário com o tipo correspondente; só a violação de protocolo do driver (organização
+ * criada com organizationId diferente do próprio ID) é recusada.
+ */
 function recordEntity(st, e, i) {
-  if (e.entityId === F3_E87_ORG || e.organizationId === F3_E87_ORG) fail("F3_FOREIGN_ORG");
-  if (st.entities.has(e.entityId)) fail("F3_INTENT_ENTITY");
-  let kind = "registro";
-  if (i.producerOrder === 2) {
-    // A organização é a própria entidade. A primeira principal confirmada é a organização F3;
-    // qualquer outra organização (duplicidade aceita ou materialização tardia) fica inventariada
-    // como organizacao_duplicada, fora da F3, e faz o gate falhar.
-    if (e.organizationId !== e.entityId) fail("F3_INTENT_ENTITY");
-    if (i.kind === "principal" && st.organizationF3 === null) kind = "organizacao";
-    else kind = "organizacao_duplicada";
-  } else if (e.organizationId !== st.organizationF3) fail("F3_FOREIGN_ORG");
+  if (i.producerOrder === 2 && e.organizationId !== e.entityId) fail("F3_INTENT_ENTITY");
+  let kind;
+  if (st.entities.has(e.entityId)) kind = "entidade_repetida";
+  else if (e.entityId === F3_E87_ORG || e.organizationId === F3_E87_ORG) kind = "fora_da_f3";
+  else if (i.producerOrder === 2)
+    kind =
+      i.kind === "principal" && st.organizationF3 === null
+        ? "organizacao"
+        : "organizacao_duplicada";
+  else kind = e.organizationId === st.organizationF3 ? "registro" : "fora_da_f3";
   if (kind === "organizacao") st.organizationF3 = e.entityId;
   st.entities.add(e.entityId);
   st.created.push({
@@ -797,6 +815,7 @@ function recordEntity(st, e, i) {
 /** Aplica um evento ao estado. É a única definição das transições válidas. */
 function applyEvent(st, run, e) {
   validateEvent(e);
+  if (run.events.length >= F3_MAX_EVENTS_PER_RUN) fail("F3_INTENT_EVENTS");
   const send = () => {
     assertF3Budget({ priorSent: st.priorSent, newIntents: run.sent + 1 });
     run.sent += 1;
@@ -906,11 +925,16 @@ function replayRun(state, events) {
  */
 export function createF3IntentBook(options = {}) {
   if (Object.keys(options).some((k) => k !== "ledger")) fail("F3_INTENT_OPTIONS");
-  const st = cloneState(ledgerRecord(options.ledger).state),
+  const record = ledgerRecord(options.ledger);
+  let st = cloneState(record.state),
     run = { sent: 0, events: [] };
+  // Transação: o evento é aplicado numa cópia e só substitui o estado se tudo der certo.
   const apply = (e) => {
-    applyEvent(st, run, e);
-    run.events.push(Object.freeze({ ...e }));
+    const next = cloneState(st),
+      nextRun = { sent: run.sent, events: run.events };
+    applyEvent(next, nextRun, e);
+    st = next;
+    run = { sent: nextRun.sent, events: [...run.events, Object.freeze({ ...e })] };
   };
   const ev = (op, requestId, extra = {}) => ({
     op,
@@ -922,7 +946,7 @@ export function createF3IntentBook(options = {}) {
     organizationId: null,
     ...extra,
   });
-  return Object.freeze({
+  const book = Object.freeze({
     seal({
       requestId,
       producerOrder,
@@ -959,6 +983,8 @@ export function createF3IntentBook(options = {}) {
     created: () => st.created.map((c) => ({ ...c })),
     summary: () => summarize(st, run),
   });
+  BOOKS.set(book, () => ({ st, run, record }));
+  return book;
 }
 
 /** Intenções do relatório: os eventos desta execução, reexecutados sobre o ledger. */
@@ -1048,7 +1074,6 @@ function validateReceipt(r, c, report, policy, ledger) {
 function crossCheck(report, requests, created) {
   const code = "F3_REPORT";
   const byId = new Map(requests.map((q) => [q.requestId, q]));
-  const createdBy = new Map(created.map((e) => [e.requestId, e.id]));
   const groups = new Map();
   for (const r of report.cases) {
     const g = groups.get(r.producerOrder) ?? [];
@@ -1073,8 +1098,9 @@ function crossCheck(report, requests, created) {
     seen.add(head.requestId);
     const q = byId.get(head.requestId);
     if (!q || q.producerOrder !== order || q.kind !== "principal") fail(code);
-    const entity = createdBy.get(head.requestId);
-    if (head.entityIds.some((id) => id !== entity)) fail("F3_ISOLATION");
+    const made = created.find((e) => e.requestId === head.requestId);
+    if (head.entityIds.some((id) => id !== made?.id)) fail("F3_ISOLATION");
+    if (head.status === "PASS" && !ISOLATED_KINDS.includes(made?.kind)) fail("F3_ISOLATION");
     if (q.outcome !== "confirmed" && head.entityIds.length) fail(code);
     if (head.status === "PASS" && q.outcome !== "confirmed") fail(code);
     const of = duplicates.filter((d) => d.duplicateOf === head.requestId);
@@ -1198,7 +1224,7 @@ export function f3GateCriteria(report, catalogue, options = {}) {
     ["ORGANIZATION", iso.organizationF3 !== null],
     [
       "ISOLATION",
-      iso.created.every((e) => e.kind !== "organizacao_duplicada") &&
+      iso.created.every((e) => ISOLATED_KINDS.includes(e.kind)) &&
         iso.created.filter((e) => e.kind === "organizacao").length === 1,
     ],
     [
@@ -1249,11 +1275,16 @@ export function f3ProvenanceFromEnv(env) {
  * Relatório BLOCKED: todo caso não executado fica BLOCKED, nunca PASS. Com ledger lido, carrega
  * o estado dele; sem ledger lido, ledgerSha256 é null e não há estado.
  */
-export function blockedF3Report({ code, catalogue, provenance, ledger = null }) {
+export function blockedF3Report({ code, catalogue, provenance, ledger = null, book = null }) {
   if (typeof code !== "string" || !CODE.test(code)) fail("F3_REPORT");
   assertCatalogue(catalogue, "F3_REPORT");
-  const record = ledger === null ? null : ledgerRecord(ledger);
-  const state = record ? record.state : emptyState();
+  // Com o livro, o relatório parcial carrega tudo o que a execução já fez: eventos, envios e
+  // inventário. Sem livro, carrega o estado do ledger; sem ledger lido, nenhum estado.
+  const live = book === null ? null : (BOOKS.get(book) ?? fail("F3_REPORT"))();
+  if (live && ledger !== null && ledgerRecord(ledger) !== live.record) fail("F3_REPORT");
+  const record = live ? live.record : ledger === null ? null : ledgerRecord(ledger);
+  const state = live ? live.st : record ? record.state : emptyState();
+  const thisRun = live ? live.run : { sent: 0, events: [] };
   const prov = provenance ?? f3ProvenanceFromEnv({});
   const cases = (catalogue?.cases ?? []).map((c) => {
     const r = {
@@ -1292,7 +1323,7 @@ export function blockedF3Report({ code, catalogue, provenance, ledger = null }) 
       httpErrors: 0,
       pageErrors: 0,
     },
-    intents: summarize(state, { sent: 0, events: [] }),
+    intents: summarize(state, thisRun),
     isolation: {
       organizationF3: state.organizationF3,
       created: state.created.map((c) => ({ ...c })),
@@ -1310,6 +1341,9 @@ export function blockedF3Report({ code, catalogue, provenance, ledger = null }) 
  * catálogo emitido por buildF3Cases. Relatório inválido nunca é gravado.
  */
 export async function writeF3Artifacts(dir, report, catalogue, casesRaw, options = {}) {
+  // Como o gate: só o ledger vem de quem chama; a política é sempre a de produção.
+  if (Object.keys(options).some((k) => k !== "ledger")) fail("F3_REPORT");
+  options = { ledger: options.ledger };
   validateF3Report(report, catalogue, options);
   const body = JSON.stringify(report, null, 2) + "\n";
   validateF3Report(JSON.parse(body), catalogue, options);
@@ -1386,7 +1420,13 @@ const LEDGER_ENTRY_KEYS = Object.freeze([
   "sha256",
   "reviewId",
 ]);
-const LEDGER_RUN_KEYS = Object.freeze(["workflowRunId", "harnessSha", "events"]);
+const LEDGER_RUN_KEYS = Object.freeze([
+  "workflowRunId",
+  "frontendSha",
+  "harnessSha",
+  "deploymentId",
+  "events",
+]);
 /**
  * Ledger append-only: os eventos do livro de cada execução e os PASS verificados (regra C). O
  * estado acumulado sai do replay dos eventos; cada PASS cita uma execução registrada, com o
@@ -1421,13 +1461,15 @@ export function validateF3Ledger(raw, catalogue) {
     try {
       strictPlain(run, LEDGER_RUN_KEYS, code);
       if (!DIGITS.test(run.workflowRunId) || runs.has(run.workflowRunId)) fail(code);
-      if (!SHA40.test(run.harnessSha)) fail(code);
+      if (!SHA40.test(run.harnessSha) || !SHA40.test(run.frontendSha)) fail(code);
+      if (!DPL.test(run.deploymentId)) fail(code);
       const replay = replayRun(state, run.events);
       state = closeRun(replay.st, replay.run);
     } catch {
       fail(code);
     }
-    runs.set(run.workflowRunId, run);
+    // Estado ao fim desta execução: a entrada PASS é conferida contra ele, não contra o final.
+    runs.set(run.workflowRunId, { run, state: cloneState(state) });
   }
   const cases = new Map((catalogue?.cases ?? []).map((c) => [c.caseId, c])),
     seen = new Set();
@@ -1441,14 +1483,19 @@ export function validateF3Ledger(raw, catalogue) {
     }
     const c = cases.get(e.caseId);
     if (e.status !== "PASS" || !c || seen.has(e.caseId)) fail(code);
-    const run = runs.get(e.workflowRunId);
-    if (!run || run.harnessSha !== e.harnessSha) fail(code);
+    const cited = runs.get(e.workflowRunId);
+    if (!cited) fail(code);
+    for (const k of ["harnessSha", "frontendSha", "deploymentId"])
+      if (cited.run[k] !== e[k]) fail(code);
     if (!DIGITS.test(e.artifactId) || !SHA64.test(e.sha256) || !DIGITS.test(e.reviewId)) fail(code);
     if (F3_MUTATING_ORDERS.includes(c.producerOrder)) {
-      const i = isUuid(e.requestId) ? state.intents.get(e.requestId) : undefined;
+      const at = cited.state;
+      const i = isUuid(e.requestId) ? at.intents.get(e.requestId) : undefined;
       if (!i || i.kind !== "principal" || i.producerOrder !== c.producerOrder) fail(code);
       if (i.state !== "confirmed" || JSON.stringify(e.entityIds) !== JSON.stringify([i.entityId]))
         fail(code);
+      const made = at.created.find((x) => x.requestId === e.requestId);
+      if (!ISOLATED_KINDS.includes(made?.kind)) fail(code);
     } else if (e.requestId !== null || e.entityIds.length) fail(code);
     seen.add(e.caseId);
   }
