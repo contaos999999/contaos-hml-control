@@ -4581,6 +4581,7 @@ test("R8 actual CLI loads recovery before runtime for workflow_run and denies an
     const run = new Function(
       "process",
       "loadSingleRequestProof",
+      "singleRequestFixturesScope",
       "preparerEventAllowed",
       "runFixturePreparation",
       "err",
@@ -4591,6 +4592,11 @@ test("R8 actual CLI loads recovery before runtime for workflow_run and denies an
         assert.deepEqual(options, { operation: "fixtures", fresh: true });
         events.push("LOAD_PUBLIC_PROOF");
         ready = true;
+      },
+      () => {
+        assert.equal(ready, true, "scope cannot be read before the proof");
+        events.push("SCOPE_TRILHA_A");
+        return "TRILHA_A";
       },
       () => true,
       async () => {
@@ -4603,13 +4609,14 @@ test("R8 actual CLI loads recovery before runtime for workflow_run and denies an
       },
     );
     assert.equal(await run(["--prepare-fixtures"]), true);
-    assert.deepEqual(events, ["LOAD_PUBLIC_PROOF", "RUNTIME_GETTER"]);
+    assert.deepEqual(events, ["LOAD_PUBLIC_PROOF", "SCOPE_TRILHA_A", "RUNTIME_GETTER"]);
   }
   let runtime = 0;
   const env = { GITHUB_EVENT_NAME: "workflow_dispatch", GITHUB_REF: "refs/heads/foreign" };
   const run = new Function(
     "process",
     "loadSingleRequestProof",
+    "singleRequestFixturesScope",
     "preparerEventAllowed",
     "runFixturePreparation",
     "err",
@@ -4619,6 +4626,7 @@ test("R8 actual CLI loads recovery before runtime for workflow_run and denies an
     async () => {
       if (env.GITHUB_REF !== "refs/heads/main") throw Error("REQUEST_EVENT");
     },
+    () => "TRILHA_A",
     sut.preparerEventAllowed,
     async () => {
       runtime++;
@@ -14275,4 +14283,43 @@ test("R19 independent original SDK parsers and both observer consumers reject ma
         recovery.f.observer.close();
       }
     }
+});
+test("F3 B1: preparador da Trilha A recusa solicitação de outro escopo antes de qualquer trabalho", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(new URL("./prepare-visual-fixtures.mjs", import.meta.url), "utf8");
+  const cli = source.slice(source.indexOf("export async function runCli("));
+  const load = cli.indexOf('await loadSingleRequestProof({ operation: "fixtures", fresh: true });');
+  const guard = cli.indexOf(
+    'if (singleRequestFixturesScope() !== "TRILHA_A") err("FIXTURES_SCOPE_NOT_TRILHA_A");',
+  );
+  const work = cli.indexOf("return runFixturePreparation();");
+  assert.ok(load > 0 && guard > load && work > guard, "guarda entre a prova e o trabalho");
+  const body = cli
+    .slice(0, cli.indexOf("\nif (process.argv[1]"))
+    .replace("export async function", "async function");
+  for (const scope of ["INTEGRACAO_V1_FASE3_REL", undefined]) {
+    let runtime = 0;
+    const run = new Function(
+      "process",
+      "loadSingleRequestProof",
+      "singleRequestFixturesScope",
+      "preparerEventAllowed",
+      "runFixturePreparation",
+      "err",
+      body + "\nreturn runCli;",
+    )(
+      { env: { GITHUB_EVENT_NAME: "workflow_run" }, argv: [] },
+      async () => {},
+      () => scope,
+      () => true,
+      async () => {
+        runtime++;
+      },
+      (code) => {
+        throw Object.assign(Error(code), { code });
+      },
+    );
+    await assert.rejects(run(["--prepare-fixtures"]), { code: "FIXTURES_SCOPE_NOT_TRILHA_A" });
+    assert.equal(runtime, 0);
+  }
 });
