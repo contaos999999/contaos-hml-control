@@ -98,7 +98,8 @@ export function validateLedger(doc, {
     if (entry?.estado==="RESOLVIDO_COM_PROVA") {
       const r=entry.recibo||{};
       if (!pullUrl(r.pr_url)||!sha40(r.head_sha)||!sha40(r.merge_sha)||
-          !runUrl(r.ci_run_url)||!reviewUrl(r.review_url)||
+          !runUrl(r.ci_run_url)||!runUrl(r.nr_run_url)||
+          !reviewUrl(r.review_url)||
           !nonblank(r.readback_url)||
           r.readback_url!==ORIGIN+"/blob/main/"+entry.prevencao.arquivo||
           !r.review_url.startsWith(r.pr_url+"#pullrequestreview-"))
@@ -128,9 +129,11 @@ export async function verifyResolvedLive(doc,apiGet) {
       const prNo=parseUrl(r.pr_url,/\/pull\/(\d+)$/);
       const runNo=parseUrl(r.ci_run_url,/\/runs\/(\d+)$/);
       const reviewNo=parseUrl(r.review_url,/#pullrequestreview-(\d+)$/);
-      const [pr,run,reviews,ancestry,file]=await Promise.all([
+      const nrRunNo=parseUrl(r.nr_run_url,/\/runs\/(\d+)$/);
+      const [pr,run,nrRun,reviews,ancestry,file]=await Promise.all([
         get("/pulls/"+prNo),
         get("/actions/runs/"+runNo),
+        get("/actions/runs/"+nrRunNo),
         get("/pulls/"+prNo+"/reviews?per_page=100"),
         get("/compare/"+r.merge_sha+"...main"),
         get("/contents/"+entry.prevencao.arquivo+"?ref="+r.head_sha),
@@ -139,16 +142,24 @@ export async function verifyResolvedLive(doc,apiGet) {
       const later=Array.isArray(reviews) ? reviews.filter(x=>
         x.user?.login===rev?.user?.login && x.submitted_at && rev?.submitted_at &&
         x.submitted_at>rev.submitted_at) : [];
-      const independent=rev?.state==="APPROVED" && rev.user?.login &&
+      const independent=Array.isArray(reviews) && reviews.length<100 &&
+        rev?.state==="APPROVED" && rev.user?.login && rev.submitted_at &&
         rev.user.login!==pr?.user?.login && rev.commit_id===pr?.head?.sha &&
         !later.some(x=>["CHANGES_REQUESTED","DISMISSED"].includes(x.state));
+      const authenticatedFile=file?.encoding==="base64" && file.content &&
+        (entry.prevencao.tipo!=="TESTE" ||
+          Buffer.from(file.content,"base64").toString("utf8")
+            .includes(entry.prevencao.teste));
       if (pr?.merged_at==null || pr?.base?.ref!=="main" ||
           pr?.head?.sha!==r.head_sha || pr?.merge_commit_sha!==r.merge_sha ||
           !independent || run?.conclusion!=="success" ||
           run?.name!=="ContaOS Frontend Zero-Drift" ||
+          nrRun?.conclusion!=="success" ||
+          nrRun?.name!=="ContaOS P0-NR-001 Anti-Reincidencia" ||
           ![r.head_sha,r.merge_sha].includes(run.head_sha) ||
+          ![r.head_sha,r.merge_sha].includes(nrRun.head_sha) ||
           !["ahead","identical"].includes(ancestry?.status) ||
-          !file?.sha)
+          !authenticatedFile)
         errs.push("P0-NR-001 LIVE "+entry.id+": PR/review/CI/merge/readback nao comprovados.");
     } catch(e) {
       errs.push("P0-NR-001 LIVE "+entry.id+": API indisponivel ou recibo nao autentico.");
