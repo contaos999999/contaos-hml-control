@@ -58,12 +58,12 @@ test("F3 B1: CSV estrito rejeita aspas soltas e aceita campos com vírgula entre
 
 test("F3 B1: orçamento de intenções conta tentativas e recusa excesso", () => {
   assert.equal(sut.F3_BUDGET.total, 60);
-  assert.equal(sut.F3_BUDGET.perRun, 30);
-  assert.ok(sut.assertF3Budget({ priorSent: 0, newIntents: 30 }));
-  assert.ok(sut.assertF3Budget({ priorSent: 30, newIntents: 30 }));
+  assert.equal(sut.F3_BUDGET.perRun, 40);
+  assert.ok(sut.assertF3Budget({ priorSent: 0, newIntents: 40 }));
+  assert.ok(sut.assertF3Budget({ priorSent: 20, newIntents: 40 }));
   for (const bad of [
-    { priorSent: 0, newIntents: 31 },
-    { priorSent: 31, newIntents: 30 },
+    { priorSent: 0, newIntents: 41 },
+    { priorSent: 21, newIntents: 40 },
     { priorSent: -1, newIntents: 1 },
     { priorSent: 0, newIntents: 1.5 },
     { priorConfirmed: 0, newIntents: 1 },
@@ -471,14 +471,14 @@ test("F3 B2b1: a organização F3 nasce na execução; rejeitada ou abandonada l
   assert.equal(accepted.created()[1].kind, "organizacao_duplicada");
 });
 
-test("F3 B2b1 RED: tipos de intenção, uma principal por produtor, 5 pré-requisitos e 1 duplicidade", () => {
+test("F3 B2b1 RED: tipos de intenção, uma principal por produtor, 11 pré-requisitos e 1 duplicidade", () => {
   const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(book);
   seal(book, 5, 5);
   assert.throws(() => seal(book, 6, 5), { code: "F3_INTENT_PRODUCER" });
   book.confirm(uuid(5), { entityId: entity(5), organizationId: F3 });
   assert.throws(() => seal(book, 6, 5), { code: "F3_INTENT_PRODUCER" });
-  for (let i = 0; i < 5; i++) seal(book, 300 + i, 18, { kind: "prerequisito" });
+  for (let i = 0; i < 11; i++) seal(book, 300 + i, 18, { kind: "prerequisito" });
   assert.throws(() => seal(book, 399, 18, { kind: "prerequisito" }), {
     code: "F3_INTENT_PREREQUISITES",
   });
@@ -751,19 +751,20 @@ test("F3 B2b1 RED: livro idempotente, incerto só com readback, mutação fora d
   assert.equal(sut.assertF3SecondUserProfile("leitor"), true);
 });
 
-test("F3 B2b1 RED: orçamento de 30 por execução e 60 no total, acumulado pelo ledger", () => {
-  // 30 envios: organização, 17 principais e 12 duplicidades; o 31º é recusado.
+test("F3 B2b1 RED: orçamento de 40 por execução e 60 no total, acumulado pelo ledger", () => {
+  // 40 envios: organização, 17 principais, 11 duplicidades e 11 pré-requisitos.
   const first = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
   createOrg(first);
   for (const o of MUT.filter((x) => x !== 2)) {
     seal(first, o, o);
     first.confirm(uuid(o), { entityId: entity(o), organizationId: F3 });
   }
-  for (const o of MUT.filter((x) => x !== 2).slice(0, 12)) {
+  for (const o of MUT.filter((x) => x !== 2).slice(0, 11)) {
     dup(first, 200 + o, o, uuid(o));
     first.rejected(uuid(200 + o));
   }
-  assert.equal(first.summary().sent, 30);
+  for (let i = 0; i < 11; i++) seal(first, 310 + i, 18, { kind: "prerequisito" });
+  assert.equal(first.summary().sent, 40);
   assert.throws(() => dup(first, 299, 20, uuid(20)), { code: "F3_BUDGET" });
   // Teto de 60: principais rejeitadas e refeitas contam como envio a cada tentativa.
   const rejectLoop = (book, start, count) => {
@@ -782,7 +783,7 @@ test("F3 B2b1 RED: orçamento de 30 por execução e 60 no total, acumulado pelo
   assert.equal(sut.f3LedgerState(lb).priorSent, 60);
   const c = sut.createF3IntentBook({ provenance: PROV, ledger: lb });
   assert.throws(() => seal(c, 3000, 5), { code: "F3_BUDGET" });
-  // Ledger com mais de 30 envios numa execução é recusado no replay.
+  // Ledger com mais de 40 envios numa execução é recusado no replay.
   const over = {
     ...run(1, first),
     events: [
@@ -790,9 +791,9 @@ test("F3 B2b1 RED: orçamento de 30 por execução e 60 no total, acumulado pelo
       {
         op: "seal",
         requestId: uuid(3001),
-        producerOrder: 18,
-        kind: "prerequisito",
-        duplicateOf: null,
+        producerOrder: 20,
+        kind: "duplicidade",
+        duplicateOf: uuid(20),
         entityId: null,
         organizationId: null,
       },

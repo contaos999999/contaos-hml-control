@@ -44,7 +44,7 @@ export const F3_CASES_PATH = "docs/frontend/auditorias/integracao-funcional-v1/f
 export const F3_CASES_SHA256 = "bce15980d31ce22c8836e26621b267951296e905139b9833c8db4a7400c9ecbb";
 // Baseline normativo fixo (PLAN 7.5, M-R2-1): nenhuma leitura nova do repositório develop.
 export const F3_BACKEND_SHA = "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6";
-export const F3_BUDGET = Object.freeze({ total: 60, perRun: 30, planned: 33, minutes: 45 });
+export const F3_BUDGET = Object.freeze({ total: 60, perRun: 40, planned: 39, minutes: 45 });
 export const F3_CASE_STATUS = Object.freeze(["PASS", "FAIL", "BLOCKED", "N_A_JUSTIFICADO"]);
 export const F3_CLEANUP_STATUS = Object.freeze([
   "ISOLATED_NO_DELETE",
@@ -671,7 +671,7 @@ export function assertJsonTree(value, code, depth = 0) {
 // conta como pendente, mas precisa ser relida na execução que fecha a matriz.
 // ---------------------------------------------------------------------------------------------
 export const F3_INTENT_KINDS = Object.freeze(["principal", "prerequisito", "duplicidade"]);
-export const F3_MAX_PREREQUISITES = 5;
+export const F3_MAX_PREREQUISITES = 11;
 // Teto provado: no máximo 8 eventos por intenção por execução (selar, incerto, ausente, reenviar,
 // incerto, ausente, abandonar, encontrada) e no máximo 60 intenções na fase.
 export const F3_MAX_EVENTS_PER_RUN = 8 * 60;
