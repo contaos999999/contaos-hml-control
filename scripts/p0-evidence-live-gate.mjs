@@ -178,10 +178,46 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
           return;
         }
         const e2e = rec.hml_e2e;
+        const hmlId = ciRef(e2e?.run_url);
         if (e2e?.ambiente !== "HML_AUTENTICADO" ||
             !Array.isArray(e2e?.casos) || e2e.casos.length === 0 ||
-            e2e.casos.some((x) => typeof x !== "string" || !x.trim())) {
-          fail(label + ": certificado final sem casos autenticados em HML evidenciados.");
+            e2e.casos.some((x) => typeof x !== "string" || !x.trim()) ||
+            !hmlId || !sha40(e2e?.tested_sha)) {
+          fail(label + ": certificado final sem execução HML autenticada identificada.");
+          return;
+        }
+        const [hmlRun, hmlJobs, hmlArtifacts, hmlAncestry] = await Promise.all([
+          get("/actions/runs/" + hmlId),
+          get("/actions/runs/" + hmlId + "/jobs?per_page=100"),
+          get("/actions/runs/" + hmlId + "/artifacts?per_page=100"),
+          get("/compare/" + e2e.tested_sha + "..." + pr.head.sha),
+        ]);
+        const hmlJob = (hmlJobs?.jobs || []).find((j) =>
+          j.name.includes("Trilha A auditoria privada HML") &&
+          j.conclusion === "success");
+        const hmlStep = (prefix) => (hmlJob?.steps || []).some((step) =>
+          step.name.startsWith(prefix) && step.conclusion === "success");
+        const hmlArtifact = (hmlArtifacts?.artifacts || []).some((artifact) =>
+          /^trilha-a-private-\d+-\d+$/.test(artifact.name || "") &&
+          artifact.expired === false && artifact.size_in_bytes > 0);
+        // O SHA do teste HML deve anteceder a PR de evidências, sem mudanças
+        // no código ou nos executores depois da prova autenticada.
+        const noCodeDrift = Array.isArray(hmlAncestry?.files) &&
+          hmlAncestry.files.length < 300 &&
+          hmlAncestry.files.every((f) =>
+            !/^(src\/|public\/|scripts\/hml\/|\.github\/workflows\/|package\.json$|bun\.lock$)/.test(f.filename || ""));
+        if (hmlRun?.name !== "ContaOS Trilha A Autenticada" ||
+            hmlRun?.conclusion !== "success" ||
+            hmlRun?.head_sha !== e2e.tested_sha ||
+            hmlRun?.head_branch !== "main" ||
+            !["ahead", "identical"].includes(hmlAncestry?.status) ||
+            !noCodeDrift || hmlJobs?.total_count > 100 ||
+            hmlArtifacts?.total_count > 100 || !hmlJob ||
+            !hmlStep("Somente agora fornecer o par sintetico ao auditor") ||
+            !hmlStep("Verificar hashes gerados") ||
+            !hmlStep("Evidencia privada imutavel por 90 dias") ||
+            !hmlArtifact) {
+          fail(label + ": HML autenticado sem run real, teste, hashes, artifact ou SHA/contrato estáveis.");
           return;
         }
         const root = rec.arquivo_evidencia.split("/fase")[0] + "/";
