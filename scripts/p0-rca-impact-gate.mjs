@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
@@ -36,6 +37,7 @@ export function validateRcaImpact({
   legacyAllowlist = [], expectedFrontendSha = null, expectedBackendSha = null,
   fileExists = existsSync, prNumber = null, governancePlan = null,
   v1Scope = null, v1ScopeChanged = false, addedLines = {},
+  readBytes = (path) => readFileSync(path),
 }) {
   const errors = [];
   const err = (msg) => errors.push("P0 RCA: " + msg);
@@ -159,9 +161,32 @@ export function validateRcaImpact({
           !texts(item?.causa?.evidencias) ||
           !texts(item?.causa?.hipoteses_descartadas))
         err(label + " causa raiz/RED não confirmados.");
-    } else if (item?.tipo === "NOVA_FUNCIONALIDADE" &&
-        (item?.preflight?.status !== "PASS" || !hasText(item?.preflight?.evidencia)))
-      err(label + " sem preflight real.");
+    } else if (item?.tipo === "NOVA_FUNCIONALIDADE") {
+      const pre = item?.preflight;
+      const required = ["CONTRATO", "RBAC_RLS", "DADOS_INTEGRIDADE", "DEPENDENCIAS"];
+      const tests = pre?.checks || [];
+      const hasAll = Array.isArray(tests) && tests.length === required.length &&
+        required.every((kind) => tests.filter((x) => x?.tipo === kind).length === 1) &&
+        tests.every((x) => caseValid(x?.teste, fileExists));
+      const evidencePath = pre?.arquivo_evidencia;
+      const pathOk = typeof evidencePath === "string" &&
+        /^docs\/frontend\/auditorias\/preflight\/[\w/-]+\.(?:json|md)$/.test(evidencePath) &&
+        !evidencePath.includes("..");
+      let hashOk = false;
+      if (pathOk && fileExists(evidencePath) &&
+          typeof pre.arquivo_sha256 === "string" &&
+          /^[a-f0-9]{64}$/.test(pre.arquivo_sha256)) {
+        try {
+          hashOk = createHash("sha256").update(readBytes(evidencePath))
+            .digest("hex") === pre.arquivo_sha256;
+        } catch { hashOk = false; }
+      }
+      if (pre?.status !== "VERIFICADO" ||
+          pre?.baseline_sha !== report.baseline?.frontend_sha ||
+          !hasAll || !hashOk) {
+        err(label + " preflight sem contrato/RBAC/RLS/dados/dependências testados, SHA e evidência real.");
+      }
+    }
     for (const red of item?.testes?.red || []) {
       if (!/^https:\/\/github\.com\/contaos999999\/contaos-hml-control\/actions\/runs\/[1-9]\d*$/.test(red.run_url || "") ||
           !validSha(red.run_sha))
@@ -209,7 +234,9 @@ export async function verifyRcaOperational(report, {
     const required = [...(item?.testes?.green || []),
       ...(item?.testes?.negativos || []),
       ...(item?.testes?.regressao || []),
-      ...(item?.impacto?.riscos || []).map((r) => r.teste_preventivo)];
+      ...(item?.impacto?.riscos || []).map((r) => r.teste_preventivo),
+      ...(item?.tipo === "NOVA_FUNCIONALIDADE"
+        ? (item?.preflight?.checks || []).map((c) => c.teste) : [])];
     for (const entry of required) {
       const key = entry?.runner + ":" + entry?.arquivo + ":" + entry?.caso;
       if (!greenCache.has(key)) {
