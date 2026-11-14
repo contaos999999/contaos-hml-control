@@ -118,6 +118,9 @@ export function validateIntegrationReceipts(m, plan, changed = [], fileExists = 
   if (m?.controle?.rca_impacto?.schema !== "contaos.p0.rca-policy.v1" ||
       !same(m?.controle?.rca_impacto?.aplica_versoes, ["V2", "V3", "V4", "V5"]) ||
       m?.controle?.rca_impacto?.relatorio_ativo !== "docs/frontend/rca/P0_RCA_ATIVO.json" ||
+      m?.controle?.rca_impacto?.relatorio_schema !== "contaos.p0.rca-report.v2" ||
+      m?.controle?.rca_impacto?.prova_operacional !== "RED_GITHUB_E_GREEN_EXECUTADO_NO_SHA" ||
+      m?.controle?.rca_impacto?.gate_certificacao_live !== "scripts/p0-evidence-live-gate.mjs" ||
       m?.restricoes?.rca_impacto_obrigatorio !== true)
     err("P0 RCA: configuracao de causa raiz/impacto ausente ou relaxada.");
   return errors;
