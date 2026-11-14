@@ -207,7 +207,8 @@ const POLICY = Object.freeze({
     ]),
   ),
 });
-const OPT = Object.freeze({ policy: POLICY });
+const NP = Object.freeze({ prior: sut.F3_NO_PRIOR });
+const OPT = Object.freeze({ policy: POLICY, prior: sut.F3_NO_PRIOR });
 const entity = (o) => (o === 2 ? F3 : uuid(100 + o));
 
 /** Relatório COMPLETE coerente (fixture de teste, nunca do executor). */
@@ -221,6 +222,7 @@ function completeReport(edit = () => {}) {
       outcome: "confirmed",
       prior: false,
       entityId: entity(o),
+      sends: 1,
     });
     if (REJ(o))
       requests.push({
@@ -230,6 +232,7 @@ function completeReport(edit = () => {}) {
         outcome: "rejected",
         prior: false,
         entityId: null,
+        sends: 1,
       });
   }
   const cases = catalogue.cases.map((c) => {
@@ -370,6 +373,7 @@ test("F3 B2b1 RED (B1): intenções, recibos e inventário são cruzados", () =>
       outcome: "pending",
       prior: false,
       entityId: null,
+      sends: 1,
     });
     r.intents.sent += 1;
     r.intents.uncertain += 1;
@@ -386,6 +390,7 @@ test("F3 B2b1 RED (B1): intenções, recibos e inventário são cruzados", () =>
         outcome: "confirmed",
         prior: false,
         entityId: uuid(501),
+        sends: 1,
       });
       r.intents.sent += 1;
       r.intents.confirmed += 1;
@@ -446,7 +451,7 @@ test("F3 B2b1 RED (I1): chaves herdadas e conjunto de contadores fora do fixado 
 
 test("F3 B2b1 RED (I2): duplicidade é por produtor, com política com fonte", () => {
   // Política de produção ainda sem fonte: nenhum caso mutante fecha PASS.
-  assert.throws(() => sut.validateF3Report(completeReport(), catalogue), { code: "F3_REPORT" });
+  assert.throws(() => sut.validateF3Report(completeReport(), catalogue, NP), { code: "F3_REPORT" });
   const pendingPolicy = completeReport((r) => {
     for (const c of r.cases) {
       if (!MUT.includes(c.producerOrder)) continue;
@@ -457,8 +462,8 @@ test("F3 B2b1 RED (I2): duplicidade é por produtor, com política com fonte", (
     r.intents.sent = 18;
     r.intents.rejected = 0;
   });
-  assert.equal(sut.validateF3Report(pendingPolicy, catalogue), true);
-  assert.equal(sut.f3Gate(pendingPolicy, catalogue), "FAIL");
+  assert.equal(sut.validateF3Report(pendingPolicy, catalogue, NP), true);
+  assert.equal(sut.f3Gate(pendingPolicy, catalogue, NP), "FAIL");
   assert.ok(MUT.every((o) => sut.F3_DUPLICATE_POLICY[String(o)] === null));
   // Resultado diferente da política, ou divergente dentro do produtor.
   rejects(completeReport((r) => forProducer(r, 15, (c) => (c.duplicate = "REJECTED"))));
@@ -744,16 +749,16 @@ test("F3 B2b1: relatório bloqueado também é válido e gravado com SHA256SUMS 
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
   const blocked = sut.blockedF3Report({ code: "F3_DRIVER_PENDING", catalogue, provenance: PROV });
-  assert.equal(sut.validateF3Report(blocked, catalogue), true);
+  assert.equal(sut.validateF3Report(blocked, catalogue, NP), true);
   assert.equal(blocked.state, "BLOCKED");
   assert.equal(blocked.summary.BLOCKED, 138);
-  assert.equal(sut.f3Gate(blocked, catalogue), "FAIL");
+  assert.equal(sut.f3Gate(blocked, catalogue, NP), "FAIL");
   const early = sut.blockedF3Report({ code: "F3_CASES_HASH", catalogue: null, provenance: null });
-  assert.equal(sut.validateF3Report(early, null), true);
+  assert.equal(sut.validateF3Report(early, null, NP), true);
   assert.equal(early.cases.length, 0);
   const dir = await mkdtemp(join(tmpdir(), "f3-"));
   const casesRaw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
-  await sut.writeF3Artifacts(dir, blocked, catalogue, casesRaw);
+  await sut.writeF3Artifacts(dir, blocked, catalogue, casesRaw, NP);
   assert.deepEqual((await readdir(dir)).sort(), ["F3_CASES.json", "F3_REPORT.json", "SHA256SUMS"]);
   const sums = (await rf(join(dir, "SHA256SUMS"), "utf8")).trim().split("\n");
   assert.equal(sums.length, 2);
@@ -771,7 +776,9 @@ test("F3 B2b1: relatório bloqueado também é válido e gravado com SHA256SUMS 
     "F3_DRIVER_PENDING",
   );
   const bad = { ...blocked, blockCode: "texto livre" };
-  await assert.rejects(sut.writeF3Artifacts(dir, bad, catalogue, casesRaw), { code: "F3_REPORT" });
+  await assert.rejects(sut.writeF3Artifacts(dir, bad, catalogue, casesRaw, NP), {
+    code: "F3_REPORT",
+  });
   for (const code of ["", "a b", null, "X".repeat(81)])
     assert.throws(() => sut.blockedF3Report({ code, catalogue, provenance: PROV }), {
       code: "F3_REPORT",
@@ -804,6 +811,7 @@ const req = (n, outcome = "confirmed", extra = {}) => ({
   outcome,
   prior: false,
   entityId: outcome === "confirmed" ? uuid(1000 + n) : null,
+  sends: extra.prior ? 0 : 1,
   ...extra,
 });
 const entry = (caseId, extra = {}) => ({
@@ -865,8 +873,8 @@ test("F3 B2b1 RED (I4): orçamento e requestId acumulados entre execuções pelo
   assert.throws(() => book.resend(uuid(2)), { code: "F3_UNCERTAIN_RESEND" });
   book.reconcile(uuid(2), { found: true, entityId: uuid(20), organizationId: F3 });
   assert.deepEqual(book.summary().requests, [
-    { ...req(1), prior: true },
-    { ...req(2), prior: true, entityId: uuid(20) },
+    { ...req(1), prior: true, sends: 0 },
+    { ...req(2), prior: true, entityId: uuid(20), sends: 0 },
   ]);
   // O teto de 60 considera o acumulado: 40 anteriores + 20 desta execução esgotam o total.
   const tail = sut.createF3IntentBook({ organizationF3: F3, priorSent: 40 });
@@ -881,7 +889,7 @@ test("F3 B2b1 RED (I4): orçamento e requestId acumulados entre execuções pelo
     workflowRunId: String(k),
     harnessSha: PROV.harnessSha,
     sent: 30,
-    requests: Array.from({ length: 15 }, (_, i) => req(100 * k + i)),
+    requests: Array.from({ length: 15 }, (_, i) => req(100 * k + i, "confirmed", { sends: 2 })),
   });
   assert.ok(sut.validateF3Ledger(ledgerWith({ runs: [heavy(1), heavy(2)] }), catalogue));
   assert.throws(
@@ -959,7 +967,7 @@ test("F3 B2b1 RED (B, D): o relatório traz todas as intenções anteriores, con
   // O livro mantém o pendente anterior no resumo, como pendente.
   const book = sut.createF3IntentBook({ organizationF3: F3, ...prior });
   const pend = book.summary().requests.find((q) => q.requestId === uuid(777));
-  assert.deepEqual(pend, { ...req(777, "pending", { producerOrder: 18 }), prior: true });
+  assert.deepEqual(pend, { ...req(777, "pending", { producerOrder: 18 }), prior: true, sends: 0 });
   assert.equal(book.summary().uncertain, 1);
   // Relatório desta execução: a organização vem do ledger (prior), o resto é novo.
   const withPrior = (keepPending) =>
@@ -968,12 +976,17 @@ test("F3 B2b1 RED (B, D): o relatório traz todas as intenções anteriores, con
       org.requestId = uuid(2);
       org.prior = true;
       org.entityId = F3;
+      org.sends = 0;
       r.isolation.created.find((e) => e.kind === "organizacao").requestId = uuid(2);
       forProducer(r, 2, (c) => (c.requestId = uuid(2)));
       r.intents.priorSent = 2;
       r.intents.sent = 27;
       if (keepPending) {
-        r.intents.requests.push({ ...req(777, "pending", { producerOrder: 18 }), prior: true });
+        r.intents.requests.push({
+          ...req(777, "pending", { producerOrder: 18 }),
+          prior: true,
+          sends: 0,
+        });
         r.intents.uncertain = 1;
       }
     });
@@ -1323,4 +1336,93 @@ test("F3 B2b1 RED (M4): imports só de node:* e do auditor, sem require nem impo
     assert.equal(forbidden.test(source), false, String(forbidden));
   // Nenhum acesso direto ao ambiente além do parâmetro padrão de runCli.
   assert.equal(source.split("process.env").length - 1, 1);
+});
+
+test("F3 B2b1 RED (I-A): pendente reaberto e rejeitado conta como envio no ledger e no relatório", () => {
+  const run1 = { ...RUN, sent: 1, requests: [req(1, "pending")] };
+  const reopen = (sends, sent) => ({
+    ...RUN,
+    workflowRunId: "2",
+    sent,
+    requests: [req(1, "rejected", { prior: true, sends })],
+  });
+  assert.throws(() => sut.validateF3Ledger(ledgerWith({ runs: [run1, reopen(0, 0)] }), catalogue), {
+    code: "F3_LEDGER",
+  });
+  assert.ok(sut.validateF3Ledger(ledgerWith({ runs: [run1, reopen(1, 1)] }), catalogue));
+  // Em escala: 30 pendentes, 30 reabertos e rejeitados e mais 30 novos passam do teto de 60.
+  const many = (k, outcome, extra) =>
+    Array.from({ length: 30 }, (_, i) => req(1000 + i, outcome, extra)).map((q, i) =>
+      k === 3 ? { ...q, requestId: uuid(5000 + i), entityId: uuid(6000 + i) } : q,
+    );
+  const r1 = { ...RUN, sent: 30, requests: many(1, "pending") };
+  const r2 = {
+    ...RUN,
+    workflowRunId: "2",
+    sent: 30,
+    requests: many(2, "rejected", { prior: true, sends: 1 }),
+  };
+  const r3 = { ...RUN, workflowRunId: "3", sent: 30, requests: many(3, "confirmed") };
+  assert.ok(sut.validateF3Ledger(ledgerWith({ runs: [r1, r2] }), catalogue));
+  assert.throws(() => sut.validateF3Ledger(ledgerWith({ runs: [r1, r2, r3] }), catalogue), {
+    code: "F3_LEDGER",
+  });
+  // O livro registra o reenvio do pendente anterior.
+  const prior = sut.f3PriorFromLedger(
+    sut.validateF3Ledger(ledgerWith({ runs: [run1] }), catalogue),
+  );
+  const book = sut.createF3IntentBook({ organizationF3: F3, ...prior });
+  book.reconcile(uuid(1), { found: false, entityId: null, organizationId: null });
+  book.resend(uuid(1));
+  book.rejected(uuid(1));
+  const s = book.summary();
+  assert.equal(s.sent, 1);
+  assert.deepEqual(s.requests, [req(1, "rejected", { prior: true, sends: 1 })]);
+  // Relatório: envios declarados precisam ser a soma exata dos envios por intenção.
+  rejects(completeReport((r) => (r.intents.sent = 27)));
+  rejects(completeReport((r) => (r.intents.sent = 29)));
+  rejects(completeReport((r) => (r.intents.requests[0].sends = 0)));
+});
+
+test("F3 B2b1 RED (M-1, M-2, M-3): prior obrigatório, getter em índice e organização anterior", () => {
+  // M-1: sem prior explícito, o validador e o gate recusam.
+  assert.throws(() => sut.validateF3Report(completeReport(), catalogue, { policy: POLICY }), {
+    code: "F3_REPORT",
+  });
+  assert.throws(() => sut.f3Gate(completeReport(), catalogue, { policy: POLICY }), {
+    code: "F3_REPORT",
+  });
+  assert.throws(
+    () =>
+      sut.validateF3Report(completeReport(), catalogue, {
+        policy: POLICY,
+        prior: { priorSent: 0 },
+      }),
+    { code: "F3_REPORT" },
+  );
+  // M-2: getter em índice de array do objeto vivo é recusado; o gate decide sobre uma cópia.
+  const live = completeReport();
+  const ids = live.cases[40].entityIds,
+    good = ids[0];
+  Object.defineProperty(ids, 0, { enumerable: true, get: () => good });
+  rejects(live);
+  const holes = completeReport();
+  holes.cases[40].entityIds = new Array(1);
+  rejects(holes);
+  const extra = completeReport();
+  extra.intents.requests.note = "x";
+  rejects(extra);
+  // M-3: organização anterior confirmada com ID diferente da organização F3.
+  const orgReq = { ...req(2), producerOrder: 2, prior: true, sends: 0 };
+  assert.throws(
+    () => sut.createF3IntentBook({ organizationF3: F3, priorSent: 1, priorRequests: [orgReq] }),
+    { code: "F3_INTENT_PRIOR" },
+  );
+  assert.ok(
+    sut.createF3IntentBook({
+      organizationF3: F3,
+      priorSent: 1,
+      priorRequests: [{ ...orgReq, entityId: F3 }],
+    }),
+  );
 });

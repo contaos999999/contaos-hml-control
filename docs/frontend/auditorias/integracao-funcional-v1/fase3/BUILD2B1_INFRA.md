@@ -41,7 +41,8 @@ Não mudam: o YAML, o auditor, o preparador, `src/**`, `types.ts`, as dependênc
    Viram `FAIL`: qualquer `VAZAMENTO`, `ACCEPTED` ou `CLEANUP_FAILED`, e qualquer divergência entre observado e esperado. Viram `BLOCKED`: prova ausente, `SEM_ENTIDADE`, observação `ERROR` e produtor ainda sem política. O resumo também é recalculado.
 2. **Cruzamento de recibos, intenções e inventário** (revisões 5900926490, B1, e 5901072418, B e D).
    - O relatório traz a lista de todas as intenções conhecidas: as desta execução e as anteriores vindas do ledger (`prior: true`). Cada uma tem `requestId`, produtor, `duplicateOf`, desfecho e a entidade criada (`entityId`). Os contadores precisam bater com essa lista.
-   - Sem ledger anterior, nenhuma intenção pode ser anterior e `priorSent` é 0. Com ledger, as anteriores e o `priorSent` batem exatamente com `f3PriorFromLedger`, que o executor passa ao validador e ao gate. Só um pendente anterior pode mudar de desfecho. Um pendente anterior não reconciliado continua na lista, como pendente, e faz o gate falhar.
+   - O anterior é obrigatório no validador e no gate: na primeira execução é `F3_NO_PRIOR`; nas seguintes, `f3PriorFromLedger` sobre o ledger fixado, que o `runCli` deriva sozinho (revisão 5901160351, M-1). As anteriores e o `priorSent` batem exatamente com ele. Só um pendente anterior pode mudar de desfecho. Um pendente anterior não reconciliado continua na lista, como pendente, e faz o gate falhar.
+   - Cada intenção registra quantas vezes foi enviada nesta execução (`sends`): 1 ou 2 para uma nova (com reenvio depois de readback), 0 ou 1 para uma anterior. O total `sent` precisa ser exatamente a soma. Um pendente anterior que termina rejeitado foi necessariamente reenviado, então exige `sends` 1 (revisão 5901160351, I-A).
    - Cada intenção nova é enviada uma vez e pode ser reenviada só uma vez.
    - Toda intenção confirmada criou exatamente uma entidade no inventário, com o mesmo ID registrado na intenção, e toda entidade aponta para a intenção que a criou. As entidades de execuções anteriores entram no inventário final.
    - Os casos de um mesmo produtor compartilham `requestId`, entidades e duplicidade.
@@ -53,7 +54,7 @@ Não mudam: o YAML, o auditor, o preparador, `src/**`, `types.ts`, as dependênc
    - Nos 18 mutantes a política nasce `null`. Por isso nenhum caso mutante fecha `PASS` até o BUILD-2b-2 preencher a política com a fonte, por PR revisada.
    - `REJECTED` exige uma tentativa de duplicidade rejeitada no livro, com `duplicateOf` apontando para a intenção confirmada do mesmo produtor. Uma tentativa confirmada exige `ACCEPTED`, que é `FAIL`.
 4. **N/A.** `N_A_JUSTIFICADO` só vale para caso `CONDICIONAL` listado em `F3_NA_AMENDMENTS`, que começa vazio. Entrar nessa lista exige a emenda aprovada pelo titular prevista na seção 4, item 5, do PLAN.
-5. **Campo livre ou credencial.** Todo objeto do relatório tem chaves exatas, sem getter nem proxy. Cada string tem formato fechado: UUID, SHA de 40 ou 64, `dpl_…`, ID numérico ou código em maiúsculas. E-mail, JWT, HTML ou texto livre falham.
+5. **Campo livre ou credencial.** Todo objeto do relatório tem chaves exatas, sem getter nem proxy; os arrays só têm índices de dados próprios, sem buraco, getter ou chave extra, e o gate decide sobre uma cópia serializada (revisão 5901160351, M-2). Cada string tem formato fechado: UUID, SHA de 40 ou 64, `dpl_…`, ID numérico ou código em maiúsculas. E-mail, JWT, HTML ou texto livre falham.
 6. **Isolamento** (revisão, I1 e M1).
    - A organização F3 não pode ser a `e87f7e68`, e todo registro criado pertence à organização F3.
    - O inventário tem exatamente uma entrada `organizacao`: a da intenção de criação da organização, com o próprio ID da F3.
@@ -61,7 +62,7 @@ Não mudam: o YAML, o auditor, o preparador, `src/**`, `types.ts`, as dependênc
    - O gate exige esse conjunto exato, com valores iguais antes e depois. O BUILD-2b-2 confirma pela UI que cada uma dessas telas expõe contador e, se preciso, emenda o conjunto.
    - As consultas por tela usam `Object.hasOwn`.
 7. **Livro de intenções** (revisão, B1, I4 e M2).
-   - Só o MASTER sela intenção, só nos produtores mutantes (ordens 2 e 4 a 20) e só na organização F3. Opções desconhecidas, como o antigo `priorConfirmed`, falham.
+   - Só o MASTER sela intenção, só nos produtores mutantes (ordens 2 e 4 a 20) e só na organização F3. Opções desconhecidas, como o antigo `priorConfirmed`, falham. Uma organização anterior confirmada precisa ser a própria organização F3 (revisão 5901160351, M-3).
    - Cada `requestId` é selado uma vez, inclusive entre execuções. O livro nasce com todas as intenções anteriores do ledger, com desfecho e entidade, e o resumo devolve todas elas.
    - A intenção incerta, desta execução ou de uma anterior, só é reenviada depois de um readback que prove ausência, e uma vez só.
    - Um readback que acha a entidade em outra organização falha com `F3_FOREIGN_ORG`.
@@ -76,7 +77,7 @@ Não mudam: o YAML, o auditor, o preparador, `src/**`, `types.ts`, as dependênc
 9. **Ledger** (revisão, I3 e I4).
    - `F3_LEDGER.json` nasce com `runs` e `entries` vazios. O SHA-256 `1d402a1a…` fica fixado em `F3_LEDGER_SHA256`.
    - Cada execução registra `workflowRunId`, harness, envios e as intenções novas e os pendentes anteriores reconciliados nela, com desfecho e entidade. Isso permite derivar o orçamento acumulado e reconciliar um incerto anterior, inclusive uma tentativa de duplicidade cuja base é de outra execução.
-   - O número de envios de cada execução precisa bater com as intenções listadas (no mínimo uma por intenção nova; no máximo duas por intenção nova mais uma por pendente reaberto). Assim o ledger não consegue subcontar o orçamento (revisão 5901072418, A).
+   - O número de envios de cada execução é exatamente a soma dos `sends` das intenções listadas, e o pendente reaberto que termina rejeitado conta um envio. Assim o ledger não consegue subcontar o orçamento (revisões 5901072418, A, e 5901160351, I-A).
    - Um `requestId` só reaparece em outra execução como reconciliação de um pendente, com o mesmo produtor e a mesma base. Entidade repetida entre execuções falha.
    - A entrada PASS precisa ter o mesmo harness da execução que ela cita.
    - Uma extensão parte do ledger fixado e só acrescenta: entradas `PASS` do catálogo, sem repetir caso, com proveniência completa, `artifactId`, `sha256`, `reviewId` e a execução registrada.
@@ -150,10 +151,23 @@ A segunda revisão confirmou I1, I2, I3, M1 a M5 resolvidos e B1 e I4 parciais, 
 | D: intenções marcadas como anteriores sem conferência | Anteriores e `priorSent` conferidos com `f3PriorFromLedger`. Teste "(B, D)" |
 | E: getter em índice grava texto no arquivo | Serialização única, validada e gravada. Teste "(E)" |
 
+## Revisão 5901160351 (CHANGES_REQUESTED no HEAD `fcb5224`)
+
+A terceira revisão confirmou B, C e E resolvidos, D resolvido desde que o chamador passe o anterior, e nenhuma regressão nos achados anteriores.
+
+| Achado | Tratamento |
+|---|---|
+| I-A: pendente reaberto e rejeitado sem envio contado | `sends` por intenção e `sent` igual à soma, no relatório e no ledger. Teste "(I-A)" |
+| M-1: `prior` opcional | Obrigatório, com `F3_NO_PRIOR` explícito; o `runCli` deriva do ledger. Teste "(M-1, M-2, M-3)" |
+| M-2: getter em índice engana o validador sobre o objeto vivo | Índices de dados obrigatórios; gate sobre cópia serializada. Mesmo teste |
+| M-3: organização anterior com outro ID | Recusada ao montar o livro. Mesmo teste |
+
+A observação sobre tipar os pré-requisitos e limitá-los a 5 (tabela 7.2) vai para o BUILD-2b-2, que é onde eles passam a existir.
+
 ## Testes
 
-- `integracao-v1-fase3.test.mjs` tem 37 testes, todos verdes. RED verificável: esta mesma suíte, rodada contra o executor do HEAD `41a4331`, tem 13 falhas; a versão de 33 testes, rodada contra o `363b451`, tinha 17.
-- Suíte do job `protocol` (auditor, preparador e F3): 917 testes, 895 passam. As 2 falhas, `GET publico nunca envia Authorization` e `R13 POSIX ignored-build template`, são de ambiente local e falham igual na main `d2a6557` (891 testes, 869 passam). A prova é o CI.
+- `integracao-v1-fase3.test.mjs` tem 39 testes, todos verdes. RED verificável: esta mesma suíte, rodada contra o executor do HEAD `fcb5224`, tem 15 falhas; as versões anteriores tinham 13 falhas contra `41a4331` e 17 contra `363b451`.
+- Suíte do job `protocol` (auditor, preparador e F3): 919 testes, 897 passam. As 2 falhas, `GET publico nunca envia Authorization` e `R13 POSIX ignored-build template`, são de ambiente local e falham igual na main `d2a6557` (891 testes, 869 passam). A prova é o CI.
 - `eslint` e `prettier --check` estão limpos nos arquivos alterados.
 
 ## Próximo passo: BUILD-2b-2
@@ -164,3 +178,4 @@ A segunda revisão confirmou I1, I2, I3, M1 a M5 resolvidos e B1 e I4 parciais, 
 - Releitura do RBAC do `leitor` com `assertF3LeitorRbac` e conferência do perfil com `assertF3SecondUserProfile`.
 - Confirmação pela UI dos estados de negação de V111 e V120 e dos contadores de `F3_E87_COUNTER_SCREENS`, com emenda do catálogo se necessário.
 - Registro da execução no ledger e inventário de isolamento.
+- Tipar os pré-requisitos finos (por exemplo, a solicitação de parecer antes de `aprovar_parecer_interno`) e limitá-los a 5, conforme a tabela 7.2, para distinguir pré-requisito de uma segunda criação do produtor.
