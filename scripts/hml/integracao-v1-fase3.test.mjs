@@ -2401,6 +2401,27 @@ test("F3 §12.6: V105 aceita contrato com contratante criado por V102", (t) => {
   assert.equal(f.fence.settle().complete, true);
 });
 
+test("F3 §12.6: leitura atrasada não substitui versão mais nova", async (t) => {
+  const f = await contractFence(t);
+  const response = versionResponse(
+    RPC("obter_cadastro_operacional_v1"),
+    "POST",
+    {
+      schema_versao: "crud-cadastro-v1",
+      entidade: "contratos",
+      registro: { id: uuid(107), id_organizacao: F3, versao_registro: 2 },
+    },
+    { p_id: uuid(107), p_id_organizacao: F3, p_entidade: "contratos" },
+  );
+  assert.equal(await f.fence.observeVersion(response), false);
+  assert.ok(
+    f.fence.arm({
+      producerOrder: 8,
+      bodies: [v106(uuid(107), sut.f3Slot("uuid", "chave"))],
+    }),
+  );
+});
+
 test("F3 §12.6: V106 recusa versão sem releitura confirmada", (t) => {
   const f = fenceWith(t, withContract);
   const body = v106(uuid(107), sut.f3Slot("uuid", "chave"));

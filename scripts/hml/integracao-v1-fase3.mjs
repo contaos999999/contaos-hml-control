@@ -1490,7 +1490,9 @@ export function createF3MutationFence(options = {}) {
         row.versao_registro < 1
       )
         return false;
-      observedVersions.set(order + ":" + id, row.versao_registro);
+      const reference = order + ":" + id;
+      if ((observedVersions.get(reference) ?? 0) > row.versao_registro) return false;
+      observedVersions.set(reference, row.versao_registro);
       return true;
     },
     arm(input = {}) {
