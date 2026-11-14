@@ -77,7 +77,7 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
     throw new Error("Reviews incompletas por paginação.");
   }
 
-  async function authenticate(rec, label, sourceFiles) {
+  async function authenticate(rec, label, sourceFiles, finalCertificate = false) {
     const rr = reviewRef(rec?.revisao_independente_url);
     const runId = ciRef(rec?.ci_url);
     if (!rr || !runId || !sha40(rec?.pr_merge_sha)) {
@@ -146,6 +146,58 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
         fail(label + ": jobs Zero-Drift e Teste C não comprovados como SUCCESS.");
         return;
       }
+      if (finalCertificate) {
+        // Teste C de mera documentação é N/A e NÃO comprova integração.
+        // Usar a própria execução do PR quando ela realmente executou
+        // Playwright, ou uma workflow_dispatch independente no mesmo SHA.
+        const visualId = ciRef(rec.teste_c_run_url || rec.ci_url);
+        if (!visualId) {
+          fail(label + ": certificado final sem execução visual Teste C identificada.");
+          return;
+        }
+        const visualRun = await get("/actions/runs/" + visualId);
+        const visualJobs = await get("/actions/runs/" + visualId + "/jobs?per_page=100");
+        const artifacts = await get("/actions/runs/" + visualId + "/artifacts?per_page=100");
+        const sameSha = visualRun?.head_sha === pr.head.sha ||
+          visualRun?.head_sha === pr.merge_commit_sha;
+        const visualJob = (visualJobs?.jobs || []).find((j) =>
+          j.name.includes("Teste C Independente") && j.conclusion === "success");
+        const step = (needle) => (visualJob?.steps || []).some((s) =>
+          s.name.startsWith(needle) && s.conclusion === "success");
+        const actual = (artifacts?.artifacts || []).some((a) =>
+          /^contaos-teste-c-\d+-\d+$/.test(a.name || "") &&
+          a.expired === false && a.size_in_bytes > 0);
+        if (!sameSha || visualRun.conclusion !== "success" ||
+            !["ContaOS Frontend Zero-Drift", "ContaOS Teste C Independente"].includes(visualRun.name) ||
+            visualJobs?.total_count > 100 || artifacts?.total_count > 100 ||
+            !visualJob || !step("Teste C Playwright") ||
+            !step("Evidencia permanente de screenshots") ||
+            !step("Confirmar que nenhuma fonte versionada foi editada") ||
+            !actual) {
+          fail(label + ": Teste C visual/E2E SKIPPED, SHA divergente ou artefatos não comprovados.");
+          return;
+        }
+        const e2e = rec.hml_e2e;
+        if (e2e?.ambiente !== "HML_AUTENTICADO" ||
+            !Array.isArray(e2e?.casos) || e2e.casos.length === 0 ||
+            e2e.casos.some((x) => typeof x !== "string" || !x.trim())) {
+          fail(label + ": certificado final sem casos autenticados em HML evidenciados.");
+          return;
+        }
+        const root = rec.arquivo_evidencia.split("/fase")[0] + "/";
+        const prefix = root + "fase" +
+          (rec.arquivo_evidencia.includes("/fase8/") ? "8/" : "7/");
+        await shaPath(e2e.arquivo_evidencia, e2e.arquivo_sha256,
+          prefix, label + " HML E2E");
+        const remoteHml = await get("/contents/" + e2e.arquivo_evidencia +
+          "?ref=" + pr.head.sha);
+        if (remoteHml?.encoding !== "base64" || !remoteHml.content ||
+            createHash("sha256").update(Buffer.from(remoteHml.content, "base64"))
+              .digest("hex") !== e2e.arquivo_sha256) {
+          fail(label + ": HML E2E não existe no SHA aprovado ou hash diverge.");
+          return;
+        }
+      }
       checks.push({ label, pr: rr.pr, run: runId, sha: rec.pr_merge_sha, reviewer: review.user.login });
     } catch (e) {
       fail(label + ": falha de API GitHub, recibo não autenticado (" + String(e?.message || e).slice(0,120) + ").");
@@ -186,7 +238,7 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
       { path: receipt.arquivo_evidencia, hash: receipt.arquivo_sha256 },
       { path: receipt.matriz_arquivo, hash: receipt.matriz_sha256 },
       { path: receipt.grafo_arquivo, hash: receipt.grafo_sha256 },
-    ]);
+    ], true);
   }
   return { errors, checks, checked: items.length };
 }
