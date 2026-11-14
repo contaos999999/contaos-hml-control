@@ -28,13 +28,21 @@ const fixture = () => {
   const finalPath = prefix + "fase7/CERTIFICADO.md";
   const matrixPath = prefix + "fase1/MATRIZ.csv";
   const graphPath = prefix + "fase1/GRAFO.mmd";
-  for (const p of [finalPath, matrixPath, graphPath]) files.set(p, data);
+  const hmlPath = prefix + "fase7/HML_E2E.md";
+  for (const p of [finalPath, matrixPath, graphPath, hmlPath]) files.set(p, data);
   const finalReceipt = {
     status: "PASS", ...receipt(finalPath),
     matriz_arquivo: matrixPath,
     matriz_sha256: digest,
     grafo_arquivo: graphPath,
     grafo_sha256: digest,
+    teste_c_run_url: ci,
+    hml_e2e: {
+      ambiente: "HML_AUTENTICADO",
+      arquivo_evidencia: hmlPath,
+      arquivo_sha256: digest,
+      casos: ["HML-REAL-001"],
+    },
     fases_anteriores: stages,
   };
   const manifest = {
@@ -61,10 +69,20 @@ const fixture = () => {
       total_count: 2,
       jobs: [
         { name: "ContaOS Frontend Zero-Drift", conclusion: "success" },
-        { name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente", conclusion: "success" },
+        { name: "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente", conclusion: "success",
+          steps: [
+            {name:"Detectar escopo de auditoria visual",conclusion:"success"},
+            {name:"Teste C Playwright — 24 telas, 4 larguras, 2 temas",conclusion:"success"},
+            {name:"Evidencia permanente de screenshots e SHA256SUMS",conclusion:"success"},
+            {name:"Confirmar que nenhuma fonte versionada foi editada",conclusion:"success"},
+          ] },
       ],
     },
     ["/compare/" + M + "...main"]: { status: "ahead" },
+    "/actions/runs/789/artifacts?per_page=100": {
+      total_count: 1,
+      artifacts: [{name:"contaos-teste-c-789-1",expired:false,size_in_bytes:4096}],
+    },
   };
   const remoteFiles = new Map(files);
   const run = () => verifyEvidenceLive(manifest, {
@@ -163,4 +181,30 @@ test("P0 LIVE — conteúdo alterado após review é rejeitado", async () => {
   const x = fixture();
   x.remoteFiles.set(prefix + "fase6/CERTIFICADO.md", Buffer.from("arquivo posterior"));
   await assertFail(x, /fonte não coincide com o SHA do PR revisado/);
+});
+
+test("P0 LIVE — job Teste C SUCCESS com Playwright SKIPPED não certifica", async () => {
+  const x = fixture();
+  const j = x.responses["/actions/runs/789/jobs?per_page=100"].jobs[1];
+  j.steps[1].conclusion = "skipped";
+  await assertFail(x,/Teste C visual\/E2E SKIPPED/);
+});
+test("P0 LIVE — sem artefato visual não existe prova E2E", async () => {
+  const x = fixture();
+  x.responses["/actions/runs/789/artifacts?per_page=100"].artifacts=[];
+  await assertFail(x,/Teste C visual\/E2E SKIPPED/);
+});
+test("P0 LIVE — mesmo CI com Teste C sem evidência HML autenticada é FAIL", async () => {
+  const x=fixture();delete x.finalReceipt.hml_e2e;
+  await assertFail(x,/sem casos autenticados em HML/);
+});
+test("P0 LIVE — relatório HML criado depois da revisão é FAIL", async () => {
+  const x=fixture();
+  x.remoteFiles.delete(prefix+"fase7/HML_E2E.md");
+  await assertFail(x,/HML E2E não existe no SHA aprovado/);
+});
+test("P0 LIVE — relatório HML com hash divergente é FAIL", async () => {
+  const x=fixture();
+  x.finalReceipt.hml_e2e.arquivo_sha256="f".repeat(64);
+  await assertFail(x,/HML E2E|SHA256 diferente/);
 });
