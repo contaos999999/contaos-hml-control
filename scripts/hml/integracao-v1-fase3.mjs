@@ -746,11 +746,13 @@ function cloneState(st) {
 function validateEvent(e) {
   const code = "F3_INTENT_EVENT";
   if (e.op === "bind") {
-    strictPlain(e, ["op", "requestId", "bodySha256"], code);
+    strictPlain(e, ["op", "requestId", "bodySha256", "keySha256"], code);
     if (
       !isUuid(e.requestId) ||
       typeof e.bodySha256 !== "string" ||
-      !/^[a-f0-9]{64}$/.test(e.bodySha256)
+      !/^[a-f0-9]{64}$/.test(e.bodySha256) ||
+      typeof e.keySha256 !== "string" ||
+      !/^[a-f0-9]{64}$/.test(e.keySha256)
     )
       fail(code);
     return;
@@ -863,7 +865,10 @@ function applyEvent(st, run, e) {
   if (e.op === "bind") {
     if (i.producerOrder !== 8 || i.state !== "sealed" || i.bodySha256 !== undefined)
       fail("F3_INTENT_STATE");
+    if ([...st.intents.values()].some((intent) => intent.keySha256 === e.keySha256))
+      fail("F3_INTENT_REPLAY");
     i.bodySha256 = e.bodySha256;
+    i.keySha256 = e.keySha256;
     return;
   }
   const from = {
@@ -984,7 +989,8 @@ export function createF3IntentBook(options = {}) {
     organizationId: null,
     ...extra,
   });
-  const bindV106Body = (requestId, bodySha256) => apply({ op: "bind", requestId, bodySha256 });
+  const bindV106Body = (requestId, bodySha256, keySha256) =>
+    apply({ op: "bind", requestId, bodySha256, keySha256 });
   const book = Object.freeze({
     seal({
       requestId,
@@ -1349,15 +1355,18 @@ export function createF3MutationFence(options = {}) {
       body = parseJsonBody(request.postData);
       if (body === undefined || !matchBody(body, armed, active.slots, got)) return freeze();
     }
+    let keySha256 = null;
     if (active.producerOrder === 8 && !active.resend) {
       const key = body.p_request_id;
       const { st } = BOOKS.get(book)();
+      if (!isUuid(key)) return freeze();
+      keySha256 = createHash("sha256").update(key).digest("hex");
       if (
-        !isUuid(key) ||
         key === F3_E87_ORG ||
         key === st.organizationF3 ||
         st.entities.has(key) ||
-        st.intents.has(key)
+        st.intents.has(key) ||
+        [...st.intents.values()].some((intent) => intent.keySha256 === keySha256)
       )
         return freeze();
     }
@@ -1388,7 +1397,7 @@ export function createF3MutationFence(options = {}) {
         return freeze();
       }
       if (bodySha256 !== null && !active.resend)
-        BOOKS.get(book)().bindV106Body(active.requestId, bodySha256);
+        BOOKS.get(book)().bindV106Body(active.requestId, bodySha256, keySha256);
       active.sealed = true;
     }
     Object.assign(active.slots, got);

@@ -2251,6 +2251,26 @@ test("F3 §12.6: V106 recusa IDs de entidade como chave gerada pela UI", (t) => 
   }
 });
 
+test("F3 §12.6: V106 recusa chave já enviada em outra intenção", (t) => {
+  const f = fenceWith(t, withContract);
+  const bodies = [v106(uuid(107), sut.f3Slot("uuid", "chave"))];
+  const send = () =>
+    f.fence.policy(
+      req({
+        url: RPC("atualizar_contrato_v1"),
+        postData: JSON.stringify(v106(uuid(107), uuid(420))),
+      }),
+    );
+  const first = f.fence.arm({ producerOrder: 8, bodies });
+  assert.equal(send(), true);
+  f.fence.settle();
+  f.book.rejected(first);
+  f.fence.arm({ producerOrder: 8, bodies });
+  assert.equal(send(), false);
+  assert.equal(f.fence.frozen(), true);
+  assert.equal(f.book.summary().sent, 3);
+});
+
 for (const sameKey of [true, false]) {
   test(`F3 §12.6: V106 ${sameKey ? "preserva a chave" : "recusa chave nova"} no reenvio`, (t) => {
     const f = fenceWith(t, withContract);
