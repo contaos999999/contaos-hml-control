@@ -666,15 +666,22 @@ export function assertJsonTree(value, code, depth = 0) {
 // Núcleo único das intenções. Uma só máquina de estados (applyEvent) define as transições; o
 // livro grava cada transição como evento; relatório e ledger carregam os eventos e os
 // validadores os reexecutam. Intenções têm tipo: principal (a criação do produtor, uma aberta
-// por produtor), prerequisito (no máximo 5 na fase, PLAN 7.2) e duplicidade (no máximo uma por
+// por produtor), prerequisito (no máximo 11 na fase, PLAN §12.1) e duplicidade (no máximo uma por
 // principal, PLAN 4.3). Uma intenção ausente por readback pode ser abandonada; abandonada não
-// conta como pendente, mas precisa ser relida na execução que fecha a matriz.
+// conta como pendente, mas precisa ser relida na execução que fecha a matriz. Cada passo que sai
+// gera um vínculo (bind) no livro: SHA-256 do corpo canônico, SHA-256 de cada valor gerado em
+// tempo de execução (chave da UI, ID capturado) e as referências usadas (inventário e versão
+// observada). As regras de origem e a do reenvio (vínculo idêntico ao original) são do livro.
 // ---------------------------------------------------------------------------------------------
 export const F3_INTENT_KINDS = Object.freeze(["principal", "prerequisito", "duplicidade"]);
 export const F3_MAX_PREREQUISITES = 11;
-// Teto provado: no máximo 9 eventos por intenção por execução (selar, incerto, ausente, reenviar,
-// incerto, ausente, abandonar, encontrada, vínculo do corpo) e no máximo 60 intenções na fase.
-export const F3_MAX_EVENTS_PER_RUN = 9 * 60;
+// Teto provado por intenção e execução: selar, F3_MAX_STEPS vínculos, incerto, ausente, reenviar,
+// F3_MAX_STEPS vínculos, incerto, ausente, abandonar e encontrada; no máximo 60 intenções na fase.
+export const F3_MAX_STEPS = 4;
+export const F3_MAX_EVENTS_PER_RUN = (8 + 2 * F3_MAX_STEPS) * 60;
+const BIND_KEYS = Object.freeze(["op", "requestId", "step", "bodySha256", "slots", "refs"]);
+const F3_MAX_BIND_ITEMS = 16;
+const sha256hex = (v) => createHash("sha256").update(v).digest("hex");
 const EVENT_KEYS = Object.freeze([
   "op",
   "requestId",
@@ -704,6 +711,7 @@ const INTENT_KEYS = Object.freeze([
   "entityId",
   "sends",
   "rechecked",
+  "binds",
 ]);
 const INTENTS_KEYS = Object.freeze([
   "priorSent",
@@ -717,7 +725,7 @@ const INTENTS_KEYS = Object.freeze([
 ]);
 // PLAN §12.5 e F3_FLUXOS_PRODUTORES §3: após incerteza, estas ações só admitem releitura.
 const READBACK_ONLY_ORDERS = new Set([2, 5, 6, 7, 14, 16, 18, 20]);
-const allowsResend = ({ producerOrder, kind }) =>
+export const f3AllowsResend = ({ producerOrder, kind }) =>
   kind === "prerequisito"
     ? producerOrder !== 18 && producerOrder !== 19
     : !READBACK_ONLY_ORDERS.has(producerOrder);
@@ -737,6 +745,7 @@ function cloneState(st) {
   return {
     organizationF3: st.organizationF3,
     priorSent: st.priorSent,
+    // binds é substituído, nunca alterado no lugar: a cópia rasa basta.
     intents: new Map([...st.intents].map(([id, i]) => [id, { ...i }])),
     created: st.created.map((c) => ({ ...c })),
     entities: new Set(st.entities),
@@ -746,15 +755,20 @@ function cloneState(st) {
 function validateEvent(e) {
   const code = "F3_INTENT_EVENT";
   if (e.op === "bind") {
-    strictPlain(e, ["op", "requestId", "bodySha256", "keySha256"], code);
-    if (
-      !isUuid(e.requestId) ||
-      typeof e.bodySha256 !== "string" ||
-      !/^[a-f0-9]{64}$/.test(e.bodySha256) ||
-      typeof e.keySha256 !== "string" ||
-      !/^[a-f0-9]{64}$/.test(e.keySha256)
-    )
-      fail(code);
+    const sha = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+    strictPlain(e, BIND_KEYS, code);
+    if (!isUuid(e.requestId) || !sha(e.bodySha256)) fail(code);
+    if (!Number.isSafeInteger(e.step) || e.step < 0 || e.step >= F3_MAX_STEPS) fail(code);
+    plainArray(e.slots, code, F3_MAX_BIND_ITEMS);
+    if (!e.slots.every(sha)) fail(code);
+    plainArray(e.refs, code, F3_MAX_BIND_ITEMS);
+    for (const ref of e.refs) {
+      strictPlain(ref, ["field", "entityId", "version"], code);
+      if (typeof ref.field !== "string" || !/^[a-z_]{1,60}$/.test(ref.field)) fail(code);
+      if (!isUuid(ref.entityId)) fail(code);
+      if (ref.version !== null && (!Number.isSafeInteger(ref.version) || ref.version < 1))
+        fail(code);
+    }
     return;
   }
   strictPlain(e, EVENT_KEYS, code);
@@ -857,20 +871,14 @@ function applyEvent(st, run, e) {
       prior: false,
       sends: 1,
       rechecked: false,
+      binds: [],
+      sendBinds: 0,
     });
     return;
   }
   const i = st.intents.get(e.requestId);
   if (!i) fail("F3_INTENT_UNKNOWN");
-  if (e.op === "bind") {
-    if (i.producerOrder !== 8 || i.state !== "sealed" || i.bodySha256 !== undefined)
-      fail("F3_INTENT_STATE");
-    if ([...st.intents.values()].some((intent) => intent.keySha256 === e.keySha256))
-      fail("F3_INTENT_REPLAY");
-    i.bodySha256 = e.bodySha256;
-    i.keySha256 = e.keySha256;
-    return;
-  }
+  if (e.op === "bind") return bindIntent(st, e, i);
   const from = {
     confirm: ["sealed"],
     reject: ["sealed"],
@@ -881,23 +889,107 @@ function applyEvent(st, run, e) {
     abandon: ["absent"],
   }[e.op];
   if (!from.includes(i.state)) fail(e.op === "resend" ? "F3_UNCERTAIN_RESEND" : "F3_INTENT_STATE");
+  // Desfecho do envio corrente só com vínculo: sem ele, o evento bind seria removível sem
+  // rastro. Confirmação só com todos os passos do fluxo declarado.
+  if (["confirm", "reject", "uncertain"].includes(e.op)) {
+    const steps = stepsOf(i);
+    if (!i.sendBinds || (e.op === "confirm" && steps && i.sendBinds !== steps.length))
+      fail("F3_INTENT_BIND");
+  }
   // Log canônico: todo evento muda o estado. A releitura de uma abandonada vale uma vez por
   // execução; repeti-la seria um evento sem efeito, removível sem deixar rastro.
   if (e.op === "absent" && i.state === "abandoned" && i.rechecked) fail("F3_INTENT_STATE");
   if (e.op === "found" || e.op === "absent") i.rechecked = true;
   if (e.op === "resend") {
-    if (i.resent || !allowsResend(i)) fail("F3_UNCERTAIN_RESEND");
+    // Reenvio só de ação com chave, uma vez, e só de intenção com vínculo registrado: os
+    // vínculos do reenvio têm de ser idênticos aos originais (bindIntent).
+    if (i.resent || !f3AllowsResend(i) || !i.binds.length) fail("F3_UNCERTAIN_RESEND");
     send();
     i.resent = true;
     i.sends += 1;
+    i.sendBinds = 0;
     i.state = "sealed";
   } else if (e.op === "confirm" || e.op === "found") recordEntity(st, e, i);
   else if (e.op === "absent") i.state = i.state === "abandoned" ? "abandoned" : "absent";
   else i.state = { reject: "rejected", uncertain: "uncertain", abandon: "abandoned" }[e.op];
 }
 
-// O resumo expõe o estado exato (selado, incerto e ausente são pendentes distintos): com o log
-// canônico, remover ou trocar qualquer evento muda o resumo ou quebra o replay.
+/** Passos do fluxo declarado da intenção (a duplicidade usa o da principal), ou null. */
+function stepsOf(i) {
+  const f = Object.hasOwn(F3_MUTATION_FLOWS, i.producerOrder)
+    ? F3_MUTATION_FLOWS[i.producerOrder]
+    : null;
+  return f ? f[i.kind === "prerequisito" ? "prerequisito" : "principal"] : null;
+}
+
+/**
+ * Vínculo de um passo que saiu (PLAN §12.5). Regras, todas reexecutadas no replay:
+ * - passos em ordem, dentro do envio corrente;
+ * - no reenvio, vínculo idêntico ao original do mesmo passo (mesmo corpo, mesmos valores);
+ * - valor gerado em tempo de execução (chave da UI, ID capturado) é novo: não é a e87f7e68, a
+ *   organização F3, entidade do inventário, requestId nem valor de outra intenção;
+ * - com fluxo declarado, as referências são exatamente as posições declaradas: inventário é a
+ *   organização F3 ou registro isolado criado pelo produtor declarado; versão observada
+ *   refere-se à entidade da posição de inventário declarada.
+ */
+function bindIntent(st, e, i) {
+  if (i.state !== "sealed") fail("F3_INTENT_STATE");
+  const steps = stepsOf(i);
+  if (e.step !== i.sendBinds || (steps && e.step >= steps.length)) fail("F3_INTENT_BIND");
+  const bind = {
+    step: e.step,
+    bodySha256: e.bodySha256,
+    slots: [...e.slots],
+    refs: e.refs.map((x) => ({ ...x })),
+  };
+  if (i.resent) {
+    const original = i.binds[e.step];
+    if (!original || JSON.stringify(original) !== JSON.stringify(bind))
+      fail("F3_INTENT_RESEND_BIND");
+    i.sendBinds += 1;
+    return;
+  }
+  const taken = new Set(
+    [
+      F3_E87_ORG,
+      ...st.entities,
+      ...st.intents.keys(),
+      ...(st.organizationF3 ? [st.organizationF3] : []),
+    ].map(sha256hex),
+  );
+  for (const [id, other] of st.intents)
+    if (id !== e.requestId) for (const b of other.binds) for (const v of b.slots) taken.add(v);
+  if (e.slots.some((v) => taken.has(v))) fail("F3_VALUE_ORIGIN");
+  if (steps) {
+    const s = steps[e.step];
+    if (e.slots.length !== s.free.length) fail("F3_INTENT_BIND");
+    const declared = [...Object.keys(s.inventory), ...Object.keys(s.derived)];
+    if (JSON.stringify(e.refs.map((x) => x.field)) !== JSON.stringify(declared))
+      fail("F3_INTENT_BIND");
+    for (const ref of e.refs) {
+      const field = Object.hasOwn(s.inventory, ref.field) ? ref.field : s.derived[ref.field];
+      const origin = s.inventory[field];
+      const ok =
+        origin === 2
+          ? ref.entityId === st.organizationF3
+          : st.created.some(
+              (c) =>
+                c.id === ref.entityId &&
+                c.kind === "registro" &&
+                c.organizationId === st.organizationF3 &&
+                st.intents.get(c.requestId)?.producerOrder === origin,
+            );
+      if (!ok) fail("F3_FOREIGN_ORG");
+      if ((ref.version !== null) !== Object.hasOwn(s.derived, ref.field)) fail("F3_VALUE_ORIGIN");
+    }
+  }
+  i.binds = [...i.binds, bind];
+  i.sendBinds += 1;
+}
+
+// O resumo expõe o estado exato (selado, incerto e ausente são pendentes distintos) e o SHA-256
+// dos vínculos da intenção: com o log canônico, remover ou trocar qualquer evento muda o resumo
+// ou quebra o replay.
 const PENDING = Object.freeze(["sealed", "uncertain", "absent"]);
 function summarize(st, run) {
   const requests = [...st.intents].map(([requestId, i]) => {
@@ -912,6 +1004,7 @@ function summarize(st, run) {
       entityId: outcome === "confirmed" ? i.entityId : null,
       sends: i.sends,
       rechecked: i.rechecked,
+      binds: i.binds.length ? sha256hex(JSON.stringify(i.binds)) : null,
     };
   });
   const count = (o) => requests.filter((q) => q.outcome === o).length;
@@ -934,6 +1027,7 @@ function closeRun(st, run) {
   for (const i of next.intents.values()) {
     i.prior = true;
     i.sends = 0;
+    i.sendBinds = 0;
     i.rechecked = false;
     if (i.state === "sealed") i.state = "uncertain";
   }
@@ -971,14 +1065,37 @@ export function createF3IntentBook(options = {}) {
   // Controle de segurança do livro (parecer R2, grupo C): no máximo uma cerca, e o congelamento
   // é do livro, não do objeto cerca. Livro congelado não sela nem reenvia; fatos ainda entram.
   const control = { fenced: false, frozen: false, failure: null };
-  const apply = (e) => {
-    if (control.frozen && (e.op === "seal" || e.op === "resend")) fail("F3_FENCE_FROZEN");
+  const SENDING = ["seal", "resend", "bind"];
+  const replayOn = (events) => {
     const next = cloneState(st),
-      nextRun = { sent: run.sent, events: run.events };
-    applyEvent(next, nextRun, e);
-    st = next;
-    run = { sent: nextRun.sent, events: [...run.events, Object.freeze({ ...e })] };
+      nextRun = { sent: run.sent, events: [...run.events] };
+    for (const e of events) {
+      applyEvent(next, nextRun, e);
+      nextRun.events.push(Object.freeze({ ...e }));
+    }
+    return { next, nextRun };
   };
+  // Um ou mais eventos numa só transação: selo (ou reenvio) e vínculo entram juntos ou não entram.
+  const apply = (...events) => {
+    if (control.frozen && events.some((e) => SENDING.includes(e.op))) fail("F3_FENCE_FROZEN");
+    const { next, nextRun } = replayOn(events);
+    st = next;
+    run = nextRun;
+  };
+  /** Simula eventos sobre uma cópia do estado, com a mesma applyEvent, sem gravar. */
+  const simulate = (...events) => {
+    if (control.frozen) fail("F3_FENCE_FROZEN");
+    replayOn(events);
+    return true;
+  };
+  const bindEvent = (requestId, { step, bodySha256, slots, refs }) => ({
+    op: "bind",
+    requestId,
+    step,
+    bodySha256,
+    slots: [...slots],
+    refs: refs.map((x) => ({ ...x })),
+  });
   const ev = (op, requestId, extra = {}) => ({
     op,
     requestId,
@@ -989,8 +1106,6 @@ export function createF3IntentBook(options = {}) {
     organizationId: null,
     ...extra,
   });
-  const bindV106Body = (requestId, bodySha256, keySha256) =>
-    apply({ op: "bind", requestId, bodySha256, keySha256 });
   const book = Object.freeze({
     seal({
       requestId,
@@ -1022,6 +1137,8 @@ export function createF3IntentBook(options = {}) {
       apply(found ? ev("found", requestId, { entityId, organizationId }) : ev("absent", requestId));
     },
     resend: (requestId) => apply(ev("resend", requestId)),
+    /** Vínculo de um passo que saiu; a cerca o grava junto com o selo ou o reenvio. */
+    bind: (requestId, b) => apply(bindEvent(requestId, b)),
     /**
      * Simula um selo ou reenvio sobre uma cópia do estado, com a mesma applyEvent: a cerca
      * valida a intenção ao armar com a regra do livro, sem reescrevê-la (parecer 2b-2a, grupo B).
@@ -1065,7 +1182,7 @@ export function createF3IntentBook(options = {}) {
       return true;
     },
   });
-  BOOKS.set(book, () => ({ st, run, record, provenance, control, bindV106Body }));
+  BOOKS.set(book, () => ({ st, run, record, provenance, control, apply, simulate, ev, bindEvent }));
   return book;
 }
 
@@ -1088,13 +1205,18 @@ export function createF3IntentBook(options = {}) {
  * anterior) e só podem levar uma vaga (f3Slot); qualquer outro UUID do corpo tem de ser a
  * organização F3 ou entidade isolada do inventário do livro.
  */
-const step = (target, name, { query = "", free = [], inventory = {}, source }) =>
+// Origens por posição (levantamento, seção 1): free são as vagas (gerado_ui e capturado);
+// inventory liga o campo à ordem do produtor que criou a entidade (2 é a organização F3);
+// derived liga o campo de versão observada ao campo de inventário da entidade lida. O que não é
+// declarado é literal (gerado_harness) e nunca contém UUID fora do inventário isolado.
+const step = (target, name, { query = "", free = [], inventory = {}, derived = {}, source }) =>
   Object.freeze({
     target,
     name,
     query,
     free: Object.freeze([...free]),
-    inventory: Object.freeze(inventory),
+    inventory: Object.freeze({ ...inventory }),
+    derived: Object.freeze({ ...derived }),
     source,
   });
 const DOC = "src/lib/administracao/admUsuariosRpc.ts:";
@@ -1113,22 +1235,26 @@ export const F3_MUTATION_FLOWS = Object.freeze({
   4: flow([
     step("edge", "admin-invite-user", {
       free: ["chave_idempotencia"],
+      inventory: { id_organizacao: 2 },
       source: DOC + "188-211",
     }),
     step("rpc", "salvar_vinculo_usuario_adm", {
       free: ["p_id_usuario", "p_chave_idempotencia"],
+      inventory: { p_id_organizacao: 2 },
       source: DOC + "171-185",
     }),
   ]),
   5: flow([
     step("table", "contratantes", {
       query: "?select=id%2Crazao_social%2Csituacao",
+      inventory: { id_organizacao: 2 },
       source: "src/lib/contratantes/novoContratanteDados.ts:148-148",
     }),
   ]),
   6: flow([
     step("rpc", "atualizar_contratante", {
       inventory: { p_id_organizacao: 2, p_id_contratante: 5 },
+      derived: { p_versao_esperada: "p_id_contratante" },
       source: "src/lib/contratantes/editarContratanteDados.ts:94-115",
     }),
   ]),
@@ -1142,6 +1268,7 @@ export const F3_MUTATION_FLOWS = Object.freeze({
     step("rpc", "atualizar_contrato_v1", {
       free: ["p_request_id"],
       inventory: { p_id_organizacao: 2, p_id_contrato: 7 },
+      derived: { p_versao_esperada: "p_id_contrato" },
       source: "src/lib/cadastros/cadastroOperacionalDados.ts:210-225",
     }),
   ]),
@@ -1306,6 +1433,34 @@ function matchUrl(u, s, armed, slots, got) {
 }
 
 /**
+ * Vínculo de um passo a partir do corpo: SHA-256 do corpo canônico, de cada valor de vaga (na
+ * ordem declarada em free) e as referências declaradas (inventário e versão observada).
+ * placeholder: ao armar, as vagas ainda não têm valor e entram com um valor novo.
+ */
+function bindOf(s, stepIndex, body, placeholder = false) {
+  const slots = s.free.map((k) => {
+    const v = placeholder ? crypto.randomUUID() : body[k];
+    if (!isUuid(v)) fail("F3_VALUE_ORIGIN");
+    return sha256hex(v);
+  });
+  const refs = [
+    ...Object.keys(s.inventory).map((field) => ({ field, entityId: body[field], version: null })),
+    ...Object.entries(s.derived).map(([field, of]) => ({
+      field,
+      entityId: body[of],
+      version: body[field],
+    })),
+  ];
+  for (const ref of refs) {
+    if (!isUuid(ref.entityId)) fail("F3_FOREIGN_ORG");
+    if (ref.version !== null && (!Number.isSafeInteger(ref.version) || ref.version < 1))
+      fail("F3_VALUE_ORIGIN");
+  }
+  return { step: stepIndex, bodySha256: sha256hex(canonicalJson(body)), slots, refs };
+}
+const ORIGIN_CODES = Object.freeze(["F3_FOREIGN_ORG", "F3_VALUE_ORIGIN"]);
+
+/**
  * Política de mutação ligada ao livro. arm() declara a intenção (produtor, tipo, ou resendOf
  * para o reenvio depois de readback) e, para cada passo do fluxo, o corpo armado: valores
  * literais e vagas f3Slot nos campos free do passo (no Storage, { path: vaga }). A intenção é
@@ -1353,6 +1508,15 @@ export function createF3MutationFence(options = {}) {
       return requestAllowed(request) === true;
     }
     if (request.stage !== "REQUEST") return false;
+    // Envio resumível (TUS, PLAN §12.3): bloqueado com causa própria desde o preflight, em
+    // qualquer método e nas duas origens.
+    const target = parseUrl(request.url);
+    if (
+      target &&
+      [API_ORIGIN, STORAGE_ORIGIN].includes(target.origin) &&
+      /^\/storage\/v1\/upload\/resumable(?:\/|$)/.test(target.pathname)
+    )
+      return freeze("F3_UPLOAD_RESUMABLE");
     if (request.method === "OPTIONS") {
       if (requestAllowed(request) === true) return true;
       const u = parseUrl(request.url);
@@ -1361,13 +1525,6 @@ export function createF3MutationFence(options = {}) {
       return true;
     }
     if (!isF3Mutation(request)) return requestAllowed(request) === true;
-    const target = parseUrl(request.url);
-    if (
-      target &&
-      [API_ORIGIN, STORAGE_ORIGIN].includes(target.origin) &&
-      /^\/storage\/v1\/upload\/resumable(?:\/|$)/.test(target.pathname)
-    )
-      return freeze("F3_UPLOAD_RESUMABLE");
     if (control.frozen || !active || !ticket || tickets.has(ticket)) return freeze();
     if (performance.now() - active.armedAt >= F3_FENCE_WINDOW_MS) return freeze();
     const s = active.flow[active.done];
@@ -1384,51 +1541,28 @@ export function createF3MutationFence(options = {}) {
       body = parseJsonBody(request.postData);
       if (body === undefined || !matchBody(body, armed, active.slots, got)) return freeze();
     }
-    let keySha256 = null;
-    if (active.producerOrder === 8 && !active.resend) {
-      const key = body.p_request_id;
-      const { st } = BOOKS.get(book)();
-      if (!isUuid(key)) return freeze();
-      keySha256 = createHash("sha256").update(key).digest("hex");
-      if (
-        key === F3_E87_ORG ||
-        key === st.organizationF3 ||
-        st.entities.has(key) ||
-        st.intents.has(key) ||
-        [...st.intents.values()].some((intent) => intent.keySha256 === keySha256)
-      )
-        return freeze();
-    }
-    const bodySha256 =
-      active.producerOrder === 8
-        ? createHash("sha256").update(canonicalJson(body)).digest("hex")
-        : null;
-    if (
-      bodySha256 !== null &&
-      active.resend &&
-      BOOKS.get(book)().st.intents.get(active.requestId)?.bodySha256 !== bodySha256
-    )
+    // A primeira requisição da intenção é a que conta: sela (ou reenvia) e vincula antes de
+    // sair; os passos seguintes vinculam. Tudo pela applyEvent do livro, numa só transação, e a
+    // regra de origem e a do reenvio são as do livro.
+    try {
+      const internal = BOOKS.get(book)();
+      const events = [];
+      if (active.done === 0)
+        events.push(
+          active.resend
+            ? internal.ev("resend", active.requestId)
+            : internal.ev("seal", active.requestId, {
+                producerOrder: active.producerOrder,
+                kind: active.kind,
+                duplicateOf: active.duplicateOf,
+              }),
+        );
+      events.push(internal.bindEvent(active.requestId, bindOf(s, active.done, body)));
+      internal.apply(...events);
+    } catch {
       return freeze();
-    // A primeira requisição da intenção é a que conta: sela (ou reenvia) antes de sair.
-    if (active.done === 0) {
-      try {
-        if (active.resend) book.resend(active.requestId);
-        else
-          book.seal({
-            requestId: active.requestId,
-            producerOrder: active.producerOrder,
-            actor: "master",
-            organizationId: book.organizationF3(),
-            kind: active.kind,
-            duplicateOf: active.duplicateOf,
-          });
-      } catch {
-        return freeze();
-      }
-      if (bodySha256 !== null && !active.resend)
-        BOOKS.get(book)().bindV106Body(active.requestId, bodySha256, keySha256);
-      active.sealed = true;
     }
+    active.sealed = true;
     Object.assign(active.slots, got);
     active.done += 1;
     tickets.set(ticket, {
@@ -1531,43 +1665,43 @@ export function createF3MutationFence(options = {}) {
           .filter((c) => ISOLATED_KINDS.includes(c.kind))
           .map((c) => c.id),
       ]);
-      steps.forEach((s, i) => {
-        const b = bodies[i];
-        if (b === null || typeof b !== "object" || Array.isArray(b)) fail("F3_FENCE_ARM");
-        if (s.target === "storage") {
-          strictPlain(b, ["path"], "F3_FENCE_ARM");
-          if (typeof b.path !== "string" || !b.path.startsWith(SLOT + "path:"))
-            fail("F3_FENCE_ARM");
-          if (!SLOT_RE.test(b.path)) fail("F3_FENCE_ARM");
-        } else {
+      // Origem por posição, por um verificador único: a forma do corpo armado, a versão
+      // observada e, pela regra do próprio livro (simulação do selo e dos vínculos), o
+      // inventário. Toda recusa de origem congela a cerca (PLAN §12.6).
+      try {
+        const binds = steps.map((s, i) => {
+          const b = bodies[i];
+          if (b === null || typeof b !== "object" || Array.isArray(b)) fail("F3_FENCE_ARM");
+          if (s.target === "storage") {
+            strictPlain(b, ["path"], "F3_FENCE_ARM");
+            if (typeof b.path !== "string" || !b.path.startsWith(SLOT + "path:"))
+              fail("F3_FENCE_ARM");
+            if (!SLOT_RE.test(b.path)) fail("F3_FENCE_ARM");
+            return null;
+          }
+          for (const field of Object.keys(s.inventory))
+            if (!isUuid(b[field])) fail("F3_FOREIGN_ORG");
           assertArmedBody(b, s, isolated);
-          for (const [field, origin] of Object.entries(s.inventory)) {
-            const { st } = BOOKS.get(book)();
-            const valid =
-              origin === 2
-                ? b[field] === st.organizationF3
-                : st.created.some(
-                    (entity) =>
-                      entity.id === b[field] &&
-                      entity.organizationId === st.organizationF3 &&
-                      entity.kind === "registro" &&
-                      st.intents.get(entity.requestId)?.producerOrder === origin,
-                  );
-            if (!valid) {
-              freeze();
-              fail("F3_FOREIGN_ORG");
-            }
-          }
-          if (producerOrder === 6 || producerOrder === 8) {
-            const id = producerOrder === 6 ? b.p_id_contratante : b.p_id_contrato;
-            const observed = observedVersions.get(producerOrder + ":" + id);
-            if (observed === undefined || b.p_versao_esperada !== observed) {
-              freeze();
-              fail("F3_VALUE_ORIGIN");
-            }
-          }
+          return bindOf(s, i, b, true);
+        });
+        if (resendOf === null) {
+          const internal = BOOKS.get(book)();
+          internal.simulate(
+            internal.ev("seal", requestId, { producerOrder, kind, duplicateOf }),
+            ...binds.filter(Boolean).map((b) => internal.bindEvent(requestId, b)),
+          );
         }
-      });
+        // Versão observada (derivado): a que a UI do MASTER leu por último para a entidade.
+        steps.forEach((s, i) => {
+          for (const [field, of] of Object.entries(s.derived)) {
+            const observed = observedVersions.get(producerOrder + ":" + bodies[i][of]);
+            if (observed === undefined || bodies[i][field] !== observed) fail("F3_VALUE_ORIGIN");
+          }
+        });
+      } catch (error) {
+        if (ORIGIN_CODES.includes(error?.code)) freeze();
+        throw error;
+      }
       active = {
         requestId,
         producerOrder,
@@ -2381,7 +2515,13 @@ export const F3_WAIT_POLICIES = Object.freeze({
 
 /** Observa uma vez por leitura. O driver agenda novas observações apenas para PENDING. */
 export async function observeF3Wait(waitId, sealedAt, read) {
-  if (!own(F3_WAIT_POLICIES, waitId) || !Number.isFinite(sealedAt) || typeof read !== "function")
+  // O instante do selo vem do driver; um instante futuro estenderia o prazo e é recusado.
+  if (
+    !own(F3_WAIT_POLICIES, waitId) ||
+    !Number.isFinite(sealedAt) ||
+    sealedAt > performance.now() ||
+    typeof read !== "function"
+  )
     fail("F3_WAIT_INPUT");
   const policy = F3_WAIT_POLICIES[waitId];
   const deadline = sealedAt + policy.timeoutMs;
