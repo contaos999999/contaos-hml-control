@@ -55,35 +55,42 @@
     },
     {
       "id": 5,
-      "status": "HOLD_DEPENDENCY_EVIDENCE",
+      "status": "PASS_TRIAGEM_CLOSED_NOT_PLANNED",
       "repo": "contaos999999/develop",
       "pr": 218,
-      "reason": [
-        "ZERO_DRIFT_OUT_OF_SCOPE",
-        "RESTORE_PROTECTED_SHA256_3_FAILURES"
-      ],
-      "evidence_runs": [
+      "merged": false,
+      "closed": true,
+      "closure": "NOT_PLANNED",
+      "head": "45834cfd23acc133e7090ab5b7fad680393e8cbb",
+      "decision": "Mudança opcional async_failure_diagnostic.kind NÃO IMPLEMENTADA. Funcionalidade segurança existente mantém failure_code/protocol_failure/failure_hashes e falha fechada. Não alterar SHA histórico.",
+      "independent_review_url": "https://github.com/contaos999999/develop/pull/218#issuecomment-6878700812",
+      "original_protected_blob": "9c016a09cbec4eb7d5032b90f4c393b1ee9071f4",
+      "ci_main_success_run": 43602633463,
+      "historical_fail_runs": [
         42808510215,
         42808510355
-      ],
-      "independent_classification": "https://github.com/contaos999999/develop/pull/218#issuecomment-6878428485"
+      ]
     },
     {
       "id": 6,
-      "status": "HOLD_ADMIN_AUTH",
+      "status": "HOLD_MFA_SUDO",
       "ruleset": 26495643,
-      "reason": "Conexao GitHub sem operacao autorizada de edicao de ruleset; P0-NR nao e required check",
+      "reason": "Acesso admin contaos9999 confirmado, porém GitHub requer confirmação sudo 2FA/MFA ao salvar ruleset; tentativa de Save changes retornou Unauthorized, mudança NÃO persistiu.",
       "required_existing": [
         "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
         "ContaOS Frontend Zero-Drift"
       ],
       "required_to_add": "ContaOS P0-NR-001 Integridade e Provas",
-      "recent_run": 43600828508
+      "provider": "GitHub Actions",
+      "current_checks": 2,
+      "api_readback": "https://api.github.com/repos/contaos999999/contaos-hml-control/rulesets/26495643",
+      "browser_evidence_url": "https://agent.tinyfish.ai/runs/cd40476b-02b8-489f-a6df-f488f993faf5",
+      "user_action_required": "Titular deve concluir a verificação de acesso GitHub MFA na sessão autenticada; não fornecer códigos em chat. Então salvar adição do check, reler API e provar enforcement positivo/negativo."
     },
     {
       "id": 7,
-      "status": "NO_GO_CERTIFICACAO_GLOBAL",
-      "reason": "Fases 5 e 6 bloqueadas; holds V1 classificados nao equivalem a execucao funcional"
+      "status": "AUDITORIA_PARCIAL_NAO_CERTIFICADA",
+      "reason": "Fase 5 encerrada por decisão não planejada com evidência; Fase 6 requer MFA do titular e prova da regra exigida; GO global impedido até confirmação real."
     }
   ],
   "open_prs": [
@@ -100,13 +107,6 @@
       "status": "HOLD_DEPENDENCY_V1",
       "head": "6183d3959dfae9ecb23f55d8401a57acb79612dc",
       "scope": "metadata SQL V123 nao executada"
-    },
-    {
-      "repo": "contaos999999/develop",
-      "number": 218,
-      "status": "HOLD_DEPENDENCY_EVIDENCE",
-      "head": "45834cfd23acc133e7090ab5b7fad680393e8cbb",
-      "scope": "browser fence diagnostics; hash historico protegido"
     }
   ],
   "certificates_protected": {
@@ -119,10 +119,11 @@
     "prod": "PROIBIDA"
   },
   "next_actions": [
-    "Administrador autorizado deve adicionar context exato ContaOS P0-NR-001 Integridade e Provas ao ruleset 26495643, mantendo Zero-Drift e Teste C; prova de check FAIL bloquear/GO permitir e readback.",
-    "PR #218 exige PLAN/GATE de evidencia sucessora append-only e allowlist explicita, sem alterar protected_sha256 historico; ou CLOSED_SUPERSEDED apenas com prova.",
-    "PRs #590 e #556 permanecem HOLD vinculado a trilha V1 separada, sem alterar certificados.",
-    "Apos remover impedimentos reauditar somente Fases 5/6 e certificar saneamento; nao repetir Fases 0-4."
+    "Titular conclui MFA/sudo mode no GitHub para salvar terceiro required status check ContaOS P0-NR-001 Integridade e Provas no ruleset 26495643; manter Teste C/Zero-Drift.",
+    "Após MFA e readback API com 3 checks, comprovar que failure bloqueia merge e success permite pelo ruleset sem bypass.",
+    "PR #218 CLOSED_NOT_PLANNED: não reabrir/reexecutar a menos que novo requisito seja aprovado em PLAN sucessor; hash histórico preservado.",
+    "PRs #590 e #556 continuam HOLD_DEPENDENCY_V1, fora da missão de saneamento; não reabrir certificação.",
+    "Concluir auditoria global apenas quando Fase 6 estiver comprovada. Não repetir Fases 0–5."
   ],
   "safety_invariants": [
     "nao alterar certificacoes",
@@ -131,5 +132,22 @@
     "no force push",
     "no bypass branch protection",
     "C13 ativa preservada"
-  ]
+  ],
+  "closed_prs": [
+    {
+      "repo": "contaos999999/develop",
+      "number": 218,
+      "state": "closed",
+      "merged": false,
+      "decision": "CLOSED_NOT_PLANNED",
+      "review": "https://github.com/contaos999999/develop/pull/218#issuecomment-6878700812",
+      "note": "Não executa extensão diagnóstica opcional e preserva hash do harness original."
+    }
+  ],
+  "reanchor": {
+    "previous": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "new": "1504af465b45afc846458d00e5cb63513fa298ed",
+    "plan": "docs/frontend/planos/P0_SANEAMENTO_REANCORAGEM_CANONICA_BACKEND_2026-11-14.md",
+    "verified": "25/25 document blobs + catalog 100/97 unchanged"
+  }
 }
