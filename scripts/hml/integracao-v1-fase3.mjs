@@ -1088,8 +1088,15 @@ export function createF3IntentBook(options = {}) {
  * anterior) e só podem levar uma vaga (f3Slot); qualquer outro UUID do corpo tem de ser a
  * organização F3 ou entidade isolada do inventário do livro.
  */
-const step = (target, name, { query = "", free = [], source }) =>
-  Object.freeze({ target, name, query, free: Object.freeze([...free]), source });
+const step = (target, name, { query = "", free = [], inventory = {}, source }) =>
+  Object.freeze({
+    target,
+    name,
+    query,
+    free: Object.freeze([...free]),
+    inventory: Object.freeze(inventory),
+    source,
+  });
 const DOC = "src/lib/administracao/admUsuariosRpc.ts:";
 // Por produtor e tipo de intenção: principal (também usado pela duplicidade) e prerequisito.
 const flow = (principal, prerequisito = null) =>
@@ -1119,9 +1126,16 @@ export const F3_MUTATION_FLOWS = Object.freeze({
       source: "src/lib/contratantes/novoContratanteDados.ts:148-148",
     }),
   ]),
+  7: flow([
+    step("table", "contratos", {
+      inventory: { id_organizacao: 2, id_contratante: 5 },
+      source: "src/lib/contratos/novoContratoDados.ts:107-129",
+    }),
+  ]),
   8: flow([
     step("rpc", "atualizar_contrato_v1", {
       free: ["p_request_id"],
+      inventory: { p_id_organizacao: 2, p_id_contrato: 7 },
       source: "src/lib/cadastros/cadastroOperacionalDados.ts:210-225",
     }),
   ]),
@@ -1463,7 +1477,26 @@ export function createF3MutationFence(options = {}) {
           if (typeof b.path !== "string" || !b.path.startsWith(SLOT + "path:"))
             fail("F3_FENCE_ARM");
           if (!SLOT_RE.test(b.path)) fail("F3_FENCE_ARM");
-        } else assertArmedBody(b, s, isolated);
+        } else {
+          assertArmedBody(b, s, isolated);
+          for (const [field, origin] of Object.entries(s.inventory)) {
+            const { st } = BOOKS.get(book)();
+            const valid =
+              origin === 2
+                ? b[field] === st.organizationF3
+                : st.created.some(
+                    (entity) =>
+                      entity.id === b[field] &&
+                      entity.organizationId === st.organizationF3 &&
+                      entity.kind === "registro" &&
+                      st.intents.get(entity.requestId)?.producerOrder === origin,
+                  );
+            if (!valid) {
+              freeze();
+              fail("F3_FOREIGN_ORG");
+            }
+          }
+        }
       });
       active = {
         requestId,

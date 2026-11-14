@@ -2233,6 +2233,44 @@ test("F3 §12.6: SYS04 sem chave só permite reconciliar após envio incerto", (
   assert.equal(f.book.summary().sent, 1);
 });
 
+test("F3 §12.6: V105 aceita contrato com contratante criado por V102", (t) => {
+  const f = fenceWith(t, (book) => {
+    createOrg(book);
+    seal(book, 5, 5);
+    book.confirm(uuid(5), { entityId: uuid(105), organizationId: F3 });
+  });
+  const body = {
+    id_organizacao: F3,
+    id_contratante: uuid(105),
+    numero: "F3-001",
+    objeto: "Contrato sintético",
+    inicio: "2026-11-14",
+  };
+  f.fence.arm({ producerOrder: 7, bodies: [body] });
+  assert.equal(
+    f.fence.policy(
+      req({
+        url: API + "/rest/v1/contratos",
+        postData: JSON.stringify(body),
+      }),
+    ),
+    true,
+  );
+  assert.equal(f.fence.settle().complete, true);
+});
+
+test("F3 §12.6: V106 exige organização e contrato em suas posições", (t) => {
+  const key = sut.f3Slot("uuid", "chave");
+  for (const body of [v106(F3, key), { ...v106(uuid(107), key), p_id_organizacao: uuid(107) }]) {
+    const f = fenceWith(t, withContract);
+    assert.throws(() => f.fence.arm({ producerOrder: 8, bodies: [body] }), {
+      code: "F3_FOREIGN_ORG",
+    });
+    assert.equal(f.fence.frozen(), true);
+    assert.equal(f.book.summary().sent, 2);
+  }
+});
+
 test("F3 §12.6: V106 recusa IDs de entidade como chave gerada pela UI", (t) => {
   for (const key of [F3, sut.F3_E87_ORG, uuid(107)]) {
     const f = fenceWith(t, withContract);
