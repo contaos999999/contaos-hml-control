@@ -715,6 +715,13 @@ const INTENTS_KEYS = Object.freeze([
   "requests",
   "events",
 ]);
+// PLAN §12.5 e F3_FLUXOS_PRODUTORES §3: após incerteza, estas ações só admitem releitura.
+const READBACK_ONLY_ORDERS = new Set([2, 5, 6, 7, 14, 16, 18, 20]);
+const allowsResend = ({ producerOrder, kind }) =>
+  kind === "prerequisito"
+    ? producerOrder !== 18 && producerOrder !== 19
+    : !READBACK_ONLY_ORDERS.has(producerOrder);
+
 const OPEN = (i) => i.state !== "rejected" && i.state !== "abandoned";
 
 function emptyState() {
@@ -874,7 +881,7 @@ function applyEvent(st, run, e) {
   if (e.op === "absent" && i.state === "abandoned" && i.rechecked) fail("F3_INTENT_STATE");
   if (e.op === "found" || e.op === "absent") i.rechecked = true;
   if (e.op === "resend") {
-    if (i.resent || i.producerOrder === 2) fail("F3_UNCERTAIN_RESEND");
+    if (i.resent || !allowsResend(i)) fail("F3_UNCERTAIN_RESEND");
     send();
     i.resent = true;
     i.sends += 1;

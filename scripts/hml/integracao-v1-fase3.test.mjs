@@ -831,8 +831,8 @@ test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade ent
   assert.equal(b2.summary().uncertain, 3);
   b2.reconcile(uuid(6), { found: true, entityId: uuid(106), organizationId: F3 });
   b2.reconcile(uuid(205), { found: false, entityId: null, organizationId: null });
-  b2.resend(uuid(205));
-  b2.rejected(uuid(205));
+  assert.throws(() => b2.resend(uuid(205)), { code: "F3_UNCERTAIN_RESEND" });
+  b2.abandon(uuid(205));
   // Ausência comprovada e abandono: não conta como pendente; libera nova principal.
   b2.reconcile(uuid(7), { found: false, entityId: null, organizationId: null });
   b2.abandon(uuid(7));
@@ -841,7 +841,7 @@ test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade ent
   dup(b2, 206, 6, uuid(6));
   b2.rejected(uuid(206));
   const s2 = b2.summary();
-  assert.deepEqual([s2.priorSent, s2.sent, s2.uncertain, s2.abandoned], [5, 3, 0, 1]);
+  assert.deepEqual([s2.priorSent, s2.sent, s2.uncertain, s2.abandoned], [5, 2, 0, 2]);
   const l2 = ledgerOf([run(1, b1), run(2, b2)]);
   // Na execução seguinte, a abandonada precisa ser relida para o critério fechar.
   const b3 = sut.createF3IntentBook({ provenance: PROV, ledger: l2 });
@@ -862,6 +862,7 @@ test("F3 B2b1 RED: execuções anteriores, pendentes, abandono e duplicidade ent
     );
   assert.ok(criteria(r3(b3), { policy: POLICY, ledger: l2 }).includes("ABANDONED_RECHECKED"));
   b3.reconcile(uuid(7), { found: false, entityId: null, organizationId: null });
+  b3.reconcile(uuid(205), { found: false });
   assert.ok(!criteria(r3(b3), { policy: POLICY, ledger: l2 }).includes("ABANDONED_RECHECKED"));
   // Releitura repetida na mesma execução seria evento sem efeito: recusada.
   assert.throws(
@@ -2188,6 +2189,30 @@ test("F3 B2b2a RED: fluxo de dois passos (ADM01) e inserção em tabela (V102)",
     const g = fenceWith(t, orgOk);
     g.fence.arm({ producerOrder: 5, bodies: [v102] });
     assert.equal(g.fence.policy(bad), false);
+  }
+});
+
+test("F3 §12.6: ações sem chave rejeitam reenvio no livro após readback", () => {
+  for (const [order, kind] of [
+    [2, "principal"],
+    [5, "principal"],
+    [6, "principal"],
+    [7, "principal"],
+    [14, "principal"],
+    [16, "principal"],
+    [18, "principal"],
+    [18, "prerequisito"],
+    [19, "prerequisito"],
+    [20, "principal"],
+  ]) {
+    const book = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+    if (order !== 2) createOrg(book);
+    seal(book, 421, order, { kind });
+    book.uncertain(uuid(421));
+    book.reconcile(uuid(421), { found: false });
+    const before = book.summary();
+    assert.throws(() => book.resend(uuid(421)), { code: "F3_UNCERTAIN_RESEND" });
+    assert.deepEqual(book.summary(), before);
   }
 });
 
