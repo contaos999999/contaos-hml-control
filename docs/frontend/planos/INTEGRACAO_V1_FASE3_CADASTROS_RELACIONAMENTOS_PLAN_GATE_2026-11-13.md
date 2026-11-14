@@ -225,6 +225,83 @@ Em cada PR, implementador e revisor são identidades diferentes, e o revisor nun
 
 O rollback dos arquivos do BUILD é feito por PR. Os dados já criados ficam isolados na organização da Fase 3, sem exclusão, e constam do inventário do relatório. O vínculo do 2º usuário continua com o perfil `leitor` até a Fase 5. Nonce consumido nunca é reutilizado.
 
+## 12. Emenda 1, 14/11/2026: pré-requisitos, orçamento, uploads e esperas assíncronas
+
+**Origem.** A seção 3 manda o BUILD confirmar no código os pré-requisitos finos e transformar qualquer divergência em emenda. A seção 10 manda emendar o PLAN se um vínculo depender de conclusão assíncrona. No BUILD-2b-2a, as revisões R1 e R2 mostraram a causa raiz de seus achados: a cerca de mutação estava sendo desenhada antes do fluxo de rede dos produtores. O levantamento completo está em `docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md`. Ele foi feito no frontend e, com autorização do titular ("Autorizo só leitura (Recomendado)"), na leitura das definições das funções do Supabase HML, sem nenhuma escrita.
+
+**Decisão do titular.** Na conversa de execução de 14/11/2026, a pergunta foi como emendar o PLAN. Resposta literal: "Emenda completa (Recomendado)".
+
+### 12.1 Pré-requisitos (substitui o teto de 5 da seção 7.2)
+
+Até **10** pré-requisitos, todos ações de negócio feitas pela UI do MASTER na organização da Fase 3:
+
+| Produtor | Pré-requisitos | Fonte |
+|---|---|---|
+| V107 | fonte normativa (`salvar_fonte_normativa_v107`), versão por texto (`registrar_versao_fonte_v107`) e aprovação humana (`aprovar_versao_fonte_v107`) | `privado.definir_aplicabilidade_fonte_v107` exige versão aprovada |
+| V108 | proposta (`salvar_proposta_orcamentaria_v108`), versão com documento-base (`registrar_versao_proposta_v108`) e uma rubrica (`salvar_linha_orcamentaria_v108`) | `privado.publicar_versao_proposta_v108` exige rascunho, rubrica e documento-base aprovado |
+| V109 | além do comando produtor (`criar_lista`), `salvar_item` e `publicar_versao` pelo mesmo `executar_comando_lista_v1` | `privado.crud_lista_mutar_v1` |
+| V118 | `solicitar_parecer_interno` | `privado.aprovar_parecer_interno` exige parecer gerado |
+| V119 | `aprovar_apresentacao` | `privado.registrar_apresentacao` exige `pode_apresentar_contratante` |
+
+O item da lista de V109 aponta para a versão de fonte aprovada em V107. Com isso, a competência de V113 nasce com um único requisito, revisado em V117.
+
+### 12.2 Orçamento (substitui a tabela da seção 7.2)
+
+| Item | Intenções previstas |
+|---|---:|
+| Criar a organização | 1 |
+| Vínculo do 2º usuário | 1 |
+| 16 produtores de negócio (ordens 5 a 20) | 16 |
+| Pré-requisitos da seção 12.1 | até 10 |
+| Tentativas de duplicidade | até 10 |
+| **Total previsto** | **até 38** |
+
+O teto por execução sobe de 30 para **40**. O total da Fase 3 continua em **60**. Toda tentativa enviada conta como intenção, inclusive as rejeitadas por duplicidade.
+
+### 12.3 Uploads
+
+Um upload conta dentro da ação de negócio que o consome, e não como intenção própria:
+- documento-base da versão em V108;
+- documentos em V110, V111 e V115;
+- relatório em V122.
+
+O upload é composto por Edge de assinatura, envio ao Storage e `confirmar_upload_arquivo`. A primeira requisição da ação sela a intenção no livro. Em todos os casos o arquivo é o sintético mínimo de texto da seção 10 (R-01), gerado no job e sem dado real, e continua sem contar como prova de R-01.
+
+### 12.4 Esperas assíncronas (complementa a seção 10)
+
+Há três processos em segundo plano do HML:
+- o verificador de arquivos, para o documento-base de V108 e a evidência de V117;
+- a análise de V116, de que V117 depende;
+- o parecer de IA de V118, de que V119 depende.
+
+O executor espera por eles só por leitura, dentro do prazo interno da sessão, que fica abaixo dos 45 minutos do job. Cada espera tem prazo próprio, fixo no executor.
+
+Se um processo não concluir no prazo:
+- o caso dependente fica `BLOCKED`, com código próprio de espera;
+- a intenção não é reenviada;
+- os casos que não dependem dele seguem.
+
+V116 continua com o critério da seção 10: o vínculo da análise criada e observável basta para o caso de V116, e o fluxo completo do worker continua na Fase 6. Pelo gate da seção 5, um `BLOCKED` por espera exige a execução de recuperação, dentro do total de 60.
+
+### 12.5 Consequências para o BUILD-2b-2
+
+- **Origem de cada valor variável.** A cerca de mutação passa a tipar a origem de cada valor variável do corpo, conforme o levantamento:
+  - gerado pela UI;
+  - inventário do livro;
+  - derivado lido pela UI do MASTER na organização da Fase 3;
+  - capturado de passo anterior da mesma ação.
+- **Fluxos.** Os fluxos são declarados por produtor e tipo de intenção, com fonte no código e variantes declaradas, por exemplo a repetição do ADM01 sem convite e o upload simples.
+- **Limite do upload.** Se a Edge pedir envio resumível (TUS), a cerca bloqueia e o caso fica `BLOCKED`.
+- **Âncoras do módulo.** Os tetos e prazos desta emenda ficam fixos no módulo, como as demais âncoras.
+
+### 12.6 O que não muda
+
+Esta emenda não muda nada do seguinte:
+- os casos, o catálogo `F3_CASES.json` e o gate da seção 5;
+- a lista fechada da seção 7.6 e as proibições;
+- o nonce único `integracao-v1-fase3-rel-20261113-r1`;
+- o ledger vazio e o protocolo de solicitação única.
+
 ## ZERO-DRIFT — IDENTIDADE VISUAL + ECONOMIA LOVABLE
 
 Esta fase altera só o instrumento de auditoria e a documentação. A marca ContaOS Brand v1.0, o Design System e os assets ficam preservados, e o impacto visual é N/A. O agente Lovable não é usado.
