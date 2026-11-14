@@ -203,7 +203,8 @@ function runCase(entry) {
   }
   try {
     const j = JSON.parse(out.slice(out.indexOf("{")));
-    return j.numPassedTests > 0 && j.numFailedTests === 0 && j.numPendingTests === 0;
+    // -t exclui os demais casos por design; somente o caso exato deve ter PASS.
+    return j.numPassedTests > 0 && j.numFailedTests === 0;
   } catch { return false; }
 }
 function git(...args) { return execFileSync("git", args, { encoding: "utf8" }).trim(); }
