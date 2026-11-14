@@ -1,3 +1,35 @@
+## Integração funcional V1: Fase 3, BUILD-2b-1 integrado, 14/11/2026 Bahia
+
+- **BUILD-2b-1 integrado.** A PR #658 (autora Edivan5002) entrou com o merge `fb02383`, cujos pais são a main `fb8d05b` e o HEAD `f30851d`. A contaos9999 publicou o APPROVE 5903293851 no HEAD `f30851d`, depois de sete rodadas de revisão independente; o histórico está em `fase3/BUILD2B1_INFRA.md`.
+  - Readback na main: os blobs batem com os do HEAD aprovado; o ledger tem SHA `1d402a1a…`; o `types.ts` está no blob `8ea7750b`.
+  - Checks da main: Zero-Drift, Teste C e protect-types estão verdes.
+  - O workflow "ContaOS Trilha A Autenticada", no job "Trilha A solicitacao unica sem credenciais", falha fechado com `REQUEST_PARENT`. O motivo é que o primeiro pai do merge não é o `approved_parent_sha` de um REQUEST. É o mesmo comportamento do merge `d2a6557`.
+- **Modelo entregue, ainda offline.** É uma máquina de estados única com eventos e replay no relatório e no ledger, mais:
+  - âncoras do próprio módulo: catálogo, ledger com SHA e política de produção no gate e no gravador;
+  - árvore JSON pura e log canônico;
+  - intenções tipadas e transição `abandon`;
+  - todo fato observado registrado no inventário;
+  - livro transacional e relatório parcial que carrega o livro;
+  - regra C ligada ao replay.
+- **Obrigações do BUILD-2b-2:**
+  - **M2:** o livro passa a receber a proveniência completa.
+  - **M3:** a execução gravada no ledger passa a se ligar ao artefato (`artifactId`, `sha256`, `reviewId`).
+  - **M-A (review 5903293851, diferente do M-A da R6):** o teste de propriedade passa a exigir que entidades na `e87f7e68` sejam sorteadas.
+  - O `runCli` passa o livro a `blockedF3Report`.
+  - O isolamento dos pré-requisitos encerra a execução com código.
+- **Regra canônica P0-RCA-001** estendida à V1 e a toda revisão, por diretriz do titular de 14/11/2026: `AGENTS.md` e emenda X do documento de governança.
+- **Próximo:** BUILD-2b-2, que cobre os drivers de UI dos 16 produtores e do ADM01, as sessões do MASTER e do `leitor`, a política de duplicidade com fonte e as obrigações acima. Depois vêm o pin de deployment e o REQUEST `fixtures` com nonce `integracao-v1-fase3-rel-20261113-r1`.
+- **Fase 3:** EM EXECUÇÃO.
+
+## Integração funcional V1: Fase 3, BUILD-2a integrado e BUILD-2b-1 em revisão, 13/11/2026 Bahia
+
+- **BUILD-2a integrado** pela PR #657 (merge `d2a6557`). O contaos9999 pediu mudanças no HEAD `59f171f` e aprovou no HEAD `a071ef4`. Catálogo `fase3/F3_CASES.json` com SHA-256 `bce15980…`: MASTER `ALLOW` nas 138 posições; `leitor` com 7 `DENY` e 19 `ALLOW` nas 26 de ADM01.
+- **BUILD-1 integrado** pela PR #656 (merge `fa7f58b`). **2º usuário sintético:** criado pelo titular às 22h17; os secrets `CONTAOS_HML_SYNTHETIC_2_*` só serão provados na 1ª execução.
+- **BUILD-2b dividido** por decisão do titular ("2b-1 infra, 2b-2 drivers (Recomendado)"). O BUILD-2b-1 (PR #658, autor Edivan5002) é offline: relatório `F3_REPORT.json` e `SHA256SUMS` também em resultado parcial, status derivado e cruzamento de recibos, intenções e inventário contra falso PASS, política de duplicidade por produtor, ledger `fase3/F3_LEDGER.json` com execuções e SHA `1d402a1a…` fixado, livro de intenções também entre execuções, releitura do RBAC (`F3_RBAC_DRIFT`), negação só por estado explícito (V123 pela RPC) e contrato do YAML por texto literal e SHA `8da83394…`. A contaos9999 pediu mudanças no HEAD `363b451` (review 5900926490), no HEAD `41a4331` (review 5901072418) e no HEAD `fcb5224` (review 5901160351); o parecer R4 aprovou o HEAD `4f204c9` com quatro menores (comentário 5901220713). A análise de causa raiz mostrou que todos vinham de o validador reimplementar o livro de intenções; a R5 substitui isso por uma máquina de estados única, com eventos e replay no relatório e no ledger, e corrige um defeito latente (o livro exigia a organização F3 antes de criá-la). A revisão 5903041644 (HEAD `49fc13d`) achou a segunda causa raiz, referências escolhidas por quem chama; a R6 ancora catálogo, ledger e política no próprio módulo, exige árvore JSON pura e log canônico, tipa as intenções e liga a regra C ao replay. A revisão 5903136160 (HEAD `588532c`) achou a terceira causa raiz, fato observado tratado como erro; a R7 registra todo fato observado no inventário, torna o livro transacional e faz o relatório parcial carregar o livro. O parecer R7 aprovou o HEAD `f7e1b9f` com quatro menores; M1 e M4 foram corrigidos e M2 e M3 ficaram como obrigações do BUILD-2b-2. Detalhes em `fase3/BUILD2B1_INFRA.md`.
+- **Provas R4, R12 e R14** conferidas com pai `d2a6557`: OK, porque só exigem ancestralidade.
+- **Próximo:** BUILD-2b-2 (drivers de UI, sessões do MASTER e do `leitor`, inventário de isolamento); depois pin de deployment e REQUEST `fixtures` com nonce `integracao-v1-fase3-rel-20261113-r1`.
+- **Fase 3:** EM EXECUÇÃO.
+
 ## Integração funcional V1: Fase 3, BUILD-1 integrado e BUILD-2a em revisão, 13/11/2026 Bahia
 
 - **BUILD-1 integrado** pela PR #656 (merge `fa7f58b`). O Edivan5002 pediu mudanças no HEAD `2511bcf` e aprovou no HEAD `e806990`.
