@@ -11,6 +11,7 @@ const sha="a".repeat(40), merge="b".repeat(40), runNo=12345, prNo=987;
 const receipt=()=>({
   pr_url:url+"/pull/"+prNo,head_sha:sha,merge_sha:merge,
   ci_run_url:url+"/actions/runs/"+runNo,
+  nr_run_url:url+"/actions/runs/45678",
   review_url:url+"/pull/"+prNo+"#pullrequestreview-888",
   readback_url:url+"/blob/main/scripts/p0-nr001-gate.test.mjs",
 });
@@ -78,11 +79,16 @@ const mockGet=(bad={})=>async(path)=>{
   };
   if(path.endsWith("/actions/runs/"+runNo))
     return {name:"ContaOS Frontend Zero-Drift",conclusion:bad.ci||"success",head_sha:sha};
+  if(path.endsWith("/actions/runs/45678"))
+    return {name:"ContaOS P0-NR-001 Anti-Reincidencia",
+      conclusion:bad.nrCi||"success",head_sha:sha};
   if(path.endsWith("/pulls/"+prNo+"/reviews?per_page=100"))
     return [{id:888,state:bad.review||"APPROVED",
-      user:{login:bad.reviewer||"Edivan5002"},commit_id:sha}];
+      user:{login:bad.reviewer||"Edivan5002"},commit_id:sha,
+      submitted_at:"2026-11-14T09:00:00Z"}];
   if(path.endsWith("/compare/"+merge+"...main"))return {status:bad.ancestry||"ahead"};
-  if(path.includes("/contents/"))return {sha:"abc",encoding:"base64",content:"dGVzdA=="};
+  if(path.includes("/contents/"))return {sha:"abc",encoding:"base64",
+    content:Buffer.from("F3 B2b1 RED: intenções e inventário declarados precisam ser o replay dos eventos").toString("base64")};
   throw Error("404");
 };
 test("P0 NR LIVE — resolucao com PR, CI, review externo e readback autenticos",async()=>{
@@ -123,6 +129,31 @@ test("P0 NR LIVE — review aprovado depois invalidado nao e certificado",async(
         {id:889,state:"CHANGES_REQUESTED",user:{login:"Edivan5002"},
           commit_id:sha,submitted_at:"2026-11-14T10:10:00Z"},
       ];
+    return mockGet()(path);
+  };
+  assert.match((await verifyResolvedLive(resolved(),api)).join(" "),/nao comprovados/);
+});
+
+test("P0 NR LIVE — ledger resolvido exige workflow anti-reincidencia em sucesso",async()=>{
+  const errs=await verifyResolvedLive(resolved(),mockGet({nrCi:"failure"}));
+  assert.match(errs.join(" "),/nao comprovados/);
+});
+test("P0 NR LIVE — origem de teste sem caso real no SHA nao serve",async()=>{
+  const api=async(path)=>{
+    if(path.includes("/contents/"))return {sha:"abc",encoding:"base64",
+      content:Buffer.from("nenhum teste de prevencao aqui").toString("base64")};
+    return mockGet()(path);
+  };
+  assert.match((await verifyResolvedLive(resolved(),api)).join(" "),/nao comprovados/);
+});
+test("P0 NR LIVE — revisoes incompletas por 100 respostas nao provam aprovacao",async()=>{
+  const api=async(path)=>{
+    if(path.endsWith("/pulls/"+prNo+"/reviews?per_page=100")) {
+      const first=(await mockGet()(path))[0];
+      return [first,...Array.from({length:99},(_,i)=>({
+        id:i+1,state:"COMMENTED",user:{login:"auditor"+i},submitted_at:"2026-11-14T09:00:00Z"
+      }))];
+    }
     return mockGet()(path);
   };
   assert.match((await verifyResolvedLive(resolved(),api)).join(" "),/nao comprovados/);
