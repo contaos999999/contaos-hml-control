@@ -77,7 +77,7 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
     throw new Error("Reviews incompletas por paginação.");
   }
 
-  async function authenticate(rec, label, sourceFiles, finalCertificate = false) {
+  async function authenticate(rec, label, sourceFiles, finalCertificate = false, scope = null) {
     const rr = reviewRef(rec?.revisao_independente_url);
     const runId = ciRef(rec?.ci_url);
     if (!rr || !runId || !sha40(rec?.pr_merge_sha)) {
@@ -179,11 +179,19 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
         }
         const e2e = rec.hml_e2e;
         const hmlId = ciRef(e2e?.run_url);
+        // Uma auditoria visual Trilha A, mesmo SUCCESS, nao autentica
+        // as jornadas funcionais internas/cumulativas de outras versoes.
+        // Exigir jobs de caso e artefatos de um workflow especifico P0.
+        const cases = e2e?.casos;
+        const validCases = Array.isArray(cases) && cases.length > 0 &&
+          cases.length <= 90 &&
+          new Set(cases).size === cases.length &&
+          cases.every((id) => typeof id === "string" &&
+            /^[A-Z][A-Z0-9_-]{4,80}$/.test(id));
         if (e2e?.ambiente !== "HML_AUTENTICADO" ||
-            !Array.isArray(e2e?.casos) || e2e.casos.length === 0 ||
-            e2e.casos.some((x) => typeof x !== "string" || !x.trim()) ||
-            !hmlId || !sha40(e2e?.tested_sha)) {
-          fail(label + ": certificado final sem execução HML autenticada identificada.");
+            e2e?.escopo !== scope ||
+            !validCases || !hmlId || !sha40(e2e?.tested_sha)) {
+          fail(label + ": certificado final sem casos e escopo HML autenticado específico da versão.");
           return;
         }
         const [hmlRun, hmlJobs, hmlArtifacts, hmlAncestry] = await Promise.all([
@@ -192,33 +200,43 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
           get("/actions/runs/" + hmlId + "/artifacts?per_page=100"),
           get("/compare/" + e2e.tested_sha + "..." + pr.head.sha),
         ]);
-        const hmlJob = (hmlJobs?.jobs || []).find((j) =>
-          j.name.includes("Trilha A auditoria privada HML") &&
-          j.conclusion === "success");
-        const hmlStep = (prefix) => (hmlJob?.steps || []).some((step) =>
-          step.name.startsWith(prefix) && step.conclusion === "success");
-        const hmlArtifact = (hmlArtifacts?.artifacts || []).some((artifact) =>
-          /^trilha-a-private-\d+-\d+$/.test(artifact.name || "") &&
-          artifact.expired === false && artifact.size_in_bytes > 0);
-        // O SHA do teste HML deve anteceder a PR de evidências, sem mudanças
-        // no código ou nos executores depois da prova autenticada.
+        // Nenhuma modificação funcional ou do executor após o run HML,
+        // inclusive scripts não-HML que podem influenciar casos.
         const noCodeDrift = Array.isArray(hmlAncestry?.files) &&
           hmlAncestry.files.length < 300 &&
           hmlAncestry.files.every((f) =>
-            !/^(src\/|public\/|scripts\/hml\/|\.github\/workflows\/|package\.json$|bun\.lock$)/.test(f.filename || ""));
-        if (hmlRun?.name !== "ContaOS Trilha A Autenticada" ||
+            !/^(src\/|public\/|scripts\/|\.github\/workflows\/|package\.json$|bun\.lock$|vite\.config\.ts$|tsconfig(?:\.[\w-]+)?\.json$)/.test(f.filename || ""));
+        if (hmlRun?.name !== "ContaOS P0 Integracao Autenticada" ||
             hmlRun?.conclusion !== "success" ||
             hmlRun?.head_sha !== e2e.tested_sha ||
             hmlRun?.head_branch !== "main" ||
             !["ahead", "identical"].includes(hmlAncestry?.status) ||
             !noCodeDrift || hmlJobs?.total_count > 100 ||
-            hmlArtifacts?.total_count > 100 || !hmlJob ||
-            !hmlStep("Somente agora fornecer o par sintetico ao auditor") ||
-            !hmlStep("Verificar hashes gerados") ||
-            !hmlStep("Evidencia privada imutavel por 90 dias") ||
-            !hmlArtifact) {
-          fail(label + ": HML autenticado sem run real, teste, hashes, artifact ou SHA/contrato estáveis.");
+            hmlArtifacts?.total_count > 100) {
+          fail(label + ": HML integração não comprovada por workflow dedicado, SHA/contrato estáveis.");
           return;
+        }
+        const caseArtifacts = [];
+        for (const caseId of cases) {
+          const jobName = "P0 Integracao " + scope + " " + caseId;
+          const job = (hmlJobs?.jobs || []).find((j) => j.name === jobName &&
+            j.conclusion === "success");
+          const caseStep = (job?.steps || []).some((step) =>
+            step.name === "E2E autenticado: " + caseId && step.conclusion === "success");
+          const artifactName = "p0-hml-" + scope.replace("/", "-") +
+            "-" + caseId + "-" + hmlId;
+          const artifact = (hmlArtifacts?.artifacts || []).find((a) =>
+            a.name === artifactName && a.expired === false &&
+            a.size_in_bytes > 0 && /^sha256:[a-f0-9]{64}$/.test(a.digest || ""));
+          if (!caseStep || !artifact) {
+            fail(label + ": caso HML " + caseId +
+              " sem job/step E2E autenticado SUCCESS e artefato SHA256 do próprio escopo.");
+            return;
+          }
+          caseArtifacts.push({
+            id: caseId, job_name: jobName, artifact_name: artifactName,
+            artifact_digest: artifact.digest,
+          });
         }
         const root = rec.arquivo_evidencia.split("/fase")[0] + "/";
         const prefix = root + "fase" +
@@ -237,6 +255,19 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
             createHash("sha256").update(Buffer.from(remoteHml.content, "base64"))
               .digest("hex") !== e2e.arquivo_sha256) {
           fail(label + ": HML E2E não existe no SHA aprovado ou hash diverge.");
+          return;
+        }
+        // Prova por caso obrigatoriamente publicada e revisada na PR A.
+        // Não aceitar IDs textuais sem vínculo com jobs e artefatos reais.
+        let caseReport;
+        try { caseReport = JSON.parse(read(e2e.arquivo_evidencia).toString("utf8")); }
+        catch { fail(label + ": relatório HML por caso JSON inválido."); return; }
+        if (caseReport?.schema !== "contaos.p0.hml-integration-e2e.v1" ||
+            caseReport.escopo !== scope || caseReport.run_url !== e2e.run_url ||
+            caseReport.tested_sha !== e2e.tested_sha ||
+            JSON.stringify(caseReport.casos) !== JSON.stringify(cases) ||
+            JSON.stringify(caseReport.artefatos) !== JSON.stringify(caseArtifacts)) {
+          fail(label + ": relatório HML não está vinculado aos casos/jobs/artefatos GitHub reais.");
           return;
         }
       }
@@ -280,7 +311,7 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
       { path: receipt.arquivo_evidencia, hash: receipt.arquivo_sha256 },
       { path: receipt.matriz_arquivo, hash: receipt.matriz_sha256 },
       { path: receipt.grafo_arquivo, hash: receipt.grafo_sha256 },
-    ], true);
+    ], true, version + "/" + kind);
   }
   return { errors, checks, checked: items.length };
 }
