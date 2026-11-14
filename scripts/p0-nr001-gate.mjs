@@ -10,7 +10,7 @@ const STATES = new Set(["DIAGNOSTICO","PENDENTE_PR","MITIGADO_EM_BRANCH",
 const nonblank = (v) => typeof v === "string" && v.trim().length > 0;
 const sha40 = (v) => typeof v === "string" && /^[a-f0-9]{40}$/.test(v);
 const safePath = (v) => typeof v === "string" &&
-  /^(?:docs\/frontend\/governanca\/|scripts\/)[A-Za-z0-9/_-]+\.(?:md|mjs|json)$/.test(v) &&
+  /^(?:docs\/frontend\/governanca\/|scripts\/)[A-Za-z0-9/_.-]+\.(?:md|mjs|json)$/.test(v) &&
   !v.split("/").includes("..");
 const pullUrl = (v) => nonblank(v) &&
   /^https:\/\/github\.com\/contaos999999\/contaos-hml-control\/pull\/[1-9]\d+$/.test(v);
@@ -99,7 +99,9 @@ export function validateLedger(doc, {
       const r=entry.recibo||{};
       if (!pullUrl(r.pr_url)||!sha40(r.head_sha)||!sha40(r.merge_sha)||
           !runUrl(r.ci_run_url)||!reviewUrl(r.review_url)||
-          !nonblank(r.readback_url)||!r.readback_url.startsWith(ORIGIN+"/blob/main/"))
+          !nonblank(r.readback_url)||
+          r.readback_url!==ORIGIN+"/blob/main/"+entry.prevencao.arquivo||
+          !r.review_url.startsWith(r.pr_url+"#pullrequestreview-"))
         fail(id+" RESOLVIDO sem PR, HEAD, merge, CI, review independente e readback.");
     } else if (entry?.recibo!==null) {
       fail(id+" recibo de resolvido apresentado sem status RESOLVIDO_COM_PROVA.");
@@ -134,8 +136,12 @@ export async function verifyResolvedLive(doc,apiGet) {
         get("/contents/"+entry.prevencao.arquivo+"?ref="+r.head_sha),
       ]);
       const rev=Array.isArray(reviews)?reviews.find(x=>x.id===reviewNo):null;
+      const later=Array.isArray(reviews) ? reviews.filter(x=>
+        x.user?.login===rev?.user?.login && x.submitted_at && rev?.submitted_at &&
+        x.submitted_at>rev.submitted_at) : [];
       const independent=rev?.state==="APPROVED" && rev.user?.login &&
-        rev.user.login!==pr?.user?.login && rev.commit_id===pr?.head?.sha;
+        rev.user.login!==pr?.user?.login && rev.commit_id===pr?.head?.sha &&
+        !later.some(x=>["CHANGES_REQUESTED","DISMISSED"].includes(x.state));
       if (pr?.merged_at==null || pr?.base?.ref!=="main" ||
           pr?.head?.sha!==r.head_sha || pr?.merge_commit_sha!==r.merge_sha ||
           !independent || run?.conclusion!=="success" ||
