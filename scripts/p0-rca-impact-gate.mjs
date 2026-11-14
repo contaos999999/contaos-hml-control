@@ -199,6 +199,10 @@ export function runCase(entry) {
     if (/(?:TOKEN|SECRET|PASSWORD|API_KEY|AUTH_KEY|PRIVATE_KEY)/i.test(key))
       delete env[key];
   }
+  // Evitar aviso node:test "run() is being called recursively" em casos
+  // selecionados por um teste do próprio guard; caso contrário retorna 0,
+  // mas nenhum teste é executado, e o guard deve recusar falso GREEN.
+  delete env.NODE_TEST_CONTEXT;
   const p = spawnSync(node ? process.execPath : "bunx", args,
     { encoding: "utf8", timeout: 120000, maxBuffer: 5 * 1024 * 1024, env });
   if (p.error || p.status !== 0) return false;
