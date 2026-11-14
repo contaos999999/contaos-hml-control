@@ -751,6 +751,7 @@
     "rca_impacto": {
       "schema": "contaos.p0.rca-policy.v1",
       "aplica_versoes": [
+        "V1",
         "V2",
         "V3",
         "V4",
@@ -764,7 +765,9 @@
       "gate": "scripts/p0-rca-impact-gate.mjs",
       "relatorio_schema": "contaos.p0.rca-report.v2",
       "prova_operacional": "RED_GITHUB_E_GREEN_EXECUTADO_NO_SHA",
-      "gate_certificacao_live": "scripts/p0-evidence-live-gate.mjs"
+      "gate_certificacao_live": "scripts/p0-evidence-live-gate.mjs",
+      "relatorio_v1": "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json",
+      "relatorio_schema_v1": "contaos.p0.v1-scope-proof.v2"
     }
   },
   "restricoes": {
