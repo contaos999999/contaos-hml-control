@@ -83,7 +83,7 @@ export function validateRcaImpact({
   }
   const evidenceFile = version === "V1" ? V1_SCOPE : REPORT;
   if (!reportExists || !changed.includes(evidenceFile) || !report) {
-    err("BUILD " + version + " sem ficha RCA alterada no mesmo diff.");
+    err("BUILD " + version + " sem ficha RCA causal alterada no mesmo diff.");
     return { errors, applicable: true, version };
   }
   if (report.schema !== (version === "V1" ? "contaos.p0.v1-scope-proof.v2" : "contaos.p0.rca-report.v2") ||
