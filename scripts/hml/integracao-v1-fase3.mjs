@@ -299,13 +299,13 @@ export function buildF3Cases(csvText) {
     (a, b) =>
       a.producerOrder - b.producerOrder || a.sourceConnectionId.localeCompare(b.sourceConnectionId),
   );
-  return Object.freeze({
+  return registerCatalogue({
     schema: "contaos.integracao-v1.f3.cases.v1",
     matrixPath: F3_MATRIX.path,
     matrixSha256: F3_MATRIX.sha256,
     scope: INTEGRACAO_V1_FASE3_SCOPE.id,
     count: cases.length,
-    cases: Object.freeze(cases),
+    cases,
   });
 }
 
@@ -337,6 +337,7 @@ function strictPlain(value, keys, code) {
 /** Valida o catálogo publicado contra a derivação da matriz; qualquer divergência falha. */
 export function validateF3Cases(value, csvText) {
   const code = "F3_CASES";
+  assertJsonTree(value, code);
   strictPlain(value, ["schema", "matrixPath", "matrixSha256", "scope", "count", "cases"], code);
   if (!Array.isArray(value.cases) || isProxy(value.cases)) fail(code);
   for (const c of value.cases) {
@@ -469,6 +470,7 @@ export const F3_RECEIPT_KEYS = Object.freeze([
   "sha256",
   "reviewId",
   "cleanupStatus",
+  "preservedFrom",
 ]);
 
 /** Política fechada: 20 produtores; mutante com null ou {result, source}; demais sem mutação. */
@@ -522,6 +524,7 @@ export function f3ReceiptBase(c, provenance) {
     artifactId: null,
     sha256: null,
     reviewId: null,
+    preservedFrom: null,
   };
 }
 
@@ -603,16 +606,72 @@ function validateProvenance(p, blocked, code) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Núcleo único das intenções (revisão de causa raiz depois das revisões 5900926490, 5901072418 e
-// 5901160351). Uma só máquina de estados decide toda transição; o livro do executor grava cada
-// transição como evento, e o relatório e o ledger carregam esses eventos. Os validadores não
-// reimplementam regras: reexecutam os eventos nesta mesma máquina e exigem que contadores,
-// intenções, envios e inventário declarados sejam exatamente o resultado do replay.
+// Fontes de verdade emitidas pelo próprio módulo (revisão final de causa raiz). Os validadores
+// não confiam em referências escolhidas por quem chama: o catálogo só vale se foi gerado por
+// buildF3Cases, o ledger só se foi validado por validateF3Ledger (com o SHA do bruto), e toda
+// entrada é uma árvore JSON pura, de modo que a igualdade por JSON é exata.
 // ---------------------------------------------------------------------------------------------
+const CATALOGUES = new WeakSet();
+const LEDGERS = new WeakMap();
+const deepFreeze = (v) => {
+  if (v && typeof v === "object" && !Object.isFrozen(v)) {
+    Object.freeze(v);
+    for (const k of Object.keys(v)) deepFreeze(v[k]);
+  }
+  return v;
+};
+function registerCatalogue(catalogue) {
+  CATALOGUES.add(deepFreeze(catalogue));
+  return catalogue;
+}
+function assertCatalogue(catalogue, code) {
+  if (catalogue !== null && !CATALOGUES.has(catalogue)) fail(code);
+}
+function ledgerRecord(ledger) {
+  const record = ledger && typeof ledger === "object" ? LEDGERS.get(ledger) : undefined;
+  if (!record) fail("F3_LEDGER_REQUIRED");
+  return record;
+}
+
+/** Só objetos simples, arrays densos e folhas string, número finito, booleano ou null. */
+export function assertJsonTree(value, code, depth = 0) {
+  if (depth > 16) fail(code);
+  if (value === null || typeof value === "boolean" || typeof value === "string") return;
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) fail(code);
+    return;
+  }
+  if (typeof value !== "object" || isProxy(value)) fail(code);
+  if (Array.isArray(value)) {
+    plainArray(value, code, 4096);
+    for (const item of value) assertJsonTree(item, code, depth + 1);
+    return;
+  }
+  const proto = Object.getPrototypeOf(value);
+  if (proto !== Object.prototype && proto !== null) fail(code);
+  for (const k of Reflect.ownKeys(value)) {
+    const d = Object.getOwnPropertyDescriptor(value, k);
+    if (typeof k !== "string" || !Object.hasOwn(d, "value") || d.enumerable !== true) fail(code);
+    assertJsonTree(d.value, code, depth + 1);
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Núcleo único das intenções. Uma só máquina de estados (applyEvent) define as transições; o
+// livro grava cada transição como evento; relatório e ledger carregam os eventos e os
+// validadores os reexecutam. Intenções têm tipo: principal (a criação do produtor, uma aberta
+// por produtor), prerequisito (no máximo 5 na fase, PLAN 7.2) e duplicidade (no máximo uma por
+// principal, PLAN 4.3). Uma intenção ausente por readback pode ser abandonada; abandonada não
+// conta como pendente, mas precisa ser relida na execução que fecha a matriz.
+// ---------------------------------------------------------------------------------------------
+export const F3_INTENT_KINDS = Object.freeze(["principal", "prerequisito", "duplicidade"]);
+export const F3_MAX_PREREQUISITES = 5;
+export const F3_MAX_EVENTS_PER_RUN = 200;
 const EVENT_KEYS = Object.freeze([
   "op",
   "requestId",
   "producerOrder",
+  "kind",
   "duplicateOf",
   "entityId",
   "organizationId",
@@ -625,16 +684,18 @@ const EVENT_OPS = Object.freeze([
   "found",
   "absent",
   "resend",
+  "abandon",
 ]);
-export const F3_MAX_EVENTS_PER_RUN = 200;
 const INTENT_KEYS = Object.freeze([
   "requestId",
   "producerOrder",
+  "kind",
   "duplicateOf",
   "outcome",
   "prior",
   "entityId",
   "sends",
+  "rechecked",
 ]);
 const INTENTS_KEYS = Object.freeze([
   "priorSent",
@@ -642,9 +703,11 @@ const INTENTS_KEYS = Object.freeze([
   "confirmed",
   "uncertain",
   "rejected",
+  "abandoned",
   "requests",
   "events",
 ]);
+const OPEN = (i) => i.state !== "rejected" && i.state !== "abandoned";
 
 function emptyState() {
   return {
@@ -664,26 +727,71 @@ function cloneState(st) {
     entities: new Set(st.entities),
   };
 }
-const kindFor = (i) =>
-  i.producerOrder !== 2
-    ? "registro"
-    : i.duplicateOf === null
-      ? "organizacao"
-      : "organizacao_duplicada";
 
 function validateEvent(e) {
   const code = "F3_INTENT_EVENT";
   strictPlain(e, EVENT_KEYS, code);
   if (!enumOf(e.op, EVENT_OPS) || !isUuid(e.requestId)) fail(code);
-  const seal = e.op === "seal",
-    entity = e.op === "confirm" || e.op === "found";
-  if (seal) {
-    if (!Number.isSafeInteger(e.producerOrder)) fail(code);
+  const entity = e.op === "confirm" || e.op === "found";
+  if (e.op === "seal") {
+    if (!Number.isSafeInteger(e.producerOrder) || !enumOf(e.kind, F3_INTENT_KINDS)) fail(code);
+    if ((e.kind === "duplicidade") !== (e.duplicateOf !== null)) fail(code);
     if (e.duplicateOf !== null && !isUuid(e.duplicateOf)) fail(code);
-  } else if (e.producerOrder !== null || e.duplicateOf !== null) fail(code);
+  } else if (e.producerOrder !== null || e.kind !== null || e.duplicateOf !== null) fail(code);
   if (entity) {
     if (!isUuid(e.entityId) || !isUuid(e.organizationId)) fail(code);
   } else if (e.entityId !== null || e.organizationId !== null) fail(code);
+}
+
+function sealIntent(st, e) {
+  if (!F3_MUTATING_ORDERS.includes(e.producerOrder)) fail("F3_INTENT_PRODUCER");
+  if (st.intents.has(e.requestId)) fail("F3_INTENT_REPLAY");
+  const all = [...st.intents.values()];
+  const same = all.filter((i) => i.producerOrder === e.producerOrder);
+  if (e.kind === "duplicidade") {
+    const base = st.intents.get(e.duplicateOf);
+    if (!base || base.kind !== "principal" || base.state !== "confirmed")
+      fail("F3_INTENT_DUPLICATE_OF");
+    if (base.producerOrder !== e.producerOrder) fail("F3_INTENT_DUPLICATE_OF");
+    if (all.some((i) => i.kind === "duplicidade" && i.duplicateOf === e.duplicateOf))
+      fail("F3_INTENT_DUPLICATE_OF");
+    return;
+  }
+  if (e.kind === "prerequisito") {
+    if (e.producerOrder === 2 || st.organizationF3 === null) fail("F3_INTENT_PRODUCER");
+    if (all.filter((i) => i.kind === "prerequisito").length >= F3_MAX_PREREQUISITES)
+      fail("F3_INTENT_PREREQUISITES");
+    return;
+  }
+  // Principal: uma aberta por produtor; a da organização só antes de a organização existir e
+  // antes de qualquer outra mutação.
+  if (same.some((i) => i.kind === "principal" && OPEN(i))) fail("F3_INTENT_PRODUCER");
+  if (e.producerOrder === 2 && st.organizationF3 !== null) fail("F3_INTENT_PRODUCER");
+  if (e.producerOrder !== 2 && st.organizationF3 === null) fail("F3_FOREIGN_ORG");
+}
+
+function recordEntity(st, e, i) {
+  if (e.entityId === F3_E87_ORG || e.organizationId === F3_E87_ORG) fail("F3_FOREIGN_ORG");
+  if (st.entities.has(e.entityId)) fail("F3_INTENT_ENTITY");
+  let kind = "registro";
+  if (i.producerOrder === 2) {
+    // A organização é a própria entidade. A primeira principal confirmada é a organização F3;
+    // qualquer outra organização (duplicidade aceita ou materialização tardia) fica inventariada
+    // como organizacao_duplicada, fora da F3, e faz o gate falhar.
+    if (e.organizationId !== e.entityId) fail("F3_INTENT_ENTITY");
+    if (i.kind === "principal" && st.organizationF3 === null) kind = "organizacao";
+    else kind = "organizacao_duplicada";
+  } else if (e.organizationId !== st.organizationF3) fail("F3_FOREIGN_ORG");
+  if (kind === "organizacao") st.organizationF3 = e.entityId;
+  st.entities.add(e.entityId);
+  st.created.push({
+    id: e.entityId,
+    kind,
+    organizationId: e.organizationId,
+    requestId: e.requestId,
+  });
+  i.entityId = e.entityId;
+  i.state = "confirmed";
 }
 
 /** Aplica um evento ao estado. É a única definição das transições válidas. */
@@ -694,86 +802,64 @@ function applyEvent(st, run, e) {
     run.sent += 1;
   };
   if (e.op === "seal") {
-    if (!F3_MUTATING_ORDERS.includes(e.producerOrder)) fail("F3_INTENT_PRODUCER");
-    if (st.intents.has(e.requestId)) fail("F3_INTENT_REPLAY");
-    if (e.duplicateOf !== null) {
-      const base = st.intents.get(e.duplicateOf);
-      if (!base || base.state !== "confirmed" || base.duplicateOf !== null)
-        fail("F3_INTENT_DUPLICATE_OF");
-      if (base.producerOrder !== e.producerOrder) fail("F3_INTENT_DUPLICATE_OF");
-    } else if (e.producerOrder === 2) {
-      // Uma única criação da organização F3, antes de qualquer outra mutação. Só uma tentativa
-      // rejeitada (nada criado) libera nova tentativa; pendente exige readback antes.
-      if (st.organizationF3 !== null) fail("F3_INTENT_PRODUCER");
-      const open = (i) => i.producerOrder === 2 && i.duplicateOf === null && i.state !== "rejected";
-      if ([...st.intents.values()].some(open)) fail("F3_INTENT_PRODUCER");
-    } else if (st.organizationF3 === null) fail("F3_FOREIGN_ORG");
+    sealIntent(st, e);
     send();
     st.intents.set(e.requestId, {
       state: "sealed",
       producerOrder: e.producerOrder,
+      kind: e.kind,
       duplicateOf: e.duplicateOf,
       entityId: null,
       resent: false,
       prior: false,
       sends: 1,
+      rechecked: false,
     });
     return;
   }
   const i = st.intents.get(e.requestId);
   if (!i) fail("F3_INTENT_UNKNOWN");
   const from = {
-    confirm: "sealed",
-    reject: "sealed",
-    uncertain: "sealed",
-    found: "uncertain",
-    absent: "uncertain",
-    resend: "absent",
+    confirm: ["sealed"],
+    reject: ["sealed"],
+    uncertain: ["sealed"],
+    found: ["uncertain", "abandoned"],
+    absent: ["uncertain", "abandoned"],
+    resend: ["absent"],
+    abandon: ["absent"],
   }[e.op];
-  if (i.state !== from) fail(e.op === "resend" ? "F3_UNCERTAIN_RESEND" : "F3_INTENT_STATE");
+  if (!from.includes(i.state)) fail(e.op === "resend" ? "F3_UNCERTAIN_RESEND" : "F3_INTENT_STATE");
+  // Log canônico: todo evento muda o estado. A releitura de uma abandonada vale uma vez por
+  // execução; repeti-la seria um evento sem efeito, removível sem deixar rastro.
+  if (e.op === "absent" && i.state === "abandoned" && i.rechecked) fail("F3_INTENT_STATE");
+  if (e.op === "found" || e.op === "absent") i.rechecked = true;
   if (e.op === "resend") {
     if (i.resent) fail("F3_UNCERTAIN_RESEND");
     send();
     i.resent = true;
     i.sends += 1;
     i.state = "sealed";
-  } else if (e.op === "confirm" || e.op === "found") {
-    const kind = kindFor(i);
-    if (e.entityId === F3_E87_ORG || e.organizationId === F3_E87_ORG) fail("F3_FOREIGN_ORG");
-    if (st.entities.has(e.entityId)) fail("F3_INTENT_ENTITY");
-    if (kind === "registro") {
-      if (e.organizationId !== st.organizationF3) fail("F3_FOREIGN_ORG");
-    } else {
-      // A organização é a própria entidade; a duplicada é outra organização, inventariada.
-      if (e.organizationId !== e.entityId) fail("F3_INTENT_ENTITY");
-      if (kind === "organizacao_duplicada" && e.entityId === st.organizationF3)
-        fail("F3_INTENT_ENTITY");
-    }
-    if (kind === "organizacao") st.organizationF3 = e.entityId;
-    st.entities.add(e.entityId);
-    st.created.push({
-      id: e.entityId,
-      kind,
-      organizationId: e.organizationId,
-      requestId: e.requestId,
-    });
-    i.entityId = e.entityId;
-    i.state = "confirmed";
-  } else i.state = { reject: "rejected", uncertain: "uncertain", absent: "absent" }[e.op];
+  } else if (e.op === "confirm" || e.op === "found") recordEntity(st, e, i);
+  else if (e.op === "absent") i.state = i.state === "abandoned" ? "abandoned" : "absent";
+  else i.state = { reject: "rejected", uncertain: "uncertain", abandon: "abandoned" }[e.op];
 }
 
+// O resumo expõe o estado exato (selado, incerto e ausente são pendentes distintos): com o log
+// canônico, remover ou trocar qualquer evento muda o resumo ou quebra o replay.
+const PENDING = Object.freeze(["sealed", "uncertain", "absent"]);
 function summarize(st, run) {
   const requests = [...st.intents].map(([requestId, i]) => {
-    const outcome =
-      i.state === "confirmed" ? "confirmed" : i.state === "rejected" ? "rejected" : "pending";
+    const outcome = i.state;
     return {
       requestId,
       producerOrder: i.producerOrder,
+      kind: i.kind,
       duplicateOf: i.duplicateOf,
       outcome,
       prior: i.prior,
       entityId: outcome === "confirmed" ? i.entityId : null,
       sends: i.sends,
+      rechecked: i.rechecked,
     };
   });
   const count = (o) => requests.filter((q) => q.outcome === o).length;
@@ -781,8 +867,9 @@ function summarize(st, run) {
     priorSent: st.priorSent,
     sent: run.sent,
     confirmed: count("confirmed"),
-    uncertain: count("pending"),
+    uncertain: requests.filter((q) => PENDING.includes(q.outcome)).length,
     rejected: count("rejected"),
+    abandoned: count("abandoned"),
     requests,
     events: run.events.map((e) => ({ ...e })),
   };
@@ -795,6 +882,7 @@ function closeRun(st, run) {
   for (const i of next.intents.values()) {
     i.prior = true;
     i.sends = 0;
+    i.rechecked = false;
     if (i.state === "sealed") i.state = "uncertain";
   }
   return next;
@@ -811,30 +899,14 @@ function replayRun(state, events) {
   return { st, run };
 }
 
-// Ledgers validados e o estado derivado do replay de todas as suas execuções.
-const LEDGER_STATES = new WeakMap();
-function ledgerState(ledger) {
-  const st = ledger && typeof ledger === "object" ? LEDGER_STATES.get(ledger) : undefined;
-  if (!st) fail("F3_LEDGER_REQUIRED");
-  return st;
-}
-const deepFreeze = (v) => {
-  if (v && typeof v === "object" && !Object.isFrozen(v)) {
-    Object.freeze(v);
-    for (const k of Object.keys(v)) deepFreeze(v[k]);
-  }
-  return v;
-};
-
 /**
- * Livro de intenções da Fase 3, sobre o ledger validado (validateF3Ledger). Só o MASTER muta.
- * Antes de existir a organização F3, só a sua criação (produtor 2) pode ser selada, com
- * organizationId null; depois, toda intenção exige organizationId igual à organização F3. Cada
- * transição passa por applyEvent e vira evento; o resumo e o inventário são derivados.
+ * Livro de intenções da Fase 3, sobre o ledger validado. Só o MASTER muta. Antes de existir a
+ * organização F3, só a sua criação (produtor 2, principal) pode ser selada, com organizationId
+ * null; depois, toda intenção exige organizationId igual à organização F3.
  */
 export function createF3IntentBook(options = {}) {
   if (Object.keys(options).some((k) => k !== "ledger")) fail("F3_INTENT_OPTIONS");
-  const st = cloneState(ledgerState(options.ledger)),
+  const st = cloneState(ledgerRecord(options.ledger).state),
     run = { sent: 0, events: [] };
   const apply = (e) => {
     applyEvent(st, run, e);
@@ -844,32 +916,44 @@ export function createF3IntentBook(options = {}) {
     op,
     requestId,
     producerOrder: null,
+    kind: null,
     duplicateOf: null,
     entityId: null,
     organizationId: null,
     ...extra,
   });
   return Object.freeze({
-    seal({ requestId, producerOrder, actor, organizationId, duplicateOf = null }) {
+    seal({
+      requestId,
+      producerOrder,
+      actor,
+      organizationId,
+      kind = "principal",
+      duplicateOf = null,
+    }) {
       if (actor !== "master") fail("F3_SECOND_USER_MUTATION");
       if (!Number.isSafeInteger(producerOrder)) fail("F3_INTENT_PRODUCER");
       if (!isUuid(requestId) || (duplicateOf !== null && !isUuid(duplicateOf)))
         fail("F3_INTENT_ID");
+      if (!enumOf(kind, F3_INTENT_KINDS)) fail("F3_INTENT_KIND");
+      if ((kind === "duplicidade") !== (duplicateOf !== null)) fail("F3_INTENT_KIND");
       if (organizationId !== st.organizationF3) fail("F3_FOREIGN_ORG");
-      apply(ev("seal", requestId, { producerOrder, duplicateOf }));
+      apply(ev("seal", requestId, { producerOrder, kind, duplicateOf }));
     },
     /** Confirma a criação; numa tentativa de duplicidade, sinaliza duplicateAccepted (FAIL). */
     confirm(requestId, { entityId, organizationId }) {
       apply(ev("confirm", requestId, { entityId, organizationId }));
-      return { duplicateAccepted: st.intents.get(requestId).duplicateOf !== null };
+      return { duplicateAccepted: st.intents.get(requestId).kind === "duplicidade" };
     },
     rejected: (requestId) => apply(ev("reject", requestId)),
     uncertain: (requestId) => apply(ev("uncertain", requestId)),
+    /** Readback de intenção incerta ou abandonada: found registra a entidade, inclusive tardia. */
     reconcile(requestId, { found, entityId, organizationId }) {
       if (typeof found !== "boolean") fail("F3_INTENT_STATE");
       apply(found ? ev("found", requestId, { entityId, organizationId }) : ev("absent", requestId));
     },
     resend: (requestId) => apply(ev("resend", requestId)),
+    abandon: (requestId) => apply(ev("abandon", requestId)),
     state: (requestId) => (st.intents.get(requestId) ?? fail("F3_INTENT_UNKNOWN")).state,
     organizationF3: () => st.organizationF3,
     created: () => st.created.map((c) => ({ ...c })),
@@ -878,19 +962,17 @@ export function createF3IntentBook(options = {}) {
 }
 
 /** Intenções do relatório: os eventos desta execução, reexecutados sobre o ledger. */
-function validateIntents(n, code, ledger) {
+function validateIntents(n, code, state) {
   strictPlain(n, INTENTS_KEYS, code);
   plainArray(n.requests, code, F3_BUDGET.total);
   for (const q of n.requests) strictPlain(q, INTENT_KEYS, code);
   let replay;
   try {
-    replay = replayRun(ledgerState(ledger), n.events);
-  } catch (error) {
-    if (error?.code === "F3_LEDGER_REQUIRED") throw error;
+    replay = replayRun(state, n.events);
+  } catch {
     fail(code);
   }
-  const derived = summarize(replay.st, replay.run);
-  if (JSON.stringify(n) !== JSON.stringify(derived)) fail(code);
+  if (JSON.stringify(n) !== JSON.stringify(summarize(replay.st, replay.run))) fail(code);
   return replay.st;
 }
 
@@ -906,12 +988,9 @@ function validateIsolation(iso, state) {
   const before = Object.keys(iso.e87Before).sort(),
     after = Object.keys(iso.e87After).sort();
   if (JSON.stringify(before) !== JSON.stringify(after)) fail(code);
-  const byRequest = new Map();
-  for (const e of state.created) byRequest.set(e.requestId, [e.id]);
-  return byRequest;
 }
 
-function validateReceipt(r, c, report, policy) {
+function validateReceipt(r, c, report, policy, ledger) {
   const code = "F3_REPORT";
   strictPlain(r, F3_RECEIPT_KEYS, code);
   strictPlain(r.expected, ["master", "leitor"], code);
@@ -919,8 +998,18 @@ function validateReceipt(r, c, report, policy) {
   strictPlain(r.negatives, ["inexistente", "outraOrganizacao"], code);
   for (const k of CASE_KEYS) if (JSON.stringify(r[k]) !== JSON.stringify(c[k])) fail(code);
   if (r.operation !== c.producer) fail(code);
-  for (const k of PROVENANCE_KEYS) if (r[k] !== report.provenance[k]) fail(code);
   if (r.artifactId !== null || r.sha256 !== null || r.reviewId !== null) fail(code);
+  // Recibo desta execução, ou PASS preservado do ledger (regra C, PLAN 7.3).
+  if (r.preservedFrom === null) {
+    for (const k of PROVENANCE_KEYS) if (r[k] !== report.provenance[k]) fail(code);
+  } else {
+    const entry = (ledger?.entries ?? []).find((e) => e.caseId === r.caseId);
+    if (!entry || entry.workflowRunId !== r.preservedFrom || r.status !== "PASS") fail(code);
+    for (const k of PROVENANCE_KEYS) if (r[k] !== entry[k]) fail(code);
+    if (!preservable(entry, report.provenance)) fail(code);
+    if (r.requestId !== entry.requestId) fail(code);
+    if (JSON.stringify(r.entityIds) !== JSON.stringify(entry.entityIds)) fail(code);
+  }
   if (!enumOf(r.applicability, APPLICABILITY)) fail(code);
   if (!enumOf(r.observed.master, OBSERVED) || !enumOf(r.observed.leitor, OBSERVED)) fail(code);
   if (r.origin !== "ADM01" && r.observed.leitor !== null) fail(code);
@@ -952,41 +1041,40 @@ function validateReceipt(r, c, report, policy) {
 }
 
 /**
- * Cruza recibos, intenções e inventário (revisão 5900926490, B1, I2 e M1). Os casos de um mesmo
- * produtor compartilham requestId, entidades e duplicidade; requestId é único entre produtores;
- * toda entidade citada foi criada pela intenção confirmada do próprio recibo; o resultado de
- * duplicidade bate com as tentativas registradas no livro.
+ * Cruza os recibos com o replay. Os casos de um produtor compartilham requestId (a intenção
+ * principal), entidades e duplicidade; requestId é único entre produtores; entidade só da
+ * principal do próprio recibo; duplicidade igual às tentativas registradas contra essa principal.
  */
-function crossCheck(report, byId, createdByRequest) {
+function crossCheck(report, requests, created) {
   const code = "F3_REPORT";
+  const byId = new Map(requests.map((q) => [q.requestId, q]));
+  const createdBy = new Map(created.map((e) => [e.requestId, e.id]));
   const groups = new Map();
   for (const r of report.cases) {
     const g = groups.get(r.producerOrder) ?? [];
     g.push(r);
     groups.set(r.producerOrder, g);
   }
-  const seenRequests = new Set();
+  const seen = new Set();
   for (const [order, group] of groups) {
     const head = group[0];
     const shared = (r) => JSON.stringify([r.requestId, r.entityIds, r.duplicate, r.cleanupStatus]);
     if (group.some((r) => shared(r) !== shared(head))) fail(code);
-    const duplicates = [...byId.values()].filter(
-      (q) => q.producerOrder === order && q.duplicateOf !== null,
+    const duplicates = requests.filter(
+      (q) => q.producerOrder === order && q.kind === "duplicidade",
     );
     if (head.requestId === null) {
-      // Sem intenção associada, o recibo não afirma nada sobre duplicidade: só NOT_RUN, ou
-      // DUPLICATE_NOT_DEFINED sem nenhuma tentativa registrada no livro.
       if (head.entityIds.length) fail(code);
       if (head.duplicate === "DUPLICATE_NOT_DEFINED" && duplicates.length) fail(code);
       if (!["NOT_RUN", "DUPLICATE_NOT_DEFINED"].includes(head.duplicate)) fail(code);
       continue;
     }
-    if (seenRequests.has(head.requestId)) fail(code);
-    seenRequests.add(head.requestId);
+    if (seen.has(head.requestId)) fail(code);
+    seen.add(head.requestId);
     const q = byId.get(head.requestId);
-    if (!q || q.producerOrder !== order || q.duplicateOf !== null) fail(code);
-    const entities = createdByRequest.get(head.requestId) ?? [];
-    if (head.entityIds.some((id) => !entities.includes(id))) fail("F3_ISOLATION");
+    if (!q || q.producerOrder !== order || q.kind !== "principal") fail(code);
+    const entity = createdBy.get(head.requestId);
+    if (head.entityIds.some((id) => id !== entity)) fail("F3_ISOLATION");
     if (q.outcome !== "confirmed" && head.entityIds.length) fail(code);
     if (head.status === "PASS" && q.outcome !== "confirmed") fail(code);
     const of = duplicates.filter((d) => d.duplicateOf === head.requestId);
@@ -1000,33 +1088,46 @@ function crossCheck(report, byId, createdByRequest) {
   }
 }
 
+const REPORT_KEYS = Object.freeze([
+  "schema",
+  "scope",
+  "nonce",
+  "casesSha256",
+  "ledgerSha256",
+  "state",
+  "blockCode",
+  "provenance",
+  "globals",
+  "intents",
+  "isolation",
+  "summary",
+  "cases",
+]);
+const GLOBAL_KEYS = Object.freeze([
+  "masterSession",
+  "masterLogout",
+  "secondSession",
+  "secondLogout",
+  "secondProfile",
+  "rbacLeitorVersion",
+  "masterPermissionsUnchanged",
+  "transportErrors",
+  "httpErrors",
+  "pageErrors",
+]);
+
 /**
- * Valida o relatório: só IDs, enums, contadores e booleanos (PLAN 7.5). Qualquer string fora do
- * formato fechado do campo (texto livre, e-mail, JWT, HTML) falha. O status de cada recibo e o
- * resumo são recalculados, e recibos, intenções e inventário são cruzados, impedindo falso PASS.
+ * Valida o relatório: árvore JSON pura, só IDs, enums, contadores e booleanos (PLAN 7.5). O
+ * status de cada recibo e o resumo são recalculados; intenções e inventário são o replay dos
+ * eventos sobre o ledger cujo SHA o relatório declara; recibos são cruzados com o replay.
+ * ledgerSha256 null só num relatório BLOCKED gravado antes de o ledger ser lido.
  */
 export function validateF3Report(report, catalogue, { policy = F3_DUPLICATE_POLICY, ledger } = {}) {
   const code = "F3_REPORT";
+  assertJsonTree(report, code);
   validateF3DuplicatePolicy(policy);
-  ledgerState(ledger);
-  strictPlain(
-    report,
-    [
-      "schema",
-      "scope",
-      "nonce",
-      "casesSha256",
-      "state",
-      "blockCode",
-      "provenance",
-      "globals",
-      "intents",
-      "isolation",
-      "summary",
-      "cases",
-    ],
-    code,
-  );
+  assertCatalogue(catalogue, code);
+  strictPlain(report, REPORT_KEYS, code);
   if (report.schema !== F3_REPORT_SCHEMA || report.scope !== INTEGRACAO_V1_FASE3_SCOPE.id)
     fail(code);
   if (report.nonce !== INTEGRACAO_V1_FASE3_SCOPE.nonce || report.casesSha256 !== F3_CASES_SHA256)
@@ -1039,78 +1140,94 @@ export function validateF3Report(report, catalogue, { policy = F3_DUPLICATE_POLI
       : report.blockCode !== null
   )
     fail(code);
+  let state, record;
+  if (report.ledgerSha256 === null) {
+    if (!blocked || (ledger !== undefined && ledger !== null)) fail(code);
+    state = emptyState();
+  } else {
+    record = ledgerRecord(ledger);
+    if (report.ledgerSha256 !== record.sha256) fail(code);
+    state = record.state;
+  }
   validateProvenance(report.provenance, blocked, code);
   const g = report.globals;
-  strictPlain(
-    g,
-    [
-      "masterSession",
-      "masterLogout",
-      "secondSession",
-      "secondLogout",
-      "secondProfile",
-      "rbacLeitorVersion",
-      "masterPermissionsUnchanged",
-      "transportErrors",
-      "httpErrors",
-      "pageErrors",
-    ],
-    code,
-  );
+  strictPlain(g, GLOBAL_KEYS, code);
   for (const k of ["masterSession", "masterLogout", "secondSession", "secondLogout"])
     if (typeof g[k] !== "boolean") fail(code);
   if (![F3_SECOND_USER_PROFILE, null].includes(g.secondProfile)) fail(code);
   if (![F3_RBAC_LEITOR.version, null].includes(g.rbacLeitorVersion)) fail(code);
   if (![true, false, null].includes(g.masterPermissionsUnchanged)) fail(code);
   for (const k of ["transportErrors", "httpErrors", "pageErrors"]) if (!isCount(g[k])) fail(code);
-  // Intenções e inventário são o replay dos eventos desta execução sobre o ledger.
-  const state = validateIntents(report.intents, code, ledger);
-  const createdByRequest = validateIsolation(report.isolation, state);
-  const byId = new Map(report.intents.requests.map((q) => [q.requestId, q]));
+  const after = validateIntents(report.intents, code, state);
+  validateIsolation(report.isolation, after);
   plainArray(report.cases, code, F3_MATRIX.rows);
   if (catalogue === null) {
     if (!blocked || report.cases.length !== 0) fail(code);
   } else {
     if (report.cases.length !== catalogue.cases.length) fail(code);
-    report.cases.forEach((r, i) => validateReceipt(r, catalogue.cases[i], report, policy));
-    crossCheck(report, byId, createdByRequest);
+    report.cases.forEach((r, i) => validateReceipt(r, catalogue.cases[i], report, policy, ledger));
+    crossCheck(report, report.intents.requests, after.created);
   }
   strictPlain(report.summary, F3_CASE_STATUS, code);
   if (JSON.stringify(report.summary) !== JSON.stringify(f3Summary(report.cases))) fail(code);
   return true;
 }
 
-/** Gate quantitativo da seção 5 do PLAN sobre um relatório já validado. */
-export function f3Gate(report, catalogue, options = {}) {
-  // Valida e decide sobre o mesmo objeto; getter, proxy e toJSON já são recusados na validação.
+/**
+ * Critérios da seção 5 do PLAN não atendidos, sobre um relatório validado com a política dada.
+ * Ferramenta de diagnóstico: nunca devolve PASS. Quem decide é f3Gate.
+ */
+export function f3GateCriteria(report, catalogue, options = {}) {
   validateF3Report(report, catalogue, options);
   const g = report.globals,
     iso = report.isolation,
     s = report.summary,
     n = report.intents;
-  const counters = (c) => JSON.stringify(Object.keys(c).sort());
-  const ok =
-    report.state === "COMPLETE" &&
-    catalogue !== null &&
-    s.FAIL === 0 &&
-    s.BLOCKED === 0 &&
-    s.PASS + s.N_A_JUSTIFICADO === F3_MATRIX.rows &&
-    g.masterSession &&
-    g.masterLogout &&
-    g.secondSession &&
-    g.secondLogout &&
-    g.secondProfile === F3_SECOND_USER_PROFILE &&
-    g.rbacLeitorVersion === F3_RBAC_LEITOR.version &&
-    g.masterPermissionsUnchanged === true &&
-    g.transportErrors + g.httpErrors + g.pageErrors === 0 &&
-    n.uncertain === 0 &&
-    n.requests.every((q) => q.outcome !== "pending") &&
-    iso.organizationF3 !== null &&
-    iso.created.filter((e) => e.kind === "organizacao").length === 1 &&
-    counters(iso.e87Before) === JSON.stringify([...F3_E87_COUNTER_SCREENS].sort()) &&
-    JSON.stringify(iso.e87Before, Object.keys(iso.e87Before).sort()) ===
-      JSON.stringify(iso.e87After, Object.keys(iso.e87Before).sort());
-  return ok ? "PASS" : "FAIL";
+  const counters = Object.keys(iso.e87Before).sort();
+  const checks = [
+    ["STATE", report.state === "COMPLETE"],
+    ["CATALOGUE", catalogue !== null],
+    ["CASES", s.FAIL === 0 && s.BLOCKED === 0 && s.PASS + s.N_A_JUSTIFICADO === F3_MATRIX.rows],
+    ["SESSIONS", g.masterSession && g.masterLogout && g.secondSession && g.secondLogout],
+    ["SECOND_PROFILE", g.secondProfile === F3_SECOND_USER_PROFILE],
+    ["RBAC", g.rbacLeitorVersion === F3_RBAC_LEITOR.version],
+    ["MASTER_PERMISSIONS", g.masterPermissionsUnchanged === true],
+    ["ERRORS", g.transportErrors + g.httpErrors + g.pageErrors === 0],
+    ["PENDING", n.uncertain === 0],
+    ["ABANDONED_RECHECKED", n.requests.every((q) => q.outcome !== "abandoned" || q.rechecked)],
+    ["ORGANIZATION", iso.organizationF3 !== null],
+    [
+      "ISOLATION",
+      iso.created.every((e) => e.kind !== "organizacao_duplicada") &&
+        iso.created.filter((e) => e.kind === "organizacao").length === 1,
+    ],
+    [
+      "PRINCIPALS",
+      F3_MUTATING_ORDERS.every(
+        (o) =>
+          n.requests.filter(
+            (q) => q.producerOrder === o && q.kind === "principal" && q.outcome === "confirmed",
+          ).length <= 1,
+      ),
+    ],
+    [
+      "E87_COUNTERS",
+      JSON.stringify(counters) === JSON.stringify([...F3_E87_COUNTER_SCREENS].sort()) &&
+        JSON.stringify(iso.e87Before, counters) === JSON.stringify(iso.e87After, counters),
+    ],
+  ];
+  return checks.filter(([, ok]) => !ok).map(([name]) => name);
+}
+
+/**
+ * Gate quantitativo da seção 5 do PLAN. Sempre com a política de produção e o ledger fixado no
+ * código: nem a política nem o ledger podem ser escolhidos por quem chama.
+ */
+export function f3Gate(report, catalogue, options = {}) {
+  if (Object.keys(options).some((k) => k !== "ledger")) fail("F3_REPORT");
+  const unmet = f3GateCriteria(report, catalogue, { ledger: options.ledger });
+  if (report.ledgerSha256 !== F3_LEDGER_SHA256) unmet.push("LEDGER_PIN");
+  return unmet.length === 0 ? "PASS" : "FAIL";
 }
 
 /** Proveniência a partir do ambiente do job, saneada: formato divergente vira null. */
@@ -1128,11 +1245,15 @@ export function f3ProvenanceFromEnv(env) {
   };
 }
 
-/** Relatório BLOCKED: todo caso não executado fica BLOCKED, nunca PASS. */
-export function blockedF3Report({ code, catalogue, provenance, ledger }) {
+/**
+ * Relatório BLOCKED: todo caso não executado fica BLOCKED, nunca PASS. Com ledger lido, carrega
+ * o estado dele; sem ledger lido, ledgerSha256 é null e não há estado.
+ */
+export function blockedF3Report({ code, catalogue, provenance, ledger = null }) {
   if (typeof code !== "string" || !CODE.test(code)) fail("F3_REPORT");
-  // O bloqueado carrega o estado do ledger sem nenhum evento novo, sem exceção (revisão, N-3).
-  const state = ledgerState(ledger);
+  assertCatalogue(catalogue, "F3_REPORT");
+  const record = ledger === null ? null : ledgerRecord(ledger);
+  const state = record ? record.state : emptyState();
   const prov = provenance ?? f3ProvenanceFromEnv({});
   const cases = (catalogue?.cases ?? []).map((c) => {
     const r = {
@@ -1155,6 +1276,7 @@ export function blockedF3Report({ code, catalogue, provenance, ledger }) {
     scope: INTEGRACAO_V1_FASE3_SCOPE.id,
     nonce: INTEGRACAO_V1_FASE3_SCOPE.nonce,
     casesSha256: F3_CASES_SHA256,
+    ledgerSha256: record ? record.sha256 : null,
     state: "BLOCKED",
     blockCode: code,
     provenance: { ...prov },
@@ -1183,27 +1305,24 @@ export function blockedF3Report({ code, catalogue, provenance, ledger }) {
 }
 
 /**
- * Grava F3_REPORT.json, a cópia do catálogo e SHA256SUMS. O relatório é serializado uma vez, e o
- * que se valida é o resultado dessa serialização, que é exatamente o que vai para o disco: getter
- * ou proxy não conseguem mostrar um valor ao validador e outro ao arquivo (revisão, E).
- * Relatório inválido nunca é gravado.
+ * Grava F3_REPORT.json, a cópia do catálogo e SHA256SUMS. Valida o objeto, serializa uma vez,
+ * valida de novo o que vai para o disco e exige que casesRaw seja o catálogo publicado e o mesmo
+ * catálogo emitido por buildF3Cases. Relatório inválido nunca é gravado.
  */
 export async function writeF3Artifacts(dir, report, catalogue, casesRaw, options = {}) {
   validateF3Report(report, catalogue, options);
-  let snapshot;
-  try {
-    snapshot = JSON.parse(JSON.stringify(report));
-  } catch {
-    fail("F3_REPORT");
+  const body = JSON.stringify(report, null, 2) + "\n";
+  validateF3Report(JSON.parse(body), catalogue, options);
+  if (catalogue !== null) {
+    if (typeof casesRaw !== "string" || sha256(casesRaw) !== F3_CASES_SHA256) fail("F3_CASES_HASH");
+    if (JSON.stringify(JSON.parse(casesRaw)) !== JSON.stringify(catalogue)) fail("F3_CASES_HASH");
   }
-  validateF3Report(snapshot, catalogue, options);
-  if (catalogue !== null && sha256(casesRaw) !== F3_CASES_SHA256) fail("F3_CASES_HASH");
   await mkdir(dir, { recursive: true });
-  const files = [["F3_REPORT.json", JSON.stringify(snapshot, null, 2) + "\n"]];
+  const files = [["F3_REPORT.json", body]];
   if (catalogue !== null) files.push(["F3_CASES.json", casesRaw]);
   files.sort(([a], [b]) => a.localeCompare(b));
-  for (const [name, body] of files) await writeFile(join(dir, name), body, { flag: "w" });
-  const sums = files.map(([name, body]) => sha256(body) + "  " + name + "\n").join("");
+  for (const [name, content] of files) await writeFile(join(dir, name), content, { flag: "w" });
+  const sums = files.map(([name, content]) => sha256(content) + "  " + name + "\n").join("");
   await writeFile(join(dir, "SHA256SUMS"), sums, { flag: "w" });
   return true;
 }
@@ -1261,15 +1380,18 @@ const LEDGER_ENTRY_KEYS = Object.freeze([
   "caseId",
   "status",
   ...PROVENANCE_KEYS,
+  "requestId",
+  "entityIds",
   "artifactId",
   "sha256",
   "reviewId",
 ]);
 const LEDGER_RUN_KEYS = Object.freeze(["workflowRunId", "harnessSha", "events"]);
 /**
- * Ledger append-only: PASS verificados (um por caso, com proveniência completa) e os eventos do
- * livro de cada execução. O estado acumulado sai do replay dos eventos, nunca de contadores
- * declarados.
+ * Ledger append-only: os eventos do livro de cada execução e os PASS verificados (regra C). O
+ * estado acumulado sai do replay dos eventos; cada PASS cita uma execução registrada, com o
+ * mesmo harness, e a intenção principal confirmada e a entidade que o replay registra para ele.
+ * O ledger validado fica congelado e guarda o SHA-256 do bruto.
  */
 export function validateF3Ledger(raw, catalogue) {
   const code = "F3_LEDGER";
@@ -1277,10 +1399,7 @@ export function validateF3Ledger(raw, catalogue) {
   let value;
   try {
     value = JSON.parse(raw);
-  } catch {
-    fail(code);
-  }
-  try {
+    assertJsonTree(value, code);
     strictPlain(
       value,
       ["schema", "scope", "matrixSha256", "casesSha256", "backendSha", "runs", "entries"],
@@ -1288,25 +1407,21 @@ export function validateF3Ledger(raw, catalogue) {
     );
     plainArray(value.entries, code, F3_MATRIX.rows);
     plainArray(value.runs, code, 16);
+    assertCatalogue(catalogue, code);
   } catch {
     fail(code);
   }
   if (value.schema !== F3_LEDGER_SCHEMA || value.scope !== INTEGRACAO_V1_FASE3_SCOPE.id) fail(code);
   if (value.matrixSha256 !== F3_MATRIX.sha256 || value.casesSha256 !== F3_CASES_SHA256) fail(code);
   if (value.backendSha !== F3_BACKEND_SHA) fail(code);
-  // As execuções são reexecutadas em ordem na mesma máquina de estados do livro: orçamento
-  // acumulado, reserva de requestId, organização única, entidades e reconciliações vêm do replay.
+  if (catalogue === null && value.entries.length) fail(code);
   const runs = new Map();
   let state = emptyState();
   for (const run of value.runs) {
     try {
       strictPlain(run, LEDGER_RUN_KEYS, code);
-    } catch {
-      fail(code);
-    }
-    if (!DIGITS.test(run.workflowRunId ?? "") || runs.has(run.workflowRunId)) fail(code);
-    if (!SHA40.test(run.harnessSha ?? "")) fail(code);
-    try {
+      if (!DIGITS.test(run.workflowRunId) || runs.has(run.workflowRunId)) fail(code);
+      if (!SHA40.test(run.harnessSha)) fail(code);
       const replay = replayRun(state, run.events);
       state = closeRun(replay.st, replay.run);
     } catch {
@@ -1314,32 +1429,35 @@ export function validateF3Ledger(raw, catalogue) {
     }
     runs.set(run.workflowRunId, run);
   }
-  const ids = new Set(catalogue.cases.map((c) => c.caseId)),
+  const cases = new Map((catalogue?.cases ?? []).map((c) => [c.caseId, c])),
     seen = new Set();
   for (const e of value.entries) {
     try {
       strictPlain(e, LEDGER_ENTRY_KEYS, code);
       validateProvenance(Object.fromEntries(PROVENANCE_KEYS.map((k) => [k, e[k]])), false, code);
+      plainArray(e.entityIds, code, 8);
     } catch {
       fail(code);
     }
-    if (e.status !== "PASS" || !ids.has(e.caseId) || seen.has(e.caseId)) fail(code);
+    const c = cases.get(e.caseId);
+    if (e.status !== "PASS" || !c || seen.has(e.caseId)) fail(code);
     const run = runs.get(e.workflowRunId);
     if (!run || run.harnessSha !== e.harnessSha) fail(code);
-    if (
-      !DIGITS.test(e.artifactId ?? "") ||
-      !SHA64.test(e.sha256 ?? "") ||
-      !DIGITS.test(e.reviewId ?? "")
-    )
-      fail(code);
+    if (!DIGITS.test(e.artifactId) || !SHA64.test(e.sha256) || !DIGITS.test(e.reviewId)) fail(code);
+    if (F3_MUTATING_ORDERS.includes(c.producerOrder)) {
+      const i = isUuid(e.requestId) ? state.intents.get(e.requestId) : undefined;
+      if (!i || i.kind !== "principal" || i.producerOrder !== c.producerOrder) fail(code);
+      if (i.state !== "confirmed" || JSON.stringify(e.entityIds) !== JSON.stringify([i.entityId]))
+        fail(code);
+    } else if (e.requestId !== null || e.entityIds.length) fail(code);
     seen.add(e.caseId);
   }
   deepFreeze(value);
-  LEDGER_STATES.set(value, state);
+  LEDGERS.set(value, { state, sha256: sha256(raw) });
   return value;
 }
 
-/** Ledger vazio validado, usado quando o ledger publicado não pôde ser lido. */
+/** Ledger vazio validado, sem catálogo, para testes e ferramentas. */
 export function emptyF3Ledger() {
   return validateF3Ledger(
     JSON.stringify({
@@ -1351,19 +1469,26 @@ export function emptyF3Ledger() {
       runs: [],
       entries: [],
     }),
-    { cases: [] },
+    null,
   );
 }
 
-/** Resumo do estado derivado de um ledger validado (organização, envios e intenções). */
+/** Resumo do estado derivado de um ledger validado (organização, envios, intenções e SHA). */
 export function f3LedgerState(ledger) {
-  const { requests, priorSent } = summarize(ledgerState(ledger), { sent: 0, events: [] });
-  return { organizationF3: ledgerState(ledger).organizationF3, priorSent, requests };
+  const record = ledgerRecord(ledger);
+  const { requests, priorSent } = summarize(record.state, { sent: 0, events: [] });
+  return {
+    organizationF3: record.state.organizationF3,
+    priorSent,
+    requests,
+    created: record.state.created.map((c) => ({ ...c })),
+    sha256: record.sha256,
+  };
 }
 
-export function validateF3LedgerExtension(previousRaw, raw, catalogue, pinned = F3_LEDGER_SHA256) {
-  // O anterior é sempre o ledger fixado no código; a extensão só acrescenta.
-  if (sha256(previousRaw) !== pinned) fail("F3_LEDGER");
+/** Extensão do ledger fixado no código: só acrescenta execuções e entradas. */
+export function validateF3LedgerExtension(previousRaw, raw, catalogue) {
+  if (sha256(previousRaw) !== F3_LEDGER_SHA256) fail("F3_LEDGER");
   const prev = validateF3Ledger(previousRaw, catalogue),
     next = validateF3Ledger(raw, catalogue);
   for (const key of ["runs", "entries"]) {
@@ -1375,25 +1500,29 @@ export function validateF3LedgerExtension(previousRaw, raw, catalogue, pinned = 
   return true;
 }
 
-/**
- * Casos preservados: PASS com mesmo produto, backend e deployment, e com o mesmo harness ou uma
- * equivalência revisada em F3_HARNESS_EQUIVALENCES (plano mestre 16.3). Ancestralidade não basta.
- */
-export function preservedF3Cases(ledger, provenance, equivalences = F3_HARNESS_EQUIVALENCES) {
-  const equivalent = (from) =>
-    from === provenance.harnessSha ||
-    equivalences.some(
-      (e) => e.from === from && e.to === provenance.harnessSha && DIGITS.test(e.reviewId ?? ""),
-    );
-  return ledger.entries
-    .filter(
+/** PASS do ledger reaproveitável no produto atual (plano mestre 16.3): mesmo produto, backend,
+ * deployment e harness, ou equivalência revisada em F3_HARNESS_EQUIVALENCES. */
+function preservable(entry, provenance) {
+  const harness =
+    entry.harnessSha === provenance.harnessSha ||
+    F3_HARNESS_EQUIVALENCES.some(
       (e) =>
-        e.frontendSha === provenance.frontendSha &&
-        e.backendSha === provenance.backendSha &&
-        e.deploymentId === provenance.deploymentId &&
-        equivalent(e.harnessSha),
-    )
-    .map((e) => e.caseId);
+        e.from === entry.harnessSha && e.to === provenance.harnessSha && DIGITS.test(e.reviewId),
+    );
+  return (
+    harness &&
+    entry.frontendSha === provenance.frontendSha &&
+    entry.backendSha === provenance.backendSha &&
+    entry.deploymentId === provenance.deploymentId
+  );
+}
+
+/** Casos do ledger validado que podem entrar preservados no relatório desta execução. */
+export function preservedF3Cases(ledger, provenance) {
+  ledgerRecord(ledger);
+  assertJsonTree(provenance, "F3_LEDGER");
+  strictPlain(provenance, PROVENANCE_KEYS, "F3_LEDGER");
+  return ledger.entries.filter((e) => preservable(e, provenance)).map((e) => e.caseId);
 }
 
 // Trechos exatos do YAML aprovado (PLAN 7.4, itens a–d). A estrutura não depende só do SHA:
@@ -1537,7 +1666,7 @@ export async function runCli(args = process.argv.slice(2), env = process.env) {
   const provenance = f3ProvenanceFromEnv(env);
   let catalogue = null,
     casesRaw = null,
-    ledger = emptyF3Ledger();
+    ledger = null;
   try {
     await loadSingleRequestProof({ operation: "fixtures", fresh: true });
     assertF3Scope(singleRequestFixturesScope());
