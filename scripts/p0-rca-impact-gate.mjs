@@ -69,7 +69,7 @@ export function validateRcaImpact({
     if (appPaths.length) {
       const unknown = appPaths.filter((p) => !legacyAllowlist.includes(p));
       if (unknown.length)
-        err("código V1 novo/sem allowlist pré-BUILD: " + unknown.join(", "));
+        err("código V1 novo/sem classificação na allowlist pré-BUILD: " + unknown.join(", "));
       const introduced = appPaths.filter((p) =>
         /(?:^|[^a-z0-9])V[2-5](?:[-_/ ]|$)|V[2-5]-(?:DIL|PRO|ACT|KB|CONTEST)/i
           .test(String(addedLines[p] || "")));
