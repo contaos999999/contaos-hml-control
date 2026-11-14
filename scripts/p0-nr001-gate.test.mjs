@@ -1,0 +1,105 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {validateLedger,verifyResolvedLive,LEDGER} from "./p0-nr001-gate.mjs";
+const actual=JSON.parse(readFileSync(LEDGER,"utf8"));
+const clone=()=>structuredClone(actual);
+const check=(x,override={})=>validateLedger(x,override).errors.join("\n");
+const fail=(x,rx,opts)=>assert.match(check(x,opts),rx);
+const url="https://github.com/contaos999999/contaos-hml-control";
+const sha="a".repeat(40), merge="b".repeat(40), runNo=12345, prNo=987;
+const receipt=()=>({
+  pr_url:url+"/pull/"+prNo,head_sha:sha,merge_sha:merge,
+  ci_run_url:url+"/actions/runs/"+runNo,
+  review_url:url+"/pull/"+prNo+"#pullrequestreview-888",
+  readback_url:url+"/blob/main/scripts/p0-nr001-gate.test.mjs",
+});
+const resolved=()=>{const d=clone();const item=d.cases.find(x=>x.id==="NR-008");
+  item.estado="RESOLVIDO_COM_PROVA";item.recibo=receipt();return d;};
+test("P0 NR — ledger existente integra todas as 8 classes sem declarar falsas resolucoes",()=>{
+  assert.equal(check(clone()),"");
+  assert.equal(actual.cases.filter(x=>x.estado==="RESOLVIDO_COM_PROVA").length,0);
+});
+test("P0 NR — nao permite remover erro historico conhecido",()=>{
+  const x=clone();x.cases=x.cases.filter(x=>x.id!=="NR-001");
+  fail(x,/classe historica removida/);
+});
+test("P0 NR — reincidencia nao pode ser registrada sob fingerprint duplicado",()=>{
+  const x=clone();x.cases[1].fingerprint=x.cases[0].fingerprint;
+  fail(x,/fingerprint causal ausente\/duplicado/);
+});
+test("P0 NR — causa nao confirmada permanece em diagnostico",()=>{
+  const x=clone();x.cases[0].causa_status="EM_INVESTIGACAO";
+  fail(x,/causa apenas hipotetica/);
+});
+test("P0 NR — sem barreira de prevencao falha fechado",()=>{
+  const x=clone();x.cases[0].barreira=" ";
+  fail(x,/sem causa, sintoma, risco residual ou barreira preventiva/);
+});
+test("P0 NR — estado de resolvido sem comprovantes PR CI review e readback bloqueia",()=>{
+  const x=clone();x.cases[0].estado="RESOLVIDO_COM_PROVA";
+  fail(x,/RESOLVIDO sem PR/);
+});
+test("P0 NR — recibo antecipado sem estado resolvido e proibido",()=>{
+  const x=clone();x.cases[1].recibo=receipt();
+  fail(x,/recibo de resolvido apresentado sem status/);
+});
+test("P0 NR — segundo retry da mesma causa exige diagnostico ampliado",()=>{
+  const x=clone();x.cases[0].tentativas_ciclo=2;
+  fail(x,/duas tentativas sem revisao causal ampliada/);
+});
+test("P0 NR — analise causal ampliada documentada permite manter historico",()=>{
+  const x=clone();x.cases[0].tentativas_ciclo=2;
+  x.cases[0].revisao_causal_ampliada=true;
+  x.cases[0].diagnostico_ampliado="hipotese nova testada com negativo causal";
+  assert.equal(check(x),"");
+});
+test("P0 NR — reincidencia exige novo teste e revisao da prevencao",()=>{
+  const x=clone();x.cases[0].estado="REINCIDENCIA";
+  fail(x,/reincidencia deve revisar prevencao/);
+});
+test("P0 NR — TESTE alegado mas arquivo desaparecido e NO-GO",()=>{
+  const x=clone();
+  fail(x,/arquivo da prevencao inexistente/,{exists:()=>false,read:()=>""});
+});
+test("P0 NR — titulo de caso nao consta do teste versionado e NO-GO",()=>{
+  const x=clone();
+  fail(x,/caso de teste preventivo nao encontrado/,{exists:()=>true,read:()=>""});
+});
+test("P0 NR — PR pendente pode propor novo teste, jamais implica certificado",()=>{
+  const x=clone();const i=x.cases.find(x=>x.id==="NR-003");
+  assert.equal(i.estado,"PENDENTE_PR");
+  assert.equal(check(x),"");
+});
+const mockGet=(bad={})=>async(path)=>{
+  if(path.endsWith("/pulls/"+prNo))return {
+    user:{login:"implementador"},merged_at:"2026-11-14T10:00:00Z",
+    base:{ref:"main"},head:{sha},merge_commit_sha:merge,
+  };
+  if(path.endsWith("/actions/runs/"+runNo))
+    return {name:"ContaOS Frontend Zero-Drift",conclusion:bad.ci||"success",head_sha:sha};
+  if(path.endsWith("/pulls/"+prNo+"/reviews?per_page=100"))
+    return [{id:888,state:bad.review||"APPROVED",
+      user:{login:bad.reviewer||"Edivan5002"},commit_id:sha}];
+  if(path.endsWith("/compare/"+merge+"...main"))return {status:bad.ancestry||"ahead"};
+  if(path.includes("/contents/"))return {sha:"abc",encoding:"base64",content:"dGVzdA=="};
+  throw Error("404");
+};
+test("P0 NR LIVE — resolucao com PR, CI, review externo e readback autenticos",async()=>{
+  assert.deepEqual(await verifyResolvedLive(resolved(),mockGet()),[]);
+});
+test("P0 NR LIVE — review self-approve nao e evidencia de prevencao",async()=>{
+  assert.match((await verifyResolvedLive(resolved(),mockGet({reviewer:"implementador"}))).join(" "),/nao comprovados/);
+});
+test("P0 NR LIVE — CHANGES_REQUESTED nao autoriza resolucao",async()=>{
+  assert.match((await verifyResolvedLive(resolved(),mockGet({review:"CHANGES_REQUESTED"}))).join(" "),/nao comprovados/);
+});
+test("P0 NR LIVE — CI com FAILURE nao autentica recibo",async()=>{
+  assert.match((await verifyResolvedLive(resolved(),mockGet({ci:"failure"}))).join(" "),/nao comprovados/);
+});
+test("P0 NR LIVE — token/REST indisponivel com status RESOLVIDO falha fechado",async()=>{
+  assert.match((await verifyResolvedLive(resolved(),null)).join(" "),/sem acesso GitHub/);
+});
+test("P0 NR LIVE — ausencia de recibos RESOLVIDO nao inventa status",async()=>{
+  assert.deepEqual(await verifyResolvedLive(clone(),null),[]);
+});
