@@ -192,8 +192,15 @@ function runCase(entry) {
   const args = node
     ? ["--test", "--test-name-pattern=" + pat, entry.arquivo]
     : ["vitest", "run", entry.arquivo, "-t", pat, "--reporter=json", "--maxWorkers=2"];
+  // Casos de teste não recebem credenciais usadas pelo gate de autenticidade.
+  // O runner principal é a única autoridade autorizada a consultar o GitHub.
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (/(?:TOKEN|SECRET|PASSWORD|API_KEY|AUTH_KEY|PRIVATE_KEY)/i.test(key))
+      delete env[key];
+  }
   const p = spawnSync(node ? process.execPath : "bunx", args,
-    { encoding: "utf8", timeout: 120000, maxBuffer: 5 * 1024 * 1024 });
+    { encoding: "utf8", timeout: 120000, maxBuffer: 5 * 1024 * 1024, env });
   if (p.error || p.status !== 0) return false;
   const out = String(p.stdout || "");
   if (node) {
