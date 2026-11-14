@@ -8,11 +8,11 @@ O levantamento mostrou que o BUILD-2b-2 tem o tamanho do preparador da Trilha A.
 - driver de UI;
 - teste offline com os componentes reais.
 
-Por isso o BUILD-2b-2 sai em PRs incrementais. Cada uma tem revisão independente por causa raiz (P0-RCA-001) e fica dentro da lista fechada da seção 7.6 do PLAN. Nenhum REQUEST da Fase 3 é criado antes do último incremento, porque o nonce `integracao-v1-fase3-rel-20261113-r1` é único e uma falha na HML exige novo PLAN, BUILD e REQUEST (PLAN 9.6).
+Por isso o BUILD-2b-2 sai em PRs incrementais. Cada uma tem revisão independente por causa raiz (P0-RCA-001) e fica dentro da lista fechada da seção 7.6 do PLAN. Nenhum REQUEST da Fase 3 é criado antes do último incremento, porque uma falha na HML exige novo PLAN, BUILD e REQUEST, com nonce novo (PLAN §9, passo 6, e §12.4).
 
 | Incremento | Conteúdo | Estado |
 |---|---|---|
-| 2b-2a | Fundação: obrigações M2, M3 e M-A, `runCli` com o livro, isolamento que encerra a execução e cerca de mutação ligada ao livro | esta PR |
+| 2b-2a | Fundação: obrigações M2, M3 e M-A, `runCli` com o livro, isolamento que encerra a execução, cerca de mutação ligada ao livro e âncoras da emenda 1 do PLAN | esta PR (#679) |
 | 2b-2b | Sessões do MASTER e do `leitor` (login, organização e logout), criação da organização F3 (SYS04), vínculo ADM01 e releitura do RBAC | próximo |
 | 2b-2c em diante | Produtores V102 a V122, em grupos, cada um com fluxo, política de duplicidade com fonte e teste offline | depois |
 
@@ -51,8 +51,8 @@ Nada muda no YAML, no auditor, no preparador, em `src/**`, em `types.ts`, nas de
   - OPTIONS nunca é mutação. Passa se a allowlist aceitar ou se for o preflight do próximo passo da intenção armada, sem selo.
   - Qualquer outro método é mutação quando vai a uma RPC de fluxo, a uma tabela, a uma Edge de fluxo, ao Storage da API ou à origem do Storage. URL malformada também cai nesse ramo.
 - **Fluxos por produtor e tipo** (`F3_MUTATION_FLOWS[ordem] = { principal, prerequisito }`), com fonte no código para cada passo. Alvos: `rpc`, `table` (com a query exata do cliente), `edge` e `storage` (PUT na URL assinada, com o caminho capturado e o token opaco).
-  - Hoje estão declarados: SYS04 (2), ADM01 (4, Edge de convite mais RPC), V102 (5, inserção em tabela) e V106 (8, chave da UI no meio do corpo).
-  - O alvo `storage` existe e é classificado, mas ainda não há fluxo de Storage declarado. O bucket e o prefixo entram com a fonte no código, junto com os drivers de V110, V111 e V115. O TUS não é suportado: se a Edge pedir envio resumível, a cerca bloqueia.
+  - Hoje estão declarados: SYS04 (2), ADM01 (4, Edge de convite mais RPC), V102 (5, inserção em tabela), V103 (6), V105 (7) e V106 (8, chave da UI no meio do corpo).
+  - O alvo `storage` existe e é classificado, mas ainda não há fluxo de Storage declarado. O bucket e o prefixo entram com a fonte no código, junto com os drivers de V110, V111 e V115. O TUS não é suportado: se a Edge pedir envio resumível, a cerca bloqueia com `F3_UPLOAD_RESUMABLE`.
 - **Corpo pela forma canônica.** Chaves ordenadas em todos os níveis e arrays na ordem, igual ao padrão do preparador. Vagas `f3Slot("uuid"|"path", nome)` marcam os valores gerados em tempo de execução: a chave de idempotência da UI e o ID devolvido por um passo anterior, como o usuário do convite no ADM01.
   - Uma vaga só pode ficar num campo `free` de topo do passo, declarado com fonte.
   - A primeira ocorrência captura o valor; as seguintes precisam ser iguais.
@@ -84,26 +84,55 @@ Nada muda no YAML, no auditor, no preparador, em `src/**`, em `types.ts`, nas de
 
 **Falha nova achada durante a correção, mesma rodada.** O teste M4 do 2b-1 copiava `node_modules` para um diretório temporário a cada execução e nunca o apagava. Isso encheu o disco no meio da verificação. A correção (`t.after` com remoção) entrou em todos os testes que criam diretório temporário.
 
-### Revisão independente R2 (HEAD `af50cff`): REQUEST_CHANGES, correção em andamento
+### Revisão independente R2 (HEAD `af50cff`): REQUEST_CHANGES
 
-A R2 confirmou que os grupos A (forma do texto), C, D e E da R1 foram fechados no que foi apontado, e achou sete grupos novos.
+Os grupos C, D, E e G foram corrigidos na própria R2. Os grupos A, B e F dependiam da emenda 1 do PLAN (§12, PR #678, merge `20d4ad9`) e do levantamento campo a campo (`F3_FLUXOS_PRODUTORES.md`). Eles foram tratados na R3, descrita abaixo.
 
-**Causa raiz comum aos grupos A e B da R2 e aos grupos A e B da R1.** A cerca estava sendo desenhada antes de se levantar o fluxo de rede de cada produtor. Cada rodada achava, na leitura do produto, uma origem de valor ou um passo que o modelo não previa. Por isso a correção deles não é um remendo por caso. Primeiro vem o levantamento completo em `F3_FLUXOS_PRODUTORES.md`; depois, um único redesenho contra ele. O levantamento mostrou que o PLAN precisa de emenda (pré-requisitos, orçamento por execução e uploads), e essa decisão é do titular.
+**Causa raiz comum (NR-008).** A cerca estava sendo desenhada antes de se levantar o fluxo de rede de cada produtor. A barreira agora é dupla: o levantamento vem antes de qualquer fluxo, e um teste liga cada fluxo declarado a uma linha do levantamento.
 
-| Grupo R2 | Severidade | Estado |
+### R3: emenda 1 aplicada ao executor (HEAD desta PR)
+
+Este incremento declara os fluxos das ordens 2 a 8: SYS04, ADM01, V102, V103, V105 e V106. Os fluxos das ordens 9 a 20 entram com os drivers, do 2b-2c em diante. O teste da barreira guarda a lista fechada das linhas do levantamento ainda sem fluxo, e essa lista tem de encolher a cada incremento.
+
+| Item da emenda ou da R2 | O que o código faz neste incremento |
+|---|---|
+| Âncoras (§12.2 e §12.1) | `F3_BUDGET` = 60 no total, 40 por execução, 39 previstas. `F3_MAX_PREREQUISITES` = 11. `F3_MAX_EVENTS_PER_RUN` = 9 × 60 |
+| A, posição `inventario` | Cada passo declara `inventory`: o campo e a ordem do produtor que criou a entidade. `arm` exige a organização F3 ou um `registro` isolado criado por aquela ordem. Vale para V103, V105 e V106. Valor errado congela a cerca e falha com `F3_FOREIGN_ORG` |
+| A, posição `derivado` (versão esperada) | `observeVersion` registra a versão lida pela UI do MASTER, na organização F3, para o contratante (V103) e para o contrato (V106). `arm` exige `p_versao_esperada` igual à versão observada (`F3_VALUE_ORIGIN`). Uma leitura atrasada não substitui uma versão mais nova |
+| A, posição `gerado_ui` (V106) | A chave da UI não pode ser a e87, a organização F3, uma entidade do inventário, um `requestId` nem uma chave já usada por outra intenção |
+| B, reenvio | Evento `bind` no livro para o V106, com o SHA-256 do corpo canônico e o da chave. O reenvio exige o mesmo corpo. Ações sem chave (ordens 2, 5, 6, 7, 14, 16, 18 e 20, e os pré-requisitos de V118 e V119) nunca são reenviadas, só relidas (`F3_UNCERTAIN_RESEND`) |
+| §12.3, TUS | Tentativa de envio resumível congela a cerca, e a sessão encerra com `F3_UPLOAD_RESUMABLE` |
+| §12.4, esperas | `F3_WAIT_POLICIES` (W1 a W5, prazos e códigos) e `observeF3Wait`: uma leitura por chamada, com prazo contado do selo. O resultado é `READY`, `PENDING` ou `BLOCKED` com o código da espera |
+
+**Limites deste incremento, que viram obrigação dos seguintes:**
+- O vínculo (`bind`) e a regra da chave da UI estão escritos só para o V106. Os fluxos com chave das ordens 9 a 20 e o ADM01 precisam da mesma regra quando seus drivers entrarem. A extensão deve ser por regra geral, não por produtor.
+- O modelo de fluxo tem um único pré-requisito por produtor. A §12.1 pede uma ação própria para cada um dos 11. O modelo precisa mudar antes do primeiro driver com mais de um pré-requisito (V107, V108 e V109).
+- A variante do ADM01 sem convite e a origem `usuario_sintetico` entram no 2b-2b, com o driver do ADM01.
+- O bloco de upload (Edge, Storage e confirmação), o caminho do Storage restrito à organização F3 e as entidades relacionadas entram com V108, V110, V111, V115 e V122.
+- Produtores que atualizam uma entidade existente (V103, V106, a publicação de V108, a aprovação e a aplicabilidade de V107) confirmam um ID já inventariado. O livro hoje classifica isso como `entidade_repetida`, que reprova o isolamento. A correção entra antes do primeiro driver de atualização.
+
+Um redesenho alternativo, que cobre esses limites com 30 fluxos e origem tipada por posição, está preservado na branch `backup/f3-b2b2a-redesenho-r3-local`. Ele não foi integrado, por decisão do titular em 14/11/2026 ("Manter a versão remota"), e serve de referência para os incrementos seguintes.
+
+### §12.6 do PLAN: onde cada teste RED está
+
+| RED da §12.6 | Teste neste incremento | Fica para |
 |---|---|---|
-| A: origem dos UUIDs sem tipo (vaga aceita qualquer UUID; referências derivadas de V107 e V117 recusadas; caminho do Storage sem conferência) | Maior | Pendente: redesenho contra o levantamento, depois da emenda do PLAN |
-| B: reenvio como repetição do primeiro envio; chave capturada fora do livro; ADM01 repetido sem convite | Maior | Pendente: mesmo redesenho, com evento no livro para as chaves capturadas e variantes de fluxo declaradas |
-| C: congelamento e intenção ativa por objeto cerca | Maior | **Corrigido.** Uma cerca por livro (`F3_FENCE_DUPLICATE`); o congelamento é do livro, que deixa de selar e reenviar (`F3_FENCE_FROZEN`); `runF3Session` encerra com `F3_FENCE_FROZEN`; `f3ReadOnlyPolicy` para o contexto do `leitor` |
-| D: sessão sem prazo e parcial perdido em job morto | Maior | **Corrigido.** Prazo fixo `F3_SESSION_DEADLINE_MS` de 40 minutos; prazo e cancelamento (SIGTERM e SIGINT) congelam o livro e devolvem o parcial; o processo sai depois de gravar os artefatos. Obrigação para o 2b-2b: testar `runCli` com driver que gere eventos |
-| E: asserções que passavam por motivo errado | Menor | **Corrigido.** Recusas isoladas com a chave em vaga, inclusive UUID aninhado em array; reutilização de ticket num fluxo de dois passos; vaga repetida com outro valor; faixas de fonte do ADM01 corrigidas e isenção retirada |
-| F: documento descreve mais que o código | Menor | Pendente junto com A e B |
-| G: catálogo validado tarde; allowlist de leitura como dependência implícita; `check` sem chaves estritas | Menor | **Corrigido.** Catálogo do módulo conferido antes do livro; invariante de carregamento (nenhuma RPC produtora, nem as variantes de cadastro, aceita pela allowlist em POST); `check` estrito |
+| Espera vencida ou recusada, sem reenvio | "espera vencida ou recusada afeta só o dependente"; "prazos e códigos das cinco esperas são fixos" | drivers (2b-2c) |
+| Edge pede TUS | "tentativa TUS bloqueia a sessão com o código canônico" | |
+| Upload dentro da ação | | 2b-2c, com o bloco de upload |
+| 41ª intenção e 12º pré-requisito | testes de orçamento e de tipos de intenção | |
+| Origem não declarada | testes de V103, V105 e V106 (inventário, versão e chave) | outro usuário no ADM01 (2b-2b); caminho do Storage (2b-2c) |
+| Reenvio de produtor sem chave | "ações sem chave rejeitam reenvio no livro após readback"; "SYS04 sem chave só permite reconciliar após envio incerto" | |
+| Fluxo sem linha ou linha sem fluxo | "(NR-008): cada fluxo declarado tem linha no levantamento e cada linha tem fluxo ou incremento declarado" | |
 
-**Prova de mutação desta rodada.** São 15 mutantes. Catorze derrubam a suíte, entre eles os M3, M4 e M5 do parecer, a cerca duplicada, o livro congelado que ainda sela, o catálogo tardio e o leitor que aceita mutação. O único que sobrevive é retirar o congelamento dentro do temporizador do prazo. Ele é equivalente na prática, porque o `catch` da sessão congela o livro em seguida; o congelamento no temporizador fica como defesa, para fechar a janela antes do `catch`.
+### Obrigações da review 5906090998 (R2 da #678)
+
+- **M1:** cumprida no levantamento, revisão 3 (V115 enfileira o processamento documental).
+- **M2:** `observeF3Wait` devolve `BLOCKED` com o código de falha quando a leitura é `failed`. O driver de W3 mapeia `pode_revisar` falso para `failed` (2b-2c).
+- **M3:** o NR-008 passa a `REINCIDENCIA` nesta PR, com `novos_testes`. Se a #679 for fechada sem merge, vale a regra de reversão do checkpoint.
+- **M4:** tabela do levantamento ordenada; os drivers de V110 e V111 não dependem da contagem de documentos (2b-2c).
 
 ### Testes
 
-- `integracao-v1-fase3.test.mjs` tem 55 testes, todos verdes. Dezenove são novos neste incremento: M2, M3, isolamento, `runF3Session`, os da cerca (opções, leitura real, envio único com preflight, desvios, regra do livro, vagas e inventário, fluxo de dois passos e tabela, reenvio, propriedade), o dos fluxos com fonte conferida no arquivo e cinco da R2 (C, C na sessão, D, G e E).
-- Nenhum teste deixa diretório temporário no disco.
-- `eslint` e `prettier --check` estão limpos nos dois scripts.
+- `integracao-v1-fase3.test.mjs`: 69 testes, todos verdes.
+- `eslint` e `prettier --check` limpos nos dois scripts.

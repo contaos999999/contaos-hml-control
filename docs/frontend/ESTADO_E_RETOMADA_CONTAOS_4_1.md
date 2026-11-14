@@ -4,7 +4,9 @@
   - `F3_FLUXOS_PRODUTORES.md` adota a revisão 2 da main (blob `52930cf`);
   - `PLANO_ATIVO.json` preserva as chaves das duas branches;
   - este checkpoint mantém os dois blocos.
-- **Próximo na #679:** o redesenho único da cerca, pela PLAN §12.5 e §12.6, com RED, GREEN, propriedade e mutação. Depois vêm o NR-008 em `REINCIDENCIA` com `novos_testes` (§12.7), as obrigações M2 a M4 da review 5906090998 e a nova revisão independente.
+- **R3 da #679 (14/11, tarde).** Duas sessões trabalharam no redesenho ao mesmo tempo. Uma enviou 12 commits (`f544530` a `5254040`, autor Edivan5002) com a emenda aplicada aos fluxos das ordens 2 a 8. A outra tinha um redesenho local de 30 fluxos, não enviado. O titular decidiu: "Manter a versão remota". O redesenho alternativo está preservado em `backup/f3-b2b2a-redesenho-r3-local` e não foi integrado.
+- **Acrescentado sobre a versão remota:** levantamento revisão 3 (M1 e M4), teste da barreira do NR-008, NR-008 em `REINCIDENCIA` com `novos_testes` (§12.7) e `BUILD2B2_DRIVERS.md` reescrito, com os limites deste incremento e as obrigações dos seguintes.
+- **Próximo:** revisão independente da #679 no HEAD com esses acréscimos, publicada pela contaos9999. Com APPROVE: merge, readback e 2b-2b, com `P0_GOV_PLAN` próprio.
 - **Regra de reversão do NR-008 (M3):** se a #679 for fechada sem merge, a PR que registrar o fechamento devolve o NR-008 a `REINCIDENCIA`, ou a `EM_MONITORAMENTO` com a prevenção anterior verificável.
 - **Fase 3:** EM EXECUÇÃO.
 

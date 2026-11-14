@@ -2758,3 +2758,59 @@ test("F3 B2b2a R2 RED (E): ticket reusado no meio do fluxo e vaga repetida com o
   assert.equal(same.fence.policy(edgeReq(uuid(30))), true);
   assert.equal(same.fence.policy(saveReq(uuid(30))), true);
 });
+
+test("F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada linha tem fluxo ou incremento declarado", async () => {
+  // Barreira do NR-008 (PLAN §12.6 e §12.7): a cerca nasce do levantamento campo a campo. Um
+  // fluxo sem linha reprova; uma linha sem fluxo só é aceita se estiver na lista fechada dos
+  // incrementos seguintes (BUILD2B2_DRIVERS.md), que encolhe a cada incremento.
+  const md = await readFile(
+    new URL("docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md", root),
+    "utf8",
+  );
+  assert.ok(!md.includes("[REVISAR]"));
+  const sec = md.slice(md.indexOf("## 3."), md.indexOf("## 4."));
+  const rows = [...sec.matchAll(/^\| (\d+) ([A-Z0-9]+), ([^|]+?) \|/gm)].map((m) => ({
+    order: Number(m[1]),
+    origin: m[2],
+    label: m[3],
+  }));
+  assert.equal(new Set(rows.map((r) => r.order + r.label)).size, rows.length);
+  for (const r of rows) {
+    const p = sut.F3_PRODUCERS.find((x) => x.order === r.order);
+    assert.equal(p?.origin, r.origin, JSON.stringify(r));
+    assert.ok(sut.F3_MUTATING_ORDERS.includes(r.order));
+  }
+  assert.equal(
+    rows.filter((r) => r.label.startsWith("pré-requisito")).length,
+    sut.F3_MAX_PREREQUISITES,
+  );
+  const declared = Object.entries(sut.F3_MUTATION_FLOWS).flatMap(([order, f]) => [
+    order + ":principal",
+    ...(f.prerequisito ? [order + ":pré-requisito"] : []),
+  ]);
+  const kindOf = (r) => (r.label.startsWith("pré-requisito") ? "pré-requisito" : "principal");
+  const inRows = new Set(rows.map((r) => r.order + ":" + kindOf(r)));
+  for (const d of declared) assert.ok(inRows.has(d), "fluxo sem linha: " + d);
+  // Linhas ainda sem fluxo: lista fechada do 2b-2c em diante.
+  const PENDING = [
+    "9:pré-requisito",
+    "9:principal",
+    "10:pré-requisito",
+    "10:principal",
+    "11:pré-requisito",
+    "11:principal",
+    "12:principal",
+    "13:principal",
+    "14:principal",
+    "15:principal",
+    "16:principal",
+    "17:principal",
+    "18:pré-requisito",
+    "18:principal",
+    "19:pré-requisito",
+    "19:principal",
+    "20:pré-requisito",
+    "20:principal",
+  ];
+  assert.deepEqual([...inRows].filter((k) => !declared.includes(k)).sort(), [...PENDING].sort());
+});

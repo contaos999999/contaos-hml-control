@@ -249,7 +249,7 @@
       "causa": "PR #658 na V1/Fase 3 exigiu sete rodadas por regras duplicadas, referências controladas pelo chamador e fatos observados tratados como erro.",
       "sintoma": "Retrabalho corretivo recorrente por origem causal compartilhada não atacada no primeiro ciclo.",
       "barreira": "Aplicar replay dos eventos e guard das fontes; inventário campo a campo do fluxo de rede antes de cerca ou driver; teste que liga cada fluxo declarado no executor a uma linha do levantamento; propriedades e mutações para evitar regredir a mesma classe.",
-      "estado": "PENDENTE_PR",
+      "estado": "REINCIDENCIA",
       "origem": [
         "https://github.com/contaos999999/contaos-hml-control/blob/main/docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B1_INFRA.md",
         "https://github.com/contaos999999/contaos-hml-control/pull/679",
@@ -278,7 +278,21 @@
             "af50cff",
             "20b7ff3"
           ],
-          "estado_seguinte": "REINCIDENCIA na PR #679, com novos_testes da PLAN §12.6"
+          "estado_seguinte": "REINCIDENCIA na PR #679, com novos_testes da PLAN §12.6; o estado seguinte só muda com merge, CI e readback (P0-NR-001 §III)"
+        }
+      ],
+      "novos_testes": [
+        {
+          "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
+          "caso": "F3 §12.6 (NR-008): cada fluxo declarado tem linha no levantamento e cada linha tem fluxo ou incremento declarado"
+        },
+        {
+          "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
+          "caso": "F3 §12.6: ações sem chave rejeitam reenvio no livro após readback"
+        },
+        {
+          "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
+          "caso": "F3 §12.6: V106 recusa IDs de entidade como chave gerada pela UI"
         }
       ]
     }
