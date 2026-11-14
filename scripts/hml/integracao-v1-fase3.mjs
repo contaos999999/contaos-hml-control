@@ -32,6 +32,8 @@ export const F3_MATRIX = Object.freeze({
   conditional: 18,
 });
 export const F3_CASES_PATH = "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json";
+// SHA-256 do catálogo publicado (PLAN 7.5); muda só por PR com nova derivação revisada.
+export const F3_CASES_SHA256 = "72d8e1cdc9fd661c4b020d505e5fbfb68ca26ea9d83feb431c0f93f1dc5fe9ee";
 // Baseline normativo fixo (PLAN 7.5, M-R2-1): nenhuma leitura nova do repositório develop.
 export const F3_BACKEND_SHA = "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6";
 export const F3_BUDGET = Object.freeze({ total: 60, perRun: 30, planned: 33, minutes: 45 });
@@ -164,15 +166,12 @@ export function buildF3Cases(csvText) {
     if (!producer) fail("F3_MATRIX_PRODUCER");
     perProducer.set(producer.order, (perProducer.get(producer.order) || 0) + 1);
     const classification = r.classe_original;
-    if (
-      !(
-        (classification === "OBRIGATORIA" && r.tipo_original === "dados_esperados") ||
-        (classification === "CONDICIONAL" &&
-          r.tipo_original === "auditoria_esperada" &&
-          r.tela_destino === "V123")
-      )
-    )
-      fail("F3_MATRIX_CLASS");
+    const mandatoryRow = classification === "OBRIGATORIA" && r.tipo_original === "dados_esperados";
+    const conditionalRow =
+      classification === "CONDICIONAL" &&
+      r.tipo_original === "auditoria_esperada" &&
+      r.tela_destino === "V123";
+    if (!mandatoryRow && !conditionalRow) fail("F3_MATRIX_CLASS");
     return Object.freeze({
       caseId: r.caso_fase3,
       sourceConnectionId: r.id_conexao,
@@ -273,7 +272,9 @@ export async function runCli(args = process.argv.slice(2), env = process.env) {
   assertF3Scope(singleRequestFixturesScope());
   const root = fileURLToPath(new URL("../../", import.meta.url));
   const csv = await readFile(join(root, F3_MATRIX.path), "utf8");
-  const cases = JSON.parse(await readFile(join(root, F3_CASES_PATH), "utf8"));
+  const casesRaw = await readFile(join(root, F3_CASES_PATH), "utf8");
+  if (sha256(casesRaw) !== F3_CASES_SHA256) fail("F3_CASES_HASH");
+  const cases = JSON.parse(casesRaw);
   validateF3Cases(cases, csv);
   if (cases.cases.some((c) => c.expected.master === null || c.expected.leitor === null))
     fail("F3_DRIVER_PENDING");

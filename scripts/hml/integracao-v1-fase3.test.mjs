@@ -99,3 +99,8 @@ test("F3 B1: executor não importa preparador da Trilha A nem lê secrets fora d
   assert.equal(source.includes("prepare-visual-fixtures"), false);
   assert.equal(/CONTAOS_HML_SYNTHETIC/.test(source), false);
 });
+
+test("F3 B1: catálogo publicado tem o SHA-256 fixado no executor", async () => {
+  const raw = await readFile(new URL(sut.F3_CASES_PATH, root), "utf8");
+  assert.equal(createHash("sha256").update(raw).digest("hex"), sut.F3_CASES_SHA256);
+});

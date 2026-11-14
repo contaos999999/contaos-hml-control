@@ -11997,6 +11997,21 @@ export function resolveC8AuditScope(request) {
   parseSingleRequest(JSON.stringify(copy), "audit");
   return NAVIGATION_SCOPE;
 }
+// Prova de runtime: o escopo gravado na revalidação deve ser o resolvido da solicitação atual.
+export function assertProofFixturesScope(proof, request) {
+  if (!proof || typeof proof !== "object" || isProxy(proof)) fail("REQUEST_RUNTIME");
+  const d = Object.getOwnPropertyDescriptor(proof, "fixturesScope");
+  if (!d || !Object.hasOwn(d, "value") || d.value !== resolveFixturesScope(request))
+    fail("REQUEST_RUNTIME");
+  return d.value;
+}
+// Linha de output da revalidação; só escopos fechados, sem quebra de linha injetável.
+export function fixturesScopeOutputLine(result) {
+  if (!result || result.selected !== true || result.operation !== "fixtures")
+    fail("FIXTURES_SCOPE");
+  if (!FIXTURES_SCOPES.includes(result.fixturesScope)) fail("FIXTURES_SCOPE");
+  return "scope=" + result.fixturesScope + "\n";
+}
 // Escopo fixtures da solicitação já provada nesta execução; sem prova, falha fechada.
 export function singleRequestFixturesScope() {
   if (singleRequestContext?.operation !== "fixtures") fail("FIXTURES_SCOPE");
@@ -12051,6 +12066,7 @@ export function requireSingleRequestOperation(operation, request = null) {
   if (operation !== "fixtures") fail("REQUEST_OPERATION");
   if (request !== null) resolveFixturesScope(request);
 }
+
 export async function verifySingleRequestGit(request, sha, git, raw) {
   const mode = singleRequestIdentityMode(request);
   if (typeof raw !== "string" || (await git(["show", sha + ":" + SINGLE_REQUEST.path])) !== raw)
@@ -15293,8 +15309,7 @@ async function singleRequestCli(mode) {
     // PLAN #655, 7.4(d): o escopo provado condiciona qual executor fixtures roda.
     if (operation === "fixtures") {
       if (!process.env.GITHUB_OUTPUT) fail("REQUEST_OUTPUT");
-      if (!FIXTURES_SCOPES.includes(result.fixturesScope)) fail("FIXTURES_SCOPE");
-      await appendFile(process.env.GITHUB_OUTPUT, "scope=" + result.fixturesScope + "\n");
+      await appendFile(process.env.GITHUB_OUTPUT, fixturesScopeOutputLine(result));
     }
   }
   console.log(JSON.stringify({ phase: "SINGLE_REQUEST", ...result }));
@@ -15516,8 +15531,7 @@ export async function loadSingleRequestProof({
         timeout: 10000,
       })
     ).stdout;
-  if (operation === "fixtures" && proof.fixturesScope !== resolveFixturesScope(request))
-    fail("REQUEST_RUNTIME");
+  if (operation === "fixtures") assertProofFixturesScope(proof, request);
   if (
     operation === "audit" &&
     (proof.auditScope !== "C8" ||
