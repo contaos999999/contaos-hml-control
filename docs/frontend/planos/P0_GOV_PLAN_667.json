@@ -1,0 +1,22 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 667,
+  "files": [
+    "scripts/p0-nr001-gate.test.mjs"
+  ],
+  "plan_documento": "docs/frontend/planos/P0_NR001_TESTE_STATUS_MUTAVEL_PLAN_2026-11-14.md",
+  "plan_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/668",
+  "plan_merge_sha": "4974bc5a190e6d5ad4af3388163efba304395f1b",
+  "plan_review_url": "https://github.com/contaos999999/contaos-hml-control/pull/668#pullrequestreview-5904015889",
+  "justificativa": "BUILD #667 deve corrigir o teste P0-NR acoplado a NR-003; um unico script de teste autorizado sob o PLAN aprovado, sem editar guard e sem fallback na allowlist V1.",
+  "regras_preservadas": [
+    "P0-NR-001",
+    "P0-RCA-001",
+    "P0 VERSION FIRST",
+    "ZERO-DRIFT",
+    "LOCK-TYPES",
+    "TESTE C",
+    "PROD PROIBIDO"
+  ]
+}
