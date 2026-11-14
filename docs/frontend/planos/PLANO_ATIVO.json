@@ -4452,5 +4452,32 @@
     "prod_autorizado": false,
     "merge_metodo": "merge commit",
     "revisao_canonica_ultima": true
+  },
+  "integracao_funcional_fase3_r1": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md",
+    "plano_mestre": "docs/frontend/planos/PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md",
+    "matriz_blob": "bb7ce43f9c334f2f03e9aafab405addadfe5e19a",
+    "baseline_frontend": "58097ad4a0d4126856072bba6dc6e8f5b2994552",
+    "casos": 138,
+    "build_allowlist": [
+      "scripts/hml/integracao-v1-fase3.mjs",
+      "scripts/hml/integracao-v1-fase3.test.mjs",
+      ".github/workflows/contaos-trilha-a-fixtures.yml",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase3/**"
+    ],
+    "workflow_mudanca_limitada": "paths dos dois novos arquivos; env CONTAOS_HML_SYNTHETIC_2_EMAIL no job hml; invocação do executor F3 quando o escopo for resolvido",
+    "request_nonce": "integracao-v1-fase3-rel-20261113-r1",
+    "request_operation": "fixtures",
+    "organizacao": "nova organização sintética exclusiva da Fase 3, criada via SYS04; e87f7e68 sem mutação",
+    "segundo_usuario_sintetico": "autorizado pelo titular; criado pelo titular na HML; secrets CONTAOS_HML_SYNTHETIC_2_EMAIL/_PASSWORD",
+    "orcamento_intencoes": {
+      "total": 60,
+      "por_execucao": 30
+    },
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "prod_autorizado": false,
+    "merge_metodo": "merge commit"
   }
 }
