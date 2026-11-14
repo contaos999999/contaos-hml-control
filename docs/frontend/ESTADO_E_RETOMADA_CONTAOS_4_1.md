@@ -1,3 +1,15 @@
+## Integração funcional V1: Fase 3, BUILD-2b-2a em revisão, 14/11/2026 Bahia
+
+- **BUILD-2b-2 em incrementos.** O titular pediu a execução integral ("Execute integralmente"). O levantamento mostrou que o BUILD-2b-2 tem o porte do preparador da Trilha A, por isso sai em PRs revisadas: 2b-2a (fundação), 2b-2b (sessões do MASTER e do `leitor`, SYS04 e ADM01) e 2b-2c em diante (produtores V102 a V122). Nenhum REQUEST antes do último incremento. O detalhe está em `fase3/BUILD2B2_DRIVERS.md`.
+- **2b-2a, branch `build/integracao-v1-fase3-b2b2-drivers`:**
+  - obrigações M2, M3 e M-A cumpridas;
+  - `runCli` cria o livro depois do ledger e o passa ao relatório parcial;
+  - `assertIsolation` encerra a execução com `F3_ISOLATION_BREACH`;
+  - nova cerca de mutação ligada ao livro, com fluxo só do SYS04 por enquanto;
+  - 44 testes verdes; o ledger não mudou (SHA `1d402a1a…`).
+- **Próximo:** revisão independente e merge do 2b-2a; depois o 2b-2b.
+- **Fase 3:** EM EXECUÇÃO.
+
 ## Integração funcional V1: Fase 3, BUILD-2b-1 integrado, 14/11/2026 Bahia
 
 - **BUILD-2b-1 integrado.** A PR #658 (autora Edivan5002) entrou com o merge `fb02383`, cujos pais são a main `fb8d05b` e o HEAD `f30851d`. A contaos9999 publicou o APPROVE 5903293851 no HEAD `f30851d`, depois de sete rodadas de revisão independente; o histórico está em `fase3/BUILD2B1_INFRA.md`.

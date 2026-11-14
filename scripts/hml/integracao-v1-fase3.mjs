@@ -6,8 +6,11 @@
  * BUILD-2a: esperado por tela (MASTER e leitor) fixado no catálogo, com fonte no código e a
  * fotografia RBAC v6 do perfil leitor.
  * BUILD-2b-1: relatório e SHA256SUMS (também parcial), ledger append-only, livro de intenções,
- * releitura do RBAC, classificador de negação explícita e contrato do YAML. Os drivers de UI vêm
- * no BUILD-2b-2; até lá a execução HML grava o relatório BLOCKED e falha com F3_DRIVER_PENDING.
+ * releitura do RBAC, classificador de negação explícita e contrato do YAML.
+ * BUILD-2b-2a: proveniência amarrada ao livro (M2), execução do ledger ligada ao artefato (M3),
+ * conferência de isolamento que encerra a execução e cerca de mutação ligada ao livro. Os drivers
+ * de UI vêm nos incrementos seguintes do BUILD-2b-2; até lá a execução HML grava o relatório
+ * BLOCKED, já com o livro, e falha com F3_DRIVER_PENDING.
  * Nunca importado pelo auditor somente leitura.
  */
 import { createHash } from "node:crypto";
@@ -16,8 +19,10 @@ import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { resolve, join } from "node:path";
 import {
+  API_ORIGIN,
   INTEGRACAO_V1_FASE3_SCOPE,
   loadSingleRequestProof,
+  requestAllowed,
   singleRequestFixturesScope,
 } from "./authenticated-visual-audit.mjs";
 
@@ -924,8 +929,14 @@ function replayRun(state, events) {
  * null; depois, toda intenção exige organizationId igual à organização F3.
  */
 export function createF3IntentBook(options = {}) {
-  if (Object.keys(options).some((k) => k !== "ledger")) fail("F3_INTENT_OPTIONS");
+  if (Object.keys(options).some((k) => k !== "ledger" && k !== "provenance"))
+    fail("F3_INTENT_OPTIONS");
   const record = ledgerRecord(options.ledger);
+  // Proveniência amarrada à mutação (parecer R7, M2): o livro só existe com a proveniência
+  // completa, e todo relatório gerado a partir dele carrega exatamente essa proveniência.
+  assertJsonTree(options.provenance, "F3_PROVENANCE");
+  validateProvenance(options.provenance, false, "F3_PROVENANCE");
+  const provenance = Object.freeze({ ...options.provenance });
   let st = cloneState(record.state),
     run = { sent: 0, events: [] };
   // Transação: o evento é aplicado numa cópia e só substitui o estado se tudo der certo.
@@ -982,9 +993,206 @@ export function createF3IntentBook(options = {}) {
     organizationF3: () => st.organizationF3,
     created: () => st.created.map((c) => ({ ...c })),
     summary: () => summarize(st, run),
+    provenance: () => ({ ...provenance }),
+    /**
+     * Conferência de isolamento (BUILD2B1_INFRA, obrigação de pré-requisitos). Encerram a
+     * execução com código: entidade fora da F3, de qualquer intenção (houve mutação fora do
+     * isolamento, e seguir só aumentaria o dano), e entidade não isolada de pré-requisito, que
+     * não tem recibo onde o critério ISOLATION a reprovaria. Entidade repetida ou organização
+     * duplicada de principal ou duplicidade fica no recibo e reprova o gate, sem encerrar. O fato
+     * já está no inventário; a exceção só impede que a execução siga mutando.
+     */
+    assertIsolation() {
+      for (const c of st.created) {
+        const i = st.intents.get(c.requestId);
+        if (c.kind === "fora_da_f3") fail("F3_ISOLATION_BREACH");
+        if (i.kind === "prerequisito" && !ISOLATED_KINDS.includes(c.kind))
+          fail("F3_ISOLATION_BREACH");
+      }
+      return true;
+    },
   });
-  BOOKS.set(book, () => ({ st, run, record }));
+  BOOKS.set(book, () => ({ st, run, record, provenance }));
   return book;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Cerca de mutação da F3 (BUILD-2b-2a). A cerca nativa do auditor recebe esta política: leituras
+// passam pela allowlist somente leitura do auditor; toda requisição de mutação conhecida só passa
+// se pertencer à intenção armada, no passo esperado, com o corpo exato, e a primeira delas sela a
+// intenção no livro antes de sair. Não há segundo caminho de mutação.
+
+/** Passo de rede de um fluxo de mutação: alvo rpc (POST /rest/v1/rpc/nome), table (POST
+ * /rest/v1/nome, inserção, com a query exata que o cliente acrescenta, como ?select=...) ou edge
+ * (POST /functions/v1/nome). A URL do passo é exata: query diferente é outra requisição. */
+const step = (target, name, query = "") => Object.freeze({ target, name, query });
+// Fluxo de mutação por produtor, com a fonte no código do produto. Só o que está aqui pode ser
+// armado; os demais produtores entram com seus drivers, por PR revisada.
+export const F3_MUTATION_FLOWS = Object.freeze({
+  2: Object.freeze({
+    steps: Object.freeze([step("rpc", "criar_organizacao")]),
+    source: "src/lib/organizacao/criarOrganizacaoDados.ts:35-40",
+  }),
+});
+const FLOW_PATH = { rpc: "/rest/v1/rpc/", table: "/rest/v1/", edge: "/functions/v1/" };
+export const F3_FENCE_WINDOW_MS = 60000;
+
+function flowUrl(s) {
+  return API_ORIGIN + FLOW_PATH[s.target] + s.name + s.query;
+}
+/** Toda URL de mutação conhecida pela F3, de qualquer produtor: nunca decidida pela leitura. */
+function knownMutation(url) {
+  return Object.values(F3_MUTATION_FLOWS).some((f) =>
+    f.steps.some((s) => {
+      const base = API_ORIGIN + FLOW_PATH[s.target] + s.name;
+      return url === base || url.startsWith(base + "?") || url.startsWith(base + "/");
+    }),
+  );
+}
+function parseJsonBody(postData) {
+  if (typeof postData !== "string" || postData.length > 65536) return undefined;
+  try {
+    const v = JSON.parse(postData);
+    assertJsonTree(v, "F3_FENCE_BODY");
+    return v;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Política de mutação ligada ao livro. arm() declara uma intenção: produtor, tipo, e para cada
+ * passo do fluxo do produtor o corpo exato esperado (e, se a UI gera a chave de idempotência, o
+ * nome do campo, conferido como UUID e devolvido em settle). policy() é a função entregue a
+ * installNativeFence. settle() fecha a intenção e devolve o que saiu; o desfecho (confirm,
+ * rejected, uncertain) é do driver, pela UI e pela releitura.
+ */
+export function createF3MutationFence({
+  book,
+  readPolicy = requestAllowed,
+  now = () => performance.now(),
+  newId = () => crypto.randomUUID(),
+} = {}) {
+  if (!BOOKS.has(book)) fail("F3_FENCE_BOOK");
+  if (typeof readPolicy !== "function" || typeof now !== "function" || typeof newId !== "function")
+    fail("F3_FENCE_OPTIONS");
+  let active = null,
+    frozen = false;
+  const tickets = new Map();
+  const ticketOf = (r) =>
+    typeof r.sessionId === "string" && typeof r.interceptionId === "string"
+      ? r.sessionId + "\u0000" + r.interceptionId
+      : null;
+  const freeze = () => {
+    frozen = true;
+    return false;
+  };
+  function policy(request = {}) {
+    try {
+      if (typeof request !== "object" || request === null || typeof request.url !== "string")
+        return false;
+      const business = knownMutation(request.url);
+      const ticket = ticketOf(request);
+      if (request.stage === "RESPONSE") {
+        if (!business) return readPolicy(request) === true;
+        const t = ticket && tickets.get(ticket);
+        if (!t || t.url !== request.url || t.method !== request.method) return freeze();
+        tickets.delete(ticket);
+        return true;
+      }
+      if (request.stage !== "REQUEST") return false;
+      if (!business) return readPolicy(request) === true;
+      if (frozen || !active || !ticket || tickets.has(ticket)) return freeze();
+      if (now() - active.armedAt >= F3_FENCE_WINDOW_MS) return freeze();
+      const next = active.steps[active.done];
+      if (!next || request.url !== next.url) return freeze();
+      if (request.method === "OPTIONS") {
+        tickets.set(ticket, { url: request.url, method: "OPTIONS" });
+        return true;
+      }
+      if (request.method !== "POST") return freeze();
+      const body = parseJsonBody(request.postData);
+      if (body === undefined) return freeze();
+      let expected = next.body;
+      if (next.uiKey !== null) {
+        if (!isUuid(body?.[next.uiKey])) return freeze();
+        expected = { ...expected, [next.uiKey]: body[next.uiKey] };
+      }
+      if (JSON.stringify(body) !== JSON.stringify(expected)) return freeze();
+      // A primeira requisição do fluxo sela a intenção: toda tentativa enviada conta (PLAN 3).
+      if (active.done === 0) {
+        try {
+          book.seal({
+            requestId: active.requestId,
+            producerOrder: active.producerOrder,
+            actor: "master",
+            organizationId: book.organizationF3(),
+            kind: active.kind,
+            duplicateOf: active.duplicateOf,
+          });
+        } catch {
+          return freeze();
+        }
+        active.sealed = true;
+      }
+      if (next.uiKey !== null) active.uiKeys[next.uiKey] = body[next.uiKey];
+      active.done += 1;
+      tickets.set(ticket, { url: request.url, method: "POST" });
+      return true;
+    } catch {
+      return freeze();
+    }
+  }
+  return Object.freeze({
+    policy,
+    arm({ producerOrder, kind = "principal", duplicateOf = null, bodies, uiKeys = [] } = {}) {
+      if (frozen) fail("F3_FENCE_FROZEN");
+      if (active) fail("F3_FENCE_PENDING");
+      const flow = F3_MUTATION_FLOWS[producerOrder] ?? fail("F3_FLOW_UNDEFINED");
+      assertJsonTree(bodies, "F3_FENCE_ARM");
+      if (!Array.isArray(bodies) || bodies.length !== flow.steps.length) fail("F3_FENCE_ARM");
+      if (!Array.isArray(uiKeys) || uiKeys.length !== flow.steps.length) fail("F3_FENCE_ARM");
+      const steps = flow.steps.map((s, i) => {
+        const b = bodies[i],
+          k = uiKeys[i] ?? null;
+        if (typeof b !== "object" || b === null || Array.isArray(b)) fail("F3_FENCE_ARM");
+        if (k !== null && (typeof k !== "string" || Object.hasOwn(b, k))) fail("F3_FENCE_ARM");
+        // Corpo de organização alheia nunca é armado: a F3 só muta a própria organização.
+        if (Object.hasOwn(b, "p_id_organizacao") && b.p_id_organizacao !== book.organizationF3())
+          fail("F3_FOREIGN_ORG");
+        if (Object.hasOwn(b, "id_organizacao") && b.id_organizacao !== book.organizationF3())
+          fail("F3_FOREIGN_ORG");
+        return { url: flowUrl(s), body: structuredClone(b), uiKey: k };
+      });
+      const requestId = newId();
+      if (!isUuid(requestId)) fail("F3_INTENT_ID");
+      active = {
+        requestId,
+        producerOrder,
+        kind,
+        duplicateOf,
+        steps,
+        done: 0,
+        sealed: false,
+        uiKeys: {},
+        armedAt: now(),
+      };
+      return requestId;
+    },
+    /** Fecha a intenção armada. sealed false: nada saiu e nada foi registrado no livro. */
+    settle() {
+      if (!active) fail("F3_FENCE_IDLE");
+      const out = {
+        requestId: active.requestId,
+        sealed: active.sealed,
+        complete: active.done === active.steps.length,
+        uiKeys: { ...active.uiKeys },
+      };
+      active = null;
+      return out;
+    },
+    frozen: () => frozen,
+  });
 }
 
 /** Intenções do relatório: os eventos desta execução, reexecutados sobre o ledger. */
@@ -1185,6 +1393,9 @@ export function validateF3Report(report, catalogue, { policy = F3_DUPLICATE_POLI
   if (![true, false, null].includes(g.masterPermissionsUnchanged)) fail(code);
   for (const k of ["transportErrors", "httpErrors", "pageErrors"]) if (!isCount(g[k])) fail(code);
   const after = validateIntents(report.intents, code, state);
+  // M2: relatório com eventos desta execução exige proveniência completa, mesmo BLOCKED; sem
+  // isso a execução não poderia entrar no ledger e os envios ficariam sem registro.
+  if (report.intents.events.length) validateProvenance(report.provenance, false, code);
   validateIsolation(report.isolation, after);
   plainArray(report.cases, code, F3_MATRIX.rows);
   if (catalogue === null) {
@@ -1286,7 +1497,10 @@ export function blockedF3Report({ code, catalogue, provenance, ledger = null, bo
   const record = live ? live.record : ledger === null ? null : ledgerRecord(ledger);
   const state = live ? live.st : record ? record.state : emptyState();
   const thisRun = live ? live.run : { sent: 0, events: [] };
-  const prov = provenance ?? f3ProvenanceFromEnv({});
+  // Com o livro, a proveniência é a do livro (M2); outra proveniência é divergência, não escolha.
+  if (live && provenance != null && JSON.stringify(provenance) !== JSON.stringify(live.provenance))
+    fail("F3_REPORT");
+  const prov = live ? live.provenance : (provenance ?? f3ProvenanceFromEnv({}));
   const cases = (catalogue?.cases ?? []).map((c) => {
     const r = {
       ...f3ReceiptBase(c, prov),
@@ -1426,6 +1640,9 @@ const LEDGER_RUN_KEYS = Object.freeze([
   "frontendSha",
   "harnessSha",
   "deploymentId",
+  "artifactId",
+  "sha256",
+  "reviewId",
   "events",
 ]);
 /**
@@ -1465,6 +1682,10 @@ export function validateF3Ledger(raw, catalogue) {
       if (!DIGITS.test(run.workflowRunId) || runs.has(run.workflowRunId)) fail(code);
       if (!SHA40.test(run.harnessSha) || !SHA40.test(run.frontendSha)) fail(code);
       if (!DPL.test(run.deploymentId)) fail(code);
+      // M3: a execução aponta o artefato (ID e SHA-256 do F3_REPORT.json) e a revisão que
+      // conferiu os eventos contra ele; um prefixo de log válido também passaria no replay.
+      if (!DIGITS.test(run.artifactId) || !SHA64.test(run.sha256) || !DIGITS.test(run.reviewId))
+        fail(code);
       const replay = replayRun(state, run.events);
       state = closeRun(replay.st, replay.run);
     } catch {
@@ -1487,7 +1708,15 @@ export function validateF3Ledger(raw, catalogue) {
     if (e.status !== "PASS" || !c || seen.has(e.caseId)) fail(code);
     const cited = runs.get(e.workflowRunId);
     if (!cited) fail(code);
-    for (const k of ["harnessSha", "frontendSha", "deploymentId"])
+    // A entrada herda da execução citada o produto, o artefato e a revisão: uma só fonte (M3).
+    for (const k of [
+      "harnessSha",
+      "frontendSha",
+      "deploymentId",
+      "artifactId",
+      "sha256",
+      "reviewId",
+    ])
       if (cited.run[k] !== e[k]) fail(code);
     if (!DIGITS.test(e.artifactId) || !SHA64.test(e.sha256) || !DIGITS.test(e.reviewId)) fail(code);
     if (F3_MUTATING_ORDERS.includes(c.producerOrder)) {
@@ -1715,7 +1944,8 @@ export async function runCli(args = process.argv.slice(2), env = process.env) {
   const provenance = f3ProvenanceFromEnv(env);
   let catalogue = null,
     casesRaw = null,
-    ledger = null;
+    ledger = null,
+    book = null;
   try {
     await loadSingleRequestProof({ operation: "fixtures", fresh: true });
     assertF3Scope(singleRequestFixturesScope());
@@ -1728,11 +1958,14 @@ export async function runCli(args = process.argv.slice(2), env = process.env) {
     const ledgerRaw = await readFile(join(root, F3_LEDGER_PATH), "utf8");
     if (sha256(ledgerRaw) !== F3_LEDGER_SHA256) fail("F3_LEDGER_HASH");
     ledger = validateF3Ledger(ledgerRaw, catalogue);
+    // Proveniência incompleta para o livro: nenhuma mutação pode ser registrada (M2).
+    book = createF3IntentBook({ ledger, provenance });
     fail("F3_DRIVER_PENDING");
   } catch (error) {
     // Resultado parcial ou bloqueado também gera F3_REPORT.json e SHA256SUMS (BUILD-1, obrigação 1).
     const code = CODE.test(error?.code || "") ? error.code : "F3_FAILURE";
-    const report = blockedF3Report({ code, catalogue, provenance, ledger });
+    // Com o livro, o relatório parcial carrega a execução inteira (eventos, envios, inventário).
+    const report = blockedF3Report({ code, catalogue, provenance, ledger, book });
     await writeF3Artifacts(join(root, F3_ARTIFACT_DIR), report, catalogue, casesRaw, { ledger });
     throw error;
   }

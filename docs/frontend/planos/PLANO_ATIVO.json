@@ -4454,7 +4454,7 @@
     "revisao_canonica_ultima": true
   },
   "integracao_funcional_fase3_r1": {
-    "status": "BUILD2A_INTEGRADO_BUILD2B1_EM_REVISAO",
+    "status": "BUILD2B1_INTEGRADO_BUILD2B2A_EM_REVISAO",
     "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md",
     "plano_mestre": "docs/frontend/planos/PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md",
     "matriz_blob": "bb7ce43f9c334f2f03e9aafab405addadfe5e19a",
@@ -4497,6 +4497,9 @@
     "ledger_sha256": "1d402a1a4946c2aad8cc7715fa86b45c4aae6f68ab63aab9f77d0ec94e93c236",
     "workflow_sha256": "8da83394d6018f9ac473970020bea693f8c3be996595ccc9573288eb29fe618c",
     "provas_r4_r12_r14": "conferidas em 13/11/2026 com pai d2a6557: OK (só exigem ancestralidade)",
-    "build2b1_pr": "#658 (autor Edivan5002); CHANGES_REQUESTED contaos9999 review 5900926490 no HEAD 363b451; R2 atende B1, I1-I4, M1-M5; CHANGES_REQUESTED contaos9999 review 5901072418 no HEAD 41a4331; R3 atende A, B, C, D, E; CHANGES_REQUESTED contaos9999 review 5901160351 no HEAD fcb5224; R4 atende I-A, M-1, M-2, M-3; parecer R4 APPROVE registrado como comentário 5901220713 no HEAD 4f204c9; R5 correção estrutural de causa raiz: máquina de estados única com eventos e replay no relatório e no ledger, livro só a partir de ledger validado, teste de propriedade; CHANGES_REQUESTED contaos9999 review 5903041644 no HEAD 49fc13d (referências escolhidas por quem chama); R6 âncoras do módulo (catálogo, ledger com SHA, política de produção no gate), árvore JSON pura, log canônico com estado exato, tipos de intenção, abandon, regra C ligada ao replay; CHANGES_REQUESTED contaos9999 review 5903136160 no HEAD 588532c (fato observado tratado como erro); R7 fato observado sempre registrado, livro transacional, relatório parcial com o livro, teto de eventos provado, gravador só com política de produção, entrada do ledger pela execução citada; parecer R7 APPROVE no HEAD f7e1b9f com quatro menores: M1 (gerador do teste de propriedade) e M4 (documentação) corrigidos, M2 (proveniência no livro) e M3 (execução do ledger ligada ao artefato) obrigações do BUILD-2b-2"
+    "build2b1_pr": "#658 (autor Edivan5002); CHANGES_REQUESTED contaos9999 review 5900926490 no HEAD 363b451; R2 atende B1, I1-I4, M1-M5; CHANGES_REQUESTED contaos9999 review 5901072418 no HEAD 41a4331; R3 atende A, B, C, D, E; CHANGES_REQUESTED contaos9999 review 5901160351 no HEAD fcb5224; R4 atende I-A, M-1, M-2, M-3; parecer R4 APPROVE registrado como comentário 5901220713 no HEAD 4f204c9; R5 correção estrutural de causa raiz: máquina de estados única com eventos e replay no relatório e no ledger, livro só a partir de ledger validado, teste de propriedade; CHANGES_REQUESTED contaos9999 review 5903041644 no HEAD 49fc13d (referências escolhidas por quem chama); R6 âncoras do módulo (catálogo, ledger com SHA, política de produção no gate), árvore JSON pura, log canônico com estado exato, tipos de intenção, abandon, regra C ligada ao replay; CHANGES_REQUESTED contaos9999 review 5903136160 no HEAD 588532c (fato observado tratado como erro); R7 fato observado sempre registrado, livro transacional, relatório parcial com o livro, teto de eventos provado, gravador só com política de produção, entrada do ledger pela execução citada; parecer R7 APPROVE no HEAD f7e1b9f com quatro menores: M1 (gerador do teste de propriedade) e M4 (documentação) corrigidos, M2 (proveniência no livro) e M3 (execução do ledger ligada ao artefato) obrigações do BUILD-2b-2",
+    "build2b1_merge": "fb02383 (PR #658, APPROVE 5903293851); governança P0-RCA-001 V1 pela PR #663 (merge e02d466)",
+    "build2b2_divisao": "incrementos revisados: 2b-2a fundação (M2, M3, M-A, runCli com livro, isolamento que encerra, cerca de mutação ligada ao livro); 2b-2b sessões MASTER/leitor, SYS04 e ADM01; 2b-2c+ produtores V102–V122; REQUEST só após o último",
+    "build2b2a_branch": "build/integracao-v1-fase3-b2b2-drivers"
   }
 }
