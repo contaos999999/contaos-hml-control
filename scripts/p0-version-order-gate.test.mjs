@@ -235,3 +235,12 @@ test("P0 — V4 exige também recibos V2 e não apenas da versão imediatamente 
   m.controle.integracao_por_versao.V3.cumulativa = fakeReceipt("V3", "cumulativa");
   assert.match(check(m, plan("56")).errors.join(" "), /cumulativa da V2/);
 });
+
+test("P0 — V1 RCA causal nao pode ser removida apos emenda X", () => {
+  const m = clone();
+  m.controle.rca_impacto.aplica_versoes = ["V2", "V3", "V4", "V5"];
+  assert.match(check(m, plan("75")).errors.join(" "), /P0 RCA/);
+  const m2 = clone();
+  delete m2.controle.rca_impacto.relatorio_v1;
+  assert.match(check(m2, plan("75")).errors.join(" "), /P0 RCA/);
+});
