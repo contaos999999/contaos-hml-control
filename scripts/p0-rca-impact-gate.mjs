@@ -315,17 +315,78 @@ async function main() {
       process.exitCode = 1; return;
     }
   }
+  // PLAN técnico prévio e protegido deve pertencer à PR atual. O bootstrap
+  // #661 usa a emenda PLAN #662, já integrada na main, com allowlist explícita.
+  let prNumber = null;
+  let governancePlan = null;
+  const event = String(process.env.GITHUB_EVENT_NAME || "");
+  try {
+    if (event === "pull_request") {
+      const payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, "utf8"));
+      prNumber = payload?.pull_request?.number || payload?.number;
+    } else if (event === "push") {
+      const match = /Merge pull request #(\d+)/.exec(git("log", "-1", "--format=%B"));
+      if (match) prNumber = Number(match[1]);
+    }
+    if (prNumber) {
+      const planPath = "docs/frontend/planos/P0_GOV_PLAN_" + prNumber + ".json";
+      let approved = null;
+      try { approved = JSON.parse(git("show", "origin/main:" + planPath)); }
+      catch {
+        if (prNumber === 661) {
+          const original = git("show", "origin/main:" + BOOTSTRAP_PLAN);
+          const mark = String.fromCharCode(96);
+          const pattern = new RegExp(mark +
+            "((?:scripts/|\\.github/workflows/)[^" + mark + "]+)" + mark, "g");
+          const files = [...original.matchAll(pattern)].map((m) => m[1])
+            .filter(codeFile);
+          if (original.includes("PR de BUILD:** #661") && files.length)
+            approved = { pr_number: 661, files, approved: true };
+        }
+      }
+      if (approved?.pr_number === prNumber &&
+          approved.approved === true && Array.isArray(approved.files))
+        governancePlan = approved;
+    }
+  } catch (e) {
+    console.error("P0 RCA: PLAN de governança não verificável: " + e.message);
+  }
+  let v1Scope = null;
+  if (existsSync(V1_SCOPE)) {
+    try { v1Scope = JSON.parse(readFileSync(V1_SCOPE, "utf8")); }
+    catch { v1Scope = null; }
+  }
+  const addedLines = {};
+  for (const path of changed.filter(appFile)) {
+    try {
+      addedLines[path] = git("diff", "--unified=0", base, "HEAD", "--", path)
+        .split("\n").filter((line) => line.startsWith("+") && !line.startsWith("+++"))
+        .map((line) => line.slice(1)).join("\n");
+    } catch { addedLines[path] = ""; }
+  }
   const result = validateRcaImpact({
     planId: plan.prompt_id, changed, report, reportExists: existsSync(REPORT),
     legacyAllowlist: previous.arquivos_permitidos,
     expectedFrontendSha: base, expectedBackendSha: backendSha,
+    prNumber, governancePlan, v1Scope,
+    v1ScopeChanged: changed.includes(V1_SCOPE), addedLines,
   });
   if (result.errors.length) {
     result.errors.forEach((msg) => console.error(msg));
     process.exitCode = 1; return;
   }
   if (!result.applicable) {
-    console.log("P0 RCA N/A: escopo V1 pré-validado ou diff documental, sem código futuro.");
+    if (result.version === "V1_ATTESTATION") {
+      for (const t of v1Scope.testes) {
+        if (!runCase(t)) {
+          console.error("P0 V1 SCOPE FAIL: teste não executado: " + t.caso);
+          process.exitCode = 1; return;
+        }
+      }
+      console.log("P0 V1 SCOPE PASS: allowlist, diff e testes V1 verificados.");
+    } else {
+      console.log("P0 RCA N/A: governança com PLAN protegido ou diff documental.");
+    }
     return;
   }
   const evidence = await verifyRcaOperational(report, {
