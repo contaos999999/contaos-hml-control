@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const PLAN = "docs/frontend/planos/PLANO_ATIVO.json";
+const V1_SCOPE = "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json";
+const BOOTSTRAP_PLAN = "docs/frontend/planos/P0_V2_RCA_661_REVIEW_CAUSA_RAIZ_EMENDA_PLAN_2026-11-14.md";
 const OWNER = "contaos999999";
 const REPO = OWNER + "/contaos-hml-control";
 const RANGES = {
@@ -32,7 +34,8 @@ const caseValid = (t, exists) => t && hasText(t.id) && hasText(t.caso) &&
 export function validateRcaImpact({
   planId, changed = [], report = null, reportExists = false,
   legacyAllowlist = [], expectedFrontendSha = null, expectedBackendSha = null,
-  fileExists = existsSync,
+  fileExists = existsSync, prNumber = null, governancePlan = null,
+  v1Scope = null, v1ScopeChanged = false, addedLines = {},
 }) {
   const errors = [];
   const err = (msg) => errors.push("P0 RCA: " + msg);
@@ -47,11 +50,47 @@ export function validateRcaImpact({
       const v = pathVersion(p);
       return v && v !== "V1";
     });
-    if (future.length) err("código de V2–V5 sob PLAN V1: " + future.join(", "));
-    const unknown = paths.filter((p) => appFile(p) && !legacyAllowlist.includes(p));
-    if (unknown.length)
-      err("código novo/sem classificação na allowlist V1 pré-BUILD: " + unknown.join(", "));
-    return { errors, applicable: false, version: "V1" };
+    if (future.length)
+      err("código de V2–V5 sob PLAN V1: " + future.join(", "));
+    const governancePaths = paths.filter((p) => !appFile(p));
+    // Um PLAN específico, pré-integrado na main, deve abranger os scripts do
+    // PR efetivo. Não classificar governança V2–V5 como código V1 legado.
+    if (governancePaths.length &&
+        (!governancePlan?.approved ||
+         governancePlan.pr_number !== prNumber ||
+         !Array.isArray(governancePlan.files) ||
+         governancePaths.some((p) => !governancePlan.files.includes(p)))) {
+      err("código de governança sem PLAN protegido e escopo fechado desta PR: " +
+        governancePaths.join(", "));
+    }
+    const appPaths = paths.filter(appFile);
+    if (appPaths.length) {
+      const unknown = appPaths.filter((p) => !legacyAllowlist.includes(p));
+      if (unknown.length)
+        err("código V1 novo/sem allowlist pré-BUILD: " + unknown.join(", "));
+      const introduced = appPaths.filter((p) =>
+        /(?:^|[^a-z0-9])V[2-5](?:[-_/ ]|$)|V[2-5]-(?:DIL|PRO|ACT|KB|CONTEST)/i
+          .test(String(addedLines[p] || "")));
+      if (introduced.length)
+        err("diff de V1 introduz referências V2–V5: " + introduced.join(", "));
+      if (!v1ScopeChanged || !changed.includes(V1_SCOPE) ||
+          v1Scope?.schema !== "contaos.p0.v1-scope-proof.v1" ||
+          v1Scope?.prompt_id !== id ||
+          v1Scope?.baseline_sha !== expectedFrontendSha ||
+          !Array.isArray(v1Scope?.arquivos) ||
+          v1Scope.arquivos.length !== appPaths.length ||
+          new Set(v1Scope.arquivos.map((a) => a?.arquivo)).size !== appPaths.length ||
+          appPaths.some((p) => !v1Scope.arquivos.some((a) =>
+            a.arquivo === p && a.versao === "V1" && hasText(a.justificativa))) ||
+          !Array.isArray(v1Scope?.testes) || v1Scope.testes.length === 0 ||
+          v1Scope.testes.some((t) => !caseValid(t, fileExists))) {
+        err("mudança em V1 exige declaração de escopo, dependências e testes executáveis no mesmo diff.");
+      }
+    }
+    return {
+      errors, applicable: false,
+      version: appPaths.length ? "V1_ATTESTATION" : "P0_GOV",
+    };
   }
   if (!reportExists || !changed.includes(REPORT) || !report) {
     err("BUILD " + version + " sem ficha RCA alterada no mesmo diff.");
