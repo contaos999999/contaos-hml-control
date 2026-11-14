@@ -6,7 +6,12 @@
   - este checkpoint mantém os dois blocos.
 - **R3 da #679 (14/11, tarde).** Duas sessões trabalharam no redesenho ao mesmo tempo. Uma enviou 12 commits (`f544530` a `5254040`, autor Edivan5002) com a emenda aplicada aos fluxos das ordens 2 a 8. A outra tinha um redesenho local de 30 fluxos, não enviado. O titular decidiu: "Manter a versão remota". O redesenho alternativo está preservado em `backup/f3-b2b2a-redesenho-r3-local` e não foi integrado.
 - **Acrescentado sobre a versão remota:** levantamento revisão 3 (M1 e M4), teste da barreira do NR-008, NR-008 em `REINCIDENCIA` com `novos_testes` (§12.7) e `BUILD2B2_DRIVERS.md` reescrito, com os limites deste incremento e as obrigações dos seguintes.
-- **Próximo:** revisão independente da #679 no HEAD com esses acréscimos, publicada pela contaos9999. Com APPROVE: merge, readback e 2b-2b, com `P0_GOV_PLAN` próprio.
+- **R3 da #679:** CHANGES_REQUESTED, contaos9999, review 5906840506, no HEAD `6b9aecf` (CI verde nesse HEAD; suíte F3 69/69). Quatro causas:
+  1. **Bloqueante:** o vínculo (`bind`) e o reenvio com o mesmo corpo estão na cerca, não no livro; o `bind` pode ser removido do relatório sem o validador perceber (regressão do log canônico do 2b-1).
+  2. **Importante:** o passo do fluxo não declara a origem por posição; há `if` por produtor, posições `inventario` sem tipo nas ordens 4 e 5 e barreira do NR-008 só por ordem e tipo.
+  3. **Importante:** 16 de 38 mutantes sobrevivem; o TUS não é reconhecido no preflight OPTIONS.
+  4. **Importante:** o documento afirma mais que o código (oito pontos).
+- **Próximo:** corrigir as quatro classes na própria branch (lista "O que basta para o APPROVE" da review), com prova de mutação registrada, e pedir nova revisão independente. O redesenho em `backup/f3-b2b2a-redesenho-r3-local` já tem vínculo no livro e origem por posição e serve de referência para as correções 1 e 2. Os mutantes da review estão em `r3` da PR.
 - **Regra de reversão do NR-008 (M3):** se a #679 for fechada sem merge, a PR que registrar o fechamento devolve o NR-008 a `REINCIDENCIA`, ou a `EM_MONITORAMENTO` com a prevenção anterior verificável.
 - **Fase 3:** EM EXECUÇÃO.
 
