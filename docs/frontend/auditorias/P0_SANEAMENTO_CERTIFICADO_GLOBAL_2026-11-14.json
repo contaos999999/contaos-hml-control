@@ -1,0 +1,173 @@
+{
+  "schema": "contaos.p0.saneamento.global-certificate.v1",
+  "date": "2026-11-14",
+  "version": "1.0",
+  "plan": {
+    "pr": 670,
+    "merge_sha": "5130c4a1be210f04c0a0cebed543d98f47f0c997",
+    "path": "docs/frontend/planos/P0_PLANO_UNICO_SANEAMENTO_PENDENCIAS_2026-11-14.md"
+  },
+  "artifact_scope": "ADMINISTRATIVE_PR_SANITATION_AND_GITHUB_CONTROL_ONLY",
+  "status_on_integration": "PASS_SANEAMENTO_GLOBAL_COM_HOLDS_V1_FORA_DO_ESCOPO",
+  "issue_to_close_after_readback": 675,
+  "review_and_merge_condition": "Este certificado só entra em vigor quando a PR #676 receber APPROVED da Edivan5002 no HEAD final, CI requerido no HEAD, merge protegido, readback de main, CI push e fechamento da issue #675. Se não comprovado: NO_GO.",
+  "main_before": "68529272dccf9572e99312c43aa7e6a55f8b02f5",
+  "backend_main_at_review": "1504af465b45afc846458d00e5cb63513fa298ed",
+  "results": [
+    {
+      "phase": 0,
+      "status": "PASS",
+      "object": "Inventario e LOCK de certificacoes",
+      "pr": 671,
+      "merge": "eda87e58bc9e8996d3b4f8601c27eb9a46681377"
+    },
+    {
+      "phase": 1,
+      "status": "PASS",
+      "object": "Trilha A sem request antiga",
+      "pr": 593,
+      "merge": "f654260cb3e1fd4d04ddcd644257efff15371ff9",
+      "post_merge_run": 43600236041
+    },
+    {
+      "phase": 2,
+      "status": "PASS_CLASSIFICACAO",
+      "object": "Classificacao segura V1 SYS-03 #590 e V123 #556",
+      "pr": 673,
+      "merge": "87c3c586a65f9c089601ea8647089a6ec1becbf6",
+      "holds": [
+        590,
+        556
+      ]
+    },
+    {
+      "phase": 3,
+      "status": "PASS",
+      "object": "GATE backend #220 aditivo e C13 preservada",
+      "repo": "contaos999999/develop",
+      "pr": 220,
+      "merge": "0f7725be5feb8efa028157a57f7629374366b913"
+    },
+    {
+      "phase": 4,
+      "status": "PASS",
+      "object": "Controlador #219 read-only sem dispatch",
+      "repo": "contaos999999/develop",
+      "pr": 219,
+      "merge": "1504af465b45afc846458d00e5cb63513fa298ed",
+      "native_node": {
+        "pass": 23,
+        "total": 23
+      },
+      "zero_drift_push_run": 43602633463
+    },
+    {
+      "phase": 5,
+      "status": "PASS_DESTINACAO",
+      "object": "PR #218 nao planejada, encerrada sem merge e sem alterar hash historico",
+      "repo": "contaos999999/develop",
+      "pr": 218,
+      "merged": false,
+      "closed": true,
+      "review": "https://github.com/contaos999999/develop/pull/218#issuecomment-6878700812",
+      "new_diagnostic_field_implemented": false
+    },
+    {
+      "phase": 6,
+      "status": "PASS_RULESET_NEGATIVE_AND_POSITIVE",
+      "object": "Ruleset main P0-NR required e fail-closed real",
+      "rule_id": 26495643,
+      "repo": "contaos999999/contaos-hml-control",
+      "test_pr": 676,
+      "checks": [
+        "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        "ContaOS Frontend Zero-Drift",
+        "ContaOS P0-NR-001 Integridade e Provas"
+      ],
+      "integration_id": 15368,
+      "enforcement": "active",
+      "negative": {
+        "sha": "5121fe9d784e7699dae6b5bca03073eb779cc9f5",
+        "run": 43606817378,
+        "conclusion": "failure",
+        "cause": "NR-002 fingerprint duplicado, somente branch; nenhum merge",
+        "pr_mergeable_state": "blocked"
+      },
+      "positive": {
+        "sha": "276401c020112e4de9343bdc1d19bbf338ad5b69",
+        "nr_run": 43606933376,
+        "nr_conclusion": "success",
+        "zero_drift_run": 43606933383,
+        "zero_drift_conclusion": "success",
+        "lock_run": 43606933481,
+        "lock_conclusion": "success",
+        "test_c_conclusion": "success",
+        "test_c_playwright": "skipped_nonvisual",
+        "pr_mergeable_state": "clean"
+      },
+      "ledger_main_blob": "d601bc36e625e5d93a044f6d22391695891df199",
+      "ledger_restored_blob": "d601bc36e625e5d93a044f6d22391695891df199"
+    },
+    {
+      "phase": 7,
+      "status": "PASS_SE_APROVADO_E_INTEGRADO",
+      "object": "Auditoria global segregada com readback e CI apos merge",
+      "test_pr": 676
+    }
+  ],
+  "protected_certifications": [
+    {
+      "path": "docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json",
+      "blob": "8ce1f23a2a7db6eb16f348fa5d991f063e4f17ff",
+      "meaning": "V1 historica PASS"
+    },
+    {
+      "path": "docs/frontend/auditorias/P0_V1_CERTIFICACAO_FASE8_2026-11-11.md",
+      "blob": "7045c0a02243b242835e7ea6817b850287917141",
+      "meaning": "V1 historica, tres ressalvas aceitas"
+    },
+    {
+      "path": "docs/frontend/auditorias/integracao-funcional-v1/fase1/CERTIFICADO.md",
+      "blob": "751c5e6d8cb53d56be4f51be3fee3cb0feb34f03",
+      "meaning": "Fase 1 de integracao, PASS do escopo original"
+    },
+    {
+      "path": "docs/frontend/auditorias/integracao-funcional-v1/fase2/CERTIFICADO_FASE2_NAVEGACAO_2026-11-13.md",
+      "blob": "e07d66897d39e8d57b9d6507cf97ba03ed01c7f1",
+      "meaning": "Fase 2 navegacao 52/52 PASS"
+    }
+  ],
+  "open_prs_intentionally_excluded": [
+    {
+      "number": 590,
+      "state": "HOLD_DEPENDENCY_V1",
+      "reason": "evidencia SYS-03 e certificacao concorrente, sem reabrir V1"
+    },
+    {
+      "number": 556,
+      "state": "HOLD_DEPENDENCY_V1",
+      "reason": "proposta V123 SQL nao executada"
+    }
+  ],
+  "exclusions": [
+    "V1-interna ainda pendente em trilha propria",
+    "V2-V5 futuras",
+    "GATE_PROD não autorizado",
+    "SQL/HML privado nao executado pelo saneamento"
+  ],
+  "requirements": [
+    "Edivan5002 independent review",
+    "same SHA Zero-Drift, Teste C, P0-NR PASS",
+    "Protected PR merge no bypass",
+    "GitHub main and post-push checks readback",
+    "4 protected certificate blobs immutable",
+    "Issue #675 closed only after proof"
+  ],
+  "provenance": {
+    "negative_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43606817378",
+    "positive_nr_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43606933376",
+    "positive_ci_url": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43606933383",
+    "ruleset": "https://github.com/contaos999999/contaos-hml-control/settings/rules/26495643",
+    "pr": "https://github.com/contaos999999/contaos-hml-control/pull/676"
+  }
+}
