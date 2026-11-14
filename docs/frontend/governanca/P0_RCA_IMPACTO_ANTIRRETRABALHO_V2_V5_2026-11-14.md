@@ -61,3 +61,16 @@ A cadeia de rastreabilidade contempla origem e predecessores **reais**, até V1 
 
 ## IX. Adoção, revisão e limites
 Esta emenda documental será efetiva **somente após PR, checks exigidos, auditoria independente e merge na main**, preservando a cronologia e a proteção existente. Uma futura tarefa de reforço de automação do gate deve ser planejada separadamente, não disfarçada como simples documento. Não altera produto nem produção e não certifica a V2.
+
+## X. Emenda de 14/11/2026: alcance estendido à V1 e a toda revisão
+
+Por diretriz expressa do titular, em 14/11/2026, às 00h10 (Bahia), este protocolo passa a valer também para a integração funcional V1 em curso (fases 3 a 7 do plano mestre), sem esperar a V2, e para toda revisão independente, de qualquer versão. A transcrição fiel da diretriz, com a grafia original anotada, está no `AGENTS.md`, seção P0-RCA-001.
+
+Caso que motivou a extensão: a PR #658 (BUILD-2b-1 da Fase 3) passou por sete rodadas de revisão. O registro está em `docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B1_INFRA.md`, seção "Causa raiz das rodadas de revisão". Três causas de projeto, tratadas como classe, encerraram o ciclo:
+1. regras reimplementadas no validador em vez de replay;
+2. referências escolhidas por quem chama;
+3. fato observado tratado como erro.
+
+O teste de propriedade com semente fixa e o teste de mutação passaram a ser a prova de que a correção fecha a classe e não abre falha nova.
+
+Esta emenda não revoga nem relaxa nenhum item anterior deste documento, nem as demais regras P0.
