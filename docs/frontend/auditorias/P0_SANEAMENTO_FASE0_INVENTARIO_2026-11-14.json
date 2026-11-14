@@ -1,0 +1,163 @@
+{
+  "schema": "contaos.p0.saneamento.phase0-inventory.v1",
+  "data_base": "2026-11-14",
+  "state": "FASE_0_INVENTARIADA_PENDENTE_CI_REVIEW_MERGE",
+  "plan_pr": "https://github.com/contaos999999/contaos-hml-control/pull/670",
+  "plan_merge_sha": "5130c4a1be210f04c0a0cebed543d98f47f0c997",
+  "baseline": {
+    "frontend": {
+      "repo": "contaos999999/contaos-hml-control",
+      "main_sha": "5130c4a1be210f04c0a0cebed543d98f47f0c997"
+    },
+    "backend": {
+      "repo": "contaos999999/develop",
+      "main_sha": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+      "active_task": "C-CHAT-013-CONTEXTUAL-CITATION-REPLAY-20261109",
+      "active_task_state": "ativa",
+      "allowed_paths": 7
+    },
+    "ruleset": {
+      "id": 26495643,
+      "name": "ContaOS-Zero-Drift-main",
+      "required_checks": [
+        "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        "ContaOS Frontend Zero-Drift"
+      ],
+      "p0_nr001_already_required": false,
+      "classic_branch_protection_read": "FORBIDDEN_403"
+    }
+  },
+  "certificates": {
+    "lock_file": "docs/frontend/planos/P0_SANEAMENTO_CERTIFICACOES_LOCK_2026-11-14.json",
+    "lock_state": "READ_ONLY",
+    "v1_historic": "PASS_WITH_3_ACCEPTED_RESERVATIONS",
+    "phase1": "PASS_STATIC_SCOPE_ONLY",
+    "phase2": "52_OF_52_PASS",
+    "v1_internal": "PENDENTE_OUTSIDE_MISSION",
+    "prod": "PROHIBITED",
+    "immutable_blobs": {
+      "docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json": "8ce1f23a2a7db6eb16f348fa5d991f063e4f17ff",
+      "docs/frontend/auditorias/P0_V1_CERTIFICACAO_FASE8_2026-11-11.md": "7045c0a02243b242835e7ea6817b850287917141",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase1/CERTIFICADO.md": "751c5e6d8cb53d56be4f51be3fee3cb0feb34f03",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/CERTIFICADO_FASE2_NAVEGACAO_2026-11-13.md": "e07d66897d39e8d57b9d6507cf97ba03ed01c7f1"
+    }
+  },
+  "prs": [
+    {
+      "number": 593,
+      "repo": "contaos999999/contaos-hml-control",
+      "url": "https://github.com/contaos999999/contaos-hml-control/pull/593",
+      "head_sha": "db0ca054a264655e749709617cdd821e341da303",
+      "state": "OPEN",
+      "mergeable": false,
+      "decision": "PENDENTE_REVISAO_CAUSAL",
+      "risk": "R14 historic request reused after unrelated merges; prior Chromium apt DNS failure; no new authenticated HML proof.",
+      "required_action": "Review equivalence, reconcile workflow only, tests of request detection, then choose MERGED_PROTECTED or CLOSED_SUPERSEDED.",
+      "dependencies": [
+        "Fase 1",
+        "CERT_V1_PHASE2_READ_ONLY"
+      ]
+    },
+    {
+      "number": 590,
+      "repo": "contaos999999/contaos-hml-control",
+      "url": "https://github.com/contaos999999/contaos-hml-control/pull/590",
+      "head_sha": "277ae3226b53e95c979b646f63253150154086fc",
+      "state": "OPEN",
+      "mergeable": false,
+      "decision": "PENDENTE_REVISAO_CAUSAL",
+      "risk": "Has alternate final V1 certificate document; merging it may contradict already accepted PASS/reservations.",
+      "required_action": "Classify without certificate rewrite; HOLD_DEPENDENCY_V1 or CLOSED_SUPERSEDED with proof of replacement.",
+      "dependencies": [
+        "Fase 2",
+        "CERT_V1_HISTORIC_IMMUTABLE"
+      ]
+    },
+    {
+      "number": 556,
+      "repo": "contaos999999/contaos-hml-control",
+      "url": "https://github.com/contaos999999/contaos-hml-control/pull/556",
+      "head_sha": "6183d3959dfae9ecb23f55d8401a57acb79612dc",
+      "state": "DRAFT",
+      "mergeable": false,
+      "decision": "PENDENTE_REVISAO_CAUSAL",
+      "risk": "SQL V123 metadata proposal unexecuted; not evidence of private HML or certification.",
+      "required_action": "Assess relevance; hold as V1 future reference or close as superseded, no SQL execution.",
+      "dependencies": [
+        "Fase 2",
+        "CERT_V1_HISTORIC_IMMUTABLE"
+      ]
+    },
+    {
+      "number": 220,
+      "repo": "contaos999999/develop",
+      "url": "https://github.com/contaos999999/develop/pull/220",
+      "head_sha": "98a669614efdf92ddfff3d3fb1e8200e042b306a",
+      "state": "OPEN",
+      "mergeable": true,
+      "decision": "PENDENTE_REVISAO_CAUSAL",
+      "risk": "Edits active-task.json removing C13 history and replacing technical_subtask while C13 is active.",
+      "required_action": "Require additive/non-destructive ownership authorization; do not merge direct context overwrite.",
+      "dependencies": [
+        "Fase 3",
+        "BACKEND_C13_ACTIVE"
+      ]
+    },
+    {
+      "number": 219,
+      "repo": "contaos999999/develop",
+      "url": "https://github.com/contaos999999/develop/pull/219",
+      "head_sha": "ec40f1a3f4c8728a5960c11c28afdb2d5",
+      "state": "DRAFT",
+      "mergeable": true,
+      "decision": "PENDENTE_REVISAO_CAUSAL",
+      "risk": "Zero-Drift prior FAILURE: 3 controller files out of current scope; must follow GATE #220.",
+      "required_action": "After #220 approved, rebase with main, TDD/CI/review for read-only controller. dispatch_allowed=false.",
+      "dependencies": [
+        "Fase 4",
+        "PR_BACKEND_220_APPROVED"
+      ]
+    },
+    {
+      "number": 218,
+      "repo": "contaos999999/develop",
+      "url": "https://github.com/contaos999999/develop/pull/218",
+      "head_sha": "45834cfd23acc133e7090ab5b7fad680393e8cbb",
+      "state": "DRAFT",
+      "mergeable": true,
+      "decision": "PENDENTE_REVISAO_CAUSAL",
+      "risk": "Zero-Drift prior FAILURE out-of-scope browser harness; Restore Isolado FAILURE protected_sha256 changed; browser partial success not substitute.",
+      "required_action": "Separate RCA for scope vs protected hash, PLAN, full restore/no secret leak, or supersede with proof.",
+      "dependencies": [
+        "Fase 5",
+        "NO_RETROACTIVE_CERTIFICATE_REWRITES"
+      ]
+    }
+  ],
+  "phase_order": [
+    "FASE_0_INVENTARIO",
+    "FASE_1_FRONT_593",
+    "FASE_2_FRONT_590_556",
+    "FASE_3_BACK_220",
+    "FASE_4_BACK_219",
+    "FASE_5_BACK_218",
+    "FASE_6_P0_NR_REQUIRED_RULESET",
+    "FASE_7_GLOBAL_AUDIT"
+  ],
+  "rules": {
+    "no_certification_reversal": true,
+    "no_prod": true,
+    "no_new_v1_cert": true,
+    "no_merges_to_reduce_pr_count": true,
+    "independent_review_account": "Edivan5002",
+    "implementer_account": "contaos9999",
+    "status_policy": [
+      "MERGED_PROTECTED",
+      "CLOSED_SUPERSEDED",
+      "HOLD_DEPENDENCY",
+      "CHANGES_REQUESTED"
+    ],
+    "progress_requires_proof": true
+  },
+  "phase0_criterion": "CI/review/merge deste inventário, readback baseline e hashes certificações; nenhuma PR operacional alterada."
+}

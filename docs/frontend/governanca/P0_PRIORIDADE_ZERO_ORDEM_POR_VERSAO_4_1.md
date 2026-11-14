@@ -61,9 +61,9 @@ Após V5 certificada, executar e evidenciar **todos os regulares 67–74, 90–9
 **SISTEMA DE FONTES:** catálogo original `contaos999999/develop/docs/prompts/PROMPT_TRACKS_4_1.json`, commit `a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`; manual regular SHA256 `8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e`, caderno atômico SHA256 `d9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8`.
 
 
-## EMENDA PROPOSTA P0-RCA-001 (14/11/2026): causa raiz, prevenção de regressões e certificação cumulativa
+## EMENDA P0-RCA-001 INTEGRADA DOCUMENTALMENTE (14/11/2026): causa raiz, prevenção de regressões e certificação cumulativa
 
-> **Estado: proposta em PR.** Esta seção entra em vigor somente após revisão independente, checks e merge protegido. Até lá preserva-se o protocolo já vigente e nenhum novo certificado é presumido.
+> **Estado documental:** integrada à `main` pela PR #659 (merge `77bb34cd00afc863bd31055984b7275a4eb0310d`). **Limites:** revisão independente formal da PR #659 não comprovada; implementação automatizada somente será declarada vigente após testes, revisão própria e merge protegido do BUILD técnico autorizado pelo PLAN #660. Não presumir certificados internos/cumulativos PASS nem alterar PROD.
 
 Para V2–V5, cada falha, inclusive pequena, requer **RCA confirmada antes de BUILD**, teste de reprodução, análise prévia de blast radius (telas, CRUD, dados, APIs/RPC, RBAC/RLS, organização, cache, versão anterior, NFRs, CI), teste negativo de falhas introduzíveis, correção na origem, regressão direcionada e revisão independente. A primeira tentativa fracassada exige nova evidência; **duas tentativas sem eliminar a falha ou regressão repetida** obrigam revisão causal ampliada e proíbem novas tentativas cegas. Nenhum teste, guard, permissão ou contrato pode ser enfraquecido para satisfazer CI. Falhas externas transitórias exigem diagnóstico e retries limitados, não reexecuções em círculo.
 
