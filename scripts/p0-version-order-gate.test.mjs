@@ -29,13 +29,31 @@ function preV1({ seen = ["43"] } = {}) {
   return m;
 }
 
-test("P0 — V1 certificada abre exatamente V2/44", () => {
+const fakeReceipt = () => ({
+  status: "PASS",
+  pr_merge_sha: "a".repeat(40),
+  arquivo_evidencia: "docs/frontend/auditorias/integracao-funcional-v1/fase1/CERTIFICADO.md",
+  matriz_arquivo: "docs/frontend/auditorias/integracao-funcional-v1/fase1/TELAS.csv",
+  grafo_arquivo: "docs/frontend/auditorias/integracao-funcional-v1/fase1/GRAFO.mmd",
+  ci_url: "https://github.com/contaos999999/contaos-hml-control/actions/runs/12345",
+  revisao_independente_url: "https://github.com/contaos999999/contaos-hml-control/pull/123#pullrequestreview-12345",
+});
+const v1Integrated = (m) => {
+  m.controle.integracao_por_versao.V1.interna = fakeReceipt();
+  return m;
+};
+
+test("P0 — V1 funcional certificada não libera V2 sem integracao interna", () => {
   const result = check(clone(), plan("44"));
-  assert.deepEqual(result.errors, []);
+  assert.match(result.errors.join(" "), /integracao interna da V1/);
   assert.equal(result.next, "44");
   assert.deepEqual(original.controle.regulares_pendentes_concluidos_com_evidencia, ["43", "75"]);
   assert.equal(original.controle.certificados_por_versao.V1.status, "PASS");
   assert.equal(result.pendingVersion, "V2");
+});
+
+test("P0 — V1 interna comprovada permite PLAN V2/44", () => {
+  assert.deepEqual(check(v1Integrated(clone()), plan("44")).errors, []);
 });
 
 test("P0 — permite PLAN 43/V1-22 antes da certificação V1 e antes do próprio recibo", () => {
@@ -112,6 +130,7 @@ test("P0 — V1 com recibos, 00–42 auditados e certificado rastreável permite
   c.arquivo_evidencia = "docs/frontend/governanca/P0_PRIORIDADE_ZERO_ORDEM_POR_VERSAO_4_1.md";
   c.ci_url = "https://github.com/contaos999999/contaos-hml-control/actions/runs/999";
   m.blocos[0].certificado = "PASS";
+  v1Integrated(m);
   assert.deepEqual(check(m, plan("44")).errors, []);
 });
 
@@ -125,4 +144,57 @@ test("P0 — proíbe aprovação automática de produção", () => {
   const m = clone();
   m.restricoes["produçao_somente_com_aprovacao_expressa"] = false;
   assert.match(check(m, plan("44")).errors.join(" "), /Restrições constitucionais/);
+});
+
+
+test("P0 — certificado interno V1 sem revisão independente é FAIL", () => {
+  const m = v1Integrated(clone());
+  m.controle.integracao_por_versao.V1.interna.revisao_independente_url = null;
+  assert.match(check(m, plan("44")).errors.join(" "), /revisao independente/);
+});
+
+test("P0 — certificado interno V1 sem grafo é FAIL", () => {
+  const m = v1Integrated(clone());
+  m.controle.integracao_por_versao.V1.interna.grafo_arquivo = null;
+  assert.match(check(m, plan("44")).errors.join(" "), /grafo/);
+});
+
+test("P0 — V3 depende de recibos internos e cumulativos V2", () => {
+  const m = v1Integrated(clone());
+  m.controle.regulares_pendentes_concluidos_com_evidencia = ["43", "75", ...m.blocos[1].regular_ids];
+  m.blocos[1].certificado = "PASS";
+  const v2 = m.controle.certificados_por_versao.V2;
+  Object.assign(v2, {
+    status: "PASS",
+    regulares_comprovados: [...m.blocos[1].regular_ids],
+    atomic_ids_comprovados: ["000", ...m.blocos[1].atomic_ids],
+    pr_merge_sha: "b".repeat(40),
+    arquivo_evidencia: "docs/frontend/governanca/P0_PRIORIDADE_ZERO_ORDEM_POR_VERSAO_4_1.md",
+    ci_url: "https://github.com/contaos999999/contaos-hml-control/actions/runs/12345",
+  });
+  const blocked = check(m, plan("50")).errors.join(" ");
+  assert.match(blocked, /integracao interna da V2/);
+  assert.match(blocked, /integracao cumulativa da V2/);
+  m.controle.integracao_por_versao.V2.interna = fakeReceipt();
+  assert.match(check(m, plan("50")).errors.join(" "), /integracao cumulativa da V2/);
+  m.controle.integracao_por_versao.V2.cumulativa = fakeReceipt();
+  assert.deepEqual(check(m, plan("50")).errors, []);
+});
+
+test("P0 — não valida PASS de integração antes do certificado funcional da versão", () => {
+  const m = v1Integrated(clone());
+  m.controle.integracao_por_versao.V2.interna = fakeReceipt();
+  assert.match(check(m, plan("44")).errors.join(" "), /antecipado ao certificado funcional/);
+});
+
+test("P0 — não permite enfraquecer o protocolo RCA", () => {
+  const m = clone();
+  m.restricoes.rca_impacto_obrigatorio = false;
+  assert.match(check(m, plan("75")).errors.join(" "), /P0 RCA/);
+});
+
+test("P0 — PR de PLAN V2/44 também fica bloqueada sem interna V1", () => {
+  const m = clone();
+  const changed = ["docs/frontend/planos/PROMPT_44_V2_01.md"];
+  assert.match(check(m, plan("75"), changed).errors.join(" "), /integracao interna da V1/);
 });
