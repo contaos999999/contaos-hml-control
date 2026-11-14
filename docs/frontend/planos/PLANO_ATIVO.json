@@ -4463,14 +4463,18 @@
     "build_allowlist": [
       "scripts/hml/integracao-v1-fase3.mjs",
       "scripts/hml/integracao-v1-fase3.test.mjs",
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "scripts/hml/prepare-visual-fixtures.mjs",
+      "scripts/hml/prepare-visual-fixtures.test.mjs",
       ".github/workflows/contaos-trilha-a-fixtures.yml",
       "docs/frontend/auditorias/integracao-funcional-v1/fase3/**"
     ],
-    "workflow_mudanca_limitada": "paths dos dois novos arquivos; env CONTAOS_HML_SYNTHETIC_2_EMAIL no job hml; invocação do executor F3 quando o escopo for resolvido",
+    "workflow_mudanca_limitada": "contaos-trilha-a-fixtures.yml: (a) paths dos dois arquivos F3; (b) job protocol inclui-os em node --test/eslint/prettier; (c) job private (environment hml) expõe CONTAOS_HML_SYNTHETIC_2_* só no env do passo do executor F3 após native-guard e request-revalidate; (d) passos Trilha A e F3 condicionados ao escopo exposto pela revalidação",
     "request_nonce": "integracao-v1-fase3-rel-20261113-r1",
     "request_operation": "fixtures",
     "organizacao": "nova organização sintética exclusiva da Fase 3, criada via SYS04; e87f7e68 sem mutação",
-    "segundo_usuario_sintetico": "autorizado pelo titular; criado pelo titular na HML; secrets CONTAOS_HML_SYNTHETIC_2_EMAIL/_PASSWORD",
+    "segundo_usuario_sintetico": "autorizado pelo titular; criado pelo titular na HML; perfil leitor na org F3; login só leitura com logout comprovado; secrets CONTAOS_HML_SYNTHETIC_2_EMAIL/_PASSWORD",
     "orcamento_intencoes": {
       "total": 60,
       "por_execucao": 30
@@ -4478,6 +4482,9 @@
     "produto_autorizado": false,
     "backend_autorizado": false,
     "prod_autorizado": false,
-    "merge_metodo": "merge commit"
+    "merge_metodo": "merge commit",
+    "escopo_protocolo": "resolveFixturesScope: TRILHA_A | INTEGRACAO_V1_FASE3_REL; exclusão mútua fail-closed nos dois executores",
+    "cleanup": "divergência aprovada da seção 16.2: isolamento sem exclusão; cleanupStatus ISOLATED_NO_DELETE | NO_MUTATION | CLEANUP_FAILED",
+    "separacao_papeis": "autor da PR #655 Edivan5002; aprovação por contaos9999; nas PRs seguintes aprova a identidade não autora"
   }
 }
