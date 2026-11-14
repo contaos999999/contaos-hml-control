@@ -116,7 +116,9 @@ export function validateIntegrationReceipts(m, plan, changed = [], fileExists = 
     gate(eligible(id), "PLAN/BUILD " + id);
   }
   if (m?.controle?.rca_impacto?.schema !== "contaos.p0.rca-policy.v1" ||
-      !same(m?.controle?.rca_impacto?.aplica_versoes, ["V2", "V3", "V4", "V5"]) ||
+      !same(m?.controle?.rca_impacto?.aplica_versoes, ["V1", "V2", "V3", "V4", "V5"]) ||
+      m?.controle?.rca_impacto?.relatorio_v1 !== "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json" ||
+      m?.controle?.rca_impacto?.relatorio_schema_v1 !== "contaos.p0.v1-scope-proof.v2" ||
       m?.controle?.rca_impacto?.relatorio_ativo !== "docs/frontend/rca/P0_RCA_ATIVO.json" ||
       m?.controle?.rca_impacto?.relatorio_schema !== "contaos.p0.rca-report.v2" ||
       m?.controle?.rca_impacto?.prova_operacional !== "RED_GITHUB_E_GREEN_EXECUTADO_NO_SHA" ||
