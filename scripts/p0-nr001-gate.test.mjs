@@ -82,6 +82,16 @@ const mockGet=(bad={})=>async(path)=>{
   if(path.endsWith("/actions/runs/45678"))
     return {name:"ContaOS P0-NR-001 Anti-Reincidencia",
       conclusion:bad.nrCi||"success",head_sha:sha};
+  if(path.endsWith("/actions/runs/45678/jobs?per_page=100"))
+    return {total_count:1,jobs:[{
+      name:"ContaOS P0-NR-001 Integridade e Provas",
+      conclusion:bad.nrJob||"success",
+      steps:[
+        {name:"Testes negativos de classes conhecidas e falso resolvido",
+          conclusion:bad.nrStep||"success"},
+        {name:"P0-NR-001 ledger com comprovantes reais",conclusion:"success"},
+      ],
+    }]};
   if(path.endsWith("/pulls/"+prNo+"/reviews?per_page=100"))
     return [{id:888,state:bad.review||"APPROVED",
       user:{login:bad.reviewer||"Edivan5002"},commit_id:sha,
@@ -157,4 +167,26 @@ test("P0 NR LIVE — revisoes incompletas por 100 respostas nao provam aprovacao
     return mockGet()(path);
   };
   assert.match((await verifyResolvedLive(resolved(),api)).join(" "),/nao comprovados/);
+});
+
+test("P0 NR — historico NR-009 registrado na main jamais pode ser apagado",()=>{
+  const baseline=clone().cases;
+  baseline.push({...structuredClone(baseline[0]),id:"NR-009",fingerprint:"NOVA_CLASSE_HISTORICA"});
+  const err=validateLedger(clone(),{baselineCases:baseline}).errors.join(" ");
+  assert.match(err,/incidente historico nao pode ser removido/);
+});
+test("P0 NR — reincidencia nao admite teste negativo ficticio",()=>{
+  const x=clone();const item=x.cases[0];item.estado="REINCIDENCIA";
+  item.revisao_causal_ampliada=true;
+  item.diagnostico_ampliado="nova hipótese comprovada";
+  item.novos_testes=[{arquivo:"scripts/nao-existe.test.mjs",caso:"Causa reproduzida"}];
+  fail(x,/novo teste de reincidencia nao verificavel/);
+});
+test("P0 NR LIVE — job NR SUCCESS mas teste de prevencao SKIPPED e NO-GO",async()=>{
+  assert.match((await verifyResolvedLive(resolved(),mockGet({nrStep:"skipped"})))
+    .join(" "),/nao comprovados/);
+});
+test("P0 NR LIVE — workflow SUCCESS com job preventivo SKIPPED e NO-GO",async()=>{
+  assert.match((await verifyResolvedLive(resolved(),mockGet({nrJob:"skipped"})))
+    .join(" "),/nao comprovados/);
 });
