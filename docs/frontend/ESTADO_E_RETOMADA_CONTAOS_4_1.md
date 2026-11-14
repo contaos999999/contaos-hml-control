@@ -11,7 +11,13 @@
   2. **Importante:** o passo do fluxo não declara a origem por posição; há `if` por produtor, posições `inventario` sem tipo nas ordens 4 e 5 e barreira do NR-008 só por ordem e tipo.
   3. **Importante:** 16 de 38 mutantes sobrevivem; o TUS não é reconhecido no preflight OPTIONS.
   4. **Importante:** o documento afirma mais que o código (oito pontos).
-- **Próximo:** corrigir as quatro classes na própria branch (lista "O que basta para o APPROVE" da review), com prova de mutação registrada, e pedir nova revisão independente. O redesenho em `backup/f3-b2b2a-redesenho-r3-local` já tem vínculo no livro e origem por posição e serve de referência para as correções 1 e 2. Os mutantes da review estão em `r3` da PR.
+- **R4 da #679:** as quatro classes foram corrigidas na própria branch.
+  1. O vínculo (`bind`) virou regra geral do livro: corpo, vagas e referências por passo, selo e vínculo numa transação, reenvio só com vínculo idêntico, desfecho só com vínculo, e o resumo expõe o hash dos vínculos.
+  2. O passo declara `inventory` e `derived` (ADM01 e V102 inclusive). Um verificador único usa a regra do livro, toda recusa de origem congela, e não há `if` por produtor. A barreira do NR-008 lê a linha inteira do levantamento.
+  3. O TUS é bloqueado desde o preflight. Prova de mutação: 37 de 37 mutantes mortos, registrada em `BUILD2B2_DRIVERS.md`.
+  4. O documento cita teste e mutante para cada regra, e os limites têm critério de aceite.
+- **Verificação local da R4:** suíte F3 com 75 de 75; `eslint` e `prettier` limpos; gates P0-NR-001 e de ordem por versão PASS.
+- **Próximo:** nova revisão independente da #679, publicada pela contaos9999. Com APPROVE: merge, readback e 2b-2b, com `P0_GOV_PLAN` próprio.
 - **Regra de reversão do NR-008 (M3):** se a #679 for fechada sem merge, a PR que registrar o fechamento devolve o NR-008 a `REINCIDENCIA`, ou a `EM_MONITORAMENTO` com a prevenção anterior verificável.
 - **Fase 3:** EM EXECUÇÃO.
 
@@ -37,7 +43,7 @@
   - cerca tipada pela lista fechada e evento de vínculo;
   - testes da §12.6.
 - **Desvio registrado:** os commits `0dc9e60` e `20b7ff3` da #678 saíram com autor git `contaos9999`, a identidade revisora, em vez do padrão `Claude` das PRs anteriores. O histórico não foi reescrito (sem force push), e os commits seguintes voltaram ao padrão. O conteúdo foi revisado de forma independente.
-## Integração funcional V1: Fase 3, BUILD-2b-2a em revisão, 14/11/2026 Bahia
+## Integração funcional V1: Fase 3, BUILD-2b-2a em revisão, 14/11/2026 Bahia (histórico da R1 e da R2; os números deste bloco são anteriores à emenda 1)
 
 - **BUILD-2b-2 em incrementos.** O titular pediu a execução integral ("Execute integralmente"). O levantamento mostrou que o BUILD-2b-2 tem o porte do preparador da Trilha A, por isso sai em PRs revisadas: 2b-2a (fundação), 2b-2b (sessões do MASTER e do `leitor`, SYS04 e ADM01) e 2b-2c em diante (produtores V102 a V122). Nenhum REQUEST antes do último incremento. O detalhe está em `fase3/BUILD2B2_DRIVERS.md`.
 - **2b-2a, branch `build/integracao-v1-fase3-b2b2-drivers`:**

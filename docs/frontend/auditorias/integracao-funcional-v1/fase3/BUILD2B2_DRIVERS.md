@@ -57,10 +57,10 @@ Nada muda no YAML, no auditor, no preparador, em `src/**`, em `types.ts`, nas de
   - Uma vaga só pode ficar num campo `free` de topo do passo, declarado com fonte.
   - A primeira ocorrência captura o valor; as seguintes precisam ser iguais.
   - Os valores capturados saem em `settle().slots`.
-- **Referências só do inventário.** Todo UUID literal do corpo armado, inteiro ou dentro de texto, em qualquer nível, precisa ser a organização F3 ou uma entidade `organizacao` ou `registro` do livro. Uma referência a organização, contrato ou registro alheio falha em `arm` com `F3_FOREIGN_ORG` (PLAN 9.3).
+- **Referências só do inventário.** Todo UUID literal do corpo armado, inteiro ou dentro de texto, em qualquer nível, precisa ser a organização F3 ou uma entidade `organizacao` ou `registro` do livro (`F3_FOREIGN_ORG`). As posições declaradas em `inventory` e `derived` têm regra própria, descrita na seção R4.
 - **Regra do livro ao armar.** `arm` chama `book.check`, que roda a mesma `applyEvent` sobre uma cópia do estado. Tipo, duplicidade, pré-requisito antes da organização e principal repetida falham ao armar, e não no clique. `producerOrder` precisa ser inteiro e chave própria de `F3_MUTATION_FLOWS`.
-- **Reenvio depois de readback.** `arm({ resendOf })` reaproveita a intenção, e o primeiro envio vira `book.resend`, contando um envio. A chave da UI vai como literal, com o valor capturado antes.
-- **Selo antes da saída.** A primeira requisição da intenção sela no livro antes de sair. Se o livro recusa, a requisição é bloqueada e nada conta.
+- **Reenvio depois de readback.** `arm({ resendOf })` reaproveita a intenção e arma o mesmo corpo, com as vagas de novo. O primeiro envio grava `resend` e o vínculo numa só transação e conta um envio. O livro exige que o vínculo do reenvio seja idêntico ao original.
+- **Selo e vínculo antes da saída.** A primeira requisição da intenção grava o selo e o vínculo do passo no livro, numa só transação, antes de sair. Os passos seguintes gravam o vínculo. Se o livro recusa, a requisição é bloqueada e nada conta.
 - **Resposta.** No estágio RESPONSE, a resposta de um passo admitido precisa ter o mesmo ticket, a mesma URL, o mesmo método e o mesmo corpo canônico.
 - **Desvio congela a cerca.** Qualquer desvio bloqueia a requisição e congela a cerca; a cerca nativa encerra o contexto em qualquer recusa.
 - **Desfecho pelo driver.** `confirm`, `rejected` ou `uncertain` é decidido pelo driver, pela UI e pela releitura. `settle` informa se algo saiu (`sealed`) e se o fluxo terminou (`complete`).
@@ -90,49 +90,95 @@ Os grupos C, D, E e G foram corrigidos na própria R2. Os grupos A, B e F depend
 
 **Causa raiz comum (NR-008).** A cerca estava sendo desenhada antes de se levantar o fluxo de rede de cada produtor. A barreira agora é dupla: o levantamento vem antes de qualquer fluxo, e um teste liga cada fluxo declarado a uma linha do levantamento.
 
-### R3: emenda 1 aplicada ao executor (HEAD desta PR)
+### R3 (HEAD `6b9aecf`): REQUEST_CHANGES, review 5906840506
 
-Este incremento declara os fluxos das ordens 2 a 8: SYS04, ADM01, V102, V103, V105 e V106. Os fluxos das ordens 9 a 20 entram com os drivers, do 2b-2c em diante. O teste da barreira guarda a lista fechada das linhas do levantamento ainda sem fluxo, e essa lista tem de encolher a cada incremento.
+A R3 aplicou a emenda aos fluxos das ordens 2 a 8, mas a revisão achou quatro causas:
+1. **Bloqueante:** o vínculo e o reenvio com o mesmo corpo estavam na cerca, não no livro, e o `bind` podia ser removido do relatório sem o validador perceber.
+2. **Importante:** o passo não declarava a origem por posição. Havia `if` por produtor e posições sem tipo no ADM01 e no V102.
+3. **Importante:** 16 de 38 mutantes sobreviviam, e o TUS não era reconhecido no preflight.
+4. **Importante:** este documento afirmava mais do que o código fazia.
 
-| Item da emenda ou da R2 | O que o código faz neste incremento |
+### R4: correção por classe (HEAD desta PR)
+
+Este incremento declara os fluxos das ordens 2 a 8: SYS04, ADM01, V102, V103, V105 e V106. Cada afirmação abaixo cita o teste que a prova e os mutantes que morrem quando a regra é retirada. Os nomes dos testes começam com "F3 R3 RED", e os mutantes estão listados na seção "Prova de mutação".
+
+| Regra (onde vive) | Teste | Mutantes |
+|---|---|---|
+| Cada passo que sai gera um `bind` no livro: SHA-256 do corpo canônico, SHA-256 de cada valor de vaga e as referências usadas. Vale para qualquer fluxo, sem condição por produtor (`bindIntent`, em `applyEvent`) | "(1): o vínculo é regra do livro…" | R06, R11, R12, R32 |
+| Selo (ou reenvio) e vínculo entram numa só transação do livro (`apply` com vários eventos) | "intenção armada sai uma vez…"; "(1)…" | R32 |
+| Desfecho (`confirm`, `reject`, `uncertain`) só com vínculo no envio corrente. Confirmação só com todos os passos do fluxo declarado | "(1)…"; "(1 e 2): valor gerado…" | R04, R05 |
+| Reenvio: só ação com chave, uma vez, e com vínculo idêntico ao original (corpo, vagas e referências) | "(1)…"; "V106 preserva a chave no reenvio"; "V106 recusa chave nova no reenvio"; "ações sem chave rejeitam reenvio…" | R01, R02, R03 |
+| O resumo de cada intenção expõe o SHA-256 dos vínculos. Remover ou trocar um `bind` no relatório quebra o replay | "(1)…" | R17 |
+| Valor de vaga (chave da UI ou ID capturado) é novo para o livro: não é a e87, a organização F3, entidade do inventário, `requestId` (inclusive o da própria intenção) nem valor de outra intenção | "(1 e 2): valor gerado…"; "(2): na cerca, ADM01 e V102…" | R07, R08, R09, R10 |
+| Posição `inventory`: a organização F3, ou um `registro` isolado criado pelo produtor declarado. Declarada em todos os passos das ordens 4 a 8 | "(2): origem por posição dirigida pela declaração…" | R13, R14, R15, R36 |
+| Posição `derived` (versão esperada de V103 e V106): refere-se à entidade da posição de inventário declarada e fica registrada no vínculo. A cerca exige que seja a versão que a UI do MASTER leu por último na organização F3 | "(2)…declaração…"; "(2 e 3): versão observada…" | R16, R18, R19, R22 a R25, R37 |
+| `arm` simula o selo e os vínculos no próprio livro. Toda recusa de origem (`F3_FOREIGN_ORG` ou `F3_VALUE_ORIGIN`) congela a cerca | "(2): na cerca…"; "vaga da UI em qualquer posição…" | R20, R21 |
+| TUS: bloqueado com `F3_UPLOAD_RESUMABLE` desde o preflight OPTIONS, em qualquer método e nas duas origens | "(3): TUS bloqueado desde o preflight…" | R26, R27 |
+| Esperas: `observeF3Wait` faz uma leitura por chamada e devolve `READY`, `PENDING` ou `BLOCKED` com o código da espera. O prazo vale antes e depois da leitura. O instante do selo é informado pelo driver, e um instante no futuro é recusado | "(3)…"; "espera vencida ou recusada…"; "prazos e códigos das cinco esperas são fixos" | R28, R29 |
+| Âncoras: 40 por execução, 11 pré-requisitos | testes de orçamento e de tipos de intenção | R30, R31 |
+| Barreira do NR-008: a linha do levantamento é lida inteira (rótulo, alvo, posições tipadas e coluna da chave no reenvio, conferida contra o livro nas 30 linhas). Linha sem fluxo só na lista fechada, por linha | "(NR-008): cada fluxo declarado tem linha…" | R33, R34, R35 |
+
+**Mudança de formato.** O evento `bind` passou a ter `step`, `bodySha256`, `slots` e `refs`. Cada intenção do resumo ganhou o campo `binds`. O teto de eventos por execução foi a (8 + 2 × 4) × 60 = 960. O ledger está vazio e nenhum relatório foi emitido, então não há migração.
+
+### Prova de mutação da R4
+
+São 37 mutantes, um por vez, numa cópia de trabalho separada. Os 37 derrubam a suíte.
+
+| Mutantes | Regra retirada |
 |---|---|
-| Âncoras (§12.2 e §12.1) | `F3_BUDGET` = 60 no total, 40 por execução, 39 previstas. `F3_MAX_PREREQUISITES` = 11. `F3_MAX_EVENTS_PER_RUN` = 9 × 60 |
-| A, posição `inventario` | Cada passo declara `inventory`: o campo e a ordem do produtor que criou a entidade. `arm` exige a organização F3 ou um `registro` isolado criado por aquela ordem. Vale para V103, V105 e V106. Valor errado congela a cerca e falha com `F3_FOREIGN_ORG` |
-| A, posição `derivado` (versão esperada) | `observeVersion` registra a versão lida pela UI do MASTER, na organização F3, para o contratante (V103) e para o contrato (V106). `arm` exige `p_versao_esperada` igual à versão observada (`F3_VALUE_ORIGIN`). Uma leitura atrasada não substitui uma versão mais nova |
-| A, posição `gerado_ui` (V106) | A chave da UI não pode ser a e87, a organização F3, uma entidade do inventário, um `requestId` nem uma chave já usada por outra intenção |
-| B, reenvio | Evento `bind` no livro para o V106, com o SHA-256 do corpo canônico e o da chave. O reenvio exige o mesmo corpo. Ações sem chave (ordens 2, 5, 6, 7, 14, 16, 18 e 20, e os pré-requisitos de V118 e V119) nunca são reenviadas, só relidas (`F3_UNCERTAIN_RESEND`) |
-| §12.3, TUS | Tentativa de envio resumível congela a cerca, e a sessão encerra com `F3_UPLOAD_RESUMABLE` |
-| §12.4, esperas | `F3_WAIT_POLICIES` (W1 a W5, prazos e códigos) e `observeF3Wait`: uma leitura por chamada, com prazo contado do selo. O resultado é `READY`, `PENDING` ou `BLOCKED` com o código da espera |
+| R01, R02, R03 | reenvio de ação sem chave; segundo reenvio; vínculo do reenvio diferente |
+| R04, R05, R06 | desfecho sem vínculo; confirmação sem todos os passos; vínculo fora de ordem |
+| R07 a R10 | vaga igual a entidade, a `requestId`, à e87 ou a valor de outra intenção |
+| R11, R12 | número de vagas e posições de referência livres |
+| R13 a R16 | inventário sem produtor de origem, sem exigir registro, sem conferir a organização; versão em posição errada |
+| R17 | resumo sem o hash dos vínculos |
+| R18, R19 | versão: basta existir observação; sem observação |
+| R20, R21 | recusa de origem sem congelar; `arm` sem simular no livro |
+| R22 a R25 | `observeVersion`: outra organização, resposta não 200, sem filtro da organização, leitura atrasada |
+| R26, R27 | TUS só na origem da API; TUS sem código próprio |
+| R28, R29 | espera sem prazo depois da leitura; selo no futuro |
+| R30, R31 | 12 pré-requisitos; 41 por execução |
+| R32 | cerca sem gravar o vínculo |
+| R33, R34, R35 | levantamento: outro RPC na linha do V103; V106 marcado sem chave; linha da variante do ADM01 removida |
+| R36, R37 | V102 sem `inventory`; V103 sem `derived` |
 
-**Limites deste incremento, que viram obrigação dos seguintes:**
-- O vínculo (`bind`) e a regra da chave da UI estão escritos só para o V106. Os fluxos com chave das ordens 9 a 20 e o ADM01 precisam da mesma regra quando seus drivers entrarem. A extensão deve ser por regra geral, não por produtor.
-- O modelo de fluxo tem um único pré-requisito por produtor. A §12.1 pede uma ação própria para cada um dos 11. O modelo precisa mudar antes do primeiro driver com mais de um pré-requisito (V107, V108 e V109).
-- A variante do ADM01 sem convite e a origem `usuario_sintetico` entram no 2b-2b, com o driver do ADM01.
-- O bloco de upload (Edge, Storage e confirmação), o caminho do Storage restrito à organização F3 e as entidades relacionadas entram com V108, V110, V111, V115 e V122.
-- Produtores que atualizam uma entidade existente (V103, V106, a publicação de V108, a aprovação e a aplicabilidade de V107) confirmam um ID já inventariado. O livro hoje classifica isso como `entidade_repetida`, que reprova o isolamento. A correção entra antes do primeiro driver de atualização.
+Dois ramos redundantes saíram do código durante a prova, porque a regra já os garantia: a exigência de vínculo registrado no reenvio (o desfecho incerto já exige vínculo) e a organização F3 na lista de valores conhecidos (ela já está entre as entidades).
 
-Um redesenho alternativo, que cobre esses limites com 30 fluxos e origem tipada por posição, está preservado na branch `backup/f3-b2b2a-redesenho-r3-local`. Ele não foi integrado, por decisão do titular em 14/11/2026 ("Manter a versão remota"), e serve de referência para os incrementos seguintes.
+### Limites deste incremento, com critério de aceite
+
+- **Fluxos das ordens 9 a 20, bloco de upload, caminho do Storage e entidades relacionadas.** Entram com os drivers (2b-2c). Aceite: cada linha sai da lista fechada do teste da barreira quando o fluxo é declarado.
+- **Um fluxo de pré-requisito por produtor.** O teste da barreira já reprova um fluxo de pré-requisito sem linha própria. Aceite: antes do primeiro driver com pré-requisito, o modelo passa a ter uma ação por linha do levantamento.
+- **Variante do ADM01 sem convite e origem `usuario_sintetico`.** Entram no 2b-2b. Até lá, o reenvio do ADM01 só é aceito com os mesmos vínculos do envio original (mesmas chaves e mesmo usuário).
+- **Produtores de atualização** (V103, V106, a publicação de V108, a aprovação e a aplicabilidade de V107). Hoje, confirmar uma entidade já inventariada grava `entidade_repetida`, e os casos de V103 e V106 não fecham em PASS (`F3_ISOLATION`). O comportamento vem do 2b-1 e falha fechado. Aceite, antes de qualquer driver de atualização: a ação declara a entidade que atualiza, por regra geral em `applyEvent`, `recordEntity`, `crossCheck` e no critério ISOLATION. O relatório de referência tem de fechar em PASS para os produtores 6 e 8, com a propriedade do livro estendida.
+- **Observação de versão.** A leitura fica na memória da cerca, e a referência usada (entidade e versão) fica registrada no vínculo. A cerca confia no objeto de resposta entregue pelo driver. É defesa contra erro do driver, não contra o driver (M-2).
+- **O que o replay prova.** O replay prova que a história é consistente com as regras. Uma reescrita coerente de eventos e resumo não é detectável por ele. A autenticidade do artefato vem do SHA-256 do ZIP no ledger (M3 do 2b-1).
+
+Um redesenho alternativo, com 30 fluxos, está preservado na branch `backup/f3-b2b2a-redesenho-r3-local`. Ele não foi integrado, por decisão do titular em 14/11/2026 ("Manter a versão remota"), e serve de referência para os incrementos seguintes.
 
 ### §12.6 do PLAN: onde cada teste RED está
 
 | RED da §12.6 | Teste neste incremento | Fica para |
 |---|---|---|
-| Espera vencida ou recusada, sem reenvio | "espera vencida ou recusada afeta só o dependente"; "prazos e códigos das cinco esperas são fixos" | drivers (2b-2c) |
-| Edge pede TUS | "tentativa TUS bloqueia a sessão com o código canônico" | |
+| Espera vencida ou recusada | "espera vencida ou recusada devolve o código da espera" e "(3)…" (só a primitiva) | caso dependente `BLOCKED` e independentes seguindo: drivers (2b-2c) |
+| Edge pede TUS | "(3): TUS bloqueado desde o preflight…" | |
 | Upload dentro da ação | | 2b-2c, com o bloco de upload |
 | 41ª intenção e 12º pré-requisito | testes de orçamento e de tipos de intenção | |
-| Origem não declarada | testes de V103, V105 e V106 (inventário, versão e chave) | outro usuário no ADM01 (2b-2b); caminho do Storage (2b-2c) |
+| Origem não declarada | "(2)…" (três testes) e os testes de V103, V105 e V106 | outro usuário no ADM01 (2b-2b); caminho do Storage (2b-2c) |
 | Reenvio de produtor sem chave | "ações sem chave rejeitam reenvio no livro após readback"; "SYS04 sem chave só permite reconciliar após envio incerto" | |
-| Fluxo sem linha ou linha sem fluxo | "(NR-008): cada fluxo declarado tem linha no levantamento e cada linha tem fluxo ou incremento declarado" | |
+| Fluxo sem linha ou linha sem fluxo | "(NR-008)…" | |
 
-### Obrigações da review 5906090998 (R2 da #678)
+### Obrigações registradas
 
-- **M1:** cumprida no levantamento, revisão 3 (V115 enfileira o processamento documental).
-- **M2:** `observeF3Wait` devolve `BLOCKED` com o código de falha quando a leitura é `failed`. O driver de W3 mapeia `pode_revisar` falso para `failed` (2b-2c).
-- **M3:** o NR-008 passa a `REINCIDENCIA` nesta PR, com `novos_testes`. Se a #679 for fechada sem merge, vale a regra de reversão do checkpoint.
-- **M4:** tabela do levantamento ordenada; os drivers de V110 e V111 não dependem da contagem de documentos (2b-2c).
+- **Da review 5906090998 (R2 da #678):** M1 e M4 cumpridas no levantamento, revisão 3. M2: o driver de W3 mapeia `pode_revisar` falso para `failed` (2b-2c). M3: o NR-008 está em `REINCIDENCIA` nesta PR.
+- **Da review 5906840506 (R3 desta PR):**
+  - M-1: o ouvinte do driver trata a rejeição de `observeVersion` quando a resposta não é JSON (2b-2b).
+  - M-2: registrada nos limites.
+  - M-3: cumprida (mutante R02).
+  - M-4: o teto de 11 pré-requisitos conta os rejeitados e abandonados de execuções anteriores. Avaliar na emenda da recuperação.
+  - M-5: cumprida no checkpoint.
+  - M-6: os pareceres R1 e R2 não foram publicados como review na #679. O resumo deles está neste documento.
 
 ### Testes
 
-- `integracao-v1-fase3.test.mjs`: 69 testes, todos verdes.
+- `integracao-v1-fase3.test.mjs`: 75 testes, todos verdes.
 - `eslint` e `prettier --check` limpos nos dois scripts.

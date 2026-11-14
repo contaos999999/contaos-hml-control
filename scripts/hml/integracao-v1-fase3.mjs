@@ -901,9 +901,9 @@ function applyEvent(st, run, e) {
   if (e.op === "absent" && i.state === "abandoned" && i.rechecked) fail("F3_INTENT_STATE");
   if (e.op === "found" || e.op === "absent") i.rechecked = true;
   if (e.op === "resend") {
-    // Reenvio só de ação com chave, uma vez, e só de intenção com vínculo registrado: os
-    // vínculos do reenvio têm de ser idênticos aos originais (bindIntent).
-    if (i.resent || !f3AllowsResend(i) || !i.binds.length) fail("F3_UNCERTAIN_RESEND");
+    // Reenvio só de ação com chave, uma vez. A intenção sempre tem vínculo registrado (o
+    // desfecho incerto o exige), e os vínculos do reenvio têm de ser idênticos aos originais.
+    if (i.resent || !f3AllowsResend(i)) fail("F3_UNCERTAIN_RESEND");
     send();
     i.resent = true;
     i.sends += 1;
@@ -950,12 +950,8 @@ function bindIntent(st, e, i) {
     return;
   }
   const taken = new Set(
-    [
-      F3_E87_ORG,
-      ...st.entities,
-      ...st.intents.keys(),
-      ...(st.organizationF3 ? [st.organizationF3] : []),
-    ].map(sha256hex),
+    // A organização F3 e toda entidade observada estão em st.entities.
+    [F3_E87_ORG, ...st.entities, ...st.intents.keys()].map(sha256hex),
   );
   for (const [id, other] of st.intents)
     if (id !== e.requestId) for (const b of other.binds) for (const v of b.slots) taken.add(v);

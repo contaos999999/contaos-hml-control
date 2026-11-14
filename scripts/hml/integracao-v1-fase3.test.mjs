@@ -2353,7 +2353,7 @@ test("F3 §12.6: tentativa TUS bloqueia a sessão com o código canônico", asyn
   assert.equal(result.report.intents.sent, 0);
 });
 
-test("F3 §12.6: espera vencida ou recusada afeta só o dependente", async () => {
+test("F3 §12.6: espera vencida ou recusada devolve o código da espera", async () => {
   let reads = 0;
   const read = async () => {
     reads++;
@@ -2889,6 +2889,10 @@ test("F3 R3 RED (1): o vínculo é regra do livro; removido, trocado ou ausente 
     assert.throws(() => raw.bind(uuid(8), other), { code: "F3_INTENT_RESEND_BIND" });
   raw.bind(uuid(8), b);
   raw.uncertain(uuid(8));
+  // Um só reenvio por intenção: depois de nova ausência, só resta abandonar.
+  raw.reconcile(uuid(8), { found: false });
+  assert.throws(() => raw.resend(uuid(8)), { code: "F3_UNCERTAIN_RESEND" });
+  raw.abandon(uuid(8));
   // Ledger com reenvio de intenção sem vínculo: recusado no replay.
   const noBind = (op, extra = {}) => ({
     op,
@@ -3037,6 +3041,30 @@ test("F3 R3 RED (2): origem por posição dirigida pela declaração; cada class
       );
     });
   }
+  // Entidade repetida não é registro isolado: não serve de inventário, mesmo criada pelo
+  // produtor declarado e na organização F3.
+  const repeated = sut.createF3IntentBook({ provenance: PROV, ledger: EMPTY });
+  createOrg(repeated);
+  seal(repeated, 4, 4);
+  repeated.confirm(uuid(4), { entityId: uuid(104), organizationId: F3 });
+  seal(repeated, 5, 5);
+  repeated.confirm(uuid(5), { entityId: uuid(104), organizationId: F3 });
+  assert.equal(repeated.created().at(-1).kind, "entidade_repetida");
+  repeated.seal({ requestId: uuid(6), producerOrder: 6, actor: "master", organizationId: F3 });
+  assert.throws(
+    () =>
+      repeated.bind(uuid(6), {
+        step: 0,
+        bodySha256: freshSha(),
+        slots: [],
+        refs: [
+          { field: "p_id_organizacao", entityId: F3, version: null },
+          { field: "p_id_contratante", entityId: uuid(104), version: null },
+          { field: "p_versao_esperada", entityId: uuid(104), version: 1 },
+        ],
+      }),
+    { code: "F3_FOREIGN_ORG" },
+  );
   // ADM01 (2), V102 (1), V103 (3), V105 (2) e V106 (3) posições tipadas.
   assert.equal(positions, 11);
 });
