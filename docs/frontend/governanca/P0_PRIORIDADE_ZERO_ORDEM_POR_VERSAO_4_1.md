@@ -59,3 +59,20 @@ Após V5 certificada, executar e evidenciar **todos os regulares 67–74, 90–9
 - Não executar novamente um prompt concluído com prova ainda válida; revisitar retroativamente o que carecer de evidência. Não confundir identificação de 100/97 com execução integral de 100/97.
 
 **SISTEMA DE FONTES:** catálogo original `contaos999999/develop/docs/prompts/PROMPT_TRACKS_4_1.json`, commit `a10d3b1a1a14276c017027f93ec2a7aace4d6cb6`; manual regular SHA256 `8a15d96568d021ac86fdd45e79038e2cb969d69c12b2edb84f012a6129b8940e`, caderno atômico SHA256 `d9faaae47de4b697b18ad7fb71e4738384514936813cd5b18779f4cb8aed83b8`.
+
+
+## EMENDA PROPOSTA P0-RCA-001 (14/11/2026): causa raiz, prevenção de regressões e certificação cumulativa
+
+> **Estado: proposta em PR.** Esta seção entra em vigor somente após revisão independente, checks e merge protegido. Até lá preserva-se o protocolo já vigente e nenhum novo certificado é presumido.
+
+Para V2–V5, cada falha, inclusive pequena, requer **RCA confirmada antes de BUILD**, teste de reprodução, análise prévia de blast radius (telas, CRUD, dados, APIs/RPC, RBAC/RLS, organização, cache, versão anterior, NFRs, CI), teste negativo de falhas introduzíveis, correção na origem, regressão direcionada e revisão independente. A primeira tentativa fracassada exige nova evidência; **duas tentativas sem eliminar a falha ou regressão repetida** obrigam revisão causal ampliada e proíbem novas tentativas cegas. Nenhum teste, guard, permissão ou contrato pode ser enfraquecido para satisfazer CI. Falhas externas transitórias exigem diagnóstico e retries limitados, não reexecuções em círculo.
+
+A economia de tokens e créditos usa contexto/diff dirigido, evidências válidas reaproveitadas, testes em camadas e separação implementador/auditor; **não dispensa** leitura normativa obrigatória, suites integrais nos gates devidos, Teste C, Zero-Drift, LOCK, segurança, HML e aprovação humana.
+
+O portão das versões **V2, V3, V4 e V5** passará a exigir três recibos distintos e integrados: (A) certificado funcional individual; (B) certificado de integração interna profunda (7 fases: inventário, navegação, relacionamentos, CRUD/sincronização, RBAC/RLS, jornadas e consolidação); (C) certificado de integração acumulada com **todas** as versões anteriores, inclusive linhagem progressiva e regressiva de objetos e testes de impacto. A certificação funcional da V1 já registrada continua válida no seu escopo; a auditoria de integração interna da V1 deve seguir seu plano e certificação própria. **Não afirmar que o gate triplo está automatizado** até que scripts/testes de bloqueio e manifestos sejam atualizados e validados em PLAN/PR técnico específico.
+
+Detalhamento vinculante após integração:
+- [P0-RCA-001: causa raiz, impacto e antirretrabalho](P0_RCA_IMPACTO_ANTIRRETRABALHO_V2_V5_2026-11-14.md).
+- [Plano Único V2: 8 + 7 + 7 fases e integração cumulativa](../planos/P0_V2_PLANO_UNICO_CERTIFICACAO_INTEGRACAO_CUMULATIVA_2026-11-14.md).
+
+As regras são aditivas, sem alteração da numeração dos 100 regulares/97 atômicos, sem revogar qualquer controle e **sem autorização de PROD**.
