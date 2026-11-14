@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { validateRcaImpact, verifyRcaOperational } from "./p0-rca-impact-gate.mjs";
+import { validateRcaImpact, verifyRcaOperational, runCase } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
@@ -184,4 +184,32 @@ test("P0 RCA LIVE — caso verde inexistente/skipped é FAIL", async () => {
 test("P0 RCA LIVE — RED commit sem ancestralidade real é FAIL", async () => {
   const r = await live(null, { isAncestor: false });
   assert.match(r.errors.join(" "), /RED sem erro observado/);
+});
+
+test("P0 RCA fixture teste real e isolado de token", () => {
+  assert.equal(process.env.GITHUB_TOKEN, undefined);
+  assert.equal(process.env.CONTAOS_CANONICAL_READ_TOKEN, undefined);
+});
+test("P0 RCA runner executa caso exato no Node sem vazar tokens", () => {
+  const before = process.env.GITHUB_TOKEN;
+  const beforeNorm = process.env.CONTAOS_CANONICAL_READ_TOKEN;
+  process.env.GITHUB_TOKEN = "fake-token-test-only";
+  process.env.CONTAOS_CANONICAL_READ_TOKEN = "fake-norm-test-only";
+  try {
+    assert.equal(runCase({
+      id: "EXEC-01", runner: "node",
+      arquivo: "scripts/p0-rca-impact-gate.test.mjs",
+      caso: "P0 RCA fixture teste real e isolado de token",
+    }), true);
+    assert.equal(runCase({
+      id: "EXEC-02", runner: "node",
+      arquivo: "scripts/p0-rca-impact-gate.test.mjs",
+      caso: "CASO RCA INEXISTENTE",
+    }), false);
+  } finally {
+    if (before === undefined) delete process.env.GITHUB_TOKEN;
+    else process.env.GITHUB_TOKEN = before;
+    if (beforeNorm === undefined) delete process.env.CONTAOS_CANONICAL_READ_TOKEN;
+    else process.env.CONTAOS_CANONICAL_READ_TOKEN = beforeNorm;
+  }
 });
