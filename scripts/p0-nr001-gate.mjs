@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 export const LEDGER = "docs/frontend/governanca/P0_NR_001_LEDGER.json";
@@ -26,6 +27,7 @@ const reviewUrl = (v) => nonblank(v) &&
 export function validateLedger(doc, {
   exists = existsSync,
   read = (path) => readFileSync(path,"utf8"),
+  baselineCases = null,
 } = {}) {
   const errors = [];
   const fail = (s) => errors.push("P0-NR-001: "+s);
@@ -36,6 +38,13 @@ export function validateLedger(doc, {
     return {errors,pendentes:0,resolvidos:0};
   }
   const cases=doc.cases;
+  if (Array.isArray(baselineCases)) {
+    for(const old of baselineCases) {
+      const current=cases.find(x=>x?.id===old?.id);
+      if(!current || current.fingerprint!==old.fingerprint)
+        fail("incidente historico nao pode ser removido/renomeado: "+old?.id);
+    }
+  }
   const ids=new Set(),fps=new Set();
   for (const key of REQUIRED) {
     if (cases.filter(x=>x?.id===key).length!==1)
@@ -95,6 +104,15 @@ export function validateLedger(doc, {
          !nonblank(entry.diagnostico_ampliado) ||
          !Array.isArray(entry.novos_testes) || !entry.novos_testes.length))
       fail(id+" reincidencia deve revisar prevencao e adicionar negativos.");
+    if(entry?.estado==="REINCIDENCIA" && Array.isArray(entry.novos_testes)) {
+      for(const proof of entry.novos_testes) {
+        if(!safePath(proof?.arquivo)||!nonblank(proof?.caso)||
+           !exists(proof.arquivo)) {fail(id+" novo teste de reincidencia nao verificavel.");continue;}
+        try {if(!read(proof.arquivo).includes(proof.caso))
+          fail(id+" novo caso negativo nao existe no arquivo de teste.");}
+        catch {fail(id+" arquivo de novo teste inacessivel.");}
+      }
+    }
     if (entry?.estado==="RESOLVIDO_COM_PROVA") {
       const r=entry.recibo||{};
       if (!pullUrl(r.pr_url)||!sha40(r.head_sha)||!sha40(r.merge_sha)||
@@ -130,10 +148,11 @@ export async function verifyResolvedLive(doc,apiGet) {
       const runNo=parseUrl(r.ci_run_url,/\/runs\/(\d+)$/);
       const reviewNo=parseUrl(r.review_url,/#pullrequestreview-(\d+)$/);
       const nrRunNo=parseUrl(r.nr_run_url,/\/runs\/(\d+)$/);
-      const [pr,run,nrRun,reviews,ancestry,file]=await Promise.all([
+      const [pr,run,nrRun,nrJobs,reviews,ancestry,file]=await Promise.all([
         get("/pulls/"+prNo),
         get("/actions/runs/"+runNo),
         get("/actions/runs/"+nrRunNo),
+        get("/actions/runs/"+nrRunNo+"/jobs?per_page=100"),
         get("/pulls/"+prNo+"/reviews?per_page=100"),
         get("/compare/"+r.merge_sha+"...main"),
         get("/contents/"+entry.prevencao.arquivo+"?ref="+r.head_sha),
@@ -147,9 +166,16 @@ export async function verifyResolvedLive(doc,apiGet) {
         rev.user.login!==pr?.user?.login && rev.commit_id===pr?.head?.sha &&
         !later.some(x=>["CHANGES_REQUESTED","DISMISSED"].includes(x.state));
       const authenticatedFile=file?.encoding==="base64" && file.content &&
-        (entry.prevencao.tipo!=="TESTE" ||
-          Buffer.from(file.content,"base64").toString("utf8")
-            .includes(entry.prevencao.teste));
+        Buffer.from(file.content,"base64").toString("utf8").includes(
+          entry.prevencao.tipo==="TESTE" ? entry.prevencao.teste : "P0-NR-001");
+      const nrJob=Array.isArray(nrJobs?.jobs) && nrJobs.total_count<=100
+        ? nrJobs.jobs.find(j=>j.name==="ContaOS P0-NR-001 Integridade e Provas" &&
+            j.conclusion==="success") : null;
+      const step=(name)=>Array.isArray(nrJob?.steps) &&
+        nrJob.steps.some(s=>s.name===name && s.conclusion==="success");
+      const nrExecuted=nrJob &&
+        step("Testes negativos de classes conhecidas e falso resolvido") &&
+        step("P0-NR-001 ledger com comprovantes reais");
       if (pr?.merged_at==null || pr?.base?.ref!=="main" ||
           pr?.head?.sha!==r.head_sha || pr?.merge_commit_sha!==r.merge_sha ||
           !independent || run?.conclusion!=="success" ||
@@ -159,7 +185,7 @@ export async function verifyResolvedLive(doc,apiGet) {
           ![r.head_sha,r.merge_sha].includes(run.head_sha) ||
           ![r.head_sha,r.merge_sha].includes(nrRun.head_sha) ||
           !["ahead","identical"].includes(ancestry?.status) ||
-          !authenticatedFile)
+          !authenticatedFile || !nrExecuted)
         errs.push("P0-NR-001 LIVE "+entry.id+": PR/review/CI/merge/readback nao comprovados.");
     } catch(e) {
       errs.push("P0-NR-001 LIVE "+entry.id+": API indisponivel ou recibo nao autentico.");
@@ -183,7 +209,22 @@ async function main(){
   try{doc=JSON.parse(readFileSync(LEDGER,"utf8"))}
   catch(e){console.error("P0-NR-001 FAIL: ledger nao lido/JSON invalido.",e.message);
     process.exitCode=1;return;}
-  const result=validateLedger(doc);
+  let baselineCases=null;
+  try {
+    const raw=execFileSync("git",["show","origin/main:"+LEDGER],
+      {encoding:"utf8",stdio:["ignore","pipe","ignore"]});
+    baselineCases=JSON.parse(raw).cases;
+  } catch {
+    // Bootstrap: ledger ainda não existe na main. Em PRs futuras o
+    // próprio checksum do GitHub/runner garantirá histórico preservado.
+    if(process.env.GITHUB_EVENT_NAME==="pull_request") {
+      const old=execFileSync("git",["ls-tree","--name-only","origin/main",LEDGER],
+        {encoding:"utf8",stdio:["ignore","pipe","ignore"]}).trim();
+      if(old) {console.error("P0-NR-001 FAIL: ledger historico inacessivel.");
+        process.exitCode=1;return;}
+    }
+  }
+  const result=validateLedger(doc,{baselineCases});
   const live=result.errors.length?[]:await verifyResolvedLive(doc,githubGet);
   for(const e of [...result.errors,...live])console.error(e);
   if(result.errors.length||live.length){process.exitCode=1;return;}
