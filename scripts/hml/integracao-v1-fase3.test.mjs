@@ -130,14 +130,43 @@ test("F3 B2a: esperado do leitor segue a fotografia RBAC v6 tela a tela, sem pre
 test("F3 B2a: toda tela de destino tem acesso com fonte real no código do produto", async () => {
   const destinations = new Set(sut.buildF3Cases(csv).cases.map((c) => c.destination));
   for (const d of destinations) assert.ok(sut.F3_SCREEN_ACCESS[d], d);
+  const lines = async (file) => (await readFile(new URL(file, root), "utf8")).split("\n");
   for (const [screen, a] of Object.entries(sut.F3_SCREEN_ACCESS)) {
-    const [file, line] = a.source.split(":");
-    const text = (await readFile(new URL(file, root), "utf8")).split("\n")[Number(line) - 1];
+    assert.ok(["publica", "menu", "guarda", "rota-mae"].includes(a.kind), screen);
+    const m = /^([^:]+):([0-9]+)-([0-9]+)$/.exec(a.source);
+    assert.ok(m, screen + " formato da fonte");
+    const text = (await lines(m[1]))
+      .slice(Number(m[2]) - 1, Number(m[3]))
+      .join("\n")
+      .replace(/\s+/g, "");
     assert.ok(text, screen + " fonte");
-    if (a.resource === null) assert.ok(text.includes("/selecionar-organizacao"), screen);
-    else if (a.kind === "guarda")
-      assert.ok(text.includes('"' + a.resource + '", "' + a.action + '"'), screen);
-    else assert.ok(text.includes('"' + a.resource + '"') || text.includes(a.resource), screen);
-    assert.ok(["publica", "menu", "guarda", "rota-mae"].includes(a.kind));
+    if (a.resource === null) {
+      assert.ok(text.includes('"/selecionar-organizacao"'), screen);
+      continue;
+    }
+    const resource = '"' + a.resource + '"';
+    if (a.kind === "guarda")
+      assert.ok(text.includes(resource + ',"' + a.action + '"'), screen + " guarda");
+    else if (text.includes("recurso:"))
+      assert.ok(
+        text.includes("recurso:" + resource) && text.includes('acao:"' + a.action + '"'),
+        screen + " menu comum",
+      );
+    else {
+      assert.ok(text.includes("adicionar("), screen + " menu contextual");
+      const args = text.slice(text.indexOf("adicionar("));
+      if (a.action === "consultar")
+        assert.ok(new RegExp(resource + "\\)").test(args), screen + " ação padrão consultar");
+      else assert.ok(args.includes(resource + ',"' + a.action + '"'), screen + " ação explícita");
+    }
+    if (a.screenGuard) {
+      const [file, line, fn] = a.screenGuard.split(":");
+      assert.ok(
+        (await lines(file))[Number(line) - 1].includes(fn + "("),
+        screen + " guarda da tela",
+      );
+    } else assert.equal(a.screenGuard, null);
   }
+  // Fonte imprecisa ou ação divergente falham.
+  assert.notEqual(sut.F3_SCREEN_ACCESS.V122.action, "processar");
 });

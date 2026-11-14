@@ -24,3 +24,23 @@ Um `DENY` só conta como PASS se a tela mostrar o estado explícito de acesso ne
 ## Estado da pendência do titular
 
 Às 22h17 (Bahia), o titular informou "Usuário criado". O proxy desta sessão não permite listar os secrets. A presença de `CONTAOS_HML_SYNTHETIC_2_*` no environment `hml` será provada na primeira execução; se faltarem, o executor falha fechado antes de qualquer login.
+
+## Revisão da PR #657 (R2)
+
+- **V122:** a fonte passa a ser a própria tela. `ImportarHistorico.tsx:70` libera somente com `historico/criar`; o menu usa `historico/processar`, mas quem decide é a tela. O `leitor` continua com DENY, e o SHA do catálogo não muda.
+- **Formato das fontes:** cada uma vira um intervalo `arquivo:início-fim` que contém o recurso e a ação. O teste lê essas linhas do produto e exige `recurso:`/`acao:` exatos nos itens do menu comum, os argumentos de `adicionar(...)` nos do menu contextual (ação padrão `consultar`) e o par `"recurso","acao"` nas guardas.
+- **ADM01 e V123:** além da guarda de menu do AppShell, agora apontam para a decisão da própria tela, `AdminUsuarios.tsx:106` (`validarAdministrador`) e `TrilhaAuditoria.tsx:41` (`podeConsultarAuditoria`).
+
+## Obrigações do BUILD-2b (acrescidas pela revisão)
+
+1. **Releitura do RBAC do `leitor`.** Reler as permissões efetivas do `leitor` durante a execução e falhar com código próprio, por exemplo `F3_RBAC_DRIFT`, se divergirem da fotografia v6. Exige teste de divergência.
+2. **V123: erro não pode virar DENY.** `podeConsultarAuditoria(...).catch(() => false)` exibe a negação também quando a RPC falha. O driver precisa diferenciar negação de erro pela resposta observada da RPC (status e corpo), não só pelo DOM. Se houver erro, o caso fica `FAIL` ou `BLOCKED`, nunca PASS de DENY.
+3. **V117 (ALLOW): negação parcial não vale.** `RevisaoRequisito.tsx:162` entra em `negado` quando `!pode_revisar`. O positivo prova a leitura do requisito e das evidências; a negação parcial de revisão não conta como negação da tela.
+4. **V111 e V120 (`rota-mae`).** Confirmar pela UI o estado de negação, que vem do backend (`negado`/`sem_permissao`). Se houver divergência, emendar o catálogo por PR revisada.
+5. **Estados explícitos de negação a observar:**
+   - V102 e V103: `Aviso icone="negado"`;
+   - V105: `negadoGate`;
+   - V113: `perfilNegado`;
+   - V122: `sem_permissao`;
+   - ADM01: `fase === "negado"`;
+   - V123: `acessoNegado`, condicionado ao item 2.

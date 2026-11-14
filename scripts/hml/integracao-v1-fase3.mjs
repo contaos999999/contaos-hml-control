@@ -76,46 +76,64 @@ export const F3_PRODUCERS = Object.freeze(
 );
 
 // Acesso exigido por tela de destino (PLAN 4.4, M-R2-4), com fonte no código do produto.
-// "rota-mae" marca telas sem item de menu próprio: o driver do BUILD-2 confirma o estado negado.
+// source = "arquivo:linhaInicial-linhaFinal" contendo recurso e ação; screenGuard aponta a decisão
+// da própria tela quando ela difere do menu. "rota-mae" marca telas sem item de menu próprio:
+// o driver do BUILD-2b confirma o estado negado pela UI.
 const M = "src/lib/navegacao/menuV1.ts:";
 export const F3_SCREEN_ACCESS = Object.freeze(
   Object.fromEntries(
     [
-      ["SYS04", null, null, "src/lib/navegacao/menuV1.ts:7", "publica"],
-      ["SYS05", "dashboard", "consultar", M + "10", "menu"],
+      ["SYS04", null, null, M + "7-7", "publica", null],
+      ["SYS05", "dashboard", "consultar", M + "10-10", "menu", null],
       [
         "ADM01",
         "usuarios",
         "administrar",
-        "src/components/layout/ContaOSAppShell.tsx:203",
+        "src/components/layout/ContaOSAppShell.tsx:203-203",
         "guarda",
+        "src/components/administracao/usuarios/AdminUsuarios.tsx:106:validarAdministrador",
       ],
-      ["V101", "contratantes", "consultar", M + "11", "menu"],
-      ["V102", "contratantes", "criar", M + "14", "menu"],
-      ["V103", "contratantes", "editar", M + "61", "menu"],
-      ["V104", "contratos", "consultar", M + "18", "menu"],
-      ["V105", "contratos", "criar", M + "19", "menu"],
-      ["V106", "contratos", "consultar", M + "48", "menu"],
-      ["V107", "normativos", "consultar", M + "49", "menu"],
-      ["V108", "orcamentos", "consultar", M + "50", "menu"],
-      ["V109", "listas", "consultar", M + "51", "menu"],
-      ["V110", "documentos_contrato", "consultar", M + "52", "menu"],
-      ["V111", "documentos_contrato", "consultar", M + "52", "rota-mae"],
-      ["V112", "competencias", "consultar", M + "53", "menu"],
-      ["V113", "competencias", "criar", M + "54", "menu"],
-      ["V114", "competencias", "consultar", M + "40", "menu"],
-      ["V115", "documentos_competencia", "consultar", M + "41", "menu"],
-      ["V116", "analises", "consultar", M + "42", "menu"],
-      ["V117", "analises", "consultar", M + "42", "rota-mae"],
-      ["V118", "pareceres", "consultar", M + "43", "menu"],
-      ["V119", "apresentacoes", "consultar", M + "44", "menu"],
-      ["V120", "apresentacoes", "consultar", M + "44", "rota-mae"],
-      ["V121", "historico", "consultar", M + "55", "menu"],
-      ["V122", "historico", "processar", M + "56", "menu"],
-      ["V123", "auditoria", "consultar", "src/components/layout/ContaOSAppShell.tsx:209", "guarda"],
-    ].map(([screen, resource, action, source, kind]) => [
+      ["V101", "contratantes", "consultar", M + "11-11", "menu", null],
+      ["V102", "contratantes", "criar", M + "15-16", "menu", null],
+      ["V103", "contratantes", "editar", M + "58-63", "menu", null],
+      ["V104", "contratos", "consultar", M + "18-18", "menu", null],
+      ["V105", "contratos", "criar", M + "19-19", "menu", null],
+      ["V106", "contratos", "consultar", M + "48-48", "menu", null],
+      ["V107", "normativos", "consultar", M + "49-49", "menu", null],
+      ["V108", "orcamentos", "consultar", M + "50-50", "menu", null],
+      ["V109", "listas", "consultar", M + "51-51", "menu", null],
+      ["V110", "documentos_contrato", "consultar", M + "52-52", "menu", null],
+      ["V111", "documentos_contrato", "consultar", M + "52-52", "rota-mae", null],
+      ["V112", "competencias", "consultar", M + "53-53", "menu", null],
+      ["V113", "competencias", "criar", M + "54-54", "menu", null],
+      ["V114", "competencias", "consultar", M + "40-40", "menu", null],
+      ["V115", "documentos_competencia", "consultar", M + "41-41", "menu", null],
+      ["V116", "analises", "consultar", M + "42-42", "menu", null],
+      ["V117", "analises", "consultar", M + "42-42", "rota-mae", null],
+      ["V118", "pareceres", "consultar", M + "43-43", "menu", null],
+      ["V119", "apresentacoes", "consultar", M + "44-44", "menu", null],
+      ["V120", "apresentacoes", "consultar", M + "44-44", "rota-mae", null],
+      ["V121", "historico", "consultar", M + "55-55", "menu", null],
+      // A tela decide por historico/criar (o menu usa historico/processar); vale a tela.
+      [
+        "V122",
+        "historico",
+        "criar",
+        "src/components/contratos/ImportarHistorico.tsx:70-70",
+        "guarda",
+        null,
+      ],
+      [
+        "V123",
+        "auditoria",
+        "consultar",
+        "src/components/layout/ContaOSAppShell.tsx:209-209",
+        "guarda",
+        "src/components/administracao/auditoria/TrilhaAuditoria.tsx:41:podeConsultarAuditoria",
+      ],
+    ].map(([screen, resource, action, source, kind, screenGuard]) => [
       screen,
-      Object.freeze({ resource, action, source, kind }),
+      Object.freeze({ resource, action, source, kind, screenGuard }),
     ]),
   ),
 );
