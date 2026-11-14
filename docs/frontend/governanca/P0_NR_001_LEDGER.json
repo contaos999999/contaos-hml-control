@@ -184,7 +184,7 @@
         "tipo": "TESTE",
         "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
         "procedimento": null,
-        "teste": "Aplicar replay dos eventos e guard das fontes; testar propriedades e mutações para evitar regredir a mesma classe."
+        "teste": "F3 B2b1 RED: intenções e inventário declarados precisam ser o replay dos eventos"
       },
       "recibo": null,
       "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo."
