@@ -217,7 +217,7 @@ test("P0 LIVE — sem artefato visual não existe prova E2E", async () => {
 });
 test("P0 LIVE — mesmo CI com Teste C sem evidência HML autenticada é FAIL", async () => {
   const x=fixture();delete x.finalReceipt.hml_e2e;
-  await assertFail(x,/sem casos autenticados em HML/);
+  await assertFail(x,/sem execução HML autenticada/);
 });
 test("P0 LIVE — relatório HML criado depois da revisão é FAIL", async () => {
   const x=fixture();
