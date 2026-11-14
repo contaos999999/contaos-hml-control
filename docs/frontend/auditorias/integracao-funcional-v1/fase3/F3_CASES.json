@@ -1,0 +1,2079 @@
+{
+  "schema": "contaos.integracao-v1.f3.cases.v1",
+  "matrixPath": "docs/frontend/planos/INTEGRACAO_V1_7_FASES_MATRIZ_EXECUCAO_PROPOSTA.csv",
+  "matrixSha256": "b8b4980bab5f841adc1db9c642e960f45a6874baad660bd18cd6a60ce87e32d9",
+  "scope": "INTEGRACAO_V1_FASE3_REL",
+  "count": 138,
+  "cases": [
+    {
+      "caseId": "IFV1-F3-C0036",
+      "sourceConnectionId": "C0036",
+      "phase": 3,
+      "origin": "SYS01",
+      "destination": "SYS04",
+      "classification": "OBRIGATORIA",
+      "producer": "listar_organizacoes_disponiveis",
+      "producerOrder": 1,
+      "consumer": "listar_organizacoes_disponiveis",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0037",
+      "sourceConnectionId": "C0037",
+      "phase": 3,
+      "origin": "SYS01",
+      "destination": "SYS05",
+      "classification": "OBRIGATORIA",
+      "producer": "listar_organizacoes_disponiveis",
+      "producerOrder": 1,
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0067",
+      "sourceConnectionId": "C0067",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "criar_organizacao",
+      "producerOrder": 2,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0041",
+      "sourceConnectionId": "C0041",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "ADM01",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "consultar_permissoes_efetivas",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0043",
+      "sourceConnectionId": "C0043",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "SYS05",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0045",
+      "sourceConnectionId": "C0045",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V101",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "contratantes",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0046",
+      "sourceConnectionId": "C0046",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V102",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "contratantes",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0047",
+      "sourceConnectionId": "C0047",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V103",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "contratantes",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0048",
+      "sourceConnectionId": "C0048",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V104",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0049",
+      "sourceConnectionId": "C0049",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V105",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "contratantes",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0050",
+      "sourceConnectionId": "C0050",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V106",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0051",
+      "sourceConnectionId": "C0051",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V107",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "fontes_normativas",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0052",
+      "sourceConnectionId": "C0052",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V108",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "propostas_orcamentarias",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0053",
+      "sourceConnectionId": "C0053",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V109",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "listas_verificacao",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0054",
+      "sourceConnectionId": "C0054",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V110",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "documentos_contrato",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0055",
+      "sourceConnectionId": "C0055",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V111",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "documentos_contrato",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0056",
+      "sourceConnectionId": "C0056",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V112",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "competencias",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0057",
+      "sourceConnectionId": "C0057",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V113",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "criar_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0058",
+      "sourceConnectionId": "C0058",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V114",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0059",
+      "sourceConnectionId": "C0059",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V115",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "obter_documentos_competencia_v115",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0060",
+      "sourceConnectionId": "C0060",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0061",
+      "sourceConnectionId": "C0061",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V117",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0062",
+      "sourceConnectionId": "C0062",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V118",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0063",
+      "sourceConnectionId": "C0063",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V119",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0064",
+      "sourceConnectionId": "C0064",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V120",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "apresentacoes_contratante",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0065",
+      "sourceConnectionId": "C0065",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V121",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "relatorios_historicos_contratante",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0066",
+      "sourceConnectionId": "C0066",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V122",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "relatorios_historicos_contratante",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0068",
+      "sourceConnectionId": "C0068",
+      "phase": 3,
+      "origin": "SYS04",
+      "destination": "V123",
+      "classification": "OBRIGATORIA",
+      "producer": "preferencia_de_organizacao_selecionada",
+      "producerOrder": 3,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0002",
+      "sourceConnectionId": "C0002",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "SYS04",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "listar_organizacoes_disponiveis",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0005",
+      "sourceConnectionId": "C0005",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "SYS05",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0007",
+      "sourceConnectionId": "C0007",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V101",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0009",
+      "sourceConnectionId": "C0009",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V102",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0011",
+      "sourceConnectionId": "C0011",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V103",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0012",
+      "sourceConnectionId": "C0012",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V104",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0014",
+      "sourceConnectionId": "C0014",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V105",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0016",
+      "sourceConnectionId": "C0016",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V106",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0017",
+      "sourceConnectionId": "C0017",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V107",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0018",
+      "sourceConnectionId": "C0018",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V108",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0019",
+      "sourceConnectionId": "C0019",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V109",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0020",
+      "sourceConnectionId": "C0020",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V110",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0021",
+      "sourceConnectionId": "C0021",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V111",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0022",
+      "sourceConnectionId": "C0022",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V112",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0023",
+      "sourceConnectionId": "C0023",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V113",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0024",
+      "sourceConnectionId": "C0024",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V114",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0025",
+      "sourceConnectionId": "C0025",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V115",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0026",
+      "sourceConnectionId": "C0026",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0027",
+      "sourceConnectionId": "C0027",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V117",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0028",
+      "sourceConnectionId": "C0028",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V118",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0029",
+      "sourceConnectionId": "C0029",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V119",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0030",
+      "sourceConnectionId": "C0030",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V120",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0031",
+      "sourceConnectionId": "C0031",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V121",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0032",
+      "sourceConnectionId": "C0032",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V122",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0033",
+      "sourceConnectionId": "C0033",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0034",
+      "sourceConnectionId": "C0034",
+      "phase": 3,
+      "origin": "ADM01",
+      "destination": "V123",
+      "classification": "OBRIGATORIA",
+      "producer": "salvar_vinculo_usuario_adm",
+      "producerOrder": 4,
+      "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0093",
+      "sourceConnectionId": "C0093",
+      "phase": 3,
+      "origin": "V102",
+      "destination": "V101",
+      "classification": "OBRIGATORIA",
+      "producer": "contratantes",
+      "producerOrder": 5,
+      "consumer": "contratantes",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0096",
+      "sourceConnectionId": "C0096",
+      "phase": 3,
+      "origin": "V102",
+      "destination": "V103",
+      "classification": "OBRIGATORIA",
+      "producer": "contratantes",
+      "producerOrder": 5,
+      "consumer": "contratantes",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0098",
+      "sourceConnectionId": "C0098",
+      "phase": 3,
+      "origin": "V102",
+      "destination": "V105",
+      "classification": "OBRIGATORIA",
+      "producer": "contratantes",
+      "producerOrder": 5,
+      "consumer": "contratantes",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0100",
+      "sourceConnectionId": "C0100",
+      "phase": 3,
+      "origin": "V102",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "contratantes",
+      "producerOrder": 5,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0107",
+      "sourceConnectionId": "C0107",
+      "phase": 3,
+      "origin": "V103",
+      "destination": "V101",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contratante",
+      "producerOrder": 6,
+      "consumer": "contratantes",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0111",
+      "sourceConnectionId": "C0111",
+      "phase": 3,
+      "origin": "V103",
+      "destination": "V104",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contratante",
+      "producerOrder": 6,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0113",
+      "sourceConnectionId": "C0113",
+      "phase": 3,
+      "origin": "V103",
+      "destination": "V105",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contratante",
+      "producerOrder": 6,
+      "consumer": "contratantes",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0115",
+      "sourceConnectionId": "C0115",
+      "phase": 3,
+      "origin": "V103",
+      "destination": "V106",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contratante",
+      "producerOrder": 6,
+      "consumer": "contratantes",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0116",
+      "sourceConnectionId": "C0116",
+      "phase": 3,
+      "origin": "V103",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "atualizar_contratante",
+      "producerOrder": 6,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0132",
+      "sourceConnectionId": "C0132",
+      "phase": 3,
+      "origin": "V105",
+      "destination": "SYS05",
+      "classification": "OBRIGATORIA",
+      "producer": "contratos",
+      "producerOrder": 7,
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0136",
+      "sourceConnectionId": "C0136",
+      "phase": 3,
+      "origin": "V105",
+      "destination": "V104",
+      "classification": "OBRIGATORIA",
+      "producer": "contratos",
+      "producerOrder": 7,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0139",
+      "sourceConnectionId": "C0139",
+      "phase": 3,
+      "origin": "V105",
+      "destination": "V106",
+      "classification": "OBRIGATORIA",
+      "producer": "contratos",
+      "producerOrder": 7,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0140",
+      "sourceConnectionId": "C0140",
+      "phase": 3,
+      "origin": "V105",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "contratos",
+      "producerOrder": 7,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0146",
+      "sourceConnectionId": "C0146",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "SYS05",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0153",
+      "sourceConnectionId": "C0153",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "V107",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0156",
+      "sourceConnectionId": "C0156",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "V108",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0159",
+      "sourceConnectionId": "C0159",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "V109",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0162",
+      "sourceConnectionId": "C0162",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "V110",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0165",
+      "sourceConnectionId": "C0165",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "V111",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0167",
+      "sourceConnectionId": "C0167",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "V112",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0170",
+      "sourceConnectionId": "C0170",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "V113",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0172",
+      "sourceConnectionId": "C0172",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "V121",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0174",
+      "sourceConnectionId": "C0174",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "V122",
+      "classification": "OBRIGATORIA",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "contratos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0176",
+      "sourceConnectionId": "C0176",
+      "phase": 3,
+      "origin": "V106",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "atualizar_contrato_v1",
+      "producerOrder": 8,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0232",
+      "sourceConnectionId": "C0232",
+      "phase": 3,
+      "origin": "V108",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "publicar_versao_proposta_v108",
+      "producerOrder": 9,
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0233",
+      "sourceConnectionId": "C0233",
+      "phase": 3,
+      "origin": "V108",
+      "destination": "V118",
+      "classification": "OBRIGATORIA",
+      "producer": "publicar_versao_proposta_v108",
+      "producerOrder": 9,
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0234",
+      "sourceConnectionId": "C0234",
+      "phase": 3,
+      "origin": "V108",
+      "destination": "V119",
+      "classification": "OBRIGATORIA",
+      "producer": "publicar_versao_proposta_v108",
+      "producerOrder": 9,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0237",
+      "sourceConnectionId": "C0237",
+      "phase": 3,
+      "origin": "V108",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "publicar_versao_proposta_v108",
+      "producerOrder": 9,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0192",
+      "sourceConnectionId": "C0192",
+      "phase": 3,
+      "origin": "V107",
+      "destination": "V109",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "producerOrder": 10,
+      "consumer": "listas_verificacao",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0200",
+      "sourceConnectionId": "C0200",
+      "phase": 3,
+      "origin": "V107",
+      "destination": "V113",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "producerOrder": 10,
+      "consumer": "criar_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0202",
+      "sourceConnectionId": "C0202",
+      "phase": 3,
+      "origin": "V107",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "producerOrder": 10,
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0203",
+      "sourceConnectionId": "C0203",
+      "phase": 3,
+      "origin": "V107",
+      "destination": "V117",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "producerOrder": 10,
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0204",
+      "sourceConnectionId": "C0204",
+      "phase": 3,
+      "origin": "V107",
+      "destination": "V118",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "producerOrder": 10,
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0205",
+      "sourceConnectionId": "C0205",
+      "phase": 3,
+      "origin": "V107",
+      "destination": "V119",
+      "classification": "OBRIGATORIA",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "producerOrder": 10,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0208",
+      "sourceConnectionId": "C0208",
+      "phase": 3,
+      "origin": "V107",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "definir_aplicabilidade_fonte_v107",
+      "producerOrder": 10,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0260",
+      "sourceConnectionId": "C0260",
+      "phase": 3,
+      "origin": "V109",
+      "destination": "V113",
+      "classification": "OBRIGATORIA",
+      "producer": "executar_comando_lista_v1",
+      "producerOrder": 11,
+      "consumer": "criar_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0262",
+      "sourceConnectionId": "C0262",
+      "phase": 3,
+      "origin": "V109",
+      "destination": "V114",
+      "classification": "OBRIGATORIA",
+      "producer": "executar_comando_lista_v1",
+      "producerOrder": 11,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0263",
+      "sourceConnectionId": "C0263",
+      "phase": 3,
+      "origin": "V109",
+      "destination": "V115",
+      "classification": "OBRIGATORIA",
+      "producer": "executar_comando_lista_v1",
+      "producerOrder": 11,
+      "consumer": "obter_documentos_competencia_v115",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0264",
+      "sourceConnectionId": "C0264",
+      "phase": 3,
+      "origin": "V109",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "executar_comando_lista_v1",
+      "producerOrder": 11,
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0265",
+      "sourceConnectionId": "C0265",
+      "phase": 3,
+      "origin": "V109",
+      "destination": "V117",
+      "classification": "OBRIGATORIA",
+      "producer": "executar_comando_lista_v1",
+      "producerOrder": 11,
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0268",
+      "sourceConnectionId": "C0268",
+      "phase": 3,
+      "origin": "V109",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "executar_comando_lista_v1",
+      "producerOrder": 11,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0288",
+      "sourceConnectionId": "C0288",
+      "phase": 3,
+      "origin": "V110",
+      "destination": "V111",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_contrato_completo",
+      "producerOrder": 12,
+      "consumer": "documentos_contrato",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0294",
+      "sourceConnectionId": "C0294",
+      "phase": 3,
+      "origin": "V110",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_contrato_completo",
+      "producerOrder": 12,
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0297",
+      "sourceConnectionId": "C0297",
+      "phase": 3,
+      "origin": "V110",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "criar_documento_contrato_completo",
+      "producerOrder": 12,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0311",
+      "sourceConnectionId": "C0311",
+      "phase": 3,
+      "origin": "V111",
+      "destination": "V107",
+      "classification": "OBRIGATORIA",
+      "producer": "adicionar_versao_documento_contrato",
+      "producerOrder": 13,
+      "consumer": "fontes_normativas",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0315",
+      "sourceConnectionId": "C0315",
+      "phase": 3,
+      "origin": "V111",
+      "destination": "V110",
+      "classification": "OBRIGATORIA",
+      "producer": "adicionar_versao_documento_contrato",
+      "producerOrder": 13,
+      "consumer": "documentos_contrato",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0320",
+      "sourceConnectionId": "C0320",
+      "phase": 3,
+      "origin": "V111",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "adicionar_versao_documento_contrato",
+      "producerOrder": 13,
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0321",
+      "sourceConnectionId": "C0321",
+      "phase": 3,
+      "origin": "V111",
+      "destination": "V117",
+      "classification": "OBRIGATORIA",
+      "producer": "adicionar_versao_documento_contrato",
+      "producerOrder": 13,
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0324",
+      "sourceConnectionId": "C0324",
+      "phase": 3,
+      "origin": "V111",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "adicionar_versao_documento_contrato",
+      "producerOrder": 13,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0352",
+      "sourceConnectionId": "C0352",
+      "phase": 3,
+      "origin": "V113",
+      "destination": "SYS05",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "producerOrder": 14,
+      "consumer": "obter_resumo_dashboard",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0365",
+      "sourceConnectionId": "C0365",
+      "phase": 3,
+      "origin": "V113",
+      "destination": "V112",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "producerOrder": 14,
+      "consumer": "competencias",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0368",
+      "sourceConnectionId": "C0368",
+      "phase": 3,
+      "origin": "V113",
+      "destination": "V114",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "producerOrder": 14,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0369",
+      "sourceConnectionId": "C0369",
+      "phase": 3,
+      "origin": "V113",
+      "destination": "V115",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "producerOrder": 14,
+      "consumer": "obter_documentos_competencia_v115",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0370",
+      "sourceConnectionId": "C0370",
+      "phase": 3,
+      "origin": "V113",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "producerOrder": 14,
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0371",
+      "sourceConnectionId": "C0371",
+      "phase": 3,
+      "origin": "V113",
+      "destination": "V118",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "producerOrder": 14,
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0372",
+      "sourceConnectionId": "C0372",
+      "phase": 3,
+      "origin": "V113",
+      "destination": "V119",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "producerOrder": 14,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0373",
+      "sourceConnectionId": "C0373",
+      "phase": 3,
+      "origin": "V113",
+      "destination": "V120",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_competencia",
+      "producerOrder": 14,
+      "consumer": "apresentacoes_contratante",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0376",
+      "sourceConnectionId": "C0376",
+      "phase": 3,
+      "origin": "V113",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "criar_competencia",
+      "producerOrder": 14,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0410",
+      "sourceConnectionId": "C0410",
+      "phase": 3,
+      "origin": "V115",
+      "destination": "V114",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_competencia_v115",
+      "producerOrder": 15,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0413",
+      "sourceConnectionId": "C0413",
+      "phase": 3,
+      "origin": "V115",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_competencia_v115",
+      "producerOrder": 15,
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0415",
+      "sourceConnectionId": "C0415",
+      "phase": 3,
+      "origin": "V115",
+      "destination": "V117",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_competencia_v115",
+      "producerOrder": 15,
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0416",
+      "sourceConnectionId": "C0416",
+      "phase": 3,
+      "origin": "V115",
+      "destination": "V118",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_competencia_v115",
+      "producerOrder": 15,
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0418",
+      "sourceConnectionId": "C0418",
+      "phase": 3,
+      "origin": "V115",
+      "destination": "V119",
+      "classification": "OBRIGATORIA",
+      "producer": "criar_documento_competencia_v115",
+      "producerOrder": 15,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0420",
+      "sourceConnectionId": "C0420",
+      "phase": 3,
+      "origin": "V115",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "criar_documento_competencia_v115",
+      "producerOrder": 15,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0433",
+      "sourceConnectionId": "C0433",
+      "phase": 3,
+      "origin": "V116",
+      "destination": "V114",
+      "classification": "OBRIGATORIA",
+      "producer": "solicitar_analise_competencia",
+      "producerOrder": 16,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0437",
+      "sourceConnectionId": "C0437",
+      "phase": 3,
+      "origin": "V116",
+      "destination": "V117",
+      "classification": "OBRIGATORIA",
+      "producer": "solicitar_analise_competencia",
+      "producerOrder": 16,
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0439",
+      "sourceConnectionId": "C0439",
+      "phase": 3,
+      "origin": "V116",
+      "destination": "V118",
+      "classification": "OBRIGATORIA",
+      "producer": "solicitar_analise_competencia",
+      "producerOrder": 16,
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0441",
+      "sourceConnectionId": "C0441",
+      "phase": 3,
+      "origin": "V116",
+      "destination": "V119",
+      "classification": "OBRIGATORIA",
+      "producer": "solicitar_analise_competencia",
+      "producerOrder": 16,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0443",
+      "sourceConnectionId": "C0443",
+      "phase": 3,
+      "origin": "V116",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "solicitar_analise_competencia",
+      "producerOrder": 16,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0455",
+      "sourceConnectionId": "C0455",
+      "phase": 3,
+      "origin": "V117",
+      "destination": "V114",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_revisao_requisito_v117",
+      "producerOrder": 17,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0458",
+      "sourceConnectionId": "C0458",
+      "phase": 3,
+      "origin": "V117",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_revisao_requisito_v117",
+      "producerOrder": 17,
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0461",
+      "sourceConnectionId": "C0461",
+      "phase": 3,
+      "origin": "V117",
+      "destination": "V118",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_revisao_requisito_v117",
+      "producerOrder": 17,
+      "consumer": "pareceres_internos",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0463",
+      "sourceConnectionId": "C0463",
+      "phase": 3,
+      "origin": "V117",
+      "destination": "V119",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_revisao_requisito_v117",
+      "producerOrder": 17,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0465",
+      "sourceConnectionId": "C0465",
+      "phase": 3,
+      "origin": "V117",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "registrar_revisao_requisito_v117",
+      "producerOrder": 17,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0477",
+      "sourceConnectionId": "C0477",
+      "phase": 3,
+      "origin": "V118",
+      "destination": "V114",
+      "classification": "OBRIGATORIA",
+      "producer": "aprovar_parecer_interno",
+      "producerOrder": 18,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0482",
+      "sourceConnectionId": "C0482",
+      "phase": 3,
+      "origin": "V118",
+      "destination": "V119",
+      "classification": "OBRIGATORIA",
+      "producer": "aprovar_parecer_interno",
+      "producerOrder": 18,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0484",
+      "sourceConnectionId": "C0484",
+      "phase": 3,
+      "origin": "V118",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "aprovar_parecer_interno",
+      "producerOrder": 18,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0496",
+      "sourceConnectionId": "C0496",
+      "phase": 3,
+      "origin": "V119",
+      "destination": "V114",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_apresentacao",
+      "producerOrder": 19,
+      "consumer": "obter_visao_geral_competencia",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0502",
+      "sourceConnectionId": "C0502",
+      "phase": 3,
+      "origin": "V119",
+      "destination": "V120",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_apresentacao",
+      "producerOrder": 19,
+      "consumer": "apresentacoes_contratante",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0504",
+      "sourceConnectionId": "C0504",
+      "phase": 3,
+      "origin": "V119",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "registrar_apresentacao",
+      "producerOrder": 19,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0562",
+      "sourceConnectionId": "C0562",
+      "phase": 3,
+      "origin": "V122",
+      "destination": "V116",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_relatorio_historico_hml",
+      "producerOrder": 20,
+      "consumer": "obter_analise_competencia_v116",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0563",
+      "sourceConnectionId": "C0563",
+      "phase": 3,
+      "origin": "V122",
+      "destination": "V117",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_relatorio_historico_hml",
+      "producerOrder": 20,
+      "consumer": "obter_detalhe_requisito_v117",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0564",
+      "sourceConnectionId": "C0564",
+      "phase": 3,
+      "origin": "V122",
+      "destination": "V121",
+      "classification": "OBRIGATORIA",
+      "producer": "registrar_relatorio_historico_hml",
+      "producerOrder": 20,
+      "consumer": "relatorios_historicos_contratante",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    },
+    {
+      "caseId": "IFV1-F3-C0567",
+      "sourceConnectionId": "C0567",
+      "phase": 3,
+      "origin": "V122",
+      "destination": "V123",
+      "classification": "CONDICIONAL",
+      "producer": "registrar_relatorio_historico_hml",
+      "producerOrder": 20,
+      "consumer": "eventos_auditoria",
+      "expected": {
+        "master": null,
+        "leitor": null
+      }
+    }
+  ]
+}

@@ -4454,7 +4454,7 @@
     "revisao_canonica_ultima": true
   },
   "integracao_funcional_fase3_r1": {
-    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "status": "PLAN_INTEGRADO_BUILD1_EM_REVISAO",
     "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md",
     "plano_mestre": "docs/frontend/planos/PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md",
     "matriz_blob": "bb7ce43f9c334f2f03e9aafab405addadfe5e19a",
@@ -4485,6 +4485,9 @@
     "merge_metodo": "merge commit",
     "escopo_protocolo": "resolveFixturesScope: TRILHA_A | INTEGRACAO_V1_FASE3_REL; exclusão mútua fail-closed nos dois executores",
     "cleanup": "divergência aprovada da seção 16.2: isolamento sem exclusão; cleanupStatus ISOLATED_NO_DELETE | NO_MUTATION | CLEANUP_FAILED",
-    "separacao_papeis": "autor da PR #655 Edivan5002; aprovação por contaos9999; nas PRs seguintes aprova a identidade não autora"
+    "separacao_papeis": "autor da PR #655 Edivan5002; aprovação por contaos9999; nas PRs seguintes aprova a identidade não autora",
+    "plan_merge": "3bbd0270cffc1a93d5d9ff05ae8484981cb394f2",
+    "build_divisao": "BUILD-1 offline (protocolo, guardas, YAML a-d, catálogo F3_CASES.json, validadores); BUILD-2 drivers de UI e esperado por tela antes de qualquer REQUEST",
+    "catalogo_sha256": "72d8e1cdc9fd661c4b020d505e5fbfb68ca26ea9d83feb431c0f93f1dc5fe9ee"
   }
 }

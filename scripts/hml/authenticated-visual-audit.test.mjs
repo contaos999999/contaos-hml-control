@@ -12745,7 +12745,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
   assert.ok(environmentSource.includes("function requestEnvironmentChain(env)"));
   const factory = new Function(
     "deps",
-    `const {C8_RECOVERY_DOCUMENT,validateC8RecoveryDocument,resolveC8AuditScope,isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,validateNavigationR1Evidence,validateNavigationR2Evidence,validateNavigationR3Evidence,singleRequestGet,validateR18RecoveryDocument,validateR18RegistrationCandidate,R18_RECOVERY_DOCUMENT,R18_REGISTRATION_CANDIDATE}=deps;
+    `const {C8_RECOVERY_DOCUMENT,validateC8RecoveryDocument,resolveC8AuditScope,resolveFixturesScope,isProxy,assertPrivateRequestEnvironment,assertRequestMetadataEnvironment,requireSingleRequestOperation,fileURLToPath,join,sourceModuleUrl,fail,parseSingleRequest,digest,verifySingleRequestGit,validateSingleRequestEvent,SINGLE_REQUEST,validateR4ZeroAuthProof,validateR7ZeroAuthProof,validateNavigationR1Evidence,validateNavigationR2Evidence,validateNavigationR3Evidence,singleRequestGet,validateR18RecoveryDocument,validateR18RegistrationCandidate,R18_RECOVERY_DOCUMENT,R18_REGISTRATION_CANDIDATE}=deps;
     ${environmentSource}
     let singleRequestContext=null,validatedR4ZeroAuth=null,validatedR7ZeroAuth=null,validatedR12ZeroAuth=null;
     ${sut.loadSingleRequestProof.toString().replaceAll("import.meta.url", "sourceModuleUrl")}
@@ -12756,6 +12756,7 @@ test("R8 carregador compartilhado mantém prova R7 audit local antes de configur
     C8_RECOVERY_DOCUMENT: sut.C8_RECOVERY_DOCUMENT,
     validateC8RecoveryDocument: sut.validateC8RecoveryDocument,
     resolveC8AuditScope: sut.resolveC8AuditScope,
+    resolveFixturesScope: sut.resolveFixturesScope,
     validateR18RecoveryDocument: sut.validateR18RecoveryDocument,
     validateR18RegistrationCandidate: sut.validateR18RegistrationCandidate,
     R18_RECOVERY_DOCUMENT: sut.R18_RECOVERY_DOCUMENT,
@@ -23099,4 +23100,217 @@ test("R14 logout: só o POST /auth/v1/logout com 204 observado deixa de ser erro
     ),
     false,
   );
+});
+
+test("F3 B1: nonce F3 resolve somente o escopo fixtures próprio, com falha fechada", () => {
+  const base = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: sut.INTEGRACAO_V1_FASE3_SCOPE.nonce,
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.equal(sut.INTEGRACAO_V1_FASE3_SCOPE.nonce, "integracao-v1-fase3-rel-20261113-r1");
+  assert.ok(Object.isFrozen(sut.INTEGRACAO_V1_FASE3_SCOPE));
+  assert.equal(sut.resolveFixturesScope(base), "INTEGRACAO_V1_FASE3_REL");
+  assert.equal(
+    sut.resolveFixturesScope({ ...base, request_id: sut.SINGLE_REQUEST.fixtures.nonce }),
+    "TRILHA_A",
+  );
+  assert.equal(
+    sut.parseSingleRequest(JSON.stringify(base), "fixtures").request_id,
+    base.request_id,
+  );
+  // Nonce F3 nunca vale em audit.
+  assert.throws(
+    () => sut.parseSingleRequest(JSON.stringify({ ...base, operation: "audit" }), "audit"),
+    { code: "REQUEST_SCHEMA" },
+  );
+  assert.throws(() => sut.resolveC8AuditScope({ ...base, operation: "audit" }));
+  // Nonce desconhecido ou da Trilha A já consumido não resolvem escopo ativo.
+  for (const request_id of [
+    "integracao-v1-fase3-rel-20261113-r0",
+    "trilha-a-fixtures-20261110-r19",
+  ])
+    assert.throws(() => sut.resolveFixturesScope({ ...base, request_id }), {
+      code: "FIXTURES_SCOPE",
+    });
+  // Escopo forjado: proxy, getter, protótipo, chave extra ou valor não escalar.
+  assert.throws(() => sut.resolveFixturesScope(new Proxy(base, {})), { code: "FIXTURES_SCOPE" });
+  const getter = { ...base };
+  Object.defineProperty(getter, "request_id", { get: () => base.request_id, enumerable: true });
+  assert.throws(() => sut.resolveFixturesScope(getter), { code: "FIXTURES_SCOPE" });
+  assert.throws(() => sut.resolveFixturesScope(Object.assign(Object.create({ x: 1 }), base)), {
+    code: "FIXTURES_SCOPE",
+  });
+  assert.throws(() => sut.resolveFixturesScope({ ...base, scope: "TRILHA_A" }), {
+    code: "FIXTURES_SCOPE",
+  });
+  assert.throws(() => sut.resolveFixturesScope({ ...base, operation: "audit" }), {
+    code: "FIXTURES_SCOPE",
+  });
+  assert.throws(() => sut.resolveFixturesScope(null), { code: "FIXTURES_SCOPE" });
+  // requireSingleRequestOperation passa a validar o escopo quando há request.
+  assert.doesNotThrow(() => sut.requireSingleRequestOperation("fixtures", base));
+  assert.throws(() => sut.requireSingleRequestOperation("fixtures", { ...base, request_id: "x" }), {
+    code: "FIXTURES_SCOPE",
+  });
+  assert.deepEqual([...sut.FIXTURES_SCOPES], ["TRILHA_A", "INTEGRACAO_V1_FASE3_REL"]);
+});
+test("F3 B1: sem prova de solicitação fixtures nenhum escopo é devolvido", () => {
+  assert.throws(() => sut.singleRequestFixturesScope(), { code: "FIXTURES_SCOPE" });
+});
+test("F3 B1: revalidação expõe o escopo e a proveniência visual ignora escopos fixtures", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const source = await readFile(
+    new URL("./authenticated-visual-audit.mjs", import.meta.url),
+    "utf8",
+  );
+  const cli = source.slice(source.indexOf("async function singleRequestCli(mode)"));
+  const block = cli.slice(0, cli.indexOf('console.log(JSON.stringify({ phase: "SINGLE_REQUEST"'));
+  assert.ok(
+    block.includes("await appendFile(process.env.GITHUB_OUTPUT, fixturesScopeOutputLine(result));"),
+  );
+  assert.ok(
+    source.includes(
+      'singleRequestContext?.operation === "audit" ? (singleRequestContext.scope ?? null) : null,',
+    ),
+  );
+  assert.ok(
+    source.includes('if (operation === "fixtures") assertProofFixturesScope(proof, request);'),
+  );
+});
+
+test("F3 B1: conjunto exato de nonces fixtures executáveis e histórico preservado", () => {
+  const row = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  const candidates = [
+    ...sut.SINGLE_REQUEST.spentFixtureNonces,
+    sut.SINGLE_REQUEST.fixtures.nonce,
+    sut.INTEGRACAO_V1_FASE3_SCOPE.nonce,
+    "integracao-v1-fase3-rel-20261113-r0",
+    "integracao-v1-fase3-rel-20261113-r2",
+  ];
+  const executable = candidates.filter((request_id) => {
+    try {
+      sut.parseSingleRequest(JSON.stringify({ ...row, request_id }), "fixtures");
+      return true;
+    } catch {
+      return false;
+    }
+  });
+  assert.deepEqual(executable, [
+    "trilha-a-fixtures-20261110-r20",
+    "integracao-v1-fase3-rel-20261113-r1",
+  ]);
+  // O nonce F3 não nasce consumido; o consumo é provado pela unicidade de execuções.
+  assert.equal(
+    sut.SINGLE_REQUEST.spentFixtureNonces.includes(sut.INTEGRACAO_V1_FASE3_SCOPE.nonce),
+    false,
+  );
+  // Modo histórico não converte nonce desconhecido em aceito.
+  assert.throws(
+    () =>
+      sut.parseSingleRequest(
+        JSON.stringify({ ...row, request_id: "integracao-v1-fase3-rel-20261113-r0" }),
+        "fixtures",
+        { historical: true },
+      ),
+    { code: "REQUEST_SCHEMA" },
+  );
+});
+test("F3 B1: prova de runtime com escopo fixtures divergente falha fechada", () => {
+  const request = {
+    schema_version: 1,
+    issue: 317,
+    operation: "fixtures",
+    request_id: sut.INTEGRACAO_V1_FASE3_SCOPE.nonce,
+    approved_parent_sha: "a".repeat(40),
+    frontend_sha: "",
+    deployment_id: "",
+  };
+  assert.equal(
+    sut.assertProofFixturesScope({ fixturesScope: "INTEGRACAO_V1_FASE3_REL" }, request),
+    "INTEGRACAO_V1_FASE3_REL",
+  );
+  const trilha = { ...request, request_id: sut.SINGLE_REQUEST.fixtures.nonce };
+  assert.equal(sut.assertProofFixturesScope({ fixturesScope: "TRILHA_A" }, trilha), "TRILHA_A");
+  const getter = {};
+  Object.defineProperty(getter, "fixturesScope", { get: () => "INTEGRACAO_V1_FASE3_REL" });
+  for (const [proof, req] of [
+    [{ fixturesScope: "TRILHA_A" }, request],
+    [{ fixturesScope: "INTEGRACAO_V1_FASE3_REL" }, trilha],
+    [{}, request],
+    [getter, request],
+    [new Proxy({ fixturesScope: "INTEGRACAO_V1_FASE3_REL" }, {}), request],
+    [null, request],
+  ])
+    assert.throws(() => sut.assertProofFixturesScope(proof, req), {
+      code: /REQUEST_RUNTIME|FIXTURES_SCOPE/,
+    });
+});
+test("F3 B1: output de escopo da revalidação só emite valores fechados", () => {
+  const ok = { selected: true, operation: "fixtures", fixturesScope: "INTEGRACAO_V1_FASE3_REL" };
+  assert.equal(sut.fixturesScopeOutputLine(ok), "scope=INTEGRACAO_V1_FASE3_REL\n");
+  assert.equal(
+    sut.fixturesScopeOutputLine({ ...ok, fixturesScope: "TRILHA_A" }),
+    "scope=TRILHA_A\n",
+  );
+  for (const bad of [
+    { ...ok, fixturesScope: "INTEGRACAO_V1_FASE3_REL\nscope=TRILHA_A" },
+    { ...ok, fixturesScope: "C8" },
+    { ...ok, selected: false },
+    { ...ok, operation: "audit" },
+    null,
+  ])
+    assert.throws(() => sut.fixturesScopeOutputLine(bad), { code: "FIXTURES_SCOPE" });
+});
+test("F3 B1: YAML entrega os pares só ao executor do escopo, depois da barreira", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const yaml = await readFile(
+    new URL("../../.github/workflows/contaos-trilha-a-fixtures.yml", import.meta.url),
+    "utf8",
+  );
+  const privateJob = yaml.slice(yaml.indexOf("\n  private:\n"));
+  const steps = privateJob.split("\n      - ").slice(1);
+  const at = (needle) => steps.findIndex((step) => step.includes(needle));
+  const guard = at("--native-guard"),
+    revalidate = at("id: revalidate"),
+    trilha = at("prepare-visual-fixtures.mjs --prepare-fixtures"),
+    f3 = at("integracao-v1-fase3.mjs --run-f3");
+  assert.ok(guard >= 0 && revalidate > guard && trilha > revalidate && f3 > revalidate);
+  assert.ok(steps[revalidate].includes("if: github.event_name == 'workflow_run'"));
+  assert.ok(steps[revalidate].includes("--request-revalidate"));
+  assert.ok(steps[trilha].includes("if: steps.revalidate.outputs.scope == 'TRILHA_A'"));
+  assert.ok(steps[f3].includes("if: steps.revalidate.outputs.scope == 'INTEGRACAO_V1_FASE3_REL'"));
+  const second = steps
+    .map((step, index) => [index, step])
+    .filter(([, step]) => step.includes("CONTAOS_HML_SYNTHETIC_2_"));
+  assert.deepEqual(
+    second.map(([index]) => index),
+    [f3],
+  );
+  // Nenhum secret no env do job e nenhum par sintético fora dos dois executores.
+  const jobHeader = privateJob.slice(0, privateJob.indexOf("    steps:"));
+  assert.equal(jobHeader.includes("secrets."), false);
+  const withSecrets = steps
+    .map((step, index) => [index, step])
+    .filter(([, step]) => step.includes("secrets.CONTAOS_HML_SYNTHETIC"))
+    .map(([index]) => index);
+  assert.deepEqual(withSecrets, [trilha, f3]);
+  // Evidências condicionadas ao escopo correspondente.
+  for (const name of ["Verificar hashes da Fase 3", "Evidencia privada da Fase 3"])
+    assert.ok(
+      steps[at(name)].includes("steps.revalidate.outputs.scope == 'INTEGRACAO_V1_FASE3_REL'"),
+    );
+  for (const name of ["Verificar hashes gerados", "Evidencia privada imutavel"])
+    assert.ok(steps[at(name)].includes("steps.revalidate.outputs.scope == 'TRILHA_A'"));
 });

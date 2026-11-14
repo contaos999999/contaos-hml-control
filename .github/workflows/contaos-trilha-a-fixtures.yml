@@ -7,6 +7,8 @@ on:
       - "scripts/ci/install-pinned-bun.test.mjs"
       - scripts/hml/prepare-visual-fixtures.mjs
       - scripts/hml/prepare-visual-fixtures.test.mjs
+      - scripts/hml/integracao-v1-fase3.mjs
+      - scripts/hml/integracao-v1-fase3.test.mjs
       - scripts/hml/authenticated-visual-audit.mjs
       - scripts/hml/authenticated-visual-audit.test.mjs
       - .github/workflows/contaos-trilha-a-fixtures.yml
@@ -100,11 +102,11 @@ jobs:
           node scripts/ci/install-pinned-bun.mjs
       - run: bun install --frozen-lockfile
       - name: Protocolo sem environment ou secrets
-        run: node --test scripts/hml/authenticated-visual-audit.test.mjs scripts/hml/prepare-visual-fixtures.test.mjs
+        run: node --test scripts/hml/authenticated-visual-audit.test.mjs scripts/hml/prepare-visual-fixtures.test.mjs scripts/hml/integracao-v1-fase3.test.mjs
       - name: Lint e formato somente dos arquivos novos
         run: |
-          bunx eslint scripts/hml/authenticated-visual-audit.mjs scripts/hml/authenticated-visual-audit.test.mjs scripts/hml/prepare-visual-fixtures.mjs scripts/hml/prepare-visual-fixtures.test.mjs
-          bunx prettier --check scripts/hml/authenticated-visual-audit.mjs scripts/hml/authenticated-visual-audit.test.mjs scripts/hml/prepare-visual-fixtures.mjs scripts/hml/prepare-visual-fixtures.test.mjs .github/workflows/contaos-trilha-a-fixtures.yml
+          bunx eslint scripts/hml/authenticated-visual-audit.mjs scripts/hml/authenticated-visual-audit.test.mjs scripts/hml/prepare-visual-fixtures.mjs scripts/hml/prepare-visual-fixtures.test.mjs scripts/hml/integracao-v1-fase3.mjs scripts/hml/integracao-v1-fase3.test.mjs
+          bunx prettier --check scripts/hml/authenticated-visual-audit.mjs scripts/hml/authenticated-visual-audit.test.mjs scripts/hml/prepare-visual-fixtures.mjs scripts/hml/prepare-visual-fixtures.test.mjs scripts/hml/integracao-v1-fase3.mjs scripts/hml/integracao-v1-fase3.test.mjs .github/workflows/contaos-trilha-a-fixtures.yml
       - name: Cache do Chromium congelado
         uses: actions/cache@v4
         with:
@@ -186,21 +188,43 @@ jobs:
       - name: Preparacao e SSR sem credenciais privadas
         run: node scripts/hml/authenticated-visual-audit.mjs --prepare
       - name: Revalidar main e unicidade dentro da concorrencia antes de secrets
+        id: revalidate
         if: github.event_name == 'workflow_run'
         env:
           CONTAOS_ACTIONS_READ_TOKEN: ${{ github.token }}
         run: node scripts/hml/authenticated-visual-audit.mjs --request-revalidate
       - name: Somente agora fornecer o par sintetico ao preparador separado
+        if: steps.revalidate.outputs.scope == 'TRILHA_A'
         env:
           CONTAOS_HML_SYNTHETIC_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_EMAIL }}
           CONTAOS_HML_SYNTHETIC_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_PASSWORD }}
         run: node scripts/hml/prepare-visual-fixtures.mjs --prepare-fixtures
+      - name: Somente agora fornecer os pares sinteticos ao executor da Fase 3
+        if: steps.revalidate.outputs.scope == 'INTEGRACAO_V1_FASE3_REL'
+        env:
+          CONTAOS_HML_SYNTHETIC_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_EMAIL }}
+          CONTAOS_HML_SYNTHETIC_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_PASSWORD }}
+          CONTAOS_HML_SYNTHETIC_2_EMAIL: ${{ secrets.CONTAOS_HML_SYNTHETIC_2_EMAIL }}
+          CONTAOS_HML_SYNTHETIC_2_PASSWORD: ${{ secrets.CONTAOS_HML_SYNTHETIC_2_PASSWORD }}
+        run: node scripts/hml/integracao-v1-fase3.mjs --run-f3
+      - name: Verificar hashes da Fase 3, inclusive em resultado parcial
+        if: always() && steps.revalidate.outputs.scope == 'INTEGRACAO_V1_FASE3_REL'
+        working-directory: artifacts/integracao-v1-fase3
+        run: sha256sum --check SHA256SUMS
+      - name: Evidencia privada da Fase 3 por 90 dias
+        if: always() && steps.revalidate.outputs.scope == 'INTEGRACAO_V1_FASE3_REL'
+        uses: actions/upload-artifact@v4
+        with:
+          name: integracao-v1-fase3-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/integracao-v1-fase3/
+          retention-days: 90
+          if-no-files-found: error
       - name: Verificar hashes gerados, inclusive em resultado parcial
-        if: always()
+        if: always() && steps.revalidate.outputs.scope == 'TRILHA_A'
         working-directory: artifacts/trilha-a-fixtures
         run: sha256sum --check SHA256SUMS
       - name: Evidencia privada imutavel por 90 dias
-        if: always()
+        if: always() && steps.revalidate.outputs.scope == 'TRILHA_A'
         uses: actions/upload-artifact@v4
         with:
           name: trilha-a-fixtures-${{ github.run_id }}-${{ github.run_attempt }}

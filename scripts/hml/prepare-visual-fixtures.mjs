@@ -11,6 +11,7 @@ import {
   requestAllowed,
   singleRequestEventAllowed,
   loadSingleRequestProof,
+  singleRequestFixturesScope,
   R15_RECOVERY_DOCUMENT,
   validateR15RecoveryDocument,
   R16_RECOVERY_DOCUMENT,
@@ -8478,6 +8479,8 @@ export async function runCli(args = process.argv.slice(2)) {
     err("PREPARER_CLI_USAGE");
   if (process.env.GITHUB_EVENT_NAME !== "workflow_run") err("PREPARER_MAIN_ONLY");
   await loadSingleRequestProof({ operation: "fixtures", fresh: true });
+  // PLAN #655, 7.1: o preparador da Trilha A nunca roda numa solicitação de outro escopo.
+  if (singleRequestFixturesScope() !== "TRILHA_A") err("FIXTURES_SCOPE_NOT_TRILHA_A");
   if (!preparerEventAllowed(process.env)) err("PREPARER_MAIN_ONLY");
   return runFixturePreparation();
 }

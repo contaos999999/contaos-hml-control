@@ -7056,7 +7056,9 @@ export async function runCli(args = process.argv.slice(2)) {
     harnessSha: process.env.CONTAOS_HARNESS_SHA,
     deploymentId: process.env.CONTAOS_DEPLOYMENT_ID,
     bun: process.env.CONTAOS_BUN_BINARY || "bun",
-    scope: singleRequestContext?.scope ?? null,
+    // Escopos fixtures (TRILHA_A, F3) não são escopos de auditoria visual.
+    scope:
+      singleRequestContext?.operation === "audit" ? (singleRequestContext.scope ?? null) : null,
   });
 
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
@@ -11712,6 +11714,14 @@ export const SINGLE_REQUEST = Object.freeze({
     privateName: "Trilha A auditoria privada HML",
   }),
 });
+// Fase 3 da integração funcional V1 (PLAN #655, seção 7.1): escopo mutante próprio,
+// resolvido exclusivamente pelo nonce na operação fixtures e mutuamente exclusivo com a Trilha A.
+export const INTEGRACAO_V1_FASE3_SCOPE = Object.freeze({
+  id: "INTEGRACAO_V1_FASE3_REL",
+  nonce: "integracao-v1-fase3-rel-20261113-r1",
+  operation: "fixtures",
+});
+export const FIXTURES_SCOPES = Object.freeze(["TRILHA_A", INTEGRACAO_V1_FASE3_SCOPE.id]);
 let singleRequestContext = null;
 
 function singleRequestIdentityMode(request) {
@@ -11794,6 +11804,7 @@ export function parseSingleRequest(raw, operation, { historical = false } = {}) 
     !["fixtures", "audit"].includes(parsed.operation) ||
     (operation && parsed.operation !== operation) ||
     (parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce &&
+      !(parsed.operation === "fixtures" && parsed.request_id === INTEGRACAO_V1_FASE3_SCOPE.nonce) &&
       !(
         historical &&
         ((parsed.operation === "fixtures" &&
@@ -11986,12 +11997,74 @@ export function resolveC8AuditScope(request) {
   parseSingleRequest(JSON.stringify(copy), "audit");
   return NAVIGATION_SCOPE;
 }
+// Prova de runtime: o escopo gravado na revalidação deve ser o resolvido da solicitação atual.
+export function assertProofFixturesScope(proof, request) {
+  if (!proof || typeof proof !== "object" || isProxy(proof)) fail("REQUEST_RUNTIME");
+  const d = Object.getOwnPropertyDescriptor(proof, "fixturesScope");
+  if (!d || !Object.hasOwn(d, "value") || d.value !== resolveFixturesScope(request))
+    fail("REQUEST_RUNTIME");
+  return d.value;
+}
+// Linha de output da revalidação; só escopos fechados, sem quebra de linha injetável.
+export function fixturesScopeOutputLine(result) {
+  if (!result || result.selected !== true || result.operation !== "fixtures")
+    fail("FIXTURES_SCOPE");
+  if (!FIXTURES_SCOPES.includes(result.fixturesScope)) fail("FIXTURES_SCOPE");
+  return "scope=" + result.fixturesScope + "\n";
+}
+// Escopo fixtures da solicitação já provada nesta execução; sem prova, falha fechada.
+export function singleRequestFixturesScope() {
+  if (singleRequestContext?.operation !== "fixtures") fail("FIXTURES_SCOPE");
+  const scope = singleRequestContext.scope;
+  if (!FIXTURES_SCOPES.includes(scope)) fail("FIXTURES_SCOPE");
+  return scope;
+}
+export function resolveFixturesScope(request) {
+  const code = "FIXTURES_SCOPE";
+  if (!request || typeof request !== "object" || isProxy(request)) fail(code);
+  const proto = Object.getPrototypeOf(request);
+  if (proto !== Object.prototype && proto !== null) fail(code);
+  const names = [
+    "schema_version",
+    "issue",
+    "operation",
+    "request_id",
+    "approved_parent_sha",
+    "frontend_sha",
+    "deployment_id",
+  ];
+  const keys = Reflect.ownKeys(request);
+  if (keys.length !== 7 || keys.some((key) => typeof key !== "string" || !names.includes(key)))
+    fail(code);
+  const descriptors = Object.getOwnPropertyDescriptors(request),
+    copy = {};
+  for (const name of names) {
+    const d = descriptors[name];
+    if (
+      !d ||
+      !Object.hasOwn(d, "value") ||
+      d.enumerable !== true ||
+      !["string", "number"].includes(typeof d.value)
+    )
+      fail(code);
+    copy[name] = d.value;
+  }
+  if (copy.operation !== "fixtures") fail(code);
+  let scope;
+  if (copy.request_id === SINGLE_REQUEST.fixtures.nonce) scope = "TRILHA_A";
+  else if (copy.request_id === INTEGRACAO_V1_FASE3_SCOPE.nonce)
+    scope = INTEGRACAO_V1_FASE3_SCOPE.id;
+  else fail(code);
+  parseSingleRequest(JSON.stringify(copy), "fixtures");
+  return scope;
+}
 export function requireSingleRequestOperation(operation, request = null) {
   if (operation === "audit") {
     resolveC8AuditScope(request);
     return;
   }
   if (operation !== "fixtures") fail("REQUEST_OPERATION");
+  if (request !== null) resolveFixturesScope(request);
 }
 
 export async function verifySingleRequestGit(request, sha, git, raw) {
@@ -15168,7 +15241,7 @@ export async function verifySingleRequest({
     operation,
     sha,
     runId: env.GITHUB_RUN_ID,
-    scope: operation === "audit" ? resolveC8AuditScope(request) : null,
+    scope: operation === "audit" ? resolveC8AuditScope(request) : resolveFixturesScope(request),
   };
   return {
     selected: true,
@@ -15182,6 +15255,7 @@ export async function verifySingleRequest({
     parentSha: request.approved_parent_sha,
     requestSha256: digest(raw),
     ...pullProof,
+    ...(operation === "fixtures" ? { fixturesScope: resolveFixturesScope(request) } : {}),
     ...(operation === "audit"
       ? {
           auditScope: "C8",
@@ -15232,6 +15306,11 @@ async function singleRequestCli(mode) {
       identity: await harnessIdentity(),
     };
     await writeFile(".audit-work/single-request.json", JSON.stringify(proof), { mode: 0o600 });
+    // PLAN #655, 7.4(d): o escopo provado condiciona qual executor fixtures roda.
+    if (operation === "fixtures") {
+      if (!process.env.GITHUB_OUTPUT) fail("REQUEST_OUTPUT");
+      await appendFile(process.env.GITHUB_OUTPUT, fixturesScopeOutputLine(result));
+    }
   }
   console.log(JSON.stringify({ phase: "SINGLE_REQUEST", ...result }));
 }
@@ -15452,6 +15531,7 @@ export async function loadSingleRequestProof({
         timeout: 10000,
       })
     ).stdout;
+  if (operation === "fixtures") assertProofFixturesScope(proof, request);
   if (
     operation === "audit" &&
     (proof.auditScope !== "C8" ||
@@ -15503,7 +15583,7 @@ export async function loadSingleRequestProof({
     operation,
     sha: proof.sha,
     runId: env.GITHUB_RUN_ID,
-    scope: operation === "audit" ? resolveC8AuditScope(request) : null,
+    scope: operation === "audit" ? resolveC8AuditScope(request) : resolveFixturesScope(request),
   };
   return true;
 }
