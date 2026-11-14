@@ -1,7 +1,7 @@
 # ContaOS 4.1 — Auditoria P0 de saneamento: resultado PARCIAL (14/11/2026)
 
 **PLANO APROVADO:** `docs/frontend/planos/P0_PLANO_UNICO_SANEAMENTO_PENDENCIAS_2026-11-14.md`, PR #670 integrada.  
-**Objeto:** saneamento de PRs antigas e controls GitHub, exclusivamente fora da auditoria de integração funcional V1 e fora de PROD.  
+**Objeto:** saneamento de PRs antigas e controles GitHub, exclusivamente fora da auditoria de integração funcional V1 e fora de PROD.  
 **Decisão:** `PASS_PARCIAL_COM_IMPEDIMENTOS` para trabalhos verificáveis, **NO-GO para certificado global do saneamento**. Não afirmar que todas as pendências foram encerradas.  
 **Rastreabilidade estruturada:** `P0_SANEAMENTO_AUDITORIA_GLOBAL_PARCIAL_2026-11-14.json`.
 
@@ -16,9 +16,9 @@ O titular condicionou a aprovação do plano à **preservação integral de cert
 | 2 — #590/#556 | PASS **somente da classificação** | PR #673 merge `87c3c586a65f9c089601ea8647089a6ec1becbf6`; #590 e #556 continuam OPEN/HOLD_DEPENDENCY_V1, NÃO MERGED, sem nova certificação |
 | 3 — GATE backend #220 | PASS | merge `0f7725be5feb8efa028157a57f7629374366b913`; C13 ativa/technical_subtask preservadas; CI push 43601209253 SUCCESS |
 | 4 — Controlador #219 | PASS | merge `1504af465b45afc846458d00e5cb63513fa298ed`; review Edivan5002 #5904711819, CI push 43602633463 SUCCESS; **Node nativo 23/23** em blobs idênticos; dispatch sempre false |
-| 5 — Backend #218 | **HOLD_DEPENDENCY_EVIDENCE** | DRAFT/OPEN; Zero-Drift 42808510215 FAIL por escopo, Restore Isolado 42808510355 FAIL (304/307 PASS; três negativos de SHA protegido) |
-| 6 — P0-NR ruleset | **HOLD_ADMIN_AUTH** | ruleset 26495643 exige somente Zero-Drift + Teste C; P0-NR executa como `ContaOS P0-NR-001 Integridade e Provas` e passou no run 43600828508, mas NÃO foi adicionado como required check |
-| 7 — Auditoria global | **NO-GO certificado global** | Fases 5/6 não estão concluídas; certificação global não emitida |
+| 5 — Backend #218 | **PASS na triagem e destinação, CLOSED_NOT_PLANNED** | Auditoria independente [decisão 6878700812](https://github.com/contaos999999/develop/pull/218#issuecomment-6878700812); PR fechada **sem merge**. Diagnóstico operacional de segurança já expõe failure_code/protocol_failure/failure_hashes; o campo opcional novo **não foi implementado**. Arquivo protegido mantido no SHA original. |
+| 6 — P0-NR ruleset | **HOLD_MFA_SUDO** | Conta `contaos9999` possui admin, mas GitHub solicitou MFA/sudo mode ao salvar; **Unauthorized** sem segundo fator. API independente comprova que ruleset 26495643 continua exigindo somente Zero-Drift + Teste C; P0-NR NÃO é required check. |
+| 7 — Auditoria global | **AUDITORIA PARCIAL, NÃO CERTIFICADA** | Fase 5 destinada de forma segura; Fase 6 ainda depende de MFA e testes do ruleset; nenhum certificado global emitido. |
 
 ## PRs antigas restantes: preservação sem encerramento artificial
 
@@ -26,7 +26,7 @@ O titular condicionou a aprovação do plano à **preservação integral de cert
 
 **Frontend #556:** `HOLD_DEPENDENCY_V1`, proposta V123 em DRAFT, SQL/PostgreSQL não executado. Não executar consultas nem atribuir PASS por mocks V8.
 
-**Backend #218:** `HOLD_DEPENDENCY_EVIDENCE`, revisão independente de classificação https://github.com/contaos999999/develop/pull/218#issuecomment-6878428485. A mudança `supabase/tests/p0_crud_global_browser.mjs` altera dependência de documento SHA256 imutável, enquanto está fora da allowlist C13. **Não** atualizar hash antigo para forçar GREEN. Nova execução só mediante PLAN/GATE de artefato sucessor e escopo explícito, ou CLOSED_SUPERSEDED com prova de substituição. Job Chromium SUCCESS anterior não anula CI Zero-Drift/Restore FAIL.
+**Backend #218:** PR [#218](https://github.com/contaos999999/develop/pull/218) **CLOSED_NOT_PLANNED, SEM MERGE**, após nova decisão independente [Edivan5002](https://github.com/contaos999999/develop/pull/218#issuecomment-6878700812). O documento de prova protegido continua idêntico: Git blob `9c016a09cbec4eb7d5032b90f4c393b1ee9071f4` no backend `main`. O campo novo `async_failure_diagnostic.kind` era observabilidade opcional, **não entregue**, enquanto `failure_code`, `protocol_failure` e `failure_hashes` já são capturados na versão certificada/operacional; assim não se sacrifica integridade histórica para modificar um harness. As falhas antigas Zero-Drift/Restore continuam registradas como justificativa da decisão, não passam a PASS.
 
 ## Fase 6: ação administrativa exata, sem bypass
 
@@ -36,7 +36,7 @@ Required checks existentes, que devem continuar integralmente:
 1. `Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente`
 2. `ContaOS Frontend Zero-Drift`
 
-**Adicionar como terceiro:** `ContaOS P0-NR-001 Integridade e Provas`, nome exato do JOB da `.github/workflows/p0-nr001-anti-recurrence.yml`; não confundir com nome do workflow `ContaOS P0-NR-001 Anti-Reincidencia`. Validar integração GitHub Actions correspondente, bloquear merge com FAIL, aceitar GREEN e reler ruleset. A conexão atual permite GET do ruleset, mas não operação autorizada de edição/ADMIN, e a leitura de branch protection clássico retornou 403. Portanto **NÃO** afirmar Fase 6 PASS antes de ação do administrador e readback.
+**Adicionar como terceiro:** `ContaOS P0-NR-001 Integridade e Provas`, nome exato do JOB da `.github/workflows/p0-nr001-anti-recurrence.yml`; não confundir com nome do workflow `ContaOS P0-NR-001 Anti-Reincidencia`. Validar integração GitHub Actions correspondente, bloquear merge com FAIL, aceitar GREEN e reler ruleset. A conta `contaos9999` tem permissão admin, e a interface autenticada possibilitou selecionar o terceiro check, mas o GitHub exigiu confirmação MFA em modo sudo para **salvar o ruleset**. A tentativa retornou `Unauthorized`; [auditoria visual do bloqueio](https://agent.tinyfish.ai/runs/cd40476b-02b8-489f-a6df-f488f993faf5). A API REST independente, consultada por duas contas, permaneceu com **somente os dois checks anteriores**. A configuração não foi persistida; nenhum check foi removido. **Próxima condição**: titular concluir MFA pelo próprio GitHub, salvar, conferir readback REST com três checks e provar o bloqueio de PR quando P0-NR falhar. Não entregar código MFA por chat.
 
 ## Prova de integridade e versão
 HEAD frontend inicial deste relatório `87c3c586a65f9c089601ea8647089a6ec1becbf6`. HEAD backend `1504af465b45afc846458d00e5cb63513fa298ed`. Antes de cada PR de correção, reler HEAD de ambos. O documento parcial **não altera** certificados anteriores, workflows, manifestos, produto, backend, Supabase ou PROD.
@@ -49,6 +49,6 @@ Snapshot dos quatro blobs protegidos:
 
 ## Continuidade
 
-**Última etapa comprovada:** Fases 0, 1, 2 (classificação), 3 e 4 integradas e revisadas; Fase 5 classificada HOLD por causas demonstradas; Fase 6 HOLD administrativo. Fase 7 sem certificado global.
+**Última etapa comprovada:** Fases 0, 1, 2 (classificação), 3 e 4 integradas e revisadas. Fase 5 encerrada quanto à **destinação da PR antiga** por `CLOSED_NOT_PLANNED`, sem implementar campo adicional nem alterar evidência. Fase 6 `HOLD_MFA_SUDO`; Fase 7 auditada apenas parcialmente, sem certificado global.
 
-**Próximo trabalho objetivo:** obter terceiro required check por administrador, sem remover checks antigos; em paralelo elaborar PLAN/GATE para #218 com preservação de hash antigo e nova prova. Após superar impedimentos reavaliar exclusivamente Fases 5–7, **sem repetir Fases 0–4** e sem tocar em V1 funcional consolidada. Não declarar trabalho em background ou PROD autorizado.
+**Próximo trabalho objetivo:** após a confirmação MFA do titular, adicionar e salvar o terceiro required check, reler ruleset via REST e testar gate. Depois concluir somente Fases 6–7 com certificado de saneamento separado, **sem repetir Fases 0–5** e sem tocar em V1 funcional consolidada. #218 permanece fechada; eventual extensão diagnóstica precisará de PLAN sucessor. Não declarar trabalho em background ou PROD autorizado.
