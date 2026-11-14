@@ -73,3 +73,30 @@ Após a integração protegida do BUILD #661, a implementação técnica deverá
 **Certificado cumulativo e autenticação live:** status PASS não equivale a texto em JSON; `scripts/p0-evidence-live-gate.mjs` exige para certificados novos revisão independente APPROVED no HEAD do PR, PR efetivamente merged à main, SHA do merge ancestral da main, workflow Zero-Drift e job Teste C SUCCESS no mesmo SHA, SHA256 das provas e correspondência binária dos artefatos com o arquivo existente no HEAD revisado. Exige todas as Fases 1–6 antes da Fase 7 interna/cumulativa (e fases 1–7 antes de um certificado funcional V2–V5 na Fase 8), com recibos por fase em `fases_anteriores`. Falta de token, API indisponível, fonte posterior ao PR, hash diferente ou review de autoria própria = FAIL, nunca PASS presumido. A comprovação V1 funcional histórica é preservada dentro de seu escopo, sem exigir migração fictícia.
 
 Os validadores verificam evidências **que existem e podem ser testadas**; não substituem a auditoria de qualidade semântica dos casos, da integridade clínica/financeira nem a revisão independente do código. As suites e CHECKs existentes, Teste C, RBAC/RLS, HML-only e PROD proibido permanecem.
+
+
+## XI. Fechamento técnico exigido na revisão independente #5903386404
+
+**Eficácia:** somente após aprovação independente de Edivan5002, CI do HEAD aprovado e merge protegido da PR #661. A alteração de gate não certifica, por si, V1-interna ou V2–V5.
+
+### Escopo V1 e governança
+
+PLAN_ATIVO 75 não autoriza automaticamente implantação V2 em arquivo antigo ou em scripts. Alterações novas de aplicativo V1 devem entregar, no próprio diff, docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json (schema contaos.p0.v1-scope-proof.v1), com baseline SHA, allowlist aprovada, mapa exato de arquivos V1, justificativas e testes reais executados no CI. Referências V2–V5 adicionadas ao diff bloqueiam classificação V1. A análise semântica do código continua obrigatória na revisão independente; uma mera declaração textual não a substitui. Certificações históricas continuam válidas em seu escopo.
+
+Mudanças em scripts ou workflows sob PLAN 75 exigem um PLAN de governança previamente integrado à main, vinculado ao número da PR e com allowlist fechada. PRs futuras podem usar docs/frontend/planos/P0_GOV_PLAN_<numero>.json, com approved:true, pr_number e files, integrado por PR protegido antes do BUILD. A exceção inicial para #661 é **exclusiva da PR #661**, apoiada no PLAN #662 integrado e nos sete caminhos de governança ali relacionados. Não é autorização reaproveitável para outra PR.
+
+### Preflight de NOVA_FUNCIONALIDADE
+
+Aceitar somente preflight.status=VERIFICADO com baseline_sha igual ao baseline real, arquivo evidência sob docs/frontend/auditorias/preflight/ e arquivo_sha256 validado contra bytes efetivamente versionados no SHA do CI. Exigir quatro testes executáveis independentes com tipo CONTRATO, RBAC_RLS, DADOS_INTEGRIDADE e DEPENDENCIAS. Cada teste tem id, runner, arquivo e caso exato; a etapa operacional executa os quatro no HEAD e rejeita testes faltantes, skipped ou não aprovados. Texto como "preflight conferido" não é prova.
+
+### Certificação em duas PRs protegidas: solução antideadlock
+
+**PR A, evidências ainda PENDENTE:** gerar evidências de fases 1–6 e certificado de fase7, ou fases 1–7 e fase8 para funcional; incluir matriz, grafo e relatório autenticado de HML sob diretórios canônicos. Obter a revisão independente no HEAD da PR A, executar o Teste C realmente aplicável com Playwright e artefatos de screenshots e SHA256SUMS. Se a PR A for só documental, executar o workflow Teste C por workflow_dispatch no mesmo SHA: a dispensa por escopo administrativo nunca vira prova E2E. Integrar PR A por merge protegido, conferir recibos e provas na main. O manifesto permanece PENDENTE.
+
+**PR B, ativação PASS:** só após o merge A preencher o manifesto com PR merge SHA de A, review APPROVED no HEAD A por autor independente, CI de A, SHA256 dos documentos, recibos das fases anteriores, teste_c_run_url da execução efetiva do Teste C no SHA de A e hml_e2e com ambiente HML_AUTENTICADO, arquivo_evidencia, arquivo_sha256 e casos. O CI da PR B autentica tudo pelo GitHub REST, confirmando PR A merged na main, SHA ancestral, review, CI, steps Playwright SUCCESS, upload SUCCESS, artifact existente e relatório HML no SHA revisado. Após outro review independente de B e CI aprovado, merge protegido da ativação e readback. Essa sequência evita exigir que a PR B já esteja merged para validar a própria PR B.
+
+Um Teste C com job SUCCESS, mas Playwright e evidências SKIPPED, permanece aceitável em PR administrativa; é NO-GO para certificado final de integração. Relatórios HML não são presumidos, e os testes só provam o que efetivamente executam. Não criar certificados artificiais nem reabrir versões já certificadas sem delta invalidante.
+
+### Gates de aceite
+
+Os testes negativos devem reproduzir bypass em scripts sob V1, classificação falsa de V2 em arquivo V1, preflight apenas textual, Teste C SKIPPED, artefato/HML ausente, hash e SHA incompatíveis e PR não merged. Zero-Drift e LOCK no HEAD final + nova auditoria independente APPROVED são obrigatórios antes do merge de #661. PROD proibido.
