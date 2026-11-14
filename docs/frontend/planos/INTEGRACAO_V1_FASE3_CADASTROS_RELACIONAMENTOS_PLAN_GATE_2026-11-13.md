@@ -81,7 +81,7 @@ O recibo de cada `IFV1-F3-Cxxxx` registra os itens abaixo.
    - as permissões efetivas refletidas em cada tela de destino (C0007–C0032 e C0034);
    - o evento em V123 (C0033), nas condições do item 5.
 
-   Ele não faz nenhuma mutação, e a sessão termina com logout comprovado. O invariante "sem conceder papel especializado ao MASTER" é provado assim: as permissões efetivas do MASTER são iguais antes e depois do vínculo, e o perfil atribuído é exatamente `leitor`.
+   O resultado esperado em cada destino (permitido ou negado) vem da matriz RBAC do perfil `leitor`, tela por tela. Nenhum destino é presumido visível; V123 e as telas administrativas (C0033 e C0034) seguem essa matriz, e um destino negado pela RBAC é PASS quando a negação é a esperada. Ele não faz nenhuma mutação, e a sessão termina com logout comprovado. O invariante "sem conceder papel especializado ao MASTER" é provado assim: as permissões efetivas do MASTER são iguais antes e depois do vínculo, e o perfil atribuído é exatamente `leitor`.
 5. **CONDICIONAL (18 casos em V123, eventos de auditoria).** A condição objetiva é que o evento do produtor apareça em V123 para a organização da Fase 3. Um caso só pode ficar `N_A_JUSTIFICADO` se cumprir três exigências:
    - a fonte no código mostra que o produtor não emite evento visível;
    - existe uma **emenda deste PLAN aprovada expressamente pelo titular** antes do REQUEST que fecha a matriz;
@@ -135,10 +135,10 @@ O executor mutante novo fica em `scripts/hml/integracao-v1-fase3.mjs` e `scripts
 |---|---:|
 | Criar a organização | 1 |
 | Vínculo do 2º usuário | 1 |
-| 17 produtores de negócio (ordens 5 a 20, menos a preferência, que é local e não conta) | 17 |
+| 16 produtores de negócio (ordens 5 a 20; a preferência, ordem 3, é local e não conta) | 16 |
 | Pré-requisitos finos confirmados no BUILD (por exemplo, solicitação de parecer) | até 5 |
 | Tentativas de duplicidade | até 10 |
-| **Total previsto** | **até 34** |
+| **Total previsto** | **até 33** |
 
 A folga até 60 cobre reconciliação e uma execução de recuperação. Toda tentativa enviada conta como intenção, inclusive as rejeitadas por duplicidade. Cada execução tem prazo de 45 minutos no job.
 
@@ -159,7 +159,7 @@ O YAML só pode mudar nestes pontos:
 - **(a)** os dois arquivos `integracao-v1-fase3*` entram no filtro `paths`;
 - **(b)** no job `protocol`, os dois arquivos entram em `node --test`, `eslint` e `prettier --check`, sem remover nenhum passo existente;
 - **(c)** no job `private` (environment `hml`), `CONTAOS_HML_SYNTHETIC_2_EMAIL` e `CONTAOS_HML_SYNTHETIC_2_PASSWORD` ficam disponíveis **somente no `env` do passo do executor F3**, depois de `--native-guard` e `--request-revalidate`, do mesmo jeito que o par da Trilha A;
-- **(d)** os passos do preparador da Trilha A e do executor F3 passam a depender do escopo exposto pela revalidação (seção 7.1).
+- **(d)** os passos do preparador da Trilha A e do executor F3 passam a depender do escopo exposto pela revalidação (seção 7.1). Para isso, o passo `--request-revalidate` ganha `id` e um output `scope`. Sem escopo exposto, como no `workflow_dispatch`, em que a revalidação é pulada, nenhum dos dois executores roda. Teste RED: executor F3 fora de `workflow_run`.
 
 Nenhuma outra mudança é permitida no YAML, nas permissões, nos gatilhos ou no environment.
 
@@ -168,7 +168,7 @@ Nenhuma outra mudança é permitida no YAML, nas permissões, nos gatilhos ou no
 Os artefatos são três: `F3_CASES.json` (catálogo derivado da matriz, conferido por SHA-256), `F3_REPORT.json` e `SHA256SUMS`. Cada recibo traz os campos da seção 16.2.
 
 Três campos só existem depois do artefato: `artifactId`, `sha256` do ZIP e `reviewId`. Eles ficam nulos no relatório e são preenchidos no ledger e no certificado. Origem dos demais campos:
-- `backendSha`: o baseline normativo `5eca44aebead3183e81b5c1af0d1dffa5fb8feb6`, mais o HEAD de `contaos999999/develop` lido pela API no job `request`;
+- `backendSha`: o baseline normativo `5eca44aebead3183e81b5c1af0d1dffa5fb8feb6`, fixo no código do executor. Nenhuma leitura nova do repositório `develop` é feita;
 - `frontendSha` e `deploymentId`: o pin;
 - `harnessSha`: o commit do executor;
 - `workflowRunId`: a run.
