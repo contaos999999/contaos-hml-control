@@ -4497,6 +4497,6 @@
     "ledger_sha256": "1d402a1a4946c2aad8cc7715fa86b45c4aae6f68ab63aab9f77d0ec94e93c236",
     "workflow_sha256": "8da83394d6018f9ac473970020bea693f8c3be996595ccc9573288eb29fe618c",
     "provas_r4_r12_r14": "conferidas em 13/11/2026 com pai d2a6557: OK (só exigem ancestralidade)",
-    "build2b1_pr": "#658 (autor Edivan5002); CHANGES_REQUESTED contaos9999 review 5900926490 no HEAD 363b451; R2 atende B1, I1-I4, M1-M5; CHANGES_REQUESTED contaos9999 review 5901072418 no HEAD 41a4331; R3 atende A, B, C, D, E; CHANGES_REQUESTED contaos9999 review 5901160351 no HEAD fcb5224; R4 atende I-A, M-1, M-2, M-3"
+    "build2b1_pr": "#658 (autor Edivan5002); CHANGES_REQUESTED contaos9999 review 5900926490 no HEAD 363b451; R2 atende B1, I1-I4, M1-M5; CHANGES_REQUESTED contaos9999 review 5901072418 no HEAD 41a4331; R3 atende A, B, C, D, E; CHANGES_REQUESTED contaos9999 review 5901160351 no HEAD fcb5224; R4 atende I-A, M-1, M-2, M-3; parecer R4 APPROVE registrado como comentário 5901220713 no HEAD 4f204c9; R5 correção estrutural de causa raiz: máquina de estados única com eventos e replay no relatório e no ledger, livro só a partir de ledger validado, teste de propriedade"
   }
 }
