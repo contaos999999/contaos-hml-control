@@ -2,9 +2,10 @@
  * Executor mutante da Fase 3 da integração funcional V1 (cadastros e relacionamentos).
  * PLAN/GATE: docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md
  *
- * BUILD-1 (este arquivo): catálogo derivado da matriz, validadores estritos, orçamento,
- * enums de recibo e guarda de escopo. Os drivers de UI dos produtores pertencem ao BUILD-2;
- * até lá a execução HML falha fechada com F3_DRIVER_PENDING, depois da guarda de escopo.
+ * BUILD-1: catálogo derivado da matriz, validadores estritos, orçamento, enums e guarda de escopo.
+ * BUILD-2a: esperado por tela (MASTER e leitor) fixado no catálogo, com fonte no código e a
+ * fotografia RBAC v6 do perfil leitor. Os drivers de UI vêm no BUILD-2b; até lá a execução HML
+ * falha fechada com F3_DRIVER_PENDING, depois da guarda de escopo e da conferência do catálogo.
  * Nunca importado pelo auditor somente leitura.
  */
 import { createHash } from "node:crypto";
@@ -33,7 +34,7 @@ export const F3_MATRIX = Object.freeze({
 });
 export const F3_CASES_PATH = "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_CASES.json";
 // SHA-256 do catálogo publicado (PLAN 7.5); muda só por PR com nova derivação revisada.
-export const F3_CASES_SHA256 = "72d8e1cdc9fd661c4b020d505e5fbfb68ca26ea9d83feb431c0f93f1dc5fe9ee";
+export const F3_CASES_SHA256 = "bce15980d31ce22c8836e26621b267951296e905139b9833c8db4a7400c9ecbb";
 // Baseline normativo fixo (PLAN 7.5, M-R2-1): nenhuma leitura nova do repositório develop.
 export const F3_BACKEND_SHA = "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6";
 export const F3_BUDGET = Object.freeze({ total: 60, perRun: 30, planned: 33, minutes: 45 });
@@ -73,6 +74,103 @@ export const F3_PRODUCERS = Object.freeze(
     Object.freeze({ order: index + 1, origin, producer, connections }),
   ),
 );
+
+// Acesso exigido por tela de destino (PLAN 4.4, M-R2-4), com fonte no código do produto.
+// source = "arquivo:linhaInicial-linhaFinal" contendo recurso e ação; screenGuard aponta a decisão
+// da própria tela quando ela difere do menu. "rota-mae" marca telas sem item de menu próprio:
+// o driver do BUILD-2b confirma o estado negado pela UI.
+const M = "src/lib/navegacao/menuV1.ts:";
+export const F3_SCREEN_ACCESS = Object.freeze(
+  Object.fromEntries(
+    [
+      ["SYS04", null, null, M + "7-7", "publica", null],
+      ["SYS05", "dashboard", "consultar", M + "10-10", "menu", null],
+      [
+        "ADM01",
+        "usuarios",
+        "administrar",
+        "src/components/layout/ContaOSAppShell.tsx:203-203",
+        "guarda",
+        "src/components/administracao/usuarios/AdminUsuarios.tsx:106:validarAdministrador",
+      ],
+      ["V101", "contratantes", "consultar", M + "11-11", "menu", null],
+      ["V102", "contratantes", "criar", M + "15-16", "menu", null],
+      ["V103", "contratantes", "editar", M + "58-63", "menu", null],
+      ["V104", "contratos", "consultar", M + "18-18", "menu", null],
+      ["V105", "contratos", "criar", M + "19-19", "menu", null],
+      ["V106", "contratos", "consultar", M + "48-48", "menu", null],
+      ["V107", "normativos", "consultar", M + "49-49", "menu", null],
+      ["V108", "orcamentos", "consultar", M + "50-50", "menu", null],
+      ["V109", "listas", "consultar", M + "51-51", "menu", null],
+      ["V110", "documentos_contrato", "consultar", M + "52-52", "menu", null],
+      ["V111", "documentos_contrato", "consultar", M + "52-52", "rota-mae", null],
+      ["V112", "competencias", "consultar", M + "53-53", "menu", null],
+      ["V113", "competencias", "criar", M + "54-54", "menu", null],
+      ["V114", "competencias", "consultar", M + "40-40", "menu", null],
+      ["V115", "documentos_competencia", "consultar", M + "41-41", "menu", null],
+      ["V116", "analises", "consultar", M + "42-42", "menu", null],
+      ["V117", "analises", "consultar", M + "42-42", "rota-mae", null],
+      ["V118", "pareceres", "consultar", M + "43-43", "menu", null],
+      ["V119", "apresentacoes", "consultar", M + "44-44", "menu", null],
+      ["V120", "apresentacoes", "consultar", M + "44-44", "rota-mae", null],
+      ["V121", "historico", "consultar", M + "55-55", "menu", null],
+      // A tela decide por historico/criar (o menu usa historico/processar); vale a tela.
+      [
+        "V122",
+        "historico",
+        "criar",
+        "src/components/contratos/ImportarHistorico.tsx:70-70",
+        "guarda",
+        null,
+      ],
+      [
+        "V123",
+        "auditoria",
+        "consultar",
+        "src/components/layout/ContaOSAppShell.tsx:209-209",
+        "guarda",
+        "src/components/administracao/auditoria/TrilhaAuditoria.tsx:41:podeConsultarAuditoria",
+      ],
+    ].map(([screen, resource, action, source, kind, screenGuard]) => [
+      screen,
+      Object.freeze({ resource, action, source, kind, screenGuard }),
+    ]),
+  ),
+);
+// Matriz RBAC do perfil leitor na HML, versão 6, lida em 13/11/2026 por SELECT autorizado pelo
+// titular (privado.rbac_permissoes_perfis). A execução relê as permissões efetivas e falha se
+// divergirem desta fotografia.
+export const F3_RBAC_LEITOR = Object.freeze({
+  version: 6,
+  allowed: Object.freeze(
+    [
+      "analises/consultar",
+      "apresentacoes/consultar",
+      "arquivos/consultar",
+      "competencias/consultar",
+      "contratantes/consultar",
+      "contratos/consultar",
+      "dashboard/consultar",
+      "documentos_competencia/consultar",
+      "documentos_contrato/consultar",
+      "historico/consultar",
+      "listas/consultar",
+      "normativos/consultar",
+      "orcamentos/consultar",
+      "organizacoes/consultar",
+      "pareceres/consultar",
+    ].sort(),
+  ),
+  denied: 33,
+});
+export function expectedAccess(screen, profile) {
+  const access = F3_SCREEN_ACCESS[screen];
+  if (!access) fail("F3_SCREEN_ACCESS");
+  if (profile === "master") return "ALLOW";
+  if (profile !== F3_SECOND_USER_PROFILE) fail("F3_PROFILE");
+  if (access.resource === null) return "ALLOW";
+  return F3_RBAC_LEITOR.allowed.includes(access.resource + "/" + access.action) ? "ALLOW" : "DENY";
+}
 
 const MATRIX_HEADER = Object.freeze([
   "id_conexao",
@@ -182,9 +280,11 @@ export function buildF3Cases(csvText) {
       producer: r.produtor_original,
       producerOrder: producer.order,
       consumer: r.consumidor_original,
-      // Esperado por sessão (MASTER e leitor) é fixado no BUILD-2 antes de qualquer execução,
-      // com fonte no código; nulo aqui bloqueia a execução HML.
-      expected: Object.freeze({ master: null, leitor: null }),
+      // Esperado por sessão, fixado antes de qualquer execução (F3_SCREEN_ACCESS + RBAC v6).
+      expected: Object.freeze({
+        master: expectedAccess(r.tela_destino, "master"),
+        leitor: expectedAccess(r.tela_destino, F3_SECOND_USER_PROFILE),
+      }),
     });
   });
   for (const p of F3_PRODUCERS)
@@ -276,8 +376,6 @@ export async function runCli(args = process.argv.slice(2), env = process.env) {
   if (sha256(casesRaw) !== F3_CASES_SHA256) fail("F3_CASES_HASH");
   const cases = JSON.parse(casesRaw);
   validateF3Cases(cases, csv);
-  if (cases.cases.some((c) => c.expected.master === null || c.expected.leitor === null))
-    fail("F3_DRIVER_PENDING");
   fail("F3_DRIVER_PENDING");
 }
 

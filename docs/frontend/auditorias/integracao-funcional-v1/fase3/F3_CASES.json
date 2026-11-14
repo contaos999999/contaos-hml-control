@@ -16,8 +16,8 @@
       "producerOrder": 1,
       "consumer": "listar_organizacoes_disponiveis",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -31,8 +31,8 @@
       "producerOrder": 1,
       "consumer": "obter_resumo_dashboard",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -46,8 +46,8 @@
       "producerOrder": 2,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -61,8 +61,8 @@
       "producerOrder": 3,
       "consumer": "consultar_permissoes_efetivas",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -76,8 +76,8 @@
       "producerOrder": 3,
       "consumer": "obter_resumo_dashboard",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -91,8 +91,8 @@
       "producerOrder": 3,
       "consumer": "contratantes",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -106,8 +106,8 @@
       "producerOrder": 3,
       "consumer": "contratantes",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -121,8 +121,8 @@
       "producerOrder": 3,
       "consumer": "contratantes",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -136,8 +136,8 @@
       "producerOrder": 3,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -151,8 +151,8 @@
       "producerOrder": 3,
       "consumer": "contratantes",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -166,8 +166,8 @@
       "producerOrder": 3,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -181,8 +181,8 @@
       "producerOrder": 3,
       "consumer": "fontes_normativas",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -196,8 +196,8 @@
       "producerOrder": 3,
       "consumer": "propostas_orcamentarias",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -211,8 +211,8 @@
       "producerOrder": 3,
       "consumer": "listas_verificacao",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -226,8 +226,8 @@
       "producerOrder": 3,
       "consumer": "documentos_contrato",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -241,8 +241,8 @@
       "producerOrder": 3,
       "consumer": "documentos_contrato",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -256,8 +256,8 @@
       "producerOrder": 3,
       "consumer": "competencias",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -271,8 +271,8 @@
       "producerOrder": 3,
       "consumer": "criar_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -286,8 +286,8 @@
       "producerOrder": 3,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -301,8 +301,8 @@
       "producerOrder": 3,
       "consumer": "obter_documentos_competencia_v115",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -316,8 +316,8 @@
       "producerOrder": 3,
       "consumer": "obter_analise_competencia_v116",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -331,8 +331,8 @@
       "producerOrder": 3,
       "consumer": "obter_detalhe_requisito_v117",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -346,8 +346,8 @@
       "producerOrder": 3,
       "consumer": "pareceres_internos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -361,8 +361,8 @@
       "producerOrder": 3,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -376,8 +376,8 @@
       "producerOrder": 3,
       "consumer": "apresentacoes_contratante",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -391,8 +391,8 @@
       "producerOrder": 3,
       "consumer": "relatorios_historicos_contratante",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -406,8 +406,8 @@
       "producerOrder": 3,
       "consumer": "relatorios_historicos_contratante",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -421,8 +421,8 @@
       "producerOrder": 3,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -436,8 +436,8 @@
       "producerOrder": 4,
       "consumer": "listar_organizacoes_disponiveis",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -451,8 +451,8 @@
       "producerOrder": 4,
       "consumer": "obter_resumo_dashboard",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -466,8 +466,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -481,8 +481,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -496,8 +496,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -511,8 +511,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -526,8 +526,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -541,8 +541,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -556,8 +556,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -571,8 +571,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -586,8 +586,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -601,8 +601,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -616,8 +616,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -631,8 +631,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -646,8 +646,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -661,8 +661,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -676,8 +676,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -691,8 +691,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -706,8 +706,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -721,8 +721,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -736,8 +736,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -751,8 +751,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -766,8 +766,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -781,8 +781,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -796,8 +796,8 @@
       "producerOrder": 4,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -811,8 +811,8 @@
       "producerOrder": 4,
       "consumer": "consultar_permissoes_efetivas (infraestrutura compartilhada)",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -826,8 +826,8 @@
       "producerOrder": 5,
       "consumer": "contratantes",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -841,8 +841,8 @@
       "producerOrder": 5,
       "consumer": "contratantes",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -856,8 +856,8 @@
       "producerOrder": 5,
       "consumer": "contratantes",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -871,8 +871,8 @@
       "producerOrder": 5,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -886,8 +886,8 @@
       "producerOrder": 6,
       "consumer": "contratantes",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -901,8 +901,8 @@
       "producerOrder": 6,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -916,8 +916,8 @@
       "producerOrder": 6,
       "consumer": "contratantes",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -931,8 +931,8 @@
       "producerOrder": 6,
       "consumer": "contratantes",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -946,8 +946,8 @@
       "producerOrder": 6,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -961,8 +961,8 @@
       "producerOrder": 7,
       "consumer": "obter_resumo_dashboard",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -976,8 +976,8 @@
       "producerOrder": 7,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -991,8 +991,8 @@
       "producerOrder": 7,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1006,8 +1006,8 @@
       "producerOrder": 7,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1021,8 +1021,8 @@
       "producerOrder": 8,
       "consumer": "obter_resumo_dashboard",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1036,8 +1036,8 @@
       "producerOrder": 8,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1051,8 +1051,8 @@
       "producerOrder": 8,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1066,8 +1066,8 @@
       "producerOrder": 8,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1081,8 +1081,8 @@
       "producerOrder": 8,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1096,8 +1096,8 @@
       "producerOrder": 8,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1111,8 +1111,8 @@
       "producerOrder": 8,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1126,8 +1126,8 @@
       "producerOrder": 8,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1141,8 +1141,8 @@
       "producerOrder": 8,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1156,8 +1156,8 @@
       "producerOrder": 8,
       "consumer": "contratos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1171,8 +1171,8 @@
       "producerOrder": 8,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1186,8 +1186,8 @@
       "producerOrder": 9,
       "consumer": "obter_analise_competencia_v116",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1201,8 +1201,8 @@
       "producerOrder": 9,
       "consumer": "pareceres_internos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1216,8 +1216,8 @@
       "producerOrder": 9,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1231,8 +1231,8 @@
       "producerOrder": 9,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1246,8 +1246,8 @@
       "producerOrder": 10,
       "consumer": "listas_verificacao",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1261,8 +1261,8 @@
       "producerOrder": 10,
       "consumer": "criar_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1276,8 +1276,8 @@
       "producerOrder": 10,
       "consumer": "obter_analise_competencia_v116",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1291,8 +1291,8 @@
       "producerOrder": 10,
       "consumer": "obter_detalhe_requisito_v117",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1306,8 +1306,8 @@
       "producerOrder": 10,
       "consumer": "pareceres_internos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1321,8 +1321,8 @@
       "producerOrder": 10,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1336,8 +1336,8 @@
       "producerOrder": 10,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1351,8 +1351,8 @@
       "producerOrder": 11,
       "consumer": "criar_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1366,8 +1366,8 @@
       "producerOrder": 11,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1381,8 +1381,8 @@
       "producerOrder": 11,
       "consumer": "obter_documentos_competencia_v115",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1396,8 +1396,8 @@
       "producerOrder": 11,
       "consumer": "obter_analise_competencia_v116",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1411,8 +1411,8 @@
       "producerOrder": 11,
       "consumer": "obter_detalhe_requisito_v117",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1426,8 +1426,8 @@
       "producerOrder": 11,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1441,8 +1441,8 @@
       "producerOrder": 12,
       "consumer": "documentos_contrato",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1456,8 +1456,8 @@
       "producerOrder": 12,
       "consumer": "obter_analise_competencia_v116",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1471,8 +1471,8 @@
       "producerOrder": 12,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1486,8 +1486,8 @@
       "producerOrder": 13,
       "consumer": "fontes_normativas",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1501,8 +1501,8 @@
       "producerOrder": 13,
       "consumer": "documentos_contrato",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1516,8 +1516,8 @@
       "producerOrder": 13,
       "consumer": "obter_analise_competencia_v116",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1531,8 +1531,8 @@
       "producerOrder": 13,
       "consumer": "obter_detalhe_requisito_v117",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1546,8 +1546,8 @@
       "producerOrder": 13,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1561,8 +1561,8 @@
       "producerOrder": 14,
       "consumer": "obter_resumo_dashboard",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1576,8 +1576,8 @@
       "producerOrder": 14,
       "consumer": "competencias",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1591,8 +1591,8 @@
       "producerOrder": 14,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1606,8 +1606,8 @@
       "producerOrder": 14,
       "consumer": "obter_documentos_competencia_v115",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1621,8 +1621,8 @@
       "producerOrder": 14,
       "consumer": "obter_analise_competencia_v116",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1636,8 +1636,8 @@
       "producerOrder": 14,
       "consumer": "pareceres_internos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1651,8 +1651,8 @@
       "producerOrder": 14,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1666,8 +1666,8 @@
       "producerOrder": 14,
       "consumer": "apresentacoes_contratante",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1681,8 +1681,8 @@
       "producerOrder": 14,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1696,8 +1696,8 @@
       "producerOrder": 15,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1711,8 +1711,8 @@
       "producerOrder": 15,
       "consumer": "obter_analise_competencia_v116",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1726,8 +1726,8 @@
       "producerOrder": 15,
       "consumer": "obter_detalhe_requisito_v117",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1741,8 +1741,8 @@
       "producerOrder": 15,
       "consumer": "pareceres_internos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1756,8 +1756,8 @@
       "producerOrder": 15,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1771,8 +1771,8 @@
       "producerOrder": 15,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1786,8 +1786,8 @@
       "producerOrder": 16,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1801,8 +1801,8 @@
       "producerOrder": 16,
       "consumer": "obter_detalhe_requisito_v117",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1816,8 +1816,8 @@
       "producerOrder": 16,
       "consumer": "pareceres_internos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1831,8 +1831,8 @@
       "producerOrder": 16,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1846,8 +1846,8 @@
       "producerOrder": 16,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1861,8 +1861,8 @@
       "producerOrder": 17,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1876,8 +1876,8 @@
       "producerOrder": 17,
       "consumer": "obter_analise_competencia_v116",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1891,8 +1891,8 @@
       "producerOrder": 17,
       "consumer": "pareceres_internos",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1906,8 +1906,8 @@
       "producerOrder": 17,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1921,8 +1921,8 @@
       "producerOrder": 17,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1936,8 +1936,8 @@
       "producerOrder": 18,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1951,8 +1951,8 @@
       "producerOrder": 18,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1966,8 +1966,8 @@
       "producerOrder": 18,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -1981,8 +1981,8 @@
       "producerOrder": 19,
       "consumer": "obter_visao_geral_competencia",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -1996,8 +1996,8 @@
       "producerOrder": 19,
       "consumer": "apresentacoes_contratante",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -2011,8 +2011,8 @@
       "producerOrder": 19,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     },
     {
@@ -2026,8 +2026,8 @@
       "producerOrder": 20,
       "consumer": "obter_analise_competencia_v116",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -2041,8 +2041,8 @@
       "producerOrder": 20,
       "consumer": "obter_detalhe_requisito_v117",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -2056,8 +2056,8 @@
       "producerOrder": 20,
       "consumer": "relatorios_historicos_contratante",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "ALLOW"
       }
     },
     {
@@ -2071,8 +2071,8 @@
       "producerOrder": 20,
       "consumer": "eventos_auditoria",
       "expected": {
-        "master": null,
-        "leitor": null
+        "master": "ALLOW",
+        "leitor": "DENY"
       }
     }
   ]

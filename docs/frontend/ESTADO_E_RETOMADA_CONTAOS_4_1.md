@@ -1,3 +1,11 @@
+## Integração funcional V1: Fase 3, BUILD-1 integrado e BUILD-2a em revisão, 13/11/2026 Bahia
+
+- **BUILD-1 integrado** pela PR #656 (merge `fa7f58b`). O Edivan5002 pediu mudanças no HEAD `2511bcf` e aprovou no HEAD `e806990`.
+- **2º usuário sintético:** o titular informou que foi criado às 22h17. Os secrets `CONTAOS_HML_SYNTHETIC_2_*` só serão provados na 1ª execução.
+- **BUILD-2a em revisão:** fixa no catálogo `fase3/F3_CASES.json` (SHA-256 `bce15980…`) o esperado por tela para o MASTER e para o `leitor`. As fontes são `menuV1.ts`, as guardas do AppShell e a matriz RBAC v6, lida por SELECT autorizado pelo titular.
+- **BUILD-2b, a seguir:** drivers de UI, negativos, relatório, ledger e inventário de isolamento.
+- **Fase 3:** EM EXECUÇÃO.
+
 ## Integração funcional V1: Fase 3, PLAN integrado e BUILD-1 em revisão, 13/11/2026 Bahia
 
 PLAN R2.1 integrado pela PR #655 (merge `3bbd027`): CHANGES_REQUESTED de contaos9999 no HEAD `1798673`, depois APPROVE no HEAD `f7b8ede`. O BUILD foi dividido. O BUILD-1 é offline: escopo fixtures por nonce com exclusão mútua, guardas `FIXTURES_SCOPE_NOT_TRILHA_A` e `FIXTURES_SCOPE_NOT_F3`, YAML com os itens a–d, catálogo `fase3/F3_CASES.json` com 138 casos e validadores. O BUILD-2 cobre os drivers de UI e o esperado por tela. Pendência do titular: criar o 2º usuário sintético e os secrets `CONTAOS_HML_SYNTHETIC_2_*`. Fase 3 EM EXECUÇÃO.
