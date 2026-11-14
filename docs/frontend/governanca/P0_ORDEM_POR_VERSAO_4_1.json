@@ -761,7 +761,10 @@
         "NOVA_FUNCIONALIDADE",
         "CORRECAO"
       ],
-      "gate": "scripts/p0-rca-impact-gate.mjs"
+      "gate": "scripts/p0-rca-impact-gate.mjs",
+      "relatorio_schema": "contaos.p0.rca-report.v2",
+      "prova_operacional": "RED_GITHUB_E_GREEN_EXECUTADO_NO_SHA",
+      "gate_certificacao_live": "scripts/p0-evidence-live-gate.mjs"
     }
   },
   "restricoes": {
