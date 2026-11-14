@@ -8,7 +8,10 @@
  * BUILD-2b-1: relatório e SHA256SUMS (também parcial), ledger append-only, livro de intenções,
  * releitura do RBAC, classificador de negação explícita e contrato do YAML.
  * BUILD-2b-2a: proveniência amarrada ao livro (M2), execução do ledger ligada ao artefato (M3),
- * conferência de isolamento que encerra a execução e cerca de mutação ligada ao livro. Os drivers
+ * conferência de isolamento que encerra a execução e cerca de mutação ligada ao livro. Emenda 1
+ * (PLAN §12): fluxos de todas as ações do levantamento campo a campo, origem tipada por posição,
+ * vínculo (bind) de cada passo no livro, reenvio só idêntico ao original, entidades relacionadas
+ * e de atualização, teto 40/11 e esperas W1–W5. Os drivers
  * de UI vêm nos incrementos seguintes do BUILD-2b-2; até lá a execução HML grava o relatório
  * BLOCKED, já com o livro, e falha com F3_DRIVER_PENDING.
  * Nunca importado pelo auditor somente leitura.
@@ -44,7 +47,8 @@ export const F3_CASES_PATH = "docs/frontend/auditorias/integracao-funcional-v1/f
 export const F3_CASES_SHA256 = "bce15980d31ce22c8836e26621b267951296e905139b9833c8db4a7400c9ecbb";
 // Baseline normativo fixo (PLAN 7.5, M-R2-1): nenhuma leitura nova do repositório develop.
 export const F3_BACKEND_SHA = "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6";
-export const F3_BUDGET = Object.freeze({ total: 60, perRun: 30, planned: 33, minutes: 45 });
+// PLAN §12.2 (emenda 1): 40 por execução, 39 previstas, 60 na fase; job de 45 minutos.
+export const F3_BUDGET = Object.freeze({ total: 60, perRun: 40, planned: 39, minutes: 45 });
 export const F3_CASE_STATUS = Object.freeze(["PASS", "FAIL", "BLOCKED", "N_A_JUSTIFICADO"]);
 export const F3_CLEANUP_STATUS = Object.freeze([
   "ISOLATED_NO_DELETE",
@@ -663,29 +667,589 @@ export function assertJsonTree(value, code, depth = 0) {
 }
 
 // ---------------------------------------------------------------------------------------------
+// Fluxos de mutação da F3, declarados a partir do levantamento campo a campo
+// (fase3/F3_FLUXOS_PRODUTORES.md, revisão 2; PLAN §12.5). Cada fluxo é uma ação de negócio:
+// produtor, tipo de intenção (principal ou prerequisito), ação, linha do levantamento, passos de
+// rede e, por passo, a origem de cada posição variável do corpo. Posição é o caminho no corpo
+// JSON (chave de topo, "a.b" para objeto, "a[]" para todo elemento de lista). Posição não
+// declarada é literal: comparada pela forma canônica e proibida de conter UUID. As origens são a
+// lista fechada da seção 1 do levantamento; a regra de cada uma é aplicada pela máquina de
+// estados do livro (applyEvent), e o replay do relatório e do ledger a reexecuta.
+// ---------------------------------------------------------------------------------------------
+export const F3_VALUE_ORIGINS = Object.freeze([
+  "gerado_ui",
+  "gerado_harness",
+  "inventario",
+  "derivado",
+  "capturado",
+  "vinculado",
+  "usuario_sintetico",
+]);
+export const F3_LEVANTAMENTO_PATH =
+  "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md";
+// gerado_harness é toda posição literal (não declarada); vinculado é a regra do reenvio, que exige
+// o mesmo corpo e os mesmos valores do envio original. As demais são declaradas por posição.
+const ui = () => Object.freeze({ origin: "gerado_ui" });
+const cap = (slot, as = "uuid") => Object.freeze({ origin: "capturado", slot, as });
+const inv = (...from) => Object.freeze({ origin: "inventario", from: Object.freeze(from) });
+const der = () => Object.freeze({ origin: "derivado" });
+const usr = () => Object.freeze({ origin: "usuario_sintetico" });
+const ORG = inv("2:principal");
+const CONTRATO = inv("7:principal");
+const COMPETENCIA = inv("14:principal");
+
+/**
+ * Passo de fluxo. target: rpc (POST /rest/v1/rpc/name), table (POST /rest/v1/name + query exata
+ * do cliente), edge (POST /functions/v1/name) ou storage (PUT
+ * /storage/v1/object/upload/sign/bucket/caminho?token=..., corpo opaco; a posição "path" é o
+ * caminho). fields: posição → origem.
+ */
+const step = (target, name, { query = "", fields = {}, source }) =>
+  Object.freeze({ target, name, query, fields: Object.freeze({ ...fields }), source });
+const DOCS = "src/lib/contratos/documentosDados.ts:";
+const BN = "src/lib/contratos/baseNormativaDados.ts:";
+// Upload simples (UP1, UP2, UP3 do levantamento): conta dentro da ação que consome o arquivo.
+const upload = (bn = false) => [
+  step("edge", "storage-sign-upload", {
+    fields: { id_organizacao: ORG, id_contrato: CONTRATO },
+    source: bn ? BN + "173-176" : DOCS + "441-457",
+  }),
+  step("storage", "contaos-documentos", {
+    fields: { path: cap("caminho", "path") },
+    source: bn ? BN + "179-185" : DOCS + "454-462",
+  }),
+  step("rpc", "confirmar_upload_arquivo", {
+    fields: { p_id_organizacao: ORG, p_id_contrato: CONTRATO, p_path: cap("caminho", "path") },
+    source: bn ? BN + "194-194" : DOCS + "643-660",
+  }),
+];
+const UPLOAD_STEPS = 3;
+/**
+ * Ação de negócio. resend: inícios permitidos do reenvio (null = sem chave, reenvio proibido,
+ * só releitura). creates: papéis das entidades criadas além da principal; updates: a ação
+ * atualiza a entidade do inventário indicada, em vez de criar uma.
+ */
+const action = (order, kind, name, levantamento, steps, extra = {}) =>
+  Object.freeze({
+    order,
+    kind,
+    action: name,
+    levantamento,
+    steps: Object.freeze(steps),
+    resend: extra.resend ? Object.freeze([...extra.resend]) : null,
+    creates: Object.freeze([...(extra.creates ?? [])]),
+    updates: extra.updates ?? null,
+  });
+const ADM = "src/lib/administracao/admUsuariosRpc.ts:";
+const VINCULO_FIELDS = {
+  p_id_organizacao: ORG,
+  p_chave_idempotencia: ui(),
+  "p_ids_contratos_ativar[]": CONTRATO,
+  "p_ids_contratos_revogar[]": CONTRATO,
+};
+const OC = "src/components/contratos/OrcamentoContrato.tsx:";
+const BNC = "src/components/contratos/BaseNormativaContrato.tsx:";
+const LISTA = "src/lib/contratos/listaOperacionalDados.ts:276-317";
+const FLOWS = [
+  action(2, "principal", "principal", "2 SYS04, principal", [
+    step("rpc", "criar_organizacao", {
+      source: "src/lib/organizacao/criarOrganizacaoDados.ts:35-40",
+    }),
+  ]),
+  action(
+    4,
+    "principal",
+    "principal",
+    "4 ADM01, principal",
+    [
+      step("edge", "admin-invite-user", {
+        fields: { id_organizacao: ORG, chave_idempotencia: ui() },
+        source: ADM + "188-230",
+      }),
+      step("rpc", "salvar_vinculo_usuario_adm", {
+        fields: { ...VINCULO_FIELDS, p_id_usuario: cap("usuario") },
+        source: ADM + "171-185",
+      }),
+    ],
+    { resend: [0, 1] },
+  ),
+  action(
+    4,
+    "principal",
+    "sem_convite",
+    "4 ADM01, variante sem convite",
+    [
+      step("rpc", "salvar_vinculo_usuario_adm", {
+        fields: { ...VINCULO_FIELDS, p_id_usuario: usr() },
+        source: ADM + "171-185",
+      }),
+    ],
+    { resend: [0] },
+  ),
+  action(5, "principal", "principal", "5 V102, principal", [
+    step("table", "contratantes", {
+      query: "?select=id%2Crazao_social%2Csituacao",
+      fields: { id_organizacao: ORG },
+      source: "src/lib/contratantes/novoContratanteDados.ts:127-148",
+    }),
+  ]),
+  action(
+    6,
+    "principal",
+    "principal",
+    "6 V103, principal",
+    [
+      step("rpc", "atualizar_contratante", {
+        fields: { p_id_organizacao: ORG, p_id_contratante: inv("5:principal") },
+        source: "src/lib/contratantes/editarContratanteDados.ts:94-115",
+      }),
+    ],
+    { updates: "5:principal" },
+  ),
+  action(7, "principal", "principal", "7 V105, principal", [
+    step("table", "contratos", {
+      fields: { id_organizacao: ORG, id_contratante: inv("5:principal") },
+      source: "src/lib/contratos/novoContratoDados.ts:107-129",
+    }),
+  ]),
+  action(
+    8,
+    "principal",
+    "principal",
+    "8 V106, principal",
+    [
+      step("rpc", "atualizar_contrato_v1", {
+        fields: { p_id_organizacao: ORG, p_id_contrato: CONTRATO, p_request_id: ui() },
+        source: "src/lib/cadastros/cadastroOperacionalDados.ts:195-232",
+      }),
+    ],
+    { resend: [0], updates: "7:principal" },
+  ),
+  action(
+    9,
+    "prerequisito",
+    "proposta",
+    "9 V108, pré-requisito 1",
+    [
+      step("rpc", "salvar_proposta_orcamentaria_v108", {
+        fields: { p_id_organizacao: ORG, p_id_contrato: CONTRATO, p_chave_idempotencia: ui() },
+        source: OC + "1044-1058",
+      }),
+    ],
+    { resend: [0] },
+  ),
+  action(
+    9,
+    "prerequisito",
+    "versao",
+    "9 V108, pré-requisito 2",
+    [
+      ...upload(true),
+      step("rpc", "registrar_versao_proposta_v108", {
+        fields: {
+          p_id_organizacao: ORG,
+          p_id_proposta: inv("9:proposta"),
+          p_id_arquivo_origem: cap("arquivo"),
+          p_chave_idempotencia: ui(),
+        },
+        source: OC + "1130-1147",
+      }),
+    ],
+    { resend: [UPLOAD_STEPS], creates: ["arquivo"] },
+  ),
+  action(
+    9,
+    "prerequisito",
+    "rubrica",
+    "9 V108, pré-requisito 3",
+    [
+      step("rpc", "salvar_linha_orcamentaria_v108", {
+        fields: {
+          p_id_organizacao: ORG,
+          p_id_versao_proposta: inv("9:versao"),
+          p_chave_idempotencia: ui(),
+        },
+        source: OC + "1268-1301",
+      }),
+    ],
+    { resend: [0] },
+  ),
+  action(
+    9,
+    "principal",
+    "principal",
+    "9 V108, principal",
+    [
+      step("rpc", "publicar_versao_proposta_v108", {
+        fields: {
+          p_id_organizacao: ORG,
+          p_id_versao: inv("9:versao"),
+          p_hash_esperado: der(),
+          p_chave_idempotencia: ui(),
+        },
+        source: OC + "1500-1513",
+      }),
+    ],
+    { resend: [0], updates: "9:versao" },
+  ),
+  action(
+    10,
+    "prerequisito",
+    "fonte",
+    "10 V107, pré-requisito 1",
+    [
+      step("rpc", "salvar_fonte_normativa_v107", {
+        fields: { p_id_organizacao: ORG, p_id_contrato: CONTRATO, p_chave_idempotencia: ui() },
+        source: BNC + "852-942",
+      }),
+    ],
+    { resend: [0] },
+  ),
+  action(
+    10,
+    "prerequisito",
+    "versao",
+    "10 V107, pré-requisito 2",
+    [
+      step("rpc", "registrar_versao_fonte_v107", {
+        fields: { p_id_organizacao: ORG, p_id_fonte: inv("10:fonte"), p_chave_idempotencia: ui() },
+        source: BNC + "1098-1106",
+      }),
+    ],
+    { resend: [0] },
+  ),
+  action(
+    10,
+    "prerequisito",
+    "aprovacao",
+    "10 V107, pré-requisito 3",
+    [
+      step("rpc", "aprovar_versao_fonte_v107", {
+        fields: {
+          p_id_organizacao: ORG,
+          p_id_versao: inv("10:versao"),
+          p_hash_esperado: der(),
+          p_chave_idempotencia: ui(),
+        },
+        source: BNC + "1366-1371",
+      }),
+    ],
+    { resend: [0], updates: "10:versao" },
+  ),
+  action(
+    10,
+    "principal",
+    "principal",
+    "10 V107, principal",
+    [
+      step("rpc", "definir_aplicabilidade_fonte_v107", {
+        fields: {
+          p_id_organizacao: ORG,
+          p_id_contrato: CONTRATO,
+          p_id_versao: inv("10:versao"),
+          p_atualizado_em_esperado: der(),
+          p_chave_idempotencia: ui(),
+        },
+        source: BNC + "1465-1472",
+      }),
+    ],
+    { resend: [0], updates: "10:versao" },
+  ),
+  action(
+    11,
+    "principal",
+    "principal",
+    "11 V109, principal",
+    [
+      step("rpc", "executar_comando_lista_v1", {
+        fields: { p_id_organizacao: ORG, p_id_contrato: CONTRATO, p_request_id: ui() },
+        source: LISTA,
+      }),
+    ],
+    { resend: [0], creates: ["versao"] },
+  ),
+  action(
+    11,
+    "prerequisito",
+    "item",
+    "11 V109, pré-requisito 1",
+    [
+      step("rpc", "executar_comando_lista_v1", {
+        fields: {
+          p_id_organizacao: ORG,
+          p_id_contrato: CONTRATO,
+          p_id_lista: inv("11:principal"),
+          "p_payload.id_versao": inv("11:principal/versao"),
+          "p_payload.id_fonte_versao": inv("10:versao"),
+          p_request_id: ui(),
+        },
+        source: LISTA,
+      }),
+    ],
+    { resend: [0] },
+  ),
+  action(
+    11,
+    "prerequisito",
+    "publicar",
+    "11 V109, pré-requisito 2",
+    [
+      step("rpc", "executar_comando_lista_v1", {
+        fields: {
+          p_id_organizacao: ORG,
+          p_id_contrato: CONTRATO,
+          p_id_lista: inv("11:principal"),
+          "p_payload.id_versao": inv("11:principal/versao"),
+          p_request_id: ui(),
+        },
+        source: LISTA,
+      }),
+    ],
+    { resend: [0], updates: "11:principal/versao" },
+  ),
+  action(
+    12,
+    "principal",
+    "principal",
+    "12 V110, principal",
+    [
+      ...upload(),
+      step("rpc", "criar_documento_contrato_completo", {
+        fields: {
+          p_id_contrato: CONTRATO,
+          p_id_arquivo: cap("arquivo"),
+          p_chave_idempotencia: ui(),
+        },
+        source: DOCS + "755-774",
+      }),
+    ],
+    { resend: [UPLOAD_STEPS], creates: ["versao", "arquivo"] },
+  ),
+  action(
+    13,
+    "principal",
+    "principal",
+    "13 V111, principal",
+    [
+      ...upload(),
+      step("rpc", "adicionar_versao_documento_contrato", {
+        fields: {
+          p_id_documento: inv("12:principal"),
+          p_id_arquivo: cap("arquivo"),
+          p_chave_idempotencia: ui(),
+        },
+        source: DOCS + "776-791",
+      }),
+    ],
+    { resend: [UPLOAD_STEPS], creates: ["arquivo"] },
+  ),
+  action(14, "principal", "principal", "14 V113, principal", [
+    step("rpc", "criar_competencia", {
+      fields: { p_id_contrato: CONTRATO },
+      source: "src/lib/contratos/novaCompetenciaDados.ts:65-75",
+    }),
+  ]),
+  action(
+    15,
+    "principal",
+    "principal",
+    "15 V115, principal",
+    [
+      ...upload(),
+      step("rpc", "criar_documento_competencia_v115", {
+        fields: {
+          p_id_competencia: COMPETENCIA,
+          p_id_requisito: der(),
+          p_id_arquivo: cap("arquivo"),
+          p_chave_idempotencia: ui(),
+        },
+        source: "src/lib/competencias/competenciaDocumentosDados.ts:299-317",
+      }),
+    ],
+    { resend: [UPLOAD_STEPS], creates: ["versao", "arquivo"] },
+  ),
+  action(16, "principal", "principal", "16 V116, principal", [
+    step("rpc", "solicitar_analise_competencia", {
+      fields: { p_id_competencia: COMPETENCIA },
+      source: "src/lib/competencias/competenciaAnaliseDados.ts:188-197",
+    }),
+  ]),
+  action(
+    17,
+    "principal",
+    "principal",
+    "17 V117, principal",
+    [
+      step("rpc", "registrar_revisao_requisito_v117", {
+        fields: {
+          p_id_competencia: COMPETENCIA,
+          p_id_requisito: der(),
+          p_id_execucao_esperada: der(),
+          p_id_resultado_esperado: der(),
+          "p_evidencias[].id_versao_documento": inv("15:principal/versao"),
+          p_request_id: ui(),
+        },
+        source: "src/lib/competencias/revisaoRequisitoDados.ts:112-177",
+      }),
+    ],
+    { resend: [0], creates: ["execucao"] },
+  ),
+  action(18, "prerequisito", "solicitar", "18 V118, pré-requisito 1", [
+    step("rpc", "solicitar_parecer_interno", {
+      fields: { p_id_competencia: COMPETENCIA },
+      source: "src/lib/competencias/parecerInternoDados.ts:136-146",
+    }),
+  ]),
+  action(18, "principal", "principal", "18 V118, principal", [
+    step("rpc", "aprovar_parecer_interno", {
+      fields: { p_id_parecer: der() },
+      source: "src/lib/competencias/parecerInternoDados.ts:150-166",
+    }),
+  ]),
+  action(19, "prerequisito", "aprovar", "19 V119, pré-requisito 1", [
+    step("rpc", "aprovar_apresentacao", {
+      fields: { p_id_competencia: COMPETENCIA },
+      source: "src/lib/competencias/apresentacaoDados.ts:56-70",
+    }),
+  ]),
+  action(
+    19,
+    "principal",
+    "principal",
+    "19 V119, principal",
+    [
+      step("rpc", "registrar_apresentacao", {
+        fields: { p_id_competencia: COMPETENCIA, p_idempotency_key: ui() },
+        source: "src/lib/competencias/apresentacaoDados.ts:88-104",
+      }),
+    ],
+    { resend: [0] },
+  ),
+  action(
+    20,
+    "prerequisito",
+    "relatorio",
+    "20 V122, pré-requisito 1",
+    [
+      ...upload(),
+      step("rpc", "criar_documento_contrato_completo", {
+        fields: {
+          p_id_contrato: CONTRATO,
+          p_id_arquivo: cap("arquivo"),
+          p_chave_idempotencia: ui(),
+        },
+        source: DOCS + "755-774",
+      }),
+    ],
+    { resend: [UPLOAD_STEPS], creates: ["versao", "arquivo"] },
+  ),
+  action(
+    20,
+    "principal",
+    "principal",
+    "20 V122, principal",
+    [
+      step("rpc", "registrar_relatorio_historico_hml", {
+        fields: { p_id_arquivo: inv("20:relatorio/arquivo") },
+        source: "src/lib/contratos/ingestaoHistoricoDados.ts:72-90",
+      }),
+      step("rpc", "enfileirar_ingestao_historica_hml", {
+        fields: {
+          p_id_relatorio: cap("relatorio"),
+          p_id_versao_documento: inv("20:relatorio/versao"),
+        },
+        source: "src/lib/contratos/ingestaoHistoricoDados.ts:84-90",
+      }),
+    ],
+    { creates: ["execucao"] },
+  ),
+];
+export const F3_MUTATION_FLOWS = Object.freeze(
+  Object.fromEntries(FLOWS.map((f) => [f.order + ":" + f.action, f])),
+);
+const flowOf = (key) =>
+  typeof key === "string" && Object.hasOwn(F3_MUTATION_FLOWS, key)
+    ? F3_MUTATION_FLOWS[key]
+    : fail("F3_FLOW_UNDEFINED");
+export const F3_MAX_STEPS = Math.max(...FLOWS.map((f) => f.steps.length));
+export const F3_MAX_RELATED = Math.max(...FLOWS.map((f) => f.creates.length));
+
+// Esperas assíncronas (PLAN §12.4). O prazo conta do selo da requisição que disparou o processo;
+// o prazo da sessão sempre prevalece. falha cobre recusa do verificador e, em W3, execução
+// concluída com pode_revisar falso (situação da competência, M2 da review 5906090998).
+export const F3_WAITS = Object.freeze({
+  W1: Object.freeze({
+    minutes: 8,
+    prazo: "F3_WAIT_VERIFICADOR_PRAZO",
+    falha: "F3_WAIT_VERIFICADOR_RECUSA",
+  }),
+  W2: Object.freeze({
+    minutes: 8,
+    prazo: "F3_WAIT_VERIFICADOR_PRAZO",
+    falha: "F3_WAIT_VERIFICADOR_RECUSA",
+  }),
+  W3: Object.freeze({ minutes: 6, prazo: "F3_WAIT_ANALISE_PRAZO", falha: "F3_WAIT_ANALISE_FALHA" }),
+  W4: Object.freeze({ minutes: 6, prazo: "F3_WAIT_PARECER_PRAZO", falha: "F3_WAIT_PARECER_FALHA" }),
+  W5: Object.freeze({
+    minutes: 8,
+    prazo: "F3_WAIT_PROCESSAMENTO_PRAZO",
+    falha: "F3_WAIT_PROCESSAMENTO_FALHA",
+  }),
+});
+export const F3_WAIT_POLL_MS = 5000;
+/**
+ * Espera só por leitura. poll() devolve "done", "pending" ou "failed" a partir do que a UI do
+ * MASTER mostra; o desfecho é ok, ou o código de prazo ou de falha da espera. Nunca reenvia.
+ */
+export async function awaitF3Condition({ wait, triggeredAt, poll, signal } = {}) {
+  const w = typeof wait === "string" && Object.hasOwn(F3_WAITS, wait) ? F3_WAITS[wait] : null;
+  if (!w || !Number.isFinite(triggeredAt) || typeof poll !== "function") fail("F3_WAIT");
+  const deadline = triggeredAt + w.minutes * 60000;
+  for (;;) {
+    if (signal?.aborted) fail("F3_SESSION_ABORTED");
+    const r = await poll();
+    if (r === "done") return { ok: true, code: null };
+    if (r === "failed") return { ok: false, code: w.falha };
+    if (r !== "pending") fail("F3_WAIT");
+    const left = deadline - performance.now();
+    if (left <= 0) return { ok: false, code: w.prazo };
+    await new Promise((ok) => setTimeout(ok, Math.min(F3_WAIT_POLL_MS, left)));
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
 // Núcleo único das intenções. Uma só máquina de estados (applyEvent) define as transições; o
 // livro grava cada transição como evento; relatório e ledger carregam os eventos e os
-// validadores os reexecutam. Intenções têm tipo: principal (a criação do produtor, uma aberta
-// por produtor), prerequisito (no máximo 5 na fase, PLAN 7.2) e duplicidade (no máximo uma por
-// principal, PLAN 4.3). Uma intenção ausente por readback pode ser abandonada; abandonada não
-// conta como pendente, mas precisa ser relida na execução que fecha a matriz.
+// validadores os reexecutam. Intenções têm tipo: principal (a criação ou atualização do
+// produtor, uma aberta por ação), prerequisito (no máximo F3_MAX_PREREQUISITES na fase, PLAN
+// §12.1) e duplicidade (no máximo uma por principal, PLAN 4.3). Cada passo que sai gera um bind:
+// os UUIDs das posições declaradas e o SHA-256 do corpo canônico. A regra da origem de cada
+// posição e a do reenvio (mesmo corpo, mesmos valores) são aplicadas no bind.
 // ---------------------------------------------------------------------------------------------
 export const F3_INTENT_KINDS = Object.freeze(["principal", "prerequisito", "duplicidade"]);
-export const F3_MAX_PREREQUISITES = 5;
-// Teto provado: no máximo 8 eventos por intenção por execução (selar, incerto, ausente, reenviar,
-// incerto, ausente, abandonar, encontrada) e no máximo 60 intenções na fase.
-export const F3_MAX_EVENTS_PER_RUN = 8 * 60;
+export const F3_MAX_PREREQUISITES = 11;
+// Teto provado por intenção e execução: selar, F3_MAX_STEPS binds, incerto, ausente, reenviar,
+// F3_MAX_STEPS binds, incerto, ausente, abandonar e encontrada.
+export const F3_MAX_EVENTS_PER_RUN = (8 + 2 * F3_MAX_STEPS) * F3_BUDGET.total;
+const F3_MAX_CREATED = F3_BUDGET.total * (1 + F3_MAX_RELATED);
+const F3_MAX_BIND_VALUES = 32;
 const EVENT_KEYS = Object.freeze([
   "op",
   "requestId",
   "producerOrder",
   "kind",
+  "action",
   "duplicateOf",
   "entityId",
   "organizationId",
+  "related",
+  "step",
+  "bodySha256",
+  "values",
 ]);
 const EVENT_OPS = Object.freeze([
   "seal",
+  "bind",
   "confirm",
   "reject",
   "uncertain",
@@ -698,6 +1262,7 @@ const INTENT_KEYS = Object.freeze([
   "requestId",
   "producerOrder",
   "kind",
+  "action",
   "duplicateOf",
   "outcome",
   "prior",
@@ -715,7 +1280,9 @@ const INTENTS_KEYS = Object.freeze([
   "requests",
   "events",
 ]);
+const CREATED_KEYS = Object.freeze(["id", "kind", "organizationId", "requestId", "flow", "role"]);
 const OPEN = (i) => i.state !== "rejected" && i.state !== "abandoned";
+const flowKeyOf = (i) => i.producerOrder + ":" + i.action;
 
 function emptyState() {
   return {
@@ -724,18 +1291,28 @@ function emptyState() {
     intents: new Map(),
     created: [],
     entities: new Set(),
+    used: new Set(),
+    syntheticUser: null,
   };
 }
+const cloneIntent = (i) => ({
+  ...i,
+  binds: i.binds.map((b) => ({ ...b, values: b.values.map((v) => ({ ...v })) })),
+  sendBinds: i.sendBinds.map((b) => ({ ...b, values: b.values.map((v) => ({ ...v })) })),
+});
 function cloneState(st) {
   return {
     organizationF3: st.organizationF3,
     priorSent: st.priorSent,
-    intents: new Map([...st.intents].map(([id, i]) => [id, { ...i }])),
+    intents: new Map([...st.intents].map(([id, i]) => [id, cloneIntent(i)])),
     created: st.created.map((c) => ({ ...c })),
     entities: new Set(st.entities),
+    used: new Set(st.used),
+    syntheticUser: st.syntheticUser,
   };
 }
 
+const ROLE = /^[a-z]{1,20}$/;
 function validateEvent(e) {
   const code = "F3_INTENT_EVENT";
   strictPlain(e, EVENT_KEYS, code);
@@ -743,37 +1320,72 @@ function validateEvent(e) {
   const entity = e.op === "confirm" || e.op === "found";
   if (e.op === "seal") {
     if (!Number.isSafeInteger(e.producerOrder) || !enumOf(e.kind, F3_INTENT_KINDS)) fail(code);
+    if (typeof e.action !== "string" || !ROLE.test(e.action.replace("_", ""))) fail(code);
     if ((e.kind === "duplicidade") !== (e.duplicateOf !== null)) fail(code);
     if (e.duplicateOf !== null && !isUuid(e.duplicateOf)) fail(code);
-  } else if (e.producerOrder !== null || e.kind !== null || e.duplicateOf !== null) fail(code);
+  } else if (
+    e.producerOrder !== null ||
+    e.kind !== null ||
+    e.action !== null ||
+    e.duplicateOf !== null
+  )
+    fail(code);
   if (entity) {
     if (!isUuid(e.entityId) || !isUuid(e.organizationId)) fail(code);
-  } else if (e.entityId !== null || e.organizationId !== null) fail(code);
+    plainArray(e.related, code, F3_MAX_RELATED);
+    for (const r of e.related) {
+      strictPlain(r, ["role", "entityId"], code);
+      if (typeof r.role !== "string" || !ROLE.test(r.role) || !isUuid(r.entityId)) fail(code);
+    }
+  } else if (e.entityId !== null || e.organizationId !== null || e.related !== null) fail(code);
+  if (e.op === "bind" || e.op === "resend") {
+    if (!Number.isSafeInteger(e.step) || e.step < 0 || e.step >= F3_MAX_STEPS) fail(code);
+  } else if (e.step !== null) fail(code);
+  if (e.op === "bind") {
+    if (e.bodySha256 !== null && !SHA64.test(e.bodySha256)) fail(code);
+    plainArray(e.values, code, F3_MAX_BIND_VALUES);
+    for (const v of e.values) {
+      strictPlain(v, ["position", "value"], code);
+      if (typeof v.position !== "string" || !/^[a-z_][a-z0-9_.[\]]{0,80}$/.test(v.position))
+        fail(code);
+      if (!isUuid(v.value)) fail(code);
+    }
+  } else if (e.bodySha256 !== null || e.values !== null) fail(code);
 }
 
 function sealIntent(st, e) {
   if (!F3_MUTATING_ORDERS.includes(e.producerOrder)) fail("F3_INTENT_PRODUCER");
   if (st.intents.has(e.requestId)) fail("F3_INTENT_REPLAY");
+  const key = e.producerOrder + ":" + e.action;
+  const f = Object.hasOwn(F3_MUTATION_FLOWS, key) ? F3_MUTATION_FLOWS[key] : null;
+  if (!f) fail("F3_FLOW_UNDEFINED");
   const all = [...st.intents.values()];
-  const same = all.filter((i) => i.producerOrder === e.producerOrder);
   if (e.kind === "duplicidade") {
+    if (f.kind !== "principal") fail("F3_INTENT_KIND");
     const base = st.intents.get(e.duplicateOf);
     if (!base || base.kind !== "principal" || base.state !== "confirmed")
       fail("F3_INTENT_DUPLICATE_OF");
-    if (base.producerOrder !== e.producerOrder) fail("F3_INTENT_DUPLICATE_OF");
+    if (base.producerOrder !== e.producerOrder || base.action !== e.action)
+      fail("F3_INTENT_DUPLICATE_OF");
     if (all.some((i) => i.kind === "duplicidade" && i.duplicateOf === e.duplicateOf))
       fail("F3_INTENT_DUPLICATE_OF");
     return;
   }
+  if (f.kind !== e.kind) fail("F3_INTENT_KIND");
+  // Uma intenção aberta por ação; principais variantes de um produtor contam como uma só.
+  const same = all.filter((i) =>
+    e.kind === "principal"
+      ? i.kind === "principal" && i.producerOrder === e.producerOrder
+      : i.kind === e.kind && flowKeyOf(i) === key,
+  );
+  if (same.some(OPEN)) fail("F3_INTENT_PRODUCER");
   if (e.kind === "prerequisito") {
-    if (e.producerOrder === 2 || st.organizationF3 === null) fail("F3_INTENT_PRODUCER");
+    if (st.organizationF3 === null) fail("F3_INTENT_PRODUCER");
     if (all.filter((i) => i.kind === "prerequisito").length >= F3_MAX_PREREQUISITES)
       fail("F3_INTENT_PREREQUISITES");
     return;
   }
-  // Principal: uma aberta por produtor; a da organização só antes de a organização existir e
-  // antes de qualquer outra mutação.
-  if (same.some((i) => i.kind === "principal" && OPEN(i))) fail("F3_INTENT_PRODUCER");
+  // Principal da organização só antes de ela existir e antes de qualquer outra mutação.
   if (e.producerOrder === 2 && st.organizationF3 !== null) fail("F3_INTENT_PRODUCER");
   if (e.producerOrder !== 2 && st.organizationF3 === null) fail("F3_FOREIGN_ORG");
 }
@@ -788,33 +1400,147 @@ export const F3_ENTITY_KINDS = Object.freeze([
   "entidade_repetida",
 ]);
 const ISOLATED_KINDS = Object.freeze(["organizacao", "registro"]);
+/** Entidade do inventário criada pela ação key com o papel role (principal se omitido). */
+const inventoryRef = (spec) => {
+  const [key, role = "principal"] = spec.split("/");
+  return { key, role };
+};
+function findInventory(st, value, from) {
+  return st.created.find(
+    (c) =>
+      c.id === value &&
+      ISOLATED_KINDS.includes(c.kind) &&
+      from.some((s) => {
+        const r = inventoryRef(s);
+        return c.flow === r.key && c.role === r.role;
+      }),
+  );
+}
+/** Entidade principal de uma intenção: a criada por ela ou, na atualização, a do inventário. */
+function primaryOf(st, requestId) {
+  const i = st.intents.get(requestId);
+  if (!i || i.state !== "confirmed") return null;
+  const own = st.created.find((c) => c.requestId === requestId && c.role === "principal");
+  return own ?? st.created.find((c) => c.id === i.entityId) ?? null;
+}
 
 /**
  * Registra a entidade devolvida pelo produto. O que o produto devolve é fato observado e sempre
- * entra no inventário com o tipo correspondente; só a violação de protocolo do driver (organização
- * criada com organizationId diferente do próprio ID) é recusada.
+ * entra no inventário com o tipo correspondente; violação de protocolo do driver (organização
+ * com organizationId diferente do próprio ID, papel não declarado, atualização de entidade que
+ * não é a declarada no fluxo) é recusada.
  */
 function recordEntity(st, e, i) {
+  const f = F3_MUTATION_FLOWS[flowKeyOf(i)];
   if (i.producerOrder === 2 && e.organizationId !== e.entityId) fail("F3_INTENT_ENTITY");
-  let kind;
-  if (st.entities.has(e.entityId)) kind = "entidade_repetida";
-  else if (e.entityId === F3_E87_ORG || e.organizationId === F3_E87_ORG) kind = "fora_da_f3";
-  else if (i.producerOrder === 2)
-    kind =
-      i.kind === "principal" && st.organizationF3 === null
-        ? "organizacao"
-        : "organizacao_duplicada";
-  else kind = e.organizationId === st.organizationF3 ? "registro" : "fora_da_f3";
-  if (kind === "organizacao") st.organizationF3 = e.entityId;
-  st.entities.add(e.entityId);
-  st.created.push({
-    id: e.entityId,
-    kind,
-    organizationId: e.organizationId,
-    requestId: e.requestId,
-  });
+  if (f.updates !== null) {
+    // Atualização: a entidade é a do inventário declarada; nada novo é criado.
+    if (e.related.length) fail("F3_INTENT_ENTITY");
+    const target = st.created.find((c) => c.id === e.entityId);
+    const r = inventoryRef(f.updates);
+    if (!target || target.flow !== r.key || target.role !== r.role) fail("F3_INTENT_ENTITY");
+    if (!ISOLATED_KINDS.includes(target.kind)) fail("F3_INTENT_ENTITY");
+    if (e.organizationId !== target.organizationId) fail("F3_INTENT_ENTITY");
+    i.entityId = e.entityId;
+    i.state = "confirmed";
+    return;
+  }
+  const roles = e.related.map((r) => r.role);
+  if (JSON.stringify(roles) !== JSON.stringify(f.creates)) fail("F3_INTENT_ENTITY");
+  const add = (id, role) => {
+    let kind;
+    if (st.entities.has(id)) kind = "entidade_repetida";
+    else if (id === F3_E87_ORG || e.organizationId === F3_E87_ORG) kind = "fora_da_f3";
+    else if (i.producerOrder === 2)
+      kind =
+        i.kind === "principal" && st.organizationF3 === null
+          ? "organizacao"
+          : "organizacao_duplicada";
+    else kind = e.organizationId === st.organizationF3 ? "registro" : "fora_da_f3";
+    if (kind === "organizacao") st.organizationF3 = id;
+    st.entities.add(id);
+    st.created.push({
+      id,
+      kind,
+      organizationId: e.organizationId,
+      requestId: e.requestId,
+      flow: flowKeyOf(i),
+      role,
+    });
+  };
+  add(e.entityId, "principal");
+  for (const r of e.related) add(r.entityId, r.role);
   i.entityId = e.entityId;
   i.state = "confirmed";
+}
+
+/**
+ * Regra das origens (PLAN §12.5; levantamento, seção 1), aplicada a cada bind:
+ * - todo valor é de posição declarada no passo e, se a posição se repete (lista), cada valor vale;
+ * - gerado_ui e capturado: valor novo, que não é entidade, organização, e87 nem valor já usado;
+ *   a mesma vaga capturada em dois passos da mesma ação traz o mesmo valor;
+ * - inventario: entidade isolada criada pela ação e papel declarados;
+ * - derivado: nunca a e87 nem entidade não isolada;
+ * - usuario_sintetico: o usuário capturado no ADM01;
+ * - no reenvio (vinculado): o bind é idêntico ao do envio original no mesmo passo.
+ */
+function bindIntent(st, e, i) {
+  if (i.state !== "sealed") fail("F3_INTENT_STATE");
+  const f = F3_MUTATION_FLOWS[flowKeyOf(i)];
+  const expected = i.sendStart + i.sendBinds.length;
+  if (e.step !== expected || e.step >= f.steps.length) fail("F3_INTENT_BIND");
+  const s = f.steps[e.step];
+  if ((s.target === "storage") !== (e.bodySha256 === null)) fail("F3_INTENT_BIND");
+  const bind = { step: e.step, bodySha256: e.bodySha256, values: e.values.map((v) => ({ ...v })) };
+  if (i.resent) {
+    const original = i.binds.find((b) => b.step === e.step);
+    if (!original || JSON.stringify(original) !== JSON.stringify(bind))
+      fail("F3_INTENT_RESEND_BIND");
+    i.sendBinds.push(bind);
+    return;
+  }
+  const slots = new Map(
+    i.binds.flatMap((b) =>
+      b.values
+        .map((v) => [f.steps[b.step].fields[v.position], v.value])
+        .filter(([spec]) => spec.origin === "capturado")
+        .map(([spec, value]) => [spec.slot, value]),
+    ),
+  );
+  const fresh = new Set();
+  for (const v of e.values) {
+    const spec = Object.hasOwn(s.fields, v.position) ? s.fields[v.position] : null;
+    if (!spec) fail("F3_VALUE_ORIGIN");
+    const known = st.entities.has(v.value) || st.used.has(v.value) || v.value === F3_E87_ORG;
+    if (spec.origin === "gerado_ui") {
+      if (known || fresh.has(v.value)) fail("F3_VALUE_ORIGIN");
+      fresh.add(v.value);
+    } else if (spec.origin === "capturado") {
+      if (slots.has(spec.slot)) {
+        if (slots.get(spec.slot) !== v.value) fail("F3_VALUE_ORIGIN");
+      } else {
+        if (known || fresh.has(v.value)) fail("F3_VALUE_ORIGIN");
+        fresh.add(v.value);
+        slots.set(spec.slot, v.value);
+      }
+    } else if (spec.origin === "inventario") {
+      if (!findInventory(st, v.value, spec.from)) fail("F3_VALUE_ORIGIN");
+    } else if (spec.origin === "derivado") {
+      if (v.value === F3_E87_ORG) fail("F3_VALUE_ORIGIN");
+      const c = st.created.find((x) => x.id === v.value);
+      if (c && !ISOLATED_KINDS.includes(c.kind)) fail("F3_VALUE_ORIGIN");
+    } else if (spec.origin === "usuario_sintetico") {
+      if (st.syntheticUser === null || v.value !== st.syntheticUser) fail("F3_VALUE_ORIGIN");
+    } else fail("F3_VALUE_ORIGIN");
+  }
+  for (const v of fresh) st.used.add(v);
+  // O 2º usuário é o capturado no 1º vínculo do ADM01; as variantes passam a exigi-lo.
+  if (i.producerOrder === 4 && st.syntheticUser === null) {
+    const u = e.values.find((v) => s.fields[v.position]?.slot === "usuario");
+    if (u) st.syntheticUser = u.value;
+  }
+  i.binds.push(bind);
+  i.sendBinds.push(bind);
 }
 
 /** Aplica um evento ao estado. É a única definição das transições válidas. */
@@ -832,17 +1558,22 @@ function applyEvent(st, run, e) {
       state: "sealed",
       producerOrder: e.producerOrder,
       kind: e.kind,
+      action: e.action,
       duplicateOf: e.duplicateOf,
       entityId: null,
       resent: false,
       prior: false,
       sends: 1,
       rechecked: false,
+      binds: [],
+      sendBinds: [],
+      sendStart: 0,
     });
     return;
   }
   const i = st.intents.get(e.requestId);
   if (!i) fail("F3_INTENT_UNKNOWN");
+  if (e.op === "bind") return bindIntent(st, e, i);
   const from = {
     confirm: ["sealed"],
     reject: ["sealed"],
@@ -853,15 +1584,27 @@ function applyEvent(st, run, e) {
     abandon: ["absent"],
   }[e.op];
   if (!from.includes(i.state)) fail(e.op === "resend" ? "F3_UNCERTAIN_RESEND" : "F3_INTENT_STATE");
+  const f = F3_MUTATION_FLOWS[flowKeyOf(i)];
+  // Desfecho do envio corrente: pelo menos o 1º passo saiu; confirmação só com o fluxo inteiro.
+  if (["confirm", "reject", "uncertain"].includes(e.op)) {
+    if (!i.sendBinds.length) fail("F3_INTENT_BIND");
+    if (e.op === "confirm" && i.sendStart + i.sendBinds.length !== f.steps.length)
+      fail("F3_INTENT_BIND");
+  }
   // Log canônico: todo evento muda o estado. A releitura de uma abandonada vale uma vez por
   // execução; repeti-la seria um evento sem efeito, removível sem deixar rastro.
   if (e.op === "absent" && i.state === "abandoned" && i.rechecked) fail("F3_INTENT_STATE");
   if (e.op === "found" || e.op === "absent") i.rechecked = true;
   if (e.op === "resend") {
-    if (i.resent) fail("F3_UNCERTAIN_RESEND");
+    // Sem chave (levantamento): reenvio proibido, só releitura. Com chave: a partir de um
+    // início declarado, com o mesmo corpo e os mesmos valores do envio original (vinculado).
+    if (i.resent || f.resend === null || !f.resend.includes(e.step)) fail("F3_UNCERTAIN_RESEND");
+    if (!i.binds.some((b) => b.step === e.step)) fail("F3_UNCERTAIN_RESEND");
     send();
     i.resent = true;
     i.sends += 1;
+    i.sendStart = e.step;
+    i.sendBinds = [];
     i.state = "sealed";
   } else if (e.op === "confirm" || e.op === "found") recordEntity(st, e, i);
   else if (e.op === "absent") i.state = i.state === "abandoned" ? "abandoned" : "absent";
@@ -878,6 +1621,7 @@ function summarize(st, run) {
       requestId,
       producerOrder: i.producerOrder,
       kind: i.kind,
+      action: i.action,
       duplicateOf: i.duplicateOf,
       outcome,
       prior: i.prior,
@@ -923,6 +1667,13 @@ function replayRun(state, events) {
   return { st, run };
 }
 
+const EVENT_NULLS = Object.freeze(
+  Object.fromEntries(
+    EVENT_KEYS.filter((k) => k !== "op" && k !== "requestId").map((k) => [k, null]),
+  ),
+);
+const ev = (op, requestId, extra = {}) => ({ op, requestId, ...EVENT_NULLS, ...extra });
+
 /**
  * Livro de intenções da Fase 3, sobre o ledger validado. Só o MASTER muta. Antes de existir a
  * organização F3, só a sua criação (produtor 2, principal) pode ser selada, com organizationId
@@ -939,28 +1690,35 @@ export function createF3IntentBook(options = {}) {
   const provenance = Object.freeze({ ...options.provenance });
   let st = cloneState(record.state),
     run = { sent: 0, events: [] };
-  // Transação: o evento é aplicado numa cópia e só substitui o estado se tudo der certo.
   // Controle de segurança do livro (parecer R2, grupo C): no máximo uma cerca, e o congelamento
-  // é do livro, não do objeto cerca. Livro congelado não sela nem reenvia; fatos ainda entram.
-  const control = { fenced: false, frozen: false };
-  const apply = (e) => {
-    if (control.frozen && (e.op === "seal" || e.op === "resend")) fail("F3_FENCE_FROZEN");
+  // é do livro, não do objeto cerca. Livro congelado não sela, não reenvia nem vincula; fatos
+  // ainda entram. freezeCode é a causa registrada (F3_FENCE_FROZEN ou F3_UPLOAD_RESUMABLE).
+  const control = { fenced: false, frozen: false, freezeCode: "F3_FENCE_FROZEN" };
+  const SENDING = ["seal", "resend", "bind"];
+  // Transação: os eventos são aplicados numa cópia e só substituem o estado se todos derem certo.
+  const apply = (...events) => {
+    if (control.frozen && events.some((e) => SENDING.includes(e.op))) fail("F3_FENCE_FROZEN");
     const next = cloneState(st),
-      nextRun = { sent: run.sent, events: run.events };
-    applyEvent(next, nextRun, e);
+      nextRun = { sent: run.sent, events: [...run.events] };
+    for (const e of events) {
+      applyEvent(next, nextRun, e);
+      nextRun.events.push(Object.freeze({ ...e }));
+    }
     st = next;
-    run = { sent: nextRun.sent, events: [...run.events, Object.freeze({ ...e })] };
+    run = nextRun;
   };
-  const ev = (op, requestId, extra = {}) => ({
-    op,
-    requestId,
-    producerOrder: null,
-    kind: null,
-    duplicateOf: null,
-    entityId: null,
-    organizationId: null,
-    ...extra,
-  });
+  const simulate = (...events) => {
+    if (control.frozen) fail("F3_FENCE_FROZEN");
+    const next = cloneState(st),
+      nextRun = { sent: run.sent, events: [...run.events] };
+    for (const e of events) {
+      applyEvent(next, nextRun, e);
+      nextRun.events.push(e);
+    }
+    return next;
+  };
+  const bindEvent = (requestId, { step, bodySha256, values }) =>
+    ev("bind", requestId, { step, bodySha256, values: values.map((v) => ({ ...v })) });
   const book = Object.freeze({
     seal({
       requestId,
@@ -968,46 +1726,63 @@ export function createF3IntentBook(options = {}) {
       actor,
       organizationId,
       kind = "principal",
+      action = kind === "prerequisito" ? null : "principal",
       duplicateOf = null,
     }) {
       if (actor !== "master") fail("F3_SECOND_USER_MUTATION");
       if (!Number.isSafeInteger(producerOrder)) fail("F3_INTENT_PRODUCER");
       if (!isUuid(requestId) || (duplicateOf !== null && !isUuid(duplicateOf)))
         fail("F3_INTENT_ID");
-      if (!enumOf(kind, F3_INTENT_KINDS)) fail("F3_INTENT_KIND");
+      if (!enumOf(kind, F3_INTENT_KINDS) || typeof action !== "string") fail("F3_INTENT_KIND");
       if ((kind === "duplicidade") !== (duplicateOf !== null)) fail("F3_INTENT_KIND");
       if (organizationId !== st.organizationF3) fail("F3_FOREIGN_ORG");
-      apply(ev("seal", requestId, { producerOrder, kind, duplicateOf }));
+      apply(ev("seal", requestId, { producerOrder, kind, action, duplicateOf }));
     },
+    /** Vínculo de um passo que saiu: UUIDs das posições declaradas e SHA-256 do corpo. */
+    bind: (requestId, b) => apply(bindEvent(requestId, b)),
     /** Confirma a criação; numa tentativa de duplicidade, sinaliza duplicateAccepted (FAIL). */
-    confirm(requestId, { entityId, organizationId }) {
-      apply(ev("confirm", requestId, { entityId, organizationId }));
+    confirm(requestId, { entityId, organizationId, related = [] }) {
+      apply(ev("confirm", requestId, { entityId, organizationId, related }));
       return { duplicateAccepted: st.intents.get(requestId).kind === "duplicidade" };
     },
     rejected: (requestId) => apply(ev("reject", requestId)),
     uncertain: (requestId) => apply(ev("uncertain", requestId)),
     /** Readback de intenção incerta ou abandonada: found registra a entidade, inclusive tardia. */
-    reconcile(requestId, { found, entityId, organizationId }) {
+    reconcile(requestId, { found, entityId, organizationId, related = [] }) {
       if (typeof found !== "boolean") fail("F3_INTENT_STATE");
-      apply(found ? ev("found", requestId, { entityId, organizationId }) : ev("absent", requestId));
+      apply(
+        found
+          ? ev("found", requestId, { entityId, organizationId, related })
+          : ev("absent", requestId),
+      );
     },
-    resend: (requestId) => apply(ev("resend", requestId)),
+    resend: (requestId, { step = 0 } = {}) => apply(ev("resend", requestId, { step })),
     /**
-     * Simula um selo ou reenvio sobre uma cópia do estado, com a mesma applyEvent: a cerca
-     * valida a intenção ao armar com a regra do livro, sem reescrevê-la (parecer 2b-2a, grupo B).
+     * Simula selo, reenvio ou vínculo sobre uma cópia do estado, com a mesma applyEvent: a cerca
+     * valida a intenção ao armar e a requisição ao sair pela regra do livro, sem reescrevê-la.
+     * values: confere, ao armar, só as origens dos valores já conhecidos de um passo.
      */
     check(input) {
       assertJsonTree(input, "F3_INTENT_STATE");
-      const keys = ["op", "requestId", "producerOrder", "kind", "duplicateOf"];
+      const keys = [
+        "op",
+        "requestId",
+        "producerOrder",
+        "kind",
+        "action",
+        "duplicateOf",
+        "step",
+        "binds",
+      ];
       if (Object.keys(input).some((k) => !keys.includes(k))) fail("F3_INTENT_STATE");
-      const { op, requestId, producerOrder = null, kind = null, duplicateOf = null } = input;
-      if (op !== "seal" && op !== "resend") fail("F3_INTENT_STATE");
-      if (control.frozen) fail("F3_FENCE_FROZEN");
-      const e =
+      const { op, requestId, producerOrder = null, kind = null, action = null } = input;
+      const { duplicateOf = null, step = 0, binds = [] } = input;
+      if (!["seal", "resend"].includes(op) || !Array.isArray(binds)) fail("F3_INTENT_STATE");
+      const first =
         op === "seal"
-          ? ev("seal", requestId, { producerOrder, kind, duplicateOf })
-          : ev("resend", requestId);
-      applyEvent(cloneState(st), { sent: run.sent, events: run.events }, e);
+          ? ev("seal", requestId, { producerOrder, kind, action, duplicateOf })
+          : ev("resend", requestId, { step });
+      simulate(first, ...binds.map((b) => bindEvent(requestId, b)));
       return true;
     },
     abandon: (requestId) => apply(ev("abandon", requestId)),
@@ -1035,7 +1810,7 @@ export function createF3IntentBook(options = {}) {
       return true;
     },
   });
-  BOOKS.set(book, () => ({ st, run, record, provenance, control }));
+  BOOKS.set(book, () => ({ st, run, record, provenance, control, simulate, apply, bindEvent }));
   return book;
 }
 
@@ -1047,55 +1822,8 @@ export function createF3IntentBook(options = {}) {
 //   da intenção armada, sem selo;
 // - qualquer outro método numa RPC de fluxo, numa tabela, numa Edge de fluxo ou no Storage é
 //   mutação e só passa como o próximo passo da intenção armada, com corpo canônico igual ao
-//   armado; a primeira requisição da intenção sela (ou reenvia) no livro antes de sair.
+//   armado; a primeira requisição sela (ou reenvia) e cada passo vincula no livro antes de sair.
 // Não há parâmetro de política: allowlist, relógio e ID são os de produção (parecer, grupo C).
-
-/**
- * Passo de fluxo. target: rpc (POST /rest/v1/rpc/name), table (POST /rest/v1/name + query
- * exata do cliente), edge (POST /functions/v1/name) ou storage (PUT
- * /storage/v1/object/upload/sign/bucket/caminho?token=..., corpo opaco). free: campos de topo
- * cujo valor é gerado em tempo de execução (chave de idempotência da UI, ID devolvido por passo
- * anterior) e só podem levar uma vaga (f3Slot); qualquer outro UUID do corpo tem de ser a
- * organização F3 ou entidade isolada do inventário do livro.
- */
-const step = (target, name, { query = "", free = [], source }) =>
-  Object.freeze({ target, name, query, free: Object.freeze([...free]), source });
-const DOC = "src/lib/administracao/admUsuariosRpc.ts:";
-// Por produtor e tipo de intenção: principal (também usado pela duplicidade) e prerequisito.
-const flow = (principal, prerequisito = null) =>
-  Object.freeze({
-    principal: Object.freeze(principal),
-    prerequisito: prerequisito && Object.freeze(prerequisito),
-  });
-export const F3_MUTATION_FLOWS = Object.freeze({
-  2: flow([
-    step("rpc", "criar_organizacao", {
-      source: "src/lib/organizacao/criarOrganizacaoDados.ts:35-40",
-    }),
-  ]),
-  4: flow([
-    step("edge", "admin-invite-user", {
-      free: ["chave_idempotencia"],
-      source: DOC + "188-211",
-    }),
-    step("rpc", "salvar_vinculo_usuario_adm", {
-      free: ["p_id_usuario", "p_chave_idempotencia"],
-      source: DOC + "171-185",
-    }),
-  ]),
-  5: flow([
-    step("table", "contratantes", {
-      query: "?select=id%2Crazao_social%2Csituacao",
-      source: "src/lib/contratantes/novoContratanteDados.ts:148-148",
-    }),
-  ]),
-  8: flow([
-    step("rpc", "atualizar_contrato_v1", {
-      free: ["p_request_id"],
-      source: "src/lib/cadastros/cadastroOperacionalDados.ts:210-225",
-    }),
-  ]),
-});
 export const F3_FENCE_WINDOW_MS = 60000;
 const STORAGE_ORIGIN = API_ORIGIN.replace(/\.supabase\.co$/, ".storage.supabase.co");
 const SAFE = Object.freeze(["GET", "HEAD"]);
@@ -1143,10 +1871,7 @@ function parseUrl(raw) {
     return null;
   }
 }
-const ALL_STEPS = Object.values(F3_MUTATION_FLOWS).flatMap((f) => [
-  ...f.principal,
-  ...(f.prerequisito ?? []),
-]);
+const ALL_STEPS = FLOWS.flatMap((f) => f.steps);
 const flowNames = (target) =>
   new Set(ALL_STEPS.filter((s) => s.target === target).map((s) => s.name));
 const FLOW_RPCS = flowNames("rpc"),
@@ -1186,6 +1911,20 @@ export function isF3Mutation(request) {
   const edge = /^\/functions\/v1\/(.+)$/.exec(p);
   return Boolean(edge && FLOW_EDGES.has(edge[1]));
 }
+/** Envio resumível (TUS) do Storage: bloqueado com causa própria (PLAN §12.3). */
+const isResumable = (u) =>
+  u !== null &&
+  (u.origin === STORAGE_ORIGIN || u.origin === API_ORIGIN) &&
+  /^\/storage\/v1\/upload\/resumable(\/|$)/.test(u.pathname);
+
+/** Percorre o corpo com o caminho de posição de cada folha (a.b, a[]). */
+function leaves(v, path, out) {
+  if (Array.isArray(v)) v.forEach((x) => leaves(x, path + "[]", out));
+  else if (v !== null && typeof v === "object")
+    for (const [k, x] of Object.entries(v)) leaves(x, path ? path + "." + k : k, out);
+  else out.push([path, v]);
+  return out;
+}
 
 /** Confere corpo observado contra o armado pela forma canônica; vagas capturam ou comparam. */
 function matchBody(seen, armed, slots, got) {
@@ -1222,24 +1961,52 @@ function matchBody(seen, armed, slots, got) {
 }
 
 /**
- * Corpo armado de passo JSON: vaga só uuid e só nos campos free de topo do passo; todo UUID
- * literal (inteiro ou dentro de texto) é a organização F3 ou entidade isolada do inventário.
- * Referência a organização, contrato ou registro alheio nunca é armada (PLAN 9.3).
+ * Corpo armado de passo JSON, pela origem de cada posição (PLAN §12.5): vaga uuid só em posição
+ * gerado_ui ou capturado (com o nome da vaga declarada); UUID literal só, e inteiro, em posição
+ * inventario, derivado ou usuario_sintetico; posição não declarada nunca contém UUID nem vaga.
+ * Posição capturada como caminho é sempre vaga path.
  */
-const UUID_ANY = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
-function assertArmedBody(body, s, isolated) {
-  const walk = (v, top) => {
-    if (typeof v === "string") {
-      if (v.startsWith(SLOT)) {
-        if (!SLOT_RE.test(v) || !v.startsWith(SLOT + "uuid:")) fail("F3_FENCE_ARM");
-        if (top === null || !s.free.includes(top)) fail("F3_FENCE_ARM");
-      } else
-        for (const m of v.matchAll(UUID_ANY))
-          if (!isolated.has(m[0].toLowerCase())) fail("F3_FOREIGN_ORG");
-    } else if (Array.isArray(v)) v.forEach((x) => walk(x, null));
-    else if (v !== null && typeof v === "object") Object.values(v).forEach((x) => walk(x, null));
-  };
-  for (const [k, v] of Object.entries(body)) walk(v, k);
+const UUID_ANY = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+function assertArmedBody(body, s) {
+  for (const [path, v] of leaves(body, "", [])) {
+    const spec = Object.hasOwn(s.fields, path) ? s.fields[path] : null;
+    if (typeof v === "string" && v.startsWith(SLOT)) {
+      const m = SLOT_RE.exec(v);
+      if (!m || !spec) fail("F3_FENCE_ARM");
+      if (spec.origin === "gerado_ui" && m[1] === "uuid") continue;
+      if (spec.origin === "capturado" && m[1] === spec.as && m[2] === spec.slot) continue;
+      fail("F3_FENCE_ARM");
+    }
+    if (spec?.origin === "gerado_ui" || spec?.origin === "capturado") {
+      if (v !== null) fail("F3_FENCE_ARM");
+      continue;
+    }
+    if (typeof v !== "string" || !UUID_ANY.test(v)) continue;
+    if (!spec || !isUuid(v)) fail("F3_VALUE_ORIGIN");
+    if (!["inventario", "derivado", "usuario_sintetico"].includes(spec.origin))
+      fail("F3_VALUE_ORIGIN");
+  }
+}
+/** Valores de um passo para o bind: UUIDs das posições declaradas, na ordem das folhas. */
+function bindValues(body, s, orgF3) {
+  const values = [];
+  for (const [path, v] of leaves(body, "", [])) {
+    const spec = Object.hasOwn(s.fields, path) ? s.fields[path] : null;
+    if (!spec || v === null) continue;
+    if (spec.as === "path") {
+      const m = new RegExp(
+        "^" +
+          orgF3 +
+          "/uploads/([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})/[A-Za-z0-9._-]{1,180}$",
+      ).exec(typeof v === "string" ? v : "");
+      if (!m) fail("F3_VALUE_ORIGIN");
+      values.push({ position: path, value: m[1] });
+    } else if (isUuid(v)) values.push({ position: path, value: v });
+    // Derivado que não é UUID (versão, hash, atualizado_em) é coberto pelo SHA-256 do corpo.
+    else if (spec.origin === "derivado" && !UUID_ANY.test(String(v))) continue;
+    else fail("F3_VALUE_ORIGIN");
+  }
+  return values;
 }
 
 /** URL do passo; no Storage, o caminho é a vaga path e o token é opaco. */
@@ -1256,10 +2023,12 @@ function matchUrl(u, s, armed, slots, got) {
 }
 
 /**
- * Política de mutação ligada ao livro. arm() declara a intenção (produtor, tipo, ou resendOf
- * para o reenvio depois de readback) e, para cada passo do fluxo, o corpo armado: valores
- * literais e vagas f3Slot nos campos free do passo (no Storage, { path: vaga }). A intenção é
- * validada ao armar pela regra do próprio livro (book.check) e pela conferência de isolamento.
+ * Política de mutação ligada ao livro. arm() declara a intenção (ação do fluxo, tipo, ou
+ * resendOf com o passo inicial from para o reenvio depois de readback) e, para cada passo que
+ * vai sair, o corpo armado: literais, valores das posições inventario, derivado e
+ * usuario_sintetico, e vagas f3Slot nas posições gerado_ui e capturado (no Storage,
+ * { path: vaga }). A intenção e os valores conhecidos são validados ao armar pela regra do
+ * próprio livro; cada requisição é validada de novo, com os valores observados, ao sair.
  * policy() vai para installNativeFence. settle() devolve o que saiu e as vagas capturadas; o
  * desfecho (confirm, rejected, uncertain) é do driver, pela UI e pela releitura.
  */
@@ -1267,7 +2036,8 @@ export function createF3MutationFence(options = {}) {
   if (Object.keys(options).some((k) => k !== "book")) fail("F3_FENCE_OPTIONS");
   const book = options.book;
   if (!BOOKS.has(book)) fail("F3_FENCE_BOOK");
-  const control = BOOKS.get(book)().control;
+  const internal = BOOKS.get(book)();
+  const control = internal.control;
   // Uma cerca por livro: uma cerca nova não pode contornar o congelamento nem abrir intenções
   // em paralelo. O contexto do leitor usa f3ReadOnlyPolicy, que nunca admite mutação.
   if (control.fenced) fail("F3_FENCE_DUPLICATE");
@@ -1278,12 +2048,14 @@ export function createF3MutationFence(options = {}) {
     typeof r.sessionId === "string" && typeof r.interceptionId === "string"
       ? r.sessionId + "\u0000" + r.interceptionId
       : null;
-  const freeze = () => {
+  const freeze = (code = "F3_FENCE_FROZEN") => {
+    if (!control.frozen) control.freezeCode = code;
     control.frozen = true;
     return false;
   };
+  const stepIndex = () => active && active.start + active.done;
   const nextUrlMatches = (u) => {
-    const s = active && active.flow[active.done];
+    const s = active && active.flow.steps[stepIndex()];
     return Boolean(s && matchUrl(u, s, active.bodies[active.done], active.slots, {}));
   };
   function decide(request) {
@@ -1301,9 +2073,10 @@ export function createF3MutationFence(options = {}) {
       return requestAllowed(request) === true;
     }
     if (request.stage !== "REQUEST") return false;
+    const u = parseUrl(request.url);
+    if (isResumable(u)) return freeze("F3_UPLOAD_RESUMABLE");
     if (request.method === "OPTIONS") {
       if (requestAllowed(request) === true) return true;
-      const u = parseUrl(request.url);
       if (control.frozen || !ticket || !u || !nextUrlMatches(u)) return false;
       tickets.set(ticket, { url: request.url, method: "OPTIONS", body: null });
       return true;
@@ -1311,38 +2084,52 @@ export function createF3MutationFence(options = {}) {
     if (!isF3Mutation(request)) return requestAllowed(request) === true;
     if (control.frozen || !active || !ticket || tickets.has(ticket)) return freeze();
     if (performance.now() - active.armedAt >= F3_FENCE_WINDOW_MS) return freeze();
-    const s = active.flow[active.done];
-    const u = parseUrl(request.url);
+    const s = active.flow.steps[stepIndex()];
     if (!s || !u) return freeze();
     const armed = active.bodies[active.done],
       got = {};
     if (!matchUrl(u, s, armed, active.slots, got)) return freeze();
-    let body = null;
-    if (s.target === "storage") {
-      if (request.method !== "PUT") return freeze();
-    } else {
-      if (request.method !== "POST") return freeze();
-      body = parseJsonBody(request.postData);
-      if (body === undefined || !matchBody(body, armed, active.slots, got)) return freeze();
-    }
-    // A primeira requisição da intenção é a que conta: sela (ou reenvia) antes de sair.
-    if (active.done === 0) {
-      try {
-        if (active.resend) book.resend(active.requestId);
-        else
-          book.seal({
-            requestId: active.requestId,
-            producerOrder: active.producerOrder,
-            actor: "master",
-            organizationId: book.organizationF3(),
-            kind: active.kind,
-            duplicateOf: active.duplicateOf,
-          });
-      } catch {
-        return freeze();
+    let body = null,
+      values;
+    try {
+      if (s.target === "storage") {
+        if (request.method !== "PUT") return freeze();
+        values = bindValues(
+          { path: got.caminho ?? active.slots.caminho },
+          s,
+          book.organizationF3(),
+        );
+      } else {
+        if (request.method !== "POST") return freeze();
+        body = parseJsonBody(request.postData);
+        if (body === undefined || !matchBody(body, armed, active.slots, got)) return freeze();
+        values = bindValues(body, s, book.organizationF3());
       }
-      active.sealed = true;
+      const b = {
+        step: stepIndex(),
+        bodySha256: body === null ? null : sha256(canonicalJson(body)),
+        values,
+      };
+      // A primeira requisição da intenção é a que conta: sela (ou reenvia) e vincula antes de
+      // sair; os passos seguintes vinculam. Tudo pela applyEvent do livro, numa só transação.
+      const events = [];
+      if (active.done === 0)
+        events.push(
+          active.resend
+            ? ev("resend", active.requestId, { step: active.start })
+            : ev("seal", active.requestId, {
+                producerOrder: active.flow.order,
+                kind: active.kind,
+                action: active.flow.action,
+                duplicateOf: active.duplicateOf,
+              }),
+        );
+      events.push(internal.bindEvent(active.requestId, b));
+      BOOKS.get(book)().apply(...events);
+    } catch {
+      return freeze();
     }
+    active.sealed = true;
     Object.assign(active.slots, got);
     active.done += 1;
     tickets.set(ticket, {
@@ -1365,56 +2152,87 @@ export function createF3MutationFence(options = {}) {
     arm(input = {}) {
       if (control.frozen) fail("F3_FENCE_FROZEN");
       if (active) fail("F3_FENCE_PENDING");
-      const ARM_KEYS = ["producerOrder", "kind", "duplicateOf", "resendOf", "bodies"];
+      const ARM_KEYS = ["flow", "kind", "duplicateOf", "resendOf", "from", "bodies"];
       assertJsonTree(input, "F3_FENCE_ARM");
       if (Object.keys(input).some((k) => !ARM_KEYS.includes(k))) fail("F3_FENCE_ARM");
-      const { producerOrder, bodies, resendOf = null } = input;
-      let { kind = "principal", duplicateOf = null } = input;
+      const { bodies, resendOf = null } = input;
       // Isolamento antes de qualquer mutação nova: violação anterior impede seguir mutando.
       book.assertIsolation();
-      if (!Number.isSafeInteger(producerOrder) || !Object.hasOwn(F3_MUTATION_FLOWS, producerOrder))
-        fail("F3_FLOW_UNDEFINED");
-      let requestId;
+      const f = flowOf(input.flow);
+      let requestId,
+        kind = input.kind ?? f.kind,
+        duplicateOf = input.duplicateOf ?? null,
+        start = 0;
       if (resendOf !== null) {
-        // Reenvio depois de readback (PLAN 7.2): mesma intenção, mesmo tipo, envio pelo livro.
+        // Reenvio depois de readback (PLAN 7.2 e §12.5): mesma intenção, mesmo fluxo, a partir
+        // de um início declarado; o livro exige o mesmo corpo e os mesmos valores.
         if (input.kind !== undefined || input.duplicateOf !== undefined) fail("F3_FENCE_ARM");
-        book.check({ op: "resend", requestId: resendOf });
+        start = input.from ?? 0;
+        if (!Number.isSafeInteger(start)) fail("F3_FENCE_ARM");
         const prior = book.summary().requests.find((q) => q.requestId === resendOf);
-        if (prior.producerOrder !== producerOrder) fail("F3_INTENT_PRODUCER");
+        if (!prior || prior.producerOrder + ":" + prior.action !== input.flow)
+          fail("F3_INTENT_PRODUCER");
+        book.check({ op: "resend", requestId: resendOf, step: start });
         ({ kind, duplicateOf } = prior);
         requestId = resendOf;
       } else {
+        if (input.from !== undefined) fail("F3_FENCE_ARM");
         requestId = crypto.randomUUID();
         // A regra do livro decide ao armar, sobre uma cópia do estado; o selo real reconfere.
-        book.check({ op: "seal", requestId, producerOrder, kind, duplicateOf });
+        book.check({
+          op: "seal",
+          requestId,
+          producerOrder: f.order,
+          kind,
+          action: f.action,
+          duplicateOf,
+        });
       }
-      const steps = F3_MUTATION_FLOWS[producerOrder][kind === "prerequisito" ? kind : "principal"];
-      if (!steps) fail("F3_FLOW_UNDEFINED");
+      const steps = f.steps.slice(start);
       if (!Array.isArray(bodies) || bodies.length !== steps.length) fail("F3_FENCE_ARM");
-      const isolated = new Set([
-        ...(book.organizationF3() ? [book.organizationF3()] : []),
-        ...book
-          .created()
-          .filter((c) => ISOLATED_KINDS.includes(c.kind))
-          .map((c) => c.id),
-      ]);
       steps.forEach((s, i) => {
         const b = bodies[i];
         if (b === null || typeof b !== "object" || Array.isArray(b)) fail("F3_FENCE_ARM");
         if (s.target === "storage") {
           strictPlain(b, ["path"], "F3_FENCE_ARM");
-          if (typeof b.path !== "string" || !b.path.startsWith(SLOT + "path:"))
-            fail("F3_FENCE_ARM");
-          if (!SLOT_RE.test(b.path)) fail("F3_FENCE_ARM");
-        } else assertArmedBody(b, s, isolated);
+          if (b.path !== f3Slot("path", s.fields.path.slot)) fail("F3_FENCE_ARM");
+        } else assertArmedBody(b, s);
       });
+      // Valores já conhecidos (inventario, derivado, usuario_sintetico) do 1º passo, pela
+      // regra do livro: a origem errada é recusada ao armar, não no clique.
+      if (resendOf === null) {
+        const s0 = steps[0];
+        const known =
+          s0.target === "storage"
+            ? []
+            : leaves(bodies[0], "", [])
+                .filter(([p, v]) => {
+                  const spec = Object.hasOwn(s0.fields, p) ? s0.fields[p] : null;
+                  if (!spec || ["gerado_ui", "capturado"].includes(spec.origin) || v === null)
+                    return false;
+                  return spec.origin !== "derivado" || isUuid(v);
+                })
+                .map(([position, value]) => ({ position, value }));
+        if (known.some((v) => !isUuid(v.value))) fail("F3_VALUE_ORIGIN");
+        book.check({
+          op: "seal",
+          requestId,
+          producerOrder: f.order,
+          kind,
+          action: f.action,
+          duplicateOf,
+          binds: [
+            { step: 0, bodySha256: s0.target === "storage" ? null : "0".repeat(64), values: known },
+          ],
+        });
+      }
       active = {
         requestId,
-        producerOrder,
+        flow: f,
         kind,
         duplicateOf,
         resend: resendOf !== null,
-        flow: steps,
+        start,
         bodies: structuredClone(bodies),
         done: 0,
         sealed: false,
@@ -1429,7 +2247,7 @@ export function createF3MutationFence(options = {}) {
       const out = {
         requestId: active.requestId,
         sealed: active.sealed,
-        complete: active.done === active.flow.length,
+        complete: active.start + active.done === active.flow.steps.length,
         slots: { ...active.slots },
       };
       active = null;
@@ -1473,8 +2291,8 @@ function validateIsolation(iso, state) {
   const code = "F3_ISOLATION";
   strictPlain(iso, ["organizationF3", "created", "e87Before", "e87After"], code);
   if (iso.organizationF3 !== state.organizationF3) fail(code);
-  plainArray(iso.created, code, F3_BUDGET.total);
-  for (const e of iso.created) strictPlain(e, ["id", "kind", "organizationId", "requestId"], code);
+  plainArray(iso.created, code, F3_MAX_CREATED);
+  for (const e of iso.created) strictPlain(e, CREATED_KEYS, code);
   if (JSON.stringify(iso.created) !== JSON.stringify(state.created)) fail(code);
   plainCounters(iso.e87Before, code);
   plainCounters(iso.e87After, code);
@@ -1565,7 +2383,11 @@ function crossCheck(report, requests, created) {
     seen.add(head.requestId);
     const q = byId.get(head.requestId);
     if (!q || q.producerOrder !== order || q.kind !== "principal") fail(code);
-    const made = created.find((e) => e.requestId === head.requestId);
+    // Entidade do recibo: a principal criada pela intenção ou, na atualização, a entidade do
+    // inventário que ela atualizou (a mesma que o ledger preserva).
+    const made =
+      created.find((e) => e.requestId === head.requestId && e.role === "principal") ??
+      (q.outcome === "confirmed" ? created.find((e) => e.id === q.entityId) : undefined);
     if (head.entityIds.some((id) => id !== made?.id)) fail("F3_ISOLATION");
     if (head.status === "PASS" && !ISOLATED_KINDS.includes(made?.kind)) fail("F3_ISOLATION");
     if (q.outcome !== "confirmed" && head.entityIds.length) fail(code);
@@ -1989,7 +2811,7 @@ export function validateF3Ledger(raw, catalogue) {
       if (!i || i.kind !== "principal" || i.producerOrder !== c.producerOrder) fail(code);
       if (i.state !== "confirmed" || JSON.stringify(e.entityIds) !== JSON.stringify([i.entityId]))
         fail(code);
-      const made = at.created.find((x) => x.requestId === e.requestId);
+      const made = primaryOf(at, e.requestId);
       if (!ISOLATED_KINDS.includes(made?.kind)) fail(code);
     } else if (e.requestId !== null || e.entityIds.length) fail(code);
     seen.add(e.caseId);
@@ -2250,14 +3072,15 @@ export async function runF3Session({
     });
     stop.catch(() => {});
     await Promise.race([Promise.resolve().then(() => drive(book)), stop]);
-    if (book.frozen()) fail("F3_FENCE_FROZEN");
+    if (book.frozen()) fail(BOOKS.get(book)().control.freezeCode);
     book.assertIsolation();
     fail("F3_DRIVER_PENDING");
   } catch (error) {
     let code = CODE.test(error?.code || "") ? error.code : "F3_FAILURE";
-    // Congelamento por desvio da cerca é a causa, não o sintoma que o driver viu depois.
+    // Congelamento da cerca é a causa, não o sintoma que o driver viu depois: desvio
+    // (F3_FENCE_FROZEN) ou envio resumível bloqueado (F3_UPLOAD_RESUMABLE, PLAN §12.3).
     if (book?.frozen() && !["F3_SESSION_DEADLINE", "F3_SESSION_ABORTED"].includes(code))
-      code = "F3_FENCE_FROZEN";
+      code = BOOKS.get(book)().control.freezeCode;
     freezeBook();
     return {
       code,

@@ -249,7 +249,7 @@
       "causa": "PR #658 na V1/Fase 3 exigiu sete rodadas por regras duplicadas, referências controladas pelo chamador e fatos observados tratados como erro.",
       "sintoma": "Retrabalho corretivo recorrente por origem causal compartilhada não atacada no primeiro ciclo.",
       "barreira": "Aplicar replay dos eventos e guard das fontes; inventário campo a campo do fluxo de rede antes de cerca ou driver; teste que liga cada fluxo declarado no executor a uma linha do levantamento; propriedades e mutações para evitar regredir a mesma classe.",
-      "estado": "PENDENTE_PR",
+      "estado": "REINCIDENCIA",
       "origem": [
         "https://github.com/contaos999999/contaos-hml-control/blob/main/docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B1_INFRA.md",
         "https://github.com/contaos999999/contaos-hml-control/pull/679",
@@ -261,11 +261,11 @@
         "tipo": "TESTE",
         "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
         "procedimento": null,
-        "teste": "F3 B2b1 RED: intenções e inventário declarados precisam ser o replay dos eventos"
+        "teste": "F3 B2b2a R3 RED (NR-008): cada fluxo declarado tem uma linha do levantamento e cada linha tem fluxo, com fonte que existe no código"
       },
       "recibo": null,
       "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo.",
-      "diagnostico_ampliado": "Reincidência em 14/11/2026: ciclo R1 (ec69e0e) e R2 (af50cff) do BUILD-2b-2a (#679) e R1 da emenda 1 (#678, review 5905890909) repetiram a causa da #658, desenhar cerca e PLAN antes do inventário completo do fluxo de rede. Revisão causal ampliada: levantamento campo a campo em docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md (revisão 2), com lista fechada de origens, antes de qualquer cerca ou driver (PLAN §12.5 e §12.7).",
+      "diagnostico_ampliado": "Reincidência em 14/11/2026: ciclo R1 (ec69e0e) e R2 (af50cff) do BUILD-2b-2a (#679) e R1 da emenda 1 (#678, review 5905890909) repetiram a causa da #658, desenhar cerca e PLAN antes do inventário completo do fluxo de rede. Revisão causal ampliada: levantamento campo a campo em docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md (revisão 2), com lista fechada de origens, antes de qualquer cerca ou driver (PLAN §12.5 e §12.7). Na PR #679 (R3), o redesenho único da cerca nasce do levantamento: 30 ações com origem tipada por posição, vínculo (bind) de cada passo aplicado pela máquina de estados do livro e reexecutado pelo replay, reenvio só idêntico ao original e entidades de atualização; barreira bidirecional fluxo↔linha do levantamento.",
       "reincidencias": [
         {
           "data": "2026-11-14",
@@ -278,7 +278,21 @@
             "af50cff",
             "20b7ff3"
           ],
-          "estado_seguinte": "REINCIDENCIA na PR #679, com novos_testes da PLAN §12.6"
+          "estado_seguinte": "REINCIDENCIA na PR #679 com novos_testes da PLAN §12.6; o estado seguinte só muda com merge, CI e readback (P0-NR-001 §III)"
+        }
+      ],
+      "novos_testes": [
+        {
+          "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
+          "caso": "F3 B2b2a R3 RED (NR-008): cada fluxo declarado tem uma linha do levantamento e cada linha tem fluxo, com fonte que existe no código"
+        },
+        {
+          "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
+          "caso": "F3 B2b2a R3 RED (A): origem tipada por posição; vaga só em gerado_ui ou capturado, UUID só do inventário da ação declarada"
+        },
+        {
+          "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
+          "caso": "F3 B2b2a R3 RED (B): reenvio só idêntico ao original (vinculado); chave nova, corpo novo ou produtor sem chave são recusados"
         }
       ]
     }
