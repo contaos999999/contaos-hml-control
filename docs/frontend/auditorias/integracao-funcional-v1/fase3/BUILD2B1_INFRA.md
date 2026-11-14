@@ -11,7 +11,7 @@ Não mudam: o YAML, o auditor, o preparador, `src/**`, `types.ts`, as dependênc
 
 ## Causa raiz das rodadas de revisão
 
-As seis rodadas acharam defeitos de três causas de projeto. A regra canônica do titular, de 14/11/2026, manda corrigir pela causa e verificar que a correção não abre falha nova. Por isso as duas causas foram tratadas como classe, não caso a caso.
+As seis rodadas acharam defeitos de três causas de projeto. A regra canônica do titular, de 14/11/2026, manda corrigir pela causa e verificar que a correção não abre falha nova. Por isso as três causas foram tratadas como classe, não caso a caso.
 
 1. **Regras reimplementadas.** Rodadas 5900926490, 5901072418, 5901160351 e o parecer 5901220713. O validador do relatório e o do ledger reimplementavam, regra por regra, o que o livro de intenções fazia; cada regra esquecida virava uma brecha. A mesma análise revelou um defeito latente: o livro exigia o ID da organização F3 antes de a execução criá-la.
 2. **Referências escolhidas por quem chama.** Rodada 5903041644. O gate e o gravador decidiam sobre um catálogo, um ledger e uma política passados como parâmetro, e comparavam por JSON folhas que podiam ser objetos com `toJSON`. Na correção da primeira causa apareceram mais duas falhas da mesma família, pegas pelo teste de propriedade antes de qualquer revisão:
@@ -39,10 +39,12 @@ As seis rodadas acharam defeitos de três causas de projeto. A regra canônica d
 - **Relatório parcial com o livro.** `blockedF3Report({ book })` carrega os eventos, os envios e o inventário da execução, e o ledger montado a partir dele conta os envios reais.
 - **Teto de eventos provado.** São no máximo 8 eventos por intenção e 60 intenções, ou seja, `F3_MAX_EVENTS_PER_RUN` = 480, aplicado dentro da própria máquina de estados.
 - **Teste de propriedade com semente fixa.**
-  - São 936 cenários de até três execuções. As ações sorteadas incluem fatos observados (entidade fora da F3, na `e87f7e68` ou repetida) e violações de protocolo.
+  - São 1.214 cenários de até três execuções. As ações sorteadas incluem fatos observados (entidade fora da F3, na `e87f7e68` ou repetida) e violações de protocolo.
+  - O gerador usa os bits altos do congruencial (revisão R7, M1): os bits baixos tinham ciclo curto, e por isso nenhuma entidade na `e87f7e68` chegava a ser sorteada.
+  - O teste exige cobertura: os cinco tipos de `F3_ENTITY_KINDS` e a recusa `F3_INTENT_ENTITY` precisam aparecer. Na execução apareceram também `F3_INTENT_DUPLICATE_OF`, `F3_INTENT_PREREQUISITES`, `F3_INTENT_PRODUCER`, `F3_INTENT_STATE` e `F3_UNCERTAIN_RESEND`.
   - Os relatórios parciais montados com o livro e os ledgers gerados sempre validam.
-  - As 860 adulterações sorteadas foram todas recusadas: contadores, envios, estados, eventos removidos do meio, entidades trocadas e inventário.
-  - Em 3.130 ações recusadas, de qualquer código, o estado continuou intacto.
+  - As 1.178 adulterações sorteadas foram todas recusadas: contadores, envios, estados, eventos removidos do meio, entidades trocadas e inventário.
+  - Em 2.945 ações recusadas, de qualquer código, o estado continuou intacto.
 
 ## O que entra
 
@@ -160,6 +162,7 @@ A prova definitiva é a revalidação do REQUEST.
 | 5901220713 | `4f204c9` | Parecer APPROVE, registrado como comentário (N-1–N-4) | R5, causa raiz 1 |
 | 5903041644 | `49fc13d` | CHANGES_REQUESTED (âncoras e folhas; M-A–M-D) | R6, causa raiz 2 |
 | 5903136160 | `588532c` | CHANGES_REQUESTED (A: fato observado; B: política no gravador; C: entrada pela execução citada) | R7, causa raiz 3 |
+| Parecer R7 | `f7e1b9f` | APPROVE, com quatro menores | M1 e M4 corrigidos nesta versão; M2 e M3 viram obrigação do BUILD-2b-2 |
 
 Na R6, os quatro menores da revisão 5903041644 também foram resolvidos, porque afetavam o funcionamento do BUILD-2b-2:
 - **M-A, regra C:** entradas ligadas ao replay e recibo preservado;
@@ -169,10 +172,10 @@ Na R6, os quatro menores da revisão 5903041644 também foram resolvidos, porque
 
 ## Testes
 
-- `integracao-v1-fase3.test.mjs` tem 36 testes, todos verdes, entre eles o de propriedade (936 cenários, 860 adulterações recusadas e 3.130 ações recusadas sem efeito).
+- `integracao-v1-fase3.test.mjs` tem 36 testes, todos verdes, entre eles o de propriedade (1.214 cenários, 1.178 adulterações recusadas e 2.945 ações recusadas sem efeito, cobrindo todos os tipos de entidade).
 - RED verificável: esta suíte, rodada contra o executor do HEAD `588532c`, tem 11 falhas. Contra o `49fc13d`, a suíte anterior tinha 13.
 - Suíte do job `protocol`: 916 testes, 894 passam, 2 falham e 20 são pulados. As falhas 281 e 378 são de ambiente local e ocorrem também na main.
-- `eslint` e `prettier --check` estão limpos.
+- `eslint` e `prettier --check` estão limpos nos dois scripts. Os `.md` não passam pelo prettier no CI.
 
 ## Próximo passo: BUILD-2b-2
 
@@ -183,3 +186,12 @@ Na R6, os quatro menores da revisão 5903041644 também foram resolvidos, porque
 - Confirmação pela UI dos estados de negação de V111 e V120 e dos contadores de `F3_E87_COUNTER_SCREENS`.
 - Registro da execução no ledger, com a proveniência completa, e inventário de isolamento.
 - Em qualquer falha depois de criar o livro, o `runCli` passa o livro a `blockedF3Report`, para o resultado parcial carregar a execução.
+- **Proveniência amarrada à mutação** (parecer R7, M2).
+  - O livro passa a receber a proveniência completa: `createF3IntentBook({ ledger, provenance })`.
+  - `blockedF3Report({ book })` usa a proveniência do livro.
+  - `validateF3Report` exige proveniência completa sempre que houver eventos.
+  - Isso impede que um relatório com envios e proveniência nula deixe de entrar no ledger. Hoje, o YAML já falha antes do executor quando o SHA do frontend ou o deployment são inválidos.
+- **Execução do ledger ligada ao artefato** (parecer R7, M3).
+  - A execução registrada no ledger ganha `artifactId`, `sha256` e `reviewId`.
+  - O revisor da PR do ledger confere os eventos contra o `F3_REPORT.json` do artefato, porque um prefixo de log válido também passa no replay.
+- **Isolamento dos pré-requisitos.** Uma conferência final de isolamento que falhe num pré-requisito, que não tem recibo, encerra a execução com código; nunca é ignorada.

@@ -1062,7 +1062,8 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
   let seed = 0x5eed1234;
   const rnd = (n) => {
     seed = (seed * 1103515245 + 12345) >>> 0;
-    return seed % n;
+    // Bits altos do gerador congruencial: os baixos têm ciclo curto e amarravam os sorteios.
+    return (seed >>> 16) % n;
   };
   let next = 1;
   const id = () => uuid(900000 + next++);
@@ -1070,6 +1071,8 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
   let scenarios = 0,
     tampers = 0,
     refused = 0;
+  const codes = new Set(),
+    kinds = new Set();
   for (let k = 0; k < 500; k++) {
     let ledger = EMPTY;
     const runs = [];
@@ -1156,6 +1159,7 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
           assert.equal(typeof error.code, "string", String(error));
           assert.equal(JSON.stringify([book.summary(), book.created()]), before);
           refused += 1;
+          codes.add(error.code);
         }
       }
       const summary = book.summary();
@@ -1207,6 +1211,7 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
         );
         tampers += 1;
       }
+      for (const c of book.created()) kinds.add(c.kind);
       runs.push({
         workflowRunId: String(r),
         frontendSha: PROV.frontendSha,
@@ -1219,7 +1224,9 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
       assert.equal(sut.f3LedgerState(ledger).priorSent, priorBefore + summary.sent);
       assert.ok(sut.f3LedgerState(ledger).priorSent <= 60);
       assert.ok(
-        sut.f3LedgerState(ledger).created.every((c) => c.organizationId !== sut.F3_E87_ORG),
+        sut
+          .f3LedgerState(ledger)
+          .created.every((c) => c.organizationId !== sut.F3_E87_ORG || c.kind === "fora_da_f3"),
       );
     }
   }
@@ -1230,6 +1237,10 @@ test("F3 B2b1: propriedade, replay do livro é a única fonte de verdade (sement
     scenarios >= 800 && tampers >= 500 && refused >= 100,
     [scenarios, tampers, refused].join(),
   );
+  // Cobertura exigida: todos os tipos de entidade e a recusa por violação de protocolo.
+  console.log("# propriedade: tipos=" + [...kinds].sort() + " codigos=" + [...codes].sort());
+  for (const kind of sut.F3_ENTITY_KINDS) assert.ok(kinds.has(kind), kind);
+  assert.ok(codes.has("F3_INTENT_ENTITY"));
 });
 
 test("F3 B2b1 RED: perfil diferente de leitor e RBAC divergente da fotografia v6 falham", () => {

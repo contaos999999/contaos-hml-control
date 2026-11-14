@@ -1272,8 +1272,9 @@ export function f3ProvenanceFromEnv(env) {
 }
 
 /**
- * Relatório BLOCKED: todo caso não executado fica BLOCKED, nunca PASS. Com ledger lido, carrega
- * o estado dele; sem ledger lido, ledgerSha256 é null e não há estado.
+ * Relatório BLOCKED: todo caso não executado fica BLOCKED, nunca PASS. Com o livro, carrega a
+ * execução inteira (eventos, envios e inventário); sem livro e com ledger lido, carrega o estado
+ * do ledger; sem ledger lido, ledgerSha256 é null e não há estado.
  */
 export function blockedF3Report({ code, catalogue, provenance, ledger = null, book = null }) {
   if (typeof code !== "string" || !CODE.test(code)) fail("F3_REPORT");
@@ -1429,8 +1430,9 @@ const LEDGER_RUN_KEYS = Object.freeze([
 ]);
 /**
  * Ledger append-only: os eventos do livro de cada execução e os PASS verificados (regra C). O
- * estado acumulado sai do replay dos eventos; cada PASS cita uma execução registrada, com o
- * mesmo harness, e a intenção principal confirmada e a entidade que o replay registra para ele.
+ * estado acumulado sai do replay dos eventos; cada PASS cita uma execução registrada, com a mesma
+ * proveniência (frontend, harness e deployment), e a principal confirmada e isolada no estado ao
+ * fim dessa execução, com a entidade que o replay registra para ela.
  * O ledger validado fica congelado e guarda o SHA-256 do bruto.
  */
 export function validateF3Ledger(raw, catalogue) {
