@@ -8,7 +8,7 @@ const clone = () => JSON.parse(JSON.stringify(original));
 const plan = (id) => ({ prompt_id: id, status: "VALIDADO" });
 const syntheticExists = (p) =>
   existsSync(p) ||
-  /^docs\/frontend\/auditorias\/integracao-(?:funcional|cumulativa)-v[1-5][a-z0-9/_.-]*$/.test(p);
+  /^docs\/frontend\/auditorias\/integracao-(?:funcional|cumulativa)-v[1-5][a-z0-9/_.-]*$/i.test(p);
 const check = (m = clone(), p = plan("42"), paths = []) =>
   validateP0(m, p, paths, syntheticExists);
 
