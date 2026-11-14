@@ -41,7 +41,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/p0-evidence-live-gate.mjs
-      - name: P0 RCA V2-V5 — testes negativos de causa raiz e impacto
+      - name: P0 RCA V1-V5 — testes negativos de causa raiz e impacto
         run: node --test scripts/p0-rca-impact-gate.test.mjs
       - name: Autoteste do guard (casos permitidos e proibidos)
         run: node --test scripts/frontend-scope-gate.test.mjs
@@ -74,7 +74,7 @@ jobs:
           node scripts/ci/install-pinned-bun.mjs
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
-      - name: P0 RCA V2-V5 — verificar escopo, RED GitHub e executar GREEN/REG reais
+      - name: P0 RCA V1-V5 — verificar escopo, RED GitHub e executar GREEN/REG reais
         env:
           FRONTEND_DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
           GITHUB_TOKEN: ${{ github.token }}
