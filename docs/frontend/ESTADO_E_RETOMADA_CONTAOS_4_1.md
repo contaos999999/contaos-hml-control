@@ -1,3 +1,12 @@
+## Integração funcional V1: Fase 3, BUILD-2a integrado e BUILD-2b-1 em revisão, 13/11/2026 Bahia
+
+- **BUILD-2a integrado** pela PR #657 (merge `d2a6557`). O contaos9999 pediu mudanças no HEAD `59f171f` e aprovou no HEAD `a071ef4`. Catálogo `fase3/F3_CASES.json` com SHA-256 `bce15980…`: MASTER `ALLOW` nas 138 posições; `leitor` com 7 `DENY` e 19 `ALLOW` nas 26 de ADM01.
+- **BUILD-1 integrado** pela PR #656 (merge `fa7f58b`). **2º usuário sintético:** criado pelo titular às 22h17; os secrets `CONTAOS_HML_SYNTHETIC_2_*` só serão provados na 1ª execução.
+- **BUILD-2b dividido** por decisão do titular ("2b-1 infra, 2b-2 drivers (Recomendado)"). O BUILD-2b-1, em revisão, é offline: relatório `F3_REPORT.json` e `SHA256SUMS` também em resultado parcial, status derivado contra falso PASS, ledger `fase3/F3_LEDGER.json` vazio com SHA `3cd3a1b6…` fixado, livro de intenções, releitura do RBAC (`F3_RBAC_DRIFT`), negação só por estado explícito (V123 pela RPC) e contrato do YAML com SHA `8da83394…`. Detalhes em `fase3/BUILD2B1_INFRA.md`.
+- **Provas R4, R12 e R14** conferidas com pai `d2a6557`: OK, porque só exigem ancestralidade.
+- **Próximo:** BUILD-2b-2 (drivers de UI, sessões do MASTER e do `leitor`, inventário de isolamento); depois pin de deployment e REQUEST `fixtures` com nonce `integracao-v1-fase3-rel-20261113-r1`.
+- **Fase 3:** EM EXECUÇÃO.
+
 ## Integração funcional V1: Fase 3, BUILD-1 integrado e BUILD-2a em revisão, 13/11/2026 Bahia
 
 - **BUILD-1 integrado** pela PR #656 (merge `fa7f58b`). O Edivan5002 pediu mudanças no HEAD `2511bcf` e aprovou no HEAD `e806990`.

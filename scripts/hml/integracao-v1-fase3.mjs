@@ -4,8 +4,10 @@
  *
  * BUILD-1: catálogo derivado da matriz, validadores estritos, orçamento, enums e guarda de escopo.
  * BUILD-2a: esperado por tela (MASTER e leitor) fixado no catálogo, com fonte no código e a
- * fotografia RBAC v6 do perfil leitor. Os drivers de UI vêm no BUILD-2b; até lá a execução HML
- * falha fechada com F3_DRIVER_PENDING, depois da guarda de escopo e da conferência do catálogo.
+ * fotografia RBAC v6 do perfil leitor.
+ * BUILD-2b-1: relatório e SHA256SUMS (também parcial), ledger append-only, livro de intenções,
+ * releitura do RBAC, classificador de negação explícita e contrato do YAML. Os drivers de UI vêm
+ * no BUILD-2b-2; até lá a execução HML grava o relatório BLOCKED e falha com F3_DRIVER_PENDING.
  * Nunca importado pelo auditor somente leitura.
  */
 import { createHash } from "node:crypto";
@@ -365,18 +367,710 @@ export function assertF3Scope(scope) {
   return true;
 }
 
+// ---------------------------------------------------------------------------------------------
+// BUILD-2b-1: infraestrutura offline. Relatório e SHA256SUMS (também em resultado parcial),
+// ledger append-only (regra C), livro de intenções idempotente, releitura do RBAC do leitor,
+// classificador de negação explícita e contrato do YAML. Os drivers de UI ficam no BUILD-2b-2.
+// ---------------------------------------------------------------------------------------------
+export const F3_E87_ORG = "e87f7e68-c5ae-4077-943b-02a4afd8b6ee";
+export const F3_REPORT_SCHEMA = "contaos.integracao-v1.f3.report.v1";
+export const F3_LEDGER_SCHEMA = "contaos.integracao-v1.f3.ledger.v1";
+export const F3_LEDGER_PATH =
+  "docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_LEDGER.json";
+// SHA-256 do ledger publicado; muda só por PR que estende o ledger com evidência verificada.
+export const F3_LEDGER_SHA256 = "3cd3a1b67cc1eee8ce74fe194eadbe22c97d995c04fe433e28c6094158a8a486";
+export const F3_WORKFLOW_PATH = ".github/workflows/contaos-trilha-a-fixtures.yml";
+// SHA-256 do YAML aprovado no BUILD-1; o executor recusa rodar sob YAML diferente.
+export const F3_WORKFLOW_SHA256 =
+  "8da83394d6018f9ac473970020bea693f8c3be996595ccc9573288eb29fe618c";
+export const F3_ARTIFACT_DIR = "artifacts/integracao-v1-fase3";
+// Produtores que mutam (ordens 2 e 4 a 20). SYS01 (1) é leitura e a preferência (3) é local.
+export const F3_MUTATING_ORDERS = Object.freeze(
+  F3_PRODUCERS.map((p) => p.order).filter((o) => o !== 1 && o !== 3),
+);
+// Emendas de N/A aprovadas expressamente pelo titular (PLAN 4.5). Vazio: nenhum N/A vale.
+export const F3_NA_AMENDMENTS = Object.freeze([]);
+// Estados explícitos de negação por tela (BUILD2A_ESPERADO_POR_TELA.md, obrigação 5). Qualquer
+// outro estado, tela vazia, erro ou timeout é ERROR. V111 e V120 entram por emenda no BUILD-2b-2,
+// depois de confirmados pela UI.
+export const F3_DENIAL_TOKENS = Object.freeze({
+  V102: "aviso-negado",
+  V103: "aviso-negado",
+  V105: "negadoGate",
+  V113: "perfilNegado",
+  V122: "sem_permissao",
+  ADM01: "fase-negado",
+  V123: "acessoNegado",
+});
+// Negação parcial que não nega a tela (V117: !pode_revisar com leitura liberada).
+export const F3_PARTIAL_DENIALS = Object.freeze({ V117: "revisao-negada" });
+export const F3_V123_RPC = "pode_consultar_auditoria_organizacao";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+const SHA40 = /^[0-9a-f]{40}$/;
+const SHA64 = /^[0-9a-f]{64}$/;
+const DPL = /^dpl_[A-Za-z0-9]{8,80}$/;
+const DIGITS = /^[1-9][0-9]{0,19}$/;
+const CODE = /^[A-Z0-9_]{1,80}$/;
+const isUuid = (v) => typeof v === "string" && UUID.test(v);
+const isCount = (v) => Number.isSafeInteger(v) && v >= 0;
+const enumOf = (v, list) => list.includes(v);
+const ACCESS = Object.freeze(["ALLOW", "DENY"]);
+const OBSERVED = Object.freeze(["ALLOW", "DENY", "ERROR", null]);
+const POSITIVE = Object.freeze(["PASS", "FAIL", "NOT_RUN"]);
+const NEGATIVE = Object.freeze(["NEGADO", "VAZAMENTO", "SEM_ENTIDADE", "NOT_RUN"]);
+const DUPLICATE = Object.freeze(["REJECTED", "DUPLICATE_NOT_DEFINED", "ACCEPTED", "NOT_RUN"]);
+const APPLICABILITY = Object.freeze(["APLICAVEL", "N_A_JUSTIFICADO"]);
+const PROVENANCE_KEYS = Object.freeze([
+  "frontendSha",
+  "backendSha",
+  "harnessSha",
+  "deploymentId",
+  "workflowRunId",
+]);
+export const F3_RECEIPT_KEYS = Object.freeze([
+  ...CASE_KEYS,
+  "applicability",
+  "operation",
+  "observed",
+  "positive",
+  "negatives",
+  "duplicate",
+  "requestId",
+  "entityIds",
+  "errorClass",
+  "status",
+  ...PROVENANCE_KEYS,
+  "artifactId",
+  "sha256",
+  "reviewId",
+  "cleanupStatus",
+]);
+
+/** Campos do catálogo e de proveniência de um recibo; o resto vem do driver. */
+export function f3ReceiptBase(c, provenance) {
+  return {
+    caseId: c.caseId,
+    sourceConnectionId: c.sourceConnectionId,
+    phase: c.phase,
+    origin: c.origin,
+    destination: c.destination,
+    classification: c.classification,
+    producer: c.producer,
+    producerOrder: c.producerOrder,
+    consumer: c.consumer,
+    expected: { master: c.expected.master, leitor: c.expected.leitor },
+    operation: c.producer,
+    frontendSha: provenance?.frontendSha ?? null,
+    backendSha: F3_BACKEND_SHA,
+    harnessSha: provenance?.harnessSha ?? null,
+    deploymentId: provenance?.deploymentId ?? null,
+    workflowRunId: provenance?.workflowRunId ?? null,
+    artifactId: null,
+    sha256: null,
+    reviewId: null,
+  };
+}
+
+/** Status derivado das provas; nunca declarado pelo driver. FAIL prevalece sobre BLOCKED. */
+export function deriveF3Status(r) {
+  if (r.applicability === "N_A_JUSTIFICADO") return "N_A_JUSTIFICADO";
+  const leitorRequired = r.origin === "ADM01";
+  const negatives = [r.negatives.inexistente, r.negatives.outraOrganizacao];
+  const mismatch = (observed, expected) => ACCESS.includes(observed) && observed !== expected;
+  if (
+    r.positive === "FAIL" ||
+    negatives.includes("VAZAMENTO") ||
+    r.duplicate === "ACCEPTED" ||
+    r.cleanupStatus === "CLEANUP_FAILED" ||
+    r.errorClass !== null ||
+    mismatch(r.observed.master, r.expected.master) ||
+    (leitorRequired && mismatch(r.observed.leitor, r.expected.leitor))
+  )
+    return "FAIL";
+  if (
+    r.positive !== "PASS" ||
+    negatives.some((n) => n !== "NEGADO") ||
+    r.duplicate === "NOT_RUN" ||
+    !ACCESS.includes(r.observed.master) ||
+    (leitorRequired && !ACCESS.includes(r.observed.leitor))
+  )
+    return "BLOCKED";
+  return "PASS";
+}
+
+export function f3Summary(receipts) {
+  const s = { PASS: 0, FAIL: 0, BLOCKED: 0, N_A_JUSTIFICADO: 0 };
+  for (const r of receipts) s[r.status] += 1;
+  return s;
+}
+
+function plainArray(value, code, max) {
+  if (!Array.isArray(value) || isProxy(value) || value.length > max) fail(code);
+  if (Object.getPrototypeOf(value) !== Array.prototype) fail(code);
+  return value;
+}
+
+function validateProvenance(p, blocked, code) {
+  strictPlain(p, PROVENANCE_KEYS, code);
+  if (p.backendSha !== F3_BACKEND_SHA) fail(code);
+  const ok = {
+    frontendSha: SHA40,
+    harnessSha: SHA40,
+    deploymentId: DPL,
+    workflowRunId: DIGITS,
+  };
+  for (const [k, re] of Object.entries(ok))
+    if (!(typeof p[k] === "string" && re.test(p[k])) && !(blocked && p[k] === null)) fail(code);
+}
+
+function validateReceipt(r, c, report, mutatingCreated) {
+  const code = "F3_REPORT";
+  strictPlain(r, F3_RECEIPT_KEYS, code);
+  strictPlain(r.expected, ["master", "leitor"], code);
+  strictPlain(r.observed, ["master", "leitor"], code);
+  strictPlain(r.negatives, ["inexistente", "outraOrganizacao"], code);
+  for (const k of CASE_KEYS) if (JSON.stringify(r[k]) !== JSON.stringify(c[k])) fail(code);
+  if (r.operation !== c.producer) fail(code);
+  for (const k of PROVENANCE_KEYS) if (r[k] !== report.provenance[k]) fail(code);
+  if (r.artifactId !== null || r.sha256 !== null || r.reviewId !== null) fail(code);
+  if (!enumOf(r.applicability, APPLICABILITY)) fail(code);
+  if (!enumOf(r.observed.master, OBSERVED) || !enumOf(r.observed.leitor, OBSERVED)) fail(code);
+  if (r.origin !== "ADM01" && r.observed.leitor !== null) fail(code);
+  if (!enumOf(r.positive, POSITIVE) || !enumOf(r.duplicate, DUPLICATE)) fail(code);
+  if (!enumOf(r.negatives.inexistente, NEGATIVE) || !enumOf(r.negatives.outraOrganizacao, NEGATIVE))
+    fail(code);
+  if (r.errorClass !== null && !enumOf(r.errorClass, F3_ERROR_CLASS)) fail(code);
+  if (!enumOf(r.cleanupStatus, F3_CLEANUP_STATUS) || !enumOf(r.status, F3_CASE_STATUS)) fail(code);
+  if (r.requestId !== null && !isUuid(r.requestId)) fail(code);
+  plainArray(r.entityIds, code, 8);
+  if (!r.entityIds.every(isUuid) || new Set(r.entityIds).size !== r.entityIds.length) fail(code);
+  for (const id of r.entityIds) if (!mutatingCreated.has(id)) fail("F3_ISOLATION");
+  const mutating = F3_MUTATING_ORDERS.includes(r.producerOrder);
+  if (r.cleanupStatus === "ISOLATED_NO_DELETE" && (!mutating || r.requestId === null)) fail(code);
+  if (r.cleanupStatus === "NO_MUTATION" && (r.requestId !== null || r.entityIds.length)) fail(code);
+  if (r.applicability === "N_A_JUSTIFICADO") {
+    if (r.classification !== "CONDICIONAL" || !F3_NA_AMENDMENTS.includes(r.caseId))
+      fail("F3_NA_UNAPPROVED");
+  }
+  if (r.status !== deriveF3Status(r)) fail(code);
+  if (r.status === "PASS") {
+    if (mutating && (r.cleanupStatus !== "ISOLATED_NO_DELETE" || !r.entityIds.length)) fail(code);
+    if (!mutating && r.cleanupStatus !== "NO_MUTATION") fail(code);
+  }
+}
+
+function validateIsolation(iso, blocked) {
+  const code = "F3_ISOLATION";
+  strictPlain(iso, ["organizationF3", "created", "e87Before", "e87After"], code);
+  if (iso.organizationF3 === null) {
+    if (!blocked) fail(code);
+  } else if (!isUuid(iso.organizationF3) || iso.organizationF3 === F3_E87_ORG) fail(code);
+  plainArray(iso.created, code, 64);
+  const ids = new Set();
+  for (const e of iso.created) {
+    strictPlain(e, ["id", "kind", "organizationId"], code);
+    if (!isUuid(e.id) || ids.has(e.id) || !["organizacao", "registro"].includes(e.kind)) fail(code);
+    ids.add(e.id);
+    if (e.organizationId !== iso.organizationF3 || e.organizationId === F3_E87_ORG) fail(code);
+    if (e.kind === "organizacao" && e.id !== iso.organizationF3) fail(code);
+  }
+  for (const counters of [iso.e87Before, iso.e87After]) {
+    if (!counters || typeof counters !== "object" || Array.isArray(counters) || isProxy(counters))
+      fail(code);
+    if (![Object.prototype, null].includes(Object.getPrototypeOf(counters))) fail(code);
+    for (const k of Reflect.ownKeys(counters)) {
+      const d = Object.getOwnPropertyDescriptor(counters, k);
+      if (typeof k !== "string" || !F3_SCREEN_ACCESS[k] || !Object.hasOwn(d, "value")) fail(code);
+      if (!isCount(d.value)) fail(code);
+    }
+  }
+  const before = Object.keys(iso.e87Before).sort(),
+    after = Object.keys(iso.e87After).sort();
+  if (JSON.stringify(before) !== JSON.stringify(after)) fail(code);
+  return ids;
+}
+
+/**
+ * Valida o relatório: só IDs, enums, contadores e booleanos (PLAN 7.5). Qualquer string fora do
+ * formato fechado do campo (texto livre, e-mail, JWT, HTML) falha. O status de cada recibo e o
+ * resumo são recalculados, impedindo falso PASS.
+ */
+export function validateF3Report(report, catalogue) {
+  const code = "F3_REPORT";
+  strictPlain(
+    report,
+    [
+      "schema",
+      "scope",
+      "nonce",
+      "casesSha256",
+      "state",
+      "blockCode",
+      "provenance",
+      "globals",
+      "intents",
+      "isolation",
+      "summary",
+      "cases",
+    ],
+    code,
+  );
+  if (report.schema !== F3_REPORT_SCHEMA || report.scope !== INTEGRACAO_V1_FASE3_SCOPE.id)
+    fail(code);
+  if (report.nonce !== INTEGRACAO_V1_FASE3_SCOPE.nonce || report.casesSha256 !== F3_CASES_SHA256)
+    fail(code);
+  if (!["COMPLETE", "PARTIAL", "BLOCKED"].includes(report.state)) fail(code);
+  const blocked = report.state === "BLOCKED";
+  if (
+    blocked
+      ? !(typeof report.blockCode === "string" && CODE.test(report.blockCode))
+      : report.blockCode !== null
+  )
+    fail(code);
+  validateProvenance(report.provenance, blocked, code);
+  const g = report.globals;
+  strictPlain(
+    g,
+    [
+      "masterSession",
+      "masterLogout",
+      "secondSession",
+      "secondLogout",
+      "secondProfile",
+      "rbacLeitorVersion",
+      "masterPermissionsUnchanged",
+      "transportErrors",
+      "httpErrors",
+      "pageErrors",
+    ],
+    code,
+  );
+  for (const k of ["masterSession", "masterLogout", "secondSession", "secondLogout"])
+    if (typeof g[k] !== "boolean") fail(code);
+  if (![F3_SECOND_USER_PROFILE, null].includes(g.secondProfile)) fail(code);
+  if (![F3_RBAC_LEITOR.version, null].includes(g.rbacLeitorVersion)) fail(code);
+  if (![true, false, null].includes(g.masterPermissionsUnchanged)) fail(code);
+  for (const k of ["transportErrors", "httpErrors", "pageErrors"]) if (!isCount(g[k])) fail(code);
+  const n = report.intents;
+  strictPlain(n, ["priorConfirmed", "sent", "confirmed", "uncertain", "rejected"], code);
+  for (const v of Object.values(n)) if (!isCount(v)) fail(code);
+  if (n.confirmed + n.uncertain + n.rejected > n.sent) fail(code);
+  assertF3Budget({ priorConfirmed: n.priorConfirmed, newIntents: n.sent });
+  const created = validateIsolation(report.isolation, blocked);
+  plainArray(report.cases, code, F3_MATRIX.rows);
+  if (catalogue === null) {
+    if (!blocked || report.cases.length !== 0) fail(code);
+  } else {
+    if (report.cases.length !== catalogue.cases.length) fail(code);
+    report.cases.forEach((r, i) => validateReceipt(r, catalogue.cases[i], report, created));
+  }
+  strictPlain(report.summary, F3_CASE_STATUS, code);
+  if (JSON.stringify(report.summary) !== JSON.stringify(f3Summary(report.cases))) fail(code);
+  return true;
+}
+
+/** Gate quantitativo da seção 5 do PLAN sobre um relatório já validado. */
+export function f3Gate(report, catalogue) {
+  validateF3Report(report, catalogue);
+  const g = report.globals,
+    iso = report.isolation,
+    s = report.summary;
+  const ok =
+    report.state === "COMPLETE" &&
+    catalogue !== null &&
+    s.FAIL === 0 &&
+    s.BLOCKED === 0 &&
+    s.PASS + s.N_A_JUSTIFICADO === F3_MATRIX.rows &&
+    g.masterSession &&
+    g.masterLogout &&
+    g.secondSession &&
+    g.secondLogout &&
+    g.secondProfile === F3_SECOND_USER_PROFILE &&
+    g.rbacLeitorVersion === F3_RBAC_LEITOR.version &&
+    g.masterPermissionsUnchanged === true &&
+    g.transportErrors + g.httpErrors + g.pageErrors === 0 &&
+    iso.organizationF3 !== null &&
+    Object.keys(iso.e87Before).length > 0 &&
+    JSON.stringify(iso.e87Before) === JSON.stringify(iso.e87After);
+  return ok ? "PASS" : "FAIL";
+}
+
+/** Proveniência a partir do ambiente do job, saneada: formato divergente vira null. */
+export function f3ProvenanceFromEnv(env) {
+  const pick = (v, re) => (typeof v === "string" && re.test(v) ? v : null);
+  return {
+    frontendSha: pick(env.CONTAOS_FRONTEND_SHA, SHA40),
+    backendSha: F3_BACKEND_SHA,
+    harnessSha: pick(env.CONTAOS_HARNESS_SHA, SHA40),
+    deploymentId: pick(env.CONTAOS_DEPLOYMENT_ID, DPL),
+    workflowRunId: pick(env.GITHUB_RUN_ID, DIGITS),
+  };
+}
+
+/** Relatório BLOCKED: todo caso não executado fica BLOCKED, nunca PASS. */
+export function blockedF3Report({ code, catalogue, provenance }) {
+  if (typeof code !== "string" || !CODE.test(code)) fail("F3_REPORT");
+  const prov = provenance ?? f3ProvenanceFromEnv({});
+  const cases = (catalogue?.cases ?? []).map((c) => {
+    const r = {
+      ...f3ReceiptBase(c, prov),
+      applicability: "APLICAVEL",
+      observed: { master: null, leitor: null },
+      positive: "NOT_RUN",
+      negatives: { inexistente: "NOT_RUN", outraOrganizacao: "NOT_RUN" },
+      duplicate: "NOT_RUN",
+      requestId: null,
+      entityIds: [],
+      errorClass: null,
+      cleanupStatus: "NO_MUTATION",
+      status: "BLOCKED",
+    };
+    return Object.fromEntries(F3_RECEIPT_KEYS.map((k) => [k, r[k]]));
+  });
+  return {
+    schema: F3_REPORT_SCHEMA,
+    scope: INTEGRACAO_V1_FASE3_SCOPE.id,
+    nonce: INTEGRACAO_V1_FASE3_SCOPE.nonce,
+    casesSha256: F3_CASES_SHA256,
+    state: "BLOCKED",
+    blockCode: code,
+    provenance: { ...prov },
+    globals: {
+      masterSession: false,
+      masterLogout: false,
+      secondSession: false,
+      secondLogout: false,
+      secondProfile: null,
+      rbacLeitorVersion: null,
+      masterPermissionsUnchanged: null,
+      transportErrors: 0,
+      httpErrors: 0,
+      pageErrors: 0,
+    },
+    intents: { priorConfirmed: 0, sent: 0, confirmed: 0, uncertain: 0, rejected: 0 },
+    isolation: { organizationF3: null, created: [], e87Before: {}, e87After: {} },
+    summary: f3Summary(cases),
+    cases,
+  };
+}
+
+/** Grava F3_REPORT.json, a cópia do catálogo e SHA256SUMS; relatório inválido nunca é gravado. */
+export async function writeF3Artifacts(dir, report, catalogue, casesRaw) {
+  validateF3Report(report, catalogue);
+  if (catalogue !== null && sha256(casesRaw) !== F3_CASES_SHA256) fail("F3_CASES_HASH");
+  const { mkdir, writeFile } = await import("node:fs/promises");
+  await mkdir(dir, { recursive: true });
+  const files = [["F3_REPORT.json", JSON.stringify(report, null, 2) + "\n"]];
+  if (catalogue !== null) files.push(["F3_CASES.json", casesRaw]);
+  files.sort(([a], [b]) => a.localeCompare(b));
+  for (const [name, body] of files) await writeFile(join(dir, name), body, { flag: "w" });
+  const sums = files.map(([name, body]) => sha256(body) + "  " + name + "\n").join("");
+  await writeFile(join(dir, "SHA256SUMS"), sums, { flag: "w" });
+  return true;
+}
+
+/**
+ * Livro de intenções da Fase 3. Só o MASTER muta, só na organização F3, só pelos produtores
+ * mutantes. Cada requestId é selado uma vez; intenção incerta só é reenviada depois de readback
+ * que prove ausência, e cada envio (inclusive duplicidade rejeitada) conta no orçamento.
+ */
+export function createF3IntentBook({ organizationF3, priorConfirmed = 0 } = {}) {
+  if (!isUuid(organizationF3) || organizationF3 === F3_E87_ORG) fail("F3_FOREIGN_ORG");
+  assertF3Budget({ priorConfirmed, newIntents: 0 });
+  const intents = new Map(),
+    created = [];
+  let sent = 0;
+  const get = (id) => intents.get(id) ?? fail("F3_INTENT_UNKNOWN");
+  const send = () => {
+    assertF3Budget({ priorConfirmed, newIntents: sent + 1 });
+    sent += 1;
+  };
+  const record = (entityId, organizationId) => {
+    if (organizationId !== organizationF3) fail("F3_FOREIGN_ORG");
+    if (!isUuid(entityId)) fail("F3_INTENT_ENTITY");
+    created.push({ id: entityId, organizationId });
+  };
+  return Object.freeze({
+    seal({ requestId, producerOrder, actor, organizationId, duplicateOf = null }) {
+      if (actor !== "master") fail("F3_SECOND_USER_MUTATION");
+      if (!F3_MUTATING_ORDERS.includes(producerOrder)) fail("F3_INTENT_PRODUCER");
+      if (!isUuid(requestId) || (duplicateOf !== null && !isUuid(duplicateOf)))
+        fail("F3_INTENT_ID");
+      if (organizationId !== organizationF3) fail("F3_FOREIGN_ORG");
+      if (intents.has(requestId)) fail("F3_INTENT_REPLAY");
+      send();
+      intents.set(requestId, { state: "sealed", producerOrder, duplicateOf, resent: false });
+    },
+    confirm(requestId, { entityId, organizationId }) {
+      const i = get(requestId);
+      if (i.state !== "sealed") fail("F3_INTENT_STATE");
+      record(entityId, organizationId);
+      i.state = "confirmed";
+    },
+    rejected(requestId) {
+      const i = get(requestId);
+      if (i.state !== "sealed") fail("F3_INTENT_STATE");
+      i.state = "rejected";
+    },
+    uncertain(requestId) {
+      const i = get(requestId);
+      if (i.state !== "sealed") fail("F3_INTENT_STATE");
+      i.state = "uncertain";
+    },
+    reconcile(requestId, { found, entityId, organizationId }) {
+      const i = get(requestId);
+      if (i.state !== "uncertain" || typeof found !== "boolean") fail("F3_INTENT_STATE");
+      if (found) {
+        record(entityId, organizationId);
+        i.state = "confirmed";
+      } else i.state = "absent";
+    },
+    resend(requestId) {
+      const i = get(requestId);
+      if (i.state !== "absent" || i.resent) fail("F3_UNCERTAIN_RESEND");
+      send();
+      i.resent = true;
+      i.state = "sealed";
+    },
+    state: (requestId) => get(requestId).state,
+    created: () => created.map((c) => ({ ...c })),
+    summary() {
+      const states = [...intents.values()].map((i) => i.state);
+      const count = (s) => states.filter((x) => x === s).length;
+      return {
+        priorConfirmed,
+        sent,
+        confirmed: count("confirmed"),
+        uncertain: count("uncertain") + count("absent"),
+        rejected: count("rejected"),
+      };
+    },
+  });
+}
+
+export function assertF3SecondUserProfile(profile) {
+  if (profile !== F3_SECOND_USER_PROFILE) fail("F3_SECOND_USER_PROFILE");
+  return true;
+}
+
+/** Releitura do RBAC efetivo do leitor durante a execução contra a fotografia v6. */
+export function assertF3LeitorRbac(observed) {
+  const code = "F3_RBAC_DRIFT";
+  try {
+    strictPlain(observed, ["version", "allowed"], code);
+    plainArray(observed.allowed, code, 64);
+  } catch {
+    fail(code);
+  }
+  const allowed = [...observed.allowed].sort();
+  if (observed.version !== F3_RBAC_LEITOR.version || new Set(allowed).size !== allowed.length)
+    fail(code);
+  if (JSON.stringify(allowed) !== JSON.stringify(F3_RBAC_LEITOR.allowed)) fail(code);
+  return true;
+}
+
+/**
+ * Classifica uma observação de acesso. DENY só com o estado explícito registrado para a tela e
+ * sem conteúdo; ALLOW só com conteúdo e sem negação. Em V123, DENY exige a RPC
+ * pode_consultar_auditoria_organizacao com HTTP 200 e corpo false (o catch(() => false) da tela
+ * não pode transformar erro em negação).
+ */
+export function classifyF3Access(screen, observation) {
+  if (!F3_SCREEN_ACCESS[screen]) fail("F3_SCREEN_ACCESS");
+  const code = "F3_ACCESS_OBSERVATION";
+  strictPlain(observation, ["denialToken", "content", "rpc"], code);
+  const { content, rpc } = observation;
+  let token = observation.denialToken;
+  if (typeof content !== "boolean" || (token !== null && typeof token !== "string")) fail(code);
+  if (F3_PARTIAL_DENIALS[screen] !== undefined && token === F3_PARTIAL_DENIALS[screen])
+    token = null;
+  if (screen === "V123") {
+    if (rpc === null || typeof rpc !== "object" || isProxy(rpc)) return "ERROR";
+    strictPlain(rpc, ["name", "status", "body"], code);
+    if (rpc.name !== F3_V123_RPC || rpc.status !== 200 || typeof rpc.body !== "boolean")
+      return "ERROR";
+    if (rpc.body === false) return token === F3_DENIAL_TOKENS.V123 && !content ? "DENY" : "ERROR";
+    return token === null && content ? "ALLOW" : "ERROR";
+  }
+  if (rpc !== null) fail(code);
+  if (token !== null) return token === F3_DENIAL_TOKENS[screen] && !content ? "DENY" : "ERROR";
+  return content ? "ALLOW" : "ERROR";
+}
+
+const LEDGER_ENTRY_KEYS = Object.freeze([
+  "caseId",
+  "status",
+  ...PROVENANCE_KEYS,
+  "artifactId",
+  "sha256",
+  "reviewId",
+]);
+/** Ledger append-only: só PASS verificados, um por caso do catálogo, com proveniência completa. */
+export function validateF3Ledger(raw, catalogue) {
+  const code = "F3_LEDGER";
+  if (typeof raw !== "string" || raw.length > 1048576) fail(code);
+  let value;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    fail(code);
+  }
+  try {
+    strictPlain(
+      value,
+      ["schema", "scope", "matrixSha256", "casesSha256", "backendSha", "entries"],
+      code,
+    );
+    plainArray(value.entries, code, F3_MATRIX.rows);
+  } catch {
+    fail(code);
+  }
+  if (value.schema !== F3_LEDGER_SCHEMA || value.scope !== INTEGRACAO_V1_FASE3_SCOPE.id) fail(code);
+  if (value.matrixSha256 !== F3_MATRIX.sha256 || value.casesSha256 !== F3_CASES_SHA256) fail(code);
+  if (value.backendSha !== F3_BACKEND_SHA) fail(code);
+  const ids = new Set(catalogue.cases.map((c) => c.caseId)),
+    seen = new Set();
+  for (const e of value.entries) {
+    try {
+      strictPlain(e, LEDGER_ENTRY_KEYS, code);
+      validateProvenance(Object.fromEntries(PROVENANCE_KEYS.map((k) => [k, e[k]])), false, code);
+    } catch {
+      fail(code);
+    }
+    if (e.status !== "PASS" || !ids.has(e.caseId) || seen.has(e.caseId)) fail(code);
+    if (
+      !DIGITS.test(e.artifactId ?? "") ||
+      !SHA64.test(e.sha256 ?? "") ||
+      !DIGITS.test(e.reviewId ?? "")
+    )
+      fail(code);
+    seen.add(e.caseId);
+  }
+  return value;
+}
+
+export function validateF3LedgerExtension(previousRaw, raw, catalogue) {
+  const prev = validateF3Ledger(previousRaw, catalogue),
+    next = validateF3Ledger(raw, catalogue);
+  if (next.entries.length < prev.entries.length) fail("F3_LEDGER");
+  prev.entries.forEach((e, i) => {
+    if (JSON.stringify(e) !== JSON.stringify(next.entries[i])) fail("F3_LEDGER");
+  });
+  return true;
+}
+
+/** Casos preservados: PASS com mesmo produto, backend e deployment, e harness ancestral. */
+export function preservedF3Cases(ledger, provenance, isAncestor) {
+  return ledger.entries
+    .filter(
+      (e) =>
+        e.frontendSha === provenance.frontendSha &&
+        e.backendSha === provenance.backendSha &&
+        e.deploymentId === provenance.deploymentId &&
+        isAncestor(e.harnessSha) === true,
+    )
+    .map((e) => e.caseId);
+}
+
+/**
+ * Estrutura exigida do YAML (PLAN 7.4, itens a–d): pares sintéticos só nos passos dos executores,
+ * o do 2º usuário só no executor F3, depois da barreira nativa e da revalidação por escopo.
+ */
+export function assertF3WorkflowStructure(yaml) {
+  const ok = (cond) => {
+    if (!cond) fail("F3_WORKFLOW");
+  };
+  ok(typeof yaml === "string" && yaml.length < 262144);
+  const count = (s, n) => yaml.split(n).length - 1;
+  ok(count(yaml, "\npermissions:\n  contents: read\njobs:\n") === 1);
+  ok(count(yaml, "    environment: hml\n") === 1 && count(yaml, "environment:") === 1);
+  for (const f of ["integracao-v1-fase3.mjs", "integracao-v1-fase3.test.mjs"])
+    ok(yaml.includes("      - scripts/hml/" + f + "\n"));
+  const protocol = yaml.slice(yaml.indexOf("\n  protocol:\n"), yaml.indexOf("\n  private:\n"));
+  const line = (needle) => protocol.split("\n").find((l) => l.includes(needle)) ?? "";
+  ok(line("node --test scripts/hml/").includes("scripts/hml/integracao-v1-fase3.test.mjs"));
+  for (const tool of ["bunx eslint", "bunx prettier --check"])
+    for (const f of ["integracao-v1-fase3.mjs", "integracao-v1-fase3.test.mjs"])
+      ok(line(tool).includes("scripts/hml/" + f));
+  const privateJob = yaml.slice(yaml.indexOf("\n  private:\n"));
+  ok(yaml.indexOf("\n  private:\n") > 0);
+  const header = privateJob.slice(0, privateJob.indexOf("    steps:"));
+  ok(!header.includes("secrets."));
+  const steps = privateJob.split("\n      - ").slice(1);
+  const at = (needle) => {
+    const found = steps.map((s, i) => [i, s]).filter(([, s]) => s.includes(needle));
+    ok(found.length === 1);
+    return found[0][0];
+  };
+  const guard = at("authenticated-visual-audit.mjs --native-guard"),
+    revalidate = at("id: revalidate"),
+    trilha = at("prepare-visual-fixtures.mjs --prepare-fixtures"),
+    f3 = at("integracao-v1-fase3.mjs --run-f3");
+  ok(guard < revalidate && revalidate < trilha && revalidate < f3);
+  ok(steps[revalidate].includes("if: github.event_name == 'workflow_run'\n"));
+  ok(
+    steps[revalidate].includes(
+      "run: node scripts/hml/authenticated-visual-audit.mjs --request-revalidate",
+    ),
+  );
+  ok(steps[trilha].includes("if: steps.revalidate.outputs.scope == 'TRILHA_A'\n"));
+  ok(steps[f3].includes("if: steps.revalidate.outputs.scope == 'INTEGRACAO_V1_FASE3_REL'\n"));
+  const secret = (name) => "          " + name + ": ${{ secrets." + name + " }}\n";
+  for (const name of ["CONTAOS_HML_SYNTHETIC_EMAIL", "CONTAOS_HML_SYNTHETIC_PASSWORD"]) {
+    ok(steps[trilha].includes(secret(name)) && steps[f3].includes(secret(name)));
+    ok(count(yaml, name) === 4);
+  }
+  for (const name of ["CONTAOS_HML_SYNTHETIC_2_EMAIL", "CONTAOS_HML_SYNTHETIC_2_PASSWORD"]) {
+    ok(steps[f3].includes(secret(name)) && count(yaml, name) === 2);
+  }
+  ok(count(yaml, "CONTAOS_HML_SYNTHETIC_2_") === 4);
+  ok(count(yaml, "secrets.") === 6);
+  const withSecrets = steps.map((s, i) => [i, s]).filter(([, s]) => s.includes("secrets."));
+  ok(JSON.stringify(withSecrets.map(([i]) => i)) === JSON.stringify([trilha, f3]));
+  const gate = "if: always() && steps.revalidate.outputs.scope == 'INTEGRACAO_V1_FASE3_REL'\n";
+  const hashes = at("working-directory: artifacts/integracao-v1-fase3\n"),
+    upload = at("path: artifacts/integracao-v1-fase3/\n");
+  ok(hashes > f3 && upload > hashes);
+  ok(steps[hashes].includes(gate) && steps[hashes].includes("run: sha256sum --check SHA256SUMS"));
+  ok(steps[upload].includes(gate) && steps[upload].includes("if-no-files-found: error"));
+  return true;
+}
+
+/** Contrato completo: estrutura e SHA-256 do YAML aprovado. */
+export function assertF3WorkflowContract(yaml) {
+  assertF3WorkflowStructure(yaml);
+  if (sha256(yaml) !== F3_WORKFLOW_SHA256) fail("F3_WORKFLOW");
+  return true;
+}
+
 export async function runCli(args = process.argv.slice(2), env = process.env) {
   if (!Array.isArray(args) || args.length !== 1 || args[0] !== "--run-f3") fail("F3_CLI_USAGE");
   if (env.GITHUB_EVENT_NAME !== "workflow_run") fail("F3_MAIN_ONLY");
-  await loadSingleRequestProof({ operation: "fixtures", fresh: true });
-  assertF3Scope(singleRequestFixturesScope());
   const root = fileURLToPath(new URL("../../", import.meta.url));
-  const csv = await readFile(join(root, F3_MATRIX.path), "utf8");
-  const casesRaw = await readFile(join(root, F3_CASES_PATH), "utf8");
-  if (sha256(casesRaw) !== F3_CASES_SHA256) fail("F3_CASES_HASH");
-  const cases = JSON.parse(casesRaw);
-  validateF3Cases(cases, csv);
-  fail("F3_DRIVER_PENDING");
+  const provenance = f3ProvenanceFromEnv(env);
+  let catalogue = null,
+    casesRaw = null;
+  try {
+    await loadSingleRequestProof({ operation: "fixtures", fresh: true });
+    assertF3Scope(singleRequestFixturesScope());
+    assertF3WorkflowContract(await readFile(join(root, F3_WORKFLOW_PATH), "utf8"));
+    const csv = await readFile(join(root, F3_MATRIX.path), "utf8");
+    const raw = await readFile(join(root, F3_CASES_PATH), "utf8");
+    if (sha256(raw) !== F3_CASES_SHA256) fail("F3_CASES_HASH");
+    validateF3Cases(JSON.parse(raw), csv);
+    [catalogue, casesRaw] = [buildF3Cases(csv), raw];
+    const ledgerRaw = await readFile(join(root, F3_LEDGER_PATH), "utf8");
+    if (sha256(ledgerRaw) !== F3_LEDGER_SHA256) fail("F3_LEDGER_HASH");
+    validateF3Ledger(ledgerRaw, catalogue);
+    fail("F3_DRIVER_PENDING");
+  } catch (error) {
+    // Resultado parcial ou bloqueado também gera F3_REPORT.json e SHA256SUMS (BUILD-1, obrigação 1).
+    const code = CODE.test(error?.code || "") ? error.code : "F3_FAILURE";
+    const report = blockedF3Report({ code, catalogue, provenance });
+    await writeF3Artifacts(join(root, F3_ARTIFACT_DIR), report, catalogue, casesRaw);
+    throw error;
+  }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

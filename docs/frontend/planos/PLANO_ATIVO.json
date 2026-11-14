@@ -4454,7 +4454,7 @@
     "revisao_canonica_ultima": true
   },
   "integracao_funcional_fase3_r1": {
-    "status": "BUILD1_INTEGRADO_BUILD2A_EM_REVISAO",
+    "status": "BUILD2A_INTEGRADO_BUILD2B1_EM_REVISAO",
     "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md",
     "plano_mestre": "docs/frontend/planos/PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md",
     "matriz_blob": "bb7ce43f9c334f2f03e9aafab405addadfe5e19a",
@@ -4491,6 +4491,11 @@
     "catalogo_sha256": "bce15980d31ce22c8836e26621b267951296e905139b9833c8db4a7400c9ecbb",
     "build1_merge": "fa7f58b2a8c18fad9452c35f5e16dfbe3ca528c5",
     "rbac_leitor": "versão 6 lida por SELECT autorizado pelo titular; 15 permitidos, 33 negados",
-    "segundo_usuario_status": "titular informou 'Usuário criado' (13/11/2026 22h17); secrets provados na 1ª execução"
+    "segundo_usuario_status": "titular informou 'Usuário criado' (13/11/2026 22h17); secrets provados na 1ª execução",
+    "build2a_merge": "d2a6557bc285e8d8bc59120df656f92dd163d9c7",
+    "build2b_divisao": "decisão do titular em 13/11/2026 ('2b-1 infra, 2b-2 drivers (Recomendado)'): BUILD-2b-1 offline (relatório e SHA256SUMS também parcial, ledger append-only, livro de intenções, RBAC drift, classificador de negação, contrato do YAML); BUILD-2b-2 drivers de UI e sessões",
+    "ledger_sha256": "3cd3a1b67cc1eee8ce74fe194eadbe22c97d995c04fe433e28c6094158a8a486",
+    "workflow_sha256": "8da83394d6018f9ac473970020bea693f8c3be996595ccc9573288eb29fe618c",
+    "provas_r4_r12_r14": "conferidas em 13/11/2026 com pai d2a6557: OK (só exigem ancestralidade)"
   }
 }
