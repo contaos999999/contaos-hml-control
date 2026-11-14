@@ -225,8 +225,14 @@ export async function verifyEvidenceLive(m, { apiGet, readBytes, fileExists } = 
           (rec.arquivo_evidencia.includes("/fase8/") ? "8/" : "7/");
         await shaPath(e2e.arquivo_evidencia, e2e.arquivo_sha256,
           prefix, label + " HML E2E");
-        const remoteHml = await get("/contents/" + e2e.arquivo_evidencia +
-          "?ref=" + pr.head.sha);
+        let remoteHml;
+        try {
+          remoteHml = await get("/contents/" + e2e.arquivo_evidencia +
+            "?ref=" + pr.head.sha);
+        } catch {
+          fail(label + ": HML E2E não existe no SHA aprovado.");
+          return;
+        }
         if (remoteHml?.encoding !== "base64" || !remoteHml.content ||
             createHash("sha256").update(Buffer.from(remoteHml.content, "base64"))
               .digest("hex") !== e2e.arquivo_sha256) {
