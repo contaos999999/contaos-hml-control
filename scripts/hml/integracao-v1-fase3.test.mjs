@@ -2233,6 +2233,47 @@ test("F3 §12.6: SYS04 sem chave só permite reconciliar após envio incerto", (
   assert.equal(f.book.summary().sent, 1);
 });
 
+test("F3 §12.6: espera vencida ou recusada afeta só o dependente", async () => {
+  let reads = 0;
+  const read = async () => {
+    reads++;
+    return "pending";
+  };
+  const expired = await sut.observeF3Wait("W1", performance.now() - 480001, read);
+  assert.deepEqual(expired, { status: "BLOCKED", code: "F3_WAIT_VERIFICADOR_PRAZO" });
+  assert.equal(reads, 0);
+  const refused = await sut.observeF3Wait("W2", performance.now(), async () => "failed");
+  assert.deepEqual(refused, { status: "BLOCKED", code: "F3_WAIT_VERIFICADOR_RECUSA" });
+  assert.deepEqual(await sut.observeF3Wait("W3", performance.now(), async () => "ready"), {
+    status: "READY",
+    code: null,
+  });
+});
+
+test("F3 §12.4: prazos e códigos das cinco esperas são fixos", () => {
+  assert.deepEqual(sut.F3_WAIT_POLICIES, {
+    W1: {
+      timeoutMs: 480000,
+      timeout: "F3_WAIT_VERIFICADOR_PRAZO",
+      failure: "F3_WAIT_VERIFICADOR_RECUSA",
+    },
+    W2: {
+      timeoutMs: 480000,
+      timeout: "F3_WAIT_VERIFICADOR_PRAZO",
+      failure: "F3_WAIT_VERIFICADOR_RECUSA",
+    },
+    W3: { timeoutMs: 360000, timeout: "F3_WAIT_ANALISE_PRAZO", failure: "F3_WAIT_ANALISE_FALHA" },
+    W4: { timeoutMs: 360000, timeout: "F3_WAIT_PARECER_PRAZO", failure: "F3_WAIT_PARECER_FALHA" },
+    W5: {
+      timeoutMs: 480000,
+      timeout: "F3_WAIT_PROCESSAMENTO_PRAZO",
+      failure: "F3_WAIT_PROCESSAMENTO_FALHA",
+    },
+  });
+  assert.ok(Object.isFrozen(sut.F3_WAIT_POLICIES));
+  assert.ok(Object.values(sut.F3_WAIT_POLICIES).every(Object.isFrozen));
+});
+
 test("F3 §12.6: V103 aponta para contratante inventariado", (t) => {
   const fixture = () =>
     fenceWith(t, (book) => {

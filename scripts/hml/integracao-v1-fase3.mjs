@@ -2304,6 +2304,33 @@ async function pendingDriver() {
 
 // Prazo interno da sessão (parecer R2, grupo D), abaixo dos 45 minutos do PLAN 7.2 e do limite
 // do job: o relatório parcial é gravado pelo próprio executor, nunca perdido num job morto.
+const waitPolicy = (minutes, timeout, failure) =>
+  Object.freeze({ timeoutMs: minutes * 60000, timeout, failure });
+const verificationWait = waitPolicy(8, "F3_WAIT_VERIFICADOR_PRAZO", "F3_WAIT_VERIFICADOR_RECUSA");
+export const F3_WAIT_POLICIES = Object.freeze({
+  W1: verificationWait,
+  W2: verificationWait,
+  W3: waitPolicy(6, "F3_WAIT_ANALISE_PRAZO", "F3_WAIT_ANALISE_FALHA"),
+  W4: waitPolicy(6, "F3_WAIT_PARECER_PRAZO", "F3_WAIT_PARECER_FALHA"),
+  W5: waitPolicy(8, "F3_WAIT_PROCESSAMENTO_PRAZO", "F3_WAIT_PROCESSAMENTO_FALHA"),
+});
+
+/** Observa uma vez por leitura. O driver agenda novas observações apenas para PENDING. */
+export async function observeF3Wait(waitId, sealedAt, read) {
+  if (!own(F3_WAIT_POLICIES, waitId) || !Number.isFinite(sealedAt) || typeof read !== "function")
+    fail("F3_WAIT_INPUT");
+  const policy = F3_WAIT_POLICIES[waitId];
+  const deadline = sealedAt + policy.timeoutMs;
+  const timedOut = { status: "BLOCKED", code: policy.timeout };
+  if (performance.now() >= deadline) return timedOut;
+  const state = await read();
+  if (performance.now() >= deadline) return timedOut;
+  if (state === "ready") return { status: "READY", code: null };
+  if (state === "pending") return { status: "PENDING", code: null };
+  if (state === "failed") return { status: "BLOCKED", code: policy.failure };
+  fail("F3_WAIT_OBSERVATION");
+}
+
 export const F3_SESSION_DEADLINE_MS = 40 * 60 * 1000;
 
 /**
