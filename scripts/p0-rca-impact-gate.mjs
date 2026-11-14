@@ -185,7 +185,7 @@ export async function verifyRcaOperational(report, {
   return { errors, executed: greenCache.size };
 }
 
-function runCase(entry) {
+export function runCase(entry) {
   const escaped = entry.caso.replace(/[^\w -]/g, (x) => "\\" + x);
   const pat = "^" + escaped + "$";
   const node = entry.runner === "node";
