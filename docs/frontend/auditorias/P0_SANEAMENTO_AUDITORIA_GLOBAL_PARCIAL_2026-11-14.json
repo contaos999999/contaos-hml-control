@@ -1,0 +1,153 @@
+{
+  "schema": "contaos.p0.saneamento.global-audit.v1",
+  "data": "2026-11-14",
+  "result": "PASS_PARCIAL_COM_IMPEDIMENTOS",
+  "global_certification": "NAO_EMITIDA",
+  "owner_approval": "Plano Unico P0 aprovado com veto absoluto a desconstruir certificacoes aprovadas/consolidadas/encerradas",
+  "front_main_before": "87c3c586a65f9c089601ea8647089a6ec1becbf6",
+  "backend_main": "1504af465b45afc846458d00e5cb63513fa298ed",
+  "phase_status": [
+    {
+      "id": 0,
+      "status": "PASS",
+      "pr": 671,
+      "merge": "eda87e58bc9e8996d3b4f8601c27eb9a46681377"
+    },
+    {
+      "id": 1,
+      "status": "PASS",
+      "pr": 593,
+      "merge": "f654260cb3e1fd4d04ddcd644257efff15371ff9",
+      "subscriber_run": 43600236041
+    },
+    {
+      "id": 2,
+      "status": "PASS_CLASSIFICACAO",
+      "pr": 673,
+      "merge": "87c3c586a65f9c089601ea8647089a6ec1becbf6",
+      "holds": [
+        590,
+        556
+      ]
+    },
+    {
+      "id": 3,
+      "status": "PASS",
+      "repo": "contaos999999/develop",
+      "pr": 220,
+      "merge": "0f7725be5feb8efa028157a57f7629374366b913"
+    },
+    {
+      "id": 4,
+      "status": "PASS",
+      "repo": "contaos999999/develop",
+      "pr": 219,
+      "merge": "1504af465b45afc846458d00e5cb63513fa298ed",
+      "native_node_tests": {
+        "count": 23,
+        "pass": 23,
+        "fail": 0,
+        "node": "22.16.0",
+        "source_blob_sha": "f7509100509da7054908849e64304c02ba01f707",
+        "test_blob_sha": "b53932349aefb3e89215efb5098ea25f506945d4",
+        "ci_backend_zero_drift_push": 43602633463
+      }
+    },
+    {
+      "id": 5,
+      "status": "PASS_TRIAGEM_CLOSED_NOT_PLANNED",
+      "repo": "contaos999999/develop",
+      "pr": 218,
+      "merged": false,
+      "closed": true,
+      "closure": "NOT_PLANNED",
+      "head": "45834cfd23acc133e7090ab5b7fad680393e8cbb",
+      "decision": "Mudança opcional async_failure_diagnostic.kind NÃO IMPLEMENTADA. Funcionalidade segurança existente mantém failure_code/protocol_failure/failure_hashes e falha fechada. Não alterar SHA histórico.",
+      "independent_review_url": "https://github.com/contaos999999/develop/pull/218#issuecomment-6878700812",
+      "original_protected_blob": "9c016a09cbec4eb7d5032b90f4c393b1ee9071f4",
+      "ci_main_success_run": 43602633463,
+      "historical_fail_runs": [
+        42808510215,
+        42808510355
+      ]
+    },
+    {
+      "id": 6,
+      "status": "HOLD_MFA_SUDO",
+      "ruleset": 26495643,
+      "reason": "Acesso admin contaos9999 confirmado, porém GitHub requer confirmação sudo 2FA/MFA ao salvar ruleset; tentativa de Save changes retornou Unauthorized, mudança NÃO persistiu.",
+      "required_existing": [
+        "Auditoria de navegador independente (somente leitura) / ContaOS Teste C Independente",
+        "ContaOS Frontend Zero-Drift"
+      ],
+      "required_to_add": "ContaOS P0-NR-001 Integridade e Provas",
+      "provider": "GitHub Actions",
+      "current_checks": 2,
+      "api_readback": "https://api.github.com/repos/contaos999999/contaos-hml-control/rulesets/26495643",
+      "browser_evidence_url": "https://agent.tinyfish.ai/runs/cd40476b-02b8-489f-a6df-f488f993faf5",
+      "user_action_required": "Titular deve concluir a verificação de acesso GitHub MFA na sessão autenticada; não fornecer códigos em chat. Então salvar adição do check, reler API e provar enforcement positivo/negativo."
+    },
+    {
+      "id": 7,
+      "status": "AUDITORIA_PARCIAL_NAO_CERTIFICADA",
+      "reason": "Fase 5 encerrada por decisão não planejada com evidência; Fase 6 requer MFA do titular e prova da regra exigida; GO global impedido até confirmação real."
+    }
+  ],
+  "open_prs": [
+    {
+      "repo": "contaos999999/contaos-hml-control",
+      "number": 590,
+      "status": "HOLD_DEPENDENCY_V1",
+      "head": "277ae3226b53e95c979b646f63253150154086fc",
+      "preserve_evidence": "SYS03 run 43039850705; nao emitir certificado paralelo"
+    },
+    {
+      "repo": "contaos999999/contaos-hml-control",
+      "number": 556,
+      "status": "HOLD_DEPENDENCY_V1",
+      "head": "6183d3959dfae9ecb23f55d8401a57acb79612dc",
+      "scope": "metadata SQL V123 nao executada"
+    }
+  ],
+  "certificates_protected": {
+    "manifest_v1_pass_blob": "8ce1f23a2a7db6eb16f348fa5d991f063e4f17ff",
+    "v1_historical_blob": "7045c0a02243b242835e7ea6817b850287917141",
+    "phase1_blob": "751c5e6d8cb53d56be4f51be3fee3cb0feb34f03",
+    "phase2_blob": "e07d66897d39e8d57b9d6507cf97ba03ed01c7f1",
+    "v1_historical": "PASS_R01_R02_R03_ACEITAS",
+    "v1_internal": "PENDENTE_OUTSIDE_THIS_PLAN",
+    "prod": "PROIBIDA"
+  },
+  "next_actions": [
+    "Titular conclui MFA/sudo mode no GitHub para salvar terceiro required status check ContaOS P0-NR-001 Integridade e Provas no ruleset 26495643; manter Teste C/Zero-Drift.",
+    "Após MFA e readback API com 3 checks, comprovar que failure bloqueia merge e success permite pelo ruleset sem bypass.",
+    "PR #218 CLOSED_NOT_PLANNED: não reabrir/reexecutar a menos que novo requisito seja aprovado em PLAN sucessor; hash histórico preservado.",
+    "PRs #590 e #556 continuam HOLD_DEPENDENCY_V1, fora da missão de saneamento; não reabrir certificação.",
+    "Concluir auditoria global apenas quando Fase 6 estiver comprovada. Não repetir Fases 0–5."
+  ],
+  "safety_invariants": [
+    "nao alterar certificacoes",
+    "nao PROD",
+    "nao falsificar PASS",
+    "no force push",
+    "no bypass branch protection",
+    "C13 ativa preservada"
+  ],
+  "closed_prs": [
+    {
+      "repo": "contaos999999/develop",
+      "number": 218,
+      "state": "closed",
+      "merged": false,
+      "decision": "CLOSED_NOT_PLANNED",
+      "review": "https://github.com/contaos999999/develop/pull/218#issuecomment-6878700812",
+      "note": "Não executa extensão diagnóstica opcional e preserva hash do harness original."
+    }
+  ],
+  "reanchor": {
+    "previous": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "new": "1504af465b45afc846458d00e5cb63513fa298ed",
+    "plan": "docs/frontend/planos/P0_SANEAMENTO_REANCORAGEM_CANONICA_BACKEND_2026-11-14.md",
+    "verified": "25/25 document blobs + catalog 100/97 unchanged"
+  }
+}
