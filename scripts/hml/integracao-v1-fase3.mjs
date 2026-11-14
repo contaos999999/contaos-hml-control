@@ -1323,6 +1323,7 @@ export function createF3MutationFence(options = {}) {
   if (control.fenced) fail("F3_FENCE_DUPLICATE");
   control.fenced = true;
   let active = null;
+  const observedVersions = new Map();
   const tickets = new Map();
   const ticketOf = (r) =>
     typeof r.sessionId === "string" && typeof r.interceptionId === "string"
@@ -1447,6 +1448,51 @@ export function createF3MutationFence(options = {}) {
         return freeze();
       }
     },
+    // Called from the MASTER page's Playwright response listener.
+    async observeVersion(response) {
+      if (control.frozen || response.status() !== 200) return false;
+      const request = response.request();
+      const url = parseUrl(response.url());
+      const org = book.organizationF3();
+      if (!org || url?.origin !== API_ORIGIN || request.url() !== response.url()) return false;
+      let id, order;
+      if (request.method() === "GET" && url.pathname === "/rest/v1/contratantes") {
+        if (url.searchParams.getAll("id_organizacao").join() !== "eq." + org) return false;
+        const filter = url.searchParams.getAll("id").join();
+        if (!filter.startsWith("eq.")) return false;
+        id = filter.slice(3);
+        order = 6;
+      } else if (
+        request.method() === "POST" &&
+        url.pathname === "/rest/v1/rpc/obter_cadastro_operacional_v1" &&
+        !url.search
+      ) {
+        const args = parseJsonBody(request.postData());
+        if (args?.p_id_organizacao !== org || args.p_entidade !== "contratos") return false;
+        id = args.p_id;
+        order = 8;
+      } else return false;
+      if (!isUuid(id)) return false;
+      const data = await response.json();
+      const row =
+        order === 8
+          ? data?.schema_versao === "crud-cadastro-v1" &&
+            data.entidade === "contratos" &&
+            data.registro
+          : Array.isArray(data) && data.length === 1
+            ? data[0]
+            : data;
+      if (
+        control.frozen ||
+        row?.id !== id ||
+        row.id_organizacao !== org ||
+        !Number.isSafeInteger(row.versao_registro) ||
+        row.versao_registro < 1
+      )
+        return false;
+      observedVersions.set(order + ":" + id, row.versao_registro);
+      return true;
+    },
     arm(input = {}) {
       if (control.frozen) fail("F3_FENCE_FROZEN");
       if (active) fail("F3_FENCE_PENDING");
@@ -1508,6 +1554,14 @@ export function createF3MutationFence(options = {}) {
             if (!valid) {
               freeze();
               fail("F3_FOREIGN_ORG");
+            }
+          }
+          if (producerOrder === 6 || producerOrder === 8) {
+            const id = producerOrder === 6 ? b.p_id_contratante : b.p_id_contrato;
+            const observed = observedVersions.get(producerOrder + ":" + id);
+            if (observed === undefined || b.p_versao_esperada !== observed) {
+              freeze();
+              fail("F3_VALUE_ORIGIN");
             }
           }
         }

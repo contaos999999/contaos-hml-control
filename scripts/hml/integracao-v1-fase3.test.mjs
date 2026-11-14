@@ -2069,8 +2069,36 @@ const withContract = (b) => {
   b.confirm(uuid(7), { entityId: uuid(107), organizationId: F3 });
 };
 
-test("F3 B2b2a RED: vaga da UI em qualquer posição, só em campo free, e UUID só do inventário", (t) => {
+function versionResponse(url, method, data, args) {
+  return {
+    url: () => url,
+    status: () => 200,
+    json: async () => data,
+    request: () => ({ url: () => url, method: () => method, postData: () => JSON.stringify(args) }),
+  };
+}
+async function contractFence(t) {
   const f = fenceWith(t, withContract);
+  assert.equal(
+    await f.fence.observeVersion(
+      versionResponse(
+        RPC("obter_cadastro_operacional_v1"),
+        "POST",
+        {
+          schema_versao: "crud-cadastro-v1",
+          entidade: "contratos",
+          registro: { id: uuid(107), id_organizacao: F3, versao_registro: 3 },
+        },
+        { p_id: uuid(107), p_id_organizacao: F3, p_entidade: "contratos" },
+      ),
+    ),
+    true,
+  );
+  return f;
+}
+
+test("F3 B2b2a RED: vaga da UI em qualquer posição, só em campo free, e UUID só do inventário", async (t) => {
+  const f = await contractFence(t);
   const id = f.fence.arm({
     producerOrder: 8,
     bodies: [v106(uuid(107), sut.f3Slot("uuid", "chave"))],
@@ -2087,7 +2115,7 @@ test("F3 B2b2a RED: vaga da UI em qualquer posição, só em campo free, e UUID 
     slots: { chave: uuid(4242) },
   });
   // Vaga com valor que não é UUID bloqueia.
-  const bad = fenceWith(t, withContract);
+  const bad = await contractFence(t);
   bad.fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), sut.f3Slot("uuid", "chave"))] });
   assert.equal(
     bad.fence.policy(
@@ -2097,17 +2125,15 @@ test("F3 B2b2a RED: vaga da UI em qualquer posição, só em campo free, e UUID 
   );
   assert.equal(bad.book.summary().sent, 2);
   // Vaga fora de campo free, vaga de caminho e UUID fora do inventário: recusados ao armar.
-  const arm = (body) => () =>
-    fenceWith(t, withContract).fence.arm({ producerOrder: 8, bodies: [body] });
+  const validated = await contractFence(t);
+  const arm = (body) => () => validated.fence.arm({ producerOrder: 8, bodies: [body] });
   assert.throws(arm({ ...v106(uuid(107), uuid(1)), p_motivo: sut.f3Slot("uuid", "m") }), {
     code: "F3_FENCE_ARM",
   });
   assert.throws(arm(v106(uuid(107), sut.f3Slot("path", "p"))), { code: "F3_FENCE_ARM" });
   // Cada recusa isolada: a chave vai em vaga, e só o campo do caso traz o UUID alheio.
   const k = sut.f3Slot("uuid", "chave");
-  assert.ok(
-    fenceWith(t, withContract).fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), k)] }),
-  );
+  assert.ok((await contractFence(t)).fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), k)] }));
   assert.throws(arm(v106(uuid(999), k)), { code: "F3_FOREIGN_ORG" });
   assert.throws(arm({ ...v106(uuid(107), k), p_id_organizacao: sut.F3_E87_ORG }), {
     code: "F3_FOREIGN_ORG",
@@ -2297,7 +2323,7 @@ test("F3 §12.4: prazos e códigos das cinco esperas são fixos", () => {
   assert.ok(Object.values(sut.F3_WAIT_POLICIES).every(Object.isFrozen));
 });
 
-test("F3 §12.6: V103 aponta para contratante inventariado", (t) => {
+test("F3 §12.6: V103 aponta para contratante inventariado", async (t) => {
   const fixture = () =>
     fenceWith(t, (book) => {
       createOrg(book);
@@ -2316,6 +2342,16 @@ test("F3 §12.6: V103 aponta para contratante inventariado", (t) => {
     p_situacao: "ativo",
   };
   const f = fixture();
+  assert.equal(
+    await f.fence.observeVersion(
+      versionResponse(
+        API + "/rest/v1/contratantes?id_organizacao=eq." + F3 + "&id=eq." + uuid(105),
+        "GET",
+        { id: uuid(105), id_organizacao: F3, versao_registro: 1 },
+      ),
+    ),
+    true,
+  );
   f.fence.arm({ producerOrder: 6, bodies: [body] });
   assert.equal(
     f.fence.policy(
@@ -2365,10 +2401,19 @@ test("F3 §12.6: V105 aceita contrato com contratante criado por V102", (t) => {
   assert.equal(f.fence.settle().complete, true);
 });
 
-test("F3 §12.6: V106 exige organização e contrato em suas posições", (t) => {
+test("F3 §12.6: V106 recusa versão sem releitura confirmada", (t) => {
+  const f = fenceWith(t, withContract);
+  const body = v106(uuid(107), sut.f3Slot("uuid", "chave"));
+  assert.throws(() => f.fence.arm({ producerOrder: 8, bodies: [body] }), {
+    code: "F3_VALUE_ORIGIN",
+  });
+  assert.equal(f.fence.frozen(), true);
+});
+
+test("F3 §12.6: V106 exige organização e contrato em suas posições", async (t) => {
   const key = sut.f3Slot("uuid", "chave");
   for (const body of [v106(F3, key), { ...v106(uuid(107), key), p_id_organizacao: uuid(107) }]) {
-    const f = fenceWith(t, withContract);
+    const f = await contractFence(t);
     assert.throws(() => f.fence.arm({ producerOrder: 8, bodies: [body] }), {
       code: "F3_FOREIGN_ORG",
     });
@@ -2377,9 +2422,9 @@ test("F3 §12.6: V106 exige organização e contrato em suas posições", (t) =>
   }
 });
 
-test("F3 §12.6: V106 recusa IDs de entidade como chave gerada pela UI", (t) => {
+test("F3 §12.6: V106 recusa IDs de entidade como chave gerada pela UI", async (t) => {
   for (const key of [F3, sut.F3_E87_ORG, uuid(107)]) {
-    const f = fenceWith(t, withContract);
+    const f = await contractFence(t);
     f.fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), sut.f3Slot("uuid", "chave"))] });
     assert.equal(
       f.fence.policy(
@@ -2395,8 +2440,8 @@ test("F3 §12.6: V106 recusa IDs de entidade como chave gerada pela UI", (t) => 
   }
 });
 
-test("F3 §12.6: V106 recusa chave já enviada em outra intenção", (t) => {
-  const f = fenceWith(t, withContract);
+test("F3 §12.6: V106 recusa chave já enviada em outra intenção", async (t) => {
+  const f = await contractFence(t);
   const bodies = [v106(uuid(107), sut.f3Slot("uuid", "chave"))];
   const send = () =>
     f.fence.policy(
@@ -2416,8 +2461,8 @@ test("F3 §12.6: V106 recusa chave já enviada em outra intenção", (t) => {
 });
 
 for (const sameKey of [true, false]) {
-  test(`F3 §12.6: V106 ${sameKey ? "preserva a chave" : "recusa chave nova"} no reenvio`, (t) => {
-    const f = fenceWith(t, withContract);
+  test(`F3 §12.6: V106 ${sameKey ? "preserva a chave" : "recusa chave nova"} no reenvio`, async (t) => {
+    const f = await contractFence(t);
     const bodies = [v106(uuid(107), sut.f3Slot("uuid", "chave"))];
     const id = f.fence.arm({ producerOrder: 8, bodies });
     const send = (key) =>
@@ -2439,7 +2484,7 @@ for (const sameKey of [true, false]) {
   });
 }
 
-test("F3 B2b2a: propriedade da cerca, semente fixa: ordem de chaves e leituras não mudam nada", (t) => {
+test("F3 B2b2a: propriedade da cerca, semente fixa: ordem de chaves e leituras não mudam nada", async (t) => {
   let seed = 0x2b2a5eed;
   const rnd = (n) => {
     seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
@@ -2454,7 +2499,7 @@ test("F3 B2b2a: propriedade da cerca, semente fixa: ordem de chaves e leituras n
   let accepted = 0,
     blocked = 0;
   for (let k = 0; k < 300; k++) {
-    const f = fenceWith(t, withContract);
+    const f = await contractFence(t);
     const chave = sut.f3Slot("uuid", "chave");
     f.fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), chave)] });
     const n = 1 + rnd(6);
