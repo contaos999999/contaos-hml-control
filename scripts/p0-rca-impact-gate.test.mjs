@@ -63,18 +63,41 @@ test("P0 RCA — código V2 sob PLAN 75 continua bloqueado mesmo em allowlist", 
 test("P0 RCA — código genérico novo sob PLAN 75 não é presumido V1", () => {
   mustFail(null, /sem classificação/, ["src/components/Generic.tsx"], "75");
 });
-test("P0 RCA — arquivo V1 na allowlist mas sem nova declaração NÃO é liberado", () => {
-  assert.match(check(null, [V1], "75", [V1]).errors.join(" "), /declaração de escopo/);
+const v1Fixture = () => {
+  const f = fixture();
+  f.schema = "contaos.p0.v1-scope-proof.v2";
+  f.versao = "V1"; f.prompt_id = "75";
+  f.escopo = [{ arquivo: V1, versao: "V1", justificativa: "cadastro V1 sob revisao RCA" }];
+  f.itens[0].id = "RCA-V1-001";
+  f.itens[0].solucao.arquivos = [V1];
+  f.itens[0].impacto.versoes_afetadas = ["V1"];
+  return f;
+};
+const v1Check = (doc=v1Fixture(), extra={}) =>
+  check(null,[V1,V1_SCOPE],"75",[V1],{v1Scope:doc,v1ScopeChanged:true,...extra});
+
+test("P0 RCA — arquivo V1 na allowlist sem RCA causal NÃO é liberado", () => {
+  assert.match(check(null,[V1],"75",[V1]).errors.join(" "), /sem ficha RCA causal/);
 });
-test("P0 RCA — arquivo V1 com declaração e testes permanece permitido", () => {
-  const attest = {
-    schema: "contaos.p0.v1-scope-proof.v1", prompt_id: "75", baseline_sha: SHA,
-    arquivos: [{arquivo:V1,versao:"V1",justificativa:"escopo V1 previamente aprovado"}],
-    testes: [ref("V1-REG")],
-  };
-  assert.deepEqual(check(null,[V1,V1_SCOPE],"75",[V1],{
-    v1Scope:attest,v1ScopeChanged:true,
-  }).errors, []);
+test("P0 RCA — V1 com atestado legado de escopo/teste mas sem causa RED é FAIL", () => {
+  const stale={schema:"contaos.p0.v1-scope-proof.v1",prompt_id:"75",baseline_sha:SHA,
+    arquivos:[{arquivo:V1,versao:"V1",justificativa:"escopo V1"}],testes:[ref("V1-REG")]};
+  assert.match(v1Check(stale).errors.join(" "), /schema, versão|ficha sem itens/);
+});
+test("P0 RCA — V1 com RCA v2, impacto, RED e casos executáveis passa estruturalmente", () => {
+  assert.deepEqual(v1Check().errors,[]);
+});
+test("P0 RCA — V1 com causa apenas plausível falha", () => {
+  const r=v1Fixture();r.itens[0].causa.status="PLAUSIVEL";
+  assert.match(v1Check(r).errors.join(" "),/causa raiz/);
+});
+test("P0 RCA — V1 sem RED ancestral ou execução real não certifica", async () => {
+  const r=await live(v1Fixture(),{isAncestor:false});
+  assert.match(r.errors.join(" "),/RED sem erro observado/);
+});
+test("P0 RCA — V1 com GREEN/NEG/REG sem execução real falha", async () => {
+  const r=await live(v1Fixture(),{execute:false});
+  assert.match(r.errors.join(" "),/não executado com PASS/);
 });
 test("P0 RCA — novo script sob PLAN 75 sem plano protegido deve falhar", () => {
   assert.match(check(null,["scripts/guard-rules.mjs"],"75",[]).errors.join(" "),
@@ -92,8 +115,7 @@ test("P0 RCA — plano GOV aprovado pertence somente à PR e arquivos exatos", (
 });
 test("P0 RCA — V2 explícita dentro de arquivo V1 permitido não é isenta", () => {
   const attest={
-    schema:"contaos.p0.v1-scope-proof.v1",prompt_id:"75",baseline_sha:SHA,
-    arquivos:[{arquivo:V1,versao:"V1",justificativa:"V1"}],testes:[ref("V1")],
+    ...v1Fixture(),
   };
   const x=check(null,[V1,V1_SCOPE],"75",[V1],{
     v1Scope:attest,v1ScopeChanged:true,addedLines:{[V1]:"// V2-DIL-001"},
