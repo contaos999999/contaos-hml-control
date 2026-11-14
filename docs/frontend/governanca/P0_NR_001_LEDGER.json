@@ -248,13 +248,15 @@
       "causa_status": "CONFIRMADA",
       "causa": "PR #658 na V1/Fase 3 exigiu sete rodadas por regras duplicadas, referências controladas pelo chamador e fatos observados tratados como erro.",
       "sintoma": "Retrabalho corretivo recorrente por origem causal compartilhada não atacada no primeiro ciclo.",
-      "barreira": "Aplicar replay dos eventos e guard das fontes; testar propriedades e mutações para evitar regredir a mesma classe.",
-      "estado": "EM_MONITORAMENTO",
+      "barreira": "Aplicar replay dos eventos e guard das fontes; inventário campo a campo do fluxo de rede antes de cerca ou driver; teste que liga cada fluxo declarado no executor a uma linha do levantamento; propriedades e mutações para evitar regredir a mesma classe.",
+      "estado": "PENDENTE_PR",
       "origem": [
-        "https://github.com/contaos999999/contaos-hml-control/blob/main/docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B1_INFRA.md"
+        "https://github.com/contaos999999/contaos-hml-control/blob/main/docs/frontend/auditorias/integracao-funcional-v1/fase3/BUILD2B1_INFRA.md",
+        "https://github.com/contaos999999/contaos-hml-control/pull/679",
+        "https://github.com/contaos999999/contaos-hml-control/pull/678#pullrequestreview-5905890909"
       ],
-      "tentativas_ciclo": 0,
-      "revisao_causal_ampliada": false,
+      "tentativas_ciclo": 2,
+      "revisao_causal_ampliada": true,
       "prevencao": {
         "tipo": "TESTE",
         "arquivo": "scripts/hml/integracao-v1-fase3.test.mjs",
@@ -262,7 +264,23 @@
         "teste": "F3 B2b1 RED: intenções e inventário declarados precisam ser o replay dos eventos"
       },
       "recibo": null,
-      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo."
+      "risco_residual": "Prevenção não garante impossibilidade absoluta de erro; exigir verificação do HEAD, CI e revisão conforme escopo.",
+      "diagnostico_ampliado": "Reincidência em 14/11/2026: ciclo R1 (ec69e0e) e R2 (af50cff) do BUILD-2b-2a (#679) e R1 da emenda 1 (#678, review 5905890909) repetiram a causa da #658, desenhar cerca e PLAN antes do inventário completo do fluxo de rede. Revisão causal ampliada: levantamento campo a campo em docs/frontend/auditorias/integracao-funcional-v1/fase3/F3_FLUXOS_PRODUTORES.md (revisão 2), com lista fechada de origens, antes de qualquer cerca ou driver (PLAN §12.5 e §12.7).",
+      "reincidencias": [
+        {
+          "data": "2026-11-14",
+          "prs": [
+            "#679",
+            "#678"
+          ],
+          "refs": [
+            "ec69e0e",
+            "af50cff",
+            "20b7ff3"
+          ],
+          "estado_seguinte": "REINCIDENCIA na PR #679, com novos_testes da PLAN §12.6"
+        }
+      ]
     }
   ]
 }

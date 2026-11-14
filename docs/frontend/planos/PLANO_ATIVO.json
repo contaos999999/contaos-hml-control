@@ -4454,7 +4454,7 @@
     "revisao_canonica_ultima": true
   },
   "integracao_funcional_fase3_r1": {
-    "status": "BUILD2B1_INTEGRADO_BUILD2B2A_AGUARDA_EMENDA_PLAN",
+    "status": "EMENDA1_INTEGRADA_BUILD2B2A_EM_REVISAO",
     "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md",
     "plano_mestre": "docs/frontend/planos/PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md",
     "matriz_blob": "bb7ce43f9c334f2f03e9aafab405addadfe5e19a",
@@ -4477,7 +4477,10 @@
     "segundo_usuario_sintetico": "autorizado pelo titular; criado pelo titular na HML; perfil leitor na org F3; login só leitura com logout comprovado; secrets CONTAOS_HML_SYNTHETIC_2_EMAIL/_PASSWORD",
     "orcamento_intencoes": {
       "total": 60,
-      "por_execucao": 30
+      "por_execucao": 40,
+      "previsto": 39,
+      "prerequisitos_max": 11,
+      "fonte": "PLAN §12.1 e §12.2 (emenda 1, R2)"
     },
     "produto_autorizado": false,
     "backend_autorizado": false,
@@ -4501,6 +4504,10 @@
     "build2b1_merge": "fb02383 (PR #658, APPROVE 5903293851); governança P0-RCA-001 V1 pela PR #663 (merge e02d466)",
     "build2b2_divisao": "incrementos revisados: 2b-2a fundação (M2, M3, M-A, runCli com livro, isolamento que encerra, cerca de mutação ligada ao livro); 2b-2b sessões MASTER/leitor, SYS04 e ADM01; 2b-2c+ produtores V102–V122; REQUEST só após o último",
     "build2b2a_branch": "build/integracao-v1-fase3-b2b2-drivers",
-    "build2b2a_revisoes": "R1 ec69e0e REQUEST_CHANGES (A-E corrigidos em af50cff); R2 af50cff REQUEST_CHANGES (C, D, E, G corrigidos; A, B e F dependem de emenda do PLAN, ver fase3/F3_FLUXOS_PRODUTORES.md)"
+    "build2b2a_revisoes": "R1 ec69e0e REQUEST_CHANGES (A-E corrigidos em af50cff); R2 af50cff REQUEST_CHANGES (C, D, E, G corrigidos; A, B e F dependem de emenda do PLAN, ver fase3/F3_FLUXOS_PRODUTORES.md)",
+    "emenda1_pr": "#678 (autor Edivan5002), inclui P0_GOV_PLAN_679.json; BUILD-2b-2a na PR #679",
+    "emenda1": "PLAN §12 (14/11/2026, R2): até 11 pré-requisitos, 39 previstas, 40 por execução, total 60; uploads dentro da ação; cinco esperas W1–W5 com prazo e códigos próprios; recuperação com novo nonce por BUILD próprio (§9 passo 6); conferência dos workers antes de cada REQUEST (§9 passo 4-A); decisão literal do titular \"Emenda completa (Recomendado)\"; levantamento campo a campo em fase3/F3_FLUXOS_PRODUTORES.md (revisão 2)",
+    "emenda1_revisoes": "R1 CHANGES_REQUESTED contaos9999 review 5905890909 no HEAD 20b7ff3 (grupos I–IV Importantes, V Menor); R2 corrige por classe; APPROVE contaos9999 review 5906090998 no HEAD 1bf892f com M1–M4 como obrigações; merge 20d4ad9",
+    "build2b2a_pr": "#679 (autor Edivan5002); main 20d4ad9 mesclada; obrigações da emenda: PLAN §12.5, §12.6, §12.7 e M2–M4 da review 5906090998"
   }
 }
