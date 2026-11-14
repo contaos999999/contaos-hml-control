@@ -59,16 +59,25 @@ export function validateIntegrationReceipts(m, plan, changed = [], fileExists = 
         continue;
       }
       if (receipt.status !== "PASS") continue;
-      const fields = ["arquivo_evidencia", "matriz_arquivo", "grafo_arquivo"];
-      const validPaths = fields.every((key) =>
-        validEvidencePath(receipt[key],
-          key === "arquivo_evidencia" ? /\.md$/ :
-          key === "matriz_arquivo" ? /\.(json|csv)$/ : /\.(mmd|json)$/) &&
+      // O certificado final da fase7 não pode ser substituído pelo inventário
+      // estático da fase1, nem por artefato de outra versão ou outro escopo.
+      const prefix = "docs/frontend/auditorias/" +
+        (kind === "interna" ? "integracao-funcional-" : "integracao-cumulativa-v1-") +
+        version.toLowerCase() + "/";
+      const expected = [
+        ["arquivo_evidencia", /\.md$/, prefix + "fase7/"],
+        ["matriz_arquivo", /\.(json|csv)$/, prefix],
+        ["grafo_arquivo", /\.(mmd|json)$/, prefix],
+      ];
+      const validPaths = expected.every(([key, ext, scope]) =>
+        typeof receipt[key] === "string" &&
+        receipt[key].startsWith(scope) &&
+        validEvidencePath(receipt[key], ext) &&
         fileExists(receipt[key]));
       if (!sha40(receipt.pr_merge_sha) || !ciRun(receipt.ci_url) ||
           !prReview(receipt.revisao_independente_url) || !validPaths)
         err("P0 INTEGRACAO: " + version + "/" + kind +
-          " PASS sem PR/merge, CI, revisao independente, matriz, grafo ou evidencia verificaveis.");
+          " PASS sem PR/merge, CI, revisao independente ou certificado final fase7 com escopo e proveniencia corretos, matriz e grafo verificaveis.");
       if (statuses[version]?.status !== "PASS")
         err("P0 INTEGRACAO: " + version + "/" + kind + " antecipado ao certificado funcional.");
       if (kind === "cumulativa" && block.interna?.status !== "PASS")
@@ -84,14 +93,18 @@ export function validateIntegrationReceipts(m, plan, changed = [], fileExists = 
   };
   const gate = (versionIndex, label) => {
     if (versionIndex < 1) return;
-    const previous = integrationVersions[versionIndex - 1];
-    const prior = policy?.[previous];
-    if (prior?.interna?.status !== "PASS")
-      err("P0 INTEGRACAO BLOQUEIA " + label +
-          ": falta certificado de integracao interna da " + previous + ".");
-    if (versionIndex > 1 && prior?.cumulativa?.status !== "PASS")
-      err("P0 INTEGRACAO BLOQUEIA " + label +
-          ": falta certificado de integracao cumulativa da " + previous + ".");
+    // Validação é cumulativa. PASS da última versão não substitui
+    // comprovantes obrigatórios das versões mais antigas.
+    for (let j = 0; j < versionIndex; j++) {
+      const previous = integrationVersions[j];
+      const prior = policy?.[previous];
+      if (prior?.interna?.status !== "PASS")
+        err("P0 INTEGRACAO BLOQUEIA " + label +
+            ": falta certificado de integracao interna da " + previous + ".");
+      if (j > 0 && prior?.cumulativa?.status !== "PASS")
+        err("P0 INTEGRACAO BLOQUEIA " + label +
+            ": falta certificado de integracao cumulativa da " + previous + ".");
+    }
   };
   const planId = String(plan?.prompt_id || "").padStart(2, "0");
   gate(eligible(planId), "PLAN " + planId);
