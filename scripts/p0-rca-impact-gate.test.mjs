@@ -1,10 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { validateRcaImpact, verifyRcaOperational, runCase } from "./p0-rca-impact-gate.mjs";
 
 const REPORT = "docs/frontend/rca/P0_RCA_ATIVO.json";
 const V2 = "src/components/v2/Apontamentos.tsx";
 const V1 = "src/components/v1/Competencias.tsx";
+const V1_SCOPE = "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json";
+const proofBytes = Buffer.from("preflight verificavel");
+const proofHash = createHash("sha256").update(proofBytes).digest("hex");
 const SHA = "a".repeat(40);
 const BACKEND = "b".repeat(40);
 const ci = "https://github.com/contaos999999/contaos-hml-control/actions/runs/123";
@@ -44,10 +48,11 @@ const fixture = () => ({
   }],
 });
 const check = (report = fixture(), changed = [V2, REPORT], id = "44",
-  allow = []) => validateRcaImpact({
+  allow = [], extras = {}) => validateRcaImpact({
   planId: id, changed, report, reportExists: Boolean(report),
   legacyAllowlist: allow, expectedFrontendSha: SHA, expectedBackendSha: BACKEND,
-  fileExists: () => true,
+  fileExists: () => true, readBytes: () => proofBytes,
+  ...extras,
 });
 const mustFail = (report, pattern, files = [V2, REPORT], id = "44", allow = []) =>
   assert.match(check(report, files, id, allow).errors.join(" "), pattern);
@@ -58,8 +63,42 @@ test("P0 RCA — código V2 sob PLAN 75 continua bloqueado mesmo em allowlist", 
 test("P0 RCA — código genérico novo sob PLAN 75 não é presumido V1", () => {
   mustFail(null, /sem classificação/, ["src/components/Generic.tsx"], "75");
 });
-test("P0 RCA — arquivo V1 aprovado em PLAN prévio continua permitido", () => {
-  assert.deepEqual(check(null, [V1], "75", [V1]).errors, []);
+test("P0 RCA — arquivo V1 na allowlist mas sem nova declaração NÃO é liberado", () => {
+  assert.match(check(null, [V1], "75", [V1]).errors.join(" "), /declaração de escopo/);
+});
+test("P0 RCA — arquivo V1 com declaração e testes permanece permitido", () => {
+  const attest = {
+    schema: "contaos.p0.v1-scope-proof.v1", prompt_id: "75", baseline_sha: SHA,
+    arquivos: [{arquivo:V1,versao:"V1",justificativa:"escopo V1 previamente aprovado"}],
+    testes: [ref("V1-REG")],
+  };
+  assert.deepEqual(check(null,[V1,V1_SCOPE],"75",[V1],{
+    v1Scope:attest,v1ScopeChanged:true,
+  }).errors, []);
+});
+test("P0 RCA — novo script sob PLAN 75 sem plano protegido deve falhar", () => {
+  assert.match(check(null,["scripts/guard-rules.mjs"],"75",[]).errors.join(" "),
+    /governança sem PLAN protegido/);
+});
+test("P0 RCA — plano GOV aprovado pertence somente à PR e arquivos exatos", () => {
+  const opts={prNumber:661,governancePlan:{
+    approved:true,pr_number:661,files:["scripts/p0-evidence-live-gate.mjs"]}};
+  assert.deepEqual(check(null,["scripts/p0-evidence-live-gate.mjs"],"75",[],opts).errors,[]);
+  assert.match(check(null,["scripts/guard-extra.mjs"],"75",[],opts).errors.join(" "),
+    /governança sem PLAN protegido/);
+  assert.match(check(null,["scripts/p0-evidence-live-gate.mjs"],"75",[],{
+    ...opts,prNumber:663,
+  }).errors.join(" "),/governança sem PLAN protegido/);
+});
+test("P0 RCA — V2 explícita dentro de arquivo V1 permitido não é isenta", () => {
+  const attest={
+    schema:"contaos.p0.v1-scope-proof.v1",prompt_id:"75",baseline_sha:SHA,
+    arquivos:[{arquivo:V1,versao:"V1",justificativa:"V1"}],testes:[ref("V1")],
+  };
+  const x=check(null,[V1,V1_SCOPE],"75",[V1],{
+    v1Scope:attest,v1ScopeChanged:true,addedLines:{[V1]:"// V2-DIL-001"},
+  });
+  assert.match(x.errors.join(" "),/introduz referências V2/);
 });
 test("P0 RCA — docs-only não invoca RCA nem bloqueia V1", () => {
   assert.deepEqual(check(null, ["docs/frontend/planos/PLAN.md"], "44").errors, []);
@@ -131,10 +170,33 @@ test("P0 RCA — nova funcionalidade exige preflight", () => {
   const f = fixture(); f.itens[0].tipo = "NOVA_FUNCIONALIDADE";
   mustFail(f, /preflight/);
 });
-test("P0 RCA — nova funcionalidade com preflight e TDD passa estruturalmente", () => {
-  const f = fixture(); f.itens[0].tipo = "NOVA_FUNCIONALIDADE";
-  f.itens[0].preflight = { status: "PASS", evidencia: "preflight e contrato conferidos" };
+const preflight = () => ({
+  status:"VERIFICADO", baseline_sha:SHA,
+  arquivo_evidencia:"docs/frontend/auditorias/preflight/v2-44.json",
+  arquivo_sha256:proofHash,
+  checks:["CONTRATO","RBAC_RLS","DADOS_INTEGRIDADE","DEPENDENCIAS"]
+    .map((tipo)=>({tipo,teste:ref("PRE-"+tipo)})),
+});
+test("P0 RCA — frase genérica de preflight não comprova funcionalidade", () => {
+  const f=fixture();f.itens[0].tipo="NOVA_FUNCIONALIDADE";
+  f.itens[0].preflight={status:"PASS",evidencia:"preflight e contrato conferidos"};
+  assert.match(check(f).errors.join(" "),/preflight sem contrato/);
+});
+test("P0 RCA — nova funcionalidade precisa quatro casos preflight e SHA256", () => {
+  const f=fixture();f.itens[0].tipo="NOVA_FUNCIONALIDADE";
+  f.itens[0].preflight=preflight();
   assert.deepEqual(check(f).errors, []);
+  f.itens[0].preflight.arquivo_sha256="c".repeat(64);
+  assert.match(check(f).errors.join(" "), /preflight sem contrato/);
+  f.itens[0].preflight=preflight();
+  f.itens[0].preflight.checks.pop();
+  assert.match(check(f).errors.join(" "), /preflight sem contrato/);
+});
+test("P0 RCA LIVE — preflight exige execução dos quatro testes", async () => {
+  const f=fixture();f.itens[0].tipo="NOVA_FUNCIONALIDADE";
+  f.itens[0].preflight=preflight();
+  const r=await live(f,{execute:false});
+  assert.match(r.errors.join(" "),/PRE-CONTRATO|PRE-RBAC_RLS/);
 });
 test("P0 RCA — item RCA duplicado bloqueado", () => {
   const f = fixture(); f.itens.push(structuredClone(f.itens[0]));
