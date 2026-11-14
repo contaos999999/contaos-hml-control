@@ -1,3 +1,16 @@
+## Integração funcional V1: Fase 3, emenda 1 do PLAN em revisão, 14/11/2026 Bahia
+
+- **Causa raiz das revisões R1 e R2 do BUILD-2b-2a:** a cerca de mutação estava sendo desenhada antes do fluxo de rede dos produtores. O levantamento completo está em `fase3/F3_FLUXOS_PRODUTORES.md`: frontend, mais as definições das funções do Supabase HML, lidas sem escrita por autorização do titular ("Autorizo só leitura (Recomendado)").
+- **Emenda 1 (PLAN §12),** por decisão do titular ("Emenda completa (Recomendado)"):
+  - até 10 pré-requisitos (V107 3, V108 3, V109 2, V118 1, V119 1);
+  - 40 intenções por execução, com o total de 60 mantido;
+  - uploads contados dentro da ação que os consome;
+  - esperas assíncronas (verificador de arquivos, análise e parecer de IA) com prazo e `BLOCKED` próprio, sem reenvio.
+- **BUILD-2b-2a,** branch `build/integracao-v1-fase3-b2b2-drivers`: os grupos C, D, E e G da R2 estão corrigidos. A e B (redesenho da cerca) saem depois do merge desta emenda.
+- **PRs (autor Edivan5002):** emenda #678; BUILD-2b-2a #679. Main `02de927` mesclada nas duas, sem conflito (prevenção NR-001).
+- **Gate P0 RCA da main:** a #679 altera `scripts/hml/*` e exige `docs/frontend/planos/P0_GOV_PLAN_679.json` aprovado na main. Esse arquivo entra pela #678, com allowlist fechada nos dois arquivos do executor F3. Até o merge da #678, a #679 falha nesse gate por desenho.
+- **Fase 3:** EM EXECUÇÃO.
+
 ## Integração funcional V1: Fase 3, BUILD-2b-1 integrado, 14/11/2026 Bahia
 
 - **BUILD-2b-1 integrado.** A PR #658 (autora Edivan5002) entrou com o merge `fb02383`, cujos pais são a main `fb8d05b` e o HEAD `f30851d`. A contaos9999 publicou o APPROVE 5903293851 no HEAD `f30851d`, depois de sete rodadas de revisão independente; o histórico está em `fase3/BUILD2B1_INFRA.md`.
