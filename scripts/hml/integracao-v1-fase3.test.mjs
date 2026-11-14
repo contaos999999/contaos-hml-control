@@ -446,9 +446,7 @@ test("F3 B2b1: a organização F3 nasce na execução; rejeitada ou abandonada l
   assert.throws(() => seal(retry, 42, 2), { code: "F3_INTENT_PRODUCER" });
   assert.throws(() => retry.abandon(uuid(41)), { code: "F3_INTENT_STATE" });
   retry.reconcile(uuid(41), { found: false, entityId: null, organizationId: null });
-  retry.resend(uuid(41));
-  retry.uncertain(uuid(41));
-  retry.reconcile(uuid(41), { found: false, entityId: null, organizationId: null });
+  assert.throws(() => retry.resend(uuid(41)), { code: "F3_UNCERTAIN_RESEND" });
   retry.abandon(uuid(41));
   seal(retry, 42, 2);
   retry.confirm(uuid(42), { entityId: F3, organizationId: F3 });
@@ -2193,26 +2191,21 @@ test("F3 B2b2a RED: fluxo de dois passos (ADM01) e inserção em tabela (V102)",
   }
 });
 
-test("F3 B2b2a RED: reenvio depois de readback usa a mesma intenção e conta um envio", (t) => {
+test("F3 §12.6: SYS04 sem chave só permite reconciliar após envio incerto", (t) => {
   const f = fenceWith(t);
   const id = armOrg(f);
   assert.equal(f.fence.policy(req()), true);
   f.fence.settle();
   f.book.uncertain(id);
-  // Sem readback, o reenvio é recusado ao armar.
   assert.throws(() => f.fence.arm({ producerOrder: 2, bodies: [ORG_BODY], resendOf: id }), {
     code: "F3_UNCERTAIN_RESEND",
   });
   f.book.reconcile(id, { found: false });
-  assert.throws(
-    () => f.fence.arm({ producerOrder: 2, bodies: [ORG_BODY], resendOf: id, kind: "principal" }),
-    { code: "F3_FENCE_ARM" },
-  );
-  assert.equal(f.fence.arm({ producerOrder: 2, bodies: [ORG_BODY], resendOf: id }), id);
-  assert.equal(f.fence.policy(req()), true);
-  assert.equal(f.book.state(id), "sealed");
-  assert.equal(f.book.summary().sent, 2);
-  f.fence.settle();
+  assert.throws(() => f.fence.arm({ producerOrder: 2, bodies: [ORG_BODY], resendOf: id }), {
+    code: "F3_UNCERTAIN_RESEND",
+  });
+  assert.throws(() => f.book.resend(id), { code: "F3_UNCERTAIN_RESEND" });
+  assert.equal(f.book.summary().sent, 1);
 });
 
 test("F3 B2b2a: propriedade da cerca, semente fixa: ordem de chaves e leituras não mudam nada", (t) => {

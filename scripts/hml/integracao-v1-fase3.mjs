@@ -858,7 +858,7 @@ function applyEvent(st, run, e) {
   if (e.op === "absent" && i.state === "abandoned" && i.rechecked) fail("F3_INTENT_STATE");
   if (e.op === "found" || e.op === "absent") i.rechecked = true;
   if (e.op === "resend") {
-    if (i.resent) fail("F3_UNCERTAIN_RESEND");
+    if (i.resent || i.producerOrder === 2) fail("F3_UNCERTAIN_RESEND");
     send();
     i.resent = true;
     i.sends += 1;
