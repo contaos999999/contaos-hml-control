@@ -1,13 +1,16 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { validateP0, P0 } from "./p0-version-order-gate.mjs";
 
 const original = JSON.parse(readFileSync(P0, "utf8"));
 const clone = () => JSON.parse(JSON.stringify(original));
 const plan = (id) => ({ prompt_id: id, status: "VALIDADO" });
+const syntheticExists = (p) =>
+  existsSync(p) ||
+  /^docs\/frontend\/auditorias\/integracao-(?:funcional|cumulativa)-v[1-5][a-z0-9/_.-]*$/.test(p);
 const check = (m = clone(), p = plan("42"), paths = []) =>
-  validateP0(m, p, paths);
+  validateP0(m, p, paths, syntheticExists);
 
 function preV1({ seen = ["43"] } = {}) {
   const m = clone();
@@ -29,12 +32,12 @@ function preV1({ seen = ["43"] } = {}) {
   return m;
 }
 
-const fakeReceipt = () => ({
+const fakeReceipt = (version = "V1", kind = "interna") => ({
   status: "PASS",
   pr_merge_sha: "a".repeat(40),
-  arquivo_evidencia: "docs/frontend/auditorias/integracao-funcional-v1/fase1/CERTIFICADO.md",
-  matriz_arquivo: "docs/frontend/auditorias/integracao-funcional-v1/fase1/TELAS.csv",
-  grafo_arquivo: "docs/frontend/auditorias/integracao-funcional-v1/fase1/GRAFO.mmd",
+  arquivo_evidencia: `docs/frontend/auditorias/${kind === "interna" ? "integracao-funcional" : "integracao-cumulativa-v1"}-${version.toLowerCase()}/fase7/CERTIFICADO.md`,
+  matriz_arquivo: `docs/frontend/auditorias/${kind === "interna" ? "integracao-funcional" : "integracao-cumulativa-v1"}-${version.toLowerCase()}/fase1/TELAS.csv`,
+  grafo_arquivo: `docs/frontend/auditorias/${kind === "interna" ? "integracao-funcional" : "integracao-cumulativa-v1"}-${version.toLowerCase()}/fase1/GRAFO.mmd`,
   ci_url: "https://github.com/contaos999999/contaos-hml-control/actions/runs/12345",
   revisao_independente_url: "https://github.com/contaos999999/contaos-hml-control/pull/123#pullrequestreview-12345",
 });
@@ -175,9 +178,9 @@ test("P0 — V3 depende de recibos internos e cumulativos V2", () => {
   const blocked = check(m, plan("50")).errors.join(" ");
   assert.match(blocked, /integracao interna da V2/);
   assert.match(blocked, /integracao cumulativa da V2/);
-  m.controle.integracao_por_versao.V2.interna = fakeReceipt();
+  m.controle.integracao_por_versao.V2.interna = fakeReceipt("V2", "interna");
   assert.match(check(m, plan("50")).errors.join(" "), /integracao cumulativa da V2/);
-  m.controle.integracao_por_versao.V2.cumulativa = fakeReceipt();
+  m.controle.integracao_por_versao.V2.cumulativa = fakeReceipt("V2", "cumulativa");
   assert.deepEqual(check(m, plan("50")).errors, []);
 });
 
@@ -197,4 +200,38 @@ test("P0 — PR de PLAN V2/44 também fica bloqueada sem interna V1", () => {
   const m = clone();
   const changed = ["docs/frontend/planos/PROMPT_44_V2_01.md"];
   assert.match(check(m, plan("75"), changed).errors.join(" "), /integracao interna da V1/);
+});
+
+test("P0 — certificado de Fase 1 não comprova a integração interna da V1", () => {
+  const m = v1Integrated(clone());
+  m.controle.integracao_por_versao.V1.interna.arquivo_evidencia =
+    "docs/frontend/auditorias/integracao-funcional-v1/fase1/CERTIFICADO.md";
+  assert.match(check(m, plan("44")).errors.join(" "), /certificado final|fase7|proveniência/i);
+});
+
+test("P0 — evidência da V2 não pode certificar a V1", () => {
+  const m = v1Integrated(clone());
+  m.controle.integracao_por_versao.V1.interna.arquivo_evidencia =
+    "docs/frontend/auditorias/integracao-funcional-v2/fase7/CERTIFICADO.md";
+  assert.match(check(m, plan("44")).errors.join(" "), /escopo|versão|proveniência/i);
+});
+
+test("P0 — V4 exige também recibos V2 e não apenas da versão imediatamente anterior", () => {
+  const m = v1Integrated(clone());
+  m.controle.regulares_pendentes_concluidos_com_evidencia =
+    ["43", "75", ...m.blocos[1].regular_ids, ...m.blocos[2].regular_ids];
+  for (const [idx, version] of [[1, "V2"], [2, "V3"]]) {
+    m.blocos[idx].certificado = "PASS";
+    Object.assign(m.controle.certificados_por_versao[version], {
+      status: "PASS",
+      regulares_comprovados: [...m.blocos[idx].regular_ids],
+      atomic_ids_comprovados: ["000", ...m.blocos[idx].atomic_ids],
+      pr_merge_sha: "b".repeat(40),
+      arquivo_evidencia: "docs/frontend/governanca/P0_PRIORIDADE_ZERO_ORDEM_POR_VERSAO_4_1.md",
+      ci_url: "https://github.com/contaos999999/contaos-hml-control/actions/runs/12345",
+    });
+    m.controle.integracao_por_versao[version].interna = fakeReceipt(version, "interna");
+  }
+  m.controle.integracao_por_versao.V3.cumulativa = fakeReceipt("V3", "cumulativa");
+  assert.match(check(m, plan("56")).errors.join(" "), /cumulativa da V2/);
 });
