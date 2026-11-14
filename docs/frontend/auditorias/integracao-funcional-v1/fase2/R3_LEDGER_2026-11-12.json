@@ -1,0 +1,33 @@
+{
+  "schema": "contaos.navigation.r3.evidence.v1",
+  "state": "FAIL_BLOCKING",
+  "authRun": 43252858747,
+  "fixturesRun": 43252858795,
+  "attempt": 1,
+  "harnessSha": "bb245f124aad6eb33c133100bde5c742978ef01c",
+  "artifact": 13963014490,
+  "zipSha256": "94d55175c6354b27858503eea25349a27b6f732089c9126945f14993f6271311",
+  "reportSha256": "688a75cce68f3d76d4346e5b1affd4ff952817c5849fa03dc5818105d470e4d1",
+  "metadataRegistrationComment": 6829829671,
+  "zipCrcMembersManifestIdentityVerified": true,
+  "expected": 52,
+  "observed": 47,
+  "passed": 33,
+  "failed": 14,
+  "unexecuted": 5,
+  "logoutVerified": false,
+  "httpStatusErrors": 0,
+  "transportErrors": 27,
+  "pageErrors": 17,
+  "firstNetworkFailure": {
+    "reason": "ABORTED",
+    "destination": "UI",
+    "method": "GET",
+    "resourceType": "image"
+  },
+  "fenceFailure": "FENCE_REQUEST_LIFECYCLE",
+  "logoutFailure": "PAGE_CLOSED",
+  "rootCause": "PARTIAL_OFFLINE_REPRODUCTION_NOT_ALL_REAL_EVENTS_ATTRIBUTED",
+  "nonceSpent": "integracao-v1-fase2-nav-20261112-r3",
+  "certified": false
+}

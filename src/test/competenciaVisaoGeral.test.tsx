@@ -35,9 +35,15 @@ vi.mock("@tanstack/react-router", () => ({
   }: {
     children: ReactNode;
     to: string;
-    params?: { id?: string };
+    params?: Record<string, string>;
   }) => (
-    <a href={params?.id ? to.replace("$id", params.id) : to} {...p}>
+    <a
+      href={Object.entries(params ?? {}).reduce(
+        (path, [key, value]) => path.replace("$" + key, value),
+        to,
+      )}
+      {...p}
+    >
       {children}
     </a>
   ),
@@ -58,6 +64,7 @@ const U = "user-1";
 const ID = "44444444-4444-4444-8444-444444444444";
 const ID2 = "55555555-5555-4555-8555-555555555555";
 const K = "11111111-1111-4111-8111-111111111111";
+const O = "22222222-2222-4222-8222-222222222222";
 
 type Acoes = {
   abrir_documentos: boolean;
@@ -86,7 +93,7 @@ function vg(
     competencia: {
       id: ID,
       id_contrato: K,
-      id_organizacao: "org-A",
+      id_organizacao: O,
       competencia_referencia: "2026-03-01",
       periodo_inicio: "2026-03-01",
       periodo_fim: "2026-03-31",
@@ -127,11 +134,16 @@ beforeEach(() => {
   m.getUser.mockReset().mockResolvedValue({ data: { user: { id: U } }, error: null });
   m.nav.mockReset();
   m.rpc.mockReset().mockResolvedValue(ok(vg()));
-  m.from.mockReset();
+  m.from.mockReset().mockImplementation(() => {
+    const chain: Record<string, unknown> = {};
+    for (const name of ["select", "eq", "order", "range"]) chain[name] = () => chain;
+    chain["abortSignal"] = async () => ({ data: [], count: 0, error: null, status: 200 });
+    return chain;
+  });
   m.sinais.length = 0;
   window.localStorage.clear();
   window.sessionStorage.clear();
-  definirPreferenciaOrganizacao(U, "org-A");
+  definirPreferenciaOrganizacao(U, O);
 });
 
 const montar = (id = ID) => render(<CompetenciaVisaoGeral id={id} />);
@@ -139,6 +151,41 @@ const pronto = () => screen.findByRole("heading", { level: 1, name: "Competênci
 const acao = (nome: string) => screen.getByTestId(`acao-${nome}`);
 
 describe("V1-14 rota e gate", () => {
+  it("recria a entrada do protocolo existente após montar a visão autorizada", async () => {
+    const ap = "33333333-3333-4333-8333-333333333333";
+    const value = {
+      id: ap,
+      id_competencia: ID,
+      id_contrato: K,
+      id_organizacao: O,
+      id_pacote: ID2,
+      protocolo: null,
+      forma_apresentacao: null,
+      apresentado_em: "2026-11-11T12:00:00Z",
+      tipo: "original",
+      numero_rodada: 1,
+    };
+    const chain: Record<string, unknown> = {};
+    for (const name of ["select", "eq", "order", "range"]) chain[name] = () => chain;
+    chain["abortSignal"] = async () => ({ data: [value], count: 1, error: null, status: 200 });
+    m.from.mockReturnValue(chain);
+    const view = montar();
+    expect(await screen.findByRole("link", { name: "Abrir apresentação 1" })).toHaveAttribute(
+      "href",
+      `/competencias/${ID}/apresentacoes/${ap}`,
+    );
+    view.unmount();
+    montar();
+    expect(await screen.findByRole("link", { name: "Abrir apresentação 1" })).toHaveAttribute(
+      "href",
+      `/competencias/${ID}/apresentacoes/${ap}`,
+    );
+    expect(m.from).toHaveBeenCalledWith("apresentacoes_contratante");
+    expect(m.rpc.mock.calls.every((call) => call[0] === "obter_visao_geral_competencia")).toBe(
+      true,
+    );
+  });
+
   it("rota /competencias/$id ssr:false com head PT-BR", () => {
     const r = Route as unknown as {
       path: string;
@@ -179,17 +226,35 @@ describe("V1-14 rota e gate", () => {
     expect(m.rpc).not.toHaveBeenCalled();
   });
 
-  it("RPC exata chamada uma vez só com p_id_competencia; nada de from/outras RPCs", async () => {
+  it("RPC exata precede a lista de leitura sem outras RPCs", async () => {
     montar();
     await pronto();
     expect(m.rpc).toHaveBeenCalledTimes(1);
     expect(m.rpc).toHaveBeenCalledWith("obter_visao_geral_competencia", { p_id_competencia: ID });
-    expect(m.from).not.toHaveBeenCalled();
+    await waitFor(() => expect(m.from).toHaveBeenCalledTimes(1));
+    expect(m.from).toHaveBeenCalledWith("apresentacoes_contratante");
+    expect(m.rpc.mock.invocationCallOrder[0]).toBeLessThan(m.from.mock.invocationCallOrder[0]!);
     expect(m.getUser.mock.invocationCallOrder[0]).toBeLessThan(m.rpc.mock.invocationCallOrder[0]!);
   });
 });
 
 describe("V1-14 erros sanitizados", () => {
+  it.each(["id", "id_organizacao", "id_contrato"])(
+    "não monta lista para ownership divergente em %s",
+    async (field) => {
+      const value = vg();
+      Object.assign(value.competencia, { [field]: field === "id_contrato" ? "inválido" : ID2 });
+      m.rpc.mockResolvedValue(ok(value));
+      montar();
+      expect(
+        await screen.findByText(
+          "Não foi possível carregar a competência agora. Tente novamente em instantes.",
+        ),
+      ).toBeInTheDocument();
+      expect(m.from).not.toHaveBeenCalled();
+      expect(screen.queryByRole("heading", { name: "Apresentações registradas" })).toBeNull();
+    },
+  );
   it.each([
     [{ code: "42501", message: "permission denied for RAW" }, 400],
     [{ message: "RAW forbidden" }, 403],
@@ -301,13 +366,19 @@ describe("V1-14 renderização do backend", () => {
   });
 
   it("REGRESSÃO: percentual 100 com backend apresentar=false continua sem link", async () => {
-    m.rpc.mockResolvedValue(ok(vg({
-      percentual: 100, situacao: "pode_apresentar_contratante", acoes: { apresentar: false },
-    })));
+    m.rpc.mockResolvedValue(
+      ok(
+        vg({
+          percentual: 100,
+          situacao: "pode_apresentar_contratante",
+          acoes: { apresentar: false },
+        }),
+      ),
+    );
     montar();
     await pronto();
     expect(acao("apresentar").querySelector("a")).toBeNull();
-    const aba = screen.getAllByRole("tab").find(t => t.textContent?.includes("Apresentação"));
+    const aba = screen.getAllByRole("tab").find((t) => t.textContent?.includes("Apresentação"));
     expect(aba?.getAttribute("aria-disabled")).toBe("true");
     expect(aba?.getAttribute("href")).toBeNull();
   });
@@ -317,9 +388,10 @@ describe("V1-14 renderização do backend", () => {
     montar();
     await pronto();
     expect(acao("apresentar").textContent).toMatch(/Permitida pelo backend/);
-    expect(acao("apresentar").querySelector("a")?.getAttribute("href"))
-      .toBe(`/competencias/${ID}/apresentar`);
-    const aba = screen.getAllByRole("tab").find(t => t.textContent?.includes("Apresentação"));
+    expect(acao("apresentar").querySelector("a")?.getAttribute("href")).toBe(
+      `/competencias/${ID}/apresentar`,
+    );
+    const aba = screen.getAllByRole("tab").find((t) => t.textContent?.includes("Apresentação"));
     expect(aba?.getAttribute("href")).toBe(`/competencias/${ID}/apresentar`);
     expect(aba?.getAttribute("aria-disabled")).toBeNull();
   });

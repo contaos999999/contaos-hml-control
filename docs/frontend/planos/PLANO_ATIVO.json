@@ -135,7 +135,18 @@
     "docs/frontend/auditorias/P0_V1_CERTIFICACAO_FASE8_2026-11-11.md",
     "docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json",
     "scripts/p0-version-order-gate.test.mjs",
-    "docs/frontend/planos/P0_FASE8_AUTH_SUBSCRIBER_NO_REQUEST_PLAN_2026-11-11.md"
+    "docs/frontend/planos/INTEGRACAO_V1_FASE2_PLAN_GATE_2026-11-11.md",
+    "docs/frontend/planos/INTEGRACAO_V1_FASE2_V120_REENTRADA_PLAN_GATE_2026-11-11.md",
+    "src/components/competencias/CompetenciaVisaoGeral.tsx",
+    "src/components/competencias/CompetenciaApresentacoesLista.tsx",
+    "src/lib/competencias/protocoloDados.ts",
+    "src/test/competenciaApresentacoesLista.test.tsx",
+    "src/test/protocoloDados.test.ts",
+    "docs/frontend/planos/INTEGRACAO_V1_FASE2_DELTA_TESTEC_PLAN_GATE_2026-11-12.md",
+    "docs/frontend/planos/INTEGRACAO_V1_FASE2_V119_FOCO_PLAN_GATE_2026-11-12.md",
+    "src/components/competencias/CompetenciaApresentar.tsx",
+    "docs/frontend/planos/INTEGRACAO_V1_FASE2_R2_PRONTIDAO_PLAN_GATE_2026-11-12.md",
+    "src/test/appShellTransicaoRotaPublica.test.tsx"
   ],
   "observacao": "Plano mestre P0 PR #130 integrado CI 42013946647. Auditoria FE-BE PR #131 integrada CI 42014564846. BUILD agrupado V1-23 de permissões: Usuários admin-only; Auditoria admin/auditor/juridico via RPC HML já implantada. Sem alteração backend/PROD. Gate CI e demais verificações ainda obrigatórios. Gate CI do plano mestre e matriz de aceite comprovado; demais gates permanecem PENDENTE e BUILD bloqueado. Escopo agrupado documentado, gate ainda condicionado à conferência canônica e CI; não alterar código sem validação. Snapshot reancorado no HEAD backend pós-RPC sem alteração dos 25 blobs normativos. Demais gates ainda exigem evidência. Gates PASS significam somente validação do planejamento do Prompt 75, com TDD e Teste C planejados, não executados; BUILD requer CI verde deste PR antes de iniciar. Emenda documental P0 (05/11/2026): teste de regressão preexistente ADM-01 precisa refletir a sexta RPC pública somente-leitura para capacidade da Auditoria. Caminho adicionado à allowlist para BUILD posterior a esta emenda validada por CI; não altera permissões, RLS, backend, identidade visual ou PROD. Testes e bloqueios negativos permanecem exigidos. EMENDA P0 V1 (05/11): corrigir falta de sinalização síncrona de mudança da organização preferida entre SYS-04 e AppShell na mesma rota, evitando exibição obsoleta de permissões. Acrescentados somente preferência organizacional e seu teste de regressão à allowlist, mantendo lógica do backend RLS como autoridade. Cobertura de logout, corrida assíncrona, idempotência, menu e CI. Corrigir antes da certificação. O aceite condicional das três ressalvas não dispensa outros requisitos ainda NÃO VERIFICADOS. EMENDA P0 V1 #166: escopo autorizado para correção de gate MASTER em Novo Contratante, após PLAN #173 e GATE #174 integrados; inclusão exclusiva dos dois arquivos de implementação e teste V1-02. Sem autorizar backend/PROD, sem dispensar TDD RED, CI e Teste C. Gate RPC/RLS como autoridade. EMENDA RBAC V1 aprovada: PR frontend #178 integrado em 6cd922a0738549d421b57a704ec17e6c6ac541cd, dois checks SUCCESS run 42154230082. Escopo src/lib/administracao/rbacRpc.ts, src/components/administracao/usuarios/MatrizPermissoes.tsx, src/test/rbacMatriz.test.tsx; AdminUsuarios.tsx preexistente. Sem rotas novas, backend, PROD, Brand, tipos, SQL. BUILD em PR distinto após CI do presente gate. EMENDA06/11: matriz MASTER e navegação contextual já implementada V1, sob RPC rbac-v1 e dados RLS, contratos descritos no aditivo da emenda. Sem tocar PR176, tipos, rotas geradas, Brand, backend ou PROD. CI deste commit anterior ao BUILD obrigatório. CHECKPOINT06/11: BUILD183 integrado após dois checks SUCCESS; testes locais36suítes/921PASS. Reancoragem documental no backend67668c6 com25/25fontes e catálogo iguais. Executor ficou indisponível depois da conclusão das rodadasJWT e da quarentena; retomar itens pendentes sem repetir casos válidos. Reancoragem documental P0 06/11: backend #86/#87/#88, restore de uma tabela sintética com 126 migrations, RLS e SHA preservados; não constitui RPO/RTO/PITR ou certificação da V1. Fonte normativa 25/25 e catálogo imutáveis. EMENDA SYS-03 06/11: PLAN #194, GATE #195 e escopo #196 integrados, somente autorização de arquivos de testes SYS-03 em PR separado; não constitui RED, BUILD, GREEN, Teste C E2E ou certificação. Fixture/mailbox sintética e execução controlada obrigatórias; sem alteração Auth/RLS/PROD. EMENDA SYS-03 BUILD 06/11: RED comprovado no PR #198, run 42188704481, três falhas esperadas para otp_expired/otp_disabled/invalid_grant; autorizar somente src/components/auth/ResetPasswordForm.tsx em gate separado, sem tocar Supabase/PROD; BUILD posterior e CI GREEN obrigatórios. EMENDA P0 SYS-03 E2E INFRA 06/11: permitir apenas package.json, package-lock.json, playwright.config.ts e tests/hml/sys03-harness-readiness.spec.ts para runner Playwright com versão travada e smoke público sem autenticação. Fixture mailbox e secrets HML ainda bloqueados; não autoriza testes com contas reais nem PROD. Exigir gate CI SUCCESS antes do BUILD. RETIFICAÇÃO GATE 06/11: repositório usa bun.lock versionado (170005 bytes) e não possui package-lock.json. Trocar autorização package-lock.json por bun.lock; não gerar lockfile npm paralelo. Build Playwright apenas após checks verdes deste gate. GATE SYS-03 DEPENDENCY BOT 06/11: autorizar workflow dedicado, manual, para gerar bun.lock por Bun real e abrir PR separado de package.json + bun.lock. Workflow somente HML, permissions contents:write e pull-requests:write estritamente no job de geração; nunca commit direto main, não acessar secrets nem PROD. Execução só após checks verdes do gate e revisão do workflow. GATE SYS-03 HML Playwright smoke: autorizar workflow manual read-only com Bun frozen, instalação browser Chromium no runner, execução somente testes públicos sem login/token, sem secrets, sem banco e sem PROD; evidência de run, status e commit. Não equivale à certificação N1-N9. EMENDA VISUAL 06/11: escopo fechado das 24 páginas organizacionais, AppShell/sidebar, cabeçalho compartilhado e tokens centralizados; inventário constatado de 28 rotas totais, não 27. Apenas apresentação e regressões correspondentes. Gate documental separado, aguardar ambos checks no mesmo HEAD antes do RED/BUILD. Sem alterar APIs, auth, RBAC, tipos, rotas, assets ou backend. EMENDA DE COMPATIBILIDADE DO GUARD VISUAL: inspeção de scripts/frontend-zero-drift.mjs linhas 51-55 exige marca local em cada tela, em conflito com marca exclusiva na sidebar aprovada no PR223. Autorizar somente atualização semântica desse verificador e autotestes negativos dedicados: marca obrigatória nas quatro rotas de acesso/seletor, proibida nas 24 páginas organizacionais, AppShell/header/sidebar obrigatórios no root. Não remover controle, relaxar tipos/secrets, modificar workflows ou declarar screenshots por código. Executar RED antes do fix. EMENDA INTEGRACAO LISTAS 06/11: plano P0_V1_INTEGRACAO_LISTAS_2026-11-06.md; somente links das listas aos registros existentes em layouts tabela/card e testes correspondentes. Nenhuma escrita/permissao nova. BUILD apenas apos CI verde desta emenda. Teste legado de ausencia de links sera substituido pela prova de navegacao sem remover zero DML/RPC/Edge. EMENDA CRUD TRANSVERSAL V1-03 06/11: plano P0_V103_CRUD_MASTER_2026-11-06.md. Substituir gate de vínculo local por capacidade efetiva contratantes/editar retornada pelo backend, sem bypass MASTER. Preservar atualizar_contratante, situação, concorrência e RLS. Invalidação de cache limitada à organização após sucesso. BUILD separado após CI. CHECKPOINT CRUD 06/11: plano233 e gate234 integrados. BUILD235 integrou correção da edição de contratantes por permissão efetiva, preservando RPC/situação e cache por usuário/org; CI42304938668 dois checks SUCCESS, sem comprovar sessão privada. Backend57 reconciliado apenas documentalmente; 25 fontes/catálogo invariáveis. EMENDA PRIORIDADE CRUD GLOBAL: P0_CRUD_ORGANIZACAO_2026-11-06.md, criação de organização via RPC criar_organizacao existente; sessão ativa conforme backend, sem gate MASTER inventado. Sem escrita direta ou backend/tipos/rotas; BUILD separado após checks verdes deste gate. Operações restantes seguem pendentes. EMENDA SYS01: permitir somente botão onNavegar('/selecionar-organizacao') no estado sem-acesso e regressão login.test.tsx; sem mudança Auth, credenciais ou sessão. GATE antes do BUILD. EMENDA CRUD V1-13: P0_CRUD_COMPETENCIA_2026-11-06.md; substituir perfil/vínculo local por competencias/criar efetivo no org/contrato exatos; sem bypass MASTER, RPC criar_competencia preservada. Validar contexto e negar divergência, sem cache infinito. BUILD separado após CI/merge deste gate. PRIORIDADE CRUD GLOBAL REFORÇADA: BUILD238 criação de organizações e BUILD240 capacidade de criar competências integrados, ambos com dois checks SUCCESS. Nenhuma certificação global/privada; restantes da matriz continuam pendentes. EMENDA CRUD CADASTROS: cinco APIs canônicas backend #90/#91/#92. Formulário inline para organizações e contratos, capacidades e transições somente do servidor, motivo, versão esperada e chaveUUID. Gate documental separado; BUILD só após dois checks deste PLAN, backend integrado/deploy/JWT real PASS e snapshot reancorado no HEAD vivo. Nenhuma atualização direta, tipos congelados, rota nova, segredo ou backend pelo frontend. EMENDA CRUD CAPACIDADES: NovoContrato e ImportarHistorico passam a consultar contratos/criar e historico/criar efetivos, mantendo organização ativa e contexto exato, sem bypass MASTER nem regras por perfil local. Fontes e assinaturas existentes preservadas; testes novoContrato/ingestaoHistorico e quatro arquivos já autorizados. Gate documental separado com dois checks antes de RED/BUILD. REANCORAGEM BUILD capacidades: backendbfd741d pós-correções de workflow93/94,25/25blobs e catálogo invariáveis. Este BUILD245 usa apenas APIs existentes de RBAC/INSERT/histórico, sem depender das cinco novas APIs; formulário CRUD novo permanece bloqueado até deploy/JWT. RETIFICAÇÃO Context Gate: PLAN244 reaplicou source_commit5ef5646 enquanto snapshot já9f786f15. BUILD245 bloqueou corretamente antes dos testes. Este gate documental recompõe ambos embfd741d; novo BUILD partirá desta base validada, preservando branch/CI245 como histórico, sem force-push. BACKEND CRUD PASS: canônico42314729963,127/127paridade eJWTreal50/50run42314717439/quarentenaverificada. Condição backend doPLAN242 cumprida. Formulários usam13camposcontratuais e3organizacionais permitidos, confirmação/motivo/versão/UUID, semDELETE; regressão local1017/1017 em39suítes, tsc/buildPASS; revisão corrigiu merge dirty e replaysemregressãodecache. CI/privado/certificaçãoglobal ainda exigem prova própria. EMENDA CRUD LISTAS: plano P0_CRUD_LISTAS_FRONTEND_2026-11-06.md autorizado pelo titular; consumir duas APIs de listas implantadas/JWT147PASS, dez ações canônicas; sem backend, rotas, types ou PROD. BUILD após CI documental aprovado. EMENDA capacidades documentais: corrigir criação de contratantes revogada e revisão documental MASTER semvínculo pela conjunçãoRBAC+restriçãolegada conforme HML,sem backend novo; BUILD após CI+merge documental. EMENDA arquivos e envio normativo: paginação25 já existente,seleção preservada,contexto completo,trava síncrona e campos/fechamento bloqueados duranteRPC; nenhuma API nova. BUILD após CI e merge deste gate documental. EMENDA07/11: P0_CRUD_REANALISE_CONFIRMACAO_2026-11-07.md, confirmação honesta após timeout e bloqueio de reenvio incerto no drawerV117. BUILD separado após CI documental SUCCESS. Sem backend ou nova ação de revisão humana. Emenda continuidade V1-17: feedback específico de falha ao conferir resultado incerto, preservando bloqueio de reenvio, contexto/página e ausência de confirmação de escrita. BUILD somente após CI documental; sem backend ou autenticação nova. EMENDA V117 revisão humana: plano P0_V117_REVISAO_FRONTEND_2026-11-07.md, duasRPCs protegidas jáHML/JWT38PASS,seleçãoRLS paginada de evidências,CAS/UUID/replay explícito;sem backend/tipos/rotas. BUILDsomenteapósCI documentalSUCCESS. EMENDA CONTRASTE V117: P0_V117_CONTRASTE_2026-11-07.md autoriza somente transition-transform noSheetContent doRequirementDrawer e regressão requisitoDetalhe.test.tsx jáallowlisted, apósGATE/CI. Falha real2.1:1 durante interpolação de fundo; preservar paleta e movimento. Titular determinou implementar imediatamente; sembackend/PROD. CHECKPOINT CONTRASTE: frontend284 HEAD266acf39 integrado344d24ad após3checksSUCCESS;1147testes/119focados e revisão independente semachados. Backendpin111 integrado1fe79dae. Mainfrontend344 falhou corretamente por fonteantiga2e apósmerge111; estecommit reancora snapshot/ack juntos sem alterar controle. HML ainda pendente. CHECKPOINT TIMEOUT: fix116 integrado2943e8ea, prova privada42391662453 PASS HTTP40/browser43 e quarentena8. PLAN103 integrado534a6d3dec156f60ac31b5b0c7f1fd05ab6bbbe7; próximoGATE separado antes doBUILD de roteamento; V1 não certificada. Snapshot/ack reancorados juntos, fontes/catálogo inalterados. CHECKPOINT ROTEAMENTO: BUILD118 integrado2ebb9e3a; runs42393625175/123/096 comprovaram3scopesSUCCESS/materialSKIPPED sem HML. Resultado119 integradoa6399adc39e984293c14d7adcf106b00ab76ce50. Snapshot/ack reancorados juntos; fontes/catálogo invariáveis. Próxima auditoriaCRUDglobal/V1 sem certificação indevida. PLAN FECHAMENTO CRUDGLOBAL07/11: inventário28rotas/18domínios, fonteoriginalZIP/hashesconferidos. CRUD-LISTA-001 perda de rascunho após409/refetchtransitório; somenteGerenciarListas/teste jáautorizados, GATE separado antesBUILD. Matriz honesta de evidências eprova privada global posterior por harnessbackendpróprio; nenhumDELETE/permissaoinventada, V1 nãocertificada. GATE CRUDGLOBAL: PLAN289 integrado com3checksSUCCESS; fontes/matriz revisadas e escopo2arquivos. Resguardar403/sessão, CAS/UUID e replayexplícito semnovenvioporefeito. BUILD sóapósCI/mergedesteGATE. BUILD CRUD-LISTA-001: draftpreservadoapós409/refetchtransitório;novasoperaçõesbloqueadasemfalha/fetch,403 de detalhe OUcabeçalhos oculta dados eimpedereplay. RED39/2 eheader41/1;GREEN1150/1150/foco42,tsc/build/lintfocal/gatesPASS;CI eHML ainda pendentes. CHECKPOINT CRUDGLOBAL07/11: PLAN289/GATE290/FIX291 integrados,1150testes e3checksSUCCESS. BackendPLAN120/GATE121 integrados34d88b8a77cd3ae2abfca72ee78d441c426e767b; harnessprivado em preparação, nenhumPASSglobal. Snapshot/ackreancoradosjuntos. Checkpoint: protocolo privado implementado nos PRs backend 122–124, 41 testes locais, duas falhas do teste preservadas com quarentena verificada. Nova HML pendente; nenhuma certificação global. Emenda visual: PASS funcional37/76 preservado;4capturas rejeitadas por instabilidade/corte,4aceitas só painel. PRbackend130 trata gatevisual, sem fecharWCAG/V1. EMENDA V1-14 08/11: causa comprovada na resposta RPC do portão de competência; campo canônico conformes_ou_na_validos e alias de exibição avaliados. Autorizar exclusivamente parser e teste após CI e merge do PLAN V114. PR326 inicial bloqueado corretamente pelo scope gate, não integrar sem novo BUILD sobre PLAN prévio. Sem backend/RLS/RBAC/types/PROD; reteste autenticado obrigatório. REANCORAGEM V114 08/11: backend main f53304f; comparação GitHub 765dac8..f53304f 9 commits e somente docs/backend/P0_CORS_DOCUMENTAL_HML_GATE_2026-11-07.md e docs/tasks/active-task.json alterados, nenhum dos 25 documentos normativos nem catálogo 100/97. Snapshot e PLAN reancorados em conjunto; verificar CI vivo antes de BUILD. EMENDA V114 08/11: RED do BUILD #328 CI 42446316835, 7 falhas por fixtures V118/V119 usando portao.avaliados legado. Autorizar apenas substituição do campo por conformes_ou_na_validos nesses dois testes, sem flexibilizar parser, RBAC/RLS ou backend. Novo BUILD somente após PLAN CI verde e merge. EMENDA C13: API frontend e teste DTO da PR #450 autorizados previamente ao BUILD, sem tocar backend ou tipos. CI/revisão obrigatórios. CHECKPOINT PR #464: reexecução CI solicitada pelo titular em 09/11/2026; autorização de escopo mantém precedência do primeiro commit PLAN b806374. Não certifica BUILD, não dispensa testes/review.",
   "context_pack_version": "4.1",
@@ -3965,5 +3976,527 @@
     "auth_authorized": false,
     "deploy_authorized": false,
     "v1_certified": false
+  },
+  "integracao_funcional_fase2": {
+    "status": "VALIDADO_TECNICAMENTE_AGUARDA_CI_MERGE_PREVIO",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_PLAN_GATE_2026-11-11.md",
+    "autorizacao": "Plano de sete fases integralmente aprovado; ordem expressa nesta conversa para executar e certificar a Fase 2 sem bypass.",
+    "baseline_frontend": "538c52d909a5a9929c10740e6f961e38beb8ee11",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "escopo": "Navegação autenticada HML, leituras/UI local, sem mutação de negócio; novo nonce governado; preservar todos os controles e provas anteriores.",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "request_nonce": "integracao-v1-fase2-nav-20261111-r1"
+  },
+  "integracao_funcional_fase2_reentrada_v120": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_V120_REENTRADA_PLAN_GATE_2026-11-11.md",
+    "autorizacao": "Ordem expressa do titular para resolver bloqueios da Fase 2 sem bypass; correção mínima de reentrada persistente V114→V120.",
+    "baseline": "c1b003bd9fd1e8909a2d1950e43984023206f1d3",
+    "build_allowlist": [
+      "src/components/competencias/CompetenciaVisaoGeral.tsx",
+      "src/components/competencias/CompetenciaApresentacoesLista.tsx",
+      "src/lib/competencias/protocoloDados.ts",
+      "src/test/competenciaApresentacoesLista.test.tsx",
+      "src/test/protocoloDados.test.ts",
+      "src/test/competenciaVisaoGeral.test.tsx"
+    ],
+    "backend_autorizado": false,
+    "prod_autorizado": false,
+    "workflow_autorizado": false,
+    "hml_publicacao_autorizada": "Somente novo SHA aprovado da correção no projeto HML existente, ignored-build fixado exatamente, identidade real e rollback preservado; gate e relatório anteriores ao novo request."
+  },
+  "integracao_funcional_fase2_delta_testec": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_DELTA_TESTEC_PLAN_GATE_2026-11-12.md",
+    "build_allowlist": [
+      "scripts/testc/visual-audit.mjs",
+      "scripts/testc/visual-audit.test.mjs"
+    ],
+    "evidencia": "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS;16PNG+relatorio+SHA256SUMS no artefato existente do Teste C",
+    "workflow_autorizado": false,
+    "backend_autorizado": false,
+    "prod_autorizado": false,
+    "auth_hml_autorizado": false,
+    "substitui_NAV_autenticado": false
+  },
+  "integracao_funcional_fase2_v119_foco": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_V119_FOCO_PLAN_GATE_2026-11-12.md",
+    "baseline": "5ff286c13195d93c0ef9b766969dc0829292794b",
+    "build_allowlist": [
+      "src/components/competencias/CompetenciaApresentar.tsx",
+      "src/test/competenciaApresentar.test.tsx"
+    ],
+    "backend_autorizado": false,
+    "prod_autorizado": false,
+    "workflow_autorizado": false,
+    "publicacao_hml": "Somente merge final desta correção com #598 ancestral, após pushCI; substitui candidato intermediário5ff como futuro pin NAV, sem nonce consumida."
+  },
+  "integracao_funcional_fase2_r2": {
+    "status": "VALIDADO_TECNICAMENTE_AGUARDA_CI_MERGE_PREVIO",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R2_PRONTIDAO_PLAN_GATE_2026-11-12.md",
+    "autorizacao": "Ordem expressa reiterada do titular para concluir/certificar Fase 2 e resolver bloqueios sem perguntas nem bypass.",
+    "baseline_frontend": "36a73d483bad43c53823f5bbfa35aa071afdb134",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261112-r2",
+    "spent_nonce": "integracao-v1-fase2-nav-20261111-r1",
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "deploy_autorizado": false,
+    "prod_autorizado": false,
+    "original_native_cases_preserved": 18,
+    "navigation_native_supplement": "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+    "report_schema": "contaos.navigation.audit.v2"
+  },
+  "integracao_funcional_fase2_r3": {
+    "status": "VALIDADO_TECNICAMENTE_AGUARDA_CI_MERGE_PREVIO",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R3_REDE_PLAN_GATE_2026-11-12.md",
+    "baseline_frontend": "22b1a0f7b432d72c1456d5061dd2cafb529f62f2",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261112-r3",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2"
+    ],
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "deploy_autorizado": false,
+    "prod_autorizado": false
+  },
+  "integracao_funcional_fase2_r4": {
+    "status": "VALIDADO_TECNICAMENTE_AGUARDA_CI_MERGE_PREVIO",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R4_CARGAS_HISTORICO_PLAN_GATE_2026-11-12.md",
+    "baseline_frontend": "bb245f124aad6eb33c133100bde5c742978ef01c",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261112-r4",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2",
+      "integracao-v1-fase2-nav-20261112-r3"
+    ],
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "deploy_autorizado": false,
+    "prod_autorizado": false
+  },
+  "integracao_funcional_fase2_r5": {
+    "status": "VALIDADO_TECNICAMENTE_AGUARDA_CI_MERGE_PREVIO",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R5_REVIEW_CANONICA_PLAN_GATE_2026-11-12.md",
+    "baseline_frontend": "f5533cd11c4cefe9577857e419d8ea57a099712d",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261112-r5",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2",
+      "integracao-v1-fase2-nav-20261112-r3",
+      "integracao-v1-fase2-nav-20261112-r4"
+    ],
+    "request_review_schema": "contaos.single-request.review.v1",
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "deploy_autorizado": false,
+    "prod_autorizado": false
+  },
+  "integracao_funcional_fase2_r6": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R6_QUIESCENCIA_MOVEL_PLAN_GATE_2026-11-12.md",
+    "baseline_frontend": "52598a8e0b6b43b51fdee6ffc3b274a13adb6fea",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261112-r6",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2",
+      "integracao-v1-fase2-nav-20261112-r3",
+      "integracao-v1-fase2-nav-20261112-r4",
+      "integracao-v1-fase2-nav-20261112-r5"
+    ],
+    "r5_artifact_digest": "sha256:bf2ae1e54f7ba034ec9d2232ba2b6abceb63d2c4afda927d65f423ed6daf0bf1",
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "deploy_autorizado": false,
+    "prod_autorizado": false
+  },
+  "integracao_funcional_fase2_r7": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R7_COMMIT_ROTA_MOVEL_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "7c3a8fda149d705adb906b1f10a53e20869018cc",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "src/components/layout/ContaOSAppShell.tsx",
+      "src/test/appShellSidebar.test.tsx",
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r7",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2",
+      "integracao-v1-fase2-nav-20261112-r3",
+      "integracao-v1-fase2-nav-20261112-r4",
+      "integracao-v1-fase2-nav-20261112-r5",
+      "integracao-v1-fase2-nav-20261112-r6"
+    ],
+    "r6_artifact_digest": "sha256:ee9bd6b955b11b88a9fbd84e5d2b89d0fdaaaea95be74d43519d9c658335f566",
+    "produto_autorizado": true,
+    "produto_allowlist_fechada": true,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false
+  },
+  "integracao_funcional_fase2_r8": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R8_FENCE_DRAIN_V110_PLAN_GATE_2026-11-13.md",
+    "emenda_certificacao_incremental": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R8_EMENDA_CERTIFICACAO_INCREMENTAL_2026-11-13.md",
+    "baseline_frontend": "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist_candidata": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "src/components/layout/ContaOSAppShell.tsx",
+      "src/test/appShellSidebar.test.tsx"
+    ],
+    "produto_condicionado_a_prova_causal": true,
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r8",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2",
+      "integracao-v1-fase2-nav-20261112-r3",
+      "integracao-v1-fase2-nav-20261112-r4",
+      "integracao-v1-fase2-nav-20261112-r5",
+      "integracao-v1-fase2-nav-20261112-r6",
+      "integracao-v1-fase2-nav-20261113-r7"
+    ],
+    "r7_run": 43358055422,
+    "r7_private_job": 131665158901,
+    "r7_artifact": 14008077669,
+    "r7_artifact_digest": "sha256:c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3",
+    "r7_observados": 26,
+    "r7_pass_indices": "1-25",
+    "r7_fail": {
+      "indice": 26,
+      "surface": "V110",
+      "width": 390,
+      "code": "FENCE_DRAIN_TIMEOUT"
+    },
+    "r7_nao_executados": "27-52",
+    "resume_from_inicial_candidato": 26,
+    "request_chaves": 7,
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false
+  },
+  "integracao_funcional_fase2_r9": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R9_ABORTOS_DESTINO_SYS04_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "9a4d0ad16a8a64fa04a30208c8c36e7020ec9b01",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/R8_LEDGER_COMPATIBILIDADE_2026-11-13.md",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/R9_EXPERIMENTO_PREFLIGHT_POST_2026-11-13.md"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r9",
+    "spent_nonces": [
+      "integracao-v1-fase2-nav-20261111-r1",
+      "integracao-v1-fase2-nav-20261112-r2",
+      "integracao-v1-fase2-nav-20261112-r3",
+      "integracao-v1-fase2-nav-20261112-r4",
+      "integracao-v1-fase2-nav-20261112-r5",
+      "integracao-v1-fase2-nav-20261112-r6",
+      "integracao-v1-fase2-nav-20261113-r7",
+      "integracao-v1-fase2-nav-20261113-r8"
+    ],
+    "r8_run": 43388821235,
+    "r8_private_job": 131764048105,
+    "r8_artifact": 14020676685,
+    "r8_artifact_digest": "sha256:ab15acd3b6a136139e620c5f734783b054157fd98ecbadcdec4e9026fde97e06",
+    "r8_report_sha256": "3025371b6c575cac164f5c5e9068104ee9a1a98d60926499a5230c97f71ac4d7",
+    "r8_pass_candidatos": "26-29,31-34",
+    "r8_fail": [
+      {
+        "indice": 30,
+        "surface": "V112",
+        "width": 390,
+        "code": "NAVIGATION_CASE"
+      },
+      {
+        "indice": 35,
+        "surface": "V115",
+        "width": 1440,
+        "code": "FENCE_DRAIN_TIMEOUT"
+      }
+    ],
+    "resume_from_candidato": 30,
+    "request_chaves": 7,
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "emenda_r9": {
+      "A": "agrupamento por identidade; BUILD amarrado ao commit do PLAN",
+      "B": "revisão canônica contaos9999 ou Edivan5002; JSON exato ou com rodapé fixo",
+      "C": "PASS após FAIL não fatal; ledger com lacunas; executa só pendentes",
+      "D": "pré-revisão por mutação",
+      "aprovacao": "titular, chat 13/11/2026 05:20 Bahia"
+    },
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
+  },
+  "integracao_funcional_fase2_r10": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R10_SHELL_ROTA_PUBLICA_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "ccd14b1113cdd24c7ae72bc2cd2a29d7de44bc74",
+    "baseline_backend": "5eca44aebead3183e81b5c1af0d1dffa5fb8feb6",
+    "build_allowlist": [
+      "src/components/layout/ContaOSAppShell.tsx",
+      "src/test/appShellTransicaoRotaPublica.test.tsx",
+      "src/test/appShellSidebar.test.tsx",
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "pins_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r10",
+    "spent_nonces_adicionais": [
+      "integracao-v1-fase2-nav-20261113-r9"
+    ],
+    "r9_run": 43401890915,
+    "r9_private_job": 131807145427,
+    "r9_artifact": 14027480344,
+    "r9_artifact_digest": "sha256:f3e5f1aab6f6a1667f58aa85b18dd1e17b86c4334fd0f6ecde40c5d4e07005f1",
+    "r9_report_sha256": "fd96cd9713d5e7ab3be2174a33192b145dbdc138516242244eb4967771438860",
+    "r9_pass": "30,35-38,41-44,47-52",
+    "r9_fail": [
+      {
+        "indice": 39,
+        "surface": "V117",
+        "width": 1440,
+        "code": "NAVIGATION_ROUTE"
+      },
+      {
+        "indice": 40,
+        "surface": "V117",
+        "width": 390,
+        "code": "NAVIGATION_ROUTE"
+      },
+      {
+        "indice": 45,
+        "surface": "V120",
+        "width": 1440,
+        "code": "NAVIGATION_CASE"
+      },
+      {
+        "indice": 46,
+        "surface": "V120",
+        "width": 390,
+        "code": "NAVIGATION_CASE"
+      }
+    ],
+    "produto_autorizado": true,
+    "produto_escopo": "ContaOSAppShell: só a escolha do layout pela rota renderizada; RBAC, menu e copiloto inalterados; sem mudança visual",
+    "deploy_hml": "somente o merge do BUILD R10, mecanismo canônico",
+    "ledger_v3": "SUPERSEDED de todos os 33 PASS; retomada no índice 1; 52 pendentes",
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
+  },
+  "integracao_funcional_fase2_r11": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R11_LOGOUT_FECHAMENTO_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "050beb1bbc3ce886227865178b7bdbecef964033",
+    "produto": "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+    "deployment": "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/R11_LEDGER_COMPATIBILIDADE_2026-11-13.md"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r11",
+    "spent_nonces_adicionais": [
+      "integracao-v1-fase2-nav-20261113-r10"
+    ],
+    "r10_run": 43459877744,
+    "r10_private_job": 132004527239,
+    "r10_artifact": 14059408905,
+    "r10_artifact_digest": "sha256:5a1b08e2eaa519d3e350488994c8625cd0bc4a60fe9d73e1c19432e717971236",
+    "r10_report_sha256": "a70976206a97571b9613ffb55dfb18491a5a76e4e337afd7c8f7b378d50eb2fc",
+    "r10_pass": "1-52 (linhas)",
+    "r10_global": {
+      "transportErrors": 1,
+      "httpErrors": 1,
+      "networkFailure": "ABORTED API POST fetch",
+      "logoutVerified": true
+    },
+    "ledger_v4": "51 PASS (1-51) da R10; pendente 52 (V123/390)",
+    "decisao_titular": "51 no ledger + 1 pendente (13/11/2026)",
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
+  },
+  "integracao_funcional_fase2_r12": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R12_PREFLIGHT_PRAZO_API_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "de2c28d7c79c62f91470dfe4c324ec7ce002367f",
+    "produto": "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+    "deployment": "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase2/R11_LEDGER_COMPATIBILIDADE_2026-11-13.md"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r12",
+    "spent_nonces_adicionais": [
+      "integracao-v1-fase2-nav-20261113-r11"
+    ],
+    "r11_run": 43482958336,
+    "r11_request_job": 132083907871,
+    "r11_bloqueio": "REQUEST_API_TIMEOUT no preflight, sem credenciais nem casos",
+    "ledger": "v4 2245b4fe inalterado; pendente 52",
+    "prazo_api_inalterado": true,
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
+  },
+  "integracao_funcional_fase2_r13": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R13_GUARD_NATIVO_NONCE_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "bb05f3bf13b40811b6c9a9ab511691d7c421de91",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r13",
+    "spent_nonces_adicionais": [
+      "integracao-v1-fase2-nav-20261113-r12"
+    ],
+    "r12_run": 43494812615,
+    "r12_private_job": 132125342973,
+    "r12_bloqueio": "NATIVE_GUARD (WORKER/FENCE_SOURCE) antes do login, sem casos",
+    "ledger": "v4 2245b4fe inalterado; pendente 52",
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
+  },
+  "integracao_funcional_fase2_r14": {
+    "status": "PLAN_PREVIO_AGUARDA_REVISAO_CI_MERGE",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE2_R14_LOGOUT_204_PLAN_GATE_2026-11-13.md",
+    "baseline_frontend": "49d23573db33009abbcb47dd33617dee988b2327",
+    "build_allowlist": [
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs"
+    ],
+    "request_nonce": "integracao-v1-fase2-nav-20261113-r14",
+    "spent_nonces_adicionais": [
+      "integracao-v1-fase2-nav-20261113-r13"
+    ],
+    "r13_run": 43502004875,
+    "r13_private_job": 132150246933,
+    "r13_artifact": 14074148065,
+    "r13_artifact_digest": "sha256:4063b36ddf96972e9a0ce0a131fb127cdffd2c08a76ffa9da9fa6deedc2c9621",
+    "r13_report_sha256": "289f48eec465a4901b867a4eada7a906071fe050353b2b4e1f5be0ec800f2758",
+    "causa": "POST /auth/v1/logout com resposta 204 não lida: Chromium emite ERR_ABORTED após o response",
+    "ledger": "v4 2245b4fe inalterado; pendente 52",
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "workflow_autorizado": false,
+    "prod_autorizado": false,
+    "merge_metodo": "merge commit",
+    "revisao_canonica_ultima": true
+  },
+  "integracao_funcional_fase3_r1": {
+    "status": "BUILD2A_INTEGRADO_BUILD2B1_EM_REVISAO",
+    "plano": "docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md",
+    "plano_mestre": "docs/frontend/planos/PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md",
+    "matriz_blob": "bb7ce43f9c334f2f03e9aafab405addadfe5e19a",
+    "baseline_frontend": "58097ad4a0d4126856072bba6dc6e8f5b2994552",
+    "casos": 138,
+    "build_allowlist": [
+      "scripts/hml/integracao-v1-fase3.mjs",
+      "scripts/hml/integracao-v1-fase3.test.mjs",
+      "scripts/hml/authenticated-visual-audit.mjs",
+      "scripts/hml/authenticated-visual-audit.test.mjs",
+      "scripts/hml/prepare-visual-fixtures.mjs",
+      "scripts/hml/prepare-visual-fixtures.test.mjs",
+      ".github/workflows/contaos-trilha-a-fixtures.yml",
+      "docs/frontend/auditorias/integracao-funcional-v1/fase3/**"
+    ],
+    "workflow_mudanca_limitada": "contaos-trilha-a-fixtures.yml: (a) paths dos dois arquivos F3; (b) job protocol inclui-os em node --test/eslint/prettier; (c) job private (environment hml) expõe CONTAOS_HML_SYNTHETIC_2_* só no env do passo do executor F3 após native-guard e request-revalidate; (d) passos Trilha A e F3 condicionados ao escopo exposto pela revalidação",
+    "request_nonce": "integracao-v1-fase3-rel-20261113-r1",
+    "request_operation": "fixtures",
+    "organizacao": "nova organização sintética exclusiva da Fase 3, criada via SYS04; e87f7e68 sem mutação",
+    "segundo_usuario_sintetico": "autorizado pelo titular; criado pelo titular na HML; perfil leitor na org F3; login só leitura com logout comprovado; secrets CONTAOS_HML_SYNTHETIC_2_EMAIL/_PASSWORD",
+    "orcamento_intencoes": {
+      "total": 60,
+      "por_execucao": 30
+    },
+    "produto_autorizado": false,
+    "backend_autorizado": false,
+    "prod_autorizado": false,
+    "merge_metodo": "merge commit",
+    "escopo_protocolo": "resolveFixturesScope: TRILHA_A | INTEGRACAO_V1_FASE3_REL; exclusão mútua fail-closed nos dois executores",
+    "cleanup": "divergência aprovada da seção 16.2: isolamento sem exclusão; cleanupStatus ISOLATED_NO_DELETE | NO_MUTATION | CLEANUP_FAILED",
+    "separacao_papeis": "autor da PR #655 Edivan5002; aprovação por contaos9999; nas PRs seguintes aprova a identidade não autora",
+    "plan_merge": "3bbd0270cffc1a93d5d9ff05ae8484981cb394f2",
+    "build_divisao": "BUILD-1 offline (protocolo, guardas, YAML a-d, catálogo F3_CASES.json, validadores); BUILD-2 drivers de UI e esperado por tela antes de qualquer REQUEST",
+    "catalogo_sha256": "bce15980d31ce22c8836e26621b267951296e905139b9833c8db4a7400c9ecbb",
+    "build1_merge": "fa7f58b2a8c18fad9452c35f5e16dfbe3ca528c5",
+    "rbac_leitor": "versão 6 lida por SELECT autorizado pelo titular; 15 permitidos, 33 negados",
+    "segundo_usuario_status": "titular informou 'Usuário criado' (13/11/2026 22h17); secrets provados na 1ª execução",
+    "build2a_merge": "d2a6557bc285e8d8bc59120df656f92dd163d9c7",
+    "build2b_divisao": "decisão do titular em 13/11/2026 ('2b-1 infra, 2b-2 drivers (Recomendado)'): BUILD-2b-1 offline (relatório e SHA256SUMS também parcial, ledger append-only, livro de intenções, RBAC drift, classificador de negação, contrato do YAML); BUILD-2b-2 drivers de UI e sessões",
+    "ledger_sha256": "1d402a1a4946c2aad8cc7715fa86b45c4aae6f68ab63aab9f77d0ec94e93c236",
+    "workflow_sha256": "8da83394d6018f9ac473970020bea693f8c3be996595ccc9573288eb29fe618c",
+    "provas_r4_r12_r14": "conferidas em 13/11/2026 com pai d2a6557: OK (só exigem ancestralidade)",
+    "build2b1_pr": "#658 (autor Edivan5002); CHANGES_REQUESTED contaos9999 review 5900926490 no HEAD 363b451; R2 atende B1, I1-I4, M1-M5; CHANGES_REQUESTED contaos9999 review 5901072418 no HEAD 41a4331; R3 atende A, B, C, D, E; CHANGES_REQUESTED contaos9999 review 5901160351 no HEAD fcb5224; R4 atende I-A, M-1, M-2, M-3; parecer R4 APPROVE registrado como comentário 5901220713 no HEAD 4f204c9; R5 correção estrutural de causa raiz: máquina de estados única com eventos e replay no relatório e no ledger, livro só a partir de ledger validado, teste de propriedade; CHANGES_REQUESTED contaos9999 review 5903041644 no HEAD 49fc13d (referências escolhidas por quem chama); R6 âncoras do módulo (catálogo, ledger com SHA, política de produção no gate), árvore JSON pura, log canônico com estado exato, tipos de intenção, abandon, regra C ligada ao replay; CHANGES_REQUESTED contaos9999 review 5903136160 no HEAD 588532c (fato observado tratado como erro); R7 fato observado sempre registrado, livro transacional, relatório parcial com o livro, teto de eventos provado, gravador só com política de produção, entrada do ledger pela execução citada; parecer R7 APPROVE no HEAD f7e1b9f com quatro menores: M1 (gerador do teste de propriedade) e M4 (documentação) corrigidos, M2 (proveniência no livro) e M3 (execução do ledger ligada ao artefato) obrigações do BUILD-2b-2"
   }
 }

@@ -112,6 +112,33 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
           fetch-depth: 0
+      - name: Testar seletor exato da solicitação sem credenciais
+        shell: bash
+        run: |
+          set -euo pipefail
+          fixture="$(mktemp -d)"
+          trap 'rm -rf "$fixture"' EXIT
+          git -C "$fixture" init -q
+          git -C "$fixture" config user.name "ContaOS CI"
+          git -C "$fixture" config user.email "ci@example.invalid"
+          request='docs/frontend/auditorias/TRILHA_A_SOLICITACAO_UNICA.json'
+          mkdir -p "$fixture/docs/frontend/auditorias"
+          echo '{"request_id":"historica"}' > "$fixture/$request"
+          git -C "$fixture" add .
+          git -C "$fixture" commit -qm 'baseline com request historica'
+          echo 'documentacao sem solicitacao' > "$fixture/arquivo-nao-request.md"
+          git -C "$fixture" add .
+          git -C "$fixture" commit -qm 'merge sem request'
+          parent="$(git -C "$fixture" rev-parse HEAD^1)"
+          changed="$(git -C "$fixture" diff --name-only --no-renames "$parent" HEAD -- "$request")"
+          test -z "$changed" || { echo 'ERRO: arquivo nao-request selecionou request historica' >&2; exit 1; }
+          echo '{"request_id":"nova"}' > "$fixture/$request"
+          git -C "$fixture" add .
+          git -C "$fixture" commit -qm 'nova request real'
+          parent="$(git -C "$fixture" rev-parse HEAD^1)"
+          changed="$(git -C "$fixture" diff --name-only --no-renames "$parent" HEAD -- "$request")"
+          test "$changed" = "$request" || { echo 'ERRO: request nova nao foi selecionada' >&2; exit 1; }
+          echo 'P0 seletor exato: caso historico NO-REQUEST e caso novo REQUEST PASS'
       - uses: actions/setup-node@v4
         with:
           node-version: "24"

@@ -1,0 +1,2463 @@
+[
+  {
+    "nome": "adicionar_versao_documento_competencia_v115",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103101542_v115_documentos_competencia_autoridade.sql",
+        "linha": 337,
+        "trecho": "create or replace function privado.adicionar_versao_documento_competencia_v115(",
+        "schema": "privado",
+        "sha256": "e075dddbf9afb1c38d92550f5ec5377dd2964c2f39b09e209f7451e8eadcd5af",
+        "tabelas_referenciadas": [
+          "documentos_competencia",
+          "execucoes_analise",
+          "processamentos_documento",
+          "v_doc",
+          "v_motivo_obrigatorio",
+          "v_num",
+          "v_ver",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103101542_v115_documentos_competencia_autoridade.sql",
+        "linha": 440,
+        "trecho": "create or replace function public.adicionar_versao_documento_competencia_v115(",
+        "schema": "public",
+        "sha256": "e075dddbf9afb1c38d92550f5ec5377dd2964c2f39b09e209f7451e8eadcd5af",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 2388,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.adicionar_versao_documento_competencia_v115(p_id_documento uuid, p_id_arquivo uuid, p_motivo text, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "documentos_competencia",
+          "execucoes_analise",
+          "processamentos_documento",
+          "v_doc",
+          "v_motivo_obrigatorio",
+          "v_num",
+          "v_ver",
+          "versoes_documento"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "adicionar_versao_documento_contrato",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103013814_v110_documentos_contrato_atomicos.sql",
+        "linha": 98,
+        "trecho": "create or replace function public.adicionar_versao_documento_contrato(p_id_documento uuid,p_id_arquivo uuid,p_motivo text,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "b521e10663beb37dcb1753e2f028302a80396c2285a7d3709cd3433217b0337a",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "alterar_situacao_contrato_v1",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
+        "linha": 127,
+        "trecho": "create function public.alterar_situacao_contrato_v1(p_id_organizacao uuid,p_id_contrato uuid,p_versao_esperada bigint,p_situacao text,p_motivo text,p_request_id uuid) returns jsonb language sql security invoker set search_path='' as $$select privado.crud_cadastro_mutar_v1($1,'contratos',$2,$3,'situacao',jsonb_build_object('situacao',$4),$5,$6)$$;",
+        "schema": "public",
+        "sha256": "11c789eee5ed03dce4944f0572a08cf7e02ea540bd28ab1799bfa043f8f3af92",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "alterar_situacao_organizacao_v1",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
+        "linha": 125,
+        "trecho": "create function public.alterar_situacao_organizacao_v1(p_id_organizacao uuid,p_versao_esperada bigint,p_situacao text,p_motivo text,p_request_id uuid) returns jsonb language sql security invoker set search_path='' as $$select privado.crud_cadastro_mutar_v1($1,'organizacoes',$1,$2,'situacao',jsonb_build_object('situacao',$3),$4,$5)$$;",
+        "schema": "public",
+        "sha256": "11c789eee5ed03dce4944f0572a08cf7e02ea540bd28ab1799bfa043f8f3af92",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "aprovar_apresentacao",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101211016_0007_portoes_apresentacao.sql",
+        "linha": 81,
+        "trecho": "create or replace function public.aprovar_apresentacao(p_id_competencia uuid,p_fundamento text default null)",
+        "schema": "public",
+        "sha256": "a78925a55b882e1a25d2e0f0cc87dcf1c1da800f8eef44a91b6ffe7a5dc429a8",
+        "tabelas_referenciadas": [
+          "aprovacoes",
+          "competencias",
+          "execucoes_analise",
+          "v",
+          "v_aprov",
+          "v_exec"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101211533_0016_rpc_privadas_wrappers.sql",
+        "linha": 35,
+        "trecho": "create function public.aprovar_apresentacao(p_id_competencia uuid,p_fundamento text default null) returns jsonb language sql security invoker set search_path='' as $$select privado.aprovar_apresentacao($1,$2)$$;",
+        "schema": "public",
+        "sha256": "962b414d1026773289d2cf25922bb8f75abb538cc246eea75a67fca3a552ee3a",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261101214949_0030_fechamento_funcional_v1_v2.sql",
+        "linha": 179,
+        "trecho": "create or replace function privado.aprovar_apresentacao(p_id_competencia uuid,p_fundamento text default null)",
+        "schema": "privado",
+        "sha256": "6009611b167dbef7daa4f0c6107ba4fae033a3215c7a5a1d9151bee9ed9b3542",
+        "tabelas_referenciadas": [
+          "aprovacoes",
+          "competencias",
+          "execucoes_analise",
+          "pareceres_internos",
+          "v",
+          "v_aprov",
+          "v_exec",
+          "v_parecer"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102021238_0048_gate_context_hash_checks.sql",
+        "linha": 26,
+        "trecho": "create or replace function privado.aprovar_apresentacao(p_id_competencia uuid, p_fundamento text default null::text)",
+        "schema": "privado",
+        "sha256": "04a5876678461ce9f4f21cdcdc90f09cd195bcf7f77d9c7bf078a405d800933a",
+        "tabelas_referenciadas": [
+          "aprovacoes",
+          "competencias",
+          "execucoes_analise",
+          "pareceres_internos",
+          "v",
+          "v_aprov",
+          "v_exec",
+          "v_hash_atual",
+          "v_parecer"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 3090,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.aprovar_apresentacao(p_id_competencia uuid, p_fundamento text DEFAULT NULL::text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "aprovacoes",
+          "competencias",
+          "execucoes_analise",
+          "pareceres_internos",
+          "v",
+          "v_aprov",
+          "v_exec",
+          "v_hash_atual",
+          "v_parecer"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "aprovar_parecer_interno",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101214949_0030_fechamento_funcional_v1_v2.sql",
+        "linha": 163,
+        "trecho": "create or replace function privado.aprovar_parecer_interno(p_id_parecer uuid,p_aprovar boolean,p_fundamento text default null)",
+        "schema": "privado",
+        "sha256": "6009611b167dbef7daa4f0c6107ba4fae033a3215c7a5a1d9151bee9ed9b3542",
+        "tabelas_referenciadas": [
+          "pareceres_internos",
+          "v"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101214949_0030_fechamento_funcional_v1_v2.sql",
+        "linha": 174,
+        "trecho": "create or replace function public.aprovar_parecer_interno(p_id_parecer uuid,p_aprovar boolean,p_fundamento text default null)",
+        "schema": "public",
+        "sha256": "6009611b167dbef7daa4f0c6107ba4fae033a3215c7a5a1d9151bee9ed9b3542",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261102192345_v106_corrigir_bola_aprovar_parecer_interno.sql",
+        "linha": 1,
+        "trecho": "create or replace function privado.aprovar_parecer_interno(",
+        "schema": "privado",
+        "sha256": "07585271ea494ad8d9fe8c50e92fc69b40d4a8980e02ebad3b0b113c9b46c871",
+        "tabelas_referenciadas": [
+          "pareceres_internos",
+          "v"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 3035,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.aprovar_parecer_interno(p_id_parecer uuid, p_aprovar boolean, p_fundamento text DEFAULT NULL::text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "pareceres_internos",
+          "v"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "aprovar_regra_preventiva",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101213428_0025_fechamento_rpc_rate_limit_concorrencia.sql",
+        "linha": 9,
+        "trecho": "create or replace function privado.aprovar_regra_preventiva(p_id_regra_preventiva uuid,p_parecer text default null)",
+        "schema": "privado",
+        "sha256": "01ff935c9801a46b6b6c4df5b5cde86f51f7e494e69202bf5d5215c124030e03",
+        "tabelas_referenciadas": [
+          "regras_preventivas",
+          "revisoes_regras_preventivas",
+          "v",
+          "v_revisao"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101213428_0025_fechamento_rpc_rate_limit_concorrencia.sql",
+        "linha": 35,
+        "trecho": "create or replace function public.aprovar_regra_preventiva(p_id_regra_preventiva uuid,p_parecer text default null)",
+        "schema": "public",
+        "sha256": "01ff935c9801a46b6b6c4df5b5cde86f51f7e494e69202bf5d5215c124030e03",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261101222447_0033_inteligencia_historica_ranking_temporal.sql",
+        "linha": 67,
+        "trecho": "create or replace function privado.aprovar_regra_preventiva(p_id_regra_preventiva uuid,p_parecer text default null)",
+        "schema": "privado",
+        "sha256": "11f967c283567e79b1813445a6dad3a3f2e2e62c1f587d43d4a08c4baa787ebc",
+        "tabelas_referenciadas": [
+          "fontes_formais_regras_preventivas",
+          "regras_preventivas",
+          "revisoes_regras_preventivas",
+          "v",
+          "v_revisao"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101222715_0032b_v4_governanca_regra_formal_perfil_contratante.sql",
+        "linha": 85,
+        "trecho": "create or replace function privado.aprovar_regra_preventiva(p_id_regra_preventiva uuid,p_parecer text default null)",
+        "schema": "privado",
+        "sha256": "3519b028603a0f7ab29104441b64ff07c4f3f1f98422c0efe69542ada6c31f51",
+        "tabelas_referenciadas": [
+          "f",
+          "fontes_normativas",
+          "p",
+          "precedentes",
+          "regras_preventivas",
+          "revisoes_regras_preventivas",
+          "v",
+          "v_revisao",
+          "versoes_fontes_normativas",
+          "vf"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "aprovar_versao_fonte_v107",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102215515_v107_base_normativa_autorizada.sql",
+        "linha": 141,
+        "trecho": "create or replace function privado.aprovar_versao_fonte_v107(p_id_organizacao uuid,p_id_versao uuid,p_hash_esperado text,p_fundamento text,p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "340b97a37298b7860f5dfe14fd84d51483663660d3d6bb1f065c8fd617b1753a",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "f",
+          "fontes_normativas",
+          "p_hash_esperado",
+          "v",
+          "versoes_fontes_normativas"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102215515_v107_base_normativa_autorizada.sql",
+        "linha": 205,
+        "trecho": "create or replace function public.aprovar_versao_fonte_v107(p_id_organizacao uuid,p_id_versao uuid,p_hash_esperado text,p_fundamento text,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "340b97a37298b7860f5dfe14fd84d51483663660d3d6bb1f065c8fd617b1753a",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1590,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.aprovar_versao_fonte_v107(p_id_organizacao uuid, p_id_versao uuid, p_hash_esperado text, p_fundamento text, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "f",
+          "fontes_normativas",
+          "p_hash_esperado",
+          "v",
+          "versoes_fontes_normativas"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "atualizar_contratante",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102163433_v103_editar_contratante_concorrencia_auditoria.sql",
+        "linha": 1,
+        "trecho": "create or replace function privado.atualizar_contratante(",
+        "schema": "privado",
+        "sha256": "a10ec4afc279c9f0f0ad4fd374f732278a7fa5c89f86945d2488859ef17f9063",
+        "tabelas_referenciadas": [
+          "contratantes",
+          "v_antes",
+          "v_depois"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102163433_v103_editar_contratante_concorrencia_auditoria.sql",
+        "linha": 69,
+        "trecho": "create or replace function public.atualizar_contratante(",
+        "schema": "public",
+        "sha256": "a10ec4afc279c9f0f0ad4fd374f732278a7fa5c89f86945d2488859ef17f9063",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1327,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.atualizar_contratante(p_id_organizacao uuid, p_id_contratante uuid, p_versao_esperada bigint, p_tipo_pessoa text, p_documento text, p_razao_social text, p_nome_fantasia text, p_contato jsonb, p_situacao text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "contratantes",
+          "v_antes",
+          "v_depois"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "atualizar_contrato_v1",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
+        "linha": 126,
+        "trecho": "create function public.atualizar_contrato_v1(p_id_organizacao uuid,p_id_contrato uuid,p_versao_esperada bigint,p_alteracoes jsonb,p_motivo text,p_request_id uuid) returns jsonb language sql security invoker set search_path='' as $$select privado.crud_cadastro_mutar_v1($1,'contratos',$2,$3,'editar',$4,$5,$6)$$;",
+        "schema": "public",
+        "sha256": "11c789eee5ed03dce4944f0572a08cf7e02ea540bd28ab1799bfa043f8f3af92",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "atualizar_matriz_rbac_master",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 84,
+        "trecho": "create function privado.atualizar_matriz_rbac_master(p_versao_esperada bigint,p_request_id uuid,p_alteracoes jsonb)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "privado",
+          "v_anterior",
+          "v_antes",
+          "v_depois",
+          "v_versao"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 142,
+        "trecho": "create function public.atualizar_matriz_rbac_master(p_versao_esperada bigint,p_request_id uuid,p_alteracoes jsonb)",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "atualizar_organizacao_v1",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
+        "linha": 124,
+        "trecho": "create function public.atualizar_organizacao_v1(p_id_organizacao uuid,p_versao_esperada bigint,p_alteracoes jsonb,p_motivo text,p_request_id uuid) returns jsonb language sql security invoker set search_path='' as $$select privado.crud_cadastro_mutar_v1($1,'organizacoes',$1,$2,'editar',$3,$4,$5)$$;",
+        "schema": "public",
+        "sha256": "11c789eee5ed03dce4944f0572a08cf7e02ea540bd28ab1799bfa043f8f3af92",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "classificar_acesso_contrato_v106",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102192127_v106_classificar_acesso_contrato_detalhe.sql",
+        "linha": 1,
+        "trecho": "create or replace function privado.classificar_acesso_contrato_v106(p_id_contrato uuid)",
+        "schema": "privado",
+        "sha256": "ec09371ec90607ff3fd511fc446c0993afd1fdf8f9e6451b1d9ad0f307579c10",
+        "tabelas_referenciadas": [
+          "contratos",
+          "v_id_organizacao"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102192127_v106_classificar_acesso_contrato_detalhe.sql",
+        "linha": 47,
+        "trecho": "create or replace function public.classificar_acesso_contrato_v106(p_id_contrato uuid)",
+        "schema": "public",
+        "sha256": "ec09371ec90607ff3fd511fc446c0993afd1fdf8f9e6451b1d9ad0f307579c10",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "confirmar_upload_arquivo",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101213741_0026_storage_upload_documentos.sql",
+        "linha": 21,
+        "trecho": "create or replace function privado.confirmar_upload_arquivo(",
+        "schema": "privado",
+        "sha256": "bcda75b2e6684fc0042453b5cfea5f9af7ce8102b52e9bc5b9809c74944cc0e8",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "configuracao_upload",
+          "storage",
+          "v_cfg",
+          "v_id"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101213741_0026_storage_upload_documentos.sql",
+        "linha": 55,
+        "trecho": "create or replace function public.confirmar_upload_arquivo(p_id_organizacao uuid,p_id_contrato uuid,p_path text,p_nome_original text,p_mime text,p_tamanho bigint,p_sha256 text,p_origem text default 'upload_usuario')",
+        "schema": "public",
+        "sha256": "bcda75b2e6684fc0042453b5cfea5f9af7ce8102b52e9bc5b9809c74944cc0e8",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261102032942_0050_upload_security_limits.sql",
+        "linha": 31,
+        "trecho": "create or replace function privado.confirmar_upload_arquivo(",
+        "schema": "privado",
+        "sha256": "017dc012fdb1d1cb1ae0d7ccd051a12c0740e591aaa55d7ab4313c5f90578e0c",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "configuracao_upload",
+          "storage",
+          "v_cfg",
+          "v_id",
+          "v_tamanho_real"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102033032_0051_upload_mime_zip_guard.sql",
+        "linha": 46,
+        "trecho": "create or replace function privado.confirmar_upload_arquivo(",
+        "schema": "privado",
+        "sha256": "02049aa00ed96ef1b8fd411d422951bbce29b597e865b256c4ea5a3cd44f3781",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "configuracao_upload",
+          "storage",
+          "v_cfg",
+          "v_id",
+          "v_tamanho_real"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 3253,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.confirmar_upload_arquivo(p_id_organizacao uuid, p_id_contrato uuid, p_path text, p_nome_original text, p_mime text, p_tamanho bigint, p_sha256 text, p_origem text DEFAULT 'upload_usuario'::text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "configuracao_upload",
+          "storage",
+          "v_cfg",
+          "v_id",
+          "v_tamanho_real"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261108053000_fix_upload_extension_extraction.sql",
+        "linha": 2,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.confirmar_upload_arquivo(p_id_organizacao uuid, p_id_contrato uuid, p_path text, p_nome_original text, p_mime text, p_tamanho bigint, p_sha256 text, p_origem text DEFAULT 'upload_usuario'::text)",
+        "schema": "privado",
+        "sha256": "5e2b44f620ce9069f066d8b34e0b33bcc599d34ff17cd6c794e1d40f4f9516fc",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "configuracao_upload",
+          "storage",
+          "v_cfg",
+          "v_id",
+          "v_tamanho_real"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "consultar_permissoes_efetivas",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 59,
+        "trecho": "create function privado.consultar_permissoes_efetivas(p_id_organizacao uuid,p_id_contrato uuid default null)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "contratos",
+          "organizacoes",
+          "privado",
+          "result"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 138,
+        "trecho": "create function public.consultar_permissoes_efetivas(p_id_organizacao uuid,p_id_contrato uuid default null)",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "criar_competencia",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101210948_0006_competencias_analise.sql",
+        "linha": 194,
+        "trecho": "create or replace function public.criar_competencia(p_id_contrato uuid,p_competencia_referencia date,p_periodo_inicio date default null,p_periodo_fim date default null,p_data_limite date default null)",
+        "schema": "public",
+        "sha256": "0f905491b8e576e46091ac34532253d7f06dd1502f04be760b2fd0b0080c3e18",
+        "tabelas_referenciadas": [
+          "competencias",
+          "contratos",
+          "itens_lista",
+          "listas_verificacao",
+          "regras_conformidade",
+          "regras_preventivas",
+          "requisitos_competencia",
+          "v_comp",
+          "v_org",
+          "versoes_lista"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101211533_0016_rpc_privadas_wrappers.sql",
+        "linha": 42,
+        "trecho": "create function public.criar_competencia(p_id_contrato uuid,p_competencia_referencia date,p_periodo_inicio date default null,p_periodo_fim date default null,p_data_limite date default null) returns uuid language sql security invoker set search_path='' as $$select privado.criar_competencia($1,$2,$3,$4,$5)$$;",
+        "schema": "public",
+        "sha256": "962b414d1026773289d2cf25922bb8f75abb538cc246eea75a67fca3a552ee3a",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1934,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.criar_competencia(p_id_contrato uuid, p_competencia_referencia date, p_periodo_inicio date DEFAULT NULL::date, p_periodo_fim date DEFAULT NULL::date, p_data_limite date DEFAULT NULL::date)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "competencias",
+          "contratos",
+          "itens_lista",
+          "listas_verificacao",
+          "regras_conformidade",
+          "regras_preventivas",
+          "requisitos_competencia",
+          "v_comp",
+          "v_org",
+          "versoes_lista"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
+        "linha": 288,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.criar_competencia(p_id_contrato uuid, p_competencia_referencia date, p_periodo_inicio date DEFAULT NULL::date, p_periodo_fim date DEFAULT NULL::date, p_data_limite date DEFAULT NULL::date)",
+        "schema": "privado",
+        "sha256": "20bfbe1eea1c152c970cf0b1ae10103a1b16576586f1eb966d9738ec0e48b6c8",
+        "tabelas_referenciadas": [
+          "competencias",
+          "contratos",
+          "itens_lista",
+          "listas_verificacao",
+          "organizacoes",
+          "regras_conformidade",
+          "regras_preventivas",
+          "requisitos_competencia",
+          "v_comp",
+          "v_org",
+          "versoes_lista"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "criar_documento_competencia_v115",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103101542_v115_documentos_competencia_autoridade.sql",
+        "linha": 264,
+        "trecho": "create or replace function privado.criar_documento_competencia_v115(",
+        "schema": "privado",
+        "sha256": "e075dddbf9afb1c38d92550f5ec5377dd2964c2f39b09e209f7451e8eadcd5af",
+        "tabelas_referenciadas": [
+          "competencias",
+          "documentos_competencia",
+          "processamentos_documento",
+          "requisitos_competencia",
+          "v_comp",
+          "v_doc",
+          "v_ver",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103101542_v115_documentos_competencia_autoridade.sql",
+        "linha": 423,
+        "trecho": "create or replace function public.criar_documento_competencia_v115(",
+        "schema": "public",
+        "sha256": "e075dddbf9afb1c38d92550f5ec5377dd2964c2f39b09e209f7451e8eadcd5af",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261103110821_v115_validar_requisito_tipo_documental.sql",
+        "linha": 1,
+        "trecho": "create or replace function privado.criar_documento_competencia_v115(",
+        "schema": "privado",
+        "sha256": "b1913f83037368f94e8578172395b8b4efe98b7083ba4ba7d67b183c0b46a3a8",
+        "tabelas_referenciadas": [
+          "competencias",
+          "documentos_competencia",
+          "processamentos_documento",
+          "requisitos_competencia",
+          "v_comp",
+          "v_doc",
+          "v_req",
+          "v_ver",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 2269,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.criar_documento_competencia_v115(p_id_competencia uuid, p_tipo text, p_titulo text, p_categoria text, p_id_requisito uuid, p_id_arquivo uuid, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "competencias",
+          "documentos_competencia",
+          "processamentos_documento",
+          "requisitos_competencia",
+          "v_comp",
+          "v_doc",
+          "v_req",
+          "v_ver",
+          "versoes_documento"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "criar_documento_contrato_completo",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103021338_v111_documento_completo_publica.sql",
+        "linha": 3,
+        "trecho": "create or replace function public.criar_documento_contrato_completo(",
+        "schema": "public",
+        "sha256": "c54de1ea2de9d95ca23f5137af2f680f7fc851ac01c5a98dc28ec40a3fd0b542",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "criar_organizacao",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101205936_0002_identidade_organizacoes.sql",
+        "linha": 183,
+        "trecho": "create or replace function public.criar_organizacao(",
+        "schema": "public",
+        "sha256": "7a968f4dbc7b9e882b62d53259c9675571fb6d1b0c65a205261a973ee5850c95",
+        "tabelas_referenciadas": [
+          "organizacoes",
+          "recursos_organizacao",
+          "v_org",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101211533_0016_rpc_privadas_wrappers.sql",
+        "linha": 43,
+        "trecho": "create function public.criar_organizacao(p_razao_social text,p_nome_fantasia text default null,p_cnpj varchar default null,p_timezone text default 'America/Bahia') returns uuid language sql security invoker set search_path='' as $$select privado.criar_organizacao($1,$2,$3,$4)$$;",
+        "schema": "public",
+        "sha256": "962b414d1026773289d2cf25922bb8f75abb538cc246eea75a67fca3a552ee3a",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261101212815_0023_localizacao_brasil_brasilia.sql",
+        "linha": 58,
+        "trecho": "create or replace function privado.criar_organizacao(",
+        "schema": "privado",
+        "sha256": "244a9b35460873304346e32b4a056fe4f8527dfb115ddeeffbc8c4167355828a",
+        "tabelas_referenciadas": [
+          "organizacoes",
+          "recursos_organizacao",
+          "v_org",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101212815_0023_localizacao_brasil_brasilia.sql",
+        "linha": 83,
+        "trecho": "create or replace function public.criar_organizacao(",
+        "schema": "public",
+        "sha256": "244a9b35460873304346e32b4a056fe4f8527dfb115ddeeffbc8c4167355828a",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261101230710_0041_auth_onboarding_timezone_brasilia.sql",
+        "linha": 49,
+        "trecho": "create or replace function public.criar_organizacao(",
+        "schema": "public",
+        "sha256": "7d8dea1baaeff4c00e19f7473837ec49ef682ce7774fae4aa075221bc6781201",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261102053745_hardening_create_organization_active_session.sql",
+        "linha": 2,
+        "trecho": "create or replace function privado.criar_organizacao(",
+        "schema": "privado",
+        "sha256": "9273be9ed62930b801e3f00a7b12bd1d3c0b5823a3660fdc71aecaeafdf989c2",
+        "tabelas_referenciadas": [
+          "organizacoes",
+          "recursos_organizacao",
+          "v_org",
+          "vinculos_usuarios"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "definir_aplicabilidade_fonte_v107",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102215515_v107_base_normativa_autorizada.sql",
+        "linha": 170,
+        "trecho": "create or replace function privado.definir_aplicabilidade_fonte_v107(p_id_organizacao uuid,p_id_contrato uuid,p_id_versao uuid,p_aplicavel boolean,p_fundamento text,p_atualizado_em_esperado timestamptz,p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "340b97a37298b7860f5dfe14fd84d51483663660d3d6bb1f065c8fd617b1753a",
+        "tabelas_referenciadas": [
+          "a",
+          "aplicabilidades_fonte",
+          "f",
+          "fontes_normativas",
+          "p_atualizado_em_esperado",
+          "v",
+          "versoes_fontes_normativas"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102215515_v107_base_normativa_autorizada.sql",
+        "linha": 207,
+        "trecho": "create or replace function public.definir_aplicabilidade_fonte_v107(p_id_organizacao uuid,p_id_contrato uuid,p_id_versao uuid,p_aplicavel boolean,p_fundamento text,p_atualizado_em_esperado timestamptz,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "340b97a37298b7860f5dfe14fd84d51483663660d3d6bb1f065c8fd617b1753a",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1627,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.definir_aplicabilidade_fonte_v107(p_id_organizacao uuid, p_id_contrato uuid, p_id_versao uuid, p_aplicavel boolean, p_fundamento text, p_atualizado_em_esperado timestamp with time zone, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "a",
+          "aplicabilidades_fonte",
+          "f",
+          "fontes_normativas",
+          "p_atualizado_em_esperado",
+          "v",
+          "versoes_fontes_normativas"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "definir_vigencia_sugestao_extracao",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103021346_v111_definir_vigencia_sugestao.sql",
+        "linha": 30,
+        "trecho": "create or replace function public.definir_vigencia_sugestao_extracao(",
+        "schema": "public",
+        "sha256": "d395fb0cc241bd524a0945ef7a26febfebb35980888c3ec2f243b56726cfb629",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "enfileirar_ingestao_historica_hml",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261104231142_v1_22_fila_dedicada_ingestao_historica_hml.sql",
+        "linha": 2,
+        "trecho": "CREATE OR REPLACE FUNCTION public.enfileirar_ingestao_historica_hml(p_id_relatorio uuid,p_id_versao_documento uuid) RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $fn$",
+        "schema": "public",
+        "sha256": "259c2e62309a4b3d9a6a6e9cd53635fb8c86f247a87dd8206aedf65960c8f5ff",
+        "tabelas_referenciadas": [
+          "e",
+          "execucoes_assincronas",
+          "m",
+          "processamentos_documento",
+          "r",
+          "relatorios_historicos_contratante",
+          "v",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 3171,
+        "trecho": "CREATE OR REPLACE FUNCTION public.enfileirar_ingestao_historica_hml(p_id_relatorio uuid, p_id_versao_documento uuid)",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "e",
+          "execucoes_assincronas",
+          "m",
+          "processamentos_documento",
+          "r",
+          "relatorios_historicos_contratante",
+          "v",
+          "versoes_documento"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "executar_comando_lista_v1",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
+        "linha": 282,
+        "trecho": "create function public.executar_comando_lista_v1(p_id_organizacao uuid,p_id_contrato uuid,p_id_lista uuid,p_versao_esperada bigint,p_acao text,p_payload jsonb,p_motivo text,p_request_id uuid)",
+        "schema": "public",
+        "sha256": "20bfbe1eea1c152c970cf0b1ae10103a1b16576586f1eb966d9738ec0e48b6c8",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "listar_auditoria_vinculo_usuario_adm",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102124852_adm01_admin_usuarios_vinculos.sql",
+        "linha": 237,
+        "trecho": "create or replace function privado.listar_auditoria_vinculo_usuario_adm(",
+        "schema": "privado",
+        "sha256": "c7c3fef1870670b17c4b379bd9e27a24c13f0e80e0b9d4af6d763364abce68aa",
+        "tabelas_referenciadas": [
+          "eventos_auditoria",
+          "usuarios",
+          "v_itens",
+          "v_total"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102124852_adm01_admin_usuarios_vinculos.sql",
+        "linha": 307,
+        "trecho": "create or replace function public.listar_auditoria_vinculo_usuario_adm(",
+        "schema": "public",
+        "sha256": "c7c3fef1870670b17c4b379bd9e27a24c13f0e80e0b9d4af6d763364abce68aa",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261102125612_adm01_consolidar_contrato_publico.sql",
+        "linha": 6,
+        "trecho": "create or replace function privado.listar_auditoria_vinculo_usuario_adm(",
+        "schema": "privado",
+        "sha256": "b61c2959167864d558de855739aa42abacc484229c19c30b1b110f899639c902",
+        "tabelas_referenciadas": [
+          "eventos_auditoria",
+          "usuarios",
+          "v_itens",
+          "v_total",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102131014_adm01_uniformizar_schema_v2.sql",
+        "linha": 91,
+        "trecho": "create or replace function privado.listar_auditoria_vinculo_usuario_adm(",
+        "schema": "privado",
+        "sha256": "b97c46a04fc63cf23f4c1e457b02b2f4b851d5fd235dba7555d7b9b04bf052e8",
+        "tabelas_referenciadas": [
+          "eventos_auditoria",
+          "usuarios",
+          "v_itens",
+          "v_total",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102131140_adm01_redigir_metadados_auditoria.sql",
+        "linha": 42,
+        "trecho": "create or replace function privado.listar_auditoria_vinculo_usuario_adm(",
+        "schema": "privado",
+        "sha256": "a2b142280dca258565623b0cfd439ebf94821ce34120737bc56d45403e10291b",
+        "tabelas_referenciadas": [
+          "eventos_auditoria",
+          "usuarios",
+          "v_itens",
+          "v_total",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 925,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.listar_auditoria_vinculo_usuario_adm(p_id_organizacao uuid, p_id_usuario uuid, p_pagina integer DEFAULT 1, p_tamanho_pagina integer DEFAULT 20)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "eventos_auditoria",
+          "usuarios",
+          "v_itens",
+          "v_total",
+          "vinculos_usuarios"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "listar_escopo_contratos_usuario_adm",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102124852_adm01_admin_usuarios_vinculos.sql",
+        "linha": 129,
+        "trecho": "create or replace function privado.listar_escopo_contratos_usuario_adm(",
+        "schema": "privado",
+        "sha256": "c7c3fef1870670b17c4b379bd9e27a24c13f0e80e0b9d4af6d763364abce68aa",
+        "tabelas_referenciadas": [
+          "contratos",
+          "v_itens",
+          "v_total",
+          "v_vinculo",
+          "vinculos_usuario_contratos",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102124852_adm01_admin_usuarios_vinculos.sql",
+        "linha": 221,
+        "trecho": "create or replace function public.listar_escopo_contratos_usuario_adm(",
+        "schema": "public",
+        "sha256": "c7c3fef1870670b17c4b379bd9e27a24c13f0e80e0b9d4af6d763364abce68aa",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+        "linha": 4,
+        "trecho": "create or replace function privado.listar_escopo_contratos_usuario_adm(",
+        "schema": "privado",
+        "sha256": "ffc209fa1d4971d6c5d6663aeb29ce1b700c2b5d3433a220423805424c01237b",
+        "tabelas_referenciadas": [
+          "contratos",
+          "v_itens",
+          "v_total",
+          "v_vinculo",
+          "vinculos_usuario_contratos",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 835,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.listar_escopo_contratos_usuario_adm(p_id_organizacao uuid, p_id_usuario uuid, p_pagina integer DEFAULT 1, p_tamanho_pagina integer DEFAULT 25, p_busca text DEFAULT NULL::text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "contratos",
+          "v_itens",
+          "v_total",
+          "v_vinculo",
+          "vinculos_usuario_contratos",
+          "vinculos_usuarios"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "listar_organizacoes_disponiveis",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102182856_admin_master_global.sql",
+        "linha": 175,
+        "trecho": "create or replace function public.listar_organizacoes_disponiveis()",
+        "schema": "public",
+        "sha256": "6fb75ce0eccabe037a5e4bd64f025f4aff465ab0031105f34f42938a7774531b",
+        "tabelas_referenciadas": [
+          "organizacoes",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102183243_admin_master_rpc_security_invoker.sql",
+        "linha": 3,
+        "trecho": "create or replace function public.listar_organizacoes_disponiveis()",
+        "schema": "public",
+        "sha256": "3b9e78ed74c4b58cf5e039c7769a087f4cf4dbaed1bd0ddb560c267bbfa3f77d",
+        "tabelas_referenciadas": [
+          "organizacoes",
+          "vinculos_usuarios"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "listar_usuarios_vinculos_adm",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102124852_adm01_admin_usuarios_vinculos.sql",
+        "linha": 6,
+        "trecho": "create or replace function privado.listar_usuarios_vinculos_adm(",
+        "schema": "privado",
+        "sha256": "c7c3fef1870670b17c4b379bd9e27a24c13f0e80e0b9d4af6d763364abce68aa",
+        "tabelas_referenciadas": [
+          "organizacoes",
+          "perfis_usuarios",
+          "usuarios",
+          "v_itens",
+          "v_org",
+          "v_perfis",
+          "v_total",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102124852_adm01_admin_usuarios_vinculos.sql",
+        "linha": 113,
+        "trecho": "create or replace function public.listar_usuarios_vinculos_adm(",
+        "schema": "public",
+        "sha256": "c7c3fef1870670b17c4b379bd9e27a24c13f0e80e0b9d4af6d763364abce68aa",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261102131014_adm01_uniformizar_schema_v2.sql",
+        "linha": 4,
+        "trecho": "create or replace function privado.listar_usuarios_vinculos_adm(",
+        "schema": "privado",
+        "sha256": "b97c46a04fc63cf23f4c1e457b02b2f4b851d5fd235dba7555d7b9b04bf052e8",
+        "tabelas_referenciadas": [
+          "perfis_usuarios",
+          "usuarios",
+          "v_itens",
+          "v_perfis",
+          "v_total",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 751,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.listar_usuarios_vinculos_adm(p_id_organizacao uuid, p_pagina integer DEFAULT 1, p_tamanho_pagina integer DEFAULT 25, p_busca text DEFAULT NULL::text, p_ativo boolean DEFAULT NULL::boolean)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "perfis_usuarios",
+          "usuarios",
+          "v_itens",
+          "v_perfis",
+          "v_total",
+          "vinculos_usuarios"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "obter_analise_competencia_v116",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103135545_v116_obter_analise_competencia.sql",
+        "linha": 1,
+        "trecho": "create or replace function public.obter_analise_competencia_v116(",
+        "schema": "public",
+        "sha256": "b64b917840e89e6a4c3d24e50f5e40251f790946e72211da50db82db57376b0d",
+        "tabelas_referenciadas": [
+          "apontamentos_internos",
+          "b",
+          "base",
+          "competencias",
+          "ev",
+          "evidencias_resultado",
+          "execucoes_analise",
+          "filtrado",
+          "pagina",
+          "requisitos_competencia",
+          "resultados_requisitos",
+          "v_apontamentos",
+          "v_apontamentos_total",
+          "v_comp",
+          "v_exec",
+          "v_execucoes",
+          "v_execucoes_total",
+          "v_mecanismos",
+          "v_resultados_total"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 2457,
+        "trecho": "CREATE OR REPLACE FUNCTION public.obter_analise_competencia_v116(p_id_competencia uuid, p_resultados_offset integer DEFAULT 0, p_resultados_limite integer DEFAULT 25, p_execucoes_offset integer DEFAULT 0, p_execucoes_limite integer DEFAULT 10, p_apontamentos_offset integer DEFAULT 0, p_apontamentos_limite integer DEFAULT 25, p_filtro_resultado text DEFAULT NULL::text, p_filtro_criticidade text DEFAULT NULL::text, p_filtro_mecanismo text DEFAULT NULL::text, p_filtro_apontamento_status text DEFAULT NULL::text, p_busca text DEFAULT NULL::text)",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "apontamentos_internos",
+          "b",
+          "base",
+          "competencias",
+          "ev",
+          "evidencias_resultado",
+          "execucoes_analise",
+          "filtrado",
+          "pagina",
+          "requisitos_competencia",
+          "resultados_requisitos",
+          "v_apontamentos",
+          "v_apontamentos_total",
+          "v_comp",
+          "v_exec",
+          "v_execucoes",
+          "v_execucoes_total",
+          "v_mecanismos",
+          "v_resultados_total"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261108114652_p0_null_pagination_guard.sql",
+        "linha": 227,
+        "trecho": "CREATE OR REPLACE FUNCTION public.obter_analise_competencia_v116(p_id_competencia uuid, p_resultados_offset integer DEFAULT 0, p_resultados_limite integer DEFAULT 25, p_execucoes_offset integer DEFAULT 0, p_execucoes_limite integer DEFAULT 10, p_apontamentos_offset integer DEFAULT 0, p_apontamentos_limite integer DEFAULT 25, p_filtro_resultado text DEFAULT NULL::text, p_filtro_criticidade text DEFAULT NULL::text, p_filtro_mecanismo text DEFAULT NULL::text, p_filtro_apontamento_status text DEFAULT NULL::text, p_busca text DEFAULT NULL::text)",
+        "schema": "public",
+        "sha256": "f3b8150532949b4842a3319f76875a3acbd276387c705d5fd5e4c800e6c7431c",
+        "tabelas_referenciadas": [
+          "apontamentos_internos",
+          "b",
+          "base",
+          "competencias",
+          "ev",
+          "evidencias_resultado",
+          "execucoes_analise",
+          "filtrado",
+          "pagina",
+          "requisitos_competencia",
+          "resultados_requisitos",
+          "v_apontamentos",
+          "v_apontamentos_total",
+          "v_comp",
+          "v_exec",
+          "v_execucoes",
+          "v_execucoes_total",
+          "v_mecanismos",
+          "v_resultados_total"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "obter_cadastro_operacional_v1",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261106230839_p0_crud_organizacoes_contratos.sql",
+        "linha": 123,
+        "trecho": "create function public.obter_cadastro_operacional_v1(p_id_organizacao uuid,p_entidade text,p_id uuid) returns jsonb language sql security invoker set search_path='' as $$select privado.crud_cadastro_consultar_v1($1,$2,$3)$$;",
+        "schema": "public",
+        "sha256": "11c789eee5ed03dce4944f0572a08cf7e02ea540bd28ab1799bfa043f8f3af92",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "obter_contexto_revisao_v117",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261107094443_p0_v117_revisao_humana.sql",
+        "linha": 26,
+        "trecho": "create function public.obter_contexto_revisao_v117(p_id_competencia uuid,p_id_requisito uuid)",
+        "schema": "public",
+        "sha256": "a90ace330c27314915dbdb547bfe4bad4f49c763a8373f1540d83d4a8eddcabb",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "obter_detalhe_requisito_v117",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103172929_v117_obter_detalhe_requisito.sql",
+        "linha": 3,
+        "trecho": "create function public.obter_detalhe_requisito_v117(",
+        "schema": "public",
+        "sha256": "d5b4fd553ad39879b1561cbf71a080af1c9daf2a57b4bbc60239b0eaeb8dac32",
+        "tabelas_referenciadas": [
+          "apontamentos_internos",
+          "arquivos",
+          "competencias",
+          "evidencias_resultado",
+          "execucoes_analise",
+          "requisitos_competencia",
+          "resultados_requisitos",
+          "v_apontamentos",
+          "v_apontamentos_total",
+          "v_atual",
+          "v_comp",
+          "v_evidencias",
+          "v_evidencias_total",
+          "v_exec",
+          "v_historico",
+          "v_historico_total",
+          "v_req",
+          "v_ultimo",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 2537,
+        "trecho": "CREATE OR REPLACE FUNCTION public.obter_detalhe_requisito_v117(p_id_competencia uuid, p_id_requisito uuid, p_evidencias_offset integer DEFAULT 0, p_evidencias_limite integer DEFAULT 25, p_historico_offset integer DEFAULT 0, p_historico_limite integer DEFAULT 25, p_apontamentos_offset integer DEFAULT 0, p_apontamentos_limite integer DEFAULT 25)",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "apontamentos_internos",
+          "arquivos",
+          "competencias",
+          "evidencias_resultado",
+          "execucoes_analise",
+          "requisitos_competencia",
+          "resultados_requisitos",
+          "v_apontamentos",
+          "v_apontamentos_total",
+          "v_atual",
+          "v_comp",
+          "v_evidencias",
+          "v_evidencias_total",
+          "v_exec",
+          "v_historico",
+          "v_historico_total",
+          "v_req",
+          "v_ultimo",
+          "versoes_documento"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "obter_documentos_competencia_v115",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103101542_v115_documentos_competencia_autoridade.sql",
+        "linha": 47,
+        "trecho": "create or replace function privado.obter_documentos_competencia_v115(",
+        "schema": "privado",
+        "sha256": "e075dddbf9afb1c38d92550f5ec5377dd2964c2f39b09e209f7451e8eadcd5af",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "competencias",
+          "documentos_competencia",
+          "execucoes_analise",
+          "processamentos_documento",
+          "requisitos_competencia",
+          "v_comp",
+          "v_docs",
+          "v_docs_total",
+          "v_motivo_obrigatorio",
+          "v_processando",
+          "v_req_total",
+          "v_reqs",
+          "v_tem_erro",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103101542_v115_documentos_competencia_autoridade.sql",
+        "linha": 407,
+        "trecho": "create or replace function public.obter_documentos_competencia_v115(",
+        "schema": "public",
+        "sha256": "e075dddbf9afb1c38d92550f5ec5377dd2964c2f39b09e209f7451e8eadcd5af",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 2027,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.obter_documentos_competencia_v115(p_id_competencia uuid, p_documentos_offset integer DEFAULT 0, p_documentos_limite integer DEFAULT 25, p_requisitos_offset integer DEFAULT 0, p_requisitos_limite integer DEFAULT 25)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "competencias",
+          "documentos_competencia",
+          "execucoes_analise",
+          "processamentos_documento",
+          "requisitos_competencia",
+          "v_comp",
+          "v_docs",
+          "v_docs_total",
+          "v_motivo_obrigatorio",
+          "v_processando",
+          "v_req_total",
+          "v_reqs",
+          "v_tem_erro",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261108114652_p0_null_pagination_guard.sql",
+        "linha": 14,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.obter_documentos_competencia_v115(p_id_competencia uuid, p_documentos_offset integer DEFAULT 0, p_documentos_limite integer DEFAULT 25, p_requisitos_offset integer DEFAULT 0, p_requisitos_limite integer DEFAULT 25)",
+        "schema": "privado",
+        "sha256": "f3b8150532949b4842a3319f76875a3acbd276387c705d5fd5e4c800e6c7431c",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "competencias",
+          "documentos_competencia",
+          "execucoes_analise",
+          "processamentos_documento",
+          "requisitos_competencia",
+          "v_comp",
+          "v_docs",
+          "v_docs_total",
+          "v_motivo_obrigatorio",
+          "v_processando",
+          "v_req_total",
+          "v_reqs",
+          "v_tem_erro",
+          "versoes_documento"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "obter_lista_operacional_v1",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261107001620_p0_crud_listas_verificacao.sql",
+        "linha": 280,
+        "trecho": "create function public.obter_lista_operacional_v1(p_id_organizacao uuid,p_id_contrato uuid,p_id_lista uuid default null,p_id_versao uuid default null,p_pagina_versoes integer default 0,p_pagina_itens integer default 0)",
+        "schema": "public",
+        "sha256": "20bfbe1eea1c152c970cf0b1ae10103a1b16576586f1eb966d9738ec0e48b6c8",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "obter_matriz_rbac_master",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 74,
+        "trecho": "create function privado.obter_matriz_rbac_master()",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "privado"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 140,
+        "trecho": "create function public.obter_matriz_rbac_master()",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "obter_resumo_dashboard",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102114958_sys05_dashboard_summary.sql",
+        "linha": 1,
+        "trecho": "create or replace function public.obter_resumo_dashboard(p_id_organizacao uuid)",
+        "schema": "public",
+        "sha256": "6d042e7b768dff6db7088f3d24f3588e0b4b1d01c52af8acf8da3991715decfa",
+        "tabelas_referenciadas": [
+          "apontamentos_contratante",
+          "apontamentos_internos",
+          "competencias",
+          "contratos",
+          "nao_conformidades",
+          "organizacoes",
+          "tarefas_diligencia",
+          "v_atencoes_prioritarias",
+          "v_competencias_por_situacao",
+          "v_contratos_por_situacao",
+          "v_organizacao",
+          "v_proximos_prazos",
+          "v_resumo"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1389,
+        "trecho": "CREATE OR REPLACE FUNCTION public.obter_resumo_dashboard(p_id_organizacao uuid)",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "apontamentos_contratante",
+          "apontamentos_internos",
+          "competencias",
+          "contratos",
+          "nao_conformidades",
+          "organizacoes",
+          "tarefas_diligencia",
+          "v_atencoes_prioritarias",
+          "v_competencias_por_situacao",
+          "v_contratos_por_situacao",
+          "v_organizacao",
+          "v_proximos_prazos",
+          "v_resumo"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "obter_visao_geral_competencia",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103092055_v114_visao_geral_competencia.sql",
+        "linha": 1,
+        "trecho": "create or replace function privado.obter_visao_geral_competencia(p_id_competencia uuid)",
+        "schema": "privado",
+        "sha256": "cd2b1e2bb4bddf1f255339107fe4d6bca34eaa0d84d3560203798a36a2e84627",
+        "tabelas_referenciadas": [
+          "aprovacoes",
+          "competencias",
+          "execucoes_analise",
+          "pareceres_internos",
+          "v",
+          "v_hash_aprovado",
+          "v_hash_exec",
+          "v_parecer_aprovado"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103092055_v114_visao_geral_competencia.sql",
+        "linha": 48,
+        "trecho": "create or replace function public.obter_visao_geral_competencia(p_id_competencia uuid)",
+        "schema": "public",
+        "sha256": "cd2b1e2bb4bddf1f255339107fe4d6bca34eaa0d84d3560203798a36a2e84627",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261103092202_v114_visao_geral_wrapper_security_definer.sql",
+        "linha": 1,
+        "trecho": "create or replace function public.obter_visao_geral_competencia(p_id_competencia uuid)",
+        "schema": "public",
+        "sha256": "661cc4ee8a9594af58fc4bb4825a8b76ff4887f1614525a2633944201d666f97",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1976,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.obter_visao_geral_competencia(p_id_competencia uuid)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "aprovacoes",
+          "competencias",
+          "execucoes_analise",
+          "pareceres_internos",
+          "v",
+          "v_hash_aprovado",
+          "v_hash_exec",
+          "v_parecer_aprovado"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "pode_consultar_auditoria_organizacao",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261105102019_v123_auditoria_capacidade.sql",
+        "linha": 3,
+        "trecho": "create function public.pode_consultar_auditoria_organizacao(p_id_organizacao uuid)",
+        "schema": "public",
+        "sha256": "543f0a61e087820087f608621cb33475b65403f56141c3ffa4ab874460cdfc72",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 3411,
+        "trecho": "create or replace function public.pode_consultar_auditoria_organizacao(p_id_organizacao uuid)",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "publicar_versao_proposta_v108",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103001740_v108_orcamento_estruturado.sql",
+        "linha": 272,
+        "trecho": "create or replace function privado.publicar_versao_proposta_v108(p_id_organizacao uuid,p_id_versao uuid,p_hash_esperado text,p_fundamento text,p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "5a06ba9b5b4bc3f7bf3bd8b7dae1a9fa14934070976c090925df1c72c86a6837",
+        "tabelas_referenciadas": [
+          "a",
+          "arquivos",
+          "competencias",
+          "linhas_orcamentarias",
+          "loop",
+          "p",
+          "p_hash_esperado",
+          "propostas_orcamentarias",
+          "v",
+          "versoes_proposta"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103001740_v108_orcamento_estruturado.sql",
+        "linha": 338,
+        "trecho": "create or replace function public.publicar_versao_proposta_v108(p_id_organizacao uuid,p_id_versao uuid,p_hash_esperado text,p_fundamento text,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "5a06ba9b5b4bc3f7bf3bd8b7dae1a9fa14934070976c090925df1c72c86a6837",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1801,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.publicar_versao_proposta_v108(p_id_organizacao uuid, p_id_versao uuid, p_hash_esperado text, p_fundamento text, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "a",
+          "arquivos",
+          "competencias",
+          "linhas_orcamentarias",
+          "loop",
+          "p",
+          "p_hash_esperado",
+          "propostas_orcamentarias",
+          "v",
+          "versoes_proposta"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "registrar_apresentacao",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101211016_0007_portoes_apresentacao.sql",
+        "linha": 103,
+        "trecho": "create or replace function public.registrar_apresentacao(p_id_competencia uuid,p_idempotency_key text,p_protocolo text default null,p_forma_apresentacao text default null,p_id_comprovante_arquivo uuid default null)",
+        "schema": "public",
+        "sha256": "a78925a55b882e1a25d2e0f0cc87dcf1c1da800f8eef44a91b6ffe7a5dc429a8",
+        "tabelas_referenciadas": [
+          "apresentacoes_contratante",
+          "aprovacoes",
+          "competencias",
+          "documentos_competencia",
+          "itens_pacote_competencia",
+          "pacotes_competencia",
+          "pareceres_internos",
+          "v",
+          "v_apres",
+          "v_exist",
+          "v_hash",
+          "v_num",
+          "v_pacote",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101211533_0016_rpc_privadas_wrappers.sql",
+        "linha": 56,
+        "trecho": "create function public.registrar_apresentacao(p_id_competencia uuid,p_idempotency_key text,p_protocolo text default null,p_forma_apresentacao text default null,p_id_comprovante_arquivo uuid default null) returns uuid language sql security invoker set search_path='' as $$select privado.registrar_apresentacao($1,$2,$3,$4,$5)$$;",
+        "schema": "public",
+        "sha256": "962b414d1026773289d2cf25922bb8f75abb538cc246eea75a67fca3a552ee3a",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261102021238_0048_gate_context_hash_checks.sql",
+        "linha": 55,
+        "trecho": "create or replace function privado.registrar_apresentacao(p_id_competencia uuid, p_idempotency_key text, p_protocolo text default null::text, p_forma_apresentacao text default null::text, p_id_comprovante_arquivo uuid default null::uuid)",
+        "schema": "privado",
+        "sha256": "04a5876678461ce9f4f21cdcdc90f09cd195bcf7f77d9c7bf078a405d800933a",
+        "tabelas_referenciadas": [
+          "apresentacoes_contratante",
+          "aprovacoes",
+          "competencias",
+          "documentos_competencia",
+          "execucoes_analise",
+          "itens_pacote_competencia",
+          "pacotes_competencia",
+          "pareceres_internos",
+          "v",
+          "v_apres",
+          "v_exist",
+          "v_hash",
+          "v_hash_aprovado",
+          "v_hash_atual",
+          "v_hash_exec",
+          "v_num",
+          "v_pacote",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 3123,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.registrar_apresentacao(p_id_competencia uuid, p_idempotency_key text, p_protocolo text DEFAULT NULL::text, p_forma_apresentacao text DEFAULT NULL::text, p_id_comprovante_arquivo uuid DEFAULT NULL::uuid)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "apresentacoes_contratante",
+          "aprovacoes",
+          "competencias",
+          "documentos_competencia",
+          "execucoes_analise",
+          "itens_pacote_competencia",
+          "pacotes_competencia",
+          "pareceres_internos",
+          "v",
+          "v_apres",
+          "v_exist",
+          "v_hash",
+          "v_hash_aprovado",
+          "v_hash_atual",
+          "v_hash_exec",
+          "v_num",
+          "v_pacote",
+          "versoes_documento"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "registrar_relatorio_historico_hml",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261104230951_v1_22_registro_historico_gestao_hml.sql",
+        "linha": 1,
+        "trecho": "CREATE OR REPLACE FUNCTION public.registrar_relatorio_historico_hml(p_id_arquivo uuid,p_competencia date,p_tipo text DEFAULT 'relatorio_contratante') RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $fn$",
+        "schema": "public",
+        "sha256": "96ef9c00fa86ef028ecbf1cc030beef42ee20f5640ab757a7c38951a21dfe852",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "p_competencia",
+          "relatorios_historicos_contratante",
+          "v_arquivo",
+          "v_id"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 3198,
+        "trecho": "CREATE OR REPLACE FUNCTION public.registrar_relatorio_historico_hml(p_id_arquivo uuid, p_competencia date, p_tipo text DEFAULT 'relatorio_contratante'::text)",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "p_competencia",
+          "relatorios_historicos_contratante",
+          "v_arquivo",
+          "v_id"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "registrar_revisao_requisito_v117",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261107094443_p0_v117_revisao_humana.sql",
+        "linha": 98,
+        "trecho": "create function public.registrar_revisao_requisito_v117(p_id_competencia uuid,p_id_requisito uuid,p_id_execucao_esperada uuid,p_id_resultado_esperado uuid,p_hash_esperado text,p_resultado text,p_justificativa text,p_fundamento text,p_evidencias jsonb,p_request_id uuid)",
+        "schema": "public",
+        "sha256": "a90ace330c27314915dbdb547bfe4bad4f49c763a8373f1540d83d4a8eddcabb",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "registrar_versao_fonte_v107",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102215515_v107_base_normativa_autorizada.sql",
+        "linha": 116,
+        "trecho": "create or replace function privado.registrar_versao_fonte_v107(p_id_organizacao uuid,p_id_fonte uuid,p_inicio_vigencia date,p_fim_vigencia date,p_id_arquivo uuid,p_conteudo_texto text,p_metadados jsonb,p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "340b97a37298b7860f5dfe14fd84d51483663660d3d6bb1f065c8fd617b1753a",
+        "tabelas_referenciadas": [
+          "a",
+          "arquivos",
+          "f",
+          "fontes_normativas",
+          "v",
+          "v_num",
+          "versoes_fontes_normativas"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102215515_v107_base_normativa_autorizada.sql",
+        "linha": 203,
+        "trecho": "create or replace function public.registrar_versao_fonte_v107(p_id_organizacao uuid,p_id_fonte uuid,p_inicio_vigencia date,p_fim_vigencia date,p_id_arquivo uuid,p_conteudo_texto text,p_metadados jsonb,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "340b97a37298b7860f5dfe14fd84d51483663660d3d6bb1f065c8fd617b1753a",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1557,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.registrar_versao_fonte_v107(p_id_organizacao uuid, p_id_fonte uuid, p_inicio_vigencia date, p_fim_vigencia date, p_id_arquivo uuid, p_conteudo_texto text, p_metadados jsonb, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "a",
+          "arquivos",
+          "f",
+          "fontes_normativas",
+          "v",
+          "v_num",
+          "versoes_fontes_normativas"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "registrar_versao_proposta_v108",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103001740_v108_orcamento_estruturado.sql",
+        "linha": 189,
+        "trecho": "create or replace function privado.registrar_versao_proposta_v108(p_id_organizacao uuid,p_id_proposta uuid,p_vigencia_inicio date,p_vigencia_fim date,p_id_arquivo_origem uuid,p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "5a06ba9b5b4bc3f7bf3bd8b7dae1a9fa14934070976c090925df1c72c86a6837",
+        "tabelas_referenciadas": [
+          "a",
+          "arquivos",
+          "p",
+          "propostas_orcamentarias",
+          "v",
+          "v_num",
+          "v_ultima",
+          "versoes_proposta"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103001740_v108_orcamento_estruturado.sql",
+        "linha": 332,
+        "trecho": "create or replace function public.registrar_versao_proposta_v108(p_id_organizacao uuid,p_id_proposta uuid,p_vigencia_inicio date,p_vigencia_fim date,p_id_arquivo_origem uuid,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "5a06ba9b5b4bc3f7bf3bd8b7dae1a9fa14934070976c090925df1c72c86a6837",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1695,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.registrar_versao_proposta_v108(p_id_organizacao uuid, p_id_proposta uuid, p_vigencia_inicio date, p_vigencia_fim date, p_id_arquivo_origem uuid, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "a",
+          "arquivos",
+          "p",
+          "propostas_orcamentarias",
+          "v",
+          "v_num",
+          "v_ultima",
+          "versoes_proposta"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "remover_linha_orcamentaria_v108",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103001740_v108_orcamento_estruturado.sql",
+        "linha": 253,
+        "trecho": "create or replace function privado.remover_linha_orcamentaria_v108(p_id_organizacao uuid,p_id_linha uuid,p_versao_esperada bigint,p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "5a06ba9b5b4bc3f7bf3bd8b7dae1a9fa14934070976c090925df1c72c86a6837",
+        "tabelas_referenciadas": [
+          "l",
+          "linhas_orcamentarias",
+          "v",
+          "versoes_proposta"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103001740_v108_orcamento_estruturado.sql",
+        "linha": 336,
+        "trecho": "create or replace function public.remover_linha_orcamentaria_v108(p_id_organizacao uuid,p_id_linha uuid,p_versao_esperada bigint,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "5a06ba9b5b4bc3f7bf3bd8b7dae1a9fa14934070976c090925df1c72c86a6837",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261103001838_v108_orcamento_rpc_grants_idempotencia.sql",
+        "linha": 8,
+        "trecho": "create function privado.remover_linha_orcamentaria_v108(p_id_organizacao uuid,p_id_versao_proposta uuid,p_id_linha uuid,p_versao_esperada bigint,p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "97425e872f58f208a117b51a2bdbe8e97116acf68d32a5784d7cacfff7309b9b",
+        "tabelas_referenciadas": [
+          "l",
+          "linhas_orcamentarias",
+          "v",
+          "versoes_proposta"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103001838_v108_orcamento_rpc_grants_idempotencia.sql",
+        "linha": 29,
+        "trecho": "create function public.remover_linha_orcamentaria_v108(p_id_organizacao uuid,p_id_versao_proposta uuid,p_id_linha uuid,p_versao_esperada bigint,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "97425e872f58f208a117b51a2bdbe8e97116acf68d32a5784d7cacfff7309b9b",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1773,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.remover_linha_orcamentaria_v108(p_id_organizacao uuid, p_id_versao_proposta uuid, p_id_linha uuid, p_versao_esperada bigint, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "l",
+          "linhas_orcamentarias",
+          "v",
+          "versoes_proposta"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "revisar_sugestao_extracao",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101222835_0034_automacao_documental_ia_ocr.sql",
+        "linha": 43,
+        "trecho": "create or replace function privado.revisar_sugestao_extracao(p_id_sugestao uuid,p_aprovar boolean,p_conteudo_revisado text default null,p_categoria_revisada text default null,p_id_requisito_revisado uuid default null)",
+        "schema": "privado",
+        "sha256": "54338b822850363799df77f1b527e17b11d38a153db4bbbeec0879af88d0f745",
+        "tabelas_referenciadas": [
+          "documentos_competencia",
+          "documentos_contrato",
+          "regras_conformidade",
+          "sugestoes_extracao_documento",
+          "v",
+          "v_regra",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101222835_0034_automacao_documental_ia_ocr.sql",
+        "linha": 77,
+        "trecho": "create or replace function public.revisar_sugestao_extracao(p_id_sugestao uuid,p_aprovar boolean,p_conteudo_revisado text default null,p_categoria_revisada text default null,p_id_requisito_revisado uuid default null)",
+        "schema": "public",
+        "sha256": "54338b822850363799df77f1b527e17b11d38a153db4bbbeec0879af88d0f745",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 3340,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.revisar_sugestao_extracao(p_id_sugestao uuid, p_aprovar boolean, p_conteudo_revisado text DEFAULT NULL::text, p_categoria_revisada text DEFAULT NULL::text, p_id_requisito_revisado uuid DEFAULT NULL::uuid)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "documentos_competencia",
+          "documentos_contrato",
+          "regras_conformidade",
+          "sugestoes_extracao_documento",
+          "v",
+          "v_regra",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261108184219_fix_reviewed_metadata_append_version.sql",
+        "linha": 2,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.revisar_sugestao_extracao(p_id_sugestao uuid, p_aprovar boolean, p_conteudo_revisado text DEFAULT NULL::text, p_categoria_revisada text DEFAULT NULL::text, p_id_requisito_revisado uuid DEFAULT NULL::uuid)",
+        "schema": "privado",
+        "sha256": "7d5ea8651d9df4324f78ac029df3155cb71d6178c34866fb495965bfaff40323",
+        "tabelas_referenciadas": [
+          "arquivos",
+          "documentos_competencia",
+          "documentos_contrato",
+          "processamentos_documento",
+          "regras_conformidade",
+          "sugestoes_extracao_documento",
+          "v",
+          "v_atual",
+          "v_base",
+          "v_nova",
+          "v_regra",
+          "versoes_documento"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "salvar_fonte_normativa_v107",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102215515_v107_base_normativa_autorizada.sql",
+        "linha": 80,
+        "trecho": "create or replace function privado.salvar_fonte_normativa_v107(p_id_organizacao uuid,p_id_contrato uuid,p_id_fonte uuid,p_tipo text,p_titulo text,p_referencia text,p_descricao text,p_situacao text,p_versao_esperada bigint,p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "340b97a37298b7860f5dfe14fd84d51483663660d3d6bb1f065c8fd617b1753a",
+        "tabelas_referenciadas": [
+          "fontes_normativas",
+          "p_id_contrato",
+          "v",
+          "versoes_fontes_normativas"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102215515_v107_base_normativa_autorizada.sql",
+        "linha": 201,
+        "trecho": "create or replace function public.salvar_fonte_normativa_v107(p_id_organizacao uuid,p_id_contrato uuid,p_id_fonte uuid,p_tipo text,p_titulo text,p_referencia text,p_descricao text,p_situacao text,p_versao_esperada bigint,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "340b97a37298b7860f5dfe14fd84d51483663660d3d6bb1f065c8fd617b1753a",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1513,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.salvar_fonte_normativa_v107(p_id_organizacao uuid, p_id_contrato uuid, p_id_fonte uuid, p_tipo text, p_titulo text, p_referencia text, p_descricao text, p_situacao text, p_versao_esperada bigint, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "fontes_normativas",
+          "p_id_contrato",
+          "v",
+          "versoes_fontes_normativas"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "salvar_linha_orcamentaria_v108",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103001740_v108_orcamento_estruturado.sql",
+        "linha": 215,
+        "trecho": "create or replace function privado.salvar_linha_orcamentaria_v108(p_id_organizacao uuid,p_id_versao_proposta uuid,p_id_linha uuid,p_codigo text,p_grupo text,p_rubrica text,p_subrubrica text,p_descricao text,p_valor_mensal numeric,p_valor_anual numeric,p_permite_remanejamento boolean,p_limite_remanejamento_percentual numeric,p_observacoes text,p_versao_esperada bigint,p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "5a06ba9b5b4bc3f7bf3bd8b7dae1a9fa14934070976c090925df1c72c86a6837",
+        "tabelas_referenciadas": [
+          "l",
+          "linhas_orcamentarias",
+          "v",
+          "versoes_proposta"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103001740_v108_orcamento_estruturado.sql",
+        "linha": 334,
+        "trecho": "create or replace function public.salvar_linha_orcamentaria_v108(p_id_organizacao uuid,p_id_versao_proposta uuid,p_id_linha uuid,p_codigo text,p_grupo text,p_rubrica text,p_subrubrica text,p_descricao text,p_valor_mensal numeric,p_valor_anual numeric,p_permite_remanejamento boolean,p_limite_remanejamento_percentual numeric,p_observacoes text,p_versao_esperada bigint,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "5a06ba9b5b4bc3f7bf3bd8b7dae1a9fa14934070976c090925df1c72c86a6837",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1728,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.salvar_linha_orcamentaria_v108(p_id_organizacao uuid, p_id_versao_proposta uuid, p_id_linha uuid, p_codigo text, p_grupo text, p_rubrica text, p_subrubrica text, p_descricao text, p_valor_mensal numeric, p_valor_anual numeric, p_permite_remanejamento boolean, p_limite_remanejamento_percentual numeric, p_observacoes text, p_versao_esperada bigint, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "l",
+          "linhas_orcamentarias",
+          "v",
+          "versoes_proposta"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "salvar_proposta_orcamentaria_v108",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261103001740_v108_orcamento_estruturado.sql",
+        "linha": 165,
+        "trecho": "create or replace function privado.salvar_proposta_orcamentaria_v108(p_id_organizacao uuid,p_id_contrato uuid,p_id_proposta uuid,p_titulo text,p_versao_esperada bigint,p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "5a06ba9b5b4bc3f7bf3bd8b7dae1a9fa14934070976c090925df1c72c86a6837",
+        "tabelas_referenciadas": [
+          "propostas_orcamentarias",
+          "v"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103001740_v108_orcamento_estruturado.sql",
+        "linha": 330,
+        "trecho": "create or replace function public.salvar_proposta_orcamentaria_v108(p_id_organizacao uuid,p_id_contrato uuid,p_id_proposta uuid,p_titulo text,p_versao_esperada bigint,p_chave_idempotencia text)",
+        "schema": "public",
+        "sha256": "5a06ba9b5b4bc3f7bf3bd8b7dae1a9fa14934070976c090925df1c72c86a6837",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1664,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.salvar_proposta_orcamentaria_v108(p_id_organizacao uuid, p_id_contrato uuid, p_id_proposta uuid, p_titulo text, p_versao_esperada bigint, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "propostas_orcamentarias",
+          "v"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "salvar_vinculo_usuario_adm",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102124852_adm01_admin_usuarios_vinculos.sql",
+        "linha": 322,
+        "trecho": "create or replace function privado.salvar_vinculo_usuario_adm(",
+        "schema": "privado",
+        "sha256": "c7c3fef1870670b17c4b379bd9e27a24c13f0e80e0b9d4af6d763364abce68aa",
+        "tabelas_referenciadas": [
+          "comandos_idempotentes",
+          "contratos",
+          "eventos_auditoria",
+          "perfis_usuarios",
+          "usuarios",
+          "v_comando_id",
+          "v_correlation_id",
+          "v_depois",
+          "v_escopo_antes",
+          "v_escopo_depois",
+          "v_hash",
+          "v_id_usuario",
+          "v_ids_contratos",
+          "v_qtd_contratos",
+          "v_vinculo_id",
+          "vinculos_usuario_contratos",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102124852_adm01_admin_usuarios_vinculos.sql",
+        "linha": 568,
+        "trecho": "create or replace function public.salvar_vinculo_usuario_adm(",
+        "schema": "public",
+        "sha256": "c7c3fef1870670b17c4b379bd9e27a24c13f0e80e0b9d4af6d763364abce68aa",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+        "linha": 101,
+        "trecho": "create or replace function privado.salvar_vinculo_usuario_adm(",
+        "schema": "privado",
+        "sha256": "ffc209fa1d4971d6c5d6663aeb29ce1b700c2b5d3433a220423805424c01237b",
+        "tabelas_referenciadas": [
+          "comandos_idempotentes",
+          "contratos",
+          "eventos_auditoria",
+          "perfis_usuarios",
+          "usuarios",
+          "v_comando_id",
+          "v_correlation_id",
+          "v_depois",
+          "v_escopo_antes",
+          "v_escopo_depois",
+          "v_hash",
+          "v_id_usuario",
+          "v_ids_ativar",
+          "v_ids_revogar",
+          "v_ids_validar",
+          "v_qtd_contratos",
+          "v_vinculo_id",
+          "vinculos_usuario_contratos",
+          "vinculos_usuarios"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102130001_adm01_scope_pagination_integrity.sql",
+        "linha": 377,
+        "trecho": "create or replace function public.salvar_vinculo_usuario_adm(",
+        "schema": "public",
+        "sha256": "ffc209fa1d4971d6c5d6663aeb29ce1b700c2b5d3433a220423805424c01237b",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1058,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.salvar_vinculo_usuario_adm(p_id_organizacao uuid, p_id_usuario uuid, p_email text, p_perfil text, p_escopo_todos_contratos boolean, p_ativo boolean, p_ids_contratos_ativar uuid[], p_ids_contratos_revogar uuid[], p_versao_esperada bigint, p_chave_idempotencia text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "comandos_idempotentes",
+          "contratos",
+          "eventos_auditoria",
+          "perfis_usuarios",
+          "usuarios",
+          "v_comando_id",
+          "v_correlation_id",
+          "v_depois",
+          "v_escopo_antes",
+          "v_escopo_depois",
+          "v_hash",
+          "v_id_usuario",
+          "v_ids_ativar",
+          "v_ids_revogar",
+          "v_ids_validar",
+          "v_qtd_contratos",
+          "v_vinculo_id",
+          "vinculos_usuario_contratos",
+          "vinculos_usuarios"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "solicitar_analise_competencia",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101210948_0006_competencias_analise.sql",
+        "linha": 230,
+        "trecho": "create or replace function public.solicitar_analise_competencia(p_id_competencia uuid,p_tipo text default 'completa')",
+        "schema": "public",
+        "sha256": "0f905491b8e576e46091ac34532253d7f06dd1502f04be760b2fd0b0080c3e18",
+        "tabelas_referenciadas": [
+          "competencias",
+          "execucoes_analise",
+          "v",
+          "v_exec"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101211533_0016_rpc_privadas_wrappers.sql",
+        "linha": 60,
+        "trecho": "create function public.solicitar_analise_competencia(p_id_competencia uuid,p_tipo text default 'completa') returns uuid language sql security invoker set search_path='' as $$select privado.solicitar_analise_competencia($1,$2)$$;",
+        "schema": "public",
+        "sha256": "962b414d1026773289d2cf25922bb8f75abb538cc246eea75a67fca3a552ee3a",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261101212154_0020_rpc_analise_diligencia_rag.sql",
+        "linha": 4,
+        "trecho": "create or replace function privado.solicitar_analise_competencia(p_id_competencia uuid,p_tipo text default 'completa')",
+        "schema": "privado",
+        "sha256": "cb5f1fdf1f410c6f21f35cb21b63878b829e77f435826528a55c87b07539932a",
+        "tabelas_referenciadas": [
+          "competencias",
+          "execucoes_analise",
+          "v",
+          "v_exec"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101214949_0030_fechamento_funcional_v1_v2.sql",
+        "linha": 107,
+        "trecho": "create or replace function privado.solicitar_analise_competencia(p_id_competencia uuid,p_tipo text default 'completa')",
+        "schema": "privado",
+        "sha256": "6009611b167dbef7daa4f0c6107ba4fae033a3215c7a5a1d9151bee9ed9b3542",
+        "tabelas_referenciadas": [
+          "competencias",
+          "documentos_competencia",
+          "execucoes_analise",
+          "requisitos_competencia",
+          "v",
+          "v_exec",
+          "v_snapshot",
+          "versoes_documento"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102021238_0048_gate_context_hash_checks.sql",
+        "linha": 1,
+        "trecho": "create or replace function privado.solicitar_analise_competencia(p_id_competencia uuid, p_tipo text default 'completa'::text)",
+        "schema": "privado",
+        "sha256": "04a5876678461ce9f4f21cdcdc90f09cd195bcf7f77d9c7bf078a405d800933a",
+        "tabelas_referenciadas": [
+          "competencias",
+          "execucoes_analise",
+          "v",
+          "v_exec"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261102045357_hardening_analysis_queue_idempotency.sql",
+        "linha": 7,
+        "trecho": "create or replace function privado.solicitar_analise_competencia(",
+        "schema": "privado",
+        "sha256": "03a7fa9a6a07e30e236b0636f7bd1999468894b9d64f13fe39aafd0a3aef2f87",
+        "tabelas_referenciadas": [
+          "competencias",
+          "execucoes_analise",
+          "v",
+          "v_exec"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 2807,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.solicitar_analise_competencia(p_id_competencia uuid, p_tipo text DEFAULT 'completa'::text)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "competencias",
+          "execucoes_analise",
+          "v",
+          "v_exec"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "solicitar_parecer_interno",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101214949_0030_fechamento_funcional_v1_v2.sql",
+        "linha": 147,
+        "trecho": "create or replace function privado.solicitar_parecer_interno(p_id_competencia uuid)",
+        "schema": "privado",
+        "sha256": "6009611b167dbef7daa4f0c6107ba4fae033a3215c7a5a1d9151bee9ed9b3542",
+        "tabelas_referenciadas": [
+          "competencias",
+          "v"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101214949_0030_fechamento_funcional_v1_v2.sql",
+        "linha": 158,
+        "trecho": "create or replace function public.solicitar_parecer_interno(p_id_competencia uuid)",
+        "schema": "public",
+        "sha256": "6009611b167dbef7daa4f0c6107ba4fae033a3215c7a5a1d9151bee9ed9b3542",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 3015,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.solicitar_parecer_interno(p_id_competencia uuid)",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "competencias",
+          "v"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "solicitar_reanalise_requisitos",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261101214949_0030_fechamento_funcional_v1_v2.sql",
+        "linha": 132,
+        "trecho": "create or replace function privado.solicitar_reanalise_requisitos(p_id_competencia uuid,p_requisitos uuid[])",
+        "schema": "privado",
+        "sha256": "6009611b167dbef7daa4f0c6107ba4fae033a3215c7a5a1d9151bee9ed9b3542",
+        "tabelas_referenciadas": [
+          "execucoes_analise",
+          "requisitos_competencia"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261101214949_0030_fechamento_funcional_v1_v2.sql",
+        "linha": 142,
+        "trecho": "create or replace function public.solicitar_reanalise_requisitos(p_id_competencia uuid,p_requisitos uuid[])",
+        "schema": "public",
+        "sha256": "6009611b167dbef7daa4f0c6107ba4fae033a3215c7a5a1d9151bee9ed9b3542",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261102080111_hardening_reanalysis_authorization.sql",
+        "linha": 3,
+        "trecho": "create or replace function privado.solicitar_reanalise_requisitos(",
+        "schema": "privado",
+        "sha256": "87d056d3d2060d254ce7db75cdc90ddb5865c95c72ced98e550b09643f9be377",
+        "tabelas_referenciadas": [
+          "competencias",
+          "execucoes_analise",
+          "requisitos_competencia",
+          "v_org"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261103172945_v117_reanalise_requisitos_concorrencia.sql",
+        "linha": 3,
+        "trecho": "create or replace function privado.solicitar_reanalise_requisitos(",
+        "schema": "privado",
+        "sha256": "1531b2f005b8704b1a3a874adf196182dab213735323ec74ff2f6b7c9aacc82e",
+        "tabelas_referenciadas": [
+          "competencias",
+          "execucoes_analise",
+          "na",
+          "requisitos_competencia",
+          "v_busy",
+          "v_busy_ids",
+          "v_comp",
+          "v_ids",
+          "v_written"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 2887,
+        "trecho": "CREATE OR REPLACE FUNCTION privado.solicitar_reanalise_requisitos(p_id_competencia uuid, p_requisitos uuid[])",
+        "schema": "privado",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "competencias",
+          "execucoes_analise",
+          "na",
+          "requisitos_competencia",
+          "v_busy",
+          "v_busy_ids",
+          "v_comp",
+          "v_ids",
+          "v_written"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "validar_administrador_organizacao",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261102125242_adm01_usuarios_vinculos_backend.sql",
+        "linha": 5,
+        "trecho": "create or replace function privado.validar_administrador_organizacao(p_id_organizacao uuid)",
+        "schema": "privado",
+        "sha256": "baf3d349080fb5330e1055792649da187ca635d3f700bf133de17fa46010c2af",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261102125242_adm01_usuarios_vinculos_backend.sql",
+        "linha": 32,
+        "trecho": "create or replace function public.validar_administrador_organizacao(p_id_organizacao uuid)",
+        "schema": "public",
+        "sha256": "baf3d349080fb5330e1055792649da187ca635d3f700bf133de17fa46010c2af",
+        "tabelas_referenciadas": []
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 1042,
+        "trecho": "CREATE OR REPLACE FUNCTION public.validar_administrador_organizacao(p_id_organizacao uuid)",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": []
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  },
+  {
+    "nome": "vincular_tratamento_historico_hml",
+    "definicoes_normativas": [
+      {
+        "arquivo": "supabase/migrations/20261104231237_v1_22_vinculo_resposta_desfecho_gestao_hml.sql",
+        "linha": 1,
+        "trecho": "CREATE OR REPLACE FUNCTION public.vincular_tratamento_historico_hml(p_id_apontamento uuid,p_resposta text DEFAULT NULL,p_desfecho text DEFAULT NULL,p_fundamento text DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $fn$",
+        "schema": "public",
+        "sha256": "cf89e92d015913243d93fb220555021594ec715bdb853e66ba1454c83bb486a2",
+        "tabelas_referenciadas": [
+          "a",
+          "apontamentos_historicos",
+          "desfechos_historicos",
+          "respostas_historicas",
+          "vd",
+          "vr"
+        ]
+      },
+      {
+        "arquivo": "supabase/migrations/20261106014102_p0_v1_rbac_persistente.sql",
+        "linha": 3226,
+        "trecho": "CREATE OR REPLACE FUNCTION public.vincular_tratamento_historico_hml(p_id_apontamento uuid, p_resposta text DEFAULT NULL::text, p_desfecho text DEFAULT NULL::text, p_fundamento text DEFAULT NULL::text)",
+        "schema": "public",
+        "sha256": "99f51e2d9d57d5d340144d14305714307be642bec83245d73b427d2b17c2b36d",
+        "tabelas_referenciadas": [
+          "a",
+          "apontamentos_historicos",
+          "desfechos_historicos",
+          "respostas_historicas",
+          "vd",
+          "vr"
+        ]
+      }
+    ],
+    "observacao": "Definições versionadas, podendo incluir wrapper público e implementação privada; não comprova deployment atual."
+  }
+]

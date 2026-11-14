@@ -1,0 +1,41 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 593,
+  "files": [
+    ".github/workflows/contaos-trilha-a-authenticated.yml"
+  ],
+  "plan_documento": "docs/frontend/planos/P0_SANEAMENTO_FASE1_PR593_TRILHA_A_PLAN_2026-11-14.md",
+  "plan_parent": "docs/frontend/planos/P0_PLANO_UNICO_SANEAMENTO_PENDENCIAS_2026-11-14.md",
+  "plan_authorization": "Aprovado pelo titular com veto absoluto à desconstrução de certificações já aprovadas e encerradas.",
+  "justificativa": "Corrigir exclusivamente o subscriber Trilha A no job request, para que merges sem novo arquivo TRILHA_A_SOLICITACAO_UNICA.json não executem preflight sobre R14 histórica. Se request mudou, manter preflight fail-closed e job privado condicionado ao selected real. Sem reabrir Fase 2 52/52.",
+  "evidence": {
+    "historical_false_red": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43589941705",
+    "original_pr": "https://github.com/contaos999999/contaos-hml-control/pull/593",
+    "original_nonsecret_ci": "https://github.com/contaos999999/contaos-hml-control/actions/runs/43042528333",
+    "phase0_merge": "eda87e58bc9e8996d3b4f8601c27eb9a46681377"
+  },
+  "denied_paths": [
+    "docs/frontend/auditorias/TRILHA_A_SOLICITACAO_UNICA.json",
+    "docs/frontend/auditorias/P0_V1_CERTIFICACAO_FASE8_2026-11-11.md",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase1/**",
+    "docs/frontend/auditorias/integracao-funcional-v1/fase2/**",
+    "docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json",
+    "docs/frontend/planos/PLANO_ATIVO.json",
+    "scripts/hml/authenticated-visual-audit.mjs",
+    "src/**",
+    "backend/**",
+    "PROD/**"
+  ],
+  "gates": [
+    "ZERO_DRIFT",
+    "LOCK_TYPES",
+    "P0_NR_001",
+    "TESTE_C",
+    "GOV_004",
+    "Edivan5002_INDEPENDENT_APPROVAL"
+  ],
+  "no_e2e_claim": true,
+  "no_prod": true,
+  "requires_protected_merge": true
+}

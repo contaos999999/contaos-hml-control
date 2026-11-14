@@ -1,0 +1,19 @@
+{
+  "id": 13963014490,
+  "name": "trilha-a-private-43252858747-1",
+  "size_in_bytes": 2568,
+  "url": "https://api.github.com/repos/contaos999999/contaos-hml-control/actions/artifacts/13963014490",
+  "archive_download_url": "https://api.github.com/repos/contaos999999/contaos-hml-control/actions/artifacts/13963014490/zip",
+  "expired": false,
+  "created_at": "2026-11-12T16:43:38Z",
+  "expires_at": "2027-02-10T15:54:32Z",
+  "updated_at": "2026-11-12T16:43:38Z",
+  "digest": "sha256:94d55175c6354b27858503eea25349a27b6f732089c9126945f14993f6271311",
+  "workflow_run": {
+    "id": 43252858747,
+    "repository_id": 1442722734,
+    "head_repository_id": 1442722734,
+    "head_branch": "main",
+    "head_sha": "bb245f124aad6eb33c133100bde5c742978ef01c"
+  }
+}

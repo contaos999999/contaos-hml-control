@@ -2731,8 +2731,15 @@ export function createRequestLifecycle(identity) {
   const pendingFetch = new Set();
   const seenNetwork = new Set(),
     seenFetch = new Set();
+  // GET principais encerrados por cancelamento comprovado (ERR_ABORTED, sem bloqueio).
+  // O Chromium conclui o preflight CORS desses pedidos na rede, mas não emite
+  // Network.loadingFinished/Failed para o OPTIONS. Somente com essa prova, e depois
+  // de a resposta do próprio preflight ter sido pausada e liberada pelo fence, o
+  // registro do preflight é aposentado; caso contrário permanece pendente.
+  const canceledMains = new Set();
   let closed = false,
-    canceled = 0;
+    canceled = 0,
+    retiredPreflights = 0;
   const id = (value) => typeof value === "string" && value.length > 0 && value.length <= 512;
   const key = (session, value) => session.id + "|" + value;
   function own(session, requireFrame = true) {
@@ -2753,6 +2760,17 @@ export function createRequestLifecycle(identity) {
     cleanup(record);
   }
   function cleanup(record) {
+    if (
+      !record.terminal &&
+      record.preflightOf !== null &&
+      record.preflightOrphaned === true &&
+      record.preflightResponded === true &&
+      record.active === 0
+    ) {
+      retiredPreflights++;
+      terminal(record, { kind: "PREFLIGHT_RETIRED" });
+      return;
+    }
     if (!record.terminal || record.active > 0) return;
     requests.delete(record.key);
     for (const fetchKey of record.fetchKeys) fetches.delete(fetchKey);
@@ -2846,7 +2864,19 @@ export function createRequestLifecycle(identity) {
           active: 0,
           fetchKeys: new Set(),
           waiters: new Set(),
+          preflightOf:
+            event.type === "Other" &&
+            event.request?.method === "OPTIONS" &&
+            event.initiator?.type === "preflight" &&
+            id(event.initiator.requestId) &&
+            event.initiator.requestId !== event.requestId
+              ? key(session, event.initiator.requestId)
+              : null,
+          preflightOrphaned: false,
+          preflightResponded: false,
         };
+        if (record.preflightOf !== null && canceledMains.has(record.preflightOf))
+          record.preflightOrphaned = true;
         requests.set(requestKey, record);
         pendingNetwork.get(requestKey)?.done(true);
         return;
@@ -2865,6 +2895,26 @@ export function createRequestLifecycle(identity) {
           timestamp: event.timestamp,
           blocked: event.blockedReason !== undefined || event.corsErrorStatus !== undefined,
         });
+        const proof = record.terminal;
+        if (
+          record.preflightOf === null &&
+          (record.method === "GET" || record.method === "POST") &&
+          proof.canceled &&
+          proof.aborted &&
+          !proof.blocked &&
+          proof.type === record.type
+        ) {
+          if (canceledMains.size >= 65536) {
+            tracker.close();
+            fail("FENCE_REQUEST_LIFECYCLE");
+          }
+          canceledMains.add(requestKey);
+          for (const other of [...requests.values()])
+            if (other.preflightOf === requestKey && !other.terminal) {
+              other.preflightOrphaned = true;
+              cleanup(other);
+            }
+        }
       } else if (method === "Network.loadingFinished") terminal(record, { kind: "FINISHED" });
     },
     async pauseWhenObserved(session, event, receivedAt = performance.now()) {
@@ -3090,11 +3140,38 @@ export function createRequestLifecycle(identity) {
       canceled++;
       return true;
     },
+    responded(ticket) {
+      if (!ticket) return;
+      if (closed || ticket.finished || ticket.stage !== "RESPONSE" || ticket.responded)
+        fail("FENCE_REQUEST_LIFECYCLE");
+      ticket.responded = true;
+      if (ticket.record.preflightOf !== null) ticket.record.preflightResponded = true;
+    },
     finish(ticket) {
       if (!ticket || ticket.finished) return;
       ticket.finished = true;
       ticket.record.active--;
       cleanup(ticket.record);
+    },
+    diagnostic(now = performance.now()) {
+      const records = [];
+      for (const record of requests.values()) {
+        if (records.length >= 16) break;
+        records.push({
+          type: CDP_RESOURCE_TYPES.has(record.type) ? record.type : "OTHER",
+          method: ["GET", "POST", "OPTIONS", "HEAD"].includes(record.method)
+            ? record.method
+            : "OTHER",
+          preflight: record.preflightOf !== null,
+          preflightOrphaned: record.preflightOrphaned === true,
+          preflightResponded: record.preflightResponded === true,
+          eligible: record.eligible === true,
+          responseSeen: record.responseSeen === true,
+          terminal: !!record.terminal,
+          active: Number.isSafeInteger(record.active) ? record.active : -1,
+        });
+      }
+      return { records, pendingNetwork: pendingNetwork.size, total: requests.size };
     },
     snapshot() {
       return {
@@ -3103,6 +3180,7 @@ export function createRequestLifecycle(identity) {
         networkTombstones: seenNetwork.size,
         fetchTombstones: seenFetch.size,
         canceled,
+        retiredPreflights,
       };
     },
     close() {
@@ -3116,6 +3194,7 @@ export function createRequestLifecycle(identity) {
       fetches.clear();
       seenNetwork.clear();
       seenFetch.clear();
+      canceledMains.clear();
     },
   };
   return tracker;
@@ -3928,6 +4007,7 @@ export async function installNativeFence({
           body: body.toString("base64"),
         });
       } else await send(session, "Fetch.continueResponse", { requestId });
+      lifecycle.responded(ticket);
     } catch (error) {
       if (!state.failed && !closed && (await lifecycle.handleCanceled(ticket, error))) return;
       await send(session, "Fetch.failRequest", { requestId, errorReason: "BlockedByClient" }).catch(
@@ -4064,6 +4144,7 @@ export async function installNativeFence({
     snapshot: () => ({
       ...state,
       canceledInitialRequests: lifecycle.snapshot().canceled,
+      retiredCanceledPreflights: lifecycle.snapshot().retiredPreflights,
       activeNetworkRequests: lifecycle.snapshot().active,
       pendingNetworkAssociations: lifecycle.snapshot().pendingNetwork,
     }),
@@ -4077,6 +4158,7 @@ export async function installNativeFence({
         if (state.failed || closed) fail(state.failureCode || "FENCE_CDP_CLOSED");
         const remaining = deadline - performance.now();
         if (remaining <= 0) {
+          navigationDrainDiagnostic(active.size, lifecycle);
           invalidate({ code: "FENCE_DRAIN_TIMEOUT" });
           fail("FENCE_DRAIN_TIMEOUT");
         }
@@ -4267,6 +4349,2379 @@ export const C8_V117_SCOPE = Object.freeze({
 export function isC8Scope(scope) {
   return scope === C8_AUDIT_SCOPE || scope === C8_REMAINING_SCOPE || scope === C8_V117_SCOPE;
 }
+// R10: produto do BUILD R10 (#637, merge e6c8cb0) publicado no HML; READY, SHA de origem
+// conferido pela API do Vercel. O produto anterior era 3638cdd / dpl_CRTez9i1…
+export const NAVIGATION_DEPLOYMENT = Object.freeze({
+  frontendSha: "e6c8cb06dac2a6cdc225b0705ef984ed3e398d97",
+  deploymentId: "dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz",
+});
+export const NAVIGATION_SCOPE = Object.freeze({
+  id: "INTEGRACAO_V1_FASE2_NAV",
+  nonce: "integracao-v1-fase2-nav-20261113-r14",
+  surfaces: Object.freeze([...PRIVATE_SURFACES]),
+});
+// Emenda R8 (certificação incremental, PR #626): ledger acumulativo, append-only,
+// integrado à main e fixado por SHA-256. Sem hash fixado, a auditoria NAV falha fechada.
+export const NAVIGATION_LEDGER_SCHEMA = "contaos.navigation.incremental.v1";
+export const NAVIGATION_LEDGER = Object.freeze({
+  path: "docs/frontend/auditorias/integracao-funcional-v1/fase2/NAV_LEDGER.json",
+  // v5 (consolidação): v4 + índice 52 (V123/390) da R14 (run 43509322900, artefato
+  // 14076439209, ZIP 596629b9…, report 0d1e580b…), relatório v4 válido com sessão, MASTER,
+  // organização, logout e zero erros globais. Matriz 52/52; nenhuma execução nova.
+  sha256: "6eeef70b5d194cfe388666096dd3a4b493e89c7b9259248a98b4ef212745afd4",
+  // Cadeia append-only: hash do ledger fixado anteriormente (v4).
+  previousSha256: "2245b4fe3dead145d1b595932df648f3163f810e5b6ddbe57120c84add9a4318",
+  resumeFrom: 53,
+  pendingCount: 0,
+  // Harness cujos PASS permanecem compatíveis com o harness atual. Cada inclusão
+  // exige prova de não impacto revisada (docs/.../fase2/R11_LEDGER_COMPATIBILIDADE).
+  // a3b6c34 e 9a4d0ad só cobriam PASS já invalidados (SUPERSEDED na v3); 050beb1 cobre os
+  // PASS 1-51 da R10; ccf5343 é o harness da R14 (índice 52). De ccf5343 até a consolidação
+  // só mudam este pin e comentários; R12-R14 só alteraram preflight, nonce e a contagem do
+  // logout 204, fora dos casos (PLANs R12, R13 e R14).
+  compatibleHarnessShas: Object.freeze([
+    "a3b6c34936a095fdca98bb79c3f21d28ed0e3979",
+    "9a4d0ad16a8a64fa04a30208c8c36e7020ec9b01",
+    "050beb1bbc3ce886227865178b7bdbecef964033",
+    "ccf534371cb06f9f1c6fef425345d0e012ac4bb8",
+  ]),
+});
+const NAVIGATION_LEDGER_CASE_KEYS = ["index", "surface", "width", "theme", "status"];
+const NAVIGATION_LEDGER_PASS_KEYS = Object.freeze([
+  ...NAVIGATION_LEDGER_CASE_KEYS,
+  "runId",
+  "attempt",
+  "frontendSha",
+  "harnessSha",
+  "deploymentId",
+  "artifactId",
+  "artifactSha256",
+  "reportSha256",
+]);
+const NAVIGATION_LEDGER_SUPERSEDE_KEYS = Object.freeze([
+  ...NAVIGATION_LEDGER_CASE_KEYS,
+  "supersedesRunId",
+  "supersedesAttempt",
+  "changeSha",
+  "justification",
+]);
+const NAVIGATION_LEDGER_EVIDENCE = Object.freeze([
+  "frontendSha",
+  "harnessSha",
+  "deploymentId",
+  "artifactId",
+  "artifactSha256",
+  "reportSha256",
+]);
+export function navigationCatalogueSha256() {
+  return digest(JSON.stringify(navigationCases().map((c) => [c.surface, c.width, c.theme])));
+}
+function parseNavigationLedger(raw) {
+  const code = "NAVIGATION_LEDGER";
+  if (typeof raw !== "string" || Buffer.byteLength(raw) > 262144) fail(code);
+  let ledger;
+  try {
+    ledger = JSON.parse(raw);
+  } catch {
+    fail(code);
+  }
+  // Forma canônica exata: impede chaves duplicadas ou texto que engane a revisão.
+  if (JSON.stringify(ledger, null, 2) + "\n" !== raw) fail(code);
+  if (
+    !navigationPlain(ledger, ["schema", "catalogueSha256", "previousLedgerSha256", "entries"]) ||
+    ledger.schema !== NAVIGATION_LEDGER_SCHEMA ||
+    ledger.catalogueSha256 !== navigationCatalogueSha256() ||
+    !(ledger.previousLedgerSha256 === null || hash64(ledger.previousLedgerSha256)) ||
+    !Array.isArray(ledger.entries) ||
+    ledger.entries.length > 208
+  )
+    fail(code);
+  return ledger;
+}
+export function validateNavigationLedger(raw, pin = NAVIGATION_LEDGER) {
+  const code = "NAVIGATION_LEDGER";
+  if (
+    typeof raw !== "string" ||
+    !hash64(pin?.sha256) ||
+    digest(raw) !== pin.sha256 ||
+    !(pin.previousSha256 === null || hash64(pin.previousSha256)) ||
+    !Number.isInteger(pin.resumeFrom) ||
+    pin.resumeFrom < 1 ||
+    pin.resumeFrom > 53 ||
+    !Array.isArray(pin.compatibleHarnessShas)
+  )
+    fail(code);
+  const ledger = parseNavigationLedger(raw);
+  if (ledger.previousLedgerSha256 !== pin.previousSha256) fail(code);
+  const cases = navigationCases(),
+    valid = new Map(),
+    runs = new Map(),
+    owners = new Map(),
+    lastIndex = new Map();
+  let lastRun = 0;
+  for (const entry of ledger.entries) {
+    const item = cases[entry?.index - 1];
+    if (
+      !entry ||
+      typeof entry !== "object" ||
+      !Number.isInteger(entry.index) ||
+      !item ||
+      entry.surface !== item.surface ||
+      entry.width !== item.width ||
+      entry.theme !== item.theme
+    )
+      fail(code);
+    if (entry.status === "PASS") {
+      if (
+        !navigationPlain(entry, NAVIGATION_LEDGER_PASS_KEYS) ||
+        !Number.isSafeInteger(entry.runId) ||
+        entry.runId <= 0 ||
+        entry.attempt !== 1 ||
+        !hash40(entry.frontendSha) ||
+        !hash40(entry.harnessSha) ||
+        !/^dpl_[A-Za-z0-9]{8,80}$/.test(entry.deploymentId) ||
+        !Number.isSafeInteger(entry.artifactId) ||
+        entry.artifactId <= 0 ||
+        !hash64(entry.artifactSha256) ||
+        !hash64(entry.reportSha256) ||
+        valid.has(entry.index)
+      )
+        fail(code);
+      // Ordem append-only: execuções em ordem crescente e índices crescentes na execução.
+      const runKey = entry.runId + "/" + entry.attempt;
+      if (entry.runId < lastRun || (lastIndex.get(runKey) ?? 0) >= entry.index) fail(code);
+      const evidence = runs.get(runKey);
+      if (evidence && NAVIGATION_LEDGER_EVIDENCE.some((k) => evidence[k] !== entry[k])) fail(code);
+      // Artefato e relatório pertencem a uma única execução: nunca reaproveitar evidência.
+      for (const k of ["artifactId", "artifactSha256", "reportSha256"]) {
+        const owner = owners.get(k + ":" + entry[k]);
+        if (owner !== undefined && owner !== runKey) fail(code);
+        owners.set(k + ":" + entry[k], runKey);
+      }
+      runs.set(runKey, evidence ?? entry);
+      lastRun = entry.runId;
+      lastIndex.set(runKey, entry.index);
+      valid.set(entry.index, entry);
+    } else if (entry.status === "SUPERSEDED") {
+      // Invalidação nunca apaga o histórico nem inventa PASS: aponta a entrada exata.
+      const target = valid.get(entry.index);
+      if (
+        !navigationPlain(entry, NAVIGATION_LEDGER_SUPERSEDE_KEYS) ||
+        !target ||
+        entry.supersedesRunId !== target.runId ||
+        entry.supersedesAttempt !== target.attempt ||
+        !hash40(entry.changeSha) ||
+        typeof entry.justification !== "string" ||
+        entry.justification.trim().length < 16 ||
+        entry.justification.length > 512
+      )
+        fail(code);
+      valid.delete(entry.index);
+    } else fail(code);
+  }
+  // Só PASS ainda válidos precisam ser compatíveis com o produto, deployment e harness atuais.
+  for (const entry of valid.values())
+    if (
+      entry.frontendSha !== NAVIGATION_DEPLOYMENT.frontendSha ||
+      entry.deploymentId !== NAVIGATION_DEPLOYMENT.deploymentId ||
+      !pin.compatibleHarnessShas.includes(entry.harnessSha)
+    )
+      fail(code);
+  // Emenda R9 (C): lacunas permitidas. Pendentes são exatamente os índices sem PASS válido.
+  const pendingIndices = [];
+  for (let index = 1; index <= cases.length; index++)
+    if (!valid.has(index)) pendingIndices.push(index);
+  const resumeFrom = pendingIndices.length ? pendingIndices[0] : cases.length + 1;
+  if (
+    resumeFrom !== pin.resumeFrom ||
+    (pin.pendingCount !== undefined && pin.pendingCount !== pendingIndices.length)
+  )
+    fail(code);
+  return Object.freeze({
+    sha256: pin.sha256,
+    resumeFrom,
+    validIndices: Object.freeze([...valid.keys()].sort((a, b) => a - b)),
+    pendingIndices: Object.freeze(pendingIndices),
+  });
+}
+// Uma nova versão do ledger só pode acrescentar entradas ao fim da anterior.
+export function validateNavigationLedgerExtension(previousRaw, raw) {
+  const previous = parseNavigationLedger(previousRaw),
+    next = parseNavigationLedger(raw);
+  if (
+    next.previousLedgerSha256 !== digest(previousRaw) ||
+    next.entries.length <= previous.entries.length ||
+    previous.entries.some((entry, i) => JSON.stringify(entry) !== JSON.stringify(next.entries[i]))
+  )
+    fail("NAVIGATION_LEDGER");
+  return true;
+}
+// Cadeia append-only em tempo de execução: a versão anterior fixada tem de existir no
+// histórico git do próprio harness e ser prefixo exato da versão atual.
+export async function verifyNavigationLedgerChain(raw, pin, git) {
+  if (pin.previousSha256 === null) return true;
+  if (!hash64(pin.previousSha256) || typeof git !== "function") fail("NAVIGATION_LEDGER");
+  let commits;
+  try {
+    commits = (await git(["log", "--format=%H", "-n", "200", "--", pin.path]))
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+  } catch {
+    fail("NAVIGATION_LEDGER");
+  }
+  for (const commit of commits) {
+    if (!hash40(commit)) fail("NAVIGATION_LEDGER");
+    let previous;
+    try {
+      previous = await git(["show", commit + ":" + pin.path]);
+    } catch {
+      continue;
+    }
+    if (digest(previous) === pin.previousSha256)
+      return validateNavigationLedgerExtension(previous, raw);
+  }
+  fail("NAVIGATION_LEDGER");
+}
+let navigationLedgerState = null;
+export async function loadNavigationLedger(read = readFile, pin = NAVIGATION_LEDGER, git) {
+  if (pin === NAVIGATION_LEDGER && navigationLedgerState) return navigationLedgerState;
+  let raw;
+  try {
+    raw = await read(fileURLToPath(new URL("../../" + pin.path, import.meta.url)), "utf8");
+  } catch {
+    fail("NAVIGATION_LEDGER");
+  }
+  const state = validateNavigationLedger(raw, pin);
+  // Ledger completo (52/52) não abre execução: a consolidação é validada fora do --audit.
+  if (state.resumeFrom > 52) fail("NAVIGATION_LEDGER");
+  await verifyNavigationLedgerChain(
+    raw,
+    pin,
+    git ??
+      (async (args) =>
+        (
+          await execFile("git", args, {
+            cwd: fileURLToPath(new URL("../../", import.meta.url)),
+            env: browserEnvironment(process.env),
+            maxBuffer: 4194304,
+            timeout: 10000,
+          })
+        ).stdout),
+  );
+  if (pin === NAVIGATION_LEDGER) navigationLedgerState = state;
+  return state;
+}
+// Para o relatório final: nunca lança, para que o relatório lacrado seja sempre gravado.
+export async function navigationReportLedger(load = loadNavigationLedger) {
+  try {
+    return await load();
+  } catch {
+    return null;
+  }
+}
+export function navigationFinalSummary(records, ledger, pin, flags) {
+  try {
+    return navigationFinalSummaryUnsafe(records, ledger, pin, flags);
+  } catch {
+    // Nunca lança: o relatório é gravado e lacrado como incompleto.
+    return navigationFinalSummaryUnsafe(records, null, pin, flags);
+  }
+}
+function navigationFinalSummaryUnsafe(records, ledger, pin, { aborted, logoutVerified }) {
+  const incremental = pin.resumeFrom > 1;
+  if (!incremental) {
+    const summary = summarizeNavigation(records);
+    if (aborted || !logoutVerified || !ledger) summary.matrixComplete = false;
+    return { incremental, summary };
+  }
+  let computed = null;
+  if (ledger)
+    try {
+      computed = summarizeNavigationIncremental(records, ledger);
+    } catch {
+      computed = null;
+    }
+  const summary = computed
+    ? computed
+    : {
+        expected: -1,
+        observed: Array.isArray(records) ? records.length : 0,
+        passed: 0,
+        failed: Array.isArray(records) ? records.length : 0,
+        resumeFrom: pin.resumeFrom,
+        runComplete: false,
+        cumulativeMatrixComplete: false,
+      };
+  if (aborted || !logoutVerified || !ledger || !computed) {
+    summary.runComplete = false;
+    summary.cumulativeMatrixComplete = false;
+  }
+  return { incremental, summary };
+}
+// Casos da execução: exatamente os índices pendentes do ledger, em ordem canônica.
+export function navigationRunCases(ledger) {
+  const cases = navigationCases();
+  const pending = ledger?.pendingIndices;
+  if (
+    !Array.isArray(pending) ||
+    pending.length === 0 ||
+    pending.some(
+      (index, position) =>
+        !Number.isInteger(index) ||
+        index < 1 ||
+        index > cases.length ||
+        (position > 0 && index <= pending[position - 1]),
+    ) ||
+    pending[0] !== ledger.resumeFrom
+  )
+    fail("NAVIGATION_LEDGER");
+  return pending.map((index) => cases[index - 1]);
+}
+export function summarizeNavigationIncremental(records, ledger) {
+  const expected = navigationRunCases(ledger);
+  const keys = new Set(expected.map((c) => `${c.surface}/${c.width}/${c.theme}`));
+  const base = summarizeNavigation(records, expected.length);
+  let passed = 0;
+  const counted = new Set();
+  if (base.observed === records?.length)
+    for (const row of records) {
+      const key = `${row?.surface}/${row?.width}/${row?.theme}`;
+      if (keys.has(key) && navigationRowValid(row) && !counted.has(key)) {
+        passed++;
+        counted.add(key);
+      }
+    }
+  const runComplete = base.observed === expected.length && passed === expected.length;
+  const total = navigationCases().length;
+  const validOthers =
+    Array.isArray(ledger?.validIndices) &&
+    ledger.validIndices.length + ledger.pendingIndices.length === total &&
+    ledger.validIndices.every((index) => !ledger.pendingIndices.includes(index));
+  return {
+    expected: expected.length,
+    observed: base.observed,
+    passed,
+    failed: base.observed - passed,
+    resumeFrom: ledger.resumeFrom,
+    runComplete,
+    cumulativeMatrixComplete: runComplete && validOthers,
+  };
+}
+export function navigationCases() {
+  const current = new Map(privateCases().map((r) => [r.surface, r.path]));
+  for (const r of privateCases(C8_AUDIT_SCOPE)) current.set(r.surface, r.path);
+  return PRIVATE_SURFACES.flatMap((surface) =>
+    [
+      { width: 1440, theme: "light" },
+      { width: 390, theme: "dark" },
+    ].map((view) => ({
+      surface,
+      ...view,
+      path: current.get(surface),
+    })),
+  );
+}
+export function navigationDestination(value) {
+  if (typeof value !== "string" || value.length > 512) return null;
+  try {
+    const url = new URL(value, HML_ORIGIN);
+    if (url.origin !== HML_ORIGIN || url.username || url.password || url.search || url.hash)
+      return null;
+    return navigationKnownRoutes().get(url.pathname) ?? null;
+  } catch {
+    return null;
+  }
+}
+function navigationKnownRoutes() {
+  const routes = new Map(
+    navigationCases().map((r) => [r.path, r.surface === "V117" ? "V116" : r.surface]),
+  );
+  for (const id of [
+    SYNTHETIC_FIXTURE.competence,
+    "50c26274-a36f-48e0-b2fe-5a1caf5d6a49",
+    "79bdc139-ed10-4c91-905e-b32b9a824d27",
+  ])
+    for (const [suffix, surface] of [
+      ["", "V114"],
+      ["/documentos", "V115"],
+      ["/analise", "V116"],
+      ["/parecer", "V118"],
+      ["/apresentar", "V119"],
+    ])
+      routes.set("/competencias/" + id + suffix, surface);
+  return routes;
+}
+const NAVIGATION_EXCLUSIONS = Object.freeze({
+  V101: "OTHER_CONTRACTOR_ROW",
+  V104: "OTHER_CONTRACT_ROW",
+  V110: "OTHER_DOCUMENT_ROW",
+  V112: "OTHER_COMPETENCE_ROW",
+});
+export function navigationControlOperation(surface) {
+  if (!PRIVATE_SURFACES.includes(surface)) fail("NAVIGATION_CASE");
+  return (
+    {
+      SYS04: "ORGANIZATION_SELECT",
+      ADM01: "READ_SEARCH",
+      V101: "READ_SEARCH",
+      V102: "EMPTY_FORM",
+      V103: "INVALID_EDIT_FORM",
+      V105: "EMPTY_FORM",
+      V113: "EMPTY_FORM",
+      V117: "REQUIREMENT_DRAWER",
+      V119: "PRESENTATION_CONFIRM_CANCEL",
+      V120: "PROTOCOL_REFRESH",
+      V121: "HISTORY_TABS",
+      V122: "HISTORY_REFRESH",
+    }[surface] || "ROUTE_MENU_LINKS"
+  );
+}
+export function navigationLinkDecision(href, source) {
+  const destination = navigationDestination(href);
+  if (destination) return { kind: "TARGET", destination };
+  if (typeof href !== "string" || href.length > 512) return { kind: "BROKEN" };
+  let url;
+  try {
+    url = new URL(href, HML_ORIGIN);
+  } catch {
+    return { kind: "BROKEN" };
+  }
+  if (url.origin !== HML_ORIGIN || url.username || url.password || url.search || url.hash)
+    return { kind: "BROKEN" };
+  const uuid = "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}";
+  const patterns = {
+    V101: new RegExp("^/contratantes/" + uuid + "/editar$"),
+    V104: new RegExp("^/contratos/" + uuid + "$"),
+    V110: new RegExp("^/contratos/" + SYNTHETIC_FIXTURE.contract + "/documentos/" + uuid + "$"),
+    V112: new RegExp("^/competencias/" + uuid + "$"),
+  };
+  return { kind: patterns[source]?.test(url.pathname) ? NAVIGATION_EXCLUSIONS[source] : "BROKEN" };
+}
+export function navigationUnavailableEvidence(path, value) {
+  const contexts = [
+    { id: SYNTHETIC_FIXTURE.competence, month: "2026-11-01", state: "rascunho" },
+    {
+      id: "79bdc139-ed10-4c91-905e-b32b9a824d27",
+      month: "2026-09-01",
+      state: "aguardando_contratante",
+    },
+  ];
+  const expected = contexts.find((c) => path === "/competencias/" + c.id + "/apresentar");
+  if (!expected || !value || typeof value !== "object" || isProxy(value)) return false;
+  const b = JSON.parse(C8_RECOVERY_DOCUMENT.reportRaw).bindings;
+  return (
+    value.competencia?.id === expected.id &&
+    value.competencia?.id_organizacao === b.organization &&
+    value.competencia?.id_contrato === b.contract &&
+    value.competencia?.competencia_referencia === expected.month &&
+    value.competencia?.situacao === expected.state &&
+    value.allowed_actions?.apresentar === false
+  );
+}
+function navigationPlain(value, keys) {
+  if (!value || typeof value !== "object" || isProxy(value) || Array.isArray(value)) return false;
+  const proto = Object.getPrototypeOf(value);
+  if (proto !== Object.prototype && proto !== null) return false;
+  const actual = Reflect.ownKeys(value);
+  if (actual.length !== keys.length || actual.some((k) => !keys.includes(k))) return false;
+  const ds = Object.getOwnPropertyDescriptors(value);
+  return keys.every((key) => ds[key]?.enumerable === true && Object.hasOwn(ds[key], "value"));
+}
+const NAVIGATION_ROW_KEYS = Object.freeze([
+  "surface",
+  "width",
+  "theme",
+  "routeExact",
+  "stateVerified",
+  "organizationVerified",
+  "enteredFromMenu",
+  "reloadVerified",
+  "backVerified",
+  "shellVerified",
+  "menuVerified",
+  "drawerVerified",
+  "linksFound",
+  "linksTested",
+  "linksOutOfFixture",
+  "excludedLinkKinds",
+  "conditionalLinksTested",
+  "controlsVerified",
+  "controlOperation",
+  "destinations",
+  "pageErrors",
+  "httpErrors",
+  "blockedRequests",
+  "status",
+  "stage",
+  "failureCode",
+  "operation",
+  "target",
+  "httpStatusErrors",
+  "transportErrors",
+]);
+function navigationArray(value, max, predicate) {
+  if (
+    !Array.isArray(value) ||
+    isProxy(value) ||
+    Object.getPrototypeOf(value) !== Array.prototype ||
+    value.length > max
+  )
+    return false;
+  const ds = Object.getOwnPropertyDescriptors(value),
+    keys = Reflect.ownKeys(value);
+  if (
+    keys.length !== value.length + 1 ||
+    keys.some((k) => k !== "length" && !/^(?:0|[1-9][0-9]*)$/.test(String(k)))
+  )
+    return false;
+  for (let i = 0; i < value.length; i++)
+    if (
+      !Object.hasOwn(ds[i] || {}, "value") ||
+      ds[i].enumerable !== true ||
+      !predicate(ds[i].value)
+    )
+      return false;
+  return true;
+}
+function navigationRowValid(row) {
+  if (!navigationPlain(row, NAVIGATION_ROW_KEYS)) return false;
+  const item = navigationCases().find(
+    (r) => r.surface === row.surface && r.width === row.width && r.theme === row.theme,
+  );
+  const truth = [
+    "routeExact",
+    "stateVerified",
+    "organizationVerified",
+    "enteredFromMenu",
+    "reloadVerified",
+    "backVerified",
+    "shellVerified",
+    "menuVerified",
+    "controlsVerified",
+  ];
+  return (
+    !!item &&
+    truth.every((k) => row[k] === true) &&
+    row.status === "PASS" &&
+    row.stage === "FINISH" &&
+    row.failureCode === null &&
+    row.operation === "FINISH" &&
+    row.target === row.surface &&
+    row.httpStatusErrors === 0 &&
+    row.transportErrors === 0 &&
+    row.controlOperation === navigationControlOperation(row.surface) &&
+    row.drawerVerified === (row.surface === "V117" ? true : null) &&
+    navigationArray(
+      row.destinations,
+      26,
+      (d) => PRIVATE_SURFACES.includes(d) && d !== row.surface,
+    ) &&
+    new Set(row.destinations).size === row.destinations.length &&
+    row.destinations.length === row.linksTested &&
+    ["linksFound", "linksTested", "linksOutOfFixture"].every(
+      (k) => Number.isInteger(row[k]) && row[k] >= 0 && row[k] <= 500,
+    ) &&
+    row.linksFound === row.linksTested &&
+    navigationArray(
+      row.excludedLinkKinds,
+      500,
+      (kind) => typeof kind === "string" && kind === NAVIGATION_EXCLUSIONS[row.surface],
+    ) &&
+    row.linksOutOfFixture === row.excludedLinkKinds.length &&
+    Number.isInteger(row.conditionalLinksTested) &&
+    row.conditionalLinksTested >= 0 &&
+    row.conditionalLinksTested <= 1 &&
+    (row.conditionalLinksTested === 0 || row.destinations.includes("V119")) &&
+    (row.surface === "SYS04" || row.linksFound >= 4) &&
+    row.pageErrors === 0 &&
+    row.httpErrors === 0 &&
+    row.blockedRequests === 0
+  );
+}
+export function summarizeNavigation(records, bound) {
+  const expected = navigationCases();
+  const safe = navigationArray(records, bound ?? expected.length, () => true);
+  if (!safe)
+    return { expected: expected.length, observed: 0, passed: 0, failed: 1, matrixComplete: false };
+  const ds = Object.getOwnPropertyDescriptors(records);
+  for (let i = 0; i < records.length; i++)
+    if (!Object.hasOwn(ds[i] || {}, "value"))
+      return {
+        expected: expected.length,
+        observed: 0,
+        passed: 0,
+        failed: 1,
+        matrixComplete: false,
+      };
+  const keys = new Set();
+  let passed = 0;
+  for (const row of records) {
+    if (!navigationRowValid(row)) continue;
+    const key = `${row.surface}/${row.width}/${row.theme}`;
+    if (!keys.has(key)) {
+      passed++;
+      keys.add(key);
+    }
+  }
+  return {
+    expected: expected.length,
+    observed: records.length,
+    passed,
+    failed: records.length - passed,
+    matrixComplete: records.length === expected.length && passed === expected.length,
+  };
+}
+
+const NAVIGATION_NATIVE_CODES = new Set([
+  "CDP_CLOSED",
+  "CDP_COMMAND",
+  "CDP_CONNECT",
+  "CDP_ENDPOINT",
+  "CDP_EVENT",
+  "CDP_FRAME",
+  "CDP_IDENTITY",
+  "CDP_METADATA",
+  "CDP_TIMEOUT",
+  "FENCE_ASYNC",
+  "FENCE_BODY_LIMIT",
+  "FENCE_CDP_CLOSED",
+  "FENCE_CONFIGURATION",
+  "FENCE_CONTEXT_FOREIGN",
+  "FENCE_CONTEXT_UNKNOWN",
+  "FENCE_DOCUMENT_BODY",
+  "FENCE_DRAIN_TIMEOUT",
+  "FENCE_HEADERS",
+  "FENCE_INITIALIZATION",
+  "FENCE_LIFECYCLE_FRAME",
+  "FENCE_LIFECYCLE_NO_NETWORK",
+  "FENCE_LIFECYCLE_TERMINAL",
+  "FENCE_LIFECYCLE_TYPE",
+  "FENCE_NOT_PROVEN",
+  "FENCE_POPUP",
+  "FENCE_READY",
+  "FENCE_REDIRECT",
+  "FENCE_REQUEST",
+  "FENCE_REQUEST_LIFECYCLE",
+  "FENCE_SOURCE",
+  "FENCE_TARGET_DETACHED",
+  "FENCE_TARGET_FAILED",
+  "FENCE_TARGET_TIMEOUT",
+  "FENCE_TRANSPORT",
+  "FENCE_WORKER_PAUSED",
+  "FENCE_WORKER_RUNNING",
+]);
+function navigationOwnValue(value, key) {
+  if (!value || typeof value !== "object" || isProxy(value)) return undefined;
+  return Object.getOwnPropertyDescriptor(value, key)?.value;
+}
+export function navigationFenceDiagnostic(snapshot) {
+  if (navigationOwnValue(snapshot, "failed") === false) return null;
+  const code = navigationOwnValue(snapshot, "failureCode"),
+    command = navigationOwnValue(snapshot, "failureCommand"),
+    protocolCode = navigationOwnValue(snapshot, "failureProtocolCode"),
+    reason = navigationOwnValue(snapshot, "failureReason"),
+    metadata = navigationOwnValue(snapshot, "lifecycleMetadata");
+  const lifecycleKeys = [
+    "network",
+    "fetch",
+    "method",
+    "stage",
+    "networkFramePresent",
+    "sameFrame",
+    "loaderPresent",
+    "ownFetchFrame",
+    "generationSame",
+    "terminal",
+  ];
+  return {
+    failed: true,
+    code: NAVIGATION_NATIVE_CODES.has(code)
+      ? code
+      : snapshot
+        ? "FENCE_UNKNOWN"
+        : "FENCE_NOT_PROVEN",
+    command: FENCE_COMMANDS.has(command) ? command : null,
+    protocolCode: [-32000, -32600, -32601, -32602, -32700].includes(protocolCode)
+      ? protocolCode
+      : null,
+    reason: ["NO_RESOURCE", "INVALID_INTERCEPTION", "BODY_STAGE", "OTHER"].includes(reason)
+      ? reason
+      : null,
+    lifecycle: navigationPlain(metadata, lifecycleKeys) ? safeLifecycleMetadata(metadata) : null,
+  };
+}
+export function navigationLogoutFailure(error, stage) {
+  const code = navigationOwnValue(error, "code"),
+    name = navigationOwnValue(error, "name");
+  return {
+    stage: [
+      "DRAIN",
+      "MENU_CLOSE",
+      "CONTROL",
+      "CLICK",
+      "REDIRECT",
+      "POST_DRAIN",
+      "NOT_LOGGED_IN",
+    ].includes(stage)
+      ? stage
+      : "UNKNOWN",
+    code: NAVIGATION_NATIVE_CODES.has(code)
+      ? code
+      : code === "NAVIGATION_LOGOUT_CONTROL"
+        ? code
+        : name === "TimeoutError"
+          ? "NAVIGATION_TIMEOUT"
+          : "UNCLASSIFIED",
+  };
+}
+
+const NAVIGATION_NATIVE_CASES = Object.freeze(
+  ["PERMISSIONS", "ADMINISTRATION", "SESSION", "TRANSPORT"].flatMap((kind) =>
+    ["1440_LIGHT", "390_DARK"].map((view) => kind + "_" + view),
+  ),
+);
+export function navigationNativeProofValid(value, identity) {
+  if (
+    !navigationPlain(value, [
+      "schema",
+      "harnessSha",
+      "moduleHash",
+      "testHash",
+      "mode",
+      "cases",
+      "views",
+      "passed",
+    ])
+  )
+    return false;
+  return (
+    value.schema === "contaos.navigation.native.v1" &&
+    value.harnessSha === identity?.harnessSha &&
+    hash40(value.harnessSha) &&
+    value.moduleHash === identity?.moduleHash &&
+    hash64(value.moduleHash) &&
+    value.testHash === identity?.testHash &&
+    hash64(value.testHash) &&
+    value.mode === "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS" &&
+    value.cases === 8 &&
+    value.passed === true &&
+    navigationArray(value.views, 2, (v) => navigationPlain(v, ["width", "theme"])) &&
+    value.views.length === 2 &&
+    value.views[0].width === 1440 &&
+    value.views[0].theme === "light" &&
+    value.views[1].width === 390 &&
+    value.views[1].theme === "dark"
+  );
+}
+export function navigationNativeSupplement(output, identity) {
+  if (typeof output !== "string" || Buffer.byteLength(output) > 1048576)
+    fail("NAVIGATION_NATIVE_PROOF");
+  const lines = output.split("\n").map((line) => line.trim()),
+    cases = [];
+  if (
+    lines.some((line) => /^not ok\b/.test(line)) ||
+    ![
+      "# tests 1",
+      "# pass 1",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "ok 1 - NAV R2 native readiness and transport",
+    ].every((line) => lines.includes(line))
+  )
+    fail("NAVIGATION_NATIVE_PROOF");
+  for (const line of lines.filter((line) => line.startsWith("# NAV_R2_NATIVE_CASE"))) {
+    const match = /^# NAV_R2_NATIVE_CASE ([A-Z0-9_]+) PASS$/.exec(line);
+    if (!match || !NAVIGATION_NATIVE_CASES.includes(match[1]) || cases.includes(match[1]))
+      fail("NAVIGATION_NATIVE_PROOF");
+    cases.push(match[1]);
+  }
+  if (cases.length !== 8) fail("NAVIGATION_NATIVE_PROOF");
+  const proof = {
+    schema: "contaos.navigation.native.v1",
+    harnessSha: identity?.harnessSha,
+    moduleHash: identity?.moduleHash,
+    testHash: identity?.testHash,
+    mode: "OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS",
+    cases: 8,
+    views: [
+      { width: 1440, theme: "light" },
+      { width: 390, theme: "dark" },
+    ],
+    passed: true,
+  };
+  if (!navigationNativeProofValid(proof, identity)) fail("NAVIGATION_NATIVE_PROOF");
+  return proof;
+}
+
+export function validateNavigationReport(value) {
+  const keys = [
+    "schema",
+    "frontendSha",
+    "harnessSha",
+    "deploymentId",
+    "auditScope",
+    "records",
+    "summary",
+    "nativeProofSha256",
+    "navigationNativeProofSha256",
+    "networkFailure",
+    "fenceDiagnostic",
+    "logoutFailure",
+    "httpStatusErrors",
+    "transportErrors",
+    "sessionVerified",
+    "masterVerified",
+    "organizationVerified",
+    "logoutVerified",
+    "blockedMutations",
+    "pageErrors",
+    "httpErrors",
+    "aborted",
+  ];
+  if (!navigationPlain(value, keys)) return false;
+  const summary = summarizeNavigation(value.records);
+  return (
+    validateNavigationGlobals(value) &&
+    navigationPlain(value.summary, [
+      "expected",
+      "observed",
+      "passed",
+      "failed",
+      "matrixComplete",
+    ]) &&
+    Object.keys(summary).every((k) => value.summary[k] === summary[k]) &&
+    summary.matrixComplete
+  );
+}
+function validateNavigationGlobals(value) {
+  return (
+    value.schema === "contaos.navigation.audit.v3" &&
+    value.networkFailure === null &&
+    value.auditScope === NAVIGATION_SCOPE.id &&
+    value.frontendSha === NAVIGATION_DEPLOYMENT.frontendSha &&
+    value.deploymentId === NAVIGATION_DEPLOYMENT.deploymentId &&
+    hash40(value.harnessSha) &&
+    /^dpl_[A-Za-z0-9]{8,80}$/.test(value.deploymentId || "") &&
+    hash64(value.nativeProofSha256) &&
+    hash64(value.navigationNativeProofSha256) &&
+    value.fenceDiagnostic === null &&
+    value.logoutFailure === null &&
+    value.httpStatusErrors === 0 &&
+    value.transportErrors === 0 &&
+    value.httpErrors === value.httpStatusErrors + value.transportErrors &&
+    ["sessionVerified", "masterVerified", "organizationVerified", "logoutVerified"].every(
+      (k) => value[k] === true,
+    ) &&
+    value.blockedMutations === 0 &&
+    value.pageErrors === 0 &&
+    value.httpErrors === 0 &&
+    value.aborted === null
+  );
+}
+export function validateNavigationReportIncremental(value, ledger) {
+  if (
+    !navigationPlain(value, [
+      "schema",
+      "ledgerSha256",
+      "resumeFrom",
+      "frontendSha",
+      "harnessSha",
+      "deploymentId",
+      "auditScope",
+      "records",
+      "summary",
+      "nativeProofSha256",
+      "navigationNativeProofSha256",
+      "networkFailure",
+      "fenceDiagnostic",
+      "logoutFailure",
+      "httpStatusErrors",
+      "transportErrors",
+      "sessionVerified",
+      "masterVerified",
+      "organizationVerified",
+      "logoutVerified",
+      "blockedMutations",
+      "pageErrors",
+      "httpErrors",
+      "aborted",
+    ]) ||
+    value.schema !== "contaos.navigation.audit.v4" ||
+    !hash64(ledger?.sha256) ||
+    value.ledgerSha256 !== ledger.sha256 ||
+    value.resumeFrom !== ledger.resumeFrom ||
+    ledger.resumeFrom <= 1
+  )
+    return false;
+  const legacy = { ...value, schema: "contaos.navigation.audit.v3" };
+  delete legacy.ledgerSha256;
+  delete legacy.resumeFrom;
+  const summary = summarizeNavigationIncremental(value.records, ledger);
+  return (
+    // Todos os controles globais v3 continuam obrigatórios na execução parcial.
+    validateNavigationGlobals(legacy) &&
+    navigationPlain(value.summary, [
+      "expected",
+      "observed",
+      "passed",
+      "failed",
+      "resumeFrom",
+      "runComplete",
+      "cumulativeMatrixComplete",
+    ]) &&
+    Object.keys(summary).every((k) => value.summary[k] === summary[k]) &&
+    summary.runComplete &&
+    summary.cumulativeMatrixComplete
+  );
+}
+export function navigationParent(item) {
+  const c = "/contratos/" + SYNTHETIC_FIXTURE.contract;
+  const m = "/competencias/" + SYNTHETIC_FIXTURE.competence;
+  if (
+    !item ||
+    !navigationCases().some(
+      (r) =>
+        r.surface === item.surface &&
+        r.path === item.path &&
+        r.width === item.width &&
+        r.theme === item.theme,
+    )
+  )
+    fail("NAVIGATION_CASE");
+  const parents = {
+    SYS04: "/",
+    SYS05: "/contratos",
+    ADM01: "/",
+    V101: "/",
+    V102: "/contratantes",
+    V103: "/contratantes",
+    V104: "/",
+    V105: "/contratos",
+    V106: "/contratos",
+    V107: c,
+    V108: c,
+    V109: c,
+    V110: c,
+    V111: c + "/documentos",
+    V112: c,
+    V113: c,
+    V114: c + "/competencias",
+    V115: m,
+    V116: m,
+    V117: "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/analise",
+    V118: m,
+    V119: "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49",
+    V120: "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27",
+    V121: c,
+    V122: c,
+    V123: "/",
+  };
+  return parents[item.surface];
+}
+
+const NAVIGATION_MENU_PATHS = Object.freeze([
+  "/",
+  "/contratantes",
+  "/contratantes/novo",
+  "/contratos",
+  "/contratos/novo",
+  "/selecionar-organizacao",
+  "/administracao/usuarios",
+  "/administracao/auditoria",
+]);
+export function navigationObservationReady(surface, observation) {
+  if (!surfaceStateValid(surface === "V117" ? "V116" : surface, observation)) return false;
+  const pending =
+    /Carregando|Confirmando organização|Verificando sessão|Consultando apresentações/i;
+  return (
+    !pending.test(observation.mainText ?? "") &&
+    !(observation.statusTexts ?? []).some((x) => pending.test(x)) &&
+    NAVIGATION_MENU_PATHS.every((path) => observation.menuHrefs?.includes(path))
+  );
+}
+export function navigationDomObservation() {
+  return {
+    headingText: document.querySelector("h1")?.textContent || "",
+    mainText: document.querySelector("main")?.innerText || document.body.innerText,
+    statusTexts: [...document.querySelectorAll('[role="status"],[role="alert"]')].map(
+      (e) => e.textContent,
+    ),
+    regionNames: [
+      ...document.querySelectorAll('[role="region"],section[aria-label],section[aria-labelledby]'),
+    ].map(
+      (e) =>
+        e.getAttribute("aria-label") ||
+        document.getElementById(e.getAttribute("aria-labelledby"))?.textContent ||
+        "",
+    ),
+    menuHrefs: [
+      ...document.querySelectorAll(
+        'aside a[href],[role="dialog"][aria-label="Menu de navegação"] a[href]',
+      ),
+    ].map((e) => e.getAttribute("href")),
+  };
+}
+function navigationDomReady(spec) {
+  if (
+    location.pathname !== spec.path ||
+    document.documentElement.classList.contains("dark") !== (spec.theme === "dark")
+  )
+    return false;
+  const header = document.querySelector('header[aria-label="Organização atual"]');
+  if (
+    !header?.textContent.includes(spec.organization) ||
+    !/Situação:\s*ativa/i.test(header.textContent)
+  )
+    return false;
+  const headings = document.querySelectorAll("h1"),
+    main = document.querySelector("main")?.innerText || document.body.innerText;
+  if (
+    headings.length !== 1 ||
+    !new RegExp(spec.title).test(headings[0].textContent.trim().replace(/\s+/g, " "))
+  )
+    return false;
+  if (/Carregando|Confirmando organização|Verificando sessão|Consultando apresentações/i.test(main))
+    return false;
+  const statuses = [...document.querySelectorAll('[role="status"],[role="alert"]')].map(
+    (e) => e.textContent,
+  );
+  if (
+    statuses.some((x) =>
+      /Carregando|Confirmando organização|Verificando sessão|Consultando apresentações/i.test(x),
+    )
+  )
+    return false;
+  if (
+    /não encontrad[oa] ou indisponível|você não tem (?:acesso|permissão|autorização)|acesso negado|não foi possível|sessão expirada/i.test(
+      main,
+    )
+  )
+    return false;
+  if (
+    !spec.conditional &&
+    /Ação não autorizada pelo backend ou competência indisponível/.test(main)
+  )
+    return false;
+  const regions = [
+    ...document.querySelectorAll('[role="region"],section[aria-label],section[aria-labelledby]'),
+  ].map(
+    (e) =>
+      e.getAttribute("aria-label") ||
+      document.getElementById(e.getAttribute("aria-labelledby"))?.textContent ||
+      "",
+  );
+  if (!spec.conditional && spec.regions.some((x) => !regions.includes(x))) return false;
+  const hrefs = [
+    ...document.querySelectorAll(
+      'aside a[href],[role="dialog"][aria-label="Menu de navegação"] a[href]',
+    ),
+  ].map((e) => e.getAttribute("href"));
+  if (!spec.menu.every((x) => hrefs.includes(x))) return false;
+  if (spec.control) {
+    const root = spec.control.menuOpened
+      ? document.querySelector('[role="dialog"][aria-label="Menu de navegação"]')
+      : document;
+    const enabled = [...(root?.querySelectorAll("a[href]") ?? [])].some(
+      (node) =>
+        node.getAttribute("href") === spec.control.path &&
+        node.getClientRects().length > 0 &&
+        !node.closest('[inert],[aria-hidden="true"],[aria-disabled="true"],[disabled]') &&
+        getComputedStyle(node).visibility !== "hidden",
+    );
+    if (!enabled) return false;
+  }
+  return {
+    headingText: headings[0].textContent,
+    mainText: main,
+    statusTexts: statuses,
+    regionNames: regions,
+    menuHrefs: hrefs,
+  };
+}
+function navigationReadinessSpec(surface, path, theme) {
+  const titles = {
+    SYS05: "^Painel da organização$",
+    ADM01: "^Usuários e vínculos$",
+    V101: "^Contratantes$",
+    V102: "^Novo contratante$",
+    V103: "^Editar contratante$",
+    V104: "^Contratos$",
+    V105: "^Novo contrato$",
+    V106: "^Contrato\\s+\\S",
+    V107: "^Base normativa$",
+    V108: "^Orçamento$",
+    V109: "^Listas e regras$",
+    V110: "^Central de documentos$",
+    V111: "^FONTE_SINTETICA_AUDITORIA_HML$",
+    V112: "^Competências$",
+    V113: "^Nova competência$",
+    V114: "^Competência\\s+\\S",
+    V115: "^Documentos da competência$",
+    V116: "^Análise da competência$",
+    V117: "^Análise da competência$",
+    V118: "^Parecer interno$",
+    V119: "^Wizard de apresentação$",
+    V120: "^Apresentação e protocolo$",
+    V121: "^Histórico do contrato$",
+    V122: "^Importação de histórico$",
+    V123: "^Trilha de auditoria$",
+  };
+  const regions = {
+    V111: ["Resumo do documento", "Processamento"],
+    V119: ["Revisão de prontidão", "Etapa 2 de 2 — Registrar apresentação"],
+    V120: ["Dados da apresentação", "Pacote imutável", "Itens preservados no pacote"],
+  };
+  if (!titles[surface]) fail("NAVIGATION_STATE");
+  const conditional =
+    surface === "V119" && path !== "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar";
+  return {
+    surface,
+    path,
+    theme,
+    title: titles[surface],
+    regions: regions[surface] ?? [],
+    menu: NAVIGATION_MENU_PATHS,
+    organization: SYNTHETIC_FIXTURE.organizationName,
+    conditional,
+  };
+}
+function navigationRemaining(deadline) {
+  const remaining = Math.floor(deadline - performance.now());
+  if (remaining <= 0)
+    throw Object.assign(Error("NAVIGATION_TIMEOUT"), {
+      name: "TimeoutError",
+      code: "NAVIGATION_TIMEOUT",
+    });
+  return remaining;
+}
+async function waitNavigationStable(page, fence, spec, deadline, quietMs = 500) {
+  for (;;) {
+    if (page.url() !== HML_ORIGIN + spec.path) fail("NAVIGATION_ROUTE");
+    await page.waitForFunction(navigationDomReady, spec, {
+      timeout: navigationRemaining(deadline),
+    });
+    const network = navigationSessions.get(page);
+    const revision = network ? await waitNavigationNetwork(page, fence, deadline, quietMs) : null;
+    if (!network) {
+      await fence.drain();
+      fence.assertSafe();
+    }
+    if (page.url() !== HML_ORIGIN + spec.path) fail("NAVIGATION_ROUTE");
+    navigationRemaining(deadline);
+    const observation = await page.evaluate(navigationDomReady, spec);
+    if (
+      observation &&
+      (spec.conditional || navigationObservationReady(spec.surface, observation)) &&
+      (!network || network.isQuiet(revision, quietMs))
+    )
+      return observation;
+  }
+}
+export async function waitNavigationReady(
+  page,
+  fence,
+  surface,
+  path,
+  theme,
+  deadline = performance.now() + 15000,
+) {
+  if (
+    typeof path !== "string" ||
+    !path.startsWith("/") ||
+    !["light", "dark"].includes(theme) ||
+    navigationDestination(HML_ORIGIN + path) !== (surface === "V117" ? "V116" : surface)
+  )
+    fail("NAVIGATION_ROUTE");
+  if (page.url() !== HML_ORIGIN + path) fail("NAVIGATION_ROUTE");
+  const spec = navigationReadinessSpec(surface, path, theme);
+  await page.evaluate(
+    (t) => document.documentElement.classList.toggle("dark", t === "dark"),
+    theme,
+  );
+  return waitNavigationStable(page, fence, spec, deadline);
+}
+export async function waitNavigationControl(page, fence, path, width, menu) {
+  if (
+    typeof path !== "string" ||
+    !path.startsWith("/") ||
+    !navigationDestination(HML_ORIGIN + path) ||
+    ![1440, 390].includes(width) ||
+    typeof menu !== "boolean"
+  )
+    fail("NAVIGATION_ROUTE");
+  const source = page.url(),
+    surface = navigationDestination(source);
+  if (!surface) fail("NAVIGATION_ROUTE");
+  const dialog = page.getByRole("dialog", { name: "Menu de navegação", exact: true });
+  let menuOpened = width === 390 && (await dialog.isVisible());
+  const select = () =>
+    menuOpened
+      ? dialog.locator('a[href="' + path + '"]:visible').first()
+      : page.locator('a[href="' + path + '"]:visible').first();
+  let link = select();
+  if (menu && width === 390 && (await link.count()) === 0 && !menuOpened) {
+    const opener = page.getByRole("button", { name: "Abrir menu", exact: true });
+    await opener.waitFor({ state: "visible", timeout: 15000 });
+    await opener.click();
+    await dialog.waitFor({ state: "visible", timeout: 15000 });
+    menuOpened = true;
+    link = select();
+  }
+  if (!menu)
+    for (let n = 0; n < 25 && (await link.count()) === 0; n++) {
+      const next = page.getByRole("button", { name: /Próxima página/ }).first();
+      if ((await next.count()) !== 1 || !(await next.isEnabled())) break;
+      await next.click();
+      await settleVerifiedPage(page, fence);
+      await waitNavigationReady(
+        page,
+        fence,
+        surface,
+        new URL(source).pathname,
+        width === 390 ? "dark" : "light",
+      );
+      link = select();
+    }
+  const deadline = performance.now() + 15000;
+  await link.waitFor({ state: "visible", timeout: navigationRemaining(deadline) });
+  const spec = navigationReadinessSpec(
+    surface,
+    new URL(source).pathname,
+    width === 390 ? "dark" : "light",
+  );
+  spec.control = { path, menuOpened };
+  await waitNavigationStable(page, fence, spec, deadline);
+  if (
+    page.url() !== source ||
+    (await link.count()) !== 1 ||
+    !(await link.isEnabled()) ||
+    !(await link.isVisible())
+  )
+    fail("NAVIGATION_LINK_MISSING");
+  // These locator checks cross browser tasks. Revalidate the entire DOM/control
+  // and the network revision after them, with the original shared deadline.
+  if (navigationSessions.has(page))
+    await waitNavigationStable(page, fence, spec, deadline, menuOpened ? 1500 : 500);
+  return { link, menuOpened };
+}
+
+const navigationSessions = new WeakMap();
+export async function toggleNavigationSidebar(page, fence, deadline = performance.now() + 15000) {
+  await waitNavigationNetwork(page, fence, deadline);
+  const collapse = page.getByRole("button", { name: "Recolher menu", exact: true });
+  const expand = page.getByRole("button", { name: "Expandir menu", exact: true });
+  if ((await collapse.count()) !== 1) fail("NAVIGATION_MENU");
+  await collapse.click({ timeout: navigationRemaining(deadline) });
+  await expand.waitFor({ state: "visible", timeout: navigationRemaining(deadline) });
+  // Changing the original AppShell image src before its GET finishes aborts it.
+  await waitNavigationNetwork(page, fence, deadline);
+  await expand.click({ timeout: navigationRemaining(deadline) });
+  await waitNavigationNetwork(page, fence, deadline);
+}
+// V117 é o drawer sobre a rota de análise, que o catálogo identifica como V116.
+export function navigationOwnDestination(surface) {
+  return surface === "V117" ? "V116" : surface;
+}
+export async function returnNavigationSource(page, fence, surface, path, theme) {
+  if (navigationDestination(HML_ORIGIN + path) !== navigationOwnDestination(surface))
+    fail("NAVIGATION_ROUTE");
+  const deadline = performance.now() + 15000;
+  await waitNavigationNetwork(page, fence, deadline);
+  await page.goBack({ waitUntil: "networkidle", timeout: navigationRemaining(deadline) });
+  if (page.url() !== HML_ORIGIN + path) fail("NAVIGATION_ROUTE");
+  return waitNavigationReady(page, fence, surface, path, theme, deadline);
+}
+// R9: diagnóstico fechado do drain e do pedido abortado. Somente enumerados e
+// números; nunca URL, query, cabeçalho, corpo ou identificador.
+export function navigationDrainDiagnostic(handlers, lifecycle, log = console.log) {
+  try {
+    const d = lifecycle?.diagnostic?.();
+    log(
+      JSON.stringify({
+        phase: "FENCE_DRAIN_DIAGNOSTIC",
+        handlers: Number.isSafeInteger(handlers) ? handlers : -1,
+        requests: Number.isSafeInteger(d?.total) ? d.total : -1,
+        pendingNetwork: Number.isSafeInteger(d?.pendingNetwork) ? d.pendingNetwork : -1,
+        records: Array.isArray(d?.records) ? d.records.slice(0, 16) : [],
+      }),
+    );
+  } catch {
+    // O diagnóstico nunca altera o resultado fail-closed.
+  }
+}
+// Lista fechada das funções RPC do frontend: o conjunto RPCS de navegação mais os nomes
+// chamados em src/ por .rpc("...") e pelos invólucros (chamar, rpc, rpcHistorico, escrever,
+// chamarV107). Qualquer outro nome é registrado apenas como rpc:OTHER.
+export const NAVIGATION_RPC_NAMES = Object.freeze([
+  "adicionar_versao_documento_competencia_v115",
+  "adicionar_versao_documento_contrato",
+  "aprovar_apresentacao",
+  "aprovar_parecer_interno",
+  "aprovar_regra_preventiva",
+  "aprovar_versao_fonte_v107",
+  "atualizar_contratante",
+  "atualizar_matriz_rbac_master",
+  "classificar_acesso_contrato_v106",
+  "confirmar_upload_arquivo",
+  "consultar_permissoes_efetivas",
+  "criar_competencia",
+  "criar_documento_competencia_v115",
+  "criar_documento_contrato_completo",
+  "criar_organizacao",
+  "definir_aplicabilidade_fonte_v107",
+  "definir_vigencia_sugestao_extracao",
+  "enfileirar_ingestao_historica_hml",
+  "executar_comando_lista_v1",
+  "listar_auditoria_vinculo_usuario_adm",
+  "listar_escopo_contratos_usuario_adm",
+  "listar_organizacoes_disponiveis",
+  "listar_usuarios_vinculos_adm",
+  "obter_analise_competencia_v116",
+  "obter_cadastro_operacional_v1",
+  "obter_contexto_revisao_v117",
+  "obter_detalhe_requisito_v117",
+  "obter_documentos_competencia_v115",
+  "obter_lista_operacional_v1",
+  "obter_matriz_rbac_master",
+  "obter_resumo_dashboard",
+  "obter_visao_geral_competencia",
+  "pode_consultar_auditoria_organizacao",
+  "registrar_apresentacao",
+  "registrar_relatorio_historico_hml",
+  "registrar_revisao_requisito_v117",
+  "registrar_versao_fonte_v107",
+  "revisar_sugestao_extracao",
+  "salvar_fonte_normativa_v107",
+  "solicitar_analise_competencia",
+  "solicitar_parecer_interno",
+  "solicitar_reanalise_requisitos",
+  "validar_administrador_organizacao",
+  "vincular_tratamento_historico_hml",
+]);
+export const NAVIGATION_DETAIL_LIMIT = 64;
+export const NAVIGATION_DOCUMENT_COUNT_LIMIT = 1000;
+export function navigationEndpointClass(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    if (url.origin !== API_ORIGIN) return "NON_API";
+    const rest = url.pathname.match(/^\/rest\/v1\/([^/]+)/);
+    if (rest) {
+      if (rest[1] === "rpc") {
+        const fn = url.pathname.slice("/rest/v1/rpc/".length);
+        return NAVIGATION_RPC_NAMES.includes(fn) ? "rpc:" + fn : "rpc:OTHER";
+      }
+      return TABLES.has(rest[1]) ? "rest:" + rest[1] : "rest:OTHER";
+    }
+    const auth = url.pathname.match(/^\/auth\/v1\/([^/]+)$/);
+    if (auth)
+      return ["user", "token", "logout", "session"].includes(auth[1])
+        ? "auth:" + auth[1]
+        : "auth:OTHER";
+    return "api:OTHER";
+  } catch {
+    return "INVALID";
+  }
+}
+export function navigationTransportDetail(request, context, timing) {
+  const base = navigationTransportMarker(request, context);
+  if (!base) return null;
+  let endpoint = "INVALID";
+  try {
+    endpoint = navigationEndpointClass(request.url());
+  } catch {
+    endpoint = "INVALID";
+  }
+  let navigationRequest = "UNKNOWN",
+    frame = "UNKNOWN";
+  try {
+    navigationRequest = request.isNavigationRequest() === true ? "YES" : "NO";
+  } catch {
+    navigationRequest = "UNKNOWN";
+  }
+  try {
+    const owner = request.frame();
+    frame = owner ? (owner.parentFrame() ? "CHILD" : "MAIN") : "NONE";
+  } catch {
+    frame = "UNKNOWN";
+  }
+  const since =
+    Number.isFinite(timing?.clickAt) && timing.clickAt > 0
+      ? Math.max(0, Math.min(600000, Math.round(timing.now - timing.clickAt)))
+      : -1;
+  // R10: início do pedido relativo ao último clique (negativo quando anterior ao clique).
+  const startKnown =
+    Number.isFinite(timing?.clickAt) && timing.clickAt > 0 && Number.isFinite(timing?.started);
+  const startedMsSinceClick = startKnown
+    ? Math.max(-600000, Math.min(600000, Math.round(timing.started - timing.clickAt)))
+    : 0;
+  return {
+    phase: "NAVIGATION_TRANSPORT_DETAIL",
+    surface: base.surface,
+    width: base.width,
+    stage: base.stage,
+    operation: base.operation,
+    target: base.target,
+    reason: base.reason,
+    method: base.method,
+    category: base.category,
+    endpoint,
+    navigationRequest,
+    frame,
+    msSinceClick: since,
+    startKnown,
+    startedMsSinceClick,
+    documentRequestsSinceClick:
+      Number.isSafeInteger(timing?.documents) && timing.documents >= 0
+        ? Math.min(timing.documents, NAVIGATION_DOCUMENT_COUNT_LIMIT)
+        : -1,
+  };
+}
+export function navigationTransportMarker(request, context) {
+  if (
+    !navigationPlain(context, ["surface", "width", "stage", "operation", "target"]) ||
+    !PRIVATE_SURFACES.includes(context.surface) ||
+    !PRIVATE_SURFACES.includes(context.target) ||
+    ![1440, 390].includes(context.width) ||
+    !["DIRECT", "RELOAD", "ENTER_MENU", "MENU", "LINKS", "CONTROLS", "FINISH"].includes(
+      context.stage,
+    ) ||
+    ![
+      "DIRECT",
+      "ENTER_PARENT",
+      "ENTER_FIRST",
+      "RETURN_PARENT",
+      "ENTER_SECOND",
+      "MENU_OPEN",
+      "MENU_REQUIRED",
+      "LINK_RETURN_SOURCE",
+      "LINK_CLICK",
+      "LINK_READY",
+      "LOCAL_CONTROL",
+      "FINISH",
+    ].includes(context.operation) ||
+    !request ||
+    isProxy(request)
+  )
+    return null;
+  const values = {};
+  try {
+    for (const name of ["failure", "url", "method", "resourceType"]) {
+      let object = request,
+        descriptor;
+      for (let depth = 0; object && depth < 10; depth++) {
+        if (isProxy(object)) return null;
+        descriptor = Object.getOwnPropertyDescriptor(object, name);
+        if (descriptor) break;
+        object = Object.getPrototypeOf(object);
+      }
+      if (
+        !descriptor ||
+        !Object.hasOwn(descriptor, "value") ||
+        typeof descriptor.value !== "function" ||
+        isProxy(descriptor.value)
+      )
+        return null;
+      values[name] = descriptor.value.call(request);
+    }
+    const error = values.failure;
+    if (error && (typeof error !== "object" || isProxy(error))) return null;
+    const descriptor = error ? Object.getOwnPropertyDescriptor(error, "errorText") : null;
+    if (descriptor && !Object.hasOwn(descriptor, "value")) return null;
+    const safe = {
+      failure: () => ({ errorText: descriptor?.value }),
+      url: () => values.url,
+      method: () => values.method,
+      resourceType: () => values.resourceType,
+    };
+    let category = "OTHER";
+    if (typeof values.url === "string") {
+      const url = new URL(values.url);
+      if (url.origin === HML_ORIGIN) {
+        if (url.pathname.startsWith("/brand/")) category = "BRAND";
+        else if (url.pathname.startsWith("/assets/") && url.pathname.endsWith(".js"))
+          category = "SCRIPT";
+        else if (values.resourceType === "document") category = "DOCUMENT";
+      } else if (url.origin === API_ORIGIN) {
+        if (url.pathname.startsWith("/rest/v1/rpc/")) category = "API_RPC";
+        else if (url.pathname.startsWith("/rest/v1/")) category = "API_REST";
+        else if (url.pathname.startsWith("/auth/v1/")) category = "AUTH";
+      }
+    }
+    return {
+      phase: "NAVIGATION_TRANSPORT",
+      ...context,
+      ...navigationTransportDiagnostic(safe),
+      category,
+    };
+  } catch {
+    return null;
+  }
+}
+// R11: diagnóstico fechado dos pedidos que falham durante o logout (fora da matriz), só
+// enums e números. Não lança e não altera contagem nem veredito.
+export const NAVIGATION_LOGOUT_STAGES = Object.freeze([
+  "DRAIN",
+  "MENU_CLOSE",
+  "CONTROL",
+  "CLICK",
+  "REDIRECT",
+  "POST_DRAIN",
+]);
+export function navigationLogoutTransportDetail(request, stage, timing) {
+  try {
+    if (!NAVIGATION_LOGOUT_STAGES.includes(stage) || !request || isProxy(request)) return null;
+    const diagnostic = navigationTransportDiagnostic(request);
+    let endpoint = "INVALID",
+      navigationRequest = "UNKNOWN",
+      frame = "UNKNOWN";
+    try {
+      endpoint = navigationEndpointClass(request.url());
+    } catch {
+      endpoint = "INVALID";
+    }
+    try {
+      navigationRequest = request.isNavigationRequest() === true ? "YES" : "NO";
+    } catch {
+      navigationRequest = "UNKNOWN";
+    }
+    try {
+      const owner = request.frame();
+      frame = owner ? (owner.parentFrame() ? "CHILD" : "MAIN") : "NONE";
+    } catch {
+      frame = "UNKNOWN";
+    }
+    const clicked = Number.isFinite(timing?.clickAt) && timing.clickAt > 0;
+    const msSinceClick =
+      clicked && Number.isFinite(timing?.now)
+        ? Math.max(0, Math.min(600000, Math.round(timing.now - timing.clickAt)))
+        : -1;
+    const startKnown = clicked && Number.isFinite(timing?.started);
+    return {
+      phase: "NAVIGATION_LOGOUT_TRANSPORT",
+      stage,
+      ...diagnostic,
+      endpoint,
+      navigationRequest,
+      frame,
+      msSinceClick,
+      startKnown,
+      startedMsSinceClick: startKnown
+        ? Math.max(-600000, Math.min(600000, Math.round(timing.started - timing.clickAt)))
+        : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+export function navigationTransportDiagnostic(request) {
+  const diagnostic = {
+    reason: "OTHER",
+    destination: "OTHER",
+    method: "OTHER",
+    resourceType: "other",
+  };
+  if (!request || isProxy(request)) return diagnostic;
+  try {
+    const text = request.failure()?.errorText;
+    diagnostic.reason =
+      text === "net::ERR_ABORTED"
+        ? "ABORTED"
+        : text === "net::ERR_TIMED_OUT"
+          ? "TIMED_OUT"
+          : [
+                "net::ERR_CONNECTION_CLOSED",
+                "net::ERR_CONNECTION_RESET",
+                "net::ERR_CONNECTION_REFUSED",
+                "net::ERR_NAME_NOT_RESOLVED",
+              ].includes(text)
+            ? "CONNECTION"
+            : "OTHER";
+    const origin = new URL(request.url()).origin;
+    diagnostic.destination = origin === API_ORIGIN ? "API" : origin === HML_ORIGIN ? "UI" : "OTHER";
+    const method = request.method();
+    diagnostic.method = ["GET", "POST", "OPTIONS"].includes(method) ? method : "OTHER";
+    const type = request.resourceType();
+    diagnostic.resourceType = [
+      "document",
+      "fetch",
+      "xhr",
+      "script",
+      "stylesheet",
+      "image",
+      "font",
+      "manifest",
+      "other",
+    ].includes(type)
+      ? type
+      : "other";
+  } catch {
+    /* Only closed enums leave this observer. */
+  }
+  return diagnostic;
+}
+export async function waitNavigationNetwork(
+  page,
+  fence,
+  deadline = performance.now() + 15000,
+  quietMs = 500,
+) {
+  const observer = navigationSessions.get(page);
+  if (!observer || !Number.isInteger(quietMs) || quietMs < 500 || quietMs > 1500)
+    fail("NAVIGATION_STATE");
+  for (;;) {
+    const revision = await observer.waitQuiet(deadline, quietMs);
+    let timer;
+    try {
+      await Promise.race([
+        fence.drain(),
+        new Promise((_, reject) => {
+          timer = setTimeout(
+            () =>
+              reject(
+                Object.assign(Error("NAVIGATION_TIMEOUT"), {
+                  name: "TimeoutError",
+                  code: "NAVIGATION_TIMEOUT",
+                }),
+              ),
+            navigationRemaining(deadline),
+          );
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+    fence.assertSafe();
+    navigationRemaining(deadline);
+    if (observer.isQuiet(revision, quietMs)) return revision;
+  }
+}
+export async function clickNavigationLogout(page, fence, deadline = performance.now() + 15000) {
+  const observer = navigationSessions.get(page);
+  if (!observer) fail("NAVIGATION_LOGOUT_CONTROL");
+  const exit = page.getByRole("button", { name: "Sair", exact: true });
+  for (;;) {
+    navigationRemaining(deadline);
+    if ((await exit.count()) !== 1 || !(await exit.isVisible()) || !(await exit.isEnabled()))
+      fail("NAVIGATION_LOGOUT_CONTROL");
+    const revision = await waitNavigationNetwork(page, fence, deadline);
+    const ready = await page.evaluate(() => {
+      const buttons = [...document.querySelectorAll('button,[role="button"]')].filter(
+        (node) =>
+          (node.getAttribute("aria-label") || node.textContent.trim()) === "Sair" &&
+          node.getClientRects().length > 0 &&
+          !node.closest('[inert],[aria-hidden="true"]'),
+      );
+      return (
+        buttons.length === 1 &&
+        !buttons[0].disabled &&
+        buttons[0].getAttribute("aria-disabled") !== "true"
+      );
+    });
+    navigationRemaining(deadline);
+    if (!ready) fail("NAVIGATION_LOGOUT_CONTROL");
+    if (!observer.isQuiet(revision)) continue;
+    await exit.click({ timeout: navigationRemaining(deadline) });
+    return;
+  }
+}
+// R14: o GoTrue responde 204 ao logout e o cliente não lê o corpo; o Chromium então emite
+// requestfailed net::ERR_ABORTED depois do response (provado em Chrome real no PLAN R14).
+// Só esse pedido exato, com o 204 observado antes, deixa de ser erro de transporte.
+export function navigationCompletedEmptyLogout(request, responseStatus) {
+  try {
+    if (!request || isProxy(request) || responseStatus !== 204) return false;
+    if (request.method() !== "POST") return false;
+    if (request.failure()?.errorText !== "net::ERR_ABORTED") return false;
+    const url = new URL(request.url());
+    return url.origin === API_ORIGIN && url.pathname === "/auth/v1/logout";
+  } catch {
+    return false;
+  }
+}
+export function observeNavigationSession(page) {
+  if (navigationSessions.has(page)) fail("NAVIGATION_STATE");
+  let httpStatusErrors = 0,
+    transportErrors = 0,
+    consoleErrors = 0,
+    revision = 0,
+    changedAt = performance.now(),
+    closed = false,
+    firstFailure = null,
+    completedEmptyLogout = 0;
+  const active = new Set(),
+    waiters = new Set(),
+    responseStatuses = new WeakMap();
+  const changed = () => {
+    revision++;
+    changedAt = performance.now();
+    for (const done of [...waiters]) done();
+  };
+  const request = (value) => {
+    active.add(value);
+    changed();
+  };
+  const finished = (value) => {
+    active.delete(value);
+    changed();
+  };
+  const response = (value) => {
+    if (value.status() >= 400) httpStatusErrors++;
+    try {
+      responseStatuses.set(value.request(), value.status());
+    } catch {
+      // Sem status registrado, o pedido continua contando como falha se falhar.
+    }
+  };
+  const failed = (value) => {
+    if (navigationCompletedEmptyLogout(value, responseStatuses.get(value))) {
+      completedEmptyLogout++;
+      try {
+        console.log(
+          JSON.stringify({
+            phase: "NAVIGATION_LOGOUT_COMPLETED_EMPTY",
+            endpoint: "auth:logout",
+            status: 204,
+            count: Math.min(completedEmptyLogout, 1000),
+          }),
+        );
+      } catch {
+        // Somente diagnóstico.
+      }
+      finished(value);
+      return;
+    }
+    transportErrors++;
+    firstFailure ??= navigationTransportDiagnostic(value);
+    finished(value);
+  };
+  const consoleMessage = (value) => {
+    if (value.type() === "error") consoleErrors++;
+  };
+  const observer = {
+    snapshot: () => ({
+      httpErrors: httpStatusErrors + transportErrors,
+      httpStatusErrors,
+      transportErrors,
+      consoleErrors,
+    }),
+    completedEmptyLogout: () => completedEmptyLogout,
+    networkFailure: () => (firstFailure ? { ...firstFailure } : null),
+    isQuiet: (expected, quietMs = 500) =>
+      !closed &&
+      revision === expected &&
+      active.size === 0 &&
+      performance.now() - changedAt >= quietMs,
+    async waitQuiet(deadline, quietMs = 500) {
+      for (;;) {
+        if (closed) fail("NAVIGATION_STATE");
+        const remaining = navigationRemaining(deadline);
+        const quietRemaining = quietMs - (performance.now() - changedAt);
+        if (active.size === 0 && quietRemaining <= 0) return revision;
+        await new Promise((resolve) => {
+          let timer;
+          const done = () => {
+            clearTimeout(timer);
+            waiters.delete(done);
+            resolve();
+          };
+          waiters.add(done);
+          timer = setTimeout(
+            done,
+            Math.min(remaining, active.size ? remaining : Math.max(1, quietRemaining)),
+          );
+        });
+      }
+    },
+    close() {
+      closed = true;
+      for (const done of [...waiters]) done();
+      page.off("request", request);
+      page.off("requestfinished", finished);
+      page.off("response", response);
+      page.off("requestfailed", failed);
+      page.off("console", consoleMessage);
+      active.clear();
+      navigationSessions.delete(page);
+    },
+  };
+  page.on("request", request);
+  page.on("requestfinished", finished);
+  page.on("response", response);
+  page.on("requestfailed", failed);
+  page.on("console", consoleMessage);
+  navigationSessions.set(page, observer);
+  return observer;
+}
+
+export async function runNavigationAudit(page, fence, proof) {
+  if (
+    singleRequestContext?.scope !== NAVIGATION_SCOPE ||
+    singleRequestContext.sha !== process.env.CONTAOS_HARNESS_SHA
+  )
+    fail("NAVIGATION_CONTEXT");
+  if (
+    proof.frontendSha !== NAVIGATION_DEPLOYMENT.frontendSha ||
+    proof.deploymentId !== NAVIGATION_DEPLOYMENT.deploymentId ||
+    proof.harnessSha !== singleRequestContext.sha
+  )
+    fail("NAVIGATION_IDENTITY");
+  if (!navigationSessions.has(page)) fail("NAVIGATION_STATE");
+  // Recorte da matriz: ledger fixado, validado antes de qualquer ação no navegador.
+  const ledger = await loadNavigationLedger();
+  const records = [];
+  let errors = 0,
+    httpErrors = 0,
+    httpStatusErrors = 0,
+    transportErrors = 0,
+    activeTheme = "light",
+    generation = 0;
+  const requestOwners = new WeakMap(),
+    unavailable = new Map(),
+    pendingResponses = new Set();
+  const onRequest = (request) => {
+    if (request.url() !== API_ORIGIN + "/rest/v1/rpc/obter_visao_geral_competencia") return;
+    try {
+      const body = request.postDataJSON();
+      if (navigationPlain(body, ["p_id_competencia"]) && typeof body.p_id_competencia === "string")
+        requestOwners.set(request, { generation, id: body.p_id_competencia });
+    } catch {
+      errors++;
+    }
+  };
+  const onError = () => errors++;
+  const onConsole = (message) => {
+    if (message.type() === "error") errors++;
+  };
+  const onRequestFailed = () => {
+    httpErrors++;
+    transportErrors++;
+  };
+  const onResponse = (response) => {
+    if (response.status() >= 400) {
+      httpErrors++;
+      httpStatusErrors++;
+    }
+    const owner = requestOwners.get(response.request());
+    if (!owner || response.status() !== 200) return;
+    const reading = (async () => {
+      const bytes = await response.body();
+      if (bytes.length > 262144) throw Error("NAVIGATION_STATE");
+      const value = JSON.parse(bytes.toString("utf8"));
+      if (navigationUnavailableEvidence("/competencias/" + owner.id + "/apresentar", value))
+        unavailable.set(owner.generation + ":" + owner.id, true);
+    })()
+      .catch(() => {
+        errors++;
+      })
+      .finally(() => pendingResponses.delete(reading));
+    pendingResponses.add(reading);
+  };
+  page.on("request", onRequest);
+  let diagnosticRow = null,
+    diagnosticCount = 0;
+  const onTransportDiagnostic = (request) => {
+    if (!diagnosticRow || diagnosticCount >= 64) return;
+    const { surface, width, stage, operation, target } = diagnosticRow;
+    const marker = navigationTransportMarker(request, { surface, width, stage, operation, target });
+    if (marker) {
+      diagnosticCount++;
+      console.log(JSON.stringify(marker));
+    }
+  };
+  page.on("requestfailed", onTransportDiagnostic);
+  const clickTiming = { clickAt: 0, documents: 0 };
+  const requestStarts = new WeakMap();
+  let detailCount = 0;
+  const onTransportDetail = (request) => {
+    try {
+      if (!diagnosticRow || detailCount >= NAVIGATION_DETAIL_LIMIT) return;
+      const { surface, width, stage, operation, target } = diagnosticRow;
+      const detail = navigationTransportDetail(
+        request,
+        { surface, width, stage, operation, target },
+        { ...clickTiming, now: performance.now(), started: requestStarts.get(request) },
+      );
+      if (detail) {
+        detailCount++;
+        console.log(JSON.stringify(detail));
+      }
+    } catch {
+      // Somente diagnóstico: nunca interfere na contagem de transportErrors.
+    }
+  };
+  const onDocumentRequest = (request) => {
+    try {
+      requestStarts.set(request, performance.now());
+      if (
+        request.resourceType() === "document" &&
+        clickTiming.documents < NAVIGATION_DOCUMENT_COUNT_LIMIT
+      )
+        clickTiming.documents++;
+    } catch {
+      // somente diagnóstico
+    }
+  };
+  page.on("requestfailed", onTransportDetail);
+  page.on("request", onDocumentRequest);
+  page.on("pageerror", onError);
+  page.on("console", onConsole);
+  page.on("requestfailed", onRequestFailed);
+  page.on("response", onResponse);
+  const need = (condition, code) => {
+    if (!condition) fail(code);
+  };
+  async function ready(surface, path) {
+    await settleVerifiedPage(page, fence);
+    need(new URL(page.url()).pathname === path, "NAVIGATION_ROUTE");
+    const themeVerified = await page.evaluate((theme) => {
+      document.documentElement.classList.toggle("dark", theme === "dark");
+      return document.documentElement.classList.contains("dark") === (theme === "dark");
+    }, activeTheme);
+    need(themeVerified, "NAVIGATION_STATE");
+    if (surface === "SYS04") {
+      const card = page
+        .getByRole("radio")
+        .filter({ hasText: SYNTHETIC_FIXTURE.organizationName })
+        .filter({ hasText: "Administrador Master" });
+      await card.waitFor({ state: "visible" });
+      need((await card.count()) === 1, "NAVIGATION_STATE");
+      await waitNavigationNetwork(page, fence);
+      return;
+    }
+    const observation = await waitNavigationReady(page, fence, surface, path, activeTheme);
+    if (
+      surface === "V119" &&
+      path !== "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49/apresentar"
+    ) {
+      await Promise.all([...pendingResponses]);
+      const id = path.split("/")[2];
+      need(
+        unavailable.get(generation + ":" + id) === true &&
+          observation.headingText.trim() === "Wizard de apresentação" &&
+          observation.mainText.includes(
+            "Ação não autorizada pelo backend ou competência indisponível para apresentação.",
+          ) &&
+          (await page
+            .getByRole("button", { name: /^(?:Aprovar|Registrar) apresentação$/ })
+            .count()) === 0,
+        "NAVIGATION_STATE",
+      );
+      return "CONDITIONAL_UNAVAILABLE";
+    }
+    need(surfaceStateValid(surface === "V117" ? "V116" : surface, observation), "NAVIGATION_STATE");
+    need(
+      !/Acesso negado|Não encontrado|Não foi possível carregar|Sessão expirada/.test(
+        observation.mainText,
+      ),
+      "NAVIGATION_STATE",
+    );
+  }
+  async function go(path) {
+    const surface = navigationDestination(HML_ORIGIN + path);
+    // Two parent contexts are required by the existing R20 presentation chain.
+    const parentSurface =
+      surface ||
+      (path === "/competencias/50c26274-a36f-48e0-b2fe-5a1caf5d6a49"
+        ? "V114"
+        : path === "/competencias/79bdc139-ed10-4c91-905e-b32b9a824d27/apresentar"
+          ? "V119"
+          : null);
+    need(!!parentSurface, "NAVIGATION_ROUTE");
+    await waitNavigationNetwork(page, fence);
+    generation++;
+    await navigateVerifiedPage(page, fence, HML_ORIGIN + path);
+    await ready(parentSurface, path);
+  }
+  async function openMenu(width) {
+    if (width < 768) {
+      const open = page.getByRole("button", { name: "Abrir menu", exact: true });
+      const dialog = page.getByRole("dialog", { name: "Menu de navegação", exact: true });
+      if (await dialog.isVisible()) return;
+      await open.waitFor({ state: "visible", timeout: 15000 });
+      need((await open.count()) === 1, "NAVIGATION_MENU");
+      await open.click();
+      await page
+        .getByRole("dialog", { name: "Menu de navegação", exact: true })
+        .waitFor({ state: "visible" });
+      await waitNavigationNetwork(page, fence);
+    }
+  }
+  async function clickPath(path, width, menu) {
+    if (!menu) await closeMenu();
+    const { link: selected, menuOpened: opened } = await waitNavigationControl(
+      page,
+      fence,
+      path,
+      width,
+      menu,
+    );
+    generation++;
+    clickTiming.clickAt = performance.now();
+    clickTiming.documents = 0;
+    await selected.click();
+    await page.waitForURL(HML_ORIGIN + path);
+    await settleVerifiedPage(page, fence);
+    if (opened)
+      await page
+        .getByRole("dialog", { name: "Menu de navegação", exact: true })
+        .waitFor({ state: "hidden" });
+  }
+  async function closeMenu() {
+    const dialog = page.getByRole("dialog", { name: "Menu de navegação", exact: true });
+    if ((await dialog.count()) !== 1) return;
+    await waitNavigationNetwork(page, fence);
+    await page.keyboard.press("Escape");
+    await dialog.waitFor({ state: "hidden" });
+    const opener = page.getByRole("button", { name: "Abrir menu", exact: true });
+    need(await opener.evaluate((node) => document.activeElement === node), "NAVIGATION_MENU");
+    await waitNavigationNetwork(page, fence);
+  }
+  async function visibleHrefs() {
+    return page
+      .locator("a[href]:visible")
+      .evaluateAll((nodes) =>
+        nodes
+          .filter((e) => !e.closest('[inert],[aria-hidden="true"]'))
+          .map((e) => e.getAttribute("href")),
+      );
+  }
+  try {
+    for (const item of navigationRunCases(ledger)) {
+      const row = {
+        surface: item.surface,
+        width: item.width,
+        theme: item.theme,
+        routeExact: false,
+        stateVerified: false,
+        organizationVerified: false,
+        enteredFromMenu: false,
+        reloadVerified: false,
+        backVerified: false,
+        shellVerified: false,
+        menuVerified: false,
+        drawerVerified: item.surface === "V117" ? false : null,
+        linksFound: 0,
+        linksTested: 0,
+        linksOutOfFixture: 0,
+        excludedLinkKinds: [],
+        conditionalLinksTested: 0,
+        destinations: [],
+        controlsVerified: false,
+        controlOperation: navigationControlOperation(item.surface),
+        operation: "DIRECT",
+        target: item.surface,
+        httpStatusErrors: 0,
+        transportErrors: 0,
+        pageErrors: 0,
+        httpErrors: 0,
+        blockedRequests: 0,
+        status: "BLOCKED",
+        stage: "DIRECT",
+        failureCode: null,
+      };
+      records.push(row);
+      diagnosticRow = row;
+      const beforeErrors = errors,
+        beforeHttp = httpErrors,
+        beforeStatus = httpStatusErrors,
+        beforeTransport = transportErrors;
+      let stopAfterRecord = false;
+      try {
+        activeTheme = item.theme;
+        await checkFreshDeployment(proof, false);
+        await waitNavigationNetwork(page, fence);
+        await resizeVerifiedPage(page, fence, item.width);
+        await go(item.path);
+        row.routeExact = true;
+        row.stateVerified = true;
+        row.organizationVerified = true;
+        row.stage = "RELOAD";
+        await waitNavigationNetwork(page, fence);
+        generation++;
+        await page.reload({ waitUntil: "networkidle" });
+        await ready(item.surface, item.path);
+        row.reloadVerified = true;
+        row.stage = "ENTER_MENU";
+        const parent = navigationParent(item);
+        row.operation = "ENTER_PARENT";
+        row.target = navigationDestination(HML_ORIGIN + parent);
+        await go(parent);
+        if (item.surface === "V117") {
+          const opener = page.getByRole("button", {
+            name: "Abrir requisito AUD-A-TXT-001",
+            exact: true,
+          });
+          await opener.waitFor({ state: "visible" });
+          await opener.click();
+          const drawer = page.getByRole("dialog", { name: "Detalhe do requisito", exact: true });
+          await drawer.waitFor({ state: "visible" });
+          await drawer
+            .getByRole("heading", { name: "Requisito", exact: true })
+            .waitFor({ state: "visible" });
+          for (const name of ["Fonte e versionamento", "Resultado de referência", "Evidências"])
+            need(
+              (await drawer.getByRole("region", { name, exact: true }).count()) === 1,
+              "NAVIGATION_STATE",
+            );
+          if ((await drawer.getByRole("alert").count()) !== 0) fail("NAV_STATE");
+          await drawer.getByRole("button", { name: "Fechar", exact: true }).click();
+          await drawer.waitFor({ state: "hidden" });
+          if (!(await opener.evaluate((node) => document.activeElement === node)))
+            fail("NAV_STATE");
+          row.drawerVerified = true;
+          row.enteredFromMenu = true;
+        } else {
+          const mainLink = ["V103", "V106", "V111", "V114", "V120"].includes(item.surface);
+          row.operation = "ENTER_FIRST";
+          row.target = item.surface;
+          await clickPath(item.path, item.width, !mainLink);
+          await ready(item.surface, item.path);
+          row.enteredFromMenu = true;
+          row.operation = "RETURN_PARENT";
+          row.target = navigationDestination(HML_ORIGIN + parent);
+          await waitNavigationNetwork(page, fence);
+          generation++;
+          await page.goBack({ waitUntil: "networkidle" });
+          await ready(
+            navigationDestination(HML_ORIGIN + parent) ||
+              (item.surface === "V119" ? "V114" : "V119"),
+            parent,
+          );
+          row.backVerified = true;
+          row.operation = "ENTER_SECOND";
+          row.target = item.surface;
+          await clickPath(item.path, item.width, !mainLink);
+          await ready(item.surface, item.path);
+        }
+        if (item.surface === "V117") {
+          await clickPath("/", item.width, true);
+          await ready("SYS05", "/");
+          await waitNavigationNetwork(page, fence);
+          generation++;
+          await page.goBack({ waitUntil: "networkidle" });
+          await ready("V117", item.path);
+          row.backVerified = true;
+        }
+        row.stage = "MENU";
+        row.operation = "MENU_OPEN";
+        row.target = item.surface;
+        if (item.surface === "SYS04") {
+          const card = page
+            .getByRole("radio")
+            .filter({ hasText: SYNTHETIC_FIXTURE.organizationName })
+            .filter({ hasText: "Administrador Master" });
+          await card.click();
+          await page.getByRole("button", { name: "Continuar", exact: true }).click();
+          await page.waitForURL(HML_ORIGIN + "/");
+          await ready("SYS05", "/");
+          row.menuVerified = true;
+          row.shellVerified = true;
+          row.controlsVerified = true;
+        } else {
+          if (item.width >= 768) {
+            await toggleNavigationSidebar(page, fence);
+          }
+          const contentHrefs = await visibleHrefs();
+          await openMenu(item.width);
+          const required = [
+            "/",
+            "/contratantes",
+            "/contratantes/novo",
+            "/contratos",
+            "/contratos/novo",
+            "/selecionar-organizacao",
+            "/administracao/usuarios",
+            "/administracao/auditoria",
+          ];
+          row.operation = "MENU_REQUIRED";
+          for (const path of required)
+            need((await page.locator(`a[href="${path}"]:visible`).count()) > 0, "NAVIGATION_MENU");
+          row.menuVerified = true;
+          row.shellVerified = true;
+          row.stage = "LINKS";
+          const hrefs = [...contentHrefs, ...(await visibleHrefs())];
+          const seen = new Set(),
+            targets = [];
+          for (const href of hrefs) {
+            const decision = navigationLinkDecision(href, item.surface);
+            need(decision.kind !== "BROKEN", "NAVIGATION_LINK_MISSING");
+            if (decision.kind !== "TARGET") {
+              row.linksOutOfFixture++;
+              row.excludedLinkKinds.push(decision.kind);
+              continue;
+            }
+            const dest = decision.destination;
+            // Autoligação (inclusive V117→V116, a mesma rota) não cria entrada no histórico.
+            if (
+              dest === item.surface ||
+              dest === navigationOwnDestination(item.surface) ||
+              seen.has(dest)
+            )
+              continue;
+            seen.add(dest);
+            targets.push({ dest, path: new URL(href, HML_ORIGIN).pathname });
+          }
+          await closeMenu();
+          row.linksFound = targets.length;
+          for (const target of targets) {
+            row.operation = "LINK_RETURN_SOURCE";
+            row.target = item.surface;
+            await ready(item.surface, item.path);
+            let menu = false;
+            if (item.width < 768) {
+              menu = (await page.locator(`a[href="${target.path}"]:visible`).count()) === 0;
+            }
+            row.operation = "LINK_CLICK";
+            row.target = target.dest;
+            await clickPath(target.path, item.width, menu);
+            row.operation = "LINK_READY";
+            const state = await ready(target.dest, target.path);
+            if (state === "CONDITIONAL_UNAVAILABLE") row.conditionalLinksTested++;
+            row.destinations.push(target.dest);
+            row.linksTested++;
+            row.operation = "LINK_RETURN_SOURCE";
+            row.target = item.surface;
+            generation++;
+            await returnNavigationSource(page, fence, item.surface, item.path, item.theme);
+            await ready(item.surface, item.path);
+          }
+          row.stage = "CONTROLS";
+          row.operation = "LOCAL_CONTROL";
+          row.target = item.surface;
+          if (["V102", "V103", "V105", "V113"].includes(item.surface)) {
+            const form = page.locator("form");
+            need((await form.count()) === 1, "NAVIGATION_FORM");
+            let restore = null,
+              original = null;
+            if (item.surface === "V103") {
+              restore = form.locator("input[required]").first();
+              need((await restore.count()) === 1, "NAVIGATION_FORM");
+              original = await restore.inputValue();
+              need(original.length > 0, "NAVIGATION_FORM");
+              await restore.fill("");
+            }
+            const empty = await form.evaluate((f) =>
+              [...f.querySelectorAll('input:not([type="hidden"]),textarea')].some((e) => !e.value),
+            );
+            need(empty, "NAVIGATION_FORM");
+            await form.locator('[type="submit"]').click();
+            await settleVerifiedPage(page, fence);
+            need(new URL(page.url()).pathname === item.path, "NAVIGATION_FORM");
+            const invalid = await form.evaluate(
+              (f) =>
+                !f.checkValidity() ||
+                !!f.querySelector('[aria-invalid="true"]') ||
+                !!f.querySelector('[role="alert"]'),
+            );
+            need(invalid, "NAVIGATION_FORM");
+            if (restore) await restore.fill(original);
+          } else if (["V101", "ADM01"].includes(item.surface)) {
+            const search = page.locator('main input[type="search"]');
+            need((await search.count()) === 1, "NAVIGATION_FORM");
+            await search.fill("AUD");
+            await settleVerifiedPage(page, fence);
+            need((await search.inputValue()) === "AUD", "NAVIGATION_FORM");
+            await search.fill("");
+            await ready(item.surface, item.path);
+          } else if (item.surface === "V119") {
+            const opener = page.getByRole("button", {
+              name: "Registrar apresentação",
+              exact: true,
+            });
+            await opener.click();
+            const dialog = page.getByRole("dialog", {
+              name: "Confirmar envio ao contratante",
+              exact: true,
+            });
+            await dialog.waitFor({ state: "visible" });
+            await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+            await dialog.waitFor({ state: "hidden" });
+            need(
+              await opener.evaluate((node) => document.activeElement === node),
+              "NAVIGATION_STATE",
+            );
+          } else if (item.surface === "V120" || item.surface === "V122") {
+            await page
+              .getByRole("button", {
+                name: item.surface === "V120" ? "Atualizar consulta" : "Atualizar histórico",
+                exact: true,
+              })
+              .click();
+            await ready(item.surface, item.path);
+          } else if (item.surface === "V121") {
+            for (const name of ["Precedentes", "Regras preventivas", "Relatórios e apontamentos"]) {
+              await page.getByRole("button", { name, exact: true }).click();
+              await ready(item.surface, item.path);
+            }
+          } else if (item.surface === "V117") {
+            need(row.drawerVerified === true, "NAVIGATION_STATE");
+          } else {
+            need(row.linksTested > 0 && row.menuVerified && row.shellVerified, "NAVIGATION_CASE");
+          }
+          row.controlsVerified = true;
+        }
+        await waitNavigationNetwork(page, fence);
+        row.pageErrors = errors - beforeErrors;
+        row.httpErrors = httpErrors - beforeHttp;
+        row.httpStatusErrors = httpStatusErrors - beforeStatus;
+        row.transportErrors = transportErrors - beforeTransport;
+        row.blockedRequests = fence.snapshot().blockedRequests;
+        row.stage = "FINISH";
+        row.operation = "FINISH";
+        row.target = item.surface;
+        row.status = "PASS";
+        need(navigationRowValid(row), "NAVIGATION_CASE");
+      } catch (error) {
+        row.status = "FAIL";
+        const allowed = [
+          "NAVIGATION_ROUTE",
+          "NAVIGATION_STATE",
+          "NAVIGATION_MENU",
+          "NAVIGATION_LINK_MISSING",
+          "NAVIGATION_FORM",
+          "NAVIGATION_CASE",
+        ];
+        row.failureCode =
+          allowed.includes(error?.code) || NAVIGATION_NATIVE_CODES.has(error?.code)
+            ? error.code
+            : error?.name === "TimeoutError"
+              ? "NAVIGATION_TIMEOUT"
+              : "NAVIGATION_RUNTIME";
+        row.pageErrors = errors - beforeErrors;
+        row.httpErrors = httpErrors - beforeHttp;
+        row.httpStatusErrors = httpStatusErrors - beforeStatus;
+        row.transportErrors = transportErrors - beforeTransport;
+        row.blockedRequests = fence.snapshot().blockedRequests;
+        if (fence.snapshot().failed) stopAfterRecord = true;
+      }
+      console.log(
+        JSON.stringify({
+          phase: "NAVIGATION",
+          surface: row.surface,
+          width: row.width,
+          status: row.status,
+          stage: row.stage,
+          code: row.failureCode,
+          operation: row.operation,
+          target: row.target,
+        }),
+      );
+      if (stopAfterRecord) break;
+    }
+  } finally {
+    page.off("requestfailed", onTransportDiagnostic);
+    page.off("requestfailed", onTransportDetail);
+    page.off("request", onDocumentRequest);
+    page.off("pageerror", onError);
+    page.off("request", onRequest);
+    page.off("console", onConsole);
+    page.off("requestfailed", onRequestFailed);
+    page.off("response", onResponse);
+  }
+  return { records, pageErrors: errors, httpErrors, httpStatusErrors, transportErrors };
+}
 export const C8_RECOVERY_DOCUMENT = Object.freeze({
   schema: "contaos.fixture.readonly-recovery-r20.v1",
   workflowRun: "42788354465",
@@ -4285,7 +6740,7 @@ export const C8_RECOVERY_DOCUMENT = Object.freeze({
 });
 function auditScope(scope = null) {
   if (scope === null || scope === undefined) return null;
-  if (!isC8Scope(scope)) fail("AUDIT_SCOPE");
+  if (!isC8Scope(scope) && scope !== NAVIGATION_SCOPE) fail("AUDIT_SCOPE");
   return scope;
 }
 export function validateC8RecoveryDocument(input) {
@@ -4480,6 +6935,7 @@ export async function preparePublicProvenance({
     ...privateCases(scope)
       .filter((r) => r.path)
       .map((r) => r.path),
+    ...(scope === NAVIGATION_SCOPE ? [...navigationKnownRoutes().keys()] : []),
   ])) {
     let response;
     try {
@@ -4559,7 +7015,10 @@ export async function runCli(args = process.argv.slice(2)) {
     });
   }
   if (args[0] === "--native-guard") return nativeGuard();
-  if (args[0] === "--audit") return runAuthenticatedAudit();
+  if (args[0] === "--audit") {
+    if (singleRequestContext?.scope === NAVIGATION_SCOPE) await loadNavigationLedger();
+    return runAuthenticatedAudit();
+  }
   if (args[0] === "--resolve-deployment") {
     if (
       !singleRequestEventAllowed(process.env, process.env.CONTAOS_REQUEST_OPERATION || "audit") ||
@@ -4597,7 +7056,9 @@ export async function runCli(args = process.argv.slice(2)) {
     harnessSha: process.env.CONTAOS_HARNESS_SHA,
     deploymentId: process.env.CONTAOS_DEPLOYMENT_ID,
     bun: process.env.CONTAOS_BUN_BINARY || "bun",
-    scope: singleRequestContext?.scope ?? null,
+    // Escopos fixtures (TRILHA_A, F3) não são escopos de auditoria visual.
+    scope:
+      singleRequestContext?.operation === "audit" ? (singleRequestContext.scope ?? null) : null,
   });
 
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
@@ -5020,6 +7481,103 @@ export function nativeC8VisualDiagnostic(tap) {
   return last;
 }
 
+export async function navigationNativeGuard({
+  execute = execFile,
+  identity = harnessIdentity,
+  makeDirectory = mkdir,
+  write = writeFile,
+} = {}) {
+  try {
+    const result = await execute(
+      process.execPath,
+      [
+        "--test",
+        "--test-reporter=tap",
+        "--test-name-pattern=^NAV R2 native readiness and transport$",
+        "scripts/hml/authenticated-visual-audit.test.mjs",
+      ],
+      {
+        env: { ...browserEnvironment(process.env), CONTAOS_NATIVE_GUARD: "1" },
+        timeout: 120000,
+        maxBuffer: 1048576,
+      },
+    );
+    const proof = navigationNativeSupplement(result.stdout, await identity());
+    await makeDirectory(".audit-work", { recursive: true, mode: 0o700 });
+    await write(".audit-work/navigation-native-proof.json", JSON.stringify(proof), { mode: 0o600 });
+    return proof;
+  } catch (error) {
+    try {
+      console.error(JSON.stringify(navigationNativeGuardDiagnostic(error)));
+    } catch {
+      // Somente diagnóstico.
+    }
+    fail("NAVIGATION_NATIVE_PROOF");
+  }
+}
+
+// R10: resumo limitado e por lista fechada da falha do guard nativo de navegação (teste
+// sintético offline). Nunca imprime a saída bruta: só contagens, casos conhecidos, a linha
+// do arquivo de teste onde a asserção falhou e enums de erro.
+export function navigationNativeGuardDiagnostic(error) {
+  const stdout =
+    typeof error?.stdout === "string" && Buffer.byteLength(error.stdout) <= 1048576
+      ? error.stdout
+      : "";
+  const lines = stdout.split("\n").map((line) => line.trim());
+  const count = (name) => {
+    const match = lines
+      .map((line) => new RegExp("^# " + name + " (\\d{1,6})$").exec(line))
+      .find(Boolean);
+    return match ? Number(match[1]) : null;
+  };
+  const passedCases = [];
+  for (const line of lines) {
+    const match = /^# NAV_R2_NATIVE_CASE ([A-Z0-9_]+) PASS$/.exec(line);
+    if (match && NAVIGATION_NATIVE_CASES.includes(match[1]) && !passedCases.includes(match[1]))
+      passedCases.push(match[1]);
+  }
+  const testLines = [];
+  for (const line of lines) {
+    const match =
+      /^location: '[^']*authenticated-visual-audit\.test\.mjs:(\d{1,6}):(\d{1,4})'$/.exec(line);
+    if (match && testLines.length < 8) testLines.push(Number(match[1]));
+  }
+  const codes = [];
+  for (const line of lines) {
+    const match = /^code: '?(ERR_[A-Z_]{1,40}|NAVIGATION_[A-Z_]{1,40}|FENCE_[A-Z_]{1,40})'?$/.exec(
+      line,
+    );
+    if (match && codes.length < 8 && !codes.includes(match[1])) codes.push(match[1]);
+  }
+  const failureTypes = [];
+  for (const line of lines) {
+    const match =
+      /^failureType: '(testCodeFailure|testTimeoutFailure|hookFailure|cancelledByParent|subtestsFailed)'$/.exec(
+        line,
+      );
+    if (match && !failureTypes.includes(match[1])) failureTypes.push(match[1]);
+  }
+  return {
+    phase: "NAVIGATION_NATIVE_GUARD",
+    exitCode: Number.isInteger(error?.code) ? error.code : null,
+    signal: ["SIGTERM", "SIGKILL"].includes(error?.signal) ? error.signal : null,
+    timedOut: error?.killed === true,
+    blocked:
+      typeof error?.code === "string" && /^NAVIGATION_[A-Z_]{1,40}$/.test(error.code)
+        ? error.code
+        : null,
+    tests: count("tests"),
+    pass: count("pass"),
+    fail: count("fail"),
+    cancelled: count("cancelled"),
+    passedCases,
+    testLines,
+    codes,
+    failureTypes,
+  };
+}
+
 async function nativeGuard() {
   let output;
   try {
@@ -5201,6 +7759,16 @@ async function nativeGuard() {
     fail("PREPARER_SOURCEFORMS_NATIVE");
   }
 
+  const navigationProof = await navigationNativeGuard();
+  console.log(
+    JSON.stringify({
+      phase: "NAVIGATION_NATIVE",
+      state: "PASS",
+      cases: navigationProof.cases,
+      harnessSha: navigationProof.harnessSha,
+      sha256: digest(JSON.stringify(navigationProof)),
+    }),
+  );
   await mkdir(".audit-work", { recursive: true, mode: 0o700 });
   await writeFile(".audit-work/native-proof.json", JSON.stringify(proof), { mode: 0o600 });
   console.log(
@@ -5692,7 +8260,7 @@ export async function openVerifiedOrganizationSelector(page, fence) {
 async function runAuthenticatedAudit() {
   validateC8RecoveryDocument(C8_RECOVERY_DOCUMENT);
   const scope = auditScope(singleRequestContext?.scope);
-  if (scope !== C8_V117_SCOPE) fail("AUDIT_BINDING_PENDING");
+  if (scope !== C8_V117_SCOPE && scope !== NAVIGATION_SCOPE) fail("AUDIT_BINDING_PENDING");
   if (process.env.GITHUB_EVENT_NAME !== "workflow_run") fail("REQUEST_EVENT");
   assertPrivateRequestEnvironment(process.env);
   getValidatedR7ZeroAuth();
@@ -5708,14 +8276,25 @@ async function runAuthenticatedAudit() {
   if (!singleRequestEventAllowed(process.env, "audit")) fail("AUDIT_MAIN_ONLY");
   const native = JSON.parse(await readFile(".audit-work/native-proof.json", "utf8"));
   if (!nativeProofValid(native, await harnessIdentity())) fail("NATIVE_PROOF");
+  const navigationNativeProof =
+    scope === NAVIGATION_SCOPE
+      ? JSON.parse(await readFile(".audit-work/navigation-native-proof.json", "utf8"))
+      : null;
+  if (
+    scope === NAVIGATION_SCOPE &&
+    !navigationNativeProofValid(navigationNativeProof, await harnessIdentity())
+  )
+    fail("NAVIGATION_NATIVE_PROOF");
   const proof = JSON.parse(await readFile(".audit-work/provenance.json", "utf8"));
   if (
     proof.schema !== "contaos.private.provenance.v1" ||
     proof.harnessSha !== process.env.CONTAOS_HARNESS_SHA ||
     proof.frontendSha !== process.env.CONTAOS_FRONTEND_SHA ||
     proof.deploymentId !== process.env.CONTAOS_DEPLOYMENT_ID ||
-    proof.frontendSha !== C8_R5_PRESERVED.frontendSha ||
-    proof.deploymentId !== C8_R5_PRESERVED.deploymentId
+    proof.frontendSha !==
+      (scope === NAVIGATION_SCOPE ? NAVIGATION_DEPLOYMENT : C8_R5_PRESERVED).frontendSha ||
+    proof.deploymentId !==
+      (scope === NAVIGATION_SCOPE ? NAVIGATION_DEPLOYMENT : C8_R5_PRESERVED).deploymentId
   )
     fail("PROVENANCE_IDENTITY");
   const axePath = process.env.CONTAOS_AXE_SOURCE_PATH;
@@ -5738,6 +8317,12 @@ async function runAuthenticatedAudit() {
     logoutVerified = false,
     aborted = null,
     errors = 0;
+  let navigationHttpErrors = 0,
+    navigationHttpStatusErrors = 0,
+    navigationTransportErrors = 0,
+    navigationSession = null,
+    logoutFailure = null,
+    navigationComplete = false;
   let phase = "AUDIT_PREFLIGHT",
     diagnostic = null;
   const flags = {
@@ -5829,6 +8414,7 @@ async function runAuthenticatedAudit() {
       install: true,
     });
     page = await context.newPage();
+    if (scope === NAVIGATION_SCOPE) navigationSession = observeNavigationSession(page);
     const privacyState = {
       proof: privacyProof,
       rbacProof,
@@ -5900,8 +8486,13 @@ async function runAuthenticatedAudit() {
     flags.organizationConfirmed = true;
     privacyState.verified = true;
     phase = "CAPTURE_PRIVATE";
+    if (scope === NAVIGATION_SCOPE) {
+      phase = "NAVIGATION";
+      const result = await runNavigationAudit(page, fence, proof);
+      records.push(...result.records);
+    }
     let surface = null;
-    for (const item of privateCases(scope)) {
+    for (const item of scope === NAVIGATION_SCOPE ? [] : privateCases(scope)) {
       captureItem = item;
       const key = caseKey(item),
         record = {
@@ -6153,44 +8744,180 @@ async function runAuthenticatedAudit() {
     const privacyState = page && privacy78Pages.get(page);
     privacyState?.c8Observer?.close();
     if (privacyState) privacyState.verified = false;
+    let logoutStage = "DRAIN";
+    const logoutTiming = { clickAt: 0 },
+      logoutStarts = new WeakMap();
+    let logoutDetails = 0;
+    const onLogoutRequest = (request) => {
+      try {
+        logoutStarts.set(request, performance.now());
+      } catch {
+        // Somente diagnóstico.
+      }
+    };
+    const onLogoutFailed = (request) => {
+      try {
+        if (logoutDetails >= 16) return;
+        const detail = navigationLogoutTransportDetail(request, logoutStage, {
+          ...logoutTiming,
+          now: performance.now(),
+          started: logoutStarts.get(request),
+        });
+        if (detail) {
+          logoutDetails++;
+          console.log(JSON.stringify(detail));
+        }
+      } catch {
+        // Somente diagnóstico: nunca interfere na contagem de transportErrors.
+      }
+    };
+    const logoutDiagnostics = scope === NAVIGATION_SCOPE && !!page && !page.isClosed();
+    // R11: contadores da sessão por fase (antes do logout, depois do logout, depois do
+    // encerramento), para localizar erros globais fora da matriz. Só inteiros.
+    const sessionPhases = { beforeLogout: -1, afterLogout: -1, afterTeardown: -1 };
+    const sessionCount = () => {
+      try {
+        const value = navigationSession?.snapshot()?.transportErrors;
+        return Number.isSafeInteger(value) && value >= 0 ? Math.min(value, 100000) : -1;
+      } catch {
+        return -1;
+      }
+    };
+    sessionPhases.beforeLogout = sessionCount();
+    if (logoutDiagnostics) {
+      page.on("request", onLogoutRequest);
+      page.on("requestfailed", onLogoutFailed);
+    }
     if (loggedIn && page && !page.isClosed())
       try {
+        if (scope === NAVIGATION_SCOPE) await waitNavigationNetwork(page, fence);
         await settleVerifiedPage(page, fence);
+        logoutStage = "MENU_CLOSE";
         await closeAuditMobileMenu(page);
+        logoutStage = "CONTROL";
         const exit = page.getByRole("button", { name: "Sair", exact: true });
         if ((await exit.count()) === 1) {
-          await exit.click();
+          logoutStage = "CLICK";
+          logoutTiming.clickAt = performance.now();
+          if (scope === NAVIGATION_SCOPE) await clickNavigationLogout(page, fence);
+          else await exit.click();
+          logoutStage = "REDIRECT";
           await page.waitForURL(HML_ORIGIN + "/login");
+          logoutStage = "POST_DRAIN";
           await settleVerifiedPage(page, fence);
+          if (scope === NAVIGATION_SCOPE) await waitNavigationNetwork(page, fence);
           logoutVerified = true;
-        }
-      } catch {}
+          logoutFailure = null;
+        } else if (scope === NAVIGATION_SCOPE)
+          logoutFailure = { stage: "CONTROL", code: "NAVIGATION_LOGOUT_CONTROL" };
+      } catch (error) {
+        if (scope === NAVIGATION_SCOPE) logoutFailure = navigationLogoutFailure(error, logoutStage);
+      }
+    if (logoutDiagnostics)
+      try {
+        page.off("request", onLogoutRequest);
+        page.off("requestfailed", onLogoutFailed);
+      } catch {
+        // Somente diagnóstico.
+      }
+    sessionPhases.afterLogout = sessionCount();
+    if (scope === NAVIGATION_SCOPE && !logoutVerified && !logoutFailure)
+      logoutFailure = {
+        stage: loggedIn ? "CONTROL" : "NOT_LOGGED_IN",
+        code: loggedIn ? "PAGE_CLOSED" : "NO_SESSION",
+      };
     fence?.close();
     await browser?.close().catch(() => {});
     await proxy?.close().catch(() => {});
-    completePrivateRecords(records, scope);
-    const summary = summarizeCases(records, scope);
-    if (scope && (aborted || !logoutVerified)) summary.matrixComplete = false;
-    const report = {
-      schema: "contaos.private.audit.v1",
-      frontendSha: proof.frontendSha,
-      harnessSha: proof.harnessSha,
-      deploymentId: proof.deploymentId,
-      nativeProof: native,
-      csp: "ADICIONAL_LOCAL_DO_AUDITOR",
-      publicProofsRepeated: false,
-      records,
-      summary,
-      auditScope: scope.id,
-      ...(scope === C8_REMAINING_SCOPE ? { preservedEvidence: C8_R5_PRESERVED } : {}),
-      ...(scope === C8_V117_SCOPE ? { preservedEvidence: [C8_R5_PRESERVED, C8_R6_PRESERVED] } : {}),
-      recoveryDocumentSha256: digest(JSON.stringify(C8_RECOVERY_DOCUMENT, null, 2) + "\n"),
-      logoutVerified,
-      aborted,
-      diagnostic,
-      criteria72: "PENDENTE_REVISAO_INDEPENDENTE",
-      v1Certified: false,
-    };
+    if (navigationSession) {
+      sessionPhases.afterTeardown = sessionCount();
+      try {
+        console.log(
+          JSON.stringify({ phase: "NAVIGATION_SESSION_TRANSPORT_PHASES", ...sessionPhases }),
+        );
+      } catch {
+        // Somente diagnóstico.
+      }
+      const sessionErrors = navigationSession.snapshot();
+      navigationHttpErrors = sessionErrors.httpErrors;
+      navigationHttpStatusErrors = sessionErrors.httpStatusErrors;
+      navigationTransportErrors = sessionErrors.transportErrors;
+      errors += sessionErrors.consoleErrors;
+      navigationSession.close();
+    }
+    if (scope !== NAVIGATION_SCOPE) completePrivateRecords(records, scope);
+    const ledger = scope === NAVIGATION_SCOPE ? await navigationReportLedger() : null;
+    let incremental = false,
+      summary;
+    if (scope === NAVIGATION_SCOPE)
+      ({ incremental, summary } = navigationFinalSummary(records, ledger, NAVIGATION_LEDGER, {
+        aborted,
+        logoutVerified,
+      }));
+    else {
+      summary = summarizeCases(records, scope);
+      if (scope && (aborted || !logoutVerified)) summary.matrixComplete = false;
+    }
+    const report =
+      scope === NAVIGATION_SCOPE
+        ? {
+            schema: incremental ? "contaos.navigation.audit.v4" : "contaos.navigation.audit.v3",
+            ...(incremental
+              ? {
+                  ledgerSha256: ledger?.sha256 ?? null,
+                  resumeFrom: ledger?.resumeFrom ?? NAVIGATION_LEDGER.resumeFrom,
+                }
+              : {}),
+            networkFailure: navigationSession?.networkFailure() ?? null,
+            frontendSha: proof.frontendSha,
+            harnessSha: proof.harnessSha,
+            deploymentId: proof.deploymentId,
+            auditScope: NAVIGATION_SCOPE.id,
+            records,
+            summary,
+            nativeProofSha256: digest(JSON.stringify(native)),
+            navigationNativeProofSha256: digest(JSON.stringify(navigationNativeProof)),
+            fenceDiagnostic: navigationFenceDiagnostic(fence?.snapshot()),
+            logoutFailure,
+            httpStatusErrors: navigationHttpStatusErrors,
+            transportErrors: navigationTransportErrors,
+            sessionVerified: flags.postLoginNavigation === true,
+            masterVerified: flags.masterLocated === true,
+            organizationVerified: flags.organizationConfirmed === true,
+            logoutVerified,
+            blockedMutations: fence?.snapshot().blockedRequests ?? -1,
+            pageErrors: errors,
+            httpErrors: navigationHttpErrors,
+            aborted,
+          }
+        : {
+            schema: "contaos.private.audit.v1",
+            frontendSha: proof.frontendSha,
+            harnessSha: proof.harnessSha,
+            deploymentId: proof.deploymentId,
+            nativeProof: native,
+            csp: "ADICIONAL_LOCAL_DO_AUDITOR",
+            publicProofsRepeated: false,
+            records,
+            summary,
+            auditScope: scope.id,
+            ...(scope === C8_REMAINING_SCOPE ? { preservedEvidence: C8_R5_PRESERVED } : {}),
+            ...(scope === C8_V117_SCOPE
+              ? { preservedEvidence: [C8_R5_PRESERVED, C8_R6_PRESERVED] }
+              : {}),
+            recoveryDocumentSha256: digest(JSON.stringify(C8_RECOVERY_DOCUMENT, null, 2) + "\n"),
+            logoutVerified,
+            aborted,
+            diagnostic,
+            criteria72: "PENDENTE_REVISAO_INDEPENDENTE",
+            v1Certified: false,
+          };
+    if (scope === NAVIGATION_SCOPE)
+      navigationComplete =
+        ledger !== null &&
+        (incremental
+          ? validateNavigationReportIncremental(report, ledger)
+          : validateNavigationReport(report));
     const reportText = JSON.stringify(report, null, 2) + "\n";
     await writeFile(join(output, "report.json"), reportText, { mode: 0o600 });
     hashes.push({ file: "report.json", sha: digest(reportText) });
@@ -6200,7 +8927,9 @@ async function runAuthenticatedAudit() {
       { mode: 0o600 },
     );
   }
-  if (aborted || !logoutVerified || records.some((r) => r.status !== "PASS_AUTOMATIZADO"))
+  if (scope === NAVIGATION_SCOPE) {
+    if (!navigationComplete) fail("NAVIGATION_INCOMPLETE");
+  } else if (aborted || !logoutVerified || records.some((r) => r.status !== "PASS_AUTOMATIZADO"))
     fail("AUDIT_INCOMPLETE");
 }
 /** Serialized into the browser: never return a browser error or arbitrary image URL. */
@@ -8880,7 +11609,43 @@ export const SINGLE_REQUEST = Object.freeze({
   c8GateSha: "67ca0f0e441902e732b4bee8e4d50f6415d5f929",
   c8PlanSha: "afe42819e62bbe8e3c25b4a5869f8ba59db124f5",
   c8ReaderBuildSha: "501237dd48a7159ccd4a7d7407334cdc2245aa24",
+  functionalNavigationGateSha: "c1b003bd9fd1e8909a2d1950e43984023206f1d3",
+  functionalNavigationRepairGateSha: "079747a75e224996082e14c671864f68bb5e36ba",
+  functionalNavigationVisualGateSha: "0f1b6bfe2757478b18855143f378bd364e80f136",
+  functionalNavigationFocusGateSha: "3b33fd69dd005814a8c615a0af6bd0fea758ac6b",
+  functionalNavigationR2PlanSha: "83279bf28172e974778c3e788b8bf5718e23d9c1",
+  functionalNavigationR3PlanSha: "9030de4115041598bdc530e03c3c8a5c18d3a5ae",
+  functionalNavigationR4PlanSha: "e01a208940d68a504d1c206e1b255eabe4938bb3",
+  functionalNavigationR5PlanSha: "a377bb65db407252a32a0dad4f371e65a03b22c2",
+  functionalNavigationR6PlanSha: "37369db9066e80f33280922c8c78b460208097ca",
+  functionalNavigationR7PlanSha: "dbcec252851cd867655aaaabc8f2160993f8f46b",
+  functionalNavigationR8PlanSha: "78a5f4b96fe756f96a43e53ab877d17145d986f2",
+  // Emenda R9 (A): commit do PLAN R9, ancestral obrigatório mesmo antes do merge.
+  functionalNavigationR9PlanSha: "771a3e0aeeb6b957c8cd2429184d8cf8fc279af8",
+  // PLAN R10 (commit), ancestral obrigatório: correção do AppShell e autoligação de V117.
+  functionalNavigationR10PlanSha: "157b39794b4b631443a664e0a746ed3880bfecea",
+  // PLAN R11 (commit), ancestral obrigatório: logout instrumentado e execução de fechamento.
+  functionalNavigationR11PlanSha: "0922b2ef7ed461d686c21a3392bbd6ade0774b0d",
+  // PLAN R12 (commit), ancestral obrigatório: preflight lista execuções por SHA.
+  functionalNavigationR12PlanSha: "a8b5a4dee1e40559b094efccecc4cfad0e9f39db",
+  // PLAN R13 (commit), ancestral obrigatório: novo nonce após o bloqueio do guard nativo na R12.
+  functionalNavigationR13PlanSha: "d01da7fd9a998ccac88f6966fac4aeeeda6dfa5d",
+  // PLAN R14 (commit), ancestral obrigatório: logout 204 não lido classificado com prova.
+  functionalNavigationR14PlanSha: "ec1cd534cee2f5685eafe543e15a4d86e52d137f",
   spentAuditNonces: Object.freeze([
+    "integracao-v1-fase2-nav-20261113-r13",
+    "integracao-v1-fase2-nav-20261113-r12",
+    "integracao-v1-fase2-nav-20261113-r11",
+    "integracao-v1-fase2-nav-20261113-r10",
+    "integracao-v1-fase2-nav-20261113-r9",
+    "integracao-v1-fase2-nav-20261113-r8",
+    "integracao-v1-fase2-nav-20261113-r7",
+    "integracao-v1-fase2-nav-20261112-r6",
+    "integracao-v1-fase2-nav-20261112-r5",
+    "integracao-v1-fase2-nav-20261112-r4",
+    "integracao-v1-fase2-nav-20261112-r3",
+    "integracao-v1-fase2-nav-20261112-r2",
+    "integracao-v1-fase2-nav-20261111-r1",
     "trilha-a-audit-20261108-r1",
     "trilha-c-audit-20261110-c8-r1",
     "trilha-c-audit-20261110-c8-r2",
@@ -8889,6 +11654,7 @@ export const SINGLE_REQUEST = Object.freeze({
     "trilha-c-audit-20261111-c8-r5",
     "trilha-c-audit-20261111-c8-r6",
     "trilha-c-audit-20261111-c8-r7",
+    "trilha-c-audit-20261111-c8-r8",
   ]),
   r19RecoveryGateSha: "d51d3fcddf861fd127278ae5b20cd3e126d31f34",
   r19RecoveryPlanSha: "2b6ab4f542c66309fb16d12f9998136641591f25",
@@ -8944,10 +11710,18 @@ export const SINGLE_REQUEST = Object.freeze({
     id: 411115674,
     name: "ContaOS Trilha A Autenticada",
     path: ".github/workflows/contaos-trilha-a-authenticated.yml",
-    nonce: "trilha-c-audit-20261111-c8-r8",
+    nonce: "integracao-v1-fase2-nav-20261113-r14",
     privateName: "Trilha A auditoria privada HML",
   }),
 });
+// Fase 3 da integração funcional V1 (PLAN #655, seção 7.1): escopo mutante próprio,
+// resolvido exclusivamente pelo nonce na operação fixtures e mutuamente exclusivo com a Trilha A.
+export const INTEGRACAO_V1_FASE3_SCOPE = Object.freeze({
+  id: "INTEGRACAO_V1_FASE3_REL",
+  nonce: "integracao-v1-fase3-rel-20261113-r1",
+  operation: "fixtures",
+});
+export const FIXTURES_SCOPES = Object.freeze(["TRILHA_A", INTEGRACAO_V1_FASE3_SCOPE.id]);
 let singleRequestContext = null;
 
 function singleRequestIdentityMode(request) {
@@ -9030,6 +11804,7 @@ export function parseSingleRequest(raw, operation, { historical = false } = {}) 
     !["fixtures", "audit"].includes(parsed.operation) ||
     (operation && parsed.operation !== operation) ||
     (parsed.request_id !== SINGLE_REQUEST[parsed.operation]?.nonce &&
+      !(parsed.operation === "fixtures" && parsed.request_id === INTEGRACAO_V1_FASE3_SCOPE.nonce) &&
       !(
         historical &&
         ((parsed.operation === "fixtures" &&
@@ -9044,6 +11819,9 @@ export function parseSingleRequest(raw, operation, { historical = false } = {}) 
   return Object.freeze({ ...parsed });
 }
 
+export const SINGLE_REQUEST_REVIEWERS = Object.freeze(["contaos9999", "Edivan5002"]);
+export const SINGLE_REQUEST_REVIEW_FOOTER =
+  "\n\n---\n_Generated by [Claude Code](https://claude.ai/code)_";
 export function validateSingleRequestEvent({ event, env, upstream, current, operation, mainSha }) {
   const expected = SINGLE_REQUEST[operation],
     repo = SINGLE_REQUEST.repository;
@@ -9122,6 +11900,35 @@ export async function listSingleRequestRuns(getPage) {
   }
   fail("REQUEST_PAGINATION");
 }
+// R12: lista só as execuções dos SHAs da REQUEST, com a mesma paginação e os mesmos limites
+// de listSingleRequestRuns, e mantém só as de head_sha em requestShas, sem duplicatas. O
+// conjunto validado é o mesmo de antes (as execuções desses SHAs), sem percorrer o histórico.
+export async function listSingleRequestRunsForShas(get, workflowId, requestShas) {
+  if (
+    !Number.isSafeInteger(workflowId) ||
+    workflowId <= 0 ||
+    !Array.isArray(requestShas) ||
+    requestShas.length === 0 ||
+    requestShas.length > 1000 ||
+    requestShas.some((sha) => !hash40(sha))
+  )
+    fail("REQUEST_PAGINATION");
+  const result = [],
+    ids = new Set();
+  for (const sha of new Set(requestShas)) {
+    const runs = await listSingleRequestRuns((page) =>
+      get(
+        "/actions/workflows/" + workflowId + "/runs?head_sha=" + sha + "&per_page=100&page=" + page,
+      ),
+    );
+    for (const run of runs) {
+      if (run.head_sha !== sha || ids.has(run.id)) continue;
+      ids.add(run.id);
+      result.push(run);
+    }
+  }
+  return result;
+}
 export function validateSingleRequestRuns({ current, runs, requestShas, workflowId }) {
   if (
     !current ||
@@ -9186,9 +11993,70 @@ export function resolveC8AuditScope(request) {
       fail(code);
     copy[name] = d.value;
   }
-  if (copy.operation !== "audit" || copy.request_id !== C8_V117_SCOPE.nonce) fail(code);
+  if (copy.operation !== "audit" || copy.request_id !== NAVIGATION_SCOPE.nonce) fail(code);
   parseSingleRequest(JSON.stringify(copy), "audit");
-  return C8_V117_SCOPE;
+  return NAVIGATION_SCOPE;
+}
+// Prova de runtime: o escopo gravado na revalidação deve ser o resolvido da solicitação atual.
+export function assertProofFixturesScope(proof, request) {
+  if (!proof || typeof proof !== "object" || isProxy(proof)) fail("REQUEST_RUNTIME");
+  const d = Object.getOwnPropertyDescriptor(proof, "fixturesScope");
+  if (!d || !Object.hasOwn(d, "value") || d.value !== resolveFixturesScope(request))
+    fail("REQUEST_RUNTIME");
+  return d.value;
+}
+// Linha de output da revalidação; só escopos fechados, sem quebra de linha injetável.
+export function fixturesScopeOutputLine(result) {
+  if (!result || result.selected !== true || result.operation !== "fixtures")
+    fail("FIXTURES_SCOPE");
+  if (!FIXTURES_SCOPES.includes(result.fixturesScope)) fail("FIXTURES_SCOPE");
+  return "scope=" + result.fixturesScope + "\n";
+}
+// Escopo fixtures da solicitação já provada nesta execução; sem prova, falha fechada.
+export function singleRequestFixturesScope() {
+  if (singleRequestContext?.operation !== "fixtures") fail("FIXTURES_SCOPE");
+  const scope = singleRequestContext.scope;
+  if (!FIXTURES_SCOPES.includes(scope)) fail("FIXTURES_SCOPE");
+  return scope;
+}
+export function resolveFixturesScope(request) {
+  const code = "FIXTURES_SCOPE";
+  if (!request || typeof request !== "object" || isProxy(request)) fail(code);
+  const proto = Object.getPrototypeOf(request);
+  if (proto !== Object.prototype && proto !== null) fail(code);
+  const names = [
+    "schema_version",
+    "issue",
+    "operation",
+    "request_id",
+    "approved_parent_sha",
+    "frontend_sha",
+    "deployment_id",
+  ];
+  const keys = Reflect.ownKeys(request);
+  if (keys.length !== 7 || keys.some((key) => typeof key !== "string" || !names.includes(key)))
+    fail(code);
+  const descriptors = Object.getOwnPropertyDescriptors(request),
+    copy = {};
+  for (const name of names) {
+    const d = descriptors[name];
+    if (
+      !d ||
+      !Object.hasOwn(d, "value") ||
+      d.enumerable !== true ||
+      !["string", "number"].includes(typeof d.value)
+    )
+      fail(code);
+    copy[name] = d.value;
+  }
+  if (copy.operation !== "fixtures") fail(code);
+  let scope;
+  if (copy.request_id === SINGLE_REQUEST.fixtures.nonce) scope = "TRILHA_A";
+  else if (copy.request_id === INTEGRACAO_V1_FASE3_SCOPE.nonce)
+    scope = INTEGRACAO_V1_FASE3_SCOPE.id;
+  else fail(code);
+  parseSingleRequest(JSON.stringify(copy), "fixtures");
+  return scope;
 }
 export function requireSingleRequestOperation(operation, request = null) {
   if (operation === "audit") {
@@ -9196,6 +12064,7 @@ export function requireSingleRequestOperation(operation, request = null) {
     return;
   }
   if (operation !== "fixtures") fail("REQUEST_OPERATION");
+  if (request !== null) resolveFixturesScope(request);
 }
 
 export async function verifySingleRequestGit(request, sha, git, raw) {
@@ -9246,6 +12115,23 @@ export async function verifySingleRequestGit(request, sha, git, raw) {
       SINGLE_REQUEST.c8GateSha,
       SINGLE_REQUEST.c8PlanSha,
       SINGLE_REQUEST.c8ReaderBuildSha,
+      SINGLE_REQUEST.functionalNavigationGateSha,
+      SINGLE_REQUEST.functionalNavigationRepairGateSha,
+      SINGLE_REQUEST.functionalNavigationVisualGateSha,
+      SINGLE_REQUEST.functionalNavigationFocusGateSha,
+      SINGLE_REQUEST.functionalNavigationR2PlanSha,
+      SINGLE_REQUEST.functionalNavigationR3PlanSha,
+      SINGLE_REQUEST.functionalNavigationR4PlanSha,
+      SINGLE_REQUEST.functionalNavigationR5PlanSha,
+      SINGLE_REQUEST.functionalNavigationR6PlanSha,
+      SINGLE_REQUEST.functionalNavigationR7PlanSha,
+      SINGLE_REQUEST.functionalNavigationR8PlanSha,
+      SINGLE_REQUEST.functionalNavigationR9PlanSha,
+      SINGLE_REQUEST.functionalNavigationR10PlanSha,
+      SINGLE_REQUEST.functionalNavigationR11PlanSha,
+      SINGLE_REQUEST.functionalNavigationR12PlanSha,
+      SINGLE_REQUEST.functionalNavigationR13PlanSha,
+      SINGLE_REQUEST.functionalNavigationR14PlanSha,
     );
   }
   // Automatic discovery proves the real source later, before its separate checkout.
@@ -11704,7 +14590,26 @@ export function singleRequestGet({
 }) {
   const environmentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
   if (!publicOnly && token !== environmentToken) fail("REQUEST_API_TOKEN");
-  const deadline = now() + 60000;
+  const deadline = now() + 60000,
+    started = now();
+  let calls = 0;
+  const timeout = (endpointKind) => {
+    // R12: diagnóstico fechado do prazo (sem caminho, token ou corpo); o prazo não muda.
+    if (diagnostic)
+      try {
+        console.error(
+          JSON.stringify({
+            phase: "REQUEST_API_TIMEOUT_DIAGNOSTIC",
+            calls: Math.min(calls, 100000),
+            endpointKind: REQUEST_ENDPOINT_KINDS.includes(endpointKind) ? endpointKind : "OTHER",
+            elapsedMs: Math.max(0, Math.min(600000, Math.round(now() - started))),
+          }),
+        );
+      } catch {
+        // Somente diagnóstico.
+      }
+    fail("REQUEST_API_TIMEOUT");
+  };
   return async (path) => {
     if (
       path !== "" &&
@@ -11718,8 +14623,9 @@ export function singleRequestGet({
     for (let attempt = 0; attempt < 2; attempt++) {
       const currentToken = assertRequestMetadataEnvironment(env, { requireToken: !publicOnly });
       if (!publicOnly && token !== currentToken) fail("REQUEST_API_TOKEN");
+      calls++;
       const remaining = deadline - now();
-      if (remaining <= 0) fail("REQUEST_API_TIMEOUT");
+      if (remaining <= 0) timeout(endpointKind);
       const headers = {
         Accept: "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
@@ -11734,7 +14640,7 @@ export function singleRequestGet({
         response = await fetchImpl(url, { headers, redirect: "error", signal });
         if (signal.aborted) throw new Error("REQUEST_API_TIMEOUT");
       } catch {
-        if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+        if (deadline - now() <= 0) timeout(endpointKind);
         if (signal.aborted && attempt === 0) continue;
         failRequestApi(
           "REQUEST_API_UNAVAILABLE",
@@ -11744,7 +14650,7 @@ export function singleRequestGet({
           diagnostic,
         );
       }
-      if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+      if (deadline - now() <= 0) timeout(endpointKind);
       if (response.status !== 200)
         failRequestApi(
           "REQUEST_API_UNAVAILABLE",
@@ -11758,7 +14664,7 @@ export function singleRequestGet({
         body = await response.text();
         if (signal.aborted) throw new Error("REQUEST_API_TIMEOUT");
       } catch {
-        if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+        if (deadline - now() <= 0) timeout(endpointKind);
         if (signal.aborted && attempt === 0) continue;
         failRequestApi(
           "REQUEST_API_UNAVAILABLE",
@@ -11768,7 +14674,7 @@ export function singleRequestGet({
           diagnostic,
         );
       }
-      if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+      if (deadline - now() <= 0) timeout(endpointKind);
       if (typeof body !== "string") fail("REQUEST_API_SCHEMA");
       if (Buffer.byteLength(body) > 4194304) fail("REQUEST_API_LIMIT");
       let parsed;
@@ -11777,12 +14683,379 @@ export function singleRequestGet({
       } catch {
         fail("REQUEST_API_SCHEMA");
       }
-      if (deadline - now() <= 0) fail("REQUEST_API_TIMEOUT");
+      if (deadline - now() <= 0) timeout(endpointKind);
       return parsed;
     }
-    fail("REQUEST_API_TIMEOUT");
+    timeout(endpointKind);
   };
 }
+
+const NAVIGATION_R1_PROOF = Object.freeze({
+  schema: "contaos.navigation.r1.proof.v1",
+  planSha: "83279bf28172e974778c3e788b8bf5718e23d9c1",
+  r1HarnessSha: "1a7b55cdad67fc2f639fa2abfb5faff04062d08a",
+  authRun: 43157856422,
+  fixturesRun: 43157856534,
+  reportSha256: "3d994303537f7e06d3c57b1dc1f1f69c763739edc6194909f331a69ac6cb348c",
+  ledgerSha256: "accb159f71e8b965bff64317535dc371946c38e53073048b3551cee3d332a0a0",
+  artifactDigest: "sha256:f08392462141b97763d9c8c4cf6918dad91a4c7bbb617fe556c4397495ca79a0",
+});
+export function validateNavigationR1Evidence(value) {
+  if (
+    !navigationPlain(value, Object.keys(NAVIGATION_R1_PROOF)) ||
+    Object.entries(NAVIGATION_R1_PROOF).some(([key, expected]) => value[key] !== expected)
+  )
+    fail("NAVIGATION_R1_PROOF");
+  return value;
+}
+export async function verifyNavigationR1Evidence({ get, git } = {}) {
+  try {
+    if (typeof get !== "function" || typeof git !== "function" || isProxy(get) || isProxy(git))
+      fail("NAVIGATION_R1_PROOF");
+    const directory = "docs/frontend/auditorias/integracao-funcional-v1/fase2/";
+    for (const [file, hash] of [
+      ["R1_REPORT_ORIGINAL_2026-11-12.json", NAVIGATION_R1_PROOF.reportSha256],
+      ["R1_LEDGER_2026-11-12.json", NAVIGATION_R1_PROOF.ledgerSha256],
+    ]) {
+      const raw = await git(["show", NAVIGATION_R1_PROOF.planSha + ":" + directory + file]);
+      if (typeof raw !== "string" || Buffer.byteLength(raw) > 65536 || digest(raw) !== hash)
+        fail("NAVIGATION_R1_PROOF");
+    }
+    const repository = (value) =>
+      value?.id === 1442722734 &&
+      value.full_name === SINGLE_REQUEST.repository &&
+      value.private === false &&
+      value.owner?.id === 352205055 &&
+      value.owner.login === "contaos999999";
+    for (const [id, workflow, name, file, conclusion, jobId, jobName, jobConclusion] of [
+      [
+        43157856422,
+        411115674,
+        "ContaOS Trilha A Autenticada",
+        "contaos-trilha-a-authenticated.yml",
+        "failure",
+        130982262200,
+        "Trilha A auditoria privada HML",
+        "failure",
+      ],
+      [
+        43157856534,
+        411426169,
+        "ContaOS Trilha A Fixtures",
+        "contaos-trilha-a-fixtures.yml",
+        "success",
+        130981976647,
+        "Trilha A preparacao sintetica HML",
+        "skipped",
+      ],
+    ]) {
+      const run = await get("/actions/runs/" + id);
+      if (
+        run?.id !== id ||
+        run.workflow_id !== workflow ||
+        run.name !== name ||
+        run.path !== ".github/workflows/" + file ||
+        run.event !== "workflow_run" ||
+        run.head_sha !== NAVIGATION_R1_PROOF.r1HarnessSha ||
+        run.head_branch !== "main" ||
+        run.run_attempt !== 1 ||
+        run.status !== "completed" ||
+        run.conclusion !== conclusion ||
+        !repository(run.repository) ||
+        !repository(run.head_repository)
+      )
+        fail("NAVIGATION_R1_PROOF");
+      const page = await get("/actions/runs/" + id + "/jobs?filter=all&per_page=100");
+      if (
+        !Number.isSafeInteger(page?.total_count) ||
+        page.total_count < 1 ||
+        page.total_count > 100 ||
+        !Array.isArray(page.jobs) ||
+        page.jobs.length !== page.total_count
+      )
+        fail("NAVIGATION_R1_PROOF");
+      if (
+        page.jobs.some(
+          (job) =>
+            job?.run_id !== id ||
+            job.run_attempt !== 1 ||
+            job.head_sha !== NAVIGATION_R1_PROOF.r1HarnessSha ||
+            job.status !== "completed",
+        )
+      )
+        fail("NAVIGATION_R1_PROOF");
+      const jobs = page.jobs.filter((job) => job.id === jobId);
+      if (jobs.length !== 1 || jobs[0].name !== jobName || jobs[0].conclusion !== jobConclusion)
+        fail("NAVIGATION_R1_PROOF");
+    }
+    const page = await get("/actions/runs/43157856422/artifacts?per_page=100");
+    if (page?.total_count !== 1 || !Array.isArray(page.artifacts) || page.artifacts.length !== 1)
+      fail("NAVIGATION_R1_PROOF");
+    const artifact = page.artifacts[0],
+      run = artifact?.workflow_run;
+    if (
+      artifact?.id !== 13917231956 ||
+      artifact.name !== "trilha-a-private-43157856422-1" ||
+      artifact.size_in_bytes !== 1496 ||
+      artifact.digest !== NAVIGATION_R1_PROOF.artifactDigest ||
+      artifact.expired !== false ||
+      run?.id !== 43157856422 ||
+      run.repository_id !== 1442722734 ||
+      run.head_repository_id !== 1442722734 ||
+      run.head_branch !== "main" ||
+      run.head_sha !== NAVIGATION_R1_PROOF.r1HarnessSha
+    )
+      fail("NAVIGATION_R1_PROOF");
+    return Object.freeze({ ...NAVIGATION_R1_PROOF });
+  } catch {
+    fail("NAVIGATION_R1_PROOF");
+  }
+}
+
+const NAVIGATION_R2_PROOF = Object.freeze({
+  schema: "contaos.navigation.r2.proof.v1",
+  planSha: "9030de4115041598bdc530e03c3c8a5c18d3a5ae",
+  r2HarnessSha: "22b1a0f7b432d72c1456d5061dd2cafb529f62f2",
+  authRun: 43208835561,
+  fixturesRun: 43208835680,
+  reportSha256: "b039701278b0e2b187421586df2c0385d0f8c3345ba4515ac8ca49021f222a42",
+  ledgerSha256: "cfe17bea2c46dbfeea9ab7b1f5dba896a870d8e5e706664753a85f97b37e40bc",
+  artifactDigest: "sha256:497d6e63d41b82b8d3ca394c19f07ecd9efac73d583ef154c9b87de1c87463d7",
+});
+export function validateNavigationR2Evidence(value) {
+  if (
+    !navigationPlain(value, Object.keys(NAVIGATION_R2_PROOF)) ||
+    Object.entries(NAVIGATION_R2_PROOF).some(([key, expected]) => value[key] !== expected)
+  )
+    fail("NAVIGATION_R2_PROOF");
+  return value;
+}
+export async function verifyNavigationR2Evidence({ get, git } = {}) {
+  try {
+    if (typeof get !== "function" || typeof git !== "function" || isProxy(get) || isProxy(git))
+      fail("NAVIGATION_R2_PROOF");
+    const directory = "docs/frontend/auditorias/integracao-funcional-v1/fase2/";
+    for (const [file, hash] of [
+      ["R2_REPORT_ORIGINAL_2026-11-12.json", NAVIGATION_R2_PROOF.reportSha256],
+      ["R2_LEDGER_2026-11-12.json", NAVIGATION_R2_PROOF.ledgerSha256],
+    ]) {
+      const raw = await git(["show", NAVIGATION_R2_PROOF.planSha + ":" + directory + file]);
+      if (typeof raw !== "string" || Buffer.byteLength(raw) > 65536 || digest(raw) !== hash)
+        fail("NAVIGATION_R2_PROOF");
+    }
+    const repository = (value) =>
+      value?.id === 1442722734 &&
+      value.full_name === SINGLE_REQUEST.repository &&
+      value.private === false &&
+      value.owner?.id === 352205055 &&
+      value.owner.login === "contaos999999";
+    for (const [id, workflow, name, file, conclusion, jobId, jobName, jobConclusion] of [
+      [
+        43208835561,
+        411115674,
+        "ContaOS Trilha A Autenticada",
+        "contaos-trilha-a-authenticated.yml",
+        "failure",
+        131151386992,
+        "Trilha A auditoria privada HML",
+        "failure",
+      ],
+      [
+        43208835680,
+        411426169,
+        "ContaOS Trilha A Fixtures",
+        "contaos-trilha-a-fixtures.yml",
+        "success",
+        131151044364,
+        "Trilha A preparacao sintetica HML",
+        "skipped",
+      ],
+    ]) {
+      const run = await get("/actions/runs/" + id);
+      if (
+        run?.id !== id ||
+        run.workflow_id !== workflow ||
+        run.name !== name ||
+        run.path !== ".github/workflows/" + file ||
+        run.event !== "workflow_run" ||
+        run.head_sha !== NAVIGATION_R2_PROOF.r2HarnessSha ||
+        run.head_branch !== "main" ||
+        run.run_attempt !== 1 ||
+        run.status !== "completed" ||
+        run.conclusion !== conclusion ||
+        !repository(run.repository) ||
+        !repository(run.head_repository)
+      )
+        fail("NAVIGATION_R2_PROOF");
+      const page = await get("/actions/runs/" + id + "/jobs?filter=all&per_page=100");
+      if (
+        !Number.isSafeInteger(page?.total_count) ||
+        page.total_count < 1 ||
+        page.total_count > 100 ||
+        !Array.isArray(page.jobs) ||
+        page.jobs.length !== page.total_count
+      )
+        fail("NAVIGATION_R2_PROOF");
+      if (
+        page.jobs.some(
+          (job) =>
+            job?.run_id !== id ||
+            job.run_attempt !== 1 ||
+            job.head_sha !== NAVIGATION_R2_PROOF.r2HarnessSha ||
+            job.status !== "completed",
+        )
+      )
+        fail("NAVIGATION_R2_PROOF");
+      const jobs = page.jobs.filter((job) => job.id === jobId);
+      if (jobs.length !== 1 || jobs[0].name !== jobName || jobs[0].conclusion !== jobConclusion)
+        fail("NAVIGATION_R2_PROOF");
+    }
+    const page = await get("/actions/runs/43208835561/artifacts?per_page=100");
+    if (page?.total_count !== 1 || !Array.isArray(page.artifacts) || page.artifacts.length !== 1)
+      fail("NAVIGATION_R2_PROOF");
+    const artifact = page.artifacts[0],
+      run = artifact?.workflow_run;
+    if (
+      artifact?.id !== 13940103116 ||
+      artifact.name !== "trilha-a-private-43208835561-1" ||
+      artifact.size_in_bytes !== 1572 ||
+      artifact.digest !== NAVIGATION_R2_PROOF.artifactDigest ||
+      artifact.expired !== false ||
+      run?.id !== 43208835561 ||
+      run.repository_id !== 1442722734 ||
+      run.head_repository_id !== 1442722734 ||
+      run.head_branch !== "main" ||
+      run.head_sha !== NAVIGATION_R2_PROOF.r2HarnessSha
+    )
+      fail("NAVIGATION_R2_PROOF");
+    return Object.freeze({ ...NAVIGATION_R2_PROOF });
+  } catch {
+    fail("NAVIGATION_R2_PROOF");
+  }
+}
+
+const NAVIGATION_R3_PROOF = Object.freeze({
+  schema: "contaos.navigation.r3.proof.v1",
+  planSha: "e01a208940d68a504d1c206e1b255eabe4938bb3",
+  r3HarnessSha: "bb245f124aad6eb33c133100bde5c742978ef01c",
+  authRun: 43252858747,
+  fixturesRun: 43252858795,
+  reportSha256: "688a75cce68f3d76d4346e5b1affd4ff952817c5849fa03dc5818105d470e4d1",
+  ledgerSha256: "eea2fc6eb38d7ec6e9bec9fc1e5e2c2b0cba294232d70c361e346e70999d007a",
+  artifactDigest: "sha256:94d55175c6354b27858503eea25349a27b6f732089c9126945f14993f6271311",
+});
+export function validateNavigationR3Evidence(value) {
+  if (
+    !navigationPlain(value, Object.keys(NAVIGATION_R3_PROOF)) ||
+    Object.entries(NAVIGATION_R3_PROOF).some(([key, expected]) => value[key] !== expected)
+  )
+    fail("NAVIGATION_R3_PROOF");
+  return value;
+}
+export async function verifyNavigationR3Evidence({ get, git } = {}) {
+  try {
+    if (typeof get !== "function" || typeof git !== "function" || isProxy(get) || isProxy(git))
+      fail("NAVIGATION_R3_PROOF");
+    const directory = "docs/frontend/auditorias/integracao-funcional-v1/fase2/";
+    for (const [file, hash] of [
+      ["R3_REPORT_ORIGINAL_2026-11-12.json", NAVIGATION_R3_PROOF.reportSha256],
+      ["R3_LEDGER_2026-11-12.json", NAVIGATION_R3_PROOF.ledgerSha256],
+    ]) {
+      const raw = await git(["show", NAVIGATION_R3_PROOF.planSha + ":" + directory + file]);
+      if (typeof raw !== "string" || Buffer.byteLength(raw) > 65536 || digest(raw) !== hash)
+        fail("NAVIGATION_R3_PROOF");
+    }
+    const repository = (value) =>
+      value?.id === 1442722734 &&
+      value.full_name === SINGLE_REQUEST.repository &&
+      value.private === false &&
+      value.owner?.id === 352205055 &&
+      value.owner.login === "contaos999999";
+    for (const [id, workflow, name, file, conclusion, jobId, jobName, jobConclusion] of [
+      [
+        43252858747,
+        411115674,
+        "ContaOS Trilha A Autenticada",
+        "contaos-trilha-a-authenticated.yml",
+        "failure",
+        131303938869,
+        "Trilha A auditoria privada HML",
+        "failure",
+      ],
+      [
+        43252858795,
+        411426169,
+        "ContaOS Trilha A Fixtures",
+        "contaos-trilha-a-fixtures.yml",
+        "success",
+        131303374970,
+        "Trilha A preparacao sintetica HML",
+        "skipped",
+      ],
+    ]) {
+      const run = await get("/actions/runs/" + id);
+      if (
+        run?.id !== id ||
+        run.workflow_id !== workflow ||
+        run.name !== name ||
+        run.path !== ".github/workflows/" + file ||
+        run.event !== "workflow_run" ||
+        run.head_sha !== NAVIGATION_R3_PROOF.r3HarnessSha ||
+        run.head_branch !== "main" ||
+        run.run_attempt !== 1 ||
+        run.status !== "completed" ||
+        run.conclusion !== conclusion ||
+        !repository(run.repository) ||
+        !repository(run.head_repository)
+      )
+        fail("NAVIGATION_R3_PROOF");
+      const page = await get("/actions/runs/" + id + "/jobs?filter=all&per_page=100");
+      if (
+        !Number.isSafeInteger(page?.total_count) ||
+        page.total_count < 1 ||
+        page.total_count > 100 ||
+        !Array.isArray(page.jobs) ||
+        page.jobs.length !== page.total_count
+      )
+        fail("NAVIGATION_R3_PROOF");
+      if (
+        page.jobs.some(
+          (job) =>
+            job?.run_id !== id ||
+            job.run_attempt !== 1 ||
+            job.head_sha !== NAVIGATION_R3_PROOF.r3HarnessSha ||
+            job.status !== "completed",
+        )
+      )
+        fail("NAVIGATION_R3_PROOF");
+      const jobs = page.jobs.filter((job) => job.id === jobId);
+      if (jobs.length !== 1 || jobs[0].name !== jobName || jobs[0].conclusion !== jobConclusion)
+        fail("NAVIGATION_R3_PROOF");
+    }
+    const page = await get("/actions/runs/43252858747/artifacts?per_page=100");
+    if (page?.total_count !== 1 || !Array.isArray(page.artifacts) || page.artifacts.length !== 1)
+      fail("NAVIGATION_R3_PROOF");
+    const artifact = page.artifacts[0],
+      run = artifact?.workflow_run;
+    if (
+      artifact?.id !== 13963014490 ||
+      artifact.name !== "trilha-a-private-43252858747-1" ||
+      artifact.size_in_bytes !== 2568 ||
+      artifact.digest !== NAVIGATION_R3_PROOF.artifactDigest ||
+      artifact.expired !== false ||
+      run?.id !== 43252858747 ||
+      run.repository_id !== 1442722734 ||
+      run.head_repository_id !== 1442722734 ||
+      run.head_branch !== "main" ||
+      run.head_sha !== NAVIGATION_R3_PROOF.r3HarnessSha
+    )
+      fail("NAVIGATION_R3_PROOF");
+    return Object.freeze({ ...NAVIGATION_R3_PROOF });
+  } catch {
+    fail("NAVIGATION_R3_PROOF");
+  }
+}
+
 export async function verifySingleRequest({
   operation,
   env = process.env,
@@ -11852,6 +15125,12 @@ export async function verifySingleRequest({
   const sha = env.CONTAOS_HARNESS_SHA;
   const requestShas = await verifySingleRequestGit(request, sha, git, raw);
   get ||= singleRequestGet({ token: metadataToken, publicOnly, env, diagnostic });
+  const navigationR1 =
+    operation === "audit" ? await verifyNavigationR1Evidence({ get, git }) : null;
+  const navigationR2 =
+    operation === "audit" ? await verifyNavigationR2Evidence({ get, git }) : null;
+  const navigationR3 =
+    operation === "audit" ? await verifyNavigationR3Evidence({ get, git }) : null;
   const r4ZeroAuth = operation === "fixtures" ? await verifyR4ZeroAuth({ get, git }) : null;
   const r7ZeroAuth = await verifyR7ZeroAuth({ get, git });
   const r12ZeroAuth =
@@ -11918,15 +15197,11 @@ export async function verifySingleRequest({
     sha,
     secondParent,
   });
-  const runs = await listSingleRequestRuns((page) =>
-    get("/actions/workflows/" + expected.id + "/runs?per_page=100&page=" + page),
-  );
+  const runs = await listSingleRequestRunsForShas(get, expected.id, requestShas);
   validateSingleRequestRuns({ current, runs, requestShas, workflowId: expected.id });
   let oppositeProven = false;
   for (let attempt = 0; attempt < 3; attempt++) {
-    const others = await listSingleRequestRuns((page) =>
-      get("/actions/workflows/" + opposite.id + "/runs?per_page=100&page=" + page),
-    );
+    const others = await listSingleRequestRunsForShas(get, opposite.id, requestShas);
     const matching = others.filter(
       (r) => requestShas.includes(r.head_sha) && r.event === "workflow_run",
     );
@@ -11960,15 +15235,13 @@ export async function verifySingleRequest({
   // Close queue and metadata races immediately before returning authorization.
   const finalMain = await get("/git/ref/heads/main");
   if (finalMain.object?.sha !== sha) fail("REQUEST_STALE");
-  const finalRuns = await listSingleRequestRuns((page) =>
-    get("/actions/workflows/" + expected.id + "/runs?per_page=100&page=" + page),
-  );
+  const finalRuns = await listSingleRequestRunsForShas(get, expected.id, requestShas);
   validateSingleRequestRuns({ current, runs: finalRuns, requestShas, workflowId: expected.id });
   singleRequestContext = {
     operation,
     sha,
     runId: env.GITHUB_RUN_ID,
-    scope: operation === "audit" ? resolveC8AuditScope(request) : null,
+    scope: operation === "audit" ? resolveC8AuditScope(request) : resolveFixturesScope(request),
   };
   return {
     selected: true,
@@ -11982,12 +15255,16 @@ export async function verifySingleRequest({
     parentSha: request.approved_parent_sha,
     requestSha256: digest(raw),
     ...pullProof,
+    ...(operation === "fixtures" ? { fixturesScope: resolveFixturesScope(request) } : {}),
     ...(operation === "audit"
       ? {
           auditScope: "C8",
           c8RecoverySha256: "3dd7dd8dd7eb6e005812f6b936fea4fa12cebf328f135605e3c4076e3334a6ee",
         }
       : {}),
+    ...(navigationR1 ? { navigationR1 } : {}),
+    ...(navigationR2 ? { navigationR2 } : {}),
+    ...(navigationR3 ? { navigationR3 } : {}),
     ...(r4ZeroAuth ? { r4ZeroAuth } : {}),
     ...(r7ZeroAuth ? { r7ZeroAuth } : {}),
     ...(r12ZeroAuth ? { r12ZeroAuth } : {}),
@@ -12003,6 +15280,8 @@ async function singleRequestCli(mode) {
     publicOnly: false,
     diagnostic: true,
   });
+  // Ledger NAV inválido bloqueia antes de qualquer credencial, browser privado ou login.
+  if (operation === "audit" && result.selected) await loadNavigationLedger();
   if (mode === "--request-preflight") {
     if (!process.env.GITHUB_OUTPUT) fail("REQUEST_OUTPUT");
     const values = {
@@ -12027,6 +15306,11 @@ async function singleRequestCli(mode) {
       identity: await harnessIdentity(),
     };
     await writeFile(".audit-work/single-request.json", JSON.stringify(proof), { mode: 0o600 });
+    // PLAN #655, 7.4(d): o escopo provado condiciona qual executor fixtures roda.
+    if (operation === "fixtures") {
+      if (!process.env.GITHUB_OUTPUT) fail("REQUEST_OUTPUT");
+      await appendFile(process.env.GITHUB_OUTPUT, fixturesScopeOutputLine(result));
+    }
   }
   console.log(JSON.stringify({ phase: "SINGLE_REQUEST", ...result }));
 }
@@ -12083,13 +15367,18 @@ export function validateSingleRequestPull({
     important: 0,
     decision: "APROVAVEL",
   });
+  // Emenda R9 (B): conta autora ou revisor independente com escrita; JSON exato ou
+  // seguido exatamente do rodapé fixo do ambiente de execução, e nada mais.
   const latest = reviews
-    .filter((r) => r.user?.login === "contaos9999" && r.commit_id === pull.head.sha)
+    .filter(
+      (r) => SINGLE_REQUEST_REVIEWERS.includes(r.user?.login) && r.commit_id === pull.head.sha,
+    )
     .sort((a, b) => b.id - a.id)[0];
+  const body = typeof latest?.body === "string" ? latest.body.trim() : null;
   if (
     !latest ||
     latest.state !== "COMMENTED" ||
-    latest.body?.trim() !== expected ||
+    (body !== expected && body !== expected + SINGLE_REQUEST_REVIEW_FOOTER) ||
     !latest.submitted_at
   )
     fail("REQUEST_REVIEW");
@@ -12242,6 +15531,7 @@ export async function loadSingleRequestProof({
         timeout: 10000,
       })
     ).stdout;
+  if (operation === "fixtures") assertProofFixturesScope(proof, request);
   if (
     operation === "audit" &&
     (proof.auditScope !== "C8" ||
@@ -12249,6 +15539,11 @@ export async function loadSingleRequestProof({
   )
     fail("REQUEST_RUNTIME");
   await verifySingleRequestGit(request, proof.sha, git, raw);
+  if (operation === "audit") {
+    validateNavigationR1Evidence(proof.navigationR1);
+    validateNavigationR2Evidence(proof.navigationR2);
+    validateNavigationR3Evidence(proof.navigationR3);
+  }
   const event = JSON.parse(await read(env.GITHUB_EVENT_PATH, "utf8")),
     spec = SINGLE_REQUEST[operation];
   const current = {
@@ -12288,7 +15583,7 @@ export async function loadSingleRequestProof({
     operation,
     sha: proof.sha,
     runId: env.GITHUB_RUN_ID,
-    scope: operation === "audit" ? resolveC8AuditScope(request) : null,
+    scope: operation === "audit" ? resolveC8AuditScope(request) : resolveFixturesScope(request),
   };
   return true;
 }

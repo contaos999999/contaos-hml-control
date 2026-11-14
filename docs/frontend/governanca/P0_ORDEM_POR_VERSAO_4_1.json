@@ -652,6 +652,122 @@
         "R03"
       ],
       "prod_untouched": true
+    },
+    "integracao_por_versao": {
+      "schema": "contaos.p0.integracao-acumulada.v1",
+      "V1": {
+        "interna": {
+          "status": "PENDENTE",
+          "pr_merge_sha": null,
+          "arquivo_evidencia": null,
+          "ci_url": null,
+          "revisao_independente_url": null,
+          "matriz_arquivo": null,
+          "grafo_arquivo": null
+        },
+        "cumulativa": "BASE_FUNDACIONAL"
+      },
+      "V2": {
+        "interna": {
+          "status": "PENDENTE",
+          "pr_merge_sha": null,
+          "arquivo_evidencia": null,
+          "ci_url": null,
+          "revisao_independente_url": null,
+          "matriz_arquivo": null,
+          "grafo_arquivo": null
+        },
+        "cumulativa": {
+          "status": "PENDENTE",
+          "pr_merge_sha": null,
+          "arquivo_evidencia": null,
+          "ci_url": null,
+          "revisao_independente_url": null,
+          "matriz_arquivo": null,
+          "grafo_arquivo": null
+        }
+      },
+      "V3": {
+        "interna": {
+          "status": "PENDENTE",
+          "pr_merge_sha": null,
+          "arquivo_evidencia": null,
+          "ci_url": null,
+          "revisao_independente_url": null,
+          "matriz_arquivo": null,
+          "grafo_arquivo": null
+        },
+        "cumulativa": {
+          "status": "PENDENTE",
+          "pr_merge_sha": null,
+          "arquivo_evidencia": null,
+          "ci_url": null,
+          "revisao_independente_url": null,
+          "matriz_arquivo": null,
+          "grafo_arquivo": null
+        }
+      },
+      "V4": {
+        "interna": {
+          "status": "PENDENTE",
+          "pr_merge_sha": null,
+          "arquivo_evidencia": null,
+          "ci_url": null,
+          "revisao_independente_url": null,
+          "matriz_arquivo": null,
+          "grafo_arquivo": null
+        },
+        "cumulativa": {
+          "status": "PENDENTE",
+          "pr_merge_sha": null,
+          "arquivo_evidencia": null,
+          "ci_url": null,
+          "revisao_independente_url": null,
+          "matriz_arquivo": null,
+          "grafo_arquivo": null
+        }
+      },
+      "V5": {
+        "interna": {
+          "status": "PENDENTE",
+          "pr_merge_sha": null,
+          "arquivo_evidencia": null,
+          "ci_url": null,
+          "revisao_independente_url": null,
+          "matriz_arquivo": null,
+          "grafo_arquivo": null
+        },
+        "cumulativa": {
+          "status": "PENDENTE",
+          "pr_merge_sha": null,
+          "arquivo_evidencia": null,
+          "ci_url": null,
+          "revisao_independente_url": null,
+          "matriz_arquivo": null,
+          "grafo_arquivo": null
+        }
+      }
+    },
+    "rca_impacto": {
+      "schema": "contaos.p0.rca-policy.v1",
+      "aplica_versoes": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "relatorio_ativo": "docs/frontend/rca/P0_RCA_ATIVO.json",
+      "modo": [
+        "NOVA_FUNCIONALIDADE",
+        "CORRECAO"
+      ],
+      "gate": "scripts/p0-rca-impact-gate.mjs",
+      "relatorio_schema": "contaos.p0.rca-report.v2",
+      "prova_operacional": "RED_GITHUB_E_GREEN_EXECUTADO_NO_SHA",
+      "gate_certificacao_live": "scripts/p0-evidence-live-gate.mjs",
+      "relatorio_v1": "docs/frontend/rca/P0_ESCOPO_V1_ATIVO.json",
+      "relatorio_schema_v1": "contaos.p0.v1-scope-proof.v2"
     }
   },
   "restricoes": {
@@ -661,6 +777,8 @@
     "todos_97_atomicos": true,
     "produçao_somente_com_aprovacao_expressa": true,
     "rls_hml_ab_operacional": "NAO_VERIFICADO_FACULTATIVO_APOS_PROMPT_99_NAO_BLOQUEANTE_ISOLADO",
-    "outros_gates_obrigatorios_intactos": true
+    "outros_gates_obrigatorios_intactos": true,
+    "integracao_interna_e_cumulativa_obrigatoria": true,
+    "rca_impacto_obrigatorio": true
   }
 }

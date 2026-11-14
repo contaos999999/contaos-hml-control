@@ -1,3 +1,182 @@
+## Integração funcional V1: Fase 3, BUILD-2b-1 integrado, 14/11/2026 Bahia
+
+- **BUILD-2b-1 integrado.** A PR #658 (autora Edivan5002) entrou com o merge `fb02383`, cujos pais são a main `fb8d05b` e o HEAD `f30851d`. A contaos9999 publicou o APPROVE 5903293851 no HEAD `f30851d`, depois de sete rodadas de revisão independente; o histórico está em `fase3/BUILD2B1_INFRA.md`.
+  - Readback na main: os blobs batem com os do HEAD aprovado; o ledger tem SHA `1d402a1a…`; o `types.ts` está no blob `8ea7750b`.
+  - Checks da main: Zero-Drift, Teste C e protect-types estão verdes.
+  - O workflow "ContaOS Trilha A Autenticada", no job "Trilha A solicitacao unica sem credenciais", falha fechado com `REQUEST_PARENT`. O motivo é que o primeiro pai do merge não é o `approved_parent_sha` de um REQUEST. É o mesmo comportamento do merge `d2a6557`.
+- **Modelo entregue, ainda offline.** É uma máquina de estados única com eventos e replay no relatório e no ledger, mais:
+  - âncoras do próprio módulo: catálogo, ledger com SHA e política de produção no gate e no gravador;
+  - árvore JSON pura e log canônico;
+  - intenções tipadas e transição `abandon`;
+  - todo fato observado registrado no inventário;
+  - livro transacional e relatório parcial que carrega o livro;
+  - regra C ligada ao replay.
+- **Obrigações do BUILD-2b-2:**
+  - **M2:** o livro passa a receber a proveniência completa.
+  - **M3:** a execução gravada no ledger passa a se ligar ao artefato (`artifactId`, `sha256`, `reviewId`).
+  - **M-A (review 5903293851, diferente do M-A da R6):** o teste de propriedade passa a exigir que entidades na `e87f7e68` sejam sorteadas.
+  - O `runCli` passa o livro a `blockedF3Report`.
+  - O isolamento dos pré-requisitos encerra a execução com código.
+- **Regra canônica P0-RCA-001** estendida à V1 e a toda revisão, por diretriz do titular de 14/11/2026: `AGENTS.md` e emenda X do documento de governança.
+- **Próximo:** BUILD-2b-2, que cobre os drivers de UI dos 16 produtores e do ADM01, as sessões do MASTER e do `leitor`, a política de duplicidade com fonte e as obrigações acima. Depois vêm o pin de deployment e o REQUEST `fixtures` com nonce `integracao-v1-fase3-rel-20261113-r1`.
+- **Fase 3:** EM EXECUÇÃO.
+
+## Integração funcional V1: Fase 3, BUILD-2a integrado e BUILD-2b-1 em revisão, 13/11/2026 Bahia
+
+- **BUILD-2a integrado** pela PR #657 (merge `d2a6557`). O contaos9999 pediu mudanças no HEAD `59f171f` e aprovou no HEAD `a071ef4`. Catálogo `fase3/F3_CASES.json` com SHA-256 `bce15980…`: MASTER `ALLOW` nas 138 posições; `leitor` com 7 `DENY` e 19 `ALLOW` nas 26 de ADM01.
+- **BUILD-1 integrado** pela PR #656 (merge `fa7f58b`). **2º usuário sintético:** criado pelo titular às 22h17; os secrets `CONTAOS_HML_SYNTHETIC_2_*` só serão provados na 1ª execução.
+- **BUILD-2b dividido** por decisão do titular ("2b-1 infra, 2b-2 drivers (Recomendado)"). O BUILD-2b-1 (PR #658, autor Edivan5002) é offline: relatório `F3_REPORT.json` e `SHA256SUMS` também em resultado parcial, status derivado e cruzamento de recibos, intenções e inventário contra falso PASS, política de duplicidade por produtor, ledger `fase3/F3_LEDGER.json` com execuções e SHA `1d402a1a…` fixado, livro de intenções também entre execuções, releitura do RBAC (`F3_RBAC_DRIFT`), negação só por estado explícito (V123 pela RPC) e contrato do YAML por texto literal e SHA `8da83394…`. A contaos9999 pediu mudanças no HEAD `363b451` (review 5900926490), no HEAD `41a4331` (review 5901072418) e no HEAD `fcb5224` (review 5901160351); o parecer R4 aprovou o HEAD `4f204c9` com quatro menores (comentário 5901220713). A análise de causa raiz mostrou que todos vinham de o validador reimplementar o livro de intenções; a R5 substitui isso por uma máquina de estados única, com eventos e replay no relatório e no ledger, e corrige um defeito latente (o livro exigia a organização F3 antes de criá-la). A revisão 5903041644 (HEAD `49fc13d`) achou a segunda causa raiz, referências escolhidas por quem chama; a R6 ancora catálogo, ledger e política no próprio módulo, exige árvore JSON pura e log canônico, tipa as intenções e liga a regra C ao replay. A revisão 5903136160 (HEAD `588532c`) achou a terceira causa raiz, fato observado tratado como erro; a R7 registra todo fato observado no inventário, torna o livro transacional e faz o relatório parcial carregar o livro. O parecer R7 aprovou o HEAD `f7e1b9f` com quatro menores; M1 e M4 foram corrigidos e M2 e M3 ficaram como obrigações do BUILD-2b-2. Detalhes em `fase3/BUILD2B1_INFRA.md`.
+- **Provas R4, R12 e R14** conferidas com pai `d2a6557`: OK, porque só exigem ancestralidade.
+- **Próximo:** BUILD-2b-2 (drivers de UI, sessões do MASTER e do `leitor`, inventário de isolamento); depois pin de deployment e REQUEST `fixtures` com nonce `integracao-v1-fase3-rel-20261113-r1`.
+- **Fase 3:** EM EXECUÇÃO.
+
+## Integração funcional V1: Fase 3, BUILD-1 integrado e BUILD-2a em revisão, 13/11/2026 Bahia
+
+- **BUILD-1 integrado** pela PR #656 (merge `fa7f58b`). O Edivan5002 pediu mudanças no HEAD `2511bcf` e aprovou no HEAD `e806990`.
+- **2º usuário sintético:** o titular informou que foi criado às 22h17. Os secrets `CONTAOS_HML_SYNTHETIC_2_*` só serão provados na 1ª execução.
+- **BUILD-2a em revisão:** fixa no catálogo `fase3/F3_CASES.json` (SHA-256 `bce15980…`) o esperado por tela para o MASTER e para o `leitor`. As fontes são `menuV1.ts`, as guardas do AppShell e a matriz RBAC v6, lida por SELECT autorizado pelo titular.
+- **BUILD-2b, a seguir:** drivers de UI, negativos, relatório, ledger e inventário de isolamento.
+- **Fase 3:** EM EXECUÇÃO.
+
+## Integração funcional V1: Fase 3, PLAN integrado e BUILD-1 em revisão, 13/11/2026 Bahia
+
+PLAN R2.1 integrado pela PR #655 (merge `3bbd027`): CHANGES_REQUESTED de contaos9999 no HEAD `1798673`, depois APPROVE no HEAD `f7b8ede`. O BUILD foi dividido. O BUILD-1 é offline: escopo fixtures por nonce com exclusão mútua, guardas `FIXTURES_SCOPE_NOT_TRILHA_A` e `FIXTURES_SCOPE_NOT_F3`, YAML com os itens a–d, catálogo `fase3/F3_CASES.json` com 138 casos e validadores. O BUILD-2 cobre os drivers de UI e o esperado por tela. Pendência do titular: criar o 2º usuário sintético e os secrets `CONTAOS_HML_SYNTHETIC_2_*`. Fase 3 EM EXECUÇÃO.
+
+## Integração funcional V1: PLAN/GATE da Fase 3 publicado, 13/11/2026 Bahia
+
+PR #654 integrada (merge `58097ad`): aceite integral do titular ao plano mestre registrado. PLAN/GATE da Fase 3 (cadastros e relacionamentos) em `docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md`: 138 casos `IFV1-F3-*` em 20 produtores, organização sintética nova e exclusiva (limpeza por isolamento), segundo usuário sintético autorizado pelo titular, nonce `integracao-v1-fase3-rel-20261113-r1`, operação `fixtures` com escopo resolvido por `resolveFixturesScope` e exclusão mútua com o preparador da Trilha A; 2º usuário com perfil `leitor` e login só leitura (decisão do titular). R2 atende a revisão CHANGES_REQUESTED do HEAD `1798673`. Separação de papéis: autor Edivan5002, aprovação por contaos9999. Fase 3 EM EXECUÇÃO (PLAN). Próxima: revisão independente, checks e merge do PLAN; depois o titular cria o 2º usuário e os secrets `CONTAOS_HML_SYNTHETIC_2_*`; então BUILD.
+
+## Integração funcional V1: plano mestre das 7 fases aceito pelo titular, 13/11/2026 Bahia
+
+Plano mestre `docs/frontend/planos/PLANO_MESTRE_AUDITORIA_INTEGRACAO_FUNCIONAL_V1_7_FASES.md` e matriz `INTEGRACAO_V1_7_FASES_MATRIZ_EXECUCAO_PROPOSTA.csv` (138 conexões, 552 posições F3–F6) integrados pela PR #653, merge `fe94015`, APPROVE `Edivan5002` no HEAD `7696a13`. Aceite integral do titular para os critérios das Fases 3–7 registrado na seção 18 do plano, com blobs e SHA-256 conferidos. Painel: Fase 1 CERTIFICADA; Fase 2 CERTIFICADA (PR #652, `b2feca7`); Fases 3–7 NÃO INICIADAS. Última etapa comprovada: certificado da Fase 2 integrado. Próxima: após merge protegido desta emenda, PLAN/GATE documental da Fase 3 (cadastros e relacionamentos), 138 casos `IFV1-F3-*`, com fixtures, cleanup, jobs e schema de relatório definidos e revisados antes do BUILD.
+
+## Fase 2 CERTIFICADA: navegação autenticada 52/52, 13/11/2026 Bahia
+
+PLAN R14 #649 e BUILD R14 #650 (logout 204 não lido classificado com prova; nonce r14) e REQUEST R14 #651 (merge `ccf5343`) integrados. Auth R14 `43509322900` attempt 1 SUCCESS: artefato `14076439209` (ZIP `596629b9…`, report `0d1e580b…`, v4 válido), índice 52 PASS, sessão/MASTER/organização/logout `true`, zero erros globais, logout 204 observado. Ledger v5 `6eeef70b…`: 52/52 PASS (1-51 da R10, 52 da R14) no produto `e6c8cb0` / `dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz`. Certificado: `docs/frontend/auditorias/integracao-funcional-v1/fase2/CERTIFICADO_FASE2_NAVEGACAO_2026-11-13.md`.
+
+## Fase 2 R14: causa do erro global provada (logout 204 não lido), 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. REQUEST R13 #648 (merge `49d2357`); Auth R13 `43502004875`: guard nativo PASS, índice 52 PASS, logout `true`, mas 1 erro global no logout (`afterLogout` 1): `POST /auth/v1/logout` `ABORTED`. Experimento em Chrome real: a resposta 204 não lida pelo cliente gera `requestfailed` `ERR_ABORTED` depois do `response`; o logout foi concluído. Próximo: BUILD R14 classifica só esse caso com prova (POST, `/auth/v1/logout`, `ERR_ABORTED`, response 204 antes), nonce r14, e REQUEST R14 para o índice 52 e o logout.
+
+## Fase 2 R13: R12 bloqueada pelo guard nativo antes do login, 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. Integrados PLAN R12 #643, BUILD R12 #644 (preflight por `head_sha`) e REQUEST R12 #645 (merge `bb05f3b`). Auth R12 `43494812615`: solicitação SUCCESS em 34 s; privado `132125342973` bloqueado por `NATIVE_GUARD` (`WORKER`, `FENCE_SOURCE`) antes do login, sem casos. O mesmo guard passou no CI da #644 e na R10. Próximo: BUILD R13 só com nonce r13 e REQUEST R13 para o índice 52 e o logout; segunda falha do guard abre PLAN de diagnóstico.
+
+## Fase 2 R12: R11 bloqueada no preflight por prazo da API, 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. Integrados PLAN R11 #640, BUILD R11 #641 (ledger v4 `2245b4fe…` com 51 PASS da R10, pendente 52; diagnóstico do logout) e REQUEST R11 #642 (merge `de2c28d`). Auth R11 `43482958336` attempt 1: o job de solicitação `132083907871` falhou com `REQUEST_API_TIMEOUT` aos 60 s do preflight; nenhum login nem caso. Causa: o preflight lista todo o histórico dos dois workflows (611 execuções, 7 páginas cada) só para filtrar os SHAs da REQUEST; levou 52 s na R9 e 55 s na R10. Próximo: BUILD R12 lista por `head_sha` com a mesma semântica e o mesmo prazo, nonce r12, e REQUEST R12 para o índice 52 e o logout.
+
+## Fase 2 R11: R10 com 52/52 casos PASS e 1 erro global no logout, 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. Integrados PLAN R10 #636, BUILD R10 #637 (AppShell escolhe o layout pela rota renderizada; harness sem autoligação V117), pins R10 #638 (produto `e6c8cb0`, `dpl_9t3QDhWhNt1jiTQvewhUKanSm6Dz`, ledger v3 com SUPERSEDED dos 33 PASS) e REQUEST R10 #639 (merge `050beb1`). Auth R10 `43459877744` attempt 1: artefato `14059408905` (ZIP `5a1b08e2…`, report `a7097620…`, v3): 52/52 linhas PASS, logout `true`, mas `transportErrors`/`httpErrors` globais 1 (`POST` `ABORTED`) fora de qualquer caso, provavelmente no logout; mesma assinatura na R9.
+
+Decisão do titular: ledger v4 com 51 PASS (1-51) da R10 e o índice 52 (V123/390) pendente; BUILD R11 só instrumenta o logout; REQUEST R11 executa 1 caso e o logout. Se sair limpo, fecha a matriz com controles globais e permite a certificação.
+
+## Fase 2 R10: R9 terminal (15 PASS; V117 e V120 falham), 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. Integrados PLAN R9 #633, BUILD R9 #634 (preflight POST, instrumentação, revisão B, ledger v2 `35297ac5…`) e REQUEST R9 #635 (merge `ccd14b1`). Auth R9 `43401890915` attempt 1: preflight SUCCESS, privado `131807145427` FAILURE; artefato `14027480344` (ZIP `f3e5f1aa…`, report `fd96cd97…`, v4, 19/19 observados, 15 PASS, logout `true`).
+
+Resultado: PASS em 30, 35-38, 41-44 e 47-52; V117 (39-40) FAIL `NAVIGATION_ROUTE` por autoligação à própria rota de análise (defeito do harness); V120 (45-46) FAIL `NAVIGATION_CASE` por `POST` `rpc:obter_visao_geral_competencia` abortado 87/132 ms após o clique para SYS04, sem navegação de documento. Causa provável de produto: o AppShell troca a árvore por `location.pathname` no início da navegação para a rota pública e remonta a página antiga. Próxima tarefa: PLAN R10, BUILD R10 (RED/GREEN com TanStack real no AppShell e correção do harness), publicação HML, pins com `SUPERSEDED` de todos os PASS e REQUEST R10 com a matriz completa.
+
+## Fase 2 R9: R8 terminal (26-29 PASS, falhas 30 e 35 em LINK_CLICK→SYS04), 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. Integrados: #629 (correção do preflight CORS de GET; V110/390 passou na R8), #630 (executor incremental e ledger R7 `0a8f71f2…` com os índices 1-25), #631 (evidência única) e REQUEST R8 #632 (merge `9a4d0ad`, revisão canônica `5887757273`). Auth R8 `43388821235` attempt 1: preflight SUCCESS e privado `131764048105` FAILURE; artefato `14020676685` (ZIP `ab15acd3…`, report `3025371b…`, v4, resumo 10/27).
+
+Resultado: índices 26-29 PASS (candidatos), índice 30 V112/390 FAIL `NAVIGATION_CASE` por dois GET `ABORTED` em LINK_CLICK→SYS04 (`transportErrors` 2), índices 31-34 PASS (candidatos pela emenda R9 C), índice 35 V115/1440 FAIL `FENCE_DRAIN_TIMEOUT` após POST RPC `ABORTED`, índices 36-52 não executados; `logoutVerified=false`. R8 consumida. Padrão: todas as falhas desse tipo desde o R6 vão para SYS04; causa dos abortos NÃO COMPROVADA. Próxima tarefa: integrar o PLAN R9; BUILD R9 só no harness (instrumentação segura de transporte e drain, RED/GREEN do preflight órfão de POST, ledger v2 com 26-29 e 31-34 encadeado, lacunas e primeira pendência 30, nonce R9); REQUEST R9. Correção de produto só com causa demonstrada, com novo deployment e `SUPERSEDED` de todos os PASS. Backend/PROD/RBAC/RLS/isolamento/Zero-Drift/LOCK preservados.
+
+## Fase 2 R8: R7 terminal e certificação incremental, 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. BUILD R7 PR#622 integrou `3638cdd381cb911f6bdc115169891a25479b7a25` (revisão independente 5885268684); pins PR#624 integraram `e1dee125da4fd1b1d75759fc1ed682937edc6a46` (5885390560); REQUEST R7 PR#625 integrou `a3b6c34936a095fdca98bb79c3f21d28ed0e3979`, revisão canônica `5885461254`. HML `dpl_CRTez9i1BPWHgE7BP7sNwvQoC3hh`. Fixtures `43358055500` SUCCESS; Auth `43358055422` attempt 1 preflight SUCCESS e privado `131665158901` FAILURE, sem rerun/replay.
+
+Artefato `14008077669`, 1900 bytes, ZIP digest `c8153ae6e306ad7fa2129f06302de078e98f4ecbfa116b52f34434f91128a9c3`. Resultado: 26/52 observados, 25 PASS (índices 1–25, inclui V107/390 corrigido), FAIL no índice 26 V110/390 LINK_CLICK→SYS04, três GET REST abortadas, `FENCE_DRAIN_TIMEOUT`, `NAVIGATION_INCOMPLETE`; índices 27–52 não executados. R7 consumida e não certifica.
+
+Direção aprovou certificação incremental por ledger acumulativo (emenda R8): PASS históricos só com evidência original e compatibilidade comprovadas; REQUEST mantém sete chaves e o recorte vem do ledger integrado; retomada candidata pelo índice 26. Próxima tarefa: integrar PLAN R8 + emenda; investigação causal e RED do V110/390; BUILD separado do mecanismo incremental com RED/GREEN adversariais; nonce R8; REQUEST R8 única. Certificado somente com 52/52 consolidados, logout e controles globais verificados, zero erros e PR final integrada. Backend/PROD/RBAC/RLS/isolamento/Zero-Drift/LOCK preservados.
+
+## Fase 2 R7: R6 terminal e correção do commit móvel, 13/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. BUILD R6 PR#619 integrou `70179cf4b8cb36a0a2d9a19134cf0b13a59deeaf`; REQUEST R6 PR#620 integrou `7c3a8fda149d705adb906b1f10a53e20869018cc`, revisão canônica `5884323862`, CI e pais corretos. Fixtures `43339435100` SUCCESS; Auth `43339435026` preflight PASS e privado `131604313438` FAILURE, sem rerun/replay.
+
+Artefato `14000041669`, 1770 bytes, ZIP digest `ee9bd6b955b11b88a9fbd84e5d2b89d0fdaaaea95be74d43519d9c658335f566`, CRC/membros válidos; report `7b2ad73ade4d61441a9033e2faf897fe7e59ca0376eda2cdad559f7157eeafaa`. Resultado: 20/52 observados, 19 PASS, um FAIL V107/390 no LINK_CLICK→SYS04, duas leituras GET REST abortadas, `FENCE_DRAIN_TIMEOUT`, logout false; zero status HTTP/page error/mutação. Sessão/MASTER/organização true. R6 consumida e não certifica.
+
+Causa localizada no fechamento antecipado do menu móvel antes do commit do novo pathname, criando render intermediário da rota antiga após quietude comprovada. Próxima tarefa: integrar PLAN R7; RED DOM real comprovando fechamento pré-commit; correção mínima AppShell para fechamento pelo efeito de pathname; auditor avança nonce/ancestral; suíte produto/auditor/TesteC/nativas/revisão/CI/merge; publicação HML do SHA aprovado e reancoragem governada; REQUEST R7 única. Certificado somente com 52/52, logout true, zero erros e PR final integrada. Backend/PROD/RBAC/RLS/isolamento/Zero-Drift/LOCK preservados.
+
+---
+
+## Fase 2 R6: sucessor após falha móvel autenticada R5, 12/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. BUILD R5 PR#616 integrou `d268bc1b1620d667e9885337d33eefdc5b8cf8ff`; REQUEST R5 PR#617 integrou `52598a8e0b6b43b51fdee6ffc3b274a13adb6fea` com revisão canônica `5881037572`, CI e pais corretos. Fixtures `43294734335` attempt1 SUCCESS/preparador SKIPPED. Auth `43294734581` preflight SUCCESS e privado `131450554732` FAILURE; sem rerun/replay.
+
+Artefato oficial `13980362527`, 2079 bytes, ZIP digest `bf2ae1e54f7ba034ec9d2232ba2b6abceb63d2c4afda927d65f423ed6daf0bf1`, CRC e membros válidos; report `aac9f7de346d1f297501802e23815e129b8283f06f7fd54b913c12984a583afa`. Resultado: 32/52 observados, 30 PASS, 2 FAIL, logout false; três GET REST abortados, zero status HTTP/page error/mutação. V107/390 teve dois abortos no LINK_CLICK→SYS04; V113/390 teve um e `FENCE_DRAIN_TIMEOUT`. R5 consumida e não certifica.
+
+Próxima tarefa: integrar PLAN R6, reproduzir em RED a corrida entre quietude móvel e desmontagem, corrigir somente os dois mjs com janela contínua reforçada dentro da mesma deadline, sem ignorar aborto; CI4/native18+NAV8/revisão/merge/push; REQUEST R6 isolada e canônica; nova tentativa original. Exigir 52/52, logout true, zero erros e certificado integrado. Produto/backend/deployment/PROD intocados; RBAC/RLS/isolamento/Zero-Drift/LOCK preservados.
+
+## Fase 2 R5: sucessor após bloqueio zero-Auth de revisão, 12/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. BUILD R4 `e9074971fe6fdffa31157babaf44cbc6adf86ac9` preservado. REQUEST R4 PR#614 integrou `f5533cd11c4cefe9577857e419d8ea57a099712d` com pais corretos e diff exclusivo; push Zero `43289333902` e LOCK `43289333935` SUCCESS. Fixtures `43289702393` attempt1 SUCCESS/preparador SKIPPED. Auth `43289702129` attempt1 FAILURE `REQUEST_REVIEW` no preflight `131432360921`; privado `131432715186` SKIPPED. Zero credencial, sessão, browser privado e artefato.
+
+Causa exata: review `5880632205` ancorada ao HEAD correto usou prosa, enquanto o produtor exige corpo JSON canônico byte-exato. R4 consumida, sem rerun/replay. Próxima: integrar PLAN R5; BUILD mínimo troca nonce ativa para R5 e marca R4 histórica; REQUEST R5 isolada com review JSON exata e readback antes do merge. Depois exigir 52/52 PASS, logout e zero erros antes do certificado. Produto/backend/deployment/PROD intocados; Fase1/certificações/ressalvas anteriores preservadas; V2 e Fases3–7 aguardam.
+
+## Fase 2 R4: R3 preservada e correções do auditor, 12/11/2026 Bahia
+
+Fase2 NÃO CERTIFICADA. HEADfrontendbb245f124aad6eb33c133100bde5c742978ef01c/backend5eca44aebead3183e81b5c1af0d1dffa5fb8feb6 reconfirmados. PLAN#6099030de4/BUILD#610491aaa/REQUEST#611bb245f1 integrados e CI/revisões rastreados no PLANR4. R3AUTH43252858747 FAILURE/FIXTURES43252858795 SUCCESS/preparadorSKIPPED attempt1 terminais, freeze respeitado. Artifact13963014490 ZIPsha94d55175c6354b27858503eea25349a27b6f732089c9126945f14993f6271311/report688a75cce68f3d76d4346e5b1affd4ff952817c5849fa03dc5818105d470e4d1, metadata pré-download6829829671, integridade conferida. 47observados33PASS14FAIL5não executados/logoutfalse/transport27/page17. Primeira falhaimagemABORTED/UI/GET; finalFENCE_REQUEST_LIFECYCLE/PAGE_CLOSED. Sem certificado.
+
+Reproduzido offline: alternar menu antes da imagem oficial terminar causa aborto; espera de rede existente elimina. Negativa novembro tinha literalpreparando incompatível com estado canônico/histórico rascunho. Teto cumulativo da cerca65536 reproduzido, atribuiçãoR3 não comprovada; percurso pelo histórico a testar reduz fullreload redundante sem alterar limites/cerca. Próxima: revisar/CI/integrar PLANR4 antes de BUILD2mjs, TDD/revisão/CI4/merge/push, REQUESTnonceR4 isolada e nova prova52PASS/logout/zeroerros, depois certificado integrado. R1/R2/R3nonces consumidas, sem replay. Produto024a/FZ preservado; não reabrir certificações anteriores/Fase1/ressalvas; V2 e demais fases aguardam.
+
+## Fase 2 R3: retomada após R2 bloqueada, 12/11/2026 Bahia
+
+Fase 2 NÃO CERTIFICADA. HEADfrontend22b1a0f7b432d72c1456d5061dd2cafb529f62f2/backend5eca44aebead3183e81b5c1af0d1dffa5fb8feb6 conferidos. R2AUTH43208835561 FAILURE/FIXTURES43208835680 SUCCESS attempt1 terminais; artefato13940103116 verificado oficialmente:13observados/11PASS/2FAIL/39não executados/logoutfalse/transport2. Report original e ledger R2 preservados na pasta Fase2. Causa específica ainda desconhecida. Nonces R1/R2 consumidas. Próxima etapa: revisar/integrar PLAN R3 antes de reproduzir/corrigir auditor, sem mudar cerca/produto/backend. Exigir52/52PASS/logout/zero erros antes de certificado. HML024a/FZ preservada. Não reabrir certificações anteriores, não avançar V2.
+
+## Fase 2 R2: retomada governada após R1, 12/11/2026 Bahia
+
+**Fase 2 permanece NÃO CERTIFICADA.** Checkpoint #605 integrado em `36a73d483bad43c53823f5bbfa35aa071afdb134`, após revisão independente 5869624609, três checks SUCCESS e readback exato. Backend reconfirmado em `5eca44aebead3183e81b5c1af0d1dffa5fb8feb6`; tipos imutáveis preservados. Fase 1 e as oito certificações/ressalvas anteriores não são reabertas.
+
+R1 foi executada uma vez no merge REQUEST #603 `1a7b55cdad67fc2f639fa2abfb5faff04062d08a`. AUTH `43157856422` FAILURE e FIXTURES `43157856534` SUCCESS/preparador SKIPPED, ambos attempt1 terminais. Artefato `13917231956`, ZIP `f08392462141b97763d9c8c4cf6918dad91a4c7bbb617fe556c4397495ca79a0`, report `3d994303537f7e06d3c57b1dc1f1f69c763739edc6194909f331a69ac6cb348c`: 33 observados, 2 PASS, 31 FAIL, 19 não executados, logout false/HTTP1. Report original e ledger técnico preservados no diretório Fase2; não são certificado. Nonce R1 consumida, sem replay.
+
+Issue #604: 18 falhas do segundo clique após voltar e 12 estados transitórios do pai demonstram contrato de prontidão insuficiente no harness. O motivo concreto da cerca/HTTP final V114 ainda não foi comprovado; nenhum defeito de produto foi estabelecido. Novo PLAN R2 fecha reprodução, espera condicional sem aumento de prazos, diagnóstico finito, testes/nativas originais e suplemento offline. Nenhuma fonte de app/backend/YAML/dep/publicação está autorizada por ele.
+
+HML continua produto `024a232c5bdb717e556d9ff16ca000e1ae65b0cb`/`dpl_FZgy7ARPgbQAbnGVVtbegFi4htXW`; BUILD #602/CI4/nativas18 anteriores não substituem R1 real. Próxima tarefa: integrar este PLAN antes de editar os dois mjs, reproduzir/corrigir prontidão, validar/revisar/CI4/merge/push e só então novo request com nonce `integracao-v1-fase2-nav-20261112-r2`. Exigir 52/52 PASS, logout, zero erros e certificado integrado antes de encerrar. V2 continua aguardando as sete fases de integração aprovadas. Nenhum novo login, request, replay ou efeito de negócio executado nesta retomada documental.
+
+## Fase 2: checkpoint de continuidade, 12/11/2026 Bahia, após PR #598
+
+**Fase 2 continua NÃO CERTIFICADA.** O executor retomou e os arquivos foram preservados. Nenhum login NAV, nonce consumida, mutação de negócio ou publicação nova HML ocorreu. Próxima tarefa concreta: integrar o PLAN/GATE V119 desta branch, executar RED com Radix real, corrigir retorno de foco e concluir CI antes de publicar o SHA final.
+
+- Última etapa concluída: correção de reentrada V114→V120 integrada no PR #598, merge `5ff286c13195d93c0ef9b766969dc0829292794b`, árvore `4d7ef01dac1e08a136fd74a96ab4e018d1b8e60a`. PLANs #595/#596/#599 anteriores, este último merge `0f1b6bfe2757478b18855143f378bd364e80f136`. Checkpoint anterior #597/merge `72cc05c12d8255e560ebf344be6818aa8d52b685` foi relido exatamente.
+- Produto #598:1252 testes/46arquivos PASS, tipagem/lint/build/escopo/LOCK/routeTree/Zero-Drift PASS. Minor de foco da nova lista corrigido com RED→GREEN. Novo suplemento Teste C:43 testes PASS; Important de coerção de tipo do schema corrigido com RED→GREEN e revisão independente final0Critical/Important/Minor. Seis arquivos de produto e dois scripts Teste C, sem YAML/backend/dependências/rotas novas.
+- HEAD final #598 `9d34547e69f26b464a564eeea19b8495537c1532`: três checks SUCCESS, run43149832063attempt1. Artefato13913646386:31.186.456bytes, ZIPsha256 `6238c80089eacac55bab92b607269c75d83673f3ad1ced326ded80492a87b529`, metadata registrada antes da aquisição oficial. CRC/316membros seguros/manifestos/schema/proveniência e16PNGs conferidos por duas revisões. Checkout `cafa05bd3e30e5094081c9d32a22cac6ea9e663c`, parents0f1b.../9d345..., árvore4d7ef01d...;16PNGs byte-idênticos à primeira execução inspecionada, CSS e quatro hashes de fonte iguais. Prova **OFFLINE_SYNTHETIC_ORIGINAL_COMPONENTS**, nunca HML autenticada.
+- Primeira prova visual: run43149115861attempt1, artifact13913325936, ZIP39.978.098bytes/sha256 `f026d4e7f3c4028a325d4803bda814a81cf508cff072ee173ad054064e3fdfeb`; checkoutc549804... com parents0f1b.../f6e1b... e árvore6f8f2c56....16capturas4larguras×2temas×V114/V120 inspecionadas sem corte/overflow/falha. Arquivos locais `/tmp/fase2-first-visual` e `/tmp/fase2-final-visual`; metadata e ZIPs em `/tmp/fase2-*-visual-metadata.json` e `/tmp/fase2-pr598-visual-*.zip`. Artefatos originais continuam no GitHub.
+- Auditor NAV preservado externamente no branch `wip/integracao-v1-fase2-nav-20261111`, HEAD `1723dbe7fb86be7a4882c78565a953820cf93df3`, árvore `b08a6e3325bff05d6ac835e03deced705ef7b25a`, equivalente ao commit local `f095d71cc4e78541492f727cf9e3d3a33449e285`. Onze testes NAV e lint PASS; revisão0Critical/1Important/0Minor: retorno de foco V119 defeituoso no produto, não retirar asserção. Demais achados anteriores fechados. Pins ainda antigos, não pronto para request. Uma suíte local posterior foi executada com HARNESS_SHA de formato inválido e falhou no guard R13; esse resultado está excluído como prova. Reexecutar suíte completa com SHA real do candidato final, sem alterar o guard.
+- PLAN V119 novo: `docs/frontend/planos/INTEGRACAO_V1_FASE2_V119_FOCO_PLAN_GATE_2026-11-12.md`. Só wizard/teste; refs/onCloseAutoFocus e fallback após sucesso, RED real Cancelar/Escape nas duas etapas, preservar comandos/idempotência. Revisão documental0Critical/Important/Minor; BUILD aguarda merge/readback. Não publicar o candidato intermediário5ff: novo pin será somente o merge final da correção V119 com #598 ancestral.
+- HML permanece no snapshot histórico `0024b3c6739ab6296ec12338f11cf792d3a5f84b`, deployment `dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh`, projeto `prj_JtEWXg54EIYcQPwVzFiQyJcVIlFo`, team `team_yeAabFPw9FQ4nS68g7LASDEJ`, origem `https://contaos-41-hml.vercel.app`. O auto-deploy de5ff foi cancelado (`dpl_aqrTYEJ4piqSBuY39naC5p5tYRm5`). Logs reais mostraram guard ainda fixado ao antigo preview348649f6..., não ao novo produto. Nenhuma configuração Vercel foi alterada nesta etapa. Sete casos POSIX locais para um candidato5ff passaram, mas esse releaseGate é intermediário e deve ser substituído pelo SHA final V119 antes de qualquer update/deploy.
+- Próximos gates: V119 TDD/BUILD/review/CI/merge/push; registrar antes/depois e mudar SOMENTE ignored-build do projeto HML para o SHA final aprovado, com predicado exato e POSIX; publicar HML e comprovar READY/SHA/deployment/assets/configuração; reancorar apenas NAV e ancestrais dos PLANs, C8/R20 imutáveis; suíte correta/CI4/nativas18/revisão do auditor; request sete campos com pai BUILD exato, COMMENT canônico relido, freeze até ambas vias attempt1 terminais; metadata antes do download oficial e relatório52 estrito; certificado/ledger por PR e recibo final. Sem PROD/backend/SQL/perfil novo, segredo exportado, rerun/dispatch/replay ou PASS fabricado.
+
+## Integração funcional V1: Fase 2 em execução, checkpoint de 12/11/2026 Bahia
+
+**Fase 2 NÃO encerrada nem certificada.** Nenhuma nonce NAV consumida, login novo ou operação de negócio executada nesta etapa. Próxima tarefa: corrigir os quatro erros TS4111 nos mocks dos testes do BUILD V114/V120, concluir formato/regressão/revisão, integrar e publicar somente HML; depois concluir o auditor e executar o request governado.
+
+- Fase 1: PR #594/merge `538c52d909a5a9929c10740e6f961e38beb8ee11`, recibo 6812207699 e ressalva 6812216566 preservados. Não repetir inventário.
+- PLAN Fase 2: PR #595/merge `c1b003bd9fd1e8909a2d1950e43984023206f1d3`, documento relido exatamente. Escopo NAV 26 superfícies privadas × 1440 claro/390 escuro = 52; sessão SYS01 e auxiliares SYS02/SYS03 conforme plano. Sem certificação de CRUD integrado/RBAC/processo mensal.
+- Revisão independente encontrou sete achados importantes no candidato do auditor: V117 fechado/drawer, entrada persistente V120, tema após reload, links desconhecidos, console/requestfailed, conteúdo móvel e controles locais/foco. Candidato original preservado no branch `wip/integracao-v1-fase2-nav-20261111`, commit `7b58446c4823daf044f35de3f16afdbb50013672`, árvore `a3d2f34b569aee83912d74c0eb62d3e922603b52`; equivale ao local `691c06f`. É WIP, não aprovado para merge/request.
+- PLAN corretivo: PR #596/merge `079747a75e224996082e14c671864f68bb5e36ba`, árvore `edf4244fd8a744f5080616352100daba903e2a7e`, revisão 5868178240, 0 Critical/0 Important, readback exato. PR e push Zero-Drift/Teste C/protect-types PASS. Push CI 43143904972; protect 43143904908.
+- Via automática antiga no merge #596: audit 43144077066 bloqueado `REQUEST_PARENT` antes das credenciais, job privado skipped; fixtures 43144077169 sem nova preparação privada. Não rerodar ou reativar nonce antigo.
+- BUILD corretivo local em `/workspace/scratch/8bbfaadf3706/fase2-v120-build`, branch `fix/integracao-v1-fase2-v120`, base #596. Seis arquivos autorizados: lista nova e testes, adapter protocolo e testes, visão geral e testes. Lista somente leitura com três filtros de ownership, paginação25 e abort. Visão geral passa a exigir identidade/organização/contrato válidos antes de montar a lista e não mostra estado antigo entre competências. Código ainda não publicado/commitado por indisponibilidade do executor após os testes.
+- TDD observado: adapter19 RED→GREEN; componente6 RED→GREEN; integração/revalidação ownership5 RED→GREEN. Suíte focada final: **83 PASS em cinco arquivos**, sem falhas. Typecheck encontrou **quatro TS4111** em acessos `chain.abortSignal` nos mocks, ainda pendentes de trocar por `chain["abortSignal"]`. Não alegar typecheck/regressão completa/build aprovados.
+- Auditor local em `/workspace/scratch/8bbfaadf3706/contaos-hml-control`: após WIP, oito testes NAV PASS, incluindo regressão RED→GREEN que rejeita link desconhecido. Algumas correções locais posteriores ao WIP ainda sem commit/publicação. Suíte completa anterior com ambiente Bun/SHA corretos: 716 testes, 698 PASS, 18 nativas SKIP locais, zero falhas; nativas18 oficiais ainda pendentes do HEAD final.
+- Executor selecionado `ccarenv_b64_Y2NhcmVudl82YThmN2MzOWQzNzQ4MTkxYjc3YzYzZjJmOWU1ZjIxZA` entrou em starting. Espera original permanece ativa; tentativa fresca de comando retornou ausência de ambiente utilizável. Não cancelar espera nem presumir perda de arquivos. Assim que disponível, verificar status dos dois diretórios e continuar sem repetir tarefas concluídas.
+- HML externa confirmada READY em `dpl_8FQFvCqVE2UMVPyg8SVsPDurZSCh`, produto `0024b3c6739ab6296ec12338f11cf792d3a5f84b`, projeto `prj_JtEWXg54EIYcQPwVzFiQyJcVIlFo`/contaos-41-hml, origem canônica preservada. Novo produto ainda não publicado. Backend vivo relido: `5eca44aebead3183e81b5c1af0d1dffa5fb8feb6`.
+- Próximos controles: revisão/CI/build do produto; revalidação visual do delta4×2; publicação HML fixada ao SHA exato aprovado e readback de configuração/identidade; novos pins somente NAV (C8/R20 imutáveis), ancestralidade do PLAN corretivo; CI4/nativas18/revisão do auditor; request isolado sete campos + COMMENT canônico; freeze até ambas vias attempt1 terminais; metadata antes de download oficial; relatório estrito e revisão independente; certificado por PR e recibo final. Sem PROD/backend/SQL/novo usuário/secrets exportados, rerun/dispatch/replay ou PASS fabricado.
+
+## Auditoria complementar de integração funcional V1: Fase 1, 11/11/2026 Bahia
+
+Missão aprovada pelo titular: inventariar e certificar o mapa funcional das telas da V1 em sete fases sequenciais, preservando as oito certificações anteriores. Esta entrega cobre somente a Fase 1. Baseline frontend `90ae86432e617b880d603cff379878e623612a73`, backend normativo `5eca44aebead3183e81b5c1af0d1dffa5fb8feb6`; 25 blobs normativos idênticos ao snapshot. V1 já consta PASS no manifesto integrado; textos históricos abaixo não revogam esse estado.
+
+Entregáveis: `docs/frontend/auditorias/integracao-funcional-v1/fase1/`. Inventário de 27 telas do núcleo e duas auxiliares de recuperação: 29 superfícies/28 rotas/26 privadas, V117 drawer. 171 fontes seladas, 204 referências de dados, 54 nomes RPC versionados e superfícies compartilhadas (AppShell, cabeçalho, cadastros, listas e copiloto). Matriz de 577 relações e 812 pares, CSVs, grafo, relatório, verificador offline e 19 testes. Referências transitivas de módulos são conservadoras; nenhuma execução HML presumida. R-01/R-02/R-03 preservadas.
+
+Decisão técnica PASS estática, eficácia condicionada a revisão independente, checks obrigatórios no mesmo SHA, merge protegido e recibo final no PR com SHA/runs/readback. Não declarar integração antes desse recibo. Nenhum código de produto, backend, tipo congelado, workflow, dependência, implantação ou PROD alterado; nenhum login/SQL/OpenAI/upload. Última etapa técnica concluída: inventário e mapa reproduzíveis. Próxima: concluir os controles de integração da Fase 1 e então Fase 2 de navegação autenticada. Fases 2–7 da auditoria complementar não executadas; V2 aguarda decisão final dessas fases pela instrução mais recente do titular.
+
+Histórico integral preservado abaixo.
+
+---
+
 ## 10/11/2026 UTC | Correção da PR #552 integrada, #159 reconciliada e #556 preservada
 
 A PR frontend #552 foi integrada em `8cb806bcb160b19d0ee6a050ea551cab72e5ccd6`, a partir do HEAD `e16d243b79bfa3e3d31249fd06a6ac05a3fa532e`, árvore `462fd917574e22d2e2c7eebd774a398d049c1fa5`. Não repetir sua implementação. PLAN #550 e GATE #551 permanecem os autorizadores do BUILD; o escopo continua nos quatro mjs aprovados, sem alteração de produto, tipos, dependências, Auth, SQL ou deploy.

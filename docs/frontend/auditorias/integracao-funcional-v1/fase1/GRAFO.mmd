@@ -1,0 +1,16 @@
+flowchart TD
+  org["Organização e usuários"] --> c["Contratante e contrato"]
+  c --> fontes["Fontes, orçamento e listas"]
+  c --> hist["Histórico e importação"]
+  c --> comp["Competência"]
+  fontes --> comp
+  comp --> doc["Documentos e versões"]
+  doc --> analise["Análise e requisitos"]
+  hist --> analise
+  fontes --> analise
+  analise --> parecer["Parecer interno"]
+  parecer --> gate["Apresentação e pacote"]
+  gate --> protocolo["Protocolo"]
+  analise --> audit["Trilha de auditoria"]
+  gate --> audit
+  doc --> audit

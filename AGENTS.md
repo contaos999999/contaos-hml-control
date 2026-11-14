@@ -11,6 +11,15 @@
 
 # ContaOS 4.1 — Regras Constitucionais e Premissas Permanentes
 
+## P0-NR-001 — NÃO REINCIDÊNCIA DE ERROS CONHECIDOS (VINCULANTE, 14/11/2026)
+
+**Antes de PLAN, BUILD, investigação, auditoria, tentativa de desbloqueio ou encerramento da missão**, ler `docs/frontend/governanca/P0_NR_001_NAO_REINCIDENCIA.md` e `docs/frontend/governanca/P0_NR_001_LEDGER.json`, consultar checkpoint e HEAD atual e classificar cada impedimento como CONHECIDO, NOVO ou NAO_VERIFICADO. Se CONHECIDO, recuperar causa-raiz, teste e solução comprovados **antes** de nova tentativa; reincidência é falha do mecanismo de prevenção, não deve ser reapresentada como problema novo. Se NOVO, aplicar RCA, impacto, RED, GREEN, AUDIT e registrar aprendizado preventivo. Falhas NOVAS podem exigir diagnóstico; repetição de erro conhecido sem aplicar prevenção é NO-GO operacional.
+
+**Bloqueio não é encerramento:** investigar causas e alternativas legítimas, inclusive GitHub mergeability, branch/base, CI Expected, eventos/runners e permissões; não repetir retries sem delta. Após duas tentativas sem solução, revisão causal ampliada, sem patches cegos. Só interromper a ação diante de risco, autorização ausente, impedimento real ou ferramenta indisponível, com último HEAD, PR, testes, checkpoint integrado, impedimento e próxima tarefa. Nunca declarar trabalho concluído sem prova de integração e revisão exigida.
+
+**Status no ledger:** `PENDENTE_PR` e `MITIGADO_EM_BRANCH` não equivalem a `RESOLVIDO_COM_PROVA`; não aproveitar mocks/links sintáticos/CI de outro SHA nem Teste C visual SKIPPED como prova. P0-NR complementa, **sem revogar**, P0-RCA-001, Zero-Drift, LOCK, 100/97, RBAC/RLS, revisão independente, proteção de branch e autorização PROD.
+
+
 ## P0 — PRIORIDADE ZERO: ORDEM DE DESENVOLVIMENTO POR VERSÃO (NOVO, VINCULANTE)
 
 **ANTES de qualquer leitura de prompt, PLAN, GATE, BUILD, revisão, GitHub, Lovable, CI, Supabase ou certificação**, LEIA INTEGRALMENTE: `docs/frontend/governanca/P0_PRIORIDADE_ZERO_ORDEM_POR_VERSAO_4_1.md` e `docs/frontend/governanca/P0_ORDEM_POR_VERSAO_4_1.json`; confirme o checkpoint GitHub e o status de certificação da versão corrente. Esta decisão expressa de 04/11/2026 é **regra constitucional aditiva de PRIORIDADE ZERO** para **sequenciamento e certificação**, sem revogar as demais restrições técnicas, segurança ou aprovações.
@@ -24,6 +33,15 @@
 
 
 Ambiente: HML. Supabase oficial conectado: `gklhhhyosgasnyoxlrui`.
+
+## P0-RCA-001 — CAUSA RAIZ, IMPACTO E ANTIRREGRESSÃO EM TODA FALHA (VINCULANTE, 14/11/2026)
+
+Diretriz expressa do titular, em 14/11/2026, às 00h10 (Bahia), registrada como regra canônica. Transcrição fiel, com pontuação e acentos normalizados; na grafia original, "retrabalho" aparece como "retratados": "sempre que encontrar uma falha, seja ela crítica ou pequena, a sua análise deve ser profunda para achar a causa raiz daquela falha e, ao propor a solução, deve ser analisado não só a correção daquela falha, mas também se a correção proposta não causa nova falha; objetivo aqui é ser eficaz e eficiente, evitando retrabalho e remendos."
+
+- O procedimento obrigatório é o de `docs/frontend/governanca/P0_RCA_IMPACTO_ANTIRRETRABALHO_V2_V5_2026-11-14.md` (RCA → IMPACTO → RED → BUILD → GREEN → AUDIT). Pela emenda X desse documento, ele vale para **todo** o trabalho a partir de 14/11/2026: a integração funcional V1 em curso (fases 3 a 7), V2 a V5, a auditoria global e qualquer revisão independente.
+- Achados de uma revisão são agrupados por causa raiz, e cada grupo recebe uma única correção que feche a classe. Remendo por sintoma, retry sem delta causal e afrouxar teste ou guard para obter PASS são proibidos.
+- Antes de publicar a correção, verificar e registrar se ela introduz falha nova (mapa de impacto, teste negativo e, quando couber, teste de propriedade ou de mutação). Uma falha nova causada pela correção suspende os patches reativos e reabre a análise do conjunto.
+- A revisão independente faz uma passada completa, não para no primeiro achado e calibra a severidade. Um achado Menor só deixa de impedir o APPROVE se não configurar FAIL de RCA, impacto, regressão ou segurança (item VII do protocolo) e não comprometer a fidelidade ao PLAN. Nesse caso, ele vira obrigação registrada.
 
 ## Regras constitucionais
 

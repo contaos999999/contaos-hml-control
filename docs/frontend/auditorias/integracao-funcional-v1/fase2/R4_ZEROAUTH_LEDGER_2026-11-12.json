@@ -1,0 +1,23 @@
+{
+  "schema": "contaos.navigation.r4.zeroauth.v1",
+  "state": "BLOCKED_PREAUTH",
+  "requestPr": 614,
+  "requestHead": "9e1cf2557435ccd8bc6c213c785b3c091be69063",
+  "requestMerge": "f5533cd11c4cefe9577857e419d8ea57a099712d",
+  "approvedParent": "e9074971fe6fdffa31157babaf44cbc6adf86ac9",
+  "requestReview": 5880632205,
+  "authRun": 43289702129,
+  "authPreflightJob": 131432360921,
+  "authPrivateJob": 131432715186,
+  "fixturesRun": 43289702393,
+  "fixturesPreflightJob": 131432360566,
+  "fixturesPrivateJob": 131432578426,
+  "attempt": 1,
+  "failureCode": "REQUEST_REVIEW",
+  "rootCause": "REVIEW_BODY_NOT_EXACT_CANONICAL_JSON",
+  "sessionStarted": false,
+  "credentialsExposed": false,
+  "privateArtifact": null,
+  "nonceSpent": "integracao-v1-fase2-nav-20261112-r4",
+  "certified": false
+}

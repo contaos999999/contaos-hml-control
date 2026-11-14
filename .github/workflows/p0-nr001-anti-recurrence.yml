@@ -1,0 +1,38 @@
+name: ContaOS P0-NR-001 Anti-Reincidencia
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: read
+
+concurrency:
+  group: p0-nr001-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  p0-no-recurrence:
+    name: ContaOS P0-NR-001 Integridade e Provas
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout SHA imutavel
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Testes negativos de classes conhecidas e falso resolvido
+        run: node --test scripts/p0-nr001-gate.test.mjs
+      - name: P0-NR-001 ledger com comprovantes reais
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/p0-nr001-gate.mjs
