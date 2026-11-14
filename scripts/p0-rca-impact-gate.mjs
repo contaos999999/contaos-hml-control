@@ -210,7 +210,15 @@ export function runCase(entry) {
   if (node) {
     const pass = /(?:^|\n)# pass (\d+)\r?(?:\n|$)/.exec(out);
     const fail = /(?:^|\n)# fail (\d+)\r?(?:\n|$)/.exec(out);
-    return Boolean(pass && Number(pass[1]) > 0 && fail && Number(fail[1]) === 0);
+    // Node pode retornar exit 0, "# pass 1" para o ARQUIVO inteiro mesmo
+    // quando o --test-name-pattern selecionou ZERO casos. Exigir a linha do
+    // subteste exato e seu resultado ok, nunca só o resumo numérico.
+    const lines = out.split("\n").map((line) => line.trimEnd());
+    const selected = lines.some((line) => line === "# Subtest: " + entry.caso);
+    const green = lines.some((line) => /^ok [1-9]\d* - /.test(line) &&
+      line.endsWith(" - " + entry.caso));
+    return Boolean(selected && green && pass && Number(pass[1]) > 0 &&
+      fail && Number(fail[1]) === 0);
   }
   try {
     const j = JSON.parse(out.slice(out.indexOf("{")));
