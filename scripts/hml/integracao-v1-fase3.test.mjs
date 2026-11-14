@@ -2208,6 +2208,24 @@ test("F3 §12.6: SYS04 sem chave só permite reconciliar após envio incerto", (
   assert.equal(f.book.summary().sent, 1);
 });
 
+test("F3 §12.6: V106 recusa IDs de entidade como chave gerada pela UI", (t) => {
+  for (const key of [F3, sut.F3_E87_ORG, uuid(107)]) {
+    const f = fenceWith(t, withContract);
+    f.fence.arm({ producerOrder: 8, bodies: [v106(uuid(107), sut.f3Slot("uuid", "chave"))] });
+    assert.equal(
+      f.fence.policy(
+        req({
+          url: RPC("atualizar_contrato_v1"),
+          postData: JSON.stringify(v106(uuid(107), key)),
+        }),
+      ),
+      false,
+    );
+    assert.equal(f.fence.frozen(), true);
+    assert.equal(f.book.summary().sent, 2);
+  }
+});
+
 for (const sameKey of [true, false]) {
   test(`F3 §12.6: V106 ${sameKey ? "preserva a chave" : "recusa chave nova"} no reenvio`, (t) => {
     const f = fenceWith(t, withContract);

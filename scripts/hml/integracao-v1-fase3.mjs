@@ -1342,6 +1342,18 @@ export function createF3MutationFence(options = {}) {
       body = parseJsonBody(request.postData);
       if (body === undefined || !matchBody(body, armed, active.slots, got)) return freeze();
     }
+    if (active.producerOrder === 8 && !active.resend) {
+      const key = body.p_request_id;
+      const { st } = BOOKS.get(book)();
+      if (
+        !isUuid(key) ||
+        key === F3_E87_ORG ||
+        key === st.organizationF3 ||
+        st.entities.has(key) ||
+        st.intents.has(key)
+      )
+        return freeze();
+    }
     const bodySha256 =
       active.producerOrder === 8
         ? createHash("sha256").update(canonicalJson(body)).digest("hex")
