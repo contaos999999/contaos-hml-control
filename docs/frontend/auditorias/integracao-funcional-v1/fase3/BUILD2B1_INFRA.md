@@ -39,10 +39,11 @@ Não mudam: o YAML, o auditor, o preparador, `src/**`, `types.ts`, as dependênc
    - duplicidade igual à política do produtor.
 
    Viram `FAIL`: qualquer `VAZAMENTO`, `ACCEPTED` ou `CLEANUP_FAILED`, e qualquer divergência entre observado e esperado. Viram `BLOCKED`: prova ausente, `SEM_ENTIDADE`, observação `ERROR` e produtor ainda sem política. O resumo também é recalculado.
-2. **Cruzamento de recibos, intenções e inventário** (revisão 5900926490, B1).
-   - O relatório traz a lista de intenções, com `requestId`, produtor, `duplicateOf`, desfecho e `prior`. Os contadores precisam bater com essa lista.
+2. **Cruzamento de recibos, intenções e inventário** (revisões 5900926490, B1, e 5901072418, B e D).
+   - O relatório traz a lista de todas as intenções conhecidas: as desta execução e as anteriores vindas do ledger (`prior: true`). Cada uma tem `requestId`, produtor, `duplicateOf`, desfecho e a entidade criada (`entityId`). Os contadores precisam bater com essa lista.
+   - Sem ledger anterior, nenhuma intenção pode ser anterior e `priorSent` é 0. Com ledger, as anteriores e o `priorSent` batem exatamente com `f3PriorFromLedger`, que o executor passa ao validador e ao gate. Só um pendente anterior pode mudar de desfecho. Um pendente anterior não reconciliado continua na lista, como pendente, e faz o gate falhar.
    - Cada intenção nova é enviada uma vez e pode ser reenviada só uma vez.
-   - Toda intenção confirmada criou exatamente uma entidade no inventário, e toda entidade aponta para a intenção que a criou.
+   - Toda intenção confirmada criou exatamente uma entidade no inventário, com o mesmo ID registrado na intenção, e toda entidade aponta para a intenção que a criou. As entidades de execuções anteriores entram no inventário final.
    - Os casos de um mesmo produtor compartilham `requestId`, entidades e duplicidade.
    - `requestId` é único entre produtores. Uma entidade só pode aparecer no recibo do próprio produtor.
    - Um caso só é `PASS` se a intenção dele foi confirmada.
@@ -61,10 +62,10 @@ Não mudam: o YAML, o auditor, o preparador, `src/**`, `types.ts`, as dependênc
    - As consultas por tela usam `Object.hasOwn`.
 7. **Livro de intenções** (revisão, B1, I4 e M2).
    - Só o MASTER sela intenção, só nos produtores mutantes (ordens 2 e 4 a 20) e só na organização F3. Opções desconhecidas, como o antigo `priorConfirmed`, falham.
-   - Cada `requestId` é selado uma vez, inclusive entre execuções: `f3PriorFromLedger` passa ao livro os `requestId` anteriores.
+   - Cada `requestId` é selado uma vez, inclusive entre execuções. O livro nasce com todas as intenções anteriores do ledger, com desfecho e entidade, e o resumo devolve todas elas.
    - A intenção incerta, desta execução ou de uma anterior, só é reenviada depois de um readback que prove ausência, e uma vez só.
    - Um readback que acha a entidade em outra organização falha com `F3_FOREIGN_ORG`.
-   - `duplicateOf` precisa apontar para uma intenção confirmada do mesmo produtor nesta execução. A confirmação de uma tentativa de duplicidade devolve `duplicateAccepted: true`.
+   - `duplicateOf` precisa apontar para uma intenção confirmada do mesmo produtor. Pode ser uma intenção desta execução, uma anterior já confirmada ou uma anterior reconciliada como encontrada agora (revisão 5901072418, C). A confirmação de uma tentativa de duplicidade devolve `duplicateAccepted: true`.
    - Entidade repetida falha.
    - Cada envio conta no orçamento, inclusive a duplicidade rejeitada: 30 por execução e 60 no total. O total vem do ledger, não do chamador.
 8. **Negação.**
@@ -74,8 +75,10 @@ Não mudam: o YAML, o auditor, o preparador, `src/**`, `types.ts`, as dependênc
    - Os tokens de V111 e V120 entram por emenda no BUILD-2b-2, depois de confirmados pela UI. Até lá, qualquer negação nessas telas é `ERROR`.
 9. **Ledger** (revisão, I3 e I4).
    - `F3_LEDGER.json` nasce com `runs` e `entries` vazios. O SHA-256 `1d402a1a…` fica fixado em `F3_LEDGER_SHA256`.
-   - Cada execução registra `workflowRunId`, harness, intenções enviadas e desfechos. Isso permite derivar o orçamento acumulado e reconciliar um incerto de uma execução anterior.
-   - Um `requestId` só reaparece em outra execução como reconciliação de um pendente.
+   - Cada execução registra `workflowRunId`, harness, envios e as intenções novas e os pendentes anteriores reconciliados nela, com desfecho e entidade. Isso permite derivar o orçamento acumulado e reconciliar um incerto anterior, inclusive uma tentativa de duplicidade cuja base é de outra execução.
+   - O número de envios de cada execução precisa bater com as intenções listadas (no mínimo uma por intenção nova; no máximo duas por intenção nova mais uma por pendente reaberto). Assim o ledger não consegue subcontar o orçamento (revisão 5901072418, A).
+   - Um `requestId` só reaparece em outra execução como reconciliação de um pendente, com o mesmo produtor e a mesma base. Entidade repetida entre execuções falha.
+   - A entrada PASS precisa ter o mesmo harness da execução que ela cita.
    - Uma extensão parte do ledger fixado e só acrescenta: entradas `PASS` do catálogo, sem repetir caso, com proveniência completa, `artifactId`, `sha256`, `reviewId` e a execução registrada.
    - Um PASS só é preservado com o mesmo produto, o mesmo backend, o mesmo deployment e o mesmo harness, ou com uma equivalência revisada em `F3_HARNESS_EQUIVALENCES`, que começa vazia. A ancestralidade sozinha não basta, porque o plano mestre (16.3) exige equivalência revisada.
    - Os controles globais ficam no relatório e nunca são herdados.
@@ -89,7 +92,7 @@ Não mudam: o YAML, o auditor, o preparador, `src/**`, `types.ts`, as dependênc
     Toda expressão com `secrets` tem a forma `secrets.NOME`, com um dos quatro nomes aprovados. `toJSON`, índice `secrets[...]`, `vars.*`, `continue-on-error` e `|| ...` no token da revalidação são proibidos.
 
     O teste prova 22 adulterações recusadas. Só a última, a remoção do passo do bun, depende apenas do SHA; as outras 21 são pegas pela estrutura sozinha. A lista inclui as permissões do topo e do job `private`, gatilho `push` novo, `toJSON(secrets)` e um `|| echo scope=...` forjando o escopo.
-11. **Resultado parcial.** Qualquer falha depois da checagem de evento grava `artifacts/integracao-v1-fase3/F3_REPORT.json`, a cópia do catálogo e `SHA256SUMS`. Sem catálogo válido, o relatório sai sem casos. Relatório inválido nunca é gravado.
+11. **Resultado parcial.** Qualquer falha depois da checagem de evento grava `artifacts/integracao-v1-fase3/F3_REPORT.json`, a cópia do catálogo e `SHA256SUMS`. Sem catálogo válido, o relatório sai sem casos. Relatório inválido nunca é gravado. O relatório é serializado uma vez, e o que se valida é essa serialização, exatamente o que vai para o disco: um getter não consegue mostrar um valor ao validador e outro ao arquivo (revisão 5901072418, E).
 
 ## Provas R4, R12 e R14 com o pai F3
 
@@ -135,10 +138,22 @@ Os três `headSha` são ancestrais da main, e as execuções citadas continuam s
 
 Também foram fechados três pontos que os próprios scripts de ataque do revisor mostravam: opções desconhecidas no livro, a extensão do ledger sem conferir o SHA fixado do anterior, e `vars.*` ou timeout alterados no YAML.
 
+## Revisão 5901072418 (CHANGES_REQUESTED no HEAD `41a4331`)
+
+A segunda revisão confirmou I1, I2, I3, M1 a M5 resolvidos e B1 e I4 parciais, todos os restos ligados ao que acontece entre execuções.
+
+| Achado | Tratamento |
+|---|---|
+| B: pendente anterior some do resumo e o gate dá PASS | O resumo do livro e o relatório trazem todas as intenções, anteriores inclusive. Teste "(B, D)" |
+| A: `run.sent` do ledger não conferido; harness da entrada livre | Envios conferidos contra as intenções de cada execução; harness da entrada igual ao da execução. Teste "(A)" |
+| C: duplicidade irreconciliável na recuperação | Base procurada também nas execuções anteriores; base anterior reconciliada aceita. Teste "(C)" |
+| D: intenções marcadas como anteriores sem conferência | Anteriores e `priorSent` conferidos com `f3PriorFromLedger`. Teste "(B, D)" |
+| E: getter em índice grava texto no arquivo | Serialização única, validada e gravada. Teste "(E)" |
+
 ## Testes
 
-- `integracao-v1-fase3.test.mjs` tem 33 testes, todos verdes. RED verificável: esta mesma suíte, rodada contra o executor do HEAD `363b451`, tem 17 falhas.
-- Suíte do job `protocol` (auditor, preparador e F3): 913 testes, 891 passam. As 2 falhas, `GET publico nunca envia Authorization` e `R13 POSIX ignored-build template`, são de ambiente local e falham igual na main `d2a6557` (891 testes, 869 passam). A prova é o CI.
+- `integracao-v1-fase3.test.mjs` tem 37 testes, todos verdes. RED verificável: esta mesma suíte, rodada contra o executor do HEAD `41a4331`, tem 13 falhas; a versão de 33 testes, rodada contra o `363b451`, tinha 17.
+- Suíte do job `protocol` (auditor, preparador e F3): 917 testes, 895 passam. As 2 falhas, `GET publico nunca envia Authorization` e `R13 POSIX ignored-build template`, são de ambiente local e falham igual na main `d2a6557` (891 testes, 869 passam). A prova é o CI.
 - `eslint` e `prettier --check` estão limpos nos arquivos alterados.
 
 ## Próximo passo: BUILD-2b-2
