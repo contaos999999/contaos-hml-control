@@ -7,7 +7,8 @@
   - uploads contados dentro da ação que os consome;
   - esperas assíncronas (verificador de arquivos, análise e parecer de IA) com prazo e `BLOCKED` próprio, sem reenvio.
 - **BUILD-2b-2a,** branch `build/integracao-v1-fase3-b2b2-drivers`: os grupos C, D, E e G da R2 estão corrigidos. A e B (redesenho da cerca) saem depois do merge desta emenda.
-- **Gate P0 RCA da main:** a PR de BUILD que altera `scripts/hml/*` exige `docs/frontend/planos/P0_GOV_PLAN_<PR>.json` aprovado na main antes do CI verde.
+- **PRs (autor Edivan5002):** emenda #678; BUILD-2b-2a #679. Main `02de927` mesclada nas duas, sem conflito (prevenção NR-001).
+- **Gate P0 RCA da main:** a #679 altera `scripts/hml/*` e exige `docs/frontend/planos/P0_GOV_PLAN_679.json` aprovado na main. Esse arquivo entra pela #678, com allowlist fechada nos dois arquivos do executor F3. Até o merge da #678, a #679 falha nesse gate por desenho.
 - **Fase 3:** EM EXECUÇÃO.
 
 ## Integração funcional V1: Fase 3, BUILD-2b-1 integrado, 14/11/2026 Bahia

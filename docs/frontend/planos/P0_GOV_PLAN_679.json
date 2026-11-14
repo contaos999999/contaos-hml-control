@@ -1,0 +1,24 @@
+{
+  "schema": "contaos.p0.gov-plan.v1",
+  "approved": true,
+  "pr_number": 679,
+  "files": [
+    "scripts/hml/integracao-v1-fase3.mjs",
+    "scripts/hml/integracao-v1-fase3.test.mjs"
+  ],
+  "plan_documento": "docs/frontend/planos/INTEGRACAO_V1_FASE3_CADASTROS_RELACIONAMENTOS_PLAN_GATE_2026-11-13.md",
+  "plan_secao": "12 (Emenda 1, 14/11/2026)",
+  "plan_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/678",
+  "plan_aprovacao": "aprovação = review APPROVE independente da PR #678 no HEAD que contém este arquivo, seguida de merge protegido; sem esse merge o arquivo não existe na main e o gate falha fechado",
+  "build_pr_url": "https://github.com/contaos999999/contaos-hml-control/pull/679",
+  "justificativa": "BUILD-2b-2 da Fase 3 (integração funcional V1, PLAN 75) altera somente o executor F3 e sua suíte em scripts/hml; allowlist fechada nos dois arquivos, sem src/**, backend, types.ts, routeTree.gen.ts, workflows, dependências ou PROD. Vale exclusivamente para a PR #679.",
+  "regras_preservadas": [
+    "P0-NR-001",
+    "P0-RCA-001",
+    "P0 VERSION FIRST",
+    "ZERO-DRIFT",
+    "LOCK-TYPES",
+    "TESTE C",
+    "PROD PROIBIDO"
+  ]
+}
