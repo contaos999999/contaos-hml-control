@@ -29,7 +29,7 @@ const fixture = () => {
   const matrixPath = prefix + "fase1/MATRIZ.csv";
   const graphPath = prefix + "fase1/GRAFO.mmd";
   const hmlPath = prefix + "fase7/HML_E2E.md";
-  for (const p of [finalPath, matrixPath, graphPath, hmlPath]) files.set(p, data);
+  for (const p of [finalPath, matrixPath, graphPath]) files.set(p, data);
   const finalReceipt = {
     status: "PASS", ...receipt(finalPath),
     matriz_arquivo: matrixPath,
@@ -39,14 +39,29 @@ const fixture = () => {
     teste_c_run_url: ci,
     hml_e2e: {
       ambiente: "HML_AUTENTICADO",
+      escopo: "V1/interna",
       arquivo_evidencia: hmlPath,
-      arquivo_sha256: digest,
+      arquivo_sha256: null,
       casos: ["HML-REAL-001"],
       run_url:"https://github.com/contaos999999/contaos-hml-control/actions/runs/555",
       tested_sha:H,
     },
     fases_anteriores: stages,
   };
+  const caseArtifact = {
+    id:"HML-REAL-001",job_name:"P0 Integracao V1/interna HML-REAL-001",
+    artifact_name:"p0-hml-V1-interna-HML-REAL-001-555",
+    artifact_digest:"sha256:"+digest,
+  };
+  const caseReport = {
+    schema:"contaos.p0.hml-integration-e2e.v1",
+    escopo:"V1/interna",run_url:finalReceipt.hml_e2e.run_url,
+    tested_sha:H,casos:["HML-REAL-001"],artefatos:[caseArtifact],
+  };
+  const hmlBytes=Buffer.from(JSON.stringify(caseReport));
+  files.set(hmlPath,hmlBytes);
+  finalReceipt.hml_e2e.arquivo_sha256=
+    createHash("sha256").update(hmlBytes).digest("hex");
   const manifest = {
     controle: {
       certificados_por_versao: {},
@@ -83,22 +98,20 @@ const fixture = () => {
     ["/compare/" + M + "...main"]: { status: "ahead" },
     ["/compare/" + H + "..." + H]: { status: "identical", files:[] },
     "/actions/runs/555": {
-      name:"ContaOS Trilha A Autenticada",conclusion:"success",
+      name:"ContaOS P0 Integracao Autenticada",conclusion:"success",
       head_sha:H,head_branch:"main",
     },
     "/actions/runs/555/jobs?per_page=100": {
       total_count:1,jobs:[{
-        name:"Trilha A auditoria privada HML",conclusion:"success",
+        name:"P0 Integracao V1/interna HML-REAL-001",conclusion:"success",
         steps:[
-          {name:"Somente agora fornecer o par sintetico ao auditor",conclusion:"success"},
-          {name:"Verificar hashes gerados, inclusive em resultado parcial",conclusion:"success"},
-          {name:"Evidencia privada imutavel por 90 dias",conclusion:"success"},
+          {name:"E2E autenticado: HML-REAL-001",conclusion:"success"},
         ],
       }],
     },
     "/actions/runs/555/artifacts?per_page=100": {
       total_count:1,
-      artifacts:[{name:"trilha-a-private-555-1",expired:false,size_in_bytes:8100}],
+      artifacts:[{name:"p0-hml-V1-interna-HML-REAL-001-555",expired:false,size_in_bytes:8100,digest:"sha256:"+digest}],
     },
     "/actions/runs/789/artifacts?per_page=100": {
       total_count: 1,
@@ -217,7 +230,7 @@ test("P0 LIVE — sem artefato visual não existe prova E2E", async () => {
 });
 test("P0 LIVE — mesmo CI com Teste C sem evidência HML autenticada é FAIL", async () => {
   const x=fixture();delete x.finalReceipt.hml_e2e;
-  await assertFail(x,/sem execução HML autenticada/);
+  await assertFail(x,/sem casos e escopo HML autenticado/);
 });
 test("P0 LIVE — relatório HML criado depois da revisão é FAIL", async () => {
   const x=fixture();
@@ -271,12 +284,12 @@ test("P0 LIVE — Teste C separado de outro SHA é FAIL", async () => {
 test("P0 LIVE — HML privado com job SUCCESS e evidência SKIPPED: FAIL", async () => {
   const x=fixture();
   x.responses["/actions/runs/555/jobs?per_page=100"].jobs[0].steps[0].conclusion="skipped";
-  await assertFail(x,/HML autenticado sem run real/);
+  await assertFail(x,/caso HML/);
 });
 test("P0 LIVE — HML sem artifact privado: FAIL", async () => {
   const x=fixture();
   x.responses["/actions/runs/555/artifacts?per_page=100"].artifacts=[];
-  await assertFail(x,/HML autenticado sem run real/);
+  await assertFail(x,/caso HML/);
 });
 test("P0 LIVE — HML SHA antigo com mudança funcional posterior: FAIL", async () => {
   const x=fixture();
@@ -287,5 +300,45 @@ test("P0 LIVE — HML SHA antigo com mudança funcional posterior: FAIL", async 
 test("P0 LIVE — HML run sem execução privada real: FAIL", async () => {
   const x=fixture();
   x.responses["/actions/runs/555"].conclusion="skipped";
-  await assertFail(x,/HML autenticado sem run real/);
+  await assertFail(x,/HML integração não comprovada/);
+});
+
+test("P0 LIVE — Trilha A visual genérica não prova integração interna V1", async () => {
+  const x=fixture();
+  x.responses["/actions/runs/555"].name="ContaOS Trilha A Autenticada";
+  await assertFail(x,/workflow dedicado/);
+});
+test("P0 LIVE — caso inventado sem job/artefato correspondente bloqueia", async () => {
+  const x=fixture();x.finalReceipt.hml_e2e.casos=["INVENTADO"];
+  await assertFail(x,/caso HML INVENTADO/);
+});
+test("P0 LIVE — certificado V1 não aceita caso declarado em escopo V2 cumulativa", async () => {
+  const x=fixture();x.finalReceipt.hml_e2e.escopo="V2/cumulativa";
+  await assertFail(x,/escopo HML autenticado específico/);
+});
+test("P0 LIVE — artefato do escopo incorreto não comprova o caso", async () => {
+  const x=fixture();
+  x.responses["/actions/runs/555/artifacts?per_page=100"].artifacts[0].name=
+    "p0-hml-V2-cumulativa-HML-REAL-001-555";
+  await assertFail(x,/caso HML/);
+});
+test("P0 LIVE — digest REST inválido ou não vinculado não autentica artefato", async () => {
+  const x=fixture();
+  x.responses["/actions/runs/555/artifacts?per_page=100"].artifacts[0].digest=null;
+  await assertFail(x,/caso HML/);
+});
+test("P0 LIVE — relatório local não pode trocar os IDs realmente executados", async () => {
+  const x=fixture();
+  const path=prefix+"fase7/HML_E2E.md";
+  const forged=Buffer.from(JSON.stringify({schema:"contaos.p0.hml-integration-e2e.v1",
+    escopo:"V1/interna",run_url:x.finalReceipt.hml_e2e.run_url,
+    tested_sha:H,casos:["INVENTADO"],artefatos:[]}));
+  x.files.set(path,forged);x.remoteFiles.set(path,forged);
+  x.finalReceipt.hml_e2e.arquivo_sha256=createHash("sha256").update(forged).digest("hex");
+  await assertFail(x,/relatório HML não está vinculado/);
+});
+test("P0 LIVE — alteração em script após teste HML impede reutilizar prova", async () => {
+  const x=fixture();x.responses["/compare/"+H+"..."+H].files=
+    [{filename:"scripts/frontend-zero-drift.mjs"}];
+  await assertFail(x,/SHA\/contrato estáveis/);
 });
